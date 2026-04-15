@@ -232,13 +232,15 @@ describe("Query Loader", () => {
 
       it("should throw error for undefined language", () => {
         expect(() => {
-          load_query(undefined as unknown as Language);
+          // @ts-expect-error - testing runtime rejection of invalid input
+          load_query(undefined);
         }).toThrow(/Invalid language/);
       });
 
       it("should throw error for null language", () => {
         expect(() => {
-          load_query(null as unknown as Language);
+          // @ts-expect-error - testing runtime rejection of invalid input
+          load_query(null);
         }).toThrow(/Invalid language/);
       });
 
@@ -493,12 +495,10 @@ describe("Query Loader", () => {
     });
 
     it("should validate language is not null or undefined", () => {
-      expect(() => load_query(null as unknown as Language)).toThrow(
-        /Invalid language/
-      );
-      expect(() => load_query(undefined as unknown as Language)).toThrow(
-        /Invalid language/
-      );
+      // @ts-expect-error - testing runtime rejection of invalid input
+      expect(() => load_query(null)).toThrow(/Invalid language/);
+      // @ts-expect-error - testing runtime rejection of invalid input
+      expect(() => load_query(undefined)).toThrow(/Invalid language/);
     });
 
     it("should validate language is not empty string", () => {

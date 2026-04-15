@@ -15,18 +15,21 @@ Currently, method resolution in `method_resolution_simple` uses a processed `Loc
 The semantic index provides four rich sources of type information:
 
 1. **`local_type_flow: LocalTypeFlowData`** - Direct AST captures with rigorous scope tracking
+
    - Constructor calls with exact locations
    - Assignment flows between variables
    - Return statements and their values
    - Function call results assigned to variables
 
 2. **`local_type_tracking: LocalTypeTracking`** - Variable and assignment patterns
+
    - Variable/parameter type annotations (raw text)
    - Variable declarations with initializers
    - Assignment patterns for type inference
    - All with proper scope IDs
 
 3. **`local_type_annotations: LocalTypeAnnotation[]`** - Type syntax extraction
+
    - Raw annotation text for variables, parameters, returns
    - Cast expressions for explicit typing
    - Generic constraints and bounds
@@ -40,12 +43,14 @@ The semantic index provides four rich sources of type information:
 ### Current Limitations
 
 The current `LocalTypeContext` in `local_type_context.ts`:
+
 - Attempts resolution too early, losing context
 - Applies risky heuristics (e.g., `getUser()` → `User` type)
 - Works from already-processed SemanticIndex data
 - Loses precise location and scope information during transformation
 
 The method resolver (`heuristic_resolver.ts`) only uses:
+
 - `expression_types` map (location → type)
 - `variable_types` map (name → type)
 - `constructor_calls` array
@@ -60,13 +65,13 @@ Replace the intermediate `LocalTypeContext` processing with direct use of semant
 ```typescript
 interface EnhancedMethodResolutionContext {
   // Direct semantic index data
-  type_flow: LocalTypeFlowData;        // From semantic_index
-  type_tracking: LocalTypeTracking;    // From semantic_index
-  type_annotations: LocalTypeAnnotation[];  // From semantic_index
-  local_types: LocalTypeInfo[];        // From semantic_index
+  type_flow: LocalTypeFlowData; // From semantic_index
+  type_tracking: LocalTypeTracking; // From semantic_index
+  type_annotations: LocalTypeAnnotation[]; // From semantic_index
+  local_types: LocalTypeInfo[]; // From semantic_index
 
   // Resolution helpers (built once, used many times)
-  annotation_map: Map<LocationKey, TypeAnnotation>;  // Quick lookup
+  annotation_map: Map<LocationKey, TypeAnnotation>; // Quick lookup
   initializer_map: Map<SymbolName, InitializerInfo>; // Variable → init
   assignment_chain: Map<SymbolName, AssignmentFlow[]>; // Track flows
 }
@@ -77,6 +82,7 @@ interface EnhancedMethodResolutionContext {
 Improve `find_class_hint()` to use richer data sources:
 
 1. **Type Annotations** - Check `local_type_tracking.annotations`
+
    ```typescript
    // Current: Only checks processed variable_types map
    // Improved: Check raw annotations for exact type
@@ -87,21 +93,23 @@ Improve `find_class_hint()` to use richer data sources:
    ```
 
 2. **Initializer Analysis** - Use `local_type_tracking.declarations`
+
    ```typescript
    // Track: const user = new User();
    const declaration = type_tracking.declarations.find(
-     d => d.name === var_name && d.initializer
+     (d) => d.name === var_name && d.initializer
    );
-   if (declaration?.initializer?.startsWith('new ')) {
+   if (declaration?.initializer?.startsWith("new ")) {
      return extract_constructor_type(declaration.initializer);
    }
    ```
 
 3. **Assignment Flow** - Use `local_type_flow.assignments`
+
    ```typescript
    // Track: user = getUserFromDB();
    const assignments = type_flow.assignments.filter(
-     a => a.target === var_name
+     (a) => a.target === var_name
    );
    // Trace through assignment chain to find type source
    ```
@@ -125,12 +133,12 @@ function find_variable_type_in_scope(
 ): TypeInfo | null {
   // Check declarations in current scope
   const declaration = type_tracking.declarations.find(
-    d => d.name === var_name && d.scope_id === scope_id
+    (d) => d.name === var_name && d.scope_id === scope_id
   );
 
   // Check assignments that affect this scope
   const assignments = type_tracking.assignments.filter(
-    a => a.target === var_name && is_visible_in_scope(a.scope_id, scope_id)
+    (a) => a.target === var_name && is_visible_in_scope(a.scope_id, scope_id)
   );
 
   // Use most recent assignment or declaration
@@ -144,14 +152,14 @@ Implement a more sophisticated resolution pipeline:
 
 ```typescript
 enum DetailedStrategy {
-  EXPLICIT_ANNOTATION = "explicit_annotation",     // let x: User
-  EXPLICIT_CAST = "explicit_cast",                // x as User
-  CONSTRUCTOR_DIRECT = "constructor_direct",       // new User()
-  CONSTRUCTOR_ASSIGNED = "constructor_assigned",   // x = new User()
-  INITIALIZER_LITERAL = "initializer_literal",    // x = { name: "foo" }
-  ASSIGNMENT_CHAIN = "assignment_chain",          // x = y; y = new User()
-  RETURN_TYPE_ANNOTATION = "return_type",         // getUser(): User
-  PARAMETER_TYPE = "parameter_type",              // function(user: User)
+  EXPLICIT_ANNOTATION = "explicit_annotation", // let x: User
+  EXPLICIT_CAST = "explicit_cast", // x as User
+  CONSTRUCTOR_DIRECT = "constructor_direct", // new User()
+  CONSTRUCTOR_ASSIGNED = "constructor_assigned", // x = new User()
+  INITIALIZER_LITERAL = "initializer_literal", // x = { name: "foo" }
+  ASSIGNMENT_CHAIN = "assignment_chain", // x = y; y = new User()
+  RETURN_TYPE_ANNOTATION = "return_type", // getUser(): User
+  PARAMETER_TYPE = "parameter_type", // function(user: User)
   // ... existing strategies as fallbacks
 }
 ```
@@ -159,24 +167,28 @@ enum DetailedStrategy {
 ## Implementation Plan
 
 ### Step 1: Create Enhanced Context Builder
+
 - [ ] Build annotation lookup maps from `local_type_annotations`
 - [ ] Create initializer analysis from `local_type_tracking`
 - [ ] Build assignment flow graph from `local_type_flow`
 - [ ] Index local type members from `local_types`
 
 ### Step 2: Enhance Type Hint Detection
+
 - [ ] Implement direct annotation lookup
 - [ ] Add initializer pattern matching
 - [ ] Create assignment chain traversal
 - [ ] Add return type tracking
 
 ### Step 3: Integrate with Method Resolver
+
 - [ ] Replace `LocalTypeContext` with `EnhancedMethodResolutionContext`
 - [ ] Update `find_class_hint()` to use new data sources
 - [ ] Add detailed strategy tracking for debugging
 - [ ] Preserve existing heuristics as fallbacks
 
 ### Step 4: Testing and Validation
+
 - [ ] Create test cases for each new resolution strategy
 - [ ] Verify no regressions in existing tests
 - [ ] Add benchmarks to ensure performance
@@ -193,9 +205,11 @@ enum DetailedStrategy {
 ## Risks and Mitigations
 
 - **Risk**: Increased memory usage from additional data structures
+
   - **Mitigation**: Build lookup maps lazily, clear after resolution phase
 
 - **Risk**: Slower initial processing
+
   - **Mitigation**: Cache enhanced contexts, reuse across multiple resolutions
 
 - **Risk**: Complexity in assignment chain traversal
@@ -223,6 +237,7 @@ The key insight is that `type_flow_references.ts` provides the rigorous AST-base
 ### Completed Components
 
 1. **Enhanced Context Builder** (`enhanced_context.ts`)
+
    - Created `EnhancedMethodResolutionContext` interface with direct semantic data access
    - Built helper maps for efficient lookup:
      - `annotation_map`: Location -> Type annotation
@@ -233,6 +248,7 @@ The key insight is that `type_flow_references.ts` provides the rigorous AST-base
    - Implemented `build_enhanced_context()` to create context from semantic index
 
 2. **Enhanced Heuristic Resolver** (`enhanced_heuristic_resolver.ts`)
+
    - Implemented `resolve_method_enhanced()` with detailed strategy tracking
    - Added new resolution strategies:
      - Direct type annotations/casts
@@ -242,6 +258,7 @@ The key insight is that `type_flow_references.ts` provides the rigorous AST-base
    - Improved confidence scoring for each strategy
 
 3. **Enhanced Method Resolution** (`enhanced_method_resolution.ts`)
+
    - Created `resolve_methods_enhanced()` as main entry point
    - Integrated enhanced context builder and resolver
    - Added comparison helper to validate improvements

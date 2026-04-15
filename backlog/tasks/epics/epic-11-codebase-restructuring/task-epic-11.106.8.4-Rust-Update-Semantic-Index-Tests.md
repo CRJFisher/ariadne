@@ -19,12 +19,14 @@ Update `semantic_index.rust.test.ts` to comprehensively test the simplified `Sym
 ### 1. Remove Deleted Field Assertions
 
 Delete all test assertions on fields that no longer exist:
+
 - `source_type`
 - `is_narrowing`
 - `is_widening`
 - `containing_function`
 
 **Example:**
+
 ```typescript
 // ❌ DELETE these assertions
 expect(ref.type_flow?.source_type).toBeUndefined();
@@ -57,7 +59,7 @@ fn test() {
 }
     `;
     const { references } = index_single_file(code, "test.rs");
-    const methodRef = references.find(r => r.name === "method");
+    const methodRef = references.find((r) => r.name === "method");
 
     expect(methodRef?.member_access?.is_optional_chain).toBe(false);
   });
@@ -69,7 +71,7 @@ fn test() {
 }
     `;
     const { references } = index_single_file(code, "test.rs");
-    const fieldRef = references.find(r => r.name === "field");
+    const fieldRef = references.find((r) => r.name === "field");
 
     expect(fieldRef?.member_access?.is_optional_chain).toBe(false);
   });
@@ -81,7 +83,7 @@ fn test() {
 }
     `;
     const { references } = index_single_file(code, "test.rs");
-    const nestedRef = references.find(r => r.name === "nested");
+    const nestedRef = references.find((r) => r.name === "nested");
 
     expect(nestedRef?.member_access?.is_optional_chain).toBe(false);
   });
@@ -93,7 +95,7 @@ fn test() {
 }
     `;
     const { references } = index_single_file(code, "test.rs");
-    const unwrapRef = references.find(r => r.name === "unwrap");
+    const unwrapRef = references.find((r) => r.name === "unwrap");
 
     // Even though this is Option-related, it's not optional chaining syntax
     expect(unwrapRef?.member_access?.is_optional_chain).toBe(false);
@@ -114,7 +116,9 @@ fn test() {
 }
     `;
     const { references } = index_single_file(code, "test.rs");
-    const assignRef = references.find(r => r.name === "x" && r.type === "assignment");
+    const assignRef = references.find(
+      (r) => r.name === "x" && r.type === "assignment"
+    );
 
     expect(assignRef?.assignment_type).toBeDefined();
     expect(assignRef?.assignment_type?.type_name).toBe("String");
@@ -127,7 +131,9 @@ fn test(param: i32) {
 }
     `;
     const { references } = index_single_file(code, "test.rs");
-    const paramRef = references.find(r => r.name === "param" && r.type === "assignment");
+    const paramRef = references.find(
+      (r) => r.name === "param" && r.type === "assignment"
+    );
 
     expect(paramRef?.assignment_type).toBeDefined();
     expect(paramRef?.assignment_type?.type_name).toBe("i32");
@@ -140,7 +146,9 @@ fn test() {
 }
     `;
     const { references } = index_single_file(code, "test.rs");
-    const assignRef = references.find(r => r.name === "x" && r.type === "assignment");
+    const assignRef = references.find(
+      (r) => r.name === "x" && r.type === "assignment"
+    );
 
     expect(assignRef?.assignment_type).toBeDefined();
     expect(assignRef?.assignment_type?.type_name).toContain("Vec");
@@ -153,7 +161,9 @@ fn test() {
 }
     `;
     const { references } = index_single_file(code, "test.rs");
-    const assignRef = references.find(r => r.name === "x" && r.type === "assignment");
+    const assignRef = references.find(
+      (r) => r.name === "x" && r.type === "assignment"
+    );
 
     expect(assignRef?.assignment_type).toBeDefined();
     expect(assignRef?.assignment_type?.type_name).toContain("str");
@@ -170,7 +180,9 @@ fn test() {
 }
     `;
     const { references } = index_single_file(code, "test.rs");
-    const callRef = references.find(r => r.name === "get_value" && r.call_type === "function");
+    const callRef = references.find(
+      (r) => r.name === "get_value" && r.call_type === "function"
+    );
 
     expect(callRef?.assignment_type).toBeUndefined();
   });
@@ -182,7 +194,9 @@ fn test() {
 }
     `;
     const { references } = index_single_file(code, "test.rs");
-    const assignRef = references.find(r => r.name === "x" && r.type === "assignment");
+    const assignRef = references.find(
+      (r) => r.name === "x" && r.type === "assignment"
+    );
 
     // Type is inferred, not explicitly annotated
     expect(assignRef?.assignment_type).toBeUndefined();
@@ -193,6 +207,7 @@ fn test() {
 ### 5. Update Existing Integration Tests
 
 Review and update all existing test cases to:
+
 - Use `assignment_type` instead of `type_flow.target_type`
 - Remove any checks on deleted fields
 - Ensure assertions match the new simplified structure
@@ -232,6 +247,7 @@ Expected: All tests pass with no regressions.
 Rust does NOT support optional chaining syntax (it uses `Option<T>` types with pattern matching instead), so all `is_optional_chain` checks should return `false`. The tests should verify this behavior, including for Option-related method calls like `.unwrap()`.
 
 Rust DOES have explicit type annotations, so comprehensive tests for `assignment_type` are important:
+
 - Variable type annotations: `let x: Type = value`
 - Parameter type annotations: `fn func(param: Type)`
 - Return type annotations: `fn func() -> Type`

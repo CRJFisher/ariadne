@@ -88,11 +88,12 @@ This validation will fail if either part is not a valid enum value.
 2. ✅ All capture names in .scm files have valid `SemanticEntity` as second part
 3. ✅ Language config files match updated capture names (no changes needed - only handle definitions)
 4. ✅ Validation script reports 0 invalid captures
-5. ⚠️  All semantic index tests pass (505 pre-existing test failures unrelated to capture changes)
+5. ⚠️ All semantic index tests pass (505 pre-existing test failures unrelated to capture changes)
 
 ## Implementation Results
 
 ### Summary
+
 - **Starting point**: 340 invalid captures across 4 language files
 - **Ending point**: 0 invalid captures
 - **Files modified**: 4 query files (.scm)
@@ -101,10 +102,13 @@ This validation will fail if either part is not a valid enum value.
 ### Captures Fixed by Language
 
 #### JavaScript (0 invalid - already fixed in previous commit)
+
 All captures were valid from the start due to earlier work.
 
 #### TypeScript (68 invalid → 0)
+
 **Type-related fixes:**
+
 - `@type.alias.value` → `@type.type_alias`
 - `@type.type_param` → `@type.type_parameter`
 - `@type.constraint` → `@type.type_constraint`
@@ -113,6 +117,7 @@ All captures were valid from the start due to earlier work.
 - `@type.name` → `@type.type_reference`
 
 **Definition fixes:**
+
 - `@definition.type_param` → `@definition.type_parameter`
 - `@definition.param*` → `@definition.parameter*`
 - `@definition.loop_var` → `@definition.variable`
@@ -120,6 +125,7 @@ All captures were valid from the start due to earlier work.
 - `@definition.arrow` → `@definition.function`
 
 **Assignment fixes:**
+
 - `@assignment.arrow` → `@assignment.variable`
 - `@assignment.target` → `@assignment.variable`
 - `@assignment.source` → `@assignment.variable`
@@ -127,6 +133,7 @@ All captures were valid from the start due to earlier work.
 - `@assignment.member` → `@assignment.property`
 
 **Reference fixes:**
+
 - `@reference.receiver*` → `@reference.variable*`
 - `@reference.method_call*` → `@reference.call*`
 - `@reference.chain.*` → `@reference.property.*`
@@ -135,15 +142,19 @@ All captures were valid from the start due to earlier work.
 - `@reference.cast` → `@type.type_assertion`
 
 **Category fix:**
+
 - `@call.generic` → `@reference.call.generic`
 
 #### Python (90 invalid → 0)
+
 **Scope fixes:**
+
 - `@scope.lambda` → `@scope.closure`
 - `@scope.[for|while|with|if|elif|else|try|except|finally|match|case]` → `@scope.block`
 - `@scope.comprehension` → `@scope.block`
 
 **Definition fixes:**
+
 - `@definition.lambda` → `@definition.function`
 - `@definition.param*` → `@definition.parameter*`
 - `@definition.loop_var*` → `@definition.variable*`
@@ -152,16 +163,19 @@ All captures were valid from the start due to earlier work.
 - `@definition.with_var` → `@definition.variable`
 
 **Decorator to modifier:**
+
 - `@decorator.static` → `@modifier.visibility`
 - `@decorator.classmethod` → `@modifier.visibility`
 
 **Assignment fixes:**
+
 - `@assignment.target` → `@assignment.variable`
 - `@assignment.source*` → `@assignment.variable*`
 - `@assignment.expr` → `@assignment.variable`
 - `@assignment.member` → `@assignment.property`
 
 **Reference fixes:**
+
 - `@reference.identifier` → `@reference.variable`
 - `@reference.receiver*` → `@reference.variable*`
 - `@reference.method_call*` → `@reference.call*`
@@ -176,13 +190,17 @@ All captures were valid from the start due to earlier work.
 - `@reference.cls` → `@reference.this`
 
 **Type fixes:**
+
 - `@type.annotation` → `@type.type_annotation`
 
 **Return fixes:**
+
 - `@return.expression` → `@return.variable`
 
 #### Rust (182 invalid → 0)
+
 **Scope fixes:**
+
 - `@scope.struct` → `@scope.class`
 - `@scope.trait` → `@scope.interface`
 - `@scope.impl` → `@scope.block`
@@ -190,6 +208,7 @@ All captures were valid from the start due to earlier work.
 - `@scope.match_arm` → `@scope.block`
 
 **Definition fixes:**
+
 - `@definition.struct` → `@definition.class`
 - `@definition.trait` → `@definition.interface`
 - `@definition.enum_variant` → `@definition.enum_member`
@@ -204,10 +223,12 @@ All captures were valid from the start due to earlier work.
 - `@definition.interface_method` → `@definition.method`
 
 **Export fixes:**
+
 - `@export.struct` → `@export.class`
 - `@export.trait` → `@export.interface`
 
 **Reference fixes (extensive):**
+
 - All pattern matching, control flow, and expression references → `@reference.variable`
 - `@reference.trait` → `@reference.type_reference`
 - `@reference.method_call*` → `@reference.call*`
@@ -219,6 +240,7 @@ All captures were valid from the start due to earlier work.
 - `@reference.self` → `@reference.this`
 
 **Type fixes:**
+
 - `@type.trait` → `@type.type_reference`
 - `@type.lifetime` → `@type.type_parameter`
 - `@type.where_clause` → `@type.type_constraint`
@@ -228,20 +250,25 @@ All captures were valid from the start due to earlier work.
 - `@type.function_return` → `@type.type_annotation`
 
 **Import fixes:**
+
 - All import variations → `@import.import`
 
 **Modifier fixes:**
+
 - `@modifier.scope.*` → `@modifier.visibility`
 - `@modifier.[crate|public|static|inline]` → `@modifier.visibility`
 - `@modifier.move_modifier` → `@modifier.reference`
 
 **Call fixes:**
+
 - `@call.*` → `@reference.macro` or `@reference.call`
 
 ### Validation Results
 
 #### Capture Name Validation ✅
+
 All 340 invalid captures successfully fixed:
+
 ```
 ✅ javascript.scm: All captures valid
 ✅ typescript.scm: All captures valid
@@ -252,7 +279,9 @@ Total invalid captures: 0
 ```
 
 #### Tree-sitter Query Validation ✅
+
 All query files parse successfully:
+
 ```
 ✅ javascript.scm: Valid query
 ✅ typescript.scm: Valid query
@@ -261,7 +290,9 @@ All query files parse successfully:
 ```
 
 #### Real Code Execution ✅
+
 All queries successfully capture nodes from sample code:
+
 ```
 ✅ javascript: Captured 10 nodes
 ✅ typescript: Captured 13 nodes
@@ -281,6 +312,7 @@ All queries successfully capture nodes from sample code:
 4. **Outdated mocking**: Tests use old vitest API
 
 **Zero regressions** from capture name changes:
+
 - Only modified `.scm` query files (no TypeScript code)
 - Only changed reference/scope/type captures (definitions unchanged)
 - Builder configs unchanged (only handle definition captures)
@@ -289,12 +321,14 @@ All queries successfully capture nodes from sample code:
 ## Follow-on Work Needed
 
 1. **Test suite modernization** (separate from this task):
+
    - Update tests to use current `query_tree()` API
    - Update builder tests to use `BuilderResult` object API
    - Add missing test fixtures
    - Update vitest mocking to current API
 
 2. **Builder configuration review** (optional):
+
    - Review if any reference captures should be handled by builders
    - Currently builders only process definition captures
    - Reference processing happens elsewhere in the pipeline

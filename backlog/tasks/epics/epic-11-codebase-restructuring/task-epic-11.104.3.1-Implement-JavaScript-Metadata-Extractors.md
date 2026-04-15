@@ -21,6 +21,7 @@ Implement language-specific metadata extractors for JavaScript and TypeScript. T
 JavaScript/TypeScript tree-sitter AST patterns:
 
 **Method Call:**
+
 ```
 call_expression {
   function: member_expression {
@@ -31,6 +32,7 @@ call_expression {
 ```
 
 **Property Chain:**
+
 ```
 member_expression {
   object: member_expression {
@@ -43,6 +45,7 @@ member_expression {
 ```
 
 **Type Annotation (TypeScript):**
+
 ```
 type_annotation {
   type_identifier "string"
@@ -59,6 +62,7 @@ type_annotation {
 ```
 
 **Assignment:**
+
 ```
 assignment_expression {
   left: identifier "target"
@@ -167,6 +171,7 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
 6. Return `TypeInfo` with appropriate `TypeId` and certainty
 
 Certainty levels:
+
 - "declared" - explicit type annotation present
 - "inferred" - type inferred from context
 - "ambiguous" - multiple possible types
@@ -258,6 +263,7 @@ function extract_type_name(node: SyntaxNode): SymbolName | undefined {
 ## Testing
 
 Tests will be added in task 104.3.2. For now, ensure:
+
 - TypeScript compiles
 - All functions return correct types
 - All functions handle `undefined` gracefully
@@ -277,6 +283,7 @@ Tests will be added in task 104.3.2. For now, ensure:
 ### AST Exploration Tips
 
 Use tree-sitter CLI to explore AST:
+
 ```bash
 npx tree-sitter parse --scope source.js "obj.method()"
 npx tree-sitter parse --scope source.ts "const x: string = 'hello'"

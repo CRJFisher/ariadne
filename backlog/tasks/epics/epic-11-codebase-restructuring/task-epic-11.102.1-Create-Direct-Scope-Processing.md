@@ -85,12 +85,14 @@ export function process_scopes(captures: RawCapture[]): Map<ScopeId, LexicalScop
 // Scopes are processed first and provide context with precomputed depths
 export interface ProcessingContext {
   scopes: Map<ScopeId, LexicalScope>;
-  scope_depths: Map<ScopeId, number>;  // Precomputed depths for efficiency
+  scope_depths: Map<ScopeId, number>; // Precomputed depths for efficiency
   root_scope_id: ScopeId;
 }
 
 // Create processing context with precomputed depths
-export function create_processing_context(scopes: Map<ScopeId, LexicalScope>): ProcessingContext {
+export function create_processing_context(
+  scopes: Map<ScopeId, LexicalScope>
+): ProcessingContext {
   const scope_depths = new Map<ScopeId, number>();
   const root_scope_id = find_root_scope(scopes);
 
@@ -120,7 +122,7 @@ export function create_processing_context(scopes: Map<ScopeId, LexicalScope>): P
       }
 
       return best_scope_id;
-    }
+    },
   };
 }
 
@@ -259,6 +261,7 @@ This approach eliminates the main performance issue (recomputing depths) while k
 #### Files Created
 
 1. **`packages/core/src/index_single_file/parse_and_query_code/scope_processor.ts`** (330 lines)
+
    - Implemented `process_scopes()` function for single-pass scope creation
    - Implemented `create_processing_context()` for context with precomputed depths
    - Implemented `process_file()` wrapper for integration
@@ -273,6 +276,7 @@ This approach eliminates the main performance issue (recomputing depths) while k
      - `compute_scope_depth()` - Calculates scope depth with cycle detection
 
 2. **`packages/core/src/index_single_file/parse_and_query_code/scope_processor.test.ts`** (598 lines)
+
    - Comprehensive test suite with **10 test suites, 10 tests passing (100%)**
    - Test coverage:
      - ✅ Root module scope creation for empty files
@@ -292,6 +296,7 @@ This approach eliminates the main performance issue (recomputing depths) while k
 #### Key Implementation Details
 
 **Architecture:**
+
 - **Single-pass scope creation**: Processes all scope-creating captures in one pass without intermediate representations
 - **Precomputed depths**: Calculates depths once during context creation for efficient lookups (O(1) depth access)
 - **Location-based containment**: Uses smallest area algorithm to find most specific containing scope
@@ -300,12 +305,14 @@ This approach eliminates the main performance issue (recomputing depths) while k
 - **Cycle detection**: Prevents infinite loops in depth calculation
 
 **Performance Characteristics:**
+
 - Scope creation: O(n log n) for sorting + O(n²) for containment checks
 - Depth precomputation: O(n × d) where d is max depth
 - Scope lookup: O(n) with cached depths
 - Suitable for typical files (<10K scopes)
 
 **Type Safety:**
+
 - Uses branded types (ScopeId, SymbolName, FilePath, etc.)
 - Immutable LexicalScope interface
 - ProcessingContext with typed methods
@@ -313,21 +320,23 @@ This approach eliminates the main performance issue (recomputing depths) while k
 #### Integration Points
 
 **Export Status:**
+
 - ✅ Exported from `parse_and_query_code/index.ts`
 - ⚠️ **Not yet integrated** - Module is ready but not wired into existing pipeline
 - Ready to replace existing `build_scope_tree` functionality in `semantic_index.ts`
 
 **API Surface:**
+
 ```typescript
 export function process_scopes(
   captures: NormalizedCapture[],
   file_path: FilePath,
   language: Language
-): Map<ScopeId, LexicalScope>
+): Map<ScopeId, LexicalScope>;
 
 export function create_processing_context(
   scopes: Map<ScopeId, LexicalScope>
-): ProcessingContext
+): ProcessingContext;
 
 export interface ProcessingContext {
   scopes: Map<ScopeId, LexicalScope>;
@@ -340,12 +349,14 @@ export interface ProcessingContext {
 #### Quality Assurance
 
 **Testing:**
+
 - ✅ All 10 unit tests passing (100% pass rate)
 - ✅ Zero TypeScript compilation errors
 - ✅ Full test suite run: **No regressions detected**
 - ✅ Verified isolation: scope_processor not yet used by other modules
 
 **Verification Results:**
+
 - Full workspace test suite: 18 test files, 13 passing
 - All pre-existing failures confirmed unrelated to scope_processor
 - No imports of scope_processor in production code (only in index.ts export)
@@ -354,6 +365,7 @@ export interface ProcessingContext {
 #### Issues Encountered
 
 **None.** Implementation proceeded smoothly with no blockers:
+
 - LexicalScope interface matched expectations (no `symbols` property in latest version)
 - All helper functions worked as designed
 - Test suite passed on first run after fixing one test expectation
@@ -361,12 +373,15 @@ export interface ProcessingContext {
 #### Follow-on Work Needed
 
 **Immediate Next Steps (task-epic-11.102.2):**
+
 1. **Integrate scope_processor into semantic_index.ts**
+
    - Replace `build_scope_tree()` call with `process_scopes()` + `create_processing_context()`
    - Update definition processing to use ProcessingContext
    - Update reference processing to use ProcessingContext
 
 2. **Update definition builders (task-epic-11.102.2)**
+
    - Modify to accept ProcessingContext
    - Use `context.get_scope_id()` instead of `find_containing_scope()`
    - Remove dependency on old scope_tree module
@@ -377,11 +392,13 @@ export interface ProcessingContext {
    - Ensure all references get proper scope-id
 
 **Future Enhancements:**
+
 - Consider caching location containment checks if performance becomes an issue
 - Add metrics/telemetry for scope processing performance
 - Potentially optimize for very large files (>10K scopes) if needed
 
 **Deprecation Path:**
+
 - Once integrated, mark `build_scope_tree()` as deprecated
 - Remove old scope_tree module after all consumers migrated
 - Clean up unused scope tree utilities
@@ -409,6 +426,7 @@ export interface ProcessingContext {
 **Status:** ✅ **COMPLETED** (2025-09-29)
 
 **Deliverables:**
+
 - ✅ `scope_processor.ts` - Production-ready implementation (330 lines)
 - ✅ `scope_processor.test.ts` - Comprehensive test suite (10/10 passing)
 - ✅ Module exported and ready for integration
@@ -416,6 +434,7 @@ export interface ProcessingContext {
 - ✅ Full documentation and implementation notes
 
 **What Works:**
+
 - Single-pass scope creation from normalized captures
 - Efficient scope lookup with precomputed depths
 - Handles all scope types (module, class, function, method, constructor, block, closure, interface, enum, namespace)
@@ -424,6 +443,7 @@ export interface ProcessingContext {
 - Location-based containment with smallest-area selection
 
 **What's Next:**
+
 - Integration into semantic_index.ts (task-epic-11.102.2)
 - Update definition builders to use ProcessingContext
 - Update reference builders to use ProcessingContext

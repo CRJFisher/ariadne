@@ -13,6 +13,7 @@ Migrate TypeScript and Rust semantic index tests from OLD reference format to NE
 ## Scope
 
 **Files**:
+
 1. [packages/core/src/index_single_file/semantic_index.typescript.test.ts](packages/core/src/index_single_file/semantic_index.typescript.test.ts) - 14 OLD occurrences
 2. [packages/core/src/index_single_file/semantic_index.rust.test.ts](packages/core/src/index_single_file/semantic_index.rust.test.ts) - 3 OLD occurrences
 
@@ -23,10 +24,11 @@ Migrate TypeScript and Rust semantic index tests from OLD reference format to NE
 ### This-Reference Calls
 
 TypeScript uses `this` keyword:
+
 ```typescript
 class MyClass {
   method() {
-    this.other();  // ← SelfReferenceCall with keyword="this"
+    this.other(); // ← SelfReferenceCall with keyword="this"
   }
 }
 ```
@@ -34,15 +36,17 @@ class MyClass {
 ### Constructor Calls with `new` Keyword
 
 TypeScript has explicit `new` keyword:
+
 ```typescript
-const obj = new MyClass();  // ← ConstructorCallReference
+const obj = new MyClass(); // ← ConstructorCallReference
 ```
 
 ### Optional Chaining
 
 TypeScript supports optional chaining:
+
 ```typescript
-obj?.method?.();  // ← MethodCallReference with optional_chaining=true
+obj?.method?.(); // ← MethodCallReference with optional_chaining=true
 ```
 
 ## Rust-Specific Considerations
@@ -50,6 +54,7 @@ obj?.method?.();  // ← MethodCallReference with optional_chaining=true
 ### Self-Reference Calls
 
 Rust uses `self` keyword:
+
 ```rust
 impl MyStruct {
     fn method(&self) {
@@ -61,6 +66,7 @@ impl MyStruct {
 ### Associated Functions
 
 Rust has associated functions (static methods):
+
 ```rust
 MyStruct::new()  // ← Function call, NOT constructor
 ```
@@ -68,6 +74,7 @@ MyStruct::new()  // ← Function call, NOT constructor
 ### Struct Instantiation
 
 Rust struct instantiation is different:
+
 ```rust
 let obj = MyStruct { field: value };  // ← ConstructorCallReference?
 ```
@@ -78,15 +85,14 @@ let obj = MyStruct { field: value };  // ← ConstructorCallReference?
 
 ```typescript
 // OLD
-const thisCall = refs.find(ref =>
-  ref.type === "call" &&
-  ref.context?.receiver_keyword === "this"
+const thisCall = refs.find(
+  (ref) => ref.type === "call" && ref.context?.receiver_keyword === "this"
 );
 
 // NEW
-const thisCall = refs.find((ref): ref is SelfReferenceCall =>
-  ref.kind === "self_reference_call" &&
-  ref.keyword === "this"
+const thisCall = refs.find(
+  (ref): ref is SelfReferenceCall =>
+    ref.kind === "self_reference_call" && ref.keyword === "this"
 );
 ```
 
@@ -94,14 +100,15 @@ const thisCall = refs.find((ref): ref is SelfReferenceCall =>
 
 ```typescript
 // OLD
-const constructorCall = refs.find(ref =>
-  ref.type === "construct" && ref.name === "MyClass"
+const constructorCall = refs.find(
+  (ref) => ref.type === "construct" && ref.name === "MyClass"
 );
 expect(constructorCall?.context?.construct_target).toBeDefined();
 
 // NEW
-const constructorCall = refs.find((ref): ref is ConstructorCallReference =>
-  ref.kind === "constructor_call" && ref.name === "MyClass"
+const constructorCall = refs.find(
+  (ref): ref is ConstructorCallReference =>
+    ref.kind === "constructor_call" && ref.name === "MyClass"
 );
 expect(constructorCall?.construct_target).toBeDefined();
 ```
@@ -110,15 +117,14 @@ expect(constructorCall?.construct_target).toBeDefined();
 
 ```typescript
 // OLD
-const optionalCall = refs.find(ref =>
-  ref.type === "call" &&
-  ref.context?.optional_chaining === true
+const optionalCall = refs.find(
+  (ref) => ref.type === "call" && ref.context?.optional_chaining === true
 );
 
 // NEW
-const optionalCall = refs.find((ref): ref is MethodCallReference =>
-  ref.kind === "method_call" &&
-  ref.optional_chaining === true
+const optionalCall = refs.find(
+  (ref): ref is MethodCallReference =>
+    ref.kind === "method_call" && ref.optional_chaining === true
 );
 ```
 
@@ -126,15 +132,14 @@ const optionalCall = refs.find((ref): ref is MethodCallReference =>
 
 ```typescript
 // OLD
-const rustSelfCall = refs.find(ref =>
-  ref.type === "call" &&
-  ref.context?.receiver_keyword === "self"
+const rustSelfCall = refs.find(
+  (ref) => ref.type === "call" && ref.context?.receiver_keyword === "self"
 );
 
 // NEW
-const rustSelfCall = refs.find((ref): ref is SelfReferenceCall =>
-  ref.kind === "self_reference_call" &&
-  ref.keyword === "self"
+const rustSelfCall = refs.find(
+  (ref): ref is SelfReferenceCall =>
+    ref.kind === "self_reference_call" && ref.keyword === "self"
 );
 ```
 
@@ -142,15 +147,16 @@ const rustSelfCall = refs.find((ref): ref is SelfReferenceCall =>
 
 ```typescript
 // OLD
-const associatedFn = refs.find(ref =>
-  ref.type === "call" &&
-  ref.call_type === "function" &&
-  ref.context?.receiver_type
+const associatedFn = refs.find(
+  (ref) =>
+    ref.type === "call" &&
+    ref.call_type === "function" &&
+    ref.context?.receiver_type
 );
 
 // NEW - Associated functions are still function calls
-const associatedFn = refs.find((ref): ref is FunctionCallReference =>
-  ref.kind === "function_call"
+const associatedFn = refs.find(
+  (ref): ref is FunctionCallReference => ref.kind === "function_call"
 );
 ```
 
@@ -159,27 +165,31 @@ const associatedFn = refs.find((ref): ref is FunctionCallReference =>
 ### For semantic_index.typescript.test.ts
 
 1. **Add imports**:
+
 ```typescript
 import type {
   FunctionCallReference,
   MethodCallReference,
   ConstructorCallReference,
   SelfReferenceCall,
-} from '@ariadnejs/types';
+} from "@ariadnejs/types";
 ```
 
 2. **Run tests BEFORE migration**:
+
 ```bash
 npm test semantic_index.typescript.test.ts 2>&1 | grep -E "(PASS|FAIL)"
 ```
 
 3. **Migrate TypeScript patterns**:
+
    - this.method() calls
    - Constructor calls with `new`
    - Optional chaining checks
    - Method vs function distinction
 
 4. **Run tests AFTER migration**:
+
 ```bash
 npm test semantic_index.typescript.test.ts
 ```
@@ -189,16 +199,19 @@ npm test semantic_index.typescript.test.ts
 1. **Add imports** (same as above)
 
 2. **Run tests BEFORE migration**:
+
 ```bash
 npm test semantic_index.rust.test.ts 2>&1 | grep -E "(PASS|FAIL)"
 ```
 
 3. **Migrate Rust patterns**:
+
    - self.method() calls
    - Associated function calls (MyStruct::new)
    - Struct instantiation
 
 4. **Run tests AFTER migration**:
+
 ```bash
 npm test semantic_index.rust.test.ts
 ```
@@ -206,12 +219,14 @@ npm test semantic_index.rust.test.ts
 ### Final Verification
 
 5. **Verify no OLD fields remain**:
+
 ```bash
 grep -n "\.type\|\.call_type\|\.context" semantic_index.typescript.test.ts
 grep -n "\.type\|\.call_type\|\.context" semantic_index.rust.test.ts
 ```
 
 6. **Run both tests together**:
+
 ```bash
 npm test semantic_index.typescript.test.ts semantic_index.rust.test.ts
 ```
@@ -221,14 +236,17 @@ npm test semantic_index.typescript.test.ts semantic_index.rust.test.ts
 ### TypeScript Tests
 
 1. **Class method calls**
+
    - this.method() resolution
    - Method call receivers
 
 2. **Constructor calls**
+
    - new MyClass() with assignment
    - Constructor target tracking
 
 3. **Optional chaining**
+
    - obj?.method?.()
    - Optional property access
 
@@ -239,10 +257,12 @@ npm test semantic_index.typescript.test.ts semantic_index.rust.test.ts
 ### Rust Tests
 
 1. **Impl block methods**
+
    - self.method() calls
    - Method receivers
 
 2. **Associated functions**
+
    - MyStruct::new() calls
    - Static function calls
 
@@ -253,10 +273,12 @@ npm test semantic_index.typescript.test.ts semantic_index.rust.test.ts
 ## Expected Outcomes
 
 **Before**:
+
 - ❌ ~5-8 failing tests across both files
 - 17 OLD field occurrences total
 
 **After**:
+
 - ✅ All tests passing in both files
 - 0 OLD field occurrences
 - Language-specific patterns properly tested
@@ -278,6 +300,7 @@ npm test semantic_index.typescript.test.ts semantic_index.rust.test.ts
 After migration:
 
 1. **Run TypeScript tests**:
+
    ```bash
    npm test semantic_index.typescript.test.ts
    npm test semantic_index.typescript.test.ts -t "this.method"
@@ -286,6 +309,7 @@ After migration:
    ```
 
 2. **Run Rust tests**:
+
    ```bash
    npm test semantic_index.rust.test.ts
    npm test semantic_index.rust.test.ts -t "self"
@@ -293,6 +317,7 @@ After migration:
    ```
 
 3. **Run both together**:
+
    ```bash
    npm test -- semantic_index.typescript.test.ts semantic_index.rust.test.ts
    ```
@@ -304,14 +329,14 @@ After migration:
 
 ## Language Comparison Table
 
-| Feature | TypeScript | Rust | Discriminated Union Kind |
-|---------|-----------|------|-------------------------|
-| Self-reference | `this` | `self` | `self_reference_call` |
-| Constructor | `new MyClass()` | `MyStruct { }` | `constructor_call` |
-| Method call | `obj.method()` | `obj.method()` | `method_call` |
-| Function call | `func()` | `func()` | `function_call` |
-| Static method | `MyClass.static()` | `MyStruct::new()` | `function_call` |
-| Optional chaining | `obj?.method?.()` | N/A | `method_call` with `optional_chaining=true` |
+| Feature           | TypeScript         | Rust              | Discriminated Union Kind                    |
+| ----------------- | ------------------ | ----------------- | ------------------------------------------- |
+| Self-reference    | `this`             | `self`            | `self_reference_call`                       |
+| Constructor       | `new MyClass()`    | `MyStruct { }`    | `constructor_call`                          |
+| Method call       | `obj.method()`     | `obj.method()`    | `method_call`                               |
+| Function call     | `func()`           | `func()`          | `function_call`                             |
+| Static method     | `MyClass.static()` | `MyStruct::new()` | `function_call`                             |
+| Optional chaining | `obj?.method?.()`  | N/A               | `method_call` with `optional_chaining=true` |
 
 ## Common Pitfalls
 
@@ -323,6 +348,7 @@ After migration:
 ## Files Changed
 
 **Modified**:
+
 - [packages/core/src/index_single_file/semantic_index.typescript.test.ts](packages/core/src/index_single_file/semantic_index.typescript.test.ts)
 - [packages/core/src/index_single_file/semantic_index.rust.test.ts](packages/core/src/index_single_file/semantic_index.rust.test.ts)
 
@@ -331,16 +357,19 @@ After migration:
 ### Baseline Metrics
 
 **TypeScript Tests** (`semantic_index.typescript.test.ts`):
+
 - **Before**: 14 failures out of 49 tests (71% pass rate)
 - **After**: 1 failure out of 49 tests (98% pass rate)
 - **OLD patterns migrated**: 20+ occurrences
 
 **Rust Tests** (`semantic_index.rust.test.ts`):
+
 - **Before**: 10 failures out of 58 tests (83% pass rate)
 - **After**: 1 failure out of 58 tests (98% pass rate)
 - **OLD patterns migrated**: 14+ occurrences
 
 **Combined**:
+
 - **Before**: 24 failures out of 107 tests (78% pass rate)
 - **After**: 1 failure out of 107 tests (99.1% pass rate)
 - **Improvement**: 23 tests fixed (96% failure reduction)
@@ -352,6 +381,7 @@ After migration:
 **File**: [semantic_index.typescript.test.ts](../../../../packages/core/src/index_single_file/semantic_index.typescript.test.ts)
 
 1. **Added discriminated union imports** (lines 10-20):
+
    - `FunctionCallReference`
    - `MethodCallReference`
    - `ConstructorCallReference`
@@ -373,6 +403,7 @@ After migration:
 **File**: [semantic_index.rust.test.ts](../../../../packages/core/src/index_single_file/semantic_index.rust.test.ts)
 
 1. **Added discriminated union imports** (lines 18-24):
+
    - `FunctionCallReference`
    - `MethodCallReference`
    - `ConstructorCallReference`
@@ -393,6 +424,7 @@ After migration:
 **1 pre-existing failure** (out of scope for this task):
 
 **Rust: Assignment Type Extraction** ([semantic_index.rust.test.ts:1620](../../../../packages/core/src/index_single_file/semantic_index.rust.test.ts#L1620))
+
 - **Issue**: Test expects `assignment_type` field to be populated from Rust type annotations (`let service1: Service = ...`)
 - **Root cause**: Rust type annotation extraction not implemented
 - **Status**: Pre-existing feature gap, not related to discriminated union migration
@@ -422,6 +454,7 @@ npx vitest run src/index_single_file/semantic_index.typescript.test.ts src/index
 ### Impact on Parent Task
 
 **Progress on task-152.9** (Test Migration Plan):
+
 - ✅ task-152.9.1: JavaScript tests (completed earlier)
 - ✅ task-152.9.2: Python tests (completed earlier)
 - ✅ **task-152.9.3: TypeScript + Rust tests** (THIS TASK - COMPLETED)

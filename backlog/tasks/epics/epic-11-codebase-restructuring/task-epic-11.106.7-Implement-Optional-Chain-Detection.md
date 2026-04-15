@@ -13,22 +13,23 @@ Implement detection of optional chaining syntax (`?.`) in JavaScript/TypeScript 
 ## Background
 
 JavaScript/TypeScript support optional chaining:
+
 ```javascript
-obj?.method()      // Optional method call
-obj?.prop          // Optional property access
-obj?.prop?.nested  // Chained optional access
+obj?.method(); // Optional method call
+obj?.prop; // Optional property access
+obj?.prop?.nested; // Chained optional access
 ```
 
 The AST represents these with specific node types that we can detect.
 
 ## Language Support
 
-| Language | Syntax | AST Node Type | Implementation |
-|----------|--------|---------------|----------------|
-| JavaScript | `obj?.method()` | `optional_chain` | ✅ Implement |
-| TypeScript | `obj?.method()` | `optional_chain` | ✅ Implement |
-| Python | N/A | N/A | ✅ Return false (no optional chaining) |
-| Rust | N/A | N/A | ✅ Return false (no optional chaining) |
+| Language   | Syntax          | AST Node Type    | Implementation                         |
+| ---------- | --------------- | ---------------- | -------------------------------------- |
+| JavaScript | `obj?.method()` | `optional_chain` | ✅ Implement                           |
+| TypeScript | `obj?.method()` | `optional_chain` | ✅ Implement                           |
+| Python     | N/A             | N/A              | ✅ Return false (no optional chaining) |
+| Rust       | N/A             | N/A              | ✅ Return false (no optional chaining) |
 
 ## Changes Required
 
@@ -39,6 +40,7 @@ The AST represents these with specific node types that we can detect.
 Update function signatures to return optional chain flag:
 
 **Before:**
+
 ```typescript
 export interface MetadataExtractors {
   extract_call_receiver(
@@ -46,13 +48,12 @@ export interface MetadataExtractors {
     file_path: FilePath
   ): Location | undefined;
 
-  extract_property_chain(
-    node: SyntaxNode
-  ): SymbolName[] | undefined;
+  extract_property_chain(node: SyntaxNode): SymbolName[] | undefined;
 }
 ```
 
 **After:**
+
 ```typescript
 export interface MetadataExtractors {
   extract_call_receiver(
@@ -142,24 +143,30 @@ function extract_context(
   let assignment_target: Location | undefined;
   let construct_target: Location | undefined;
   let property_chain: readonly SymbolName[] | undefined;
-  let is_optional_chain = false;  // NEW
+  let is_optional_chain = false; // NEW
 
   // For method calls: extract receiver/object information
   const kind = determine_reference_kind(capture);
   if (kind === ReferenceKind.METHOD_CALL || kind === ReferenceKind.SUPER_CALL) {
-    const receiver_result = extractors.extract_call_receiver(capture.node, file_path);
+    const receiver_result = extractors.extract_call_receiver(
+      capture.node,
+      file_path
+    );
     if (receiver_result) {
       receiver_location = receiver_result.location;
-      is_optional_chain = receiver_result.is_optional;  // NEW
+      is_optional_chain = receiver_result.is_optional; // NEW
     }
   }
 
   // For member access: extract property chain
-  if (kind === ReferenceKind.PROPERTY_ACCESS || kind === ReferenceKind.METHOD_CALL) {
+  if (
+    kind === ReferenceKind.PROPERTY_ACCESS ||
+    kind === ReferenceKind.METHOD_CALL
+  ) {
     const chain_result = extractors.extract_property_chain(capture.node);
     if (chain_result) {
       property_chain = chain_result.chain;
-      is_optional_chain = is_optional_chain || chain_result.is_optional;  // NEW
+      is_optional_chain = is_optional_chain || chain_result.is_optional; // NEW
     }
   }
 
@@ -175,7 +182,7 @@ Update member_access creation:
 const member_access = {
   object_type: type_info ? type_info : undefined,
   access_type: "method" as const,
-  is_optional_chain: is_optional_chain,  // Use actual value instead of false
+  is_optional_chain: is_optional_chain, // Use actual value instead of false
 };
 ```
 
@@ -185,7 +192,7 @@ const member_access = {
 const member_access_info = {
   object_type: type_info ? type_info : undefined,
   access_type: "property" as const,
-  is_optional_chain: is_optional_chain,  // Use actual value instead of false
+  is_optional_chain: is_optional_chain, // Use actual value instead of false
 };
 ```
 
@@ -194,6 +201,7 @@ const member_access_info = {
 Both languages don't have optional chaining, so update their extractors to return the new format:
 
 **Files:**
+
 - `packages/core/src/index_single_file/query_code_tree/language_configs/python_metadata.ts`
 - `packages/core/src/index_single_file/query_code_tree/language_configs/rust_metadata.ts`
 
@@ -207,7 +215,7 @@ function extract_call_receiver(
   if (receiver_node) {
     return {
       location: node_to_location(receiver_node, file_path),
-      is_optional: false,  // Python/Rust don't have optional chaining
+      is_optional: false, // Python/Rust don't have optional chaining
     };
   }
 
@@ -222,7 +230,7 @@ function extract_property_chain(
   if (chain.length > 0) {
     return {
       chain,
-      is_optional: false,  // Python/Rust don't have optional chaining
+      is_optional: false, // Python/Rust don't have optional chaining
     };
   }
 
@@ -288,6 +296,7 @@ npx tree-sitter parse --scope source.js "obj?.method()"
 ```
 
 Expected structure:
+
 ```
 call_expression
   function: optional_chain
@@ -300,17 +309,21 @@ call_expression
 ## Verification Steps
 
 1. **TypeScript compilation:**
+
    ```bash
    npx tsc --noEmit
    ```
+
    Expected: 0 errors
 
 2. **Run metadata tests:**
+
    ```bash
    npx vitest javascript_metadata.test.ts
    npx vitest python_metadata.test.ts
    npx vitest rust_metadata.test.ts
    ```
+
    Expected: All pass with new optional chain tests
 
 3. **Run full test suite:**

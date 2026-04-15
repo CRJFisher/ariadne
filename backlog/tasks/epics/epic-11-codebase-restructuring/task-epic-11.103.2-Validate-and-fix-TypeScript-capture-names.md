@@ -48,11 +48,13 @@ Fix all invalid capture names in `typescript.scm` and update `typescript_builder
 ## Implementation Summary
 
 **Commits:**
+
 1. `40b43b3` - Fixed remaining TypeScript capture name in builder config
 2. `cb02a13` - Commented out JSX patterns incompatible with TypeScript grammar
 3. `0a93955` & `4218aee` - Documentation updates with validation results
 
 **Files Modified:**
+
 - `typescript_builder.ts` - Fixed 1 capture name mapping
 - `typescript_builder.test.ts` - Updated 10 test expectations
 - `typescript.scm` - Commented out 2 JSX patterns
@@ -66,6 +68,7 @@ Fix all invalid capture names in `typescript.scm` and update `typescript_builder
 The majority of the work was completed in previous commits. All 68 invalid capture names in typescript.scm had already been fixed:
 
 **Type-related fixes:**
+
 - `@type.alias` → `@type.type_alias`
 - `@type.type_param` → `@type.type_parameter`
 - `@type.constraint` → `@type.type_constraint`
@@ -74,6 +77,7 @@ The majority of the work was completed in previous commits. All 68 invalid captu
 - `@type.name` → `@type.type_reference`
 
 **Definition fixes:**
+
 - `@definition.type_param` → `@definition.type_parameter`
 - `@definition.param*` → `@definition.parameter*`
 - `@definition.loop_var` → `@definition.variable`
@@ -81,6 +85,7 @@ The majority of the work was completed in previous commits. All 68 invalid captu
 - `@definition.arrow` → `@definition.function`
 
 **Assignment fixes:**
+
 - `@assignment.arrow` → `@assignment.variable`
 - `@assignment.target` → `@assignment.variable`
 - `@assignment.source` → `@assignment.variable`
@@ -88,6 +93,7 @@ The majority of the work was completed in previous commits. All 68 invalid captu
 - `@assignment.member` → `@assignment.property`
 
 **Reference fixes:**
+
 - `@reference.receiver*` → `@reference.variable*`
 - `@reference.method_call*` → `@reference.call*`
 - `@reference.chain.*` → `@reference.property.*`
@@ -96,16 +102,19 @@ The majority of the work was completed in previous commits. All 68 invalid captu
 - `@reference.cast` → `@type.type_assertion`
 
 **Category fix:**
+
 - `@call.generic` → `@reference.call.generic`
 
 ### Language Config Update
 
 Fixed one remaining issue in typescript_builder.ts:
+
 - Line 1024: `"definition.param.optional"` → `"definition.parameter.optional"`
 
 ### Validation Results
 
 All capture names in typescript.scm are now valid:
+
 - ✅ All captures use valid SemanticCategory enum values
 - ✅ All captures use valid SemanticEntity enum values
 - ✅ Validation script confirms 0 invalid captures
@@ -113,11 +122,13 @@ All capture names in typescript.scm are now valid:
 ### Query Validation and Testing
 
 **Tree-sitter Query Validation:**
+
 - Fixed JSX pattern error at line 734 (jsx_opening_element not available in TypeScript grammar)
 - Commented out JSX patterns (only valid in TSX grammar for React files)
 - Query now parses and executes successfully
 
 **End-to-End Testing:**
+
 - ✅ Query validated with real TypeScript code
 - ✅ Successfully captured 81 nodes from test code including:
   - Interfaces with properties and methods
@@ -133,6 +144,7 @@ All capture names in typescript.scm are now valid:
   - modifier: 2 nodes
 
 **Language Configuration Tests:**
+
 - ✅ All 21 TypeScript builder tests pass
 - ✅ Builder config correctly maps all TypeScript-specific captures
 - ✅ Integration with JavaScript base configuration works correctly
@@ -140,11 +152,13 @@ All capture names in typescript.scm are now valid:
 ## Full Test Suite Results
 
 **Core Package Test Results:**
+
 - Current: **504 failed | 802 passed | 227 skipped** (1533 tests)
 - Baseline (parent task): **505 failed | 801 passed | 227 skipped** (1533 tests)
 - **Net improvement: +1 passing test** (TypeScript builder test fixed)
 
 **TypeScript-Specific Test Analysis:**
+
 - ✅ TypeScript builder tests: **21/21 passing** (direct tests of capture name mappings)
 - ❌ Semantic index TypeScript tests: **19/20 failing** (pre-existing API evolution issues)
 - ❌ Scope tree TypeScript tests: **4 failing** (pre-existing API evolution issues)
@@ -157,6 +171,7 @@ All test failures are pre-existing issues documented in the parent task (epic-11
 3. **Outdated test code**: Tests use old APIs like `captures.scopes.map()` which no longer exist
 
 **Verification:**
+
 - ✅ My changes only modified capture name strings in builder config and test expectations
 - ✅ Did not change any core functionality, types, or interfaces
 - ✅ Tree-sitter query validates and executes successfully
@@ -166,6 +181,7 @@ All test failures are pre-existing issues documented in the parent task (epic-11
 ## Issues Encountered and Resolutions
 
 ### Issue 1: JSX Pattern Incompatibility
+
 **Problem:** Tree-sitter query validation failed at line 734 with error `TSQueryErrorNodeType at position 18508`
 
 **Root Cause:** JSX node types (`jsx_opening_element`, `jsx_self_closing_element`) are only available in the TSX grammar, not the plain TypeScript grammar
@@ -175,6 +191,7 @@ All test failures are pre-existing issues documented in the parent task (epic-11
 **Impact:** Query now validates and executes successfully. No loss of functionality as JSX files should use TSX grammar.
 
 ### Issue 2: Test Expectations Using Abbreviated Names
+
 **Problem:** TypeScript builder tests were checking for abbreviated capture names (`def.interface`, `def.enum`, etc.)
 
 **Root Cause:** Tests written before migration from abbreviated to full enum names
@@ -184,6 +201,7 @@ All test failures are pre-existing issues documented in the parent task (epic-11
 **Impact:** All 21 TypeScript builder tests now pass (was failing 1 test)
 
 ### Issue 3: Builder Config Using Old Capture Name
+
 **Problem:** Builder config had one capture name using `param` instead of `parameter`
 
 **Root Cause:** Missed during initial capture name migration
@@ -195,14 +213,17 @@ All test failures are pre-existing issues documented in the parent task (epic-11
 ## Follow-on Work Needed
 
 ### Immediate (Completed in this task)
+
 - ✅ All TypeScript capture names validated
 - ✅ Builder config aligned with query file
 - ✅ Tests updated and passing
 
 ### Short-term (Related to this task)
+
 None. All TypeScript capture name work is complete.
 
 ### Long-term (Separate tasks, documented in parent task epic-11.103)
+
 1. **Test Suite Modernization** - Update semantic index tests to use current API
 2. **Missing Test Fixtures** - Create comprehensive TypeScript fixture files
 3. **TSX Grammar Support** - Evaluate if TSX-specific query file needed for React projects

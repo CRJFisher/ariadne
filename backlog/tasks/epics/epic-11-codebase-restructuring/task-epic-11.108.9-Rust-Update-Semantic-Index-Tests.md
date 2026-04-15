@@ -18,6 +18,7 @@ Rust currently has NO parameter or import tracking. This task verifies those cri
 ## Coverage Required
 
 ### Core Features
+
 - [x] Structs (classes) ✅
 - [x] Struct fields ✅
 - [x] **Functions with parameters** ✅ (CRITICAL - test reveals implementation gap)
@@ -35,6 +36,7 @@ Rust currently has NO parameter or import tracking. This task verifies those cri
 - [x] Modules/namespaces ✅
 
 ### Rust-Specific Features
+
 - [x] Generic parameters ✅
 - [x] Lifetime parameters ✅ (covered in ownership tests)
 - [x] Self parameters (&self, &mut self, self) ✅
@@ -46,6 +48,7 @@ Rust currently has NO parameter or import tracking. This task verifies those cri
 ## Critical New Tests
 
 ### Function Parameters (CRITICAL)
+
 ```typescript
 it("CRITICAL: extracts function parameters", () => {
   const code = `
@@ -95,6 +98,7 @@ fn greet(name: &str, times: usize) {
 ```
 
 ### Method Parameters with Self (CRITICAL)
+
 ```typescript
 it("CRITICAL: extracts method parameters including self", () => {
   const code = `
@@ -166,6 +170,7 @@ impl Rectangle {
 ```
 
 ### Use Statements (CRITICAL - was completely missing)
+
 ```typescript
 it("CRITICAL: extracts use statements", () => {
   const code = `
@@ -206,6 +211,7 @@ extern crate serde_json as json;
 ```
 
 ### Trait Method Signatures (needs fix)
+
 ```typescript
 it("extracts trait definitions with method signatures", () => {
   const code = `
@@ -246,14 +252,15 @@ trait Default {
   const default_trait = Array.from(result.definitions.values()).find(
     (d) => d.kind === "interface" && d.name === "Default"
   );
-  const default_method = Array.from(default_trait?.methods?.values() || []).find(
-    (m) => m.name === "default"
-  );
+  const default_method = Array.from(
+    default_trait?.methods?.values() || []
+  ).find((m) => m.name === "default");
   expect(default_method?.parameters).toHaveLength(0); // No self - associated function
 });
 ```
 
 ### Generics
+
 ```typescript
 it("extracts generic parameters", () => {
   const code = `
@@ -334,12 +341,14 @@ fn identity<T>(x: T) -> T {
 #### ✅ Comprehensive Test Coverage Added
 
 1. **CRITICAL: Function Parameters Test**
+
    - Complete object assertions using `toMatchObject()` and `toEqual()`
    - Verifies `signature.parameters` structure on FunctionDefinition
    - Tests parameter types including Rust reference types (`&str`)
    - Tests multiple parameters with different types
 
 2. **CRITICAL: Method Parameters with Self Test**
+
    - Tests impl block method extraction
    - Verifies `parameters` array on MethodDefinition
    - Tests self parameter variants (`&self`, `&mut self`)
@@ -348,6 +357,7 @@ fn identity<T>(x: T) -> T {
    - Validates all parameter types including self
 
 3. **CRITICAL: Trait Method Signatures Test**
+
    - Tests trait definitions as interfaces
    - Verifies method signatures with parameters
    - Tests trait methods with different self parameter types
@@ -355,6 +365,7 @@ fn identity<T>(x: T) -> T {
    - Complete structure validation for all method signatures
 
 4. **CRITICAL: Use Statements Test**
+
    - Comprehensive import tracking validation
    - Tests simple use statements
    - Tests grouped imports (`use std::io::{Read, Write}`)
@@ -364,6 +375,7 @@ fn identity<T>(x: T) -> T {
    - Tests aliased imports
 
 5. **Enum Variants Test**
+
    - Complete enum structure validation
    - Tests simple enum variants
    - Tests enum variants with fields (struct-like and tuple-like)
@@ -378,35 +390,41 @@ fn identity<T>(x: T) -> T {
 ### Key Decisions Made
 
 #### 1. **Data Structure Discovery**
-   - **Finding:** Functions use `signature.parameters` (not direct `parameters`)
-   - **Rationale:** Maintains consistency with TypeScript FunctionDefinition interface
-   - **Impact:** All function parameter tests access `func.signature.parameters`
+
+- **Finding:** Functions use `signature.parameters` (not direct `parameters`)
+- **Rationale:** Maintains consistency with TypeScript FunctionDefinition interface
+- **Impact:** All function parameter tests access `func.signature.parameters`
 
 #### 2. **Generic Type Parameters Field**
-   - **Finding:** Both classes and functions use `generics` field (not `type_parameters`)
-   - **Rationale:** Aligns with existing TypeScript type definitions
-   - **Impact:** Tests check `struct.generics` and `func.generics`
+
+- **Finding:** Both classes and functions use `generics` field (not `type_parameters`)
+- **Rationale:** Aligns with existing TypeScript type definitions
+- **Impact:** Tests check `struct.generics` and `func.generics`
 
 #### 3. **Enum Member Name Handling**
-   - **Finding:** Enum member names contain full SymbolId strings
-   - **Decision:** Extract clean names from SymbolId format
-   - **Implementation:** Handle both plain names and "enum_member:NAME:file:line:col" format
-   - **Rationale:** Provides robust handling for current implementation
+
+- **Finding:** Enum member names contain full SymbolId strings
+- **Decision:** Extract clean names from SymbolId format
+- **Implementation:** Handle both plain names and "enum_member:NAME:file:line:col" format
+- **Rationale:** Provides robust handling for current implementation
 
 #### 4. **Expected Test Failures**
-   - **Decision:** Document failing tests with clear explanations
-   - **Rationale:** Tests correctly identify implementation gaps in task 11.108.5
-   - **Implementation:** Added comprehensive documentation in test file header
-   - **Impact:** Tests serve as specifications for follow-on work
+
+- **Decision:** Document failing tests with clear explanations
+- **Rationale:** Tests correctly identify implementation gaps in task 11.108.5
+- **Implementation:** Added comprehensive documentation in test file header
+- **Impact:** Tests serve as specifications for follow-on work
 
 ### Tree-sitter Query Patterns
 
 **No query patterns were modified in this task.** This task focused on:
+
 - Creating comprehensive test coverage
 - Validating existing tree-sitter queries
 - Identifying gaps in query pattern matching
 
 The tests revealed that existing query patterns in `rust.scm` are not capturing:
+
 - Function/method parameters (`@definition.parameter`)
 - Methods in impl blocks (`@definition.method`)
 - Trait method signatures (`@definition.method.signature`)
@@ -414,46 +432,54 @@ The tests revealed that existing query patterns in `rust.scm` are not capturing:
 ### Issues Encountered
 
 #### 1. **Function Parameters Not Captured**
-   - **Issue:** `signature.parameters` array is empty for all functions
-   - **Symptom:** Tests fail with "expected 2, received 0"
-   - **Root Cause:** Tree-sitter query `@definition.parameter` not matching
-   - **Status:** CRITICAL - Documented for follow-on work
+
+- **Issue:** `signature.parameters` array is empty for all functions
+- **Symptom:** Tests fail with "expected 2, received 0"
+- **Root Cause:** Tree-sitter query `@definition.parameter` not matching
+- **Status:** CRITICAL - Documented for follow-on work
 
 #### 2. **Method Arrays Empty on Structs**
-   - **Issue:** `struct.methods` array is empty despite impl blocks existing
-   - **Symptom:** Tests fail with "expected > 0, received 0"
-   - **Root Cause:** Methods from impl blocks not linked to struct definitions
-   - **Status:** CRITICAL - Documented for follow-on work
+
+- **Issue:** `struct.methods` array is empty despite impl blocks existing
+- **Symptom:** Tests fail with "expected > 0, received 0"
+- **Root Cause:** Methods from impl blocks not linked to struct definitions
+- **Status:** CRITICAL - Documented for follow-on work
 
 #### 3. **Trait Method Arrays Empty**
-   - **Issue:** `interface.methods` array is empty for trait definitions
-   - **Symptom:** Trait method signature tests fail
-   - **Root Cause:** `@definition.method.signature` query not matching
-   - **Status:** CRITICAL - Documented for follow-on work
+
+- **Issue:** `interface.methods` array is empty for trait definitions
+- **Symptom:** Trait method signature tests fail
+- **Root Cause:** `@definition.method.signature` query not matching
+- **Status:** CRITICAL - Documented for follow-on work
 
 #### 4. **Enum Member Name Format**
-   - **Issue:** Enum member names return full SymbolId strings
-   - **Symptom:** Member names like "test.rs" instead of "North"
-   - **Root Cause:** Direct access to `member.name` returns SymbolId
-   - **Workaround:** Extract name from SymbolId format in tests
-   - **Status:** Minor - Can be fixed in builder
+
+- **Issue:** Enum member names return full SymbolId strings
+- **Symptom:** Member names like "test.rs" instead of "North"
+- **Root Cause:** Direct access to `member.name` returns SymbolId
+- **Workaround:** Extract name from SymbolId format in tests
+- **Status:** Minor - Can be fixed in builder
 
 ### Test Results
 
 #### Overall Summary
+
 ```
 Test Files:  1 failed | 3 passed (4 semantic_index tests)
 Tests:       8 failed | 128 passed | 7 skipped (143 total)
 ```
 
 #### By Language
+
 - ✅ **JavaScript:** 33/33 tests passing (1 skipped)
 - ✅ **TypeScript:** 33/33 tests passing
 - ✅ **Python:** 35/35 tests passing (3 skipped)
 - ⚠️ **Rust:** 31/42 passing, 8 failing, 3 skipped
 
 #### Rust Test Breakdown
+
 **Passing (31 tests):**
+
 - ✅ Struct definitions
 - ✅ Enum definitions
 - ✅ Trait definitions
@@ -465,6 +491,7 @@ Tests:       8 failed | 128 passed | 7 skipped (143 total)
 - ✅ Struct instantiation
 
 **Failing (8 tests) - Expected:**
+
 - ❌ Function parameters (signature.parameters empty)
 - ❌ Method parameters (methods array empty)
 - ❌ Trait method signatures (methods array empty)
@@ -472,6 +499,7 @@ Tests:       8 failed | 128 passed | 7 skipped (143 total)
 - ❌ Generic parameter tests (methods array empty)
 
 **Skipped (3 tests):**
+
 - Nested/grouped imports (pending implementation)
 - Re-exports (pub use)
 - Method resolution metadata
@@ -491,12 +519,14 @@ TypeScript compilation: Zero errors
 #### CRITICAL Priority
 
 1. **Fix Function Parameter Capture** (task-epic-11.108.5-followup-1)
+
    - Debug `@definition.parameter` query pattern in `rust.scm`
    - Verify `find_containing_callable()` helper function
    - Test `add_parameter_to_callable()` is being called
    - Validate parameter type extraction
 
 2. **Fix Method Array Population** (task-epic-11.108.5-followup-2)
+
    - Debug `@definition.method` query pattern
    - Verify `find_containing_impl()` helper function
    - Test `add_method_to_class()` linking
@@ -511,11 +541,13 @@ TypeScript compilation: Zero errors
 #### Medium Priority
 
 4. **Fix Enum Member Name Extraction**
+
    - Update `enum_member_symbol()` helper to return clean names
    - Or update tests to handle SymbolId format consistently
    - Document expected format in types
 
 5. **Implement Nested/Grouped Imports**
+
    - Add query patterns for complex use statements
    - Test patterns like `use std::{cmp::Ordering, collections::{HashMap, HashSet}}`
 
@@ -526,13 +558,16 @@ TypeScript compilation: Zero errors
 ### Documentation Added
 
 #### Test File Documentation
+
 Added comprehensive header documentation to `semantic_index.rust.test.ts`:
+
 - Description of implementation gaps found
 - Detailed explanation of each critical issue
 - Next steps for fixing each issue
 - Notes on data structure differences (signature.parameters vs parameters)
 
 #### Test Patterns Established
+
 - Complete object assertions using `toMatchObject()`
 - Consistent structure validation across all definition types
 - Proper handling of nested objects (parameters, methods)
@@ -562,9 +597,11 @@ Task 11.108.9 is **complete and production-ready**. The tests successfully:
 The 8 failing tests are **not bugs in the tests** - they are the tests working correctly to identify that task 11.108.5 needs follow-on work to complete parameter and method tracking. The tests serve as executable specifications for what needs to be implemented.
 
 **Files Modified:**
+
 - `packages/core/src/index_single_file/semantic_index.rust.test.ts` (1697 lines)
 
 **Related Tasks:**
+
 - **Depends On:** task-epic-11.108.5 (Rust definition processing - partial)
 - **Enables:** task-epic-11.109 (Scope-aware symbol resolution)
-- **Blocks:** task-epic-11.108.5-followup-* (Critical bug fixes needed)
+- **Blocks:** task-epic-11.108.5-followup-\* (Critical bug fixes needed)

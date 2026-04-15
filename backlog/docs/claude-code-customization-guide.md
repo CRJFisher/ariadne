@@ -68,7 +68,6 @@ paths:
   - "src/api/**/*.ts"
   - "src/services/**/*.ts"
 ---
-
 # API Development Rules
 
 - All endpoints must include input validation
@@ -79,12 +78,12 @@ Rules without a `paths` field apply unconditionally to all files.
 
 **Glob Patterns**:
 
-| Pattern | Matches |
-| ------- | ------- |
-| `**/*.ts` | All TypeScript files |
-| `src/**/*` | All files under `src/` |
-| `*.{ts,tsx}` | TypeScript and TSX files in root |
-| `{src,lib}/**/*.ts` | TS files in src or lib |
+| Pattern             | Matches                          |
+| ------------------- | -------------------------------- |
+| `**/*.ts`           | All TypeScript files             |
+| `src/**/*`          | All files under `src/`           |
+| `*.{ts,tsx}`        | TypeScript and TSX files in root |
+| `{src,lib}/**/*.ts` | TS files in src or lib           |
 
 **Memory Hierarchy** (highest to lowest priority):
 
@@ -307,26 +306,26 @@ Need to...
 
 ## LLM vs Deterministic Execution
 
-| LLM-Driven (Claude Decides) | Deterministic (Always Executes)  |
-| --------------------------- | -------------------------------- |
-| Skills                      | Hooks                            |
-| Subagents                   | Settings/Permissions             |
-| Slash Commands              | CLAUDE.md (always loaded)        |
-| MCP tool usage              | Rules (loaded when paths match)  |
+| LLM-Driven (Claude Decides) | Deterministic (Always Executes) |
+| --------------------------- | ------------------------------- |
+| Skills                      | Hooks                           |
+| Subagents                   | Settings/Permissions            |
+| Slash Commands              | CLAUDE.md (always loaded)       |
+| MCP tool usage              | Rules (loaded when paths match) |
 
 **Use LLM-driven** for flexible, context-aware behavior.
 **Use deterministic** for enforcement, validation, security.
 
 ## Context Inheritance Summary
 
-| Feature            | Inherits Parent Context                         |
-| ------------------ | ----------------------------------------------- |
-| **CLAUDE.md**      | N/A (always injected)                           |
-| **Rules**          | N/A (conditionally injected based on paths)     |
-| **Skills**         | Yes — loaded into current conversation          |
-| **Subagents**      | No — fresh isolated context                     |
-| **Hooks**          | No — receives event JSON only                   |
-| **Slash Commands** | Yes — runs in main conversation                 |
-| **MCP Servers**    | Yes — tools available in main context           |
+| Feature            | Inherits Parent Context                     |
+| ------------------ | ------------------------------------------- |
+| **CLAUDE.md**      | N/A (always injected)                       |
+| **Rules**          | N/A (conditionally injected based on paths) |
+| **Skills**         | Yes — loaded into current conversation      |
+| **Subagents**      | No — fresh isolated context                 |
+| **Hooks**          | No — receives event JSON only               |
+| **Slash Commands** | Yes — runs in main conversation             |
+| **MCP Servers**    | Yes — tools available in main context       |
 
 The key architectural distinction: **Skills add knowledge to the current conversation**, while **Subagents branch off into isolated contexts** for specialized work.

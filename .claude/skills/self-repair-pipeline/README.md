@@ -1,6 +1,6 @@
 # Self-Repair Pipeline
 
-Triage pipeline for entry point analysis: detect false positives, classify root causes, plan fixes, and create backlog tasks.
+Triage pipeline for entry point analysis: detect false positives, classify root causes, and update the known-entrypoints registry.
 
 ## Pipeline Flow
 
@@ -21,78 +21,46 @@ flowchart TD
     subgraph P2["Phase 2: Prepare Triage"]
         PREPARE(["prepare_triage.ts"]) --> LOAD_REG["Load known-entrypoints registry"]
         LOAD_REG --> CLASSIFY{"Classify<br/>each entry"}
-        CLASSIFY -->|"Registry match"| KNOWN_TP["known-tp<br/>(completed immediately)"]
+        CLASSIFY -->|"Registry match"| KNOWN_UR["known-unreachable<br/>(completed immediately)"]
         CLASSIFY -->|"No match"| LLM_TRIAGE["llm-triage<br/>(pending, with diagnostics)"]
-        KNOWN_TP --> STATE
+        KNOWN_UR --> STATE
         LLM_TRIAGE --> STATE
         STATE[("triage_state/{project}_triage.json")]
     end
 
-    STATE --> HOOK_ENTRY
+    STATE --> LOOP_ENTRY
 
-    %% ── Stop Hook State Machine ──────────────────────────────
-    subgraph HOOK["Stop Hook State Machine — triage_loop_stop.ts"]
-        direction TB
-        HOOK_ENTRY["Claude tries to stop"] --> READ_STATE["Read triage state<br/>(via discover_state.ts)"]
-        READ_STATE --> PHASE_SW{"Current<br/>phase?"}
-
-        %% ── Phase 3a: Triage ────────────────────────────────
-        subgraph P3a["Phase 3a: Investigate"]
-            PENDING{"Pending<br/>entries?"}
-            PENDING -->|"Yes"| BATCH["BLOCK with entry indices<br/>[62, 63, 64, ...]"]
-            BATCH --> INVESTIGATORS[/"triage-investigator x batch_size<br/>(each runs get_entry_context.ts<br/>to fetch own prompt)"/]
-            INVESTIGATORS --> MERGE["Stop hook merges + validates<br/>result files into state"]
-            MERGE --> PENDING
-        end
-
-        %% ── Phase 3b: Aggregation ───────────────────────────
-        subgraph P3b["Phase 3b: Aggregate"]
-            AGG_LAUNCH[/"triage-aggregator"/]
-            AGG_LAUNCH --> AGG_CHECK{"False-positive<br/>entries found?"}
-        end
-
-        %% ── Phase 3c: Meta-Review ───────────────────────────
-        subgraph P3c["Phase 3c: Meta-Review"]
-            META_LAUNCH[/"triage-rule-reviewer"/]
-            META_LAUNCH --> META_CHECK{"Multi-entry<br/>FP groups?"}
-        end
-
-        %% ── Phase 4: Fix Planning ───────────────────────────
-        subgraph P4["Phase 4: Fix Planning (per group)"]
-            PLAN[/"5x fix-planner<br/>(competing proposals)"/]
-            PLAN --> SYNTH[/"plan-synthesizer (Opus)<br/>(best-of-5 synthesis)"/]
-            SYNTH --> REVIEW[/"4x plan-reviewer<br/>(info-arch · simplicity ·<br/>fundamentality · lang-coverage)"/]
-            REVIEW --> TASK_W[/"task-writer<br/>(create backlog task)"/]
-            TASK_W --> MORE_GROUPS{"More<br/>groups?"}
-        end
-
-        %% Phase routing
-        PHASE_SW -->|"triage"| PENDING
-        PHASE_SW -->|"aggregation"| AGG_LAUNCH
-        PHASE_SW -->|"meta-review"| META_LAUNCH
-        PHASE_SW -->|"fix-planning"| PLAN
-
-        %% Phase transitions
-        PENDING -->|"All done"| AGG_LAUNCH
-        AGG_CHECK -->|"Yes"| META_LAUNCH
-        META_CHECK -->|"Yes"| PLAN
-        MORE_GROUPS -->|"Yes<br/>(next group)"| PLAN
+    %% ── Phase 3: Triage Loop ─────────────────────────────────
+    subgraph P3["Phase 3: Triage Loop"]
+        LOOP_ENTRY(["get_next_triage_batch.ts"]) --> BATCH_CHECK{"Pending<br/>entries?"}
+        BATCH_CHECK -->|"Yes — batch of N"| CONTEXT["get_entry_context.ts<br/>(per entry)"]
+        CONTEXT --> INVESTIGATORS[/"triage-investigator x batch<br/>(run_in_background: true)"/]
+        INVESTIGATORS --> LOOP_ENTRY
+        BATCH_CHECK -->|"None — phase=complete"| AGG_START
     end
 
-    %% ── Early exits ──────────────────────────────────────────
-    AGG_CHECK -->|"No FPs"| ALLOW
-    META_CHECK -->|"No multi-entry groups"| ALLOW
-    MORE_GROUPS -->|"No<br/>(all groups done)"| ALLOW
+    %% ── Phase 4: Aggregate ───────────────────────────────────
+    subgraph P4["Phase 4: Aggregate (3-pass)"]
+        AGG_START(["prepare_aggregation_slices.ts"])
+        AGG_START --> ROUGH[/"rough-aggregator x slice<br/>(run_in_background: true)"/]
+        ROUGH --> MERGE_ROUGH(["merge_rough_groups.ts"])
+        MERGE_ROUGH --> SKIP_CHECK{"≤15 groups?"}
+        SKIP_CHECK -->|"Yes"| PASS3_INPUT[("pass3/input.json")]
+        SKIP_CHECK -->|"No"| CONSOLIDATOR[/"group-consolidator x batch<br/>(run_in_background: true)"/]
+        CONSOLIDATOR --> MERGE_CONSOL(["merge_consolidated_groups.ts"])
+        MERGE_CONSOL --> PASS3_INPUT
+        PASS3_INPUT --> INVESTIGATORS2[/"group-investigator x group<br/>(Opus · run_in_background: true)"/]
+        INVESTIGATORS2 --> FINALIZE_AGG(["finalize_aggregation.ts"])
+    end
+
+    FINALIZE_AGG --> FINALIZE
 
     %% ── Phase 5: Finalize ────────────────────────────────────
     subgraph P5["Phase 5: Finalize"]
-        ALLOW(["ALLOW — stop hook permits exit"])
-        ALLOW --> FINALIZE(["finalize_triage.ts"])
-        FINALIZE --> STRIP["Strip diagnostics<br/>from entries"]
-        STRIP --> PARTITION["Partition: true positives /<br/>dead code / FP groups"]
+        FINALIZE(["finalize_triage.ts"])
+        FINALIZE --> PARTITION["Partition: confirmed-unreachable /<br/>false-positive groups"]
         PARTITION --> UPD_REG["Update known-entrypoints registry"]
-        UPD_REG --> PATTERNS["Write triage_patterns.json"]
-        PATTERNS --> SAVE["Save results to<br/>analysis_output/{project}/triage_results/"]
+        UPD_REG --> SAVE["Save results to<br/>analysis_output/{project}/triage_results/"]
     end
 
     SAVE --> DONE(["Pipeline complete"])
@@ -102,79 +70,57 @@ flowchart TD
     classDef agent fill:#f3e5f5,stroke:#7b1fa2,color:#4a148c
     classDef decision fill:#fff3e0,stroke:#ef6c00,color:#e65100
     classDef data fill:#e8f5e9,stroke:#388e3c,color:#1b5e20
-    classDef hook fill:#fce4ec,stroke:#c62828,color:#b71c1c
-    classDef phase fill:#f5f5f5,stroke:#616161
 
-    class DETECT,PREPARE,FINALIZE script
-    class INVESTIGATORS,AGG_LAUNCH,META_LAUNCH,PLAN,SYNTH,REVIEW,TASK_W agent
-    class CLASSIFY,PENDING,AGG_CHECK,META_CHECK,MORE_GROUPS,PHASE_SW decision
-    class ANALYSIS,STATE data
-    class HOOK_ENTRY,READ_STATE,MERGE,BATCH,STRIP hook
+    class DETECT,PREPARE,FINALIZE,LOOP_ENTRY,AGG_START,MERGE_ROUGH,MERGE_CONSOL,FINALIZE_AGG script
+    class INVESTIGATORS,INVESTIGATORS2,ROUGH,CONSOLIDATOR agent
+    class CLASSIFY,BATCH_CHECK,SKIP_CHECK decision
+    class ANALYSIS,STATE,PASS3_INPUT data
 ```
 
-## Self-Service Context (Phase 3a)
+## Triage Investigator Context
 
-The main agent stays thin during triage. The stop hook provides only entry indices in its BLOCK reason:
-
-```
-Triage batch: entries [62, 63, 64, 65, 66]. State: /path/to/triage_state/projections_triage.json
-```
-
-Each triage-investigator sub-agent fetches its own investigation context by running:
+The main agent runs `get_entry_context.ts` per entry to fetch the investigation prompt, then passes it directly to the triage-investigator sub-agent:
 
 ```bash
 node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts --entry 62
 ```
 
-The script auto-discovers the triage state, loads the entry (including embedded diagnostics), selects a diagnosis-specific prompt template, substitutes placeholders, and outputs the complete investigation prompt.
+The script loads the entry, selects a diagnosis-specific prompt template, substitutes placeholders, and outputs the complete investigation prompt. The main agent passes this output verbatim as the sub-agent prompt.
 
 ## Diagnosis Routing
 
 The `get_entry_context.ts` script maps each entry's `diagnosis` field to a prompt template:
 
-| Diagnosis | Template | Focus |
-| --------- | -------- | ----- |
-| `callers-not-in-registry` | `prompt_callers_not_in_registry.md` | File coverage gap investigation |
-| `callers-in-registry-unresolved` | `prompt_resolution_failure.md` | Resolution failure pattern identification |
-| `callers-in-registry-wrong-target` | `prompt_wrong_target.md` | Wrong resolution target analysis |
-| All other | `prompt_generic.md` | Broad investigation |
+| Diagnosis                          | Template                            | Focus                                     |
+| ---------------------------------- | ----------------------------------- | ----------------------------------------- |
+| `callers-not-in-registry`          | `prompt_callers_not_in_registry.md` | File coverage gap investigation           |
+| `callers-in-registry-unresolved`   | `prompt_resolution_failure.md`      | Resolution failure pattern identification |
+| `callers-in-registry-wrong-target` | `prompt_wrong_target.md`            | Wrong resolution target analysis          |
+| All other                          | `prompt_generic.md`                 | Broad investigation                       |
 
 ## Sub-Agent Summary
 
-| Agent | Model | Multiplicity | Purpose |
-| ----- | ----- | ------------ | ------- |
-| triage-investigator | Sonnet | 1 per entry (batched) | Fetch own context via `get_entry_context.ts`, investigate entry |
-| triage-aggregator | Sonnet | 1 | Group entries by shared root cause |
-| triage-rule-reviewer | Sonnet | 1 | Extract deterministic classification patterns |
-| fix-planner | Sonnet | 5 per group | Generate competing fix proposals |
-| plan-synthesizer | Opus | 1 per group | Synthesize best-of-5 unified fix approach |
-| plan-reviewer | Sonnet | 4 per group | Review from info-arch, simplicity, fundamentality, lang-coverage angles |
-| task-writer | Sonnet | 1 per group | Create backlog task from synthesis + reviews |
-
-## Result Validation
-
-When `merge_result_files()` processes sub-agent results, it validates classifications:
-
-- If `is_true_positive` and `is_likely_dead_code` are both `true`, normalizes to `is_true_positive = false, group_id = "dead-code"`
-
-## State Machine Transitions
-
-```
-triage ──→ aggregation ──→ meta-review ──→ fix-planning ──→ complete
-                │                │                              │
-                ├─ no FPs ──────→ complete                      │
-                                 ├─ no multi-entry groups ────→ complete
-```
-
-Each phase transition is driven by the stop hook (`triage_loop_stop.ts`). The hook reads the state file via the shared `discover_state.ts` module, evaluates conditions, and either **BLOCKs** (with actionable data like entry indices) or **ALLOWs** (pipeline complete, proceed to finalize).
+| Agent               | Model  | Multiplicity          | Purpose                                                                                |
+| ------------------- | ------ | --------------------- | -------------------------------------------------------------------------------------- |
+| triage-investigator | Sonnet | 1 per entry (batched) | Fetch own context via `get_entry_context.ts`, determine if Ariadne missed real callers |
+| rough-aggregator    | Sonnet | 1 per slice           | Group false-positive entries by semantic similarity of root cause                      |
+| group-consolidator  | Sonnet | 1 per batch           | Merge synonymous group names across slices                                             |
+| group-investigator  | Opus   | 1 per group           | Verify per-entry group membership using source code and Ariadne MCP evidence           |
 
 ## Key Modules
 
-| Module | Purpose |
-| ------ | ------- |
-| `src/discover_state.ts` | Triage state file discovery (shared by hook + scripts) |
-| `scripts/get_entry_context.ts` | Self-service context: diagnosis→template, placeholder substitution |
-| `scripts/triage_loop_stop.ts` | Stop hook state machine with result merging and validation |
-| `src/triage_state_types.ts` | State types (entries carry diagnostics for self-service context) |
-| `src/build_triage_entries.ts` | Convert classification → triage entries with embedded diagnostics |
-| `scripts/finalize_triage.ts` | Strip diagnostics, partition results, update registry |
+| Module                                  | Purpose                                                           |
+| --------------------------------------- | ----------------------------------------------------------------- |
+| `src/discover_state.ts`                 | Triage state file discovery                                       |
+| `src/merge_results.ts`                  | Merge investigator result files into triage state                 |
+| `src/build_triage_entries.ts`           | Convert classification → triage entries with embedded diagnostics |
+| `src/build_finalization_output.ts`      | Build finalization output from completed state                    |
+| `src/known_entrypoints.ts`              | Known-entrypoints registry I/O and matching                       |
+| `src/triage_state_types.ts`             | State types (`TriageState`, `TriageEntry`, `TriageEntryResult`)   |
+| `scripts/get_entry_context.ts`          | Diagnosis → template selection and placeholder substitution       |
+| `scripts/get_next_triage_batch.ts`      | Merge results, return next pending batch, advance phase           |
+| `scripts/prepare_aggregation_slices.ts` | Split false-positive entries into aggregation slices              |
+| `scripts/merge_rough_groups.ts`         | Merge pass1 outputs; route to pass2 or pass3                      |
+| `scripts/merge_consolidated_groups.ts`  | Merge pass2 outputs into canonical pass3 group list               |
+| `scripts/finalize_aggregation.ts`       | Apply group assignments, handle rejections, set phase=complete    |
+| `scripts/finalize_triage.ts`            | Partition results, update registry, save output                   |

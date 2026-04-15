@@ -3,9 +3,9 @@ id: task-65
 title: Implement file-level variable type tracking
 status: Done
 assignee:
-  - '@claude'
-created_date: '2025-08-02'
-updated_date: '2025-08-02'
+  - "@claude"
+created_date: "2025-08-02"
+updated_date: "2025-08-02"
 labels:
   - enhancement
   - call-graph

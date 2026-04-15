@@ -3,9 +3,9 @@ id: task-66
 title: Connect import resolution with constructor type tracking
 status: Done
 assignee:
-  - '@claude'
-created_date: '2025-08-02'
-updated_date: '2025-08-02'
+  - "@claude"
+created_date: "2025-08-02"
+updated_date: "2025-08-02"
 labels:
   - enhancement
   - call-graph

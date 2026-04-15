@@ -3,9 +3,9 @@ id: task-55
 title: Fix enclosing_range field in Def type
 status: Done
 assignee:
-  - '@claude'
-created_date: '2025-07-30'
-updated_date: '2025-07-31'
+  - "@claude"
+created_date: "2025-07-30"
+updated_date: "2025-07-31"
 labels: []
 dependencies: []
 ---
@@ -54,6 +54,7 @@ The tree-sitter queries only capture the identifier node for function definition
 ### Test Coverage
 
 The test suite covers all supported languages:
+
 - **JavaScript**: Function declarations, arrow functions, method definitions
 - **TypeScript**: Typed functions with full signatures
 - **Python**: Function definitions and class methods

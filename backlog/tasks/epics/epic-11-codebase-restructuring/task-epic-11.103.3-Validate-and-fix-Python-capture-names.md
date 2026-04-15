@@ -65,11 +65,13 @@ Completed in commit edd2612b002af4b448d4b25f3ffacaeb9887e940.
 ### Python Fixes Applied (90 invalid → 0)
 
 **Scope fixes:**
+
 - `@scope.lambda` → `@scope.closure`
 - `@scope.[for|while|with|if|elif|else|try|except|finally|match|case]` → `@scope.block`
 - `@scope.comprehension` → `@scope.block`
 
 **Definition fixes:**
+
 - `@definition.lambda` → `@definition.function`
 - `@definition.param*` → `@definition.parameter*`
 - `@definition.loop_var*` → `@definition.variable*`
@@ -78,16 +80,19 @@ Completed in commit edd2612b002af4b448d4b25f3ffacaeb9887e940.
 - `@definition.with_var` → `@definition.variable`
 
 **Decorator to modifier:**
+
 - `@decorator.static` → `@modifier.visibility`
 - `@decorator.classmethod` → `@modifier.visibility`
 
 **Assignment fixes:**
+
 - `@assignment.target` → `@assignment.variable`
 - `@assignment.source*` → `@assignment.variable*`
 - `@assignment.expr` → `@assignment.variable`
 - `@assignment.member` → `@assignment.property`
 
 **Reference fixes:**
+
 - `@reference.identifier` → `@reference.variable`
 - `@reference.receiver*` → `@reference.variable*`
 - `@reference.method_call*` → `@reference.call*`
@@ -102,9 +107,11 @@ Completed in commit edd2612b002af4b448d4b25f3ffacaeb9887e940.
 - `@reference.cls` → `@reference.this`
 
 **Type fixes:**
+
 - `@type.annotation` → `@type.type_annotation`
 
 **Return fixes:**
+
 - `@return.expression` → `@return.variable`
 
 ### Builder Configuration Updates
@@ -112,6 +119,7 @@ Completed in commit edd2612b002af4b448d4b25f3ffacaeb9887e940.
 The Python builder configuration required updates to match the fixed capture names in python.scm:
 
 **Changes made to `python_builder.ts`:**
+
 - `"definition.param"` → `"definition.parameter"`
 - `"definition.param.default"` → `"definition.parameter.default"`
 - `"definition.param.typed"` → `"definition.parameter.typed"`
@@ -123,6 +131,7 @@ The Python builder configuration required updates to match the fixed capture nam
 
 **Stale handlers identified but not removed:**
 The builder config contains handlers for old capture names that no longer exist in python.scm:
+
 - `definition.lambda` (not in .scm)
 - `definition.loop_var` (not in .scm)
 - `definition.loop_var.multiple` (not in .scm)
@@ -160,6 +169,7 @@ These handlers are harmless (never called) but could be removed in future cleanu
 **Impact**: 784 TypeScript compilation errors, though these were test infrastructure issues, not runtime code problems.
 
 **Resolution**: Updated Location object constructions in test files:
+
 - Changed `line:` → `start_line:`
 - Changed `column:` → `start_column:`
 - Fixed parameter names in helper functions (`mock_location`, `create_test_location`)
@@ -180,6 +190,7 @@ These handlers are harmless (never called) but could be removed in future cleanu
 ### Test Suite Impact
 
 **Full test suite results:**
+
 - **Current**: 511 failed | 795 passed | 227 skipped (1533 tests)
 - **Baseline** (from parent task): 505 failed | 801 passed | 227 skipped (1533 tests)
 - **Delta**: +6 failures, -6 passes
@@ -190,6 +201,7 @@ These handlers are harmless (never called) but could be removed in future cleanu
 The 6 additional failures are within normal test suite variance and represent pre-existing issues:
 
 **Categories of test failures:**
+
 1. **Missing fixture files** (majority of Python tests): Tests expect files in `/fixtures/python/` that don't exist
    - Examples: `scope_hierarchy.py`, `classes.py`, etc.
 2. **Builder API mismatch**: Tests use array operations (`.find()`, `.length`) on `BuilderResult`, which is now a Map-based object
@@ -197,6 +209,7 @@ The 6 additional failures are within normal test suite variance and represent pr
 4. **Incomplete test data**: Tests create `CaptureNode` objects without required `location`, `category`, `entity` fields
 
 **Python-specific test results:**
+
 - Python builder tests: 5 failed | 23 passed (28 total)
   - All 8 configuration validation tests pass
   - 15 functional builder tests pass
@@ -213,13 +226,13 @@ The Python builder configuration contains 7 handlers for capture names that no l
 
 ```typescript
 // Handlers to remove from python_builder.ts:
-- "definition.lambda"
-- "definition.loop_var"
-- "definition.loop_var.multiple"
-- "definition.comprehension_var"
-- "definition.except_var"
-- "definition.with_var"
-- "definition.variable.destructured"
+-"definition.lambda" -
+  "definition.loop_var" -
+  "definition.loop_var.multiple" -
+  "definition.comprehension_var" -
+  "definition.except_var" -
+  "definition.with_var" -
+  "definition.variable.destructured";
 ```
 
 **Impact**: None - these handlers are never called since the captures don't exist
@@ -230,6 +243,7 @@ The Python builder configuration contains 7 handlers for capture names that no l
 The Python builder tests need updating to work with current APIs:
 
 **Changes needed:**
+
 1. Update all `"def.*"` capture name checks to use full names like `"definition.*"`
 2. Fix `BuilderResult` API usage:
    - Replace `definitions.find()` with `Array.from(definitions.classes.values()).find()`
@@ -240,6 +254,7 @@ The Python builder tests need updating to work with current APIs:
    - `location` (with proper `start_line`, `start_column`, etc.)
 
 **Files to update:**
+
 - `packages/core/src/index_single_file/query_code_tree/language_configs/python_builder.test.ts`
 
 **Expected outcome**: 28/28 tests passing (currently 23/28 passing)
@@ -249,14 +264,17 @@ The Python builder tests need updating to work with current APIs:
 Many Python semantic index tests fail because expected fixture files don't exist:
 
 **Missing files:**
+
 - `src/index_single_file/parse_and_query_code/fixtures/python/scope_hierarchy.py`
 - `src/index_single_file/parse_and_query_code/fixtures/python/classes.py`
 - And others referenced in semantic_index.python.test.ts
 
 **Files to update:**
+
 - `packages/core/src/index_single_file/semantic_index.python.test.ts`
 
 **Options:**
+
 1. Create the missing fixture files with appropriate Python code
 2. Update tests to use existing fixtures or inline code samples
 3. Skip/remove tests for missing fixtures
@@ -266,6 +284,7 @@ Many Python semantic index tests fail because expected fixture files don't exist
 589 TypeScript compilation errors remain, mostly in test files:
 
 **Categories:**
+
 1. BuilderResult API usage (56 errors) - tests using array operations
 2. Removed type properties (174 errors) - tests accessing removed properties like `symbols`, `phases`, `is_hoisted`
 3. Type mismatches (131 errors) - various type incompatibilities
@@ -278,6 +297,7 @@ Many Python semantic index tests fail because expected fixture files don't exist
 While this task focused on Python, ensure other language builders (JavaScript, TypeScript, Rust) are also synchronized with their respective .scm files after the capture name migration.
 
 **Action items:**
+
 - Verify JavaScript builder uses `definition.parameter` (not `definition.param`)
 - Verify TypeScript builder uses `definition.parameter` (not `definition.param`)
 - Verify Rust builder uses `definition.parameter` (not `definition.param`)
@@ -288,6 +308,7 @@ While this task focused on Python, ensure other language builders (JavaScript, T
 This task successfully validated and synchronized the Python capture names and builder configuration:
 
 ✅ **Completed:**
+
 - All 90 invalid Python captures fixed (in commit edd2612)
 - Python builder configuration updated with 6 capture name corrections
 - Location property naming issues fixed in 28 test files (195 TypeScript errors resolved)
@@ -295,6 +316,7 @@ This task successfully validated and synchronized the Python capture names and b
 - All captures validate successfully
 
 ⚠️ **Deferred:**
+
 - Test suite modernization (separate effort)
 - Removal of stale builder handlers (non-critical)
 - Python test fixture creation (separate effort)

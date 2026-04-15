@@ -3,7 +3,7 @@ id: task-epic-11.41
 title: Migrate query_executor
 status: To Do
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, foundation, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate tree-sitter query executor to src/ast/query_executor.ts
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -52,7 +53,10 @@ Migrate tree-sitter query executor to src/ast/query_executor.ts
 
 ```typescript
 // TODO: Add these stubs in implementation
-interface QueryExecutor { execute(query: Query, tree: Tree): QueryMatch[]; capture(match: QueryMatch, name: string): SyntaxNode; }
+interface QueryExecutor {
+  execute(query: Query, tree: Tree): QueryMatch[];
+  capture(match: QueryMatch, name: string): SyntaxNode;
+}
 ```
 
 ## Planning Phase
@@ -95,6 +99,7 @@ Research findings will be documented here during execution.
 When implementing, add these TODO comments:
 
 1. In `query_executor.ts`:
+
    ```typescript
    // TODO: Integration with Scope Queries
    // - Run .scm queries
@@ -105,6 +110,7 @@ When implementing, add these TODO comments:
    ```
 
 2. In language-specific files (if applicable):
+
    ```typescript
 
    ```

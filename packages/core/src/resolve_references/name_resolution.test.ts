@@ -96,7 +96,7 @@ describe("resolve_names", () => {
             parent_id: null,
             name: null,
             child_ids: [] as readonly ScopeId[],
-          } as unknown as LexicalScope,
+          } as LexicalScope,
         ],
       ]);
       scopes.update_file(TEST_FILE, scope_map);
@@ -140,7 +140,7 @@ describe("resolve_names", () => {
             parent_id: null,
             name: null,
             child_ids: [] as readonly ScopeId[],
-          } as unknown as LexicalScope,
+          } as LexicalScope,
         ],
       ]);
       scopes.update_file(TEST_FILE, scope_map);
@@ -193,7 +193,7 @@ describe("resolve_names", () => {
             parent_id: null,
             name: null,
             child_ids: [inner_scope_id] as readonly ScopeId[],
-          } as unknown as LexicalScope,
+          } as LexicalScope,
         ],
         [
           inner_scope_id,
@@ -204,7 +204,7 @@ describe("resolve_names", () => {
             parent_id: FILE_SCOPE_ID,
             name: "inner" as SymbolName,
             child_ids: [] as readonly ScopeId[],
-          } as unknown as LexicalScope,
+          } as LexicalScope,
         ],
       ]);
       scopes.update_file(TEST_FILE, scope_map);
@@ -249,7 +249,7 @@ describe("resolve_names", () => {
             parent_id: null,
             name: null,
             child_ids: [inner_scope_id] as readonly ScopeId[],
-          } as unknown as LexicalScope,
+          } as LexicalScope,
         ],
         [
           inner_scope_id,
@@ -260,7 +260,7 @@ describe("resolve_names", () => {
             parent_id: FILE_SCOPE_ID,
             name: "inner" as SymbolName,
             child_ids: [] as readonly ScopeId[],
-          } as unknown as LexicalScope,
+          } as LexicalScope,
         ],
       ]);
       scopes.update_file(TEST_FILE, scope_map);
@@ -340,7 +340,7 @@ describe("resolve_names", () => {
               parent_id: null,
               name: null,
               child_ids: [] as readonly ScopeId[],
-            } as unknown as LexicalScope,
+            } as LexicalScope,
           ],
         ])
       );
@@ -356,7 +356,7 @@ describe("resolve_names", () => {
               parent_id: null,
               name: null,
               child_ids: [] as readonly ScopeId[],
-            } as unknown as LexicalScope,
+            } as LexicalScope,
           ],
         ])
       );
@@ -416,7 +416,7 @@ describe("resolve_names", () => {
             parent_id: null,
             name: null,
             child_ids: [FUNC_SCOPE_ID] as readonly ScopeId[],
-          } as unknown as LexicalScope,
+          } as LexicalScope,
         ],
         [
           FUNC_SCOPE_ID,
@@ -427,7 +427,7 @@ describe("resolve_names", () => {
             parent_id: FILE_SCOPE_ID,
             name: "greet" as SymbolName,
             child_ids: [] as readonly ScopeId[],
-          } as unknown as LexicalScope,
+          } as LexicalScope,
         ],
       ]);
       scopes.update_file(TEST_FILE, scope_map);

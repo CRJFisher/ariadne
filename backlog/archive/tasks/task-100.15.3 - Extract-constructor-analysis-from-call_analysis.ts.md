@@ -3,7 +3,7 @@ id: task-100.15.3
 title: Extract constructor analysis from call_analysis.ts
 status: To Do
 assignee: []
-created_date: '2025-08-05 14:07'
+created_date: "2025-08-05 14:07"
 labels: []
 dependencies: []
 parent_task_id: task-100.15

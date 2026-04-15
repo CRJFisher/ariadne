@@ -13,11 +13,13 @@ Update TypeScript language support to use the new direct definition builder syst
 ## Sub-tasks
 
 1. **Update Language Config** (102.5.2.1)
+
    - Convert to builder pattern
    - Handle TypeScript-specific features (interfaces, types, generics)
    - Direct Definition creation
 
 2. **Update Query File** (102.5.2.2)
+
    - Clean up typescript.scm
    - Add interface and type captures
    - Handle decorators and generics
@@ -60,13 +62,16 @@ Update TypeScript language support to use the new direct definition builder syst
 ### Completed Work
 
 #### 1. TypeScript Language Configuration (`typescript_builder.ts`)
+
 Created comprehensive TypeScript builder configuration with 900+ lines covering all TypeScript-specific features:
 
 **Files Created:**
+
 - `packages/core/src/index_single_file/parse_and_query_code/language_configs/typescript_builder.ts`
 - `packages/core/src/index_single_file/parse_and_query_code/language_configs/typescript_builder.test.ts`
 
 **Features Implemented:**
+
 - **Interfaces**: Full interface definitions with method signatures, property signatures, and extends clauses
 - **Type Aliases**: Type definitions with proper symbol tracking
 - **Enums**: Enum definitions with member tracking and optional method support
@@ -77,6 +82,7 @@ Created comprehensive TypeScript builder configuration with 900+ lines covering 
 - **Abstract Classes**: Abstract class and method definitions with proper marking
 
 **Helper Functions:**
+
 - `extract_location()`: Convert tree-sitter nodes to Location objects
 - `create_interface_id()`, `create_type_id()`, `create_enum_id()`, `create_namespace_id()`: Symbol ID generation
 - `extract_type_parameters()`: Generic type parameter extraction
@@ -87,9 +93,11 @@ Created comprehensive TypeScript builder configuration with 900+ lines covering 
 - `determine_availability()`: Visibility modifier extraction
 
 #### 2. DefinitionBuilder Enhancements
+
 Updated `packages/core/src/index_single_file/definitions/definition_builder.ts` with TypeScript-specific methods:
 
 **New Public Methods:**
+
 - `add_interface()`: Add interface definition with extends clause
 - `add_method_signature_to_interface()`: Add method signature to interface
 - `add_property_signature_to_interface()`: Add property signature to interface
@@ -100,22 +108,27 @@ Updated `packages/core/src/index_single_file/definitions/definition_builder.ts` 
 - `add_decorator_to_target()`: Add decorator to class, method, property, or constructor
 
 **Enhanced Methods:**
+
 - `add_class()`: Added type_parameters, is_abstract, implements_interfaces
 - `add_method_to_class()`: Added is_abstract, is_async, access_modifier, is_static
 - `add_property_to_class()`: Added access_modifier, is_readonly, is_static
 
 **Internal Refactoring:**
+
 - Renamed old capture-based methods to `*_from_capture` to avoid conflicts
 - Maintained backward compatibility with existing capture-based code
 
 #### 3. Query File Updates
+
 Updated `packages/core/src/index_single_file/parse_and_query_code/queries/typescript.scm`:
 
 **Critical Fix:**
+
 - Fixed decorator capture patterns: decorators are siblings in class_body, not children of methods
 - This was causing query syntax errors at position 7517
 
 **New Captures:**
+
 - Interface method signatures: `@def.interface.method_sig`
 - Interface property signatures: `@def.interface.property_sig`
 - Type alias definitions: `@def.type`
@@ -125,9 +138,11 @@ Updated `packages/core/src/index_single_file/parse_and_query_code/queries/typesc
 - Decorators: `@decorator.class`, `@decorator.method`, `@decorator.property`, `@decorator.constructor`
 
 #### 4. Comprehensive Test Suite
+
 Created `typescript_builder.test.ts` with 21 tests covering all TypeScript features:
 
 **Test Coverage:**
+
 - ✅ Interface definitions (basic, with methods, with properties, with extends)
 - ✅ Type alias definitions
 - ✅ Enum definitions (basic, with members)
@@ -148,6 +163,7 @@ Created `typescript_builder.test.ts` with 21 tests covering all TypeScript featu
 - ✅ Static members
 
 **Test Results:**
+
 - `typescript_builder.test.ts`: 21/21 passing ✅
 - `javascript_builder.test.ts`: 12/12 passing ✅
 - `definition_builder.test.ts`: 12/12 passing ✅
@@ -155,6 +171,7 @@ Created `typescript_builder.test.ts` with 21 tests covering all TypeScript featu
 - **Total: 55/55 tests passing ✅**
 
 #### 5. Type Safety and Compilation
+
 - All TypeScript compilation passes with no errors (`npm run typecheck`)
 - Fixed decorator type inconsistencies (SymbolId vs SymbolName for different contexts)
 - Updated test mocks to include complete ProcessingContext properties
@@ -162,18 +179,22 @@ Created `typescript_builder.test.ts` with 21 tests covering all TypeScript featu
 ### Issues Encountered and Resolved
 
 #### Issue 1: Query Syntax Error at Position 7517
+
 **Problem:** TypeScript query failed with `TSQueryErrorStructure` error
 
 **Root Cause:** Method decorator patterns incorrectly specified decorators as children of `method_definition`, but in TypeScript AST, decorators are siblings within `class_body`
 
 **Solution:** Changed decorator pattern from:
+
 ```scheme
 (method_definition
   (decorator (identifier) @decorator.method)
   name: (property_identifier)
 )
 ```
+
 To:
+
 ```scheme
 (class_body
   (decorator (identifier) @decorator.method)
@@ -183,28 +204,34 @@ To:
 ```
 
 #### Issue 2: Decorator Type Inconsistencies
+
 **Problem:** Type conversion errors between `SymbolName` and `SymbolId` for decorators
 
 **Root Cause:** Different definition types use different decorator formats:
+
 - Classes/properties use `SymbolId[]` (decorators create new symbols)
 - Methods/constructors use `SymbolName[]` (simpler decoration)
 
 **Solution:** Updated `add_decorator_to_target()` to handle both types correctly based on target context
 
 #### Issue 3: ProcessingContext Type Mismatches
+
 **Problem:** Test mocks missing required ProcessingContext properties
 
 **Solution:** Updated all test mocks to provide complete context:
+
 ```typescript
 const mockContext: ProcessingContext = {
   scopes: new Map(),
   scope_depths: new Map(),
   root_scope_id: "scope:root" as ScopeId,
-  get_scope_id: (location: Location): ScopeId => `scope:${location.line}:${location.column}` as ScopeId,
+  get_scope_id: (location: Location): ScopeId =>
+    `scope:${location.line}:${location.column}` as ScopeId,
 };
 ```
 
 #### Issue 4: Parser Selection for Queries
+
 **Problem:** Integration test failed with TSX node type errors
 
 **Root Cause:** Used `TypeScript.typescript` parser, but queries are designed for `TypeScript.tsx` (supports JSX)
@@ -214,9 +241,11 @@ const mockContext: ProcessingContext = {
 ### Follow-on Work Needed
 
 #### 1. Migrate Legacy TypeScript Tests
+
 **Status:** Not blocking, architectural migration in progress
 
 **Files Affected:**
+
 - `semantic_index.typescript.test.ts` (20 tests failing)
 - Tests expect old NormalizedCapture format with grouped captures
 - Current system returns `QueryCapture[]` directly
@@ -224,15 +253,18 @@ const mockContext: ProcessingContext = {
 **Recommendation:** Track as separate migration task once all language configs use builder pattern
 
 #### 2. Missing Test Fixtures
+
 **Status:** Pre-existing issue, not related to builder work
 
 **Missing Directories:**
+
 - `packages/core/src/index_single_file/fixtures/typescript/comprehensive_*.ts`
 - `packages/core/src/index_single_file/fixtures/rust/`
 
 **Recommendation:** Create fixtures as needed for comprehensive integration testing
 
 #### 3. JavaScript Query Syntax Issues
+
 **Status:** Pre-existing issue
 
 **Problem:** JavaScript queries have syntax errors at position 7970 (decorator-related patterns likely)
@@ -242,16 +274,19 @@ const mockContext: ProcessingContext = {
 ### Files Modified
 
 **Created:**
+
 1. `packages/core/src/index_single_file/parse_and_query_code/language_configs/typescript_builder.ts` (900+ lines)
 2. `packages/core/src/index_single_file/parse_and_query_code/language_configs/typescript_builder.test.ts` (600+ lines)
 
 **Modified:**
+
 1. `packages/core/src/index_single_file/definitions/definition_builder.ts` (added TypeScript methods)
 2. `packages/core/src/index_single_file/parse_and_query_code/queries/typescript.scm` (fixed decorator patterns)
 
 ### Verification
 
 **No regressions introduced:**
+
 - All builder pattern tests pass (55/55)
 - TypeScript compilation succeeds
 - Integration test with real TypeScript code produces correct definitions

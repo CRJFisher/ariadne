@@ -13,6 +13,7 @@ Migrate nested scope resolution tests and project-level integration tests from O
 ## Scope
 
 **Files**:
+
 1. [packages/core/src/test_nested_scope.test.ts](packages/core/src/test_nested_scope.test.ts) - 8 OLD occurrences
 2. [packages/core/src/project/project.integration.test.ts](packages/core/src/project/project.integration.test.ts) - 3 OLD occurrences
 3. [packages/core/src/project/project.javascript.integration.test.ts](packages/core/src/project/project.javascript.integration.test.ts) - 2 OLD occurrences
@@ -26,6 +27,7 @@ This file tests scope resolution across nested function scopes, which is critica
 ### Test 1: Constructor Call Tracking
 
 **Current (line 140-150)**:
+
 ```typescript
 const constructor_call = result.references.find(
   (ref) => ref.call_type === "constructor"
@@ -37,6 +39,7 @@ expect(constructor_call?.type).toBe("construct");
 ```
 
 **Migrate to**:
+
 ```typescript
 const constructor_call = result.references.find(
   (ref): ref is ConstructorCallReference => ref.kind === "constructor_call"
@@ -50,6 +53,7 @@ expect(constructor_call?.construct_target).toBeDefined();
 ### Test 2: This.method() Call Tracking
 
 **Current (line 260-265)**:
+
 ```typescript
 const this_call = result.references.find(
   (ref) => ref.type === "call" && ref.name === "build_class"
@@ -60,6 +64,7 @@ expect(this_call?.context?.receiver_keyword).toBe("this");
 ```
 
 **Migrate to**:
+
 ```typescript
 const this_call = result.references.find(
   (ref): ref is SelfReferenceCall =>
@@ -75,31 +80,39 @@ expect(this_call?.property_chain).toEqual(["this", "build_class"]);
 ### Test 3: Nested Constructor in Real File
 
 **Current (line 200-210)**:
+
 ```typescript
 const constructor_calls = result.references.filter(
   (ref) => ref.call_type === "constructor"
 );
 
 expect(constructor_calls.length).toBeGreaterThan(0);
-console.log("Constructor calls:", constructor_calls.map(ref => ({
-  name: ref.name,
-  type: ref.type,
-  construct_target: ref.context?.construct_target
-})));
+console.log(
+  "Constructor calls:",
+  constructor_calls.map((ref) => ({
+    name: ref.name,
+    type: ref.type,
+    construct_target: ref.context?.construct_target,
+  }))
+);
 ```
 
 **Migrate to**:
+
 ```typescript
 const constructor_calls = result.references.filter(
   (ref): ref is ConstructorCallReference => ref.kind === "constructor_call"
 );
 
 expect(constructor_calls.length).toBeGreaterThan(0);
-console.log("Constructor calls:", constructor_calls.map(ref => ({
-  name: ref.name,
-  kind: ref.kind,
-  construct_target: ref.construct_target
-})));
+console.log(
+  "Constructor calls:",
+  constructor_calls.map((ref) => ({
+    name: ref.name,
+    kind: ref.kind,
+    construct_target: ref.construct_target,
+  }))
+);
 ```
 
 ## project.integration.test.ts - Project-Level Tests
@@ -109,9 +122,10 @@ These tests verify references work correctly across multi-file projects.
 ### Pattern: Cross-File Reference Checks
 
 **Current**:
+
 ```typescript
 const method_calls = project_index.references.filter(
-  ref => ref.type === "call" && ref.call_type === "method"
+  (ref) => ref.type === "call" && ref.call_type === "method"
 );
 
 expect(method_calls.length).toBeGreaterThan(0);
@@ -119,6 +133,7 @@ expect(method_calls[0]?.context?.receiver_location).toBeDefined();
 ```
 
 **Migrate to**:
+
 ```typescript
 const method_calls = project_index.references.filter(
   (ref): ref is MethodCallReference => ref.kind === "method_call"
@@ -135,15 +150,17 @@ These tests verify JavaScript-specific behavior in project context.
 ### Pattern: JavaScript Method Resolution
 
 **Current**:
+
 ```typescript
 const console_log = refs.find(
-  ref => ref.type === "call" && ref.name === "log"
+  (ref) => ref.type === "call" && ref.name === "log"
 );
 
 expect(console_log?.context?.receiver_location).toBeDefined();
 ```
 
 **Migrate to**:
+
 ```typescript
 const console_log = refs.find(
   (ref): ref is MethodCallReference =>
@@ -159,7 +176,7 @@ expect(console_log?.receiver_location).toBeDefined();
 
 ```typescript
 // OLD
-const constructors = refs.filter(ref => ref.call_type === "constructor");
+const constructors = refs.filter((ref) => ref.call_type === "constructor");
 
 // NEW
 const constructors = refs.filter(
@@ -171,13 +188,14 @@ const constructors = refs.filter(
 
 ```typescript
 // OLD
-const selfCall = refs.find(ref =>
-  ref.type === "call" && ref.context?.receiver_keyword === "this"
+const selfCall = refs.find(
+  (ref) => ref.type === "call" && ref.context?.receiver_keyword === "this"
 );
 
 // NEW
-const selfCall = refs.find((ref): ref is SelfReferenceCall =>
-  ref.kind === "self_reference_call" && ref.keyword === "this"
+const selfCall = refs.find(
+  (ref): ref is SelfReferenceCall =>
+    ref.kind === "self_reference_call" && ref.keyword === "this"
 );
 ```
 
@@ -185,8 +203,8 @@ const selfCall = refs.find((ref): ref is SelfReferenceCall =>
 
 ```typescript
 // OLD
-const methods = refs.filter(ref =>
-  ref.type === "call" && ref.call_type === "method"
+const methods = refs.filter(
+  (ref) => ref.type === "call" && ref.call_type === "method"
 );
 
 // NEW
@@ -199,21 +217,27 @@ const methods = refs.filter(
 
 ```typescript
 // OLD
-console.log("Refs:", refs.map(ref => ({
-  name: ref.name,
-  type: ref.type,
-  call_type: ref.call_type,
-  context: ref.context
-})));
+console.log(
+  "Refs:",
+  refs.map((ref) => ({
+    name: ref.name,
+    type: ref.type,
+    call_type: ref.call_type,
+    context: ref.context,
+  }))
+);
 
 // NEW
-console.log("Refs:", refs.map(ref => ({
-  name: ref.name,
-  kind: ref.kind,
-  // Add kind-specific fields based on discriminated union
-  ...(ref.kind === "method_call" && { receiver: ref.receiver_location }),
-  ...(ref.kind === "constructor_call" && { target: ref.construct_target })
-})));
+console.log(
+  "Refs:",
+  refs.map((ref) => ({
+    name: ref.name,
+    kind: ref.kind,
+    // Add kind-specific fields based on discriminated union
+    ...(ref.kind === "method_call" && { receiver: ref.receiver_location }),
+    ...(ref.kind === "constructor_call" && { target: ref.construct_target }),
+  }))
+);
 ```
 
 ## Implementation Steps
@@ -221,25 +245,29 @@ console.log("Refs:", refs.map(ref => ({
 ### For test_nested_scope.test.ts
 
 1. **Add imports**:
+
 ```typescript
 import type {
   ConstructorCallReference,
   SelfReferenceCall,
   MethodCallReference,
-} from '@ariadnejs/types';
+} from "@ariadnejs/types";
 ```
 
 2. **Run tests BEFORE**:
+
 ```bash
 npm test test_nested_scope.test.ts 2>&1 | grep -E "(PASS|FAIL)"
 ```
 
 3. **Migrate 3 key tests**:
+
    - Constructor call tracking
    - this.method() call tracking
    - Real file constructor tracking
 
 4. **Run tests AFTER**:
+
 ```bash
 npm test test_nested_scope.test.ts
 ```
@@ -249,15 +277,18 @@ npm test test_nested_scope.test.ts
 1. **Add imports** (same as above)
 
 2. **Run tests BEFORE**:
+
 ```bash
 npm test project.integration.test.ts
 ```
 
 3. **Migrate project-level reference checks**:
+
    - Cross-file method calls
    - Project-wide reference filtering
 
 4. **Run tests AFTER**:
+
 ```bash
 npm test project.integration.test.ts
 ```
@@ -267,15 +298,18 @@ npm test project.integration.test.ts
 1. **Add imports** (same as above)
 
 2. **Run tests BEFORE**:
+
 ```bash
 npm test project.javascript.integration.test.ts
 ```
 
 3. **Migrate JavaScript-specific checks**:
+
    - console.log() method calls
    - JavaScript method resolution
 
 4. **Run tests AFTER**:
+
 ```bash
 npm test project.javascript.integration.test.ts
 ```
@@ -283,6 +317,7 @@ npm test project.javascript.integration.test.ts
 ### Final Verification
 
 5. **Verify no OLD fields remain**:
+
 ```bash
 grep -n "\.type\|\.call_type\|\.context" test_nested_scope.test.ts
 grep -n "\.type\|\.call_type\|\.context" project.integration.test.ts
@@ -290,6 +325,7 @@ grep -n "\.type\|\.call_type\|\.context" project.javascript.integration.test.ts
 ```
 
 6. **Run all 3 tests together**:
+
 ```bash
 npm test test_nested_scope.test.ts project.integration.test.ts project.javascript.integration.test.ts
 ```
@@ -299,9 +335,11 @@ npm test test_nested_scope.test.ts project.integration.test.ts project.javascrip
 ### test_nested_scope.test.ts
 
 1. **Nested function scopes > constructor calls within same file**
+
    - Tests constructor call capture in nested scopes
 
 2. **Nested function scopes > constructor in actual ReferenceBuilder.ts**
+
    - Tests real file with complex nesting
 
 3. **Nested function scopes > this.method() calls within same class**
@@ -310,6 +348,7 @@ npm test test_nested_scope.test.ts project.integration.test.ts project.javascrip
 ### project.integration.test.ts
 
 1. **Multi-file project indexing**
+
    - Cross-file reference tracking
 
 2. **Project-level reference resolution**
@@ -323,10 +362,12 @@ npm test test_nested_scope.test.ts project.integration.test.ts project.javascrip
 ## Expected Outcomes
 
 **Before**:
+
 - ❌ 5-8 failing tests across 3 files
 - 13 OLD field occurrences total
 
 **After**:
+
 - ✅ All tests passing in all 3 files
 - 0 OLD field occurrences
 - Self-reference call tests verify bug fix
@@ -348,6 +389,7 @@ npm test test_nested_scope.test.ts project.integration.test.ts project.javascrip
 After migration:
 
 1. **Run test_nested_scope tests**:
+
    ```bash
    npm test test_nested_scope.test.ts
    npm test test_nested_scope.test.ts -t "constructor"
@@ -355,12 +397,14 @@ After migration:
    ```
 
 2. **Run project integration tests**:
+
    ```bash
    npm test project.integration.test.ts
    npm test project.javascript.integration.test.ts
    ```
 
 3. **Run all together**:
+
    ```bash
    npm test -- test_nested_scope project.integration project.javascript
    ```
@@ -377,13 +421,14 @@ After migration:
 ```typescript
 class Builder {
   process() {
-    this.build_class(node);  // ← Was failing before self_reference_resolver.ts
+    this.build_class(node); // ← Was failing before self_reference_resolver.ts
   }
-  build_class(node) { }
+  build_class(node) {}
 }
 ```
 
 After migration, these tests will verify that:
+
 1. Self-reference calls are correctly identified (`kind === "self_reference_call"`)
 2. `this` keyword is captured (`keyword === "this"`)
 3. Property chain is correct (`["this", "build_class"]`)
@@ -399,6 +444,7 @@ After migration, these tests will verify that:
 ## Files Changed
 
 **Modified**:
+
 - [packages/core/src/test_nested_scope.test.ts](packages/core/src/test_nested_scope.test.ts)
 - [packages/core/src/project/project.integration.test.ts](packages/core/src/project/project.integration.test.ts)
 - [packages/core/src/project/project.javascript.integration.test.ts](packages/core/src/project/project.javascript.integration.test.ts)
@@ -410,6 +456,7 @@ After migration, these tests will verify that:
 **Completed in 6 phases** with **4 commits**:
 
 ### Phase 1: Initial Task Migration
+
 **Scope**: test_nested_scope.test.ts, project.integration.test.ts, project.javascript.integration.test.ts
 
 - Migrated 30 OLD pattern occurrences across 3 test files
@@ -417,9 +464,11 @@ After migration, these tests will verify that:
 - Committed earlier in task session
 
 ### Phase 2: construct_target Undefined Fix
+
 **Root Cause**: Missing undefined check for optional `construct_target` field
 
 **Fix**: Added guard in [constructor_tracking.ts:43-55](../../../../packages/core/src/index_single_file/type_preprocessing/constructor_tracking.ts#L43-L55)
+
 ```typescript
 if (ref.construct_target !== undefined) {
   // Process binding
@@ -427,62 +476,75 @@ if (ref.construct_target !== undefined) {
 ```
 
 **Commit**: `678779d` - `fix(tests): Fix construct_target crashes and migrate OLD API usage`
+
 - Fixed 4 tests (prevents crashes on standalone constructor calls)
 
 ### Phase 3: OLD API Migration in Integration Tests
+
 **Root Cause**: Tests using OLD API `r.type === "call"` instead of NEW API
 
 **Fix**: Migrated 19 occurrences in integration test files
+
 - `r.type === "call"` → `r.kind === "function_call"` / `r.kind === "method_call"`
 
 **Commit**: Same as above (`678779d`)
+
 - Fixed 13 additional tests
 - Total from this commit: **27 tests fixed** (17→2 failures)
 
 ### Phase 4: Rust Associated Function Semantics
+
 **Root Cause**: Tests incorrectly expected `User::new()` to be `method_call`
 
 **Fix**: Changed to `function_call` with exact name match
+
 - Rust associated functions (static methods) are `function_call`, not `method_call`
 
 **Commit**: `a0b970b` - `fix(tests): Fix Rust associated function test assertions`
+
 - Fixed final 2 tests in project.integration.test.ts
 - **100% pass rate achieved for project.integration.test.ts!**
 
 ### Phase 5: Extended Work - Python Integration Tests
+
 **Root Cause**: 15 tests in project.python.integration.test.ts using OLD API patterns
 
 **Fix**: Complete API migration using Task tool
+
 - Added type imports
 - Migrated 20 OLD API occurrences
 - Applied type guards throughout
 
 **Commit**: `3d882f7` - `fix(tests): Migrate Python and Rust integration tests to NEW API`
+
 - Result: 15→0 failures (100% pass rate!)
 - **All 29 Python integration tests now passing!**
 
 ### Phase 6: Extended Work - Rust Integration Tests
+
 **Root Cause**: 8 tests in project.rust.integration.test.ts using OLD API patterns
 
 **Fix**: Complete API migration using Task tool
+
 - Added type imports including VariableReference
 - Migrated 9 OLD API occurrences
 - Fixed receiver_location field access
 - Applied type guards
 
 **Commit**: Same as above (`3d882f7`)
+
 - Result: 8→0 failures (100% pass rate!)
 - **All 14 Rust integration tests now passing!**
 
 ### Final Test Results
 
-| Test File | Before | After | Status |
-|-----------|--------|-------|--------|
-| test_nested_scope.test.ts | 8 OLD occurrences | Migrated | ✅ |
-| project.integration.test.ts | 29 failures | 0 failures | ✅ 100% |
-| project.javascript.integration.test.ts | Failures | 0 failures | ✅ 100% |
-| **project.python.integration.test.ts** | 15 failures | 0 failures | ✅ 100% |
-| **project.rust.integration.test.ts** | 8 failures | 0 failures | ✅ 100% |
+| Test File                              | Before            | After      | Status  |
+| -------------------------------------- | ----------------- | ---------- | ------- |
+| test_nested_scope.test.ts              | 8 OLD occurrences | Migrated   | ✅      |
+| project.integration.test.ts            | 29 failures       | 0 failures | ✅ 100% |
+| project.javascript.integration.test.ts | Failures          | 0 failures | ✅ 100% |
+| **project.python.integration.test.ts** | 15 failures       | 0 failures | ✅ 100% |
+| **project.rust.integration.test.ts**   | 8 failures        | 0 failures | ✅ 100% |
 
 **Task 152.9.4 Scope**: 52 tests - **100% passing!** ✅
 **Extended Work**: Python (29 tests) + Rust (14 tests) = **43 additional tests!** ✅
@@ -511,18 +573,21 @@ if (ref.construct_target !== undefined) {
 ### Files Modified
 
 **Core Task Scope**:
+
 - [test_nested_scope.test.ts](../../../../packages/core/src/test_nested_scope.test.ts)
 - [project.integration.test.ts](../../../../packages/core/src/project/project.integration.test.ts)
 - [project.javascript.integration.test.ts](../../../../packages/core/src/project/project.javascript.integration.test.ts)
 - [constructor_tracking.ts](../../../../packages/core/src/index_single_file/type_preprocessing/constructor_tracking.ts)
 
 **Extended Work**:
+
 - [project.python.integration.test.ts](../../../../packages/core/src/project/project.python.integration.test.ts)
 - [project.rust.integration.test.ts](../../../../packages/core/src/project/project.rust.integration.test.ts)
 
 ### Impact on Parent Task
 
 **Progress on task-152.9** (Test Migration Plan):
+
 - ✅ task-152.9.1: JavaScript tests (completed earlier)
 - ✅ task-152.9.2: Python tests (completed earlier)
 - ✅ task-152.9.3: TypeScript + Rust tests (completed earlier)

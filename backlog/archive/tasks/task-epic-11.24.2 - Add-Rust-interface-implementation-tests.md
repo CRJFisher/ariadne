@@ -3,7 +3,7 @@ id: task-epic-11.24.2
 title: Add Rust interface implementation tests
 status: To Do
 assignee: []
-created_date: '2025-01-21'
+created_date: "2025-01-21"
 labels: [testing, rust, epic-11, interface-implementation]
 dependencies: [task-epic-11.24]
 parent_task_id: task-epic-11.24
@@ -28,18 +28,21 @@ Add comprehensive tests for Rust trait implementation tracking, covering trait d
 ## Test Cases to Implement
 
 ### Trait Definitions
+
 - Extract trait definitions with required methods
 - Extract traits with default method implementations
 - Handle associated types in traits
 - Extract super trait relationships (trait bounds)
 
 ### Trait Implementations
+
 - Find `impl Trait for Type` blocks
 - Track implemented methods
 - Track associated type implementations
 - Detect incomplete implementations
 
 ### Special Cases
+
 - Generic traits and implementations
 - Derive macros (#[derive(Debug, Clone)])
 - Trait objects (dyn Trait)
@@ -55,31 +58,31 @@ Add comprehensive tests for Rust trait implementation tracking, covering trait d
 ## Example Test Structure
 
 ```typescript
-describe('interface_implementation.rust', () => {
-  describe('Trait definitions', () => {
-    it('should extract trait definitions', () => {
+describe("interface_implementation.rust", () => {
+  describe("Trait definitions", () => {
+    it("should extract trait definitions", () => {
       // Test trait extraction with methods
     });
-    
-    it('should handle associated types', () => {
+
+    it("should handle associated types", () => {
       // Test associated type extraction
     });
-    
-    it('should extract super traits', () => {
+
+    it("should extract super traits", () => {
       // Test trait bounds extraction
     });
   });
-  
-  describe('Trait implementations', () => {
-    it('should find trait implementations', () => {
+
+  describe("Trait implementations", () => {
+    it("should find trait implementations", () => {
       // Test impl Trait for Type
     });
-    
-    it('should detect incomplete implementations', () => {
+
+    it("should detect incomplete implementations", () => {
       // Test missing required methods
     });
-    
-    it('should handle derive macros', () => {
+
+    it("should handle derive macros", () => {
       // Test #[derive(...)] detection
     });
   });

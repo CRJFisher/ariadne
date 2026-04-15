@@ -317,16 +317,19 @@ Example: 1000 calls to same function in same scope
 #### Files Created (4 files, 1,285 lines total)
 
 1. **`function_resolver.ts`** (68 lines)
+
    - Core implementation of `resolve_function_calls()`
    - Exports `FunctionCallMap` type
    - Complete JSDoc documentation
 
 2. **`function_resolver.test.ts`** (642 lines)
+
    - 9 comprehensive unit tests
    - Tests for basic calls, shadowing, unresolved calls, cache performance
    - Multi-file scenarios
 
 3. **`integration.test.ts`** (567 lines)
+
    - 7 integration tests
    - Verifies ScopeResolverIndex integration
    - Validates cache behavior
@@ -360,6 +363,7 @@ Example: 1000 calls to same function in same scope
 **Decision:** Use manually constructed `SemanticIndex` objects in tests rather than parsing actual code.
 
 **Rationale:**
+
 - Tree-sitter creates complex nested scope structures that are hard to predict
 - Manual indices provide precise control over test scenarios
 - Tests are faster and more deterministic
@@ -372,6 +376,7 @@ Example: 1000 calls to same function in same scope
 **Decision:** Minimal implementation that delegates all resolution logic to `ScopeResolverIndex`.
 
 **Rationale:**
+
 - Single Responsibility Principle: function_resolver only filters and delegates
 - Complexity centralized in ScopeResolverIndex (already tested)
 - Easier to maintain and understand
@@ -384,6 +389,7 @@ Example: 1000 calls to same function in same scope
 **Decision:** Use `ReadonlyMap<FilePath, SemanticIndex>` for indices parameter.
 
 **Rationale:**
+
 - Prevents accidental mutation of input data
 - Signals intent clearly to callers
 - Enables compiler optimizations
@@ -396,6 +402,7 @@ Example: 1000 calls to same function in same scope
 **Decision:** Return empty map entry for unresolved calls rather than throwing exceptions.
 
 **Rationale:**
+
 - Partial resolution is better than complete failure
 - Allows analysis of partially-complete codebases
 - Consistent with ScopeResolverIndex behavior (returns null)
@@ -418,6 +425,7 @@ const resolved = resolver_index.resolve(scope_id, name, cache);
 ```
 
 This pattern separates concerns:
+
 - Filtering determines WHAT to resolve
 - Delegation determines HOW to resolve
 
@@ -436,6 +444,7 @@ const symbol_id = resolver();  // Called only when needed
 ```
 
 **Benefits:**
+
 - Minimal memory usage (no pre-computed resolutions)
 - Fast startup (no upfront resolution cost)
 - Cache-friendly (repeated calls use cache)
@@ -448,6 +457,7 @@ resolutions.set(key, resolved);
 ```
 
 Using location as key enables:
+
 - O(1) lookup by source position
 - Natural deduplication
 - Easy correlation with source code
@@ -464,6 +474,7 @@ Using location as key enables:
 #### Scalability
 
 Tested scenarios:
+
 - **Single file, 5 calls:** 5ms total
 - **Multiple files:** Linear scaling
 - **Repeated calls:** Demonstrates cache effectiveness (4/5 cache hits)
@@ -477,6 +488,7 @@ Tested scenarios:
 #### Optimization Opportunities
 
 None identified. Current implementation is optimal for its purpose:
+
 - Cannot optimize O(n) iteration (must check all references)
 - Cache already provides O(1) lookup
 - No memory waste detected
@@ -488,6 +500,7 @@ None identified. Current implementation is optimal for its purpose:
 **Issue:** Initial tests using parsed code failed because semantic_index creates deeply nested scopes for function declarations.
 
 **Example:**
+
 ```
 module:test.js
 ├── function:test.js:2:1:4:2 (declaration node)
@@ -502,6 +515,7 @@ Function definitions are in name scopes, not declaration scopes.
 **Impact:** Tests are more maintainable and less fragile to parser changes.
 
 **Lessons Learned:**
+
 - Avoid coupling to implementation details of dependencies
 - Unit tests should test the unit, not its dependencies
 - Manual test data provides better control
@@ -527,11 +541,13 @@ Function definitions are in name scopes, not declaration scopes.
 #### Immediate (Required for Epic 11.109)
 
 1. **Task 11.109.6: Method Call Resolution**
+
    - Follow same pattern as function resolution
    - Add TypeContext integration for receiver type tracking
    - Expected complexity: Similar to function resolution + type tracking
 
 2. **Task 11.109.7: Constructor Call Resolution**
+
    - Follow same pattern as function resolution
    - Add TypeContext integration for class type tracking
    - Expected complexity: Similar to method resolution
@@ -544,16 +560,19 @@ Function definitions are in name scopes, not declaration scopes.
 #### Future Enhancements (Post-Epic)
 
 1. **Import Resolution Enhancement**
+
    - Currently handled by ScopeResolverIndex
    - Could add explicit import tracing for debugging
    - Not critical: current delegation works correctly
 
 2. **Multi-Language Test Coverage**
+
    - Add language-specific parser tests (JavaScript, TypeScript, Python, Rust)
    - Verify function call detection across all languages
    - Current tests are language-agnostic (by design)
 
 3. **Performance Monitoring**
+
    - Add instrumentation for cache hit rate tracking
    - Monitor resolution times in production
    - Optimize only if metrics show issues
@@ -603,6 +622,7 @@ No breaking changes expected.
 #### Downstream Impact
 
 This implementation provides the foundation for:
+
 - Method resolution (similar filtering pattern)
 - Constructor resolution (similar filtering pattern)
 - Call graph analysis (uses FunctionCallMap)
@@ -610,24 +630,26 @@ This implementation provides the foundation for:
 
 ### Validation Summary
 
-| Category | Status | Notes |
-|----------|--------|-------|
-| Functionality | ✅ Complete | All scenarios tested |
-| Type Safety | ✅ Verified | 0 type errors |
-| Performance | ✅ Optimal | Cache hit rate 80%+ |
-| Test Coverage | ✅ Comprehensive | 16/16 tests pass |
-| Documentation | ✅ Complete | Full JSDoc + examples |
-| Integration | ✅ Verified | ScopeResolverIndex + Cache |
-| Code Quality | ✅ Excellent | Minimal, clear, maintainable |
+| Category      | Status           | Notes                        |
+| ------------- | ---------------- | ---------------------------- |
+| Functionality | ✅ Complete      | All scenarios tested         |
+| Type Safety   | ✅ Verified      | 0 type errors                |
+| Performance   | ✅ Optimal       | Cache hit rate 80%+          |
+| Test Coverage | ✅ Comprehensive | 16/16 tests pass             |
+| Documentation | ✅ Complete      | Full JSDoc + examples        |
+| Integration   | ✅ Verified      | ScopeResolverIndex + Cache   |
+| Code Quality  | ✅ Excellent     | Minimal, clear, maintainable |
 
 ### Recommendations for Next Tasks
 
 1. **Method Resolution (11.109.6)**
+
    - Reuse filter-delegate pattern
    - Add type context parameter
    - Follow same test strategy (manual indices)
 
 2. **Constructor Resolution (11.109.7)**
+
    - Reuse filter-delegate pattern
    - Add type context parameter for class resolution
    - Test new operator handling

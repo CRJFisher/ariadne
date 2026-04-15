@@ -29,6 +29,7 @@ After investigation, I found that:
 The root cause is a missing feature in the scope graph construction: references should be attached to their containing scope via `ref_to_scope` edges, but this is not happening.
 
 Created follow-up tasks:
+
 - task-97: Fix missing ref_to_scope edges
 - task-98: Update JavaScript/TypeScript tests after the edge fix is implemented
 

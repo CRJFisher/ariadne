@@ -13,6 +13,7 @@ Clean up and optimize `javascript.scm` to contain only the essential captures ne
 ## Current Issues
 
 The current query file likely contains:
+
 - Redundant captures for the same entities
 - Overly specific captures that could be generalized
 - Captures for intermediate representations no longer needed
@@ -205,6 +206,7 @@ The current query file likely contains:
 ## Testing Requirements
 
 Each capture must be tested with:
+
 - Basic case (standard syntax)
 - Edge cases (unusual but valid syntax)
 - Nested cases (definitions inside definitions)

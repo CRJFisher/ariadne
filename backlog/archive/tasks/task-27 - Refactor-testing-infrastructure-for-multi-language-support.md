@@ -121,6 +121,7 @@ After the initial implementation, the advanced feature tests revealed gaps in th
 **Rust (`src/languages/rust/scopes.scm`):**
 
 1. **Method calls**: Added patterns for:
+
    - Object method calls: `rect.area()`
    - Type method calls: `Rectangle::new()`
    - Prevented double-counting in method call expressions

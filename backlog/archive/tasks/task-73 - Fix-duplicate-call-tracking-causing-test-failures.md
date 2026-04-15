@@ -3,9 +3,9 @@ id: task-73
 title: Fix duplicate call tracking causing test failures
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-08-03'
-updated_date: '2025-08-04'
+  - "@chuck"
+created_date: "2025-08-03"
+updated_date: "2025-08-04"
 labels: []
 dependencies: []
 ---

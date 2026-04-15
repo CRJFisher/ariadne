@@ -18,28 +18,28 @@ Based on agent compatibility analysis, prioritize tools that provide maximum val
 // packages/mcp/src/tools/get_symbol_context.ts
 
 export async function getSymbolContext(params: {
-  symbol: string;          // Symbol name or code snippet
+  symbol: string; // Symbol name or code snippet
   searchScope?: "file" | "project" | "dependencies";
   includeTests?: boolean;
 }) {
   // Step 1: Symbol resolution (no position needed)
   const symbols = await project.findSymbolsByName(params.symbol);
-  
+
   // Step 2: Handle ambiguity
   const symbol = await disambiguateSymbol(symbols, params);
-  
+
   // Step 3: Gather context
   const definition = await getDefinitionWithCode(symbol);
   const references = await project.getReferences(symbol);
   const relationships = await analyzeRelationships(symbol);
-  
+
   // Step 4: Format for agents
   return formatSymbolContext({
     symbol,
     definition,
     usage: categorizeReferences(references),
     relationships,
-    contextSnippet: extractRelevantContext(definition)
+    contextSnippet: extractRelevantContext(definition),
   });
 }
 ```
@@ -60,13 +60,13 @@ export async function getCodeStructure(params: {
   const modules = await analyzeModules(params.path);
   const abstractions = await extractKeyAbstractions(modules);
   const patterns = await detectPatterns(modules);
-  
+
   return {
     modules: summarizeModules(modules),
     keyAbstractions: abstractions,
     patterns: patterns,
     entryPoints: findEntryPoints(modules),
-    testCoverage: calculateCoverage(modules)
+    testCoverage: calculateCoverage(modules),
   };
 }
 ```
@@ -76,6 +76,7 @@ export async function getCodeStructure(params: {
 **Why third**: Powerful for understanding patterns, builds on previous tools
 
 **Key features:**
+
 - Pattern matching using Ariadne's AST
 - Semantic similarity using embeddings
 - Test-to-implementation mapping
@@ -89,19 +90,19 @@ Create an adapter that translates context requests to Ariadne's existing graph o
 ```typescript
 class AriadneContextAdapter {
   constructor(private project: Project) {}
-  
+
   // Translate high-level context requests to graph queries
   async getSymbolInfo(name: string) {
     // Use existing Ariadne methods
     const files = await this.project.getFiles();
     const symbols = [];
-    
+
     for (const file of files) {
       const sourceFile = await this.project.getSourceFile(file);
       const fileSymbols = await findSymbolsInFile(sourceFile, name);
       symbols.push(...fileSymbols);
     }
-    
+
     return symbols;
   }
 }
@@ -126,7 +127,7 @@ Cache frequently requested context to improve performance:
 class ContextCache {
   private cache = new Map<string, CachedContext>();
   private projectVersion: string;
-  
+
   async get(key: string): Promise<Context | null> {
     const cached = this.cache.get(key);
     if (cached && cached.version === this.projectVersion) {
@@ -142,24 +143,26 @@ class ContextCache {
 ### Week 4: Create Agent Adapters
 
 **Aider Adapter:**
+
 ```python
 class AriadneContextProvider:
     def __init__(self, mcp_client):
         self.mcp = mcp_client
-    
+
     def enhance_edit_context(self, file_path, search_text):
         # Get symbol context for better SEARCH blocks
         symbols = self.extract_symbols(search_text)
         contexts = []
-        
+
         for symbol in symbols:
             context = self.mcp.get_symbol_context(symbol)
             contexts.append(self.format_for_aider(context))
-        
+
         return "\n".join(contexts)
 ```
 
 **Continue Integration:**
+
 ```typescript
 // New Continue commands
 const ariadneCommands = {
@@ -167,11 +170,11 @@ const ariadneCommands = {
     const context = await ariadne.get_symbol_context(selection);
     return formatExplanation(context);
   },
-  
+
   "/impact": async (selection) => {
     const impact = await ariadne.analyze_code_impact(selection);
     return formatImpactReport(impact);
-  }
+  },
 };
 ```
 
@@ -182,15 +185,15 @@ const ariadneCommands = {
 Test each context tool independently:
 
 ```typescript
-describe('get_symbol_context', () => {
-  it('should find symbol without position', async () => {
-    const context = await getSymbolContext({ symbol: 'startServer' });
-    expect(context.definition.file).toBe('src/server.ts');
+describe("get_symbol_context", () => {
+  it("should find symbol without position", async () => {
+    const context = await getSymbolContext({ symbol: "startServer" });
+    expect(context.definition.file).toBe("src/server.ts");
     expect(context.usage.direct_references).toHaveLength(3);
   });
-  
-  it('should handle ambiguous symbols', async () => {
-    const context = await getSymbolContext({ symbol: 'config' });
+
+  it("should handle ambiguous symbols", async () => {
+    const context = await getSymbolContext({ symbol: "config" });
     expect(context.disambiguation_hints).toBeDefined();
   });
 });
@@ -201,14 +204,14 @@ describe('get_symbol_context', () => {
 Test with real agent scenarios:
 
 ```typescript
-describe('Agent Integration', () => {
-  it('should provide context for Aider edits', async () => {
+describe("Agent Integration", () => {
+  it("should provide context for Aider edits", async () => {
     const query = "Add error handling to startServer";
     const context = await getRelevantContext(query);
-    
-    expect(context).toContain('definition');
-    expect(context).toContain('error patterns');
-    expect(context).toContain('related functions');
+
+    expect(context).toContain("definition");
+    expect(context).toContain("error patterns");
+    expect(context).toContain("related functions");
   });
 });
 ```
@@ -224,16 +227,19 @@ Ensure context retrieval is fast enough for interactive use:
 ## Migration Path
 
 ### Phase 1: Parallel Implementation (Week 1-4)
+
 - Keep existing navigation tools
 - Add context tools alongside
 - Test with early adopters
 
 ### Phase 2: Agent Integration (Week 5-6)
+
 - Create adapters for each agent type
 - Document usage patterns
 - Gather feedback
 
 ### Phase 3: Full Migration (Week 7-8)
+
 - Deprecate navigation tools
 - Update all documentation
 - Release context-oriented MCP
@@ -248,12 +254,15 @@ Ensure context retrieval is fast enough for interactive use:
 ## Risk Mitigation
 
 ### Risk 1: Performance Degradation
+
 **Mitigation**: Implement aggressive caching, lazy loading
 
 ### Risk 2: Breaking Changes
+
 **Mitigation**: Maintain backwards compatibility during migration
 
 ### Risk 3: Complex Symbol Resolution
+
 **Mitigation**: Provide disambiguation UI/API when multiple matches
 
 ## Next Steps

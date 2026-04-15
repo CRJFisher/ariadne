@@ -164,7 +164,7 @@ interface CallGraph {
 interface CallableNode {
   symbol_id: SymbolId;
   name: SymbolName;
-  enclosed_calls: readonly CallReference[];  // Calls made by this function
+  enclosed_calls: readonly CallReference[]; // Calls made by this function
   location: Location;
   definition: AnyDefinition;
 }
@@ -185,7 +185,7 @@ interface CallReference {
   name: SymbolName;
   scope_id: ScopeId;
   call_type: "function" | "method" | "constructor";
-  resolutions: readonly Resolution[];  // All possible call targets
+  resolutions: readonly Resolution[]; // All possible call targets
   is_callback_invocation?: boolean;
 }
 ```
@@ -202,8 +202,8 @@ Example of indirect reachability:
 ```typescript
 // Handler functions are stored in HANDLERS
 const HANDLERS = {
-  "create": handle_create,
-  "delete": handle_delete,
+  create: handle_create,
+  delete: handle_delete,
 } as const;
 
 // HANDLERS is read here - all stored functions become reachable

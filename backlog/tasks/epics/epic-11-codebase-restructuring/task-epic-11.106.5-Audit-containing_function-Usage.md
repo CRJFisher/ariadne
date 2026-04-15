@@ -13,6 +13,7 @@ Determine whether `context.containing_function` is used anywhere in the codebase
 ## Background
 
 The `containing_function` field in `ReferenceContext` has never been populated by any metadata extractor. It's defined in the interface but:
+
 - Never written to
 - Possibly never read from
 - Requires scope tree traversal (not AST-local)
@@ -47,11 +48,13 @@ For each usage found in PRODUCTION code (not tests), document:
 ## Decision Criteria
 
 ### DELETE if:
+
 - ✅ No read operations found
 - ✅ Only present in interface definition
 - ✅ No documented use case
 
 ### KEEP if:
+
 - ❌ Any code reads the field
 - ❌ Planned feature depends on it
 - ❌ Method resolution needs it
@@ -61,6 +64,7 @@ For each usage found in PRODUCTION code (not tests), document:
 Most likely: **DELETE**
 
 Reasoning:
+
 - Task 11.104 implemented comprehensive metadata extraction
 - 247 tests passed without populating this field
 - No extractors reference it
@@ -77,6 +81,7 @@ Add decision to task notes:
 [paste grep output]
 
 **Analysis:**
+
 - Read locations: [list or "none"]
 - Write locations: [list or "none"]
 - Planned usage: [yes/no with details]
@@ -87,6 +92,7 @@ Add decision to task notes:
 [explanation]
 
 **Action:**
+
 - If DELETE: Proceed to task 11.106.6
 - If KEEP: Create follow-up task for ScopeBuilder integration
 ```
@@ -101,10 +107,12 @@ Add decision to task notes:
 ## Follow-Up Actions
 
 ### If DELETE:
+
 - Proceed to task 11.106.6
 - Remove field in that task
 
 ### If KEEP:
+
 - Skip task 11.106.6
 - Create new task: "Implement containing_function via ScopeBuilder"
 - Document the use case
@@ -115,6 +123,7 @@ Add decision to task notes:
 ### What containing_function Was Meant For
 
 The field was likely intended to help with:
+
 - Return type inference (knowing which function a return belongs to)
 - Closure variable resolution
 - Nested function analysis
@@ -124,6 +133,7 @@ However, this information is already available through `scope_id` and the scope 
 ### ScopeBuilder Integration
 
 If we decide to KEEP the field, implementation would involve:
+
 1. Add method to ScopeBuilder: `get_containing_function(scope_id)`
 2. Walk up scope tree until finding a function scope
 3. Return that function's SymbolId

@@ -3,7 +3,7 @@ id: task-80
 title: Add comprehensive import/export tests for all languages
 status: Done
 assignee: []
-created_date: '2025-08-03'
+created_date: "2025-08-03"
 labels: []
 dependencies: []
 ---
@@ -29,25 +29,29 @@ Created comprehensive test suite for import/export patterns across all supported
 Created `/Users/chuck/workspace/ariadne/packages/core/tests/import_export_comprehensive.test.ts` with 16 tests:
 
 **TypeScript/JavaScript (5 tests):**
+
 - ES6 named imports and exports
 - ES6 default imports and exports
-- ES6 namespace imports (import * as)
+- ES6 namespace imports (import \* as)
 - CommonJS require and module.exports
 - Re-exports (export from)
 
 **Python (4 tests):**
+
 - from imports
 - import as aliases
-- star imports (from X import *)
+- star imports (from X import \*)
 - relative imports
 
 **Rust (4 tests):**
+
 - use statements
 - use with aliases
 - nested and glob imports
 - pub use re-exports
 
 **Cross-file resolution (3 tests):**
+
 - TypeScript usage tracking across files
 - Python usage tracking across files
 - Rust usage tracking across files
@@ -55,6 +59,7 @@ Created `/Users/chuck/workspace/ariadne/packages/core/tests/import_export_compre
 ### Test Results
 
 All 16 tests pass successfully. Some limitations were identified:
+
 - Python parser only captures module imports, not individual aliased function imports
 - Star imports captured as single import
 - Tests adjusted to match current parser capabilities

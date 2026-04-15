@@ -26,7 +26,7 @@ Metadata extractors already check for keywords but don't preserve the informatio
 
 ```typescript
 // javascript_metadata.ts:255
-if (receiver_node.type === 'this') {
+if (receiver_node.type === "this") {
   // We detect 'this' but don't preserve it!
 }
 ```
@@ -50,7 +50,7 @@ export interface ReceiverInfo {
 }
 
 // NEW: Import from types package
-import type { SelfReferenceKeyword } from '@ariadnejs/types';
+import type { SelfReferenceKeyword } from "@ariadnejs/types";
 ```
 
 ### JavaScript/TypeScript Metadata Extractor
@@ -64,34 +64,34 @@ function extract_receiver_info(
   member_node: Parser.SyntaxNode,
   source_code: string
 ): ReceiverInfo | null {
-  const object_node = member_node.childForFieldName('object');
+  const object_node = member_node.childForFieldName("object");
   if (!object_node) return null;
 
-  const property_node = member_node.childForFieldName('property');
+  const property_node = member_node.childForFieldName("property");
   const property_name = property_node
     ? extract_node_text(property_node, source_code)
     : null;
 
   // Detect self-reference keywords
-  if (object_node.type === 'this') {
+  if (object_node.type === "this") {
     return {
       receiver_location: node_location(object_node),
       property_chain: property_name
-        ? (['this', property_name] as readonly SymbolName[])
-        : (['this'] as readonly SymbolName[]),
+        ? (["this", property_name] as readonly SymbolName[])
+        : (["this"] as readonly SymbolName[]),
       is_self_reference: true,
-      self_keyword: 'this',
+      self_keyword: "this",
     };
   }
 
-  if (object_node.type === 'super') {
+  if (object_node.type === "super") {
     return {
       receiver_location: node_location(object_node),
       property_chain: property_name
-        ? (['super', property_name] as readonly SymbolName[])
-        : (['super'] as readonly SymbolName[]),
+        ? (["super", property_name] as readonly SymbolName[])
+        : (["super"] as readonly SymbolName[]),
       is_self_reference: true,
-      self_keyword: 'super',
+      self_keyword: "super",
     };
   }
 
@@ -111,13 +111,13 @@ function extract_receiver_info(
 
 ```typescript
 // Inside extract_method_call_info() when handling super calls
-if (function_node.type === 'super') {
+if (function_node.type === "super") {
   const method_name = extract_node_text(property_node, source_code);
   return {
     receiver_location: node_location(function_node),
-    property_chain: ['super', method_name] as readonly SymbolName[],
+    property_chain: ["super", method_name] as readonly SymbolName[],
     is_self_reference: true,
-    self_keyword: 'super',
+    self_keyword: "super",
   };
 }
 ```
@@ -133,10 +133,10 @@ function extract_receiver_info(
   attribute_node: Parser.SyntaxNode,
   source_code: string
 ): ReceiverInfo | null {
-  const object_node = attribute_node.childForFieldName('object');
+  const object_node = attribute_node.childForFieldName("object");
   if (!object_node) return null;
 
-  const attribute_name_node = attribute_node.childForFieldName('attribute');
+  const attribute_name_node = attribute_node.childForFieldName("attribute");
   const attribute_name = attribute_name_node
     ? extract_node_text(attribute_name_node, source_code)
     : null;
@@ -144,36 +144,36 @@ function extract_receiver_info(
   // Detect Python self-reference keywords
   const object_text = extract_node_text(object_node, source_code);
 
-  if (object_text === 'self') {
+  if (object_text === "self") {
     return {
       receiver_location: node_location(object_node),
       property_chain: attribute_name
-        ? (['self', attribute_name] as readonly SymbolName[])
-        : (['self'] as readonly SymbolName[]),
+        ? (["self", attribute_name] as readonly SymbolName[])
+        : (["self"] as readonly SymbolName[]),
       is_self_reference: true,
-      self_keyword: 'self',
+      self_keyword: "self",
     };
   }
 
-  if (object_text === 'cls') {
+  if (object_text === "cls") {
     return {
       receiver_location: node_location(object_node),
       property_chain: attribute_name
-        ? (['cls', attribute_name] as readonly SymbolName[])
-        : (['cls'] as readonly SymbolName[]),
+        ? (["cls", attribute_name] as readonly SymbolName[])
+        : (["cls"] as readonly SymbolName[]),
       is_self_reference: true,
-      self_keyword: 'cls',
+      self_keyword: "cls",
     };
   }
 
-  if (object_text === 'super') {
+  if (object_text === "super") {
     return {
       receiver_location: node_location(object_node),
       property_chain: attribute_name
-        ? (['super', attribute_name] as readonly SymbolName[])
-        : (['super'] as readonly SymbolName[]),
+        ? (["super", attribute_name] as readonly SymbolName[])
+        : (["super"] as readonly SymbolName[]),
       is_self_reference: true,
-      self_keyword: 'super',
+      self_keyword: "super",
     };
   }
 
@@ -199,10 +199,10 @@ function extract_receiver_info(
   field_node: Parser.SyntaxNode,
   source_code: string
 ): ReceiverInfo | null {
-  const value_node = field_node.childForFieldName('value');
+  const value_node = field_node.childForFieldName("value");
   if (!value_node) return null;
 
-  const field_name_node = field_node.childForFieldName('field');
+  const field_name_node = field_node.childForFieldName("field");
   const field_name = field_name_node
     ? extract_node_text(field_name_node, source_code)
     : null;
@@ -210,25 +210,25 @@ function extract_receiver_info(
   // Detect Rust self-reference keywords
   const value_text = extract_node_text(value_node, source_code);
 
-  if (value_text === 'self') {
+  if (value_text === "self") {
     return {
       receiver_location: node_location(value_node),
       property_chain: field_name
-        ? (['self', field_name] as readonly SymbolName[])
-        : (['self'] as readonly SymbolName[]),
+        ? (["self", field_name] as readonly SymbolName[])
+        : (["self"] as readonly SymbolName[]),
       is_self_reference: true,
-      self_keyword: 'self',
+      self_keyword: "self",
     };
   }
 
-  if (value_text === 'super') {
+  if (value_text === "super") {
     return {
       receiver_location: node_location(value_node),
       property_chain: field_name
-        ? (['super', field_name] as readonly SymbolName[])
-        : (['super'] as readonly SymbolName[]),
+        ? (["super", field_name] as readonly SymbolName[])
+        : (["super"] as readonly SymbolName[]),
       is_self_reference: true,
-      self_keyword: 'super',
+      self_keyword: "super",
     };
   }
 
@@ -249,8 +249,8 @@ Create tests for each language's keyword detection:
 
 ```typescript
 // javascript_metadata.test.ts
-describe('JavaScript Keyword Detection', () => {
-  test('detects this keyword in method call', () => {
+describe("JavaScript Keyword Detection", () => {
+  test("detects this keyword in method call", () => {
     const code = `
       class MyClass {
         method() {
@@ -261,11 +261,11 @@ describe('JavaScript Keyword Detection', () => {
 
     const receiver = extract_receiver_info(/* ... */);
     expect(receiver?.is_self_reference).toBe(true);
-    expect(receiver?.self_keyword).toBe('this');
-    expect(receiver?.property_chain).toEqual(['this', 'other_method']);
+    expect(receiver?.self_keyword).toBe("this");
+    expect(receiver?.property_chain).toEqual(["this", "other_method"]);
   });
 
-  test('detects super keyword', () => {
+  test("detects super keyword", () => {
     const code = `
       class Child extends Parent {
         method() {
@@ -276,10 +276,10 @@ describe('JavaScript Keyword Detection', () => {
 
     const receiver = extract_receiver_info(/* ... */);
     expect(receiver?.is_self_reference).toBe(true);
-    expect(receiver?.self_keyword).toBe('super');
+    expect(receiver?.self_keyword).toBe("super");
   });
 
-  test('does not mark regular objects as self-reference', () => {
+  test("does not mark regular objects as self-reference", () => {
     const code = `user.getName()`;
 
     const receiver = extract_receiver_info(/* ... */);
@@ -289,8 +289,8 @@ describe('JavaScript Keyword Detection', () => {
 });
 
 // python_metadata.test.ts
-describe('Python Keyword Detection', () => {
-  test('detects self keyword', () => {
+describe("Python Keyword Detection", () => {
+  test("detects self keyword", () => {
     const code = `
       class MyClass:
         def method(self):
@@ -299,10 +299,10 @@ describe('Python Keyword Detection', () => {
 
     const receiver = extract_receiver_info(/* ... */);
     expect(receiver?.is_self_reference).toBe(true);
-    expect(receiver?.self_keyword).toBe('self');
+    expect(receiver?.self_keyword).toBe("self");
   });
 
-  test('detects cls keyword in classmethod', () => {
+  test("detects cls keyword in classmethod", () => {
     const code = `
       class MyClass:
         @classmethod
@@ -312,7 +312,7 @@ describe('Python Keyword Detection', () => {
 
     const receiver = extract_receiver_info(/* ... */);
     expect(receiver?.is_self_reference).toBe(true);
-    expect(receiver?.self_keyword).toBe('cls');
+    expect(receiver?.self_keyword).toBe("cls");
   });
 });
 
@@ -333,12 +333,14 @@ describe('Python Keyword Detection', () => {
 ## Files Changed
 
 **Modified**:
+
 - `packages/core/src/index_single_file/metadata/metadata_types.ts`
 - `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_metadata.ts`
 - `packages/core/src/index_single_file/query_code_tree/language_configs/python_metadata.ts`
 - `packages/core/src/index_single_file/query_code_tree/language_configs/rust_metadata.ts`
 
 **New**:
+
 - Test files for each metadata extractor (if not exist)
 
 ## Completion Notes
@@ -346,6 +348,7 @@ describe('Python Keyword Detection', () => {
 **Completed**: All metadata extractors updated with keyword detection.
 
 **Implementation Summary**:
+
 - Created `ReceiverInfo` type with `is_self_reference` and `self_keyword` fields
 - Added `extract_receiver_info()` method to `MetadataExtractors` interface
 - Implemented keyword detection for:

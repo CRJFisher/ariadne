@@ -3,9 +3,9 @@ id: task-54.1
 title: Implement get_symbol_definition_context MCP tool
 status: Done
 assignee:
-  - '@claude'
-created_date: '2025-07-30'
-updated_date: '2025-07-30'
+  - "@claude"
+created_date: "2025-07-30"
+updated_date: "2025-07-30"
 labels: []
 dependencies: []
 parent_task_id: task-54
@@ -43,6 +43,7 @@ Implement the first context-oriented MCP tool that provides rich symbol informat
 ### ✅ COMPLETED FEATURES
 
 1. **Core Symbol Resolution**
+
    - Symbol lookup by name without positions ✅
    - TypeScript interfaces for request/response ✅
    - Fuzzy matching with suggestions for "symbol not found" ✅
@@ -50,6 +51,7 @@ Implement the first context-oriented MCP tool that provides rich symbol informat
    - Test reference filtering with `includeTests` flag ✅
 
 2. **Context Information**
+
    - Symbol metadata (name, kind, signature) ✅
    - Basic usage statistics (direct references, imports, tests) ✅
    - Function call relationships via `Project.get_call_graph()` ✅
@@ -66,19 +68,21 @@ Implement the first context-oriented MCP tool that provides rich symbol informat
 ### 🚫 BLOCKED FEATURES (Core Dependencies)
 
 1. **Full Function Body Extraction** - **BLOCKED by task-55**
+
    - Issue: `enclosing_range` field is undefined in Def objects
    - Impact: Can only return function signatures, not full implementations
    - Current: Returns signature line only
    - Needed: Fix enclosing_range in core to include full function body
 
 2. **~~Documentation Extraction~~** - **✅ RESOLVED**
+
    - **UPDATE**: Core DOES provide documentation extraction via `get_source_with_context()`!
    - **Available**: JSDoc extraction for JS/TS, docstring extraction for Python
    - **Available**: Decorator/annotation extraction for all languages
    - **Implemented**: Now extracts documentation and annotations successfully
 
 3. **Class Inheritance Relationships** - **BLOCKED by task-56**
-   - Issue: No API to analyze extends/implements relationships  
+   - Issue: No API to analyze extends/implements relationships
    - Impact: `RelationshipInfo.extends/implements` always undefined
    - Current: Returns undefined for non-function symbols
    - Needed: AST traversal utilities for class relationships
@@ -118,10 +122,12 @@ Major implementation completed with documentation extraction discovery. Pausing 
 All acceptance criteria have been successfully completed after tasks 55 and 56 were finished:
 
 1. **Full Function Body Extraction** - Now working with enclosing_range fix from task-55
+
    - Functions now return complete implementation including body
    - Added test to verify full body extraction
 
 2. **Class Inheritance Relationships** - Fully implemented with task-56 APIs
+
    - Added support for class extends and interface implements
    - Added support for interface extends (fixed core bug)
    - Added support for Rust trait implementations

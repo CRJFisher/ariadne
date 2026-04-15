@@ -17,6 +17,7 @@ Update TypeScript semantic index integration tests to verify metadata extraction
 ## Scope
 
 Similar to 104.3.4 but focused on TypeScript-specific features:
+
 - Type annotations: `const x: string = "hello"`
 - Generic types: `Array<T>`, `Map<K, V>`
 - Interface type references
@@ -142,6 +143,7 @@ describe("interface type references", () => {
 ### 5. Follow Pattern from 104.3.4
 
 Apply same fixes as JavaScript tests:
+
 - Add metadata assertions
 - Handle optional metadata
 - Update snapshots if needed
@@ -178,6 +180,7 @@ npx vitest run src/index_single_file/semantic_index.typescript.test.ts
 ### TypeScript vs JavaScript
 
 TypeScript tests should verify:
+
 - Type information is extracted from annotations
 - Generic type arguments are captured
 - Interface references are tracked
@@ -186,6 +189,7 @@ TypeScript tests should verify:
 ### Optional Type Info
 
 Not all references will have `type_info`:
+
 - Plain JavaScript patterns: no type info
 - Inferred types: may or may not have type info
 - Explicit annotations: should have type info with certainty "declared"

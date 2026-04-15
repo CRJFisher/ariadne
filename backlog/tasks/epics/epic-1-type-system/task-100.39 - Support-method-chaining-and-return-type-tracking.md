@@ -3,7 +3,7 @@ id: task-100.39
 title: Support method chaining and return type tracking
 status: To Do
 assignee: []
-created_date: '2025-08-06 08:08'
+created_date: "2025-08-06 08:08"
 labels: []
 dependencies: []
 parent_task_id: task-100

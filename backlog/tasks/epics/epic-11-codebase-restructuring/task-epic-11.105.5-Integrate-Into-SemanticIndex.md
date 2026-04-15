@@ -15,6 +15,7 @@ Add the extracted type data fields to `SemanticIndex` interface and update `buil
 ### File Changes
 
 **Files to modify:**
+
 1. `packages/core/src/index_single_file/semantic_index.ts` - Interface + builder
 2. `packages/core/src/index_single_file/type_preprocessing/index.ts` - Public API
 
@@ -210,10 +211,7 @@ function extract_type_data(
 
 export { extract_type_annotations } from "./type_bindings";
 export { extract_constructor_bindings } from "./constructor_tracking";
-export {
-  extract_type_members,
-  type TypeMemberInfo,
-} from "./member_extraction";
+export { extract_type_members, type TypeMemberInfo } from "./member_extraction";
 export { extract_type_alias_metadata } from "./alias_extraction";
 ```
 
@@ -242,8 +240,9 @@ describe("SemanticIndex type preprocessing", () => {
     expect(index.type_bindings.size).toBeGreaterThan(0);
 
     // Find user variable location and check binding
-    const user_binding = Array.from(index.type_bindings.entries())
-      .find(([loc, type]) => type === "User");
+    const user_binding = Array.from(index.type_bindings.entries()).find(
+      ([loc, type]) => type === "User"
+    );
 
     expect(user_binding).toBeDefined();
   });
@@ -258,8 +257,9 @@ describe("SemanticIndex type preprocessing", () => {
     const index = build_semantic_index(file, file.tree, "typescript");
 
     // Should have binding from constructor
-    const user_binding = Array.from(index.type_bindings.entries())
-      .find(([loc, type]) => type === "User");
+    const user_binding = Array.from(index.type_bindings.entries()).find(
+      ([loc, type]) => type === "User"
+    );
 
     expect(user_binding).toBeDefined();
   });
@@ -276,8 +276,9 @@ describe("SemanticIndex type preprocessing", () => {
     const index = build_semantic_index(file, file.tree, "typescript");
 
     // Find User class
-    const user_class = Array.from(index.classes.values())
-      .find(c => c.name === "User");
+    const user_class = Array.from(index.classes.values()).find(
+      (c) => c.name === "User"
+    );
 
     expect(user_class).toBeDefined();
 
@@ -299,13 +300,16 @@ describe("SemanticIndex type preprocessing", () => {
     const index = build_semantic_index(file, file.tree, "typescript");
 
     // Find MyUser type alias
-    const myuser_alias = Array.from(index.types.values())
-      .find(t => t.name === "MyUser");
+    const myuser_alias = Array.from(index.types.values()).find(
+      (t) => t.name === "MyUser"
+    );
 
     expect(myuser_alias).toBeDefined();
 
     // Should have metadata (string, not resolved)
-    const alias_metadata = index.type_alias_metadata.get(myuser_alias.symbol_id);
+    const alias_metadata = index.type_alias_metadata.get(
+      myuser_alias.symbol_id
+    );
 
     expect(alias_metadata).toBe("User");
   });
@@ -338,17 +342,20 @@ describe("SemanticIndex type preprocessing", () => {
 ## Success Criteria
 
 ### Functional
+
 - ✅ New fields added to SemanticIndex interface
 - ✅ build_semantic_index() calls all extractors
 - ✅ Type data correctly stored in index
 - ✅ No breaking changes to existing code
 
 ### Testing
+
 - ✅ Integration test verifies all fields populated
 - ✅ All existing tests still pass
 - ✅ Type checking passes
 
 ### Code Quality
+
 - ✅ Clear JSDoc on new fields
 - ✅ Well-structured extraction helper
 - ✅ Public API exported cleanly
@@ -356,6 +363,7 @@ describe("SemanticIndex type preprocessing", () => {
 ## Dependencies
 
 **Uses:**
+
 - Tasks 105.1, 105.2, 105.3, 105.4 (extraction functions)
 - Existing SemanticIndex structure
 
@@ -364,6 +372,7 @@ describe("SemanticIndex type preprocessing", () => {
 ## Next Steps
 
 After completion:
+
 - Task 11.105.6 adds comprehensive tests
 - Task 11.109.3 consumes this data to build TypeContext
 - Type data enables method resolution in 11.109.5
@@ -373,6 +382,7 @@ After completion:
 ### Binding Precedence
 
 When both annotation and constructor exist:
+
 ```typescript
 const user: User = new User();
 ```

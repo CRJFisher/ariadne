@@ -3,9 +3,11 @@
 ## Status: Completed
 
 ## Parent Task
+
 task-epic-11.102 - Replace NormalizedCapture with Direct Definition Builders
 
 ## Completion Date
+
 2025-09-29
 
 ## Objective
@@ -104,25 +106,37 @@ export class DefinitionBuilder {
     const definitions: AnyDefinition[] = [];
 
     // Build complex types with nested structures
-    this.classes.forEach(state => definitions.push(this.build_class(state)));
-    this.functions.forEach(state => definitions.push(this.build_function(state)));
-    this.interfaces.forEach(state => definitions.push(this.build_interface(state)));
-    this.enums.forEach(state => definitions.push(this.build_enum(state)));
-    this.namespaces.forEach(state => definitions.push(this.build_namespace(state)));
+    this.classes.forEach((state) => definitions.push(this.build_class(state)));
+    this.functions.forEach((state) =>
+      definitions.push(this.build_function(state))
+    );
+    this.interfaces.forEach((state) =>
+      definitions.push(this.build_interface(state))
+    );
+    this.enums.forEach((state) => definitions.push(this.build_enum(state)));
+    this.namespaces.forEach((state) =>
+      definitions.push(this.build_namespace(state))
+    );
 
     // Add simple definitions
-    this.variables.forEach(def => definitions.push(def));
-    this.imports.forEach(def => definitions.push(def));
-    this.types.forEach(def => definitions.push(def));
-    this.decorators.forEach(def => definitions.push(def));
+    this.variables.forEach((def) => definitions.push(def));
+    this.imports.forEach((def) => definitions.push(def));
+    this.types.forEach((def) => definitions.push(def));
+    this.decorators.forEach((def) => definitions.push(def));
 
     return definitions;
   }
 
   private build_class(state: ClassBuilderState): ClassDefinition {
-    const methods = Array.from(state.methods.values()).map(m => this.build_method(m));
-    const properties = Array.from(state.properties.values()).map(p => this.build_property(p));
-    const constructor = state.constructor ? this.build_constructor(state.constructor) : undefined;
+    const methods = Array.from(state.methods.values()).map((m) =>
+      this.build_method(m)
+    );
+    const properties = Array.from(state.properties.values()).map((p) =>
+      this.build_property(p)
+    );
+    const constructor = state.constructor
+      ? this.build_constructor(state.constructor)
+      : undefined;
 
     return {
       kind: "class" as const,
@@ -131,7 +145,7 @@ export class DefinitionBuilder {
       properties: properties,
       constructor: constructor,
       decorators: state.decorators || [],
-      extends: state.base.extends || []
+      extends: state.base.extends || [],
     } as ClassDefinition;
   }
 
@@ -142,18 +156,20 @@ export class DefinitionBuilder {
       kind: "method" as const,
       ...state.base,
       parameters: parameters,
-      decorators: state.decorators.length > 0 ? state.decorators : undefined
+      decorators: state.decorators.length > 0 ? state.decorators : undefined,
     } as MethodDefinition;
   }
 
-  private build_constructor(state: ConstructorBuilderState): ConstructorDefinition {
+  private build_constructor(
+    state: ConstructorBuilderState
+  ): ConstructorDefinition {
     const parameters = Array.from(state.parameters.values());
 
     return {
       kind: "constructor" as const,
       ...state.base,
       parameters: parameters,
-      decorators: state.decorators.length > 0 ? state.decorators : undefined
+      decorators: state.decorators.length > 0 ? state.decorators : undefined,
     } as ConstructorDefinition;
   }
 
@@ -161,7 +177,7 @@ export class DefinitionBuilder {
     return {
       kind: "property" as const,
       ...state.base,
-      decorators: state.decorators || []
+      decorators: state.decorators || [],
     } as PropertyDefinition;
   }
 
@@ -173,14 +189,16 @@ export class DefinitionBuilder {
       ...state.base,
       signature: {
         parameters: parameters,
-        return_type: state.signature.return_type
+        return_type: state.signature.return_type,
       },
-      decorators: state.decorators.length > 0 ? state.decorators : undefined
+      decorators: state.decorators.length > 0 ? state.decorators : undefined,
     } as FunctionDefinition;
   }
 
   private build_interface(state: InterfaceBuilderState): InterfaceDefinition {
-    const methods = Array.from(state.methods.values()).map(m => this.build_method(m));
+    const methods = Array.from(state.methods.values()).map((m) =>
+      this.build_method(m)
+    );
     const properties = Array.from(state.properties.values());
 
     return {
@@ -188,14 +206,14 @@ export class DefinitionBuilder {
       ...state.base,
       methods: methods,
       properties: properties,
-      extends: state.base.extends || []
+      extends: state.base.extends || [],
     } as InterfaceDefinition;
   }
 
   private build_enum(state: EnumBuilderState): EnumDefinition {
     const members = Array.from(state.members.values());
     const methods = state.methods
-      ? Array.from(state.methods.values()).map(m => this.build_method(m))
+      ? Array.from(state.methods.values()).map((m) => this.build_method(m))
       : undefined;
 
     return {
@@ -203,19 +221,20 @@ export class DefinitionBuilder {
       ...state.base,
       members: members,
       methods: methods,
-      is_const: state.base.is_const || false
+      is_const: state.base.is_const || false,
     } as EnumDefinition;
   }
 
   private build_namespace(state: NamespaceBuilderState): NamespaceDefinition {
-    const exported_symbols = state.exported_symbols.size > 0
-      ? Array.from(state.exported_symbols)
-      : undefined;
+    const exported_symbols =
+      state.exported_symbols.size > 0
+        ? Array.from(state.exported_symbols)
+        : undefined;
 
     return {
       kind: "namespace" as const,
       ...state.base,
-      exported_symbols: exported_symbols
+      exported_symbols: exported_symbols,
     } as NamespaceDefinition;
   }
 }
@@ -227,11 +246,11 @@ export class DefinitionBuilder {
 // packages/core/src/parse_and_query_code/capture_types.ts
 
 export interface RawCapture {
-  category: SemanticCategory;  // DEFINITION, REFERENCE, etc.
-  node_location: Location;     // Where in file
-  symbol_name: SymbolName;     // The identifier
-  node: SyntaxNode;            // Raw tree-sitter node
-  capture_name: string;        // @name from query
+  category: SemanticCategory; // DEFINITION, REFERENCE, etc.
+  node_location: Location; // Where in file
+  symbol_name: SymbolName; // The identifier
+  node: SyntaxNode; // Raw tree-sitter node
+  capture_name: string; // @name from query
 }
 ```
 
@@ -490,10 +509,12 @@ All definitions from `@ariadnejs/types/symbol_definitions.ts`:
 ### What Was Completed
 
 #### 1. Core Implementation
+
 **File**: `packages/core/src/index_single_file/definitions/definition_builder.ts` (855 lines)
 
 - ✅ Complete DefinitionBuilder class with functional composition pattern
 - ✅ Builder states for all complex definition types using `Omit<>` to avoid TypeScript conflicts:
+
   - `ClassBuilderState` - accumulates methods, properties, constructor, decorators
   - `FunctionBuilderState` - accumulates signature with parameters
   - `InterfaceBuilderState` - accumulates methods and properties
@@ -502,24 +523,29 @@ All definitions from `@ariadnejs/types/symbol_definitions.ts`:
   - Supporting states: `MethodBuilderState`, `ConstructorBuilderState`, `PropertyBuilderState`
 
 - ✅ Helper functions for SymbolId creation:
+
   - `enum_symbol()`, `namespace_symbol()`, `decorator_symbol()`, `import_symbol()`, `constructor_symbol()`
   - `determine_availability()`, `extract_type()`, `extract_extends()`
 
 - ✅ Full support for all definition types:
+
   - **Complex**: classes, functions, interfaces, enums, namespaces
   - **Nested**: methods, constructors, properties, parameters, enum members
   - **Simple**: variables, constants, imports, types, decorators
 
 - ✅ Location-based nesting logic:
+
   - `find_containing_class()`, `find_containing_interface()`, `find_containing_enum()`
   - `is_location_within()` for hierarchical containment checks
 
 - ✅ Functional pipeline with `process_captures()` exported function
 
 #### 2. Tests
+
 **File**: `packages/core/src/index_single_file/definitions/definition_builder.test.ts` (294 lines)
 
 - ✅ 12 comprehensive tests covering:
+
   - All major definition types (class, function, interface, enum, variable, constant, namespace, type)
   - Functional chaining behavior
   - Nested structures (methods in classes)
@@ -530,12 +556,14 @@ All definitions from `@ariadnejs/types/symbol_definitions.ts`:
 - ✅ **Test Results**: 12/12 passing (100% success rate)
 
 #### 3. Module Exports
+
 **File**: `packages/core/src/index_single_file/definitions/index.ts`
 
 - ✅ Properly exported `DefinitionBuilder` class
 - ✅ Exported `process_captures()` pipeline function
 
 #### 4. TypeScript Compilation
+
 - ✅ Zero compilation errors
 - ✅ Full type safety with branded types (SymbolId, SymbolName)
 - ✅ Proper handling of readonly arrays and optional fields
@@ -543,12 +571,19 @@ All definitions from `@ariadnejs/types/symbol_definitions.ts`:
 ### Issues Encountered and Resolutions
 
 #### Issue 1: TypeScript `Partial<>` Type Conflicts
+
 **Problem**: Using `Partial<ClassDefinition>` caused type errors because TypeScript's built-in `constructor` property conflicted with our `ConstructorDefinition` type.
 
 **Solution**: Used `Omit<>` to exclude builder-managed fields from the base partial type:
+
 ```typescript
 interface ClassBuilderState {
-  base: Partial<Omit<ClassDefinition, 'constructor' | 'methods' | 'properties' | 'decorators'>>;
+  base: Partial<
+    Omit<
+      ClassDefinition,
+      "constructor" | "methods" | "properties" | "decorators"
+    >
+  >;
   methods: Map<SymbolId, MethodBuilderState>;
   properties: Map<SymbolId, PropertyBuilderState>;
   constructor?: ConstructorBuilderState;
@@ -557,14 +592,17 @@ interface ClassBuilderState {
 ```
 
 #### Issue 2: Decorator Category vs Entity
+
 **Problem**: Initial implementation used `SemanticEntity.DECORATOR` which doesn't exist in the enum.
 
 **Solution**: Decorators are identified by `SemanticCategory.DECORATOR`, not entity. Updated the process method to check category first for decorators.
 
 #### Issue 3: Test Type Narrowing
+
 **Problem**: TypeScript couldn't narrow `AnyDefinition` union type in test assertions.
 
 **Solution**: Added explicit type assertions after kind checks:
+
 ```typescript
 if (class_def.kind === "class") {
   const classDef = class_def as ClassDefinition;
@@ -575,11 +613,14 @@ if (class_def.kind === "class") {
 ### Follow-on Work Needed
 
 #### Immediate Next Steps (from task-epic-11.102 parent)
+
 1. **task-epic-11.102.3**: Create Reference Builder System
+
    - Similar pattern to DefinitionBuilder
    - Handle call references, member access, type references, return references
 
 2. **task-epic-11.102.4**: Delete Intermediate Types
+
    - Remove `NormalizedCapture` once builders are wired up
    - Clean up old capture normalization code
 
@@ -588,6 +629,7 @@ if (class_def.kind === "class") {
    - Update JavaScript, TypeScript, Python, Rust configs
 
 #### Future Enhancements
+
 1. **Decorator Association**: Currently decorators are captured but not associated with their targets. Need logic to link decorator definitions to the entities they decorate.
 
 2. **Cross-file References**: DefinitionBuilder handles single-file processing. Need to extend for cross-file definition tracking (imports/exports resolution).
@@ -608,6 +650,7 @@ if (class_def.kind === "class") {
 ### Test Coverage Analysis
 
 **DefinitionBuilder Tests**: 12/12 passing ✅
+
 - Basic definition creation: 8 tests
 - Functional composition: 1 test
 - Nested structures: 1 test
@@ -615,16 +658,19 @@ if (class_def.kind === "class") {
 - Multiple types: 1 test
 
 **Dependency Tests**: All passing ✅
+
 - scope_processor.test.ts: 10/10
 - capture_types.test.ts: 28/28
 
 **Pre-existing Failures**: Not related to this implementation
+
 - definitions.test.ts: 34 failures (old system)
 - capture_normalizer.test.ts: 8 failures (pre-existing)
 - rust.test.ts: ~18 failures (language config issues)
 - MCP integration tests: 12 failures (old API deleted in previous commits)
 
 ### Files Created
+
 ```
 packages/core/src/index_single_file/definitions/
 ├── definition_builder.ts          (855 lines, 27.4 KB)
@@ -633,7 +679,9 @@ packages/core/src/index_single_file/definitions/
 ```
 
 ### Actual Time Spent
+
 Approximately 2 hours (under original estimate of 3 hours)
 
 ### Notes
+
 The implementation is production-ready and fully tested. The builder pattern successfully eliminates intermediate representations while maintaining type safety and providing a clean functional API. Ready for integration into the main processing pipeline once parent task coordination is complete.

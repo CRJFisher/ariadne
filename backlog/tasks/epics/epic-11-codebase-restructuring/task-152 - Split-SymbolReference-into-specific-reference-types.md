@@ -3,7 +3,7 @@ id: task-152
 title: Split SymbolReference into specific reference types
 status: In Progress
 assignee: []
-created_date: '2025-10-03 11:32'
+created_date: "2025-10-03 11:32"
 labels: [architecture, type-safety, refactoring]
 dependencies: []
 priority: high
@@ -15,6 +15,7 @@ estimated_effort: 6-8 days
 Split the monolithic `SymbolReference` interface into a discriminated union of specific reference types. This architectural refactor improves type safety by making optional fields required on specific variants and enables pattern matching for cleaner resolution code.
 
 **Key Benefits**:
+
 - **Type safety**: Compiler enforces required fields per variant (no `undefined` checks)
 - **Pattern matching**: Clean dispatch using `switch(ref.kind)`
 - **Self-documenting**: Each variant clearly shows its purpose
@@ -27,15 +28,19 @@ Split the monolithic `SymbolReference` interface into a discriminated union of s
 ## Implementation Strategy
 
 ### Phase 1: Core Infrastructure (Tasks 152.1 - 152.5)
+
 Build the foundation for typed references without breaking existing code.
 
 ### Phase 2: Migration (Tasks 152.6 - 152.9)
+
 Migrate ReferenceBuilder and resolution code to use typed variants.
 
 ### Phase 3: Self-Reference Bug Fix (Tasks 152.10 - 152.13)
+
 Add `SelfReferenceCall` variant to fix the `this.method()` resolution bug (31% of call graph failures).
 
 ### Phase 4: Cleanup (Task 152.14)
+
 Remove legacy code and verify all systems work.
 
 ---
@@ -48,6 +53,7 @@ Remove legacy code and verify all systems work.
 **File**: `packages/types/src/symbol_references.ts`
 
 **What was done**:
+
 - Created `SymbolReference` as discriminated union
 - Defined 8 variant types:
   - `SelfReferenceCall` (for `this.method()` bug fix)
@@ -68,6 +74,7 @@ Remove legacy code and verify all systems work.
 **Estimated Effort**: 4 hours
 
 **Files to create**:
+
 - `packages/core/src/index_single_file/references/reference_factories.ts`
 
 **Purpose**: Centralize reference creation logic in pure factory functions.
@@ -98,7 +105,7 @@ export function create_self_reference_call(
   property_chain: readonly SymbolName[]
 ): SelfReferenceCall {
   return {
-    kind: 'self_reference_call',
+    kind: "self_reference_call",
     name,
     location,
     scope_id,
@@ -118,7 +125,7 @@ export function create_method_call_reference(
   property_chain: readonly SymbolName[]
 ): MethodCallReference {
   return {
-    kind: 'method_call',
+    kind: "method_call",
     name,
     location,
     scope_id,
@@ -136,7 +143,7 @@ export function create_function_call_reference(
   scope_id: ScopeId
 ): FunctionCallReference {
   return {
-    kind: 'function_call',
+    kind: "function_call",
     name,
     location,
     scope_id,
@@ -153,7 +160,7 @@ export function create_constructor_call_reference(
   construct_target: Location
 ): ConstructorCallReference {
   return {
-    kind: 'constructor_call',
+    kind: "constructor_call",
     name,
     location,
     scope_id,
@@ -168,10 +175,10 @@ export function create_variable_reference(
   name: SymbolName,
   location: Location,
   scope_id: ScopeId,
-  access_type: 'read' | 'write'
+  access_type: "read" | "write"
 ): VariableReference {
   return {
-    kind: 'variable_reference',
+    kind: "variable_reference",
     name,
     location,
     scope_id,
@@ -188,11 +195,11 @@ export function create_property_access_reference(
   scope_id: ScopeId,
   receiver_location: Location,
   property_chain: readonly SymbolName[],
-  access_type: 'property' | 'index',
+  access_type: "property" | "index",
   is_optional_chain: boolean
 ): PropertyAccessReference {
   return {
-    kind: 'property_access',
+    kind: "property_access",
     name,
     location,
     scope_id,
@@ -210,10 +217,10 @@ export function create_type_reference(
   name: SymbolName,
   location: Location,
   scope_id: ScopeId,
-  type_context: 'annotation' | 'extends' | 'implements' | 'generic' | 'return'
+  type_context: "annotation" | "extends" | "implements" | "generic" | "return"
 ): TypeReference {
   return {
-    kind: 'type_reference',
+    kind: "type_reference",
     name,
     location,
     scope_id,
@@ -231,7 +238,7 @@ export function create_assignment_reference(
   target_location: Location
 ): AssignmentReference {
   return {
-    kind: 'assignment',
+    kind: "assignment",
     name,
     location,
     scope_id,
@@ -241,6 +248,7 @@ export function create_assignment_reference(
 ```
 
 **Success Criteria**:
+
 - All factory functions are pure (no side effects)
 - Each factory corresponds to one variant type
 - Type parameters match variant requirements exactly
@@ -255,6 +263,7 @@ export function create_assignment_reference(
 **Purpose**: Enable semantic index to detect `this`, `self`, `super` keywords so ReferenceBuilder can create `SelfReferenceCall` variants.
 
 **Files to modify**:
+
 1. `packages/core/src/index_single_file/query_code_tree/language_configs/metadata_types.ts`
 2. `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_metadata.ts`
 3. `packages/core/src/index_single_file/query_code_tree/language_configs/python_metadata.ts`
@@ -296,7 +305,7 @@ return {
   location,
   property_chain: chain,
   is_self_reference,
-  self_keyword
+  self_keyword,
 };
 ```
 
@@ -340,6 +349,7 @@ if (object_node.type === "identifier" && object_node.text === "self") {
 ```
 
 **Success Criteria**:
+
 - `ReceiverInfo` includes `is_self_reference` and `self_keyword` fields
 - All extractors detect keywords in their language
 - Property chains still include the keyword (backward compatible)
@@ -369,7 +379,7 @@ import {
 } from "./reference_factories";
 
 export class ReferenceBuilder {
-  private references: SymbolReference[] = [];  // Now typed variants!
+  private references: SymbolReference[] = []; // Now typed variants!
 
   process(capture: CaptureNode): ReferenceBuilder {
     const kind = determine_reference_kind(capture, this.extractors);
@@ -393,25 +403,35 @@ export class ReferenceBuilder {
 
     switch (kind) {
       case ReferenceKind.METHOD_CALL:
-        return this.create_method_or_self_reference_call(capture, location, scope_id, name);
+        return this.create_method_or_self_reference_call(
+          capture,
+          location,
+          scope_id,
+          name
+        );
 
       case ReferenceKind.FUNCTION_CALL:
         return create_function_call_reference(name, location, scope_id);
 
       case ReferenceKind.CONSTRUCTOR_CALL:
-        return this.create_constructor_reference(capture, location, scope_id, name);
+        return this.create_constructor_reference(
+          capture,
+          location,
+          scope_id,
+          name
+        );
 
       case ReferenceKind.VARIABLE_REFERENCE:
-        return create_variable_reference(name, location, scope_id, 'read');
+        return create_variable_reference(name, location, scope_id, "read");
 
       case ReferenceKind.VARIABLE_WRITE:
-        return create_variable_reference(name, location, scope_id, 'write');
+        return create_variable_reference(name, location, scope_id, "write");
 
       case ReferenceKind.PROPERTY_ACCESS:
         return this.create_property_access(capture, location, scope_id, name);
 
       case ReferenceKind.TYPE_REFERENCE:
-        return create_type_reference(name, location, scope_id, 'annotation');
+        return create_type_reference(name, location, scope_id, "annotation");
 
       case ReferenceKind.ASSIGNMENT:
         return this.create_assignment(capture, location, scope_id, name);
@@ -483,8 +503,8 @@ export class ReferenceBuilder {
       scope_id,
       chain_info.location,
       chain_info.property_chain as readonly SymbolName[],
-      'property',
-      false  // TODO: detect optional chaining
+      "property",
+      false // TODO: detect optional chaining
     );
   }
 
@@ -498,7 +518,7 @@ export class ReferenceBuilder {
       name,
       location,
       scope_id,
-      location  // Target is the assignment location itself
+      location // Target is the assignment location itself
     );
   }
 
@@ -510,6 +530,7 @@ export class ReferenceBuilder {
 ```
 
 **Key Changes**:
+
 1. Remove old monolithic reference creation code (lines 350-500+)
 2. Add `create_typed_reference()` dispatch method
 3. Create variant-specific helper methods
@@ -517,6 +538,7 @@ export class ReferenceBuilder {
 5. Check for self-reference keywords BEFORE creating method calls
 
 **Success Criteria**:
+
 - All references created are typed variants (no `LegacySymbolReference`)
 - Self-reference calls correctly identified and typed
 - Build completes without type errors in reference_builder.ts
@@ -559,28 +581,40 @@ export function resolve_reference(
 ): SymbolId | null {
   // Pattern match on kind
   switch (ref.kind) {
-    case 'self_reference_call':
+    case "self_reference_call":
       return resolve_self_reference_call(ref, scopes, definitions, types);
 
-    case 'method_call':
+    case "method_call":
       return resolve_method_call(ref, scopes, definitions, types, resolutions);
 
-    case 'function_call':
+    case "function_call":
       return resolve_function_call(ref, scopes, definitions, resolutions);
 
-    case 'constructor_call':
-      return resolve_constructor_call(ref, scopes, definitions, types, resolutions);
+    case "constructor_call":
+      return resolve_constructor_call(
+        ref,
+        scopes,
+        definitions,
+        types,
+        resolutions
+      );
 
-    case 'variable_reference':
+    case "variable_reference":
       return resolve_variable_reference(ref, scopes, resolutions);
 
-    case 'property_access':
-      return resolve_property_access(ref, scopes, definitions, types, resolutions);
+    case "property_access":
+      return resolve_property_access(
+        ref,
+        scopes,
+        definitions,
+        types,
+        resolutions
+      );
 
-    case 'type_reference':
+    case "type_reference":
       return resolve_type_reference(ref, scopes, definitions, resolutions);
 
-    case 'assignment':
+    case "assignment":
       return resolve_assignment_target(ref, scopes, resolutions);
 
     default:
@@ -592,6 +626,7 @@ export function resolve_reference(
 ```
 
 **Success Criteria**:
+
 - Single dispatch point using switch statement
 - No more checking `ref.type` or `ref.call_type`
 - Exhaustiveness checking ensures all variants handled
@@ -608,23 +643,25 @@ export function resolve_reference(
 **Purpose**: Update method call resolution to work with typed `MethodCallReference` instead of checking optional context fields.
 
 **Current signature**:
+
 ```typescript
 export function resolve_single_method_call(
-  call_ref: SymbolReference,  // Untyped
+  call_ref: SymbolReference // Untyped
   // ...
 ): SymbolId | null {
-  const receiver_loc = call_ref.context?.receiver_location;  // Optional field
-  if (!receiver_loc) return null;  // Runtime check
+  const receiver_loc = call_ref.context?.receiver_location; // Optional field
+  if (!receiver_loc) return null; // Runtime check
 
-  const chain = call_ref.context?.property_chain;  // Optional field
+  const chain = call_ref.context?.property_chain; // Optional field
   // ...
 }
 ```
 
 **New signature**:
+
 ```typescript
 export function resolve_method_call(
-  ref: MethodCallReference,  // Typed parameter!
+  ref: MethodCallReference, // Typed parameter!
   scopes: ScopeRegistry,
   definitions: DefinitionRegistry,
   types: TypeRegistry,
@@ -640,12 +677,14 @@ export function resolve_method_call(
 ```
 
 **Key Changes**:
+
 1. Remove all `call_ref.context?.field` optional chaining
 2. Access fields directly: `ref.receiver_location`, `ref.property_chain`
 3. Remove runtime undefined checks
 4. Update function name: `resolve_single_method_call` → `resolve_method_call`
 
 **Success Criteria**:
+
 - No optional chaining in method resolver
 - No runtime undefined checks for receiver_location or property_chain
 - Function accepts `MethodCallReference` type (not generic `SymbolReference`)
@@ -668,7 +707,7 @@ import type {
   SelfReferenceCall,
   SelfReferenceKeyword,
   SymbolId,
-  LexicalScope
+  LexicalScope,
 } from "@ariadnejs/types";
 import { ScopeRegistry } from "../registries/scope_registry";
 import { DefinitionRegistry } from "../registries/definition_registry";
@@ -728,13 +767,17 @@ function resolve_keyword_to_type(
   definitions: DefinitionRegistry
 ): SymbolId | null {
   switch (keyword) {
-    case 'this':
-    case 'self':
-    case 'cls':
+    case "this":
+    case "self":
+    case "cls":
       return find_containing_class(scope_id, scopes, definitions);
 
-    case 'super':
-      const containing_class = find_containing_class(scope_id, scopes, definitions);
+    case "super":
+      const containing_class = find_containing_class(
+        scope_id,
+        scopes,
+        definitions
+      );
       if (!containing_class) return null;
       return find_parent_class(containing_class, definitions);
   }
@@ -772,10 +815,12 @@ function find_containing_class(
 }
 
 function is_type_scope(scope_type: string): boolean {
-  return scope_type === 'class'
-    || scope_type === 'struct'
-    || scope_type === 'impl'
-    || scope_type === 'interface';
+  return (
+    scope_type === "class" ||
+    scope_type === "struct" ||
+    scope_type === "impl" ||
+    scope_type === "interface"
+  );
 }
 
 function find_type_definition(
@@ -802,10 +847,12 @@ function find_type_definition(
 }
 
 function is_type_definition(kind: string): boolean {
-  return kind === 'class'
-    || kind === 'struct'
-    || kind === 'interface'
-    || kind === 'enum';
+  return (
+    kind === "class" ||
+    kind === "struct" ||
+    kind === "interface" ||
+    kind === "enum"
+  );
 }
 
 function find_parent_class(
@@ -813,7 +860,7 @@ function find_parent_class(
   definitions: DefinitionRegistry
 ): SymbolId | null {
   const class_def = definitions.get(class_id);
-  if (!class_def || class_def.kind !== 'class') {
+  if (!class_def || class_def.kind !== "class") {
     return null;
   }
 
@@ -825,6 +872,7 @@ function find_parent_class(
 ```
 
 **Success Criteria**:
+
 - `resolve_self_reference_call()` exported and integrated
 - Handles `this`, `self`, `cls` keywords
 - Walks multi-step property chains correctly
@@ -852,13 +900,14 @@ if (ref.call_type === "constructor" && ref.context?.construct_target) {
 **New code**:
 
 ```typescript
-if (ref.kind === 'constructor_call') {
-  const target_location = ref.construct_target;  // Always present!
+if (ref.kind === "constructor_call") {
+  const target_location = ref.construct_target; // Always present!
   // ...
 }
 ```
 
 **Success Criteria**:
+
 - Uses `ref.kind` check instead of `ref.call_type`
 - Accesses `ref.construct_target` directly (no optional chaining)
 - Constructor tracking tests pass
@@ -883,15 +932,16 @@ expect(ref.context?.receiver_location).toBeDefined();
 
 // After
 expect(ref.kind).toBe("method_call");
-expect(ref.receiver_location).toBeDefined();  // Always present
+expect(ref.receiver_location).toBeDefined(); // Always present
 
 // Type guards in tests
-if (ref.kind === 'method_call') {
-  expect(ref.property_chain).toEqual(['user', 'getName']);
+if (ref.kind === "method_call") {
+  expect(ref.property_chain).toEqual(["user", "getName"]);
 }
 ```
 
 **Test files to update**:
+
 - `reference_builder.test.ts`
 - `method_resolver.test.ts`
 - `constructor_tracking.test.ts`
@@ -900,6 +950,7 @@ if (ref.kind === 'method_call') {
 - All language-specific tests
 
 **Success Criteria**:
+
 - All tests pass
 - Tests use `ref.kind` for type discrimination
 - Tests access typed fields directly (no optional chaining)
@@ -918,9 +969,9 @@ if (ref.kind === 'method_call') {
 **Test cases**:
 
 ```typescript
-describe('self_reference_resolver', () => {
-  describe('TypeScript this', () => {
-    test('resolves this.method() to class method', () => {
+describe("self_reference_resolver", () => {
+  describe("TypeScript this", () => {
+    test("resolves this.method() to class method", () => {
       const code = `
         class Builder {
           build_class(node) { }
@@ -928,20 +979,25 @@ describe('self_reference_resolver', () => {
         }
       `;
 
-      const index = index_single_file(code, 'test.ts', 'typescript');
-      const ref = index.references.find(r => r.name === 'build_class');
+      const index = index_single_file(code, "test.ts", "typescript");
+      const ref = index.references.find((r) => r.name === "build_class");
 
-      expect(ref?.kind).toBe('self_reference_call');
-      if (ref?.kind === 'self_reference_call') {
-        expect(ref.keyword).toBe('this');
-        expect(ref.property_chain).toEqual(['this', 'build_class']);
+      expect(ref?.kind).toBe("self_reference_call");
+      if (ref?.kind === "self_reference_call") {
+        expect(ref.keyword).toBe("this");
+        expect(ref.property_chain).toEqual(["this", "build_class"]);
       }
 
-      const resolved = resolve_self_reference_call(ref!, scopes, definitions, types);
-      expect(resolved).toBe('method:test.ts:Builder:build_class');
+      const resolved = resolve_self_reference_call(
+        ref!,
+        scopes,
+        definitions,
+        types
+      );
+      expect(resolved).toBe("method:test.ts:Builder:build_class");
     });
 
-    test('resolves this.field.method() to nested method', () => {
+    test("resolves this.field.method() to nested method", () => {
       const code = `
         class Container {
           registry: Registry;
@@ -955,7 +1011,7 @@ describe('self_reference_resolver', () => {
       // Test multi-step chain resolution
     });
 
-    test('handles nested classes correctly', () => {
+    test("handles nested classes correctly", () => {
       const code = `
         class Outer {
           method() {
@@ -969,8 +1025,8 @@ describe('self_reference_resolver', () => {
     });
   });
 
-  describe('Python self', () => {
-    test('resolves self.method() to class method', () => {
+  describe("Python self", () => {
+    test("resolves self.method() to class method", () => {
       const code = `
         class IndexBuilder:
             def build_class(self, node):
@@ -979,16 +1035,16 @@ describe('self_reference_resolver', () => {
                 self.build_class(node)
       `;
 
-      const index = index_single_file(code, 'test.py', 'python');
-      const ref = index.references.find(r => r.name === 'build_class');
+      const index = index_single_file(code, "test.py", "python");
+      const ref = index.references.find((r) => r.name === "build_class");
 
-      expect(ref?.kind).toBe('self_reference_call');
-      if (ref?.kind === 'self_reference_call') {
-        expect(ref.keyword).toBe('self');
+      expect(ref?.kind).toBe("self_reference_call");
+      if (ref?.kind === "self_reference_call") {
+        expect(ref.keyword).toBe("self");
       }
     });
 
-    test('handles cls for classmethods', () => {
+    test("handles cls for classmethods", () => {
       const code = `
         class MyClass:
             @classmethod
@@ -1004,8 +1060,8 @@ describe('self_reference_resolver', () => {
     });
   });
 
-  describe('Rust self', () => {
-    test('resolves self.method() in impl block', () => {
+  describe("Rust self", () => {
+    test("resolves self.method() in impl block", () => {
       const code = `
         impl MyStruct {
             fn helper(&self) { }
@@ -1015,18 +1071,18 @@ describe('self_reference_resolver', () => {
         }
       `;
 
-      const index = index_single_file(code, 'test.rs', 'rust');
-      const ref = index.references.find(r => r.name === 'helper');
+      const index = index_single_file(code, "test.rs", "rust");
+      const ref = index.references.find((r) => r.name === "helper");
 
-      expect(ref?.kind).toBe('self_reference_call');
-      if (ref?.kind === 'self_reference_call') {
-        expect(ref.keyword).toBe('self');
+      expect(ref?.kind).toBe("self_reference_call");
+      if (ref?.kind === "self_reference_call") {
+        expect(ref.keyword).toBe("self");
       }
     });
   });
 
-  describe('super keyword', () => {
-    test('resolves super.method() to parent class', () => {
+  describe("super keyword", () => {
+    test("resolves super.method() to parent class", () => {
       const code = `
         class Parent {
           process() { }
@@ -1041,22 +1097,27 @@ describe('self_reference_resolver', () => {
     });
   });
 
-  describe('edge cases', () => {
-    test('returns null for this in non-class scope', () => {
+  describe("edge cases", () => {
+    test("returns null for this in non-class scope", () => {
       const code = `
         function standalone() {
           this.method();
         }
       `;
 
-      const index = index_single_file(code, 'test.ts', 'typescript');
-      const ref = index.references.find(r => r.name === 'method');
+      const index = index_single_file(code, "test.ts", "typescript");
+      const ref = index.references.find((r) => r.name === "method");
 
-      const resolved = resolve_self_reference_call(ref!, scopes, definitions, types);
+      const resolved = resolve_self_reference_call(
+        ref!,
+        scopes,
+        definitions,
+        types
+      );
       expect(resolved).toBeNull();
     });
 
-    test('handles arrow functions with lexical this', () => {
+    test("handles arrow functions with lexical this", () => {
       const code = `
         class MyClass {
           field = () => {
@@ -1073,6 +1134,7 @@ describe('self_reference_resolver', () => {
 ```
 
 **Success Criteria**:
+
 - All test cases pass
 - Coverage ≥ 95% for self_reference_resolver.ts
 - Tests cover all languages (TypeScript, JavaScript, Python, Rust)
@@ -1091,41 +1153,49 @@ describe('self_reference_resolver', () => {
 **Test cases**:
 
 ```typescript
-describe('Self-reference bug fix integration tests', () => {
-  test('definition_builder.ts: this.build_class resolves', () => {
+describe("Self-reference bug fix integration tests", () => {
+  test("definition_builder.ts: this.build_class resolves", () => {
     // Test actual code from definition_builder.ts
     const code = fs.readFileSync(
-      'packages/core/src/index_single_file/definition_builder/definition_builder.ts',
-      'utf-8'
+      "packages/core/src/index_single_file/definition_builder/definition_builder.ts",
+      "utf-8"
     );
 
-    const index = index_single_file(code, 'definition_builder.ts', 'typescript');
+    const index = index_single_file(
+      code,
+      "definition_builder.ts",
+      "typescript"
+    );
     const graph = detect_call_graph(index);
 
     // build_class should NOT be an entry point (it's called by process methods)
     const entry_points = find_entry_points(graph);
-    expect(entry_points.map(e => e.name)).not.toContain('build_class');
+    expect(entry_points.map((e) => e.name)).not.toContain("build_class");
 
     // build_class should have callers
-    const build_class_node = graph.nodes.get('build_class');
+    const build_class_node = graph.nodes.get("build_class");
     expect(build_class_node.callers.size).toBeGreaterThan(0);
   });
 
-  test('python_scope_boundary_extractor.ts: self.extract_* resolves', () => {
+  test("python_scope_boundary_extractor.ts: self.extract_* resolves", () => {
     // Test Python extractor methods
   });
 
-  test('all 42 misidentifications are fixed', () => {
+  test("all 42 misidentifications are fixed", () => {
     // Load the misidentified symbols from analysis
     const misidentified = JSON.parse(
-      fs.readFileSync('top-level-nodes-analysis/results/internal_misidentified.json', 'utf-8')
+      fs.readFileSync(
+        "top-level-nodes-analysis/results/internal_misidentified.json",
+        "utf-8"
+      )
     );
 
     // Filter for self-reference related failures
-    const self_ref_failures = misidentified.filter(item =>
-      item.reasoning.includes('this') ||
-      item.reasoning.includes('self') ||
-      item.reasoning.includes('property chain')
+    const self_ref_failures = misidentified.filter(
+      (item) =>
+        item.reasoning.includes("this") ||
+        item.reasoning.includes("self") ||
+        item.reasoning.includes("property chain")
     );
 
     expect(self_ref_failures.length).toBe(42);
@@ -1140,6 +1210,7 @@ describe('Self-reference bug fix integration tests', () => {
 ```
 
 **Success Criteria**:
+
 - All 42 misidentified symbols resolve correctly
 - Entry point detection accuracy improves by 31%
 - No regressions in other call graph analysis
@@ -1153,6 +1224,7 @@ describe('Self-reference bug fix integration tests', () => {
 **Purpose**: Clean up backward compatibility code now that migration is complete.
 
 **Files to update**:
+
 1. `packages/types/src/symbol_references.ts` - Remove `LegacySymbolReference`, `ReferenceContext`
 2. `packages/core/src/index_single_file/references/reference_builder.ts` - Remove old creation code
 
@@ -1168,6 +1240,7 @@ export interface LegacySymbolReference { ... }
 ```
 
 **Success Criteria**:
+
 - No references to `LegacySymbolReference` in codebase
 - No references to `ReferenceContext` (except metadata extractors)
 - Build completes without errors
@@ -1184,6 +1257,7 @@ export interface LegacySymbolReference { ... }
 **Files to update**:
 
 1. **ARCHITECTURE.md** (create if doesn't exist):
+
 ```markdown
 ## Reference System Architecture
 
@@ -1206,17 +1280,18 @@ Resolution uses pattern matching on `ref.kind`:
 
 \`\`\`typescript
 switch (ref.kind) {
-  case 'self_reference_call':
-    return resolve_self_reference_call(ref);
-  case 'method_call':
-    return resolve_method_call(ref);
-  // ... other cases
+case 'self_reference_call':
+return resolve_self_reference_call(ref);
+case 'method_call':
+return resolve_method_call(ref);
+// ... other cases
 }
 \`\`\`
 
 ### Type Safety
 
 Each variant has exactly the fields it needs:
+
 - `MethodCallReference.receiver_location` is REQUIRED (not optional)
 - `SelfReferenceCall.keyword` is REQUIRED
 - Impossible states are unrepresentable
@@ -1234,6 +1309,7 @@ Each variant has exactly the fields it needs:
 3. **packages/types/README.md** - Document type system
 
 **Success Criteria**:
+
 - Architecture documented
 - Examples provided for adding new types
 - Migration guide for external consumers
@@ -1247,6 +1323,7 @@ Each variant has exactly the fields it needs:
 **Purpose**: Ensure no regressions and measure performance impact.
 
 **Verification checklist**:
+
 - [ ] All tests pass (`npm test`)
 - [ ] Build completes without errors (`npm run build`)
 - [ ] Type checking passes (`npx tsc --noEmit`)
@@ -1267,6 +1344,7 @@ node scripts/benchmark_resolution.js
 ```
 
 **Success Criteria**:
+
 - No regressions in functionality
 - Performance within ±5% of baseline
 - Type coverage maintained or improved
@@ -1277,6 +1355,7 @@ node scripts/benchmark_resolution.js
 ## Success Metrics
 
 ### Quantitative:
+
 - [ ] 0 TypeScript errors
 - [ ] 100% test pass rate
 - [ ] ≥95% type coverage on new code
@@ -1284,6 +1363,7 @@ node scripts/benchmark_resolution.js
 - [ ] 42 misidentified symbols fixed (31% improvement in call graph accuracy)
 
 ### Qualitative:
+
 - [ ] Code is more readable (pattern matching vs conditionals)
 - [ ] Type safety improved (required fields, no undefined checks)
 - [ ] Architecture is extensible (easy to add new reference types)
@@ -1294,14 +1374,17 @@ node scripts/benchmark_resolution.js
 ## Timeline
 
 **Week 1**:
+
 - Day 1-2: Tasks 152.1-152.3 (types, factories, metadata)
 - Day 3-5: Tasks 152.4-152.5 (ReferenceBuilder, resolution entry)
 
 **Week 2**:
+
 - Day 1-2: Tasks 152.6-152.8 (resolvers, constructor tracking)
 - Day 3-5: Tasks 152.9-152.10 (tests, self-reference tests)
 
 **Week 3**:
+
 - Day 1-2: Tasks 152.11-152.13 (integration, cleanup, docs)
 - Day 3: Task 152.14 (final verification)
 
@@ -1316,6 +1399,7 @@ None - this is a foundational refactor that enables future improvements.
 ## Blocks
 
 This task blocks:
+
 - **task-epic-11.156**: Anonymous callback function capture (depends on typed references)
 - **task-epic-11.158**: Interface method resolution (depends on pattern matching)
 - Any other reference-related improvements
@@ -1343,6 +1427,7 @@ This task blocks:
 ### Future Enhancements
 
 After this task, we can easily add:
+
 - More reference variants (e.g., `ImportReference`, `ExportReference`)
 - Richer metadata per variant
 - Specialized resolvers with variant-specific optimizations

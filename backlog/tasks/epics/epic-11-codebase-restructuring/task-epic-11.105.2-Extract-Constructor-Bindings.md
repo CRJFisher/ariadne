@@ -19,7 +19,11 @@ Track constructor calls and their assignment targets to determine variable types
 ### Core Function
 
 ```typescript
-import type { LocationKey, SymbolName, SymbolReference } from "@ariadnejs/types";
+import type {
+  LocationKey,
+  SymbolName,
+  SymbolReference,
+} from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
 
 /**
@@ -66,6 +70,7 @@ export function extract_constructor_bindings(
 ### Test Cases
 
 #### TypeScript
+
 ```typescript
 test("tracks simple constructor assignment", () => {
   const code = `
@@ -123,6 +128,7 @@ test("handles destructured assignment", () => {
 ```
 
 #### Python
+
 ```python
 test("tracks Python constructor assignment", () => {
   const code = `
@@ -151,6 +157,7 @@ test("tracks method assignment in Python", () => {
 ```
 
 #### Rust
+
 ```rust
 test("tracks Rust struct construction", () => {
   const code = `
@@ -186,6 +193,7 @@ test("tracks Rust direct struct literal", () => {
 ```
 
 #### JavaScript
+
 ```javascript
 test("tracks JavaScript constructor", () => {
   const code = `
@@ -211,17 +219,20 @@ test("tracks JavaScript constructor", () => {
 ## Success Criteria
 
 ### Functional
+
 - ✅ Simple constructor assignments tracked
 - ✅ Property assignments tracked
 - ✅ All 4 languages supported
 - ✅ Multiple constructor calls in same scope handled
 
 ### Testing
+
 - ✅ Unit tests for each language
 - ✅ Edge cases documented
 - ✅ >90% code coverage
 
 ### Code Quality
+
 - ✅ Clear JSDoc comments
 - ✅ Type-safe implementation
 - ✅ Pythonic naming
@@ -229,15 +240,18 @@ test("tracks JavaScript constructor", () => {
 ## Dependencies
 
 **Uses:**
+
 - `SymbolReference` with `call_type` and `construct_target`
 - `LocationKey`, `SymbolName` from types
 
 **Requires:**
+
 - SymbolReference must have `construct_target` populated (already done in reference_builder)
 
 ## Next Steps
 
 After completion:
+
 - Task 11.105.1 extracts type annotations
 - Both merged in task 11.105.5
 - Combined bindings used by 11.109.3
@@ -249,6 +263,7 @@ After completion:
 The `construct_target` field in `SymbolReference` is populated by tree-sitter queries:
 
 **TypeScript pattern:**
+
 ```scheme
 (variable_declarator
   name: (identifier) @construct.target
@@ -257,6 +272,7 @@ The `construct_target` field in `SymbolReference` is populated by tree-sitter qu
 ```
 
 **Python pattern:**
+
 ```scheme
 (assignment
   left: (identifier) @construct.target
@@ -269,11 +285,13 @@ This extraction already happens in `reference_builder.ts`.
 ### Binding Priority
 
 When both type annotation and constructor exist:
+
 ```typescript
 const user: User = new User();
 ```
 
 Both bindings are recorded:
+
 - 105.1 extracts: user → "User" (from annotation)
 - 105.2 extracts: user → "User" (from constructor)
 
@@ -282,10 +300,12 @@ In 11.105.5, when merging, constructor bindings can override annotation bindings
 ### Language-Specific Notes
 
 **Rust:**
+
 - Both `Type::new()` calls and `Type { ... }` literals are constructors
 - Query must capture both patterns
 
 **Python:**
+
 - Constructor is just a regular call to class name
 - Indistinguishable from function call at query level
 - Relies on class name being capitalized (heuristic)

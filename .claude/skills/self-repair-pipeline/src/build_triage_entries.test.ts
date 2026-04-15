@@ -34,21 +34,20 @@ function make_entry(overrides: Partial<EnrichedFunctionEntry>): EnrichedFunction
   };
 }
 
-const KNOWN_TP_RESULT: TriageEntryResult = {
-  is_true_positive: true,
-  is_likely_dead_code: false,
-  group_id: "true-positive",
-  root_cause: "Known true positive",
+const KNOWN_UNREACHABLE_RESULT: TriageEntryResult = {
+  ariadne_correct: true,
+  group_id: "confirmed-unreachable",
+  root_cause: "Known confirmed-unreachable",
   reasoning: "Matched known-entrypoints registry",
 };
 
 // ===== Tests =====
 
 describe("build_triage_entries", () => {
-  it("known-tp entry from registry match", () => {
+  it("known-unreachable entry from registry match", () => {
     const entry = make_entry({ name: "main", file_path: "/projects/myapp/src/main.py" });
     const classification: PreClassificationResult = {
-      known_true_positives: [{ entry, source: "project" }],
+      known_true_positives: [{ entry, source: "confirmed-unreachable" }],
       unclassified: [],
     };
 
@@ -61,12 +60,11 @@ describe("build_triage_entries", () => {
       start_line: 10,
       kind: "function",
       signature: null,
-      route: "known-tp",
+      route: "known-unreachable",
       diagnosis: "no-textual-callers",
-      deterministic_group_id: null,
-      known_source: "project",
+      known_source: "confirmed-unreachable",
       status: "completed",
-      result: KNOWN_TP_RESULT,
+      result: KNOWN_UNREACHABLE_RESULT,
       error: null,
       attempt_count: 0,
       is_exported: false,
@@ -106,7 +104,6 @@ describe("build_triage_entries", () => {
       signature: "def mystery_func(x: int) -> str",
       route: "llm-triage",
       diagnosis: "callers-not-in-registry",
-      deterministic_group_id: null,
       known_source: null,
       status: "pending",
       result: null,
@@ -137,10 +134,10 @@ describe("build_triage_entries", () => {
 
     expect(result).toHaveLength(3);
     expect(result[0].entry_index).toBe(0);
-    expect(result[0].route).toBe("known-tp");
+    expect(result[0].route).toBe("known-unreachable");
     expect(result[0].known_source).toBe("react");
     expect(result[0].status).toBe("completed");
-    expect(result[0].result).toEqual(KNOWN_TP_RESULT);
+    expect(result[0].result).toEqual(KNOWN_UNREACHABLE_RESULT);
     expect(result[1].entry_index).toBe(1);
     expect(result[1].route).toBe("llm-triage");
     expect(result[1].status).toBe("pending");

@@ -3,9 +3,9 @@ id: task-100.11.3
 title: Implement immutable call analysis with state passing
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-08-04 14:17'
-updated_date: '2025-08-04 14:56'
+  - "@chuck"
+created_date: "2025-08-04 14:17"
+updated_date: "2025-08-04 14:56"
 labels:
   - immutable
   - refactoring

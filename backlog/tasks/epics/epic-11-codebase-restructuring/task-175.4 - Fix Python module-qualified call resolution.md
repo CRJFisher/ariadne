@@ -3,8 +3,8 @@ id: task-175.4
 title: Fix Python module-qualified call resolution
 status: Completed
 assignee: []
-created_date: '2026-01-28'
-completed_date: '2026-01-29'
+created_date: "2026-01-28"
+completed_date: "2026-01-29"
 labels:
   - bug
   - call-graph
@@ -51,21 +51,25 @@ Fixed Python module-qualified call resolution by improving aliased import handli
 ### Key Changes
 
 1. **Aliased Import Symbol ID Consistency** (imports.python.ts)
+
    - For aliased imports (`import X as Y` / `from X import Y as Z`), the symbol_id now uses the alias location instead of the module/name location
    - This ensures the symbol_id matches what scope resolution returns when looking up the alias name
    - Added early return for alias capture nodes to prevent duplicate processing
 
 2. **Semantic Call Type Inference** (resolve_references.ts)
+
    - Added `infer_call_type_from_resolution()` function that determines call type from the resolved symbol's definition kind
    - This is more accurate than relying solely on syntax because Python class instantiation uses function call syntax but should resolve to constructor
    - The function falls back to syntax-based type when definition not found
 
 3. **Reference Preprocessing Infrastructure** (preprocess_references.ts, preprocess_references.python.ts)
+
    - Added language-dispatch preprocessing phase called AFTER name resolution but BEFORE type resolution
    - For Python: converts class instantiation function_call references to constructor_call when the callee resolves to a class definition
    - Enables proper type binding via extract_constructor_bindings()
 
 4. **Potential Constructor Target Extraction** (references.ts, factories.ts)
+
    - Added `potential_construct_target` field to FunctionCallReference type
    - For Python function calls in assignment context, extracts the target variable location
    - This metadata enables the preprocessing phase to create proper ConstructorCallReference

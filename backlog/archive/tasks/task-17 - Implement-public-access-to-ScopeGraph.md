@@ -3,9 +3,9 @@ id: task-17
 title: Implement public access to ScopeGraph
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-07-17'
-updated_date: '2025-07-17'
+  - "@chuck"
+created_date: "2025-07-17"
+updated_date: "2025-07-17"
 labels: []
 dependencies: []
 ---
@@ -26,11 +26,11 @@ Expose the ScopeGraph class through the public API to enable external access to 
 
 ```typescript
 class Project {
-    // New method to get the scope graph for a specific file
-    get_scope_graph(file_path: string): ScopeGraph | null;
-    
-    // Alternative: get all scope graphs
-    get_all_scope_graphs(): Map<string, ScopeGraph>;
+  // New method to get the scope graph for a specific file
+  get_scope_graph(file_path: string): ScopeGraph | null;
+
+  // Alternative: get all scope graphs
+  get_all_scope_graphs(): Map<string, ScopeGraph>;
 }
 ```
 
@@ -60,11 +60,13 @@ Implemented public access to ScopeGraph through two new methods in the Project c
 Both methods are properly typed and handle edge cases gracefully. The get_all_scope_graphs method returns a copy to prevent external modifications to the internal state.
 
 Added comprehensive unit tests to verify:
+
 - Proper graph retrieval for existing files
 - Null return for non-existent files
 - Complete graph collection retrieval
 - Isolation of internal state (returns copies, not references)
 
 Modified files:
+
 - src/index.ts: Added ScopeGraph to exports and implemented the two new methods
 - src/index.test.ts: Added test suite for public ScopeGraph access

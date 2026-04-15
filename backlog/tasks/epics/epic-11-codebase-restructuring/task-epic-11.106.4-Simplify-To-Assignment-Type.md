@@ -29,6 +29,7 @@ This double-optional nesting (`type_flow?.target_type`) is awkward. A simple `as
 **File:** `packages/types/src/semantic_index.ts`
 
 **Before:**
+
 ```typescript
 export interface SymbolReference {
   // ... other fields ...
@@ -40,6 +41,7 @@ export interface SymbolReference {
 ```
 
 **After:**
+
 ```typescript
 export interface SymbolReference {
   // ... other fields ...
@@ -55,6 +57,7 @@ export interface SymbolReference {
 **Location:** Around line 412-427 in the `process()` method
 
 **Before:**
+
 ```typescript
 // Add type flow information for assignments
 if (kind === ReferenceKind.ASSIGNMENT) {
@@ -72,10 +75,15 @@ if (kind === ReferenceKind.ASSIGNMENT) {
 ```
 
 **After:**
+
 ```typescript
 // Add assignment type information
 if (kind === ReferenceKind.ASSIGNMENT) {
-  const assignment_type = extract_type_info(capture, this.extractors, this.file_path);
+  const assignment_type = extract_type_info(
+    capture,
+    this.extractors,
+    this.file_path
+  );
 
   // Only add assignment_type if we have meaningful information
   if (assignment_type) {
@@ -99,18 +107,21 @@ rg "type_flow\.target_type" --type ts --glob "*test.ts" -l
 For each file found, update assertions to use `assignment_type`:
 
 **Before:**
+
 ```typescript
 expect(reference.type_flow?.target_type).toBeDefined();
 expect(reference.type_flow?.target_type?.type_name).toBe("string");
 ```
 
 **After:**
+
 ```typescript
 expect(reference.assignment_type).toBeDefined();
 expect(reference.assignment_type?.type_name).toBe("string");
 ```
 
 **Important:** Also delete any assertions on `type_flow` structure itself:
+
 ```typescript
 // ❌ DELETE these lines
 expect(reference.type_flow).toBeDefined();
@@ -132,20 +143,25 @@ Based on typical patterns:
 ## Verification Steps
 
 1. **Find all type_flow references (should be 0):**
+
    ```bash
    rg "type_flow" --type ts
    ```
 
 2. **Find assignment_type usage:**
+
    ```bash
    rg "assignment_type" --type ts
    ```
+
    Expected: Shows new usage
 
 3. **TypeScript compilation:**
+
    ```bash
    npx tsc --noEmit
    ```
+
    Expected: 0 errors
 
 4. **Run all tests:**
@@ -188,6 +204,7 @@ const type = ref.assignment_type;
 ## Notes
 
 After this task, `SymbolReference` will have three type-related fields:
+
 - `type_info?: TypeInfo` - Type at the reference location
 - `assignment_type?: TypeInfo` - Type of assignment target (for assignments)
 - `return_type?: TypeInfo` - Return type (for return statements)

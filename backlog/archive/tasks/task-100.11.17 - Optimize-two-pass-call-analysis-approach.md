@@ -3,8 +3,8 @@ id: task-100.11.17
 title: Optimize two-pass call analysis approach
 status: Done
 assignee: []
-created_date: '2025-08-04 16:44'
-updated_date: '2025-08-04 22:59'
+created_date: "2025-08-04 16:44"
+updated_date: "2025-08-04 22:59"
 labels: []
 dependencies: []
 parent_task_id: task-100.11
@@ -38,6 +38,7 @@ After analyzing the two-pass approach in `analyze_calls_from_definition`:
 The two-pass approach is actually necessary and optimal for correctness:
 
 1. **First Pass**: Identifies constructor calls and collects type information
+
    - Example: `const logger = new Logger()` establishes that `logger` is of type `Logger`
    - This must happen before resolving method calls on these variables
 
@@ -64,8 +65,8 @@ The implementation is already optimized:
 Consider this code:
 
 ```javascript
-const obj = new MyClass();  // Line 1
-obj.method();               // Line 2
+const obj = new MyClass(); // Line 1
+obj.method(); // Line 2
 ```
 
 A single pass would encounter line 2 before establishing the type from line 1, causing the method resolution to fail.

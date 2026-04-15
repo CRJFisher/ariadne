@@ -39,17 +39,20 @@ Total Estimated Effort: 18.25 hours
 ## Implementation Sequence
 
 ### Phase 1: Foundation (2 hours)
+
 **Must complete first - all other tasks depend on these**
 
 1. **104.1** - Creates `metadata_types.ts` with `MetadataExtractors` interface
 2. **104.2** - Updates `reference_builder.ts` to accept extractors parameter
 
 After these tasks:
+
 - ✅ Type definitions in place
 - ✅ Infrastructure ready for language implementations
 - ⚠️ Tests will fail (no extractors implemented yet)
 
 ### Phase 2: JavaScript/TypeScript (5.25 hours)
+
 **Start here for proof-of-concept**
 
 3. **104.3.1** - Implement JavaScript/TypeScript extractors
@@ -59,11 +62,13 @@ After these tasks:
 7. **104.3.5** - Fix TypeScript integration tests
 
 After these tasks:
+
 - ✅ JavaScript and TypeScript fully working with metadata
 - ✅ Proof-of-concept complete
 - ⚠️ Python and Rust tests still fail
 
 ### Phase 3: Python (4 hours)
+
 **Can be done in parallel with Rust if resources available**
 
 8. **104.4.1** - Implement Python extractors
@@ -72,10 +77,12 @@ After these tasks:
 11. **104.4.4** - Fix Python integration tests
 
 After these tasks:
+
 - ✅ Python fully working with metadata
 - ⚠️ Rust tests still fail
 
 ### Phase 4: Rust (5 hours)
+
 **Can be done in parallel with Python if resources available**
 
 12. **104.5.1** - Implement Rust extractors
@@ -84,9 +91,11 @@ After these tasks:
 15. **104.5.4** - Fix Rust integration tests
 
 After these tasks:
+
 - ✅ All 4 languages working with metadata
 
 ### Phase 5: Integration & Validation (2.5 hours)
+
 **Final polish and verification**
 
 16. **104.6.1** - Update reference_builder unit tests
@@ -94,12 +103,14 @@ After these tasks:
 18. **104.6.3** - Cleanup TODOs and documentation
 
 After these tasks:
+
 - ✅ Production ready
 - ✅ Documented and validated
 
 ## Critical Path
 
 **Sequential dependencies (must follow order):**
+
 ```
 104.1 → 104.2 → 104.3.1 → 104.3.2 → 104.3.3 → (104.3.4, 104.3.5)
                                               ↓
@@ -109,6 +120,7 @@ After these tasks:
 ```
 
 **Parallelizable work:**
+
 - 104.3.4 and 104.3.5 (JS and TS test fixes)
 - 104.4.x and 104.5.x (Python and Rust implementations)
 
@@ -127,6 +139,7 @@ cat backlog/tasks/epics/epic-11-codebase-restructuring/task-epic-11.104.1-*.md
 ### 2. Verify Setup
 
 Before starting, ensure:
+
 - ✅ All task-epic-11.103.x tasks complete (capture name validation)
 - ✅ TypeScript compiles: `cd packages/core && npx tsc --noEmit`
 - ✅ Tests run: `npm test`
@@ -134,6 +147,7 @@ Before starting, ensure:
 ### 3. Track Progress
 
 Each task file has:
+
 - **Status:** Not Started / In Progress / Completed
 - **Estimated Effort:** Time estimate
 - **Dependencies:** What must be done first
@@ -156,29 +170,32 @@ npm test
 
 ## Key Files Modified
 
-| File | Tasks | Purpose |
-|------|-------|---------|
-| `metadata_types.ts` | 104.1 | Interface definition |
-| `reference_builder.ts` | 104.2 | Accept extractors param |
-| `javascript_metadata.ts` | 104.3.1 | JS/TS extractors |
-| `python_metadata.ts` | 104.4.1 | Python extractors |
-| `rust_metadata.ts` | 104.5.1 | Rust extractors |
-| `semantic_index.ts` | 104.3.3, 104.4.3, 104.5.3 | Wire extractors |
-| `reference_builder.test.ts` | 104.6.1 | Unit tests |
+| File                        | Tasks                     | Purpose                 |
+| --------------------------- | ------------------------- | ----------------------- |
+| `metadata_types.ts`         | 104.1                     | Interface definition    |
+| `reference_builder.ts`      | 104.2                     | Accept extractors param |
+| `javascript_metadata.ts`    | 104.3.1                   | JS/TS extractors        |
+| `python_metadata.ts`        | 104.4.1                   | Python extractors       |
+| `rust_metadata.ts`          | 104.5.1                   | Rust extractors         |
+| `semantic_index.ts`         | 104.3.3, 104.4.3, 104.5.3 | Wire extractors         |
+| `reference_builder.test.ts` | 104.6.1                   | Unit tests              |
 
 ## Success Metrics
 
 ### Code Metrics
+
 - ✅ TypeScript compiles with 0 errors
 - ✅ All tests pass (>95% coverage maintained)
 - ✅ No ESLint errors
 
 ### Functional Metrics
+
 - ✅ 80%+ method calls have `receiver_location`
 - ✅ 90%+ type references have `type_info`
 - ✅ 75%+ property accesses have `property_chain`
 
 ### Quality Metrics
+
 - ✅ All TODO comments removed
 - ✅ Documentation updated
 - ✅ No performance regression (benchmark if needed)
@@ -188,20 +205,24 @@ npm test
 ### Common Issues
 
 **Issue:** TypeScript errors about missing extractors parameter
+
 - **Fix:** Update function signatures to accept `MetadataExtractors`
 - **Where:** Any function calling `process_references()`
 
 **Issue:** Tests fail with "Cannot read property of undefined"
+
 - **Fix:** Extractors returning `undefined` is valid - tests should handle it
 - **Where:** Update test assertions to check `?.` optional chaining
 
 **Issue:** AST traversal returns wrong nodes
+
 - **Fix:** Use tree-sitter CLI to inspect AST structure
 - **Command:** `npx tree-sitter parse --scope source.js "your code here"`
 
 **Issue:** Integration tests fail after wiring extractors
+
 - **Fix:** Update test assertions - metadata may change reference structure
-- **Where:** semantic_index.*.test.ts files
+- **Where:** semantic_index.\*.test.ts files
 
 ### Getting Help
 
@@ -216,11 +237,13 @@ npm test
 After completing this epic:
 
 1. **Use metadata in method_resolution.ts**
+
    - Consume `receiver_location` for method resolution
    - Use `type_info` to narrow down candidates
    - Leverage `property_chain` for chained calls
 
 2. **Performance Optimization**
+
    - Profile metadata extraction overhead
    - Cache expensive operations if needed
    - Optimize AST traversal

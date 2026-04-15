@@ -16,16 +16,19 @@ Update Python language builder to populate the new `is_exported` flag based on P
 Python doesn't have explicit `export` keywords. Instead:
 
 1. **Module-level definitions are importable** (unless prefixed with `_`)
+
    - `def foo(): pass` → `is_exported = true`
    - `class Bar: pass` → `is_exported = true`
    - `x = 1` → `is_exported = true`
 
 2. **Names starting with underscore are private by convention**
+
    - `def _internal(): pass` → `is_exported = false`
    - `class _Private: pass` → `is_exported = false`
    - `_secret = 1` → `is_exported = false`
 
 3. **Nested definitions are not importable**
+
    - Function inside function → `is_exported = false`
    - Class inside function → `is_exported = false`
 
@@ -93,13 +96,21 @@ Update each builder to use the new export info:
 
 ```typescript
 function_definition: {
-  process: (capture: CaptureNode, builder: DefinitionBuilder, context: ProcessingContext) => {
+  process: (
+    capture: CaptureNode,
+    builder: DefinitionBuilder,
+    context: ProcessingContext
+  ) => {
     const node = capture.node;
     const name = capture.text;
     const defining_scope_id = context.get_scope_id(capture.location);
     const module_scope_id = context.module_scope_id; // Assumes this exists in context
 
-    const export_info = extract_export_info(name, defining_scope_id, module_scope_id);
+    const export_info = extract_export_info(
+      name,
+      defining_scope_id,
+      module_scope_id
+    );
 
     builder.add_function({
       symbol_id: function_id,
@@ -107,11 +118,11 @@ function_definition: {
       location: capture.location,
       defining_scope_id: defining_scope_id,
       availability: determine_availability(name), // Keep for migration
-      is_exported: export_info.is_exported,       // NEW
-      export: export_info.export,                 // NEW
+      is_exported: export_info.is_exported, // NEW
+      export: export_info.export, // NEW
       // ... other fields
     });
-  }
+  };
 }
 
 // Apply same pattern to:
@@ -127,7 +138,7 @@ Ensure `ProcessingContext` provides access to the module scope ID:
 // In semantic_index.ts or wherever ProcessingContext is defined
 interface ProcessingContext {
   get_scope_id(location: Location): ScopeId;
-  module_scope_id: ScopeId;  // NEW: Reference to module-level scope
+  module_scope_id: ScopeId; // NEW: Reference to module-level scope
   // ... other fields
 }
 ```
@@ -146,6 +157,7 @@ npm test -- semantic_index.python.test.ts
 ```
 
 Test scenarios:
+
 - ✅ Module-level function without underscore → `is_exported = true`
 - ✅ Module-level function with underscore → `is_exported = false`
 - ✅ Nested function → `is_exported = false`
@@ -162,6 +174,7 @@ Test scenarios:
 ## Future Work
 
 **Note for future tasks:**
+
 - Implement `__all__` support to respect explicit export lists
 - Handle `from module import *` visibility rules
 
@@ -174,12 +187,14 @@ Successfully implemented `is_exported` flag for Python and discovered/fixed crit
 ### Implementation Completed
 
 1. **Python `extract_export_info()` Function** (`python_builder.ts`)
+
    - Implements Python's underscore privacy convention
    - Special handling for magic methods (`__name__`) - NOT private despite underscores
    - Module-level vs nested scope detection
    - Comprehensive documentation with examples
 
 2. **All Python Definition Builders Updated** (`python_builder_config.ts`)
+
    - Functions, classes, variables - use `extract_export_info()`
    - Lambda, loop vars, except vars - explicit `is_exported = false`
    - Imports - support re-export detection via `extract_export_info()`
@@ -194,12 +209,14 @@ Successfully implemented `is_exported` flag for Python and discovered/fixed crit
 **Found and fixed major regressions affecting all languages:**
 
 1. **Missing `defining_scope_id` in Definition Builders** (`definition_builder.ts`)
+
    - **Root Cause:** Recent refactoring renamed `scope_id` → `defining_scope_id` but builder methods still used `scope_id` internally
    - **Impact:** Constructors, methods, parameters, properties missing required field
    - **Fixed:** 4 builder methods (`add_constructor_to_class`, `add_method_to_class`, `add_parameter_to_callable`, `add_property_to_class`)
    - **Lines:** 310-315, 282-288, 398-404, 526-532
 
 2. **Super Call Receiver Extraction Failing** (`reference_builder.ts`)
+
    - **Root Cause:** `extract_context()` tried to call `extract_call_receiver()` on super keyword node, but extractor expects call_expression/member_expression
    - **Impact:** JavaScript/TypeScript tests failing on `super.method()` patterns
    - **Fixed:** Separate handling for `SUPER_CALL` - receiver location is the super keyword itself
@@ -214,6 +231,7 @@ Successfully implemented `is_exported` flag for Python and discovered/fixed crit
 ### Test Results
 
 **Python Tests:** ✅ **88/90 passing (98%)**
+
 - `python_builder.test.ts`: 44/44 passing (100%)
   - 28 original tests
   - 16 new export verification tests
@@ -223,6 +241,7 @@ Successfully implemented `is_exported` flag for Python and discovered/fixed crit
 **Integration Test Impact:** 📈 **Major improvement across all languages**
 
 Semantic Index Tests (before → after fixes):
+
 - **JavaScript**: 15/36 failing → **35/36 passing** (97%)
 - **TypeScript**: ~50% passing → **~85% passing**
 - **Rust**: ~60% passing → **~90% passing**
@@ -233,6 +252,7 @@ Semantic Index Tests (before → after fixes):
 ### Files Modified
 
 **Python Implementation:**
+
 - `packages/core/src/index_single_file/query_code_tree/language_configs/python_builder.ts`
   - Added comprehensive documentation to `extract_export_info()`
   - Added documentation to `is_magic_name()` and `is_private_name()` helpers
@@ -243,6 +263,7 @@ Semantic Index Tests (before → after fixes):
   - Added 16 comprehensive export verification tests
 
 **Critical Regression Fixes:**
+
 - `packages/core/src/index_single_file/definitions/definition_builder.ts`
   - Fixed `add_constructor_to_class()` to use `defining_scope_id`
   - Fixed `add_method_to_class()` to use `defining_scope_id`
@@ -264,6 +285,7 @@ Semantic Index Tests (before → after fixes):
 ### Known Issues / Pre-existing Failures
 
 **Scope Boundary Tests (7 failures - pre-existing):**
+
 - Class/interface/enum scope end position off by 1 character
 - Example: expected `module:test.js:1:1:3:1` but got `module:test.js:1:1:3:2`
 - Affects: JavaScript (1), TypeScript (5), Python (1)
@@ -271,6 +293,7 @@ Semantic Index Tests (before → after fixes):
 - Requires separate fix in scope calculation logic
 
 **Symbol Resolution Tests (56 failures - investigation needed):**
+
 - Tests in `symbol_resolution.*.test.ts` returning `undefined` instead of resolved symbol IDs
 - Appears to be test fixture issue (missing `is_exported` field in manually constructed test data)
 - **Low priority** - import_resolver updated correctly, likely just test fixture data needs update
@@ -295,15 +318,18 @@ Semantic Index Tests (before → after fixes):
 ### Follow-on Work Needed
 
 1. **Immediate (blocking for epic-11.112.23):**
+
    - ✅ Python implementation complete
    - ⏭️ **Task epic-11.112.23.4**: Rust implementation
    - ⏭️ **Task epic-11.112.26**: Update import_resolver to fully use `is_exported` (partially done)
 
 2. **Python-Specific Future Work:**
+
    - Implement `__all__` support for explicit export lists
    - Handle `from module import *` visibility (currently only respects underscore convention)
 
 3. **Test Infrastructure:**
+
    - Fix 7 pre-existing scope boundary calculation tests (separate task)
    - Update symbol resolution test fixtures with `is_exported` field (low priority)
 

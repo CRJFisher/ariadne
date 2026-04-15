@@ -3,8 +3,8 @@ id: task-22
 title: Implement cross-file import resolution
 status: Done
 assignee: []
-created_date: '2025-07-17'
-updated_date: '2025-07-18'
+created_date: "2025-07-17"
+updated_date: "2025-07-18"
 labels: []
 dependencies: []
 ---
@@ -118,11 +118,13 @@ This allows call graph construction to:
 1. **ImportInfo Interface**: Added to `src/graph.ts` with all required fields (imported_function, import_statement, local_name)
 
 2. **get_imports_with_definitions()**: Implemented in Project class to resolve imports to their definitions
+
    - Handles renamed imports correctly using `source_name`
    - Searches all files for exported definitions (module path resolution TODO remains)
    - Returns empty array for non-existent files
 
 3. **get_exported_functions()**: Implemented to return root-level functions
+
    - Filters out methods (those with `class_name` in metadata)
    - Note: Currently returns ALL root-level functions, not just exported ones, as the scope mechanism doesn't distinguish export keywords
 

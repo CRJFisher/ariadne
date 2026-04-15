@@ -3,9 +3,9 @@ id: task-48.3
 title: Implement minimal MCP server with basic endpoints
 status: Done
 assignee:
-  - '@claude'
-created_date: '2025-07-28'
-updated_date: '2025-07-28'
+  - "@claude"
+created_date: "2025-07-28"
+updated_date: "2025-07-28"
 labels: []
 dependencies: []
 parent_task_id: task-48
@@ -29,7 +29,7 @@ Implement a minimal MCP server that exposes basic Ariadne functionality through 
 1. Install MCP TypeScript SDK
 2. Create server.ts with basic MCP server setup
 3. Implement go_to_definition tool endpoint
-4. Implement find_references tool endpoint  
+4. Implement find_references tool endpoint
 5. Create programmatic API for starting server
 6. Write tests for both endpoints
 7. Update documentation

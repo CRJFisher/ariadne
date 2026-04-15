@@ -3,9 +3,9 @@ id: task-15.1
 title: Add prebuild binary support for tree-sitter native modules
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-07-16'
-updated_date: '2025-07-16'
+  - "@chuck"
+created_date: "2025-07-16"
+updated_date: "2025-07-16"
 labels: []
 dependencies: []
 parent_task_id: task-15

@@ -16,6 +16,7 @@
 **Issue:** Python assignments are NOT creating "write" reference types.
 
 **Missing patterns in `packages/core/src/index_single_file/references/queries/python.scm`:**
+
 ```scheme
 ; Simple assignments: x = 42
 (assignment
@@ -43,6 +44,7 @@
 **Issue:** `None` in type hints is NOT captured as a type reference.
 
 **Missing patterns in `packages/core/src/index_single_file/references/queries/python.scm`:**
+
 ```scheme
 ; None in Union types: Union[int, None]
 (generic_type
@@ -79,6 +81,7 @@
 **Location:** `packages/core/src/index_single_file/definitions/queries/python.scm` or import builder
 
 **Examples not captured:**
+
 - `import os` → should populate imported_symbols["os"]
 - `from typing import List, Dict` → should populate imported_symbols["List"], imported_symbols["Dict"]
 - `import sys as system` → should track alias
@@ -87,12 +90,13 @@
 
 ## Objective
 
-After fixing the critical query issues above, update Python semantic_index tests to verify all data with literal object assertions, including Python-specific features like decorators, *args, **kwargs, and property decorators.
+After fixing the critical query issues above, update Python semantic_index tests to verify all data with literal object assertions, including Python-specific features like decorators, \*args, \*\*kwargs, and property decorators.
 
 ## Coverage Required
 
 ### Core Features
-- [ ] Classes with __init__
+
+- [ ] Classes with **init**
 - [ ] Constructor parameters (including self)
 - [ ] Methods (instance, static, class)
 - [ ] Properties (@property)
@@ -100,15 +104,16 @@ After fixing the critical query issues above, update Python semantic_index tests
 - [ ] Functions
 - [ ] Lambda functions
 - [ ] Variables
-- [ ] Imports (from, import, import as, from import *)
+- [ ] Imports (from, import, import as, from import \*)
 
 ### Python-Specific Features
+
 - [ ] **Decorators** (@dataclass, @property, @staticmethod, @classmethod)
 - [ ] **Enums** (Enum, IntEnum, StrEnum, Flag, IntFlag)
 - [ ] Enum members with values
-- [ ] Constructor (__init__) parameters
-- [ ] *args parameters
-- [ ] **kwargs parameters
+- [ ] Constructor (**init**) parameters
+- [ ] \*args parameters
+- [ ] \*\*kwargs parameters
 - [ ] Type annotations
 - [ ] Default parameter values
 - [ ] Multiple assignment
@@ -119,6 +124,7 @@ After fixing the critical query issues above, update Python semantic_index tests
 ## Critical New Tests
 
 ### Constructor with Parameters
+
 ```typescript
 it("extracts __init__ as constructor with parameters", () => {
   const code = `
@@ -151,6 +157,7 @@ class Person:
 ```
 
 ### Decorators
+
 ```typescript
 it("extracts decorators on classes and methods", () => {
   const code = `
@@ -187,18 +194,21 @@ class Point:
 
   const magnitude = methods.find((m) => m.name === "magnitude");
   expect(magnitude?.decorators).toBeDefined();
-  expect(magnitude?.decorators?.some(d => d.name === "property")).toBe(true);
+  expect(magnitude?.decorators?.some((d) => d.name === "property")).toBe(true);
 
   const origin = methods.find((m) => m.name === "origin");
-  expect(origin?.decorators?.some(d => d.name === "staticmethod")).toBe(true);
+  expect(origin?.decorators?.some((d) => d.name === "staticmethod")).toBe(true);
   expect(origin?.static).toBe(true);
 
   const from_tuple = methods.find((m) => m.name === "from_tuple");
-  expect(from_tuple?.decorators?.some(d => d.name === "classmethod")).toBe(true);
+  expect(from_tuple?.decorators?.some((d) => d.name === "classmethod")).toBe(
+    true
+  );
 });
 ```
 
 ### Enums and Enum Members
+
 ```typescript
 it("extracts enums and enum members with values", () => {
   const code = `
@@ -230,14 +240,14 @@ class Priority(IntEnum):
   expect(color_enum?.members).toBeDefined();
   expect(color_enum?.members?.length).toBe(3);
 
-  const red = color_enum?.members?.find(m => m.name === "RED");
+  const red = color_enum?.members?.find((m) => m.name === "RED");
   expect(red).toBeDefined();
   expect(red?.value).toBe(1);
 
-  const green = color_enum?.members?.find(m => m.name === "GREEN");
+  const green = color_enum?.members?.find((m) => m.name === "GREEN");
   expect(green?.value).toBe(2);
 
-  const blue = color_enum?.members?.find(m => m.name === "BLUE");
+  const blue = color_enum?.members?.find((m) => m.name === "BLUE");
   expect(blue?.value).toBe(3);
 
   // Check Status string enum
@@ -247,7 +257,7 @@ class Priority(IntEnum):
   expect(status_enum).toBeDefined();
   expect(status_enum?.members?.length).toBe(3);
 
-  const pending = status_enum?.members?.find(m => m.name === "PENDING");
+  const pending = status_enum?.members?.find((m) => m.name === "PENDING");
   expect(pending?.value).toBe('"pending"');
 
   // Check Priority int enum
@@ -257,12 +267,13 @@ class Priority(IntEnum):
   expect(priority_enum).toBeDefined();
   expect(priority_enum?.members?.length).toBe(3);
 
-  const high = priority_enum?.members?.find(m => m.name === "HIGH");
+  const high = priority_enum?.members?.find((m) => m.name === "HIGH");
   expect(high?.value).toBe(10);
 });
 ```
 
 ### Variable Arguments
+
 ```typescript
 it("extracts *args and **kwargs parameters", () => {
   const code = `
@@ -287,6 +298,7 @@ def flexible_function(a, b, *args, **kwargs):
 ```
 
 ### Imports
+
 ```typescript
 it("extracts Python imports", () => {
   const code = `
@@ -328,6 +340,7 @@ from collections import *
 Once the critical query patterns are fixed, re-add these tests that were removed in task-epic-11.107.3:
 
 ### Assignment/Write Reference Tests
+
 ```typescript
 it("should extract assignment source and target locations", () => {
   const code = `
@@ -341,11 +354,11 @@ z: int = y + 1
   const result = build_semantic_index(parsed_file, tree, "python");
 
   // Check assignments via write references
-  const writes = result.references.filter(ref => ref.type === "write");
+  const writes = result.references.filter((ref) => ref.type === "write");
   expect(writes.length).toBeGreaterThan(0);
 
   // Find y = x assignment
-  const y_assignment = writes.find(ref => ref.name === "y");
+  const y_assignment = writes.find((ref) => ref.name === "y");
   expect(y_assignment).toBeDefined();
 });
 
@@ -360,10 +373,10 @@ value *= 2
   const parsed_file = createParsedFile(code, file_path, tree, "python");
   const result = build_semantic_index(parsed_file, tree, "python");
 
-  const writes = result.references.filter(ref => ref.type === "write");
+  const writes = result.references.filter((ref) => ref.type === "write");
 
   // Augmented assignments should create write references
-  const count_writes = writes.filter(ref => ref.name === "count");
+  const count_writes = writes.filter((ref) => ref.name === "count");
   expect(count_writes.length).toBeGreaterThan(0);
 });
 
@@ -377,18 +390,19 @@ x, y, z = values
   const parsed_file = createParsedFile(code, file_path, tree, "python");
   const result = build_semantic_index(parsed_file, tree, "python");
 
-  const writes = result.references.filter(ref => ref.type === "write");
+  const writes = result.references.filter((ref) => ref.type === "write");
 
   // Multiple assignments should track all targets
-  const a_write = writes.find(ref => ref.name === "a");
+  const a_write = writes.find((ref) => ref.name === "a");
   expect(a_write).toBeDefined();
 
-  const b_write = writes.find(ref => ref.name === "b");
+  const b_write = writes.find((ref) => ref.name === "b");
   expect(b_write).toBeDefined();
 });
 ```
 
 ### None Type Reference Tests
+
 ```typescript
 it("should extract None type references from return type hints", () => {
   const code = `
@@ -409,10 +423,10 @@ def get_pipe_union() -> int | str | None:
   const parsed_file = createParsedFile(code, file_path, tree, "python");
   const result = build_semantic_index(parsed_file, tree, "python");
 
-  const type_refs = result.references.filter(ref => ref.type === "type");
+  const type_refs = result.references.filter((ref) => ref.type === "type");
 
   // Check for None type references (indicates nullable)
-  const none_refs = type_refs.filter(ref => ref.name === "None");
+  const none_refs = type_refs.filter((ref) => ref.name === "None");
   expect(none_refs.length).toBeGreaterThan(0);
 });
 
@@ -431,15 +445,16 @@ y: int | str = 42
   const parsed_file = createParsedFile(code, file_path, tree, "python");
   const result = build_semantic_index(parsed_file, tree, "python");
 
-  const type_refs = result.references.filter(ref => ref.type === "type");
+  const type_refs = result.references.filter((ref) => ref.type === "type");
 
   // Check for None type references (indicates nullable)
-  const none_refs = type_refs.filter(ref => ref.name === "None");
+  const none_refs = type_refs.filter((ref) => ref.name === "None");
   expect(none_refs.length).toBeGreaterThan(0);
 });
 ```
 
 ### Import Tracking Tests
+
 ```typescript
 it("should maintain import tracking", () => {
   const code = `
@@ -458,7 +473,7 @@ from collections import defaultdict, Counter
   expect(imports.length).toBeGreaterThan(0);
 
   // Check various import types
-  const import_names = imports.map(imp => imp.name);
+  const import_names = imports.map((imp) => imp.name);
   expect(import_names).toContain("os");
 });
 ```
@@ -466,16 +481,18 @@ from collections import defaultdict, Counter
 ## Success Criteria
 
 ### Phase 1: Query Fixes (CRITICAL)
+
 - ✅ Assignment/write reference queries added to python.scm
 - ✅ None type reference queries added to python.scm
 - ✅ Import symbol tracking implemented
 - ✅ All 6 removed tests now pass
 
 ### Phase 2: Comprehensive Tests
+
 - ✅ All Python-specific features tested
 - ✅ Decorators fully verified
 - ✅ Enums and enum members verified (Enum, IntEnum, StrEnum)
 - ✅ Constructor parameters verified
-- ✅ *args and **kwargs tested
+- ✅ \*args and \*\*kwargs tested
 - ✅ All tests use complete object assertions
 - ✅ All tests pass (target: 60+ tests passing)

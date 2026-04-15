@@ -15,7 +15,7 @@ export function set_test_resolutions(
   scope_id: ScopeId,
   resolutions: Map<SymbolName, SymbolId>
 ): void {
-  const internal = registry as unknown as {
+  const internal = (registry as object) as {
     state: { resolutions_by_scope: Map<ScopeId, Map<SymbolName, SymbolId>> };
   };
   if (!internal.state.resolutions_by_scope) {

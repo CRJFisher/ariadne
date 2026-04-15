@@ -3,6 +3,7 @@
 ## Status: In Progress
 
 ## Parent Task
+
 task-epic-11.102 - Replace NormalizedCapture with Direct Definition Builders
 
 ## Objective
@@ -12,21 +13,25 @@ Update all language configuration files to use the new builder pattern for direc
 ## Sub-tasks by Language
 
 ### 102.5.1 - JavaScript
+
 - **102.5.1.1** - Update JavaScript Language Config
 - **102.5.1.2** - Update JavaScript Queries (.scm file)
 - **102.5.1.3** - Update JavaScript Tests
 
 ### 102.5.2 - TypeScript
+
 - **102.5.2.1** - Update TypeScript Language Config
 - **102.5.2.2** - Update TypeScript Queries (.scm file)
 - **102.5.2.3** - Update TypeScript Tests
 
 ### 102.5.3 - Python
+
 - **102.5.3.1** - Update Python Language Config
 - **102.5.3.2** - Update Python Queries (.scm file)
 - **102.5.3.3** - Update Python Tests
 
 ### 102.5.4 - Rust
+
 - **102.5.4.1** - Update Rust Language Config
 - **102.5.4.2** - Update Rust Queries (.scm file)
 - **102.5.4.3** - Update Rust Tests
@@ -34,18 +39,21 @@ Update all language configuration files to use the new builder pattern for direc
 ## Files to Update Per Language
 
 ### Config Files
+
 - `packages/core/src/parse_and_query_code/language_configs/javascript.ts`
 - `packages/core/src/parse_and_query_code/language_configs/typescript.ts`
 - `packages/core/src/parse_and_query_code/language_configs/python.ts`
 - `packages/core/src/parse_and_query_code/language_configs/rust.ts`
 
 ### Query Files
+
 - `packages/core/src/parse_and_query_code/queries/javascript.scm`
 - `packages/core/src/parse_and_query_code/queries/typescript.scm`
 - `packages/core/src/parse_and_query_code/queries/python.scm`
 - `packages/core/src/parse_and_query_code/queries/rust.scm`
 
 ### Test Files
+
 - `packages/core/src/parse_and_query_code/language_configs/*.test.ts`
 - `packages/core/tests/{language}/*.test.ts`
 
@@ -68,40 +76,50 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map([
 
 ```typescript
 export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
-  ["def.class", {
-    category: SemanticCategory.DEFINITION,
-    entity: SemanticEntity.CLASS,
-    process: (capture: RawCapture, builder: DefinitionBuilder) => {
-      const extends_clause = capture.node.childForFieldName('extends');
+  [
+    "def.class",
+    {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.CLASS,
+      process: (capture: RawCapture, builder: DefinitionBuilder) => {
+        const extends_clause = capture.node.childForFieldName("extends");
 
-      builder.add_class({
-        symbol_id: create_symbol_id(capture.symbol_name, capture.node_location),
-        name: capture.symbol_name,
-        location: capture.node_location,
-        extends: extends_clause ? [extract_symbol_name(extends_clause)] : [],
-        availability: determine_availability(capture.node)
-      });
-    }
-  }]
+        builder.add_class({
+          symbol_id: create_symbol_id(
+            capture.symbol_name,
+            capture.node_location
+          ),
+          name: capture.symbol_name,
+          location: capture.node_location,
+          extends: extends_clause ? [extract_symbol_name(extends_clause)] : [],
+          availability: determine_availability(capture.node),
+        });
+      },
+    },
+  ],
 ]);
 ```
 
 ## Key Changes Per Capture Type
 
 ### Class Captures
+
 - Extract base class information directly
 - Create ClassDefinition stub immediately
 - Methods/properties will be added by subsequent captures
 
 ### Method Captures
+
 - Find containing class via scope/parent analysis
 - Add to class's method list in builder
 
 ### Function Captures
+
 - Create complete FunctionDefinition immediately
 - Extract parameters from node structure
 
 ### Parameter Captures
+
 - Add to containing function/method in builder
 - Extract type information if available
 
@@ -110,7 +128,10 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
 ```typescript
 // packages/core/src/parse_and_query_code/builder_helpers.ts
 
-export function create_symbol_id(name: SymbolName, location: Location): SymbolId {
+export function create_symbol_id(
+  name: SymbolName,
+  location: Location
+): SymbolId {
   // Create unique symbol ID
 }
 
@@ -118,7 +139,9 @@ export function determine_availability(node: SyntaxNode): SymbolAvailability {
   // Determine if exported, private, etc.
 }
 
-export function find_containing_class(capture: RawCapture): SymbolId | undefined {
+export function find_containing_class(
+  capture: RawCapture
+): SymbolId | undefined {
   // Walk up AST to find containing class
 }
 
@@ -130,6 +153,7 @@ export function extract_parameters(node: SyntaxNode): ParameterDefinition[] {
 ## Testing Updates
 
 Each language config needs updated tests:
+
 - Test that captures produce correct definitions
 - Test that multi-part definitions (class + methods) assemble correctly
 - Test that all required fields are populated
@@ -137,11 +161,13 @@ Each language config needs updated tests:
 ## Key Requirements for Each Language
 
 1. **Update Language Config**
+
    - Convert from NormalizedCapture to builder pattern
    - Handle language-specific features
    - Implement all helper functions
 
 2. **Update Query Files**
+
    - Remove unnecessary captures
    - Add missing captures (scopes, imports, etc.)
    - Optimize for performance
@@ -180,6 +206,7 @@ Each language config needs updated tests:
 **Date Completed:** 2025-09-30
 
 **Files Created:**
+
 - `packages/core/src/index_single_file/parse_and_query_code/language_configs/python_builder.ts`
 - `packages/core/src/index_single_file/parse_and_query_code/language_configs/python_builder.test.ts`
 
@@ -188,6 +215,7 @@ Each language config needs updated tests:
 Created comprehensive Python builder configuration with 33 capture mappings covering all Python language features:
 
 1. **Core Definitions:**
+
    - Classes (with inheritance extraction)
    - Functions (including async functions)
    - Methods (instance, static, class methods)
@@ -195,6 +223,7 @@ Created comprehensive Python builder configuration with 33 capture mappings cove
    - Properties (@property, @setter, @getter decorators)
 
 2. **Python-Specific Features:**
+
    - **Decorators:** Extraction and tracking of @decorator syntax
    - **Magic Methods:** Proper handling of `__init__`, `__str__`, etc.
    - **Naming Conventions:**
@@ -207,6 +236,7 @@ Created comprehensive Python builder configuration with 33 capture mappings cove
    - **Parameter Types:** Support for `*args` and `**kwargs`
 
 3. **Helper Functions Implemented:**
+
    - `extract_decorators()`: Extract decorator list from function/method
    - `determine_method_type()`: Detect static/class/instance methods
    - `is_private_name()`: Detect private naming convention
@@ -225,6 +255,7 @@ Created comprehensive Python builder configuration with 33 capture mappings cove
 **Test Coverage:**
 
 Created comprehensive test suite with 28 tests covering:
+
 - All definition types (classes, functions, methods, properties)
 - Edge cases (constants vs variables, private members, magic methods)
 - Decorator extraction and method type detection
@@ -233,6 +264,7 @@ Created comprehensive test suite with 28 tests covering:
 - Integration scenarios (classes with methods, decorators, inheritance)
 
 **Test Results:**
+
 - ✅ `python_builder.test.ts`: 28/28 tests passing
 - ✅ `python.test.ts`: 43/43 tests passing (existing tests)
 - ✅ `definition_builder.test.ts`: 12/12 tests passing
@@ -241,10 +273,12 @@ Created comprehensive test suite with 28 tests covering:
 **Issues Encountered:**
 
 1. **Reserved Keyword Issue:**
+
    - Initially used `extends` as variable name (TypeScript reserved keyword)
    - Fixed by renaming to `base_classes`
 
 2. **TypeScript Compilation Errors:**
+
    - Pre-existing errors in legacy test files using deprecated APIs
    - Added `@ts-nocheck` to legacy files during migration period
    - Affected files: `definitions.test.ts`, `semantic_index.*.test.ts`, and other test files using old NormalizedCapture APIs
@@ -270,6 +304,7 @@ No changes needed to `python.scm` - existing queries already capture all necessa
 4. **Documentation Extraction:** Add support for Python docstrings (similar to JSDoc extraction in other languages).
 
 **Success Metrics:**
+
 - ✅ 33 capture mappings implemented
 - ✅ All Python-specific features handled
 - ✅ 28 comprehensive tests passing
@@ -284,10 +319,12 @@ No changes needed to `python.scm` - existing queries already capture all necessa
 **Date Completed:** 2025-09-30
 
 **Files Created:**
+
 - `packages/core/src/index_single_file/parse_and_query_code/language_configs/rust_builder.ts` (~1200 lines)
 - `packages/core/src/index_single_file/parse_and_query_code/language_configs/rust_builder.test.ts` (32 tests)
 
 **Files Modified:**
+
 - `packages/core/src/index_single_file/parse_and_query_code/language_configs/rust.ts` - Updated to export builder pattern
 
 **Implementation Details:**
@@ -295,6 +332,7 @@ No changes needed to `python.scm` - existing queries already capture all necessa
 Created comprehensive Rust builder configuration with all capture mappings covering Rust language features:
 
 1. **Core Definitions:**
+
    - Structs (mapped to classes)
    - Enums (with separate enum member addition)
    - Traits (mapped to interfaces)
@@ -305,7 +343,9 @@ Created comprehensive Rust builder configuration with all capture mappings cover
    - Modules
 
 2. **Rust-Specific Features:**
+
    - **Visibility System:**
+
      - `pub` → `"public"`
      - `pub(crate)` → `"package-internal"`
      - `pub(super)` → `"file-private"` (mapped to closest available scope)
@@ -325,6 +365,7 @@ Created comprehensive Rust builder configuration with all capture mappings cover
    - **Enum Variants:** Separate addition via `add_enum_member()` calls
 
 3. **Helper Functions Implemented:**
+
    - `extract_visibility()`: Map Rust visibility to SymbolAvailability
    - `extract_generic_parameters()`: Extract type and lifetime parameters
    - `extract_trait_bounds()`: Extract where clause constraints
@@ -345,6 +386,7 @@ Created comprehensive Rust builder configuration with all capture mappings cover
 **Test Coverage:**
 
 Created comprehensive test suite with 32 tests covering:
+
 - Struct definitions with visibility modifiers
 - Enum definitions with variant extraction
 - Trait definitions (mapped to interfaces)
@@ -359,6 +401,7 @@ Created comprehensive test suite with 32 tests covering:
 - Integration scenarios (structs with impl blocks, enums with methods)
 
 **Test Results:**
+
 - ✅ TypeScript compilation: All clean (no errors)
 - ✅ Core infrastructure tests: All passing
 - ✅ JavaScript/TypeScript builder tests: All passing
@@ -418,6 +461,7 @@ No changes needed to `rust.scm` - existing queries already capture all necessary
 1. **API Enhancement for Rust Properties:**
 
    Consider extending DefinitionBuilder API to support:
+
    - Function return types, async/const/unsafe modifiers in constructor
    - Variable readonly/static flags
    - Interface type parameters
@@ -426,12 +470,14 @@ No changes needed to `rust.scm` - existing queries already capture all necessary
 2. **Visibility Scope Expansion:**
 
    Consider adding more granular SymbolAvailability scopes:
+
    - `"parent-module"` for `pub(super)`
    - `"restricted-public"` with path parameter for `pub(in path)`
 
 3. **Legacy Test Migration:**
 
    Files marked with `@ts-nocheck` need migration to builder pattern:
+
    - `rust.test.ts` (119 tests)
    - `semantic_index.rust.test.ts` (93 tests)
 
@@ -445,6 +491,7 @@ No changes needed to `rust.scm` - existing queries already capture all necessary
 5. **Missing Fixture Files:**
 
    Many semantic index tests fail with `ENOENT: no such file or directory`:
+
    - `fixtures/rust/basic_structs_and_enums.rs`
    - `fixtures/rust/traits_and_generics.rs`
    - `fixtures/rust/functions_and_closures.rs`
@@ -454,11 +501,13 @@ No changes needed to `rust.scm` - existing queries already capture all necessary
 **Regression Testing:**
 
 Ran full test suite before and after changes:
+
 - ✅ No regressions detected
 - ✅ All non-Rust test failures pre-existed
 - ✅ Same test files failing before and after Rust builder implementation
 
 Pre-existing failures (unrelated to Rust work):
+
 - `member_access_references.test.ts` (55 failures)
 - `type_members.test.ts` (20 failures)
 - `semantic_index.python.test.ts` (55 failures)
@@ -468,6 +517,7 @@ Pre-existing failures (unrelated to Rust work):
 - `get_symbol_context.test.ts` (10 failures)
 
 **Success Metrics:**
+
 - ✅ Comprehensive capture mappings implemented
 - ✅ All Rust-specific features handled (structs, enums, traits, impl blocks, visibility, generics, lifetimes)
 - ✅ Helper functions for Rust language features

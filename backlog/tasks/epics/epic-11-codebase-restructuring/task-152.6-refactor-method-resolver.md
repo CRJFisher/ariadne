@@ -52,9 +52,9 @@ import type {
   SymbolId,
   SymbolName,
   ScopeId,
-} from '@ariadnejs/types';
-import type { SemanticIndex } from '../../index_single_file/semantic_index';
-import { walk_scope_chain } from '../scope_resolution/scope_walker';
+} from "@ariadnejs/types";
+import type { SemanticIndex } from "../../index_single_file/semantic_index";
+import { walk_scope_chain } from "../scope_resolution/scope_walker";
 
 /**
  * Resolve method call reference: obj.method()
@@ -94,11 +94,7 @@ export function resolve_method_call(
   }
 
   // Step 3: Find method on receiver's type
-  return resolve_method_on_type(
-    ref.name,
-    receiver_type,
-    semantic_index
-  );
+  return resolve_method_on_type(ref.name, receiver_type, semantic_index);
 }
 
 /**
@@ -114,8 +110,8 @@ function resolve_receiver(
   semantic_index: SemanticIndex
 ): SymbolId | null {
   // Check if receiver is a definition (variable, parameter, property)
-  const definition = semantic_index.definitions.find(
-    (def) => locations_equal(def.location, receiver_location)
+  const definition = semantic_index.definitions.find((def) =>
+    locations_equal(def.location, receiver_location)
   );
 
   if (definition) {
@@ -123,7 +119,10 @@ function resolve_receiver(
   }
 
   // Receiver might be a reference itself - resolve it first
-  const receiver_name = extract_name_at_location(receiver_location, semantic_index);
+  const receiver_name = extract_name_at_location(
+    receiver_location,
+    semantic_index
+  );
   if (!receiver_name) return null;
 
   // Walk scope chain to find receiver definition
@@ -178,7 +177,7 @@ function resolve_method_on_type(
     (def) =>
       def.name === method_name &&
       def.scope_id === class_scope_id &&
-      def.kind === 'method'
+      def.kind === "method"
   );
 
   return method_definition?.symbol_id ?? null;
@@ -217,24 +216,27 @@ function extract_name_at_location(
 ### 1. Type Signature
 
 **Before**:
+
 ```typescript
 export function resolve_method_call(
-  ref: SymbolReference,  // Generic type
+  ref: SymbolReference, // Generic type
   semantic_index: SemanticIndex
-): SymbolId | null
+): SymbolId | null;
 ```
 
 **After**:
+
 ```typescript
 export function resolve_method_call(
-  ref: MethodCallReference,  // Specific type
+  ref: MethodCallReference, // Specific type
   semantic_index: SemanticIndex
-): SymbolId | null
+): SymbolId | null;
 ```
 
 ### 2. No More Chain Length Heuristic
 
 **Before**:
+
 ```typescript
 if (context.property_chain.length <= 2) {
   return resolve_simple_method_call(...);
@@ -244,6 +246,7 @@ if (context.property_chain.length <= 2) {
 ```
 
 **After**:
+
 ```typescript
 // No branching - single code path for all method calls
 const receiver_symbol = resolve_receiver(...);
@@ -276,9 +279,9 @@ The following functions are **deleted** because they contained the buggy routing
 
 ```typescript
 // method_resolver.test.ts
-describe('resolve_method_call', () => {
-  describe('Regular method calls', () => {
-    test('resolves method on local variable', () => {
+describe("resolve_method_call", () => {
+  describe("Regular method calls", () => {
+    test("resolves method on local variable", () => {
       const code = `
         class User {
           getName() { return this.name; }
@@ -292,11 +295,11 @@ describe('resolve_method_call', () => {
 
       const semantic_index = build_semantic_index(code);
       const ref = create_method_call_reference(
-        'getName' as SymbolName,
+        "getName" as SymbolName,
         call_location,
         scope_id,
         user_location,
-        ['user', 'getName']
+        ["user", "getName"]
       );
 
       const resolved = resolve_method_call(ref, semantic_index);
@@ -304,7 +307,7 @@ describe('resolve_method_call', () => {
       expect(resolved).toMatch(/^symbol:.*getName$/);
     });
 
-    test('resolves method on parameter', () => {
+    test("resolves method on parameter", () => {
       const code = `
         class User {
           getName() { return this.name; }
@@ -317,18 +320,18 @@ describe('resolve_method_call', () => {
 
       const semantic_index = build_semantic_index(code);
       const ref = create_method_call_reference(
-        'getName' as SymbolName,
+        "getName" as SymbolName,
         call_location,
         scope_id,
         user_location,
-        ['user', 'getName']
+        ["user", "getName"]
       );
 
       const resolved = resolve_method_call(ref, semantic_index);
       expect(resolved).toBeTruthy();
     });
 
-    test('resolves chained method calls', () => {
+    test("resolves chained method calls", () => {
       const code = `
         class User {
           getProfile() { return this.profile; }
@@ -346,11 +349,11 @@ describe('resolve_method_call', () => {
 
       const semantic_index = build_semantic_index(code);
       const ref = create_method_call_reference(
-        'getName' as SymbolName,
+        "getName" as SymbolName,
         call_location,
         scope_id,
         get_profile_call_location,
-        ['user', 'getProfile', 'getName']
+        ["user", "getProfile", "getName"]
       );
 
       const resolved = resolve_method_call(ref, semantic_index);
@@ -358,8 +361,8 @@ describe('resolve_method_call', () => {
     });
   });
 
-  describe('Unresolved cases', () => {
-    test('returns null when receiver not found', () => {
+  describe("Unresolved cases", () => {
+    test("returns null when receiver not found", () => {
       const code = `
         function test() {
           unknown.method();  // unknown is not defined
@@ -368,18 +371,18 @@ describe('resolve_method_call', () => {
 
       const semantic_index = build_semantic_index(code);
       const ref = create_method_call_reference(
-        'method' as SymbolName,
+        "method" as SymbolName,
         call_location,
         scope_id,
         unknown_location,
-        ['unknown', 'method']
+        ["unknown", "method"]
       );
 
       const resolved = resolve_method_call(ref, semantic_index);
       expect(resolved).toBeNull();
     });
 
-    test('returns null when method does not exist on type', () => {
+    test("returns null when method does not exist on type", () => {
       const code = `
         class User {
           getName() { return this.name; }
@@ -393,11 +396,11 @@ describe('resolve_method_call', () => {
 
       const semantic_index = build_semantic_index(code);
       const ref = create_method_call_reference(
-        'nonexistent' as SymbolName,
+        "nonexistent" as SymbolName,
         call_location,
         scope_id,
         user_location,
-        ['user', 'nonexistent']
+        ["user", "nonexistent"]
       );
 
       const resolved = resolve_method_call(ref, semantic_index);
@@ -405,8 +408,8 @@ describe('resolve_method_call', () => {
     });
   });
 
-  describe('Does NOT handle self-reference calls', () => {
-    test('this.method() is NOT resolved here', () => {
+  describe("Does NOT handle self-reference calls", () => {
+    test("this.method() is NOT resolved here", () => {
       // This test documents that self-reference calls are
       // handled by self_reference_resolver.ts, not here.
       // If someone tries to pass a SelfReferenceCall to
@@ -446,9 +449,11 @@ describe('resolve_method_call', () => {
 ## Files Changed
 
 **Modified**:
+
 - `packages/core/src/resolve_references/call_resolution/method_resolver.ts`
 
 **Updated**:
+
 - `packages/core/src/resolve_references/call_resolution/method_resolver.test.ts`
 
 ## Impact on Bug Fix
@@ -471,24 +476,29 @@ After completion, proceed to **task-152.7** (Create self_reference_resolver.ts)
 ### Changes Made
 
 1. **Updated function signature** (method_resolver.ts:61-67):
+
    - Changed parameter from `SymbolReference` to `MethodCallReference`
    - TypeScript now knows the reference has `receiver_location` and `property_chain` fields
 
 2. **Replaced OLD `.context` field access** with discriminated union fields:
+
    - `call_ref.context?.receiver_location` → `call_ref.receiver_location` ✅
    - `call_ref.context?.property_chain` → `call_ref.property_chain` ✅
 
 3. **Removed chain length heuristic** (THE BUG!):
+
    - Deleted `if (chain && chain.length > 2)` branching
    - All method calls now use `resolve_property_chain()` consistently
    - No more special-case routing based on chain length
 
 4. **Removed `this` keyword handling** (lines 153-210):
+
    - Deleted 60 lines of `this` keyword resolution logic
    - Self-reference calls are now filtered by entry point (task-152.5)
    - Added clear documentation noting self-references are NOT handled here
 
 5. **Simplified first element resolution** (lines 152-198):
+
    - Direct scope resolution for all receivers
    - Namespace import handling preserved
    - Associated function call handling preserved

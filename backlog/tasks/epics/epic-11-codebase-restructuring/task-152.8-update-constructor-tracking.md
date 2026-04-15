@@ -23,7 +23,7 @@ export function resolve_constructor_call(
 ): SymbolId | null {
   const context = ref.context;
   if (!context?.construct_target) {
-    return null;  // Runtime check needed
+    return null; // Runtime check needed
   }
 
   // ... resolution logic
@@ -44,9 +44,9 @@ import type {
   SymbolId,
   SymbolName,
   Location,
-} from '@ariadnejs/types';
-import type { SemanticIndex } from '../../index_single_file/semantic_index';
-import { walk_scope_chain } from '../scope_resolution/scope_walker';
+} from "@ariadnejs/types";
+import type { SemanticIndex } from "../../index_single_file/semantic_index";
+import { walk_scope_chain } from "../scope_resolution/scope_walker";
 
 /**
  * Resolve constructor call: new MyClass(), MyClass() (Python)
@@ -98,11 +98,8 @@ function find_class_definition(
   scope_id: ScopeId,
   semantic_index: SemanticIndex
 ): Definition | null {
-  return walk_scope_chain(
-    class_name,
-    scope_id,
-    semantic_index,
-    (def) => (def.kind === 'class' ? def : null)
+  return walk_scope_chain(class_name, scope_id, semantic_index, (def) =>
+    def.kind === "class" ? def : null
   );
 }
 
@@ -123,8 +120,8 @@ function track_construction_relationship(
   semantic_index: SemanticIndex
 ): void {
   // Find the variable/parameter at construct_target
-  const target_definition = semantic_index.definitions.find(
-    (def) => locations_equal(def.location, construct_target)
+  const target_definition = semantic_index.definitions.find((def) =>
+    locations_equal(def.location, construct_target)
   );
 
   if (!target_definition) {
@@ -146,8 +143,8 @@ function track_construction_relationship(
  */
 function extract_class_name(symbol_id: SymbolId): string {
   // symbol_id format: "symbol:src/file.ts:ClassName:line:col"
-  const parts = symbol_id.split(':');
-  return parts[2] ?? 'Unknown';
+  const parts = symbol_id.split(":");
+  return parts[2] ?? "Unknown";
 }
 
 /**
@@ -168,18 +165,21 @@ function locations_equal(a: Location, b: Location): boolean {
 ### Type Signature
 
 **Before**:
+
 ```typescript
 export function resolve_constructor_call(
-  ref: SymbolReference,  // Generic type
+  ref: SymbolReference, // Generic type
   semantic_index: SemanticIndex
 ): SymbolId | null {
-  if (!ref.context?.construct_target) {  // ❌ Runtime check
+  if (!ref.context?.construct_target) {
+    // ❌ Runtime check
     return null;
   }
 }
 ```
 
 **After**:
+
 ```typescript
 export function resolve_constructor_call(
   ref: ConstructorCallReference,  // Specific type
@@ -199,7 +199,7 @@ if (ref.context?.construct_target) {
 }
 
 // After: Required field, no check needed
-use_construct_target(ref.construct_target);  // Always exists
+use_construct_target(ref.construct_target); // Always exists
 ```
 
 ## Language-Specific Handling
@@ -219,7 +219,7 @@ const obj = new MyClass();
 
 ```typescript
 // Constructor without 'new' keyword
-obj = MyClass()
+obj = MyClass();
 //    ^^^^^^^ Create ConstructorCallReference
 
 // Semantic index must distinguish:
@@ -232,9 +232,9 @@ obj = MyClass()
 
 ```typescript
 // constructor_resolver.test.ts
-describe('resolve_constructor_call', () => {
-  describe('TypeScript/JavaScript', () => {
-    test('resolves constructor with new keyword', () => {
+describe("resolve_constructor_call", () => {
+  describe("TypeScript/JavaScript", () => {
+    test("resolves constructor with new keyword", () => {
       const code = `
         class MyClass {
           constructor() { }
@@ -243,9 +243,9 @@ describe('resolve_constructor_call', () => {
         const obj = new MyClass();
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const ref = create_constructor_call_reference(
-        'MyClass' as SymbolName,
+        "MyClass" as SymbolName,
         new_expression_location,
         scope_id,
         obj_location
@@ -256,16 +256,16 @@ describe('resolve_constructor_call', () => {
       expect(resolved).toMatch(/^symbol:.*MyClass$/);
     });
 
-    test('resolves constructor from imported class', () => {
+    test("resolves constructor from imported class", () => {
       const code = `
         import { MyClass } from './other';
 
         const obj = new MyClass();
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const ref = create_constructor_call_reference(
-        'MyClass' as SymbolName,
+        "MyClass" as SymbolName,
         new_expression_location,
         scope_id,
         obj_location
@@ -275,7 +275,7 @@ describe('resolve_constructor_call', () => {
       expect(resolved).toBeTruthy();
     });
 
-    test('tracks construction relationship for type inference', () => {
+    test("tracks construction relationship for type inference", () => {
       const code = `
         class MyClass {
           method() { }
@@ -285,9 +285,9 @@ describe('resolve_constructor_call', () => {
         obj.method();  // Should resolve because obj's type is known
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const constructor_ref = create_constructor_call_reference(
-        'MyClass' as SymbolName,
+        "MyClass" as SymbolName,
         new_expression_location,
         scope_id,
         obj_location
@@ -297,14 +297,14 @@ describe('resolve_constructor_call', () => {
 
       // Verify obj's type_info was updated
       const obj_definition = semantic_index.definitions.find(
-        (def) => def.name === 'obj'
+        (def) => def.name === "obj"
       );
-      expect(obj_definition?.type_info?.type_name).toBe('MyClass');
+      expect(obj_definition?.type_info?.type_name).toBe("MyClass");
     });
   });
 
-  describe('Python', () => {
-    test('resolves constructor without new keyword', () => {
+  describe("Python", () => {
+    test("resolves constructor without new keyword", () => {
       const code = `
         class MyClass:
           def __init__(self):
@@ -313,9 +313,9 @@ describe('resolve_constructor_call', () => {
         obj = MyClass()
       `;
 
-      const semantic_index = build_semantic_index(code, 'python');
+      const semantic_index = build_semantic_index(code, "python");
       const ref = create_constructor_call_reference(
-        'MyClass' as SymbolName,
+        "MyClass" as SymbolName,
         call_expression_location,
         scope_id,
         obj_location
@@ -326,7 +326,7 @@ describe('resolve_constructor_call', () => {
       expect(resolved).toMatch(/^symbol:.*MyClass$/);
     });
 
-    test('resolves constructor with arguments', () => {
+    test("resolves constructor with arguments", () => {
       const code = `
         class User:
           def __init__(self, name):
@@ -335,9 +335,9 @@ describe('resolve_constructor_call', () => {
         user = User("Alice")
       `;
 
-      const semantic_index = build_semantic_index(code, 'python');
+      const semantic_index = build_semantic_index(code, "python");
       const ref = create_constructor_call_reference(
-        'User' as SymbolName,
+        "User" as SymbolName,
         call_expression_location,
         scope_id,
         user_location
@@ -348,8 +348,8 @@ describe('resolve_constructor_call', () => {
     });
   });
 
-  describe('Rust', () => {
-    test('resolves struct instantiation', () => {
+  describe("Rust", () => {
+    test("resolves struct instantiation", () => {
       const code = `
         struct MyStruct {
           field: i32,
@@ -358,9 +358,9 @@ describe('resolve_constructor_call', () => {
         let obj = MyStruct { field: 42 };
       `;
 
-      const semantic_index = build_semantic_index(code, 'rust');
+      const semantic_index = build_semantic_index(code, "rust");
       const ref = create_constructor_call_reference(
-        'MyStruct' as SymbolName,
+        "MyStruct" as SymbolName,
         struct_expression_location,
         scope_id,
         obj_location
@@ -371,15 +371,15 @@ describe('resolve_constructor_call', () => {
     });
   });
 
-  describe('Unresolved cases', () => {
-    test('returns null when class does not exist', () => {
+  describe("Unresolved cases", () => {
+    test("returns null when class does not exist", () => {
       const code = `
         const obj = new NonExistentClass();
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const ref = create_constructor_call_reference(
-        'NonExistentClass' as SymbolName,
+        "NonExistentClass" as SymbolName,
         new_expression_location,
         scope_id,
         obj_location
@@ -389,7 +389,7 @@ describe('resolve_constructor_call', () => {
       expect(resolved).toBeNull();
     });
 
-    test('returns null when constructor is not in scope', () => {
+    test("returns null when constructor is not in scope", () => {
       const code = `
         function outer() {
           class LocalClass { }
@@ -400,9 +400,9 @@ describe('resolve_constructor_call', () => {
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const ref = create_constructor_call_reference(
-        'LocalClass' as SymbolName,
+        "LocalClass" as SymbolName,
         new_expression_location,
         other_scope_id,
         obj_location
@@ -429,9 +429,11 @@ describe('resolve_constructor_call', () => {
 ## Files Changed
 
 **Modified**:
+
 - `packages/core/src/resolve_references/call_resolution/constructor_resolver.ts` (renamed from `constructor_tracking.ts`)
 
 **Updated**:
+
 - `packages/core/src/resolve_references/call_resolution/constructor_resolver.test.ts`
 
 ## Notes
@@ -444,7 +446,7 @@ The `construct_target` field enables type inference:
 const obj = new MyClass();
 //    ^^^ construct_target
 
-obj.method();  // Can resolve because we know obj's type is MyClass
+obj.method(); // Can resolve because we know obj's type is MyClass
 ```
 
 Without tracking this relationship, method calls on constructed objects would fail to resolve.
@@ -452,13 +454,15 @@ Without tracking this relationship, method calls on constructed objects would fa
 ### Difference from Method Calls
 
 **Constructor call**:
+
 ```typescript
-new MyClass()  // Returns class symbol_id
+new MyClass(); // Returns class symbol_id
 ```
 
 **Method call**:
+
 ```typescript
-obj.method()  // Returns method symbol_id
+obj.method(); // Returns method symbol_id
 ```
 
 Constructor calls resolve to the **class**, not a separate constructor symbol.
@@ -491,20 +495,22 @@ After completion, proceed to **task-152.9** (Update all tests)
 ### Architecture Benefits
 
 **Before (OLD reference format)**:
+
 ```typescript
 // Runtime checks needed for optional fields
 if (ref.call_type === "constructor" && ref.context?.construct_target) {
-  const target_location = ref.context.construct_target;  // ❌ Optional field
+  const target_location = ref.context.construct_target; // ❌ Optional field
   // ...
 }
 ```
 
 **After (discriminated union)**:
+
 ```typescript
 // Type narrowing with guaranteed fields
 if (ref.kind === "constructor_call") {
   // TypeScript knows ref is ConstructorCallReference here
-  const target_location = ref.construct_target;  // ✅ Required field, always exists
+  const target_location = ref.construct_target; // ✅ Required field, always exists
   // ...
 }
 ```

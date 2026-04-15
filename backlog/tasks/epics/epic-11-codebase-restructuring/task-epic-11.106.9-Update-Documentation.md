@@ -17,12 +17,14 @@ Update all documentation to reflect the simplified `SymbolReference` interface. 
 **Location:** `packages/core/src/index_single_file/`
 
 **Changes:**
+
 - Update interface examples to show simplified structure
 - Remove mentions of `type_flow.source_type`, `is_narrowing`, `is_widening`
 - Update examples to use `assignment_type`
 - Add optional chain detection examples
 
 **Sections to Update:**
+
 - Interface definition section
 - Usage examples
 - Return type documentation
@@ -32,11 +34,13 @@ Update all documentation to reflect the simplified `SymbolReference` interface. 
 **Location:** `packages/core/src/index_single_file/`
 
 **Changes:**
+
 - Add note about field removals in completion section
 - Update "What Can Be Extracted" section
 - Document why certain fields were removed
 
 **Add Section:**
+
 ```markdown
 ## Field Removals (Task 11.106)
 
@@ -53,10 +57,12 @@ These removals make the API clearer and remove confusing "always undefined/false
 ### 3. Inline Code Comments
 
 **Files:**
+
 - `packages/types/src/semantic_index.ts` - Interface definition
 - `packages/core/src/index_single_file/query_code_tree/reference_builder.ts` - Usage
 
 **Changes:**
+
 - Update JSDoc comments to reference `assignment_type` not `type_flow`
 - Remove "Could be enhanced" comments for deleted fields
 - Add documentation for optional chain detection
@@ -95,7 +101,7 @@ export interface SymbolReference {
   readonly member_access?: {
     readonly object_type?: TypeInfo;
     readonly access_type: "property" | "method" | "index";
-    readonly is_optional_chain: boolean;  // ✅ Now accurate
+    readonly is_optional_chain: boolean; // ✅ Now accurate
   };
 }
 ```
@@ -105,6 +111,7 @@ export interface SymbolReference {
 **File:** `packages/core/README.md`
 
 **Changes:**
+
 - Update examples to use simplified interface
 - Add optional chaining examples
 - Remove outdated type flow examples
@@ -153,10 +160,12 @@ rg "type_flow|source_type|is_narrowing|is_widening" --type ts -g "!*test.ts"
 ## Verification Steps
 
 1. **Search for outdated references:**
+
    ```bash
    rg "type_flow" --type md
    rg "source_type|is_narrowing|is_widening"
    ```
+
    Expected: 0 results (or only in "what we removed" sections)
 
 2. **Verify examples compile:**
@@ -190,12 +199,14 @@ rg "type_flow|source_type|is_narrowing|is_widening" --type ts -g "!*test.ts"
 Per project guidelines: "Write comments etc in a 'timeless' way i.e. don't make reference to the change process / new architecture / old way of doing things"
 
 **BAD (Don't do this):**
+
 ```typescript
 // Updated in task 11.106 to replace type_flow with assignment_type
 readonly assignment_type?: TypeInfo;
 ```
 
 **GOOD (Do this):**
+
 ```typescript
 /**
  * Type information for assignment targets
@@ -208,6 +219,7 @@ readonly assignment_type?: TypeInfo;
 ### Clear Examples
 
 All examples should:
+
 1. Be copy-paste runnable
 2. Show realistic use cases
 3. Include type annotations

@@ -1,10 +1,10 @@
 ---
 id: task-epic-11.107.1
-title: 'JavaScript: Fix semantic_index.javascript.test.ts'
+title: "JavaScript: Fix semantic_index.javascript.test.ts"
 status: Completed
 assignee: []
-created_date: '2025-10-01 10:27'
-completed_date: '2025-10-01'
+created_date: "2025-10-01 10:27"
+completed_date: "2025-10-01"
 labels: []
 dependencies: []
 parent_task_id: task-epic-11.107
@@ -23,11 +23,13 @@ No metadata file exists for JavaScript.
 ## Implementation Results
 
 ### ✅ Test Status
+
 - **Before:** 4/16 tests failing, 12 passing
 - **After:** 14/14 tests passing, 2 skipped (100% pass rate)
 - **Test Suite:** `packages/core/src/index_single_file/semantic_index.javascript.test.ts`
 
 ### 🎯 Objectives Achieved
+
 1. ✅ Fixture paths verified at `tests/fixtures/javascript/`
 2. ✅ Tests use SemanticIndex structure (no deprecated APIs)
 3. ✅ Unsupported features properly skipped (JSDoc, assignments)
@@ -38,11 +40,13 @@ No metadata file exists for JavaScript.
 **Primary Issue:** SymbolId mismatch in method-to-class attachment
 
 The `find_containing_class()` function was creating SymbolIds with incorrect location coordinates:
+
 - When adding a class: used `capture.location` (columns with +1 offset from `node_to_location()`)
 - When finding the class from methods: manually created location WITHOUT +1 offset
 - Result: Class ID `class:test.js:2:15:2:19:Test` didn't match method lookup `class:test.js:2:14:2:18:Test`
 
 **Debug Evidence:**
+
 ```
 [class handler] Adding class: Test, class_id: class:test.js:2:15:2:19:Test
 [method handler] Processing method: staticMethod, class_id: class:test.js:2:14:2:18:Test
@@ -51,6 +55,7 @@ The `find_containing_class()` function was creating SymbolIds with incorrect loc
 ### 📝 Changes Made
 
 #### 1. JavaScript Builder Fixes
+
 **File:** `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_builder.ts`
 
 ```typescript
@@ -59,9 +64,9 @@ function extract_location(node: SyntaxNode): Location {
   return {
     file_path: "" as any,
     start_line: node.startPosition.row + 1,
-    start_column: node.startPosition.column + 1,  // ← Added +1
+    start_column: node.startPosition.column + 1, // ← Added +1
     end_line: node.endPosition.row + 1,
-    end_column: node.endPosition.column + 1,      // ← Added +1
+    end_column: node.endPosition.column + 1, // ← Added +1
   };
 }
 
@@ -69,25 +74,30 @@ function extract_location(node: SyntaxNode): Location {
 const location: Location = {
   file_path: capture.location.file_path,
   start_line: nameNode.startPosition.row + 1,
-  start_column: nameNode.startPosition.column + 1,  // ← Added +1
+  start_column: nameNode.startPosition.column + 1, // ← Added +1
   end_line: nameNode.endPosition.row + 1,
-  end_column: nameNode.endPosition.column + 1,      // ← Added +1
+  end_column: nameNode.endPosition.column + 1, // ← Added +1
 };
 ```
 
 #### 2. TypeScript Compilation Fixes
+
 **Files Modified:**
+
 - `semantic_index.ts` - Removed unused imports (type_members, type_annotation_references, etc.)
 - `javascript_builder.ts` - Fixed `extract_original_name()` null safety
 - `typescript_builder.ts` - Fixed `extract_type_parameters()` null safety
 - `rust_builder_helpers.ts` - Fixed node.parent null checks, added enum_member_symbol export
 
 #### 3. Build Configuration
+
 - **tsconfig.json:** Excluded `src/resolve_references/**/*` (legacy code with 184 errors)
 - **package.json:** Fixed `copy-scm-files` script path from `semantic_index/queries/` to `index_single_file/query_code_tree/queries/`
 
 #### 4. Test Cleanup
+
 **File:** `packages/core/src/index_single_file/semantic_index.javascript.test.ts`
+
 - Removed `@ts-nocheck` comment
 - Removed debug logging code
 - Fixed test to check `MethodDefinition` objects instead of strings
@@ -98,6 +108,7 @@ const location: Location = {
 **Query File:** `packages/core/src/index_single_file/query_code_tree/queries/javascript.scm`
 
 #### ✅ Working Correctly
+
 All JavaScript query patterns are functioning properly:
 
 1. **Class Definitions** - `(class_declaration name: (identifier) @definition.class)`
@@ -107,6 +118,7 @@ All JavaScript query patterns are functioning properly:
 5. **References** - Function calls, method calls, property access all working
 
 **Debug Verification:**
+
 ```
 All captures for class with methods:
   - definition.class: Test
@@ -119,6 +131,7 @@ The queries were capturing AST nodes correctly. The issue was in the **builder c
 #### 🚧 Known Limitations (Intentional)
 
 1. **JSDoc Type Parsing** - Not implemented
+
    - Test: `should populate type_info for type references (JSDoc not supported)`
    - Reason: Would require parsing JSDoc comments separately from AST
    - Status: Skipped (intentional)
@@ -139,11 +152,11 @@ The queries were capturing AST nodes correctly. The issue was in the **builder c
 
 **Full Test Suite Comparison:**
 
-| Metric | Before Changes | After Changes | Delta |
-|--------|---------------|---------------|-------|
-| Test Files Passing | 24 | 28 | +4 ✅ |
-| Test Files Failing | 26 | 22 | -4 ✅ |
-| JavaScript Tests | 12/16 passing | 14/14 passing | +2 ✅ |
+| Metric             | Before Changes | After Changes | Delta |
+| ------------------ | -------------- | ------------- | ----- |
+| Test Files Passing | 24             | 28            | +4 ✅ |
+| Test Files Failing | 26             | 22            | -4 ✅ |
+| JavaScript Tests   | 12/16 passing  | 14/14 passing | +2 ✅ |
 
 **No regressions introduced.** Changes improved overall test suite health.
 
@@ -152,11 +165,13 @@ The queries were capturing AST nodes correctly. The issue was in the **builder c
 #### Critical (Blocking Other Work)
 
 1. **TypeScript Builder Tests** - 52 failures in `typescript_builder.test.ts`
+
    - Tests use old API (arrays/objects instead of Maps)
    - Need migration to new SemanticIndex structure
    - **Impact:** Blocks TypeScript semantic_index test fixes
 
 2. **Rust Builder Tests** - 26 failures in `rust_builder.test.ts`
+
    - Parameter extraction failing (expects .parameters array, gets Map)
    - Visibility scope mismatches (package-internal vs package)
    - Generic parameter extraction missing
@@ -170,6 +185,7 @@ The queries were capturing AST nodes correctly. The issue was in the **builder c
 #### High Priority
 
 4. **Python Type Hints** - 6 failures in `semantic_index.python.test.ts`
+
    - Return type hints not extracted
    - Union/Optional types not detecting nullable
    - Import tracking missing
@@ -191,6 +207,7 @@ The queries were capturing AST nodes correctly. The issue was in the **builder c
 ### 📚 Documentation Updates
 
 Added comprehensive comments explaining:
+
 - Why column coordinates need +1 offset
 - How SymbolIds are constructed from Locations
 - When to use `node_to_location()` vs manual construction
@@ -199,18 +216,21 @@ Added comprehensive comments explaining:
 ### ✅ Verification
 
 **Test Suite Status:**
+
 ```bash
 npm test -- semantic_index.javascript.test.ts
 # Result: 14 passed, 2 skipped (100% pass rate)
 ```
 
 **Build Status:**
+
 ```bash
 npm run build
 # Result: Success (0 TypeScript errors in index_single_file/)
 ```
 
 **Files Modified:**
+
 - `javascript_builder.ts` - Fixed location coordinate bug
 - `semantic_index.javascript.test.ts` - Cleaned up tests
 - `semantic_index.ts` - Removed unused imports

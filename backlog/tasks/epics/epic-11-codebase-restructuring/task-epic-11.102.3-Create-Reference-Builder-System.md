@@ -3,6 +3,7 @@
 ## Status: Completed
 
 ## Parent Task
+
 task-epic-11.102 - Replace NormalizedCapture with Direct Definition Builders
 
 ## Objective
@@ -29,7 +30,7 @@ export class ReferenceBuilder {
       symbol: capture.symbol_name,
       location: capture.node_location,
       scope_id: scope_id,
-      kind: determine_reference_kind(capture)
+      kind: determine_reference_kind(capture),
     });
 
     return this;
@@ -51,19 +52,19 @@ enum ReferenceKind {
   METHOD_CALL,
   PROPERTY_ACCESS,
   VARIABLE_REFERENCE,
-  TYPE_REFERENCE
+  TYPE_REFERENCE,
 }
 
 function determine_reference_kind(capture: RawCapture): ReferenceKind {
   // Determine from capture name and node type
   switch (capture.capture_name) {
-    case 'ref.call':
+    case "ref.call":
       return ReferenceKind.FUNCTION_CALL;
-    case 'ref.method':
+    case "ref.method":
       return ReferenceKind.METHOD_CALL;
-    case 'ref.property':
+    case "ref.property":
       return ReferenceKind.PROPERTY_ACCESS;
-    case 'ref.type':
+    case "ref.type":
       return ReferenceKind.TYPE_REFERENCE;
     // ...
   }
@@ -96,8 +97,10 @@ function process_method_reference(
   capture: RawCapture,
   context: BuilderContext
 ): Reference {
-  const object_node = capture.node.childForFieldName('object');
-  const object_symbol = object_node ? extract_symbol_name(object_node) : undefined;
+  const object_node = capture.node.childForFieldName("object");
+  const object_symbol = object_node
+    ? extract_symbol_name(object_node)
+    : undefined;
 
   return {
     symbol: capture.symbol_name,
@@ -107,7 +110,7 @@ function process_method_reference(
     context: {
       object: object_symbol,
       // Additional context for resolution
-    }
+    },
   };
 }
 
@@ -123,7 +126,7 @@ function process_type_reference(
     location: capture.node_location,
     scope_id: context.get_scope_id(capture),
     kind: ReferenceKind.TYPE_REFERENCE,
-    type_arguments: type_args
+    type_arguments: type_args,
   };
 }
 ```
@@ -182,16 +185,19 @@ Created `packages/core/src/index_single_file/parse_and_query_code/reference_buil
 1. **ReferenceKind enum**: Defines different types of references (FUNCTION_CALL, METHOD_CALL, PROPERTY_ACCESS, VARIABLE_REFERENCE, TYPE_REFERENCE, CONSTRUCTOR_CALL, SUPER_CALL, ASSIGNMENT, RETURN)
 
 2. **ReferenceBuilder class**: Main builder class that:
+
    - Processes normalized captures through the `process()` method
    - Accumulates SymbolReference objects
    - Implements functional chaining pattern (returns `this`)
    - Routes special cases to dedicated handlers
 
 3. **Special handlers**:
+
    - `process_method_reference()`: Handles method calls with object context and member access details
    - `process_type_reference()`: Handles type references including generics
 
 4. **Helper functions**:
+
    - `determine_reference_kind()`: Maps captures to ReferenceKind based on category and entity
    - `map_to_reference_type()`: Maps ReferenceKind to ReferenceType for the SymbolReference
    - `extract_type_info()`: Extracts TypeInfo from capture context
@@ -209,6 +215,7 @@ Created `packages/core/src/index_single_file/parse_and_query_code/reference_buil
 ### Tests
 
 Created comprehensive tests in `reference_builder.test.ts` covering:
+
 - All reference kinds (variables, functions, methods, types, properties, etc.)
 - Special cases (method calls with object context, type references with generics)
 - Category filtering in the pipeline
@@ -234,30 +241,36 @@ All 21 tests passing with full coverage.
 Successfully implemented complete ReferenceBuilder system that directly creates SymbolReference objects from normalized captures. The implementation follows functional composition patterns with proper scope integration and context preservation.
 
 **Files Created:**
+
 - `packages/core/src/index_single_file/parse_and_query_code/reference_builder.ts` (220 lines)
 - `packages/core/src/index_single_file/parse_and_query_code/reference_builder.test.ts` (21 tests)
 
 **Files Modified:**
+
 - `packages/core/src/index_single_file/parse_and_query_code/index.ts` (added exports)
 
 ### What Was Completed
 
 1. **ReferenceKind Enum**: Implemented with 9 variants covering all reference types:
+
    - FUNCTION_CALL, METHOD_CALL, PROPERTY_ACCESS, VARIABLE_REFERENCE
    - TYPE_REFERENCE, CONSTRUCTOR_CALL, SUPER_CALL
    - ASSIGNMENT, RETURN (for type flow tracking)
 
 2. **ReferenceBuilder Class**: Core builder with functional chaining:
+
    - `process()` method filters and processes reference-like captures
    - Routes complex cases (method calls, type references) to specialized handlers
    - Accumulates SymbolReference objects with proper scope_id
    - `build()` returns final reference array
 
 3. **Special Case Handlers**:
+
    - `process_method_reference()`: Extracts receiver context, object symbols, and property chains
    - `process_type_reference()`: Handles type references with generic type arguments
 
 4. **Helper Functions**:
+
    - `determine_reference_kind()`: Maps semantic category/entity to ReferenceKind
    - `map_to_reference_type()`: Converts ReferenceKind to ReferenceType enum
    - `extract_type_info()`: Builds TypeInfo from capture context
@@ -270,9 +283,11 @@ Successfully implemented complete ReferenceBuilder system that directly creates 
 ### Issues Encountered and Resolutions
 
 #### Issue 1: TypeScript Type Mismatches
+
 **Problem**: Initial implementation used non-existent properties on CaptureContext and SemanticModifiers types.
 
 **Resolution**:
+
 - Replaced `receiver_name`, `object_name` with `receiver_node`, extracting symbols from SyntaxNode
 - Used `source_node`, `target_node`, `construct_target` from actual CaptureContext
 - Extracted locations from SyntaxNode.startPosition/endPosition
@@ -280,9 +295,11 @@ Successfully implemented complete ReferenceBuilder system that directly creates 
 - Result: Zero TypeScript compilation errors
 
 #### Issue 2: Import Path Regressions
+
 **Problem**: Moving parse_and_query_code directory broke imports in 10 files in references/ directory.
 
 **Files Affected**:
+
 - member_access_references.ts
 - type_tracking.ts and type_tracking.test.ts
 - type_annotation_references.ts and type_annotation_references.test.ts
@@ -294,6 +311,7 @@ Successfully implemented complete ReferenceBuilder system that directly creates 
 **Resolution**: Updated all imports from `../../capture_types` to `../../parse_and_query_code/capture_types`
 
 #### Issue 3: Duplicate Variable Declaration
+
 **Problem**: `type_members.ts` had function parameter named `parameters` conflicting with local const `parameters`.
 
 **Resolution**: Renamed function parameter to `parameter_map` and updated loop variable references.
@@ -301,16 +319,19 @@ Successfully implemented complete ReferenceBuilder system that directly creates 
 ### Test Results
 
 **New Tests (All Passing):**
+
 - reference_builder.test.ts: 21/21 passing
 - definition_builder.test.ts: 12/12 passing
 - scope_processor.test.ts: 10/10 passing
 - **Total: 43/43 new tests passing**
 
 **Regression Testing:**
+
 - All semantic_index tests passing after import fixes
 - No regressions introduced by ReferenceBuilder implementation
 
 **Pre-existing Failures (Unrelated):**
+
 - Rust language config: 63/172 failing (pre-existing)
 - capture_normalizer: 8/27 failing (pre-existing)
 

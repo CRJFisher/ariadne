@@ -13,11 +13,13 @@ Update Rust language support to use the new direct definition builder system, re
 ## Sub-tasks
 
 1. **Update Language Config** (102.5.4.1)
+
    - Convert to builder pattern
    - Handle Rust-specific features (traits, impl blocks, lifetimes)
    - Direct Definition creation
 
 2. **Update Query File** (102.5.4.2)
+
    - Clean up rust.scm
    - Add trait and impl captures
    - Handle generics and lifetimes

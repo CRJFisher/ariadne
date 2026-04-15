@@ -9,6 +9,7 @@
 ## Objective
 
 Complete Python definition tracking by:
+
 - Migrating constructors to dedicated API
 - Adding decorator tracking (currently extracted but discarded)
 - Verifying all Python-specific features work
@@ -16,11 +17,12 @@ Complete Python definition tracking by:
 ## Current Status
 
 Python builder has good coverage but critical gaps:
+
 - ✅ Classes, methods, functions tracked
-- ✅ Parameters tracked (including *args, **kwargs)
+- ✅ Parameters tracked (including \*args, \*\*kwargs)
 - ✅ Properties and fields tracked
 - ✅ Imports tracked
-- ⚠️ Constructors (__init__) added as methods
+- ⚠️ Constructors (**init**) added as methods
 - ❌ Decorators extracted but NEVER applied via `add_decorator_to_target`
 
 ## Changes Required
@@ -30,6 +32,7 @@ Python builder has good coverage but critical gaps:
 **File:** `packages/core/src/index_single_file/query_code_tree/language_configs/python_builder.ts`
 
 **Current code (line 452-475):**
+
 ```typescript
 [
   "definition.constructor",
@@ -55,6 +58,7 @@ Python builder has good coverage but critical gaps:
 ```
 
 **New code:**
+
 ```typescript
 [
   "definition.constructor",
@@ -76,7 +80,8 @@ Python builder has good coverage but critical gaps:
 ],
 ```
 
-**Also check line 361-374** where __init__ is handled in `definition.method`:
+**Also check line 361-374** where **init** is handled in `definition.method`:
+
 ```typescript
 if (name === "__init__") {
   // __init__ is actually a constructor
@@ -88,13 +93,14 @@ if (name === "__init__") {
 }
 ```
 
-**This should be removed** - `definition.constructor` should handle all __init__ methods.
+**This should be removed** - `definition.constructor` should handle all **init** methods.
 
 ### 2. Add Decorator Tracking
 
 **Current state:** `extract_decorators()` helper exists (line 173-193) but results are discarded!
 
 **Example of extraction:**
+
 ```typescript
 function extract_decorators(node: SyntaxNode): SymbolName[] {
   const decorators: SymbolName[] = [];
@@ -240,6 +246,7 @@ function extract_decorators(node: SyntaxNode): SymbolName[] {
 **Current `extract_decorators` only gets names, not arguments.**
 
 **Enhanced version:**
+
 ```typescript
 interface DecoratorInfo {
   name: SymbolName;
@@ -290,28 +297,28 @@ function extract_decorators_with_args(node: SyntaxNode): DecoratorInfo[] {
 
 ### 4. Verify All Python-Specific Features
 
-| Definition Type | Capture Name | Builder Method | Status |
-|----------------|--------------|----------------|--------|
-| Class | `definition.class` | `add_class` | ✅ |
-| Constructor (__init__) | `definition.constructor` | `add_constructor_to_class` | ⚠️ Update |
-| Method | `definition.method` | `add_method_to_class` | ✅ |
-| Static Method | `definition.method.static` | `add_method_to_class` | ✅ |
-| Class Method | `definition.method.class` | `add_method_to_class` | ✅ |
-| Function | `definition.function` | `add_function` | ✅ |
-| Async Function | `definition.function.async` | `add_function` | ✅ |
-| Lambda | `definition.lambda` | `add_function` | ✅ |
-| Parameter | `definition.parameter` | `add_parameter_to_callable` | ✅ |
-| Parameter (default) | `definition.parameter.default` | `add_parameter_to_callable` | ✅ |
-| Parameter (typed) | `definition.parameter.typed` | `add_parameter_to_callable` | ✅ |
-| *args | `definition.parameter.args` | `add_parameter_to_callable` | ✅ |
-| **kwargs | `definition.parameter.kwargs` | `add_parameter_to_callable` | ✅ |
-| Property (@property) | `definition.property` | `add_property_to_class` | ✅ |
-| Field | `definition.field` | `add_property_to_class` | ✅ |
-| Variable | `definition.variable` | `add_variable` | ✅ |
-| Import | `import.named` | `add_import` | ✅ |
-| Import module | `import.module` | `add_import` | ✅ |
-| Import star | `import.star` | `add_import` | ✅ |
-| **Decorators** | N/A | `add_decorator_to_target` | ❌ Add |
+| Definition Type        | Capture Name                   | Builder Method              | Status    |
+| ---------------------- | ------------------------------ | --------------------------- | --------- |
+| Class                  | `definition.class`             | `add_class`                 | ✅        |
+| Constructor (**init**) | `definition.constructor`       | `add_constructor_to_class`  | ⚠️ Update |
+| Method                 | `definition.method`            | `add_method_to_class`       | ✅        |
+| Static Method          | `definition.method.static`     | `add_method_to_class`       | ✅        |
+| Class Method           | `definition.method.class`      | `add_method_to_class`       | ✅        |
+| Function               | `definition.function`          | `add_function`              | ✅        |
+| Async Function         | `definition.function.async`    | `add_function`              | ✅        |
+| Lambda                 | `definition.lambda`            | `add_function`              | ✅        |
+| Parameter              | `definition.parameter`         | `add_parameter_to_callable` | ✅        |
+| Parameter (default)    | `definition.parameter.default` | `add_parameter_to_callable` | ✅        |
+| Parameter (typed)      | `definition.parameter.typed`   | `add_parameter_to_callable` | ✅        |
+| \*args                 | `definition.parameter.args`    | `add_parameter_to_callable` | ✅        |
+| \*\*kwargs             | `definition.parameter.kwargs`  | `add_parameter_to_callable` | ✅        |
+| Property (@property)   | `definition.property`          | `add_property_to_class`     | ✅        |
+| Field                  | `definition.field`             | `add_property_to_class`     | ✅        |
+| Variable               | `definition.variable`          | `add_variable`              | ✅        |
+| Import                 | `import.named`                 | `add_import`                | ✅        |
+| Import module          | `import.module`                | `add_import`                | ✅        |
+| Import star            | `import.star`                  | `add_import`                | ✅        |
+| **Decorators**         | N/A                            | `add_decorator_to_target`   | ❌ Add    |
 
 ## Query File Verification
 
@@ -320,6 +327,7 @@ function extract_decorators_with_args(node: SyntaxNode): DecoratorInfo[] {
 **Verify decorators are accessible:**
 
 Python decorators are part of `decorated_definition` nodes:
+
 ```scheme
 ; Decorated classes
 (decorated_definition
@@ -341,6 +349,7 @@ Python decorators are part of `decorated_definition` nodes:
 **File:** `packages/core/src/index_single_file/semantic_index.python.test.ts`
 
 **Add test for decorators:**
+
 ```typescript
 it("should extract class decorators", () => {
   const code = `
@@ -425,6 +434,7 @@ class MyClass:
 **Issue:** Python 3.10+ supports explicit type aliases, but we don't track them!
 
 **Example:**
+
 ```python
 from typing import TypeAlias
 
@@ -433,6 +443,7 @@ Vector: TypeAlias = list[float]
 ```
 
 **Add handler:**
+
 ```typescript
 [
   "definition.type_alias",
@@ -455,6 +466,7 @@ Vector: TypeAlias = list[float]
 ```
 
 **Helper function:**
+
 ```typescript
 function extract_type_alias_expression(node: SyntaxNode): string | undefined {
   const parent = node.parent;
@@ -467,6 +479,7 @@ function extract_type_alias_expression(node: SyntaxNode): string | undefined {
 ```
 
 **Query update (`python.scm`):**
+
 ```scheme
 ; Type alias (Python 3.10+)
 (annotated_assignment
@@ -479,30 +492,36 @@ function extract_type_alias_expression(node: SyntaxNode): string | undefined {
 ## Implementation Steps
 
 1. **Update constructor handling:**
+
    - Change `add_method_to_class` to `add_constructor_to_class`
-   - Remove __init__ special case from `definition.method`
+   - Remove **init** special case from `definition.method`
 
 2. **Add decorator tracking:**
+
    - Enhance `extract_decorators` to include arguments
    - Call `add_decorator_to_target` in class/method/property handlers
 
 3. **Add TypeAlias support:**
+
    - Add query capture in `python.scm`
    - Add handler in `python_builder.ts`
    - Add helper function for type expression extraction
 
 4. **Add Enum support (CRITICAL):**
+
    - Add query to detect Enum inheritance
    - Add handler for `definition.enum`
    - Add handler for `definition.enum.member`
    - Add helper functions for enum detection
 
 5. **Add Protocol support (optional - medium priority):**
+
    - Add query to detect Protocol inheritance
    - Treat as interface with `add_interface`
    - Add property signature support
 
 6. **Add tests:**
+
    - Constructor with parameters
    - Class decorators
    - Method decorators (property, staticmethod, classmethod)
@@ -521,6 +540,7 @@ function extract_type_alias_expression(node: SyntaxNode): string | undefined {
 **Issue:** Python has `Enum` class from `enum` module, but we don't track enums at all!
 
 **Example:**
+
 ```python
 from enum import Enum, IntEnum, StrEnum
 
@@ -539,6 +559,7 @@ class Status(StrEnum):
 **Solution:**
 
 **Query (`python.scm`):**
+
 ```scheme
 ; Enum classes - detect classes inheriting from Enum
 (class_definition
@@ -559,6 +580,7 @@ class Status(StrEnum):
 ```
 
 **Handler:**
+
 ```typescript
 [
   "definition.enum",
@@ -599,16 +621,22 @@ class Status(StrEnum):
 ```
 
 **Helper functions:**
+
 ```typescript
 function create_enum_id(capture: CaptureNode): SymbolId {
   return `enum:${capture.location.file_path}:${capture.location.start_line}:${capture.text}` as SymbolId;
 }
 
-function create_enum_member_id(capture: CaptureNode, enum_id: SymbolId): SymbolId {
+function create_enum_member_id(
+  capture: CaptureNode,
+  enum_id: SymbolId
+): SymbolId {
   return `${enum_id}::${capture.text}` as SymbolId;
 }
 
-function extract_enum_member_value(node: SyntaxNode): string | number | undefined {
+function extract_enum_member_value(
+  node: SyntaxNode
+): string | number | undefined {
   const parent = node.parent;
   if (parent?.type === "assignment") {
     const valueNode = parent.childForFieldName?.("right");
@@ -631,8 +659,10 @@ function find_containing_enum(capture: CaptureNode): SymbolId | undefined {
       const superclasses = node.childForFieldName?.("superclasses");
       if (superclasses) {
         for (const child of superclasses.children || []) {
-          if (child.type === "identifier" &&
-              /^(Enum|IntEnum|StrEnum|Flag|IntFlag)$/.test(child.text)) {
+          if (
+            child.type === "identifier" &&
+            /^(Enum|IntEnum|StrEnum|Flag|IntFlag)$/.test(child.text)
+          ) {
             const nameNode = node.childForFieldName?.("name");
             if (nameNode) {
               const location = extract_location(nameNode);
@@ -649,6 +679,7 @@ function find_containing_enum(capture: CaptureNode): SymbolId | undefined {
 ```
 
 **Test:**
+
 ```typescript
 it("extracts enums and enum members", () => {
   const code = `
@@ -681,6 +712,7 @@ class Color(Enum):
 **Issue:** Python 3.8+ has `Protocol` for structural typing with property signatures, but we don't track them!
 
 **Example:**
+
 ```python
 from typing import Protocol
 
@@ -696,6 +728,7 @@ class Drawable(Protocol):
 Treat Protocols as interfaces:
 
 **Query:**
+
 ```scheme
 ; Protocol classes - detect classes inheriting from Protocol
 (class_definition
@@ -725,7 +758,7 @@ Treat Protocols as interfaces:
 - ✅ Constructor uses `add_constructor_to_class`
 - ✅ Decorators tracked for classes, methods, properties
 - ✅ Decorator arguments extracted
-- ✅ __init__ special case removed from method handler
+- ✅ **init** special case removed from method handler
 - ✅ **Enum support added (CRITICAL)**
 - ✅ **Enum members tracked**
 - ⚠️ **Protocol property support added (optional - medium priority)**

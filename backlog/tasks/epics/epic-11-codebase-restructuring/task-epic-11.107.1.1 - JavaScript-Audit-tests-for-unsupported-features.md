@@ -1,9 +1,9 @@
 ---
 id: task-epic-11.107.1.1
-title: 'JavaScript: Audit tests for unsupported features'
+title: "JavaScript: Audit tests for unsupported features"
 status: Completed
 assignee: []
-created_date: '2025-10-01 10:27'
+created_date: "2025-10-01 10:27"
 labels: []
 dependencies: []
 parent_task_id: task-epic-11.107.1
@@ -13,6 +13,7 @@ priority: high
 ## Description
 
 Review semantic_index.javascript.test.ts to identify and remove:
+
 - Tests for language features we don't need to support
 - Tests that would require adding unnecessary functionality
 - Overly complex edge cases that cause code rot
@@ -28,11 +29,13 @@ Focus on essential JavaScript features for call graph analysis.
 **Removed redundant tests (42 lines eliminated):**
 
 1. **Removed redundant construct_target test** (previously lines 354-377)
+
    - Test: "should correctly convert construct_target to location in semantic index"
    - Reason: Already covered by comprehensive test at lines 322-352
    - Duplicate test added no value
 
 2. **Removed redundant property chain test** (previously lines 523-555)
+
    - Test: "should correctly capture property chains in method calls"
    - Reason: Already covered by test at lines 436-469
    - Complete duplicate with no additional scenarios
@@ -50,6 +53,7 @@ Focus on essential JavaScript features for call graph analysis.
 **Active Tests: 12/12 passing ✅**
 
 **Test Coverage by Category:**
+
 - ✅ Fixture parsing (3 tests): basic_function.js, class_and_methods.js, imports_exports.js
 - ✅ Export detection (1 test): All export types from imports_exports fixture
 - ✅ Import detection (1 test): Named, default, namespace, side-effect, mixed imports
@@ -62,6 +66,7 @@ Focus on essential JavaScript features for call graph analysis.
 - ✅ Function call context (1 test): Distinguishing function vs method calls
 
 **Intentionally Skipped: 2/14 tests ⊘**
+
 - ⊘ JSDoc type references (line 406): Not supported for JavaScript
 - ⊘ Assignment metadata tracking (line 486): Not currently implemented
 
@@ -75,32 +80,38 @@ Location: `packages/core/src/index_single_file/query_code_tree/queries/javascrip
 Based on test results, the following query patterns are **working correctly:**
 
 1. **Function Definitions** ✅
+
    - Regular functions: `(function_declaration name: (identifier) @definition.function)`
    - Arrow functions: Captured via variable declarator
    - Function expressions: `(function_expression name: (identifier) @definition.function)`
 
 2. **Class Definitions** ✅
+
    - Classes: `(class_declaration name: (identifier) @definition.class)`
    - Inheritance: `(class_heritage (identifier) @reference.type_reference)`
    - Static methods: `(method_definition "static"? @modifier.visibility)`
 
 3. **Method Calls with Receiver Tracking** ✅
+
    - Simple method calls: `(call_expression function: (member_expression))`
    - Property chain tracking: Up to 3 levels deep
    - Receiver location metadata: Correctly captures receiver node location
 
 4. **Constructor Calls** ✅
+
    - Basic constructors: `(new_expression constructor: (identifier) @reference.call)`
    - Constructor target assignment: Captures assignment variable location
    - Unassigned constructors: Correctly handles both cases
 
 5. **Imports** ✅
+
    - Named imports: `(import_specifier name: (identifier) @definition.import)`
    - Default imports: `(import_clause (identifier) @definition.import)`
    - Namespace imports: `(namespace_import (identifier) @definition.import)`
    - Mixed imports: All patterns work together
 
 6. **Exports** ✅
+
    - Named exports: `(export_specifier name: (identifier) @export.variable)`
    - Default exports: Captured correctly
    - Function/class exports: Specific patterns for each
@@ -114,12 +125,14 @@ Based on test results, the following query patterns are **working correctly:**
 #### ⚠️ Known Limitations (By Design)
 
 1. **JSDoc Type Annotations** ⊘
+
    - Status: Not captured
    - Reason: JavaScript has no runtime type system
    - Impact: Type inference limited to assignments and constructors
    - Test: Intentionally skipped (line 406)
 
 2. **Assignment Metadata Tracking** ⊘
+
    - Status: Not fully implemented
    - Pattern exists: `@assignment.variable` captures present
    - Missing: Assignment source/target metadata in reference nodes
@@ -141,10 +154,12 @@ Based on test results, the following query patterns are **working correctly:**
 #### TypeScript Compilation (Zero Errors Achieved)
 
 **Created stub files:**
+
 - `/packages/mcp/src/types.ts` - Stub Project interface for MCP server
 - `/packages/core/src/index_single_file/query_code_tree/capture_types.ts` - Re-exports for backward compatibility
 
 **Fixed TypeScript errors in MCP package (38 errors resolved):**
+
 - Added missing `Project` type imports to all tool files
 - Fixed 7 implicit `any` parameter types in arrow functions
 - Fixed 3 `FilePath` branded type cast errors
@@ -152,9 +167,11 @@ Based on test results, the following query patterns are **working correctly:**
 - Added `add_or_update_file` method to Project interface
 
 **Build configuration:**
+
 - Set `composite: false` in `packages/mcp/tsconfig.json` to emit .js files
 
 **Verification:**
+
 - ✅ All packages compile without errors
 - ✅ `npm run build` succeeds
 - ✅ All type checks pass
@@ -162,17 +179,20 @@ Based on test results, the following query patterns are **working correctly:**
 ### Regression Testing
 
 **Full test suite verification:**
+
 - Stashed all changes and ran tests on clean checkout
 - Before changes: 22 failed test files (pre-existing)
 - After changes: 22 failed test files (unchanged)
 - **Conclusion:** ✅ No regressions introduced
 
 **Pre-existing test failures (not caused by this work):**
+
 - 22 test files in core package (legacy tests using deprecated APIs)
 - 5 test files in MCP package (require actual Project implementation)
 - All marked with `// @ts-nocheck - Legacy test using deprecated APIs`
 
 **Files Modified:**
+
 - `packages/core/src/index_single_file/semantic_index.javascript.test.ts`
 - `packages/core/src/index_single_file/query_code_tree/capture_types.ts` (created)
 - `packages/mcp/src/types.ts` (created)
@@ -184,11 +204,13 @@ Based on test results, the following query patterns are **working correctly:**
 ### Follow-On Work Required
 
 #### Critical (Blocking)
+
 **None.** All JavaScript semantic index tests pass.
 
 #### Important (Future Enhancements)
 
 1. **Assignment Metadata Tracking** (Medium Priority)
+
    - Implement assignment source/target metadata in reference nodes
    - Would enable variable reassignment type tracking
    - Query patterns already exist (`@assignment.variable`)
@@ -196,6 +218,7 @@ Based on test results, the following query patterns are **working correctly:**
    - Related test: Currently skipped at line 486
 
 2. **Legacy Test Migration** (Medium Priority)
+
    - 22 test files marked with `@ts-nocheck` need migration to builder pattern
    - Includes: TypeScript, Python, Rust semantic_index tests
    - Includes: Type resolution, method resolution, constructor resolution tests
@@ -211,6 +234,7 @@ Based on test results, the following query patterns are **working correctly:**
 #### Optional (Nice to Have)
 
 1. **Optional Chaining Support Verification**
+
    - Verify tree-sitter query handles `?.` operator correctly
    - Add test case if needed for future ES2020+ support
    - Low priority: Not essential for call graph analysis
@@ -223,6 +247,7 @@ Based on test results, the following query patterns are **working correctly:**
 ### Summary
 
 ✅ **Task Completed Successfully**
+
 - 100% pass rate for JavaScript semantic_index tests (12/12 active tests)
 - Zero TypeScript compilation errors
 - Zero regressions introduced

@@ -11,6 +11,7 @@
 After completing the discriminated union refactoring (tasks 152.1-152.8), we discovered **130 failing tests** that check the OLD reference format. These tests need migration to the NEW discriminated union format.
 
 **Build Status**:
+
 - ✅ Build: SUCCESS (0 type errors)
 - ❌ Tests: 130 failing, 1292 passing (out of 1428 total)
 
@@ -19,33 +20,37 @@ After completing the discriminated union refactoring (tasks 152.1-152.8), we dis
 ### Pattern 1: OLD field checks (90 occurrences across 8 files)
 
 Tests checking OLD fields that no longer exist:
+
 ```typescript
 // ❌ FAILING - checks OLD format
-ref.type === "call"
-ref.call_type === "constructor"
-ref.context?.receiver_location
-ref.context?.construct_target
+ref.type === "call";
+ref.call_type === "constructor";
+ref.context?.receiver_location;
+ref.context?.construct_target;
 ```
 
 Should be:
+
 ```typescript
 // ✅ NEW discriminated union format
-ref.kind === "function_call"
-ref.kind === "constructor_call"
-ref.receiver_location  // Direct field on MethodCallReference
-ref.construct_target   // Direct field on ConstructorCallReference
+ref.kind === "function_call";
+ref.kind === "constructor_call";
+ref.receiver_location; // Direct field on MethodCallReference
+ref.construct_target; // Direct field on ConstructorCallReference
 ```
 
 ### Pattern 2: Missing test coverage
 
 The new resolvers need dedicated test files:
+
 - ✅ `self_reference_resolver.ts` exists - **NO TESTS** (created in task-152.7)
 - ✅ `method_resolver.ts` exists - **NO TESTS** (updated in task-152.6)
 - ✅ `constructor_tracking.ts` exists - **NO TESTS** (updated in task-152.8)
 
 ### Affected Test Files (by priority)
 
-#### Priority 1: Integration Tests (semantic_index.*.test.ts)
+#### Priority 1: Integration Tests (semantic_index.\*.test.ts)
+
 These test end-to-end semantic index building and verify reference capture:
 
 1. **semantic_index.javascript.test.ts** - 35 OLD field occurrences
@@ -54,13 +59,16 @@ These test end-to-end semantic index building and verify reference capture:
 4. **semantic_index.rust.test.ts** - 3 OLD field occurrences
 
 #### Priority 2: Resolution Tests
+
 5. **test_nested_scope.test.ts** - 8 OLD field occurrences (tests scope resolution)
 
 #### Priority 3: Project Integration Tests
+
 6. **project.integration.test.ts** - 3 OLD field occurrences
 7. **project.javascript.integration.test.ts** - 2 OLD field occurrences
 
 #### Priority 4: Factory Tests
+
 8. **reference_factories.test.ts** - 4 OLD field occurrences (mostly comments/documentation)
 
 ## Migration Strategy
@@ -70,6 +78,7 @@ These test end-to-end semantic index building and verify reference capture:
 Migrate tests to check NEW discriminated union format while maintaining test intent.
 
 **Sub-tasks**:
+
 - **task-152.9.1**: Migrate semantic_index.javascript.test.ts (35 occurrences)
 - **task-152.9.2**: Migrate semantic_index.python.test.ts (21 occurrences)
 - **task-152.9.3**: Migrate semantic_index.typescript.test.ts + semantic_index.rust.test.ts (17 occurrences)
@@ -80,12 +89,14 @@ Migrate tests to check NEW discriminated union format while maintaining test int
 Add comprehensive test coverage for NEW resolvers:
 
 **Sub-tasks**:
+
 - **task-152.9.5**: Create self_reference_resolver.test.ts (THE BUG FIX verification)
 - **task-152.9.6**: Create method_resolver.test.ts and constructor_tracking.test.ts
 
 ### Phase 3: Verification (included in sub-tasks)
 
 Each sub-task includes:
+
 - Run tests before migration (capture failure count)
 - Apply migration
 - Run tests after migration (verify fixes)
@@ -108,64 +119,79 @@ Each sub-task includes:
 ### Pattern 1: Function Call References
 
 **OLD**:
+
 ```typescript
-const funcCall = refs.find(ref => ref.type === "call" && ref.call_type === "function");
+const funcCall = refs.find(
+  (ref) => ref.type === "call" && ref.call_type === "function"
+);
 expect(funcCall?.context?.receiver_location).toBeUndefined();
 ```
 
 **NEW**:
+
 ```typescript
-const funcCall = refs.find(ref => ref.kind === "function_call");
+const funcCall = refs.find((ref) => ref.kind === "function_call");
 // receiver_location doesn't exist on FunctionCallReference
 ```
 
 ### Pattern 2: Method Call References
 
 **OLD**:
+
 ```typescript
-const methodCall = refs.find(ref => ref.type === "call" && ref.name === "log");
+const methodCall = refs.find(
+  (ref) => ref.type === "call" && ref.name === "log"
+);
 expect(methodCall?.context?.receiver_location).toBeDefined();
 ```
 
 **NEW**:
+
 ```typescript
-const methodCall = refs.find((ref): ref is MethodCallReference =>
-  ref.kind === "method_call" && ref.name === "log"
+const methodCall = refs.find(
+  (ref): ref is MethodCallReference =>
+    ref.kind === "method_call" && ref.name === "log"
 );
-expect(methodCall?.receiver_location).toBeDefined();  // Direct field
+expect(methodCall?.receiver_location).toBeDefined(); // Direct field
 ```
 
 ### Pattern 3: Constructor Call References
 
 **OLD**:
+
 ```typescript
-const constructorCall = refs.find(ref =>
-  ref.type === "construct" || ref.call_type === "constructor"
+const constructorCall = refs.find(
+  (ref) => ref.type === "construct" || ref.call_type === "constructor"
 );
 expect(constructorCall?.context?.construct_target).toBeDefined();
 ```
 
 **NEW**:
+
 ```typescript
-const constructorCall = refs.find((ref): ref is ConstructorCallReference =>
-  ref.kind === "constructor_call"
+const constructorCall = refs.find(
+  (ref): ref is ConstructorCallReference => ref.kind === "constructor_call"
 );
-expect(constructorCall?.construct_target).toBeDefined();  // Direct field
+expect(constructorCall?.construct_target).toBeDefined(); // Direct field
 ```
 
 ### Pattern 4: Self-Reference Call
 
 **OLD**:
+
 ```typescript
-const thisCall = refs.find(ref =>
-  ref.type === "call" && ref.context?.receiver_location?.keyword === "this"
+const thisCall = refs.find(
+  (ref) =>
+    ref.type === "call" && ref.context?.receiver_location?.keyword === "this"
 );
 ```
 
 **NEW**:
+
 ```typescript
-const thisCall = refs.find((ref): ref is SelfReferenceCall =>
-  ref.kind === "self_reference_call" && ref.keyword === "this"
+const thisCall = refs.find(
+  (ref): ref is SelfReferenceCall =>
+    ref.kind === "self_reference_call" && ref.keyword === "this"
 );
 expect(thisCall?.property_chain).toEqual(["this", "method"]);
 ```
@@ -173,12 +199,14 @@ expect(thisCall?.property_chain).toEqual(["this", "method"]);
 ## Test Coverage Goals
 
 ### Existing Coverage (after migration)
+
 - ✅ Reference building and capture (semantic_index tests)
 - ✅ Scope resolution (test_nested_scope.test.ts)
-- ✅ Project-level integration (project.*.test.ts)
+- ✅ Project-level integration (project.\*.test.ts)
 - ✅ Factory functions (reference_factories.test.ts)
 
 ### New Coverage (to be created)
+
 - 🆕 Self-reference call resolution (this.method(), super.method())
 - 🆕 Method call resolution (obj.method())
 - 🆕 Constructor tracking (new MyClass(), type inference)
@@ -186,19 +214,20 @@ expect(thisCall?.property_chain).toEqual(["this", "method"]);
 
 ## Estimated Effort Breakdown
 
-| Sub-task | File(s) | Occurrences | Effort | Priority |
-|----------|---------|-------------|--------|----------|
-| 152.9.1 | semantic_index.javascript.test.ts | 35 | 2.5h | P1 |
-| 152.9.2 | semantic_index.python.test.ts | 21 | 2h | P1 |
-| 152.9.3 | semantic_index.{typescript,rust}.test.ts | 17 | 1.5h | P1 |
-| 152.9.4 | test_nested_scope + project tests | 13 | 1.5h | P2 |
-| 152.9.5 | self_reference_resolver.test.ts (NEW) | - | 3h | P1 |
-| 152.9.6 | method_resolver.test.ts (NEW) | - | 1.5h | P2 |
-| **Total** | | **90** | **12h** | |
+| Sub-task  | File(s)                                  | Occurrences | Effort  | Priority |
+| --------- | ---------------------------------------- | ----------- | ------- | -------- |
+| 152.9.1   | semantic_index.javascript.test.ts        | 35          | 2.5h    | P1       |
+| 152.9.2   | semantic_index.python.test.ts            | 21          | 2h      | P1       |
+| 152.9.3   | semantic_index.{typescript,rust}.test.ts | 17          | 1.5h    | P1       |
+| 152.9.4   | test_nested_scope + project tests        | 13          | 1.5h    | P2       |
+| 152.9.5   | self_reference_resolver.test.ts (NEW)    | -           | 3h      | P1       |
+| 152.9.6   | method_resolver.test.ts (NEW)            | -           | 1.5h    | P2       |
+| **Total** |                                          | **90**      | **12h** |          |
 
 ## Dependencies
 
 ### Completed (prerequisites)
+
 - ✅ task-152.4: reference_factories.ts created
 - ✅ task-152.5: resolution_registry.ts updated
 - ✅ task-152.6: method_resolver.ts refactored
@@ -206,6 +235,7 @@ expect(thisCall?.property_chain).toEqual(["this", "method"]);
 - ✅ task-152.8: constructor_tracking.ts updated
 
 ### Blocks
+
 - task-152.10: Write self-reference tests (REPLACED BY 152.9.5)
 - task-152.11: Integration testing
 
@@ -219,6 +249,7 @@ expect(thisCall?.property_chain).toEqual(["this", "method"]);
 ## Files to Create
 
 New task files:
+
 - [task-152.9.1-migrate-javascript-tests.md](task-152.9.1-migrate-javascript-tests.md)
 - [task-152.9.2-migrate-python-tests.md](task-152.9.2-migrate-python-tests.md)
 - [task-152.9.3-migrate-typescript-rust-tests.md](task-152.9.3-migrate-typescript-rust-tests.md)

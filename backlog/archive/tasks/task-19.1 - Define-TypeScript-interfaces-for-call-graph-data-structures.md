@@ -3,9 +3,9 @@ id: task-19.1
 title: Define TypeScript interfaces for call graph data structures
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-07-17'
-updated_date: '2025-07-17'
+  - "@chuck"
+created_date: "2025-07-17"
+updated_date: "2025-07-17"
 labels: []
 dependencies: []
 parent_task_id: task-19
@@ -38,14 +38,15 @@ Successfully defined the FunctionCall interface in `src/graph.ts`:
  * Represents a function call relationship in the codebase.
  */
 export interface FunctionCall {
-  caller_def: Def;           // The function making the call
-  called_def: Def;           // The function being called  
-  call_location: Point;      // Where in the caller the call happens
-  is_method_call: boolean;   // true for self.method() or this.method()
+  caller_def: Def; // The function making the call
+  called_def: Def; // The function being called
+  call_location: Point; // Where in the caller the call happens
+  is_method_call: boolean; // true for self.method() or this.method()
 }
 ```
 
 The interface includes all required fields from the enhancement proposal:
+
 - `caller_def`: Reference to the function making the call
 - `called_def`: Reference to the function being called
 - `call_location`: Exact position in the source where the call occurs
@@ -54,5 +55,6 @@ The interface includes all required fields from the enhancement proposal:
 The interface is properly exported from `graph.ts` and re-exported through `index.ts` for public API access. JSDoc comments explain the purpose of the interface and inline comments clarify each field.
 
 Modified files:
+
 - src/graph.ts: Added FunctionCall interface with JSDoc
 - src/index.ts: Added FunctionCall to exports

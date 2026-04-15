@@ -34,8 +34,8 @@ export interface Definition {
   readonly defining_scope_id: ScopeId;
   readonly location: Location;
   readonly availability: SymbolAvailability; // Keep temporarily for migration
-  readonly is_exported: boolean;             // NEW: Can be imported from other files?
-  readonly export?: ExportMetadata;          // NEW: Export-specific metadata
+  readonly is_exported: boolean; // NEW: Can be imported from other files?
+  readonly export?: ExportMetadata; // NEW: Export-specific metadata
 }
 ```
 
@@ -91,6 +91,7 @@ export function get_export_name(def: Definition): SymbolName {
 ### 4. Update All Definition Types (20 min)
 
 Ensure all specific definition types inherit the new fields:
+
 - `FunctionDefinition`
 - `ClassDefinition`
 - `VariableDefinition`
@@ -108,6 +109,7 @@ No changes needed - they all extend `Definition` base interface.
 ## Testing
 
 Run type checks:
+
 ```bash
 cd packages/types && npm run build
 ```
@@ -125,19 +127,24 @@ cd packages/types && npm run build
 ### Changes Made
 
 #### 1. Definition Interface Updated (lines 58-67)
+
 ✅ Added `is_exported: boolean` field to base `Definition` interface
 ✅ Added `export?: ExportMetadata` optional field for export-specific metadata
 ✅ Kept `availability: SymbolAvailability` field with deprecation comment for backward compatibility
 
 #### 2. ExportMetadata Interface Added (lines 34-52)
+
 ✅ Created new `ExportMetadata` interface with:
+
 - `export_name?: SymbolName` - For export aliases (e.g., `export { foo as bar }`)
 - `is_default?: boolean` - For default exports (e.g., `export default foo`)
 - `is_reexport?: boolean` - For re-exports (e.g., `export { x } from './other'`)
-✅ Added comprehensive documentation with real-world examples
+  ✅ Added comprehensive documentation with real-world examples
 
 #### 3. Helper Functions Created (lines 230-263)
+
 ✅ Implemented 5 helper functions:
+
 - `is_exported_definition(def)` - Check if definition is exported
 - `has_export_alias(def)` - Check if export has an alias
 - `is_default_export(def)` - Check if export is a default export
@@ -145,7 +152,9 @@ cd packages/types && npm run build
 - `get_export_name(def)` - Get effective export name (alias or original)
 
 #### 4. Automatic Inheritance
+
 ✅ All specific definition types automatically inherit new fields through base `Definition` interface:
+
 - FunctionDefinition
 - ClassDefinition
 - MethodDefinition
@@ -165,20 +174,24 @@ cd packages/types && npm run build
 **New Tests Added** (14 additional tests in `packages/types/tests/types.test.ts`):
 
 1. **is_exported_definition** (2 tests)
+
    - ✅ Returns true for exported definitions
    - ✅ Returns false for non-exported definitions
 
 2. **has_export_alias** (3 tests)
+
    - ✅ Returns true when export has an alias
    - ✅ Returns false when export has no alias
    - ✅ Returns false when not exported
 
 3. **is_default_export** (3 tests)
+
    - ✅ Returns true for default exports
    - ✅ Returns false for non-default exports
    - ✅ Returns false when export metadata is missing
 
 4. **is_reexport** (3 tests)
+
    - ✅ Returns true for re-exports
    - ✅ Returns false for non-reexports
    - ✅ Returns false when export metadata is missing
@@ -189,6 +202,7 @@ cd packages/types && npm run build
    - ✅ Returns original name when not exported
 
 #### Compilation Results
+
 ✅ TypeScript compilation: **Success** (no errors or warnings)
 ✅ Type declaration files generated correctly in `dist/`
 ✅ All exports properly declared in package index

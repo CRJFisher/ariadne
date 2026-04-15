@@ -5,10 +5,9 @@
  * Reads a completed triage state file and produces:
  * - Triage results JSON (via save_json)
  * - Updated known-entrypoints registry
- * - Triage patterns file (if meta_review contains patterns)
  *
  * Usage:
- *   npx tsx finalize_triage.ts --state <path> [--external]
+ *   npx tsx finalize_triage.ts --state <path>
  */
 
 import * as fs from "node:fs/promises";
@@ -22,14 +21,12 @@ import {
 import {
   load_known_entrypoints,
   save_known_entrypoints,
-  build_project_source,
-  build_dead_code_source,
+  build_confirmed_unreachable_source,
 } from "../src/known_entrypoints.js";
 import {
   build_finalization_output,
   build_finalization_summary,
 } from "../src/build_finalization_output.js";
-import { TRIAGE_PATTERNS_FILE } from "../src/paths.js";
 import type { TriageState } from "../src/triage_state_types.js";
 
 // ===== CLI Argument Parsing =====
@@ -84,24 +81,17 @@ async function main(): Promise<void> {
 
   // Update known-entrypoints registry
   const known_sources = await load_known_entrypoints(state.project_name);
-  const project_source = build_project_source(output.true_positives, state.project_path);
-  const dead_code_source = build_dead_code_source(output.dead_code, state.project_path);
+  const confirmed_unreachable_source = build_confirmed_unreachable_source(
+    output.confirmed_unreachable,
+    state.project_path,
+  );
   const framework_sources = known_sources.filter(
-    (s) => s.source !== "project" && s.source !== "dead-code",
+    (s) => s.source !== "confirmed-unreachable",
   );
   const registry_path = await save_known_entrypoints(state.project_name, [
-    project_source,
-    dead_code_source,
+    confirmed_unreachable_source,
     ...framework_sources,
   ]);
-
-  // Write triage patterns (guarded)
-  if (state.meta_review && state.meta_review.patterns) {
-    await fs.writeFile(TRIAGE_PATTERNS_FILE, JSON.stringify(state.meta_review.patterns, null, 2) + "\n");
-    console.error(`Triage patterns written: ${TRIAGE_PATTERNS_FILE}`);
-  } else {
-    console.error("No triage patterns in meta_review, skipping patterns file.");
-  }
 
   // Clean up per-entry result files
   const results_dir = path.join(path.dirname(cli.state_path), "results");
@@ -109,24 +99,16 @@ async function main(): Promise<void> {
     await fs.rm(results_dir, { recursive: true });
     console.error(`Cleaned up results directory: ${results_dir}`);
   } catch {
-    // May not exist if all entries were known-tp
+    // May not exist if all entries were known-unreachable
   }
 
   // Print summary
   console.error("\nFinalization complete:");
-  console.error(`  Total entries:     ${summary.total_entries}`);
-  console.error(`  True positives:    ${summary.true_positive_count}`);
-  console.error(`  Dead code:         ${summary.dead_code_count}`);
-  console.error(`  False positives:   ${summary.false_positive_count} (${summary.group_count} groups)`);
+  console.error(`  Total entries:          ${summary.total_entries}`);
+  console.error(`  Confirmed unreachable:  ${summary.confirmed_unreachable_count}`);
+  console.error(`  False positives:        ${summary.false_positive_count} (${summary.group_count} groups)`);
   if (summary.failed_count > 0) {
-    console.error(`  Failed:            ${summary.failed_count}`);
-  }
-
-  if (summary.task_files.length > 0) {
-    console.error("\n  Task files created:");
-    for (const tf of summary.task_files) {
-      console.error(`    - ${tf}`);
-    }
+    console.error(`  Failed:                 ${summary.failed_count}`);
   }
 
   console.error(`\n  Output file:   ${output_file}`);

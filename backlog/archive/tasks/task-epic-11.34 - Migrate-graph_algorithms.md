@@ -3,7 +3,7 @@ id: task-epic-11.34
 title: Migrate graph_algorithms feature
 status: To Do
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, data-layer, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate the `graph_algorithms` feature to `src/graph/graph_algorithms/` followin
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -54,7 +55,10 @@ Migrate the `graph_algorithms` feature to `src/graph/graph_algorithms/` followin
 
 ```typescript
 // TODO: Add these stubs in implementation
-interface GraphAlgorithms { find_path<N>(graph: Graph<N, any>, from: string, to: string): N[]; detect_cycles<N>(graph: Graph<N, any>): N[][]; }
+interface GraphAlgorithms {
+  find_path<N>(graph: Graph<N, any>, from: string, to: string): N[];
+  detect_cycles<N>(graph: Graph<N, any>): N[][];
+}
 ```
 
 ## Planning Phase
@@ -107,6 +111,7 @@ Research findings will be documented here during execution.
 When implementing, add these TODO comments:
 
 1. In `graph_algorithms.ts`:
+
    ```typescript
    // TODO: Integration with Graph Data
    // - Traverse graph structures

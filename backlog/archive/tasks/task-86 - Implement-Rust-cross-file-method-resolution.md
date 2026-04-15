@@ -3,8 +3,8 @@ id: task-86
 title: Implement Rust cross-file method resolution
 status: Done
 assignee: []
-created_date: '2025-08-03'
-updated_date: '2025-08-03'
+created_date: "2025-08-03"
+updated_date: "2025-08-03"
 labels: []
 dependencies: []
 ---

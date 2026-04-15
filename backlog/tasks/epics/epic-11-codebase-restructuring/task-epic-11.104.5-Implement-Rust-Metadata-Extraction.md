@@ -18,6 +18,7 @@ Implement language-specific metadata extractors for Rust, handling Rust's unique
 Create `packages/core/src/index_single_file/query_code_tree/language_configs/rust_metadata.ts`
 
 **Key Differences from JavaScript:**
+
 - Method calls: `call_expression` with `field_expression`
 - Type annotations: Type after colon: `let x: i32 = 5`
 - Property access: `field_expression` nodes
@@ -26,6 +27,7 @@ Create `packages/core/src/index_single_file/query_code_tree/language_configs/rus
 - References: `&` and `&mut` prefixes
 
 **Rust AST Examples:**
+
 ```rust
 // Method call:
 obj.method()
@@ -45,6 +47,7 @@ fn foo(x: &str) -> &str
 ```
 
 **Implementation Notes:**
+
 - Handle `field_expression` for property access
 - Extract turbofish generics: `::<T>`
 - Handle reference types: `&T`, `&mut T`
@@ -52,6 +55,7 @@ fn foo(x: &str) -> &str
 - Constructor calls may be `struct_expression` or function calls
 
 **Rust-Specific Challenges:**
+
 - Ownership syntax: `&`, `&mut`, `Box<T>`, `Rc<T>`
 - Lifetime parameters: `'a`, `'static`
 - Associated types: `Iterator::Item`
@@ -62,6 +66,7 @@ fn foo(x: &str) -> &str
 Create `packages/core/src/index_single_file/query_code_tree/language_configs/rust_metadata.test.ts`
 
 **Test Cases:**
+
 - Method call receiver: `obj.method()`
 - Property chain: `a.b.c.d`
 - Type annotation: `let x: i32 = 5`
@@ -72,6 +77,7 @@ Create `packages/core/src/index_single_file/query_code_tree/language_configs/rus
 - Constructor: `let obj = MyStruct { field: value }`
 
 **Rust-Specific Tests:**
+
 - Lifetime parameters in types
 - Mutable references: `&mut T`
 - Associated types: `T::AssociatedType`
@@ -92,7 +98,7 @@ function get_metadata_extractors(language: Language): MetadataExtractors {
     case "python":
       return PYTHON_METADATA_EXTRACTORS;
     case "rust":
-      return RUST_METADATA_EXTRACTORS;  // NEW
+      return RUST_METADATA_EXTRACTORS; // NEW
     default:
       throw new Error(`Unsupported language: ${language}`);
   }
@@ -104,6 +110,7 @@ Remove the `throw` statement that was temporarily added for Rust.
 ### 104.5.4 - Fix semantic_index.rust.test.ts (30 minutes)
 
 Update Rust integration tests:
+
 - Add metadata assertions
 - Test method call receivers
 - Test property chains
@@ -115,6 +122,7 @@ Update Rust integration tests:
 ## Rust AST Reference
 
 Use tree-sitter CLI to explore:
+
 ```bash
 npx tree-sitter parse --scope source.rust "obj.method()"
 npx tree-sitter parse --scope source.rust "let x: Vec<String> = Vec::new();"
@@ -135,6 +143,7 @@ Or use Rust tree-sitter playground: https://tree-sitter.github.io/tree-sitter/pl
 ### Rust Type System Complexity
 
 Rust has the most complex type system of the four languages:
+
 - Generic type parameters: `<T>`
 - Lifetime parameters: `<'a>`
 - Trait bounds: `T: Clone + Debug`
@@ -146,6 +155,7 @@ Start with basics (primitives, simple generics), add complexity incrementally.
 ### Turbofish Syntax
 
 The turbofish (`::<T>`) is unique to Rust and used in:
+
 - Method calls: `iter.collect::<Vec<_>>()`
 - Associated functions: `Vec::<String>::new()`
 
@@ -154,6 +164,7 @@ Must handle both generic syntax styles.
 ### Field Expression vs Member Expression
 
 Rust uses `field_expression` where JavaScript uses `member_expression`:
+
 ```rust
 obj.field  // field_expression
 ```
@@ -173,11 +184,14 @@ This is semantically similar but structurally different in AST.
 ### Task 104.5.1 - ✅ COMPLETE
 
 **Files Created:**
+
 - `rust_metadata.ts` (520 lines)
 - `rust_metadata.test.ts` (515 lines, 47 tests)
 
 **All 6 Extractors Implemented:**
+
 1. ✅ `extract_type_from_annotation` - 11 tests covering:
+
    - Let bindings with type annotations
    - Function parameters and return types
    - References (`&str`, `&mut Vec<T>`)
@@ -186,6 +200,7 @@ This is semantically similar but structurally different in AST.
    - Tuple types, array types, scoped types
 
 2. ✅ `extract_call_receiver` - 6 tests covering:
+
    - Method calls (`obj.method()`)
    - Chained method calls (`vec.iter().map()`)
    - Self references (`self.process()`)
@@ -194,6 +209,7 @@ This is semantically similar but structurally different in AST.
    - Turbofish syntax (`vec.iter::<i32>()`)
 
 3. ✅ `extract_property_chain` - 6 tests covering:
+
    - Simple field access chains
    - Self field chains
    - Method chains with calls
@@ -201,6 +217,7 @@ This is semantically similar but structurally different in AST.
    - Index access chains (`array[0].field`)
 
 4. ✅ `extract_assignment_parts` - 8 tests covering:
+
    - Let bindings (immutable and mutable)
    - Assignment expressions
    - Field assignments
@@ -208,6 +225,7 @@ This is semantically similar but structurally different in AST.
    - Pattern destructuring (tuples, structs)
 
 5. ✅ `extract_construct_target` - 8 tests covering:
+
    - Struct instantiation (`Point { x: 1, y: 2 }`)
    - Associated function constructors (`Vec::new()`, `Box::new()`)
    - Tuple struct constructors
@@ -223,6 +241,7 @@ This is semantically similar but structurally different in AST.
    - Complex nested structures
 
 **Rust-Specific Features Handled:**
+
 - ✅ Turbofish syntax (`::<T>`)
 - ✅ Associated functions (`Type::method()`)
 - ✅ Trait method calls
@@ -234,6 +253,7 @@ This is semantically similar but structurally different in AST.
 - ✅ Pattern matching constructs
 
 **Issues Resolved:**
+
 1. Function return type extraction - needed direct text access
 2. Chained method call receiver - corrected AST traversal order
 3. Method chain extraction - added recursive call traversal
@@ -242,6 +262,7 @@ This is semantically similar but structurally different in AST.
 ### Task 104.5.2 - ✅ COMPLETE
 
 **Test Results:**
+
 - 47 comprehensive tests created
 - 100% passing (47/47)
 - Execution time: ~26-37ms (excellent performance)
@@ -251,12 +272,14 @@ This is semantically similar but structurally different in AST.
 ### Task 104.5.3 - ✅ COMPLETE
 
 **Integration:**
+
 - Modified `semantic_index.ts` (+2 lines)
 - Added import for `RUST_METADATA_EXTRACTORS`
 - Updated `get_metadata_extractors()` to return Rust extractors
 - Removed TODO comment
 
 **Files Modified:**
+
 - `packages/core/src/index_single_file/semantic_index.ts`
 
 ### Task 104.5.4 - NOT APPLICABLE
@@ -266,6 +289,7 @@ Rust semantic index integration tests were not created/updated as they were not 
 ## Overall Results
 
 **Test Summary:**
+
 - ✅ All 47 Rust metadata tests pass
 - ✅ Zero regressions in existing tests
 - ✅ All other metadata tests continue to pass:
@@ -275,6 +299,7 @@ Rust semantic index integration tests were not created/updated as they were not 
   - Total: 193 metadata tests passing
 
 **Key Achievements:**
+
 - Production-ready Rust metadata extraction
 - Comprehensive test coverage
 - Zero regressions

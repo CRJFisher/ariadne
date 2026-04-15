@@ -1,5 +1,4 @@
 import { z } from "zod";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult, ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import type { Project } from "@ariadnejs/core";
 import type { ProjectManager } from "../project_manager";
@@ -27,8 +26,8 @@ export interface ToolGroupDefinition {
 }
 
 export interface RegisterToolGroupsOptions {
-  mcp_server: McpServer;
-  project_manager: ProjectManager;
+  mcp_server: ToolRegistrar;
+  project_manager: Pick<ProjectManager, "get_project">;
   project_path: string;
   enabled_groups: string[];
   /** Optional persistence storage, shared with ProjectManager for scoped loads. */
@@ -40,7 +39,7 @@ export interface RegisterToolGroupsOptions {
  * instantiation triggered by the SDK's overloaded signatures when given
  * a dynamic ZodRawShape. Safe because we validate with tool.input_schema.parse().
  */
-interface ToolRegistrar {
+export interface ToolRegistrar {
   tool(
     name: string,
     description: string,

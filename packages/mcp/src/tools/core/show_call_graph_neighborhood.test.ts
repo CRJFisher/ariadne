@@ -537,12 +537,12 @@ describe("build_callers_index", () => {
 });
 
 describe("show_call_graph_neighborhood", () => {
-  let mock_project: Project;
+  let mock_project: Pick<Project, "get_call_graph">;
 
   beforeEach(() => {
     mock_project = {
       get_call_graph: vi.fn(),
-    } as unknown as Project;
+    };
   });
 
   it("should throw error for invalid symbol_ref format", async () => {

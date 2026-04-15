@@ -81,6 +81,7 @@ Consider adding Rust-specific entities to SemanticEntity enum:
 ## Implementation Results
 
 ### Summary
+
 - **Starting point**: 1 invalid capture (`@while_let_pattern`)
 - **Ending point**: 0 invalid captures
 - **Files modified**: 2 (rust.scm, rust_builder.ts)
@@ -88,41 +89,50 @@ Consider adding Rust-specific entities to SemanticEntity enum:
 ### Changes Made
 
 #### rust.scm (1 fix)
+
 - Fixed `@while_let_pattern` → `@definition.variable` (line 432)
   - This was capturing a pattern in a while-let expression
   - The capture was missing the required category.entity format
 
 #### rust_builder.ts (updated to match current capture names)
+
 Most of rust.scm had already been fixed in the parent task. The builder config needed updates to match the new capture names:
 
 **Struct/Class mappings:**
+
 - `definition.struct` → `definition.class`
 - `definition.struct.generic` → `definition.class.generic`
 
 **Enum variant mapping:**
+
 - `definition.enum_variant` → `definition.enum_member`
 
 **Trait/Interface mapping:**
+
 - `definition.trait` → removed (now using `definition.interface`)
 
 **Method mappings (removed obsolete):**
+
 - `definition.trait_method` → removed (now `definition.method`)
 - `definition.trait_method.default` → `definition.method.default`
 - `definition.trait_impl_method` → removed (now `definition.method`)
 - `definition.trait_impl_method.async` → `definition.method.async`
 
 **Parameter mappings:**
+
 - `definition.param` → removed (now `definition.parameter`)
 - `definition.param.self` → `definition.parameter.self`
 - Added `definition.parameter.closure`
 
 **Variable/Constant mappings:**
+
 - `definition.const` → removed (now `definition.constant`)
 - `definition.static` → removed (now `definition.variable`)
 - `definition.loop_var` → removed (now `definition.variable`)
 - Added `definition.variable.mut`
 
 **Type mappings:**
+
 - `definition.type_param` → `definition.type_parameter`
 - `definition.const_param` → removed
 - `definition.associated_type` → removed (now `definition.type_alias`)
@@ -130,6 +140,7 @@ Most of rust.scm had already been fixed in the parent task. The builder config n
 - `definition.associated_type.impl` → `definition.type_alias.impl`
 
 **Added new captures:**
+
 - `definition.module.public`
 - `definition.function.closure`
 - `definition.function.async_closure`
@@ -139,6 +150,7 @@ Most of rust.scm had already been fixed in the parent task. The builder config n
 - `definition.visibility`
 
 **Removed obsolete entries:**
+
 - All `import.*` entries (not definition captures)
 - All `export.*` entries (not definition captures)
 - All `scope.*` entries (not definition captures)
@@ -146,6 +158,7 @@ Most of rust.scm had already been fixed in the parent task. The builder config n
 ### Validation Results
 
 #### Initial validation (after rust.scm fix):
+
 ```
 === Validating Rust Captures ===
 Total unique captures: 115
@@ -153,6 +166,7 @@ Total unique captures: 115
 ```
 
 #### Final validation (all languages):
+
 ```bash
 $ node validate_captures.js
 ✅ javascript.scm: All captures valid
@@ -166,13 +180,16 @@ Total invalid captures: 0
 ### Test Results
 
 #### Initial Status
+
 All 32 Rust builder tests were skipped with a TODO comment about needing API updates.
 
 #### After Fixes
+
 - **12 tests passing** ✅
 - **20 tests failing** ⚠️
 
 #### Passing Tests
+
 - Simple struct, tuple struct processing
 - Simple trait processing
 - Instance method, associated function processing
@@ -183,27 +200,33 @@ All 32 Rust builder tests were skipped with a TODO comment about needing API upd
 #### Failing Tests & Causes
 
 **1. Missing helper function** (2 failures):
+
 - `enum_member_symbol` is imported but doesn't exist in `rust_builder_helpers.ts`
 - Affects enum variant processing
 
 **2. Missing properties on Definition types** (11 failures):
+
 - Tests expect `.generics` but definitions use `.type_parameters`
 - Tests expect `.async`, `.const`, `.unsafe`, `.readonly`, `.static`, `.macro` properties
 - These modifier properties don't exist in the type definitions
 
 **3. Visibility scope mismatches** (2 failures):
+
 - Helper returns `"package-internal"` but tests expect `"package"`
 - Helper returns `"file-private"` but tests expect `"parent-module"`
 
 **4. Parameter processing** (2 failures):
+
 - Parameters aren't stored in `BuilderResult` directly
 - They're nested within function/method definitions
 - Tests need restructuring to access parameters correctly
 
 **5. Integration test assertion issue** (1 failure):
+
 - Type mismatch in assertion arguments
 
 #### Test Updates Made
+
 - ✅ Fixed `ProcessingContext` mock to include all required properties
 - ✅ Fixed `CaptureNode` creation to include category, entity, location
 - ✅ Updated `processCapture` helper to work with BuilderResult Maps
@@ -216,18 +239,22 @@ All 32 Rust builder tests were skipped with a TODO comment about needing API upd
 Ran complete test suite to ensure no regressions from capture name changes:
 
 #### Before Rust Changes (commit 2db26d1 - after JavaScript/TypeScript/Python fixes)
+
 ```
 Test Files  33 failed | 23 passed | 5 skipped (61)
 ```
 
 #### After Rust Changes (current HEAD)
+
 ```
 Test Files  31 failed | 26 passed | 4 skipped (61)
 Tests       531 failed | 807 passed | 195 skipped (1533)
 ```
 
 #### Regression Analysis
+
 ✅ **NO REGRESSIONS INTRODUCED**
+
 - Actually improved: 2 fewer failing test files (33 → 31)
 - 3 more passing test files (23 → 26)
 - All 807 passing tests maintained
@@ -238,25 +265,30 @@ See `TEST_RESULTS.md` in repository root for detailed comparison.
 ### Issues Encountered
 
 #### 1. Single Invalid Capture in rust.scm
+
 **Issue**: `@while_let_pattern` was missing category.entity format
 **Solution**: Changed to `@definition.variable` to match pattern binding semantics
 **Impact**: Minimal - single line change
 
 #### 2. Builder Config Out of Sync
+
 **Issue**: rust_builder.ts still referenced old capture names from before parent task
 **Solution**: Systematically updated all 25+ config entries to match new names
 **Impact**: Medium - required careful mapping of Rust concepts to valid entities
 
 #### 3. Test Suite Completely Skipped
+
 **Issue**: All 32 Rust builder tests were skipped with API mismatch TODO
 **Solution**:
+
 - Updated test helpers to use new `ProcessingContext` interface
 - Fixed `CaptureNode` creation to include all required properties
 - Updated `processCapture` to work with `BuilderResult` Maps instead of arrays
 - Updated 40+ test capture name references
-**Impact**: Significant - brought tests from 0% to 37.5% passing
+  **Impact**: Significant - brought tests from 0% to 37.5% passing
 
 #### 4. Test Infrastructure Issues
+
 **Issue**: Multiple test files had incomplete mock objects
 **Solution**: Added `captures: []` property to `ProcessingContext` mocks
 **Impact**: Minor - fixed 1 compilation error in definition_builder.test.ts
@@ -266,6 +298,7 @@ See `TEST_RESULTS.md` in repository root for detailed comparison.
 #### High Priority (affects Rust builder test completion)
 
 1. **Create `enum_member_symbol` helper function** (rust_builder_helpers.ts)
+
    - Currently imported but doesn't exist
    - Blocks 2 enum-related tests
    - Estimated effort: 30 minutes
@@ -279,6 +312,7 @@ See `TEST_RESULTS.md` in repository root for detailed comparison.
 #### Medium Priority (improves test coverage)
 
 3. **Add modifier properties to Definition types** (or update tests)
+
    - Tests expect `.generics`, `.async`, `.const`, `.unsafe`, `.static`, `.macro`
    - Current definitions use `.type_parameters` instead of `.generics`
    - Blocks 11 tests
@@ -286,6 +320,7 @@ See `TEST_RESULTS.md` in repository root for detailed comparison.
    - Estimated effort: 4 hours
 
 4. **Restructure parameter tests**
+
    - Parameters aren't in `BuilderResult` root, they're nested in functions/methods
    - Blocks 2 parameter tests
    - Tests need to query function definitions to access parameters
@@ -299,6 +334,7 @@ See `TEST_RESULTS.md` in repository root for detailed comparison.
 #### Low Priority (systematic cleanup)
 
 6. **Update remaining language builder tests**
+
    - JavaScript: 11/12 failing with similar issues
    - Python: 14/28 failing with similar issues
    - TypeScript: Tests exist but have similar patterns
@@ -321,6 +357,7 @@ See `TEST_RESULTS.md` in repository root for detailed comparison.
 6. `e20fba7` - docs: Document test results showing no regressions from Rust capture changes
 
 ### Notes
+
 - The parent task had already fixed 181 of the 182 invalid captures in rust.scm
 - This task only needed to fix the remaining `@while_let_pattern` capture
 - The rust_builder.ts updates ensure the builder config matches the current capture names

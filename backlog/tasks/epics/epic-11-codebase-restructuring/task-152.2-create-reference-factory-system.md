@@ -75,7 +75,7 @@ export function create_self_reference_call(
   property_chain: readonly SymbolName[]
 ): SelfReferenceCall {
   return {
-    kind: 'self_reference_call',
+    kind: "self_reference_call",
     name,
     location,
     scope_id,
@@ -105,7 +105,7 @@ export function create_method_call_reference(
   property_chain: readonly SymbolName[]
 ): MethodCallReference {
   return {
-    kind: 'method_call',
+    kind: "method_call",
     name,
     location,
     scope_id,
@@ -127,7 +127,7 @@ export function create_function_call_reference(
   scope_id: ScopeId
 ): FunctionCallReference {
   return {
-    kind: 'function_call',
+    kind: "function_call",
     name,
     location,
     scope_id,
@@ -153,7 +153,7 @@ export function create_constructor_call_reference(
   construct_target: Location
 ): ConstructorCallReference {
   return {
-    kind: 'constructor_call',
+    kind: "constructor_call",
     name,
     location,
     scope_id,
@@ -176,10 +176,10 @@ export function create_variable_reference(
   name: SymbolName,
   location: Location,
   scope_id: ScopeId,
-  access_type: 'read' | 'write'
+  access_type: "read" | "write"
 ): VariableReference {
   return {
-    kind: 'variable_reference',
+    kind: "variable_reference",
     name,
     location,
     scope_id,
@@ -208,11 +208,11 @@ export function create_property_access_reference(
   scope_id: ScopeId,
   receiver_location: Location,
   property_chain: readonly SymbolName[],
-  access_type: 'property' | 'index',
+  access_type: "property" | "index",
   is_optional_chain: boolean
 ): PropertyAccessReference {
   return {
-    kind: 'property_access',
+    kind: "property_access",
     name,
     location,
     scope_id,
@@ -238,10 +238,10 @@ export function create_type_reference(
   name: SymbolName,
   location: Location,
   scope_id: ScopeId,
-  type_context: 'annotation' | 'extends' | 'implements' | 'generic' | 'return'
+  type_context: "annotation" | "extends" | "implements" | "generic" | "return"
 ): TypeReference {
   return {
-    kind: 'type_reference',
+    kind: "type_reference",
     name,
     location,
     scope_id,
@@ -263,7 +263,7 @@ export function create_assignment_reference(
   target_location: Location
 ): AssignmentReference {
   return {
-    kind: 'assignment',
+    kind: "assignment",
     name,
     location,
     scope_id,
@@ -286,6 +286,7 @@ export function create_assignment_reference(
 **Completed**: All factory functions created and tested.
 
 **Test Results**: 23/23 tests passing
+
 - All factory functions create correct discriminated union variants
 - All required fields enforced by TypeScript
 - Pure functions with no side effects
@@ -298,19 +299,19 @@ Create unit tests for factories:
 
 ```typescript
 // reference_factories.test.ts
-describe('Reference Factories', () => {
-  test('create_self_reference_call creates valid SelfReferenceCall', () => {
+describe("Reference Factories", () => {
+  test("create_self_reference_call creates valid SelfReferenceCall", () => {
     const ref = create_self_reference_call(
-      'method' as SymbolName,
+      "method" as SymbolName,
       mock_location,
-      'scope:1' as ScopeId,
-      'this',
-      ['this', 'method']
+      "scope:1" as ScopeId,
+      "this",
+      ["this", "method"]
     );
 
-    expect(ref.kind).toBe('self_reference_call');
-    expect(ref.keyword).toBe('this');
-    expect(ref.name).toBe('method');
+    expect(ref.kind).toBe("self_reference_call");
+    expect(ref.keyword).toBe("this");
+    expect(ref.name).toBe("method");
   });
 
   // Test each factory similarly
@@ -320,6 +321,7 @@ describe('Reference Factories', () => {
 ## Files Changed
 
 **New**:
+
 - `packages/core/src/index_single_file/references/reference_factories.ts`
 - `packages/core/src/index_single_file/references/reference_factories.test.ts`
 

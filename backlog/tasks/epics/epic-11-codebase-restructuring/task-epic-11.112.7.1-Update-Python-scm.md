@@ -13,6 +13,7 @@ Update the Python tree-sitter query file to capture scope **bodies** instead of 
 ## Files
 
 ### MODIFIED
+
 - `packages/core/src/index_single_file/query_code_tree/queries/python.scm`
 
 ---
@@ -20,6 +21,7 @@ Update the Python tree-sitter query file to capture scope **bodies** instead of 
 ## The Fix
 
 ### Current Problem
+
 ```scheme
 (class_definition) @scope.class
 ```
@@ -27,6 +29,7 @@ Update the Python tree-sitter query file to capture scope **bodies** instead of 
 Captures the ENTIRE class including the name.
 
 ### Solution
+
 ```scheme
 (class_definition
   body: (block) @scope.class
@@ -42,6 +45,7 @@ Captures only the BODY (the indented block).
 ### 1. Locate Current Scope Capture (3 min)
 
 Find this pattern in `python.scm`:
+
 ```scheme
 (class_definition) @scope.class
 ```
@@ -63,11 +67,13 @@ Find this pattern in `python.scm`:
 ### 3. Verify Grammar Fields (2 min)
 
 Check tree-sitter-python grammar:
+
 - `class_definition` has `body: (block)` ✅
 
 ### 4. Test with Simple Example (10 min)
 
 Create test file `test.py`:
+
 ```python
 class MyClass:
     def method(self):
@@ -75,6 +81,7 @@ class MyClass:
 ```
 
 Verify:
+
 - Class scope starts at the colon `:` (where block begins)
 - Class name "MyClass" is OUTSIDE class scope
 - Method scope is INSIDE class scope
@@ -84,6 +91,7 @@ Verify:
 ## Expected Scope Locations
 
 **Before:**
+
 ```python
 class MyClass:        # class scope: 1:0 to 3:13 (includes name ❌)
     def method(self):
@@ -91,6 +99,7 @@ class MyClass:        # class scope: 1:0 to 3:13 (includes name ❌)
 ```
 
 **After:**
+
 ```python
 class MyClass:        # class scope: 1:13 to 3:13 (body only ✅)
     def method(self):
@@ -102,6 +111,7 @@ class MyClass:        # class scope: 1:13 to 3:13 (body only ✅)
 ## Python-Specific Notes
 
 Python uses indentation for blocks:
+
 ```python
 class Foo:     # ← Scope starts after ':'
     x = 1      # ← Block begins (indented)
@@ -125,6 +135,7 @@ The `(block)` node represents the indented suite.
 ### Changes Made
 
 1. **Updated python.scm (line 26-28)**
+
    ```scheme
    ; BEFORE
    (class_definition) @scope.class
@@ -144,12 +155,14 @@ The `(block)` node represents the indented suite.
 ### Verification Results
 
 **Grammar Validation:**
+
 - ✅ tree-sitter-python v0.21.0 confirmed
 - ✅ `class_definition` has field `body: $._suite`
 - ✅ `_suite` is aliased to `block` node
 - ✅ Pattern syntax is valid
 
 **Test Results:**
+
 ```
 Python Class Body-Based Scope Verification
 - Class scope starts at line 2 (after ':'), not line 1
@@ -159,6 +172,7 @@ Python Class Body-Based Scope Verification
 ```
 
 **TypeScript Compilation:**
+
 - ✅ 0 errors in query_code_tree files
 - ✅ python.scm loads without syntax errors
 - ✅ Query object creates successfully
@@ -166,6 +180,7 @@ Python Class Body-Based Scope Verification
 ### Scope Behavior
 
 **Before:** Class scope included class name
+
 ```python
 class MyClass:        # scope: 1:1 to 3:12 (includes "MyClass" ❌)
     def method(self):
@@ -173,6 +188,7 @@ class MyClass:        # scope: 1:1 to 3:12 (includes "MyClass" ❌)
 ```
 
 **After:** Class scope is body only
+
 ```python
 class MyClass:        # "MyClass" in module scope ✅
                       # scope starts: 2:5 (indented block ✅)
@@ -183,8 +199,10 @@ class MyClass:        # "MyClass" in module scope ✅
 ### Key Differences from TypeScript/JavaScript
 
 - **TypeScript/JavaScript:** Body starts at `{` on same line
+
   ```typescript
-  class MyClass {    // scope: 1:15 (at brace)
+  class MyClass {
+    // scope: 1:15 (at brace)
     method() {}
   }
   ```
@@ -199,6 +217,7 @@ class MyClass:        # "MyClass" in module scope ✅
 ### Files Modified
 
 1. **packages/core/src/index_single_file/query_code_tree/queries/python.scm**
+
    - Line 26-28: Updated class scope capture to use body-based approach
 
 2. **packages/core/src/index_single_file/scopes/body_based_scope_verification.test.ts**

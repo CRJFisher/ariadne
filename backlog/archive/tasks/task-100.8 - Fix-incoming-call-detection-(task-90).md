@@ -3,7 +3,7 @@ id: task-100.8
 title: Fix incoming call detection (task-90)
 status: Done
 assignee: []
-created_date: '2025-08-04 12:05'
+created_date: "2025-08-04 12:05"
 labels: []
 dependencies:
   - task-90
@@ -33,17 +33,20 @@ The system fails to detect many incoming calls to functions and methods. This di
 ### Investigation Results
 
 Tested incoming call detection and found that the system correctly handles:
+
 1. **Direct method calls**: `obj.method()` ✓
-2. **Chained property access**: `this.prop.method()` ✓  
+2. **Chained property access**: `this.prop.method()` ✓
 3. **Variable-based calls**: `const x = this.prop; x.method()` ✓
 
 But does NOT handle:
+
 1. **Method call chains**: `obj.getInner().process()` - only detects call to `getInner()`, not `process()` ✗
 2. **Complex expressions**: Method calls through function returns or complex expressions ✗
 
 ### Root Cause
 
 The main issue is that the system doesn't track return types of methods. When analyzing `outer.getInner().process()`:
+
 - It correctly identifies the call to `getInner()`
 - But it cannot determine that `getInner()` returns an `InnerClass` instance
 - Therefore, it cannot resolve the subsequent `process()` call
@@ -59,6 +62,7 @@ The main issue is that the system doesn't track return types of methods. When an
 ### Next Steps
 
 To improve incoming call detection, we need to implement:
+
 1. **Return type tracking**: Track what type/class methods return
 2. **Multi-step resolution**: Resolve chained calls by tracking intermediate types
 3. **Function return analysis**: Analyze function bodies to determine return types
@@ -66,6 +70,7 @@ To improve incoming call detection, we need to implement:
 ## Resolution
 
 This task was resolved by implementing task-100.11.13 (Implement return type tracking for method chains). The solution successfully:
+
 - Tracks return types of functions and methods
 - Resolves chained method calls like `obj.getInner().process()`
 - Properly detects incoming calls to methods called through chains

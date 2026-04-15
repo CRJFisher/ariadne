@@ -65,12 +65,12 @@ describe("list_entrypoints_schema", () => {
 });
 
 describe("list_entrypoints", () => {
-  let mock_project: Project;
+  let mock_project: Pick<Project, "get_call_graph">;
 
   beforeEach(() => {
     mock_project = {
       get_call_graph: vi.fn(),
-    } as unknown as Project;
+    };
   });
 
   it("should return message when no entry points found", async () => {

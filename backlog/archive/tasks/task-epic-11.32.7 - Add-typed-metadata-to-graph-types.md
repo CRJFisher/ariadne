@@ -1,9 +1,9 @@
 ---
-id: task-epic-11.32.7  
+id: task-epic-11.32.7
 title: Add typed metadata to graph types
 status: To Do
 assignee: []
-created_date: '2025-08-26'
+created_date: "2025-08-26"
 labels: [types, graph-builder, epic-11]
 dependencies: [task-epic-11.32, task-epic-11.33]
 parent_task_id: task-epic-11.32
@@ -16,24 +16,26 @@ Replace the untyped `metadata: Record<string, any>` fields in GraphNode, GraphEd
 ## Context
 
 Current graph types use untyped metadata:
+
 ```typescript
 export interface GraphNode {
   // ...
-  metadata: Record<string, any>;  // <-- No type checking
+  metadata: Record<string, any>; // <-- No type checking
 }
 
 export interface GraphEdge {
   // ...
-  metadata: Record<string, any>;  // <-- No type checking
+  metadata: Record<string, any>; // <-- No type checking
 }
 
 export interface ProjectGraph {
   // ...
-  metadata: Record<string, any>;  // <-- No type checking
+  metadata: Record<string, any>; // <-- No type checking
 }
 ```
 
 This leads to:
+
 1. No compile-time checking of metadata fields
 2. No IntelliSense/autocomplete support
 3. Unclear what metadata is available
@@ -45,6 +47,7 @@ This leads to:
 From graph_builder.ts, we can see actual metadata being used:
 
 **GraphNode metadata:**
+
 ```typescript
 metadata: {
   scope_id: scope.id,
@@ -54,6 +57,7 @@ metadata: {
 ```
 
 **GraphEdge metadata:**
+
 ```typescript
 metadata: {
   // For calls:
@@ -69,6 +73,7 @@ metadata: {
 ```
 
 **ProjectGraph metadata:**
+
 ```typescript
 metadata: {
   file_count: files.length,
@@ -82,6 +87,7 @@ metadata: {
 ## Tasks
 
 ### Phase 1: Design Metadata Types
+
 - [ ] Create NodeMetadata interface with common fields
 - [ ] Create type-specific metadata interfaces (FunctionNodeMetadata, ClassNodeMetadata, etc.)
 - [ ] Create EdgeMetadata interface with common fields
@@ -89,22 +95,26 @@ metadata: {
 - [ ] Create ProjectMetadata interface
 
 ### Phase 2: Update Type Definitions
+
 - [ ] Create metadata types in packages/types
 - [ ] Update GraphNode to use typed metadata
 - [ ] Update GraphEdge to use typed metadata
 - [ ] Update ProjectGraph to use typed metadata
 
 ### Phase 3: Support Type Discrimination
+
 - [ ] Use discriminated unions based on node/edge type
 - [ ] Ensure TypeScript can narrow types properly
 - [ ] Add type guards if necessary
 
 ### Phase 4: Update graph_builder
+
 - [ ] Update all metadata creation to use typed interfaces
 - [ ] Fix any type errors from stricter typing
 - [ ] Ensure all metadata fields are properly typed
 
 ### Phase 5: Testing
+
 - [ ] Verify TypeScript compilation with strict types
 - [ ] Test that metadata is correctly typed at runtime
 - [ ] Update tests to use typed metadata
@@ -184,10 +194,7 @@ interface GraphNode {
   type: "function" | "class" | "module" | "variable" | "method";
   name: string;
   file_path: string;
-  metadata: 
-    | FunctionNodeMetadata 
-    | ClassNodeMetadata 
-    | ModuleNodeMetadata;
+  metadata: FunctionNodeMetadata | ClassNodeMetadata | ModuleNodeMetadata;
 }
 
 interface GraphEdge {
@@ -195,10 +202,7 @@ interface GraphEdge {
   type: "calls" | "imports" | "exports" | "inherits";
   source: string;
   target: string;
-  metadata:
-    | CallEdgeMetadata
-    | ImportEdgeMetadata
-    | ExportEdgeMetadata;
+  metadata: CallEdgeMetadata | ImportEdgeMetadata | ExportEdgeMetadata;
 }
 ```
 

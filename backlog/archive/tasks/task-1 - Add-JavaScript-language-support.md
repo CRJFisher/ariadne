@@ -3,9 +3,9 @@ id: task-1
 title: Add JavaScript language support
 status: Done
 assignee:
-  - '@claude'
-created_date: '2025-07-08'
-updated_date: '2025-07-08'
+  - "@claude"
+created_date: "2025-07-08"
+updated_date: "2025-07-08"
 labels:
   - feature
   - language-support
@@ -57,10 +57,11 @@ Successfully implemented JavaScript language support with the following:
   - JSX elements
   - Operators and expressions
   - Closures and hoisting
-  
+
 The scope queries handle CommonJS require() imports as well as ES6 modules. Private class fields and other modern JavaScript features are also supported.
 
 Files created/modified:
+
 - src/languages/javascript/index.ts
 - src/languages/javascript/scopes.scm
 - src/languages/javascript/javascript.test.ts

@@ -40,6 +40,7 @@ During the migration of disk_storage (task-epic-11.30), we discovered that `test
 The `tests/storage_interface.test.ts` file was found to have extensive issues beyond just the missing disk_storage example:
 
 1. **Multiple non-existent imports:**
+
    - `createStorage` and `registerStorageProvider` functions (no longer exist)
    - `InMemoryStorage` class (renamed to MemoryStorage)
    - `Project` class (removed from codebase)

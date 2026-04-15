@@ -1,10 +1,10 @@
 ---
 id: task-epic-11.107.2.1
-title: 'TypeScript: Audit tests for unsupported features'
+title: "TypeScript: Audit tests for unsupported features"
 status: Completed
 assignee: []
-created_date: '2025-10-01 10:27'
-completed_date: '2025-10-01'
+created_date: "2025-10-01 10:27"
+completed_date: "2025-10-01"
 labels: []
 dependencies: []
 parent_task_id: task-epic-11.107.2
@@ -14,6 +14,7 @@ priority: high
 ## Description
 
 Review semantic_index.typescript.test.ts to identify and remove:
+
 - Tests for TypeScript-specific features we don't need (advanced generics, complex type operators, etc.)
 - Tests that would require unnecessary TypeScript compiler integration
 - Overly specific edge cases
@@ -27,6 +28,7 @@ Focus on essential TypeScript features for call graph analysis.
 Removed 2 tests from semantic_index.typescript.test.ts that tested TypeScript-specific features beyond call graph analysis requirements:
 
 1. **"should handle mapped and conditional types"** (lines 218-258)
+
    - Tested advanced TypeScript type operators: `Optional<T>`, `Pick<T, K>`, conditional types (`T extends string ? true : false`)
    - These features require TypeScript compiler integration for full semantic analysis
    - Not essential for call graph tracking of function/method calls
@@ -42,6 +44,7 @@ Removed 2 tests from semantic_index.typescript.test.ts that tested TypeScript-sp
 **Test Suite Status:** ✅ 100% pass rate (22/22 tests passing)
 
 **Test Coverage Verified:**
+
 - Basic TypeScript features (4 tests): interfaces, classes, methods, type aliases, enums, inheritance, abstract classes, parameter properties
 - Module system (2 tests): type-only imports, namespace definitions
 - Metadata extraction (5 tests): receiver locations, chained method calls, type info for interfaces, generic types, constructor targets
@@ -52,6 +55,7 @@ Removed 2 tests from semantic_index.typescript.test.ts that tested TypeScript-sp
 ### Compilation Verification
 
 **TypeScript Compilation:** ✅ All packages compile successfully
+
 - `@ariadnejs/types`: No errors
 - `@ariadnejs/core`: No errors
 - `@ariadnejs/mcp`: No errors
@@ -62,12 +66,14 @@ Removed 2 tests from semantic_index.typescript.test.ts that tested TypeScript-sp
 **Full Test Suite Impact:** ✅ No regressions introduced
 
 Compared test results before/after changes:
+
 - Test Files: 10 failed (10) - UNCHANGED
 - Tests: 22 failed | 1 passed | 36 skipped - UNCHANGED
 - Pre-existing failures in other test files remain unchanged
 - Only modified file: `semantic_index.typescript.test.ts` (22/22 passing)
 
 **Semantic Index Test Status:**
+
 - ✅ `semantic_index.typescript.test.ts`: 22/22 passing (100%)
 - ✅ `semantic_index.javascript.test.ts`: 26/26 passing
 - ✅ `semantic_index.python.metadata.test.ts`: 9/9 passing
@@ -82,6 +88,7 @@ Compared test results before/after changes:
 The TypeScript tree-sitter queries (`queries/typescript.scm`) are functioning correctly for all essential call graph features:
 
 **Validated Query Patterns:**
+
 - ✅ Interface definitions and inheritance (`interface_declaration`, `extends_clause`)
 - ✅ Class definitions and abstract classes (`class_declaration`, `abstract_class_declaration`)
 - ✅ Method definitions and calls (`method_definition`, `call_expression`)
@@ -95,6 +102,7 @@ The TypeScript tree-sitter queries (`queries/typescript.scm`) are functioning co
 - ✅ Property access chains (`member_expression`)
 
 **Metadata Extraction Validated:**
+
 - ✅ `receiver_location` for method calls
 - ✅ `type_info` with `type_name` and `certainty` fields
 - ✅ `construct_target` for constructor calls
@@ -107,6 +115,7 @@ All metadata extractors in `typescript_metadata.ts` are functioning correctly an
 **None required for this task.** The TypeScript test suite is complete and focused on essential features for call graph analysis.
 
 **Note:** Pre-existing failures in Python and Rust test suites should be addressed in their respective audit tasks:
+
 - Python: 6 failures in metadata extraction (task-epic-11.107.3)
 - Rust: 89 failures requiring investigation (task-epic-11.107.4)
 

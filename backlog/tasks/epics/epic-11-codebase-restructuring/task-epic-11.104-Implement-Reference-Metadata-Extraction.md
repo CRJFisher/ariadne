@@ -30,11 +30,13 @@
 ## Phase 1 Summary (Foundation)
 
 ✅ **Completed Tasks:**
+
 - Task 104.1: Created metadata extractor interface and types
 - Task 104.2: Refactored ReferenceBuilder to accept extractors
 - Test suite updates: Updated reference_builder tests, verified no regressions
 
 ✅ **Key Achievements:**
+
 - `MetadataExtractors` interface defined with 6 extraction methods
 - `ReferenceBuilder` architecture successfully refactored to accept extractors
 - Full backward compatibility maintained (extractors parameter is optional)
@@ -45,6 +47,7 @@
 ## Phase 2 Summary (JavaScript/TypeScript Implementation)
 
 ✅ **Completed Tasks:**
+
 - Task 104.3.1: Implemented javascript_metadata.ts with all 6 extractors
 - Task 104.3.2: Comprehensive test suite for JavaScript metadata extractors (57 tests, 100% passing)
 - Task 104.3.3: Wired JavaScript/TypeScript extractors into semantic_index
@@ -53,6 +56,7 @@
 - Task 104.3.6: Fixed javascript_builder.test.ts for metadata integration testing
 
 ✅ **Key Achievements:**
+
 - All 6 metadata extractors fully implemented and tested for JavaScript/TypeScript
 - 57 comprehensive tests for JavaScript metadata extractors (100% passing)
 - 11 comprehensive tests for TypeScript-specific metadata (84.6% passing, 2 skipped)
@@ -73,11 +77,13 @@
 ## Phase 3 Summary (Python Implementation)
 
 ✅ **Completed Tasks:**
+
 - Task 104.4.1: Implemented python_metadata.ts with all 6 extractors (Completed 2025-10-01)
 - Task 104.4.2: Comprehensive test suite for Python metadata extractors (69 tests, 100% passing) (Completed 2025-10-01)
 - Task 104.4.3: Wired Python extractors into semantic_index (Completed 2025-10-01)
 
 ✅ **Key Achievements:**
+
 - All 6 metadata extractors fully implemented and tested for Python
 - **69 comprehensive tests** for Python metadata extractors (100% passing) - **Most comprehensive of all languages**
 - **9 integration tests** for Python semantic index metadata (100% passing)
@@ -97,6 +103,7 @@
 ## Phase 4 Summary (Rust Implementation)
 
 ✅ **Completed Tasks:**
+
 - Task 104.5.1: Implemented rust_metadata.ts with all 6 extractors (Completed 2025-10-01)
 - Task 104.5.2: Enhanced rust_metadata.test.ts with comprehensive test suite (Completed 2025-10-01)
 - Task 104.5.3: Wired Rust extractors into semantic_index and created integration tests (Completed 2025-10-01)
@@ -104,6 +111,7 @@
 - Integrated Rust extractors into semantic_index.ts (verified in task 104.5.3)
 
 ✅ **Key Achievements:**
+
 - All 6 metadata extractors fully implemented and tested for Rust
 - **93 comprehensive tests** for Rust metadata extractors (100% passing) - **Most comprehensive of all languages**
 - **5 integration tests** for Rust semantic index metadata (100% passing)
@@ -138,6 +146,7 @@
 - Test file: 1,091 lines (largest metadata test file across all languages)
 
 🔍 **Implementation Details:**
+
 - Task 104.5.1: Created `rust_metadata.ts` (520 lines) with all 6 extractor functions
 - Task 104.5.2: Enhanced `rust_metadata.test.ts` from 515 lines to 1,091 lines (+576 lines, 47→93 tests)
 - Modified `semantic_index.ts` (+2 lines) to integrate RUST_METADATA_EXTRACTORS
@@ -171,10 +180,12 @@
 ## Phase 5 Summary (Integration & Validation) - ✅ COMPLETE
 
 ✅ **Completed Tasks:**
+
 - Task 104.6.1: Updated reference_builder.test.ts with comprehensive metadata extractor tests (Completed 2025-10-01)
 - Task 104.6.2: End-to-end validation across all languages (Completed 2025-10-01)
 
 ✅ **Key Achievements:**
+
 - **14 new comprehensive tests** added to reference_builder.test.ts (100% passing)
 - **Total reference_builder tests: 35** (28 passing + 7 intentionally skipped)
 - **Mock metadata extractors** created for isolated unit testing
@@ -186,11 +197,13 @@
 🔍 **Implementation Details (Task 104.6.1):**
 
 **File Modified:**
+
 - `packages/core/src/index_single_file/query_code_tree/reference_builder.test.ts`
   - Added mock extractor factory function using Vitest's `vi.fn()` for proper test isolation
   - Created new test suite: "metadata extractors integration" (14 tests)
 
 **Test Coverage Added:**
+
 1. ✅ `extract_type_from_annotation` - Verifies type extraction and certainty detection
 2. ✅ `extract_call_receiver` - Verifies receiver location extraction for method calls
 3. ✅ `extract_property_chain` - Verifies property chain tracking for member access
@@ -207,6 +220,7 @@
 14. ✅ Partial context creation - Verifies context created only with available data
 
 **Test Validation Results:**
+
 - All 14 new tests pass with proper mock extractor verification
 - Extractor functions called with correct arguments (node, file_path)
 - Metadata properly populated in SymbolReference objects
@@ -214,17 +228,20 @@
 - No regressions in existing 21 tests (14 existing + 7 skipped)
 
 **TypeScript Compilation:**
+
 - Zero new TypeScript errors introduced
 - File uses `@ts-nocheck` directive (intentional for test utilities)
 - Pre-existing codebase errors unrelated to changes (471 failures baseline)
 
 **Semantic Index Integration Tests:**
+
 - TypeScript metadata tests: ✅ 11/11 passing (2 skipped)
 - Python metadata tests: ✅ 9/9 passing (100%)
 - Rust metadata tests: ✅ 5/5 passing (100%)
 - JavaScript semantic index tests: 11/16 passing (5 failures pre-existing, documented in Phase 2)
 
 **Full Test Suite Comparison:**
+
 ```
 Baseline (before changes):
   Tests: 471 failed | 1109 passed | 183 skipped (1763 total)
@@ -240,6 +257,7 @@ Impact: +14 passing tests, 0 new failures
 **Comprehensive End-to-End Validation Completed:**
 
 **Files Created:**
+
 - `measure_metadata_coverage.ts` - Automated coverage measurement tool
 - `METADATA_COVERAGE_FINAL_REPORT.md` - Complete validation report
 - `metadata_coverage_report.json` - Machine-readable metrics
@@ -250,14 +268,18 @@ Impact: +14 passing tests, 0 new failures
 - `analyze_reference_types.ts` - Reference type distribution analysis
 
 **Files Modified:**
+
 1. `packages/core/src/index_single_file/query_code_tree/queries/javascript.scm`
+
    - Fixed import capture names from `@import.import` to `@definition.import`
    - Removed redundant import source capture
 
 2. `packages/core/src/index_single_file/query_code_tree/queries/typescript.scm`
+
    - Applied same import fixes as JavaScript
 
 3. `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_builder.ts`
+
    - Enhanced `extract_import_path` with null safety
    - Fixed import handler to navigate to `import_statement` node
 
@@ -268,19 +290,22 @@ Impact: +14 passing tests, 0 new failures
 
 **Validation Results:**
 
-*Method Call Coverage (receiver_location):*
+_Method Call Coverage (receiver_location):_
+
 - JavaScript: 17/17 (100%) ✅
 - Python: 8/8 (100%) ✅
 - Rust: 14/14 (100%) ✅
 - **Average: 100%** ✅ **EXCEEDS 80% TARGET**
 
-*Type Info Coverage (type_info):*
+_Type Info Coverage (type_info):_
+
 - JavaScript: N/A (dynamically typed)
 - Python: 0/32 (0%) ❌
 - Rust: 0/40 (0%) ❌
 - **Average: 0%** ❌ Below 90% target
 
-*Property Chain Coverage:*
+_Property Chain Coverage:_
+
 - JavaScript: 17/36 (47.2%)
 - Python: 8/24 (33.3%)
 - Rust: 14/40 (35.0%)
@@ -288,11 +313,13 @@ Impact: +14 passing tests, 0 new failures
 **Critical Issues Discovered & Fixed:**
 
 1. **JavaScript Import Processing** ✅ FIXED
+
    - Problem: Import queries used incorrect capture names
    - Solution: Updated query patterns to use `@definition.import`
    - Impact: +1 passing test (JavaScript semantic index: 11→12 passing)
 
 2. **Python Method Call Detection** ✅ FIXED
+
    - Problem: Method calls classified as function calls, preventing metadata extraction
    - Root Cause: Python uses `call` node with `attribute` function child (not `member_expression`)
    - Solution: Enhanced reference_builder.ts to recognize Python AST patterns
@@ -305,6 +332,7 @@ Impact: +14 passing tests, 0 new failures
    - Impact: Rust method call coverage: 0% → 100%
 
 **Test Suite Impact:**
+
 ```
 Before Task 104.6.2:
   JavaScript semantic_index: 11/16 passing (68.75%)
@@ -320,14 +348,17 @@ Net Change: +1 test fixed, 0 regressions
 ```
 
 **Production Readiness:**
+
 - ✅ **Method call metadata extraction: PRODUCTION READY**
 - ❌ **Type info extraction: Requires follow-up work**
 
 📋 **Outstanding Work:**
+
 - Task 104.6.3: Cleanup and documentation (deferred - validation reports completed)
 - **Follow-up Task Needed:** Fix type_info population (0% coverage, needs architectural review)
 
 📋 **Future Enhancements:**
+
 - Complete property chain extraction debugging (currently 35-47% coverage)
 - Improve TypeScript complex code handling (intermittent parsing issues)
 - Fix DefinitionBuilder to properly add methods/properties to classes
@@ -340,6 +371,7 @@ Net Change: +1 test fixed, 0 regressions
 **STATUS:** ✅ **COMPLETE - PRODUCTION READY**
 
 **What Was Delivered:**
+
 - ✅ 4 language-specific metadata extractor modules (JavaScript, TypeScript, Python, Rust)
 - ✅ 170 comprehensive unit tests (100% passing)
 - ✅ Full integration with semantic_index pipeline
@@ -349,6 +381,7 @@ Net Change: +1 test fixed, 0 regressions
 - ✅ Zero regressions introduced
 
 **What Works:**
+
 - Method call receiver location tracking (100% coverage)
 - Property chain extraction (35-47% coverage)
 - Assignment source/target tracking
@@ -356,12 +389,14 @@ Net Change: +1 test fixed, 0 regressions
 - Import/export processing (fixed during validation)
 
 **What Needs Follow-up:**
+
 - Type information population (0% coverage) - extractors implemented but not invoked correctly
 - Property chain coverage improvement (currently below 50%)
 - TypeScript complex code handling
 - Remaining pre-existing test failures
 
 **Production Impact:**
+
 - Enables cross-file method resolution
 - Enables call graph construction
 - Enables type inference from receivers
@@ -371,6 +406,7 @@ Net Change: +1 test fixed, 0 regressions
 **Time Spent:** 16 hours (on target with estimate)
 
 **Recommendation:** Mark task as complete. Type info population should be addressed in a separate follow-up task as it requires architectural changes to how type annotations are processed in the semantic index.
+
 - Fix DefinitionBuilder to properly populate function parameters
 - Address 6 known implementation gaps in Python semantic index tests
 - Address 5 known failures in JavaScript semantic index tests
@@ -388,6 +424,7 @@ Currently, `reference_builder.ts` creates basic `SymbolReference` objects but le
 - ❌ `member_access.object_type` - Always `undefined`
 
 This metadata is **essential for accurate method resolution** in `symbol_resolution.ts`:
+
 - Method calls need `receiver_location` to trace the receiver object
 - Type information helps resolve which class a method belongs to
 - Property chains enable tracking chained method calls (`a.b.c.method()`)
@@ -428,17 +465,20 @@ export interface MetadataExtractors {
 ### Integration with ReferenceBuilder
 
 Update `reference_builder.ts` to:
+
 1. Accept a `MetadataExtractors` parameter
 2. Call extractors instead of returning `undefined`
 3. Properly populate `context`, `type_info`, and `member_access` fields
 
 Update `semantic_index.ts` to:
+
 1. Get language-specific extractors based on `language` parameter
 2. Pass extractors to `ReferenceBuilder` constructor
 
 ## Success Criteria - FINAL STATUS
 
 1. ✅ All metadata extractor modules implemented and tested
+
    - **STATUS: COMPLETE** - JavaScript, TypeScript, Python, Rust all implemented with comprehensive test suites
    - JavaScript: 57 tests (100% passing)
    - TypeScript: 11 tests (100% passing)
@@ -446,21 +486,25 @@ Update `semantic_index.ts` to:
    - Rust: 33 tests (100% passing)
 
 2. ✅ `reference_builder.ts` uses extractors instead of stubbed functions
+
    - **STATUS: COMPLETE** - All 6 extractor methods integrated and tested
    - 14 integration tests added (100% passing)
 
 3. ✅ 80%+ method calls have `receiver_location` populated
+
    - **STATUS: EXCEEDED TARGET** - **100% coverage achieved**
    - JavaScript: 17/17 (100%)
    - Python: 8/8 (100%)
    - Rust: 14/14 (100%)
 
 4. ❌ 90%+ type references have `type_info` populated
+
    - **STATUS: NOT MET** - 0% coverage
    - Type extractors implemented but not being invoked correctly
    - Requires architectural review (deferred to follow-up task)
 
 5. ✅ All semantic_index language integration tests pass
+
    - **STATUS: MOSTLY COMPLETE** - Significant improvements
    - JavaScript: 12/16 passing (75%, +1 from baseline)
    - Python: 9/9 passing (100%)
@@ -477,26 +521,31 @@ Update `semantic_index.ts` to:
 ## Implementation Strategy
 
 ### Phase 1: Foundation (Tasks 104.1-104.2)
+
 - Create metadata extractor interface
 - Update reference_builder architecture
 
 ### Phase 2: JavaScript/TypeScript (Tasks 104.3.1-104.3.6)
+
 - Implement JS/TS metadata extractors
 - Test extractors in isolation
 - Wire into reference_builder
 - Fix semantic_index integration tests
 
 ### Phase 3: Python (Tasks 104.4.1-104.4.4)
+
 - Implement Python metadata extractors
 - Test and integrate
 - Fix Python integration tests
 
 ### Phase 4: Rust (Tasks 104.5.1-104.5.4)
+
 - Implement Rust metadata extractors
 - Test and integrate
 - Fix Rust integration tests
 
 ### Phase 5: Integration & Validation (Tasks 104.6.1-104.6.3)
+
 - Update reference_builder tests
 - End-to-end validation
 - Documentation updates
@@ -530,13 +579,17 @@ Update `semantic_index.ts` to:
 ## Testing Strategy
 
 ### Unit Tests
+
 Each `*_metadata.ts` file has corresponding `*_metadata.test.ts`:
+
 - Test each extractor function in isolation
 - Use minimal code snippets parsed with tree-sitter
 - Verify correct AST traversal for each language
 
 ### Integration Tests
+
 Update existing `semantic_index.*.test.ts` files:
+
 - Add assertions for metadata fields being populated
 - Verify method calls have receiver information
 - Verify type references have type_info
@@ -562,6 +615,7 @@ Update existing `semantic_index.*.test.ts` files:
 ### Task 104.1: Create Metadata Extractor Interface and Types (Completed 2025-09-30)
 
 **What Was Completed:**
+
 - Created `packages/core/src/index_single_file/query_code_tree/language_configs/metadata_types.ts`
 - Defined `MetadataExtractors` interface with 6 required methods:
   - `extract_type_from_annotation()` - Extract type info from type annotations
@@ -574,21 +628,25 @@ Update existing `semantic_index.*.test.ts` files:
 - Comprehensive TSDoc documentation with multi-language examples (JavaScript, TypeScript, Python, Rust)
 
 **Verification:**
+
 - ✅ TypeScript compilation: Zero errors
 - ✅ Test suite: No regressions (file not yet imported, cannot cause failures)
 - ✅ Code quality: Follows project conventions and style guide
 - ✅ Documentation: Complete with examples for each method
 
 **Issues Encountered:**
+
 - None. Task completed without issues.
 
 **Follow-on Work:**
+
 - Next: Task 104.2 - Refactor reference_builder to accept extractors
 - The interface signature in the parent task doc included `file_path` parameter for some methods, but this was correctly added to the actual implementation for methods that need to create `Location` objects
 
 ### Task 104.2: Refactor ReferenceBuilder to Accept Extractors (Completed 2025-09-30)
 
 **What Was Completed:**
+
 - Updated `ReferenceBuilder` constructor to accept:
   - `MetadataExtractors | undefined` parameter
   - `FilePath` parameter for location creation
@@ -609,21 +667,25 @@ Update existing `semantic_index.*.test.ts` files:
 - Updated `process_references()` pipeline function to accept extractors and file_path parameters
 
 **Architecture Decisions:**
+
 - Extractors parameter is optional (`MetadataExtractors | undefined`) to allow gradual implementation
 - When extractors are `undefined`, functions return `undefined` (preserving current behavior)
 - Language-specific extractor selection infrastructure is in place but returns `undefined` until language-specific implementations are added
 - All previous TODO comments replaced with proper extractor calls
 
 **Verification:**
+
 - ✅ TypeScript compilation: Zero errors in modified files (`reference_builder.ts`, `semantic_index.ts`)
 - ✅ Type safety: All function signatures properly typed
 - ✅ Backward compatibility: Extractors are optional, existing behavior preserved when `undefined`
 - ✅ Code quality: Follows project conventions and style guide
 
 **Issues Encountered:**
+
 - None. Task completed without issues.
 
 **Follow-on Work:**
+
 - Next: Task 104.3 - Implement JavaScript/TypeScript metadata extraction
 - Language-specific extractors need to be implemented and wired into `get_metadata_extractors()`
 - Existing test failures are pre-existing issues with old API usage, not caused by this refactoring
@@ -631,6 +693,7 @@ Update existing `semantic_index.*.test.ts` files:
 ### Test Suite Updates (Completed 2025-09-30)
 
 **What Was Completed:**
+
 - Updated `reference_builder.test.ts` test suite to work with refactored ReferenceBuilder:
   - Fixed `create_test_location()` parameter name mismatch
   - Added `captures` array to `create_test_context()` (required by ProcessingContext)
@@ -644,6 +707,7 @@ Update existing `semantic_index.*.test.ts` files:
   - Marked 7 tests with `.skip` that require language-specific metadata extractors (to be enabled once tasks 104.3+ are completed)
 
 **Test Results:**
+
 - ✅ **14 tests passing** - Core reference building functionality verified
 - ✅ **7 tests skipped** - Tests awaiting language-specific metadata extractors:
   - `should process type references` - requires type_info extraction
@@ -656,16 +720,18 @@ Update existing `semantic_index.*.test.ts` files:
 - ✅ **0 tests failing** - No regressions introduced
 
 **Full Test Suite Verification:**
+
 - Ran complete test suite: 1533 tests total
 - ✅ **821 tests passing** (baseline maintained)
 - ❌ **531 tests failing** - All pre-existing failures:
-  - semantic_index.*.test.ts failures: Tests use deprecated API (`@ts-nocheck` comment present before refactoring)
+  - semantic_index.\*.test.ts failures: Tests use deprecated API (`@ts-nocheck` comment present before refactoring)
   - Tests call `build_semantic_index` with wrong signature (FilePath instead of ParsedFile)
   - These failures existed before this refactoring work
 - ✅ **Reference builder tests**: All passing (14 passed, 7 skipped)
 - ✅ **TypeScript compilation**: Zero errors in modified files
 
 **Verification of No Regressions:**
+
 1. ✅ Direct tests pass: The reference_builder test suite passes completely
 2. ✅ Type safety maintained: No TypeScript errors in modified files
 3. ✅ Integration point correct: Call to `process_references` in semantic_index.ts has correct signature
@@ -673,22 +739,26 @@ Update existing `semantic_index.*.test.ts` files:
 5. ✅ Existing functionality preserved: Tests that were passing before are still passing
 
 **Known Issues (Pre-existing, not caused by refactoring):**
+
 1. **Legacy semantic_index tests**: Need migration to new API (separate task, not part of 104.x)
 2. **Missing imports**: Some test files missing required imports (pre-existing infrastructure issue)
 3. **Deprecated types**: Tests using old `NormalizedCapture` type (pre-existing)
 
 **Files Modified:**
+
 - `packages/core/src/index_single_file/query_code_tree/reference_builder.ts` - Refactored to accept extractors
 - `packages/core/src/index_single_file/query_code_tree/reference_builder.test.ts` - Updated for new API
 - `packages/core/src/index_single_file/semantic_index.ts` - Updated to create and pass extractors
 
 **Follow-on Work:**
+
 - 7 skipped tests will be enabled once language-specific extractors are implemented (tasks 104.3-104.5)
 - Legacy semantic_index integration tests need API migration (separate task, outside scope of 104.x)
 
 ### Task 104.3.1: Implement JavaScript Metadata Extractors (Completed 2025-10-01)
 
 **What Was Completed:**
+
 - Created `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_metadata.ts`
 - Implemented all 6 required metadata extractor functions:
   1. `extract_type_from_annotation()` - Extracts type information from JSDoc and TypeScript annotations
@@ -724,6 +794,7 @@ Update existing `semantic_index.*.test.ts` files:
 - Exported `JAVASCRIPT_METADATA_EXTRACTORS` constant implementing the `MetadataExtractors` interface
 
 **Edge Cases Handled:**
+
 - ✅ Optional chaining (`?.`) - Properly extracts chains despite optional operators
 - ✅ Computed property access - Handles bracket notation with string literals
 - ✅ `this` references - Correctly identifies and extracts `this` in various contexts
@@ -735,6 +806,7 @@ Update existing `semantic_index.*.test.ts` files:
 - ✅ JSDoc comment navigation - Correctly finds JSDoc comments for variable declarations
 
 **Testing:**
+
 - Created comprehensive test suite: `javascript_metadata.test.ts`
 - **25 tests implemented and passing:**
   - 3 tests for `extract_type_from_annotation`
@@ -749,6 +821,7 @@ Update existing `semantic_index.*.test.ts` files:
 - Each test verifies correct location extraction with column/line precision
 
 **Verification:**
+
 - ✅ TypeScript compilation: Zero errors in `javascript_metadata.ts`
 - ✅ Test suite: 25/25 tests passing
 - ✅ No regressions: Full test suite shows 846 passing (baseline: 821, +25 new tests)
@@ -757,17 +830,21 @@ Update existing `semantic_index.*.test.ts` files:
 - ✅ Type safety: Full use of branded types (`SymbolName`, `FilePath`, `Location`, `TypeInfo`)
 
 **Issues Encountered:**
+
 1. **JSDoc Comment Location:** Initial implementation looked for `previousSibling` directly on the variable_declarator node, but JSDoc comments are siblings of the parent lexical_declaration node. Fixed by traversing to parent and iterating through children to find preceding comment.
 2. **Test File Build Configuration:** Test files were initially included in TypeScript build. Fixed by adding `**/*.test.ts` and `**/*.test.tsx` to `tsconfig.json` exclude list.
 
 **Files Created:**
+
 - `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_metadata.ts` (358 lines)
 - `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_metadata.test.ts` (302 lines)
 
 **Files Modified:**
+
 - `packages/core/tsconfig.json` - Added test file exclusions
 
 **Test Results Summary:**
+
 ```
 Before: 821 tests passing, 531 failing (pre-existing)
 After:  846 tests passing, 531 failing (no new failures)
@@ -776,23 +853,27 @@ Regressions: 0
 ```
 
 **Performance:**
+
 - Test execution time: ~18ms for all 25 tests
 - Extractor functions are pure and fast (no file I/O, just AST traversal)
 - No memory leaks or performance concerns
 
 **Follow-on Work:**
+
 - Next: Task 104.3.3 - Wire JavaScript extractors into semantic_index
 - The 7 skipped tests in reference_builder.test.ts can be enabled once extractors are wired in
 - TypeScript extractor can reuse the same `JAVASCRIPT_METADATA_EXTRACTORS` (tree-sitter-typescript is superset of tree-sitter-javascript)
 - Consider adding more edge case tests for complex JSDoc patterns if needed during integration
 
 **Documentation Updates:**
+
 - All extractor functions have comprehensive TSDoc comments
 - Each function documents what AST patterns it handles
 - Examples provided for each extractor function
 - Helper functions documented inline
 
 **Code Quality Metrics:**
+
 - Lines of code: 358 (implementation) + 302 (tests) = 660 total
 - Test coverage: All 6 extractors tested with multiple scenarios
 - Complexity: Functions kept simple with clear single responsibilities
@@ -801,6 +882,7 @@ Regressions: 0
 ### Task 104.3.2: Test JavaScript Metadata Extractors (Completed 2025-10-01)
 
 **What Was Completed:**
+
 - Expanded test suite from 25 to 57 comprehensive tests (+32 new tests)
 - Added full TypeScript type annotation test coverage (9 tests)
 - Added extensive edge case testing (20+ tests)
@@ -810,6 +892,7 @@ Regressions: 0
 **Test Coverage Breakdown:**
 
 1. **JavaScript Tests (44 tests):**
+
    - `extract_type_from_annotation`: JSDoc @type, @returns, @return (singular), nullable detection
    - `extract_call_receiver`: Method calls, chained calls, this/super references, standalone functions
    - `extract_property_chain`: Simple chains, optional chaining, this/super, computed properties, mixed notation
@@ -818,6 +901,7 @@ Regressions: 0
    - `extract_type_arguments`: JSDoc generics, multiple type args, non-generic types
 
 2. **TypeScript Tests (13 tests):**
+
    - Type annotations: type identifiers, predefined types, generic types, union/intersection/tuple/function types
    - Nullable types: null and undefined detection in TypeScript unions
    - Generic type arguments: single/multiple args, nested generics, non-generic fallback
@@ -836,11 +920,13 @@ Regressions: 0
 **Implementation Fixes Applied:**
 
 1. **TypeScript Type Annotation Handling:**
+
    - Fixed `extract_typescript_type()` to handle `type_annotation` nodes that include `:` prefix
    - Properly strips `:` character from type names
    - Correctly detects "declared" vs "inferred" certainty based on presence of type_annotation
 
 2. **Single Quote Support:**
+
    - Enhanced bracket notation parsing to support both single (`'`) and double (`"`) quotes
    - Correctly extracts property names from `obj['prop']` and `obj["prop"]`
 
@@ -850,10 +936,12 @@ Regressions: 0
    - Added subscript_expression to traversal checks in member_expression handler
 
 **Files Modified:**
+
 - `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_metadata.test.ts` (added 32 tests, 409 lines)
 - `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_metadata.ts` (bug fixes, 25 lines changed)
 
 **Test Results:**
+
 ```
 Before: 25 tests passing
 After:  57 tests passing (100% success rate)
@@ -861,6 +949,7 @@ Change: +32 comprehensive tests
 ```
 
 **Full Test Suite Verification:**
+
 ```
 Baseline (from task 104.3.1):
   Passing: 821 tests
@@ -879,6 +968,7 @@ Regression Analysis:
 ```
 
 **Verification:**
+
 - ✅ TypeScript compilation: Zero errors in modified files (verified with `tsc --noEmit --skipLibCheck`)
 - ✅ Test suite: 57/57 tests passing (100%)
 - ✅ No regressions: Full test suite shows same 531 pre-existing failures, no new failures
@@ -888,11 +978,13 @@ Regression Analysis:
 **Issues Encountered:**
 
 1. **TypeScript Type Annotation Structure:**
+
    - **Problem:** TypeScript `type_annotation` nodes include the `:` character in their text representation (e.g., `: string` instead of `string`)
    - **Solution:** Enhanced `extract_typescript_type()` to detect `type_annotation` nodes and strip the `:` prefix, falling back to regex replacement if needed
    - **Impact:** All TypeScript type extraction tests now pass with correct type names
 
 2. **Certainty Detection:**
+
    - **Problem:** Initial implementation incorrectly detected certainty by checking `node.type.includes("type_annotation")`, which never matched
    - **Solution:** Changed to check `node.childForFieldName("type")?.type === "type_annotation"` to properly detect TypeScript annotations
    - **Impact:** TypeScript annotations now correctly report "declared" certainty vs "inferred" for JSDoc
@@ -903,23 +995,27 @@ Regression Analysis:
    - **Impact:** Full chains now extracted correctly for complex access patterns
 
 **Performance:**
+
 - Test execution time: ~33ms for all 57 tests (fast, no performance concerns)
 - Extractor functions remain pure with no side effects
 - No memory leaks or resource issues
 
 **Follow-on Work:**
+
 - Next: Task 104.3.3 - Wire JavaScript extractors into semantic_index
 - The 7 skipped tests in reference_builder.test.ts will be enabled once extractors are wired into semantic_index
 - TypeScript can reuse `JAVASCRIPT_METADATA_EXTRACTORS` (tree-sitter-typescript is a superset of tree-sitter-javascript)
 - All TypeScript-specific patterns are already tested and working
 
 **Documentation Updates:**
+
 - Test file has comprehensive describe blocks and test names
 - Each test validates specific AST patterns and edge cases
 - TypeScript-specific tests clearly separated into dedicated describe block
 - All edge cases documented with expected behavior
 
 **Code Quality Metrics (Updated):**
+
 - Lines of code: 370 (implementation) + 711 (tests) = 1,081 total
 - Test coverage: 100% of all 6 extractors with comprehensive edge case coverage
 - Test count: 57 tests (25 original + 32 new)
@@ -929,6 +1025,7 @@ Regression Analysis:
 ### Task 104.3.4: Fix JavaScript Semantic Index Tests (Completed 2025-10-01)
 
 **What Was Completed:**
+
 - Updated `semantic_index.javascript.test.ts` to use new ParsedFile API
 - Added comprehensive metadata assertions for all reference types
 - Fixed test infrastructure and helper functions
@@ -937,7 +1034,9 @@ Regression Analysis:
 - Verified zero regressions in Python and Rust test suites
 
 **Files Modified:**
+
 1. `packages/core/src/index_single_file/semantic_index.javascript.test.ts`
+
    - Created `createParsedFile()` helper to wrap fixtures with ParsedFile interface
    - Fixed fixtures directory path: `"parse_and_query_code"` → `"query_code_tree"`
    - Updated all test calls to use `build_semantic_index(parsed_file)` instead of `build_semantic_index(file_path)`
@@ -960,26 +1059,31 @@ Regression Analysis:
 **Critical Bugs Fixed in reference_builder.ts:**
 
 1. **Method Call Detection:**
+
    - **Problem:** Method calls not properly distinguished from function calls
    - **Solution:** Check if `call_expression` contains `member_expression` as function node
    - **Impact:** Method calls now correctly categorized with proper metadata
 
 2. **Method Name Extraction:**
+
    - **Problem:** Method names extracted as full expression (e.g., "obj.method()" instead of "method")
    - **Solution:** Navigate AST to get property identifier from member_expression
    - **Impact:** Method names now correctly extracted from AST structure
 
 3. **Function Name Extraction:**
+
    - **Problem:** Function names included call syntax
    - **Solution:** Navigate to identifier node in call_expression function field
    - **Impact:** Function references now have clean names
 
 4. **Constructor Name Extraction:**
+
    - **Problem:** Constructor names extracted from full new_expression
    - **Solution:** Navigate to identifier node in constructor field
    - **Impact:** Constructor calls properly identified with correct class names
 
 5. **Location Field Naming:**
+
    - **Problem:** Tests expected `column` but TypeScript Location type uses `start_column`
    - **Solution:** Updated all test assertions throughout test file
    - **Impact:** All location-based assertions now pass
@@ -992,10 +1096,12 @@ Regression Analysis:
 **Test Results:**
 
 **JavaScript Semantic Index Tests:**
+
 - **11 passing** (68.75%)
 - **5 failing** (known limitations requiring future features)
 
 **Passing Tests:**
+
 - ✅ Basic function definitions and calls
 - ✅ Method calls with receiver_location metadata
 - ✅ Property access chains with metadata
@@ -1009,6 +1115,7 @@ Regression Analysis:
 - ✅ Method call chains with receiver locations
 
 **Failing Tests (Known Limitations):**
+
 1. **Named imports not fully tracked** - Only namespace imports currently supported
    - Requires enhanced import/export symbol tracking
 2. **Return statement reference count mismatch** - Duplicates in extraction
@@ -1021,6 +1128,7 @@ Regression Analysis:
    - Requires enhancement to assignment flow tracking
 
 **Regression Testing:**
+
 ```
 Python Tests:
   Before: 55 failed
@@ -1036,26 +1144,31 @@ Rust Tests:
 **JavaScript-Specific Metadata Patterns Documented:**
 
 1. **Method Call Detection:**
+
    - Method calls identified by `call_expression` containing `member_expression` as function node
    - Name extracted from property identifier in member_expression
    - Pattern: `node.type === "call_expression" && node.childForFieldName("function")?.type === "member_expression"`
 
 2. **Name Extraction:**
+
    - Requires navigating AST to get identifier/property node text
    - Cannot use full node text which includes call syntax
    - Example: For `obj.method()`, extract "method" from property node, not "obj.method()"
 
 3. **Property Chains:**
+
    - Include full path INCLUDING the final method/property name
    - Built left-to-right from receiver through all member accesses
    - Example: `api.users.list()` → `["api", "users", "list"]`
 
 4. **Constructor Calls:**
+
    - Use separate `type: "construct"` reference type
    - Not categorized as `type: "call"` with `call_type: "constructor"`
    - Pattern: `node.type === "new_expression"`
 
 5. **Receiver Locations:**
+
    - Populated for method calls (object before dot)
    - Undefined for regular function calls (no receiver)
    - Tracks where the receiver object is defined/referenced
@@ -1066,6 +1179,7 @@ Rust Tests:
    - Example: `obj?.prop?.method` → `["obj", "prop", "method"]`
 
 **Verification:**
+
 - ✅ TypeScript compilation: Zero errors in modified files
 - ✅ JavaScript tests: 11/16 passing (68.75%)
 - ✅ Reference builder tests: 14 passing, 7 skipped (pending metadata extractors)
@@ -1073,6 +1187,7 @@ Rust Tests:
 - ✅ Only 2 files modified: reference_builder.ts and semantic_index.javascript.test.ts
 
 **Performance:**
+
 - Test execution time: Minimal impact (tests complete in ~50ms)
 - Name extraction adds negligible overhead (single AST node navigation)
 - No memory leaks or performance concerns
@@ -1080,26 +1195,31 @@ Rust Tests:
 **Issues Encountered:**
 
 1. **Fixtures Directory Path:**
+
    - **Problem:** Tests looked for fixtures in old `"parse_and_query_code"` directory
    - **Solution:** Updated to `"query_code_tree"` directory
    - **Impact:** All fixtures now load correctly
 
 2. **ParsedFile API Migration:**
+
    - **Problem:** Tests called `build_semantic_index(file_path)` but signature now requires `ParsedFile`
    - **Solution:** Created `createParsedFile()` helper to wrap file data
    - **Impact:** All tests now use correct API
 
 3. **Constructor Type Mismatch:**
+
    - **Problem:** Metadata extractors return `type: "construct"` but tests looked for `type: "call"`
    - **Solution:** Updated all constructor lookups to check for `type === "construct"`
    - **Impact:** Constructor calls now properly detected
 
 4. **Property Chain Semantics:**
+
    - **Problem:** Expected `["api", "users"]` but got `["api", "users", "list"]`
    - **Solution:** Updated test expectations to include method name (this is correct behavior)
    - **Impact:** Property chain tests now pass
 
 5. **Method Name Extraction:**
+
    - **Problem:** Method names extracted as full expression text including receiver
    - **Solution:** Enhanced reference_builder.ts to navigate AST for property identifier
    - **Impact:** Method names now correctly extracted from AST structure
@@ -1110,6 +1230,7 @@ Rust Tests:
    - **Impact:** All location assertions now match TypeScript types
 
 **Follow-on Work:**
+
 - Next: Task 104.3.5 - Fix semantic_index.typescript.test.ts
 - The 5 failing JavaScript tests represent features requiring additional work:
   - Enhanced import/export tracking (task for future epic)
@@ -1121,6 +1242,7 @@ Rust Tests:
 - All core metadata extraction functionality is working correctly
 
 **Code Quality:**
+
 - Clean separation of concerns: Tests focus on assertions, implementation handles extraction
 - Comprehensive test coverage of metadata fields
 - Well-documented JavaScript-specific patterns
@@ -1128,6 +1250,7 @@ Rust Tests:
 - Tests serve as documentation for expected behavior
 
 **Documentation Updates:**
+
 - Added implementation notes to task-epic-11.104.3.4 document
 - Documented JavaScript-specific metadata patterns
 - Listed known limitations with clear explanations
@@ -1136,6 +1259,7 @@ Rust Tests:
 ### Task 104.3.5: Fix TypeScript Semantic Index Tests with Metadata (Completed 2025-10-01)
 
 **What Was Completed:**
+
 - Created TypeScript-specific metadata extractors in `typescript_metadata.ts`
 - Created comprehensive test suite `semantic_index.typescript.metadata.test.ts` with 13 tests
 - Wired TypeScript extractors into semantic_index.ts
@@ -1143,7 +1267,9 @@ Rust Tests:
 - Reverted partial changes to old semantic_index.typescript.test.ts to avoid introducing regressions
 
 **Files Created:**
+
 1. `packages/core/src/index_single_file/query_code_tree/language_configs/typescript_metadata.ts`
+
    - Extends JavaScript metadata extractors for TypeScript-specific features
    - Handles type references where node IS the type (type_identifier)
    - Properly extracts TypeInfo for interfaces, type aliases, generics, enums
@@ -1159,7 +1285,9 @@ Rust Tests:
    - 2 property chain tests skipped (requires additional debugging)
 
 **Files Modified:**
+
 1. `packages/core/src/index_single_file/semantic_index.ts`
+
    - Added import for TYPESCRIPT_METADATA_EXTRACTORS
    - Updated get_metadata_extractors() to return TypeScript-specific extractors for "typescript" language
    - Changed from using JavaScript extractors for TypeScript to dedicated TypeScript extractors
@@ -1172,16 +1300,19 @@ Rust Tests:
 **Key Implementation Decisions:**
 
 1. **TypeScript-Specific Type Extraction:**
+
    - Problem: JavaScript extractors expected parent nodes with type annotations
    - Solution: TypeScript extractors handle nodes that ARE type references (type_identifier)
    - Impact: Type references in TypeScript now properly extract type_info metadata
 
 2. **TypeInfo Structure:**
+
    - Used correct fields: type_id, type_name, certainty, is_nullable
    - Not using: name, symbol, type_arguments (not in TypeInfo interface)
    - type_arguments would be encoded in type_id if needed
 
 3. **Delegation Pattern:**
+
    - TypeScript extractors extend JavaScript extractors
    - Only override extract_type_from_annotation for TypeScript-specific logic
    - All other methods delegate to JavaScript implementations
@@ -1195,26 +1326,32 @@ Rust Tests:
 **Test Results:**
 
 **TypeScript Metadata Tests (semantic_index.typescript.metadata.test.ts):**
+
 - ✅ 11 tests passing (84.6%)
 - ⏭️ 2 tests skipped (property chain extraction needs debugging)
 - ❌ 0 tests failing
 
 **Passing Tests:**
+
 - ✅ Method call metadata extraction (receiver_location) - 2 tests
 - ✅ Type info extraction for interfaces, type aliases, unions - 3 tests
 - ✅ Constructor call metadata (construct_target) - 2 tests
 - ✅ TypeScript-specific features (interfaces, enums, namespaces, decorators) - 4 tests
 
 **Skipped Tests:**
+
 - ⏭️ Property access chain extraction - 2 tests (feature requires additional work)
 
 **Reference Builder Tests:**
+
 - ✅ 14/14 passing, 7 skipped (100% pass rate)
 
 **JavaScript Semantic Index Tests:**
+
 - ✅ 11/16 passing (68.75%)
 
 **Full Test Suite Regression Analysis:**
+
 ```
 Test Files: 31 failed | 29 passed | 3 skipped (63)
 Tests: 527 failed | 901 passed | 183 skipped (1611)
@@ -1227,11 +1364,13 @@ Regressions: 0
 **Critical Bugs Fixed:**
 
 1. **TypeInfo Field Naming:**
+
    - Problem: Used incorrect field names (name, symbol, type_arguments)
    - Solution: Updated to correct TypeInfo structure (type_id, type_name, certainty, is_nullable)
    - Impact: All type info assertions now use correct TypeScript types
 
 2. **Type Symbol Creation:**
+
    - Problem: Used wrong signature for type_symbol() (3 args instead of 2)
    - Solution: Create Location object first, then pass to type_symbol(name, location)
    - Impact: All type_id creation now compiles without errors
@@ -1244,16 +1383,19 @@ Regressions: 0
 **Issues Encountered:**
 
 1. **TypeInfo Interface Mismatch:**
+
    - Problem: Initial implementation used wrong field names based on assumptions
    - Solution: Checked actual TypeInfo interface and corrected all fields
    - Impact: Proper TypeScript compilation and type safety
 
 2. **Property Chain Location:**
+
    - Problem: Tests expected property_chain in member_access object
    - Solution: property_chain is actually in context object
    - Impact: Updated test assertions to check context.property_chain
 
 3. **Definition Count Mismatches:**
+
    - Problem: Tests expected exact counts but queries capture additional items
    - Solution: Changed assertions to use toBeGreaterThanOrEqual for flexibility
    - Impact: Tests pass despite minor query differences
@@ -1264,6 +1406,7 @@ Regressions: 0
    - Impact: No regressions introduced, clean new test suite
 
 **Verification:**
+
 - ✅ TypeScript compilation: Zero errors in all new files
 - ✅ New test suite: 11/13 passing (84.6%)
 - ✅ Reference builder tests: 14/14 passing
@@ -1274,15 +1417,18 @@ Regressions: 0
 **Follow-on Work:**
 
 1. **Property Chain Extraction Debugging (Future):**
+
    - Context.property_chain not being populated for member_access references
    - Requires debugging why extractors aren't being called or results aren't stored
    - Not critical for core TypeScript metadata functionality
 
 2. **Task 104.3.6: Fix javascript_builder.test.ts (Optional):**
+
    - Builder tests may need metadata assertions
    - Lower priority than language-specific extractors
 
 3. **Task 104.4: Implement Python Metadata Extractors:**
+
    - Can use JavaScript/TypeScript patterns as reference
    - Python has different AST structure requiring language-specific handling
 
@@ -1291,6 +1437,7 @@ Regressions: 0
    - Rust AST patterns documented during implementation
 
 **Code Quality:**
+
 - Clean separation: TypeScript extractors extend JavaScript extractors
 - Type safety: All fields match TypeInfo interface
 - No regressions: Reverted changes that would break existing tests
@@ -1298,11 +1445,13 @@ Regressions: 0
 - Well-documented: Clear comments and test descriptions
 
 **Performance:**
+
 - Test execution: ~1.5s for 13 tests (fast, no performance concerns)
 - Metadata extraction: Minimal overhead (pure AST traversal)
 - No memory leaks or resource issues
 
 **Documentation:**
+
 - Test file serves as documentation for expected TypeScript metadata behavior
 - Implementation notes document key decisions and patterns
 - Known issues clearly documented with workarounds
@@ -1310,6 +1459,7 @@ Regressions: 0
 ### Task 104.3.3: Wire JavaScript/TypeScript Extractors into Semantic Index (Completed 2025-10-01)
 
 **What Was Completed:**
+
 - Updated `semantic_index.ts` to import `JAVASCRIPT_METADATA_EXTRACTORS` from `javascript_metadata.ts`
 - Modified `get_metadata_extractors()` function to return JavaScript extractors for both "javascript" and "typescript" languages
 - Verified extractors are properly passed through the pipeline to `ReferenceBuilder` via `process_references()`
@@ -1317,11 +1467,13 @@ Regressions: 0
 - Ran full test suite regression analysis
 
 **Architecture Integration:**
+
 - JavaScript extractors work for both JavaScript and TypeScript (tree-sitter-typescript is a superset of tree-sitter-javascript)
 - Extractors parameter flows: `build_semantic_index()` → `get_metadata_extractors()` → `process_references()` → `ReferenceBuilder`
 - Extractors are now active for all JavaScript/TypeScript files processed through semantic_index
 
 **Verification:**
+
 - ✅ TypeScript compilation: Zero errors in `semantic_index.ts`, `javascript_metadata.ts`, `metadata_types.ts`
 - ✅ JavaScript metadata tests: 57/57 tests passing (100%)
 - ✅ Reference builder tests: 14/14 tests passing (7 appropriately skipped)
@@ -1330,12 +1482,14 @@ Regressions: 0
 - ✅ Integration verified: Type info extraction confirmed working in integration testing
 
 **Files Modified:**
+
 - `packages/core/src/index_single_file/semantic_index.ts`:
   - Added import for `JAVASCRIPT_METADATA_EXTRACTORS`
   - Updated `get_metadata_extractors()` to return extractors for JavaScript/TypeScript
   - Updated function documentation
 
 **Test Results:**
+
 ```
 Before: 878 tests passing, 531 failing (pre-existing)
 After:  878 tests passing, 531 failing (no new failures)
@@ -1343,19 +1497,23 @@ Change: 0 new failures (zero regressions)
 ```
 
 **Issues Encountered:**
+
 - None. Integration was straightforward due to well-designed interface from task 104.2
 
 **Follow-on Work:**
+
 - Task 104.3.4: Fix semantic_index.javascript.test.ts (legacy tests using deprecated query_tree API)
 - Task 104.3.5: Fix semantic_index.typescript.test.ts (legacy tests using deprecated query_tree API)
 - Task 104.3.6: Fix javascript_builder.test.ts for metadata validation
 - Future: TypeScript-specific extractors may be needed for advanced TypeScript features (currently JavaScript extractors handle basic TypeScript correctly)
 
 **Performance:**
+
 - No performance impact observed (extractors are pure functions with O(1) AST node traversal)
 - Metadata extraction adds negligible overhead to semantic index building
 
 **Code Quality:**
+
 - Clean integration following existing patterns
 - No breaking changes to public API
 - Full backward compatibility maintained (extractors parameter is optional)
@@ -1364,6 +1522,7 @@ Change: 0 new failures (zero regressions)
 ### Task 104.3.6: Fix javascript_builder.test.ts for Metadata Integration Testing (Completed 2025-10-01)
 
 **What Was Completed:**
+
 - Updated `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_builder.test.ts` with comprehensive metadata integration tests
 - Fixed all CaptureNode definitions to match the required interface (added `category` and `entity` fields)
 - Added proper location data with `file_path` to all test captures
@@ -1373,6 +1532,7 @@ Change: 0 new failures (zero regressions)
 - Added proper type imports and casting (SymbolName, FilePath)
 
 **Test Coverage Added:**
+
 1. Method calls with receiver metadata - Verifies `receiver_location` is populated for method calls
 2. Property chains with metadata - Verifies `property_chain` is extracted correctly
 3. JSDoc type annotation extraction - Tests type info extraction from JSDoc comments
@@ -1380,11 +1540,13 @@ Change: 0 new failures (zero regressions)
 5. Constructor calls with metadata - Verifies `construct_target` is tracked
 
 **Test Results:**
+
 - **9/17 tests passing** (53% pass rate) - Up from 1 test passing initially
 - **8 tests failing** - All failures due to pre-existing implementation gaps in DefinitionBuilder
 - **0 regressions** - All test infrastructure is correct
 
 **Passing Tests:**
+
 - ✅ Class definitions
 - ✅ Function definitions
 - ✅ Variable definitions
@@ -1396,15 +1558,18 @@ Change: 0 new failures (zero regressions)
 - ✅ Import capture mappings
 
 **Failing Tests (Pre-existing Implementation Gaps):**
+
 - ❌ Methods not being added to classes (DefinitionBuilder.add_method_to_class not working)
 - ❌ Properties not being added to classes (DefinitionBuilder.add_property_to_class not working)
 - ❌ Function parameters not being populated (DefinitionBuilder.add_parameter_to_callable not working)
 - ❌ Metadata test captures need proper routing through ReferenceBuilder (infrastructure issue)
 
 **Files Modified:**
+
 - `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_builder.test.ts`
 
 **Verification:**
+
 - ✅ TypeScript compilation: Zero errors in javascript_builder.test.ts
 - ✅ Test infrastructure: All metadata tests structured correctly
 - ✅ Reference builder tests: Still 14/14 passing (7 skipped)
@@ -1413,6 +1578,7 @@ Change: 0 new failures (zero regressions)
 - ✅ TypeScript metadata tests: Still 11/13 passing (84.6%)
 
 **Regression Analysis - Full Test Suite:**
+
 ```
 Baseline (from task 104.3.5):
   Test Files: 31 failed | 29 passed | 3 skipped (63)
@@ -1428,11 +1594,13 @@ Net Change: +7 passing tests, -5 failing tests ✅
 **Key Implementation Decisions:**
 
 1. **CaptureNode Interface Compliance:**
+
    - Added required `category` field (definition/reference/assignment/return)
    - Added required `entity` field (class/function/method/variable/etc.)
    - All captures now properly typed and validated
 
 2. **Test Expectations Updated:**
+
    - Changed from `definitions[0]` to `Array.from(result.classes.values())[0]`
    - Builder.build() returns object with Maps, not array
    - Updated all test assertions to match actual return types
@@ -1445,6 +1613,7 @@ Net Change: +7 passing tests, -5 failing tests ✅
 **Issues Encountered:**
 
 1. **DefinitionBuilder Implementation Gaps:**
+
    - **Problem:** Methods and properties not being added to class definitions
    - **Root Cause:** DefinitionBuilder.add_method_to_class and add_property_to_class may not be wiring correctly
    - **Impact:** 3 tests failing (methods, properties, parameters)
@@ -1457,12 +1626,14 @@ Net Change: +7 passing tests, -5 failing tests ✅
    - **Status:** Test infrastructure correct, actual usage in production works fine
 
 **Follow-on Work:**
+
 - Fix DefinitionBuilder.add_method_to_class to properly populate class methods array
 - Fix DefinitionBuilder.add_property_to_class to properly populate class properties array
 - Fix DefinitionBuilder.add_parameter_to_callable to properly populate function parameters
 - Debug metadata test capture routing to make integration tests pass
 
 **Code Quality:**
+
 - Clean test structure with proper helper functions
 - Comprehensive test coverage of all builder processors
 - Well-documented test cases with clear assertions
@@ -1470,11 +1641,13 @@ Net Change: +7 passing tests, -5 failing tests ✅
 - Zero technical debt introduced
 
 **Documentation:**
+
 - Test file serves as documentation for expected builder behavior
 - All capture types and entities documented through test examples
 - Metadata integration patterns clearly demonstrated
 
 **Performance:**
+
 - Test execution: ~30ms for 17 tests (fast, no performance concerns)
 - No memory leaks or resource issues
 
@@ -1485,6 +1658,7 @@ Net Change: +7 passing tests, -5 failing tests ✅
 **Status:** ✅ **COMPLETE** - All JavaScript/TypeScript metadata extraction and testing tasks finished
 
 ### Tasks Completed (6/6)
+
 1. ✅ Task 104.3.1: JavaScript metadata extractors implemented (57/57 tests passing)
 2. ✅ Task 104.3.2: JavaScript metadata extractor tests comprehensive (100% coverage)
 3. ✅ Task 104.3.3: Extractors wired into semantic_index pipeline
@@ -1495,17 +1669,20 @@ Net Change: +7 passing tests, -5 failing tests ✅
 ### Overall Test Results
 
 **Core Metadata Functionality:**
+
 - ✅ JavaScript metadata extractors: **57/57 tests passing (100%)**
 - ✅ TypeScript metadata extractors: **11/13 tests passing (84.6%)**
 - ✅ Reference builder: **14/14 tests passing (100%)**
 
 **Integration Tests:**
+
 - ✅ JavaScript semantic index: **11/16 tests passing (68.75%)**
   - 5 known limitations (named imports, return duplicates, static methods, JSDoc types, assignments)
 - ⚠️ JavaScript builder: **9/17 tests passing (53%)**
   - 8 failing due to DefinitionBuilder implementation gaps (not metadata issues)
 
 **Full Test Suite:**
+
 ```
 Baseline (before Phase 2): 901 passing, 527 failing
 After Phase 2 Complete:    908 passing, 522 failing
@@ -1515,6 +1692,7 @@ Net Improvement:           +7 passing, -5 failing ✅
 ### Success Criteria Verification
 
 ✅ **All Phase 2 success criteria met:**
+
 1. ✅ All 6 metadata extractors implemented for JavaScript/TypeScript
 2. ✅ Extractors integrated into semantic_index pipeline
 3. ✅ 80%+ method calls have receiver_location populated (achieved 90%+)
@@ -1527,6 +1705,7 @@ Net Improvement:           +7 passing, -5 failing ✅
 ### Known Limitations & Follow-on Work
 
 **Acceptable Limitations (documented in tests):**
+
 1. Named imports not fully tracked (only namespace imports)
 2. Return statement duplicates in some cases
 3. Static methods not separated from instance methods
@@ -1534,11 +1713,13 @@ Net Improvement:           +7 passing, -5 failing ✅
 5. Assignment metadata partially implemented
 
 **DefinitionBuilder Gaps (separate from metadata work):**
+
 1. Methods not being added to classes properly
 2. Properties not being added to classes properly
 3. Function parameters not being populated
 
 **Recommended Next Steps:**
+
 1. Task 104.4: Implement Python metadata extractors
 2. Task 104.5: Implement Rust metadata extractors
 3. Future: Fix DefinitionBuilder implementation gaps
@@ -1548,11 +1729,13 @@ Net Improvement:           +7 passing, -5 failing ✅
 ### Files Modified in Phase 2
 
 **Production Code:**
+
 - `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_metadata.ts` (created)
 - `packages/core/src/index_single_file/query_code_tree/language_configs/typescript_metadata.ts` (created)
 - `packages/core/src/index_single_file/semantic_index.ts` (updated to use extractors)
 
 **Test Code:**
+
 - `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_metadata.test.ts` (created)
 - `packages/core/src/index_single_file/query_code_tree/language_configs/typescript_metadata.test.ts` (created)
 - `packages/core/src/index_single_file/semantic_index.javascript.test.ts` (updated with metadata assertions)
@@ -1562,6 +1745,7 @@ Net Improvement:           +7 passing, -5 failing ✅
 ### Key Achievements
 
 **Technical Excellence:**
+
 - Clean, well-tested implementation following existing patterns
 - Zero breaking changes to public APIs
 - Full backward compatibility maintained
@@ -1569,6 +1753,7 @@ Net Improvement:           +7 passing, -5 failing ✅
 - Comprehensive documentation in code and tests
 
 **Quality Metrics:**
+
 - 68 new tests added for metadata functionality
 - 100% pass rate for core metadata extractor tests
 - Net improvement of +7 tests passing in full suite
@@ -1576,6 +1761,7 @@ Net Improvement:           +7 passing, -5 failing ✅
 - All tests well-documented with clear assertions
 
 **Impact:**
+
 - Method resolution now has 90%+ receiver location information
 - Type references have 90%+ type info for TypeScript
 - Property chains fully tracked
@@ -1597,6 +1783,7 @@ The failing tests in javascript_builder.test.ts and semantic_index.javascript.te
 ### Task 104.4.1: Implement Python Metadata Extractors (Completed 2025-10-01)
 
 **What Was Completed:**
+
 - Created `packages/core/src/index_single_file/query_code_tree/language_configs/python_metadata.ts` (467 lines)
 - Implemented all 6 required metadata extractor functions for Python
 - Created comprehensive test suite `python_metadata.test.ts` (489 lines, 41 tests)
@@ -1605,6 +1792,7 @@ The failing tests in javascript_builder.test.ts and semantic_index.javascript.te
 **Implementation Details:**
 
 1. **`extract_type_from_annotation`** - Extracts Python type hints
+
    - Function parameters: `def f(x: int)` → extracts "int"
    - Return types: `def f() -> str` → extracts "str"
    - Variable annotations: `x: int = 5` → extracts "int"
@@ -1613,18 +1801,21 @@ The failing tests in javascript_builder.test.ts and semantic_index.javascript.te
    - Python 3.10+ union syntax: `str | int`
 
 2. **`extract_call_receiver`** - Extracts method call receivers
+
    - Regular methods: `obj.method()` → location of `obj`
    - Self/cls references: `self.method()`, `cls.method()`
    - Super calls: `super().method()`, `super(MyClass, self).method()`
    - Chained calls: `a.b.c.method()` → location of `a.b.c`
 
 3. **`extract_property_chain`** - Extracts attribute access chains
+
    - Dot notation: `a.b.c.d` → ["a", "b", "c", "d"]
    - Subscript notation: `obj['key'].prop` → ["obj", "key", "prop"]
    - Super handling: `super().method` → ["super", "method"]
    - Deeply nested chains (6+ levels)
 
 4. **`extract_assignment_parts`** - Extracts assignment sources/targets
+
    - Simple: `x = y`
    - Annotated: `x: int = 5`
    - Augmented: `x += 5`
@@ -1633,6 +1824,7 @@ The failing tests in javascript_builder.test.ts and semantic_index.javascript.te
    - Walrus operator: `(name := value)`
 
 5. **`extract_construct_target`** - Extracts constructor call targets
+
    - Variable assignment: `obj = MyClass()`
    - Attribute assignment: `self.prop = Thing()`
    - Annotated assignment: `items: List[Item] = ItemList()`
@@ -1648,6 +1840,7 @@ The failing tests in javascript_builder.test.ts and semantic_index.javascript.te
 **Python-Specific AST Handling:**
 
 Python's tree-sitter grammar differs significantly from JavaScript:
+
 - Uses `generic_type` with `type_parameter` instead of `subscript` for generics
 - Uses `assignment` with `type` field instead of separate `annotated_assignment` node type
 - Uses `attribute` node for property access instead of `member_expression`
@@ -1656,21 +1849,25 @@ Python's tree-sitter grammar differs significantly from JavaScript:
 **Critical Discoveries and Fixes:**
 
 1. **AST Structure Investigation:**
+
    - Initial implementation assumed `subscript` nodes for generics (like JavaScript)
    - Investigation revealed Python uses `generic_type` + `type_parameter` structure
    - Updated implementation to traverse `type_parameter` children containing `type` nodes
 
 2. **Annotated Assignment Handling:**
+
    - Expected separate `annotated_assignment` node type (not in Python grammar)
    - Python uses single `assignment` node with optional `type` field
    - Fixed by checking for `type` field in assignment nodes
 
 3. **Null Safety:**
+
    - Added null checks to all extractor functions
    - Changed parameter types from `SyntaxNode` to `SyntaxNode | null | undefined`
    - Prevents crashes when tree-sitter returns null for missing nodes
 
 4. **Super() Call Structure:**
+
    - Super() calls create nested `call` nodes
    - Outer call is the method call, inner call is `super()`
    - Fixed tests to target correct call node (index 0, not index 1)
@@ -1685,6 +1882,7 @@ Python's tree-sitter grammar differs significantly from JavaScript:
 Total: 41 tests, 100% passing
 
 By extractor function:
+
 - `extract_type_from_annotation`: 7 tests (parameter, return, variable, generic, Optional, Union, Python 3.10+ syntax)
 - `extract_call_receiver`: 6 tests (method, chained, self, cls, super(), standalone)
 - `extract_property_chain`: 6 tests (simple, method call, self, subscript, super, nested)
@@ -1705,16 +1903,19 @@ By extractor function:
 **Issues Encountered:**
 
 1. **Python AST Grammar Differences:**
+
    - Problem: Initial assumptions based on JavaScript grammar were incorrect
    - Solution: Investigated actual AST structure using tree-sitter parser directly
    - Impact: Required rewriting type argument and assignment extraction logic
 
 2. **Node Type Mismatches in Tests:**
+
    - Problem: Tests queried for wrong node types (subscript vs generic_type)
    - Solution: Updated tests to query correct Python-specific node types
    - Impact: All type argument tests now pass
 
 3. **Null Reference Errors:**
+
    - Problem: Node traversal could return null/undefined
    - Solution: Added comprehensive null checks at start of each function
    - Impact: Robust error handling, no crashes on malformed code
@@ -1725,10 +1926,12 @@ By extractor function:
    - Impact: Simplified implementation by treating all assignments uniformly
 
 **Files Created:**
+
 - `packages/core/src/index_single_file/query_code_tree/language_configs/python_metadata.ts` (467 lines)
 - `packages/core/src/index_single_file/query_code_tree/language_configs/python_metadata.test.ts` (489 lines)
 
 **Test Results Summary:**
+
 ```
 Before Phase 3:
   Passing: 908 tests (from Phase 2)
@@ -1746,23 +1949,27 @@ Regression Analysis:
 ```
 
 **Performance:**
+
 - Test execution time: ~30ms for all 41 tests (excellent)
 - Extractor functions are pure and fast (no file I/O, just AST traversal)
 - No memory leaks or performance concerns
 
 **Follow-on Work:**
+
 - Next: Task 104.4.3 - Wire Python extractors into semantic_index
 - Next: Task 104.4.4 - Fix semantic_index.python.test.ts with metadata assertions
 - Python extractors ready for integration into the semantic index pipeline
 - All Python-specific patterns tested and working
 
 **Documentation Updates:**
+
 - All extractor functions have comprehensive TSDoc comments
 - Each function documents what AST patterns it handles with examples
 - Test file serves as additional documentation with 41 test cases
 - Python-specific AST differences documented inline
 
 **Code Quality Metrics:**
+
 - Lines of code: 467 (implementation) + 489 (tests) = 956 total
 - Test coverage: 100% of all 6 extractors with comprehensive edge case coverage
 - Test count: 41 tests covering all major Python type hint and reference patterns
@@ -1770,6 +1977,7 @@ Regression Analysis:
 - Maintainability: Excellent - pure functions, well-tested, easy to extend
 
 **Comparison with JavaScript Implementation:**
+
 - Python: 467 lines, 41 tests
 - JavaScript: 394 lines, 57 tests
 - Similar complexity and thoroughness
@@ -1787,6 +1995,7 @@ Task 104.4.1 is **successfully complete** with all deliverables met. The Python 
 ### Task 104.4.2: Test Python Metadata Extractors (Completed 2025-10-01)
 
 **What Was Completed:**
+
 - Expanded Python metadata test suite from 41 to 69 comprehensive tests (+28 new tests)
 - Added comprehensive null/undefined input handling tests (11 tests)
 - Added edge case coverage for all uncovered code paths
@@ -1801,12 +2010,14 @@ The test suite was expanded based on systematic code coverage analysis to ensure
 **New Test Categories Added:**
 
 1. **Null/Undefined Handling (11 tests)** - Defensive programming
+
    - All 6 extractor functions tested with null input
    - All 6 extractor functions tested with undefined input (where applicable)
    - Ensures robust error handling prevents runtime crashes
    - All functions correctly return undefined for invalid inputs
 
 2. **Type Annotation Edge Cases (7 tests)**
+
    - Parameters with default values (`def f(x: int = 5)`) - Tests `typed_default_parameter` node handling
    - Pipe None nullable syntax (`str | None`) - Verifies nullable detection for Python 3.10+ unions
    - Nodes without type annotations (`x = 5`) - Tests undefined return path
@@ -1816,11 +2027,13 @@ The test suite was expanded based on systematic code coverage analysis to ensure
    - Already covered: function params, return types, variable annotations, generics, Optional, Union
 
 3. **Call Receiver Edge Cases (2 tests)**
+
    - Direct attribute nodes (not in call) - Tests `node.type === "attribute"` branch
    - Nested attribute nodes directly - Verifies proper object extraction
    - Already covered: method calls, chained calls, self/cls, super(), standalone functions
 
 4. **Property Chain Edge Cases (5 tests)**
+
    - Integer subscripts (`obj[0].prop`) - Tests non-string subscript handling
    - Variable subscripts (`obj[index].prop`) - Verifies variable subscript behavior
    - Simple identifier returning undefined - Tests empty chain path
@@ -1838,6 +2051,7 @@ The test suite was expanded based on systematic code coverage analysis to ensure
 **Test Coverage Analysis Performed:**
 
 A comprehensive analysis identified these specific uncovered code paths:
+
 - Line 42-51: "type" node handling with child iteration
 - Line 54-56: "type_identifier" node type
 - Line 70-75: "typed_default_parameter" handling
@@ -1859,6 +2073,7 @@ A comprehensive analysis identified these specific uncovered code paths:
    - **Impact:** Tests now correctly verify both code paths
 
 **Files Modified:**
+
 - `packages/core/src/index_single_file/query_code_tree/language_configs/python_metadata.test.ts` (added 28 tests, 281 lines total added)
 
 **Test Results:**
@@ -1870,6 +2085,7 @@ Change: +28 comprehensive edge case tests
 ```
 
 **Test Breakdown by Category:**
+
 - extract_type_from_annotation: 13 tests (was 7, +6 new)
 - extract_call_receiver: 8 tests (was 6, +2 new)
 - extract_property_chain: 11 tests (was 6, +5 new)
@@ -1929,6 +2145,7 @@ Regression Analysis:
 **Issues Encountered:**
 
 1. **Test Expectation Mismatch:**
+
    - **Problem:** One test expected undefined but implementation correctly extracted identifier as type
    - **Solution:** Updated test to verify actual behavior (identifier extraction) is correct
    - **Impact:** Test suite now accurately reflects implementation semantics
@@ -1941,6 +2158,7 @@ Regression Analysis:
 **Pre-existing Test Failures Confirmed:**
 
 The 522 failing tests in the full suite are **pre-existing** and unrelated to Python metadata work:
+
 - Missing Python fixture files (semantic_index.python.test.ts - ENOENT errors)
 - Builder configuration issues (python_builder.test.ts - assertion failures)
 - Rust builder tests (rust_builder.test.ts - generics, visibility, macros)
@@ -2006,6 +2224,7 @@ The systematic code coverage analysis approach ensured no edge cases were missed
 ### Task 104.4.3: Wire Python Extractors into Semantic Index (Completed 2025-10-01)
 
 **What Was Completed:**
+
 - Updated `semantic_index.ts` to import `PYTHON_METADATA_EXTRACTORS` from `python_metadata.ts`
 - Modified `get_metadata_extractors()` function to return Python extractors for "python" language
 - Created comprehensive integration test suite `semantic_index.python.metadata.test.ts` (9 tests)
@@ -2040,12 +2259,14 @@ SemanticIndex with rich Python metadata ✅
 ```
 
 **Files Modified:**
+
 1. `packages/core/src/index_single_file/semantic_index.ts`
    - Added import: `PYTHON_METADATA_EXTRACTORS`
    - Updated `get_metadata_extractors()` case for "python" to return extractors
    - Removed TODO comment for Task 104.4.3
 
 **Files Created:**
+
 1. `packages/core/src/index_single_file/semantic_index.python.metadata.test.ts` (239 lines, 9 tests)
    - Type metadata extraction tests (3 tests)
    - Class and method handling tests (2 tests)
@@ -2083,6 +2304,7 @@ Change Analysis:
 ```
 
 **Metadata Test Suite Status:**
+
 - ✅ python_metadata.test.ts: 69/69 passing (100%)
 - ✅ javascript_metadata.test.ts: 57/57 passing (100%)
 - ✅ typescript_metadata.test.ts: 11/13 passing (84.6%, 2 skipped)
@@ -2091,6 +2313,7 @@ Change Analysis:
 - ✅ reference_builder.test.ts: 14/14 passing (100% active tests, 7 skipped)
 
 **Verification:**
+
 - ✅ TypeScript compilation: Zero errors in semantic_index.ts
 - ✅ TypeScript compilation: Zero errors in python_metadata.ts
 - ✅ Python metadata extractors: 69/69 tests passing
@@ -2118,6 +2341,7 @@ Only 4 lines modified in production code:
 None. Integration was straightforward due to well-designed interface from Task 104.2.
 
 **Follow-on Work:**
+
 - Next: Task 104.4.4 - Fix semantic_index.python.test.ts (legacy tests using deprecated API)
 - Note: The legacy `semantic_index.python.test.ts` has 55 failing tests because it uses the old `query_tree` API and has incorrect fixture paths. This is a separate task to migrate those tests to the new builder pattern.
 
@@ -2134,6 +2358,7 @@ None. Integration was straightforward due to well-designed interface from Task 1
 **Impact:**
 
 Python files processed through `build_semantic_index()` now receive full metadata extraction:
+
 - Method resolution has receiver location information (90%+ coverage)
 - Type references have complete type info (type_name, certainty, is_nullable)
 - Property chains are fully tracked for attribute access
@@ -2141,6 +2366,7 @@ Python files processed through `build_semantic_index()` now receive full metadat
 - Assignment source and target locations are captured
 
 **Code Quality Metrics:**
+
 - Lines of code modified: 4 (production code)
 - Lines of code added: 239 (test code)
 - Test count: +9 comprehensive integration tests
@@ -2163,6 +2389,7 @@ The Python metadata extraction system is production-ready and will enhance metho
 ### Task 104.4.4: Fix semantic_index.python.test.ts for Metadata (Completed 2025-10-01)
 
 **What Was Completed:**
+
 - Completely rewrote `semantic_index.python.test.ts` from deprecated query_tree API to current builder pattern
 - Added comprehensive metadata assertions for all Python reference types
 - Fixed all API mismatches and type errors
@@ -2170,6 +2397,7 @@ The Python metadata extraction system is production-ready and will enhance metho
 - Verified zero regressions in full test suite
 
 **Files Modified:**
+
 1. `packages/core/src/index_single_file/semantic_index.python.test.ts`
    - Migrated from deprecated `query_tree(code, "python")` API to `build_semantic_index(parsed_file, tree, "python")`
    - Created `createParsedFile()` helper function to properly construct ParsedFile objects
@@ -2180,16 +2408,19 @@ The Python metadata extraction system is production-ready and will enhance metho
 **Key API Corrections:**
 
 1. **Function Signature:**
+
    - **Wrong:** `build_semantic_index(file_path)`
    - **Correct:** `build_semantic_index(parsed_file, tree, language)`
    - Requires ParsedFile object with: file_path, file_lines, file_end_column, tree, lang
 
 2. **SemanticIndex Structure:**
+
    - **Wrong:** `result.references.calls`, `result.references.types`, `result.references.member_accesses`
    - **Correct:** `result.references` is a flat readonly array
    - Must filter by `ref.type` to get specific reference types
 
 3. **ParsedFile Interface:**
+
    - **Wrong:** Using @ariadnejs/types ParsedFile (content, language)
    - **Correct:** Using file_utils ParsedFile (file_lines, file_end_column, lang)
 
@@ -2202,37 +2433,44 @@ The Python metadata extraction system is production-ready and will enhance metho
 Created 26 comprehensive tests organized into 8 categories:
 
 1. **Method Call Metadata (3 tests):**
+
    - Simple method calls with receiver_location
    - Self references (self.method()) with receiver tracking
    - Method call chain metadata
 
 2. **Type Reference Metadata (4 tests):**
+
    - Function parameter type hints with type_info
    - Variable type annotations with certainty detection
    - Return type hints (marked as known implementation gap)
    - Generic type arguments in type hints
 
 3. **Attribute Access Metadata (3 tests):**
+
    - Simple attribute access with property_chain
    - Nested attribute chains
    - Self attribute access chains
 
 4. **Constructor Call Metadata (3 tests):**
+
    - Class instantiation with construct_target
    - Constructor in assignment context
    - Multiple constructor calls
 
 5. **Assignment Metadata (3 tests):**
+
    - Assignment source/target tracking (marked as known implementation gap)
    - Augmented assignments (marked as known implementation gap)
    - Multiple assignments (marked as known implementation gap)
 
 6. **Python-Specific Metadata Patterns (3 tests):**
+
    - Walrus operator handling
    - Super() call receiver tracking
    - Union and Optional types with nullable detection (marked as known implementation gap)
 
 7. **Edge Cases (4 tests):**
+
    - Property decorator handling
    - Class method (cls) references
    - Deeply nested attribute access
@@ -2272,14 +2510,17 @@ Failing Tests: 6 (All Known Implementation Gaps)
 The 6 failing tests are **NOT regressions** - they test features not yet implemented in the query system:
 
 1. **Return Type Hints (line 221):**
+
    - Type references from return type annotations not extracted by queries
    - Requires enhancement to type reference query patterns
 
 2. **Assignment Metadata (lines 451, 479, 498):**
+
    - Assignment source/target locations not populated
    - Requires enhancement to assignment context extraction
 
 3. **Union/Optional Nullable Detection (line 563):**
+
    - Type info not extracting nullable flag from Union/Optional types
    - Requires enhancement to type info extraction logic
 
@@ -2349,16 +2590,19 @@ Regression Analysis:
 **Issues Encountered:**
 
 1. **Invalid Language Error:**
+
    - **Problem:** `build_semantic_index` called with wrong signature
    - **Solution:** Updated to use (parsed_file, tree, language) signature
    - **Impact:** All tests now use correct API
 
 2. **SemanticIndex Structure Mismatch:**
+
    - **Problem:** Assumed references had structured properties (references.calls, references.types)
    - **Solution:** Changed to filter flat references array by type property
    - **Impact:** All test assertions now correctly query references
 
 3. **ParsedFile Interface Mismatch:**
+
    - **Problem:** Used wrong ParsedFile interface from @ariadnejs/types
    - **Solution:** Updated to use file_utils ParsedFile with correct properties
    - **Impact:** All helper functions now create valid ParsedFile objects
@@ -2371,6 +2615,7 @@ Regression Analysis:
 **Follow-on Work:**
 
 **Implementation Gaps to Address (Future Tasks):**
+
 1. Enhance query patterns to extract return type hint references
 2. Implement assignment source/target location tracking
 3. Add support for augmented assignment metadata
@@ -2379,6 +2624,7 @@ Regression Analysis:
 6. Implement import statement reference tracking
 
 **Code Quality:**
+
 - Clean separation: Tests focus on assertions, implementation handles extraction
 - Comprehensive coverage: 26 tests cover all major Python metadata scenarios
 - Well-documented: Test names clearly describe expected behavior
@@ -2387,17 +2633,20 @@ Regression Analysis:
 - No technical debt introduced
 
 **Performance:**
+
 - Test execution: ~1.68s for 26 tests (acceptable performance)
 - No memory leaks or performance concerns
 - Metadata extraction adds negligible overhead
 
 **Documentation Updates:**
+
 - Test file serves as documentation for expected Python metadata behavior
 - All known implementation gaps documented with comments
 - Python-specific AST patterns documented in test comments
 - Clear test organization by metadata type
 
 **Code Quality Metrics:**
+
 - Lines modified: ~800 (complete rewrite of test file)
 - Test count: 26 comprehensive tests
 - Pass rate: 77% (20/26 passing)
@@ -2421,6 +2670,7 @@ Zero regressions were introduced. The only file modified was semantic_index.pyth
 **Status:** ✅ **COMPLETE** - All Python metadata extraction and testing tasks finished
 
 ### Tasks Completed (4/4)
+
 1. ✅ Task 104.4.1: Python metadata extractors implemented (69/69 tests passing)
 2. ✅ Task 104.4.2: Python metadata extractor tests comprehensive (100% coverage)
 3. ✅ Task 104.4.3: Extractors wired into semantic_index pipeline (9/9 integration tests passing)
@@ -2429,11 +2679,13 @@ Zero regressions were introduced. The only file modified was semantic_index.pyth
 ### Overall Test Results
 
 **Core Metadata Functionality:**
+
 - ✅ Python metadata extractors: **69/69 tests passing (100%)**
 - ✅ Python integration tests: **9/9 tests passing (100%)**
 - ✅ Python semantic index tests: **20/26 tests passing (77%)**
 
 **Full Test Suite Impact:**
+
 ```
 Baseline (before Phase 3): 908 passing, 522 failing
 After Phase 3 Complete:    1006 passing, 473 failing
@@ -2443,6 +2695,7 @@ Net Improvement:           +98 passing tests ✅
 ### Success Criteria Verification
 
 ✅ **All Phase 3 success criteria met:**
+
 1. ✅ All 6 metadata extractors implemented for Python
 2. ✅ Extractors integrated into semantic_index pipeline
 3. ✅ 80%+ method calls have receiver_location populated (achieved 90%+)
@@ -2455,6 +2708,7 @@ Net Improvement:           +98 passing tests ✅
 ### Key Achievements
 
 **Technical Excellence:**
+
 - Most comprehensive metadata extractor test suite of all languages (69 tests)
 - 100% code coverage for Python metadata extractors
 - Zero breaking changes to public APIs
@@ -2463,6 +2717,7 @@ Net Improvement:           +98 passing tests ✅
 - Comprehensive documentation in code and tests
 
 **Quality Metrics:**
+
 - 104 new tests added for Python metadata functionality (69 + 9 + 26)
 - 100% pass rate for core metadata extractor tests
 - 100% pass rate for integration tests
@@ -2471,6 +2726,7 @@ Net Improvement:           +98 passing tests ✅
 - All tests well-documented with clear assertions
 
 **Impact:**
+
 - Method resolution has 90%+ receiver location information for Python
 - Type references have complete type info for explicit type hints
 - Property chains fully tracked for attribute access
@@ -2480,6 +2736,7 @@ Net Improvement:           +98 passing tests ✅
 ### Known Limitations
 
 **Acceptable Limitations (documented in tests):**
+
 1. Return type hint references not extracted (query pattern gap)
 2. Assignment source/target tracking partially implemented
 3. Augmented assignment metadata not populated
@@ -2492,10 +2749,12 @@ These limitations represent **query system implementation gaps**, not issues wit
 ### Files Modified in Phase 3
 
 **Production Code:**
+
 - `packages/core/src/index_single_file/query_code_tree/language_configs/python_metadata.ts` (created, 467 lines)
 - `packages/core/src/index_single_file/semantic_index.ts` (updated to use Python extractors)
 
 **Test Code:**
+
 - `packages/core/src/index_single_file/query_code_tree/language_configs/python_metadata.test.ts` (created, 770 lines, 69 tests)
 - `packages/core/src/index_single_file/semantic_index.python.metadata.test.ts` (created, 239 lines, 9 tests)
 - `packages/core/src/index_single_file/semantic_index.python.test.ts` (completely rewritten, ~800 lines, 26 tests)
@@ -2513,10 +2772,12 @@ The 6 failing tests in semantic_index.python.test.ts represent **known, acceptab
 ### Files Modified in Phase 4
 
 **Production Code:**
+
 - `packages/core/src/index_single_file/query_code_tree/language_configs/rust_metadata.ts` (created, 520 lines) - Task 104.5.1
 - `packages/core/src/index_single_file/semantic_index.ts` (updated to use Rust extractors, +2 lines) - Task 104.5.1
 
 **Test Code:**
+
 - `packages/core/src/index_single_file/query_code_tree/language_configs/rust_metadata.test.ts` (enhanced from 515 to 1,091 lines, 47→93 tests)
   - Task 104.5.1: Initial creation with 47 comprehensive tests
   - Task 104.5.2: Enhanced with 46 additional tests (+576 lines)
@@ -2530,6 +2791,7 @@ The 6 failing tests in semantic_index.python.test.ts represent **known, acceptab
 **Test Coverage Enhancement:** 47 → 93 tests (+46 tests, +576 lines)
 
 **Extractor Coverage Details:**
+
 - `extract_type_from_annotation`: 11 → 21 tests (function pointers, trait objects, impl traits, pointers, slices, bounded types, null handling)
 - `extract_call_receiver`: 6 → 11 tests (null/undefined handling, edge cases, field expressions)
 - `extract_property_chain`: 6 → 14 tests (deeply nested, scoped identifiers, mixed patterns, edge cases)
@@ -2551,12 +2813,14 @@ The 6 failing tests in semantic_index.python.test.ts represent **known, acceptab
 **What Was Completed:**
 
 1. **Verified Rust Extractor Integration** (semantic_index.ts):
+
    - ✅ RUST_METADATA_EXTRACTORS already imported (line 45)
    - ✅ Language detection already configured (lines 197-198 in `get_metadata_extractors()`)
    - ✅ Extractors already passed to ReferenceBuilder (line 137 via `process_references()`)
    - Integration was already complete from task 104.5.1
 
 2. **Created Comprehensive Integration Test Suite** (semantic_index.rust.metadata.test.ts):
+
    - ✅ New test file: 228 lines, 5 comprehensive tests
    - ✅ Type metadata extraction tests (3 tests)
      - Function parameter type annotations
@@ -2572,6 +2836,7 @@ The 6 failing tests in semantic_index.python.test.ts represent **known, acceptab
      - Rust-specific metadata confirmed
 
 3. **TypeScript Compilation Verification:**
+
    - ✅ Zero errors in semantic_index.ts
    - ✅ Zero errors in rust_metadata.ts
    - ✅ Test file has only configuration-related errors (same as other test files)
@@ -2585,6 +2850,7 @@ The 6 failing tests in semantic_index.python.test.ts represent **known, acceptab
    - ✅ All 14 reference_builder tests still passing (100%)
 
 **Test Results:**
+
 - ✅ Rust metadata integration tests: 5/5 passing (100%)
 - ✅ All metadata tests across languages: 244/246 passing (99.1%)
 - ✅ Reference builder tests: 14/14 passing (100%)
@@ -2593,12 +2859,14 @@ The 6 failing tests in semantic_index.python.test.ts represent **known, acceptab
 **Test Execution:** ~382ms for 5 integration tests
 
 **Issues Encountered:**
+
 - Initial test iterations revealed that Rust queries don't capture all type annotations (parameter types, return types)
 - This is a query limitation, not an extractor issue
 - Tests adjusted to validate what queries currently capture
 - Metadata extractors work correctly when nodes are captured
 
 **Follow-on Work:**
+
 - Future enhancement: Update Rust query patterns to capture type annotations from function parameters and return types
 - This would enable full type metadata extraction for all Rust code constructs
 - Current extractor implementation is production-ready and will work correctly once queries are enhanced
@@ -2613,6 +2881,7 @@ The 6 failing tests in semantic_index.python.test.ts represent **known, acceptab
 - Document findings in `RUST_METADATA_PATTERNS.md` created in task 104.5.4
 
 **Files Modified:**
+
 - ✅ Created: `packages/core/src/index_single_file/semantic_index.rust.metadata.test.ts` (228 lines) - Task 104.5.3
 - ✅ Modified: `packages/core/src/index_single_file/semantic_index.rust.test.ts` (+180 lines approx) - Task 104.5.4
   - Added new test suite "Method Calls and Type Resolution with Metadata"
@@ -2624,6 +2893,7 @@ The 6 failing tests in semantic_index.python.test.ts represent **known, acceptab
   - Provides comprehensive pattern documentation for future work
 
 **Verification:**
+
 - ✅ Zero TypeScript compilation errors in modified/new files (test file has @ts-nocheck)
 - ✅ Zero regressions (471 failures pre-existing, none introduced by task 104.5.4)
 - ✅ Net positive improvement (+10 passing tests for Phase 4: +5 from 104.5.3, +5 from 104.5.4)
@@ -2637,6 +2907,7 @@ The 6 failing tests in semantic_index.python.test.ts represent **known, acceptab
 Phase 4 is **successfully complete** with excellent results. The Rust metadata extraction system is fully functional, comprehensively tested, and integrated into the semantic index pipeline with **zero regressions**.
 
 **Test Results Summary:**
+
 - ✅ **93 Rust metadata extractor tests** pass successfully (100%, enhanced from initial 47 tests)
 - ✅ **5 Rust integration tests** pass successfully (100%, created in task 104.5.3)
 - ✅ **5 Rust semantic index metadata tests** pass successfully (100%, created in task 104.5.4)
@@ -2645,6 +2916,7 @@ Phase 4 is **successfully complete** with excellent results. The Rust metadata e
 The implementation properly handles all Rust-specific features including turbofish syntax, associated functions, trait methods, lifetime parameters, and Option types. Test debugging revealed 4 issues that were successfully resolved during task 104.5.1, demonstrating thorough validation of the implementation.
 
 Integration with semantic_index was verified in task 104.5.3, confirming that:
+
 - Rust extractors are properly wired into the reference processing pipeline
 - Type metadata is correctly extracted from annotations
 - The system works end-to-end with zero regressions
@@ -2654,7 +2926,6 @@ Integration with semantic_index was verified in task 104.5.3, confirming that:
 
 ---
 
-
 ## Task 104.6.3: Clean Up TODOs and Update Documentation
 
 **Status:** ✅ COMPLETE (2025-10-01)
@@ -2662,11 +2933,13 @@ Integration with semantic_index was verified in task 104.5.3, confirming that:
 ### Actions Taken:
 
 1. **TODO Cleanup:**
+
    - Searched entire codebase for metadata-related TODOs
    - Found 2 TODOs in enhanced_heuristic_resolver.ts (not metadata extraction related, legitimate future work)
    - Confirmed zero TODOs remain in metadata extraction code
 
 2. **Documentation Updates:**
+
    - Updated REFERENCE_METADATA_PLAN.md to mark Phase 2 and Phase 3 as complete
    - Created comprehensive METADATA_EXTRACTORS_GUIDE.md with interface documentation and examples for all languages
    - Created task-epic-11.104-FINAL-SUMMARY.md with complete implementation results
@@ -2678,6 +2951,7 @@ Integration with semantic_index was verified in task 104.5.3, confirming that:
    - Production-ready implementation
 
 ### Documentation Created:
+
 - **METADATA_EXTRACTORS_GUIDE.md** - Complete interface guide with examples
 - **task-epic-11.104-FINAL-SUMMARY.md** - Final implementation summary and lessons learned
 
@@ -2732,6 +3006,7 @@ This task completed 7 major verification activities:
 ### Semantic Index Integration: ZERO REGRESSIONS ✅
 
 Baseline comparison confirmed:
+
 - JavaScript: 0 new failures
 - TypeScript: 0 new failures
 - Python: 0 new failures
@@ -2743,6 +3018,7 @@ Baseline comparison confirmed:
 ### Full Test Suite: ZERO REGRESSIONS ✅
 
 **Baseline vs Current:**
+
 - Test Files: 31 failed | 33 passed (IDENTICAL)
 - Tests: 470 failed | 1,124 passed (IDENTICAL)
 - **Difference: 0 new failures** ✅
@@ -2752,11 +3028,13 @@ Baseline comparison confirmed:
 ### Coverage Against Success Criteria: EXCEEDED ✅
 
 **Method Call Receiver Coverage:**
+
 - Target: ≥80%
 - Actual: ~95%
 - Status: ✅ EXCEEDS (+15%)
 
 **Type Reference Info Coverage:**
+
 - Target: ≥90%
 - Actual: ~98%
 - Status: ✅ EXCEEDS (+8%)
@@ -2778,6 +3056,7 @@ Baseline comparison confirmed:
 **Status:** READY FOR IMMEDIATE DEPLOYMENT 🚀
 
 **Evidence:**
+
 - ✅ 251+ metadata tests (100% passing)
 - ✅ 0 regressions in 1,777 total tests
 - ✅ Coverage exceeds all criteria
@@ -2793,6 +3072,7 @@ Baseline comparison confirmed:
 **Epic 11.104: ✅ COMPLETE AND VERIFIED**
 
 **Completion Summary:**
+
 - **All 6 phases:** Complete ✅
 - **All 24 sub-tasks:** Complete ✅
 - **All 251+ tests:** Passing ✅
@@ -2800,6 +3080,7 @@ Baseline comparison confirmed:
 - **Production status:** Approved ✅
 
 **Key Metrics:**
+
 - Implementation: ~2,500 lines
 - Tests: ~3,000 lines
 - Documentation: ~1,500 lines
@@ -2816,4 +3097,3 @@ Baseline comparison confirmed:
 **Production readiness:** Confirmed
 **Documentation:** Comprehensive
 **Follow-on work:** Identified and documented
-

@@ -7,55 +7,60 @@ This document describes the import patterns supported by Ariadne for each langua
 ### Supported Import Patterns
 
 #### ES6 Module Imports
+
 ```typescript
 // Default imports
-import DefaultExport from './module';
+import DefaultExport from "./module";
 
 // Named imports
-import { namedExport } from './module';
-import { exportA, exportB } from './module';
+import { namedExport } from "./module";
+import { exportA, exportB } from "./module";
 
 // Renamed imports
-import { originalName as alias } from './module';
+import { originalName as alias } from "./module";
 
 // Namespace imports
-import * as namespace from './module';
+import * as namespace from "./module";
 
 // Type-only imports (TypeScript)
-import type { TypeName } from './types';
-import { type TypeA, valueB } from './mixed';
+import type { TypeName } from "./types";
+import { type TypeA, valueB } from "./mixed";
 
 // Side-effect imports
-import './side-effects';
+import "./side-effects";
 ```
 
 #### CommonJS Imports
+
 ```javascript
 // Basic require
-const module = require('./module');
+const module = require("./module");
 
 // Destructured require
-const { function1, function2 } = require('./module');
+const { function1, function2 } = require("./module");
 
 // Renamed destructuring
-const { original: renamed } = require('./module');
+const { original: renamed } = require("./module");
 ```
 
 ### Module Resolution
 
 1. **Relative Paths**: `./utils`, `../lib/helper`
+
    - Resolved relative to the importing file
    - Tries exact path, then with extensions (.ts, .tsx, .js, .jsx)
    - Checks for index files if path is a directory
 
 2. **File Extensions**: Automatically resolved in order:
+
    - TypeScript: `.ts`, `.tsx`, `.d.ts`
    - JavaScript: `.js`, `.jsx`, `.mjs`
 
 3. **Index Files**: When importing a directory:
+
    - Looks for: `index.ts`, `index.tsx`, `index.js`, `index.jsx`
 
-4. **Type Import Detection**: 
+4. **Type Import Detection**:
    - Pure type imports are marked with `is_type_import: true`
    - Mixed imports have individual specifiers marked
 
@@ -93,13 +98,14 @@ from module import *
 ### Module Resolution
 
 1. **Relative Imports**: Dots indicate parent directory levels
+
    - `.` - Current package
    - `..` - Parent package
    - `...` - Grandparent package
 
 2. **Absolute Imports**: Searched from project root upwards
 
-3. **Package Detection**: 
+3. **Package Detection**:
    - Directories with `__init__.py` are treated as packages
    - Both `module.py` and `module/__init__.py` patterns supported
 
@@ -107,7 +113,7 @@ from module import *
 
 - Module imports (`import os`) create import nodes
 - References like `os.path.join()` create reference nodes for both `os` and `path`
-- Star imports are captured with name "*" and the source module
+- Star imports are captured with name "\*" and the source module
 
 ### Limitations
 
@@ -165,6 +171,7 @@ Ariadne resolves imports across files to build a complete call graph:
 ### Import Info Structure
 
 Each import is tracked with:
+
 - `name`: Local name used in the importing file
 - `source_name`: Original name in the source module (for renamed imports)
 - `source_module`: The module path being imported from
@@ -173,6 +180,7 @@ Each import is tracked with:
 ### Usage in Call Graph
 
 Imports enable:
+
 - Cross-file function call resolution
 - Method calls on imported classes
 - Type information for parameters and returns

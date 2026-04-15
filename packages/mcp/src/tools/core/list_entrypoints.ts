@@ -249,7 +249,7 @@ function format_output(entries: EntryPointData[]): string {
  * @returns Formatted ASCII text listing entry points
  */
 export async function list_entrypoints(
-  project: Project,
+  project: Pick<Project, "get_call_graph">,
   request: ListEntrypointsRequest = {}
 ): Promise<string> {
   const { include_tests = false } = request;

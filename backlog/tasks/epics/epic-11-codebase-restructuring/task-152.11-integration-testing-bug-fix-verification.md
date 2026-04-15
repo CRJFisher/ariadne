@@ -19,11 +19,11 @@ Create test cases from the actual failures:
 **File**: `packages/core/src/__tests__/integration/bug_fix_verification.test.ts`
 
 ```typescript
-import { describe, test, expect } from 'vitest';
-import { build_semantic_index } from '../../index_single_file/index_single_file';
-import { resolve_references } from '../../resolve_references/resolve_references';
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { describe, test, expect } from "vitest";
+import { build_semantic_index } from "../../index_single_file/index_single_file";
+import { resolve_references } from "../../resolve_references/resolve_references";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 /**
  * Integration tests verifying the self-reference bug fix
@@ -34,9 +34,9 @@ import { join } from 'path';
  * Expected outcome: All 42 self-reference cases should now resolve correctly.
  */
 
-describe('Bug Fix Verification - Self-Reference Resolution', () => {
-  describe('TypeScript this.method() failures', () => {
-    test('IndexBuilder.build_class() resolution', () => {
+describe("Bug Fix Verification - Self-Reference Resolution", () => {
+  describe("TypeScript this.method() failures", () => {
+    test("IndexBuilder.build_class() resolution", () => {
       // Real code from packages/core/src/index_single_file/index_builder.ts:123
       const code = `
         export class IndexBuilder {
@@ -50,7 +50,7 @@ describe('Bug Fix Verification - Self-Reference Resolution', () => {
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const resolutions = resolve_references(
         semantic_index.references,
         semantic_index
@@ -59,8 +59,7 @@ describe('Bug Fix Verification - Self-Reference Resolution', () => {
       // Find the this.build_class reference
       const self_ref = semantic_index.references.find(
         (ref) =>
-          ref.kind === 'self_reference_call' &&
-          ref.name === 'build_class'
+          ref.kind === "self_reference_call" && ref.name === "build_class"
       );
 
       expect(self_ref).toBeDefined();
@@ -71,7 +70,7 @@ describe('Bug Fix Verification - Self-Reference Resolution', () => {
       expect(resolved_id).toMatch(/^symbol:.*build_class$/);
     });
 
-    test('IndexBuilder.build_function() resolution', () => {
+    test("IndexBuilder.build_function() resolution", () => {
       const code = `
         export class IndexBuilder {
           process_function_declaration(node: Parser.SyntaxNode): void {
@@ -84,7 +83,7 @@ describe('Bug Fix Verification - Self-Reference Resolution', () => {
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const resolutions = resolve_references(
         semantic_index.references,
         semantic_index
@@ -92,8 +91,7 @@ describe('Bug Fix Verification - Self-Reference Resolution', () => {
 
       const self_ref = semantic_index.references.find(
         (ref) =>
-          ref.kind === 'self_reference_call' &&
-          ref.name === 'build_function'
+          ref.kind === "self_reference_call" && ref.name === "build_function"
       );
 
       expect(self_ref).toBeDefined();
@@ -101,7 +99,7 @@ describe('Bug Fix Verification - Self-Reference Resolution', () => {
       expect(resolved_id).toBeDefined();
     });
 
-    test('Multiple chained this.method() calls', () => {
+    test("Multiple chained this.method() calls", () => {
       const code = `
         export class IndexBuilder {
           process(node: Parser.SyntaxNode): void {
@@ -116,14 +114,14 @@ describe('Bug Fix Verification - Self-Reference Resolution', () => {
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const resolutions = resolve_references(
         semantic_index.references,
         semantic_index
       );
 
       const self_refs = semantic_index.references.filter(
-        (ref) => ref.kind === 'self_reference_call'
+        (ref) => ref.kind === "self_reference_call"
       );
 
       expect(self_refs).toHaveLength(3);
@@ -136,7 +134,7 @@ describe('Bug Fix Verification - Self-Reference Resolution', () => {
       expect(resolved_count).toBe(3);
     });
 
-    test('Nested scope this.method() resolution', () => {
+    test("Nested scope this.method() resolution", () => {
       const code = `
         export class ScopeProcessor {
           process_scopes(): void {
@@ -152,14 +150,14 @@ describe('Bug Fix Verification - Self-Reference Resolution', () => {
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const resolutions = resolve_references(
         semantic_index.references,
         semantic_index
       );
 
       const self_refs = semantic_index.references.filter(
-        (ref) => ref.kind === 'self_reference_call'
+        (ref) => ref.kind === "self_reference_call"
       );
 
       // Both calls should resolve despite nested scopes
@@ -171,8 +169,8 @@ describe('Bug Fix Verification - Self-Reference Resolution', () => {
     });
   });
 
-  describe('Python self.method() failures', () => {
-    test('IndexBuilder.build_class() resolution', () => {
+  describe("Python self.method() failures", () => {
+    test("IndexBuilder.build_class() resolution", () => {
       const code = `
         class IndexBuilder:
           def process_class(self, node):
@@ -182,7 +180,7 @@ describe('Bug Fix Verification - Self-Reference Resolution', () => {
             pass
       `;
 
-      const semantic_index = build_semantic_index(code, 'python');
+      const semantic_index = build_semantic_index(code, "python");
       const resolutions = resolve_references(
         semantic_index.references,
         semantic_index
@@ -190,18 +188,17 @@ describe('Bug Fix Verification - Self-Reference Resolution', () => {
 
       const self_ref = semantic_index.references.find(
         (ref) =>
-          ref.kind === 'self_reference_call' &&
-          ref.name === 'build_class'
+          ref.kind === "self_reference_call" && ref.name === "build_class"
       );
 
       expect(self_ref).toBeDefined();
-      expect(self_ref?.keyword).toBe('self');
+      expect(self_ref?.keyword).toBe("self");
 
       const resolved_id = resolutions.get(self_ref!.location);
       expect(resolved_id).toBeDefined();
     });
 
-    test('Multiple self.method() calls in Python', () => {
+    test("Multiple self.method() calls in Python", () => {
       const code = `
         class Processor:
           def run(self):
@@ -219,14 +216,14 @@ describe('Bug Fix Verification - Self-Reference Resolution', () => {
             pass
       `;
 
-      const semantic_index = build_semantic_index(code, 'python');
+      const semantic_index = build_semantic_index(code, "python");
       const resolutions = resolve_references(
         semantic_index.references,
         semantic_index
       );
 
       const self_refs = semantic_index.references.filter(
-        (ref) => ref.kind === 'self_reference_call'
+        (ref) => ref.kind === "self_reference_call"
       );
 
       expect(self_refs.length).toBeGreaterThanOrEqual(3);
@@ -241,8 +238,8 @@ describe('Bug Fix Verification - Self-Reference Resolution', () => {
   });
 });
 
-describe('Regression Tests - Ensure Other Cases Still Work', () => {
-  test('Regular method calls still resolve', () => {
+describe("Regression Tests - Ensure Other Cases Still Work", () => {
+  test("Regular method calls still resolve", () => {
     const code = `
       class User {
         getName(): string { return this.name; }
@@ -254,21 +251,21 @@ describe('Regression Tests - Ensure Other Cases Still Work', () => {
       }
     `;
 
-    const semantic_index = build_semantic_index(code, 'typescript');
+    const semantic_index = build_semantic_index(code, "typescript");
     const resolutions = resolve_references(
       semantic_index.references,
       semantic_index
     );
 
     const method_call = semantic_index.references.find(
-      (ref) => ref.kind === 'method_call' && ref.name === 'getName'
+      (ref) => ref.kind === "method_call" && ref.name === "getName"
     );
 
     expect(method_call).toBeDefined();
     expect(resolutions.get(method_call!.location)).toBeDefined();
   });
 
-  test('Function calls still resolve', () => {
+  test("Function calls still resolve", () => {
     const code = `
       function helper() { }
 
@@ -277,35 +274,35 @@ describe('Regression Tests - Ensure Other Cases Still Work', () => {
       }
     `;
 
-    const semantic_index = build_semantic_index(code, 'typescript');
+    const semantic_index = build_semantic_index(code, "typescript");
     const resolutions = resolve_references(
       semantic_index.references,
       semantic_index
     );
 
     const func_call = semantic_index.references.find(
-      (ref) => ref.kind === 'function_call' && ref.name === 'helper'
+      (ref) => ref.kind === "function_call" && ref.name === "helper"
     );
 
     expect(func_call).toBeDefined();
     expect(resolutions.get(func_call!.location)).toBeDefined();
   });
 
-  test('Constructor calls still resolve', () => {
+  test("Constructor calls still resolve", () => {
     const code = `
       class MyClass { }
 
       const obj = new MyClass();
     `;
 
-    const semantic_index = build_semantic_index(code, 'typescript');
+    const semantic_index = build_semantic_index(code, "typescript");
     const resolutions = resolve_references(
       semantic_index.references,
       semantic_index
     );
 
     const constructor_call = semantic_index.references.find(
-      (ref) => ref.kind === 'constructor_call'
+      (ref) => ref.kind === "constructor_call"
     );
 
     expect(constructor_call).toBeDefined();
@@ -321,10 +318,10 @@ describe('Regression Tests - Ensure Other Cases Still Work', () => {
 **File**: `scripts/verify_bug_fix.ts`
 
 ```typescript
-import { readFileSync } from 'fs';
-import { join } from 'path';
-import { build_semantic_index } from '../packages/core/src/index_single_file/index_single_file';
-import { resolve_references } from '../packages/core/src/resolve_references/resolve_references';
+import { readFileSync } from "fs";
+import { join } from "path";
+import { build_semantic_index } from "../packages/core/src/index_single_file/index_single_file";
+import { resolve_references } from "../packages/core/src/resolve_references/resolve_references";
 
 /**
  * Verify the bug fix quantitatively
@@ -346,9 +343,12 @@ interface MisidentifiedCase {
 
 async function verify_bug_fix() {
   // Load misidentified cases
-  const json_path = join(__dirname, '../top-level-nodes-analysis/results/internal_misidentified.json');
+  const json_path = join(
+    __dirname,
+    "../top-level-nodes-analysis/results/internal_misidentified.json"
+  );
   const misidentified: MisidentifiedCase[] = JSON.parse(
-    readFileSync(json_path, 'utf-8')
+    readFileSync(json_path, "utf-8")
   );
 
   console.log(`Total misidentified cases: ${misidentified.length}`);
@@ -356,9 +356,9 @@ async function verify_bug_fix() {
   // Filter for self-reference cases (reason contains "this." or "self.")
   const self_reference_cases = misidentified.filter(
     (case_item) =>
-      case_item.reason.includes('this.') ||
-      case_item.reason.includes('self.') ||
-      case_item.reason.includes('super.')
+      case_item.reason.includes("this.") ||
+      case_item.reason.includes("self.") ||
+      case_item.reason.includes("super.")
   );
 
   console.log(`Self-reference cases: ${self_reference_cases.length}`);
@@ -367,11 +367,11 @@ async function verify_bug_fix() {
   let failed_count = 0;
 
   for (const case_item of self_reference_cases) {
-    const file_path = join(__dirname, '..', case_item.file_path);
+    const file_path = join(__dirname, "..", case_item.file_path);
 
     try {
-      const code = readFileSync(file_path, 'utf-8');
-      const language = file_path.endsWith('.py') ? 'python' : 'typescript';
+      const code = readFileSync(file_path, "utf-8");
+      const language = file_path.endsWith(".py") ? "python" : "typescript";
 
       const semantic_index = build_semantic_index(code, language);
       const resolutions = resolve_references(
@@ -383,7 +383,7 @@ async function verify_bug_fix() {
       const ref_at_line = semantic_index.references.find(
         (ref) =>
           ref.location.start_line === case_item.line &&
-          ref.kind === 'self_reference_call'
+          ref.kind === "self_reference_call"
       );
 
       if (ref_at_line && resolutions.has(ref_at_line.location)) {
@@ -399,18 +399,22 @@ async function verify_bug_fix() {
     }
   }
 
-  console.log('\n=== Bug Fix Verification Results ===');
+  console.log("\n=== Bug Fix Verification Results ===");
   console.log(`Total self-reference cases: ${self_reference_cases.length}`);
   console.log(`Now resolved: ${resolved_count}`);
   console.log(`Still failing: ${failed_count}`);
-  console.log(`Fix rate: ${((resolved_count / self_reference_cases.length) * 100).toFixed(1)}%`);
+  console.log(
+    `Fix rate: ${((resolved_count / self_reference_cases.length) * 100).toFixed(
+      1
+    )}%`
+  );
 
   // Expected: 100% fix rate (all 42 cases should resolve)
   if (resolved_count === self_reference_cases.length) {
-    console.log('\n✅ BUG FIX VERIFIED: All self-reference cases now resolve!');
+    console.log("\n✅ BUG FIX VERIFIED: All self-reference cases now resolve!");
     process.exit(0);
   } else {
-    console.log('\n⚠️  Some cases still failing. Investigation needed.');
+    console.log("\n⚠️  Some cases still failing. Investigation needed.");
     process.exit(1);
   }
 }
@@ -425,6 +429,7 @@ npx tsx scripts/verify_bug_fix.ts
 ```
 
 Expected output:
+
 ```
 Total misidentified cases: 135
 Self-reference cases: 42
@@ -455,17 +460,20 @@ Fix rate: 100.0%
 ## Files Changed
 
 **New**:
+
 - `packages/core/src/__tests__/integration/bug_fix_verification.test.ts`
 - `scripts/verify_bug_fix.ts`
 
 ## Quantitative Impact
 
 **Before fix**:
+
 - 135 misidentified symbols
 - 42 due to self-reference bug (31%)
 - Call graph accuracy: 69%
 
 **After fix**:
+
 - 93 misidentified symbols remaining (42 fixed)
 - 0 due to self-reference bug
 - Call graph accuracy: **100% for self-reference cases** (31% overall improvement)

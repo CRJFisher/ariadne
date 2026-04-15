@@ -3,8 +3,8 @@ id: task-17
 title: Fix CI test failures for tree-sitter native modules
 status: Done
 assignee: []
-created_date: '2025-07-16'
-updated_date: '2025-07-16'
+created_date: "2025-07-16"
+updated_date: "2025-07-16"
 labels:
   - bug
   - ci
@@ -55,22 +55,26 @@ Multiple test suites fail in CI environment (Ubuntu) while passing locally. Init
 Based on Jest issue #9206, we've implemented multiple workaround strategies:
 
 1. **Global Module Binding** (`jest-setup-native-modules.js`):
+
    - Pre-loads tree-sitter modules and binds them to global
    - Overrides require() to return global instances
    - Prevents multiple native module loads
 
 2. **Linux-Specific Jest Config** (`jest.config.linux.js`):
+
    - Forces single worker with `maxWorkers: 1`
    - Disables Jest cache with `cache: false`
    - Uses setup file for module initialization
    - Increases timeout to 30 seconds
 
 3. **Experimental VM Config** (`jest.config.experimental.js`):
+
    - Uses experimental VM modules flag
    - Disables module resetting
    - Custom export conditions for node addons
 
 4. **Isolated Test Runner** (`run-tests-linux.js`):
+
    - Runs each test file in a separate process
    - Clears cache before each test
    - Avoids Jest's module system entirely
@@ -90,6 +94,7 @@ Based on Jest issue #9206, we've implemented multiple workaround strategies:
 - `.github/workflows/test.yml` - Updated to try multiple approaches
 
 Identified root cause as Jest issue #9206 - a known incompatibility between Jest and native modules on Linux. The issue occurs when importing tree-sitter native libraries multiple times in test files, causing 'TypeError: illegal invocation'. Tree-sitter binaries are prebuilt and functional, the problem is specifically with Jest's module system on Linux. Attempted multiple workarounds including global module binding, custom Jest configs, and isolated test runners, but the fundamental incompatibility remains. Recommendation: migrate to alternative test runner (Vitest) that properly supports native modules.
+
 ## Failing Test Suites
 
 ### Core Tests
@@ -238,12 +243,14 @@ Our initial assumption was completely wrong. The CI is NOT building tree-sitter 
 The `test-jest-simulation.js` results are extremely revealing:
 
 1. **All parsers work with simulated Jest-like behavior**:
+
    - Module cache clearing works fine
    - Rapid re-imports work fine
    - Async contexts work fine
    - TypeScript: 48ms, Python: 24ms parse times
 
 2. **This definitively proves**:
+
    - The issue is NOT with module loading
    - The issue is NOT with native bindings
    - The issue is NOT with async execution
@@ -279,6 +286,7 @@ This means the issue is specifically with **Jest + Linux + tree-sitter native mo
 ### This Changes Our Approach
 
 Instead of replacing Jest entirely, we might:
+
 1. Find a Jest configuration that works on Linux
 2. Use a different Jest environment for Linux
 3. Disable Jest's VM isolation for native modules

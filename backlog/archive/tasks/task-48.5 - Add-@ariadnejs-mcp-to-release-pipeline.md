@@ -3,9 +3,9 @@ id: task-48.5
 title: Add @ariadnejs/mcp to release pipeline
 status: Done
 assignee:
-  - '@claude'
-created_date: '2025-07-29'
-updated_date: '2025-07-29'
+  - "@claude"
+created_date: "2025-07-29"
+updated_date: "2025-07-29"
 labels: []
 dependencies: []
 parent_task_id: task-48

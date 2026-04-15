@@ -8,6 +8,7 @@ import type {
   Language,
   ScopeId,
   SymbolId,
+  SymbolName,
   LexicalScope,
   FunctionDefinition,
 } from "@ariadnejs/types";
@@ -98,7 +99,7 @@ describe("SemanticIndex Serialization", () => {
               id: "scope:test.ts:function:foo" as ScopeId,
               type: "function",
               parent_id: "scope:test.ts:module" as ScopeId,
-              name: "foo",
+              name: "foo" as SymbolName,
               location: {
                 file_path: "test.ts" as FilePath,
                 start_line: 1,
@@ -109,15 +110,14 @@ describe("SemanticIndex Serialization", () => {
               child_ids: [],
             },
           ],
-        ]) as unknown as ReadonlyMap<ScopeId, LexicalScope>,
+        ]),
         functions: new Map([
           [
             "function:test.ts:foo:1:0" as SymbolId,
             {
               kind: "function",
               symbol_id: "function:test.ts:foo:1:0" as SymbolId,
-              name: "foo",
-              scope_id: "scope:test.ts:module" as ScopeId,
+              name: "foo" as SymbolName,
               defining_scope_id: "scope:test.ts:module" as ScopeId,
               body_scope_id: "scope:test.ts:function:foo" as ScopeId,
               location: {
@@ -127,14 +127,13 @@ describe("SemanticIndex Serialization", () => {
                 end_line: 3,
                 end_column: 1,
               },
-              parameters: [],
               is_exported: false,
               signature: {
                 parameters: [],
               },
             },
           ],
-        ]) as unknown as ReadonlyMap<SymbolId, FunctionDefinition>,
+        ]),
         classes: new Map(),
         variables: new Map(),
         interfaces: new Map(),

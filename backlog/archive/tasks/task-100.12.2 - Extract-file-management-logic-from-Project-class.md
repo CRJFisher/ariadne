@@ -3,8 +3,8 @@ id: task-100.12.2
 title: Extract file management logic from Project class
 status: Done
 assignee: []
-created_date: '2025-08-04 22:40'
-updated_date: '2025-08-04 23:11'
+created_date: "2025-08-04 22:40"
+updated_date: "2025-08-04 23:11"
 labels: []
 dependencies: []
 parent_task_id: task-100.12
@@ -35,6 +35,7 @@ Move all file-related operations (add_or_update_file, parse logic, file_graphs, 
 Successfully extracted file management logic into separate modules:
 
 1. **FileManager class** (`project/file_manager.ts`):
+
    - Handles all file parsing and caching operations
    - `parseFile`: Manages tree-sitter parsing with error handling
    - `processFile`: Updates project state with parsed file data
@@ -44,6 +45,7 @@ Successfully extracted file management logic into separate modules:
    - Utility methods for byte offset and position calculations
 
 2. **LanguageManager class** (`project/language_manager.ts`):
+
    - Centralizes language configuration management
    - Registers default languages (TypeScript, JavaScript, Python, Rust)
    - Provides lookup by name or file extension

@@ -9,6 +9,7 @@
 ## Objective
 
 Ensure TypeScript builder properly tracks all definitions and nested objects, including:
+
 - Migrating constructors to dedicated API
 - Adding parameter tracking for interface methods
 - Verifying all TypeScript-specific features work
@@ -16,6 +17,7 @@ Ensure TypeScript builder properly tracks all definitions and nested objects, in
 ## Current Status
 
 TypeScript extends JavaScript but has additional features:
+
 - ✅ All JavaScript features inherited
 - ✅ Interfaces with methods and properties
 - ✅ Type aliases, enums, namespaces
@@ -33,6 +35,7 @@ TypeScript extends JavaScript but has additional features:
 TypeScript inherits JavaScript config, so constructor handling comes from parent. However, it's **overridden** around line 926:
 
 **Current code (inherited override):**
+
 ```typescript
 [
   "definition.class",
@@ -64,6 +67,7 @@ TypeScript inherits JavaScript config, so constructor handling comes from parent
 **Current issue:** Interface methods added but their parameters are ignored.
 
 **Current code (line 703-726):**
+
 ```typescript
 [
   "definition.interface.method",
@@ -95,6 +99,7 @@ TypeScript inherits JavaScript config, so constructor handling comes from parent
 **File:** `packages/core/src/index_single_file/query_code_tree/language_configs/queries/typescript.scm`
 
 **Add or verify capture:**
+
 ```scheme
 ; Interface method signatures with parameters
 (method_signature
@@ -107,6 +112,7 @@ TypeScript inherits JavaScript config, so constructor handling comes from parent
 **Solution 2: Add handler for interface method parameters**
 
 **Add after `definition.interface.method`:**
+
 ```typescript
 [
   "definition.interface.method.param",
@@ -129,6 +135,7 @@ TypeScript inherits JavaScript config, so constructor handling comes from parent
 ```
 
 **Helper function needed:**
+
 ```typescript
 function find_containing_interface_method(capture: CaptureNode): SymbolId {
   let node = capture.node.parent;
@@ -137,7 +144,10 @@ function find_containing_interface_method(capture: CaptureNode): SymbolId {
     if (node.type === "method_signature") {
       const nameNode = node.childForFieldName?.("name");
       if (nameNode) {
-        return method_symbol(nameNode.text as SymbolName, extract_location(nameNode));
+        return method_symbol(
+          nameNode.text as SymbolName,
+          extract_location(nameNode)
+        );
       }
     }
     node = node.parent;
@@ -161,6 +171,7 @@ function is_optional_parameter(node: SyntaxNode): boolean {
 ### 3. Verify Parameter Properties
 
 **Current code (line 1057-1085):**
+
 ```typescript
 [
   "param.property",
@@ -193,6 +204,7 @@ function is_optional_parameter(node: SyntaxNode): boolean {
 **Query check:** Does `param.property` capture both the parameter AND property aspects?
 
 **Potential fix:** Parameter properties should ALSO be added as constructor parameters:
+
 ```typescript
 [
   "param.property",
@@ -236,6 +248,7 @@ function is_optional_parameter(node: SyntaxNode): boolean {
 ```
 
 **Helper needed:**
+
 ```typescript
 function find_constructor_in_class(class_id: SymbolId): SymbolId | undefined {
   // This is tricky - we need to find the constructor symbol ID
@@ -250,27 +263,28 @@ function find_constructor_in_class(class_id: SymbolId): SymbolId | undefined {
 
 ### 4. Verify All TypeScript-Specific Features
 
-| Definition Type | Capture Name | Builder Method | Status |
-|----------------|--------------|----------------|--------|
-| Interface | `definition.interface` | `add_interface` | ✅ |
-| Interface Method | `definition.interface.method` | `add_method_signature_to_interface` | ✅ |
-| Interface Method Param | NEW | `add_parameter_to_callable` | ❌ Add |
-| Interface Property | `definition.interface.property` | `add_property_signature_to_interface` | ✅ |
-| Type Alias | `definition.type_alias` | `add_type` | ✅ |
-| Enum | `definition.enum` | `add_enum` | ✅ |
-| Enum Member | `definition.enum.member` | `add_enum_member` | ✅ |
-| Namespace | `definition.namespace` | `add_namespace` | ✅ |
-| Decorator (class) | `decorator.class` | `add_decorator_to_target` | ✅ |
-| Decorator (method) | `decorator.method` | `add_decorator_to_target` | ✅ |
-| Decorator (property) | `decorator.property` | `add_decorator_to_target` | ✅ |
-| Parameter Property | `param.property` | `add_property_to_class` | ⚠️ Verify |
-| Optional Parameter | `definition.parameter.optional` | `add_parameter_to_callable` | ✅ |
+| Definition Type        | Capture Name                    | Builder Method                        | Status    |
+| ---------------------- | ------------------------------- | ------------------------------------- | --------- |
+| Interface              | `definition.interface`          | `add_interface`                       | ✅        |
+| Interface Method       | `definition.interface.method`   | `add_method_signature_to_interface`   | ✅        |
+| Interface Method Param | NEW                             | `add_parameter_to_callable`           | ❌ Add    |
+| Interface Property     | `definition.interface.property` | `add_property_signature_to_interface` | ✅        |
+| Type Alias             | `definition.type_alias`         | `add_type`                            | ✅        |
+| Enum                   | `definition.enum`               | `add_enum`                            | ✅        |
+| Enum Member            | `definition.enum.member`        | `add_enum_member`                     | ✅        |
+| Namespace              | `definition.namespace`          | `add_namespace`                       | ✅        |
+| Decorator (class)      | `decorator.class`               | `add_decorator_to_target`             | ✅        |
+| Decorator (method)     | `decorator.method`              | `add_decorator_to_target`             | ✅        |
+| Decorator (property)   | `decorator.property`            | `add_decorator_to_target`             | ✅        |
+| Parameter Property     | `param.property`                | `add_property_to_class`               | ⚠️ Verify |
+| Optional Parameter     | `definition.parameter.optional` | `add_parameter_to_callable`           | ✅        |
 
 ## Query File Changes
 
 **File:** `packages/core/src/index_single_file/query_code_tree/language_configs/queries/typescript.scm`
 
 **Add interface method parameter capture:**
+
 ```scheme
 ; Interface method parameters
 (method_signature
@@ -287,6 +301,7 @@ function find_constructor_in_class(class_id: SymbolId): SymbolId | undefined {
 **File:** `packages/core/src/index_single_file/semantic_index.typescript.test.ts`
 
 **Add test for interface method parameters:**
+
 ```typescript
 it("should extract interface method parameters", () => {
   const code = `
@@ -317,6 +332,7 @@ it("should extract interface method parameters", () => {
 ```
 
 **Add test for parameter properties:**
+
 ```typescript
 it("should extract parameter properties", () => {
   const code = `
@@ -346,14 +362,17 @@ it("should extract parameter properties", () => {
 ## Implementation Steps
 
 1. **Update typescript.scm:**
+
    - Add interface method parameter captures
 
 2. **Update typescript_builder.ts:**
+
    - Add `definition.interface.method.param` handler
    - Add helper functions
    - Verify parameter property handling
 
 3. **Add tests:**
+
    - Interface method parameters
    - Parameter properties
    - Optional parameters in interfaces

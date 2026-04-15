@@ -219,6 +219,7 @@ See [OPTION-A-SCOPE-FIX-PLAN.md](OPTION-A-SCOPE-FIX-PLAN.md) for complete detail
 #### Sub-task 11.112.5: Update TypeScript .scm
 
 Update `typescript.scm` to capture bodies:
+
 - Classes: `body: (class_body) @scope.class`
 - Interfaces: `body: (object_type) @scope.interface`
 - Enums: `body: (enum_body) @scope.enum`
@@ -226,16 +227,19 @@ Update `typescript.scm` to capture bodies:
 #### Sub-task 11.112.6: Update JavaScript .scm
 
 Update `javascript.scm`:
+
 - Classes: `body: (class_body) @scope.class`
 
 #### Sub-task 11.112.7: Update Python .scm
 
 Update `python.scm`:
+
 - Classes: `body: (block) @scope.class`
 
 #### Sub-task 11.112.8: Update Rust .scm
 
 Update `rust.scm`:
+
 - Structs: `body: (field_declaration_list) @scope.struct`
 - Enums: `body: (enum_variant_list) @scope.enum`
 - Traits: `body: (declaration_list) @scope.trait`
@@ -244,6 +248,7 @@ Update `rust.scm`:
 #### Sub-task 11.112.9: Clean Up get_scope_id()
 
 Remove any heuristic code from `scope_processor.ts`:
+
 - Revert to simple deepest-scope logic
 - No start-position tricks
 - No distance-based checks
@@ -252,6 +257,7 @@ Remove any heuristic code from `scope_processor.ts`:
 #### Sub-task 11.112.10: Verify Scope Assignment Tests
 
 Run reproduction tests from task 11.112.1:
+
 ```bash
 npm test -- scope_assignment_bug_repro.test.ts
 ```
@@ -261,6 +267,7 @@ npm test -- scope_assignment_bug_repro.test.ts
 #### Sub-task 11.112.11: Run Semantic Index Tests (All Languages)
 
 Verify no regressions from .scm changes:
+
 ```bash
 npm test -- semantic_index.typescript.test.ts
 npm test -- semantic_index.javascript.test.ts
@@ -273,6 +280,7 @@ npm test -- semantic_index.rust.test.ts
 #### Sub-task 11.112.12: Run TypeContext and Integration Tests
 
 Verify scope fix unblocks type resolution:
+
 ```bash
 npm test -- type_context.test.ts
 npm test -- symbol_resolution.integration.test.ts

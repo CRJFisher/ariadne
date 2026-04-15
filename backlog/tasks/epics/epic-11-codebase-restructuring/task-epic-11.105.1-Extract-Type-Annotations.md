@@ -107,6 +107,7 @@ export function extract_type_annotations(
 ### Test Cases
 
 #### TypeScript
+
 ```typescript
 test("extracts variable type annotations", () => {
   const code = `
@@ -157,6 +158,7 @@ test("handles optional parameters", () => {
 ```
 
 #### Python
+
 ```python
 test("extracts Python type hints", () => {
   const code = `
@@ -172,6 +174,7 @@ test("extracts Python type hints", () => {
 ```
 
 #### JavaScript (JSDoc)
+
 ```javascript
 test("extracts JSDoc type annotations", () => {
   const code = `
@@ -188,6 +191,7 @@ test("extracts JSDoc type annotations", () => {
 ```
 
 #### Rust
+
 ```rust
 test("extracts Rust type annotations", () => {
   const code = `
@@ -213,17 +217,20 @@ test("extracts Rust type annotations", () => {
 ## Success Criteria
 
 ### Functional
+
 - ✅ Variable annotations extracted
 - ✅ Parameter annotations extracted (functions, methods, constructors)
 - ✅ All 4 languages supported (TS, Python, Rust; JS deferred)
 - ✅ Handles optional parameters
 
 ### Testing
+
 - ✅ Unit tests for each language
 - ✅ Edge cases covered
 - ✅ >90% code coverage
 
 ### Code Quality
+
 - ✅ Clear JSDoc comments
 - ✅ Type-safe implementation
 - ✅ Pythonic naming
@@ -231,6 +238,7 @@ test("extracts Rust type annotations", () => {
 ## Dependencies
 
 **Uses:**
+
 - `BuilderResult` from definition_builder
 - `LocationKey`, `SymbolName` from types
 
@@ -239,6 +247,7 @@ test("extracts Rust type annotations", () => {
 ## Next Steps
 
 After completion:
+
 - Task 11.105.2 extracts constructor bindings
 - Both merged in task 11.105.5
 - Used by 11.109.3 for type resolution
@@ -252,6 +261,7 @@ Return type annotations ARE extracted from functions and methods because they pr
 ### Type Expression Complexity
 
 For complex types like `Map<string, User>`, store the full string:
+
 - 11.109.3 will attempt resolution
 - Initial implementation only resolves simple type names
 - Complex generic types deferred to future work
@@ -261,6 +271,7 @@ For complex types like `Map<string, User>`, store the full string:
 ### What Was Completed
 
 **Core Implementation:**
+
 - ✅ Created `type_preprocessing` module with clean architecture
 - ✅ Implemented `extract_type_bindings()` function for type annotation extraction
 - ✅ Comprehensive test suite with 18 tests across all 4 target languages
@@ -268,6 +279,7 @@ For complex types like `Map<string, User>`, store the full string:
 - ✅ Integration-ready for task 11.105.5
 
 **Files Created:**
+
 ```
 packages/core/src/index_single_file/type_preprocessing/
 ├── index.ts                      # Public API (exports extract_type_bindings)
@@ -279,6 +291,7 @@ packages/core/src/index_single_file/type_preprocessing/
 **Extraction Coverage:**
 
 The implementation successfully extracts type annotations from:
+
 1. ✅ **Variable declarations** - `const x: Type`
 2. ✅ **Function parameters** - `function f(x: Type)`
 3. ✅ **Function return types** - `function f(): Type`
@@ -295,6 +308,7 @@ The implementation successfully extracts type annotations from:
 **Overall:** 18/18 tests passing (100%)
 
 **By Language:**
+
 - **JavaScript** (2 tests): Baseline testing, untyped code handling
 - **TypeScript** (6 tests): Parameters, properties, methods, interfaces, complex types
 - **Python** (4 tests): Variables, parameters, class attributes, methods
@@ -302,6 +316,7 @@ The implementation successfully extracts type annotations from:
 - **Edge Cases** (2 tests): Empty definitions, code without annotations
 
 **Test Execution:**
+
 - Duration: ~1.6 seconds
 - No flaky tests
 - No timeouts
@@ -312,16 +327,18 @@ The implementation successfully extracts type annotations from:
 #### 1. Function Signature Design
 
 **Decision:** Accept a structured definitions object instead of BuilderResult
+
 ```typescript
 export function extract_type_bindings(definitions: {
   variables: ReadonlyMap<unknown, VariableDefinition>;
   functions: ReadonlyMap<unknown, FunctionDefinition>;
   classes: ReadonlyMap<unknown, ClassDefinition>;
   interfaces: ReadonlyMap<unknown, InterfaceDefinition>;
-}): ReadonlyMap<LocationKey, SymbolName>
+}): ReadonlyMap<LocationKey, SymbolName>;
 ```
 
 **Rationale:**
+
 - More flexible - can be called with subset of definitions
 - Clearer interface - explicitly shows what's needed
 - Better testability - easy to mock individual definition types
@@ -332,6 +349,7 @@ export function extract_type_bindings(definitions: {
 **Decision:** Return `Map<LocationKey, SymbolName>` (strings) instead of resolved SymbolIds
 
 **Rationale:**
+
 - Type resolution requires scope context (imports, shadowing)
 - Scope-aware resolution happens in task 11.109 with ScopeResolver
 - Separation of concerns: extraction vs resolution
@@ -342,6 +360,7 @@ export function extract_type_bindings(definitions: {
 **Decision:** Use `LocationKey` (location string) as map key
 
 **Rationale:**
+
 - Efficient O(1) lookup by location
 - Matches existing codebase patterns
 - Works with both definitions and references
@@ -352,6 +371,7 @@ export function extract_type_bindings(definitions: {
 **Decision:** Extract from all definition types, not just variables
 
 **Rationale:**
+
 - Function return types needed for call chain resolution
 - Method parameters essential for method overload resolution
 - Interface properties needed for structural typing
@@ -362,6 +382,7 @@ export function extract_type_bindings(definitions: {
 #### Pattern 1: Uniform Type Field Access
 
 All definition types follow a consistent pattern:
+
 ```typescript
 // Variables, parameters, properties all have optional .type field
 variable.type?: SymbolName
@@ -378,6 +399,7 @@ This consistency simplified implementation - same extraction pattern works acros
 #### Pattern 2: Nested Iteration Pattern
 
 TypeScript's `downlevelIteration` handles Map iteration correctly:
+
 ```typescript
 for (const def of definitions.classes.values()) {
   for (const method of def.methods) {
@@ -393,9 +415,12 @@ This three-level nesting pattern appears throughout the codebase and works relia
 #### Pattern 3: Optional Chaining for Nested Arrays
 
 Constructor arrays require careful null checking:
+
 ```typescript
-if (class_def.constructor) {  // constructor is optional
-  for (const ctor of class_def.constructor) {  // array iteration
+if (class_def.constructor) {
+  // constructor is optional
+  for (const ctor of class_def.constructor) {
+    // array iteration
     for (const param of ctor.parameters) {
       // Extract safely
     }
@@ -406,6 +431,7 @@ if (class_def.constructor) {  // constructor is optional
 #### Pattern 4: Location Key Generation
 
 The `location_key()` utility provides consistent key generation:
+
 ```typescript
 import { location_key } from "@ariadnejs/types";
 
@@ -422,6 +448,7 @@ This ensures keys are compatible with other parts of the system.
 **Problem:** Not all type annotations are extracted by `semantic_index` itself.
 
 **Examples:**
+
 - TypeScript top-level variable types: `const x: string = "foo"` - type not always captured
 - Top-level function return types: `function f(): number` - may not be extracted
 - Python/Rust function parameters at module level
@@ -429,6 +456,7 @@ This ensures keys are compatible with other parts of the system.
 **Root Cause:** Tree-sitter query patterns in `semantic_index` don't capture all annotation contexts.
 
 **Impact:** Limited, because:
+
 - Class members (properties, methods) ARE extracted correctly
 - Interface definitions ARE extracted correctly
 - Most practical code is in classes/interfaces
@@ -441,6 +469,7 @@ This ensures keys are compatible with other parts of the system.
 #### Issue 2: Test Compilation Errors (Resolved)
 
 **Problem:** Initial isolated compilation failed with iterator errors:
+
 ```
 error TS2802: Type 'MapIterator<...>' can only be iterated through
 when using the '--downlevelIteration' flag
@@ -455,6 +484,7 @@ when using the '--downlevelIteration' flag
 **Problem:** Initial tests expected all type annotations to be extracted but some weren't.
 
 **Resolution:** Adjusted tests to match what `semantic_index` actually provides:
+
 - Focus on class/interface members (where extraction works well)
 - Accept that top-level function parameters may not be extracted
 - Document the limitation clearly in test comments
@@ -464,16 +494,19 @@ when using the '--downlevelIteration' flag
 ### Performance Characteristics
 
 **Complexity Analysis:**
+
 - Time: O(D + P) where D = definitions, P = parameters/properties
 - Space: O(T) where T = type annotations found
 - Typical: ~1000 definitions → <1ms extraction time
 
 **Memory Usage:**
+
 - Minimal - only stores LocationKey → SymbolName mappings
 - No deep copies - uses readonly views
 - GC-friendly - no circular references
 
 **Scalability:**
+
 - Tested on files with 100+ definitions - no performance issues
 - Linear scaling with codebase size
 - Suitable for real-time/interactive use
@@ -483,12 +516,14 @@ when using the '--downlevelIteration' flag
 #### For Task 11.105.5 (Integration into SemanticIndex)
 
 **Required Changes:**
+
 1. Add `type_bindings: ReadonlyMap<LocationKey, SymbolName>` field to SemanticIndex interface
 2. Call `extract_type_bindings()` in `build_semantic_index()`
 3. Store result in returned index
 4. Update SemanticIndex construction to include type_bindings
 
 **Example Integration:**
+
 ```typescript
 export function build_semantic_index(...): SemanticIndex {
   // ... existing code ...
@@ -513,6 +548,7 @@ export function build_semantic_index(...): SemanticIndex {
 #### For Task 11.109.3 (TypeContext Resolution)
 
 **Usage Pattern:**
+
 ```typescript
 export function build_type_context(
   indices: ReadonlyMap<FilePath, SemanticIndex>,
@@ -542,6 +578,7 @@ export function build_type_context(
 #### Immediate Next Steps (Task 11.105.2)
 
 Constructor binding extraction will follow the same patterns:
+
 - Similar function signature design
 - Location-based keys for consistency
 - Stores type names (not resolved)
@@ -550,12 +587,14 @@ Constructor binding extraction will follow the same patterns:
 #### Future Enhancements
 
 1. **Enhance semantic_index Type Extraction**
+
    - Add tree-sitter query patterns for top-level variable types
    - Capture function return types at module level
    - Extract Python/Rust function parameters more consistently
    - Priority: Medium (works well enough for classes/interfaces)
 
 2. **Complex Type Parsing**
+
    - Current: Stores `Array<User>` as single string
    - Future: Parse generic type expressions
    - Extract type arguments: `Array<User>` → `["Array", "User"]`
@@ -563,6 +602,7 @@ Constructor binding extraction will follow the same patterns:
    - Priority: Low (deferred to post-11.109)
 
 3. **Type Alias Chain Resolution**
+
    - Current: Extract raw alias expressions
    - Future: Follow alias chains automatically
    - Example: `type A = B; type B = C;` → resolve A to C
@@ -579,16 +619,19 @@ Constructor binding extraction will follow the same patterns:
 ### Lessons Learned
 
 1. **Test Against Reality, Not Ideals**
+
    - Initial tests assumed perfect semantic_index extraction
    - Reality: Some annotations not extracted by upstream
    - Lesson: Verify assumptions about input data early
 
 2. **Separation of Concerns Works**
+
    - Extraction vs resolution split was correct decision
    - Enables independent testing and optimization
    - Makes future changes easier
 
 3. **Consistent Patterns Enable Reuse**
+
    - Same extraction pattern works for all definition types
    - Location-based keys work everywhere
    - Lesson: Follow existing codebase patterns
@@ -601,6 +644,7 @@ Constructor binding extraction will follow the same patterns:
 ### Quality Metrics
 
 ✅ **Code Quality:**
+
 - TypeScript strict mode: passing
 - No `any` types used
 - All functions documented with JSDoc
@@ -608,6 +652,7 @@ Constructor binding extraction will follow the same patterns:
 - Clean, readable implementation
 
 ✅ **Test Quality:**
+
 - 100% test pass rate
 - All 4 languages covered
 - Edge cases included
@@ -615,6 +660,7 @@ Constructor binding extraction will follow the same patterns:
 - No flaky tests
 
 ✅ **Integration Quality:**
+
 - Zero compilation errors
 - Follows existing patterns
 - Clean public API
@@ -625,6 +671,7 @@ Constructor binding extraction will follow the same patterns:
 All success criteria met:
 
 **Functional:**
+
 - ✅ Variable annotations extracted
 - ✅ Parameter annotations extracted (functions, methods, constructors)
 - ✅ Return type annotations extracted (added beyond original spec)
@@ -633,12 +680,14 @@ All success criteria met:
 - ✅ Handles complex/generic types (stored as strings)
 
 **Testing:**
+
 - ✅ Unit tests for each language (18 total)
 - ✅ Edge cases covered (empty, no annotations)
 - ✅ >90% code coverage (100% function coverage)
 - ✅ Integration tests via semantic_index
 
 **Code Quality:**
+
 - ✅ Clear JSDoc comments throughout
 - ✅ Type-safe implementation (0 TypeScript errors)
 - ✅ Pythonic naming (snake_case functions/variables)

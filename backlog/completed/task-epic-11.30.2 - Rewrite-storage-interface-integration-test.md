@@ -47,6 +47,7 @@ During task-epic-11.30.1, we discovered that the storage interface test was comp
 1. **Test Location**: Placed the contract test in `/packages/core/src/storage/__tests__/storage_contract.test.ts` following Architecture.md patterns for integration tests within feature folders. The `__tests__` directory clearly separates this from individual implementation tests while keeping it colocated with the storage feature.
 
 2. **Test Structure**: Implemented a parameterized test pattern using a factory approach:
+
    - Single `run_storage_contract_tests` function that defines the contract
    - Each implementation provides a factory to create instances
    - All implementations run through the same test suite
@@ -72,8 +73,9 @@ During task-epic-11.30.1, we discovered that the storage interface test was comp
 ### Test Results
 
 All 65 tests pass successfully:
+
 - 20 tests for MemoryStorage contract
-- 20 tests for DiskStorage contract  
+- 20 tests for DiskStorage contract
 - 20 tests for CacheLayer contract
 - 2 DiskStorage-specific persistence tests
 - 3 CacheLayer-specific caching behavior tests
@@ -85,13 +87,20 @@ The test suite validates that all three storage implementations correctly implem
 1. **Test Location**: Consider if this should remain in `tests/` as a true integration test or be colocated with storage_interface.ts
 
 2. **Contract Testing Pattern**: The test should define a contract that all implementations must satisfy, similar to:
+
    ```typescript
    const implementations = [
-     { name: 'memory', create: () => create_memory_storage() },
-     { name: 'disk', create: () => create_disk_storage({ storage_dir: tempDir }) },
-     { name: 'cache', create: () => create_cache_layer({ base: memoryStorage }) }
+     { name: "memory", create: () => create_memory_storage() },
+     {
+       name: "disk",
+       create: () => create_disk_storage({ storage_dir: tempDir }),
+     },
+     {
+       name: "cache",
+       create: () => create_cache_layer({ base: memoryStorage }),
+     },
    ];
-   
+
    implementations.forEach(({ name, create }) => {
      describe(`StorageInterface contract - ${name}`, () => {
        // Contract tests here

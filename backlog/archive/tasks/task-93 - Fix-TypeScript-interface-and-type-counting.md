@@ -3,8 +3,8 @@ id: task-93
 title: Fix TypeScript interface and type counting
 status: Done
 assignee: []
-created_date: '2025-08-03'
-updated_date: '2025-08-03'
+created_date: "2025-08-03"
+updated_date: "2025-08-03"
 labels: []
 dependencies: []
 ---

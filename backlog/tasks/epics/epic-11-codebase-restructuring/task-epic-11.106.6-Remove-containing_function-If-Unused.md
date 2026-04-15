@@ -24,18 +24,20 @@ Delete the `containing_function` field from `ReferenceContext` interface.
 **File:** `packages/types/src/semantic_index.ts`
 
 **Before:**
+
 ```typescript
 export interface ReferenceContext {
   readonly receiver_location?: Location;
   readonly assignment_source?: Location;
   readonly assignment_target?: Location;
   readonly construct_target?: Location;
-  readonly containing_function?: SymbolId;  // ❌ DELETE THIS LINE
+  readonly containing_function?: SymbolId; // ❌ DELETE THIS LINE
   readonly property_chain?: readonly SymbolName[];
 }
 ```
 
 **After:**
+
 ```typescript
 export interface ReferenceContext {
   readonly receiver_location?: Location;
@@ -49,16 +51,20 @@ export interface ReferenceContext {
 ## Verification Steps
 
 1. **Confirm no references remain in production code:**
+
    ```bash
    rg "containing_function" --type ts -g "!*test.ts"
    ```
+
    Expected: 0 results
 
 2. **TypeScript compilation:**
+
    ```bash
    cd packages/types && npx tsc --noEmit
    cd packages/core && npx tsc --noEmit
    ```
+
    Expected: 0 errors
 
 3. **Run tests (may fail - will be fixed in 11.106.8):**
@@ -86,6 +92,7 @@ If task 11.106.5 decided to KEEP the field:
 ## Notes
 
 This task is intentionally small and simple because:
+
 - It's just deleting one line from the interface
 - Conditional execution based on audit results
 - Low risk (field was never populated)

@@ -3,9 +3,9 @@ id: task-100.5
 title: Run validation guide process and identify discrepancies
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-08-04 11:55'
-updated_date: '2025-08-04 13:40'
+  - "@chuck"
+created_date: "2025-08-04 11:55"
+updated_date: "2025-08-04 13:40"
 labels: []
 dependencies: []
 parent_task_id: task-100
@@ -35,16 +35,19 @@ Follow the validation-guide.md process to manually verify Ariadne's accuracy and
 Ran the Ariadne self-analysis validation process and identified critical discrepancies:
 
 1. File Size Limit Issue:
+
    - project_call_graph.ts (60.1KB) was skipped due to 32KB tree-sitter limit
    - This file contains many function calls, causing false top-level node identification
    - Without this file, the analysis is fundamentally incomplete
 
 2. Method Call Detection Failure:
+
    - Method calls on built-in types (Array, Map, Set, String, etc.) are not tracked
    - Functions like apply_max_depth_filter and generateLargeFile show 0 outgoing calls despite having many
    - This causes the 'nodes with calls' metric to be only 36.9% instead of 85%
 
 3. Created Test Cases:
+
    - method-call-detection.test.ts: Tests for tracking method calls on built-in types
    - large-file-handling.test.ts: Tests for handling files over 32KB limit
 

@@ -6,11 +6,11 @@ Hooks are automated triggers that execute shell commands or LLM-based evaluation
 
 Hooks are configured in JSON settings files at three levels (in order of precedence):
 
-| File | Scope | Committed |
-|------|-------|-----------|
-| `.claude/settings.json` | Project-wide | Yes |
+| File                          | Scope           | Committed       |
+| ----------------------------- | --------------- | --------------- |
+| `.claude/settings.json`       | Project-wide    | Yes             |
 | `.claude/settings.local.json` | Local overrides | No (gitignored) |
-| `~/.claude/settings.json` | User-wide | N/A |
+| `~/.claude/settings.json`     | User-wide       | N/A             |
 
 Basic structure:
 
@@ -34,18 +34,18 @@ Basic structure:
 
 ## Hook Events
 
-| Event | When It Fires | Supports Matcher | Use Case |
-|-------|---------------|------------------|----------|
-| `PreToolUse` | Before tool executes | Yes | Validate/block tool calls |
-| `PostToolUse` | After tool completes | Yes | Lint, validate output |
-| `PermissionRequest` | User permission dialog | Yes | Auto-allow/deny |
-| `UserPromptSubmit` | Before processing prompt | No | Validate input, add context |
-| `Stop` | Main agent finished | No | Final validation before completion |
-| `SubagentStop` | Subagent (Task) finished | No | Validate subagent work |
-| `SessionStart` | Session begins | No | Environment setup |
-| `SessionEnd` | Session ends | No | Cleanup |
-| `Notification` | System notification | Yes | Filter notifications |
-| `PreCompact` | Before context compression | Yes (`manual`/`auto`) | Custom compaction |
+| Event               | When It Fires              | Supports Matcher      | Use Case                           |
+| ------------------- | -------------------------- | --------------------- | ---------------------------------- |
+| `PreToolUse`        | Before tool executes       | Yes                   | Validate/block tool calls          |
+| `PostToolUse`       | After tool completes       | Yes                   | Lint, validate output              |
+| `PermissionRequest` | User permission dialog     | Yes                   | Auto-allow/deny                    |
+| `UserPromptSubmit`  | Before processing prompt   | No                    | Validate input, add context        |
+| `Stop`              | Main agent finished        | No                    | Final validation before completion |
+| `SubagentStop`      | Subagent (Task) finished   | No                    | Validate subagent work             |
+| `SessionStart`      | Session begins             | No                    | Environment setup                  |
+| `SessionEnd`        | Session ends               | No                    | Cleanup                            |
+| `Notification`      | System notification        | Yes                   | Filter notifications               |
+| `PreCompact`        | Before context compression | Yes (`manual`/`auto`) | Custom compaction                  |
 
 ## Matchers
 
@@ -83,11 +83,11 @@ Fields vary by event type. Tool-related events include `tool_name`, `tool_input`
 
 ## Exit Codes
 
-| Exit Code | Behavior |
-|-----------|----------|
-| `0` | Success. stdout shown in verbose mode (or added as context for some events) |
-| `2` | **Blocking error**. stderr is fed back to Claude as feedback |
-| Other | Non-blocking error. stderr shown in verbose mode |
+| Exit Code | Behavior                                                                    |
+| --------- | --------------------------------------------------------------------------- |
+| `0`       | Success. stdout shown in verbose mode (or added as context for some events) |
+| `2`       | **Blocking error**. stderr is fed back to Claude as feedback                |
+| Other     | Non-blocking error. stderr shown in verbose mode                            |
 
 **Key insight**: Exit code 2 blocks the operation and provides feedback to Claude, allowing it to fix the issue.
 
@@ -106,6 +106,7 @@ For exit code 0, hooks can return JSON for fine-grained control:
 ### Event-Specific Decisions
 
 **PreToolUse**:
+
 ```json
 {
   "hookSpecificOutput": {
@@ -117,6 +118,7 @@ For exit code 0, hooks can return JSON for fine-grained control:
 ```
 
 **PostToolUse**:
+
 ```json
 {
   "decision": "block",
@@ -126,6 +128,7 @@ For exit code 0, hooks can return JSON for fine-grained control:
 ```
 
 **Stop/SubagentStop**:
+
 ```json
 {
   "decision": "block",
@@ -135,11 +138,11 @@ For exit code 0, hooks can return JSON for fine-grained control:
 
 ## Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `CLAUDE_PROJECT_DIR` | Project root directory |
-| `CLAUDE_CODE_REMOTE` | `"true"` if running remotely |
-| `CLAUDE_ENV_FILE` | (SessionStart only) File to persist env vars |
+| Variable             | Description                                  |
+| -------------------- | -------------------------------------------- |
+| `CLAUDE_PROJECT_DIR` | Project root directory                       |
+| `CLAUDE_CODE_REMOTE` | `"true"` if running remotely                 |
+| `CLAUDE_ENV_FILE`    | (SessionStart only) File to persist env vars |
 
 ## Example: ESLint Hook
 
@@ -177,16 +180,18 @@ function main() {
     execSync(`npx eslint "${file_path}" --format stylish`, {
       cwd: project_dir,
       encoding: "utf8",
-      stdio: ["pipe", "pipe", "pipe"]
+      stdio: ["pipe", "pipe", "pipe"],
     });
-    process.exit(0);  // No errors
+    process.exit(0); // No errors
   } catch (error) {
     const output = error.stdout || error.stderr || "ESLint errors found";
-    console.log(JSON.stringify({
-      decision: "block",
-      reason: `ESLint errors in ${file_path}:\n${output}\n\nPlease fix these lint errors.`
-    }));
-    process.exit(0);  // Return JSON, not exit code 2
+    console.log(
+      JSON.stringify({
+        decision: "block",
+        reason: `ESLint errors in ${file_path}:\n${output}\n\nPlease fix these lint errors.`,
+      })
+    );
+    process.exit(0); // Return JSON, not exit code 2
   }
 }
 
@@ -213,15 +218,17 @@ function main() {
     execSync("npm run lint", {
       cwd: project_dir,
       encoding: "utf8",
-      stdio: ["pipe", "pipe", "pipe"]
+      stdio: ["pipe", "pipe", "pipe"],
     });
-    process.exit(0);  // No errors
+    process.exit(0); // No errors
   } catch (error) {
     const output = error.stdout || error.stderr || "ESLint errors found";
-    console.log(JSON.stringify({
-      decision: "block",
-      reason: `Project has ESLint errors:\n\n${output}\n\nPlease fix all lint errors before finishing.`
-    }));
+    console.log(
+      JSON.stringify({
+        decision: "block",
+        reason: `Project has ESLint errors:\n\n${output}\n\nPlease fix all lint errors before finishing.`,
+      })
+    );
     process.exit(0);
   }
 }
@@ -266,6 +273,7 @@ main();
 Two ways to block Claude and provide feedback:
 
 1. **Exit code 2 + stderr**: Simple, stderr becomes Claude's feedback
+
    ```javascript
    console.error("Error message for Claude");
    process.exit(2);
@@ -273,10 +281,12 @@ Two ways to block Claude and provide feedback:
 
 2. **Exit code 0 + JSON**: More control, structured response
    ```javascript
-   console.log(JSON.stringify({
-     decision: "block",
-     reason: "Error message for Claude"
-   }));
+   console.log(
+     JSON.stringify({
+       decision: "block",
+       reason: "Error message for Claude",
+     })
+   );
    process.exit(0);
    ```
 

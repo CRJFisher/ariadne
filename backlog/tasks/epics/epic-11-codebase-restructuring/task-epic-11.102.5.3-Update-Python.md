@@ -13,11 +13,13 @@ Update Python language support to use the new direct definition builder system, 
 ## Sub-tasks
 
 1. **Update Language Config** (102.5.3.1)
+
    - Convert to builder pattern
    - Handle Python-specific features (decorators, type hints, docstrings)
    - Direct Definition creation
 
 2. **Update Query File** (102.5.3.2)
+
    - Clean up python.scm
    - Add decorator captures
    - Handle class inheritance (multiple inheritance)

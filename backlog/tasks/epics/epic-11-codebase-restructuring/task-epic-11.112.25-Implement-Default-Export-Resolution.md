@@ -15,14 +15,17 @@ Fix the critical bug where default exports cannot be resolved. Currently, `impor
 
 ```javascript
 // math.js
-export default function calculate() { return 42; }
+export default function calculate() {
+  return 42;
+}
 
 // main.js
-import calc from './math';  // ❌ FAILS
+import calc from "./math"; // ❌ FAILS
 calc();
 ```
 
 **Why it fails:**
+
 1. Semantic index creates definition: `name = "calculate"`
 2. Builder marks: `is_exported = true, export = { is_default: true }`
 3. Import uses `import_kind = "default"`
@@ -32,6 +35,7 @@ calc();
 ### Expected Behavior
 
 For default imports, the resolver should:
+
 1. Detect `import_kind = "default"` in the import spec
 2. Search for ANY definition with `export.is_default = true`
 3. Ignore the local import name (it's user-chosen, not part of the export)
@@ -65,7 +69,7 @@ export function extract_import_specs(
         local_name: import_def.name,
         source_file,
         import_name: import_def.original_name || import_def.name,
-        import_kind: import_def.import_kind,  // ✅ Already extracted
+        import_kind: import_def.import_kind, // ✅ Already extracted
       });
     }
   }
@@ -93,7 +97,7 @@ export function resolve_export_chain(
   source_file: FilePath,
   export_name: SymbolName,
   indices: ReadonlyMap<FilePath, SemanticIndex>,
-  import_kind: "named" | "default" | "namespace" = "named",  // NEW parameter
+  import_kind: "named" | "default" | "namespace" = "named", // NEW parameter
   visited: Set<string> = new Set()
 ): SymbolId | null {
   const source_index = indices.get(source_file);
@@ -109,9 +113,10 @@ export function resolve_export_chain(
   visited.add(key);
 
   // Look for export in source file
-  const export_info = import_kind === "default"
-    ? find_default_export(source_index)    // NEW: Handle default
-    : find_export(export_name, source_index);
+  const export_info =
+    import_kind === "default"
+      ? find_default_export(source_index) // NEW: Handle default
+      : find_export(export_name, source_index);
 
   if (!export_info) {
     throw new Error(
@@ -137,7 +142,7 @@ export function resolve_export_chain(
       resolved_file,
       original_name,
       indices,
-      next_import_kind,  // Pass through import kind
+      next_import_kind, // Pass through import kind
       visited
     );
   }
@@ -239,7 +244,7 @@ const resolver: SymbolResolver = (indices) => {
     spec.source_file,
     spec.import_name,
     indices,
-    spec.import_kind,  // ✅ Pass import kind
+    spec.import_kind // ✅ Pass import kind
   );
 };
 ```
@@ -259,16 +264,16 @@ describe("Default Export Resolution", () => {
           is_exported: true,
           export: { is_default: true },
           symbol_id: "fn:/math.ts:calculate:1:0" as SymbolId,
-        }
-      ]
+        },
+      ],
     });
 
     // main.ts: import calc from './math'
     const result = resolve_export_chain(
       "/math.ts" as FilePath,
-      "calc" as SymbolName,  // Local name (ignored for default)
+      "calc" as SymbolName, // Local name (ignored for default)
       new Map([["/math.ts" as FilePath, math_index]]),
-      "default"  // Import kind
+      "default" // Import kind
     );
 
     expect(result).toBe("fn:/math.ts:calculate:1:0");
@@ -283,14 +288,14 @@ describe("Default Export Resolution", () => {
           is_exported: true,
           export: { is_default: true },
           symbol_id: "class:/user.ts:User:1:0" as SymbolId,
-        }
-      ]
+        },
+      ],
     });
 
     // main.ts: import MyUser from './user'
     const result = resolve_export_chain(
       "/user.ts" as FilePath,
-      "MyUser" as SymbolName,  // Local name (ignored)
+      "MyUser" as SymbolName, // Local name (ignored)
       new Map([["/user.ts" as FilePath, user_index]]),
       "default"
     );
@@ -306,8 +311,8 @@ describe("Default Export Resolution", () => {
           name: "foo" as SymbolName,
           is_exported: true,
           // No is_default flag
-        }
-      ]
+        },
+      ],
     });
 
     // main.ts: import something from './lib'
@@ -330,8 +335,8 @@ describe("Default Export Resolution", () => {
           is_exported: true,
           export: { is_default: true },
           symbol_id: "fn:/base.ts:core:1:0" as SymbolId,
-        }
-      ]
+        },
+      ],
     });
 
     // barrel.ts: export { default } from './base'
@@ -343,8 +348,8 @@ describe("Default Export Resolution", () => {
           export: { is_default: true, is_reexport: true },
           import_path: "./base",
           import_kind: "default",
-        }
-      ]
+        },
+      ],
     });
 
     // main.ts: import something from './barrel'
@@ -353,7 +358,7 @@ describe("Default Export Resolution", () => {
       "something" as SymbolName,
       new Map([
         ["/barrel.ts" as FilePath, barrel_index],
-        ["/base.ts" as FilePath, base_index]
+        ["/base.ts" as FilePath, base_index],
       ]),
       "default"
     );
@@ -392,7 +397,9 @@ npm test -- symbol_resolution.typescript.test.ts
 
 ```javascript
 // math.js
-export default function() { return 42; }  // Anonymous function
+export default function () {
+  return 42;
+} // Anonymous function
 ```
 
 The semantic index should create a definition with a generated name (e.g., `"<anonymous>"`), and mark it with `is_default = true`.
@@ -413,12 +420,14 @@ This is a syntax error in JavaScript/TypeScript, so the parser won't create a va
 #### 1. `import_resolver.ts` - Core Implementation
 
 **Added `find_default_export()` function (lines 168-302)**
+
 - Searches all definition types (functions, classes, variables, interfaces, enums, types)
 - Validates uniqueness - throws error if multiple defaults found
 - Returns first definition with `export.is_default = true`
 - Handles re-exported imports (e.g., `export { default } from './other'`)
 
 **Enhanced `resolve_export_chain()` function (lines 85-154)**
+
 - Added `import_kind` parameter with default "named"
 - Dispatches to `find_default_export()` when `import_kind === "default"`
 - Fixed cycle detection: uses `${source_file}:default` for default imports (not the local name)
@@ -426,12 +435,14 @@ This is a syntax error in JavaScript/TypeScript, so the parser won't create a va
 - Updated error messages for clarity (distinguishes default vs named export errors)
 
 **Updated `extract_import_specs()` function (lines 39-67)**
+
 - Added documentation explaining `import_name` behavior for each import type
 - Confirmed correct extraction of `import_kind` from `ImportDefinition`
 
 #### 2. `import_resolver.test.ts` - Comprehensive Test Coverage
 
 **Added 17 default export resolution tests:**
+
 1. Default function export resolution
 2. Default class export resolution
 3. Default variable export resolution
@@ -451,6 +462,7 @@ This is a syntax error in JavaScript/TypeScript, so the parser won't create a va
 17. Default variable re-export chain
 
 **Added 1 extract_import_specs test:**
+
 - Default import spec extraction and validation
 
 **Total: 40/40 tests passing** (23 pre-existing + 17 new default export tests)
@@ -458,6 +470,7 @@ This is a syntax error in JavaScript/TypeScript, so the parser won't create a va
 #### 3. `scope_resolver_index.ts` - Documentation Only
 
 **Enhanced documentation (lines 183-201)**
+
 - Added example for default imports
 - Added example for namespace imports
 - Clarified that default import names are ignored during resolution
@@ -466,29 +479,34 @@ This is a syntax error in JavaScript/TypeScript, so the parser won't create a va
 ### Test Results
 
 #### ✅ Unit Tests - All Pass
+
 ```bash
 npm test -- import_resolver.test.ts
 # ✅ 40/40 tests passing
 ```
 
 **Coverage:**
+
 - Default export resolution: 17 tests
 - Extract import specs: 4 tests
 - Named export resolution: 7 tests
 - Export alias resolution: 12 tests
 
 #### ✅ Integration Tests - No Regressions
+
 ```bash
 npm test --workspace=@ariadnejs/core
 # 904/1121 tests passing (87 pre-existing failures)
 ```
 
 **Verification:**
+
 - Stashed changes and re-ran tests
 - All failures confirmed as pre-existing
 - Zero regressions introduced by our implementation
 
 **Pre-existing failures categories:**
+
 1. Symbol resolution integration (13 tests) - `resolve_symbols()` not fully implemented
 2. Scope boundary verification (6 tests) - Scope calculation issues
 3. Body-based scopes (12 tests) - Unrelated to imports
@@ -497,16 +515,19 @@ npm test --workspace=@ariadnejs/core
 ### Issues Encountered
 
 #### 1. Cycle Detection Key for Default Imports
+
 **Problem:** Original approach used `${source_file}:${export_name}:${import_kind}` where `export_name` for defaults is the meaningless local import name.
 
 **Solution:** Changed to `${source_file}:default` for default imports to prevent false negatives in cycle detection.
 
 #### 2. Silent Fallback on Missing import_kind
+
 **Problem:** Code had `import_def.import_kind || "named"` which silently hides bugs.
 
 **Solution:** Added explicit validation that throws descriptive error if `import_kind` is missing on re-exports.
 
 #### 3. No Multiple Default Export Validation
+
 **Problem:** Original `find_default_export()` returned first match without checking for duplicates.
 
 **Solution:** Enhanced to track all matches and throw error with both symbol IDs if multiple defaults found.
@@ -526,6 +547,7 @@ npm test --workspace=@ariadnejs/core
 ### Additional Achievements
 
 **Beyond original requirements:**
+
 - ✅ Anonymous default exports (functions and classes)
 - ✅ Multi-level re-export chains (3+ levels)
 - ✅ Multiple default export validation

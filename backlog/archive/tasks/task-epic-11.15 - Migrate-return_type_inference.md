@@ -3,7 +3,7 @@ id: task-epic-11.15
 title: Migrate return_type_inference feature
 status: Completed
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, type-analysis, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate the `return_type_inference` feature to `src/type_analysis/return_type_in
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -64,8 +65,13 @@ Migrate the `return_type_inference` feature to `src/type_analysis/return_type_in
 
 ```typescript
 // TODO: Add these stubs in implementation
-interface ReturnTypeInferrer { infer_return_type(func: FunctionDef): TypeInfo; }
-interface ReturnAnalysis { explicit_returns: TypeInfo[]; inferred_type: TypeInfo; }
+interface ReturnTypeInferrer {
+  infer_return_type(func: FunctionDef): TypeInfo;
+}
+interface ReturnAnalysis {
+  explicit_returns: TypeInfo[];
+  inferred_type: TypeInfo;
+}
 ```
 
 ## Planning Phase
@@ -143,12 +149,14 @@ Research findings will be documented here during execution.
 1. **Architecture**: Migrated from class-based analyze_return_type to functional paradigm with pure functions
 
 2. **Language Support**: Created comprehensive language-specific implementations:
+
    - JavaScript: Literal inference, constructor detection, Promise/Generator support
    - TypeScript: Explicit annotations, generics, union types, type guards
-   - Python: Type hints, docstring parsing, special methods (__init__, __str__, etc.)
+   - Python: Type hints, docstring parsing, special methods (**init**, **str**, etc.)
    - Rust: Explicit types, impl Trait, Self type, implicit returns
 
 3. **Key Features Implemented**:
+
    - Explicit return type annotation extraction
    - Return statement analysis and type inference
    - Special pattern recognition (constructors, getters, setters)
@@ -158,6 +166,7 @@ Research findings will be documented here during execution.
    - Type confidence levels (explicit, inferred, heuristic)
 
 4. **Advanced Features**:
+
    - Multi-return type analysis with common type inference
    - Union type creation for mixed returns
    - Generic type parameter detection
@@ -166,6 +175,7 @@ Research findings will be documented here during execution.
    - impl block context (Rust)
 
 5. **Test Results**: 10/15 tests passing with minor issues:
+
    - JavaScript literal confidence level (cosmetic)
    - Constructor name extraction precision
    - Async function wrapper detection
@@ -182,6 +192,7 @@ Research findings will be documented here during execution.
 When implementing, add these TODO comments:
 
 1. In `return_type_inference.ts`:
+
    ```typescript
    // TODO: Integration with Function Calls
    // - Analyze function body for returns

@@ -3,8 +3,8 @@ id: task-40
 title: Implement consistent symbol naming convention
 status: Done
 assignee: []
-created_date: '2025-07-18'
-updated_date: '2025-07-18'
+created_date: "2025-07-18"
+updated_date: "2025-07-18"
 labels: []
 dependencies: []
 ---
@@ -41,16 +41,19 @@ Establish and implement a consistent symbol naming scheme for call graph nodes u
 Implemented a comprehensive symbol naming convention with the format <module_path>#<symbol_name>:
 
 1. Created symbol_naming.ts module with utilities for:
+
    - get_symbol_id(): Generate unique symbol IDs from Def objects
    - parse_symbol_id(): Parse symbol IDs into components
    - normalize_module_path(): Normalize file paths cross-platform
    - get_qualified_name(): Handle nested symbols with dot notation
 
 2. Created two decision documents:
+
    - symbol-naming-convention.md: Detailed design and rules
    - Referenced in task documentation
 
 3. Features implemented:
+
    - Cross-platform path normalization (forward slashes)
    - Extension removal for module paths
    - Nested symbol support (e.g., User.validate for methods)

@@ -26,35 +26,36 @@ Write your result JSON to: {{output_path}}
 ### Investigation Steps
 
 1. **Examine the grep call sites** listed above. For each hit:
+
    - Read the file at the call site to confirm it is an actual invocation (not a comment, string, or name collision)
    - Note the file path — is it a test file, config file, script, or source file?
 
 2. **Check if calling files are in the project scope**:
+
    - Use `Glob` to verify the calling files exist in the repository
    - Check if the calling files are in directories that Ariadne excludes (e.g., `node_modules/`, `dist/`, `build/`, `.git/`)
    - Check if the calling files use a supported language/extension
 
 3. **Determine why the calling files were not indexed**:
+
    - Are they in an excluded folder pattern?
    - Are they a file type Ariadne does not index (e.g., `.json`, `.yaml`, `.html`, `.vue` template section)?
    - Are they generated files in an output directory?
-   - Are they in a separate package/workspace that was not included in the analysis scope?
+   - Are they in a separate package/workspace not included in the analysis scope?
 
 4. **Verify with Ariadne MCP tools**:
+
    - Use `show_call_graph_neighborhood` with `symbol_ref` = `{{entry.file_path}}:{{entry.start_line}}#{{entry.name}}` and `callers_depth: 2` to check if Ariadne sees any callers
    - If no callers appear, this confirms the registry gap
 
 5. **Classify the entry**:
-   - If real callers exist in unindexed files → **false-positive** (Ariadne has a file coverage gap)
-   - If the grep hits are all false matches (comments, strings, different functions with the same name) → continue to check if it is a true-positive or dead-code
-   - If no real callers exist and the function is a public API, framework hook, or CLI handler → **true-positive**
-   - If no real callers exist and the function appears unused → **dead-code**
+   - If real callers exist in unindexed files → `ariadne_correct: false` (Ariadne has a file coverage gap)
+   - If all grep hits are false matches (comments, strings, different functions with the same name) and no other callers exist → `ariadne_correct: true`
 
 ### Classification Guide
 
-- **true-positive**: `group_id = "true-positive"`, `is_true_positive = true`, `is_likely_dead_code = false`
-- **dead-code**: `group_id = "dead-code"`, `is_true_positive = false`, `is_likely_dead_code = true`
-- **false-positive**: `group_id` = kebab-case detection gap (e.g., `"unindexed-test-files"`, `"cross-package-call"`, `"template-file-call"`), `is_true_positive = false`, `is_likely_dead_code = false`
+- **Ariadne correct** (`ariadne_correct: true`): No real callers found. `group_id = "confirmed-unreachable"`.
+- **False positive** (`ariadne_correct: false`): Real callers exist in unindexed files. `group_id` = kebab-case detection gap (e.g., `"unindexed-test-files"`, `"cross-package-call"`, `"template-file-call"`).
 
 ### Output
 
@@ -62,8 +63,7 @@ Write raw JSON (no markdown fencing) to the output path above:
 
 ```
 {
-  "is_true_positive": boolean,
-  "is_likely_dead_code": boolean,
+  "ariadne_correct": boolean,
   "group_id": "string",
   "root_cause": "string",
   "reasoning": "string"

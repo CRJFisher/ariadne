@@ -19,6 +19,7 @@ TypeContext was failing because class/interface definitions had wrong `scope_id`
 ## Context - Body-Based Scopes Fix
 
 The fix uses **Option A (body-based .scm scopes)**:
+
 - `.scm` files capture class/interface/enum **bodies**, not entire declarations
 - Class names are now in parent (module) scope where they should be
 - Type resolution can find classes via normal scope walking
@@ -27,6 +28,7 @@ The fix uses **Option A (body-based .scm scopes)**:
 ## Files
 
 ### VERIFY/FIX
+
 - TypeContext test files (find with: `find packages/core -name "*type_context*test*"`)
 - Likely: `packages/core/src/resolve_references/type_context.test.ts` or similar
 
@@ -45,15 +47,18 @@ grep -r "TypeContext" packages/core/src --include="*.test.ts"
 ### 2. Document Baseline (10 min)
 
 From task-epic-11.111 documentation:
+
 - **Before fix:** 2/23 tests passing (9%)
 - Root cause: Classes have `scope_id` pointing to method scope
 
 Run tests to confirm current state:
+
 ```bash
 npm test -- type_context
 ```
 
 Document:
+
 - Total tests: X
 - Passing: Y
 - Failing: Z
@@ -66,6 +71,7 @@ npm test -- type_context
 ```
 
 **Expected Result:**
+
 - Passing: ~23/23 (or at least 20+/23)
 - **This is THE success metric for the entire task 11.112 effort**
 
@@ -79,6 +85,7 @@ If not 100% passing:
 2. Identify what type resolution it's testing
 3. Check if issue is scope-related or something else
 4. Debug:
+
    ```typescript
    // Add logging to failing test:
    console.log("Class scope_id:", class_def.scope_id);
@@ -111,18 +118,15 @@ class MyClass {
 
   // Find the type reference
   const type_refs = Array.from(index.references.values()).filter(
-    r => r.name === "MyClass"
+    (r) => r.name === "MyClass"
   );
 
   const method_scope = Array.from(index.scopes.values()).find(
-    s => s.name === "method"
+    (s) => s.name === "method"
   );
 
   // This should NOW work (was failing before)
-  const resolved = type_context.resolve_type_name(
-    "MyClass",
-    method_scope.id
-  );
+  const resolved = type_context.resolve_type_name("MyClass", method_scope.id);
 
   expect(resolved).not.toBeNull();
   expect(resolved).toBe(class_def.symbol_id);
@@ -137,28 +141,33 @@ Create detailed comparison:
 # TypeContext Test Improvement - Task 11.112.19
 
 ## Before Scope Fix (baseline from task 11.111)
+
 - Total tests: 23
 - Passing: 2 (9%)
 - Failing: 21 (91%)
 - Root cause: Class definitions had scope_id pointing to method scopes
 
 ## After Scope Fix (task-epic-11.112.8-11.112.10)
+
 - Total tests: 23
 - Passing: X (Y%)
 - Failing: Z (W%)
 - Improvement: +N tests passing (+P%)
 
 ## Key Improvements
+
 - ✅ Class type resolution in methods: WORKS
 - ✅ Interface type resolution: WORKS
 - ✅ Enum type resolution: WORKS
 - ✅ Nested type resolution: WORKS
 
 ## Remaining Issues (if any)
+
 - [ ] Issue 1: [description]
 - [ ] Issue 2: [description]
 
 ## Conclusion
+
 The scope assignment fix [SUCCEEDED/PARTIALLY SUCCEEDED] in unblocking TypeContext.
 ```
 
@@ -207,11 +216,13 @@ All should pass.
 ## If Tests Don't Improve
 
 **This indicates a problem with the scope fix.** Go back to:
+
 1. task-11.112.8 - TypeScript class scope fix
 2. task-11.112.9 - TypeScript interface scope fix
 3. task-11.112.10 - TypeScript enum scope fix
 
 Check:
+
 - Did we actually apply `get_defining_scope_id()`?
 - Are there other definition types we missed?
 - Is the helper function working correctly?

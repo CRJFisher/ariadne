@@ -3,8 +3,8 @@ id: task-75
 title: Fix failing call_graph.test.ts tests with incorrect call counts
 status: Done
 assignee: []
-created_date: '2025-08-03'
-updated_date: '2025-08-04'
+created_date: "2025-08-03"
+updated_date: "2025-08-04"
 labels: []
 dependencies: []
 ---

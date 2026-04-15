@@ -43,6 +43,7 @@ packages/core/src/index_single_file/type_preprocessing/tests/
 ### 1. Type Bindings Tests (type_bindings.test.ts)
 
 **Coverage:**
+
 - Variable annotations
 - Parameter annotations
 - Optional parameters
@@ -54,23 +55,45 @@ packages/core/src/index_single_file/type_preprocessing/tests/
 ```typescript
 describe("extract_type_annotations", () => {
   describe("TypeScript", () => {
-    test("variable with type annotation", () => { /* ... */ });
-    test("parameter with type annotation", () => { /* ... */ });
-    test("optional parameter", () => { /* ... */ });
-    test("union type annotation", () => { /* ... */ });
-    test("complex generic type", () => { /* ... */ });
+    test("variable with type annotation", () => {
+      /* ... */
+    });
+    test("parameter with type annotation", () => {
+      /* ... */
+    });
+    test("optional parameter", () => {
+      /* ... */
+    });
+    test("union type annotation", () => {
+      /* ... */
+    });
+    test("complex generic type", () => {
+      /* ... */
+    });
   });
 
   describe("Python", () => {
-    test("function parameter with type hint", () => { /* ... */ });
-    test("variable with type annotation", () => { /* ... */ });
-    test("method parameter with type hint", () => { /* ... */ });
+    test("function parameter with type hint", () => {
+      /* ... */
+    });
+    test("variable with type annotation", () => {
+      /* ... */
+    });
+    test("method parameter with type hint", () => {
+      /* ... */
+    });
   });
 
   describe("Rust", () => {
-    test("variable with type annotation", () => { /* ... */ });
-    test("function parameter with type", () => { /* ... */ });
-    test("struct field with type", () => { /* ... */ });
+    test("variable with type annotation", () => {
+      /* ... */
+    });
+    test("function parameter with type", () => {
+      /* ... */
+    });
+    test("struct field with type", () => {
+      /* ... */
+    });
   });
 
   describe("JavaScript", () => {
@@ -84,6 +107,7 @@ describe("extract_type_annotations", () => {
 ### 2. Constructor Tracking Tests (constructor_tracking.test.ts)
 
 **Coverage:**
+
 - Simple constructor assignments
 - Property assignments
 - Multiple constructors
@@ -94,25 +118,45 @@ describe("extract_type_annotations", () => {
 ```typescript
 describe("extract_constructor_bindings", () => {
   describe("TypeScript", () => {
-    test("simple constructor", () => { /* ... */ });
-    test("property assignment", () => { /* ... */ });
-    test("multiple constructors", () => { /* ... */ });
-    test("constructor in conditional", () => { /* ... */ });
+    test("simple constructor", () => {
+      /* ... */
+    });
+    test("property assignment", () => {
+      /* ... */
+    });
+    test("multiple constructors", () => {
+      /* ... */
+    });
+    test("constructor in conditional", () => {
+      /* ... */
+    });
   });
 
   describe("Python", () => {
-    test("class instantiation", () => { /* ... */ });
-    test("self property assignment", () => { /* ... */ });
+    test("class instantiation", () => {
+      /* ... */
+    });
+    test("self property assignment", () => {
+      /* ... */
+    });
   });
 
   describe("Rust", () => {
-    test("Type::new() pattern", () => { /* ... */ });
-    test("struct literal", () => { /* ... */ });
+    test("Type::new() pattern", () => {
+      /* ... */
+    });
+    test("struct literal", () => {
+      /* ... */
+    });
   });
 
   describe("JavaScript", () => {
-    test("new expression", () => { /* ... */ });
-    test("class constructor", () => { /* ... */ });
+    test("new expression", () => {
+      /* ... */
+    });
+    test("class constructor", () => {
+      /* ... */
+    });
   });
 });
 ```
@@ -120,6 +164,7 @@ describe("extract_constructor_bindings", () => {
 ### 3. Member Extraction Tests (member_extraction.test.ts)
 
 **Coverage:**
+
 - Class methods and properties
 - Interface members
 - Inheritance tracking
@@ -131,21 +176,39 @@ describe("extract_constructor_bindings", () => {
 ```typescript
 describe("extract_type_members", () => {
   describe("Classes", () => {
-    test("methods and properties", () => { /* ... */ });
-    test("constructor tracking", () => { /* ... */ });
-    test("static methods", () => { /* ... */ });
-    test("inheritance", () => { /* ... */ });
-    test("empty class", () => { /* ... */ });
+    test("methods and properties", () => {
+      /* ... */
+    });
+    test("constructor tracking", () => {
+      /* ... */
+    });
+    test("static methods", () => {
+      /* ... */
+    });
+    test("inheritance", () => {
+      /* ... */
+    });
+    test("empty class", () => {
+      /* ... */
+    });
   });
 
   describe("Interfaces", () => {
-    test("method signatures", () => { /* ... */ });
-    test("property signatures", () => { /* ... */ });
-    test("extension", () => { /* ... */ });
+    test("method signatures", () => {
+      /* ... */
+    });
+    test("property signatures", () => {
+      /* ... */
+    });
+    test("extension", () => {
+      /* ... */
+    });
   });
 
   describe("Rust Enums", () => {
-    test("enum methods", () => { /* ... */ });
+    test("enum methods", () => {
+      /* ... */
+    });
   });
 });
 ```
@@ -153,6 +216,7 @@ describe("extract_type_members", () => {
 ### 4. Type Alias Tests (alias_extraction.test.ts)
 
 **Coverage:**
+
 - Simple aliases
 - Class/interface aliases
 - Complex type expressions
@@ -187,6 +251,7 @@ describe("extract_type_alias_metadata", () => {
 ### 5. Integration Tests (integration.test.ts)
 
 **Coverage:**
+
 - End-to-end semantic indexing
 - All extraction functions combined
 - Realistic code examples
@@ -222,9 +287,15 @@ describe("Type preprocessing integration", () => {
     // ...
   });
 
-  test("complete Python file", () => { /* ... */ });
-  test("complete Rust file", () => { /* ... */ });
-  test("complete JavaScript file", () => { /* ... */ });
+  test("complete Python file", () => {
+    /* ... */
+  });
+  test("complete Rust file", () => {
+    /* ... */
+  });
+  test("complete JavaScript file", () => {
+    /* ... */
+  });
 });
 ```
 
@@ -336,6 +407,7 @@ let pet = Dog::new();
 ### Line Coverage: >90%
 
 All extraction functions must have >90% line coverage:
+
 - `extract_type_annotations()`
 - `extract_constructor_bindings()`
 - `extract_type_members()`
@@ -345,6 +417,7 @@ All extraction functions must have >90% line coverage:
 ### Branch Coverage: >85%
 
 All conditional branches tested:
+
 - Optional field handling
 - Empty collections
 - Language-specific patterns
@@ -373,18 +446,21 @@ npm test -- type_preprocessing --watch
 ## Success Criteria
 
 ### Functional
+
 - ✅ All test categories implemented
 - ✅ All 4 languages tested
 - ✅ Fixtures created for realistic examples
 - ✅ All tests pass
 
 ### Coverage
+
 - ✅ >90% line coverage
 - ✅ >85% branch coverage
 - ✅ 100% function coverage
 - ✅ Coverage report generated
 
 ### Code Quality
+
 - ✅ Tests are clear and well-documented
 - ✅ Test names describe what's being tested
 - ✅ Fixtures are realistic and reusable
@@ -393,6 +469,7 @@ npm test -- type_preprocessing --watch
 ## Dependencies
 
 **Requires:**
+
 - Tasks 105.1-105.5 completed
 - Vitest testing framework
 - build_semantic_index() function
@@ -402,6 +479,7 @@ npm test -- type_preprocessing --watch
 ## Next Steps
 
 After completion:
+
 - Task 11.109 can confidently use this extracted data
 - Type preprocessing is fully validated
 - Ready for production use

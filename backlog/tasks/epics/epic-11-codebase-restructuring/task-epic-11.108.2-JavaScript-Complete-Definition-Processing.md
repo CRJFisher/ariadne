@@ -13,6 +13,7 @@ Ensure JavaScript builder properly tracks all definitions and nested objects, mi
 ## Current Status
 
 JavaScript builder is mostly complete but uses workarounds:
+
 - ✅ Classes, methods, functions tracked
 - ✅ Parameters tracked for functions and methods
 - ✅ Properties tracked
@@ -27,6 +28,7 @@ JavaScript builder is mostly complete but uses workarounds:
 **File:** `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_builder.ts`
 
 **Current code (line 459-484):**
+
 ```typescript
 [
   "definition.constructor",
@@ -50,6 +52,7 @@ JavaScript builder is mostly complete but uses workarounds:
 ```
 
 **New code:**
+
 ```typescript
 [
   "definition.constructor",
@@ -73,11 +76,13 @@ JavaScript builder is mostly complete but uses workarounds:
 ### 2. Verify Parameter Tracking
 
 **Check that parameters are added to all callables:**
+
 - Functions: `definition.function`, `definition.arrow` → parameters via `definition.param`
 - Methods: `definition.method` → parameters via `definition.param`
 - Constructors: `definition.constructor` → parameters via `definition.param`
 
 **Current parameter handling (line 529-548):**
+
 ```typescript
 [
   "definition.param",
@@ -102,6 +107,7 @@ JavaScript builder is mostly complete but uses workarounds:
 **Verify `find_containing_callable` finds constructors:**
 
 The function needs to check for constructor nodes:
+
 ```typescript
 function find_containing_callable(capture: CaptureNode): SymbolId {
   let node = capture.node;
@@ -111,7 +117,10 @@ function find_containing_callable(capture: CaptureNode): SymbolId {
     if (node.type === "method_definition") {
       const nameNode = node.childForFieldName?.("name");
       const methodName = nameNode ? nameNode.text : "anonymous";
-      return method_symbol(methodName as SymbolName, extract_location(nameNode || node));
+      return method_symbol(
+        methodName as SymbolName,
+        extract_location(nameNode || node)
+      );
     }
 
     if (
@@ -121,9 +130,15 @@ function find_containing_callable(capture: CaptureNode): SymbolId {
     ) {
       const nameNode = node.childForFieldName?.("name");
       if (nameNode) {
-        return function_symbol(nameNode.text as SymbolName, extract_location(nameNode));
+        return function_symbol(
+          nameNode.text as SymbolName,
+          extract_location(nameNode)
+        );
       } else {
-        return function_symbol("anonymous" as SymbolName, extract_location(node));
+        return function_symbol(
+          "anonymous" as SymbolName,
+          extract_location(node)
+        );
       }
     }
 
@@ -172,22 +187,22 @@ function find_containing_callable(capture: CaptureNode): SymbolId {
 
 Review builder config for completeness:
 
-| Definition Type | Capture Name | Builder Method | Status |
-|----------------|--------------|----------------|--------|
-| Class | `definition.class` | `add_class` | ✅ |
-| Constructor | `definition.constructor` | `add_constructor_to_class` | ⚠️ Update |
-| Method | `definition.method` | `add_method_to_class` | ✅ |
-| Function | `definition.function` | `add_function` | ✅ |
-| Arrow Function | `definition.arrow` | `add_function` | ✅ |
-| Parameter | `definition.param` | `add_parameter_to_callable` | ✅ |
-| Parameter | `definition.parameter` | `add_parameter_to_callable` | ✅ |
-| Variable | `definition.variable` | `add_variable` | ✅ |
-| Property | `definition.field` | `add_property_to_class` | ✅ |
-| Property | `definition.property` | `add_property_to_class` | ✅ |
-| Import | `definition.import` | `add_import` | ✅ |
-| Import Named | `import.named` | `add_import` | ✅ |
-| Import Default | `import.default` | `add_import` | ✅ |
-| Import Namespace | `import.namespace` | `add_import` | ✅ |
+| Definition Type  | Capture Name             | Builder Method              | Status    |
+| ---------------- | ------------------------ | --------------------------- | --------- |
+| Class            | `definition.class`       | `add_class`                 | ✅        |
+| Constructor      | `definition.constructor` | `add_constructor_to_class`  | ⚠️ Update |
+| Method           | `definition.method`      | `add_method_to_class`       | ✅        |
+| Function         | `definition.function`    | `add_function`              | ✅        |
+| Arrow Function   | `definition.arrow`       | `add_function`              | ✅        |
+| Parameter        | `definition.param`       | `add_parameter_to_callable` | ✅        |
+| Parameter        | `definition.parameter`   | `add_parameter_to_callable` | ✅        |
+| Variable         | `definition.variable`    | `add_variable`              | ✅        |
+| Property         | `definition.field`       | `add_property_to_class`     | ✅        |
+| Property         | `definition.property`    | `add_property_to_class`     | ✅        |
+| Import           | `definition.import`      | `add_import`                | ✅        |
+| Import Named     | `import.named`           | `add_import`                | ✅        |
+| Import Default   | `import.default`         | `add_import`                | ✅        |
+| Import Namespace | `import.namespace`       | `add_import`                | ✅        |
 
 ## Testing Changes
 
@@ -225,10 +240,12 @@ it("should extract constructor with parameters", () => {
 ## Implementation Steps
 
 1. **Update constructor handling:**
+
    - Change `add_method_to_class` to `add_constructor_to_class`
    - Remove `return_type: undefined` (not needed for constructors)
 
 2. **Verify parameter tracking:**
+
    - Run existing tests to ensure parameters still tracked
    - Add new test for constructor parameters
 
@@ -241,15 +258,19 @@ it("should extract constructor with parameters", () => {
 ## Verification Steps
 
 1. **Constructor migration:**
+
    ```bash
    grep -n "add_constructor_to_class" packages/core/src/index_single_file/query_code_tree/language_configs/javascript_builder.ts
    ```
+
    Should find usage in `definition.constructor` handler.
 
 2. **No more constructor-as-method:**
+
    ```bash
    grep -A 5 "definition.constructor" packages/core/src/index_single_file/query_code_tree/language_configs/javascript_builder.ts | grep "add_method_to_class"
    ```
+
    Should return nothing.
 
 3. **Tests pass:**

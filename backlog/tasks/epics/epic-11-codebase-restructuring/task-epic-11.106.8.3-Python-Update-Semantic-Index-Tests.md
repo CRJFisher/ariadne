@@ -19,12 +19,14 @@ Update `semantic_index.python.test.ts` to comprehensively test the simplified `S
 ### 1. Remove Deleted Field Assertions
 
 Delete all test assertions on fields that no longer exist:
+
 - `source_type`
 - `is_narrowing`
 - `is_widening`
 - `containing_function`
 
 **Example:**
+
 ```typescript
 // ❌ DELETE these assertions
 expect(ref.type_flow?.source_type).toBeUndefined();
@@ -55,7 +57,7 @@ describe("SymbolReference - optional chaining (Python)", () => {
 obj.method()
     `;
     const { references } = index_single_file(code, "test.py");
-    const methodRef = references.find(r => r.name === "method");
+    const methodRef = references.find((r) => r.name === "method");
 
     expect(methodRef?.member_access?.is_optional_chain).toBe(false);
   });
@@ -65,7 +67,7 @@ obj.method()
 value = obj.prop
     `;
     const { references } = index_single_file(code, "test.py");
-    const propRef = references.find(r => r.name === "prop");
+    const propRef = references.find((r) => r.name === "prop");
 
     expect(propRef?.member_access?.is_optional_chain).toBe(false);
   });
@@ -75,7 +77,7 @@ value = obj.prop
 value = obj.prop.nested
     `;
     const { references } = index_single_file(code, "test.py");
-    const nestedRef = references.find(r => r.name === "nested");
+    const nestedRef = references.find((r) => r.name === "nested");
 
     expect(nestedRef?.member_access?.is_optional_chain).toBe(false);
   });
@@ -93,7 +95,9 @@ describe("SymbolReference - assignment_type", () => {
 x: str = get_value()
     `;
     const { references } = index_single_file(code, "test.py");
-    const assignRef = references.find(r => r.name === "x" && r.type === "assignment");
+    const assignRef = references.find(
+      (r) => r.name === "x" && r.type === "assignment"
+    );
 
     expect(assignRef?.assignment_type).toBeDefined();
     expect(assignRef?.assignment_type?.type_name).toBe("str");
@@ -105,7 +109,9 @@ def test(param: int):
     x = param
     `;
     const { references } = index_single_file(code, "test.py");
-    const paramRef = references.find(r => r.name === "param" && r.type === "assignment");
+    const paramRef = references.find(
+      (r) => r.name === "param" && r.type === "assignment"
+    );
 
     expect(paramRef?.assignment_type).toBeDefined();
     expect(paramRef?.assignment_type?.type_name).toBe("int");
@@ -117,7 +123,9 @@ from typing import List
 x: List[str] = get_list()
     `;
     const { references } = index_single_file(code, "test.py");
-    const assignRef = references.find(r => r.name === "x" && r.type === "assignment");
+    const assignRef = references.find(
+      (r) => r.name === "x" && r.type === "assignment"
+    );
 
     expect(assignRef?.assignment_type).toBeDefined();
     expect(assignRef?.assignment_type?.type_name).toContain("List");
@@ -131,7 +139,9 @@ def get_value() -> str:
 get_value()
     `;
     const { references } = index_single_file(code, "test.py");
-    const callRef = references.find(r => r.name === "get_value" && r.call_type === "function");
+    const callRef = references.find(
+      (r) => r.name === "get_value" && r.call_type === "function"
+    );
 
     expect(callRef?.assignment_type).toBeUndefined();
   });
@@ -141,7 +151,9 @@ get_value()
 x = get_value()
     `;
     const { references } = index_single_file(code, "test.py");
-    const assignRef = references.find(r => r.name === "x" && r.type === "assignment");
+    const assignRef = references.find(
+      (r) => r.name === "x" && r.type === "assignment"
+    );
 
     expect(assignRef?.assignment_type).toBeUndefined();
   });
@@ -151,6 +163,7 @@ x = get_value()
 ### 5. Update Existing Integration Tests
 
 Review and update all existing test cases to:
+
 - Use `assignment_type` instead of `type_flow.target_type`
 - Remove any checks on deleted fields
 - Ensure assertions match the new simplified structure
@@ -190,6 +203,7 @@ Expected: All tests pass with no regressions.
 Python does NOT support optional chaining syntax, so all `is_optional_chain` checks should return `false`. The tests should verify this behavior rather than test optional chaining patterns.
 
 Python DOES support type hints (PEP 484+), so comprehensive tests for `assignment_type` are important:
+
 - Type hints on variables: `x: str = value`
 - Type hints on parameters: `def func(param: int)`
 - Type hints on return types: `def func() -> str`

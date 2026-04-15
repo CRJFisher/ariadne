@@ -3,8 +3,8 @@ id: task-89
 title: Fix function over-counting in file summaries
 status: Done
 assignee: []
-created_date: '2025-08-03'
-updated_date: '2025-08-04 08:31'
+created_date: "2025-08-03"
+updated_date: "2025-08-04 08:31"
 labels: []
 dependencies: []
 ---
@@ -49,7 +49,7 @@ Successfully fixed function over-counting and export detection issues.
 ### Files Modified
 
 - src/project_call_graph.ts: Fixed export detection in get_call_graph()
-- Cleaned up src/*.js files (compiled output)
+- Cleaned up src/\*.js files (compiled output)
 
 ### Test Results
 

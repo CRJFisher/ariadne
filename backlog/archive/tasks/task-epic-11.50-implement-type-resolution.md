@@ -3,7 +3,8 @@
 **Epic**: Epic 11 - Codebase Restructuring  
 **Priority**: High  
 **Status**: Not Started  
-**Dependencies**: 
+**Dependencies**:
+
 - task-epic-11.32 (graph_builder implementation)
 - Requires type_tracking (Stage 1) to be working
 
@@ -23,21 +24,25 @@ Type analysis currently only tracks types within individual files (Stage 1). We 
 ## Implementation Plan
 
 1. **Collect Type Definitions**
+
    - Gather all type definitions from FileAnalysis results
    - Create qualified names (file#type format)
    - Handle type parameters/generics
 
 2. **Import Resolution**
+
    - Use ModuleGraph to resolve imported types
    - Track type import chains
    - Handle namespace imports (e.g., `import * as ns`)
 
 3. **Inheritance Integration**
+
    - Use ClassHierarchy for method/property type resolution
    - Build type compatibility relationships
    - Handle interface implementations
 
 4. **Type Alias Resolution**
+
    - Follow type aliases to base types
    - Handle circular type references
    - Resolve union/intersection types

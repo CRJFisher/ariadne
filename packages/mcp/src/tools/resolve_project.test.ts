@@ -14,14 +14,14 @@ vi.mock("@ariadnejs/core", async () => {
 });
 
 describe("resolve_project", () => {
-  let mock_project_manager: ProjectManager;
+  let mock_project_manager: Pick<ProjectManager, "get_project">;
   let persistent_project: Project;
 
   beforeEach(() => {
     persistent_project = {} as Project;
     mock_project_manager = {
       get_project: vi.fn().mockReturnValue(persistent_project),
-    } as unknown as ProjectManager;
+    };
     vi.clearAllMocks();
   });
 

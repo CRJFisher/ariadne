@@ -23,17 +23,21 @@ References in the scope graph are not being attached to their containing scopes.
 Successfully implemented ref_to_scope edges to attach references to their containing scopes.
 
 ### Problem
+
 - References were added to the scope graph but never attached to their containing scope
 - No `ref_to_scope` edges were being created
 - This caused all orphaned references to appear at root level in test output
 - JavaScript and TypeScript tests were failing because references appeared in wrong scopes
 
 ### Solution
+
 1. **Added RefToScope edge type** to types package:
+
    - Added interface `RefToScope extends BaseEdge`
    - Added to Edge union type
 
 2. **Modified insert_ref method** in graph.ts:
+
    - Already had `local_scope_id` from `find_containing_scope(ref.range)`
    - Added line to create ref_to_scope edge: `this.edges.push({ kind: 'ref_to_scope', source_id: ref.id, target_id: local_scope_id })`
 
@@ -43,12 +47,14 @@ Successfully implemented ref_to_scope edges to attach references to their contai
    - Only includes orphaned references that belong to the current scope
 
 ### Results
+
 - References now correctly appear in their containing scopes
 - JavaScript tests: 4/10 now passing (was 0/10)
 - TypeScript tests: 4/4 now passing (was 3/4)
 - References to built-in globals (console, document) appear in correct scopes
 
 ### Files Modified
+
 - packages/types/src/index.ts: Added RefToScope edge type
 - packages/core/src/graph.ts: Added ref_to_scope edge creation
 - packages/core/tests/test_utils.ts: Updated reference filtering

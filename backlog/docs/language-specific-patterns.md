@@ -5,6 +5,7 @@ This document describes how Ariadne handles language-specific patterns for impli
 ## Overview
 
 Different programming languages have different conventions for accessing the current instance within methods:
+
 - Python: `self` parameter (and `cls` for classmethods)
 - JavaScript/TypeScript: `this` context
 - Rust: `self`, `&self`, or `&mut self` parameters
@@ -20,11 +21,14 @@ The `LocalTypeTracker` class (in `project_call_graph.ts`) is responsible for tra
 ```typescript
 class LocalTypeTracker {
   private localTypes = new Map<string, { className: string; classDef?: Def }>();
-  
-  setVariableType(varName: string, typeInfo: { className: string; classDef?: Def }) {
+
+  setVariableType(
+    varName: string,
+    typeInfo: { className: string; classDef?: Def }
+  ) {
     this.localTypes.set(varName, typeInfo);
   }
-  
+
   getVariableType(varName: string) {
     return this.localTypes.get(varName) || this.parent.getVariableType(varName);
   }
@@ -38,19 +42,20 @@ class LocalTypeTracker {
 For Python methods, we track both `self` and `cls` parameters:
 
 ```typescript
-if (methodDef.file_path.endsWith('.py')) {
-  localTypeTracker.setVariableType('self', {
+if (methodDef.file_path.endsWith(".py")) {
+  localTypeTracker.setVariableType("self", {
     className: classDef.name,
-    classDef: classDefWithRange
+    classDef: classDefWithRange,
   });
-  localTypeTracker.setVariableType('cls', {
+  localTypeTracker.setVariableType("cls", {
     className: classDef.name,
-    classDef: classDefWithRange
+    classDef: classDefWithRange,
   });
 }
 ```
 
 Python's scope rules (`scopes.scm`) capture:
+
 - Regular methods: `(function_definition)` inside `(class_definition)`
 - Decorated methods: `(decorated_definition)` for `@classmethod` and `@staticmethod`
 
@@ -59,15 +64,19 @@ Python's scope rules (`scopes.scm`) capture:
 For JavaScript and TypeScript, we track the `this` context:
 
 ```typescript
-if (methodDef.file_path.endsWith('.js') || methodDef.file_path.endsWith('.ts')) {
-  localTypeTracker.setVariableType('this', {
+if (
+  methodDef.file_path.endsWith(".js") ||
+  methodDef.file_path.endsWith(".ts")
+) {
+  localTypeTracker.setVariableType("this", {
     className: classDef.name,
-    classDef: classDefWithRange
+    classDef: classDefWithRange,
   });
 }
 ```
 
 Method calls are captured with:
+
 ```scm
 (call_expression
   function: (member_expression
@@ -80,15 +89,16 @@ Method calls are captured with:
 For Rust, we track `self` in its various forms:
 
 ```typescript
-if (methodDef.file_path.endsWith('.rs')) {
-  localTypeTracker.setVariableType('self', {
+if (methodDef.file_path.endsWith(".rs")) {
+  localTypeTracker.setVariableType("self", {
     className: classDef.name,
-    classDef: classDefWithRange
+    classDef: classDefWithRange,
   });
 }
 ```
 
 Rust's scope rules capture impl block methods:
+
 ```scm
 (impl_item
   (declaration_list
@@ -97,8 +107,9 @@ Rust's scope rules capture impl block methods:
 ```
 
 And method calls:
+
 ```scm
-(call_expression 
+(call_expression
   function: (field_expression
     value: (self)
     field: (field_identifier) @local.reference.method))
@@ -122,6 +133,7 @@ Each language has specific tests to verify implicit parameter tracking:
 - **Rust**: Tests for `self` parameter in impl block methods
 
 Example test structure:
+
 ```typescript
 test("tracks Python self parameter in methods", () => {
   const code = `

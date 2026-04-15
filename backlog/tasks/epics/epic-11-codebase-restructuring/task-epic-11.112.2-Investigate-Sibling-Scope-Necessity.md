@@ -8,6 +8,7 @@
 ## Objective
 
 Determine empirically whether the sibling scope handling code in `scope_resolver_index.ts` (lines 213-235) is necessary by:
+
 1. Adding debug logging
 2. Running tests WITH the code
 3. Running tests WITHOUT the code
@@ -16,6 +17,7 @@ Determine empirically whether the sibling scope handling code in `scope_resolver
 ## Background
 
 Current code claims to handle "sibling scopes for function name and body" but:
+
 - No evidence in `scope_processor.ts` that siblings are created
 - `.scm` files show ONE scope per function: `(function_declaration) @scope.function`
 - Code may be defensive programming for a non-existent case
@@ -23,9 +25,11 @@ Current code claims to handle "sibling scopes for function name and body" but:
 ## Files
 
 ### MODIFIED
+
 - `packages/core/src/resolve_references/scope_resolver_index/scope_resolver_index.ts`
 
 ### NEW
+
 - `packages/core/src/resolve_references/scope_resolver_index/sibling_scope_necessity.test.ts`
 
 ## Implementation Steps
@@ -37,34 +41,46 @@ In `scope_resolver_index.ts`, update lines 213-235:
 ```typescript
 // Special case: For function expression nodes or block scopes,
 // also collect definitions from sibling function name scopes
-if (scope.type === 'function' || scope.type === 'block') {
-  const DEBUG_SIBLING = process.env.DEBUG_SIBLING === '1';
+if (scope.type === "function" || scope.type === "block") {
+  const DEBUG_SIBLING = process.env.DEBUG_SIBLING === "1";
 
-  const parent_scope = scope.parent_id ? index.scopes.get(scope.parent_id) : null;
+  const parent_scope = scope.parent_id
+    ? index.scopes.get(scope.parent_id)
+    : null;
   if (parent_scope) {
     if (DEBUG_SIBLING) {
       console.log(`\n=== SIBLING CHECK ===`);
-      console.log(`Scope: ${scope_id} (type: ${scope.type}, name: ${scope.name || 'unnamed'})`);
-      console.log(`Parent: ${parent_scope.id} (${parent_scope.child_ids.length} children)`);
+      console.log(
+        `Scope: ${scope_id} (type: ${scope.type}, name: ${
+          scope.name || "unnamed"
+        })`
+      );
+      console.log(
+        `Parent: ${parent_scope.id} (${parent_scope.child_ids.length} children)`
+      );
     }
 
     let siblings_processed = 0;
     for (const sibling_id of parent_scope.child_ids) {
       if (sibling_id !== scope_id) {
         const sibling_scope = index.scopes.get(sibling_id);
-        if (sibling_scope && sibling_scope.type === 'function') {
+        if (sibling_scope && sibling_scope.type === "function") {
           const sibling_defs = find_local_definitions(sibling_id, index);
 
           if (DEBUG_SIBLING && sibling_defs.size > 0) {
             console.log(`  Found sibling function scope: ${sibling_id}`);
-            console.log(`  Sibling defs: ${Array.from(sibling_defs.keys()).join(', ')}`);
+            console.log(
+              `  Sibling defs: ${Array.from(sibling_defs.keys()).join(", ")}`
+            );
             siblings_processed++;
           }
 
           for (const [name, symbol_id] of sibling_defs) {
             if (!resolvers.has(name)) {
               if (DEBUG_SIBLING) {
-                console.log(`    Adding "${name}" to current scope from sibling`);
+                console.log(
+                  `    Adding "${name}" to current scope from sibling`
+                );
               }
               resolvers.set(name, () => symbol_id);
             }
@@ -89,12 +105,7 @@ import {
   type ResolutionCache,
 } from "./scope_resolver_index";
 import { build_semantic_index } from "../../index_single_file/semantic_index";
-import type {
-  FilePath,
-  SymbolId,
-  ScopeId,
-  SymbolName,
-} from "@ariadnejs/types";
+import type { FilePath, SymbolId, ScopeId, SymbolName } from "@ariadnejs/types";
 import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";
 import type { ParsedFile } from "../../index_single_file/file_utils";
@@ -247,6 +258,7 @@ DEBUG_SIBLING=1 npm test -- sibling_scope_necessity.test.ts
 ```
 
 Document output:
+
 - How many times sibling code triggered
 - What definitions were added
 - Which tests passed
@@ -256,10 +268,10 @@ Document output:
 Comment out lines 213-235 in `scope_resolver_index.ts`:
 
 ```typescript
-  // TEMPORARILY DISABLED FOR TESTING - task-epic-11.112.2
-  // if (scope.type === 'function' || scope.type === 'block') {
-  //   ... sibling handling code ...
-  // }
+// TEMPORARILY DISABLED FOR TESTING - task-epic-11.112.2
+// if (scope.type === 'function' || scope.type === 'block') {
+//   ... sibling handling code ...
+// }
 ```
 
 ### 8. Run Tests WITHOUT Sibling Code (15 min)
@@ -315,10 +327,10 @@ Add to test file:
 Unless removing it, uncomment the code:
 
 ```typescript
-  // Conclusion: [keep/remove] - see task-epic-11.112.21
-  if (scope.type === 'function' || scope.type === 'block') {
-    // ... original code ...
-  }
+// Conclusion: [keep/remove] - see task-epic-11.112.21
+if (scope.type === "function" || scope.type === "block") {
+  // ... original code ...
+}
 ```
 
 ## Success Criteria
@@ -345,13 +357,16 @@ Unless removing it, uncomment the code:
 ### Phase 1: Debug Logging & Testing (COMPLETED)
 
 **Files Created:**
+
 - `packages/core/src/resolve_references/scope_resolver_index/sibling_scope_investigation.test.ts`
 - `backlog/tasks/epics/epic-11-codebase-restructuring/sibling-scope-investigation-results.md`
 
 **Files Modified:**
+
 - `packages/core/src/resolve_references/scope_resolver_index/scope_resolver_index.ts` (added debug logging)
 
 **Test Results:**
+
 - Created 5 test cases for different function scenarios
 - Debug logging CONFIRMED sibling scope code IS being triggered
 - Example from Test 1 (named function expression):
@@ -372,12 +387,15 @@ Unless removing it, uncomment the code:
 **Question Raised:** Why are sibling scopes being created in the first place?
 
 **Investigation Path:**
+
 1. Checked `.scm` files - only ONE scope capture per function:
+
    ```scheme
    (function_expression) @scope.function
    ```
 
 2. Checked scope locations - found TWO function scopes created:
+
    - `function:test.js:2:19:5:2` - the function body (from `@scope.function`)
    - `function:test.js:2:28:2:32` - the function NAME (unexpected!)
 
@@ -402,12 +420,14 @@ function creates_scope(capture: CaptureNode): boolean {
 ```
 
 **The Bug:** When processing `@definition.function` (the function name identifier):
+
 - `category = "definition"`
 - `entity = "function"`
 - `creates_scope()` returns TRUE because `entity === "function"`
 - A scope is created for the DEFINITION, not just the function body!
 
 **Evidence:**
+
 ```javascript
 const factorial = function fact(n) { ... };
                   ^              ^
@@ -415,6 +435,7 @@ const factorial = function fact(n) { ... };
 ```
 
 Two scopes created:
+
 1. From `@scope.function` → `function:2:19:5:2` (function body, starts at "function")
 2. From `@definition.function` → `function:2:28:2:32` (function NAME, starts at "fact") ← UNINTENDED!
 
@@ -423,6 +444,7 @@ Two scopes created:
 **Key Question:** If we fix `creates_scope()`, will the function name definition be INSIDE the function scope?
 
 **Analysis:**
+
 ```javascript
 const factorial = function fact(n) {
 //                ^        ^
@@ -454,6 +476,7 @@ function creates_scope(capture: CaptureNode): boolean {
 ```
 
 **Impact:**
+
 - ✅ Stops creating unintended scopes for `@definition.function`
 - ✅ Stops creating unintended scopes for `@definition.class`, `@definition.method`, etc.
 - ✅ Function name becomes a normal definition, assigned to function scope via `get_scope_id()`
@@ -461,12 +484,14 @@ function creates_scope(capture: CaptureNode): boolean {
 - ✅ Simpler mental model - no more "sibling scopes"
 
 **Migration:**
+
 1. Fix `creates_scope()` to only check `category === "scope"`
 2. Test that named function expressions still work
 3. Remove sibling scope handling code (lines 213-235 in `scope_resolver_index.ts`)
 4. Run full test suite to verify no regressions
 
 **Risk Level:** LOW
+
 - Cleaner architecture (definitions don't create scopes)
 - Semantically correct (only `@scope.*` should create scopes)
 - Easy to test and verify
@@ -474,11 +499,13 @@ function creates_scope(capture: CaptureNode): boolean {
 ### Alternative Approaches Considered
 
 **Option B: Keep Sibling Scope Code**
+
 - ❌ Maintains complexity in resolution system
 - ❌ Workaround for a bug, not a fix
 - ❌ Harder to understand and maintain
 
 **Option C: Special Reference Field**
+
 - ❌ Adds data model complexity
 - ❌ Violates separation of concerns
 - ❌ Doesn't fix the underlying issue
@@ -494,13 +521,16 @@ function creates_scope(capture: CaptureNode): boolean {
 ### Files to Modify
 
 **Primary Fix:**
+
 - `packages/core/src/index_single_file/scopes/scope_processor.ts` - Fix `creates_scope()`
 
 **Cleanup (after verification):**
+
 - `packages/core/src/resolve_references/scope_resolver_index/scope_resolver_index.ts` - Remove sibling code
 - Remove debug logging
 
 **Tests:**
+
 - Verify `sibling_scope_investigation.test.ts` still passes (named function self-reference)
 - Run full test suite
 

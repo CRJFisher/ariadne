@@ -3,8 +3,8 @@ id: task-77
 title: Investigate and fix remaining test suite failures
 status: Done
 assignee: []
-created_date: '2025-08-03'
-updated_date: '2025-08-04'
+created_date: "2025-08-03"
+updated_date: "2025-08-04"
 labels: []
 dependencies: []
 ---
@@ -22,6 +22,7 @@ After implementing Rust cross-file method resolution, multiple test files are fa
 ## Implementation Notes
 
 After the cross-file method resolution implementation and ref_to_scope edge fix:
+
 - 25 out of 26 test files pass
 - Only JavaScript language tests have failures, which are due to ref_to_scope changes requiring test updates (tracked in task-99)
 - All core functionality tests pass

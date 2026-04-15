@@ -1,7 +1,7 @@
 /**
  * Known Entrypoints Registry
  *
- * Persists confirmed true positives and dead code across triage runs.
+ * Persists confirmed-unreachable entries across triage runs.
  * Once an entry is classified (by LLM or framework source), it is recorded
  * and skipped in future runs.
  *
@@ -66,7 +66,7 @@ export function matches_known_entrypoint(
 
 export interface KnownEntrypointMatch {
   entry: EnrichedFunctionEntry;
-  source: string; // which source matched ("project", "react", etc.)
+  source: string; // which source matched ("confirmed-unreachable", "react", etc.)
 }
 
 export interface FilterResult {
@@ -107,32 +107,17 @@ export function filter_known_entrypoints(
 
 // ===== Building sources from triage results =====
 
-export function build_project_source(
-  true_positives: FalsePositiveEntry[],
+export function build_confirmed_unreachable_source(
+  entries: FalsePositiveEntry[],
   project_path: string,
 ): KnownEntrypointSource {
   return {
-    source: "project",
-    description: "Confirmed entry points from triage",
-    entrypoints: true_positives.map((tp) => ({
-      name: tp.name,
-      file_path: path.relative(project_path, tp.file_path),
-      start_line: tp.start_line,
-    })),
-  };
-}
-
-export function build_dead_code_source(
-  dead_code: FalsePositiveEntry[],
-  project_path: string,
-): KnownEntrypointSource {
-  return {
-    source: "dead-code",
-    description: "Functions identified as likely dead code",
-    entrypoints: dead_code.map((dc) => ({
-      name: dc.name,
-      file_path: path.relative(project_path, dc.file_path),
-      start_line: dc.start_line,
+    source: "confirmed-unreachable",
+    description: "Functions with no real callers (Ariadne correctly identified as unreachable)",
+    entrypoints: entries.map((e) => ({
+      name: e.name,
+      file_path: path.relative(project_path, e.file_path),
+      start_line: e.start_line,
     })),
   };
 }

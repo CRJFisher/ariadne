@@ -7,8 +7,7 @@ import {
   save_known_entrypoints,
   matches_known_entrypoint,
   filter_known_entrypoints,
-  build_project_source,
-  build_dead_code_source,
+  build_confirmed_unreachable_source,
 } from "./known_entrypoints.js";
 import type { EnrichedFunctionEntry, KnownEntrypointSource } from "./types.js";
 
@@ -171,39 +170,21 @@ describe("filter_known_entrypoints", () => {
 
 // ===== Building sources from triage results =====
 
-describe("build_project_source", () => {
-  it("converts absolute paths to relative", () => {
-    const true_positives = [
+describe("build_confirmed_unreachable_source", () => {
+  it("converts absolute paths to relative with confirmed-unreachable source", () => {
+    const entries = [
       { name: "main", file_path: "/projects/myapp/src/main.py", start_line: 10 },
-      { name: "handler", file_path: "/projects/myapp/lib/handler.py", start_line: 5 },
-    ];
-
-    const source = build_project_source(true_positives, PROJECT_PATH);
-
-    expect(source).toEqual({
-      source: "project",
-      description: "Confirmed entry points from triage",
-      entrypoints: [
-        { name: "main", file_path: "src/main.py", start_line: 10 },
-        { name: "handler", file_path: "lib/handler.py", start_line: 5 },
-      ],
-    });
-  });
-});
-
-describe("build_dead_code_source", () => {
-  it("converts absolute paths to relative with dead-code source", () => {
-    const dead_code = [
       { name: "unused_helper", file_path: "/projects/myapp/src/utils.py", start_line: 42 },
     ];
 
-    const source = build_dead_code_source(dead_code, PROJECT_PATH);
+    const source = build_confirmed_unreachable_source(entries, PROJECT_PATH);
 
     expect(source).toEqual({
-      source: "dead-code",
-      description: "Functions identified as likely dead code",
+      source: "confirmed-unreachable",
+      description: "Functions with no real callers (Ariadne correctly identified as unreachable)",
       entrypoints: [
-        { name: "unused_helper", file_path: path.relative(PROJECT_PATH, "/projects/myapp/src/utils.py"), start_line: 42 },
+        { name: "main", file_path: "src/main.py", start_line: 10 },
+        { name: "unused_helper", file_path: "src/utils.py", start_line: 42 },
       ],
     });
   });

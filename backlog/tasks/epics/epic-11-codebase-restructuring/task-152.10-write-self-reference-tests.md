@@ -13,6 +13,7 @@ Create comprehensive tests for self-reference call resolution across all support
 ## Testing Strategy
 
 Test the following scenarios:
+
 1. Simple self-reference calls: `this.method()`
 2. Self-reference from nested scopes
 3. Super calls to parent classes
@@ -27,10 +28,10 @@ Test the following scenarios:
 **File**: `packages/core/src/__tests__/integration/self_reference_integration.test.ts`
 
 ```typescript
-import { describe, test, expect } from 'vitest';
-import { build_semantic_index } from '../../index_single_file/index_single_file';
-import { resolve_references } from '../../resolve_references/resolve_references';
-import type { SelfReferenceCall } from '@ariadnejs/types';
+import { describe, test, expect } from "vitest";
+import { build_semantic_index } from "../../index_single_file/index_single_file";
+import { resolve_references } from "../../resolve_references/resolve_references";
+import type { SelfReferenceCall } from "@ariadnejs/types";
 
 /**
  * Integration tests for self-reference call resolution
@@ -42,9 +43,9 @@ import type { SelfReferenceCall } from '@ariadnejs/types';
  * Now they use SelfReferenceCall variant and resolve correctly.
  */
 
-describe('Self-Reference Call Resolution - TypeScript', () => {
-  describe('this.method() calls', () => {
-    test('resolves simple this.method() in same class', () => {
+describe("Self-Reference Call Resolution - TypeScript", () => {
+  describe("this.method() calls", () => {
+    test("resolves simple this.method() in same class", () => {
       const code = `
         class Builder {
           process() {
@@ -57,7 +58,7 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const resolutions = resolve_references(
         semantic_index.references,
         semantic_index
@@ -66,12 +67,11 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
       // Find the this.build_class reference
       const self_ref = semantic_index.references.find(
         (ref): ref is SelfReferenceCall =>
-          ref.kind === 'self_reference_call' &&
-          ref.name === 'build_class'
+          ref.kind === "self_reference_call" && ref.name === "build_class"
       );
 
       expect(self_ref).toBeDefined();
-      expect(self_ref?.keyword).toBe('this');
+      expect(self_ref?.keyword).toBe("this");
 
       // Verify it resolved
       const resolved_id = resolutions.get(self_ref!.location);
@@ -79,7 +79,7 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
       expect(resolved_id).toMatch(/^symbol:.*build_class$/);
     });
 
-    test('resolves this.method() from nested scope', () => {
+    test("resolves this.method() from nested scope", () => {
       const code = `
         class MyClass {
           method() {
@@ -94,7 +94,7 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const resolutions = resolve_references(
         semantic_index.references,
         semantic_index
@@ -102,8 +102,7 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
 
       const self_ref = semantic_index.references.find(
         (ref): ref is SelfReferenceCall =>
-          ref.kind === 'self_reference_call' &&
-          ref.name === 'helper'
+          ref.kind === "self_reference_call" && ref.name === "helper"
       );
 
       expect(self_ref).toBeDefined();
@@ -111,7 +110,7 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
       expect(resolved_id).toBeDefined();
     });
 
-    test('resolves multiple this.method() calls', () => {
+    test("resolves multiple this.method() calls", () => {
       const code = `
         class IndexBuilder {
           process() {
@@ -126,7 +125,7 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const resolutions = resolve_references(
         semantic_index.references,
         semantic_index
@@ -134,21 +133,27 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
 
       // All three calls should resolve
       const self_refs = semantic_index.references.filter(
-        (ref): ref is SelfReferenceCall => ref.kind === 'self_reference_call'
+        (ref): ref is SelfReferenceCall => ref.kind === "self_reference_call"
       );
 
       expect(self_refs).toHaveLength(3);
 
-      const build_class_ref = self_refs.find((ref) => ref.name === 'build_class');
-      const build_function_ref = self_refs.find((ref) => ref.name === 'build_function');
-      const build_variable_ref = self_refs.find((ref) => ref.name === 'build_variable');
+      const build_class_ref = self_refs.find(
+        (ref) => ref.name === "build_class"
+      );
+      const build_function_ref = self_refs.find(
+        (ref) => ref.name === "build_function"
+      );
+      const build_variable_ref = self_refs.find(
+        (ref) => ref.name === "build_variable"
+      );
 
       expect(resolutions.get(build_class_ref!.location)).toBeDefined();
       expect(resolutions.get(build_function_ref!.location)).toBeDefined();
       expect(resolutions.get(build_variable_ref!.location)).toBeDefined();
     });
 
-    test('handles overloaded methods', () => {
+    test("handles overloaded methods", () => {
       const code = `
         class Parser {
           parse(input: string): void;
@@ -161,7 +166,7 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const resolutions = resolve_references(
         semantic_index.references,
         semantic_index
@@ -169,8 +174,7 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
 
       const self_ref = semantic_index.references.find(
         (ref): ref is SelfReferenceCall =>
-          ref.kind === 'self_reference_call' &&
-          ref.name === 'validate'
+          ref.kind === "self_reference_call" && ref.name === "validate"
       );
 
       expect(self_ref).toBeDefined();
@@ -178,8 +182,8 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
     });
   });
 
-  describe('super.method() calls', () => {
-    test('resolves super.method() to parent class', () => {
+  describe("super.method() calls", () => {
+    test("resolves super.method() to parent class", () => {
       const code = `
         class Parent {
           process() {
@@ -195,7 +199,7 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const resolutions = resolve_references(
         semantic_index.references,
         semantic_index
@@ -203,25 +207,24 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
 
       const super_ref = semantic_index.references.find(
         (ref): ref is SelfReferenceCall =>
-          ref.kind === 'self_reference_call' &&
-          ref.keyword === 'super'
+          ref.kind === "self_reference_call" && ref.keyword === "super"
       );
 
       expect(super_ref).toBeDefined();
-      expect(super_ref?.name).toBe('process');
+      expect(super_ref?.name).toBe("process");
 
       const resolved_id = resolutions.get(super_ref!.location);
       expect(resolved_id).toBeDefined();
 
       // Should resolve to Parent.process, not Child.process
       const parent_process = semantic_index.definitions.find(
-        (def) => def.name === 'process' && def.symbol_id === resolved_id
+        (def) => def.name === "process" && def.symbol_id === resolved_id
       );
       expect(parent_process).toBeDefined();
       // Verify it's in Parent's scope (not Child's)
     });
 
-    test('resolves super constructor call', () => {
+    test("resolves super constructor call", () => {
       const code = `
         class Parent {
           constructor(name: string) { }
@@ -234,7 +237,7 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const resolutions = resolve_references(
         semantic_index.references,
         semantic_index
@@ -245,8 +248,8 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
     });
   });
 
-  describe('Property chains', () => {
-    test('distinguishes this.field vs this.method()', () => {
+  describe("Property chains", () => {
+    test("distinguishes this.field vs this.method()", () => {
       const code = `
         class MyClass {
           registry = { };
@@ -260,23 +263,23 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
 
       // this.registry should be PropertyAccessReference
       const property_ref = semantic_index.references.find(
-        (ref) => ref.kind === 'property_access' && ref.name === 'registry'
+        (ref) => ref.kind === "property_access" && ref.name === "registry"
       );
       expect(property_ref).toBeDefined();
 
       // this.process() should be SelfReferenceCall
       const method_ref = semantic_index.references.find(
         (ref): ref is SelfReferenceCall =>
-          ref.kind === 'self_reference_call' && ref.name === 'process'
+          ref.kind === "self_reference_call" && ref.name === "process"
       );
       expect(method_ref).toBeDefined();
     });
 
-    test('handles this.field.method() chains', () => {
+    test("handles this.field.method() chains", () => {
       const code = `
         class Registry {
           get(key: string): any { }
@@ -291,7 +294,7 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const resolutions = resolve_references(
         semantic_index.references,
         semantic_index
@@ -302,8 +305,8 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
     });
   });
 
-  describe('Edge cases', () => {
-    test('returns unresolved when method does not exist', () => {
+  describe("Edge cases", () => {
+    test("returns unresolved when method does not exist", () => {
       const code = `
         class MyClass {
           method() {
@@ -312,7 +315,7 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const resolutions = resolve_references(
         semantic_index.references,
         semantic_index
@@ -320,8 +323,7 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
 
       const self_ref = semantic_index.references.find(
         (ref): ref is SelfReferenceCall =>
-          ref.kind === 'self_reference_call' &&
-          ref.name === 'nonexistent'
+          ref.kind === "self_reference_call" && ref.name === "nonexistent"
       );
 
       expect(self_ref).toBeDefined();
@@ -331,7 +333,7 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
       expect(resolved_id).toBeUndefined();
     });
 
-    test('handles this in arrow function (inherits outer context)', () => {
+    test("handles this in arrow function (inherits outer context)", () => {
       const code = `
         class MyClass {
           method() {
@@ -344,7 +346,7 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const resolutions = resolve_references(
         semantic_index.references,
         semantic_index
@@ -352,29 +354,28 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
 
       const self_ref = semantic_index.references.find(
         (ref): ref is SelfReferenceCall =>
-          ref.kind === 'self_reference_call' &&
-          ref.name === 'helper'
+          ref.kind === "self_reference_call" && ref.name === "helper"
       );
 
       expect(self_ref).toBeDefined();
       expect(resolutions.get(self_ref!.location)).toBeDefined();
     });
 
-    test('handles this outside class context (unresolved)', () => {
+    test("handles this outside class context (unresolved)", () => {
       const code = `
         function standalone() {
           this.method();  // Not in class
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const resolutions = resolve_references(
         semantic_index.references,
         semantic_index
       );
 
       const self_ref = semantic_index.references.find(
-        (ref): ref is SelfReferenceCall => ref.kind === 'self_reference_call'
+        (ref): ref is SelfReferenceCall => ref.kind === "self_reference_call"
       );
 
       if (self_ref) {
@@ -386,9 +387,9 @@ describe('Self-Reference Call Resolution - TypeScript', () => {
   });
 });
 
-describe('Self-Reference Call Resolution - Python', () => {
-  describe('self.method() calls', () => {
-    test('resolves simple self.method() in same class', () => {
+describe("Self-Reference Call Resolution - Python", () => {
+  describe("self.method() calls", () => {
+    test("resolves simple self.method() in same class", () => {
       const code = `
         class IndexBuilder:
           def process(self):
@@ -398,7 +399,7 @@ describe('Self-Reference Call Resolution - Python', () => {
             pass
       `;
 
-      const semantic_index = build_semantic_index(code, 'python');
+      const semantic_index = build_semantic_index(code, "python");
       const resolutions = resolve_references(
         semantic_index.references,
         semantic_index
@@ -406,19 +407,18 @@ describe('Self-Reference Call Resolution - Python', () => {
 
       const self_ref = semantic_index.references.find(
         (ref): ref is SelfReferenceCall =>
-          ref.kind === 'self_reference_call' &&
-          ref.name === 'build_class'
+          ref.kind === "self_reference_call" && ref.name === "build_class"
       );
 
       expect(self_ref).toBeDefined();
-      expect(self_ref?.keyword).toBe('self');
+      expect(self_ref?.keyword).toBe("self");
 
       const resolved_id = resolutions.get(self_ref!.location);
       expect(resolved_id).toBeDefined();
       expect(resolved_id).toMatch(/^symbol:.*build_class$/);
     });
 
-    test('resolves multiple self.method() calls', () => {
+    test("resolves multiple self.method() calls", () => {
       const code = `
         class Processor:
           def run(self):
@@ -436,14 +436,14 @@ describe('Self-Reference Call Resolution - Python', () => {
             pass
       `;
 
-      const semantic_index = build_semantic_index(code, 'python');
+      const semantic_index = build_semantic_index(code, "python");
       const resolutions = resolve_references(
         semantic_index.references,
         semantic_index
       );
 
       const self_refs = semantic_index.references.filter(
-        (ref): ref is SelfReferenceCall => ref.kind === 'self_reference_call'
+        (ref): ref is SelfReferenceCall => ref.kind === "self_reference_call"
       );
 
       expect(self_refs.length).toBeGreaterThanOrEqual(3);
@@ -456,8 +456,8 @@ describe('Self-Reference Call Resolution - Python', () => {
     });
   });
 
-  describe('cls.method() calls - classmethods', () => {
-    test('resolves cls.method() in classmethod', () => {
+  describe("cls.method() calls - classmethods", () => {
+    test("resolves cls.method() in classmethod", () => {
       const code = `
         class Factory:
           @classmethod
@@ -469,7 +469,7 @@ describe('Self-Reference Call Resolution - Python', () => {
             return Factory()
       `;
 
-      const semantic_index = build_semantic_index(code, 'python');
+      const semantic_index = build_semantic_index(code, "python");
       const resolutions = resolve_references(
         semantic_index.references,
         semantic_index
@@ -477,20 +477,19 @@ describe('Self-Reference Call Resolution - Python', () => {
 
       const cls_ref = semantic_index.references.find(
         (ref): ref is SelfReferenceCall =>
-          ref.kind === 'self_reference_call' &&
-          ref.keyword === 'cls'
+          ref.kind === "self_reference_call" && ref.keyword === "cls"
       );
 
       expect(cls_ref).toBeDefined();
-      expect(cls_ref?.name).toBe('default_instance');
+      expect(cls_ref?.name).toBe("default_instance");
 
       const resolved_id = resolutions.get(cls_ref!.location);
       expect(resolved_id).toBeDefined();
     });
   });
 
-  describe('super() calls', () => {
-    test('resolves super() method calls', () => {
+  describe("super() calls", () => {
+    test("resolves super() method calls", () => {
       const code = `
         class Parent:
           def process(self):
@@ -501,7 +500,7 @@ describe('Self-Reference Call Resolution - Python', () => {
             super().process()
       `;
 
-      const semantic_index = build_semantic_index(code, 'python');
+      const semantic_index = build_semantic_index(code, "python");
       const resolutions = resolve_references(
         semantic_index.references,
         semantic_index
@@ -509,8 +508,7 @@ describe('Self-Reference Call Resolution - Python', () => {
 
       const super_ref = semantic_index.references.find(
         (ref): ref is SelfReferenceCall =>
-          ref.kind === 'self_reference_call' &&
-          ref.keyword === 'super'
+          ref.kind === "self_reference_call" && ref.keyword === "super"
       );
 
       expect(super_ref).toBeDefined();
@@ -520,8 +518,8 @@ describe('Self-Reference Call Resolution - Python', () => {
   });
 });
 
-describe('Self-Reference Call Resolution - JavaScript', () => {
-  test('resolves this.method() in class', () => {
+describe("Self-Reference Call Resolution - JavaScript", () => {
+  test("resolves this.method() in class", () => {
     const code = `
       class MyClass {
         method() {
@@ -532,7 +530,7 @@ describe('Self-Reference Call Resolution - JavaScript', () => {
       }
     `;
 
-    const semantic_index = build_semantic_index(code, 'javascript');
+    const semantic_index = build_semantic_index(code, "javascript");
     const resolutions = resolve_references(
       semantic_index.references,
       semantic_index
@@ -540,15 +538,14 @@ describe('Self-Reference Call Resolution - JavaScript', () => {
 
     const self_ref = semantic_index.references.find(
       (ref): ref is SelfReferenceCall =>
-        ref.kind === 'self_reference_call' &&
-        ref.name === 'helper'
+        ref.kind === "self_reference_call" && ref.name === "helper"
     );
 
     expect(self_ref).toBeDefined();
     expect(resolutions.get(self_ref!.location)).toBeDefined();
   });
 
-  test('resolves this.method() in prototype method', () => {
+  test("resolves this.method() in prototype method", () => {
     const code = `
       function MyClass() {
         this.field = 'value';
@@ -561,7 +558,7 @@ describe('Self-Reference Call Resolution - JavaScript', () => {
       MyClass.prototype.helper = function() { };
     `;
 
-    const semantic_index = build_semantic_index(code, 'javascript');
+    const semantic_index = build_semantic_index(code, "javascript");
     const resolutions = resolve_references(
       semantic_index.references,
       semantic_index
@@ -612,6 +609,7 @@ npm test self_reference_integration.test.ts
 ```
 
 Expected output:
+
 ```
 ✓ Self-Reference Call Resolution - TypeScript (8 tests)
 ✓ Self-Reference Call Resolution - Python (5 tests)
