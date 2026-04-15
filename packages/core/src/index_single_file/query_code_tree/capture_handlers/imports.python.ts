@@ -10,10 +10,10 @@ import type {
   SymbolId,
   SymbolName,
 } from "@ariadnejs/types";
-import { variable_symbol } from "@ariadnejs/types";
+import { variable_symbol, create_module_path } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definitions";
 import type { CaptureNode, ProcessingContext } from "../../index_single_file";
-import { node_to_location } from "../../node_utils";
+import { node_to_location } from "../../node_to_location";
 import {
   create_variable_id,
   extract_export_info,
@@ -82,7 +82,7 @@ export function handle_definition_import(
   if (import_stmt.type === "import_statement") {
     // import X or import X as Y
     import_kind = "namespace";
-    import_path = capture.text as unknown as ModulePath;
+    import_path = create_module_path(capture.text);
 
     // Check for alias
     const aliased_import = capture.node.parent;
@@ -243,7 +243,7 @@ export function handle_import_module(
     location: capture.location,
     scope_id: defining_scope_id,
     export: export_metadata,
-    import_path: capture.text as unknown as ModulePath,
+    import_path: create_module_path(capture.text),
     import_kind: "namespace",
     original_name: undefined,
   });
@@ -294,7 +294,7 @@ export function handle_import_module_source(
     location,
     scope_id: defining_scope_id,
     export: export_metadata,
-    import_path: capture.text as unknown as ModulePath,
+    import_path: create_module_path(capture.text),
     import_kind: "namespace",
     original_name: alias_name ? capture.text : undefined,
   });

@@ -5,7 +5,7 @@ import Rust from "tree-sitter-rust";
 import TypeScript from "tree-sitter-typescript";
 import { detect_function_collection as detect_python_collection, extract_collection_source as extract_python_collection_source } from "./symbol_factories.python";
 import { detect_function_collection as detect_rust_collection, extract_collection_source as extract_rust_collection_source } from "./symbol_factories.rust";
-import { detect_function_collection as detect_js_collection } from "./symbol_factories.javascript";
+import { detect_function_collection as detect_js_collection, extract_collection_source as extract_js_collection_source } from "./symbol_factories.javascript";
 import type { FilePath } from "@ariadnejs/types";
 
 describe("Collection Resolution Tests", () => {
@@ -418,9 +418,325 @@ describe("Collection Resolution Tests", () => {
       const tree = rust_parser.parse(code);
       const declaration = tree.rootNode.child(0)!;
       const pattern = declaration.childForFieldName("pattern")!;
-      
+
       const derived = extract_rust_collection_source(pattern);
       expect(derived).toBe("config");
+    });
+  });
+
+  describe("JS/TS new Map() and new Set() constructors", () => {
+    it("should detect new Map with function references", () => {
+      const code = `const handlers = new Map([["key1", fn1], ["key2", fn2]]);`;
+      const tree = ts_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!;
+      const declarator = declaration.namedChildren[0]!;
+
+      const result = detect_js_collection(declarator, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.collection_type).toBe("Map");
+      expect(result?.stored_references).toContain("fn1");
+      expect(result?.stored_references).toContain("fn2");
+    });
+
+    it("should detect new Set with function references", () => {
+      const code = `const handlers = new Set([fn1, fn2, fn3]);`;
+      const tree = ts_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!;
+      const declarator = declaration.namedChildren[0]!;
+
+      const result = detect_js_collection(declarator, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.collection_type).toBe("Set");
+      expect(result?.stored_references).toContain("fn1");
+      expect(result?.stored_references).toContain("fn2");
+      expect(result?.stored_references).toContain("fn3");
+    });
+
+    it("should detect new Map with arrow function values", () => {
+      const code = `const handlers = new Map([["key1", (x) => x * 2]]);`;
+      const tree = ts_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!;
+      const declarator = declaration.namedChildren[0]!;
+
+      const result = detect_js_collection(declarator, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.collection_type).toBe("Map");
+      expect(result?.stored_functions).toHaveLength(1);
+      expect(result?.stored_functions?.[0]).toMatch(/^function:.*:<anonymous>$/);
+    });
+  });
+
+  describe("Anonymous functions/closures/lambdas in collections", () => {
+    it("should detect arrow functions in JS/TS array", () => {
+      const code = `const handlers = [(x) => x + 1, (y) => y * 2];`;
+      const tree = ts_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!;
+      const declarator = declaration.namedChildren[0]!;
+
+      const result = detect_js_collection(declarator, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.collection_type).toBe("Array");
+      expect(result?.stored_functions).toHaveLength(2);
+      expect(result?.stored_functions?.[0]).toMatch(/^function:.*:<anonymous>$/);
+      expect(result?.stored_functions?.[1]).toMatch(/^function:.*:<anonymous>$/);
+      expect(result?.stored_references).toHaveLength(0);
+    });
+
+    it("should detect arrow functions in JS/TS object values", () => {
+      const code = `const handlers = { a: (x) => x + 1, b: (y) => y * 2 };`;
+      const tree = ts_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!;
+      const declarator = declaration.namedChildren[0]!;
+
+      const result = detect_js_collection(declarator, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.collection_type).toBe("Object");
+      expect(result?.stored_functions).toHaveLength(2);
+    });
+
+    it("should detect lambda functions in Python list", () => {
+      const code = "handlers = [lambda x: x + 1, lambda y: y * 2]";
+      const tree = python_parser.parse(code);
+      let assignment = tree.rootNode.child(0)!;
+      if (assignment.type === "expression_statement") {
+        assignment = assignment.child(0)!;
+      }
+
+      const result = detect_python_collection(assignment, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.collection_type).toBe("Array");
+      expect(result?.stored_functions).toHaveLength(2);
+      expect(result?.stored_functions?.[0]).toMatch(/^function:.*:<anonymous>$/);
+      expect(result?.stored_references).toHaveLength(0);
+    });
+
+    it("should detect lambda functions in Python dict values", () => {
+      const code = "handlers = {'a': lambda x: x + 1, 'b': lambda y: y * 2}";
+      const tree = python_parser.parse(code);
+      let assignment = tree.rootNode.child(0)!;
+      if (assignment.type === "expression_statement") {
+        assignment = assignment.child(0)!;
+      }
+
+      const result = detect_python_collection(assignment, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.collection_type).toBe("Object");
+      expect(result?.stored_functions).toHaveLength(2);
+    });
+
+    it("should detect closures in Rust array", () => {
+      const code = "let handlers = [|x| x + 1, |y| y * 2];";
+      const tree = rust_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!;
+
+      const result = detect_rust_collection(declaration, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.collection_type).toBe("Array");
+      expect(result?.stored_functions).toHaveLength(2);
+      expect(result?.stored_functions?.[0]).toMatch(/^function:.*:<anonymous>$/);
+    });
+
+    it("should detect mixed references and anonymous functions in JS/TS", () => {
+      const code = `const handlers = [fn1, (x) => x * 2, fn2];`;
+      const tree = ts_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!;
+      const declarator = declaration.namedChildren[0]!;
+
+      const result = detect_js_collection(declarator, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.collection_type).toBe("Array");
+      expect(result?.stored_functions).toHaveLength(1);
+      expect(result?.stored_references).toHaveLength(2);
+      expect(result?.stored_references).toContain("fn1");
+      expect(result?.stored_references).toContain("fn2");
+    });
+  });
+
+  describe("JS/TS extract_collection_source", () => {
+    it("should extract source from method call: config.get('key')", () => {
+      const code = "const handler = config.get('key');";
+      const tree = ts_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!;
+      const declarator = declaration.namedChildren[0]!;
+      const identifier = declarator.childForFieldName("name")!;
+
+      const derived = extract_js_collection_source(identifier);
+      expect(derived).toBe("config");
+    });
+
+    it("should extract source from subscript: config['key']", () => {
+      const code = "const handler = config['key'];";
+      const tree = ts_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!;
+      const declarator = declaration.namedChildren[0]!;
+      const identifier = declarator.childForFieldName("name")!;
+
+      const derived = extract_js_collection_source(identifier);
+      expect(derived).toBe("config");
+    });
+
+    it("should return undefined for plain assignment", () => {
+      const code = "const handler = someFunction;";
+      const tree = ts_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!;
+      const declarator = declaration.namedChildren[0]!;
+      const identifier = declarator.childForFieldName("name")!;
+
+      const derived = extract_js_collection_source(identifier);
+      expect(derived).toBeUndefined();
+    });
+
+    it("should return undefined for numeric literal", () => {
+      const code = "const x = 42;";
+      const tree = ts_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!;
+      const declarator = declaration.namedChildren[0]!;
+      const identifier = declarator.childForFieldName("name")!;
+
+      const derived = extract_js_collection_source(identifier);
+      expect(derived).toBeUndefined();
+    });
+  });
+
+  describe("Negative / null-return cases", () => {
+    it("should return null for JS/TS empty object", () => {
+      const code = "const handlers = {};";
+      const tree = ts_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!;
+      const declarator = declaration.namedChildren[0]!;
+
+      const result = detect_js_collection(declarator, TEST_FILE);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for JS/TS empty array", () => {
+      const code = "const handlers = [];";
+      const tree = ts_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!;
+      const declarator = declaration.namedChildren[0]!;
+
+      const result = detect_js_collection(declarator, TEST_FILE);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for JS/TS object with non-function values", () => {
+      const code = `const config = { a: 1, b: "hello", c: true };`;
+      const tree = ts_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!;
+      const declarator = declaration.namedChildren[0]!;
+
+      const result = detect_js_collection(declarator, TEST_FILE);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for JS/TS string assignment", () => {
+      const code = `const name = "hello";`;
+      const tree = ts_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!;
+      const declarator = declaration.namedChildren[0]!;
+
+      const result = detect_js_collection(declarator, TEST_FILE);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for Python empty list", () => {
+      const code = "handlers = []";
+      const tree = python_parser.parse(code);
+      let assignment = tree.rootNode.child(0)!;
+      if (assignment.type === "expression_statement") {
+        assignment = assignment.child(0)!;
+      }
+
+      const result = detect_python_collection(assignment, TEST_FILE);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for Python empty dict", () => {
+      const code = "config = {}";
+      const tree = python_parser.parse(code);
+      let assignment = tree.rootNode.child(0)!;
+      if (assignment.type === "expression_statement") {
+        assignment = assignment.child(0)!;
+      }
+
+      const result = detect_python_collection(assignment, TEST_FILE);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for Python non-function list", () => {
+      const code = "items = [1, 2, 3]";
+      const tree = python_parser.parse(code);
+      let assignment = tree.rootNode.child(0)!;
+      if (assignment.type === "expression_statement") {
+        assignment = assignment.child(0)!;
+      }
+
+      const result = detect_python_collection(assignment, TEST_FILE);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for Python string assignment", () => {
+      const code = "name = 'hello'";
+      const tree = python_parser.parse(code);
+      let assignment = tree.rootNode.child(0)!;
+      if (assignment.type === "expression_statement") {
+        assignment = assignment.child(0)!;
+      }
+
+      const result = detect_python_collection(assignment, TEST_FILE);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for Rust empty array", () => {
+      const code = "let handlers: Vec<fn()> = vec![];";
+      const tree = rust_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!;
+
+      const result = detect_rust_collection(declaration, TEST_FILE);
+      // vec![] macro invocation with empty token_tree may not detect functions
+      // The result depends on whether the macro parser finds identifiers
+      expect(result === null || (result?.stored_references?.length === 0 && result?.stored_functions?.length === 0)).toBe(true);
+    });
+
+    it("should return null for Rust numeric assignment", () => {
+      const code = "let x = 42;";
+      const tree = rust_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!;
+
+      const result = detect_rust_collection(declaration, TEST_FILE);
+      expect(result).toBeNull();
+    });
+
+    it("should return undefined for Python collection_source on plain assignment", () => {
+      const code = "handler = some_func";
+      const tree = python_parser.parse(code);
+      let assignment = tree.rootNode.child(0)!;
+      if (assignment.type === "expression_statement") {
+        assignment = assignment.child(0)!;
+      }
+      const identifier = assignment.child(0)!;
+
+      const derived = extract_python_collection_source(identifier);
+      expect(derived).toBeUndefined();
+    });
+
+    it("should return undefined for Rust collection_source on plain assignment", () => {
+      const code = "let handler = some_func;";
+      const tree = rust_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!;
+      const pattern = declaration.childForFieldName("pattern")!;
+
+      const derived = extract_rust_collection_source(pattern);
+      expect(derived).toBeUndefined();
     });
   });
 });

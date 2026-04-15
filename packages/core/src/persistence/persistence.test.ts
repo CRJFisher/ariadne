@@ -7,10 +7,21 @@ import {
   deserialize_semantic_index,
 } from "./serialize_index";
 import { InMemoryStorage } from "./storage.test";
+import { FileSystemStorage } from "./file_system_storage";
 import { load_project } from "../project/load_project";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import * as fs from "fs/promises";
 import * as os from "os";
 import * as path from "path";
+
+const exec_file = promisify(execFile);
+
+/** Build a clean env for git commands in temp dirs, removing inherited git vars. */
+function clean_git_env(): typeof process.env {
+  const { GIT_DIR, GIT_WORK_TREE, GIT_INDEX_FILE, ...env } = process.env;
+  return env;
+}
 
 // ============================================================================
 // Helpers
@@ -461,6 +472,40 @@ describe("Corruption/Recovery", () => {
     }
   });
 
+  it("prunes manifest entries for deleted files on warm load", async () => {
+    const dir = await setup_project_dir({
+      "a.ts": "export function foo() { return 42; }",
+      "b.ts": "import { foo } from './a'; const x = foo();",
+    });
+    try {
+      const storage = new InMemoryStorage();
+
+      // Cold load populates cache with both files
+      const cold = await load_project({ project_path: dir, storage });
+      expect(cold.get_stats().file_count).toEqual(2);
+
+      const manifest_v1 = JSON.parse((await storage.read_manifest())!);
+      expect(manifest_v1.entries.length).toEqual(2);
+
+      // Delete b.ts from disk
+      await fs.unlink(path.join(dir, "b.ts"));
+
+      // Warm load — b.ts is gone, its manifest entry should be pruned
+      const warm = await load_project({ project_path: dir, storage });
+      expect(warm.get_stats().file_count).toEqual(1);
+
+      const manifest_v2 = JSON.parse((await storage.read_manifest())!);
+      expect(manifest_v2.entries.length).toEqual(1);
+
+      const entry_paths = manifest_v2.entries.map(
+        (e: [string, unknown]) => e[0],
+      );
+      expect(entry_paths).toEqual([path.join(dir, "a.ts")]);
+    } finally {
+      await cleanup();
+    }
+  });
+
   it("falls back on missing index entry", async () => {
     const dir = await setup_project_dir({
       "a.ts": "export function foo() { return 42; }",
@@ -662,6 +707,423 @@ describe("Schema version mismatch", () => {
       // Second load should discard cache and re-index
       const second = await load_project({ project_path: temp_dir, storage });
       expect(second.get_stats()).toEqual(first_stats);
+    } finally {
+      await cleanup();
+    }
+  });
+});
+
+// ============================================================================
+// Git-Accelerated Warm Load Tests
+// ============================================================================
+
+describe("Git-accelerated warm load", { timeout: 30_000 }, () => {
+  let temp_dir: string;
+
+  async function git(args: string[]): Promise<string> {
+    const { stdout } = await exec_file("git", args, {
+      cwd: temp_dir,
+      env: clean_git_env(),
+    });
+    return stdout;
+  }
+
+  async function setup_git_repo(
+    files: Record<string, string>,
+  ): Promise<string> {
+    temp_dir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "ariadne-git-warm-test-"),
+    );
+    await git(["init"]);
+    await git(["config", "user.email", "test@test.com"]);
+    await git(["config", "user.name", "Test"]);
+
+    for (const [name, content] of Object.entries(files)) {
+      const file_path = path.join(temp_dir, name);
+      await fs.mkdir(path.dirname(file_path), { recursive: true });
+      await fs.writeFile(file_path, content, "utf-8");
+    }
+    await git(["add", "."]);
+    await git(["commit", "-m", "initial"]);
+    return temp_dir;
+  }
+
+  async function cleanup(): Promise<void> {
+    if (temp_dir) {
+      await fs.rm(temp_dir, { recursive: true, force: true });
+    }
+  }
+
+  it("tree-unchanged fast path: warm load skips all re-indexing", async () => {
+    await setup_git_repo({
+      "a.ts": "export function foo() { return 42; }",
+      "b.ts": "import { foo } from './a';\nconst x = foo();",
+    });
+    try {
+      const storage = new InMemoryStorage();
+
+      // Cold load populates cache
+      const cold = await load_project({ project_path: temp_dir, storage });
+      const cold_stats = cold.get_stats();
+
+      // Manifest should have git_tree_hash
+      const manifest_json = await storage.read_manifest();
+      expect(manifest_json).not.toBeNull();
+      const manifest = JSON.parse(manifest_json!);
+      expect(typeof manifest.git_tree_hash).toEqual("string");
+      expect(manifest.git_tree_hash.length).toEqual(40); // SHA-1
+
+      // Warm load with unchanged tree — all files should use cache
+      const warm = await load_project({ project_path: temp_dir, storage });
+
+      assert_projects_equivalent(cold, warm);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("tree-changed, blob-hash match: unchanged files still use cache", async () => {
+    await setup_git_repo({
+      "a.ts": "export function foo() { return 42; }",
+      "b.ts": "import { foo } from './a';\nconst x = foo();",
+    });
+    try {
+      const storage = new InMemoryStorage();
+
+      // Cold load
+      await load_project({ project_path: temp_dir, storage });
+
+      // Add a new file and commit — tree hash changes, but a.ts and b.ts are unchanged
+      await fs.writeFile(
+        path.join(temp_dir, "c.ts"),
+        "export function bar() { return 99; }",
+        "utf-8",
+      );
+      await git(["add", "c.ts"]);
+      await git(["commit", "-m", "add c.ts"]);
+
+      // Warm load — a.ts and b.ts should use cached blob hashes, c.ts is new
+      const warm = await load_project({ project_path: temp_dir, storage });
+
+      // All three files should be present
+      const files = warm.get_all_files();
+      expect(files.length).toEqual(3);
+
+      // Full rebuild should match
+      const fresh = await load_project({ project_path: temp_dir });
+      assert_projects_equivalent(fresh, warm);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("dirty file (unstaged changes) forces re-index", async () => {
+    await setup_git_repo({
+      "a.ts": "export function foo() { return 42; }",
+      "b.ts": "import { foo } from './a';\nconst x = foo();",
+    });
+    try {
+      const storage = new InMemoryStorage();
+
+      // Cold load
+      await load_project({ project_path: temp_dir, storage });
+
+      // Modify a.ts without staging — file becomes dirty
+      await fs.writeFile(
+        path.join(temp_dir, "a.ts"),
+        "export function foo() { return 999; }\nexport function baz() { return 1; }",
+        "utf-8",
+      );
+
+      // Warm load — a.ts is dirty so must be re-indexed
+      const warm = await load_project({ project_path: temp_dir, storage });
+
+      // Fresh build for comparison
+      const fresh = await load_project({ project_path: temp_dir });
+      assert_projects_equivalent(fresh, warm);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("untracked file is indexed on warm load", async () => {
+    await setup_git_repo({
+      "a.ts": "export function foo() { return 42; }",
+    });
+    try {
+      const storage = new InMemoryStorage();
+
+      // Cold load
+      await load_project({ project_path: temp_dir, storage });
+
+      // Add untracked file (not git-added)
+      await fs.writeFile(
+        path.join(temp_dir, "untracked.ts"),
+        "export function untracked_fn() { return 0; }",
+        "utf-8",
+      );
+
+      // Warm load — untracked file should be discovered and indexed
+      const warm = await load_project({ project_path: temp_dir, storage });
+      expect(warm.get_all_files().length).toEqual(2);
+
+      const fresh = await load_project({ project_path: temp_dir });
+      assert_projects_equivalent(fresh, warm);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("modified + committed file uses new content on warm load", async () => {
+    await setup_git_repo({
+      "a.ts": "export function foo() { return 42; }",
+    });
+    try {
+      const storage = new InMemoryStorage();
+
+      // Cold load
+      const cold = await load_project({ project_path: temp_dir, storage });
+
+      // Modify and commit — blob hash changes
+      const new_content =
+        "export function foo() { return 42; }\nexport function bar() { return 1; }";
+      await fs.writeFile(path.join(temp_dir, "a.ts"), new_content, "utf-8");
+      await git(["add", "a.ts"]);
+      await git(["commit", "-m", "add bar"]);
+
+      // Warm load — blob hash differs from cache, so a.ts is re-indexed
+      const warm = await load_project({ project_path: temp_dir, storage });
+
+      // Should have bar now
+      const fresh = await load_project({ project_path: temp_dir });
+      assert_projects_equivalent(fresh, warm);
+
+      // Verify more definitions than cold load
+      expect(warm.get_stats().definition_count).toBeGreaterThan(
+        cold.get_stats().definition_count,
+      );
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("manifest git_tree_hash is updated after warm load with changes", async () => {
+    await setup_git_repo({
+      "a.ts": "export function foo() { return 42; }",
+    });
+    try {
+      const storage = new InMemoryStorage();
+
+      // Cold load
+      await load_project({ project_path: temp_dir, storage });
+      const manifest_v1 = JSON.parse((await storage.read_manifest())!);
+      const tree_hash_v1 = manifest_v1.git_tree_hash;
+
+      // Modify and commit
+      await fs.writeFile(
+        path.join(temp_dir, "b.ts"),
+        "export function bar() {}",
+        "utf-8",
+      );
+      await git(["add", "b.ts"]);
+      await git(["commit", "-m", "add b"]);
+
+      // Warm load
+      await load_project({ project_path: temp_dir, storage });
+      const manifest_v2 = JSON.parse((await storage.read_manifest())!);
+      const tree_hash_v2 = manifest_v2.git_tree_hash;
+
+      // Tree hash should be updated
+      expect(tree_hash_v2).not.toEqual(tree_hash_v1);
+      expect(typeof tree_hash_v2).toEqual("string");
+      expect(tree_hash_v2.length).toEqual(40);
+    } finally {
+      await cleanup();
+    }
+  });
+});
+
+// ============================================================================
+// load_project + FileSystemStorage Integration Tests
+// ============================================================================
+
+describe("load_project + FileSystemStorage", { timeout: 30_000 }, () => {
+  let project_dir: string;
+  let cache_dir: string;
+
+  async function cleanup(): Promise<void> {
+    if (project_dir) {
+      await fs.rm(project_dir, { recursive: true, force: true });
+    }
+    if (cache_dir) {
+      await fs.rm(cache_dir, { recursive: true, force: true });
+    }
+  }
+
+  it("cold load persists indexes and manifest to disk", async () => {
+    project_dir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "ariadne-fss-project-"),
+    );
+    cache_dir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "ariadne-fss-cache-"),
+    );
+    try {
+      await fs.writeFile(
+        path.join(project_dir, "a.ts"),
+        "export function foo() { return 42; }",
+        "utf-8",
+      );
+      await fs.writeFile(
+        path.join(project_dir, "b.ts"),
+        "import { foo } from './a';\nconst x = foo();",
+        "utf-8",
+      );
+
+      const storage = new FileSystemStorage(cache_dir);
+      const project = await load_project({
+        project_path: project_dir,
+        storage,
+      });
+
+      // Manifest should exist on disk
+      const manifest_raw = await storage.read_manifest();
+      expect(manifest_raw).not.toBeNull();
+      const manifest = JSON.parse(manifest_raw!);
+      expect(manifest.schema_version).toEqual(1);
+      expect(manifest.entries.length).toEqual(2);
+
+      // Indexes should exist on disk
+      const a_path = path.join(project_dir, "a.ts");
+      const b_path = path.join(project_dir, "b.ts");
+      expect(await storage.read_index(a_path)).not.toBeNull();
+      expect(await storage.read_index(b_path)).not.toBeNull();
+
+      // Project should have correct stats
+      expect(project.get_stats().file_count).toEqual(2);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("warm load from FileSystemStorage matches cold load (content-hash path)", async () => {
+    project_dir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "ariadne-fss-warm-"),
+    );
+    cache_dir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "ariadne-fss-wcache-"),
+    );
+    try {
+      await fs.writeFile(
+        path.join(project_dir, "a.ts"),
+        "export function foo() { return 42; }",
+        "utf-8",
+      );
+      await fs.writeFile(
+        path.join(project_dir, "b.ts"),
+        "import { foo } from './a';\nconst x = foo();",
+        "utf-8",
+      );
+
+      const storage = new FileSystemStorage(cache_dir);
+
+      // Cold load — populates cache
+      const cold = await load_project({
+        project_path: project_dir,
+        storage,
+      });
+
+      // Warm load — files unchanged, should use content-hash match
+      const warm = await load_project({
+        project_path: project_dir,
+        storage,
+      });
+
+      assert_projects_equivalent(cold, warm);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("FileSystemStorage survives storage instance recreation", async () => {
+    project_dir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "ariadne-fss-recreate-"),
+    );
+    cache_dir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "ariadne-fss-rcache-"),
+    );
+    try {
+      await fs.writeFile(
+        path.join(project_dir, "a.ts"),
+        "export function foo() { return 42; }",
+        "utf-8",
+      );
+
+      // Cold load with first storage instance
+      const storage_v1 = new FileSystemStorage(cache_dir);
+      const cold = await load_project({
+        project_path: project_dir,
+        storage: storage_v1,
+      });
+
+      // Create new storage instance pointing to same cache dir (simulates process restart)
+      const storage_v2 = new FileSystemStorage(cache_dir);
+
+      // Warm load with new instance — should read cached data from disk
+      const warm = await load_project({
+        project_path: project_dir,
+        storage: storage_v2,
+      });
+
+      assert_projects_equivalent(cold, warm);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("FileSystemStorage + git repo: full end-to-end", async () => {
+    project_dir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "ariadne-fss-git-"),
+    );
+    cache_dir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "ariadne-fss-gcache-"),
+    );
+    const exec = promisify(execFile);
+    const git = (args: string[]) =>
+      exec("git", args, { cwd: project_dir, env: clean_git_env() });
+    try {
+      // Set up git repo
+      await git(["init"]);
+      await git(["config", "user.email", "test@test.com"]);
+      await git(["config", "user.name", "Test"]);
+
+      await fs.writeFile(
+        path.join(project_dir, "a.ts"),
+        "export function foo() { return 42; }",
+        "utf-8",
+      );
+      await git(["add", "."]);
+      await git(["commit", "-m", "initial"]);
+
+      const storage = new FileSystemStorage(cache_dir);
+
+      // Cold load
+      const cold = await load_project({
+        project_path: project_dir,
+        storage,
+      });
+
+      // Manifest should have git_tree_hash on disk
+      const manifest_raw = await storage.read_manifest();
+      const manifest = JSON.parse(manifest_raw!);
+      expect(typeof manifest.git_tree_hash).toEqual("string");
+
+      // Warm load — should use git fast path with on-disk storage
+      const warm = await load_project({
+        project_path: project_dir,
+        storage,
+      });
+
+      assert_projects_equivalent(cold, warm);
     } finally {
       await cleanup();
     }

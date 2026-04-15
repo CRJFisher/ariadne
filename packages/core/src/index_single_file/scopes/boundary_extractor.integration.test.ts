@@ -18,7 +18,7 @@ import type {
   LexicalScope,
   ScopeId,
 } from "@ariadnejs/types";
-import type { ParsedFile } from "../file_utils";
+import type { ParsedFile } from "../parsed_file";
 
 describe("Scope Boundary Extractor - All Languages", () => {
   let python_parser: Parser;

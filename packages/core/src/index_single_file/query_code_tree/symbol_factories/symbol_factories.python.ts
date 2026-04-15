@@ -29,7 +29,7 @@ import {
   anonymous_function_symbol,
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../index_single_file";
-import { node_to_location } from "../../node_utils";
+import { node_to_location } from "../../node_to_location";
 
 // ============================================================================
 // Symbol ID Creation
@@ -74,8 +74,7 @@ export function create_property_id(capture: CaptureNode): SymbolId {
 export function create_enum_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
-  const file_path = location.file_path;
-  return `enum:${file_path}:${location.start_line}:${location.start_column}:${location.end_line}:${location.end_column}:${name}` as SymbolId;
+  return enum_symbol(name, location);
 }
 
 export function create_enum_member_id(
@@ -256,6 +255,24 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
   return anonymous_function_symbol(capture.location);
 }
 
+function has_property_decorator(decorated_def: SyntaxNode): boolean {
+  for (let i = 0; i < decorated_def.childCount; i++) {
+    const child = decorated_def.child(i);
+    if (child === null) continue;
+    if (child.type === "decorator") {
+      // The decorator identifier is typically the second child (after "@")
+      for (let j = 0; j < child.childCount; j++) {
+        const dec_child = child.child(j);
+        if (dec_child === null) continue;
+        if (dec_child.type === "identifier" && dec_child.text === "property") {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 export function find_decorator_target(
   capture: CaptureNode
 ): SymbolId | undefined {
@@ -282,15 +299,21 @@ export function find_decorator_target(
             } as CaptureNode);
 
             if (class_node) {
-              // It's a method or constructor
-              const method_name = name_node.text as SymbolName;
-              return method_symbol(method_name, {
+              const location = {
                 file_path,
                 start_line: name_node.startPosition.row + 1,
                 start_column: name_node.startPosition.column + 1,
                 end_line: name_node.endPosition.row + 1,
                 end_column: name_node.endPosition.column,
-              });
+              };
+              const sym_name = name_node.text as SymbolName;
+
+              // Check if decorated with @property
+              if (has_property_decorator(node)) {
+                return property_symbol(sym_name, location);
+              }
+
+              return method_symbol(sym_name, location);
             } else {
               // It's a function
               return function_symbol(name_node.text as SymbolName, {
@@ -441,9 +464,17 @@ export function extract_type_expression(node: SyntaxNode): string | undefined {
 // ============================================================================
 
 export function extract_default_value(node: SyntaxNode): string | undefined {
-  const default_node = node.childForFieldName?.("default");
-  if (default_node) {
-    return default_node.text;
+  // The capture node is the identifier inside default_parameter or typed_default_parameter.
+  // Navigate to the parent parameter node to find the "value" field (the default value).
+  const param_node =
+    node.type === "identifier" &&
+    (node.parent?.type === "default_parameter" || node.parent?.type === "typed_default_parameter")
+      ? node.parent
+      : node;
+
+  const value_node = param_node.childForFieldName?.("value");
+  if (value_node) {
+    return value_node.text;
   }
   return undefined;
 }

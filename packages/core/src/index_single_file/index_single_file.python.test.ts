@@ -21,7 +21,7 @@ import type {
   FunctionCallReference,
 } from "@ariadnejs/types";
 import { build_index_single_file } from "./index_single_file";
-import type { ParsedFile } from "./file_utils";
+import type { ParsedFile } from "./parsed_file";
 
 // Helper to create a ParsedFile from code
 function create_parsed_file(
@@ -1274,25 +1274,19 @@ class User:
           );
         }
 
-        // Verify @property decorated method
-        const property_method = user_class.methods.find(
-          (m) => m.name === "name",
+        // Verify @property decorated function is registered as a property (not a method)
+        const property_def = user_class.properties.find(
+          (p) => p.name === "name",
         );
-        if (property_method) {
-          expect(property_method.kind).toBe("method");
-          expect(property_method.name).toBe("name");
-          expect(property_method.location.file_path).toBe("test.py");
-          expect(property_method.defining_scope_id).toBeTruthy();
+        if (property_def) {
+          expect(property_def.kind).toBe("property");
+          expect(property_def.name).toBe("name");
+          expect(property_def.location.file_path).toBe("test.py");
+          expect(property_def.readonly).toBe(true);
 
-          // Verify decorators are tracked
-          expect(property_method.decorators).toBeDefined();
-          if (
-            property_method.decorators &&
-            property_method.decorators.length > 0
-          ) {
-            const decorator_names = property_method.decorators.map(d => d.name);
-            expect(decorator_names).toContain("property");
-          }
+          // Verify @property decorator is attached
+          expect(property_def.decorators.length).toBeGreaterThanOrEqual(1);
+          expect(property_def.decorators.some((d: any) => d.name === "property")).toBe(true);
         }
 
         // Verify @staticmethod decorated method
@@ -2204,7 +2198,7 @@ type Handler = Callable[[str], None]
     function is_descendant_of(
       potential_descendant_id: string,
       ancestor_id: string,
-      scopes: Map<string, { id: string; parent_id: string | null }>
+      scopes: ReadonlyMap<string, { id: string; parent_id: string | null }>
     ): boolean {
       let current_id = potential_descendant_id;
       const visited = new Set<string>();
@@ -2254,7 +2248,7 @@ type Handler = Callable[[str], None]
       // All block scopes should be descendants of constructor
       for (const block of block_scopes) {
         expect(
-          is_descendant_of(block.id, constructor_scope!.id, index.scopes as unknown as Map<string, { id: string; parent_id: string | null }>)
+          is_descendant_of(block.id, constructor_scope!.id, index.scopes as ReadonlyMap<string, { id: string; parent_id: string | null }>)
         ).toBe(true);
       }
     });
@@ -2295,7 +2289,7 @@ type Handler = Callable[[str], None]
       // All block scopes should be descendants of constructor
       for (const block of block_scopes) {
         expect(
-          is_descendant_of(block.id, constructor_scope!.id, index.scopes as unknown as Map<string, { id: string; parent_id: string | null }>)
+          is_descendant_of(block.id, constructor_scope!.id, index.scopes as ReadonlyMap<string, { id: string; parent_id: string | null }>)
         ).toBe(true);
       }
     });
@@ -2329,7 +2323,7 @@ type Handler = Callable[[str], None]
       // All block scopes should be descendants of constructor
       for (const block of block_scopes) {
         expect(
-          is_descendant_of(block.id, constructor_scope!.id, index.scopes as unknown as Map<string, { id: string; parent_id: string | null }>)
+          is_descendant_of(block.id, constructor_scope!.id, index.scopes as ReadonlyMap<string, { id: string; parent_id: string | null }>)
         ).toBe(true);
       }
     });
@@ -2379,7 +2373,7 @@ type Handler = Callable[[str], None]
 
       for (const block of block_scopes) {
         expect(
-          is_descendant_of(block.id, constructor_scope!.id, index.scopes as unknown as Map<string, { id: string; parent_id: string | null }>)
+          is_descendant_of(block.id, constructor_scope!.id, index.scopes as ReadonlyMap<string, { id: string; parent_id: string | null }>)
         ).toBe(true);
       }
     });

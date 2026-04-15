@@ -23,7 +23,7 @@ import type {
   AssignmentReference,
 } from "@ariadnejs/types";
 import { build_index_single_file } from "./index_single_file";
-import type { ParsedFile } from "./file_utils";
+import type { ParsedFile } from "./parsed_file";
 
 const FIXTURES_DIR = join(__dirname, "..", "..", "tests", "fixtures", "rust");
 
@@ -869,12 +869,13 @@ fn main() {
 
       const index = build_index_single_file(parsed_file, tree, "rust");
 
-      // Verify associated function call is tracked
-      const calls = index.references.filter((r) => r.kind === "function_call" || r.kind === "method_call" || r.kind === "constructor_call");
-      expect(calls.length).toBeGreaterThan(0);
+      // Verify associated function constructor call is tracked
+      // Config::new() produces a constructor_call with the type name "Config"
+      const constructor_calls = index.references.filter((r) => r.kind === "constructor_call");
+      expect(constructor_calls.length).toBeGreaterThan(0);
 
-      const new_call = calls.find((c) => c.name.includes("new"));
-      expect(new_call).toBeDefined();
+      const config_constructor = constructor_calls.find((c) => c.name === "Config");
+      expect(config_constructor).toBeDefined();
     });
   });
 
@@ -1071,7 +1072,7 @@ use crate::models::User;
         expect(hashmap_import.location.file_path).toBe("test.rs");
         expect(typeof hashmap_import.location.start_line).toBe("number");
         expect(typeof hashmap_import.location.start_column).toBe("number");
-        expect(hashmap_import.import_path).toBe("std::collections::HashMap");
+        expect(hashmap_import.import_path).toBe("std::collections");
         expect(hashmap_import.import_kind).toBe("named");
       }
 
@@ -1108,7 +1109,7 @@ use crate::models::User;
       expect(user_import).toBeDefined();
 
       if (user_import) {
-        expect(user_import.import_path).toBe("crate::models::User");
+        expect(user_import.import_path).toBe("crate::models");
       }
     });
 
@@ -1342,7 +1343,7 @@ mod math {
       const hashmap_import = imports.find((imp) => imp.name === "HashMap");
       expect(hashmap_import).toBeDefined();
       if (hashmap_import) {
-        expect(hashmap_import.import_path).toBe("std::collections::HashMap");
+        expect(hashmap_import.import_path).toBe("std::collections");
       }
 
       // Verify add_numbers import exists (aliased from self::math::add)
@@ -1351,8 +1352,8 @@ mod math {
       );
       expect(add_numbers_import).toBeDefined();
       if (add_numbers_import) {
-        // The original_name should be the full path from the import
-        expect(add_numbers_import.original_name).toBe("self::math::add");
+        // The original_name is the symbol name (not the full path)
+        expect(add_numbers_import.original_name).toBe("add");
       }
     });
   });

@@ -70,9 +70,11 @@ function resolve_relative_javascript(
   const candidates = [
     resolved_absolute,
     `${resolved_absolute}.js`,
+    `${resolved_absolute}.jsx`,
     `${resolved_absolute}.mjs`,
     `${resolved_absolute}.cjs`,
     path.join(resolved_absolute, "index.js"),
+    path.join(resolved_absolute, "index.jsx"),
     path.join(resolved_absolute, "index.mjs"),
     path.join(resolved_absolute, "index.cjs"),
   ];

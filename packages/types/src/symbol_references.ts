@@ -4,27 +4,12 @@ import type { TypeInfo } from "./index_single_file";
 import type { SymbolName, SymbolId } from "./symbol";
 
 /**
- * Discriminated union of all reference types
- *
- * This replaces the monolithic SymbolReference interface with specific typed variants.
- * Each variant has exactly the fields it needs, making impossible states unrepresentable.
- *
- * Benefits:
- * - Type safety: Compiler enforces required fields per variant
- * - Pattern matching: Clean dispatch using switch(ref.kind)
- * - No runtime undefined checks: Fields are guaranteed present
- * - Self-documenting: Each variant clearly shows its purpose
+ * Discriminated union of all reference types, dispatched via `ref.kind`.
  *
  * @example
- * // Pattern matching on kind
- * function resolve_reference(ref: SymbolReference): SymbolId | null {
- *   switch (ref.kind) {
- *     case 'method_call':
- *       return resolve_method_call(ref);  // ref is MethodCallReference
- *     case 'self_reference_call':
- *       return resolve_self_reference_call(ref);  // ref is SelfReferenceCall
- *     // ... other cases
- *   }
+ * switch (ref.kind) {
+ *   case 'method_call': return resolve_method_call(ref);
+ *   case 'self_reference_call': return resolve_self_reference_call(ref);
  * }
  */
 export type SymbolReference =
@@ -103,16 +88,17 @@ export type SelfReferenceKeyword = "this" | "self" | "super" | "cls";
  * // → { receiver_location: <loc of 'user'>, property_chain: ['user', 'getName'] }
  *
  * @example Optional chaining
- * obj?.method();  // MethodCallReference with optional_chaining: true
+ * obj?.method();  // MethodCallReference with is_optional_chain: true
  */
 export interface MethodCallReference extends BaseReference {
   readonly kind: "method_call";
-  /** Location of the receiver object (REQUIRED) */
   readonly receiver_location: Location;
-  /** Property chain (REQUIRED) */
+  /** Full property chain from receiver to method */
   readonly property_chain: readonly SymbolName[];
   /** Whether this uses optional chaining (obj?.method()) */
-  readonly optional_chaining?: boolean;
+  readonly is_optional_chain: boolean;
+  /** Location of assigned variable when this call may be a class instantiation (e.g. user = models.User()) */
+  readonly potential_construct_target?: Location;
 }
 
 /**
@@ -132,13 +118,7 @@ export interface MethodCallReference extends BaseReference {
  */
 export interface FunctionCallReference extends BaseReference {
   readonly kind: "function_call";
-  /** Optional argument type information */
-  readonly argument_types?: readonly TypeInfo[];
-  /**
-   * For Python: Location of the variable being assigned (if this call is an assignment RHS).
-   * Used by call resolution to convert class instantiation calls to
-   * ConstructorCallReference with proper construct_target.
-   */
+  /** Location of variable being assigned if this call may be a class instantiation (e.g. obj = SomeClass()) */
   readonly potential_construct_target?: Location;
 }
 
@@ -158,13 +138,17 @@ export interface FunctionCallReference extends BaseReference {
  * @example Standalone (no assignment)
  * MyClass()  // side effect only
  * // → ConstructorCallReference { construct_target: undefined }
+ *
+ * @example Namespace-qualified constructor (TypeScript)
+ * const user = new models.User(name);
+ * // → ConstructorCallReference { property_chain: ['models', 'User'] }
  */
 export interface ConstructorCallReference extends BaseReference {
   readonly kind: "constructor_call";
   /** Location of the variable being assigned (optional - undefined for standalone calls) */
   readonly construct_target?: Location;
-  /** Type being constructed */
-  readonly constructed_type?: TypeInfo;
+  /** Namespace-qualified constructors: ["models", "User"] for new models.User() */
+  readonly property_chain?: readonly SymbolName[];
 }
 
 /**
@@ -200,7 +184,6 @@ export interface PropertyAccessReference extends BaseReference {
   readonly kind: "property_access";
   /** Object whose property is accessed */
   readonly receiver_location: Location;
-  /** Property chain (REQUIRED) */
   readonly property_chain: readonly SymbolName[];
   /** Access type */
   readonly access_type: "property" | "index";

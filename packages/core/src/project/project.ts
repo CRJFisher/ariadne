@@ -1,5 +1,5 @@
 import type { FilePath, SymbolId, Language } from "@ariadnejs/types";
-import type { ParsedFile } from "../index_single_file/file_utils";
+import type { ParsedFile } from "../index_single_file/parsed_file";
 import { build_index_single_file } from "../index_single_file/index_single_file";
 import type { SemanticIndex } from "../index_single_file/index_single_file";
 import type { AnyDefinition } from "@ariadnejs/types";
@@ -369,6 +369,7 @@ export class Project {
           affected_index,
           this.definitions,
           this.resolutions,
+          (import_id) => this.imports.get_resolved_import_path(import_id),
         );
       }
     }
@@ -447,7 +448,8 @@ export class Project {
             dependent_file,
             dependent_index,
             this.definitions,
-            this.resolutions
+            this.resolutions,
+            (import_id) => this.imports.get_resolved_import_path(import_id)
           );
         }
       }

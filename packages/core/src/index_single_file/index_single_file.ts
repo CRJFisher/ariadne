@@ -28,7 +28,7 @@ import {
   create_processing_context,
 } from "./scopes/scopes";
 import { process_references } from "./references/references";
-import { node_to_location } from "./node_utils";
+import { node_to_location } from "./node_to_location";
 import {
   DefinitionBuilder,
   type BuilderResult,
@@ -44,7 +44,7 @@ import {
   PYTHON_METADATA_EXTRACTORS,
   RUST_METADATA_EXTRACTORS,
 } from "./query_code_tree/metadata_extractors";
-import { ParsedFile } from "./file_utils";
+import { ParsedFile } from "./parsed_file";
 import { profiler } from "../profiling";
 import { reset_documentation_state as reset_js_documentation } from "./query_code_tree/symbol_factories/symbol_factories.javascript";
 import { reset_documentation_state as reset_python_documentation } from "./query_code_tree/symbol_factories/symbol_factories.python";

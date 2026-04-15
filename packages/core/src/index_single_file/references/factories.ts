@@ -64,7 +64,8 @@ export function create_self_reference_call(
  *   call_location,
  *   scope_id,
  *   user_location,
- *   ['user', 'getName']
+ *   ['user', 'getName'],
+ *   false
  * )
  */
 export function create_method_call_reference(
@@ -73,7 +74,8 @@ export function create_method_call_reference(
   scope_id: ScopeId,
   receiver_location: Location,
   property_chain: readonly SymbolName[],
-  optional_chaining?: boolean
+  is_optional_chain: boolean,
+  potential_construct_target?: Location
 ): MethodCallReference {
   return {
     kind: "method_call",
@@ -82,7 +84,8 @@ export function create_method_call_reference(
     scope_id,
     receiver_location,
     property_chain,
-    ...(optional_chaining !== undefined && { optional_chaining }),
+    is_optional_chain,
+    ...(potential_construct_target !== undefined && { potential_construct_target }),
   };
 }
 
@@ -124,6 +127,16 @@ export function create_function_call_reference(
  *   obj_location
  * )
  *
+ * @example Namespace-qualified
+ * // const user = new models.User(name)
+ * create_constructor_call_reference(
+ *   'User',
+ *   new_expression_location,
+ *   scope_id,
+ *   user_location,
+ *   ['models', 'User']
+ * )
+ *
  * @example Standalone
  * // MyClass()  // side effect only
  * create_constructor_call_reference(
@@ -136,7 +149,8 @@ export function create_constructor_call_reference(
   name: SymbolName,
   location: Location,
   scope_id: ScopeId,
-  construct_target?: Location
+  construct_target?: Location,
+  property_chain?: readonly SymbolName[]
 ): ConstructorCallReference {
   return {
     kind: "constructor_call",
@@ -144,6 +158,7 @@ export function create_constructor_call_reference(
     location,
     scope_id,
     ...(construct_target !== undefined && { construct_target }),
+    ...(property_chain !== undefined && { property_chain }),
   };
 }
 
@@ -233,7 +248,7 @@ export function create_type_reference(
     location,
     scope_id,
     type_context,
-    ...(type_info && { type_info }),
+    ...(type_info !== undefined && { type_info }),
   };
 }
 
@@ -261,6 +276,6 @@ export function create_assignment_reference(
     location,
     scope_id,
     target_location,
-    ...(assignment_type && { assignment_type }),
+    ...(assignment_type !== undefined && { assignment_type }),
   };
 }

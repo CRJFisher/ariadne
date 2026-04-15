@@ -45,7 +45,7 @@ describe("Reference Factories", () => {
         mock_location,
         mock_scope_id,
         "this",
-        ["this", "method"] as unknown as readonly SymbolName[]
+        ["this" as SymbolName, "method" as SymbolName]
       );
 
       expect(ref).toEqual({
@@ -64,7 +64,7 @@ describe("Reference Factories", () => {
         mock_location,
         mock_scope_id,
         "self",
-        ["self", "process_data"] as unknown as readonly SymbolName[]
+        ["self" as SymbolName, "process_data" as SymbolName]
       );
 
       expect(ref.kind).toBe("self_reference_call");
@@ -79,7 +79,7 @@ describe("Reference Factories", () => {
         mock_location,
         mock_scope_id,
         "super",
-        ["super", "parent_method"] as unknown as readonly SymbolName[]
+        ["super" as SymbolName, "parent_method" as SymbolName]
       );
 
       expect(ref.kind).toBe("self_reference_call");
@@ -92,7 +92,7 @@ describe("Reference Factories", () => {
         mock_location,
         mock_scope_id,
         "cls",
-        ["cls", "class_method"] as unknown as readonly SymbolName[]
+        ["cls" as SymbolName, "class_method" as SymbolName]
       );
 
       expect(ref.kind).toBe("self_reference_call");
@@ -107,7 +107,8 @@ describe("Reference Factories", () => {
         mock_location,
         mock_scope_id,
         mock_receiver_location,
-        ["user", "getName"] as unknown as readonly SymbolName[]
+        ["user" as SymbolName, "getName" as SymbolName],
+        false
       );
 
       expect(ref).toEqual({
@@ -117,6 +118,7 @@ describe("Reference Factories", () => {
         scope_id: mock_scope_id,
         receiver_location: mock_receiver_location,
         property_chain: ["user", "getName"],
+        is_optional_chain: false,
       });
     });
 
@@ -126,7 +128,8 @@ describe("Reference Factories", () => {
         mock_location,
         mock_scope_id,
         mock_receiver_location,
-        ["obj", "field", "doSomething"] as unknown as readonly SymbolName[]
+        ["obj" as SymbolName, "field" as SymbolName, "doSomething" as SymbolName],
+        false
       );
 
       expect(ref.kind).toBe("method_call");
@@ -231,7 +234,7 @@ describe("Reference Factories", () => {
         mock_location,
         mock_scope_id,
         mock_receiver_location,
-        ["user", "name"] as unknown as readonly SymbolName[],
+        ["user" as SymbolName, "name" as SymbolName],
         "property",
         false
       );
@@ -254,7 +257,7 @@ describe("Reference Factories", () => {
         mock_location,
         mock_scope_id,
         mock_receiver_location,
-        ["array", "item"] as unknown as readonly SymbolName[],
+        ["array" as SymbolName, "item" as SymbolName],
         "index",
         false
       );
@@ -269,7 +272,7 @@ describe("Reference Factories", () => {
         mock_location,
         mock_scope_id,
         mock_receiver_location,
-        ["obj", "field"] as unknown as readonly SymbolName[],
+        ["obj" as SymbolName, "field" as SymbolName],
         "property",
         true
       );
@@ -384,14 +387,15 @@ describe("Reference Factories", () => {
         mock_location,
         mock_scope_id,
         "this",
-        ["this", "method"] as unknown as readonly SymbolName[]
+        ["this" as SymbolName, "method" as SymbolName]
       );
       const method_ref = create_method_call_reference(
         "method" as SymbolName,
         mock_location,
         mock_scope_id,
         mock_receiver_location,
-        ["obj", "method"] as unknown as readonly SymbolName[]
+        ["obj" as SymbolName, "method" as SymbolName],
+        false
       );
       const func_ref = create_function_call_reference(
         "func" as SymbolName,
@@ -415,7 +419,7 @@ describe("Reference Factories", () => {
         mock_location,
         mock_scope_id,
         mock_receiver_location,
-        ["obj", "field"] as unknown as readonly SymbolName[],
+        ["obj" as SymbolName, "field" as SymbolName],
         "property",
         false
       );

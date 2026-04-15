@@ -26,7 +26,7 @@ import type {
 } from "@ariadnejs/types";
 import { ReferenceBuilder } from "../../references/references";
 import { JAVASCRIPT_METADATA_EXTRACTORS } from "../metadata_extractors";
-import { node_to_location } from "../../node_utils";
+import { node_to_location } from "../../node_to_location";
 
 describe("JavaScript Builder Configuration", () => {
   let parser: Parser;
@@ -131,19 +131,46 @@ describe("JavaScript Builder Configuration", () => {
   }
 
   describe("JAVASCRIPT_HANDLERS", () => {
-    it("should export a valid LanguageBuilderConfig", () => {
-      expect(JAVASCRIPT_HANDLERS).toBeDefined();
-      expect(JAVASCRIPT_HANDLERS).toBeDefined();
-      expect(Object.keys(JAVASCRIPT_HANDLERS).length).toBeGreaterThan(0);
+    it("should export a valid handler registry with all expected handlers", () => {
+      expect(Object.keys(JAVASCRIPT_HANDLERS).sort()).toEqual([
+        "definition.anonymous_function",
+        "definition.arrow",
+        "definition.class",
+        "definition.constructor",
+        "definition.documentation",
+        "definition.field",
+        "definition.function",
+        "definition.import",
+        "definition.import.default",
+        "definition.import.named",
+        "definition.import.namespace",
+        "definition.import.require",
+        "definition.import.require.simple",
+        "definition.method",
+        "definition.param",
+        "definition.parameter",
+        "definition.property",
+        "definition.variable",
+        "import.reexport",
+        "import.reexport.as_default.alias",
+        "import.reexport.default.alias",
+        "import.reexport.default.original",
+        "import.reexport.named",
+        "import.reexport.named.alias",
+        "import.reexport.named.simple",
+        "import.reexport.namespace.alias",
+        "import.reexport.namespace.source",
+      ]);
     });
 
-    it("should contain definition capture mappings with process functions", () => {
+    it("should contain all definition capture handler functions", () => {
       const definition_mappings = [
         "definition.class",
         "definition.method",
         "definition.constructor",
         "definition.function",
         "definition.arrow",
+        "definition.anonymous_function",
         "definition.param",
         "definition.parameter",
         "definition.variable",
@@ -153,25 +180,42 @@ describe("JavaScript Builder Configuration", () => {
 
       for (const mapping of definition_mappings) {
         expect(mapping in JAVASCRIPT_HANDLERS).toBe(true);
-        const handler = JAVASCRIPT_HANDLERS[mapping];
-        expect(handler).toBeDefined();
-        expect(handler).toBeInstanceOf(Function);
+        expect(typeof JAVASCRIPT_HANDLERS[mapping]).toBe("function");
       }
     });
 
-    it("should contain import capture mappings with process functions", () => {
+    it("should contain all import capture handler functions", () => {
       const import_mappings = [
         "definition.import",
         "definition.import.named",
         "definition.import.default",
         "definition.import.namespace",
+        "definition.import.require",
+        "definition.import.require.simple",
       ];
 
       for (const mapping of import_mappings) {
         expect(mapping in JAVASCRIPT_HANDLERS).toBe(true);
-        const handler = JAVASCRIPT_HANDLERS[mapping];
-        expect(handler).toBeDefined();
-        expect(handler).toBeInstanceOf(Function);
+        expect(typeof JAVASCRIPT_HANDLERS[mapping]).toBe("function");
+      }
+    });
+
+    it("should contain all re-export capture handler functions", () => {
+      const reexport_mappings = [
+        "import.reexport",
+        "import.reexport.named.simple",
+        "import.reexport.named",
+        "import.reexport.named.alias",
+        "import.reexport.default.original",
+        "import.reexport.default.alias",
+        "import.reexport.as_default.alias",
+        "import.reexport.namespace.source",
+        "import.reexport.namespace.alias",
+      ];
+
+      for (const mapping of reexport_mappings) {
+        expect(mapping in JAVASCRIPT_HANDLERS).toBe(true);
+        expect(typeof JAVASCRIPT_HANDLERS[mapping]).toBe("function");
       }
     });
 
@@ -199,15 +243,19 @@ describe("JavaScript Builder Configuration", () => {
           location: node_to_location(name_node, TEST_FILE_PATH),
         };
 
-        const processor = JAVASCRIPT_HANDLERS["definition.class"];
-        expect(processor).toBeDefined();
-        processor?.(capture, builder, context);
+        JAVASCRIPT_HANDLERS["definition.class"]!(capture, builder, context);
 
         const result = builder.build();
         const classes = Array.from(result.classes.values());
         expect(classes).toHaveLength(1);
         expect(classes[0].kind).toBe("class");
         expect(classes[0].name).toBe("MyClass");
+        expect(classes[0].is_exported).toBe(false);
+        expect(classes[0].extends).toEqual([]);
+        expect(classes[0].methods).toEqual([]);
+        expect(classes[0].properties).toEqual([]);
+        expect(classes[0].decorators).toEqual([]);
+        expect(classes[0].location).toEqual(node_to_location(name_node, TEST_FILE_PATH));
       });
 
       it("should process function definitions", () => {
@@ -232,15 +280,17 @@ describe("JavaScript Builder Configuration", () => {
           location: node_to_location(name_node, TEST_FILE_PATH),
         };
 
-        const processor = JAVASCRIPT_HANDLERS["definition.function"];
-        expect(processor).toBeDefined();
-        processor?.(capture, builder, context);
+        JAVASCRIPT_HANDLERS["definition.function"]!(capture, builder, context);
 
         const result = builder.build();
         const functions = Array.from(result.functions.values());
         expect(functions).toHaveLength(1);
         expect(functions[0].kind).toBe("function");
         expect(functions[0].name).toBe("myFunction");
+        expect(functions[0].is_exported).toBe(false);
+        expect(functions[0].export).toBeUndefined();
+        expect(functions[0].signature.parameters).toEqual([]);
+        expect(functions[0].location).toEqual(node_to_location(name_node, TEST_FILE_PATH));
       });
 
       it("should process variable definitions", () => {
@@ -265,15 +315,16 @@ describe("JavaScript Builder Configuration", () => {
           location: node_to_location(name_node, TEST_FILE_PATH),
         };
 
-        const processor = JAVASCRIPT_HANDLERS["definition.variable"];
-        expect(processor).toBeDefined();
-        processor?.(capture, builder, context);
+        JAVASCRIPT_HANDLERS["definition.variable"]!(capture, builder, context);
 
         const result = builder.build();
         const variables = Array.from(result.variables.values());
         expect(variables).toHaveLength(1);
         expect(variables[0].kind).toBe("constant");
         expect(variables[0].name).toBe("myVar");
+        expect(variables[0].is_exported).toBe(false);
+        expect(variables[0].initial_value).toBe("123");
+        expect(variables[0].location).toEqual(node_to_location(name_node, TEST_FILE_PATH));
       });
 
       it("should process method definitions in classes", () => {
@@ -306,7 +357,7 @@ describe("JavaScript Builder Configuration", () => {
 
         const class_processor =
           JAVASCRIPT_HANDLERS["definition.class"];
-        class_processor?.(class_capture, builder, context);
+        class_processor!(class_capture, builder, context);
 
         // Then add the method
         const method_node = find_node_by_type(ast.rootNode, "method_definition");
@@ -327,7 +378,7 @@ describe("JavaScript Builder Configuration", () => {
 
         const method_processor =
           JAVASCRIPT_HANDLERS["definition.method"];
-        method_processor?.(method_capture, builder, context);
+        method_processor!(method_capture, builder, context);
 
         const result = builder.build();
         const classes = Array.from(result.classes.values());
@@ -361,19 +412,16 @@ describe("JavaScript Builder Configuration", () => {
           location: node_to_location(name_node, TEST_FILE_PATH),
         };
 
-        const processor = JAVASCRIPT_HANDLERS["definition.import.default"];
-        expect(processor).toBeDefined();
-        processor?.(capture, builder, context);
+        JAVASCRIPT_HANDLERS["definition.import.default"]!(capture, builder, context);
 
         const result = builder.build();
         const imports = Array.from(result.imports.values());
         expect(imports).toHaveLength(1);
         expect(imports[0].kind).toBe("import");
         expect(imports[0].name).toBe("React");
-
-        const import_def = imports[0] as any;
-        expect(import_def.import_kind).toBe("default");
-        expect(import_def.import_path).toBe("react");
+        expect(imports[0].import_kind).toBe("default");
+        expect(imports[0].import_path).toBe("react");
+        expect(imports[0].original_name).toBeUndefined();
       });
 
       it("should process arrow function assignments", () => {
@@ -398,9 +446,7 @@ describe("JavaScript Builder Configuration", () => {
           location: node_to_location(name_node, TEST_FILE_PATH),
         };
 
-        const processor = JAVASCRIPT_HANDLERS["definition.arrow"];
-        expect(processor).toBeDefined();
-        processor?.(capture, builder, context);
+        JAVASCRIPT_HANDLERS["definition.arrow"]!(capture, builder, context);
 
         const result = builder.build();
         const functions = Array.from(result.functions.values());
@@ -434,9 +480,7 @@ describe("JavaScript Builder Configuration", () => {
           location: node_to_location(name_node, TEST_FILE_PATH),
         };
 
-        const processor = JAVASCRIPT_HANDLERS["definition.variable"];
-        expect(processor).toBeDefined();
-        processor?.(capture, builder, context);
+        JAVASCRIPT_HANDLERS["definition.variable"]!(capture, builder, context);
 
         const result = builder.build();
         const variables = Array.from(result.variables.values());
@@ -468,9 +512,7 @@ describe("JavaScript Builder Configuration", () => {
           location: node_to_location(name_node, TEST_FILE_PATH),
         };
 
-        const processor = JAVASCRIPT_HANDLERS["definition.variable"];
-        expect(processor).toBeDefined();
-        processor?.(capture, builder, context);
+        JAVASCRIPT_HANDLERS["definition.variable"]!(capture, builder, context);
 
         const result = builder.build();
         const variables = Array.from(result.variables.values());
@@ -508,7 +550,7 @@ describe("JavaScript Builder Configuration", () => {
 
         const class_processor =
           JAVASCRIPT_HANDLERS["definition.class"];
-        class_processor?.(class_capture, builder, context);
+        class_processor!(class_capture, builder, context);
 
         // Then add the property
         const field_node = find_node_by_type(ast.rootNode, "field_definition");
@@ -528,7 +570,7 @@ describe("JavaScript Builder Configuration", () => {
         };
 
         const prop_processor = JAVASCRIPT_HANDLERS["definition.field"];
-        prop_processor?.(prop_capture, builder, context);
+        prop_processor!(prop_capture, builder, context);
 
         const result = builder.build();
         const classes = Array.from(result.classes.values());
@@ -567,7 +609,7 @@ describe("JavaScript Builder Configuration", () => {
         const func_processor = JAVASCRIPT_HANDLERS[
           "definition.function"
         ];
-        func_processor?.(func_capture, builder, context);
+        func_processor!(func_capture, builder, context);
 
         // Then add the parameters
         const params_node = func_node?.childForFieldName("parameters");
@@ -588,7 +630,7 @@ describe("JavaScript Builder Configuration", () => {
 
             const param_processor =
               JAVASCRIPT_HANDLERS["definition.param"];
-            param_processor?.(param_capture, builder, context);
+            param_processor!(param_capture, builder, context);
           }
         }
 
@@ -599,20 +641,287 @@ describe("JavaScript Builder Configuration", () => {
 
         const func_def = functions[0] as any;
         expect(func_def.signature.parameters).toHaveLength(2);
+        expect(func_def.signature.parameters[0].name).toBe("param1");
+        expect(func_def.signature.parameters[1].name).toBe("param2");
+      });
+
+      it("should process constructor definitions in classes", () => {
+        const code = "class MyClass { constructor(x) {} }";
+        const context = create_test_context();
+        const builder = new DefinitionBuilder(context);
+
+        const ast = parser.parse(code);
+
+        // Add the class
+        const class_node = find_node_by_type(ast.rootNode, "class_declaration");
+        const class_name_node = class_node?.childForFieldName("name");
+        if (!class_name_node) throw new Error("Could not find class name");
+
+        const class_capture: CaptureNode = {
+          name: "definition.class",
+          category: "definition" as SemanticCategory,
+          entity: "class" as SemanticEntity,
+          node: class_name_node as any,
+          text: class_name_node.text as SymbolName,
+          location: node_to_location(class_name_node, TEST_FILE_PATH),
+        };
+        JAVASCRIPT_HANDLERS["definition.class"]!(class_capture, builder, context);
+
+        // Add the constructor
+        const method_node = find_node_by_type(ast.rootNode, "method_definition");
+        const ctor_name_node = method_node?.childForFieldName("name");
+        if (!ctor_name_node) throw new Error("Could not find constructor name");
+
+        const ctor_capture: CaptureNode = {
+          name: "definition.constructor",
+          category: "definition" as SemanticCategory,
+          entity: "constructor" as SemanticEntity,
+          node: ctor_name_node as any,
+          text: "constructor" as SymbolName,
+          location: node_to_location(ctor_name_node, TEST_FILE_PATH),
+        };
+        JAVASCRIPT_HANDLERS["definition.constructor"]!(ctor_capture, builder, context);
+
+        const result = builder.build();
+        const classes = Array.from(result.classes.values());
+        expect(classes).toHaveLength(1);
+        expect(classes[0].constructors).toHaveLength(1);
+        expect(classes[0].constructors![0].name).toBe("constructor");
+        expect(classes[0].constructors![0].kind).toBe("constructor");
+      });
+
+      it("should process anonymous function definitions", () => {
+        const code = "items.forEach(function(item) { process(item); });";
+        const context = create_test_context();
+        const builder = new DefinitionBuilder(context);
+
+        const ast = parser.parse(code);
+        const func_expr = find_node_by_type(ast.rootNode, "function_expression");
+        if (!func_expr) throw new Error("Could not find function_expression");
+
+        const capture: CaptureNode = {
+          name: "definition.anonymous_function",
+          category: "definition" as SemanticCategory,
+          entity: "function" as SemanticEntity,
+          node: func_expr as any,
+          text: "" as SymbolName,
+          location: node_to_location(func_expr, TEST_FILE_PATH),
+        };
+        JAVASCRIPT_HANDLERS["definition.anonymous_function"]!(capture, builder, context);
+
+        const result = builder.build();
+        const functions = Array.from(result.functions.values());
+        expect(functions).toHaveLength(1);
+        expect(functions[0].kind).toBe("function");
+        // Anonymous functions have a synthetic name like "<anonymous>"
+        expect(functions[0].callback_context!.is_callback).toBe(true);
+      });
+
+      it("should process anonymous arrow functions as callbacks", () => {
+        const code = "items.map((item) => item.name);";
+        const context = create_test_context();
+        const builder = new DefinitionBuilder(context);
+
+        const ast = parser.parse(code);
+        const arrow_fn = find_node_by_type(ast.rootNode, "arrow_function");
+        if (!arrow_fn) throw new Error("Could not find arrow_function");
+
+        const capture: CaptureNode = {
+          name: "definition.anonymous_function",
+          category: "definition" as SemanticCategory,
+          entity: "function" as SemanticEntity,
+          node: arrow_fn as any,
+          text: "" as SymbolName,
+          location: node_to_location(arrow_fn, TEST_FILE_PATH),
+        };
+        JAVASCRIPT_HANDLERS["definition.anonymous_function"]!(capture, builder, context);
+
+        const result = builder.build();
+        const functions = Array.from(result.functions.values());
+        expect(functions).toHaveLength(1);
+        expect(functions[0].callback_context!.is_callback).toBe(true);
+      });
+
+      it("should process named import statements", () => {
+        const code = "import { useState } from 'react';";
+        const context = create_test_context();
+        const builder = new DefinitionBuilder(context);
+
+        const ast = parser.parse(code);
+        const import_specifier = find_node_by_type(ast.rootNode, "import_specifier");
+        const name_node = import_specifier?.childForFieldName("name");
+        if (!name_node) throw new Error("Could not find import name");
+
+        const capture: CaptureNode = {
+          name: "definition.import.named",
+          category: "definition" as SemanticCategory,
+          entity: "import" as SemanticEntity,
+          node: name_node as any,
+          text: name_node.text as SymbolName,
+          location: node_to_location(name_node, TEST_FILE_PATH),
+        };
+        JAVASCRIPT_HANDLERS["definition.import.named"]!(capture, builder, context);
+
+        const result = builder.build();
+        const imports = Array.from(result.imports.values());
+        expect(imports).toHaveLength(1);
+        expect(imports[0].name).toBe("useState");
+        expect(imports[0].import_kind).toBe("named");
+        expect(imports[0].import_path).toBe("react");
+        expect(imports[0].original_name).toBeUndefined();
+      });
+
+      it("should process namespace import statements", () => {
+        const code = "import * as React from 'react';";
+        const context = create_test_context();
+        const builder = new DefinitionBuilder(context);
+
+        const ast = parser.parse(code);
+        // In JS tree-sitter, namespace import is: import_clause > namespace_import > identifier
+        const namespace_import = find_node_by_type(ast.rootNode, "namespace_import");
+        if (!namespace_import) throw new Error("Could not find namespace_import");
+        // The identifier inside namespace_import
+        const name_node = find_node_by_type(namespace_import, "identifier");
+        if (!name_node) throw new Error("Could not find namespace identifier");
+
+        const capture: CaptureNode = {
+          name: "definition.import.namespace",
+          category: "definition" as SemanticCategory,
+          entity: "import" as SemanticEntity,
+          node: name_node as any,
+          text: name_node.text as SymbolName,
+          location: node_to_location(name_node, TEST_FILE_PATH),
+        };
+        JAVASCRIPT_HANDLERS["definition.import.namespace"]!(capture, builder, context);
+
+        const result = builder.build();
+        const imports = Array.from(result.imports.values());
+        expect(imports).toHaveLength(1);
+        expect(imports[0].name).toBe("React");
+        expect(imports[0].import_kind).toBe("namespace");
+        expect(imports[0].import_path).toBe("react");
+        expect(imports[0].original_name).toBeUndefined();
+      });
+
+      it("should process CommonJS require with destructuring", () => {
+        const code = "const { readFile } = require('fs');";
+        const context = create_test_context();
+        const builder = new DefinitionBuilder(context);
+
+        const ast = parser.parse(code);
+        // Find the shorthand_property_identifier_pattern inside object_pattern
+        const object_pattern = find_node_by_type(ast.rootNode, "object_pattern");
+        if (!object_pattern) throw new Error("Could not find object_pattern");
+        const name_node = find_node_by_type(object_pattern, "shorthand_property_identifier_pattern");
+        if (!name_node) throw new Error("Could not find destructured name");
+
+        const capture: CaptureNode = {
+          name: "definition.import.require",
+          category: "definition" as SemanticCategory,
+          entity: "import" as SemanticEntity,
+          node: name_node as any,
+          text: name_node.text as SymbolName,
+          location: node_to_location(name_node, TEST_FILE_PATH),
+        };
+        JAVASCRIPT_HANDLERS["definition.import.require"]!(capture, builder, context);
+
+        const result = builder.build();
+        const imports = Array.from(result.imports.values());
+        expect(imports).toHaveLength(1);
+        expect(imports[0].name).toBe("readFile");
+        expect(imports[0].import_kind).toBe("named");
+        expect(imports[0].import_path).toBe("fs");
+      });
+
+      it("should process simple CommonJS require", () => {
+        const code = "const fs = require('fs');";
+        const context = create_test_context();
+        const builder = new DefinitionBuilder(context);
+
+        const ast = parser.parse(code);
+        const var_decl = find_node_by_type(ast.rootNode, "variable_declarator");
+        const name_node = var_decl?.childForFieldName("name");
+        if (!name_node) throw new Error("Could not find variable name");
+
+        const capture: CaptureNode = {
+          name: "definition.import.require.simple",
+          category: "definition" as SemanticCategory,
+          entity: "import" as SemanticEntity,
+          node: name_node as any,
+          text: name_node.text as SymbolName,
+          location: node_to_location(name_node, TEST_FILE_PATH),
+        };
+        JAVASCRIPT_HANDLERS["definition.import.require.simple"]!(capture, builder, context);
+
+        const result = builder.build();
+        const imports = Array.from(result.imports.values());
+        expect(imports).toHaveLength(1);
+        expect(imports[0].name).toBe("fs");
+        expect(imports[0].import_kind).toBe("namespace");
+        expect(imports[0].import_path).toBe("fs");
+      });
+
+      it("should process definition.import (general import handler)", () => {
+        const code = "import { helper } from './utils';";
+        const context = create_test_context();
+        const builder = new DefinitionBuilder(context);
+
+        const ast = parser.parse(code);
+        const import_specifier = find_node_by_type(ast.rootNode, "import_specifier");
+        const name_node = import_specifier?.childForFieldName("name");
+        if (!name_node) throw new Error("Could not find import name");
+
+        const capture: CaptureNode = {
+          name: "definition.import",
+          category: "definition" as SemanticCategory,
+          entity: "import" as SemanticEntity,
+          node: name_node as any,
+          text: name_node.text as SymbolName,
+          location: node_to_location(name_node, TEST_FILE_PATH),
+        };
+        JAVASCRIPT_HANDLERS["definition.import"]!(capture, builder, context);
+
+        const result = builder.build();
+        const imports = Array.from(result.imports.values());
+        expect(imports).toHaveLength(1);
+        expect(imports[0].name).toBe("helper");
+        expect(imports[0].import_kind).toBe("named");
+        expect(imports[0].import_path).toBe("./utils");
+      });
+
+      it("should process let variable definitions with kind=variable", () => {
+        const code = "let myVar = 42;";
+        const context = create_test_context();
+        const builder = new DefinitionBuilder(context);
+
+        const ast = parser.parse(code);
+        const var_node = find_node_by_type(ast.rootNode, "variable_declarator");
+        const name_node = var_node?.childForFieldName("name");
+        if (!name_node) throw new Error("Could not find variable name");
+
+        const capture: CaptureNode = {
+          name: "definition.variable",
+          category: "definition" as SemanticCategory,
+          entity: "variable" as SemanticEntity,
+          node: name_node as any,
+          text: name_node.text as SymbolName,
+          location: node_to_location(name_node, TEST_FILE_PATH),
+        };
+        JAVASCRIPT_HANDLERS["definition.variable"]!(capture, builder, context);
+
+        const result = builder.build();
+        const variables = Array.from(result.variables.values());
+        expect(variables).toHaveLength(1);
+        expect(variables[0].kind).toBe("variable");
+        expect(variables[0].name).toBe("myVar");
+        expect(variables[0].is_exported).toBe(false);
+        expect(variables[0].initial_value).toBe("42");
       });
     });
 
     describe("Field Coverage", () => {
-      it("should have 100% coverage of all required Definition fields", () => {
-        const code = `
-          export class MyClass extends BaseClass {
-            myProperty = "value";
-
-            constructor(param) { }
-
-            public myMethod(arg: string): void { }
-          }
-        `;
+      it("should populate all required Definition fields for exported class", () => {
+        const code = "export class MyClass {}";
 
         const context = create_test_context();
         const builder = new DefinitionBuilder(context);
@@ -622,45 +931,35 @@ describe("JavaScript Builder Configuration", () => {
         const class_node = find_node_by_type(ast.rootNode, "class_declaration");
         const class_name_node = class_node?.childForFieldName("name");
 
-        if (class_name_node) {
-          const class_capture: CaptureNode = {
-            name: "definition.class",
-            category: "definition" as SemanticCategory,
-            entity: "class" as SemanticEntity,
-            node: class_name_node as any,
-            text: class_name_node.text as SymbolName,
-            location: {
-              file_path: TEST_FILE_PATH,
-              start_line: class_name_node.startPosition.row + 1,
-              start_column: class_name_node.startPosition.column + 1,
-              end_line: class_name_node.endPosition.row + 1,
-              end_column: class_name_node.endPosition.column + 1,
-            },
-          };
-          const class_processor =
-            JAVASCRIPT_HANDLERS["definition.class"];
-          class_processor?.(class_capture, builder, context);
+        if (!class_name_node) {
+          throw new Error("Could not find class name");
         }
+
+        const location = node_to_location(class_name_node, TEST_FILE_PATH);
+        const class_capture: CaptureNode = {
+          name: "definition.class",
+          category: "definition" as SemanticCategory,
+          entity: "class" as SemanticEntity,
+          node: class_name_node as any,
+          text: class_name_node.text as SymbolName,
+          location,
+        };
+        JAVASCRIPT_HANDLERS["definition.class"]!(class_capture, builder, context);
 
         const result = builder.build();
         const classes = Array.from(result.classes.values());
         expect(classes).toHaveLength(1);
 
         const class_def = classes[0];
-
-        // Check all required fields are populated
         expect(class_def.kind).toBe("class");
-        expect(class_def.symbol_id).toBeDefined();
         expect(class_def.name).toBe("MyClass");
-        expect(class_def.location).toBeDefined();
-        expect(class_def.defining_scope_id).toBeDefined();
-
-        // Check location has all subfields
-        expect(class_def.location.start_line).toBeGreaterThan(0);
-        expect(class_def.location.start_column).toBeGreaterThanOrEqual(0);
-        expect(class_def.location.end_line).toBeGreaterThan(0);
-        expect(class_def.location.end_column).toBeGreaterThanOrEqual(0);
-
+        expect(class_def.is_exported).toBe(true);
+        expect(class_def.location).toEqual(location);
+        expect(class_def.defining_scope_id).toBe(context.root_scope_id);
+        expect(class_def.extends).toEqual([]);
+        expect(class_def.methods).toEqual([]);
+        expect(class_def.properties).toEqual([]);
+        expect(class_def.decorators).toEqual([]);
       });
     });
 
@@ -720,7 +1019,13 @@ describe("JavaScript Builder Configuration", () => {
         expect(method_calls).toHaveLength(1);
         expect(method_calls[0].name).toBe("method");
         expect(method_calls[0].kind).toBe("method_call");
-        expect(method_calls[0].receiver_location).toBeDefined();
+        expect(method_calls[0].receiver_location).toEqual({
+          file_path: TEST_FILE_PATH,
+          start_line: 3,
+          start_column: 11,
+          end_line: 3,
+          end_column: 13,
+        });
         expect(method_calls[0].property_chain).toEqual(["obj", "method"]);
       });
 
@@ -779,7 +1084,13 @@ describe("JavaScript Builder Configuration", () => {
         expect(method_calls).toHaveLength(1);
         expect(method_calls[0].name).toBe("list");
         expect(method_calls[0].kind).toBe("method_call");
-        expect(method_calls[0].receiver_location).toBeDefined();
+        expect(method_calls[0].receiver_location).toEqual({
+          file_path: TEST_FILE_PATH,
+          start_line: 3,
+          start_column: 11,
+          end_line: 3,
+          end_column: 19,
+        });
         expect(method_calls[0].property_chain).toEqual(["api", "users", "list"]);
       });
 
@@ -823,10 +1134,13 @@ describe("JavaScript Builder Configuration", () => {
           TEST_FILE_PATH
         );
 
-        const references = builder.process(captures[0]);
+        builder.process(captures[0]);
 
-        // The type info extraction would be populated if the variable had a type annotation
-        expect(references).toBeDefined();
+        // The reference builder creates a variable_reference for the identifier
+        const refs = builder.references;
+        expect(refs).toHaveLength(1);
+        expect(refs[0].kind).toBe("variable_reference");
+        expect(refs[0].name).toBe("myVar");
       });
 
       it("should process assignment contexts with metadata", () => {
@@ -848,18 +1162,12 @@ describe("JavaScript Builder Configuration", () => {
           const left_node = assignment_node.childForFieldName("left");
           if (left_node) {
             captures.push({
-              name: "ref.assignment",
+              name: "assignment.variable",
               category: "assignment" as SemanticCategory,
-              entity: "assignment" as SemanticEntity,
+              entity: "variable" as SemanticEntity,
               node: assignment_node as any,
               text: left_node.text as SymbolName,
-              location: {
-                file_path: TEST_FILE_PATH,
-                start_line: left_node.startPosition.row + 1,
-                start_column: left_node.startPosition.column + 1,
-                end_line: left_node.endPosition.row + 1,
-                end_column: left_node.endPosition.column + 1,
-              },
+              location: node_to_location(left_node, TEST_FILE_PATH),
             });
           }
         }
@@ -880,8 +1188,9 @@ describe("JavaScript Builder Configuration", () => {
           (r) => r.kind === "assignment"
         );
 
-        expect(assignments).toBeDefined();
-        // Assignment parts would be extracted through metadata extractors
+        expect(assignments).toHaveLength(1);
+        expect(assignments[0].name).toBe("target");
+        expect(assignments[0].kind).toBe("assignment");
       });
 
       it("should process constructor calls with metadata", () => {
@@ -926,7 +1235,12 @@ describe("JavaScript Builder Configuration", () => {
         );
 
         expect(constructor_calls).toHaveLength(1);
-        expect(constructor_calls[0]?.construct_target).toBeDefined();
+        expect(constructor_calls[0].name).toBe("MyClass");
+        // construct_target is the location of the variable being assigned to ("instance")
+        const var_declarator = find_node_by_type(ast.rootNode, "variable_declarator");
+        expect(constructor_calls[0].construct_target).toEqual(
+          node_to_location(var_declarator!.childForFieldName("name")!, TEST_FILE_PATH)
+        );
       });
     });
 
@@ -997,11 +1311,11 @@ export { internal as external };
         const ast = parser.parse(code);
         const export_node = find_node_by_type(ast.rootNode, "export_statement");
 
-        if (export_node) {
-          const metadata = analyze_export_statement(export_node);
-          expect(metadata).toBeDefined();
-          expect(metadata?.is_reexport).toBe(true);
-        }
+        expect(export_node).not.toBeNull();
+        const metadata = analyze_export_statement(export_node!, "foo" as SymbolName);
+        expect(metadata).toEqual({
+          is_reexport: true,
+        });
       });
 
       it("should not mark non-exported symbols as exported and set is_exported=false", () => {
@@ -1135,13 +1449,12 @@ export const CONFIG = {
         const config_var = variables.find(v => v.name === "CONFIG");
         const local_var = variables.find(v => v.name === "local_var");
 
-        expect(config_var).toBeDefined();
-        expect(local_var).toBeDefined();
-
         // CONFIG should be exported
+        expect(config_var!.name).toBe("CONFIG");
         expect(config_var!.is_exported).toBe(true);
 
         // local_var should NOT be exported (it's inside a nested arrow function)
+        expect(local_var!.name).toBe("local_var");
         expect(local_var!.is_exported).toBe(false);
       });
 
@@ -1201,13 +1514,12 @@ export const HANDLERS = [
         const handlers_var = variables.find(v => v.name === "HANDLERS");
         const temp_var = variables.find(v => v.name === "temp");
 
-        expect(handlers_var).toBeDefined();
-        expect(temp_var).toBeDefined();
-
         // HANDLERS should be exported
+        expect(handlers_var!.name).toBe("HANDLERS");
         expect(handlers_var!.is_exported).toBe(true);
 
         // temp should NOT be exported (it's inside a nested function)
+        expect(temp_var!.name).toBe("temp");
         expect(temp_var!.is_exported).toBe(false);
       });
 
@@ -1269,13 +1581,12 @@ export const NESTED = {
         const nested_var = variables.find(v => v.name === "NESTED");
         const deeply_var = variables.find(v => v.name === "deeply_nested");
 
-        expect(nested_var).toBeDefined();
-        expect(deeply_var).toBeDefined();
-
         // NESTED should be exported
+        expect(nested_var!.name).toBe("NESTED");
         expect(nested_var!.is_exported).toBe(true);
 
         // deeply_nested should NOT be exported (it's inside a nested arrow function)
+        expect(deeply_var!.name).toBe("deeply_nested");
         expect(deeply_var!.is_exported).toBe(false);
       });
     });
@@ -1283,9 +1594,7 @@ export const NESTED = {
     describe("JSDoc Documentation Extraction", () => {
       it("should have documentation capture handler in config", () => {
         expect("definition.documentation" in JAVASCRIPT_HANDLERS).toBe(true);
-        const handler = JAVASCRIPT_HANDLERS["definition.documentation"];
-        expect(handler).toBeDefined();
-        expect(handler).toBeInstanceOf(Function);
+        expect(typeof JAVASCRIPT_HANDLERS["definition.documentation"]).toBe("function");
       });
 
       it("should capture and attach JSDoc documentation to functions", () => {
@@ -1305,7 +1614,7 @@ export const NESTED = {
 
         // Find and process the JSDoc comment
         const comment_node = find_node_by_type(ast.rootNode, "comment");
-        expect(comment_node).toBeDefined();
+        expect(comment_node).not.toBeNull();
 
         if (comment_node) {
           const doc_capture: CaptureNode = {
@@ -1320,7 +1629,7 @@ export const NESTED = {
           const doc_processor = JAVASCRIPT_HANDLERS[
             "definition.documentation"
           ];
-          doc_processor?.(doc_capture, builder, context);
+          doc_processor!(doc_capture, builder, context);
         }
 
         // Find and process the function
@@ -1340,14 +1649,14 @@ export const NESTED = {
           const func_processor = JAVASCRIPT_HANDLERS[
             "definition.function"
           ];
-          func_processor?.(func_capture, builder, context);
+          func_processor!(func_capture, builder, context);
         }
 
         const result = builder.build();
         const functions = Array.from(result.functions.values());
         expect(functions).toHaveLength(1);
         expect(functions[0].name).toBe("createUser");
-        expect(functions[0].docstring).toBeDefined();
+        expect(functions[0].docstring).not.toBeUndefined();
         expect(functions[0].docstring).toContain("Creates a user account");
         expect(functions[0].docstring).toContain("@param {string} name");
         expect(functions[0].docstring).toContain("@returns {User}");
@@ -1384,7 +1693,7 @@ export const NESTED = {
           const doc_processor = JAVASCRIPT_HANDLERS[
             "definition.documentation"
           ];
-          doc_processor?.(doc_capture, builder, context);
+          doc_processor!(doc_capture, builder, context);
         }
 
         // Process the class
@@ -1403,14 +1712,15 @@ export const NESTED = {
 
           const class_processor =
             JAVASCRIPT_HANDLERS["definition.class"];
-          class_processor?.(class_capture, builder, context);
+          class_processor!(class_capture, builder, context);
         }
 
         const result = builder.build();
         const classes = Array.from(result.classes.values());
         expect(classes).toHaveLength(1);
         expect(classes[0].name).toBe("User");
-        expect(classes[0].docstring).toBeDefined();
+        expect(classes[0].docstring).not.toBeUndefined();
+        expect(classes[0].docstring!.length).toBe(1);
         expect(classes[0].docstring?.[0]).toContain("Represents a user");
         expect(classes[0].docstring?.[0]).toContain("@class");
       });
@@ -1449,7 +1759,7 @@ export const NESTED = {
 
           const class_processor =
             JAVASCRIPT_HANDLERS["definition.class"];
-          class_processor?.(class_capture, builder, context);
+          class_processor!(class_capture, builder, context);
         }
 
         // Process the JSDoc comment
@@ -1467,7 +1777,7 @@ export const NESTED = {
           const doc_processor = JAVASCRIPT_HANDLERS[
             "definition.documentation"
           ];
-          doc_processor?.(doc_capture, builder, context);
+          doc_processor!(doc_capture, builder, context);
         }
 
         // Process the method
@@ -1486,7 +1796,7 @@ export const NESTED = {
 
           const method_processor =
             JAVASCRIPT_HANDLERS["definition.method"];
-          method_processor?.(method_capture, builder, context);
+          method_processor!(method_capture, builder, context);
         }
 
         const result = builder.build();
@@ -1497,7 +1807,7 @@ export const NESTED = {
         const class_def = classes[0] as any;
         expect(class_def.methods).toHaveLength(1);
         expect(class_def.methods[0].name).toBe("add");
-        expect(class_def.methods[0].docstring).toBeDefined();
+        expect(class_def.methods[0].docstring).not.toBeUndefined();
         expect(class_def.methods[0].docstring).toContain("Adds two numbers");
         expect(class_def.methods[0].docstring).toContain("@param {number} a");
         expect(class_def.methods[0].docstring).toContain("@returns {number}");
@@ -1527,7 +1837,7 @@ export const NESTED = {
           const doc_processor = JAVASCRIPT_HANDLERS[
             "definition.documentation"
           ];
-          doc_processor?.(doc_capture, builder, context);
+          doc_processor!(doc_capture, builder, context);
         }
 
         // Process the variable
@@ -1547,14 +1857,14 @@ export const NESTED = {
           const var_processor = JAVASCRIPT_HANDLERS[
             "definition.variable"
           ];
-          var_processor?.(var_capture, builder, context);
+          var_processor!(var_capture, builder, context);
         }
 
         const result = builder.build();
         const variables = Array.from(result.variables.values());
         expect(variables).toHaveLength(1);
         expect(variables[0].name).toBe("service");
-        expect(variables[0].docstring).toBeDefined();
+        expect(variables[0].docstring).not.toBeUndefined();
         expect(variables[0].docstring).toContain("@type {Service}");
       });
 
@@ -1581,7 +1891,7 @@ export const NESTED = {
           const func_processor = JAVASCRIPT_HANDLERS[
             "definition.function"
           ];
-          func_processor?.(func_capture, builder, context);
+          func_processor!(func_capture, builder, context);
         }
 
         const result = builder.build();
@@ -1624,96 +1934,48 @@ export const NESTED = {
         expect(functions).toHaveLength(2);
 
         // Process first comment and function
-        if (comments[0]) {
-          const doc_capture1: CaptureNode = {
-            name: "definition.documentation",
-            category: "definition" as SemanticCategory,
-            entity: "function" as SemanticEntity,
-            node: comments[0] as any,
-            text: comments[0].text as SymbolName,
-            location: {
-              file_path: TEST_FILE_PATH,
-              start_line: comments[0].startPosition.row + 1,
-              start_column: comments[0].startPosition.column + 1,
-              end_line: comments[0].endPosition.row + 1,
-              end_column: comments[0].endPosition.column + 1,
-            },
-          };
+        const doc_capture1: CaptureNode = {
+          name: "definition.documentation",
+          category: "definition" as SemanticCategory,
+          entity: "function" as SemanticEntity,
+          node: comments[0] as any,
+          text: comments[0].text as SymbolName,
+          location: node_to_location(comments[0], TEST_FILE_PATH),
+        };
+        JAVASCRIPT_HANDLERS["definition.documentation"]!(doc_capture1, builder, context);
 
-          const doc_processor = JAVASCRIPT_HANDLERS[
-            "definition.documentation"
-          ];
-          doc_processor?.(doc_capture1, builder, context);
-        }
-
-        if (functions[0]) {
-          const name_node1 = functions[0].childForFieldName("name");
-          const func_capture1: CaptureNode = {
-            name: "definition.function",
-            category: "definition" as SemanticCategory,
-            entity: "function" as SemanticEntity,
-            node: name_node1 as any,
-            text: name_node1.text as SymbolName,
-            location: {
-              file_path: TEST_FILE_PATH,
-              start_line: name_node1.startPosition.row + 1,
-              start_column: name_node1.startPosition.column + 1,
-              end_line: name_node1.endPosition.row + 1,
-              end_column: name_node1.endPosition.column + 1,
-            },
-          };
-
-          const func_processor = JAVASCRIPT_HANDLERS[
-            "definition.function"
-          ];
-          func_processor?.(func_capture1, builder, context);
-        }
+        const name_node1 = functions[0].childForFieldName("name");
+        const func_capture1: CaptureNode = {
+          name: "definition.function",
+          category: "definition" as SemanticCategory,
+          entity: "function" as SemanticEntity,
+          node: name_node1 as any,
+          text: name_node1.text as SymbolName,
+          location: node_to_location(name_node1, TEST_FILE_PATH),
+        };
+        JAVASCRIPT_HANDLERS["definition.function"]!(func_capture1, builder, context);
 
         // Process second comment and function
-        if (comments[1]) {
-          const doc_capture2: CaptureNode = {
-            name: "definition.documentation",
-            category: "definition" as SemanticCategory,
-            entity: "function" as SemanticEntity,
-            node: comments[1] as any,
-            text: comments[1].text as SymbolName,
-            location: {
-              file_path: TEST_FILE_PATH,
-              start_line: comments[1].startPosition.row + 1,
-              start_column: comments[1].startPosition.column + 1,
-              end_line: comments[1].endPosition.row + 1,
-              end_column: comments[1].endPosition.column + 1,
-            },
-          };
+        const doc_capture2: CaptureNode = {
+          name: "definition.documentation",
+          category: "definition" as SemanticCategory,
+          entity: "function" as SemanticEntity,
+          node: comments[1] as any,
+          text: comments[1].text as SymbolName,
+          location: node_to_location(comments[1], TEST_FILE_PATH),
+        };
+        JAVASCRIPT_HANDLERS["definition.documentation"]!(doc_capture2, builder, context);
 
-          const doc_processor = JAVASCRIPT_HANDLERS[
-            "definition.documentation"
-          ];
-          doc_processor?.(doc_capture2, builder, context);
-        }
-
-        if (functions[1]) {
-          const name_node2 = functions[1].childForFieldName("name");
-          const func_capture2: CaptureNode = {
-            name: "definition.function",
-            category: "definition" as SemanticCategory,
-            entity: "function" as SemanticEntity,
-            node: name_node2 as any,
-            text: name_node2.text as SymbolName,
-            location: {
-              file_path: TEST_FILE_PATH,
-              start_line: name_node2.startPosition.row + 1,
-              start_column: name_node2.startPosition.column + 1,
-              end_line: name_node2.endPosition.row + 1,
-              end_column: name_node2.endPosition.column + 1,
-            },
-          };
-
-          const func_processor = JAVASCRIPT_HANDLERS[
-            "definition.function"
-          ];
-          func_processor?.(func_capture2, builder, context);
-        }
+        const name_node2 = functions[1].childForFieldName("name");
+        const func_capture2: CaptureNode = {
+          name: "definition.function",
+          category: "definition" as SemanticCategory,
+          entity: "function" as SemanticEntity,
+          node: name_node2 as any,
+          text: name_node2.text as SymbolName,
+          location: node_to_location(name_node2, TEST_FILE_PATH),
+        };
+        JAVASCRIPT_HANDLERS["definition.function"]!(func_capture2, builder, context);
 
         const result = builder.build();
         const built_functions = Array.from(result.functions.values());
@@ -1722,10 +1984,8 @@ export const NESTED = {
         const first_func = built_functions.find((f) => f.name === "first");
         const second_func = built_functions.find((f) => f.name === "second");
 
-        expect(first_func?.docstring).toBeDefined();
-        expect(first_func?.docstring).toContain("First function");
-        expect(second_func?.docstring).toBeDefined();
-        expect(second_func?.docstring).toContain("Second function");
+        expect(first_func!.docstring).toContain("First function");
+        expect(second_func!.docstring).toContain("Second function");
       });
     });
   });
@@ -1760,11 +2020,11 @@ export const NESTED = {
 
       const registry_class = classes[0];
       expect(registry_class.name).toBe("Registry");
-      expect(registry_class.properties.length).toBeGreaterThan(0);
+      expect(registry_class.properties).toHaveLength(1);
 
-      const symbols_prop = registry_class.properties.find(p => p.name === "symbols");
-      expect(symbols_prop).toBeDefined();
-      expect(symbols_prop?.type).toBe("Map<string, Symbol>");
+      const symbols_prop = registry_class.properties[0];
+      expect(symbols_prop.name).toBe("symbols");
+      expect(symbols_prop.type).toBe("Map<string, Symbol>");
     });
 
     it("should extract type from multiline JSDoc", async () => {
@@ -1783,32 +2043,15 @@ export const NESTED = {
       expect(classes.length).toBe(1);
 
       const config_class = classes[0];
-      const settings_prop = config_class.properties.find(p => p.name === "settings");
-      expect(settings_prop).toBeDefined();
-      expect(settings_prop?.type).toBe("AppSettings");
+      expect(config_class.properties).toHaveLength(1);
+      const settings_prop = config_class.properties[0];
+      expect(settings_prop.name).toBe("settings");
+      expect(settings_prop.type).toBe("AppSettings");
     });
 
-    it.skip("should extract type from JSDoc on constructor assignment (not yet implemented)", async () => {
-      // Constructor assignments require additional infrastructure to track as properties
-      // This is a known limitation - JSDoc types on constructor assignments aren't extracted yet
-      const code = `
-        class Project {
-          constructor() {
-            /** @type {DefinitionRegistry} */
-            this.definitions = new DefinitionRegistry();
-          }
-        }
-      `;
-
-      const index = await build_index_from_code(code);
-      const classes = Array.from(index.classes.values());
-      expect(classes.length).toBe(1);
-
-      const project_class = classes[0];
-      const definitions_prop = project_class.properties.find(p => p.name === "definitions");
-      expect(definitions_prop).toBeDefined();
-      expect(definitions_prop?.type).toBe("DefinitionRegistry");
-    });
+    // JSDoc type extraction from constructor assignments (e.g. `this.definitions = ...`)
+    // is not yet implemented. Constructor assignments require additional infrastructure
+    // to track as class properties. Tracked in TASK-199.22.
 
     it("should extract array type annotations", async () => {
       const code = `
@@ -1848,8 +2091,8 @@ export const NESTED = {
 
       const foo_class = classes[0];
       const value_prop = foo_class.properties.find(p => p.name === "value");
-      expect(value_prop).toBeDefined();
-      expect(value_prop?.type).toBe("string | number | null");
+      expect(value_prop!.name).toBe("value");
+      expect(value_prop!.type).toBe("string | number | null");
     });
 
     it("should extract function type annotations", async () => {
@@ -1866,8 +2109,8 @@ export const NESTED = {
 
       const foo_class = classes[0];
       const handler_prop = foo_class.properties.find(p => p.name === "handler");
-      expect(handler_prop).toBeDefined();
-      expect(handler_prop?.type).toBe("(data: string) => void");
+      expect(handler_prop!.name).toBe("handler");
+      expect(handler_prop!.type).toBe("(data: string) => void");
     });
 
     it("should handle properties without JSDoc", async () => {
@@ -1882,9 +2125,10 @@ export const NESTED = {
       expect(classes.length).toBe(1);
 
       const foo_class = classes[0];
-      const data_prop = foo_class.properties.find(p => p.name === "data");
-      expect(data_prop).toBeDefined();
-      expect(data_prop?.type).toBeUndefined();
+      expect(foo_class.properties).toHaveLength(1);
+      const data_prop = foo_class.properties[0];
+      expect(data_prop.name).toBe("data");
+      expect(data_prop.type).toBeUndefined();
     });
   });
 
@@ -2112,9 +2356,7 @@ export const NESTED = {
           location: node_to_location(name_node, TEST_FILE_PATH),
         };
 
-        const processor = JAVASCRIPT_HANDLERS["definition.variable"];
-        expect(processor).toBeDefined();
-        processor?.(capture, builder, context);
+        JAVASCRIPT_HANDLERS["definition.variable"]!(capture, builder, context);
 
         const result = builder.build();
         const variables = Array.from(result.variables.values());
@@ -2151,7 +2393,6 @@ export const NESTED = {
       const reexport = imports[0];
       expect(reexport.name).toBe("aliasedName"); // Local name is the alias
       expect(reexport.original_name).toBe("originalName"); // Original name tracked
-      expect(reexport.export).toBeDefined();
       expect(reexport.export?.is_reexport).toBe(true);
       expect(reexport.import_path).toBe("./original");
     });
@@ -2176,7 +2417,6 @@ export const NESTED = {
       const reexport = imports[0];
       expect(reexport.name).toBe("foo");
       expect(reexport.original_name).toBeUndefined(); // No alias
-      expect(reexport.export).toBeDefined();
       expect(reexport.export?.is_reexport).toBe(true);
     });
 
@@ -2200,13 +2440,13 @@ export const NESTED = {
       const bar_import = imports.find(i => i.name === "bar");
       const qux_import = imports.find(i => i.name === "qux");
 
-      expect(bar_import).toBeDefined();
-      expect(bar_import?.original_name).toBe("foo");
-      expect(bar_import?.export?.is_reexport).toBe(true);
+      expect(bar_import!.name).toBe("bar");
+      expect(bar_import!.original_name).toBe("foo");
+      expect(bar_import!.export?.is_reexport).toBe(true);
 
-      expect(qux_import).toBeDefined();
-      expect(qux_import?.original_name).toBe("baz");
-      expect(qux_import?.export?.is_reexport).toBe(true);
+      expect(qux_import!.name).toBe("qux");
+      expect(qux_import!.original_name).toBe("baz");
+      expect(qux_import!.export?.is_reexport).toBe(true);
     });
   });
 });

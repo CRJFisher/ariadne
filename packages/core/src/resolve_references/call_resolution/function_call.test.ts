@@ -60,7 +60,7 @@ describe("Function Call Resolution", () => {
     references = new ReferenceRegistry();
     imports = new ImportGraph();
     resolutions = new ResolutionRegistry();
-    context = { references, scopes, types, definitions, imports };
+    context = { references, scopes, types, definitions, imports, resolutions };
   });
 
   describe("Resolves to function symbol", () => {

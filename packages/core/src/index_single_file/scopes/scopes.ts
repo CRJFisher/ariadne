@@ -13,7 +13,7 @@ import type {
   Location,
 } from "@ariadnejs/types";
 import { module_scope, scope_string, ScopeType } from "@ariadnejs/types";
-import { ParsedFile } from "../file_utils";
+import { ParsedFile } from "../parsed_file";
 import {
   CaptureNode,
   ProcessingContext,
@@ -197,9 +197,6 @@ export function process_scopes(
     const scope_type = map_capture_to_scope_type(capture);
     if (!scope_type) continue;
 
-    // Skip module/namespace scopes - we already created the root module scope manually
-    if (scope_type === "module") continue;
-
     // Extract boundaries using language-specific extractors
     const extractor = get_scope_boundary_extractor(file.lang);
     const boundaries = extractor.extract_boundaries(
@@ -208,6 +205,15 @@ export function process_scopes(
       file.file_path
     );
     const location = boundaries.scope_location;
+
+    // Skip module scopes that duplicate the root file scope or have no body.
+    // The root file module is created manually above. External module
+    // declarations (e.g. Rust `mod other;`) have no body, indicated by
+    // symbol_location === scope_location from the boundary extractor.
+    if (scope_type === "module") {
+      if (locations_equal(location, file_location)) continue;
+      if (locations_equal(boundaries.symbol_location, location)) continue;
+    }
 
     // Create scope ID based on type and location
     const scope_id = create_scope_id(scope_type, location);
@@ -382,6 +388,18 @@ function find_containing_scope(
   }
 
   return best_scope;
+}
+
+/**
+ * Check if two locations have identical positions (ignoring file_path)
+ */
+function locations_equal(a: Location, b: Location): boolean {
+  return (
+    a.start_line === b.start_line &&
+    a.start_column === b.start_column &&
+    a.end_line === b.end_line &&
+    a.end_column === b.end_column
+  );
 }
 
 /**

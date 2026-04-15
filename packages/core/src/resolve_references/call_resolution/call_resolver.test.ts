@@ -8,13 +8,14 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   resolve_calls_for_files,
   type CallResolutionContext,
-  type NameResolver,
 } from "./call_resolver";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ScopeRegistry } from "../registries/scope";
 import { ReferenceRegistry } from "../registries/reference";
 import { ImportGraph } from "../../project/import_graph";
+import { ResolutionRegistry } from "../resolve_references";
+import { set_test_resolutions } from "../resolve_references.test";
 import { function_symbol, method_symbol, class_symbol } from "@ariadnejs/types";
 import type {
   FilePath,
@@ -49,6 +50,7 @@ describe("resolve_calls_for_files", () => {
   let scopes: ScopeRegistry;
   let references: ReferenceRegistry;
   let imports: ImportGraph;
+  let resolutions: ResolutionRegistry;
   let context: CallResolutionContext;
 
   beforeEach(() => {
@@ -57,13 +59,13 @@ describe("resolve_calls_for_files", () => {
     scopes = new ScopeRegistry();
     references = new ReferenceRegistry();
     imports = new ImportGraph();
-    context = { references, scopes, types, definitions, imports };
+    resolutions = new ResolutionRegistry();
+    context = { references, scopes, types, definitions, imports, resolutions };
   });
 
   describe("Empty inputs", () => {
     it("should return empty result for empty file_ids", () => {
-      const name_resolver: NameResolver = () => null;
-      const result = resolve_calls_for_files(new Set(), context, name_resolver);
+      const result = resolve_calls_for_files(new Set(), context);
 
       expect(result.resolved_calls_by_file.size).toBe(0);
       expect(result.calls_by_caller_scope.size).toBe(0);
@@ -71,7 +73,6 @@ describe("resolve_calls_for_files", () => {
     });
 
     it("should return empty calls for file with no references", () => {
-      const name_resolver: NameResolver = () => null;
       const file_ids = new Set([TEST_FILE]);
 
       // Set up empty scope structure
@@ -86,7 +87,7 @@ describe("resolve_calls_for_files", () => {
       });
       scopes.update_file(TEST_FILE, scope_map);
 
-      const result = resolve_calls_for_files(file_ids, context, name_resolver);
+      const result = resolve_calls_for_files(file_ids, context);
 
       expect(result.resolved_calls_by_file.get(TEST_FILE)).toEqual([]);
     });
@@ -146,19 +147,8 @@ describe("resolve_calls_for_files", () => {
       };
       references.update_file(TEST_FILE, [call_ref]);
 
-      // Name resolver that resolves greet in FILE_SCOPE_ID
-      const name_resolver: NameResolver = (scope_id, name) => {
-        if (scope_id === FILE_SCOPE_ID && name === "greet") {
-          return func_id;
-        }
-        return null;
-      };
-
-      const result = resolve_calls_for_files(
-        new Set([TEST_FILE]),
-        context,
-        name_resolver
-      );
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, new Map([["greet" as SymbolName, func_id]]));
+      const result = resolve_calls_for_files(new Set([TEST_FILE]), context);
 
       const calls = result.resolved_calls_by_file.get(TEST_FILE);
       expect(calls).toBeDefined();
@@ -191,14 +181,7 @@ describe("resolve_calls_for_files", () => {
       };
       references.update_file(TEST_FILE, [call_ref]);
 
-      // Name resolver that can't resolve anything
-      const name_resolver: NameResolver = () => null;
-
-      const result = resolve_calls_for_files(
-        new Set([TEST_FILE]),
-        context,
-        name_resolver
-      );
+      const result = resolve_calls_for_files(new Set([TEST_FILE]), context);
 
       // No resolved calls since resolution failed
       const calls = result.resolved_calls_by_file.get(TEST_FILE);
@@ -285,17 +268,9 @@ describe("resolve_calls_for_files", () => {
         },
       ]);
 
-      const name_resolver: NameResolver = (scope_id, name) => {
-        if (scope_id === scope_a && name === "funcA") return func_a;
-        if (scope_id === scope_b && name === "funcB") return func_b;
-        return null;
-      };
-
-      const result = resolve_calls_for_files(
-        new Set([file_a, file_b]),
-        context,
-        name_resolver
-      );
+      set_test_resolutions(resolutions, scope_a, new Map([["funcA" as SymbolName, func_a]]));
+      set_test_resolutions(resolutions, scope_b, new Map([["funcB" as SymbolName, func_b]]));
+      const result = resolve_calls_for_files(new Set([file_a, file_b]), context);
 
       expect(result.resolved_calls_by_file.get(file_a)!.length).toBe(1);
       expect(result.resolved_calls_by_file.get(file_b)!.length).toBe(1);
@@ -352,16 +327,8 @@ describe("resolve_calls_for_files", () => {
         },
       ]);
 
-      const name_resolver: NameResolver = (scope_id, name) => {
-        if (name === "helper") return func_id;
-        return null;
-      };
-
-      const result = resolve_calls_for_files(
-        new Set([TEST_FILE]),
-        context,
-        name_resolver
-      );
+      set_test_resolutions(resolutions, caller_scope, new Map([["helper" as SymbolName, func_id]]));
+      const result = resolve_calls_for_files(new Set([TEST_FILE]), context);
 
       // Check calls are grouped by caller scope
       const caller_calls = result.calls_by_caller_scope.get(caller_scope);
@@ -458,23 +425,10 @@ describe("resolve_calls_for_files", () => {
       };
       references.update_file(TEST_FILE, [call_ref]);
 
-      // Name resolver that simulates lexical scope resolution:
-      // - METHOD_BODY_SCOPE resolves to method (wrong for function_call)
-      // - FILE_SCOPE_ID resolves to imported function (correct)
-      const name_resolver: NameResolver = (scope_id, name) => {
-        if (name === "do_work") {
-          if (scope_id === METHOD_BODY_SCOPE_ID) return method_id;
-          if (scope_id === CLASS_SCOPE_ID) return method_id;
-          if (scope_id === FILE_SCOPE_ID) return import_func_id;
-        }
-        return null;
-      };
-
-      const result = resolve_calls_for_files(
-        new Set([TEST_FILE]),
-        context,
-        name_resolver
-      );
+      set_test_resolutions(resolutions, METHOD_BODY_SCOPE_ID, new Map([["do_work" as SymbolName, method_id]]));
+      set_test_resolutions(resolutions, CLASS_SCOPE_ID, new Map([["do_work" as SymbolName, method_id]]));
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, new Map([["do_work" as SymbolName, import_func_id]]));
+      const result = resolve_calls_for_files(new Set([TEST_FILE]), context);
 
       const calls = result.resolved_calls_by_file.get(TEST_FILE);
       expect(calls).toBeDefined();
@@ -568,20 +522,10 @@ describe("resolve_calls_for_files", () => {
       };
       references.update_file(TEST_FILE, [call_ref]);
 
-      const name_resolver: NameResolver = (scope_id, name) => {
-        if (name === "do_work") {
-          if (scope_id === inner_scope_id) return inner_func_id;
-          if (scope_id === FUNC_SCOPE_ID) return inner_func_id;
-          if (scope_id === FILE_SCOPE_ID) return outer_func_id;
-        }
-        return null;
-      };
-
-      const result = resolve_calls_for_files(
-        new Set([TEST_FILE]),
-        context,
-        name_resolver
-      );
+      set_test_resolutions(resolutions, inner_scope_id, new Map([["do_work" as SymbolName, inner_func_id]]));
+      set_test_resolutions(resolutions, FUNC_SCOPE_ID, new Map([["do_work" as SymbolName, inner_func_id]]));
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, new Map([["do_work" as SymbolName, outer_func_id]]));
+      const result = resolve_calls_for_files(new Set([TEST_FILE]), context);
 
       const calls = result.resolved_calls_by_file.get(TEST_FILE);
       expect(calls).toBeDefined();
@@ -652,21 +596,10 @@ describe("resolve_calls_for_files", () => {
       };
       references.update_file(TEST_FILE, [call_ref]);
 
-      // Name resolver: resolves to method in all scopes, no import exists
-      const name_resolver: NameResolver = (scope_id, name) => {
-        if (name === "do_work") {
-          if (scope_id === METHOD_BODY_SCOPE_ID) return method_id;
-          if (scope_id === CLASS_SCOPE_ID) return method_id;
-          // FILE_SCOPE_ID returns null (no import)
-        }
-        return null;
-      };
-
-      const result = resolve_calls_for_files(
-        new Set([TEST_FILE]),
-        context,
-        name_resolver
-      );
+      set_test_resolutions(resolutions, METHOD_BODY_SCOPE_ID, new Map([["do_work" as SymbolName, method_id]]));
+      set_test_resolutions(resolutions, CLASS_SCOPE_ID, new Map([["do_work" as SymbolName, method_id]]));
+      // FILE_SCOPE_ID has no entry (no import)
+      const result = resolve_calls_for_files(new Set([TEST_FILE]), context);
 
       // Should have no resolved calls - method can't be target of bare function call
       const calls = result.resolved_calls_by_file.get(TEST_FILE);
@@ -748,17 +681,8 @@ describe("resolve_calls_for_files", () => {
       };
       references.update_file(TEST_FILE, [call_ref]);
 
-      // Name resolver returns class symbol for "MyClass"
-      const name_resolver: NameResolver = (scope_id, name) => {
-        if (name === "MyClass") return class_id;
-        return null;
-      };
-
-      const result = resolve_calls_for_files(
-        new Set([TEST_FILE]),
-        context,
-        name_resolver
-      );
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, new Map([["MyClass" as SymbolName, class_id]]));
+      const result = resolve_calls_for_files(new Set([TEST_FILE]), context);
 
       const calls = result.resolved_calls_by_file.get(TEST_FILE);
       expect(calls).toBeDefined();

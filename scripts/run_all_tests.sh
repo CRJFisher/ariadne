@@ -15,6 +15,7 @@ PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 VITEST_ROOTS=$(find "$PROJECT_DIR" \
   -name node_modules -prune -o \
   -name .worktrees -prune -o \
+  -path "*/.claude/worktrees*" -prune -o \
   -name .git -prune -o \
   -name dist -prune -o \
   \( -name 'vitest.config.mjs' -o -name 'vitest.config.ts' -o -name 'vitest.config.js' \) -print \
@@ -25,6 +26,7 @@ VITEST_ROOTS=$(find "$PROJECT_DIR" \
 PKG_ROOTS=$(find "$PROJECT_DIR" \
   -name node_modules -prune -o \
   -name .worktrees -prune -o \
+  -path "*/.claude/worktrees*" -prune -o \
   -name .git -prune -o \
   -name dist -prune -o \
   -name 'package.json' -print \

@@ -8,6 +8,7 @@ import JavaScript from "tree-sitter-javascript";
 // @ts-ignore - TypeScript grammar is available but not typed
 import TypeScript from "tree-sitter-typescript";
 import { JAVASCRIPT_METADATA_EXTRACTORS } from "./metadata_extractors.javascript";
+import { TYPESCRIPT_METADATA_EXTRACTORS } from "./metadata_extractors.typescript";
 import type { FilePath } from "@ariadnejs/types";
 
 describe("JavaScript Metadata Extractors", () => {
@@ -165,9 +166,7 @@ describe("JavaScript Metadata Extractors", () => {
 
       const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(member_expr);
 
-      // Should still extract the chain even with optional chaining
-      expect(result).toBeDefined();
-      expect(result).toContain("obj");
+      expect(result).toEqual(["obj", "prop", "method"]);
     });
 
     it("should handle 'this' in property chain", () => {
@@ -461,7 +460,179 @@ describe("JavaScript Metadata Extractors", () => {
 
       expect(result).toBeUndefined();
     });
+  });
 
+  describe("extract_receiver_info", () => {
+    it("should detect 'this' as self-reference", () => {
+      const code = "this.method()";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
+
+      expect(result).toEqual({
+        receiver_location: expect.objectContaining({ start_column: 1, end_column: 4 }),
+        property_chain: ["this", "method"],
+        is_self_reference: true,
+        self_keyword: "this",
+      });
+    });
+
+    it("should detect 'super' as self-reference", () => {
+      const code = "super.process()";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
+
+      expect(result).toEqual({
+        receiver_location: expect.objectContaining({ start_column: 1, end_column: 5 }),
+        property_chain: ["super", "process"],
+        is_self_reference: true,
+        self_keyword: "super",
+      });
+    });
+
+    it("should handle regular object receiver without self-reference", () => {
+      const code = "obj.getName()";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.property_chain).toEqual(["obj", "getName"]);
+      expect(result!.is_self_reference).toBe(false);
+      expect(result!.self_keyword).toBeUndefined();
+    });
+
+    it("should handle nested property chain receiver", () => {
+      const code = "a.b.c.method()";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.property_chain).toEqual(["a", "b", "c", "method"]);
+      expect(result!.is_self_reference).toBe(false);
+    });
+
+    it("should handle this with nested chain", () => {
+      const code = "this.data.items.push(1)";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.property_chain).toEqual(["this", "data", "items", "push"]);
+      expect(result!.is_self_reference).toBe(true);
+      expect(result!.self_keyword).toBe("this");
+    });
+
+    it("should handle member_expression directly (not in call)", () => {
+      const code = "obj.prop";
+      const tree = parser.parse(code);
+      const member_expr = tree.rootNode.descendantsOfType("member_expression")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_receiver_info(member_expr, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.property_chain).toEqual(["obj", "prop"]);
+      expect(result!.is_self_reference).toBe(false);
+    });
+
+    it("should return undefined for plain function calls", () => {
+      const code = "doSomething()";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
+
+      expect(result).toBeUndefined();
+    });
+
+    it("should handle optional chain receiver", () => {
+      const code = "obj?.method()";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.property_chain).toEqual(["obj", "method"]);
+      expect(result!.is_self_reference).toBe(false);
+    });
+  });
+
+  describe("extract_is_optional_chain", () => {
+    it("should return true for call with optional chain on receiver", () => {
+      const code = "obj?.method()";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      expect(JAVASCRIPT_METADATA_EXTRACTORS.extract_is_optional_chain(call_expr)).toBe(true);
+    });
+
+    it("should return false for regular method call", () => {
+      const code = "obj.method()";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      expect(JAVASCRIPT_METADATA_EXTRACTORS.extract_is_optional_chain(call_expr)).toBe(false);
+    });
+
+    it("should return true for member_expression with optional chain", () => {
+      const code = "obj?.prop";
+      const tree = parser.parse(code);
+      const member_expr = tree.rootNode.descendantsOfType("member_expression")[0];
+
+      expect(JAVASCRIPT_METADATA_EXTRACTORS.extract_is_optional_chain(member_expr)).toBe(true);
+    });
+
+    it("should return false for regular member_expression", () => {
+      const code = "obj.prop";
+      const tree = parser.parse(code);
+      const member_expr = tree.rootNode.descendantsOfType("member_expression")[0];
+
+      expect(JAVASCRIPT_METADATA_EXTRACTORS.extract_is_optional_chain(member_expr)).toBe(false);
+    });
+
+    it("should detect optional chaining deep in nested member_expression", () => {
+      const code = "a.b?.c.d";
+      const tree = parser.parse(code);
+      const member_expr = tree.rootNode.descendantsOfType("member_expression")[0];
+
+      expect(JAVASCRIPT_METADATA_EXTRACTORS.extract_is_optional_chain(member_expr)).toBe(true);
+    });
+
+    it("should return false for fully non-optional nested chain", () => {
+      const code = "a.b.c.d";
+      const tree = parser.parse(code);
+      const member_expr = tree.rootNode.descendantsOfType("member_expression")[0];
+
+      expect(JAVASCRIPT_METADATA_EXTRACTORS.extract_is_optional_chain(member_expr)).toBe(false);
+    });
+
+    it("should return true for chained optional call", () => {
+      const code = "obj?.prop?.method()";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      expect(JAVASCRIPT_METADATA_EXTRACTORS.extract_is_optional_chain(call_expr)).toBe(true);
+    });
+
+    it("should return false for non-call non-member nodes", () => {
+      const code = "42";
+      const tree = parser.parse(code);
+      const number_node = tree.rootNode.descendantsOfType("number")[0];
+
+      expect(JAVASCRIPT_METADATA_EXTRACTORS.extract_is_optional_chain(number_node)).toBe(false);
+    });
+  });
+
+  describe("edge cases", () => {
     it("should return undefined when no JSDoc comment exists", () => {
       const code = "const x = 5;";
       const tree = parser.parse(code);
@@ -518,33 +689,22 @@ describe("JavaScript Metadata Extractors", () => {
     it("should handle mixed bracket and dot notation", () => {
       const code = "obj.prop[\"key\"].nested";
       const tree = parser.parse(code);
-      // Get the outermost expression which contains the full chain
-      const expr_statement = tree.rootNode.child(0);
-      const member_expr = expr_statement?.child(0);
+      const member_expr = tree.rootNode.descendantsOfType("member_expression")[0];
 
-      if (member_expr) {
-        const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(member_expr);
-        expect(result).toEqual(["obj", "prop", "key", "nested"]);
-      } else {
-        // Fallback if AST structure is different
-        const first_member_expr = tree.rootNode.descendantsOfType("member_expression")[0];
-        const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(first_member_expr);
-        expect(result).toBeDefined();
-        expect(result).toContain("nested");
-      }
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(member_expr);
+
+      expect(result).toEqual(["obj", "prop", "key", "nested"]);
     });
 
     it("should handle nested optional chaining with method calls", () => {
       const code = "obj?.method()?.prop?.another()";
       const tree = parser.parse(code);
-      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+      // DFS order: outermost call first
+      const outer_call = tree.rootNode.descendantsOfType("call_expression")[0];
 
-      // Get the outer call expression
-      const outer_call = tree.rootNode.descendantsOfType("call_expression")[1] || call_expr;
       const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(outer_call);
 
-      expect(result).toBeDefined();
-      expect(result?.length).toBeGreaterThan(0);
+      expect(result).toEqual(["obj", "method", "prop", "another"]);
     });
 
     it("should handle constructor in return statement", () => {
@@ -703,11 +863,10 @@ describe("TypeScript Metadata Extractors", () => {
       const tree = parser.parse(code);
       const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
 
-      if (generic_type) {
-        const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
+      expect(generic_type).toBeDefined();
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
-        expect(result).toEqual(["string", "number"]);
-      }
+      expect(result).toEqual(["string", "number"]);
     });
 
     it("should extract single type argument", () => {
@@ -715,11 +874,10 @@ describe("TypeScript Metadata Extractors", () => {
       const tree = parser.parse(code);
       const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
 
-      if (generic_type) {
-        const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
+      expect(generic_type).toBeDefined();
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
-        expect(result).toEqual(["string"]);
-      }
+      expect(result).toEqual(["string"]);
     });
 
     it("should handle nested generic types", () => {
@@ -727,12 +885,10 @@ describe("TypeScript Metadata Extractors", () => {
       const tree = parser.parse(code);
       const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
 
-      if (generic_type) {
-        const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
+      expect(generic_type).toBeDefined();
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
-        expect(result).toBeDefined();
-        expect(result?.length).toBeGreaterThan(0);
-      }
+      expect(result).toEqual(["Array<string>"]);
     });
 
     it("should return undefined for non-generic types", () => {
@@ -740,11 +896,10 @@ describe("TypeScript Metadata Extractors", () => {
       const tree = parser.parse(code);
       const type_annotation = tree.rootNode.descendantsOfType("type_annotation")[0];
 
-      if (type_annotation) {
-        const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments(type_annotation);
+      expect(type_annotation).toBeDefined();
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments(type_annotation);
 
-        expect(result).toBeUndefined();
-      }
+      expect(result).toBeUndefined();
     });
   });
 
@@ -860,6 +1015,135 @@ describe("TypeScript Metadata Extractors", () => {
 
       // new_expression is not a call_expression, so should return undefined
       expect(result).toBeUndefined();
+    });
+  });
+});
+
+describe("TYPESCRIPT_METADATA_EXTRACTORS", () => {
+  let parser: Parser;
+  const TEST_FILE: FilePath = "/test/file.ts" as FilePath;
+
+  beforeEach(() => {
+    parser = new Parser();
+    parser.setLanguage(TypeScript.typescript);
+  });
+
+  describe("extract_type_from_annotation", () => {
+    it("should handle type_identifier node directly", () => {
+      const code = "const x: MyType = {};";
+      const tree = parser.parse(code);
+      const type_ident = tree.rootNode.descendantsOfType("type_identifier")[0];
+
+      expect(type_ident).toBeDefined();
+      const result = TYPESCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(type_ident, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.type_name).toBe("MyType");
+      expect(result!.certainty).toBe("declared");
+      expect(result!.is_nullable).toBe(false);
+    });
+
+    it("should extract base type name from generic_type node", () => {
+      const code = "const arr: Array<string> = [];";
+      const tree = parser.parse(code);
+      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
+
+      expect(generic_type).toBeDefined();
+      const result = TYPESCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(generic_type, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.type_name).toBe("Array");
+      expect(result!.certainty).toBe("declared");
+    });
+
+    it("should handle nested_type_identifier (e.g. Status.Active)", () => {
+      const code = "const val: Status.Active = Status.Active;";
+      const tree = parser.parse(code);
+      const nested_type = tree.rootNode.descendantsOfType("nested_type_identifier")[0];
+
+      expect(nested_type).toBeDefined();
+      const result = TYPESCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(nested_type, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.type_name).toBe("Status.Active");
+      expect(result!.certainty).toBe("declared");
+    });
+
+    it("should fall back to JS extractor for variable_declarator with type annotation", () => {
+      const code = "const x: string = \"\";";
+      const tree = parser.parse(code);
+      const var_declarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
+
+      const result = TYPESCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(var_declarator, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.type_name).toBe("string");
+      expect(result!.certainty).toBe("declared");
+    });
+
+    it("should fall back to JS extractor for JSDoc on function", () => {
+      const code = `
+        /** @returns {boolean} */
+        function check() { return true; }
+      `;
+      const tree = parser.parse(code);
+      const func_decl = tree.rootNode.descendantsOfType("function_declaration")[0];
+
+      const result = TYPESCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(func_decl, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.type_name).toBe("boolean");
+    });
+  });
+
+  describe("delegated methods", () => {
+    it("should delegate extract_call_receiver to JS extractor", () => {
+      const code = "obj.method()";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = TYPESCRIPT_METADATA_EXTRACTORS.extract_call_receiver(call_expr, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.start_column).toBe(1);
+      expect(result!.end_column).toBe(3);
+    });
+
+    it("should delegate is_method_call to JS extractor", () => {
+      const code = "obj.method()";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      expect(TYPESCRIPT_METADATA_EXTRACTORS.is_method_call(call_expr)).toBe(true);
+    });
+
+    it("should delegate extract_call_name to JS extractor", () => {
+      const code = "obj.method()";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      expect(TYPESCRIPT_METADATA_EXTRACTORS.extract_call_name(call_expr)).toBe("method");
+    });
+
+    it("should delegate extract_is_optional_chain to JS extractor", () => {
+      const code = "obj?.method()";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      expect(TYPESCRIPT_METADATA_EXTRACTORS.extract_is_optional_chain(call_expr)).toBe(true);
+    });
+
+    it("should delegate extract_receiver_info to JS extractor", () => {
+      const code = "this.method()";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = TYPESCRIPT_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.is_self_reference).toBe(true);
+      expect(result!.self_keyword).toBe("this");
+      expect(result!.property_chain).toEqual(["this", "method"]);
     });
   });
 });

@@ -16,11 +16,13 @@
 import type {
   SymbolId,
   SymbolName,
-  SymbolReference,
+  FilePath,
+  ConstructorCallReference,
   ClassDefinition,
 } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../registries/definition";
 import type { ResolutionRegistry } from "../resolve_references";
+import { resolve_namespace_export } from "./method_lookup";
 
 /**
  * Resolve a constructor call to zero, one, or more symbols
@@ -28,38 +30,56 @@ import type { ResolutionRegistry } from "../resolve_references";
  * EAGER approach: Uses pre-computed resolutions from ResolutionRegistry.
  *
  * Steps:
- * 1. Resolve class name using EAGER resolution
- * 2. Verify it's a class definition
- * 3. Return constructor symbol if exists, otherwise class symbol
+ * 1. If property_chain is set: resolve namespace → class via import path
+ * 2. Otherwise: resolve class name using EAGER resolution
+ * 3. Verify it's a class definition
+ * 4. Return constructor symbol if exists, otherwise class symbol
  *
  * @param call_ref - Constructor call reference from semantic index
  * @param definitions - Definition registry for class lookup
  * @param resolutions - Resolution registry with eager resolutions
+ * @param import_source_resolver - Optional resolver mapping a namespace import symbol to its source file
  * @returns Array of resolved constructor/class symbol_ids (empty if resolution fails)
  */
 export function resolve_constructor_call(
-  call_ref: SymbolReference,
+  call_ref: ConstructorCallReference,
   definitions: DefinitionRegistry,
-  resolutions: ResolutionRegistry
+  resolutions: ResolutionRegistry,
+  import_source_resolver?: (import_id: SymbolId) => FilePath | undefined
 ): SymbolId[] {
-  // Step 1: Resolve class name using EAGER resolution
-  const class_symbol = resolutions.resolve(
-    call_ref.scope_id,
-    call_ref.name as SymbolName
-  );
+  let class_symbol: SymbolId | null = null;
+
+  // Namespace-qualified constructor: property_chain = [namespace, class_name] — need both parts
+  if (call_ref.property_chain && call_ref.property_chain.length > 1 && import_source_resolver) {
+    const namespace_id = resolutions.resolve(call_ref.scope_id, call_ref.property_chain[0]);
+    if (namespace_id) {
+      const namespace_def = definitions.get(namespace_id);
+      if (namespace_def?.kind === "import" && namespace_def.import_kind === "namespace") {
+        const source_file = import_source_resolver(namespace_id);
+        if (source_file) {
+          class_symbol = resolve_namespace_export(source_file, call_ref.property_chain[1], definitions);
+        }
+      }
+    }
+  }
+
+  // Simple constructor: new ClassName()
+  if (!class_symbol) {
+    class_symbol = resolutions.resolve(call_ref.scope_id, call_ref.name as SymbolName);
+  }
 
   if (!class_symbol) {
     return [];
   }
 
-  // Step 2: Verify it's actually a class and get constructor
+  // Verify it's actually a class and get constructor
   const class_def = find_class_definition(class_symbol, definitions);
 
   if (!class_def) {
     return [];
   }
 
-  // Step 3: Walk class hierarchy for constructor, fall back to class symbol
+  // Walk class hierarchy for constructor, fall back to class symbol
   const constructor_symbol = find_constructor_in_class_hierarchy(
     class_def,
     definitions,

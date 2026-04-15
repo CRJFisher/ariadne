@@ -76,12 +76,16 @@ export function extract_imports_from_use_declaration(
 
     case "scoped_identifier": {
       // Scoped: use std::fmt::Display
-      const full_path = extract_scoped_path(argument);
+      // module_path is the path to the module (without the item name)
       const name = argument.childForFieldName?.("name");
-      if (name) {
+      const path_node = argument.childForFieldName?.("path");
+      if (name && path_node) {
+        const module_path = path_node.type === "scoped_identifier"
+          ? extract_scoped_path(path_node)
+          : path_node.text;
         imports.push({
           name: name.text as SymbolName,
-          module_path: create_module_path(full_path),
+          module_path: create_module_path(module_path),
         });
       }
       break;
@@ -143,19 +147,21 @@ export function extract_imports_from_use_declaration(
             if (!item) continue;
 
             if (item.type === "identifier") {
-              const full_path = `${prefix}::${item.text}`;
               imports.push({
                 name: item.text as SymbolName,
-                module_path: create_module_path(full_path),
+                module_path: create_module_path(prefix),
               });
             } else if (item.type === "scoped_identifier") {
-              const item_path = extract_scoped_path(item);
               const name = item.childForFieldName?.("name");
+              const item_path_node = item.childForFieldName?.("path");
               if (name) {
-                const full_path = `${prefix}::${item_path}`;
+                // For `use std::{cmp::Ordering}`, module_path = "std::cmp", name = "Ordering"
+                const module_path = item_path_node
+                  ? `${prefix}::${item_path_node.type === "scoped_identifier" ? extract_scoped_path(item_path_node) : item_path_node.text}`
+                  : prefix;
                 imports.push({
                   name: name.text as SymbolName,
-                  module_path: create_module_path(full_path),
+                  module_path: create_module_path(module_path),
                 });
               }
             } else if (item.type === "scoped_use_list") {
@@ -185,15 +191,26 @@ export function extract_imports_from_use_declaration(
                 }
               }
               if (original && alias) {
-                const original_path = original.type === "scoped_identifier"
-                  ? extract_scoped_path(original)
-                  : original.text;
-                const full_path = `${prefix}::${original_path}`;
-                imports.push({
-                  name: alias.text as SymbolName,
-                  module_path: create_module_path(full_path),
-                  original_name: create_symbol_name(full_path),
-                });
+                if (original.type === "scoped_identifier") {
+                  // e.g., `use std::{cmp::Ordering as Ord}` — original is cmp::Ordering
+                  const original_name_node = original.childForFieldName?.("name");
+                  const original_path_node = original.childForFieldName?.("path");
+                  const module_path = original_path_node
+                    ? `${prefix}::${original_path_node.type === "scoped_identifier" ? extract_scoped_path(original_path_node) : original_path_node.text}`
+                    : prefix;
+                  imports.push({
+                    name: alias.text as SymbolName,
+                    module_path: create_module_path(module_path),
+                    original_name: create_symbol_name(original_name_node?.text ?? original.text),
+                  });
+                } else {
+                  // e.g., `use utils::{helper as h}` — original is identifier "helper"
+                  imports.push({
+                    name: alias.text as SymbolName,
+                    module_path: create_module_path(prefix),
+                    original_name: create_symbol_name(original.text),
+                  });
+                }
               }
             }
           }
@@ -222,15 +239,29 @@ export function extract_imports_from_use_declaration(
       }
 
       if (original && alias) {
-        const module_path = original.type === "scoped_identifier"
-          ? extract_scoped_path(original)
-          : original.text;
-        // For aliased imports, original_name should be the full path
-        imports.push({
-          name: alias.text as SymbolName,
-          module_path: create_module_path(module_path),
-          original_name: create_symbol_name(module_path),
-        });
+        if (original.type === "scoped_identifier") {
+          // e.g., `use self::math::add as add_numbers`
+          // module_path = "self::math", original_name = "add"
+          const original_name_node = original.childForFieldName?.("name");
+          const original_path_node = original.childForFieldName?.("path");
+          const module_path = original_path_node
+            ? (original_path_node.type === "scoped_identifier"
+              ? extract_scoped_path(original_path_node)
+              : original_path_node.text)
+            : original.text;
+          imports.push({
+            name: alias.text as SymbolName,
+            module_path: create_module_path(module_path),
+            original_name: create_symbol_name(original_name_node?.text ?? original.text),
+          });
+        } else {
+          // Simple: `use foo as bar`
+          imports.push({
+            name: alias.text as SymbolName,
+            module_path: create_module_path(original.text),
+            original_name: create_symbol_name(original.text),
+          });
+        }
       }
       break;
     }

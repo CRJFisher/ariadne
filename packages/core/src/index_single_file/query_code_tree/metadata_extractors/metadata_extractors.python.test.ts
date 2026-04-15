@@ -96,7 +96,7 @@ describe("Python Metadata Extractors", () => {
       const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typed_param, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.type_name).toContain("|");
+      expect(result!.type_name).toBe("str | int");
     });
 
     it("should handle parameters with default values", () => {
@@ -104,20 +104,12 @@ describe("Python Metadata Extractors", () => {
       const tree = parser.parse(code);
       const typed_default_param = tree.rootNode.descendantsOfType("typed_default_parameter")[0];
 
-      if (typed_default_param) {
-        const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typed_default_param, TEST_FILE);
+      expect(typed_default_param).toBeDefined();
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typed_default_param!, TEST_FILE);
 
-        expect(result).toBeDefined();
-        expect(result?.type_name).toBe("int");
-        expect(result?.certainty).toBe("declared");
-      } else {
-        // Some versions of tree-sitter-python might use typed_parameter even with defaults
-        const typed_param = tree.rootNode.descendantsOfType("typed_parameter")[0];
-        const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typed_param, TEST_FILE);
-
-        expect(result).toBeDefined();
-        expect(result?.type_name).toBe("int");
-      }
+      expect(result).toBeDefined();
+      expect(result!.type_name).toBe("int");
+      expect(result!.certainty).toBe("declared");
     });
 
     it("should detect nullable with pipe None syntax", () => {
@@ -128,7 +120,7 @@ describe("Python Metadata Extractors", () => {
       const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typed_param, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.type_name).toContain("None");
+      expect(result!.type_name).toBe("str | None");
       expect(result?.is_nullable).toBe(true);
     });
 
@@ -173,12 +165,11 @@ describe("Python Metadata Extractors", () => {
       const tree = parser.parse(code);
       const type_node = tree.rootNode.descendantsOfType("type")[0];
 
-      if (type_node) {
-        const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(type_node, TEST_FILE);
+      expect(type_node).toBeDefined();
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(type_node!, TEST_FILE);
 
-        expect(result).toBeDefined();
-        expect(result?.type_name).toBe("int");
-      }
+      expect(result).toBeDefined();
+      expect(result!.type_name).toBe("int");
     });
   });
 
@@ -348,10 +339,7 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_property_chain(attribute);
 
-      expect(result).toBeDefined();
-      expect(result).toContain("obj");
-      expect(result).toContain("key");
-      expect(result).toContain("prop");
+      expect(result).toEqual(["obj", "key", "prop"]);
     });
 
     it("should handle super() in chain", () => {
@@ -361,9 +349,7 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_property_chain(attribute);
 
-      expect(result).toBeDefined();
-      expect(result).toContain("super");
-      expect(result).toContain("method");
+      expect(result).toEqual(["super", "method"]);
     });
 
     it("should handle nested subscripts", () => {
@@ -383,10 +369,7 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_property_chain(attribute);
 
-      expect(result).toBeDefined();
-      expect(result).toContain("obj");
-      expect(result).toContain("prop");
-      // Note: numeric subscripts are not included in the chain
+      expect(result).toEqual(["obj", "prop"]);
     });
 
     it("should handle variable subscript", () => {
@@ -396,10 +379,7 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_property_chain(attribute);
 
-      expect(result).toBeDefined();
-      expect(result).toContain("obj");
-      expect(result).toContain("prop");
-      // Note: variable subscripts are not included in the chain
+      expect(result).toEqual(["obj", "prop"]);
     });
 
     it("should return undefined for simple identifier", () => {
@@ -419,11 +399,8 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_property_chain(attribute);
 
-      expect(result).toBeDefined();
-      expect(result).toContain("data");
-      expect(result).toContain("users");
-      expect(result).toContain("profile");
-      expect(result).toContain("name");
+      // numeric subscripts are skipped, string subscripts included
+      expect(result).toEqual(["data", "users", "profile", "name"]);
     });
   });
 
@@ -608,8 +585,7 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
-      expect(result).toBeDefined();
-      expect(result?.length).toBeGreaterThan(0);
+      expect(result).toEqual(["[int, str]", "bool"]);
     });
 
     it("should return undefined for non-generic types", () => {
@@ -629,11 +605,7 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
-      expect(result).toBeDefined();
-      // Callable has special format where arguments are in a list
-      expect(result).toBeDefined();
-      const result_str = result?.join(", ");
-      expect(result_str).toContain("bool");
+      expect(result).toEqual(["[int, str]", "bool"]);
     });
 
     it("should handle deeply nested generics", () => {
@@ -643,10 +615,7 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
-      expect(result).toBeDefined();
-      expect(result?.[0]).toBe("str");
-      expect(result?.[1]).toContain("List");
-      expect(result?.[1]).toContain("Tuple");
+      expect(result).toEqual(["str", "List[Tuple[int, str]]"]);
     });
 
     it("should handle Optional as special case of Union", () => {
@@ -667,11 +636,7 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
-      expect(result).toBeDefined();
-      expect(result?.length).toBe(3);
-      expect(result?.[0]).toBe("int");
-      expect(result?.[1]).toContain("List");
-      expect(result?.[2]).toContain("Dict");
+      expect(result).toEqual(["int", "List[str]", "Dict[str, Any]"]);
     });
 
     it("should handle Literal type arguments", () => {
@@ -681,9 +646,7 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
-      expect(result).toBeDefined();
-      // Literal contains string values as type arguments
-      expect(result?.length).toBeGreaterThan(0);
+      expect(result).toEqual(["\"foo\"", "\"bar\""]);
     });
   });
 
@@ -1020,6 +983,84 @@ def value(self):
       const result = PYTHON_METADATA_EXTRACTORS.extract_receiver_info(call, TEST_FILE);
 
       expect(result).toBeUndefined();
+    });
+
+    it("should handle direct attribute node (not wrapped in call)", () => {
+      const code = "obj.prop";
+      const tree = parser.parse(code);
+      const attribute = tree.rootNode.descendantsOfType("attribute")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_receiver_info(attribute, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.property_chain).toEqual(["obj", "prop"]);
+      expect(result!.is_self_reference).toBe(false);
+    });
+
+    it("should handle direct self attribute node", () => {
+      const code = "self.value";
+      const tree = parser.parse(code);
+      const attribute = tree.rootNode.descendantsOfType("attribute")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_receiver_info(attribute, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.property_chain).toEqual(["self", "value"]);
+      expect(result!.is_self_reference).toBe(true);
+      expect(result!.self_keyword).toBe("self");
+    });
+  });
+
+  describe("extract_is_optional_chain", () => {
+    it("should always return false for Python", () => {
+      const code = "obj.method()";
+      const tree = parser.parse(code);
+      const call = tree.rootNode.descendantsOfType("call")[0];
+
+      expect(PYTHON_METADATA_EXTRACTORS.extract_is_optional_chain(call)).toBe(false);
+    });
+
+    it("should return false for attribute access", () => {
+      const code = "obj.prop";
+      const tree = parser.parse(code);
+      const attribute = tree.rootNode.descendantsOfType("attribute")[0];
+
+      expect(PYTHON_METADATA_EXTRACTORS.extract_is_optional_chain(attribute)).toBe(false);
+    });
+
+    it("should return false for simple identifier", () => {
+      const code = "x";
+      const tree = parser.parse(code);
+      const identifier = tree.rootNode.descendantsOfType("identifier")[0];
+
+      expect(PYTHON_METADATA_EXTRACTORS.extract_is_optional_chain(identifier)).toBe(false);
+    });
+  });
+
+  describe("extract_type_arguments - subscript node", () => {
+    it("should extract single type argument from subscript", () => {
+      const code = "x = items[str]";
+      const tree = parser.parse(code);
+      const subscript = tree.rootNode.descendantsOfType("subscript")[0];
+
+      expect(subscript).toBeDefined();
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(subscript);
+
+      expect(result).toEqual(["str"]);
+    });
+
+    it("should extract tuple subscript type arguments", () => {
+      // When the subscript is a tuple node (not comma-separated identifiers),
+      // extract_type_arguments handles it as multiple type arguments
+      const code = "x = mapping[(str, int)]";
+      const tree = parser.parse(code);
+      const subscript = tree.rootNode.descendantsOfType("subscript")[0];
+
+      expect(subscript).toBeDefined();
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(subscript);
+
+      expect(result).toBeDefined();
+      expect(result).toEqual(["str", "int"]);
     });
   });
 });

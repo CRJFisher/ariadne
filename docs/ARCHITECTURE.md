@@ -27,7 +27,6 @@ Key subdirectories:
 - `scopes/` — Lexical scope tree building with language-specific boundary extractors
 - `definitions/` — Definition builder (functions, classes, methods, variables, etc.)
 - `references/` — Reference builder (calls, type references, variable references)
-- `type_preprocessing/` — Type information extraction
 
 ### resolve_references/
 
@@ -39,6 +38,7 @@ Resolves symbol names to `SymbolId`s and function/method/constructor calls to th
 Also contains the project-level registries:
 
 - `registries/` — `DefinitionRegistry`, `TypeRegistry`, `ScopeRegistry`, `ExportRegistry`, `ReferenceRegistry`
+- `type_preprocessing/` — Type metadata extraction from definitions and references (feeds `TypeRegistry`)
 - `call_resolution/` — Function, method, constructor, and collection dispatch resolvers
 - `import_resolution/` — Language-specific import path resolvers
 
@@ -62,14 +62,14 @@ All identifiers use the branded `SymbolId` type, constructed via factory functio
 
 Project-level registries aggregate per-file data and support incremental updates:
 
-| Registry | Purpose |
-|----------|---------|
+| Registry             | Purpose                                                                          |
+| -------------------- | -------------------------------------------------------------------------------- |
 | `DefinitionRegistry` | All definitions, indexed by symbol, file, location, scope, member, type subtypes |
-| `TypeRegistry` | Resolved type relationships, inheritance, interface implementations |
-| `ScopeRegistry` | Scope trees for cross-file scope lookups |
-| `ExportRegistry` | Export tracking per file |
-| `ReferenceRegistry` | Raw references per file (source of truth for call resolution) |
-| `ImportGraph` | Import dependency tracking for incremental re-resolution |
-| `ResolutionRegistry` | Symbol and call resolution state (immutable `ResolutionState`) |
+| `TypeRegistry`       | Resolved type relationships, inheritance, interface implementations              |
+| `ScopeRegistry`      | Scope trees for cross-file scope lookups                                         |
+| `ExportRegistry`     | Export tracking per file                                                         |
+| `ReferenceRegistry`  | Raw references per file (source of truth for call resolution)                    |
+| `ImportGraph`        | Import dependency tracking for incremental re-resolution                         |
+| `ResolutionRegistry` | Symbol and call resolution state (immutable `ResolutionState`)                   |
 
 Each registry exposes `update_file()` and `remove_file()` for incremental operations.

@@ -16,11 +16,12 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { resolve_method_on_type } from "./method_lookup";
-import type { ResolutionContext } from "./receiver_resolution";
+import type { ReceiverResolutionContext } from "./receiver_resolution";
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ResolutionRegistry } from "../resolve_references";
+import { ImportGraph } from "../../project/import_graph";
 import { set_test_resolutions } from "../resolve_references.test";
 import type {
   SymbolId,
@@ -64,14 +65,16 @@ describe("resolve_method_on_type", () => {
   let definitions: DefinitionRegistry;
   let types: TypeRegistry;
   let resolutions: ResolutionRegistry;
-  let context: ResolutionContext;
+  let imports: ImportGraph;
+  let context: ReceiverResolutionContext;
 
   beforeEach(() => {
     scopes = new ScopeRegistry();
     definitions = new DefinitionRegistry();
     types = new TypeRegistry();
     resolutions = new ResolutionRegistry();
-    context = { scopes, definitions, types, resolutions };
+    imports = new ImportGraph();
+    context = { scopes, definitions, types, resolutions, imports };
   });
 
   describe("Regular class method lookup", () => {
@@ -785,11 +788,11 @@ describe("resolve_method_on_type", () => {
       definitions.update_file(TEST_FILE, [import_def]);
       definitions.update_file(UTILS_FILE, [helper_def]);
 
-      // Add import path resolver to context
-      const context_with_resolver: ResolutionContext = {
+      const imports_for_test = new ImportGraph();
+      imports_for_test["resolved_import_paths"].set(namespace_import_id, UTILS_FILE);
+      const context_with_resolver: ReceiverResolutionContext = {
         ...context,
-        resolve_import_path: (import_id) =>
-          import_id === namespace_import_id ? UTILS_FILE : undefined,
+        imports: imports_for_test,
       };
 
       const result = resolve_method_on_type(
@@ -834,11 +837,11 @@ describe("resolve_method_on_type", () => {
       definitions.update_file(TEST_FILE, [import_def]);
       definitions.update_file(UTILS_FILE, [private_def]);
 
-      // Add import path resolver to context
-      const context_with_resolver: ResolutionContext = {
+      const imports_for_test = new ImportGraph();
+      imports_for_test["resolved_import_paths"].set(namespace_import_id, UTILS_FILE);
+      const context_with_resolver: ReceiverResolutionContext = {
         ...context,
-        resolve_import_path: (import_id) =>
-          import_id === namespace_import_id ? UTILS_FILE : undefined,
+        imports: imports_for_test,
       };
 
       const result = resolve_method_on_type(
@@ -865,11 +868,11 @@ describe("resolve_method_on_type", () => {
 
       definitions.update_file(TEST_FILE, [import_def]);
 
-      // Add import path resolver to context
-      const context_with_resolver: ResolutionContext = {
+      const imports_for_test = new ImportGraph();
+      imports_for_test["resolved_import_paths"].set(namespace_import_id, UTILS_FILE);
+      const context_with_resolver: ReceiverResolutionContext = {
         ...context,
-        resolve_import_path: (import_id) =>
-          import_id === namespace_import_id ? UTILS_FILE : undefined,
+        imports: imports_for_test,
       };
 
       const result = resolve_method_on_type(
@@ -1182,11 +1185,11 @@ describe("resolve_method_on_type", () => {
       definitions.update_file(TEST_FILE, [import_def]);
       definitions.update_file(IMPORT_GRAPH_FILE, [class_def, update_method_def]);
 
-      // Add import path resolver
-      const context_with_resolver: ResolutionContext = {
+      const imports_for_test = new ImportGraph();
+      imports_for_test["resolved_import_paths"].set(import_id, IMPORT_GRAPH_FILE);
+      const context_with_resolver: ReceiverResolutionContext = {
         ...context,
-        resolve_import_path: (id) =>
-          id === import_id ? IMPORT_GRAPH_FILE : undefined,
+        imports: imports_for_test,
       };
 
       const result = resolve_method_on_type(
@@ -1234,10 +1237,11 @@ describe("resolve_method_on_type", () => {
       definitions.update_file(TEST_FILE, [import_def]);
       definitions.update_file(IMPORT_GRAPH_FILE, [class_def]);
 
-      const context_with_resolver: ResolutionContext = {
+      const imports_for_test = new ImportGraph();
+      imports_for_test["resolved_import_paths"].set(import_id, IMPORT_GRAPH_FILE);
+      const context_with_resolver: ReceiverResolutionContext = {
         ...context,
-        resolve_import_path: (id) =>
-          id === import_id ? IMPORT_GRAPH_FILE : undefined,
+        imports: imports_for_test,
       };
 
       const result = resolve_method_on_type(
@@ -1289,16 +1293,12 @@ describe("resolve_method_on_type", () => {
       definitions.update_file(TEST_FILE, [import_def]);
       definitions.update_file(PIPELINE_FILE, [train_def]);
 
-      // resolve_import_path returns the parent __init__.py (normal resolution)
-      // resolve_submodule_import_path returns the actual submodule file
-      const context_with_resolvers: ResolutionContext = {
+      const imports_for_test = new ImportGraph();
+      imports_for_test["resolved_import_paths"].set(import_id, "/project/training/__init__.py" as FilePath);
+      imports_for_test["submodule_import_paths"].set(import_id, PIPELINE_FILE);
+      const context_with_resolvers: ReceiverResolutionContext = {
         ...context,
-        resolve_import_path: (id) =>
-          id === import_id
-            ? ("/project/training/__init__.py" as FilePath)
-            : undefined,
-        resolve_submodule_import_path: (id) =>
-          id === import_id ? PIPELINE_FILE : undefined,
+        imports: imports_for_test,
       };
 
       const result = resolve_method_on_type(

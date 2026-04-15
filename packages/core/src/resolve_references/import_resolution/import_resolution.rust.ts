@@ -158,8 +158,12 @@ function resolve_rust_module_path(
         if (is_last) {
           return candidate as FilePath;
         } else {
-          // Continue into subdirectory
-          current_path = path.dirname(candidate);
+          // For mod.rs style, submodules are in the same directory as mod.rs.
+          // For module.rs style (Rust 2018+), submodules are in module/.
+          const is_mod_rs = path.basename(candidate) === "mod.rs";
+          current_path = is_mod_rs
+            ? path.dirname(candidate)
+            : path.join(current_path, part);
           break;
         }
       }

@@ -20,7 +20,7 @@ import type {
 } from "@ariadnejs/types";
 import { build_index_single_file } from "./index_single_file";
 import { query_tree } from "./query_code_tree/query_code_tree";
-import type { ParsedFile } from "./file_utils";
+import type { ParsedFile } from "./parsed_file";
 
 const FIXTURES_DIR = join(__dirname, "..", "..", "tests", "fixtures");
 
@@ -572,20 +572,20 @@ describe("Semantic Index - TypeScript", () => {
         (ref): ref is MethodCallReference =>
           ref.kind === "method_call" &&
           ref.name === "getDisplayName" &&
-          !ref.optional_chaining,
+          !ref.is_optional_chain,
       );
       expect(regular_call).toBeDefined();
-      expect(regular_call?.optional_chaining).toBeFalsy(); // Can be undefined or false
+      expect(regular_call?.is_optional_chain).toBe(false);
 
       // Optional chaining method call - should have optional chaining
       const optional_call = result.references.find(
         (ref): ref is MethodCallReference =>
           ref.kind === "method_call" &&
           ref.name === "getDisplayName" &&
-          ref.optional_chaining === true,
+          ref.is_optional_chain === true,
       );
       expect(optional_call).toBeDefined();
-      expect(optional_call?.optional_chaining).toBe(true);
+      expect(optional_call?.is_optional_chain).toBe(true);
     });
 
     it("should extract type info for interface references", () => {
@@ -1242,39 +1242,108 @@ describe("Semantic Index - TypeScript", () => {
 
       expect(user_class).toBeDefined();
 
-      if (user_class) {
-        expect(user_class).toMatchObject({
-          kind: "class",
-          symbol_id: expect.stringMatching(/^class:/),
-          name: "User",
-          location: expect.objectContaining({
-            file_path: "test.ts",
-            start_line: expect.any(Number),
-            start_column: expect.any(Number),
-            end_line: expect.any(Number),
-            end_column: expect.any(Number),
-          }),
-          defining_scope_id: expect.any(String),
-          is_exported: expect.any(Boolean),
-        });
+      expect(user_class!).toEqual({
+        kind: "class",
+        symbol_id: expect.stringMatching(/^class:/),
+        name: "User",
+        location: {
+          file_path: "test.ts",
+          start_line: expect.any(Number),
+          start_column: expect.any(Number),
+          end_line: expect.any(Number),
+          end_column: expect.any(Number),
+        },
+        defining_scope_id: expect.any(String),
+        is_exported: false,
+        generics: [],
+        extends: [],
+        methods: [],
+        properties: [
+          {
+            kind: "property",
+            defining_scope_id: expect.any(String),
+            symbol_id: expect.stringMatching(/^property:/),
+            name: "name",
+            location: {
+              file_path: "test.ts",
+              start_line: expect.any(Number),
+              start_column: expect.any(Number),
+              end_line: expect.any(Number),
+              end_column: expect.any(Number),
+            },
+            static: false,
+            readonly: false,
+            abstract: false,
+            type: "string",
+            decorators: [],
+          },
+        ],
+        constructors: [
+          {
+            kind: "constructor",
+            defining_scope_id: expect.any(String),
+            symbol_id: expect.stringMatching(/^method:/),
+            name: "constructor",
+            location: {
+              file_path: "test.ts",
+              start_line: expect.any(Number),
+              start_column: expect.any(Number),
+              end_line: expect.any(Number),
+              end_column: expect.any(Number),
+            },
+            parameters: [
+              {
+                kind: "parameter",
+                defining_scope_id: expect.any(String),
+                symbol_id: expect.stringMatching(/^parameter:/),
+                name: "name",
+                location: {
+                  file_path: "test.ts",
+                  start_line: expect.any(Number),
+                  start_column: expect.any(Number),
+                  end_line: expect.any(Number),
+                  end_column: expect.any(Number),
+                },
+                type: "string",
+                optional: false,
+              },
+            ],
+            body_scope_id: expect.any(String),
+          },
+        ],
+        decorators: [
+          {
+            symbol_id: expect.stringMatching(/^decorator:/),
+            defining_scope_id: expect.any(String),
+            kind: "decorator",
+            name: "Entity",
+            location: {
+              file_path: "test.ts",
+              start_line: expect.any(Number),
+              start_column: expect.any(Number),
+              end_line: expect.any(Number),
+              end_column: expect.any(Number),
+            },
+          },
+          {
+            symbol_id: expect.stringMatching(/^decorator:/),
+            defining_scope_id: expect.any(String),
+            kind: "decorator",
+            name: "Sealed",
+            location: {
+              file_path: "test.ts",
+              start_line: expect.any(Number),
+              start_column: expect.any(Number),
+              end_line: expect.any(Number),
+              end_column: expect.any(Number),
+            },
+          },
+        ],
+      });
 
-        // Verify decorators structure (decorators are SymbolId strings)
-        expect(user_class.decorators).toBeDefined();
-        expect(Array.isArray(user_class.decorators)).toBe(true);
-
-        // Note: Decorator extraction may not be fully implemented
-        // Verify that if decorators are present, they are properly formatted
-        if (user_class.decorators.length > 0) {
-          const decorator_names = user_class.decorators.map((d) => d.name);
-          expect(decorator_names).toContain("Entity");
-          expect(decorator_names).toContain("Sealed");
-        } else {
-          // Decorators not extracted - this is the current behavior
-          console.log(
-            "Note: Class decorators not extracted - may need implementation",
-          );
-        }
-      }
+      expect(user_class!.decorators.length).toBe(2);
+      expect(user_class!.decorators[0].name).toBe("Entity");
+      expect(user_class!.decorators[1].name).toBe("Sealed");
     });
 
     it("should extract method with decorators and verify decorator metadata", () => {
@@ -1311,42 +1380,55 @@ describe("Semantic Index - TypeScript", () => {
 
       expect(service_class).toBeDefined();
 
-      if (service_class) {
-        expect(service_class.methods).toBeDefined();
-        expect(service_class.methods.length).toBeGreaterThanOrEqual(1);
+      expect(service_class!.methods).toBeDefined();
+      expect(service_class!.methods.length).toBeGreaterThanOrEqual(1);
 
-        const get_data_method = service_class.methods.find(
-          (m) => m.name === "getData",
-        );
-        expect(get_data_method).toBeDefined();
+      const get_data_method = service_class!.methods.find(
+        (m) => m.name === "getData",
+      );
+      expect(get_data_method).toBeDefined();
 
-        if (get_data_method) {
-          expect(get_data_method).toMatchObject({
-            kind: "method",
-            symbol_id: expect.stringMatching(/^method:/),
-            name: "getData",
-            location: expect.objectContaining({
-              file_path: "test.ts",
-            }),
+      expect(get_data_method!).toEqual({
+        kind: "method",
+        symbol_id: expect.stringMatching(/^method:/),
+        name: "getData",
+        location: {
+          file_path: "test.ts",
+          start_line: expect.any(Number),
+          start_column: expect.any(Number),
+          end_line: expect.any(Number),
+          end_column: expect.any(Number),
+        },
+        defining_scope_id: expect.any(String),
+        abstract: false,
+        static: false,
+        async: false,
+        return_type: "string[]",
+        generics: [],
+        parameters: [],
+        decorators: [
+          {
+            symbol_id: expect.stringMatching(/^decorator:/),
             defining_scope_id: expect.any(String),
-          });
+            kind: "decorator",
+            name: "Benchmark",
+            location: {
+              file_path: "test.ts",
+              start_line: expect.any(Number),
+              start_column: expect.any(Number),
+              end_line: expect.any(Number),
+              end_column: expect.any(Number),
+            },
+          },
+        ],
+        body_scope_id: expect.any(String),
+      });
 
-          // Verify method decorators (decorators are SymbolName strings)
-          if (get_data_method.decorators) {
-            expect(Array.isArray(get_data_method.decorators)).toBe(true);
-            expect(get_data_method.decorators.length).toBe(2);
-
-            // Method decorators are SymbolName strings
-            expect(get_data_method.decorators).toContain("Log");
-            expect(get_data_method.decorators).toContain("Benchmark");
-          } else {
-            // If decorators are not extracted, skip this part
-            console.log(
-              "Note: Method decorators not extracted - this may be expected",
-            );
-          }
-        }
-      }
+      // The .scm query uses `.` (immediately-follows) so only the decorator
+      // directly before the method_definition is captured (@Benchmark).
+      expect(get_data_method!.decorators).toBeDefined();
+      expect(get_data_method!.decorators!.length).toBe(1);
+      expect(get_data_method!.decorators![0].name).toBe("Benchmark");
     });
 
     it("should extract property with decorators and verify decorator metadata", () => {
@@ -1387,46 +1469,64 @@ describe("Semantic Index - TypeScript", () => {
 
       expect(user_class).toBeDefined();
 
-      if (user_class) {
-        expect(user_class.properties).toBeDefined();
-        expect(Array.isArray(user_class.properties)).toBe(true);
-        expect(user_class.properties.length).toBeGreaterThanOrEqual(1);
+      expect(user_class!.properties).toBeDefined();
+      expect(Array.isArray(user_class!.properties)).toBe(true);
+      expect(user_class!.properties.length).toBeGreaterThanOrEqual(1);
 
-        const name_property = user_class.properties.find(
-          (p) => p.name === "name",
-        );
-        expect(name_property).toBeDefined();
+      const name_property = user_class!.properties.find(
+        (p) => p.name === "name",
+      );
+      expect(name_property).toBeDefined();
 
-        if (name_property) {
-          expect(name_property).toMatchObject({
-            kind: "property",
-            symbol_id: expect.stringMatching(/^property:/),
-            name: "name",
-            location: expect.objectContaining({
-              file_path: "test.ts",
-            }),
+      expect(name_property!).toEqual({
+        kind: "property",
+        symbol_id: expect.stringMatching(/^property:/),
+        name: "name",
+        location: {
+          file_path: "test.ts",
+          start_line: expect.any(Number),
+          start_column: expect.any(Number),
+          end_line: expect.any(Number),
+          end_column: expect.any(Number),
+        },
+        defining_scope_id: expect.any(String),
+        static: false,
+        readonly: false,
+        abstract: false,
+        type: "string",
+        decorators: [
+          {
+            symbol_id: expect.stringMatching(/^decorator:/),
             defining_scope_id: expect.any(String),
-            type: "string",
-          });
+            kind: "decorator",
+            name: "Required",
+            location: {
+              file_path: "test.ts",
+              start_line: expect.any(Number),
+              start_column: expect.any(Number),
+              end_line: expect.any(Number),
+              end_column: expect.any(Number),
+            },
+          },
+          {
+            symbol_id: expect.stringMatching(/^decorator:/),
+            defining_scope_id: expect.any(String),
+            kind: "decorator",
+            name: "MinLength",
+            location: {
+              file_path: "test.ts",
+              start_line: expect.any(Number),
+              start_column: expect.any(Number),
+              end_line: expect.any(Number),
+              end_column: expect.any(Number),
+            },
+          },
+        ],
+      });
 
-          // Verify property decorators structure (decorators are SymbolId strings)
-          expect(name_property.decorators).toBeDefined();
-          expect(Array.isArray(name_property.decorators)).toBe(true);
-
-          // Note: Decorator extraction may not be fully implemented
-          // Verify that if decorators are present, they are properly formatted
-          if (name_property.decorators.length > 0) {
-            const decorator_names = name_property.decorators.map((d) => d.name);
-            expect(decorator_names).toContain("Required");
-            expect(decorator_names).toContain("MinLength");
-          } else {
-            // Decorators not extracted - this is the current behavior
-            console.log(
-              "Note: Property decorators not extracted - may need implementation",
-            );
-          }
-        }
-      }
+      expect(name_property!.decorators.length).toBe(2);
+      expect(name_property!.decorators[0].name).toBe("Required");
+      expect(name_property!.decorators[1].name).toBe("MinLength");
     });
 
     it("should extract parameter properties with complete structure", () => {

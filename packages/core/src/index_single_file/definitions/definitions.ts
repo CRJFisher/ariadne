@@ -397,6 +397,70 @@ export class DefinitionBuilder {
   }
 
   /**
+   * Find an enum ID by name (for languages like Rust where impl blocks can target enums)
+   */
+  find_enum_by_name(name: SymbolName): SymbolId | undefined {
+    for (const [id, state] of this.enums.entries()) {
+      if (state.base.name === name) {
+        return id;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Add a method to an enum (for Rust enums with impl blocks)
+   */
+  add_method_to_enum(
+    enum_id: SymbolId,
+    definition: {
+      symbol_id: SymbolId;
+      name: SymbolName;
+      location: Location;
+      scope_id: ScopeId;
+      return_type?: SymbolName;
+      static?: boolean;
+      async?: boolean;
+      docstring?: string;
+    },
+    capture: CaptureNode
+  ): DefinitionBuilder {
+    const enum_state = this.enums.get(enum_id);
+    if (!enum_state) return this;
+
+    if (!enum_state.methods) {
+      enum_state.methods = new Map();
+    }
+
+    let body_scope_id: ScopeId | undefined;
+    try {
+      body_scope_id = find_body_scope_for_definition(
+        capture,
+        this.context.scopes,
+        definition.name,
+        definition.location
+      );
+    } catch (error) {
+      console.warn(
+        `Could not find body scope for enum method ${definition.name}: ${error}`
+      );
+    }
+
+    const { scope_id, ...rest } = definition;
+    enum_state.methods.set(definition.symbol_id, {
+      base: {
+        kind: "method",
+        defining_scope_id: scope_id,
+        ...rest,
+      },
+      parameters: new Map(),
+      decorators: [],
+      body_scope_id,
+    });
+    return this;
+  }
+
+  /**
    * Add a function definition
    */
   add_function(
@@ -828,6 +892,7 @@ export class DefinitionBuilder {
     if (!enum_state) return this;
 
     enum_state.members.set(definition.symbol_id, {
+      symbol_id: definition.symbol_id,
       name: definition.name,
       value: definition.value,
       location: definition.location,
@@ -917,6 +982,13 @@ export class DefinitionBuilder {
         method_state.decorators.push(decorator_definition);
         return this;
       }
+    }
+
+    // Check if target is a standalone function
+    const func_state = this.functions.get(target_id);
+    if (func_state) {
+      func_state.decorators.push(decorator_definition);
+      return this;
     }
 
     return this;

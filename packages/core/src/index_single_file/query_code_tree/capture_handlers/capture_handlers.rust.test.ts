@@ -12,6 +12,7 @@ import type {
 } from "../../index_single_file";
 import type { Location, SymbolName, ScopeId, FilePath } from "@ariadnejs/types";
 import type { SyntaxNode } from "tree-sitter";
+import { node_to_location } from "../../node_to_location";
 
 describe("rust_builder", () => {
   let parser: Parser;
@@ -100,13 +101,7 @@ describe("rust_builder", () => {
       );
     }
 
-    const location: Location = {
-      file_path: "test.rs" as any,
-      start_line: node.startPosition.row + 1,
-      start_column: node.startPosition.column,
-      end_line: node.endPosition.row + 1,
-      end_column: node.endPosition.column,
-    };
+    const location: Location = node_to_location(node, "test.rs" as FilePath);
 
     // Parse capture name to extract category and entity
     const parts = capture_name.split(".");
@@ -220,7 +215,8 @@ describe("rust_builder", () => {
       );
 
       expect(definitions.classes).toHaveLength(1);
-
+      expect(definitions.classes[0].name).toBe("InternalStruct");
+      expect(definitions.classes[0].is_exported).toBe(true);
     });
   });
 
@@ -346,7 +342,8 @@ describe("rust_builder", () => {
 
       expect(definitions.functions).toHaveLength(1);
       expect(definitions.functions[0].name).toBe("calculate");
-      // return_type is in signature.return_type, not directly on function
+      expect(definitions.functions[0].return_type).toBe("i32");
+      expect(definitions.functions[0].is_exported).toBe(true);
     });
 
     it("should process async function", () => {
@@ -364,8 +361,7 @@ describe("rust_builder", () => {
 
       expect(definitions.functions).toHaveLength(1);
       expect(definitions.functions[0].name).toBe("fetch_data");
-      // async, const, unsafe are Rust-specific attributes not in standard FunctionDefinition
-      // They would need to be added as extra properties if needed
+      expect(definitions.functions[0].return_type).toBe("Result<String, Error>");
     });
 
     it("should process const function", () => {
@@ -383,7 +379,7 @@ describe("rust_builder", () => {
 
       expect(definitions.functions).toHaveLength(1);
       expect(definitions.functions[0].name).toBe("compute");
-      // const, unsafe are Rust-specific attributes not in standard FunctionDefinition
+      expect(definitions.functions[0].return_type).toBe("usize");
     });
 
     it("should process unsafe function", () => {
@@ -401,7 +397,7 @@ describe("rust_builder", () => {
 
       expect(definitions.functions).toHaveLength(1);
       expect(definitions.functions[0].name).toBe("raw_access");
-      // unsafe is a Rust-specific attribute not in standard FunctionDefinition
+      expect(definitions.functions[0].return_type).toBe("u8");
     });
 
     it("should process generic function", () => {
@@ -425,147 +421,124 @@ describe("rust_builder", () => {
 
   describe("method definitions", () => {
     it("should process instance method", () => {
-      const code = `impl MyStruct {
-        pub fn get_value(&self) -> String {
-          self.value.clone()
-        }
-      }`;
+      const code = `struct MyStruct { value: String }
+impl MyStruct {
+    pub fn get_value(&self) -> String {
+        self.value.clone()
+    }
+}`;
 
-      // Note: In real usage, this would be called with proper impl context
-      // For testing, we're isolating the method processing
       const tree = parser.parse(code);
-      const impl_node = find_node(tree.rootNode, "impl_item");
-      const method_node = find_node(impl_node, "identifier", "get_value");
+      const struct_node = find_node(tree.rootNode, "type_identifier", "MyStruct");
+      const method_node = find_node(tree.rootNode, "identifier", "get_value");
 
-      const location: Location = {
-        file_path: "test.rs" as any,
-        start_line: method_node.startPosition.row + 1,
-        start_column: method_node.startPosition.column,
-        end_line: method_node.endPosition.row + 1,
-        end_column: method_node.endPosition.column,
-      };
+      const struct_location = node_to_location(struct_node, "test.rs" as FilePath);
+      const method_location = node_to_location(method_node, "test.rs" as FilePath);
 
-      const capture: CaptureNode = {
-        category: "definition" as any,
-        entity: "method" as any,
-        node: method_node,
-        text: "get_value" as any,
-        name: "definition.method",
-        location,
-      };
-
-      // Create custom context with scope matching the actual method location
-      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as any;
-      const scopes = new Map();
-      const method_scope_id = `method:test.rs:${location.start_line}:${location.start_column}:${location.end_line}:${location.end_column}:<method_body>` as any;
-      scopes.set(method_scope_id, {
-        id: method_scope_id,
-        type: "method",
-        name: "get_value",
-        location,
-        parent_id: root_scope_id,
-      });
-
-      const context = {
+      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as ScopeId;
+      const context: ProcessingContext = {
         captures: [],
-        scopes,
+        scopes: new Map(),
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
         get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
           throw new Error(`Child scope with name ${_name} not found in scope ${_scope_id}`);
         },
-      } as ProcessingContext;
+      };
 
       const builder = new DefinitionBuilder(context);
 
-      // Add a class first to attach method to
-      builder.add_class({
-        symbol_id: "test-class" as any,
-        name: "MyStruct" as any,
-        location: {} as any,
-        scope_id: "test-scope" as any,
-      });
+      // Add struct first using the same tree's node
+      const struct_capture: CaptureNode = {
+        category: "definition" as any,
+        entity: "class" as any,
+        node: struct_node,
+        text: "MyStruct" as SymbolName,
+        name: "definition.class",
+        location: struct_location,
+      };
+      RUST_HANDLERS["definition.class"](struct_capture, builder, context);
 
-      const processor = RUST_HANDLERS["definition.method"];
-      if (processor) {
-        processor(capture, builder, context);
-      }
+      // Now process the method
+      const method_capture: CaptureNode = {
+        category: "definition" as any,
+        entity: "method" as any,
+        node: method_node,
+        text: "get_value" as SymbolName,
+        name: "definition.method",
+        location: method_location,
+      };
+      RUST_HANDLERS["definition.method"](method_capture, builder, context);
 
       const result = builder.build();
       const classes = Array.from(result.classes.values());
-      // Method will be added if impl context is properly found
       expect(classes).toHaveLength(1);
+      expect(classes[0].name).toBe("MyStruct");
+      expect(classes[0].methods).toHaveLength(1);
+      expect(classes[0].methods[0].name).toBe("get_value");
+      expect(classes[0].methods[0].return_type).toBe("String");
     });
 
     it("should process associated function (static method)", () => {
-      const code = `impl MyStruct {
-        pub fn new() -> Self {
-          MyStruct { value: String::new() }
-        }
-      }`;
+      const code = `struct MyStruct { value: String }
+impl MyStruct {
+    pub fn new() -> Self {
+        MyStruct { value: String::new() }
+    }
+}`;
 
       const tree = parser.parse(code);
-      const impl_node = find_node(tree.rootNode, "impl_item");
-      const method_node = find_node(impl_node, "identifier", "new");
+      const struct_node = find_node(tree.rootNode, "type_identifier", "MyStruct");
+      const method_node = find_node(tree.rootNode, "identifier", "new");
 
-      const location: Location = {
-        file_path: "test.rs" as any,
-        start_line: method_node.startPosition.row + 1,
-        start_column: method_node.startPosition.column,
-        end_line: method_node.endPosition.row + 1,
-        end_column: method_node.endPosition.column,
-      };
+      const struct_location = node_to_location(struct_node, "test.rs" as FilePath);
+      const method_location = node_to_location(method_node, "test.rs" as FilePath);
 
-      const capture: CaptureNode = {
-        category: "definition" as any,
-        entity: "method" as any,
-        node: method_node,
-        text: "new" as any,
-        name: "definition.method.associated",
-        location,
-      };
-
-      // Create custom context with scope matching the actual method location
-      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as any;
-      const scopes = new Map();
-      const method_scope_id = `method:test.rs:${location.start_line}:${location.start_column}:${location.end_line}:${location.end_column}:<method_body>` as any;
-      scopes.set(method_scope_id, {
-        id: method_scope_id,
-        type: "method",
-        name: "new",
-        location,
-        parent_id: root_scope_id,
-      });
-
-      const context = {
+      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as ScopeId;
+      const context: ProcessingContext = {
         captures: [],
-        scopes,
+        scopes: new Map(),
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
         get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
           throw new Error(`Child scope with name ${_name} not found in scope ${_scope_id}`);
         },
-      } as ProcessingContext;
+      };
 
       const builder = new DefinitionBuilder(context);
 
-      builder.add_class({
-        symbol_id: "test-class" as any,
-        name: "MyStruct" as any,
-        location: {} as any,
-        scope_id: "test-scope" as any,
-      });
+      // Add struct first
+      const struct_capture: CaptureNode = {
+        category: "definition" as any,
+        entity: "class" as any,
+        node: struct_node,
+        text: "MyStruct" as SymbolName,
+        name: "definition.class",
+        location: struct_location,
+      };
+      RUST_HANDLERS["definition.class"](struct_capture, builder, context);
 
-      const processor = RUST_HANDLERS["definition.method.associated"];
-      if (processor) {
-        processor(capture, builder, context);
-      }
+      // Now process the associated function
+      const method_capture: CaptureNode = {
+        category: "definition" as any,
+        entity: "method" as any,
+        node: method_node,
+        text: "new" as SymbolName,
+        name: "definition.method.associated",
+        location: method_location,
+      };
+      RUST_HANDLERS["definition.method.associated"](method_capture, builder, context);
 
       const result = builder.build();
       const classes = Array.from(result.classes.values());
       expect(classes).toHaveLength(1);
+      expect(classes[0].name).toBe("MyStruct");
+      expect(classes[0].methods).toHaveLength(1);
+      expect(classes[0].methods[0].name).toBe("new");
+      expect(classes[0].methods[0].static).toBe(true);
+      expect(classes[0].methods[0].return_type).toBe("Self");
     });
   });
 
@@ -619,69 +592,179 @@ describe("rust_builder", () => {
   describe("parameter definitions", () => {
     it("should process function parameter", () => {
       const code = "fn process(data: &str) {}";
+      const tree = parser.parse(code);
 
-      const definitions = process_capture(
-        code,
-        "definition.parameter",
-        "identifier",
-        "data"
-      );
+      const fn_node = find_node(tree.rootNode, "identifier", "process");
+      const param_node = find_node(tree.rootNode, "identifier", "data");
 
-      // Parameters are stored within functions/methods, not returned separately
-      // This test would need restructuring to test within a complete function
-      expect(definitions).toBeDefined();
+      const fn_location = node_to_location(fn_node, "test.rs" as FilePath);
+      const param_location = node_to_location(param_node, "test.rs" as FilePath);
+
+      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as ScopeId;
+      const context: ProcessingContext = {
+        captures: [],
+        scopes: new Map(),
+        scope_depths: new Map(),
+        root_scope_id,
+        get_scope_id: (_location: Location) => root_scope_id,
+        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
+          throw new Error("Child scope not found");
+        },
+      };
+
+      const builder = new DefinitionBuilder(context);
+
+      // Add function first
+      const fn_capture: CaptureNode = {
+        category: "definition" as any,
+        entity: "function" as any,
+        node: fn_node,
+        text: "process" as SymbolName,
+        name: "definition.function",
+        location: fn_location,
+      };
+      RUST_HANDLERS["definition.function"](fn_capture, builder, context);
+
+      // Now add parameter
+      const param_capture: CaptureNode = {
+        category: "definition" as any,
+        entity: "parameter" as any,
+        node: param_node,
+        text: "data" as SymbolName,
+        name: "definition.parameter",
+        location: param_location,
+      };
+      RUST_HANDLERS["definition.parameter"](param_capture, builder, context);
+
+      const result = builder.build();
+      const functions = Array.from(result.functions.values());
+      expect(functions).toHaveLength(1);
+      expect(functions[0].name).toBe("process");
+      expect(functions[0].signature.parameters).toHaveLength(1);
+      expect(functions[0].signature.parameters[0].name).toBe("data");
+      expect(functions[0].signature.parameters[0].type).toBe("&str");
     });
 
     it("should process mutable parameter", () => {
       const code = "fn modify(mut value: Vec<u8>) {}";
+      const tree = parser.parse(code);
 
-      const definitions = process_capture(
-        code,
-        "definition.parameter",
-        "identifier",
-        "value"
-      );
+      const fn_node = find_node(tree.rootNode, "identifier", "modify");
+      const param_node = find_node(tree.rootNode, "identifier", "value");
 
-      // Parameters are stored within functions/methods, not returned separately
-      expect(definitions).toBeDefined();
+      const fn_location = node_to_location(fn_node, "test.rs" as FilePath);
+      const param_location = node_to_location(param_node, "test.rs" as FilePath);
+
+      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as ScopeId;
+      const context: ProcessingContext = {
+        captures: [],
+        scopes: new Map(),
+        scope_depths: new Map(),
+        root_scope_id,
+        get_scope_id: (_location: Location) => root_scope_id,
+        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
+          throw new Error("Child scope not found");
+        },
+      };
+
+      const builder = new DefinitionBuilder(context);
+
+      // Add function first
+      const fn_capture: CaptureNode = {
+        category: "definition" as any,
+        entity: "function" as any,
+        node: fn_node,
+        text: "modify" as SymbolName,
+        name: "definition.function",
+        location: fn_location,
+      };
+      RUST_HANDLERS["definition.function"](fn_capture, builder, context);
+
+      // Now add parameter
+      const param_capture: CaptureNode = {
+        category: "definition" as any,
+        entity: "parameter" as any,
+        node: param_node,
+        text: "value" as SymbolName,
+        name: "definition.parameter",
+        location: param_location,
+      };
+      RUST_HANDLERS["definition.parameter"](param_capture, builder, context);
+
+      const result = builder.build();
+      const functions = Array.from(result.functions.values());
+      expect(functions).toHaveLength(1);
+      expect(functions[0].signature.parameters).toHaveLength(1);
+      expect(functions[0].signature.parameters[0].name).toBe("value");
+      expect(functions[0].signature.parameters[0].type).toBe("Vec<u8>");
     });
 
     it("should process self parameter", () => {
-      const code = "fn method(&self) {}";
-
+      const code = `struct MyStruct {}
+impl MyStruct {
+    fn method(&self) {}
+}`;
       const tree = parser.parse(code);
+      const struct_node = find_node(tree.rootNode, "type_identifier", "MyStruct");
+      const method_node = find_node(tree.rootNode, "identifier", "method");
       const self_node = find_node(tree.rootNode, "self");
 
-      const location: Location = {
-        file_path: "test.rs" as any,
-        start_line: self_node.startPosition.row + 1,
-        start_column: self_node.startPosition.column,
-        end_line: self_node.endPosition.row + 1,
-        end_column: self_node.endPosition.column,
+      const struct_location = node_to_location(struct_node, "test.rs" as FilePath);
+      const method_location = node_to_location(method_node, "test.rs" as FilePath);
+      const self_location = node_to_location(self_node, "test.rs" as FilePath);
+
+      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as ScopeId;
+      const context: ProcessingContext = {
+        captures: [],
+        scopes: new Map(),
+        scope_depths: new Map(),
+        root_scope_id,
+        get_scope_id: (_location: Location) => root_scope_id,
+        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
+          throw new Error("Child scope not found");
+        },
       };
 
-      const capture: CaptureNode = {
+      const builder = new DefinitionBuilder(context);
+
+      // Add struct
+      RUST_HANDLERS["definition.class"]({
+        category: "definition" as any,
+        entity: "class" as any,
+        node: struct_node,
+        text: "MyStruct" as SymbolName,
+        name: "definition.class",
+        location: struct_location,
+      }, builder, context);
+
+      // Add method
+      RUST_HANDLERS["definition.method"]({
+        category: "definition" as any,
+        entity: "method" as any,
+        node: method_node,
+        text: "method" as SymbolName,
+        name: "definition.method",
+        location: method_location,
+      }, builder, context);
+
+      // Add self parameter
+      RUST_HANDLERS["definition.parameter.self"]({
         category: "definition" as any,
         entity: "parameter" as any,
         node: self_node,
-        text: "self" as any,
+        text: "self" as SymbolName,
         name: "definition.parameter.self",
-        location,
-      };
-
-      const context = create_mock_context();
-      const builder = new DefinitionBuilder(context);
-      const processor = RUST_HANDLERS["definition.parameter.self"];
-
-      if (processor) {
-        processor(capture, builder, context);
-      }
+        location: self_location,
+      }, builder, context);
 
       const result = builder.build();
-      // Parameters aren't stored in BuilderResult, they're part of function/method definitions
-      // This test would need to be restructured to test parameters properly
-      // For now, just verify the builder runs without error
-      expect(result).toBeDefined();
+      const classes = Array.from(result.classes.values());
+      expect(classes).toHaveLength(1);
+      const method = classes[0].methods[0];
+      expect(method.name).toBe("method");
+      expect(method.parameters).toHaveLength(1);
+      expect(method.parameters[0].name).toBe("self");
+      expect(method.parameters[0].type).toBe("MyStruct");
     });
   });
 
@@ -743,53 +826,70 @@ describe("rust_builder", () => {
   describe("field definitions", () => {
     it("should process struct fields", () => {
       const code = `struct Person {
-        pub name: String,
-        age: u32,
-      }`;
+    pub name: String,
+    age: u32,
+}`;
 
-      // Test field processing
       const tree = parser.parse(code);
-      const struct_node = find_node(tree.rootNode, "struct_item");
-      const field_node = find_node(struct_node, "field_identifier", "name");
+      const struct_type_node = find_node(tree.rootNode, "type_identifier", "Person");
+      const name_field_node = find_node(tree.rootNode, "field_identifier", "name");
+      const age_field_node = find_node(tree.rootNode, "field_identifier", "age");
 
-      if (field_node) {
-        const location: Location = {
-          file_path: "test.rs" as any,
-          start_line: field_node.startPosition.row + 1,
-          start_column: field_node.startPosition.column,
-          end_line: field_node.endPosition.row + 1,
-          end_column: field_node.endPosition.column,
-        };
+      const struct_location = node_to_location(struct_type_node, "test.rs" as FilePath);
+      const name_location = node_to_location(name_field_node, "test.rs" as FilePath);
+      const age_location = node_to_location(age_field_node, "test.rs" as FilePath);
 
-        const capture: CaptureNode = {
-          category: "definition" as any,
-          entity: "field" as any,
-          node: field_node,
-          text: "name" as any,
-          name: "definition.field",
-          location,
-        };
+      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as ScopeId;
+      const context: ProcessingContext = {
+        captures: [],
+        scopes: new Map(),
+        scope_depths: new Map(),
+        root_scope_id,
+        get_scope_id: (_location: Location) => root_scope_id,
+        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
+          throw new Error("Child scope not found");
+        },
+      };
 
-        const context = create_mock_context();
-        const builder = new DefinitionBuilder(context);
+      const builder = new DefinitionBuilder(context);
 
-        // Add struct first
-        builder.add_class({
-          symbol_id: "test-struct" as any,
-          name: "Person" as any,
-          location: {} as any,
-          scope_id: "test-scope" as any,
-        });
+      // Add struct first using the handler
+      RUST_HANDLERS["definition.class"]({
+        category: "definition" as any,
+        entity: "class" as any,
+        node: struct_type_node,
+        text: "Person" as SymbolName,
+        name: "definition.class",
+        location: struct_location,
+      }, builder, context);
 
-        const processor = RUST_HANDLERS["definition.field"];
-        if (processor) {
-          processor(capture, builder, context);
-        }
+      // Add fields
+      RUST_HANDLERS["definition.field"]({
+        category: "definition" as any,
+        entity: "field" as any,
+        node: name_field_node,
+        text: "name" as SymbolName,
+        name: "definition.field",
+        location: name_location,
+      }, builder, context);
 
-        const result = builder.build();
-        const classes = Array.from(result.classes.values());
-        expect(classes).toHaveLength(1);
-      }
+      RUST_HANDLERS["definition.field"]({
+        category: "definition" as any,
+        entity: "field" as any,
+        node: age_field_node,
+        text: "age" as SymbolName,
+        name: "definition.field",
+        location: age_location,
+      }, builder, context);
+
+      const result = builder.build();
+      const classes = Array.from(result.classes.values());
+      expect(classes).toHaveLength(1);
+      expect(classes[0].properties).toHaveLength(2);
+      expect(classes[0].properties[0].name).toBe("name");
+      expect(classes[0].properties[0].type).toBe("String");
+      expect(classes[0].properties[1].name).toBe("age");
+      expect(classes[0].properties[1].type).toBe("u32");
     });
   });
 
@@ -827,10 +927,7 @@ describe("rust_builder", () => {
         );
         expect(definitions.classes).toHaveLength(1);
         expect(definitions.classes[0].name).toBe("Database");
-        // type_parameters is an array, use array assertion
-        expect(definitions.classes[0].generics).toEqual(
-          expect.arrayContaining(["T"])
-        );
+        expect(definitions.classes[0].generics).toEqual(["T"]);
       }
     });
 
@@ -1193,6 +1290,408 @@ describe("rust_builder", () => {
   // with limited parent walking that stops at function boundaries. The nested variable
   // export bug only affected JavaScript/TypeScript which use AST traversal. No additional tests needed.
 
+  describe("import definitions (use declarations)", () => {
+    it("should process simple use declaration", () => {
+      const code = "use std::fmt::Display;";
+      const tree = parser.parse(code);
+      const use_node = find_node(tree.rootNode, "use_declaration");
+
+      const use_location = node_to_location(use_node, "test.rs" as FilePath);
+
+      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as ScopeId;
+      const context: ProcessingContext = {
+        captures: [],
+        scopes: new Map(),
+        scope_depths: new Map(),
+        root_scope_id,
+        get_scope_id: (_location: Location) => root_scope_id,
+        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
+          throw new Error("Child scope not found");
+        },
+      };
+
+      const builder = new DefinitionBuilder(context);
+      RUST_HANDLERS["definition.import"]({
+        category: "definition" as any,
+        entity: "import" as any,
+        node: use_node,
+        text: use_node.text as SymbolName,
+        name: "definition.import",
+        location: use_location,
+      }, builder, context);
+
+      const result = builder.build();
+      const imports = Array.from(result.imports.values());
+      expect(imports).toHaveLength(1);
+      expect(imports[0].name).toBe("Display");
+      expect(imports[0].import_kind).toBe("named");
+    });
+
+    it("should process use declaration with alias", () => {
+      const code = "use std::collections::HashMap as Map;";
+      const tree = parser.parse(code);
+      const use_node = find_node(tree.rootNode, "use_declaration");
+
+      const use_location = node_to_location(use_node, "test.rs" as FilePath);
+
+      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as ScopeId;
+      const context: ProcessingContext = {
+        captures: [],
+        scopes: new Map(),
+        scope_depths: new Map(),
+        root_scope_id,
+        get_scope_id: (_location: Location) => root_scope_id,
+        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
+          throw new Error("Child scope not found");
+        },
+      };
+
+      const builder = new DefinitionBuilder(context);
+      RUST_HANDLERS["definition.import"]({
+        category: "definition" as any,
+        entity: "import" as any,
+        node: use_node,
+        text: use_node.text as SymbolName,
+        name: "definition.import",
+        location: use_location,
+      }, builder, context);
+
+      const result = builder.build();
+      const imports = Array.from(result.imports.values());
+      expect(imports).toHaveLength(1);
+      expect(imports[0].name).toBe("Map");
+      expect(imports[0].original_name).toBe("HashMap");
+      expect(imports[0].import_kind).toBe("named");
+    });
+
+    it("should process use declaration with braced group", () => {
+      const code = "use std::io::{Read, Write};";
+      const tree = parser.parse(code);
+      const use_node = find_node(tree.rootNode, "use_declaration");
+
+      const use_location = node_to_location(use_node, "test.rs" as FilePath);
+
+      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as ScopeId;
+      const context: ProcessingContext = {
+        captures: [],
+        scopes: new Map(),
+        scope_depths: new Map(),
+        root_scope_id,
+        get_scope_id: (_location: Location) => root_scope_id,
+        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
+          throw new Error("Child scope not found");
+        },
+      };
+
+      const builder = new DefinitionBuilder(context);
+      RUST_HANDLERS["definition.import"]({
+        category: "definition" as any,
+        entity: "import" as any,
+        node: use_node,
+        text: use_node.text as SymbolName,
+        name: "definition.import",
+        location: use_location,
+      }, builder, context);
+
+      const result = builder.build();
+      const imports = Array.from(result.imports.values());
+      expect(imports).toHaveLength(2);
+      const import_names = imports.map(i => i.name).sort();
+      expect(import_names).toEqual(["Read", "Write"]);
+    });
+
+    it("should process wildcard use declaration", () => {
+      const code = "use std::io::*;";
+      const tree = parser.parse(code);
+      const use_node = find_node(tree.rootNode, "use_declaration");
+
+      const use_location = node_to_location(use_node, "test.rs" as FilePath);
+
+      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as ScopeId;
+      const context: ProcessingContext = {
+        captures: [],
+        scopes: new Map(),
+        scope_depths: new Map(),
+        root_scope_id,
+        get_scope_id: (_location: Location) => root_scope_id,
+        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
+          throw new Error("Child scope not found");
+        },
+      };
+
+      const builder = new DefinitionBuilder(context);
+      RUST_HANDLERS["definition.import"]({
+        category: "definition" as any,
+        entity: "import" as any,
+        node: use_node,
+        text: use_node.text as SymbolName,
+        name: "definition.import",
+        location: use_location,
+      }, builder, context);
+
+      const result = builder.build();
+      const imports = Array.from(result.imports.values());
+      expect(imports).toHaveLength(1);
+      expect(imports[0].import_kind).toBe("namespace");
+    });
+
+    it("should process extern crate declaration", () => {
+      const code = "extern crate serde;";
+      const tree = parser.parse(code);
+      const extern_node = find_node(tree.rootNode, "extern_crate_declaration")!;
+      const context = create_mock_context();
+      const use_location = node_to_location(extern_node, "test.rs" as FilePath);
+
+      const builder = new DefinitionBuilder(context);
+      RUST_HANDLERS["definition.import"]({
+        category: "definition" as any,
+        entity: "import" as any,
+        node: extern_node,
+        text: extern_node.text as SymbolName,
+        name: "definition.import",
+        location: use_location,
+      }, builder, context);
+
+      const result = builder.build();
+      const imports = Array.from(result.imports.values());
+      expect(imports).toHaveLength(1);
+      expect(imports[0].name).toBe("serde");
+    });
+  });
+
+  describe("interface method definitions (trait methods)", () => {
+    it("should process trait method signature", () => {
+      const code = `trait Display {
+    fn fmt(&self) -> String;
+}`;
+      const tree = parser.parse(code);
+      const trait_node = find_node(tree.rootNode, "type_identifier", "Display");
+      const method_node = find_node(tree.rootNode, "identifier", "fmt");
+
+      const trait_location = node_to_location(trait_node, "test.rs" as FilePath);
+      const method_location = node_to_location(method_node, "test.rs" as FilePath);
+
+      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as ScopeId;
+      const context: ProcessingContext = {
+        captures: [],
+        scopes: new Map(),
+        scope_depths: new Map(),
+        root_scope_id,
+        get_scope_id: (_location: Location) => root_scope_id,
+        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
+          throw new Error("Child scope not found");
+        },
+      };
+
+      const builder = new DefinitionBuilder(context);
+
+      // Add trait first
+      RUST_HANDLERS["definition.interface"]({
+        category: "definition" as any,
+        entity: "interface" as any,
+        node: trait_node,
+        text: "Display" as SymbolName,
+        name: "definition.interface",
+        location: trait_location,
+      }, builder, context);
+
+      // Add trait method
+      RUST_HANDLERS["definition.interface.method"]({
+        category: "definition" as any,
+        entity: "interface" as any,
+        node: method_node,
+        text: "fmt" as SymbolName,
+        name: "definition.interface.method",
+        location: method_location,
+      }, builder, context);
+
+      const result = builder.build();
+      const interfaces = Array.from(result.interfaces.values());
+      expect(interfaces).toHaveLength(1);
+      expect(interfaces[0].name).toBe("Display");
+      expect(interfaces[0].methods).toHaveLength(1);
+      expect(interfaces[0].methods[0].name).toBe("fmt");
+      expect(interfaces[0].methods[0].return_type).toBe("String");
+    });
+  });
+
+  describe("anonymous function definitions (closures)", () => {
+    it("should process closure as anonymous function", () => {
+      const code = "let f = |x: i32| x * 2;";
+      const tree = parser.parse(code);
+      const closure_node = find_node(tree.rootNode, "closure_expression");
+
+      const closure_location = node_to_location(closure_node, "test.rs" as FilePath);
+
+      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as ScopeId;
+      const context: ProcessingContext = {
+        captures: [],
+        scopes: new Map(),
+        scope_depths: new Map(),
+        root_scope_id,
+        get_scope_id: (_location: Location) => root_scope_id,
+        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
+          throw new Error("Child scope not found");
+        },
+      };
+
+      const builder = new DefinitionBuilder(context);
+      RUST_HANDLERS["definition.anonymous_function"]({
+        category: "definition" as any,
+        entity: "anonymous_function" as any,
+        node: closure_node,
+        text: closure_node.text as SymbolName,
+        name: "definition.anonymous_function",
+        location: closure_location,
+      }, builder, context);
+
+      const result = builder.build();
+      const functions = Array.from(result.functions.values());
+      expect(functions).toHaveLength(1);
+      expect(functions[0].name).toBe("<anonymous>");
+      expect(functions[0].callback_context?.is_callback).toBe(false);
+    });
+
+    it("should detect callback closure", () => {
+      const code = "items.iter().map(|x| x * 2);";
+      const tree = parser.parse(code);
+      const closure_node = find_node(tree.rootNode, "closure_expression");
+
+      const closure_location = node_to_location(closure_node, "test.rs" as FilePath);
+
+      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as ScopeId;
+      const context: ProcessingContext = {
+        captures: [],
+        scopes: new Map(),
+        scope_depths: new Map(),
+        root_scope_id,
+        get_scope_id: (_location: Location) => root_scope_id,
+        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
+          throw new Error("Child scope not found");
+        },
+      };
+
+      const builder = new DefinitionBuilder(context);
+      RUST_HANDLERS["definition.anonymous_function"]({
+        category: "definition" as any,
+        entity: "anonymous_function" as any,
+        node: closure_node,
+        text: closure_node.text as SymbolName,
+        name: "definition.anonymous_function",
+        location: closure_location,
+      }, builder, context);
+
+      const result = builder.build();
+      const functions = Array.from(result.functions.values());
+      expect(functions).toHaveLength(1);
+      expect(functions[0].callback_context?.is_callback).toBe(true);
+    });
+  });
+
+  describe("mutable variable definitions", () => {
+    it("should process let mut binding", () => {
+      const code = "let mut count: usize = 0;";
+
+      const definitions = process_capture(
+        code,
+        "definition.variable.mut",
+        "identifier",
+        "count"
+      );
+
+      expect(definitions.variables).toHaveLength(1);
+      expect(definitions.variables[0].name).toBe("count");
+      expect(definitions.variables[0].type).toBe("usize");
+      expect(definitions.variables[0].kind).toBe("variable");
+    });
+
+    it("should process let mut without type annotation", () => {
+      const code = "let mut items = Vec::new();";
+
+      const definitions = process_capture(
+        code,
+        "definition.variable.mut",
+        "identifier",
+        "items"
+      );
+
+      expect(definitions.variables).toHaveLength(1);
+      expect(definitions.variables[0].name).toBe("items");
+      expect(definitions.variables[0].kind).toBe("variable");
+    });
+  });
+
+  describe("type alias in impl block", () => {
+    it("should process type alias in impl", () => {
+      const code = "type Output = String;";
+
+      const definitions = process_capture(
+        code,
+        "definition.type_alias.impl",
+        "type_identifier",
+        "Output"
+      );
+
+      expect(definitions.types).toHaveLength(1);
+      expect(definitions.types[0].name).toBe("Output");
+      expect(definitions.types[0].is_exported).toBe(true);
+    });
+  });
+
+  describe("closure parameter definitions", () => {
+    it("should process closure parameter", () => {
+      const code = "fn apply(f: impl Fn(i32) -> i32) {}";
+      const tree = parser.parse(code);
+
+      const fn_node = find_node(tree.rootNode, "identifier", "apply");
+      const param_node = find_node(tree.rootNode, "identifier", "f");
+
+      const fn_location = node_to_location(fn_node, "test.rs" as FilePath);
+      const param_location = node_to_location(param_node, "test.rs" as FilePath);
+
+      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as ScopeId;
+      const context: ProcessingContext = {
+        captures: [],
+        scopes: new Map(),
+        scope_depths: new Map(),
+        root_scope_id,
+        get_scope_id: (_location: Location) => root_scope_id,
+        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
+          throw new Error("Child scope not found");
+        },
+      };
+
+      const builder = new DefinitionBuilder(context);
+
+      // Add function first
+      RUST_HANDLERS["definition.function"]({
+        category: "definition" as any,
+        entity: "function" as any,
+        node: fn_node,
+        text: "apply" as SymbolName,
+        name: "definition.function",
+        location: fn_location,
+      }, builder, context);
+
+      // Add closure parameter
+      RUST_HANDLERS["definition.parameter.closure"]({
+        category: "definition" as any,
+        entity: "parameter" as any,
+        node: param_node,
+        text: "f" as SymbolName,
+        name: "definition.parameter.closure",
+        location: param_location,
+      }, builder, context);
+
+      const result = builder.build();
+      const functions = Array.from(result.functions.values());
+      expect(functions).toHaveLength(1);
+      expect(functions[0].name).toBe("apply");
+      expect(functions[0].signature.parameters).toHaveLength(1);
+      expect(functions[0].signature.parameters[0].name).toBe("f");
+    });
+  });
+
   describe("Property Type Extraction", () => {
     async function build_index_from_code(code: string) {
       const tree = parser.parse(code);
@@ -1218,16 +1717,15 @@ struct Service {
       const index = await build_index_from_code(code);
       const service_struct = Array.from(index.classes.values())[0];
 
-      expect(service_struct).toBeDefined();
-      expect(service_struct.properties).toBeDefined();
+      expect(service_struct.name).toBe("Service");
       expect(service_struct.properties.length).toBe(2);
 
       const registry_field = service_struct.properties.find(p => p.name === "registry");
-      expect(registry_field).toBeDefined();
+      expect(registry_field?.name).toBe("registry");
       expect(registry_field?.type).toBe("DefinitionRegistry");
 
       const cache_field = service_struct.properties.find(p => p.name === "cache");
-      expect(cache_field).toBeDefined();
+      expect(cache_field?.name).toBe("cache");
       expect(cache_field?.type).toBe("HashMap<String, i32>");
     });
 
@@ -1570,7 +2068,7 @@ fn add(a: i32, b: i32) -> i32 {
 `;
       const index = await build_index_from_code_doc(code);
       const fn_def = Array.from(index.functions.values()).find(f => f.name === "add");
-      expect(fn_def).toBeDefined();
+      expect(fn_def?.name).toBe("add");
       expect(fn_def!.docstring).toBe("/// Calculate the sum of two numbers.");
     });
 
@@ -1583,7 +2081,7 @@ struct Point {
 `;
       const index = await build_index_from_code_doc(code);
       const cls = Array.from(index.classes.values()).find(c => c.name === "Point");
-      expect(cls).toBeDefined();
+      expect(cls?.name).toBe("Point");
       expect(cls!.docstring).toEqual(["/// A point in 2D space."]);
     });
 
@@ -1596,7 +2094,7 @@ fn described() -> bool {
 `;
       const index = await build_index_from_code_doc(code);
       const fn_def = Array.from(index.functions.values()).find(f => f.name === "described");
-      expect(fn_def).toBeDefined();
+      expect(fn_def?.name).toBe("described");
       expect(fn_def!.docstring).toBe("/// First line.\n/// Second line.");
     });
 
@@ -1606,7 +2104,7 @@ fn helper() {}
 `;
       const index = await build_index_from_code_doc(code);
       const fn_def = Array.from(index.functions.values()).find(f => f.name === "helper");
-      expect(fn_def).toBeDefined();
+      expect(fn_def?.name).toBe("helper");
       expect(fn_def!.docstring).toBeUndefined();
     });
 
@@ -1623,7 +2121,7 @@ impl Calculator {
       const index = await build_index_from_code_doc(code);
       const cls = Array.from(index.classes.values()).find(c => c.name === "Calculator");
       const method = cls!.methods.find(m => m.name === "add");
-      expect(method).toBeDefined();
+      expect(method?.name).toBe("add");
       expect(method!.docstring).toBe("/// Add two integers.");
     });
 
@@ -1640,7 +2138,7 @@ impl Point {
       const index = await build_index_from_code_doc(code);
       const cls = Array.from(index.classes.values()).find(c => c.name === "Point");
       const method = cls!.methods.find(m => m.name === "make");
-      expect(method).toBeDefined();
+      expect(method?.name).toBe("make");
       expect(method!.docstring).toBe("/// Create a Point from coordinates.");
     });
 
@@ -1652,7 +2150,7 @@ struct Box<T> {
 `;
       const index = await build_index_from_code_doc(code);
       const cls = Array.from(index.classes.values()).find(c => c.name === "Box");
-      expect(cls).toBeDefined();
+      expect(cls?.name).toBe("Box");
       expect(cls!.docstring).toEqual(["/// A generic box."]);
     });
 
@@ -1664,7 +2162,7 @@ fn process<T>(v: T) -> T {
 `;
       const index = await build_index_from_code_doc(code);
       const fn_def = Array.from(index.functions.values()).find(f => f.name === "process");
-      expect(fn_def).toBeDefined();
+      expect(fn_def?.name).toBe("process");
       expect(fn_def!.docstring).toBe("/// Process items.");
     });
 
@@ -1674,7 +2172,7 @@ async fn fetch() {}
 `;
       const index = await build_index_from_code_doc(code);
       const fn_def = Array.from(index.functions.values()).find(f => f.name === "fetch");
-      expect(fn_def).toBeDefined();
+      expect(fn_def?.name).toBe("fetch");
       expect(fn_def!.docstring).toBe("/// Fetch data.");
     });
 
@@ -1684,7 +2182,7 @@ const fn hash(x: u32) -> u32 { x }
 `;
       const index = await build_index_from_code_doc(code);
       const fn_def = Array.from(index.functions.values()).find(f => f.name === "hash");
-      expect(fn_def).toBeDefined();
+      expect(fn_def?.name).toBe("hash");
       expect(fn_def!.docstring).toBe("/// Compute hash.");
     });
 
@@ -1694,7 +2192,7 @@ unsafe fn raw_write() {}
 `;
       const index = await build_index_from_code_doc(code);
       const fn_def = Array.from(index.functions.values()).find(f => f.name === "raw_write");
-      expect(fn_def).toBeDefined();
+      expect(fn_def?.name).toBe("raw_write");
       expect(fn_def!.docstring).toBe("/// Raw write.");
     });
 
@@ -1711,7 +2209,7 @@ impl Store {
       const index = await build_index_from_code_doc(code);
       const cls = Array.from(index.classes.values()).find(c => c.name === "Store");
       const method = cls!.methods.find(m => m.name === "load");
-      expect(method).toBeDefined();
+      expect(method?.name).toBe("load");
       expect(method!.docstring).toBe("/// Load from disk.");
     });
 
@@ -1726,7 +2224,7 @@ impl Store {
       const index = await build_index_from_code_doc(code);
       const iface = Array.from(index.interfaces.values()).find(i => i.name === "Greet");
       const method = iface!.methods.find(m => m.name === "greet");
-      expect(method).toBeDefined();
+      expect(method?.name).toBe("greet");
       expect(method!.docstring).toBe("/// Greet someone.");
     });
 
@@ -1743,7 +2241,7 @@ impl Counter {
       const index = await build_index_from_code_doc(code);
       const cls = Array.from(index.classes.values()).find(c => c.name === "Counter");
       const ctor = cls!.methods.find(m => m.name === "new");
-      expect(ctor).toBeDefined();
+      expect(ctor?.name).toBe("new");
       expect(ctor!.docstring).toBe("/// Creates a new Counter.");
     });
 
@@ -1754,7 +2252,7 @@ fn helper() {}
 `;
       const index = await build_index_from_code_doc(code);
       const fn_def = Array.from(index.functions.values()).find(f => f.name === "helper");
-      expect(fn_def).toBeDefined();
+      expect(fn_def?.name).toBe("helper");
       expect(fn_def!.docstring).toBe("/// Inline helper.");
     });
   });

@@ -98,6 +98,25 @@ Test helper functions should go in the first common ancestor test file of all de
 
 This avoids generic utility files like `test_utils.ts` that become dumping grounds.
 
+### Integration Test Patterns
+
+Choose based on scope:
+
+- `build_index_single_file()` with inline code — AST-level extraction, single-construct, metadata/factory tests
+- `Project` + `update_file()` with inline code — cross-file resolution, full pipeline tests
+- `Project` + temp directory — filesystem-dependent features, import resolution
+- Fixture files (`tests/fixtures/{lang}/code/`) — project-level integration, multi-file scenarios
+
+Use inline code for small focused tests (1–10 lines); fixtures for multi-file or complex scenarios.
+
+### Assertion Requirements
+
+Assert the exact extracted value — never use weak existence checks:
+
+- Use `toEqual` with typed literal objects
+- Never: `toBeDefined()`, `instanceof Map` alone, `toHaveLength(n > 0)`, `not.toThrow()` alone, `if (node) { expect... }` guards
+- Test `is_exported` for both `true` and `false` cases
+
 ## Debugging
 
 - Create debug scripts in a temporary folder, not in this project.

@@ -20,7 +20,6 @@
 (function_declaration) @scope.function
 (function_expression) @scope.function
 (arrow_function) @scope.function
-(method_definition) @scope.method
 (generator_function_declaration) @scope.function
 (generator_function) @scope.function
 
@@ -64,7 +63,7 @@
 ; Interface definitions
 (interface_declaration
   name: (type_identifier) @definition.interface
-) @definition.interface
+)
 
 ; Interface method signatures
 (interface_declaration
@@ -87,33 +86,33 @@
 ; Type alias definitions
 (type_alias_declaration
   name: (type_identifier) @definition.type_alias
-) @definition.type_alias
+)
 
 ; Enum definitions
 (enum_declaration
   name: (identifier) @definition.enum
-) @definition.enum
+)
 
 ; Enum members
 (enum_body
-  (property_identifier) @definition.enum_member
+  (property_identifier) @definition.enum.member
 )
 
 (enum_body
   (enum_assignment
-    name: (property_identifier) @definition.enum_member
+    name: (property_identifier) @definition.enum.member
   )
 )
 
 ; Namespace definitions
 (internal_module
   name: (identifier) @definition.namespace
-) @definition.namespace
+)
 
 ; Type parameter definitions
 (type_parameter
   (type_identifier) @definition.type_parameter
-) @definition.type_parameter
+)
 
 ;; ==============================================================================
 ;; TYPE ANNOTATIONS AND GENERICS
@@ -140,30 +139,30 @@
 (method_definition
   (accessibility_modifier) @modifier.access_modifier
   name: (property_identifier) @definition.method
-) @scope.method
+)
 
 ; Access modifiers on fields
 (public_field_definition
   (accessibility_modifier) @modifier.access_modifier
   name: (property_identifier) @definition.field
-) @definition.field
+)
 
 ; Readonly modifier
 (public_field_definition
   "readonly" @modifier.readonly_modifier
   name: (property_identifier) @definition.field
-) @definition.field
+)
 
 ; Static modifier
 (method_definition
   "static" @modifier.visibility
   name: (property_identifier) @definition.method
-) @scope.method
+)
 
 (public_field_definition
   "static" @modifier.visibility
   name: (property_identifier) @definition.field
-) @definition.field
+)
 
 ; Constructor parameter properties (with access modifiers)
 ; These create both a parameter AND an implicit class property
@@ -312,13 +311,13 @@
   value: (_) @assignment.variable
 ) @assignment.variable
 
-; Variable declarations with constructor calls
+; Variable declarations with namespace-qualified constructor calls
 (variable_declarator
   name: (identifier) @assignment.variable
   value: (new_expression
-    constructor: (identifier) @assignment.constructor
+    constructor: (member_expression) @assignment.constructor.qualified
   )
-) @assignment.constructor
+) @assignment.constructor.qualified
 
 ; Destructuring
 (variable_declarator
@@ -364,7 +363,7 @@
 
 (method_definition
   name: (private_property_identifier) @definition.method
-)
+) @scope.method
 
 ; Abstract method signatures in classes (not interfaces)
 ; These are abstract methods declared in abstract classes
@@ -398,7 +397,7 @@
   "static"? @modifier.visibility
   "readonly"? @modifier.readonly_modifier
   name: (property_identifier) @definition.field
-) @definition.field
+)
 
 (public_field_definition
   name: (private_property_identifier) @definition.field
@@ -600,13 +599,18 @@
 ; Constructor calls
 (new_expression
   constructor: (identifier) @reference.constructor
-) @reference.call
+)
 
 ; Constructor calls with type arguments (TypeScript)
 (new_expression
   constructor: (identifier) @reference.constructor.generic
   type_arguments: (type_arguments)
-) @reference.call.generic
+)
+
+; Namespace-qualified constructor calls: new models.User(name)
+(new_expression
+  constructor: (member_expression) @reference.constructor.qualified
+)
 
 ; Property access
 (member_expression

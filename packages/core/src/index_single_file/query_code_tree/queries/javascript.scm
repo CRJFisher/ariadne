@@ -15,7 +15,6 @@
 (function_declaration) @scope.function
 (function_expression) @scope.function
 (arrow_function) @scope.function
-(method_definition) @scope.method
 (generator_function_declaration) @scope.function
 (generator_function) @scope.function
 
@@ -103,13 +102,13 @@
   value: (_) @reference.variable
 ) @assignment.variable
 
-; Variable declarations with constructor calls
+; Variable declarations with namespace-qualified constructor calls
 (variable_declarator
-  name: (identifier) @definition.variable @assignment.variable
+  name: (identifier) @assignment.variable
   value: (new_expression
-    constructor: (identifier) @reference.call
-  ) @reference.variable
-) @assignment.variable
+    constructor: (member_expression) @assignment.constructor.qualified
+  )
+) @assignment.constructor.qualified
 
 ; Destructuring
 (variable_declarator
@@ -149,7 +148,7 @@
 
 (method_definition
   name: (private_property_identifier) @definition.method
-)
+) @scope.method
 
 ; Constructor
 (method_definition
@@ -371,7 +370,12 @@
 ; Constructor calls
 (new_expression
   constructor: (identifier) @reference.constructor
-) @reference.call
+)
+
+; Namespace-qualified constructor calls: new models.User(name)
+(new_expression
+  constructor: (member_expression) @reference.constructor.qualified
+)
 
 ; Property access
 (member_expression

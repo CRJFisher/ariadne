@@ -1,8 +1,13 @@
 /**
  * Call Resolution (Phase 2)
  *
- * Pure functions for resolving call references to their target symbols.
- * Uses type information and name resolutions from Phase 1.
+ * Resolves call references to their target symbols using type information
+ * and name resolutions from Phase 1.
+ *
+ * Note: `resolve_calls` has a type-registry side effect for Python namespace
+ * constructors. When a method call with `potential_construct_target` resolves
+ * to a class (e.g., `user = models.User(name)`), the variable's type is
+ * registered in the TypeRegistry so subsequent method calls on it can resolve.
  */
 
 import type {
@@ -17,6 +22,7 @@ import type {
   FunctionCallReference,
   ConstructorCallReference,
 } from "@ariadnejs/types";
+import { location_key } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../registries/definition";
 import type { TypeRegistry } from "../registries/type";
 import type { ScopeRegistry } from "../registries/scope";
@@ -25,7 +31,7 @@ import type { ImportGraph } from "../../project/import_graph";
 import type { CallResolutionResult } from "../resolution_state";
 import type { ResolutionRegistry } from "../resolve_references";
 import { detect_indirect_reachability } from "../indirect_reachability";
-import { resolve_method_call } from "./method";
+import { resolve_method_call } from "./method_call";
 import { resolve_constructor_call, include_constructors_for_class_symbols } from "./constructor";
 import { resolve_collection_dispatch } from "./collection_dispatch";
 import { resolve_function_call } from "./function_call";
@@ -42,15 +48,6 @@ type CallSymbolReference =
   | ConstructorCallReference;
 
 /**
- * Function type for resolving symbol names in scopes.
- * Used to decouple call resolution from the state storage mechanism.
- */
-export type NameResolver = (
-  scope_id: ScopeId,
-  name: SymbolName
-) => SymbolId | null;
-
-/**
  * Context bundle for call resolution.
  * Groups related parameters for cleaner function signatures.
  */
@@ -60,6 +57,7 @@ export interface CallResolutionContext {
   readonly types: TypeRegistry;
   readonly definitions: DefinitionRegistry;
   readonly imports: ImportGraph;
+  readonly resolutions: ResolutionRegistry;
 }
 
 /**
@@ -79,8 +77,7 @@ export interface CallResolutionContext {
  */
 export function resolve_calls_for_files(
   file_ids: Set<FilePath>,
-  context: CallResolutionContext,
-  name_resolver: NameResolver
+  context: CallResolutionContext
 ): CallResolutionResult {
   if (file_ids.size === 0) {
     return {
@@ -99,17 +96,10 @@ export function resolve_calls_for_files(
     }
   }
 
-  // Create resolution provider object that implements the resolve method
-  // Cast to ResolutionRegistry for compatibility with existing resolver functions
-  const resolution_provider = {
-    resolve: name_resolver,
-  } as ResolutionRegistry;
-
   // Resolve all calls
   const resolved_calls = resolve_calls(
     file_references,
-    context,
-    resolution_provider
+    context
   );
 
   // Resolve callback invocations for anonymous functions
@@ -166,11 +156,10 @@ export function resolve_calls_for_files(
   }
 
   // Detect indirect reachability (function collections and function-as-value references)
-  // Cast name_resolver to SymbolResolver - types are compatible (ScopeId extends string)
   const indirect_reachability = detect_indirect_reachability(
     file_references,
     context.definitions,
-    (scope_id, name) => name_resolver(scope_id as ScopeId, name)
+    (scope_id, name) => context.resolutions.resolve(scope_id as ScopeId, name)
   );
 
   return {
@@ -195,8 +184,7 @@ export function resolve_calls_for_files(
  */
 function resolve_calls(
   file_references: Map<FilePath, readonly SymbolReference[]>,
-  context: CallResolutionContext,
-  resolver: ResolutionRegistry
+  context: CallResolutionContext
 ): CallReference[] {
   const resolved_calls: CallReference[] = [];
 
@@ -216,9 +204,8 @@ function resolve_calls(
             context.scopes,
             context.definitions,
             context.types,
-            resolver,
-            (import_id) => context.imports.get_resolved_import_path(import_id),
-            (import_id) => context.imports.get_submodule_import_path(import_id)
+            context.resolutions,
+            context.imports
           );
 
           // If standard resolution failed, try collection dispatch resolution
@@ -226,21 +213,22 @@ function resolve_calls(
             resolved_symbols = resolve_collection_dispatch(
               ref,
               context.definitions,
-              resolver
+              context.resolutions
             );
           }
           break;
 
         case "function_call":
-          resolved_symbols = resolve_function_call(ref, context, resolver);
+          resolved_symbols = resolve_function_call(ref, context, context.resolutions);
           break;
 
         case "constructor_call":
-          // Constructor calls: new MyClass()
+          // Constructor calls: new MyClass() or new models.User()
           resolved_symbols = resolve_constructor_call(
             ref,
             context.definitions,
-            resolver
+            context.resolutions,
+            (import_id) => context.imports.get_resolved_import_path(import_id)
           );
           break;
 
@@ -255,7 +243,7 @@ function resolve_calls(
           // Exhaustiveness checking
           const _exhaustive: never = ref;
           throw new Error(
-            `Unhandled reference kind: ${(_exhaustive as unknown as { kind: string }).kind}`
+            `Unhandled reference kind: ${(_exhaustive as { kind: string }).kind}`
           );
         }
       }
@@ -264,8 +252,30 @@ function resolve_calls(
       resolved_symbols = include_constructors_for_class_symbols(
         resolved_symbols,
         context.definitions,
-        resolver
+        context.resolutions
       );
+
+      // Python namespace constructor: register type binding for the assigned variable
+      // e.g., user = models.User(name) — after resolution, bind user's type to User
+      if (ref.kind === "method_call" && ref.potential_construct_target) {
+        // Find the class that this constructor-like call resolved to (e.g., models.User → User class)
+        const resolved_class = resolved_symbols.find(
+          (s) => context.definitions.get(s)?.kind === "class"
+        );
+        if (resolved_class) {
+          // Look up the variable being assigned (e.g., `user` in `user = models.User(name)`)
+          const assigned_variable = context.definitions.get_symbol_at_location(
+            location_key(ref.potential_construct_target)
+          );
+          if (assigned_variable) {
+            context.types.register_late_binding(
+              assigned_variable,
+              resolved_class,
+              ref.location.file_path
+            );
+          }
+        }
+      }
 
       // Build CallReference with Resolution metadata
       if (resolved_symbols.length > 0) {
@@ -320,12 +330,12 @@ function build_call_reference(
     default: {
       const _exhaustive_call: never = ref;
       throw new Error(
-        `Cannot convert reference to CallReference: ${(_exhaustive_call as unknown as { kind: string }).kind}`
+        `Cannot convert reference to CallReference: ${(_exhaustive_call as { kind: string }).kind}`
       );
     }
   }
 
-  // Detect interface implementations
+  // Multiple method resolutions indicate interface + implementations (polymorphic dispatch)
   const is_interface_impl =
     call_type === "method" && resolved_symbols.length > 1;
 

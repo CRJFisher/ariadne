@@ -23,7 +23,7 @@ import {
   anonymous_function_symbol,
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../index_single_file";
-import { node_to_location } from "../../node_utils";
+import { node_to_location } from "../../node_to_location";
 export { detect_callback_context } from "./callback.rust";
 export {
   type ImportInfo,
@@ -311,6 +311,9 @@ export function extract_type_expression(node: SyntaxNode): string | undefined {
 }
 
 export function is_self_parameter(node: SyntaxNode): boolean {
+  if (node.type === "self_parameter") {
+    return true;
+  }
   const pattern = node.childForFieldName?.("pattern");
   if (pattern) {
     return (
@@ -452,7 +455,7 @@ export function is_associated_function(node: SyntaxNode): boolean {
 
   if (params) {
     for (const child of params.children || []) {
-      if (child.type === "self_parameter" || is_self_parameter(child)) {
+      if (is_self_parameter(child)) {
         return false; // Has self, so it's a method not an associated function
       }
     }

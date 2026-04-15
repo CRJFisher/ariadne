@@ -120,13 +120,18 @@ export function parse_name_list(
   return result;
 }
 
-/** Run a git command and return stdout. */
+/**
+ * Run a git command and return stdout.
+ * Clears inherited GIT_DIR / GIT_WORK_TREE / GIT_INDEX_FILE so that git
+ * resolves the repo from `cwd` rather than from an inherited hook environment.
+ */
 function exec_git(cwd: string, args: string[]): Promise<string> {
+  const { GIT_DIR, GIT_WORK_TREE, GIT_INDEX_FILE, ...env } = process.env;
   return new Promise((resolve, reject) => {
     execFile(
       "git",
       args,
-      { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: MAX_BUFFER },
+      { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: MAX_BUFFER, env },
       (error, stdout) => {
         if (error) reject(error);
         else resolve(stdout);

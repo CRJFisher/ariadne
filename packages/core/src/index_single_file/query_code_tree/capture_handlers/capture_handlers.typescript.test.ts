@@ -11,7 +11,8 @@ import { extract_return_type, detect_callback_context } from "../symbol_factorie
 import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
 import { DefinitionBuilder } from "../../definitions/definitions";
 import { build_index_single_file } from "../../index_single_file";
-import type { ParsedFile } from "../../file_utils";
+import { node_to_location } from "../../node_to_location";
+import type { ParsedFile } from "../../parsed_file";
 import type {
   ProcessingContext,
   CaptureNode,
@@ -55,25 +56,20 @@ describe("TypeScript Builder Configuration", () => {
     return null;
   }
 
-  // Helper to create a raw capture
+  // Helper to create a raw capture using node_to_location for consistent location encoding
   function create_raw_capture(
     name: string,
     node: SyntaxNode,
     text?: string
   ): CaptureNode {
+    const parts = name.split(".");
     return {
       name,
       node,
       text: (text || node.text) as SymbolName,
-      category: "definition" as SemanticCategory,
-      entity: "interface" as SemanticEntity,
-      location: {
-        file_path: "test.ts" as FilePath,
-        start_line: node.startPosition.row + 1,
-        start_column: node.startPosition.column + 1,
-        end_line: node.endPosition.row + 1,
-        end_column: node.endPosition.column + 1,
-      },
+      category: (parts[0] || "definition") as SemanticCategory,
+      entity: (parts[1] || "interface") as SemanticEntity,
+      location: node_to_location(node, "test.ts" as FilePath),
     };
   }
 
@@ -92,104 +88,127 @@ describe("TypeScript Builder Configuration", () => {
   }
 
   describe("TYPESCRIPT_HANDLERS", () => {
-    it("should export a valid LanguageBuilderConfig", () => {
-      expect(TYPESCRIPT_HANDLERS).toBeDefined();
-      expect(TYPESCRIPT_HANDLERS).toBeDefined();
-      expect(Object.keys(TYPESCRIPT_HANDLERS).length).toBeGreaterThan(0);
-    });
-
-    it("should extend JavaScript configuration", () => {
-      // Should contain all JavaScript mappings plus TypeScript-specific ones
-      expect(Object.keys(TYPESCRIPT_HANDLERS).length).toBeGreaterThan(
-        Object.keys(JAVASCRIPT_HANDLERS).length
-      );
-
-      // Check that JavaScript mappings are included
-      const js_keys = Object.keys(JAVASCRIPT_HANDLERS);
-      for (const key of js_keys) {
-        expect((key in TYPESCRIPT_HANDLERS)).toBe(true);
-      }
-    });
-
-    it("should contain TypeScript-specific capture handlers", () => {
-      const ts_specific_handlers = [
+    it("should contain all expected handler keys", () => {
+      const expected_keys = [
+        // Inherited from JavaScript
+        "definition.variable",
+        "definition.function",
+        "definition.anonymous_function",
+        "definition.class",
+        "definition.method",
+        "definition.field",
+        "definition.parameter",
+        // TypeScript-specific: Interfaces
         "definition.interface",
         "definition.interface.method",
         "definition.interface.property",
+        // TypeScript-specific: Type aliases
         "definition.type_alias",
+        // TypeScript-specific: Enums
         "definition.enum",
         "definition.enum.member",
+        // TypeScript-specific: Namespaces
         "definition.namespace",
+        // TypeScript-specific: Decorators
         "decorator.class",
         "decorator.method",
         "decorator.property",
+        // TypeScript-specific: Methods
+        "definition.method.private",
+        "definition.method.abstract",
+        // TypeScript-specific: Fields
+        "definition.field.private",
+        "definition.field.param_property",
+        // TypeScript-specific: Parameters
+        "definition.parameter.optional",
+        "definition.parameter.rest",
       ];
 
-      for (const handler_name of ts_specific_handlers) {
-        expect((handler_name in TYPESCRIPT_HANDLERS)).toBe(true);
-        const handler = TYPESCRIPT_HANDLERS[handler_name];
-        expect(handler).toBeDefined();
-        expect(handler).toBeInstanceOf(Function);
+      for (const key of expected_keys) {
+        expect(key in TYPESCRIPT_HANDLERS).toBe(true);
+        expect(typeof TYPESCRIPT_HANDLERS[key]).toBe("function");
       }
+
+      // Verify expected keys are a subset (there may be additional inherited JS handlers)
+      expect(Object.keys(TYPESCRIPT_HANDLERS).length).toBeGreaterThanOrEqual(expected_keys.length);
+    });
+
+    it("should extend JavaScript configuration with all JS keys present", () => {
+      const js_keys = Object.keys(JAVASCRIPT_HANDLERS);
+      for (const key of js_keys) {
+        expect(key in TYPESCRIPT_HANDLERS).toBe(true);
+      }
+      // TypeScript has more handlers than JavaScript
+      expect(Object.keys(TYPESCRIPT_HANDLERS).length).toBeGreaterThan(
+        Object.keys(JAVASCRIPT_HANDLERS).length
+      );
     });
   });
 
   describe("Interface handling", () => {
     it("should process interface definitions", () => {
       const code = `interface IUser {
-        name: string;
-        age: number;
-      }`;
+  name: string;
+  age: number;
+}`;
       const ast = get_ast_node(code);
-      const interface_node = find_node_by_type(ast, "interface_declaration");
-      const name_node = interface_node?.childForFieldName?.("name");
-
-      expect(interface_node).toBeTruthy();
-      expect(name_node).toBeTruthy();
+      const interface_node = find_node_by_type(ast, "interface_declaration")!;
+      const name_node = interface_node.childForFieldName!("name")!;
 
       const builder = new DefinitionBuilder(mock_context);
       const handler = TYPESCRIPT_HANDLERS["definition.interface"];
+      const capture = create_raw_capture("definition.interface", name_node, "IUser");
+      handler(capture, builder, mock_context);
 
-      if (handler && name_node) {
-        const capture = create_raw_capture("definition.interface", name_node, "IUser");
-        handler(capture, builder, mock_context);
-
-        const result = builder.build();
-        expect(result.interfaces.size).toBe(1);
-        const iface = Array.from(result.interfaces.values())[0];
-        expect(iface?.kind).toBe("interface");
-        expect(iface?.name).toBe("IUser");
-      }
+      const result = builder.build();
+      expect(result.interfaces.size).toBe(1);
+      const iface = Array.from(result.interfaces.values())[0];
+      expect(iface.kind).toBe("interface");
+      expect(iface.name).toBe("IUser");
+      expect(iface.is_exported).toBe(false);
+      expect(iface.extends).toEqual([]);
+      expect(iface.methods).toEqual([]);
+      expect(iface.properties).toEqual([]);
     });
 
-    it("should process interface method signatures", () => {
+    it("should process interface with extends", () => {
+      const code = "interface IAdmin extends IUser, ISerializable {}";
+      const index = build_index_from_code(code);
+      const iface = Array.from(index.interfaces.values()).find(i => i.name === "IAdmin")!;
+      expect(iface.kind).toBe("interface");
+      expect(iface.name).toBe("IAdmin");
+      expect(iface.extends).toEqual(["IUser", "ISerializable"]);
+    });
+
+    it("should process interface method signatures via integration", () => {
       const code = `interface ICalculator {
-        add(a: number, b: number): number;
-      }`;
-      const ast = get_ast_node(code);
-      const method_sig_node = find_node_by_type(ast, "method_signature");
-      const method_name_node = method_sig_node?.childForFieldName?.("name");
-
-      expect(method_sig_node).toBeTruthy();
-      expect(method_name_node).toBeTruthy();
-
-      // Would need to first add interface, then add method to it
-      // This is a simplified test - in real usage the interface would already exist
+  add(a: number, b: number): number;
+}`;
+      const index = build_index_from_code(code);
+      const iface = Array.from(index.interfaces.values()).find(i => i.name === "ICalculator")!;
+      expect(iface.kind).toBe("interface");
+      expect(iface.methods.length).toBe(1);
+      const method = iface.methods[0];
+      expect(method.name).toBe("add");
+      expect(method.kind).toBe("method");
+      expect(method.return_type).toBe("number");
     });
 
-    it("should process interface property signatures", () => {
+    it("should process interface property signatures via integration", () => {
       const code = `interface IConfig {
-        readonly debug?: boolean;
-      }`;
-      const ast = get_ast_node(code);
-      const prop_sig_node = find_node_by_type(ast, "property_signature");
-      const prop_name_node = prop_sig_node?.childForFieldName?.("name");
-
-      expect(prop_sig_node).toBeTruthy();
-      expect(prop_name_node).toBeTruthy();
-
-      // Would need to first add interface, then add property to it
-      // This is a simplified test - in real usage the interface would already exist
+  debug: boolean;
+  name: string;
+}`;
+      const index = build_index_from_code(code);
+      const iface = Array.from(index.interfaces.values()).find(i => i.name === "IConfig")!;
+      expect(iface.kind).toBe("interface");
+      expect(iface.properties.length).toBe(2);
+      const debug_prop = iface.properties.find(p => p.name === "debug")!;
+      expect(debug_prop.kind).toBe("property");
+      expect(debug_prop.type).toBe("boolean");
+      const name_prop = iface.properties.find(p => p.name === "name")!;
+      expect(name_prop.kind).toBe("property");
+      expect(name_prop.type).toBe("string");
     });
   });
 
@@ -197,331 +216,418 @@ describe("TypeScript Builder Configuration", () => {
     it("should process type alias definitions", () => {
       const code = "type UserID = string | number;";
       const ast = get_ast_node(code);
-      const type_alias_node = find_node_by_type(ast, "type_alias_declaration");
-      const name_node = type_alias_node?.childForFieldName?.("name");
-
-      expect(type_alias_node).toBeTruthy();
-      expect(name_node).toBeTruthy();
+      const type_alias_node = find_node_by_type(ast, "type_alias_declaration")!;
+      const name_node = type_alias_node.childForFieldName!("name")!;
 
       const builder = new DefinitionBuilder(mock_context);
       const handler = TYPESCRIPT_HANDLERS["definition.type_alias"];
+      const capture = create_raw_capture("definition.type_alias", name_node, "UserID");
+      handler(capture, builder, mock_context);
 
-      if (handler && name_node) {
-        const capture = create_raw_capture("definition.type_alias", name_node, "UserID");
-        handler(capture, builder, mock_context);
-
-        const result = builder.build();
-        expect(result.types.size).toBe(1);
-        const type_alias = Array.from(result.types.values())[0];
-        expect(type_alias.kind).toBe("type_alias");
-        expect(type_alias.name).toBe("UserID");
-      }
+      const result = builder.build();
+      expect(result.types.size).toBe(1);
+      const type_alias = Array.from(result.types.values())[0];
+      expect(type_alias.kind).toBe("type_alias");
+      expect(type_alias.name).toBe("UserID");
+      expect(type_alias.is_exported).toBe(false);
+      expect(type_alias.type_expression).toBe("string | number");
     });
 
     it("should process generic type aliases", () => {
       const code = "type Result<T, E> = { ok: T } | { error: E };";
       const ast = get_ast_node(code);
-      const type_alias_node = find_node_by_type(ast, "type_alias_declaration");
-      const name_node = type_alias_node?.childForFieldName?.("name");
-
-      expect(type_alias_node).toBeTruthy();
-      expect(name_node).toBeTruthy();
+      const type_alias_node = find_node_by_type(ast, "type_alias_declaration")!;
+      const name_node = type_alias_node.childForFieldName!("name")!;
 
       const builder = new DefinitionBuilder(mock_context);
       const handler = TYPESCRIPT_HANDLERS["definition.type_alias"];
+      const capture = create_raw_capture("definition.type_alias", name_node, "Result");
+      handler(capture, builder, mock_context);
 
-      if (handler && name_node) {
-        const capture = create_raw_capture("definition.type_alias", name_node, "Result");
-        handler(capture, builder, mock_context);
+      const result = builder.build();
+      expect(result.types.size).toBe(1);
+      const type_alias = Array.from(result.types.values())[0];
+      expect(type_alias.kind).toBe("type_alias");
+      expect(type_alias.name).toBe("Result");
+      expect(type_alias.generics).toEqual(["T", "E"]);
+    });
 
-        const result = builder.build();
-        expect(result.types.size).toBe(1);
-        const type_alias = Array.from(result.types.values())[0];
-        expect(type_alias.kind).toBe("type_alias");
-        expect(type_alias.name).toBe("Result");
-        // Type parameters would be extracted from the parent node
-      }
+    it("should process exported type alias via integration", () => {
+      const code = "export type StatusCode = 200 | 404 | 500;";
+      const index = build_index_from_code(code);
+      const type_alias = Array.from(index.types.values()).find(t => t.name === "StatusCode")!;
+      expect(type_alias.kind).toBe("type_alias");
+      expect(type_alias.name).toBe("StatusCode");
+      expect(type_alias.is_exported).toBe(true);
     });
   });
 
   describe("Enum handling", () => {
     it("should process enum definitions", () => {
       const code = `enum Color {
-        Red = 0,
-        Green = 1,
-        Blue = 2
-      }`;
+  Red = 0,
+  Green = 1,
+  Blue = 2
+}`;
       const ast = get_ast_node(code);
-      const enum_node = find_node_by_type(ast, "enum_declaration");
-      const name_node = enum_node?.childForFieldName?.("name");
-
-      expect(enum_node).toBeTruthy();
-      expect(name_node).toBeTruthy();
+      const enum_node = find_node_by_type(ast, "enum_declaration")!;
+      const name_node = enum_node.childForFieldName!("name")!;
 
       const builder = new DefinitionBuilder(mock_context);
       const handler = TYPESCRIPT_HANDLERS["definition.enum"];
+      const capture = create_raw_capture("definition.enum", name_node, "Color");
+      handler(capture, builder, mock_context);
 
-      if (handler && name_node) {
-        const capture = create_raw_capture("definition.enum", name_node, "Color");
-        handler(capture, builder, mock_context);
-
-        const result = builder.build();
-        expect(result.enums.size).toBe(1);
-        const enum_def = Array.from(result.enums.values())[0];
-        expect(enum_def.kind).toBe("enum");
-        expect(enum_def.name).toBe("Color");
-      }
+      const result = builder.build();
+      expect(result.enums.size).toBe(1);
+      const enum_def = Array.from(result.enums.values())[0];
+      expect(enum_def.kind).toBe("enum");
+      expect(enum_def.name).toBe("Color");
+      expect(enum_def.is_const).toBe(false);
+      expect(enum_def.is_exported).toBe(false);
+      expect(enum_def.members).toEqual([]);
     });
 
     it("should process const enum definitions", () => {
       const code = `const enum Status {
-        Active,
-        Inactive
-      }`;
+  Active,
+  Inactive
+}`;
       const ast = get_ast_node(code);
-      const enum_node = find_node_by_type(ast, "enum_declaration");
-      const name_node = enum_node?.childForFieldName?.("name");
-
-      expect(enum_node).toBeTruthy();
-      expect(name_node).toBeTruthy();
+      const enum_node = find_node_by_type(ast, "enum_declaration")!;
+      const name_node = enum_node.childForFieldName!("name")!;
 
       const builder = new DefinitionBuilder(mock_context);
       const handler = TYPESCRIPT_HANDLERS["definition.enum"];
+      const capture = create_raw_capture("definition.enum", name_node, "Status");
+      handler(capture, builder, mock_context);
 
-      if (handler && name_node) {
-        const capture = create_raw_capture("definition.enum", name_node, "Status");
-        handler(capture, builder, mock_context);
+      const result = builder.build();
+      expect(result.enums.size).toBe(1);
+      const enum_def = Array.from(result.enums.values())[0];
+      expect(enum_def.kind).toBe("enum");
+      expect(enum_def.name).toBe("Status");
+      expect(enum_def.is_const).toBe(true);
+    });
 
-        const result = builder.build();
-        expect(result.enums.size).toBe(1);
-        const enum_def = Array.from(result.enums.values())[0];
-        expect(enum_def.kind).toBe("enum");
-        // is_const would be determined from parent node
-      }
+    it("should process enum with members via integration", () => {
+      const code = `enum Direction {
+  Up = "UP",
+  Down = "DOWN",
+  Left = "LEFT",
+  Right = "RIGHT"
+}`;
+      const index = build_index_from_code(code);
+      const enum_def = Array.from(index.enums.values()).find(e => e.name === "Direction")!;
+      expect(enum_def.kind).toBe("enum");
+      expect(enum_def.is_const).toBe(false);
+      expect(enum_def.is_exported).toBe(false);
+      // Enum members are captured via definition.enum.member handler and
+      // attached via find_containing_enum.
+      expect(enum_def.members.map(m => m.name)).toEqual(["Up", "Down", "Left", "Right"]);
+      expect(enum_def.members.map(m => m.value)).toEqual(["\"UP\"", "\"DOWN\"", "\"LEFT\"", "\"RIGHT\""]);
+    });
+
+    it("should process exported enum via integration", () => {
+      const code = "export enum LogLevel { Debug, Info, Warn, Error }";
+      const index = build_index_from_code(code);
+      const enum_def = Array.from(index.enums.values()).find(e => e.name === "LogLevel")!;
+      expect(enum_def.is_exported).toBe(true);
+      expect(enum_def.kind).toBe("enum");
     });
   });
 
   describe("Namespace handling", () => {
     it("should process namespace definitions", () => {
       const code = `namespace Utils {
-        export function log(msg: string): void {}
-      }`;
+  export function log(msg: string): void {}
+}`;
       const ast = get_ast_node(code);
-      const namespace_node = find_node_by_type(ast, "internal_module");
-      const name_node = namespace_node?.childForFieldName?.("name");
-
-      expect(namespace_node).toBeTruthy();
-      expect(name_node).toBeTruthy();
+      const namespace_node = find_node_by_type(ast, "internal_module")!;
+      const name_node = namespace_node.childForFieldName!("name")!;
 
       const builder = new DefinitionBuilder(mock_context);
       const handler = TYPESCRIPT_HANDLERS["definition.namespace"];
+      const capture = create_raw_capture("definition.namespace", name_node, "Utils");
+      handler(capture, builder, mock_context);
 
-      if (handler && name_node) {
-        const capture = create_raw_capture("definition.namespace", name_node, "Utils");
-        handler(capture, builder, mock_context);
-
-        const result = builder.build();
-        expect(result.namespaces.size).toBe(1);
-        const namespace_def = Array.from(result.namespaces.values())[0];
-        expect(namespace_def.kind).toBe("namespace");
-        expect(namespace_def.name).toBe("Utils");
-      }
+      const result = builder.build();
+      expect(result.namespaces.size).toBe(1);
+      const namespace_def = Array.from(result.namespaces.values())[0];
+      expect(namespace_def.kind).toBe("namespace");
+      expect(namespace_def.name).toBe("Utils");
+      expect(namespace_def.is_exported).toBe(false);
     });
   });
 
   describe("Class enhancements", () => {
-    it("should process abstract classes", () => {
+    it("should process abstract classes via integration", () => {
       const code = `abstract class Shape {
-        abstract area(): number;
-      }`;
-      const ast = get_ast_node(code);
-      const class_node = find_node_by_type(ast, "abstract_class_declaration");
-      const name_node = class_node?.childForFieldName?.("name");
-
-      expect(class_node).toBeTruthy();
-      expect(name_node).toBeTruthy();
-
-      const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_HANDLERS["definition.class"];
-
-      if (handler && name_node) {
-        const capture = create_raw_capture("definition.class", name_node, "Shape");
-        handler(capture, builder, mock_context);
-
-        const result = builder.build();
-        expect(result.classes.size).toBe(1);
-        const class_def = Array.from(result.classes.values())[0];
-        expect(class_def.kind).toBe("class");
-        expect(class_def.name).toBe("Shape");
-        // abstract flag would be set based on parent node type
-      }
+  abstract area(): number;
+}`;
+      const index = build_index_from_code(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Shape")!;
+      expect(cls.kind).toBe("class");
+      expect(cls.name).toBe("Shape");
+      expect(cls.is_exported).toBe(false);
+      expect(cls.methods.length).toBe(1);
+      expect(cls.methods[0]!.name).toBe("area");
+      expect(cls.methods[0]!.abstract).toBe(true);
+      expect(cls.methods[0]!.return_type).toBe("number");
     });
 
-    it("should process classes with implements", () => {
+    it("should process classes with implements via integration", () => {
       const code = `class User implements IUser, ISerializable {
-        name: string;
-      }`;
-      const ast = get_ast_node(code);
-      const class_node = find_node_by_type(ast, "class_declaration");
-      const name_node = class_node?.childForFieldName?.("name");
-
-      expect(class_node).toBeTruthy();
-      expect(name_node).toBeTruthy();
-
-      const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_HANDLERS["definition.class"];
-
-      if (handler && name_node) {
-        const capture = create_raw_capture("definition.class", name_node, "User");
-        handler(capture, builder, mock_context);
-
-        const result = builder.build();
-        expect(result.classes.size).toBe(1);
-        const class_def = Array.from(result.classes.values())[0];
-        expect(class_def.kind).toBe("class");
-        expect(class_def.name).toBe("User");
-        // implements would be extracted from class heritage
-      }
+  name: string = "";
+}`;
+      const index = build_index_from_code(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "User")!;
+      expect(cls.kind).toBe("class");
+      expect(cls.name).toBe("User");
+      expect(cls.extends).toEqual(["IUser", "ISerializable"]);
     });
 
-    it("should process generic classes", () => {
+    it("should process classes with extends and implements via integration", () => {
+      const code = `class Admin extends BaseUser implements IAdmin {
+  role: string = "admin";
+}`;
+      const index = build_index_from_code(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Admin")!;
+      expect(cls.extends).toEqual(["BaseUser", "IAdmin"]);
+    });
+
+    it("should process generic classes via integration", () => {
       const code = `class Container<T> {
-        private value: T;
-      }`;
-      const ast = get_ast_node(code);
-      const class_node = find_node_by_type(ast, "class_declaration");
-      const name_node = class_node?.childForFieldName?.("name");
+  private value: T = {} as T;
+}`;
+      const index = build_index_from_code(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Container")!;
+      expect(cls.kind).toBe("class");
+      expect(cls.name).toBe("Container");
+      expect(cls.generics).toEqual(["T"]);
+    });
 
-      expect(class_node).toBeTruthy();
-      expect(name_node).toBeTruthy();
+    it("should process exported class via integration", () => {
+      const code = "export class Service { run() {} }";
+      const index = build_index_from_code(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Service")!;
+      expect(cls.is_exported).toBe(true);
+      expect(cls.methods.length).toBe(1);
+      expect(cls.methods[0].name).toBe("run");
+    });
+  });
 
-      const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_HANDLERS["definition.class"];
+  describe("Method handling via integration", () => {
+    it("should process class methods", () => {
+      const code = `class Calculator {
+  add(a: number, b: number): number { return a + b; }
+  subtract(a: number, b: number): number { return a - b; }
+}`;
+      const index = build_index_from_code(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Calculator")!;
+      expect(cls.methods.length).toBe(2);
 
-      if (handler && name_node) {
-        const capture = create_raw_capture("definition.class", name_node, "Container");
-        handler(capture, builder, mock_context);
+      const add = cls.methods.find(m => m.name === "add")!;
+      expect(add.kind).toBe("method");
+      expect(add.return_type).toBe("number");
+      expect(add.parameters.length).toBe(2);
+      expect(add.parameters[0].name).toBe("a");
+      expect(add.parameters[0].type).toBe("number");
+      expect(add.parameters[1].name).toBe("b");
 
-        const result = builder.build();
-        expect(result.classes.size).toBe(1);
-        const class_def = Array.from(result.classes.values())[0];
-        expect(class_def.kind).toBe("class");
-        expect(class_def.name).toBe("Container");
-        // type_parameters would be extracted from parent node
-      }
+      const sub = cls.methods.find(m => m.name === "subtract")!;
+      expect(sub.return_type).toBe("number");
+    });
+
+    it("should process async methods", () => {
+      const code = `class Api {
+  async fetch(url: string): Promise<Response> { return new Response(); }
+}`;
+      const index = build_index_from_code(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Api")!;
+      const method = cls.methods.find(m => m.name === "fetch")!;
+      expect(method.return_type).toBe("Promise<Response>");
+      expect(method.async).toBe(true);
+    });
+
+    it("should process static methods", () => {
+      const code = `class Factory {
+  static create(): Factory { return new Factory(); }
+}`;
+      const index = build_index_from_code(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Factory")!;
+      const method = cls.methods.find(m => m.name === "create")!;
+      expect(method.static).toBe(true);
     });
   });
 
   describe("Decorator handling", () => {
-    it("should process class decorators", () => {
+    it("should have decorator handler functions registered", () => {
+      expect(typeof TYPESCRIPT_HANDLERS["decorator.class"]).toBe("function");
+      expect(typeof TYPESCRIPT_HANDLERS["decorator.method"]).toBe("function");
+      expect(typeof TYPESCRIPT_HANDLERS["decorator.property"]).toBe("function");
+    });
+
+    it("should process class decorator when target is found", () => {
+      // Decorator handlers require the class to exist in the builder first.
+      // Use direct handler invocation with a pre-registered class.
       const code = `@Component
-      class MyComponent {}`;
+class MyComponent {
+  value: number = 0;
+}`;
       const ast = get_ast_node(code);
-      const decorator_node = find_node_by_type(ast, "decorator");
-      const identifier_node = decorator_node?.firstChild;
+      const builder = new DefinitionBuilder(mock_context);
 
-      expect(decorator_node).toBeTruthy();
-      expect(identifier_node).toBeTruthy();
+      // First register the class
+      const class_name_node = find_node_by_type(ast, "type_identifier")!;
+      const class_capture = create_raw_capture("definition.class", class_name_node, "MyComponent");
+      TYPESCRIPT_HANDLERS["definition.class"](class_capture, builder, mock_context);
 
-      // Decorator processing would add decorator to the target class
-      // This requires the class to be processed first
-    });
+      // The decorator identifier is inside the decorator node
+      const decorator_node = find_node_by_type(ast, "decorator")!;
+      const decorator_id_node = find_node_by_type(decorator_node, "identifier")!;
+      const decorator_capture = create_raw_capture("decorator.class", decorator_id_node, "Component");
 
-    it("should process method decorators", () => {
-      const code = `class Service {
-        @Log
-        process() {}
-      }`;
-      const ast = get_ast_node(code);
-      const class_body_node = find_node_by_type(ast, "class_body");
-      const method_node = find_node_by_type(ast, "method_definition");
-      const decorator_node = class_body_node?.children?.find(
-        (c) => c.type === "decorator"
-      );
+      // Invoke the handler - it calls find_decorator_target which walks
+      // from the identifier up to the decorator node, then to class_declaration
+      TYPESCRIPT_HANDLERS["decorator.class"](decorator_capture, builder, mock_context);
 
-      expect(method_node).toBeTruthy();
-      expect(decorator_node).toBeTruthy();
-
-      // Decorator processing would add decorator to the target method
-      // This requires the method to be processed first
-    });
-
-    it("should process property decorators", () => {
-      const code = `class Model {
-        @Required
-        name: string;
-      }`;
-      const ast = get_ast_node(code);
-      const field_node = find_node_by_type(ast, "public_field_definition");
-      const decorator_node = field_node?.children?.find(
-        (c) => c.type === "decorator"
-      );
-
-      expect(field_node).toBeTruthy();
-      expect(decorator_node).toBeTruthy();
-
-      // Decorator processing would add decorator to the target property
-      // This requires the property to be processed first
+      const result = builder.build();
+      const cls = Array.from(result.classes.values())[0];
+      expect(cls.kind).toBe("class");
+      expect(cls.name).toBe("MyComponent");
+      expect(cls.decorators.length).toBe(1);
+      expect(cls.decorators[0].name).toBe("Component");
     });
   });
 
-  describe("Access modifiers", () => {
+  describe("Access modifiers via integration", () => {
     it("should handle private members", () => {
       const code = `class Account {
-        private balance: number;
-        private updateBalance() {}
-      }`;
-      const ast = get_ast_node(code);
-      const field_node = find_node_by_type(ast, "public_field_definition");
-      const method_node = find_node_by_type(ast, "method_definition");
+  private balance: number = 0;
+  private updateBalance() {}
+}`;
+      const index = build_index_from_code(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Account")!;
 
-      expect(field_node).toBeTruthy();
-      expect(method_node).toBeTruthy();
+      const balance_prop = cls.properties.find(p => p.name === "balance")!;
+      expect(balance_prop.access_modifier).toBe("private");
 
-      // Access modifiers would be extracted during processing
+      const update_method = cls.methods.find(m => m.name === "updateBalance")!;
+      expect(update_method.access_modifier).toBe("private");
     });
 
     it("should handle protected members", () => {
       const code = `class Base {
-        protected data: string;
-        protected process() {}
-      }`;
-      const ast = get_ast_node(code);
-      const field_node = find_node_by_type(ast, "public_field_definition");
-      const method_node = find_node_by_type(ast, "method_definition");
+  protected data: string = "";
+  protected process() {}
+}`;
+      const index = build_index_from_code(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Base")!;
 
-      expect(field_node).toBeTruthy();
-      expect(method_node).toBeTruthy();
+      const data_prop = cls.properties.find(p => p.name === "data")!;
+      expect(data_prop.access_modifier).toBe("protected");
 
-      // Access modifiers would be extracted during processing
+      const process_method = cls.methods.find(m => m.name === "process")!;
+      expect(process_method.access_modifier).toBe("protected");
     });
 
     it("should handle readonly properties", () => {
       const code = `class Config {
-        readonly version = "1.0";
-      }`;
-      const ast = get_ast_node(code);
-      const field_node = find_node_by_type(ast, "public_field_definition");
-
-      expect(field_node).toBeTruthy();
-
-      // Readonly modifier would be extracted during processing
+  readonly version: string = "1.0";
+}`;
+      const index = build_index_from_code(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Config")!;
+      // readonly is set internally but not exposed on PropertyDefinition as a top-level field
+      // Check the property exists with correct type
+      const version_prop = cls.properties.find(p => p.name === "version")!;
+      expect(version_prop.kind).toBe("property");
+      expect(version_prop.type).toBe("string");
     });
   });
 
-  describe("Parameter properties", () => {
-    it("should handle constructor parameter properties", () => {
-      const code = `class User {
-        constructor(public name: string, private age: number) {}
-      }`;
-      const ast = get_ast_node(code);
-      const constructor_node = find_node_by_type(ast, "method_definition");
-      const params = constructor_node?.childForFieldName?.("parameters");
+  describe("Function handling via integration", () => {
+    it("should process named function declarations", () => {
+      const code = "function greet(name: string): string { return \"Hello \" + name; }";
+      const index = build_index_from_code(code);
+      const fn = Array.from(index.functions.values()).find(f => f.name === "greet")!;
+      expect(fn.kind).toBe("function");
+      expect(fn.name).toBe("greet");
+      expect(fn.is_exported).toBe(false);
+      expect(fn.return_type).toBe("string");
+      expect(fn.signature.parameters.length).toBe(1);
+      expect(fn.signature.parameters[0].name).toBe("name");
+      expect(fn.signature.parameters[0].type).toBe("string");
+    });
 
-      expect(constructor_node).toBeTruthy();
-      expect(params).toBeTruthy();
+    it("should process exported functions", () => {
+      const code = "export function process(): void {}";
+      const index = build_index_from_code(code);
+      const fn = Array.from(index.functions.values()).find(f => f.name === "process")!;
+      expect(fn.is_exported).toBe(true);
+      expect(fn.return_type).toBe("void");
+    });
 
-      // Parameter properties would create both parameters and class properties
+    it("should process arrow function assigned to variable", () => {
+      const code = "const add = (a: number, b: number): number => a + b;";
+      const index = build_index_from_code(code);
+      const fn = Array.from(index.functions.values()).find(f => f.name === "add")!;
+      expect(fn.kind).toBe("function");
+      expect(fn.name).toBe("add");
+      // Return type for arrow functions assigned to variables is captured
+      // on the arrow function node, not the variable name node
+      expect(fn.is_exported).toBe(false);
+    });
+  });
+
+  describe("Anonymous function handling via integration", () => {
+    it("should process anonymous arrow functions as callbacks", () => {
+      const code = "function run() { items.forEach((item) => { console.log(item); }); }";
+      const index = build_index_from_code(code);
+      const anon_fns = Array.from(index.functions.values()).filter(f => f.name === "<anonymous>");
+      expect(anon_fns.length).toBe(1);
+      expect(anon_fns[0].callback_context?.is_callback).toBe(true);
+    });
+  });
+
+  describe("Parameter handling via integration", () => {
+    it("should process required parameters", () => {
+      const code = "function greet(name: string, count: number): void {}";
+      const index = build_index_from_code(code);
+      const fn = Array.from(index.functions.values()).find(f => f.name === "greet")!;
+      expect(fn.signature.parameters.length).toBe(2);
+      expect(fn.signature.parameters[0].name).toBe("name");
+      expect(fn.signature.parameters[0].type).toBe("string");
+      expect(fn.signature.parameters[1].name).toBe("count");
+      expect(fn.signature.parameters[1].type).toBe("number");
+    });
+
+    it("should process optional parameters", () => {
+      const code = "function greet(name: string, suffix?: string): void {}";
+      const index = build_index_from_code(code);
+      const fn = Array.from(index.functions.values()).find(f => f.name === "greet")!;
+      expect(fn.signature.parameters.length).toBe(2);
+      expect(fn.signature.parameters[1].name).toBe("suffix");
+      expect(fn.signature.parameters[1].type).toBe("string");
+    });
+
+    it("should process rest parameters", () => {
+      const code = "function sum(...values: number[]): number { return values.reduce((a, b) => a + b, 0); }";
+      const index = build_index_from_code(code);
+      const fn = Array.from(index.functions.values()).find(f => f.name === "sum")!;
+      expect(fn.signature.parameters.length).toBe(1);
+      expect(fn.signature.parameters[0].name).toBe("values");
+      expect(fn.signature.parameters[0].type).toBe("number[]");
+    });
+
+    it("should process parameters with default values", () => {
+      const code = "function greet(name: string = \"World\"): void {}";
+      const index = build_index_from_code(code);
+      const fn = Array.from(index.functions.values()).find(f => f.name === "greet")!;
+      expect(fn.signature.parameters.length).toBe(1);
+      expect(fn.signature.parameters[0].name).toBe("name");
+      expect(fn.signature.parameters[0].type).toBe("string");
+      expect(fn.signature.parameters[0].default_value).toBe("\"World\"");
     });
   });
 
@@ -603,11 +709,10 @@ export const CONFIG = {
 
       // Process each variable using the JavaScript config (TypeScript uses same logic)
       const var_handler = JAVASCRIPT_HANDLERS["definition.variable"];
-      expect(var_handler).toBeDefined();
 
       for (const {node, name} of variables) {
         const capture = create_raw_capture("definition.variable", node, name);
-        var_handler!(capture, builder, mock_context);
+        var_handler(capture, builder, mock_context);
       }
 
       const result = builder.build();
@@ -615,17 +720,16 @@ export const CONFIG = {
 
       expect(vars.length).toBe(2);
 
-      const config_var = vars.find(v => v.name === "CONFIG");
-      const local_var = vars.find(v => v.name === "local_var");
-
-      expect(config_var).toBeDefined();
-      expect(local_var).toBeDefined();
+      const config_var = vars.find(v => v.name === "CONFIG")!;
+      const local_var = vars.find(v => v.name === "local_var")!;
 
       // CONFIG should be exported
-      expect(config_var!.is_exported).toBe(true);
+      expect(config_var.kind).toBe("constant");
+      expect(config_var.is_exported).toBe(true);
 
       // local_var should NOT be exported (it's inside a nested arrow function)
-      expect(local_var!.is_exported).toBe(false);
+      expect(local_var.kind).toBe("constant");
+      expect(local_var.is_exported).toBe(false);
     });
 
     it("should NOT mark variables inside exported arrays with functions as exported", () => {
@@ -662,11 +766,10 @@ export const HANDLERS: Array<Function> = [
       const variables = find_all_variables(ast);
 
       const var_handler = JAVASCRIPT_HANDLERS["definition.variable"];
-      expect(var_handler).toBeDefined();
 
       for (const {node, name} of variables) {
         const capture = create_raw_capture("definition.variable", node, name);
-        var_handler!(capture, builder, mock_context);
+        var_handler(capture, builder, mock_context);
       }
 
       const result = builder.build();
@@ -674,17 +777,16 @@ export const HANDLERS: Array<Function> = [
 
       expect(vars.length).toBe(2);
 
-      const handlers_var = vars.find(v => v.name === "HANDLERS");
-      const temp_var = vars.find(v => v.name === "temp");
-
-      expect(handlers_var).toBeDefined();
-      expect(temp_var).toBeDefined();
+      const handlers_var = vars.find(v => v.name === "HANDLERS")!;
+      const temp_var = vars.find(v => v.name === "temp")!;
 
       // HANDLERS should be exported
-      expect(handlers_var!.is_exported).toBe(true);
+      expect(handlers_var.kind).toBe("constant");
+      expect(handlers_var.is_exported).toBe(true);
 
       // temp should NOT be exported (it's inside a nested function)
-      expect(temp_var!.is_exported).toBe(false);
+      expect(temp_var.kind).toBe("constant");
+      expect(temp_var.is_exported).toBe(false);
     });
 
     it("should NOT mark deeply nested variables in exported type-annotated objects as exported", () => {
@@ -727,11 +829,10 @@ export const NESTED: {
       const variables = find_all_variables(ast);
 
       const var_handler = JAVASCRIPT_HANDLERS["definition.variable"];
-      expect(var_handler).toBeDefined();
 
       for (const {node, name} of variables) {
         const capture = create_raw_capture("definition.variable", node, name);
-        var_handler!(capture, builder, mock_context);
+        var_handler(capture, builder, mock_context);
       }
 
       const result = builder.build();
@@ -739,17 +840,16 @@ export const NESTED: {
 
       expect(vars.length).toBe(2);
 
-      const nested_var = vars.find(v => v.name === "NESTED");
-      const deeply_var = vars.find(v => v.name === "deeply_nested");
-
-      expect(nested_var).toBeDefined();
-      expect(deeply_var).toBeDefined();
+      const nested_var = vars.find(v => v.name === "NESTED")!;
+      const deeply_var = vars.find(v => v.name === "deeply_nested")!;
 
       // NESTED should be exported
-      expect(nested_var!.is_exported).toBe(true);
+      expect(nested_var.kind).toBe("constant");
+      expect(nested_var.is_exported).toBe(true);
 
       // deeply_nested should NOT be exported (it's inside a nested arrow function)
-      expect(deeply_var!.is_exported).toBe(false);
+      expect(deeply_var.kind).toBe("constant");
+      expect(deeply_var.is_exported).toBe(false);
     });
   });
 
@@ -771,9 +871,9 @@ function use() {
       const index = build_index_from_code(code);
       const vars = Array.from(index.variables.values());
 
-      const h_var = vars.find(v => v.name === "h");
-      expect(h_var).toBeDefined();
-      expect(h_var?.initialized_from_call).toBe("createHandler");
+      const h_var = vars.find(v => v.name === "h")!;
+      expect(h_var.kind).toBe("constant");
+      expect(h_var.initialized_from_call).toBe("createHandler");
     });
 
     it("should NOT set initialized_from_call for variables with literal initializers", () => {
@@ -797,9 +897,9 @@ const extractor = get_scope_boundary_extractor(language);
       const index = build_index_from_code(code);
       const vars = Array.from(index.variables.values());
 
-      const extractor_var = vars.find(v => v.name === "extractor");
-      expect(extractor_var).toBeDefined();
-      expect(extractor_var?.initialized_from_call).toBe("get_scope_boundary_extractor");
+      const extractor_var = vars.find(v => v.name === "extractor")!;
+      expect(extractor_var.kind).toBe("constant");
+      expect(extractor_var.initialized_from_call).toBe("get_scope_boundary_extractor");
     });
 
     it("should NOT set initialized_from_call for method calls on objects", () => {
@@ -809,11 +909,11 @@ const result = obj.getSomething();
       const index = build_index_from_code(code);
       const vars = Array.from(index.variables.values());
 
-      const result_var = vars.find(v => v.name === "result");
-      expect(result_var).toBeDefined();
+      const result_var = vars.find(v => v.name === "result")!;
+      expect(result_var.kind).toBe("constant");
       // Method calls on objects (property access) should not set initialized_from_call
       // Only direct function calls should be tracked
-      expect(result_var?.initialized_from_call).toBeUndefined();
+      expect(result_var.initialized_from_call).toBeUndefined();
     });
   });
 
@@ -830,16 +930,12 @@ const result = obj.getSomething();
       `;
 
       const index = build_index_from_code(code);
-      const classes = Array.from(index.classes.values());
-      expect(classes.length).toBe(1);
+      const foo_class = Array.from(index.classes.values()).find(c => c.name === "Foo")!;
 
-      const foo_class = classes[0];
-      expect(foo_class.name).toBe("Foo");
-      expect(foo_class.properties.length).toBeGreaterThan(0);
-
-      const field_prop = foo_class.properties.find(p => p.name === "field");
-      expect(field_prop).toBeDefined();
-      expect(field_prop?.type).toBe("Registry");
+      const field_prop = foo_class.properties.find(p => p.name === "field")!;
+      expect(field_prop.kind).toBe("property");
+      expect(field_prop.type).toBe("Registry");
+      expect(field_prop.access_modifier).toBe("public");
     });
 
     it("should extract type from private field", () => {
@@ -850,11 +946,11 @@ const result = obj.getSomething();
       `;
 
       const index = build_index_from_code(code);
-      const classes = Array.from(index.classes.values());
-      const foo_class = classes[0];
-      const data_prop = foo_class.properties.find(p => p.name === "data");
-      expect(data_prop).toBeDefined();
-      expect(data_prop?.type).toBe("Map<string, number>");
+      const foo_class = Array.from(index.classes.values()).find(c => c.name === "Foo")!;
+      const data_prop = foo_class.properties.find(p => p.name === "data")!;
+      expect(data_prop.kind).toBe("property");
+      expect(data_prop.type).toBe("Map<string, number>");
+      expect(data_prop.access_modifier).toBe("private");
     });
 
     it("should extract type from optional field", () => {
@@ -865,12 +961,10 @@ const result = obj.getSomething();
       `;
 
       const index = build_index_from_code(code);
-      const classes = Array.from(index.classes.values());
-      const foo_class = classes[0];
-      const optional_prop = foo_class.properties.find(p => p.name === "optional");
-      expect(optional_prop).toBeDefined();
-      expect(optional_prop?.type).toBe("string");
-      // Note: optional modifier tracking is not yet implemented for PropertyDefinition
+      const foo_class = Array.from(index.classes.values()).find(c => c.name === "Foo")!;
+      const optional_prop = foo_class.properties.find(p => p.name === "optional")!;
+      expect(optional_prop.kind).toBe("property");
+      expect(optional_prop.type).toBe("string");
     });
 
     it("should extract type from readonly field", () => {
@@ -881,12 +975,10 @@ const result = obj.getSomething();
       `;
 
       const index = build_index_from_code(code);
-      const classes = Array.from(index.classes.values());
-      const foo_class = classes[0];
-      const config_prop = foo_class.properties.find(p => p.name === "config");
-      expect(config_prop).toBeDefined();
-      expect(config_prop?.type).toBe("Config");
-      // Note: readonly modifier tracking is not yet implemented for PropertyDefinition
+      const foo_class = Array.from(index.classes.values()).find(c => c.name === "Foo")!;
+      const config_prop = foo_class.properties.find(p => p.name === "config")!;
+      expect(config_prop.kind).toBe("property");
+      expect(config_prop.type).toBe("Config");
     });
 
     it("should extract type from static field", () => {
@@ -897,12 +989,10 @@ const result = obj.getSomething();
       `;
 
       const index = build_index_from_code(code);
-      const classes = Array.from(index.classes.values());
-      const foo_class = classes[0];
-      const instance_prop = foo_class.properties.find(p => p.name === "instance");
-      expect(instance_prop).toBeDefined();
-      expect(instance_prop?.type).toBe("Foo");
-      // Note: static modifier tracking is not yet implemented for PropertyDefinition
+      const foo_class = Array.from(index.classes.values()).find(c => c.name === "Foo")!;
+      const instance_prop = foo_class.properties.find(p => p.name === "instance")!;
+      expect(instance_prop.kind).toBe("property");
+      expect(instance_prop.type).toBe("Foo");
     });
 
     it("should extract generic type annotations", () => {
@@ -913,11 +1003,10 @@ const result = obj.getSomething();
       `;
 
       const index = build_index_from_code(code);
-      const classes = Array.from(index.classes.values());
-      const foo_class = classes[0];
-      const items_prop = foo_class.properties.find(p => p.name === "items");
-      expect(items_prop).toBeDefined();
-      expect(items_prop?.type).toBe("Map<string, Item[]>");
+      const foo_class = Array.from(index.classes.values()).find(c => c.name === "Foo")!;
+      const items_prop = foo_class.properties.find(p => p.name === "items")!;
+      expect(items_prop.kind).toBe("property");
+      expect(items_prop.type).toBe("Map<string, Item[]>");
     });
 
     it("should extract array type annotations", () => {
@@ -929,18 +1018,13 @@ const result = obj.getSomething();
       `;
 
       const index = build_index_from_code(code);
-      const classes = Array.from(index.classes.values());
-      const foo_class = classes[0];
-      expect(foo_class.properties.length).toBeGreaterThan(0);
+      const foo_class = Array.from(index.classes.values()).find(c => c.name === "Foo")!;
 
-      const numbers_prop = foo_class.properties.find(p => p.name === "numbers");
-      const items_prop = foo_class.properties.find(p => p.name === "items");
+      const numbers_prop = foo_class.properties.find(p => p.name === "numbers")!;
+      expect(numbers_prop.type).toBe("number[]");
 
-      expect(numbers_prop).toBeDefined();
-      expect(numbers_prop?.type).toBe("number[]");
-
-      expect(items_prop).toBeDefined();
-      expect(items_prop?.type).toBe("Array<string>");
+      const items_prop = foo_class.properties.find(p => p.name === "items")!;
+      expect(items_prop.type).toBe("Array<string>");
     });
 
     it("should extract union type annotations", () => {
@@ -951,11 +1035,10 @@ const result = obj.getSomething();
       `;
 
       const index = build_index_from_code(code);
-      const classes = Array.from(index.classes.values());
-      const foo_class = classes[0];
-      const value_prop = foo_class.properties.find(p => p.name === "value");
-      expect(value_prop).toBeDefined();
-      expect(value_prop?.type).toBe("string | number | null");
+      const foo_class = Array.from(index.classes.values()).find(c => c.name === "Foo")!;
+      const value_prop = foo_class.properties.find(p => p.name === "value")!;
+      expect(value_prop.kind).toBe("property");
+      expect(value_prop.type).toBe("string | number | null");
     });
 
     it("should extract function type annotations", () => {
@@ -966,11 +1049,10 @@ const result = obj.getSomething();
       `;
 
       const index = build_index_from_code(code);
-      const classes = Array.from(index.classes.values());
-      const foo_class = classes[0];
-      const handler_prop = foo_class.properties.find(p => p.name === "handler");
-      expect(handler_prop).toBeDefined();
-      expect(handler_prop?.type).toBe("(data: string) => void");
+      const foo_class = Array.from(index.classes.values()).find(c => c.name === "Foo")!;
+      const handler_prop = foo_class.properties.find(p => p.name === "handler")!;
+      expect(handler_prop.kind).toBe("property");
+      expect(handler_prop.type).toBe("(data: string) => void");
     });
   });
 
@@ -1165,34 +1247,34 @@ const result = obj.getSomething();
     it("should extract JSDoc on a function", () => {
       const code = "/** Compute the total. */\nfunction total(a: number): number { return a; }";
       const index = build_index_from_code(code);
-      const fn = Array.from(index.functions.values()).find(f => f.name === "total");
-      expect(fn).toBeDefined();
-      expect(fn!.docstring).toContain("Compute the total.");
+      const fn = Array.from(index.functions.values()).find(f => f.name === "total")!;
+      expect(fn.kind).toBe("function");
+      expect(fn.docstring).toContain("Compute the total.");
     });
 
     it("should extract JSDoc on a class", () => {
       const code = "/** A user entity. */\nclass User { name: string = \"\"; }";
       const index = build_index_from_code(code);
-      const cls = Array.from(index.classes.values()).find(c => c.name === "User");
-      expect(cls).toBeDefined();
-      expect(cls!.docstring?.[0]).toContain("A user entity.");
+      const cls = Array.from(index.classes.values()).find(c => c.name === "User")!;
+      expect(cls.kind).toBe("class");
+      expect(cls.docstring?.[0]).toContain("A user entity.");
     });
 
     it("should extract JSDoc on a method", () => {
       const code = "class Calc {\n  /** Add two numbers. */\n  add(a: number, b: number) { return a + b; }\n}";
       const index = build_index_from_code(code);
-      const cls = Array.from(index.classes.values()).find(c => c.name === "Calc");
-      const method = cls!.methods.find(m => m.name === "add");
-      expect(method).toBeDefined();
-      expect(method!.docstring).toContain("Add two numbers.");
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Calc")!;
+      const method = cls.methods.find(m => m.name === "add")!;
+      expect(method.kind).toBe("method");
+      expect(method.docstring).toContain("Add two numbers.");
     });
 
     it("should extract JSDoc on a const variable", () => {
       const code = "/** @type {Service} */\nconst svc = create_service();";
       const index = build_index_from_code(code);
-      const variable = Array.from(index.variables.values()).find(v => v.name === "svc");
-      expect(variable).toBeDefined();
-      expect(variable!.docstring).toContain("@type {Service}");
+      const variable = Array.from(index.variables.values()).find(v => v.name === "svc")!;
+      expect(variable.kind).toBe("constant");
+      expect(variable.docstring).toContain("@type {Service}");
     });
   });
 });
