@@ -51,7 +51,7 @@ function create_mock_definition_registry(
     get_exportable_definitions_in_file: vi
       .fn()
       .mockReturnValue(definitions),
-  } as unknown as DefinitionRegistry;
+  } as Partial<DefinitionRegistry> as DefinitionRegistry;
 }
 
 describe("ExportRegistry", () => {

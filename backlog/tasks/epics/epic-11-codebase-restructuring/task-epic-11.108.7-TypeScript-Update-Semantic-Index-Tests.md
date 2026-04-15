@@ -35,6 +35,7 @@ expect(definition).toEqual({
 ## Coverage Required
 
 ### JavaScript Features (Inherited)
+
 - [ ] Classes with constructors
 - [ ] Constructor parameters
 - [ ] Methods with parameters
@@ -45,6 +46,7 @@ expect(definition).toEqual({
 - [ ] Imports
 
 ### TypeScript-Specific Features
+
 - [ ] Interfaces
 - [ ] Interface methods
 - [ ] **Interface method parameters** (NEW)
@@ -64,6 +66,7 @@ expect(definition).toEqual({
 ## Critical New Tests
 
 ### Interface Method Parameters
+
 ```typescript
 it("extracts interface method parameters", () => {
   const code = `
@@ -97,6 +100,7 @@ it("extracts interface method parameters", () => {
 ```
 
 ### Parameter Properties
+
 ```typescript
 it("extracts parameter properties", () => {
   const code = `
@@ -131,6 +135,7 @@ it("extracts parameter properties", () => {
 ```
 
 ### Decorators
+
 ```typescript
 it("extracts decorators", () => {
   const code = `
@@ -154,7 +159,9 @@ it("extracts decorators", () => {
 
   expect(class_def?.decorators).toHaveLength(1);
   expect(class_def?.decorators?.[0].name).toBe("Component");
-  expect(class_def?.decorators?.[0].arguments).toContain("{ selector: 'app-root' }");
+  expect(class_def?.decorators?.[0].arguments).toContain(
+    "{ selector: 'app-root' }"
+  );
 
   const properties = Array.from(class_def?.properties?.values() || []);
   const title_prop = properties.find((p) => p.name === "title");

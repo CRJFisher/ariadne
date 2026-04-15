@@ -3,7 +3,8 @@
 **Epic**: Epic 11 - Codebase Restructuring  
 **Priority**: High  
 **Status**: Not Started  
-**Dependencies**: 
+**Dependencies**:
+
 - Should be done after core CodeGraph structure is stable
 - Before public API is finalized
 
@@ -23,6 +24,7 @@ The new CodeGraph architecture introduces many types (CodeGraph, FileAnalysis, C
 ## Types to Review and Consolidate
 
 ### Currently in code_graph.ts (should move to packages/types)
+
 - `CodeGraph` - Main output structure
 - `FileAnalysis` - Per-file results
 - `CallGraph`, `FunctionNode`, `CallEdge`
@@ -34,9 +36,11 @@ The new CodeGraph architecture introduces many types (CodeGraph, FileAnalysis, C
 - `CodeGraphOptions` - API options
 
 ### Currently in query modules (evaluate for public API)
+
 - `CallGraphInfo` - Query result type
 
 ### Internal types (keep in implementation modules)
+
 - `InternalFileAnalysis` - Implementation detail
 - `*Context` types - Processing contexts
 - `*Config` types - Internal configs
@@ -45,10 +49,12 @@ The new CodeGraph architecture introduces many types (CodeGraph, FileAnalysis, C
 ## Implementation Plan
 
 1. **Identify Public vs Internal Types**
+
    - Public: Returned by API functions or passed as parameters
    - Internal: Only used within implementation
 
 2. **Create Type Hierarchy in packages/types**
+
    ```
    packages/types/src/
    ├── codegraph.ts      # Main CodeGraph types
@@ -62,10 +68,12 @@ The new CodeGraph architecture introduces many types (CodeGraph, FileAnalysis, C
    ```
 
 3. **Update Imports Throughout Codebase**
+
    - Replace local type imports with `@ariadnejs/types`
    - Keep internal types local
 
 4. **Ensure Backwards Compatibility**
+
    - Existing types in packages/types should remain
    - Add new types without breaking changes
 

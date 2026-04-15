@@ -5,6 +5,7 @@
 **Estimated Effort:** 2-3 hours
 **Parent:** task-epic-11.108
 **Dependencies:**
+
 - task-epic-11.108.1 (builder documentation clarified)
 - task-epic-11.108.3 (TypeScript processing)
 - task-epic-11.108.4 (Python TypeAlias added)
@@ -17,6 +18,7 @@ Verify that all forms of type aliases are properly captured across TypeScript, R
 ## Background
 
 The `add_type` method is specifically for TYPE ALIASES, not all types:
+
 - Classes, interfaces, enums are type DEFINITIONS (use dedicated methods)
 - Type aliases are transparent alternative names for type expressions
 - See [TYPE_SYSTEM_ANALYSIS.md](../../../TYPE_SYSTEM_ANALYSIS.md) for full explanation
@@ -29,7 +31,7 @@ TypeScript has the richest type alias syntax:
 
 ```typescript
 // Simple object type
-type Point = { x: number, y: number };
+type Point = { x: number; y: number };
 
 // Generic type
 type Container<T> = { value: T };
@@ -53,7 +55,7 @@ type Readonly<T> = { readonly [P in keyof T]: T[P] };
 type EventName<T extends string> = `${T}Changed`;
 
 // Index access type
-type PointX = Point['x'];
+type PointX = Point["x"];
 
 // Tuple type
 type Pair = [string, number];
@@ -130,6 +132,7 @@ MaybeString: TypeAlias = str | None  # Or Optional[str]
 **File:** `packages/core/src/index_single_file/query_code_tree/language_configs/queries/typescript.scm`
 
 Verify query captures:
+
 - [ ] Simple object types: `type X = { ... }`
 - [ ] Generic types: `type X<T> = ...`
 - [ ] Generic with constraints: `type X<T extends Y> = ...`
@@ -145,6 +148,7 @@ Verify query captures:
 **Test file:** `semantic_index.typescript.test.ts`
 
 Add comprehensive test:
+
 ```typescript
 it("captures all type alias forms", () => {
   const code = `
@@ -178,6 +182,7 @@ it("captures all type alias forms", () => {
 **File:** `packages/core/src/index_single_file/query_code_tree/language_configs/queries/rust.scm`
 
 Verify query captures:
+
 - [ ] Simple aliases: `type X = Y;`
 - [ ] Generic aliases: `type X<T> = Y<T>;`
 - [ ] Generic with bounds: `type X<T: Display> = ...;`
@@ -190,6 +195,7 @@ Verify query captures:
 **Test file:** `semantic_index.rust.test.ts`
 
 Add test:
+
 ```typescript
 it("captures all type alias forms", () => {
   const code = `
@@ -219,6 +225,7 @@ it("captures all type alias forms", () => {
 **File:** `packages/core/src/index_single_file/query_code_tree/language_configs/queries/python.scm`
 
 Verify query captures:
+
 - [ ] TypeAlias annotation: `X: TypeAlias = Y`
 - [ ] Simple types: `X: TypeAlias = tuple[int, int]`
 - [ ] Generic types: `X: TypeAlias = list[T]`
@@ -229,6 +236,7 @@ Verify query captures:
 **Test file:** `semantic_index.python.test.ts`
 
 Add test (should be added in task 11.108.4):
+
 ```typescript
 it("captures type aliases", () => {
   const code = `
@@ -257,24 +265,29 @@ Callback: TypeAlias = Callable[[int], str]
 ## Implementation Steps
 
 1. **Review query files:**
+
    - Read each language's .scm file
    - Identify type alias patterns
    - Verify all forms are captured
 
 2. **Review builders:**
+
    - Check `typescript_builder.ts` type alias handler
    - Check `rust_builder.ts` type alias handler
    - Check `python_builder.ts` type alias handler (after 11.108.4)
 
 3. **Add missing query patterns:**
+
    - If any type alias forms are missing, add captures
    - Test queries with tree-sitter playground if available
 
 4. **Update handlers:**
+
    - Ensure handlers extract all relevant info
    - Type parameters, constraints, expressions
 
 5. **Add comprehensive tests:**
+
    - One test per language covering all forms
    - Verify `type_expression` field is populated
    - Verify `type_parameters` field when present
@@ -297,16 +310,19 @@ Callback: TypeAlias = Callable[[int], str]
 ## Edge Cases to Consider
 
 ### TypeScript
+
 - Type aliases vs interface declarations (different things!)
 - Type parameters with defaults: `type X<T = string> = ...`
 - Type parameters with multiple constraints: `type X<T extends A & B> = ...`
 
 ### Rust
+
 - Associated types in trait impl vs trait definitions
 - Type aliases in module scope vs impl scope
 - Visibility modifiers on type aliases
 
 ### Python
+
 - Older style type aliases (without TypeAlias annotation)
 - Type aliases with forward references
 - Type aliases using typing.Type vs typing.TypeAlias
@@ -327,6 +343,7 @@ Callback: TypeAlias = Callable[[int], str]
 ## Notes
 
 This task ensures complete type alias coverage across all languages. Type aliases are crucial for:
+
 - Type-based symbol resolution
 - Understanding type relationships
 - Code navigation ("find all usages of this type")

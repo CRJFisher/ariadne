@@ -10,17 +10,20 @@ Successfully migrated `semantic_index.javascript.test.ts` from OLD reference for
 ## Results
 
 **Before**:
+
 - ❌ 15 failing tests (out of 41 total)
 - 35 OLD field occurrences
 - 3 bugs in implementation
 
 **After**:
+
 - ✅ **37 passing tests** (4 skipped for unimplemented features)
 - ✅ 0 OLD field occurrences
 - ✅ 0 test failures
 - ✅ **3 bugs fixed in implementation**
 
 **Final Test Results**:
+
 - Test Files: 1 passed ✅
 - Tests: **37 passed** | 0 failed | 4 skipped (41 total)
 - **100% pass rate** for all non-skipped tests!
@@ -42,16 +45,19 @@ import type {
 ### 2. Migrated Test Sections
 
 **basic_function.js fixture tests (lines 81-109)**:
+
 - ✅ console.log() method call → `MethodCallReference`
 - ✅ greet() function call → `FunctionCallReference`
 - Removed optional chaining for direct field access
 
 **class_and_methods.js fixture tests (lines 116-158)**:
+
 - ✅ Dog constructor → `ConstructorCallReference`
 - ✅ speak() method call → `MethodCallReference`
 - ✅ getSpecies() static method → `MethodCallReference`
 
 **Detailed capture parsing tests (lines 290-960)**:
+
 - ✅ Function definitions and calls
 - ✅ Method calls with receivers
 - ✅ Constructor calls with target assignment
@@ -72,6 +78,7 @@ import type {
 **Root Cause**: `extract_receiver_info()` was using `object_node.text` which returns the entire text of a nested member_expression as a single string, instead of recursively extracting individual parts.
 
 **Fix**:
+
 ```typescript
 // BEFORE (line 360)
 const receiver_name = object_node.text;
@@ -85,12 +92,15 @@ return {
 
 // AFTER (lines 360-372)
 // Use extract_property_chain for nested receivers like obj.prop.method()
-const object_chain = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(target_node);
+const object_chain =
+  JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(target_node);
 
 // Fallback: if chain extraction failed, use simple receiver + property
-const chain = object_chain || (property_name
-  ? [object_node.text as SymbolName, property_name as SymbolName]
-  : [object_node.text as SymbolName]);
+const chain =
+  object_chain ||
+  (property_name
+    ? [object_node.text as SymbolName, property_name as SymbolName]
+    : [object_node.text as SymbolName]);
 
 return {
   receiver_location: node_to_location(object_node, file_path),
@@ -104,6 +114,7 @@ return {
 ### Bug 2: Missing optional_chaining Field on MethodCallReference ✅ FIXED
 
 **Files**:
+
 - [symbol_references.ts](packages/types/src/symbol_references.ts:115)
 - [reference_factories.ts](packages/core/src/index_single_file/references/reference_factories.ts:76)
 - [reference_builder.ts](packages/core/src/index_single_file/references/reference_builder.ts:367-379)
@@ -113,17 +124,18 @@ return {
 **Root Cause**: The discriminated union design was incomplete - only `PropertyAccessReference` had `is_optional_chain`, but `MethodCallReference` should also support optional chaining.
 
 **Fix 1 - Type Definition**:
+
 ```typescript
 // BEFORE (symbol_references.ts)
 export interface MethodCallReference extends BaseReference {
-  readonly kind: 'method_call';
+  readonly kind: "method_call";
   readonly receiver_location: Location;
   readonly property_chain: readonly SymbolName[];
 }
 
 // AFTER
 export interface MethodCallReference extends BaseReference {
-  readonly kind: 'method_call';
+  readonly kind: "method_call";
   readonly receiver_location: Location;
   readonly property_chain: readonly SymbolName[];
   /** Whether this uses optional chaining (obj?.method()) */
@@ -132,6 +144,7 @@ export interface MethodCallReference extends BaseReference {
 ```
 
 **Fix 2 - Factory Function**:
+
 ```typescript
 // BEFORE (reference_factories.ts)
 export function create_method_call_reference(
@@ -142,7 +155,7 @@ export function create_method_call_reference(
   property_chain: readonly SymbolName[]
 ): MethodCallReference {
   return {
-    kind: 'method_call',
+    kind: "method_call",
     name,
     location,
     scope_id,
@@ -161,7 +174,7 @@ export function create_method_call_reference(
   optional_chaining?: boolean
 ): MethodCallReference {
   return {
-    kind: 'method_call',
+    kind: "method_call",
     name,
     location,
     scope_id,
@@ -173,6 +186,7 @@ export function create_method_call_reference(
 ```
 
 **Fix 3 - Reference Builder**:
+
 ```typescript
 // BEFORE (reference_builder.ts)
 return create_method_call_reference(
@@ -222,20 +236,25 @@ case ReferenceKind.RETURN:
 ## Files Modified
 
 **Implementation Fixes**:
+
 - [packages/core/src/index_single_file/query_code_tree/language_configs/javascript_metadata.ts](packages/core/src/index_single_file/query_code_tree/language_configs/javascript_metadata.ts) - Fixed property chain extraction
 - [packages/types/src/symbol_references.ts](packages/types/src/symbol_references.ts) - Added optional_chaining to MethodCallReference
 - [packages/core/src/index_single_file/references/reference_factories.ts](packages/core/src/index_single_file/references/reference_factories.ts) - Added optional_chaining parameter
 - [packages/core/src/index_single_file/references/reference_builder.ts](packages/core/src/index_single_file/references/reference_builder.ts) - Extract and pass optional_chaining
 
 **Test Migration**:
+
 - [packages/core/src/index_single_file/semantic_index.javascript.test.ts](packages/core/src/index_single_file/semantic_index.javascript.test.ts) - 35 OLD occurrences removed
 
 ## Migration Patterns Applied
 
 ### Pattern 1: Function Call
+
 ```typescript
 // BEFORE
-const funcCall = refs.find(ref => ref.type === "call" && ref.name === "greet");
+const funcCall = refs.find(
+  (ref) => ref.type === "call" && ref.name === "greet"
+);
 expect(funcCall?.call_type).toBe("function");
 
 // AFTER
@@ -247,9 +266,12 @@ const funcCall = refs.find(
 ```
 
 ### Pattern 2: Method Call
+
 ```typescript
 // BEFORE
-const methodCall = refs.find(ref => ref.type === "call" && ref.name === "method");
+const methodCall = refs.find(
+  (ref) => ref.type === "call" && ref.name === "method"
+);
 expect(methodCall?.context?.receiver_location).toBeDefined();
 
 // AFTER
@@ -257,13 +279,16 @@ const methodCall = refs.find(
   (ref): ref is MethodCallReference =>
     ref.kind === "method_call" && ref.name === "method"
 );
-expect(methodCall?.receiver_location).toBeDefined();  // Direct field access
+expect(methodCall?.receiver_location).toBeDefined(); // Direct field access
 ```
 
 ### Pattern 3: Constructor Call
+
 ```typescript
 // BEFORE
-const constructor = refs.find(ref => ref.type === "construct" && ref.name === "MyClass");
+const constructor = refs.find(
+  (ref) => ref.type === "construct" && ref.name === "MyClass"
+);
 expect(constructor?.context?.construct_target).toBeDefined();
 
 // AFTER
@@ -271,14 +296,15 @@ const constructor = refs.find(
   (ref): ref is ConstructorCallReference =>
     ref.kind === "constructor_call" && ref.name === "MyClass"
 );
-expect(constructor?.construct_target).toBeDefined();  // Direct field access
+expect(constructor?.construct_target).toBeDefined(); // Direct field access
 ```
 
 ### Pattern 4: Self-Reference Call
+
 ```typescript
 // BEFORE
-const thisCall = refs.find(ref =>
-  ref.type === "call" && ref.context?.receiver_keyword === "this"
+const thisCall = refs.find(
+  (ref) => ref.type === "call" && ref.context?.receiver_keyword === "this"
 );
 
 // AFTER

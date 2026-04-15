@@ -3,7 +3,7 @@ id: task-epic-11.11
 title: Migrate export_detection feature
 status: Completed
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, import-export, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate the `export_detection` feature to `src/import_export/export_detection/` 
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -61,15 +62,18 @@ Migrate the `export_detection` feature to `src/import_export/export_detection/` 
 ### Required Integrations
 
 1. **With Import Resolution**: Exports must be discoverable by import resolver
+
    - Export data should be queryable by file path
    - Re-exports need special handling
    - TODO: Add `ExportRegistry` interface
 
 2. **With Scope Analysis**: Need scope graph to find definitions
+
    - Exports reference definitions from scope graph
    - TODO: Add `scope_graph` parameter to detection functions
 
 3. **With Type Analysis**: Type exports need special handling
+
    - TypeScript type exports vs value exports
    - TODO: Add `is_type_export` flag
 
@@ -188,15 +192,16 @@ Research findings will be documented here during execution.
 When implementing, add these TODO comments:
 
 1. In `export_detection.ts`:
+
    ```typescript
    // TODO: Integration with import_resolution
    // - Exports should be registered in a shared registry
    // - Import resolver needs to query this registry
-   
+
    // TODO: Integration with scope_analysis
    // - Need scope graph to resolve definition references
    // - Exported symbols must exist in scope
-   
+
    // TODO: Integration with type_analysis
    // - Type exports need different handling than value exports
    // - Track whether export is type-only (TypeScript)

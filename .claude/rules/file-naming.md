@@ -22,6 +22,7 @@ Each folder represents a module. The folder name provides the namespace, so sub-
 ### Language Suffix Rule
 
 Language identifiers ALWAYS come as a suffix, never a prefix:
+
 - `imports.python.ts` - correct
 - `python.imports.ts` - incorrect (blocked by hook)
 
@@ -39,10 +40,12 @@ Supported languages: typescript, javascript, python, rust, go, java
 File names describe their responsibility, not their category.
 
 **Preferred** (functionality-descriptive):
+
 - `detect_test_file.ts` - describes what it does
 - `resolve_module_path.ts` - describes its purpose
 
 **Avoid** (category-descriptive):
+
 - `file_utils.ts` - generic, unclear purpose
 - `helpers.ts` - too broad
 

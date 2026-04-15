@@ -1,95 +1,67 @@
-# State Machine: Phase Transitions and BLOCK/ALLOW Logic
+# Triage Pipeline: Explicit Loop and Aggregation Convention
 
-The Stop hook (`scripts/triage_loop_stop.ts`) drives the triage pipeline as a deterministic state machine. Each time Claude attempts to stop, the hook reads the triage state file, evaluates the current phase, and either **BLOCKs** (with instructions for the next action) or **ALLOWs** (pipeline complete).
+The pipeline is orchestrated explicitly by the main agent following SKILL.md instructions. There is no implicit stop hook or automatic phase transition — every step is a direct script call or agent launch.
 
-## Phase Lifecycle
+## Triage State
+
+The triage state file (`triage_state/{project}_triage.json`) tracks all entries through their lifecycle. The state has two phases:
 
 ```
-triage → aggregation → meta-review → fix-planning → complete
+triage → complete
 ```
 
-Phases transition forward only. Not every phase is reached — the pipeline exits early when there's nothing to do (e.g., no false positives found).
+- **`triage`**: Set by `prepare_triage.ts`. Entries are pending, completed, or failed.
+- **`complete`**: Set by `finalize_aggregation.ts` after all group investigations finish.
 
-## Phase: triage
+`finalize_triage.ts` guards on `phase === "complete"` before writing output.
 
-| Condition | Action | Decision |
-| --------- | ------ | -------- |
-| Pending entries exist | Instruct: launch **triage-investigator** sub-agent for next batch | BLOCK |
-| All entries completed | Mutate phase → `aggregation` | BLOCK |
+## Triage Loop
 
-## Phase: aggregation
+`get_next_triage_batch.ts` drives the triage loop:
 
-| Condition | Action | Decision |
-| --------- | ------ | -------- |
-| Aggregation null or pending | Instruct: launch **triage-aggregator** sub-agent | BLOCK |
-| Aggregation failed | Mutate phase → `complete` | ALLOW |
-| Aggregation completed, FP entries exist | Mutate phase → `meta-review` | BLOCK |
-| Aggregation completed, no FP entries | Mutate phase → `complete` | ALLOW |
+1. Merges any completed investigator result files from `triage_state/results/` into the state.
+2. Returns the next batch of pending entry indices (up to `state.batch_size`).
+3. If no pending entries remain, sets `phase = "complete"` and returns an empty batch.
 
-FP entries are those routed through `llm-triage` with `result.is_true_positive === false`.
+The main agent loops: call `get_next_triage_batch.ts` → launch investigators → repeat until batch is empty.
 
-## Phase: meta-review
+## Aggregation Filesystem Convention
 
-| Condition | Action | Decision |
-| --------- | ------ | -------- |
-| Meta-review null or pending | Instruct: launch **triage-rule-reviewer** sub-agent | BLOCK |
-| Meta-review failed | Mutate phase → `complete` | ALLOW |
-| Meta-review completed, multi-entry FP groups exist | Initialize fix planning, mutate phase → `fix-planning` | BLOCK |
-| Meta-review completed, no multi-entry FP groups | Mutate phase → `complete` | ALLOW |
+Aggregation state is fully implicit in the filesystem. No aggregation fields exist in the triage state file. All files live under `triage_state/aggregation/`:
 
-Multi-entry FP groups: groups where more than one entry shares the same `group_id`. Single-entry groups are recorded but do not trigger fix planning.
+```
+aggregation/
+  slices/        slice_{n}.json            — pass 1 input
+  pass1/         slice_{n}.output.json     — rough groupings
+  pass2/         batch_{n}.input.json      — consolidation input (>15 groups only)
+                 batch_{n}.output.json     — consolidated groups
+  pass3/         input.json                — canonical group list
+                 {group_id}_investigation.json  — per-group member verification
+```
 
-## Phase: fix-planning
+### Pass 1 — Rough grouping
 
-Fix planning iterates over groups sequentially. Each group has four sub-phases:
+`prepare_aggregation_slices.ts` splits `ariadne_correct === false` entries into slices of ~50. One `rough-aggregator` agent processes each slice and writes group assignments to `pass1/slice_{n}.output.json`.
 
-### Sub-phase: planning
+### Pass 2 — Cross-slice consolidation (conditional)
 
-| Condition | Action | Decision |
-| --------- | ------ | -------- |
-| `plans_written < 5` | Instruct: launch **fix-planner** sub-agents | BLOCK |
-| `plans_written >= 5` | Mutate sub-phase → `synthesis` | BLOCK |
+`merge_rough_groups.ts` counts distinct group names across all pass1 outputs:
 
-### Sub-phase: synthesis
+- **≤15 groups**: writes `pass3/input.json` directly and sets `skip_pass2: true`.
+- **>15 groups**: writes `pass2/batch_{n}.input.json` bundles of ~20 groups. One `group-consolidator` agent processes each batch. `merge_consolidated_groups.ts` then traces group chains back through pass1 to resolve entry indices and writes `pass3/input.json`.
 
-| Condition | Action | Decision |
-| --------- | ------ | -------- |
-| `synthesis_written === false` | Instruct: launch **plan-synthesizer** sub-agent | BLOCK |
-| `synthesis_written === true` | Mutate sub-phase → `review` | BLOCK |
+### Pass 3 — Member verification
 
-### Sub-phase: review
+One `group-investigator` (Opus) agent runs per group in parallel. Each reads investigator result files, re-fetches context for ambiguous members, and classifies each member as confirmed or rejected. Outputs `pass3/{group_id}_investigation.json`.
 
-| Condition | Action | Decision |
-| --------- | ------ | -------- |
-| `reviews_written < 4` | Instruct: launch **plan-reviewer** sub-agents | BLOCK |
-| `reviews_written >= 4` | Mutate sub-phase → `task-writing` | BLOCK |
-
-### Sub-phase: task-writing
-
-| Condition | Action | Decision |
-| --------- | ------ | -------- |
-| `task_file === null` | Instruct: launch **task-writer** sub-agent | BLOCK |
-| `task_file !== null` | Mutate sub-phase → `complete`, proceed to next group | (continue) |
-
-When all groups reach sub-phase `complete`:
-
-| Condition | Action | Decision |
-| --------- | ------ | -------- |
-| All groups complete | Mutate phase → `complete` | ALLOW |
-
-## Constants
-
-| Name | Value | Purpose |
-| ---- | ----- | ------- |
-| `REQUIRED_PLANS` | 5 | Number of independent fix plans per group |
-| `REQUIRED_REVIEWS` | 4 | Number of review angles per group |
+`finalize_aggregation.ts` reads all investigation results, writes canonical `group_id`/`root_cause` back to state entries, reallocates rejected members (to `suggested_group_id` if valid, else `"residual-fp"`), and sets `state.phase = "complete"`.
 
 ## Edge Cases
 
-| Condition | Behavior |
-| --------- | -------- |
-| `stop_hook_active === true` (in stdin) | ALLOW — prevents recursive hook invocation |
-| No triage state file found | ALLOW — no pipeline active |
-| State file unparsable (invalid JSON) | ALLOW — log error and let Claude stop |
-| `phase === "complete"` | ALLOW — pipeline already finished |
-| Unknown phase value | ALLOW — log error and let Claude stop |
+| Condition              | Behavior                                                                         |
+| ---------------------- | -------------------------------------------------------------------------------- |
+| No triage state file   | `get_next_triage_batch.ts` exits 1 with error on stderr                          |
+| State file unparsable  | `get_next_triage_batch.ts` exits 1 with error on stderr                          |
+| `phase === "complete"` | `finalize_triage.ts` proceeds normally                                           |
+| Failed entries         | Skipped by `get_next_triage_batch.ts`; not re-batched                            |
+| Rejected group member  | Assigned to `suggested_group_id` or `"residual-fp"` by `finalize_aggregation.ts` |

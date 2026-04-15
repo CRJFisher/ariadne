@@ -16,6 +16,7 @@ Create a dedicated resolver for self-reference calls (`this.method()`, `self.met
 **Problem**: `this.method()` calls were treated as variable references, looking for a variable named `this` instead of resolving to methods on the containing class.
 
 **Solution**: Dedicated resolver that:
+
 1. Detects self-reference keywords (`this`, `self`, `super`, `cls`)
 2. Finds the containing class by walking up the scope tree
 3. Resolves methods within that class's scope
@@ -33,9 +34,9 @@ import type {
   SymbolName,
   ScopeId,
   SelfReferenceKeyword,
-} from '@ariadnejs/types';
-import type { SemanticIndex } from '../../index_single_file/semantic_index';
-import { find_containing_class_scope } from '../scope_resolution/scope_walker';
+} from "@ariadnejs/types";
+import type { SemanticIndex } from "../../index_single_file/semantic_index";
+import { find_containing_class_scope } from "../scope_resolution/scope_walker";
 
 /**
  * Resolve self-reference call: this.method(), self.method(), super.method()
@@ -72,12 +73,12 @@ export function resolve_self_reference_call(
 ): SymbolId | null {
   // Dispatch based on keyword type
   switch (ref.keyword) {
-    case 'this':
-    case 'self':
-    case 'cls':
+    case "this":
+    case "self":
+    case "cls":
       return resolve_this_or_self_call(ref, semantic_index);
 
-    case 'super':
+    case "super":
       return resolve_super_call(ref, semantic_index);
 
     default:
@@ -136,7 +137,7 @@ function resolve_super_call(
 
   // Find the class definition to get its parent
   const class_definition = semantic_index.definitions.find(
-    (def) => def.scope_id === class_scope_id && def.kind === 'class'
+    (def) => def.scope_id === class_scope_id && def.kind === "class"
   );
 
   if (!class_definition) {
@@ -178,7 +179,7 @@ function find_method_in_scope(
     (def) =>
       def.name === method_name &&
       def.scope_id === scope_id &&
-      (def.kind === 'method' || def.kind === 'function')  // Functions inside classes
+      (def.kind === "method" || def.kind === "function") // Functions inside classes
   );
 
   return method_definition?.symbol_id ?? null;
@@ -195,8 +196,8 @@ function get_parent_class(
   // Look for 'extends' or 'inherits' relationships
   const parent_ref = semantic_index.references.find(
     (ref) =>
-      ref.kind === 'type_reference' &&
-      ref.type_context === 'extends' &&
+      ref.kind === "type_reference" &&
+      ref.type_context === "extends" &&
       ref.scope_id === class_definition.scope_id
   );
 
@@ -217,7 +218,7 @@ function resolve_type_reference(
 ): SymbolId | null {
   // Find class definition with matching name in accessible scopes
   const class_def = semantic_index.definitions.find(
-    (def) => def.name === ref.name && def.kind === 'class'
+    (def) => def.name === ref.name && def.kind === "class"
   );
 
   return class_def?.symbol_id ?? null;
@@ -262,7 +263,7 @@ export function find_containing_class_scope(
     }
 
     // Check if this is a class scope
-    if (scope.scope_type === 'class') {
+    if (scope.scope_type === "class") {
       return current_scope_id;
     }
 
@@ -314,9 +315,9 @@ export function find_containing_class_scope(
 
 ```typescript
 // self_reference_resolver.test.ts
-describe('resolve_self_reference_call', () => {
-  describe('this.method() - TypeScript/JavaScript', () => {
-    test('resolves method on same class', () => {
+describe("resolve_self_reference_call", () => {
+  describe("this.method() - TypeScript/JavaScript", () => {
+    test("resolves method on same class", () => {
       const code = `
         class Builder {
           process() {
@@ -329,13 +330,13 @@ describe('resolve_self_reference_call', () => {
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const ref = create_self_reference_call(
-        'build_class' as SymbolName,
+        "build_class" as SymbolName,
         call_location,
         method_scope_id,
-        'this',
-        ['this', 'build_class']
+        "this",
+        ["this", "build_class"]
       );
 
       const resolved = resolve_self_reference_call(ref, semantic_index);
@@ -343,7 +344,7 @@ describe('resolve_self_reference_call', () => {
       expect(resolved).toMatch(/^symbol:.*build_class$/);
     });
 
-    test('resolves method from nested scope', () => {
+    test("resolves method from nested scope", () => {
       const code = `
         class MyClass {
           method() {
@@ -356,20 +357,20 @@ describe('resolve_self_reference_call', () => {
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const ref = create_self_reference_call(
-        'other_method' as SymbolName,
+        "other_method" as SymbolName,
         call_location,
-        block_scope_id,  // Inside if block
-        'this',
-        ['this', 'other_method']
+        block_scope_id, // Inside if block
+        "this",
+        ["this", "other_method"]
       );
 
       const resolved = resolve_self_reference_call(ref, semantic_index);
       expect(resolved).toBeTruthy();
     });
 
-    test('resolves property access followed by method call', () => {
+    test("resolves property access followed by method call", () => {
       const code = `
         class MyClass {
           registry = { };
@@ -387,8 +388,8 @@ describe('resolve_self_reference_call', () => {
     });
   });
 
-  describe('self.method() - Python', () => {
-    test('resolves method on same class', () => {
+  describe("self.method() - Python", () => {
+    test("resolves method on same class", () => {
       const code = `
         class IndexBuilder:
           def process(self):
@@ -398,13 +399,13 @@ describe('resolve_self_reference_call', () => {
             pass
       `;
 
-      const semantic_index = build_semantic_index(code, 'python');
+      const semantic_index = build_semantic_index(code, "python");
       const ref = create_self_reference_call(
-        'build_class' as SymbolName,
+        "build_class" as SymbolName,
         call_location,
         method_scope_id,
-        'self',
-        ['self', 'build_class']
+        "self",
+        ["self", "build_class"]
       );
 
       const resolved = resolve_self_reference_call(ref, semantic_index);
@@ -412,7 +413,7 @@ describe('resolve_self_reference_call', () => {
       expect(resolved).toMatch(/^symbol:.*build_class$/);
     });
 
-    test('resolves classmethod with cls', () => {
+    test("resolves classmethod with cls", () => {
       const code = `
         class MyClass:
           @classmethod
@@ -424,13 +425,13 @@ describe('resolve_self_reference_call', () => {
             return MyClass()
       `;
 
-      const semantic_index = build_semantic_index(code, 'python');
+      const semantic_index = build_semantic_index(code, "python");
       const ref = create_self_reference_call(
-        'default_instance' as SymbolName,
+        "default_instance" as SymbolName,
         call_location,
         method_scope_id,
-        'cls',
-        ['cls', 'default_instance']
+        "cls",
+        ["cls", "default_instance"]
       );
 
       const resolved = resolve_self_reference_call(ref, semantic_index);
@@ -438,8 +439,8 @@ describe('resolve_self_reference_call', () => {
     });
   });
 
-  describe('super.method()', () => {
-    test('resolves method on parent class - TypeScript', () => {
+  describe("super.method()", () => {
+    test("resolves method on parent class - TypeScript", () => {
       const code = `
         class Parent {
           process() {
@@ -454,23 +455,23 @@ describe('resolve_self_reference_call', () => {
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const ref = create_self_reference_call(
-        'process' as SymbolName,
+        "process" as SymbolName,
         call_location,
         child_method_scope_id,
-        'super',
-        ['super', 'process']
+        "super",
+        ["super", "process"]
       );
 
       const resolved = resolve_self_reference_call(ref, semantic_index);
       expect(resolved).toBeTruthy();
       // Should resolve to Parent.process, not Child.process
-      const parent_process_id = find_symbol_in_code(code, 'Parent', 'process');
+      const parent_process_id = find_symbol_in_code(code, "Parent", "process");
       expect(resolved).toBe(parent_process_id);
     });
 
-    test('resolves method on parent class - Python', () => {
+    test("resolves method on parent class - Python", () => {
       const code = `
         class Parent:
           def process(self):
@@ -481,13 +482,13 @@ describe('resolve_self_reference_call', () => {
             super().process()
       `;
 
-      const semantic_index = build_semantic_index(code, 'python');
+      const semantic_index = build_semantic_index(code, "python");
       const ref = create_self_reference_call(
-        'process' as SymbolName,
+        "process" as SymbolName,
         call_location,
         child_method_scope_id,
-        'super',
-        ['super', 'process']
+        "super",
+        ["super", "process"]
       );
 
       const resolved = resolve_self_reference_call(ref, semantic_index);
@@ -495,28 +496,28 @@ describe('resolve_self_reference_call', () => {
     });
   });
 
-  describe('Unresolved cases', () => {
-    test('returns null when not in class context', () => {
+  describe("Unresolved cases", () => {
+    test("returns null when not in class context", () => {
       const code = `
         function standalone() {
           this.method();  // 'this' outside class
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const ref = create_self_reference_call(
-        'method' as SymbolName,
+        "method" as SymbolName,
         call_location,
         function_scope_id,
-        'this',
-        ['this', 'method']
+        "this",
+        ["this", "method"]
       );
 
       const resolved = resolve_self_reference_call(ref, semantic_index);
       expect(resolved).toBeNull();
     });
 
-    test('returns null when method does not exist', () => {
+    test("returns null when method does not exist", () => {
       const code = `
         class MyClass {
           method() {
@@ -525,20 +526,20 @@ describe('resolve_self_reference_call', () => {
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const ref = create_self_reference_call(
-        'nonexistent' as SymbolName,
+        "nonexistent" as SymbolName,
         call_location,
         method_scope_id,
-        'this',
-        ['this', 'nonexistent']
+        "this",
+        ["this", "nonexistent"]
       );
 
       const resolved = resolve_self_reference_call(ref, semantic_index);
       expect(resolved).toBeNull();
     });
 
-    test('returns null when super called but no parent class', () => {
+    test("returns null when super called but no parent class", () => {
       const code = `
         class OnlyChild {
           method() {
@@ -547,13 +548,13 @@ describe('resolve_self_reference_call', () => {
         }
       `;
 
-      const semantic_index = build_semantic_index(code, 'typescript');
+      const semantic_index = build_semantic_index(code, "typescript");
       const ref = create_self_reference_call(
-        'process' as SymbolName,
+        "process" as SymbolName,
         call_location,
         method_scope_id,
-        'super',
-        ['super', 'process']
+        "super",
+        ["super", "process"]
       );
 
       const resolved = resolve_self_reference_call(ref, semantic_index);
@@ -585,10 +586,12 @@ describe('resolve_self_reference_call', () => {
 ## Files Changed
 
 **New**:
+
 - `packages/core/src/resolve_references/call_resolution/self_reference_resolver.ts`
 - `packages/core/src/resolve_references/call_resolution/self_reference_resolver.test.ts`
 
 **Modified**:
+
 - `packages/core/src/resolve_references/scope_resolution/scope_walker.ts`
 
 ## Next Task
@@ -603,6 +606,7 @@ After completion, proceed to **task-152.8** (Update constructor_tracking.ts)
 ### Changes Made
 
 1. **Created self_reference_resolver.ts** ([self_reference_resolver.ts](packages/core/src/resolve_references/call_resolution/self_reference_resolver.ts)):
+
    - Implemented `resolve_self_reference_call()` function with registry-based architecture
    - Handles `this`, `self`, `cls` keywords via `resolve_this_or_self_call()`
    - Handles `super` keyword via `resolve_super_call()`
@@ -611,6 +615,7 @@ After completion, proceed to **task-152.8** (Update constructor_tracking.ts)
    - Added `find_class_in_scope()` helper for finding class definitions
 
 2. **Updated resolution_registry.ts** ([resolution_registry.ts:268-277](packages/core/src/resolve_references/resolution_registry.ts#L268-L277)):
+
    - Added import for `resolve_self_reference_call`
    - Replaced `TODO` placeholder with actual resolver call
    - Added `self_reference_call` case to call_type transformation (maps to "method")
@@ -642,7 +647,7 @@ The task documentation used semantic_index approach, but the actual implementati
 function resolve_self_reference_call(
   ref: SelfReferenceCall,
   semantic_index: SemanticIndex
-): SymbolId | null
+): SymbolId | null;
 
 // Actual implementation (NEW registry approach):
 export function resolve_self_reference_call(
@@ -650,10 +655,11 @@ export function resolve_self_reference_call(
   scopes: ScopeRegistry,
   definitions: DefinitionRegistry,
   types: TypeRegistry
-): SymbolId | null
+): SymbolId | null;
 ```
 
 **Why Registry Architecture**:
+
 - Matches existing `resolve_single_method_call()` signature
 - Leverages pre-built indexes for O(1) lookups
 - Consistent with Epic 11 registry migration goals
@@ -664,6 +670,7 @@ export function resolve_self_reference_call(
 **Challenge**: Finding parent class methods required understanding the Definition type system.
 
 **Solution**: Used member_index for direct lookup instead of scope-based search:
+
 ```typescript
 // Instead of searching parent class scope
 const parent_members = definitions.get_member_index().get(parent_class_id);
@@ -682,15 +689,18 @@ if (parent_members) {
 **Result**: Successfully fixed all 2 type errors in self_reference_resolver.ts ✅
 
 **Errors Fixed**:
+
 1. `Property 'scope_id' does not exist on type 'AnyDefinition'` - Used member_index instead
 2. `Property 'scope_type' does not exist on type 'LexicalScope'` - Changed to `.type`
 
 ### Files Created
 
 **New**:
+
 - [packages/core/src/resolve_references/call_resolution/self_reference_resolver.ts](packages/core/src/resolve_references/call_resolution/self_reference_resolver.ts) - 270 lines
 
 **Modified**:
+
 - [packages/core/src/resolve_references/resolution_registry.ts](packages/core/src/resolve_references/resolution_registry.ts) - Added import and call
 - [backlog/tasks/epics/epic-11-codebase-restructuring/task-152.7-create-self-reference-resolver.md](backlog/tasks/epics/epic-11-codebase-restructuring/task-152.7-create-self-reference-resolver.md) - This file
 
@@ -699,12 +709,14 @@ if (parent_members) {
 No tests written yet - will be covered in task-152.10 (Write self-reference tests).
 
 Current testing approach:
+
 - Build verification (type checking) ✅
 - Integration testing will be done in task-152.11
 
 ### Impact
 
 **Expected Bug Fix**: This task implements THE ACTUAL BUG FIX for 42 instances (31%) of misidentified symbols:
+
 - `this.method()` calls in TypeScript/JavaScript classes
 - `self.method()` calls in Python classes
 - `cls.method()` calls in Python classmethods
@@ -716,6 +728,7 @@ Current testing approach:
 ### Code Quality
 
 **Strengths**:
+
 - Type-safe discriminated union handling with exhaustiveness checking
 - O(1) lookups using pre-built indexes
 - Clear separation of concerns (this/self vs super)
@@ -723,6 +736,7 @@ Current testing approach:
 - Consistent with registry architecture patterns
 
 **Technical Debt**:
+
 - No test coverage yet (deferred to task-152.10)
 - Super call resolution could be simplified if Definition had body_scope_id
 - find_class_in_scope() iterates all scope symbols (could be optimized with index)

@@ -3,7 +3,7 @@ id: task-100.15.6
 title: Extract types and create call_analysis_core.ts
 status: To Do
 assignee: []
-created_date: '2025-08-05 14:08'
+created_date: "2025-08-05 14:08"
 labels: []
 dependencies: []
 parent_task_id: task-100.15

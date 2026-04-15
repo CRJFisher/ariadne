@@ -149,6 +149,14 @@ export function index_single_file_to_json(
 }
 
 /**
+ * Converts a string-keyed record to a ReadonlyMap with branded key type.
+ * Used at JSON deserialization boundaries where branded types are trusted.
+ */
+function record_to_readonly_map<K extends string, V>(record: Record<string, V>): ReadonlyMap<K, V> {
+  return new Map(Object.entries(record) as [K, V][]) as ReadonlyMap<K, V>;
+}
+
+/**
  * Deserializes a SemanticIndex from JSON format
  *
  * Converts plain objects back to ReadonlyMaps. This is the inverse
@@ -164,41 +172,15 @@ export function json_to_index_single_file(
     file_path: json.file_path as FilePath,
     language: json.language as Language,
     root_scope_id: json.root_scope_id as ScopeId,
-    scopes: new Map(Object.entries(json.scopes)) as unknown as ReadonlyMap<
-      ScopeId,
-      LexicalScope
-    >,
-    functions: new Map(Object.entries(json.functions)) as unknown as ReadonlyMap<
-      SymbolId,
-      FunctionDefinition
-    >,
-    classes: new Map(Object.entries(json.classes)) as unknown as ReadonlyMap<
-      SymbolId,
-      ClassDefinition
-    >,
-    variables: new Map(Object.entries(json.variables)) as unknown as ReadonlyMap<
-      SymbolId,
-      VariableDefinition
-    >,
-    interfaces: new Map(Object.entries(json.interfaces)) as unknown as ReadonlyMap<
-      SymbolId,
-      InterfaceDefinition
-    >,
-    enums: new Map(Object.entries(json.enums)) as unknown as ReadonlyMap<
-      SymbolId,
-      EnumDefinition
-    >,
-    namespaces: new Map(Object.entries(json.namespaces)) as unknown as ReadonlyMap<
-      SymbolId,
-      NamespaceDefinition
-    >,
-    types: new Map(Object.entries(json.types)) as unknown as ReadonlyMap<
-      SymbolId,
-      TypeAliasDefinition
-    >,
-    imported_symbols: new Map(
-      Object.entries(json.imported_symbols)
-    ) as unknown as ReadonlyMap<SymbolId, ImportDefinition>,
+    scopes: record_to_readonly_map<ScopeId, LexicalScope>(json.scopes),
+    functions: record_to_readonly_map<SymbolId, FunctionDefinition>(json.functions),
+    classes: record_to_readonly_map<SymbolId, ClassDefinition>(json.classes),
+    variables: record_to_readonly_map<SymbolId, VariableDefinition>(json.variables),
+    interfaces: record_to_readonly_map<SymbolId, InterfaceDefinition>(json.interfaces),
+    enums: record_to_readonly_map<SymbolId, EnumDefinition>(json.enums),
+    namespaces: record_to_readonly_map<SymbolId, NamespaceDefinition>(json.namespaces),
+    types: record_to_readonly_map<SymbolId, TypeAliasDefinition>(json.types),
+    imported_symbols: record_to_readonly_map<SymbolId, ImportDefinition>(json.imported_symbols),
     references: json.references as readonly SymbolReference[],
   };
 }

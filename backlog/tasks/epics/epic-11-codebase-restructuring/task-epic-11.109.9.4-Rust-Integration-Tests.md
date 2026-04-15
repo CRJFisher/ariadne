@@ -13,6 +13,7 @@ Create comprehensive integration tests for Rust that validate symbol resolution 
 ## File to Create
 
 **Single test file:**
+
 - `packages/core/src/resolve_references/symbol_resolution.rust.test.ts`
 
 ## Implementation
@@ -115,6 +116,7 @@ describe("Rust Symbol Resolution Integration", () => {
 ### 1. Basic Function Call with use
 
 **Code:**
+
 ```rust
 // utils.rs
 pub fn helper() -> i32 {
@@ -130,6 +132,7 @@ fn main() {
 ```
 
 **Test:**
+
 ```typescript
 it("resolves imported function call (use statement)", () => {
   const utils_code = `
@@ -146,12 +149,20 @@ fn main() {
 }
   `;
 
-  const utils_index = create_semantic_index_from_code(utils_code, "utils.rs", "rust");
-  const main_index = create_semantic_index_from_code(main_code, "main.rs", "rust");
+  const utils_index = create_semantic_index_from_code(
+    utils_code,
+    "utils.rs",
+    "rust"
+  );
+  const main_index = create_semantic_index_from_code(
+    main_code,
+    "main.rs",
+    "rust"
+  );
 
   const indices = new Map([
     ["utils.rs", utils_index],
-    ["main.rs", main_index]
+    ["main.rs", main_index],
   ]);
 
   const resolved = resolve_symbols(indices);
@@ -159,14 +170,16 @@ fn main() {
   const helper_call = find_reference_by_name(main_index, "helper", "function");
   const helper_def = find_definition(utils_index, "helper", "function");
 
-  expect(resolved.resolved_references.get(location_key(helper_call.location)))
-    .toBe(helper_def.symbol_id);
+  expect(
+    resolved.resolved_references.get(location_key(helper_call.location))
+  ).toBe(helper_def.symbol_id);
 });
 ```
 
 ### 2. Super:: Relative Import
 
 **Code:**
+
 ```rust
 // models/user.rs
 pub struct User {
@@ -186,6 +199,7 @@ impl UserService {
 ```
 
 **Test:**
+
 ```typescript
 it("resolves super:: relative path", () => {
   const user_code = `
@@ -206,27 +220,41 @@ impl UserService {
 }
   `;
 
-  const user_index = create_semantic_index_from_code(user_code, "models/user.rs", "rust");
-  const service_index = create_semantic_index_from_code(service_code, "services/user_service.rs", "rust");
+  const user_index = create_semantic_index_from_code(
+    user_code,
+    "models/user.rs",
+    "rust"
+  );
+  const service_index = create_semantic_index_from_code(
+    service_code,
+    "services/user_service.rs",
+    "rust"
+  );
 
   const indices = new Map([
     ["models/user.rs", user_index],
-    ["services/user_service.rs", service_index]
+    ["services/user_service.rs", service_index],
   ]);
 
   const resolved = resolve_symbols(indices);
 
-  const User_call = find_reference_by_name(service_index, "User", "constructor");
+  const User_call = find_reference_by_name(
+    service_index,
+    "User",
+    "constructor"
+  );
   const User_struct = find_definition(user_index, "User", "struct");
 
-  expect(resolved.resolved_references.get(location_key(User_call.location)))
-    .toBe(User_struct.symbol_id);
+  expect(
+    resolved.resolved_references.get(location_key(User_call.location))
+  ).toBe(User_struct.symbol_id);
 });
 ```
 
 ### 3. Method Call on Struct
 
 **Code:**
+
 ```rust
 // user.rs
 pub struct User {
@@ -253,6 +281,7 @@ fn main() {
 ```
 
 **Test:**
+
 ```typescript
 it("resolves associated function and method call", () => {
   const user_code = `
@@ -280,12 +309,20 @@ fn main() {
 }
   `;
 
-  const user_index = create_semantic_index_from_code(user_code, "user.rs", "rust");
-  const main_index = create_semantic_index_from_code(main_code, "main.rs", "rust");
+  const user_index = create_semantic_index_from_code(
+    user_code,
+    "user.rs",
+    "rust"
+  );
+  const main_index = create_semantic_index_from_code(
+    main_code,
+    "main.rs",
+    "rust"
+  );
 
   const indices = new Map([
     ["user.rs", user_index],
-    ["main.rs", main_index]
+    ["main.rs", main_index],
   ]);
 
   const resolved = resolve_symbols(indices);
@@ -293,20 +330,27 @@ fn main() {
   // Associated function call (User::new)
   const new_call = find_reference_by_name(main_index, "new", "function");
   const new_fn = find_impl_method(user_index, "User", "new");
-  expect(resolved.resolved_references.get(location_key(new_call.location)))
-    .toBe(new_fn.symbol_id);
+  expect(
+    resolved.resolved_references.get(location_key(new_call.location))
+  ).toBe(new_fn.symbol_id);
 
   // Method call (user.get_name())
-  const get_name_call = find_reference_by_name(main_index, "get_name", "method");
+  const get_name_call = find_reference_by_name(
+    main_index,
+    "get_name",
+    "method"
+  );
   const get_name_method = find_impl_method(user_index, "User", "get_name");
-  expect(resolved.resolved_references.get(location_key(get_name_call.location)))
-    .toBe(get_name_method.symbol_id);
+  expect(
+    resolved.resolved_references.get(location_key(get_name_call.location))
+  ).toBe(get_name_method.symbol_id);
 });
 ```
 
 ### 4. Module Directory (mod.rs)
 
 **Code:**
+
 ```rust
 // utils/mod.rs
 pub fn helper() -> i32 {
@@ -322,6 +366,7 @@ fn main() {
 ```
 
 **Test:**
+
 ```typescript
 it("resolves module directory (utils/mod.rs)", () => {
   const utils_code = `
@@ -338,12 +383,20 @@ fn main() {
 }
   `;
 
-  const utils_index = create_semantic_index_from_code(utils_code, "utils/mod.rs", "rust");
-  const main_index = create_semantic_index_from_code(main_code, "main.rs", "rust");
+  const utils_index = create_semantic_index_from_code(
+    utils_code,
+    "utils/mod.rs",
+    "rust"
+  );
+  const main_index = create_semantic_index_from_code(
+    main_code,
+    "main.rs",
+    "rust"
+  );
 
   const indices = new Map([
     ["utils/mod.rs", utils_index],
-    ["main.rs", main_index]
+    ["main.rs", main_index],
   ]);
 
   const resolved = resolve_symbols(indices);
@@ -351,14 +404,16 @@ fn main() {
   const helper_call = find_reference_by_name(main_index, "helper", "function");
   const helper_def = find_definition(utils_index, "helper", "function");
 
-  expect(resolved.resolved_references.get(location_key(helper_call.location)))
-    .toBe(helper_def.symbol_id);
+  expect(
+    resolved.resolved_references.get(location_key(helper_call.location))
+  ).toBe(helper_def.symbol_id);
 });
 ```
 
 ### 5. Trait Implementation
 
 **Code:**
+
 ```rust
 // traits.rs
 pub trait Display {
@@ -389,6 +444,7 @@ fn main() {
 ```
 
 **Test:**
+
 ```typescript
 it("resolves method from trait implementation", () => {
   const traits_code = `
@@ -421,29 +477,48 @@ fn main() {
 }
   `;
 
-  const traits_index = create_semantic_index_from_code(traits_code, "traits.rs", "rust");
-  const user_index = create_semantic_index_from_code(user_code, "user.rs", "rust");
-  const main_index = create_semantic_index_from_code(main_code, "main.rs", "rust");
+  const traits_index = create_semantic_index_from_code(
+    traits_code,
+    "traits.rs",
+    "rust"
+  );
+  const user_index = create_semantic_index_from_code(
+    user_code,
+    "user.rs",
+    "rust"
+  );
+  const main_index = create_semantic_index_from_code(
+    main_code,
+    "main.rs",
+    "rust"
+  );
 
   const indices = new Map([
     ["traits.rs", traits_index],
     ["user.rs", user_index],
-    ["main.rs", main_index]
+    ["main.rs", main_index],
   ]);
 
   const resolved = resolve_symbols(indices);
 
   const display_call = find_reference_by_name(main_index, "display", "method");
-  const display_impl = find_trait_impl_method(user_index, "User", "Display", "display");
+  const display_impl = find_trait_impl_method(
+    user_index,
+    "User",
+    "Display",
+    "display"
+  );
 
-  expect(resolved.resolved_references.get(location_key(display_call.location)))
-    .toBe(display_impl.symbol_id);
+  expect(
+    resolved.resolved_references.get(location_key(display_call.location))
+  ).toBe(display_impl.symbol_id);
 });
 ```
 
 ### 6. Nested Module Structure
 
 **Code:**
+
 ```rust
 // utils/string/mod.rs
 pub fn trim(s: &str) -> &str {
@@ -462,6 +537,7 @@ fn main() {
 ```
 
 **Test:**
+
 ```typescript
 it("resolves nested modules", () => {
   const string_code = `
@@ -482,14 +558,26 @@ fn main() {
 }
   `;
 
-  const string_index = create_semantic_index_from_code(string_code, "utils/string/mod.rs", "rust");
-  const utils_index = create_semantic_index_from_code(utils_code, "utils/mod.rs", "rust");
-  const main_index = create_semantic_index_from_code(main_code, "main.rs", "rust");
+  const string_index = create_semantic_index_from_code(
+    string_code,
+    "utils/string/mod.rs",
+    "rust"
+  );
+  const utils_index = create_semantic_index_from_code(
+    utils_code,
+    "utils/mod.rs",
+    "rust"
+  );
+  const main_index = create_semantic_index_from_code(
+    main_code,
+    "main.rs",
+    "rust"
+  );
 
   const indices = new Map([
     ["utils/string/mod.rs", string_index],
     ["utils/mod.rs", utils_index],
-    ["main.rs", main_index]
+    ["main.rs", main_index],
   ]);
 
   const resolved = resolve_symbols(indices);
@@ -497,14 +585,16 @@ fn main() {
   const trim_call = find_reference_by_name(main_index, "trim", "function");
   const trim_def = find_definition(string_index, "trim", "function");
 
-  expect(resolved.resolved_references.get(location_key(trim_call.location)))
-    .toBe(trim_def.symbol_id);
+  expect(
+    resolved.resolved_references.get(location_key(trim_call.location))
+  ).toBe(trim_def.symbol_id);
 });
 ```
 
 ### 7. Full Workflow with Repository Pattern
 
 **Code:**
+
 ```rust
 // models/user.rs
 pub struct User {
@@ -568,6 +658,7 @@ fn main() {
 ```
 
 **Test:**
+
 ```typescript
 it("resolves full workflow: use → construct → method call", () => {
   const user_code = `
@@ -633,49 +724,94 @@ fn main() {
   `;
 
   // Create indices for all files
-  const user_index = create_semantic_index_from_code(user_code, "models/user.rs", "rust");
-  const repository_index = create_semantic_index_from_code(repository_code, "repositories/user_repository.rs", "rust");
-  const service_index = create_semantic_index_from_code(service_code, "services/user_service.rs", "rust");
-  const main_index = create_semantic_index_from_code(main_code, "main.rs", "rust");
+  const user_index = create_semantic_index_from_code(
+    user_code,
+    "models/user.rs",
+    "rust"
+  );
+  const repository_index = create_semantic_index_from_code(
+    repository_code,
+    "repositories/user_repository.rs",
+    "rust"
+  );
+  const service_index = create_semantic_index_from_code(
+    service_code,
+    "services/user_service.rs",
+    "rust"
+  );
+  const main_index = create_semantic_index_from_code(
+    main_code,
+    "main.rs",
+    "rust"
+  );
 
   const indices = new Map([
     ["models/user.rs", user_index],
     ["repositories/user_repository.rs", repository_index],
     ["services/user_service.rs", service_index],
-    ["main.rs", main_index]
+    ["main.rs", main_index],
   ]);
 
   const resolved = resolve_symbols(indices);
 
   // Verify UserService::new in main.rs
-  const service_new_call = find_reference_by_name(main_index, "new", "function");
+  const service_new_call = find_reference_by_name(
+    main_index,
+    "new",
+    "function"
+  );
   const service_new_fn = find_impl_method(service_index, "UserService", "new");
-  expect(resolved.resolved_references.get(location_key(service_new_call.location)))
-    .toBe(service_new_fn.symbol_id);
+  expect(
+    resolved.resolved_references.get(location_key(service_new_call.location))
+  ).toBe(service_new_fn.symbol_id);
 
   // Verify register_user method call in main.rs
-  const register_user_call = find_reference_by_name(main_index, "register_user", "method");
-  const register_user_method = find_impl_method(service_index, "UserService", "register_user");
-  expect(resolved.resolved_references.get(location_key(register_user_call.location)))
-    .toBe(register_user_method.symbol_id);
+  const register_user_call = find_reference_by_name(
+    main_index,
+    "register_user",
+    "method"
+  );
+  const register_user_method = find_impl_method(
+    service_index,
+    "UserService",
+    "register_user"
+  );
+  expect(
+    resolved.resolved_references.get(location_key(register_user_call.location))
+  ).toBe(register_user_method.symbol_id);
 
   // Verify create_user method call in UserService
-  const create_user_call = find_reference_by_name(service_index, "create_user", "method");
-  const create_user_method = find_impl_method(repository_index, "UserRepository", "create_user");
-  expect(resolved.resolved_references.get(location_key(create_user_call.location)))
-    .toBe(create_user_method.symbol_id);
+  const create_user_call = find_reference_by_name(
+    service_index,
+    "create_user",
+    "method"
+  );
+  const create_user_method = find_impl_method(
+    repository_index,
+    "UserRepository",
+    "create_user"
+  );
+  expect(
+    resolved.resolved_references.get(location_key(create_user_call.location))
+  ).toBe(create_user_method.symbol_id);
 
   // Verify User::new call in UserRepository
-  const user_new_call = find_reference_by_name(repository_index, "new", "function");
+  const user_new_call = find_reference_by_name(
+    repository_index,
+    "new",
+    "function"
+  );
   const user_new_fn = find_impl_method(user_index, "User", "new");
-  expect(resolved.resolved_references.get(location_key(user_new_call.location)))
-    .toBe(user_new_fn.symbol_id);
+  expect(
+    resolved.resolved_references.get(location_key(user_new_call.location))
+  ).toBe(user_new_fn.symbol_id);
 });
 ```
 
 ## Rust-Specific Features to Test
 
 ### Use Statements
+
 1. **Absolute paths** - `use crate::module::item;`
 2. **Relative paths** - `use super::sibling;`, `use self::child;`
 3. **Wildcard imports** - `use module::*;` (if supported)
@@ -683,6 +819,7 @@ fn main() {
 5. **Renaming** - `use module::item as alias;`
 
 ### Module System
+
 1. **File modules** - `utils.rs`
 2. **Directory modules** - `utils/mod.rs`
 3. **Nested modules** - `a/b/c.rs` or `a/b/c/mod.rs`
@@ -690,6 +827,7 @@ fn main() {
 5. **Re-exports** - `pub use other::item;`
 
 ### Types and Traits
+
 1. **Struct methods** - `impl Struct { fn method() }`
 2. **Associated functions** - `Struct::new()` vs `obj.method()`
 3. **Trait methods** - `impl Trait for Struct`
@@ -699,6 +837,7 @@ fn main() {
 ## Success Criteria
 
 ### Functional
+
 - ✅ Use statements resolve correctly (`crate::`, `super::`, `self::`)
 - ✅ Module hierarchy works (files and directories)
 - ✅ Associated functions resolve correctly
@@ -707,6 +846,7 @@ fn main() {
 - ✅ Full multi-file workflows work end-to-end
 
 ### Coverage
+
 - ✅ At least 15 Rust-specific integration tests
 - ✅ Tests cover all use statement variants
 - ✅ Tests cover module structure (file vs directory)
@@ -714,6 +854,7 @@ fn main() {
 - ✅ Tests use realistic Rust patterns
 
 ### Quality
+
 - ✅ Tests use actual Rust indexing pipeline
 - ✅ Tests validate module resolution
 - ✅ Clear test names and assertions
@@ -722,12 +863,14 @@ fn main() {
 ## Dependencies
 
 **Uses:**
+
 - task-epic-11.109.8 (Main orchestration)
 - Rust indexing pipeline
 - Rust module resolver (11.109.3)
 - Test helpers from previous tests
 
 **Validates:**
+
 - Rust-specific resolution
 - Use statement resolution
 - Module hierarchy resolution
@@ -748,7 +891,7 @@ function find_impl_method(
 ): FunctionDefinition {
   const impl_blocks = get_impl_blocks(index, struct_name);
   for (const impl_block of impl_blocks) {
-    const method = impl_block.methods.find(m => m.name === method_name);
+    const method = impl_block.methods.find((m) => m.name === method_name);
     if (method) return method;
   }
   throw new Error(`Method ${method_name} not found in impl for ${struct_name}`);
@@ -765,10 +908,12 @@ function find_trait_impl_method(
 ): FunctionDefinition {
   const trait_impls = get_trait_impls(index, struct_name, trait_name);
   for (const impl_block of trait_impls) {
-    const method = impl_block.methods.find(m => m.name === method_name);
+    const method = impl_block.methods.find((m) => m.name === method_name);
     if (method) return method;
   }
-  throw new Error(`Method ${method_name} not found in ${trait_name} impl for ${struct_name}`);
+  throw new Error(
+    `Method ${method_name} not found in ${trait_name} impl for ${struct_name}`
+  );
 }
 ```
 
@@ -777,6 +922,7 @@ function find_trait_impl_method(
 ### Rust Module Complexity
 
 Rust modules have unique characteristics:
+
 1. **Explicit module tree** - Must declare `mod` to include files
 2. **File vs directory** - `utils.rs` vs `utils/mod.rs`
 3. **Visibility rules** - `pub` vs private, `pub(crate)`, `pub(super)`
@@ -785,6 +931,7 @@ Rust modules have unique characteristics:
 ### Testing Strategy
 
 Focus on:
+
 1. **Module hierarchy** - Correct file resolution
 2. **Use statement variants** - All path types
 3. **Impl blocks** - Methods vs associated functions
@@ -793,6 +940,7 @@ Focus on:
 ## Next Steps
 
 After completion:
+
 - All 4 language integration test suites complete
 - Compare results across languages
 - Document any inconsistencies or gaps
@@ -805,35 +953,42 @@ After completion:
 ### Completed: 2025-10-03
 
 **File Created:**
+
 - ✅ `packages/core/src/resolve_references/symbol_resolution.rust.test.ts`
 
 **Test Results:**
+
 - 1 passing test (local function calls)
 - 15 todo tests (cross-file resolution features)
 
 **Test Coverage:**
 
 1. **Function Calls (3 tests)**
+
    - ✅ Local function call (passing)
    - 🔜 Imported function call via `use` (todo - requires ImportResolver)
    - 🔜 Fully qualified function call (todo - requires ImportResolver)
 
 2. **Use Statements (3 tests)**
+
    - 🔜 `crate::` absolute path (todo - requires ImportResolver)
    - 🔜 `super::` relative path (todo - requires ImportResolver)
    - 🔜 `self::` current module (todo - requires ImportResolver)
 
 3. **Method Calls (3 tests)**
+
    - 🔜 Associated function `Type::new()` (todo - requires TypeContext)
    - 🔜 Method call on struct (todo - requires TypeContext)
    - 🔜 Trait method resolution (todo - requires TypeContext + ImportResolver)
 
 4. **Module Resolution (3 tests)**
+
    - 🔜 Module file `utils.rs` (todo - requires ImportResolver)
    - 🔜 Module directory `utils/mod.rs` (todo - requires ImportResolver)
    - 🔜 Nested modules (todo - requires ImportResolver)
 
 5. **Trait System (2 tests)**
+
    - 🔜 Trait method call (todo - requires TypeContext + ImportResolver)
    - 🔜 Default trait implementation (todo - requires TypeContext + ImportResolver)
 
@@ -844,6 +999,7 @@ After completion:
 **Implementation Approach:**
 
 Created comprehensive integration tests following the same pattern as JavaScript, TypeScript, and Python tests:
+
 - Used `create_test_index` helper to build semantic indices
 - Created multi-file test scenarios with proper imports and exports
 - Structured tests to cover all Rust-specific features
@@ -852,16 +1008,19 @@ Created comprehensive integration tests following the same pattern as JavaScript
 **Rust-Specific Features Tested:**
 
 1. **Use Statements:**
+
    - `use crate::module::item` (absolute path)
    - `use super::module::item` (parent module)
    - `use self::item` (current module)
 
 2. **Module System:**
+
    - File modules (`utils.rs`)
    - Directory modules (`utils/mod.rs`)
    - Nested module hierarchies
 
 3. **Impl Blocks:**
+
    - Associated functions (`Type::new()`)
    - Instance methods (`obj.method()`)
    - Multiple impl blocks per struct
@@ -881,11 +1040,13 @@ Created comprehensive integration tests following the same pattern as JavaScript
 **Dependencies on Future Work:**
 
 These tests will pass once the following components are integrated:
+
 - ImportResolver for cross-file symbol lookup
 - TypeContext for method resolution via receiver types
 - Module resolver for Rust module hierarchy
 
 **Test Quality:**
+
 - Clear test names and documentation
 - Realistic Rust code patterns
 - Comprehensive error scenarios
@@ -901,12 +1062,14 @@ TypeScript type checking (`npm run typecheck`) revealed missing required fields 
 **Type Errors Fixed:**
 
 1. **FunctionDefinition Missing Fields (2 locations):**
+
    - Missing `availability: SymbolAvailability` property
    - Missing `signature: FunctionSignature` property
    - **Fixed:** Added `availability: { scope: "file-private" }` and `signature: { parameters: [] }`
    - Locations: helper function (line 150) and run_process function (line 2770)
 
 2. **ClassDefinition Missing Fields (1 location):**
+
    - Missing `availability: SymbolAvailability` property
    - Missing `extends: readonly SymbolName[]` property
    - Missing `decorators: readonly SymbolId[]` property
@@ -914,6 +1077,7 @@ TypeScript type checking (`npm run typecheck`) revealed missing required fields 
    - Location: Item struct definition (line 2676)
 
 3. **MethodDefinition Missing Fields (1 location):**
+
    - Missing `availability: SymbolAvailability` property
    - **Fixed:** Added `availability: { scope: "file-export" }`
    - Location: process method definition (line 2694)
@@ -925,6 +1089,7 @@ TypeScript type checking (`npm run typecheck`) revealed missing required fields 
    - Location: method call reference (line 2788)
 
 **Verification:**
+
 - ✅ TypeScript compilation passes: `npm run typecheck` succeeds with no errors
 - ✅ Tests still pass: 1 passing, 15 todo (no behavior change)
 - ✅ All test data now conforms to strict type definitions
@@ -932,6 +1097,7 @@ TypeScript type checking (`npm run typecheck`) revealed missing required fields 
 **Design Pattern Discovery:**
 
 The type system enforces complete symbol metadata at all layers:
+
 - All definitions require `availability` to track visibility scope
 - FunctionDefinitions require `signature` even for parameter-less functions
 - ClassDefinitions require `extends` and `decorators` arrays (can be empty)
@@ -940,6 +1106,7 @@ The type system enforces complete symbol metadata at all layers:
 This strict typing ensures that test indices match real-world semantic indices produced by the actual indexing pipeline, catching structural mismatches early.
 
 **Performance Impact:**
+
 - No runtime performance impact (type-only changes)
 - Compilation time unchanged
 - Test execution time unchanged (566ms → 566ms)

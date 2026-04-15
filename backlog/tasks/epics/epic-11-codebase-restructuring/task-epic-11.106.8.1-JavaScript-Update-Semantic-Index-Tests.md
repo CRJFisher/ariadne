@@ -19,12 +19,14 @@ Update `semantic_index.javascript.test.ts` to comprehensively test the simplifie
 ### 1. Remove Deleted Field Assertions
 
 Delete all test assertions on fields that no longer exist:
+
 - `source_type`
 - `is_narrowing`
 - `is_widening`
 - `containing_function`
 
 **Example:**
+
 ```typescript
 // ❌ DELETE these assertions
 expect(ref.type_flow?.source_type).toBeUndefined();
@@ -55,7 +57,7 @@ describe("SymbolReference - optional chaining", () => {
       obj?.method()
     `;
     const { references } = index_single_file(code, "test.js");
-    const methodRef = references.find(r => r.name === "method");
+    const methodRef = references.find((r) => r.name === "method");
 
     expect(methodRef?.member_access?.is_optional_chain).toBe(true);
   });
@@ -65,7 +67,7 @@ describe("SymbolReference - optional chaining", () => {
       obj.method()
     `;
     const { references } = index_single_file(code, "test.js");
-    const methodRef = references.find(r => r.name === "method");
+    const methodRef = references.find((r) => r.name === "method");
 
     expect(methodRef?.member_access?.is_optional_chain).toBe(false);
   });
@@ -75,7 +77,7 @@ describe("SymbolReference - optional chaining", () => {
       const value = obj?.prop
     `;
     const { references } = index_single_file(code, "test.js");
-    const propRef = references.find(r => r.name === "prop");
+    const propRef = references.find((r) => r.name === "prop");
 
     expect(propRef?.member_access?.is_optional_chain).toBe(true);
   });
@@ -85,7 +87,7 @@ describe("SymbolReference - optional chaining", () => {
       const value = obj?.prop?.nested
     `;
     const { references } = index_single_file(code, "test.js");
-    const nestedRef = references.find(r => r.name === "nested");
+    const nestedRef = references.find((r) => r.name === "nested");
 
     expect(nestedRef?.member_access?.is_optional_chain).toBe(true);
   });
@@ -95,7 +97,7 @@ describe("SymbolReference - optional chaining", () => {
       const value = obj?.prop.nested
     `;
     const { references } = index_single_file(code, "test.js");
-    const nestedRef = references.find(r => r.name === "nested");
+    const nestedRef = references.find((r) => r.name === "nested");
 
     // nested uses regular access, but obj?.prop is optional
     expect(nestedRef?.member_access?.is_optional_chain).toBe(false);
@@ -115,7 +117,9 @@ describe("SymbolReference - assignment_type", () => {
       const x = getValue()
     `;
     const { references } = index_single_file(code, "test.js");
-    const assignRef = references.find(r => r.name === "x" && r.type === "assignment");
+    const assignRef = references.find(
+      (r) => r.name === "x" && r.type === "assignment"
+    );
 
     expect(assignRef?.assignment_type).toBeDefined();
     expect(assignRef?.assignment_type?.type_name).toBe("string");
@@ -127,7 +131,9 @@ describe("SymbolReference - assignment_type", () => {
       getValue()
     `;
     const { references } = index_single_file(code, "test.js");
-    const callRef = references.find(r => r.name === "getValue" && r.call_type === "function");
+    const callRef = references.find(
+      (r) => r.name === "getValue" && r.call_type === "function"
+    );
 
     expect(callRef?.assignment_type).toBeUndefined();
   });
@@ -137,7 +143,9 @@ describe("SymbolReference - assignment_type", () => {
       const x = getValue()
     `;
     const { references } = index_single_file(code, "test.js");
-    const assignRef = references.find(r => r.name === "x" && r.type === "assignment");
+    const assignRef = references.find(
+      (r) => r.name === "x" && r.type === "assignment"
+    );
 
     expect(assignRef?.assignment_type).toBeUndefined();
   });
@@ -147,6 +155,7 @@ describe("SymbolReference - assignment_type", () => {
 ### 5. Update Existing Integration Tests
 
 Review and update all existing test cases to:
+
 - Use `assignment_type` instead of `type_flow.target_type`
 - Remove any checks on deleted fields
 - Ensure assertions match the new simplified structure
@@ -184,6 +193,7 @@ Expected: All tests pass with no regressions.
 ## Notes
 
 JavaScript supports optional chaining (`?.`), so this file should have comprehensive tests for the `is_optional_chain` field. Focus on testing various patterns:
+
 - Optional method calls: `obj?.method()`
 - Optional property access: `obj?.prop`
 - Chained optional access: `obj?.prop?.nested`

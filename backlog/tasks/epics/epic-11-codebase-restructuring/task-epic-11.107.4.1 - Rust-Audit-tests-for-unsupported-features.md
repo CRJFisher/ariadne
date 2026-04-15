@@ -1,10 +1,10 @@
 ---
 id: task-epic-11.107.4.1
-title: 'Rust: Audit tests for unsupported features'
+title: "Rust: Audit tests for unsupported features"
 status: Completed
 assignee: []
-created_date: '2025-10-01 10:28'
-completed_date: '2025-10-01'
+created_date: "2025-10-01 10:28"
+completed_date: "2025-10-01"
 labels: []
 dependencies: []
 parent_task_id: task-epic-11.107.4
@@ -14,6 +14,7 @@ priority: high
 ## Description
 
 Review semantic_index.rust.test.ts to identify and remove tests for:
+
 - TYPE_PARAMETER, TYPE_CONSTRAINT (we don't extract these)
 - Advanced lifetime tracking
 - Macro expansion
@@ -21,6 +22,7 @@ Review semantic_index.rust.test.ts to identify and remove tests for:
 - Const generics edge cases
 
 FOCUS ON:
+
 - Structs and enums (as classes)
 - Traits (as interfaces)
 - Impl blocks (methods)
@@ -41,6 +43,7 @@ FOCUS ON:
 6. ✅ **NO tests for const generics** - No tests check for const generic parameter extraction
 
 **Search Results:**
+
 ```bash
 grep -n "(TYPE_PARAMETER|TYPE_CONSTRAINT|type_parameter)" semantic_index.rust.test.ts
 # No matches found
@@ -59,23 +62,24 @@ grep -n "(trait.*bound|where.*clause|const.*generic)" semantic_index.rust.test.t
 
 **All 25 tests focus exclusively on supported features:**
 
-| Category | Test Count | Verified Coverage |
-|----------|-----------|-------------------|
-| Structs and enums | 4 | ✅ Definitions, variants, fields |
-| Traits (interfaces) | 2 | ✅ Trait definitions, methods |
-| Impl blocks | 3 | ✅ Methods, associated functions, trait impls |
-| Functions | 3 | ✅ Definitions, parameters, return types |
-| Ownership patterns | 2 | ✅ References (`&`, `&mut`) |
-| Modules/visibility | 2 | ✅ Module declarations, use statements |
-| Type metadata | 3 | ✅ Type annotations, certainty tracking |
-| Method calls | 4 | ✅ Receivers, chaining, field access |
-| Integration | 2 | ✅ Comprehensive fixtures, pipeline validation |
+| Category            | Test Count | Verified Coverage                              |
+| ------------------- | ---------- | ---------------------------------------------- |
+| Structs and enums   | 4          | ✅ Definitions, variants, fields               |
+| Traits (interfaces) | 2          | ✅ Trait definitions, methods                  |
+| Impl blocks         | 3          | ✅ Methods, associated functions, trait impls  |
+| Functions           | 3          | ✅ Definitions, parameters, return types       |
+| Ownership patterns  | 2          | ✅ References (`&`, `&mut`)                    |
+| Modules/visibility  | 2          | ✅ Module declarations, use statements         |
+| Type metadata       | 3          | ✅ Type annotations, certainty tracking        |
+| Method calls        | 4          | ✅ Receivers, chaining, field access           |
+| Integration         | 2          | ✅ Comprehensive fixtures, pipeline validation |
 
 ### 🔍 Fixture Analysis
 
 **Fixtures contain unsupported features, but tests DON'T check for their extraction:**
 
 #### Fixtures Used:
+
 1. **basic_structs_and_enums.rs** - Contains generic structs (`Pair<T, U>`, `Option<T>`)
 2. **traits_and_generics.rs** - Contains generics, lifetimes, const generics, HRTB
 3. **functions_and_closures.rs** - Contains lifetime parameters, generic functions, where clauses
@@ -84,12 +88,14 @@ grep -n "(trait.*bound|where.*clause|const.*generic)" semantic_index.rust.test.t
 6. **comprehensive_definitions.rs** - Contains macros, generics, lifetimes, const generics
 
 #### Test Strategy Confirmed:
+
 - ✅ Tests use fixtures with real-world Rust code (including advanced features)
 - ✅ Tests only verify extraction of SUPPORTED features
 - ✅ Tests ignore/skip unsupported features in fixtures
 - ✅ No assertions check for generic parameters, lifetimes, macros, etc.
 
 **Example:**
+
 ```typescript
 // Fixture contains: pub struct Pair<T, U> { first: T, second: U }
 // Test only checks: expect(class_names).toContain("Pair");
@@ -132,17 +138,20 @@ The parent task (task-epic-11.107.4) successfully rewrote the tests to focus on 
 #### Tasks Completed:
 
 1. ✅ **Audited semantic_index.rust.test.ts**
+
    - Systematic grep search for unsupported feature keywords
    - Manual review of all 25 test cases
    - Analyzed all 6 fixture files
    - Verified no assertions check for unsupported features
 
 2. ✅ **Verified test suite integrity**
+
    - Ran Rust semantic_index tests: **25/25 passing (100%)**
    - Confirmed all tests focus on supported features only
    - No cleanup or removal needed - tests already clean
 
 3. ✅ **Ran regression testing**
+
    - TypeScript compilation: **Clean (0 errors)**
    - Full test suite: **905 passed, 130 failed (88% pass rate)**
    - **No regressions introduced** - all failures are pre-existing
@@ -154,6 +163,7 @@ The parent task (task-epic-11.107.4) successfully rewrote the tests to focus on 
 ### 📊 Test Verification Results
 
 #### Rust Semantic Index Tests
+
 ```bash
 cd packages/core && npx vitest run src/index_single_file/semantic_index.rust.test.ts
 
@@ -163,6 +173,7 @@ cd packages/core && npx vitest run src/index_single_file/semantic_index.rust.tes
 ```
 
 **Test breakdown:**
+
 - Structs and enums: 4/4 ✅
 - Traits (interfaces): 2/2 ✅
 - Impl blocks: 3/3 ✅
@@ -174,6 +185,7 @@ cd packages/core && npx vitest run src/index_single_file/semantic_index.rust.tes
 - Comprehensive integration: 2/2 ✅
 
 #### TypeScript Compilation
+
 ```bash
 npm run typecheck
 
@@ -183,6 +195,7 @@ npm run typecheck
 ```
 
 #### Full Test Suite Regression Check
+
 ```bash
 npm test
 
@@ -203,6 +216,7 @@ Overall: 905 passed | 130 failed | 130 skipped (1,165 total)
 ```
 
 **Regression Analysis:**
+
 - ✅ **No code changes made** (verified via git diff)
 - ✅ **Test results match documented baseline** from task-epic-11.107.4
 - ✅ **All 130 failures are pre-existing** issues unrelated to this work
@@ -210,6 +224,7 @@ Overall: 905 passed | 130 failed | 130 skipped (1,165 total)
 ### 🔍 Issues Encountered
 
 **None** - Audit confirmed tests are already clean:
+
 - No tests for TYPE_PARAMETER/TYPE_CONSTRAINT extraction
 - No tests for advanced lifetime tracking
 - No tests for macro expansion
@@ -225,51 +240,60 @@ While this audit task did not discover new gaps (parent task already documented 
 #### Referenced from task-epic-11.107.4 "Critical Findings" Section:
 
 **1. 🔴 CRITICAL: Nested Collections Not Populated**
+
 - **Issue**: Methods, properties, parameters captured separately but never associated with parent definitions
 - **Impact**: `class_definition.methods = []` (empty arrays)
 - **Location**: `packages/core/src/index_single_file/query_code_tree/queries/rust.scm`
 - **Follow-on**: task-epic-11.108.5
 
 **2. 🟠 HIGH: Generic Type Parameters Not Extracted**
+
 - **Issue**: No capture for `<T>`, `<T, U>` type parameters
 - **Impact**: All generics appear as `undefined`
 - **Required**: Add `type_parameters` captures to rust.scm
 - **Follow-on**: New task needed
 
 **3. 🟠 HIGH: Function Return Types Not Captured**
+
 - **Issue**: No capture for `-> i32` return type annotations
 - **Impact**: `return_type = undefined` for all functions
 - **Required**: Add `return_type` captures to rust.scm
 - **Follow-on**: New task needed
 
 **4. 🟡 MEDIUM: Function Modifiers Not Captured**
+
 - **Issue**: `async`, `const`, `unsafe` keywords not extracted
 - **Impact**: `is_async = undefined`, `is_const = undefined`, etc.
 - **Required**: Add modifier captures to rust.scm
 - **Follow-on**: Optional enhancement
 
 **5. 🟡 MEDIUM: Import/Use Statement Extraction Incomplete**
+
 - **Issue**: `use std::collections::HashMap` not populating imported_symbols
 - **Impact**: Limits cross-file analysis
 - **Follow-on**: Review import resolution implementation
 
 **6. 🟢 LOW: Visibility Mapping Incorrect**
+
 - **Issue**: `pub(crate)` → 'package-internal' (should be 'package')
 - **Impact**: Cosmetic labeling issue
 - **Location**: `packages/core/src/index_single_file/query_code_tree/language_configs/rust_builder.ts`
 - **Follow-on**: Quick fix
 
 **7. 🟢 LOW: Const/Static Variable Flags Missing**
+
 - **Issue**: `is_const` and `is_static` not set for const/static variables
 - **Impact**: Nice-to-have completeness
 - **Follow-on**: Optional enhancement
 
 **8. 🟢 LOW: Property References Not Tracked**
+
 - **Issue**: `obj.field` access not captured in references
 - **Impact**: Limits usage tracking
 - **Follow-on**: Optional enhancement
 
 **Full details and examples**: See parent task-epic-11.107.4 sections:
+
 - "🚨 Critical Findings: Missing/Incomplete Rust Language Support"
 - "### Tree-Sitter Query (.scm) Gaps Discovered" (lines 78-296)
 
@@ -284,6 +308,7 @@ While this audit task did not discover new gaps (parent task already documented 
 **High Priority** (new tasks needed):
 
 2. **Rust: Add generic type parameter support**
+
    - Add `type_parameters` captures to rust.scm
    - Update builder to populate `generics: string[]` field
    - Severity: 🟠 HIGH

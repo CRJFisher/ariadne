@@ -123,9 +123,8 @@ describe("extract_property_chain", () => {
     const code = "obj.prop";
     const member_node = parse_and_find(code, "member_expression");
 
-    const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(
-      member_node
-    );
+    const result =
+      JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(member_node);
 
     expect(result).toEqual(["obj", "prop"]);
   });
@@ -134,9 +133,8 @@ describe("extract_property_chain", () => {
     const code = "a.b.c.d";
     const member_node = parse_and_find(code, "member_expression");
 
-    const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(
-      member_node
-    );
+    const result =
+      JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(member_node);
 
     expect(result).toEqual(["a", "b", "c", "d"]);
   });
@@ -145,9 +143,8 @@ describe("extract_property_chain", () => {
     const code = "obj[key]";
     const subscript_node = parse_and_find(code, "subscript_expression");
 
-    const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(
-      subscript_node
-    );
+    const result =
+      JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(subscript_node);
 
     expect(result).toBeUndefined();
   });
@@ -302,9 +299,8 @@ describe("extract_type_arguments", () => {
     const code = "const arr: Array<string> = []";
     const generic_node = parse_and_find(code, "generic_type", true);
 
-    const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments(
-      generic_node
-    );
+    const result =
+      JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments(generic_node);
 
     expect(result).toEqual(["string"]);
   });
@@ -313,9 +309,8 @@ describe("extract_type_arguments", () => {
     const code = "const map: Map<string, number> = new Map()";
     const generic_node = parse_and_find(code, "generic_type", true);
 
-    const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments(
-      generic_node
-    );
+    const result =
+      JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments(generic_node);
 
     expect(result).toEqual(["string", "number"]);
   });
@@ -339,7 +334,10 @@ describe("edge cases", () => {
   it("should handle null nodes gracefully", () => {
     // Test all functions with null/undefined nodes
     expect(() => {
-      JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(null as any, test_file);
+      JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(
+        null as any,
+        test_file
+      );
     }).not.toThrow();
   });
 

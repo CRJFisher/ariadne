@@ -3,7 +3,7 @@ id: task-epic-11.32.3
 title: Add FileMetadata type for analysis functions
 status: To Do
 assignee: []
-created_date: '2025-08-26'
+created_date: "2025-08-26"
 labels: [types, graph-builder, epic-11]
 dependencies: [task-epic-11.32]
 parent_task_id: task-epic-11.32
@@ -16,6 +16,7 @@ Create a proper FileMetadata type in packages/types that standardizes the metada
 ## Context
 
 The graph_builder orchestration layer passes metadata to every analysis function:
+
 ```typescript
 const metadata = {
   language: file.language,
@@ -30,6 +31,7 @@ const exports = detect_exports(file.tree!, metadata);
 ```
 
 This pattern is repeated throughout but lacks type safety. A proper type would:
+
 1. Ensure consistency across all analysis functions
 2. Provide a single place to extend metadata when needed
 3. Enable type checking for metadata consumers
@@ -38,6 +40,7 @@ This pattern is repeated throughout but lacks type safety. A proper type would:
 ## Tasks
 
 ### Phase 1: Design & Create Type
+
 - [ ] Create FileMetadata interface in packages/types
 - [ ] Include core fields: language, file_path
 - [ ] Consider optional fields that might be useful:
@@ -46,6 +49,7 @@ This pattern is repeated throughout but lacks type safety. A proper type would:
   - scope_tree?: ScopeTree (for functions that need it)
 
 ### Phase 2: Update Function Signatures
+
 - [ ] Update all analysis function signatures to use FileMetadata
   - [ ] build_scope_tree(tree: Tree, metadata: FileMetadata)
   - [ ] resolve_imports(tree: Tree, metadata: FileMetadata)
@@ -57,11 +61,13 @@ This pattern is repeated throughout but lacks type safety. A proper type would:
   - [ ] build_class_hierarchy(..., metadata: FileMetadata)
 
 ### Phase 3: Update graph_builder
+
 - [ ] Import FileMetadata type from @ariadnejs/types
 - [ ] Use typed metadata object instead of inline object
 - [ ] Ensure all call sites pass proper metadata
 
 ### Phase 4: Testing
+
 - [ ] Verify TypeScript compilation passes
 - [ ] Update tests to use FileMetadata type
 - [ ] Ensure no runtime errors from type changes
@@ -82,14 +88,14 @@ export interface FileMetadata {
   language: Language;
   file_path: string;
   // Optional fields for optimization:
-  source_code?: string;  // Avoid re-reading files
-  ast_root?: Tree;       // Pass AST if already parsed
+  source_code?: string; // Avoid re-reading files
+  ast_root?: Tree; // Pass AST if already parsed
 }
 
 // Extended metadata for specific analyses
 export interface AnalysisMetadata extends FileMetadata {
-  scope_tree?: ScopeTree;  // For functions needing scope info
-  module_graph?: ModuleGraph;  // For cross-module analysis
+  scope_tree?: ScopeTree; // For functions needing scope info
+  module_graph?: ModuleGraph; // For cross-module analysis
 }
 ```
 

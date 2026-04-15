@@ -17,6 +17,7 @@ Implement language-specific metadata extractors for Python, following the same p
 Create `packages/core/src/index_single_file/query_code_tree/language_configs/python_metadata.ts`
 
 **Key Differences from JavaScript:**
+
 - Method calls: `attribute` node instead of `member_expression`
 - Type annotations: Python 3 type hints syntax
 - Property access: `attribute` for all member access
@@ -24,6 +25,7 @@ Create `packages/core/src/index_single_file/query_code_tree/language_configs/pyt
 - No generic syntax (type hints use subscript: `List[str]`)
 
 **Python AST Examples:**
+
 ```python
 # Method call:
 obj.method()
@@ -39,6 +41,7 @@ a.b.c
 ```
 
 **Implementation Notes:**
+
 - Handle `self` parameter specially in methods
 - Type hints may be in comments (`# type: int`) or annotations
 - Constructor calls look like regular function calls
@@ -49,6 +52,7 @@ a.b.c
 Create `packages/core/src/index_single_file/query_code_tree/language_configs/python_metadata.test.ts`
 
 **Test Cases:**
+
 - Method call receiver extraction: `obj.method()`
 - Property chain: `a.b.c.d`
 - Type hint extraction: `def foo() -> int:`
@@ -57,6 +61,7 @@ Create `packages/core/src/index_single_file/query_code_tree/language_configs/pyt
 - Type annotation: `name: str = "Alice"`
 
 **Python-Specific Tests:**
+
 - `self` parameter handling
 - Type comment parsing: `x = 5  # type: int`
 - Multiple assignment: `a = b = c`
@@ -75,9 +80,11 @@ function get_metadata_extractors(language: Language): MetadataExtractors {
     case "typescript":
       return JAVASCRIPT_METADATA_EXTRACTORS;
     case "python":
-      return PYTHON_METADATA_EXTRACTORS;  // NEW
+      return PYTHON_METADATA_EXTRACTORS; // NEW
     case "rust":
-      throw new Error(`Metadata extractors not yet implemented for ${language}`);
+      throw new Error(
+        `Metadata extractors not yet implemented for ${language}`
+      );
     default:
       throw new Error(`Unsupported language: ${language}`);
   }
@@ -87,6 +94,7 @@ function get_metadata_extractors(language: Language): MetadataExtractors {
 ### 104.4.4 - Fix semantic_index.python.test.ts (30 minutes)
 
 Update Python integration tests similar to JavaScript:
+
 - Add metadata assertions
 - Test method call receivers
 - Test property chains
@@ -96,6 +104,7 @@ Update Python integration tests similar to JavaScript:
 ## Python AST Reference
 
 Use tree-sitter CLI to explore:
+
 ```bash
 npx tree-sitter parse --scope source.python "obj.method()"
 npx tree-sitter parse --scope source.python "def foo() -> int: pass"
@@ -114,6 +123,7 @@ npx tree-sitter parse --scope source.python "def foo() -> int: pass"
 ### Python Type Hints Complexity
 
 Python 3 type hints can be:
+
 1. Function annotations: `def foo() -> int:`
 2. Variable annotations: `name: str = "value"`
 3. Type comments: `x = 5  # type: int`

@@ -13,6 +13,7 @@ Delete `type_flow.is_narrowing` and `type_flow.is_widening` boolean flags. These
 ## Background
 
 Type narrowing/widening detection requires:
+
 - Understanding subtype relationships
 - Tracking control flow (if/else branches)
 - Type inference across statements
@@ -27,6 +28,7 @@ This is beyond the scope of AST-based metadata extraction.
 **File:** `packages/types/src/semantic_index.ts`
 
 **Before:**
+
 ```typescript
 readonly type_flow?: {
   target_type?: TypeInfo;
@@ -36,6 +38,7 @@ readonly type_flow?: {
 ```
 
 **After:**
+
 ```typescript
 readonly type_flow?: {
   target_type?: TypeInfo;
@@ -47,15 +50,17 @@ readonly type_flow?: {
 **File:** `packages/core/src/index_single_file/query_code_tree/reference_builder.ts`
 
 Find and remove lines (around line 417-418):
+
 ```typescript
 const type_flow_info = {
   target_type: extract_type_info(capture, this.extractors, this.file_path),
-  is_narrowing: false,        // ❌ DELETE THIS LINE
-  is_widening: false,         // ❌ DELETE THIS LINE
+  is_narrowing: false, // ❌ DELETE THIS LINE
+  is_widening: false, // ❌ DELETE THIS LINE
 };
 ```
 
 **After:**
+
 ```typescript
 const type_flow_info = {
   target_type: extract_type_info(capture, this.extractors, this.file_path),
@@ -65,6 +70,7 @@ const type_flow_info = {
 ## Impact Analysis
 
 After this change, `type_flow` will only contain:
+
 - `target_type?: TypeInfo` (the only field that's actually populated)
 
 This sets up task 11.106.4 to simplify `type_flow` to a single `assignment_type` field.
@@ -72,17 +78,21 @@ This sets up task 11.106.4 to simplify `type_flow` to a single `assignment_type`
 ## Verification Steps
 
 1. **Search for remaining references in production code:**
+
    ```bash
    rg "is_narrowing" --type ts -g "!*test.ts"
    rg "is_widening" --type ts -g "!*test.ts"
    ```
+
    Expected: 0 results
 
 2. **TypeScript compilation:**
+
    ```bash
    cd packages/core && npx tsc --noEmit
    cd packages/types && npx tsc --noEmit
    ```
+
    Expected: 0 errors
 
 3. **Run tests (may fail - will be fixed in 11.106.8):**
@@ -105,6 +115,7 @@ This sets up task 11.106.4 to simplify `type_flow` to a single `assignment_type`
 ### Why These Flags Don't Work
 
 **Narrowing example (TypeScript):**
+
 ```typescript
 function process(x: string | number) {
   if (typeof x === "string") {
@@ -117,14 +128,16 @@ function process(x: string | number) {
 ```
 
 Detecting this requires:
+
 1. Understanding TypeScript's type system
 2. Tracking control flow branches
 3. Maintaining type state across statements
 
 **Widening example:**
+
 ```typescript
-let x = 42;           // inferred as number
-let y: any = x;       // widened to any
+let x = 42; // inferred as number
+let y: any = x; // widened to any
 ```
 
 Detecting this requires comparing type hierarchies.
@@ -134,6 +147,7 @@ Both are beyond AST-based extraction.
 ## Related Documentation
 
 After this task, update any docs that mention narrowing/widening:
+
 - Remove examples showing these flags
 - Note that type flow is simplified to target type only
 

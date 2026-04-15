@@ -187,7 +187,7 @@ Best for simple queries and analyses:
 ```typescript
 // Agent can call without maintaining state
 const dependencies = await mcp.call("analyze_dependencies", {
-  module: "src/core/auth"
+  module: "src/core/auth",
 });
 ```
 
@@ -198,14 +198,14 @@ For complex, multi-step operations:
 ```typescript
 // Start a refactoring session
 const session = await mcp.call("start_refactoring_session", {
-  type: "extract_component"
+  type: "extract_component",
 });
 
 // Preview changes incrementally
 const preview = await mcp.call("add_to_refactoring", {
   session_id: session.id,
   file: "src/components/Button.tsx",
-  selection: { start: 10, end: 50 }
+  selection: { start: 10, end: 50 },
 });
 ```
 
@@ -227,7 +227,7 @@ For complex analyses with AI assistance:
 ```typescript
 const analysis = await mcp.prompt("architecture_review", {
   module: "src/core",
-  focus_areas: ["scalability", "testability", "coupling"]
+  focus_areas: ["scalability", "testability", "coupling"],
 });
 ```
 
@@ -253,11 +253,13 @@ const analysis = await mcp.prompt("architecture_review", {
 ### Key Features to Expose
 
 1. **Core Ariadne APIs**
+
    - `go_to_definition` → MCP tool
    - `find_references` → MCP tool
    - `get_call_graph` → MCP tool with visualization
 
 2. **Enhanced Capabilities**
+
    - Incremental parsing status
    - Multi-file refactoring preview
    - Architecture metrics and insights

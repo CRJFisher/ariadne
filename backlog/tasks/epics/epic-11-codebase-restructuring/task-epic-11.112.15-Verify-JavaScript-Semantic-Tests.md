@@ -13,6 +13,7 @@ Ensure all JavaScript semantic index tests pass after scope assignment changes. 
 ## Context - Body-Based Scopes
 
 With Option A, JavaScript `.scm` files now capture class **bodies** only:
+
 - `(class_declaration body: (class_body) @scope.class)`
 - Class names are in parent scope (module scope), not in their own scope
 - Simple location containment determines scope assignment
@@ -21,6 +22,7 @@ With Option A, JavaScript `.scm` files now capture class **bodies** only:
 ## Files
 
 ### VERIFY/FIX
+
 - `packages/core/src/index_single_file/semantic_index.javascript.test.ts`
 
 ## Implementation Steps
@@ -32,6 +34,7 @@ npm test -- semantic_index.javascript.test.ts
 ```
 
 Document baseline:
+
 - Total tests: X
 - Passing: Y
 - Failing: Z
@@ -40,12 +43,14 @@ Document baseline:
 ### 2. Analyze Failures (30 min)
 
 For each failing test:
+
 1. Read the test code
 2. Identify what it's testing
 3. Check if failure is due to scope_id changes
 4. Determine if test expectation needs updating
 
 Common patterns to look for:
+
 ```typescript
 // Old expectation (might be wrong now):
 expect(class_def.scope_id).toBe(some_method_scope.id);
@@ -59,6 +64,7 @@ expect(class_def.scope_id).toBe(file_scope.id);
 For tests checking `scope_id` values:
 
 **Example Fix 1: File-level class**
+
 ```typescript
 // BEFORE (test might have been checking wrong scope):
 it("class definition", () => {
@@ -70,6 +76,7 @@ it("class definition", () => {
 ```
 
 **Example Fix 2: Nested class**
+
 ```typescript
 // BEFORE:
 it("nested class", () => {
@@ -105,7 +112,7 @@ class MyClass {
     `;
     const index = build_semantic_index(/* ... */);
     const class_def = Array.from(index.classes.values()).find(
-      c => c.name === "MyClass"
+      (c) => c.name === "MyClass"
     );
 
     // This is the fix we made
@@ -158,12 +165,15 @@ Create summary comment in test file or separate file:
 ## Common Issues
 
 ### Issue 1: Test was accepting wrong scope
+
 **Solution:** Update expectation to check for correct scope
 
 ### Issue 2: Test wasn't checking scope at all
+
 **Solution:** Add scope verification to strengthen test
 
 ### Issue 3: Test structure needs refactoring
+
 **Solution:** Refactor to make scope checks clearer
 
 ## Next Task

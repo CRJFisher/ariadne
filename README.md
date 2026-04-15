@@ -86,7 +86,11 @@ await project.initialize("/path/to/project");
 function load_dir(dir: string) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
-    if (entry.isDirectory() && entry.name !== "node_modules" && entry.name !== ".git") {
+    if (
+      entry.isDirectory() &&
+      entry.name !== "node_modules" &&
+      entry.name !== ".git"
+    ) {
       load_dir(full);
     } else if (/\.(ts|tsx|js|jsx|py|rs)$/.test(entry.name)) {
       project.update_file(full, fs.readFileSync(full, "utf-8"));

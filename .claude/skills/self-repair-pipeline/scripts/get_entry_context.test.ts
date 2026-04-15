@@ -77,7 +77,6 @@ describe("substitute_template", () => {
     signature: "function handle_request(req: Request): Response",
     route: "llm-triage",
     diagnosis: "callers-not-in-registry",
-    deterministic_group_id: null,
     known_source: null,
     status: "pending",
     result: null,

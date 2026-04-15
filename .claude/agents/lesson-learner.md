@@ -28,11 +28,13 @@ When invoked, follow these three phases:
 If the principle is not yet clear, stop and ask targeted questions to surface the underlying intent.
 
 Examples of actionable principles:
+
 - "Name files to reflect their responsibility in the system, not their implementation approach"
 - "Validate invariants at module boundaries rather than scattering checks throughout"
 - "Prefer explicit type annotations over inferred types at public API surfaces"
 
 Examples needing refinement:
+
 - "Be more careful" (what specifically? in what context?)
 - "Fix this kind of bug" (what principle prevents this class of bug?)
 
@@ -58,15 +60,18 @@ Only proceed if Phase 1 yielded an actionable principle.
 Provide a structured proposal:
 
 **1. Principle Extracted**
+
 - State the principle clearly in one or two sentences
 - Note the context that revealed this principle
 
 **2. Current State Assessment**
+
 - Relevant existing guidance (if any)
 - Gaps or weaknesses in current documentation
 - Opportunities for structural improvement
 
 **3. Proposed Improvement**
+
 - Target location in CLAUDE.md
 - Integration approach (integrate/create/refactor/replace)
 - Exact text changes, shown as:
@@ -75,6 +80,7 @@ Provide a structured proposal:
   - For refactoring: the consolidated result
 
 **4. Improvement Rationale**
+
 - Why this placement and approach
 - How this strengthens the overall documentation
 

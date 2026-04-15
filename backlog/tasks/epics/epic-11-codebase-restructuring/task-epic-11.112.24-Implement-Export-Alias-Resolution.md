@@ -15,15 +15,18 @@ Fix the critical bug where export aliases cannot be resolved. Currently, `import
 
 ```javascript
 // lib.js
-function internalName() { return 42; }
+function internalName() {
+  return 42;
+}
 export { internalName as publicName };
 
 // main.js
-import { publicName } from './lib';  // ❌ FAILS
+import { publicName } from "./lib"; // ❌ FAILS
 publicName();
 ```
 
 **Why it fails:**
+
 1. Semantic index creates definition: `name = "internalName"`
 2. Builder marks: `is_exported = true, export = { export_name: "publicName" }`
 3. Import resolver calls: `find_export("publicName", index)`
@@ -32,6 +35,7 @@ publicName();
 ### Expected Behavior
 
 The import resolver should:
+
 1. Search by export name when available: `get_export_name(def) === "publicName"`
 2. Fall back to definition name if no alias: `def.name === "publicName"`
 3. Match the correct definition and resolve the import ✅
@@ -93,7 +97,7 @@ function find_export(
 }
 ```
 
-### 2. Update Individual find_exported_* Functions (45 min)
+### 2. Update Individual find*exported*\* Functions (45 min)
 
 Each finder must check BOTH the export name AND definition name:
 
@@ -151,7 +155,10 @@ function get_effective_export_name(def: Definition): SymbolName {
 /**
  * Check if definition matches the requested export name
  */
-function matches_export_name(def: Definition, export_name: SymbolName): boolean {
+function matches_export_name(
+  def: Definition,
+  export_name: SymbolName
+): boolean {
   if (!is_exported(def)) {
     return false;
   }
@@ -208,8 +215,8 @@ describe("Export Alias Resolution", () => {
           is_exported: true,
           export: { export_name: "publicFoo" as SymbolName },
           // ... other fields
-        }
-      ]
+        },
+      ],
     });
 
     // main.ts: import { publicFoo } from './lib'
@@ -231,8 +238,8 @@ describe("Export Alias Resolution", () => {
           is_exported: true,
           // No export alias
           // ... other fields
-        }
-      ]
+        },
+      ],
     });
 
     // main.ts: import { foo } from './lib'
@@ -253,8 +260,8 @@ describe("Export Alias Resolution", () => {
           name: "internalFoo" as SymbolName,
           is_exported: true,
           export: { export_name: "publicFoo" as SymbolName },
-        }
-      ]
+        },
+      ],
     });
 
     // main.ts: import { wrongName } from './lib'
@@ -315,6 +322,7 @@ import { is_reexport, get_export_name } from "@ariadnejs/types";
 ```
 
 **Helper Functions:**
+
 - `get_export_name(def)` - Returns `def.export?.export_name || def.name`
 - `is_reexport(def)` - Returns `def.export?.is_reexport === true`
 
@@ -357,7 +365,7 @@ function matches_export_name(
 
 ---
 
-### 3. Updated All find_exported_* Functions
+### 3. Updated All find*exported*\* Functions
 
 **File:** `packages/core/src/resolve_references/import_resolution/import_resolver.ts`
 **Locations:** Multiple functions updated
@@ -365,10 +373,12 @@ function matches_export_name(
 All export finder functions now use `matches_export_name()` instead of direct name comparison:
 
 **Before:**
+
 ```typescript
 function find_exported_function(name: SymbolName, index: SemanticIndex) {
   for (const [symbol_id, func_def] of index.functions) {
-    if (func_def.name === name && is_exported(func_def)) {  // ❌ WRONG
+    if (func_def.name === name && is_exported(func_def)) {
+      // ❌ WRONG
       return func_def;
     }
   }
@@ -377,10 +387,12 @@ function find_exported_function(name: SymbolName, index: SemanticIndex) {
 ```
 
 **After:**
+
 ```typescript
 function find_exported_function(export_name: SymbolName, index: SemanticIndex) {
   for (const func_def of index.functions.values()) {
-    if (matches_export_name(func_def, export_name)) {  // ✅ CORRECT
+    if (matches_export_name(func_def, export_name)) {
+      // ✅ CORRECT
       return func_def;
     }
   }
@@ -389,6 +401,7 @@ function find_exported_function(export_name: SymbolName, index: SemanticIndex) {
 ```
 
 **Functions Updated:**
+
 - ✅ `find_exported_function()` (line ~353)
 - ✅ `find_exported_class()` (line ~376)
 - ✅ `find_exported_variable()` (line ~392)
@@ -409,13 +422,15 @@ function find_exported_function(export_name: SymbolName, index: SemanticIndex) {
 The `find_export()` function was using a deprecated path for checking re-exports:
 
 **Before (BROKEN):**
+
 ```typescript
-is_reexport: def.availability?.export?.is_reexport || false
+is_reexport: def.availability?.export?.is_reexport || false;
 ```
 
 **After (FIXED):**
+
 ```typescript
-is_reexport: is_reexport(def)
+is_reexport: is_reexport(def);
 ```
 
 **Root Cause:** After the migration from `availability.scope` to `is_exported` flag (task epic-11.112.23), the code was still accessing the old `availability.export.is_reexport` path, which no longer exists. The new structure is `def.export?.is_reexport`.
@@ -431,6 +446,7 @@ is_reexport: is_reexport(def)
 #### Test Infrastructure Updates
 
 **Added Type Imports:**
+
 ```typescript
 import type {
   InterfaceDefinition,
@@ -441,38 +457,32 @@ import type {
 ```
 
 **Updated create_test_index() Helper:**
+
 ```typescript
 function create_test_index(
   file_path: FilePath,
   language: "javascript" | "typescript" | "python" | "rust" = "javascript",
   options: {
     // ... existing options
-    interfaces?: Map<SymbolId, InterfaceDefinition>;  // NEW
-    enums?: Map<SymbolId, EnumDefinition>;           // NEW
-    types?: Map<SymbolId, TypeAliasDefinition>;      // NEW
+    interfaces?: Map<SymbolId, InterfaceDefinition>; // NEW
+    enums?: Map<SymbolId, EnumDefinition>; // NEW
+    types?: Map<SymbolId, TypeAliasDefinition>; // NEW
   } = {}
-): SemanticIndex
+): SemanticIndex;
 ```
 
 #### New Tests Added (12 total)
 
 **Basic Export Alias Tests:**
+
 1. ✅ `resolves import using export alias` - Core functionality
 2. ✅ `resolves import using definition name when no alias` - Backwards compatibility
 3. ✅ `fails when import name does not match export or definition name` - Error handling
 4. ✅ `cannot import by internal name when export alias is used` - Security semantics
 
-**Symbol Type Coverage:**
-5. ✅ `resolves export alias for classes`
-6. ✅ `resolves export alias for variables`
-7. ✅ `resolves export alias for interfaces`
-8. ✅ `resolves export alias for enums`
-9. ✅ `resolves export alias for type aliases`
+**Symbol Type Coverage:** 5. ✅ `resolves export alias for classes` 6. ✅ `resolves export alias for variables` 7. ✅ `resolves export alias for interfaces` 8. ✅ `resolves export alias for enums` 9. ✅ `resolves export alias for type aliases`
 
-**Advanced Scenarios:**
-10. ✅ `resolves correct symbol when multiple exports have different aliases`
-11. ✅ `resolves re-exported import with alias` - Chain resolution
-12. ✅ `handles mixed aliased and non-aliased exports`
+**Advanced Scenarios:** 10. ✅ `resolves correct symbol when multiple exports have different aliases` 11. ✅ `resolves re-exported import with alias` - Chain resolution 12. ✅ `handles mixed aliased and non-aliased exports`
 
 **Total Test Suite:** 22 tests (previously 10 tests)
 
@@ -487,12 +497,14 @@ npm test -- import_resolver.test.ts
 ```
 
 **Results:**
+
 ```
 ✓ import_resolver.test.ts (22 tests) - ALL PASS
   Duration: 10ms
 ```
 
 **Coverage:**
+
 - ✅ Basic export alias resolution
 - ✅ Non-aliased exports (backwards compatibility)
 - ✅ Error cases (wrong names, internal name access)
@@ -506,18 +518,21 @@ npm test -- import_resolver.test.ts
 #### Full Test Suite Results
 
 **Baseline (before changes):**
+
 ```
 Test Files: 11 failed | 6 passed (17)
 Tests: 56 failed | 214 passed | 33 todo (303)
 ```
 
 **After Export Alias Implementation:**
+
 ```
 Test Files: 10 failed | 7 passed (17)
 Tests: 53 failed | 229 passed | 33 todo (315)
 ```
 
 **Impact Analysis:**
+
 - ✅ **1 additional test file now passing** (6 → 7 passed)
 - ✅ **3 fewer test failures** (56 → 53 failed)
 - ✅ **15 more tests passing** (214 → 229 passed)
@@ -530,11 +545,13 @@ Tests: 53 failed | 229 passed | 33 todo (315)
 The remaining 53 failures are in:
 
 1. **Type Context Tests** (14 failures)
+
    - Import statement processing errors
    - Type annotation tracking issues
    - Unrelated to export alias resolution
 
 2. **Symbol Resolution Integration** (13 failures)
+
    - 11 JavaScript integration tests
    - 2 TypeScript integration tests
    - All showing `undefined` for resolved references
@@ -557,6 +574,7 @@ The remaining 53 failures are in:
 **Discovery:** During code review, noticed the types package already had `get_export_name()` and `is_reexport()` helpers.
 
 **Resolution:**
+
 - Removed duplicate `get_effective_export_name()`
 - Imported existing helpers from `@ariadnejs/types`
 - Updated `matches_export_name()` to use `get_export_name()`
@@ -570,15 +588,17 @@ The remaining 53 failures are in:
 **Problem:** Found critical bug in `find_export()` using wrong path for re-export detection.
 
 **Code:**
+
 ```typescript
-is_reexport: def.availability?.export?.is_reexport || false  // ❌ BROKEN
+is_reexport: def.availability?.export?.is_reexport || false; // ❌ BROKEN
 ```
 
 **Root Cause:** After task epic-11.112.23 migrated from `availability` to `is_exported` flag, this code wasn't updated to use the new structure.
 
 **Resolution:**
+
 ```typescript
-is_reexport: is_reexport(def)  // ✅ Uses def.export?.is_reexport
+is_reexport: is_reexport(def); // ✅ Uses def.export?.is_reexport
 ```
 
 **Impact:** Fixed re-export chain resolution (e.g., `export { foo } from './other'`).
@@ -590,11 +610,13 @@ is_reexport: is_reexport(def)  // ✅ Uses def.export?.is_reexport
 **Problem:** Tests for interfaces, enums, and type aliases failed because `create_test_index()` didn't support them.
 
 **Error:**
+
 ```
 Export not found for symbol: PublicInterface in file: /test/lib.ts
 ```
 
 **Resolution:** Updated `create_test_index()` helper to accept:
+
 ```typescript
 interfaces?: Map<SymbolId, InterfaceDefinition>
 enums?: Map<SymbolId, EnumDefinition>
@@ -610,6 +632,7 @@ types?: Map<SymbolId, TypeAliasDefinition>
 ### 1. Export Alias Semantics
 
 When `export { foo as bar }` is used:
+
 - ✅ ONLY `bar` is importable
 - ❌ `foo` is NOT importable (internal name hidden)
 
@@ -618,6 +641,7 @@ This is critical for API design where internal names should not be exposed.
 ### 2. Code Reuse
 
 The types package (`@ariadnejs/types`) contains many helper functions:
+
 - `get_export_name(def)` - Get effective export name
 - `is_reexport(def)` - Check if definition is re-exported
 - `is_default_export(def)` - Check if definition is default export
@@ -627,6 +651,7 @@ The types package (`@ariadnejs/types`) contains many helper functions:
 ### 3. Migration Gaps
 
 The migration from `availability` to `is_exported` flag (task epic-11.112.23) left some code using deprecated paths:
+
 - Old: `def.availability?.export?.is_reexport`
 - New: `def.export?.is_reexport`
 
@@ -635,6 +660,7 @@ The migration from `availability` to `is_exported` flag (task epic-11.112.23) le
 ### 4. Test Coverage Importance
 
 The comprehensive test suite (22 tests) uncovered:
+
 - The need for TypeScript type support in test helpers
 - Edge cases like multiple aliases in one file
 - Re-export chain behavior with aliases
@@ -670,6 +696,7 @@ The comprehensive test suite (22 tests) uncovered:
    - **Lines changed:** This section
 
 **Total Changes:**
+
 ```
 3 files changed, 401 insertions(+), 51 deletions(-)
 ```
@@ -683,6 +710,7 @@ The comprehensive test suite (22 tests) uncovered:
 **53 integration tests are failing** in the broader symbol resolution pipeline:
 
 **Affected Test Files:**
+
 - `symbol_resolution.javascript.test.ts` (11 failures)
 - `symbol_resolution.typescript.test.ts` (2 failures)
 - `type_context.test.ts` (14 failures)
@@ -691,11 +719,13 @@ The comprehensive test suite (22 tests) uncovered:
 **Symptom:** References returning `undefined` instead of resolved symbol IDs
 
 **Likely Causes:**
+
 1. Issue in `resolve_symbols()` main pipeline
 2. Scope resolution not finding symbols
 3. Reference capture missing some reference types
 
 **Recommended Approach:**
+
 - Create new task: **epic-11.112.XX - Fix Symbol Resolution Pipeline**
 - Start with simplest failing test
 - Add debug logging to trace resolution flow
@@ -706,6 +736,7 @@ The comprehensive test suite (22 tests) uncovered:
 **Current testing is synthetic** (unit tests with constructed indices)
 
 **Recommended:**
+
 - Test on real TypeScript/JavaScript projects
 - Verify Tree-sitter correctly captures export aliases
 - Ensure indexer properly sets `export.export_name` field
@@ -717,18 +748,21 @@ The comprehensive test suite (22 tests) uncovered:
 **Task:** epic-11.112.25 - Implement Default Export Resolution
 
 **Scope:**
+
 - Handle `export default foo`
 - Handle `import bar from './foo'` (default import)
 - Use `def.export?.is_default` flag
 - Update `find_export()` to handle default exports
 
 **Dependencies:**
+
 - Requires this task (epic-11.112.24) ✅ COMPLETE
 - Builds on same infrastructure
 
 ### 4. Document Export Resolution Architecture (Low Priority)
 
 **Create comprehensive documentation** explaining:
+
 - How export aliases work
 - How re-export chains are resolved
 - How default exports are handled

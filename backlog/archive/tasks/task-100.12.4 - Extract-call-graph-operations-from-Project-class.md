@@ -3,8 +3,8 @@ id: task-100.12.4
 title: Extract call graph operations from Project class
 status: Done
 assignee: []
-created_date: '2025-08-04 22:40'
-updated_date: '2025-08-04 23:15'
+created_date: "2025-08-04 22:40"
+updated_date: "2025-08-04 23:15"
 labels: []
 dependencies: []
 parent_task_id: task-100.12
@@ -35,6 +35,7 @@ Move all call graph related methods into a separate CallGraphService module, usi
 Successfully extracted call graph and inheritance operations:
 
 1. **CallGraphService** (`project/call_graph_service.ts`):
+
    - `getCallsFromDefinition`: Get all calls from a definition
    - `getFunctionCalls`: Get function calls (filtered)
    - `extractCallGraph`: Extract all call relationships
@@ -43,6 +44,7 @@ Successfully extracted call graph and inheritance operations:
    - Module-level call detection integrated
 
 2. **InheritanceService** (`project/inheritance_service.ts`):
+
    - `getClassRelationships`: Get inheritance info for a class
    - `findSubclasses`: Find all subclasses of a class
    - `findImplementations`: Find interface implementations

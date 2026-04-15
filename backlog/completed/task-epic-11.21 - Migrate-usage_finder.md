@@ -3,7 +3,7 @@ id: task-epic-11.21
 title: Migrate usage_finder feature
 status: Done
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, scope-analysis, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate the `usage_finder` feature to `src/scope_analysis/usage_finder/` followi
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -54,7 +55,10 @@ Migrate the `usage_finder` feature to `src/scope_analysis/usage_finder/` followi
 
 ```typescript
 // TODO: Add these stubs in implementation
-interface UsageFinder { find_usages(def: Def): Ref[]; find_references(symbol: string): Ref[]; }
+interface UsageFinder {
+  find_usages(def: Def): Ref[];
+  find_references(symbol: string): Ref[];
+}
 ```
 
 ## Planning Phase
@@ -107,12 +111,14 @@ Research findings will be documented here during execution.
 ### What Was Implemented
 
 1. **Created Complete Usage Finder System**
+
    - Core usage_finder.ts (493 lines) - Usage interface, find by definition/symbol, AST traversal, usage type detection
    - usage_finder.javascript.ts (396 lines) - JavaScript-specific patterns (method calls, property access, constructors, destructuring)
    - index.ts (349 lines) - Language dispatcher with high-level APIs
    - usage_finder.test.ts (384 lines) - Comprehensive tests for all features
 
 2. **Key Features Implemented**
+
    - Find all usages of a definition
    - Find references by symbol name
    - Find usages at cursor position
@@ -130,6 +136,7 @@ Research findings will be documented here during execution.
      - Batch find usages for multiple definitions
 
 3. **Test Status**: **12/12 tests passing ✅**
+
    - Variable usage detection
    - Function call tracking
    - Method call detection
@@ -142,6 +149,7 @@ Research findings will be documented here during execution.
    - Usage filtering and grouping
 
 4. **Design Decisions**
+
    - Built on top of scope_tree and leverages AST traversal
    - Functional paradigm throughout (no classes)
    - Usage type detection based on AST context
@@ -161,6 +169,7 @@ Research findings will be documented here during execution.
 When implementing, add these TODO comments:
 
 1. In `usage_finder.ts`:
+
    ```typescript
    // TODO: Integration with Scope Tree
    // - Find all refs in scope tree

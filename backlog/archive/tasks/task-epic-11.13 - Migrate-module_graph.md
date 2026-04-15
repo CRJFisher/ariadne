@@ -3,7 +3,7 @@ id: task-epic-11.13
 title: Migrate module_graph feature
 status: Completed
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, import-export, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate the `module_graph` feature to `src/import_export/module_graph/` followin
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -75,8 +76,16 @@ Migrate the `module_graph` feature to `src/import_export/module_graph/` followin
 
 ```typescript
 // TODO: Add these stubs in implementation
-interface ModuleNode { file: string; exports: ExportInfo[]; imports: ImportInfo[]; }
-interface ModuleEdge { from: string; to: string; type: 'import' | 'namespace' | 'type'; }
+interface ModuleNode {
+  file: string;
+  exports: ExportInfo[];
+  imports: ImportInfo[];
+}
+interface ModuleEdge {
+  from: string;
+  to: string;
+  type: "import" | "namespace" | "type";
+}
 ```
 
 ## Planning Phase
@@ -190,6 +199,7 @@ Research findings will be documented here during execution.
 When implementing, add these TODO comments:
 
 1. In `module_graph.ts`:
+
    ```typescript
    // TODO: Integration with Import Resolution
    // - Add import edges to graph

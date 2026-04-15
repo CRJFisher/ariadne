@@ -3,8 +3,8 @@ import { z } from "zod";
 import {
   register_tool_groups,
   type ToolGroupDefinition,
+  type ToolRegistrar,
 } from "./tool_registry";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ProjectManager } from "../project_manager";
 import type { Project } from "@ariadnejs/core";
 
@@ -38,8 +38,8 @@ function make_test_group(overrides?: Partial<ToolGroupDefinition>): ToolGroupDef
 }
 
 describe("register_tool_groups", () => {
-  let mock_server: McpServer;
-  let mock_project_manager: ProjectManager;
+  let mock_server: ToolRegistrar;
+  let mock_project_manager: Pick<ProjectManager, "get_project">;
   let mock_project: Project;
   let registered_tools: Map<string, { callback: (...args: unknown[]) => unknown }>;
 
@@ -49,13 +49,13 @@ describe("register_tool_groups", () => {
     mock_project = {} as Project;
     mock_project_manager = {
       get_project: vi.fn().mockReturnValue(mock_project),
-    } as unknown as ProjectManager;
+    };
 
     mock_server = {
       tool: vi.fn((_name: string, _desc: string, _schema: unknown, callback: unknown) => {
         registered_tools.set(_name, { callback: callback as (...args: unknown[]) => unknown });
       }),
-    } as unknown as McpServer;
+    };
 
     vi.mocked(resolve_project).mockResolvedValue(mock_project);
   });

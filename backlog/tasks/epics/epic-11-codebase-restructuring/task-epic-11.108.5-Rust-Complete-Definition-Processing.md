@@ -13,6 +13,7 @@
 ## Current Status - CRITICAL GAPS
 
 Rust builder has the most serious gaps of all languages:
+
 - ✅ Structs, enums, traits tracked
 - ✅ Functions and methods tracked
 - ✅ Fields tracked
@@ -29,6 +30,7 @@ Rust builder has the most serious gaps of all languages:
 **File:** `packages/core/src/index_single_file/query_code_tree/language_configs/rust_builder.ts`
 
 **Current code (line 506-508):**
+
 ```typescript
 ["definition.parameter", { process: () => {} }],  // ❌ DOES NOTHING!
 ["definition.parameter.self", { process: () => {} }],  // ❌ DOES NOTHING!
@@ -36,6 +38,7 @@ Rust builder has the most serious gaps of all languages:
 ```
 
 **Impact:**
+
 - ALL function signatures are incomplete
 - ALL method signatures lack parameters
 - Type information for parameters is completely lost
@@ -46,12 +49,14 @@ Rust builder has the most serious gaps of all languages:
 ### 2. ❌ NO Import Tracking
 
 **No handlers for:**
+
 - `use` statements
 - External crate imports
 - Module imports
 - Glob imports
 
 **Impact:**
+
 - Cross-file resolution impossible
 - Can't track dependencies
 - Module system not represented
@@ -63,11 +68,13 @@ Rust builder has the most serious gaps of all languages:
 **Critical fix - line 506:**
 
 **Current (BROKEN):**
+
 ```typescript
 ["definition.parameter", { process: () => {} }],
 ```
 
 **Fixed:**
+
 ```typescript
 [
   "definition.parameter",
@@ -89,6 +96,7 @@ Rust builder has the most serious gaps of all languages:
 ```
 
 **Need helper functions:**
+
 ```typescript
 /**
  * Find the containing function/method for a parameter
@@ -147,6 +155,7 @@ function extract_parameter_type(node: SyntaxNode): SymbolName | undefined {
 ```
 
 **Add to rust_builder_helpers.ts:**
+
 ```typescript
 export function create_parameter_id(capture: CaptureNode): SymbolId {
   return parameter_symbol(capture.text, capture.location);
@@ -222,6 +231,7 @@ export function create_parameter_id(capture: CaptureNode): SymbolId {
 ```
 
 **Helper function:**
+
 ```typescript
 function extract_use_path(node: SyntaxNode): ModulePath {
   // Traverse up to find use_declaration
@@ -246,6 +256,7 @@ function extract_use_path(node: SyntaxNode): ModulePath {
 ### 3. Migrate Constructor Handling
 
 **Current code (line 444-472):**
+
 ```typescript
 [
   "definition.constructor",
@@ -272,6 +283,7 @@ function extract_use_path(node: SyntaxNode): ModulePath {
 ```
 
 **Fixed:**
+
 ```typescript
 [
   "definition.constructor",
@@ -323,6 +335,7 @@ function extract_use_path(node: SyntaxNode): ModulePath {
 ```
 
 **Fixed:**
+
 ```typescript
 [
   "definition.method.default",
@@ -348,6 +361,7 @@ function extract_use_path(node: SyntaxNode): ModulePath {
 ```
 
 **Also need handler for trait method signatures (no default implementation):**
+
 ```typescript
 [
   "definition.trait.method.signature",
@@ -376,6 +390,7 @@ function extract_use_path(node: SyntaxNode): ModulePath {
 **File:** `packages/core/src/index_single_file/query_code_tree/language_configs/queries/rust.scm`
 
 **Add parameter captures:**
+
 ```scheme
 ; Function parameters
 (parameters
@@ -390,6 +405,7 @@ function extract_use_path(node: SyntaxNode): ModulePath {
 ```
 
 **Add import captures:**
+
 ```scheme
 ; Use statements
 (use_declaration
@@ -409,6 +425,7 @@ function extract_use_path(node: SyntaxNode): ModulePath {
 ```
 
 **Add trait method signature capture:**
+
 ```scheme
 ; Trait method signatures (no body)
 (trait_item
@@ -421,6 +438,7 @@ function extract_use_path(node: SyntaxNode): ModulePath {
 **File:** `packages/core/src/index_single_file/semantic_index.rust.test.ts`
 
 **Add critical test for parameters:**
+
 ```typescript
 it("should extract function parameters", () => {
   const code = `
@@ -541,19 +559,23 @@ it("should extract trait method signatures", () => {
 ## Implementation Steps
 
 1. **CRITICAL - Add parameter tracking:**
+
    - Implement `definition.parameter` handler
    - Add helper functions
    - Update query file if needed
 
 2. **Add import tracking:**
+
    - Add use statement handlers
    - Add extern crate handler
    - Update query file
 
 3. **Migrate constructor:**
+
    - Change to `add_constructor_to_class`
 
 4. **Fix trait methods:**
+
    - Use `add_method_signature_to_interface`
 
 5. **Add comprehensive tests**
@@ -583,6 +605,7 @@ it("should extract trait method signatures", () => {
 ## Notes
 
 **THIS IS THE MOST CRITICAL TASK** in the builder audit. Rust currently has:
+
 - NO parameter information on ANY functions or methods
 - NO import tracking whatsoever
 

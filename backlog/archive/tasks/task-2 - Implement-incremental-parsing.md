@@ -3,9 +3,9 @@ id: task-2
 title: Implement incremental parsing
 status: Done
 assignee:
-  - '@claude'
-created_date: '2025-07-08'
-updated_date: '2025-07-09'
+  - "@claude"
+created_date: "2025-07-08"
+updated_date: "2025-07-09"
 labels:
   - performance
   - enhancement

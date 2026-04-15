@@ -14,6 +14,7 @@ Move export metadata (aliases, default exports, re-exports) to a separate `expor
 ## Problem Analysis
 
 ### Current System
+
 ```typescript
 interface SymbolAvailability {
   scope: "file-private" | "file-export" | "package-internal" | "public";
@@ -26,18 +27,20 @@ interface SymbolAvailability {
 ```
 
 ### Issues
+
 1. **Over-engineered**: The `scope` field has 4 values but only one check: "is it exported?"
 2. **Unused for same-file resolution**: Same-file symbol resolution uses scope tree walking, not availability
 3. **Only used for imports**: The only non-test usage is `import_resolver.ts:is_exported()`
 
 ### New System
+
 ```typescript
 interface Definition {
-  readonly is_exported: boolean;  // Can be imported from other files?
+  readonly is_exported: boolean; // Can be imported from other files?
   readonly export?: {
-    readonly export_name?: SymbolName;   // For: export { foo as bar }
-    readonly is_default?: boolean;        // For: export default foo
-    readonly is_reexport?: boolean;       // For: export { x } from './y'
+    readonly export_name?: SymbolName; // For: export { foo as bar }
+    readonly is_default?: boolean; // For: export default foo
+    readonly is_reexport?: boolean; // For: export { x } from './y'
   };
 }
 ```
@@ -45,14 +48,17 @@ interface Definition {
 ## Language-Specific Rules
 
 ### JavaScript/TypeScript
+
 - `is_exported = true` if definition has `export` keyword
 - Extract export metadata from export_statement AST nodes
 
 ### Python
+
 - `is_exported = true` for all module-level definitions
 - `is_exported = false` for names starting with `_` (convention)
 
 ### Rust
+
 - `is_exported = true` if definition has `pub` modifier at module scope
 - Respect Rust's module visibility rules
 
@@ -68,9 +74,11 @@ This task is split into 4 sub-tasks by language:
 ## Files Modified
 
 ### Core Types
+
 - `packages/types/src/symbol_definitions.ts`
 
 ### Language Builders
+
 - `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_builder.ts`
 - `packages/core/src/index_single_file/query_code_tree/language_configs/typescript_builder.ts`
 - `packages/core/src/index_single_file/query_code_tree/language_configs/python_builder.ts`
@@ -78,9 +86,11 @@ This task is split into 4 sub-tasks by language:
 - `packages/core/src/index_single_file/definitions/definition_builder.ts`
 
 ### Import Resolution
+
 - `packages/core/src/resolve_references/import_resolution/import_resolver.ts`
 
 ### Tests (update across all language test files)
+
 - All `*.test.ts` files that reference `availability`
 
 ## Migration Strategy

@@ -2,9 +2,9 @@
 id: task-67
 title: Implement cross-file type registry for method resolution
 status: In-Progress
-assignee: ['@claude']
-created_date: '2025-08-02'
-updated_date: '2025-08-02'
+assignee: ["@claude"]
+created_date: "2025-08-02"
+updated_date: "2025-08-02"
 labels:
   - enhancement
   - call-graph
@@ -12,8 +12,8 @@ labels:
 dependencies:
   - task-66
 blocked_by:
-  - task-28  # (partial) Module path resolution needed for Python/Rust
-  - task-30  # (critical for Python) Export detection for languages without export keyword
+  - task-28 # (partial) Module path resolution needed for Python/Rust
+  - task-30 # (critical for Python) Export detection for languages without export keyword
 ---
 
 ## Description
@@ -71,7 +71,7 @@ Create a project-wide type registry that maintains variable type information acr
 - **Python**: Handle different import styles (import x.y, from x.y import z)
 - **Rust**: Handle Type::method() pattern and variable assignments from constructors
 - **Variable reassignments**: Track type changes when variables are reassigned
-- **Export syntaxes**: Handle export default, export *, named exports, etc.
+- **Export syntaxes**: Handle export default, export \*, named exports, etc.
 
 ### Recent Progress
 
@@ -85,6 +85,7 @@ Create a project-wide type registry that maintains variable type information acr
 ### Python Support Blockers
 
 **Critical Blocker - Task 30 (Export Detection):**
+
 - Python has no explicit export keywords like JavaScript/TypeScript
 - Everything at module level is implicitly exported unless:
   - It starts with underscore `_` (convention for private)
@@ -93,6 +94,7 @@ Create a project-wide type registry that maintains variable type information acr
 - **Workaround**: Treat all top-level definitions as exported, filter by naming conventions
 
 **Partial Blocker - Task 28 (Module Path Resolution):**
+
 - Python uses `__init__.py` files to mark directories as packages
 - Relative imports use dots: `from ..utils import helper`
 - Module imports create namespace: `import utils` then `utils.helper()`
@@ -102,6 +104,7 @@ Create a project-wide type registry that maintains variable type information acr
 ### Rust Support Blockers
 
 **Partial Blocker - Task 28 (Module Path Resolution):**
+
 - Rust module system is tightly coupled to file structure
 - `mod foo;` looks for `foo.rs` or `foo/mod.rs`
 - Module paths like `crate::module::function` need special handling
@@ -109,6 +112,7 @@ Create a project-wide type registry that maintains variable type information acr
 - **Impact**: Can't resolve modules correctly without understanding Rust's file conventions
 
 **Minor Blocker - Export Detection:**
+
 - Rust uses `pub` keyword instead of `export`
 - Has visibility modifiers: `pub`, `pub(crate)`, `pub(super)`
 - **Workaround**: Adapt export detection to look for `pub` keyword instead of `export`
@@ -116,18 +120,21 @@ Create a project-wide type registry that maintains variable type information acr
 ### Implementation Strategies Without Resolving Blockers
 
 **Python Quick Implementation:**
+
 1. Treat all root-level definitions as potentially exported
 2. Use simple heuristics (exclude `_` prefixed items)
 3. Basic import resolution for same-directory imports only
 4. Skip package imports and relative imports for now
 
 **Rust Quick Implementation:**
+
 1. Adapt export detection regex to match `pub` keyword
 2. Support basic `use` statements for same-crate items
 3. Skip complex module paths and external crates
 4. Assume simple file structure (no nested modules)
 
 **Limitations of Quick Implementation:**
+
 - No support for Python packages or relative imports
 - No support for Rust's module hierarchy
 - May have false positives for exported items

@@ -3,8 +3,8 @@ id: task-57
 title: Update main README and improve ariadne-mcp documentation
 status: Done
 assignee:
-  - '@claude'
-created_date: '2025-07-31'
+  - "@claude"
+created_date: "2025-07-31"
 labels: []
 dependencies: []
 ---
@@ -26,12 +26,14 @@ Update the main project README to clearly point to the separate packages (@ariad
 Successfully updated both README files to provide clear documentation:
 
 **Main README Updates:**
+
 - Added prominent "Packages" section highlighting @ariadnejs/core and @ariadnejs/mcp
 - Reorganized installation section to guide users to the right package
 - Added MCP quick start section with example prompts
 - Updated features list to include class inheritance analysis
 
 **MCP Package README Updates:**
+
 - Enhanced overview with key benefits section
 - Expanded installation instructions for global and project-specific setups
 - Added detailed configuration examples for Claude Desktop, Cursor, and Continue
@@ -41,6 +43,7 @@ Successfully updated both README files to provide clear documentation:
 - Added environment variables and advanced configuration options
 
 **SETUP.md Updates:**
+
 - Updated to include the new context-oriented tools
 - Added example prompts for each tool
 - Marked get_symbol_context as recommended

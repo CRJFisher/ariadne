@@ -19,8 +19,8 @@ Type aliases can reference imported types, requiring import resolution:
 export class User {}
 
 // file2.ts
-import { User } from './file1';
-type MyUser = User;  // Resolving "User" requires import resolution!
+import { User } from "./file1";
+type MyUser = User; // Resolving "User" requires import resolution!
 ```
 
 This task extracts `"User"` as a string. Task 11.109.3 will resolve it to User's SymbolId using ScopeResolver (which handles imports).
@@ -76,6 +76,7 @@ export function extract_type_alias_metadata(
 ### Test Cases
 
 #### TypeScript
+
 ```typescript
 test("extracts simple type alias", () => {
   const code = `
@@ -137,6 +138,7 @@ test("skips aliases without type_expression", () => {
 ```
 
 #### Python (Type Aliases)
+
 ```python
 test("extracts Python type aliases", () => {
   const code = `
@@ -151,6 +153,7 @@ test("extracts Python type aliases", () => {
 ```
 
 #### Rust (Type Aliases)
+
 ```rust
 test("extracts Rust type aliases", () => {
   const code = `
@@ -172,20 +175,23 @@ test("extracts Rust type aliases", () => {
 ```typescript
 // user.ts
 export class User {
-  getName() { return ""; }
+  getName() {
+    return "";
+  }
 }
 
 // types.ts
-import { User } from './user';
+import { User } from "./user";
 type MyUser = User;
 
 // app.ts
-import { MyUser } from './types';
+import { MyUser } from "./types";
 const user: MyUser = getUser();
-user.getName();  // Should resolve to User.getName
+user.getName(); // Should resolve to User.getName
 ```
 
 For this to work:
+
 1. Task 11.105.4 extracts: `{MyUser id → "User"}`
 2. Task 11.109.3 resolves: `"User"` → User class SymbolId (via import resolution)
 3. Task 11.109.5 resolves: `user.getName()` → User.getName
@@ -193,18 +199,21 @@ For this to work:
 ## Success Criteria
 
 ### Functional
+
 - ✅ Simple aliases extracted
 - ✅ Complex type expressions stored as strings
 - ✅ Does NOT attempt resolution
 - ✅ All languages with type aliases supported
 
 ### Testing
+
 - ✅ Unit tests for simple cases
 - ✅ Complex type expressions
 - ✅ Cross-file reference examples
 - ✅ >90% code coverage
 
 ### Code Quality
+
 - ✅ Clear JSDoc explaining NO resolution
 - ✅ Simple implementation (just string extraction)
 - ✅ Well-documented why resolution is deferred
@@ -212,6 +221,7 @@ For this to work:
 ## Dependencies
 
 **Uses:**
+
 - `TypeAliasDefinition` from types
 
 **No external dependencies**
@@ -219,6 +229,7 @@ For this to work:
 ## Next Steps
 
 After completion:
+
 - Task 11.105.5 adds this to SemanticIndex
 - Task 11.109.3 resolves type_expression strings to SymbolIds
 - Task 11.109.3 uses ScopeResolver for resolution (handles imports!)
@@ -228,6 +239,7 @@ After completion:
 ### Why Not Resolve Here?
 
 Type alias resolution requires:
+
 1. **Scope-aware lookup** - respects local shadowing
 2. **Import resolution** - resolves imported type names
 3. **Cross-file context** - may reference types from other files
@@ -238,8 +250,8 @@ Example showing why scope awareness is needed:
 class User {}
 
 function test() {
-  type User = string;  // Shadows outer User
-  type MyUser = User;  // Should resolve to string, not class
+  type User = string; // Shadows outer User
+  type MyUser = User; // Should resolve to string, not class
 }
 ```
 
@@ -248,11 +260,13 @@ Task 11.109.1's ScopeResolver handles this correctly.
 ### Generic Type Expressions
 
 For generic types like `Map<string, User>`:
+
 - Store the full string as-is
 - Task 11.109.3 will attempt basic resolution
 - Complex generic parsing is future work
 
 Initial 11.109.3 implementation may only resolve simple type names:
+
 - `"User"` → resolves
 - `"Map<string, User>"` → may defer or resolve partially
 
@@ -261,6 +275,7 @@ Initial 11.109.3 implementation may only resolve simple type names:
 The `type_expression` field in TypeAliasDefinition comes from tree-sitter:
 
 **TypeScript pattern:**
+
 ```scheme
 (type_alias_declaration
   name: (type_identifier) @type.name

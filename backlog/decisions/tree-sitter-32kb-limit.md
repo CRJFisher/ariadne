@@ -118,6 +118,7 @@ Through systematic testing, I confirmed:
 4. **Not Encoding-Related**: Binary/invalid UTF-8 data under 32KB parses fine
 
 Test results:
+
 ```
 ✓ 32,767 bytes: Success
 ✗ 32,768 bytes: Failed - Invalid argument
@@ -126,6 +127,7 @@ Test results:
 ### Root Cause
 
 Found in the tree-sitter Node.js bindings source code (`parser.cc`):
+
 ```cpp
 buffer.resize(static_cast<uint64_t>(32 * 1024));
 ```

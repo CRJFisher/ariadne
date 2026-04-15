@@ -17,11 +17,13 @@ When invoked, follow these phases:
 ### Phase 1: Gather Backlog State
 
 1. List all incomplete tasks with their status and priority:
+
    ```bash
    backlog task list --plain
    ```
 
 2. Identify recently completed tasks to understand momentum:
+
    ```bash
    backlog task list -s "Done" --plain | head -20
    ```
@@ -34,9 +36,11 @@ When invoked, follow these phases:
 ### Phase 2: Analyze Task Relationships
 
 1. Read the task dependency file if it exists:
+
    - Check `backlog/task-dependencies.yaml` for explicit dependencies
 
 2. For high-priority incomplete tasks, read their full details:
+
    ```bash
    backlog task <id> --plain
    ```

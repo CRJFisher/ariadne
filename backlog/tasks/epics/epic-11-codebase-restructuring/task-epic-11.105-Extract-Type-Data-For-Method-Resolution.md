@@ -127,6 +127,7 @@ Track constructor → variable assignments.
 #### Implementation Details
 
 **Files Created:**
+
 - `/packages/core/src/index_single_file/type_preprocessing/constructor_tracking.ts` (48 lines)
 - `/packages/core/src/index_single_file/type_preprocessing/tests/constructor_tracking.test.ts` (573 lines)
 
@@ -165,10 +166,12 @@ export function extract_constructor_bindings(
 **Patterns Discovered:**
 
 1. **construct_target Availability**:
+
    - Present for: `const x = new Class()`, `this.field = new Class()`, property assignments
    - Absent for: Standalone calls like `new Class();` (no variable assignment)
 
 2. **Type Name Extraction**:
+
    - Simple classes: `ref.name` contains "User" for `new User()`
    - Generic classes: `ref.name` may contain type parameters (e.g., "<string>" for `new Container<string>()`)
    - Tree-sitter parsing variations across languages handled consistently
@@ -196,6 +199,7 @@ export function extract_constructor_bindings(
 **Issues Encountered:**
 
 1. **Generic Type Name Extraction** (Minor):
+
    - Issue: TypeScript generic constructors (`new Container<string>()`) may have type parameters included in `ref.name`
    - Resolution: Tests adjusted to be flexible about exact name format
    - Impact: Minimal - resolution in task 11.109 will handle this
@@ -224,11 +228,13 @@ export function extract_constructor_bindings(
 **Follow-On Work:**
 
 1. **Integration with SemanticIndex** (Task 11.105.5):
+
    - Add `type_bindings` field to SemanticIndex interface
    - Call `extract_constructor_bindings()` in `build_semantic_index()`
    - Store results for use by task 11.109
 
 2. **Generic Type Handling**:
+
    - Consider whether type parameters should be stripped from constructor names
    - May need coordination with task 11.109.3 for proper generic type resolution
 
@@ -256,16 +262,19 @@ Extract members from type definitions.
 #### Implementation Summary
 
 **Files Created:**
+
 - `/packages/core/src/index_single_file/type_preprocessing/member_extraction.ts` (167 lines)
 - `/packages/core/src/index_single_file/type_preprocessing/tests/member_extraction.test.ts` (670 lines, 20 tests)
 
 **Module Exports:**
 Updated `/packages/core/src/index_single_file/type_preprocessing/index.ts`:
+
 ```typescript
 export { extract_type_members, type TypeMemberInfo } from "./member_extraction";
 ```
 
 **Build Artifacts:**
+
 - `member_extraction.js` (4.3KB)
 - `member_extraction.d.ts` (2.0KB)
 - TypeScript compilation: ✅ No errors
@@ -276,6 +285,7 @@ export { extract_type_members, type TypeMemberInfo } from "./member_extraction";
 #### Core Implementation
 
 **TypeMemberInfo Interface:**
+
 ```typescript
 export interface TypeMemberInfo {
   readonly methods: ReadonlyMap<SymbolName, SymbolId>;
@@ -286,15 +296,17 @@ export interface TypeMemberInfo {
 ```
 
 **Main Function:**
+
 ```typescript
 export function extract_type_members(definitions: {
   classes: ReadonlyMap<SymbolId, ClassDefinition>;
   interfaces: ReadonlyMap<SymbolId, InterfaceDefinition>;
   enums: ReadonlyMap<SymbolId, EnumDefinition>;
-}): ReadonlyMap<SymbolId, TypeMemberInfo>
+}): ReadonlyMap<SymbolId, TypeMemberInfo>;
 ```
 
 **Data Sources:**
+
 - `ClassDefinition.methods`, `properties`, `constructor`, `extends`
 - `InterfaceDefinition.methods`, `properties`, `extends`
 - `EnumDefinition.methods` (Rust enums can have methods)
@@ -310,6 +322,7 @@ export function extract_type_members(definitions: {
 **Problem:** `PropertySignature.name` is a `SymbolId` (not `SymbolName` like other definitions)
 
 **Decision:** Created helper function `extract_name_from_symbol_id()` to parse local name from SymbolId:
+
 ```typescript
 function extract_name_from_symbol_id(symbol_id: SymbolId): SymbolName {
   const parts = symbol_id.split(":");
@@ -318,6 +331,7 @@ function extract_name_from_symbol_id(symbol_id: SymbolId): SymbolName {
 ```
 
 **Rationale:**
+
 - SymbolId format: `"kind:file_path:start_line:start_column:end_line:end_column:name"`
 - Need local name for Map keys to enable lookup by property name
 - Consistent with how ClassDefinition properties use `name` field
@@ -327,6 +341,7 @@ function extract_name_from_symbol_id(symbol_id: SymbolId): SymbolName {
 **Decision:** Always create TypeMemberInfo entry for enums, even if they have no methods
 
 **Code:**
+
 ```typescript
 for (const [enum_id, enum_def] of definitions.enums) {
   if (!enum_def.methods || enum_def.methods.length === 0) {
@@ -343,6 +358,7 @@ for (const [enum_id, enum_def] of definitions.enums) {
 ```
 
 **Rationale:**
+
 - Ensures every enum has a TypeMemberInfo entry for consistent lookup
 - Rust enums can have methods via `impl` blocks
 - Empty maps are valid and expected for basic enums
@@ -352,6 +368,7 @@ for (const [enum_id, enum_def] of definitions.enums) {
 **Decision:** Store `extends` as `readonly SymbolName[]` (strings, not resolved SymbolIds)
 
 **Rationale:**
+
 - Type name resolution is scope-aware (requires ScopeResolver from task 11.109)
 - Can't resolve during indexing (no scope context available)
 - Mirrors pattern from `type_bindings.ts` and `constructor_tracking.ts`
@@ -362,6 +379,7 @@ for (const [enum_id, enum_def] of definitions.enums) {
 **Decision:** Implement as pure function with ReadonlyMap return type
 
 **Pattern:**
+
 ```typescript
 export function extract_type_members(definitions): ReadonlyMap<...> {
   const members = new Map<...>();
@@ -371,6 +389,7 @@ export function extract_type_members(definitions): ReadonlyMap<...> {
 ```
 
 **Rationale:**
+
 - Follows established pattern from `type_bindings.ts` and `constructor_tracking.ts`
 - Immutable return type prevents accidental mutations
 - Easy to test and reason about
@@ -385,6 +404,7 @@ export function extract_type_members(definitions): ReadonlyMap<...> {
 **Discovery:** TypeScript tests must use `TypeScript.tsx` (not `TypeScript.typescript`)
 
 **Pattern Found:**
+
 ```typescript
 // ❌ Fails - no definitions extracted
 parser.setLanguage(TypeScript.typescript);
@@ -402,12 +422,14 @@ parser.setLanguage(TypeScript.tsx);
 **Discovery:** semantic_index has incomplete extraction for several language features
 
 **Gaps Identified:**
+
 - JavaScript: `extends` relationships not extracted from class declarations
 - TypeScript: Interface methods/properties arrays are empty
 - Python: Class methods not extracted
 - Rust: Struct/enum methods not extracted from `impl` blocks
 
 **Evidence:**
+
 ```typescript
 // Test showed:
 Classes found: 2
@@ -418,6 +440,7 @@ Class 1 name: Dog, extends: []     // Expected: extends: ["Animal"]
 **Verification:** Added debug logging confirmed semantic_index returns empty arrays
 
 **Impact:**
+
 - Skipped 7 tests with clear documentation of semantic_index limitations
 - member_extraction.ts implementation is correct
 - Tests will automatically pass when semantic_index is improved
@@ -427,12 +450,14 @@ Class 1 name: Dog, extends: []     // Expected: extends: ["Animal"]
 **Discovery:** Tests should validate structure, not exact names
 
 **Original Approach:**
+
 ```typescript
 // ❌ Brittle - depends on exact name matching
 expect(userMembers.methods.has("get_name")).toBe(true);
 ```
 
 **Better Approach:**
+
 ```typescript
 // ✅ Robust - validates structure exists
 expect(userMembers.methods).toBeDefined();
@@ -440,6 +465,7 @@ expect(userMembers.properties).toBeDefined();
 ```
 
 **Rationale:**
+
 - Handles variations in parser output across languages
 - Focuses on what member_extraction controls (structure creation)
 - Separates concerns between semantic_index (extraction) and member_extraction (indexing)
@@ -449,17 +475,19 @@ expect(userMembers.properties).toBeDefined();
 **Pattern:** Always create maps/arrays even when empty
 
 **Implementation:**
+
 ```typescript
 // Enum with no methods
 members.set(enum_id, {
-  methods: new Map(),      // Empty but defined
-  properties: new Map(),   // Empty but defined
-  constructor: undefined,  // Explicit undefined
-  extends: [],             // Empty array
+  methods: new Map(), // Empty but defined
+  properties: new Map(), // Empty but defined
+  constructor: undefined, // Explicit undefined
+  extends: [], // Empty array
 });
 ```
 
 **Benefit:**
+
 - Consumers can safely iterate without null checks
 - Distinguishes "no members" from "not indexed"
 - Consistent structure for all types
@@ -473,17 +501,18 @@ members.set(enum_id, {
 **Issue:** `PropertySignature.name` is `SymbolId`, not `SymbolName` like `PropertyDefinition.name`
 
 **Root Cause:** Type system inconsistency in symbol_definitions.ts:
+
 ```typescript
 // PropertyDefinition (for classes)
 export interface PropertyDefinition extends Definition {
-  readonly name: SymbolName;  // ✅ Has name field
+  readonly name: SymbolName; // ✅ Has name field
   readonly symbol_id: SymbolId;
   // ...
 }
 
 // PropertySignature (for interfaces)
 export interface PropertySignature {
-  readonly name: SymbolId;  // ⚠️ name IS the SymbolId
+  readonly name: SymbolId; // ⚠️ name IS the SymbolId
   // No separate symbol_id field!
   // ...
 }
@@ -502,6 +531,7 @@ export interface PropertySignature {
 **Root Cause:** Used wrong parser variant (`TypeScript.typescript` vs `TypeScript.tsx`)
 
 **Discovery Process:**
+
 1. Added debug logging: `console.log("Classes count:", index.classes.size)`
 2. Output showed 0 classes for TypeScript code
 3. Checked working tests in `constructor_tracking.test.ts`
@@ -509,8 +539,9 @@ export interface PropertySignature {
 5. Changed to `.tsx`, all tests passed
 
 **Solution:**
+
 ```typescript
-parser.setLanguage(TypeScript.tsx);  // Not TypeScript.typescript
+parser.setLanguage(TypeScript.tsx); // Not TypeScript.typescript
 ```
 
 **Impact:** Fixed all TypeScript test failures immediately
@@ -522,6 +553,7 @@ parser.setLanguage(TypeScript.tsx);  // Not TypeScript.typescript
 **Issue:** Multiple tests failed due to empty methods/properties/extends arrays
 
 **Examples:**
+
 - Python: `methods.size = 0` for classes with `def` methods
 - Rust: `methods.size = 0` for structs with `impl` blocks
 - JavaScript: `extends = []` for `class Dog extends Animal`
@@ -529,19 +561,22 @@ parser.setLanguage(TypeScript.tsx);  // Not TypeScript.typescript
 
 **Investigation:**
 Added debug logging to verify semantic_index output:
+
 ```typescript
-console.log("Interface methods count:", iface.methods.length);  // Output: 0
-console.log("Interface properties count:", iface.properties.length);  // Output: 0
+console.log("Interface methods count:", iface.methods.length); // Output: 0
+console.log("Interface properties count:", iface.properties.length); // Output: 0
 ```
 
 **Conclusion:** Confirmed issue is in semantic_index, not member_extraction
 
 **Solution:**
+
 - Skipped 7 tests with `.skip()` and clear documentation
 - Added comments explaining semantic_index limitations
 - Tests are ready to pass when semantic_index is improved
 
 **Impact:**
+
 - Clear separation of responsibilities
 - member_extraction implementation validated as correct
 - Test suite provides coverage when semantic_index catches up
@@ -551,6 +586,7 @@ console.log("Interface properties count:", iface.properties.length);  // Output:
 #### Test Coverage
 
 **Test Results:**
+
 ```
 ✓ member_extraction.test.ts (20 tests | 7 skipped)
 ✓ constructor_tracking.test.ts (19 tests)
@@ -564,12 +600,14 @@ Pass Rate: 87.7% (100% of non-skipped tests)
 **Test Categories:**
 
 **JavaScript (4 tests):**
+
 - ✅ Class method extraction
 - ✅ Class property extraction
 - ✅ Multiple class handling
 - ✅ Inheritance structure (validates extends array exists)
 
 **TypeScript (5 tests):**
+
 - ✅ Class methods and properties extraction
 - ✅ Constructor tracking
 - ✅ Interface structure creation (validates TypeMemberInfo created)
@@ -577,23 +615,27 @@ Pass Rate: 87.7% (100% of non-skipped tests)
 - ✅ Static and instance method distinction
 
 **Python (4 tests - SKIPPED):**
+
 - ⏭️ Class methods extraction - semantic_index limitation
 - ⏭️ `__init__` constructor - semantic_index limitation
 - ⏭️ Class inheritance - semantic_index limitation
 - ⏭️ Static methods - semantic_index limitation
 
 **Rust (4 tests - 1 passing, 3 skipped):**
+
 - ✅ Enum without methods (validates empty TypeMemberInfo)
 - ⏭️ Struct methods from impl block - semantic_index limitation
 - ⏭️ Enum methods - semantic_index limitation
 - ⏭️ Struct with fields - semantic_index limitation
 
 **Edge Cases (3 tests):**
+
 - ✅ Empty class (all fields empty but defined)
 - ✅ No definitions (returns empty map)
 - ✅ Constructor-only class
 
 **Code Coverage:**
+
 - **Line coverage:** ~95% (all main logic paths covered)
 - **Branch coverage:** ~90% (all conditionals tested)
 - **Function coverage:** 100% (all exported functions tested)
@@ -607,11 +649,13 @@ Pass Rate: 87.7% (100% of non-skipped tests)
 **Memory:** O(m) where m = number of unique methods/properties (creating new maps)
 
 **Benchmarks:**
+
 - Typical class (5 methods, 3 properties): ~0.1ms
 - Large class (50 methods, 20 properties): ~0.5ms
 - 100 classes: ~50ms total
 
 **Optimization Notes:**
+
 - Map-based storage provides O(1) lookup
 - No deep copying (stores references to existing SymbolIds)
 - ReadonlyMap prevents accidental mutations
@@ -621,17 +665,20 @@ Pass Rate: 87.7% (100% of non-skipped tests)
 #### Integration Points
 
 **Exports:**
+
 ```typescript
 // From type_preprocessing/index.ts
 export { extract_type_members, type TypeMemberInfo } from "./member_extraction";
 ```
 
 **Consumed By:**
+
 - Task 11.105.5: Will integrate into SemanticIndex
 - Task 11.109.3: Will use TypeMemberInfo for method resolution
 - Task 11.109.5: Will leverage member maps for receiver resolution
 
 **Data Flow:**
+
 ```
 semantic_index
   ↓ (provides definitions)
@@ -651,12 +698,14 @@ Method Resolution (task 11.109.5)
 **1. semantic_index Improvements (High Priority)**
 
 **Issue:** semantic_index doesn't extract:
+
 - Python class methods
 - Rust struct/enum methods from impl blocks
 - JavaScript class extends relationships
 - TypeScript interface members
 
 **Tasks:**
+
 - Investigate Python method extraction queries
 - Investigate Rust impl block extraction queries
 - Add extends extraction for JavaScript classes
@@ -669,23 +718,26 @@ Method Resolution (task 11.109.5)
 **Issue:** Type inconsistency between PropertyDefinition and PropertySignature
 
 **Current:**
+
 ```typescript
 PropertyDefinition.name: SymbolName + PropertyDefinition.symbol_id: SymbolId
 PropertySignature.name: SymbolId (no separate symbol_id field)
 ```
 
 **Proposal:** Standardize PropertySignature to match PropertyDefinition:
+
 ```typescript
 export interface PropertySignature {
   readonly kind: "property";
   readonly symbol_id: SymbolId;
-  readonly name: SymbolName;  // Changed from SymbolId
+  readonly name: SymbolName; // Changed from SymbolId
   readonly type?: SymbolName;
   readonly location: Location;
 }
 ```
 
 **Benefits:**
+
 - Consistent API across property types
 - No need for `extract_name_from_symbol_id()` helper
 - Simpler extraction logic
@@ -695,6 +747,7 @@ export interface PropertySignature {
 **3. Integration with SemanticIndex (Task 11.105.5)**
 
 **Next Steps:**
+
 1. Add `type_members: ReadonlyMap<SymbolId, TypeMemberInfo>` to SemanticIndex interface
 2. Call `extract_type_members()` in `build_semantic_index()`
 3. Store results in returned index
@@ -705,11 +758,13 @@ export interface PropertySignature {
 **4. Usage Examples and Documentation**
 
 **Missing:**
+
 - Example showing how to lookup members for a type
 - Example showing inheritance chain traversal
 - Integration guide for task 11.109
 
 **Add to member_extraction.ts JSDoc:**
+
 ```typescript
 /**
  * @example
@@ -725,11 +780,13 @@ export interface PropertySignature {
 **5. Test Enhancements**
 
 **When semantic_index is improved:**
+
 - Remove `.skip()` from 7 skipped tests
 - Verify exact method/property names match expectations
 - Add tests for inheritance chain resolution (task 11.109 scope)
 
 **Additional test cases:**
+
 - Overloaded methods (verify first one wins)
 - Private/public methods (both should be indexed)
 - Abstract methods (should be included)
@@ -742,6 +799,7 @@ export interface PropertySignature {
 **1. Test-Driven Discovery**
 
 Writing tests first revealed:
+
 - semantic_index extraction gaps
 - PropertySignature type inconsistency
 - TypeScript parser configuration requirements
@@ -751,10 +809,12 @@ Writing tests first revealed:
 **2. Defensive Testing**
 
 Tests should validate:
+
 - Structure existence (always)
 - Exact values (only when controlled by the module being tested)
 
 **Example:**
+
 ```typescript
 // ✅ Good - validates what we control
 expect(memberInfo.methods).toBeDefined();
@@ -767,11 +827,13 @@ expect(memberInfo.methods.has("specificMethodName")).toBe(true);
 **3. Documentation at Discovery**
 
 Documenting issues immediately (via `.skip()` messages and comments) prevents:
+
 - Forgotten context when revisiting tests
 - Confusion about whether tests are broken or intentionally skipped
 - Re-investigation of the same issue
 
 **Pattern:**
+
 ```typescript
 it.skip("test name (SKIPPED: specific reason with context)", () => {
   // Test implementation preserved for when fix is ready
@@ -781,11 +843,13 @@ it.skip("test name (SKIPPED: specific reason with context)", () => {
 **4. Separation of Concerns**
 
 member_extraction.ts is responsible for:
+
 - ✅ Indexing members into efficient lookup structures
 - ✅ Preserving data from definitions
 - ✅ Creating consistent TypeMemberInfo structure
 
 member_extraction.ts is NOT responsible for:
+
 - ❌ Extracting definitions from source code (semantic_index's job)
 - ❌ Resolving type names to SymbolIds (task 11.109's job)
 - ❌ Walking inheritance chains (task 11.109's job)
@@ -797,6 +861,7 @@ member_extraction.ts is NOT responsible for:
 #### Success Criteria Met
 
 **Functional:**
+
 - ✅ Type annotations extracted correctly (from previous subtask)
 - ✅ Constructor bindings extracted correctly (from previous subtask)
 - ✅ Type members indexed correctly
@@ -804,11 +869,13 @@ member_extraction.ts is NOT responsible for:
 - ✅ Graceful handling of missing/empty data
 
 **Integration:**
+
 - ✅ TypeMemberInfo interface defined and exported
 - ✅ Data format matches task 11.109.3's expectations
 - ✅ Efficient Map-based lookup structures (O(1) access)
 
 **Testing:**
+
 - ✅ Unit tests for classes (JavaScript, TypeScript)
 - ✅ Unit tests for interfaces (TypeScript)
 - ✅ Unit tests for enums (Rust)
@@ -817,6 +884,7 @@ member_extraction.ts is NOT responsible for:
 - ✅ >90% code coverage achieved
 
 **Code Quality:**
+
 - ✅ Pythonic naming (`snake_case`)
 - ✅ Full JSDoc documentation
 - ✅ Type-safe implementation
@@ -853,6 +921,7 @@ Extract raw type alias data (NOT resolved).
 #### Implementation Details
 
 **Files Created:**
+
 - `/packages/core/src/index_single_file/type_preprocessing/alias_extraction.ts` (48 lines)
 - `/packages/core/src/index_single_file/type_preprocessing/tests/alias_extraction.test.ts` (18 tests)
 
@@ -923,11 +992,13 @@ export function extract_type_alias_metadata(
 **Follow-On Work:**
 
 1. **Integration with SemanticIndex** (Task 11.105.5):
+
    - Add `type_alias_metadata` field to SemanticIndex interface
    - Call `extract_type_alias_metadata()` in `build_semantic_index()`
    - Store results for use by task 11.109.3
 
 2. **Rust Type Expression Extraction**:
+
    - Add `extract_type_expression()` helper to Rust builder
    - Extract right-hand side of type alias declarations
    - Will enable 4 currently-skipped tests to pass
@@ -971,12 +1042,14 @@ Add extraction to indexing pipeline.
 #### Implementation Summary
 
 **Files Modified:**
+
 - `/packages/types/src/semantic_index.ts` - Added TypeMemberInfo interface and new SemanticIndex fields
 - `/packages/core/src/index_single_file/semantic_index.ts` - Integrated extractors into build_semantic_index()
 - `/packages/core/src/index_single_file/type_preprocessing/member_extraction.ts` - Updated to use TypeMemberInfo from @ariadnejs/types
 - `/packages/core/src/index_single_file/type_preprocessing/index.ts` - Updated exports
 
 **Build Artifacts:**
+
 - TypeScript compilation: ✅ 0 errors
 - All packages built successfully
 - Generated .d.ts files verified correct
@@ -1086,6 +1159,7 @@ return {
 **Decision:** Move TypeMemberInfo from core package to types package
 
 **Rationale:**
+
 - SemanticIndex is defined in types package
 - TypeMemberInfo is part of SemanticIndex interface
 - Enables type sharing across packages without circular dependencies
@@ -1098,20 +1172,23 @@ return {
 **Decision:** Combine type bindings from both definitions and constructor calls
 
 **Implementation:**
+
 ```typescript
 const type_bindings = new Map([
-  ...type_bindings_from_defs,      // From type annotations
-  ...type_bindings_from_ctors,     // From constructor calls
+  ...type_bindings_from_defs, // From type annotations
+  ...type_bindings_from_ctors, // From constructor calls
 ]);
 ```
 
 **Rationale:**
+
 - Maximizes type information coverage
 - Constructor bindings override annotation bindings (more specific)
 - JavaScript Map spread ensures later entries win on key conflicts
 - Enables tracking types even when annotations are missing
 
 **Benefits:**
+
 - `const x: User = ...` → binding from annotation
 - `const x = new User()` → binding from constructor
 - Both stored in same unified map for consistent lookup
@@ -1121,12 +1198,14 @@ const type_bindings = new Map([
 **Decision:** Add type preprocessing as final pass after all other indexing
 
 **Rationale:**
+
 - Depends on completed definitions (functions, classes, interfaces)
 - Depends on completed references (for constructor tracking)
 - Doesn't affect existing passes (clean separation)
 - Can be disabled/modified without impacting core indexing
 
 **Pipeline Order:**
+
 1. PASS 1: Query tree-sitter for captures
 2. PASS 2: Build scope tree
 3. PASS 3: Process definitions
@@ -1139,6 +1218,7 @@ const type_bindings = new Map([
 **Decision:** All extractors return `ReadonlyMap` types
 
 **Consistency:**
+
 - Matches existing SemanticIndex field types
 - Prevents accidental mutation of indexed data
 - Communicates immutability contract to consumers
@@ -1153,6 +1233,7 @@ const type_bindings = new Map([
 **Discovery:** Moving TypeMemberInfo to types package revealed clean architecture
 
 **Pattern:**
+
 ```
 @ariadnejs/types (interfaces, types)
        ↓
@@ -1162,6 +1243,7 @@ const type_bindings = new Map([
 ```
 
 **Benefits:**
+
 - No circular dependencies
 - Clear separation: types vs. implementations
 - Easy to add new packages that share types
@@ -1172,12 +1254,14 @@ const type_bindings = new Map([
 **Discovery:** JavaScript Map supports spread operator for clean merging
 
 **Pattern:**
+
 ```typescript
 const merged = new Map([...map1, ...map2]);
 // Later entries (map2) override earlier entries (map1) on key conflict
 ```
 
 **Benefits:**
+
 - Concise syntax
 - Explicit override behavior
 - Type-safe (TypeScript validates)
@@ -1188,12 +1272,13 @@ const merged = new Map([...map1, ...map2]);
 **Discovery:** TypeMemberInfo needed as both type and value
 
 **Solution:**
+
 ```typescript
 // In member_extraction.ts
-import type { TypeMemberInfo } from "@ariadnejs/types";  // Type import
+import type { TypeMemberInfo } from "@ariadnejs/types"; // Type import
 
 // In semantic_index.ts
-import type { TypeMemberInfo } from "@ariadnejs/types";  // Type import only
+import type { TypeMemberInfo } from "@ariadnejs/types"; // Type import only
 // (Never needs runtime value - just type annotation)
 ```
 
@@ -1204,6 +1289,7 @@ import type { TypeMemberInfo } from "@ariadnejs/types";  // Type import only
 **Discovery:** Types package must build before core package
 
 **Verification:**
+
 ```bash
 npm run build  # Builds in order: types → core → mcp
 ```
@@ -1221,6 +1307,7 @@ npm run build  # Builds in order: types → core → mcp
 **Root Cause:** Types package hadn't been built yet, so .d.ts files were stale
 
 **Solution:**
+
 ```bash
 cd packages/types && npm run build
 npm run typecheck  # Now passes
@@ -1237,6 +1324,7 @@ npm run typecheck  # Now passes
 **Root Cause:** Needed to update imports after moving TypeMemberInfo to types package
 
 **Solution:**
+
 ```typescript
 // Before
 export interface TypeMemberInfo { ... }
@@ -1252,12 +1340,14 @@ import type { TypeMemberInfo } from "@ariadnejs/types";
 #### Verification Steps Completed
 
 **1. TypeScript Compilation** ✅
+
 ```bash
 npm run typecheck
 # Result: 0 errors across all 3 packages
 ```
 
 **2. Build Verification** ✅
+
 ```bash
 npm run build
 # Result: All packages built successfully
@@ -1266,6 +1356,7 @@ npm run build
 ```
 
 **3. Test Suite Verification** ✅
+
 ```bash
 npm test
 # Results:
@@ -1282,8 +1373,8 @@ Created live integration test to verify new fields populated:
 const index = build_semantic_index(file, tree, "typescript");
 
 // Verify new fields exist and are populated
-expect(index.type_bindings.size).toBeGreaterThan(0);      // ✅ 4 bindings
-expect(index.type_members.size).toBeGreaterThan(0);       // ✅ 1 class
+expect(index.type_bindings.size).toBeGreaterThan(0); // ✅ 4 bindings
+expect(index.type_members.size).toBeGreaterThan(0); // ✅ 1 class
 expect(index.type_alias_metadata.size).toBeGreaterThan(0); // ✅ 1 alias
 ```
 
@@ -1304,12 +1395,14 @@ grep "type_bindings\|type_members\|type_alias_metadata" \
 #### Performance Impact
 
 **Measured Performance:**
+
 - Type preprocessing adds ~5-10ms per file to indexing time
 - Memory overhead: ~5-10% increase for typical files
 - Complexity: O(n) where n = number of definitions + references
 - No observable impact on large codebases (tested with 100+ files)
 
 **Optimization Notes:**
+
 - All extractors use single-pass algorithms
 - Maps provide O(1) lookup for consumers
 - No deep copying (stores references to existing SymbolIds)
@@ -1320,12 +1413,14 @@ grep "type_bindings\|type_members\|type_alias_metadata" \
 #### Integration Points
 
 **Exported Types (from @ariadnejs/types):**
+
 ```typescript
 export interface TypeMemberInfo { ... }
 export interface SemanticIndex { ... }  // Now includes 3 new fields
 ```
 
 **Exported Functions (from @ariadnejs/core):**
+
 ```typescript
 export { extract_type_bindings } from "./type_preprocessing";
 export { extract_constructor_bindings } from "./type_preprocessing";
@@ -1334,11 +1429,13 @@ export { extract_type_alias_metadata } from "./type_preprocessing";
 ```
 
 **Consumed By:**
+
 - Task 11.109.1: ScopeResolver (will resolve type names → SymbolIds)
 - Task 11.109.3: TypeContext (will consume all 3 fields)
 - Task 11.109.5: Method resolution (will use TypeContext for lookups)
 
 **Data Flow:**
+
 ```
 semantic_index definitions
   ↓
@@ -1361,6 +1458,7 @@ Task 11.109.5: Method resolution (used)
 **1. Task 11.109.3: TypeContext Integration** (Next Step)
 
 **Required:**
+
 - Implement ScopeResolver for type name resolution
 - Build TypeContext using SemanticIndex fields
 - Resolve type bindings: SymbolName → SymbolId
@@ -1368,6 +1466,7 @@ Task 11.109.5: Method resolution (used)
 - Handle inheritance chains using type_members.extends
 
 **Data Available:**
+
 ```typescript
 // From SemanticIndex:
 index.type_bindings: Map<LocationKey, SymbolName>  // ✅ Ready
@@ -1378,6 +1477,7 @@ index.type_alias_metadata: Map<SymbolId, string>   // ✅ Ready
 **2. semantic_index Improvements** (Future)
 
 **Gaps Identified:**
+
 - Python: Class methods not extracted (7 tests skipped)
 - Rust: impl block methods not extracted (4 tests skipped)
 - Rust: Type alias expressions not extracted (4 tests skipped)
@@ -1394,6 +1494,7 @@ index.type_alias_metadata: Map<SymbolId, string>   // ✅ Ready
 **Current Workaround:** `extract_name_from_symbol_id()` helper function
 
 **Proposed:**
+
 ```typescript
 // Current (inconsistent)
 PropertyDefinition.name: SymbolName
@@ -1412,6 +1513,7 @@ PropertySignature.symbol_id: SymbolId
 **4. Documentation** (Recommended)
 
 **Missing:**
+
 - Usage examples for type_bindings lookup
 - Usage examples for type_members traversal
 - Integration guide for task 11.109
@@ -1424,20 +1526,23 @@ PropertySignature.symbol_id: SymbolId
 #### Test Coverage Summary
 
 **Unit Tests:**
+
 - type_bindings.test.ts: 18 tests ✅
 - constructor_tracking.test.ts: 19 tests ✅
 - member_extraction.test.ts: 13 passed, 7 skipped (semantic_index gaps)
 - alias_extraction.test.ts: 14 passed, 4 skipped (Rust limitation)
 
 **Integration Tests:**
+
 - All semantic_index tests pass (575 tests)
 - Live integration test verified all 3 fields populated
 - No regressions in existing functionality
 
 **Total Coverage:**
+
 - 64 passing tests (11 skipped due to semantic_index gaps)
-- >95% line coverage
-- >90% branch coverage
+- > 95% line coverage
+- > 90% branch coverage
 - 100% function coverage
 
 ---
@@ -1445,6 +1550,7 @@ PropertySignature.symbol_id: SymbolId
 #### Success Criteria Met
 
 **Functional:** ✅
+
 - ✅ Type annotations extracted correctly
 - ✅ Constructor bindings extracted correctly
 - ✅ Type members indexed correctly
@@ -1452,18 +1558,21 @@ PropertySignature.symbol_id: SymbolId
 - ✅ All 4 supported languages working
 
 **Integration:** ✅
+
 - ✅ Fields added to SemanticIndex
 - ✅ Data format matches task 11.109.3's expectations
 - ✅ Efficient lookup structures (O(1) access)
 - ✅ TypeMemberInfo properly exported from @ariadnejs/types
 
 **Testing:** ✅
+
 - ✅ Unit tests for each extractor
 - ✅ Integration tests with semantic_index
 - ✅ All languages tested
 - ✅ >90% code coverage achieved
 
 **Code Quality:** ✅
+
 - ✅ Pythonic naming (`snake_case`)
 - ✅ Full JSDoc documentation
 - ✅ Type-safe implementation
@@ -1477,6 +1586,7 @@ PropertySignature.symbol_id: SymbolId
 **1. Build Order Matters**
 
 When adding types to @ariadnejs/types:
+
 1. Build types package first
 2. Then typecheck dependent packages
 3. npm workspace handles this automatically for `npm run build`
@@ -1502,6 +1612,7 @@ When adding types to @ariadnejs/types:
 **5. Separation of Concerns**
 
 Clear boundaries between:
+
 - **Extraction** (task 11.105): Extract data as strings
 - **Resolution** (task 11.109): Resolve strings → SymbolIds
 - **Usage** (task 11.109.5): Use resolved data for method calls
@@ -1736,6 +1847,7 @@ After completion:
 Conducted comprehensive regression testing across all 3 packages to verify type preprocessing integration introduced zero breaking changes.
 
 **Scope:**
+
 - Full test suite execution (743 tests across all packages)
 - Coverage verification for type preprocessing modules
 - Regression analysis for all test failures
@@ -1744,14 +1856,15 @@ Conducted comprehensive regression testing across all 3 packages to verify type 
 
 **Test Results:**
 
-| Package | Total Tests | Passing | Failed | Skipped | Status |
-|---------|-------------|---------|--------|---------|--------|
-| **@ariadnejs/types** | 10 | 10 | 0 | 0 | ✅ 100% |
-| **@ariadnejs/core** | 684 | 575 | 8 | 101 | ✅ No regressions |
-| **@ariadnejs/mcp** | 49 | 1 | 12 | 36 | ⚠️ Pre-existing |
-| **TOTAL** | **743** | **586** | **20** | **137** | ✅ **No new failures** |
+| Package              | Total Tests | Passing | Failed | Skipped | Status                 |
+| -------------------- | ----------- | ------- | ------ | ------- | ---------------------- |
+| **@ariadnejs/types** | 10          | 10      | 0      | 0       | ✅ 100%                |
+| **@ariadnejs/core**  | 684         | 575     | 8      | 101     | ✅ No regressions      |
+| **@ariadnejs/mcp**   | 49          | 1       | 12     | 36      | ⚠️ Pre-existing        |
+| **TOTAL**            | **743**     | **586** | **20** | **137** | ✅ **No new failures** |
 
 **Coverage Achieved:**
+
 - Line coverage: 90.34% (target: >90%) ✅
 - Branch coverage: 85.71% (target: >85%) ✅
 - Function coverage: 100% (target: 100%) ✅
@@ -1763,6 +1876,7 @@ Conducted comprehensive regression testing across all 3 packages to verify type 
 **1. Zero Regressions Confirmed**
 
 Type preprocessing integration introduced:
+
 - **0 new test failures**
 - **0 breaking changes**
 - **64 new passing tests** (type_preprocessing suite)
@@ -1770,25 +1884,27 @@ Type preprocessing integration introduced:
 
 **2. Test Results by Language**
 
-| Language | Tests | Passing | Coverage |
-|----------|-------|---------|----------|
-| **JavaScript** | 12 | 12 | ✅ 100% |
-| **TypeScript** | 21 | 21 | ✅ 100% |
-| **Python** | 11 | 11 | ✅ 100% |
-| **Rust** | 9 | 9 | ✅ 100% |
-| **Edge Cases** | 12 | 11 | ✅ 100% |
+| Language       | Tests | Passing | Coverage |
+| -------------- | ----- | ------- | -------- |
+| **JavaScript** | 12    | 12      | ✅ 100%  |
+| **TypeScript** | 21    | 21      | ✅ 100%  |
+| **Python**     | 11    | 11      | ✅ 100%  |
+| **Rust**       | 9     | 9       | ✅ 100%  |
+| **Edge Cases** | 12    | 11      | ✅ 100%  |
 
 **3. Pre-Existing Failures Identified**
 
 All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 
 **Rust failures (8 tests):**
+
 - Added in commit 3acc21d as "intentional failures"
 - Documented as semantic_index extraction gaps
 - Root cause: Missing Rust parameter/method extraction
 - NOT related to type preprocessing
 
 **MCP failures (12 tests):**
+
 - Error: `ReferenceError: Project is not defined`
 - Root cause: Missing imports in MCP test files
 - Documented in TEST_REGRESSION_ANALYSIS.md
@@ -1799,6 +1915,7 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 #### Test Scenarios Verified
 
 **Type Annotations (18 tests):**
+
 - ✅ Variable type annotations (all 4 languages)
 - ✅ Function parameter types (all 4 languages)
 - ✅ Function return types (all 4 languages)
@@ -1808,6 +1925,7 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 - ✅ Struct field types (Rust)
 
 **Constructor Bindings (19 tests):**
+
 - ✅ Simple constructor assignments (all 4 languages)
 - ✅ Multiple constructor assignments (all 4 languages)
 - ✅ Property/field assignments (all 4 languages)
@@ -1816,6 +1934,7 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 - ✅ Standalone calls without assignment (edge case)
 
 **Type Members (20 tests):**
+
 - ✅ Class method extraction (JavaScript, TypeScript)
 - ✅ Class property extraction (JavaScript, TypeScript)
 - ✅ Constructor tracking (TypeScript)
@@ -1826,6 +1945,7 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 - ⏭️ 7 tests skipped (semantic_index limitations)
 
 **Type Alias Metadata (18 tests):**
+
 - ✅ Simple type aliases (TypeScript, Python)
 - ✅ Union types (TypeScript)
 - ✅ Object types (TypeScript)
@@ -1840,12 +1960,14 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 #### Performance Analysis
 
 **Type Preprocessing Impact:**
+
 - Adds ~5-10ms per file to indexing time
 - Memory overhead: ~5-10% for typical files
 - Complexity: O(n) where n = definitions + references
 - **No observable performance regressions**
 
 **Test Execution Times:**
+
 - Type preprocessing suite: 6.39s for 75 tests (~85ms/test)
 - TypeScript semantic_index: 5.55s (normal)
 - JavaScript semantic_index: 1.65s (normal)
@@ -1860,12 +1982,14 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **Decision:** Document all failures with git history evidence
 
 **Rationale:**
+
 - Clear separation of new vs. pre-existing issues
 - Provides audit trail for future debugging
 - Prevents false regression reports
 - Enables proper prioritization of fixes
 
 **Implementation:**
+
 - Created comprehensive regression analysis report
 - Traced each failure to original commit
 - Documented root causes for all 20 failures
@@ -1876,14 +2000,16 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **Decision:** Install @vitest/coverage-v8 for detailed metrics
 
 **Rationale:**
+
 - Needed precise line/branch/function coverage percentages
 - Required to verify >90% line, >85% branch, 100% function goals
 - Provides detailed uncovered line reporting
 - Integrates with vitest test runner
 
 **Implementation:**
+
 - Installed @vitest/coverage-v8 as dev dependency
-- Configured coverage to include only type_preprocessing/*.ts
+- Configured coverage to include only type_preprocessing/\*.ts
 - Excluded test files from coverage analysis
 - Generated text and text-summary reports
 
@@ -1892,12 +2018,14 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **Decision:** Compare test counts before/after type preprocessing
 
 **Rationale:**
+
 - Objective measure of regression impact
 - Easy to verify: 575 passing before, 575 passing after
 - Demonstrates zero impact on existing tests
 - Validates backward compatibility
 
 **Evidence:**
+
 - Before: 575 core tests passing
 - After: 575 core tests passing + 64 new
 - Delta: +64 passing, 0 new failures
@@ -1911,12 +2039,14 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **Pattern:** Use commit messages to verify failure origins
 
 **Discovery:**
+
 - Commit 3acc21d explicitly stated "31/42 tests passing"
 - Documented "Implementation Gaps Identified (Expected)"
 - Proves failures existed before type preprocessing
 - Commit messages provide audit trail
 
 **Application:**
+
 - Always check git log for failure history
 - Use commit messages as evidence
 - Cross-reference with task documentation
@@ -1927,12 +2057,14 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **Pattern:** Previously documented issues in TEST_REGRESSION_ANALYSIS.md
 
 **Discovery:**
+
 - MCP failures explicitly documented as pre-existing
 - Rust failures documented with root causes
 - Documentation created before type preprocessing
 - Provides independent verification
 
 **Benefit:**
+
 - Instant verification of pre-existing issues
 - No need to re-analyze known problems
 - Confirms issues are tracked
@@ -1943,12 +2075,14 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **Pattern:** Passing test count should remain constant
 
 **Discovery:**
+
 - 575 tests passing before integration
 - 575 tests passing after integration
 - +64 new tests, 0 failures
 - Objective measure of zero regressions
 
 **Application:**
+
 - Track passing test counts across changes
 - Use as primary regression indicator
 - Supplement with failure analysis
@@ -1959,11 +2093,13 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **Pattern:** Coverage just above thresholds indicates minimal uncovered code
 
 **Discovery:**
+
 - Line: 90.34% (target: >90%) - Just above threshold
 - Branch: 85.71% (target: >85%) - Just above threshold
 - Indicates edge cases or blocked paths
 
 **Analysis:**
+
 - Uncovered lines in member_extraction.ts (lines 132-144)
 - Blocked by semantic_index limitations (no Rust enum methods)
 - Uncovered lines in type_bindings.ts (lines 60-62, 109-111)
@@ -1980,6 +2116,7 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **Issue:** Need to distinguish new failures from pre-existing
 
 **Investigation Steps:**
+
 1. Executed full test suite (743 tests)
 2. Found 20 failures (8 Rust + 12 MCP)
 3. Checked git history for failure origins
@@ -1987,6 +2124,7 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 5. Analyzed type preprocessing scope
 
 **Resolution:**
+
 - All 20 failures confirmed pre-existing
 - Evidence: commit 3acc21d, TEST_REGRESSION_ANALYSIS.md
 - Root causes identified and documented
@@ -2001,6 +2139,7 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **Error:** `MISSING DEPENDENCY Cannot find dependency '@vitest/coverage-v8'`
 
 **Resolution:**
+
 - Installed coverage tool: `npm install --save-dev @vitest/coverage-v8`
 - Added 30 packages, changed 1 package
 - Verified coverage reporting works
@@ -2014,12 +2153,14 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **Issue:** Need to verify if Rust failures are regressions
 
 **Investigation:**
+
 - Found commit 3acc21d added 42 Rust tests
 - Commit message: "31/42 tests passing"
 - Documented: "Implementation Gaps Identified (Expected)"
 - Current: 8 failures (improved from 11)
 
 **Verification:**
+
 - Checked commit message for "intentional failures"
 - Reviewed RUST_TEST_COVERAGE_ANALYSIS.md
 - Confirmed gaps documented before type preprocessing
@@ -2036,6 +2177,7 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **Gap Identified:** 8 Rust tests failing due to extraction limitations
 
 **Missing Features:**
+
 - Function parameter extraction (signature.parameters empty)
 - Method extraction from impl blocks
 - Trait method signatures
@@ -2060,10 +2202,12 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **3. Coverage Improvement Opportunities** (Optional)
 
 **Current Coverage:**
+
 - Line: 90.34% (16 lines uncovered)
 - Branch: 85.71% (6 branches uncovered)
 
 **Opportunities:**
+
 - Add tests for Rust enum method extraction path
 - Cover edge cases in type_bindings.ts
 - Test constructor parameter edge cases
@@ -2077,6 +2221,7 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **Current:** No performance regressions detected
 
 **Recommendation:**
+
 - Monitor indexing time as codebase grows
 - Track memory usage for large files
 - Benchmark type preprocessing overhead
@@ -2103,17 +2248,20 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 #### Success Criteria Verification
 
 **Coverage Goals:**
+
 - ✅ Line coverage >90%: **90.34%** ACHIEVED
 - ✅ Branch coverage >85%: **85.71%** ACHIEVED
 - ✅ Function coverage 100%: **100%** ACHIEVED
 
 **Language Coverage:**
+
 - ✅ JavaScript: 12/12 tests passing
 - ✅ TypeScript: 21/21 tests passing
 - ✅ Python: 11/11 tests passing
 - ✅ Rust: 9/9 tests passing (type_preprocessing only)
 
 **Test Scenarios:**
+
 - ✅ Type annotations tested across all 4 languages
 - ✅ Constructor patterns tested across all 4 languages
 - ✅ Generic type arguments tested (TypeScript)
@@ -2121,11 +2269,13 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 - ✅ Member extraction tested (JavaScript, TypeScript, Rust)
 
 **Performance:**
+
 - ✅ No regressions in indexing pipeline
 - ✅ Type preprocessing adds only 5-10ms per file
 - ✅ Memory overhead <10% for typical files
 
 **Quality:**
+
 - ✅ Zero regressions introduced
 - ✅ Zero TypeScript compilation errors
 - ✅ All existing tests still passing
@@ -2138,6 +2288,7 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **Subtask 11.105.6 COMPLETE** with all objectives achieved:
 
 **Achievements:**
+
 - ✅ 586 tests passing across all packages
 - ✅ 64 type_preprocessing tests (all passing)
 - ✅ Zero regressions from type preprocessing
@@ -2147,6 +2298,7 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 - ✅ Comprehensive documentation created
 
 **Evidence:**
+
 - Test counts maintained: 575 core tests still passing
 - Coverage metrics: 90.34% line, 85.71% branch, 100% function
 - Pre-existing failures: All 20 failures documented with evidence
@@ -2154,6 +2306,7 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 - Performance: No observable impact on indexing
 
 **Deliverables:**
+
 - ✅ Full regression test report
 - ✅ Coverage analysis report
 - ✅ Pre-existing failure documentation
@@ -2171,6 +2324,7 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **Time Spent:** ~8 hours (of estimated 7-10 hours)
 
 **Repository State:**
+
 - All code compiles ✅
 - All tests passing (586 total | 64 type_preprocessing | 11 skipped) ✅
 - Zero regressions from type preprocessing ✅
@@ -2180,17 +2334,20 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 ### Key Achievements
 
 1. **Established Type Preprocessing Architecture:**
+
    - Created `/packages/core/src/index_single_file/type_preprocessing/` module structure
    - Defined clear separation between extraction (11.105) and resolution (11.109)
    - Established test patterns for cross-language validation
 
 2. **Implemented Four Core Extractors:**
+
    - `extract_type_bindings()`: Extracts type annotations from definitions
    - `extract_constructor_bindings()`: Extracts constructor → variable mappings
    - `extract_type_members()`: Builds type member indexes for classes/interfaces
    - `extract_type_alias_metadata()`: Extracts raw type alias expressions
 
 3. **Comprehensive Test Coverage:**
+
    - 75 tests across all 4 supported languages (64 passed | 11 skipped)
    - Test categories: simple cases, edge cases, language-specific patterns
    - All non-skipped tests green and stable
@@ -2204,14 +2361,17 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 ### Patterns Established
 
 1. **Extractor Function Signature:**
+
    ```typescript
-   export function extract_X(input: SourceData): ReadonlyMap<Key, Value>
+   export function extract_X(input: SourceData): ReadonlyMap<Key, Value>;
    ```
+
    - Pure functions with clear inputs/outputs
    - Return ReadonlyMap for immutability
    - No side effects
 
 2. **Test Structure:**
+
    - Organize by language (JavaScript, TypeScript, Python, Rust)
    - Include edge cases section
    - Use helper functions for parser setup
@@ -2232,6 +2392,7 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **Task 11.105 is now complete. Next task:** 11.109 (Method Resolution)
 
 **Deliverables Ready for Task 11.109:**
+
 - ✅ type_bindings: Map<LocationKey, SymbolName> - Type annotations from definitions
 - ✅ type_members: Map<SymbolId, TypeMemberInfo> - Class/interface/enum member indexes
 - ✅ type_alias_metadata: Map<SymbolId, string> - Type alias expressions (unresolved)
@@ -2242,6 +2403,7 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 ### Integration Readiness
 
 **For Task 11.109 (Method Resolution):**
+
 - ✅ Type bindings data structure defined and implemented
 - ✅ Constructor bindings data structure defined and implemented
 - ✅ Type members data structure defined and implemented
@@ -2249,6 +2411,7 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 - ✅ SemanticIndex integration COMPLETED
 
 **Final State:**
+
 - All 4 extractor functions complete and tested
 - All extractors integrated into build_semantic_index() pipeline
 - 64 tests passing (11 skipped due to semantic_index limitations)
@@ -2271,22 +2434,26 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **What Was Completed:**
 
 1. **Type Bindings Extractor** (11.105.1) ✅
+
    - Extracts type annotations from VariableDefinition, ParameterDefinition, FunctionDefinition
    - Returns Map<LocationKey, SymbolName> for efficient lookup
    - Tested across all 4 languages
 
 2. **Constructor Bindings Extractor** (11.105.2) ✅
+
    - Tracks constructor calls → variable assignments
    - Uses SymbolReference.context.construct_target metadata
    - Handles generic constructors, property assignments
    - 19 tests, all passing
 
 3. **Type Members Extractor** (11.105.3) ✅
+
    - Builds TypeMemberInfo index from ClassDefinition, InterfaceDefinition, EnumDefinition
    - Indexes methods, properties, constructor, extends relationships
    - 20 tests (13 passed, 7 skipped due to semantic_index gaps)
 
 4. **Type Alias Metadata Extractor** (11.105.4) ✅
+
    - Extracts raw type_expression strings from TypeAliasDefinition
    - Returns Map<SymbolId, string> (NOT resolved)
    - 18 tests (14 passed, 4 skipped for Rust)
@@ -2302,11 +2469,13 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **Key Decisions Made:**
 
 1. **Extraction vs. Resolution Separation:**
+
    - All extractors store strings (SymbolName), NOT resolved SymbolIds
    - Resolution deferred to task 11.109.3 using ScopeResolver
    - Enables scope-aware type name resolution with proper import handling
 
 2. **Pure Function Design:**
+
    - All extractors are pure functions with clear inputs/outputs
    - Return ReadonlyMap for immutability
    - No side effects, easily testable
@@ -2319,11 +2488,13 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **Patterns Discovered:**
 
 1. **SymbolReference Metadata Richness:**
+
    - `construct_target` provides assignment location for constructor calls
    - Type information embedded in definition objects
    - Minimal additional parsing needed
 
 2. **Cross-Language Type System Variations:**
+
    - TypeScript: Full type alias support with `type_expression` extraction
    - Python: Type alias support via `type` statement (3.12+) and TypeAlias
    - Rust: Type aliases exist but `type_expression` not extracted by semantic_index
@@ -2338,11 +2509,13 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **Issues Encountered & Solutions:**
 
 1. **PropertySignature Type Inconsistency:**
+
    - Issue: PropertySignature.name is SymbolId, not SymbolName like PropertyDefinition
    - Solution: Created `extract_name_from_symbol_id()` helper
    - Follow-up: Consider standardizing interface in future
 
 2. **TypeScript Parser Configuration:**
+
    - Issue: TypeScript.typescript parser didn't extract definitions
    - Solution: Use TypeScript.tsx parser for all TypeScript code
    - Documented in test patterns
@@ -2363,11 +2536,13 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **Follow-On Work Identified:**
 
 1. **Immediate (Task 11.105.5):**
+
    - Add fields to SemanticIndex: `type_bindings`, `type_members`, `type_alias_metadata`
    - Call all 4 extractors in `build_semantic_index()`
    - Store results in returned index
 
 2. **semantic_index Improvements (Future):**
+
    - Add `extract_type_expression()` for Rust type aliases
    - Extract Python class methods from `def` statements
    - Extract Rust impl block methods
@@ -2382,6 +2557,7 @@ All 20 test failures are **PRE-EXISTING** (confirmed via git history):
 **Integration Readiness:**
 
 All 4 extractors and SemanticIndex integration are **production-ready**:
+
 - ✅ Zero compilation errors
 - ✅ Full type safety with TypeScript
 - ✅ Comprehensive test coverage (64 passing tests)
@@ -2406,24 +2582,28 @@ Task 11.105 is **COMPLETE**. Ready to proceed with task 11.109 (Method Resolutio
 ### What Was Delivered
 
 **1. Four Type Preprocessing Extractors:**
+
 - `extract_type_bindings()` - Type annotations from definitions
 - `extract_constructor_bindings()` - Constructor → variable mappings
 - `extract_type_members()` - Class/interface/enum member indexes
 - `extract_type_alias_metadata()` - Type alias expressions (unresolved)
 
 **2. SemanticIndex Integration:**
+
 - Added `TypeMemberInfo` interface to @ariadnejs/types
 - Extended `SemanticIndex` with 3 new fields
 - Integrated extractors into `build_semantic_index()` pipeline (PASS 6)
 - Verified all fields populated correctly
 
 **3. Comprehensive Testing:**
+
 - 64 type_preprocessing unit tests (all passing, 11 skipped for documented gaps)
 - 575 core integration tests (all passing, zero regressions)
-- >95% line coverage, >90% branch coverage, 100% function coverage
+- > 95% line coverage, >90% branch coverage, 100% function coverage
 - Cross-language validation (JavaScript, TypeScript, Python, Rust)
 
 **4. Complete Documentation:**
+
 - Detailed implementation notes for all 5 subtasks
 - Design decisions and rationale documented
 - Patterns discovered and catalogued
@@ -2443,15 +2623,16 @@ Task 11.105 is **COMPLETE**. Ready to proceed with task 11.109 (Method Resolutio
 ```typescript
 interface SemanticIndex {
   // NEW: Type preprocessing data
-  type_bindings: ReadonlyMap<LocationKey, SymbolName>;           // ✅ Ready
-  type_members: ReadonlyMap<SymbolId, TypeMemberInfo>;          // ✅ Ready
-  type_alias_metadata: ReadonlyMap<SymbolId, string>;           // ✅ Ready
+  type_bindings: ReadonlyMap<LocationKey, SymbolName>; // ✅ Ready
+  type_members: ReadonlyMap<SymbolId, TypeMemberInfo>; // ✅ Ready
+  type_alias_metadata: ReadonlyMap<SymbolId, string>; // ✅ Ready
 }
 ```
 
 ### Next Task
 
 **Task 11.109: Method Resolution**
+
 - 11.109.1: Implement ScopeResolver
 - 11.109.3: Build TypeContext using type preprocessing data
 - 11.109.5: Implement scope-aware method call resolution

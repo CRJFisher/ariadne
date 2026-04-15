@@ -220,7 +220,6 @@ function build_resolvers_recursive(
   file_path: FilePath,
   indices: ReadonlyMap<FilePath, SemanticIndex>
 ): Map<ScopeId, Map<SymbolName, SymbolResolver>> {
-
   const result = new Map<ScopeId, Map<SymbolName, SymbolResolver>>();
   const resolvers = new Map<SymbolName, SymbolResolver>();
 

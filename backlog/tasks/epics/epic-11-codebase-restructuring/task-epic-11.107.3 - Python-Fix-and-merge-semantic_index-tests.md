@@ -1,9 +1,9 @@
 ---
 id: task-epic-11.107.3
-title: 'Python: Fix and merge semantic_index tests'
+title: "Python: Fix and merge semantic_index tests"
 status: Completed
 assignee: []
-created_date: '2025-10-01 10:27'
+created_date: "2025-10-01 10:27"
 labels: []
 dependencies: []
 parent_task_id: task-epic-11.107
@@ -24,16 +24,19 @@ priority: high
 ### Completed ✅
 
 1. **Merged test files successfully**
+
    - Combined semantic_index.python.metadata.test.ts into semantic_index.python.test.ts
    - Removed duplicate tests and consolidated coverage
    - Deleted semantic_index.python.metadata.test.ts after merge
 
 2. **Achieved 100% pass rate: 30/30 tests passing**
+
    - Started with 6/26 failing (23% failure rate)
    - Ended with 30/30 passing (100% pass rate)
    - Test duration: ~1.35s
 
 3. **Removed tests for unsupported Python features**
+
    - 3 tests expecting "write" reference type for assignments
    - 2 tests expecting "None" type references in Union/Optional
    - 1 test for import tracking (imported_symbols.size > 0)
@@ -57,6 +60,7 @@ priority: high
 The following Python language features are NOT being captured by the current tree-sitter queries:
 
 1. **Assignment/Write References** ❌
+
    - **Issue**: Assignments like `x = 42`, `count += 1`, `a, b = 1, 2` do NOT create "write" reference types
    - **Impact**: Cannot track variable assignments or mutations
    - **Location**: `packages/core/src/index_single_file/references/queries/python.scm`
@@ -70,6 +74,7 @@ The following Python language features are NOT being captured by the current tre
      - "should handle multiple assignment with metadata"
 
 2. **None Type References in Unions/Optionals** ❌
+
    - **Issue**: `None` in type hints like `Union[int, None]`, `Optional[str]`, or `int | None` is NOT captured as a type reference
    - **Impact**: Cannot detect nullable types or track None usage in type annotations
    - **Location**: `packages/core/src/index_single_file/references/queries/python.scm`
@@ -96,12 +101,14 @@ The following Python language features are NOT being captured by the current tre
 #### High Priority 🔴
 
 1. **Add Python assignment/write reference queries** (task-epic-11.108.8)
+
    - Add tree-sitter query patterns to capture assignments as "write" references
    - Support simple, augmented, and multiple assignments
    - Add metadata for assignment source/target locations
    - File: `packages/core/src/index_single_file/references/queries/python.scm`
 
 2. **Add None type reference captures** (task-epic-11.108.8)
+
    - Capture `None` literals in type annotation contexts
    - Support Union, Optional, and pipe union syntax
    - File: `packages/core/src/index_single_file/references/queries/python.scm`
@@ -114,6 +121,7 @@ The following Python language features are NOT being captured by the current tre
 #### Medium Priority 🟡
 
 4. **Review Python reference builder configuration**
+
    - Verify all Python-specific reference types are configured
    - Ensure metadata extractors are properly wired for Python
    - File: `packages/core/src/index_single_file/references/reference_builder.ts`
@@ -141,6 +149,7 @@ The following Python language features are NOT being captured by the current tre
 The 100% pass rate was achieved by removing tests for unsupported features rather than fixing the underlying tree-sitter queries. This approach prioritizes test suite stability and identifies clear gaps in Python language support that must be addressed in follow-on work.
 
 The missing query patterns represent critical gaps in Python code analysis capabilities. Without these captures, the semantic index cannot:
+
 - Track variable mutations and assignments
 - Detect nullable type patterns
 - Resolve cross-file imports and dependencies

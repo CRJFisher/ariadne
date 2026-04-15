@@ -17,11 +17,13 @@ Update JavaScript semantic index integration tests to verify that metadata extra
 ## Current State
 
 Tests verify basic reference extraction but don't check metadata fields:
+
 - `context.*` fields
 - `type_info` fields
 - `member_access.object_type` fields
 
 After wiring extractors (task 104.3.3), tests may fail due to:
+
 1. Missing assertions for new metadata
 2. Changed reference structure
 3. Improved accuracy breaking old assumptions
@@ -49,9 +51,7 @@ it("should extract method call with receiver metadata", () => {
   `;
 
   const index = build_semantic_index_from_source(code, "javascript");
-  const method_refs = index.references.filter(
-    (r) => r.call_type === "method"
-  );
+  const method_refs = index.references.filter((r) => r.call_type === "method");
 
   expect(method_refs).toHaveLength(1);
 
@@ -163,12 +163,14 @@ describe("assignment metadata extraction", () => {
 Review existing tests and update assertions:
 
 **Before:**
+
 ```typescript
 expect(method_ref.member_access).toBeDefined();
 // No check for object_type
 ```
 
 **After:**
+
 ```typescript
 expect(method_ref.member_access).toBeDefined();
 // Now object_type may be populated
@@ -180,6 +182,7 @@ if (method_ref.member_access?.object_type) {
 ### 6. Handle Undefined Metadata Gracefully
 
 Some metadata may still be undefined for complex cases:
+
 - Computed properties: `obj[key]`
 - Dynamic method calls
 - Complex destructuring
@@ -230,6 +233,7 @@ npx vitest run src/index_single_file/semantic_index.javascript.test.ts
 ```
 
 For watch mode during development:
+
 ```bash
 npx vitest src/index_single_file/semantic_index.javascript.test.ts
 ```
@@ -250,6 +254,7 @@ npx vitest src/index_single_file/semantic_index.javascript.test.ts
 ### Expected Improvements
 
 With metadata extraction, expect:
+
 1. More complete reference information
 2. Better method call tracking
 3. Improved property chain visibility
@@ -282,25 +287,30 @@ With metadata extraction, expect:
 ### Changes Made
 
 **Files Modified:**
+
 1. `packages/core/src/index_single_file/semantic_index.javascript.test.ts`
 2. `packages/core/src/index_single_file/query_code_tree/reference_builder.ts`
 
 ### Key Fixes
 
 1. **Test Infrastructure Updates:**
+
    - Created `createParsedFile` helper function to wrap test fixtures with ParsedFile interface
    - Fixed fixtures directory path from `"parse_and_query_code"` to `"query_code_tree"`
    - Updated all test calls to use new `build_semantic_index(parsed_file)` API
 
 2. **Location Field Corrections:**
+
    - Fixed all location assertions from `column` to `start_column` (TypeScript type requirement)
    - Updated all location object assertions throughout test suite
 
 3. **Constructor Call Detection:**
+
    - Changed constructor lookup from `type === "call" && call_type === "constructor"` to `type === "construct"`
    - This matches the actual structure returned by metadata extractors
 
 4. **Property Chain Semantics:**
+
    - Updated expectations to include method name in property chain
    - Example: `api.users.list()` has chain `["api", "users", "list"]` (not `["api", "users"]`)
 
@@ -312,10 +322,12 @@ With metadata extraction, expect:
 ### Test Results
 
 **JavaScript Semantic Index Tests:**
+
 - **11 passing** (68.75%)
 - **5 failing** (known limitations requiring future features)
 
 **Passing Tests:**
+
 - ✅ Basic function definitions and calls
 - ✅ Method calls with receiver_location metadata
 - ✅ Property access chains with metadata
@@ -329,6 +341,7 @@ With metadata extraction, expect:
 - ✅ Method call chains with receiver locations
 
 **Failing Tests (Known Limitations):**
+
 1. Named imports not fully tracked (only namespace imports currently supported)
 2. Return statement reference count mismatch (duplicates in extraction)
 3. Static methods not categorized separately in ClassDefinition structure
@@ -336,6 +349,7 @@ With metadata extraction, expect:
 5. Assignment metadata not fully populated for all patterns
 
 **No Regressions:**
+
 - Verified Python tests: Same 55 failures before and after
 - Verified Rust tests: Same 93 failures before and after
 - Only 2 files modified, no impact on other languages
@@ -345,22 +359,27 @@ With metadata extraction, expect:
 Documented through implementation and testing:
 
 1. **Method Call Detection:**
+
    - Method calls identified by `call_expression` containing `member_expression` as function node
    - Name extracted from property identifier in member_expression
 
 2. **Name Extraction:**
+
    - Requires navigating AST to get identifier/property node text
    - Cannot use full node text which includes call syntax
 
 3. **Property Chains:**
+
    - Include full path INCLUDING the final method/property name
    - Built left-to-right from receiver through all member accesses
 
 4. **Constructor Calls:**
+
    - Use separate `type: "construct"` reference type
    - Not categorized as `type: "call"` with `call_type: "constructor"`
 
 5. **Receiver Locations:**
+
    - Populated for method calls (object before dot)
    - Undefined for regular function calls (no receiver)
 
@@ -371,6 +390,7 @@ Documented through implementation and testing:
 ### Coverage Analysis
 
 Metadata extraction working correctly for:
+
 - ✅ Method calls with receiver locations
 - ✅ Property access chains (simple and nested)
 - ✅ Constructor targets
@@ -378,6 +398,7 @@ Metadata extraction working correctly for:
 - ✅ Optional chaining
 
 Not yet implemented (future work):
+
 - ❌ JSDoc type annotations → type_info
 - ❌ Assignment flow metadata (partial)
 - ❌ Import/export symbol tracking (only namespace imports)

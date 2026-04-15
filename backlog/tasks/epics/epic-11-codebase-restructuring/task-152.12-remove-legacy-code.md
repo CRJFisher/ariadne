@@ -100,8 +100,11 @@ Remove exports of deprecated types:
 
 ```typescript
 // DELETE THESE EXPORTS:
-export type { LegacySymbolReference, ReferenceContext } from './symbol_references';
-export { ReferenceType } from './semantic_index';
+export type {
+  LegacySymbolReference,
+  ReferenceContext,
+} from "./symbol_references";
+export { ReferenceType } from "./semantic_index";
 ```
 
 Keep only the new exports:
@@ -119,7 +122,7 @@ export type {
   TypeReference,
   AssignmentReference,
   SelfReferenceKeyword,
-} from './symbol_references';
+} from "./symbol_references";
 
 export {
   is_self_reference_call,
@@ -130,7 +133,7 @@ export {
   is_property_access,
   is_type_reference,
   is_assignment,
-} from './symbol_references';
+} from "./symbol_references";
 ```
 
 ### 4. Remove Migration Comments
@@ -162,7 +165,7 @@ After removing legacy types, clean up imports:
 
 ```typescript
 // BEFORE (in various files):
-import { ReferenceType, LegacySymbolReference } from '@ariadnejs/types';
+import { ReferenceType, LegacySymbolReference } from "@ariadnejs/types";
 
 // AFTER:
 // Remove entire import if nothing else needed, or remove unused types
@@ -220,6 +223,7 @@ Expected: All tests pass.
 ## Files Changed
 
 **Modified**:
+
 - `packages/types/src/symbol_references.ts` - Remove legacy interfaces
 - `packages/types/src/semantic_index.ts` - Remove ReferenceType enum
 - `packages/types/src/index.ts` - Remove deprecated exports
@@ -241,6 +245,7 @@ Expected: All tests pass.
 ## Expected Code Reduction
 
 Estimated lines of code deleted:
+
 - Legacy interfaces: ~50 lines
 - ReferenceType enum: ~10 lines
 - Migration comments: ~30 lines
@@ -283,11 +288,13 @@ These notes were useful during migration but are no longer needed.
 ## Rationale
 
 From CLAUDE.md:
+
 > DO NOT SUPPORT BACKWARD COMPATIBILITY - JUST _CHANGE_ THE CODE.
 
 We don't need to keep deprecated code around. Once the migration is complete, remove all traces of the old system.
 
 **Benefits**:
+
 1. **Less cognitive load**: Developers don't see deprecated patterns
 2. **Cleaner codebase**: No dead code or misleading comments
 3. **Faster builds**: Less code to compile

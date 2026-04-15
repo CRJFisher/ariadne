@@ -289,6 +289,7 @@ To be resolved during synthesis:
 ### Approach Taken
 
 Synthesized findings from three comprehensive analyses:
+
 1. **Information Architecture Plan** - Ideal structure patterns
 2. **Functionality Tree Analysis** - Current state mapping (487 functions)
 3. **Code Style Audit** - 847 violations to address
@@ -298,21 +299,25 @@ Created a systematic proposal that resolves conflicts between ideal and practica
 ### Key Architectural Decisions
 
 #### 1. Functional Core with Compatibility Wrappers
+
 **Decision**: Use adapter pattern to migrate from stateful to functional
 **Rationale**: Allows incremental migration without breaking consumers
 **Impact**: All 23 stateful classes will have temporary adapters
 
 #### 2. Feature-Based Organization
+
 **Decision**: Organize by feature (call_graph/, imports/) not by type
 **Rationale**: Better discoverability and cohesion
 **Structure**: 40+ directories replacing current 12
 
 #### 3. Strict Size Limits
+
 **Decision**: Hard limit 30KB, target 10KB per file
 **Rationale**: Tree-sitter parsing limit at 32KB
 **Impact**: 8 files need immediate splitting
 
 #### 4. Test Contracts Pattern
+
 **Decision**: Every universal feature has test contract interface
 **Rationale**: Enforces language parity
 **Implementation**: TypeScript interfaces with required test cases
@@ -320,6 +325,7 @@ Created a systematic proposal that resolves conflicts between ideal and practica
 ### Migration Strategy Highlights
 
 #### Phased Approach (10 weeks)
+
 - **Phase 0**: Setup and prerequisites
 - **Phase 1**: Foundation (no dependencies)
 - **Phase 2**: Parsing layer
@@ -333,11 +339,13 @@ Created a systematic proposal that resolves conflicts between ideal and practica
 #### Critical Refactorings
 
 1. **scope_resolution.ts** (22.3KB)
+
    - Split 457-line function into 6 functions
    - Convert ScopeGraph class to immutable
    - Create 8 new files
 
 2. **reference_resolution.ts** (28.9KB)
+
    - Split into 4 strategy-based modules
    - Each ~7KB focused on one resolution type
 
@@ -349,12 +357,14 @@ Created a systematic proposal that resolves conflicts between ideal and practica
 ### Deliverables Created
 
 1. **NEW_STRUCTURE_PROPOSAL.md** (Primary)
+
    - Complete target directory structure
    - 200+ files in 40+ directories
    - Detailed migration mappings
    - 8-phase implementation plan
 
 2. **STRUCTURE_CONFLICTS.md**
+
    - 5 major conflict categories identified
    - Resolution strategies for each
    - Trade-off decisions documented
@@ -369,11 +379,13 @@ Created a systematic proposal that resolves conflicts between ideal and practica
 ### Complexity Assessment
 
 **Total Effort**: 400 hours (10 weeks)
+
 - Low complexity: 67.5 hours (45 tasks)
 - Medium complexity: 150 hours (25 tasks)
 - High complexity: 192 hours (12 tasks)
 
 **Critical Path**:
+
 1. Scope resolution (everything depends on it)
 2. Import resolution (needed for references)
 3. Type tracking (needed for call graph)
@@ -383,17 +395,20 @@ Created a systematic proposal that resolves conflicts between ideal and practica
 ### Risk Analysis
 
 **Highest Risks**:
+
 1. **Performance regression** - Mitigated by benchmarking
 2. **API breaking changes** - Mitigated by compatibility layer
 3. **Circular dependencies** - Mitigated by dependency analysis
 
 **Process Risks**:
+
 1. **Scope creep** - Mitigated by strict phase boundaries
 2. **Merge conflicts** - Mitigated by feature branches
 
 ### Success Metrics Defined
 
 **Quantitative**:
+
 - All files < 30KB (hard requirement)
 - 90% files < 10KB (target)
 - Zero stateful classes
@@ -401,6 +416,7 @@ Created a systematic proposal that resolves conflicts between ideal and practica
 - < 10% performance regression
 
 **Qualitative**:
+
 - Clear module boundaries
 - Consistent patterns
 - Discoverable structure
@@ -409,16 +425,19 @@ Created a systematic proposal that resolves conflicts between ideal and practica
 ### Key Insights
 
 1. **Fundamental Paradigm Shift Required**
+
    - Current: Object-oriented, stateful
    - Target: Functional, immutable
    - Strategy: Gradual migration with adapters
 
 2. **File Size Crisis**
+
    - 5 files approaching parser limits
    - Must split before any other work
    - Logical boundaries, not arbitrary splits
 
 3. **Test Structure Revolution**
+
    - Current: Monolithic test files
    - Target: Contract-based, language-specific
    - Benefit: Enforced language parity
@@ -445,24 +464,28 @@ After initial validation revealed issues with adding NEW features instead of map
 #### Deliverables Created
 
 1. **EXISTING_FUNCTIONALITY_MAPPING.md**
+
    - Maps all 487 existing functions to new structure
    - Classifies universal vs language-specific features
    - Identifies migration bundles
    - NO new features added
 
 2. **FUNCTION_LEVEL_MAPPING.md**
+
    - Detailed function-by-function mapping
    - Shows exact new location for each function
    - Identifies language implementations
    - Maps associated tests
 
 3. **TEST_REORGANIZATION_MAPPING.md**
+
    - Maps all 124 test files to new structure
    - Shows how to split monolithic test files
    - Defines test contracts for language parity
    - Identifies missing test coverage
 
 4. **DOCUMENTATION_MIGRATION_MAPPING.md**
+
    - Maps existing documentation to new structure
    - Identifies outdated content
    - Plans documentation updates
@@ -477,16 +500,19 @@ After initial validation revealed issues with adding NEW features instead of map
 #### Key Insights from Re-Analysis
 
 1. **Feature Classification**
+
    - 60% of code is universal (works across all languages)
    - 40% is language-specific
    - Clear separation improves maintainability
 
 2. **Critical File Splits**
+
    - src/index.ts at 41KB EXCEEDS parser limit
    - 457-line function in scope_resolution.ts must be split
    - 7 files approaching 32KB limit need immediate attention
 
 3. **Test Contract Pattern**
+
    - Enforces language parity
    - Every language must implement core features
    - Makes missing implementations obvious

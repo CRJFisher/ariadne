@@ -51,11 +51,15 @@ function get_metadata_extractors(language: Language): MetadataExtractors {
 
     case "python":
       // Will be implemented in task 104.4.3
-      throw new Error(`Metadata extractors not yet implemented for ${language}`);
+      throw new Error(
+        `Metadata extractors not yet implemented for ${language}`
+      );
 
     case "rust":
       // Will be implemented in task 104.5.3
-      throw new Error(`Metadata extractors not yet implemented for ${language}`);
+      throw new Error(
+        `Metadata extractors not yet implemented for ${language}`
+      );
 
     default:
       throw new Error(`Unsupported language: ${language}`);
@@ -78,15 +82,15 @@ const all_references = process_references(context, extractors);
 Update the comment above the call to reflect metadata extraction:
 
 ```typescript
-  // PASS 4: Process references with language-specific metadata extraction
-  // Extractors parse AST structures to extract:
-  // - Type information from annotations
-  // - Method call receiver locations
-  // - Property access chains
-  // - Assignment source/target
-  // - Constructor call targets
-  const extractors = get_metadata_extractors(language);
-  const all_references = process_references(context, extractors);
+// PASS 4: Process references with language-specific metadata extraction
+// Extractors parse AST structures to extract:
+// - Type information from annotations
+// - Method call receiver locations
+// - Property access chains
+// - Assignment source/target
+// - Constructor call targets
+const extractors = get_metadata_extractors(language);
+const all_references = process_references(context, extractors);
 ```
 
 ## Implementation Steps
@@ -126,6 +130,7 @@ Expected: Tests may still fail but should now call the extractors instead of stu
 ### Why Throw for Python/Rust?
 
 Throwing errors for unimplemented languages ensures:
+
 1. Clear failure if those languages are tested before implementation
 2. Reminder to update this function when adding new extractors
 3. No silent failures with undefined behavior
@@ -133,6 +138,7 @@ Throwing errors for unimplemented languages ensures:
 ### Testing Strategy
 
 Don't fix all test failures in this task - that's for 104.3.4. This task only verifies:
+
 1. Extractors are called
 2. No TypeScript errors
 3. Basic integration works
@@ -140,6 +146,7 @@ Don't fix all test failures in this task - that's for 104.3.4. This task only ve
 ### Expected Test Behavior
 
 After this change:
+
 - JavaScript/TypeScript tests: Will call extractors (may still fail on assertions)
 - Python tests: Will throw "not yet implemented" error
 - Rust tests: Will throw "not yet implemented" error

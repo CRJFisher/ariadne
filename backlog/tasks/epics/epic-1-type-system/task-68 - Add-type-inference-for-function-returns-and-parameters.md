@@ -3,7 +3,7 @@ id: task-68
 title: Add type inference for function returns and parameters
 status: To Do
 assignee: []
-created_date: '2025-08-02'
+created_date: "2025-08-02"
 labels:
   - enhancement
   - call-graph

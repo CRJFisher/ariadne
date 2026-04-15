@@ -9,6 +9,7 @@
 ## Objective
 
 Update all test files to reflect the simplified `SymbolReference` structure:
+
 - **DELETE** assertions on deleted fields (`source_type`, `is_narrowing`, `is_widening`, `containing_function`)
 - Update `type_flow.target_type` → `assignment_type`
 - Add tests for `is_optional_chain` functionality
@@ -23,6 +24,7 @@ Update all test files to reflect the simplified `SymbolReference` structure:
 **File:** `packages/core/src/index_single_file/query_code_tree/reference_builder.test.ts`
 
 Changes needed:
+
 - Update assertions that check `type_flow` structure
 - Add optional chain detection tests
 - Verify simplified structure
@@ -30,6 +32,7 @@ Changes needed:
 ### 2. Metadata Extractor Tests
 
 **Files:**
+
 - `javascript_metadata.test.ts` - Add optional chain tests (done in 11.106.7)
 - `typescript_metadata.test.ts` - Add optional chain tests
 - `python_metadata.test.ts` - Verify no optional chain (returns false)
@@ -38,18 +41,21 @@ Changes needed:
 ### 3. Semantic Index Integration Tests
 
 **NOTE:** This section has been split into 4 language-specific sub-tasks for comprehensive test coverage:
+
 - **task-epic-11.106.8.1** - JavaScript semantic_index tests
 - **task-epic-11.106.8.2** - TypeScript semantic_index tests
 - **task-epic-11.106.8.3** - Python semantic_index tests
 - **task-epic-11.106.8.4** - Rust semantic_index tests
 
 **Files:**
+
 - `semantic_index.javascript.test.ts` → See task-epic-11.106.8.1
 - `semantic_index.typescript.test.ts` → See task-epic-11.106.8.2
 - `semantic_index.python.test.ts` → See task-epic-11.106.8.3
 - `semantic_index.rust.test.ts` → See task-epic-11.106.8.4
 
 Changes needed (detailed in sub-tasks):
+
 - Update references assertions
 - Test optional chain in integration (JS/TS) or verify false (Python/Rust)
 - Add comprehensive `assignment_type` tests
@@ -224,6 +230,7 @@ Expected: Coverage maintains or improves.
 **Solution:** Update assertions to use `assignment_type` directly.
 
 **Example:**
+
 ```typescript
 // OLD
 expect(ref.type_flow).toBeDefined();

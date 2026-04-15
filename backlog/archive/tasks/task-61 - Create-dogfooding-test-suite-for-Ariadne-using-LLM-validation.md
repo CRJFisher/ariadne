@@ -3,9 +3,9 @@ id: task-61
 title: Create dogfooding test suite for Ariadne using LLM validation
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-08-01'
-updated_date: '2025-08-01'
+  - "@chuck"
+created_date: "2025-08-01"
+updated_date: "2025-08-01"
 labels:
   - testing
   - integration

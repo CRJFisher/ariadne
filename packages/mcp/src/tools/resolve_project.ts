@@ -11,7 +11,7 @@ import type { ProjectManager } from "../project_manager";
  */
 export async function resolve_project(
   args: { files?: string[]; folders?: string[] },
-  project_manager: ProjectManager,
+  project_manager: Pick<ProjectManager, "get_project">,
   project_path: string,
   storage?: PersistenceStorage,
 ): Promise<Project> {

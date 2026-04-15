@@ -29,17 +29,20 @@ You follow these core principles when analyzing code:
 When invoked with a list of file paths, follow these steps:
 
 1. **Expand Paths and Read Files**:
+
    - For each path provided:
      - If it's a folder path (ends with `/` or appears to be a directory), use Glob with pattern `{folder}/**/*.ts` to find all TypeScript files recursively within that folder
      - If it's a file path, read it directly
    - Use the Read tool to examine each file's contents, understanding its current structure and what it actually does.
 
 2. **Analyze Domain Purpose**: For each file and function, determine:
+
    - What domain concept does this represent?
    - What is its role in the overall system?
    - Does the current name accurately reflect this purpose?
 
 3. **Map Dependencies**: Use Grep to find:
+
    - How files import from each other
    - Which functions are exported and used elsewhere
    - The dependency graph between the files
@@ -47,12 +50,14 @@ When invoked with a list of file paths, follow these steps:
 4. **Explore Related Context**: Use Glob to find related files that might be affected by restructuring, or that provide context about the intended module organization.
 
 5. **Identify Naming Issues**: Look for:
+
    - Names describing HOW something works rather than WHAT it does (implementation vs domain)
    - Redundant prefixes where folder name is repeated in file name
    - Generic names that do not convey domain meaning (e.g., `utils.ts`, `helpers.ts`, `common.ts`)
    - Inconsistent naming patterns within the same module
 
 6. **Identify Structural Issues**: Look for:
+
    - Functions that belong in different files based on their domain
    - Files that mix unrelated concerns
    - Files that should be split (too many responsibilities)
@@ -71,23 +76,24 @@ Provide your analysis in this structured format:
 ### 1. Current Architecture Summary
 
 Brief description of the current structure:
+
 - What modules exist
 - How they relate to each other
 - What domain concepts they represent
 
 ### 2. Naming Suggestions
 
-| Current Name | Suggested Name | Rationale |
-|--------------|----------------|-----------|
+| Current Name      | Suggested Name           | Rationale                                |
+| ----------------- | ------------------------ | ---------------------------------------- |
 | `path/to/file.ts` | `path/to/better_name.ts` | Why this name better reflects the domain |
 
 ### 3. Move Suggestions
 
 For functions or types that should move between files:
 
-| Item | Current Location | Suggested Location | Rationale |
-|------|------------------|-------------------|-----------|
-| `function_name` | `source_file.ts` | `target_file.ts` | Why this function belongs elsewhere |
+| Item            | Current Location | Suggested Location | Rationale                           |
+| --------------- | ---------------- | ------------------ | ----------------------------------- |
+| `function_name` | `source_file.ts` | `target_file.ts`   | Why this function belongs elsewhere |
 
 ### 4. Folder Structure Suggestions
 
@@ -112,10 +118,10 @@ With explanation of why this structure better reflects the domain.
 
 If any files should be split into multiple files or merged together:
 
-| Action | Files | Rationale |
-|--------|-------|-----------|
-| Split | `large_file.ts` into `domain_a.ts`, `domain_b.ts` | Why separation improves clarity |
-| Merge | `tiny_a.ts`, `tiny_b.ts` into `combined.ts` | Why combination makes sense |
+| Action | Files                                             | Rationale                       |
+| ------ | ------------------------------------------------- | ------------------------------- |
+| Split  | `large_file.ts` into `domain_a.ts`, `domain_b.ts` | Why separation improves clarity |
+| Merge  | `tiny_a.ts`, `tiny_b.ts` into `combined.ts`       | Why combination makes sense     |
 
 ### 6. Priority Order
 
@@ -124,7 +130,7 @@ Numbered list of changes in dependency order (what must change first):
 1. First change (no dependencies)
 2. Second change (depends on #1)
 3. Third change (depends on #1, #2)
-...
+   ...
 
 Include notes about which changes can be done in parallel.
 

@@ -13,6 +13,7 @@ Verify that symbol resolution integration tests pass after scope assignment fixe
 ## Files
 
 ### MODIFIED
+
 - `packages/core/src/resolve_references/symbol_resolution.integration.test.ts`
 
 ## Implementation Steps
@@ -28,6 +29,7 @@ Expected: Tests should pass, but verify no regressions.
 ### 2. Analyze Any Failures (30 min)
 
 If tests fail, determine root cause:
+
 - Are class members being resolved correctly?
 - Are interface members visible in correct scopes?
 - Are nested class references working?
@@ -38,8 +40,8 @@ If tests fail, determine root cause:
 Add tests verifying class member resolution works with correct scope_id:
 
 ```typescript
-describe('Class Member Resolution with Correct Scopes', () => {
-  it('resolves method call on class instance (TypeScript)', () => {
+describe("Class Member Resolution with Correct Scopes", () => {
+  it("resolves method call on class instance (TypeScript)", () => {
     const code = `
 class Calculator {
   add(a: number, b: number): number {
@@ -50,14 +52,14 @@ class Calculator {
 const calc = new Calculator();
 calc.add(1, 2);
 `;
-    const references = resolve_references(code, 'test.ts');
-    const add_call = find_reference('add');
-    const add_def = find_definition('add');
+    const references = resolve_references(code, "test.ts");
+    const add_call = find_reference("add");
+    const add_def = find_definition("add");
 
     expect(add_call.resolved_to).toBe(add_def.symbol_id);
   });
 
-  it('resolves property access on class instance (JavaScript)', () => {
+  it("resolves property access on class instance (JavaScript)", () => {
     const code = `
 class Person {
   constructor(name) {
@@ -68,8 +70,8 @@ class Person {
 const person = new Person('Alice');
 console.log(person.name);
 `;
-    const references = resolve_references(code, 'test.js');
-    const name_access = find_reference('name', 'member_access');
+    const references = resolve_references(code, "test.js");
+    const name_access = find_reference("name", "member_access");
 
     expect(name_access.resolved_to).toBeDefined();
   });
@@ -81,8 +83,8 @@ console.log(person.name);
 Verify nested classes resolve correctly with updated scope_id:
 
 ```typescript
-describe('Nested Class Resolution', () => {
-  it('resolves nested class reference (TypeScript)', () => {
+describe("Nested Class Resolution", () => {
+  it("resolves nested class reference (TypeScript)", () => {
     const code = `
 class Outer {
   static Inner = class {
@@ -92,15 +94,15 @@ class Outer {
 
 Outer.Inner.method();
 `;
-    const references = resolve_references(code, 'test.ts');
-    const inner_ref = find_reference('Inner');
-    const method_ref = find_reference('method');
+    const references = resolve_references(code, "test.ts");
+    const inner_ref = find_reference("Inner");
+    const method_ref = find_reference("method");
 
     expect(inner_ref.resolved_to).toBeDefined();
     expect(method_ref.resolved_to).toBeDefined();
   });
 
-  it('resolves nested class reference (Python)', () => {
+  it("resolves nested class reference (Python)", () => {
     const code = `
 class Company:
     class Department:
@@ -110,9 +112,9 @@ class Company:
 
 Company.Department.process()
 `;
-    const references = resolve_references(code, 'test.py');
-    const dept_ref = find_reference('Department');
-    const process_ref = find_reference('process');
+    const references = resolve_references(code, "test.py");
+    const dept_ref = find_reference("Department");
+    const process_ref = find_reference("process");
 
     expect(dept_ref.resolved_to).toBeDefined();
     expect(process_ref.resolved_to).toBeDefined();
@@ -125,8 +127,8 @@ Company.Department.process()
 Verify interface members resolve correctly:
 
 ```typescript
-describe('Interface Member Resolution', () => {
-  it('resolves method call on interface-typed variable', () => {
+describe("Interface Member Resolution", () => {
+  it("resolves method call on interface-typed variable", () => {
     const code = `
 interface IService {
   process(): void;
@@ -136,8 +138,8 @@ function useService(service: IService) {
   service.process();
 }
 `;
-    const references = resolve_references(code, 'test.ts');
-    const process_call = find_reference('process');
+    const references = resolve_references(code, "test.ts");
+    const process_call = find_reference("process");
 
     expect(process_call.resolved_to).toBeDefined();
   });
@@ -149,8 +151,8 @@ function useService(service: IService) {
 Add test confirming scope tree traversal still works correctly:
 
 ```typescript
-describe('Scope Tree Traversal', () => {
-  it('finds symbols by traversing up scope tree', () => {
+describe("Scope Tree Traversal", () => {
+  it("finds symbols by traversing up scope tree", () => {
     const code = `
 class MyClass {
   method() {
@@ -161,9 +163,9 @@ class MyClass {
   }
 }
 `;
-    const references = resolve_references(code, 'test.ts');
-    const x_ref = find_reference('x');
-    const x_def = find_definition('x');
+    const references = resolve_references(code, "test.ts");
+    const x_ref = find_reference("x");
+    const x_def = find_definition("x");
 
     expect(x_ref.resolved_to).toBe(x_def.symbol_id);
   });

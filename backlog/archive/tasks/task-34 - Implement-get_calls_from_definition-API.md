@@ -3,9 +3,9 @@ id: task-34
 title: Implement get_calls_from_definition API
 status: Done
 assignee:
-  - '@claude'
-created_date: '2025-07-18'
-updated_date: '2025-07-18'
+  - "@claude"
+created_date: "2025-07-18"
+updated_date: "2025-07-18"
 labels: []
 dependencies:
   - task-32

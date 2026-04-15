@@ -3,8 +3,8 @@ id: task-100.11.8
 title: Research TypeScript immutability patterns and apply best practices
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-08-04 15:21'
+  - "@chuck"
+created_date: "2025-08-04 15:21"
 labels:
   - immutable
   - refactoring

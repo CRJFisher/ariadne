@@ -3,8 +3,8 @@ id: task-100.15
 title: Refactor call_analysis.ts to reduce file size below 32KB
 status: Done
 assignee: []
-created_date: '2025-08-05 13:34'
-updated_date: '2025-08-05 20:37'
+created_date: "2025-08-05 13:34"
+updated_date: "2025-08-05 20:37"
 labels: []
 dependencies: []
 parent_task_id: task-100
@@ -42,23 +42,25 @@ src/call_graph/
 ```
 
 Benefits of folder structure:
+
 - Clear separation from other call_graph modules
 - Easy to locate all call analysis related code
 - Clean imports via index.ts
 - Allows for future expansion without cluttering call_graph/
 
-
 ## Implementation Notes
 
-Successfully refactored the large call_analysis.ts file (32KB) into a modular structure using a folder-based approach. 
+Successfully refactored the large call_analysis.ts file (32KB) into a modular structure using a folder-based approach.
 
 ## Approach taken
+
 - Created a new call_analysis/ folder with 8 focused modules
 - Preserved the critical AST node identity fix for built-in calls
 - Used immutable types from @ariadnejs/types package throughout
 - Maintained all existing functionality with tests passing
 
 ## Features implemented or modified
+
 - Split monolithic file into focused, single-responsibility modules:
   - range_utils.ts: Range calculation utilities (5.5KB)
   - call_detection.ts: Call pattern detection with AST fix (4.4KB)
@@ -70,15 +72,18 @@ Successfully refactored the large call_analysis.ts file (32KB) into a modular st
   - index.ts: Public API exports (625B)
 
 ## Technical decisions and trade-offs
+
 - Used folder structure instead of flat files for better organization
 - Imported types from @ariadnejs/types package to ensure immutability
 - All modules are now under 28KB warning threshold
 - Maintained backwards compatibility by preserving the same public API
 
 ## Modified or added files
+
 - Deleted: packages/core/src/call_graph/call_analysis.ts
 - Added: packages/core/src/call_graph/call_analysis/ (folder with 8 modules)
 - Updated: Imports in call_graph_service.ts, graph_builder.ts, and tests
+
 ## Sub-tasks Created
 
 1. task-100.15.1: Extract range utilities

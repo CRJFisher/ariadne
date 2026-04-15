@@ -15,16 +15,19 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 This task is divided into language-specific integration test sub-tasks:
 
 1. **11.109.9.1** - JavaScript Integration Tests (`symbol_resolution.javascript.test.ts`)
+
    - Tests JS-specific features: ES modules, import/export, class methods
    - Validates cross-file resolution, import chains, shadowing
    - Focus on realistic JS codebases
 
 2. **11.109.9.2** - TypeScript Integration Tests (`symbol_resolution.typescript.test.ts`)
+
    - Tests TS-specific features: type annotations, interfaces, generics
    - Validates type-based method resolution
    - Tests TS module resolution (.ts, index.ts, JS interop)
 
 3. **11.109.9.3** - Python Integration Tests (`symbol_resolution.python.test.ts`)
+
    - Tests Python-specific features: relative imports, `__init__.py`, `self`
    - Validates package structure resolution
    - Tests class methods, decorators, inheritance

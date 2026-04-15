@@ -180,7 +180,16 @@ Config file format (JSON):
 
 async function load_project_config(config_path: string): Promise<ProjectConfig> {
   const resolved = path.resolve(config_path);
-  const raw = await fs.readFile(resolved, "utf-8");
+  let raw: string;
+  try {
+    raw = await fs.readFile(resolved, "utf-8");
+  } catch {
+    console.error(`Error: Config file not found: ${resolved}`);
+    console.error("\nTo create a config, save a JSON file at that path with at least:");
+    console.error("  { \"project_path\": \"/absolute/path/to/your/repo\" }");
+    console.error("\nOr use --path /your/repo to analyze without a config file.");
+    process.exit(1);
+  }
   const parsed = JSON.parse(raw) as Record<string, unknown>;
 
   if (typeof parsed.project_path !== "string" || !parsed.project_path) {

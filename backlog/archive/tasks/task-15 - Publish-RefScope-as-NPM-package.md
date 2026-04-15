@@ -3,9 +3,9 @@ id: task-15
 title: Publish RefScope as NPM package
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-07-08'
-updated_date: '2025-07-16'
+  - "@chuck"
+created_date: "2025-07-08"
+updated_date: "2025-07-16"
 labels:
   - deployment
   - infrastructure

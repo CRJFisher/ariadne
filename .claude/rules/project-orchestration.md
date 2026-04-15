@@ -35,15 +35,15 @@ project/
 
 The `Project` class holds these registries, all updated via `update_file()`:
 
-| Registry | Purpose |
-|----------|---------|
+| Registry             | Purpose                                                                              |
+| -------------------- | ------------------------------------------------------------------------------------ |
 | `DefinitionRegistry` | All definitions with indexes by symbol, file, location, scope, member, type subtypes |
-| `TypeRegistry` | Resolved type relationships: symbol→type, type→members, inheritance, interfaces |
-| `ScopeRegistry` | Persisted scope trees for cross-file lookups |
-| `ExportRegistry` | Export tracking per file for import resolution |
-| `ReferenceRegistry` | Raw references per file (source of truth for call resolution) |
-| `ImportGraph` | Import dependency graph for incremental re-resolution |
-| `ResolutionRegistry` | Symbol and call resolution state |
+| `TypeRegistry`       | Resolved type relationships: symbol→type, type→members, inheritance, interfaces      |
+| `ScopeRegistry`      | Persisted scope trees for cross-file lookups                                         |
+| `ExportRegistry`     | Export tracking per file for import resolution                                       |
+| `ReferenceRegistry`  | Raw references per file (source of truth for call resolution)                        |
+| `ImportGraph`        | Import dependency graph for incremental re-resolution                                |
+| `ResolutionRegistry` | Symbol and call resolution state                                                     |
 
 ## Incremental Update Strategy
 

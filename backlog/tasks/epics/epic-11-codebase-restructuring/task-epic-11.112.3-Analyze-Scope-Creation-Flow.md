@@ -34,10 +34,12 @@ grep "@scope" packages/core/src/index_single_file/query_code_tree/queries/rust.s
 ```
 
 Document in analysis file:
+
 ```markdown
 ## .scm Scope Patterns
 
 ### JavaScript/TypeScript
+
 - `(function_declaration) @scope.function` - ONE scope per function
 - `(class_declaration) @scope.class` - ONE scope per class
 - `(method_definition) @scope.method` - ONE scope per method
@@ -51,6 +53,7 @@ Document in analysis file:
 ### 2. Trace scope_processor Flow (30 min)
 
 Read and document:
+
 ```typescript
 // packages/core/src/index_single_file/scopes/scope_processor.ts
 
@@ -65,6 +68,7 @@ Read and document:
 ```
 
 Document the mechanism:
+
 ```markdown
 ## scope_processor Flow
 
@@ -97,6 +101,7 @@ For classes specifically:
 ```
 
 Document:
+
 ```markdown
 ## Definition Builder Flow (TypeScript Class Example)
 
@@ -105,7 +110,7 @@ Document:
 3. Handler called with capture
 4. capture.location spans ENTIRE class (lines 10-30)
    - Line 10: `class MyClass {`
-   - Lines 15-20: `method() { ... }`  ← Creates method_scope
+   - Lines 15-20: `method() { ... }` ← Creates method_scope
    - Line 30: `}`
 5. context.get_scope_id(lines 10-30)
    - Finds deepest scope in that range
@@ -118,24 +123,29 @@ Document:
 Why do functions work?
 
 Test hypothesis:
+
 ```typescript
 // In typescript_builder_config.ts, find function handler
 // Compare capture.location for functions vs classes
 ```
 
 Document findings:
+
 ```markdown
 ## Why Functions Work But Classes Don't
 
 ### Hypothesis 1: Function captures use different location
+
 - Function capture might only include function header?
 - Need to verify with actual capture data
 
 ### Hypothesis 2: Functions don't contain nested scopes at capture time
+
 - Function body scopes created after function definition?
 - Need to verify scope creation order
 
 ### Hypothesis 3: [After investigation]
+
 [Document actual reason found]
 ```
 
@@ -146,21 +156,25 @@ grep -rn "get_scope_id" packages/core/src/index_single_file/query_code_tree/lang
 ```
 
 Document each callsite:
+
 ```markdown
 ## get_scope_id() Usage Analysis
 
 ### JavaScript (javascript_builder_config.ts)
+
 - Line X: class definitions
 - Line Y: function definitions
 - Line Z: variable definitions
 
 ### TypeScript (typescript_builder_config.ts)
+
 - Line X: class definitions
 - Line Y: interface definitions
 - Line Z: enum definitions
 - [etc]
 
 ### Pattern
+
 All definition types use: `scope_id: context.get_scope_id(capture.location)`
 ```
 
@@ -174,17 +188,21 @@ Per @changes-notes.md#95-102 guidelines:
 ### Question: Do we need to modify .scm files?
 
 #### Option A: No .scm changes needed
+
 - Fix in get_scope_id() usage (use start position only)
 - Pro: No query changes, less risky
 - Con: Relies on implementation detail
 
 #### Option B: Modify .scm queries
+
 - Capture parent scope explicitly
 - Pro: More accurate at source
 - Con: Complex, affects all languages
 
 ### Recommendation: Option A
+
 Because:
+
 1. .scm queries are correct (one scope per construct)
 2. Issue is in get_scope_id() usage (full span vs start position)
 3. Simpler fix with less risk
@@ -199,27 +217,32 @@ Add visual diagrams to document:
 
 ### Current (Buggy) Flow
 ```
+
 .scm query → capture (location: full class span)
-    ↓
+↓
 handler: context.get_scope_id(full span)
-    ↓
+↓
 get_scope_id finds deepest scope in span = method_scope ❌
-    ↓
+↓
 class.scope_id = method_scope (WRONG)
+
 ```
 
 ### Fixed Flow
 ```
+
 .scm query → capture (location: full class span)
-    ↓
+↓
 handler: context.get_defining_scope_id(full span)
-    ↓
+↓
 get_defining_scope_id uses START position only
-    ↓
+↓
 finds scope at definition point = parent_scope ✓
-    ↓
+↓
 class.scope_id = parent_scope (CORRECT)
+
 ```
+
 ```
 
 ## Success Criteria

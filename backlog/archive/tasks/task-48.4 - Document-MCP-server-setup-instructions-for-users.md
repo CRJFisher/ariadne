@@ -3,9 +3,9 @@ id: task-48.4
 title: Document MCP server setup instructions for users
 status: Done
 assignee:
-  - '@claude'
-created_date: '2025-07-28'
-updated_date: '2025-07-28'
+  - "@claude"
+created_date: "2025-07-28"
+updated_date: "2025-07-28"
 labels: []
 dependencies: []
 parent_task_id: task-48
@@ -26,7 +26,7 @@ Create comprehensive documentation for setting up the Ariadne MCP server with va
 ## Implementation Plan
 
 1. Research MCP setup documentation for Claude Desktop
-2. Research MCP setup documentation for VS Code  
+2. Research MCP setup documentation for VS Code
 3. Research MCP setup documentation for Cursor
 4. Identify common configuration patterns across all hosts
 5. Create comprehensive SETUP.md with generic and host-specific instructions

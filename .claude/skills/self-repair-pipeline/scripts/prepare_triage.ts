@@ -87,9 +87,6 @@ async function main(): Promise<void> {
     phase: "triage",
     batch_size: cli.batch_size,
     entries,
-    aggregation: null,
-    meta_review: null,
-    fix_planning: null,
     created_at: now,
     updated_at: now,
   };
@@ -113,11 +110,11 @@ async function main(): Promise<void> {
   await fs.writeFile(state_path, JSON.stringify(state, null, 2) + "\n");
 
   // Summary
-  const known_tp_count = entries.filter(e => e.route === "known-tp").length;
+  const known_count = entries.filter(e => e.route === "known-unreachable").length;
   const llm_triage_count = entries.filter(e => e.route === "llm-triage").length;
   console.error(`Triage state prepared: ${entries.length} entries`);
-  console.error(`  known-tp:    ${known_tp_count} (completed)`);
-  console.error(`  llm-triage:  ${llm_triage_count} (pending)`);
+  console.error(`  known-unreachable: ${known_count} (completed)`);
+  console.error(`  llm-triage:        ${llm_triage_count} (pending)`);
   console.error(`State file: ${state_path}`);
 }
 

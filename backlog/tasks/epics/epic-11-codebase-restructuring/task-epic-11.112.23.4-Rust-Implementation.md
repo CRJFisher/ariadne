@@ -18,15 +18,18 @@ Update Rust language builder to populate the new `is_exported` flag based on Rus
 Rust has explicit visibility modifiers:
 
 1. **`pub` makes items public (exportable)**
+
    - `pub fn foo() {}` → `is_exported = true`
    - `pub struct Bar {}` → `is_exported = true`
    - `pub const X: i32 = 1` → `is_exported = true`
 
 2. **No `pub` means module-private (not exportable)**
+
    - `fn foo() {}` → `is_exported = false`
    - `struct Bar {}` → `is_exported = false`
 
 3. **Nested items follow parent visibility**
+
    - `pub` items inside private modules are not externally visible
    - For now, simplify: check if item itself has `pub`
    - Future: Track module visibility hierarchy
@@ -79,7 +82,11 @@ Update each Rust builder to use the new export info:
 ```typescript
 // Function definitions
 function_item: {
-  process: (capture: CaptureNode, builder: DefinitionBuilder, context: ProcessingContext) => {
+  process: (
+    capture: CaptureNode,
+    builder: DefinitionBuilder,
+    context: ProcessingContext
+  ) => {
     const node = capture.node;
     const export_info = extract_export_info(node);
 
@@ -89,11 +96,11 @@ function_item: {
       location: capture.location,
       defining_scope_id: context.get_scope_id(capture.location),
       availability: determine_availability(node), // Keep for migration
-      is_exported: export_info.is_exported,       // NEW
-      export: export_info.export,                 // NEW
+      is_exported: export_info.is_exported, // NEW
+      export: export_info.export, // NEW
       // ... other fields
     });
-  }
+  };
 }
 
 // Apply same pattern to:
@@ -145,9 +152,11 @@ function is_impl_exported(impl_node: SyntaxNode): boolean {
 ### 5. Add Tests (10 min)
 
 Add test cases in:
+
 - `packages/core/src/index_single_file/query_code_tree/language_configs/rust_builder.test.ts`
 
 Test scenarios:
+
 - ✅ `pub fn foo()` has `is_exported = true`
 - ✅ `fn foo()` has `is_exported = false`
 - ✅ `pub struct Bar` has `is_exported = true`
@@ -175,6 +184,7 @@ npm test -- semantic_index.rust.test.ts
 ## Future Work
 
 **Note for future tasks:**
+
 - Implement proper module visibility tracking (`pub(crate)`, `pub(super)`, etc.)
 - Handle visibility inheritance from parent modules
 - Track re-exports with `pub use`
@@ -194,12 +204,14 @@ The implementation correctly identifies exported (pub) vs private symbols across
 #### 1. Helper Functions (`rust_builder_helpers.ts`)
 
 **Added `has_pub_modifier()` function:**
+
 - Checks for `visibility_modifier` nodes in AST
 - Walks up parent tree for proper scope context (matches `extract_visibility()` behavior)
 - Returns `true` for any `pub` variant: `pub`, `pub(crate)`, `pub(super)`, `pub(in path)`
 - Returns `false` for private items (no visibility modifier)
 
 **Added `extract_export_info()` function:**
+
 - Calls `has_pub_modifier()` to determine export status
 - Returns `{ is_exported: boolean, export?: ExportMetadata }`
 - Sets `export` to `undefined` (Rust doesn't have JS-style export aliases)
@@ -222,14 +234,16 @@ The implementation correctly identifies exported (pub) vs private symbols across
 - ✅ **Macros:** `definition.macro`
 
 **Pattern applied consistently:**
+
 ```typescript
 const export_info = extract_export_info(capture.node.parent || capture.node);
 
-builder.add_*({
-  // ... existing fields
-  is_exported: export_info.is_exported,
-  export: export_info.export,
-});
+builder.add_ *
+  {
+    // ... existing fields
+    is_exported: export_info.is_exported,
+    export: export_info.export,
+  };
 ```
 
 #### 3. Comprehensive Test Suite (`rust_builder.test.ts`)
@@ -237,6 +251,7 @@ builder.add_*({
 **Added 20 new tests for `is_exported` flag:**
 
 Coverage by definition type:
+
 - Functions (5 tests): pub fn, fn, pub(crate) fn, pub async fn, pub unsafe fn
 - Structs (5 tests): pub struct, struct, pub(super) struct, pub struct<T>, struct<T>
 - Enums (2 tests): pub enum, enum
@@ -246,6 +261,7 @@ Coverage by definition type:
 - Modules (2 tests): pub mod, mod
 
 Each test verifies:
+
 1. `is_exported` field is correctly set (true/false)
 2. `export` field is `undefined`
 
@@ -254,16 +270,19 @@ Each test verifies:
 #### Direct Tests (All Passing)
 
 **rust_builder.test.ts:** ✅ 52/52 tests passing
+
 - Original 32 tests: ✅ All passing
 - New `is_exported` tests: ✅ 20/20 passing
 - Duration: 16-49ms
 
 **semantic_index.rust.test.ts:** ✅ 57/58 tests passing (1 skipped)
+
 - Integration tests for semantic indexing
 - No regressions from `is_exported` changes
 - Duration: 3.5 seconds
 
 **rust_metadata.test.ts:** ✅ 93/93 tests passing
+
 - Metadata extraction tests
 - No impact from changes
 - Duration: 19ms
@@ -271,12 +290,14 @@ Each test verifies:
 #### Integration Tests (No Regressions)
 
 **Total Rust tests:** 244 tests
+
 - ✅ Passing: 221 tests (90.6%)
 - ❌ Failing: 7 tests (2.9%) - **PRE-EXISTING**, unrelated to `is_exported`
 - ⏭️ Skipped: 1 test
 - 📝 Todo: 15 tests
 
 **Full core test suite:** 1091 tests
+
 - ✅ Passing: 871 tests (79.8%)
 - ❌ Failing: 90 tests (8.2%) - **PRE-EXISTING**, unrelated to `is_exported`
 - ⏭️ Skipped: 96 tests
@@ -299,6 +320,7 @@ Each test verifies:
 **7 Rust test failures exist but are unrelated to this implementation:**
 
 1. `symbol_resolution.rust.test.ts` (1 failure)
+
    - "resolves local function call" returns undefined instead of function ID
    - Issue: Symbol resolution logic, not export detection
 
@@ -307,6 +329,7 @@ Each test verifies:
    - Issue: Scope boundary calculation, not export detection
 
 **Evidence they're pre-existing:**
+
 - My changes only touched 3 files: `rust_builder.ts`, `rust_builder_helpers.ts`, `rust_builder.test.ts`
 - No modifications to scope calculation, symbol resolution, or import resolution logic
 - Failures are about column offsets and undefined symbols, not export metadata
@@ -317,11 +340,13 @@ Each test verifies:
 **Total: 3 files, 456 lines added**
 
 1. `packages/core/src/index_single_file/query_code_tree/language_configs/rust_builder.ts`
+
    - Added `extract_export_info()` calls to 25 definition handlers
    - Added `is_exported` and `export` fields to all `builder.add_*()` calls
    - 75 lines added
 
 2. `packages/core/src/index_single_file/query_code_tree/language_configs/rust_builder_helpers.ts`
+
    - Added `has_pub_modifier()` function (36 lines)
    - Added `extract_export_info()` function (13 lines)
    - Added ExportMetadata import
@@ -356,12 +381,14 @@ Each test verifies:
 #### Medium-term (Future Tasks)
 
 2. **Enhanced visibility tracking**
+
    - Distinguish between `pub`, `pub(crate)`, `pub(super)`, `pub(in path)`
    - Track module visibility hierarchy
    - Handle visibility inheritance from parent modules
    - Currently: All `pub` variants → `is_exported = true` (simplified but correct)
 
 3. **Re-export handling**
+
    - Track `pub use` re-exports as separate export entries
    - Link re-exports to original definitions
    - Currently: `pub use` creates import entries, not tracked as exports

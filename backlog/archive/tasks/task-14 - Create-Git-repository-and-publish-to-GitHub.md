@@ -3,8 +3,8 @@ id: task-14
 title: Create Git repository and publish to GitHub
 status: Done
 assignee: []
-created_date: '2025-07-08'
-updated_date: '2025-07-16'
+created_date: "2025-07-08"
+updated_date: "2025-07-16"
 labels:
   - infrastructure
   - deployment

@@ -449,16 +449,19 @@ After implementation:
 Upon investigation, the task description was **completely outdated**. The issues described in the task had already been resolved in previous work:
 
 1. **Test files mentioned don't exist or were already fixed**:
+
    - `constructor_resolution.test.ts` - doesn't exist
    - `symbol_resolution.test.ts` - doesn't exist
    - `detect_call_graph.test.ts` - exists and all 13 tests **PASS** ✅
    - `definition_builder.test.ts` - exists and all 11 tests **PASS** ✅
 
 2. **No "line is not defined" bugs found**:
+
    - The `create_location` helper functions in existing test files were already correctly implemented
    - Used proper parameter names (`start_line`, not `line`)
 
 3. **No SemanticIndex structure issues found**:
+
    - All tests were already using the current SemanticIndex structure correctly
    - No tests expected old unified `symbols` map
 
@@ -471,12 +474,14 @@ Upon investigation, the task description was **completely outdated**. The issues
 ### Current Test Suite Status
 
 **After changes**:
+
 ```
 Test Files:  1 failed | 18 passed | 1 skipped (20)
 Tests:       4 failed | 579 passed | 101 skipped (684)
 ```
 
 **Only failures**: 4 Rust-related tests in `semantic_index.rust.test.ts`:
+
 - Enum variant extraction
 - Trait method signatures
 - Impl block method parameters

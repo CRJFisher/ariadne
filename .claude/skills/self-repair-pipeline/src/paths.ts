@@ -7,4 +7,3 @@ export const PROJECT_CONFIGS_DIR = path.join(STATE_DIR, "project_configs");
 export const REGISTRY_DIR = path.join(STATE_DIR, "known_entrypoints");
 export const ANALYSIS_OUTPUT_DIR = path.join(STATE_DIR, "analysis_output");
 export const TRIAGE_STATE_DIR = path.join(STATE_DIR, "triage_state");
-export const TRIAGE_PATTERNS_FILE = path.join(STATE_DIR, "triage_patterns.json");

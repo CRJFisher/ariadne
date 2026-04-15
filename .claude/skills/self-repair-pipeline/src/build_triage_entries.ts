@@ -1,7 +1,7 @@
 /**
  * Convert classify_entrypoints() output into TriageEntry[].
  *
- * Registry matches become known-tp (completed), everything else
+ * Registry matches become known-unreachable (completed), everything else
  * becomes llm-triage (pending).
  */
 
@@ -26,11 +26,10 @@ function entry_to_triage_base(entry: EnrichedFunctionEntry): Pick<
   };
 }
 
-const KNOWN_TP_RESULT: TriageEntryResult = {
-  is_true_positive: true,
-  is_likely_dead_code: false,
-  group_id: "true-positive",
-  root_cause: "Known true positive",
+const KNOWN_UNREACHABLE_RESULT: TriageEntryResult = {
+  ariadne_correct: true,
+  group_id: "confirmed-unreachable",
+  root_cause: "Known confirmed-unreachable",
   reasoning: "Matched known-entrypoints registry",
 };
 
@@ -44,11 +43,10 @@ export function build_triage_entries(
     entries.push({
       entry_index: index++,
       ...entry_to_triage_base(match.entry),
-      route: "known-tp",
-      deterministic_group_id: null,
+      route: "known-unreachable",
       known_source: match.source,
       status: "completed",
-      result: KNOWN_TP_RESULT,
+      result: KNOWN_UNREACHABLE_RESULT,
       error: null,
       attempt_count: 0,
     });
@@ -59,7 +57,6 @@ export function build_triage_entries(
       entry_index: index++,
       ...entry_to_triage_base(entry),
       route: "llm-triage",
-      deterministic_group_id: null,
       known_source: null,
       status: "pending",
       result: null,

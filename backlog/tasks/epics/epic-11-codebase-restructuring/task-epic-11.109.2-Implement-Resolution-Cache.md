@@ -179,6 +179,7 @@ export function create_resolution_cache(): ResolutionCache {
 ### Unit Tests (`resolution_cache.test.ts`)
 
 **Basic Operations:**
+
 1. ✅ Create empty cache
 2. ✅ Set and get single entry
 3. ✅ Get non-existent entry returns undefined
@@ -186,25 +187,13 @@ export function create_resolution_cache(): ResolutionCache {
 5. ✅ Multiple entries in same scope
 6. ✅ Same name in different scopes (different entries)
 
-**Cache Hits/Misses:**
-7. ✅ First get is miss, second get is hit
-8. ✅ Statistics track hits and misses correctly
-9. ✅ Hit rate calculated correctly
+**Cache Hits/Misses:** 7. ✅ First get is miss, second get is hit 8. ✅ Statistics track hits and misses correctly 9. ✅ Hit rate calculated correctly
 
-**Invalidation:**
-10. ✅ Invalidate file removes all entries for that file
-11. ✅ Invalidate file doesn't affect other files
-12. ✅ Clear removes all entries
-13. ✅ Clear resets statistics
+**Invalidation:** 10. ✅ Invalidate file removes all entries for that file 11. ✅ Invalidate file doesn't affect other files 12. ✅ Clear removes all entries 13. ✅ Clear resets statistics
 
-**Edge Cases:**
-14. ✅ Set same (scope, name) twice overwrites
-15. ✅ Invalidate non-existent file is no-op
-16. ✅ Large cache (10,000+ entries) performs well
+**Edge Cases:** 14. ✅ Set same (scope, name) twice overwrites 15. ✅ Invalidate non-existent file is no-op 16. ✅ Large cache (10,000+ entries) performs well
 
-**File Path Extraction:**
-17. ✅ Extract file path from scope_id correctly
-18. ✅ Handle scope_ids without file path gracefully
+**File Path Extraction:** 17. ✅ Extract file path from scope_id correctly 18. ✅ Handle scope_ids without file path gracefully
 
 ## Success Criteria
 
@@ -225,6 +214,7 @@ export function create_resolution_cache(): ResolutionCache {
 The cache uses a simple string composite key: `"${scope_id}:${name}"
 
 This is efficient because:
+
 - String concatenation is fast in modern JavaScript
 - Map lookups on strings are O(1)
 - No need for complex hashing
@@ -232,6 +222,7 @@ This is efficient because:
 ### File Invalidation
 
 File invalidation is critical for incremental updates:
+
 ```typescript
 // User edits file
 const file_path = "src/app.ts";
@@ -245,6 +236,7 @@ cache.invalidate_file(file_path);
 ### Cache Statistics
 
 Statistics help monitor performance:
+
 ```typescript
 const stats = cache.get_stats();
 console.log(`Cache hit rate: ${(stats.hit_rate * 100).toFixed(1)}%`);
@@ -254,9 +246,11 @@ console.log(`Cache hit rate: ${(stats.hit_rate * 100).toFixed(1)}%`);
 ## Dependencies
 
 **Uses:**
+
 - `@ariadnejs/types` (SymbolId, SymbolName, ScopeId, FilePath)
 
 **Consumed by:**
+
 - task-epic-11.109.1 (Scope Resolver Index)
 - task-epic-11.109.4 (Type Context)
 - task-epic-11.109.5 (Function Call Resolution)
@@ -266,6 +260,7 @@ console.log(`Cache hit rate: ${(stats.hit_rate * 100).toFixed(1)}%`);
 ## Next Steps
 
 After completion:
+
 - All resolvers will use this cache
 - Expected 80%+ cache hit rates
 - Significant performance improvement for repeated resolutions
@@ -283,6 +278,7 @@ After completion:
 ### Primary Deliverables (100% Complete)
 
 1. **Core Implementation** (`resolution_cache.ts` - 150 lines)
+
    - ✅ `ResolutionCache` interface with 6 methods
    - ✅ `CacheStats` interface for performance monitoring
    - ✅ `create_resolution_cache()` factory function using closure pattern
@@ -292,6 +288,7 @@ After completion:
    - ✅ Full TypeScript type safety with branded types
 
 2. **Test Suite** (`resolution_cache.test.ts` - 225 lines, 28 tests)
+
    - ✅ Basic operations: create, get, set, has (6 tests)
    - ✅ Cache hit/miss tracking and statistics (4 tests)
    - ✅ File invalidation and clear operations (5 tests)
@@ -307,6 +304,7 @@ After completion:
 ### Secondary Work (Required for Integration)
 
 4. **TypeScript Configuration Updates**
+
    - ✅ Removed `src/resolve_references/**/*` exclusion from `packages/core/tsconfig.json`
    - ✅ Re-enabled type checking for all Epic 11 restructured code
    - ✅ Fixed pre-existing compilation errors in `symbol_resolution.ts`
@@ -325,12 +323,14 @@ After completion:
 **Decision:** Use `create_resolution_cache()` factory returning object literal, not a class.
 
 **Rationale:**
+
 - **Encapsulation:** Private state (`cache`, `file_keys`, statistics) truly hidden
 - **Lightweight:** No `this` binding overhead or prototype chain
 - **Immutable Interface:** Returned object is immutable, preventing external mutation
 - **Pythonic Style:** Aligns with project's functional programming preference
 
 **Alternative Considered:** Class-based implementation
+
 - **Rejected:** Classes encourage OOP patterns; project prefers functional style
 - **Rejected:** `this` binding can be confusing; closures are explicit
 
@@ -352,16 +352,19 @@ export class ResolutionCache {
 **Decision:** Use `${scope_id}:${name}` string concatenation as Map keys.
 
 **Rationale:**
+
 - **Performance:** String concatenation in V8 is ~2-3ns, negligible vs Map lookup (20-30ns)
 - **Simplicity:** No custom hash function or tuple library needed
 - **Debuggability:** Keys are human-readable in debugger (`"scope:src/app.ts:0:foo"`)
 - **Collision-Free:** `:` delimiter ensures `scope:a:b` ≠ `scope:ab:`
 
 **Alternative Considered:** Object keys `{scope_id, name}`
+
 - **Rejected:** Requires WeakMap (no `.size`) or JSON.stringify (slower, brittle)
 - **Rejected:** Custom hash function adds complexity for no measurable gain
 
 **Performance Data:**
+
 ```
 10,000 inserts with string keys: 8-12ms
 10,000 lookups: 2-3ms
@@ -373,17 +376,20 @@ String key overhead: <0.001ms per operation
 **Decision:** Maintain two Maps: `cache` (key→symbol_id) and `file_keys` (file→Set<key>).
 
 **Rationale:**
+
 - **O(1) Invalidation:** `invalidate_file()` directly looks up keys, no iteration
 - **Memory Trade-off:** ~2x memory for file tracking, acceptable for cache use case
 - **Incremental Updates:** Critical for watch mode and LSP scenarios
 
 **Alternative Considered:** Single Map, iterate all keys on invalidation
+
 - **Rejected:** O(n) invalidation unacceptable for large codebases (10k+ symbols)
 - **Example:** With 10,000 symbols across 100 files, invalidating one file:
   - Bidirectional: O(100 keys) ≈ 0.1ms
   - Iteration: O(10,000 keys) ≈ 5-10ms (50-100x slower)
 
 **Memory Overhead:**
+
 ```
 1,000 symbols, 50 files, avg 20 symbols/file:
 - cache Map: ~80KB (key strings + SymbolId branded strings)
@@ -396,11 +402,13 @@ String key overhead: <0.001ms per operation
 **Decision:** Track hits/misses synchronously in `get()` method, not lazily.
 
 **Rationale:**
+
 - **Accuracy:** Real-time stats for performance monitoring
 - **Overhead:** Two integer increments (~1ns) negligible vs Map lookup (20-30ns)
 - **Debugging:** Immediate feedback during development
 
 **Alternative Considered:** Async/batched statistics
+
 - **Rejected:** Adds complexity, minimal performance gain
 - **Rejected:** Delayed stats reduce debugging utility
 
@@ -409,6 +417,7 @@ String key overhead: <0.001ms per operation
 **Decision:** Return `undefined` from `get()` on cache miss.
 
 **Rationale:**
+
 - **JavaScript Idiom:** `Map.get()` returns `undefined`, not `null`
 - **Optional Chaining:** Enables `cache.get(...)?.property` pattern
 - **Type Safety:** `SymbolId | undefined` clearer than `SymbolId | null | undefined`
@@ -475,26 +484,29 @@ clear(): void {
 ### Benchmarks (M1 MacBook Pro, Node 20)
 
 **Setup:**
+
 - 10,000 unique symbols across 100 files
 - 100 symbols per file average
 - Scope IDs: `"scope:src/file${i}.ts:${line}"`
 
 **Results:**
 
-| Operation | Time (10k ops) | Per Operation | Complexity |
-|-----------|----------------|---------------|------------|
-| `set()` | 8-12ms | ~1μs | O(1) |
-| `get()` (hit) | 2-3ms | ~0.3μs | O(1) |
-| `get()` (miss) | 2-3ms | ~0.3μs | O(1) |
-| `has()` | 2ms | ~0.2μs | O(1) |
-| `invalidate_file()` | 0.05-0.1ms | ~50-100μs | O(k) where k=keys per file |
-| `clear()` | 0.1ms | - | O(1) |
+| Operation           | Time (10k ops) | Per Operation | Complexity                 |
+| ------------------- | -------------- | ------------- | -------------------------- |
+| `set()`             | 8-12ms         | ~1μs          | O(1)                       |
+| `get()` (hit)       | 2-3ms          | ~0.3μs        | O(1)                       |
+| `get()` (miss)      | 2-3ms          | ~0.3μs        | O(1)                       |
+| `has()`             | 2ms            | ~0.2μs        | O(1)                       |
+| `invalidate_file()` | 0.05-0.1ms     | ~50-100μs     | O(k) where k=keys per file |
+| `clear()`           | 0.1ms          | -             | O(1)                       |
 
 **Memory:**
+
 - 10,000 entries: ~800KB (cache) + ~400KB (file_keys) = ~1.2MB
 - Memory growth is linear: O(n)
 
 **Hit Rate Simulation:**
+
 ```
 First resolution pass: 100% misses (10,000 misses)
 Second pass: 100% hits (10,000 hits)
@@ -509,6 +521,7 @@ Realistic workload (LSP, 5 passes):
 ### Scalability Analysis
 
 **Linear Scalability Confirmed:**
+
 ```
 1,000 symbols:   ~100KB,  set=1ms,  get=0.3ms
 10,000 symbols:  ~1.2MB,  set=10ms, get=3ms
@@ -526,10 +539,12 @@ Realistic workload (LSP, 5 passes):
 **Problem:** After implementing cache, `npm run typecheck` failed with errors in `symbol_resolution.ts`.
 
 **Root Cause:**
+
 - Epic 11 restructuring added `src/resolve_references/` to tsconfig exclude list
 - Removing exclusion exposed pre-existing errors in stub orchestration file
 
 **Errors:**
+
 ```
 symbol_resolution.ts:47 - error TS2304: Cannot find name 'resolve_imports'
 symbol_resolution.ts:102 - error TS2304: Cannot find name 'CallReference'
@@ -537,6 +552,7 @@ symbol_resolution.ts:117 - error TS2339: Property 'symbol_id' does not exist on 
 ```
 
 **Resolution:**
+
 1. Added stub implementations for future tasks (`resolve_imports`, `resolve_function_calls`, etc.)
 2. Imported missing types (`CallReference`, `ConstructorDefinition`)
 3. Fixed constructor iteration: `cls.constructor` is `readonly ConstructorDefinition[]`, not single object
@@ -556,9 +572,10 @@ Received hit_count: 101
 ```
 
 **Root Cause:**
+
 ```typescript
 for (let i = 0; i < 100; i++) {
-  cache.get(scope1, name1);  // 100 gets
+  cache.get(scope1, name1); // 100 gets
 }
 expect(cache.get(scope1, name1)).toBe(symbol1); // +1 get (101 total!)
 ```
@@ -566,9 +583,9 @@ expect(cache.get(scope1, name1)).toBe(symbol1); // +1 get (101 total!)
 **Resolution:** Moved final `get()` before stats assertion, used `has()` instead.
 
 ```typescript
-expect(cache.has(scope1, name1)).toBe(true);      // Doesn't affect stats
+expect(cache.has(scope1, name1)).toBe(true); // Doesn't affect stats
 expect(cache.get_stats().hit_count).toBe(100);
-expect(cache.get(scope1, name1)).toBe(symbol1);   // After assertion
+expect(cache.get(scope1, name1)).toBe(symbol1); // After assertion
 ```
 
 **Time Cost:** ~10 minutes
@@ -582,11 +599,13 @@ expect(cache.get(scope1, name1)).toBe(symbol1);   // After assertion
 **Root Cause:** Type system update in Epic 11 changed `ClassDefinition.constructor` to `readonly ConstructorDefinition[]`.
 
 **Error:**
+
 ```
 error TS2339: Property 'symbol_id' does not exist on type 'readonly ConstructorDefinition[]'
 ```
 
 **Resolution:**
+
 ```typescript
 // Before (incorrect)
 if (cls.constructor) {
@@ -612,11 +631,13 @@ if (cls.constructor) {
 ### High Priority (Next Tasks)
 
 1. **Task 11.109.3: Import Resolution Integration**
+
    - Import `create_resolution_cache()` and instantiate shared cache
    - Pass cache to import resolver functions
    - Expected hit rate: 60-80% (imports are frequently re-resolved)
 
 2. **Task 11.109.4: Type Context Integration**
+
    - Share same cache instance across type resolution
    - Cache type member lookups: `(class_symbol_id, member_name) → method_symbol_id`
    - Expected hit rate: 70-90% (class members are stable)
@@ -629,6 +650,7 @@ if (cls.constructor) {
 ### Medium Priority (Performance Optimization)
 
 4. **Cache Eviction Policy (Epic 12?)**
+
    - **Problem:** Unbounded cache growth for large codebases (100k+ symbols)
    - **Solution:** Implement LRU eviction with configurable max size
    - **Interface Addition:**
@@ -640,6 +662,7 @@ if (cls.constructor) {
      ```
 
 5. **Warm-Up Optimization**
+
    - **Problem:** First resolution pass is 100% misses
    - **Solution:** Pre-populate cache from persisted semantic index
    - **Benefit:** LSP startup with instant symbol resolution
@@ -652,6 +675,7 @@ if (cls.constructor) {
 ### Low Priority (Observability)
 
 7. **Detailed Statistics**
+
    - Per-file hit rates
    - Per-scope hit rates
    - Histogram of cache key access frequency (for LRU tuning)
@@ -664,6 +688,7 @@ if (cls.constructor) {
 ### Documentation
 
 9. **Architecture Decision Record (ADR)**
+
    - Document cache integration patterns for future resolver implementations
    - Example code snippets for consuming the cache
 
@@ -679,13 +704,19 @@ if (cls.constructor) {
 ### API Stability: ✅ Stable
 
 **Public API:**
+
 ```typescript
 export function create_resolution_cache(): ResolutionCache;
-export interface ResolutionCache { /* 6 methods */ }
-export interface CacheStats { /* 4 properties */ }
+export interface ResolutionCache {
+  /* 6 methods */
+}
+export interface CacheStats {
+  /* 4 properties */
+}
 ```
 
 **Guarantees:**
+
 - ✅ Method signatures are frozen (breaking changes require major version bump)
 - ✅ `undefined` return convention for cache miss is contractual
 - ✅ Statistics are always computed (never throw)
@@ -693,15 +724,18 @@ export interface CacheStats { /* 4 properties */ }
 ### Consumed By (Ready for Integration)
 
 1. **Scope Resolver Index** (task-epic-11.109.1)
+
    - **Status:** ✅ Already implemented and consuming cache
    - **Integration:** `create_scope_resolvers()` accepts `cache?: ResolutionCache` parameter
    - **Hit Rate:** 85% in tests (excellent)
 
 2. **Type Context** (task-epic-11.109.4) - **Blocked: Not Started**
+
    - **Integration Point:** Type member lookup should check cache before traversing class hierarchy
    - **Expected Signature:** `resolve_type_member(class_id, member_name, cache)`
 
 3. **Function Call Resolution** (task-epic-11.109.5) - **Blocked: Not Started**
+
    - **Integration Point:** Scope chain traversal should consult cache before walking parent scopes
    - **Expected Signature:** `resolve_function_call(reference, scope_resolvers, cache)`
 
@@ -712,6 +746,7 @@ export interface CacheStats { /* 4 properties */ }
 ### Testing Verification
 
 **All Integration Tests Pass:** ✅
+
 ```bash
 npm test -- resolution_cache.test.ts
 # 28 tests passed (802ms)
@@ -721,6 +756,7 @@ npm run typecheck
 ```
 
 **Performance Tests Pass:** ✅
+
 ```
 ✓ handles large cache efficiently (10,000+ entries) - 16ms
   Set operations: 8ms (<1000ms threshold)
@@ -747,6 +783,7 @@ npm run typecheck
 ## References
 
 **Files Modified:**
+
 - `packages/core/src/resolve_references/resolution_cache/resolution_cache.ts` (created)
 - `packages/core/src/resolve_references/resolution_cache/resolution_cache.test.ts` (created)
 - `packages/core/src/resolve_references/resolution_cache/index.ts` (created)
@@ -754,6 +791,7 @@ npm run typecheck
 - `packages/core/src/resolve_references/symbol_resolution.ts` (fixed compilation errors)
 
 **Related Tasks:**
+
 - ✅ task-epic-11.109.0 (File Structure) - Dependency
 - ✅ task-epic-11.109.1 (Scope Resolver Index) - Consumes cache
 - ⏳ task-epic-11.109.3 (Import Resolution) - Next consumer

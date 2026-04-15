@@ -3,7 +3,7 @@ id: task-epic-11.43
 title: Migrate path_utils
 status: To Do
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, foundation, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate path manipulation utilities to src/utils/path_utils.ts
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -52,7 +53,11 @@ Migrate path manipulation utilities to src/utils/path_utils.ts
 
 ```typescript
 // TODO: Add these stubs in implementation
-interface PathUtils { resolve(from: string, to: string): string; relative(from: string, to: string): string; normalize(path: string): string; }
+interface PathUtils {
+  resolve(from: string, to: string): string;
+  relative(from: string, to: string): string;
+  normalize(path: string): string;
+}
 ```
 
 ## Planning Phase
@@ -95,6 +100,7 @@ Research findings will be documented here during execution.
 When implementing, add these TODO comments:
 
 1. In `path_utils.ts`:
+
    ```typescript
    // TODO: Integration with Module Resolution
    // - Path manipulation
@@ -105,6 +111,7 @@ When implementing, add these TODO comments:
    ```
 
 2. In language-specific files (if applicable):
+
    ```typescript
 
    ```

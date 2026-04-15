@@ -1,10 +1,10 @@
 ---
 id: task-epic-11.107.4
-title: 'Rust: REWRITE semantic_index tests from SemanticEntity API'
+title: "Rust: REWRITE semantic_index tests from SemanticEntity API"
 status: Completed
 assignee: []
-created_date: '2025-10-01 10:28'
-completed_date: '2025-10-01 14:26'
+created_date: "2025-10-01 10:28"
+completed_date: "2025-10-01 14:26"
 labels: []
 dependencies: []
 parent_task_id: task-epic-11.107
@@ -41,13 +41,13 @@ MAJOR REWRITE - Currently 5147 lines with @ts-nocheck using deprecated API
 
 ### 📊 Metrics
 
-| Metric | Before | After | Change |
-|--------|--------|-------|--------|
-| **Pass Rate** | 24% (29/120) | **100%** (25/25) | +76% ✅ |
-| **Lines of Code** | 5,376 | 741 | -86% ✅ |
-| **Type Safety** | @ts-nocheck | Fully typed | ✅ |
-| **API** | SemanticEntity (deprecated) | SemanticIndex | ✅ |
-| **Test Files** | 2 files | 1 file | -1 ✅ |
+| Metric            | Before                      | After            | Change  |
+| ----------------- | --------------------------- | ---------------- | ------- |
+| **Pass Rate**     | 24% (29/120)                | **100%** (25/25) | +76% ✅ |
+| **Lines of Code** | 5,376                       | 741              | -86% ✅ |
+| **Type Safety**   | @ts-nocheck                 | Fully typed      | ✅      |
+| **API**           | SemanticEntity (deprecated) | SemanticIndex    | ✅      |
+| **Test Files**    | 2 files                     | 1 file           | -1 ✅   |
 
 ### 🎯 Test Coverage
 
@@ -85,23 +85,26 @@ Testing revealed several **critical gaps in Rust tree-sitter query patterns** th
 **Issue**: The current builder pattern does NOT populate nested collections in definitions.
 
 **Evidence from testing**:
+
 ```typescript
 // FAILING: These arrays are empty
-class_definition.methods         // []
-class_definition.properties      // []
-function_definition.parameters   // []
-trait_definition.methods         // []
-enum_definition.members          // []
+class_definition.methods; // []
+class_definition.properties; // []
+function_definition.parameters; // []
+trait_definition.methods; // []
+enum_definition.members; // []
 ```
 
-**Root Cause**: 
+**Root Cause**:
+
 - Builder pattern in `definition_builder.ts` creates empty arrays for nested items
 - SCM queries capture items separately but don't associate them with parent definitions
 - No processing step to populate nested collections from captured items
 
 **Impact**: HIGH - All tests had to be rewritten to avoid checking nested collections
 
-**Location**: 
+**Location**:
+
 - `packages/core/src/index_single_file/query_code_tree/queries/rust.scm`
 - `packages/core/src/index_single_file/definitions/definition_builder.ts`
 
@@ -114,6 +117,7 @@ enum_definition.members          // []
 **Issue**: Generic parameters (`<T>`, `<T, U>`) are not captured from Rust declarations.
 
 **Failing Cases** (from rust_builder.test.ts):
+
 ```rust
 struct Point<T, U> { x: T, y: U }     // generics = undefined (expected ['T', 'U'])
 enum Result<T, E> { Ok(T), Err(E) }   // generics = undefined (expected ['T', 'E'])
@@ -125,6 +129,7 @@ type MyVec<T> = Vec<T>;               // generics = undefined (expected ['T'])
 **SCM Pattern Missing**: No capture for `type_parameters` node in struct/enum/trait/function declarations.
 
 **Required Addition**:
+
 ```scheme
 ;; Add to struct_item, enum_item, trait_item, function_item
 (type_parameters
@@ -140,6 +145,7 @@ type MyVec<T> = Vec<T>;               // generics = undefined (expected ['T'])
 **Issue**: Return type annotations are not extracted from function signatures.
 
 **Failing Cases**:
+
 ```rust
 fn add(a: i32, b: i32) -> i32 { a + b }  // return_type = undefined (expected 'i32')
 ```
@@ -147,6 +153,7 @@ fn add(a: i32, b: i32) -> i32 { a + b }  // return_type = undefined (expected 'i
 **SCM Pattern Missing**: No capture for return type in function signatures.
 
 **Required Addition**:
+
 ```scheme
 (function_item
   return_type: (_) @function.return_type)
@@ -161,6 +168,7 @@ fn add(a: i32, b: i32) -> i32 { a + b }  // return_type = undefined (expected 'i
 **Issue**: Function modifiers are not extracted.
 
 **Failing Cases**:
+
 ```rust
 async fn fetch_data() { ... }      // is_async = undefined (expected true)
 const fn compute() -> i32 { 42 }   // is_const = undefined (expected true)
@@ -170,6 +178,7 @@ unsafe fn raw_ptr() { ... }        // is_unsafe = undefined (expected true)
 **SCM Pattern Missing**: No captures for modifier keywords.
 
 **Required Additions**:
+
 ```scheme
 (function_item
   "async" @function.modifier.async)?
@@ -188,11 +197,13 @@ unsafe fn raw_ptr() { ... }        // is_unsafe = undefined (expected true)
 **Issue**: Enum variants return object structure instead of simple names.
 
 **Current Output**:
+
 ```typescript
 enum.members = [{ name: '...', value: undefined, location: {...} }, ...]
 ```
 
 **Expected Output** (from tests):
+
 ```typescript
 enum.members = ['Success', 'Error', 'Pending']
 ```
@@ -208,6 +219,7 @@ enum.members = ['Success', 'Error', 'Pending']
 **Issue**: Rust-specific visibility (`pub(crate)`, `pub(super)`) mapped to wrong values.
 
 **Failing Cases**:
+
 ```rust
 pub(crate) struct S;  // visibility = 'package-internal' (expected 'package')
 pub(super) struct S;  // visibility = 'file-private' (expected 'parent-module')
@@ -226,6 +238,7 @@ pub(super) struct S;  // visibility = 'file-private' (expected 'parent-module')
 **Issue**: `is_const` and `is_static` flags not populated for const/static variables.
 
 **Failing Cases**:
+
 ```rust
 const MAX: i32 = 100;          // is_const = undefined (expected true)
 static COUNTER: i32 = 0;       // is_static = undefined (expected true)
@@ -242,6 +255,7 @@ static COUNTER: i32 = 0;       // is_static = undefined (expected true)
 **Issue**: `macro_rules!` definitions not captured.
 
 **Failing Case**:
+
 ```rust
 macro_rules! my_macro { ... }  // is_macro = undefined (expected true)
 ```
@@ -271,6 +285,7 @@ macro_rules! my_macro { ... }  // is_macro = undefined (expected true)
 **Issue**: Property access (`obj.field`) not captured in references.
 
 **Test Finding**:
+
 ```rust
 let val = obj.inner.value;  // No property references captured
 ```
@@ -297,25 +312,25 @@ let val = obj.inner.value;  // No property references captured
 
 ### Summary of Query Pattern Issues
 
-| Issue | Severity | Status | Follow-on Required |
-|-------|----------|--------|-------------------|
-| Nested collections empty (methods, properties, params) | **CRITICAL** | ⚠️ Workaround | ✅ YES - Epic-11.108.5 |
-| Generic type parameters missing | HIGH | ❌ Not implemented | ✅ YES |
-| Function return types missing | MEDIUM | ❌ Not implemented | ✅ YES |
-| Function modifiers missing (async/const/unsafe) | MEDIUM | ❌ Not implemented | ⚙️ Optional |
-| Enum member structure mismatch | LOW | ⚠️ Design choice | ⚙️ Review |
-| Visibility mapping incorrect | LOW | ❌ Bug | ⚙️ Quick fix |
-| Const/static flags missing | LOW | ❌ Not implemented | ⚙️ Optional |
-| Import extraction incomplete | MEDIUM | ⚠️ Partial | ⚙️ Review |
-| Property references not tracked | MEDIUM | ❌ Not implemented | ⚙️ Optional |
-| Receiver location inconsistent | LOW | ⚠️ Partial | ⚙️ Review |
-
+| Issue                                                  | Severity     | Status             | Follow-on Required     |
+| ------------------------------------------------------ | ------------ | ------------------ | ---------------------- |
+| Nested collections empty (methods, properties, params) | **CRITICAL** | ⚠️ Workaround      | ✅ YES - Epic-11.108.5 |
+| Generic type parameters missing                        | HIGH         | ❌ Not implemented | ✅ YES                 |
+| Function return types missing                          | MEDIUM       | ❌ Not implemented | ✅ YES                 |
+| Function modifiers missing (async/const/unsafe)        | MEDIUM       | ❌ Not implemented | ⚙️ Optional            |
+| Enum member structure mismatch                         | LOW          | ⚠️ Design choice   | ⚙️ Review              |
+| Visibility mapping incorrect                           | LOW          | ❌ Bug             | ⚙️ Quick fix           |
+| Const/static flags missing                             | LOW          | ❌ Not implemented | ⚙️ Optional            |
+| Import extraction incomplete                           | MEDIUM       | ⚠️ Partial         | ⚙️ Review              |
+| Property references not tracked                        | MEDIUM       | ❌ Not implemented | ⚙️ Optional            |
+| Receiver location inconsistent                         | LOW          | ⚠️ Partial         | ⚙️ Review              |
 
 ## 📋 Follow-on Work Required
 
 ### Critical Priority Tasks
 
-#### 1. **Fix Nested Collection Population in Definitions** 
+#### 1. **Fix Nested Collection Population in Definitions**
+
 **Priority**: 🔴 **CRITICAL**  
 **Task**: `task-epic-11.108.5` - Rust: Complete Definition Processing
 
@@ -324,6 +339,7 @@ let val = obj.inner.value;  // No property references captured
 **Required Changes**:
 
 1. **Update `definition_builder.ts`** to populate nested arrays:
+
    ```typescript
    // After building definitions, associate nested items
    - class_definition.methods = []  // Currently empty
@@ -331,6 +347,7 @@ let val = obj.inner.value;  // No property references captured
    ```
 
 2. **Add association logic** in semantic_index.ts:
+
    ```typescript
    // Match methods to their parent class by scope/location
    for (const method of method_captures) {
@@ -352,6 +369,7 @@ let val = obj.inner.value;  // No property references captured
 **Impact**: Until fixed, tests cannot verify nested structures, limiting test coverage.
 
 **Related Files**:
+
 - `packages/core/src/index_single_file/definitions/definition_builder.ts`
 - `packages/core/src/index_single_file/semantic_index.ts`
 - `packages/core/src/index_single_file/query_code_tree/queries/rust.scm`
@@ -359,6 +377,7 @@ let val = obj.inner.value;  // No property references captured
 ---
 
 #### 2. **Add Generic Type Parameter Extraction**
+
 **Priority**: 🟠 **HIGH**  
 **Task**: New task needed - "Rust: Add generic type parameter support"
 
@@ -387,12 +406,14 @@ let val = obj.inner.value;  // No property references captured
 ```
 
 **Builder Changes**:
+
 - Add `generics: string[]` field to ClassDefinition, EnumDefinition, InterfaceDefinition, FunctionDefinition
 - Process `type_parameter` captures into generics array
 
 ---
 
 #### 3. **Add Function Return Type Extraction**
+
 **Priority**: 🟠 **HIGH**  
 **Task**: New task needed - "Rust: Add function return type support"
 
@@ -404,6 +425,7 @@ let val = obj.inner.value;  // No property references captured
 ```
 
 **Builder Changes**:
+
 - Populate `FunctionDefinition.signature.return_type` field
 - Extract type name from return_type capture
 
@@ -412,6 +434,7 @@ let val = obj.inner.value;  // No property references captured
 ### Medium Priority Tasks
 
 #### 4. **Add Function Modifier Support (async/const/unsafe)**
+
 **Priority**: 🟡 **MEDIUM**  
 **Task**: Optional enhancement
 
@@ -420,13 +443,15 @@ let val = obj.inner.value;  // No property references captured
 ---
 
 #### 5. **Fix Visibility Modifier Mapping**
+
 **Priority**: 🟡 **MEDIUM**  
 **Task**: Quick bug fix in `rust_builder.ts`
 
 **Changes Needed**:
+
 ```typescript
 // In visibility extractor
-- 'pub(crate)' -> 'package-internal'  
+- 'pub(crate)' -> 'package-internal'
 + 'pub(crate)' -> 'package'
 
 - 'pub(super)' -> 'file-private'
@@ -436,15 +461,18 @@ let val = obj.inner.value;  // No property references captured
 ---
 
 #### 6. **Enhance Import/Use Statement Extraction**
+
 **Priority**: 🟡 **MEDIUM**  
 **Task**: Review current Rust import resolution implementation
 
 **Investigation Needed**:
+
 - Why are `use` statements not populating `imported_symbols`?
 - Is the SCM query capturing them?
 - Is the builder processing them?
 
 **Files to Check**:
+
 - `packages/core/src/index_single_file/query_code_tree/queries/rust.scm`
 - `packages/core/src/resolve_references/import_resolution/language_handlers/rust.ts`
 
@@ -511,6 +539,7 @@ let val = obj.inner.value;  // No property references captured
 **Dependencies**: None - tests are self-contained
 
 **Fixtures Used**:
+
 - basic_structs_and_enums.rs
 - traits_and_generics.rs
 - functions_and_closures.rs
@@ -519,6 +548,7 @@ let val = obj.inner.value;  // No property references captured
 - comprehensive_definitions.rs
 
 **Test Strategy**:
+
 - Focus on top-level definitions (functions, classes, enums, interfaces)
 - Verify essential metadata (type_info, certainty)
 - Test method calls and references
@@ -531,4 +561,3 @@ let val = obj.inner.value;  // No property references captured
 **Duration**: ~4 hours  
 **Lines Changed**: -4,635 deletions, +741 additions (net -3,894 lines)  
 **Test Improvement**: +76 percentage points (24% → 100%)
-

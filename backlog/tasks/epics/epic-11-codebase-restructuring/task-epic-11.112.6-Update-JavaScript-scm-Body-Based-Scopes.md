@@ -114,9 +114,11 @@ class MyClass {     // Scope: 1:14 to 3:1 (body only ✅)
 JavaScript ES6 classes were incorrectly assigned their own scope as the `scope_id`, when they should be assigned their parent (module) scope. This is the same bug as TypeScript (task-epic-11.112.5) but for JavaScript's simpler class system (no interfaces or enums).
 
 **Example Bug:**
+
 ```javascript
-class MyClass {        // Lines 1-3
-  method() {}          // Lines 2-3
+class MyClass {
+  // Lines 1-3
+  method() {} // Lines 2-3
 }
 
 // BUG: MyClass.scope_id = class_scope (wrong!)
@@ -140,12 +142,14 @@ JavaScript only has classes (no interfaces or enums), so only one `.scm` pattern
 ### Why This Works
 
 **ES6 Module Semantics:**
+
 - Class declarations are hoisted to module scope
 - `export class MyClass` exports from module scope
 - Class body creates scope for methods and properties
 - Matches JavaScript's actual runtime behavior
 
 **Technical Implementation:**
+
 - Same body-based capture approach as TypeScript
 - Class name location falls outside class body scope
 - Module-level exports work correctly
@@ -155,9 +159,11 @@ JavaScript only has classes (no interfaces or enums), so only one `.scm` pattern
 #### Sub-task 11.112.6.1: Update JavaScript .scm ✅
 
 **Modified Files:**
+
 - `packages/core/src/index_single_file/query_code_tree/queries/javascript.scm`
 
 **Changes:**
+
 ```scheme
 ; OLD: Captures entire class declaration
 (class_declaration) @scope.class
@@ -168,6 +174,7 @@ JavaScript only has classes (no interfaces or enums), so only one `.scm` pattern
 ```
 
 **Technical Details:**
+
 - JavaScript only has classes (no interfaces/enums)
 - Single pattern change (simpler than TypeScript's 3 patterns)
 - Class expressions handled identically to class declarations
@@ -180,32 +187,37 @@ JavaScript only has classes (no interfaces or enums), so only one `.scm` pattern
 ES6 import/export resolution already operates at module level. The `resolve_import()` function looks up exported symbols in module scope.
 
 **Verification:**
+
 - Reviewed JavaScript-specific import resolution logic
 - Confirmed ES6 export semantics align with body-based scopes
 - No assumptions about class declaration scope positions
 
 **ES6 Module Behavior:**
+
 ```javascript
 // File: example.js
-export class MyClass {}  // Exported from module scope
+export class MyClass {} // Exported from module scope
 
 // Other file:
-import { MyClass } from './example.js';  // Resolves in module scope
+import { MyClass } from "./example.js"; // Resolves in module scope
 ```
 
 #### Sub-task 11.112.6.3: Update JavaScript Import Resolver Tests ✅
 
 **Modified Files:**
+
 - `packages/core/src/index_single_file/semantic_index.javascript.test.ts`
 - `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_builder.ts`
 
 **Changes:**
+
 - Added body-based scope verification tests (commit 500b48e)
 - Updated scope location assertions to expect body boundaries
 - Added tests for class exports
 - All JavaScript tests passing
 
 **Test Coverage:**
+
 - ✅ Class declarations in module scope
 - ✅ Class expressions in appropriate scope
 - ✅ Nested classes (name in parent scope)
@@ -216,6 +228,7 @@ import { MyClass } from './example.js';  // Resolves in module scope
 ### Results
 
 **Before (Broken):**
+
 ```javascript
 // File: example.js
 class MyClass {
@@ -227,6 +240,7 @@ class MyClass {
 ```
 
 **After (Fixed):**
+
 ```javascript
 // File: example.js
 class MyClass {
@@ -249,51 +263,56 @@ class MyClass {
 ### Impact & Benefits
 
 **Immediate Improvements:**
+
 1. **ES6 Exports Fixed**: Class exports now resolve correctly
 2. **Consistent with TypeScript**: Same scoping behavior across languages
 3. **Simpler Implementation**: JavaScript has fewer constructs than TypeScript
 4. **Module Semantics**: Matches JavaScript's actual runtime behavior
 
 **Test Results:**
+
 - JavaScript semantic index tests: All passing ✅
 - Import resolution tests: All passing ✅
 - Consistent with TypeScript body-based scopes
 
 **ES6 Module Examples:**
+
 ```javascript
 // Named export
-export class MyClass {}  // MyClass in module scope ✅
+export class MyClass {} // MyClass in module scope ✅
 
 // Default export
-export default class MyClass {}  // MyClass in module scope ✅
+export default class MyClass {} // MyClass in module scope ✅
 
 // Re-export
-export { MyClass } from './other.js';  // Resolves correctly ✅
+export { MyClass } from "./other.js"; // Resolves correctly ✅
 ```
 
 ### JavaScript-Specific Notes
 
 **Class vs Class Expression:**
 Both handled correctly by body-based scopes:
+
 ```javascript
 // Class declaration
-class MyClass {  }  // MyClass in module scope ✅
+class MyClass {} // MyClass in module scope ✅
 
 // Class expression (named)
-const MyClass = class MyClass { };  // Outer MyClass in module scope ✅
+const MyClass = class MyClass {}; // Outer MyClass in module scope ✅
 
 // Class expression (anonymous)
-const MyClass = class { };  // MyClass in module scope ✅
+const MyClass = class {}; // MyClass in module scope ✅
 ```
 
 **CommonJS vs ES6:**
 Body-based scopes work for both module systems:
+
 ```javascript
 // CommonJS
-module.exports = class MyClass {};  // MyClass in module scope ✅
+module.exports = class MyClass {}; // MyClass in module scope ✅
 
 // ES6
-export class MyClass {}  // MyClass in module scope ✅
+export class MyClass {} // MyClass in module scope ✅
 ```
 
 **No Interfaces/Enums:**
@@ -302,6 +321,7 @@ JavaScript's simpler type system means only classes needed updating. TypeScript 
 ### Consistency with TypeScript
 
 Both languages now use identical body-based scope patterns:
+
 - **TypeScript**: Classes, interfaces, enums
 - **JavaScript**: Classes only
 

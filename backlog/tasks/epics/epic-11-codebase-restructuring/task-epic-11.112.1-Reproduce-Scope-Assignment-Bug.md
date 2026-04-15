@@ -85,7 +85,9 @@ class MyClass {
   console.log("File root scope_id:", index.root_scope_id);
   console.log(
     "BUG:",
-    class_def!.scope_id === method_scope!.id ? "CLASS POINTS TO METHOD SCOPE ❌" : "OK"
+    class_def!.scope_id === method_scope!.id
+      ? "CLASS POINTS TO METHOD SCOPE ❌"
+      : "OK"
   );
 
   // EXPECTED: Class should be in file scope

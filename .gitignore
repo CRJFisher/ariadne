@@ -44,6 +44,7 @@ coverage/
 # Claude AI specific
 .claude/settings.local.json
 .claude/worktrees.local.md
+.claude/worktrees/
 CLAUDE.local.md
 .cursorrules
 

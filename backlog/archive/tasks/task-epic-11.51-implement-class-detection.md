@@ -3,7 +3,8 @@
 **Epic**: Epic 11 - Codebase Restructuring  
 **Priority**: High  
 **Status**: Not Started  
-**Dependencies**: 
+**Dependencies**:
+
 - Should complete before class_hierarchy can properly assemble
 
 ## Problem Statement
@@ -22,6 +23,7 @@ The inheritance module currently doesn't have clear separation between file-leve
 ## Implementation Plan
 
 1. **JavaScript/TypeScript Classes**
+
    - ES6 class syntax
    - Constructor functions (legacy)
    - TypeScript interfaces
@@ -29,6 +31,7 @@ The inheritance module currently doesn't have clear separation between file-leve
    - Private fields (#private)
 
 2. **Python Classes**
+
    - Class definitions
    - Inheritance (single and multiple)
    - Abstract base classes (ABC)
@@ -36,6 +39,7 @@ The inheritance module currently doesn't have clear separation between file-leve
    - Class methods vs instance methods
 
 3. **Rust Structures**
+
    - Struct definitions
    - Impl blocks
    - Trait definitions

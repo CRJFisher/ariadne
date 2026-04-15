@@ -3,7 +3,7 @@ id: task-100.11.13
 title: Implement return type tracking for method chains
 status: Done
 assignee: []
-created_date: '2025-08-04 19:00'
+created_date: "2025-08-04 19:00"
 labels: []
 dependencies: []
 parent_task_id: task-100.11
@@ -31,6 +31,7 @@ Method call chains like `obj.getInner().process()` only detect the first call (g
 ## Implementation Notes
 
 ### Approach taken
+
 - Added `return_type` field to the Def interface in the types package
 - Created `return_type_analyzer.ts` module to extract return types from function/method AST nodes
 - Integrated return type analysis into `scope_resolution.ts` during definition creation
@@ -43,18 +44,21 @@ Method call chains like `obj.getInner().process()` only detect the first call (g
 - Added scope query pattern for chained method calls in TypeScript
 
 ### Features implemented or modified
+
 - **Type tracking**: Return types are now extracted and stored for all functions/methods
 - **Chain resolution**: Method chains like `obj.getInner().process()` are fully resolved
 - **Scope queries**: Added pattern to capture chained method references
 - **Cross-file support**: Works with types defined in other files
 
 ### Technical decisions and trade-offs
+
 - Focus on explicit return type annotations first (TypeScript, Python, Rust)
 - Added basic heuristics for common patterns (constructors, getters)
 - Did not implement full type inference from function bodies (would require dataflow analysis)
 - Store language in ScopeGraph to enable language-specific analysis
 
 ### Modified or added files
+
 - `packages/types/src/index.ts`: Added return_type field to Def interface
 - `packages/core/src/call_graph/return_type_analyzer.ts`: New module for return type analysis
 - `packages/core/src/scope_resolution.ts`: Integrated return type analysis
@@ -64,6 +68,7 @@ Method call chains like `obj.getInner().process()` only detect the first call (g
 - `packages/core/test_return_types.ts`: Created comprehensive test
 
 ### Results
+
 - Direct method calls were already working: `inner1.process()` detected correctly
 - Chained calls now work: `outer.getInner().process()` fully resolved
 - All 3 process() calls and 2 getData() calls detected in test

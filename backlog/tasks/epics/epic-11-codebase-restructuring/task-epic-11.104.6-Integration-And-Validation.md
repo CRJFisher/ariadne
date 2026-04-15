@@ -41,11 +41,17 @@ const mock_extractors: MetadataExtractors = {
   extract_property_chain: vi.fn(() => ["obj", "prop"] as SymbolName[]),
 
   extract_assignment_parts: vi.fn(() => ({
-    source: { /* location */ },
-    target: { /* location */ },
+    source: {
+      /* location */
+    },
+    target: {
+      /* location */
+    },
   })),
 
-  extract_construct_target: vi.fn(() => ({ /* location */ })),
+  extract_construct_target: vi.fn(() => ({
+    /* location */
+  })),
 
   extract_type_arguments: vi.fn(() => ["string"] as SymbolName[]),
 };
@@ -113,12 +119,19 @@ describe("metadata extraction validation", () => {
     ["rust", "let obj = MyStruct::new();\nobj.method();"],
   ])("language: %s", (language, code) => {
     it("should extract method call receiver", () => {
-      const index = build_semantic_index_from_source(code, language as Language);
-      const method_refs = index.references.filter(r => r.call_type === "method");
+      const index = build_semantic_index_from_source(
+        code,
+        language as Language
+      );
+      const method_refs = index.references.filter(
+        (r) => r.call_type === "method"
+      );
 
       expect(method_refs.length).toBeGreaterThan(0);
       // Most method calls should have receiver location
-      const with_receiver = method_refs.filter(r => r.context?.receiver_location);
+      const with_receiver = method_refs.filter(
+        (r) => r.context?.receiver_location
+      );
       expect(with_receiver.length / method_refs.length).toBeGreaterThan(0.8);
     });
   });
@@ -155,6 +168,7 @@ it("should extract metadata for >80% of method calls across all languages", () =
 4. **Add Regression Tests**
 
 Test known tricky patterns:
+
 - Chained method calls: `a.b().c().d()`
 - Nested property access: `obj.prop.nested.deep`
 - Generic method calls: `arr.map<string>(x => x)`
@@ -167,16 +181,19 @@ Test known tricky patterns:
 **Tasks:**
 
 1. **Remove Stubbed Code Comments**
+
    - Search for "TODO" in reference_builder.ts - all should be resolved
    - Remove "Would need to extract" comments
    - Remove "STUBBED" comments from REFERENCE_METADATA_PLAN.md
 
 2. **Update REFERENCE_METADATA_PLAN.md**
+
    - Mark Phase 2 & 3 as ✅ DONE
    - Add "Implementation Complete" section with stats
    - Document any known limitations
 
 3. **Add JSDoc to Key Functions**
+
    - Ensure all extractor functions have clear documentation
    - Document parameters and return values
    - Add examples where helpful
@@ -214,6 +231,7 @@ npm test
 ```
 
 Verify:
+
 - All tests pass
 - No TypeScript errors
 - Test coverage maintained/improved
@@ -249,12 +267,14 @@ Add section to REFERENCE_METADATA_PLAN.md:
 ## Success Criteria (All Sub-tasks)
 
 ### 104.6.1
+
 - ✅ reference_builder.test.ts updated with mock extractors
 - ✅ Tests verify metadata extraction logic
 - ✅ Tests handle undefined metadata gracefully
 - ✅ All reference_builder tests pass
 
 ### 104.6.2
+
 - ✅ End-to-end validation tests created
 - ✅ Tests cover all 4 languages
 - ✅ Metadata extraction rates measured
@@ -263,6 +283,7 @@ Add section to REFERENCE_METADATA_PLAN.md:
   - 90%+ type references have type_info
 
 ### 104.6.3
+
 - ✅ All TODO comments removed
 - ✅ REFERENCE_METADATA_PLAN.md updated
 - ✅ JSDoc documentation complete
@@ -275,4 +296,4 @@ Add section to REFERENCE_METADATA_PLAN.md:
 - `packages/core/src/index_single_file/query_code_tree/reference_builder.ts`
 - `packages/core/src/index_single_file/query_code_tree/reference_builder.test.ts`
 - `REFERENCE_METADATA_PLAN.md`
-- All semantic_index.*.test.ts files
+- All semantic_index.\*.test.ts files

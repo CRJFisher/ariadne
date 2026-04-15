@@ -14,6 +14,7 @@ Dramatically simplify import resolution by adding an `exported_symbols` map to S
 In [import_resolver.ts:134-280](import_resolver.ts#L134-L280):
 
 **147 lines of repetitive code**:
+
 - `find_export()` - orchestrates searching across 6 definition types
 - `find_exported_function()` - iterates functions, checks `is_exported()`
 - `find_exported_class()` - iterates classes, checks `is_exported()`
@@ -24,6 +25,7 @@ In [import_resolver.ts:134-280](import_resolver.ts#L134-L280):
 - `is_exported()` - checks `availability.scope === "file-export" || "public"`
 
 **Problems:**
+
 1. **Code duplication**: 6 nearly-identical finder functions
 2. **Performance**: O(n) iteration through each collection
 3. **Fragile**: Easy to miss a definition type
@@ -104,7 +106,9 @@ Following the pattern of `build_name_index()` at [semantic_index.ts:269](package
  * @returns Map from export name to definition
  * @throws Error if duplicate export names are found
  */
-function build_exported_symbols_map(result: BuilderResult): Map<SymbolName, AnyDefinition> {
+function build_exported_symbols_map(
+  result: BuilderResult
+): Map<SymbolName, AnyDefinition> {
   const map = new Map<SymbolName, AnyDefinition>();
 
   const add_to_map = (def: AnyDefinition) => {
@@ -121,9 +125,9 @@ function build_exported_symbols_map(result: BuilderResult): Map<SymbolName, AnyD
     if (existing) {
       throw new Error(
         `Duplicate export name "${export_name}" in file.\n` +
-        `  First:  ${existing.kind} ${existing.symbol_id}\n` +
-        `  Second: ${def.kind} ${def.symbol_id}\n` +
-        `This indicates a bug in is_exported logic or malformed source code.`
+          `  First:  ${existing.kind} ${existing.symbol_id}\n` +
+          `  Second: ${def.kind} ${def.symbol_id}\n` +
+          `This indicates a bug in is_exported logic or malformed source code.`
       );
     }
 
@@ -138,7 +142,7 @@ function build_exported_symbols_map(result: BuilderResult): Map<SymbolName, AnyD
   result.enums.forEach(add_to_map);
   result.namespaces.forEach(add_to_map);
   result.types.forEach(add_to_map);
-  result.imports.forEach(add_to_map);  // For re-exports
+  result.imports.forEach(add_to_map); // For re-exports
 
   return map;
 }
@@ -184,7 +188,7 @@ export function build_semantic_index(
     imported_symbols: builder_result.imports,
     references: all_references,
     symbols_by_name,
-    exported_symbols,  // NEW
+    exported_symbols, // NEW
     type_bindings,
     type_members,
     type_alias_metadata,
@@ -225,6 +229,7 @@ function find_export(
 ```
 
 **Delete these functions entirely:**
+
 - `find_exported_function()`
 - `find_exported_class()`
 - `find_exported_variable()`
@@ -282,34 +287,41 @@ npm test -- symbol_resolution.integration.test.ts
 ## Benefits
 
 ### Performance
+
 - **Before**: O(n) iteration through 6+ collections
 - **After**: O(1) map lookup
 
 ### Code Quality
+
 - **Before**: 147 lines of repetitive finder functions
 - **After**: 10 lines for find_export + map building
 
 ### Correctness
+
 - **Before**: Duplicate export names silently picked first match
 - **After**: Duplicate export names throw error immediately
 
 ### Maintainability
+
 - **Before**: Adding new definition type requires new finder function
 - **After**: New types automatically included in map
 
 ## Migration Path
 
 ### Immediate (This Task)
+
 1. Add `exported_symbols` map to SemanticIndex
 2. Build map in `build_semantic_index()`
 3. Simplify `find_export()` to use map
 4. Delete all finder functions
 
 ### After Language Builders Updated (Tasks 11.112.23.2-4)
+
 1. Remove fallback logic from `build_exported_symbols_map()`
 2. Only check `def.is_exported` field
 
 ### Final Cleanup (Future Task)
+
 1. Remove `availability` field entirely
 2. All code uses `is_exported` and `export` fields
 

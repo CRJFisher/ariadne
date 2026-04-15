@@ -255,11 +255,13 @@ Based on preliminary review:
 ### Approach Taken
 
 Performed comprehensive automated and manual analysis of all 213 files (89 source, 124 test) to identify violations across three main categories:
+
 1. File organization (size limits, structure)
 2. Functional style (statefulness, mutations, complexity)
 3. Naming conventions (snake_case compliance)
 
 Used combination of:
+
 - Automated file size analysis
 - AST-based class and function analysis
 - Pattern matching for mutations and side effects
@@ -268,18 +270,21 @@ Used combination of:
 ### Key Findings
 
 **Most Critical Violations:**
+
 1. **23 instances of stateful classes** - Direct violation of functional paradigm
 2. **5 files approaching 32KB limit** - Parser failure risk
 3. **457-line function in scope_resolution.ts** - Extreme complexity
 4. **847 total violations** across all categories
 
 **Severity Distribution:**
+
 - 🔴 Critical: 23 violations (2.7%)
 - 🟠 High: 156 violations (18.4%)
 - 🟡 Medium: 412 violations (48.6%)
 - 🟢 Low: 256 violations (30.2%)
 
 **Worst Offenders:**
+
 1. `src/scope_resolution.ts` - Stateful ScopeGraph class with 457-line function
 2. `src/project/project.ts` - Core stateful class affecting entire codebase
 3. `tests/edge_cases.test.ts` - 31.3KB file dangerously close to limit
@@ -294,6 +299,7 @@ Used combination of:
 ### Refactoring Strategy
 
 Developed 4-phase approach:
+
 - **Week 1**: Critical fixes (file sizes, stateful classes)
 - **Week 2**: High priority (long functions, naming)
 - **Week 3**: Medium priority (reorganization, complexity)
@@ -304,6 +310,7 @@ Developed 4-phase approach:
 ### Automation Opportunities
 
 Identified auto-fixable issues:
+
 - Naming conventions: 80% automatable with ESLint
 - Simple mutations: 60% automatable with codemods
 - Import organization: 95% automatable
@@ -311,6 +318,7 @@ Identified auto-fixable issues:
 ### Risk Assessment
 
 **Highest Risk Changes:**
+
 1. Converting Project class - affects all 89 source files
 2. Splitting scope_resolution - core functionality
 3. Removing mutations - potential performance impact

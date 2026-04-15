@@ -51,6 +51,7 @@ Fix all invalid capture names in `javascript.scm` and update `javascript_builder
 Successfully fixed all 36 invalid capture names in javascript.scm:
 
 ### Key Changes:
+
 - `@reference.identifier` → `@reference.variable`
 - `@reference.receiver` → `@reference.variable`
 - `@reference.method_call` → `@reference.call`

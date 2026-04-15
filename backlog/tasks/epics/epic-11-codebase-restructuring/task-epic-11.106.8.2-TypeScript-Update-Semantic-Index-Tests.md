@@ -19,12 +19,14 @@ Update `semantic_index.typescript.test.ts` to comprehensively test the simplifie
 ### 1. Remove Deleted Field Assertions
 
 Delete all test assertions on fields that no longer exist:
+
 - `source_type`
 - `is_narrowing`
 - `is_widening`
 - `containing_function`
 
 **Example:**
+
 ```typescript
 // ❌ DELETE these assertions
 expect(ref.type_flow?.source_type).toBeUndefined();
@@ -55,7 +57,7 @@ describe("SymbolReference - optional chaining", () => {
       obj?.method()
     `;
     const { references } = index_single_file(code, "test.ts");
-    const methodRef = references.find(r => r.name === "method");
+    const methodRef = references.find((r) => r.name === "method");
 
     expect(methodRef?.member_access?.is_optional_chain).toBe(true);
   });
@@ -65,7 +67,7 @@ describe("SymbolReference - optional chaining", () => {
       obj.method()
     `;
     const { references } = index_single_file(code, "test.ts");
-    const methodRef = references.find(r => r.name === "method");
+    const methodRef = references.find((r) => r.name === "method");
 
     expect(methodRef?.member_access?.is_optional_chain).toBe(false);
   });
@@ -75,7 +77,7 @@ describe("SymbolReference - optional chaining", () => {
       const value = obj?.prop
     `;
     const { references } = index_single_file(code, "test.ts");
-    const propRef = references.find(r => r.name === "prop");
+    const propRef = references.find((r) => r.name === "prop");
 
     expect(propRef?.member_access?.is_optional_chain).toBe(true);
   });
@@ -85,7 +87,7 @@ describe("SymbolReference - optional chaining", () => {
       const value = obj?.prop?.nested
     `;
     const { references } = index_single_file(code, "test.ts");
-    const nestedRef = references.find(r => r.name === "nested");
+    const nestedRef = references.find((r) => r.name === "nested");
 
     expect(nestedRef?.member_access?.is_optional_chain).toBe(true);
   });
@@ -95,7 +97,7 @@ describe("SymbolReference - optional chaining", () => {
       const value = obj?.prop.nested
     `;
     const { references } = index_single_file(code, "test.ts");
-    const nestedRef = references.find(r => r.name === "nested");
+    const nestedRef = references.find((r) => r.name === "nested");
 
     // nested uses regular access, but obj?.prop is optional
     expect(nestedRef?.member_access?.is_optional_chain).toBe(false);
@@ -106,7 +108,7 @@ describe("SymbolReference - optional chaining", () => {
       (obj as SomeType)?.method()
     `;
     const { references } = index_single_file(code, "test.ts");
-    const methodRef = references.find(r => r.name === "method");
+    const methodRef = references.find((r) => r.name === "method");
 
     expect(methodRef?.member_access?.is_optional_chain).toBe(true);
   });
@@ -124,7 +126,9 @@ describe("SymbolReference - assignment_type", () => {
       const x: string = getValue()
     `;
     const { references } = index_single_file(code, "test.ts");
-    const assignRef = references.find(r => r.name === "x" && r.type === "assignment");
+    const assignRef = references.find(
+      (r) => r.name === "x" && r.type === "assignment"
+    );
 
     expect(assignRef?.assignment_type).toBeDefined();
     expect(assignRef?.assignment_type?.type_name).toBe("string");
@@ -137,7 +141,9 @@ describe("SymbolReference - assignment_type", () => {
       }
     `;
     const { references } = index_single_file(code, "test.ts");
-    const paramRef = references.find(r => r.name === "param" && r.type === "assignment");
+    const paramRef = references.find(
+      (r) => r.name === "param" && r.type === "assignment"
+    );
 
     expect(paramRef?.assignment_type).toBeDefined();
     expect(paramRef?.assignment_type?.type_name).toBe("number");
@@ -148,7 +154,9 @@ describe("SymbolReference - assignment_type", () => {
       const x: Array<string> = getArray()
     `;
     const { references } = index_single_file(code, "test.ts");
-    const assignRef = references.find(r => r.name === "x" && r.type === "assignment");
+    const assignRef = references.find(
+      (r) => r.name === "x" && r.type === "assignment"
+    );
 
     expect(assignRef?.assignment_type).toBeDefined();
     expect(assignRef?.assignment_type?.type_name).toContain("Array");
@@ -160,7 +168,9 @@ describe("SymbolReference - assignment_type", () => {
       getValue()
     `;
     const { references } = index_single_file(code, "test.ts");
-    const callRef = references.find(r => r.name === "getValue" && r.call_type === "function");
+    const callRef = references.find(
+      (r) => r.name === "getValue" && r.call_type === "function"
+    );
 
     expect(callRef?.assignment_type).toBeUndefined();
   });
@@ -170,7 +180,9 @@ describe("SymbolReference - assignment_type", () => {
       const x = getValue()
     `;
     const { references } = index_single_file(code, "test.ts");
-    const assignRef = references.find(r => r.name === "x" && r.type === "assignment");
+    const assignRef = references.find(
+      (r) => r.name === "x" && r.type === "assignment"
+    );
 
     expect(assignRef?.assignment_type).toBeUndefined();
   });
@@ -180,6 +192,7 @@ describe("SymbolReference - assignment_type", () => {
 ### 5. Update Existing Integration Tests
 
 Review and update all existing test cases to:
+
 - Use `assignment_type` instead of `type_flow.target_type`
 - Remove any checks on deleted fields
 - Ensure assertions match the new simplified structure
@@ -217,6 +230,7 @@ Expected: All tests pass with no regressions.
 ## Notes
 
 TypeScript has both optional chaining (`?.`) and rich type annotation support, so this file should have comprehensive tests for both:
+
 - Optional chaining patterns (similar to JavaScript but with TypeScript-specific constructs)
 - Type annotations on variables, parameters, and return types
 - Complex types (generics, unions, intersections)

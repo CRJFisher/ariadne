@@ -11,10 +11,12 @@
 This task creates MULTIPLE files (main logic + language-specific module resolvers):
 
 **Main import resolution:**
+
 - `packages/core/src/resolve_references/import_resolution/import_resolver.ts`
 - `packages/core/src/resolve_references/import_resolution/import_resolver.test.ts`
 
 **Language-specific module resolution:**
+
 - `packages/core/src/resolve_references/import_resolution/import_resolver.javascript.ts`
 - `packages/core/src/resolve_references/import_resolution/import_resolver.javascript.test.ts`
 - `packages/core/src/resolve_references/import_resolution/import_resolver.typescript.ts`
@@ -279,6 +281,7 @@ function resolve_module_path(
 ### JavaScript Module Resolution (`import_resolver.javascript.ts`)
 
 **Rules:**
+
 1. Relative imports: `./utils`, `../helpers`
 2. Extensions: `.js`, `.mjs`, `.cjs`
 3. Index files: `/index.js`, `/index.mjs`
@@ -336,6 +339,7 @@ function resolve_relative_javascript(
 ```
 
 **Tests:**
+
 - Relative imports with explicit extension
 - Relative imports without extension (tries .js, .mjs, .cjs)
 - Directory imports (tries index.js)
@@ -344,6 +348,7 @@ function resolve_relative_javascript(
 ### TypeScript Module Resolution (`import_resolver.typescript.ts`)
 
 **Rules:**
+
 1. Relative imports: `./utils`, `../helpers`
 2. Extensions: `.ts`, `.tsx`, `.js`, `.jsx` (JS for type-only imports)
 3. Index files: `/index.ts`, `/index.tsx`
@@ -385,7 +390,7 @@ function resolve_relative_typescript(
     resolved,
     `${resolved}.ts`,
     `${resolved}.tsx`,
-    `${resolved}.js`,  // For JS libraries with types
+    `${resolved}.js`, // For JS libraries with types
     `${resolved}.jsx`,
     path.join(resolved, "index.ts"),
     path.join(resolved, "index.tsx"),
@@ -403,6 +408,7 @@ function resolve_relative_typescript(
 ```
 
 **Tests:**
+
 - TypeScript files (.ts, .tsx)
 - JavaScript files in TypeScript project
 - Index file resolution
@@ -411,6 +417,7 @@ function resolve_relative_typescript(
 ### Python Module Resolution (`import_resolver.python.ts`)
 
 **Rules:**
+
 1. Relative imports: `from .utils import`, `from ..helpers import`
 2. Absolute imports: `from package.module import`
 3. Extensions: `.py`
@@ -458,10 +465,7 @@ function resolve_relative_python(
   const file_path = path.join(target_dir, ...module_path.split("."));
 
   // Try as file or package
-  const candidates = [
-    `${file_path}.py`,
-    path.join(file_path, "__init__.py"),
-  ];
+  const candidates = [`${file_path}.py`, path.join(file_path, "__init__.py")];
 
   for (const candidate of candidates) {
     if (fs.existsSync(candidate)) {
@@ -484,10 +488,7 @@ function resolve_absolute_python(
   // Convert dotted path to file path
   const file_path = path.join(project_root, ...absolute_path.split("."));
 
-  const candidates = [
-    `${file_path}.py`,
-    path.join(file_path, "__init__.py"),
-  ];
+  const candidates = [`${file_path}.py`, path.join(file_path, "__init__.py")];
 
   for (const candidate of candidates) {
     if (fs.existsSync(candidate)) {
@@ -519,6 +520,7 @@ function find_python_project_root(start_dir: string): string {
 ```
 
 **Tests:**
+
 - Relative imports: `.sibling`, `..parent.module`
 - Absolute imports: `package.module.submodule`
 - Package imports: `from package import` → `package/__init__.py`
@@ -527,6 +529,7 @@ function find_python_project_root(start_dir: string): string {
 ### Rust Module Resolution (`import_resolver.rust.ts`)
 
 **Rules:**
+
 1. Use statements: `use crate::module;`, `use super::sibling;`
 2. Module hierarchy: `mod.rs`, inline `mod` declarations
 3. Extensions: `.rs`
@@ -652,6 +655,7 @@ function find_rust_crate_root(start_file: FilePath): string {
 ```
 
 **Tests:**
+
 - `crate::` absolute paths
 - `super::` relative to parent
 - `self::` relative to current
@@ -802,7 +806,7 @@ The algorithm handles this naturally by checking for imports in **every scope**,
 - ✅ Core import resolution tests (export chains, lazy behavior)
 - ✅ JavaScript module resolution tests (all extensions and index files)
 - ✅ TypeScript module resolution tests (TS/JS extensions, index files)
-- ✅ Python module resolution tests (relative/absolute, packages, __init__.py)
+- ✅ Python module resolution tests (relative/absolute, packages, **init**.py)
 - ✅ Rust module resolution tests (crate/super/self, mod.rs, crate root)
 - ✅ Integration tests prove lazy behavior
 - ✅ Performance tests show unused imports cost nothing
@@ -866,7 +870,7 @@ Default exports are found by checking `is_default` flag in export metadata.
 4. **Type-only imports** - TypeScript type imports treated as regular imports
 5. **Node modules** - External packages not resolved
 6. **Path aliases** - `@/utils` requires additional configuration
-7. **Availability lacks scope context** - Current availability system doesn't account for *where* a symbol is referenced from. See **task-epic-11.110** for comprehensive scope-aware availability refactor.
+7. **Availability lacks scope context** - Current availability system doesn't account for _where_ a symbol is referenced from. See **task-epic-11.110** for comprehensive scope-aware availability refactor.
 
 ## Dependencies
 
@@ -877,12 +881,14 @@ Default exports are found by checking `is_default` flag in export metadata.
 - Path resolution utilities
 
 **Consumed by:**
+
 - Task 11.109.1 `ScopeResolverIndex` (calls `extract_import_specs` and creates resolvers)
 - Task 11.109.8 (Main orchestration)
 
 ## Next Steps
 
 After completion:
+
 - ScopeResolverIndex integrates import resolvers into scope resolver maps
 - Import resolution happens on-demand during call resolution
 - Cache provides O(1) lookups for repeated imports
@@ -905,26 +911,32 @@ Successfully implemented lazy import resolution with language-specific module pa
 ### Files Created
 
 **Core Import Resolution (2 files):**
+
 - ✅ `import_resolver.ts` (273 lines) - Core import resolution logic
 - ✅ `import_resolver.test.ts` (361 lines) - 12 comprehensive tests
 
 **JavaScript Module Resolution (2 files):**
+
 - ✅ `import_resolver.javascript.ts` (73 lines) - Node.js module resolution rules
 - ✅ `import_resolver.javascript.test.ts` (181 lines) - 12 tests
 
 **TypeScript Module Resolution (2 files):**
+
 - ✅ `import_resolver.typescript.ts` (75 lines) - TypeScript module resolution rules
 - ✅ `import_resolver.typescript.test.ts` (221 lines) - 15 tests
 
 **Python Module Resolution (2 files):**
-- ✅ `import_resolver.python.ts` (148 lines) - Python import resolution with __init__.py support
+
+- ✅ `import_resolver.python.ts` (148 lines) - Python import resolution with **init**.py support
 - ✅ `import_resolver.python.test.ts` (219 lines) - 13 tests
 
 **Rust Module Resolution (2 files):**
+
 - ✅ `import_resolver.rust.ts` (161 lines) - Rust crate/module resolution
 - ✅ `import_resolver.rust.test.ts` (269 lines) - 14 tests
 
 **Integration:**
+
 - ✅ `index.ts` (15 lines) - Public API exports
 - ✅ Updated `scope_resolver_index.ts` - Integrated import resolution functions
 
@@ -937,12 +949,14 @@ Successfully implemented lazy import resolution with language-specific module pa
 **Decision:** Use closure-based lazy resolvers instead of eager resolution.
 
 **Rationale:**
+
 - Traditional approach would resolve all imports upfront (wasteful for unused imports)
 - Lazy resolvers are lightweight closures (~100 bytes each)
 - Only resolve when symbol is actually referenced
 - Estimated 90% savings on unused import resolution
 
 **Implementation:**
+
 ```typescript
 export function create_import_resolver(
   import_spec: ImportSpec,
@@ -964,14 +978,16 @@ export function create_import_resolver(
 **Decision:** Separate module resolver per language instead of unified resolver.
 
 **Rationale:**
+
 - Each language has fundamentally different module resolution rules
 - JavaScript: .js/.mjs/.cjs extensions, index files
 - TypeScript: .ts/.tsx priority, JS library support
-- Python: Dotted paths, __init__.py packages, project root detection
+- Python: Dotted paths, **init**.py packages, project root detection
 - Rust: crate::/super::/self:: paths, mod.rs vs module files
 - Unified approach would be too complex and brittle
 
 **Pattern:**
+
 ```typescript
 function resolve_module_path(
   import_path: string,
@@ -992,6 +1008,7 @@ function resolve_module_path(
 **Decision:** Use `availability.scope` field to detect exports.
 
 **Implementation:**
+
 ```typescript
 function is_exported(def: Definition): boolean {
   return (
@@ -1002,6 +1019,7 @@ function is_exported(def: Definition): boolean {
 ```
 
 **Rationale:**
+
 - Semantic index already tracks availability per symbol
 - No need to parse export statements separately
 - Consistent across all languages
@@ -1011,6 +1029,7 @@ function is_exported(def: Definition): boolean {
 **Decision:** Return symbol directly without following re-export chains.
 
 **Rationale:**
+
 - Semantic index doesn't currently track `source_file` and `source_name` for re-exports
 - `SymbolAvailability.export` only has: `name`, `is_default`, `is_reexport`
 - Full chain following requires semantic index enhancement (task-epic-11.110)
@@ -1025,6 +1044,7 @@ function is_exported(def: Definition): boolean {
 **Pattern:** Capture context in closure, defer execution until needed.
 
 **Benefits:**
+
 - Memory efficient (only stores closure pointer)
 - Execution deferred until actual use
 - Natural fit for functional programming style
@@ -1035,6 +1055,7 @@ function is_exported(def: Definition): boolean {
 **Pattern:** Interface + implementations per language.
 
 **Structure:**
+
 ```
 resolve_module_path (dispatcher)
   ├── resolve_module_path_javascript
@@ -1044,6 +1065,7 @@ resolve_module_path (dispatcher)
 ```
 
 **Benefits:**
+
 - Easy to add new languages
 - Each resolver can be tested independently
 - Clear separation of concerns
@@ -1052,7 +1074,8 @@ resolve_module_path (dispatcher)
 
 **Pattern:** Check `fs.statSync().isFile()` to distinguish files from directories.
 
-**Why:** 
+**Why:**
+
 - `fs.existsSync()` returns true for both files and directories
 - Directory imports need to try index files
 - File imports should return immediately
@@ -1068,6 +1091,7 @@ if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
 **Pattern:** Return resolved path even if file doesn't exist.
 
 **Rationale:**
+
 - Files may be generated at runtime
 - Build systems may create files after analysis
 - Better to return expected path than null
@@ -1091,6 +1115,7 @@ if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
 - **Cache Lookup:** O(1) hash map lookup
 
 **Typical Timings:**
+
 - Extract import specs: <1ms per 100 imports
 - Resolve single import: <1ms (cached: <0.1ms)
 - Module path resolution: <1ms (file I/O dominated)
@@ -1098,6 +1123,7 @@ if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
 #### Test Performance
 
 **Test Suite Duration:** 1.61s for 110 tests
+
 - Core import resolution: 6ms for 12 tests
 - Language-specific tests: 60ms for 54 tests
 - Integration tests: ~800ms (involves tree-sitter parsing)
@@ -1109,6 +1135,7 @@ if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
 #### Issue 1: TypeScript Compilation Errors
 
 **Problem:**
+
 ```
 error TS2339: Property 'source_file' does not exist on type SymbolAvailability.export
 error TS2339: Property 'source_name' does not exist on type SymbolAvailability.export
@@ -1117,6 +1144,7 @@ error TS2339: Property 'source_name' does not exist on type SymbolAvailability.e
 **Root Cause:** Semantic index doesn't track re-export source information.
 
 **Resolution:**
+
 1. Removed `source_file` and `source_name` from `ExportInfo` interface
 2. Simplified `resolve_export_chain` to return symbol directly
 3. Updated tests to use valid type data
@@ -1129,12 +1157,14 @@ error TS2339: Property 'source_name' does not exist on type SymbolAvailability.e
 **Problem:** `fs.existsSync()` returns true for directories, causing wrong paths to be returned.
 
 **Example:**
+
 ```typescript
 // ./utils exists as directory with index.js
-fs.existsSync("./utils") // true (but it's a directory!)
+fs.existsSync("./utils"); // true (but it's a directory!)
 ```
 
 **Resolution:** Added `fs.statSync().isFile()` check:
+
 ```typescript
 if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
   return candidate as FilePath;
@@ -1148,15 +1178,18 @@ if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
 **Problem:** Initial algorithm walked up until finding directory without `__init__.py`, which gave wrong root.
 
 **Example:**
+
 ```
 /project/          (should be root)
   src/             (has __init__.py)
     helpers/       (has __init__.py)
       utils.py
 ```
+
 Importing `src.helpers.utils` should resolve from `/project/`, not `/project/src/`.
 
 **Resolution:** Changed algorithm to find topmost package, then return its parent:
+
 ```typescript
 function find_python_project_root(start_dir: string): string {
   // Find topmost package
@@ -1176,19 +1209,22 @@ function find_python_project_root(start_dir: string): string {
 **Problem:** `super::` in nested modules didn't resolve correctly.
 
 **Example:**
+
 ```rust
 // In helpers.rs
 use super::utils;  // Should look in parent directory
 ```
 
 **Resolution:** Detect if current file is `mod.rs` vs regular module file:
+
 ```typescript
 function resolve_from_parent(parts, base_file) {
   const base_name = path.basename(base_file);
   // mod.rs: go up two levels, regular file: stay at current dir
-  const parent_dir = base_name === "mod.rs"
-    ? path.dirname(path.dirname(base_file))
-    : path.dirname(base_file);
+  const parent_dir =
+    base_name === "mod.rs"
+      ? path.dirname(path.dirname(base_file))
+      : path.dirname(base_file);
   return resolve_rust_module_path(parent_dir, parts);
 }
 ```
@@ -1202,29 +1238,34 @@ function resolve_from_parent(parts, base_file) {
 **Coverage by Category:**
 
 1. **Core Import Resolution (12 tests):**
+
    - Import spec extraction: 3 tests
    - Export chain resolution: 7 tests
    - Lazy resolver creation: 2 tests
 
 2. **JavaScript Module Resolution (12 tests):**
+
    - Extension resolution (.js/.mjs/.cjs)
    - Index file resolution
    - Relative/parent imports
    - Extension priority
 
 3. **TypeScript Module Resolution (15 tests):**
+
    - TS/TSX extension priority
    - JS library support in TS projects
    - Index file variants
    - Complex nested paths
 
 4. **Python Module Resolution (13 tests):**
+
    - Relative imports (., .., ...)
    - Absolute imports
-   - Package imports (__init__.py)
+   - Package imports (**init**.py)
    - Project root detection
 
 5. **Rust Module Resolution (14 tests):**
+
    - crate:: absolute paths
    - super:: relative paths
    - self:: current module
@@ -1237,6 +1278,7 @@ function resolve_from_parent(parts, base_file) {
    - Multi-language support
 
 **Edge Cases Covered:**
+
 - ✅ Non-existent files
 - ✅ Non-existent exports
 - ✅ Non-exported symbols
@@ -1250,12 +1292,14 @@ function resolve_from_parent(parts, base_file) {
 ### Integration Success
 
 **Scope Resolver Index Integration:**
+
 - ✅ Import resolvers integrate seamlessly
 - ✅ 16 integration tests passing
 - ✅ Lazy resolution works with cache
 - ✅ Multi-language support verified
 
 **No Regressions:**
+
 - All existing scope resolver tests pass
 - All existing resolution cache tests pass
 - No changes required to consuming code
@@ -1265,6 +1309,7 @@ function resolve_from_parent(parts, base_file) {
 #### High Priority (task-epic-11.110)
 
 **Full Re-export Chain Following:**
+
 - Enhance semantic index to track `source_file` and `source_name` for re-exports
 - Implement multi-hop chain following (A → B → C)
 - Add cycle detection for circular re-exports
@@ -1277,21 +1322,25 @@ function resolve_from_parent(parts, base_file) {
 #### Medium Priority
 
 **Namespace Imports (task 11.109.10):**
+
 ```typescript
-import * as utils from './utils';
+import * as utils from "./utils";
 utils.helper();
 ```
+
 - Requires secondary lookup for member access
 - Return namespace object instead of symbol_id
 - ~1-2 days effort
 
 **Node Modules Resolution:**
+
 - Implement package.json lookup
 - Handle node_modules/ directory traversal
 - Support package exports field
 - ~3-4 days effort
 
 **Path Aliases:**
+
 - Read tsconfig.json for path mappings
 - Support @ and ~ aliases
 - ~1-2 days effort
@@ -1299,11 +1348,13 @@ utils.helper();
 #### Low Priority
 
 **Declaration Files (.d.ts):**
+
 - TypeScript type-only imports
 - Ambient module declarations
 - ~2-3 days effort
 
 **Dynamic Imports:**
+
 - Runtime import() expressions
 - Requires different analysis approach
 - Lower priority (not needed for static analysis)
@@ -1323,6 +1374,7 @@ utils.helper();
 ### Verification Reports
 
 Generated comprehensive verification documentation:
+
 - `.test-verification-import-resolution.md` - 226 lines, detailed test coverage analysis
 - `.typescript-compilation-verification.md` - 197 lines, type safety verification
 - `.typecheck-summary.md` - 57 lines, quick reference
@@ -1345,4 +1397,3 @@ Generated comprehensive verification documentation:
 4. 📝 **Documentation:** API documented, limitations clearly noted
 
 **Status:** ✅ **TASK COMPLETE AND VERIFIED**
-

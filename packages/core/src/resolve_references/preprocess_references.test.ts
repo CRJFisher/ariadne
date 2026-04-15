@@ -18,7 +18,7 @@ import type {
   FilePath,
   FunctionCallReference,
 } from "@ariadnejs/types";
-import type { ResolutionRegistry } from "./resolve_references";
+import { ResolutionRegistry } from "./resolve_references";
 
 import { preprocess_python_references } from "./preprocess_references.python";
 
@@ -43,12 +43,12 @@ const MOCK_LOCATION: Location = {
 describe("preprocess_references", () => {
   let references: ReferenceRegistry;
   let definitions: DefinitionRegistry;
-  let resolutions: { resolve: () => null };
+  let resolutions: ResolutionRegistry;
 
   beforeEach(() => {
     references = new ReferenceRegistry();
     definitions = new DefinitionRegistry();
-    resolutions = { resolve: () => null };
+    resolutions = new ResolutionRegistry();
     vi.clearAllMocks();
   });
 
@@ -62,7 +62,7 @@ describe("preprocess_references", () => {
       "python",
       references,
       definitions,
-      resolutions as unknown as ResolutionRegistry
+      resolutions
     );
 
     expect(preprocess_python_references).toHaveBeenCalledOnce();
@@ -89,7 +89,7 @@ describe("preprocess_references", () => {
       "typescript",
       references,
       definitions,
-      resolutions as unknown as ResolutionRegistry
+      resolutions
     );
 
     // Python preprocessor should NOT be called
@@ -114,7 +114,7 @@ describe("preprocess_references", () => {
       "javascript",
       references,
       definitions,
-      resolutions as unknown as ResolutionRegistry
+      resolutions
     );
 
     expect(preprocess_python_references).not.toHaveBeenCalled();
@@ -138,7 +138,7 @@ describe("preprocess_references", () => {
       "rust", // Not yet supported
       references,
       definitions,
-      resolutions as unknown as ResolutionRegistry
+      resolutions
     );
 
     expect(preprocess_python_references).not.toHaveBeenCalled();

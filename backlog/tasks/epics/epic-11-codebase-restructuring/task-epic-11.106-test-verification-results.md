@@ -9,6 +9,7 @@
 ✅ **ALL TESTS PASSING** - 111 reference-related tests passed across 4 test suites
 
 All critical SymbolReference attributes for method call resolution are being correctly extracted and tested:
+
 - ✅ **receiver_location** - Tested in TypeScript, Python, Rust
 - ✅ **property_chain** - Tested in TypeScript, Python
 - ✅ **type_info** - Tested in TypeScript, Python, Rust
@@ -27,12 +28,14 @@ All critical SymbolReference attributes for method call resolution are being cor
 **File:** `packages/core/src/index_single_file/references/reference_builder.test.ts`
 
 **Results:**
+
 - **Status:** ✅ FULLY PASSED
 - **Tests Passed:** 27
 - **Tests Skipped:** 7
 - **Duration:** 791ms
 
 **Key Verifications:**
+
 - ✅ Variable references processed correctly
 - ✅ Function calls processed correctly
 - ✅ Method calls with object context processed correctly
@@ -44,6 +47,7 @@ All critical SymbolReference attributes for method call resolution are being cor
 - ✅ Multiple references chained correctly
 
 **Metadata Extractor Integration:**
+
 - ✅ `extract_type_from_annotation` called for type references
 - ✅ `extract_call_receiver` called for method calls
 - ✅ `extract_property_chain` called for member access
@@ -60,6 +64,7 @@ All critical SymbolReference attributes for method call resolution are being cor
 **File:** `packages/core/src/index_single_file/semantic_index.javascript.test.ts`
 
 **Results:**
+
 - **Status:** ⚠️ MOSTLY PASSED (4 pre-existing fixture failures)
 - **Tests Passed:** 21
 - **Tests Skipped:** 2
@@ -67,6 +72,7 @@ All critical SymbolReference attributes for method call resolution are being cor
 - **Duration:** 1.34s
 
 **Key Verifications:**
+
 - ✅ Static methods parsed correctly
 - ✅ Optional chaining detected in method calls and property access
 - ✅ Method calls with receivers parsed correctly
@@ -83,6 +89,7 @@ All critical SymbolReference attributes for method call resolution are being cor
 - ✅ Template literals parsed
 
 **Failed Tests (Pre-existing):**
+
 - ❌ basic_function.js - ENOENT: no such file
 - ❌ class_and_methods.js - ENOENT: no such file
 - ❌ imports_exports.js - ENOENT: no such file (2 tests)
@@ -96,6 +103,7 @@ All critical SymbolReference attributes for method call resolution are being cor
 **File:** `packages/core/src/index_single_file/semantic_index.typescript.test.ts`
 
 **Results:**
+
 - **Status:** ✅ FULLY PASSED
 - **Tests Passed:** 26
 - **Tests Failed:** 0
@@ -104,6 +112,7 @@ All critical SymbolReference attributes for method call resolution are being cor
 **Key Verifications:**
 
 **Basic Features:**
+
 - ✅ Interfaces, classes, and methods captured
 - ✅ Type aliases and enums handled
 - ✅ Interface inheritance handled
@@ -112,10 +121,12 @@ All critical SymbolReference attributes for method call resolution are being cor
 - ✅ Async functions with Promise return types handled
 
 **Module System:**
+
 - ✅ Type-only imports handled
 - ✅ Namespace definitions handled
 
 **Metadata Extraction (Core Focus):**
+
 - ✅ **receiver_location** extracted for method calls on class instances
 - ✅ **type_info** extracted for method calls on interface-typed objects
 - ✅ **property_chain** handled for chained method calls
@@ -126,12 +137,14 @@ All critical SymbolReference attributes for method call resolution are being cor
 - ✅ Generic constructors handled
 
 **TypeScript-Specific Features:**
+
 - ✅ Optional chaining on typed objects handled
 - ✅ Enum member access handled
 - ✅ Namespaces handled
 - ✅ Decorators handled
 
 **Fixtures:**
+
 - ✅ classes.ts parsed correctly
 - ✅ interfaces.ts parsed correctly
 - ✅ types.ts parsed correctly
@@ -139,6 +152,7 @@ All critical SymbolReference attributes for method call resolution are being cor
 - ✅ modules.ts parsed correctly
 
 **Specific Attribute Test Locations:**
+
 - **receiver_location:** Lines 270, 273, 372-373, 427, 430, 464-466
 - **property_chain:** Lines 721-722
 - **type_info:** Lines 535-538, 566-571
@@ -153,6 +167,7 @@ All critical SymbolReference attributes for method call resolution are being cor
 **File:** `packages/core/src/index_single_file/semantic_index.python.test.ts`
 
 **Results:**
+
 - **Status:** ✅ FULLY PASSED
 - **Tests Passed:** 28
 - **Tests Failed:** 0
@@ -161,6 +176,7 @@ All critical SymbolReference attributes for method call resolution are being cor
 **Key Verifications:**
 
 **Type Metadata Extraction:**
+
 - ✅ Type info extracted from function parameter annotations
 - ✅ Type info extracted from variable annotations
 - ✅ Generic types handled
@@ -170,22 +186,27 @@ All critical SymbolReference attributes for method call resolution are being cor
 - ✅ Generic type arguments handled
 
 **Method Call Metadata:**
+
 - ✅ **receiver_location** extracted for method calls
 - ✅ **receiver_location** extracted for chained method calls
 
 **Attribute Access Chain Metadata:**
+
 - ✅ **property_chain** extracted for attribute access
 - ✅ `self` and `cls` handled in property chains
 
 **Class and Method Handling:**
+
 - ✅ Class definitions and methods extracted
 - ✅ Constructor calls handled
 
 **Class Instantiation Metadata:**
+
 - ✅ **construct_target** extracted for class instantiation
 - ✅ Nested constructor calls handled
 
 **Additional Features:**
+
 - ✅ Variable assignments tracked
 - ✅ Annotated assignments handled
 - ✅ Function definitions with type hints captured
@@ -197,11 +218,13 @@ All critical SymbolReference attributes for method call resolution are being cor
 - ✅ Union and Optional types handled
 
 **Edge Cases:**
+
 - ✅ Empty property chains handled gracefully
 - ✅ Missing type hints handled gracefully
 - ✅ Standalone constructor calls without assignment handled
 
 **Specific Attribute Test Locations:**
+
 - **type_info:** Lines 60-68, 84-90, 109+
 - **receiver_location:** Lines 236-261, 271+
 - **property_chain:** Lines 300-330, 358-368
@@ -214,6 +237,7 @@ All critical SymbolReference attributes for method call resolution are being cor
 **File:** `packages/core/src/index_single_file/semantic_index.rust.test.ts`
 
 **Results:**
+
 - **Status:** ✅ FULLY PASSED
 - **Tests Passed:** 30
 - **Tests Skipped:** 5
@@ -222,21 +246,25 @@ All critical SymbolReference attributes for method call resolution are being cor
 **Key Verifications:**
 
 **Structs and Enums:**
+
 - ✅ Struct definitions extracted
 - ✅ Enum definitions extracted
 - ✅ Enum variants extracted
 - ✅ Struct fields extracted
 
 **Traits:**
+
 - ✅ Trait definitions extracted
 - ✅ Trait methods extracted
 
 **Impl Blocks:**
+
 - ✅ Methods from impl blocks extracted
 - ✅ Associated functions distinguished from methods
 - ✅ Trait implementations extracted
 
 **Functions:**
+
 - ✅ Function definitions extracted
 - ✅ Function parameters extracted
 - ✅ Function return types extracted
@@ -244,10 +272,12 @@ All critical SymbolReference attributes for method call resolution are being cor
 - ✅ Associated function calls tracked
 
 **Ownership Patterns:**
+
 - ✅ Reference types in function signatures handled
 - ✅ Basic borrowing patterns handled
 
 **Modules and Visibility:**
+
 - ✅ Module declarations extracted
 - ✅ Inline module declarations extracted
 - ✅ Nested module declarations extracted
@@ -255,17 +285,20 @@ All critical SymbolReference attributes for method call resolution are being cor
 - ✅ Glob imports handled
 
 **Type Metadata Extraction:**
+
 - ✅ Type info extracted from function parameter type annotations
 - ✅ Type info extracted from variable annotations
 - ✅ Generic types handled
 
 **Method Calls and Type Resolution:**
+
 - ✅ Method calls with receivers tracked
 - ✅ Chained method calls handled
 - ✅ Field access chains captured
 - ✅ Struct instantiation captured
 
 **Comprehensive Integration:**
+
 - ✅ Comprehensive definition file handled
 - ✅ Rust extractors integrated into semantic index pipeline
 
@@ -274,6 +307,7 @@ All critical SymbolReference attributes for method call resolution are being cor
 ## Comprehensive Test Run Results
 
 **Combined Test Execution:**
+
 - **Test Suites:** 4 passed (4)
 - **Total Tests:** 111 passed | 12 skipped (123 total)
 - **Total Duration:** 5.04s
@@ -285,19 +319,20 @@ All critical SymbolReference attributes for method call resolution are being cor
 
 ## Critical Attributes Verification Matrix
 
-| Attribute | JavaScript | TypeScript | Python | Rust | Status |
-|-----------|------------|------------|--------|------|--------|
-| **receiver_location** | ✅ Tested | ✅ Tested | ✅ Tested | ✅ Tested | ✅ VERIFIED |
-| **property_chain** | ✅ Tested | ✅ Tested | ✅ Tested | ✅ Tested | ✅ VERIFIED |
-| **type_info** | ⚠️ JSDoc | ✅ Tested | ✅ Tested | ✅ Tested | ✅ VERIFIED |
-| **call_type** | ✅ Tested | ✅ Tested | ✅ Tested | ✅ Tested | ✅ VERIFIED |
-| **construct_target** | ✅ Tested | ✅ Tested | ✅ Tested | ✅ Tested | ✅ VERIFIED |
-| **is_optional_chain** | ✅ Tested | ✅ Tested | ❌ N/A | ❌ N/A | ✅ VERIFIED |
-| **assignment_type** | ✅ Tested | ✅ Tested | ✅ Tested | ✅ Tested | ✅ VERIFIED |
-| **return_type** | ✅ Tested | ✅ Tested | ✅ Tested | ✅ Tested | ✅ VERIFIED |
-| **member_access** | ✅ Tested | ✅ Tested | ✅ Tested | ✅ Tested | ✅ VERIFIED |
+| Attribute             | JavaScript | TypeScript | Python    | Rust      | Status      |
+| --------------------- | ---------- | ---------- | --------- | --------- | ----------- |
+| **receiver_location** | ✅ Tested  | ✅ Tested  | ✅ Tested | ✅ Tested | ✅ VERIFIED |
+| **property_chain**    | ✅ Tested  | ✅ Tested  | ✅ Tested | ✅ Tested | ✅ VERIFIED |
+| **type_info**         | ⚠️ JSDoc   | ✅ Tested  | ✅ Tested | ✅ Tested | ✅ VERIFIED |
+| **call_type**         | ✅ Tested  | ✅ Tested  | ✅ Tested | ✅ Tested | ✅ VERIFIED |
+| **construct_target**  | ✅ Tested  | ✅ Tested  | ✅ Tested | ✅ Tested | ✅ VERIFIED |
+| **is_optional_chain** | ✅ Tested  | ✅ Tested  | ❌ N/A    | ❌ N/A    | ✅ VERIFIED |
+| **assignment_type**   | ✅ Tested  | ✅ Tested  | ✅ Tested | ✅ Tested | ✅ VERIFIED |
+| **return_type**       | ✅ Tested  | ✅ Tested  | ✅ Tested | ✅ Tested | ✅ VERIFIED |
+| **member_access**     | ✅ Tested  | ✅ Tested  | ✅ Tested | ✅ Tested | ✅ VERIFIED |
 
 **Legend:**
+
 - ✅ Tested - Explicitly tested with passing tests
 - ⚠️ JSDoc - Limited support (JSDoc comments only)
 - ❌ N/A - Feature not applicable to language
@@ -309,31 +344,37 @@ All critical SymbolReference attributes for method call resolution are being cor
 ### By Attribute Category
 
 **1. Receiver Identification (receiver_location)**
+
 - **Tests:** 10+ explicit tests across languages
 - **Coverage:** Method calls, chained calls, static methods
 - **Status:** ✅ Comprehensive
 
 **2. Type Information (type_info)**
+
 - **Tests:** 15+ explicit tests across languages
 - **Coverage:** Type annotations, generic types, interface types, return types
 - **Status:** ✅ Comprehensive
 
 **3. Call Classification (call_type)**
+
 - **Tests:** Implicit in all method/function call tests
 - **Coverage:** Function calls, method calls, constructor calls, super calls
 - **Status:** ✅ Comprehensive
 
 **4. Constructor Tracking (construct_target)**
+
 - **Tests:** 8+ explicit tests across languages
 - **Coverage:** Simple constructors, nested constructors, generic constructors
 - **Status:** ✅ Comprehensive
 
 **5. Property Chain Tracking (property_chain)**
+
 - **Tests:** 8+ explicit tests across languages
 - **Coverage:** Simple chains, nested chains, self/cls chains, field access
 - **Status:** ✅ Comprehensive
 
 **6. Optional Chaining (is_optional_chain)**
+
 - **Tests:** 5+ explicit tests (JS/TS only)
 - **Coverage:** Regular vs. optional calls, nested optional chaining
 - **Status:** ✅ Comprehensive
@@ -345,6 +386,7 @@ All critical SymbolReference attributes for method call resolution are being cor
 ### Pre-Epic 11.106 vs. Post-Epic 11.106
 
 **Changes Made in Epic 11.106:**
+
 1. ✅ Task 11.106.1: Evaluated ReferenceContext attributes
 2. ✅ Task 11.106.2: Removed `type_flow.source_type`, `is_narrowing`, `is_widening`
 3. ✅ Task 11.106.3: Simplified `type_flow` to `assignment_type`
@@ -353,12 +395,14 @@ All critical SymbolReference attributes for method call resolution are being cor
 6. ✅ Task 11.106.6: Verified extractable receiver type patterns
 
 **Regression Test Results:**
+
 - ✅ **Zero regressions introduced**
 - ✅ All existing tests continue to pass
 - ✅ Removed tests for deleted attributes (intentional)
 - ✅ Added new tests for enhanced features (optional chaining)
 
 **Test Count Comparison:**
+
 - **Before Epic 11.106:** ~107 passing tests (estimated)
 - **After Epic 11.106:** 111 passing tests
 - **Net Change:** +4 tests (new optional chaining tests)
@@ -368,17 +412,20 @@ All critical SymbolReference attributes for method call resolution are being cor
 ## Quality Assurance Metrics
 
 ### Test Success Rate
+
 - **Target:** 100% of functional tests passing
 - **Actual:** 111/111 functional tests passing (100%)
 - **Non-functional failures:** 4 tests (missing fixtures, pre-existing)
 - **Status:** ✅ TARGET MET
 
 ### Code Coverage
+
 - **Reference Builder:** ✅ All public methods tested
 - **Metadata Extractors:** ✅ All extract methods tested
 - **Semantic Index:** ✅ All languages tested
 
 ### Cross-Language Parity
+
 - **JavaScript:** ✅ All applicable attributes tested
 - **TypeScript:** ✅ All applicable attributes tested
 - **Python:** ✅ All applicable attributes tested
@@ -392,6 +439,7 @@ All critical SymbolReference attributes for method call resolution are being cor
 ### Pre-Existing Test Failures (Not Related to Epic 11.106)
 
 **JavaScript Fixture Files Missing:**
+
 1. `basic_function.js` - ENOENT
 2. `class_and_methods.js` - ENOENT
 3. `imports_exports.js` - ENOENT (2 tests fail)
@@ -411,25 +459,30 @@ All SymbolReference attributes are correctly extracted and thoroughly tested. Th
 ### 2. Future Enhancements 🔮
 
 **Test Fixture Files:**
+
 - Create missing JavaScript fixture files
 - Ensures all language fixture tests pass
 
 **Test Documentation:**
+
 - Add inline comments explaining what each test verifies
 - Document expected attribute values in test assertions
 
 **Performance Testing:**
+
 - Add performance benchmarks for extraction operations
 - Verify recursive operations (property chains) scale well
 
 ### 3. Continuous Monitoring 📊
 
 **Test Stability:**
+
 - Monitor test execution times
 - Watch for flaky tests
 - Maintain 100% pass rate
 
 **Coverage Maintenance:**
+
 - Add tests for new language features
 - Update tests when TypeScript/Python/Rust versions change
 - Ensure new extraction patterns are tested
@@ -452,6 +505,7 @@ All SymbolReference attribute extraction functionality is working correctly and 
 **Confidence Level:** High - 111 passing tests provide strong evidence that the system works correctly.
 
 **Next Steps:**
+
 - Task 11.106.7: Update tests (mostly complete)
 - Task 11.106.8: Update documentation
 - Consider addressing pre-existing fixture file issues in future task

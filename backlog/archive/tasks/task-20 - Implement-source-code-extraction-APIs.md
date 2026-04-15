@@ -3,9 +3,9 @@ id: task-20
 title: Implement source code extraction APIs
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-07-17'
-updated_date: '2025-07-17'
+  - "@chuck"
+created_date: "2025-07-17"
+updated_date: "2025-07-17"
 labels: []
 dependencies: []
 ---
@@ -27,15 +27,18 @@ Add methods to extract source code for definitions, including context like docst
 
 ```typescript
 class Project {
-    // Get source code for a definition
-    get_source_code(def: Def): string;
-    
-    // Get source with context (includes docstring before function)
-    get_source_with_context(def: Def, context_lines?: number): {
-        source: string;
-        docstring?: string;
-        decorators?: string[];
-    };
+  // Get source code for a definition
+  get_source_code(def: Def): string;
+
+  // Get source with context (includes docstring before function)
+  get_source_with_context(
+    def: Def,
+    context_lines?: number
+  ): {
+    source: string;
+    docstring?: string;
+    decorators?: string[];
+  };
 }
 ```
 
@@ -60,6 +63,7 @@ class Project {
 Implemented both source extraction methods with comprehensive functionality:
 
 **get_source_code(def: Def, file_path: string): string**
+
 - Modified to accept file_path as parameter since Def interface doesn't include it
 - Uses tree-sitter AST traversal to find enclosing function/method nodes
 - Handles function declarations, method definitions, arrow functions, and generators
@@ -67,14 +71,16 @@ Implemented both source extraction methods with comprehensive functionality:
 - Returns empty string for missing files or invalid ranges
 
 **get_source_with_context(def: Def, file_path: string, context_lines?: number)**
+
 - Returns object with source, docstring, and decorators
 - Python docstring extraction: Handles both single-line and multi-line docstrings inside functions
-- JSDoc extraction: Parses /** */ comments before TypeScript/JavaScript functions
+- JSDoc extraction: Parses /\*\* \*/ comments before TypeScript/JavaScript functions
 - Python decorator extraction: Collects all @decorator lines before function definitions
 - Context lines feature: Includes surrounding code based on context_lines parameter
 - Gracefully handles edge cases with empty returns
 
 **Technical Decisions:**
+
 - Used AST node traversal instead of simple range extraction to get full function bodies
 - Implemented language-specific docstring/decorator detection logic
 - Added file_path parameter to both methods for consistency

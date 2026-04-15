@@ -52,15 +52,15 @@ Uses the existing `Def` interface from `graph.ts`, which was extended per the de
 
 ```typescript
 export interface Def extends BaseNode {
-  kind: 'definition';
+  kind: "definition";
   name: string;
   symbol_kind: string; // e.g., 'function', 'class', 'variable'
   file_path: string;
   symbol_id: string;
   metadata?: FunctionMetadata;
   enclosing_range?: SimpleRange; // Full body range including definition
-  signature?: string;             // Full signature with parameters
-  docstring?: string;             // Documentation comment if available
+  signature?: string; // Full signature with parameters
+  docstring?: string; // Documentation comment if available
   // ... other fields
 }
 ```

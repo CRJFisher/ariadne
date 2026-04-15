@@ -3,7 +3,7 @@ id: task-epic-11.46
 title: Migrate index.ts
 status: To Do
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, foundation, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Create new index.ts with exports only (no logic). The ONLY exports it should con
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -94,6 +95,7 @@ Research findings will be documented here during execution.
 When implementing, add these TODO comments:
 
 1. In `index.ts.ts`:
+
    ```typescript
    // TODO: Integration with All features
    // - Export all public interfaces
@@ -102,6 +104,7 @@ When implementing, add these TODO comments:
    ```
 
 2. In language-specific files (if applicable):
+
    ```typescript
 
    ```

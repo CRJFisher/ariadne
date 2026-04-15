@@ -41,15 +41,15 @@ cd packages/mcp
 
 The script runs 7 tests:
 
-| Test | Name                  | What It Validates                                     |
-| ---- | --------------------- | ----------------------------------------------------- |
-| 1    | Tool Discovery        | Claude can see the `list_entrypoints` tool            |
-| 2    | Tool Invocation       | Tool runs successfully on fixture code                |
-| 3    | Filtered Analysis     | File/folder filtering parameters work                 |
-| 4    | Neighborhood Discovery| Claude can see the `show_call_graph_neighborhood` tool|
-| 5    | Neighborhood Invocation| Tool runs successfully on fixture code               |
-| 6    | Neighborhood Depth    | Depth parameters work correctly                       |
-| 7    | Analytics Client Info | Analytics captures client_name and client_version     |
+| Test | Name                    | What It Validates                                      |
+| ---- | ----------------------- | ------------------------------------------------------ |
+| 1    | Tool Discovery          | Claude can see the `list_entrypoints` tool             |
+| 2    | Tool Invocation         | Tool runs successfully on fixture code                 |
+| 3    | Filtered Analysis       | File/folder filtering parameters work                  |
+| 4    | Neighborhood Discovery  | Claude can see the `show_call_graph_neighborhood` tool |
+| 5    | Neighborhood Invocation | Tool runs successfully on fixture code                 |
+| 6    | Neighborhood Depth      | Depth parameters work correctly                        |
+| 7    | Analytics Client Info   | Analytics captures client_name and client_version      |
 
 ## Interpreting Results
 
@@ -88,13 +88,13 @@ Failed: 0
 
 ### Failure Indicators
 
-| Indicator                              | Meaning                                      | Action                                                |
-| -------------------------------------- | -------------------------------------------- | ----------------------------------------------------- |
-| `Claude Code CLI not found`            | `claude` command not in PATH                 | Install Claude Code CLI                               |
-| `MCP server not built`                 | Missing `dist/server.js`                     | Run `npm run build -w packages/mcp`                   |
-| `Tool 'list_entrypoints' not found`    | Claude didn't discover the MCP tool          | Check MCP config, server logs                         |
-| `Tool invocation did not produce...`   | Tool ran but output unexpected               | Check if fixtures exist, review Claude's response     |
-| `FAIL: Filtered analysis...`           | Folder filtering parameter not working       | Check tool schema, parameter handling                 |
+| Indicator                            | Meaning                                | Action                                            |
+| ------------------------------------ | -------------------------------------- | ------------------------------------------------- |
+| `Claude Code CLI not found`          | `claude` command not in PATH           | Install Claude Code CLI                           |
+| `MCP server not built`               | Missing `dist/server.js`               | Run `npm run build -w packages/mcp`               |
+| `Tool 'list_entrypoints' not found`  | Claude didn't discover the MCP tool    | Check MCP config, server logs                     |
+| `Tool invocation did not produce...` | Tool ran but output unexpected         | Check if fixtures exist, review Claude's response |
+| `FAIL: Filtered analysis...`         | Folder filtering parameter not working | Check tool schema, parameter handling             |
 
 ## Verifying Correctness
 
@@ -201,9 +201,9 @@ This points to TypeScript fixtures in `packages/core/tests/fixtures/typescript/c
 
 ## Related Files
 
-| File                                      | Purpose                          |
-| ----------------------------------------- | -------------------------------- |
-| `packages/mcp/tests/claude-headless-test.sh` | Test runner script              |
-| `packages/mcp/tests/mcp-test-config.json`    | MCP server configuration        |
-| `packages/mcp/src/start_server.ts`           | Server implementation           |
-| `packages/mcp/src/list_entrypoints.e2e.test.ts` | Programmatic E2E tests       |
+| File                                            | Purpose                  |
+| ----------------------------------------------- | ------------------------ |
+| `packages/mcp/tests/claude-headless-test.sh`    | Test runner script       |
+| `packages/mcp/tests/mcp-test-config.json`       | MCP server configuration |
+| `packages/mcp/src/start_server.ts`              | Server implementation    |
+| `packages/mcp/src/list_entrypoints.e2e.test.ts` | Programmatic E2E tests   |

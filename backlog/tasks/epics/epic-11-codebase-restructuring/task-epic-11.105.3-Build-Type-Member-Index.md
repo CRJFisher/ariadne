@@ -136,6 +136,7 @@ export function extract_type_members(
 ### Test Cases
 
 #### TypeScript
+
 ```typescript
 test("extracts class methods and properties", () => {
   const code = `
@@ -212,6 +213,7 @@ test("handles static methods", () => {
 ```
 
 #### Interface
+
 ```typescript
 test("extracts interface method signatures", () => {
   const code = `
@@ -248,6 +250,7 @@ test("tracks interface extension", () => {
 ```
 
 #### Python
+
 ```python
 test("extracts Python class methods", () => {
   const code = `
@@ -268,6 +271,7 @@ test("extracts Python class methods", () => {
 ```
 
 #### Rust
+
 ```rust
 test("extracts Rust struct methods", () => {
   const code = `
@@ -315,6 +319,7 @@ test("extracts Rust enum methods", () => {
 ## Success Criteria
 
 ### Functional
+
 - ✅ Class methods and properties indexed
 - ✅ Interface methods and properties indexed
 - ✅ Constructor tracked
@@ -322,12 +327,14 @@ test("extracts Rust enum methods", () => {
 - ✅ All 4 languages supported
 
 ### Testing
+
 - ✅ Unit tests for classes
 - ✅ Unit tests for interfaces
 - ✅ Inheritance edge cases
 - ✅ >90% code coverage
 
 ### Code Quality
+
 - ✅ Clear JSDoc comments
 - ✅ Type-safe implementation
 - ✅ Efficient Map-based lookup
@@ -335,6 +342,7 @@ test("extracts Rust enum methods", () => {
 ## Dependencies
 
 **Uses:**
+
 - `BuilderResult` from definition_builder
 - `ClassDefinition`, `InterfaceDefinition`, `EnumDefinition`
 
@@ -343,6 +351,7 @@ test("extracts Rust enum methods", () => {
 ## Next Steps
 
 After completion:
+
 - Task 11.105.5 adds this to SemanticIndex
 - Task 11.109.3 uses for member lookup during method resolution
 - Task 11.109.3 resolves `extends` strings to SymbolIds for inheritance
@@ -352,11 +361,13 @@ After completion:
 ### Inheritance Resolution
 
 This task stores `extends` as SymbolName strings:
+
 ```typescript
 extends: ["Animal", "IBase"]
 ```
 
 Task 11.109.3 will resolve these to SymbolIds using ScopeResolver:
+
 ```typescript
 // In 11.109.3:
 const parent_id = scope_resolver.resolve_in_scope("Animal", class_scope);
@@ -367,6 +378,7 @@ This enables proper inheritance lookup that respects imports and shadowing.
 ### Static vs Instance Methods
 
 Both are included in the same `methods` map. The `static` modifier is stored in the MethodDefinition itself, not in this index. During method resolution:
+
 - Instance method calls lookup in `methods`
 - Static method calls also lookup in `methods` (but check `static` flag)
 

@@ -332,11 +332,13 @@ None - this task is self-contained.
 ## Implementation Notes
 
 All three fixture files were created successfully:
+
 - `basic_function.js`: Contains function declaration, function calls, and console.log (method call with receiver)
 - `class_and_methods.js`: Contains Dog class with constructor, instance method (speak), and static method (getSpecies)
 - `imports_exports.js`: Contains ES6 imports/exports with VERSION constant, processData function, DataProcessor class, and main function
 
 All 4 previously failing tests now pass:
+
 - ✅ should correctly parse basic_function.js fixture
 - ✅ should correctly parse class_and_methods.js fixture
 - ✅ should correctly parse imports_exports.js fixture (2 tests)

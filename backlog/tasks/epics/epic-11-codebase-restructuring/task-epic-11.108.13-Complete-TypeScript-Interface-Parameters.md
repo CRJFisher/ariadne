@@ -9,6 +9,7 @@
 **Blocks:** task-epic-11.108.7 (TypeScript test updates)
 
 **Completion Summary:**
+
 - Fixed 8 critical bugs preventing interface parameter extraction
 - Added 3 helper functions for value extraction and type filtering
 - Enhanced 8 handlers with value extraction
@@ -27,10 +28,11 @@ Add interface method parameter tracking to TypeScript builder. Currently, interf
 TypeScript interface methods are added via `add_method_signature_to_interface()`, but their parameters are never captured or added to the method signatures.
 
 **Example:**
+
 ```typescript
 interface Calculator {
-  add(x: number, y: number): number;      // ← parameters NOT tracked
-  divide(a: number, b: number, precision?: number): number;  // ← parameters NOT tracked
+  add(x: number, y: number): number; // ← parameters NOT tracked
+  divide(a: number, b: number, precision?: number): number; // ← parameters NOT tracked
 }
 ```
 
@@ -123,14 +125,19 @@ interface Calculator {
 /**
  * Find the containing interface method for a parameter
  */
-function find_containing_interface_method(capture: CaptureNode): SymbolId | undefined {
+function find_containing_interface_method(
+  capture: CaptureNode
+): SymbolId | undefined {
   let node = capture.node.parent;
 
   while (node) {
     if (node.type === "method_signature") {
       const nameNode = node.childForFieldName?.("name");
       if (nameNode) {
-        return method_symbol(nameNode.text as SymbolName, extract_location(nameNode));
+        return method_symbol(
+          nameNode.text as SymbolName,
+          extract_location(nameNode)
+        );
       }
     }
     node = node.parent;
@@ -177,6 +184,7 @@ tree-sitter parse test_sample.ts
 ```
 
 Look for:
+
 - `method_signature` nodes
 - `formal_parameters` nodes
 - `required_parameter` vs `optional_parameter` nodes
@@ -238,7 +246,7 @@ it("extracts interface method parameters", () => {
   expect(divide_method?.parameters[2]).toMatchObject({
     name: "precision",
     type: "number",
-    optional: true,  // ← Verify optional flag
+    optional: true, // ← Verify optional flag
   });
 });
 ```
@@ -300,7 +308,7 @@ May need special handling for destructured parameters.
 
 ```typescript
 interface Config {
-  init(port: number = 3000): void;  // Default value in interface (rare but valid)
+  init(port: number = 3000): void; // Default value in interface (rare but valid)
 }
 ```
 
@@ -355,6 +363,7 @@ The existing implementation in `typescript.scm` (lines 428-439) already captures
 ```
 
 These patterns are **not** scoped to specific parent nodes, so they capture parameters in:
+
 - Regular functions
 - Arrow functions
 - Class methods
@@ -367,6 +376,7 @@ The handlers in `typescript_builder_config.ts` use `find_containing_callable()` 
 **Issue:** Rest parameters (`...args: any[]`) had `undefined` type instead of the actual type annotation.
 
 **Root Cause:** The AST structure for rest parameters is:
+
 ```
 required_parameter
   ├─ rest_pattern
@@ -406,6 +416,7 @@ export function extract_parameter_type(
 ### Verification
 
 All edge cases tested and working:
+
 - ✅ Required parameters: `add(x: number, y: number)`
 - ✅ Optional parameters: `divide(a: number, b?: number)` - correctly marked with `optional: true`
 - ✅ Rest parameters: `log(...args: any[])` - type now correctly extracted as `any[]`
@@ -438,6 +449,7 @@ The task description was slightly outdated - the query patterns and handlers wer
 These patterns were capturing `@definition.parameter` and `@definition.parameter.optional` in addition to unused `@type.type_annotation` captures. This caused duplicate parameter captures (verified with tree-sitter query testing).
 
 **Before:**
+
 ```scheme
 ; Parameter type annotations
 (required_parameter
@@ -460,12 +472,14 @@ These patterns were capturing `@definition.parameter` and `@definition.parameter
 **Enhanced parameter patterns documentation (lines 413-447):**
 
 Added comprehensive AST structure comments based on tree-sitter verification:
+
 - Documents that patterns apply to ALL callables (not just functions)
 - Shows exact AST structure for each parameter type
 - Notes critical detail about `rest_pattern` having no field name for identifier
 - Explains why patterns work for interface method signatures
 
 **Test Results:**
+
 - Before: 14 parameter captures (with duplicates)
 - After: 10 parameter captures (no duplicates)
 - All 33 tests in `semantic_index.typescript.test.ts` pass ✅
@@ -474,6 +488,7 @@ Added comprehensive AST structure comments based on tree-sitter verification:
 ### Files Modified
 
 1. **`packages/core/src/index_single_file/query_code_tree/queries/typescript.scm`**
+
    - Removed duplicate parameter patterns (lines 147-159)
    - Enhanced parameter section documentation (lines 413-447)
 
@@ -488,6 +503,7 @@ Added comprehensive AST structure comments based on tree-sitter verification:
 ### Verification Process
 
 Systematically verified that all query captures have corresponding handlers:
+
 1. Extracted all 107 unique captures from typescript.scm
 2. Listed all 28 handlers (20 TypeScript + 8 JavaScript base)
 3. Categorized captures by type (scope, definition, reference, export, etc.)
@@ -496,11 +512,13 @@ Systematically verified that all query captures have corresponding handlers:
 ### Critical Handlers Added
 
 **1. definition.field.private** - Private class fields (#field syntax)
+
 - Handles: `class MyClass { #privateField: number }`
 - Sets: `access_modifier: "private"`, `availability: "file-private"`
 - Status: ✅ Working
 
 **2. definition.method.private** - Private class methods (#method syntax)
+
 - Handles: `class MyClass { #privateMethod() {} }`
 - Sets: `access_modifier: "private"`, `availability: "file-private"`
 - Status: ✅ Working
@@ -508,14 +526,17 @@ Systematically verified that all query captures have corresponding handlers:
 ### Intentionally Unhandled Captures
 
 **References (36 captures)** - For future call graph analysis
+
 - `reference.call`, `reference.variable`, `reference.property`, etc.
 - Status: ✅ Intentional (used for usage tracking, not definitions)
 
 **Exports (13 captures)** - May need handlers depending on requirements
+
 - `export.interface`, `export.enum`, `export.variable`, etc.
 - Status: ⚠️ Depends on module graph requirements
 
 **Others:**
+
 - `definition.type_parameter` - Metadata only (extracted via helper)
 - `definition.enum_member.value` - Metadata only (extracted via helper)
 - `definition.variable.destructured` - Complex, needs separate task
@@ -538,12 +559,14 @@ See `HANDLER_VERIFICATION_SUMMARY.md` for complete analysis.
 Systematic review revealed that initial values and default values were not being extracted. Added two critical helper functions:
 
 **1. extract_parameter_default_value()**
+
 - Extracts default values from parameter declarations
 - Handles regular parameters: `name: string = "World"` → returns `'"World"'`
 - Handles optional parameters without defaults correctly
 - Handles rest parameters (navigates AST correctly)
 
 **2. extract_property_initial_value()**
+
 - Extracts initial values from property/field declarations
 - Handles public fields: `count: number = 42` → returns `"42"`
 - Handles property signatures with initializers
@@ -552,6 +575,7 @@ Systematic review revealed that initial values and default values were not being
 ### Handlers Updated
 
 All relevant handlers updated to use new value extraction:
+
 - **Fields:** `definition.field`, `definition.field.private`
 - **Parameters:** `definition.parameter`, `definition.parameter.optional`, `definition.parameter.rest`
 - **Parameter Properties:** `definition.field.param_property`, `param.property`
@@ -568,6 +592,7 @@ All relevant handlers updated to use new value extraction:
 ### Helper Function Coverage
 
 **Total helpers:** 42
+
 - Used in handlers: 38
 - Unused (future use): 4 (`create_function_id`, `create_variable_id`, `extract_location`, `extract_symbol_name`)
 - Recently added: 2 (value extraction functions)
@@ -599,6 +624,7 @@ See `TYPESCRIPT_HELPER_FUNCTIONS_REFERENCE.md` for complete helper function docu
 **Root Cause:** Query patterns capture ALL parameters including those inside `function_type` nodes (which are type signatures, not actual callable definitions)
 **Fix:** Added `is_parameter_in_function_type()` helper to detect parameters inside function types, updated all 3 parameter handlers to skip these
 **Files Modified:**
+
 - `typescript_builder.ts` (lines 572-596) - added helper function
 - `typescript_builder_config.ts` (lines 487-489, 516-518, 545-547) - added checks in handlers
 
@@ -616,6 +642,7 @@ See `TYPESCRIPT_HELPER_FUNCTIONS_REFERENCE.md` for complete helper function docu
 ### Summary
 
 Task complete! The TypeScript interface method parameter feature was mostly implemented, but had three bugs:
+
 1. Test expected type inference (not implemented) - fixed test
 2. Generics not stored in builder - fixed builder
 3. Function type parameters incorrectly captured - fixed handlers with filtering
@@ -629,6 +656,7 @@ Total implementation time: ~2 hours including bug fixes and comprehensive testin
 ### What Was Completed ✅
 
 1. **Interface Method Parameter Extraction** - Fully implemented
+
    - Required parameters: `add(x: number, y: number)`
    - Optional parameters: `divide(a: number, b?: number)`
    - Rest parameters: `log(...args: any[])`
@@ -637,11 +665,13 @@ Total implementation time: ~2 hours including bug fixes and comprehensive testin
    - Complex types: object types, union/intersection types, function types, arrays/tuples
 
 2. **Private Member Support** - Added for # syntax
+
    - Private fields: `#privateField: number = 42`
    - Static private fields: `static #staticPrivate = "test"`
    - Private methods: `#privateMethod(): number`
 
 3. **Value Extraction** - Implemented for initial values and defaults
+
    - Field initial values: `count: number = 42`
    - Parameter default values: `greet(name = "World")`
    - Parameter properties: `constructor(public id = 0)`
@@ -656,6 +686,7 @@ Total implementation time: ~2 hours including bug fixes and comprehensive testin
 **File:** `packages/core/src/index_single_file/query_code_tree/queries/typescript.scm`
 
 1. **Duplicate Parameter Patterns Removed** (lines 147-159)
+
    - Eliminated 14 duplicate captures (was capturing each parameter twice)
    - Reduced query overhead by ~28%
 
@@ -665,6 +696,7 @@ Total implementation time: ~2 hours including bug fixes and comprehensive testin
    - Clarified rest_pattern has NO field name for identifier child
 
 **No new patterns added** - Existing patterns were already correct, just needed:
+
 - Deduplication
 - Better documentation
 - Handler fixes to prevent false captures
@@ -674,10 +706,12 @@ Total implementation time: ~2 hours including bug fixes and comprehensive testin
 **File:** `packages/core/src/index_single_file/query_code_tree/language_configs/typescript_builder_config.ts`
 
 1. **Added 2 Missing Handlers:**
+
    - `definition.field.private` (lines 408-438) - for #privateField syntax
    - `definition.method.private` (lines 378-409) - for #privateMethod syntax
 
 2. **Enhanced 8 Existing Handlers with Value Extraction:**
+
    - All field handlers now use `extract_property_initial_value()`
    - All parameter handlers now use `extract_parameter_default_value()`
    - Lines: 232, 264, 295, 327, 355, 437, 501, 530, 559
@@ -695,11 +729,13 @@ Total implementation time: ~2 hours including bug fixes and comprehensive testin
 **File:** `packages/core/src/index_single_file/query_code_tree/language_configs/typescript_builder.ts`
 
 1. **extract_parameter_default_value()** (lines 674-702)
+
    - Extracts default values from parameters
    - Handles optional_parameter and required_parameter
    - Handles rest_pattern navigation
 
 2. **extract_property_initial_value()** (lines 704-726)
+
    - Extracts initial values from fields
    - Handles public_field_definition and property_signature
 
@@ -715,6 +751,7 @@ Total implementation time: ~2 hours including bug fixes and comprehensive testin
 **File:** `packages/core/src/index_single_file/definitions/definition_builder.ts`
 
 **Bug Fix:** `add_method_signature_to_interface()` (line 548)
+
 - Added: `generics: definition.generics`
 - Was accepting generics parameter but not storing it
 - Now interface method generics properly extracted
@@ -722,48 +759,56 @@ Total implementation time: ~2 hours including bug fixes and comprehensive testin
 ### Issues Encountered and Resolutions
 
 #### Issue 1: Feature Already Implemented
+
 - **Discovery:** Interface parameters were already being captured correctly
 - **Root Cause:** Existing query patterns were working, just had bugs
 - **Resolution:** Focused on bug fixes rather than new implementation
 - **Time Impact:** Saved ~4 hours by discovering existing functionality
 
 #### Issue 2: Rest Parameter Type Extraction
+
 - **Problem:** `...args: any[]` had `undefined` type
 - **Root Cause:** Type annotation on grandparent node, not parent
 - **Resolution:** Enhanced `extract_parameter_type()` to navigate up 2 levels for rest_pattern
 - **Lines Modified:** typescript_builder.ts:649-672
 
 #### Issue 3: Duplicate Parameter Captures
+
 - **Problem:** Each parameter captured twice (14 instead of 10)
 - **Root Cause:** Query patterns at lines 147-159 duplicated patterns at 428-439
 - **Resolution:** Removed duplicate patterns
 - **Impact:** 28% reduction in query overhead
 
 #### Issue 4: Missing Private Member Handlers
+
 - **Problem:** `#privateField` and `#privateMethod` not being processed
 - **Root Cause:** No handlers for `definition.field.private` and `definition.method.private`
 - **Resolution:** Added 2 handlers mirroring regular field/method handlers
 - **Lines Added:** typescript_builder_config.ts:378-438
 
 #### Issue 5: Values Not Extracted
+
 - **Problem:** All `initial_value` and `default_value` were `undefined`
 - **Root Cause:** No helper functions to extract values from AST
 - **Resolution:** Added 2 value extraction helpers, updated 8 handlers
 - **Impact:** Complete data structure population
 
 #### Issue 6: Nested Function Type Parameters Captured
+
 - **Problem:** `map<U>(fn: (item: T) => U)` captured both `fn` and `item`
 - **Root Cause:** Query captures ALL parameters including those in type signatures
 - **Resolution:** Added `is_parameter_in_function_type()` guard
 - **Critical Fix:** Prevents spurious parameter definitions from type annotations
 
 #### Issue 7: Interface Method Generics Not Stored
+
 - **Problem:** `map<U>` had `generics: undefined` instead of `['U']`
 - **Root Cause:** `add_method_signature_to_interface()` didn't store generics
 - **Resolution:** Added `generics: definition.generics` to method base object
 - **Lines Modified:** definition_builder.ts:548
 
 #### Issue 8: Test Expected Type Inference
+
 - **Problem:** Test expected `type: "string"` for field with only initial value
 - **Root Cause:** We don't implement type inference from initial values
 - **Resolution:** Updated test to not expect type annotation
@@ -772,6 +817,7 @@ Total implementation time: ~2 hours including bug fixes and comprehensive testin
 ### Test Coverage
 
 **New Test Suite:** semantic_index.typescript.test.ts (lines 1448-2104)
+
 - 5 new test cases (~660 lines)
 - 38/38 tests passing
 - Coverage:
@@ -782,6 +828,7 @@ Total implementation time: ~2 hours including bug fixes and comprehensive testin
   - JavaScript consistency
 
 **Full Regression Testing:**
+
 - ✅ Core package: 594 tests passed
 - ✅ Types package: 10 tests passed
 - ✅ TypeScript compilation: No errors
@@ -790,17 +837,21 @@ Total implementation time: ~2 hours including bug fixes and comprehensive testin
 ### Follow-on Work Needed
 
 #### Immediate (None - Task Complete)
+
 - All originally scoped work is complete
 - All tests passing
 - No known issues
 
 #### Future Enhancements (Out of Scope)
+
 1. **Type Inference** - Currently we don't infer types from initial values
+
    - Example: `static #staticPrivate = "test"` has no type
    - Would require full TypeScript type inference engine
    - Complexity: High, Value: Medium
 
 2. **Decorator Extraction** - Currently noted but not extracted
+
    - Class decorators: `@Component`
    - Method decorators: `@log`
    - Property decorators: `@Input()`
@@ -808,6 +859,7 @@ Total implementation time: ~2 hours including bug fixes and comprehensive testin
    - Complexity: Medium, Value: Low (mainly for Angular/NestJS)
 
 3. **Constructor Parameter Properties** - Partially implemented
+
    - Basic tracking works
    - Could enhance with more metadata
    - Complexity: Low, Value: Low
@@ -836,6 +888,7 @@ Total implementation time: ~2 hours including bug fixes and comprehensive testin
 ### Status: ✅ COMPLETED
 
 All acceptance criteria met:
+
 - ✅ Interface method parameters extracted with complete structure
 - ✅ All parameter types supported (required, optional, rest, generic)
 - ✅ Value extraction (initial values, defaults) working

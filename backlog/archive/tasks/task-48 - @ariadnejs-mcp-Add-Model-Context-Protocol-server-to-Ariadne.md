@@ -1,10 +1,10 @@
 ---
 id: task-48
-title: '@ariadnejs/mcp - Add Model Context Protocol server to Ariadne'
+title: "@ariadnejs/mcp - Add Model Context Protocol server to Ariadne"
 status: Done
 assignee: []
-created_date: '2025-07-28'
-updated_date: '2025-07-29'
+created_date: "2025-07-28"
+updated_date: "2025-07-29"
 labels: []
 dependencies: []
 ---

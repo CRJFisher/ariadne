@@ -3,7 +3,7 @@ id: task-epic-11.10
 title: Migrate import_resolution feature
 status: Done
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, import-export, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate the `import_resolution` feature to `src/import_export/import_resolution/
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -84,7 +85,7 @@ Migrate the `import_resolution` feature to `src/import_export/import_resolution/
   - Created with import detection, resolution, and module exports
 - [x] Move/create language-specific files
   - JavaScript: ES6, CommonJS, dynamic imports
-  - Python: Package imports, relative imports, __init__ handling
+  - Python: Package imports, relative imports, **init** handling
   - Rust: use statements, crate paths, trait methods
 - [x] Create index.ts dispatcher
   - Routes to language-specific implementations
@@ -122,16 +123,18 @@ Migrate the `import_resolution` feature to `src/import_export/import_resolution/
 ### Research Findings
 
 1. **Two separate import resolution systems existed**:
+
    - `ImportResolver` service in project/ for general imports
    - Namespace-specific resolution in import_resolution/ folder
 
 2. **Language-specific patterns identified**:
-   - **JavaScript/TypeScript**: default exports, export *, CommonJS
-   - **Python**: __all__, relative imports, package structure
+
+   - **JavaScript/TypeScript**: default exports, export \*, CommonJS
+   - **Python**: **all**, relative imports, package structure
    - **Rust**: pub use, crate paths, trait methods
 
 3. **Common patterns across languages**:
-   - Namespace imports (import * as name)
+   - Namespace imports (import \* as name)
    - Named imports
    - Re-exports
    - Module path resolution
@@ -139,6 +142,7 @@ Migrate the `import_resolution` feature to `src/import_export/import_resolution/
 ### Implementation Details
 
 1. **Core Features**:
+
    - Import type detection (namespace, default, named)
    - Import resolution to definitions
    - Module export collection
@@ -146,11 +150,13 @@ Migrate the `import_resolution` feature to `src/import_export/import_resolution/
    - Module path resolution
 
 2. **Language-Specific Features**:
+
    - **JavaScript**: Dynamic imports, CommonJS require, default exports
-   - **Python**: Package imports, __init__.py handling, relative imports
+   - **Python**: Package imports, **init**.py handling, relative imports
    - **Rust**: Use statements, crate/super/self paths, trait methods
 
 3. **Files Created**:
+
    - `import_resolution.ts` (345 lines)
    - `import_resolution.javascript.ts` (265 lines)
    - `import_resolution.python.ts` (298 lines)

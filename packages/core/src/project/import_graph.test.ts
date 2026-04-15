@@ -19,7 +19,7 @@ function create_import_definition(
     kind: "import",
     symbol_id: `import:${file}:1:0:1:10:foo` as any,
     name: "foo" as SymbolName,
-    import_path: source as unknown as ModulePath,
+    import_path: source as string as ModulePath,
     import_kind: "named",
     location: {
       file_path: file,

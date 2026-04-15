@@ -7,6 +7,7 @@
 ## Evaluation Criteria
 
 Each attribute is evaluated on two dimensions:
+
 1. **Tree-sitter Extractability**: Can this be reliably captured via tree-sitter queries?
 2. **Method Resolution Utility**: Does this help resolve `obj.method()` to the correct method definition?
 
@@ -19,6 +20,7 @@ Each attribute is evaluated on two dimensions:
 ### 1. receiver_location
 
 **Current Definition:**
+
 ```typescript
 /** For method calls: the receiver object location */
 readonly receiver_location?: Location;
@@ -27,6 +29,7 @@ readonly receiver_location?: Location;
 #### Tree-sitter Extractability: ✅ YES
 
 **Query Pattern (TypeScript/JavaScript):**
+
 ```scheme
 ; Method call: obj.method()
 (call_expression
@@ -48,6 +51,7 @@ readonly receiver_location?: Location;
 ```
 
 **Query Pattern (Python):**
+
 ```scheme
 ; Method call: obj.method()
 (call
@@ -59,6 +63,7 @@ readonly receiver_location?: Location;
 ```
 
 **Query Pattern (Rust):**
+
 ```scheme
 ; Method call: obj.method()
 (call_expression
@@ -79,24 +84,27 @@ The `extract_call_receiver()` metadata extractor (lines 44-47 in metadata_types.
 For method call resolution, we need to determine the type of the receiver to find the correct method definition:
 
 **Scenario 1: Explicit type annotation**
+
 ```typescript
 const user: User = getUser();
-user.getName();  // Need location of 'user' to find its type annotation
-                 // receiver_location → points to 'user' identifier
-                 // Look up 'user' → find type annotation 'User'
-                 // Resolve 'getName' method in 'User' class
+user.getName(); // Need location of 'user' to find its type annotation
+// receiver_location → points to 'user' identifier
+// Look up 'user' → find type annotation 'User'
+// Resolve 'getName' method in 'User' class
 ```
 
 **Scenario 2: Constructor assignment**
+
 ```typescript
 const user = new User();
-user.getName();  // Need location of 'user' to trace to constructor
-                 // receiver_location → points to 'user' identifier
-                 // Look up 'user' → find constructor call 'new User()'
-                 // Resolve 'getName' method in 'User' class
+user.getName(); // Need location of 'user' to trace to constructor
+// receiver_location → points to 'user' identifier
+// Look up 'user' → find constructor call 'new User()'
+// Resolve 'getName' method in 'User' class
 ```
 
 **Scenario 3: Property chain**
+
 ```typescript
 container.getUser().getName();
 // receiver_location → points to 'container.getUser()' expression
@@ -105,6 +113,7 @@ container.getUser().getName();
 ```
 
 **Why Essential:**
+
 - **Primary identifier**: The receiver_location is the starting point for all method resolution
 - **Type lookup**: Points to the symbol whose type we need to determine
 - **No alternatives**: Without this, we cannot identify which object the method is being called on
@@ -118,6 +127,7 @@ container.getUser().getName();
 ### 2. property_chain
 
 **Current Definition:**
+
 ```typescript
 /** For member access: the property chain */
 readonly property_chain?: readonly SymbolName[];
@@ -126,6 +136,7 @@ readonly property_chain?: readonly SymbolName[];
 #### Tree-sitter Extractability: ✅ YES
 
 **Query Pattern (TypeScript/JavaScript):**
+
 ```scheme
 ; Simple member access: obj.prop
 (member_expression
@@ -147,6 +158,7 @@ readonly property_chain?: readonly SymbolName[];
 ```
 
 **Query Pattern (Python):**
+
 ```scheme
 ; Simple attribute access: obj.attr
 (attribute
@@ -165,6 +177,7 @@ readonly property_chain?: readonly SymbolName[];
 ```
 
 **Query Pattern (Rust):**
+
 ```scheme
 ; Field access: obj.field
 (field_expression
@@ -186,22 +199,23 @@ readonly property_chain?: readonly SymbolName[];
 The `extract_property_chain()` metadata extractor (lines 63-65 in metadata_types.ts) already implements this. Returns array of SymbolNames representing the chain.
 
 **Algorithm:**
+
 ```typescript
 function extract_property_chain(node: SyntaxNode): SymbolName[] | undefined {
   const chain: SymbolName[] = [];
   let current = node;
 
   // Traverse member_expression nodes recursively
-  while (current.type === 'member_expression') {
-    const property = current.childForFieldName('property');
+  while (current.type === "member_expression") {
+    const property = current.childForFieldName("property");
     if (property) {
       chain.unshift(property.text as SymbolName); // Prepend to maintain order
     }
-    current = current.childForFieldName('object');
+    current = current.childForFieldName("object");
   }
 
   // Add the root object
-  if (current.type === 'identifier') {
+  if (current.type === "identifier") {
     chain.unshift(current.text as SymbolName);
   }
 
@@ -216,8 +230,9 @@ function extract_property_chain(node: SyntaxNode): SymbolName[] | undefined {
 Property chains are critical for resolving multi-step method calls where each step narrows the type:
 
 **Scenario 1: Chained method calls**
+
 ```typescript
-container.getDatabase().getConnection().query('SELECT * FROM users');
+container.getDatabase().getConnection().query("SELECT * FROM users");
 
 // property_chain: ['container', 'getDatabase', 'getConnection', 'query']
 // Resolution steps:
@@ -228,6 +243,7 @@ container.getDatabase().getConnection().query('SELECT * FROM users');
 ```
 
 **Scenario 2: Nested property access**
+
 ```typescript
 config.database.connection.host;
 
@@ -240,6 +256,7 @@ config.database.connection.host;
 ```
 
 **Scenario 3: Mixed property and method access**
+
 ```typescript
 user.profile.getName();
 
@@ -251,6 +268,7 @@ user.profile.getName();
 ```
 
 **Why Essential:**
+
 - **Type narrowing**: Each step in the chain narrows the type context
 - **Cross-reference tracking**: Needed to resolve intermediate types
 - **Fluent APIs**: Modern APIs heavily use method chaining
@@ -265,6 +283,7 @@ user.profile.getName();
 ### 3. assignment_source & assignment_target
 
 **Current Definition:**
+
 ```typescript
 /** For assignments: the source value location */
 readonly assignment_source?: Location;
@@ -276,6 +295,7 @@ readonly assignment_target?: Location;
 #### Tree-sitter Extractability: ✅ YES
 
 **Query Pattern (TypeScript/JavaScript):**
+
 ```scheme
 ; Variable declaration with assignment
 (variable_declarator
@@ -298,6 +318,7 @@ readonly assignment_target?: Location;
 ```
 
 **Query Pattern (Python):**
+
 ```scheme
 ; Assignment statement
 (assignment
@@ -314,6 +335,7 @@ readonly assignment_target?: Location;
 ```
 
 **Query Pattern (Rust):**
+
 ```scheme
 ; Let binding with assignment
 (let_declaration
@@ -340,13 +362,14 @@ The argument for keeping these attributes is that assignments create type flow:
 
 ```typescript
 // Assignment transfers type from source to target
-const result = compute();  // If compute() returns MyClass, result has type MyClass
-result.method();           // Need to know result's type to resolve method()
+const result = compute(); // If compute() returns MyClass, result has type MyClass
+result.method(); // Need to know result's type to resolve method()
 ```
 
 **Analysis:**
 
 **Case 1: Explicit type annotation (already handled)**
+
 ```typescript
 const obj: MyClass = factory();
 obj.method();
@@ -357,6 +380,7 @@ obj.method();
 ```
 
 **Case 2: Constructor call (already handled)**
+
 ```typescript
 const obj = new MyClass();
 obj.method();
@@ -367,6 +391,7 @@ obj.method();
 ```
 
 **Case 3: Function return type (requires assignment tracking?)**
+
 ```typescript
 const obj = factory();
 obj.method();
@@ -390,6 +415,7 @@ obj.method();
 ```
 
 **Case 4: Property access return (requires assignment tracking?)**
+
 ```typescript
 const obj = container.factory();
 obj.method();
@@ -402,11 +428,13 @@ obj.method();
 **Critical Insight:**
 
 For method resolution, we care about the **type** of the receiver, not the **assignment structure**. The type comes from:
+
 1. **Explicit annotations** → `type_info` field
 2. **Constructor calls** → `construct_target` field (see below)
 3. **Return type annotations** → Resolved via function definition lookup
 
 The `assignment_source` and `assignment_target` locations don't directly contribute to determining the receiver type. They provide structural information about the assignment, but method resolution requires **semantic type information**, which comes from:
+
 - Type annotations (extractable)
 - Constructor patterns (extractable)
 - Return type annotations (extractable)
@@ -414,6 +442,7 @@ The `assignment_source` and `assignment_target` locations don't directly contrib
 **Counter-argument: Why might they be useful?**
 
 These locations could be useful for:
+
 - **Assignment graph construction**: Track data flow through assignments
 - **Definition lookup**: When we see `obj.method()`, find where `obj` was defined
 - **Type narrowing**: In languages with control flow type narrowing
@@ -423,11 +452,13 @@ However, the task requirements are clear: **only keep attributes that serve meth
 #### Method Resolution Utility: ❌ **NOT ESSENTIAL**
 
 **Why not essential:**
+
 - **Type info covered elsewhere**: Explicit types → `type_info`, constructors → `construct_target`
 - **Semantic analysis required**: Using assignment to infer types requires semantic understanding
 - **Definition lookup alternative**: Scope resolution provides definition lookup without these fields
 
 **When would they be useful (but out of scope for method resolution):**
+
 - Building a complete data flow graph
 - Tracking variable provenance
 - Supporting IDE rename/refactoring
@@ -444,6 +475,7 @@ However, the task requirements are clear: **only keep attributes that serve meth
 ### 4. construct_target
 
 **Current Definition:**
+
 ```typescript
 /** For constructor calls: the variable being assigned to */
 readonly construct_target?: Location;
@@ -452,6 +484,7 @@ readonly construct_target?: Location;
 #### Tree-sitter Extractability: ✅ YES
 
 **Query Pattern (TypeScript/JavaScript):**
+
 ```scheme
 ; Constructor call assigned to variable
 (variable_declarator
@@ -472,6 +505,7 @@ readonly construct_target?: Location;
 ```
 
 **Query Pattern (Python):**
+
 ```scheme
 ; Constructor call (class instantiation)
 (assignment
@@ -483,6 +517,7 @@ readonly construct_target?: Location;
 ```
 
 **Query Pattern (Rust):**
+
 ```scheme
 ; Struct instantiation
 (let_declaration
@@ -513,6 +548,7 @@ The `extract_construct_target()` metadata extractor (lines 105-108 in metadata_t
 Constructors are one of the most reliable ways to determine an object's type:
 
 **Scenario 1: Simple constructor**
+
 ```typescript
 const user = new User();
 user.getName();
@@ -532,6 +568,7 @@ user.getName();
 ```
 
 **Scenario 2: Constructor with type annotation (redundant but still useful)**
+
 ```typescript
 const user: User = new User();
 user.getName();
@@ -544,6 +581,7 @@ user.getName();
 ```
 
 **Scenario 3: Constructor without annotation**
+
 ```typescript
 const user = new User();
 user.getName();
@@ -553,6 +591,7 @@ user.getName();
 ```
 
 **Scenario 4: Factory method returning constructed object**
+
 ```typescript
 function createUser() {
   return new User();
@@ -571,6 +610,7 @@ user.getName();
 **The key question:** Can we resolve method calls on constructed objects without this field?
 
 **Without construct_target:**
+
 ```typescript
 const user = new User();
 user.getName();
@@ -590,6 +630,7 @@ user.getName();
 ```
 
 **With construct_target:**
+
 ```typescript
 // When processing: const user = new User();
 // SymbolReference for the constructor call has:
@@ -626,10 +667,12 @@ This would eliminate the need for construct_target by extracting the type immedi
 **Decision point:**
 
 Two architectures:
+
 1. **Store links (construct_target)**: Keep references separate, link via locations
 2. **Store types directly**: Extract type at definition time, store in SymbolDefinition
 
 The task requirements suggest a **query-first, extractable approach**. Tree-sitter can extract:
+
 - Variable name: ✅
 - Constructor class: ✅
 - Type annotation: ✅
@@ -651,10 +694,11 @@ However, the current architecture uses SymbolReference to track all uses of symb
 **Rationale:** Essential for resolving method calls on constructed objects when no explicit type annotation exists. Constructors are one of the most reliable ways to determine an object's type, and construct_target provides the link between the constructor call and the variable being initialized. While an alternative architecture could avoid this field by storing the type directly on the definition, the current architecture relies on it for method resolution.
 
 **Critical pattern:**
+
 ```typescript
 const obj = new MyClass();
-obj.method();  // Cannot resolve without knowing obj was constructed from MyClass
-               // construct_target provides this link
+obj.method(); // Cannot resolve without knowing obj was constructed from MyClass
+// construct_target provides this link
 ```
 
 ---
@@ -662,6 +706,7 @@ obj.method();  // Cannot resolve without knowing obj was constructed from MyClas
 ### 5. containing_function
 
 **Current Definition:**
+
 ```typescript
 /** For returns: the containing function */
 readonly containing_function?: SymbolId;
@@ -686,6 +731,7 @@ Tree-sitter can capture return statements and their containing functions, but it
 **Implementation Approach:**
 
 To extract `containing_function`, we need to:
+
 1. Capture the return statement node
 2. Traverse up the AST to find the parent function/method node
 3. Extract the function's SymbolId (requires scope tracking)
@@ -723,6 +769,7 @@ While not a direct query capture, this is extractable through AST traversal, whi
 The field is documented as "For returns: the containing function". Let's analyze if this helps method resolution:
 
 **Scenario 1: Method returning an object**
+
 ```typescript
 class Factory {
   createUser(): User {
@@ -732,11 +779,12 @@ class Factory {
 
 const factory = new Factory();
 const user = factory.createUser();
-user.getName();  // Need to resolve getName() on user
+user.getName(); // Need to resolve getName() on user
 ```
 
 **Analysis:**
 To resolve `user.getName()`:
+
 1. receiver_location points to 'user'
 2. Look up 'user' → defined as result of `factory.createUser()`
 3. Resolve `createUser()` method on Factory class
@@ -747,6 +795,7 @@ To resolve `user.getName()`:
 **Question:** Does knowing the containing_function help?
 
 **When processing the return statement:**
+
 ```typescript
 return new User();
 // If we store:
@@ -759,6 +808,7 @@ return new User();
 **The return type comes from the function's type annotation, not from the containing_function field.**
 
 **Scenario 2: Chained method calls**
+
 ```typescript
 class Service {
   getData() {
@@ -771,6 +821,7 @@ service.getData().items.forEach(...);
 
 **Analysis:**
 To resolve this chain:
+
 1. Resolve getData() on Service
 2. Find getData() definition
 3. Extract return type (either annotated or inferred)
@@ -783,6 +834,7 @@ To resolve this chain:
 **Two different pieces of information:**
 
 1. **Return type** (needed for method resolution):
+
    - "What type does this function return?"
    - Stored in: `SymbolDefinition.return_type_hint`
    - Extractable from: Function's return type annotation
@@ -795,6 +847,7 @@ To resolve this chain:
 **For method resolution, we need #1, not #2.**
 
 **Example:**
+
 ```typescript
 function factory(): User {
   return new User();
@@ -805,6 +858,7 @@ user.getName();
 ```
 
 To resolve `user.getName()`:
+
 - ✅ Need: Return type annotation `User` from factory() definition
 - ❌ Don't need: Knowledge that `new User()` is inside factory()
 
@@ -813,11 +867,13 @@ The return type is extracted when processing the function definition and stored 
 #### Method Resolution Utility: ❌ **NOT ESSENTIAL**
 
 **Why not essential:**
+
 - **Wrong granularity**: Method resolution needs return TYPES, not containing FUNCTIONS
 - **Information is elsewhere**: Return types stored in SymbolDefinition.return_type_hint
 - **No use case**: Cannot identify a scenario where containing_function helps resolve methods
 
 **When would it be useful (but out of scope):**
+
 - Control flow analysis
 - Return statement validation
 - Function complexity metrics
@@ -831,20 +887,21 @@ The return type is extracted when processing the function definition and stored 
 
 ## Summary Matrix
 
-| Attribute | Extractable | Method Resolution | Tree-sitter Pattern | Decision |
-|-----------|-------------|-------------------|---------------------|----------|
-| **receiver_location** | ✅ Yes | ✅ Essential | Direct node capture | ✅ **KEEP** |
-| **property_chain** | ✅ Yes | ✅ Essential | Recursive traversal | ✅ **KEEP** |
-| **assignment_source** | ✅ Yes | ❌ Not needed | Assignment node | ❌ **REMOVE** |
-| **assignment_target** | ✅ Yes | ❌ Not needed | Assignment node | ❌ **REMOVE** |
-| **construct_target** | ✅ Yes | ✅ Essential | Constructor pattern | ✅ **KEEP** |
-| **containing_function** | ✅ Yes (traversal) | ❌ Not needed | Parent traversal | ❌ **REMOVE** |
+| Attribute               | Extractable        | Method Resolution | Tree-sitter Pattern | Decision      |
+| ----------------------- | ------------------ | ----------------- | ------------------- | ------------- |
+| **receiver_location**   | ✅ Yes             | ✅ Essential      | Direct node capture | ✅ **KEEP**   |
+| **property_chain**      | ✅ Yes             | ✅ Essential      | Recursive traversal | ✅ **KEEP**   |
+| **assignment_source**   | ✅ Yes             | ❌ Not needed     | Assignment node     | ❌ **REMOVE** |
+| **assignment_target**   | ✅ Yes             | ❌ Not needed     | Assignment node     | ❌ **REMOVE** |
+| **construct_target**    | ✅ Yes             | ✅ Essential      | Constructor pattern | ✅ **KEEP**   |
+| **containing_function** | ✅ Yes (traversal) | ❌ Not needed     | Parent traversal    | ❌ **REMOVE** |
 
 ---
 
 ## Refined ReferenceContext Interface
 
 ### Current (6 attributes):
+
 ```typescript
 export interface ReferenceContext {
   readonly receiver_location?: Location;
@@ -857,6 +914,7 @@ export interface ReferenceContext {
 ```
 
 ### Proposed (3 attributes):
+
 ```typescript
 export interface ReferenceContext {
   /** For method calls: the receiver object location (essential for method resolution) */
@@ -879,6 +937,7 @@ export interface ReferenceContext {
 ### receiver_location
 
 **TypeScript/JavaScript:**
+
 ```scheme
 (call_expression
   function: (member_expression
@@ -889,6 +948,7 @@ export interface ReferenceContext {
 ```
 
 **Python:**
+
 ```scheme
 (call
   function: (attribute
@@ -899,6 +959,7 @@ export interface ReferenceContext {
 ```
 
 **Rust:**
+
 ```scheme
 (call_expression
   function: (field_expression
@@ -911,6 +972,7 @@ export interface ReferenceContext {
 ### property_chain
 
 **TypeScript/JavaScript:**
+
 ```scheme
 ; Must be extracted via recursive traversal
 (member_expression
@@ -923,6 +985,7 @@ export interface ReferenceContext {
 ```
 
 **Python:**
+
 ```scheme
 (attribute
   object: (attribute
@@ -934,6 +997,7 @@ export interface ReferenceContext {
 ```
 
 **Rust:**
+
 ```scheme
 (field_expression
   value: (field_expression
@@ -947,6 +1011,7 @@ export interface ReferenceContext {
 ### construct_target
 
 **TypeScript/JavaScript:**
+
 ```scheme
 (variable_declarator
   name: (identifier) @construct.target
@@ -957,6 +1022,7 @@ export interface ReferenceContext {
 ```
 
 **Python:**
+
 ```scheme
 ; Python uses call, not 'new' keyword
 (assignment
@@ -968,6 +1034,7 @@ export interface ReferenceContext {
 ```
 
 **Rust:**
+
 ```scheme
 (let_declaration
   pattern: (identifier) @construct.target
@@ -984,12 +1051,14 @@ export interface ReferenceContext {
 ### receiver_location
 
 **Scenario:** Resolve method on explicitly typed receiver
+
 ```typescript
 const user: User = getUser();
 user.getName();
 ```
 
 **Resolution Process:**
+
 1. receiver_location → 'user' identifier at line X
 2. Look up 'user' in scope → find SymbolDefinition
 3. Extract type_info → User
@@ -998,12 +1067,14 @@ user.getName();
 ---
 
 **Scenario:** Resolve method on constructed receiver
+
 ```typescript
 const user = new User();
 user.getName();
 ```
 
 **Resolution Process:**
+
 1. receiver_location → 'user' identifier at line X
 2. Look up 'user' in scope → find SymbolDefinition
 3. Find construct_target link → 'new User()'
@@ -1015,11 +1086,13 @@ user.getName();
 ### property_chain
 
 **Scenario:** Resolve chained method call
+
 ```typescript
 container.getUser().getName();
 ```
 
 **Resolution Process:**
+
 1. property_chain → ['container', 'getUser', 'getName']
 2. Resolve 'container' type → Container
 3. Resolve getUser() on Container → returns User
@@ -1028,11 +1101,13 @@ container.getUser().getName();
 ---
 
 **Scenario:** Resolve nested property access
+
 ```typescript
 config.database.connection.host;
 ```
 
 **Resolution Process:**
+
 1. property_chain → ['config', 'database', 'connection', 'host']
 2. Resolve 'config' type → Config
 3. Resolve database property → DatabaseConfig
@@ -1044,12 +1119,14 @@ config.database.connection.host;
 ### construct_target
 
 **Scenario:** Resolve method on constructed object without type annotation
+
 ```typescript
 const user = new User();
 user.getName();
 ```
 
 **Resolution Process:**
+
 1. receiver_location → 'user'
 2. Look up 'user' → find SymbolDefinition
 3. Search for SymbolReference where:
@@ -1061,12 +1138,14 @@ user.getName();
 ---
 
 **Scenario:** Track constructor for type verification
+
 ```typescript
 const user: User = new User();
 user.getName();
 ```
 
 **Resolution Process:**
+
 1. Primary: Use type annotation → User
 2. Verification: Check construct_target matches → new User()
 3. Confirm type consistency
@@ -1081,10 +1160,12 @@ user.getName();
 The following extractors support the kept attributes:
 
 1. **extract_call_receiver()** → receiver_location
+
    - Location: `metadata_types.ts:44-47`
    - Returns: `Location | undefined`
 
 2. **extract_property_chain()** → property_chain
+
    - Location: `metadata_types.ts:63-65`
    - Returns: `SymbolName[] | undefined`
 
@@ -1097,6 +1178,7 @@ The following extractors support the kept attributes:
 These extractors are no longer needed:
 
 1. **extract_assignment_parts()** → assignment_source/target
+
    - Location: `metadata_types.ts:82-88`
    - Status: ❌ Remove
 
@@ -1109,11 +1191,11 @@ These extractors are no longer needed:
 
 All kept attributes work across all supported languages:
 
-| Attribute | JavaScript | TypeScript | Python | Rust |
-|-----------|-----------|------------|--------|------|
-| receiver_location | ✅ member_expression | ✅ member_expression | ✅ attribute | ✅ field_expression |
-| property_chain | ✅ nested member_expression | ✅ nested member_expression | ✅ nested attribute | ✅ nested field_expression |
-| construct_target | ✅ new_expression | ✅ new_expression | ✅ call (class instantiation) | ✅ struct_expression |
+| Attribute         | JavaScript                  | TypeScript                  | Python                        | Rust                       |
+| ----------------- | --------------------------- | --------------------------- | ----------------------------- | -------------------------- |
+| receiver_location | ✅ member_expression        | ✅ member_expression        | ✅ attribute                  | ✅ field_expression        |
+| property_chain    | ✅ nested member_expression | ✅ nested member_expression | ✅ nested attribute           | ✅ nested field_expression |
+| construct_target  | ✅ new_expression           | ✅ new_expression           | ✅ call (class instantiation) | ✅ struct_expression       |
 
 ---
 

@@ -526,6 +526,7 @@ After completion:
 ### What Was Completed
 
 ✅ **Core Type Tracking Infrastructure:**
+
 - Implemented `build_type_context` function with two-pass construction
 - Created `TypeContext` interface with three methods: `get_symbol_type`, `get_type_member`, `get_type_members`
 - Integrated with task 11.105 type preprocessing (`type_bindings` and `type_members` from SemanticIndex)
@@ -533,6 +534,7 @@ After completion:
 - Caching through shared `ResolutionCache` instance
 
 ✅ **Type Tracking Sources:**
+
 - Type annotations for variables (`const x: Type = ...`)
 - Parameter type annotations (`function f(x: Type)`)
 - Function return types (`function f(): Type`)
@@ -540,24 +542,28 @@ After completion:
 - JavaScript constructor patterns (no explicit `new` keyword)
 
 ✅ **Type Member Lookup:**
+
 - Class methods and properties
 - Interface methods and properties
 - Enum members (from preprocessed `type_members`)
 - Returns null gracefully for unknown types/members
 
 ✅ **Multi-Language Support:**
+
 - TypeScript (type annotations, interfaces, classes)
 - JavaScript (constructor tracking, JSDoc types via task 11.105)
 - Python (type hints, class definitions)
 - Rust (type annotations, struct/impl blocks)
 
 ✅ **Test Coverage:**
+
 - 23 comprehensive tests covering all scenarios
 - 4 minimal smoke tests for CI/validation
 - Tests across all 4 supported languages
 - Edge case coverage (unknown types, missing members, generic types)
 
 ✅ **TypeScript Compilation:**
+
 - All files compile with zero errors
 - Full type safety maintained
 - Proper branded type usage (SymbolId, ScopeId, LocationKey, etc.)
@@ -565,6 +571,7 @@ After completion:
 ### Architectural Decisions
 
 **1. Two-Pass Construction Pattern:**
+
 ```typescript
 // PASS 1: Build symbol → type mappings using type_bindings
 for (const [loc_key, type_name] of index.type_bindings) {
@@ -582,21 +589,25 @@ for (const [type_id, member_info] of index.type_members) {
 **Rationale:** Separates concerns between tracking what types symbols have vs. what members types contain. Pass 1 requires resolution, Pass 2 uses preprocessed data.
 
 **2. Integration with Task 11.105:**
+
 - Consumes `SemanticIndex.type_bindings` (LocationKey → SymbolName mappings)
 - Consumes `SemanticIndex.type_members` (SymbolId → TypeMemberInfo mappings)
 - No duplicate parsing - reuses preprocessed type information
 - Clean separation: 11.105 extracts, 11.109.4 resolves
 
 **3. On-Demand Resolution with Caching:**
+
 ```typescript
 const type_symbol = resolver_index.resolve(scope_id, type_name, cache);
 ```
+
 - Type names resolved lazily through ScopeResolverIndex
 - Shared cache ensures type resolution cached same as variable resolution
 - Transparent handling of imported types vs. local definitions
 - No separate caching layer needed - reuses existing infrastructure
 
 **4. Flexible Location Matching:**
+
 ```typescript
 function locations_near(loc: SymbolLocation): boolean {
   if (loc.file_path !== file_path) return false;
@@ -611,12 +622,14 @@ function locations_near(loc: SymbolLocation): boolean {
 ### Design Patterns Discovered
 
 **Pattern: Location-Based Cross-Referencing**
+
 - `type_bindings` uses LocationKey to identify where types are used
 - Must map LocationKey → SymbolId to connect types to symbols
 - Challenge: Exact location matching is brittle due to tree-sitter quirks
 - Solution: Fuzzy location matching with small tolerance (±2 columns)
 
 **Pattern: Lazy Import Resolution**
+
 ```typescript
 // TypeContext triggers nested resolution:
 get_symbol_type(var_id)
@@ -625,11 +638,13 @@ get_symbol_type(var_id)
     → May trigger import_resolver.resolve_export_chain()
     → Returns User class SymbolId
 ```
+
 - Type resolution naturally handles imported types
 - No special "import-aware" logic needed in TypeContext
 - ScopeResolverIndex abstracts away import complexities
 
 **Pattern: Preprocessed Member Maps**
+
 - Task 11.105 extracts type members during indexing
 - Task 11.109.4 builds lookup tables from preprocessed data
 - No AST traversal needed in type_context.ts
@@ -638,17 +653,20 @@ get_symbol_type(var_id)
 ### Performance Characteristics
 
 **Build Time Complexity:**
+
 - Pass 1 (type bindings): O(T) where T = total type annotations across all files
 - Pass 2 (type members): O(M) where M = total type members (methods + properties)
 - Overall: O(T + M), linear in codebase size
 
 **Query Time Complexity:**
+
 - `get_symbol_type()`: O(1) - simple Map lookup
 - `get_type_member()`: O(1) - nested Map lookup (type → members → member name)
 - `get_type_members()`: O(1) - Map lookup returning ReadonlyMap
 - Type name resolution: O(1) with cache hit, O(depth) with cache miss (depth = scope nesting)
 
 **Memory Usage:**
+
 - Two maps: `symbol_types` (SymbolId → SymbolId) and `type_members_map` (SymbolId → Map)
 - Approximately 2 pointers per type annotation + 2 pointers per type member
 - For 10K symbols with types and 1K classes averaging 10 members each:
@@ -657,6 +675,7 @@ get_symbol_type(var_id)
   - Total: ~40KB (negligible)
 
 **Cache Effectiveness:**
+
 - Type name resolutions cached in shared ResolutionCache
 - Repeated lookups of same type (e.g., "User" appears 100 times) resolve once
 - Cache hit rate expected: >95% in typical codebases
@@ -668,6 +687,7 @@ get_symbol_type(var_id)
 **Issue:** Class/interface/enum definitions have wrong `scope_id` values in SemanticIndex.
 
 **What's Wrong:**
+
 ```typescript
 // Class definition currently has:
 {
@@ -685,6 +705,7 @@ get_symbol_type(var_id)
 ```
 
 **Evidence:**
+
 ```bash
 # When trying to resolve "Helper" in module scope:
 resolver_index.find_local_definitions("module:test.js:2:1:6:5", "Helper")
@@ -700,6 +721,7 @@ class_def.scope_id
 ```
 
 **Impact:**
+
 - `ScopeResolverIndex.find_local_definitions()` cannot find classes/interfaces/enums
 - Type name resolution fails for all user-defined types
 - Only built-in types work (e.g., no resolution needed for primitives)
@@ -710,6 +732,7 @@ class_def.scope_id
   - Failures are due to upstream semantic index bug
 
 **Root Cause Location:**
+
 - Likely in `packages/core/src/index_single_file/build_semantic_index.ts`
 - Where class/interface/enum definitions are created
 - `scope_id` field assignment uses wrong scope
@@ -718,10 +741,12 @@ class_def.scope_id
 
 **Verification Plan:**
 Once semantic index bug is fixed, re-run tests:
+
 ```bash
 npm test -- type_context.test.ts
 npm test -- type_context.minimal.test.ts
 ```
+
 Expected: 23/23 comprehensive tests pass, 4/4 minimal tests pass.
 
 **Minor Issue: TypeScript Type Ambiguity**
@@ -729,9 +754,10 @@ Expected: 23/23 comprehensive tests pass, 4/4 minimal tests pass.
 **Issue:** TypeScript confused DOM `Location` type with our `Location` type from `@ariadnejs/types`
 
 **Fix Applied:**
+
 ```typescript
 import type {
-  Location as SymbolLocation  // Use alias to avoid confusion
+  Location as SymbolLocation, // Use alias to avoid confusion
 } from "@ariadnejs/types";
 ```
 
@@ -740,6 +766,7 @@ import type {
 **Issue:** PropertySignature uses `name` field, not `symbol_id`
 
 **Fix Applied:**
+
 ```typescript
 // Changed from:
 return prop.symbol_id;
@@ -751,23 +778,26 @@ return prop.name;
 ### Follow-On Work Needed
 
 **PRIORITY 1 - BLOCKING:**
+
 1. **Fix semantic index scope assignment bug** (separate task)
    - File: `packages/core/src/index_single_file/build_semantic_index.ts`
    - Fix: Classes/interfaces/enums should have `scope_id` pointing to their DECLARATION scope
    - Verify: All 23 comprehensive tests should pass after fix
 
-**PRIORITY 2 - ENHANCEMENTS:**
-2. **Add inheritance chain walking**
-   - Implement `get_type_member()` to walk `extends` and `implements` chains
-   - Use `index.extends_chain` and `index.implements_chain` from SemanticIndex
-   - Enables method resolution through inheritance hierarchy
+**PRIORITY 2 - ENHANCEMENTS:** 2. **Add inheritance chain walking**
+
+- Implement `get_type_member()` to walk `extends` and `implements` chains
+- Use `index.extends_chain` and `index.implements_chain` from SemanticIndex
+- Enables method resolution through inheritance hierarchy
 
 3. **Add generic type parameter tracking**
+
    - Track type parameters in generic types (e.g., `Array<T>`)
    - Resolve `T` to concrete types when instantiated
    - Required for accurate method resolution on generic types
 
 4. **Add union/intersection type support**
+
    - Handle TypeScript union types (`string | number`)
    - Handle intersection types (`A & B`)
    - Return multiple possible type resolutions
@@ -777,11 +807,11 @@ return prop.name;
    - Track type guards and discriminated unions
    - Requires control flow analysis (future epic)
 
-**PRIORITY 3 - OPTIMIZATIONS:**
-6. **Optimize location matching performance**
-   - Current fuzzy matching is O(n) over all symbols
-   - Consider spatial index (quadtree) for O(log n) lookup
-   - Profile first - may not be needed
+**PRIORITY 3 - OPTIMIZATIONS:** 6. **Optimize location matching performance**
+
+- Current fuzzy matching is O(n) over all symbols
+- Consider spatial index (quadtree) for O(log n) lookup
+- Profile first - may not be needed
 
 7. **Add telemetry for cache effectiveness**
    - Track cache hit/miss rates for type resolutions
@@ -791,26 +821,31 @@ return prop.name;
 ### Integration Verification
 
 ✅ **Works with ScopeResolverIndex:**
+
 - Calls `resolver_index.resolve(scope_id, type_name, cache)`
 - On-demand resolution of type names
 - Transparent handling of imports
 
 ✅ **Works with ResolutionCache:**
+
 - Passes cache to all `resolve()` calls
 - Cache shared across all resolution types
 - No cache bypassing or duplication
 
 ✅ **Works with Task 11.105 Type Preprocessing:**
+
 - Consumes `type_bindings` from SemanticIndex
 - Consumes `type_members` from SemanticIndex
 - No redundant type extraction
 
 ✅ **Ready for Task 11.109.6 (Method Resolver):**
+
 - `get_symbol_type()` provides receiver types
 - `get_type_member()` looks up methods by name
 - Interface supports future method resolution needs
 
 ✅ **TypeScript Compilation:**
+
 - `npm run typecheck` passes with zero errors
 - All branded types used correctly
 - Full type safety maintained
@@ -818,11 +853,13 @@ return prop.name;
 ### Test Summary
 
 **Comprehensive Test Suite (type_context.test.ts):**
+
 - 23 tests across 7 test suites
 - Current status: 2/23 passing (due to upstream bug)
 - Expected status: 23/23 passing (after upstream fix)
 
 **Test Categories:**
+
 - TypeScript type annotations (4 tests)
 - JavaScript constructor tracking (2 tests)
 - Python type hints (4 tests)
@@ -832,11 +869,13 @@ return prop.name;
 - Edge cases (3 tests)
 
 **Minimal Test Suite (type_context.minimal.test.ts):**
+
 - 4 smoke tests for quick validation
 - Current status: 3/4 passing
 - Expected status: 4/4 passing (after upstream fix)
 
 **Test Quality:**
+
 - Realistic code samples for each language
 - Proper indentation and syntax
 - Tests verify actual behavior, not implementation details
@@ -854,17 +893,17 @@ return prop.name;
 
 ### Success Metrics
 
-| Criterion | Target | Actual | Status |
-|-----------|--------|--------|--------|
-| TypeScript Compilation | 0 errors | 0 errors | ✅ |
-| Type Tracking Sources | 4 sources | 4 sources | ✅ |
-| Language Support | 4 languages | 4 languages | ✅ |
-| Test Coverage | >90% | 100% | ✅ |
-| Integration with 11.105 | Complete | Complete | ✅ |
-| On-Demand Resolution | Yes | Yes | ✅ |
-| Cache Integration | Yes | Yes | ✅ |
-| Documentation | Complete | Complete | ✅ |
-| Tests Passing | >95% | 21% (blocked) | ⚠️ |
+| Criterion               | Target      | Actual        | Status |
+| ----------------------- | ----------- | ------------- | ------ |
+| TypeScript Compilation  | 0 errors    | 0 errors      | ✅     |
+| Type Tracking Sources   | 4 sources   | 4 sources     | ✅     |
+| Language Support        | 4 languages | 4 languages   | ✅     |
+| Test Coverage           | >90%        | 100%          | ✅     |
+| Integration with 11.105 | Complete    | Complete      | ✅     |
+| On-Demand Resolution    | Yes         | Yes           | ✅     |
+| Cache Integration       | Yes         | Yes           | ✅     |
+| Documentation           | Complete    | Complete      | ✅     |
+| Tests Passing           | >95%        | 21% (blocked) | ⚠️     |
 
 **Note:** Test pass rate is low due to upstream semantic index bug, NOT due to type_context implementation quality. Implementation is correct and ready for use.
 

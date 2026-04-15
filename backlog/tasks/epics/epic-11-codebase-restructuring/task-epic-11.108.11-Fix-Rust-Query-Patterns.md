@@ -7,6 +7,7 @@
 **Parent:** task-epic-11.108
 **Dependencies:** None (handlers already implemented)
 **Blocks:**
+
 - Full Rust semantic indexing
 - Rust call graph analysis
 - Rust cross-file resolution
@@ -20,11 +21,13 @@ Fix tree-sitter query patterns in `rust.scm` to properly capture function/method
 **From task 11.108.9 test results:**
 
 Rust builder handlers are fully implemented at:
+
 - `rust_builder.ts:551` - `definition.parameter` handler (complete)
 - `rust_builder.ts:583` - `definition.parameter.self` handler (complete)
 - Parameter handlers call `add_parameter_to_callable()` correctly
 
 **However, 8 tests fail because:**
+
 1. ❌ `signature.parameters` arrays are empty for all functions
 2. ❌ `struct.methods` arrays are empty despite impl blocks existing
 3. ❌ `interface.methods` arrays are empty for traits
@@ -42,6 +45,7 @@ Rust builder handlers are fully implemented at:
 **Expected behavior:** Function parameters should be captured with `@definition.parameter`
 
 **Current query (likely):**
+
 ```scheme
 ; Function parameters
 (function_item
@@ -51,6 +55,7 @@ Rust builder handlers are fully implemented at:
 ```
 
 **Debug steps:**
+
 1. Inspect Rust AST for function with parameters:
    ```rust
    fn add(x: i32, y: i32) -> i32 { x + y }
@@ -60,6 +65,7 @@ Rust builder handlers are fully implemented at:
 4. Update query pattern to match
 
 **Likely fix needed:**
+
 ```scheme
 ; Function parameters - explicit type annotation required
 (parameters
@@ -79,6 +85,7 @@ Rust builder handlers are fully implemented at:
 **Current issue:** Methods are created but not associated with their struct
 
 **Debug steps:**
+
 1. Check if `definition.method` capture exists in impl blocks
 2. Verify `find_containing_impl()` helper function
 3. Check if struct SymbolId matches impl block's target SymbolId
@@ -86,6 +93,7 @@ Rust builder handlers are fully implemented at:
 **Likely issue:** Query captures method but doesn't provide context to find containing struct
 
 **Potential query pattern:**
+
 ```scheme
 ; Impl block methods - need to associate with struct
 (impl_item
@@ -96,6 +104,7 @@ Rust builder handlers are fully implemented at:
 ```
 
 **May need to:**
+
 - Capture the struct name from impl block
 - Pass it to handler via metadata
 - Update handler to look up struct by name
@@ -105,6 +114,7 @@ Rust builder handlers are fully implemented at:
 **Expected behavior:** Trait methods should be captured and added to interface
 
 **Current query (check if exists):**
+
 ```scheme
 ; Trait definitions
 (trait_item
@@ -118,6 +128,7 @@ Rust builder handlers are fully implemented at:
 ```
 
 **Debug steps:**
+
 1. Verify `@definition.method.signature` capture exists
 2. Check if handler for this capture exists in builder
 3. Verify it calls `add_method_signature_to_interface()`
@@ -164,6 +175,7 @@ tree-sitter parse test_sample.rs
 Based on AST inspection, update `rust.scm`:
 
 **Parameters:**
+
 ```scheme
 ; Function parameters with type annotations
 (parameters
@@ -182,6 +194,7 @@ Based on AST inspection, update `rust.scm`:
 ```
 
 **Methods in impl blocks:**
+
 ```scheme
 ; Methods in impl blocks - capture with struct context
 (impl_item
@@ -199,6 +212,7 @@ Based on AST inspection, update `rust.scm`:
 ```
 
 **Trait method signatures:**
+
 ```scheme
 ; Trait method signatures (no implementation)
 (trait_item
@@ -228,9 +242,14 @@ If query patterns need metadata, update handler to use it:
       const method_id = create_method_id(capture);
 
       // Get impl target from capture metadata
-      const impl_target = capture.node.parent?.parent?.childForFieldName("type");
+      const impl_target =
+        capture.node.parent?.parent?.childForFieldName("type");
       const struct_id = impl_target
-        ? create_class_id({...capture, node: impl_target, text: impl_target.text})
+        ? create_class_id({
+            ...capture,
+            node: impl_target,
+            text: impl_target.text,
+          })
         : find_containing_impl(capture);
 
       if (struct_id) {
@@ -244,7 +263,7 @@ If query patterns need metadata, update handler to use it:
       }
     },
   },
-]
+];
 ```
 
 ### Phase 4: Run Tests
@@ -272,6 +291,7 @@ Target: 42/42 Rust tests passing (currently 31/42)
 Use online playground: https://tree-sitter.github.io/tree-sitter/playground
 
 Or local CLI:
+
 ```bash
 tree-sitter parse test_sample.rs > ast_output.txt
 cat ast_output.txt
@@ -280,6 +300,7 @@ cat ast_output.txt
 ### Query Testing
 
 Test queries directly:
+
 ```bash
 tree-sitter query rust.scm test_sample.rs
 ```
@@ -302,7 +323,7 @@ Temporarily add logging to see what's captured:
       // ... existing handler code
     },
   },
-]
+];
 ```
 
 ## Success Criteria
@@ -317,6 +338,7 @@ Temporarily add logging to see what's captured:
 ## Expected Test Results
 
 **Before fix:**
+
 ```
 Rust tests: 31/42 passing (8 failing)
 - ❌ extracts function parameters
@@ -326,6 +348,7 @@ Rust tests: 31/42 passing (8 failing)
 ```
 
 **After fix:**
+
 ```
 Rust tests: 42/42 passing ✅
 - ✅ extracts function parameters
@@ -362,18 +385,21 @@ Task completed successfully with all CRITICAL tests passing. The investigation r
 ### Test Results
 
 **Before Fix:**
+
 - Rust tests: 39/44 passing (89%)
 - 2 CRITICAL test failures
 - Methods not being associated with structs
 - Parameters not being added to methods
 
 **After Fix:**
+
 - ✅ Rust tests: 41/44 passing (93%) - **All non-skipped tests pass**
 - ✅ All CRITICAL tests passing
 - ✅ No regressions in full test suite
 - ✅ TypeScript compilation: All packages compile with no errors
 
 **Full Test Suite:**
+
 - Test Files: 19 passed | 1 skipped (20)
 - Tests: 583 passed | 101 skipped (684)
 - Zero regressions across all languages
@@ -383,6 +409,7 @@ Task completed successfully with all CRITICAL tests passing. The investigation r
 The root causes were **handler implementation bugs**, not query patterns:
 
 #### 1. Constructor Name Hardcoding Bug
+
 **File:** `rust_builder.ts:530`
 
 **Issue:** The `definition.constructor` handler hardcoded the method name to "constructor" instead of using the actual Rust function name.
@@ -400,6 +427,7 @@ name: capture.text as SymbolName,
 **Impact:** Made all constructor methods unfindable by their actual names.
 
 #### 2. Duplicate Function/Method Creation Bug
+
 **File:** `rust_builder.ts:269-274, 297-302, 329-334, 357-362, 385-390`
 
 **Issue:** All function handlers (`definition.function`, `definition.function.generic`, `definition.function.async`, etc.) processed methods inside impl blocks as standalone functions, creating duplicate entries with wrong symbol types.
@@ -419,6 +447,7 @@ if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
 **Impact:** Created inconsistent symbol IDs, prevented parameters from being associated with methods.
 
 #### 3. Symbol ID Prefix Mismatch Bug
+
 **File:** `rust_builder_helpers.ts:745-762`
 
 **Issue:** `find_containing_callable()` returned early with `function_symbol()` when it found a `function_item` node, even if that function was inside an impl/trait block. This created `function:` prefixed IDs instead of `method:` prefixed IDs.
@@ -447,6 +476,7 @@ if (node.type === "function_item") {
 **Impact:** Parameters couldn't find their parent methods, resulting in empty parameter arrays.
 
 #### 4. Generic Struct Name Extraction Bug
+
 **File:** `rust_builder_helpers.ts:339-350`
 
 **Issue:** `extract_impl_type()` returned full generic type text like `"Container<T>"` when the struct was created with just base name `"Container"`, causing name-based lookup to fail.
@@ -461,7 +491,7 @@ return type.text as SymbolName;
 if (type.type === "generic_type") {
   const typeIdentifier = type.childForFieldName?.("type");
   if (typeIdentifier) {
-    return typeIdentifier.text as SymbolName;  // Returns "Container"
+    return typeIdentifier.text as SymbolName; // Returns "Container"
   }
 }
 ```
@@ -469,6 +499,7 @@ if (type.type === "generic_type") {
 **Impact:** Generic structs couldn't have methods associated with them.
 
 #### 5. Return Type Extraction for Generic References Bug
+
 **File:** `rust_builder_helpers.ts:386-387`
 
 **Issue:** `extract_return_type()` had overly complex filtering logic that broke for reference types like `&T`.
@@ -489,6 +520,7 @@ return returnType.text?.replace(/^->\s*/, "").trim() as SymbolName;
 **Impact:** Generic return types were incomplete, causing test failures.
 
 #### 6. Generic Function Handler Precedence Bug
+
 **File:** `rust_builder.ts:276-280`
 
 **Issue:** Generic functions were processed by both `definition.function` and `definition.function.generic` handlers. The non-generic handler ran first and created functions without generics, preventing the generic handler from running.
@@ -498,7 +530,9 @@ return returnType.text?.replace(/^->\s*/, "").trim() as SymbolName;
 ```typescript
 // ADDED to definition.function handler:
 // Skip generic functions - they're handled by definition.function.generic
-const generics = extract_generic_parameters(capture.node.parent || capture.node);
+const generics = extract_generic_parameters(
+  capture.node.parent || capture.node
+);
 if (generics && generics.length > 0) {
   return;
 }
@@ -509,6 +543,7 @@ if (generics && generics.length > 0) {
 ### Type System Enhancement
 
 #### Added `static` Property to MethodDefinition
+
 **File:** `packages/types/src/symbol_definitions.ts:85`
 
 **Reason:** Rust distinguishes between instance methods (`&self` parameter) and associated functions (no `self` parameter). TypeScript/JavaScript don't have this distinction as clearly, so the type system didn't include a `static` flag.
@@ -520,7 +555,7 @@ export interface MethodDefinition extends Definition {
   readonly return_type?: SymbolName;
   readonly decorators?: readonly SymbolName[];
   readonly generics?: string[];
-  readonly static?: boolean;  // ← Added for Rust associated functions
+  readonly static?: boolean; // ← Added for Rust associated functions
 }
 ```
 
@@ -529,10 +564,13 @@ export interface MethodDefinition extends Definition {
 ### Files Modified
 
 #### Query Patterns (Already Correct)
+
 - ✅ `packages/core/src/index_single_file/query_code_tree/queries/rust.scm` - Query patterns were already correct from previous work
 
 #### Handler Implementations (6 bugs fixed)
+
 1. **`packages/core/src/index_single_file/query_code_tree/language_configs/rust_builder.ts`**
+
    - Fixed constructor name hardcoding (line 530)
    - Added impl/trait skip logic to `definition.function` handler (lines 269-274)
    - Added impl/trait skip logic to `definition.function.generic` handler (lines 297-302)
@@ -542,6 +580,7 @@ export interface MethodDefinition extends Definition {
    - Added generic skip logic to `definition.function` handler (lines 276-280)
 
 2. **`packages/core/src/index_single_file/query_code_tree/language_configs/rust_builder_helpers.ts`**
+
    - Fixed `find_containing_callable()` to check impl/trait ancestry before deciding symbol type (lines 745-762)
    - Fixed `extract_impl_type()` to extract base type name from generic types (lines 339-350)
    - Simplified `extract_return_type()` to preserve full type text (lines 386-387)
@@ -551,6 +590,7 @@ export interface MethodDefinition extends Definition {
    - Applied static flag to interface method signatures (line 547)
 
 #### Type Definitions
+
 4. **`packages/types/src/symbol_definitions.ts`**
    - Added `readonly static?: boolean` to MethodDefinition interface (line 85)
 
@@ -569,6 +609,7 @@ export interface MethodDefinition extends Definition {
 The following query patterns in `rust.scm` were verified to be correct:
 
 1. **Function Parameters** (lines 350-356):
+
 ```scheme
 (parameter
   (identifier) @definition.parameter
@@ -576,11 +617,13 @@ The following query patterns in `rust.scm` were verified to be correct:
 ```
 
 2. **Self Parameters** (line 359):
+
 ```scheme
 (self_parameter) @definition.parameter.self
 ```
 
 3. **Enum Variants** (line 155):
+
 ```scheme
 (enum_variant
   (identifier) @definition.enum_member
@@ -588,6 +631,7 @@ The following query patterns in `rust.scm` were verified to be correct:
 ```
 
 4. **Trait Method Signatures** (lines 226-231):
+
 ```scheme
 (trait_item
   body: (declaration_list
@@ -599,6 +643,7 @@ The following query patterns in `rust.scm` were verified to be correct:
 ```
 
 5. **Constructor Methods** (lines 261-268):
+
 ```scheme
 (impl_item
   body: (declaration_list
@@ -613,6 +658,7 @@ The following query patterns in `rust.scm` were verified to be correct:
 ### Follow-on Work
 
 #### Completed in This Task
+
 - ✅ All CRITICAL Rust tests passing
 - ✅ Methods properly associated with structs
 - ✅ Parameters properly associated with methods/functions
@@ -621,7 +667,9 @@ The following query patterns in `rust.scm` were verified to be correct:
 - ✅ Full regression testing passed
 
 #### Future Enhancements (Not Blocking)
+
 1. **Skipped Tests:** 3 Rust tests are skipped (not blocking):
+
    - "should extract nested/grouped imports" - Complex import syntax
    - "should extract re-exports (pub use)" - Re-export handling
    - "should extract method resolution metadata for all receiver patterns" - Advanced receiver patterns

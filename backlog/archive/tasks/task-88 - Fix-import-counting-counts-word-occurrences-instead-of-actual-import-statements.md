@@ -5,8 +5,8 @@ title: >-
   statements
 status: To Do
 assignee: []
-created_date: '2025-08-03'
-updated_date: '2025-08-04 13:28'
+created_date: "2025-08-03"
+updated_date: "2025-08-04 13:28"
 labels: []
 dependencies: []
 ---
@@ -53,7 +53,7 @@ Successfully clarified import counting behavior and added namespace import suppo
 ### Files Modified
 
 - src/languages/typescript/scopes.scm: Added namespace import pattern
-- src/languages/javascript/scopes.scm: Added namespace import pattern  
+- src/languages/javascript/scopes.scm: Added namespace import pattern
 - src/graph.ts: Added getImportStatementCount() method
 
 ### Test Results

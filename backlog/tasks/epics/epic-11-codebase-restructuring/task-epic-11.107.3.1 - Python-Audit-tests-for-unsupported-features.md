@@ -1,10 +1,10 @@
 ---
 id: task-epic-11.107.3.1
-title: 'Python: Audit tests for unsupported features'
+title: "Python: Audit tests for unsupported features"
 status: Completed
 assignee: []
-created_date: '2025-10-01 10:27'
-completed_date: '2025-10-01 13:46'
+created_date: "2025-10-01 10:27"
+completed_date: "2025-10-01 13:46"
 labels: []
 dependencies: []
 parent_task_id: task-epic-11.107.3
@@ -14,6 +14,7 @@ priority: high
 ## Description
 
 Review semantic_index.python.test.ts to identify and remove:
+
 - Tests for advanced Python features we don't need (metaclasses, descriptors, etc.)
 - Tests requiring deep type inference
 - Overly specific edge cases
@@ -37,6 +38,7 @@ Audited and removed the following tests from semantic_index.python.test.ts:
 ### Result
 
 Reduced from 30 tests to 23 tests, focusing on essential Python features:
+
 - Basic type hints (str, int, float, etc.)
 - Generic types (List, Dict, Tuple, Optional, Union)
 - Method calls with receivers
@@ -52,13 +54,16 @@ All 23 remaining tests pass successfully.
 ## Testing Results
 
 ### Test Execution
+
 - **Python semantic_index tests**: 23/23 passed (100%)
 - **TypeScript compilation**: ✅ Passes with no errors
 - **Full test suite**: No regressions introduced in Python tests
 - **Duration**: 1.89s for Python test suite
 
 ### Test Coverage Maintained
+
 All essential Python features for call graph analysis remain tested:
+
 - ✅ Type metadata extraction (7 tests)
 - ✅ Method call metadata (2 tests)
 - ✅ Attribute access chains (2 tests)
@@ -73,6 +78,7 @@ All essential Python features for call graph analysis remain tested:
 ## Tree-sitter Query Pattern Observations
 
 ### Working Patterns (No Issues Found)
+
 The current Python query patterns (`packages/core/src/index_single_file/query_code_tree/queries/python.scm`) correctly capture:
 
 1. **Type annotations**: Function parameters, variables, return types via `type:` field
@@ -85,16 +91,19 @@ The current Python query patterns (`packages/core/src/index_single_file/query_co
 ### Features Removed from Testing (May Need Future Query Work)
 
 1. **Subscript notation** (`obj['key']`):
+
    - Removed from tests but may be important for tracking dict/list property access
    - Current queries might not capture subscript as member_access
    - **Potential follow-on**: Verify if subscript access should create member_access references
 
 2. **super() method calls**:
+
    - Important for inheritance call chains
    - Current queries handle this, but removed from testing scope
    - **Potential follow-on**: Add back if inheritance tracking becomes priority
 
 3. **@property decorators**:
+
    - Property getters/setters affect method vs. attribute access patterns
    - Current queries don't distinguish between property methods and regular methods
    - **Potential follow-on**: Add decorator metadata to method definitions if needed
@@ -107,7 +116,9 @@ The current Python query patterns (`packages/core/src/index_single_file/query_co
 ## Issues Encountered
 
 ### None Critical
+
 No critical issues were encountered during the audit:
+
 - All query patterns work correctly for essential features
 - No parsing failures or AST traversal errors
 - Type extraction metadata is populated correctly
@@ -126,6 +137,7 @@ No critical issues were encountered during the audit:
 4. **Complex generic types**: Current queries handle basic generics well; nested generics like `Dict[str, List[Tuple[int, str]]]` work but aren't thoroughly tested
 
 ### No Critical Work Required
+
 The Python query patterns are sufficient for current call graph analysis needs. All removed tests were for advanced features or edge cases that don't impact core functionality.
 
 ## Recommendations

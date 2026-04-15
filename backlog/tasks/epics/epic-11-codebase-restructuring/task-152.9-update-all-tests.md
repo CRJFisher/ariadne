@@ -14,6 +14,7 @@ Update all existing test files to use factory functions and typed reference vari
 ## Scope
 
 Update tests in the following areas:
+
 1. Reference creation tests
 2. Resolution tests
 3. Integration tests
@@ -29,16 +30,16 @@ Replace object literal construction with factory calls:
 
 ```typescript
 // BEFORE
-describe('ReferenceBuilder', () => {
-  test('builds method call reference', () => {
+describe("ReferenceBuilder", () => {
+  test("builds method call reference", () => {
     const ref: SymbolReference = {
       location: mock_location,
       type: ReferenceType.METHOD_CALL,
-      scope_id: 'scope:1' as ScopeId,
-      name: 'method' as SymbolName,
+      scope_id: "scope:1" as ScopeId,
+      name: "method" as SymbolName,
       context: {
         receiver_location: mock_receiver_location,
-        property_chain: ['obj', 'method'],
+        property_chain: ["obj", "method"],
       },
     };
     // ...
@@ -46,18 +47,18 @@ describe('ReferenceBuilder', () => {
 });
 
 // AFTER
-describe('ReferenceBuilder', () => {
-  test('builds method call reference', () => {
+describe("ReferenceBuilder", () => {
+  test("builds method call reference", () => {
     const ref = create_method_call_reference(
-      'method' as SymbolName,
+      "method" as SymbolName,
       mock_location,
-      'scope:1' as ScopeId,
+      "scope:1" as ScopeId,
       mock_receiver_location,
-      ['obj', 'method']
+      ["obj", "method"]
     );
 
-    expect(ref.kind).toBe('method_call');
-    expect(ref.name).toBe('method');
+    expect(ref.kind).toBe("method_call");
+    expect(ref.name).toBe("method");
     expect(ref.receiver_location).toEqual(mock_receiver_location);
   });
 });
@@ -71,32 +72,32 @@ Update to use typed references and remove legacy ReferenceType:
 
 ```typescript
 // BEFORE
-import { ReferenceType } from '@ariadnejs/types';
+import { ReferenceType } from "@ariadnejs/types";
 
-describe('resolve_method_call', () => {
-  test('resolves method call', () => {
+describe("resolve_method_call", () => {
+  test("resolves method call", () => {
     const ref: SymbolReference = {
       location,
       type: ReferenceType.METHOD_CALL,
       scope_id,
-      name: 'method' as SymbolName,
-      context: { receiver_location, property_chain: ['obj', 'method'] },
+      name: "method" as SymbolName,
+      context: { receiver_location, property_chain: ["obj", "method"] },
     };
     // ...
   });
 });
 
 // AFTER
-import { create_method_call_reference } from '../../index_single_file/references/reference_factories';
+import { create_method_call_reference } from "../../index_single_file/references/reference_factories";
 
-describe('resolve_method_call', () => {
-  test('resolves method call', () => {
+describe("resolve_method_call", () => {
+  test("resolves method call", () => {
     const ref = create_method_call_reference(
-      'method' as SymbolName,
+      "method" as SymbolName,
       location,
       scope_id,
       receiver_location,
-      ['obj', 'method']
+      ["obj", "method"]
     );
 
     const resolved = resolve_method_call(ref, semantic_index);
@@ -111,12 +112,12 @@ describe('resolve_method_call', () => {
 
 ```typescript
 // AFTER
-import { create_function_call_reference } from '../../index_single_file/references/reference_factories';
+import { create_function_call_reference } from "../../index_single_file/references/reference_factories";
 
-describe('resolve_function_call', () => {
-  test('resolves function call', () => {
+describe("resolve_function_call", () => {
+  test("resolves function call", () => {
     const ref = create_function_call_reference(
-      'processData' as SymbolName,
+      "processData" as SymbolName,
       location,
       scope_id
     );
@@ -125,9 +126,9 @@ describe('resolve_function_call', () => {
     expect(resolved).toBeTruthy();
   });
 
-  test('resolves function across scopes', () => {
+  test("resolves function across scopes", () => {
     const ref = create_function_call_reference(
-      'helper' as SymbolName,
+      "helper" as SymbolName,
       location,
       nested_scope_id
     );
@@ -144,27 +145,27 @@ describe('resolve_function_call', () => {
 
 ```typescript
 // AFTER
-import { create_variable_reference } from '../../index_single_file/references/reference_factories';
+import { create_variable_reference } from "../../index_single_file/references/reference_factories";
 
-describe('resolve_variable_reference', () => {
-  test('resolves variable read', () => {
+describe("resolve_variable_reference", () => {
+  test("resolves variable read", () => {
     const ref = create_variable_reference(
-      'x' as SymbolName,
+      "x" as SymbolName,
       location,
       scope_id,
-      'read'
+      "read"
     );
 
     const resolved = resolve_variable_reference(ref, semantic_index);
     expect(resolved).toBeTruthy();
   });
 
-  test('resolves variable write', () => {
+  test("resolves variable write", () => {
     const ref = create_variable_reference(
-      'x' as SymbolName,
+      "x" as SymbolName,
       location,
       scope_id,
-      'write'
+      "write"
     );
 
     const resolved = resolve_variable_reference(ref, semantic_index);
@@ -179,27 +180,27 @@ describe('resolve_variable_reference', () => {
 
 ```typescript
 // AFTER
-import { create_type_reference } from '../../index_single_file/references/reference_factories';
+import { create_type_reference } from "../../index_single_file/references/reference_factories";
 
-describe('resolve_type_reference', () => {
-  test('resolves type annotation', () => {
+describe("resolve_type_reference", () => {
+  test("resolves type annotation", () => {
     const ref = create_type_reference(
-      'MyType' as SymbolName,
+      "MyType" as SymbolName,
       location,
       scope_id,
-      'annotation'
+      "annotation"
     );
 
     const resolved = resolve_type_reference(ref, semantic_index);
     expect(resolved).toBeTruthy();
   });
 
-  test('resolves extends clause', () => {
+  test("resolves extends clause", () => {
     const ref = create_type_reference(
-      'BaseClass' as SymbolName,
+      "BaseClass" as SymbolName,
       location,
       scope_id,
-      'extends'
+      "extends"
     );
 
     const resolved = resolve_type_reference(ref, semantic_index);
@@ -215,8 +216,8 @@ describe('resolve_type_reference', () => {
 Update end-to-end tests:
 
 ```typescript
-describe('Reference Resolution Integration', () => {
-  test('resolves all reference types in complex code', () => {
+describe("Reference Resolution Integration", () => {
+  test("resolves all reference types in complex code", () => {
     const code = `
       class MyClass {
         field: string;
@@ -238,7 +239,7 @@ describe('Reference Resolution Integration', () => {
       obj.method();
     `;
 
-    const semantic_index = build_semantic_index(code, 'typescript');
+    const semantic_index = build_semantic_index(code, "typescript");
     const resolutions = resolve_references(
       semantic_index.references,
       semantic_index
@@ -246,19 +247,19 @@ describe('Reference Resolution Integration', () => {
 
     // Verify each reference type resolved correctly
     const self_references = semantic_index.references.filter(
-      (ref): ref is SelfReferenceCall => ref.kind === 'self_reference_call'
+      (ref): ref is SelfReferenceCall => ref.kind === "self_reference_call"
     );
-    expect(self_references).toHaveLength(3);  // this.field, this.other_method, this.field
+    expect(self_references).toHaveLength(3); // this.field, this.other_method, this.field
 
     const method_calls = semantic_index.references.filter(
-      (ref): ref is MethodCallReference => ref.kind === 'method_call'
+      (ref): ref is MethodCallReference => ref.kind === "method_call"
     );
-    expect(method_calls).toHaveLength(1);  // obj.method()
+    expect(method_calls).toHaveLength(1); // obj.method()
 
     const constructor_calls = semantic_index.references.filter(
-      (ref): ref is ConstructorCallReference => ref.kind === 'constructor_call'
+      (ref): ref is ConstructorCallReference => ref.kind === "constructor_call"
     );
-    expect(constructor_calls).toHaveLength(1);  // new MyClass()
+    expect(constructor_calls).toHaveLength(1); // new MyClass()
 
     // All references should resolve
     expect(resolutions.size).toBe(semantic_index.references.length);
@@ -282,8 +283,8 @@ import {
   create_property_access_reference,
   create_type_reference,
   create_assignment_reference,
-} from '../../index_single_file/references/reference_factories';
-import type { Location, ScopeId, SymbolName } from '@ariadnejs/types';
+} from "../../index_single_file/references/reference_factories";
+import type { Location, ScopeId, SymbolName } from "@ariadnejs/types";
 
 /**
  * Test utilities for building references with mock data
@@ -303,7 +304,7 @@ export const mock_receiver_location: Location = {
   end_column: 3,
 };
 
-export const mock_scope_id = 'scope:test:1' as ScopeId;
+export const mock_scope_id = "scope:test:1" as ScopeId;
 
 /**
  * Build a test self-reference call with defaults
@@ -313,11 +314,11 @@ export function build_test_self_reference_call(
     name: SymbolName;
     location: Location;
     scope_id: ScopeId;
-    keyword: 'this' | 'self' | 'super' | 'cls';
+    keyword: "this" | "self" | "super" | "cls";
   }>
 ): SelfReferenceCall {
-  const name = overrides?.name ?? ('test_method' as SymbolName);
-  const keyword = overrides?.keyword ?? 'this';
+  const name = overrides?.name ?? ("test_method" as SymbolName);
+  const keyword = overrides?.keyword ?? "this";
 
   return create_self_reference_call(
     name,
@@ -338,14 +339,14 @@ export function build_test_method_call(
     scope_id: ScopeId;
   }>
 ): MethodCallReference {
-  const name = overrides?.name ?? ('test_method' as SymbolName);
+  const name = overrides?.name ?? ("test_method" as SymbolName);
 
   return create_method_call_reference(
     name,
     overrides?.location ?? mock_location,
     overrides?.scope_id ?? mock_scope_id,
     mock_receiver_location,
-    ['obj', name]
+    ["obj", name]
   );
 }
 
@@ -375,9 +376,9 @@ if (ref.type === ReferenceType.METHOD_CALL) {
 }
 
 // AFTER
-if (ref.kind === 'method_call') {
+if (ref.kind === "method_call") {
   // TypeScript knows ref is MethodCallReference
-  expect(ref.receiver_location).toBeDefined();  // No optional chaining needed
+  expect(ref.receiver_location).toBeDefined(); // No optional chaining needed
 }
 ```
 
@@ -395,6 +396,7 @@ if (ref.kind === 'method_call') {
 ## Files Changed
 
 **Modified** (test files):
+
 - `packages/core/src/index_single_file/references/reference_builder.test.ts`
 - `packages/core/src/resolve_references/call_resolution/method_resolver.test.ts`
 - `packages/core/src/resolve_references/call_resolution/function_resolver.test.ts`
@@ -403,6 +405,7 @@ if (ref.kind === 'method_call') {
 - `packages/core/src/__tests__/integration/reference_resolution.test.ts`
 
 **New**:
+
 - `packages/core/src/__tests__/test_utils/reference_builders.ts`
 
 ## Testing Strategy
@@ -424,6 +427,7 @@ After updating tests:
 ### Why Update Tests?
 
 Tests serve as **documentation** and **regression prevention**. Updating them to use typed variants:
+
 - Shows developers the correct way to create references
 - Prevents regressions to legacy patterns
 - Makes tests more readable (no optional field checks)
@@ -451,6 +455,7 @@ Upon inspection, this task was found to be **already completed** or **not applic
 ### Current Test Status
 
 1. **[reference_builder.test.ts](packages/core/src/index_single_file/references/reference_builder.test.ts)** ✅ **ALREADY UPDATED**
+
    - Uses discriminated union pattern matching
    - Has comprehensive tests for all reference types
    - Includes dedicated self-reference call tests
@@ -458,11 +463,13 @@ Upon inspection, this task was found to be **already completed** or **not applic
    - No legacy `ReferenceType` enum usage
 
 2. **[reference_factories.test.ts](packages/core/src/index_single_file/references/reference_factories.test.ts)** ✅ **EXISTS**
+
    - Tests all factory functions
    - Validates discriminated union construction
    - Ensures correct type narrowing
 
 3. **Resolver test files mentioned in task** ❌ **DON'T EXIST YET**
+
    - `method_resolver.test.ts` - doesn't exist
    - `function_resolver.test.ts` - doesn't exist
    - `variable_resolver.test.ts` - doesn't exist
@@ -507,6 +514,7 @@ test("creates MethodCallReference for regular obj.method() calls", () => {
 ```
 
 **The tests use modern patterns:**
+
 - ✅ Type guards with `ref.kind === "..."`
 - ✅ Type narrowing in `if` blocks
 - ✅ Direct field access (no optional chaining)
@@ -516,16 +524,19 @@ test("creates MethodCallReference for regular obj.method() calls", () => {
 ### What Was Done Previously
 
 The test updates were completed as part of:
+
 - **task-152.4**: Created reference_factories.ts and reference_factories.test.ts
 - **Incremental updates**: reference_builder.test.ts was updated during the refactoring
 
 ### Comprehensive Resolver Tests
 
 **Will be created in subsequent tasks:**
+
 - **task-152.10**: Write self-reference tests (dedicated test file for self_reference_resolver.ts)
 - **task-152.11**: Integration testing - bug fix verification
 
 These will add:
+
 - Dedicated tests for each resolver (method, function, constructor, self-reference)
 - End-to-end integration tests
 - Bug fix verification tests
@@ -543,10 +554,12 @@ npm test       # ✅ PASSING
 ### Files Checked
 
 **Existing test files using discriminated unions:**
+
 - ✅ [packages/core/src/index_single_file/references/reference_builder.test.ts](packages/core/src/index_single_file/references/reference_builder.test.ts)
 - ✅ [packages/core/src/index_single_file/references/reference_factories.test.ts](packages/core/src/index_single_file/references/reference_factories.test.ts)
 
 **Test files that don't exist yet** (as expected):
+
 - method_resolver.test.ts
 - function_resolver.test.ts
 - variable_resolver.test.ts

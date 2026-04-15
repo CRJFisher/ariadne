@@ -13,6 +13,7 @@ Verify that Rust semantic index tests pass after scope assignment fixes for stru
 ## Context - Body-Based Scopes
 
 With Option A, Rust `.scm` files now capture **bodies** only:
+
 - Structs: `(struct_item body: (field_declaration_list) @scope.struct)`
 - Enums: `(enum_item body: (enum_variant_list) @scope.enum)`
 - Traits: `(trait_item body: (declaration_list) @scope.trait)`
@@ -22,6 +23,7 @@ With Option A, Rust `.scm` files now capture **bodies** only:
 ## Files
 
 ### MODIFIED
+
 - `packages/core/src/index_single_file/query_code_tree/semantic_index.rust.test.ts`
 
 ## Implementation Steps
@@ -37,6 +39,7 @@ Expected: Some tests may fail if they have hardcoded expectations about scope_id
 ### 2. Analyze Test Failures (20 min)
 
 For each failing test, determine:
+
 - Does it expect incorrect scope_id for structs? (needs update)
 - Does it expect incorrect scope_id for enums? (needs update)
 - Does it involve impl blocks? (special case)
@@ -45,6 +48,7 @@ For each failing test, determine:
 ### 3. Update Struct Scope Expectations (30 min)
 
 Update tests for structs:
+
 ```rust
 // Test case:
 struct Rectangle {
@@ -60,8 +64,8 @@ impl Rectangle {
 ```
 
 ```typescript
-it('should index Rust struct with correct scope', () => {
-  const struct_def = find_class('Rectangle'); // Rust structs stored as classes
+it("should index Rust struct with correct scope", () => {
+  const struct_def = find_class("Rectangle"); // Rust structs stored as classes
   expect(struct_def.scope_id).toBe(index.root_scope_id); // ← Verify correct
 });
 ```
@@ -69,6 +73,7 @@ it('should index Rust struct with correct scope', () => {
 ### 4. Update Enum Scope Expectations (30 min)
 
 Update tests for enums:
+
 ```rust
 // Test case:
 enum Color {
@@ -86,8 +91,8 @@ fn process_color(color: Color) {
 ```
 
 ```typescript
-it('should index Rust enum with correct scope', () => {
-  const enum_def = find_enum('Color');
+it("should index Rust enum with correct scope", () => {
+  const enum_def = find_enum("Color");
   expect(enum_def.scope_id).toBe(index.root_scope_id); // ← Verify correct
 });
 ```
@@ -95,6 +100,7 @@ it('should index Rust enum with correct scope', () => {
 ### 5. Verify Tuple Struct Cases (15 min)
 
 Rust tuple structs should also have correct scope:
+
 ```rust
 // Test case:
 struct Point(i32, i32);
@@ -107,8 +113,8 @@ impl Point {
 ```
 
 ```typescript
-it('should index tuple struct with correct scope', () => {
-  const struct_def = find_class('Point');
+it("should index tuple struct with correct scope", () => {
+  const struct_def = find_class("Point");
   expect(struct_def.scope_id).toBe(index.root_scope_id);
 });
 ```
@@ -116,6 +122,7 @@ it('should index tuple struct with correct scope', () => {
 ### 6. Verify Complex Enum Cases (20 min)
 
 Enums with variants containing data:
+
 ```rust
 // Test case:
 enum Message {
@@ -130,8 +137,8 @@ impl Message {
 ```
 
 ```typescript
-it('should index enum with variants with correct scope', () => {
-  const enum_def = find_enum('Message');
+it("should index enum with variants with correct scope", () => {
+  const enum_def = find_enum("Message");
   expect(enum_def.scope_id).toBe(index.root_scope_id);
 });
 ```
@@ -139,9 +146,10 @@ it('should index enum with variants with correct scope', () => {
 ### 7. Add Regression Tests (30 min)
 
 Add explicit tests for the bug:
+
 ```typescript
-describe('Rust Scope Assignment Regression Tests', () => {
-  it('struct scope_id is not impl method scope_id', () => {
+describe("Rust Scope Assignment Regression Tests", () => {
+  it("struct scope_id is not impl method scope_id", () => {
     const code = `
 struct Rectangle {
     width: u32,
@@ -157,17 +165,19 @@ impl Rectangle {
         2 * (self.width + self.height)
     }
 }`;
-    const index = build_semantic_index(code, 'test.rs');
-    const struct_def = Array.from(index.classes.values()).find(c => c.name === 'Rectangle');
+    const index = build_semantic_index(code, "test.rs");
+    const struct_def = Array.from(index.classes.values()).find(
+      (c) => c.name === "Rectangle"
+    );
     const method_scope = Array.from(index.scopes.values()).find(
-      s => s.name === 'area' || s.name === 'perimeter'
+      (s) => s.name === "area" || s.name === "perimeter"
     );
 
     expect(struct_def!.scope_id).not.toBe(method_scope?.id);
     expect(struct_def!.scope_id).toBe(index.root_scope_id);
   });
 
-  it('enum scope_id is not match arm scope_id', () => {
+  it("enum scope_id is not match arm scope_id", () => {
     const code = `
 enum Color {
     Red,
@@ -182,10 +192,10 @@ fn process_color(color: Color) {
         Color::Blue => println!("Blue"),
     }
 }`;
-    const index = build_semantic_index(code, 'test.rs');
+    const index = build_semantic_index(code, "test.rs");
     const enum_def = Array.from(index.enums.values())[0];
     const function_scope = Array.from(index.scopes.values()).find(
-      s => s.name === 'process_color'
+      (s) => s.name === "process_color"
     );
 
     expect(enum_def.scope_id).not.toBe(function_scope?.id);

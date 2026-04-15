@@ -13,6 +13,7 @@
 ## ✅ REGRESSION FIXED (2025-10-08)
 
 All 4 JavaScript JSDoc tests are now passing:
+
 - ✓ "should capture JSDoc documentation for functions"
 - ✓ "should capture JSDoc documentation for classes"
 - ✓ "should capture JSDoc documentation for methods"
@@ -26,6 +27,7 @@ All 4 JavaScript JSDoc tests are now passing:
 ### Changes Made (2025-10-08)
 
 1. **Restored documentation handlers** in `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_builder.ts`:
+
    - Added documentation state management (`pending_documentation` Map, `store_documentation`, `consume_documentation`)
    - Added handlers for `definition.function.documentation`, `definition.class.documentation`, `definition.method.documentation`, `definition.variable.documentation`
    - Updated definition handlers to consume and attach documentation: `add_class`, `add_method_to_class`, `add_function`, `add_variable`
@@ -123,6 +125,7 @@ Add comment capture patterns for each definition type:
 ```
 
 **Naming convention**: `@category.entity.documentation` where:
+
 - `category` = `definition` (SemanticCategory)
 - `entity` = `function|method|class|variable` (SemanticEntity)
 - qualifier = `documentation`
@@ -135,12 +138,12 @@ Add documentation field extraction:
 
 ```typescript
 // In process_function_definition or similar:
-if (capture.name === 'definition.function.documentation') {
+if (capture.name === "definition.function.documentation") {
   // Store comment text for association with next function
   pending_documentation = node.text;
 }
 
-if (capture.name === 'definition.function') {
+if (capture.name === "definition.function") {
   // Associate pending documentation with this function
   if (pending_documentation) {
     function_def.documentation = pending_documentation;
@@ -186,7 +189,7 @@ export interface Variable {
 Add test cases for comment extraction:
 
 ```typescript
-it('should capture JSDoc comment for function', () => {
+it("should capture JSDoc comment for function", () => {
   const code = `
     /** @param {string} name */
     function greet(name) {
@@ -194,11 +197,13 @@ it('should capture JSDoc comment for function', () => {
     }
   `;
 
-  const result = build_semantic_index(parsedFile, tree, 'javascript');
-  const func = Array.from(result.functions.values()).find(f => f.name === 'greet');
+  const result = build_semantic_index(parsedFile, tree, "javascript");
+  const func = Array.from(result.functions.values()).find(
+    (f) => f.name === "greet"
+  );
 
   expect(func?.documentation).toBeDefined();
-  expect(func?.documentation).toContain('@param {string} name');
+  expect(func?.documentation).toContain("@param {string} name");
 });
 ```
 
@@ -209,6 +214,7 @@ Add similar tests for methods, classes, and variables.
 **File**: `packages/core/src/index_single_file/semantic_index.javascript.test.ts`
 
 Either:
+
 - Enable the skipped test and update expectations, or
 - Replace with a new test that verifies documentation extraction (not full JSDoc parsing)
 
@@ -228,16 +234,20 @@ it("should capture JSDoc documentation comments", () => {
     }
   `;
 
-  const result = build_semantic_index(parsedFile, tree, 'javascript');
+  const result = build_semantic_index(parsedFile, tree, "javascript");
 
   // Verify variable has documentation
-  const serviceVar = Array.from(result.variables.values()).find(v => v.name === 'service');
-  expect(serviceVar?.documentation).toContain('@type {Service}');
+  const serviceVar = Array.from(result.variables.values()).find(
+    (v) => v.name === "service"
+  );
+  expect(serviceVar?.documentation).toContain("@type {Service}");
 
   // Verify function has documentation
-  const createUserFunc = Array.from(result.functions.values()).find(f => f.name === 'createUser');
-  expect(createUserFunc?.documentation).toContain('@param {string} name');
-  expect(createUserFunc?.documentation).toContain('@returns {User}');
+  const createUserFunc = Array.from(result.functions.values()).find(
+    (f) => f.name === "createUser"
+  );
+  expect(createUserFunc?.documentation).toContain("@param {string} name");
+  expect(createUserFunc?.documentation).toContain("@returns {User}");
 });
 ```
 
@@ -280,19 +290,32 @@ it("should capture JSDoc documentation for type references", () => {
   `;
 
   const tree = parser.parse(code);
-  const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-  const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+  const parsedFile = createParsedFile(
+    code,
+    "test.js" as FilePath,
+    tree,
+    "javascript" as Language
+  );
+  const result = build_semantic_index(
+    parsedFile,
+    tree,
+    "javascript" as Language
+  );
 
   // Verify variable has JSDoc documentation
-  const serviceVar = Array.from(result.variables.values()).find(v => v.name === 'service');
+  const serviceVar = Array.from(result.variables.values()).find(
+    (v) => v.name === "service"
+  );
   expect(serviceVar?.documentation).toBeDefined();
-  expect(serviceVar?.documentation).toContain('@type {Service}');
+  expect(serviceVar?.documentation).toContain("@type {Service}");
 
   // Verify function has JSDoc documentation
-  const getUserNameFunc = Array.from(result.functions.values()).find(f => f.name === 'getUserName');
+  const getUserNameFunc = Array.from(result.functions.values()).find(
+    (f) => f.name === "getUserName"
+  );
   expect(getUserNameFunc?.documentation).toBeDefined();
-  expect(getUserNameFunc?.documentation).toContain('@param {User} user');
-  expect(getUserNameFunc?.documentation).toContain('@returns {string}');
+  expect(getUserNameFunc?.documentation).toContain("@param {User} user");
+  expect(getUserNameFunc?.documentation).toContain("@returns {string}");
 });
 ```
 
@@ -301,16 +324,20 @@ it("should capture JSDoc documentation for type references", () => {
 ## Files to Modify
 
 **Query files**:
+
 - `packages/core/src/index_single_file/query_code_tree/query_languages/javascript.scm`
 
 **Builder files**:
+
 - `packages/core/src/index_single_file/language_configs/javascript_builder.ts`
 
 **Type definitions**:
+
 - Check existing types in `@ariadnejs/types` package
 - May need to add `documentation?: string` field to definition types
 
 **Test files**:
+
 - `packages/core/src/index_single_file/language_configs/javascript_builder.test.ts`
 - `packages/core/src/index_single_file/semantic_index.javascript.test.ts`
 
@@ -345,16 +372,19 @@ program [1:0]
 After implementation, verify:
 
 1. **Query syntax is correct**:
+
    ```bash
    npm test -- javascript_builder.test.ts
    ```
 
 2. **Comments are captured**:
+
    ```bash
    npm test -- semantic_index.javascript.test.ts
    ```
 
 3. **No regressions**:
+
    ```bash
    npm test
    ```
@@ -369,11 +399,13 @@ After implementation, verify:
 ## Risks
 
 **Low risk**:
+
 - Only adding new optional fields
 - No changes to existing extraction logic
 - Comments are already in the AST, just not captured yet
 
 **Potential issues**:
+
 - Capture ordering: Need to ensure comment is processed before the definition it annotates
 - Multiple comments: May need to handle consecutive comment nodes
 - Non-JSDoc comments: May capture regular comments - decide if filtering is needed
@@ -383,6 +415,7 @@ After implementation, verify:
 **Optional enhancements** (create separate tasks if needed):
 
 1. **Parse JSDoc structure**: Extract `@param`, `@returns`, `@type` into structured data
+
    - Would require separate JSDoc parser library (`comment-parser` or `doctrine`)
    - Would enable type-aware method resolution
 
@@ -413,27 +446,32 @@ After implementation, verify:
 ### Changes Made (2025-10-07)
 
 1. **Type Definitions** (`packages/types/src/symbol_definitions.ts`)
+
    - Added `docstring?: DocString` field to `MethodDefinition` (line 87)
    - Added `docstring?: DocString` field to `VariableDefinition` (line 163)
    - `FunctionDefinition` and `ClassDefinition` already had docstring fields
 
 2. **SCM Query** (`packages/core/src/index_single_file/query_code_tree/queries/javascript.scm`)
+
    - Added documentation capture patterns for functions, classes, methods, and variables
    - Patterns capture comments immediately preceding definitions at appropriate scope levels
 
 3. **Builder Configuration** (`packages/core/src/index_single_file/query_code_tree/language_configs/javascript_builder.ts`)
+
    - Added documentation state management with `pending_documentation` Map
    - Added `store_documentation()` and `consume_documentation()` functions
    - Added handlers for `definition.function.documentation`, `definition.class.documentation`, `definition.method.documentation`, `definition.variable.documentation`
    - Updated all definition handlers to consume and attach documentation
 
 4. **Definition Builder** (`packages/core/src/index_single_file/definitions/definition_builder.ts`)
+
    - Updated `add_class()` to accept `docstring?: readonly string[]` parameter
    - Updated `add_method_to_class()` to accept `docstring?: string` parameter
    - Updated `add_function()` to accept `docstring?: string` parameter
    - Updated `add_variable()` to accept `docstring?: string` parameter
 
 5. **Tests** (`packages/core/src/index_single_file/semantic_index.javascript.test.ts`)
+
    - Replaced skipped JSDoc test with 5 comprehensive integration tests:
      - `should capture JSDoc documentation for functions`
      - `should capture JSDoc documentation for classes`
@@ -458,11 +496,13 @@ After implementation, verify:
 ✅ **All JavaScript tests passing (100% coverage)**
 
 **Integration Tests** (`semantic_index.javascript.test.ts`):
+
 - Previous: 32 passed | 1 skipped (33 total)
 - Current: 40 passed (40 total)
 - Added: 7 new JSDoc-specific tests
 
 **Unit Tests** (`javascript_builder.test.ts`):
+
 - Previous: 25 tests
 - Current: 32 tests
 - Added: 7 new JSDoc documentation extraction tests

@@ -514,7 +514,7 @@ function format_output(
  * @returns Formatted ASCII text showing the call graph neighborhood
  */
 export async function show_call_graph_neighborhood(
-  project: Project,
+  project: Pick<Project, "get_call_graph">,
   request: ShowCallGraphNeighborhoodRequest
 ): Promise<string> {
   const {

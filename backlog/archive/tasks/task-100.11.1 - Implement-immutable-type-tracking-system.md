@@ -3,9 +3,9 @@ id: task-100.11.1
 title: Implement immutable type tracking system
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-08-04 14:17'
-updated_date: '2025-08-04 14:30'
+  - "@chuck"
+created_date: "2025-08-04 14:17"
+updated_date: "2025-08-04 14:30"
 labels:
   - immutable
   - refactoring

@@ -13,6 +13,7 @@ Update the JavaScript tree-sitter query file to capture scope **bodies** instead
 ## Files
 
 ### MODIFIED
+
 - `packages/core/src/index_single_file/query_code_tree/queries/javascript.scm`
 
 ---
@@ -20,6 +21,7 @@ Update the JavaScript tree-sitter query file to capture scope **bodies** instead
 ## The Fix
 
 ### Current Problem
+
 ```scheme
 (class_declaration) @scope.class
 ```
@@ -27,6 +29,7 @@ Update the JavaScript tree-sitter query file to capture scope **bodies** instead
 Captures the ENTIRE class including the name.
 
 ### Solution
+
 ```scheme
 (class_declaration
   body: (class_body) @scope.class
@@ -42,6 +45,7 @@ Captures only the BODY, making the class name visible in the parent scope.
 ### 1. Locate Current Scope Captures (3 min)
 
 Find this pattern in `javascript.scm`:
+
 ```scheme
 (class_declaration) @scope.class
 ```
@@ -63,6 +67,7 @@ Note: JavaScript doesn't have interfaces or enums (those are TypeScript features
 ### 3. Check for Class Expressions (5 min)
 
 May also need to update class expressions if they exist:
+
 ```scheme
 (class
   body: (class_body) @scope.class
@@ -72,11 +77,13 @@ May also need to update class expressions if they exist:
 ### 4. Verify Grammar Fields (2 min)
 
 Check tree-sitter-javascript grammar:
+
 - Class has `body: (class_body)` ✅
 
 ### 5. Test with Simple Example (5 min)
 
 Create test file `test.js`:
+
 ```javascript
 class MyClass {
   method() {}
@@ -84,6 +91,7 @@ class MyClass {
 ```
 
 Verify:
+
 - Class scope starts at `{` (after "MyClass")
 - Class name location is OUTSIDE class scope
 - Method scope is INSIDE class scope
@@ -93,6 +101,7 @@ Verify:
 ## Expected Scope Locations
 
 **Before:**
+
 ```
 class MyClass {     // class scope: 1:0 to 3:1 (includes name ❌)
   method() {}
@@ -100,6 +109,7 @@ class MyClass {     // class scope: 1:0 to 3:1 (includes name ❌)
 ```
 
 **After:**
+
 ```
 class MyClass {     // class scope: 1:14 to 3:1 (body only ✅)
   method() {}
@@ -122,6 +132,7 @@ class MyClass {     // class scope: 1:14 to 3:1 (body only ✅)
 ### Changes Made
 
 1. **Updated `javascript.scm`** (lines 22-28):
+
    - Changed `(class_declaration) @scope.class` to `(class_declaration body: (class_body) @scope.class)`
    - Changed `(class) @scope.class` to `(class body: (class_body) @scope.class)`
    - Both class declarations and class expressions now capture only the body
@@ -134,12 +145,14 @@ class MyClass {     // class scope: 1:14 to 3:1 (body only ✅)
 ### Test Results
 
 JavaScript class declaration:
+
 ```
 Class scope: 1:15 to 3:2 (body only ✅)
 Class name 'MyClass': in module scope ✅
 ```
 
 JavaScript class expression:
+
 ```
 Class scope: 1:23 to 3:2 (body only ✅)
 ```
@@ -149,6 +162,7 @@ Both match expected behavior from TypeScript implementation.
 ### TypeScript Compilation
 
 ✅ **Verified** - No TypeScript errors in files that use `javascript.scm`:
+
 - `javascript_metadata.ts` - compiles cleanly
 - `javascript_builder.ts` - compiles cleanly
 - `.scm` file is loaded as text at runtime, not compiled

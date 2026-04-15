@@ -23,6 +23,7 @@ Add missing builder methods to [definition_builder.ts](../../../packages/core/sr
 **Location:** After `add_method_to_class` (around line 348)
 
 **Implementation:**
+
 ```typescript
 /**
  * Add a constructor to a class
@@ -73,6 +74,7 @@ add_constructor_to_class(
 **Location:** Existing method (around line 312)
 
 **Current code:**
+
 ```typescript
 add_parameter_to_callable(
   callable_id: SymbolId,
@@ -100,6 +102,7 @@ add_parameter_to_callable(
 ```
 
 **Enhanced code:**
+
 ```typescript
 add_parameter_to_callable(
   callable_id: SymbolId,
@@ -156,6 +159,7 @@ add_parameter_to_callable(
 **Location:** `process_orphans` method (around line 167)
 
 **Add handling for new orphan types:**
+
 ```typescript
 private process_orphans(): void {
   for (const orphan of this.orphan_additions) {
@@ -184,17 +188,19 @@ private process_orphans(): void {
 **Location:** Top of file (around line 91)
 
 **Verify ConstructorBuilderState includes parameters:**
+
 ```typescript
 interface ConstructorBuilderState {
   symbol_id: SymbolId;
   location: Location;
   scope_id: ScopeId;
   availability: SymbolAvailability;
-  parameters: ParameterBuilderState[];  // Ensure this exists
+  parameters: ParameterBuilderState[]; // Ensure this exists
 }
 ```
 
 **Update orphan type:**
+
 ```typescript
 private orphan_additions: Array<{
   type: "method" | "property" | "constructor" | "parameter" | /* ... */;
@@ -208,6 +214,7 @@ private orphan_additions: Array<{
 **Location:** Around line 685
 
 **Ensure it handles parameters:**
+
 ```typescript
 private build_constructor(
   state: ConstructorBuilderState
@@ -229,6 +236,7 @@ private build_constructor(
 **Issue:** The method name `add_type` suggests it's for ALL types, but it's specifically for TYPE ALIASES.
 
 **Current JSDoc:**
+
 ```typescript
 /**
  * Add a type definition (type alias or type)
@@ -237,6 +245,7 @@ add_type(definition: { /* ... */ }): DefinitionBuilder
 ```
 
 **Enhanced JSDoc:**
+
 ```typescript
 /**
  * Add a type ALIAS definition
@@ -274,6 +283,7 @@ add_type(definition: {
 ```
 
 **Why this matters:**
+
 - Prevents confusion about when to use `add_type`
 - Clarifies that classes/interfaces/enums are NOT aliases
 - Documents the semantic distinction
@@ -297,13 +307,13 @@ describe("add_constructor_to_class", () => {
         name: "MyClass",
         location,
         scope_id,
-        availability: { scope: "public" }
+        availability: { scope: "public" },
       })
       .add_constructor_to_class(class_id, {
         symbol_id: constructor_id,
         location,
         scope_id,
-        availability: { scope: "public" }
+        availability: { scope: "public" },
       });
 
     const result = builder.build();
@@ -321,14 +331,18 @@ describe("add_constructor_to_class", () => {
     const param_id = parameter_symbol("x", location);
 
     builder
-      .add_class({ /* ... */ })
-      .add_constructor_to_class(class_id, { /* ... */ })
+      .add_class({
+        /* ... */
+      })
+      .add_constructor_to_class(class_id, {
+        /* ... */
+      })
       .add_parameter_to_callable(constructor_id, {
         symbol_id: param_id,
         name: "x",
         location,
         scope_id,
-        type: "number"
+        type: "number",
       });
 
     const result = builder.build();
@@ -351,19 +365,21 @@ describe("add_parameter_to_callable - enhanced", () => {
     const param_id = parameter_symbol("x", location);
 
     builder
-      .add_interface({ /* ... */ })
+      .add_interface({
+        /* ... */
+      })
       .add_method_signature_to_interface(interface_id, {
         symbol_id: method_id,
         name: "myMethod",
         location,
-        scope_id
+        scope_id,
       })
       .add_parameter_to_callable(method_id, {
         symbol_id: param_id,
         name: "x",
         location,
         scope_id,
-        type: "string"
+        type: "string",
       });
 
     const result = builder.build();
@@ -385,14 +401,14 @@ describe("add_parameter_to_callable - enhanced", () => {
         symbol_id: param_id,
         name: "x",
         location,
-        scope_id
+        scope_id,
       })
       .add_function({
         symbol_id: func_id,
         name: "myFunc",
         location,
         scope_id,
-        availability: { scope: "public" }
+        availability: { scope: "public" },
       });
 
     const result = builder.build();
@@ -406,16 +422,19 @@ describe("add_parameter_to_callable - enhanced", () => {
 ## Verification Steps
 
 1. **TypeScript compilation:**
+
    ```bash
    npx tsc --noEmit packages/core/src/index_single_file/definitions/definition_builder.ts
    ```
 
 2. **Run tests:**
+
    ```bash
    npm test packages/core/src/index_single_file/definitions/definition_builder.test.ts
    ```
 
 3. **Verify method exists:**
+
    ```bash
    grep "add_constructor_to_class" packages/core/src/index_single_file/definitions/definition_builder.ts
    ```

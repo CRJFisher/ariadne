@@ -3,7 +3,7 @@ id: task-epic-11.12
 title: Migrate namespace_resolution feature
 status: Completed
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, import-export, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate the `namespace_resolution` feature to `src/import_export/namespace_resol
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -59,14 +60,17 @@ Migrate the `namespace_resolution` feature to `src/import_export/namespace_resol
 ### Required Integrations
 
 1. **With Import Resolution**: Namespace imports are a special type of import
+
    - Must work with import resolver to find namespace targets
    - TODO: Extend `ImportInfo` with namespace flag
 
 2. **With Export Detection**: Need to enumerate all exports from namespace
+
    - Namespace members come from target module's exports
    - TODO: Use `get_module_exports()` from export_detection
 
 3. **With Symbol Resolution**: Namespace member access needs symbol resolution
+
    - `namespace.member` requires two-step resolution
    - TODO: Add `resolve_qualified_name()` helper
 
@@ -184,15 +188,16 @@ This was recently refactored to functional paradigm in import_resolution folder.
 When implementing, add these TODO comments:
 
 1. In `namespace_resolution.ts`:
+
    ```typescript
    // TODO: Integration with import_resolution
    // - Namespace imports are handled by import resolver
    // - Need to mark imports as namespace type
-   
-   // TODO: Integration with export_detection  
+
+   // TODO: Integration with export_detection
    // - Enumerate exports from target module
    // - Handle re-exported namespaces
-   
+
    // TODO: Integration with symbol_resolution
    // - Qualified name resolution (ns.member.submember)
    // - Scope-aware member lookup

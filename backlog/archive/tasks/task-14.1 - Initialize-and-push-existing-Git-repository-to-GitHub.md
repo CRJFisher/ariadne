@@ -3,9 +3,9 @@ id: task-14.1
 title: Initialize and push existing Git repository to GitHub
 status: Done
 assignee:
-  - '@claude'
-created_date: '2025-07-08'
-updated_date: '2025-07-16'
+  - "@claude"
+created_date: "2025-07-08"
+updated_date: "2025-07-16"
 labels:
   - infrastructure
   - deployment

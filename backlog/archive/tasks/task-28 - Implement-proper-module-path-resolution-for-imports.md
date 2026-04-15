@@ -3,9 +3,9 @@ id: task-28
 title: Implement proper module path resolution for imports
 status: Done
 assignee:
-  - '@claude'
-created_date: '2025-07-18'
-updated_date: '2025-08-02'
+  - "@claude"
+created_date: "2025-07-18"
+updated_date: "2025-08-02"
 labels:
   - enhancement
   - import-resolution
@@ -165,12 +165,14 @@ mod utils;  // Looks for utils.rs or utils/mod.rs
 ### Completed Implementation
 
 1. **Created ModuleResolver class** (`packages/core/src/module_resolver.ts`):
+
    - Handles relative path resolution for all languages
    - Language-specific resolvers for Python and Rust
    - Supports file extensions and index files
    - 14 comprehensive tests all passing
 
 2. **Integrated with Project.get_imports_with_definitions()**:
+
    - Uses ModuleResolver instead of brute-force search
    - Detects language based on file extension
    - Falls back to search if module resolution fails
@@ -185,16 +187,19 @@ mod utils;  // Looks for utils.rs or utils/mod.rs
 All major objectives have been achieved:
 
 1. **Module Path Resolution**:
+
    - Created `ModuleResolver` class with language-specific logic
    - Handles relative paths, file extensions, and index files
    - Integrated with `Project.get_imports_with_definitions()`
 
 2. **Python Enhancements**:
+
    - Added star import support in scopes.scm
    - Verified module imports work correctly
    - Module path extraction for `from X import Y` statements
 
 3. **TypeScript Enhancements**:
+
    - Added type import detection
    - Added `is_type_import` flag to Import interface
    - Correctly distinguishes pure type imports and mixed imports

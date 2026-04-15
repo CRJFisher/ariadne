@@ -9,12 +9,12 @@ import {
 } from "../analytics/query_stats";
 import { resolve_analytics_dir } from "../analytics/analytics";
 
-export interface CliArgs {
+interface CliArgs {
   since?: string;
   session?: string;
 }
 
-export function parse_args(argv: string[] = process.argv.slice(2)): CliArgs {
+function parse_args(argv: string[] = process.argv.slice(2)): CliArgs {
   const result: CliArgs = {};
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === "--since" && argv[i + 1]) {
@@ -28,7 +28,7 @@ export function parse_args(argv: string[] = process.argv.slice(2)): CliArgs {
   return result;
 }
 
-export function pad_right(str: string, len: number): string {
+function pad_right(str: string, len: number): string {
   return str.length >= len ? str : str + " ".repeat(len - str.length);
 }
 
@@ -44,7 +44,7 @@ function main(): void {
     process.exit(1);
   }
 
-  const args = parse_args(argv);
+  const args = parse_args();
 
   if (args.session) {
     // Per-session detail view
@@ -110,8 +110,4 @@ function main(): void {
   }
 }
 
-// Run when executed directly (not imported by tests)
-const is_direct = process.argv[1]?.includes("ariadne_analytics");
-if (is_direct) {
-  main();
-}
+main();

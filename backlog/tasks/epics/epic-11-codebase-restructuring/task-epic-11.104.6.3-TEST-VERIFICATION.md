@@ -9,6 +9,7 @@
 **File:** `packages/core/src/index_single_file/query_code_tree/reference_builder.test.ts`
 
 ### Summary
+
 - **Total Tests:** 35
 - **Passing:** 28 ✅
 - **Skipped:** 7 (intentional)
@@ -19,6 +20,7 @@
 ### Test Breakdown by Category
 
 #### 1. Basic Processing Tests (8 tests) ✅
+
 - ✅ should ignore non-reference captures
 - ✅ should process variable references
 - ✅ should process function calls
@@ -29,17 +31,21 @@
 - ✅ should chain multiple references
 
 #### 2. Process References Pipeline (2 tests) ✅
+
 - ✅ should filter and process only reference captures
 - ✅ should preserve scope context
 
 #### 3. Reference Capture Detection (4 tests) ✅
+
 - ✅ should return true for reference captures
 - ✅ should return true for assignment captures
 - ✅ should return true for return captures
 - ✅ should return false for non-reference captures
 
 #### 4. Metadata Extractors Integration (14 tests) ✅
+
 All metadata extractor integration tests passing:
+
 - ✅ should call extract_type_from_annotation for type references
 - ✅ should call extract_call_receiver for method calls
 - ✅ should call extract_property_chain for member access
@@ -60,17 +66,20 @@ All metadata extractor integration tests passing:
 These tests are skipped because they require **actual language-specific AST parsing** (not mocks) and are covered by integration tests in semantic_index tests:
 
 #### From "process" section (4 skipped):
+
 1. ↓ should process type references
 2. ↓ should process type references with generics
 3. ↓ should process property access
 4. ↓ should process assignments with type flow
 
 #### From "complex scenarios" section (3 skipped):
+
 5. ↓ should handle method call with property chain
 6. ↓ should handle type references
 7. ↓ should handle assignments
 
 **Why Skipped:**
+
 - Comment in code: "Skipped: Requires language-specific metadata extractors (task 104.3+)"
 - These scenarios require real tree-sitter AST nodes from actual code parsing
 - The functionality is tested via:
@@ -84,6 +93,7 @@ These tests are skipped because they require **actual language-specific AST pars
 ### Test Coverage Analysis
 
 **What's Tested:**
+
 - ✅ Basic reference building logic
 - ✅ Capture filtering and classification
 - ✅ Metadata extractor integration (with mocks)
@@ -97,6 +107,7 @@ These tests are skipped because they require **actual language-specific AST pars
 - ✅ Complex multi-extractor scenarios
 
 **What's Tested Elsewhere:**
+
 - Language-specific AST parsing → semantic_index tests
 - Real metadata extraction → language_metadata.test.ts files
 - End-to-end integration → semantic_index integration tests
@@ -112,12 +123,14 @@ These tests are skipped because they require **actual language-specific AST pars
 ### Code Quality
 
 **Test Organization:**
+
 - Clear describe blocks for each test category
 - Descriptive test names following "should..." pattern
 - Comprehensive mock utilities for testing
 - Good separation of concerns (unit vs integration)
 
 **Mock Quality:**
+
 - `create_mock_extractors()` - Flexible mock creation
 - `create_test_capture()` - Standardized test data
 - `create_test_location()` - Consistent location objects
@@ -125,6 +138,7 @@ These tests are skipped because they require **actual language-specific AST pars
 ### Conclusion
 
 The ReferenceBuilder test suite demonstrates **excellent test coverage** with:
+
 - ✅ **100% passing rate** for all enabled tests
 - ✅ **14 comprehensive metadata extractor integration tests**
 - ✅ **Zero test failures**
@@ -137,6 +151,7 @@ The 7 skipped tests are intentional placeholders for scenarios that require real
 ### Related Test Files
 
 Additional test coverage for metadata extraction:
+
 - `javascript_metadata.test.ts` - 57 tests (100% passing)
 - `python_metadata.test.ts` - 69 tests (100% passing)
 - `rust_metadata.test.ts` - 51 tests (100% passing)

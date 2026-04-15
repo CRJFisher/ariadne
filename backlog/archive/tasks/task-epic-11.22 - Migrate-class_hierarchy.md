@@ -3,7 +3,7 @@ id: task-epic-11.22
 title: Migrate class_hierarchy feature
 status: Completed
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, inheritance, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate the `class_hierarchy` feature to `src/inheritance_analysis/class_hierarc
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -24,7 +25,7 @@ Migrate the `class_hierarchy` feature to `src/inheritance_analysis/class_hierarc
 - [x] Find where class_hierarchy currently lives - **Found in src_old/inheritance.ts and project_inheritance.ts**
 - [x] Document all language-specific implementations:
   - **TypeScript/JavaScript**: Extract extends/implements from class_heritage nodes
-  - **Python**: Extract superclasses from argument_list  
+  - **Python**: Extract superclasses from argument_list
   - **Rust**: Find trait implementations from impl blocks
 - [x] Identify common logic vs language-specific logic:
   - **Common**: ClassRelationship interface, caching, resolution logic
@@ -74,7 +75,7 @@ export interface ClassInfo {
 export interface InheritanceEdge {
   child: Def;
   parent: Def;
-  relationship_type: 'extends' | 'implements' | 'trait' | 'mixin';
+  relationship_type: "extends" | "implements" | "trait" | "mixin";
   source_location: Position;
 }
 
@@ -146,6 +147,7 @@ Successfully migrated the class_hierarchy feature from src_old/inheritance.ts an
 **Key Implementation Details:**
 
 1. **Core Functionality (class_hierarchy.ts)**:
+
    - Defines ClassInfo, InheritanceEdge, ClassHierarchy interfaces
    - Implements build_class_hierarchy as main entry point
    - Provides helper functions for traversing hierarchy
@@ -153,17 +155,19 @@ Successfully migrated the class_hierarchy feature from src_old/inheritance.ts an
    - Identifies root classes and inheritance paths
 
 2. **Language-Specific Implementations**:
+
    - **JavaScript/TypeScript**: Handles ES6 extends, TypeScript implements, interface extends
    - **Python**: Handles multiple inheritance, ABC detection, metaclasses
    - **Rust**: Handles trait implementations, derive macros, super traits
 
 3. **Key Bug Fix**:
+
    - Fixed Rust derive attribute parsing - was looking for 'meta' child but should look for 'attribute' child
    - The attribute structure is: attribute_item > attribute > [identifier, token_tree]
 
 4. **Testing Coverage**:
    - Class extends relationships
-   - Interface implementations  
+   - Interface implementations
    - Multiple inheritance (Python)
    - Trait implementations (Rust)
    - Derived traits (Rust)

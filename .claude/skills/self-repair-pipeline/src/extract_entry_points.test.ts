@@ -16,10 +16,10 @@ import type {
 // ===== Test Helpers =====
 
 /** Branded type helper — avoids verbose `as X` on every string */
-const sym = (s: string) => s as unknown as SymbolId;
-const name = (s: string) => s as unknown as SymbolName;
-const scope = (s: string) => s as unknown as ScopeId;
-const fp = (s: string) => s as unknown as FilePath;
+const sym = (s: string) => s as SymbolId;
+const name = (s: string) => s as SymbolName;
+const scope = (s: string) => s as ScopeId;
+const fp = (s: string) => s as FilePath;
 
 function make_location(file_path: string, start_line: number): Location {
   return {
@@ -45,7 +45,7 @@ function make_callable_node(
       name: name(node_name),
       is_exported: false,
       body_scope_id: scope("scope_1"),
-    } as AnyDefinition,
+    } as object as AnyDefinition,
     enclosed_calls,
     is_test: false,
   };
@@ -73,7 +73,7 @@ function make_call_ref(
 
 describe("build_signature", () => {
   it("builds signature for function definition", () => {
-    // Use 'as unknown as AnyDefinition' to avoid needing full ParameterDefinition fields
+    // Cast partial object to AnyDefinition (tests only need relevant fields)
     const def = {
       kind: "function",
       name: name("process_data"),
@@ -86,7 +86,7 @@ describe("build_signature", () => {
         ],
         return_type: "boolean",
       },
-    } as unknown as AnyDefinition;
+    } as object as AnyDefinition;
 
     expect(build_signature(def)).toBe("process_data(input: string, count: number): boolean");
   });
@@ -101,7 +101,7 @@ describe("build_signature", () => {
         { name: "key", type: "string" },
       ],
       return_type: "any",
-    } as unknown as AnyDefinition;
+    } as object as AnyDefinition;
 
     expect(build_signature(def)).toBe("get_value(key: string): any");
   });
@@ -113,7 +113,7 @@ describe("build_signature", () => {
       parameters: [
         { name: "config", type: "Config" },
       ],
-    } as unknown as AnyDefinition;
+    } as object as AnyDefinition;
 
     expect(build_signature(def)).toBe("constructor(config: Config)");
   });
@@ -128,7 +128,7 @@ describe("build_signature", () => {
         parameters: [],
         return_type: "void",
       },
-    } as unknown as AnyDefinition;
+    } as object as AnyDefinition;
 
     expect(build_signature(def)).toBe("init(): void");
   });
@@ -145,7 +145,7 @@ describe("build_signature", () => {
         ],
         return_type: "string",
       },
-    } as unknown as AnyDefinition;
+    } as object as AnyDefinition;
 
     expect(build_signature(def)).toBe("loose(x: any): string");
   });

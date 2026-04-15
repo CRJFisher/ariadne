@@ -3,9 +3,9 @@ id: task-48.2
 title: Set up @ariadnejs/mcp package structure
 status: Done
 assignee:
-  - '@claude'
-created_date: '2025-07-28'
-updated_date: '2025-07-28'
+  - "@claude"
+created_date: "2025-07-28"
+updated_date: "2025-07-28"
 labels: []
 dependencies: []
 parent_task_id: task-48

@@ -3,7 +3,7 @@ id: task-epic-11.32
 title: Migrate graph_builder feature
 status: Done
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, data-layer, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate the `graph_builder` feature to `src/graph/graph_builder/` following Arch
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -71,7 +72,11 @@ Migrate the `graph_builder` feature to `src/graph/graph_builder/` following Arch
 
 ```typescript
 // TODO: Add these stubs in implementation
-interface GraphBuilder<N, E> { add_node(node: N): void; add_edge(edge: E): void; build(): Graph<N, E>; }
+interface GraphBuilder<N, E> {
+  add_node(node: N): void;
+  add_edge(edge: E): void;
+  build(): Graph<N, E>;
+}
 ```
 
 ## Planning Phase
@@ -148,12 +153,14 @@ interface GraphBuilder<N, E> { add_node(node: N): void; add_edge(edge: E): void;
 ### Research Findings
 
 1. **Original Implementation Analysis**:
+
    - Located in `src_old/call_graph/graph_builder.ts`
    - Uses two-phase approach: analyze files, then build graph
    - Heavily coupled to old graph types and call_graph modules
    - Minimal test coverage (just checks exports exist)
 
 2. **Available Features for Integration**:
+
    - **Storage Layer**: Complete with memory, disk, and cache implementations
    - **Call Graph**: Function, method, and constructor call detection
    - **Scope Analysis**: Scope tree building and symbol resolution
@@ -170,16 +177,19 @@ interface GraphBuilder<N, E> { add_node(node: N): void; add_edge(edge: E): void;
 ### Implementation Insights
 
 1. **Architecture Pattern**:
+
    - Follows functional paradigm with pure functions
    - Tests colocated with implementation (not in separate test folder)
    - Clear separation between orchestration and analysis logic
 
 2. **Integration Strategy**:
+
    - Each feature module is called in phases (scope → type → import → call)
    - Results aggregated into unified graph structure
    - Cross-file references resolved after initial analysis
 
 3. **Graph Structure**:
+
    - Nodes represent code entities (functions, classes, modules)
    - Edges represent relationships (calls, imports, inherits)
    - Metadata attached to both nodes and edges for rich queries
@@ -196,8 +206,9 @@ interface GraphBuilder<N, E> { add_node(node: N): void; add_edge(edge: E): void;
 ### TODO Comments Added
 
 As per requirements, the following TODO comments were added in the implementation:
+
 1. Integration with Call Graph - Aggregate function calls into graph
-2. Integration with Module Graph - Create module dependency graph  
+2. Integration with Module Graph - Create module dependency graph
 3. Integration with Class Hierarchy - Create class hierarchy graph
 4. Graph Data stub interface for future data structure integration
 
@@ -206,6 +217,7 @@ As per requirements, the following TODO comments were added in the implementatio
 When implementing, add these TODO comments:
 
 1. In `graph_builder.ts`:
+
    ```typescript
    // TODO: Integration with Call Graph
    // - Aggregate function calls into graph

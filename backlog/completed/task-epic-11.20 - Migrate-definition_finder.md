@@ -3,7 +3,7 @@ id: task-epic-11.20
 title: Migrate definition_finder feature
 status: Done
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, scope-analysis, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate the `definition_finder` feature to `src/scope_analysis/definition_finder
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -54,7 +55,10 @@ Migrate the `definition_finder` feature to `src/scope_analysis/definition_finder
 
 ```typescript
 // TODO: Add these stubs in implementation
-interface DefinitionFinder { find_definition(ref: Ref): Def | undefined; go_to_definition(pos: Position): Def | undefined; }
+interface DefinitionFinder {
+  find_definition(ref: Ref): Def | undefined;
+  go_to_definition(pos: Position): Def | undefined;
+}
 ```
 
 ## Planning Phase
@@ -107,12 +111,14 @@ Research findings will be documented here during execution.
 ### What Was Implemented
 
 1. **Created Definition Finder System**
+
    - Core definition_finder.ts (383 lines) - DefinitionResult interface, local/import/cross-file resolution
    - definition_finder.javascript.ts (244 lines) - JavaScript-specific patterns (constructors, prototypes, arrow functions)
    - index.ts (218 lines) - Language dispatcher with high-level APIs
    - definition_finder.test.ts (261 lines) - Comprehensive tests for all languages
 
 2. **Key Features Implemented**
+
    - Find definition at position
    - Find definition for symbol name
    - Find all definitions in scope tree
@@ -125,11 +131,13 @@ Research findings will be documented here during execution.
      - Integration with symbol_resolution for enhanced finding
 
 3. **Test Status**: **11/11 tests passing ✅ (All fixed 2025-08-21)**
+
    - All tests passing after fixing scope tree symbol extraction
    - Fixed Rust struct definition by handling type_identifier nodes
    - Core functionality fully working
 
 4. **Fixes Applied (2025-08-21)**
+
    - Fixed by updating generic scope_tree implementation to properly handle:
      - Nodes that both create scopes AND are symbols (function/class declarations)
      - Rust struct_item and enum_item name extraction
@@ -147,6 +155,7 @@ Research findings will be documented here during execution.
 When implementing, add these TODO comments:
 
 1. In `definition_finder.ts`:
+
    ```typescript
    // TODO: Integration with Scope Tree
    // - Use scope tree for def lookup

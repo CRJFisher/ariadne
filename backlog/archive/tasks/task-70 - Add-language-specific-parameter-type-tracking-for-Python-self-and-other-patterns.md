@@ -5,9 +5,9 @@ title: >-
   patterns
 status: Done
 assignee:
-  - '@claude'
-created_date: '2025-08-02'
-updated_date: '2025-08-03'
+  - "@claude"
+created_date: "2025-08-02"
+updated_date: "2025-08-03"
 labels:
   - enhancement
   - call-graph

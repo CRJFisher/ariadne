@@ -9,6 +9,7 @@
 ## Objective
 
 Remove `SymbolReference` attributes that cannot be extracted from tree-sitter AST:
+
 - `type_flow.source_type` - Requires type inference
 - `type_flow.is_narrowing` - Requires control flow analysis
 - `type_flow.is_widening` - Requires type system knowledge
@@ -20,19 +21,23 @@ These require semantic analysis beyond tree-sitter's syntactic capabilities.
 ### Why These Can't Be Extracted
 
 **source_type** - Where a value came from:
+
 ```typescript
 const x = getValue(); // What's the return type of getValue?
 ```
+
 - Requires inter-procedural analysis
 - Needs to track through function calls
 - Beyond AST-local information
 
 **is_narrowing/is_widening** - Type constraint changes:
+
 ```typescript
 if (typeof x === "string") {
   // x narrowed from string|number to string
 }
 ```
+
 - Requires control flow analysis
 - Needs type system understanding
 - Requires tracking state across branches
@@ -40,6 +45,7 @@ if (typeof x === "string") {
 ### Method Resolution Impact
 
 None of these attributes help resolve `obj.method()`:
+
 - We don't need to know where a type came from
 - We don't need to track narrowing/widening
 - We only need the **current explicit type** (which we keep in `type_info`)
@@ -62,6 +68,7 @@ readonly type_flow?: {
 ```
 
 After:
+
 ```typescript
 readonly type_flow?: {
   target_type?: TypeInfo;      // Only this remains
@@ -77,9 +84,11 @@ Remove assignments to deleted fields (no code audit needed, just delete).
 ## Verification Steps
 
 1. **TypeScript compilation:**
+
    ```bash
    npx tsc --noEmit
    ```
+
    Expected: 0 errors
 
 2. **Update tests:** Remove assertions on deleted fields

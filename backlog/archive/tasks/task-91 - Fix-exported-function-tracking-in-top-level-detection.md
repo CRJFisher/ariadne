@@ -3,8 +3,8 @@ id: task-91
 title: Fix exported function tracking in top-level detection
 status: Done
 assignee: []
-created_date: '2025-08-03'
-updated_date: '2025-08-04 08:31'
+created_date: "2025-08-03"
+updated_date: "2025-08-04 08:31"
 labels: []
 dependencies: []
 ---

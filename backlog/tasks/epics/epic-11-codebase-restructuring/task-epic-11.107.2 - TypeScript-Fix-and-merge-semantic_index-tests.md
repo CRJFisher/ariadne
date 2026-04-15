@@ -1,9 +1,9 @@
 ---
 id: task-epic-11.107.2
-title: 'TypeScript: Fix and merge semantic_index tests'
+title: "TypeScript: Fix and merge semantic_index tests"
 status: Completed
 assignee: []
-created_date: '2025-10-01 10:27'
+created_date: "2025-10-01 10:27"
 labels: []
 dependencies: []
 parent_task_id: task-epic-11.107
@@ -15,7 +15,7 @@ priority: high
 1. Merge semantic_index.typescript.metadata.test.ts INTO semantic_index.typescript.test.ts
 2. Delete semantic_index.typescript.metadata.test.ts after merge
 3. Update fixture paths to tests/fixtures/typescript/
-4. Remove tests for comprehensive_* fixtures testing unsupported features
+4. Remove tests for comprehensive\_\* fixtures testing unsupported features
 5. Ensure tests verify SemanticIndex API (not deprecated)
 6. Achieve 100% pass rate (currently 19/20 failing)
 
@@ -28,21 +28,25 @@ priority: high
 #### Changes Made
 
 1. **Test Merging**
+
    - Successfully merged `semantic_index.typescript.metadata.test.ts` into main test file
    - Deleted obsolete metadata test file
    - Combined coverage: Basic features + Metadata extraction + TypeScript-specific features
 
 2. **Fixture Path Updates**
+
    - Changed from: `parse_and_query_code/fixtures/typescript`
    - Changed to: `tests/fixtures/typescript/`
    - All fixture-based tests now use correct paths
 
 3. **Removed Unsupported Tests**
+
    - Removed all tests using `comprehensive_*` fixtures that tested features beyond current semantic_index scope
    - Tests removed for: comprehensive_interfaces, comprehensive_generics, comprehensive_classes, comprehensive_types, comprehensive_enums, comprehensive_modules, comprehensive_decorators, comprehensive_definitions
    - Replaced with focused inline tests for supported features
 
 4. **API Migration**
+
    - Fixed `build_semantic_index` signature: Now uses `ParsedFile` parameter
    - Corrected property access: `index.functions`, `index.classes`, `index.interfaces`, etc.
    - Removed references to non-existent properties: `index.symbols`, `index.exports`, `index.imports`
@@ -60,19 +64,23 @@ priority: high
 ### Issues Encountered
 
 #### 1. Deprecated API Usage
+
 **Problem:** Original tests used old `build_semantic_index` signature that took filepath string and tree
 **Solution:** Updated to use new `ParsedFile` parameter with proper metadata (file_lines, file_end_column)
 
 #### 2. Incorrect Property Access
+
 **Problem:** Tests tried accessing `index.symbols` and `index.exports` which don't exist on `SemanticIndex`
 **Solution:** Changed to use specific symbol maps (`index.functions`, `index.classes`, etc.) and `index.imported_symbols`
 
 #### 3. Method Capture Expectations
+
 **Problem:** Tests expected methods to be easily filterable from functions using `qualified_name?.includes("::")`
 **Finding:** Current implementation doesn't consistently populate qualified_name for methods
 **Workaround:** Simplified test to just verify `index.functions.size > 0` rather than filtering for methods specifically
 
 #### 4. Parameter Properties
+
 **Problem:** Test expected parameter properties to create variable definitions
 **Finding:** TypeScript parameter properties may not be captured as separate variable definitions
 **Workaround:** Changed test to verify class definition exists rather than checking for parameter property variables
@@ -86,12 +94,14 @@ priority: high
 The following TypeScript features are correctly captured by `typescript.scm`:
 
 1. **Interfaces** - Full support including:
+
    - Basic interface definitions
    - Generic interfaces
    - Interface inheritance (extends)
    - Nested interfaces in namespaces
 
 2. **Classes** - Full support including:
+
    - Basic class definitions
    - Generic classes
    - Abstract classes
@@ -100,6 +110,7 @@ The following TypeScript features are correctly captured by `typescript.scm`:
    - Decorators on classes
 
 3. **Type Aliases** - Full support including:
+
    - Basic type aliases
    - Generic type aliases
    - Mapped types
@@ -107,17 +118,20 @@ The following TypeScript features are correctly captured by `typescript.scm`:
    - Union and intersection types
 
 4. **Enums** - Full support including:
+
    - String enums
    - Numeric enums
    - Computed enum values
    - Const enums
 
 5. **Namespaces** - Full support including:
+
    - Namespace definitions
    - Exported namespaces
    - Nested namespaces
 
 6. **Functions/Methods** - Full support including:
+
    - Function declarations
    - Method definitions
    - Constructor definitions
@@ -125,6 +139,7 @@ The following TypeScript features are correctly captured by `typescript.scm`:
    - Decorators on methods
 
 7. **Imports/Exports** - Full support including:
+
    - Type-only imports (`import type`)
    - Mixed imports (`import { type X, Y }`)
    - Type-only exports (`export type`)
@@ -139,10 +154,12 @@ The following TypeScript features are correctly captured by `typescript.scm`:
 #### ⚠️ Potential Gaps Identified (Needs Further Investigation)
 
 1. **Parameter Properties**
+
    - TypeScript parameter properties (`constructor(public x: string)`) may not be captured as separate variable definitions
    - Follow-on: Investigate if query should capture these as variables or if current behavior is intended
 
 2. **Method Qualified Names**
+
    - Methods may not consistently have `qualified_name` populated with class::method pattern
    - Follow-on: Verify if this is a query issue or a definition builder issue
 
@@ -169,12 +186,14 @@ None identified - all core TypeScript features are working correctly
 #### Enhancement Opportunities
 
 1. **Parameter Property Capture** (Low Priority)
+
    - Investigate whether TypeScript parameter properties should be captured as variable definitions
    - Current behavior: Parameter properties are not captured as separate variables
    - Impact: Minimal - class definitions are still correct
    - Recommendation: Document current behavior or add query pattern if desired
 
 2. **Method Qualified Names** (Low Priority)
+
    - Verify if methods should have `qualified_name` populated with `ClassName::methodName` pattern
    - Current behavior: Methods exist in `index.functions` but may not have qualified_name
    - Impact: Minimal - methods are still captured and accessible
@@ -190,12 +209,14 @@ None identified - all core TypeScript features are working correctly
 ### Test Maintenance Notes
 
 **Test Structure:** Follows JavaScript test pattern
+
 - Uses `createParsedFile` helper for consistency
 - Uses inline code for most tests (better readability)
 - Uses fixtures only for integration validation
 - All tests verify actual `SemanticIndex` API
 
 **Adding New Tests:**
+
 1. Add inline code tests for new TypeScript features
 2. Verify against actual `SemanticIndex` interface
 3. Use fixture files only for integration tests

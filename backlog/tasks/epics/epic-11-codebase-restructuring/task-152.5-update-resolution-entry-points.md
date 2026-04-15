@@ -50,17 +50,17 @@ import type {
   PropertyAccessReference,
   TypeReference,
   AssignmentReference,
-} from '@ariadnejs/types';
-import type { SemanticIndex } from '../index_single_file/semantic_index';
-import type { SymbolId } from '@ariadnejs/types';
+} from "@ariadnejs/types";
+import type { SemanticIndex } from "../index_single_file/semantic_index";
+import type { SymbolId } from "@ariadnejs/types";
 
-import { resolve_self_reference_call } from './call_resolution/self_reference_resolver';
-import { resolve_method_call } from './call_resolution/method_resolver';
-import { resolve_function_call } from './call_resolution/function_resolver';
-import { resolve_constructor_call } from './call_resolution/constructor_resolver';
-import { resolve_variable_reference } from './scope_resolution/variable_resolver';
-import { resolve_property_access } from './scope_resolution/property_resolver';
-import { resolve_type_reference } from './type_resolution/type_resolver';
+import { resolve_self_reference_call } from "./call_resolution/self_reference_resolver";
+import { resolve_method_call } from "./call_resolution/method_resolver";
+import { resolve_function_call } from "./call_resolution/function_resolver";
+import { resolve_constructor_call } from "./call_resolution/constructor_resolver";
+import { resolve_variable_reference } from "./scope_resolution/variable_resolver";
+import { resolve_property_access } from "./scope_resolution/property_resolver";
+import { resolve_type_reference } from "./type_resolution/type_resolver";
 
 /**
  * Main entry point for reference resolution
@@ -81,28 +81,28 @@ export function resolve_reference(
 ): SymbolId | null {
   // Pattern matching on discriminated union
   switch (ref.kind) {
-    case 'self_reference_call':
+    case "self_reference_call":
       return resolve_self_reference_call(ref, semantic_index);
 
-    case 'method_call':
+    case "method_call":
       return resolve_method_call(ref, semantic_index);
 
-    case 'function_call':
+    case "function_call":
       return resolve_function_call(ref, semantic_index);
 
-    case 'constructor_call':
+    case "constructor_call":
       return resolve_constructor_call(ref, semantic_index);
 
-    case 'variable_reference':
+    case "variable_reference":
       return resolve_variable_reference(ref, semantic_index);
 
-    case 'property_access':
+    case "property_access":
       return resolve_property_access(ref, semantic_index);
 
-    case 'type_reference':
+    case "type_reference":
       return resolve_type_reference(ref, semantic_index);
 
-    case 'assignment':
+    case "assignment":
       // Assignments are resolved via target_location
       return resolve_assignment_target(ref, semantic_index);
 
@@ -142,8 +142,8 @@ function resolve_assignment_target(
   semantic_index: SemanticIndex
 ): SymbolId | null {
   // Find definition at target_location
-  const definition = semantic_index.definitions.find(
-    (def) => locations_equal(def.location, ref.target_location)
+  const definition = semantic_index.definitions.find((def) =>
+    locations_equal(def.location, ref.target_location)
   );
 
   return definition?.symbol_id ?? null;
@@ -195,7 +195,7 @@ Update resolver functions to accept specific variant types:
 ```typescript
 // self_reference_resolver.ts
 export function resolve_self_reference_call(
-  ref: SelfReferenceCall,  // Specific type, not generic SymbolReference
+  ref: SelfReferenceCall, // Specific type, not generic SymbolReference
   semantic_index: SemanticIndex
 ): SymbolId | null {
   // Can access ref.keyword without type guard
@@ -204,7 +204,7 @@ export function resolve_self_reference_call(
 
 // method_resolver.ts
 export function resolve_method_call(
-  ref: MethodCallReference,  // Specific type
+  ref: MethodCallReference, // Specific type
   semantic_index: SemanticIndex
 ): SymbolId | null {
   // Can access ref.receiver_location without undefined check
@@ -213,7 +213,7 @@ export function resolve_method_call(
 
 // function_resolver.ts
 export function resolve_function_call(
-  ref: FunctionCallReference,  // Specific type
+  ref: FunctionCallReference, // Specific type
   semantic_index: SemanticIndex
 ): SymbolId | null {
   // No optional fields to check - all required fields present
@@ -233,20 +233,20 @@ This task establishes the entry point pattern. Individual resolvers will be upda
 
 ```typescript
 // resolve_references.test.ts
-describe('resolve_reference', () => {
+describe("resolve_reference", () => {
   let semantic_index: SemanticIndex;
 
   beforeEach(() => {
     semantic_index = build_test_semantic_index();
   });
 
-  test('dispatches SelfReferenceCall to self_reference_resolver', () => {
+  test("dispatches SelfReferenceCall to self_reference_resolver", () => {
     const ref = create_self_reference_call(
-      'build_class' as SymbolName,
+      "build_class" as SymbolName,
       mock_location,
-      'scope:1' as ScopeId,
-      'this',
-      ['this', 'build_class']
+      "scope:1" as ScopeId,
+      "this",
+      ["this", "build_class"]
     );
 
     const resolved = resolve_reference(ref, semantic_index);
@@ -254,35 +254,35 @@ describe('resolve_reference', () => {
     expect(resolved).toMatch(/^symbol:.*build_class$/);
   });
 
-  test('dispatches MethodCallReference to method_resolver', () => {
+  test("dispatches MethodCallReference to method_resolver", () => {
     const ref = create_method_call_reference(
-      'getName' as SymbolName,
+      "getName" as SymbolName,
       mock_location,
-      'scope:1' as ScopeId,
+      "scope:1" as ScopeId,
       mock_receiver_location,
-      ['user', 'getName']
+      ["user", "getName"]
     );
 
     const resolved = resolve_reference(ref, semantic_index);
     expect(resolved).toBeTruthy();
   });
 
-  test('dispatches FunctionCallReference to function_resolver', () => {
+  test("dispatches FunctionCallReference to function_resolver", () => {
     const ref = create_function_call_reference(
-      'processData' as SymbolName,
+      "processData" as SymbolName,
       mock_location,
-      'scope:1' as ScopeId
+      "scope:1" as ScopeId
     );
 
     const resolved = resolve_reference(ref, semantic_index);
     expect(resolved).toBeTruthy();
   });
 
-  test('dispatches ConstructorCallReference to constructor_resolver', () => {
+  test("dispatches ConstructorCallReference to constructor_resolver", () => {
     const ref = create_constructor_call_reference(
-      'MyClass' as SymbolName,
+      "MyClass" as SymbolName,
       mock_location,
-      'scope:1' as ScopeId,
+      "scope:1" as ScopeId,
       mock_construct_target
     );
 
@@ -290,11 +290,11 @@ describe('resolve_reference', () => {
     expect(resolved).toBeTruthy();
   });
 
-  test('handles unresolved references gracefully', () => {
+  test("handles unresolved references gracefully", () => {
     const ref = create_function_call_reference(
-      'nonexistent' as SymbolName,
+      "nonexistent" as SymbolName,
       mock_location,
-      'scope:1' as ScopeId
+      "scope:1" as ScopeId
     );
 
     const resolved = resolve_reference(ref, semantic_index);
@@ -302,18 +302,18 @@ describe('resolve_reference', () => {
   });
 });
 
-describe('resolve_references (batch)', () => {
-  test('resolves multiple references and returns map', () => {
+describe("resolve_references (batch)", () => {
+  test("resolves multiple references and returns map", () => {
     const references = [
       create_function_call_reference(
-        'func1' as SymbolName,
+        "func1" as SymbolName,
         location1,
-        'scope:1' as ScopeId
+        "scope:1" as ScopeId
       ),
       create_function_call_reference(
-        'func2' as SymbolName,
+        "func2" as SymbolName,
         location2,
-        'scope:1' as ScopeId
+        "scope:1" as ScopeId
       ),
     ];
 
@@ -323,17 +323,17 @@ describe('resolve_references (batch)', () => {
     expect(resolutions.get(location2)).toBeTruthy();
   });
 
-  test('omits unresolved references from map', () => {
+  test("omits unresolved references from map", () => {
     const references = [
       create_function_call_reference(
-        'exists' as SymbolName,
+        "exists" as SymbolName,
         location1,
-        'scope:1' as ScopeId
+        "scope:1" as ScopeId
       ),
       create_function_call_reference(
-        'nonexistent' as SymbolName,
+        "nonexistent" as SymbolName,
         location2,
-        'scope:1' as ScopeId
+        "scope:1" as ScopeId
       ),
     ];
 
@@ -359,9 +359,11 @@ describe('resolve_references (batch)', () => {
 ## Files Changed
 
 **Modified**:
+
 - `packages/core/src/resolve_references/resolve_references.ts`
 
 **New**:
+
 - `packages/core/src/resolve_references/resolve_references.test.ts` (if not exist)
 
 ## Notes
@@ -369,20 +371,23 @@ describe('resolve_references (batch)', () => {
 ### Why Discriminated Unions Are Better
 
 **Before (enum-based)**:
+
 ```typescript
 switch (ref.type) {
   case ReferenceType.METHOD_CALL:
     // TypeScript doesn't know which fields exist
-    if (ref.context?.receiver_location) {  // ❌ Runtime check needed
+    if (ref.context?.receiver_location) {
+      // ❌ Runtime check needed
       return resolve_method_call(ref, semantic_index);
     }
 }
 ```
 
 **After (discriminated union)**:
+
 ```typescript
 switch (ref.kind) {
-  case 'method_call':
+  case "method_call":
     // TypeScript knows ref.receiver_location exists ✅
     return resolve_method_call(ref, semantic_index);
 }
@@ -400,6 +405,7 @@ After completion, proceed to **task-152.6** (Refactor method_resolver.ts)
 ### Changes Made
 
 1. **Updated `ResolutionRegistry.resolve_calls()` method** (resolution_registry.ts:238-352):
+
    - Replaced OLD `ref.type === "call"` check with discriminated union dispatch
    - Replaced OLD `ref.call_type` switch with `ref.kind` switch
    - Added all 8 reference variant cases
@@ -407,6 +413,7 @@ After completion, proceed to **task-152.6** (Refactor method_resolver.ts)
    - Removed special-case `super` call handling (now handled as `self_reference_call`)
 
 2. **Added CallReference transformation logic** (resolution_registry.ts:319-348):
+
    - Created transformation from discriminated union to CallReference format
    - `method_call` → `call_type: "method"`
    - `function_call` → `call_type: "function"`
@@ -430,6 +437,7 @@ After completion, proceed to **task-152.6** (Refactor method_resolver.ts)
 ### Architecture Benefits
 
 **Before**:
+
 ```typescript
 if (ref.type !== "call") continue;  // Runtime check
 if (ref.call_type === "super") continue;  // Special case
@@ -439,6 +447,7 @@ switch (ref.call_type) {  // No type narrowing
 ```
 
 **After**:
+
 ```typescript
 switch (ref.kind) {  // Type narrowing
   case "self_reference_call":

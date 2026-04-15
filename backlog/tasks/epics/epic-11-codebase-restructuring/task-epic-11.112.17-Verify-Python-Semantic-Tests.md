@@ -13,6 +13,7 @@ Verify that Python semantic index tests pass after scope assignment fix for clas
 ## Context - Body-Based Scopes
 
 With Option A, Python `.scm` files now capture class **bodies** only:
+
 - `(class_definition body: (block) @scope.class)`
 - Python uses `block` (indented code) for class bodies
 - Class names are in parent scope (module scope), not in their own scopes
@@ -20,6 +21,7 @@ With Option A, Python `.scm` files now capture class **bodies** only:
 ## Files
 
 ### MODIFIED
+
 - `packages/core/src/index_single_file/query_code_tree/semantic_index.python.test.ts`
 
 ## Implementation Steps
@@ -35,6 +37,7 @@ Expected: Some tests may fail if they have hardcoded expectations about scope_id
 ### 2. Analyze Test Failures (20 min)
 
 For each failing test, determine:
+
 - Does it expect incorrect scope_id for classes? (needs update)
 - Does it reveal a real bug in Python class handling? (needs investigation)
 - Is it related to decorators or metaclasses? (special case)
@@ -42,6 +45,7 @@ For each failing test, determine:
 ### 3. Update Class Scope Expectations (30 min)
 
 Update tests for module-level classes:
+
 ```python
 # Test case:
 class MyClass:
@@ -50,8 +54,8 @@ class MyClass:
 ```
 
 ```typescript
-it('should index Python class at module scope', () => {
-  const class_def = find_class('MyClass');
+it("should index Python class at module scope", () => {
+  const class_def = find_class("MyClass");
   expect(class_def.scope_id).toBe(index.root_scope_id); // ← Verify correct
 });
 ```
@@ -59,6 +63,7 @@ it('should index Python class at module scope', () => {
 ### 4. Update Nested Class Expectations (30 min)
 
 Python allows nested classes - verify correct scope:
+
 ```python
 # Test case:
 class Outer:
@@ -68,10 +73,10 @@ class Outer:
 ```
 
 ```typescript
-it('should index nested Python class with correct scope', () => {
-  const outer = find_class('Outer');
-  const inner = find_class('Inner');
-  const outer_scope = find_scope_by_name('Outer');
+it("should index nested Python class with correct scope", () => {
+  const outer = find_class("Outer");
+  const inner = find_class("Inner");
+  const outer_scope = find_scope_by_name("Outer");
 
   expect(outer.scope_id).toBe(index.root_scope_id);
   expect(inner.scope_id).toBe(outer_scope.id); // ← Inner in Outer's scope
@@ -82,6 +87,7 @@ it('should index nested Python class with correct scope', () => {
 ### 5. Handle Decorator Cases (20 min)
 
 Verify decorated classes get correct scope:
+
 ```python
 # Test case:
 @dataclass
@@ -94,8 +100,8 @@ class Person:
 ```
 
 ```typescript
-it('should index decorated class with correct scope', () => {
-  const class_def = find_class('Person');
+it("should index decorated class with correct scope", () => {
+  const class_def = find_class("Person");
   expect(class_def.scope_id).toBe(index.root_scope_id);
 });
 ```
@@ -103,9 +109,10 @@ it('should index decorated class with correct scope', () => {
 ### 6. Add Regression Tests (30 min)
 
 Add explicit tests for the bug:
+
 ```typescript
-describe('Python Scope Assignment Regression Tests', () => {
-  it('class scope_id is not method scope_id', () => {
+describe("Python Scope Assignment Regression Tests", () => {
+  it("class scope_id is not method scope_id", () => {
     const code = `
 class Calculator:
     def add(self, a, b):
@@ -114,17 +121,17 @@ class Calculator:
     def multiply(self, a, b):
         return a * b
 `;
-    const index = build_semantic_index(code, 'test.py');
+    const index = build_semantic_index(code, "test.py");
     const class_def = Array.from(index.classes.values())[0];
     const method_scope = Array.from(index.scopes.values()).find(
-      s => s.name === 'add' || s.name === 'multiply'
+      (s) => s.name === "add" || s.name === "multiply"
     );
 
     expect(class_def.scope_id).not.toBe(method_scope?.id);
     expect(class_def.scope_id).toBe(index.root_scope_id);
   });
 
-  it('nested class has parent class scope, not method scope', () => {
+  it("nested class has parent class scope, not method scope", () => {
     const code = `
 class Company:
     def business_logic(self):
@@ -134,10 +141,16 @@ class Company:
         def department_logic(self):
             pass
 `;
-    const index = build_semantic_index(code, 'test.py');
-    const department = Array.from(index.classes.values()).find(c => c.name === 'Department');
-    const company_scope = Array.from(index.scopes.values()).find(s => s.name === 'Company');
-    const method_scope = Array.from(index.scopes.values()).find(s => s.name === 'business_logic');
+    const index = build_semantic_index(code, "test.py");
+    const department = Array.from(index.classes.values()).find(
+      (c) => c.name === "Department"
+    );
+    const company_scope = Array.from(index.scopes.values()).find(
+      (s) => s.name === "Company"
+    );
+    const method_scope = Array.from(index.scopes.values()).find(
+      (s) => s.name === "business_logic"
+    );
 
     expect(department!.scope_id).toBe(company_scope!.id);
     expect(department!.scope_id).not.toBe(method_scope?.id);

@@ -72,7 +72,7 @@ function mock_definition_registry(
   return {
     get: (symbol_id: SymbolId) => defs.get(symbol_id),
     get_function_collection: (symbol_id: SymbolId) => collections.get(symbol_id),
-  } as unknown as DefinitionRegistry;
+  } as Partial<DefinitionRegistry> as DefinitionRegistry;
 }
 
 describe("detect_indirect_reachability", () => {

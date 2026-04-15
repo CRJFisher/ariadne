@@ -17,6 +17,7 @@ Refactor `reference_builder.ts` to accept a `MetadataExtractors` parameter and r
 ## Current State
 
 The file has stubbed functions that always return `undefined`:
+
 - `extract_type_info()` - lines 153-167
 - `extract_context()` - lines 169-277
 - Inline stubs in `process_method_reference()` - line 290
@@ -37,7 +38,7 @@ export class ReferenceBuilder {
 
   constructor(
     private readonly context: ProcessingContext,
-    private readonly extractors: MetadataExtractors  // ADD THIS
+    private readonly extractors: MetadataExtractors // ADD THIS
   ) {}
 
   // ... rest of class
@@ -51,7 +52,7 @@ Update the main entry point to require extractors:
 ```typescript
 export function process_references(
   context: ProcessingContext,
-  extractors: MetadataExtractors  // ADD THIS
+  extractors: MetadataExtractors // ADD THIS
 ): SymbolReference[] {
   return context.captures
     .filter(
@@ -62,7 +63,7 @@ export function process_references(
     )
     .reduce(
       (builder, capture) => builder.process(capture),
-      new ReferenceBuilder(context, extractors)  // PASS EXTRACTORS
+      new ReferenceBuilder(context, extractors) // PASS EXTRACTORS
     )
     .build();
 }
@@ -162,7 +163,7 @@ Replace inline stub (line 290):
 function process_method_reference(
   capture: CaptureNode,
   context: ProcessingContext,
-  extractors: MetadataExtractors  // ADD THIS
+  extractors: MetadataExtractors // ADD THIS
 ): SymbolReference {
   const scope_id = context.get_scope_id(capture.location);
   const reference_type = map_to_reference_type(ReferenceKind.METHOD_CALL);
@@ -172,7 +173,7 @@ function process_method_reference(
 
   // Build member access details
   const member_access = {
-    object_type: type_info,  // Use extracted type info
+    object_type: type_info, // Use extracted type info
     access_type: "method" as const,
     is_optional_chain: false,
   };
@@ -200,7 +201,7 @@ Replace inline stub (line 327):
 function process_type_reference(
   capture: CaptureNode,
   context: ProcessingContext,
-  extractors: MetadataExtractors  // ADD THIS
+  extractors: MetadataExtractors // ADD THIS
 ): SymbolReference {
   const scope_id = context.get_scope_id(capture.location);
 
@@ -213,7 +214,9 @@ function process_type_reference(
     type_args && type_args.length > 0 && type_info
       ? {
           ...type_info,
-          type_name: `${type_info.type_name}<${type_args.join(', ')}>` as SymbolName,
+          type_name: `${type_info.type_name}<${type_args.join(
+            ", "
+          )}>` as SymbolName,
         }
       : type_info;
 
@@ -335,6 +338,7 @@ Remove `ReferenceContext` and `TypeInfo` from imports if no longer directly used
 This task breaks existing tests - that's expected. Tests will be fixed in subsequent tasks after language-specific extractors are implemented.
 
 Expected test failures:
+
 - `reference_builder.test.ts` - needs extractors parameter
 - All semantic_index tests - need to pass extractors
 

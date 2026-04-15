@@ -22,7 +22,12 @@ Define the interface that all language-specific metadata extractors must impleme
 
 ```typescript
 import type { SyntaxNode } from "tree-sitter";
-import type { Location, SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
+import type {
+  Location,
+  SymbolName,
+  TypeInfo,
+  FilePath,
+} from "@ariadnejs/types";
 
 /**
  * Language-specific metadata extraction functions
@@ -62,9 +67,7 @@ export interface MetadataExtractors {
    * For `a.b.c.d`, extract ["a", "b", "c", "d"]
    * Enables tracking chained method calls
    */
-  extract_property_chain(
-    node: SyntaxNode
-  ): readonly SymbolName[] | undefined;
+  extract_property_chain(node: SyntaxNode): readonly SymbolName[] | undefined;
 
   /**
    * Extract assignment source and target locations
@@ -98,9 +101,7 @@ export interface MetadataExtractors {
    * - TypeScript: `Array<string>` → ["string"]
    * - Rust: `Vec<i32>` → ["i32"]
    */
-  extract_type_arguments(
-    node: SyntaxNode
-  ): readonly SymbolName[] | undefined;
+  extract_type_arguments(node: SyntaxNode): readonly SymbolName[] | undefined;
 }
 ```
 
@@ -135,6 +136,7 @@ export interface NodeTraversal {
 ## Testing
 
 No tests needed for this task - it only defines types. Validation happens when:
+
 - Language-specific implementations are created
 - TypeScript compilation succeeds
 

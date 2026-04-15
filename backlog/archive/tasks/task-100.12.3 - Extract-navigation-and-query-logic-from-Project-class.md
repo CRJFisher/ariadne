@@ -3,8 +3,8 @@ id: task-100.12.3
 title: Extract navigation and query logic from Project class
 status: Done
 assignee: []
-created_date: '2025-08-04 22:40'
-updated_date: '2025-08-04 23:13'
+created_date: "2025-08-04 22:40"
+updated_date: "2025-08-04 23:13"
 labels: []
 dependencies: []
 parent_task_id: task-100.12
@@ -35,6 +35,7 @@ Move all navigation methods (go_to_definition, get_definitions, get_hover_info, 
 Successfully extracted navigation and query logic into separate services:
 
 1. **NavigationService** (`project/navigation_service.ts`):
+
    - `findReferences`: Find all references to a symbol
    - `goToDefinition`: Navigate to symbol definition
    - `getScopeGraph`: Get scope graph for a file
@@ -45,6 +46,7 @@ Successfully extracted navigation and query logic into separate services:
    - `isDefinitionExported`: Check if a definition is exported
 
 2. **QueryService** (`project/query_service.ts`):
+
    - `getSourceCode`: Extract source code for a definition
    - `getSourceWithContext`: Get source with surrounding context
    - `getImportsWithDefinitions`: Resolve imports to their definitions

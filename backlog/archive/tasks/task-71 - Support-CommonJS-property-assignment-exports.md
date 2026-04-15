@@ -3,8 +3,8 @@ id: task-71
 title: Support CommonJS property assignment exports
 status: To Do
 assignee: []
-created_date: '2025-08-02'
-updated_date: '2025-08-04 13:29'
+created_date: "2025-08-02"
+updated_date: "2025-08-04 13:29"
 labels: []
 dependencies:
   - task-30
@@ -22,10 +22,10 @@ Add support for CommonJS export pattern `module.exports.name = value` where expo
 - [ ] Support both `module.exports.x` and `exports.x` patterns
 - [ ] Maintain performance - avoid O(n²) reference-to-definition matching
 
-
 ## Implementation Notes
 
 Moved to epic task-100.9 as part of validation accuracy improvements. Needed for better export detection.
+
 ## Technical Context
 
 Currently, we detect:

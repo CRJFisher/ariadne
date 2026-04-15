@@ -90,37 +90,45 @@ import { RawCapture } from "../definition_builder";
 ### Completed Work
 
 #### 1. Files Deleted
+
 - ✅ `capture_types.ts` - Deleted entirely
 - ✅ `capture_normalizer.ts` - Deleted entirely
 - ✅ `capture_types.test.ts` - Deleted
 - ✅ `capture_normalizer.test.ts` - Deleted
 
 #### 2. Enums Relocated
+
 - ✅ `SemanticCategory` enum moved to `scope_processor.ts`
 - ✅ `SemanticEntity` enum moved to `scope_processor.ts`
 - ✅ Both enums re-exported from `parse_and_query_code/index.ts`
 
 #### 3. New Builder System - Fully Updated
+
 The core new builder system is now completely clean of intermediate types:
 
 **Files Updated to use RawCapture:**
+
 - ✅ `definition_builder.ts` - Uses RawCapture, parses capture names
 - ✅ `reference_builder.ts` - Uses RawCapture, parses capture names
 - ✅ `scope_processor.ts` - Uses RawCapture directly
 - ✅ `parse_and_query_code.ts` - Returns raw QueryCapture[]
 
 **Helper Functions Added:**
+
 - `extract_location()` - Extracts Location from tree-sitter nodes
 - `extract_symbol_name()` - Gets symbol name from capture text
 - `get_category()` / `get_entity()` - Parse capture names
 
 **Data Extraction Approach:**
+
 - Capture names follow pattern: `"category.entity"` (e.g., `"definition.class"`)
 - Node information extracted directly from tree-sitter node properties
 - Context/modifier fields set to `undefined` with comments for future extraction
 
 #### 4. Tests Updated
+
 - ✅ `definition_builder.test.ts` - All 12 tests passing
+
   - Updated imports to use RawCapture
   - Created mock tree-sitter nodes
   - Converted from enum-based to string-based entity names
@@ -131,6 +139,7 @@ The core new builder system is now completely clean of intermediate types:
   - 3 test cases fully converted, 1 partially converted
 
 #### 5. Type System Updates
+
 - ✅ Fixed `FilePath` import in definition_builder.ts
 - ✅ Fixed `FilePath` import in reference_builder.ts
 - ✅ Removed import from semantic_index.ts
@@ -139,9 +148,11 @@ The core new builder system is now completely clean of intermediate types:
 ### Remaining Work (Legacy Code)
 
 #### Files Still Referencing Deleted Types
+
 **20 non-test implementation files** in legacy/old systems:
 
 **Old Processors (parallel to new builders):**
+
 1. `definitions.ts` - Old definitions processor
 2. `references.ts` - Old references processor
 3. `scope_tree.ts` - Old scope tree builder
@@ -154,8 +165,7 @@ The core new builder system is now completely clean of intermediate types:
 **Type Analysis:**
 11-12. `type_members.ts`, `type_tracking.ts`
 
-**Language Configs:**
-13. `language_configs/python.ts`
+**Language Configs:** 13. `language_configs/python.ts`
 
 **Rust-Specific:**
 14-19. `ownership_resolver.ts`, `pattern_matching.ts`, `function_types.ts`, `advanced_types.ts`, `reference_types.ts`, `async_types.ts`
@@ -163,7 +173,9 @@ The core new builder system is now completely clean of intermediate types:
 **Plus 14 test files for legacy code**
 
 #### Known Non-Regression Issues
+
 1. **Scope Resolution Test Failure** (pre-existing)
+
    - Test: "should find hoisted var declarations"
    - In `resolve_references/function_resolution/scope_resolution.test.ts`
    - Uses different data structures (`SymbolDefinition` with `symbols` field)
@@ -186,13 +198,16 @@ This is a **BREAKING CHANGE** with **NO backwards compatibility**:
 ### Follow-On Work Needed
 
 #### High Priority
+
 1. **Complete scope_processor.test.ts** - Finish converting remaining 4 tests
 2. **Update Legacy Processors** - Migrate or deprecate old implementation files:
    - `definitions.ts`, `references.ts`, `scope_tree.ts`
    - These duplicate functionality of the new builder system
 
 #### Medium Priority
+
 3. **Update Reference Extractors** - Refactor to use RawCapture:
+
    - `call_references.ts`, `type_flow_references.ts`, etc.
    - These may be used by legacy processors
 
@@ -201,7 +216,9 @@ This is a **BREAKING CHANGE** with **NO backwards compatibility**:
    - Currently uses SemanticModifiers
 
 #### Low Priority
+
 5. **Update Rust-Specific Code** - If still needed, update to RawCapture:
+
    - `ownership_resolver.ts` and related type resolution files
    - May be candidates for deprecation
 
@@ -211,16 +228,19 @@ This is a **BREAKING CHANGE** with **NO backwards compatibility**:
 ### Verification
 
 **Compilation Status:**
+
 - ✅ New builder system compiles cleanly
 - ✅ No references to deleted types in new builder code
 - ⚠️ Legacy code has expected compilation errors
 
 **Test Status:**
+
 - ✅ Definition builder: 12/12 passing
 - 🔄 Scope processor: 6/10 passing (straightforward to complete)
 - ⚠️ Legacy tests: Expected failures due to breaking change
 
 **Code Quality:**
+
 - ✅ All helper functions properly typed
 - ✅ Clear comments indicating future work needed
 - ✅ Consistent naming conventions
@@ -233,6 +253,7 @@ This is a **BREAKING CHANGE** with **NO backwards compatibility**:
 ## Actual Effort
 
 ~4 hours (vs estimated 1 hour)
+
 - Additional time spent on:
   - Updating test suites
   - Fixing syntax errors from replacements

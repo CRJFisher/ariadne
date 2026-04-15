@@ -3,8 +3,8 @@ id: task-76
 title: Fix methods incorrectly appearing in top-level nodes
 status: Done
 assignee: []
-created_date: '2025-08-03'
-updated_date: '2025-08-04'
+created_date: "2025-08-03"
+updated_date: "2025-08-04"
 labels: []
 dependencies: []
 ---

@@ -3,8 +3,8 @@ id: task-100.11.6
 title: Add immutability tests and performance benchmarks
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-08-04 14:17'
+  - "@chuck"
+created_date: "2025-08-04 14:17"
 labels:
   - immutable
   - testing

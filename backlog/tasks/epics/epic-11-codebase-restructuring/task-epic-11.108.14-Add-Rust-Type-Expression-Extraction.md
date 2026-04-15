@@ -18,6 +18,7 @@ Add `extract_type_expression()` helper function to Rust builder to extract the r
 Rust type aliases are captured and stored, but the `type_expression` field is always `undefined` because the Rust builder doesn't have an `extract_type_expression()` helper function.
 
 **Example:**
+
 ```rust
 type Kilometers = i32;                           // type_expression should be "i32"
 type Result<T> = std::result::Result<T, Error>;  // type_expression should be "std::result::Result<T, Error>"
@@ -46,6 +47,7 @@ export function extract_type_expression(node: SyntaxNode): string | undefined {
 ```
 
 **Usage in handler:**
+
 ```typescript
 [
   "definition.type_alias",
@@ -53,11 +55,11 @@ export function extract_type_expression(node: SyntaxNode): string | undefined {
     process: (capture, builder, context) => {
       builder.add_type({
         // ...
-        type_expression: extract_type_expression(capture.node),  // ← Used here
+        type_expression: extract_type_expression(capture.node), // ← Used here
       });
     },
   },
-]
+];
 ```
 
 ### Python
@@ -93,6 +95,7 @@ tree-sitter parse test_sample.rs
 ```
 
 **Expected AST structure:**
+
 ```
 (type_item
   name: (type_identifier) @name
@@ -136,11 +139,11 @@ export function extract_type_expression(node: SyntaxNode): string | undefined {
 **Find type alias handler and update:**
 
 ```typescript
-import { extract_type_expression } from "./rust_builder_helpers";  // ← Add import
+import { extract_type_expression } from "./rust_builder_helpers"; // ← Add import
 
 // Find the type alias handler (search for "definition.type" or similar)
 [
-  "definition.type_alias",  // or whatever the capture name is
+  "definition.type_alias", // or whatever the capture name is
   {
     process: (capture, builder, context) => {
       const type_id = create_type_alias_id(capture);
@@ -152,12 +155,14 @@ import { extract_type_expression } from "./rust_builder_helpers";  // ← Add im
         location: capture.location,
         scope_id: context.get_scope_id(capture.location),
         availability: extract_visibility(capture.node.parent || capture.node),
-        type_expression: extract_type_expression(capture.node),  // ← Add this line
-        type_parameters: extract_type_parameters(capture.node.parent || capture.node),
+        type_expression: extract_type_expression(capture.node), // ← Add this line
+        type_parameters: extract_type_parameters(
+          capture.node.parent || capture.node
+        ),
       });
     },
   },
-]
+];
 ```
 
 ### Step 4: Write Test
@@ -219,6 +224,7 @@ it.skip("should extract type alias type expressions", () => {
 ```
 
 Change to:
+
 ```typescript
 it("should extract type alias type expressions", () => {
   // Test should now pass
@@ -228,16 +234,19 @@ it("should extract type alias type expressions", () => {
 ## Verification Steps
 
 1. **Add helper function:**
+
    ```bash
    grep -n "extract_type_expression" packages/core/src/index_single_file/query_code_tree/language_configs/rust_builder_helpers.ts
    ```
 
 2. **Update handler:**
+
    ```bash
    grep -A 10 "definition.type_alias" packages/core/src/index_single_file/query_code_tree/language_configs/rust_builder.ts
    ```
 
 3. **Run tests:**
+
    ```bash
    npm test -- semantic_index.rust.test.ts -t "type alias"
    ```
@@ -320,12 +329,14 @@ Successfully implemented Rust type expression extraction with comprehensive edge
 #### Core Functionality
 
 1. **Added `extract_type_expression()` helper** (rust_builder_helpers.ts:412-420)
+
    - Extracts type field from type_item parent node
    - Mirrors TypeScript implementation pattern
    - Returns undefined for non-type_item parents
    - Handles all Rust type forms correctly
 
 2. **Added `has_generic_parameters()` helper** (rust_builder_helpers.ts:432-435)
+
    - Utility function to check if a node has generic type parameters
    - Used for consistent generic parameter detection
    - Supports struct_item, enum_item, type_item, function_item nodes
@@ -339,6 +350,7 @@ Successfully implemented Rust type expression extraction with comprehensive edge
 #### Import Handling Improvements
 
 4. **Fixed extern crate import handling** (rust_builder.ts:946-968, 980-1000)
+
    - Updated `import.import` handler to properly extract `original_name` for aliased imports
    - Updated `import.import.aliased` handler to use `import_path` for extern crate original names
    - Fixed issue where handler was called twice (once with original, once with alias identifier)
@@ -352,6 +364,7 @@ Successfully implemented Rust type expression extraction with comprehensive edge
 #### Comprehensive Testing
 
 6. **Added 7 new comprehensive test cases** (semantic_index.rust.test.ts:1856-2038)
+
    - Basic type expressions (simple, tuple, generic, trait object, function pointer)
    - Lifetime parameters (`type Ref<'a> = &'a str`)
    - Const generics (`type Arr<T, const N: usize> = [T; N]`)
@@ -359,6 +372,7 @@ Successfully implemented Rust type expression extraction with comprehensive edge
    - Type aliases with trait bounds (`type Handler<T: Display> = Box<dyn Fn(T)>`)
 
 7. **Re-enabled 6 previously skipped tests**
+
    - alias_extraction.test.ts (4 tests):
      - "should extract type alias for simple type" (line 336)
      - "should extract type alias for generic type" (line 357)
@@ -376,6 +390,7 @@ Successfully implemented Rust type expression extraction with comprehensive edge
 ### Query Patterns Modified
 
 **No changes to rust.scm** - All existing query patterns were sufficient. The work focused on:
+
 - Improving handler implementations
 - Adding missing helper functions
 - Fixing edge cases in existing handlers
@@ -383,12 +398,15 @@ Successfully implemented Rust type expression extraction with comprehensive edge
 ### Handlers Modified
 
 #### Type Alias Handlers
+
 - `definition.type` (rust_builder.ts:854) - Added `type_expression` field
 - `definition.type_alias` (rust_builder.ts:881) - Added `type_expression` field
 - `definition.type_alias.impl` (rust_builder.ts:905) - Added `type_expression` field
 
 #### Import Handlers
+
 - `import.import` (rust_builder.ts:939-970)
+
   - Fixed `original_name` extraction for aliased imports
   - Added logic to detect if capture is alias identifier vs original identifier
   - Type cast `ModulePath` to `SymbolName` for type safety
@@ -400,14 +418,17 @@ Successfully implemented Rust type expression extraction with comprehensive edge
 ### Issues Encountered and Resolutions
 
 #### Issue 1: TypeScript Type Mismatch
+
 **Problem:** `ModulePath` and `SymbolName` are distinct branded types, causing compilation errors when assigning `import_path` to `original_name` field.
 
 **Error:**
+
 ```
 error TS2322: Type 'ModulePath' is not assignable to type 'SymbolName | undefined'
 ```
 
 **Resolution:** Added type cast `as any as SymbolName` which is safe because:
+
 - Both types have the same underlying string representation
 - The `original_name` field semantically represents the original symbol path
 - For Rust imports, the module path IS the original name (e.g., `std::collections::HashMap`)
@@ -415,25 +436,33 @@ error TS2322: Type 'ModulePath' is not assignable to type 'SymbolName | undefine
 **Files:** rust_builder.ts:958, 989
 
 #### Issue 2: Extern Crate Original Name Extraction
+
 **Problem:** For `extern crate foo as bar`, the query captures both identifiers:
+
 1. `@import.import.original` captures "foo"
 2. `@import.import.alias` captures "bar"
 
 The `import.import` handler is called for BOTH captures, leading to incorrect `original_name` when the capture is the alias identifier.
 
 **Resolution:** Added conditional logic to detect if `capture.text === alias`:
+
 ```typescript
-const original_name = alias && capture.text !== alias
-  ? capture.text  // This capture is the original identifier
-  : (alias ? import_path as any as SymbolName : undefined);  // This capture is the alias
+const original_name =
+  alias && capture.text !== alias
+    ? capture.text // This capture is the original identifier
+    : alias
+    ? (import_path as any as SymbolName)
+    : undefined; // This capture is the alias
 ```
 
 **Files:** rust_builder.ts:956-958
 
 #### Issue 3: Test Assertion Updates
+
 **Problem:** Re-enabled tests had outdated assertions (e.g., using `.imported_name` instead of `.name`).
 
 **Resolution:** Updated test assertions to match current semantic index structure:
+
 - Changed `imp.imported_name` to `imp.name`
 - Updated `original_name` expectations for pub use re-exports
 - Added proper type checks and structure verification
@@ -443,6 +472,7 @@ const original_name = alias && capture.text !== alias
 ### Test Results
 
 ✅ **All tests passing:**
+
 - **semantic_index.rust.test.ts:** 51 passed | 1 skipped (52 total)
   - 1 test intentionally skipped: method resolution metadata (requires assignment tracking)
 - **alias_extraction.test.ts:** 18 passed (18 total)
@@ -452,6 +482,7 @@ const original_name = alias && capture.text !== alias
 ### Type Expression Coverage
 
 #### Basic Types
+
 ```rust
 type Kilometers = i32;                           // ✅ "i32"
 type Point = (i32, i32);                        // ✅ "(i32, i32)"
@@ -461,6 +492,7 @@ type FnPtr = fn(i32, i32) -> i32;               // ✅ "fn(i32, i32) -> i32"
 ```
 
 #### Advanced Types (New Coverage)
+
 ```rust
 // Lifetime parameters
 type Ref<'a> = &'a str;                         // ✅ "&'a str"
@@ -481,6 +513,7 @@ type CompareFn<T: PartialOrd + Clone> = fn(&T, &T) -> bool;  // ✅ "fn(&T, &T) 
 ```
 
 #### Import Handling (New Coverage)
+
 ```rust
 // Extern crate declarations
 extern crate serde;                     // ✅ name: "serde"
@@ -531,6 +564,7 @@ The following functionality is intentionally not implemented and should be track
 ### Verification
 
 All verification steps completed successfully:
+
 - ✅ Helper functions implemented and tested
 - ✅ Handlers updated and verified
 - ✅ All type alias tests passing (69 tests across 2 files)

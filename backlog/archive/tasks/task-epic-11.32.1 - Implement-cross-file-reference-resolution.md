@@ -3,7 +3,7 @@ id: task-epic-11.32.1
 title: Implement cross-file reference resolution in graph_builder
 status: To Do
 assignee: []
-created_date: '2025-08-26'
+created_date: "2025-08-26"
 labels: [enhancement, graph, epic-11]
 dependencies: [task-epic-11.32]
 parent_task_id: task-epic-11.32
@@ -44,6 +44,7 @@ The current graph_builder implementation analyzes files individually and creates
 ## Technical Notes
 
 The graph_builder already has the foundation for this:
+
 1. Import/export information is collected for each file
 2. Module graph tracks dependencies
 3. Need to add a resolution phase after initial analysis
