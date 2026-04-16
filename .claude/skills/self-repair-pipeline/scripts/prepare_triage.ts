@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env node
 /**
  * Prepare triage state file from entrypoint analysis output.
  *
@@ -6,7 +6,7 @@
  * registry, and builds the triage state file.
  *
  * Usage:
- *   npx tsx prepare_triage.ts --analysis <path> [--state <path>] [--package <name>] [--batch-size <n>]
+ *   node --import tsx prepare_triage.ts --analysis <path> [--state <path>] [--package <name>] [--batch-size <n>]
  */
 
 import * as fs from "node:fs/promises";
@@ -19,6 +19,12 @@ import { build_triage_entries } from "../src/build_triage_entries.js";
 import { TRIAGE_STATE_DIR } from "../src/paths.js";
 import type { AnalysisResult } from "../src/types.js";
 import type { TriageState } from "../src/triage_state_types.js";
+
+if (process.env.TSX_CWD !== undefined) {
+  process.stderr.write("Error: do not invoke with tsx CLI (pnpm exec tsx / npx tsx) — use node --import tsx:\n");
+  process.stderr.write(`  node --import tsx ${process.argv[1]} ${process.argv.slice(2).join(" ")}\n`);
+  process.exit(1);
+}
 
 // ===== CLI Argument Parsing =====
 
@@ -91,9 +97,9 @@ async function main(): Promise<void> {
     updated_at: now,
   };
 
-  // Determine output path
+  // Determine output path — each project gets its own subdirectory
   const state_path = cli.state_path
-    ?? path.join(TRIAGE_STATE_DIR, `${project_name}_triage.json`);
+    ?? path.join(TRIAGE_STATE_DIR, project_name, `${project_name}_triage.json`);
 
   // Clean up old state files — one pipeline at a time
   const triage_dir = path.dirname(state_path);

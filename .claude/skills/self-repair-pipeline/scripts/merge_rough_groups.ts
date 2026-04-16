@@ -20,6 +20,12 @@ import path from "path";
 import { TRIAGE_STATE_DIR } from "../src/paths.js";
 import { discover_state_file } from "../src/discover_state.js";
 
+if (process.env.TSX_CWD !== undefined) {
+  process.stderr.write("Error: do not invoke with tsx CLI (pnpm exec tsx / npx tsx) — use node --import tsx:\n");
+  process.stderr.write(`  node --import tsx ${process.argv[1]} ${process.argv.slice(2).join(" ")}\n`);
+  process.exit(1);
+}
+
 const PASS2_THRESHOLD = 15;
 const BUNDLE_SIZE = 20;
 

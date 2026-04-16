@@ -20,6 +20,12 @@ import { TRIAGE_STATE_DIR } from "../src/paths.js";
 import { discover_state_file } from "../src/discover_state.js";
 import type { TriageState } from "../src/triage_state_types.js";
 
+if (process.env.TSX_CWD !== undefined) {
+  process.stderr.write("Error: do not invoke with tsx CLI (pnpm exec tsx / npx tsx) — use node --import tsx:\n");
+  process.stderr.write(`  node --import tsx ${process.argv[1]} ${process.argv.slice(2).join(" ")}\n`);
+  process.exit(1);
+}
+
 // ===== CLI =====
 
 const args = process.argv.slice(2);
