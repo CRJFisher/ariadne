@@ -1,7 +1,7 @@
 ---
 name: triage-investigator
 description: Investigates a single entry point candidate to determine whether Ariadne correctly identified it as unreachable, or whether Ariadne missed real callers (false positive). Returns a TriageEntryResult JSON.
-tools: Read, Grep, Glob, Write
+tools: Bash(node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts:*), Read, Grep, Glob, Write
 mcpServers:
   - ariadne
 model: sonnet
@@ -17,17 +17,25 @@ You investigate a single entry point candidate detected by Ariadne's call graph 
 
 ## Context
 
-Your prompt contains the complete investigation context: entry metadata, pre-gathered diagnostic evidence, diagnosis-specific investigation steps, and the output path for your result JSON. This context was pre-fetched by the orchestrator via `get_entry_context.ts`.
+Your prompt contains an `entry_index`. Run `get_entry_context.ts` to fetch the full investigation context:
+
+```bash
+node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts --entry <entry_index>
+```
+
+The script outputs the complete investigation context: entry metadata, pre-gathered diagnostic evidence, diagnosis-specific investigation steps, and the output path for your result JSON.
 
 ## Instructions
 
-1. **Review pre-gathered evidence**. Your prompt includes grep call sites and Ariadne call references collected before your invocation. Analyze these first before running your own searches.
+1. **Run `get_entry_context.ts`** as shown above to get your investigation context. The output includes grep call sites, Ariadne call references, and all information needed for the investigation. Read this context carefully before proceeding.
 
-2. **Follow the diagnosis-specific investigation steps** provided in your prompt. These steps are tailored to the type of detection gap suspected for this entry.
+2. **Review pre-gathered evidence**. The context includes grep call sites and Ariadne call references collected before your invocation. Analyze these first before running your own searches.
 
-3. **Verify grep hits are real invocations**: Discard hits that are comments, type annotations, string literals, or name collisions with unrelated functions.
+3. **Follow the diagnosis-specific investigation steps** provided in the context. These steps are tailored to the type of detection gap suspected for this entry.
 
-4. **Search for callers the initial grep missed**:
+4. **Verify grep hits are real invocations**: Discard hits that are comments, type annotations, string literals, or name collisions with unrelated functions.
+
+5. **Search for callers the initial grep missed**:
 
    - Aliased receivers and destructured imports
    - Barrel re-exports and index files
@@ -35,16 +43,16 @@ Your prompt contains the complete investigation context: entry metadata, pre-gat
    - Dynamic calls and string-based dispatch
    - Framework lifecycle hooks and decorator registrations
 
-5. **Use Ariadne MCP tools** to inspect the call graph:
+6. **Use Ariadne MCP tools** to inspect the call graph:
 
    - `show_call_graph_neighborhood` — shows callers and callees of a symbol
      - `symbol_ref` format: `file_path:line#name` (e.g., `src/handlers.ts:15#handle_request`)
      - Set `callers_depth` to 2 or higher to find indirect callers
    - `list_entrypoints` — lists all detected entry points, useful for cross-referencing
 
-6. **Cross-reference** what Ariadne reports (via MCP) against what grep found. A discrepancy where grep finds calls but MCP shows none is the signature of a false positive.
+7. **Cross-reference** what Ariadne reports (via MCP) against what grep found. A discrepancy where grep finds calls but MCP shows none is the signature of a false positive.
 
-7. **Classify**:
+8. **Classify**:
    - `ariadne_correct: true` if no real invocations were found anywhere
    - `ariadne_correct: false` if any real invocation exists that Ariadne does not include in its call graph
 

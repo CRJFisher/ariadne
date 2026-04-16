@@ -6,7 +6,7 @@
  * registry, and builds the triage state file.
  *
  * Usage:
- *   node --import tsx prepare_triage.ts --analysis <path> [--state <path>] [--package <name>] [--batch-size <n>]
+ *   node --import tsx prepare_triage.ts --analysis <path> [--package <name>] [--batch-size <n>]
  */
 
 import * as fs from "node:fs/promises";
@@ -30,7 +30,6 @@ if (process.env.TSX_CWD !== undefined) {
 
 interface CliArgs {
   analysis_path: string;
-  state_path: string | null;
   package_name: string | null;
   batch_size: number;
 }
@@ -38,7 +37,6 @@ interface CliArgs {
 function parse_args(argv: string[]): CliArgs {
   const args = argv.slice(2);
   let analysis_path: string | null = null;
-  let state_path: string | null = null;
   let package_name: string | null = null;
   let batch_size = 5;
 
@@ -46,9 +44,6 @@ function parse_args(argv: string[]): CliArgs {
     switch (args[i]) {
       case "--analysis":
         analysis_path = args[++i];
-        break;
-      case "--state":
-        state_path = args[++i];
         break;
       case "--package":
         package_name = args[++i];
@@ -60,11 +55,11 @@ function parse_args(argv: string[]): CliArgs {
   }
 
   if (!analysis_path) {
-    console.error("Usage: prepare_triage.ts --analysis <path> [--state <path>] [--package <name>] [--batch-size <n>]");
+    console.error("Usage: prepare_triage.ts --analysis <path> [--package <name>] [--batch-size <n>]");
     process.exit(1);
   }
 
-  return { analysis_path, state_path, package_name, batch_size };
+  return { analysis_path, package_name, batch_size };
 }
 
 // ===== Main =====
@@ -98,8 +93,7 @@ async function main(): Promise<void> {
   };
 
   // Determine output path — each project gets its own subdirectory
-  const state_path = cli.state_path
-    ?? path.join(TRIAGE_STATE_DIR, project_name, `${project_name}_triage.json`);
+  const state_path = path.join(TRIAGE_STATE_DIR, project_name, `${project_name}_triage.json`);
 
   // Clean up old state files — one pipeline at a time
   const triage_dir = path.dirname(state_path);

@@ -9,7 +9,7 @@
  * groups, for group-consolidator agents to merge synonyms).
  *
  * Usage:
- *   node --import tsx merge_rough_groups.ts [--state <path>] [--bundle-size <n>]
+ *   node --import tsx merge_rough_groups.ts [--bundle-size <n>]
  *
  * Output (JSON to stdout):
  *   { group_count: number, skip_pass2: boolean }
@@ -32,14 +32,12 @@ const BUNDLE_SIZE = 20;
 // ===== CLI =====
 
 const args = process.argv.slice(2);
-let state_path_arg: string | null = null;
 let bundle_size = BUNDLE_SIZE;
 for (let i = 0; i < args.length; i++) {
-  if (args[i] === "--state") state_path_arg = args[++i];
   if (args[i] === "--bundle-size") bundle_size = parseInt(args[++i], 10);
 }
 
-const state_path = state_path_arg ?? discover_state_file(TRIAGE_STATE_DIR);
+const state_path = discover_state_file(TRIAGE_STATE_DIR);
 if (!state_path) {
   process.stderr.write("Error: no triage state file found\n");
   process.exit(1);
