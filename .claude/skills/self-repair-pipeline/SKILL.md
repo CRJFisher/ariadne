@@ -117,7 +117,7 @@ node --import tsx .claude/skills/self-repair-pipeline/scripts/prepare_triage.ts 
   --batch-size 5
 ```
 
-Options: `--analysis <path>` (required), `--package <name>`, `--state <path>`, `--batch-size <n>` (default 5)
+Options: `--analysis <path>` (required), `--package <name>`, `--batch-size <n>` (default 5)
 
 The script loads the known-entrypoints registry and classifies entries:
 
@@ -138,17 +138,17 @@ Repeat the following loop until all entries are processed:
    node --import tsx .claude/skills/self-repair-pipeline/scripts/get_next_triage_batch.ts
    ```
 
-   Output: `{ "entries": [N, ...], "state_path": "..." }` — **capture `state_path` now**; it is required for all `--state` arguments in Phase 4 and 5. If the script exits non-zero, stop and report stderr to the user.
+   Output: `{ "entries": [N, ...] }`. If the script exits non-zero, stop and report stderr to the user.
 
 2. If `entries` is empty, all pending entries are done — proceed to Phase 4 (Aggregate).
 
-3. For each entry index N in the batch: run `get_entry_context.ts` and pass its stdout as the **`prompt:`** parameter of a Task tool call to a **triage-investigator** agent (`run_in_background: true`):
+3. For each entry index N in the batch: launch a **triage-investigator** agent (`run_in_background: true`) with the entry index as the prompt:
 
-   ```bash
-   node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts --entry <N>
+   ```
+   entry_index: N
    ```
 
-   Pass the raw stdout string verbatim as the `prompt:` value — no wrapping, trimming, or interpretation. If the script exits non-zero, skip that entry and log stderr instead of launching an agent with an empty prompt.
+   The triage-investigator will run `get_entry_context.ts` itself to fetch the full investigation context.
 
 4. Wait for all investigator tasks to complete.
 
@@ -158,13 +158,10 @@ Repeat the following loop until all entries are processed:
 
 Group false-positive results by root cause using a 3-pass pipeline. All aggregation files are stored under `triage_state/aggregation/` relative to the state directory.
 
-**`state_path`** is the value captured from `get_next_triage_batch.ts` output in Phase 3. All `--state` arguments below use this value.
-
 **Step 1:** Split false-positive entries into slices:
 
 ```bash
-node --import tsx .claude/skills/self-repair-pipeline/scripts/prepare_aggregation_slices.ts \
-  --state <state_path>
+node --import tsx .claude/skills/self-repair-pipeline/scripts/prepare_aggregation_slices.ts
 ```
 
 Output: `{ "slice_count": N }`. Writes `aggregation/slices/slice_{n}.json` files (~50 entries each). If `slice_count` is 0 (no false positives), skip to Phase 5.
@@ -174,8 +171,7 @@ Output: `{ "slice_count": N }`. Writes `aggregation/slices/slice_{n}.json` files
 **Step 3:** Verify all pass1 output files exist (one per slice), then merge rough groups:
 
 ```bash
-node --import tsx .claude/skills/self-repair-pipeline/scripts/merge_rough_groups.ts \
-  --state <state_path>
+node --import tsx .claude/skills/self-repair-pipeline/scripts/merge_rough_groups.ts
 ```
 
 Output: `{ "group_count": N, "skip_pass2": true|false }`
@@ -189,8 +185,7 @@ Output: `{ "group_count": N, "skip_pass2": true|false }`
 - Launch one **group-consolidator** agent per batch in parallel (`run_in_background: true`). Prompt each agent with the **absolute path to its batch file as plain text** — no key-value wrapping, just the path string. Each agent merges synonymous group names and writes `aggregation/pass2/batch_{n}.output.json`.
 - Then run:
   ```bash
-  node --import tsx .claude/skills/self-repair-pipeline/scripts/merge_consolidated_groups.ts \
-    --state <state_path>
+  node --import tsx .claude/skills/self-repair-pipeline/scripts/merge_consolidated_groups.ts
   ```
   Writes `aggregation/pass3/input.json`.
 
@@ -200,7 +195,6 @@ Output: `{ "group_count": N, "skip_pass2": true|false }`
 group_id: <id>
 root_cause: <root_cause>
 entry_indices: [N, ...]
-state_path: <state_path>
 ```
 
 Each agent verifies member assignments and writes `aggregation/pass3/{group_id}_investigation.json`.
@@ -208,8 +202,7 @@ Each agent verifies member assignments and writes `aggregation/pass3/{group_id}_
 **Step 6:** Apply investigation results and finalize group assignments:
 
 ```bash
-node --import tsx .claude/skills/self-repair-pipeline/scripts/finalize_aggregation.ts \
-  --state <state_path>
+node --import tsx .claude/skills/self-repair-pipeline/scripts/finalize_aggregation.ts
 ```
 
 Writes canonical `group_id`/`root_cause` back to state entries, handles reject reallocation, sets `phase = "complete"`.
@@ -218,11 +211,10 @@ Writes canonical `group_id`/`root_cause` back to state entries, handles reject r
 
 ## Phase 5: Finalize
 
-Run after Phase 4 sets `phase = "complete"`. Use the `state_path` captured in Phase 3.
+Run after Phase 4 sets `phase = "complete"`.
 
 ```bash
-node --import tsx .claude/skills/self-repair-pipeline/scripts/finalize_triage.ts \
-  --state <state_path>
+node --import tsx .claude/skills/self-repair-pipeline/scripts/finalize_triage.ts
 ```
 
 Finalization:

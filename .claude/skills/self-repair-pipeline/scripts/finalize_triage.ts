@@ -7,7 +7,7 @@
  * - Updated known-entrypoints registry
  *
  * Usage:
- *   node --import tsx finalize_triage.ts --state <path>
+ *   node --import tsx finalize_triage.ts
  */
 
 import * as fs from "node:fs/promises";
@@ -28,6 +28,8 @@ import {
   build_finalization_summary,
 } from "../src/build_finalization_output.js";
 import type { TriageState } from "../src/triage_state_types.js";
+import { TRIAGE_STATE_DIR } from "../src/paths.js";
+import { discover_state_file } from "../src/discover_state.js";
 
 if (process.env.TSX_CWD !== undefined) {
   process.stderr.write("Error: do not invoke with tsx CLI (pnpm exec tsx / npx tsx) — use node --import tsx:\n");
@@ -37,35 +39,17 @@ if (process.env.TSX_CWD !== undefined) {
 
 // ===== CLI Argument Parsing =====
 
-interface CliArgs {
-  state_path: string;
-}
-
-function parse_args(argv: string[]): CliArgs {
-  const args = argv.slice(2);
-  let state_path: string | null = null;
-
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--state") {
-      state_path = args[++i];
-    }
-  }
-
-  if (!state_path) {
-    console.error("Usage: finalize_triage.ts --state <path>");
-    process.exit(1);
-  }
-
-  return { state_path };
-}
-
 // ===== Main =====
 
 async function main(): Promise<void> {
-  const cli = parse_args(process.argv);
+  const state_path = discover_state_file(TRIAGE_STATE_DIR);
+  if (!state_path) {
+    console.error("Error: no triage state file found");
+    process.exit(1);
+  }
 
   // Load state
-  const state = await load_json<TriageState>(cli.state_path);
+  const state = await load_json<TriageState>(state_path);
 
   // Verify phase
   if (state.phase !== "complete") {
@@ -100,7 +84,7 @@ async function main(): Promise<void> {
   ]);
 
   // Clean up per-entry result files
-  const results_dir = path.join(path.dirname(cli.state_path), "results");
+  const results_dir = path.join(path.dirname(state_path), "results");
   try {
     await fs.rm(results_dir, { recursive: true });
     console.error(`Cleaned up results directory: ${results_dir}`);

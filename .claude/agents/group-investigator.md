@@ -19,11 +19,10 @@ Your prompt contains:
 - `group_id`: the canonical group identifier
 - `root_cause`: the shared detection gap description
 - `entry_indices`: list of entry indices assigned to this group
-- `state_path`: path to the triage state file
 
 ## Investigation Instructions
 
-1. **Read the triage state file** to load entries by index.
+1. **Discover the triage state file** using Glob: `~/.ariadne/self-repair-pipeline/triage_state/**/*_triage.json`. Read it to load entries by index.
 
 2. **For each entry**:
    a. Read the investigator result file at `{triage_dir}/results/{entry_index}.json`

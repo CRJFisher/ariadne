@@ -7,7 +7,7 @@
  * are processed, sets phase="complete" and returns an empty entries array.
  *
  * Output (JSON to stdout):
- *   { entries: number[], state_path: string }
+ *   { entries: number[] }
  *
  * Exit codes:
  *   0 = success
@@ -50,9 +50,9 @@ state.updated_at = new Date().toISOString();
 if (pending.length > 0) {
   const batch = pending.slice(0, state.batch_size).map((e) => e.entry_index);
   fs.writeFileSync(state_path, JSON.stringify(state, null, 2) + "\n");
-  process.stdout.write(JSON.stringify({ entries: batch, state_path }) + "\n");
+  process.stdout.write(JSON.stringify({ entries: batch }) + "\n");
 } else {
   state.phase = "complete";
   fs.writeFileSync(state_path, JSON.stringify(state, null, 2) + "\n");
-  process.stdout.write(JSON.stringify({ entries: [], state_path }) + "\n");
+  process.stdout.write(JSON.stringify({ entries: [] }) + "\n");
 }
