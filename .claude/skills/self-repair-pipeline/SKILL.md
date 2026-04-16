@@ -68,19 +68,19 @@ If no arguments are provided or the input is ambiguous, **ask the user** before 
 
 ## State and Output Locations
 
-| File                                                           | Purpose                                                     |
-| -------------------------------------------------------------- | ----------------------------------------------------------- |
-| `project_configs/{name}.json`                                  | Per-project detection config (folders, excludes)            |
-| `triage_state/{project}_triage.json`                           | Active triage state (entries, results)                      |
-| `triage_state/results/{entry_index}.json`                      | Per-entry triage result files (written by sub-agents)       |
-| `triage_state/aggregation/slices/slice_{n}.json`               | Pass 1 input slices (false-positive entries)                |
-| `triage_state/aggregation/pass1/slice_{n}.output.json`         | Pass 1 rough groupings                                      |
-| `triage_state/aggregation/pass2/batch_{n}.input.json`          | Pass 2 consolidation input (when >15 groups)                |
-| `triage_state/aggregation/pass2/batch_{n}.output.json`         | Pass 2 consolidated groups                                  |
-| `triage_state/aggregation/pass3/input.json`                    | Pass 3 canonical group list                                 |
-| `triage_state/aggregation/pass3/{group_id}_investigation.json` | Pass 3 per-group investigation results                      |
-| `analysis_output/{project}/`                                   | Project-scoped timestamped analysis and triage result files |
-| `known_entrypoints/{project}.json`                             | Known-entrypoints registry (persists across runs)           |
+| File                                                                     | Purpose                                                     |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| `project_configs/{name}.json`                                            | Per-project detection config (folders, excludes)            |
+| `triage_state/{project}/{project}_triage.json`                           | Active triage state (entries, results)                      |
+| `triage_state/{project}/results/{entry_index}.json`                      | Per-entry triage result files (written by sub-agents)       |
+| `triage_state/{project}/aggregation/slices/slice_{n}.json`               | Pass 1 input slices (false-positive entries)                |
+| `triage_state/{project}/aggregation/pass1/slice_{n}.output.json`         | Pass 1 rough groupings                                      |
+| `triage_state/{project}/aggregation/pass2/batch_{n}.input.json`          | Pass 2 consolidation input (when >15 groups)                |
+| `triage_state/{project}/aggregation/pass2/batch_{n}.output.json`         | Pass 2 consolidated groups                                  |
+| `triage_state/{project}/aggregation/pass3/input.json`                    | Pass 3 canonical group list                                 |
+| `triage_state/{project}/aggregation/pass3/{group_id}_investigation.json` | Pass 3 per-group investigation results                      |
+| `analysis_output/{project}/`                                             | Project-scoped timestamped analysis and triage result files |
+| `known_entrypoints/{project}.json`                                       | Known-entrypoints registry (persists across runs)           |
 
 All paths above are relative to `~/.ariadne/self-repair-pipeline/`.
 
@@ -124,7 +124,7 @@ The script loads the known-entrypoints registry and classifies entries:
 - **known-unreachable**: Matches registry — marked completed immediately
 - **llm-triage**: No registry match — marked pending for investigation
 
-Output: `triage_state/{project}_triage.json` — use Glob to find this path if the project name is unknown: `~/.ariadne/self-repair-pipeline/triage_state/*_triage.json`.
+Output: `triage_state/{project}/{project}_triage.json` — use Glob to find this path if the project name is unknown: `~/.ariadne/self-repair-pipeline/triage_state/**/*_triage.json`.
 
 ## Phase 3: Triage Loop
 

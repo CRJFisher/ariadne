@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env node
 /**
  * Self-service context script for triage-investigator sub-agents.
  *
@@ -18,6 +18,12 @@ import { discover_state_file } from "../src/discover_state.js";
 import { TRIAGE_STATE_DIR } from "../src/paths.js";
 import type { TriageState, TriageEntry } from "../src/triage_state_types.js";
 import type { GrepHit, CallRefDiagnostic, EntryPointDiagnostics, AnalysisResult } from "../src/types.js";
+
+if (process.env.TSX_CWD !== undefined) {
+  process.stderr.write("Error: do not invoke with tsx CLI (pnpm exec tsx / npx tsx) — use node --import tsx:\n");
+  process.stderr.write(`  node --import tsx ${process.argv[1]} ${process.argv.slice(2).join(" ")}\n`);
+  process.exit(1);
+}
 
 const THIS_FILE = fileURLToPath(import.meta.url);
 const THIS_DIR = path.dirname(THIS_FILE);
@@ -132,8 +138,7 @@ function main(): void {
   const cli = parse_args(process.argv);
 
   // Discover state file
-  const triage_dir = TRIAGE_STATE_DIR;
-  const state_path = discover_state_file(triage_dir);
+  const state_path = discover_state_file(TRIAGE_STATE_DIR);
   if (!state_path) {
     console.error("No active triage state file found");
     process.exit(1);
@@ -162,7 +167,7 @@ function main(): void {
   const template = fs.readFileSync(template_path, "utf8");
 
   // Build output path for the sub-agent to write results to
-  const output_path = path.join(triage_dir, "results", `${entry.entry_index}.json`);
+  const output_path = path.join(path.dirname(state_path), "results", `${entry.entry_index}.json`);
 
   // Substitute and output
   const prompt = substitute_template(template, entry, diagnostics, output_path);

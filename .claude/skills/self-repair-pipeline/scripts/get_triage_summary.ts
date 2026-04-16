@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env node
 /**
  * Compact triage state summary for SKILL.md dynamic injection.
  *
@@ -12,6 +12,12 @@ import { fileURLToPath } from "url";
 import { TRIAGE_STATE_DIR } from "../src/paths.js";
 import { discover_state_file } from "../src/discover_state.js";
 import type { TriageState } from "../src/triage_state_types.js";
+
+if (process.env.TSX_CWD !== undefined) {
+  process.stderr.write("Error: do not invoke with tsx CLI (pnpm exec tsx / npx tsx) — use node --import tsx:\n");
+  process.stderr.write(`  node --import tsx ${process.argv[1]} ${process.argv.slice(2).join(" ")}\n`);
+  process.exit(1);
+}
 
 function main(): void {
   const state_path = discover_state_file(TRIAGE_STATE_DIR);

@@ -50,6 +50,12 @@ import * as fs from "fs/promises";
 import * as os from "os";
 import { execSync } from "child_process";
 
+if (process.env.TSX_CWD !== undefined) {
+  process.stderr.write("Error: do not invoke with tsx CLI (pnpm exec tsx / npx tsx) — use node --import tsx:\n");
+  process.stderr.write(`  node --import tsx ${process.argv[1]} ${process.argv.slice(2).join(" ")}\n`);
+  process.exit(1);
+}
+
 // ===== Types =====
 
 interface SourceInfo {
