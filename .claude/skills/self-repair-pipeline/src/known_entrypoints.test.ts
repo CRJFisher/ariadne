@@ -1,6 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
 import * as fs from "node:fs/promises";
-import * as path from "path";
 import {
   get_registry_path,
   load_known_entrypoints,
@@ -14,7 +13,6 @@ import type { EnrichedFunctionEntry, KnownEntrypointSource } from "./types.js";
 // ===== Test Helpers =====
 
 const TEST_PROJECT = "__test_known_entrypoints__";
-const TEST_REGISTRY_DIR = "/tmp/claude/known_entrypoints_test";
 
 function make_entry(overrides: Partial<EnrichedFunctionEntry>): EnrichedFunctionEntry {
   return {
@@ -27,14 +25,6 @@ function make_entry(overrides: Partial<EnrichedFunctionEntry>): EnrichedFunction
     kind: "function",
     tree_size: 0,
     is_exported: false,
-    is_anonymous: false,
-    call_summary: {
-      total_calls: 0,
-      unresolved_count: 0,
-      method_calls: 0,
-      constructor_calls: 0,
-      callback_invocations: 0,
-    },
     diagnostics: {
       grep_call_sites: [],
       ariadne_call_refs: [],
@@ -46,12 +36,12 @@ function make_entry(overrides: Partial<EnrichedFunctionEntry>): EnrichedFunction
 
 const PROJECT_PATH = "/projects/myapp";
 
-// Clean up test registry files after each test
+// Clean up test registry file after each test
 afterEach(async () => {
   try {
-    await fs.rm(TEST_REGISTRY_DIR, { recursive: true });
+    await fs.unlink(get_registry_path(TEST_PROJECT));
   } catch {
-    // Directory may not exist
+    // File may not exist
   }
 });
 
@@ -81,10 +71,10 @@ describe("registry I/O", () => {
       },
     ];
 
-    const saved_path = await save_known_entrypoints(TEST_PROJECT, sources, TEST_REGISTRY_DIR);
-    expect(saved_path).toBe(get_registry_path(TEST_PROJECT, TEST_REGISTRY_DIR));
+    const saved_path = await save_known_entrypoints(TEST_PROJECT, sources);
+    expect(saved_path).toBe(get_registry_path(TEST_PROJECT));
 
-    const loaded = await load_known_entrypoints(TEST_PROJECT, TEST_REGISTRY_DIR);
+    const loaded = await load_known_entrypoints(TEST_PROJECT);
     expect(loaded).toEqual(sources);
   });
 });

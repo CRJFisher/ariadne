@@ -20,6 +20,7 @@ import type {
   SymbolId,
   SymbolName,
 } from "@ariadnejs/types";
+
 import type { Language } from "@ariadnejs/types";
 import type {
   EnrichedFunctionEntry,
@@ -49,15 +50,9 @@ export function build_constructor_to_class_name_map(
 /**
  * Extract enriched entry points from a call graph.
  *
- * For each entry point, captures:
- * - Basic info (name, location, signature, tree_size, kind)
- * - CallableNode metadata (is_exported, access_modifier, callback_context, etc.)
- * - Pre-gathered diagnostics (grep call sites, Ariadne call references, diagnosis)
- *
- * @param call_graph - The call graph from Project.get_call_graph()
- * @param source_files - Map of file_path → source code content (for grep diagnostics)
- * @param filter - Optional predicate to include only matching nodes
- * @returns Enriched entry points sorted by tree_size descending
+ * For each entry point, captures basic info (name, location, signature, tree_size, kind),
+ * CallableNode metadata (is_exported, access_modifier), and pre-gathered diagnostics
+ * (grep call sites, Ariadne call references, diagnosis).
  */
 export function extract_entry_points(
   call_graph: CallGraph,
@@ -118,86 +113,22 @@ export function extract_entry_points(
 interface EntryPointMetadata {
   is_exported: boolean;
   access_modifier?: "public" | "private" | "protected";
-  is_static?: boolean;
-  is_anonymous: boolean;
-  callback_context?: {
-    is_callback: boolean;
-    receiver_is_external: boolean | null;
-  };
-  call_summary: {
-    total_calls: number;
-    unresolved_count: number;
-    method_calls: number;
-    constructor_calls: number;
-    callback_invocations: number;
-  };
 }
 
 function extract_metadata(node: CallableNode): EntryPointMetadata {
   const def = node.definition;
   const kind = def.kind;
 
-  let is_exported = false;
-  let access_modifier: "public" | "private" | "protected" | undefined;
-  let is_static: boolean | undefined;
-  let callback_context: EntryPointMetadata["callback_context"];
-
   if (kind === "function") {
     const func_def = def as FunctionDefinition;
-    is_exported = func_def.is_exported;
-    if (func_def.callback_context) {
-      callback_context = {
-        is_callback: func_def.callback_context.is_callback,
-        receiver_is_external: func_def.callback_context.receiver_is_external,
-      };
-    }
-  } else if (kind === "method") {
+    return { is_exported: func_def.is_exported };
+  }
+  if (kind === "method") {
     const method_def = def as MethodDefinition;
-    access_modifier = method_def.access_modifier;
-    is_static = method_def.static;
-  } else if (kind === "constructor") {
-    const ctor_def = def as ConstructorDefinition;
-    access_modifier = ctor_def.access_modifier;
+    return { is_exported: false, access_modifier: method_def.access_modifier };
   }
-
-  const is_anonymous = (node.name as string) === "<anonymous>";
-
-  // Summarize enclosed calls
-  const call_summary = summarize_enclosed_calls(node.enclosed_calls);
-
-  return {
-    is_exported,
-    access_modifier,
-    is_static,
-    is_anonymous,
-    callback_context,
-    call_summary,
-  };
-}
-
-function summarize_enclosed_calls(
-  calls: readonly CallReference[],
-): EntryPointMetadata["call_summary"] {
-  let method_calls = 0;
-  let constructor_calls = 0;
-  let unresolved_count = 0;
-  let callback_invocations = 0;
-
-  for (const call of calls) {
-    if (call.call_type === "method") method_calls++;
-    else if (call.call_type === "constructor") constructor_calls++;
-
-    if (call.resolutions.length === 0) unresolved_count++;
-    if (call.is_callback_invocation) callback_invocations++;
-  }
-
-  return {
-    total_calls: calls.length,
-    unresolved_count,
-    method_calls,
-    constructor_calls,
-    callback_invocations,
-  };
+  const ctor_def = def as ConstructorDefinition;
+  return { is_exported: false, access_modifier: ctor_def.access_modifier };
 }
 
 // ===== Diagnostics Gathering =====

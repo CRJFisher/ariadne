@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { build_triage_entries } from "./build_triage_entries.js";
-import type { PreClassificationResult } from "./classify_entrypoints.js";
+import type { FilterResult } from "./known_entrypoints.js";
 import type { EnrichedFunctionEntry } from "./types.js";
 import type { TriageEntry, TriageEntryResult } from "./triage_state_types.js";
 
@@ -17,14 +17,6 @@ function make_entry(overrides: Partial<EnrichedFunctionEntry>): EnrichedFunction
     kind: "function",
     tree_size: 0,
     is_exported: false,
-    is_anonymous: false,
-    call_summary: {
-      total_calls: 0,
-      unresolved_count: 0,
-      method_calls: 0,
-      constructor_calls: 0,
-      callback_invocations: 0,
-    },
     diagnostics: {
       grep_call_sites: [],
       ariadne_call_refs: [],
@@ -46,12 +38,12 @@ const KNOWN_UNREACHABLE_RESULT: TriageEntryResult = {
 describe("build_triage_entries", () => {
   it("known-unreachable entry from registry match", () => {
     const entry = make_entry({ name: "main", file_path: "/projects/myapp/src/main.py" });
-    const classification: PreClassificationResult = {
+    const filtered: FilterResult = {
       known_true_positives: [{ entry, source: "confirmed-unreachable" }],
-      unclassified: [],
+      remaining: [],
     };
 
-    const result = build_triage_entries(classification);
+    const result = build_triage_entries(filtered);
 
     const expected: TriageEntry[] = [{
       entry_index: 0,
@@ -66,7 +58,6 @@ describe("build_triage_entries", () => {
       status: "completed",
       result: KNOWN_UNREACHABLE_RESULT,
       error: null,
-      attempt_count: 0,
       is_exported: false,
       access_modifier: null,
       diagnostics: {
@@ -78,7 +69,7 @@ describe("build_triage_entries", () => {
     expect(result).toEqual(expected);
   });
 
-  it("unclassified entry becomes llm-triage pending", () => {
+  it("remaining entry becomes llm-triage pending", () => {
     const entry = make_entry({
       name: "mystery_func",
       signature: "def mystery_func(x: int) -> str",
@@ -88,12 +79,12 @@ describe("build_triage_entries", () => {
         diagnosis: "callers-not-in-registry",
       },
     });
-    const classification: PreClassificationResult = {
+    const filtered: FilterResult = {
       known_true_positives: [],
-      unclassified: [entry],
+      remaining: [entry],
     };
 
-    const result = build_triage_entries(classification);
+    const result = build_triage_entries(filtered);
 
     const expected: TriageEntry[] = [{
       entry_index: 0,
@@ -108,7 +99,6 @@ describe("build_triage_entries", () => {
       status: "pending",
       result: null,
       error: null,
-      attempt_count: 0,
       is_exported: false,
       access_modifier: null,
       diagnostics: {
@@ -120,17 +110,17 @@ describe("build_triage_entries", () => {
     expect(result).toEqual(expected);
   });
 
-  it("mixed input: 1 known + 2 unclassified", () => {
+  it("mixed input: 1 known + 2 remaining", () => {
     const known = make_entry({ name: "render", kind: "method" });
-    const unclassified_a = make_entry({ name: "helper_a" });
-    const unclassified_b = make_entry({ name: "helper_b" });
+    const remaining_a = make_entry({ name: "helper_a" });
+    const remaining_b = make_entry({ name: "helper_b" });
 
-    const classification: PreClassificationResult = {
+    const filtered: FilterResult = {
       known_true_positives: [{ entry: known, source: "react" }],
-      unclassified: [unclassified_a, unclassified_b],
+      remaining: [remaining_a, remaining_b],
     };
 
-    const result = build_triage_entries(classification);
+    const result = build_triage_entries(filtered);
 
     expect(result).toHaveLength(3);
     expect(result[0].entry_index).toBe(0);
@@ -147,13 +137,13 @@ describe("build_triage_entries", () => {
     expect(result[2].status).toBe("pending");
   });
 
-  it("empty classification returns empty array", () => {
-    const classification: PreClassificationResult = {
+  it("empty filter result returns empty array", () => {
+    const filtered: FilterResult = {
       known_true_positives: [],
-      unclassified: [],
+      remaining: [],
     };
 
-    const result = build_triage_entries(classification);
+    const result = build_triage_entries(filtered);
 
     expect(result).toEqual([]);
   });

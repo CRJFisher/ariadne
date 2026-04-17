@@ -34,10 +34,9 @@ function build_mock_entry(overrides: Partial<TriageEntry> = {}): TriageEntry {
       status: "pending" as const,
       result: null,
       error: null,
-      attempt_count: 0,
       is_exported: true,
       access_modifier: null,
-      diagnostics: null,
+      diagnostics: { grep_call_sites: [], ariadne_call_refs: [], diagnosis: "no-textual-callers" },
     } satisfies TriageEntry,
     overrides,
     { entry_index: idx },
@@ -48,9 +47,7 @@ function build_mock_state(overrides: Partial<TriageState> = {}): TriageState {
   return {
     project_name: "test-project",
     project_path: "/test/project",
-    analysis_file: "/test/analysis.json",
     phase: "triage",
-    batch_size: 5,
     entries: [],
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
@@ -99,7 +96,6 @@ describe("merge_results", () => {
     expect(merged).toEqual(1);
     expect(state.entries[1].status).toEqual("completed");
     expect(state.entries[1].result).toEqual(result);
-    expect(state.entries[1].attempt_count).toEqual(1);
     expect(state.entries[0].status).toEqual("pending");
   });
 
@@ -139,7 +135,6 @@ describe("merge_results", () => {
     expect(merged).toEqual(1);
     expect(state.entries[0].status).toEqual("failed");
     expect(state.entries[0].error).toContain("Failed to parse result file");
-    expect(state.entries[0].attempt_count).toEqual(1);
   });
 
   it("ignores non-numeric filenames", () => {

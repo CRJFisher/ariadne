@@ -81,10 +81,9 @@ describe("substitute_template", () => {
     status: "pending",
     result: null,
     error: null,
-    attempt_count: 0,
     is_exported: true,
     access_modifier: null,
-    diagnostics: null,
+    diagnostics: { grep_call_sites: [], ariadne_call_refs: [], diagnosis: "callers-not-in-registry" },
   };
 
   const mock_diagnostics: EntryPointDiagnostics = {

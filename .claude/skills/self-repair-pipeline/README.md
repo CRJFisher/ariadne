@@ -31,24 +31,20 @@ flowchart TD
     STATE --> LOOP_ENTRY
 
     %% ── Phase 3: Triage Loop ─────────────────────────────────
-    subgraph P3["Phase 3: Triage Loop"]
-        LOOP_ENTRY(["get_next_triage_batch.ts"]) --> BATCH_CHECK{"Pending<br/>entries?"}
-        BATCH_CHECK -->|"Yes — batch of N"| CONTEXT["get_entry_context.ts<br/>(per entry)"]
-        CONTEXT --> INVESTIGATORS[/"triage-investigator x batch<br/>(run_in_background: true)"/]
-        INVESTIGATORS --> LOOP_ENTRY
-        BATCH_CHECK -->|"None — phase=complete"| AGG_START
+    subgraph P3["Phase 3: Triage Loop (continuous worker pool)"]
+        LOOP_ENTRY(["get_next_triage_entry.ts"]) --> POOL_CHECK{"Pending<br/>entries?"}
+        POOL_CHECK -->|"Yes — one entry"| CONTEXT["get_entry_context.ts<br/>(per entry)"]
+        CONTEXT --> INVESTIGATORS[/"triage-investigator<br/>(run_in_background: true)<br/>N in flight"/]
+        INVESTIGATORS -->|"on completion"| LOOP_ENTRY
+        POOL_CHECK -->|"None &amp; no in-flight — phase=complete"| AGG_START
     end
 
     %% ── Phase 4: Aggregate ───────────────────────────────────
-    subgraph P4["Phase 4: Aggregate (3-pass)"]
+    subgraph P4["Phase 4: Aggregate"]
         AGG_START(["prepare_aggregation_slices.ts"])
         AGG_START --> ROUGH[/"rough-aggregator x slice<br/>(run_in_background: true)"/]
         ROUGH --> MERGE_ROUGH(["merge_rough_groups.ts"])
-        MERGE_ROUGH --> SKIP_CHECK{"≤15 groups?"}
-        SKIP_CHECK -->|"Yes"| PASS3_INPUT[("pass3/input.json")]
-        SKIP_CHECK -->|"No"| CONSOLIDATOR[/"group-consolidator x batch<br/>(run_in_background: true)"/]
-        CONSOLIDATOR --> MERGE_CONSOL(["merge_consolidated_groups.ts"])
-        MERGE_CONSOL --> PASS3_INPUT
+        MERGE_ROUGH --> PASS3_INPUT[("pass3/input.json")]
         PASS3_INPUT --> INVESTIGATORS2[/"group-investigator x group<br/>(Opus · run_in_background: true)"/]
         INVESTIGATORS2 --> FINALIZE_AGG(["finalize_aggregation.ts"])
     end
@@ -71,9 +67,9 @@ flowchart TD
     classDef decision fill:#fff3e0,stroke:#ef6c00,color:#e65100
     classDef data fill:#e8f5e9,stroke:#388e3c,color:#1b5e20
 
-    class DETECT,PREPARE,FINALIZE,LOOP_ENTRY,AGG_START,MERGE_ROUGH,MERGE_CONSOL,FINALIZE_AGG script
-    class INVESTIGATORS,INVESTIGATORS2,ROUGH,CONSOLIDATOR agent
-    class CLASSIFY,BATCH_CHECK,SKIP_CHECK decision
+    class DETECT,PREPARE,FINALIZE,LOOP_ENTRY,AGG_START,MERGE_ROUGH,FINALIZE_AGG script
+    class INVESTIGATORS,INVESTIGATORS2,ROUGH agent
+    class CLASSIFY,POOL_CHECK decision
     class ANALYSIS,STATE,PASS3_INPUT data
 ```
 
@@ -85,27 +81,15 @@ The main agent runs `get_entry_context.ts` per entry to fetch the investigation 
 node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts --entry 62
 ```
 
-The script loads the entry, selects a diagnosis-specific prompt template, substitutes placeholders, and outputs the complete investigation prompt. The main agent passes this output verbatim as the sub-agent prompt.
-
-## Diagnosis Routing
-
-The `get_entry_context.ts` script maps each entry's `diagnosis` field to a prompt template:
-
-| Diagnosis                          | Template                            | Focus                                     |
-| ---------------------------------- | ----------------------------------- | ----------------------------------------- |
-| `callers-not-in-registry`          | `prompt_callers_not_in_registry.md` | File coverage gap investigation           |
-| `callers-in-registry-unresolved`   | `prompt_resolution_failure.md`      | Resolution failure pattern identification |
-| `callers-in-registry-wrong-target` | `prompt_wrong_target.md`            | Wrong resolution target analysis          |
-| All other                          | `prompt_generic.md`                 | Broad investigation                       |
+The script loads the entry, renders the prompt template with diagnosis-specific hints, and outputs the complete investigation prompt. The main agent passes this output verbatim as the sub-agent prompt.
 
 ## Sub-Agent Summary
 
-| Agent               | Model  | Multiplicity          | Purpose                                                                                |
-| ------------------- | ------ | --------------------- | -------------------------------------------------------------------------------------- |
-| triage-investigator | Sonnet | 1 per entry (batched) | Fetch own context via `get_entry_context.ts`, determine if Ariadne missed real callers |
-| rough-aggregator    | Sonnet | 1 per slice           | Group false-positive entries by semantic similarity of root cause                      |
-| group-consolidator  | Sonnet | 1 per batch           | Merge synonymous group names across slices                                             |
-| group-investigator  | Opus   | 1 per group           | Verify per-entry group membership using source code and Ariadne MCP evidence           |
+| Agent               | Model  | Multiplicity              | Purpose                                                                                |
+| ------------------- | ------ | ------------------------- | -------------------------------------------------------------------------------------- |
+| triage-investigator | Sonnet | 1 per entry (worker pool) | Fetch own context via `get_entry_context.ts`, determine if Ariadne missed real callers |
+| rough-aggregator    | Sonnet | 1 per slice               | Group false-positive entries by semantic similarity of root cause                      |
+| group-investigator  | Opus   | 1 per group               | Verify per-entry group membership using source code and Ariadne MCP evidence           |
 
 ## Key Modules
 
@@ -117,10 +101,9 @@ The `get_entry_context.ts` script maps each entry's `diagnosis` field to a promp
 | `src/build_finalization_output.ts`      | Build finalization output from completed state                    |
 | `src/known_entrypoints.ts`              | Known-entrypoints registry I/O and matching                       |
 | `src/triage_state_types.ts`             | State types (`TriageState`, `TriageEntry`, `TriageEntryResult`)   |
-| `scripts/get_entry_context.ts`          | Diagnosis → template selection and placeholder substitution       |
-| `scripts/get_next_triage_batch.ts`      | Merge results, return next pending batch, advance phase           |
+| `scripts/get_entry_context.ts`          | Render prompt template with diagnosis-specific hints              |
+| `scripts/get_next_triage_entry.ts`      | Merge results, dispense next pending entry(ies), advance phase    |
 | `scripts/prepare_aggregation_slices.ts` | Split false-positive entries into aggregation slices              |
-| `scripts/merge_rough_groups.ts`         | Merge pass1 outputs; route to pass2 or pass3                      |
-| `scripts/merge_consolidated_groups.ts`  | Merge pass2 outputs into canonical pass3 group list               |
+| `scripts/merge_rough_groups.ts`         | Union pass1 outputs into the canonical pass3 group list           |
 | `scripts/finalize_aggregation.ts`       | Apply group assignments, handle rejections, set phase=complete    |
 | `scripts/finalize_triage.ts`            | Partition results, update registry, save output                   |

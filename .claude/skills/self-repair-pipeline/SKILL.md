@@ -3,7 +3,7 @@ name: self-repair-pipeline
 description: Runs the full entry point self-repair pipeline. Detects entry points in Ariadne packages or external codebases, triages false positives via sub-agents, aggregates root causes by group, and updates the known-entrypoints registry.
 argument-hint: "[config-name | /path/to/repo | owner/repo (GitHub)]"
 disable-model-invocation: true
-allowed-tools: Bash(node --import tsx:*), Bash(ls:*), Read, Write, Glob, Task(triage-investigator, rough-aggregator, group-consolidator, group-investigator)
+allowed-tools: Bash(node --import tsx:*), Bash(ls:*), Read, Write, Glob, Task(triage-investigator, rough-aggregator, group-investigator)
 ---
 
 # Self-Repair Pipeline
@@ -14,19 +14,27 @@ Triage pipeline for entry point analysis: detect false positives, classify root 
 
 ## Pipeline Overview
 
-| Phase          | Script / Agent                                           | Purpose                                                         |
-| -------------- | -------------------------------------------------------- | --------------------------------------------------------------- |
-| 1. Detect      | `scripts/detect_entrypoints.ts`                          | Run entry point detection                                       |
-| 2. Prepare     | `scripts/prepare_triage.ts`                              | Classify against known-entrypoints registry, build triage state |
-| 3. Triage Loop | triage-investigator                                      | Investigate pending entries in batches                          |
-| 4. Aggregate   | rough-aggregator, group-consolidator, group-investigator | Group false positives by root cause, verify membership          |
-| 5. Finalize    | `scripts/finalize_triage.ts`                             | Save results, update known-entrypoints registry                 |
+| Phase          | Script / Agent                       | Purpose                                                         |
+| -------------- | ------------------------------------ | --------------------------------------------------------------- |
+| 1. Detect      | `scripts/detect_entrypoints.ts`      | Run entry point detection                                       |
+| 2. Prepare     | `scripts/prepare_triage.ts`          | Classify against known-entrypoints registry, build triage state |
+| 3. Triage Loop | triage-investigator                  | Investigate pending entries with a continuous worker pool       |
+| 4. Aggregate   | rough-aggregator, group-investigator | Group false positives by root cause, verify membership          |
+| 5. Finalize    | `scripts/finalize_triage.ts`         | Save results, update known-entrypoints registry                 |
 
 ## Analysis Target
 
 **User input:** `$ARGUMENTS`
 
-Resolve the analysis target from the user's input using this routing table:
+Before routing, extract any pipeline flags from the arguments:
+
+| Flag              | Variable     | Default   |
+| ----------------- | ------------ | --------- |
+| `--max-count <n>` | `$MAX_COUNT` | _(unset)_ |
+
+Strip extracted flags from the input before applying the routing table below.
+
+Resolve the analysis target from the remaining input using this routing table:
 
 | Input pattern                       | Example                                                  | Action                                                                     |
 | ----------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------- |
@@ -75,8 +83,6 @@ If no arguments are provided or the input is ambiguous, **ask the user** before 
 | `triage_state/{project}/results/{entry_index}.json`                      | Per-entry triage result files (written by sub-agents)       |
 | `triage_state/{project}/aggregation/slices/slice_{n}.json`               | Pass 1 input slices (false-positive entries)                |
 | `triage_state/{project}/aggregation/pass1/slice_{n}.output.json`         | Pass 1 rough groupings                                      |
-| `triage_state/{project}/aggregation/pass2/batch_{n}.input.json`          | Pass 2 consolidation input (when >15 groups)                |
-| `triage_state/{project}/aggregation/pass2/batch_{n}.output.json`         | Pass 2 consolidated groups                                  |
 | `triage_state/{project}/aggregation/pass3/input.json`                    | Pass 3 canonical group list                                 |
 | `triage_state/{project}/aggregation/pass3/{group_id}_investigation.json` | Pass 3 per-group investigation results                      |
 | `analysis_output/{project}/`                                             | Project-scoped timestamped analysis and triage result files |
@@ -114,10 +120,12 @@ Build triage state from the latest analysis output:
 node --import tsx .claude/skills/self-repair-pipeline/scripts/prepare_triage.ts \
   --analysis ~/.ariadne/self-repair-pipeline/analysis_output/<project>/detect_entrypoints/<timestamp>.json \
   --package <name> \
-  --batch-size 5
+  [--max-count $MAX_COUNT]   # omit if $MAX_COUNT is unset
 ```
 
-Options: `--analysis <path>` (required), `--package <name>`, `--batch-size <n>` (default 5)
+Options: `--analysis <path>` (required), `--package <name>`, `--max-count <n>` (optional)
+
+When `--max-count` is set, the script shuffles the `llm-triage` entries (Fisher-Yates) and keeps only the first `<n>`. Use this to take a random sample when the full triage set is too large to process in one run.
 
 The script loads the known-entrypoints registry and classifies entries:
 
@@ -128,31 +136,48 @@ Output: `triage_state/{project}/{project}_triage.json` — use Glob to find this
 
 ## Phase 3: Triage Loop
 
-All commands run from the repository root. The script auto-discovers the active state file in `~/.ariadne/self-repair-pipeline/triage_state/` — no `--state` flag needed.
+Run investigators as a **continuous worker pool**: keep `N` triage-investigator agents in flight at all times, launching a replacement the moment any one of them completes. This keeps concurrency close to `N` for the whole phase instead of averaging `N/2` as a batch loop would.
 
-Repeat the following loop until all entries are processed:
+**Default concurrency:** `N = 5`.
 
-1. Run `get_next_triage_batch.ts` and parse its JSON output:
+The script auto-discovers the active state file in `~/.ariadne/self-repair-pipeline/triage_state/` — no `--state` flag needed. The main agent tracks in-flight indices locally and passes them via `--active` so the script never hands the same index to two workers.
 
-   ```bash
-   node --import tsx .claude/skills/self-repair-pipeline/scripts/get_next_triage_batch.ts
-   ```
+**Crash recovery is automatic.** Entries stay `pending` until an investigator writes a result file, which `merge_results` absorbs on the next script call (transitioning the entry to `completed`). If an investigator crashes before writing a result, its entry remains `pending` and is redispensed naturally on a later call. The `--active` set tells the script which `pending` entries are currently assigned to live workers so they are skipped when picking replacements.
 
-   Output: `{ "entries": [N, ...] }`. If the script exits non-zero, stop and report stderr to the user.
+### Step 1: Initial fill
 
-2. If `entries` is empty, all pending entries are done — proceed to Phase 4 (Aggregate).
+Run once to pick up to `N` pending entries:
 
-3. For each entry index N in the batch: launch a **triage-investigator** agent (`run_in_background: true`) with the entry index as the prompt:
+```bash
+node --import tsx .claude/skills/self-repair-pipeline/scripts/get_next_triage_entry.ts --count 5
+```
 
-   ```
-   entry_index: N
-   ```
+Output: `{ "entries": [N, ...] }`. If the script exits non-zero, stop and report stderr to the user. If `entries` is empty, skip to Phase 4.
 
-   The triage-investigator will run `get_entry_context.ts` itself to fetch the full investigation context.
+Launch one **triage-investigator** agent per returned index in a **single message with multiple Agent calls** (parallel), all `run_in_background: true`. Prompt each with:
 
-4. Wait for all investigator tasks to complete.
+```
+entry_index: N
+```
 
-5. Go to step 1.
+The triage-investigator runs `get_entry_context.ts` itself to fetch the full investigation context and writes its result to `results/{entry_index}.json`.
+
+Track the set of in-flight entry indices locally — it seeds `--active` on the next call.
+
+### Step 2: Steady-state worker pool
+
+Whenever any background investigator completes, remove its entry index from the in-flight set, then run the script once with the remaining in-flight indices:
+
+```bash
+node --import tsx .claude/skills/self-repair-pipeline/scripts/get_next_triage_entry.ts \
+  --active 7,12,18,23
+```
+
+- If `entries` has one index, launch one replacement `triage-investigator` agent (`run_in_background: true`) for that index and add it to the in-flight set.
+- If `entries` is empty and the in-flight set is empty, proceed to Phase 4.
+- If `entries` is empty but the in-flight set is non-empty, wait for the next completion and call the script again.
+
+Call the script **sequentially** (not in parallel) for replacements — each call needs a fresh `merge_results` pass to see the just-completed entry before picking the next pending one. Pass an empty `--active` (omit the flag) if every worker has finished and you're doing a final drain check.
 
 ## Phase 4: Aggregate
 
@@ -174,22 +199,9 @@ Output: `{ "slice_count": N }`. Writes `aggregation/slices/slice_{n}.json` files
 node --import tsx .claude/skills/self-repair-pipeline/scripts/merge_rough_groups.ts
 ```
 
-Output: `{ "group_count": N, "skip_pass2": true|false }`
+Output: `{ "group_count": N }`. Writes `aggregation/pass3/input.json`. If `group_count` is 0, stop and investigate — at least one false-positive slice was expected.
 
-- If `group_count` is 0: stop and investigate — at least one false-positive slice was expected.
-- If `skip_pass2: true` (≤15 groups): writes `aggregation/pass3/input.json` directly — skip to Step 5.
-- If `skip_pass2: false` (>15 groups): writes `aggregation/pass2/batch_{n}.input.json` bundles.
-
-**Step 4** (only if `skip_pass2: false`):
-
-- Launch one **group-consolidator** agent per batch in parallel (`run_in_background: true`). Prompt each agent with the **absolute path to its batch file as plain text** — no key-value wrapping, just the path string. Each agent merges synonymous group names and writes `aggregation/pass2/batch_{n}.output.json`.
-- Then run:
-  ```bash
-  node --import tsx .claude/skills/self-repair-pipeline/scripts/merge_consolidated_groups.ts
-  ```
-  Writes `aggregation/pass3/input.json`.
-
-**Step 5:** Read `aggregation/pass3/input.json` to get the group list. Launch one **group-investigator** agent per false-positive group in parallel (`run_in_background: true`). Prompt each agent with the following **key-value plain text** (not JSON, not a file path):
+**Step 4:** Read `aggregation/pass3/input.json` to get the group list. Launch one **group-investigator** agent per false-positive group in parallel (`run_in_background: true`). Prompt each agent with the following **key-value plain text** (not JSON, not a file path):
 
 ```
 group_id: <id>
@@ -199,7 +211,7 @@ entry_indices: [N, ...]
 
 Each agent verifies member assignments and writes `aggregation/pass3/{group_id}_investigation.json`.
 
-**Step 6:** Apply investigation results and finalize group assignments:
+**Step 5:** Apply investigation results and finalize group assignments:
 
 ```bash
 node --import tsx .claude/skills/self-repair-pipeline/scripts/finalize_aggregation.ts
@@ -207,7 +219,7 @@ node --import tsx .claude/skills/self-repair-pipeline/scripts/finalize_aggregati
 
 Writes canonical `group_id`/`root_cause` back to state entries, handles reject reallocation, sets `phase = "complete"`.
 
-**Step 7:** Run Phase 5.
+**Step 6:** Run Phase 5.
 
 ## Phase 5: Finalize
 
@@ -230,9 +242,8 @@ All library modules live under `src/`:
 | Module                         | Purpose                                                                          |
 | ------------------------------ | -------------------------------------------------------------------------------- |
 | `extract_entry_points.ts`      | Shared extraction with enriched metadata + diagnostics                           |
-| `classify_entrypoints.ts`      | Deterministic rule-based classification (no LLM)                                 |
 | `known_entrypoints.ts`         | Known-entrypoints registry I/O and matching                                      |
-| `build_triage_entries.ts`      | Build triage entries from classification results                                 |
+| `build_triage_entries.ts`      | Build triage entries from filter-known-entrypoints output                        |
 | `build_finalization_output.ts` | Build finalization output from completed state                                   |
 | `merge_results.ts`             | Merge investigator result files into triage state                                |
 | `types.ts`                     | Shared type definitions (`EnrichedFunctionEntry`, `EntryPointDiagnostics`, etc.) |
@@ -250,5 +261,4 @@ All library modules live under `src/`:
 | ------------------- | ------ | ---------------------------------------------------------------------------- |
 | triage-investigator | sonnet | Investigate a single pending entry; determine if Ariadne missed real callers |
 | rough-aggregator    | sonnet | Group a slice of false-positive entries by semantic similarity of root cause |
-| group-consolidator  | sonnet | Merge synonymous group names across slices into canonical group identifiers  |
 | group-investigator  | opus   | Verify per-entry group membership using source code and Ariadne MCP evidence |

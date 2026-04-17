@@ -62,37 +62,3 @@ export async function load_json<T>(file_path: string): Promise<T> {
   return JSON.parse(content);
 }
 
-/**
- * Find the most recent analysis file for a given output type
- * Returns the absolute path to the file
- */
-export async function find_most_recent_analysis(
-  project_name: string,
-  output_type: OutputType = OutputType.DETECT_ENTRYPOINTS
-): Promise<string> {
-  const target_dir = path.join(ANALYSIS_OUTPUT_DIR, project_name, output_type);
-
-  try {
-    const files = await fs.readdir(target_dir);
-    const json_files = files.filter((file) => file.endsWith(".json"));
-
-    if (json_files.length === 0) {
-      throw new Error(
-        `No analysis files found in ${target_dir}. Run detect_entrypoints.ts first.`
-      );
-    }
-
-    json_files.sort();
-    const most_recent = json_files[json_files.length - 1];
-
-    return path.join(target_dir, most_recent);
-  } catch (error) {
-    if ((error as { code?: string }).code === "ENOENT") {
-      throw new Error(
-        `Analysis output directory not found: ${target_dir}. Run detect_entrypoints.ts first.`
-      );
-    }
-    throw error;
-  }
-}
-

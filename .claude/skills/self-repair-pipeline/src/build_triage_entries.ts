@@ -1,12 +1,12 @@
 /**
- * Convert classify_entrypoints() output into TriageEntry[].
+ * Convert filter_known_entrypoints() output into TriageEntry[].
  *
  * Registry matches become known-unreachable (completed), everything else
  * becomes llm-triage (pending).
  */
 
-import type { PreClassificationResult } from "./classify_entrypoints.js";
 import type { EnrichedFunctionEntry } from "./types.js";
+import type { FilterResult } from "./known_entrypoints.js";
 import type { TriageEntry, TriageEntryResult } from "./triage_state_types.js";
 
 function entry_to_triage_base(entry: EnrichedFunctionEntry): Pick<
@@ -33,13 +33,11 @@ const KNOWN_UNREACHABLE_RESULT: TriageEntryResult = {
   reasoning: "Matched known-entrypoints registry",
 };
 
-export function build_triage_entries(
-  classification: PreClassificationResult,
-): TriageEntry[] {
+export function build_triage_entries(filtered: FilterResult): TriageEntry[] {
   const entries: TriageEntry[] = [];
   let index = 0;
 
-  for (const match of classification.known_true_positives) {
+  for (const match of filtered.known_true_positives) {
     entries.push({
       entry_index: index++,
       ...entry_to_triage_base(match.entry),
@@ -48,11 +46,10 @@ export function build_triage_entries(
       status: "completed",
       result: KNOWN_UNREACHABLE_RESULT,
       error: null,
-      attempt_count: 0,
     });
   }
 
-  for (const entry of classification.unclassified) {
+  for (const entry of filtered.remaining) {
     entries.push({
       entry_index: index++,
       ...entry_to_triage_base(entry),
@@ -61,7 +58,6 @@ export function build_triage_entries(
       status: "pending",
       result: null,
       error: null,
-      attempt_count: 0,
     });
   }
 
