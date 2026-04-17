@@ -1,13 +1,28 @@
 #!/usr/bin/env node --import tsx
 /**
- * Get the next batch of pending triage entries.
+ * Hand out the next pending triage entry (or up to --count entries) to the
+ * main agent running the continuous worker pool.
  *
- * Scans the results/ directory to absorb completed investigator outputs,
- * then returns the next batch of pending entry indices. When all entries
- * are processed, sets phase="complete" and returns an empty entries array.
+ * Each call:
+ *   1. Absorbs any completed investigator result files from results/ into state.
+ *   2. Picks up to `count` entries with status="pending" that are NOT listed in
+ *      --active, and returns their indices.
+ *
+ * The picker itself is pure — it reads state, merges results (which writes back
+ * newly completed entries), and returns indices without mutating any `pending`
+ * entry. The main agent tracks in-flight indices via --active so the script
+ * never hands the same index to two workers in a single fill.
+ *
+ * CLI:
+ *   --count <n>         Max entries to return in this call (default 1).
+ *   --active <indices>  Comma-separated entry indices currently in flight.
+ *                       These are excluded from the pick. Omit on the initial
+ *                       fill or when a prior run's investigators have all died.
  *
  * Output (JSON to stdout):
  *   { entries: number[] }
+ *   Phase transitions to "complete" only when nothing is pending AND nothing is
+ *   active.
  *
  * Exit codes:
  *   0 = success
@@ -20,12 +35,45 @@ import { TRIAGE_STATE_DIR } from "../src/paths.js";
 import { discover_state_file } from "../src/discover_state.js";
 import { merge_results } from "../src/merge_results.js";
 import type { TriageState } from "../src/triage_state_types.js";
+import "../src/require_node_import_tsx.js";
 
-if (process.env.TSX_CWD !== undefined) {
-  process.stderr.write("Error: do not invoke with tsx CLI (pnpm exec tsx / npx tsx) — use node --import tsx:\n");
-  process.stderr.write(`  node --import tsx ${process.argv[1]} ${process.argv.slice(2).join(" ")}\n`);
-  process.exit(1);
+interface CliArgs {
+  count: number;
+  active: Set<number>;
 }
+
+function parse_args(argv: string[]): CliArgs {
+  const args = argv.slice(2);
+  let count = 1;
+  const active = new Set<number>();
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === "--count") {
+      const n = parseInt(args[++i], 10);
+      if (isNaN(n) || n < 1) {
+        process.stderr.write("Error: --count must be a positive integer\n");
+        process.exit(1);
+      }
+      count = n;
+    } else if (args[i] === "--active") {
+      const raw = args[++i] ?? "";
+      if (raw.length > 0) {
+        for (const token of raw.split(",")) {
+          const n = parseInt(token.trim(), 10);
+          if (isNaN(n)) {
+            process.stderr.write(`Error: --active contains non-integer value: ${token}\n`);
+            process.exit(1);
+          }
+          active.add(n);
+        }
+      }
+    }
+  }
+
+  return { count, active };
+}
+
+const { count, active } = parse_args(process.argv);
 
 const state_path = discover_state_file(TRIAGE_STATE_DIR);
 if (!state_path) {
@@ -44,15 +92,19 @@ try {
 const triage_dir = path.dirname(state_path);
 merge_results(state, triage_dir);
 
-const pending = state.entries.filter((e) => e.status === "pending");
-state.updated_at = new Date().toISOString();
-
-if (pending.length > 0) {
-  const batch = pending.slice(0, state.batch_size).map((e) => e.entry_index);
-  fs.writeFileSync(state_path, JSON.stringify(state, null, 2) + "\n");
-  process.stdout.write(JSON.stringify({ entries: batch }) + "\n");
-} else {
-  state.phase = "complete";
-  fs.writeFileSync(state_path, JSON.stringify(state, null, 2) + "\n");
-  process.stdout.write(JSON.stringify({ entries: [] }) + "\n");
+const picked: number[] = [];
+for (const entry of state.entries) {
+  if (picked.length >= count) break;
+  if (entry.status === "pending" && !active.has(entry.entry_index)) {
+    picked.push(entry.entry_index);
+  }
 }
+
+const any_pending = state.entries.some((e) => e.status === "pending");
+if (!any_pending && active.size === 0) {
+  state.phase = "complete";
+}
+
+state.updated_at = new Date().toISOString();
+fs.writeFileSync(state_path, JSON.stringify(state, null, 2) + "\n");
+process.stdout.write(JSON.stringify({ entries: picked }) + "\n");
