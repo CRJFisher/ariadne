@@ -30,12 +30,7 @@ import {
 import type { TriageState } from "../src/triage_state_types.js";
 import { TRIAGE_STATE_DIR } from "../src/paths.js";
 import { discover_state_file } from "../src/discover_state.js";
-
-if (process.env.TSX_CWD !== undefined) {
-  process.stderr.write("Error: do not invoke with tsx CLI (pnpm exec tsx / npx tsx) — use node --import tsx:\n");
-  process.stderr.write(`  node --import tsx ${process.argv[1]} ${process.argv.slice(2).join(" ")}\n`);
-  process.exit(1);
-}
+import "../src/require_node_import_tsx.js";
 
 // ===== CLI Argument Parsing =====
 
@@ -55,11 +50,6 @@ async function main(): Promise<void> {
   if (state.phase !== "complete") {
     console.error(`Error: state phase is "${state.phase}", expected "complete"`);
     process.exit(1);
-  }
-
-  // Strip transient diagnostics from entries before finalization
-  for (const entry of state.entries) {
-    entry.diagnostics = null;
   }
 
   // Build output

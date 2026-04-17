@@ -6,26 +6,22 @@
  * Supports multiple languages: TypeScript, JavaScript, Python, Rust, Go, Java, C++, C.
  *
  * Usage:
- *   # From project config (preferred)
- *   npx tsx detect_entrypoints.ts --config path/to/config.json
+ *   # From project config (preferred; carries folders, exclude, include_tests)
+ *   node --import tsx detect_entrypoints.ts --config path/to/config.json
  *
- *   # Local repository
- *   npx tsx detect_entrypoints.ts --path /path/to/repo
+ *   # Local repository (analyzes everything under the path with default exclusions)
+ *   node --import tsx detect_entrypoints.ts --path /path/to/repo
  *
  *   # GitHub repository
- *   npx tsx detect_entrypoints.ts --github owner/repo
- *   npx tsx detect_entrypoints.ts --github https://github.com/owner/repo
+ *   node --import tsx detect_entrypoints.ts --github owner/repo
+ *   node --import tsx detect_entrypoints.ts --github https://github.com/owner/repo
  *
  * Options:
- *   --config <file>        Project config file (preferred)
- *   --path <dir>           Local directory to analyze
- *   --github <repo>        GitHub repository (owner/repo or full URL)
- *   --branch <name>        Branch to analyze (default: default branch)
- *   --depth <n>            Clone depth for GitHub repos (default: 1)
- *   --output <file>        Output file (default: stdout)
- *   --include-tests        Include test files in analysis
- *   --folders <paths>      Comma-separated subfolders to analyze
- *   --exclude <patterns>   Comma-separated exclude patterns
+ *   --config <file>  Project config file (preferred; see config format in load_project_config)
+ *   --path <dir>     Local directory to analyze
+ *   --github <repo>  GitHub repository (owner/repo or full URL)
+ *   --branch <name>  Branch to analyze (default: default branch, --github only)
+ *   --depth <n>      Clone depth for GitHub repos (default: 1, --github only)
  */
 
 import {
@@ -49,12 +45,7 @@ import * as path from "path";
 import * as fs from "fs/promises";
 import * as os from "os";
 import { execSync } from "child_process";
-
-if (process.env.TSX_CWD !== undefined) {
-  process.stderr.write("Error: do not invoke with tsx CLI (pnpm exec tsx / npx tsx) — use node --import tsx:\n");
-  process.stderr.write(`  node --import tsx ${process.argv[1]} ${process.argv.slice(2).join(" ")}\n`);
-  process.exit(1);
-}
+import "../src/require_node_import_tsx.js";
 
 // ===== Types =====
 
@@ -80,10 +71,6 @@ interface CLIArgs {
   github?: string;
   branch?: string;
   depth: number;
-  output?: string;
-  include_tests: boolean;
-  folders?: string[];
-  exclude?: string[];
   config?: string;
 }
 
@@ -107,7 +94,6 @@ function parse_cli_args(): CLIArgs {
   const args = process.argv.slice(2);
   const result: CLIArgs = {
     depth: 1,
-    include_tests: false,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -129,20 +115,6 @@ function parse_cli_args(): CLIArgs {
       result.depth = parseInt(args[++i], 10);
     } else if (arg.startsWith("--depth=")) {
       result.depth = parseInt(arg.split("=")[1], 10);
-    } else if (arg === "--output" && args[i + 1]) {
-      result.output = args[++i];
-    } else if (arg.startsWith("--output=")) {
-      result.output = arg.split("=")[1];
-    } else if (arg === "--include-tests") {
-      result.include_tests = true;
-    } else if (arg === "--folders" && args[i + 1]) {
-      result.folders = args[++i].split(",").map((f) => f.trim());
-    } else if (arg.startsWith("--folders=")) {
-      result.folders = arg.split("=")[1].split(",").map((f) => f.trim());
-    } else if (arg === "--exclude" && args[i + 1]) {
-      result.exclude = args[++i].split(",").map((p) => p.trim());
-    } else if (arg.startsWith("--exclude=")) {
-      result.exclude = arg.split("=")[1].split(",").map((p) => p.trim());
     } else if (arg === "--config" && args[i + 1]) {
       result.config = args[++i];
     } else if (arg.startsWith("--config=")) {
@@ -156,20 +128,16 @@ function parse_cli_args(): CLIArgs {
 function print_usage(): void {
   console.error(`
 Usage:
-  npx tsx detect_entrypoints.ts --config path/to/config.json
-  npx tsx detect_entrypoints.ts --path /path/to/repo
-  npx tsx detect_entrypoints.ts --github owner/repo
+  node --import tsx detect_entrypoints.ts --config path/to/config.json
+  node --import tsx detect_entrypoints.ts --path /path/to/repo
+  node --import tsx detect_entrypoints.ts --github owner/repo
 
 Options:
-  --config <file>        Project config file (preferred, see below)
-  --path <dir>           Local directory to analyze
-  --github <repo>        GitHub repository (owner/repo or full URL)
-  --branch <name>        Branch to analyze (default: default branch)
-  --depth <n>            Clone depth for GitHub repos (default: 1)
-  --output <file>        Output file (default: stdout)
-  --include-tests        Include test files in analysis
-  --folders <paths>      Comma-separated subfolders to analyze
-  --exclude <patterns>   Comma-separated exclude patterns
+  --config <file>  Project config file (preferred; carries folders, exclude, include_tests)
+  --path <dir>     Local directory to analyze
+  --github <repo>  GitHub repository (owner/repo or full URL)
+  --branch <name>  Branch to analyze (--github only, default: default branch)
+  --depth <n>      Clone depth for GitHub repos (--github only, default: 1)
 
 Config file format (JSON):
   {
@@ -217,6 +185,8 @@ async function load_project_config(config_path: string): Promise<ProjectConfig> 
 
 // ===== GitHub Cloning =====
 
+const ARIADNE_REPOS_DIR = path.join(os.homedir(), ".ariadne", "self-repair-pipeline", "repos");
+
 function parse_github_url(repo: string): string {
   // Already a full URL
   if (repo.startsWith("https://") || repo.startsWith("git@")) {
@@ -234,46 +204,72 @@ function parse_github_url(repo: string): string {
   );
 }
 
+/**
+ * Derive a stable directory name and project ID from a GitHub repo reference.
+ * "webpack/webpack" → dir: "webpack--webpack", project_id: "webpack"
+ */
+function github_repo_to_ids(repo: string): { dir_name: string; project_id: string } {
+  const slug = repo
+    .replace(/^https?:\/\/github\.com\//, "")
+    .replace(/^git@github\.com:/, "")
+    .replace(/\.git$/, "");
+  const parts = slug.split("/");
+  return {
+    dir_name: parts.join("--"),
+    project_id: parts[parts.length - 1],
+  };
+}
+
 async function clone_github_repo(
   repo: string,
   branch?: string,
   depth: number = 1
 ): Promise<CloneResult> {
   const github_url = parse_github_url(repo);
-  const temp_dir = await fs.mkdtemp(path.join(os.tmpdir(), "ariadne-analysis-"));
+  const { dir_name } = github_repo_to_ids(repo);
+  const clone_dir = path.join(ARIADNE_REPOS_DIR, dir_name);
 
-  console.error(`Cloning ${github_url} to ${temp_dir}...`);
+  await fs.mkdir(clone_dir, { recursive: true });
 
-  // Build clone command
-  let clone_cmd = `git clone --depth ${depth}`;
-  if (branch) {
-    clone_cmd += ` -b ${branch}`;
-  }
-  clone_cmd += ` ${github_url} ${temp_dir}`;
-
+  // Reuse existing clone if present
+  let commit_hash: string;
   try {
-    execSync(clone_cmd, { encoding: "utf-8", stdio: "pipe" });
-  } catch (error: unknown) {
-    // Clean up on failure
-    await fs.rm(temp_dir, { recursive: true, force: true });
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to clone repository: ${message}`);
+    await fs.stat(path.join(clone_dir, ".git"));
+    console.error(`Using existing clone at ${clone_dir}`);
+    commit_hash = execSync("git rev-parse HEAD", {
+      encoding: "utf-8",
+      cwd: clone_dir,
+    }).trim();
+    console.error(`At commit ${commit_hash.substring(0, 7)}`);
+  } catch {
+    console.error(`Cloning ${github_url} to ${clone_dir}...`);
+
+    let clone_cmd = `git clone --depth ${depth}`;
+    if (branch) {
+      clone_cmd += ` -b ${branch}`;
+    }
+    clone_cmd += ` ${github_url} ${clone_dir}`;
+
+    try {
+      execSync(clone_cmd, { encoding: "utf-8", stdio: "pipe" });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to clone repository: ${message}`);
+    }
+
+    commit_hash = execSync("git rev-parse HEAD", {
+      encoding: "utf-8",
+      cwd: clone_dir,
+    }).trim();
+
+    console.error(`Cloned at commit ${commit_hash.substring(0, 7)}`);
   }
-
-  // Get commit hash
-  const commit_hash = execSync("git rev-parse HEAD", {
-    encoding: "utf-8",
-    cwd: temp_dir,
-  }).trim();
-
-  console.error(`Cloned at commit ${commit_hash.substring(0, 7)}`);
 
   return {
-    local_path: temp_dir,
+    local_path: clone_dir,
     commit_hash,
     cleanup: async () => {
-      console.error(`Cleaning up ${temp_dir}...`);
-      await fs.rm(temp_dir, { recursive: true, force: true });
+      // Repo is kept at a stable path — nothing to clean up
     },
   };
 }
@@ -434,9 +430,9 @@ async function main() {
       process.exit(1);
     }
 
-    include_tests = args.include_tests;
-    folders = args.folders;
-    exclude = args.exclude;
+    include_tests = false;
+    folders = undefined;
+    exclude = undefined;
 
     if (args.github) {
       // Clone GitHub repository
@@ -447,7 +443,7 @@ async function main() {
       );
       project_path = clone_result.local_path;
       cleanup = clone_result.cleanup;
-      project_name = path_to_project_id(project_path);
+      project_name = github_repo_to_ids(args.github).project_id;
 
       source_info = {
         type: "github",
@@ -516,16 +512,8 @@ async function main() {
       generated_at: new Date().toISOString(),
     };
 
-    // Output result
-    if (args.output) {
-      const json_output = JSON.stringify(result, null, 2);
-      await fs.writeFile(args.output, json_output, "utf-8");
-      console.error(`Output written to: ${args.output}`);
-    } else {
-      // Use structured output
-      const output_file = await save_json(OutputType.DETECT_ENTRYPOINTS, result, project_name);
-      console.error(`Output written to: ${output_file}`);
-    }
+    const output_file = await save_json(OutputType.DETECT_ENTRYPOINTS, result, project_name);
+    console.error(`Output written to: ${output_file}`);
 
     console.error("\nAnalysis complete:");
     console.error(`  Files analyzed: ${files_analyzed}`);

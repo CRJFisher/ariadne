@@ -36,7 +36,6 @@ export function merge_results(state: TriageState, triage_dir: string): number {
       entry.status = "failed";
       entry.error = `Failed to parse result file: ${err}`;
     }
-    entry.attempt_count++;
     merged++;
   }
 

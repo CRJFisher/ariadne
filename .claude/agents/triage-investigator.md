@@ -1,11 +1,11 @@
 ---
 name: triage-investigator
 description: Investigates a single entry point candidate to determine whether Ariadne correctly identified it as unreachable, or whether Ariadne missed real callers (false positive). Returns a TriageEntryResult JSON.
-tools: Bash(node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts:*), Read, Grep, Glob, Write
+tools: Bash(node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts:*), Read, Grep, Glob, Write(~/.ariadne/self-repair-pipeline/**)
 mcpServers:
   - ariadne
 model: sonnet
-maxTurns: 100
+maxTurns: 50
 ---
 
 # Purpose

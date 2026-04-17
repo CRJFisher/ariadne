@@ -2,19 +2,6 @@
  * Shared type definitions for top-level nodes analysis
  */
 
-// ===== Ground Truth =====
-
-export interface APIMethod {
-  name: string;
-  file_path: string;
-  start_line: number;
-  end_line?: number;
-  signature: string;
-  kind: string;
-  is_public: boolean;
-  description: string;
-}
-
 // ===== Analysis Input =====
 
 export interface FunctionEntry {
@@ -35,19 +22,6 @@ export interface EnrichedFunctionEntry extends FunctionEntry {
   // Metadata from CallableNode.definition
   is_exported: boolean;
   access_modifier?: "public" | "private" | "protected";
-  is_static?: boolean;
-  is_anonymous: boolean;
-  callback_context?: {
-    is_callback: boolean;
-    receiver_is_external: boolean | null;
-  };
-  call_summary: {
-    total_calls: number;
-    unresolved_count: number;
-    method_calls: number;
-    constructor_calls: number;
-    callback_invocations: number;
-  };
 
   // Pre-gathered diagnostics
   diagnostics: EntryPointDiagnostics;
@@ -104,42 +78,6 @@ export interface KnownEntrypointSource {
   source: string;       // "project", "react", "django", etc.
   description: string;
   entrypoints: KnownEntrypoint[];
-}
-
-// ===== Phase 1 Outputs =====
-
-export interface APICorrectlyDetected {
-  name: string;
-  file_path: string;
-  line: number;
-  signature: string;
-  detected_at_line: number;
-  reasoning: string;
-}
-
-export interface APIMissingFromDetection {
-  name: string;
-  file_path: string;
-  line: number;
-  signature: string;
-  triage_analysis: {
-    why_missed: string;
-    existing_task_fixes: string[];
-    suggested_new_task_fix?: string;
-  };
-}
-
-export interface APIInternalsExposed {
-  name: string;
-  file_path: string;
-  detected_at_line: number;
-  signature?: string;
-  reasoning: string;
-  triage_analysis: {
-    why_exposed: string;
-    existing_task_fixes: string[];
-    suggested_new_task_fix?: string;
-  };
 }
 
 // ===== Phase 2 Outputs (Grouped by Root Cause) =====

@@ -2,7 +2,7 @@
  * State types for the self-repair triage pipeline.
  *
  * The triage state file tracks entry point candidates through two phases:
- * - "triage": active batch loop, investigators running
+ * - "triage": investigators running as a continuous worker pool
  * - "complete": all entries processed, ready to finalize
  */
 
@@ -13,9 +13,7 @@ import type { EntryPointDiagnostics } from "./types.js";
 export interface TriageState {
   project_name: string;
   project_path: string;
-  analysis_file: string;
   phase: "triage" | "complete";
-  batch_size: number;
   entries: TriageEntry[];
   created_at: string;
   updated_at: string;
@@ -38,12 +36,11 @@ export interface TriageEntry {
   status: "pending" | "completed" | "failed";
   result: TriageEntryResult | null;
   error: string | null;
-  attempt_count: number;
   /** Enriched metadata for template substitution (stripped on finalize) */
   is_exported: boolean;
   access_modifier: string | null;
-  /** Pre-gathered diagnostics for self-service context (stripped on finalize) */
-  diagnostics: EntryPointDiagnostics | null;
+  /** Pre-gathered diagnostics for self-service context */
+  diagnostics: EntryPointDiagnostics;
 }
 
 export interface TriageEntryResult {
