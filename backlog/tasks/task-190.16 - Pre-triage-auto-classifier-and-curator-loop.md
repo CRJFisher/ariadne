@@ -1,0 +1,113 @@
+---
+id: TASK-190.16
+title: Pre-triage auto-classifier and curator loop
+status: To Do
+assignee: []
+created_date: "2026-04-17 14:50"
+labels:
+  - self-repair
+  - auto-classifier
+  - curator
+  - initiative
+dependencies: []
+references:
+  - /Users/chuck/.claude/plans/open-that-plan-up-hazy-cloud.md
+  - .claude/skills/self-repair-pipeline/SKILL.md
+  - ~/.ariadne/self-repair-pipeline/triage_patterns.json
+  - ~/.ariadne/self-repair-pipeline/analysis_output/webpack/triage_results
+parent_task_id: TASK-190
+priority: high
+---
+
+## Description
+
+<!-- SECTION:DESCRIPTION:BEGIN -->
+
+### Plan source
+
+The full architectural plan for this initiative lives at `~/.claude/plans/open-that-plan-up-hazy-cloud.md`. That file is the authoritative source of truth for the design — this task and its sub-tasks (TASK-190.16.1 through TASK-190.16.11) are the execution decomposition. Use the plan file during final review of each sub-task to cross-check that intent and acceptance criteria align with the originating design.
+
+### Summary
+
+This task is the umbrella for a new initiative: **stop re-discovering Ariadne's known failure modes on every pipeline run; start classifying them deterministically.** The self-repair pipeline currently sends every flagged entry point through an LLM triage agent, which re-derives the same conclusions every run. We replace that with a two-sided loop.
+
+### The two sides of the loop
+
+**Consumer side — `self-repair-pipeline` (existing skill, updated).** Between entry-point detection and LLM triage, a new `auto_classify` stage runs entries against a canonical registry of known Ariadne gaps. High-confidence matches get labelled automatically; the LLM only sees residual entries that genuinely might be true positives or unknown failure modes. Deterministic signals come from Ariadne itself — new `CallReference` fields carry _why_ a call didn't resolve (resolver stage + reason, receiver kind, syntactic features) so classifiers can read the resolver's internal state instead of re-implementing it.
+
+**Curator side — new `triage-curator` skill.** Analyses completed pipeline runs. Sonnet agents QA auto-classified groups (single-prompt outlier checks, no source-file deep dives). Opus agents investigate residual groups, proposing new classifier specs, linked backlog tasks, and — when current signals aren't sufficient — new Ariadne introspection APIs or resolver fields. Every registry entry links to a backlog task via `group_id`, so an impact report can rank Ariadne's unsupported language constructs by real-world `observed_count` across projects. This is how backlog prioritisation becomes data-driven rather than intuition-driven.
+
+### Why this is its own initiative
+
+Replacing the known-entrypoints cache is a fundamental architectural shift, not a bug fix:
+
+1. **Stateless pipeline runs.** Current cache keys (`file_path + symbol_name + …`) survive repo drift even when the underlying facts don't. The auto-classifier re-derives labels each run from the current tree-sitter queries, current resolver state, and current (version-controlled) registry. No per-project persisted state; no drift.
+2. **LLM effort becomes narrow and purposeful.** The residual set shrinks as classifiers cover dominant failure modes (webpack corpus shows 4 groups account for ~70% of false positives). When the LLM does emit a novel `group_id`, that's a signal we've found a genuinely new gap worth tracking.
+3. **Closed feedback loop.** Curator verifies consumer output, adds classifiers, creates backlog tasks. Every pipeline run generates data; every curator run either confirms existing classifications or improves them. Registry + backlog stay in sync.
+
+### Three axes of failure
+
+Each axis needs its own classifier family because the evidence differs:
+
+- **Axis A — Tree-sitter capture gaps.** The indexer's `.scm` query didn't fire `@reference.call` / `@reference.constructor`. Evidence: grep hit line has no relevant capture.
+- **Axis B — Resolution failures.** Call captured but `resolutions` is empty or wrong. Evidence: new `CallReference.resolution_failure.{stage, reason}` from resolver.
+- **Axis C — Framework / decorator patterns.** Legitimate framework entry points (`@pytest.fixture`, `@app.route`, `@Component`). Classifies as **true positive** with `group_id: framework-<name>` — still a useful deterministic label.
+
+### Sub-task map
+
+Phase A — Ariadne core enablers (prerequisite metadata):
+
+- **TASK-190.16.1** — `CallReference.resolution_failure` diagnostic (`Result<SymbolId[], ResolutionFailure>` resolver refactor)
+- **TASK-190.16.2** — `CallReference.receiver_kind` + `syntactic_features` (indexer-side metadata)
+- **TASK-190.16.3** — `explain_call_site()` + `list_name_collisions()` introspection APIs
+
+Phase B — Canonical registry:
+
+- **TASK-190.16.4** — `known_issues/registry.json` schema + seed content + rendered per-language references
+
+Phase C — Auto-classify pipeline stage:
+
+- **TASK-190.16.5** — `auto_classify` stage + predicate DSL evaluator, wired into `prepare_triage.ts`
+- **TASK-190.16.6** — 10 initial classifiers covering the webpack-dominant groups and the Axis B taxonomy
+
+Phase D — Residual-only agent + feedback loop:
+
+- **TASK-190.16.7** — Triage agent updated for residual-only workflow; `novel:` prefix feedback; drift monitoring
+
+Phase E — Cache removal:
+
+- **TASK-190.16.8** — Delete `known_entrypoints.ts`, `entrypoint_stop.ts` hook, `KnownEntrypointSource`, cache paths
+
+Phase F — Curator skill:
+
+- **TASK-190.16.9** — Skill scaffold (`scan_runs`, `curator_state`, CLI options `--project`/`--last`/`--run`/`--dry-run`)
+- **TASK-190.16.10** — Sonnet group-QA and opus group-investigation dispatchers
+- **TASK-190.16.11** — Backlog-task linkage + cross-run impact reporting
+
+### Cross-cutting norms
+
+- **No backwards-compatibility hedging.** Rename types, remove old fields, change resolver signatures in the same PR as the replacement. If `EntryPointDiagnostics` should become `EntryPointContext`, do it; don't leave shims.
+- **Curator is invoked explicitly.** Running the self-repair-pipeline does NOT trigger the curator. The curator is run manually, on cron, or in CI on a regular cadence. The two skills communicate through files on disk only.
+- **Feedback loop only proposes.** The pipeline's registry-update path never auto-writes an active `ClassifierSpec` — only `kind: "none"` entries with `status: "wip"`. Promotion to an active classifier is always a human-reviewed PR.
+
+### What "done" looks like
+
+- Every pipeline run is stateless with respect to previous runs; `known_issues/registry.json` is the only persisted signal and it is version-controlled.
+- On webpack corpus, auto-classify matches ≥40% of flagged entries at ≥0.9 confidence.
+- Agent-to-classifier disagreement rate <10% per classifier with `min_confidence: 0.9`.
+- Curator runs across completed pipeline outputs, inserting `wip`-status registry entries for novel groups and creating backlog tasks with impact-weighted `observed_count`.
+- Impact report ranks Ariadne's unsupported constructs by observed frequency, bridging code behaviour to backlog prioritisation.
+
+<!-- SECTION:DESCRIPTION:END -->
+
+## Acceptance Criteria
+
+<!-- AC:BEGIN -->
+
+- [ ] #1 All 11 sub-tasks (TASK-190.16.1 through TASK-190.16.11) are complete
+- [ ] #2 Pipeline runs produce identical output back-to-back on webpack with no persisted per-project state between runs (cache removal verified)
+- [ ] #3 `known_issues/registry.json` seeded with ≥15 entries covering webpack-dominant groups, Axis B F1–F10, Axis C framework patterns
+- [ ] #4 Auto-classify rate ≥40% on webpack corpus; per-classifier precision ≥ registered `min_confidence`
+- [ ] #5 `triage-curator` skill can curate a full run end-to-end: sonnet QA on auto-classified groups, opus investigation on residual groups, registry/backlog updates with bidirectional links
+- [ ] #6 Cross-run impact report ranks Ariadne gaps by `observed_count`; top entries cross-referenced with open backlog tasks
+<!-- AC:END -->
