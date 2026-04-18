@@ -19,7 +19,10 @@ import type {
   SymbolName,
   SymbolReference,
   MethodCallReference,
+  Result,
+  ResolutionFailure,
 } from "@ariadnejs/types";
+import { err, ok } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../registries/definition";
 import type { ResolutionRegistry } from "../resolve_references";
 
@@ -34,16 +37,14 @@ import type { ResolutionRegistry } from "../resolve_references";
  * 4. If so, resolve the collection variable
  * 5. Return all functions from the collection
  *
- * @param call_ref - Call reference from semantic index
- * @param definitions - Definition registry with function collections
- * @param resolutions - Resolution registry for symbol lookup
- * @returns Array of resolved function symbol_ids
+ * @returns Resolved function symbol_ids on success, or a `ResolutionFailure`
+ *          identifying why no collection-stored functions could be reached.
  */
 export function resolve_collection_dispatch(
   call_ref: SymbolReference,
   definitions: DefinitionRegistry,
   resolutions: ResolutionRegistry
-): SymbolId[] {
+): Result<SymbolId[], ResolutionFailure> {
   // 1. Identify the target variable name
   let target_name: SymbolName | undefined;
   const scope_id = call_ref.scope_id;
@@ -67,18 +68,36 @@ export function resolve_collection_dispatch(
   }
 
   if (!target_name) {
-    return [];
+    return err({
+      stage: "collection_dispatch",
+      reason: "dynamic_dispatch",
+      partial_info: { last_known_scope: scope_id },
+    });
   }
 
   // 2. Resolve target variable
   const target_id = resolutions.resolve(scope_id, target_name);
   if (!target_id) {
-    return [];
+    return err({
+      stage: "name_resolution",
+      reason: "name_not_in_scope",
+      partial_info: { last_known_scope: scope_id },
+    });
   }
 
   const target_def = definitions.get(target_id);
   if (!target_def) {
-    return [];
+    // Name resolved to a symbol_id, but no definition is registered for it
+    // (e.g. unresolved import target). Surface as a collection dispatch miss
+    // since we cannot inspect the target for a collection_source.
+    return err({
+      stage: "collection_dispatch",
+      reason: "collection_dispatch_miss",
+      partial_info: {
+        resolved_receiver_type: target_id,
+        last_known_scope: scope_id,
+      },
+    });
   }
 
   // 3. Check collection_source
@@ -87,7 +106,11 @@ export function resolve_collection_dispatch(
     (target_def.kind !== "variable" && target_def.kind !== "constant") ||
     !target_def.collection_source
   ) {
-    return [];
+    return err({
+      stage: "collection_dispatch",
+      reason: "collection_dispatch_miss",
+      partial_info: { resolved_receiver_type: target_id },
+    });
   }
 
   // 4. Resolve collection variable
@@ -98,7 +121,11 @@ export function resolve_collection_dispatch(
   );
 
   if (!collection_id) {
-    return [];
+    return err({
+      stage: "name_resolution",
+      reason: "name_not_in_scope",
+      partial_info: { last_known_scope: target_def.defining_scope_id },
+    });
   }
 
   // 5. Get functions from collection
@@ -107,22 +134,21 @@ export function resolve_collection_dispatch(
 
 /**
  * Get all functions from a collection variable.
- *
- * @param variable_id - SymbolId of the collection variable
- * @param definitions - Definition registry
- * @param resolutions - Resolution registry
- * @returns Array of function SymbolIds stored in the collection
  */
 function get_collection_functions(
   variable_id: SymbolId,
   definitions: DefinitionRegistry,
   resolutions: ResolutionRegistry
-): SymbolId[] {
+): Result<SymbolId[], ResolutionFailure> {
   const collection = definitions.get_function_collection(variable_id);
   if (!collection) {
-    return [];
+    return err({
+      stage: "collection_dispatch",
+      reason: "collection_dispatch_miss",
+      partial_info: { resolved_receiver_type: variable_id },
+    });
   }
-  
+
   const functions = Array.from(collection.stored_functions);
 
   // Resolve stored references (e.g. identifiers in the collection)
@@ -139,5 +165,13 @@ function get_collection_functions(
     }
   }
 
-  return functions;
+  if (functions.length === 0) {
+    return err({
+      stage: "collection_dispatch",
+      reason: "collection_dispatch_miss",
+      partial_info: { resolved_receiver_type: variable_id },
+    });
+  }
+
+  return ok(functions);
 }

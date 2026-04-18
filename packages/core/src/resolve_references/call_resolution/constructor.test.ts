@@ -11,9 +11,9 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { resolve_constructor_call, find_constructor_in_class_hierarchy, include_constructors_for_class_symbols } from "./constructor";
 import { DefinitionRegistry } from "../registries/definition";
 import { ResolutionRegistry } from "../resolve_references";
-import { set_test_resolutions } from "../resolve_references.test";
+import { set_test_resolutions, unwrap } from "../resolve_references.test";
 import { create_constructor_call_reference } from "../../index_single_file/references/factories";
-import { class_symbol } from "@ariadnejs/types";
+import { class_symbol, is_err } from "@ariadnejs/types";
 import type {
   SymbolId,
   SymbolName,
@@ -113,7 +113,7 @@ describe("Constructor Call Resolution", () => {
       );
 
       // Assert - should resolve to constructor symbol, not class symbol
-      expect(resolved).toEqual([constructor_id]);
+      expect(unwrap(resolved)).toEqual([constructor_id]);
     });
 
     it("should resolve constructor with parameters", () => {
@@ -186,7 +186,7 @@ describe("Constructor Call Resolution", () => {
       );
 
       // Assert
-      expect(resolved).toEqual([constructor_id]);
+      expect(unwrap(resolved)).toEqual([constructor_id]);
     });
   });
 
@@ -233,7 +233,7 @@ describe("Constructor Call Resolution", () => {
       );
 
       // Assert - falls back to class symbol
-      expect(resolved).toEqual([class_id]);
+      expect(unwrap(resolved)).toEqual([class_id]);
     });
 
     it("should return class symbol when constructor array is empty", () => {
@@ -271,7 +271,7 @@ describe("Constructor Call Resolution", () => {
         resolutions
       );
 
-      expect(resolved).toEqual([class_id]);
+      expect(unwrap(resolved)).toEqual([class_id]);
     });
   });
 
@@ -292,7 +292,11 @@ describe("Constructor Call Resolution", () => {
         resolutions
       );
 
-      expect(resolved).toEqual([]);
+      expect(resolved.ok).toBe(false);
+      if (is_err(resolved)) {
+        expect(resolved.error.stage).toBe("constructor_lookup");
+        expect(resolved.error.reason).toBe("name_not_in_scope");
+      }
     });
 
     it("should return empty array when symbol is not a class", () => {
@@ -332,7 +336,11 @@ describe("Constructor Call Resolution", () => {
       );
 
       // Function is not a class, so resolution fails
-      expect(resolved).toEqual([]);
+      expect(resolved.ok).toBe(false);
+      if (is_err(resolved)) {
+        expect(resolved.error.stage).toBe("constructor_lookup");
+        expect(resolved.error.reason).toBe("constructor_target_not_a_class");
+      }
     });
 
     it("should return empty array when definition not found", () => {
@@ -357,7 +365,7 @@ describe("Constructor Call Resolution", () => {
         resolutions
       );
 
-      expect(resolved).toEqual([]);
+      expect(resolved.ok).toBe(false);
     });
   });
 
@@ -412,8 +420,8 @@ describe("Constructor Call Resolution", () => {
 
       // Should NOT find the "constructor" in methods array
       // Should fall back to class symbol
-      expect(resolved).toEqual([class_id]);
-      expect(resolved).not.toContain(fake_constructor_method.symbol_id);
+      expect(unwrap(resolved)).toEqual([class_id]);
+      expect(unwrap(resolved)).not.toContain(fake_constructor_method.symbol_id);
     });
   });
 });

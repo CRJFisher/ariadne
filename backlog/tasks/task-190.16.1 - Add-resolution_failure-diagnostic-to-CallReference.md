@@ -1,7 +1,7 @@
 ---
 id: TASK-190.16.1
 title: Add resolution_failure diagnostic to CallReference
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-04-17 14:37"
 labels:
@@ -40,7 +40,7 @@ interface ResolutionFailure {
     | "name_resolution"
     | "receiver_resolution"
     | "method_lookup"
-    | "import_follow"
+    | "import_resolution"
     | "type_inference";
   reason:
     | "name_not_in_scope"
@@ -71,9 +71,9 @@ No backwards-compatibility hedging — change the resolver signature and update 
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 `ResolutionFailure` type exported from `packages/types/src/call_chains.ts`
-- [ ] #2 Resolver functions return `Result<SymbolId[], ResolutionFailure>`; every null-return site names a specific stage + reason
-- [ ] #3 Every existing resolver test still passes; added tests cover at least one entry per reason enum value
-- [ ] #4 `CallReference.resolution_failure` is populated on resolution failure and absent on success (zero memory overhead for the common case)
-- [ ] #5 No call site has a `// TODO: resolution_failure` or similar placeholder — enum coverage is compile-time-enforced
+- [x] #1 `ResolutionFailure` type exported from `packages/types/src/call_chains.ts`
+- [x] #2 Resolver functions return `Result<SymbolId[], ResolutionFailure>`; every null-return site names a specific stage + reason
+- [x] #3 Every existing resolver test still passes; added tests cover at least one entry per reason enum value
+- [x] #4 `CallReference.resolution_failure` is populated on resolution failure and absent on success (zero memory overhead for the common case)
+- [x] #5 No call site has a `// TODO: resolution_failure` or similar placeholder — enum coverage is compile-time-enforced
 <!-- AC:END -->

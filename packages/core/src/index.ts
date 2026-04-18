@@ -12,6 +12,10 @@ export { Project } from "./project";
 export { build_index_single_file } from "./index_single_file/index_single_file";
 export { trace_call_graph, type TraceCallGraphOptions } from "./trace_call_graph/trace_call_graph";
 
+// Tree-sitter query execution (used by self-repair pipeline for diagnostic capture analysis)
+export { query_tree } from "./index_single_file/query_code_tree/query_code_tree";
+export { LANGUAGE_TO_TREESITTER_LANG, SUPPORTED_LANGUAGES } from "./index_single_file/query_code_tree/query_loader";
+
 // Project-level registries
 export {
   DefinitionRegistry,

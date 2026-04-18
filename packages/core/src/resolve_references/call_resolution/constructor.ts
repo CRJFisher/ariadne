@@ -19,7 +19,10 @@ import type {
   FilePath,
   ConstructorCallReference,
   ClassDefinition,
+  Result,
+  ResolutionFailure,
 } from "@ariadnejs/types";
+import { err, ok } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../registries/definition";
 import type { ResolutionRegistry } from "../resolve_references";
 import { resolve_namespace_export } from "./method_lookup";
@@ -46,7 +49,7 @@ export function resolve_constructor_call(
   definitions: DefinitionRegistry,
   resolutions: ResolutionRegistry,
   import_source_resolver?: (import_id: SymbolId) => FilePath | undefined
-): SymbolId[] {
+): Result<SymbolId[], ResolutionFailure> {
   let class_symbol: SymbolId | null = null;
 
   // Namespace-qualified constructor: property_chain = [namespace, class_name] — need both parts
@@ -69,14 +72,22 @@ export function resolve_constructor_call(
   }
 
   if (!class_symbol) {
-    return [];
+    return err({
+      stage: "constructor_lookup",
+      reason: "name_not_in_scope",
+      partial_info: { last_known_scope: call_ref.scope_id },
+    });
   }
 
   // Verify it's actually a class and get constructor
   const class_def = find_class_definition(class_symbol, definitions);
 
   if (!class_def) {
-    return [];
+    return err({
+      stage: "constructor_lookup",
+      reason: "constructor_target_not_a_class",
+      partial_info: { resolved_receiver_type: class_symbol },
+    });
   }
 
   // Walk class hierarchy for constructor, fall back to class symbol
@@ -86,7 +97,7 @@ export function resolve_constructor_call(
     resolutions
   );
 
-  return [constructor_symbol || class_symbol];
+  return ok([constructor_symbol || class_symbol]);
 }
 
 /**

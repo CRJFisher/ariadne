@@ -11,7 +11,14 @@
  * - Namespace export lookup for namespace imports
  */
 
-import type { SymbolId, SymbolName, FilePath } from "@ariadnejs/types";
+import type {
+  SymbolId,
+  SymbolName,
+  FilePath,
+  Result,
+  ResolutionFailure,
+} from "@ariadnejs/types";
+import { err, ok } from "@ariadnejs/types";
 import { DefinitionRegistry } from "../registries/definition";
 import type { ReceiverResolutionContext } from "./receiver_resolution";
 
@@ -24,16 +31,14 @@ import type { ReceiverResolutionContext } from "./receiver_resolution";
  * - Object literal (FunctionCollection): lookup in stored functions
  * - Namespace import: lookup in source file exports
  *
- * @param receiver_type - Resolved receiver type (or symbol for special cases)
- * @param method_name - Name of the method to look up
- * @param context - Resolution context with all registries
- * @returns Array of resolved method symbol_ids (empty if not found)
+ * @returns Resolved method symbol_ids on success, or a `ResolutionFailure`
+ *          identifying which sub-stage and reason caused the lookup to fail.
  */
 export function resolve_method_on_type(
   receiver_type: SymbolId,
   method_name: SymbolName,
   context: ReceiverResolutionContext
-): SymbolId[] {
+): Result<SymbolId[], ResolutionFailure> {
   const { definitions, types } = context;
 
   // Check for special receiver types that need different handling
@@ -42,11 +47,25 @@ export function resolve_method_on_type(
   // Handle namespace imports
   if (receiver_def?.kind === "import" && receiver_def.import_kind === "namespace") {
     const source_file = context.imports.get_resolved_import_path(receiver_type);
-    if (source_file) {
-      const sym = resolve_namespace_export(source_file, method_name, definitions);
-      return sym ? [sym] : [];
+    if (!source_file) {
+      return err({
+        stage: "import_resolution",
+        reason: "import_unresolved",
+        partial_info: { resolved_receiver_type: receiver_type },
+      });
     }
-    return [];
+    const sym = resolve_namespace_export(source_file, method_name, definitions);
+    if (!sym) {
+      return err({
+        stage: "method_lookup",
+        reason: "method_not_on_type",
+        partial_info: {
+          resolved_receiver_type: receiver_type,
+          import_target_file: source_file,
+        },
+      });
+    }
+    return ok([sym]);
   }
 
   // Handle named/default imports - follow to actual exported class/type
@@ -67,12 +86,39 @@ export function resolve_method_on_type(
       }
     }
     // Submodule fallback: named import may refer to a submodule file
+    // (e.g. `from training import pipeline` where pipeline is a .py file)
     const submodule_path = context.imports.get_submodule_import_path(receiver_type);
     if (submodule_path) {
       const sym = resolve_namespace_export(submodule_path, method_name, definitions);
-      return sym ? [sym] : [];
+      if (!sym) {
+        return err({
+          stage: "method_lookup",
+          reason: "method_not_on_type",
+          partial_info: {
+            resolved_receiver_type: receiver_type,
+            import_target_file: submodule_path,
+          },
+        });
+      }
+      return ok([sym]);
     }
-    return [];
+    if (source_file) {
+      // Source file resolved but the named export was not found and no submodule fallback:
+      // common case for re-export / barrel walk failure.
+      return err({
+        stage: "import_resolution",
+        reason: "barrel_reexport_chain",
+        partial_info: {
+          resolved_receiver_type: receiver_type,
+          import_target_file: source_file,
+        },
+      });
+    }
+    return err({
+      stage: "import_resolution",
+      reason: "import_unresolved",
+      partial_info: { resolved_receiver_type: receiver_type },
+    });
   }
 
   // Handle object literals with FunctionCollection
@@ -94,27 +140,41 @@ export function resolve_method_on_type(
   }
 
   if (!method_symbol) {
-    return [];
+    return err({
+      stage: "method_lookup",
+      reason: "method_not_on_type",
+      partial_info: { resolved_receiver_type: receiver_type },
+    });
   }
 
   // Check if this is a polymorphic call (receiver is an interface)
   if (receiver_def?.kind === "interface") {
-    return resolve_polymorphic_method(receiver_type, method_name, definitions);
+    const impls = resolve_polymorphic_method(receiver_type, method_name, definitions);
+    if (impls.length === 0) {
+      return err({
+        stage: "method_lookup",
+        reason: "polymorphic_no_implementations",
+        partial_info: { resolved_receiver_type: receiver_type },
+      });
+    }
+    return ok(impls);
   }
 
   // For classes, check if subtypes override this method
   // This ensures all possible runtime targets are connected in the call graph
   if (receiver_def?.kind === "class") {
-    return resolve_polymorphic_class_method(
-      receiver_type,
-      method_name,
-      method_symbol,
-      definitions
+    return ok(
+      resolve_polymorphic_class_method(
+        receiver_type,
+        method_name,
+        method_symbol,
+        definitions
+      )
     );
   }
 
   // Concrete call: single resolution
-  return [method_symbol];
+  return ok([method_symbol]);
 }
 
 /**
@@ -334,10 +394,14 @@ function resolve_collection_method(
   method_name: SymbolName,
   definitions: DefinitionRegistry,
   context: ReceiverResolutionContext
-): SymbolId[] {
+): Result<SymbolId[], ResolutionFailure> {
   const fn_collection = definitions.get_function_collection(variable_id);
   if (!fn_collection) {
-    return [];
+    return err({
+      stage: "method_lookup",
+      reason: "collection_dispatch_miss",
+      partial_info: { resolved_receiver_type: variable_id },
+    });
   }
 
   // Check stored_functions (directly defined anonymous functions)
@@ -345,7 +409,7 @@ function resolve_collection_method(
   for (const stored_fn_id of fn_collection.stored_functions) {
     const fn_def = definitions.get(stored_fn_id);
     if (fn_def && fn_def.name === method_name) {
-      return [stored_fn_id];
+      return ok([stored_fn_id]);
     }
   }
 
@@ -359,12 +423,16 @@ function resolve_collection_method(
         if (var_def) {
           const resolved = context.resolutions.resolve(var_def.defining_scope_id, method_name);
           if (resolved) {
-            return [resolved];
+            return ok([resolved]);
           }
         }
       }
     }
   }
 
-  return [];
+  return err({
+    stage: "method_lookup",
+    reason: "collection_dispatch_miss",
+    partial_info: { resolved_receiver_type: variable_id },
+  });
 }

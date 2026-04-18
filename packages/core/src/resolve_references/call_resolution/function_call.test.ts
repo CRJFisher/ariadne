@@ -16,9 +16,9 @@ import { ScopeRegistry } from "../registries/scope";
 import { ReferenceRegistry } from "../registries/reference";
 import { ImportGraph } from "../../project/import_graph";
 import { ResolutionRegistry } from "../resolve_references";
-import { set_test_resolutions } from "../resolve_references.test";
+import { set_test_resolutions, unwrap } from "../resolve_references.test";
 import { create_function_call_reference } from "../../index_single_file/references/factories";
-import { function_symbol, method_symbol, variable_symbol } from "@ariadnejs/types";
+import { function_symbol, method_symbol, variable_symbol, is_err } from "@ariadnejs/types";
 import type {
   SymbolId,
   SymbolName,
@@ -91,7 +91,7 @@ describe("Function Call Resolution", () => {
       );
 
       const resolved = resolve_function_call(call_ref, context, resolutions);
-      expect(resolved).toEqual([func_id]);
+      expect(unwrap(resolved)).toEqual([func_id]);
     });
   });
 
@@ -175,7 +175,7 @@ describe("Function Call Resolution", () => {
       );
 
       const resolved = resolve_function_call(call_ref, context, resolutions);
-      expect(resolved).toEqual([import_func_id]);
+      expect(unwrap(resolved)).toEqual([import_func_id]);
     });
   });
 
@@ -190,7 +190,106 @@ describe("Function Call Resolution", () => {
       );
 
       const resolved = resolve_function_call(call_ref, context, resolutions);
-      expect(resolved).toEqual([]);
+      expect(resolved.ok).toBe(false);
+      if (is_err(resolved)) {
+        expect(resolved.error.stage).toBe("name_resolution");
+        expect(resolved.error.reason).toBe("name_not_in_scope");
+      }
+    });
+
+    it("should fail with definition_has_no_body_scope when method has no body_scope_id", () => {
+      // A method without a body_scope_id (e.g. abstract / interface method) cannot
+      // be the target of a bare function call, and the alternative-resolution walk
+      // has nowhere to climb.
+      const method_id = method_symbol("do_work", MOCK_LOCATION);
+
+      const method_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: method_id,
+        name: "do_work" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        parameters: [],
+        // body_scope_id intentionally omitted
+      };
+
+      definitions.update_file(TEST_FILE, [method_def]);
+
+      const scope_resolutions = new Map<SymbolName, SymbolId>();
+      scope_resolutions.set("do_work" as SymbolName, method_id);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
+
+      const call_ref = create_function_call_reference(
+        "do_work" as SymbolName,
+        MOCK_LOCATION,
+        FILE_SCOPE_ID
+      );
+
+      const resolved = resolve_function_call(call_ref, context, resolutions);
+      expect(resolved.ok).toBe(false);
+      if (is_err(resolved)) {
+        expect(resolved.error.stage).toBe("name_resolution");
+        expect(resolved.error.reason).toBe("definition_has_no_body_scope");
+      }
+    });
+
+    it("should fail with no_parent_class when method body's parent scope has no parent", () => {
+      // Method whose body scope's parent (the "class" scope) has no parent — i.e.
+      // the alternative-resolution walk can't climb to a module/file scope.
+      const ORPHAN_CLASS_SCOPE = "scope:test.ts:orphan_class:1:0" as ScopeId;
+      const ORPHAN_METHOD_SCOPE = "scope:test.ts:orphan_method:2:0" as ScopeId;
+      const method_id = method_symbol("do_work", MOCK_LOCATION);
+
+      const method_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: method_id,
+        name: "do_work" as SymbolName,
+        defining_scope_id: ORPHAN_CLASS_SCOPE,
+        location: MOCK_LOCATION,
+        parameters: [],
+        body_scope_id: ORPHAN_METHOD_SCOPE,
+      };
+
+      definitions.update_file(TEST_FILE, [method_def]);
+
+      // Scope tree: ORPHAN_CLASS (parent_id: null) → ORPHAN_METHOD (parent: ORPHAN_CLASS)
+      const scope_map = new Map<ScopeId, LexicalScope>();
+      scope_map.set(ORPHAN_CLASS_SCOPE, {
+        id: ORPHAN_CLASS_SCOPE,
+        type: "class",
+        location: MOCK_LOCATION,
+        parent_id: null,
+        name: "Orphan" as SymbolName,
+        child_ids: [ORPHAN_METHOD_SCOPE],
+      });
+      scope_map.set(ORPHAN_METHOD_SCOPE, {
+        id: ORPHAN_METHOD_SCOPE,
+        type: "function",
+        location: MOCK_LOCATION,
+        parent_id: ORPHAN_CLASS_SCOPE,
+        name: "do_work" as SymbolName,
+        child_ids: [],
+      });
+      scopes.update_file(TEST_FILE, scope_map);
+
+      set_test_resolutions(
+        resolutions,
+        ORPHAN_METHOD_SCOPE,
+        new Map([["do_work" as SymbolName, method_id]])
+      );
+
+      const call_ref = create_function_call_reference(
+        "do_work" as SymbolName,
+        MOCK_LOCATION,
+        ORPHAN_METHOD_SCOPE
+      );
+
+      const resolved = resolve_function_call(call_ref, context, resolutions);
+      expect(resolved.ok).toBe(false);
+      if (is_err(resolved)) {
+        expect(resolved.error.stage).toBe("name_resolution");
+        expect(resolved.error.reason).toBe("no_parent_class");
+      }
     });
 
     it("should return symbol when definition not in registry (trust unresolved)", () => {
@@ -207,7 +306,7 @@ describe("Function Call Resolution", () => {
       );
 
       const resolved = resolve_function_call(call_ref, context, resolutions);
-      expect(resolved).toEqual([unknown_id]);
+      expect(unwrap(resolved)).toEqual([unknown_id]);
     });
   });
 
@@ -299,7 +398,7 @@ describe("Function Call Resolution", () => {
       );
 
       const resolved = resolve_function_call(call_ref, context, resolutions);
-      expect(resolved).toEqual([handler_a_id, handler_b_id]);
+      expect(unwrap(resolved)).toEqual([handler_a_id, handler_b_id]);
     });
 
     it("should return direct resolution when variable has no collection_source", () => {
@@ -329,7 +428,7 @@ describe("Function Call Resolution", () => {
       );
 
       const resolved = resolve_function_call(call_ref, context, resolutions);
-      expect(resolved).toEqual([func_id]);
+      expect(unwrap(resolved)).toEqual([func_id]);
     });
   });
 
@@ -372,7 +471,7 @@ describe("Function Call Resolution", () => {
       // Without type bindings, callable instance returns undefined,
       // so the variable resolution is preserved
       const resolved = resolve_function_call(call_ref, context, resolutions);
-      expect(resolved).toEqual([var_id]);
+      expect(unwrap(resolved)).toEqual([var_id]);
     });
 
     it("should not attempt __call__ for non-.py files", () => {
@@ -401,7 +500,7 @@ describe("Function Call Resolution", () => {
 
       // For .ts files, callable instance path is not attempted
       const resolved = resolve_function_call(call_ref, context, resolutions);
-      expect(resolved).toEqual([var_id]);
+      expect(unwrap(resolved)).toEqual([var_id]);
     });
   });
 });

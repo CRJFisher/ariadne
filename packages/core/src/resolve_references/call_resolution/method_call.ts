@@ -18,6 +18,8 @@ import type {
   SymbolId,
   MethodCallReference,
   SelfReferenceCall,
+  Result,
+  ResolutionFailure,
 } from "@ariadnejs/types";
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
@@ -40,18 +42,9 @@ import { resolve_method_on_type } from "./method_lookup";
  * 2. Look up method on that type
  *
  * Returns:
- * - []: Resolution failed (no receiver, no type, or no method)
- * - [symbol]: Concrete method call (user.getName())
- * - [a, b, c]: Polymorphic method call (handler.process() where handler is an interface)
- *
- * @param call_ref - Method call or self-reference call from semantic index
- * @param scopes - Scope registry for scope tree walking
- * @param definitions - Definition registry for lookups
- * @param types - TypeRegistry for type tracking and member lookup
- * @param resolutions - Resolution registry for symbol resolution
- * @param resolve_import_path - Optional resolver for import paths (for module imports)
- * @param resolve_submodule_import_path - Optional resolver for submodule import paths
- * @returns Array of resolved method symbol_ids (empty if resolution fails)
+ * - `ok([symbol])`: Concrete method call (user.getName())
+ * - `ok([a, b, c])`: Polymorphic method call (handler.process() where handler is an interface)
+ * - `err(failure)`: Receiver-resolution or method-lookup failure with a named reason
  */
 export function resolve_method_call(
   call_ref: MethodCallReference | SelfReferenceCall,
@@ -60,7 +53,7 @@ export function resolve_method_call(
   types: TypeRegistry,
   resolutions: ResolutionRegistry,
   imports: ImportGraph
-): SymbolId[] {
+): Result<SymbolId[], ResolutionFailure> {
   // Build resolution context
   const context: ReceiverResolutionContext = {
     scopes,
@@ -72,14 +65,16 @@ export function resolve_method_call(
 
   // Phase 1: Extract and resolve the receiver expression to a type
   const receiver = extract_receiver(call_ref);
-  const receiver_type = resolve_receiver_type(receiver, context);
+  const receiver_result = resolve_receiver_type(receiver, context);
 
-  if (!receiver_type) {
-    // Resolution failed - no fallback for now
-    // Collection dispatch fallback is handled by the caller
-    return [];
+  if (!receiver_result.ok) {
+    return receiver_result;
   }
 
   // Phase 2: Look up method on the resolved receiver type
-  return resolve_method_on_type(receiver_type, receiver.method_name, context);
+  return resolve_method_on_type(
+    receiver_result.value,
+    receiver.method_name,
+    context
+  );
 }

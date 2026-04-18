@@ -22,7 +22,7 @@ import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ResolutionRegistry } from "../resolve_references";
 import { ImportGraph } from "../../project/import_graph";
-import { set_test_resolutions } from "../resolve_references.test";
+import { set_test_resolutions, unwrap } from "../resolve_references.test";
 import type {
   SymbolId,
   SymbolName,
@@ -43,6 +43,8 @@ import {
   method_symbol,
   function_symbol,
   variable_symbol,
+  is_ok,
+  is_err,
 } from "@ariadnejs/types";
 
 // Test fixtures
@@ -122,7 +124,7 @@ describe("resolve_method_on_type", () => {
         context
       );
 
-      expect(result).toEqual([method_id]);
+      expect(unwrap(result)).toEqual([method_id]);
     });
 
     it("should find method via DefinitionRegistry fallback", () => {
@@ -163,7 +165,7 @@ describe("resolve_method_on_type", () => {
         context
       );
 
-      expect(result).toEqual([method_id]);
+      expect(unwrap(result)).toEqual([method_id]);
     });
 
     it("should return empty array if method not found", () => {
@@ -191,7 +193,10 @@ describe("resolve_method_on_type", () => {
         context
       );
 
-      expect(result).toEqual([]);
+      expect(result.ok).toBe(false);
+      if (is_err(result)) {
+        expect(result.error.reason).toBe("method_not_on_type");
+      }
     });
   });
 
@@ -306,9 +311,9 @@ describe("resolve_method_on_type", () => {
       );
 
       // Should return both implementation methods
-      expect(result).toHaveLength(2);
-      expect(result).toContain(method_a_id);
-      expect(result).toContain(method_b_id);
+      expect(unwrap(result)).toHaveLength(2);
+      expect(unwrap(result)).toContain(method_a_id);
+      expect(unwrap(result)).toContain(method_b_id);
     });
 
     it("should return empty array for interface with no implementations", () => {
@@ -353,7 +358,11 @@ describe("resolve_method_on_type", () => {
       );
 
       // No implementations = empty result
-      expect(result).toEqual([]);
+      expect(result.ok).toBe(false);
+      if (is_err(result)) {
+        expect(result.error.stage).toBe("method_lookup");
+        expect(result.error.reason).toBe("polymorphic_no_implementations");
+      }
     });
   });
 
@@ -441,9 +450,9 @@ describe("resolve_method_on_type", () => {
       );
 
       // Should return both base and child methods
-      expect(result).toHaveLength(2);
-      expect(result).toContain(base_method_id);
-      expect(result).toContain(child_method_id);
+      expect(unwrap(result)).toHaveLength(2);
+      expect(unwrap(result)).toContain(base_method_id);
+      expect(unwrap(result)).toContain(child_method_id);
     });
 
     it("should resolve multi-level inheritance (3 levels)", () => {
@@ -557,10 +566,10 @@ describe("resolve_method_on_type", () => {
       );
 
       // Should return all three methods
-      expect(result).toHaveLength(3);
-      expect(result).toContain(method_a_id);
-      expect(result).toContain(method_b_id);
-      expect(result).toContain(method_c_id);
+      expect(unwrap(result)).toHaveLength(3);
+      expect(unwrap(result)).toContain(method_a_id);
+      expect(unwrap(result)).toContain(method_b_id);
+      expect(unwrap(result)).toContain(method_c_id);
     });
 
     it("should return only base method when no overrides exist", () => {
@@ -633,7 +642,7 @@ describe("resolve_method_on_type", () => {
       );
 
       // Should return only base method
-      expect(result).toEqual([base_method_id]);
+      expect(unwrap(result)).toEqual([base_method_id]);
     });
 
     it("should handle sibling classes both overriding", () => {
@@ -746,10 +755,10 @@ describe("resolve_method_on_type", () => {
       );
 
       // Should return all three methods
-      expect(result).toHaveLength(3);
-      expect(result).toContain(base_method_id);
-      expect(result).toContain(child1_method_id);
-      expect(result).toContain(child2_method_id);
+      expect(unwrap(result)).toHaveLength(3);
+      expect(unwrap(result)).toContain(base_method_id);
+      expect(unwrap(result)).toContain(child1_method_id);
+      expect(unwrap(result)).toContain(child2_method_id);
     });
   });
 
@@ -801,7 +810,7 @@ describe("resolve_method_on_type", () => {
         context_with_resolver
       );
 
-      expect(result).toEqual([helper_fn_id]);
+      expect(unwrap(result)).toEqual([helper_fn_id]);
     });
 
     it("should return empty for non-exported function", () => {
@@ -850,7 +859,11 @@ describe("resolve_method_on_type", () => {
         context_with_resolver
       );
 
-      expect(result).toEqual([]);
+      expect(result.ok).toBe(false);
+      if (is_err(result)) {
+        expect(result.error.stage).toBe("method_lookup");
+        expect(result.error.reason).toBe("method_not_on_type");
+      }
     });
 
     it("should return empty for non-existent function", () => {
@@ -881,7 +894,11 @@ describe("resolve_method_on_type", () => {
         context_with_resolver
       );
 
-      expect(result).toEqual([]);
+      expect(result.ok).toBe(false);
+      if (is_err(result)) {
+        expect(result.error.stage).toBe("method_lookup");
+        expect(result.error.reason).toBe("method_not_on_type");
+      }
     });
 
     it("should return empty when no import path resolver is provided", () => {
@@ -906,7 +923,11 @@ describe("resolve_method_on_type", () => {
         context
       );
 
-      expect(result).toEqual([]);
+      expect(result.ok).toBe(false);
+      if (is_err(result)) {
+        expect(result.error.stage).toBe("import_resolution");
+        expect(result.error.reason).toBe("import_unresolved");
+      }
     });
   });
 
@@ -956,7 +977,7 @@ describe("resolve_method_on_type", () => {
         context
       );
 
-      expect(result).toEqual([method_fn_id]);
+      expect(unwrap(result)).toEqual([method_fn_id]);
     });
 
     it("should find method in stored_references via resolution", () => {
@@ -1012,7 +1033,7 @@ describe("resolve_method_on_type", () => {
         context
       );
 
-      expect(result).toEqual([external_fn_id]);
+      expect(unwrap(result)).toEqual([external_fn_id]);
     });
 
     it("should return empty for method not in collection", () => {
@@ -1058,7 +1079,11 @@ describe("resolve_method_on_type", () => {
         context
       );
 
-      expect(result).toEqual([]);
+      expect(result.ok).toBe(false);
+      if (is_err(result)) {
+        expect(result.error.stage).toBe("method_lookup");
+        expect(result.error.reason).toBe("collection_dispatch_miss");
+      }
     });
   });
 
@@ -1072,7 +1097,7 @@ describe("resolve_method_on_type", () => {
         context
       );
 
-      expect(result).toEqual([]);
+      expect(result.ok).toBe(false);
     });
 
     it("should prefer TypeRegistry over member_index", () => {
@@ -1121,7 +1146,7 @@ describe("resolve_method_on_type", () => {
       );
 
       // Should return the TypeRegistry result, not the member_index one
-      expect(result).toEqual([method_id_registry]);
+      expect(unwrap(result)).toEqual([method_id_registry]);
     });
   });
 
@@ -1198,7 +1223,7 @@ describe("resolve_method_on_type", () => {
         context_with_resolver
       );
 
-      expect(result).toEqual([update_method_id]);
+      expect(unwrap(result)).toEqual([update_method_id]);
     });
 
     it("should return empty for non-exported class in source file", () => {
@@ -1250,7 +1275,7 @@ describe("resolve_method_on_type", () => {
         context_with_resolver
       );
 
-      expect(result).toEqual([]);
+      expect(result.ok).toBe(false);
     });
 
     it("should fall back to submodule resolution when named import fails export chain", () => {
@@ -1307,7 +1332,45 @@ describe("resolve_method_on_type", () => {
         context_with_resolvers
       );
 
-      expect(result).toEqual([train_fn_id]);
+      expect(unwrap(result)).toEqual([train_fn_id]);
+    });
+
+    it("should fail with barrel_reexport_chain when source resolves but export is missing", () => {
+      // import { Helper } from "./barrel"; — barrel.ts re-exports nothing matching Helper
+      const import_id = "import:test.ts:1:0:1:30:Helper" as SymbolId;
+
+      const import_def: ImportDefinition = {
+        kind: "import",
+        symbol_id: import_id,
+        name: "Helper" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        import_kind: "named",
+        import_path: "./barrel" as ModulePath,
+      };
+
+      // Source file resolves but contains no Helper export and no submodule fallback
+      definitions.update_file(TEST_FILE, [import_def]);
+      definitions.update_file(IMPORT_GRAPH_FILE, []);
+
+      const imports_for_test = new ImportGraph();
+      imports_for_test["resolved_import_paths"].set(import_id, IMPORT_GRAPH_FILE);
+      const context_with_resolver: ReceiverResolutionContext = {
+        ...context,
+        imports: imports_for_test,
+      };
+
+      const result = resolve_method_on_type(
+        import_id,
+        "do_thing" as SymbolName,
+        context_with_resolver
+      );
+
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error.stage).toBe("import_resolution");
+        expect(result.error.reason).toBe("barrel_reexport_chain");
+      }
     });
   });
 });

@@ -16,7 +16,10 @@
 import type {
   SymbolId,
   FunctionCallReference,
+  Result,
+  ResolutionFailure,
 } from "@ariadnejs/types";
+import { err, is_ok, ok } from "@ariadnejs/types";
 import type { CallResolutionContext } from "./call_resolver";
 import type { ResolutionRegistry } from "../resolve_references";
 import { resolve_collection_dispatch } from "./collection_dispatch";
@@ -27,54 +30,89 @@ import { resolve_callable_instance } from "./callable_instance.python";
  *
  * When a function_call resolves to a method (which requires a receiver),
  * walk up the scope tree to find an import or function with the same name.
- *
- * @param ref - The function call reference
- * @param context - Call resolution context
- * @param resolver - Name resolution provider
- * @returns The resolved SymbolId or null if no valid resolution found
  */
 function find_function_resolution(
   ref: FunctionCallReference,
   context: CallResolutionContext,
   resolver: ResolutionRegistry
-): SymbolId | null {
+): Result<SymbolId, ResolutionFailure> {
   const initial = resolver.resolve(ref.scope_id, ref.name);
-  if (!initial) return null;
+  if (!initial) {
+    return err({
+      stage: "name_resolution",
+      reason: "name_not_in_scope",
+      partial_info: { last_known_scope: ref.scope_id },
+    });
+  }
 
   // Check if resolution is valid for a function call
   const def = context.definitions.get(initial);
-  if (!def) return initial; // Trust unresolved symbols
+  if (!def) return ok(initial); // Trust unresolved symbols
 
   // Methods and constructors require receivers - can't be called as bare functions
   if (def.kind !== "method" && def.kind !== "constructor") {
-    return initial; // Valid: function, variable, import
+    return ok(initial); // Valid: function, variable, import
   }
 
   // Resolved to method/constructor - this can't be the target of a bare function call
   // Find alternative by walking up from the class scope
   const method_body_scope = def.body_scope_id;
-  if (!method_body_scope) return null;
+  if (!method_body_scope) {
+    return err({
+      stage: "name_resolution",
+      reason: "definition_has_no_body_scope",
+      partial_info: { last_known_scope: ref.scope_id },
+    });
+  }
 
   const body_scope = context.scopes.get_scope(method_body_scope);
-  if (!body_scope?.parent_id) return null;
+  if (!body_scope?.parent_id) {
+    return err({
+      stage: "name_resolution",
+      reason: "definition_has_no_body_scope",
+      partial_info: {
+        resolved_receiver_type: initial,
+        last_known_scope: method_body_scope,
+      },
+    });
+  }
 
   // Class scope's parent should be module scope with imports
   const class_scope = context.scopes.get_scope(body_scope.parent_id);
-  if (!class_scope?.parent_id) return null;
+  if (!class_scope?.parent_id) {
+    return err({
+      stage: "name_resolution",
+      reason: "no_parent_class",
+      partial_info: {
+        resolved_receiver_type: initial,
+        last_known_scope: body_scope.parent_id,
+      },
+    });
+  }
 
   // Try resolving from module scope (where imports live)
   const alternative = resolver.resolve(class_scope.parent_id, ref.name);
-  if (!alternative) return null;
+  if (!alternative) {
+    return err({
+      stage: "name_resolution",
+      reason: "name_not_in_scope",
+      partial_info: { last_known_scope: class_scope.parent_id },
+    });
+  }
 
   // Verify the alternative is valid for a function call
   const alt_def = context.definitions.get(alternative);
-  if (!alt_def) return alternative;
+  if (!alt_def) return ok(alternative);
 
   if (alt_def.kind === "method" || alt_def.kind === "constructor") {
-    return null; // Still a method/constructor - no valid resolution
+    return err({
+      stage: "name_resolution",
+      reason: "name_not_in_scope",
+      partial_info: { last_known_scope: class_scope.parent_id },
+    });
   }
 
-  return alternative;
+  return ok(alternative);
 }
 
 /**
@@ -85,24 +123,20 @@ function find_function_resolution(
  * 2. Fall back to collection dispatch if unresolved or collection-sourced
  * 3. Fall back to Python callable instance (__call__ method)
  *
- * @param ref - Function call reference from semantic index
- * @param context - Call resolution context with all required registries
- * @param resolver - Name resolution provider
- * @returns Array of resolved symbol_ids (empty if resolution fails)
+ * @returns Resolved symbol_ids on success, or a `ResolutionFailure` describing
+ *          why no valid resolution could be produced.
  */
 export function resolve_function_call(
   ref: FunctionCallReference,
   context: CallResolutionContext,
   resolver: ResolutionRegistry
-): SymbolId[] {
+): Result<SymbolId[], ResolutionFailure> {
   // Step 1: Resolve function name
-  const func_symbol = find_function_resolution(ref, context, resolver);
+  const name_result = find_function_resolution(ref, context, resolver);
 
-  let resolved_symbols: SymbolId[];
-  if (func_symbol) {
-    resolved_symbols = [func_symbol];
-  } else {
-    resolved_symbols = [];
+  let resolved_symbols: SymbolId[] = [];
+  if (is_ok(name_result)) {
+    resolved_symbols = [name_result.value];
   }
 
   // Step 2: Check for collection dispatch
@@ -119,13 +153,13 @@ export function resolve_function_call(
   }
 
   if (try_dispatch) {
-    const dispatch_ids = resolve_collection_dispatch(
+    const dispatch_result = resolve_collection_dispatch(
       ref,
       context.definitions,
       resolver
     );
-    if (dispatch_ids.length > 0) {
-      resolved_symbols = dispatch_ids;
+    if (is_ok(dispatch_result) && dispatch_result.value.length > 0) {
+      resolved_symbols = dispatch_result.value;
     }
   }
 
@@ -144,5 +178,21 @@ export function resolve_function_call(
     }
   }
 
-  return resolved_symbols;
+  if (resolved_symbols.length === 0) {
+    // Prefer the original name-resolution failure (most specific). If name
+    // resolution succeeded but downstream dispatch produced nothing, the
+    // failure is in collection dispatch, not name resolution.
+    return is_ok(name_result)
+      ? err({
+          stage: "collection_dispatch",
+          reason: "collection_dispatch_miss",
+          partial_info: {
+            resolved_receiver_type: name_result.value,
+            last_known_scope: ref.scope_id,
+          },
+        })
+      : name_result;
+  }
+
+  return ok(resolved_symbols);
 }

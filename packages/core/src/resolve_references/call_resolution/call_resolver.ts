@@ -21,8 +21,10 @@ import type {
   MethodCallReference,
   FunctionCallReference,
   ConstructorCallReference,
+  Result,
+  ResolutionFailure,
 } from "@ariadnejs/types";
-import { location_key } from "@ariadnejs/types";
+import { location_key, is_err, is_ok } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../registries/definition";
 import type { TypeRegistry } from "../registries/type";
 import type { ScopeRegistry } from "../registries/scope";
@@ -190,16 +192,16 @@ function resolve_calls(
 
   for (const references of file_references.values()) {
     for (const ref of references) {
-      let resolved_symbols: SymbolId[] = [];
+      let dispatch_result: Result<SymbolId[], ResolutionFailure>;
 
       // Dispatch on discriminated union kind field
       switch (ref.kind) {
         case "self_reference_call":
-        case "method_call":
+        case "method_call": {
           // Unified method call resolution for both:
           // - Self-reference calls: this.method(), self.method(), super.method()
           // - Method calls: obj.method(), obj.field.method()
-          resolved_symbols = resolve_method_call(
+          const method_result = resolve_method_call(
             ref,
             context.scopes,
             context.definitions,
@@ -208,23 +210,34 @@ function resolve_calls(
             context.imports
           );
 
-          // If standard resolution failed, try collection dispatch resolution
-          if (resolved_symbols.length === 0) {
-            resolved_symbols = resolve_collection_dispatch(
+          // If standard resolution failed, try collection dispatch resolution.
+          // Prefer the original method-call failure as the recorded reason —
+          // the call was syntactically a method call; collection dispatch is
+          // a synthetic fallback whose failure isn't user-meaningful here.
+          if (is_ok(method_result) && method_result.value.length > 0) {
+            dispatch_result = method_result;
+          } else {
+            const dispatch_fallback = resolve_collection_dispatch(
               ref,
               context.definitions,
               context.resolutions
             );
+            if (is_ok(dispatch_fallback) && dispatch_fallback.value.length > 0) {
+              dispatch_result = dispatch_fallback;
+            } else {
+              dispatch_result = method_result;
+            }
           }
           break;
+        }
 
         case "function_call":
-          resolved_symbols = resolve_function_call(ref, context, context.resolutions);
+          dispatch_result = resolve_function_call(ref, context, context.resolutions);
           break;
 
         case "constructor_call":
           // Constructor calls: new MyClass() or new models.User()
-          resolved_symbols = resolve_constructor_call(
+          dispatch_result = resolve_constructor_call(
             ref,
             context.definitions,
             context.resolutions,
@@ -247,6 +260,10 @@ function resolve_calls(
           );
         }
       }
+
+      let resolved_symbols: SymbolId[] = is_ok(dispatch_result)
+        ? [...dispatch_result.value]
+        : [];
 
       // Enrich: if any resolved symbol is a class, also reference its constructor
       resolved_symbols = include_constructors_for_class_symbols(
@@ -277,15 +294,20 @@ function resolve_calls(
         }
       }
 
-      // Build CallReference with Resolution metadata
-      if (resolved_symbols.length > 0) {
-        const call_ref = build_call_reference(
-          ref as CallSymbolReference,
-          resolved_symbols,
-          context.definitions
-        );
-        resolved_calls.push(call_ref);
-      }
+      // Build CallReference with Resolution metadata. Emit a CallReference
+      // even on failure so downstream consumers can read `resolution_failure`.
+      const failure: ResolutionFailure | undefined =
+        resolved_symbols.length === 0 && is_err(dispatch_result)
+          ? dispatch_result.error
+          : undefined;
+
+      const call_ref = build_call_reference(
+        ref as CallSymbolReference,
+        resolved_symbols,
+        context.definitions,
+        failure
+      );
+      resolved_calls.push(call_ref);
     }
   }
 
@@ -294,52 +316,41 @@ function resolve_calls(
 
 /**
  * Build a CallReference from resolved symbols.
+ *
+ * When `resolved_symbols` is empty and `failure` is provided, the returned
+ * `CallReference` carries `resolution_failure` and an empty `resolutions` array.
+ * Consumers that only care about resolved edges should gate on
+ * `resolutions.length > 0`.
  */
 function build_call_reference(
   ref: CallSymbolReference,
   resolved_symbols: SymbolId[],
-  definitions: DefinitionRegistry
+  definitions: DefinitionRegistry,
+  failure?: ResolutionFailure
 ): CallReference {
-  const primary_resolved = resolved_symbols[0];
+  // Determine call_type. When resolution failed there is no resolved symbol
+  // to inspect, so fall back to the syntactic kind from `ref`.
+  const syntax_fallback: "function" | "method" | "constructor" =
+    ref.kind === "function_call"
+      ? "function"
+      : ref.kind === "constructor_call"
+      ? "constructor"
+      : "method";
 
-  // Determine call_type from resolved symbol (semantic) with syntax as fallback
-  let call_type: "function" | "method" | "constructor";
-  switch (ref.kind) {
-    case "self_reference_call":
-    case "method_call":
-      call_type = infer_call_type_from_resolution(
-        primary_resolved,
-        definitions,
-        "method"
-      );
-      break;
-    case "function_call":
-      call_type = infer_call_type_from_resolution(
-        primary_resolved,
-        definitions,
-        "function"
-      );
-      break;
-    case "constructor_call":
-      call_type = infer_call_type_from_resolution(
-        primary_resolved,
-        definitions,
-        "constructor"
-      );
-      break;
-    default: {
-      const _exhaustive_call: never = ref;
-      throw new Error(
-        `Cannot convert reference to CallReference: ${(_exhaustive_call as { kind: string }).kind}`
-      );
-    }
-  }
+  const call_type: "function" | "method" | "constructor" =
+    resolved_symbols.length > 0
+      ? infer_call_type_from_resolution(
+          resolved_symbols[0],
+          definitions,
+          syntax_fallback
+        )
+      : syntax_fallback;
 
   // Multiple method resolutions indicate interface + implementations (polymorphic dispatch)
   const is_interface_impl =
     call_type === "method" && resolved_symbols.length > 1;
 
-  return {
+  const base = {
     location: ref.location,
     name: ref.name,
     scope_id: ref.scope_id,
@@ -355,6 +366,10 @@ function build_call_reference(
         : ({ type: "direct" as const } as const),
     })),
   };
+
+  // Omit the field entirely on success — preserves the zero-overhead invariant
+  // (Object.hasOwn(call, "resolution_failure") === false on the success path).
+  return failure ? { ...base, resolution_failure: failure } : base;
 }
 
 /**
