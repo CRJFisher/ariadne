@@ -1,10 +1,21 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { Project } from "../project/project";
-import type { FilePath, ScopeId, SymbolId, SymbolName, SymbolReference } from "@ariadnejs/types";
+import type { FilePath, Result, ScopeId, SymbolId, SymbolName, SymbolReference } from "@ariadnejs/types";
 import type { ResolutionRegistry } from "./resolve_references";
 import * as path from "path";
 import * as os from "os";
 import * as fs from "fs";
+
+/**
+ * Test helper: Unwrap a `Result` to its value, throwing if it's an error.
+ * Exported for use by other test files in resolve_references/.
+ */
+export function unwrap<T>(r: Result<T, unknown>): T {
+  if (!r.ok) {
+    throw new Error(`Expected ok, got err: ${JSON.stringify(r.error)}`);
+  }
+  return r.value;
+}
 
 /**
  * Test helper: Set up scope resolutions directly for testing.

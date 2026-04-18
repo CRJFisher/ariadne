@@ -183,9 +183,13 @@ describe("resolve_calls_for_files", () => {
 
       const result = resolve_calls_for_files(new Set([TEST_FILE]), context);
 
-      // No resolved calls since resolution failed
+      // CallReference is emitted with empty resolutions + resolution_failure diagnostic
       const calls = result.resolved_calls_by_file.get(TEST_FILE);
-      expect(calls).toEqual([]);
+      expect(calls).toBeDefined();
+      expect(calls!.length).toBe(1);
+      expect(calls![0].resolutions).toEqual([]);
+      expect(calls![0].resolution_failure).toBeDefined();
+      expect(calls![0].resolution_failure!.reason).toBe("name_not_in_scope");
     });
   });
 
@@ -601,9 +605,13 @@ describe("resolve_calls_for_files", () => {
       // FILE_SCOPE_ID has no entry (no import)
       const result = resolve_calls_for_files(new Set([TEST_FILE]), context);
 
-      // Should have no resolved calls - method can't be target of bare function call
+      // Should emit CallReference with empty resolutions + failure diagnostic
+      // Method can't be target of bare function call
       const calls = result.resolved_calls_by_file.get(TEST_FILE);
-      expect(calls).toEqual([]);
+      expect(calls).toBeDefined();
+      expect(calls!.length).toBe(1);
+      expect(calls![0].resolutions).toEqual([]);
+      expect(calls![0].resolution_failure).toBeDefined();
     });
   });
 

@@ -40,6 +40,8 @@ import {
   class_symbol,
   method_symbol,
   property_symbol,
+  is_ok,
+  is_err,
 } from "@ariadnejs/types";
 
 // Test fixtures
@@ -593,10 +595,10 @@ describe("resolve_receiver_type", () => {
 
       const result = resolve_receiver_type(receiver, context);
 
-      expect(result).toBe(my_class_id);
+      expect(is_ok(result) && result.value).toBe(my_class_id);
     });
 
-    it("should return null for this outside of class", () => {
+    it("should fail with no_enclosing_class_scope for this outside of class", () => {
       // Setup scope without class
       const func_scope_id = "scope:test.ts:standalone:1:0" as ScopeId;
       const scope_map = new Map();
@@ -625,7 +627,11 @@ describe("resolve_receiver_type", () => {
 
       const result = resolve_receiver_type(receiver, context);
 
-      expect(result).toBeNull();
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error.stage).toBe("receiver_resolution");
+        expect(result.error.reason).toBe("no_enclosing_class_scope");
+      }
     });
   });
 
@@ -648,7 +654,7 @@ describe("resolve_receiver_type", () => {
 
       const result = resolve_receiver_type(receiver, context);
 
-      expect(result).toBe(database_class_id);
+      expect(is_ok(result) && result.value).toBe(database_class_id);
     });
 
     it("should resolve this.property.method() via TypeRegistry", () => {
@@ -668,10 +674,10 @@ describe("resolve_receiver_type", () => {
 
       const result = resolve_receiver_type(receiver, context);
 
-      expect(result).toBe(database_class_id);
+      expect(is_ok(result) && result.value).toBe(database_class_id);
     });
 
-    it("should return null if property not found", () => {
+    it("should fail with method_not_on_type if property not found", () => {
       setup_class_scopes();
       setup_class_definitions();
 
@@ -684,10 +690,13 @@ describe("resolve_receiver_type", () => {
 
       const result = resolve_receiver_type(receiver, context);
 
-      expect(result).toBeNull();
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error.reason).toBe("method_not_on_type");
+      }
     });
 
-    it("should return null if property type cannot be resolved", () => {
+    it("should fail with class_definition_not_found if property type cannot be resolved", () => {
       setup_class_scopes();
 
       // Create property without type annotation and no TypeRegistry entry
@@ -737,7 +746,10 @@ describe("resolve_receiver_type", () => {
 
       const result = resolve_receiver_type(receiver, context);
 
-      expect(result).toBeNull();
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error.reason).toBe("class_definition_not_found");
+      }
     });
   });
 
@@ -799,10 +811,10 @@ describe("resolve_receiver_type", () => {
 
       const result = resolve_receiver_type(receiver, context);
 
-      expect(result).toBe(my_class_id);
+      expect(is_ok(result) && result.value).toBe(my_class_id);
     });
 
-    it("should return null if identifier cannot be resolved", () => {
+    it("should fail with name_not_in_scope if identifier cannot be resolved", () => {
       const scope_map = new Map();
       scope_map.set(FILE_SCOPE_ID, {
         id: FILE_SCOPE_ID,
@@ -822,7 +834,119 @@ describe("resolve_receiver_type", () => {
 
       const result = resolve_receiver_type(receiver, context);
 
-      expect(result).toBeNull();
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error.reason).toBe("name_not_in_scope");
+      }
+    });
+
+    it("should fail with receiver_type_unknown when identifier has no inferable type", () => {
+      // A bare variable with no type annotation, no TypeRegistry entry, and not a type def
+      const var_id = "variable:test.ts:5:0:5:8:untyped" as SymbolId;
+      const scope_map = new Map();
+      scope_map.set(FILE_SCOPE_ID, {
+        id: FILE_SCOPE_ID,
+        type: "file",
+        location: { file_path: TEST_FILE, start_line: 0, start_column: 0, end_line: 100, end_column: 0 },
+        parent_id: null,
+        child_ids: [],
+      });
+      scopes.update_file(TEST_FILE, scope_map);
+
+      definitions.update_file(TEST_FILE, [
+        {
+          kind: "variable",
+          symbol_id: var_id,
+          name: "untyped" as SymbolName,
+          defining_scope_id: FILE_SCOPE_ID,
+          location: MOCK_LOCATION,
+          is_exported: false,
+        },
+      ]);
+
+      const scope_resolutions = new Map<SymbolName, SymbolId>();
+      scope_resolutions.set("untyped" as SymbolName, var_id);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
+
+      const receiver: ReceiverExpression = {
+        base: { type: "identifier", value: "untyped" as SymbolName },
+        chain: [],
+        method_name: "process" as SymbolName,
+        scope_id: FILE_SCOPE_ID,
+      };
+
+      const result = resolve_receiver_type(receiver, context);
+
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error.stage).toBe("type_inference");
+        expect(result.error.reason).toBe("receiver_type_unknown");
+      }
+    });
+
+    it("should fail with member_type_unknown when chained property has no resolvable type", () => {
+      setup_class_scopes();
+
+      // Property exists but has no type annotation and no TypeRegistry entry.
+      // walk_property_chain finds the member but cannot resolve its type.
+      const property_no_type: PropertyDefinition = {
+        kind: "property",
+        symbol_id: property_id,
+        name: "db" as SymbolName,
+        defining_scope_id: CLASS_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 2 },
+        decorators: [],
+      };
+
+      const method_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: method_id,
+        name: "process" as SymbolName,
+        defining_scope_id: CLASS_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 3 },
+        parameters: [],
+        body_scope_id: METHOD_SCOPE_ID,
+        decorators: [],
+      };
+
+      const class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: my_class_id,
+        name: "MyClass" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 1 },
+        is_exported: false,
+        extends: [],
+        methods: [method_def],
+        properties: [property_no_type],
+        decorators: [],
+        constructors: [],
+      };
+
+      definitions.update_file(TEST_FILE, [class_def, method_def, property_no_type]);
+
+      // Set type member explicitly so walk finds the property symbol.
+      types["resolved_type_members"] = new Map();
+      types["resolved_type_members"].set(
+        my_class_id,
+        new Map([[("db" as SymbolName), property_id]])
+      );
+      // Property has no type — get_symbol_type returns undefined.
+
+      const receiver: ReceiverExpression = {
+        base: { type: "keyword", value: "this" },
+        chain: ["db" as SymbolName],
+        method_name: "query" as SymbolName,
+        scope_id: METHOD_SCOPE_ID,
+      };
+
+      const result = resolve_receiver_type(receiver, context);
+
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error.stage).toBe("type_inference");
+        expect(result.error.reason).toBe("member_type_unknown");
+      }
     });
   });
 });

@@ -4,7 +4,7 @@
 
 import { SymbolId } from "./symbol";
 import { SymbolName } from "./symbol";
-import { Location, type LocationKey } from "./common";
+import { Location, type LocationKey, type FilePath } from "./common";
 import type { ScopeId } from "./scopes";
 import type { AnyDefinition } from "./symbol_definitions";
 /**
@@ -77,6 +77,58 @@ export interface CallGraph {
   readonly indirect_reachability?: ReadonlyMap<SymbolId, IndirectReachability>;
 }
 
+/**
+ * Resolver pipeline stage that produced a `ResolutionFailure`.
+ */
+export type ResolutionFailureStage =
+  | "name_resolution"
+  | "receiver_resolution"
+  | "method_lookup"
+  | "import_resolution"
+  | "type_inference"
+  | "constructor_lookup"
+  | "collection_dispatch";
+
+/**
+ * Specific reason a call failed to resolve. Each value names a single
+ * recoverable failure mode the resolver discovered. New resolver paths must
+ * extend this enum so downstream classifiers can pattern-match exhaustively.
+ */
+export type ResolutionFailureReason =
+  | "name_not_in_scope"
+  | "import_unresolved"
+  | "barrel_reexport_chain"
+  | "receiver_type_unknown"
+  | "method_not_on_type"
+  | "polymorphic_no_implementations"
+  | "collection_dispatch_miss"
+  | "dynamic_dispatch"
+  | "no_enclosing_class_scope"
+  | "class_definition_not_found"
+  | "no_parent_class"
+  | "member_type_unknown"
+  | "definition_has_no_body_scope"
+  | "constructor_target_not_a_class";
+
+/**
+ * Diagnostic emitted by the resolver when a call cannot be resolved.
+ *
+ * Populated on `CallReference.resolution_failure` only when
+ * `resolutions.length === 0`. The triple `(stage, reason, partial_info)`
+ * carries enough context for downstream classifiers (auto-classify pipeline
+ * stage) to deterministically distinguish failure modes without re-running
+ * the resolver.
+ */
+export interface ResolutionFailure {
+  readonly stage: ResolutionFailureStage;
+  readonly reason: ResolutionFailureReason;
+  readonly partial_info: {
+    readonly resolved_receiver_type?: SymbolId;
+    readonly import_target_file?: FilePath;
+    readonly last_known_scope?: ScopeId;
+  };
+}
+
 export interface CallReference {
   /** Reference location */
   readonly location: Location;
@@ -90,8 +142,21 @@ export interface CallReference {
   /** Type of call */
   readonly call_type: "function" | "method" | "constructor";
 
-  /** All resolved candidates with metadata */
+  /**
+   * All resolved candidates with metadata.
+   *
+   * May be empty when the resolver produced a `CallReference` for a call site
+   * it could not resolve. In that case `resolution_failure` carries the reason.
+   * Consumers that only care about resolved edges should gate on
+   * `resolutions.length > 0`.
+   */
   readonly resolutions: readonly Resolution[];
+
+  /**
+   * Populated iff `resolutions.length === 0`. Absent on success — zero
+   * memory overhead for the common case.
+   */
+  readonly resolution_failure?: ResolutionFailure;
 
   /**
    * True if this call reference represents a callback invocation.
@@ -105,14 +170,12 @@ export interface CallReference {
    *   // resolutions: [{ symbol_id: anonymous function, ... }]
    */
   readonly is_callback_invocation?: boolean;
-} // ============================================================================
-// Complete Resolution Result
-// ============================================================================
+}
+
 /**
  * Complete symbol resolution result
  * Combines all phase outputs into a unified resolution map
  */
-
 export interface ResolvedSymbols {
   // Master map: any reference location key -> its resolved SymbolId
   readonly resolved_references: ReadonlyMap<LocationKey, SymbolId>;

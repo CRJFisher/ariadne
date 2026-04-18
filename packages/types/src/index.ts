@@ -34,3 +34,4 @@ export * from "./symbol_references";
 export * from "./errors";
 export { TypeKind } from "./type_kind";
 export * from "./aliases";
+export * from "./result";

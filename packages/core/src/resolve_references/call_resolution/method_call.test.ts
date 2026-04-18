@@ -17,9 +17,9 @@ import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ResolutionRegistry } from "../resolve_references";
 import { ImportGraph } from "../../project/import_graph";
-import { set_test_resolutions } from "../resolve_references.test";
+import { set_test_resolutions, unwrap } from "../resolve_references.test";
 import { create_method_call_reference } from "../../index_single_file/references/factories";
-import { method_symbol, class_symbol, function_symbol, variable_symbol } from "@ariadnejs/types";
+import { method_symbol, class_symbol, function_symbol, variable_symbol, is_err } from "@ariadnejs/types";
 import type {
   SymbolId,
   SymbolName,
@@ -169,7 +169,7 @@ describe("Method Call Resolution", () => {
       );
 
       // Assert
-      expect(resolved).toEqual([method_id]);
+      expect(unwrap(resolved)).toEqual([method_id]);
     });
 
     it("should resolve method call using TypeRegistry.get_type_member", () => {
@@ -228,7 +228,7 @@ describe("Method Call Resolution", () => {
       );
 
       // Assert
-      expect(resolved).toEqual([method_id]);
+      expect(unwrap(resolved)).toEqual([method_id]);
     });
   });
 
@@ -289,7 +289,7 @@ describe("Method Call Resolution", () => {
       );
 
       // Assert
-      expect(resolved).toEqual([method_id]);
+      expect(unwrap(resolved)).toEqual([method_id]);
     });
   });
 
@@ -358,7 +358,7 @@ describe("Method Call Resolution", () => {
         imports
       );
 
-      expect(resolved_first).toEqual([set_name_id]);
+      expect(unwrap(resolved_first)).toEqual([set_name_id]);
 
       // Test second call: (result).setAge()
       // NOTE: In real resolution, the property_chain would be:
@@ -382,7 +382,7 @@ describe("Method Call Resolution", () => {
         imports
       );
 
-      expect(resolved_second).toEqual([set_age_id]);
+      expect(unwrap(resolved_second)).toEqual([set_age_id]);
     });
   });
 
@@ -458,7 +458,7 @@ describe("Method Call Resolution", () => {
       );
 
       // Assert
-      expect(resolved).toEqual([method_id]);
+      expect(unwrap(resolved)).toEqual([method_id]);
     });
   });
 
@@ -536,7 +536,7 @@ describe("Method Call Resolution", () => {
       );
 
       // Assert - should resolve to the helper function
-      expect(resolved).toEqual([helper_id]);
+      expect(unwrap(resolved)).toEqual([helper_id]);
     });
 
     it("should return empty when no import_path resolver is provided", () => {
@@ -607,7 +607,11 @@ describe("Method Call Resolution", () => {
       );
 
       // Assert - should return empty (cannot resolve without import path registered)
-      expect(resolved).toEqual([]);
+      expect(resolved.ok).toBe(false);
+      if (is_err(resolved)) {
+        expect(resolved.error.stage).toBe("import_resolution");
+        expect(resolved.error.reason).toBe("import_unresolved");
+      }
     });
 
     it("should return empty when import_path resolver returns undefined (external module)", () => {
@@ -652,7 +656,11 @@ describe("Method Call Resolution", () => {
       );
 
       // Assert - should return empty (external module not in project)
-      expect(resolved).toEqual([]);
+      expect(resolved.ok).toBe(false);
+      if (is_err(resolved)) {
+        expect(resolved.error.stage).toBe("import_resolution");
+        expect(resolved.error.reason).toBe("import_unresolved");
+      }
     });
   });
 
@@ -700,7 +708,11 @@ describe("Method Call Resolution", () => {
       );
 
       // Assert
-      expect(resolved).toEqual([]);
+      expect(resolved.ok).toBe(false);
+      if (is_err(resolved)) {
+        expect(resolved.error.stage).toBe("type_inference");
+        expect(resolved.error.reason).toBe("receiver_type_unknown");
+      }
     });
 
     it("should return null when receiver not in scope", () => {
@@ -731,7 +743,11 @@ describe("Method Call Resolution", () => {
       );
 
       // Assert
-      expect(resolved).toEqual([]);
+      expect(resolved.ok).toBe(false);
+      if (is_err(resolved)) {
+        expect(resolved.error.stage).toBe("name_resolution");
+        expect(resolved.error.reason).toBe("name_not_in_scope");
+      }
     });
 
     it("should return null when method not on type", () => {
@@ -782,7 +798,11 @@ describe("Method Call Resolution", () => {
       );
 
       // Assert
-      expect(resolved).toEqual([]);
+      expect(resolved.ok).toBe(false);
+      if (is_err(resolved)) {
+        expect(resolved.error.stage).toBe("method_lookup");
+        expect(resolved.error.reason).toBe("method_not_on_type");
+      }
     });
 
     it("should return null for empty property chain", () => {
@@ -807,7 +827,11 @@ describe("Method Call Resolution", () => {
       );
 
       // Assert
-      expect(resolved).toEqual([]);
+      expect(resolved.ok).toBe(false);
+      if (is_err(resolved)) {
+        expect(resolved.error.stage).toBe("name_resolution");
+        expect(resolved.error.reason).toBe("name_not_in_scope");
+      }
     });
 
     it("should return null when property chain has unresolved intermediate", () => {
@@ -858,7 +882,11 @@ describe("Method Call Resolution", () => {
       );
 
       // Assert
-      expect(resolved).toEqual([]);
+      expect(resolved.ok).toBe(false);
+      if (is_err(resolved)) {
+        expect(resolved.error.stage).toBe("receiver_resolution");
+        expect(resolved.error.reason).toBe("method_not_on_type");
+      }
     });
   });
 
@@ -1030,9 +1058,9 @@ describe("Method Call Resolution", () => {
       );
 
       // Assert: Should resolve to BOTH implementations
-      expect(resolved).toHaveLength(2);
-      expect(resolved).toContain(handler_a_process_id);
-      expect(resolved).toContain(handler_b_process_id);
+      expect(unwrap(resolved)).toHaveLength(2);
+      expect(unwrap(resolved)).toContain(handler_a_process_id);
+      expect(unwrap(resolved)).toContain(handler_b_process_id);
     });
 
     it("should return single resolution for concrete class method call", () => {
@@ -1111,7 +1139,7 @@ describe("Method Call Resolution", () => {
       );
 
       // Assert: Should return single resolution (not polymorphic)
-      expect(resolved).toEqual([method_id]);
+      expect(unwrap(resolved)).toEqual([method_id]);
     });
 
     it("should return empty array when interface has no implementations", () => {
@@ -1188,7 +1216,7 @@ describe("Method Call Resolution", () => {
       );
 
       // Assert: Should return empty array (no implementations found)
-      expect(resolved).toEqual([]);
+      expect(resolved.ok).toBe(false);
     });
   });
 });

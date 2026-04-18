@@ -241,15 +241,31 @@ export function calculate(a: number, b: number): number {
     expect(add_entry).toBeUndefined();
     expect(multiply_entry).toBeUndefined();
 
-    // calculate has no enclosed calls because math.add() and math.multiply()
-    // don't resolve through the barrel file's re-export imports
+    // calculate emits CallReferences for math.add() and math.multiply() but
+    // they fail to resolve through the barrel file's re-export imports.
+    // Each emitted CallReference carries an empty resolutions array and a
+    // resolution_failure diagnostic.
     const calculate_node = [...call_graph.nodes.values()].find(
       (node) =>
         node.name === ("calculate" as SymbolName) &&
         node.location.file_path === file_paths["calculator.ts"]
     );
     expect(calculate_node).toBeDefined();
-    expect(calculate_node!.enclosed_calls.length).toBe(0);
+    const method_calls = calculate_node!.enclosed_calls.filter(
+      (call) =>
+        call.call_type === "method" &&
+        (call.name === "add" || call.name === "multiply")
+    );
+    // Each math.X(...) call site emits at least one CallReference.
+    expect(method_calls.length).toBeGreaterThanOrEqual(2);
+    expect(
+      new Set(method_calls.map((c) => c.name as string))
+    ).toEqual(new Set(["add", "multiply"]));
+    for (const call of method_calls) {
+      expect(call.resolutions).toEqual([]);
+      expect(call.resolution_failure?.stage).toBe("method_lookup");
+      expect(call.resolution_failure?.reason).toBe("method_not_on_type");
+    }
   });
 });
 

@@ -26,7 +26,10 @@ import type {
   SelfReferenceCall,
   MethodCallReference,
   SelfReferenceKeyword,
+  Result,
+  ResolutionFailure,
 } from "@ariadnejs/types";
+import { err, ok } from "@ariadnejs/types";
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import type { TypeRegistry } from "../registries/type";
@@ -125,48 +128,34 @@ export function extract_receiver(
  *
  * @param receiver - Normalized receiver expression
  * @param context - Resolution context with all registries
- * @returns Type symbol_id of the receiver, or null if resolution fails
+ * @returns Type symbol_id of the receiver, or a `ResolutionFailure` describing why resolution failed
  */
 export function resolve_receiver_type(
   receiver: ReceiverExpression,
   context: ReceiverResolutionContext
-): SymbolId | null {
+): Result<SymbolId, ResolutionFailure> {
   // Phase 1: Resolve the base to a type
-  const base_type = resolve_base(receiver.base, receiver.scope_id, context);
-  if (!base_type) {
-    return null;
+  const base_result = resolve_base(receiver.base, receiver.scope_id, context);
+  if (!base_result.ok) {
+    return base_result;
   }
 
   // Phase 2: Walk property chain (if any)
   if (receiver.chain.length === 0) {
-    return base_type;
+    return base_result;
   }
 
-  return walk_property_chain(base_type, receiver.chain, context);
+  return walk_property_chain(base_result.value, receiver.chain, context);
 }
 
 /**
  * Resolve the base of a receiver expression to a type
- *
- * For keywords (this, self, super, cls):
- *   - Walk scope tree to find containing class
- *   - For super, get parent class from inheritance chain
- *
- * For identifiers:
- *   - Resolve in scope via ResolutionRegistry
- *   - Get type via TypeRegistry
- *   - Handle special cases (type definitions, object literals)
- *
- * @param base - The base of the receiver expression
- * @param scope_id - Scope where the reference appears
- * @param context - Resolution context
- * @returns Type symbol_id, or null if resolution fails
  */
 function resolve_base(
   base: ReceiverExpression["base"],
   scope_id: ScopeId,
   context: ReceiverResolutionContext
-): SymbolId | null {
+): Result<SymbolId, ResolutionFailure> {
   if (base.type === "keyword") {
     return resolve_keyword_base(base.value, scope_id, context);
   } else {
@@ -176,27 +165,30 @@ function resolve_base(
 
 /**
  * Resolve a self-reference keyword to its type
- *
- * @param keyword - this, self, super, or cls
- * @param scope_id - Scope where the reference appears
- * @param context - Resolution context
- * @returns Class type symbol_id, or null if not in class context
  */
 function resolve_keyword_base(
   keyword: SelfReferenceKeyword,
   scope_id: ScopeId,
   context: ReceiverResolutionContext
-): SymbolId | null {
+): Result<SymbolId, ResolutionFailure> {
   // Find the containing class scope (pass definitions to detect Rust impl blocks)
   const class_scope_id = find_containing_class_scope(scope_id, context.scopes, context.definitions);
   if (!class_scope_id) {
-    return null;
+    return err({
+      stage: "receiver_resolution",
+      reason: "no_enclosing_class_scope",
+      partial_info: { last_known_scope: scope_id },
+    });
   }
 
   // Find the class definition from the class scope
   const class_symbol_id = find_class_from_scope(class_scope_id, context.definitions);
   if (!class_symbol_id) {
-    return null;
+    return err({
+      stage: "receiver_resolution",
+      reason: "class_definition_not_found",
+      partial_info: { last_known_scope: class_scope_id },
+    });
   }
 
   // For super, we need the parent class, not the current class
@@ -204,13 +196,17 @@ function resolve_keyword_base(
     const inheritance_chain = context.types.walk_inheritance_chain(class_symbol_id);
     // inheritance_chain[0] is current class, inheritance_chain[1] is parent
     if (inheritance_chain.length < 2) {
-      return null; // No parent class
+      return err({
+        stage: "receiver_resolution",
+        reason: "no_parent_class",
+        partial_info: { resolved_receiver_type: class_symbol_id },
+      });
     }
-    return inheritance_chain[1];
+    return ok(inheritance_chain[1]);
   }
 
   // For this, self, cls - return the current class
-  return class_symbol_id;
+  return ok(class_symbol_id);
 }
 
 /**
@@ -221,28 +217,27 @@ function resolve_keyword_base(
  * - Type definitions (class, interface, enum) → return the type itself
  * - Object literals with FunctionCollection → return the variable's symbol
  *   (method_lookup will handle looking up methods in the collection)
- *
- * @param identifier - The identifier name
- * @param scope_id - Scope where the reference appears
- * @param context - Resolution context
- * @returns Type symbol_id, or null if resolution fails
  */
 function resolve_identifier_base(
   identifier: SymbolName,
   scope_id: ScopeId,
   context: ReceiverResolutionContext
-): SymbolId | null {
+): Result<SymbolId, ResolutionFailure> {
   // Resolve the identifier in scope
   const symbol_id = context.resolutions.resolve(scope_id, identifier);
   if (!symbol_id) {
-    return null;
+    return err({
+      stage: "name_resolution",
+      reason: "name_not_in_scope",
+      partial_info: { last_known_scope: scope_id },
+    });
   }
 
   // Check if this is a module-level import - needs special handling
   const def = context.definitions.get(symbol_id);
   if (def?.kind === "import") {
     // Return the symbol itself - method_lookup will handle module exports
-    return symbol_id;
+    return ok(symbol_id);
   }
 
   // Check if this is an object literal with function collection
@@ -251,7 +246,7 @@ function resolve_identifier_base(
     const fn_collection = context.definitions.get_function_collection(symbol_id);
     if (fn_collection) {
       // Return the symbol itself - method_lookup will handle collection lookup
-      return symbol_id;
+      return ok(symbol_id);
     }
   }
 
@@ -284,7 +279,15 @@ function resolve_identifier_base(
     }
   }
 
-  return type_id;
+  if (!type_id) {
+    return err({
+      stage: "type_inference",
+      reason: "receiver_type_unknown",
+      partial_info: { last_known_scope: scope_id },
+    });
+  }
+
+  return ok(type_id);
 }
 
 /**
@@ -294,17 +297,12 @@ function resolve_identifier_base(
  * 1. Look up the member on the current type
  * 2. Get the member's type
  * 3. Continue to next property
- *
- * @param start_type - Starting type to walk from
- * @param chain - Property names to walk through
- * @param context - Resolution context
- * @returns Final type symbol_id, or null if any step fails
  */
 function walk_property_chain(
   start_type: SymbolId,
   chain: readonly SymbolName[],
   context: ReceiverResolutionContext
-): SymbolId | null {
+): Result<SymbolId, ResolutionFailure> {
   let current_type = start_type;
 
   for (const property_name of chain) {
@@ -321,7 +319,11 @@ function walk_property_chain(
     }
 
     if (!member_symbol) {
-      return null;
+      return err({
+        stage: "receiver_resolution",
+        reason: "method_not_on_type",
+        partial_info: { resolved_receiver_type: current_type },
+      });
     }
 
     // Get the type of this member
@@ -354,13 +356,17 @@ function walk_property_chain(
     }
 
     if (!member_type) {
-      return null;
+      return err({
+        stage: "type_inference",
+        reason: "member_type_unknown",
+        partial_info: { resolved_receiver_type: current_type },
+      });
     }
 
     current_type = member_type;
   }
 
-  return current_type;
+  return ok(current_type);
 }
 
 /**
