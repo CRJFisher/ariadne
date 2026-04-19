@@ -7,6 +7,7 @@ import type {
   PropertyAccessReference,
   TypeReference,
   AssignmentReference,
+  CallSiteSyntax,
   Location,
   SymbolName,
   ScopeId,
@@ -75,7 +76,8 @@ export function create_method_call_reference(
   receiver_location: Location,
   property_chain: readonly SymbolName[],
   is_optional_chain: boolean,
-  potential_construct_target?: Location
+  potential_construct_target?: Location,
+  call_site_syntax?: CallSiteSyntax
 ): MethodCallReference {
   return {
     kind: "method_call",
@@ -86,6 +88,7 @@ export function create_method_call_reference(
     property_chain,
     is_optional_chain,
     ...(potential_construct_target !== undefined && { potential_construct_target }),
+    ...(call_site_syntax !== undefined && { call_site_syntax }),
   };
 }
 

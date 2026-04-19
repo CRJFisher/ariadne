@@ -2,10 +2,15 @@
  * Tests for Reference Builder System
  */
 
-import { describe, it, expect, beforeEach, vi, test } from "vitest";
+import { describe, it, expect, beforeEach, vi, test, beforeAll } from "vitest";
+import Parser from "tree-sitter";
+import TypeScript from "tree-sitter-typescript";
+import Python from "tree-sitter-python";
+import type { SyntaxNode } from "tree-sitter";
 import {
   ReferenceBuilder,
   process_references,
+  extract_call_site_syntax,
 } from "./references";
 import type { ProcessingContext, CaptureNode } from "../index_single_file";
 import { SemanticCategory, SemanticEntity } from "../index_single_file";
@@ -1060,6 +1065,214 @@ describe("ReferenceBuilder", () => {
 
       expect(references).toHaveLength(1);
       expect(references[0].kind).toBe("assignment");
+    });
+  });
+});
+
+// ============================================================================
+// extract_call_site_syntax
+// ============================================================================
+
+/**
+ * Find the first call node (call_expression in TS, call in Python) under a root.
+ */
+function find_first_call(root: SyntaxNode, call_type: string): SyntaxNode | undefined {
+  if (root.type === call_type) return root;
+  for (let i = 0; i < root.namedChildCount; i++) {
+    const child = root.namedChild(i);
+    if (!child) continue;
+    const hit = find_first_call(child, call_type);
+    if (hit) return hit;
+  }
+  return undefined;
+}
+
+describe("extract_call_site_syntax", () => {
+  let ts_parser: Parser;
+  let py_parser: Parser;
+
+  beforeAll(() => {
+    ts_parser = new Parser();
+    ts_parser.setLanguage(TypeScript.typescript);
+    py_parser = new Parser();
+    py_parser.setLanguage(Python);
+  });
+
+  function parse_ts_call(code: string): SyntaxNode {
+    const tree = ts_parser.parse(code);
+    const call = find_first_call(tree.rootNode, "call_expression");
+    if (!call) throw new Error(`No call_expression in: ${code}`);
+    return call;
+  }
+
+  function parse_py_call(code: string): SyntaxNode {
+    const tree = py_parser.parse(code);
+    const call = find_first_call(tree.rootNode, "call");
+    if (!call) throw new Error(`No call in: ${code}`);
+    return call;
+  }
+
+  describe("receiver_kind — TypeScript (all 8 variants)", () => {
+    const cases: Array<{
+      code: string;
+      expected_kind: string;
+    }> = [
+      { code: "obj.m()", expected_kind: "identifier" },
+      { code: "this.m()", expected_kind: "self_keyword" },
+      { code: "super.m()", expected_kind: "self_keyword" },
+      { code: "a.b.m()", expected_kind: "member_expression" },
+      { code: "foo().m()", expected_kind: "call_chain" },
+      { code: "arr[k].m()", expected_kind: "index_access" },
+      { code: "(x as T).m()", expected_kind: "type_cast" },
+      { code: "(x satisfies T).m()", expected_kind: "type_cast" },
+      { code: "((x as T)).m()", expected_kind: "type_cast" },
+      { code: "(((x as T))).m()", expected_kind: "type_cast" },
+      { code: "(expr).m()", expected_kind: "parenthesized" },
+      { code: "x!.m()", expected_kind: "non_null_assertion" },
+      { code: "new Foo().m()", expected_kind: "call_chain" },
+    ];
+
+    test.each(cases)(
+      "$code → $expected_kind",
+      ({ code, expected_kind }) => {
+        const node = parse_ts_call(code);
+        const syntax = extract_call_site_syntax(node);
+        expect(syntax?.receiver_kind).toBe(expected_kind);
+      }
+    );
+  });
+
+  describe("receiver_kind — Python (6 variants, no type_cast / non_null_assertion)", () => {
+    const cases: Array<{
+      code: string;
+      expected_kind: string;
+    }> = [
+      { code: "obj.m()", expected_kind: "identifier" },
+      { code: "self.m()", expected_kind: "self_keyword" },
+      { code: "cls.m()", expected_kind: "self_keyword" },
+      { code: "super().m()", expected_kind: "self_keyword" },
+      { code: "a.b.m()", expected_kind: "member_expression" },
+      { code: "foo().m()", expected_kind: "call_chain" },
+      { code: "arr[k].m()", expected_kind: "index_access" },
+      { code: "(expr).m()", expected_kind: "parenthesized" },
+    ];
+
+    test.each(cases)(
+      "$code → $expected_kind",
+      ({ code, expected_kind }) => {
+        const node = parse_py_call(code);
+        const syntax = extract_call_site_syntax(node);
+        expect(syntax?.receiver_kind).toBe(expected_kind);
+      }
+    );
+  });
+
+  describe("receiver_call_target_hint — 3 cases × 2 languages", () => {
+    const ts_cases: Array<{
+      code: string;
+      expected_hint: "class_like" | "function_like" | "unknown";
+    }> = [
+      { code: "SubClass().m()", expected_hint: "class_like" },
+      { code: "foo().m()", expected_hint: "function_like" },
+      { code: "(a + b)().m()", expected_hint: "unknown" },
+      { code: "new Foo().m()", expected_hint: "class_like" },
+    ];
+
+    test.each(ts_cases)(
+      "TS: $code → $expected_hint",
+      ({ code, expected_hint }) => {
+        const node = parse_ts_call(code);
+        const syntax = extract_call_site_syntax(node);
+        expect(syntax?.receiver_kind).toBe("call_chain");
+        expect(syntax?.receiver_call_target_hint).toBe(expected_hint);
+      }
+    );
+
+    const py_cases: Array<{
+      code: string;
+      expected_hint: "class_like" | "function_like" | "unknown";
+    }> = [
+      { code: "SubClass().m()", expected_hint: "class_like" },
+      { code: "foo().m()", expected_hint: "function_like" },
+      { code: "(a + b)().m()", expected_hint: "unknown" },
+    ];
+
+    test.each(py_cases)(
+      "Python: $code → $expected_hint",
+      ({ code, expected_hint }) => {
+        const node = parse_py_call(code);
+        const syntax = extract_call_site_syntax(node);
+        expect(syntax?.receiver_kind).toBe("call_chain");
+        expect(syntax?.receiver_call_target_hint).toBe(expected_hint);
+      }
+    );
+  });
+
+  describe("index_key_is_literal — 3 cases × 2 languages", () => {
+    const ts_cases: Array<{
+      code: string;
+      expected_literal: boolean;
+    }> = [
+      { code: 'arr["k"].m()', expected_literal: true },
+      { code: "arr[0].m()", expected_literal: true },
+      { code: "arr[k].m()", expected_literal: false },
+    ];
+
+    test.each(ts_cases)(
+      "TS: $code → literal=$expected_literal",
+      ({ code, expected_literal }) => {
+        const node = parse_ts_call(code);
+        const syntax = extract_call_site_syntax(node);
+        expect(syntax?.receiver_kind).toBe("index_access");
+        expect(syntax?.index_key_is_literal).toBe(expected_literal);
+      }
+    );
+
+    const py_cases: Array<{
+      code: string;
+      expected_literal: boolean;
+    }> = [
+      { code: 'arr["k"].m()', expected_literal: true },
+      { code: "arr[0].m()", expected_literal: true },
+      { code: "arr[k].m()", expected_literal: false },
+    ];
+
+    test.each(py_cases)(
+      "Python: $code → literal=$expected_literal",
+      ({ code, expected_literal }) => {
+        const node = parse_py_call(code);
+        const syntax = extract_call_site_syntax(node);
+        expect(syntax?.receiver_kind).toBe("index_access");
+        expect(syntax?.index_key_is_literal).toBe(expected_literal);
+      }
+    );
+  });
+
+  describe("discriminator absence on non-applicable receiver kinds", () => {
+    it("omits receiver_call_target_hint when receiver_kind !== call_chain", () => {
+      const node = parse_ts_call("obj.m()");
+      const syntax = extract_call_site_syntax(node);
+      expect(syntax).toEqual({ receiver_kind: "identifier" });
+    });
+
+    it("omits index_key_is_literal when receiver_kind !== index_access", () => {
+      const node = parse_ts_call("a.b.m()");
+      const syntax = extract_call_site_syntax(node);
+      expect(syntax).toEqual({ receiver_kind: "member_expression" });
+    });
+  });
+
+  describe("non-method call nodes", () => {
+    it("returns undefined for plain function call (TS)", () => {
+      const node = parse_ts_call("foo()");
+      const syntax = extract_call_site_syntax(node);
+      expect(syntax).toBeUndefined();
+    });
+
+    it("returns undefined for plain function call (Python)", () => {
+      const node = parse_py_call("foo()");
+      const syntax = extract_call_site_syntax(node);
+      expect(syntax).toBeUndefined();
     });
   });
 });

@@ -2,6 +2,7 @@ import type { Location } from "./common";
 import type { ScopeId } from "./scopes";
 import type { TypeInfo } from "./index_single_file";
 import type { SymbolName, SymbolId } from "./symbol";
+import type { CallSiteSyntax } from "./call_chains";
 
 /**
  * Discriminated union of all reference types, dispatched via `ref.kind`.
@@ -99,6 +100,12 @@ export interface MethodCallReference extends BaseReference {
   readonly is_optional_chain: boolean;
   /** Location of assigned variable when this call may be a class instantiation (e.g. user = models.User()) */
   readonly potential_construct_target?: Location;
+  /**
+   * Syntactic shape of the call site. Populated when the receiver AST shape
+   * is determinable at index time. Copied onto the emitted `CallReference`
+   * during call resolution.
+   */
+  readonly call_site_syntax?: CallSiteSyntax;
 }
 
 /**

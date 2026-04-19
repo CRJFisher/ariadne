@@ -14,6 +14,7 @@ import type {
   SymbolId,
   FilePath,
   CallReference,
+  CallSiteSyntax,
   SymbolReference,
   ScopeId,
   SymbolName,
@@ -367,9 +368,26 @@ function build_call_reference(
     })),
   };
 
-  // Omit the field entirely on success — preserves the zero-overhead invariant
-  // (Object.hasOwn(call, "resolution_failure") === false on the success path).
-  return failure ? { ...base, resolution_failure: failure } : base;
+  // Propagate call_site_syntax for method calls. MethodCallReference carries
+  // the indexer-computed value; SelfReferenceCall gets a synthesized
+  // { receiver_kind: "self_keyword" } so downstream classifiers see every
+  // method-call CallReference with a deterministic receiver_kind.
+  const call_site_syntax: CallSiteSyntax | undefined =
+    call_type === "method"
+      ? ref.kind === "method_call"
+        ? ref.call_site_syntax
+        : ref.kind === "self_reference_call"
+        ? { receiver_kind: "self_keyword" }
+        : undefined
+      : undefined;
+
+  // Omit optional fields entirely when absent — preserves the zero-overhead
+  // invariant on the success / non-method path.
+  return {
+    ...base,
+    ...(failure !== undefined && { resolution_failure: failure }),
+    ...(call_site_syntax !== undefined && { call_site_syntax }),
+  };
 }
 
 /**
