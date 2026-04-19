@@ -129,6 +129,56 @@ export interface ResolutionFailure {
   };
 }
 
+/**
+ * Syntactic shape of a method-call receiver.
+ *
+ * Populated on `CallSiteSyntax.receiver_kind` only when `call_type === "method"`
+ * (function / constructor calls are discriminated by `call_type` itself).
+ * Closed union — new variants force a types-package bump so classifiers stay
+ * exhaustive, mirroring the `ResolutionFailureReason` pattern.
+ *
+ * Variant meanings:
+ * - `identifier`         — `obj.m()`
+ * - `self_keyword`       — `this.m()` / `self.m()` / `super.m()` / `cls.m()`
+ * - `member_expression`  — `a.b.m()` (nested member access as receiver)
+ * - `call_chain`         — `foo().m()` (receiver is itself a call)
+ * - `index_access`       — `arr[k].m()` (receiver is an index/subscript)
+ * - `type_cast`          — `(x as T).m()` (TypeScript only)
+ * - `parenthesized`      — `(expr).m()` (wraps any non-trivial expression)
+ * - `non_null_assertion` — `x!.m()` (TypeScript only)
+ */
+export type ReceiverKind =
+  | "identifier"
+  | "self_keyword"
+  | "member_expression"
+  | "call_chain"
+  | "index_access"
+  | "type_cast"
+  | "parenthesized"
+  | "non_null_assertion";
+
+/**
+ * Call-site syntactic context.
+ *
+ * Carries deterministic, purely syntactic signals that downstream classifiers
+ * (auto-classify pipeline stage) key off. Two discriminators accompany
+ * `receiver_kind`, each populated only when it resolves a known ambiguity:
+ *
+ * - `receiver_call_target_hint` — set only when `receiver_kind === "call_chain"`.
+ *   Separates F3 (inline `SubClass().m()`) from F2 (`foo().m()` where factory
+ *   return type is unknown). Hint is lexical: `PascalCase` receiver-call target
+ *   → `"class_like"`; all-lowercase → `"function_like"`; otherwise `"unknown"`.
+ *
+ * - `index_key_is_literal` — set only when `receiver_kind === "index_access"`.
+ *   Separates resolvable literal-key dispatch (`a["k"].m()`) from F9 (dynamic-
+ *   key dispatch, `a[k].m()`).
+ */
+export interface CallSiteSyntax {
+  readonly receiver_kind: ReceiverKind;
+  readonly receiver_call_target_hint?: "class_like" | "function_like" | "unknown";
+  readonly index_key_is_literal?: boolean;
+}
+
 export interface CallReference {
   /** Reference location */
   readonly location: Location;
@@ -157,6 +207,12 @@ export interface CallReference {
    * memory overhead for the common case.
    */
   readonly resolution_failure?: ResolutionFailure;
+
+  /**
+   * Populated iff `call_type === "method"`. Absent on function/constructor
+   * calls — those are already discriminated by `call_type`.
+   */
+  readonly call_site_syntax?: CallSiteSyntax;
 
   /**
    * True if this call reference represents a callback invocation.

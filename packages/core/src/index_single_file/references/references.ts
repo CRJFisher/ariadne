@@ -16,11 +16,14 @@
  */
 
 import type {
+  CallSiteSyntax,
   FilePath,
+  ReceiverKind,
   SymbolName,
   SymbolReference,
   TypeInfo,
 } from "@ariadnejs/types";
+import type { SyntaxNode } from "tree-sitter";
 
 import {
   create_self_reference_call,
@@ -167,6 +170,216 @@ function extract_type_info(
 }
 
 /**
+ * Classify a method-call receiver node as a `ReceiverKind`.
+ *
+ * Navigates one layer: for `call_expression` / `call`, resolves to the
+ * `function` field; for `member_expression` / `optional_chain` / `attribute`,
+ * resolves to the `object` field. Returns undefined when the call shape is
+ * unrecognized.
+ */
+function classify_receiver_node(node: SyntaxNode): SyntaxNode | undefined {
+  // Unwrap call → member/attribute
+  let target = node;
+  if (target.type === "call_expression" || target.type === "call") {
+    const function_node = target.childForFieldName("function");
+    if (!function_node) return undefined;
+    target = function_node;
+  }
+
+  // Unwrap member/attribute → object/receiver
+  if (
+    target.type === "member_expression" ||
+    target.type === "optional_chain" ||
+    target.type === "attribute"
+  ) {
+    const object_node = target.childForFieldName("object");
+    if (!object_node) return undefined;
+    return object_node;
+  }
+
+  return undefined;
+}
+
+/**
+ * Check if an identifier text denotes a self-reference keyword.
+ */
+const SELF_KEYWORD_TEXTS: ReadonlySet<string> = new Set(["this", "super", "self", "cls"]);
+
+/**
+ * Classify receiver kind from the receiver node's AST shape.
+ *
+ * Unwraps all layers of parentheses to detect an inner `type_cast` (as-expression
+ * or satisfies-expression) — `(x as T).m()` and `(((x as T))).m()` both return
+ * `type_cast`, while `(complex_expr).m()` returns `parenthesized`.
+ */
+function receiver_kind_from_node(receiver: SyntaxNode): ReceiverKind {
+  // Type cast (TypeScript)
+  if (receiver.type === "as_expression" || receiver.type === "satisfies_expression") {
+    return "type_cast";
+  }
+
+  // Parenthesized — unwrap all nested parens to catch ((x as T)).m()
+  if (receiver.type === "parenthesized_expression") {
+    let inner: SyntaxNode | undefined = receiver;
+    while (inner && inner.type === "parenthesized_expression") {
+      let next: SyntaxNode | undefined = undefined;
+      for (let i = 0; i < inner.namedChildCount; i++) {
+        const child = inner.namedChild(i);
+        if (child) {
+          next = child;
+          break;
+        }
+      }
+      inner = next;
+    }
+    if (inner && (inner.type === "as_expression" || inner.type === "satisfies_expression")) {
+      return "type_cast";
+    }
+    return "parenthesized";
+  }
+
+  // Non-null assertion (TypeScript)
+  if (receiver.type === "non_null_expression") {
+    return "non_null_assertion";
+  }
+
+  // Self-reference keywords
+  if (receiver.type === "this" || receiver.type === "super") {
+    return "self_keyword";
+  }
+  if (receiver.type === "identifier" && SELF_KEYWORD_TEXTS.has(receiver.text)) {
+    return "self_keyword";
+  }
+
+  // Python `super().m()` — the receiver is a `call` whose function is `super`
+  if (receiver.type === "call") {
+    const fn = receiver.childForFieldName("function");
+    if (fn && fn.type === "identifier" && fn.text === "super") {
+      return "self_keyword";
+    }
+    return "call_chain";
+  }
+
+  // `new Foo().m()` — construct expression feeding a method call; semantically F3
+  if (receiver.type === "new_expression") {
+    return "call_chain";
+  }
+
+  // TypeScript call chain
+  if (receiver.type === "call_expression") {
+    return "call_chain";
+  }
+
+  // Member / attribute access
+  if (
+    receiver.type === "member_expression" ||
+    receiver.type === "optional_chain" ||
+    receiver.type === "attribute"
+  ) {
+    return "member_expression";
+  }
+
+  // Index / subscript access
+  if (receiver.type === "subscript_expression" || receiver.type === "subscript") {
+    return "index_access";
+  }
+
+  // Fallback: plain identifier (or any unclassified leaf)
+  return "identifier";
+}
+
+/**
+ * Classify a call-chain receiver's inner call target by lexical convention.
+ *
+ * Only meaningful for `ReceiverKind.call_chain`. Separates F3 (inline
+ * constructor chain, `SubClass().m()`) from F2 (factory-return-type-unknown,
+ * `foo().m()`) without type-resolving the inner call.
+ *
+ * Heuristic (safe to apply before resolution):
+ * - inner call target is identifier/type_identifier starting with uppercase → `class_like`
+ * - inner call target is identifier starting with lowercase → `function_like`
+ * - anything else (non-identifier target, empty text) → `unknown`
+ */
+function call_chain_target_hint(
+  receiver: SyntaxNode
+): "class_like" | "function_like" | "unknown" {
+  // `new Foo()` — always a constructor → class_like
+  if (receiver.type === "new_expression") return "class_like";
+
+  const inner_call =
+    receiver.type === "call_expression" || receiver.type === "call"
+      ? receiver
+      : undefined;
+  if (!inner_call) return "unknown";
+
+  const fn = inner_call.childForFieldName("function");
+  if (!fn) return "unknown";
+  if (fn.type !== "identifier" && fn.type !== "type_identifier") return "unknown";
+
+  const first = fn.text[0];
+  if (!first) return "unknown";
+  if (first >= "A" && first <= "Z") return "class_like";
+  if (first >= "a" && first <= "z") return "function_like";
+  return "unknown";
+}
+
+/**
+ * Check whether an index-access receiver uses a literal key.
+ *
+ * Only meaningful for `ReceiverKind.index_access`. Literal-key dispatch
+ * (`a["k"].m()`, `a[0].m()`) is typically resolvable; non-literal dispatch
+ * (`a[k].m()`) is F9.
+ */
+function index_key_literalness(receiver: SyntaxNode): boolean {
+  // TypeScript subscript_expression: index field
+  if (receiver.type === "subscript_expression") {
+    const index = receiver.childForFieldName("index");
+    if (!index) return false;
+    return index.type === "string" || index.type === "number";
+  }
+
+  // Python subscript: subscript field
+  if (receiver.type === "subscript") {
+    const key = receiver.childForFieldName("subscript");
+    if (!key) return false;
+    return key.type === "string" || key.type === "integer" || key.type === "float";
+  }
+
+  return false;
+}
+
+/**
+ * Extract call-site syntactic context for a method call.
+ *
+ * Language-agnostic — keys off tree-sitter node type literals across TypeScript,
+ * JavaScript, and Python. Returns undefined when the node is not a recognizable
+ * method call, leaving downstream classifiers to treat the signal as missing.
+ */
+export function extract_call_site_syntax(node: SyntaxNode): CallSiteSyntax | undefined {
+  const receiver = classify_receiver_node(node);
+  if (!receiver) return undefined;
+
+  const receiver_kind = receiver_kind_from_node(receiver);
+
+  if (receiver_kind === "call_chain") {
+    // When the receiver is Python `super()`, it classified as self_keyword already.
+    return {
+      receiver_kind,
+      receiver_call_target_hint: call_chain_target_hint(receiver),
+    };
+  }
+
+  if (receiver_kind === "index_access") {
+    return {
+      receiver_kind,
+      index_key_is_literal: index_key_literalness(receiver),
+    };
+  }
+
+  return { receiver_kind };
+}
+
+/**
  * Process method reference with object context
  *
  * Uses factory functions to create typed reference variants based on receiver type.
@@ -225,6 +438,9 @@ function process_method_reference(
     // (e.g., user = models.User(name) — user is the potential_construct_target)
     const potential_construct_target = extractors?.extract_construct_target(capture.node, file_path);
 
+    // Extract syntactic call-site context for downstream auto-classifiers
+    const call_site_syntax = extract_call_site_syntax(capture.node);
+
     return create_method_call_reference(
       method_name,
       location,
@@ -232,7 +448,8 @@ function process_method_reference(
       receiver_info.receiver_location,
       receiver_info.property_chain,
       is_optional_chain,
-      potential_construct_target
+      potential_construct_target,
+      call_site_syntax
     );
   }
 
