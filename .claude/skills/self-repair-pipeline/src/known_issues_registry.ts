@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   PREDICATE_OPERATORS,
+  SYNTACTIC_FEATURE_NAMES,
   type ClassifierSpec,
   type KnownIssue,
   type KnownIssueLanguage,
@@ -19,6 +20,7 @@ import {
   type KnownIssuesRegistry,
   type PredicateExpr,
   type PredicateOperator,
+  type SyntacticFeatureName,
 } from "./types.js";
 
 // ===== Constants =====
@@ -39,6 +41,10 @@ const VALID_LANGUAGES: ReadonlySet<KnownIssueLanguage> = new Set<KnownIssueLangu
 const VALID_AXES: ReadonlySet<"A" | "B" | "C"> = new Set(["A", "B", "C"] as const);
 
 const VALID_OPERATORS: ReadonlySet<PredicateOperator> = new Set(PREDICATE_OPERATORS);
+
+const VALID_SYNTACTIC_FEATURE_NAMES: ReadonlySet<SyntacticFeatureName> = new Set(
+  SYNTACTIC_FEATURE_NAMES,
+);
 
 const KEBAB_CASE = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 
@@ -99,40 +105,44 @@ function validate_entry(entry: unknown, at: string): asserts entry is KnownIssue
 
   require_string(record, "group_id", at);
   require_kebab_case(record["group_id"] as string, `${at}.group_id`);
-  require_string(record, "title", at);
-  require_string(record, "description", at);
+  // All subsequent errors carry the group_id so curators don't need to count
+  // array positions to find the offending entry.
+  const at_id = `${at}(group_id="${record["group_id"] as string}")`;
 
-  require_enum(record, "status", VALID_STATUSES, at);
+  require_string(record, "title", at_id);
+  require_string(record, "description", at_id);
+
+  require_enum(record, "status", VALID_STATUSES, at_id);
 
   if (!Array.isArray(record["languages"])) {
-    throw new RegistryValidationError(`${at}.languages: must be an array`);
+    throw new RegistryValidationError(`${at_id}.languages: must be an array`);
   }
   if (record["languages"].length === 0) {
-    throw new RegistryValidationError(`${at}.languages: must not be empty`);
+    throw new RegistryValidationError(`${at_id}.languages: must not be empty`);
   }
   for (const lang of record["languages"]) {
     if (typeof lang !== "string" || !VALID_LANGUAGES.has(lang as KnownIssueLanguage)) {
       throw new RegistryValidationError(
-        `${at}.languages: invalid language "${String(lang)}" (allowed: ${[...VALID_LANGUAGES].join(", ")})`,
+        `${at_id}.languages: invalid language "${String(lang)}" (allowed: ${[...VALID_LANGUAGES].join(", ")})`,
       );
     }
   }
 
   if ("backlog_task" in record && record["backlog_task"] !== undefined) {
     if (typeof record["backlog_task"] !== "string") {
-      throw new RegistryValidationError(`${at}.backlog_task: must be a string`);
+      throw new RegistryValidationError(`${at_id}.backlog_task: must be a string`);
     }
     if (!/^TASK-[0-9]+(?:\.[0-9]+)*$/.test(record["backlog_task"])) {
       throw new RegistryValidationError(
-        `${at}.backlog_task: must match "TASK-<id>" with digits and optional dotted suffixes (got "${record["backlog_task"]}")`,
+        `${at_id}.backlog_task: must match "TASK-<id>" with digits and optional dotted suffixes (got "${record["backlog_task"]}")`,
       );
     }
   }
 
-  validate_examples(record["examples"], `${at}.examples`);
-  validate_classifier_spec(record["classifier"], `${at}.classifier`);
+  validate_examples(record["examples"], `${at_id}.examples`);
+  validate_classifier_spec(record["classifier"], `${at_id}.classifier`);
 
-  validate_optional_curator_fields(record, at);
+  validate_optional_curator_fields(record, at_id);
 }
 
 function validate_examples(value: unknown, at: string): void {
@@ -224,15 +234,32 @@ export function validate_predicate_expr(value: unknown, at: string): asserts val
       require_string(record, "value", at);
       return;
     case "decorator_matches":
-    case "grep_line_regex":
+    case "grep_line_regex": {
       require_string(record, "pattern", at);
+      const pattern = record["pattern"] as string;
+      try {
+        // Pre-compile once at load time so classifier evaluation is hot-path
+        // cheap and invalid patterns surface immediately.
+        record["compiled_pattern"] = new RegExp(pattern);
+      } catch (e) {
+        const reason = e instanceof Error ? e.message : String(e);
+        throw new RegistryValidationError(
+          `${at}.pattern: invalid regex for op="${op}" — ${reason}`,
+        );
+      }
       return;
+    }
     case "has_capture_at_grep_hit":
     case "missing_capture_at_grep_hit":
       require_string(record, "capture_name", at);
       return;
     case "syntactic_feature_eq":
       require_string(record, "name", at);
+      if (!VALID_SYNTACTIC_FEATURE_NAMES.has(record["name"] as SyntacticFeatureName)) {
+        throw new RegistryValidationError(
+          `${at}.name: unknown syntactic feature "${String(record["name"])}" (allowed: ${[...VALID_SYNTACTIC_FEATURE_NAMES].join(", ")})`,
+        );
+      }
       if (typeof record["value"] !== "boolean") {
         throw new RegistryValidationError(`${at}.value: must be boolean for op="syntactic_feature_eq"`);
       }

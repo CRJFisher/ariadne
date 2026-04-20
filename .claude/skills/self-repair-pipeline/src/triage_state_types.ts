@@ -41,6 +41,19 @@ export interface TriageEntry {
   access_modifier: string | null;
   /** Pre-gathered diagnostics for self-service context */
   diagnostics: EntryPointDiagnostics;
+  /**
+   * True when a predicate classifier from the known-issues registry matched this
+   * entry at or above its `min_confidence` threshold. Orthogonal to `route`:
+   * these entries carry `route === "known-unreachable"` and `status === "completed"`,
+   * and are skipped by `get_next_triage_entry`.
+   */
+  auto_classified: boolean;
+  /**
+   * Sub-threshold classifier matches that did not reach `min_confidence`.
+   * Attached to entries routed to `llm-triage` so the prompt can surface the
+   * signal; always `[]` for entries already completed by the classifier.
+   */
+  classifier_hints: ClassifierHint[];
 }
 
 export interface TriageEntryResult {
@@ -49,5 +62,15 @@ export interface TriageEntryResult {
   /** "confirmed-unreachable" when ariadne_correct=true; kebab-case detection gap id otherwise */
   group_id: string;
   root_cause: string;
+  reasoning: string;
+}
+
+// ===== Classifier Hints (persisted on TriageEntry) =====
+
+export interface ClassifierHint {
+  /** Known-issue group this hint points at. */
+  group_id: string;
+  /** Score in [0, 1]. Predicates return 1.0; sub-threshold means `< min_confidence`. */
+  confidence: number;
   reasoning: string;
 }

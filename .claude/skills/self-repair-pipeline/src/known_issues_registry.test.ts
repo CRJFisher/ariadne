@@ -238,6 +238,37 @@ describe("validate_registry — negative cases", () => {
     registry[0].backlog_task = "task-123";
     expect(() => validate_registry(registry)).toThrow(/backlog_task/);
   });
+
+  it("rejects an invalid regex in grep_line_regex", () => {
+    expect(() =>
+      validate_predicate_expr({ op: "grep_line_regex", pattern: "[unterminated" }, "root"),
+    ).toThrow(/invalid regex/);
+  });
+
+  it("rejects an invalid regex in decorator_matches", () => {
+    expect(() =>
+      validate_predicate_expr({ op: "decorator_matches", pattern: "(unbalanced" }, "root"),
+    ).toThrow(/invalid regex/);
+  });
+
+  it("rejects an unknown syntactic_feature_eq.name", () => {
+    expect(() =>
+      validate_predicate_expr(
+        { op: "syntactic_feature_eq", name: "is_banana", value: true },
+        "root",
+      ),
+    ).toThrow(/unknown syntactic feature/);
+  });
+
+  it("attaches compiled_pattern to grep_line_regex nodes after validation", () => {
+    const node: { op: string; pattern: string; compiled_pattern?: RegExp } = {
+      op: "grep_line_regex",
+      pattern: "foo.*bar",
+    };
+    validate_predicate_expr(node, "root");
+    expect(node.compiled_pattern).toBeInstanceOf(RegExp);
+    expect(node.compiled_pattern?.test("foo zzz bar")).toBe(true);
+  });
 });
 
 // ===== backlog_task either matches an existing task or is intentionally absent =====

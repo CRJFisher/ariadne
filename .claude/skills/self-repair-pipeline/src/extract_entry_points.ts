@@ -27,7 +27,23 @@ import type {
   EntryPointDiagnostics,
   GrepHit,
   CallRefDiagnostic,
+  SyntacticFeatures,
 } from "./types.js";
+
+/**
+ * Tree-sitter capture names associated with each call type.
+ *
+ * Registry predicates that use `has_capture_at_grep_hit` /
+ * `missing_capture_at_grep_hit` reference capture names (e.g.
+ * `"@reference.constructor"`); `explain_call_site()` emits a boolean
+ * `capture_fired`, not a capture name. We bridge the two by deriving the
+ * canonical capture name(s) from `call_type`.
+ */
+const CAPTURE_NAMES_BY_CALL_TYPE: Record<"function" | "method" | "constructor", readonly string[]> = {
+  function: ["@reference.call"],
+  method: ["@reference.call"],
+  constructor: ["@reference.constructor"],
+};
 
 /**
  * Build a map from constructor SymbolId to the owning class name.
@@ -60,8 +76,9 @@ export function extract_entry_points(
   filter?: (node: CallableNode) => boolean,
   class_name_by_constructor_id?: ReadonlyMap<SymbolId, SymbolName>,
 ): EnrichedFunctionEntry[] {
-  // Build a name-to-call-references index for diagnostic lookups
+  // Build indexes used by diagnostics.
   const call_refs_by_name = build_call_refs_by_name(call_graph);
+  const call_refs_by_file_line = build_call_refs_by_file_line(call_graph);
 
   const entry_points: EnrichedFunctionEntry[] = [];
 
@@ -83,6 +100,7 @@ export function extract_entry_points(
       node,
       entry_point_id as string,
       call_refs_by_name,
+      call_refs_by_file_line,
       source_files,
       class_name_by_constructor_id,
     );
@@ -157,6 +175,32 @@ function build_call_refs_by_name(
   return index;
 }
 
+/**
+ * Build an index of `file_path → (start_line → CallReference[])`.
+ * Lets the grep-hit pass look up whether any tree-sitter call capture fired
+ * at a (file, line) in O(1) without re-running the resolver.
+ */
+function build_call_refs_by_file_line(
+  call_graph: CallGraph,
+): Map<string, Map<number, CallReference[]>> {
+  const index = new Map<string, Map<number, CallReference[]>>();
+  for (const [, caller_node] of call_graph.nodes) {
+    for (const call_ref of caller_node.enclosed_calls) {
+      const file = call_ref.location.file_path;
+      const line = call_ref.location.start_line;
+      let by_line = index.get(file);
+      if (!by_line) {
+        by_line = new Map();
+        index.set(file, by_line);
+      }
+      const arr = by_line.get(line) ?? [];
+      arr.push(call_ref);
+      by_line.set(line, arr);
+    }
+  }
+  return index;
+}
+
 const MAX_GREP_HITS = 10;
 
 /**
@@ -170,6 +214,7 @@ function gather_diagnostics(
   node: CallableNode,
   entry_point_id: string,
   call_refs_by_name: Map<string, { caller_node: CallableNode; call_ref: CallReference }[]>,
+  call_refs_by_file_line: Map<string, Map<number, CallReference[]>>,
   source_files: ReadonlyMap<string, string>,
   class_name_by_constructor_id?: ReadonlyMap<SymbolId, SymbolName>,
 ): EntryPointDiagnostics {
@@ -182,13 +227,22 @@ function gather_diagnostics(
 
   // Step 1: Grep for textual call sites
   const is_constructor = node.definition.kind === "constructor";
-  const grep_call_sites = grep_for_calls(grep_name, def_file, def_line, source_files, MAX_GREP_HITS, is_constructor);
+  const grep_call_sites = grep_for_calls(
+    grep_name,
+    def_file,
+    def_line,
+    source_files,
+    MAX_GREP_HITS,
+    is_constructor,
+    call_refs_by_file_line,
+  );
 
   // Step 2: Find matching CallReferences in the call graph
   const ariadne_call_refs = find_matching_call_refs(
     node.name as string,
     entry_point_id,
     call_refs_by_name,
+    source_files,
   );
 
   // Step 3: Diagnose
@@ -211,7 +265,8 @@ function grep_for_calls(
   def_line: number,
   source_files: ReadonlyMap<string, string>,
   max_hits: number,
-  is_constructor: boolean = false,
+  is_constructor: boolean,
+  call_refs_by_file_line: Map<string, Map<number, CallReference[]>>,
 ): GrepHit[] {
   // Can't meaningfully grep for anonymous functions
   if (name === "<anonymous>") {
@@ -248,6 +303,7 @@ function grep_for_calls(
           file_path,
           line: line_num,
           content: line.trim(),
+          captures: captures_at(call_refs_by_file_line, file_path, line_num),
         });
 
         if (hits.length >= max_hits) {
@@ -264,6 +320,30 @@ function grep_for_calls(
 }
 
 /**
+ * Tree-sitter capture names that fired at `(file, line)`, derived from the
+ * `call_type` of any `CallReference` the resolver produced at that position.
+ * Empty array when no call reference exists — which itself is the signal that
+ * `missing_capture_at_grep_hit` classifier entries key off.
+ */
+function captures_at(
+  call_refs_by_file_line: Map<string, Map<number, CallReference[]>>,
+  file_path: string,
+  line: number,
+): string[] {
+  const by_line = call_refs_by_file_line.get(file_path);
+  if (!by_line) return [];
+  const refs = by_line.get(line);
+  if (!refs || refs.length === 0) return [];
+  const captures = new Set<string>();
+  for (const ref of refs) {
+    for (const name of CAPTURE_NAMES_BY_CALL_TYPE[ref.call_type]) {
+      captures.add(name);
+    }
+  }
+  return [...captures];
+}
+
+/**
  * Find CallReferences in the call graph that match a given function name.
  * These represent calls that Ariadne detected but may not have resolved
  * to the entry point's symbol.
@@ -272,17 +352,68 @@ function find_matching_call_refs(
   name: string,
   _entry_point_id: string,
   call_refs_by_name: Map<string, { caller_node: CallableNode; call_ref: CallReference }[]>,
+  source_files: ReadonlyMap<string, string>,
 ): CallRefDiagnostic[] {
   const matching = call_refs_by_name.get(name) ?? [];
 
-  return matching.map(({ caller_node, call_ref }) => ({
-    caller_function: caller_node.name as string,
-    caller_file: call_ref.location.file_path,
-    call_line: call_ref.location.start_line,
-    call_type: call_ref.call_type,
-    resolution_count: call_ref.resolutions.length,
-    resolved_to: call_ref.resolutions.map((r) => r.symbol_id as string),
-  }));
+  return matching.map(({ caller_node, call_ref }) => {
+    const source_line = read_source_line(
+      source_files,
+      call_ref.location.file_path,
+      call_ref.location.start_line,
+    );
+    return {
+      caller_function: caller_node.name as string,
+      caller_file: call_ref.location.file_path,
+      call_line: call_ref.location.start_line,
+      call_type: call_ref.call_type,
+      resolution_count: call_ref.resolutions.length,
+      resolved_to: call_ref.resolutions.map((r) => r.symbol_id as string),
+      receiver_kind: call_ref.call_site_syntax?.receiver_kind ?? "none",
+      resolution_failure: call_ref.resolution_failure ?? null,
+      syntactic_features: derive_syntactic_features(call_ref, source_line),
+    };
+  });
+}
+
+function read_source_line(
+  source_files: ReadonlyMap<string, string>,
+  file_path: string,
+  line: number,
+): string {
+  const content = source_files.get(file_path);
+  if (!content) return "";
+  const lines = content.split("\n");
+  return lines[line - 1] ?? "";
+}
+
+/**
+ * Derive `SyntacticFeatures` for a call from the `CallReference` and the
+ * source line text at the call site. Core does not emit these flags directly
+ * — we compose them here so the predicate evaluator can read them uniformly.
+ *
+ * Registry entries today use `is_super_call` and `is_dynamic_dispatch`. The
+ * remaining flags are populated best-effort for future registry entries.
+ * `is_inside_try` has no syntactic source and remains `false`.
+ */
+function derive_syntactic_features(
+  call_ref: CallReference,
+  source_line: string,
+): SyntacticFeatures {
+  const receiver_kind = call_ref.call_site_syntax?.receiver_kind;
+  const index_key_is_literal = call_ref.call_site_syntax?.index_key_is_literal;
+  return {
+    is_new_expression: call_ref.call_type === "constructor",
+    // Core emits `receiver_kind: "self_keyword"` for this/self/super/cls. To
+    // isolate super we fall back to a textual check on the call-site line.
+    is_super_call: /\bsuper\s*\./.test(source_line),
+    is_optional_chain: /\?\./.test(source_line),
+    is_awaited: /\bawait\s/.test(source_line),
+    is_callback_arg: call_ref.is_callback_invocation === true,
+    is_inside_try: false,
+    is_dynamic_dispatch:
+      receiver_kind === "index_access" && index_key_is_literal === false,
+  };
 }
 
 /**
