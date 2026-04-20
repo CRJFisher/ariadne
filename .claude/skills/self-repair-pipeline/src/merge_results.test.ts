@@ -37,6 +37,8 @@ function build_mock_entry(overrides: Partial<TriageEntry> = {}): TriageEntry {
       is_exported: true,
       access_modifier: null,
       diagnostics: { grep_call_sites: [], ariadne_call_refs: [], diagnosis: "no-textual-callers" },
+      auto_classified: false,
+      classifier_hints: [],
     } satisfies TriageEntry,
     overrides,
     { entry_index: idx },

@@ -22,6 +22,7 @@ Write your result JSON to: {{output_path}}
 
 **Ariadne call references:**
 {{entry.diagnostics.ariadne_call_refs_formatted}}
+{{classifier_hints}}
 
 ### Investigation Steps
 

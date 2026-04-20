@@ -2,6 +2,8 @@
  * Shared type definitions for top-level nodes analysis
  */
 
+import type { ReceiverKind, ResolutionFailure } from "@ariadnejs/types";
+
 // ===== Analysis Input =====
 
 export interface FunctionEntry {
@@ -44,7 +46,55 @@ export interface GrepHit {
   file_path: string;
   line: number;
   content: string;
+  /**
+   * Tree-sitter capture names that fired at this (file, line) during resolution.
+   * Empty array when no `CallReference` was produced at the line — that fact is
+   * what `missing_capture_at_grep_hit` classifier entries key off.
+   */
+  captures: string[];
 }
+
+/**
+ * Syntactic flags derived from a `CallReference` and its source line.
+ *
+ * Derived (not persisted upstream): core does not emit a `SyntacticFeatures`
+ * record on `CallReference`. `find_matching_call_refs` computes these at
+ * extraction time by combining `CallReference` fields with the source line
+ * text so the auto-classifier predicate evaluator can consume them uniformly.
+ *
+ * Registry entries today consume only `is_super_call` and `is_dynamic_dispatch`;
+ * the remaining flags are populated best-effort so new registry entries adding
+ * them do not require an extract-layer change.
+ */
+export interface SyntacticFeatures {
+  /** `call_type === "constructor"` */
+  is_new_expression: boolean;
+  /** Source line starts the receiver with `super.` */
+  is_super_call: boolean;
+  /** Source line uses `?.` to invoke the method */
+  is_optional_chain: boolean;
+  /** Source line prefixes the call with `await ` */
+  is_awaited: boolean;
+  /** `is_callback_invocation === true` (synthetic edge from forEach-style dispatch) */
+  is_callback_arg: boolean;
+  /** Not surfaced by core — always false. */
+  is_inside_try: boolean;
+  /** `call_site_syntax.index_key_is_literal === false` (e.g. `this._hooks[name].call()`) */
+  is_dynamic_dispatch: boolean;
+}
+
+/** Stable list of `SyntacticFeatures` keys — drives registry validation. */
+export const SYNTACTIC_FEATURE_NAMES = [
+  "is_new_expression",
+  "is_super_call",
+  "is_optional_chain",
+  "is_awaited",
+  "is_callback_arg",
+  "is_inside_try",
+  "is_dynamic_dispatch",
+] as const;
+
+export type SyntacticFeatureName = typeof SYNTACTIC_FEATURE_NAMES[number];
 
 export interface CallRefDiagnostic {
   caller_function: string;
@@ -53,6 +103,11 @@ export interface CallRefDiagnostic {
   call_type: "function" | "method" | "constructor";
   resolution_count: number;
   resolved_to: string[];
+  /** `"none"` when `call_type !== "method"` (core leaves `call_site_syntax` absent). */
+  receiver_kind: ReceiverKind | "none";
+  /** `null` on resolved calls (core leaves `resolution_failure` absent when `resolutions.length > 0`). */
+  resolution_failure: ResolutionFailure | null;
+  syntactic_features: SyntacticFeatures;
 }
 
 export interface AnalysisResult {
@@ -171,13 +226,13 @@ export type PredicateExpr =
   // Leaves
   | { op: "diagnosis_eq"; value: string }
   | { op: "language_eq"; value: string }
-  | { op: "decorator_matches"; pattern: string }
+  | { op: "decorator_matches"; pattern: string; compiled_pattern?: RegExp }
   | { op: "has_capture_at_grep_hit"; capture_name: string }
   | { op: "missing_capture_at_grep_hit"; capture_name: string }
-  | { op: "grep_line_regex"; pattern: string }
+  | { op: "grep_line_regex"; pattern: string; compiled_pattern?: RegExp }
   | { op: "resolution_failure_reason_eq"; value: string }
   | { op: "receiver_kind_eq"; value: string }
-  | { op: "syntactic_feature_eq"; name: string; value: boolean };
+  | { op: "syntactic_feature_eq"; name: SyntacticFeatureName; value: boolean };
 
 /** The exhaustive set of recognised predicate operators. Used by schema validation. */
 export const PREDICATE_OPERATORS = [

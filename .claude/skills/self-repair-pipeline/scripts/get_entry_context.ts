@@ -19,6 +19,7 @@ import { discover_state_file } from "../src/discover_state.js";
 import { TRIAGE_STATE_DIR } from "../src/paths.js";
 import type { TriageState, TriageEntry } from "../src/triage_state_types.js";
 import type { GrepHit, CallRefDiagnostic, EntryPointDiagnostics } from "../src/types.js";
+import type { ClassifierHint } from "../src/auto_classify/types.js";
 import "../src/require_node_import_tsx.js";
 
 const THIS_FILE = fileURLToPath(import.meta.url);
@@ -243,6 +244,27 @@ export function format_call_refs(refs: CallRefDiagnostic[]): string {
     .join("\n");
 }
 
+/**
+ * Render sub-threshold classifier hints as a markdown block. Returns an empty
+ * string when there are no hints so the enclosing template contributes nothing
+ * (including no trailing heading) for the common case.
+ */
+export function format_classifier_hints(hints: readonly ClassifierHint[]): string {
+  if (hints.length === 0) return "";
+  const bullets = hints
+    .map((h) => `- ${h.group_id} (confidence ${h.confidence.toFixed(2)}): ${h.reasoning}`)
+    .join("\n");
+  return [
+    "",
+    "### Classifier hints (sub-threshold matches)",
+    "",
+    "Predicate classifiers from the known-issues registry matched this entry but did not reach the `min_confidence` threshold for auto-classification. Weigh these before starting the investigation — a hint often names the exact detection gap.",
+    "",
+    bullets,
+    "",
+  ].join("\n");
+}
+
 // ===== Template Substitution =====
 
 export function substitute_template(
@@ -265,6 +287,7 @@ export function substitute_template(
     "{{output_path}}": output_path,
     "{{entry.diagnostics.grep_call_sites_formatted}}": format_grep_hits(diagnostics.grep_call_sites),
     "{{entry.diagnostics.ariadne_call_refs_formatted}}": format_call_refs(diagnostics.ariadne_call_refs),
+    "{{classifier_hints}}": format_classifier_hints(entry.classifier_hints),
     "{{diagnosis.title}}": hints.title,
     "{{diagnosis.summary}}": hints.summary,
     "{{diagnosis.investigation_guide}}": hints.investigation_guide,
