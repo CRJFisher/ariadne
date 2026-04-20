@@ -1,10 +1,15 @@
 #!/usr/bin/env npx tsx
 /**
- * Claude Code Stop hook: Entry point detection using Ariadne directly
+ * Stop hook: detects dead code introduced during a coding session.
  *
- * Detects which packages were modified, runs entrypoint analysis using Ariadne,
- * and compares against package-specific whitelists.
- * Blocks if unexpected entry points are found.
+ * Runs Ariadne against git-modified packages and cross-checks flagged entry
+ * points against the project's static known-entrypoints whitelist at
+ * ~/.ariadne/self-repair-pipeline/known_entrypoints/<package>.json. Blocks the
+ * session if any exported-but-uncalled entry point is not on the whitelist.
+ *
+ * The whitelist is human-maintained (edit the JSON and commit). This hook only
+ * reads it — it never writes. The self-repair pipeline's classifier registry is
+ * a separate concern and is not consulted here.
  */
 
 import { load_project, FileSystemStorage, resolve_cache_dir } from "@ariadnejs/core";
