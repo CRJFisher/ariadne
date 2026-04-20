@@ -1167,7 +1167,7 @@ describe("extract_call_site_syntax", () => {
     );
   });
 
-  describe("receiver_call_target_hint — 3 cases × 2 languages", () => {
+  describe("receiver_call_target_lexical_shape — 3 cases × 2 languages", () => {
     const ts_cases: Array<{
       code: string;
       expected_hint: "class_like" | "function_like" | "unknown";
@@ -1184,7 +1184,7 @@ describe("extract_call_site_syntax", () => {
         const node = parse_ts_call(code);
         const syntax = extract_call_site_syntax(node);
         expect(syntax?.receiver_kind).toBe("call_chain");
-        expect(syntax?.receiver_call_target_hint).toBe(expected_hint);
+        expect(syntax?.receiver_call_target_lexical_shape).toBe(expected_hint);
       }
     );
 
@@ -1203,7 +1203,7 @@ describe("extract_call_site_syntax", () => {
         const node = parse_py_call(code);
         const syntax = extract_call_site_syntax(node);
         expect(syntax?.receiver_kind).toBe("call_chain");
-        expect(syntax?.receiver_call_target_hint).toBe(expected_hint);
+        expect(syntax?.receiver_call_target_lexical_shape).toBe(expected_hint);
       }
     );
   });
@@ -1249,7 +1249,7 @@ describe("extract_call_site_syntax", () => {
   });
 
   describe("discriminator absence on non-applicable receiver kinds", () => {
-    it("omits receiver_call_target_hint when receiver_kind !== call_chain", () => {
+    it("omits receiver_call_target_lexical_shape when receiver_kind !== call_chain", () => {
       const node = parse_ts_call("obj.m()");
       const syntax = extract_call_site_syntax(node);
       expect(syntax).toEqual({ receiver_kind: "identifier" });

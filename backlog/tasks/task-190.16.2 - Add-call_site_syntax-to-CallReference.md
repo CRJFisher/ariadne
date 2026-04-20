@@ -46,23 +46,25 @@ export type ReceiverKind =
   | "identifier"          // obj.m()
   | "self_keyword"        // this.m() / self.m() / super.m()
   | "member_expression"   // a.b.m()
-  | "call_chain"          // foo().m() — see receiver_call_target_hint
+  | "call_chain"          // foo().m() — see receiver_call_target_lexical_shape
   | "index_access"        // arr[k].m() — see index_key_is_literal
   | "type_cast"           // (x as T).m() — TS only
   | "parenthesized"       // (expr).m()
   | "non_null_assertion"; // x!.m() — TS only
 
 /**
- * Call-site syntactic context. Two discriminators accompany `receiver_kind`,
- * populated only when they disambiguate a known failure mode:
- *   - receiver_call_target_hint → separates F3 (inline `SubClass().m()`)
- *     from F2 (factory return type unknown, `foo().m()`).
- *   - index_key_is_literal → separates resolvable literal-key dispatch from
- *     F9 (dynamic-key dispatch).
+ * Call-site syntactic context. Neutral AST observations — not classifier
+ * outputs. Two discriminators accompany `receiver_kind`, each populated only
+ * when it resolves a specific ambiguity that pure `receiver_kind` cannot:
+ *   - receiver_call_target_lexical_shape → lexical case of the inner call
+ *     target in a call chain (PascalCase looks class-like, lowercase looks
+ *     function-like); core does no type inference here.
+ *   - index_key_is_literal → whether the subscript key is a literal or a
+ *     computed expression.
  */
 export interface CallSiteSyntax {
   readonly receiver_kind: ReceiverKind;
-  readonly receiver_call_target_hint?: "class_like" | "function_like" | "unknown";
+  readonly receiver_call_target_lexical_shape?: "class_like" | "function_like" | "unknown";
   readonly index_key_is_literal?: boolean;
 }
 ```
@@ -78,9 +80,9 @@ Reuse existing extractor outputs — `receiver_info.is_self_reference/self_keywo
 ### Out of scope (explicit)
 
 - **Axis A (tree-sitter capture gaps):** no `CallReference` is produced, so this schema is load-bearing only for Axis B.
-- **F4 (Python `module.func()`):** requires `receiver_resolves_to_import_kind` on `resolution_failure.partial_info` — part of the Phase A1 / TASK-190.16.1 surface, not here.
-- **F7 (polymorphic dispatch):** already covered by `resolution_failure.reason === "polymorphic_no_implementations"`.
-- **F10 (global name collision):** separate signal (`resolutions.length > 1` + cross-file derivation).
+- **Python module-attribute calls** — needs `receiver_resolves_to_import_kind` on `resolution_failure.partial_info`, landing in TASK-190.16.1. (Classifier F4 consumes it.)
+- **Polymorphic dispatch with no implementations** — already an observable resolver state, emitted as `resolution_failure.reason === "polymorphic_no_implementations"`. (Classifier F7 reads it directly.)
+- **Global name collision** — derived from `resolutions.length > 1` plus cross-file analysis, not a per-call-site field. (Classifier F10 computes it.)
 
 ### What was removed from the original proposal
 
@@ -94,7 +96,7 @@ Reuse existing extractor outputs — `receiver_info.is_self_reference/self_keywo
 - [x] #3 `CallReference.call_site_syntax` populated at resolver time iff `call_type === "method"`; undefined otherwise
 - [x] #4 Population logic lives in a single `extract_call_site_syntax(node)` helper in `references.ts`; no new `MetadataExtractors` method added
 - [x] #5 Tests cover each `ReceiverKind` variant in TypeScript (all 8) and Python (6 — no `type_cast` / `non_null_assertion`)
-- [x] #6 Tests cover `receiver_call_target_hint` (3 cases × 2 languages) and `index_key_is_literal` (3 cases × 2 languages)
+- [x] #6 Tests cover `receiver_call_target_lexical_shape` (3 cases × 2 languages) and `index_key_is_literal` (3 cases × 2 languages)
 - [x] #7 `pnpm -C packages/types build && pnpm -C packages/core build && pnpm -C packages/core test` passes
 <!-- AC:END -->
 
@@ -105,13 +107,13 @@ Added syntactic call-site metadata to `CallReference` so the auto-classifier can
 
 ## Changes
 
-- **Types** (`packages/types/src/call_chains.ts`, `symbol_references.ts`): Introduced `ReceiverKind` (8 variants: `identifier`, `self_keyword`, `member_expression`, `call_chain`, `index_access`, `type_cast`, `parenthesized`, `non_null_assertion`) and `CallSiteSyntax` (required `receiver_kind`, optional `receiver_call_target_hint` for `call_chain`, optional `index_key_is_literal` for `index_access`). Added `call_site_syntax?: CallSiteSyntax` to both `MethodCallReference` and `CallReference`.
+- **Types** (`packages/types/src/call_chains.ts`, `symbol_references.ts`): Introduced `ReceiverKind` (8 variants: `identifier`, `self_keyword`, `member_expression`, `call_chain`, `index_access`, `type_cast`, `parenthesized`, `non_null_assertion`) and `CallSiteSyntax` (required `receiver_kind`, optional `receiver_call_target_lexical_shape` for `call_chain`, optional `index_key_is_literal` for `index_access`). Added `call_site_syntax?: CallSiteSyntax` to both `MethodCallReference` and `CallReference`.
 - **Indexer** (`packages/core/src/index_single_file/references/references.ts`): New `extract_call_site_syntax(node)` helper (language-agnostic over TS/JS/Python AST shapes) wired into `process_method_reference` and passed through the factory.
 - **Resolver** (`packages/core/src/resolve_references/call_resolution/call_resolver.ts`): `build_call_reference` propagates `MethodCallReference.call_site_syntax` and synthesizes `{ receiver_kind: "self_keyword" }` for `SelfReferenceCall`, so every method-call `CallReference` has a deterministic `receiver_kind`.
 
 ## Correctness fixes from review
 
-- `new Foo().m()`: `new_expression` now classifies as `call_chain` with `call_target_hint: "class_like"` (previously mis-bucketed as `identifier`).
+- `new Foo().m()`: `new_expression` now classifies as `call_chain` with `receiver_call_target_lexical_shape: "class_like"` (previously mis-bucketed as `identifier`).
 - Nested parenthesized type casts `(((x as T))).m()`: unwrap loop detects inner `as_expression`/`satisfies_expression` through any level of parens.
 
 ## Tests

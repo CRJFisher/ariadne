@@ -90,14 +90,20 @@ export type ResolutionFailureStage =
   | "collection_dispatch";
 
 /**
- * Specific reason a call failed to resolve. Each value names a single
- * recoverable failure mode the resolver discovered. New resolver paths must
- * extend this enum so downstream classifiers can pattern-match exhaustively.
+ * Specific reason a call failed to resolve. Each value names **a single
+ * observation the resolver made about its own internal state** — never a
+ * classifier verdict or failure category. Values read as "the resolver got
+ * as far as X and observed Y," not as "this is an F-coded failure mode."
+ *
+ * Downstream classifiers (in `.claude/skills/self-repair-pipeline`) compose
+ * these observations with syntactic facts to produce taxonomic labels; the
+ * enum itself stays taxonomy-free. New resolver paths must extend this enum
+ * so classifiers can pattern-match exhaustively.
  */
 export type ResolutionFailureReason =
   | "name_not_in_scope"
   | "import_unresolved"
-  | "barrel_reexport_chain"
+  | "reexport_chain_unresolved"
   | "receiver_type_unknown"
   | "method_not_on_type"
   | "polymorphic_no_implementations"
@@ -160,22 +166,28 @@ export type ReceiverKind =
 /**
  * Call-site syntactic context.
  *
- * Carries deterministic, purely syntactic signals that downstream classifiers
- * (auto-classify pipeline stage) key off. Two discriminators accompany
- * `receiver_kind`, each populated only when it resolves a known ambiguity:
+ * Carries deterministic, purely syntactic signals any downstream consumer can
+ * key off. Two discriminators accompany `receiver_kind`, each populated only
+ * when it resolves a specific ambiguity that pure `receiver_kind` cannot:
  *
- * - `receiver_call_target_hint` — set only when `receiver_kind === "call_chain"`.
- *   Separates F3 (inline `SubClass().m()`) from F2 (`foo().m()` where factory
- *   return type is unknown). Hint is lexical: `PascalCase` receiver-call target
- *   → `"class_like"`; all-lowercase → `"function_like"`; otherwise `"unknown"`.
+ * - `receiver_call_target_lexical_shape` — set only when
+ *   `receiver_kind === "call_chain"`. Distinguishes receiver-call targets that
+ *   lexically *look* class-like (`PascalCase`, suggesting instantiation) from
+ *   function-like (all-lowercase, suggesting factory) or unknown shapes. The
+ *   shape is purely lexical — core does no type inference here.
  *
  * - `index_key_is_literal` — set only when `receiver_kind === "index_access"`.
- *   Separates resolvable literal-key dispatch (`a["k"].m()`) from F9 (dynamic-
- *   key dispatch, `a[k].m()`).
+ *   Whether the subscript key is a literal (`a["k"].m()`) or a computed
+ *   expression (`a[k].m()`).
+ *
+ * These are observational facts about the AST. They are not classifier outputs
+ * and do not encode any taxonomy; classifiers (in
+ * `.claude/skills/self-repair-pipeline`) compose them with other signals to
+ * produce labels.
  */
 export interface CallSiteSyntax {
   readonly receiver_kind: ReceiverKind;
-  readonly receiver_call_target_hint?: "class_like" | "function_like" | "unknown";
+  readonly receiver_call_target_lexical_shape?: "class_like" | "function_like" | "unknown";
   readonly index_key_is_literal?: boolean;
 }
 

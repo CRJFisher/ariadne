@@ -101,9 +101,12 @@ export interface MethodCallReference extends BaseReference {
   /** Location of assigned variable when this call may be a class instantiation (e.g. user = models.User()) */
   readonly potential_construct_target?: Location;
   /**
-   * Syntactic shape of the call site. Populated when the receiver AST shape
-   * is determinable at index time. Copied onto the emitted `CallReference`
-   * during call resolution.
+   * Syntactic shape of the call site — a neutral AST observation, not a
+   * classifier label. Populated when the receiver AST shape is determinable
+   * at index time, and copied onto the emitted `CallReference` during call
+   * resolution. Consumers (including the auto-classifier in
+   * `.claude/skills/self-repair-pipeline`) compose it with `resolution_failure`
+   * and other signals; core stores only the observation.
    */
   readonly call_site_syntax?: CallSiteSyntax;
 }
