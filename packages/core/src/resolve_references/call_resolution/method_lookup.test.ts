@@ -1335,7 +1335,7 @@ describe("resolve_method_on_type", () => {
       expect(unwrap(result)).toEqual([train_fn_id]);
     });
 
-    it("should fail with barrel_reexport_chain when source resolves but export is missing", () => {
+    it("should fail with reexport_chain_unresolved when source resolves but export is missing", () => {
       // import { Helper } from "./barrel"; — barrel.ts re-exports nothing matching Helper
       const import_id = "import:test.ts:1:0:1:30:Helper" as SymbolId;
 
@@ -1369,7 +1369,7 @@ describe("resolve_method_on_type", () => {
       expect(is_err(result)).toBe(true);
       if (is_err(result)) {
         expect(result.error.stage).toBe("import_resolution");
-        expect(result.error.reason).toBe("barrel_reexport_chain");
+        expect(result.error.reason).toBe("reexport_chain_unresolved");
       }
     });
   });

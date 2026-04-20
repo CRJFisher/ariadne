@@ -146,7 +146,7 @@ describe("ResolutionFailure diagnostics", () => {
     const reasons: ResolutionFailureReason[] = [
       "name_not_in_scope",
       "import_unresolved",
-      "barrel_reexport_chain",
+      "reexport_chain_unresolved",
       "receiver_type_unknown",
       "method_not_on_type",
       "polymorphic_no_implementations",

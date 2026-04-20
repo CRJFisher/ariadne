@@ -29,7 +29,7 @@ Plan reference: `~/.claude/plans/open-that-plan-up-hazy-cloud.md` — Phase A3.
 Expose two introspection APIs from `@ariadne/core` so the auto-classifier and the curator skill can query resolver state directly rather than inferring it from indirect evidence:
 
 - `explain_call_site(file, line)` — returns `{ capture_fired, receiver_kind, resolution_failure?, candidate_definitions, import_trace? }`.
-- `list_name_collisions(name)` — returns all definitions sharing a name (for F10 collision detection).
+- `list_name_collisions(name)` — returns all definitions sharing a name (used by the F10 collision classifier).
 
 Also export the tree-sitter query primitives the classifier will reuse:
 
@@ -39,6 +39,10 @@ export { LANGUAGE_TO_TREESITTER_LANG } from "./index_single_file/query_code_tree
 ```
 
 Library-only exposure; MCP tool wrappers are deferred. Depends on the `resolution_failure` and `receiver_kind` fields being populated, but does not depend on `call_resolver.ts` signature changes.
+
+### Facts-only principle
+
+These APIs are strictly factual: they return what the resolver observed and what the AST looks like. They never return classifier verdicts, F-codes, `group_id` suggestions, or registry lookups. If the curator needs an additional neutral signal (e.g., "was this imported from a declared-types-only module?"), extend the return shape with that fact; never add a field that encodes skill-layer taxonomy. The rule: any field that would need to change when the skill's registry changes is wrong-shaped and belongs in the skill.
 
 <!-- SECTION:DESCRIPTION:END -->
 

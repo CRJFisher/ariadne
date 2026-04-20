@@ -53,6 +53,15 @@ Each axis needs its own classifier family because the evidence differs:
 - **Axis B — Resolution failures.** Call captured but `resolutions` is empty or wrong. Evidence: new `CallReference.resolution_failure.{stage, reason}` from resolver.
 - **Axis C — Framework / decorator patterns.** Legitimate framework entry points (`@pytest.fixture`, `@app.route`, `@Component`). Classifies as **true positive** with `group_id: framework-<name>` — still a useful deterministic label.
 
+### Architecture: core emits facts, skill owns opinions
+
+This initiative draws a hard layering boundary that every subtask respects:
+
+- **`@ariadnejs/core` and `@ariadnejs/types` emit neutral facts only** — resolver-state diagnostics (what stage/reason the resolver tripped on) and AST-shape metadata (receiver kind, syntactic discriminators). Core has *no knowledge* of F-codes, classifier rules, registry entries, or the triage taxonomy. **Adding a new failure category must require zero changes to core.**
+- **The skills own all opinions** — `self-repair-pipeline` owns the F-code taxonomy, the predicate DSL, `known_issues/registry.json`, and the classifiers; `triage-curator` owns investigation, drift detection, and backlog linkage. New signals are added to core only when the curator (TASK-190.16.10) proves that existing facts cannot disambiguate a group.
+
+Future iteration happens almost entirely in the skills: adding/refining classifiers, editing the registry, tuning predicates. Core stays still; the skills evolve. When reviewing a subtask PR, ask: "Would adding F11 tomorrow need to touch this file?" If the answer is yes and the file is under `packages/`, the abstraction is wrong.
+
 ### Sub-task map
 
 Phase A — Ariadne core enablers (prerequisite metadata):

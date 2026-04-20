@@ -291,16 +291,15 @@ function receiver_kind_from_node(receiver: SyntaxNode): ReceiverKind {
 /**
  * Classify a call-chain receiver's inner call target by lexical convention.
  *
- * Only meaningful for `ReceiverKind.call_chain`. Separates F3 (inline
- * constructor chain, `SubClass().m()`) from F2 (factory-return-type-unknown,
- * `foo().m()`) without type-resolving the inner call.
+ * Only meaningful for `ReceiverKind.call_chain`. A neutral AST observation
+ * about the case shape of the inner call target; no type inference.
  *
- * Heuristic (safe to apply before resolution):
+ * Convention:
  * - inner call target is identifier/type_identifier starting with uppercase → `class_like`
  * - inner call target is identifier starting with lowercase → `function_like`
  * - anything else (non-identifier target, empty text) → `unknown`
  */
-function call_chain_target_hint(
+function call_chain_target_lexical_shape(
   receiver: SyntaxNode
 ): "class_like" | "function_like" | "unknown" {
   // `new Foo()` — always a constructor → class_like
@@ -365,7 +364,7 @@ export function extract_call_site_syntax(node: SyntaxNode): CallSiteSyntax | und
     // When the receiver is Python `super()`, it classified as self_keyword already.
     return {
       receiver_kind,
-      receiver_call_target_hint: call_chain_target_hint(receiver),
+      receiver_call_target_lexical_shape: call_chain_target_lexical_shape(receiver),
     };
   }
 

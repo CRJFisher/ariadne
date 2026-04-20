@@ -30,7 +30,9 @@ priority: high
 
 Plan reference: `~/.claude/plans/open-that-plan-up-hazy-cloud.md` — Phase A1.
 
-Ariadne currently drops the reason a call failed to resolve: `call_resolver.ts:281`, `receiver_resolution.ts:{133,169,288}`, `method_lookup.ts:{96,118}`, `function_call.ts:{39-77}`, `method_call.ts:{77-81}`, `constructor.ts:{71,78}` all return `null`/`[]` with no trace. The pre-triage auto-classifier (planned in Phase C) needs this information to deterministically distinguish aliased-receiver failures from barrel-reexport failures from external-module failures.
+The resolver internally distinguishes many failure modes (name out of scope, import chain walked to a dead end, method lookup missed on a known type, …) but currently collapses them all to `null`/`[]` at the boundary: `call_resolver.ts:281`, `receiver_resolution.ts:{133,169,288}`, `method_lookup.ts:{96,118}`, `function_call.ts:{39-77}`, `method_call.ts:{77-81}`, `constructor.ts:{71,78}` all return with no trace.
+
+Capturing the `(stage, reason, partial_info)` triple at each null-return site exposes the resolver's own state as a typed diagnostic. Downstream consumers — including the auto-classifier planned in Phase C, `explain_call_site()` from Phase A3, and any future introspection tooling — read this diagnostic; none re-implement the resolver's reasoning. **The enum names what the resolver observed, never what a classifier concludes.**
 
 Extend `CallReference` in `packages/types/src/call_chains.ts` with an optional `resolution_failure: ResolutionFailure` field populated only when `resolutions.length === 0`. Refactor the resolver's return type from `SymbolId[]` to `Result<SymbolId[], ResolutionFailure>` so every null-return site must name its failure — this yields compile-time coverage of the reason enum and avoids drift as new resolution paths land.
 
@@ -45,7 +47,7 @@ interface ResolutionFailure {
   reason:
     | "name_not_in_scope"
     | "import_unresolved"
-    | "barrel_reexport_chain"
+    | "reexport_chain_unresolved"
     | "receiver_type_unknown"
     | "receiver_type_is_primitive"
     | "method_not_on_type"

@@ -104,10 +104,10 @@ export function resolve_method_on_type(
     }
     if (source_file) {
       // Source file resolved but the named export was not found and no submodule fallback:
-      // common case for re-export / barrel walk failure.
+      // resolver walked the re-export chain and observed no terminal definition.
       return err({
         stage: "import_resolution",
-        reason: "barrel_reexport_chain",
+        reason: "reexport_chain_unresolved",
         partial_info: {
           resolved_receiver_type: receiver_type,
           import_target_file: source_file,
