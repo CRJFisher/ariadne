@@ -29,7 +29,9 @@ priority: high
 
 Plan reference: `~/.claude/plans/open-that-plan-up-hazy-cloud.md` — Phase B1 + B2.
 
-Create the canonical `known_issues/registry.json` that lists every known Ariadne failure mode, with a classifier spec for each. This replaces the implicit per-project known-entrypoints cache with a repo-tracked, drift-free source of truth.
+Create the canonical `known_issues/registry.json` that lists every known Ariadne failure mode, with a classifier spec for each. This replaces the self-repair pipeline's previous triage-memoization write path into `known_entrypoints/<pkg>.json` with a repo-tracked, drift-free source of classifier rules.
+
+**Orthogonal to the dead-code whitelist.** The Stop hook `detect_dead_code.ts` reads a *separate* static whitelist at `~/.ariadne/self-repair-pipeline/known_entrypoints/<pkg>.json` to catch dead code introduced during Claude coding sessions. That whitelist is human-maintained and unchanged by this initiative. The `known_issues/registry.json` created here stores **classifier rules** (how to label an unreachable entry when the triage pipeline runs). The two catalogs do not share entries, formats, writeback paths, or consumers.
 
 Schema includes `group_id`, `title`, `description`, `status`, `languages`, `backlog_task?`, `examples`, `classifier: ClassifierSpec`, plus curator-populated optional fields `observed_count`, `observed_projects`, `last_seen_run`. `ClassifierSpec` is a tagged union: `none | builtin { function_name, min_confidence } | predicate { axis, expression, min_confidence }` with a structured predicate DSL (no eval).
 

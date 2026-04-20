@@ -45,7 +45,7 @@
           },
           {
             "type": "command",
-            "command": "cd \"$CLAUDE_PROJECT_DIR\" && pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/entrypoint_stop.ts\""
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect_dead_code.ts\""
           }
         ]
       }

@@ -39,9 +39,9 @@ This task is the umbrella for a new initiative: **stop re-discovering Ariadne's 
 
 ### Why this is its own initiative
 
-Replacing the known-entrypoints cache is a fundamental architectural shift, not a bug fix:
+Removing the self-repair pipeline's triage cache is a fundamental architectural shift, not a bug fix. The Stop hook's static whitelist (`~/.ariadne/self-repair-pipeline/known_entrypoints/<pkg>.json`) is a separate concern — it's the dead-code guardrail that fires on coding sessions, is human-maintained, and remains in place. What changes here is the pipeline's own interaction with that file:
 
-1. **Stateless pipeline runs.** Current cache keys (`file_path + symbol_name + …`) survive repo drift even when the underlying facts don't. The auto-classifier re-derives labels each run from the current tree-sitter queries, current resolver state, and current (version-controlled) registry. No per-project persisted state; no drift.
+1. **Stateless pipeline runs.** The pipeline no longer reads or writes the whitelist; its previous memoization of triage results into those files drifted silently when the target repo changed. The auto-classifier re-derives labels each run from the current tree-sitter queries, current resolver state, and current (version-controlled) registry. No pipeline-maintained per-project state; no drift. (The human-maintained whitelist consumed by the Stop hook is deliberately stateful — it's the codebase's own record of legitimate entry points.)
 2. **LLM effort becomes narrow and purposeful.** The residual set shrinks as classifiers cover dominant failure modes (webpack corpus shows 4 groups account for ~70% of false positives). When the LLM does emit a novel `group_id`, that's a signal we've found a genuinely new gap worth tracking.
 3. **Closed feedback loop.** Curator verifies consumer output, adds classifiers, creates backlog tasks. Every pipeline run generates data; every curator run either confirms existing classifications or improves them. Registry + backlog stay in sync.
 
@@ -83,9 +83,9 @@ Phase D — Residual-only agent + feedback loop:
 
 - **TASK-190.16.7** — Triage agent updated for residual-only workflow; `novel:` prefix feedback; drift monitoring
 
-Phase E — Cache removal:
+Phase E — Triage-pipeline cache removal + hook rename:
 
-- **TASK-190.16.8** — Delete `known_entrypoints.ts`, `entrypoint_stop.ts` hook, `KnownEntrypointSource`, cache paths
+- **TASK-190.16.8** — Remove the triage pipeline's `known_entrypoints.ts` module and its types; rename the Stop hook from `entrypoint_stop.ts` to `detect_dead_code.ts` (purpose-descriptive); whitelist files and hook behaviour retained
 
 Phase F — Curator skill:
 
@@ -114,7 +114,7 @@ Phase F — Curator skill:
 <!-- AC:BEGIN -->
 
 - [ ] #1 All 11 sub-tasks (TASK-190.16.1 through TASK-190.16.11) are complete
-- [ ] #2 Pipeline runs produce identical output back-to-back on webpack with no persisted per-project state between runs (cache removal verified)
+- [ ] #2 Pipeline runs produce identical output back-to-back on webpack with no pipeline-maintained per-project state between runs (cache removal verified). The static dead-code whitelist at `~/.ariadne/self-repair-pipeline/known_entrypoints/<pkg>.json` is outside the pipeline's scope and is unchanged.
 - [ ] #3 `known_issues/registry.json` seeded with ≥15 entries covering webpack-dominant groups, Axis B F1–F10, Axis C framework patterns
 - [ ] #4 Auto-classify rate ≥40% on webpack corpus; per-classifier precision ≥ registered `min_confidence`
 - [ ] #5 `triage-curator` skill can curate a full run end-to-end: sonnet QA on auto-classified groups, opus investigation on residual groups, registry/backlog updates with bidirectional links
