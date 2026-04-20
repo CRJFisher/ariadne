@@ -141,6 +141,20 @@ export function get_calls_by_caller_scope(
 }
 
 /**
+ * Get all resolved call references in a file.
+ *
+ * @param state - Current resolution state
+ * @param file_id - File to query
+ * @returns Array of call references from that file (empty if file is untracked)
+ */
+export function get_calls_for_file(
+  state: ResolutionState,
+  file_id: FilePath
+): readonly CallReference[] {
+  return state.resolved_calls_by_file.get(file_id) ?? [];
+}
+
+/**
  * Get all SymbolIds that are referenced anywhere in the codebase.
  * Used for entry point detection - functions NOT in this set are entry points.
  *

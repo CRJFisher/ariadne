@@ -76,6 +76,14 @@ No LLM dispatch at this stage — `curate_run.ts` contains stub hooks that the n
 5. Decorator patterns on `CallableNode.definition.decorators` (Axis C)
 6. Ariadne introspection APIs (`explain_call_site`, `list_name_collisions`) from Phase A3
 
+The inventory must also carry a **"Known API caveats"** subsection so classifier authors see the constraints before they write predicates against these signals. At minimum:
+
+- **Chained calls are not individually addressable by `(line, column)`.** For expressions like `factory().run()`, the outer `.run()` call and inner `factory()` call share an identical `(start_line, start_column)` — tree-sitter assigns the outer call-expression node the start position of its leftmost descendant. `explain_call_site(file, line, col)` returns a single first-match `CallReference`, so the outer call in a chain is unreachable through this API. Classifiers that must observe the outer call (notably `method-chain-dispatch`, which keys on `receiver_kind === "call_chain"` on the outer method call) must iterate `project.resolutions.get_calls_for_file(file)` directly and filter by `call_type` / `call_site_syntax.receiver_kind`.
+
+- **`ResolutionFailureReason` values observed in practice are a subset of the full union.** Reasons produced by deep sub-stages in `method_lookup.ts` (`import_unresolved`, `reexport_chain_unresolved`, `polymorphic_no_implementations`) are frequently short-circuited by the earlier `name_resolution` stage emitting `name_not_in_scope`. A classifier predicate keyed on `resolution_failure_reason_eq "import_unresolved"` against a clean integration input will often miss — the same logical failure arrives tagged `name_not_in_scope`. Implication: draw classifier fixtures from real project runs (e.g. webpack triage output), not from minimal-TS snippets that short-circuit. The authoritative coverage for deep reasons lives in unit tests on `resolve_method_on_type`, not integration tests on `explain_call_site`.
+
+Re-verify both caveats against the current `packages/core/src/introspection/explain_call_site.ts` docstring when rendering the inventory — this section is load-bearing for any classifier that uses these signals, and must not drift from the API.
+
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
@@ -85,7 +93,7 @@ No LLM dispatch at this stage — `curate_run.ts` contains stub hooks that the n
 - [ ] #1 `.claude/skills/triage-curator/` directory exists with the layout above
 - [ ] #2 `scripts/scan_runs.ts` correctly enumerates un-curated runs and respects `--project`, `--last`, `--run` filters
 - [ ] #3 `src/curation_state.ts` loads + persists `~/.ariadne/triage-curator/state.json` idempotently
-- [ ] #4 `reference/signal_inventory.md` is generated from the registry + introspection API surface (can be a render script or hand-maintained-but-checked-in at this stage)
+- [ ] #4 `reference/signal_inventory.md` is generated from the registry + introspection API surface (can be a render script or hand-maintained-but-checked-in at this stage), and includes a "Known API caveats" subsection covering the chained-call `(line, column)` non-addressability and the `ResolutionFailureReason` short-circuit behaviour documented on `explain_call_site`
 - [ ] #5 Unit tests cover: empty state, all-curated state, partial state, and `--reinvestigate` re-processing of `wip`-status entries whose example set has grown since the last curation
 - [ ] #6 Running `curate_all --dry-run` on an empty state against the existing webpack triage output lists the runs that would be curated without writing anything
 <!-- AC:END -->
