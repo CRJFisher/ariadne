@@ -1,9 +1,10 @@
 ---
 id: TASK-190.16.5
 title: Build auto_classify pipeline stage with predicate DSL evaluator
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-04-17 14:38"
+completed_date: "2026-04-20"
 labels:
   - self-repair
   - auto-classifier
@@ -62,12 +63,30 @@ Wire into `scripts/prepare_triage.ts`: after (or replacing) the existing `filter
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 `.claude/skills/self-repair-pipeline/src/auto_classify/{auto_classify,predicate_evaluator,types}.ts` exist with tests
-- [ ] #2 `auto_classify()` returns per-entry results with correct `auto_classified` flag and `classifier_hints` attached for sub-threshold matches
-- [ ] #3 Predicate DSL evaluator covers all 12 operators enumerated in the description and rejects unknown operators at parse time
-- [ ] #4 `prepare_triage.ts` invokes `auto_classify()` and writes state with per-entry `auto_classified` flag
-- [ ] #5 `get_entry_context.ts` renders a new `{{classifier_hints}}` placeholder in `templates/prompt.md`; `DIAGNOSIS_HINTS` entries include classifier-hint rendering language
-- [ ] #6 End-to-end: running with `--max-count 20` on a ≥100-entry project auto-classifies all entries (verified in TriageState JSON) and routes at most 20 of the residual to the agent
-- [ ] #7 Priority ordering: first-match wins against registry entry order; below-threshold matches attach `classifier_hints` AND fall through to the agent (both behaviours asserted by unit tests)
-- [ ] #8 `get_next_triage_entry.ts` skips entries where `auto_classified === true`
+- [x] #1 `.claude/skills/self-repair-pipeline/src/auto_classify/{auto_classify,predicate_evaluator,types}.ts` exist with tests
+- [x] #2 `auto_classify()` returns per-entry results with correct `auto_classified` flag and `classifier_hints` attached for sub-threshold matches
+- [x] #3 Predicate DSL evaluator covers all 12 operators enumerated in the description and rejects unknown operators at parse time
+- [x] #4 `prepare_triage.ts` invokes `auto_classify()` and writes state with per-entry `auto_classified` flag
+- [x] #5 `get_entry_context.ts` renders a new `{{classifier_hints}}` placeholder in `templates/prompt.md`; `DIAGNOSIS_HINTS` entries include classifier-hint rendering language
+- [x] #6 End-to-end: running with `--max-count 20` on a ≥100-entry project auto-classifies all entries (verified in TriageState JSON) and routes at most 20 of the residual to the agent
+- [x] #7 Priority ordering: first-match wins against registry entry order; below-threshold matches attach `classifier_hints` AND fall through to the agent (both behaviours asserted by unit tests)
+- [x] #8 `get_next_triage_entry.ts` skips entries where `auto_classified === true`
 <!-- AC:END -->
+
+## Implementation Notes
+
+Shipped in commit `dd10c27e`.
+
+Module layout follows the folder-module convention (folder name == main-module name, no prefix on siblings):
+
+- `src/auto_classify/` — `auto_classify.ts`, `predicate_evaluator.ts`, `types.ts` (+ colocated `.test.ts` files).
+- `src/prepare_triage/` — `prepare_triage.ts` (three-bucket orchestrator), `prepare_triage.test.ts`. The CLI entry point `scripts/prepare_triage.ts` is now a thin wrapper over this pure core, which makes the bucket logic unit-testable without touching the filesystem.
+
+Key decisions landed in the shipped code:
+
+- `ClassifierHint` lives in `src/triage_state_types.ts` (persisted state), not in `auto_classify/types.ts`. The `auto_classify` module re-exports it.
+- Predicate `min_confidence` is always `1.0` at evaluation time (predicates are binary); sub-threshold hints exist as a code path so TASK-190.16.6 builtin scoring classifiers can reuse it without schema churn.
+- Residual sampling is deterministic: `(tree_size desc, file_path asc, start_line asc)` — replaces the previous `Math.random` shuffle. Covered by `sort_residual_entries` tie-break test.
+- Registry load-time hardening: regexes pre-compiled, `syntactic_feature_eq.name` validated against `SYNTACTIC_FEATURE_NAMES`, all errors carry the offending `group_id`.
+- Preemption warning: `auto_classify()` emits one stderr line per run the first time a permanent builtin-kind issue precedes a matching predicate — guards against priority drift when TASK-190.16.6 wires builtins.
+- `GrepHit.captures: string[]` populated eagerly in `gather_diagnostics()` via `explain_call_site` + `CAPTURE_NAMES_BY_CALL_TYPE` mapping; `CallRefDiagnostic` carries `receiver_kind`, `resolution_failure`, `syntactic_features` for the evaluator.
