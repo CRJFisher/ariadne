@@ -49,6 +49,15 @@ Depends on `resolution_failure`, `receiver_kind`, and `syntactic_features` being
 
 - **Namespace-import barrel re-export emits `method_lookup`/`method_not_on_type` instead of `import_resolution`/`reexport_chain_unresolved`.** When `import * as ns from "./barrel"` is followed by `ns.fn()` and `barrel/index.ts` re-exports `fn` via `export { fn } from "./fn"`, `resolve_method_on_type` (namespace path, `method_lookup.ts:48-69`) calls `resolve_namespace_export`, which skips `kind === "import"` defs (re-exports). It returns null and the resolver emits `method_lookup`/`method_not_on_type` — losing the barrel-walk signal that the `aliased-re-export-walk-broken` classifier (priority 9) needs. The `reexport_chain_unresolved` reason currently fires only on the named/default-import path (`method_lookup.ts:108-115`). Before relying on that classifier in the registry, either (a) extend `resolve_namespace_export` to follow re-export chains and emit `reexport_chain_unresolved` on miss, or (b) widen the classifier's predicate to also match `method_not_on_type` for namespace-import receivers backed by a re-export-only source file. Verified by `resolve_references.typescript.test.ts > "namespace import with re-exports should resolve through barrel file"`.
 
+### `explain_call_site` API caveats
+
+The chained-call addressability gap and the `ResolutionFailureReason` short-circuit behaviour are documented in two places:
+
+1. The canonical API docstring on `packages/core/src/introspection/explain_call_site.ts` (travels with the code).
+2. `.claude/skills/triage-curator/reference/signal_inventory.md` (see TASK-190.16.9 AC #4) — the authoritative reference classifier authors read when wiring predicates.
+
+Classifier authors should consult `signal_inventory.md` before writing predicates keyed on `receiver_kind` or `resolution_failure_reason`. In particular, `method-chain-dispatch` (priority 4) depends on `receiver_kind === "call_chain"` and must iterate `get_calls_for_file` directly rather than go through `explain_call_site`.
+
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

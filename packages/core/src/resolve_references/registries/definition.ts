@@ -256,6 +256,24 @@ export class DefinitionRegistry {
     return classes;
   }
 
+  /**
+   * Get all definitions in the registry whose `name` matches the given name,
+   * across all files and scopes. Linear scan over the symbol index.
+   *
+   * Used by introspection APIs to surface name collisions (multiple
+   * definitions sharing a name, a resolver failure mode the auto-classifier
+   * uses as a signal).
+   */
+  get_definitions_by_name(name: SymbolName): AnyDefinition[] {
+    const matches: AnyDefinition[] = [];
+    for (const def of this.by_symbol.values()) {
+      if (def.name === name) {
+        matches.push(def);
+      }
+    }
+    return matches;
+  }
+
   get_exportable_definitions_in_file(
     file_id: FilePath
   ): ExportableDefinition[] {

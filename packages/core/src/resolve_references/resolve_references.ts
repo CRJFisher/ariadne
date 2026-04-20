@@ -45,6 +45,7 @@ import {
   create_resolution_state,
   resolve as resolve_in_state,
   get_calls_by_caller_scope as get_calls_by_caller_scope_from_state,
+  get_calls_for_file as get_calls_for_file_from_state,
   get_all_referenced_symbols as get_all_referenced_symbols_from_state,
   get_indirect_reachability as get_indirect_reachability_from_state,
   size as get_state_size,
@@ -202,6 +203,16 @@ export class ResolutionRegistry {
     caller_scope_id: ScopeId
   ): readonly CallReference[] {
     return get_calls_by_caller_scope_from_state(this.state, caller_scope_id);
+  }
+
+  /**
+   * Get all resolved call references in a file.
+   *
+   * @param file_id - File to query
+   * @returns Array of call references from that file (empty if file is untracked)
+   */
+  get_calls_for_file(file_id: FilePath): readonly CallReference[] {
+    return get_calls_for_file_from_state(this.state, file_id);
   }
 
   /**
