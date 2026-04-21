@@ -85,8 +85,8 @@ Module layout follows the folder-module convention (folder name == main-module n
 Key decisions landed in the shipped code:
 
 - `ClassifierHint` lives in `src/triage_state_types.ts` (persisted state), not in `auto_classify/types.ts`. The `auto_classify` module re-exports it.
-- Predicate `min_confidence` is always `1.0` at evaluation time (predicates are binary); sub-threshold hints exist as a code path so TASK-190.16.6 builtin scoring classifiers can reuse it without schema churn.
+- Predicate `min_confidence` is always `1.0` at evaluation time (predicates are binary); sub-threshold hints exist as a code path so TASK-190.16.8 builtin scoring classifiers can reuse it without schema churn.
 - Residual sampling is deterministic: `(tree_size desc, file_path asc, start_line asc)` — replaces the previous `Math.random` shuffle. Covered by `sort_residual_entries` tie-break test.
 - Registry load-time hardening: regexes pre-compiled, `syntactic_feature_eq.name` validated against `SYNTACTIC_FEATURE_NAMES`, all errors carry the offending `group_id`.
-- Preemption warning: `auto_classify()` emits one stderr line per run the first time a permanent builtin-kind issue precedes a matching predicate — guards against priority drift when TASK-190.16.6 wires builtins.
+- Preemption warning: `auto_classify()` emits one stderr line per run the first time a permanent builtin-kind issue precedes a matching predicate — guards against priority drift when TASK-190.16.8 wires builtins.
 - `GrepHit.captures: string[]` populated eagerly in `gather_diagnostics()` via `explain_call_site` + `CAPTURE_NAMES_BY_CALL_TYPE` mapping; `CallRefDiagnostic` carries `receiver_kind`, `resolution_failure`, `syntactic_features` for the evaluator.

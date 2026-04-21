@@ -25,7 +25,7 @@ priority: high
 
 ### Plan source
 
-The full architectural plan for this initiative lives at `~/.claude/plans/open-that-plan-up-hazy-cloud.md`. That file is the authoritative source of truth for the design — this task and its sub-tasks (TASK-190.16.1 through TASK-190.16.11) are the execution decomposition. Use the plan file during final review of each sub-task to cross-check that intent and acceptance criteria align with the originating design.
+The full architectural plan for this initiative lives at `~/.claude/plans/open-that-plan-up-hazy-cloud.md`. That file is the authoritative source of truth for the design — this task and its sub-tasks (TASK-190.16.1 through TASK-190.16.12) are the execution decomposition. Use the plan file during final review of each sub-task to cross-check that intent and acceptance criteria align with the originating design.
 
 ### Summary
 
@@ -58,7 +58,7 @@ Each axis needs its own classifier family because the evidence differs:
 This initiative draws a hard layering boundary that every subtask respects:
 
 - **`@ariadnejs/core` and `@ariadnejs/types` emit neutral facts only** — resolver-state diagnostics (what stage/reason the resolver tripped on) and AST-shape metadata (receiver kind, syntactic discriminators). Core has *no knowledge* of F-codes, classifier rules, registry entries, or the triage taxonomy. **Adding a new failure category must require zero changes to core.**
-- **The skills own all opinions** — `self-repair-pipeline` owns the F-code taxonomy, the predicate DSL, `known_issues/registry.json`, and the classifiers; `triage-curator` owns investigation, drift detection, and backlog linkage. New signals are added to core only when the curator (TASK-190.16.10) proves that existing facts cannot disambiguate a group.
+- **The skills own all opinions** — `self-repair-pipeline` owns the F-code taxonomy, the predicate DSL, `known_issues/registry.json`, and the classifiers; `triage-curator` owns investigation, drift detection, and backlog linkage. New signals are added to core only when the curator (TASK-190.16.7) proves that existing facts cannot disambiguate a group.
 
 Future iteration happens almost entirely in the skills: adding/refining classifiers, editing the registry, tuning predicates. Core stays still; the skills evolve. When reviewing a subtask PR, ask: "Would adding F11 tomorrow need to touch this file?" If the answer is yes and the file is under `packages/`, the abstraction is wrong.
 
@@ -74,24 +74,31 @@ Phase B — Canonical registry:
 
 - **TASK-190.16.4** — `known_issues/registry.json` schema + seed content + rendered per-language references
 
-Phase C — Auto-classify pipeline stage:
+Phase C1 — Auto-classify pipeline stage (predicate DSL):
 
 - **TASK-190.16.5** — `auto_classify` stage + predicate DSL evaluator, wired into `prepare_triage.ts`
-- **TASK-190.16.6** — 10 initial classifiers covering the webpack-dominant groups and the Axis B taxonomy
+
+Phase F — Curator skill (built before classifiers so the curator can bootstrap them):
+
+- **TASK-190.16.6** — Skill scaffold (`scan_runs`, `curator_state`, CLI options `--project`/`--last`/`--run`/`--dry-run`)
+- **TASK-190.16.7** — Sonnet group-QA and opus group-investigation dispatchers
+
+Phase C2 — Initial classifier generation (curator-driven):
+
+- **TASK-190.16.8** — Run the curator over the webpack triage corpus with an empty classifier set; opus proposes `ClassifierSpec` entries + co-located builtin `.ts` files for dominant groups
+- **TASK-190.16.9** — Validate generated classifiers against the reference benchmark cases documented in TASK-190.16.8; close gaps or justify divergence
 
 Phase D — Residual-only agent + feedback loop:
 
-- **TASK-190.16.7** — Triage agent updated for residual-only workflow; `novel:` prefix feedback; drift monitoring
+- **TASK-190.16.10** — Triage agent updated for residual-only workflow; `novel:` prefix feedback; drift monitoring
 
 Phase E — Triage-pipeline cache removal + hook rename:
 
-- **TASK-190.16.8** — Remove the triage pipeline's `known_entrypoints.ts` module and its types; rename the Stop hook from `entrypoint_stop.ts` to `detect_dead_code.ts` (purpose-descriptive); whitelist files and hook behaviour retained
+- **TASK-190.16.11** — Remove the triage pipeline's `known_entrypoints.ts` module and its types; rename the Stop hook from `entrypoint_stop.ts` to `detect_dead_code.ts` (purpose-descriptive); whitelist files and hook behaviour retained
 
-Phase F — Curator skill:
+Phase F2 — Curator backlog linkage + reporting:
 
-- **TASK-190.16.9** — Skill scaffold (`scan_runs`, `curator_state`, CLI options `--project`/`--last`/`--run`/`--dry-run`)
-- **TASK-190.16.10** — Sonnet group-QA and opus group-investigation dispatchers
-- **TASK-190.16.11** — Backlog-task linkage + cross-run impact reporting
+- **TASK-190.16.12** — Backlog-task linkage + cross-run impact reporting
 
 ### Cross-cutting norms
 
@@ -113,7 +120,7 @@ Phase F — Curator skill:
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 All 11 sub-tasks (TASK-190.16.1 through TASK-190.16.11) are complete
+- [ ] #1 All 12 sub-tasks (TASK-190.16.1 through TASK-190.16.12) are complete
 - [ ] #2 Pipeline runs produce identical output back-to-back on webpack with no pipeline-maintained per-project state between runs (cache removal verified). The static dead-code whitelist at `~/.ariadne/self-repair-pipeline/known_entrypoints/<pkg>.json` is outside the pipeline's scope and is unchanged.
 - [ ] #3 `known_issues/registry.json` seeded with ≥15 entries covering webpack-dominant groups, Axis B F1–F10, Axis C framework patterns
 - [ ] #4 Auto-classify rate ≥40% on webpack corpus; per-classifier precision ≥ registered `min_confidence`

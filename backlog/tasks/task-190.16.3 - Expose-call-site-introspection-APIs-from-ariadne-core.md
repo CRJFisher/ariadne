@@ -63,4 +63,4 @@ These APIs are strictly factual: they return what the resolver observed and what
 - `ExplainCallSiteResult` fields are all `readonly`; optional fields are omitted entirely when absent (not set to `undefined`) to match the resolver's zero-overhead convention.
 - `find_call_at` picks the leftmost call on a line deterministically when no column is supplied. Two known limits documented on the API docstring: chained calls are not individually addressable by `(line, column)` (inner and outer share start position); `ResolutionFailureReason` values surfaced through this API are a subset of the full union (deep reasons short-circuit to `name_not_in_scope`).
 - TASK-205 was created during delivery to track the `project.<field>.<method>()` receiver-resolution gap that surfaced when whitelisting the two new registry methods.
-- Skill-level documentation of the API caveats is scheduled into TASK-190.16.9 AC #4 (`reference/signal_inventory.md` "Known API caveats" subsection).
+- Skill-level documentation of the API caveats is scheduled into TASK-190.16.6 AC #4 (`reference/signal_inventory.md` "Known API caveats" subsection).
