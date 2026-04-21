@@ -1,5 +1,5 @@
 ---
-id: TASK-190.16.10
+id: TASK-190.16.7
 title: Implement curator group QA (sonnet) and group investigation (opus) dispatchers
 status: To Do
 assignee: []

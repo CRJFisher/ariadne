@@ -1,5 +1,5 @@
 ---
-id: TASK-190.16.9
+id: TASK-190.16.6
 title: "Create triage-curator skill scaffold (scan runs, curator state, CLI options)"
 status: To Do
 assignee: []
@@ -63,7 +63,7 @@ interface CuratorState {
 
 **CLI options:** `--project <name>`, `--last <n>`, `--run <path>`, `--dry-run`, `--reinvestigate`. Default behavior: scan `~/.ariadne/self-repair-pipeline/*/triage_results/*.json`, diff against `CuratorState.curated_runs`, process un-curated runs in chronological order.
 
-No LLM dispatch at this stage — `curate_run.ts` contains stub hooks that the next task fills in. The LLM dispatchers and `templates/` directory (`prompt_group_qa.md`, `prompt_group_investigate.md`) are added by TASK-190.16.10. Reporting scripts (`generate_impact_report.ts`, `propose_backlog_tasks.ts`) are added by TASK-190.16.11.
+No LLM dispatch at this stage — `curate_run.ts` contains stub hooks that the next task fills in. The LLM dispatchers and `templates/` directory (`prompt_group_qa.md`, `prompt_group_investigate.md`) are added by TASK-190.16.7. Reporting scripts (`generate_impact_report.ts`, `propose_backlog_tasks.ts`) are added by TASK-190.16.12.
 
 **Curator invocation boundary:** the curator is run explicitly (manually, on cron, or in CI on a regular cadence). Running the self-repair-pipeline does NOT trigger the curator automatically. The two skills communicate solely through files on disk (pipeline triage output → curator reads).
 
