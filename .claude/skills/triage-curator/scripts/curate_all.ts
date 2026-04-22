@@ -40,6 +40,7 @@ const SCRIPTS_REL = path.relative(REPO_ROOT, THIS_DIR);
 
 interface CliOpts extends ScanOptions {
   dry_run: boolean;
+  reaggregate_on_incoherent: boolean;
 }
 
 function parse_argv(argv: string[]): CliOpts {
@@ -49,6 +50,7 @@ function parse_argv(argv: string[]): CliOpts {
     run: null,
     reinvestigate: false,
     dry_run: false,
+    reaggregate_on_incoherent: false,
   };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -71,10 +73,13 @@ function parse_argv(argv: string[]): CliOpts {
       case "--dry-run":
         opts.dry_run = true;
         break;
+      case "--reaggregate-on-incoherent":
+        opts.reaggregate_on_incoherent = true;
+        break;
       case "--help":
       case "-h":
         process.stdout.write(
-          "Usage: curate_all [--project N] [--last N] [--run P] [--reinvestigate] [--dry-run]\n",
+          "Usage: curate_all [--project N] [--last N] [--run P] [--reinvestigate] [--dry-run] [--reaggregate-on-incoherent]\n",
         );
         process.exit(0);
         break;
@@ -103,6 +108,7 @@ interface RunDispatch {
     get_context_cmd: string;
   }>;
   promote_cmd: string;
+  validate_cmd: string;
   finalize_cmd: string;
 }
 
@@ -110,6 +116,7 @@ async function plan_for_run(
   item: ScanResultItem,
   known_group_ids: Set<string>,
   dry_run: boolean,
+  reaggregate_on_incoherent: boolean,
 ): Promise<RunDispatch> {
   const triage = JSON.parse(await fs.readFile(item.run_path, "utf8")) as TriageResultsFile;
   const output_dir = run_output_dir(item.run_id);
@@ -120,6 +127,7 @@ async function plan_for_run(
   const qa_script = path.join(SCRIPTS_REL, "get_qa_context.ts");
   const inv_script = path.join(SCRIPTS_REL, "get_investigate_context.ts");
   const promote_script = path.join(SCRIPTS_REL, "promote_qa_to_investigate.ts");
+  const validate_script = path.join(SCRIPTS_REL, "validate_responses.ts");
   const finalize_script = path.join(SCRIPTS_REL, "curate_run.ts");
   const run_rel = path.relative(REPO_ROOT, item.run_path);
 
@@ -146,9 +154,11 @@ async function plan_for_run(
 
   const promote_cmd =
     `node --import tsx ${promote_script} --run ${run_rel}` + (dry_run ? " --dry-run" : "");
+  const validate_cmd = `node --import tsx ${validate_script} --run ${run_rel}`;
   const finalize_cmd =
     `node --import tsx ${finalize_script} --phase finalize --run ${run_rel}` +
-    (dry_run ? " --dry-run" : "");
+    (dry_run ? " --dry-run" : "") +
+    (reaggregate_on_incoherent ? " --reaggregate-on-incoherent" : "");
 
   return {
     run_id: item.run_id,
@@ -158,6 +168,7 @@ async function plan_for_run(
     qa_groups,
     investigate_groups,
     promote_cmd,
+    validate_cmd,
     finalize_cmd,
   };
 }
@@ -175,7 +186,9 @@ async function main(): Promise<void> {
   const items = await scan_runs(state, opts, wip_counts);
   // Use allSettled so a single malformed triage_results.json doesn't kill the sweep.
   const settled = await Promise.allSettled(
-    items.map((item) => plan_for_run(item, known_group_ids, opts.dry_run)),
+    items.map((item) =>
+      plan_for_run(item, known_group_ids, opts.dry_run, opts.reaggregate_on_incoherent),
+    ),
   );
   const dispatches: RunDispatch[] = [];
   const failed_runs: Array<{ run_path: string; reason: string }> = [];

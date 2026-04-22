@@ -31,6 +31,11 @@ import {
   parse_qa_response,
   type FailedAuthoring,
 } from "../src/apply_proposals.js";
+import {
+  render_all as render_unsupported_features_all,
+  write_outputs as write_unsupported_features_outputs,
+} from "../../self-repair-pipeline/scripts/render_unsupported_features.js";
+import type { KnownIssue as SelfRepairKnownIssue } from "../../self-repair-pipeline/src/known_issues_registry.js";
 import { load_state, save_state, upsert_curated_run } from "../src/curation_state.js";
 import { compute_wip_group_counts } from "../src/compute_wip_counts.js";
 import { error_code } from "../src/errors.js";
@@ -58,6 +63,7 @@ interface CliArgs {
   run_path: string;
   dry_run: boolean;
   authored_files_path: string | null;
+  reaggregate_on_incoherent: boolean;
 }
 
 function parse_argv(argv: string[]): CliArgs {
@@ -65,6 +71,7 @@ function parse_argv(argv: string[]): CliArgs {
   let run_path: string | null = null;
   let dry_run = false;
   let authored_files_path: string | null = null;
+  let reaggregate_on_incoherent = false;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     switch (arg) {
@@ -85,10 +92,13 @@ function parse_argv(argv: string[]): CliArgs {
       case "--authored-files":
         authored_files_path = argv[++i];
         break;
+      case "--reaggregate-on-incoherent":
+        reaggregate_on_incoherent = true;
+        break;
       case "--help":
       case "-h":
         process.stdout.write(
-          "Usage: curate_run --phase plan|finalize --run <path> [--dry-run] [--authored-files <path>]\n",
+          "Usage: curate_run --phase plan|finalize --run <path> [--dry-run] [--authored-files <path>] [--reaggregate-on-incoherent]\n",
         );
         process.exit(0);
         break;
@@ -98,7 +108,7 @@ function parse_argv(argv: string[]): CliArgs {
   }
   if (phase === null) throw new Error("--phase is required");
   if (run_path === null || run_path.length === 0) throw new Error("--run <path> is required");
-  return { phase, run_path, dry_run, authored_files_path };
+  return { phase, run_path, dry_run, authored_files_path, reaggregate_on_incoherent };
 }
 
 function derive_run_id(run_path: string): string {
@@ -332,6 +342,7 @@ async function phase_finalize(
   run_path: string,
   dry_run: boolean,
   authored_files_path: string | null,
+  reaggregate_on_incoherent: boolean,
 ): Promise<void> {
   const run_id = derive_run_id(run_path);
   const project = derive_project(run_path);
@@ -374,10 +385,45 @@ async function phase_finalize(
       registry_path: get_registry_file_path(),
       authored_files_by_group,
       session_logs,
+      triage_groups: triage.false_positive_groups,
     },
   );
 
   const failed_authoring = [...ast_failures, ...result.failed_authoring];
+
+  // Orphan cleanup: any authored file that did not land in the registry is
+  // dead weight — unlink it so the working tree doesn't carry half-finished
+  // classifier source around. The authored-files map that Step 4.5 produced
+  // tells us every candidate path; the apply_proposals `authored_files` result
+  // tells us which paths were actually upserted. The complement is orphans.
+  const accepted = new Set(result.authored_files);
+  const deleted_orphan_files: string[] = [];
+  if (!dry_run) {
+    for (const orphan_path of Object.values(authored_files_raw)) {
+      if (accepted.has(orphan_path)) continue;
+      try {
+        await fs.unlink(orphan_path);
+        deleted_orphan_files.push(orphan_path);
+      } catch (err) {
+        if (error_code(err) === "ENOENT") continue;
+        throw err;
+      }
+    }
+  }
+
+  // Derived-markdown regeneration: the registry feeds
+  // `unsupported_features.<lang>.md` golden files. Any registry upsert or
+  // drift tag invalidates them, so re-render and stage alongside the
+  // classifier files. The pre-commit hook expects these to be in sync.
+  const derived_files: string[] = [];
+  if (!dry_run && (result.registry_upserts.length > 0 || result.drift_tagged_groups.length > 0)) {
+    const registry_after = JSON.parse(
+      await fs.readFile(get_registry_file_path(), "utf8"),
+    ) as SelfRepairKnownIssue[];
+    const outputs = render_unsupported_features_all(registry_after);
+    const written = write_unsupported_features_outputs(outputs);
+    derived_files.push(...written);
+  }
 
   const sessions = aggregate_session_logs(session_logs);
 
@@ -406,6 +452,38 @@ async function phase_finalize(
     await save_state(upsert_curated_run(state, outcome_entry));
   }
 
+  // Incoherent-group queueing: when requested, gather every session log with
+  // failure_category === "group_incoherent" and write a re-aggregation bundle.
+  // The rough-aggregator is not triggered automatically; the queue file is
+  // picked up by the orchestration layer for follow-up dispatch.
+  const reaggregate_queue: Array<{
+    group_id: string;
+    project: string;
+    run_id: string;
+    failure_details: string;
+  }> = [];
+  let reaggregate_queue_path: string | null = null;
+  if (reaggregate_on_incoherent) {
+    for (const fg of sessions.failed_groups) {
+      if (fg.failure_category === "group_incoherent") {
+        reaggregate_queue.push({
+          group_id: fg.group_id,
+          project,
+          run_id,
+          failure_details: fg.failure_details,
+        });
+      }
+    }
+    if (!dry_run && reaggregate_queue.length > 0) {
+      reaggregate_queue_path = path.join(output_dir, "reaggregate_queue.json");
+      await fs.writeFile(
+        reaggregate_queue_path,
+        JSON.stringify({ run_id, project, groups: reaggregate_queue }, null, 2) + "\n",
+        "utf8",
+      );
+    }
+  }
+
   const summary = {
     run_id,
     project,
@@ -413,7 +491,10 @@ async function phase_finalize(
     qa_groups_checked: outcome_entry.outcome.qa_groups_checked,
     qa_outliers_found: outcome_entry.outcome.qa_outliers_found,
     investigated_groups: outcome_entry.outcome.investigated_groups,
-    authored_files: result.authored_files,
+    authored_files: [...result.authored_files, ...derived_files],
+    deleted_orphan_files,
+    reaggregate_queue,
+    reaggregate_queue_path,
     failed_authoring,
     spec_validation_failures: result.spec_validation_failures,
     skipped_permanent_upserts: result.skipped_permanent_upserts,
@@ -432,16 +513,25 @@ async function phase_finalize(
 }
 
 async function main(): Promise<void> {
-  const { phase, run_path, dry_run, authored_files_path } = parse_argv(
-    process.argv.slice(2),
-  );
+  const {
+    phase,
+    run_path,
+    dry_run,
+    authored_files_path,
+    reaggregate_on_incoherent,
+  } = parse_argv(process.argv.slice(2));
   await fs.mkdir(CURATOR_RUNS_DIR, { recursive: true });
   if (phase === "plan") {
     const plan = await phase_plan(run_path);
     process.stdout.write(JSON.stringify(plan, null, 2) + "\n");
     return;
   }
-  await phase_finalize(run_path, dry_run, authored_files_path);
+  await phase_finalize(
+    run_path,
+    dry_run,
+    authored_files_path,
+    reaggregate_on_incoherent,
+  );
 }
 
 main().catch((err) => {

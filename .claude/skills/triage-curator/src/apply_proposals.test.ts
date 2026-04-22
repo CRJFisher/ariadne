@@ -6,12 +6,14 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
   apply_proposals,
+  derive_languages_for_upsert,
   mark_drift_in_registry,
   parse_investigate_response,
   parse_qa_response,
 } from "./apply_proposals.js";
 import type {
   BuiltinClassifierSpec,
+  FalsePositiveGroup,
   InvestigateResponse,
   KnownIssue,
   QaResponse,
@@ -60,7 +62,7 @@ function minimal_spec(function_name: string): BuiltinClassifierSpec {
     function_name,
     min_confidence: 0.9,
     combinator: "all",
-    checks: [],
+    checks: [{ op: "language_eq", value: "typescript" }],
     positive_examples: [],
     negative_examples: [],
     description: "",
@@ -115,6 +117,7 @@ describe("parse_investigate_response", () => {
     backlog_ref: null,
     new_signals_needed: [],
     classifier_spec: null,
+    retargets_to: null,
     reasoning: "",
   };
 
@@ -149,6 +152,7 @@ describe("parse_investigate_response", () => {
       backlog_ref: { title: "fix it", description: "body" },
       new_signals_needed: ["grep_call_sites"],
       classifier_spec: null,
+      retargets_to: null,
       reasoning: "because",
     });
   });
@@ -512,6 +516,101 @@ describe("mark_drift_in_registry", () => {
     const { updated, drift_tagged_groups } = mark_drift_in_registry(reg, qa, { a: 20 });
     expect(drift_tagged_groups).toEqual([]);
     expect(updated[0].drift_detected).toBe(true);
+  });
+});
+
+describe("derive_languages_for_upsert", () => {
+  function group_with_extensions(
+    group_id: string,
+    extensions: string[],
+  ): FalsePositiveGroup {
+    return {
+      group_id,
+      root_cause: "",
+      reasoning: "",
+      existing_task_fixes: [],
+      entries: extensions.map((ext, i) => ({
+        name: `e${i}`,
+        file_path: `src/e${i}${ext}`,
+        start_line: 1,
+      })),
+    };
+  }
+
+  function builtin_response(
+    group_id: string,
+    spec: BuiltinClassifierSpec,
+  ): InvestigateResponse {
+    return {
+      group_id,
+      proposed_classifier: {
+        kind: "builtin",
+        function_name: spec.function_name,
+        min_confidence: spec.min_confidence,
+      },
+      backlog_ref: null,
+      new_signals_needed: [],
+      classifier_spec: spec,
+      retargets_to: null,
+      reasoning: "",
+    };
+  }
+
+  it("prefers declared language_eq values from the classifier spec", () => {
+    const spec: BuiltinClassifierSpec = {
+      ...minimal_spec("check_x"),
+      checks: [
+        { op: "language_eq", value: "python" },
+        { op: "callers_count_at_most", n: 0 },
+      ],
+    };
+    const group = group_with_extensions("g", [".ts", ".ts"]);
+    expect(derive_languages_for_upsert(builtin_response("g", spec), group)).toEqual([
+      "python",
+    ]);
+  });
+
+  it("falls back to member file extensions when no language_eq in spec", () => {
+    const spec: BuiltinClassifierSpec = {
+      ...minimal_spec("check_x"),
+      checks: [{ op: "callers_count_at_most", n: 0 }],
+    };
+    const group = group_with_extensions("g", [".js", ".jsx", ".mjs"]);
+    expect(derive_languages_for_upsert(builtin_response("g", spec), group)).toEqual([
+      "javascript",
+    ]);
+  });
+
+  it("returns empty for kind='none' when group has no recognizable extensions", () => {
+    const response: InvestigateResponse = {
+      group_id: "g",
+      proposed_classifier: { kind: "none" },
+      backlog_ref: null,
+      new_signals_needed: [],
+      classifier_spec: null,
+      retargets_to: null,
+      reasoning: "",
+    };
+    const group = group_with_extensions("g", [".txt", ".md"]);
+    expect(derive_languages_for_upsert(response, group)).toEqual([]);
+  });
+
+  it("derives mixed languages from mixed-extension groups", () => {
+    const response: InvestigateResponse = {
+      group_id: "g",
+      proposed_classifier: { kind: "none" },
+      backlog_ref: null,
+      new_signals_needed: [],
+      classifier_spec: null,
+      retargets_to: null,
+      reasoning: "",
+    };
+    const group = group_with_extensions("g", [".ts", ".py", ".rs"]);
+    expect(derive_languages_for_upsert(response, group).sort()).toEqual([
+      "python",
+      "rust",
+      "typescript",
+    ]);
   });
 });
 

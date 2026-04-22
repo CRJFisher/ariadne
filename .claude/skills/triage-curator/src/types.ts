@@ -204,6 +204,15 @@ export interface InvestigateResponse {
    * The main agent renders the spec to TypeScript source in Step 4.5.
    */
   classifier_spec: BuiltinClassifierSpec | null;
+  /**
+   * Set when the investigator's classifier extends an existing registry entry
+   * rather than the group being investigated. `group_id` still equals the
+   * dispatch group; `retargets_to` names the existing entry to upsert against
+   * and drives the authored `.ts` filename. When set, `positive_examples` and
+   * `negative_examples` must be empty — their indices would reference the
+   * wrong group's entries.
+   */
+  retargets_to: string | null;
   reasoning: string;
 }
 

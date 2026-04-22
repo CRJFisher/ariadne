@@ -177,6 +177,36 @@ async function main(): Promise<void> {
     signal_inventory,
     writable_paths,
     signal_check_ops: SIGNAL_CHECK_OPS,
+    authoring_rules: {
+      signal_check_ops: SIGNAL_CHECK_OPS,
+      combinator_values: ["all", "any"] as const,
+      response_group_id_rule:
+        `response.group_id must equal '${group_id}' (the dispatch group). ` +
+        "To extend an existing registry entry, set response.retargets_to='<existing_group_id>' " +
+        "and keep response.group_id unchanged.",
+      retarget_rules:
+        "response.retargets_to is optional. When set, it MUST name an existing " +
+        "registry group_id. The authored classifier file then shadows that entry's " +
+        "classifier. When retargeting, positive_examples and negative_examples must be " +
+        "empty — their indices would reference the source group, not the target.",
+      positive_example_rules:
+        `classifier_spec.positive_examples indices must satisfy 0 <= i < group.entries.length ` +
+        `(= ${group.entries.length} for this group). Same rule for negative_examples. ` +
+        "When retargeting (response.retargets_to set), leave both arrays empty.",
+      kind_none_rule:
+        "If proposed_classifier.kind === 'none', you must either populate new_signals_needed " +
+        "with the missing signal names, or emit a session log with failure_category set. " +
+        "Silent dead-ends (kind='none', no signals, no failure_category) are rejected.",
+      common_mistakes: [
+        "Using an op not in signal_check_ops — e.g. 'any' as a top-level combinator. " +
+          "The combinator field goes on the classifier_spec itself (combinator: 'all' | 'any'), " +
+          "NOT nested inside checks[].",
+        "Renaming response.group_id to target an existing registry entry. Use retargets_to instead.",
+        "Listing positive_examples that reference indices >= group.entries.length.",
+        "Emitting kind='none' with empty new_signals_needed when the investigation never tried " +
+          "to land a classifier. Record a failure_category in the session log instead.",
+      ],
+    },
   };
 
   const out = promoted
