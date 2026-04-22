@@ -19,17 +19,17 @@ never `npx tsx`.
 
 ## Pipeline Overview
 
-| #    | Step             | Actor                                           | Output                                                          |
-| ---- | ---------------- | ----------------------------------------------- | --------------------------------------------------------------- |
-| 1    | Plan             | `scripts/curate_all.ts`                         | List of runs, per-run QA + residual-investigate dispatches      |
-| 2    | QA               | `triage-curator-qa` (sonnet, 50 turns)          | One `QaResponse` per auto-classified group                      |
-| 3    | Promote          | `scripts/promote_qa_to_investigate.ts`          | List of classifiers QA judged mis-matching, re-routed to step 4 |
-| 4    | Investigate      | `triage-curator-investigator` (opus, 200 turns) | One `InvestigateResponse` + `<id>.session.json` per dispatch    |
-| 4.25 | Validate         | `scripts/validate_responses.ts`                 | `<run>/validation.json`; non-zero exit on any issue             |
-| 4.5  | Author source    | Main agent + `scripts/render_classifier.ts`     | One `check_<target_group_id>.ts` per builtin proposal           |
-| 5    | Finalize         | `scripts/curate_run.ts --phase finalize`        | Apply proposals, fold outcome into `state.json`, print summary  |
-| 6    | Backlog          | `mcp__backlog__task_create`                     | One task per `backlog_tasks_to_create[]` entry                  |
-| 7    | Commit           | `git` / `gh` via `AskUserQuestion`              | Committed sweep on current branch, a new branch, or an open PR  |
+| #    | Step          | Actor                                                          | Output                                                          |
+| ---- | ------------- | -------------------------------------------------------------- | --------------------------------------------------------------- |
+| 1    | Plan          | `scripts/curate_all.ts`                                        | List of runs, per-run QA + residual-investigate dispatches      |
+| 2    | QA            | `triage-curator-qa` (sonnet, 50 turns)                         | One `QaResponse` per auto-classified group                      |
+| 3    | Promote       | `scripts/promote_qa_to_investigate.ts`                         | List of classifiers QA judged mis-matching, re-routed to step 4 |
+| 4    | Investigate   | `triage-curator-investigator` (opus, 200 turns, ≤5 concurrent) | One `InvestigateResponse` + `<id>.session.json` per dispatch    |
+| 4.25 | Validate      | `scripts/validate_responses.ts`                                | `<run>/validation.json`; non-zero exit on any issue             |
+| 4.5  | Author source | Main agent + `scripts/render_classifier.ts`                    | One `check_<target_group_id>.ts` per builtin proposal           |
+| 5    | Finalize      | `scripts/curate_run.ts --phase finalize`                       | Apply proposals, fold outcome into `state.json`, print summary  |
+| 6    | Backlog       | `mcp__backlog__task_create`                                    | One task per `backlog_tasks_to_create[]` entry                  |
+| 7    | Commit        | `git` / `gh` via `AskUserQuestion`                             | Committed sweep on current branch, a new branch, or an open PR  |
 
 ## Arguments
 
@@ -61,9 +61,9 @@ node --import tsx .claude/skills/triage-curator/scripts/curate_all.ts <FORWARDED
 ```
 
 Checkpoint: capture the printed JSON as `PLAN`. It holds `runs[]`, each
-with `qa_groups[]`, `investigate_groups[]`, `promote_cmd`, and
-`finalize_cmd`. Each dispatch carries a `get_context_cmd` and pre-allocated
-`output_path`.
+with `run_path` (the triage_results JSON path), `qa_groups[]`,
+`investigate_groups[]`, `promote_cmd`, `validate_cmd`, and `finalize_cmd`.
+Each dispatch carries a `get_context_cmd` and pre-allocated `output_path`.
 
 ### Step 2 — Dispatch the QA wave
 
@@ -88,9 +88,49 @@ carries `output_path` and `get_context_cmd` with `--promoted` baked in.
 
 ### Step 4 — Dispatch the investigate wave
 
-For every run, fire one `Task(triage-curator-investigator)` per entry in
-the union of `investigate_groups[]` (from `PLAN`) and `promoted_groups[]`
-(from `PROMOTED`):
+The investigator is an opus/200-turn sub-agent, so a large sweep can
+spawn too many concurrent instances. Cap concurrency at
+`MAX_CONCURRENT_INVESTIGATORS = 5` and drain the queue in waves, pulling
+the next batch from a helper script that derives state from disk.
+
+**1. Build the combined dispatch list.** Flatten every entry in
+`PLAN.runs[*].investigate_groups[]` and every entry in each run's
+`PROMOTED.promoted_groups[]` (there is one `PROMOTED` output per run)
+into a single array. Tag each entry with the `run_path` of the run it
+came from — the same `PLAN.runs[i].run_path` value (the triage_results
+JSON path). Each entry carries exactly these four fields:
+
+```json
+{
+  "run_path": "<PLAN.runs[i].run_path>",
+  "group_id": "<entry.group_id>",
+  "output_path": "<entry.output_path>",
+  "get_context_cmd": "<entry.get_context_cmd>"
+}
+```
+
+Using the `Write` tool, persist the JSON array to a temp file and
+capture the path as `$DISPATCH_LIST`, e.g.
+`/tmp/curator-dispatch-<run_stamp>.json`.
+
+**2. Pull-and-dispatch loop.** Until the puller returns an empty
+`pending[]`:
+
+```bash
+node --import tsx .claude/skills/triage-curator/scripts/next_investigate_tasks.ts \
+  --dispatch-list "$DISPATCH_LIST" --limit 5
+```
+
+The puller considers a dispatch done when its pre-allocated `output_path`
+exists and parses as JSON — the same convention finalize uses. It
+prints:
+
+```json
+{ "pending": [ { …up to 5 entries… } ], "remaining": <total_not_done> }
+```
+
+For each entry in `pending[]`, fire one `Task(triage-curator-investigator)`
+in a single message so the wave runs in parallel:
 
 > Investigate group `<group_id>` in run `<run_path>`. Hydrate with the
 > command in `<get_context_cmd>`. Write the `InvestigateResponse` JSON to
@@ -98,7 +138,14 @@ the union of `investigate_groups[]` (from `PLAN`) and `promoted_groups[]`
 > For any `kind: "builtin"` proposal, populate `classifier_spec` as
 > structured data — never TypeScript. Return nothing inline.
 
-Checkpoint: wait for all `Task()` calls to return before continuing.
+Wait for every `Task()` in the wave to return before calling the puller
+again. Each completed task writes its response file, so the next puller
+call naturally excludes it.
+
+Exit the loop when `pending[]` is empty.
+
+Checkpoint: puller returns `{ "pending": [], "remaining": 0 }`, and every
+combined-list entry has a response file on disk. Proceed to Step 4.25.
 
 ### Step 4.25 — Validate investigator responses
 
@@ -385,7 +432,12 @@ entry, or where `positive_examples`/`negative_examples` are non-empty.
   "run_id": "string",
   "project": "string",
   "groups": [
-    { "group_id": "string", "project": "string", "run_id": "string", "failure_details": "string" }
+    {
+      "group_id": "string",
+      "project": "string",
+      "run_id": "string",
+      "failure_details": "string"
+    }
   ]
 }
 ```
