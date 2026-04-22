@@ -1,9 +1,10 @@
 ---
 id: TASK-190.16.6
 title: "Create triage-curator skill scaffold (scan runs, curator state, CLI options)"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-04-17 14:39"
+completed_date: "2026-04-22"
 labels:
   - triage-curator
   - skill
@@ -90,10 +91,28 @@ Re-verify both caveats against the current `packages/core/src/introspection/expl
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 `.claude/skills/triage-curator/` directory exists with the layout above
-- [ ] #2 `scripts/scan_runs.ts` correctly enumerates un-curated runs and respects `--project`, `--last`, `--run` filters
-- [ ] #3 `src/curation_state.ts` loads + persists `~/.ariadne/triage-curator/state.json` idempotently
-- [ ] #4 `reference/signal_inventory.md` is generated from the registry + introspection API surface (can be a render script or hand-maintained-but-checked-in at this stage), and includes a "Known API caveats" subsection covering the chained-call `(line, column)` non-addressability and the `ResolutionFailureReason` short-circuit behaviour documented on `explain_call_site`
-- [ ] #5 Unit tests cover: empty state, all-curated state, partial state, and `--reinvestigate` re-processing of `wip`-status entries whose example set has grown since the last curation
-- [ ] #6 Running `curate_all --dry-run` on an empty state against the existing webpack triage output lists the runs that would be curated without writing anything
+- [x] #1 `.claude/skills/triage-curator/` directory exists with the layout above
+- [x] #2 `scripts/scan_runs.ts` correctly enumerates un-curated runs and respects `--project`, `--last`, `--run` filters
+- [x] #3 `src/curation_state.ts` loads + persists `~/.ariadne/triage-curator/state.json` idempotently
+- [x] #4 `reference/signal_inventory.md` is generated from the registry + introspection API surface (can be a render script or hand-maintained-but-checked-in at this stage), and includes a "Known API caveats" subsection covering the chained-call `(line, column)` non-addressability and the `ResolutionFailureReason` short-circuit behaviour documented on `explain_call_site`
+- [x] #5 Unit tests cover: empty state, all-curated state, partial state, and `--reinvestigate` re-processing of `wip`-status entries whose example set has grown since the last curation
+- [x] #6 Running `curate_all --dry-run` on an empty state against the existing webpack triage output lists the runs that would be curated without writing anything
 <!-- AC:END -->
+
+## Implementation Notes
+
+Shipped in commit `f5d0edde` (scaffold) and extended in `7dd43d65` (builtin authoring).
+
+Layout deviations from the task description:
+
+- `scan_runs` lives in `src/scan_runs.ts` as a pure module; the CLI surface is folded into `scripts/curate_all.ts` rather than a standalone `scripts/scan_runs.ts`. This makes the run-diff logic directly unit-testable (`src/scan_runs.test.ts`, 14 tests) without filesystem fakes in the CLI layer.
+- `CurationOutcome` grew beyond the initial schema to carry investigator-session telemetry: `wip_group_example_counts: Record<string, number>` (snapshot of `wip`-status group sizes at curation time — the data source for `--reinvestigate` growth detection), plus `success_count`, `failure_count`, `blocked_count`, and per-group `failed_groups[]` detail. Shape lives in `src/types.ts:52-80`.
+- `ScanResultItem` carries `reason: "uncurated" | "reinvestigate"` and `wip_groups_with_growth: string[]`; `diff_runs_against_state` compares a supplied `current_wip_counts` map against each curated run's `wip_group_example_counts` to surface the growth set.
+
+Supporting modules shipped alongside the scaffold:
+
+- `src/compute_wip_counts.ts` — reduces the known-issues registry to `{ [group_id]: entries_count }` for `wip`-status entries. Fed into `scan_runs` for the `--reinvestigate` diff.
+- `src/detect_drift.ts` — `DRIFT_OUTLIER_RATE_THRESHOLD = 0.15`; pure function used by the finalize phase in TASK-190.16.7.
+- `src/paths.ts` / `src/errors.ts` / `src/require_node_import_tsx.ts` — shared constants, ENOENT helper, and the guard that ensures every CLI script is launched via `node --import tsx` (prevents `.ts` execution surprises).
+
+`reference/signal_inventory.md` is hand-maintained (checked into the repo, not render-generated) and includes the full predicate-DSL operator table, a "Builtin-only SignalCheck ops" subsection covering the four ops that require builtin context (`name_matches`, `file_path_matches`, `callers_count_at_least`, `callers_count_at_most`), and the "Known API caveats" subsection on chained-call `(line, column)` non-addressability and `ResolutionFailureReason` short-circuiting.

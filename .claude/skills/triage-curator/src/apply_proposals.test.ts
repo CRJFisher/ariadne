@@ -9,22 +9,22 @@ import {
   mark_drift_in_registry,
   parse_investigate_response,
   parse_qa_response,
-  validate_code_changes,
 } from "./apply_proposals.js";
 import type {
+  BuiltinClassifierSpec,
   InvestigateResponse,
   KnownIssue,
   QaResponse,
 } from "./types.js";
 
 let tmp_dir: string;
-let allowed_root: string;
+let authored_dir: string;
 let registry_path: string;
 
 beforeEach(async () => {
   tmp_dir = await fs.mkdtemp(path.join(os.tmpdir(), "curator-apply-"));
-  allowed_root = path.join(tmp_dir, "allowed");
-  await fs.mkdir(allowed_root, { recursive: true });
+  authored_dir = path.join(tmp_dir, "authored");
+  await fs.mkdir(authored_dir, { recursive: true });
   registry_path = path.join(tmp_dir, "registry.json");
   await fs.writeFile(registry_path, "[]", "utf8");
 });
@@ -55,68 +55,22 @@ async function read_registry_json(): Promise<KnownIssue[]> {
   return JSON.parse(raw) as KnownIssue[];
 }
 
-describe("validate_code_changes", () => {
-  it("accepts paths inside allowed roots", async () => {
-    const inside = path.join(allowed_root, "sub", "file.ts");
-    const violations = await validate_code_changes(
-      [{ path: inside, contents: "x" }],
-      { allowed_roots: [allowed_root] },
-    );
-    expect(violations).toEqual([]);
-  });
+function minimal_spec(function_name: string): BuiltinClassifierSpec {
+  return {
+    function_name,
+    min_confidence: 0.9,
+    combinator: "all",
+    checks: [],
+    positive_examples: [],
+    negative_examples: [],
+    description: "",
+  };
+}
 
-  it("rejects paths outside allowed roots", async () => {
-    const outside = path.join(tmp_dir, "other", "file.ts");
-    const violations = await validate_code_changes(
-      [{ path: outside, contents: "x" }],
-      { allowed_roots: [allowed_root] },
-    );
-    expect(violations).toHaveLength(1);
-    expect(violations[0].reason).toMatch(/outside allowed roots/);
-  });
-
-  it("rejects relative paths", async () => {
-    const violations = await validate_code_changes(
-      [{ path: "relative/file.ts", contents: "x" }],
-      { allowed_roots: [allowed_root] },
-    );
-    expect(violations).toHaveLength(1);
-    expect(violations[0].reason).toMatch(/absolute/);
-  });
-
-  it("rejects empty paths", async () => {
-    const violations = await validate_code_changes(
-      [{ path: "", contents: "x" }],
-      { allowed_roots: [allowed_root] },
-    );
-    expect(violations).toHaveLength(1);
-    expect(violations[0].reason).toMatch(/empty/);
-  });
-
-  it("rejects path traversal with ..", async () => {
-    const traversal = path.join(allowed_root, "..", "escape.ts");
-    const violations = await validate_code_changes(
-      [{ path: traversal, contents: "x" }],
-      { allowed_roots: [allowed_root] },
-    );
-    expect(violations).toHaveLength(1);
-  });
-
-  it("rejects symlink-escape into a sibling directory", async () => {
-    const elsewhere = path.join(tmp_dir, "elsewhere");
-    await fs.mkdir(elsewhere, { recursive: true });
-    // allowed_root/link → elsewhere (a sibling outside the allow-root)
-    const link_dir = path.join(allowed_root, "link");
-    await fs.symlink(elsewhere, link_dir);
-    const target = path.join(link_dir, "pwned.ts");
-    const violations = await validate_code_changes(
-      [{ path: target, contents: "x" }],
-      { allowed_roots: [allowed_root] },
-    );
-    expect(violations).toHaveLength(1);
-    expect(violations[0].reason).toMatch(/outside allowed roots/);
-  });
-});
+async function write_authored_file(file_path: string, source = "export {};\n"): Promise<void> {
+  await fs.mkdir(path.dirname(file_path), { recursive: true });
+  await fs.writeFile(file_path, source, "utf8");
+}
 
 describe("parse_qa_response", () => {
   it("accepts a well-formed response", () => {
@@ -160,7 +114,7 @@ describe("parse_investigate_response", () => {
     proposed_classifier: null,
     backlog_ref: null,
     new_signals_needed: [],
-    code_changes: [],
+    classifier_spec: null,
     reasoning: "",
   };
 
@@ -180,7 +134,7 @@ describe("parse_investigate_response", () => {
       },
       backlog_ref: { title: "fix it", description: "body" },
       new_signals_needed: ["grep_call_sites"],
-      code_changes: [{ path: "/abs/p.ts", contents: "src" }],
+      classifier_spec: null,
       reasoning: "because",
     };
     const result = parse_investigate_response(full);
@@ -194,7 +148,7 @@ describe("parse_investigate_response", () => {
       },
       backlog_ref: { title: "fix it", description: "body" },
       new_signals_needed: ["grep_call_sites"],
-      code_changes: [{ path: "/abs/p.ts", contents: "src" }],
+      classifier_spec: null,
       reasoning: "because",
     });
   });
@@ -235,6 +189,7 @@ describe("parse_investigate_response", () => {
     const result = parse_investigate_response({
       ...base,
       proposed_classifier: { kind: "builtin", function_name: "x", min_confidence: 1.5 },
+      classifier_spec: minimal_spec("x"),
     });
     expect(result).toEqual({ error: "proposed_classifier.min_confidence must be in [0, 1]" });
   });
@@ -243,10 +198,12 @@ describe("parse_investigate_response", () => {
     const result = parse_investigate_response({
       ...base,
       proposed_classifier: { kind: "builtin", function_name: "some_check" },
+      classifier_spec: minimal_spec("some_check"),
     });
     expect(result).toEqual<InvestigateResponse>({
       ...base,
       proposed_classifier: { kind: "builtin", function_name: "some_check", min_confidence: 0.9 },
+      classifier_spec: minimal_spec("some_check"),
     });
   });
 
@@ -341,21 +298,145 @@ describe("parse_investigate_response", () => {
     expect(result).toEqual({ error: "backlog_ref.title must be a non-empty string" });
   });
 
-  it("rejects malformed code_changes entries", () => {
+  it("requires classifier_spec when proposed_classifier is builtin", () => {
     const result = parse_investigate_response({
       ...base,
-      code_changes: [{ path: 123, contents: "x" }],
-    });
-    expect(result).toEqual({ error: "investigate response: code_changes[0].path must be a string" });
-  });
-
-  it("rejects code_changes entries with missing contents", () => {
-    const result = parse_investigate_response({
-      ...base,
-      code_changes: [{ path: "/a/b.ts" }],
+      proposed_classifier: { kind: "builtin", function_name: "check_x", min_confidence: 0.9 },
+      classifier_spec: null,
     });
     expect(result).toEqual({
-      error: "investigate response: code_changes[0].contents must be a string",
+      error:
+        "investigate response: classifier_spec must be provided when proposed_classifier.kind === 'builtin'",
+    });
+  });
+
+  it("rejects classifier_spec when proposed_classifier is not builtin", () => {
+    const result = parse_investigate_response({
+      ...base,
+      proposed_classifier: null,
+      classifier_spec: minimal_spec("stray"),
+    });
+    expect(result).toEqual({
+      error:
+        "investigate response: classifier_spec must be null unless proposed_classifier.kind === 'builtin'",
+    });
+  });
+
+  it("rejects classifier_spec whose function_name disagrees with proposed_classifier", () => {
+    const result = parse_investigate_response({
+      ...base,
+      proposed_classifier: { kind: "builtin", function_name: "expected_name", min_confidence: 0.9 },
+      classifier_spec: minimal_spec("wrong_name"),
+    });
+    expect(result).toEqual({
+      error:
+        "classifier_spec.function_name must equal proposed_classifier.function_name",
+    });
+  });
+
+  it("accepts builtin with matching classifier_spec and validates every SignalCheck op", () => {
+    const spec: BuiltinClassifierSpec = {
+      function_name: "check_x",
+      min_confidence: 0.95,
+      combinator: "any",
+      checks: [
+        { op: "diagnosis_eq", value: "v" },
+        { op: "name_matches", pattern: "^foo" },
+      ],
+      positive_examples: [0, 2],
+      negative_examples: [],
+      description: "desc",
+    };
+    const result = parse_investigate_response({
+      ...base,
+      proposed_classifier: { kind: "builtin", function_name: "check_x", min_confidence: 0.95 },
+      classifier_spec: spec,
+    });
+    expect(result).toEqual<InvestigateResponse>({
+      ...base,
+      proposed_classifier: { kind: "builtin", function_name: "check_x", min_confidence: 0.95 },
+      classifier_spec: spec,
+    });
+  });
+
+  it("rejects unknown SignalCheck op inside classifier_spec", () => {
+    const result = parse_investigate_response({
+      ...base,
+      proposed_classifier: { kind: "builtin", function_name: "check_x", min_confidence: 0.9 },
+      classifier_spec: {
+        ...minimal_spec("check_x"),
+        checks: [{ op: "bogus_op" }],
+      },
+    });
+    expect("error" in result).toBe(true);
+    if ("error" in result) {
+      expect(result.error).toMatch(/bogus_op/);
+    }
+  });
+
+  it("rejects negative positive_examples index", () => {
+    const result = parse_investigate_response({
+      ...base,
+      proposed_classifier: { kind: "builtin", function_name: "check_x", min_confidence: 0.9 },
+      classifier_spec: {
+        ...minimal_spec("check_x"),
+        positive_examples: [-1],
+      },
+    });
+    expect(result).toEqual({
+      error: "classifier_spec.positive_examples[0] must be a non-negative integer",
+    });
+  });
+
+  it("rejects duplicate positive_examples indexes", () => {
+    const result = parse_investigate_response({
+      ...base,
+      proposed_classifier: { kind: "builtin", function_name: "check_x", min_confidence: 0.9 },
+      classifier_spec: {
+        ...minimal_spec("check_x"),
+        positive_examples: [0, 2, 0],
+      },
+    });
+    expect(result).toEqual({
+      error: "classifier_spec.positive_examples[2] is a duplicate entry index (0)",
+    });
+  });
+
+  it("rejects duplicate negative_examples indexes", () => {
+    const result = parse_investigate_response({
+      ...base,
+      proposed_classifier: { kind: "builtin", function_name: "check_x", min_confidence: 0.9 },
+      classifier_spec: {
+        ...minimal_spec("check_x"),
+        negative_examples: [3, 3],
+      },
+    });
+    expect(result).toEqual({
+      error: "classifier_spec.negative_examples[1] is a duplicate entry index (3)",
+    });
+  });
+
+  it("accepts capture_name on capture ops and rejects the wrong field", () => {
+    const ok = parse_investigate_response({
+      ...base,
+      proposed_classifier: { kind: "builtin", function_name: "check_x", min_confidence: 0.9 },
+      classifier_spec: {
+        ...minimal_spec("check_x"),
+        checks: [{ op: "has_capture_at_grep_hit", capture_name: "reference.call" }],
+      },
+    });
+    expect("error" in ok).toBe(false);
+
+    const bad = parse_investigate_response({
+      ...base,
+      proposed_classifier: { kind: "builtin", function_name: "check_x", min_confidence: 0.9 },
+      classifier_spec: {
+        ...minimal_spec("check_x"),
+        checks: [{ op: "has_capture_at_grep_hit", capture: "reference.call" }],
+      },
+    });
+    expect(bad).toEqual({
+      error: "classifier_spec.checks[0].capture_name must be a string",
     });
   });
 });
@@ -435,47 +516,45 @@ describe("mark_drift_in_registry", () => {
 });
 
 describe("apply_proposals", () => {
-  it("dry_run performs zero writes", async () => {
+  it("dry_run does not mutate the registry", async () => {
     await write_registry([known("a")]);
     const qa: QaResponse[] = [
       { group_id: "a", outliers: [{ entry_index: 0, reason: "" }, { entry_index: 1, reason: "" }, { entry_index: 2, reason: "" }], notes: "" },
     ];
+    const authored_path = path.join(authored_dir, "check_new-group.ts");
+    await write_authored_file(authored_path);
     const inv: InvestigateResponse[] = [
       {
         group_id: "new-group",
         proposed_classifier: { kind: "builtin", function_name: "new_check", min_confidence: 0.9 },
-        backlog_ref: { title: "t", description: "d" },
+        backlog_ref: null,
         new_signals_needed: [],
-        code_changes: [{ path: path.join(allowed_root, "new.ts"), contents: "content" }],
+        classifier_spec: minimal_spec("new_check"),
         reasoning: "r",
       },
     ];
     const result = await apply_proposals(qa, inv, { a: 20 }, {
       dry_run: true,
-      scope: { allowed_roots: [allowed_root] },
       registry_path,
+      authored_files_by_group: { "new-group": authored_path },
     });
 
-    expect(result.wrote_files).toEqual([]);
+    expect(result.authored_files).toEqual([authored_path]);
+    expect(result.failed_authoring).toEqual([]);
+    expect(result.spec_validation_failures).toEqual([]);
     expect(result.drift_tagged_groups).toEqual(["a"]);
     expect(result.registry_upserts).toEqual(["new-group"]);
-    expect(result.backlog_tasks_to_create).toEqual([{ title: "t", description: "d" }]);
+    expect(result.backlog_tasks_to_create).toEqual([]);
 
     const on_disk = await read_registry_json();
     expect(on_disk).toEqual([known("a")]);
-    const new_file_exists = await fs
-      .stat(path.join(allowed_root, "new.ts"))
-      .then(() => true)
-      .catch(() => false);
-    expect(new_file_exists).toBe(false);
   });
 
-  it("apply mode writes registry + allowed code_changes", async () => {
+  it("apply mode writes registry upserts for a predicate classifier", async () => {
     await write_registry([known("a")]);
     const qa: QaResponse[] = [
       { group_id: "a", outliers: [{ entry_index: 0, reason: "" }, { entry_index: 1, reason: "" }, { entry_index: 2, reason: "" }], notes: "" },
     ];
-    const target = path.join(allowed_root, "sub", "file.ts");
     const inv: InvestigateResponse[] = [
       {
         group_id: "a",
@@ -487,19 +566,18 @@ describe("apply_proposals", () => {
         },
         backlog_ref: null,
         new_signals_needed: [],
-        code_changes: [{ path: target, contents: "hello" }],
+        classifier_spec: null,
         reasoning: "",
       },
     ];
     const result = await apply_proposals(qa, inv, { a: 20 }, {
       dry_run: false,
-      scope: { allowed_roots: [allowed_root] },
       registry_path,
+      authored_files_by_group: {},
     });
 
-    expect(result.wrote_files).toContain(target);
-    expect(result.wrote_files).toContain(registry_path);
-    expect(result.skipped_code_changes).toEqual([]);
+    expect(result.registry_upserts).toEqual(["a"]);
+    expect(result.failed_authoring).toEqual([]);
 
     const on_disk = await read_registry_json();
     expect(on_disk[0].drift_detected).toBe(true);
@@ -509,13 +587,207 @@ describe("apply_proposals", () => {
       expression: { op: "diagnosis_eq", value: "x" },
       min_confidence: 0.95,
     });
-    const written = await fs.readFile(target, "utf8");
-    expect(written).toBe("hello");
   });
 
-  it("rejects out-of-allowlist code_changes and still applies registry changes", async () => {
+  it("records failed_authoring when a builtin group has no authored file", async () => {
+    await write_registry([]);
+    const inv: InvestigateResponse[] = [
+      {
+        group_id: "a",
+        proposed_classifier: { kind: "builtin", function_name: "check_a", min_confidence: 0.9 },
+        backlog_ref: null,
+        new_signals_needed: [],
+        classifier_spec: minimal_spec("check_a"),
+        reasoning: "",
+      },
+    ];
+    const result = await apply_proposals([], inv, {}, {
+      dry_run: false,
+      registry_path,
+      authored_files_by_group: {},
+    });
+
+    expect(result.failed_authoring).toHaveLength(1);
+    expect(result.failed_authoring[0].group_id).toBe("a");
+    expect(result.failed_authoring[0].reason).toMatch(/no authored classifier file/);
+    expect(result.registry_upserts).toEqual([]);
+    const on_disk = await read_registry_json();
+    expect(on_disk).toEqual([]);
+  });
+
+  it("records failed_authoring when the authored file is missing on disk", async () => {
+    await write_registry([]);
+    const missing = path.join(authored_dir, "check_a.ts");
+    const inv: InvestigateResponse[] = [
+      {
+        group_id: "a",
+        proposed_classifier: { kind: "builtin", function_name: "check_a", min_confidence: 0.9 },
+        backlog_ref: null,
+        new_signals_needed: [],
+        classifier_spec: minimal_spec("check_a"),
+        reasoning: "",
+      },
+    ];
+    const result = await apply_proposals([], inv, {}, {
+      dry_run: false,
+      registry_path,
+      authored_files_by_group: { a: missing },
+    });
+
+    expect(result.failed_authoring).toHaveLength(1);
+    expect(result.failed_authoring[0].group_id).toBe("a");
+    expect(result.failed_authoring[0].reason).toMatch(/missing or unreadable/);
+    expect(result.registry_upserts).toEqual([]);
+  });
+
+  it("records spec_validation_failures when positive_examples is out of range", async () => {
+    await write_registry([]);
+    const authored_path = path.join(authored_dir, "check_a.ts");
+    await write_authored_file(authored_path);
+    const inv: InvestigateResponse[] = [
+      {
+        group_id: "a",
+        proposed_classifier: { kind: "builtin", function_name: "check_a", min_confidence: 0.9 },
+        backlog_ref: null,
+        new_signals_needed: [],
+        classifier_spec: {
+          ...minimal_spec("check_a"),
+          positive_examples: [0, 7],
+        },
+        reasoning: "",
+      },
+    ];
+    const result = await apply_proposals([], inv, { a: 3 }, {
+      dry_run: false,
+      registry_path,
+      authored_files_by_group: { a: authored_path },
+    });
+
+    expect(result.spec_validation_failures).toEqual([
+      {
+        group_id: "a",
+        reason:
+          "classifier_spec.positive_examples contains index 7 but group has 3 entries",
+      },
+    ]);
+    expect(result.registry_upserts).toEqual([]);
+    expect(result.failed_authoring).toEqual([]);
+    const on_disk = await read_registry_json();
+    expect(on_disk).toEqual([]);
+  });
+
+  it("records spec_validation_failures when negative_examples is out of range", async () => {
+    await write_registry([]);
+    const authored_path = path.join(authored_dir, "check_a.ts");
+    await write_authored_file(authored_path);
+    const inv: InvestigateResponse[] = [
+      {
+        group_id: "a",
+        proposed_classifier: { kind: "builtin", function_name: "check_a", min_confidence: 0.9 },
+        backlog_ref: null,
+        new_signals_needed: [],
+        classifier_spec: {
+          ...minimal_spec("check_a"),
+          positive_examples: [0],
+          negative_examples: [99],
+        },
+        reasoning: "",
+      },
+    ];
+    const result = await apply_proposals([], inv, { a: 5 }, {
+      dry_run: false,
+      registry_path,
+      authored_files_by_group: { a: authored_path },
+    });
+
+    expect(result.spec_validation_failures).toEqual([
+      {
+        group_id: "a",
+        reason:
+          "classifier_spec.negative_examples contains index 99 but group has 5 entries",
+      },
+    ]);
+    expect(result.registry_upserts).toEqual([]);
+  });
+
+  it("upserts a builtin when the authored file exists", async () => {
+    await write_registry([]);
+    const authored_path = path.join(authored_dir, "check_a.ts");
+    await write_authored_file(authored_path);
+    const inv: InvestigateResponse[] = [
+      {
+        group_id: "a",
+        proposed_classifier: { kind: "builtin", function_name: "check_a", min_confidence: 0.9 },
+        backlog_ref: null,
+        new_signals_needed: [],
+        classifier_spec: minimal_spec("check_a"),
+        reasoning: "",
+      },
+    ];
+    const result = await apply_proposals([], inv, {}, {
+      dry_run: false,
+      registry_path,
+      authored_files_by_group: { a: authored_path },
+    });
+
+    expect(result.failed_authoring).toEqual([]);
+    expect(result.authored_files).toEqual([authored_path]);
+    expect(result.registry_upserts).toEqual(["a"]);
+    const on_disk = await read_registry_json();
+    expect(on_disk).toHaveLength(1);
+    expect(on_disk[0].classifier).toEqual({
+      kind: "builtin",
+      function_name: "check_a",
+      min_confidence: 0.9,
+    });
+  });
+
+  it("does not write registry when nothing changed", async () => {
     await write_registry([known("a")]);
-    const outside = path.join(tmp_dir, "escape", "bad.ts");
+    const result = await apply_proposals([], [], {}, {
+      dry_run: false,
+      registry_path,
+      authored_files_by_group: {},
+    });
+    expect(result.registry_upserts).toEqual([]);
+    expect(result.drift_tagged_groups).toEqual([]);
+    expect(result.authored_files).toEqual([]);
+  });
+
+  it("deduplicates new_signals_needed across responses", async () => {
+    await write_registry([]);
+    const inv: InvestigateResponse[] = [
+      {
+        group_id: "a",
+        proposed_classifier: null,
+        backlog_ref: null,
+        new_signals_needed: ["grep_call_sites", "decorator_scan"],
+        classifier_spec: null,
+        reasoning: "",
+      },
+      {
+        group_id: "b",
+        proposed_classifier: null,
+        backlog_ref: null,
+        new_signals_needed: ["decorator_scan", "receiver_kind"],
+        classifier_spec: null,
+        reasoning: "",
+      },
+    ];
+    const result = await apply_proposals([], inv, {}, {
+      dry_run: true,
+      registry_path,
+      authored_files_by_group: {},
+    });
+    expect(result.new_signals_needed.sort()).toEqual([
+      "decorator_scan",
+      "grep_call_sites",
+      "receiver_kind",
+    ]);
+  });
+
+  it("skips upsert when existing entry is status='permanent'", async () => {
+    await write_registry([known("a", { status: "permanent" })]);
     const inv: InvestigateResponse[] = [
       {
         group_id: "a",
@@ -527,95 +799,75 @@ describe("apply_proposals", () => {
         },
         backlog_ref: null,
         new_signals_needed: [],
-        code_changes: [{ path: outside, contents: "x" }],
+        classifier_spec: null,
         reasoning: "",
       },
     ];
     const result = await apply_proposals([], inv, {}, {
       dry_run: false,
-      scope: { allowed_roots: [allowed_root] },
       registry_path,
+      authored_files_by_group: {},
     });
-
-    expect(result.skipped_code_changes).toHaveLength(1);
-    expect(result.skipped_code_changes[0].change.path).toBe(outside);
-    expect(result.wrote_files).toEqual([registry_path]);
-    const escaped = await fs
-      .stat(outside)
-      .then(() => true)
-      .catch(() => false);
-    expect(escaped).toBe(false);
+    expect(result.skipped_permanent_upserts).toEqual(["a"]);
+    expect(result.registry_upserts).toEqual([]);
+    const on_disk = await read_registry_json();
+    expect(on_disk[0].classifier).toEqual({
+      kind: "builtin",
+      function_name: "a",
+      min_confidence: 0.9,
+    });
   });
 
-  it("rejects code_changes that target the registry path", async () => {
-    await write_registry([known("a")]);
-    // Registry happens to live under allowed_root in this test.
-    const inside_registry = path.join(allowed_root, "registry.json");
-    await fs.writeFile(inside_registry, "[]", "utf8");
+  it("kind='none' overwrite flips status to wip and sets drift_detected", async () => {
+    await write_registry([known("a", { status: "fixed" })]);
     const inv: InvestigateResponse[] = [
       {
         group_id: "a",
-        proposed_classifier: null,
+        proposed_classifier: { kind: "none" },
         backlog_ref: null,
         new_signals_needed: [],
-        code_changes: [{ path: inside_registry, contents: "[{\"hacked\":true}]" }],
+        classifier_spec: null,
         reasoning: "",
       },
     ];
     const result = await apply_proposals([], inv, {}, {
       dry_run: false,
-      scope: { allowed_roots: [allowed_root] },
-      registry_path: inside_registry,
+      registry_path,
+      authored_files_by_group: {},
     });
+    expect(result.registry_upserts).toEqual(["a"]);
+    const on_disk = await read_registry_json();
+    expect(on_disk[0].status).toBe("wip");
+    expect(on_disk[0].drift_detected).toBe(true);
+    expect(on_disk[0].classifier).toEqual({ kind: "none" });
+  });
+});
 
-    expect(result.skipped_code_changes).toHaveLength(1);
-    expect(result.skipped_code_changes[0].reason).toMatch(/registry is managed/);
-    // Registry contents untouched.
-    const on_disk = await fs.readFile(inside_registry, "utf8");
-    expect(on_disk).toBe("[]");
+describe("parse_investigate_response — backlog_ref gate", () => {
+  it("rejects backlog_ref when new_signals_needed is empty", () => {
+    const result = parse_investigate_response({
+      group_id: "g",
+      proposed_classifier: null,
+      backlog_ref: { title: "fix", description: "d" },
+      new_signals_needed: [],
+      classifier_spec: null,
+      reasoning: "",
+    });
+    expect(result).toEqual({
+      error:
+        "investigate response: backlog_ref only permitted when new_signals_needed is non-empty",
+    });
   });
 
-  it("does not write registry when nothing changed", async () => {
-    await write_registry([known("a")]);
-    const result = await apply_proposals([], [], {}, {
-      dry_run: false,
-      scope: { allowed_roots: [allowed_root] },
-      registry_path,
+  it("accepts backlog_ref when new_signals_needed is non-empty", () => {
+    const result = parse_investigate_response({
+      group_id: "g",
+      proposed_classifier: { kind: "none" },
+      backlog_ref: { title: "needs signal", description: "d" },
+      new_signals_needed: ["receiver-type-in-await"],
+      classifier_spec: null,
+      reasoning: "",
     });
-    expect(result.wrote_files).toEqual([]);
-    expect(result.registry_upserts).toEqual([]);
-    expect(result.drift_tagged_groups).toEqual([]);
-  });
-
-  it("deduplicates new_signals_needed across responses", async () => {
-    await write_registry([]);
-    const inv: InvestigateResponse[] = [
-      {
-        group_id: "a",
-        proposed_classifier: null,
-        backlog_ref: null,
-        new_signals_needed: ["grep_call_sites", "decorator_scan"],
-        code_changes: [],
-        reasoning: "",
-      },
-      {
-        group_id: "b",
-        proposed_classifier: null,
-        backlog_ref: null,
-        new_signals_needed: ["decorator_scan", "receiver_kind"],
-        code_changes: [],
-        reasoning: "",
-      },
-    ];
-    const result = await apply_proposals([], inv, {}, {
-      dry_run: true,
-      scope: { allowed_roots: [allowed_root] },
-      registry_path,
-    });
-    expect(result.new_signals_needed.sort()).toEqual([
-      "decorator_scan",
-      "grep_call_sites",
-      "receiver_kind",
-    ]);
+    expect("error" in result).toBe(false);
   });
 });

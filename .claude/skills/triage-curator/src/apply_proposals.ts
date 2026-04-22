@@ -1,88 +1,23 @@
 import * as fs from "node:fs/promises";
-import * as path from "node:path";
 
 import { DRIFT_OUTLIER_RATE_THRESHOLD } from "./detect_drift.js";
 import { error_code } from "./errors.js";
+import {
+  cross_check_session_against_response,
+  type SessionResponseMismatch,
+} from "./session_log.js";
 import type {
   BacklogRefProposal,
+  BuiltinClassifierSpec,
   ClassifierAxis,
   ClassifierSpecProposal,
-  CodeChange,
   InvestigateResponse,
+  InvestigatorSessionLog,
   KnownIssue,
   QaResponse,
+  SignalCheck,
 } from "./types.js";
-
-// ===== Write-scope enforcement =====
-
-/**
- * Any `code_changes` path emitted by the opus investigator must resolve inside
- * one of these roots. The dispatcher rejects everything else.
- */
-export interface WriteScope {
-  allowed_roots: string[];
-}
-
-export interface CodeChangeViolation {
-  change: CodeChange;
-  reason: string;
-}
-
-/**
- * Symlink-safe canonicalisation. Resolves the path through `fs.realpath`;
- * if the target (or any ancestor) does not yet exist, walks up until an
- * existing ancestor is found, realpaths it, then re-appends the non-existent
- * suffix. Ensures a symlinked allow-root parent cannot redirect writes
- * outside the allowlist.
- */
-async function resolve_canonical(p: string): Promise<string> {
-  try {
-    return await fs.realpath(p);
-  } catch (err) {
-    if (error_code(err) !== "ENOENT") throw err;
-    const parent = path.dirname(p);
-    if (parent === p) return p;
-    const parent_canonical = await resolve_canonical(parent);
-    return path.join(parent_canonical, path.basename(p));
-  }
-}
-
-function is_inside(child: string, parent: string): boolean {
-  if (child === parent) return true;
-  const rel = path.relative(parent, child);
-  return rel.length > 0 && !rel.startsWith("..") && !path.isAbsolute(rel);
-}
-
-export async function validate_code_changes(
-  changes: CodeChange[],
-  scope: WriteScope,
-): Promise<CodeChangeViolation[]> {
-  const violations: CodeChangeViolation[] = [];
-  const resolved_roots = await Promise.all(
-    scope.allowed_roots.map((r) => resolve_canonical(path.resolve(r))),
-  );
-
-  for (const change of changes) {
-    if (change.path.length === 0) {
-      violations.push({ change, reason: "empty path" });
-      continue;
-    }
-    if (!path.isAbsolute(change.path)) {
-      violations.push({ change, reason: "path must be absolute" });
-      continue;
-    }
-    const resolved = await resolve_canonical(path.resolve(change.path));
-    const inside = resolved_roots.some((root) => is_inside(resolved, root));
-    if (!inside) {
-      violations.push({
-        change,
-        reason: `path is outside allowed roots: ${scope.allowed_roots.join(", ")}`,
-      });
-    }
-  }
-
-  return violations;
-}
+import { SIGNAL_CHECK_OPS } from "./types.js";
 
 // ===== Response-shape validation =====
 
@@ -150,36 +85,37 @@ export function parse_investigate_response(raw: unknown): InvestigateResponse | 
     }
   }
 
-  if (!Array.isArray(obj.code_changes)) {
-    return { error: "investigate response: code_changes must be an array" };
-  }
-  const code_changes: CodeChange[] = [];
-  for (const [idx, c] of obj.code_changes.entries()) {
-    if (typeof c !== "object" || c === null) {
-      return { error: `investigate response: code_changes[${idx}] is not an object` };
-    }
-    const cc = c as Record<string, unknown>;
-    if (typeof cc.path !== "string") {
-      return { error: `investigate response: code_changes[${idx}].path must be a string` };
-    }
-    if (typeof cc.contents !== "string") {
-      return { error: `investigate response: code_changes[${idx}].contents must be a string` };
-    }
-    code_changes.push({ path: cc.path, contents: cc.contents });
-  }
-
   if (typeof obj.reasoning !== "string") {
     return { error: "investigate response: reasoning must be a string" };
   }
+
+  const new_signals_needed = obj.new_signals_needed.filter(
+    (s): s is string => typeof s === "string",
+  );
+
+  // A backlog ticket is only an acceptable substitute for a working classifier
+  // when the investigator has identified a missing-signal blocker. The dispatcher
+  // enforces this so sub-agents cannot fall back to "file a ticket" on groups
+  // that are tractable with existing signals.
+  if (backlog_result.value !== null && new_signals_needed.length === 0) {
+    return {
+      error:
+        "investigate response: backlog_ref only permitted when new_signals_needed is non-empty",
+    };
+  }
+
+  const spec_result = parse_classifier_spec(
+    obj.classifier_spec,
+    classifier_result.value,
+  );
+  if ("error" in spec_result) return spec_result;
 
   return {
     group_id: obj.group_id,
     proposed_classifier: classifier_result.value,
     backlog_ref: backlog_result.value,
-    new_signals_needed: obj.new_signals_needed.filter(
-      (s): s is string => typeof s === "string",
-    ),
-    code_changes,
+    new_signals_needed,
+    classifier_spec: spec_result.value,
     reasoning: obj.reasoning,
   };
 }
@@ -274,6 +210,228 @@ function parse_backlog_ref(raw: unknown): { value: BacklogRefProposal | null } |
   return { value: { title: obj.title, description: obj.description } };
 }
 
+/**
+ * `classifier_spec` must be non-null when `proposed_classifier.kind === "builtin"`
+ * and null otherwise. Validates spec shape against `BuiltinClassifierSpec`.
+ */
+function parse_classifier_spec(
+  raw: unknown,
+  proposed_classifier: ClassifierSpecProposal | null,
+): { value: BuiltinClassifierSpec | null } | ParseError {
+  const requires_spec = proposed_classifier?.kind === "builtin";
+  if (raw === null || raw === undefined) {
+    if (requires_spec) {
+      return {
+        error:
+          "investigate response: classifier_spec must be provided when proposed_classifier.kind === 'builtin'",
+      };
+    }
+    return { value: null };
+  }
+  if (!requires_spec) {
+    return {
+      error:
+        "investigate response: classifier_spec must be null unless proposed_classifier.kind === 'builtin'",
+    };
+  }
+  if (typeof raw !== "object") {
+    return { error: "classifier_spec must be an object" };
+  }
+  const obj = raw as Record<string, unknown>;
+  if (typeof obj.function_name !== "string" || obj.function_name.length === 0) {
+    return { error: "classifier_spec.function_name must be a non-empty string" };
+  }
+  if (obj.function_name !== proposed_classifier.function_name) {
+    return {
+      error:
+        "classifier_spec.function_name must equal proposed_classifier.function_name",
+    };
+  }
+  const min_confidence = parse_min_confidence(obj.min_confidence);
+  if (typeof min_confidence !== "number") return min_confidence;
+  if (obj.combinator !== "all" && obj.combinator !== "any") {
+    return { error: "classifier_spec.combinator must be 'all' or 'any'" };
+  }
+  if (!Array.isArray(obj.checks)) {
+    return { error: "classifier_spec.checks must be an array" };
+  }
+  const checks: SignalCheck[] = [];
+  for (const [idx, c] of obj.checks.entries()) {
+    const check_result = parse_signal_check(c, idx);
+    if ("error" in check_result) return check_result;
+    checks.push(check_result.value);
+  }
+  const positive_result = parse_example_indexes(obj.positive_examples, "positive_examples");
+  if ("error" in positive_result) return positive_result;
+  const negative_result = parse_example_indexes(obj.negative_examples, "negative_examples");
+  if ("error" in negative_result) return negative_result;
+  if (typeof obj.description !== "string") {
+    return { error: "classifier_spec.description must be a string" };
+  }
+  return {
+    value: {
+      function_name: obj.function_name,
+      min_confidence,
+      combinator: obj.combinator,
+      checks,
+      positive_examples: positive_result.value,
+      negative_examples: negative_result.value,
+      description: obj.description,
+    },
+  };
+}
+
+function parse_signal_check(
+  raw: unknown,
+  idx: number,
+): { value: SignalCheck } | ParseError {
+  if (typeof raw !== "object" || raw === null) {
+    return { error: `classifier_spec.checks[${idx}] must be an object` };
+  }
+  const obj = raw as Record<string, unknown>;
+  if (typeof obj.op !== "string") {
+    return { error: `classifier_spec.checks[${idx}].op must be a string` };
+  }
+  const prefix = `classifier_spec.checks[${idx}]`;
+  switch (obj.op) {
+    case "diagnosis_eq": {
+      if (typeof obj.value !== "string") {
+        return { error: `${prefix}.value must be a string` };
+      }
+      return { value: { op: "diagnosis_eq", value: obj.value } };
+    }
+    case "language_eq": {
+      if (
+        obj.value !== "typescript" &&
+        obj.value !== "javascript" &&
+        obj.value !== "python" &&
+        obj.value !== "rust"
+      ) {
+        return {
+          error: `${prefix}.value must be 'typescript', 'javascript', 'python', or 'rust'`,
+        };
+      }
+      return { value: { op: "language_eq", value: obj.value } };
+    }
+    case "syntactic_feature_eq": {
+      if (typeof obj.name !== "string" || obj.name.length === 0) {
+        return { error: `${prefix}.name must be a non-empty string` };
+      }
+      if (
+        typeof obj.value !== "string" &&
+        typeof obj.value !== "number" &&
+        typeof obj.value !== "boolean"
+      ) {
+        return { error: `${prefix}.value must be a string, number, or boolean` };
+      }
+      return {
+        value: {
+          op: "syntactic_feature_eq",
+          name: obj.name,
+          value: obj.value,
+        },
+      };
+    }
+    case "grep_line_regex": {
+      if (typeof obj.pattern !== "string") {
+        return { error: `${prefix}.pattern must be a string` };
+      }
+      return { value: { op: "grep_line_regex", pattern: obj.pattern } };
+    }
+    case "decorator_matches": {
+      if (typeof obj.pattern !== "string") {
+        return { error: `${prefix}.pattern must be a string` };
+      }
+      return { value: { op: "decorator_matches", pattern: obj.pattern } };
+    }
+    case "has_capture_at_grep_hit": {
+      if (typeof obj.capture_name !== "string") {
+        return { error: `${prefix}.capture_name must be a string` };
+      }
+      return {
+        value: { op: "has_capture_at_grep_hit", capture_name: obj.capture_name },
+      };
+    }
+    case "missing_capture_at_grep_hit": {
+      if (typeof obj.capture_name !== "string") {
+        return { error: `${prefix}.capture_name must be a string` };
+      }
+      return {
+        value: {
+          op: "missing_capture_at_grep_hit",
+          capture_name: obj.capture_name,
+        },
+      };
+    }
+    case "receiver_kind_eq": {
+      if (typeof obj.value !== "string") {
+        return { error: `${prefix}.value must be a string` };
+      }
+      return { value: { op: "receiver_kind_eq", value: obj.value } };
+    }
+    case "resolution_failure_reason_eq": {
+      if (typeof obj.value !== "string") {
+        return { error: `${prefix}.value must be a string` };
+      }
+      return {
+        value: { op: "resolution_failure_reason_eq", value: obj.value },
+      };
+    }
+    case "callers_count_at_least": {
+      if (typeof obj.n !== "number" || !Number.isInteger(obj.n) || obj.n < 0) {
+        return { error: `${prefix}.n must be a non-negative integer` };
+      }
+      return { value: { op: "callers_count_at_least", n: obj.n } };
+    }
+    case "callers_count_at_most": {
+      if (typeof obj.n !== "number" || !Number.isInteger(obj.n) || obj.n < 0) {
+        return { error: `${prefix}.n must be a non-negative integer` };
+      }
+      return { value: { op: "callers_count_at_most", n: obj.n } };
+    }
+    case "file_path_matches": {
+      if (typeof obj.pattern !== "string") {
+        return { error: `${prefix}.pattern must be a string` };
+      }
+      return { value: { op: "file_path_matches", pattern: obj.pattern } };
+    }
+    case "name_matches": {
+      if (typeof obj.pattern !== "string") {
+        return { error: `${prefix}.pattern must be a string` };
+      }
+      return { value: { op: "name_matches", pattern: obj.pattern } };
+    }
+    default:
+      return {
+        error: `${prefix}.op '${obj.op}' is not a known SignalCheck op (allowed: ${SIGNAL_CHECK_OPS.join(", ")})`,
+      };
+  }
+}
+
+function parse_example_indexes(
+  raw: unknown,
+  field: string,
+): { value: number[] } | ParseError {
+  if (!Array.isArray(raw)) {
+    return { error: `classifier_spec.${field} must be an array` };
+  }
+  const out: number[] = [];
+  const seen = new Set<number>();
+  for (const [idx, v] of raw.entries()) {
+    if (typeof v !== "number" || !Number.isInteger(v) || v < 0) {
+      return { error: `classifier_spec.${field}[${idx}] must be a non-negative integer` };
+    }
+    if (seen.has(v)) {
+      return {
+        error: `classifier_spec.${field}[${idx}] is a duplicate entry index (${v})`,
+      };
+    }
+    seen.add(v);
+    out.push(v);
+  }
+  return { value: out };
+}
+
 // ===== Drift tagging =====
 
 /**
@@ -301,24 +459,68 @@ export function mark_drift_in_registry(
 
 // ===== Orchestrator =====
 
+export interface FailedAuthoring {
+  group_id: string;
+  reason: string;
+}
+
+export interface SpecValidationFailure {
+  group_id: string;
+  reason: string;
+}
+
 export interface ApplyOptions {
   dry_run: boolean;
-  scope: WriteScope;
   registry_path: string;
+  /**
+   * Map of group_id → absolute path to the authored `check_<group_id>.ts` file
+   * written in Step 4.5 by the main agent. The dispatcher requires a readable
+   * file at this path before upserting the registry entry for a builtin
+   * classifier. Predicate-kind proposals are not keyed here.
+   */
+  authored_files_by_group: Record<string, string>;
+  /**
+   * Session logs written alongside each InvestigateResponse. Optional: finalize
+   * hydrates them when present so that the summary can surface failed groups.
+   */
+  session_logs?: InvestigatorSessionLog[];
 }
 
 export interface ApplyResult {
-  wrote_files: string[];
-  skipped_code_changes: CodeChangeViolation[];
+  /** Group IDs whose authored file was validated and registry entry upserted. */
+  authored_files: string[];
+  /**
+   * Group IDs whose builtin classifier could not be landed: the authored file
+   * is missing, unreadable, or failed an upstream invariant check.
+   */
+  failed_authoring: FailedAuthoring[];
+  /**
+   * Group IDs whose classifier_spec carried example indexes inconsistent with
+   * the source group (out-of-range against `group.entries.length`). Registry
+   * upsert is skipped so a manual review can repair the spec.
+   */
+  spec_validation_failures: SpecValidationFailure[];
   registry_upserts: string[];
+  /**
+   * Group IDs whose upsert was skipped because the existing registry entry has
+   * `status: "permanent"`. Surfaces promotion attempts that should instead be
+   * routed to a human-authored backlog task.
+   */
+  skipped_permanent_upserts: string[];
   drift_tagged_groups: string[];
   backlog_tasks_to_create: BacklogRefProposal[];
   new_signals_needed: string[];
+  /** Per-field disagreements between session log and investigate response. */
+  session_response_mismatches: SessionResponseMismatch[];
 }
 
 /**
- * Apply curator proposals. In `dry_run` mode no files are written; the returned
- * `ApplyResult` describes exactly what *would* have happened.
+ * Apply curator proposals. In `dry_run` mode no registry mutation is written;
+ * the returned `ApplyResult` describes exactly what *would* have happened.
+ *
+ * Source authoring (`check_<group_id>.ts`) happens in Step 4.5, before this
+ * function is called. This function only validates that the authored file
+ * exists on disk, then upserts the registry entry referencing it.
  *
  * Backlog task creation is not performed here (MCP is only available in the
  * Claude harness) — callers read `backlog_tasks_to_create` and invoke
@@ -338,52 +540,73 @@ export async function apply_proposals(
     member_counts,
   );
 
+  // Validate authored files exist and classifier_spec example indexes reference
+  // real entries in the source group. Either violation blocks the registry
+  // upsert for that group — the dispatcher refuses to point the registry at a
+  // classifier whose file is absent or whose spec contradicts the group it
+  // claims to describe.
+  const failed_authoring: FailedAuthoring[] = [];
+  const spec_validation_failures: SpecValidationFailure[] = [];
+  const authored_files: string[] = [];
+  const rejected_builtin_groups = new Set<string>();
+  for (const r of inv) {
+    if (r.proposed_classifier?.kind !== "builtin") continue;
+    const spec_errors = validate_spec_example_indexes(r, member_counts);
+    if (spec_errors.length > 0) {
+      for (const reason of spec_errors) {
+        spec_validation_failures.push({ group_id: r.group_id, reason });
+      }
+      rejected_builtin_groups.add(r.group_id);
+      continue;
+    }
+    const authored_path = opts.authored_files_by_group[r.group_id];
+    if (authored_path === undefined || authored_path.length === 0) {
+      failed_authoring.push({
+        group_id: r.group_id,
+        reason: "no authored classifier file recorded for group",
+      });
+      rejected_builtin_groups.add(r.group_id);
+      continue;
+    }
+    const readable = await is_readable(authored_path);
+    if (!readable) {
+      failed_authoring.push({
+        group_id: r.group_id,
+        reason: `authored classifier file is missing or unreadable: ${authored_path}`,
+      });
+      rejected_builtin_groups.add(r.group_id);
+      continue;
+    }
+    authored_files.push(authored_path);
+  }
+
   const registry_upserts: string[] = [];
+  const skipped_permanent_upserts: string[] = [];
   let next_registry = after_drift;
   for (const r of inv) {
     if (r.proposed_classifier === null) continue;
-    next_registry = upsert_classifier(next_registry, r.group_id, r.proposed_classifier);
+    if (rejected_builtin_groups.has(r.group_id)) continue;
+    const { registry: after_upsert, skipped_permanent } = upsert_classifier(
+      next_registry,
+      r.group_id,
+      r.proposed_classifier,
+    );
+    if (skipped_permanent) {
+      skipped_permanent_upserts.push(r.group_id);
+      continue;
+    }
+    next_registry = after_upsert;
     registry_upserts.push(r.group_id);
   }
 
-  const canonical_registry_path = await resolve_canonical(path.resolve(opts.registry_path));
-
-  const wrote_files: string[] = [];
-  const skipped_code_changes: CodeChangeViolation[] = [];
-  for (const r of inv) {
-    const violations = await validate_code_changes(r.code_changes, opts.scope);
-    skipped_code_changes.push(...violations);
-    const allowed = r.code_changes.filter(
-      (c) => !violations.some((v) => v.change === c),
-    );
-    for (const change of allowed) {
-      // The registry is managed by the upsert path, not by free-form
-      // `code_changes`. Reject any attempt to overwrite it this way — even
-      // if the registry happens to live inside an allow-root.
-      const canonical = await resolve_canonical(path.resolve(change.path));
-      if (canonical === canonical_registry_path) {
-        skipped_code_changes.push({
-          change,
-          reason: "registry is managed by upsert path, not code_changes",
-        });
-        continue;
-      }
-      if (!opts.dry_run) {
-        await fs.mkdir(path.dirname(change.path), { recursive: true });
-        await fs.writeFile(change.path, change.contents, "utf8");
-        wrote_files.push(change.path);
-      }
-    }
-  }
-
-  const registry_mutated = drift_tagged_groups.length > 0 || registry_upserts.length > 0;
+  const registry_mutated =
+    drift_tagged_groups.length > 0 || registry_upserts.length > 0;
   if (!opts.dry_run && registry_mutated) {
     await fs.writeFile(
       opts.registry_path,
       JSON.stringify(next_registry, null, 2) + "\n",
       "utf8",
     );
-    wrote_files.push(opts.registry_path);
   }
 
   const backlog_tasks_to_create = inv
@@ -394,14 +617,80 @@ export async function apply_proposals(
     ...new Set(inv.flatMap((r) => r.new_signals_needed)),
   ];
 
+  const session_response_mismatches = cross_check_all_sessions(
+    opts.session_logs ?? [],
+    inv,
+  );
+
   return {
-    wrote_files,
-    skipped_code_changes,
+    authored_files,
+    failed_authoring,
+    spec_validation_failures,
     registry_upserts,
+    skipped_permanent_upserts,
     drift_tagged_groups,
     backlog_tasks_to_create,
     new_signals_needed,
+    session_response_mismatches,
   };
+}
+
+/**
+ * Verify every `positive_examples` / `negative_examples` index is in-range
+ * against the source group's entries. Returns a list of human-readable
+ * violations (empty when the spec is consistent).
+ *
+ * A group missing from `member_counts` is treated as "no entries observed";
+ * any referenced example is therefore out-of-range. An investigator emitting
+ * classifier_spec for a group not in the source triage output is itself a bug.
+ */
+function validate_spec_example_indexes(
+  inv: InvestigateResponse,
+  member_counts: Record<string, number>,
+): string[] {
+  const spec = inv.classifier_spec;
+  if (spec === null) return [];
+  const size = member_counts[inv.group_id] ?? 0;
+  const errors: string[] = [];
+  for (const idx of spec.positive_examples) {
+    if (idx >= size) {
+      errors.push(
+        `classifier_spec.positive_examples contains index ${idx} but group has ${size} entries`,
+      );
+    }
+  }
+  for (const idx of spec.negative_examples) {
+    if (idx >= size) {
+      errors.push(
+        `classifier_spec.negative_examples contains index ${idx} but group has ${size} entries`,
+      );
+    }
+  }
+  return errors;
+}
+
+async function is_readable(file_path: string): Promise<boolean> {
+  try {
+    await fs.access(file_path, fs.constants.R_OK);
+    return true;
+  } catch (err) {
+    if (error_code(err) === "ENOENT" || error_code(err) === "EACCES") return false;
+    throw err;
+  }
+}
+
+function cross_check_all_sessions(
+  logs: InvestigatorSessionLog[],
+  inv: InvestigateResponse[],
+): SessionResponseMismatch[] {
+  const by_group = new Map(inv.map((r) => [r.group_id, r]));
+  const mismatches: SessionResponseMismatch[] = [];
+  for (const log of logs) {
+    const response = by_group.get(log.group_id);
+    if (response === undefined) continue;
+    mismatches.push(...cross_check_session_against_response(log, response));
+  }
+  return mismatches;
 }
 
 async function read_registry(registry_path: string): Promise<KnownIssue[]> {
@@ -409,11 +698,16 @@ async function read_registry(registry_path: string): Promise<KnownIssue[]> {
   return JSON.parse(raw) as KnownIssue[];
 }
 
+interface UpsertOutcome {
+  registry: KnownIssue[];
+  skipped_permanent: boolean;
+}
+
 function upsert_classifier(
   registry: KnownIssue[],
   group_id: string,
   proposal: ClassifierSpecProposal,
-): KnownIssue[] {
+): UpsertOutcome {
   const existing_idx = registry.findIndex((e) => e.group_id === group_id);
   if (existing_idx === -1) {
     const placeholder: KnownIssue = {
@@ -425,9 +719,30 @@ function upsert_classifier(
       examples: [],
       classifier: proposal,
     };
-    return [...registry, placeholder];
+    return { registry: [...registry, placeholder], skipped_permanent: false };
   }
+
+  const existing = registry[existing_idx];
+
+  // Permanent entries are protected from curator overwrite. Promotion flow
+  // should route these to a human-authored backlog task instead.
+  if (existing.status === "permanent") {
+    return { registry, skipped_permanent: true };
+  }
+
   const next = [...registry];
-  next[existing_idx] = { ...next[existing_idx], classifier: proposal };
-  return next;
+  // Overwriting with kind:"none" is a "retire" action. Flip status to wip
+  // and set drift_detected so the next scan surfaces it for human review,
+  // rather than leaving a silently neutered classifier in place.
+  if (proposal.kind === "none") {
+    next[existing_idx] = {
+      ...existing,
+      classifier: proposal,
+      status: "wip",
+      drift_detected: true,
+    };
+  } else {
+    next[existing_idx] = { ...existing, classifier: proposal };
+  }
+  return { registry: next, skipped_permanent: false };
 }

@@ -18,7 +18,11 @@ import { fileURLToPath } from "node:url";
 
 import { compute_wip_group_counts } from "../src/compute_wip_counts.js";
 import { load_state } from "../src/curation_state.js";
-import { CURATOR_RUNS_DIR, get_registry_file_path, run_output_dir } from "../src/paths.js";
+import {
+  CURATOR_RUNS_DIR,
+  get_registry_file_path,
+  run_output_dir,
+} from "../src/paths.js";
 import { scan_runs } from "../src/scan_runs.js";
 import type {
   KnownIssue,
@@ -98,6 +102,7 @@ interface RunDispatch {
     output_path: string;
     get_context_cmd: string;
   }>;
+  promote_cmd: string;
   finalize_cmd: string;
 }
 
@@ -110,9 +115,11 @@ async function plan_for_run(
   const output_dir = run_output_dir(item.run_id);
   await fs.mkdir(path.join(output_dir, "qa"), { recursive: true });
   await fs.mkdir(path.join(output_dir, "investigate"), { recursive: true });
+  await fs.mkdir(path.join(output_dir, "investigate_promoted"), { recursive: true });
 
   const qa_script = path.join(SCRIPTS_REL, "get_qa_context.ts");
   const inv_script = path.join(SCRIPTS_REL, "get_investigate_context.ts");
+  const promote_script = path.join(SCRIPTS_REL, "promote_qa_to_investigate.ts");
   const finalize_script = path.join(SCRIPTS_REL, "curate_run.ts");
   const run_rel = path.relative(REPO_ROOT, item.run_path);
 
@@ -137,6 +144,8 @@ async function plan_for_run(
     }
   }
 
+  const promote_cmd =
+    `node --import tsx ${promote_script} --run ${run_rel}` + (dry_run ? " --dry-run" : "");
   const finalize_cmd =
     `node --import tsx ${finalize_script} --phase finalize --run ${run_rel}` +
     (dry_run ? " --dry-run" : "");
@@ -148,6 +157,7 @@ async function plan_for_run(
     reason: item.reason,
     qa_groups,
     investigate_groups,
+    promote_cmd,
     finalize_cmd,
   };
 }
