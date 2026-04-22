@@ -226,6 +226,7 @@ Write **two files** to `~/.ariadne/triage-curator/**` before returning.
   "backlog_ref": { "title": "string", "description": "string" } | null,
   "new_signals_needed": ["kebab-case-signal-1"],
   "classifier_spec": <BuiltinClassifierSpec> | null,
+  "retargets_to": "string" | null,
   "reasoning": "string"
 }
 ```
@@ -245,6 +246,32 @@ Classifier shapes (exclusive):
 - `min_confidence` — optional; defaults to `0.9`.
 - `backlog_ref` — non-null **only** when `new_signals_needed` is non-empty.
 - `reasoning` — cite specific files, lines, and patterns examined.
+- `group_id` **must** equal the dispatch group id (the id you received).
+  To extend an existing registry entry, set `retargets_to` instead of
+  renaming `group_id`.
+- `retargets_to` — optional. When set, names an existing registry
+  `group_id`; the authored `.ts` file is named `check_<retargets_to>.ts`
+  and the registry upsert lands on that entry. When set, **both
+  `positive_examples` and `negative_examples` must be empty** — their
+  indices would reference the source group's entries, not the target's.
+
+### Authoring rules — quick-reference
+
+Step 4.25 validates every response before rendering. The validator rejects:
+
+- `classifier_spec.checks[].op` not in `signal_check_ops` (from the
+  hydrated context). No nested `{ op: "any", of: [...] }` combinators —
+  the combinator lives on `classifier_spec.combinator: "all" | "any"`.
+- `group_id` different from the dispatch id (use `retargets_to`).
+- `retargets_to` naming a group_id absent from the current registry.
+- `retargets_to` non-null while `positive_examples` or `negative_examples`
+  is non-empty.
+- `positive_examples` / `negative_examples` indices `>= group.entries.length`.
+- `kind: "none"` with empty `new_signals_needed` AND a session log that
+  carries no `failure_category` (silent dead-end).
+
+The hydrated context carries an `authoring_rules` stanza that names the
+exact rules; consult it before emitting the response.
 
 ### 2. Session log at `<output_path_stem>.session.json`
 

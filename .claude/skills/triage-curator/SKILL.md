@@ -19,16 +19,17 @@ never `npx tsx`.
 
 ## Pipeline Overview
 
-| #   | Step          | Actor                                           | Output                                                          |
-| --- | ------------- | ----------------------------------------------- | --------------------------------------------------------------- |
-| 1   | Plan          | `scripts/curate_all.ts`                         | List of runs, per-run QA + residual-investigate dispatches      |
-| 2   | QA            | `triage-curator-qa` (sonnet, 50 turns)          | One `QaResponse` per auto-classified group                      |
-| 3   | Promote       | `scripts/promote_qa_to_investigate.ts`          | List of classifiers QA judged mis-matching, re-routed to step 4 |
-| 4   | Investigate   | `triage-curator-investigator` (opus, 200 turns) | One `InvestigateResponse` + `<id>.session.json` per dispatch    |
-| 4.5 | Author source | Main agent + `scripts/render_classifier.ts`     | One `check_<group_id>.ts` per builtin proposal                  |
-| 5   | Finalize      | `scripts/curate_run.ts --phase finalize`        | Apply proposals, fold outcome into `state.json`, print summary  |
-| 6   | Backlog       | `mcp__backlog__task_create`                     | One task per `backlog_tasks_to_create[]` entry                  |
-| 7   | Commit        | `git` / `gh` via `AskUserQuestion`              | Committed sweep on current branch, a new branch, or an open PR  |
+| #    | Step             | Actor                                           | Output                                                          |
+| ---- | ---------------- | ----------------------------------------------- | --------------------------------------------------------------- |
+| 1    | Plan             | `scripts/curate_all.ts`                         | List of runs, per-run QA + residual-investigate dispatches      |
+| 2    | QA               | `triage-curator-qa` (sonnet, 50 turns)          | One `QaResponse` per auto-classified group                      |
+| 3    | Promote          | `scripts/promote_qa_to_investigate.ts`          | List of classifiers QA judged mis-matching, re-routed to step 4 |
+| 4    | Investigate      | `triage-curator-investigator` (opus, 200 turns) | One `InvestigateResponse` + `<id>.session.json` per dispatch    |
+| 4.25 | Validate         | `scripts/validate_responses.ts`                 | `<run>/validation.json`; non-zero exit on any issue             |
+| 4.5  | Author source    | Main agent + `scripts/render_classifier.ts`     | One `check_<target_group_id>.ts` per builtin proposal           |
+| 5    | Finalize         | `scripts/curate_run.ts --phase finalize`        | Apply proposals, fold outcome into `state.json`, print summary  |
+| 6    | Backlog          | `mcp__backlog__task_create`                     | One task per `backlog_tasks_to_create[]` entry                  |
+| 7    | Commit           | `git` / `gh` via `AskUserQuestion`              | Committed sweep on current branch, a new branch, or an open PR  |
 
 ## Arguments
 
@@ -44,6 +45,7 @@ never `npx tsx`.
 | `--commit-to <current\|new\|pr>` | Where to commit curation outputs. If omitted and not `--dry-run`, the main agent asks via `AskUserQuestion` |
 | `--branch <name>`                | Branch name for `--commit-to new`                                                                           |
 | `--pr <number>`                  | Existing PR number for `--commit-to pr`                                                                     |
+| `--reaggregate-on-incoherent`    | When any session log ends in `failure_category: "group_incoherent"`, write `<run>/reaggregate_queue.json`   |
 
 The three commit flags are consumed by the orchestrator. Strip them from
 `$ARGUMENTS` before forwarding the remainder to `curate_all.ts`.
@@ -98,28 +100,61 @@ the union of `investigate_groups[]` (from `PLAN`) and `promoted_groups[]`
 
 Checkpoint: wait for all `Task()` calls to return before continuing.
 
+### Step 4.25 — Validate investigator responses
+
+Every response must pass a schema + semantic validator before any file is
+rendered. Use each run's `validate_cmd` from `PLAN`:
+
+```bash
+node --import tsx .claude/skills/triage-curator/scripts/validate_responses.ts --run <run_path>
+```
+
+The script walks `<run>/investigate/` and `<run>/investigate_promoted/`,
+parses each response, and runs:
+
+- Shape parse (unknown SignalCheck op, bad combinator, malformed proposal).
+- `group_id` must equal the dispatch id derived from the filename.
+- `retargets_to`, when set, must name an existing registry `group_id`.
+- When retargeting, `positive_examples` and `negative_examples` must be
+  empty.
+- `positive_examples` / `negative_examples` indices must be in-range
+  against the source group's entries.
+- `kind: "none"` must carry either `new_signals_needed[]` or a session log
+  with `failure_category` set.
+
+Output: `<run>/validation.json` with `{ ok: boolean, issues: [...] }`.
+Non-zero exit when any issue is present.
+
+Checkpoint: when `ok === false`, halt. Read each issue, decide which
+investigators to re-dispatch with corrections, re-run those `Task()` calls,
+then re-invoke the validator. Do not proceed to Step 4.5 until validation
+passes cleanly — rendering a broken response pollutes the working tree and
+wastes finalize cycles.
+
 ### Step 4.5 — Author builtin classifier source
 
-For every investigate response under `<run_id>/investigate/` and
-`<run_id>/investigate_promoted/` whose `classifier_spec` is non-null,
-render the classifier to TypeScript and write it to the pre-assigned
-path. For each such response JSON at `<response_path>` with
-`classifier_spec.function_name` set:
+For every validated investigate response with a non-null `classifier_spec`,
+render the classifier to TypeScript. The renderer derives the filename
+itself from `response.retargets_to ?? response.group_id`, so the main
+agent does not compose paths by hand:
 
 ```bash
 REPO_ROOT=$(git rev-parse --show-toplevel)
-TARGET="$REPO_ROOT/.claude/skills/self-repair-pipeline/src/auto_classify/builtins/check_<group_id>.ts"
+BUILTINS_DIR="$REPO_ROOT/.claude/skills/self-repair-pipeline/src/auto_classify/builtins"
 node --import tsx .claude/skills/triage-curator/scripts/render_classifier.ts \
-  --response <response_path> > "$TARGET"
+  --response <response_path> --out "$BUILTINS_DIR"
 ```
 
-Render errors (unknown op, missing spec) surface as non-zero exits —
-re-read the response and halt Step 5 for that run if the renderer fails.
+The script prints the absolute target path on stdout when it succeeds. On
+failure (should not happen after Step 4.25) it exits non-zero and does
+NOT create the file — the working tree is never polluted with half-rendered
+source.
 
-Build the authored-files map for finalize:
+Build the authored-files map for finalize, keyed by the target group id
+(`retargets_to` when set, else `group_id`):
 
 ```json
-{ "<group_id_1>": "/abs/path/to/check_<group_id_1>.ts", ... }
+{ "<target_group_id_1>": "/abs/path/to/check_<target_group_id_1>.ts", ... }
 ```
 
 Write it to a temp file and pass it to Step 5 via `--authored-files`.
@@ -136,13 +171,33 @@ authored-files map from Step 4.5:
 ```bash
 node --import tsx .claude/skills/triage-curator/scripts/curate_run.ts \
   --phase finalize --run <run_path> \
-  --authored-files <path/to/authored-files.json> [--dry-run]
+  --authored-files <path/to/authored-files.json> \
+  [--reaggregate-on-incoherent] [--dry-run]
 ```
 
+Finalize owns several automatic housekeeping steps beyond the registry
+upsert itself:
+
+- **Language derivation**: new `wip` entries get their `languages` field
+  populated from (a) declared `language_eq` checks in the classifier spec,
+  (b) otherwise from source-group member file extensions. A group with no
+  derivable language fails with a `spec_validation_failures[]` entry.
+- **Orphan cleanup**: any path in the authored-files map that does not
+  land as an accepted upsert is `unlink`'d and logged to
+  `deleted_orphan_files[]`.
+- **Derived markdown**: when the registry is mutated, the four
+  `packages/core/src/index_single_file/query_code_tree/queries/unsupported_features.<lang>.md`
+  files are re-rendered and added to `authored_files[]` so the pre-commit
+  hook sees them as part of the sweep.
+- **Incoherent-group queue**: with `--reaggregate-on-incoherent`, any
+  session log with `failure_category: "group_incoherent"` is written to
+  `<run>/reaggregate_queue.json` for follow-up dispatch.
+
 Checkpoint: capture each printed JSON as `FINALIZE[run_id]`. Aggregate
-`authored_files`, `failed_authoring`, `spec_validation_failures`,
-`backlog_tasks_to_create`, `failed_groups`, `session_response_mismatches`,
-`skipped_permanent_upserts`, `promoted_reinvestigations` across all runs.
+`authored_files`, `deleted_orphan_files`, `failed_authoring`,
+`spec_validation_failures`, `backlog_tasks_to_create`, `failed_groups`,
+`session_response_mismatches`, `skipped_permanent_upserts`,
+`promoted_reinvestigations`, `reaggregate_queue` across all runs.
 
 ### Step 6 — Create backlog tasks
 
@@ -266,19 +321,75 @@ questions.
 The investigator never writes to the source tree — it emits structured
 proposals only. Two actors handle writes:
 
-- **Main agent (Step 4.5)** renders each builtin `classifier_spec` to
-  `src/auto_classify/builtins/check_<group_id>.ts` via
-  `render_classifier.ts`. The filename is derived deterministically from
-  `group_id`; there is no way for two investigators to collide.
-- **Dispatcher (`curate_run --phase finalize`)** AST-parses each
-  authored file, upserts the registry entry for every proposal whose
-  classifier file passed, and flips drift tags. Failures become
-  `failed_authoring[]` entries and block the corresponding registry
-  upsert.
+- **Main agent (Step 4.5)** calls `render_classifier.ts --out <dir>` for
+  every validated builtin `classifier_spec`. The renderer derives the
+  target path itself as `<dir>/check_<response.retargets_to ?? response.group_id>.ts`,
+  writes the file atomically, and prints the path on stdout. Render
+  failures exit non-zero and leave no file behind.
+- **Dispatcher (`curate_run --phase finalize`)** AST-parses each authored
+  file, upserts the registry entry for every proposal whose classifier
+  file passed, flips drift tags, re-renders derived markdown, and unlinks
+  orphaned `.ts` files whose groups failed validation. Failures become
+  `failed_authoring[]` / `spec_validation_failures[]` entries and block
+  the corresponding registry upsert.
 
 Registry files written: `known_issues/registry.json` (upserts + drift
-tags). Classifier files written: `src/auto_classify/builtins/check_<group_id>.ts`.
+tags). Classifier files written:
+`src/auto_classify/builtins/check_<target_group_id>.ts`. Derived files
+written on upsert: `packages/core/src/index_single_file/query_code_tree/queries/unsupported_features.{typescript,javascript,python,rust}.md`.
 No other paths are ever written during the sweep.
+
+#### Failure cleanup
+
+Finalize unlinks every path in the authored-files map that did not land
+as an accepted upsert — whether the rejection came from AST failure,
+spec validation, language-derivation failure, or file readability. The
+list of removed paths is surfaced in `deleted_orphan_files[]` so the
+commit diff never carries half-finished source.
+
+#### Derived-markdown regeneration
+
+When finalize mutates the registry (any upsert or drift tag), it invokes
+`render_unsupported_features` directly, overwrites the four
+`unsupported_features.<lang>.md` golden files, and adds those paths to
+`authored_files[]` so they're staged alongside the classifier source.
+The pre-commit hook's `render_unsupported_features.test.ts` pins them, so
+this step is required for the commit to succeed when the registry moves.
+
+### Retarget-to-existing-entry
+
+An investigator may decide its classifier should extend an existing
+registry entry rather than create a new one. Signal this by setting
+`response.retargets_to: "<existing-group-id>"` while keeping
+`response.group_id` equal to the dispatch group id. Effects:
+
+- The authored `.ts` filename becomes `check_<retargets_to>.ts`.
+- The registry upsert lands on the `<retargets_to>` entry, not a new one.
+- `positive_examples` and `negative_examples` must be empty — their
+  indices would reference the source group's entries, not the target's.
+
+Step 4.25 rejects retargets where `retargets_to` names a non-existent
+entry, or where `positive_examples`/`negative_examples` are non-empty.
+
+### Incoherent-group handling
+
+`--reaggregate-on-incoherent` collects every session log whose
+`failure_category === "group_incoherent"` into
+`<run>/reaggregate_queue.json`. Schema:
+
+```json
+{
+  "run_id": "string",
+  "project": "string",
+  "groups": [
+    { "group_id": "string", "project": "string", "run_id": "string", "failure_details": "string" }
+  ]
+}
+```
+
+The bundle is a hand-off — finalize does not trigger the rough-aggregator
+itself. Orchestration layers (the main agent, a follow-up script, or a
+human) dispatch against the queue as a separate step.
 
 ### Session log statuses
 

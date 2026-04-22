@@ -11,6 +11,7 @@ import type {
   BuiltinClassifierSpec,
   ClassifierAxis,
   ClassifierSpecProposal,
+  FalsePositiveGroup,
   InvestigateResponse,
   InvestigatorSessionLog,
   KnownIssue,
@@ -89,6 +90,17 @@ export function parse_investigate_response(raw: unknown): InvestigateResponse | 
     return { error: "investigate response: reasoning must be a string" };
   }
 
+  let retargets_to: string | null;
+  if (obj.retargets_to === undefined || obj.retargets_to === null) {
+    retargets_to = null;
+  } else if (typeof obj.retargets_to === "string" && obj.retargets_to.length > 0) {
+    retargets_to = obj.retargets_to;
+  } else {
+    return {
+      error: "investigate response: retargets_to must be a non-empty string when present",
+    };
+  }
+
   const new_signals_needed = obj.new_signals_needed.filter(
     (s): s is string => typeof s === "string",
   );
@@ -116,6 +128,7 @@ export function parse_investigate_response(raw: unknown): InvestigateResponse | 
     backlog_ref: backlog_result.value,
     new_signals_needed,
     classifier_spec: spec_result.value,
+    retargets_to,
     reasoning: obj.reasoning,
   };
 }
@@ -484,6 +497,13 @@ export interface ApplyOptions {
    * hydrates them when present so that the summary can surface failed groups.
    */
   session_logs?: InvestigatorSessionLog[];
+  /**
+   * Groups from the source triage run, keyed by group_id. Used to derive
+   * `languages` on new registry upserts when the classifier spec does not
+   * already declare a language gate. Optional because some callers
+   * (e.g. unit tests that exercise drift only) don't have the full triage view.
+   */
+  triage_groups?: Record<string, FalsePositiveGroup>;
 }
 
 export interface ApplyResult {
@@ -586,17 +606,40 @@ export async function apply_proposals(
   for (const r of inv) {
     if (r.proposed_classifier === null) continue;
     if (rejected_builtin_groups.has(r.group_id)) continue;
+    const target_group_id = r.retargets_to ?? r.group_id;
+    const existing = next_registry.find((e) => e.group_id === target_group_id);
+    let languages: string[];
+    if (existing !== undefined) {
+      // Upserting against an existing entry — languages field is not touched.
+      languages = existing.languages;
+    } else {
+      languages = derive_languages_for_upsert(
+        r,
+        opts.triage_groups?.[r.group_id],
+      );
+      if (languages.length === 0) {
+        spec_validation_failures.push({
+          group_id: r.group_id,
+          reason:
+            `cannot derive languages for new registry entry '${target_group_id}': ` +
+            `classifier_spec has no language_eq check and the source group's ` +
+            `member file paths carry no recognizable extension (.ts/.tsx/.js/.jsx/.mjs/.cjs/.py/.rs)`,
+        });
+        continue;
+      }
+    }
     const { registry: after_upsert, skipped_permanent } = upsert_classifier(
       next_registry,
-      r.group_id,
+      target_group_id,
       r.proposed_classifier,
+      languages,
     );
     if (skipped_permanent) {
-      skipped_permanent_upserts.push(r.group_id);
+      skipped_permanent_upserts.push(target_group_id);
       continue;
     }
     next_registry = after_upsert;
-    registry_upserts.push(r.group_id);
+    registry_upserts.push(target_group_id);
   }
 
   const registry_mutated =
@@ -644,7 +687,7 @@ export async function apply_proposals(
  * any referenced example is therefore out-of-range. An investigator emitting
  * classifier_spec for a group not in the source triage output is itself a bug.
  */
-function validate_spec_example_indexes(
+export function validate_spec_example_indexes(
   inv: InvestigateResponse,
   member_counts: Record<string, number>,
 ): string[] {
@@ -703,10 +746,67 @@ interface UpsertOutcome {
   skipped_permanent: boolean;
 }
 
+/**
+ * Extract `language_eq` values from a builtin classifier spec; empty when the
+ * spec has no language gate or is null (predicate / kind: "none").
+ */
+function declared_languages(spec: BuiltinClassifierSpec | null): string[] {
+  if (spec === null) return [];
+  const out: string[] = [];
+  for (const c of spec.checks) {
+    if (c.op === "language_eq") out.push(c.value);
+  }
+  return [...new Set(out)];
+}
+
+/** Map file extension to a registry language token. */
+function language_from_file_path(file_path: string): string | null {
+  if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";
+  if (
+    file_path.endsWith(".js") ||
+    file_path.endsWith(".jsx") ||
+    file_path.endsWith(".mjs") ||
+    file_path.endsWith(".cjs")
+  ) {
+    return "javascript";
+  }
+  if (file_path.endsWith(".py")) return "python";
+  if (file_path.endsWith(".rs")) return "rust";
+  return null;
+}
+
+/** Observed languages across a group's entries, inferred from file extensions. */
+function observed_languages(group: FalsePositiveGroup | undefined): string[] {
+  if (group === undefined) return [];
+  const langs = new Set<string>();
+  for (const e of group.entries) {
+    const lang = language_from_file_path(e.file_path);
+    if (lang !== null) langs.add(lang);
+  }
+  return [...langs];
+}
+
+/**
+ * Derive the `languages` field for a new registry entry. Prefers the
+ * classifier spec's own `language_eq` gate (authoritative); falls back to the
+ * source group's observed file extensions. Returns an empty array when
+ * neither source yields anything — the caller must reject the upsert in that
+ * case rather than write an invalid registry entry.
+ */
+export function derive_languages_for_upsert(
+  response: InvestigateResponse,
+  group: FalsePositiveGroup | undefined,
+): string[] {
+  const from_spec = declared_languages(response.classifier_spec);
+  if (from_spec.length > 0) return from_spec;
+  return observed_languages(group);
+}
+
 function upsert_classifier(
   registry: KnownIssue[],
   group_id: string,
   proposal: ClassifierSpecProposal,
+  languages: string[],
 ): UpsertOutcome {
   const existing_idx = registry.findIndex((e) => e.group_id === group_id);
   if (existing_idx === -1) {
@@ -715,7 +815,7 @@ function upsert_classifier(
       title: group_id,
       description: "Proposed by triage-curator investigator — fill in before enabling.",
       status: "wip",
-      languages: [],
+      languages,
       examples: [],
       classifier: proposal,
     };
