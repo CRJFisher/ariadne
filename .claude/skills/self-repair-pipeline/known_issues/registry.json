@@ -4,7 +4,12 @@
     "title": "Method call on call-chain receiver unresolved",
     "description": "A method is invoked on the result of another call (e.g. `a.b().c()`), but Ariadne cannot carry the intermediate call's return type through to resolve the final method. Common in builder patterns and fluent APIs. Observed as a dominant group in the webpack corpus.",
     "status": "wip",
-    "languages": ["typescript", "javascript", "python", "rust"],
+    "languages": [
+      "typescript",
+      "javascript",
+      "python",
+      "rust"
+    ],
     "examples": [
       {
         "file": "lib/util/Hash.js",
@@ -23,7 +28,12 @@
     "title": "Method call resolves to base or wrong class in polymorphic hierarchy",
     "description": "A call on a base-class or generic receiver resolves to the base method (or an unrelated same-named method) rather than the concrete subclass override, so subclass entry points appear unreachable. Covers protocol/interface dispatch and generic parameter erasure. Webpack-corpus F7.",
     "status": "wip",
-    "languages": ["typescript", "javascript", "python", "rust"],
+    "languages": [
+      "typescript",
+      "javascript",
+      "python",
+      "rust"
+    ],
     "backlog_task": "TASK-198",
     "examples": [
       {
@@ -43,7 +53,12 @@
     "title": "Callback invoked via dynamic / computed property key",
     "description": "A function is stored in a map or object and invoked via `handlers[key](...)` or `obj[name]()` where the key is not a literal. The resolver has a collection source but no literal key, so the specific callback cannot be linked. Webpack-corpus F9 and a permanent resolver limitation when the key is computed.",
     "status": "permanent",
-    "languages": ["typescript", "javascript", "python", "rust"],
+    "languages": [
+      "typescript",
+      "javascript",
+      "python",
+      "rust"
+    ],
     "examples": [
       {
         "file": "lib/Compilation.js",
@@ -67,7 +82,10 @@
     "title": "`new Name(...)` call site missed by tree-sitter query",
     "description": "A constructor is invoked via `new Name(...)`, grep sees the literal text, but the `.scm` query did not fire `@reference.constructor`, so no `CallReference` exists. Tree-sitter capture gap for constructor calls, particularly on TS/JS namespaced or generic constructors.",
     "status": "wip",
-    "languages": ["typescript", "javascript"],
+    "languages": [
+      "typescript",
+      "javascript"
+    ],
     "examples": [
       {
         "file": "lib/dependencies/WorkerPlugin.js",
@@ -86,7 +104,11 @@
     "title": "F1 — Aliased-receiver method call with type lost",
     "description": "A method is called on a variable whose declared type is unknown (no annotation, no inferable initialiser). The receiver resolves to a variable definition but the resolver cannot recover the class on which to look up the method.",
     "status": "wip",
-    "languages": ["typescript", "javascript", "python"],
+    "languages": [
+      "typescript",
+      "javascript",
+      "python"
+    ],
     "examples": [
       {
         "file": "src/service.ts",
@@ -101,8 +123,14 @@
       "expression": {
         "op": "all",
         "of": [
-          { "op": "resolution_failure_reason_eq", "value": "receiver_type_unknown" },
-          { "op": "receiver_kind_eq", "value": "identifier" }
+          {
+            "op": "resolution_failure_reason_eq",
+            "value": "receiver_type_unknown"
+          },
+          {
+            "op": "receiver_kind_eq",
+            "value": "identifier"
+          }
         ]
       }
     }
@@ -112,7 +140,11 @@
     "title": "F2 — Receiver assigned from factory with unknown return type",
     "description": "A variable is assigned the result of a function call whose return type Ariadne cannot infer (no explicit annotation, no local body analysis). Subsequent method calls on that variable cannot be resolved.",
     "status": "wip",
-    "languages": ["typescript", "javascript", "python"],
+    "languages": [
+      "typescript",
+      "javascript",
+      "python"
+    ],
     "examples": [
       {
         "file": "src/pool.ts",
@@ -120,14 +152,20 @@
         "snippet": "const client = get_client();\nclient.connect();"
       }
     ],
-    "classifier": { "kind": "none" }
+    "classifier": {
+      "kind": "none"
+    }
   },
   {
     "group_id": "inline-constructor-method-chain",
     "title": "F3 — Inline `new X().method()` unresolved",
     "description": "The source line contains an inline constructor followed by a method call (`new Builder().with_x().build()`). The tree-sitter capture fires but the resolver cannot track the constructed type across the intermediate chain to dispatch the final method.",
     "status": "wip",
-    "languages": ["typescript", "javascript", "python"],
+    "languages": [
+      "typescript",
+      "javascript",
+      "python"
+    ],
     "examples": [
       {
         "file": "test/suite.ts",
@@ -142,8 +180,14 @@
       "expression": {
         "op": "all",
         "of": [
-          { "op": "grep_line_regex", "pattern": "new\\s+[A-Z][A-Za-z0-9_]*\\s*\\([^)]*\\)\\s*\\." },
-          { "op": "diagnosis_eq", "value": "callers-in-registry-unresolved" }
+          {
+            "op": "grep_line_regex",
+            "pattern": "new\\s+[A-Z][A-Za-z0-9_]*\\s*\\([^)]*\\)\\s*\\."
+          },
+          {
+            "op": "diagnosis_eq",
+            "value": "callers-in-registry-unresolved"
+          }
         ]
       }
     }
@@ -153,7 +197,9 @@
     "title": "F4 — Python `module.func()` call not resolved via namespace receiver",
     "description": "In Python, `module.func()` where `module` is imported directly (not via `import module`) resolves through an `ImportDefinition` whose target file is not re-entered for name lookup, so the callee's definition is missed.",
     "status": "wip",
-    "languages": ["python"],
+    "languages": [
+      "python"
+    ],
     "backlog_task": "TASK-190.11",
     "examples": [
       {
@@ -169,8 +215,14 @@
       "expression": {
         "op": "all",
         "of": [
-          { "op": "language_eq", "value": "python" },
-          { "op": "resolution_failure_reason_eq", "value": "import_unresolved" }
+          {
+            "op": "language_eq",
+            "value": "python"
+          },
+          {
+            "op": "resolution_failure_reason_eq",
+            "value": "import_unresolved"
+          }
         ]
       }
     }
@@ -180,7 +232,10 @@
     "title": "F5 — Aliased re-export (`export { orig as alias }`) broken",
     "description": "A symbol is re-exported under a new name via `export { original as alias }`. The resolution registry binds the alias to the barrel location but does not walk back to the original definition, so calls via the alias resolve to nothing.",
     "status": "wip",
-    "languages": ["typescript", "javascript"],
+    "languages": [
+      "typescript",
+      "javascript"
+    ],
     "backlog_task": "TASK-156",
     "examples": [
       {
@@ -200,7 +255,12 @@
     "title": "F6 — Caller lives in unindexed/external module",
     "description": "The only callers are inside a module that Ariadne did not index (outside configured folders, or an external package). When it is an external dependency, this is a permanent limitation. When it is an internal but unindexed folder, it is a configuration fix.",
     "status": "permanent",
-    "languages": ["typescript", "javascript", "python", "rust"],
+    "languages": [
+      "typescript",
+      "javascript",
+      "python",
+      "rust"
+    ],
     "examples": [
       {
         "file": "src/loader.ts",
@@ -223,7 +283,12 @@
     "title": "F8 — `super` / inherited method call missed",
     "description": "A subclass method is invoked via `super.method()` or through inheritance. The call's receiver resolves to the parent class rather than the dispatching subclass, and the inherited method on the parent is marked unreachable.",
     "status": "wip",
-    "languages": ["typescript", "javascript", "python", "rust"],
+    "languages": [
+      "typescript",
+      "javascript",
+      "python",
+      "rust"
+    ],
     "examples": [
       {
         "file": "src/derived.ts",
@@ -247,7 +312,12 @@
     "title": "F10 — Global name collision resolves to wrong file",
     "description": "Two unrelated functions share a name in different files. With no receiver type to disambiguate, the resolver picks one globally, marking the other unreachable even when its real callers exist.",
     "status": "wip",
-    "languages": ["typescript", "javascript", "python", "rust"],
+    "languages": [
+      "typescript",
+      "javascript",
+      "python",
+      "rust"
+    ],
     "backlog_task": "TASK-108",
     "examples": [
       {
@@ -261,14 +331,19 @@
         "snippet": "function handle() { /* other */ }"
       }
     ],
-    "classifier": { "kind": "none" }
+    "classifier": {
+      "kind": "none"
+    }
   },
   {
     "group_id": "ts-jsx-component-call",
     "title": "JSX/TSX component element not captured as a call",
     "description": "`<Component />` in JSX/TSX is a function invocation at runtime but the tree-sitter query does not emit `@reference.call` for JSX elements. Components that are only referenced via JSX appear unreachable.",
     "status": "wip",
-    "languages": ["typescript", "javascript"],
+    "languages": [
+      "typescript",
+      "javascript"
+    ],
     "examples": [
       {
         "file": "src/app.tsx",
@@ -283,12 +358,27 @@
       "expression": {
         "op": "all",
         "of": [
-          { "op": "any", "of": [
-            { "op": "language_eq", "value": "typescript" },
-            { "op": "language_eq", "value": "javascript" }
-          ]},
-          { "op": "grep_line_regex", "pattern": "<[A-Z][A-Za-z0-9_]*[\\s/>]" },
-          { "op": "missing_capture_at_grep_hit", "capture_name": "reference.call" }
+          {
+            "op": "any",
+            "of": [
+              {
+                "op": "language_eq",
+                "value": "typescript"
+              },
+              {
+                "op": "language_eq",
+                "value": "javascript"
+              }
+            ]
+          },
+          {
+            "op": "grep_line_regex",
+            "pattern": "<[A-Z][A-Za-z0-9_]*[\\s/>]"
+          },
+          {
+            "op": "missing_capture_at_grep_hit",
+            "capture_name": "reference.call"
+          }
         ]
       }
     }
@@ -298,7 +388,10 @@
     "title": "Decorator factory invocation not captured as a call",
     "description": "`@Decorator(args)` attached to a class or method invokes the factory, but the decorator expression is not currently emitted as `@reference.call`, so the factory itself can look unreachable.",
     "status": "wip",
-    "languages": ["typescript", "javascript"],
+    "languages": [
+      "typescript",
+      "javascript"
+    ],
     "examples": [
       {
         "file": "src/controller.ts",
@@ -313,8 +406,14 @@
       "expression": {
         "op": "all",
         "of": [
-          { "op": "grep_line_regex", "pattern": "^\\s*@[A-Za-z_][A-Za-z0-9_]*\\s*\\(" },
-          { "op": "missing_capture_at_grep_hit", "capture_name": "reference.call" }
+          {
+            "op": "grep_line_regex",
+            "pattern": "^\\s*@[A-Za-z_][A-Za-z0-9_]*\\s*\\("
+          },
+          {
+            "op": "missing_capture_at_grep_hit",
+            "capture_name": "reference.call"
+          }
         ]
       }
     }
@@ -324,7 +423,10 @@
     "title": "Private class method with only intra-class callers reported unreachable",
     "description": "A `private` method called only through `this.m()` inside the same class is not picked up because the self-reference resolution does not walk private members, or because the `this` receiver does not bind back to the enclosing class.",
     "status": "wip",
-    "languages": ["typescript", "javascript"],
+    "languages": [
+      "typescript",
+      "javascript"
+    ],
     "examples": [
       {
         "file": "src/service.ts",
@@ -332,14 +434,18 @@
         "snippet": "class Service { private encode() {} public run() { this.encode(); } }"
       }
     ],
-    "classifier": { "kind": "none" }
+    "classifier": {
+      "kind": "none"
+    }
   },
   {
     "group_id": "py-property-decorator-access",
     "title": "`@property` getter accessed as attribute, never captured as a call",
     "description": "A Python `@property`-decorated method is invoked implicitly by attribute access (`obj.value`), not by an explicit `obj.value()`. Tree-sitter captures only emit `@reference.call` on call expressions, so these entry points look unreachable.",
     "status": "permanent",
-    "languages": ["python"],
+    "languages": [
+      "python"
+    ],
     "examples": [
       {
         "file": "src/model.py",
@@ -354,8 +460,14 @@
       "expression": {
         "op": "all",
         "of": [
-          { "op": "language_eq", "value": "python" },
-          { "op": "decorator_matches", "pattern": "@property" }
+          {
+            "op": "language_eq",
+            "value": "python"
+          },
+          {
+            "op": "decorator_matches",
+            "pattern": "@property"
+          }
         ]
       }
     }
@@ -365,7 +477,9 @@
     "title": "Caller inside a `from x import *` module not linked back",
     "description": "Python wildcard imports (`from module import *`) bind names into the importing module's namespace without producing explicit per-name import records. Functions that are only called via a wildcard import look unreachable to the resolver.",
     "status": "wip",
-    "languages": ["python"],
+    "languages": [
+      "python"
+    ],
     "examples": [
       {
         "file": "src/api.py",
@@ -373,14 +487,18 @@
         "snippet": "from .helpers import *\nrun_task()"
       }
     ],
-    "classifier": { "kind": "none" }
+    "classifier": {
+      "kind": "none"
+    }
   },
   {
     "group_id": "rust-macro-invocation-call",
     "title": "Rust macro invocation hides a function call",
     "description": "Rust macros such as `println!`, `format!`, custom proc macros, and `#[derive(...)]` expand into function calls that are not visible to tree-sitter's `.scm` queries on the pre-expansion AST. Functions invoked only through macros look unreachable.",
     "status": "permanent",
-    "languages": ["rust"],
+    "languages": [
+      "rust"
+    ],
     "examples": [
       {
         "file": "src/main.rs",
@@ -395,8 +513,14 @@
       "expression": {
         "op": "all",
         "of": [
-          { "op": "language_eq", "value": "rust" },
-          { "op": "grep_line_regex", "pattern": "[A-Za-z_][A-Za-z0-9_]*!\\s*[\\(\\[{]" }
+          {
+            "op": "language_eq",
+            "value": "rust"
+          },
+          {
+            "op": "grep_line_regex",
+            "pattern": "[A-Za-z_][A-Za-z0-9_]*!\\s*[\\(\\[{]"
+          }
         ]
       }
     }
@@ -406,7 +530,9 @@
     "title": "Trait method invoked via dynamic or generic dispatch",
     "description": "A Rust trait method is invoked through `&dyn Trait` or a generic parameter `T: Trait`. The concrete impl method appears unreachable because the call site resolves to the trait declaration rather than the impl.",
     "status": "wip",
-    "languages": ["rust"],
+    "languages": [
+      "rust"
+    ],
     "examples": [
       {
         "file": "src/plugin.rs",
@@ -414,14 +540,18 @@
         "snippet": "fn run(p: &dyn Plugin) { p.execute(); }"
       }
     ],
-    "classifier": { "kind": "none" }
+    "classifier": {
+      "kind": "none"
+    }
   },
   {
     "group_id": "js-commonjs-require-destructure",
     "title": "CommonJS `require(...)` destructure not tracked back to source",
     "description": "`const { fn } = require('./mod')` brings `fn` into scope, but the resolver does not always walk the `require` target to the defining file, so callers of the destructured symbol do not link to the original definition.",
     "status": "wip",
-    "languages": ["javascript"],
+    "languages": [
+      "javascript"
+    ],
     "examples": [
       {
         "file": "lib/cli.js",
@@ -429,14 +559,18 @@
         "snippet": "const { parse_args } = require('./args');"
       }
     ],
-    "classifier": { "kind": "none" }
+    "classifier": {
+      "kind": "none"
+    }
   },
   {
     "group_id": "framework-pytest-fixture",
     "title": "pytest fixture invoked by test runner",
     "description": "A function decorated with `@pytest.fixture` (or `@pytest.fixture(...)`) is invoked by the pytest runtime when a test requests it. It has no explicit call site, but it is a legitimate entry point — label as a framework true-positive.",
     "status": "permanent",
-    "languages": ["python"],
+    "languages": [
+      "python"
+    ],
     "examples": [
       {
         "file": "tests/conftest.py",
@@ -451,8 +585,14 @@
       "expression": {
         "op": "all",
         "of": [
-          { "op": "language_eq", "value": "python" },
-          { "op": "decorator_matches", "pattern": "@pytest.fixture*" }
+          {
+            "op": "language_eq",
+            "value": "python"
+          },
+          {
+            "op": "decorator_matches",
+            "pattern": "@pytest.fixture*"
+          }
         ]
       }
     }
@@ -462,7 +602,9 @@
     "title": "Flask route handler invoked by Flask/Werkzeug router",
     "description": "A function decorated with `@app.route(...)` or `@blueprint.route(...)` is registered with Flask and invoked by the request dispatcher, not by a Python call expression. Label as a framework true-positive.",
     "status": "permanent",
-    "languages": ["python"],
+    "languages": [
+      "python"
+    ],
     "examples": [
       {
         "file": "src/web.py",
@@ -477,8 +619,14 @@
       "expression": {
         "op": "all",
         "of": [
-          { "op": "language_eq", "value": "python" },
-          { "op": "decorator_matches", "pattern": "@*.route*" }
+          {
+            "op": "language_eq",
+            "value": "python"
+          },
+          {
+            "op": "decorator_matches",
+            "pattern": "@*.route*"
+          }
         ]
       }
     }
@@ -488,7 +636,10 @@
     "title": "Framework `@Component`-style class invoked by framework runtime",
     "description": "Angular `@Component`, NestJS `@Controller`, or similar framework class decorators register the class with the framework's dependency-injection runtime. The class constructor and its lifecycle methods are invoked by the framework without an explicit call site.",
     "status": "permanent",
-    "languages": ["typescript", "javascript"],
+    "languages": [
+      "typescript",
+      "javascript"
+    ],
     "examples": [
       {
         "file": "src/app.component.ts",
@@ -511,7 +662,12 @@
     "title": "Grep finds callers but Ariadne's call graph is empty (broad)",
     "description": "When `grep_call_sites` contains entries but `ariadne_call_refs` is empty, Ariadne found textual evidence of callers but its resolution pipeline failed to link those call sites to the entry. Covers module-qualified calls, cross-package callers, cross-file inheritance, protocol dispatch, intra-file call resolution failures, type-inference dispatch, and Python `@overload` stubs. Seeded from `triage_patterns.json` rule `grep-evidence-ariadne-miss` (precision 0.923 over the webpack corpus).",
     "status": "wip",
-    "languages": ["typescript", "javascript", "python", "rust"],
+    "languages": [
+      "typescript",
+      "javascript",
+      "python",
+      "rust"
+    ],
     "examples": [
       {
         "file": "lib/util/memoize.js",
@@ -530,7 +686,12 @@
     "title": "`callers-in-registry-wrong-target`: resolved target is a module-level alias",
     "description": "When Ariadne's diagnosis is `callers-in-registry-wrong-target`, callers exist in the call graph but were resolved to the wrong definition — typically a local alias variable rather than the actual function. Seeded from `triage_patterns.json` rule `callers-in-registry-wrong-target` (precision 1.0).",
     "status": "wip",
-    "languages": ["typescript", "javascript", "python", "rust"],
+    "languages": [
+      "typescript",
+      "javascript",
+      "python",
+      "rust"
+    ],
     "examples": [
       {
         "file": "src/torch_util.py",
@@ -541,7 +702,7 @@
     "classifier": {
       "kind": "predicate",
       "axis": "B",
-      "min_confidence": 1.0,
+      "min_confidence": 1,
       "expression": {
         "op": "diagnosis_eq",
         "value": "callers-in-registry-wrong-target"
@@ -553,7 +714,11 @@
     "title": "AWS Lambda handler file convention indicates framework entry point",
     "description": "Functions defined in files whose path contains `_lambda_handler` are AWS Lambda handler entry points, invoked by AWS infrastructure and never called from source code. Seeded from `triage_patterns.json` rule `lambda-handler-file-true-positive` (precision 1.0).",
     "status": "permanent",
-    "languages": ["typescript", "javascript", "python"],
+    "languages": [
+      "typescript",
+      "javascript",
+      "python"
+    ],
     "examples": [
       {
         "file": "src/handlers/ingest_lambda_handler.py",
@@ -564,7 +729,7 @@
     "classifier": {
       "kind": "builtin",
       "function_name": "lambda_handler_file_convention",
-      "min_confidence": 1.0
+      "min_confidence": 1
     }
   },
   {
@@ -572,7 +737,12 @@
     "title": "Grep finds callers + diagnosis `callers-not-in-registry` + empty call refs",
     "description": "Stricter variant of `callers-outside-scope-grep-evidence`: diagnosis is `callers-not-in-registry` AND grep found call sites AND `ariadne_call_refs` is empty. Higher precision (0.952) at lower coverage. Seeded from `triage_patterns.json` rule `diagnosis-callers-not-in-registry-with-grep`.",
     "status": "wip",
-    "languages": ["typescript", "javascript", "python", "rust"],
+    "languages": [
+      "typescript",
+      "javascript",
+      "python",
+      "rust"
+    ],
     "examples": [
       {
         "file": "src/utils.ts",
@@ -584,6 +754,116 @@
       "kind": "builtin",
       "function_name": "callers_not_in_registry_with_grep",
       "min_confidence": 0.952
+    }
+  },
+  {
+    "group_id": "context-object-destructuring",
+    "title": "context-object-destructuring",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    }
+  },
+  {
+    "group_id": "dynamic-dispatch",
+    "title": "dynamic-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_dynamic_dispatch",
+      "min_confidence": 0.9
+    }
+  },
+  {
+    "group_id": "intra-file-call-not-resolved",
+    "title": "intra-file-call-not-resolved",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    }
+  },
+  {
+    "group_id": "property-accessor-not-tracked",
+    "title": "property-accessor-not-tracked",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    }
+  },
+  {
+    "group_id": "require-indirection",
+    "title": "require-indirection",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    }
+  },
+  {
+    "group_id": "static-method-call-resolution",
+    "title": "static-method-call-resolution",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_static_method_call_resolution",
+      "min_confidence": 0.9
+    }
+  },
+  {
+    "group_id": "unindexed-test-files",
+    "title": "unindexed-test-files",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    }
+  },
+  {
+    "group_id": "wasm-cross-language-call",
+    "title": "wasm-cross-language-call",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_wasm_cross_language_call",
+      "min_confidence": 0.95
     }
   }
 ]

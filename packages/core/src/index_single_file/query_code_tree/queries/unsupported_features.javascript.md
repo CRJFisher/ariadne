@@ -2,7 +2,7 @@
 
 Canonical list of known Ariadne failure modes that affect this language. Generated from `.claude/skills/self-repair-pipeline/known_issues/registry.json` by `.claude/skills/self-repair-pipeline/scripts/render_unsupported_features.ts`. Do not edit by hand — edit the registry and re-render.
 
-Entries: 20
+Entries: 27
 
 ## `method-chain-dispatch` — Method call on call-chain receiver unresolved
 
@@ -369,3 +369,80 @@ Stricter variant of `callers-outside-scope-grep-evidence`: diagnosis is `callers
 **Examples**
 
 - `src/utils.ts`:1 — `foo(...)`
+
+## `context-object-destructuring` — context-object-destructuring
+
+Proposed by triage-curator investigator — fill in before enabling.
+
+| Field        | Value                                   |
+| ------------ | --------------------------------------- |
+| Status       | `wip`                                   |
+| Languages    | `javascript`                            |
+| Backlog task | _none_                                  |
+| Classifier   | _none — known, no automated classifier_ |
+
+## `dynamic-dispatch` — dynamic-dispatch
+
+Proposed by triage-curator investigator — fill in before enabling.
+
+| Field        | Value                                                 |
+| ------------ | ----------------------------------------------------- |
+| Status       | `wip`                                                 |
+| Languages    | `javascript`                                          |
+| Backlog task | _none_                                                |
+| Classifier   | builtin `check_dynamic_dispatch` (min_confidence 0.9) |
+
+## `intra-file-call-not-resolved` — intra-file-call-not-resolved
+
+Proposed by triage-curator investigator — fill in before enabling.
+
+| Field        | Value                                   |
+| ------------ | --------------------------------------- |
+| Status       | `wip`                                   |
+| Languages    | `javascript`                            |
+| Backlog task | _none_                                  |
+| Classifier   | _none — known, no automated classifier_ |
+
+## `property-accessor-not-tracked` — property-accessor-not-tracked
+
+Proposed by triage-curator investigator — fill in before enabling.
+
+| Field        | Value                                   |
+| ------------ | --------------------------------------- |
+| Status       | `wip`                                   |
+| Languages    | `javascript`                            |
+| Backlog task | _none_                                  |
+| Classifier   | _none — known, no automated classifier_ |
+
+## `require-indirection` — require-indirection
+
+Proposed by triage-curator investigator — fill in before enabling.
+
+| Field        | Value                                   |
+| ------------ | --------------------------------------- |
+| Status       | `wip`                                   |
+| Languages    | `javascript`                            |
+| Backlog task | _none_                                  |
+| Classifier   | _none — known, no automated classifier_ |
+
+## `static-method-call-resolution` — static-method-call-resolution
+
+Proposed by triage-curator investigator — fill in before enabling.
+
+| Field        | Value                                                              |
+| ------------ | ------------------------------------------------------------------ |
+| Status       | `wip`                                                              |
+| Languages    | `javascript`                                                       |
+| Backlog task | _none_                                                             |
+| Classifier   | builtin `check_static_method_call_resolution` (min_confidence 0.9) |
+
+## `unindexed-test-files` — unindexed-test-files
+
+Proposed by triage-curator investigator — fill in before enabling.
+
+| Field        | Value                                   |
+| ------------ | --------------------------------------- |
+| Status       | `wip`                                   |
+| Languages    | `javascript`                            |
+| Backlog task | _none_                                  |
+| Classifier   | _none — known, no automated classifier_ |

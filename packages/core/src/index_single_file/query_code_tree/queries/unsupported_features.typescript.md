@@ -2,7 +2,7 @@
 
 Canonical list of known Ariadne failure modes that affect this language. Generated from `.claude/skills/self-repair-pipeline/known_issues/registry.json` by `.claude/skills/self-repair-pipeline/scripts/render_unsupported_features.ts`. Do not edit by hand — edit the registry and re-render.
 
-Entries: 19
+Entries: 20
 
 ## `method-chain-dispatch` — Method call on call-chain receiver unresolved
 
@@ -354,3 +354,14 @@ Stricter variant of `callers-outside-scope-grep-evidence`: diagnosis is `callers
 **Examples**
 
 - `src/utils.ts`:1 — `foo(...)`
+
+## `wasm-cross-language-call` — wasm-cross-language-call
+
+Proposed by triage-curator investigator — fill in before enabling.
+
+| Field        | Value                                                          |
+| ------------ | -------------------------------------------------------------- |
+| Status       | `wip`                                                          |
+| Languages    | `typescript`                                                   |
+| Backlog task | _none_                                                         |
+| Classifier   | builtin `check_wasm_cross_language_call` (min_confidence 0.95) |
