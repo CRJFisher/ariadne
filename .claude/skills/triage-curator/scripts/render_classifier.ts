@@ -70,7 +70,13 @@ interface MinimalResponse {
 }
 
 function derive_target_group_id(response: MinimalResponse, response_path: string): string {
-  if (typeof response.retargets_to === "string" && response.retargets_to.length > 0) {
+  if (response.retargets_to !== undefined && response.retargets_to !== null) {
+    // Mirror parse_investigate_response: present means non-empty string.
+    if (typeof response.retargets_to !== "string" || response.retargets_to.length === 0) {
+      throw new Error(
+        `response at ${response_path} has invalid retargets_to — must be a non-empty string when present`,
+      );
+    }
     return response.retargets_to;
   }
   if (typeof response.group_id === "string" && response.group_id.length > 0) {

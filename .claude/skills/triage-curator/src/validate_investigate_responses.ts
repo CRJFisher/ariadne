@@ -21,6 +21,7 @@ import {
 } from "./apply_proposals.js";
 import type {
   FalsePositiveGroup,
+  InvestigateResponse,
   InvestigatorSessionLog,
   KnownIssue,
 } from "./types.js";
@@ -31,7 +32,8 @@ export type ValidationIssueCode =
   | "retargets_to_missing_entry"
   | "retarget_must_not_carry_examples"
   | "example_index_out_of_range"
-  | "kind_none_no_signals_no_failure";
+  | "kind_none_no_signals_no_failure"
+  | "target_conflict";
 
 export interface ValidationIssue {
   group_id: string;
@@ -79,7 +81,7 @@ export function validate_response(inp: ValidationInput): ValidationIssue[] {
         `response.group_id='${parsed.group_id}' does not match dispatch group ` +
         `'${inp.dispatch_group_id}'. To extend an existing registry entry, keep ` +
         `group_id='${inp.dispatch_group_id}' and set ` +
-        `retargets_to='<existing-registry-group-id>' instead of renaming.`,
+        "retargets_to='<existing-registry-group-id>' instead of renaming.",
     });
   }
 
@@ -142,5 +144,58 @@ export function validate_response(inp: ValidationInput): ValidationIssue[] {
     }
   }
 
+  return issues;
+}
+
+/**
+ * One validated response paired with the dispatch metadata needed to report
+ * cross-response conflicts. `parsed` is null when shape validation failed —
+ * those responses are excluded from coherence checks (the per-response
+ * shape_error already surfaces them).
+ */
+export interface RunCoherenceInput {
+  dispatch_group_id: string;
+  response_path: string;
+  parsed: InvestigateResponse | null;
+}
+
+/**
+ * Check invariants that span the full set of responses in a run. Today: no
+ * two responses may claim the same classifier target. Two different
+ * dispatch groups can only collide on target when at least one uses
+ * `retargets_to` (since dispatch ids are unique by construction); the
+ * render step writes to `check_<target>.ts`, so sharing a target means
+ * silent file overwrite + silent registry classifier overwrite.
+ */
+export function validate_run_coherence(
+  inputs: RunCoherenceInput[],
+): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  const by_target = new Map<string, RunCoherenceInput[]>();
+  for (const i of inputs) {
+    if (i.parsed === null) continue;
+    const target = i.parsed.retargets_to ?? i.parsed.group_id;
+    const list = by_target.get(target) ?? [];
+    list.push(i);
+    by_target.set(target, list);
+  }
+  for (const [target, claimants] of by_target) {
+    if (claimants.length <= 1) continue;
+    const sources = claimants
+      .map((c) => `'${c.dispatch_group_id}'`)
+      .join(", ");
+    for (const c of claimants) {
+      issues.push({
+        group_id: c.dispatch_group_id,
+        response_path: c.response_path,
+        code: "target_conflict",
+        message:
+          `classifier target '${target}' is claimed by ${claimants.length} responses (${sources}). ` +
+          "Renders collide on the same `.ts` file and registry upserts silently overwrite. " +
+          "Pick one response to own the target; the others must re-investigate with a different " +
+          "retargets_to value or drop retargets_to entirely.",
+      });
+    }
+  }
   return issues;
 }

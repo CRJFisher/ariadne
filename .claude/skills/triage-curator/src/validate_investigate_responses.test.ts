@@ -2,10 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   validate_response,
+  validate_run_coherence,
+  type RunCoherenceInput,
   type ValidationInput,
 } from "./validate_investigate_responses.js";
 import type {
   FalsePositiveGroup,
+  InvestigateResponse,
   InvestigatorSessionLog,
   KnownIssue,
 } from "./types.js";
@@ -232,6 +235,79 @@ describe("validate_response", () => {
       response_raw: raw,
       session_log,
     });
+    expect(issues).toEqual([]);
+  });
+});
+
+describe("validate_run_coherence", () => {
+  function parsed(group_id: string, retargets_to: string | null): InvestigateResponse {
+    return {
+      group_id,
+      proposed_classifier: {
+        kind: "builtin",
+        function_name: `check_${group_id}`,
+        min_confidence: 0.9,
+      },
+      backlog_ref: null,
+      new_signals_needed: [],
+      classifier_spec: {
+        function_name: `check_${group_id}`,
+        min_confidence: 0.9,
+        combinator: "all",
+        checks: [{ op: "language_eq", value: "typescript" }],
+        positive_examples: [],
+        negative_examples: [],
+        description: "",
+      },
+      retargets_to,
+      reasoning: "",
+    };
+  }
+
+  function input(group_id: string, response: InvestigateResponse | null): RunCoherenceInput {
+    return {
+      dispatch_group_id: group_id,
+      response_path: `/tmp/${group_id}.json`,
+      parsed: response,
+    };
+  }
+
+  it("accepts disjoint targets", () => {
+    const issues = validate_run_coherence([
+      input("a", parsed("a", null)),
+      input("b", parsed("b", null)),
+      input("c", parsed("c", "existing-entry")),
+    ]);
+    expect(issues).toEqual([]);
+  });
+
+  it("rejects two responses retargeting the same entry", () => {
+    const issues = validate_run_coherence([
+      input("a", parsed("a", "shared-target")),
+      input("b", parsed("b", "shared-target")),
+    ]);
+    expect(issues.length).toBe(2);
+    expect(issues.every((i) => i.code === "target_conflict")).toBe(true);
+    expect(issues.map((i) => i.group_id).sort()).toEqual(["a", "b"]);
+    expect(issues[0].message).toContain("shared-target");
+  });
+
+  it("rejects a retarget colliding with a naturally-named group", () => {
+    // Dispatch group 'a' naturally writes to target 'a'. Dispatch group 'b'
+    // retargets to 'a'. Both render to check_a.ts — silent overwrite.
+    const issues = validate_run_coherence([
+      input("a", parsed("a", null)),
+      input("b", parsed("b", "a")),
+    ]);
+    expect(issues.length).toBe(2);
+    expect(issues.every((i) => i.code === "target_conflict")).toBe(true);
+  });
+
+  it("skips responses whose shape failed to parse", () => {
+    const issues = validate_run_coherence([
+      input("a", parsed("a", "shared-target")),
+      input("b", null),
+    ]);
     expect(issues).toEqual([]);
   });
 });
