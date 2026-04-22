@@ -23,20 +23,6 @@ export function get_registry_file_path(): string {
   return path.resolve(here, "..", "..", "self-repair-pipeline", "known_issues", "registry.json");
 }
 
-/** Resolves the auto_classify builtins directory for write-scope validation. */
-export function get_builtins_glob(): string {
-  const here = path.dirname(fileURLToPath(import.meta.url));
-  return path.resolve(
-    here,
-    "..",
-    "..",
-    "self-repair-pipeline",
-    "src",
-    "auto_classify",
-    "builtins",
-  );
-}
-
 export function run_output_dir(run_id: string): string {
   return path.join(CURATOR_RUNS_DIR, run_id);
 }

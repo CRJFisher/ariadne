@@ -87,6 +87,25 @@ and compute its own shape.
 All regex expressions are pre-compiled at registry load; do not write regex
 flags inline.
 
+## Builtin-only SignalCheck ops
+
+Four additional ops are available only inside `classifier_spec.checks[]` for
+`kind: "builtin"` proposals. They read entry-local fields (`name`, `file_path`)
+or aggregate the resolution-graph shape (`ariadne_call_refs.length`) and have
+no predicate-DSL counterpart — do not propose them inside a `kind: "predicate"`
+expression.
+
+| Operator                 | Fields            | Matches when                         |
+| ------------------------ | ----------------- | ------------------------------------ |
+| `name_matches`           | `pattern: string` | `entry.name` matches the regex.      |
+| `file_path_matches`      | `pattern: string` | `entry.file_path` matches the regex. |
+| `callers_count_at_least` | `n: number`       | `ariadne_call_refs.length >= n`.     |
+| `callers_count_at_most`  | `n: number`       | `ariadne_call_refs.length <= n`.     |
+
+The complete closed union is `SIGNAL_CHECK_OPS` in
+`.claude/skills/triage-curator/src/types.ts`; the renderer rejects any op not
+listed there.
+
 ## Classifier kinds
 
 A registry entry's `classifier` field is one of:

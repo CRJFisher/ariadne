@@ -43,6 +43,10 @@ function make_curated(
       classifiers_proposed: 0,
       backlog_tasks_proposed: [],
       wip_group_example_counts: wip_counts,
+      success_count: 0,
+      failure_count: 0,
+      blocked_count: 0,
+      failed_groups: [],
     },
   };
 }

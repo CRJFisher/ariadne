@@ -38,6 +38,10 @@ function make_entry(run_id: string, overrides: Partial<CuratedRunEntry> = {}): C
       classifiers_proposed: 0,
       backlog_tasks_proposed: [],
       wip_group_example_counts: {},
+      success_count: 0,
+      failure_count: 0,
+      blocked_count: 0,
+      failed_groups: [],
     },
     ...overrides,
   };
