@@ -569,6 +569,10 @@ export async function apply_proposals(
   const spec_validation_failures: SpecValidationFailure[] = [];
   const authored_files: string[] = [];
   const rejected_builtin_groups = new Set<string>();
+  // The authored-files map is keyed by the TARGET group id the renderer wrote
+  // to — `retargets_to ?? group_id` — so lookups here must use the same
+  // derivation. Without this, retargeted responses would silently fail the
+  // "no authored classifier file" check even though their file exists.
   for (const r of inv) {
     if (r.proposed_classifier?.kind !== "builtin") continue;
     const spec_errors = validate_spec_example_indexes(r, member_counts);
@@ -579,11 +583,12 @@ export async function apply_proposals(
       rejected_builtin_groups.add(r.group_id);
       continue;
     }
-    const authored_path = opts.authored_files_by_group[r.group_id];
+    const authored_key = r.retargets_to ?? r.group_id;
+    const authored_path = opts.authored_files_by_group[authored_key];
     if (authored_path === undefined || authored_path.length === 0) {
       failed_authoring.push({
         group_id: r.group_id,
-        reason: "no authored classifier file recorded for group",
+        reason: `no authored classifier file recorded for key '${authored_key}'`,
       });
       rejected_builtin_groups.add(r.group_id);
       continue;
@@ -696,14 +701,14 @@ export function validate_spec_example_indexes(
   const size = member_counts[inv.group_id] ?? 0;
   const errors: string[] = [];
   for (const idx of spec.positive_examples) {
-    if (idx >= size) {
+    if (idx < 0 || idx >= size) {
       errors.push(
         `classifier_spec.positive_examples contains index ${idx} but group has ${size} entries`,
       );
     }
   }
   for (const idx of spec.negative_examples) {
-    if (idx >= size) {
+    if (idx < 0 || idx >= size) {
       errors.push(
         `classifier_spec.negative_examples contains index ${idx} but group has ${size} entries`,
       );

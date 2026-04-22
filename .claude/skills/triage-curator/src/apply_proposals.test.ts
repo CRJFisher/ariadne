@@ -841,6 +841,88 @@ describe("apply_proposals", () => {
     });
   });
 
+  it("upserts against retargets_to and looks up authored file by the retarget key", async () => {
+    // Existing registry entry that the investigator wants to extend.
+    await write_registry([
+      known("existing-entry", {
+        languages: ["python"],
+        classifier: { kind: "none" },
+      }),
+    ]);
+    const authored_path = path.join(authored_dir, "check_existing-entry.ts");
+    await write_authored_file(authored_path);
+    const inv: InvestigateResponse[] = [
+      {
+        group_id: "dispatch-group",
+        proposed_classifier: {
+          kind: "builtin",
+          function_name: "check_dispatch_group",
+          min_confidence: 0.9,
+        },
+        backlog_ref: null,
+        new_signals_needed: [],
+        classifier_spec: minimal_spec("check_dispatch_group"),
+        retargets_to: "existing-entry",
+        reasoning: "extend existing",
+      },
+    ];
+    const result = await apply_proposals([], inv, { "dispatch-group": 2 }, {
+      dry_run: false,
+      registry_path,
+      // Map is keyed by the TARGET id, matching the filename the renderer writes.
+      authored_files_by_group: { "existing-entry": authored_path },
+    });
+
+    expect(result.failed_authoring).toEqual([]);
+    expect(result.spec_validation_failures).toEqual([]);
+    expect(result.authored_files).toEqual([authored_path]);
+    expect(result.registry_upserts).toEqual(["existing-entry"]);
+
+    const on_disk = await read_registry_json();
+    expect(on_disk).toHaveLength(1);
+    expect(on_disk[0].group_id).toBe("existing-entry");
+    // Languages preserved from the existing entry, not touched by the upsert.
+    expect(on_disk[0].languages).toEqual(["python"]);
+    expect(on_disk[0].classifier).toEqual({
+      kind: "builtin",
+      function_name: "check_dispatch_group",
+      min_confidence: 0.9,
+    });
+  });
+
+  it("rejects out-of-range negative example indices", async () => {
+    await write_registry([]);
+    const authored_path = path.join(authored_dir, "check_a.ts");
+    await write_authored_file(authored_path);
+    const inv: InvestigateResponse[] = [
+      {
+        group_id: "a",
+        proposed_classifier: { kind: "builtin", function_name: "check_a", min_confidence: 0.9 },
+        backlog_ref: null,
+        new_signals_needed: [],
+        classifier_spec: {
+          ...minimal_spec("check_a"),
+          positive_examples: [-1],
+        },
+        retargets_to: null,
+        reasoning: "",
+      },
+    ];
+    const result = await apply_proposals([], inv, { a: 3 }, {
+      dry_run: false,
+      registry_path,
+      authored_files_by_group: { a: authored_path },
+    });
+    expect(result.spec_validation_failures).toEqual([
+      {
+        group_id: "a",
+        reason:
+          "classifier_spec.positive_examples contains index -1 but group has 3 entries",
+      },
+    ]);
+    expect(result.registry_upserts).toEqual([]);
+  });
+
   it("does not write registry when nothing changed", async () => {
     await write_registry([known("a")]);
     const result = await apply_proposals([], [], {}, {

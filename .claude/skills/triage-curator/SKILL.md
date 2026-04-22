@@ -1,7 +1,7 @@
 ---
 name: triage-curator
 description: Offline sweep that QAs auto-classified false-positive groups and investigates residuals from completed self-repair-pipeline runs. Tags drifting classifiers, proposes new ones, re-investigates promoted groups whose QA found the classifier is mis-matching, drafts backlog tasks for signal gaps, and commits the result.
-argument-hint: "[--project <name>] [--last <n>] [--run <path>] [--reinvestigate] [--dry-run] [--commit-to current|new|pr] [--branch <name>] [--pr <number>]"
+argument-hint: "[--project <name>] [--last <n>] [--run <path>] [--reinvestigate] [--dry-run] [--reaggregate-on-incoherent] [--commit-to current|new|pr] [--branch <name>] [--pr <number>]"
 disable-model-invocation: true
 allowed-tools: Bash(node --import tsx:*), Bash(git *), Bash(gh *), AskUserQuestion, Read, Write, Edit, Glob, Task(triage-curator-qa, triage-curator-investigator), mcp__backlog__task_create, mcp__backlog__task_search
 ---
@@ -150,11 +150,13 @@ failure (should not happen after Step 4.25) it exits non-zero and does
 NOT create the file — the working tree is never polluted with half-rendered
 source.
 
-Build the authored-files map for finalize, keyed by the target group id
-(`retargets_to` when set, else `group_id`):
+Build the authored-files map for finalize. The renderer derives both the
+filename and the map key from `response.retargets_to ?? response.group_id`
+(they are the same string), and finalize looks up paths by that same key.
+Always use the derivation for both:
 
 ```json
-{ "<target_group_id_1>": "/abs/path/to/check_<target_group_id_1>.ts", ... }
+{ "<retargets_to ?? group_id>": "/abs/path/to/check_<retargets_to ?? group_id>.ts", ... }
 ```
 
 Write it to a temp file and pass it to Step 5 via `--authored-files`.
@@ -168,11 +170,12 @@ hand to `curate_run --phase finalize`.
 For every run, invoke the `finalize_cmd` from `PLAN`, passing the
 authored-files map from Step 4.5:
 
+Invoke the `finalize_cmd` verbatim — it already carries `--dry-run` /
+`--reaggregate-on-incoherent` if you asked for them at Step 1 — and pass
+the authored-files map from Step 4.5:
+
 ```bash
-node --import tsx .claude/skills/triage-curator/scripts/curate_run.ts \
-  --phase finalize --run <run_path> \
-  --authored-files <path/to/authored-files.json> \
-  [--reaggregate-on-incoherent] [--dry-run]
+<finalize_cmd> --authored-files <path/to/authored-files.json>
 ```
 
 Finalize owns several automatic housekeeping steps beyond the registry
