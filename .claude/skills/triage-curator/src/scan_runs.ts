@@ -2,25 +2,8 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
 import { error_code } from "./errors.js";
-import { SELF_REPAIR_ANALYSIS_OUTPUT_DIR } from "./paths.js";
-import type {
-  CuratorState,
-  ScanOptions,
-  ScanResultItem,
-} from "./types.js";
-
-/**
- * Snapshot of wip-status group example counts, keyed by group_id.
- * The CLI wrapper computes this from the registry; the pure `scan_runs` function
- * takes it as input so it's trivial to test.
- */
-export type WipGroupCounts = Record<string, number>;
-
-interface DiscoveredRun {
-  run_id: string;
-  project: string;
-  run_path: string;
-}
+import { CURATOR_RUNS_DIR, SELF_REPAIR_ANALYSIS_OUTPUT_DIR } from "./paths.js";
+import type { ScanOptions, ScanResultItem } from "./types.js";
 
 /**
  * Walk `analysis_output/{project}/triage_results/*.json` under the given root.
@@ -28,8 +11,8 @@ interface DiscoveredRun {
  */
 export async function discover_runs(
   analysis_output_dir: string = SELF_REPAIR_ANALYSIS_OUTPUT_DIR,
-): Promise<DiscoveredRun[]> {
-  const runs: DiscoveredRun[] = [];
+): Promise<ScanResultItem[]> {
+  const runs: ScanResultItem[] = [];
   let project_dirs: string[];
   try {
     project_dirs = await fs.readdir(analysis_output_dir);
@@ -63,40 +46,47 @@ export async function discover_runs(
 }
 
 /**
- * Pure: given discovered runs, prior state, wip snapshot, and opts, return
- * the list of runs that need curation (chronological).
+ * Return the set of run_ids that have been curated (i.e. have a
+ * `runs/<id>/finalized.json` sentinel).
  */
-export function diff_runs_against_state(
-  discovered: DiscoveredRun[],
-  state: CuratorState,
-  opts: ScanOptions,
-  wip_counts: WipGroupCounts,
-): ScanResultItem[] {
-  const items: ScanResultItem[] = [];
-
-  for (const run of discovered) {
-    if (opts.project !== null && run.project !== opts.project) continue;
-
-    const prior = state.curated_runs.find((e) => e.run_id === run.run_id);
-    if (prior === undefined) {
-      items.push({ ...run, reason: "uncurated", wip_groups_with_growth: [] });
-      continue;
-    }
-
-    if (!opts.reinvestigate) continue;
-
-    const growth: string[] = [];
-    for (const [group_id, current_count] of Object.entries(wip_counts)) {
-      const prior_count = prior.outcome.wip_group_example_counts[group_id] ?? 0;
-      if (current_count > prior_count) {
-        growth.push(group_id);
-      }
-    }
-    if (growth.length > 0) {
-      items.push({ ...run, reason: "reinvestigate", wip_groups_with_growth: growth });
+export async function list_curated_run_ids(
+  runs_dir: string = CURATOR_RUNS_DIR,
+): Promise<Set<string>> {
+  const out = new Set<string>();
+  let entries: string[];
+  try {
+    entries = await fs.readdir(runs_dir);
+  } catch (err) {
+    if (error_code(err) === "ENOENT") return out;
+    throw err;
+  }
+  for (const run_id of entries) {
+    try {
+      await fs.access(path.join(runs_dir, run_id, "finalized.json"));
+      out.add(run_id);
+    } catch (err) {
+      if (error_code(err) === "ENOENT") continue;
+      throw err;
     }
   }
+  return out;
+}
 
+/**
+ * Pure: given discovered runs and the curated set, return the runs that need
+ * curation, honouring --project and --last filters.
+ */
+export function filter_uncurated(
+  discovered: ScanResultItem[],
+  curated: Set<string>,
+  opts: ScanOptions,
+): ScanResultItem[] {
+  const items: ScanResultItem[] = [];
+  for (const run of discovered) {
+    if (opts.project !== null && run.project !== opts.project) continue;
+    if (curated.has(run.run_id)) continue;
+    items.push(run);
+  }
   if (opts.last !== null) {
     return items.slice(-opts.last);
   }
@@ -104,26 +94,20 @@ export function diff_runs_against_state(
 }
 
 /**
- * Top-level scan: discover runs, honour --run override, apply filters via diff.
+ * Top-level scan: discover runs, honour --run override, filter by curation state.
  */
 export async function scan_runs(
-  state: CuratorState,
   opts: ScanOptions,
-  wip_counts: WipGroupCounts,
   analysis_output_dir?: string,
+  runs_dir?: string,
 ): Promise<ScanResultItem[]> {
+  const curated = await list_curated_run_ids(runs_dir);
   if (opts.run !== null) {
     const run_path = path.resolve(opts.run);
     const run_id = path.basename(run_path, ".json");
     const project = path.basename(path.dirname(path.dirname(run_path)));
-    return diff_runs_against_state(
-      [{ run_id, project, run_path }],
-      state,
-      opts,
-      wip_counts,
-    );
+    return filter_uncurated([{ run_id, project, run_path }], curated, opts);
   }
-
   const discovered = await discover_runs(analysis_output_dir);
-  return diff_runs_against_state(discovered, state, opts, wip_counts);
+  return filter_uncurated(discovered, curated, opts);
 }

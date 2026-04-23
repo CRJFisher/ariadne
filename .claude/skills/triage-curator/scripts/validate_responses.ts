@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 /**
  * Step 4.25 — validate every investigator response written under
- * <run>/investigate/ and <run>/investigate_promoted/ BEFORE Step 4.5
- * rendering and finalize. Exits non-zero when any response has a validation
- * issue so the orchestrator halts cleanly.
+ * `<run>/investigate/` BEFORE Step 4.5 rendering and finalize. Exits non-zero
+ * when any response has a validation issue so the orchestrator halts cleanly.
  *
  * Usage:
  *   node --import tsx validate_responses.ts --run <path>
@@ -12,21 +11,21 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
-import { parse_investigate_response } from "../src/apply_proposals.js";
 import { error_code } from "../src/errors.js";
 import {
+  derive_run_id,
   get_registry_file_path,
   run_output_dir,
 } from "../src/paths.js";
 import { parse_investigator_session_log } from "../src/session_log.js";
 import type {
   FalsePositiveGroup,
-  InvestigateResponse,
   InvestigatorSessionLog,
   KnownIssue,
   TriageResultsFile,
 } from "../src/types.js";
 import {
+  parse_response_shape,
   validate_response,
   validate_run_coherence,
   type RunCoherenceInput,
@@ -61,14 +60,6 @@ function parse_argv(argv: string[]): CliArgs {
   return { run_path };
 }
 
-function derive_run_id(run_path: string): string {
-  return path.basename(run_path, ".json");
-}
-
-async function load_json<T>(file_path: string): Promise<T> {
-  return JSON.parse(await fs.readFile(file_path, "utf8")) as T;
-}
-
 async function read_dir_safe(dir: string): Promise<string[]> {
   try {
     return await fs.readdir(dir);
@@ -94,23 +85,25 @@ async function load_session_log(
   }
 }
 
-interface DirValidation {
-  issues: ValidationIssue[];
-  coherence_inputs: RunCoherenceInput[];
-}
+async function main(): Promise<void> {
+  const { run_path } = parse_argv(process.argv.slice(2));
+  const run_id = derive_run_id(run_path);
+  const output_dir = run_output_dir(run_id);
+  const investigate_dir = path.join(output_dir, "investigate");
 
-async function validate_dir(
-  dir: string,
-  triage_groups: Record<string, FalsePositiveGroup>,
-  registry: KnownIssue[],
-): Promise<DirValidation> {
-  const entries = await read_dir_safe(dir);
+  const triage = JSON.parse(await fs.readFile(run_path, "utf8")) as TriageResultsFile;
+  const triage_groups: Record<string, FalsePositiveGroup> = triage.false_positive_groups;
+  const registry = JSON.parse(
+    await fs.readFile(get_registry_file_path(), "utf8"),
+  ) as KnownIssue[];
+
+  const files = await read_dir_safe(investigate_dir);
   const issues: ValidationIssue[] = [];
   const coherence_inputs: RunCoherenceInput[] = [];
-  for (const file of entries) {
+  for (const file of files) {
     if (!file.endsWith(".json") || file.endsWith(".session.json")) continue;
     const dispatch_group_id = path.basename(file, ".json");
-    const response_path = path.join(dir, file);
+    const response_path = path.join(investigate_dir, file);
     let response_raw: unknown;
     try {
       response_raw = JSON.parse(await fs.readFile(response_path, "utf8"));
@@ -125,7 +118,7 @@ async function validate_dir(
       coherence_inputs.push({ dispatch_group_id, response_path, parsed: null });
       continue;
     }
-    const session_log = await load_session_log(dir, dispatch_group_id);
+    const session_log = await load_session_log(investigate_dir, dispatch_group_id);
     const source_group = triage_groups[dispatch_group_id] ?? null;
     issues.push(
       ...validate_response({
@@ -137,32 +130,15 @@ async function validate_dir(
         session_log,
       }),
     );
-    const parsed_or_err = parse_investigate_response(response_raw);
-    const parsed: InvestigateResponse | null =
-      "error" in parsed_or_err ? null : parsed_or_err;
-    coherence_inputs.push({ dispatch_group_id, response_path, parsed });
+    const parsed_or_err = parse_response_shape(response_raw);
+    coherence_inputs.push({
+      dispatch_group_id,
+      response_path,
+      parsed: "error" in parsed_or_err ? null : parsed_or_err,
+    });
   }
-  return { issues, coherence_inputs };
-}
 
-async function main(): Promise<void> {
-  const { run_path } = parse_argv(process.argv.slice(2));
-  const run_id = derive_run_id(run_path);
-  const output_dir = run_output_dir(run_id);
-  const investigate_dir = path.join(output_dir, "investigate");
-  const investigate_promoted_dir = path.join(output_dir, "investigate_promoted");
-
-  const triage = await load_json<TriageResultsFile>(run_path);
-  const registry = await load_json<KnownIssue[]>(get_registry_file_path());
-
-  const residual = await validate_dir(investigate_dir, triage.false_positive_groups, registry);
-  const promoted = await validate_dir(investigate_promoted_dir, triage.false_positive_groups, registry);
-  const coherence_inputs = [...residual.coherence_inputs, ...promoted.coherence_inputs];
-  const issues = [
-    ...residual.issues,
-    ...promoted.issues,
-    ...validate_run_coherence(coherence_inputs),
-  ];
+  issues.push(...validate_run_coherence(coherence_inputs));
 
   const ok = issues.length === 0;
   const validation_path = path.join(output_dir, "validation.json");

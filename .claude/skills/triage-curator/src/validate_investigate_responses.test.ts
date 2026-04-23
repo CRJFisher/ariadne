@@ -221,12 +221,6 @@ describe("validate_response", () => {
       failure_category: "group_incoherent",
       failure_details: "details",
       success_summary: null,
-      actions: {
-        classifier_kind: "none",
-        backlog_ref_emitted: false,
-        new_signals_needed_count: 0,
-        classifier_spec_emitted: false,
-      },
       entries_examined_count: 2,
       timestamp: "2026-04-22T00:00:00Z",
     };
