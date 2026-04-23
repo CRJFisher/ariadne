@@ -14,6 +14,7 @@
  * never hands the same index to two workers in a single fill.
  *
  * CLI:
+ *   --project <name>    Required. Names the project whose state to read.
  *   --count <n>         Max entries to return in this call (default 1).
  *   --active <indices>  Comma-separated entry indices currently in flight.
  *                       These are excluded from the pick. Omit on the initial
@@ -31,18 +32,21 @@
 
 import fs from "fs";
 import path from "path";
-import { TRIAGE_STATE_DIR } from "../src/paths.js";
-import { discover_state_file } from "../src/discover_state.js";
+import { parse_project_arg, require_state_file } from "../src/triage_state_paths.js";
 import { merge_results } from "../src/merge_results.js";
 import type { TriageEntry, TriageState } from "../src/triage_state_types.js";
-import "../src/require_node_import_tsx.js";
+import "../src/guard_tsx_invocation.js";
+
+const USAGE = "Usage: get_next_triage_entry.ts --project <name> [--count <n>] [--active <indices>]";
 
 interface CliArgs {
+  project: string;
   count: number;
   active: Set<number>;
 }
 
 function parse_args(argv: string[]): CliArgs {
+  const project = parse_project_arg(argv, USAGE);
   const args = argv.slice(2);
   let count = 1;
   const active = new Set<number>();
@@ -70,7 +74,7 @@ function parse_args(argv: string[]): CliArgs {
     }
   }
 
-  return { count, active };
+  return { project, count, active };
 }
 
 /**
@@ -107,13 +111,8 @@ function is_main_module(): boolean {
 }
 
 if (is_main_module()) {
-  const { count, active } = parse_args(process.argv);
-
-  const state_path = discover_state_file(TRIAGE_STATE_DIR);
-  if (!state_path) {
-    process.stderr.write("Error: no triage state file found in " + TRIAGE_STATE_DIR + "\n");
-    process.exit(1);
-  }
+  const { project, count, active } = parse_args(process.argv);
+  const state_path = require_state_file(project);
 
   let state: TriageState;
   try {

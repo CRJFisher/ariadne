@@ -16,7 +16,7 @@
  * *before* calling this function so the bucketing here is final.
  */
 
-import type { EnrichedFunctionEntry } from "./types.js";
+import type { EnrichedFunctionEntry } from "./entry_point_types.js";
 import type { KnownEntrypointMatch } from "./known_entrypoints.js";
 import type { TriageEntry, TriageEntryResult } from "./triage_state_types.js";
 import type { AutoClassifiedEntry, ClassifierHint } from "./auto_classify/types.js";
@@ -76,11 +76,9 @@ export function build_triage_entries(input: BuildTriageEntriesInput): TriageEntr
   }
 
   for (const { entry, result } of input.auto_classified) {
-    // Invariant: auto_classify only returns an entry with `auto_classified: true`
-    // when a `group_id` is set. Fail loud rather than produce a half-formed entry.
-    if (!result.auto_classified || result.auto_group_id === null) {
+    if (!result.auto_classified) {
       throw new Error(
-        `build_triage_entries: auto_classified bucket must contain only classified entries (got auto_classified=${result.auto_classified}, auto_group_id=${result.auto_group_id})`,
+        "build_triage_entries: auto_classified bucket must contain only classified entries",
       );
     }
     entries.push({
@@ -93,7 +91,7 @@ export function build_triage_entries(input: BuildTriageEntriesInput): TriageEntr
         ariadne_correct: true,
         group_id: result.auto_group_id,
         root_cause: `Matched known-issue: ${result.auto_group_id}`,
-        reasoning: result.reasoning ?? `Matched predicate classifier for ${result.auto_group_id}`,
+        reasoning: result.reasoning,
       },
       error: null,
       auto_classified: true,

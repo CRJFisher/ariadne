@@ -8,12 +8,12 @@ Entries: 20
 
 A method is invoked on the result of another call (e.g. `a.b().c()`), but Ariadne cannot carry the intermediate call's return type through to resolve the final method. Common in builder patterns and fluent APIs. Observed as a dominant group in the webpack corpus.
 
-| Field        | Value                                                |
-| ------------ | ---------------------------------------------------- |
-| Status       | `wip`                                                |
-| Languages    | `typescript`, `javascript`, `python`, `rust`         |
-| Backlog task | _none_                                               |
-| Classifier   | builtin `method_chain_dispatch` (min_confidence 0.9) |
+| Field        | Value                                        |
+| ------------ | -------------------------------------------- |
+| Status       | `wip`                                        |
+| Languages    | `typescript`, `javascript`, `python`, `rust` |
+| Backlog task | _none_                                       |
+| Classifier   | _none — known, no automated classifier_      |
 
 **Examples**
 
@@ -23,12 +23,12 @@ A method is invoked on the result of another call (e.g. `a.b().c()`), but Ariadn
 
 A call on a base-class or generic receiver resolves to the base method (or an unrelated same-named method) rather than the concrete subclass override, so subclass entry points appear unreachable. Covers protocol/interface dispatch and generic parameter erasure. Webpack-corpus F7.
 
-| Field        | Value                                                       |
-| ------------ | ----------------------------------------------------------- |
-| Status       | `wip`                                                       |
-| Languages    | `typescript`, `javascript`, `python`, `rust`                |
-| Backlog task | `TASK-198`                                                  |
-| Classifier   | builtin `polymorphic_subtype_dispatch` (min_confidence 0.9) |
+| Field        | Value                                        |
+| ------------ | -------------------------------------------- |
+| Status       | `wip`                                        |
+| Languages    | `typescript`, `javascript`, `python`, `rust` |
+| Backlog task | `TASK-198`                                   |
+| Classifier   | _none — known, no automated classifier_      |
 
 **Examples**
 
@@ -59,12 +59,12 @@ syntactic_feature_eq is_dynamic_dispatch=true
 
 A constructor is invoked via `new Name(...)`, grep sees the literal text, but the `.scm` query did not fire `@reference.constructor`, so no `CallReference` exists. Tree-sitter capture gap for constructor calls, particularly on TS/JS namespaced or generic constructors.
 
-| Field        | Value                                                                 |
-| ------------ | --------------------------------------------------------------------- |
-| Status       | `wip`                                                                 |
-| Languages    | `typescript`, `javascript`                                            |
-| Backlog task | _none_                                                                |
-| Classifier   | builtin `constructor_new_expression_capture_gap` (min_confidence 0.9) |
+| Field        | Value                                   |
+| ------------ | --------------------------------------- |
+| Status       | `wip`                                   |
+| Languages    | `typescript`, `javascript`              |
+| Backlog task | _none_                                  |
+| Classifier   | _none — known, no automated classifier_ |
 
 **Examples**
 
@@ -135,12 +135,12 @@ all:
 
 A symbol is re-exported under a new name via `export { original as alias }`. The resolution registry binds the alias to the barrel location but does not walk back to the original definition, so calls via the alias resolve to nothing.
 
-| Field        | Value                                                  |
-| ------------ | ------------------------------------------------------ |
-| Status       | `wip`                                                  |
-| Languages    | `typescript`, `javascript`                             |
-| Backlog task | `TASK-156`                                             |
-| Classifier   | builtin `aliased_re_export_chain` (min_confidence 0.9) |
+| Field        | Value                                   |
+| ------------ | --------------------------------------- |
+| Status       | `wip`                                   |
+| Languages    | `typescript`, `javascript`              |
+| Backlog task | `TASK-156`                              |
+| Classifier   | _none — known, no automated classifier_ |
 
 **Examples**
 
@@ -293,12 +293,12 @@ decorator_matches @Component*
 
 When `grep_call_sites` contains entries but `ariadne_call_refs` is empty, Ariadne found textual evidence of callers but its resolution pipeline failed to link those call sites to the entry. Covers module-qualified calls, cross-package callers, cross-file inheritance, protocol dispatch, intra-file call resolution failures, type-inference dispatch, and Python `@overload` stubs. Seeded from `triage_patterns.json` rule `grep-evidence-ariadne-miss` (precision 0.923 over the webpack corpus).
 
-| Field        | Value                                                       |
-| ------------ | ----------------------------------------------------------- |
-| Status       | `wip`                                                       |
-| Languages    | `typescript`, `javascript`, `python`, `rust`                |
-| Backlog task | _none_                                                      |
-| Classifier   | builtin `grep_evidence_ariadne_miss` (min_confidence 0.923) |
+| Field        | Value                                        |
+| ------------ | -------------------------------------------- |
+| Status       | `wip`                                        |
+| Languages    | `typescript`, `javascript`, `python`, `rust` |
+| Backlog task | _none_                                       |
+| Classifier   | _none — known, no automated classifier_      |
 
 **Examples**
 
@@ -329,12 +329,12 @@ diagnosis_eq callers-in-registry-wrong-target
 
 Functions defined in files whose path contains `_lambda_handler` are AWS Lambda handler entry points, invoked by AWS infrastructure and never called from source code. Seeded from `triage_patterns.json` rule `lambda-handler-file-true-positive` (precision 1.0).
 
-| Field        | Value                                                       |
-| ------------ | ----------------------------------------------------------- |
-| Status       | `permanent`                                                 |
-| Languages    | `typescript`, `javascript`, `python`                        |
-| Backlog task | _none_                                                      |
-| Classifier   | builtin `lambda_handler_file_convention` (min_confidence 1) |
+| Field        | Value                                   |
+| ------------ | --------------------------------------- |
+| Status       | `permanent`                             |
+| Languages    | `typescript`, `javascript`, `python`    |
+| Backlog task | _none_                                  |
+| Classifier   | _none — known, no automated classifier_ |
 
 **Examples**
 
@@ -344,12 +344,12 @@ Functions defined in files whose path contains `_lambda_handler` are AWS Lambda 
 
 Stricter variant of `callers-outside-scope-grep-evidence`: diagnosis is `callers-not-in-registry` AND grep found call sites AND `ariadne_call_refs` is empty. Higher precision (0.952) at lower coverage. Seeded from `triage_patterns.json` rule `diagnosis-callers-not-in-registry-with-grep`.
 
-| Field        | Value                                                              |
-| ------------ | ------------------------------------------------------------------ |
-| Status       | `wip`                                                              |
-| Languages    | `typescript`, `javascript`, `python`, `rust`                       |
-| Backlog task | _none_                                                             |
-| Classifier   | builtin `callers_not_in_registry_with_grep` (min_confidence 0.952) |
+| Field        | Value                                        |
+| ------------ | -------------------------------------------- |
+| Status       | `wip`                                        |
+| Languages    | `typescript`, `javascript`, `python`, `rust` |
+| Backlog task | _none_                                       |
+| Classifier   | _none — known, no automated classifier_      |
 
 **Examples**
 
@@ -359,9 +359,9 @@ Stricter variant of `callers-outside-scope-grep-evidence`: diagnosis is `callers
 
 Proposed by triage-curator investigator — fill in before enabling.
 
-| Field        | Value                                                          |
-| ------------ | -------------------------------------------------------------- |
-| Status       | `wip`                                                          |
-| Languages    | `typescript`                                                   |
-| Backlog task | _none_                                                         |
-| Classifier   | builtin `check_wasm_cross_language_call` (min_confidence 0.95) |
+| Field        | Value                                   |
+| ------------ | --------------------------------------- |
+| Status       | `wip`                                   |
+| Languages    | `typescript`                            |
+| Backlog task | _none_                                  |
+| Classifier   | _none — known, no automated classifier_ |

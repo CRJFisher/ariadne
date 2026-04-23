@@ -7,7 +7,7 @@
  * - Updated known-entrypoints registry
  *
  * Usage:
- *   node --import tsx finalize_triage.ts
+ *   node --import tsx finalize_triage.ts --project <name>
  */
 
 import * as fs from "node:fs/promises";
@@ -17,7 +17,7 @@ import {
   save_json,
   load_json,
   OutputType,
-} from "../src/analysis_io.js";
+} from "../src/analysis_output.js";
 import {
   load_known_entrypoints,
   save_known_entrypoints,
@@ -28,20 +28,14 @@ import {
   build_finalization_summary,
 } from "../src/build_finalization_output.js";
 import type { TriageState } from "../src/triage_state_types.js";
-import { TRIAGE_STATE_DIR } from "../src/paths.js";
-import { discover_state_file } from "../src/discover_state.js";
-import "../src/require_node_import_tsx.js";
+import { parse_project_arg, require_state_file } from "../src/triage_state_paths.js";
+import "../src/guard_tsx_invocation.js";
 
-// ===== CLI Argument Parsing =====
-
-// ===== Main =====
+const USAGE = "Usage: finalize_triage.ts --project <name>";
 
 async function main(): Promise<void> {
-  const state_path = discover_state_file(TRIAGE_STATE_DIR);
-  if (!state_path) {
-    console.error("Error: no triage state file found");
-    process.exit(1);
-  }
+  const project = parse_project_arg(process.argv, USAGE);
+  const state_path = require_state_file(project);
 
   // Load state
   const state = await load_json<TriageState>(state_path);
@@ -96,6 +90,7 @@ async function main(): Promise<void> {
 }
 
 main().catch((error) => {
-  console.error(`Fatal: ${error}`);
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(`Error: ${message}`);
   process.exit(1);
 });

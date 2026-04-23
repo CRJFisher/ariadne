@@ -11,16 +11,16 @@
  *   3. Delegate shape assembly to `build_triage_entries`.
  */
 
-import { auto_classify } from "../auto_classify/auto_classify.js";
-import type { AutoClassifiedEntry, FileLinesReader } from "../auto_classify/types.js";
+import { auto_classify } from "./auto_classify/orchestrator.js";
+import type { AutoClassifiedEntry, FileLinesReader } from "./auto_classify/types.js";
 import {
   build_triage_entries,
   type BuildTriageEntriesInput,
   type ResidualEntry,
-} from "../build_triage_entries.js";
-import type { FilterResult } from "../known_entrypoints.js";
-import type { KnownIssuesRegistry } from "../types.js";
-import type { TriageEntry } from "../triage_state_types.js";
+} from "./build_triage_entries.js";
+import type { FilterResult } from "./known_entrypoints.js";
+import type { KnownIssuesRegistry } from "./known_issues_types.js";
+import type { TriageEntry } from "./triage_state_types.js";
 
 export interface PrepareTriageInput {
   filtered: FilterResult;

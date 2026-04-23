@@ -34,18 +34,19 @@ import {
   resolve_cache_dir,
 } from "@ariadnejs/core";
 import type { PersistenceStorage } from "@ariadnejs/core";
-import type { EnrichedFunctionEntry } from "../src/types.js";
+import type { EnrichedFunctionEntry } from "../src/entry_point_types.js";
 import {
   build_constructor_to_class_name_map,
   detect_language,
   extract_entry_points,
 } from "../src/extract_entry_points.js";
-import { save_json, OutputType, path_to_project_id, project_id_from_config } from "../src/analysis_io.js";
+import { save_json, OutputType } from "../src/analysis_output.js";
+import { path_to_project_id, project_id_from_config } from "../src/project_id.js";
 import * as path from "path";
 import * as fs from "fs/promises";
 import * as os from "os";
 import { execSync } from "child_process";
-import "../src/require_node_import_tsx.js";
+import "../src/guard_tsx_invocation.js";
 
 // ===== Types =====
 
@@ -85,7 +86,15 @@ interface ProjectConfig {
 interface CloneResult {
   local_path: string;
   commit_hash: string;
-  cleanup: () => Promise<void>;
+}
+
+interface ResolvedMode {
+  project_path: string;
+  project_name: string;
+  source_info: SourceInfo;
+  include_tests: boolean;
+  folders?: string[];
+  exclude?: string[];
 }
 
 // ===== CLI Argument Parsing =====
@@ -167,7 +176,8 @@ async function load_project_config(config_path: string): Promise<ProjectConfig> 
   const parsed = JSON.parse(raw) as Record<string, unknown>;
 
   if (typeof parsed.project_path !== "string" || !parsed.project_path) {
-    throw new Error("Config missing required field: project_path");
+    console.error(`Error: config ${resolved} is missing required field: project_path`);
+    process.exit(1);
   }
 
   const raw_project_path = parsed.project_path as string;
@@ -220,6 +230,35 @@ function github_repo_to_ids(repo: string): { dir_name: string; project_id: strin
   };
 }
 
+/**
+ * Serialize access to a clone_dir using an atomic mkdir lock. Parallel pipelines
+ * cloning the same slug must not race — second caller waits until first finishes,
+ * then reuses the clone.
+ */
+async function with_clone_lock<T>(clone_dir: string, fn: () => Promise<T>): Promise<T> {
+  const lock_dir = `${clone_dir}.lock`;
+  const max_wait_ms = 120_000;
+  const start = Date.now();
+  while (true) {
+    try {
+      await fs.mkdir(lock_dir);
+      break;
+    } catch (err) {
+      const code = (err as { code?: unknown }).code;
+      if (code !== "EEXIST") throw err;
+      if (Date.now() - start > max_wait_ms) {
+        throw new Error(`Timed out waiting for clone lock at ${lock_dir}`);
+      }
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+  }
+  try {
+    return await fn();
+  } finally {
+    await fs.rmdir(lock_dir).catch(() => {});
+  }
+}
+
 async function clone_github_repo(
   repo: string,
   branch?: string,
@@ -229,49 +268,47 @@ async function clone_github_repo(
   const { dir_name } = github_repo_to_ids(repo);
   const clone_dir = path.join(ARIADNE_REPOS_DIR, dir_name);
 
-  await fs.mkdir(clone_dir, { recursive: true });
+  await fs.mkdir(ARIADNE_REPOS_DIR, { recursive: true });
 
-  // Reuse existing clone if present
-  let commit_hash: string;
-  try {
-    await fs.stat(path.join(clone_dir, ".git"));
-    console.error(`Using existing clone at ${clone_dir}`);
-    commit_hash = execSync("git rev-parse HEAD", {
-      encoding: "utf-8",
-      cwd: clone_dir,
-    }).trim();
-    console.error(`At commit ${commit_hash.substring(0, 7)}`);
-  } catch {
-    console.error(`Cloning ${github_url} to ${clone_dir}...`);
+  return with_clone_lock(clone_dir, async () => {
+    await fs.mkdir(clone_dir, { recursive: true });
 
-    let clone_cmd = `git clone --depth ${depth}`;
-    if (branch) {
-      clone_cmd += ` -b ${branch}`;
-    }
-    clone_cmd += ` ${github_url} ${clone_dir}`;
-
+    // Reuse existing clone if present
+    let commit_hash: string;
     try {
-      execSync(clone_cmd, { encoding: "utf-8", stdio: "pipe" });
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to clone repository: ${message}`);
+      await fs.stat(path.join(clone_dir, ".git"));
+      console.error(`Using existing clone at ${clone_dir}`);
+      commit_hash = execSync("git rev-parse HEAD", {
+        encoding: "utf-8",
+        cwd: clone_dir,
+      }).trim();
+      console.error(`At commit ${commit_hash.substring(0, 7)}`);
+    } catch {
+      console.error(`Cloning ${github_url} to ${clone_dir}...`);
+
+      let clone_cmd = `git clone --depth ${depth}`;
+      if (branch) {
+        clone_cmd += ` -b ${branch}`;
+      }
+      clone_cmd += ` ${github_url} ${clone_dir}`;
+
+      try {
+        execSync(clone_cmd, { encoding: "utf-8", stdio: "pipe" });
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to clone repository: ${message}`);
+      }
+
+      commit_hash = execSync("git rev-parse HEAD", {
+        encoding: "utf-8",
+        cwd: clone_dir,
+      }).trim();
+
+      console.error(`Cloned at commit ${commit_hash.substring(0, 7)}`);
     }
 
-    commit_hash = execSync("git rev-parse HEAD", {
-      encoding: "utf-8",
-      cwd: clone_dir,
-    }).trim();
-
-    console.error(`Cloned at commit ${commit_hash.substring(0, 7)}`);
-  }
-
-  return {
-    local_path: clone_dir,
-    commit_hash,
-    cleanup: async () => {
-      // Repo is kept at a stable path — nothing to clean up
-    },
-  };
+    return { local_path: clone_dir, commit_hash };
+  });
 }
 
 /**
@@ -375,7 +412,7 @@ async function analyze_directory(
   const class_name_by_constructor_id = build_constructor_to_class_name_map(project.definitions.get_class_definitions());
 
   // Extract entry points
-  const entry_points = extract_entry_points(call_graph, source_files, undefined, class_name_by_constructor_id);
+  const entry_points = extract_entry_points(call_graph, source_files, class_name_by_constructor_id);
 
   console.error(`Total analysis time: ${Date.now() - start_time}ms`);
 
@@ -390,140 +427,116 @@ async function analyze_directory(
 async function main() {
   const args = parse_cli_args();
 
-  let project_path: string;
-  let source_info: SourceInfo;
-  let cleanup: (() => Promise<void>) | undefined;
-  let project_name: string;
-  let include_tests: boolean;
-  let folders: string[] | undefined;
-  let exclude: string[] | undefined;
-
-  if (args.config) {
-    // Config mode — all settings come from the config file
-    const config = await load_project_config(args.config);
-
-    project_path = config.project_path;
-
-    // Verify path exists
-    try {
-      const stat = await fs.stat(project_path);
-      if (!stat.isDirectory()) {
-        console.error(`Error: ${project_path} is not a directory.`);
-        process.exit(1);
-      }
-    } catch {
-      console.error(`Error: Directory ${project_path} does not exist.`);
-      process.exit(1);
-    }
-
-    project_name = config.project_name;
-    include_tests = config.include_tests ?? false;
-    folders = config.folders;
-    exclude = config.exclude;
-    source_info = {
-      type: "local",
-      commit_hash: get_local_commit_hash(project_path),
-    };
-  } else if (args.path || args.github) {
-    if (args.path && args.github) {
-      console.error("Error: --path and --github are mutually exclusive.");
-      process.exit(1);
-    }
-
-    include_tests = false;
-    folders = undefined;
-    exclude = undefined;
-
-    if (args.github) {
-      // Clone GitHub repository
-      const clone_result = await clone_github_repo(
-        args.github,
-        args.branch,
-        args.depth
-      );
-      project_path = clone_result.local_path;
-      cleanup = clone_result.cleanup;
-      project_name = github_repo_to_ids(args.github).project_id;
-
-      source_info = {
-        type: "github",
-        github_url: parse_github_url(args.github),
-        branch: args.branch,
-        commit_hash: clone_result.commit_hash,
-      };
-    } else {
-      // Local path (args.path is guaranteed by the condition above)
-      project_path = path.resolve(args.path as string);
-
-      // Verify path exists
-      try {
-        const stat = await fs.stat(project_path);
-        if (!stat.isDirectory()) {
-          console.error(`Error: ${project_path} is not a directory.`);
-          process.exit(1);
-        }
-      } catch {
-        console.error(`Error: Directory ${project_path} does not exist.`);
-        process.exit(1);
-      }
-
-      project_name = path_to_project_id(project_path);
-      source_info = {
-        type: "local",
-        commit_hash: get_local_commit_hash(project_path),
-      };
-    }
-  } else {
-    console.error("Error: One of --config, --path, or --github is required.");
-    print_usage();
-    process.exit(1);
-  }
+  const resolved = await resolve_mode(args);
 
   // Create storage for local paths only (GitHub clones use temp dirs — caching is pointless)
   let storage: PersistenceStorage | undefined;
-  if (source_info.type === "local") {
-    const cache_dir = resolve_cache_dir(project_path);
+  if (resolved.source_info.type === "local") {
+    const cache_dir = resolve_cache_dir(resolved.project_path);
     if (cache_dir) {
       storage = new FileSystemStorage(cache_dir);
       console.error(`Cache directory: ${cache_dir}`);
     }
   }
 
-  try {
-    // Run analysis
-    const { files_analyzed, entry_points } = await analyze_directory(
-      project_path,
-      {
-        include_tests,
-        folders,
-        exclude,
-        storage,
-      }
-    );
+  const { files_analyzed, entry_points } = await analyze_directory(resolved.project_path, {
+    include_tests: resolved.include_tests,
+    folders: resolved.folders,
+    exclude: resolved.exclude,
+    storage,
+  });
 
-    // Build result
-    const result: AnalysisResult = {
-      project_name,
-      project_path,
-      source: source_info,
-      total_files_analyzed: files_analyzed,
-      total_entry_points: entry_points.length,
-      entry_points,
-      generated_at: new Date().toISOString(),
-    };
+  const result: AnalysisResult = {
+    project_name: resolved.project_name,
+    project_path: resolved.project_path,
+    source: resolved.source_info,
+    total_files_analyzed: files_analyzed,
+    total_entry_points: entry_points.length,
+    entry_points,
+    generated_at: new Date().toISOString(),
+  };
 
-    const output_file = await save_json(OutputType.DETECT_ENTRYPOINTS, result, project_name);
-    console.error(`Output written to: ${output_file}`);
+  const output_file = await save_json(OutputType.DETECT_ENTRYPOINTS, result, resolved.project_name);
+  console.error(`Output written to: ${output_file}`);
 
-    console.error("\nAnalysis complete:");
-    console.error(`  Files analyzed: ${files_analyzed}`);
-    console.error(`  Entry points found: ${entry_points.length}`);
-  } finally {
-    // Clean up cloned repository
-    if (cleanup) {
-      await cleanup();
-    }
+  console.error("\nAnalysis complete:");
+  console.error(`  Files analyzed: ${files_analyzed}`);
+  console.error(`  Entry points found: ${entry_points.length}`);
+}
+
+async function resolve_mode(args: CLIArgs): Promise<ResolvedMode> {
+  if (args.config) return resolve_config_mode(args.config);
+  if (args.path && args.github) {
+    console.error("Error: --path and --github are mutually exclusive.");
+    process.exit(1);
   }
+  if (args.github) return resolve_github_mode(args.github, args.branch, args.depth);
+  if (args.path) return resolve_local_mode(args.path);
+  console.error("Error: One of --config, --path, or --github is required.");
+  print_usage();
+  process.exit(1);
+}
+
+async function ensure_directory(dir_path: string): Promise<void> {
+  try {
+    const stat = await fs.stat(dir_path);
+    if (!stat.isDirectory()) {
+      console.error(`Error: ${dir_path} is not a directory.`);
+      process.exit(1);
+    }
+  } catch {
+    console.error(`Error: Directory ${dir_path} does not exist.`);
+    process.exit(1);
+  }
+}
+
+async function resolve_config_mode(config_path: string): Promise<ResolvedMode> {
+  const config = await load_project_config(config_path);
+  await ensure_directory(config.project_path);
+  return {
+    project_path: config.project_path,
+    project_name: config.project_name,
+    include_tests: config.include_tests ?? false,
+    folders: config.folders,
+    exclude: config.exclude,
+    source_info: {
+      type: "local",
+      commit_hash: get_local_commit_hash(config.project_path),
+    },
+  };
+}
+
+async function resolve_github_mode(
+  github: string,
+  branch: string | undefined,
+  depth: number,
+): Promise<ResolvedMode> {
+  const clone_result = await clone_github_repo(github, branch, depth);
+  return {
+    project_path: clone_result.local_path,
+    project_name: github_repo_to_ids(github).project_id,
+    include_tests: false,
+    source_info: {
+      type: "github",
+      github_url: parse_github_url(github),
+      branch,
+      commit_hash: clone_result.commit_hash,
+    },
+  };
+}
+
+async function resolve_local_mode(input_path: string): Promise<ResolvedMode> {
+  const project_path = path.resolve(input_path);
+  await ensure_directory(project_path);
+  return {
+    project_path,
+    project_name: path_to_project_id(project_path),
+    include_tests: false,
+    source_info: {
+      type: "local",
+      commit_hash: get_local_commit_hash(project_path),
+    },
+  };
 }
 
 main().catch((error) => {

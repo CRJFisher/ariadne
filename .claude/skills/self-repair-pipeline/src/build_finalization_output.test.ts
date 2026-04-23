@@ -6,7 +6,7 @@ import {
   type FinalizationSummary,
 } from "./build_finalization_output.js";
 import type { TriageState, TriageEntry, TriageEntryResult } from "./triage_state_types.js";
-import type { FalsePositiveGroup } from "./types.js";
+import type { FalsePositiveGroup } from "./entry_point_types.js";
 
 // ===== Test Helpers =====
 
@@ -166,10 +166,11 @@ describe("build_finalization_output", () => {
 
     const output = build_finalization_output(state);
 
-    expect(output.confirmed_unreachable).toHaveLength(1);
-    expect(output.confirmed_unreachable[0].name).toBe("main");
+    expect(output.confirmed_unreachable.map((e) => e.name)).toEqual(["main"]);
     expect(Object.keys(output.false_positive_groups)).toEqual(["builder-chain"]);
-    expect(output.false_positive_groups["builder-chain"].entries).toHaveLength(1);
+    expect(output.false_positive_groups["builder-chain"].entries.map((e) => e.name)).toEqual([
+      "builder_a",
+    ]);
   });
 
   it("failed entries excluded from output", () => {
@@ -195,8 +196,7 @@ describe("build_finalization_output", () => {
 
     const output = build_finalization_output(state);
 
-    expect(output.confirmed_unreachable).toHaveLength(1);
-    expect(output.confirmed_unreachable[0].name).toBe("good_func");
+    expect(output.confirmed_unreachable.map((e) => e.name)).toEqual(["good_func"]);
     expect(output.false_positive_groups).toEqual({});
   });
 

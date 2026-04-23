@@ -20,18 +20,9 @@ Each entry has a `diagnosis` field from pre-gathered diagnostics during detectio
 | `callers-in-registry-unresolved`   | Calling files are indexed but resolution failed to link them to this definition |
 | `callers-in-registry-wrong-target` | Calls were resolved but linked to a different symbol                            |
 
-## Diagnosis-to-Template Routing Table
+## Investigation Prompt
 
-For `llm-triage` entries, the diagnosis selects which investigation prompt template to use:
-
-| Diagnosis                          | Template File                                 | Investigation Focus                                                            |
-| ---------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------ |
-| `callers-not-in-registry`          | `templates/prompt_callers_not_in_registry.md` | Verify call sites exist in unindexed files, check file coverage gaps           |
-| `callers-in-registry-unresolved`   | `templates/prompt_resolution_failure.md`      | Identify resolution failure pattern (aliased imports, barrel re-exports, etc.) |
-| `callers-in-registry-wrong-target` | `templates/prompt_wrong_target.md`            | Determine why resolution linked to wrong symbol (class hierarchy, shadowing)   |
-| All other diagnoses                | `templates/prompt_generic.md`                 | Broad investigation: check for indirect callers, detection gaps                |
-
-Templates use `{{entry.*}}` placeholder syntax. Substitute with entry fields before launching the triage-investigator sub-agent.
+All `llm-triage` entries render a single template — `templates/prompt.md` — which is parameterized by the entry's `diagnosis`. `scripts/get_entry_context.ts` substitutes diagnosis-specific hints (title, summary, investigation guide, classification hint) for the four diagnoses above; any other diagnosis falls back to a generic broad-investigation guide. The template itself uses `{{entry.*}}` placeholders filled from the triage state entry.
 
 ## Binary Classification Output
 

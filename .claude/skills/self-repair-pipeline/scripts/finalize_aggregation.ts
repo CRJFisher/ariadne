@@ -1,31 +1,24 @@
 #!/usr/bin/env node --import tsx
 /**
- * Finalize aggregation: apply canonical group assignments back to triage state.
+ * CLI: apply pass3 group-investigator verdicts back to triage state.
  *
- * Reads all pass3/{group_id}_investigation.json files produced by group-investigator
- * agents, applies confirmed group_id/root_cause assignments back to state entries,
- * reallocates rejected members deterministically, and sets state.phase="complete".
- *
- * Reject reallocation:
- *   - If suggested_group_id exists in final confirmed groups → assign there
- *   - Otherwise → assign group_id = "residual-fp"
+ * Delegates the mutation + reject reallocation logic to
+ * `src/aggregation/finalize_aggregation.ts`.
  *
  * Usage:
- *   node --import tsx finalize_aggregation.ts
+ *   node --import tsx finalize_aggregation.ts --project <name>
  */
 
 import fs from "fs";
 import path from "path";
-import { TRIAGE_STATE_DIR } from "../src/paths.js";
-import { discover_state_file } from "../src/discover_state.js";
+import { finalize_aggregation } from "../src/aggregation/finalize_aggregation.js";
+import type { GroupInvestigation } from "../src/aggregation/types.js";
+import { parse_project_arg, require_state_file } from "../src/triage_state_paths.js";
 import type { TriageState } from "../src/triage_state_types.js";
-import "../src/require_node_import_tsx.js";
+import "../src/guard_tsx_invocation.js";
 
-const state_path = discover_state_file(TRIAGE_STATE_DIR);
-if (!state_path) {
-  process.stderr.write("Error: no triage state file found\n");
-  process.exit(1);
-}
+const project = parse_project_arg(process.argv, "Usage: finalize_aggregation.ts --project <name>");
+const state_path = require_state_file(project);
 
 let state: TriageState;
 try {
@@ -35,79 +28,25 @@ try {
   process.exit(1);
 }
 
-const aggregation_dir = path.join(path.dirname(state_path), "aggregation");
-const pass3_dir = path.join(aggregation_dir, "pass3");
-
+const pass3_dir = path.join(path.dirname(state_path), "aggregation", "pass3");
 if (!fs.existsSync(pass3_dir)) {
   process.stderr.write(`Error: pass3 directory not found at ${pass3_dir}\n`);
   process.exit(1);
 }
 
-// ===== Read all investigation outputs =====
+const investigations: GroupInvestigation[] = fs
+  .readdirSync(pass3_dir)
+  .filter((f) => f.endsWith("_investigation.json"))
+  .map((f) => JSON.parse(fs.readFileSync(path.join(pass3_dir, f), "utf8")) as GroupInvestigation);
 
-interface RejectedMember {
-  entry_index: number;
-  suggested_group_id: string;
-}
-
-interface GroupInvestigation {
-  group_id: string;
-  root_cause: string;
-  confirmed_members: number[];
-  rejected_members: RejectedMember[];
-}
-
-const investigation_files = fs.readdirSync(pass3_dir)
-  .filter((f) => f.endsWith("_investigation.json"));
-
-if (investigation_files.length === 0) {
+if (investigations.length === 0) {
   process.stderr.write(`Error: no investigation files found in ${pass3_dir}\n`);
   process.exit(1);
 }
 
-const investigations: GroupInvestigation[] = investigation_files.map((f) =>
-  JSON.parse(fs.readFileSync(path.join(pass3_dir, f), "utf8")) as GroupInvestigation,
-);
+const { assigned_count, group_count } = finalize_aggregation(state, investigations);
 
-// Build set of confirmed group_ids for reject reallocation
-const confirmed_group_ids = new Set(investigations.map((inv) => inv.group_id));
-
-// ===== Apply confirmed assignments =====
-
-for (const inv of investigations) {
-  for (const entry_index of inv.confirmed_members) {
-    const entry = state.entries.find((e) => e.entry_index === entry_index);
-    if (!entry || entry.result === null) continue;
-    entry.result.group_id = inv.group_id;
-    entry.result.root_cause = inv.root_cause;
-  }
-}
-
-// ===== Reallocate rejected members =====
-
-for (const inv of investigations) {
-  for (const rejected of inv.rejected_members) {
-    const entry = state.entries.find((e) => e.entry_index === rejected.entry_index);
-    if (!entry || entry.result === null) continue;
-
-    if (confirmed_group_ids.has(rejected.suggested_group_id)) {
-      entry.result.group_id = rejected.suggested_group_id;
-    } else {
-      entry.result.group_id = "residual-fp";
-    }
-  }
-}
-
-// ===== Set phase=complete and write state =====
-
-state.phase = "complete";
-state.updated_at = new Date().toISOString();
 fs.writeFileSync(state_path, JSON.stringify(state, null, 2) + "\n");
-
-const assigned_count = investigations.reduce(
-  (sum, inv) => sum + inv.confirmed_members.length + inv.rejected_members.length,
-  0,
-);
-console.error(`Aggregation finalized: ${assigned_count} entries assigned across ${investigations.length} groups`);
+console.error(`Aggregation finalized: ${assigned_count} entries assigned across ${group_count} groups`);
 console.error(`State phase set to "complete": ${state_path}`);
-process.stdout.write(JSON.stringify({ assigned_count, group_count: investigations.length }) + "\n");
+process.stdout.write(JSON.stringify({ assigned_count, group_count }) + "\n");

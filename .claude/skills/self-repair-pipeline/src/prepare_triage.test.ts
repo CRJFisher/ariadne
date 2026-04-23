@@ -12,13 +12,10 @@
 import { describe, it, expect } from "vitest";
 
 import { prepare_triage, sort_residual_entries } from "./prepare_triage.js";
-import type { ResidualEntry } from "../build_triage_entries.js";
-import type {
-  EnrichedFunctionEntry,
-  KnownIssue,
-  KnownIssuesRegistry,
-} from "../types.js";
-import type { FilterResult } from "../known_entrypoints.js";
+import type { ResidualEntry } from "./build_triage_entries.js";
+import type { EnrichedFunctionEntry } from "./entry_point_types.js";
+import type { KnownIssue, KnownIssuesRegistry } from "./known_issues_types.js";
+import type { FilterResult } from "./known_entrypoints.js";
 
 // ===== Fixtures =====
 
@@ -26,9 +23,6 @@ function make_entry(overrides: Partial<EnrichedFunctionEntry> & { name: string }
   return {
     file_path: `src/${overrides.name}.ts`,
     start_line: 1,
-    start_column: 0,
-    end_line: 5,
-    end_column: 1,
     kind: "function",
     tree_size: 10,
     is_exported: true,

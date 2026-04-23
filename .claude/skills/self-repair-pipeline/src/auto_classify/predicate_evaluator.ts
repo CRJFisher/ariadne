@@ -15,7 +15,8 @@
  *   `new RegExp(pattern)` only to keep unit tests tolerant of hand-built nodes.
  */
 
-import type { PredicateExpr, SyntacticFeatures, SyntacticFeatureName } from "../types.js";
+import type { SyntacticFeatures, SyntacticFeatureName } from "../entry_point_types.js";
+import type { PredicateExpr } from "../known_issues_types.js";
 import { detect_language } from "../extract_entry_points.js";
 import type { PredicateContext } from "./types.js";
 

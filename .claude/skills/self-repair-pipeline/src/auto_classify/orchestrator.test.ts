@@ -1,12 +1,9 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 
-import type {
-  EnrichedFunctionEntry,
-  KnownIssue,
-  KnownIssuesRegistry,
-  PredicateExpr,
-} from "../types.js";
-import { auto_classify } from "./auto_classify.js";
+import type { EnrichedFunctionEntry } from "../entry_point_types.js";
+import type { KnownIssue, KnownIssuesRegistry, PredicateExpr } from "../known_issues_types.js";
+import type { ClassifierHint } from "../triage_state_types.js";
+import { auto_classify } from "./orchestrator.js";
 
 // ===== Fixtures =====
 
@@ -17,9 +14,6 @@ function make_entry(
     name: "target",
     file_path: "src/target.ts",
     start_line: 5,
-    start_column: 0,
-    end_line: 8,
-    end_column: 1,
     kind: "function",
     tree_size: 0,
     is_exported: true,
@@ -67,29 +61,9 @@ function none_issue(group_id: string): KnownIssue {
   };
 }
 
-function builtin_issue(group_id: string, status: KnownIssue["status"] = "permanent"): KnownIssue {
-  return {
-    group_id,
-    title: `Title for ${group_id}`,
-    description: `Desc for ${group_id}`,
-    status,
-    languages: ["typescript"],
-    examples: [],
-    classifier: {
-      kind: "builtin",
-      function_name: "some_builtin",
-      min_confidence: 0.8,
-    },
-  };
-}
-
 const EMPTY_READER = (_: string) => [] as readonly string[];
 
 // ===== Tests =====
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
 
 describe("auto_classify — priority and match semantics", () => {
   it("first matching predicate wins when two predicates both match", () => {
@@ -132,7 +106,7 @@ describe("auto_classify — priority and match semantics", () => {
     expect(classified.result.classifier_hints).toEqual([]);
   });
 
-  it("kind: none and kind: builtin entries are skipped silently", () => {
+  it("kind: none entries are skipped silently", () => {
     const entry = make_entry({
       diagnostics: {
         grep_call_sites: [],
@@ -142,7 +116,6 @@ describe("auto_classify — priority and match semantics", () => {
     });
     const registry: KnownIssuesRegistry = [
       none_issue("skip-none"),
-      builtin_issue("skip-builtin"),
       predicate_issue("match", { op: "diagnosis_eq", value: "no-textual-callers" }, 1.0),
     ];
 
@@ -223,7 +196,7 @@ describe("auto_classify — sub-threshold hints", () => {
 
     expect(classified.result.auto_classified).toBe(true);
     expect(classified.result.auto_group_id).toBe("final");
-    expect(classified.result.classifier_hints.map((h) => h.group_id)).toEqual([
+    expect(classified.result.classifier_hints.map((h: ClassifierHint) => h.group_id)).toEqual([
       "hint-1",
       "hint-2",
     ]);
@@ -250,54 +223,3 @@ describe("auto_classify — file reader plumbing", () => {
   });
 });
 
-describe("auto_classify — preemption warning", () => {
-  it("emits exactly one stderr warning naming the preempted predicate", () => {
-    const entry = make_entry();
-    const registry: KnownIssuesRegistry = [
-      builtin_issue("perm-builtin", "permanent"),
-      predicate_issue("after-builtin", { op: "diagnosis_eq", value: "no-textual-callers" }, 1.0),
-    ];
-    const write = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
-
-    auto_classify([entry], registry, EMPTY_READER);
-
-    const warnings = write.mock.calls
-      .map((c) => String(c[0]))
-      .filter((msg) => msg.includes("[auto_classify] warning"));
-    expect(warnings.length).toEqual(1);
-    expect(warnings[0]).toContain("after-builtin");
-  });
-
-  it("warns only once per run even with multiple preempted predicates", () => {
-    const entry = make_entry();
-    const registry: KnownIssuesRegistry = [
-      builtin_issue("perm-1", "permanent"),
-      predicate_issue("first-after", { op: "diagnosis_eq", value: "no-textual-callers" }, 1.0),
-      predicate_issue("second-after", { op: "diagnosis_eq", value: "no-textual-callers" }, 1.0),
-    ];
-    const write = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
-
-    auto_classify([entry], registry, EMPTY_READER);
-
-    const warnings = write.mock.calls
-      .map((c) => String(c[0]))
-      .filter((msg) => msg.includes("[auto_classify] warning"));
-    expect(warnings.length).toEqual(1);
-  });
-
-  it("does not warn when a wip builtin precedes a predicate", () => {
-    const entry = make_entry();
-    const registry: KnownIssuesRegistry = [
-      builtin_issue("wip-builtin", "wip"),
-      predicate_issue("after-wip", { op: "diagnosis_eq", value: "no-textual-callers" }, 1.0),
-    ];
-    const write = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
-
-    auto_classify([entry], registry, EMPTY_READER);
-
-    const warnings = write.mock.calls
-      .map((c) => String(c[0]))
-      .filter((msg) => msg.includes("[auto_classify] warning"));
-    expect(warnings).toEqual([]);
-  });
-});

@@ -17,10 +17,10 @@ You investigate a single entry point candidate detected by Ariadne's call graph 
 
 ## Context
 
-Your prompt contains an `entry_index`. Run `get_entry_context.ts` to fetch the full investigation context:
+Your prompt contains a `project` and an `entry_index`. Run `get_entry_context.ts` to fetch the full investigation context:
 
 ```bash
-node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts --entry <entry_index>
+node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts --project <project> --entry <entry_index>
 ```
 
 The script outputs the complete investigation context: entry metadata, pre-gathered diagnostic evidence, diagnosis-specific investigation steps, and the output path for your result JSON.

@@ -5,9 +5,9 @@ import type {
   EnrichedFunctionEntry,
   EntryPointDiagnostics,
   GrepHit,
-  PredicateExpr,
   SyntacticFeatures,
-} from "../types.js";
+} from "../entry_point_types.js";
+import type { PredicateExpr } from "../known_issues_types.js";
 import { evaluate_predicate } from "./predicate_evaluator.js";
 
 // ===== Fixtures =====
@@ -65,9 +65,6 @@ function make_entry(
     name: "target",
     file_path: "src/target.ts",
     start_line: 5,
-    start_column: 0,
-    end_line: 8,
-    end_column: 1,
     kind: "function",
     tree_size: 0,
     is_exported: true,

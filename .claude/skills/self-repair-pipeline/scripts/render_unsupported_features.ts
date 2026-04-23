@@ -20,14 +20,14 @@ import type {
   KnownIssue,
   KnownIssueLanguage,
   PredicateExpr,
-} from "../src/types.js";
+} from "../src/known_issues_types.js";
 
 // ===== Paths =====
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_ROOT = path.resolve(HERE, "..");
 const REPO_ROOT = path.resolve(SKILL_ROOT, "..", "..", "..");
-const QUERIES_DIR = path.resolve(
+export const QUERIES_DIR = path.resolve(
   REPO_ROOT,
   "packages",
   "core",
@@ -136,8 +136,6 @@ function render_classifier_short(classifier: ClassifierSpec): string {
   switch (classifier.kind) {
     case "none":
       return "_none — known, no automated classifier_";
-    case "builtin":
-      return `builtin \`${classifier.function_name}\` (min_confidence ${classifier.min_confidence})`;
     case "predicate":
       return `predicate, axis ${classifier.axis} (min_confidence ${classifier.min_confidence})`;
   }
@@ -172,19 +170,15 @@ function render_predicate_expr(expr: PredicateExpr, depth: number): string {
 
 // ===== IO =====
 
-export function write_outputs(outputs: RenderOutput[], target_dir: string = QUERIES_DIR): string[] {
-  fs.mkdirSync(target_dir, { recursive: true });
+export function write_outputs(outputs: RenderOutput[]): string[] {
+  fs.mkdirSync(QUERIES_DIR, { recursive: true });
   const written: string[] = [];
   for (const o of outputs) {
-    const p = path.join(target_dir, o.file_name);
+    const p = path.join(QUERIES_DIR, o.file_name);
     fs.writeFileSync(p, o.content, "utf8");
     written.push(p);
   }
   return written;
-}
-
-export function get_queries_dir(): string {
-  return QUERIES_DIR;
 }
 
 // ===== Main =====
@@ -194,8 +188,7 @@ function main(): void {
   const outputs = render_all(registry);
   const written = write_outputs(outputs);
   for (const p of written) {
-     
-    console.log(`wrote ${path.relative(REPO_ROOT, p)}`);
+    console.error(`wrote ${path.relative(REPO_ROOT, p)}`);
   }
 }
 

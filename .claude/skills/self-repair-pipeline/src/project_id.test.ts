@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { path_to_project_id, project_id_from_config } from "./analysis_io.js";
+import { path_to_project_id, project_id_from_config } from "./project_id.js";
 
 describe("path_to_project_id", () => {
   it("replaces slashes with dashes", () => {

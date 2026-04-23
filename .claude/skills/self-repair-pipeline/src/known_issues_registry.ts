@@ -10,9 +10,9 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { SYNTACTIC_FEATURE_NAMES, type SyntacticFeatureName } from "./entry_point_types.js";
 import {
   PREDICATE_OPERATORS,
-  SYNTACTIC_FEATURE_NAMES,
   type ClassifierSpec,
   type KnownIssue,
   type KnownIssueLanguage,
@@ -20,8 +20,7 @@ import {
   type KnownIssuesRegistry,
   type PredicateExpr,
   type PredicateOperator,
-  type SyntacticFeatureName,
-} from "./types.js";
+} from "./known_issues_types.js";
 
 // ===== Constants =====
 
@@ -176,11 +175,6 @@ function validate_classifier_spec(value: unknown, at: string): asserts value is 
     }
     return;
   }
-  if (kind === "builtin") {
-    require_string(record, "function_name", at);
-    require_confidence(record["min_confidence"], `${at}.min_confidence`);
-    return;
-  }
   if (kind === "predicate") {
     const axis = record["axis"];
     if (typeof axis !== "string" || !VALID_AXES.has(axis as "A" | "B" | "C")) {
@@ -193,7 +187,7 @@ function validate_classifier_spec(value: unknown, at: string): asserts value is 
     return;
   }
   throw new RegistryValidationError(
-    `${at}.kind: must be "none" | "builtin" | "predicate" (got "${String(kind)}")`,
+    `${at}.kind: must be "none" | "predicate" (got "${String(kind)}")`,
   );
 }
 
