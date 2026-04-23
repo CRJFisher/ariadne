@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   apply_proposals,
   derive_languages_for_upsert,
+  link_ariadne_bug_tasks,
   mark_drift_in_registry,
 } from "./apply_proposals.js";
 import type {
@@ -83,10 +84,10 @@ function builtin_inv(
       function_name: `check_${group_id}`,
       min_confidence: 0.9,
     },
-    backlog_ref: null,
-    new_signals_needed: [],
     classifier_spec: minimal_spec(`check_${group_id}`),
     retargets_to: null,
+    introspection_gap: null,
+    ariadne_bug: null,
     reasoning: "",
     ...overrides,
   };
@@ -249,7 +250,8 @@ describe("apply_proposals", () => {
     expect(result.failed_authoring).toEqual([]);
     expect(result.drift_tagged_groups).toEqual(["a"]);
     expect(result.registry_upserts).toEqual(["new-group"]);
-    expect(result.backlog_tasks_to_create).toEqual([]);
+    expect(result.introspection_gap_tasks).toEqual([]);
+    expect(result.ariadne_bug_tasks).toEqual([]);
 
     const on_disk = await read_registry_json();
     expect(on_disk).toEqual([known("a")]);
@@ -359,25 +361,33 @@ describe("apply_proposals", () => {
     expect(result.authored_files).toEqual([]);
   });
 
-  it("deduplicates new_signals_needed across responses", async () => {
+  it("collects introspection_gap entries as separate tasks (one per response)", async () => {
     await write_registry([]);
     const inv: InvestigateResponse[] = [
       {
         group_id: "a",
         proposed_classifier: null,
-        backlog_ref: null,
-        new_signals_needed: ["grep_call_sites", "decorator_scan"],
         classifier_spec: null,
         retargets_to: null,
+        introspection_gap: {
+          signals_needed: ["grep_call_sites", "decorator_scan"],
+          title: "a-gap",
+          description: "",
+        },
+        ariadne_bug: null,
         reasoning: "",
       },
       {
         group_id: "b",
         proposed_classifier: null,
-        backlog_ref: null,
-        new_signals_needed: ["decorator_scan", "receiver_kind"],
         classifier_spec: null,
         retargets_to: null,
+        introspection_gap: {
+          signals_needed: ["decorator_scan", "receiver_kind"],
+          title: "b-gap",
+          description: "",
+        },
+        ariadne_bug: null,
         reasoning: "",
       },
     ];
@@ -386,24 +396,62 @@ describe("apply_proposals", () => {
       registry_path,
       authored_files_by_group: {},
     });
-    expect(result.new_signals_needed.sort()).toEqual([
-      "decorator_scan",
-      "grep_call_sites",
-      "receiver_kind",
+    expect(result.introspection_gap_tasks).toEqual([
+      {
+        group_id: "a",
+        title: "a-gap",
+        description: "",
+        signals_needed: ["grep_call_sites", "decorator_scan"],
+      },
+      {
+        group_id: "b",
+        title: "b-gap",
+        description: "",
+        signals_needed: ["decorator_scan", "receiver_kind"],
+      },
+    ]);
+    expect(result.ariadne_bug_tasks).toEqual([]);
+  });
+
+  it("collects ariadne_bug proposals with retargets_to folded into target_registry_group_id", async () => {
+    await write_registry([known("existing-entry")]);
+    const inv: InvestigateResponse = builtin_inv("dispatch-group", {
+      retargets_to: "existing-entry",
+      ariadne_bug: {
+        root_cause_category: "receiver_resolution",
+        title: "Resolver loses field type",
+        description: "details",
+        existing_task_id: null,
+      },
+    });
+    // Need an authored file to keep upsert flow happy.
+    const authored_path = path.join(authored_dir, "check_existing-entry.ts");
+    await write_authored_file(authored_path);
+
+    const result = await apply_proposals([], [inv], { "dispatch-group": 2 }, {
+      dry_run: false,
+      registry_path,
+      authored_files_by_group: { "existing-entry": authored_path },
+    });
+
+    expect(result.ariadne_bug_tasks).toEqual([
+      {
+        group_id: "dispatch-group",
+        target_registry_group_id: "existing-entry",
+        root_cause_category: "receiver_resolution",
+        title: "Resolver loses field type",
+        description: "details",
+        existing_task_id: null,
+      },
     ]);
   });
 
   it("skips upsert when existing entry is status='permanent'", async () => {
     await write_registry([known("a", { status: "permanent" })]);
-    const inv: InvestigateResponse = {
-      group_id: "a",
+    const inv: InvestigateResponse = builtin_inv("a", {
       proposed_classifier: { kind: "none" },
-      backlog_ref: null,
-      new_signals_needed: [],
       classifier_spec: null,
-      retargets_to: null,
-      reasoning: "",
-    };
+    });
     const result = await apply_proposals([], [inv], {}, {
       dry_run: false,
       registry_path,
@@ -421,15 +469,10 @@ describe("apply_proposals", () => {
 
   it("kind='none' overwrite flips status to wip and sets drift_detected", async () => {
     await write_registry([known("a", { status: "fixed" })]);
-    const inv: InvestigateResponse = {
-      group_id: "a",
+    const inv: InvestigateResponse = builtin_inv("a", {
       proposed_classifier: { kind: "none" },
-      backlog_ref: null,
-      new_signals_needed: [],
       classifier_spec: null,
-      retargets_to: null,
-      reasoning: "",
-    };
+    });
     const result = await apply_proposals([], [inv], {}, {
       dry_run: false,
       registry_path,
@@ -440,5 +483,43 @@ describe("apply_proposals", () => {
     expect(on_disk[0].status).toBe("wip");
     expect(on_disk[0].drift_detected).toBe(true);
     expect(on_disk[0].classifier).toEqual({ kind: "none" });
+  });
+});
+
+describe("link_ariadne_bug_tasks", () => {
+  it("writes backlog_task onto matching registry entries", async () => {
+    await write_registry([known("a"), known("b"), known("c")]);
+    const result = await link_ariadne_bug_tasks(registry_path, {
+      a: "TASK-300",
+      c: "TASK-301",
+    });
+    expect(result.updated_groups.sort()).toEqual(["a", "c"]);
+    const on_disk = await read_registry_json();
+    expect(on_disk.find((e) => e.group_id === "a")?.backlog_task).toBe("TASK-300");
+    expect(on_disk.find((e) => e.group_id === "b")?.backlog_task).toBeUndefined();
+    expect(on_disk.find((e) => e.group_id === "c")?.backlog_task).toBe("TASK-301");
+  });
+
+  it("no-ops when the task id already matches", async () => {
+    await write_registry([known("a", { backlog_task: "TASK-300" })]);
+    const result = await link_ariadne_bug_tasks(registry_path, { a: "TASK-300" });
+    expect(result.updated_groups).toEqual([]);
+  });
+
+  it("silently skips ids that don't match any registry entry", async () => {
+    await write_registry([known("a")]);
+    const result = await link_ariadne_bug_tasks(registry_path, {
+      a: "TASK-300",
+      "no-such-entry": "TASK-999",
+    });
+    expect(result.updated_groups).toEqual(["a"]);
+  });
+
+  it("short-circuits on an empty mapping", async () => {
+    await write_registry([known("a")]);
+    const result = await link_ariadne_bug_tasks(registry_path, {});
+    expect(result.updated_groups).toEqual([]);
+    const on_disk = await read_registry_json();
+    expect(on_disk[0].backlog_task).toBeUndefined();
   });
 });

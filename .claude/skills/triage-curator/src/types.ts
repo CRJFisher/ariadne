@@ -51,7 +51,18 @@ export interface CurationOutcome {
   qa_outliers_found: number;
   investigated_groups: number;
   classifiers_proposed: number;
-  backlog_tasks_proposed: string[];
+  /**
+   * Introspection-gap sub-tasks proposed for `INTROSPECTION_GAP_PARENT_TASK_ID`.
+   * Persisted in full so Step 6a is replayable from the sentinel if the main
+   * agent crashes between finalize and backlog filing.
+   */
+  introspection_gap_tasks: IntrospectionGapTaskToCreate[];
+  /**
+   * Ariadne-bug top-level tasks proposed. Persisted in full so Step 6b is
+   * replayable from the sentinel; crash between finalize and
+   * `link_ariadne_bug_tasks` does not strand registry entries.
+   */
+  ariadne_bug_tasks: AriadneBugTaskToCreate[];
   /** Count of investigator sessions that produced a valid classifier. */
   success_count: number;
   /** Count of investigator sessions where classification was structurally impossible. */
@@ -110,9 +121,105 @@ export type ClassifierSpecProposal =
   | { kind: "none" }
   | { kind: "builtin"; function_name: string; min_confidence: number };
 
-export interface BacklogRefProposal {
+/**
+ * Closed enumeration of the resolver-level root causes behind a false-positive
+ * group. Used to label Ariadne-bug backlog tasks so they can be rolled up by
+ * category in impact reports.
+ *
+ * - `receiver_resolution`     member-access receiver type lost across a field or
+ *                             method hop (e.g. `project.definitions.method()`).
+ * - `import_resolution`       import-level linking failure (inline `require()`,
+ *                             wildcard imports, re-export chains, module-qualified
+ *                             attribute calls).
+ * - `syntactic_extraction`    the tree-sitter query / definition extractor does not
+ *                             capture the node kind (e.g. JS getter/setter, class
+ *                             extends, Rust enum-impl methods).
+ * - `coverage_config`         call sites exist but live in files Ariadne excludes
+ *                             from indexing (e.g. `/tests/` directories).
+ * - `cross_file_flow`         call edge requires flow through a value (argument
+ *                             lambdas through higher-order calls, object-literal
+ *                             method through destructure, factory return types).
+ * - `other`                   anything else; description must explain.
+ */
+export type AriadneRootCauseCategory =
+  | "receiver_resolution"
+  | "import_resolution"
+  | "syntactic_extraction"
+  | "coverage_config"
+  | "cross_file_flow"
+  | "other";
+
+/** String-form enumeration of `AriadneRootCauseCategory`. Kept in sync with the union above. */
+export const ARIADNE_ROOT_CAUSE_CATEGORIES: readonly AriadneRootCauseCategory[] = [
+  "receiver_resolution",
+  "import_resolution",
+  "syntactic_extraction",
+  "coverage_config",
+  "cross_file_flow",
+  "other",
+];
+
+/**
+ * Deficiency in Ariadne's **introspection / classifier DSL** that blocks the
+ * investigator from expressing a precise classifier. Drafts a backlog sub-task
+ * under the single static parent (`INTROSPECTION_GAP_PARENT_TASK_ID`).
+ */
+export interface IntrospectionGap {
+  /** Kebab-case identifiers of the signals the classifier would need. */
+  signals_needed: string[];
   title: string;
   description: string;
+}
+
+/**
+ * Deficiency in Ariadne's **resolver** that is the real root cause of the
+ * false-positive group. Drafts a top-level backlog task, or attaches to an
+ * existing one when `existing_task_id` is set.
+ *
+ * Required on every response that proposes a working classifier (`predicate`
+ * or `builtin`): the classifier is a workaround; the bug is the real fix.
+ */
+export interface AriadneBug {
+  root_cause_category: AriadneRootCauseCategory;
+  title: string;
+  description: string;
+  /**
+   * Set when `mcp__backlog__task_search` already found a task covering this
+   * root cause. Finalize attaches to it instead of creating a new one.
+   * Format: `TASK-<N>` or `TASK-<N>.<M>...`.
+   */
+  existing_task_id: string | null;
+}
+
+/**
+ * Introspection-gap task produced by `apply_proposals` and filed by the main
+ * agent under `INTROSPECTION_GAP_PARENT_TASK_ID` in Step 6a. One per
+ * investigator response that populated `introspection_gap`.
+ */
+export interface IntrospectionGapTaskToCreate {
+  /** Source group that surfaced this gap. */
+  group_id: string;
+  title: string;
+  description: string;
+  signals_needed: string[];
+}
+
+/**
+ * Ariadne-bug task produced by `apply_proposals` and filed by the main agent
+ * as a top-level backlog task in Step 6b. The resolved task id is written
+ * back onto `KnownIssue.backlog_task` for the `target_registry_group_id`
+ * entry via `link_ariadne_bug_tasks`.
+ */
+export interface AriadneBugTaskToCreate {
+  /** Source group that surfaced this bug. */
+  group_id: string;
+  /** Target registry entry that carries the linked `backlog_task` once the task lands. */
+  target_registry_group_id: string;
+  root_cause_category: AriadneRootCauseCategory;
+  title: string;
+  description: string;
+  /** Non-null when the investigator matched an existing backlog task; skip create, attach. */
+  existing_task_id: string | null;
 }
 
 // ===== Builtin classifier spec =====
@@ -178,8 +285,6 @@ export interface BuiltinClassifierSpec {
 export interface InvestigateResponse {
   group_id: string;
   proposed_classifier: ClassifierSpecProposal | null;
-  backlog_ref: BacklogRefProposal | null;
-  new_signals_needed: string[];
   /**
    * Required when `proposed_classifier.kind === "builtin"`; null otherwise.
    * The main agent renders the spec to TypeScript source in Step 4.5.
@@ -194,6 +299,20 @@ export interface InvestigateResponse {
    * wrong group's entries.
    */
   retargets_to: string | null;
+  /**
+   * Signal-library / classifier-DSL deficiency. Non-null ↔ `signals_needed`
+   * is non-empty. Finalize files this as a sub-task under
+   * `INTROSPECTION_GAP_PARENT_TASK_ID`.
+   */
+  introspection_gap: IntrospectionGap | null;
+  /**
+   * Resolver-level root cause behind this false-positive group. REQUIRED when
+   * `proposed_classifier` is non-null and its `kind` is not `"none"` — the
+   * classifier is a workaround; this is the real fix. Finalize files this as a
+   * top-level task (or attaches to `existing_task_id`) and writes the resolved
+   * id into the registry entry's `backlog_task` field.
+   */
+  ariadne_bug: AriadneBug | null;
   reasoning: string;
 }
 

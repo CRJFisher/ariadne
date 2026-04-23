@@ -1,6 +1,6 @@
 ---
 name: triage-curator-investigator
-description: Investigates a false-positive group — either residual (no existing classifier) or promoted (QA found the existing classifier is mis-matching enough members to warrant re-investigation) — to propose or tighten a classifier, a backlog task, and any missing Ariadne signals.
+description: Investigates a false-positive group — either residual (no existing classifier) or promoted (QA found the existing classifier is mis-matching enough members to warrant re-investigation) — and emits three distinct proposals: a classifier (workaround), an Ariadne-bug task (root cause), and any introspection gap (signal-library deficiency).
 tools: Bash(node --import tsx .claude/skills/triage-curator/scripts/get_investigate_context.ts:*), Read, Grep, Glob, Write(~/.ariadne/triage-curator/**)
 mcpServers:
   - ariadne
@@ -49,7 +49,11 @@ Branch your investigation on it. In both modes the bundle includes:
 - `signal_check_ops` — the closed list of `SignalCheck.op` values that are
   valid inside a `classifier_spec`. Choose only from this list. Adding a
   new op requires a type + renderer change first; propose via
-  `new_signals_needed` if you need one.
+  `introspection_gap.signals_needed` if you need one.
+- `ariadne_root_cause_categories` — closed list of valid
+  `ariadne_bug.root_cause_category` values.
+- `introspection_gap_parent_task_id` — the static parent task under which
+  introspection-gap sub-tasks are filed (e.g. `TASK-190.16`).
 
 In promoted mode the bundle adds:
 
@@ -78,15 +82,19 @@ The group has no registry entry yet. Propose one.
    confirm the real pattern. `mcp__ariadne__show_call_graph_neighborhood`
    and `list_entrypoints` are the two main levers.
 
-4. **Check the backlog** via `mcp__backlog__task_search`. If a pre-existing
-   task already targets this gap, omit `backlog_ref` and mention the
-   existing task id in `reasoning`.
+4. **Propose a classifier.** Read `signal_inventory.md` first; prefer
+   existing signals. The curator only emits `kind: "builtin"` classifiers
+   (plus `kind: "none"` when the signal library is insufficient);
+   hand-authored predicate-DSL classifiers exist in the registry but are
+   not produced here. You never emit TypeScript — the main agent renders
+   the builtin `classifier_spec` to source.
 
-5. **Propose a classifier.** Read `signal_inventory.md` first; prefer
-   existing signals. Predicate-DSL-expressible → `kind: "predicate"`.
-   Resolution-graph-access required → `kind: "builtin"` with a
-   `classifier_spec` (see "Classifier spec" below). You never emit
-   TypeScript — the main agent renders the spec to source.
+5. **Capture the Ariadne bug.** See deliverable 3 in "Three deliverables"
+   below. Search the backlog first via `mcp__backlog__task_search`.
+
+6. **Capture any introspection gap.** See deliverable 2 in "Three
+   deliverables" below (populate only if the signal library cannot
+   express the needed rule).
 
 ## Promoted path
 
@@ -109,38 +117,88 @@ found the existing classifier is mis-matching (`qa_outliers`). Pick one of
   resurfaces on the next scan for human review.
 - **keep** — You investigated and concluded the existing classifier is
   correct; QA's outliers are genuine edge cases that do belong to this
-  group. Omit `proposed_classifier` (emit it as `null`), attach a
-  `backlog_ref` describing the judgement call, and set session log
-  `status: "success"`, `success_summary` explaining the decision.
+  group. Emit `proposed_classifier: null` (**not** `{ kind: "none" }` —
+  `null` means "retained existing entry"; `{ kind: "none" }` means
+  "retire the existing classifier"). Populate `ariadne_bug` describing
+  the underlying resolver deficiency that made the call look unreachable,
+  and set session log `status: "success"`, `success_summary` explaining
+  the decision.
 
 **Permanent entries are protected.** If `registry_entry.status ===
 "permanent"`, tightening / replacement / retirement are off-limits. Return
-`proposed_classifier: null`, a `backlog_ref` describing the needed human
-follow-up, and set session log `status: "failure"`,
-`failure_category: "permanent_locked"`.
+`proposed_classifier: null`, populate `ariadne_bug` describing the
+resolver bug (the permanent entry exists because the bug is real), and
+set session log `status: "failure"`, `failure_category: "permanent_locked"`.
 
-## Classifier vs backlog — the dichotomy
+## Three deliverables — classifier, introspection gap, Ariadne bug
 
-A classifier is the primary deliverable. A backlog ticket is a narrow
-substitute, permitted only when the signal library is insufficient.
+Each response has three distinct outputs, each tracking a different aspect:
 
-- Every response **must** emit a classifier of one of these shapes:
-  - `kind: "predicate"` — inline DSL expression; `classifier_spec` must
-    be `null`.
-  - `kind: "builtin"` — accompanied by a non-null `classifier_spec`
-    matching `function_name` and `min_confidence`. The main agent
-    renders it to source in Step 4.5; you never emit code.
-- `kind: "none"` is permitted **only** when `new_signals_needed` is
-  non-empty **and** `backlog_ref` describes the missing-signal blocker.
-  This is the only condition under which a backlog ticket substitutes for
-  a classifier. The dispatcher enforces this — any response with
-  `backlog_ref !== null` and empty `new_signals_needed` is rejected.
-- `proposed_classifier: null` is the only exception, reserved for the
-  promoted **split** and **keep** actions above, and for residual
-  `group_incoherent` failures. Pair it with a session log of
-  `status: "failure"` or `status: "success"` that matches the intent.
+1. **Classifier** (`proposed_classifier` + optional `classifier_spec`) —
+   the primary deliverable. This is _how the pipeline routes around the
+   false positive_. The curator emits one of two kinds:
 
-## Classifier spec
+   - `kind: "builtin"` — accompanied by a non-null `classifier_spec`
+     matching `function_name` and `min_confidence`. The main agent
+     renders it to source in Step 4.5; you never emit code.
+   - `kind: "none"` — permitted **only** when `introspection_gap` is
+     non-null (i.e. the signal library cannot express the needed rule).
+
+   `proposed_classifier: null` is reserved for the promoted **split** and
+   **keep** actions and for residual `group_incoherent` failures. Pair it
+   with a session log status that matches the intent.
+
+2. **Introspection gap** (`introspection_gap`) — the signal-library /
+   classifier-DSL deficiency. Non-null when the signals you need to
+   discriminate the pattern are missing. Finalize files this as a
+   sub-task under `introspection_gap_parent_task_id` (currently
+   `TASK-190.16`); Backlog.md auto-assigns `.n+1`.
+
+   ```json
+   {
+     "signals_needed": ["kebab-case-signal-1", "kebab-case-signal-2"],
+     "title": "Add <capability> to SignalCheck op union",
+     "description": "Why the existing ops are insufficient, the shape of the needed signal, and a sketch of the rule you would write with it."
+   }
+   ```
+
+   **Granularity.** File **one gap per coherent missing capability**, not
+   one per signal name. If a single capability needs two new ops (e.g.
+   a grep cross-line walk + an enclosing-function lookup), list both in
+   `signals_needed[]` under one task. The title should name the
+   capability; `signals_needed[]` enumerates the concrete op names.
+
+3. **Ariadne bug** (`ariadne_bug`) — the resolver-level root cause.
+   **REQUIRED** whenever `proposed_classifier.kind === "builtin"`. The
+   classifier is a workaround; this is the real fix. Finalize files this
+   as a top-level backlog task (or attaches to `existing_task_id`) and
+   writes the resolved task id into the upserted registry entry's
+   `backlog_task` field.
+
+   ```json
+   {
+     "root_cause_category": "receiver_resolution",
+     "title": "Short imperative title",
+     "description": "File/line evidence from the group's entries + why the resolver misses the edge.",
+     "existing_task_id": null
+   }
+   ```
+
+   **Search the backlog first** via `mcp__backlog__task_search`. Cite
+   the query you used in `reasoning` so the search is auditable. A match
+   requires **both**:
+
+   - same `root_cause_category` (or equivalent labelled scope — e.g.
+     task body references the same Ariadne subsystem), and
+   - overlapping evidence: file paths, symbol names, or grep patterns
+     from the group's entries appear in the candidate task body.
+
+   If matched, set `ariadne_bug.existing_task_id: "TASK-<N>"` and keep
+   title/description short (finalize ignores them when `existing_task_id`
+   is set but they still aid review). Otherwise leave `existing_task_id:
+null` and write a full task body.
+
+### Classifier spec (deliverable 1, `kind: "builtin"`)
 
 When `proposed_classifier.kind === "builtin"`, emit a `classifier_spec`
 describing the classifier as structured data. The main agent renders it
@@ -175,7 +233,7 @@ Rules:
   usually empty.
 - `combinator: "all"` → fold checks with logical AND. `"any"` → OR.
 
-### Residual worked example
+#### Residual worked example
 
 ```json
 {
@@ -193,7 +251,7 @@ Rules:
 }
 ```
 
-### Promoted worked example
+#### Promoted worked example
 
 QA flagged entries `[2, 5]` as outliers. Tighten by adding a `file_path_matches`
 check that excludes the subdirectory the outliers live in:
@@ -213,6 +271,39 @@ check that excludes the subdirectory the outliers live in:
 }
 ```
 
+### Ariadne root-cause categories (deliverable 3)
+
+Choose the best-matching `root_cause_category` from this closed set:
+
+- **`receiver_resolution`** — the receiver **type** is lost at a field or
+  method hop. The chain `<id>.<field>.<method>()` succeeds syntactically
+  but Ariadne cannot identify the class that owns `<method>`. Example:
+  `project.definitions.method()` (TASK-205).
+- **`import_resolution`** — import-level linking fails: inline `require()`,
+  wildcard imports, re-export chains, module-qualified attribute calls.
+  Example: Python `mod.func()` resolved through namespace receiver
+  (TASK-190.11).
+- **`syntactic_extraction`** — the tree-sitter query / definition
+  extractor does not capture the node kind. Example: JS getter/setter
+  accessors (TASK-208 territory), Rust enum-impl methods (TASK-201), JS
+  class `extends` (TASK-202).
+- **`coverage_config`** — call sites exist but live in files Ariadne
+  excludes from indexing. Example: callers under `/tests/` directories
+  (TASK-210).
+- **`cross_file_flow`** — a **value** flows across a call/assignment and
+  the function identity is lost with it. The receiver type (if any) is
+  not the issue — it's the function itself that travels through an
+  argument, destructure, or return. Examples: argument lambdas through
+  higher-order calls (TASK-204), object-literal methods through
+  destructuring (TASK-206), factory-return inference, callback resolution
+  through `self_reference_call` receivers (TASK-203).
+- **`other`** — anything else. The description must explain.
+
+**Boundary rule:** if the receiver **type** is lost at a hop, pick
+`receiver_resolution`. If a value (lambda, method object, factory
+result) is passed across a call/assignment and loses its function
+identity, pick `cross_file_flow`.
+
 ## Output
 
 Write **two files** to `~/.ariadne/triage-curator/**` before returning.
@@ -223,10 +314,19 @@ Write **two files** to `~/.ariadne/triage-curator/**` before returning.
 {
   "group_id": "string",
   "proposed_classifier": <one of the shapes below> | null,
-  "backlog_ref": { "title": "string", "description": "string" } | null,
-  "new_signals_needed": ["kebab-case-signal-1"],
   "classifier_spec": <BuiltinClassifierSpec> | null,
   "retargets_to": "string" | null,
+  "introspection_gap": {
+    "signals_needed": ["kebab-case-signal-1"],
+    "title": "string",
+    "description": "string"
+  } | null,
+  "ariadne_bug": {
+    "root_cause_category": "receiver_resolution" | "import_resolution" | "syntactic_extraction" | "coverage_config" | "cross_file_flow" | "other",
+    "title": "string",
+    "description": "string",
+    "existing_task_id": "TASK-<N>" | null
+  } | null,
   "reasoning": "string"
 }
 ```
@@ -235,8 +335,7 @@ Classifier shapes (exclusive):
 
 ```json
 { "kind": "none" }
-{ "kind": "builtin",   "function_name": "check_x", "min_confidence": 0.9 }
-{ "kind": "predicate", "axis": "A" | "B" | "C", "expression": { ... }, "min_confidence": 0.9 }
+{ "kind": "builtin", "function_name": "check_x", "min_confidence": 0.9 }
 ```
 
 - For `kind: "builtin"`, `classifier_spec` **must** be non-null and its
@@ -244,7 +343,13 @@ Classifier shapes (exclusive):
   "Classifier spec" above for the full shape.
 - For any other `kind`, `classifier_spec` **must** be `null`.
 - `min_confidence` — optional; defaults to `0.9`.
-- `backlog_ref` — non-null **only** when `new_signals_needed` is non-empty.
+- `introspection_gap` — non-null when the signal library cannot express
+  the needed classifier rule. `signals_needed` must be non-empty when the
+  object is non-null.
+- `ariadne_bug` — **required** whenever `proposed_classifier.kind ===
+"builtin"`. Either file a new task (title + description,
+  `existing_task_id: null`) or attach to an existing one
+  (`existing_task_id: "TASK-<N>"` after `mcp__backlog__task_search`).
 - `reasoning` — cite specific files, lines, and patterns examined.
 - `group_id` **must** equal the dispatch group id (the id you received).
   To extend an existing registry entry, set `retargets_to` instead of
@@ -267,8 +372,15 @@ Step 4.25 validates every response before rendering. The validator rejects:
 - `retargets_to` non-null while `positive_examples` or `negative_examples`
   is non-empty.
 - `positive_examples` / `negative_examples` indices `>= group.entries.length`.
-- `kind: "none"` with empty `new_signals_needed` AND a session log that
+- `kind: "none"` with null `introspection_gap` AND a session log that
   carries no `failure_category` (silent dead-end).
+- Working classifier proposed (`kind: "builtin"`) with `ariadne_bug:
+null` (the workaround is not allowed to stand alone — the resolver bug
+  must also be filed or attached).
+- `ariadne_bug.root_cause_category` not in `ariadne_root_cause_categories`.
+- `ariadne_bug.existing_task_id` not matching `^TASK-[0-9]+(\.[0-9]+)*$`.
+- `introspection_gap.signals_needed` empty (drop `introspection_gap` to
+  `null` instead).
 
 The hydrated context carries an `authoring_rules` stanza that names the
 exact rules; consult it before emitting the response.
@@ -290,12 +402,6 @@ Alongside `<output_path>`, write a sibling file with the same stem plus
   "failure_category": null | "group_incoherent" | "pattern_unclear" | "classifier_infeasible" | "registry_conflict" | "permanent_locked" | "other",
   "failure_details": null | "concrete specifics beyond reasoning",
   "success_summary": null | "signals picked and classifier chosen",
-  "actions": {
-    "classifier_kind": null | "predicate" | "builtin" | "none",
-    "backlog_ref_emitted": true | false,
-    "new_signals_needed_count": 0,
-    "classifier_spec_emitted": true | false
-  },
   "entries_examined_count": 0,
   "timestamp": "2026-04-22T12:34:56.000Z"
 }
@@ -303,25 +409,21 @@ Alongside `<output_path>`, write a sibling file with the same stem plus
 
 Status semantics:
 
-- `success` — `proposed_classifier` is non-null and its `kind` is
-  `"predicate"` or `"builtin"` (valid working classifier). Set
-  `success_summary` to describe which signals discriminate the pattern and
-  which kind of classifier you chose.
+- `success` — `proposed_classifier.kind === "builtin"` (valid working
+  classifier). Set `success_summary` to describe which signals
+  discriminate the pattern and which kind of classifier you chose.
+  `ariadne_bug` is required.
 - `blocked_missing_signal` — `proposed_classifier: { kind: "none" }`,
-  `new_signals_needed` non-empty, `backlog_ref` set. Legitimate, expected
-  outcome when the signal library is insufficient.
+  `introspection_gap` set. Legitimate, expected outcome when the signal
+  library is insufficient. `ariadne_bug` may still be populated to name
+  the underlying resolver deficiency (recommended when identifiable).
 - `failure` — anything else: group cannot be classified for a structural
   reason (incoherent grouping, infeasible pattern, permanent lock,
   registry conflict). Set both `failure_category` and `failure_details`
   (the latter naming specific entries that belong to different root causes
-  when `group_incoherent`). A `backlog_ref` MAY still be emitted alongside
-  `failure` when human follow-up is needed (e.g. "ask the rough-aggregator
-  to re-split this group for project X") — subject to the dichotomy rule
-  above.
-
-The dispatcher cross-checks `actions.*` against the response JSON; any
-disagreement is surfaced in the run summary as a sub-agent bug signal. Fill
-`actions.*` to match exactly what you wrote in the response.
+  when `group_incoherent`). `ariadne_bug` may still be emitted when the
+  resolver bug is identifiable (e.g. permanent-lock cases), but is not
+  required.
 
 ### After writing both files
 

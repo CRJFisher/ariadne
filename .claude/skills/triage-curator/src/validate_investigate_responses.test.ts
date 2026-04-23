@@ -47,6 +47,15 @@ function base_input(): ValidationInput {
   };
 }
 
+function valid_ariadne_bug(): Record<string, unknown> {
+  return {
+    root_cause_category: "receiver_resolution",
+    title: "Resolver loses type across Project.field hop",
+    description: "Full description with file/line evidence.",
+    existing_task_id: null,
+  };
+}
+
 function valid_builtin_response(overrides: Record<string, unknown> = {}): unknown {
   return {
     group_id: "dispatch-group",
@@ -55,8 +64,6 @@ function valid_builtin_response(overrides: Record<string, unknown> = {}): unknow
       function_name: "check_dispatch_group",
       min_confidence: 0.9,
     },
-    backlog_ref: null,
-    new_signals_needed: [],
     classifier_spec: {
       function_name: "check_dispatch_group",
       min_confidence: 0.9,
@@ -67,6 +74,8 @@ function valid_builtin_response(overrides: Record<string, unknown> = {}): unknow
       description: "d",
     },
     retargets_to: null,
+    introspection_gap: null,
+    ariadne_bug: valid_ariadne_bug(),
     reasoning: "r",
     ...overrides,
   };
@@ -175,10 +184,10 @@ describe("validate_response", () => {
     const raw = {
       group_id: "dispatch-group",
       proposed_classifier: { kind: "none" },
-      backlog_ref: null,
-      new_signals_needed: [],
       classifier_spec: null,
       retargets_to: null,
+      introspection_gap: null,
+      ariadne_bug: null,
       reasoning: "r",
     };
     const issues = validate_response({ ...base_input(), response_raw: raw });
@@ -186,17 +195,18 @@ describe("validate_response", () => {
     expect(issues[0].code).toBe("kind_none_no_signals_no_failure");
   });
 
-  it("accepts kind='none' when new_signals_needed is non-empty", () => {
+  it("accepts kind='none' when introspection_gap is populated", () => {
     const raw = {
       group_id: "dispatch-group",
       proposed_classifier: { kind: "none" },
-      backlog_ref: {
+      classifier_spec: null,
+      retargets_to: null,
+      introspection_gap: {
+        signals_needed: ["some-signal"],
         title: "new signal",
         description: "body",
       },
-      new_signals_needed: ["some-signal"],
-      classifier_spec: null,
-      retargets_to: null,
+      ariadne_bug: null,
       reasoning: "r",
     };
     const issues = validate_response({ ...base_input(), response_raw: raw });
@@ -207,10 +217,10 @@ describe("validate_response", () => {
     const raw = {
       group_id: "dispatch-group",
       proposed_classifier: { kind: "none" },
-      backlog_ref: null,
-      new_signals_needed: [],
       classifier_spec: null,
       retargets_to: null,
+      introspection_gap: null,
+      ariadne_bug: null,
       reasoning: "r",
     };
     const session_log: InvestigatorSessionLog = {
@@ -231,6 +241,66 @@ describe("validate_response", () => {
     });
     expect(issues).toEqual([]);
   });
+
+  it("reports missing_ariadne_bug when a working classifier is proposed without a bug", () => {
+    const raw = valid_builtin_response({ ariadne_bug: null });
+    const issues = validate_response({ ...base_input(), response_raw: raw });
+    expect(issues.length).toBe(1);
+    expect(issues[0].code).toBe("missing_ariadne_bug");
+  });
+
+  it("accepts a working classifier with ariadne_bug.existing_task_id set", () => {
+    const raw = valid_builtin_response({
+      ariadne_bug: {
+        root_cause_category: "receiver_resolution",
+        title: "Resolver loses type across Project.field hop",
+        description: "Attaching to existing resolver-bug task.",
+        existing_task_id: "TASK-205",
+      },
+    });
+    const issues = validate_response({ ...base_input(), response_raw: raw });
+    expect(issues).toEqual([]);
+  });
+
+  it("rejects an unknown root_cause_category", () => {
+    const raw = valid_builtin_response({
+      ariadne_bug: {
+        root_cause_category: "made_up_category",
+        title: "t",
+        description: "d",
+        existing_task_id: null,
+      },
+    });
+    const issues = validate_response({ ...base_input(), response_raw: raw });
+    expect(issues.length).toBe(1);
+    expect(issues[0].code).toBe("shape_error");
+    expect(issues[0].message).toContain("root_cause_category");
+  });
+
+  it("rejects a malformed existing_task_id", () => {
+    const raw = valid_builtin_response({
+      ariadne_bug: {
+        root_cause_category: "receiver_resolution",
+        title: "t",
+        description: "d",
+        existing_task_id: "task-205",
+      },
+    });
+    const issues = validate_response({ ...base_input(), response_raw: raw });
+    expect(issues.length).toBe(1);
+    expect(issues[0].code).toBe("shape_error");
+    expect(issues[0].message).toContain("existing_task_id");
+  });
+
+  it("rejects introspection_gap with empty signals_needed", () => {
+    const raw = valid_builtin_response({
+      introspection_gap: { signals_needed: [], title: "t", description: "d" },
+    });
+    const issues = validate_response({ ...base_input(), response_raw: raw });
+    expect(issues.length).toBe(1);
+    expect(issues[0].code).toBe("shape_error");
+    expect(issues[0].message).toContain("signals_needed");
+  });
 });
 
 describe("validate_run_coherence", () => {
@@ -242,8 +312,6 @@ describe("validate_run_coherence", () => {
         function_name: `check_${group_id}`,
         min_confidence: 0.9,
       },
-      backlog_ref: null,
-      new_signals_needed: [],
       classifier_spec: {
         function_name: `check_${group_id}`,
         min_confidence: 0.9,
@@ -254,6 +322,13 @@ describe("validate_run_coherence", () => {
         description: "",
       },
       retargets_to,
+      introspection_gap: null,
+      ariadne_bug: {
+        root_cause_category: "receiver_resolution",
+        title: "t",
+        description: "d",
+        existing_task_id: null,
+      },
       reasoning: "",
     };
   }
