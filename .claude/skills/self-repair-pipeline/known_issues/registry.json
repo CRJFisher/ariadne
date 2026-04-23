@@ -18,9 +18,7 @@
       }
     ],
     "classifier": {
-      "kind": "builtin",
-      "function_name": "method_chain_dispatch",
-      "min_confidence": 0.9
+      "kind": "none"
     }
   },
   {
@@ -43,9 +41,7 @@
       }
     ],
     "classifier": {
-      "kind": "builtin",
-      "function_name": "polymorphic_subtype_dispatch",
-      "min_confidence": 0.9
+      "kind": "none"
     }
   },
   {
@@ -94,9 +90,7 @@
       }
     ],
     "classifier": {
-      "kind": "builtin",
-      "function_name": "constructor_new_expression_capture_gap",
-      "min_confidence": 0.9
+      "kind": "none"
     }
   },
   {
@@ -245,9 +239,7 @@
       }
     ],
     "classifier": {
-      "kind": "builtin",
-      "function_name": "aliased_re_export_chain",
-      "min_confidence": 0.9
+      "kind": "none"
     }
   },
   {
@@ -676,9 +668,7 @@
       }
     ],
     "classifier": {
-      "kind": "builtin",
-      "function_name": "grep_evidence_ariadne_miss",
-      "min_confidence": 0.923
+      "kind": "none"
     }
   },
   {
@@ -727,9 +717,7 @@
       }
     ],
     "classifier": {
-      "kind": "builtin",
-      "function_name": "lambda_handler_file_convention",
-      "min_confidence": 1
+      "kind": "none"
     }
   },
   {
@@ -751,9 +739,7 @@
       }
     ],
     "classifier": {
-      "kind": "builtin",
-      "function_name": "callers_not_in_registry_with_grep",
-      "min_confidence": 0.952
+      "kind": "none"
     }
   },
   {
@@ -779,9 +765,7 @@
     ],
     "examples": [],
     "classifier": {
-      "kind": "builtin",
-      "function_name": "check_dynamic_dispatch",
-      "min_confidence": 0.9
+      "kind": "none"
     }
   },
   {
@@ -833,9 +817,7 @@
     ],
     "examples": [],
     "classifier": {
-      "kind": "builtin",
-      "function_name": "check_static_method_call_resolution",
-      "min_confidence": 0.9
+      "kind": "none"
     }
   },
   {
@@ -861,9 +843,7 @@
     ],
     "examples": [],
     "classifier": {
-      "kind": "builtin",
-      "function_name": "check_wasm_cross_language_call",
-      "min_confidence": 0.95
+      "kind": "none"
     }
   }
 ]

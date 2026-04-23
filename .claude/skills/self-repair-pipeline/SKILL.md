@@ -76,10 +76,12 @@ If no arguments are provided or the input is ambiguous, **ask the user** before 
 
 ## State and Output Locations
 
+Scripts that operate on existing triage state take `--project <name>` (`prepare_triage` uses `--project` at creation time; `get_triage_summary` enumerates every project and takes no flags). Each pipeline invocation operates on exactly one project, and different projects can run in parallel against the same `triage_state/` dir — the project name is the isolation boundary.
+
 | File                                                                     | Purpose                                                     |
 | ------------------------------------------------------------------------ | ----------------------------------------------------------- |
 | `project_configs/{name}.json`                                            | Per-project detection config (folders, excludes)            |
-| `triage_state/{project}/{project}_triage.json`                           | Active triage state (entries, results)                      |
+| `triage_state/{project}/{project}_triage.json`                           | Project triage state (entries, results)                     |
 | `triage_state/{project}/results/{entry_index}.json`                      | Per-entry triage result files (written by sub-agents)       |
 | `triage_state/{project}/aggregation/slices/slice_{n}.json`               | Pass 1 input slices (false-positive entries)                |
 | `triage_state/{project}/aggregation/pass1/slice_{n}.output.json`         | Pass 1 rough groupings                                      |
@@ -106,7 +108,7 @@ node --import tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints
 node --import tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts --github owner/repo
 ```
 
-Options: `--config <file>`, `--path <dir>`, `--github <repo>`, `--branch <name>`, `--depth <n>`, `--output <file>`, `--include-tests`, `--folders <paths>`, `--exclude <patterns>`
+Options: `--config <file>`, `--path <dir>`, `--github <repo>`, `--branch <name>`, `--depth <n>`. Folder filters, exclusions, and test inclusion are declared in the project config file, not as CLI flags.
 
 Tracked project configs for Ariadne packages: `~/.ariadne/self-repair-pipeline/project_configs/{core,mcp,types}.json`
 
@@ -119,11 +121,11 @@ Build triage state from the latest analysis output:
 ```bash
 node --import tsx .claude/skills/self-repair-pipeline/scripts/prepare_triage.ts \
   --analysis ~/.ariadne/self-repair-pipeline/analysis_output/<project>/detect_entrypoints/<timestamp>.json \
-  --package <name> \
+  --project <name> \
   [--max-count $MAX_COUNT]   # omit if $MAX_COUNT is unset
 ```
 
-Options: `--analysis <path>` (required), `--package <name>`, `--max-count <n>` (optional)
+Options: `--analysis <path>` (required), `--project <name>` (optional — falls back to analysis file's project_name), `--max-count <n>` (optional)
 
 When `--max-count` is set, the script shuffles the `llm-triage` entries (Fisher-Yates) and keeps only the first `<n>`. Use this to take a random sample when the full triage set is too large to process in one run.
 
@@ -140,7 +142,7 @@ Run investigators as a **continuous worker pool**: keep `N` triage-investigator 
 
 **Default concurrency:** `N = 5`.
 
-The script auto-discovers the active state file in `~/.ariadne/self-repair-pipeline/triage_state/` — no `--state` flag needed. The main agent tracks in-flight indices locally and passes them via `--active` so the script never hands the same index to two workers.
+Every script takes `--project <name>` — use the project captured in Phase 2. The main agent tracks in-flight indices locally and passes them via `--active` so the script never hands the same index to two workers.
 
 **Crash recovery is automatic.** Entries stay `pending` until an investigator writes a result file, which `merge_results` absorbs on the next script call (transitioning the entry to `completed`). If an investigator crashes before writing a result, its entry remains `pending` and is redispensed naturally on a later call. The `--active` set tells the script which `pending` entries are currently assigned to live workers so they are skipped when picking replacements.
 
@@ -149,7 +151,8 @@ The script auto-discovers the active state file in `~/.ariadne/self-repair-pipel
 Run once to pick up to `N` pending entries:
 
 ```bash
-node --import tsx .claude/skills/self-repair-pipeline/scripts/get_next_triage_entry.ts --count 5
+node --import tsx .claude/skills/self-repair-pipeline/scripts/get_next_triage_entry.ts \
+  --project <name> --count 5
 ```
 
 Output: `{ "entries": [N, ...] }`. If the script exits non-zero, stop and report stderr to the user. If `entries` is empty, skip to Phase 4.
@@ -157,10 +160,11 @@ Output: `{ "entries": [N, ...] }`. If the script exits non-zero, stop and report
 Launch one **triage-investigator** agent per returned index in a **single message with multiple Agent calls** (parallel), all `run_in_background: true`. Prompt each with:
 
 ```
+project: <name>
 entry_index: N
 ```
 
-The triage-investigator runs `get_entry_context.ts` itself to fetch the full investigation context and writes its result to `results/{entry_index}.json`.
+The triage-investigator runs `get_entry_context.ts --project <name> --entry <index>` itself to fetch the full investigation context and writes its result to `results/{entry_index}.json`.
 
 Track the set of in-flight entry indices locally — it seeds `--active` on the next call.
 
@@ -170,7 +174,7 @@ Whenever any background investigator completes, remove its entry index from the 
 
 ```bash
 node --import tsx .claude/skills/self-repair-pipeline/scripts/get_next_triage_entry.ts \
-  --active 7,12,18,23
+  --project <name> --active 7,12,18,23
 ```
 
 - If `entries` has one index, launch one replacement `triage-investigator` agent (`run_in_background: true`) for that index and add it to the in-flight set.
@@ -186,7 +190,8 @@ Group false-positive results by root cause using a 3-pass pipeline. All aggregat
 **Step 1:** Split false-positive entries into slices:
 
 ```bash
-node --import tsx .claude/skills/self-repair-pipeline/scripts/prepare_aggregation_slices.ts
+node --import tsx .claude/skills/self-repair-pipeline/scripts/prepare_aggregation_slices.ts \
+  --project <name>
 ```
 
 Output: `{ "slice_count": N }`. Writes `aggregation/slices/slice_{n}.json` files (~50 entries each). If `slice_count` is 0 (no false positives), skip to Phase 5.
@@ -196,7 +201,8 @@ Output: `{ "slice_count": N }`. Writes `aggregation/slices/slice_{n}.json` files
 **Step 3:** Verify all pass1 output files exist (one per slice), then merge rough groups:
 
 ```bash
-node --import tsx .claude/skills/self-repair-pipeline/scripts/merge_rough_groups.ts
+node --import tsx .claude/skills/self-repair-pipeline/scripts/merge_rough_groups.ts \
+  --project <name>
 ```
 
 Output: `{ "group_count": N }`. Writes `aggregation/pass3/input.json`. If `group_count` is 0, stop and investigate — at least one false-positive slice was expected.
@@ -204,6 +210,7 @@ Output: `{ "group_count": N }`. Writes `aggregation/pass3/input.json`. If `group
 **Step 4:** Read `aggregation/pass3/input.json` to get the group list. Launch one **group-investigator** agent per false-positive group in parallel (`run_in_background: true`). Prompt each agent with the following **key-value plain text** (not JSON, not a file path):
 
 ```
+project: <name>
 group_id: <id>
 root_cause: <root_cause>
 entry_indices: [N, ...]
@@ -214,7 +221,8 @@ Each agent verifies member assignments and writes `aggregation/pass3/{group_id}_
 **Step 5:** Apply investigation results and finalize group assignments:
 
 ```bash
-node --import tsx .claude/skills/self-repair-pipeline/scripts/finalize_aggregation.ts
+node --import tsx .claude/skills/self-repair-pipeline/scripts/finalize_aggregation.ts \
+  --project <name>
 ```
 
 Writes canonical `group_id`/`root_cause` back to state entries, handles reject reallocation, sets `phase = "complete"`.
@@ -226,7 +234,8 @@ Writes canonical `group_id`/`root_cause` back to state entries, handles reject r
 Run after Phase 4 sets `phase = "complete"`.
 
 ```bash
-node --import tsx .claude/skills/self-repair-pipeline/scripts/finalize_triage.ts
+node --import tsx .claude/skills/self-repair-pipeline/scripts/finalize_triage.ts \
+  --project <name>
 ```
 
 Finalization:
@@ -239,17 +248,25 @@ Finalization:
 
 All library modules live under `src/`:
 
-| Module                         | Purpose                                                                          |
-| ------------------------------ | -------------------------------------------------------------------------------- |
-| `extract_entry_points.ts`      | Shared extraction with enriched metadata + diagnostics                           |
-| `known_entrypoints.ts`         | Known-entrypoints registry I/O and matching                                      |
-| `build_triage_entries.ts`      | Build triage entries from filter-known-entrypoints output                        |
-| `build_finalization_output.ts` | Build finalization output from completed state                                   |
-| `merge_results.ts`             | Merge investigator result files into triage state                                |
-| `types.ts`                     | Shared type definitions (`EnrichedFunctionEntry`, `EntryPointDiagnostics`, etc.) |
-| `triage_state_types.ts`        | Triage state types (`TriageState`, `TriageEntry`, `TriageEntryResult`)           |
-| `analysis_io.ts`               | Analysis file lookup, JSON I/O                                                   |
-| `discover_state.ts`            | Triage state file discovery                                                      |
+| Module                                | Purpose                                                                        |
+| ------------------------------------- | ------------------------------------------------------------------------------ |
+| `extract_entry_points.ts`             | Shared extraction with enriched metadata + diagnostics                         |
+| `known_entrypoints.ts`                | Known-entrypoints registry I/O and matching                                    |
+| `known_issues_registry.ts`            | Known-issues registry loader + predicate-expression schema validator           |
+| `prepare_triage.ts`                   | Three-bucket orchestration (whitelist / auto-classified / residual)            |
+| `build_triage_entries.ts`             | Assemble `TriageEntry` records from prepared buckets                           |
+| `build_finalization_output.ts`        | Build final results from a completed triage state                              |
+| `merge_results.ts`                    | Merge investigator result files into triage state                              |
+| `aggregation/prepare_slices.ts`       | Slice completed false positives into rough-aggregator inputs                   |
+| `aggregation/merge_rough_groups.ts`   | Merge pass1 outputs into canonical pass3 input                                 |
+| `aggregation/finalize_aggregation.ts` | Apply pass3 verdicts back to triage state                                      |
+| `entry_point_types.ts`                | Entry-point shapes (`EnrichedFunctionEntry`, diagnostics, known-entrypoints)   |
+| `known_issues_types.ts`               | Known-issues registry DSL (`ClassifierSpec`, `PredicateExpr`, `KnownIssue`, …) |
+| `triage_state_types.ts`               | Triage state types (`TriageState`, `TriageEntry`, `TriageEntryResult`)         |
+| `triage_state_paths.ts`               | Triage state file locations + required-flag CLI helpers                        |
+| `analysis_output.ts`                  | Timestamped analysis output JSON I/O                                           |
+| `project_id.ts`                       | Project-identifier derivation (`path_to_project_id`, `project_id_from_config`) |
+| `guard_tsx_invocation.ts`             | Enforce `node --import tsx` invocation (sandbox-compatible)                    |
 
 ## Reference
 

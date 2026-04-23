@@ -8,7 +8,7 @@ import {
   filter_known_entrypoints,
   build_confirmed_unreachable_source,
 } from "./known_entrypoints.js";
-import type { EnrichedFunctionEntry, KnownEntrypointSource } from "./types.js";
+import type { EnrichedFunctionEntry, KnownEntrypointSource } from "./entry_point_types.js";
 
 // ===== Test Helpers =====
 
@@ -19,9 +19,6 @@ function make_entry(overrides: Partial<EnrichedFunctionEntry>): EnrichedFunction
     name: "test_func",
     file_path: "/projects/myapp/src/test.ts",
     start_line: 10,
-    start_column: 0,
-    end_line: 20,
-    end_column: 1,
     kind: "function",
     tree_size: 0,
     is_exported: false,
@@ -143,10 +140,10 @@ describe("filter_known_entrypoints", () => {
 
     const result = filter_known_entrypoints([known_entry, unknown_entry], sources, PROJECT_PATH);
 
-    expect(result.known_true_positives).toHaveLength(1);
-    expect(result.known_true_positives[0].entry).toEqual(known_entry);
-    expect(result.known_true_positives[0].source).toBe("project");
-    expect(result.remaining).toEqual([unknown_entry]);
+    expect(result).toEqual({
+      known_true_positives: [{ entry: known_entry, source: "project" }],
+      remaining: [unknown_entry],
+    });
   });
 
   it("empty sources puts all entries in remaining", () => {

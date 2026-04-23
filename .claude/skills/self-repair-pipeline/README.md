@@ -25,7 +25,7 @@ flowchart TD
         CLASSIFY -->|"No match"| LLM_TRIAGE["llm-triage<br/>(pending, with diagnostics)"]
         KNOWN_UR --> STATE
         LLM_TRIAGE --> STATE
-        STATE[("triage_state/{project}_triage.json")]
+        STATE[("triage_state/{project}/{project}_triage.json")]
     end
 
     STATE --> LOOP_ENTRY
@@ -73,16 +73,6 @@ flowchart TD
     class ANALYSIS,STATE,PASS3_INPUT data
 ```
 
-## Triage Investigator Context
-
-The main agent runs `get_entry_context.ts` per entry to fetch the investigation prompt, then passes it directly to the triage-investigator sub-agent:
-
-```bash
-node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts --entry 62
-```
-
-The script loads the entry, renders the prompt template with diagnosis-specific hints, and outputs the complete investigation prompt. The main agent passes this output verbatim as the sub-agent prompt.
-
 ## Sub-Agent Summary
 
 | Agent               | Model  | Multiplicity              | Purpose                                                                                |
@@ -93,17 +83,4 @@ The script loads the entry, renders the prompt template with diagnosis-specific 
 
 ## Key Modules
 
-| Module                                  | Purpose                                                           |
-| --------------------------------------- | ----------------------------------------------------------------- |
-| `src/discover_state.ts`                 | Triage state file discovery                                       |
-| `src/merge_results.ts`                  | Merge investigator result files into triage state                 |
-| `src/build_triage_entries.ts`           | Convert classification → triage entries with embedded diagnostics |
-| `src/build_finalization_output.ts`      | Build finalization output from completed state                    |
-| `src/known_entrypoints.ts`              | Known-entrypoints registry I/O and matching                       |
-| `src/triage_state_types.ts`             | State types (`TriageState`, `TriageEntry`, `TriageEntryResult`)   |
-| `scripts/get_entry_context.ts`          | Render prompt template with diagnosis-specific hints              |
-| `scripts/get_next_triage_entry.ts`      | Merge results, dispense next pending entry(ies), advance phase    |
-| `scripts/prepare_aggregation_slices.ts` | Split false-positive entries into aggregation slices              |
-| `scripts/merge_rough_groups.ts`         | Union pass1 outputs into the canonical pass3 group list           |
-| `scripts/finalize_aggregation.ts`       | Apply group assignments, handle rejections, set phase=complete    |
-| `scripts/finalize_triage.ts`            | Partition results, update registry, save output                   |
+See [SKILL.md → Architecture: Key Modules](SKILL.md#architecture-key-modules).

@@ -28,7 +28,7 @@ import type {
   GrepHit,
   CallRefDiagnostic,
   SyntacticFeatures,
-} from "./types.js";
+} from "./entry_point_types.js";
 
 /**
  * Tree-sitter capture names associated with each call type.
@@ -73,7 +73,6 @@ export function build_constructor_to_class_name_map(
 export function extract_entry_points(
   call_graph: CallGraph,
   source_files: ReadonlyMap<string, string>,
-  filter?: (node: CallableNode) => boolean,
   class_name_by_constructor_id?: ReadonlyMap<SymbolId, SymbolName>,
 ): EnrichedFunctionEntry[] {
   // Build indexes used by diagnostics.
@@ -85,8 +84,6 @@ export function extract_entry_points(
   for (const entry_point_id of call_graph.entry_points) {
     const node = call_graph.nodes.get(entry_point_id);
     if (!node) continue;
-
-    if (filter && !filter(node)) continue;
 
     const tree_size = count_tree_size(entry_point_id, call_graph, new Set());
     const def = node.definition;
@@ -109,9 +106,6 @@ export function extract_entry_points(
       name: node.name as string,
       file_path: node.location.file_path,
       start_line: node.location.start_line,
-      start_column: node.location.start_column,
-      end_line: node.location.end_line,
-      end_column: node.location.end_column,
       signature: build_signature(def),
       tree_size,
       kind,

@@ -2,37 +2,39 @@
 /**
  * Prepare triage state file from entrypoint analysis output.
  *
- * CLI wrapper around `src/prepare_triage/prepare_triage.ts`. This file handles argv parsing,
+ * CLI wrapper around `src/prepare_triage.ts`. This file handles argv parsing,
  * I/O (analysis JSON, registry, whitelist, state dir cleanup, state writing)
  * and delegates bucketing + ordering to the pure pipeline core.
  *
  * Usage:
- *   node --import tsx prepare_triage.ts --analysis <path> [--package <name>] [--max-count <n>]
+ *   node --import tsx prepare_triage.ts --analysis <path> [--project <name>] [--max-count <n>]
+ *
+ * If `--project` is omitted, the project name is taken from the analysis file.
  */
 
 import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as path from "path";
 
-import { load_json } from "../src/analysis_io.js";
+import { load_json } from "../src/analysis_output.js";
 import { load_known_entrypoints, filter_known_entrypoints } from "../src/known_entrypoints.js";
 import { load_registry } from "../src/known_issues_registry.js";
-import { prepare_triage } from "../src/prepare_triage/prepare_triage.js";
+import { prepare_triage } from "../src/prepare_triage.js";
 import { TRIAGE_STATE_DIR } from "../src/paths.js";
-import type { AnalysisResult } from "../src/types.js";
+import type { AnalysisResult } from "../src/entry_point_types.js";
 import type { TriageState } from "../src/triage_state_types.js";
-import "../src/require_node_import_tsx.js";
+import "../src/guard_tsx_invocation.js";
 
 interface CliArgs {
   analysis_path: string;
-  package_name: string | null;
+  project: string | null;
   max_count: number | null;
 }
 
 function parse_args(argv: string[]): CliArgs {
   const args = argv.slice(2);
   let analysis_path: string | null = null;
-  let package_name: string | null = null;
+  let project: string | null = null;
   let max_count: number | null = null;
 
   for (let i = 0; i < args.length; i++) {
@@ -40,8 +42,8 @@ function parse_args(argv: string[]): CliArgs {
       case "--analysis":
         analysis_path = args[++i];
         break;
-      case "--package":
-        package_name = args[++i];
+      case "--project":
+        project = args[++i];
         break;
       case "--max-count":
         max_count = parseInt(args[++i], 10);
@@ -50,11 +52,11 @@ function parse_args(argv: string[]): CliArgs {
   }
 
   if (!analysis_path) {
-    console.error("Usage: prepare_triage.ts --analysis <path> [--package <name>] [--max-count <n>]");
+    console.error("Usage: prepare_triage.ts --analysis <path> [--project <name>] [--max-count <n>]");
     process.exit(1);
   }
 
-  return { analysis_path, package_name, max_count };
+  return { analysis_path, project, max_count };
 }
 
 /** Cached synchronous line reader. One read per file per run. */
@@ -78,7 +80,7 @@ async function main(): Promise<void> {
   const cli = parse_args(process.argv);
 
   const analysis = await load_json<AnalysisResult>(cli.analysis_path);
-  const project_name = cli.package_name ?? analysis.project_name;
+  const project_name = cli.project ?? analysis.project_name;
   const project_path = analysis.project_path;
 
   const known_sources = await load_known_entrypoints(project_name);
@@ -128,6 +130,7 @@ async function main(): Promise<void> {
 }
 
 main().catch((error) => {
-  console.error(`Fatal: ${error}`);
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(`Error: ${message}`);
   process.exit(1);
 });

@@ -5,7 +5,7 @@
  * (ariadne_correct=true) or false-positive groups (ariadne_correct=false).
  */
 
-import type { FalsePositiveEntry, FalsePositiveGroup } from "./types.js";
+import type { FalsePositiveEntry, FalsePositiveGroup } from "./entry_point_types.js";
 import type { TriageState, TriageEntry } from "./triage_state_types.js";
 
 // ===== Output Types =====

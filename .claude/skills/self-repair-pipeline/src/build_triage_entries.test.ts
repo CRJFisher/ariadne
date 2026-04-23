@@ -3,7 +3,7 @@ import {
   build_triage_entries,
   type BuildTriageEntriesInput,
 } from "./build_triage_entries.js";
-import type { EnrichedFunctionEntry } from "./types.js";
+import type { EnrichedFunctionEntry } from "./entry_point_types.js";
 import type { TriageEntry, TriageEntryResult } from "./triage_state_types.js";
 import type { AutoClassifiedEntry } from "./auto_classify/types.js";
 
@@ -14,9 +14,6 @@ function make_entry(overrides: Partial<EnrichedFunctionEntry>): EnrichedFunction
     name: "test_func",
     file_path: "/projects/myapp/src/test.ts",
     start_line: 10,
-    start_column: 0,
-    end_line: 20,
-    end_column: 1,
     kind: "function",
     tree_size: 0,
     is_exported: false,

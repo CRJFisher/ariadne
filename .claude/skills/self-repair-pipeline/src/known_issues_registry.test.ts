@@ -7,7 +7,7 @@ import {
   PREDICATE_OPERATORS,
   type KnownIssuesRegistry,
   type PredicateOperator,
-} from "./types.js";
+} from "./known_issues_types.js";
 import {
   RegistryValidationError,
   get_registry_file_path,
@@ -72,14 +72,12 @@ describe("validate_registry — on-disk registry shape", () => {
     }
   });
 
-  it("every classifier uses kind in {none, builtin, predicate}", () => {
+  it("every classifier uses kind in {none, predicate}", () => {
     for (const e of registry) {
-      expect(["none", "builtin", "predicate"]).toContain(e.classifier.kind);
-      if (e.classifier.kind === "builtin" || e.classifier.kind === "predicate") {
+      expect(["none", "predicate"]).toContain(e.classifier.kind);
+      if (e.classifier.kind === "predicate") {
         expect(e.classifier.min_confidence).toBeGreaterThanOrEqual(0);
         expect(e.classifier.min_confidence).toBeLessThanOrEqual(1);
-      }
-      if (e.classifier.kind === "predicate") {
         expect(["A", "B", "C"]).toContain(e.classifier.axis);
       }
     }
@@ -215,9 +213,9 @@ describe("validate_registry — negative cases", () => {
 
   it("rejects min_confidence outside [0, 1]", () => {
     const registry = clone(load_registry());
-    const entry = registry.find((e) => e.classifier.kind === "predicate" || e.classifier.kind === "builtin");
+    const entry = registry.find((e) => e.classifier.kind === "predicate");
     if (!entry) return;
-    if (entry.classifier.kind === "predicate" || entry.classifier.kind === "builtin") {
+    if (entry.classifier.kind === "predicate") {
       entry.classifier.min_confidence = 1.5;
     }
     expect(() => validate_registry(registry)).toThrow(/min_confidence/);
@@ -266,8 +264,11 @@ describe("validate_registry — negative cases", () => {
       pattern: "foo.*bar",
     };
     validate_predicate_expr(node, "root");
-    expect(node.compiled_pattern).toBeInstanceOf(RegExp);
-    expect(node.compiled_pattern?.test("foo zzz bar")).toBe(true);
+    if (!(node.compiled_pattern instanceof RegExp)) {
+      throw new Error("compiled_pattern was not attached as a RegExp");
+    }
+    expect(node.compiled_pattern.test("foo zzz bar")).toBe(true);
+    expect(node.compiled_pattern.source).toBe("foo.*bar");
   });
 });
 
@@ -357,19 +358,19 @@ describe("required seed content", () => {
     }
   });
 
-  it("all 4 pre-measured patterns from triage_patterns.json are present with their declared precision as min_confidence", () => {
+  it("pre-measured predicate patterns carry their declared precision as min_confidence", () => {
+    // Only the predicate-classified members of the pre-measured set are pinned
+    // here. Entries with `kind: "none"` are known issues awaiting an automated
+    // classifier and intentionally omit precision metadata.
     const measured: Array<{ id: string; min_confidence: number }> = [
-      { id: "callers-outside-scope-grep-evidence", min_confidence: 0.923 },
       { id: "module-attribute-alias", min_confidence: 1.0 },
-      { id: "true-positive-lambda-handler", min_confidence: 1.0 },
-      { id: "callers-outside-scope-strict-grep-evidence", min_confidence: 0.952 },
     ];
     for (const m of measured) {
       const entry = by_id.get(m.id);
       expect(entry, `missing pre-measured entry ${m.id}`).toBeDefined();
       if (!entry) continue;
-      if (entry.classifier.kind === "none") {
-        throw new Error(`${m.id}: expected classifier kind builtin|predicate, got "none"`);
+      if (entry.classifier.kind !== "predicate") {
+        throw new Error(`${m.id}: expected classifier kind "predicate", got "${entry.classifier.kind}"`);
       }
       expect(entry.classifier.min_confidence).toBeCloseTo(m.min_confidence, 3);
     }

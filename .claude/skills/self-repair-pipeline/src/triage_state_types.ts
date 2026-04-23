@@ -6,7 +6,7 @@
  * - "complete": all entries processed, ready to finalize
  */
 
-import type { EntryPointDiagnostics } from "./types.js";
+import type { EntryPointDiagnostics } from "./entry_point_types.js";
 
 // ===== Top-Level State =====
 

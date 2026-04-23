@@ -2,26 +2,32 @@
  * Types for the `auto_classify` pipeline stage.
  *
  * Kept narrow on purpose: the evaluator is pure over `EnrichedFunctionEntry` +
- * a lazy file reader, so new classifier axes (e.g. Project-backed builtins in
- * TASK-190.16.6) introduce their own context shape rather than widening this
- * one up-front.
+ * a lazy file reader, so any future classifier axis introduces its own context
+ * shape rather than widening this one up-front.
  *
  * `ClassifierHint` is not defined here: it lives in `../triage_state_types.ts`
  * because it is part of the persisted `TriageEntry` shape, not a transient
  * pipeline-internal value. Re-exported for convenience.
  */
 
-import type { EnrichedFunctionEntry } from "../types.js";
+import type { EnrichedFunctionEntry } from "../entry_point_types.js";
 import type { ClassifierHint } from "../triage_state_types.js";
 
 export type { ClassifierHint };
 
-export interface AutoClassifyResult {
-  auto_classified: boolean;
-  auto_group_id: string | null;
-  reasoning: string | null;
-  classifier_hints: ClassifierHint[];
-}
+export type AutoClassifyResult =
+  | {
+      auto_classified: false;
+      auto_group_id: null;
+      reasoning: null;
+      classifier_hints: ClassifierHint[];
+    }
+  | {
+      auto_classified: true;
+      auto_group_id: string;
+      reasoning: string;
+      classifier_hints: ClassifierHint[];
+    };
 
 export interface AutoClassifiedEntry {
   entry: EnrichedFunctionEntry;

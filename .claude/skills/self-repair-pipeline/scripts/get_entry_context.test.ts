@@ -11,7 +11,7 @@ import type {
   CallRefDiagnostic,
   EntryPointDiagnostics,
   SyntacticFeatures,
-} from "../src/types.js";
+} from "../src/entry_point_types.js";
 import type { ClassifierHint } from "../src/auto_classify/types.js";
 
 const BASE_SYNTACTIC_FEATURES: SyntacticFeatures = {

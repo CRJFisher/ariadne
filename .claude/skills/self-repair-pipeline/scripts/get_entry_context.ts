@@ -9,18 +9,19 @@
  * the prompt to stdout.
  *
  * Usage:
- *   node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts --entry 62
+ *   node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts --project mocha --entry 62
  */
 
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { discover_state_file } from "../src/discover_state.js";
-import { TRIAGE_STATE_DIR } from "../src/paths.js";
+import { parse_project_arg, require_state_file } from "../src/triage_state_paths.js";
 import type { TriageState, TriageEntry } from "../src/triage_state_types.js";
-import type { GrepHit, CallRefDiagnostic, EntryPointDiagnostics } from "../src/types.js";
+import type { GrepHit, CallRefDiagnostic, EntryPointDiagnostics } from "../src/entry_point_types.js";
 import type { ClassifierHint } from "../src/auto_classify/types.js";
-import "../src/require_node_import_tsx.js";
+import "../src/guard_tsx_invocation.js";
+
+const USAGE = "Usage: get_entry_context.ts --project <name> --entry <index>";
 
 const THIS_FILE = fileURLToPath(import.meta.url);
 const THIS_DIR = path.dirname(THIS_FILE);
@@ -205,22 +206,18 @@ const DIAGNOSIS_HINTS: Record<string, DiagnosisHints> = {
 
 // ===== CLI Argument Parsing =====
 
-function parse_args(argv: string[]): { entry_index: number } {
+function parse_args(argv: string[]): { project: string; entry_index: number } {
+  const project = parse_project_arg(argv, USAGE);
   const args = argv.slice(2);
   let entry_index: number | null = null;
-
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--entry") {
-      entry_index = parseInt(args[++i], 10);
-    }
+    if (args[i] === "--entry") entry_index = parseInt(args[++i], 10);
   }
-
   if (entry_index === null || isNaN(entry_index)) {
-    console.error("Usage: get_entry_context.ts --entry <index>");
+    process.stderr.write(`${USAGE}\n`);
     process.exit(1);
   }
-
-  return { entry_index };
+  return { project, entry_index };
 }
 
 // ===== Diagnostics Formatting =====
@@ -306,11 +303,7 @@ export function substitute_template(
 function main(): void {
   const cli = parse_args(process.argv);
 
-  const state_path = discover_state_file(TRIAGE_STATE_DIR);
-  if (!state_path) {
-    console.error("No active triage state file found");
-    process.exit(1);
-  }
+  const state_path = require_state_file(cli.project);
 
   const state = JSON.parse(fs.readFileSync(state_path, "utf8")) as TriageState;
 
@@ -330,5 +323,11 @@ function main(): void {
 
 const this_file = fileURLToPath(import.meta.url);
 if (process.argv[1] && path.resolve(process.argv[1]) === this_file) {
-  main();
+  try {
+    main();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`Error: ${message}`);
+    process.exit(1);
+  }
 }

@@ -15,7 +15,7 @@ import type {
   FalsePositiveEntry,
   KnownEntrypoint,
   KnownEntrypointSource,
-} from "./types.js";
+} from "./entry_point_types.js";
 import { REGISTRY_DIR } from "./paths.js";
 
 // ===== I/O =====

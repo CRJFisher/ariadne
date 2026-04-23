@@ -3,16 +3,16 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import {
   LANGUAGES,
-  get_queries_dir,
+  QUERIES_DIR,
   render_all,
   render_language,
 } from "./render_unsupported_features.js";
 import { load_registry } from "../src/known_issues_registry.js";
-import type { KnownIssue } from "../src/types.js";
+import type { KnownIssue } from "../src/known_issues_types.js";
 
 describe("render_unsupported_features — golden file pinning", () => {
   const registry = load_registry();
-  const queries_dir = get_queries_dir();
+  const queries_dir = QUERIES_DIR;
 
   for (const language of LANGUAGES) {
     it(`${language}.md on disk matches the rendered output`, () => {
@@ -53,19 +53,15 @@ describe("render_unsupported_features — per-language filtering", () => {
 });
 
 describe("render_unsupported_features — classifier rendering", () => {
-  it("labels builtin and predicate classifiers with min_confidence, and marks 'none' classifiers", () => {
+  it("labels predicate classifiers with axis + min_confidence, and marks 'none' classifiers", () => {
     const registry = load_registry();
     const content = render_language("typescript", registry);
-    const has_builtin = registry.some(
-      (e) => e.languages.includes("typescript") && e.classifier.kind === "builtin",
-    );
     const has_predicate = registry.some(
       (e) => e.languages.includes("typescript") && e.classifier.kind === "predicate",
     );
     const has_none = registry.some(
       (e) => e.languages.includes("typescript") && e.classifier.kind === "none",
     );
-    if (has_builtin) expect(content).toMatch(/builtin `[a-z_]+`/);
     if (has_predicate) expect(content).toMatch(/predicate, axis [ABC]/);
     if (has_none) expect(content).toContain("_none — known, no automated classifier_");
   });

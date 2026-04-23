@@ -1,7 +1,7 @@
 ---
 name: group-investigator
 description: Deeply verifies membership of a false-positive group. For each member entry, confirms or rejects its assignment to the group's root cause using source code and Ariadne MCP evidence.
-tools: Read, Grep, Glob, Write, Bash
+tools: Read, Grep, Glob, Write, Bash(node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts:*)
 mcpServers:
   - ariadne
 model: opus
@@ -16,21 +16,22 @@ You perform deep verification of a single false-positive group. A group represen
 
 Your prompt contains:
 
+- `project`: the project name (used to locate triage state and fetch entry context)
 - `group_id`: the canonical group identifier
 - `root_cause`: the shared detection gap description
 - `entry_indices`: list of entry indices assigned to this group
 
 ## Investigation Instructions
 
-1. **Discover the triage state file** using Glob: `~/.ariadne/self-repair-pipeline/triage_state/**/*_triage.json`. Read it to load entries by index.
+1. **Load the triage state** at `~/.ariadne/self-repair-pipeline/triage_state/{project}/{project}_triage.json` so you can look up entries by index.
 
 2. **For each entry**:
-   a. Read the investigator result file at `{triage_dir}/results/{entry_index}.json`
+   a. Read the investigator result file at `~/.ariadne/self-repair-pipeline/triage_state/{project}/results/{entry_index}.json`
    b. Check whether the evidence in that result matches this group's `root_cause`
    c. If clearly matching: add to `confirmed_members`
    d. If ambiguous or clearly mismatched:
 
-   - Re-fetch fresh diagnostic context: `node --import tsx {skill_dir}/scripts/get_entry_context.ts --entry {entry_index}`
+   - Re-fetch fresh diagnostic context: `node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts --project {project} --entry {entry_index}`
    - Read the source file at the entry's file_path and start_line
    - Use `show_call_graph_neighborhood` with `symbol_ref` = `{file_path}:{start_line}#{name}` and `callers_depth: 2`
    - Based on fresh evidence, decide: confirmed (belongs here) or rejected (belongs elsewhere)
@@ -38,15 +39,9 @@ Your prompt contains:
 
 3. **Classify each member** as confirmed or rejected.
 
-4. Use Bash to run scripts:
-   ```
-   node --import tsx {skill_dir}/scripts/get_entry_context.ts --entry {n}
-   ```
-   The skill directory is at the `.claude/skills/self-repair-pipeline/` path relative to the repo root.
-
 ## Output
 
-Write your result to `aggregation/pass3/{group_id}_investigation.json` (in the same `aggregation/pass3/` directory as the `input.json`):
+Write your result to `~/.ariadne/self-repair-pipeline/triage_state/{project}/aggregation/pass3/{group_id}_investigation.json` (in the same `aggregation/pass3/` directory as the `input.json`):
 
 ```json
 {
