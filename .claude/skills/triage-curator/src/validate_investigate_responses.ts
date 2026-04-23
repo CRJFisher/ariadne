@@ -17,15 +17,20 @@
 
 import { validate_spec_example_indexes } from "./apply_proposals.js";
 import type {
+  AriadneBug,
+  AriadneRootCauseCategory,
   BuiltinClassifierSpec,
   ClassifierSpecProposal,
   FalsePositiveGroup,
+  IntrospectionGap,
   InvestigateResponse,
   InvestigatorSessionLog,
   KnownIssue,
   SignalCheck,
 } from "./types.js";
-import { SIGNAL_CHECK_OPS } from "./types.js";
+import { ARIADNE_ROOT_CAUSE_CATEGORIES, SIGNAL_CHECK_OPS } from "./types.js";
+
+const TASK_ID_PATTERN = /^TASK-[0-9]+(?:\.[0-9]+)*$/;
 
 export type ValidationIssueCode =
   | "shape_error"
@@ -34,6 +39,7 @@ export type ValidationIssueCode =
   | "retarget_must_not_carry_examples"
   | "example_index_out_of_range"
   | "kind_none_no_signals_no_failure"
+  | "missing_ariadne_bug"
   | "target_conflict";
 
 export interface ValidationIssue {
@@ -126,22 +132,37 @@ export function validate_response(inp: ValidationInput): ValidationIssue[] {
   }
 
   if (parsed.proposed_classifier?.kind === "none") {
-    const has_signals = parsed.new_signals_needed.length > 0;
+    const has_gap = parsed.introspection_gap !== null;
     const has_failure =
       inp.session_log?.status === "failure" &&
       inp.session_log.failure_category !== null;
-    if (!has_signals && !has_failure) {
+    if (!has_gap && !has_failure) {
       issues.push({
         group_id: inp.dispatch_group_id,
         response_path: inp.response_path,
         code: "kind_none_no_signals_no_failure",
         message:
-          "proposed_classifier.kind='none' but response carries no new_signals_needed " +
+          "proposed_classifier.kind='none' but response carries no introspection_gap " +
           "and session log has no failure_category — this is a silent dead-end. " +
-          "Either declare the missing signal (new_signals_needed[]) or record a " +
-          "failure_category in the session log.",
+          "Either declare the introspection gap (introspection_gap.signals_needed[]) " +
+          "or record a failure_category in the session log.",
       });
     }
+  }
+
+  const proposes_workaround =
+    parsed.proposed_classifier !== null && parsed.proposed_classifier.kind !== "none";
+  if (proposes_workaround && parsed.ariadne_bug === null) {
+    issues.push({
+      group_id: inp.dispatch_group_id,
+      response_path: inp.response_path,
+      code: "missing_ariadne_bug",
+      message:
+        "proposed_classifier is a working classifier but ariadne_bug is null. " +
+        "A classifier is a workaround; the resolver-level bug must also be filed " +
+        "(or attached to an existing_task_id). Populate ariadne_bug with " +
+        "root_cause_category, title, and description.",
+    });
   }
 
   return issues;
@@ -220,15 +241,6 @@ export function parse_response_shape(raw: unknown): InvestigateResponse | ShapeE
   if (typeof obj.reasoning !== "string") {
     return { error: "response: reasoning must be a string" };
   }
-  if (!Array.isArray(obj.new_signals_needed)) {
-    return { error: "response: new_signals_needed must be an array" };
-  }
-  for (const [idx, s] of obj.new_signals_needed.entries()) {
-    if (typeof s !== "string") {
-      return { error: `response: new_signals_needed[${idx}] must be a string` };
-    }
-  }
-  const new_signals_needed = obj.new_signals_needed as string[];
 
   let retargets_to: string | null;
   if (obj.retargets_to === undefined || obj.retargets_to === null) {
@@ -242,14 +254,11 @@ export function parse_response_shape(raw: unknown): InvestigateResponse | ShapeE
   const classifier_result = parse_classifier_proposal(obj.proposed_classifier);
   if ("error" in classifier_result) return classifier_result;
 
-  const backlog_result = parse_backlog_ref(obj.backlog_ref);
-  if ("error" in backlog_result) return backlog_result;
+  const gap_result = parse_introspection_gap(obj.introspection_gap);
+  if ("error" in gap_result) return gap_result;
 
-  if (backlog_result.value !== null && new_signals_needed.length === 0) {
-    return {
-      error: "response: backlog_ref only permitted when new_signals_needed is non-empty",
-    };
-  }
+  const bug_result = parse_ariadne_bug(obj.ariadne_bug);
+  if ("error" in bug_result) return bug_result;
 
   const spec_result = parse_classifier_spec(obj.classifier_spec, classifier_result.value);
   if ("error" in spec_result) return spec_result;
@@ -257,10 +266,10 @@ export function parse_response_shape(raw: unknown): InvestigateResponse | ShapeE
   return {
     group_id: obj.group_id,
     proposed_classifier: classifier_result.value,
-    backlog_ref: backlog_result.value,
-    new_signals_needed,
     classifier_spec: spec_result.value,
     retargets_to,
+    introspection_gap: gap_result.value,
+    ariadne_bug: bug_result.value,
     reasoning: obj.reasoning,
   };
 }
@@ -297,17 +306,85 @@ function parse_min_confidence(raw: unknown): number | ShapeError {
   return raw;
 }
 
-function parse_backlog_ref(raw: unknown): { value: { title: string; description: string } | null } | ShapeError {
+function parse_introspection_gap(
+  raw: unknown,
+): { value: IntrospectionGap | null } | ShapeError {
   if (raw === null || raw === undefined) return { value: null };
-  if (typeof raw !== "object") return { error: "backlog_ref must be an object or null" };
+  if (typeof raw !== "object") {
+    return { error: "introspection_gap must be an object or null" };
+  }
   const obj = raw as Record<string, unknown>;
+  if (!Array.isArray(obj.signals_needed)) {
+    return { error: "introspection_gap.signals_needed must be an array" };
+  }
+  for (const [idx, s] of obj.signals_needed.entries()) {
+    if (typeof s !== "string" || s.length === 0) {
+      return {
+        error: `introspection_gap.signals_needed[${idx}] must be a non-empty string`,
+      };
+    }
+  }
+  const signals_needed = obj.signals_needed as string[];
+  if (signals_needed.length === 0) {
+    return {
+      error:
+        "introspection_gap.signals_needed must be non-empty — drop introspection_gap to null if no signals are missing",
+    };
+  }
   if (typeof obj.title !== "string" || obj.title.length === 0) {
-    return { error: "backlog_ref.title must be a non-empty string" };
+    return { error: "introspection_gap.title must be a non-empty string" };
   }
   if (typeof obj.description !== "string") {
-    return { error: "backlog_ref.description must be a string" };
+    return { error: "introspection_gap.description must be a string" };
   }
-  return { value: { title: obj.title, description: obj.description } };
+  return {
+    value: { signals_needed, title: obj.title, description: obj.description },
+  };
+}
+
+function parse_ariadne_bug(raw: unknown): { value: AriadneBug | null } | ShapeError {
+  if (raw === null || raw === undefined) return { value: null };
+  if (typeof raw !== "object") {
+    return { error: "ariadne_bug must be an object or null" };
+  }
+  const obj = raw as Record<string, unknown>;
+  if (
+    typeof obj.root_cause_category !== "string" ||
+    !ARIADNE_ROOT_CAUSE_CATEGORIES.includes(obj.root_cause_category as AriadneRootCauseCategory)
+  ) {
+    return {
+      error:
+        `ariadne_bug.root_cause_category must be one of: ${ARIADNE_ROOT_CAUSE_CATEGORIES.join(", ")}`,
+    };
+  }
+  const root_cause_category = obj.root_cause_category as AriadneRootCauseCategory;
+  if (typeof obj.title !== "string" || obj.title.length === 0) {
+    return { error: "ariadne_bug.title must be a non-empty string" };
+  }
+  if (typeof obj.description !== "string") {
+    return { error: "ariadne_bug.description must be a string" };
+  }
+  let existing_task_id: string | null;
+  if (obj.existing_task_id === undefined || obj.existing_task_id === null) {
+    existing_task_id = null;
+  } else if (typeof obj.existing_task_id !== "string") {
+    return { error: "ariadne_bug.existing_task_id must be a string or null" };
+  } else if (!TASK_ID_PATTERN.test(obj.existing_task_id)) {
+    return {
+      error:
+        `ariadne_bug.existing_task_id '${obj.existing_task_id}' must match ${TASK_ID_PATTERN.source}`,
+    };
+  } else {
+    existing_task_id = obj.existing_task_id;
+  }
+  return {
+    value: {
+      root_cause_category,
+      title: obj.title,
+      description: obj.description,
+      existing_task_id,
+    },
+  };
 }
 
 function parse_classifier_spec(

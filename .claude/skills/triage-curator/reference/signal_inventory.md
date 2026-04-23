@@ -3,8 +3,12 @@
 This document lists the signals Ariadne exposes to classifier authors and the
 predicate DSL operators that consume them. Use it when proposing a new
 classifier from the `triage-curator-investigator` sub-agent: prefer existing
-signals; only propose new signals in `new_signals_needed` when no existing
+signals; only populate `introspection_gap.signals_needed` when no existing
 combination suffices.
+
+**Curator emits `kind: "builtin"` only.** The sections below cover the full
+registry including the predicate DSL (for context on what hand-authored
+entries look like), but sub-agent proposals use the builtin path exclusively.
 
 ## The six signal categories
 

@@ -2,15 +2,22 @@ import * as fs from "node:fs/promises";
 
 import { error_code } from "./errors.js";
 import type {
-  BacklogRefProposal,
+  AriadneBugTaskToCreate,
   BuiltinClassifierSpec,
   ClassifierSpecProposal,
   FalsePositiveGroup,
+  IntrospectionGapTaskToCreate,
   InvestigateResponse,
   InvestigatorSessionLog,
   KnownIssue,
   QaResponse,
 } from "./types.js";
+
+/**
+ * Single static parent task for all introspection-gap sub-tasks emitted by
+ * the curator. Sub-task ids are auto-assigned by Backlog.md via `parentTaskId`.
+ */
+export const INTROSPECTION_GAP_PARENT_TASK_ID = "TASK-190.16";
 
 /**
  * Outlier rate at or above which a classifier is considered drifting. Denominator
@@ -123,8 +130,16 @@ export interface ApplyResult {
    */
   skipped_permanent_upserts: string[];
   drift_tagged_groups: string[];
-  backlog_tasks_to_create: BacklogRefProposal[];
-  new_signals_needed: string[];
+  /**
+   * Signal-library gaps to file as sub-tasks under
+   * `INTROSPECTION_GAP_PARENT_TASK_ID`. One per `introspection_gap` emitted.
+   */
+  introspection_gap_tasks: IntrospectionGapTaskToCreate[];
+  /**
+   * Ariadne resolver bugs to file as top-level tasks (or attach to
+   * `existing_task_id`). One per `ariadne_bug` emitted.
+   */
+  ariadne_bug_tasks: AriadneBugTaskToCreate[];
 }
 
 /**
@@ -225,13 +240,29 @@ export async function apply_proposals(
     );
   }
 
-  const backlog_tasks_to_create = inv
-    .map((r) => r.backlog_ref)
-    .filter((b): b is BacklogRefProposal => b !== null);
+  const introspection_gap_tasks: IntrospectionGapTaskToCreate[] = [];
+  for (const r of inv) {
+    if (r.introspection_gap === null) continue;
+    introspection_gap_tasks.push({
+      group_id: r.group_id,
+      title: r.introspection_gap.title,
+      description: r.introspection_gap.description,
+      signals_needed: r.introspection_gap.signals_needed,
+    });
+  }
 
-  const new_signals_needed = [
-    ...new Set(inv.flatMap((r) => r.new_signals_needed)),
-  ];
+  const ariadne_bug_tasks: AriadneBugTaskToCreate[] = [];
+  for (const r of inv) {
+    if (r.ariadne_bug === null) continue;
+    ariadne_bug_tasks.push({
+      group_id: r.group_id,
+      target_registry_group_id: r.retargets_to ?? r.group_id,
+      root_cause_category: r.ariadne_bug.root_cause_category,
+      title: r.ariadne_bug.title,
+      description: r.ariadne_bug.description,
+      existing_task_id: r.ariadne_bug.existing_task_id,
+    });
+  }
 
   return {
     authored_files,
@@ -239,9 +270,42 @@ export async function apply_proposals(
     registry_upserts,
     skipped_permanent_upserts,
     drift_tagged_groups,
-    backlog_tasks_to_create,
-    new_signals_needed,
+    introspection_gap_tasks,
+    ariadne_bug_tasks,
   };
+}
+
+/**
+ * Write `backlog_task` back into registry entries after Ariadne-bug tasks have
+ * been created. Called by the main agent after Step 6b with a map of
+ * target-group-id → resolved TASK-id.
+ *
+ * Entries absent from the registry are silently skipped (the upsert may have
+ * failed earlier, or the entry was rejected for other reasons).
+ */
+export async function link_ariadne_bug_tasks(
+  registry_path: string,
+  task_ids_by_target_group_id: Record<string, string>,
+): Promise<{ updated_groups: string[] }> {
+  const entries = Object.entries(task_ids_by_target_group_id);
+  if (entries.length === 0) return { updated_groups: [] };
+
+  const raw = await fs.readFile(registry_path, "utf8");
+  const registry = JSON.parse(raw) as KnownIssue[];
+
+  const updated_groups: string[] = [];
+  const next = registry.map((issue) => {
+    const task_id = task_ids_by_target_group_id[issue.group_id];
+    if (task_id === undefined) return issue;
+    if (issue.backlog_task === task_id) return issue;
+    updated_groups.push(issue.group_id);
+    return { ...issue, backlog_task: task_id };
+  });
+
+  if (updated_groups.length === 0) return { updated_groups: [] };
+
+  await fs.writeFile(registry_path, JSON.stringify(next, null, 2) + "\n", "utf8");
+  return { updated_groups };
 }
 
 async function is_readable(file_path: string): Promise<boolean> {

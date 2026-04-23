@@ -1,6 +1,6 @@
 ---
 name: triage-curator
-description: Offline sweep that QAs auto-classified false-positive groups and investigates residuals from completed self-repair-pipeline runs. Tags drifting classifiers, proposes new ones, re-investigates classifiers QA found mis-matching, drafts backlog tasks for signal gaps, and commits the result.
+description: Offline sweep that QAs auto-classified false-positive groups and investigates residuals from completed self-repair-pipeline runs. Tags drifting classifiers, proposes new ones, re-investigates classifiers QA found mis-matching, files introspection-gap sub-tasks under TASK-190.16 and Ariadne-bug top-level tasks (linked back into the registry), and commits the result.
 argument-hint: "[--project <name>] [--last <n>] [--run <path>] [--dry-run] [--commit-to current|new|pr] [--branch <name>] [--pr <number>]"
 disable-model-invocation: true
 allowed-tools: Bash(node --import tsx:*), Bash(git *), Bash(gh *), AskUserQuestion, Read, Write, Edit, Glob, Task(triage-curator-qa, triage-curator-investigator), mcp__backlog__task_create, mcp__backlog__task_search
@@ -26,7 +26,7 @@ or `npx tsx`.
 | 3.5 | Validate      | `scripts/validate_responses.ts`                                | `<run>/validation.json`; non-zero exit on any issue          |
 | 4   | Author source | Main agent + `scripts/render_classifier.ts`                    | One `check_<target>.ts` per builtin proposal                 |
 | 5   | Finalize      | `scripts/finalize_run.ts`                                      | Apply proposals, write `finalized.json`, print summary       |
-| 6   | Backlog       | `mcp__backlog__task_create`                                    | One task per `backlog_tasks_to_create[]` entry               |
+| 6   | Backlog       | `mcp__backlog__task_create` + `link_ariadne_bug_tasks`         | Gap sub-tasks under `TASK-190.16`; bug tasks + registry link |
 | 7   | Commit        | `git` / `gh` via `AskUserQuestion`                             | Committed sweep on current branch, a new branch, or a PR     |
 
 ## Arguments
@@ -138,8 +138,10 @@ the shape schema, and checks:
 - `retargets_to`, when set, names an existing registry entry.
 - When retargeting, `positive_examples` and `negative_examples` are empty.
 - `positive_examples` / `negative_examples` indices are in-range.
-- `kind: "none"` carries either `new_signals_needed[]` or a session log
+- `kind: "none"` carries either `introspection_gap` or a session log
   with `failure_category` set (no silent dead-ends).
+- Every working classifier (`kind: "builtin"`) carries an `ariadne_bug`
+  (root-cause fix task — new task body or `existing_task_id` attached).
 - No two responses target the same classifier file.
 
 Output: `<run>/validation.json` with `{ ok: boolean, issues: [...] }`.
@@ -192,14 +194,84 @@ Finalize handles several housekeeping steps:
   this run.
 
 Capture each printed JSON as `FINALIZE[run_id]`. Aggregate `authored_files`,
-`deleted_orphan_files`, `failed_authoring`, `backlog_tasks_to_create`,
-`failed_groups`, `skipped_permanent_upserts` across runs.
+`deleted_orphan_files`, `failed_authoring`, `introspection_gap_tasks`,
+`ariadne_bug_tasks`, `failed_groups`, `skipped_permanent_upserts` across runs.
 
-### Step 6 — Create backlog tasks
+### Step 6 — File backlog tasks
 
-For every entry across all finalize summaries' `backlog_tasks_to_create[]`,
-call `mcp__backlog__task_create` with the entry's `title` and
-`description`. Record each created task id alongside its triggering group.
+Skip entirely when `--dry-run` was set. Otherwise file two distinct task
+flights from the finalize summaries.
+
+#### Introspection-gap sub-tasks
+
+For every entry across all finalize summaries' `introspection_gap_tasks[]`,
+first dedup via `mcp__backlog__task_search` using a query derived from
+`title` + joined `signals_needed`. If a sub-task already exists under
+`TASK-190.16` that covers the same signal(s), skip create and remember the
+existing task id.
+
+Otherwise call:
+
+```
+mcp__backlog__task_create({
+  title,
+  description,
+  parentTaskId: "TASK-190.16",
+  labels: ["self-repair-pipeline", "signal-gap", "triage-curator"],
+})
+```
+
+Backlog.md auto-assigns the next `.n+1` suffix (e.g. `TASK-190.16.13`).
+Record each created task id alongside its triggering `group_id` for
+commit-message rendering. No registry write.
+
+#### Ariadne-bug tasks and registry linkage
+
+For every entry across all finalize summaries' `ariadne_bug_tasks[]`,
+resolve a task id using this precedence:
+
+1. **Attach existing.** If `entry.existing_task_id` is set, use it — skip
+   create.
+2. **Dedup.** Otherwise `mcp__backlog__task_search` on the `title` and
+   `root_cause_category` label; if a matching task exists, use its id.
+3. **Create new.** Otherwise call:
+
+   ```
+   mcp__backlog__task_create({
+     title,
+     description,
+     labels: ["ariadne-core", "false-positive-root-cause",
+              "root-cause-<root_cause_category>"],
+   })
+   ```
+
+Build the registry-linkage mapping file:
+
+```bash
+STAMP=$(date -u +%Y-%m-%dT%H-%M-%SZ)
+MAPPING_PATH="/tmp/curator-ariadne-bug-mapping-${STAMP}.json"
+```
+
+The mapping is a JSON object `{ [target_registry_group_id]: "TASK-<N>" }`.
+**Every resolved entry contributes — whether attached via `existing_task_id`,
+found via `task_search`, or freshly created.** Omitting attached entries
+would leave their registry rows with `backlog_task: undefined`.
+
+Write the mapping via `Write`, then invoke:
+
+```bash
+node --import tsx .claude/skills/triage-curator/scripts/link_ariadne_bug_tasks.ts \
+  --mapping "$MAPPING_PATH"
+```
+
+This writes `backlog_task` onto matching registry entries. The helper is a
+thin wrapper around `link_ariadne_bug_tasks` in `apply_proposals.ts`.
+
+**Crash recovery.** If the orchestrator crashes between finalize and
+successful linkage, the run's `runs/<id>/finalized.json` already contains
+the full `outcome.ariadne_bug_tasks[]` array. Re-running this sub-step
+from that array reconstructs the mapping without re-dispatching
+investigators.
 
 ### Step 7 — Commit the sweep
 
@@ -243,7 +315,7 @@ finalize summaries plus the registry file (`~/.ariadne/` is never staged).
 `<MESSAGE>` format:
 
 ```
-triage-curator: <run_count> runs curated, <classifiers_added> classifiers, <signal_tasks> signal tasks
+triage-curator: <run_count> runs curated, <classifiers_added> classifiers, <gap_tasks> gap tasks, <bug_tasks> bug tasks
 
 Projects: <proj1>, <proj2>
 Runs:
@@ -251,7 +323,11 @@ Runs:
 New classifiers:
   - <group_id> (builtin: check_<id>.ts)
 Drift tagged: <group_id_x>
-Missing-signal tasks queued: <n>
+Introspection-gap sub-tasks: <n>
+  - TASK-190.16.<n+1> (<group_id>): <signals_needed>
+Ariadne-bug tasks: <n>
+  - TASK-<N> (<group_id>, <root_cause_category>): <title>
+Registry links updated: <n>
 Failed groups: <n>
   - <group_id> (<category>): <details>
 Failed authoring: <n>        # omit when empty
@@ -269,7 +345,8 @@ Confirm the commit landed on the expected ref.
 - **Session logs:** `~/.ariadne/triage-curator/runs/{run_id}/investigate/{group_id}.session.json`
 - **Sentinel:** `~/.ariadne/triage-curator/runs/{run_id}/finalized.json` (presence → run is curated)
 - **Registry writes:** `.claude/skills/self-repair-pipeline/known_issues/registry.json`
-  (only when not `--dry-run`; drift tags + classifier upserts)
+  (only when not `--dry-run`; drift tags + classifier upserts + `backlog_task`
+  linkage for Ariadne-bug tasks created in Step 6b)
 
 ### Drift vs promotion — two thresholds, two denominators
 
@@ -290,10 +367,12 @@ Both consume the same QA `outliers[]` list but answer different questions.
 Every investigator dispatch emits `<group_id>.session.json` alongside its
 response. Finalize folds the statuses into the summary and commit message.
 
-- **`success`** — valid classifier (`kind: "builtin"`).
-- **`blocked_missing_signal`** — `kind: "none"` plus non-empty
-  `new_signals_needed` plus a `backlog_ref`. Legitimate outcome when the
-  signal library cannot express the pattern.
+- **`success`** — valid classifier (`kind: "builtin"`), paired with a
+  required `ariadne_bug` (new task or `existing_task_id`).
+- **`blocked_missing_signal`** — `kind: "none"` plus `introspection_gap`
+  populated. Legitimate outcome when the signal library cannot express
+  the pattern. `ariadne_bug` may still be populated to name the
+  underlying resolver deficiency.
 - **`failure`** — structural block: incoherent group, infeasible pattern,
   permanent lock, registry conflict. Carries `failure_category` and
   `failure_details`; surfaced in the commit message.
