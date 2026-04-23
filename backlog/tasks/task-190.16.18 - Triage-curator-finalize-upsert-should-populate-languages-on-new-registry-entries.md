@@ -1,5 +1,5 @@
 ---
-id: TASK-211
+id: TASK-190.16.18
 title: >-
   Triage-curator finalize upsert should populate `languages` on new registry
   entries
@@ -11,6 +11,7 @@ labels:
   - triage-curator
   - bug
 dependencies: []
+parent_task_id: TASK-190.16
 ---
 
 ## Description

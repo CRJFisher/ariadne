@@ -1,5 +1,5 @@
 ---
-id: TASK-210
+id: TASK-190.16.17
 title: 'Signal gap: expose callers located in unindexed test directories'
 status: To Do
 assignee: []
@@ -8,6 +8,7 @@ labels:
   - self-repair-pipeline
   - signal-gap
 dependencies: []
+parent_task_id: TASK-190.16
 ---
 
 ## Description
