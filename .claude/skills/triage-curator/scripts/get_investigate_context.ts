@@ -22,9 +22,9 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { parse_qa_response } from "../src/apply_proposals.js";
 import { error_code } from "../src/errors.js";
 import {
+  derive_run_id,
   get_registry_file_path,
   run_output_dir,
 } from "../src/paths.js";
@@ -93,10 +93,6 @@ async function read_optional_file(file_path: string): Promise<string | null> {
   }
 }
 
-function derive_run_id(run_path: string): string {
-  return path.basename(run_path, ".json");
-}
-
 interface PromotedContext {
   registry_entry: KnownIssue;
   qa_outliers: QaOutlier[];
@@ -119,12 +115,7 @@ async function load_promoted_context(
 
   const run_id = derive_run_id(run_path);
   const qa_file = path.join(run_output_dir(run_id), "qa", `${group_id}.json`);
-  const raw_qa = await fs.readFile(qa_file, "utf8");
-  const parsed = parse_qa_response(JSON.parse(raw_qa));
-  if ("error" in parsed) {
-    throw new Error(`--promoted: QA response at ${qa_file} failed to parse: ${parsed.error}`);
-  }
-  const qa: QaResponse = parsed;
+  const qa = JSON.parse(await fs.readFile(qa_file, "utf8")) as QaResponse;
 
   const group = triage.false_positive_groups[group_id];
   const outlier_source_excerpts = await Promise.all(
@@ -190,7 +181,7 @@ async function main(): Promise<void> {
         "classifier. When retargeting, positive_examples and negative_examples must be " +
         "empty — their indices would reference the source group, not the target.",
       positive_example_rules:
-        `classifier_spec.positive_examples indices must satisfy 0 <= i < group.entries.length ` +
+        "classifier_spec.positive_examples indices must satisfy 0 <= i < group.entries.length " +
         `(= ${group.entries.length} for this group). Same rule for negative_examples. ` +
         "When retargeting (response.retargets_to set), leave both arrays empty.",
       kind_none_rule:

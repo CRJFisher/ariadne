@@ -1,41 +1,12 @@
 # triage-curator
 
 Offline sweep over completed `self-repair-pipeline` runs. Audits
-auto-classified false-positive groups, investigates residuals, and produces
-proposals for classifier, backlog, and signal updates.
-
-## Layout
-
-```
-triage-curator/
-├── SKILL.md                    # Claude-facing 7-step worksheet
-├── README.md                   # This file
-├── package.json, tsconfig.json
-├── scripts/
-│   ├── curate_all.ts                  # Default entry: plan the full sweep
-│   ├── curate_run.ts                  # Phased plan/finalize for one run
-│   ├── promote_qa_to_investigate.ts   # Step 3: route mis-matching QA outputs to the investigator
-│   ├── get_qa_context.ts              # Hydrates the sonnet QA agent
-│   ├── get_investigate_context.ts     # Hydrates the opus investigator (residual + --promoted modes)
-│   └── render_classifier.ts           # Step 4.5: render a BuiltinClassifierSpec to TypeScript (stdout)
-├── src/
-│   ├── paths.ts, types.ts
-│   ├── compute_wip_counts.ts          # Registry → wip group example counts
-│   ├── source_excerpt.ts              # Shared source-excerpt reader + SAMPLE_SIZE
-│   ├── curation_state.ts       (+ .test.ts)
-│   ├── scan_runs.ts            (+ .test.ts)
-│   ├── detect_drift.ts         (+ .test.ts)   # 15 % outlier-rate / group-size → sticky tag
-│   ├── promote_to_investigate.ts (+ .test.ts) # 40 % outlier-rate / sample-size → re-investigate
-│   ├── session_log.ts          (+ .test.ts)   # Parse + cross-check investigator session logs
-│   ├── render_classifier.ts    (+ .test.ts)   # Pure render(spec) → TypeScript module body
-│   └── apply_proposals.ts      (+ .test.ts)   # Validate + apply opus output
-└── reference/
-    └── signal_inventory.md     # Six signal categories + predicate DSL
-```
+auto-classified false-positive groups, investigates residuals, produces
+classifier + backlog + signal proposals, and commits the result.
 
 ## Authored classifiers
 
-Builtin classifiers produced by this sweep live at
+Builtin classifiers live at
 `.claude/skills/self-repair-pipeline/src/auto_classify/builtins/check_<group_id>.ts`.
 Each file is a **pure function of its `BuiltinClassifierSpec`** — the
 investigator emits the spec, the main agent runs `render_classifier.ts`,
@@ -67,12 +38,9 @@ pnpm test
 
 ## State files
 
-- `~/.ariadne/triage-curator/state.json` — rollup (`curated_runs[]`).
-- `~/.ariadne/triage-curator/runs/<run_id>/{qa,investigate,investigate_promoted}/*.json` —
-  per-group sub-agent output (inputs to `curate_run --phase finalize`).
-  `investigate/` holds residual-mode dispatches (no prior registry entry);
-  `investigate_promoted/` holds re-investigations of classifiers QA found
-  mis-matching.
-- `~/.ariadne/triage-curator/runs/<run_id>/{investigate,investigate_promoted}/<group_id>.session.json` —
-  investigator session log, one per dispatch. Finalize folds
-  success/failure/blocked counts into the summary.
+- `~/.ariadne/triage-curator/runs/<run_id>/{qa,investigate}/*.json` —
+  per-group sub-agent output (inputs to `finalize_run.ts`).
+- `~/.ariadne/triage-curator/runs/<run_id>/investigate/<group_id>.session.json` —
+  investigator session log, one per dispatch.
+- `~/.ariadne/triage-curator/runs/<run_id>/finalized.json` — written by
+  finalize; its presence marks the run as curated and makes scan skip it.

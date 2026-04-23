@@ -40,14 +40,11 @@ export interface KnownIssue {
   backlog_task?: string;
   examples: KnownIssueExample[];
   classifier: unknown; // opaque to the curator; self-repair-pipeline is authoritative for validation
-  observed_count?: number;
-  observed_projects?: string[];
-  last_seen_run?: string;
   /** Curator-populated tag indicating the classifier is producing too many outliers. */
   drift_detected?: boolean;
 }
 
-// ===== Curator state =====
+// ===== Curator state (per-run sentinel files under runs/<id>/finalized.json) =====
 
 export interface CurationOutcome {
   qa_groups_checked: number;
@@ -55,8 +52,6 @@ export interface CurationOutcome {
   investigated_groups: number;
   classifiers_proposed: number;
   backlog_tasks_proposed: string[];
-  /** Snapshot of wip-status group example counts at curation time, keyed by group_id. */
-  wip_group_example_counts: Record<string, number>;
   /** Count of investigator sessions that produced a valid classifier. */
   success_count: number;
   /** Count of investigator sessions where classification was structurally impossible. */
@@ -79,25 +74,18 @@ export interface CuratedRunEntry {
   outcome: CurationOutcome;
 }
 
-export interface CuratorState {
-  curated_runs: CuratedRunEntry[];
-}
-
 // ===== Scan =====
 
 export interface ScanOptions {
   project: string | null;
   last: number | null;
   run: string | null;
-  reinvestigate: boolean;
 }
 
 export interface ScanResultItem {
   run_id: string;
   project: string;
   run_path: string;
-  reason: "uncurated" | "reinvestigate";
-  wip_groups_with_growth: string[];
 }
 
 // ===== Sub-agent output shapes =====
@@ -113,19 +101,14 @@ export interface QaResponse {
   notes: string;
 }
 
-export type ClassifierAxis = "A" | "B" | "C";
-
 /**
- * Proposal from the investigator. Normalised shapes (mirrors the authoritative
- * `ClassifierSpec` in self-repair-pipeline):
- *   { kind: "none" }
- *   { kind: "builtin";   function_name; min_confidence }
- *   { kind: "predicate"; axis; expression; min_confidence }
+ * Curator-emitted classifier shape. Mirrors `ClassifierSpec` in self-repair-pipeline
+ * but narrowed: the curator only emits "none" (retire) or "builtin" (author source).
+ * Hand-authored predicate classifiers exist in the registry but are not produced here.
  */
 export type ClassifierSpecProposal =
   | { kind: "none" }
-  | { kind: "builtin"; function_name: string; min_confidence: number }
-  | { kind: "predicate"; axis: ClassifierAxis; expression: unknown; min_confidence: number };
+  | { kind: "builtin"; function_name: string; min_confidence: number };
 
 export interface BacklogRefProposal {
   title: string;
@@ -138,8 +121,6 @@ export interface BacklogRefProposal {
 // The main agent consumes it in Step 4.5 (via `render_classifier`) to author
 // the `.ts` source file at the pre-assigned path. The union is closed — every
 // op is enumerated in both the type and the renderer's translation table.
-// Adding a new op requires a change in both places; the main agent never
-// emits free-form code.
 
 export type SignalCheck =
   // ===== predicate-DSL-expressible ops (reusable in builtin context) =====
@@ -239,14 +220,6 @@ export type InvestigatorFailureCategory =
   | "permanent_locked"
   | "other";
 
-export interface InvestigatorSessionActions {
-  classifier_kind: "predicate" | "builtin" | "none" | null;
-  backlog_ref_emitted: boolean;
-  new_signals_needed_count: number;
-  /** True when the investigator emitted a `BuiltinClassifierSpec`. Only meaningful when classifier_kind === "builtin". */
-  classifier_spec_emitted: boolean;
-}
-
 export interface InvestigatorSessionLog {
   group_id: string;
   mode: "residual" | "promoted";
@@ -266,7 +239,6 @@ export interface InvestigatorSessionLog {
   failure_details: string | null;
   /** Populated on success or blocked_missing_signal. */
   success_summary: string | null;
-  actions: InvestigatorSessionActions;
   entries_examined_count: number;
   /** ISO-8601 timestamp. */
   timestamp: string;
