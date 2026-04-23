@@ -1,5 +1,5 @@
 ---
-id: TASK-206
+id: TASK-190.16.13
 title: >-
   Add `definition_is_object_literal_method` syntactic feature to support
   context-object-destructuring classifier
@@ -10,6 +10,7 @@ labels:
   - self-repair-pipeline
   - signal-gap
 dependencies: []
+parent_task_id: TASK-190.16
 ---
 
 ## Description

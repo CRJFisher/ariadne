@@ -1,5 +1,5 @@
 ---
-id: TASK-209
+id: TASK-190.16.16
 title: Add signal for inline `require()` near grep-hit call sites
 status: To Do
 assignee: []
@@ -8,6 +8,7 @@ labels:
   - self-repair-pipeline
   - signal-gap
 dependencies: []
+parent_task_id: TASK-190.16
 ---
 
 ## Description

@@ -1,5 +1,5 @@
 ---
-id: TASK-208
+id: TASK-190.16.15
 title: >-
   Add accessor-definition flag to FalsePositiveEntry for JS/TS getter/setter
   detection
@@ -10,6 +10,7 @@ labels:
   - self-repair-pipeline
   - signal-gap
 dependencies: []
+parent_task_id: TASK-190.16
 ---
 
 ## Description
