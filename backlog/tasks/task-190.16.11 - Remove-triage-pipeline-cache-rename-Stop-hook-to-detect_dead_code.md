@@ -4,6 +4,7 @@ title: Remove triage-pipeline cache; rename Stop hook to detect_dead_code
 status: To Do
 assignee: []
 created_date: "2026-04-17 14:38"
+updated_date: "2026-04-24 16:26"
 labels:
   - self-repair
   - cleanup
@@ -11,8 +12,7 @@ dependencies: []
 references:
   - /Users/chuck/.claude/plans/open-that-plan-up-hazy-cloud.md
   - /Users/chuck/.claude/plans/read-backlog-task-190-19-4-tingly-planet.md
-  - .claude/skills/self-repair-pipeline/src/known_entrypoints.ts
-  - .claude/hooks/entrypoint_stop.ts
+  - .claude/hooks/detect_dead_code.ts
   - .claude/skills/self-repair-pipeline/src/types.ts
   - .claude/skills/self-repair-pipeline/src/paths.ts
   - .claude/skills/self-repair-pipeline/scripts/prepare_triage.ts
@@ -79,5 +79,5 @@ The hook is also renamed: `entrypoint_stop.ts` described the Claude Code event (
 - [ ] #6 Test suite passes; cache-specific tests in the skill are deleted; any hook-adjacent tests are retained
 - [ ] #7 `FilterResult.remaining` branch is removed from `prepare_triage.ts`; `paths.ts` retains non-cache helpers; only the cache-path helper is removed
 - [ ] #8 Pre-existing `~/.ariadne/self-repair-pipeline/<project>/known_entrypoints/*.json` files are left in place; the SKILL.md docs note recommends a one-time audit to review entries that were auto-added by the old pipeline write path
-- [ ] #9 References to `entrypoint_stop` in parent plan, TASK-190.16, TASK-190.16.4, TASK-204, TASK-205 are updated to `detect_dead_code`; `backlog/completed/task-177` is left unchanged (historical record)
+- [x] #9 References to `entrypoint_stop` in parent plan, TASK-190.16, TASK-190.16.4, TASK-204, TASK-205 are updated to `detect_dead_code`; `backlog/completed/task-177` is left unchanged (historical record)
 <!-- AC:END -->

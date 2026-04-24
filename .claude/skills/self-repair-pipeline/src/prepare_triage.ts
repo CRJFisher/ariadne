@@ -1,12 +1,12 @@
 /**
  * Pure pipeline core for `scripts/prepare_triage.ts`.
  *
- * Extracted so the three-bucket orchestration can be exercised in unit tests
+ * Extracted so the two-bucket orchestration can be exercised in unit tests
  * without spawning a subprocess or touching the filesystem for state writes.
  *
  * Responsibilities:
- *   1. Partition entries into `known` (whitelist), `auto` (predicate classifier),
- *      and `residual` buckets using the provided registry + reader.
+ *   1. Partition entries into `auto` (predicate classifier) and `residual` buckets
+ *      using the provided registry + reader.
  *   2. Order the residual bucket deterministically and apply `max_count`.
  *   3. Delegate shape assembly to `build_triage_entries`.
  */
@@ -18,12 +18,12 @@ import {
   type BuildTriageEntriesInput,
   type ResidualEntry,
 } from "./build_triage_entries.js";
-import type { FilterResult } from "./known_entrypoints.js";
+import type { EnrichedFunctionEntry } from "./entry_point_types.js";
 import type { KnownIssuesRegistry } from "./known_issues_types.js";
 import type { TriageEntry } from "./triage_state_types.js";
 
 export interface PrepareTriageInput {
-  filtered: FilterResult;
+  entries: EnrichedFunctionEntry[];
   registry: KnownIssuesRegistry;
   read_file_lines: FileLinesReader;
   /** When set, truncate the ordered residual bucket to this many entries. */
@@ -33,7 +33,6 @@ export interface PrepareTriageInput {
 export interface PrepareTriageReport {
   entries: TriageEntry[];
   stats: {
-    known_count: number;
     auto_count: number;
     residual_total: number;
     residual_kept: number;
@@ -56,7 +55,7 @@ export function sort_residual_entries(entries: ResidualEntry[]): ResidualEntry[]
 }
 
 export function prepare_triage(input: PrepareTriageInput): PrepareTriageReport {
-  const classified = auto_classify(input.filtered.remaining, input.registry, input.read_file_lines);
+  const classified = auto_classify(input.entries, input.registry, input.read_file_lines);
 
   const auto_hits: AutoClassifiedEntry[] = [];
   const residual_pool: ResidualEntry[] = [];
@@ -73,7 +72,6 @@ export function prepare_triage(input: PrepareTriageInput): PrepareTriageReport {
     input.max_count === null ? sorted_residual : sorted_residual.slice(0, input.max_count);
 
   const build_input: BuildTriageEntriesInput = {
-    known: input.filtered.known_true_positives,
     auto_classified: auto_hits,
     residual,
   };
@@ -82,7 +80,6 @@ export function prepare_triage(input: PrepareTriageInput): PrepareTriageReport {
   return {
     entries,
     stats: {
-      known_count: input.filtered.known_true_positives.length,
       auto_count: auto_hits.length,
       residual_total: residual_pool.length,
       residual_kept: residual.length,

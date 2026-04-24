@@ -1,6 +1,6 @@
 ---
 name: self-repair-pipeline
-description: Runs the full entry point self-repair pipeline. Detects entry points in Ariadne packages or external codebases, triages false positives via sub-agents, aggregates root causes by group, and updates the known-entrypoints registry.
+description: Runs the full entry point self-repair pipeline. Detects entry points in Ariadne packages or external codebases, triages false positives via sub-agents, and aggregates root causes into groups.
 argument-hint: "[config-name | /path/to/repo | owner/repo (GitHub)]"
 disable-model-invocation: true
 allowed-tools: Bash(node --import tsx:*), Bash(ls:*), Read, Write, Glob, Task(triage-investigator, rough-aggregator, group-investigator)
@@ -8,19 +8,19 @@ allowed-tools: Bash(node --import tsx:*), Bash(ls:*), Read, Write, Glob, Task(tr
 
 # Self-Repair Pipeline
 
-Triage pipeline for entry point analysis: detect false positives, classify root causes, and update the known-entrypoints registry. Supports both self-analysis (Ariadne packages) and external codebase analysis.
+Triage pipeline for entry point analysis: detect false positives and classify root causes. Supports both self-analysis (Ariadne packages) and external codebase analysis. The pipeline is stateless — back-to-back runs repeat the same triage work, since the classifier registry at `known_issues/registry.json` (consulted by `prepare_triage`) already filters out entries with known root causes.
 
 **Script invocation:** Always use `node --import tsx` to run scripts. Never use `pnpm exec tsx` or `npx tsx` — these create IPC Unix sockets that the sandbox blocks.
 
 ## Pipeline Overview
 
-| Phase          | Script / Agent                       | Purpose                                                         |
-| -------------- | ------------------------------------ | --------------------------------------------------------------- |
-| 1. Detect      | `scripts/detect_entrypoints.ts`      | Run entry point detection                                       |
-| 2. Prepare     | `scripts/prepare_triage.ts`          | Classify against known-entrypoints registry, build triage state |
-| 3. Triage Loop | triage-investigator                  | Investigate pending entries with a continuous worker pool       |
-| 4. Aggregate   | rough-aggregator, group-investigator | Group false positives by root cause, verify membership          |
-| 5. Finalize    | `scripts/finalize_triage.ts`         | Save results, update known-entrypoints registry                 |
+| Phase          | Script / Agent                       | Purpose                                                              |
+| -------------- | ------------------------------------ | -------------------------------------------------------------------- |
+| 1. Detect      | `scripts/detect_entrypoints.ts`      | Run entry point detection                                            |
+| 2. Prepare     | `scripts/prepare_triage.ts`          | Auto-classify against the known-issues registry, build triage state  |
+| 3. Triage Loop | triage-investigator                  | Investigate pending (residual) entries with a continuous worker pool |
+| 4. Aggregate   | rough-aggregator, group-investigator | Group false positives by root cause, verify membership               |
+| 5. Finalize    | `scripts/finalize_triage.ts`         | Save triage-results JSON                                             |
 
 ## Analysis Target
 
@@ -88,9 +88,10 @@ Scripts that operate on existing triage state take `--project <name>` (`prepare_
 | `triage_state/{project}/aggregation/pass3/input.json`                    | Pass 3 canonical group list                                 |
 | `triage_state/{project}/aggregation/pass3/{group_id}_investigation.json` | Pass 3 per-group investigation results                      |
 | `analysis_output/{project}/`                                             | Project-scoped timestamped analysis and triage result files |
-| `known_entrypoints/{project}.json`                                       | Known-entrypoints registry (persists across runs)           |
 
 All paths above are relative to `~/.ariadne/self-repair-pipeline/`.
+
+The dead-code whitelist at `known_entrypoints/<package>.json` (also under `~/.ariadne/self-repair-pipeline/`) is owned by the `detect_dead_code` Stop hook and is never read or written by this pipeline. See **Dead-code guardrail** below.
 
 ## Phase 1: Detect
 
@@ -129,10 +130,10 @@ Options: `--analysis <path>` (required), `--project <name>` (optional — falls 
 
 When `--max-count` is set, the script shuffles the `llm-triage` entries (Fisher-Yates) and keeps only the first `<n>`. Use this to take a random sample when the full triage set is too large to process in one run.
 
-The script loads the known-entrypoints registry and classifies entries:
+The script consults the known-issues registry's predicate classifiers and partitions entries into two buckets:
 
-- **known-unreachable**: Matches registry — marked completed immediately
-- **llm-triage**: No registry match — marked pending for investigation
+- **known-unreachable**: A classifier matched at or above its `min_confidence` — marked completed immediately with the matched `group_id`
+- **llm-triage**: No classifier matched — marked pending for investigation
 
 Output: `triage_state/{project}/{project}_triage.json` — use Glob to find this path if the project name is unknown: `~/.ariadne/self-repair-pipeline/triage_state/**/*_triage.json`.
 
@@ -242,7 +243,26 @@ Finalization:
 
 - Partitions entries into confirmed-unreachable and false-positive groups
 - Saves triage results JSON to `analysis_output/<project>/triage_results/`
-- Updates the known-entrypoints registry with confirmed unreachable entries
+
+## Dead-code guardrail
+
+Orthogonal to the self-repair pipeline. The `detect_dead_code` Stop hook (`.claude/hooks/detect_dead_code.ts`, registered in `.claude/settings.json`) runs Ariadne against git-modified packages after each Claude Code session and cross-checks flagged entry points against a per-package whitelist at `~/.ariadne/self-repair-pipeline/known_entrypoints/<package>.json`. Exported-but-uncalled entry points not on the whitelist block the session.
+
+The whitelist is **human-owned**. Add a legitimate entry point by editing the package's JSON file and committing:
+
+```json
+[
+  {
+    "source": "project",
+    "description": "Confirmed legitimate entry points",
+    "entrypoints": [
+      { "name": "handle_request", "file_path": "src/handlers.ts" }
+    ]
+  }
+]
+```
+
+The self-repair pipeline does not read or write this whitelist. If you previously ran the pipeline under an older version that auto-appended `confirmed-unreachable` entries, audit each `known_entrypoints/<package>.json` once and delete any entries you do not actually want gated as legitimate entry points.
 
 ## Architecture: Key Modules
 
@@ -251,16 +271,15 @@ All library modules live under `src/`:
 | Module                                | Purpose                                                                        |
 | ------------------------------------- | ------------------------------------------------------------------------------ |
 | `extract_entry_points.ts`             | Shared extraction with enriched metadata + diagnostics                         |
-| `known_entrypoints.ts`                | Known-entrypoints registry I/O and matching                                    |
 | `known_issues_registry.ts`            | Known-issues registry loader + predicate-expression schema validator           |
-| `prepare_triage.ts`                   | Three-bucket orchestration (whitelist / auto-classified / residual)            |
+| `prepare_triage.ts`                   | Two-bucket orchestration (auto-classified / residual)                          |
 | `build_triage_entries.ts`             | Assemble `TriageEntry` records from prepared buckets                           |
 | `build_finalization_output.ts`        | Build final results from a completed triage state                              |
 | `merge_results.ts`                    | Merge investigator result files into triage state                              |
 | `aggregation/prepare_slices.ts`       | Slice completed false positives into rough-aggregator inputs                   |
 | `aggregation/merge_rough_groups.ts`   | Merge pass1 outputs into canonical pass3 input                                 |
 | `aggregation/finalize_aggregation.ts` | Apply pass3 verdicts back to triage state                                      |
-| `entry_point_types.ts`                | Entry-point shapes (`EnrichedFunctionEntry`, diagnostics, known-entrypoints)   |
+| `entry_point_types.ts`                | Entry-point shapes (`EnrichedFunctionEntry`, diagnostics)                      |
 | `known_issues_types.ts`               | Known-issues registry DSL (`ClassifierSpec`, `PredicateExpr`, `KnownIssue`, …) |
 | `triage_state_types.ts`               | Triage state types (`TriageState`, `TriageEntry`, `TriageEntryResult`)         |
 | `triage_state_paths.ts`               | Triage state file locations + required-flag CLI helpers                        |

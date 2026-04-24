@@ -61,7 +61,7 @@ For built-ins (`Map.forEach`, `Array.forEach`, `Array.map`, `Array.filter`, `Arr
 
 ## References
 
-- Detection hook: `.claude/hooks/entrypoint_stop.ts`
+- Detection hook: `.claude/hooks/detect_dead_code.ts`
 - Whitelist file: `~/.ariadne/self-repair-pipeline/known_entrypoints/core.json` (source `known-false-positives`)
 - Related call-resolution code: `packages/core/src/resolve_references/call_resolution/`
 <!-- SECTION:DESCRIPTION:END -->

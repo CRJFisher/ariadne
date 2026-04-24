@@ -4,7 +4,7 @@ import {
   type BuildTriageEntriesInput,
 } from "./build_triage_entries.js";
 import type { EnrichedFunctionEntry } from "./entry_point_types.js";
-import type { TriageEntry, TriageEntryResult } from "./triage_state_types.js";
+import type { TriageEntry } from "./triage_state_types.js";
 import type { AutoClassifiedEntry } from "./auto_classify/types.js";
 
 // ===== Test Helpers =====
@@ -41,53 +41,9 @@ function make_auto_classified(
   };
 }
 
-const KNOWN_UNREACHABLE_RESULT: TriageEntryResult = {
-  ariadne_correct: true,
-  group_id: "confirmed-unreachable",
-  root_cause: "Known confirmed-unreachable",
-  reasoning: "Matched known-entrypoints registry",
-};
-
-const EMPTY_INPUT: BuildTriageEntriesInput = { known: [], auto_classified: [], residual: [] };
+const EMPTY_INPUT: BuildTriageEntriesInput = { auto_classified: [], residual: [] };
 
 // ===== Tests =====
-
-describe("build_triage_entries — known bucket", () => {
-  it("produces a known-unreachable completed entry", () => {
-    const entry = make_entry({ name: "main", file_path: "/projects/myapp/src/main.py" });
-    const input: BuildTriageEntriesInput = {
-      ...EMPTY_INPUT,
-      known: [{ entry, source: "confirmed-unreachable" }],
-    };
-
-    const result = build_triage_entries(input);
-
-    const expected: TriageEntry[] = [{
-      entry_index: 0,
-      name: "main",
-      file_path: "/projects/myapp/src/main.py",
-      start_line: 10,
-      kind: "function",
-      signature: null,
-      route: "known-unreachable",
-      diagnosis: "no-textual-callers",
-      known_source: "confirmed-unreachable",
-      status: "completed",
-      result: KNOWN_UNREACHABLE_RESULT,
-      error: null,
-      is_exported: false,
-      access_modifier: null,
-      diagnostics: {
-        grep_call_sites: [],
-        ariadne_call_refs: [],
-        diagnosis: "no-textual-callers",
-      },
-      auto_classified: false,
-      classifier_hints: [],
-    }];
-    expect(result).toEqual(expected);
-  });
-});
 
 describe("build_triage_entries — auto_classified bucket", () => {
   it("produces a known-unreachable completed entry with auto_classified=true", () => {
@@ -214,15 +170,13 @@ describe("build_triage_entries — residual bucket", () => {
   });
 });
 
-describe("build_triage_entries — three-bucket composition", () => {
-  it("orders entries known → auto_classified → residual with contiguous indices", () => {
-    const known = make_entry({ name: "render", kind: "method" });
+describe("build_triage_entries — two-bucket composition", () => {
+  it("orders entries auto_classified → residual with contiguous indices", () => {
     const auto = make_entry({ name: "my_fixture" });
     const residual_a = make_entry({ name: "helper_a" });
     const residual_b = make_entry({ name: "helper_b" });
 
     const input: BuildTriageEntriesInput = {
-      known: [{ entry: known, source: "react" }],
       auto_classified: [make_auto_classified(auto, "py-pytest-fixture")],
       residual: [
         { entry: residual_a, classifier_hints: [] },
@@ -241,10 +195,9 @@ describe("build_triage_entries — three-bucket composition", () => {
       known_source: r.known_source,
     }));
     expect(summary).toEqual([
-      { entry_index: 0, name: "render",      route: "known-unreachable", status: "completed", auto_classified: false, known_source: "react" },
-      { entry_index: 1, name: "my_fixture",  route: "known-unreachable", status: "completed", auto_classified: true,  known_source: "py-pytest-fixture" },
-      { entry_index: 2, name: "helper_a",    route: "llm-triage",        status: "pending",   auto_classified: false, known_source: null },
-      { entry_index: 3, name: "helper_b",    route: "llm-triage",        status: "pending",   auto_classified: false, known_source: null },
+      { entry_index: 0, name: "my_fixture", route: "known-unreachable", status: "completed", auto_classified: true,  known_source: "py-pytest-fixture" },
+      { entry_index: 1, name: "helper_a",   route: "llm-triage",        status: "pending",   auto_classified: false, known_source: null },
+      { entry_index: 2, name: "helper_b",   route: "llm-triage",        status: "pending",   auto_classified: false, known_source: null },
     ]);
   });
 

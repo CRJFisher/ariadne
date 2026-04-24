@@ -26,8 +26,8 @@ import {
   render_all as render_unsupported_features_all,
   write_outputs as write_unsupported_features_outputs,
 } from "../../self-repair-pipeline/scripts/render_unsupported_features.js";
-import type { KnownIssue as SelfRepairKnownIssue } from "../../self-repair-pipeline/src/types.js";
-import { save_outcome } from "../src/curation_outcome.js";
+import type { KnownIssue as SelfRepairKnownIssue } from "../../self-repair-pipeline/src/known_issues_types.js";
+import { is_curated, save_outcome } from "../src/curation_outcome.js";
 import { error_code } from "../src/errors.js";
 import {
   CURATOR_RUNS_DIR,
@@ -249,6 +249,14 @@ async function main(): Promise<void> {
   const output_dir = run_output_dir(run_id);
   const investigate_dir = path.join(output_dir, "investigate");
 
+  if (!dry_run && (await is_curated(run_id))) {
+    process.stderr.write(
+      `finalize_run: run '${run_id}' already has finalized.json; refusing to re-apply ` +
+        "proposals (would double-bump observed_count). Delete the sentinel to force.\n",
+    );
+    process.exit(2);
+  }
+
   const triage = JSON.parse(await fs.readFile(run_path, "utf8")) as TriageResultsFile;
 
   const qa_responses = await read_json_dir<QaResponse>(path.join(output_dir, "qa"));
@@ -266,6 +274,8 @@ async function main(): Promise<void> {
     {
       dry_run,
       registry_path: get_registry_file_path(),
+      project,
+      run_id,
       authored_files_by_group,
       session_logs,
       triage_groups: triage.false_positive_groups,

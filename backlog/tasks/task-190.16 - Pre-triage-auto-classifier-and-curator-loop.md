@@ -94,7 +94,7 @@ Phase D — Residual-only agent + feedback loop:
 
 Phase E — Triage-pipeline cache removal + hook rename:
 
-- **TASK-190.16.11** — Remove the triage pipeline's `known_entrypoints.ts` module and its types; rename the Stop hook from `entrypoint_stop.ts` to `detect_dead_code.ts` (purpose-descriptive); whitelist files and hook behaviour retained
+- **TASK-190.16.11** — Remove the triage pipeline's `known_entrypoints.ts` module and its types; rename the Stop hook to `detect_dead_code.ts` (purpose-descriptive); whitelist files and hook behaviour retained
 
 Phase F2 — Curator backlog linkage + reporting:
 

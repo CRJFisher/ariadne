@@ -2,9 +2,9 @@
 /**
  * Prepare triage state file from entrypoint analysis output.
  *
- * CLI wrapper around `src/prepare_triage.ts`. This file handles argv parsing,
- * I/O (analysis JSON, registry, whitelist, state dir cleanup, state writing)
- * and delegates bucketing + ordering to the pure pipeline core.
+ * CLI wrapper around `src/prepare_triage.ts`. Handles argv parsing, I/O
+ * (analysis JSON, registry, state dir cleanup, state writing) and delegates
+ * bucketing + ordering to the pure pipeline core.
  *
  * Usage:
  *   node --import tsx prepare_triage.ts --analysis <path> [--project <name>] [--max-count <n>]
@@ -17,7 +17,6 @@ import * as fsp from "node:fs/promises";
 import * as path from "path";
 
 import { load_json } from "../src/analysis_output.js";
-import { load_known_entrypoints, filter_known_entrypoints } from "../src/known_entrypoints.js";
 import { load_registry } from "../src/known_issues_registry.js";
 import { prepare_triage } from "../src/prepare_triage.js";
 import { TRIAGE_STATE_DIR } from "../src/paths.js";
@@ -83,12 +82,9 @@ async function main(): Promise<void> {
   const project_name = cli.project ?? analysis.project_name;
   const project_path = analysis.project_path;
 
-  const known_sources = await load_known_entrypoints(project_name);
-  const filtered = filter_known_entrypoints(analysis.entry_points, known_sources, project_path);
-
   const registry = load_registry();
   const { entries, stats } = prepare_triage({
-    filtered,
+    entries: analysis.entry_points,
     registry,
     read_file_lines: make_file_lines_reader(),
     max_count: cli.max_count,
@@ -117,7 +113,6 @@ async function main(): Promise<void> {
   await fsp.writeFile(state_path, JSON.stringify(state, null, 2) + "\n");
 
   console.error(`Triage state prepared: ${entries.length} entries`);
-  console.error(`  known-unreachable (whitelist):     ${stats.known_count} (completed)`);
   console.error(`  known-unreachable (auto-classify): ${stats.auto_count} (completed)`);
   if (cli.max_count !== null && stats.residual_kept < stats.residual_total) {
     console.error(

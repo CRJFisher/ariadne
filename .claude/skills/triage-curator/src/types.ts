@@ -42,6 +42,12 @@ export interface KnownIssue {
   classifier: unknown; // opaque to the curator; self-repair-pipeline is authoritative for validation
   /** Curator-populated tag indicating the classifier is producing too many outliers. */
   drift_detected?: boolean;
+  /** Cumulative count of false-positive entries observed across curated runs. */
+  observed_count?: number;
+  /** Project names in which this group has been observed at least once. */
+  observed_projects?: string[];
+  /** Run id of the most recent run that observed this group. */
+  last_seen_run?: string;
 }
 
 // ===== Curator state (per-run sentinel files under runs/<id>/finalized.json) =====

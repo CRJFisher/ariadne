@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
   apply_proposals,
+  bump_observed_stats,
   derive_languages_for_upsert,
   link_ariadne_bug_tasks,
   mark_drift_in_registry,
@@ -158,6 +159,46 @@ describe("mark_drift_in_registry", () => {
   });
 });
 
+describe("bump_observed_stats", () => {
+  it("increments observed_count, merges observed_projects, sets last_seen_run", () => {
+    const reg: KnownIssue[] = [
+      known("a", { observed_count: 3, observed_projects: ["old-proj"] }),
+      known("b"),
+    ];
+    const { updated, bumped_groups } = bump_observed_stats(
+      reg,
+      { a: 5, b: 2 },
+      "new-proj",
+      "run-2026-04-24",
+    );
+    expect(bumped_groups).toEqual(["a", "b"]);
+    expect(updated[0].observed_count).toBe(8);
+    expect(updated[0].observed_projects).toEqual(["old-proj", "new-proj"]);
+    expect(updated[0].last_seen_run).toBe("run-2026-04-24");
+    expect(updated[1].observed_count).toBe(2);
+    expect(updated[1].observed_projects).toEqual(["new-proj"]);
+    expect(updated[1].last_seen_run).toBe("run-2026-04-24");
+  });
+
+  it("does not duplicate a project already in observed_projects", () => {
+    const reg: KnownIssue[] = [known("a", { observed_projects: ["p"] })];
+    const { updated } = bump_observed_stats(reg, { a: 1 }, "p", "run-id");
+    expect(updated[0].observed_projects).toEqual(["p"]);
+  });
+
+  it("skips registry entries not observed in this run", () => {
+    const reg: KnownIssue[] = [known("a"), known("b")];
+    const { updated, bumped_groups } = bump_observed_stats(
+      reg,
+      { a: 1 },
+      "p",
+      "r",
+    );
+    expect(bumped_groups).toEqual(["a"]);
+    expect(updated[1]).toEqual(known("b"));
+  });
+});
+
 describe("derive_languages_for_upsert", () => {
   function group_with_extensions(
     group_id: string,
@@ -243,6 +284,8 @@ describe("apply_proposals", () => {
     const result = await apply_proposals(qa, [builtin_inv("new-group")], { a: 20 }, {
       dry_run: true,
       registry_path,
+      project: "test-project",
+      run_id: "test-run",
       authored_files_by_group: { "new-group": authored_path },
     });
 
@@ -262,6 +305,8 @@ describe("apply_proposals", () => {
     const result = await apply_proposals([], [builtin_inv("a")], {}, {
       dry_run: false,
       registry_path,
+      project: "test-project",
+      run_id: "test-run",
       authored_files_by_group: {},
     });
 
@@ -279,6 +324,8 @@ describe("apply_proposals", () => {
     const result = await apply_proposals([], [builtin_inv("a")], {}, {
       dry_run: false,
       registry_path,
+      project: "test-project",
+      run_id: "test-run",
       authored_files_by_group: { a: missing },
     });
 
@@ -293,6 +340,8 @@ describe("apply_proposals", () => {
     const result = await apply_proposals([], [builtin_inv("a")], {}, {
       dry_run: false,
       registry_path,
+      project: "test-project",
+      run_id: "test-run",
       authored_files_by_group: { a: authored_path },
     });
 
@@ -330,6 +379,8 @@ describe("apply_proposals", () => {
     const result = await apply_proposals([], [inv], { "dispatch-group": 2 }, {
       dry_run: false,
       registry_path,
+      project: "test-project",
+      run_id: "test-run",
       authored_files_by_group: { "existing-entry": authored_path },
     });
 
@@ -354,6 +405,8 @@ describe("apply_proposals", () => {
     const result = await apply_proposals([], [], {}, {
       dry_run: false,
       registry_path,
+      project: "test-project",
+      run_id: "test-run",
       authored_files_by_group: {},
     });
     expect(result.registry_upserts).toEqual([]);
@@ -394,6 +447,8 @@ describe("apply_proposals", () => {
     const result = await apply_proposals([], inv, {}, {
       dry_run: true,
       registry_path,
+      project: "test-project",
+      run_id: "test-run",
       authored_files_by_group: {},
     });
     expect(result.introspection_gap_tasks).toEqual([
@@ -431,19 +486,26 @@ describe("apply_proposals", () => {
     const result = await apply_proposals([], [inv], { "dispatch-group": 2 }, {
       dry_run: false,
       registry_path,
+      project: "test-project",
+      run_id: "test-run",
       authored_files_by_group: { "existing-entry": authored_path },
     });
 
-    expect(result.ariadne_bug_tasks).toEqual([
-      {
-        group_id: "dispatch-group",
-        target_registry_group_id: "existing-entry",
-        root_cause_category: "receiver_resolution",
-        title: "Resolver loses field type",
-        description: "details",
-        existing_task_id: null,
-      },
-    ]);
+    expect(result.ariadne_bug_tasks.length).toBe(1);
+    const task = result.ariadne_bug_tasks[0];
+    expect(task.group_id).toBe("dispatch-group");
+    expect(task.target_registry_group_id).toBe("existing-entry");
+    expect(task.root_cause_category).toBe("receiver_resolution");
+    expect(task.title).toBe("Resolver loses field type");
+    expect(task.existing_task_id).toBeNull();
+    // description is now the rendered Ariadne-bug body — spot-check the
+    // sections that distinguish it from the raw investigator narrative.
+    expect(task.description).toContain("**Root cause category:** `receiver_resolution`");
+    expect(task.description).toContain("**Target registry entry:** `existing-entry`");
+    expect(task.description).toContain("details");
+    expect(task.description).toContain("## Observations");
+    expect(task.description).toContain("## Proposed classifier (workaround)");
+    expect(task.description).toContain("## Acceptance criteria");
   });
 
   it("skips upsert when existing entry is status='permanent'", async () => {
@@ -455,6 +517,8 @@ describe("apply_proposals", () => {
     const result = await apply_proposals([], [inv], {}, {
       dry_run: false,
       registry_path,
+      project: "test-project",
+      run_id: "test-run",
       authored_files_by_group: {},
     });
     expect(result.skipped_permanent_upserts).toEqual(["a"]);
@@ -476,6 +540,8 @@ describe("apply_proposals", () => {
     const result = await apply_proposals([], [inv], {}, {
       dry_run: false,
       registry_path,
+      project: "test-project",
+      run_id: "test-run",
       authored_files_by_group: {},
     });
     expect(result.registry_upserts).toEqual(["a"]);
