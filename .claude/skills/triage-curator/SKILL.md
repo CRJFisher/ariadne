@@ -191,7 +191,9 @@ Finalize handles several housekeeping steps:
   `unsupported_features.<lang>.md` golden files are re-rendered and
   added to `authored_files[]`.
 - **Sentinel:** writes `runs/<id>/finalized.json` so future sweeps skip
-  this run.
+  this run. Re-running finalize on an already-finalized run exits with
+  code 2 without re-applying proposals (prevents double-bumping
+  `observed_count`); delete the sentinel to force.
 
 Capture each printed JSON as `FINALIZE[run_id]`. Aggregate `authored_files`,
 `deleted_orphan_files`, `failed_authoring`, `introspection_gap_tasks`,
@@ -217,7 +219,7 @@ mcp__backlog__task_create({
   title,
   description,
   parentTaskId: "TASK-190.16",
-  labels: ["self-repair-pipeline", "signal-gap", "triage-curator"],
+  labels: ["self-repair-pipeline", "signal-gap", "triage-curator", group_id],
 })
 ```
 
@@ -241,7 +243,7 @@ resolve a task id using this precedence:
      title,
      description,
      labels: ["ariadne-core", "false-positive-root-cause",
-              "root-cause-<root_cause_category>"],
+              "root-cause-<root_cause_category>", group_id],
    })
    ```
 
@@ -335,6 +337,107 @@ Failed authoring: <n>        # omit when empty
 ```
 
 Confirm the commit landed on the expected ref.
+
+## Impact reporting (on demand)
+
+After curating one or more runs, generate a human-readable ranking of the
+known-issues registry by observed impact. Not part of the main curation
+pipeline — invoked separately when the user wants a snapshot.
+
+```bash
+node --import tsx .claude/skills/triage-curator/scripts/generate_impact_report.ts \
+  [--top-n 20] [--prior <json>] [--out <md>] [--snapshot <json>]
+```
+
+The report prints to stdout and optionally to `--out`. Pass `--snapshot` to
+write the current `{ [group_id]: observed_count }` map, and pass the previous
+run's snapshot as `--prior` to highlight groups that first appeared since then.
+
+The report has four sections: top N by `observed_count`, per-language breakdown,
+per-project breakdown, and "new since prior snapshot". Every registry entry
+carries its accumulated `observed_count`, `observed_projects`, and
+`last_seen_run`; these are bumped automatically by `finalize_run` each time a
+false-positive group is seen.
+
+### Posting the report to the backlog
+
+After running `generate_impact_report.ts`, the main agent optionally posts the
+markdown to the backlog as a document for ongoing reference:
+
+```
+mcp__backlog__document_create({
+  title: "Self-repair impact report — <YYYY-MM-DD>",
+  content: <markdown from --out>,
+  tags: ["self-repair-pipeline", "impact-report"],
+})
+```
+
+Post a fresh document each time rather than editing an existing one — old
+reports are useful as a historical record of where false-positive pressure
+sat at a given point.
+
+## Sweeping registry entries without a linked backlog task (on demand)
+
+Registry entries minted by the novel-group scanner, or seeded `wip` entries
+that predate the curator's Ariadne-bug flow, carry no `backlog_task`. The
+sweeper emits `mcp__backlog__task_create` proposals for each unlinked entry
+and flags linked entries whose body needs refreshing because `observed_count`
+has changed since the prior sweep.
+
+```bash
+node --import tsx .claude/skills/triage-curator/scripts/propose_backlog_tasks.ts \
+  [--prior <json>] [--out <json>] [--snapshot <json>]
+```
+
+Output shape:
+
+```json
+{
+  "creates": [
+    {
+      "group_id": "novel:xxx",
+      "title": "[novel:xxx] …",
+      "description": "<markdown body with observed_count, examples, classifier spec, AC checklist>",
+      "labels": [
+        "self-repair-pipeline",
+        "known-issue",
+        "novel:xxx",
+        "lang-typescript"
+      ]
+    }
+  ],
+  "updates": [
+    {
+      "group_id": "method-chain-dispatch",
+      "backlog_task": "TASK-900",
+      "description": "<refreshed body>"
+    }
+  ]
+}
+```
+
+For each `creates[]` entry the main agent calls `mcp__backlog__task_create`
+with the supplied fields, then feeds `{ [group_id]: "TASK-<N>" }` back through
+`link_ariadne_bug_tasks.ts` to record the linkage. For each `updates[]` entry
+it calls `mcp__backlog__task_edit` on the `backlog_task` with the new
+`description`.
+
+## Promoting novel groups (on demand)
+
+The triage-investigator emits `novel:<kebab-case>` group_ids for detection
+gaps that do not match any existing registry entry. The novel-group scanner
+aggregates those across finalized runs and mints a `wip` registry placeholder
+once a group accumulates at least `PROMOTION_THRESHOLD` (5) distinct members.
+
+```bash
+node --import tsx .claude/skills/triage-curator/scripts/promote_novel_groups.ts \
+  [--dry-run] [--threshold 5]
+```
+
+Only curated runs (runs with a `finalized.json` sentinel) are scanned, so the
+scanner can run safely after `curate_all`. Promoted placeholders carry
+`classifier: { kind: "none" }` — the next curator run dispatches an
+investigator to author the real classifier.
 
 ## Reference
 

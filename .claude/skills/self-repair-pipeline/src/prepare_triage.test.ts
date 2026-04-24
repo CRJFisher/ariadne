@@ -1,9 +1,9 @@
 /**
  * End-to-end integration test for the prepare_triage pipeline core.
  *
- * Exercises the three-bucket orchestration — whitelist, auto-classified,
- * residual — and verifies the `max_count` contract: it caps only the residual
- * bucket, never the already-completed whitelist or auto-classified entries.
+ * Exercises the two-bucket orchestration — auto-classified, residual — and
+ * verifies the `max_count` contract: it caps only the residual bucket, never
+ * the already-completed auto-classified entries.
  *
  * Also verifies deterministic selection: running the pipeline twice on
  * identical input produces byte-identical output.
@@ -15,7 +15,6 @@ import { prepare_triage, sort_residual_entries } from "./prepare_triage.js";
 import type { ResidualEntry } from "./build_triage_entries.js";
 import type { EnrichedFunctionEntry } from "./entry_point_types.js";
 import type { KnownIssue, KnownIssuesRegistry } from "./known_issues_types.js";
-import type { FilterResult } from "./known_entrypoints.js";
 
 // ===== Fixtures =====
 
@@ -59,16 +58,13 @@ const EMPTY_READER = (_: string) => [] as readonly string[];
 
 // ===== Tests =====
 
-describe("prepare_triage — three-bucket end-to-end", () => {
-  it("max-count caps only the residual bucket; whitelist + auto_classified are always kept in full", () => {
+describe("prepare_triage — two-bucket end-to-end", () => {
+  it("max-count caps only the residual bucket; auto_classified entries are always kept in full", () => {
     const registry: KnownIssuesRegistry = [
       predicate_issue("match-no-textual-callers", "no-textual-callers"),
     ];
 
-    // 3 whitelist + 50 auto-classified + 97 residual = 150 synthetic entries.
-    const whitelist_entries: EnrichedFunctionEntry[] = Array.from({ length: 3 }, (_, i) =>
-      make_entry({ name: `whitelist_${i}`, tree_size: 500 + i }),
-    );
+    // 50 auto-classified + 97 residual = 147 synthetic entries.
     const auto_entries: EnrichedFunctionEntry[] = Array.from({ length: 50 }, (_, i) =>
       make_entry({
         name: `auto_${i}`,
@@ -87,45 +83,29 @@ describe("prepare_triage — three-bucket end-to-end", () => {
       }),
     );
 
-    // Simulate filter_known_entrypoints having already pulled the whitelist out.
-    const filtered: FilterResult = {
-      known_true_positives: whitelist_entries.map((entry) => ({
-        entry,
-        source: "confirmed-unreachable",
-      })),
-      remaining: [...auto_entries, ...residual_entries],
-    };
-
     const report = prepare_triage({
-      filtered,
+      entries: [...auto_entries, ...residual_entries],
       registry,
       read_file_lines: EMPTY_READER,
       max_count: 20,
     });
 
-    // Whitelist (3) + auto-classified (50) + residual top-20 = 73 entries.
-    expect(report.entries.length).toEqual(73);
+    // Auto-classified (50) + residual top-20 = 70 entries.
+    expect(report.entries.length).toEqual(70);
     expect(report.stats).toEqual({
-      known_count: 3,
       auto_count: 50,
       residual_total: 97,
       residual_kept: 20,
     });
 
-    // Bucket ordering: known → auto → residual. Build a compact signature per
-    // entry so a single toEqual against the expected array pinpoints any drift.
+    // Bucket ordering: auto → residual. Build a compact signature per entry so a
+    // single toEqual against the expected array pinpoints any drift.
     const signatures = report.entries.map((e) => ({
       route: e.route,
       status: e.status,
       auto_classified: e.auto_classified,
       known_source: e.known_source,
     }));
-    const known_sig = {
-      route: "known-unreachable" as const,
-      status: "completed" as const,
-      auto_classified: false,
-      known_source: "confirmed-unreachable",
-    };
     const auto_sig = {
       route: "known-unreachable" as const,
       status: "completed" as const,
@@ -139,7 +119,6 @@ describe("prepare_triage — three-bucket end-to-end", () => {
       known_source: null,
     };
     const expected_signatures = [
-      ...Array(3).fill(known_sig),
       ...Array(50).fill(auto_sig),
       ...Array(20).fill(residual_sig),
     ];
@@ -156,16 +135,15 @@ describe("prepare_triage — three-bucket end-to-end", () => {
         tree_size: (i * 13) % 97,
       }),
     );
-    const filtered: FilterResult = { known_true_positives: [], remaining: entries };
 
     const first = prepare_triage({
-      filtered,
+      entries,
       registry,
       read_file_lines: EMPTY_READER,
       max_count: 20,
     });
     const second = prepare_triage({
-      filtered,
+      entries,
       registry,
       read_file_lines: EMPTY_READER,
       max_count: 20,
@@ -180,10 +158,9 @@ describe("prepare_triage — three-bucket end-to-end", () => {
     const entries: EnrichedFunctionEntry[] = Array.from({ length: 7 }, (_, i) =>
       make_entry({ name: `e_${i}` }),
     );
-    const filtered: FilterResult = { known_true_positives: [], remaining: entries };
 
     const report = prepare_triage({
-      filtered,
+      entries,
       registry,
       read_file_lines: EMPTY_READER,
       max_count: null,
@@ -199,10 +176,9 @@ describe("prepare_triage — three-bucket end-to-end", () => {
     const entries: EnrichedFunctionEntry[] = Array.from({ length: 5 }, (_, i) =>
       make_entry({ name: `e_${i}` }),
     );
-    const filtered: FilterResult = { known_true_positives: [], remaining: entries };
 
     const report = prepare_triage({
-      filtered,
+      entries,
       registry,
       read_file_lines: EMPTY_READER,
       max_count: 20,

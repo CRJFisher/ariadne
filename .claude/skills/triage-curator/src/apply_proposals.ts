@@ -1,6 +1,7 @@
 import * as fs from "node:fs/promises";
 
 import { error_code } from "./errors.js";
+import { render_ariadne_bug_body } from "./render_ariadne_bug_body.js";
 import type {
   AriadneBugTaskToCreate,
   BuiltinClassifierSpec,
@@ -51,6 +52,46 @@ export function mark_drift_in_registry(
   return { updated, drift_tagged_groups: [...drifting] };
 }
 
+// ===== Observed-count bookkeeping =====
+
+/**
+ * Increment `observed_count`, extend `observed_projects`, and set `last_seen_run`
+ * on registry entries whose `group_id` appears in the source triage run. Pure.
+ *
+ * Behaviour:
+ * - Groups present in the triage run but absent from the registry are ignored —
+ *   `upsert_classifier` is the only path that can mint a new registry entry, and
+ *   when it does, this function will increment the entry's counts on the next
+ *   pass (the order is drift → upserts → observed bump in `apply_proposals`).
+ * - `observed_count` accumulates across runs; re-running the curator on the same
+ *   run_id does double-count, which is why finalize's `finalized.json` sentinel
+ *   is the guard against redundant invocation.
+ */
+export function bump_observed_stats(
+  registry: KnownIssue[],
+  member_counts: Record<string, number>,
+  project: string,
+  run_id: string,
+): { updated: KnownIssue[]; bumped_groups: string[] } {
+  const bumped_groups: string[] = [];
+  const updated = registry.map((issue) => {
+    const count = member_counts[issue.group_id];
+    if (count === undefined || count <= 0) return issue;
+    bumped_groups.push(issue.group_id);
+    const prior_projects = issue.observed_projects ?? [];
+    const next_projects = prior_projects.includes(project)
+      ? prior_projects
+      : [...prior_projects, project];
+    return {
+      ...issue,
+      observed_count: (issue.observed_count ?? 0) + count,
+      observed_projects: next_projects,
+      last_seen_run: run_id,
+    };
+  });
+  return { updated, bumped_groups };
+}
+
 // ===== Spec validation (called from the pre-finalize validator) =====
 
 /**
@@ -96,6 +137,10 @@ export interface FailedAuthoring {
 export interface ApplyOptions {
   dry_run: boolean;
   registry_path: string;
+  /** Project name of the source run. Written to `observed_projects` on matched entries. */
+  project: string;
+  /** Run id of the source run. Written to `last_seen_run` on matched entries. */
+  run_id: string;
   /**
    * Map of `retargets_to ?? group_id` → absolute path to the authored
    * `check_<id>.ts` file written in Step 4.5 by the main agent.
@@ -230,8 +275,20 @@ export async function apply_proposals(
     registry_upserts.push(target_group_id);
   }
 
+  // Observed-stat bookkeeping runs after drift + upsert so newly-minted
+  // entries still pick up the current run's counts.
+  const { updated: after_observed, bumped_groups } = bump_observed_stats(
+    next_registry,
+    member_counts,
+    opts.project,
+    opts.run_id,
+  );
+  next_registry = after_observed;
+
   const registry_mutated =
-    drift_tagged_groups.length > 0 || registry_upserts.length > 0;
+    drift_tagged_groups.length > 0 ||
+    registry_upserts.length > 0 ||
+    bumped_groups.length > 0;
   if (!opts.dry_run && registry_mutated) {
     await fs.writeFile(
       opts.registry_path,
@@ -254,12 +311,20 @@ export async function apply_proposals(
   const ariadne_bug_tasks: AriadneBugTaskToCreate[] = [];
   for (const r of inv) {
     if (r.ariadne_bug === null) continue;
+    const target_group_id = r.retargets_to ?? r.group_id;
+    const target_entry = next_registry.find((e) => e.group_id === target_group_id);
+    const description = render_ariadne_bug_body({
+      response: r,
+      group: opts.triage_groups?.[r.group_id],
+      target_entry,
+      current_project: opts.project,
+    });
     ariadne_bug_tasks.push({
       group_id: r.group_id,
-      target_registry_group_id: r.retargets_to ?? r.group_id,
+      target_registry_group_id: target_group_id,
       root_cause_category: r.ariadne_bug.root_cause_category,
       title: r.ariadne_bug.title,
-      description: r.ariadne_bug.description,
+      description,
       existing_task_id: r.ariadne_bug.existing_task_id,
     });
   }

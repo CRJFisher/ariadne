@@ -1,13 +1,13 @@
 # Diagnosis Routes: Routing Table and Classification Guide
 
-Entry point candidates are routed through the triage pipeline based on their classification against the known-entrypoints registry and their pre-gathered diagnostic data.
+Entry point candidates are routed through the triage pipeline based on their classification against the known-issues registry (predicate classifiers) and their pre-gathered diagnostic data.
 
 ## Entry Classification Routes
 
-| Route               | Source            | Initial Status | Description                                                                         |
-| ------------------- | ----------------- | -------------- | ----------------------------------------------------------------------------------- |
-| `known-unreachable` | Registry match    | `completed`    | Entry matched the known-entrypoints registry — confirmed unreachable, no LLM needed |
-| `llm-triage`        | No registry match | `pending`      | Entry needs LLM investigation to determine whether Ariadne missed real callers      |
+| Route               | Source              | Initial Status | Description                                                                    |
+| ------------------- | ------------------- | -------------- | ------------------------------------------------------------------------------ |
+| `known-unreachable` | Classifier match    | `completed`    | A predicate classifier from the known-issues registry matched — no LLM needed  |
+| `llm-triage`        | No classifier match | `pending`      | Entry needs LLM investigation to determine whether Ariadne missed real callers |
 
 ## Diagnosis Values
 

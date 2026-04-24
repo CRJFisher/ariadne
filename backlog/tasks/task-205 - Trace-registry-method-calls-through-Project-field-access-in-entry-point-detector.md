@@ -72,7 +72,7 @@ The fix is not specific to `Project`; any `class C { public reg: R = …; }` wit
 
 ## References
 
-- Detection hook: `.claude/hooks/entrypoint_stop.ts`
+- Detection hook: `.claude/hooks/detect_dead_code.ts`
 - Whitelist file: `~/.ariadne/self-repair-pipeline/known_entrypoints/core.json` (source `ground-truth`)
 - Related call-resolution code: `packages/core/src/resolve_references/call_resolution/receiver_resolution.*.ts`, `method_lookup.ts`
 - Introduced by: TASK-190.16.3 (added the two introspection APIs that exposed this gap)

@@ -1,7 +1,6 @@
 /**
- * Types for entry-point detection: what `extract_entry_points` produces,
- * what downstream stages (triage, finalization) consume, and the shape of
- * the known-entrypoints (dead-code whitelist) registry.
+ * Types for entry-point detection: what `extract_entry_points` produces and
+ * what downstream stages (triage, finalization) consume.
  *
  * The classifier DSL for the known-issues registry lives in `known_issues_types.ts`.
  */
@@ -116,24 +115,6 @@ export interface AnalysisResult {
   project_path: string;
   entry_points: EnrichedFunctionEntry[];
   [key: string]: unknown;
-}
-
-// ===== Known Entrypoints Registry =====
-
-export interface KnownEntrypoint {
-  name: string;
-  /** Relative path from project root. Omit for pattern-based matching (frameworks). */
-  file_path?: string;
-  /** Optional kind filter for pattern-based matching. */
-  kind?: "function" | "method" | "constructor";
-  /** Informational only, not used for matching. */
-  start_line?: number;
-}
-
-export interface KnownEntrypointSource {
-  source: string;       // "project", "react", "django", etc.
-  description: string;
-  entrypoints: KnownEntrypoint[];
 }
 
 // ===== Phase 2 Outputs (Grouped by Root Cause) =====

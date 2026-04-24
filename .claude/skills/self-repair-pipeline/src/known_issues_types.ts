@@ -3,9 +3,10 @@
  * `.claude/skills/self-repair-pipeline/known_issues/registry.json` and consumed
  * by the `auto_classify` pipeline stage and by the triage-curator skill.
  *
- * Orthogonal to the dead-code whitelist read by the Stop hook — that lives
- * at `~/.ariadne/self-repair-pipeline/known_entrypoints/<pkg>.json` and is
- * a separate, human-maintained list of legitimate entry points.
+ * Orthogonal to the dead-code whitelist read by the `detect_dead_code` Stop
+ * hook — that lives at `~/.ariadne/self-repair-pipeline/known_entrypoints/<pkg>.json`
+ * and is a separate, human-maintained list of legitimate entry points. The
+ * self-repair pipeline never reads or writes that whitelist.
  */
 
 import type { SyntacticFeatureName } from "./entry_point_types.js";
