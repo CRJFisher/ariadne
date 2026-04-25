@@ -1,7 +1,7 @@
 import * as crypto from "crypto";
 import * as path from "path";
 import * as fs from "fs";
-import { log_info, log_warn } from "../logger";
+import { log_info, log_warn } from "@ariadnejs/core";
 
 export interface ToolCallRecord {
   tool_name: string;

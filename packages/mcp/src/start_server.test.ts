@@ -24,11 +24,6 @@ vi.mock("./project_manager", () => ({
   }),
 }));
 
-vi.mock("./logger", () => ({
-  initialize_logger: vi.fn(),
-  log_info: vi.fn(),
-}));
-
 vi.mock("./analytics/analytics", () => ({
   is_analytics_enabled: vi.fn().mockReturnValue(false),
   init_analytics: vi.fn(),
@@ -47,6 +42,8 @@ vi.mock("./tools/core/tool_group", () => ({
 vi.mock("@ariadnejs/core", () => ({
   FileSystemStorage: vi.fn().mockImplementation(function () {}),
   resolve_cache_dir: vi.fn().mockReturnValue("/mock/cache/dir"),
+  initialize_logger: vi.fn(),
+  log_info: vi.fn(),
 }));
 
 describe("start_server", () => {

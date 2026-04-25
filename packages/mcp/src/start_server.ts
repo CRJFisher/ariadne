@@ -1,9 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { FileSystemStorage, resolve_cache_dir } from "@ariadnejs/core";
+import { FileSystemStorage, resolve_cache_dir, initialize_logger, log_info } from "@ariadnejs/core";
 import { VERSION } from "./version";
 import { ProjectManager } from "./project_manager";
-import { initialize_logger, log_info } from "./logger";
 import {
   close_analytics,
   init_analytics,

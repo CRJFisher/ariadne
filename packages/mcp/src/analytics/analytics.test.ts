@@ -11,10 +11,14 @@ import {
 } from "./analytics";
 
 // Suppress logger output during tests
-vi.mock("../logger", () => ({
-  log_info: vi.fn(),
-  log_warn: vi.fn(),
-}));
+vi.mock("@ariadnejs/core", async (import_original) => {
+  const actual = await import_original<typeof import("@ariadnejs/core")>();
+  return {
+    ...actual,
+    log_info: vi.fn(),
+    log_warn: vi.fn(),
+  };
+});
 
 function read_jsonl<T>(file_path: string): T[] {
   const content = fs.readFileSync(file_path, "utf-8");

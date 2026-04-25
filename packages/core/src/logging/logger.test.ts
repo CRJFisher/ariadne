@@ -14,8 +14,10 @@ describe("logger", () => {
   beforeEach(() => {
     console_error_spy = vi.spyOn(console, "error").mockImplementation(() => {});
     vi.clearAllMocks();
-    // Reset environment variable
     delete process.env.DEBUG_LOG_FILE;
+    delete process.env.ARIADNE_LOG_LEVEL;
+    initialize_logger();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
@@ -85,17 +87,13 @@ describe("logger", () => {
   });
 
   describe("log_debug", () => {
-    it("should not write to stderr", () => {
+    it("should not write to stderr at default info level", () => {
       log_debug("debug message");
 
       expect(console_error_spy).not.toHaveBeenCalled();
     });
 
     it("should not write to file when DEBUG_LOG_FILE is not set", () => {
-      // Re-initialize to reset internal log_file_path state
-      initialize_logger();
-      vi.clearAllMocks();
-
       log_debug("debug message");
 
       expect(fs.appendFileSync).not.toHaveBeenCalled();
@@ -111,6 +109,48 @@ describe("logger", () => {
       expect(fs.appendFileSync).toHaveBeenCalledWith(
         "/tmp/test.log",
         expect.stringMatching(/\[.*\] \[DEBUG\] debug message\n/)
+      );
+    });
+
+    it("should write to stderr when ARIADNE_LOG_LEVEL=debug", () => {
+      process.env.ARIADNE_LOG_LEVEL = "debug";
+      initialize_logger();
+      vi.clearAllMocks();
+
+      log_debug("debug message");
+
+      expect(console_error_spy).toHaveBeenCalledWith(
+        expect.stringMatching(/\[.*\] \[DEBUG\] debug message/)
+      );
+    });
+  });
+
+  describe("ARIADNE_LOG_LEVEL", () => {
+    it("should suppress info when level=warn", () => {
+      process.env.ARIADNE_LOG_LEVEL = "warn";
+      initialize_logger();
+      vi.clearAllMocks();
+
+      log_info("info message");
+      log_warn("warn message");
+
+      expect(console_error_spy).toHaveBeenCalledTimes(1);
+      expect(console_error_spy).toHaveBeenCalledWith(
+        expect.stringContaining("warn message")
+      );
+    });
+
+    it("should suppress warn when level=error", () => {
+      process.env.ARIADNE_LOG_LEVEL = "error";
+      initialize_logger();
+      vi.clearAllMocks();
+
+      log_warn("warn message");
+      log_error("error message");
+
+      expect(console_error_spy).toHaveBeenCalledTimes(1);
+      expect(console_error_spy).toHaveBeenCalledWith(
+        expect.stringContaining("error message")
       );
     });
   });
