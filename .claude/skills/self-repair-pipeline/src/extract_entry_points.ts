@@ -22,13 +22,16 @@ import type {
 } from "@ariadnejs/types";
 
 import type { Language } from "@ariadnejs/types";
+import { log_info, log_warn } from "@ariadnejs/core";
 import type {
+  DefinitionFeatures,
   EnrichedFunctionEntry,
   EntryPointDiagnostics,
   GrepHit,
   CallRefDiagnostic,
   SyntacticFeatures,
 } from "./entry_point_types.js";
+import { should_log, SLOW_ITEM_MS } from "./progress.js";
 
 /**
  * Tree-sitter capture names associated with each call type.
@@ -69,37 +72,58 @@ export function build_constructor_to_class_name_map(
  * For each entry point, captures basic info (name, location, signature, tree_size, kind),
  * CallableNode metadata (is_exported, access_modifier), and pre-gathered diagnostics
  * (grep call sites, Ariadne call references, diagnosis).
+ *
+ * Algorithmic invariants:
+ *   - Each source file's content is split into lines exactly once (into `lines_by_file`).
+ *   - The grep index (`grep_index`) is built in a single pass over `lines_by_file`:
+ *     every `identifier\s*\(` occurrence maps from `identifier` → `GrepHit[]`. Per-entry
+ *     grep becomes an O(1) Map lookup + filter.
  */
 export function extract_entry_points(
   call_graph: CallGraph,
   source_files: ReadonlyMap<string, string>,
   class_name_by_constructor_id?: ReadonlyMap<SymbolId, SymbolName>,
+  class_method_symbol_ids?: ReadonlySet<SymbolId>,
 ): EnrichedFunctionEntry[] {
-  // Build indexes used by diagnostics.
+  const lines_by_file = build_lines_by_file(source_files);
   const call_refs_by_name = build_call_refs_by_name(call_graph);
   const call_refs_by_file_line = build_call_refs_by_file_line(call_graph);
+  const grep_index = build_grep_index(lines_by_file, call_refs_by_file_line);
+  const class_methods = class_method_symbol_ids ?? new Set<SymbolId>();
+
+  check_name_collision_gate(call_refs_by_name);
+
+  const total = call_graph.entry_points.length;
+  log_info(`extract_entry_points: N=${total}`);
+  const phase_start = Date.now();
 
   const entry_points: EnrichedFunctionEntry[] = [];
 
-  for (const entry_point_id of call_graph.entry_points) {
+  for (let i = 0; i < total; i++) {
+    const entry_point_id = call_graph.entry_points[i];
     const node = call_graph.nodes.get(entry_point_id);
     if (!node) continue;
 
+    const iter_start = Date.now();
     const tree_size = count_tree_size(entry_point_id, call_graph, new Set());
     const def = node.definition;
     const kind = def.kind as "function" | "method" | "constructor";
 
-    // Extract metadata from definition
     const metadata = extract_metadata(node);
 
-    // Gather diagnostics
     const diagnostics = gather_diagnostics(
       node,
       entry_point_id as string,
       call_refs_by_name,
-      call_refs_by_file_line,
-      source_files,
+      grep_index,
+      lines_by_file,
       class_name_by_constructor_id,
+    );
+
+    const definition_features = derive_definition_features(
+      node,
+      class_methods,
+      lines_by_file,
     );
 
     entry_points.push({
@@ -110,14 +134,46 @@ export function extract_entry_points(
       tree_size,
       kind,
       ...metadata,
+      definition_features,
       diagnostics,
     });
+
+    const elapsed = Date.now() - iter_start;
+    if (should_log(i, total) || elapsed >= SLOW_ITEM_MS) {
+      const refs = diagnostics.ariadne_call_refs.length;
+      log_info(
+        `[${i + 1}/${total}] extract ${node.name} (${kind}) elapsed=${elapsed}ms refs=${refs}`,
+      );
+    }
   }
 
-  // Sort by tree_size descending
+  const phase_elapsed = Date.now() - phase_start;
+  const rate = phase_elapsed > 0 ? ((total * 1000) / phase_elapsed).toFixed(1) : "∞";
+  log_info(`extract_entry_points: done ${total}/${total} in ${phase_elapsed}ms (${rate}/s)`);
+
   entry_points.sort((a, b) => b.tree_size - a.tree_size);
 
   return entry_points;
+}
+
+/**
+ * Warn if any single function name has an unusually large number of matching
+ * call refs. Such names trigger quadratic-ish enrichment cost on every entry
+ * with the same name, so surfacing the top offenders helps operators
+ * investigate repo-specific hotspots (vendor trees, ubiquitous helper names).
+ */
+const NAME_COLLISION_THRESHOLD = 1000;
+
+function check_name_collision_gate(
+  call_refs_by_name: Map<string, { caller_node: CallableNode; call_ref: CallReference }[]>,
+): void {
+  for (const [name, refs] of call_refs_by_name) {
+    if (refs.length > NAME_COLLISION_THRESHOLD) {
+      log_warn(
+        `name "${name}" has ${refs.length} call refs — enrichment will scan all of them per matching entry`,
+      );
+    }
+  }
 }
 
 // ===== Metadata Extraction =====
@@ -143,7 +199,20 @@ function extract_metadata(node: CallableNode): EntryPointMetadata {
   return { is_exported: false, access_modifier: ctor_def.access_modifier };
 }
 
-// ===== Diagnostics Gathering =====
+// ===== Indexes =====
+
+/**
+ * Split every source file into lines, exactly once.
+ */
+function build_lines_by_file(
+  source_files: ReadonlyMap<string, string>,
+): Map<string, string[]> {
+  const lines_by_file = new Map<string, string[]>();
+  for (const [file_path, content] of source_files) {
+    lines_by_file.set(file_path, content.split("\n"));
+  }
+  return lines_by_file;
+}
 
 /**
  * Build an index of call references grouped by the called name.
@@ -195,12 +264,69 @@ function build_call_refs_by_file_line(
   return index;
 }
 
+/**
+ * One-pass inverted grep index over all source files. For every occurrence of
+ * `identifier\s*\(` on any line, record a `GrepHit` keyed by the identifier.
+ *
+ * The identifier pattern `[A-Za-z_$][\w$]*` is the common superset for
+ * JavaScript/TypeScript/Python identifiers — language-agnostic enough for the
+ * diagnostic pass without requiring per-language lexing.
+ */
+export function build_grep_index(
+  lines_by_file: ReadonlyMap<string, string[]>,
+  call_refs_by_file_line: Map<string, Map<number, CallReference[]>>,
+): Map<string, GrepHit[]> {
+  const index = new Map<string, GrepHit[]>();
+  // Lookbehind form of word-boundary that also respects `$` as an identifier
+  // character — `\b` alone rejects `$(…)` because `$` is non-word.
+  const pattern = /(?<![A-Za-z0-9_$])([A-Za-z_$][\w$]*)\s*\(/g;
+
+  for (const [file_path, lines] of lines_by_file) {
+    const by_line = call_refs_by_file_line.get(file_path);
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const line_num = i + 1;
+      const refs = by_line?.get(line_num);
+      const line_captures = refs && refs.length > 0 ? captures_from_refs(refs) : [];
+      let trimmed: string | null = null;
+
+      pattern.lastIndex = 0;
+      let m: RegExpExecArray | null;
+      while ((m = pattern.exec(line)) !== null) {
+        const name = m[1];
+        let hits = index.get(name);
+        if (!hits) {
+          hits = [];
+          index.set(name, hits);
+        }
+        if (trimmed === null) trimmed = line.trim();
+        hits.push({
+          file_path,
+          line: line_num,
+          content: trimmed,
+          captures: line_captures,
+        });
+      }
+    }
+  }
+  return index;
+}
+
 const MAX_GREP_HITS = 10;
+
+/**
+ * Per-entry cap on CallRefDiagnostic records. Names like `<anonymous>` or
+ * ubiquitous helpers can match tens of thousands of call refs, each of which
+ * becomes a heavy diagnostic object. Downstream investigators never need more
+ * than a handful of representative call sites, and the full list would push
+ * JSON serialization past V8's max string length on large repos.
+ */
+const MAX_DIAGNOSTICS_PER_ENTRY = 50;
 
 /**
  * Gather diagnostic data for an entry point.
  *
- * 1. Grep: search source files for textual calls to this function
+ * 1. Grep: look up textual call sites in the precomputed inverted index
  * 2. Registry: find CallReferences in the call graph matching this name
  * 3. Diagnose: classify the failure mode
  */
@@ -208,8 +334,8 @@ function gather_diagnostics(
   node: CallableNode,
   entry_point_id: string,
   call_refs_by_name: Map<string, { caller_node: CallableNode; call_ref: CallReference }[]>,
-  call_refs_by_file_line: Map<string, Map<number, CallReference[]>>,
-  source_files: ReadonlyMap<string, string>,
+  grep_index: Map<string, GrepHit[]>,
+  lines_by_file: ReadonlyMap<string, string[]>,
   class_name_by_constructor_id?: ReadonlyMap<SymbolId, SymbolName>,
 ): EntryPointDiagnostics {
   // For constructors, grep for class name (e.g. ClassName() instead of __init__())
@@ -218,116 +344,74 @@ function gather_diagnostics(
     : node.name as string;
   const def_file = node.location.file_path;
   const def_line = node.location.start_line;
-
-  // Step 1: Grep for textual call sites
   const is_constructor = node.definition.kind === "constructor";
+
   const grep_call_sites = grep_for_calls(
     grep_name,
     def_file,
     def_line,
-    source_files,
-    MAX_GREP_HITS,
+    grep_index,
     is_constructor,
-    call_refs_by_file_line,
   );
 
-  // Step 2: Find matching CallReferences in the call graph
   const ariadne_call_refs = find_matching_call_refs(
     node.name as string,
     entry_point_id,
     call_refs_by_name,
-    source_files,
+    lines_by_file,
   );
 
-  // Step 3: Diagnose
   const diagnosis = compute_diagnosis(grep_call_sites, ariadne_call_refs, entry_point_id);
 
   return {
     grep_call_sites,
+    // Populated by a separate pass in detect_entrypoints when an unindexed
+    // test-dir grep is configured; defaults to empty so builtin classifiers
+    // reading this field degrade gracefully when no pass has run.
+    grep_call_sites_unindexed_tests: [],
     ariadne_call_refs,
     diagnosis,
   };
 }
 
 /**
- * Search source files for textual references to a function call.
- * Searches for `functionName(` pattern, excluding the definition itself.
+ * Look up textual call sites for a given name in the precomputed inverted
+ * index, filtering out the definition itself and (for constructors) class
+ * definition lines like `class Name(object):`.
  */
 function grep_for_calls(
   name: string,
   def_file: string,
   def_line: number,
-  source_files: ReadonlyMap<string, string>,
-  max_hits: number,
+  grep_index: Map<string, GrepHit[]>,
   is_constructor: boolean,
-  call_refs_by_file_line: Map<string, Map<number, CallReference[]>>,
 ): GrepHit[] {
-  // Can't meaningfully grep for anonymous functions
-  if (name === "<anonymous>") {
-    return [];
-  }
+  if (name === "<anonymous>") return [];
 
-  const hits: GrepHit[] = [];
-  const pattern = new RegExp(`\\b${escape_regex(name)}\\s*\\(`, "g");
-  // For constructors grepping by class name, skip class definition lines
-  // (e.g., "class AuthApi(object):" matches "AuthApi(" but isn't a call)
+  const all = grep_index.get(name);
+  if (!all) return [];
+
   const class_def_pattern = is_constructor
     ? new RegExp(`^\\s*class\\s+${escape_regex(name)}\\b`)
     : null;
 
-  for (const [file_path, content] of source_files) {
-    const lines = content.split("\n");
-    for (let i = 0; i < lines.length; i++) {
-      const line_num = i + 1; // 1-indexed
-      const line = lines[i];
-
-      // Skip the definition itself
-      if (file_path === def_file && line_num === def_line) {
-        continue;
-      }
-
-      if (pattern.test(line)) {
-        // Skip class definition lines for constructor grep
-        if (class_def_pattern && class_def_pattern.test(line)) {
-          pattern.lastIndex = 0;
-          continue;
-        }
-
-        hits.push({
-          file_path,
-          line: line_num,
-          content: line.trim(),
-          captures: captures_at(call_refs_by_file_line, file_path, line_num),
-        });
-
-        if (hits.length >= max_hits) {
-          return hits;
-        }
-      }
-
-      // Reset regex lastIndex for next line
-      pattern.lastIndex = 0;
-    }
+  const hits: GrepHit[] = [];
+  for (const hit of all) {
+    if (hit.file_path === def_file && hit.line === def_line) continue;
+    if (class_def_pattern && class_def_pattern.test(hit.content)) continue;
+    hits.push(hit);
+    if (hits.length >= MAX_GREP_HITS) break;
   }
-
   return hits;
 }
 
 /**
- * Tree-sitter capture names that fired at `(file, line)`, derived from the
- * `call_type` of any `CallReference` the resolver produced at that position.
- * Empty array when no call reference exists — which itself is the signal that
+ * Tree-sitter capture names that fired at a line, derived from any
+ * `CallReference` the resolver produced at that position. Empty when no call
+ * reference exists — which itself is the signal that
  * `missing_capture_at_grep_hit` classifier entries key off.
  */
-function captures_at(
-  call_refs_by_file_line: Map<string, Map<number, CallReference[]>>,
-  file_path: string,
-  line: number,
-): string[] {
-  const by_line = call_refs_by_file_line.get(file_path);
-  if (!by_line) return [];
-  const refs = by_line.get(line);
-  if (!refs || refs.length === 0) return [];
+function captures_from_refs(refs: CallReference[]): string[] {
   const captures = new Set<string>();
   for (const ref of refs) {
     for (const name of CAPTURE_NAMES_BY_CALL_TYPE[ref.call_type]) {
@@ -346,13 +430,16 @@ function find_matching_call_refs(
   name: string,
   _entry_point_id: string,
   call_refs_by_name: Map<string, { caller_node: CallableNode; call_ref: CallReference }[]>,
-  source_files: ReadonlyMap<string, string>,
+  lines_by_file: ReadonlyMap<string, string[]>,
 ): CallRefDiagnostic[] {
   const matching = call_refs_by_name.get(name) ?? [];
+  const slice = matching.length > MAX_DIAGNOSTICS_PER_ENTRY
+    ? matching.slice(0, MAX_DIAGNOSTICS_PER_ENTRY)
+    : matching;
 
-  return matching.map(({ caller_node, call_ref }) => {
+  return slice.map(({ caller_node, call_ref }) => {
     const source_line = read_source_line(
-      source_files,
+      lines_by_file,
       call_ref.location.file_path,
       call_ref.location.start_line,
     );
@@ -371,14 +458,11 @@ function find_matching_call_refs(
 }
 
 function read_source_line(
-  source_files: ReadonlyMap<string, string>,
+  lines_by_file: ReadonlyMap<string, string[]>,
   file_path: string,
   line: number,
 ): string {
-  const content = source_files.get(file_path);
-  if (!content) return "";
-  const lines = content.split("\n");
-  return lines[line - 1] ?? "";
+  return lines_by_file.get(file_path)?.[line - 1] ?? "";
 }
 
 /**
@@ -408,6 +492,54 @@ function derive_syntactic_features(
     is_dynamic_dispatch:
       receiver_kind === "index_access" && index_key_is_literal === false,
   };
+}
+
+/**
+ * Derive definition-site features (JS/TS-aware) from a `CallableNode` plus
+ * the source-file lines around its definition. Separate from call-site
+ * `SyntacticFeatures` — those describe the call; these describe the callee.
+ *
+ * - `accessor_kind`: read directly from the `get` / `set` token on the
+ *   definition line (class and object-literal accessors share this syntax).
+ * - `definition_is_object_literal_method`: true for `kind === "method"` entries
+ *   whose symbol_id is NOT in the class-method symbol set. Class methods are
+ *   registered via `ClassDefinition.methods`; anything else with `kind="method"`
+ *   (JS/TS object-literal shorthand) falls through.
+ *
+ * Python/Rust callees carry `{ false, null }` — no JS-style accessor syntax
+ * and no object-literal-method concept.
+ */
+export function derive_definition_features(
+  node: CallableNode,
+  class_methods: ReadonlySet<SymbolId>,
+  lines_by_file: ReadonlyMap<string, string[]>,
+): DefinitionFeatures {
+  const file_path = node.location.file_path;
+  const start_line = node.location.start_line;
+  const is_jsts = /\.(ts|tsx|js|jsx|mjs|cjs)$/.test(file_path);
+  if (!is_jsts) {
+    return { definition_is_object_literal_method: false, accessor_kind: null };
+  }
+  const def_line = read_source_line(lines_by_file, file_path, start_line);
+  const accessor_kind = classify_accessor_line(def_line);
+  const kind = node.definition.kind;
+  const is_object_literal_method =
+    kind === "method" && !class_methods.has(node.symbol_id);
+  return {
+    definition_is_object_literal_method: is_object_literal_method,
+    accessor_kind,
+  };
+}
+
+export function classify_accessor_line(line: string): "getter" | "setter" | null {
+  // Matches `get name(` or `set name(`, allowing for leading whitespace,
+  // optional `static`, optional access modifier, and optional `async`. Must
+  // be followed by whitespace + identifier + optional whitespace + `(` to
+  // avoid false positives on identifiers that happen to start with `get`.
+  const re = /^\s*(?:(?:public|private|protected|static|async|readonly)\s+)*(get|set)\s+[A-Za-z_$][\w$]*\s*\(/;
+  const m = re.exec(line);
+  if (m === null) return null;
+  return m[1] === "get" ? "getter" : "setter";
 }
 
 /**

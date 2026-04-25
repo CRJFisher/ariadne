@@ -1,7 +1,7 @@
 ---
 id: TASK-190.16.14
 title: Add `grep_hits_all_intra_file` signal to SignalCheck op union
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-04-22 14:00'
 labels:
@@ -37,4 +37,14 @@ Implementation notes:
 4. Once merged, re-run the investigator on this group so a proper `kind: "builtin"` classifier can be emitted with checks `[{ diagnosis_eq: callers-not-in-registry }, { callers_count_at_most: 0 }, { grep_hits_all_intra_file: true }]`.
 
 The root cause of the false positive itself — Ariadne's within-file resolver failing to link arrow functions (`const preferredType = (ext, ...) => ...`) to sibling `function`-declaration callees (`function mimeScore(...)`) inside a CommonJS module — is a separate resolver defect that should be tracked in its own task once the classifier is in place.
+
+## Implementation notes
+
+- `grep_hits_all_intra_file` wired through curator `SignalCheck`, classifier renderer, validator parser, pipeline `PredicateExpr`, registry validator, predicate evaluator, and the "unsupported features" doc renderer.
+- Renderer and evaluator agree on the empty-grep edge case: `value:true` requires at least one hit, all in the entry's file.
+
+## Reviewer follow-ups (applied)
+
+- Predicate evaluator: explicit `value:false` and empty-grep-array tests added (covers the `0 === false` and `0 === true` truth-table corners).
+- Renderer test: explicit `value:false` case so a future polarity-flip regression in the rendered string would be caught.
 <!-- SECTION:DESCRIPTION:END -->

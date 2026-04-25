@@ -3,7 +3,7 @@ id: TASK-190.16.13
 title: >-
   Add `definition_is_object_literal_method` syntactic feature to support
   context-object-destructuring classifier
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-04-22 14:00'
 labels:
@@ -32,4 +32,15 @@ Acceptance criteria:
 - Add a predicate DSL operator (or reuse `syntactic_feature_eq` at entry scope) so the feature is addressable from classifier expressions.
 - Add test fixtures covering: object-literal shorthand method (should match), class method (should not match), standalone function expression assigned to a variable (should not match).
 - Once the signal is available, author a new registry entry for `context-object-destructuring` with the predicate above and retire the overlap with `callers-outside-scope-strict-grep-evidence`.
+
+## Implementation notes
+
+- `DefinitionFeatures` is split out from `SyntacticFeatures`: call-site features stay on `CallRefDiagnostic`, definition-site flags live on `EnrichedFunctionEntry.definition_features`. The closed-enum `DEFINITION_FEATURE_NAMES` keeps the validator and the renderer in sync.
+- New `definition_feature_eq` op landed across the curator-side `SignalCheck`, the pipeline-side `PredicateExpr`, the registry validator, the predicate evaluator, and the classifier renderer.
+- Authoring of the `context-object-destructuring` registry classifier remains outstanding — that requires a full investigate/upsert flow rather than a code change, so it lives under the parent epic (TASK-190.16) for a future curator run.
+
+## Reviewer follow-ups (applied)
+
+- `derive_definition_features` and `classify_accessor_line` exported from `extract_entry_points.ts`.
+- Direct unit tests for `derive_definition_features` cover the three derivation paths (object-literal shorthand match, class-method no-match, standalone-function no-match), plus non-JS/TS short-circuit and getter/setter accessor capture.
 <!-- SECTION:DESCRIPTION:END -->

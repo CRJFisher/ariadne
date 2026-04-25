@@ -25,13 +25,53 @@ export interface EnrichedFunctionEntry extends FunctionEntry {
   is_exported: boolean;
   access_modifier?: "public" | "private" | "protected";
 
+  /**
+   * Features of the definition site itself (not of call references to it).
+   * Drives classifier ops like `definition_feature_eq` — distinct from
+   * `SyntacticFeatures`, which lives on each `CallRefDiagnostic` and describes
+   * the call site.
+   */
+  definition_features: DefinitionFeatures;
+
   // Pre-gathered diagnostics
   diagnostics: EntryPointDiagnostics;
 }
 
+/**
+ * Definition-time flags captured at entry extraction. All fields are populated
+ * for JS/TS; for Python/Rust the defaults (`false` / `null`) are used.
+ */
+export interface DefinitionFeatures {
+  /**
+   * True when the entry is a method defined as an object-literal
+   * property-shorthand (`let o = { name() { ... } }`) rather than a class
+   * method or standalone function. JS/TS only.
+   */
+  definition_is_object_literal_method: boolean;
+  /**
+   * `"getter"` / `"setter"` when the definition carries the `get` / `set`
+   * keyword (JS/TS class accessor). `null` otherwise.
+   */
+  accessor_kind: "getter" | "setter" | null;
+}
+
+/** Stable enum of definition-level feature names. Drives DSL validation. */
+export const DEFINITION_FEATURE_NAMES = [
+  "definition_is_object_literal_method",
+] as const;
+
+export type DefinitionFeatureName = typeof DEFINITION_FEATURE_NAMES[number];
+
 export interface EntryPointDiagnostics {
   /** Textual grep results for calls to this function across source files */
   grep_call_sites: GrepHit[];
+  /**
+   * Grep hits located in directories excluded from Ariadne's indexing (e.g.
+   * `/test/`, `/tests/`, `/__tests__/`, `/spec/`). Populated by a second grep
+   * pass run outside the indexed scope so classifiers can distinguish
+   * "callers-exist-in-test-dir" from the broader callers-not-in-registry bucket.
+   */
+  grep_call_sites_unindexed_tests: GrepHit[];
   /** CallReferences in the call graph where name matches this entry point */
   ariadne_call_refs: CallRefDiagnostic[];
   /** Summary diagnosis of where in Ariadne's pipeline the detection failed */

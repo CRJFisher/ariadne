@@ -19,6 +19,7 @@ function make_entry(overrides: Partial<TriageEntry> & { entry_index: number }): 
     access_modifier: null,
     diagnostics: {
       grep_call_sites: [],
+      grep_call_sites_unindexed_tests: [],
       ariadne_call_refs: [],
       diagnosis: "callers-not-in-registry",
     },

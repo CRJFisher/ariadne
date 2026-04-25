@@ -15,7 +15,12 @@
  *   `new RegExp(pattern)` only to keep unit tests tolerant of hand-built nodes.
  */
 
-import type { SyntacticFeatures, SyntacticFeatureName } from "../entry_point_types.js";
+import type {
+  DefinitionFeatureName,
+  DefinitionFeatures,
+  SyntacticFeatures,
+  SyntacticFeatureName,
+} from "../entry_point_types.js";
 import type { PredicateExpr } from "../known_issues_types.js";
 import { detect_language } from "../extract_entry_points.js";
 import type { PredicateContext } from "./types.js";
@@ -73,11 +78,58 @@ export function evaluate_predicate(expr: PredicateExpr, ctx: PredicateContext): 
       return ctx.entry.diagnostics.ariadne_call_refs.some(
         (r) => syntactic_feature_value(r.syntactic_features, expr.name) === expr.value,
       );
+
+    case "grep_hits_all_intra_file": {
+      const hits = ctx.entry.diagnostics.grep_call_sites;
+      if (hits.length === 0) return false === expr.value;
+      const all_intra = hits.every((h) => h.file_path === ctx.entry.file_path);
+      return all_intra === expr.value;
+    }
+
+    case "grep_hit_neighbourhood_matches": {
+      const re = compiled_regex_for(expr);
+      const window = expr.window;
+      return ctx.entry.diagnostics.grep_call_sites.some((h) => {
+        const lines = ctx.read_file_lines(h.file_path);
+        const start = Math.max(0, h.line - 1 - window);
+        const end = h.line - 1; // exclusive of the hit line itself
+        for (let i = start; i < end; i++) {
+          if (re.test(lines[i] ?? "")) return true;
+        }
+        return false;
+      });
+    }
+
+    case "definition_feature_eq":
+      return (
+        definition_feature_value(ctx.entry.definition_features, expr.name) === expr.value
+      );
+
+    case "accessor_kind_eq": {
+      const actual = ctx.entry.definition_features.accessor_kind ?? "none";
+      return actual === expr.value;
+    }
+
+    case "has_unindexed_test_caller": {
+      const hits = ctx.entry.diagnostics.grep_call_sites_unindexed_tests;
+      const has = hits.length > 0;
+      return has === expr.value;
+    }
   }
   // Unreachable: all discriminants above handled. If registry loading lets a
   // bad operator through, we throw rather than silently return false.
   const unreachable: never = expr;
   throw new Error(`Unknown predicate operator: ${JSON.stringify(unreachable)}`);
+}
+
+function definition_feature_value(
+  features: DefinitionFeatures,
+  name: DefinitionFeatureName,
+): boolean {
+  switch (name) {
+    case "definition_is_object_literal_method":
+      return features.definition_is_object_literal_method;
+  }
 }
 
 function compiled_regex_for(

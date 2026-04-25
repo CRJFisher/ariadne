@@ -292,6 +292,24 @@ describe("validate_response", () => {
     expect(issues[0].message).toContain("existing_task_id");
   });
 
+  it("rejects a response with the introspection_gap key entirely absent", () => {
+    const raw = valid_builtin_response();
+    delete (raw as Record<string, unknown>).introspection_gap;
+    const issues = validate_response({ ...base_input(), response_raw: raw });
+    expect(issues.length).toBe(1);
+    expect(issues[0].code).toBe("shape_error");
+    expect(issues[0].message).toContain("introspection_gap field is required");
+  });
+
+  it("rejects a response with the ariadne_bug key entirely absent", () => {
+    const raw = valid_builtin_response();
+    delete (raw as Record<string, unknown>).ariadne_bug;
+    const issues = validate_response({ ...base_input(), response_raw: raw });
+    expect(issues.length).toBe(1);
+    expect(issues[0].code).toBe("shape_error");
+    expect(issues[0].message).toContain("ariadne_bug field is required");
+  });
+
   it("rejects introspection_gap with empty signals_needed", () => {
     const raw = valid_builtin_response({
       introspection_gap: { signals_needed: [], title: "t", description: "d" },

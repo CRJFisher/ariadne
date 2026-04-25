@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import type { EnrichedFunctionEntry } from "../entry_point_types.js";
 import type { KnownIssue, KnownIssuesRegistry, PredicateExpr } from "../known_issues_types.js";
 import type { ClassifierHint } from "../triage_state_types.js";
-import { auto_classify } from "./orchestrator.js";
+import { auto_classify, MissingBuiltinError } from "./orchestrator.js";
 
 // ===== Fixtures =====
 
@@ -17,8 +17,13 @@ function make_entry(
     kind: "function",
     tree_size: 0,
     is_exported: true,
+    definition_features: {
+      definition_is_object_literal_method: false,
+      accessor_kind: null,
+    },
     diagnostics: {
       grep_call_sites: [],
+      grep_call_sites_unindexed_tests: [],
       ariadne_call_refs: [],
       diagnosis: "callers-not-in-registry",
     },
@@ -70,6 +75,7 @@ describe("auto_classify — priority and match semantics", () => {
     const entry = make_entry({
       diagnostics: {
         grep_call_sites: [],
+        grep_call_sites_unindexed_tests: [],
         ariadne_call_refs: [],
         diagnosis: "no-textual-callers",
       },
@@ -90,6 +96,7 @@ describe("auto_classify — priority and match semantics", () => {
     const entry = make_entry({
       diagnostics: {
         grep_call_sites: [],
+        grep_call_sites_unindexed_tests: [],
         ariadne_call_refs: [],
         diagnosis: "callers-not-in-registry",
       },
@@ -110,6 +117,7 @@ describe("auto_classify — priority and match semantics", () => {
     const entry = make_entry({
       diagnostics: {
         grep_call_sites: [],
+        grep_call_sites_unindexed_tests: [],
         ariadne_call_refs: [],
         diagnosis: "no-textual-callers",
       },
@@ -129,6 +137,7 @@ describe("auto_classify — priority and match semantics", () => {
     const entry = make_entry({
       diagnostics: {
         grep_call_sites: [],
+        grep_call_sites_unindexed_tests: [],
         ariadne_call_refs: [],
         diagnosis: "callers-in-registry-wrong-target",
       },
@@ -152,6 +161,7 @@ describe("auto_classify — sub-threshold hints", () => {
     const entry = make_entry({
       diagnostics: {
         grep_call_sites: [],
+        grep_call_sites_unindexed_tests: [],
         ariadne_call_refs: [],
         diagnosis: "no-textual-callers",
       },
@@ -182,6 +192,7 @@ describe("auto_classify — sub-threshold hints", () => {
     const entry = make_entry({
       diagnostics: {
         grep_call_sites: [],
+        grep_call_sites_unindexed_tests: [],
         ariadne_call_refs: [],
         diagnosis: "no-textual-callers",
       },
@@ -220,6 +231,68 @@ describe("auto_classify — file reader plumbing", () => {
 
     expect(classified.result.auto_classified).toBe(true);
     expect(classified.result.auto_group_id).toBe("py-fixture");
+  });
+});
+
+describe("auto_classify — builtin dispatch", () => {
+  function builtin_issue(group_id: string, function_name: string, min_confidence = 1.0): KnownIssue {
+    return {
+      group_id,
+      title: group_id,
+      description: "",
+      status: "wip",
+      languages: ["typescript"],
+      examples: [],
+      classifier: { kind: "builtin", function_name, min_confidence },
+    };
+  }
+
+  it("dispatches builtin via BUILTIN_CHECKS lookup on function_name", () => {
+    const entry = make_entry();
+    const registry: KnownIssuesRegistry = [builtin_issue("bg", "check_thing")];
+    let invoked_with: EnrichedFunctionEntry | null = null;
+    const builtin_checks = {
+      check_thing: (e: EnrichedFunctionEntry) => {
+        invoked_with = e;
+        return true;
+      },
+    };
+    const [classified] = auto_classify([entry], registry, EMPTY_READER, { builtin_checks });
+    expect(classified.result.auto_classified).toBe(true);
+    expect(classified.result.auto_group_id).toBe("bg");
+    expect(classified.result.reasoning).toBe(
+      "Matched builtin classifier check_thing for bg",
+    );
+    expect(invoked_with).toBe(entry);
+  });
+
+  it("throws MissingBuiltinError when function_name is missing from the barrel", () => {
+    const entry = make_entry();
+    const registry: KnownIssuesRegistry = [builtin_issue("stale", "check_stale")];
+    expect(() => auto_classify([entry], registry, EMPTY_READER, { builtin_checks: {} })).toThrow(
+      MissingBuiltinError,
+    );
+    expect(() => auto_classify([entry], registry, EMPTY_READER, { builtin_checks: {} })).toThrow(
+      /check_stale/,
+    );
+  });
+
+  it("builtin that returns false does not classify and does not emit a hint", () => {
+    const entry = make_entry();
+    const registry: KnownIssuesRegistry = [
+      builtin_issue("b", "check_b"),
+      predicate_issue(
+        "p",
+        { op: "diagnosis_eq", value: "callers-not-in-registry" },
+        1.0,
+      ),
+    ];
+    const [classified] = auto_classify([entry], registry, EMPTY_READER, {
+      builtin_checks: { check_b: () => false },
+    });
+    expect(classified.result.auto_classified).toBe(true);
+    expect(classified.result.auto_group_id).toBe("p");
+    expect(classified.result.classifier_hints).toEqual([]);
   });
 });
 

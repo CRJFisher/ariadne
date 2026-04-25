@@ -76,4 +76,29 @@ describe("render_unsupported_features — classifier rendering", () => {
       expect(content).toContain("**Predicate**");
     }
   });
+
+  it("renders kind='builtin' classifiers with function_name and min_confidence", () => {
+    const registry = load_registry();
+    // Splice in a synthetic builtin entry so we don't depend on registry state.
+    const synthetic: KnownIssue = {
+      group_id: "synthetic-builtin",
+      title: "synthetic",
+      description: "test",
+      status: "wip",
+      languages: ["typescript"],
+      examples: [],
+      classifier: {
+        kind: "builtin",
+        function_name: "check_synthetic",
+        min_confidence: 0.85,
+      },
+    };
+    const content = render_language("typescript", [...registry, synthetic]);
+    expect(content).toContain("builtin, `check_synthetic` (min_confidence 0.85)");
+    // Builtin entries do not render a Predicate block.
+    const section = content.split("## `synthetic-builtin`")[1] ?? "";
+    const next_section_idx = section.indexOf("\n## ");
+    const our_section = next_section_idx === -1 ? section : section.slice(0, next_section_idx);
+    expect(our_section).not.toContain("**Predicate**");
+  });
 });

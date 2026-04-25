@@ -25,8 +25,13 @@ function make_entry(overrides: Partial<EnrichedFunctionEntry> & { name: string }
     kind: "function",
     tree_size: 10,
     is_exported: true,
+    definition_features: {
+      definition_is_object_literal_method: false,
+      accessor_kind: null,
+    },
     diagnostics: {
       grep_call_sites: [],
+      grep_call_sites_unindexed_tests: [],
       ariadne_call_refs: [],
       diagnosis: "callers-not-in-registry",
     },
@@ -71,6 +76,7 @@ describe("prepare_triage — two-bucket end-to-end", () => {
         tree_size: 100 + i,
         diagnostics: {
           grep_call_sites: [],
+          grep_call_sites_unindexed_tests: [],
           ariadne_call_refs: [],
           diagnosis: "no-textual-callers",
         },
