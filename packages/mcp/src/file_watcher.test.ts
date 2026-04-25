@@ -19,11 +19,15 @@ vi.mock("fs/promises", () => ({
   unlink: vi.fn(() => Promise.resolve()),
 }));
 
-vi.mock("./logger", () => ({
-  log_debug: vi.fn(),
-  log_warn: vi.fn(),
-  log_error: vi.fn(),
-}));
+vi.mock("@ariadnejs/core", async (import_original) => {
+  const actual = await import_original<typeof import("@ariadnejs/core")>();
+  return {
+    ...actual,
+    log_debug: vi.fn(),
+    log_warn: vi.fn(),
+    log_error: vi.fn(),
+  };
+});
 
 const PROJECT_PATH = "/fake/project";
 

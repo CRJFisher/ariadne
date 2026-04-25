@@ -36,6 +36,15 @@ export {
 // Profiling
 export { profiler } from "./profiling";
 
+// Logging
+export {
+  initialize_logger,
+  log_info,
+  log_warn,
+  log_error,
+  log_debug,
+} from "./logging";
+
 // Test file detection
 export { is_test_file } from "./project/detect_test_file";
 

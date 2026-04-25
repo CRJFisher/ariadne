@@ -1,8 +1,7 @@
 import * as chokidar from "chokidar";
 import * as fs from "fs/promises";
 import * as path from "path";
-import { IGNORED_GLOBS, is_supported_file } from "@ariadnejs/core";
-import { log_debug, log_error, log_warn } from "./logger";
+import { IGNORED_GLOBS, is_supported_file, log_debug, log_error, log_warn } from "@ariadnejs/core";
 
 export interface FileWatcherOptions {
   project_path: string;

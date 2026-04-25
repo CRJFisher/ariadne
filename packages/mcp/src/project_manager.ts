@@ -1,9 +1,8 @@
-import { Project, load_project } from "@ariadnejs/core";
+import { Project, load_project, log_info, log_warn } from "@ariadnejs/core";
 import type { PersistenceStorage } from "@ariadnejs/core";
 import { FilePath } from "@ariadnejs/types";
 import * as chokidar from "chokidar";
 import { create_file_watcher, FileWatcherOptions } from "./file_watcher";
-import { log_info, log_warn } from "./logger";
 
 export interface ProjectManagerOptions {
   project_path: string;

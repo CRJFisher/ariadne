@@ -1,13 +1,40 @@
 import * as fs from "fs";
 
+type LogLevel = "error" | "warn" | "info" | "debug";
+const LEVEL_PRIORITY: Record<LogLevel, number> = {
+  error: 0,
+  warn: 1,
+  info: 2,
+  debug: 3,
+};
+
+let initialized = false;
 let log_file_path: string | null = null;
+let stderr_level_priority: number = LEVEL_PRIORITY.info;
+
+function ensure_initialized(): void {
+  if (initialized) return;
+  log_file_path = process.env.DEBUG_LOG_FILE || null;
+  const env_level = process.env.ARIADNE_LOG_LEVEL?.toLowerCase();
+  if (
+    env_level === "error" ||
+    env_level === "warn" ||
+    env_level === "info" ||
+    env_level === "debug"
+  ) {
+    stderr_level_priority = LEVEL_PRIORITY[env_level];
+  }
+  initialized = true;
+}
 
 /**
  * Initialize logger from environment.
  * Call once at server startup before any logging.
+ * Idempotent — safe to call multiple times; also called lazily on first write.
  */
 export function initialize_logger(): void {
-  log_file_path = process.env.DEBUG_LOG_FILE || null;
+  initialized = false;
+  ensure_initialized();
 
   if (log_file_path) {
     const timestamp = new Date().toISOString();
@@ -23,13 +50,14 @@ function format_message(level: string, message: string): string {
   return `[${timestamp}] [${level.toUpperCase()}] ${message}`;
 }
 
-function write_log(level: string, message: string): void {
+function write_log(level: LogLevel, message: string): void {
+  ensure_initialized();
   const formatted = format_message(level, message);
 
-  // Always write to stderr (safe for MCP stdio transport)
-  console.error(formatted);
+  if (LEVEL_PRIORITY[level] <= stderr_level_priority) {
+    console.error(formatted);
+  }
 
-  // Also write to file if configured
   if (log_file_path) {
     fs.appendFileSync(log_file_path, formatted + "\n");
   }
@@ -48,8 +76,5 @@ export function log_error(message: string): void {
 }
 
 export function log_debug(message: string): void {
-  if (log_file_path) {
-    const formatted = format_message("debug", message);
-    fs.appendFileSync(log_file_path, formatted + "\n");
-  }
+  write_log("debug", message);
 }
