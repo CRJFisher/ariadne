@@ -72,13 +72,18 @@ describe("validate_registry — on-disk registry shape", () => {
     }
   });
 
-  it("every classifier uses kind in {none, predicate}", () => {
+  it("every classifier uses kind in {none, predicate, builtin}", () => {
     for (const e of registry) {
-      expect(["none", "predicate"]).toContain(e.classifier.kind);
+      expect(["none", "predicate", "builtin"]).toContain(e.classifier.kind);
       if (e.classifier.kind === "predicate") {
         expect(e.classifier.min_confidence).toBeGreaterThanOrEqual(0);
         expect(e.classifier.min_confidence).toBeLessThanOrEqual(1);
         expect(["A", "B", "C"]).toContain(e.classifier.axis);
+      }
+      if (e.classifier.kind === "builtin") {
+        expect(e.classifier.function_name.length).toBeGreaterThan(0);
+        expect(e.classifier.min_confidence).toBeGreaterThanOrEqual(0);
+        expect(e.classifier.min_confidence).toBeLessThanOrEqual(1);
       }
     }
   });
@@ -102,7 +107,7 @@ describe("validate_registry — examples", () => {
 // ===== PredicateExpr: 12 operators, no others =====
 
 describe("PredicateExpr operators", () => {
-  it("enumerates exactly the 12 operators declared in the design", () => {
+  it("enumerates the predicate operators declared in the design", () => {
     expect([...PREDICATE_OPERATORS].sort()).toEqual(
       [
         "all",
@@ -117,9 +122,13 @@ describe("PredicateExpr operators", () => {
         "resolution_failure_reason_eq",
         "receiver_kind_eq",
         "syntactic_feature_eq",
+        "grep_hits_all_intra_file",
+        "grep_hit_neighbourhood_matches",
+        "definition_feature_eq",
+        "accessor_kind_eq",
+        "has_unindexed_test_caller",
       ].sort(),
     );
-    expect(PREDICATE_OPERATORS.length).toBe(12);
   });
 
   it("validate_predicate_expr rejects an unknown operator", () => {
@@ -258,6 +267,83 @@ describe("validate_registry — negative cases", () => {
     ).toThrow(/unknown syntactic feature/);
   });
 
+  it("accepts grep_hits_all_intra_file with a boolean value", () => {
+    expect(() =>
+      validate_predicate_expr({ op: "grep_hits_all_intra_file", value: true }, "root"),
+    ).not.toThrow();
+  });
+
+  it("rejects grep_hits_all_intra_file with a non-boolean value", () => {
+    expect(() =>
+      validate_predicate_expr({ op: "grep_hits_all_intra_file", value: "true" }, "root"),
+    ).toThrow(/boolean/);
+  });
+
+  it("accepts grep_hit_neighbourhood_matches with pattern + positive window", () => {
+    expect(() =>
+      validate_predicate_expr(
+        { op: "grep_hit_neighbourhood_matches", pattern: "require\\(", window: 5 },
+        "root",
+      ),
+    ).not.toThrow();
+  });
+
+  it("rejects grep_hit_neighbourhood_matches with non-positive window", () => {
+    expect(() =>
+      validate_predicate_expr(
+        { op: "grep_hit_neighbourhood_matches", pattern: "x", window: 0 },
+        "root",
+      ),
+    ).toThrow(/window/);
+  });
+
+  it("rejects grep_hit_neighbourhood_matches with invalid regex", () => {
+    expect(() =>
+      validate_predicate_expr(
+        { op: "grep_hit_neighbourhood_matches", pattern: "[unterm", window: 3 },
+        "root",
+      ),
+    ).toThrow(/invalid regex/);
+  });
+
+  it("accepts definition_feature_eq with a known name", () => {
+    expect(() =>
+      validate_predicate_expr(
+        { op: "definition_feature_eq", name: "definition_is_object_literal_method", value: true },
+        "root",
+      ),
+    ).not.toThrow();
+  });
+
+  it("rejects definition_feature_eq with an unknown name", () => {
+    expect(() =>
+      validate_predicate_expr(
+        { op: "definition_feature_eq", name: "not_a_feature", value: true },
+        "root",
+      ),
+    ).toThrow(/unknown definition feature/);
+  });
+
+  it("accepts accessor_kind_eq with getter/setter/none", () => {
+    for (const v of ["getter", "setter", "none"]) {
+      expect(() =>
+        validate_predicate_expr({ op: "accessor_kind_eq", value: v }, "root"),
+      ).not.toThrow();
+    }
+  });
+
+  it("rejects accessor_kind_eq with an unknown value", () => {
+    expect(() =>
+      validate_predicate_expr({ op: "accessor_kind_eq", value: "accessor" }, "root"),
+    ).toThrow(/getter/);
+  });
+
+  it("accepts has_unindexed_test_caller with a boolean value", () => {
+    expect(() =>
+      validate_predicate_expr({ op: "has_unindexed_test_caller", value: true }, "root"),
+    ).not.toThrow();
+  });
+
   it("attaches compiled_pattern to grep_line_regex nodes after validation", () => {
     const node: { op: string; pattern: string; compiled_pattern?: RegExp } = {
       op: "grep_line_regex",
@@ -269,6 +355,67 @@ describe("validate_registry — negative cases", () => {
     }
     expect(node.compiled_pattern.test("foo zzz bar")).toBe(true);
     expect(node.compiled_pattern.source).toBe("foo.*bar");
+  });
+
+  it("accepts a builtin classifier entry", () => {
+    const registry = clone(load_registry());
+    registry[0].classifier = {
+      kind: "builtin",
+      function_name: "check_something",
+      min_confidence: 0.9,
+    };
+    expect(() => validate_registry(registry)).not.toThrow();
+  });
+
+  it("rejects a builtin classifier with an empty function_name", () => {
+    const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
+    bad[0]["classifier"] = {
+      kind: "builtin",
+      function_name: "",
+      min_confidence: 0.9,
+    };
+    expect(() => validate_registry(bad)).toThrow(/function_name/);
+  });
+
+  it("rejects a builtin classifier with an illegal function_name character", () => {
+    const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
+    bad[0]["classifier"] = {
+      kind: "builtin",
+      function_name: "Check-Something",
+      min_confidence: 0.9,
+    };
+    expect(() => validate_registry(bad)).toThrow(/function_name/);
+  });
+
+  it("rejects a builtin classifier with min_confidence outside [0,1]", () => {
+    const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
+    bad[0]["classifier"] = {
+      kind: "builtin",
+      function_name: "check_x",
+      min_confidence: 2,
+    };
+    expect(() => validate_registry(bad)).toThrow(/min_confidence/);
+  });
+
+  it("rejects an unknown classifier kind", () => {
+    const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
+    bad[0]["classifier"] = { kind: "magic" };
+    expect(() => validate_registry(bad)).toThrow(/kind/);
+  });
+
+  it("rejects two builtin entries that share a function_name", () => {
+    const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
+    bad[0]["classifier"] = {
+      kind: "builtin",
+      function_name: "check_collision",
+      min_confidence: 0.9,
+    };
+    bad[1]["classifier"] = {
+      kind: "builtin",
+      function_name: "check_collision",
+      min_confidence: 0.95,
+    };
+    expect(() => validate_registry(bad)).toThrow(/function_name "check_collision" already used/);
   });
 });
 

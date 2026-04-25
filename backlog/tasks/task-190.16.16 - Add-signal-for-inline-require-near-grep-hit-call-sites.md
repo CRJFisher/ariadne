@@ -1,7 +1,7 @@
 ---
 id: TASK-190.16.16
 title: Add signal for inline `require()` near grep-hit call sites
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-04-22 14:01'
 labels:
@@ -27,4 +27,14 @@ Confirmed entries (all four):
 - lib/node/ReadFileCompileAsyncWasmPlugin.js:40 `apply` — instantiated at lib/wasm/EnableWasmLoadingPlugin.js:124-130 preceded by inline `require("../node/ReadFileCompileAsyncWasmPlugin")` on line 124; also a lazy getter in lib/index.js:572-574.
 - lib/optimize/ModuleConcatenationPlugin.js:63 `apply` — instantiated at lib/WebpackOptionsApply.js:619 preceded by inline `require("./optimize/ModuleConcatenationPlugin")` on line 617; also a lazy getter in lib/index.js:494-496.
 - lib/electron/ElectronTargetPlugin.js:28 `apply` — instantiated at lib/WebpackOptionsApply.js:{182,188,194,204} each preceded by an inline `require("./electron/ElectronTargetPlugin")`; also a lazy getter in lib/index.js:578-580.
+
+## Implementation notes
+
+- Op carries `{pattern: string; window: number}`; both validators (curator + registry) reject `window <= 0`, and the registry validator pre-compiles `pattern`. Window arithmetic is `[h.line - window, h.line - 1]` 1-based inclusive — the hit line itself is excluded.
+
+## Reviewer follow-ups (applied)
+
+- `validate_investigate_responses` now pre-compiles regex patterns for `grep_line_regex`, `decorator_matches`, `file_path_matches`, `name_matches`, and `grep_hit_neighbourhood_matches` so authoring-time errors surface immediately rather than at registry-load.
+- Renderer hoists `new RegExp(...)` out of the per-line inner loop in the rendered builtin (and out of the per-hit `.some(...)` callback for `grep_line_regex`).
+- Predicate evaluator gains explicit boundary tests: top-of-file (window dwarfs the available lines, exercising `Math.max(0, ...)`) and missing-file (the hit's file is absent from `lines_by_file`).
 <!-- SECTION:DESCRIPTION:END -->

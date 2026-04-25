@@ -10,7 +10,12 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { SYNTACTIC_FEATURE_NAMES, type SyntacticFeatureName } from "./entry_point_types.js";
+import {
+  DEFINITION_FEATURE_NAMES,
+  SYNTACTIC_FEATURE_NAMES,
+  type DefinitionFeatureName,
+  type SyntacticFeatureName,
+} from "./entry_point_types.js";
 import {
   PREDICATE_OPERATORS,
   type ClassifierSpec,
@@ -44,6 +49,16 @@ const VALID_OPERATORS: ReadonlySet<PredicateOperator> = new Set(PREDICATE_OPERAT
 const VALID_SYNTACTIC_FEATURE_NAMES: ReadonlySet<SyntacticFeatureName> = new Set(
   SYNTACTIC_FEATURE_NAMES,
 );
+
+const VALID_DEFINITION_FEATURE_NAMES: ReadonlySet<DefinitionFeatureName> = new Set(
+  DEFINITION_FEATURE_NAMES,
+);
+
+const VALID_ACCESSOR_KIND_VALUES: ReadonlySet<"getter" | "setter" | "none"> = new Set([
+  "getter",
+  "setter",
+  "none",
+]);
 
 const KEBAB_CASE = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 
@@ -85,6 +100,7 @@ export function validate_registry(value: unknown): asserts value is KnownIssuesR
     throw new RegistryValidationError("registry must be a JSON array");
   }
   const seen_group_ids = new Set<string>();
+  const seen_function_names = new Map<string, string>();
   for (let i = 0; i < value.length; i++) {
     const at = `[${i}]`;
     const entry = value[i];
@@ -93,6 +109,19 @@ export function validate_registry(value: unknown): asserts value is KnownIssuesR
       throw new RegistryValidationError(`${at}: duplicate group_id "${entry.group_id}"`);
     }
     seen_group_ids.add(entry.group_id);
+    // Builtin function_names must be unique because the generated barrel
+    // imports them as identifiers — collisions would surface as cryptic TS
+    // compile errors. Catch them at registry-load time instead.
+    if (entry.classifier.kind === "builtin") {
+      const fn = entry.classifier.function_name;
+      const prior = seen_function_names.get(fn);
+      if (prior !== undefined) {
+        throw new RegistryValidationError(
+          `${at}: builtin function_name "${fn}" already used by group_id "${prior}"`,
+        );
+      }
+      seen_function_names.set(fn, entry.group_id);
+    }
   }
 }
 
@@ -160,6 +189,8 @@ function validate_examples(value: unknown, at: string): void {
   }
 }
 
+const BUILTIN_FUNCTION_NAME = /^[a-z_][a-z0-9_]*$/;
+
 function validate_classifier_spec(value: unknown, at: string): asserts value is ClassifierSpec {
   if (typeof value !== "object" || value === null) {
     throw new RegistryValidationError(`${at}: must be an object`);
@@ -186,8 +217,31 @@ function validate_classifier_spec(value: unknown, at: string): asserts value is 
     validate_predicate_expr(record["expression"], `${at}.expression`);
     return;
   }
+  if (kind === "builtin") {
+    const function_name = record["function_name"];
+    if (typeof function_name !== "string" || function_name.length === 0) {
+      throw new RegistryValidationError(
+        `${at}.function_name: must be a non-empty string`,
+      );
+    }
+    if (!BUILTIN_FUNCTION_NAME.test(function_name)) {
+      throw new RegistryValidationError(
+        `${at}.function_name: must match /^[a-z_][a-z0-9_]*$/ (got "${function_name}")`,
+      );
+    }
+    require_confidence(record["min_confidence"], `${at}.min_confidence`);
+    const extra = Object.keys(record).filter(
+      (k) => k !== "kind" && k !== "function_name" && k !== "min_confidence",
+    );
+    if (extra.length > 0) {
+      throw new RegistryValidationError(
+        `${at}: kind="builtin" must not carry extra fields (got: ${extra.join(", ")})`,
+      );
+    }
+    return;
+  }
   throw new RegistryValidationError(
-    `${at}.kind: must be "none" | "predicate" (got "${String(kind)}")`,
+    `${at}.kind: must be "none" | "predicate" | "builtin" (got "${String(kind)}")`,
   );
 }
 
@@ -256,6 +310,51 @@ export function validate_predicate_expr(value: unknown, at: string): asserts val
       }
       if (typeof record["value"] !== "boolean") {
         throw new RegistryValidationError(`${at}.value: must be boolean for op="syntactic_feature_eq"`);
+      }
+      return;
+    case "grep_hits_all_intra_file":
+    case "has_unindexed_test_caller":
+      if (typeof record["value"] !== "boolean") {
+        throw new RegistryValidationError(`${at}.value: must be boolean for op="${op}"`);
+      }
+      return;
+    case "grep_hit_neighbourhood_matches": {
+      require_string(record, "pattern", at);
+      const window = record["window"];
+      if (typeof window !== "number" || !Number.isInteger(window) || window <= 0) {
+        throw new RegistryValidationError(
+          `${at}.window: must be a positive integer for op="grep_hit_neighbourhood_matches"`,
+        );
+      }
+      try {
+        record["compiled_pattern"] = new RegExp(record["pattern"] as string);
+      } catch (e) {
+        const reason = e instanceof Error ? e.message : String(e);
+        throw new RegistryValidationError(
+          `${at}.pattern: invalid regex for op="grep_hit_neighbourhood_matches" — ${reason}`,
+        );
+      }
+      return;
+    }
+    case "definition_feature_eq":
+      require_string(record, "name", at);
+      if (!VALID_DEFINITION_FEATURE_NAMES.has(record["name"] as DefinitionFeatureName)) {
+        throw new RegistryValidationError(
+          `${at}.name: unknown definition feature "${String(record["name"])}" (allowed: ${[...VALID_DEFINITION_FEATURE_NAMES].join(", ")})`,
+        );
+      }
+      if (typeof record["value"] !== "boolean") {
+        throw new RegistryValidationError(`${at}.value: must be boolean for op="definition_feature_eq"`);
+      }
+      return;
+    case "accessor_kind_eq":
+      if (
+        typeof record["value"] !== "string" ||
+        !VALID_ACCESSOR_KIND_VALUES.has(record["value"] as "getter" | "setter" | "none")
+      ) {
+        throw new RegistryValidationError(
+          `${at}.value: must be "getter" | "setter" | "none" (got "${String(record["value"])}")`,
+        );
       }
       return;
   }

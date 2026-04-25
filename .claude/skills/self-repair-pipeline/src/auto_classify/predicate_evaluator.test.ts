@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import type {
   CallRefDiagnostic,
+  DefinitionFeatures,
   EnrichedFunctionEntry,
   EntryPointDiagnostics,
   GrepHit,
@@ -52,11 +53,17 @@ function make_diagnostics(
 ): EntryPointDiagnostics {
   return {
     grep_call_sites: [],
+    grep_call_sites_unindexed_tests: [],
     ariadne_call_refs: [],
     diagnosis: "callers-not-in-registry",
     ...overrides,
   };
 }
+
+const BASE_DEFINITION_FEATURES: DefinitionFeatures = {
+  definition_is_object_literal_method: false,
+  accessor_kind: null,
+};
 
 function make_entry(
   overrides: Partial<EnrichedFunctionEntry> = {},
@@ -68,6 +75,7 @@ function make_entry(
     kind: "function",
     tree_size: 0,
     is_exported: true,
+    definition_features: { ...BASE_DEFINITION_FEATURES },
     diagnostics: make_diagnostics(),
     ...overrides,
   };
@@ -263,6 +271,177 @@ describe("evaluate_predicate — leaf operators", () => {
       value: true,
     };
     expect(evaluate_predicate(expr, ctx(entry))).toBe(false);
+  });
+
+  it("grep_hits_all_intra_file matches when every hit shares the entry file", () => {
+    const entry = make_entry({
+      file_path: "src/foo.js",
+      diagnostics: make_diagnostics({
+        grep_call_sites: [
+          make_grep_hit({ file_path: "src/foo.js" }),
+          make_grep_hit({ file_path: "src/foo.js" }),
+        ],
+      }),
+    });
+    const yes: PredicateExpr = { op: "grep_hits_all_intra_file", value: true };
+    expect(evaluate_predicate(yes, ctx(entry))).toBe(true);
+  });
+
+  it("grep_hits_all_intra_file rejects when any hit is cross-file", () => {
+    const entry = make_entry({
+      file_path: "src/foo.js",
+      diagnostics: make_diagnostics({
+        grep_call_sites: [
+          make_grep_hit({ file_path: "src/foo.js" }),
+          make_grep_hit({ file_path: "src/bar.js" }),
+        ],
+      }),
+    });
+    const expr: PredicateExpr = { op: "grep_hits_all_intra_file", value: true };
+    expect(evaluate_predicate(expr, ctx(entry))).toBe(false);
+  });
+
+  it("grep_hits_all_intra_file with value:false negates the predicate", () => {
+    const all_intra = make_entry({
+      file_path: "src/foo.js",
+      diagnostics: make_diagnostics({
+        grep_call_sites: [make_grep_hit({ file_path: "src/foo.js" })],
+      }),
+    });
+    const cross_file = make_entry({
+      file_path: "src/foo.js",
+      diagnostics: make_diagnostics({
+        grep_call_sites: [
+          make_grep_hit({ file_path: "src/foo.js" }),
+          make_grep_hit({ file_path: "src/bar.js" }),
+        ],
+      }),
+    });
+    const expr: PredicateExpr = { op: "grep_hits_all_intra_file", value: false };
+    expect(evaluate_predicate(expr, ctx(all_intra))).toBe(false);
+    expect(evaluate_predicate(expr, ctx(cross_file))).toBe(true);
+  });
+
+  it("grep_hits_all_intra_file with empty grep array reads as 'not all intra'", () => {
+    const entry = make_entry({
+      file_path: "src/foo.js",
+      diagnostics: make_diagnostics({ grep_call_sites: [] }),
+    });
+    const yes: PredicateExpr = { op: "grep_hits_all_intra_file", value: true };
+    const no: PredicateExpr = { op: "grep_hits_all_intra_file", value: false };
+    expect(evaluate_predicate(yes, ctx(entry))).toBe(false);
+    expect(evaluate_predicate(no, ctx(entry))).toBe(true);
+  });
+
+  it("grep_hit_neighbourhood_matches scans lines above the hit", () => {
+    const entry = make_entry({
+      diagnostics: make_diagnostics({
+        grep_call_sites: [make_grep_hit({ file_path: "src/caller.js", line: 10 })],
+      }),
+    });
+    const lines_by_file = {
+      "src/caller.js": [
+        "/* 1 */", "/* 2 */", "/* 3 */", "/* 4 */",
+        "/* 5 */", "/* 6 */", "/* 7 */",
+        "const Foo = require(\"./foo\");",  // line 8
+        "/* 9 */",
+        "Foo.bar();",                       // line 10 (hit line)
+      ],
+    };
+    const yes: PredicateExpr = {
+      op: "grep_hit_neighbourhood_matches",
+      pattern: "require\\(",
+      window: 5,
+    };
+    const no: PredicateExpr = {
+      op: "grep_hit_neighbourhood_matches",
+      pattern: "require\\(",
+      window: 1, // hit on line 10, window 1 means just line 9 — no match
+    };
+    expect(evaluate_predicate(yes, ctx(entry, lines_by_file))).toBe(true);
+    expect(evaluate_predicate(no, ctx(entry, lines_by_file))).toBe(false);
+  });
+
+  it("grep_hit_neighbourhood_matches handles top-of-file (window larger than hit line)", () => {
+    const entry = make_entry({
+      diagnostics: make_diagnostics({
+        grep_call_sites: [make_grep_hit({ file_path: "src/caller.js", line: 2 })],
+      }),
+    });
+    const lines_by_file = {
+      "src/caller.js": [
+        "const Foo = require(\"./foo\");",  // line 1
+        "Foo.bar();",                       // line 2 (hit line)
+      ],
+    };
+    const expr: PredicateExpr = {
+      op: "grep_hit_neighbourhood_matches",
+      pattern: "require\\(",
+      window: 10, // window dwarfs available lines; Math.max(0, ...) protects start index
+    };
+    expect(evaluate_predicate(expr, ctx(entry, lines_by_file))).toBe(true);
+  });
+
+  it("grep_hit_neighbourhood_matches returns false when the hit's file is not in lines_by_file", () => {
+    const entry = make_entry({
+      diagnostics: make_diagnostics({
+        grep_call_sites: [make_grep_hit({ file_path: "src/missing.js", line: 5 })],
+      }),
+    });
+    const expr: PredicateExpr = {
+      op: "grep_hit_neighbourhood_matches",
+      pattern: "require\\(",
+      window: 5,
+    };
+    expect(evaluate_predicate(expr, ctx(entry, {}))).toBe(false);
+  });
+
+  it("definition_feature_eq reads definition-site features", () => {
+    const entry = make_entry({
+      definition_features: {
+        definition_is_object_literal_method: true,
+        accessor_kind: null,
+      },
+    });
+    const yes: PredicateExpr = {
+      op: "definition_feature_eq",
+      name: "definition_is_object_literal_method",
+      value: true,
+    };
+    const no: PredicateExpr = {
+      op: "definition_feature_eq",
+      name: "definition_is_object_literal_method",
+      value: false,
+    };
+    expect(evaluate_predicate(yes, ctx(entry))).toBe(true);
+    expect(evaluate_predicate(no, ctx(entry))).toBe(false);
+  });
+
+  it("accessor_kind_eq matches getter/setter/none", () => {
+    const getter_entry = make_entry({
+      definition_features: {
+        definition_is_object_literal_method: false,
+        accessor_kind: "getter",
+      },
+    });
+    const plain_entry = make_entry();
+    const yes: PredicateExpr = { op: "accessor_kind_eq", value: "getter" };
+    const none_match: PredicateExpr = { op: "accessor_kind_eq", value: "none" };
+    expect(evaluate_predicate(yes, ctx(getter_entry))).toBe(true);
+    expect(evaluate_predicate(yes, ctx(plain_entry))).toBe(false);
+    expect(evaluate_predicate(none_match, ctx(plain_entry))).toBe(true);
+  });
+
+  it("has_unindexed_test_caller reflects grep_call_sites_unindexed_tests presence", () => {
+    const with_test = make_entry({
+      diagnostics: make_diagnostics({
+        grep_call_sites_unindexed_tests: [make_grep_hit({ file_path: "test/foo.test.js" })],
+      }),
+    });
+    const without_test = make_entry();
+    const yes: PredicateExpr = { op: "has_unindexed_test_caller", value: true };
+    expect(evaluate_predicate(yes, ctx(with_test))).toBe(true);
+    expect(evaluate_predicate(yes, ctx(without_test))).toBe(false);
   });
 });
 

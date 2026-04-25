@@ -138,7 +138,11 @@ function render_classifier_short(classifier: ClassifierSpec): string {
       return "_none — known, no automated classifier_";
     case "predicate":
       return `predicate, axis ${classifier.axis} (min_confidence ${classifier.min_confidence})`;
+    case "builtin":
+      return `builtin, \`${classifier.function_name}\` (min_confidence ${classifier.min_confidence})`;
   }
+  const unreachable: never = classifier;
+  throw new Error(`Unhandled classifier kind: ${JSON.stringify(unreachable)}`);
 }
 
 function render_predicate_expr(expr: PredicateExpr, depth: number): string {
@@ -165,7 +169,19 @@ function render_predicate_expr(expr: PredicateExpr, depth: number): string {
       return `${indent}${expr.op} ${expr.capture_name}`;
     case "syntactic_feature_eq":
       return `${indent}syntactic_feature_eq ${expr.name}=${expr.value}`;
+    case "grep_hits_all_intra_file":
+      return `${indent}grep_hits_all_intra_file=${expr.value}`;
+    case "grep_hit_neighbourhood_matches":
+      return `${indent}grep_hit_neighbourhood_matches pattern=${expr.pattern} window=${expr.window}`;
+    case "definition_feature_eq":
+      return `${indent}definition_feature_eq ${expr.name}=${expr.value}`;
+    case "accessor_kind_eq":
+      return `${indent}accessor_kind_eq ${expr.value}`;
+    case "has_unindexed_test_caller":
+      return `${indent}has_unindexed_test_caller=${expr.value}`;
   }
+  const unreachable: never = expr;
+  throw new Error(`Unhandled predicate operator: ${JSON.stringify(unreachable)}`);
 }
 
 // ===== IO =====

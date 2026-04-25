@@ -131,6 +131,11 @@ describe("render_classifier", () => {
         "missing_capture_at_grep_hit",
         "receiver_kind_eq",
         "resolution_failure_reason_eq",
+        "grep_hits_all_intra_file",
+        "grep_hit_neighbourhood_matches",
+        "definition_feature_eq",
+        "accessor_kind_eq",
+        "has_unindexed_test_caller",
         "callers_count_at_least",
         "callers_count_at_most",
         "file_path_matches",
@@ -211,6 +216,45 @@ describe("render_classifier", () => {
         label: "name_matches",
         check: { op: "name_matches", pattern: "^handle_" },
         expect_substring: "test(entry.name)",
+      },
+      {
+        label: "grep_hits_all_intra_file",
+        check: { op: "grep_hits_all_intra_file", value: true },
+        expect_substring: "entry.diagnostics.grep_call_sites.every",
+      },
+      {
+        label: "grep_hits_all_intra_file (value=false negation)",
+        check: { op: "grep_hits_all_intra_file", value: false },
+        expect_substring: "=== false",
+      },
+      {
+        label: "grep_hit_neighbourhood_matches",
+        check: { op: "grep_hit_neighbourhood_matches", pattern: "require\\(", window: 5 },
+        expect_substring: "read_file_lines(h.file_path)",
+      },
+      {
+        label: "definition_feature_eq",
+        check: {
+          op: "definition_feature_eq",
+          name: "definition_is_object_literal_method",
+          value: true,
+        },
+        expect_substring: "entry.definition_features",
+      },
+      {
+        label: "accessor_kind_eq (getter)",
+        check: { op: "accessor_kind_eq", value: "getter" },
+        expect_substring: "entry.definition_features.accessor_kind === \"getter\"",
+      },
+      {
+        label: "accessor_kind_eq (none)",
+        check: { op: "accessor_kind_eq", value: "none" },
+        expect_substring: "entry.definition_features.accessor_kind === null",
+      },
+      {
+        label: "has_unindexed_test_caller",
+        check: { op: "has_unindexed_test_caller", value: true },
+        expect_substring: "grep_call_sites_unindexed_tests.length",
       },
     ];
 

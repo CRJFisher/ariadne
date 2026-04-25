@@ -17,8 +17,13 @@ function make_entry(overrides: Partial<EnrichedFunctionEntry>): EnrichedFunction
     kind: "function",
     tree_size: 0,
     is_exported: false,
+    definition_features: {
+      definition_is_object_literal_method: false,
+      accessor_kind: null,
+    },
     diagnostics: {
       grep_call_sites: [],
+      grep_call_sites_unindexed_tests: [],
       ariadne_call_refs: [],
       diagnosis: "no-textual-callers",
     },
@@ -52,6 +57,7 @@ describe("build_triage_entries — auto_classified bucket", () => {
       file_path: "/projects/myapp/src/ui.tsx",
       diagnostics: {
         grep_call_sites: [],
+        grep_call_sites_unindexed_tests: [],
         ariadne_call_refs: [],
         diagnosis: "callers-not-in-registry",
       },
@@ -85,6 +91,7 @@ describe("build_triage_entries — auto_classified bucket", () => {
       access_modifier: null,
       diagnostics: {
         grep_call_sites: [],
+        grep_call_sites_unindexed_tests: [],
         ariadne_call_refs: [],
         diagnosis: "callers-not-in-registry",
       },
@@ -121,6 +128,7 @@ describe("build_triage_entries — residual bucket", () => {
       signature: "def mystery_func(x: int) -> str",
       diagnostics: {
         grep_call_sites: [],
+        grep_call_sites_unindexed_tests: [],
         ariadne_call_refs: [],
         diagnosis: "callers-not-in-registry",
       },
@@ -156,6 +164,7 @@ describe("build_triage_entries — residual bucket", () => {
       access_modifier: null,
       diagnostics: {
         grep_call_sites: [],
+        grep_call_sites_unindexed_tests: [],
         ariadne_call_refs: [],
         diagnosis: "callers-not-in-registry",
       },

@@ -106,7 +106,7 @@ describe("substitute_template", () => {
     error: null,
     is_exported: true,
     access_modifier: null,
-    diagnostics: { grep_call_sites: [], ariadne_call_refs: [], diagnosis: "callers-not-in-registry" },
+    diagnostics: { grep_call_sites: [], grep_call_sites_unindexed_tests: [], ariadne_call_refs: [], diagnosis: "callers-not-in-registry" },
     auto_classified: false,
     classifier_hints: [],
   };
@@ -115,6 +115,7 @@ describe("substitute_template", () => {
     grep_call_sites: [
       { file_path: "test/server.test.ts", line: 10, content: "handle_request(req)", captures: [] },
     ],
+    grep_call_sites_unindexed_tests: [],
     ariadne_call_refs: [],
     diagnosis: "callers-not-in-registry",
   };

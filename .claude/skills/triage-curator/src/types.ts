@@ -25,6 +25,14 @@ export interface TriageResultsFile {
 
 export type KnownIssueStatus = "permanent" | "wip" | "fixed";
 
+/**
+ * Closed enum mirroring `self-repair-pipeline/src/known_issues_types.ts`.
+ * The canonical source for validation lives in self-repair-pipeline; this copy
+ * is used to type derived language lists on the curator side so authored
+ * upserts can't drift from the four supported targets.
+ */
+export type KnownIssueLanguage = "typescript" | "javascript" | "python" | "rust";
+
 export interface KnownIssueExample {
   file: string;
   line: number;
@@ -246,6 +254,14 @@ export type SignalCheck =
   | { op: "missing_capture_at_grep_hit"; capture_name: string }
   | { op: "receiver_kind_eq"; value: string }
   | { op: "resolution_failure_reason_eq"; value: string }
+  // ===== grep-correlation ops (read ctx.entry.file_path vs hit file, neighbouring lines) =====
+  | { op: "grep_hits_all_intra_file"; value: boolean }
+  | { op: "grep_hit_neighbourhood_matches"; pattern: string; window: number }
+  // ===== definition-site feature ops =====
+  | { op: "definition_feature_eq"; name: string; value: boolean }
+  | { op: "accessor_kind_eq"; value: "getter" | "setter" | "none" }
+  // ===== unindexed-test-dir caller signal =====
+  | { op: "has_unindexed_test_caller"; value: boolean }
   // ===== ops requiring cross-file access (why builtin, not predicate) =====
   | { op: "callers_count_at_least"; n: number }
   | { op: "callers_count_at_most"; n: number }
@@ -263,6 +279,11 @@ export const SIGNAL_CHECK_OPS: readonly string[] = [
   "missing_capture_at_grep_hit",
   "receiver_kind_eq",
   "resolution_failure_reason_eq",
+  "grep_hits_all_intra_file",
+  "grep_hit_neighbourhood_matches",
+  "definition_feature_eq",
+  "accessor_kind_eq",
+  "has_unindexed_test_caller",
   "callers_count_at_least",
   "callers_count_at_most",
   "file_path_matches",

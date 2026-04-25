@@ -254,9 +254,21 @@ export function parse_response_shape(raw: unknown): InvestigateResponse | ShapeE
   const classifier_result = parse_classifier_proposal(obj.proposed_classifier);
   if ("error" in classifier_result) return classifier_result;
 
+  if (!("introspection_gap" in obj)) {
+    return {
+      error:
+        "response: introspection_gap field is required (set to null when no signal gap exists)",
+    };
+  }
   const gap_result = parse_introspection_gap(obj.introspection_gap);
   if ("error" in gap_result) return gap_result;
 
+  if (!("ariadne_bug" in obj)) {
+    return {
+      error:
+        "response: ariadne_bug field is required (set to null when no resolver bug applies)",
+    };
+  }
   const bug_result = parse_ariadne_bug(obj.ariadne_bug);
   if ("error" in bug_result) return bug_result;
 
@@ -501,11 +513,23 @@ function parse_signal_check(raw: unknown, idx: number): { value: SignalCheck } |
     case "grep_line_regex": {
       const r = s("pattern");
       if ("error" in r) return r;
+      try {
+        new RegExp(r.ok);
+      } catch (e) {
+        const reason = e instanceof Error ? e.message : String(e);
+        return { error: `${prefix}.pattern is not a valid regex — ${reason}` };
+      }
       return { value: { op: "grep_line_regex", pattern: r.ok } };
     }
     case "decorator_matches": {
       const r = s("pattern");
       if ("error" in r) return r;
+      try {
+        new RegExp(r.ok);
+      } catch (e) {
+        const reason = e instanceof Error ? e.message : String(e);
+        return { error: `${prefix}.pattern is not a valid regex — ${reason}` };
+      }
       return { value: { op: "decorator_matches", pattern: r.ok } };
     }
     case "has_capture_at_grep_hit": {
@@ -541,12 +565,71 @@ function parse_signal_check(raw: unknown, idx: number): { value: SignalCheck } |
     case "file_path_matches": {
       const r = s("pattern");
       if ("error" in r) return r;
+      try {
+        new RegExp(r.ok);
+      } catch (e) {
+        const reason = e instanceof Error ? e.message : String(e);
+        return { error: `${prefix}.pattern is not a valid regex — ${reason}` };
+      }
       return { value: { op: "file_path_matches", pattern: r.ok } };
     }
     case "name_matches": {
       const r = s("pattern");
       if ("error" in r) return r;
+      try {
+        new RegExp(r.ok);
+      } catch (e) {
+        const reason = e instanceof Error ? e.message : String(e);
+        return { error: `${prefix}.pattern is not a valid regex — ${reason}` };
+      }
       return { value: { op: "name_matches", pattern: r.ok } };
+    }
+    case "grep_hits_all_intra_file": {
+      if (typeof obj.value !== "boolean") {
+        return { error: `${prefix}.value must be boolean` };
+      }
+      return { value: { op: "grep_hits_all_intra_file", value: obj.value } };
+    }
+    case "grep_hit_neighbourhood_matches": {
+      const p = s("pattern");
+      if ("error" in p) return p;
+      const w = obj.window;
+      if (typeof w !== "number" || !Number.isInteger(w) || w <= 0) {
+        return { error: `${prefix}.window must be a positive integer` };
+      }
+      try {
+        new RegExp(p.ok);
+      } catch (e) {
+        const reason = e instanceof Error ? e.message : String(e);
+        return { error: `${prefix}.pattern is not a valid regex — ${reason}` };
+      }
+      return {
+        value: { op: "grep_hit_neighbourhood_matches", pattern: p.ok, window: w },
+      };
+    }
+    case "definition_feature_eq": {
+      const name = s("name");
+      if ("error" in name) return name;
+      if (typeof obj.value !== "boolean") {
+        return { error: `${prefix}.value must be boolean` };
+      }
+      return { value: { op: "definition_feature_eq", name: name.ok, value: obj.value } };
+    }
+    case "accessor_kind_eq": {
+      if (
+        obj.value !== "getter" &&
+        obj.value !== "setter" &&
+        obj.value !== "none"
+      ) {
+        return { error: `${prefix}.value must be "getter" | "setter" | "none"` };
+      }
+      return { value: { op: "accessor_kind_eq", value: obj.value } };
+    }
+    case "has_unindexed_test_caller": {
+      if (typeof obj.value !== "boolean") {
+        return { error: `${prefix}.value must be boolean` };
+      }
+      return { value: { op: "has_unindexed_test_caller", value: obj.value } };
     }
     default:
       return {

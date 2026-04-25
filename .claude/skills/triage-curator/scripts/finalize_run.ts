@@ -22,10 +22,12 @@ import {
   apply_proposals,
   type FailedAuthoring,
 } from "../src/apply_proposals.js";
+import { compute_orphan_paths } from "../src/orphan_cleanup.js";
 import {
   render_all as render_unsupported_features_all,
   write_outputs as write_unsupported_features_outputs,
 } from "../../self-repair-pipeline/scripts/render_unsupported_features.js";
+import { render_builtins_barrel } from "../../self-repair-pipeline/src/auto_classify/render_builtins_barrel.js";
 import type { KnownIssue as SelfRepairKnownIssue } from "../../self-repair-pipeline/src/known_issues_types.js";
 import { is_curated, save_outcome } from "../src/curation_outcome.js";
 import { error_code } from "../src/errors.js";
@@ -284,14 +286,17 @@ async function main(): Promise<void> {
 
   const failed_authoring = [...ast_failures, ...result.failed_authoring];
 
-  // Orphan cleanup: any authored file that did not land in the registry is
-  // dead weight — unlink it so the working tree doesn't carry half-finished
-  // classifier source around.
-  const accepted = new Set(result.authored_files);
+  const orphan_candidates = compute_orphan_paths(
+    authored_files_raw,
+    investigate_responses.map((r) => ({
+      group_id: r.group_id,
+      retargets_to: r.retargets_to ?? null,
+    })),
+    result.authored_files,
+  );
   const deleted_orphan_files: string[] = [];
   if (!dry_run) {
-    for (const orphan_path of Object.values(authored_files_raw)) {
-      if (accepted.has(orphan_path)) continue;
+    for (const orphan_path of orphan_candidates) {
       try {
         await fs.unlink(orphan_path);
         deleted_orphan_files.push(orphan_path);
@@ -302,9 +307,9 @@ async function main(): Promise<void> {
     }
   }
 
-  // Derived-markdown regeneration: the registry feeds
-  // `unsupported_features.<lang>.md` golden files. Any registry upsert or
-  // drift tag invalidates them.
+  // Derived-file regeneration: the registry feeds `unsupported_features.<lang>.md`
+  // (golden files) and `auto_classify/builtins/index.ts` (orchestrator dispatch
+  // map). Any registry upsert or drift tag invalidates both.
   const derived_files: string[] = [];
   if (!dry_run && (result.registry_upserts.length > 0 || result.drift_tagged_groups.length > 0)) {
     const registry_after = JSON.parse(
@@ -312,6 +317,19 @@ async function main(): Promise<void> {
     ) as SelfRepairKnownIssue[];
     const outputs = render_unsupported_features_all(registry_after);
     derived_files.push(...write_unsupported_features_outputs(outputs));
+
+    const barrel_content = render_builtins_barrel(registry_after);
+    const barrel_path = path.resolve(
+      path.dirname(get_registry_file_path()),
+      "..",
+      "src",
+      "auto_classify",
+      "builtins",
+      "index.ts",
+    );
+    await fs.mkdir(path.dirname(barrel_path), { recursive: true });
+    await fs.writeFile(barrel_path, barrel_content, "utf8");
+    derived_files.push(barrel_path);
   }
 
   const sessions = aggregate_session_logs(session_logs);

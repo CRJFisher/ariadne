@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { build_signature, count_tree_size, detect_language } from "./extract_entry_points.js";
+import {
+  build_grep_index,
+  build_signature,
+  classify_accessor_line,
+  count_tree_size,
+  derive_definition_features,
+  detect_language,
+} from "./extract_entry_points.js";
 import type {
   AnyDefinition,
   CallGraph,
@@ -212,6 +219,107 @@ describe("count_tree_size", () => {
   });
 });
 
+// ===== build_grep_index =====
+
+describe("build_grep_index", () => {
+  function as_lines(source: string): string[] {
+    return source.split("\n");
+  }
+
+  it("indexes simple identifier-followed-by-paren calls", () => {
+    const lines_by_file = new Map<string, string[]>([
+      ["a.ts", as_lines("const x = foo();\nconst y = bar();")],
+    ]);
+
+    const index = build_grep_index(lines_by_file, new Map());
+
+    expect(index.get("foo")).toEqual([
+      { file_path: "a.ts", line: 1, content: "const x = foo();", captures: [] },
+    ]);
+    expect(index.get("bar")).toEqual([
+      { file_path: "a.ts", line: 2, content: "const y = bar();", captures: [] },
+    ]);
+  });
+
+  it("collects all occurrences of a repeated name across files", () => {
+    const lines_by_file = new Map<string, string[]>([
+      ["a.ts", as_lines("foo(); foo();")],
+      ["b.ts", as_lines("foo();")],
+    ]);
+
+    const index = build_grep_index(lines_by_file, new Map());
+
+    const foo_hits = index.get("foo") ?? [];
+    expect(foo_hits).toHaveLength(3);
+    expect(foo_hits.map((h) => `${h.file_path}:${h.line}`)).toEqual([
+      "a.ts:1",
+      "a.ts:1",
+      "b.ts:1",
+    ]);
+  });
+
+  it("ignores identifiers not followed by an open paren", () => {
+    const lines_by_file = new Map<string, string[]>([
+      ["a.ts", as_lines("const foo = 1;\nfoo.bar;\nfoo[0];")],
+    ]);
+
+    const index = build_grep_index(lines_by_file, new Map());
+
+    expect(index.get("foo")).toBeUndefined();
+    expect(index.get("bar")).toBeUndefined();
+  });
+
+  it("matches across whitespace between name and paren", () => {
+    const lines_by_file = new Map<string, string[]>([
+      ["a.ts", as_lines("foo  ();\n  bar (x);")],
+    ]);
+
+    const index = build_grep_index(lines_by_file, new Map());
+
+    expect(index.get("foo")).toHaveLength(1);
+    expect(index.get("bar")).toHaveLength(1);
+  });
+
+  it("supports $ and _ in identifiers", () => {
+    const lines_by_file = new Map<string, string[]>([
+      ["a.js", as_lines("$(selector); _private();")],
+    ]);
+
+    const index = build_grep_index(lines_by_file, new Map());
+
+    expect(index.get("$")).toHaveLength(1);
+    expect(index.get("_private")).toHaveLength(1);
+  });
+
+  it("attaches captures from call_refs_by_file_line when refs exist at the line", () => {
+    const lines_by_file = new Map<string, string[]>([
+      ["a.ts", as_lines("foo();")],
+    ]);
+    const refs_at_line: CallReference[] = [
+      {
+        location: make_location("a.ts", 1),
+        name: name("foo"),
+        scope_id: scope("s1"),
+        call_type: "function",
+        resolutions: [],
+        is_callback_invocation: false,
+      },
+    ];
+    const call_refs_by_file_line = new Map<string, Map<number, CallReference[]>>([
+      ["a.ts", new Map([[1, refs_at_line]])],
+    ]);
+
+    const index = build_grep_index(lines_by_file, call_refs_by_file_line);
+
+    expect(index.get("foo")?.[0].captures).toEqual(["@reference.call"]);
+  });
+
+  it("returns empty index for no source files", () => {
+    const index = build_grep_index(new Map(), new Map());
+    expect(index.size).toBe(0);
+  });
+});
+
 // ===== detect_language =====
 
 describe("detect_language", () => {
@@ -239,5 +347,172 @@ describe("detect_language", () => {
     expect(detect_language("lib.cpp")).toBeNull();
     expect(detect_language("README.md")).toBeNull();
     expect(detect_language("style.css")).toBeNull();
+  });
+});
+
+// ===== classify_accessor_line =====
+
+describe("classify_accessor_line", () => {
+  it("identifies a getter from a class accessor", () => {
+    expect(classify_accessor_line("  get x() {")).toBe("getter");
+  });
+
+  it("identifies a setter from a class accessor", () => {
+    expect(classify_accessor_line("  set value(v: number) {")).toBe("setter");
+  });
+
+  it("returns null for a regular method whose name starts with get", () => {
+    expect(classify_accessor_line("  getThing() {")).toBeNull();
+  });
+
+  it("returns null for a regular method whose name starts with set", () => {
+    expect(classify_accessor_line("  setThing(x) {")).toBeNull();
+  });
+
+  it("recognises modifiers preceding the accessor keyword", () => {
+    expect(classify_accessor_line("  public static get x() {")).toBe("getter");
+    expect(classify_accessor_line("  private set foo(v) {")).toBe("setter");
+  });
+
+  it("returns null for object-literal property assignments", () => {
+    expect(classify_accessor_line("  get: 1,")).toBeNull();
+    expect(classify_accessor_line("  set: 2,")).toBeNull();
+  });
+
+  it("returns null for plain function declarations", () => {
+    expect(classify_accessor_line("function foo() {")).toBeNull();
+  });
+});
+
+// ===== derive_definition_features =====
+
+describe("derive_definition_features", () => {
+  function make_node(
+    overrides: {
+      name?: string;
+      symbol_id?: string;
+      file_path?: string;
+      start_line?: number;
+      kind?: "function" | "method" | "constructor";
+    } = {},
+  ): CallableNode {
+    const node_name = overrides.name ?? "fn";
+    const file_path = overrides.file_path ?? "src/test.ts";
+    const start_line = overrides.start_line ?? 1;
+    const kind = overrides.kind ?? "function";
+    return {
+      symbol_id: sym(overrides.symbol_id ?? "fn_id"),
+      name: name(node_name),
+      location: {
+        file_path: fp(file_path),
+        start_line,
+        start_column: 0,
+        end_line: start_line + 2,
+        end_column: 1,
+      },
+      definition: {
+        kind,
+        name: name(node_name),
+        body_scope_id: scope("scope_1"),
+      } as object as AnyDefinition,
+      enclosed_calls: [],
+      is_test: false,
+    };
+  }
+
+  it("returns false / null for non-JS/TS files", () => {
+    const node = make_node({ file_path: "src/main.py", kind: "method" });
+    const out = derive_definition_features(node, new Set(), new Map());
+    expect(out).toEqual({
+      definition_is_object_literal_method: false,
+      accessor_kind: null,
+    });
+  });
+
+  it("flags an object-literal-method (kind=method but not in class_methods set)", () => {
+    const node = make_node({
+      file_path: "src/o.ts",
+      symbol_id: "obj_method",
+      kind: "method",
+      start_line: 2,
+    });
+    const lines = new Map<string, string[]>([
+      ["src/o.ts", ["const o = {", "  foo() { return 1; },", "};"]],
+    ]);
+    const out = derive_definition_features(node, new Set(), lines);
+    expect(out).toEqual({
+      definition_is_object_literal_method: true,
+      accessor_kind: null,
+    });
+  });
+
+  it("does NOT flag a class method whose symbol_id is in class_methods", () => {
+    const node = make_node({
+      file_path: "src/c.ts",
+      symbol_id: "class_method",
+      kind: "method",
+      start_line: 2,
+    });
+    const lines = new Map<string, string[]>([
+      ["src/c.ts", ["class C {", "  foo() {}", "}"]],
+    ]);
+    const class_methods = new Set<SymbolId>([sym("class_method")]);
+    const out = derive_definition_features(node, class_methods, lines);
+    expect(out).toEqual({
+      definition_is_object_literal_method: false,
+      accessor_kind: null,
+    });
+  });
+
+  it("does NOT flag a standalone function (kind=function)", () => {
+    const node = make_node({
+      file_path: "src/f.ts",
+      kind: "function",
+      start_line: 1,
+    });
+    const lines = new Map<string, string[]>([
+      ["src/f.ts", ["function foo() {", "  return 1;", "}"]],
+    ]);
+    const out = derive_definition_features(node, new Set(), lines);
+    expect(out).toEqual({
+      definition_is_object_literal_method: false,
+      accessor_kind: null,
+    });
+  });
+
+  it("captures accessor_kind for a class getter", () => {
+    const node = make_node({
+      file_path: "src/c.ts",
+      symbol_id: "class_method",
+      kind: "method",
+      start_line: 2,
+    });
+    const lines = new Map<string, string[]>([
+      ["src/c.ts", ["class C {", "  get name() { return this._n; }", "}"]],
+    ]);
+    const class_methods = new Set<SymbolId>([sym("class_method")]);
+    const out = derive_definition_features(node, class_methods, lines);
+    expect(out).toEqual({
+      definition_is_object_literal_method: false,
+      accessor_kind: "getter",
+    });
+  });
+
+  it("captures accessor_kind for a class setter", () => {
+    const node = make_node({
+      file_path: "src/c.ts",
+      symbol_id: "class_method",
+      kind: "method",
+      start_line: 2,
+    });
+    const lines = new Map<string, string[]>([
+      ["src/c.ts", ["class C {", "  set name(v: string) { this._n = v; }", "}"]],
+    ]);
+    const class_methods = new Set<SymbolId>([sym("class_method")]);
+    const out = derive_definition_features(node, class_methods, lines);
+    expect(out).toEqual({
+      definition_is_object_literal_method: false,
+      accessor_kind: "setter",
+    });
   });
 });

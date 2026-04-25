@@ -32,6 +32,8 @@ import {
   parse_gitignore,
   FileSystemStorage,
   resolve_cache_dir,
+  log_info,
+  log_warn,
 } from "@ariadnejs/core";
 import type { PersistenceStorage } from "@ariadnejs/core";
 import type { EnrichedFunctionEntry } from "../src/entry_point_types.js";
@@ -42,6 +44,7 @@ import {
 } from "../src/extract_entry_points.js";
 import { save_json, OutputType } from "../src/analysis_output.js";
 import { path_to_project_id, project_id_from_config } from "../src/project_id.js";
+import { should_log, SLOW_ITEM_MS } from "../src/progress.js";
 import * as path from "path";
 import * as fs from "fs/promises";
 import * as os from "os";
@@ -379,25 +382,76 @@ async function analyze_directory(
     : [project_path];
 
   let all_files: string[] = [];
+  log_info(`find_source_files: N=${search_paths.length}`);
+  const scan_start = Date.now();
   for (const search_path of search_paths) {
+    const path_start = Date.now();
     try {
       const files = await find_source_files(search_path, project_path, combined_patterns);
       all_files = all_files.concat(files);
+      log_info(
+        `scanned ${path.relative(project_path, search_path) || "."}: +${files.length} files in ${Date.now() - path_start}ms`,
+      );
     } catch (error) {
-      console.error(`Warning: Could not read ${search_path}: ${error}`);
+      log_warn(`Could not read ${search_path}: ${error}`);
     }
   }
+  log_info(
+    `find_source_files: done ${search_paths.length}/${search_paths.length} in ${Date.now() - scan_start}ms (${all_files.length} files total)`,
+  );
   if (test_file_filter) {
     all_files = all_files.filter(test_file_filter);
   }
 
+  // Gate: indexed vs discovered ratio. A big gap suggests indexing dropped files
+  // (parse errors, unsupported languages, filter mismatch) and downstream work
+  // will be blind to those files.
+  if (all_files.length > 0 && stats.file_count / all_files.length < 0.5) {
+    log_warn(
+      `indexed ${stats.file_count}/${all_files.length} files (ratio ${(stats.file_count / all_files.length).toFixed(2)}) — indexing may be dropping files`,
+    );
+  }
+
+  const read_total = all_files.length;
+  log_info(`read_source_files: N=${read_total}`);
+  const read_start = Date.now();
+  let total_bytes = 0;
+  let unreadable = 0;
+  const GIANT_FILE_LINES = 10_000;
   const source_files = new Map<string, string>();
-  for (const file_path of all_files) {
+  for (let i = 0; i < read_total; i++) {
+    const file_path = all_files[i];
+    const iter_start = Date.now();
     try {
-      source_files.set(file_path, await fs.readFile(file_path, "utf-8"));
+      const content = await fs.readFile(file_path, "utf-8");
+      source_files.set(file_path, content);
+      total_bytes += content.length;
+
+      // Gate: flag oversize files (vendor bundles, minified code) — these
+      // dominate grep cost and often represent code we don't actually want to
+      // analyze.
+      const line_count = (content.match(/\n/g)?.length ?? 0) + 1;
+      if (line_count > GIANT_FILE_LINES) {
+        log_warn(
+          `${path.relative(project_path, file_path)}: ${line_count} lines — likely vendored/minified; consider excluding`,
+        );
+      }
     } catch {
-      // Skip unreadable files
+      unreadable++;
     }
+
+    const elapsed = Date.now() - iter_start;
+    if (should_log(i, read_total) || elapsed >= SLOW_ITEM_MS) {
+      log_info(
+        `[${i + 1}/${read_total}] read ${path.relative(project_path, file_path)} (${total_bytes} total bytes)`,
+      );
+    }
+  }
+  log_info(
+    `read_source_files: done ${source_files.size}/${read_total} in ${Date.now() - read_start}ms (${total_bytes} bytes)`,
+  );
+  if (unreadable > 0) {
+    log_warn(`${unreadable} source file(s) were unreadable and silently dropped`);
   }
 
   // Build call graph
@@ -409,10 +463,50 @@ async function analyze_directory(
   );
 
   // Build constructor → class name map for grep heuristic
-  const class_name_by_constructor_id = build_constructor_to_class_name_map(project.definitions.get_class_definitions());
+  const class_definitions = project.definitions.get_class_definitions();
+  const class_name_by_constructor_id = build_constructor_to_class_name_map(class_definitions);
+  // Position-keyed (file:line) map used by the second-pass test-dir grep,
+  // which only sees `EnrichedFunctionEntry` (no symbol_id). Same data, keyed
+  // by the same coordinates the entry already carries.
+  const class_name_by_constructor_position = new Map<string, string>();
+  for (const class_def of class_definitions) {
+    for (const ctor of class_def.constructors ?? []) {
+      const key = `${ctor.location.file_path}:${ctor.location.start_line}`;
+      class_name_by_constructor_position.set(key, class_def.name as string);
+    }
+  }
+
+  // Build class-method symbol_id set so the extractor can discriminate
+  // class methods from object-literal shorthand methods.
+  const class_method_symbol_ids = new Set<import("@ariadnejs/types").SymbolId>();
+  for (const class_def of class_definitions) {
+    for (const m of class_def.methods) {
+      class_method_symbol_ids.add(m.symbol_id);
+    }
+  }
 
   // Extract entry points
-  const entry_points = extract_entry_points(call_graph, source_files, class_name_by_constructor_id);
+  const entry_points = extract_entry_points(
+    call_graph,
+    source_files,
+    class_name_by_constructor_id,
+    class_method_symbol_ids,
+  );
+
+  // Second grep pass: scan common test-directory patterns OUTSIDE the indexed
+  // scope. Attach matching call-site hits to
+  // `diagnostics.grep_call_sites_unindexed_tests` so classifiers can detect
+  // the `unindexed-test-files` root cause. Skipped when include_tests is true
+  // (test directories are already part of source_files).
+  if (!options.include_tests) {
+    await attach_unindexed_test_grep_hits(
+      entry_points,
+      project_path,
+      source_files,
+      class_name_by_constructor_position,
+      combined_patterns,
+    );
+  }
 
   console.error(`Total analysis time: ${Date.now() - start_time}ms`);
 
@@ -420,6 +514,117 @@ async function analyze_directory(
     files_analyzed: stats.file_count,
     entry_points,
   };
+}
+
+// Common conventions for test-directory siting. Kept narrow on purpose —
+// project-specific patterns should extend this list via a config entry, not
+// by broadening the default.
+const UNINDEXED_TEST_DIR_SEGMENTS: readonly string[] = [
+  "/test/",
+  "/tests/",
+  "/__tests__/",
+  "/spec/",
+];
+
+const TEST_FILE_EXTENSIONS: readonly string[] = [
+  ".ts",
+  ".tsx",
+  ".js",
+  ".jsx",
+  ".mjs",
+  ".cjs",
+  ".py",
+  ".rs",
+];
+
+export async function attach_unindexed_test_grep_hits(
+  entry_points: EnrichedFunctionEntry[],
+  project_path: string,
+  indexed_source_files: ReadonlyMap<string, string>,
+  class_name_by_constructor_position: ReadonlyMap<string, string>,
+  ignore_patterns: readonly string[],
+): Promise<void> {
+  const test_files = await collect_unindexed_test_files(
+    project_path,
+    indexed_source_files,
+    ignore_patterns,
+  );
+  if (test_files.size === 0) return;
+
+  // Per-identifier inverted index over the test files.
+  const grep_index = new Map<string, { file_path: string; line: number; content: string }[]>();
+  const pattern = /(?<![A-Za-z0-9_$])([A-Za-z_$][\w$]*)\s*\(/g;
+  for (const [file_path, content] of test_files) {
+    const lines = content.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      pattern.lastIndex = 0;
+      let m: RegExpExecArray | null;
+      let trimmed: string | null = null;
+      while ((m = pattern.exec(line)) !== null) {
+        const name = m[1];
+        let hits = grep_index.get(name);
+        if (!hits) {
+          hits = [];
+          grep_index.set(name, hits);
+        }
+        if (trimmed === null) trimmed = line.trim();
+        hits.push({ file_path, line: i + 1, content: trimmed });
+      }
+    }
+  }
+
+  for (const entry of entry_points) {
+    // Constructors are grepped by class name, not __init__/constructor —
+    // mirror the behaviour of the primary grep pass.
+    let grep_name: string;
+    if (entry.kind === "constructor") {
+      const key = `${entry.file_path}:${entry.start_line}`;
+      grep_name = class_name_by_constructor_position.get(key) ?? entry.name;
+    } else {
+      grep_name = entry.name;
+    }
+    if (grep_name === "<anonymous>") continue;
+    const hits = grep_index.get(grep_name);
+    if (!hits) continue;
+    entry.diagnostics.grep_call_sites_unindexed_tests = hits.map((h) => ({
+      file_path: h.file_path,
+      line: h.line,
+      content: h.content,
+      captures: [],
+    }));
+  }
+}
+
+export async function collect_unindexed_test_files(
+  project_path: string,
+  indexed_source_files: ReadonlyMap<string, string>,
+  ignore_patterns: readonly string[],
+): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  // Reuse core's gitignore-aware walker so test-dir discovery honours the
+  // same exclusion rules as primary indexing (`.gitignore` + `options.exclude`
+  // + `IGNORED_DIRECTORIES`). Output is then narrowed to test directories
+  // and to files not already indexed.
+  let candidates: string[];
+  try {
+    candidates = await find_source_files(project_path, project_path, [...ignore_patterns]);
+  } catch {
+    return out;
+  }
+  for (const full of candidates) {
+    if (indexed_source_files.has(full)) continue;
+    if (!TEST_FILE_EXTENSIONS.some((ext) => full.endsWith(ext))) continue;
+    const rel = `/${path.relative(project_path, full)}/`;
+    if (!UNINDEXED_TEST_DIR_SEGMENTS.some((seg) => rel.includes(seg))) continue;
+    try {
+      const content = await fs.readFile(full, "utf-8");
+      out.set(full, content);
+    } catch {
+      // silently skip unreadable
+    }
+  }
+  return out;
 }
 
 // ===== Main Entry Point =====
@@ -539,7 +744,11 @@ async function resolve_local_mode(input_path: string): Promise<ResolvedMode> {
   };
 }
 
-main().catch((error) => {
-  console.error("Error:", error.message);
-  process.exit(1);
-});
+// Only run as a CLI when invoked directly (not when imported by tests).
+const is_cli = import.meta.url === `file://${process.argv[1]}`;
+if (is_cli) {
+  main().catch((error) => {
+    console.error("Error:", error.message);
+    process.exit(1);
+  });
+}

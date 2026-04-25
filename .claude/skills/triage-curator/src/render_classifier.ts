@@ -130,7 +130,11 @@ function render_check(check: SignalCheck, helpers: HelperRequirements): string {
 
     case "grep_line_regex": {
       const re = JSON.stringify(check.pattern);
-      return `entry.diagnostics.grep_call_sites.some((h) => new RegExp(${re}).test(h.content))`;
+      // Compile once per check evaluation, not per grep hit.
+      return (
+        `(() => { const pattern = new RegExp(${re}); ` +
+        "return entry.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })()"
+      );
     }
 
     case "decorator_matches": {
@@ -181,6 +185,55 @@ function render_check(check: SignalCheck, helpers: HelperRequirements): string {
     case "name_matches": {
       const re = JSON.stringify(check.pattern);
       return `new RegExp(${re}).test(entry.name)`;
+    }
+
+    case "grep_hits_all_intra_file": {
+      const expected = check.value;
+      return (
+        "(entry.diagnostics.grep_call_sites.length > 0 && " +
+        "entry.diagnostics.grep_call_sites.every((h) => h.file_path === entry.file_path)) " +
+        `=== ${expected ? "true" : "false"}`
+      );
+    }
+
+    case "grep_hit_neighbourhood_matches": {
+      helpers.uses_read_file_lines = true;
+      const re = JSON.stringify(check.pattern);
+      const window = check.window;
+      // Compile the regex once outside the per-line loop so we don't re-parse
+      // it for every line of every grep hit.
+      return (
+        `(() => { const pattern = new RegExp(${re}); ` +
+        "return entry.diagnostics.grep_call_sites.some((h) => { " +
+        "const lines = read_file_lines(h.file_path); " +
+        `const start = Math.max(0, h.line - 1 - ${window}); ` +
+        "for (let i = start; i < h.line - 1; i++) { " +
+        "if (pattern.test(lines[i] ?? \"\")) return true; " +
+        "} return false; }); })()"
+      );
+    }
+
+    case "definition_feature_eq": {
+      const name = JSON.stringify(check.name);
+      return (
+        "(entry.definition_features as Record<string, boolean | string | null>)" +
+        `[${name}] === ${check.value ? "true" : "false"}`
+      );
+    }
+
+    case "accessor_kind_eq": {
+      if (check.value === "none") {
+        return "entry.definition_features.accessor_kind === null";
+      }
+      return `entry.definition_features.accessor_kind === ${JSON.stringify(check.value)}`;
+    }
+
+    case "has_unindexed_test_caller": {
+      const expected = check.value;
+      return (
+        "(entry.diagnostics.grep_call_sites_unindexed_tests.length > 0) === " +
+        `${expected ? "true" : "false"}`
+      );
     }
   }
   const unreachable: never = check;

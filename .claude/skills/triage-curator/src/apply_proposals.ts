@@ -11,6 +11,7 @@ import type {
   InvestigateResponse,
   InvestigatorSessionLog,
   KnownIssue,
+  KnownIssueLanguage,
   QaResponse,
 } from "./types.js";
 
@@ -299,18 +300,20 @@ export async function apply_proposals(
 
   const introspection_gap_tasks: IntrospectionGapTaskToCreate[] = [];
   for (const r of inv) {
-    if (r.introspection_gap === null) continue;
+    const gap = r.introspection_gap;
+    if (gap == null) continue;
     introspection_gap_tasks.push({
       group_id: r.group_id,
-      title: r.introspection_gap.title,
-      description: r.introspection_gap.description,
-      signals_needed: r.introspection_gap.signals_needed,
+      title: gap.title,
+      description: gap.description,
+      signals_needed: gap.signals_needed,
     });
   }
 
   const ariadne_bug_tasks: AriadneBugTaskToCreate[] = [];
   for (const r of inv) {
-    if (r.ariadne_bug === null) continue;
+    const bug = r.ariadne_bug;
+    if (bug == null) continue;
     const target_group_id = r.retargets_to ?? r.group_id;
     const target_entry = next_registry.find((e) => e.group_id === target_group_id);
     const description = render_ariadne_bug_body({
@@ -322,10 +325,10 @@ export async function apply_proposals(
     ariadne_bug_tasks.push({
       group_id: r.group_id,
       target_registry_group_id: target_group_id,
-      root_cause_category: r.ariadne_bug.root_cause_category,
-      title: r.ariadne_bug.title,
+      root_cause_category: bug.root_cause_category,
+      title: bug.title,
       description,
-      existing_task_id: r.ariadne_bug.existing_task_id,
+      existing_task_id: bug.existing_task_id,
     });
   }
 
@@ -386,33 +389,44 @@ async function is_readable(file_path: string): Promise<boolean> {
 /**
  * Derive the `languages` field for a new registry entry. Prefers the
  * classifier spec's own `language_eq` gate (authoritative); falls back to the
- * source group's observed file extensions.
+ * source group's observed file extensions. Returns a sorted unique list so
+ * the on-disk registry diff is stable across runs.
  */
 export function derive_languages_for_upsert(
   response: InvestigateResponse,
   group: FalsePositiveGroup | undefined,
-): string[] {
+): KnownIssueLanguage[] {
   const from_spec = declared_languages(response.classifier_spec);
-  if (from_spec.length > 0) return from_spec;
+  if (from_spec.length > 0) return sort_languages(from_spec);
   if (group === undefined) return [];
-  const langs = new Set<string>();
+  const langs = new Set<KnownIssueLanguage>();
   for (const e of group.entries) {
     const lang = language_from_file_path(e.file_path);
     if (lang !== null) langs.add(lang);
   }
-  return [...langs];
+  return sort_languages([...langs]);
 }
 
-function declared_languages(spec: BuiltinClassifierSpec | null): string[] {
+function sort_languages(langs: KnownIssueLanguage[]): KnownIssueLanguage[] {
+  return [...langs].sort();
+}
+
+function declared_languages(spec: BuiltinClassifierSpec | null): KnownIssueLanguage[] {
   if (spec === null) return [];
-  const out = new Set<string>();
+  const out = new Set<KnownIssueLanguage>();
   for (const c of spec.checks) {
-    if (c.op === "language_eq") out.add(c.value);
+    if (c.op === "language_eq" && is_known_issue_language(c.value)) {
+      out.add(c.value);
+    }
   }
   return [...out];
 }
 
-function language_from_file_path(file_path: string): string | null {
+function is_known_issue_language(value: string): value is KnownIssueLanguage {
+  return value === "typescript" || value === "javascript" || value === "python" || value === "rust";
+}
+
+function language_from_file_path(file_path: string): KnownIssueLanguage | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";
   if (
     file_path.endsWith(".js") ||

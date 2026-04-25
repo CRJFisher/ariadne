@@ -257,7 +257,21 @@ describe("derive_languages_for_upsert", () => {
       classifier_spec: null,
     });
     const group = group_with_extensions("g", [".ts", ".py", ".rs"]);
-    expect(derive_languages_for_upsert(response, group).sort()).toEqual([
+    expect(derive_languages_for_upsert(response, group)).toEqual([
+      "python",
+      "rust",
+      "typescript",
+    ]);
+  });
+
+  it("returns languages in deterministic sorted order", () => {
+    const response: InvestigateResponse = builtin_inv("g", {
+      proposed_classifier: { kind: "none" },
+      classifier_spec: null,
+    });
+    const group = group_with_extensions("g", [".rs", ".py", ".ts", ".js"]);
+    expect(derive_languages_for_upsert(response, group)).toEqual([
+      "javascript",
       "python",
       "rust",
       "typescript",
@@ -529,6 +543,128 @@ describe("apply_proposals", () => {
       function_name: "a",
       min_confidence: 0.9,
     });
+  });
+
+  it("populates languages on a new builtin upsert using classifier_spec language_eq", async () => {
+    // New entry → no existing registry row. The classifier_spec declares
+    // language_eq='python'; upsert must land languages=['python'] even though
+    // the triage_groups payload observed a .ts file (language_eq wins).
+    await write_registry([]);
+    const authored_path = path.join(authored_dir, "check_py-only.ts");
+    await write_authored_file(authored_path);
+    const inv: InvestigateResponse = builtin_inv("py-only", {
+      classifier_spec: {
+        ...minimal_spec("check_py-only"),
+        checks: [
+          { op: "language_eq", value: "python" },
+          { op: "callers_count_at_most", n: 0 },
+        ],
+      },
+    });
+    const triage_groups: Record<string, FalsePositiveGroup> = {
+      "py-only": {
+        group_id: "py-only",
+        root_cause: "",
+        reasoning: "",
+        existing_task_fixes: [],
+        entries: [
+          { name: "x", file_path: "src/x.ts", start_line: 1 },
+        ],
+      },
+    };
+    const result = await apply_proposals([], [inv], { "py-only": 1 }, {
+      dry_run: false,
+      registry_path,
+      project: "p",
+      run_id: "r",
+      authored_files_by_group: { "py-only": authored_path },
+      triage_groups,
+    });
+    expect(result.registry_upserts).toEqual(["py-only"]);
+    const on_disk = await read_registry_json();
+    expect(on_disk[0].languages).toEqual(["python"]);
+  });
+
+  it("derives languages from triage group member paths for kind='none' new upsert", async () => {
+    await write_registry([]);
+    const inv: InvestigateResponse = builtin_inv("member-path-only", {
+      proposed_classifier: { kind: "none" },
+      classifier_spec: null,
+    });
+    const triage_groups: Record<string, FalsePositiveGroup> = {
+      "member-path-only": {
+        group_id: "member-path-only",
+        root_cause: "",
+        reasoning: "",
+        existing_task_fixes: [],
+        entries: [
+          { name: "a", file_path: "src/a.rs", start_line: 1 },
+          { name: "b", file_path: "src/b.ts", start_line: 2 },
+        ],
+      },
+    };
+    const result = await apply_proposals([], [inv], { "member-path-only": 2 }, {
+      dry_run: false,
+      registry_path,
+      project: "p",
+      run_id: "r",
+      authored_files_by_group: {},
+      triage_groups,
+    });
+    expect(result.registry_upserts).toEqual(["member-path-only"]);
+    const on_disk = await read_registry_json();
+    expect(on_disk[0].languages).toEqual(["rust", "typescript"]);
+    expect(on_disk[0].classifier).toEqual({ kind: "none" });
+  });
+
+  it("does not downgrade languages when upserting onto an existing entry", async () => {
+    // Existing entry has languages=['python','rust']; the classifier_spec only
+    // declares language_eq='python'. The upsert must preserve both.
+    await write_registry([
+      known("x", { languages: ["python", "rust"], classifier: { kind: "none" } }),
+    ]);
+    const authored_path = path.join(authored_dir, "check_x.ts");
+    await write_authored_file(authored_path);
+    const inv: InvestigateResponse = builtin_inv("x", {
+      classifier_spec: {
+        ...minimal_spec("check_x"),
+        checks: [{ op: "language_eq", value: "python" }],
+      },
+    });
+    const result = await apply_proposals([], [inv], { x: 1 }, {
+      dry_run: false,
+      registry_path,
+      project: "p",
+      run_id: "r",
+      authored_files_by_group: { x: authored_path },
+    });
+    expect(result.registry_upserts).toEqual(["x"]);
+    const on_disk = await read_registry_json();
+    expect(on_disk[0].languages).toEqual(["python", "rust"]);
+  });
+
+  it("records failed_authoring when languages cannot be derived for a new entry", async () => {
+    // No language_eq in spec, no triage_groups provided → empty languages → fail.
+    await write_registry([]);
+    const authored_path = path.join(authored_dir, "check_no-lang.ts");
+    await write_authored_file(authored_path);
+    const inv: InvestigateResponse = builtin_inv("no-lang", {
+      classifier_spec: {
+        ...minimal_spec("check_no-lang"),
+        checks: [{ op: "callers_count_at_most", n: 0 }],
+      },
+    });
+    const result = await apply_proposals([], [inv], { "no-lang": 1 }, {
+      dry_run: false,
+      registry_path,
+      project: "p",
+      run_id: "r",
+      authored_files_by_group: { "no-lang": authored_path },
+    });
+    expect(result.failed_authoring).toHaveLength(1);
+    expect(result.failed_authoring[0].group_id).toBe("no-lang");
+    expect(result.failed_authoring[0].reason).toMatch(/cannot derive languages/);
+    expect(result.registry_upserts).toEqual([]);
   });
 
   it("kind='none' overwrite flips status to wip and sets drift_detected", async () => {

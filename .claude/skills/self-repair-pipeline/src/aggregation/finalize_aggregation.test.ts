@@ -26,6 +26,7 @@ function make_fp_entry(entry_index: number, group_id: string): TriageEntry {
     access_modifier: null,
     diagnostics: {
       grep_call_sites: [],
+      grep_call_sites_unindexed_tests: [],
       ariadne_call_refs: [],
       diagnosis: "callers-not-in-registry",
     },

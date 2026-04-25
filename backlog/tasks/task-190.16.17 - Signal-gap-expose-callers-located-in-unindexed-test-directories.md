@@ -1,7 +1,7 @@
 ---
 id: TASK-190.16.17
 title: 'Signal gap: expose callers located in unindexed test directories'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-04-22 14:01'
 labels:
@@ -26,4 +26,17 @@ Requested signal (proposed name `has-callers-in-unindexed-test-dir`): extend the
 Alternative (lower-effort) signal: a boolean `entry.is_in_indexed_source_only` plus a builtin-only aggregate check `has_unindexed_test_caller` that resolves by targeted filesystem grep when the builtin runs. Either form would close the gap.
 
 Until this signal exists, the group is documented in the registry with `classifier.kind = none` so it does not misclassify entries but remains visible for human review.
+
+## Implementation notes
+
+- New diagnostic field `EntryPointDiagnostics.grep_call_sites_unindexed_tests` populated by a second pass in `detect_entrypoints.ts` that runs only when `include_tests` is false. Pass collects test files via `find_source_files` (gitignore-aware) and filters to common test-dir segments (`/test/`, `/tests/`, `/__tests__/`, `/spec/`).
+- Pass builds an inverted identifier index over the test files for O(1) per-entry lookup. Constructors look up by class name through a position-keyed map (`${file_path}:${start_line}` → class name) since `EnrichedFunctionEntry` does not carry `symbol_id`.
+- New `has_unindexed_test_caller` op wired through curator `SignalCheck`, classifier renderer, validator parser, pipeline `PredicateExpr`, registry validator, and predicate evaluator.
+- Authoring of the `unindexed-test-files` registry classifier remains future work (parent epic TASK-190.16) — the signal is now expressible.
+
+## Reviewer follow-ups (applied)
+
+- Constructor handling: previously the second-pass grep used the constructor symbol's own name (`__init__` / `constructor`), which never matches a real call site. Now wired through a position-keyed `class_name_by_constructor_position` map so constructor entries grep by class name, mirroring the primary pass.
+- `collect_unindexed_test_files` now reuses core's `find_source_files`, which honours `.gitignore` and `options.exclude` (passed through as ignore patterns) — previously the walker only filtered `IGNORED_DIRECTORIES`.
+- New colocated integration test `scripts/detect_entrypoints.test.ts` covers the test-dir collection (recognised dir names, gitignore/exclude pruning, indexed-file dedup) and the attach pass (function caller hit, constructor-by-class-name, no-test-files no-op). The script's `main()` is now CLI-gated so the test file can import the helpers without triggering CLI exit.
 <!-- SECTION:DESCRIPTION:END -->
