@@ -24,17 +24,19 @@ import type { AnalysisResult } from "../src/entry_point_types.js";
 import type { TriageState } from "../src/triage_state_types.js";
 import "../src/guard_tsx_invocation.js";
 
+const DEFAULT_MAX_COUNT = 150;
+
 interface CliArgs {
   analysis_path: string;
   project: string | null;
-  max_count: number | null;
+  max_count: number;
 }
 
 function parse_args(argv: string[]): CliArgs {
   const args = argv.slice(2);
   let analysis_path: string | null = null;
   let project: string | null = null;
-  let max_count: number | null = null;
+  let max_count: number = DEFAULT_MAX_COUNT;
 
   for (let i = 0; i < args.length; i++) {
     switch (args[i]) {
@@ -44,14 +46,22 @@ function parse_args(argv: string[]): CliArgs {
       case "--project":
         project = args[++i];
         break;
-      case "--max-count":
-        max_count = parseInt(args[++i], 10);
+      case "--max-count": {
+        const n = parseInt(args[++i], 10);
+        if (isNaN(n) || n < 1) {
+          process.stderr.write("Error: --max-count must be a positive integer\n");
+          process.exit(1);
+        }
+        max_count = n;
         break;
+      }
     }
   }
 
   if (!analysis_path) {
-    console.error("Usage: prepare_triage.ts --analysis <path> [--project <name>] [--max-count <n>]");
+    console.error(
+      `Usage: prepare_triage.ts --analysis <path> [--project <name>] [--max-count <n> (default: ${DEFAULT_MAX_COUNT})]`,
+    );
     process.exit(1);
   }
 
@@ -114,7 +124,7 @@ async function main(): Promise<void> {
 
   console.error(`Triage state prepared: ${entries.length} entries`);
   console.error(`  known-unreachable (auto-classify): ${stats.auto_count} (completed)`);
-  if (cli.max_count !== null && stats.residual_kept < stats.residual_total) {
+  if (stats.residual_kept < stats.residual_total) {
     console.error(
       `  llm-triage:                        ${stats.residual_kept} (pending, top-N of ${stats.residual_total} by tree_size)`,
     );

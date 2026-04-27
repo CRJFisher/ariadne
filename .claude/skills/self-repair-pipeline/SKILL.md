@@ -28,9 +28,9 @@ Triage pipeline for entry point analysis: detect false positives and classify ro
 
 Before routing, extract any pipeline flags from the arguments:
 
-| Flag              | Variable     | Default   |
-| ----------------- | ------------ | --------- |
-| `--max-count <n>` | `$MAX_COUNT` | _(unset)_ |
+| Flag              | Variable     | Default |
+| ----------------- | ------------ | ------- |
+| `--max-count <n>` | `$MAX_COUNT` | `150`   |
 
 Strip extracted flags from the input before applying the routing table below.
 
@@ -123,12 +123,12 @@ Build triage state from the latest analysis output:
 node --import tsx .claude/skills/self-repair-pipeline/scripts/prepare_triage.ts \
   --analysis ~/.ariadne/self-repair-pipeline/analysis_output/<project>/detect_entrypoints/<timestamp>.json \
   --project <name> \
-  [--max-count $MAX_COUNT]   # omit if $MAX_COUNT is unset
+  [--max-count $MAX_COUNT]   # omit to use default of 150
 ```
 
-Options: `--analysis <path>` (required), `--project <name>` (optional — falls back to analysis file's project_name), `--max-count <n>` (optional)
+Options: `--analysis <path>` (required), `--project <name>` (optional — falls back to analysis file's project_name), `--max-count <n>` (optional, default `150`)
 
-When `--max-count` is set, the script shuffles the `llm-triage` entries (Fisher-Yates) and keeps only the first `<n>`. Use this to take a random sample when the full triage set is too large to process in one run.
+`--max-count` caps how many `llm-triage` entries are kept (and thus the total number of triage-investigator agents Phase 3 dispatches — distinct from the `N = 5` concurrency setting in Phase 3). The script keeps the top `<n>` residual entries by `tree_size`. Auto-classified entries are always kept in full and do not count toward this cap. Override the default for a smaller probe or larger sweep.
 
 The script consults the known-issues registry's predicate classifiers and partitions entries into two buckets:
 
