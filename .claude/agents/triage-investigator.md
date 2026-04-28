@@ -2,8 +2,6 @@
 name: triage-investigator
 description: Investigates a single entry point candidate to determine whether Ariadne correctly identified it as unreachable, or whether Ariadne missed real callers (false positive). Returns a TriageEntryResult JSON.
 tools: Bash(node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts:*), Read, Grep, Glob, Write(~/.ariadne/self-repair-pipeline/**)
-mcpServers:
-  - ariadne
 model: sonnet
 maxTurns: 50
 ---
@@ -77,12 +75,9 @@ Do not use `novel:` for names that already exist in the registry; adopt the exis
    - Dynamic calls and string-based dispatch
    - Framework lifecycle hooks and decorator registrations
 
-6. **Use Ariadne MCP tools** to inspect the call graph:
+6. **Re-read the pre-gathered Ariadne call references** in your prompt context. The `Pre-Gathered Evidence → Ariadne call references` block lists every call site Ariadne saw with `resolution_count`, `resolved_to`, `call_type`, and `caller_function`. This is Ariadne's view of the entry's callers — no live MCP query is needed.
 
-   - `show_call_graph_neighborhood` — callers and callees of a symbol (`symbol_ref` format: `file_path:line#name`; `callers_depth: 2` or higher for indirect callers)
-   - `list_entrypoints` — cross-reference against all detected entry points
-
-7. **Cross-reference** what Ariadne reports against what grep found. A discrepancy — grep finds calls, MCP shows none — is the signature of a false positive.
+7. **Cross-reference** what the pre-gathered Ariadne call references show against what grep found. A discrepancy — grep finds calls, the pre-gathered references show none or resolve to the wrong target — is the signature of a false positive.
 
 8. **Classify**:
    - `ariadne_correct: true` if no real invocations were found
