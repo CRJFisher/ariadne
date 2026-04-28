@@ -377,7 +377,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-309`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `barrel-reexport` — barrel-reexport
@@ -388,7 +388,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-218`                              |
+| Backlog task | `TASK-240`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `cross-package-call-untracked` — cross-package-call-untracked
@@ -399,7 +399,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-256`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `cross-package-method-resolution` — cross-package-method-resolution
@@ -410,7 +410,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-255`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `destructured-property-method-call` — destructured-property-method-call
@@ -421,7 +421,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-305`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `dynamic-constructor-dispatch` — dynamic-constructor-dispatch
@@ -443,7 +443,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-283`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `framework-decorator-dispatch` — framework-decorator-dispatch
@@ -454,7 +454,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------------ |
 | Status       | `wip`                                                              |
 | Languages    | `typescript`                                                       |
-| Backlog task | _none_                                                             |
+| Backlog task | `TASK-284`                                                         |
 | Classifier   | builtin, `check_framework_decorator_dispatch` (min_confidence 0.9) |
 
 ## `framework-lifecycle-dispatch` — framework-lifecycle-dispatch
@@ -465,7 +465,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------------ |
 | Status       | `wip`                                                              |
 | Languages    | `typescript`                                                       |
-| Backlog task | _none_                                                             |
+| Backlog task | `TASK-244`                                                         |
 | Classifier   | builtin, `check_framework_lifecycle_dispatch` (min_confidence 0.9) |
 
 ## `framework-lifecycle-override` — framework-lifecycle-override
@@ -476,7 +476,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------------ |
 | Status       | `wip`                                                              |
 | Languages    | `typescript`                                                       |
-| Backlog task | _none_                                                             |
+| Backlog task | `TASK-301`                                                         |
 | Classifier   | builtin, `check_framework_lifecycle_override` (min_confidence 0.9) |
 
 ## `generic-type-erasure` — generic-type-erasure
@@ -487,7 +487,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-337`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `inherited-method-call` — inherited-method-call
@@ -498,7 +498,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-315`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `interface-polymorphic-dispatch` — interface-polymorphic-dispatch
@@ -520,7 +520,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------- |
 | Status       | `wip`                                                         |
 | Languages    | `typescript`                                                  |
-| Backlog task | _none_                                                        |
+| Backlog task | `TASK-316`                                                    |
 | Classifier   | builtin, `check_intra_class_method_call` (min_confidence 0.9) |
 
 ## `method-call-in-callback-unresolved` — method-call-in-callback-unresolved
@@ -564,7 +564,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------------------- |
 | Status       | `wip`                                                                     |
 | Languages    | `typescript`                                                              |
-| Backlog task | _none_                                                                    |
+| Backlog task | `TASK-332`                                                                |
 | Classifier   | builtin, `check_stored_callback_via_object_property` (min_confidence 0.9) |
 
 ## `tsconfig-path-alias` — tsconfig-path-alias
@@ -575,7 +575,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-335`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `tsconfig-paths-not-resolved` — tsconfig-paths-not-resolved
@@ -619,7 +619,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | -------------------------------------------------------------------- |
 | Status       | `wip`                                                                |
 | Languages    | `typescript`                                                         |
-| Backlog task | _none_                                                               |
+| Backlog task | `TASK-321`                                                           |
 | Classifier   | builtin, `check_aliased_import_method_dispatch` (min_confidence 0.9) |
 
 ## `angular-framework-lifecycle-dispatch` — angular-framework-lifecycle-dispatch
@@ -630,7 +630,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-259`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `angular-generated-instruction-call` — angular-generated-instruction-call
@@ -641,7 +641,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------------------- |
 | Status       | `wip`                                                                     |
 | Languages    | `typescript`                                                              |
-| Backlog task | _none_                                                                    |
+| Backlog task | `TASK-261`                                                                |
 | Classifier   | builtin, `check_angular_generated_instruction_call` (min_confidence 0.95) |
 
 ## `any-typed-receiver-method-call` — any-typed-receiver-method-call
@@ -652,7 +652,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-328`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `compiler-generated-dynamic-dispatch` — compiler-generated-dynamic-dispatch
@@ -674,7 +674,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-292`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `cross-package-registry-gap` — cross-package-registry-gap
@@ -696,7 +696,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | -------------------------------------------------------------------------- |
 | Status       | `wip`                                                                      |
 | Languages    | `typescript`                                                               |
-| Backlog task | _none_                                                                     |
+| Backlog task | `TASK-314`                                                                 |
 | Classifier   | builtin, `check_dependency_injection_type_resolution` (min_confidence 0.9) |
 
 ## `dynamic-cast-structural-type-dispatch` — dynamic-cast-structural-type-dispatch
@@ -707,7 +707,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------------------------------------------- |
 | Status       | `wip`                                                                       |
 | Languages    | `typescript`                                                                |
-| Backlog task | _none_                                                                      |
+| Backlog task | `TASK-318`                                                                  |
 | Classifier   | builtin, `check_dynamic_cast_structural_type_dispatch` (min_confidence 0.9) |
 
 ## `external-framework-interface-dispatch` — external-framework-interface-dispatch
@@ -718,7 +718,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-302`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `getter-property-access` — getter-property-access
@@ -729,7 +729,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-233`                              |
+| Backlog task | `TASK-272`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `higher-order-function-callback` — higher-order-function-callback
@@ -751,7 +751,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | -------------------------------------------------------------- |
 | Status       | `wip`                                                          |
 | Languages    | `typescript`                                                   |
-| Backlog task | _none_                                                         |
+| Backlog task | `TASK-334`                                                     |
 | Classifier   | builtin, `check_import_resolution_missed` (min_confidence 0.9) |
 
 ## `instance-method-call-unresolved` — instance-method-call-unresolved
@@ -762,7 +762,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-205`                              |
+| Backlog task | `TASK-248`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `instance-method-dispatch` — instance-method-dispatch
@@ -806,7 +806,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | -------------------------------------------------------------- |
 | Status       | `wip`                                                          |
 | Languages    | `typescript`                                                   |
-| Backlog task | _none_                                                         |
+| Backlog task | `TASK-303`                                                     |
 | Classifier   | builtin, `check_property_getter_dispatch` (min_confidence 0.9) |
 
 ## `singleton-instance-method-call` — singleton-instance-method-call
@@ -817,7 +817,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-306`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `static-method-resolution` — static-method-resolution
@@ -828,7 +828,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | -------------------------------------------------------------- |
 | Status       | `wip`                                                          |
 | Languages    | `typescript`                                                   |
-| Backlog task | _none_                                                         |
+| Backlog task | `TASK-324`                                                     |
 | Classifier   | builtin, `check_static_method_resolution` (min_confidence 0.9) |
 
 ## `string-keyed-dispatch` — string-keyed-dispatch
@@ -861,7 +861,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-241`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `builtin-higher-order-callback` — builtin-higher-order-callback
@@ -905,7 +905,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------------------ |
 | Status       | `wip`                                                                    |
 | Languages    | `typescript`                                                             |
-| Backlog task | _none_                                                                   |
+| Backlog task | `TASK-288`                                                               |
 | Classifier   | builtin, `check_ts_class_getter_no_textual_callers` (min_confidence 0.9) |
 
 ## `framework-command-builder-callback` — framework-command-builder-callback
@@ -938,7 +938,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ----------------------------------------------------------------- |
 | Status       | `wip`                                                             |
 | Languages    | `typescript`                                                      |
-| Backlog task | _none_                                                            |
+| Backlog task | `TASK-245`                                                        |
 | Classifier   | builtin, `check_getter_accessor_not_tracked` (min_confidence 0.9) |
 
 ## `import-resolution-miss` — import-resolution-miss
@@ -949,7 +949,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-304`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `inherited-method-dispatch` — inherited-method-dispatch
@@ -960,7 +960,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-336`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `inherited-static-method-dispatch` — inherited-static-method-dispatch
@@ -971,7 +971,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-330`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `inline-callback` — inline-callback
@@ -1004,7 +1004,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------- |
 | Status       | `wip`                                                         |
 | Languages    | `typescript`                                                  |
-| Backlog task | _none_                                                        |
+| Backlog task | `TASK-294`                                                    |
 | Classifier   | builtin, `check_jsx_mdx_component_usage` (min_confidence 0.9) |
 
 ## `method-call-on-callback-parameter` — method-call-on-callback-parameter
@@ -1015,7 +1015,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-329`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `method-call-on-typed-instance` — method-call-on-typed-instance
@@ -1026,7 +1026,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | -------------------------------------------------------------------- |
 | Status       | `wip`                                                                |
 | Languages    | `typescript`                                                         |
-| Backlog task | _none_                                                               |
+| Backlog task | `TASK-320`                                                           |
 | Classifier   | builtin, `check_method_call_on_typed_instance` (min_confidence 0.85) |
 
 ## `method-call-unresolved` — method-call-unresolved
@@ -1048,7 +1048,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-249`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `static-method-call-unresolved` — static-method-call-unresolved
@@ -1059,7 +1059,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-237`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `static-method-call` — static-method-call
@@ -1092,7 +1092,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | -------------------------------------------------------- |
 | Status       | `wip`                                                    |
 | Languages    | `typescript`                                             |
-| Backlog task | _none_                                                   |
+| Backlog task | `TASK-281`                                               |
 | Classifier   | builtin, `check_type_cast_dispatch` (min_confidence 0.9) |
 
 ## `type-cast-receiver` — type-cast-receiver
@@ -1103,7 +1103,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | -------------------------------------------------------- |
 | Status       | `wip`                                                    |
 | Languages    | `typescript`                                             |
-| Backlog task | _none_                                                   |
+| Backlog task | `TASK-319`                                               |
 | Classifier   | builtin, `check_type_cast_receiver` (min_confidence 0.9) |
 
 ## `unindexed-callers` — unindexed-callers
@@ -1125,7 +1125,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ---------------------------------------------------------------------- |
 | Status       | `wip`                                                                  |
 | Languages    | `typescript`                                                           |
-| Backlog task | _none_                                                                 |
+| Backlog task | `TASK-311`                                                             |
 | Classifier   | builtin, `check_bundler_module_path_substitution` (min_confidence 0.9) |
 
 ## `bundler-module-substitution` — bundler-module-substitution
@@ -1147,7 +1147,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-325`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `computed-property-method-caller` — computed-property-method-caller
@@ -1158,7 +1158,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------------------------------------- |
 | Status       | `wip`                                                                 |
 | Languages    | `typescript`                                                          |
-| Backlog task | _none_                                                                |
+| Backlog task | `TASK-290`                                                            |
 | Classifier   | builtin, `check_computed_property_method_caller` (min_confidence 0.9) |
 
 ## `const-arrow-function-export` — const-arrow-function-export
@@ -1213,7 +1213,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------------------------------- |
 | Status       | `wip`                                                           |
 | Languages    | `typescript`                                                    |
-| Backlog task | _none_                                                          |
+| Backlog task | `TASK-285`                                                      |
 | Classifier   | builtin, `check_dynamic_runtime_injection` (min_confidence 0.9) |
 
 ## `getter-access-not-tracked` — getter-access-not-tracked
@@ -1224,7 +1224,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-258`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `iife-not-tracked` — iife-not-tracked
@@ -1235,7 +1235,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-307`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `indirect-function-reference` — indirect-function-reference
@@ -1246,7 +1246,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-268`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `namespace-reexport-member-access` — namespace-reexport-member-access
@@ -1257,7 +1257,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-278`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `private-class-field-method` — private-class-field-method
@@ -1290,7 +1290,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-280`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `test-file-exclusion` — test-file-exclusion
@@ -1312,7 +1312,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-322`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `unindexed-script-caller` — unindexed-script-caller
@@ -1323,7 +1323,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-296`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `unresolved-import-caller` — unresolved-import-caller
@@ -1334,7 +1334,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-252`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `unresolved-instance-method-call` — unresolved-instance-method-call
