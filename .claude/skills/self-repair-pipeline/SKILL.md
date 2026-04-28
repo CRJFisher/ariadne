@@ -36,28 +36,36 @@ Strip extracted flags from the input before applying the routing table below.
 
 Resolve the analysis target from the remaining input using this routing table:
 
-| Input pattern                       | Example                                                  | Action                                                                     |
-| ----------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Empty or blank                      | `/self-repair-pipeline`                                  | List available configs below, ask user what to analyze                     |
-| Config name                         | `core`, `mcp`, `types`, `projections`                    | Use `--config ~/.ariadne/self-repair-pipeline/project_configs/{name}.json` |
-| Absolute or relative directory path | `/Users/chuck/workspace/some-repo`, `../other-repo`      | Use `--path <path>`                                                        |
-| `owner/repo` or GitHub URL          | `anthropics/sdk-python`, `https://github.com/owner/repo` | Use `--github <value>`                                                     |
-| Natural language                    | "analyze the core package"                               | Interpret intent and map to one of the above                               |
+| Input pattern                       | Example                                                  | Action                                                                                                                           |
+| ----------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Empty or blank                      | `/self-repair-pipeline`                                  | List available configs below, ask user what to analyze                                                                           |
+| Config name                         | `core`, `mcp`, `types`, `projections`                    | Use `--config ~/.ariadne/self-repair-pipeline/project_configs/{name}.json`                                                       |
+| Absolute or relative directory path | `/Users/chuck/workspace/some-repo`, `../other-repo`      | If a project config exists for this path, use `--config <config-path>`; otherwise follow **Creating a New Project Config** below |
+| `owner/repo` or GitHub URL          | `anthropics/sdk-python`, `https://github.com/owner/repo` | Use `--github <value>`                                                                                                           |
+| Natural language                    | "analyze the core package"                               | Interpret intent and map to one of the above                                                                                     |
 
 ### Creating a New Project Config
 
-When the input is a directory path and no existing config matches:
+When the input is a directory path and a project config already exists for that path, skip this section and proceed to Phase 1 using `--config <path>`. Otherwise, follow these steps:
 
-1. Resolve the path and verify it exists
-2. Run `ls` to see top-level structure; check for `.gitignore`, `package.json`, `pyproject.toml`
-3. Propose a config with:
+1. Resolve the path and verify it exists.
+2. Run the folder preview to see what would be indexed:
+
+   ```bash
+   node --import tsx .claude/skills/self-repair-pipeline/scripts/preview_folders.ts \
+     --path <abs_path>
+   ```
+
+3. Pick directories to exclude from indexing. Common candidates: vendored / third-party / generated trees, directories whose contents are not first-party source, or any single directory whose file count dominates the rest of the project. A high `file_count_recursive` with a low `file_count_direct` means the directory is a container for sub-packages, not a leaf vendor blob — do not exclude it on count alone.
+4. Present the **full** preview list in your message text (relative path + `file_count_recursive` per line), with your pre-selected exclusions marked and a short reason for each pick. Then use AskUserQuestion with three options: "Accept these exclusions", "Modify — I'll describe changes in my reply", "Exclude nothing". If the user chooses Modify, read their follow-up message, apply the changes, and confirm the final list before continuing. The user's final answer is authoritative.
+5. Propose a config with:
    - `project_path`: absolute path (required)
    - `folders`: relevant source directories (omit if analyzing everything)
-   - `exclude`: obvious non-source directories beyond the defaults
+   - `exclude`: the list the user confirmed in step 4
    - `project_name` is auto-derived for external projects via `path_to_project_id(project_path)` — do not include it in the config. Only internal projects (`project_path: "."`) require an explicit `project_name`.
-4. Show the proposed config and ask the user to confirm or adjust
-5. Save to `~/.ariadne/self-repair-pipeline/project_configs/{name}.json`
-6. Continue the pipeline with `--config ~/.ariadne/self-repair-pipeline/project_configs/{name}.json`
+6. Show the proposed config and ask for final confirmation.
+7. Save to `~/.ariadne/self-repair-pipeline/project_configs/{name}.json`.
+8. Continue the pipeline with `--config ~/.ariadne/self-repair-pipeline/project_configs/{name}.json`.
 
 Available project configs:
 
