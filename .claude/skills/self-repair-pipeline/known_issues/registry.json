@@ -575,7 +575,8 @@
     "classifier": {
       "kind": "none"
     },
-    "drift_detected": true
+    "drift_detected": true,
+    "backlog_task": "TASK-341"
   },
   {
     "group_id": "framework-pytest-fixture",
@@ -803,7 +804,8 @@
       "lodash",
       "prisma"
     ],
-    "last_seen_run": "2026-04-27T16-24-40.808Z"
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-254"
   },
   {
     "group_id": "intra-file-call-not-resolved",
@@ -844,7 +846,8 @@
       "webpack"
     ],
     "last_seen_run": "2026-04-16T18-10-16.855Z",
-    "drift_detected": true
+    "drift_detected": true,
+    "backlog_task": "TASK-287"
   },
   {
     "group_id": "require-indirection",
@@ -966,7 +969,7 @@
     ],
     "last_seen_run": "2026-04-27T11-02-57.035Z",
     "drift_detected": true,
-    "backlog_task": "TASK-198"
+    "backlog_task": "TASK-264"
   },
   {
     "group_id": "callback-registration",
@@ -1011,7 +1014,8 @@
     "observed_projects": [
       "express"
     ],
-    "last_seen_run": "2026-04-23T16-01-17.205Z"
+    "last_seen_run": "2026-04-23T16-01-17.205Z",
+    "backlog_task": "TASK-333"
   },
   {
     "group_id": "dynamic-getter-registration",
@@ -1029,7 +1033,8 @@
     "observed_projects": [
       "express"
     ],
-    "last_seen_run": "2026-04-23T16-01-17.205Z"
+    "last_seen_run": "2026-04-23T16-01-17.205Z",
+    "backlog_task": "TASK-275"
   },
   {
     "group_id": "dynamic-method-dispatch",
@@ -1049,7 +1054,8 @@
     "observed_projects": [
       "express"
     ],
-    "last_seen_run": "2026-04-23T16-01-17.205Z"
+    "last_seen_run": "2026-04-23T16-01-17.205Z",
+    "backlog_task": "TASK-310"
   },
   {
     "group_id": "dynamic-property-dispatch",
@@ -1090,7 +1096,8 @@
     "observed_projects": [
       "express"
     ],
-    "last_seen_run": "2026-04-23T16-01-17.205Z"
+    "last_seen_run": "2026-04-23T16-01-17.205Z",
+    "backlog_task": "TASK-300"
   },
   {
     "group_id": "object-define-property-getter",
@@ -1127,7 +1134,8 @@
     "observed_projects": [
       "express"
     ],
-    "last_seen_run": "2026-04-23T16-01-17.205Z"
+    "last_seen_run": "2026-04-23T16-01-17.205Z",
+    "backlog_task": "TASK-286"
   },
   {
     "group_id": "prototype-method-dispatch",
@@ -1167,7 +1175,8 @@
     "observed_projects": [
       "express"
     ],
-    "last_seen_run": "2026-04-23T16-01-17.205Z"
+    "last_seen_run": "2026-04-23T16-01-17.205Z",
+    "backlog_task": "TASK-326"
   },
   {
     "group_id": "this-method-dispatch",
@@ -1188,7 +1197,7 @@
     ],
     "last_seen_run": "2026-04-27T11-02-57.035Z",
     "drift_detected": true,
-    "backlog_task": "TASK-225"
+    "backlog_task": "TASK-263"
   },
   {
     "group_id": "call-apply-dispatch",
@@ -1227,7 +1236,8 @@
     "observed_projects": [
       "jquery"
     ],
-    "last_seen_run": "2026-04-23T20-22-56.592Z"
+    "last_seen_run": "2026-04-23T20-22-56.592Z",
+    "backlog_task": "TASK-267"
   },
   {
     "group_id": "object-property-dispatch",
@@ -1245,7 +1255,8 @@
     "observed_projects": [
       "jquery"
     ],
-    "last_seen_run": "2026-04-23T20-22-56.592Z"
+    "last_seen_run": "2026-04-23T20-22-56.592Z",
+    "backlog_task": "TASK-238"
   },
   {
     "group_id": "prototype-dispatch",
@@ -1284,7 +1295,8 @@
     "observed_projects": [
       "mocha"
     ],
-    "last_seen_run": "2026-04-23T20-41-21.302Z"
+    "last_seen_run": "2026-04-23T20-41-21.302Z",
+    "backlog_task": "TASK-250"
   },
   {
     "group_id": "dynamic-dispatch-reporter-constructor",
@@ -1325,7 +1337,8 @@
     "observed_projects": [
       "mocha"
     ],
-    "last_seen_run": "2026-04-23T20-41-21.302Z"
+    "last_seen_run": "2026-04-23T20-41-21.302Z",
+    "backlog_task": "TASK-299"
   },
   {
     "group_id": "dynamic-string-key-dispatch",
@@ -1343,7 +1356,8 @@
     "observed_projects": [
       "mocha"
     ],
-    "last_seen_run": "2026-04-23T20-41-21.302Z"
+    "last_seen_run": "2026-04-23T20-41-21.302Z",
+    "backlog_task": "TASK-266"
   },
   {
     "group_id": "factory-return-value-dispatch",
@@ -1361,7 +1375,8 @@
     "observed_projects": [
       "mocha"
     ],
-    "last_seen_run": "2026-04-23T20-41-21.302Z"
+    "last_seen_run": "2026-04-23T20-41-21.302Z",
+    "backlog_task": "TASK-251"
   },
   {
     "group_id": "module-exports-class-constructor",
@@ -1381,7 +1396,8 @@
     "observed_projects": [
       "mocha"
     ],
-    "last_seen_run": "2026-04-23T20-41-21.302Z"
+    "last_seen_run": "2026-04-23T20-41-21.302Z",
+    "backlog_task": "TASK-291"
   },
   {
     "group_id": "object-property-function-dispatch",
@@ -1439,7 +1455,8 @@
     "observed_projects": [
       "mocha"
     ],
-    "last_seen_run": "2026-04-23T20-41-21.302Z"
+    "last_seen_run": "2026-04-23T20-41-21.302Z",
+    "backlog_task": "TASK-308"
   },
   {
     "group_id": "static-method-on-cjs-class",
@@ -1459,7 +1476,8 @@
     "observed_projects": [
       "mocha"
     ],
-    "last_seen_run": "2026-04-23T20-41-21.302Z"
+    "last_seen_run": "2026-04-23T20-41-21.302Z",
+    "backlog_task": "TASK-273"
   },
   {
     "group_id": "static-method-on-destructured-import",
@@ -1479,7 +1497,8 @@
     "observed_projects": [
       "mocha"
     ],
-    "last_seen_run": "2026-04-23T20-41-21.302Z"
+    "last_seen_run": "2026-04-23T20-41-21.302Z",
+    "backlog_task": "TASK-260"
   },
   {
     "group_id": "super-constructor-call",
@@ -1501,7 +1520,7 @@
     ],
     "last_seen_run": "2026-04-27T16-24-40.808Z",
     "drift_detected": true,
-    "backlog_task": "TASK-224"
+    "backlog_task": "TASK-331"
   },
   {
     "group_id": "unresolved-receiver-type",
@@ -1521,7 +1540,8 @@
     "observed_projects": [
       "mocha"
     ],
-    "last_seen_run": "2026-04-23T20-41-21.302Z"
+    "last_seen_run": "2026-04-23T20-41-21.302Z",
+    "backlog_task": "TASK-242"
   },
   {
     "group_id": "unsupported-file-extension",
@@ -1539,7 +1559,8 @@
     "observed_projects": [
       "mocha"
     ],
-    "last_seen_run": "2026-04-23T20-41-21.302Z"
+    "last_seen_run": "2026-04-23T20-41-21.302Z",
+    "backlog_task": "TASK-293"
   },
   {
     "group_id": "abstract-class-polymorphic-dispatch",
@@ -1576,7 +1597,8 @@
     "observed_projects": [
       "nest"
     ],
-    "last_seen_run": "2026-04-23T22-12-28.705Z"
+    "last_seen_run": "2026-04-23T22-12-28.705Z",
+    "backlog_task": "TASK-309"
   },
   {
     "group_id": "barrel-reexport",
@@ -1599,7 +1621,7 @@
     ],
     "last_seen_run": "2026-04-27T16-24-40.808Z",
     "drift_detected": true,
-    "backlog_task": "TASK-218"
+    "backlog_task": "TASK-240"
   },
   {
     "group_id": "cross-package-call-untracked",
@@ -1617,7 +1639,8 @@
     "observed_projects": [
       "nest"
     ],
-    "last_seen_run": "2026-04-23T22-12-28.705Z"
+    "last_seen_run": "2026-04-23T22-12-28.705Z",
+    "backlog_task": "TASK-256"
   },
   {
     "group_id": "cross-package-method-resolution",
@@ -1636,7 +1659,8 @@
       "nest",
       "prisma"
     ],
-    "last_seen_run": "2026-04-27T16-24-40.808Z"
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-255"
   },
   {
     "group_id": "destructured-property-method-call",
@@ -1654,7 +1678,8 @@
     "observed_projects": [
       "nest"
     ],
-    "last_seen_run": "2026-04-23T22-12-28.705Z"
+    "last_seen_run": "2026-04-23T22-12-28.705Z",
+    "backlog_task": "TASK-305"
   },
   {
     "group_id": "dynamic-constructor-dispatch",
@@ -1691,7 +1716,8 @@
     "observed_projects": [
       "nest"
     ],
-    "last_seen_run": "2026-04-23T22-12-28.705Z"
+    "last_seen_run": "2026-04-23T22-12-28.705Z",
+    "backlog_task": "TASK-283"
   },
   {
     "group_id": "framework-decorator-dispatch",
@@ -1711,7 +1737,8 @@
     "observed_projects": [
       "nest"
     ],
-    "last_seen_run": "2026-04-23T22-12-28.705Z"
+    "last_seen_run": "2026-04-23T22-12-28.705Z",
+    "backlog_task": "TASK-284"
   },
   {
     "group_id": "framework-lifecycle-dispatch",
@@ -1731,7 +1758,8 @@
     "observed_projects": [
       "nest"
     ],
-    "last_seen_run": "2026-04-23T22-12-28.705Z"
+    "last_seen_run": "2026-04-23T22-12-28.705Z",
+    "backlog_task": "TASK-244"
   },
   {
     "group_id": "framework-lifecycle-override",
@@ -1751,7 +1779,8 @@
     "observed_projects": [
       "nest"
     ],
-    "last_seen_run": "2026-04-23T22-12-28.705Z"
+    "last_seen_run": "2026-04-23T22-12-28.705Z",
+    "backlog_task": "TASK-301"
   },
   {
     "group_id": "generic-type-erasure",
@@ -1769,7 +1798,8 @@
     "observed_projects": [
       "nest"
     ],
-    "last_seen_run": "2026-04-23T22-12-28.705Z"
+    "last_seen_run": "2026-04-23T22-12-28.705Z",
+    "backlog_task": "TASK-337"
   },
   {
     "group_id": "inherited-method-call",
@@ -1787,7 +1817,8 @@
     "observed_projects": [
       "nest"
     ],
-    "last_seen_run": "2026-04-23T22-12-28.705Z"
+    "last_seen_run": "2026-04-23T22-12-28.705Z",
+    "backlog_task": "TASK-315"
   },
   {
     "group_id": "interface-polymorphic-dispatch",
@@ -1830,7 +1861,8 @@
     "observed_projects": [
       "nest"
     ],
-    "last_seen_run": "2026-04-23T22-12-28.705Z"
+    "last_seen_run": "2026-04-23T22-12-28.705Z",
+    "backlog_task": "TASK-316"
   },
   {
     "group_id": "method-call-in-callback-unresolved",
@@ -1907,7 +1939,8 @@
     "observed_projects": [
       "nest"
     ],
-    "last_seen_run": "2026-04-23T22-12-28.705Z"
+    "last_seen_run": "2026-04-23T22-12-28.705Z",
+    "backlog_task": "TASK-332"
   },
   {
     "group_id": "tsconfig-path-alias",
@@ -1927,7 +1960,8 @@
       "angular"
     ],
     "last_seen_run": "2026-04-25T17-07-32.678Z",
-    "drift_detected": true
+    "drift_detected": true,
+    "backlog_task": "TASK-335"
   },
   {
     "group_id": "tsconfig-paths-not-resolved",
@@ -2005,7 +2039,8 @@
     "observed_projects": [
       "angular"
     ],
-    "last_seen_run": "2026-04-25T17-07-32.678Z"
+    "last_seen_run": "2026-04-25T17-07-32.678Z",
+    "backlog_task": "TASK-321"
   },
   {
     "group_id": "angular-framework-lifecycle-dispatch",
@@ -2023,7 +2058,8 @@
     "observed_projects": [
       "angular"
     ],
-    "last_seen_run": "2026-04-25T17-07-32.678Z"
+    "last_seen_run": "2026-04-25T17-07-32.678Z",
+    "backlog_task": "TASK-259"
   },
   {
     "group_id": "angular-generated-instruction-call",
@@ -2043,7 +2079,8 @@
     "observed_projects": [
       "angular"
     ],
-    "last_seen_run": "2026-04-25T17-07-32.678Z"
+    "last_seen_run": "2026-04-25T17-07-32.678Z",
+    "backlog_task": "TASK-261"
   },
   {
     "group_id": "any-typed-receiver-method-call",
@@ -2061,7 +2098,8 @@
     "observed_projects": [
       "angular"
     ],
-    "last_seen_run": "2026-04-25T17-07-32.678Z"
+    "last_seen_run": "2026-04-25T17-07-32.678Z",
+    "backlog_task": "TASK-328"
   },
   {
     "group_id": "compiler-generated-dynamic-dispatch",
@@ -2100,7 +2138,8 @@
     "observed_projects": [
       "angular"
     ],
-    "last_seen_run": "2026-04-25T17-07-32.678Z"
+    "last_seen_run": "2026-04-25T17-07-32.678Z",
+    "backlog_task": "TASK-292"
   },
   {
     "group_id": "cross-package-registry-gap",
@@ -2141,7 +2180,8 @@
     "observed_projects": [
       "angular"
     ],
-    "last_seen_run": "2026-04-25T17-07-32.678Z"
+    "last_seen_run": "2026-04-25T17-07-32.678Z",
+    "backlog_task": "TASK-314"
   },
   {
     "group_id": "dynamic-cast-structural-type-dispatch",
@@ -2161,7 +2201,8 @@
     "observed_projects": [
       "angular"
     ],
-    "last_seen_run": "2026-04-25T17-07-32.678Z"
+    "last_seen_run": "2026-04-25T17-07-32.678Z",
+    "backlog_task": "TASK-318"
   },
   {
     "group_id": "external-framework-interface-dispatch",
@@ -2179,7 +2220,8 @@
     "observed_projects": [
       "angular"
     ],
-    "last_seen_run": "2026-04-25T17-07-32.678Z"
+    "last_seen_run": "2026-04-25T17-07-32.678Z",
+    "backlog_task": "TASK-302"
   },
   {
     "group_id": "getter-property-access",
@@ -2200,7 +2242,7 @@
     ],
     "last_seen_run": "2026-04-27T16-24-40.808Z",
     "drift_detected": true,
-    "backlog_task": "TASK-233"
+    "backlog_task": "TASK-272"
   },
   {
     "group_id": "higher-order-function-callback",
@@ -2241,7 +2283,8 @@
     "observed_projects": [
       "angular"
     ],
-    "last_seen_run": "2026-04-25T17-07-32.678Z"
+    "last_seen_run": "2026-04-25T17-07-32.678Z",
+    "backlog_task": "TASK-334"
   },
   {
     "group_id": "instance-method-call-unresolved",
@@ -2262,7 +2305,7 @@
     ],
     "last_seen_run": "2026-04-27T16-19-42.325Z",
     "drift_detected": true,
-    "backlog_task": "TASK-205"
+    "backlog_task": "TASK-248"
   },
   {
     "group_id": "instance-method-dispatch",
@@ -2340,7 +2383,8 @@
     "observed_projects": [
       "angular"
     ],
-    "last_seen_run": "2026-04-25T17-07-32.678Z"
+    "last_seen_run": "2026-04-25T17-07-32.678Z",
+    "backlog_task": "TASK-303"
   },
   {
     "group_id": "singleton-instance-method-call",
@@ -2358,7 +2402,8 @@
     "observed_projects": [
       "angular"
     ],
-    "last_seen_run": "2026-04-25T17-07-32.678Z"
+    "last_seen_run": "2026-04-25T17-07-32.678Z",
+    "backlog_task": "TASK-306"
   },
   {
     "group_id": "static-method-resolution",
@@ -2378,7 +2423,8 @@
     "observed_projects": [
       "angular"
     ],
-    "last_seen_run": "2026-04-25T17-07-32.678Z"
+    "last_seen_run": "2026-04-25T17-07-32.678Z",
+    "backlog_task": "TASK-324"
   },
   {
     "group_id": "string-keyed-dispatch",
@@ -2440,7 +2486,8 @@
     "observed_projects": [
       "lodash"
     ],
-    "last_seen_run": "2026-04-27T11-02-57.035Z"
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-282"
   },
   {
     "group_id": "call-apply-indirect-invocation",
@@ -2458,7 +2505,8 @@
     "observed_projects": [
       "lodash"
     ],
-    "last_seen_run": "2026-04-27T11-02-57.035Z"
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-239"
   },
   {
     "group_id": "commonjs-property-access-call",
@@ -2476,7 +2524,8 @@
     "observed_projects": [
       "lodash"
     ],
-    "last_seen_run": "2026-04-27T11-02-57.035Z"
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-262"
   },
   {
     "group_id": "constructor-call-resolution",
@@ -2496,7 +2545,8 @@
     "observed_projects": [
       "lodash"
     ],
-    "last_seen_run": "2026-04-27T11-02-57.035Z"
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-327"
   },
   {
     "group_id": "dynamic-new-function-dispatch",
@@ -2516,7 +2566,8 @@
     "observed_projects": [
       "lodash"
     ],
-    "last_seen_run": "2026-04-27T11-02-57.035Z"
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-289"
   },
   {
     "group_id": "dynamic-property-method-dispatch",
@@ -2534,7 +2585,8 @@
     "observed_projects": [
       "lodash"
     ],
-    "last_seen_run": "2026-04-27T11-02-57.035Z"
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-297"
   },
   {
     "group_id": "dynamic-receiver-method-call",
@@ -2552,7 +2604,8 @@
     "observed_projects": [
       "lodash"
     ],
-    "last_seen_run": "2026-04-27T11-02-57.035Z"
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-253"
   },
   {
     "group_id": "dynamic-string-dispatch",
@@ -2570,7 +2623,8 @@
     "observed_projects": [
       "lodash"
     ],
-    "last_seen_run": "2026-04-27T11-02-57.035Z"
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-274"
   },
   {
     "group_id": "eval-based-dynamic-dispatch",
@@ -2590,7 +2644,8 @@
     "observed_projects": [
       "lodash"
     ],
-    "last_seen_run": "2026-04-27T11-02-57.035Z"
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-236"
   },
   {
     "group_id": "intra-file-call-not-in-registry",
@@ -2631,7 +2686,8 @@
     "observed_projects": [
       "lodash"
     ],
-    "last_seen_run": "2026-04-27T11-02-57.035Z"
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-312"
   },
   {
     "group_id": "method-on-object-literal",
@@ -2649,7 +2705,8 @@
     "observed_projects": [
       "lodash"
     ],
-    "last_seen_run": "2026-04-27T11-02-57.035Z"
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-323"
   },
   {
     "group_id": "mixin-extend-dispatch",
@@ -2667,7 +2724,8 @@
     "observed_projects": [
       "lodash"
     ],
-    "last_seen_run": "2026-04-27T11-02-57.035Z"
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-265"
   },
   {
     "group_id": "mixin-inheritance-dispatch",
@@ -2685,7 +2743,8 @@
     "observed_projects": [
       "lodash"
     ],
-    "last_seen_run": "2026-04-27T11-02-57.035Z"
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-257"
   },
   {
     "group_id": "object-literal-method-dispatch",
@@ -2721,7 +2780,8 @@
     "observed_projects": [
       "lodash"
     ],
-    "last_seen_run": "2026-04-27T11-02-57.035Z"
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-295"
   },
   {
     "group_id": "property-alias-intra-file-call",
@@ -2741,7 +2801,8 @@
     "observed_projects": [
       "lodash"
     ],
-    "last_seen_run": "2026-04-27T11-02-57.035Z"
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-313"
   },
   {
     "group_id": "prototype-inheritance-dispatch",
@@ -2759,7 +2820,8 @@
     "observed_projects": [
       "lodash"
     ],
-    "last_seen_run": "2026-04-27T11-02-57.035Z"
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-298"
   },
   {
     "group_id": "same-file-call-missed",
@@ -2779,7 +2841,8 @@
     "observed_projects": [
       "lodash"
     ],
-    "last_seen_run": "2026-04-27T11-02-57.035Z"
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-317"
   },
   {
     "group_id": "same-file-var-function-resolution",
@@ -2799,7 +2862,8 @@
     "observed_projects": [
       "lodash"
     ],
-    "last_seen_run": "2026-04-27T11-02-57.035Z"
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-246"
   },
   {
     "group_id": "this-based-method-dispatch",
@@ -2840,7 +2904,8 @@
     "observed_projects": [
       "lodash"
     ],
-    "last_seen_run": "2026-04-27T11-02-57.035Z"
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-247"
   },
   {
     "group_id": "this-property-method-dispatch",
@@ -2860,7 +2925,8 @@
     "observed_projects": [
       "lodash"
     ],
-    "last_seen_run": "2026-04-27T11-02-57.035Z"
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-279"
   },
   {
     "group_id": "anonymous-function-in-object-or-chain",
@@ -2878,7 +2944,8 @@
     "observed_projects": [
       "typeorm"
     ],
-    "last_seen_run": "2026-04-27T16-19-42.325Z"
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-241"
   },
   {
     "group_id": "builtin-higher-order-callback",
@@ -2958,7 +3025,8 @@
     "observed_projects": [
       "typeorm"
     ],
-    "last_seen_run": "2026-04-27T16-19-42.325Z"
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-288"
   },
   {
     "group_id": "framework-command-builder-callback",
@@ -3021,7 +3089,8 @@
       "typeorm",
       "prisma"
     ],
-    "last_seen_run": "2026-04-27T16-24-40.808Z"
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-245"
   },
   {
     "group_id": "import-resolution-miss",
@@ -3039,7 +3108,8 @@
     "observed_projects": [
       "typeorm"
     ],
-    "last_seen_run": "2026-04-27T16-19-42.325Z"
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-304"
   },
   {
     "group_id": "inherited-method-dispatch",
@@ -3057,7 +3127,8 @@
     "observed_projects": [
       "typeorm"
     ],
-    "last_seen_run": "2026-04-27T16-19-42.325Z"
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-336"
   },
   {
     "group_id": "inherited-static-method-dispatch",
@@ -3075,7 +3146,8 @@
     "observed_projects": [
       "typeorm"
     ],
-    "last_seen_run": "2026-04-27T16-19-42.325Z"
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-330"
   },
   {
     "group_id": "inline-callback",
@@ -3135,7 +3207,8 @@
     "observed_projects": [
       "typeorm"
     ],
-    "last_seen_run": "2026-04-27T16-19-42.325Z"
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-294"
   },
   {
     "group_id": "method-call-on-callback-parameter",
@@ -3153,7 +3226,8 @@
     "observed_projects": [
       "typeorm"
     ],
-    "last_seen_run": "2026-04-27T16-19-42.325Z"
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-329"
   },
   {
     "group_id": "method-call-on-typed-instance",
@@ -3173,7 +3247,8 @@
     "observed_projects": [
       "typeorm"
     ],
-    "last_seen_run": "2026-04-27T16-19-42.325Z"
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-320"
   },
   {
     "group_id": "method-call-unresolved",
@@ -3212,7 +3287,8 @@
     "observed_projects": [
       "typeorm"
     ],
-    "last_seen_run": "2026-04-27T16-19-42.325Z"
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-249"
   },
   {
     "group_id": "static-method-call-unresolved",
@@ -3230,7 +3306,8 @@
     "observed_projects": [
       "typeorm"
     ],
-    "last_seen_run": "2026-04-27T16-19-42.325Z"
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-237"
   },
   {
     "group_id": "static-method-call",
@@ -3289,7 +3366,8 @@
     "observed_projects": [
       "typeorm"
     ],
-    "last_seen_run": "2026-04-27T16-19-42.325Z"
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-281"
   },
   {
     "group_id": "type-cast-receiver",
@@ -3309,7 +3387,8 @@
     "observed_projects": [
       "typeorm"
     ],
-    "last_seen_run": "2026-04-27T16-19-42.325Z"
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-319"
   },
   {
     "group_id": "unindexed-callers",
@@ -3347,7 +3426,8 @@
     "observed_projects": [
       "prisma"
     ],
-    "last_seen_run": "2026-04-27T16-24-40.808Z"
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-311"
   },
   {
     "group_id": "bundler-module-substitution",
@@ -3385,7 +3465,8 @@
     "observed_projects": [
       "prisma"
     ],
-    "last_seen_run": "2026-04-27T16-24-40.808Z"
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-325"
   },
   {
     "group_id": "computed-property-method-caller",
@@ -3405,7 +3486,8 @@
     "observed_projects": [
       "prisma"
     ],
-    "last_seen_run": "2026-04-27T16-24-40.808Z"
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-290"
   },
   {
     "group_id": "const-arrow-function-export",
@@ -3500,7 +3582,8 @@
     "observed_projects": [
       "prisma"
     ],
-    "last_seen_run": "2026-04-27T16-24-40.808Z"
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-285"
   },
   {
     "group_id": "getter-access-not-tracked",
@@ -3518,7 +3601,8 @@
     "observed_projects": [
       "prisma"
     ],
-    "last_seen_run": "2026-04-27T16-24-40.808Z"
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-258"
   },
   {
     "group_id": "iife-not-tracked",
@@ -3536,7 +3620,8 @@
     "observed_projects": [
       "prisma"
     ],
-    "last_seen_run": "2026-04-27T16-24-40.808Z"
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-307"
   },
   {
     "group_id": "indirect-function-reference",
@@ -3554,7 +3639,8 @@
     "observed_projects": [
       "prisma"
     ],
-    "last_seen_run": "2026-04-27T16-24-40.808Z"
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-268"
   },
   {
     "group_id": "namespace-reexport-member-access",
@@ -3572,7 +3658,8 @@
     "observed_projects": [
       "prisma"
     ],
-    "last_seen_run": "2026-04-27T16-24-40.808Z"
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-278"
   },
   {
     "group_id": "private-class-field-method",
@@ -3632,7 +3719,8 @@
     "observed_projects": [
       "prisma"
     ],
-    "last_seen_run": "2026-04-27T16-24-40.808Z"
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-280"
   },
   {
     "group_id": "test-file-exclusion",
@@ -3669,7 +3757,8 @@
     "observed_projects": [
       "prisma"
     ],
-    "last_seen_run": "2026-04-27T16-24-40.808Z"
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-322"
   },
   {
     "group_id": "unindexed-script-caller",
@@ -3687,7 +3776,8 @@
     "observed_projects": [
       "prisma"
     ],
-    "last_seen_run": "2026-04-27T16-24-40.808Z"
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-296"
   },
   {
     "group_id": "unresolved-import-caller",
@@ -3705,7 +3795,8 @@
     "observed_projects": [
       "prisma"
     ],
-    "last_seen_run": "2026-04-27T16-24-40.808Z"
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-252"
   },
   {
     "group_id": "unresolved-instance-method-call",

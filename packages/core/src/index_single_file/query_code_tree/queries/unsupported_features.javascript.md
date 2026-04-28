@@ -268,7 +268,7 @@ A `private` method called only through `this.m()` inside the same class is not p
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-341`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 **Examples**
@@ -381,7 +381,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------ |
 | Status       | `wip`                                                  |
 | Languages    | `javascript`                                           |
-| Backlog task | _none_                                                 |
+| Backlog task | `TASK-254`                                             |
 | Classifier   | builtin, `check_dynamic_dispatch` (min_confidence 0.9) |
 
 ## `intra-file-call-not-resolved` — intra-file-call-not-resolved
@@ -403,7 +403,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-287`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `require-indirection` — require-indirection
@@ -458,7 +458,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | `TASK-198`                              |
+| Backlog task | `TASK-264`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `callback-registration` — callback-registration
@@ -480,7 +480,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-333`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `dynamic-getter-registration` — dynamic-getter-registration
@@ -491,7 +491,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-275`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `dynamic-method-dispatch` — dynamic-method-dispatch
@@ -502,7 +502,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------- |
 | Status       | `wip`                                                         |
 | Languages    | `javascript`                                                  |
-| Backlog task | _none_                                                        |
+| Backlog task | `TASK-310`                                                    |
 | Classifier   | builtin, `check_dynamic_method_dispatch` (min_confidence 0.9) |
 
 ## `dynamic-property-dispatch` — dynamic-property-dispatch
@@ -524,7 +524,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-300`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `object-define-property-getter` — object-define-property-getter
@@ -546,7 +546,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-286`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `prototype-method-dispatch` — prototype-method-dispatch
@@ -568,7 +568,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-326`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `this-method-dispatch` — this-method-dispatch
@@ -579,7 +579,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | `TASK-225`                              |
+| Backlog task | `TASK-263`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `call-apply-dispatch` — call-apply-dispatch
@@ -601,7 +601,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-267`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `object-property-dispatch` — object-property-dispatch
@@ -612,7 +612,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-238`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `prototype-dispatch` — prototype-dispatch
@@ -634,7 +634,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------------- |
 | Status       | `wip`                                                               |
 | Languages    | `javascript`                                                        |
-| Backlog task | _none_                                                              |
+| Backlog task | `TASK-250`                                                          |
 | Classifier   | builtin, `check_commonjs_module_property_call` (min_confidence 0.9) |
 
 ## `dynamic-dispatch-reporter-constructor` — dynamic-dispatch-reporter-constructor
@@ -656,7 +656,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ----------------------------------------------------------------- |
 | Status       | `wip`                                                             |
 | Languages    | `javascript`                                                      |
-| Backlog task | _none_                                                            |
+| Backlog task | `TASK-299`                                                        |
 | Classifier   | builtin, `check_dynamic_require_constructor` (min_confidence 0.9) |
 
 ## `dynamic-string-key-dispatch` — dynamic-string-key-dispatch
@@ -667,7 +667,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-266`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `factory-return-value-dispatch` — factory-return-value-dispatch
@@ -678,7 +678,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-251`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `module-exports-class-constructor` — module-exports-class-constructor
@@ -689,7 +689,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ---------------------------------------------------------------------- |
 | Status       | `wip`                                                                  |
 | Languages    | `javascript`                                                           |
-| Backlog task | _none_                                                                 |
+| Backlog task | `TASK-291`                                                             |
 | Classifier   | builtin, `check_module_exports_class_constructor` (min_confidence 0.9) |
 
 ## `object-property-function-dispatch` — object-property-function-dispatch
@@ -722,7 +722,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ----------------------------------------------------------- |
 | Status       | `wip`                                                       |
 | Languages    | `javascript`                                                |
-| Backlog task | _none_                                                      |
+| Backlog task | `TASK-308`                                                  |
 | Classifier   | builtin, `check_receiver_type_unknown` (min_confidence 0.9) |
 
 ## `static-method-on-cjs-class` — static-method-on-cjs-class
@@ -733,7 +733,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ---------------------------------------------------------------- |
 | Status       | `wip`                                                            |
 | Languages    | `javascript`                                                     |
-| Backlog task | _none_                                                           |
+| Backlog task | `TASK-273`                                                       |
 | Classifier   | builtin, `check_static_method_on_cjs_class` (min_confidence 0.9) |
 
 ## `static-method-on-destructured-import` — static-method-on-destructured-import
@@ -744,7 +744,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | -------------------------------------------------------------------------- |
 | Status       | `wip`                                                                      |
 | Languages    | `javascript`                                                               |
-| Backlog task | _none_                                                                     |
+| Backlog task | `TASK-260`                                                                 |
 | Classifier   | builtin, `check_static_method_on_destructured_import` (min_confidence 0.9) |
 
 ## `super-constructor-call` — super-constructor-call
@@ -755,7 +755,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | `TASK-224`                              |
+| Backlog task | `TASK-331`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `unresolved-receiver-type` — unresolved-receiver-type
@@ -766,7 +766,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | -------------------------------------------------------------- |
 | Status       | `wip`                                                          |
 | Languages    | `javascript`                                                   |
-| Backlog task | _none_                                                         |
+| Backlog task | `TASK-242`                                                     |
 | Classifier   | builtin, `check_unresolved_receiver_type` (min_confidence 0.9) |
 
 ## `unsupported-file-extension` — unsupported-file-extension
@@ -777,7 +777,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-293`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `aliased-object-property-call` — aliased-object-property-call
@@ -788,7 +788,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------------ |
 | Status       | `wip`                                                              |
 | Languages    | `javascript`                                                       |
-| Backlog task | _none_                                                             |
+| Backlog task | `TASK-282`                                                         |
 | Classifier   | builtin, `check_aliased_object_property_call` (min_confidence 0.9) |
 
 ## `call-apply-indirect-invocation` — call-apply-indirect-invocation
@@ -799,7 +799,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-239`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `commonjs-property-access-call` — commonjs-property-access-call
@@ -810,7 +810,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-262`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `constructor-call-resolution` — constructor-call-resolution
@@ -821,7 +821,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ----------------------------------------------------------------- |
 | Status       | `wip`                                                             |
 | Languages    | `javascript`                                                      |
-| Backlog task | _none_                                                            |
+| Backlog task | `TASK-327`                                                        |
 | Classifier   | builtin, `check_constructor_call_resolution` (min_confidence 0.9) |
 
 ## `dynamic-new-function-dispatch` — dynamic-new-function-dispatch
@@ -832,7 +832,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------------- |
 | Status       | `wip`                                                               |
 | Languages    | `javascript`                                                        |
-| Backlog task | _none_                                                              |
+| Backlog task | `TASK-289`                                                          |
 | Classifier   | builtin, `check_dynamic_new_function_dispatch` (min_confidence 0.9) |
 
 ## `dynamic-property-method-dispatch` — dynamic-property-method-dispatch
@@ -843,7 +843,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-297`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `dynamic-receiver-method-call` — dynamic-receiver-method-call
@@ -854,7 +854,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-253`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `dynamic-string-dispatch` — dynamic-string-dispatch
@@ -865,7 +865,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-274`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `eval-based-dynamic-dispatch` — eval-based-dynamic-dispatch
@@ -876,7 +876,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ----------------------------------------------------------------- |
 | Status       | `wip`                                                             |
 | Languages    | `javascript`                                                      |
-| Backlog task | _none_                                                            |
+| Backlog task | `TASK-236`                                                        |
 | Classifier   | builtin, `check_eval_based_dynamic_dispatch` (min_confidence 0.9) |
 
 ## `intra-file-call-not-in-registry` — intra-file-call-not-in-registry
@@ -898,7 +898,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ---------------------------------------------------------- |
 | Status       | `wip`                                                      |
 | Languages    | `javascript`                                               |
-| Backlog task | _none_                                                     |
+| Backlog task | `TASK-312`                                                 |
 | Classifier   | builtin, `check_local_variable_alias` (min_confidence 0.9) |
 
 ## `method-on-object-literal` — method-on-object-literal
@@ -909,7 +909,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-323`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `mixin-extend-dispatch` — mixin-extend-dispatch
@@ -920,7 +920,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-265`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `mixin-inheritance-dispatch` — mixin-inheritance-dispatch
@@ -931,7 +931,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-257`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `object-literal-method-dispatch` — object-literal-method-dispatch
@@ -953,7 +953,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-295`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `property-alias-intra-file-call` — property-alias-intra-file-call
@@ -964,7 +964,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | -------------------------------------------------------------------- |
 | Status       | `wip`                                                                |
 | Languages    | `javascript`                                                         |
-| Backlog task | _none_                                                               |
+| Backlog task | `TASK-313`                                                           |
 | Classifier   | builtin, `check_property_alias_intra_file_call` (min_confidence 0.9) |
 
 ## `prototype-inheritance-dispatch` — prototype-inheritance-dispatch
@@ -975,7 +975,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `javascript`                            |
-| Backlog task | _none_                                  |
+| Backlog task | `TASK-298`                              |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `same-file-call-missed` — same-file-call-missed
@@ -986,7 +986,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ----------------------------------------------------------- |
 | Status       | `wip`                                                       |
 | Languages    | `javascript`                                                |
-| Backlog task | _none_                                                      |
+| Backlog task | `TASK-317`                                                  |
 | Classifier   | builtin, `check_same_file_call_missed` (min_confidence 0.9) |
 
 ## `same-file-var-function-resolution` — same-file-var-function-resolution
@@ -997,7 +997,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ----------------------------------------------------------------------- |
 | Status       | `wip`                                                                   |
 | Languages    | `javascript`                                                            |
-| Backlog task | _none_                                                                  |
+| Backlog task | `TASK-246`                                                              |
 | Classifier   | builtin, `check_same_file_var_function_resolution` (min_confidence 0.9) |
 
 ## `this-based-method-dispatch` — this-based-method-dispatch
@@ -1019,7 +1019,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ----------------------------------------------------------------- |
 | Status       | `wip`                                                             |
 | Languages    | `javascript`                                                      |
-| Backlog task | _none_                                                            |
+| Backlog task | `TASK-247`                                                        |
 | Classifier   | builtin, `check_this_object_method_dispatch` (min_confidence 0.9) |
 
 ## `this-property-method-dispatch` — this-property-method-dispatch
@@ -1030,5 +1030,5 @@ Proposed by triage-curator investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------------- |
 | Status       | `wip`                                                               |
 | Languages    | `javascript`                                                        |
-| Backlog task | _none_                                                              |
+| Backlog task | `TASK-279`                                                          |
 | Classifier   | builtin, `check_this_property_method_dispatch` (min_confidence 0.9) |
