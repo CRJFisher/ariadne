@@ -32,6 +32,12 @@ export interface TriageEntry {
   signature: string | null;
   route: TriageRoute;
   diagnosis: string;
+  /**
+   * Provenance tag for entries placed on `route="known-unreachable"`. Examples:
+   * `"registry:<group_id>"` for predicate/builtin classifier hits, or
+   * `"previously-confirmed-tp"` for entries reused from a prior run's TP cache.
+   * `null` for `route="llm-triage"` entries.
+   */
   known_source: string | null;
   status: "pending" | "completed" | "failed";
   result: TriageEntryResult | null;
@@ -54,6 +60,13 @@ export interface TriageEntry {
    * signal; always `[]` for entries already completed by the classifier.
    */
   classifier_hints: ClassifierHint[];
+  /**
+   * Run-id of the prior finalized run that supplied this entry's verdict via
+   * the TP cache. Set only when `known_source === "previously-confirmed-tp"`;
+   * otherwise `null`. Used by diff/audit tooling to distinguish reused
+   * verdicts from re-investigated ones.
+   */
+  tp_source_run_id: string | null;
 }
 
 export interface TriageEntryResult {
@@ -73,4 +86,41 @@ export interface ClassifierHint {
   /** Score in [0, 1]. Predicates return 1.0; sub-threshold means `< min_confidence`. */
   confidence: number;
   reasoning: string;
+}
+
+// ===== Run Manifest (per-run metadata) =====
+
+export const RUN_MANIFEST_SCHEMA_VERSION = 1;
+
+export type RunStatus = "active" | "finalized" | "abandoned";
+
+export interface TpCacheRecord {
+  enabled: boolean;
+  /** Source run-id that supplied the cached TPs. `null` when no source was found / cache disabled. */
+  source_run_id: string | null;
+  skipped_count: number;
+  skipped_entry_keys: TpCacheEntryKey[];
+}
+
+export interface TpCacheEntryKey {
+  name: string;
+  file_path: string;
+  kind: string;
+  start_line: number;
+}
+
+export interface RunManifest {
+  schema_version: number;
+  run_id: string;
+  project_name: string;
+  project_path: string;
+  created_at: string;
+  finalized_at: string | null;
+  status: RunStatus;
+  source_analysis_path: string;
+  source_analysis_run_id: string;
+  max_count: number;
+  /** Full HEAD commit hash for the target repo, or `null` for non-git projects. */
+  commit_hash: string | null;
+  tp_cache: TpCacheRecord;
 }

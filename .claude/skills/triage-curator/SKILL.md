@@ -13,6 +13,8 @@ waves (QA, then Investigate); the puller folds QA-broken classifiers into
 the investigate wave automatically. Finalize applies proposals; backlog
 captures signal gaps; commit seals the sweep.
 
+The curator reads `analysis_output/<project>/triage_results/<run-id>.json` (schema v2 — includes `project_path`, `commit_hash`, and `kind` per entry; `file_path` is relative to `project_path`). The `<run-id>` is the same identifier the self-repair-pipeline emits (`<short-commit>-<iso-ts>`): run-id is the shared identifier across the two skills.
+
 **Script invocation:** always `node --import tsx`. Never `pnpm exec tsx`
 or `npx tsx`.
 

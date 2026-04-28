@@ -1,6 +1,8 @@
 # Self-Repair Pipeline
 
-Triage pipeline for entry point analysis: detect false positives and classify root causes. The pipeline is stateless: it never writes per-run caches back to disk. The classifier registry at `known_issues/registry.json` is the only cross-run state, and it is updated by the `triage-curator` skill, not by this pipeline.
+Triage pipeline for entry point analysis: detect false positives and classify root causes.
+
+Each invocation produces a self-contained run under `triage_state/<project>/runs/<run-id>/`. Run-id format is `<short-commit>-<iso-ts>` (or `nogit-<iso-ts>` for non-git projects). Re-running at the same target commit reuses prior `confirmed_unreachable` verdicts via the TP cache (skip with `--no-reuse-tp`). The classifier registry at `known_issues/registry.json` is also cross-run state, updated by the `triage-curator` skill.
 
 Orthogonally, the `detect_dead_code` Stop hook (`.claude/hooks/detect_dead_code.ts`) reads a human-maintained whitelist at `~/.ariadne/self-repair-pipeline/known_entrypoints/<package>.json` to guard against dead code introduced during coding sessions. That whitelist is not read or written by any script in this skill — see [SKILL.md → Dead-code guardrail](SKILL.md#dead-code-guardrail).
 
@@ -27,7 +29,7 @@ flowchart TD
         CLASSIFY -->|"No match"| LLM_TRIAGE["llm-triage<br/>(pending, with diagnostics)"]
         KNOWN_UR --> STATE
         LLM_TRIAGE --> STATE
-        STATE[("triage_state/{project}/{project}_triage.json")]
+        STATE[("triage_state/{project}/runs/{run-id}/<br/>triage.json + manifest.json")]
     end
 
     STATE --> LOOP_ENTRY
@@ -57,7 +59,7 @@ flowchart TD
     subgraph P5["Phase 5: Finalize"]
         FINALIZE(["finalize_triage.ts"])
         FINALIZE --> PARTITION["Partition: confirmed-unreachable /<br/>false-positive groups"]
-        PARTITION --> SAVE["Save results to<br/>analysis_output/{project}/triage_results/"]
+        PARTITION --> SAVE["Save results to<br/>analysis_output/{project}/triage_results/{run-id}.json"]
     end
 
     SAVE --> DONE(["Pipeline complete"])

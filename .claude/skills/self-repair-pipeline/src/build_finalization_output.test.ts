@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
+  FINALIZATION_OUTPUT_SCHEMA_VERSION,
   build_finalization_output,
   build_finalization_summary,
+  type FinalizationContext,
   type FinalizationOutput,
   type FinalizationSummary,
 } from "./build_finalization_output.js";
@@ -9,6 +11,14 @@ import type { TriageState, TriageEntry, TriageEntryResult } from "./triage_state
 import type { FalsePositiveGroup } from "./entry_point_types.js";
 
 // ===== Test Helpers =====
+
+const PROJECT_PATH = "/projects/myapp";
+const COMMIT = "deadbeefcafebabe";
+
+const CONTEXT: FinalizationContext = {
+  commit_hash: COMMIT,
+  project_path: PROJECT_PATH,
+};
 
 function make_result(overrides: Partial<TriageEntryResult> = {}): TriageEntryResult {
   return {
@@ -43,6 +53,7 @@ function make_entry(overrides: Partial<TriageEntry> = {}): TriageEntry {
       diagnostics: { grep_call_sites: [], grep_call_sites_unindexed_tests: [], ariadne_call_refs: [], diagnosis: "no-textual-callers" },
       auto_classified: false,
       classifier_hints: [],
+      tp_source_run_id: null,
     } satisfies TriageEntry,
     overrides,
     { entry_index: idx },
@@ -52,7 +63,7 @@ function make_entry(overrides: Partial<TriageEntry> = {}): TriageEntry {
 function make_state(overrides: Partial<TriageState> = {}): TriageState {
   return {
     project_name: "test-project",
-    project_path: "/projects/myapp",
+    project_path: PROJECT_PATH,
     phase: "complete",
     entries: [],
     created_at: "2026-01-01T00:00:00Z",
@@ -64,7 +75,7 @@ function make_state(overrides: Partial<TriageState> = {}): TriageState {
 // ===== Tests =====
 
 describe("build_finalization_output", () => {
-  it("all confirmed-unreachable → only confirmed_unreachable populated", () => {
+  it("all confirmed-unreachable → only confirmed_unreachable populated, paths relativized", () => {
     const state = make_state({
       entries: [
         make_entry({
@@ -83,12 +94,15 @@ describe("build_finalization_output", () => {
       ],
     });
 
-    const output = build_finalization_output(state);
+    const output = build_finalization_output(state, CONTEXT);
 
     const expected: FinalizationOutput = {
+      schema_version: FINALIZATION_OUTPUT_SCHEMA_VERSION,
+      project_path: PROJECT_PATH,
+      commit_hash: COMMIT,
       confirmed_unreachable: [
-        { name: "main", file_path: "/projects/myapp/src/main.ts", start_line: 1, signature: "function main(): void" },
-        { name: "handler", file_path: "/projects/myapp/src/handler.ts", start_line: 5 },
+        { name: "main", file_path: "src/main.ts", start_line: 1, kind: "function", signature: "function main(): void" },
+        { name: "handler", file_path: "src/handler.ts", start_line: 5, kind: "function" },
       ],
       false_positive_groups: {},
       last_updated: "2026-01-15T00:00:00Z",
@@ -124,7 +138,7 @@ describe("build_finalization_output", () => {
       ],
     });
 
-    const output = build_finalization_output(state);
+    const output = build_finalization_output(state, CONTEXT);
 
     const expected_group: FalsePositiveGroup = {
       group_id: "builder-chain",
@@ -132,11 +146,14 @@ describe("build_finalization_output", () => {
       reasoning: "Method chaining pattern",
       existing_task_fixes: [],
       entries: [
-        { name: "builder_a", file_path: "/projects/myapp/src/builder.ts", start_line: 42 },
-        { name: "builder_b", file_path: "/projects/myapp/src/builder.ts", start_line: 60 },
+        { name: "builder_a", file_path: "src/builder.ts", start_line: 42, kind: "function" },
+        { name: "builder_b", file_path: "src/builder.ts", start_line: 60, kind: "function" },
       ],
     };
     expect(output).toEqual({
+      schema_version: FINALIZATION_OUTPUT_SCHEMA_VERSION,
+      project_path: PROJECT_PATH,
+      commit_hash: COMMIT,
       confirmed_unreachable: [],
       false_positive_groups: { "builder-chain": expected_group },
       last_updated: "2026-01-15T00:00:00Z",
@@ -164,7 +181,7 @@ describe("build_finalization_output", () => {
       ],
     });
 
-    const output = build_finalization_output(state);
+    const output = build_finalization_output(state, CONTEXT);
 
     expect(output.confirmed_unreachable.map((e) => e.name)).toEqual(["main"]);
     expect(Object.keys(output.false_positive_groups)).toEqual(["builder-chain"]);
@@ -194,7 +211,7 @@ describe("build_finalization_output", () => {
       ],
     });
 
-    const output = build_finalization_output(state);
+    const output = build_finalization_output(state, CONTEXT);
 
     expect(output.confirmed_unreachable.map((e) => e.name)).toEqual(["good_func"]);
     expect(output.false_positive_groups).toEqual({});
@@ -203,9 +220,12 @@ describe("build_finalization_output", () => {
   it("empty entries → empty output", () => {
     const state = make_state({ entries: [] });
 
-    const output = build_finalization_output(state);
+    const output = build_finalization_output(state, CONTEXT);
 
     const expected: FinalizationOutput = {
+      schema_version: FINALIZATION_OUTPUT_SCHEMA_VERSION,
+      project_path: PROJECT_PATH,
+      commit_hash: COMMIT,
       confirmed_unreachable: [],
       false_positive_groups: {},
       last_updated: "2026-01-15T00:00:00Z",
@@ -219,9 +239,18 @@ describe("build_finalization_output", () => {
       updated_at: "2026-02-18T12:00:00Z",
     });
 
-    const output = build_finalization_output(state);
+    const output = build_finalization_output(state, CONTEXT);
 
     expect(output.last_updated).toBe("2026-02-18T12:00:00Z");
+  });
+
+  it("commit_hash is null for non-git projects", () => {
+    const state = make_state({ entries: [] });
+    const output = build_finalization_output(state, {
+      commit_hash: null,
+      project_path: PROJECT_PATH,
+    });
+    expect(output.commit_hash).toBe(null);
   });
 });
 
@@ -243,7 +272,7 @@ describe("build_finalization_summary", () => {
       ],
     });
 
-    const output = build_finalization_output(state);
+    const output = build_finalization_output(state, CONTEXT);
     const summary = build_finalization_summary(state, output);
 
     const expected: FinalizationSummary = {
@@ -258,7 +287,7 @@ describe("build_finalization_summary", () => {
 
   it("empty state produces zeroed summary", () => {
     const state = make_state({ entries: [] });
-    const output = build_finalization_output(state);
+    const output = build_finalization_output(state, CONTEXT);
     const summary = build_finalization_summary(state, output);
 
     const expected: FinalizationSummary = {

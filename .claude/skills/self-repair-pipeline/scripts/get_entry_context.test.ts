@@ -109,6 +109,7 @@ describe("substitute_template", () => {
     diagnostics: { grep_call_sites: [], grep_call_sites_unindexed_tests: [], ariadne_call_refs: [], diagnosis: "callers-not-in-registry" },
     auto_classified: false,
     classifier_hints: [],
+    tp_source_run_id: null,
   };
 
   const mock_diagnostics: EntryPointDiagnostics = {

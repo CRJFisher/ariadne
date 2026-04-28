@@ -1,9 +1,15 @@
 // ===== Triage results shape (read-only, mirrors self-repair-pipeline canonical output) =====
+//
+// Schema v2 fields: `schema_version`, `project_path`, `commit_hash` on the file;
+// `kind` on every entry. `file_path` is relative to `project_path`.
 
 export interface FalsePositiveEntry {
   name: string;
+  /** Relative to the file's `project_path`. */
   file_path: string;
   start_line: number;
+  /** Definition kind. Required since schema v2. */
+  kind: "function" | "method" | "constructor";
   signature?: string;
 }
 
@@ -16,6 +22,12 @@ export interface FalsePositiveGroup {
 }
 
 export interface TriageResultsFile {
+  /** Schema version of this published artifact. v1 lacks this field. */
+  schema_version?: number;
+  /** Absolute path to the target repo when the run was finalized. v1 lacks this field. */
+  project_path?: string;
+  /** Full HEAD commit hash for the target repo when the run was finalized. */
+  commit_hash?: string | null;
   confirmed_unreachable: FalsePositiveEntry[];
   false_positive_groups: Record<string, FalsePositiveGroup>;
   last_updated: string;

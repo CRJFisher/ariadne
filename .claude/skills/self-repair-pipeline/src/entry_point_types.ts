@@ -150,9 +150,23 @@ export interface CallRefDiagnostic {
   syntactic_features: SyntacticFeatures;
 }
 
+/**
+ * Provenance for the analysis. Distinguishes locally-checked-out projects
+ * from GitHub clones and records the HEAD commit hash so downstream stages
+ * can detect when the user re-runs `prepare_triage` against a stale analysis.
+ */
+export interface AnalysisSourceInfo {
+  type: "local" | "github";
+  github_url?: string;
+  branch?: string;
+  /** Full HEAD commit hash at detection time. Absent for non-git projects. */
+  commit_hash?: string;
+}
+
 export interface AnalysisResult {
   project_name: string;
   project_path: string;
+  source?: AnalysisSourceInfo;
   entry_points: EnrichedFunctionEntry[];
   [key: string]: unknown;
 }
@@ -160,12 +174,19 @@ export interface AnalysisResult {
 // ===== Phase 2 Outputs (Grouped by Root Cause) =====
 
 /**
- * A single false positive entry point detection
+ * A single false-positive (or confirmed-unreachable) entry point published in
+ * `analysis_output/<project>/triage_results/<run-id>.json`.
+ *
+ * `file_path` is **relative** to the run's `project_path` so the record is
+ * portable across machines and worktrees.
  */
 export interface FalsePositiveEntry {
   name: string;
+  /** Relative to the run's project_path. */
   file_path: string;
   start_line: number;
+  /** Definition kind. Required so the TP cache match key disambiguates same-name overloads. */
+  kind: "function" | "method" | "constructor";
   signature?: string;
 }
 

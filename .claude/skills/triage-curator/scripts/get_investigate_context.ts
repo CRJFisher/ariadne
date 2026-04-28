@@ -128,7 +128,7 @@ async function load_promoted_context(
       }
       return {
         entry_index: o.entry_index,
-        excerpt: await read_source_excerpt(entry.file_path, entry.start_line),
+        excerpt: await read_source_excerpt(entry.file_path, entry.start_line, triage.project_path),
       };
     }),
   );

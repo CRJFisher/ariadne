@@ -13,12 +13,17 @@ import fs from "fs";
 import path from "path";
 import { finalize_aggregation } from "../src/aggregation/finalize_aggregation.js";
 import type { GroupInvestigation } from "../src/aggregation/types.js";
-import { parse_project_arg, require_state_file } from "../src/triage_state_paths.js";
+import { parse_project_arg, parse_run_id_arg } from "../src/cli_args.js";
+import { require_run } from "../src/triage_state_paths.js";
 import type { TriageState } from "../src/triage_state_types.js";
 import "../src/guard_tsx_invocation.js";
 
-const project = parse_project_arg(process.argv, "Usage: finalize_aggregation.ts --project <name>");
-const state_path = require_state_file(project);
+const project = parse_project_arg(
+  process.argv,
+  "Usage: finalize_aggregation.ts --project <name> [--run-id <id>]",
+);
+const run_id_opt = parse_run_id_arg(process.argv);
+const { state_path, run_dir } = require_run(project, run_id_opt);
 
 let state: TriageState;
 try {
@@ -28,7 +33,7 @@ try {
   process.exit(1);
 }
 
-const pass3_dir = path.join(path.dirname(state_path), "aggregation", "pass3");
+const pass3_dir = path.join(run_dir, "aggregation", "pass3");
 if (!fs.existsSync(pass3_dir)) {
   process.stderr.write(`Error: pass3 directory not found at ${pass3_dir}\n`);
   process.exit(1);

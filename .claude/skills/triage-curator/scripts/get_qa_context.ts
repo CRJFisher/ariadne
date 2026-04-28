@@ -108,7 +108,7 @@ async function main(): Promise<void> {
       file_path: entry.file_path,
       start_line: entry.start_line,
       signature: entry.signature ?? null,
-      source_excerpt: await read_source_excerpt(entry.file_path, entry.start_line),
+      source_excerpt: await read_source_excerpt(entry.file_path, entry.start_line, triage.project_path),
     })),
   );
 

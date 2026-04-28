@@ -8,7 +8,9 @@ allowed-tools: Bash(node --import tsx:*), Bash(ls:*), Read, Write, Glob, Task(tr
 
 # Self-Repair Pipeline
 
-Triage pipeline for entry point analysis: detect false positives and classify root causes. Supports both self-analysis (Ariadne packages) and external codebase analysis. The pipeline is stateless — back-to-back runs repeat the same triage work, since the classifier registry at `known_issues/registry.json` (consulted by `prepare_triage`) already filters out entries with known root causes.
+Triage pipeline for entry point analysis: detect false positives and classify root causes. Supports both self-analysis (Ariadne packages) and external codebase analysis.
+
+Each invocation produces a self-contained run under `triage_state/<project>/runs/<run-id>/`. Run-id format is `<short-commit>-<iso-ts>` (e.g. `deadbee-2026-04-28T13-42-07.812Z`); `nogit-...` for non-git projects. Re-running at the same target commit reuses prior `confirmed_unreachable` verdicts via the TP cache (skip with `--no-reuse-tp`). A new commit on the target busts the cache: every entry re-investigates.
 
 **Script invocation:** Always use `node --import tsx` to run scripts. Never use `pnpm exec tsx` or `npx tsx` — these create IPC Unix sockets that the sandbox blocks.
 
@@ -86,18 +88,23 @@ If no arguments are provided or the input is ambiguous, **ask the user** before 
 
 Scripts that operate on existing triage state take `--project <name>` (`prepare_triage` uses `--project` at creation time; `get_triage_summary` enumerates every project and takes no flags). Each pipeline invocation operates on exactly one project, and different projects can run in parallel against the same `triage_state/` dir — the project name is the isolation boundary.
 
-| File                                                                     | Purpose                                                     |
-| ------------------------------------------------------------------------ | ----------------------------------------------------------- |
-| `project_configs/{name}.json`                                            | Per-project detection config (folders, excludes)            |
-| `triage_state/{project}/{project}_triage.json`                           | Project triage state (entries, results)                     |
-| `triage_state/{project}/results/{entry_index}.json`                      | Per-entry triage result files (written by sub-agents)       |
-| `triage_state/{project}/aggregation/slices/slice_{n}.json`               | Pass 1 input slices (false-positive entries)                |
-| `triage_state/{project}/aggregation/pass1/slice_{n}.output.json`         | Pass 1 rough groupings                                      |
-| `triage_state/{project}/aggregation/pass3/input.json`                    | Pass 3 canonical group list                                 |
-| `triage_state/{project}/aggregation/pass3/{group_id}_investigation.json` | Pass 3 per-group investigation results                      |
-| `analysis_output/{project}/`                                             | Project-scoped timestamped analysis and triage result files |
+| File                                                                                   | Purpose                                                                               |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `project_configs/{name}.json`                                                          | Per-project detection config (folders, excludes)                                      |
+| `triage_state/{project}/LATEST`                                                        | Pointer to the active run-id; absent when no run is in progress                       |
+| `triage_state/{project}/runs/{run-id}/manifest.json`                                   | Per-run metadata (status, commit_hash, tp_cache record)                               |
+| `triage_state/{project}/runs/{run-id}/triage.json`                                     | Per-run triage state (entries, per-entry results)                                     |
+| `triage_state/{project}/runs/{run-id}/results/{entry_index}.json`                      | Per-entry investigator outputs (written by sub-agents)                                |
+| `triage_state/{project}/runs/{run-id}/aggregation/slices/slice_{n}.json`               | Pass 1 input slices (false-positive entries)                                          |
+| `triage_state/{project}/runs/{run-id}/aggregation/pass1/slice_{n}.output.json`         | Pass 1 rough groupings                                                                |
+| `triage_state/{project}/runs/{run-id}/aggregation/pass3/input.json`                    | Pass 3 canonical group list                                                           |
+| `triage_state/{project}/runs/{run-id}/aggregation/pass3/{group_id}_investigation.json` | Pass 3 per-group investigation results                                                |
+| `analysis_output/{project}/detect_entrypoints/{ts}.json`                               | Detection output (kept project-scoped; one detection feeds many triage runs)          |
+| `analysis_output/{project}/triage_results/{run-id}.json`                               | Published triage results (schema v2, with `commit_hash`, `kind`, relative file paths) |
 
-All paths above are relative to `~/.ariadne/self-repair-pipeline/`.
+All paths above are relative to `~/.ariadne/self-repair-pipeline/`. Run-ids have the form `<short-commit>-<iso-ts>` (e.g. `deadbee-2026-04-28T13-42-07.812Z`); `nogit-<iso-ts>` when the target is not a git repo.
+
+Phase 3-5 scripts default to the run pointed at by `LATEST`; pass `--run-id <id>` to operate on a specific run. `prepare_triage` writes `LATEST` and `finalize_triage` clears it.
 
 The dead-code whitelist at `known_entrypoints/<package>.json` (also under `~/.ariadne/self-repair-pipeline/`) is owned by the `detect_dead_code` Stop hook and is never read or written by this pipeline. See **Dead-code guardrail** below.
 
@@ -134,16 +141,25 @@ node --import tsx .claude/skills/self-repair-pipeline/scripts/prepare_triage.ts 
   [--max-count $MAX_COUNT]   # omit to use default of 150
 ```
 
-Options: `--analysis <path>` (required), `--project <name>` (optional — falls back to analysis file's project_name), `--max-count <n>` (optional, default `150`)
+Options:
+
+- `--analysis <path>` (required)
+- `--project <name>` (optional — falls back to the analysis file's `project_name`)
+- `--max-count <n>` (optional, default `150`)
+- `--no-reuse-tp` (optional) — disable the TP cache for this run; every `llm-triage` entry will re-investigate even if a prior run at the same commit confirmed it unreachable
+- `--tp-source-run <run-id>` (optional) — pin a specific source run for the TP cache. Must be at the current HEAD commit; the script throws otherwise.
 
 `--max-count` caps how many `llm-triage` entries are kept (and thus the total number of triage-investigator agents Phase 3 dispatches — distinct from the `N = 5` concurrency setting in Phase 3). The script keeps the top `<n>` residual entries by `tree_size`. Auto-classified entries are always kept in full and do not count toward this cap. Override the default for a smaller probe or larger sweep.
 
-The script consults the known-issues registry's predicate classifiers and partitions entries into two buckets:
+The script captures the target's HEAD short-commit, generates run-id `<short-commit>-<iso-ts>`, and creates `triage_state/<project>/runs/<run-id>/`. It partitions entries into three buckets:
 
-- **known-unreachable**: A classifier matched at or above its `min_confidence` — marked completed immediately with the matched `group_id`
-- **llm-triage**: No classifier matched — marked pending for investigation
+- **known-unreachable (registry)**: A predicate classifier from `known_issues/registry.json` matched at or above its `min_confidence` — marked completed immediately with the matched `group_id`.
+- **known-unreachable (previously-confirmed-tp)**: Reused from the most recent finalized run at the same commit. Skipped via `--no-reuse-tp`. Distinguished by `known_source: "previously-confirmed-tp"` and `tp_source_run_id`.
+- **llm-triage**: No classifier matched — marked pending for investigation.
 
-Output: `triage_state/{project}/{project}_triage.json` — use Glob to find this path if the project name is unknown: `~/.ariadne/self-repair-pipeline/triage_state/**/*_triage.json`.
+`prepare_triage` prints `{ "run_id": "...", "stats": { ... } }` to stdout. Capture the `run_id` if you need to pin Phase 3-5 to a specific run; otherwise the project's `LATEST` pointer makes that automatic.
+
+Output: `triage_state/<project>/runs/<run-id>/triage.json` and `manifest.json`.
 
 ## Phase 3: Triage Loop
 
@@ -250,7 +266,89 @@ node --import tsx .claude/skills/self-repair-pipeline/scripts/finalize_triage.ts
 Finalization:
 
 - Partitions entries into confirmed-unreachable and false-positive groups
-- Saves triage results JSON to `analysis_output/<project>/triage_results/`
+- Saves triage results JSON to `analysis_output/<project>/triage_results/<run-id>.json` (schema v2: includes `commit_hash`, `kind`, relative file paths)
+- Sets `manifest.status = "finalized"`, `finalized_at = now`
+- Clears the project's `LATEST` pointer
+
+The run directory is preserved for diffing and audit. Use `prune_runs.ts` to garbage-collect old run dirs (the published `triage_results/<run-id>.json` is kept forever — diff_runs and the curator depend on it).
+
+## Reusing Prior TP Verdicts
+
+When you re-run the pipeline at the same target HEAD commit, `prepare_triage` reuses entries that the most recent finalized run classified as `confirmed_unreachable` — they skip Phase 3 and ship straight to the new run's `confirmed_unreachable[]` with `known_source: "previously-confirmed-tp"` and a `tp_source_run_id` that records the source.
+
+The cache validity gate is **the run-id's `<short-commit>-` prefix**:
+
+- Same prefix → cache reuses prior TP verdicts.
+- Different prefix (any commit on the target) → cache misses; every entry re-investigates.
+
+Two known leaks (accepted; document for users):
+
+- **Uncommitted target-repo changes don't bust the cache.** HEAD is the only signal. To force a clean pass after a dirty edit, either `git commit` first or pass `--no-reuse-tp`.
+- **Ariadne core changes don't bust the cache.** If you tighten Ariadne's call resolution and want to validate that prior TPs still hold, run once with `--no-reuse-tp`.
+
+`--tp-source-run <run-id>` pins a specific source (must be at the current commit).
+
+## Comparing Runs
+
+```bash
+node --import tsx .claude/skills/self-repair-pipeline/scripts/diff_runs.ts \
+  --project <name> --from <run-id> --to <run-id> [--format text|json]
+```
+
+Output highlights TP↔FP flips (regression candidates), entries that appeared/disappeared, group-id changes, and group membership deltas. Reads the published `triage_results/<run-id>.json` files; works even when the underlying run dirs have been pruned.
+
+## Run Retention
+
+```bash
+node --import tsx .claude/skills/self-repair-pipeline/scripts/prune_runs.ts \
+  --project <name> [--keep <n>] [--dry-run]
+```
+
+Default keep-count is `5` (override with `--keep` or `ARIADNE_RETAIN_RUNS`). Runs whose run-id is referenced by another run's `tp_cache.source_run_id` are protected. Active and abandoned runs are never pruned. Published `triage_results/<run-id>.json` files are kept forever.
+
+`list_runs.ts --project <name> [--status active|finalized|abandoned] [--last <n>]` enumerates the run history with status (JSON to stdout). `abandon_run.ts --project <name> [--run-id <id>]` marks a run abandoned and clears `LATEST` if it pointed there.
+
+## Typical Iteration Loop
+
+The user's iteration cycle when tuning the classifier registry or Ariadne core resolution against a fixed target commit:
+
+```bash
+# 1. Detect once (entry-point set is stable for a given target HEAD)
+node --import tsx scripts/detect_entrypoints.ts --config <config> > /dev/null
+# capture the analysis JSON path (or use Glob to find it)
+
+# 2. Initial run
+node --import tsx scripts/prepare_triage.ts --analysis <analysis.json> --project <name>
+#   ... walk through Phase 3-5 ...
+
+# 3. Edit registry / Ariadne core. (No commit needed; the cache gates on target HEAD.)
+
+# 4. Re-run at the same commit. Cache reuses prior TPs; LLM re-investigates only the residual.
+node --import tsx scripts/prepare_triage.ts --analysis <analysis.json> --project <name>
+#   ... walk through Phase 3-5 again ...
+
+# 5. Diff to spot regressions
+node --import tsx scripts/diff_runs.ts --project <name> --from <run-1> --to <run-2>
+```
+
+Two known leaks during this loop (escape hatch: `--no-reuse-tp`):
+
+- **Uncommitted target-repo edits** don't bust the cache (`git commit` first, or pass `--no-reuse-tp`).
+- **Ariadne core changes** don't bust it either (run once with `--no-reuse-tp` after substantive resolution improvements).
+
+## Migrating from a Pre-Run-Namespaced Pipeline
+
+If you upgraded from a version that wrote `triage_state/<project>/<project>_triage.json` directly:
+
+```bash
+# Wrap the legacy state into runs/legacy-<ts>/ with status=abandoned (default)
+node --import tsx scripts/migrate_legacy_state.ts --project <name>
+
+# OR: delete the legacy artifacts
+node --import tsx scripts/migrate_legacy_state.ts --project <name> --purge
+```
+
+`prepare_triage` emits a one-line stderr warning when it detects unmigrated legacy state.
 
 ## Dead-code guardrail
 

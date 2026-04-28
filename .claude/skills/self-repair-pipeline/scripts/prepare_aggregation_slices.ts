@@ -14,11 +14,13 @@
 import fs from "fs";
 import path from "path";
 import { DEFAULT_SLICE_SIZE, prepare_slices } from "../src/aggregation/prepare_slices.js";
-import { parse_project_arg, require_state_file } from "../src/triage_state_paths.js";
+import { parse_project_arg, parse_run_id_arg } from "../src/cli_args.js";
+import { require_run } from "../src/triage_state_paths.js";
 import type { TriageState } from "../src/triage_state_types.js";
 import "../src/guard_tsx_invocation.js";
 
-const USAGE = "Usage: prepare_aggregation_slices.ts --project <name> [--slice-size <n>]";
+const USAGE =
+  "Usage: prepare_aggregation_slices.ts --project <name> [--run-id <id>] [--slice-size <n>]";
 
 const project = parse_project_arg(process.argv, USAGE);
 const args = process.argv.slice(2);
@@ -27,7 +29,8 @@ for (let i = 0; i < args.length; i++) {
   if (args[i] === "--slice-size") slice_size = parseInt(args[++i], 10);
 }
 
-const state_path = require_state_file(project);
+const run_id_opt = parse_run_id_arg(process.argv);
+const { state_path, run_dir } = require_run(project, run_id_opt);
 
 let state: TriageState;
 try {
@@ -46,7 +49,7 @@ if (entry_count === 0) {
   process.exit(0);
 }
 
-const slices_dir = path.join(path.dirname(state_path), "aggregation", "slices");
+const slices_dir = path.join(run_dir, "aggregation", "slices");
 fs.mkdirSync(slices_dir, { recursive: true });
 for (const slice of slices) {
   fs.writeFileSync(
