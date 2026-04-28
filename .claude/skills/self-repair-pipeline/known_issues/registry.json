@@ -19,7 +19,19 @@
     ],
     "classifier": {
       "kind": "none"
-    }
+    },
+    "observed_count": 107,
+    "observed_projects": [
+      "webpack",
+      "mocha",
+      "angular",
+      "lodash",
+      "typeorm",
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "drift_detected": true,
+    "backlog_task": "TASK-206"
   },
   {
     "group_id": "polymorphic-subtype-dispatch",
@@ -42,7 +54,13 @@
     ],
     "classifier": {
       "kind": "none"
-    }
+    },
+    "observed_count": 21,
+    "observed_projects": [
+      "webpack"
+    ],
+    "last_seen_run": "2026-04-16T18-10-16.855Z",
+    "drift_detected": true
   },
   {
     "group_id": "dynamic-property-keyed-callback",
@@ -71,7 +89,12 @@
         "name": "is_dynamic_dispatch",
         "value": true
       }
-    }
+    },
+    "observed_count": 12,
+    "observed_projects": [
+      "webpack"
+    ],
+    "last_seen_run": "2026-04-16T18-10-16.855Z"
   },
   {
     "group_id": "constructor-new-expression",
@@ -90,8 +113,17 @@
       }
     ],
     "classifier": {
-      "kind": "none"
-    }
+      "kind": "builtin",
+      "function_name": "check_constructor_new_expression",
+      "min_confidence": 0.9
+    },
+    "observed_count": 14,
+    "observed_projects": [
+      "webpack",
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-228"
   },
   {
     "group_id": "aliased-receiver-type-lost",
@@ -168,23 +200,11 @@
       }
     ],
     "classifier": {
-      "kind": "predicate",
-      "axis": "B",
-      "min_confidence": 0.9,
-      "expression": {
-        "op": "all",
-        "of": [
-          {
-            "op": "grep_line_regex",
-            "pattern": "new\\s+[A-Z][A-Za-z0-9_]*\\s*\\([^)]*\\)\\s*\\."
-          },
-          {
-            "op": "diagnosis_eq",
-            "value": "callers-in-registry-unresolved"
-          }
-        ]
-      }
-    }
+      "kind": "builtin",
+      "function_name": "check_inline_constructor_method_chain",
+      "min_confidence": 0.9
+    },
+    "backlog_task": "TASK-187"
   },
   {
     "group_id": "python-module-attribute-call",
@@ -240,7 +260,8 @@
     ],
     "classifier": {
       "kind": "none"
-    }
+    },
+    "drift_detected": true
   },
   {
     "group_id": "unindexed-external-module",
@@ -553,7 +574,8 @@
     ],
     "classifier": {
       "kind": "none"
-    }
+    },
+    "drift_detected": true
   },
   {
     "group_id": "framework-pytest-fixture",
@@ -753,7 +775,12 @@
     "examples": [],
     "classifier": {
       "kind": "none"
-    }
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "webpack"
+    ],
+    "last_seen_run": "2026-04-16T18-10-16.855Z"
   },
   {
     "group_id": "dynamic-dispatch",
@@ -765,8 +792,18 @@
     ],
     "examples": [],
     "classifier": {
-      "kind": "none"
-    }
+      "kind": "builtin",
+      "function_name": "check_dynamic_dispatch",
+      "min_confidence": 0.9
+    },
+    "drift_detected": true,
+    "observed_count": 43,
+    "observed_projects": [
+      "webpack",
+      "lodash",
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z"
   },
   {
     "group_id": "intra-file-call-not-resolved",
@@ -778,8 +815,17 @@
     ],
     "examples": [],
     "classifier": {
-      "kind": "none"
-    }
+      "kind": "builtin",
+      "function_name": "check_intra_file_call_not_resolved",
+      "min_confidence": 0.9
+    },
+    "observed_count": 16,
+    "observed_projects": [
+      "webpack",
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-220"
   },
   {
     "group_id": "property-accessor-not-tracked",
@@ -792,7 +838,13 @@
     "examples": [],
     "classifier": {
       "kind": "none"
-    }
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "webpack"
+    ],
+    "last_seen_run": "2026-04-16T18-10-16.855Z",
+    "drift_detected": true
   },
   {
     "group_id": "require-indirection",
@@ -805,7 +857,12 @@
     "examples": [],
     "classifier": {
       "kind": "none"
-    }
+    },
+    "observed_count": 4,
+    "observed_projects": [
+      "webpack"
+    ],
+    "last_seen_run": "2026-04-16T18-10-16.855Z"
   },
   {
     "group_id": "static-method-call-resolution",
@@ -818,7 +875,12 @@
     "examples": [],
     "classifier": {
       "kind": "none"
-    }
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "webpack"
+    ],
+    "last_seen_run": "2026-04-16T18-10-16.855Z"
   },
   {
     "group_id": "unindexed-test-files",
@@ -831,7 +893,20 @@
     "examples": [],
     "classifier": {
       "kind": "none"
-    }
+    },
+    "observed_count": 81,
+    "observed_projects": [
+      "webpack",
+      "express",
+      "mocha",
+      "nest",
+      "angular",
+      "typeorm",
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "drift_detected": true,
+    "backlog_task": "TASK-209"
   },
   {
     "group_id": "wasm-cross-language-call",
@@ -844,6 +919,2811 @@
     "examples": [],
     "classifier": {
       "kind": "none"
-    }
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "webpack"
+    ],
+    "last_seen_run": "2026-04-16T18-10-16.855Z"
+  },
+  {
+    "group_id": "callers-not-in-registry-unclassified",
+    "title": "callers-not-in-registry-unclassified",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_callers_not_in_registry_unclassified",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "webpack"
+    ],
+    "last_seen_run": "2026-04-16T18-10-16.855Z",
+    "backlog_task": "TASK-202"
+  },
+  {
+    "group_id": "polymorphic-method-dispatch",
+    "title": "polymorphic-method-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 3,
+    "observed_projects": [
+      "webpack",
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "drift_detected": true,
+    "backlog_task": "TASK-198"
+  },
+  {
+    "group_id": "callback-registration",
+    "title": "callback-registration",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 219,
+    "observed_projects": [
+      "express",
+      "jquery",
+      "mocha",
+      "nest",
+      "angular",
+      "lodash",
+      "typeorm",
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "drift_detected": true,
+    "backlog_task": "TASK-207"
+  },
+  {
+    "group_id": "closure-returned-function",
+    "title": "closure-returned-function",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "express"
+    ],
+    "last_seen_run": "2026-04-23T16-01-17.205Z"
+  },
+  {
+    "group_id": "dynamic-getter-registration",
+    "title": "dynamic-getter-registration",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "express"
+    ],
+    "last_seen_run": "2026-04-23T16-01-17.205Z"
+  },
+  {
+    "group_id": "dynamic-method-dispatch",
+    "title": "dynamic-method-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_dynamic_method_dispatch",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "express"
+    ],
+    "last_seen_run": "2026-04-23T16-01-17.205Z"
+  },
+  {
+    "group_id": "dynamic-property-dispatch",
+    "title": "dynamic-property-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 91,
+    "observed_projects": [
+      "express",
+      "jquery",
+      "lodash",
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "drift_detected": true,
+    "backlog_task": "TASK-211"
+  },
+  {
+    "group_id": "event-emitter-callback",
+    "title": "event-emitter-callback",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "express"
+    ],
+    "last_seen_run": "2026-04-23T16-01-17.205Z"
+  },
+  {
+    "group_id": "object-define-property-getter",
+    "title": "object-define-property-getter",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 9,
+    "observed_projects": [
+      "express"
+    ],
+    "last_seen_run": "2026-04-23T16-01-17.205Z",
+    "backlog_task": "TASK-232"
+  },
+  {
+    "group_id": "property-alias-assignment",
+    "title": "property-alias-assignment",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "express"
+    ],
+    "last_seen_run": "2026-04-23T16-01-17.205Z"
+  },
+  {
+    "group_id": "prototype-method-dispatch",
+    "title": "prototype-method-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 18,
+    "observed_projects": [
+      "express",
+      "mocha",
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "drift_detected": true,
+    "backlog_task": "TASK-222"
+  },
+  {
+    "group_id": "prototype-mixin-dispatch",
+    "title": "prototype-mixin-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "express"
+    ],
+    "last_seen_run": "2026-04-23T16-01-17.205Z"
+  },
+  {
+    "group_id": "this-method-dispatch",
+    "title": "this-method-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 11,
+    "observed_projects": [
+      "express",
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "drift_detected": true,
+    "backlog_task": "TASK-225"
+  },
+  {
+    "group_id": "call-apply-dispatch",
+    "title": "call-apply-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_call_apply_dispatch",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "jquery"
+    ],
+    "last_seen_run": "2026-04-23T20-22-56.592Z",
+    "backlog_task": "TASK-204"
+  },
+  {
+    "group_id": "method-on-returned-object",
+    "title": "method-on-returned-object",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 3,
+    "observed_projects": [
+      "jquery"
+    ],
+    "last_seen_run": "2026-04-23T20-22-56.592Z"
+  },
+  {
+    "group_id": "object-property-dispatch",
+    "title": "object-property-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 8,
+    "observed_projects": [
+      "jquery"
+    ],
+    "last_seen_run": "2026-04-23T20-22-56.592Z"
+  },
+  {
+    "group_id": "prototype-dispatch",
+    "title": "prototype-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 22,
+    "observed_projects": [
+      "jquery"
+    ],
+    "last_seen_run": "2026-04-23T20-22-56.592Z",
+    "backlog_task": "TASK-214"
+  },
+  {
+    "group_id": "commonjs-module-property-call",
+    "title": "commonjs-module-property-call",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_commonjs_module_property_call",
+      "min_confidence": 0.9
+    },
+    "observed_count": 4,
+    "observed_projects": [
+      "mocha"
+    ],
+    "last_seen_run": "2026-04-23T20-41-21.302Z"
+  },
+  {
+    "group_id": "dynamic-dispatch-reporter-constructor",
+    "title": "dynamic-dispatch-reporter-constructor",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_dynamic_dispatch_reporter_constructor",
+      "min_confidence": 0.9
+    },
+    "observed_count": 12,
+    "observed_projects": [
+      "mocha"
+    ],
+    "last_seen_run": "2026-04-23T20-41-21.302Z",
+    "backlog_task": "TASK-221"
+  },
+  {
+    "group_id": "dynamic-require-constructor",
+    "title": "dynamic-require-constructor",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_dynamic_require_constructor",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "mocha"
+    ],
+    "last_seen_run": "2026-04-23T20-41-21.302Z"
+  },
+  {
+    "group_id": "dynamic-string-key-dispatch",
+    "title": "dynamic-string-key-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 3,
+    "observed_projects": [
+      "mocha"
+    ],
+    "last_seen_run": "2026-04-23T20-41-21.302Z"
+  },
+  {
+    "group_id": "factory-return-value-dispatch",
+    "title": "factory-return-value-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 4,
+    "observed_projects": [
+      "mocha"
+    ],
+    "last_seen_run": "2026-04-23T20-41-21.302Z"
+  },
+  {
+    "group_id": "module-exports-class-constructor",
+    "title": "module-exports-class-constructor",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_module_exports_class_constructor",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "mocha"
+    ],
+    "last_seen_run": "2026-04-23T20-41-21.302Z"
+  },
+  {
+    "group_id": "object-property-function-dispatch",
+    "title": "object-property-function-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 10,
+    "observed_projects": [
+      "mocha"
+    ],
+    "last_seen_run": "2026-04-23T20-41-21.302Z",
+    "backlog_task": "TASK-229"
+  },
+  {
+    "group_id": "polymorphic-dispatch-missing-base-method",
+    "title": "polymorphic-dispatch-missing-base-method",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "mocha"
+    ],
+    "last_seen_run": "2026-04-23T20-41-21.302Z",
+    "backlog_task": "TASK-202"
+  },
+  {
+    "group_id": "receiver-type-unknown",
+    "title": "receiver-type-unknown",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_receiver_type_unknown",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "mocha"
+    ],
+    "last_seen_run": "2026-04-23T20-41-21.302Z"
+  },
+  {
+    "group_id": "static-method-on-cjs-class",
+    "title": "static-method-on-cjs-class",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_static_method_on_cjs_class",
+      "min_confidence": 0.9
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "mocha"
+    ],
+    "last_seen_run": "2026-04-23T20-41-21.302Z"
+  },
+  {
+    "group_id": "static-method-on-destructured-import",
+    "title": "static-method-on-destructured-import",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_static_method_on_destructured_import",
+      "min_confidence": 0.9
+    },
+    "observed_count": 3,
+    "observed_projects": [
+      "mocha"
+    ],
+    "last_seen_run": "2026-04-23T20-41-21.302Z"
+  },
+  {
+    "group_id": "super-constructor-call",
+    "title": "super-constructor-call",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 11,
+    "observed_projects": [
+      "mocha",
+      "angular",
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "drift_detected": true,
+    "backlog_task": "TASK-224"
+  },
+  {
+    "group_id": "unresolved-receiver-type",
+    "title": "unresolved-receiver-type",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_unresolved_receiver_type",
+      "min_confidence": 0.9
+    },
+    "observed_count": 6,
+    "observed_projects": [
+      "mocha"
+    ],
+    "last_seen_run": "2026-04-23T20-41-21.302Z"
+  },
+  {
+    "group_id": "unsupported-file-extension",
+    "title": "unsupported-file-extension",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "mocha"
+    ],
+    "last_seen_run": "2026-04-23T20-41-21.302Z"
+  },
+  {
+    "group_id": "abstract-class-polymorphic-dispatch",
+    "title": "abstract-class-polymorphic-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "nest"
+    ],
+    "last_seen_run": "2026-04-23T22-12-28.705Z",
+    "backlog_task": "TASK-198"
+  },
+  {
+    "group_id": "anonymous-class-inheritance-resolution",
+    "title": "anonymous-class-inheritance-resolution",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "nest"
+    ],
+    "last_seen_run": "2026-04-23T22-12-28.705Z"
+  },
+  {
+    "group_id": "barrel-reexport",
+    "title": "barrel-reexport",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 29,
+    "observed_projects": [
+      "nest",
+      "angular",
+      "typeorm",
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "drift_detected": true,
+    "backlog_task": "TASK-218"
+  },
+  {
+    "group_id": "cross-package-call-untracked",
+    "title": "cross-package-call-untracked",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 4,
+    "observed_projects": [
+      "nest"
+    ],
+    "last_seen_run": "2026-04-23T22-12-28.705Z"
+  },
+  {
+    "group_id": "cross-package-method-resolution",
+    "title": "cross-package-method-resolution",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 6,
+    "observed_projects": [
+      "nest",
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z"
+  },
+  {
+    "group_id": "destructured-property-method-call",
+    "title": "destructured-property-method-call",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "nest"
+    ],
+    "last_seen_run": "2026-04-23T22-12-28.705Z"
+  },
+  {
+    "group_id": "dynamic-constructor-dispatch",
+    "title": "dynamic-constructor-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 10,
+    "observed_projects": [
+      "nest"
+    ],
+    "last_seen_run": "2026-04-23T22-12-28.705Z",
+    "backlog_task": "TASK-231"
+  },
+  {
+    "group_id": "dynamic-require-resolution",
+    "title": "dynamic-require-resolution",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "nest"
+    ],
+    "last_seen_run": "2026-04-23T22-12-28.705Z"
+  },
+  {
+    "group_id": "framework-decorator-dispatch",
+    "title": "framework-decorator-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_framework_decorator_dispatch",
+      "min_confidence": 0.9
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "nest"
+    ],
+    "last_seen_run": "2026-04-23T22-12-28.705Z"
+  },
+  {
+    "group_id": "framework-lifecycle-dispatch",
+    "title": "framework-lifecycle-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_framework_lifecycle_dispatch",
+      "min_confidence": 0.9
+    },
+    "observed_count": 6,
+    "observed_projects": [
+      "nest"
+    ],
+    "last_seen_run": "2026-04-23T22-12-28.705Z"
+  },
+  {
+    "group_id": "framework-lifecycle-override",
+    "title": "framework-lifecycle-override",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_framework_lifecycle_override",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "nest"
+    ],
+    "last_seen_run": "2026-04-23T22-12-28.705Z"
+  },
+  {
+    "group_id": "generic-type-erasure",
+    "title": "generic-type-erasure",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "nest"
+    ],
+    "last_seen_run": "2026-04-23T22-12-28.705Z"
+  },
+  {
+    "group_id": "inherited-method-call",
+    "title": "inherited-method-call",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "nest"
+    ],
+    "last_seen_run": "2026-04-23T22-12-28.705Z"
+  },
+  {
+    "group_id": "interface-polymorphic-dispatch",
+    "title": "interface-polymorphic-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 111,
+    "observed_projects": [
+      "nest",
+      "angular",
+      "typeorm",
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "drift_detected": true,
+    "backlog_task": "TASK-198"
+  },
+  {
+    "group_id": "intra-class-method-call",
+    "title": "intra-class-method-call",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_intra_class_method_call",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "nest"
+    ],
+    "last_seen_run": "2026-04-23T22-12-28.705Z"
+  },
+  {
+    "group_id": "method-call-in-callback-unresolved",
+    "title": "method-call-in-callback-unresolved",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "nest"
+    ],
+    "last_seen_run": "2026-04-23T22-12-28.705Z",
+    "backlog_task": "TASK-205"
+  },
+  {
+    "group_id": "method-call-on-typed-receiver",
+    "title": "method-call-on-typed-receiver",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 3,
+    "observed_projects": [
+      "nest"
+    ],
+    "last_seen_run": "2026-04-23T22-12-28.705Z",
+    "backlog_task": "TASK-205"
+  },
+  {
+    "group_id": "polymorphic-interface-dispatch",
+    "title": "polymorphic-interface-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 3,
+    "observed_projects": [
+      "nest"
+    ],
+    "last_seen_run": "2026-04-23T22-12-28.705Z",
+    "backlog_task": "TASK-198"
+  },
+  {
+    "group_id": "stored-callback-via-object-property",
+    "title": "stored-callback-via-object-property",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_stored_callback_via_object_property",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "nest"
+    ],
+    "last_seen_run": "2026-04-23T22-12-28.705Z"
+  },
+  {
+    "group_id": "tsconfig-path-alias",
+    "title": "tsconfig-path-alias",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "nest",
+      "angular"
+    ],
+    "last_seen_run": "2026-04-25T17-07-32.678Z",
+    "drift_detected": true
+  },
+  {
+    "group_id": "tsconfig-paths-not-resolved",
+    "title": "tsconfig-paths-not-resolved",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "nest"
+    ],
+    "last_seen_run": "2026-04-23T22-12-28.705Z"
+  },
+  {
+    "group_id": "typed-field-method-dispatch",
+    "title": "typed-field-method-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_typed_field_method_dispatch",
+      "min_confidence": 0.9
+    },
+    "observed_count": 4,
+    "observed_projects": [
+      "nest"
+    ],
+    "last_seen_run": "2026-04-23T22-12-28.705Z",
+    "backlog_task": "TASK-205"
+  },
+  {
+    "group_id": "unindexed-caller-files",
+    "title": "unindexed-caller-files",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "nest"
+    ],
+    "last_seen_run": "2026-04-23T22-12-28.705Z",
+    "backlog_task": "TASK-190.13"
+  },
+  {
+    "group_id": "aliased-import-method-dispatch",
+    "title": "aliased-import-method-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_aliased_import_method_dispatch",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "angular"
+    ],
+    "last_seen_run": "2026-04-25T17-07-32.678Z"
+  },
+  {
+    "group_id": "angular-framework-lifecycle-dispatch",
+    "title": "angular-framework-lifecycle-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 3,
+    "observed_projects": [
+      "angular"
+    ],
+    "last_seen_run": "2026-04-25T17-07-32.678Z"
+  },
+  {
+    "group_id": "angular-generated-instruction-call",
+    "title": "angular-generated-instruction-call",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_angular_generated_instruction_call",
+      "min_confidence": 0.95
+    },
+    "observed_count": 3,
+    "observed_projects": [
+      "angular"
+    ],
+    "last_seen_run": "2026-04-25T17-07-32.678Z"
+  },
+  {
+    "group_id": "any-typed-receiver-method-call",
+    "title": "any-typed-receiver-method-call",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "angular"
+    ],
+    "last_seen_run": "2026-04-25T17-07-32.678Z"
+  },
+  {
+    "group_id": "compiler-generated-dynamic-dispatch",
+    "title": "compiler-generated-dynamic-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_compiler_generated_dynamic_dispatch",
+      "min_confidence": 0.95
+    },
+    "observed_count": 11,
+    "observed_projects": [
+      "angular"
+    ],
+    "last_seen_run": "2026-04-25T17-07-32.678Z",
+    "backlog_task": "TASK-226"
+  },
+  {
+    "group_id": "cross-file-import-resolution",
+    "title": "cross-file-import-resolution",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "angular"
+    ],
+    "last_seen_run": "2026-04-25T17-07-32.678Z"
+  },
+  {
+    "group_id": "cross-package-registry-gap",
+    "title": "cross-package-registry-gap",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_cross_package_registry_gap",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "angular"
+    ],
+    "last_seen_run": "2026-04-25T17-07-32.678Z",
+    "backlog_task": "TASK-198"
+  },
+  {
+    "group_id": "dependency-injection-type-resolution",
+    "title": "dependency-injection-type-resolution",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_dependency_injection_type_resolution",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "angular"
+    ],
+    "last_seen_run": "2026-04-25T17-07-32.678Z"
+  },
+  {
+    "group_id": "dynamic-cast-structural-type-dispatch",
+    "title": "dynamic-cast-structural-type-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_dynamic_cast_structural_type_dispatch",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "angular"
+    ],
+    "last_seen_run": "2026-04-25T17-07-32.678Z"
+  },
+  {
+    "group_id": "external-framework-interface-dispatch",
+    "title": "external-framework-interface-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "angular"
+    ],
+    "last_seen_run": "2026-04-25T17-07-32.678Z"
+  },
+  {
+    "group_id": "getter-property-access",
+    "title": "getter-property-access",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 9,
+    "observed_projects": [
+      "angular",
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "drift_detected": true,
+    "backlog_task": "TASK-233"
+  },
+  {
+    "group_id": "higher-order-function-callback",
+    "title": "higher-order-function-callback",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_higher_order_function_callback",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "angular"
+    ],
+    "last_seen_run": "2026-04-25T17-07-32.678Z",
+    "backlog_task": "TASK-204"
+  },
+  {
+    "group_id": "import-resolution-missed",
+    "title": "import-resolution-missed",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_import_resolution_missed",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "angular"
+    ],
+    "last_seen_run": "2026-04-25T17-07-32.678Z"
+  },
+  {
+    "group_id": "instance-method-call-unresolved",
+    "title": "instance-method-call-unresolved",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 5,
+    "observed_projects": [
+      "angular",
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "drift_detected": true,
+    "backlog_task": "TASK-205"
+  },
+  {
+    "group_id": "instance-method-dispatch",
+    "title": "instance-method-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "angular"
+    ],
+    "last_seen_run": "2026-04-25T17-07-32.678Z",
+    "backlog_task": "TASK-182"
+  },
+  {
+    "group_id": "interface-method-dispatch",
+    "title": "interface-method-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 16,
+    "observed_projects": [
+      "angular",
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "drift_detected": true,
+    "backlog_task": "TASK-198"
+  },
+  {
+    "group_id": "missed-named-import-call",
+    "title": "missed-named-import-call",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "angular"
+    ],
+    "last_seen_run": "2026-04-25T17-07-32.678Z"
+  },
+  {
+    "group_id": "property-getter-dispatch",
+    "title": "property-getter-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_property_getter_dispatch",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "angular"
+    ],
+    "last_seen_run": "2026-04-25T17-07-32.678Z"
+  },
+  {
+    "group_id": "singleton-instance-method-call",
+    "title": "singleton-instance-method-call",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "angular"
+    ],
+    "last_seen_run": "2026-04-25T17-07-32.678Z"
+  },
+  {
+    "group_id": "static-method-resolution",
+    "title": "static-method-resolution",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_static_method_resolution",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "angular"
+    ],
+    "last_seen_run": "2026-04-25T17-07-32.678Z"
+  },
+  {
+    "group_id": "string-keyed-dispatch",
+    "title": "string-keyed-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_string_keyed_dispatch",
+      "min_confidence": 0.95
+    },
+    "observed_count": 27,
+    "observed_projects": [
+      "angular"
+    ],
+    "last_seen_run": "2026-04-25T17-07-32.678Z",
+    "backlog_task": "TASK-212"
+  },
+  {
+    "group_id": "type-based-method-dispatch",
+    "title": "type-based-method-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_type_based_method_dispatch",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "angular"
+    ],
+    "last_seen_run": "2026-04-25T17-07-32.678Z",
+    "backlog_task": "TASK-205"
+  },
+  {
+    "group_id": "aliased-object-property-call",
+    "title": "aliased-object-property-call",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_aliased_object_property_call",
+      "min_confidence": 0.9
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "call-apply-indirect-invocation",
+    "title": "call-apply-indirect-invocation",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 7,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "commonjs-property-access-call",
+    "title": "commonjs-property-access-call",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 3,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "constructor-call-resolution",
+    "title": "constructor-call-resolution",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_constructor_call_resolution",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "dynamic-new-function-dispatch",
+    "title": "dynamic-new-function-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_dynamic_new_function_dispatch",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "dynamic-property-method-dispatch",
+    "title": "dynamic-property-method-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "dynamic-receiver-method-call",
+    "title": "dynamic-receiver-method-call",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 4,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "dynamic-string-dispatch",
+    "title": "dynamic-string-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "eval-based-dynamic-dispatch",
+    "title": "eval-based-dynamic-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_eval_based_dynamic_dispatch",
+      "min_confidence": 0.9
+    },
+    "observed_count": 8,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "intra-file-call-not-in-registry",
+    "title": "intra-file-call-not-in-registry",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_intra_file_call_not_in_registry",
+      "min_confidence": 0.9
+    },
+    "observed_count": 9,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-234"
+  },
+  {
+    "group_id": "local-variable-alias",
+    "title": "local-variable-alias",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_local_variable_alias",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "method-on-object-literal",
+    "title": "method-on-object-literal",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "mixin-extend-dispatch",
+    "title": "mixin-extend-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 3,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "mixin-inheritance-dispatch",
+    "title": "mixin-inheritance-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 3,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "object-literal-method-dispatch",
+    "title": "object-literal-method-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 16,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "object-literal-method-with-scope",
+    "title": "object-literal-method-with-scope",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "property-alias-intra-file-call",
+    "title": "property-alias-intra-file-call",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_property_alias_intra_file_call",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "prototype-inheritance-dispatch",
+    "title": "prototype-inheritance-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "same-file-call-missed",
+    "title": "same-file-call-missed",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_same_file_call_missed",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "same-file-var-function-resolution",
+    "title": "same-file-var-function-resolution",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_same_file_var_function_resolution",
+      "min_confidence": 0.9
+    },
+    "observed_count": 5,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "this-based-method-dispatch",
+    "title": "this-based-method-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_this_based_method_dispatch",
+      "min_confidence": 0.9
+    },
+    "observed_count": 22,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z",
+    "backlog_task": "TASK-213"
+  },
+  {
+    "group_id": "this-object-method-dispatch",
+    "title": "this-object-method-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_this_object_method_dispatch",
+      "min_confidence": 0.9
+    },
+    "observed_count": 5,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "this-property-method-dispatch",
+    "title": "this-property-method-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "javascript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_this_property_method_dispatch",
+      "min_confidence": 0.9
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "lodash"
+    ],
+    "last_seen_run": "2026-04-27T11-02-57.035Z"
+  },
+  {
+    "group_id": "anonymous-function-in-object-or-chain",
+    "title": "anonymous-function-in-object-or-chain",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 7,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z"
+  },
+  {
+    "group_id": "builtin-higher-order-callback",
+    "title": "builtin-higher-order-callback",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 3,
+    "observed_projects": [
+      "typeorm",
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-204"
+  },
+  {
+    "group_id": "constructor-instance-method-resolution",
+    "title": "constructor-instance-method-resolution",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_constructor_instance_method_resolution",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-187"
+  },
+  {
+    "group_id": "cross-package-call",
+    "title": "cross-package-call",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-190.13"
+  },
+  {
+    "group_id": "dynamic-or-untyped-property-access",
+    "title": "dynamic-or-untyped-property-access",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_ts_class_getter_no_textual_callers",
+      "min_confidence": 0.9
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z"
+  },
+  {
+    "group_id": "framework-command-builder-callback",
+    "title": "framework-command-builder-callback",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_framework_command_builder_callback",
+      "min_confidence": 0.9
+    },
+    "observed_count": 11,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-198"
+  },
+  {
+    "group_id": "framework-lifecycle-handler",
+    "title": "framework-lifecycle-handler",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_framework_lifecycle_handler",
+      "min_confidence": 0.9
+    },
+    "observed_count": 12,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-223"
+  },
+  {
+    "group_id": "getter-accessor-not-tracked",
+    "title": "getter-accessor-not-tracked",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_getter_accessor_not_tracked",
+      "min_confidence": 0.9
+    },
+    "observed_count": 13,
+    "observed_projects": [
+      "typeorm",
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z"
+  },
+  {
+    "group_id": "import-resolution-miss",
+    "title": "import-resolution-miss",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z"
+  },
+  {
+    "group_id": "inherited-method-dispatch",
+    "title": "inherited-method-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z"
+  },
+  {
+    "group_id": "inherited-static-method-dispatch",
+    "title": "inherited-static-method-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z"
+  },
+  {
+    "group_id": "inline-callback",
+    "title": "inline-callback",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_inline_callback",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-204"
+  },
+  {
+    "group_id": "interface-dispatch",
+    "title": "interface-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 3,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-198"
+  },
+  {
+    "group_id": "jsx-mdx-component-usage",
+    "title": "jsx-mdx-component-usage",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_jsx_mdx_component_usage",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z"
+  },
+  {
+    "group_id": "method-call-on-callback-parameter",
+    "title": "method-call-on-callback-parameter",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z"
+  },
+  {
+    "group_id": "method-call-on-typed-instance",
+    "title": "method-call-on-typed-instance",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_method_call_on_typed_instance",
+      "min_confidence": 0.85
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z"
+  },
+  {
+    "group_id": "method-call-unresolved",
+    "title": "method-call-unresolved",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_method_call_unresolved_receiver_type_lost",
+      "min_confidence": 0.9
+    },
+    "observed_count": 7,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-184"
+  },
+  {
+    "group_id": "method-chain-return-type-resolution",
+    "title": "method-chain-return-type-resolution",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 5,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z"
+  },
+  {
+    "group_id": "static-method-call-unresolved",
+    "title": "static-method-call-unresolved",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 8,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z"
+  },
+  {
+    "group_id": "static-method-call",
+    "title": "static-method-call",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z"
+  },
+  {
+    "group_id": "test-file-callers-missed",
+    "title": "test-file-callers-missed",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_test_file_callers_missed",
+      "min_confidence": 0.9
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z",
+    "backlog_task": "TASK-182"
+  },
+  {
+    "group_id": "type-cast-dispatch",
+    "title": "type-cast-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_type_cast_dispatch",
+      "min_confidence": 0.9
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z"
+  },
+  {
+    "group_id": "type-cast-receiver",
+    "title": "type-cast-receiver",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_type_cast_receiver",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z"
+  },
+  {
+    "group_id": "unindexed-callers",
+    "title": "unindexed-callers",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 18,
+    "observed_projects": [
+      "typeorm"
+    ],
+    "last_seen_run": "2026-04-27T16-19-42.325Z"
+  },
+  {
+    "group_id": "bundler-module-path-substitution",
+    "title": "bundler-module-path-substitution",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_bundler_module_path_substitution",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z"
+  },
+  {
+    "group_id": "bundler-module-substitution",
+    "title": "bundler-module-substitution",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_bundler_module_substitution",
+      "min_confidence": 0.9
+    },
+    "observed_count": 4,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z"
+  },
+  {
+    "group_id": "callback-stored-in-dictionary",
+    "title": "callback-stored-in-dictionary",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z"
+  },
+  {
+    "group_id": "computed-property-method-caller",
+    "title": "computed-property-method-caller",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_computed_property_method_caller",
+      "min_confidence": 0.9
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z"
+  },
+  {
+    "group_id": "const-arrow-function-export",
+    "title": "const-arrow-function-export",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-190.13"
+  },
+  {
+    "group_id": "cross-package-import-resolution",
+    "title": "cross-package-import-resolution",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 9,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-235"
+  },
+  {
+    "group_id": "cross-package-workspace-import",
+    "title": "cross-package-workspace-import",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z"
+  },
+  {
+    "group_id": "dynamic-class-instantiation",
+    "title": "dynamic-class-instantiation",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-184"
+  },
+  {
+    "group_id": "dynamic-runtime-injection",
+    "title": "dynamic-runtime-injection",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_dynamic_runtime_injection",
+      "min_confidence": 0.9
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z"
+  },
+  {
+    "group_id": "getter-access-not-tracked",
+    "title": "getter-access-not-tracked",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 3,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z"
+  },
+  {
+    "group_id": "iife-not-tracked",
+    "title": "iife-not-tracked",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z"
+  },
+  {
+    "group_id": "indirect-function-reference",
+    "title": "indirect-function-reference",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 3,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z"
+  },
+  {
+    "group_id": "namespace-reexport-member-access",
+    "title": "namespace-reexport-member-access",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z"
+  },
+  {
+    "group_id": "private-class-field-method",
+    "title": "private-class-field-method",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_private_class_field_method",
+      "min_confidence": 0.9
+    },
+    "observed_count": 18,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-216"
+  },
+  {
+    "group_id": "private-field-method-resolution",
+    "title": "private-field-method-resolution",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "builtin",
+      "function_name": "check_private_field_method_resolution",
+      "min_confidence": 0.95
+    },
+    "observed_count": 10,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-230"
+  },
+  {
+    "group_id": "proxy-dispatch",
+    "title": "proxy-dispatch",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z"
+  },
+  {
+    "group_id": "test-file-exclusion",
+    "title": "test-file-exclusion",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-182"
+  },
+  {
+    "group_id": "tsconfig-paths-import-resolution",
+    "title": "tsconfig-paths-import-resolution",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z"
+  },
+  {
+    "group_id": "unindexed-script-caller",
+    "title": "unindexed-script-caller",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 1,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z"
+  },
+  {
+    "group_id": "unresolved-import-caller",
+    "title": "unresolved-import-caller",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 4,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z"
+  },
+  {
+    "group_id": "unresolved-instance-method-call",
+    "title": "unresolved-instance-method-call",
+    "description": "Proposed by triage-curator investigator — fill in before enabling.",
+    "status": "wip",
+    "languages": [
+      "typescript"
+    ],
+    "examples": [],
+    "classifier": {
+      "kind": "none"
+    },
+    "observed_count": 2,
+    "observed_projects": [
+      "prisma"
+    ],
+    "last_seen_run": "2026-04-27T16-24-40.808Z",
+    "backlog_task": "TASK-182"
   }
 ]

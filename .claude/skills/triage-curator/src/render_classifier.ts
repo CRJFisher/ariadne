@@ -44,7 +44,7 @@ export function render_classifier(spec: BuiltinClassifierSpec): string {
     lines.push(`// ${desc_line}`);
   }
   lines.push("");
-  lines.push("import type { EnrichedFunctionEntry } from \"../../types.js\";");
+  lines.push("import type { EnrichedFunctionEntry } from \"../../entry_point_types.js\";");
   lines.push("import type { FileLinesReader } from \"../types.js\";");
   lines.push("");
 
@@ -121,11 +121,11 @@ function render_check(check: SignalCheck, helpers: HelperRequirements): string {
       return `detect_language(entry.file_path) === ${JSON.stringify(check.value)}`;
 
     case "syntactic_feature_eq":
-      // Feature names are a closed enum (SyntacticFeatureName) in self-repair-pipeline;
-      // bracket-indexing by name keeps the renderer agnostic to the enum list.
+      // Feature names are a closed enum (SyntacticFeatureName) of valid identifiers
+      // — emit direct property access for type safety.
       return (
         "entry.diagnostics.ariadne_call_refs.some((r) => " +
-        `(r.syntactic_features as Record<string, string | number | boolean>)[${JSON.stringify(check.name)}] === ${JSON.stringify(check.value)})`
+        `r.syntactic_features.${check.name} === ${JSON.stringify(check.value)})`
       );
 
     case "grep_line_regex": {
@@ -214,11 +214,9 @@ function render_check(check: SignalCheck, helpers: HelperRequirements): string {
     }
 
     case "definition_feature_eq": {
-      const name = JSON.stringify(check.name);
-      return (
-        "(entry.definition_features as Record<string, boolean | string | null>)" +
-        `[${name}] === ${check.value ? "true" : "false"}`
-      );
+      // Feature names are a closed enum (DefinitionFeatureName) of valid identifiers
+      // — emit direct property access for type safety.
+      return `entry.definition_features.${check.name} === ${check.value ? "true" : "false"}`;
     }
 
     case "accessor_kind_eq": {

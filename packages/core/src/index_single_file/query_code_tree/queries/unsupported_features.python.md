@@ -12,7 +12,7 @@ A method is invoked on the result of another call (e.g. `a.b().c()`), but Ariadn
 | ------------ | -------------------------------------------- |
 | Status       | `wip`                                        |
 | Languages    | `typescript`, `javascript`, `python`, `rust` |
-| Backlog task | _none_                                       |
+| Backlog task | `TASK-206`                                   |
 | Classifier   | _none — known, no automated classifier_      |
 
 **Examples**
@@ -97,24 +97,16 @@ A variable is assigned the result of a function call whose return type Ariadne c
 
 The source line contains an inline constructor followed by a method call (`new Builder().with_x().build()`). The tree-sitter capture fires but the resolver cannot track the constructed type across the intermediate chain to dispatch the final method.
 
-| Field        | Value                                  |
-| ------------ | -------------------------------------- |
-| Status       | `wip`                                  |
-| Languages    | `typescript`, `javascript`, `python`   |
-| Backlog task | _none_                                 |
-| Classifier   | predicate, axis B (min_confidence 0.9) |
+| Field        | Value                                                                 |
+| ------------ | --------------------------------------------------------------------- |
+| Status       | `wip`                                                                 |
+| Languages    | `typescript`, `javascript`, `python`                                  |
+| Backlog task | `TASK-187`                                                            |
+| Classifier   | builtin, `check_inline_constructor_method_chain` (min_confidence 0.9) |
 
 **Examples**
 
 - `test/suite.ts`:3 — `new Builder().with_opt().build()`
-
-**Predicate**
-
-```
-all:
-  grep_line_regex new\s+[A-Z][A-Za-z0-9_]*\s*\([^)]*\)\s*\.
-  diagnosis_eq callers-in-registry-unresolved
-```
 
 ## `python-module-attribute-call` — F4 — Python `module.func()` call not resolved via namespace receiver
 
