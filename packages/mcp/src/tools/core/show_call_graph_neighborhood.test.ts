@@ -538,6 +538,11 @@ describe("build_callers_index", () => {
 
 describe("show_call_graph_neighborhood", () => {
   let mock_project: Pick<Project, "get_call_graph">;
+  const TEST_PROJECT_PATH = "/test_project";
+  const call_show = (
+    request: Parameters<typeof show_call_graph_neighborhood>[1],
+    project_path: string = TEST_PROJECT_PATH,
+  ) => show_call_graph_neighborhood(mock_project, request, project_path);
 
   beforeEach(() => {
     mock_project = {
@@ -553,7 +558,7 @@ describe("show_call_graph_neighborhood", () => {
     vi.mocked(mock_project.get_call_graph).mockReturnValue(mock_call_graph);
 
     await expect(
-      show_call_graph_neighborhood(mock_project, {
+      call_show({
         symbol_ref: "invalid",
         show_full_signature: true,
       })
@@ -568,7 +573,7 @@ describe("show_call_graph_neighborhood", () => {
     vi.mocked(mock_project.get_call_graph).mockReturnValue(mock_call_graph);
 
     await expect(
-      show_call_graph_neighborhood(mock_project, {
+      call_show({
         symbol_ref: "test.ts:1#foo",
         show_full_signature: true,
       })
@@ -589,7 +594,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "src/utils.ts:10#foo",
       show_full_signature: true,
     });
@@ -612,7 +617,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "src/utils.ts:10#foo",
       show_full_signature: true,
     });
@@ -634,7 +639,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "src/utils.ts:10#foo",
       show_full_signature: true,
     });
@@ -676,7 +681,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "test.ts:1#callee",
       show_full_signature: true,
     });
@@ -720,7 +725,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "test.ts:10#caller",
       show_full_signature: true,
     });
@@ -754,7 +759,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "test.ts:1#recursive",
       callees_depth: 3,
       show_full_signature: true,
@@ -806,7 +811,7 @@ describe("show_call_graph_neighborhood", () => {
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
     // With depth 1, should only show c1
-    const result_depth1 = await show_call_graph_neighborhood(mock_project, {
+    const result_depth1 = await call_show({
       symbol_ref: "test.ts:1#target",
       callers_depth: 1,
       show_full_signature: true,
@@ -815,7 +820,7 @@ describe("show_call_graph_neighborhood", () => {
     expect(result_depth1).not.toContain("c2(): void");
 
     // With depth 2, should show c1 and c2
-    const result_depth2 = await show_call_graph_neighborhood(mock_project, {
+    const result_depth2 = await call_show({
       symbol_ref: "test.ts:1#target",
       callers_depth: 2,
       show_full_signature: true,
@@ -864,7 +869,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "test.ts:1#my_func",
       show_full_signature: false,
     });
@@ -881,7 +886,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "test.ts:1#foo",
       show_full_signature: true,
     });
@@ -923,7 +928,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "test.ts:1#func_a",
       callers_depth: 3,
       callees_depth: 3,
@@ -943,7 +948,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "test.ts:1#foo",
       callers_depth: null,
       callees_depth: null,
@@ -1003,7 +1008,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "test.ts:10#target",
       show_full_signature: true,
     });
@@ -1054,7 +1059,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "test.ts:10#target",
       show_full_signature: true,
     });
@@ -1080,7 +1085,7 @@ describe("show_call_graph_neighborhood", () => {
       };
       vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-      const result = await show_call_graph_neighborhood(mock_project, {
+      const result = await call_show({
         symbol_ref: "stats.py:10#calculate",
         show_full_signature: true,
       });
@@ -1096,7 +1101,7 @@ describe("show_call_graph_neighborhood", () => {
       };
       vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-      const result = await show_call_graph_neighborhood(mock_project, {
+      const result = await call_show({
         symbol_ref: "stats.py:10#calculate",
         show_full_signature: true,
       });
@@ -1116,7 +1121,7 @@ describe("show_call_graph_neighborhood", () => {
       };
       vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-      const result = await show_call_graph_neighborhood(mock_project, {
+      const result = await call_show({
         symbol_ref: "stats.py:10#calculate",
         show_full_signature: true,
       });
@@ -1136,12 +1141,71 @@ describe("show_call_graph_neighborhood", () => {
       };
       vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-      const result = await show_call_graph_neighborhood(mock_project, {
+      const result = await call_show({
         symbol_ref: "stats.py:10#calculate",
         show_full_signature: true,
       });
 
       expect(result).not.toContain("Docstring:");
+    });
+  });
+
+  describe("symbol_ref project-root guard", () => {
+    it("throws a project-aware error when symbol_ref file_path is absolute and outside the project root", async () => {
+      const empty_call_graph: CallGraph = {
+        nodes: new Map(),
+        entry_points: [],
+      };
+      vi.mocked(mock_project.get_call_graph).mockReturnValue(empty_call_graph);
+
+      await expect(
+        call_show(
+          {
+            symbol_ref: "/tmp/elsewhere/foo.ts:10#bar",
+            show_full_signature: true,
+          },
+          "/test_project",
+        ),
+      ).rejects.toThrow(
+        /symbol_ref file path '\/tmp\/elsewhere\/foo\.ts' is outside the loaded project root '\/test_project'/,
+      );
+    });
+
+    it("does not trigger the project-root guard for relative symbol_ref paths", async () => {
+      const empty_call_graph: CallGraph = {
+        nodes: new Map(),
+        entry_points: [],
+      };
+      vi.mocked(mock_project.get_call_graph).mockReturnValue(empty_call_graph);
+
+      await expect(
+        call_show({
+          symbol_ref: "src/foo.ts:10#bar",
+          show_full_signature: true,
+        }),
+      ).rejects.toThrow(/Could not find callable/);
+    });
+
+    it("accepts an absolute symbol_ref file_path inside the project root", async () => {
+      const node = create_mock_node(
+        "symbol:foo",
+        "foo",
+        "/test_project/src/utils.ts",
+        10,
+        20,
+      );
+      const call_graph: CallGraph = {
+        nodes: new Map([[node.symbol_id, node]]),
+        entry_points: [node.symbol_id],
+      };
+      vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
+
+      const result = await call_show({
+        symbol_ref: "/test_project/src/utils.ts:10#foo",
+        show_full_signature: true,
+      });
+
+      expect(result).toContain("Call graph for: foo(): void");
     });
   });
 });

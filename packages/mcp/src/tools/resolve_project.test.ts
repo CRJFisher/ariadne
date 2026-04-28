@@ -80,4 +80,73 @@ describe("resolve_project", () => {
       folders: ["src/"],
     });
   });
+
+  it("throws when a files entry is outside the project root", async () => {
+    await expect(
+      resolve_project(
+        { files: ["/tmp/elsewhere/foo.ts"] },
+        mock_project_manager,
+        "/project",
+      ),
+    ).rejects.toThrow(/outside the loaded project root '\/project'/);
+    expect(load_project).not.toHaveBeenCalled();
+  });
+
+  it("throws when a folders entry is outside the project root", async () => {
+    await expect(
+      resolve_project(
+        { folders: ["/tmp/elsewhere"] },
+        mock_project_manager,
+        "/project",
+      ),
+    ).rejects.toThrow(/outside the loaded project root '\/project'/);
+    expect(load_project).not.toHaveBeenCalled();
+  });
+
+  it("throws when a relative folders entry escapes via ..", async () => {
+    await expect(
+      resolve_project(
+        { folders: ["../escape"] },
+        mock_project_manager,
+        "/project",
+      ),
+    ).rejects.toThrow(/outside the loaded project root/);
+    expect(load_project).not.toHaveBeenCalled();
+  });
+
+  it("throws for an empty-string files entry", async () => {
+    await expect(
+      resolve_project(
+        { files: [""] },
+        mock_project_manager,
+        "/project",
+      ),
+    ).rejects.toThrow(/files entry must not be empty/);
+    expect(load_project).not.toHaveBeenCalled();
+  });
+
+  it("throws for a whitespace-only folders entry", async () => {
+    await expect(
+      resolve_project(
+        { folders: ["   "] },
+        mock_project_manager,
+        "/project",
+      ),
+    ).rejects.toThrow(/folders entry must not be empty/);
+    expect(load_project).not.toHaveBeenCalled();
+  });
+
+  it("accepts an absolute files entry inside the project root", async () => {
+    const scoped_project = {} as Project;
+    vi.mocked(load_project).mockResolvedValue(scoped_project);
+
+    const result = await resolve_project(
+      { files: ["/project/src/main.ts"] },
+      mock_project_manager,
+      "/project",
+    );
+
+    expect(result).toBe(scoped_project);
+    expect(load_project).toHaveBeenCalled();
+  });
 });

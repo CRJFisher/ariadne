@@ -27,8 +27,12 @@ export const CORE_TOOL_GROUP: ToolGroupDefinition = {
       description:
         "Shows the call graph neighborhood around a callable. Displays callers (upstream, who calls this function) and callees (downstream, what this function calls) with configurable depth. Use the Ref output from list_entrypoints as the symbol_ref input, or construct it as file_path:line#name. Supports filtering by specific files or folders for scoped analysis.",
       input_schema: show_call_graph_neighborhood_schema,
-      handler: async (project, args) =>
-        show_call_graph_neighborhood(project, args as ShowCallGraphNeighborhoodRequest),
+      handler: async (project, args, project_path) =>
+        show_call_graph_neighborhood(
+          project,
+          args as ShowCallGraphNeighborhoodRequest,
+          project_path,
+        ),
     },
   ],
 };

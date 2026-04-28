@@ -114,7 +114,7 @@ describe("register_tool_groups", () => {
     const extra = { requestId: "req-1", _meta: { "claudecode/toolUseId": "tu-1" } };
     const result = await callback({ value: "hello" }, extra);
 
-    expect(group.tools[0].handler).toHaveBeenCalledWith(mock_project, { value: "hello" });
+    expect(group.tools[0].handler).toHaveBeenCalledWith(mock_project, { value: "hello" }, "/project");
     expect(record_tool_call).toHaveBeenCalledTimes(1);
     const success_call = vi.mocked(record_tool_call).mock.calls[0][0];
     expect(success_call).toEqual({
@@ -191,5 +191,35 @@ describe("register_tool_groups", () => {
       "/project",
       undefined,
     );
+  });
+
+  it("surfaces a resolve_project path-guard rejection as isError with the guard message", async () => {
+    const group = make_test_group();
+    vi.mocked(resolve_project).mockRejectedValue(
+      new Error(
+        "files entry '/tmp/elsewhere/foo.ts' is outside the loaded project root '/project'.",
+      ),
+    );
+
+    register_tool_groups([group], {
+      mcp_server: mock_server,
+      project_manager: mock_project_manager,
+      project_path: "/project",
+      enabled_groups: [],
+    });
+
+    const { callback } = registered_tools.get("test_tool")!;
+    const result = await callback({}, { requestId: "req-guard" });
+
+    expect(result).toEqual({
+      content: [
+        {
+          type: "text",
+          text:
+            "Error: files entry '/tmp/elsewhere/foo.ts' is outside the loaded project root '/project'.",
+        },
+      ],
+      isError: true,
+    });
   });
 });
