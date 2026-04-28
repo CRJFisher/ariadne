@@ -32,6 +32,7 @@ function make_fp_entry(entry_index: number, group_id: string): TriageEntry {
     },
     auto_classified: false,
     classifier_hints: [],
+    tp_source_run_id: null,
   };
 }
 

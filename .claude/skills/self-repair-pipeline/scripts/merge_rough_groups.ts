@@ -15,13 +15,18 @@ import fs from "fs";
 import path from "path";
 import { merge_rough_groups } from "../src/aggregation/merge_rough_groups.js";
 import type { Pass1Output } from "../src/aggregation/types.js";
-import { parse_project_arg, require_state_file } from "../src/triage_state_paths.js";
+import { parse_project_arg, parse_run_id_arg } from "../src/cli_args.js";
+import { require_run } from "../src/triage_state_paths.js";
 import "../src/guard_tsx_invocation.js";
 
-const project = parse_project_arg(process.argv, "Usage: merge_rough_groups.ts --project <name>");
-const state_path = require_state_file(project);
+const project = parse_project_arg(
+  process.argv,
+  "Usage: merge_rough_groups.ts --project <name> [--run-id <id>]",
+);
+const run_id_opt = parse_run_id_arg(process.argv);
+const { run_dir } = require_run(project, run_id_opt);
 
-const aggregation_dir = path.join(path.dirname(state_path), "aggregation");
+const aggregation_dir = path.join(run_dir, "aggregation");
 const pass1_dir = path.join(aggregation_dir, "pass1");
 
 if (!fs.existsSync(pass1_dir)) {

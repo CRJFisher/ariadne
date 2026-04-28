@@ -1,9 +1,11 @@
 /**
- * Merge per-entry result files from triage_state/results/ into the triage state.
+ * Merge per-entry result files from a run's `results/` subdir into its triage state.
  *
- * Each triage-investigator agent writes its result to {triage_dir}/results/{entry_index}.json.
- * This function scans that directory, parses results, and updates the
- * corresponding entries in the state. Returns the count of entries merged.
+ * Each triage-investigator agent writes its result to
+ * `triage_state/<project>/runs/<run-id>/results/<entry_index>.json`. This
+ * function scans that directory (passed as `triage_dir` = the run's directory),
+ * parses results, and updates the corresponding entries in the state. Returns
+ * the count of entries merged.
  */
 
 import fs from "fs";

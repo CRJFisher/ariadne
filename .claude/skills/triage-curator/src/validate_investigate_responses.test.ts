@@ -19,8 +19,8 @@ const SOURCE_GROUP: FalsePositiveGroup = {
   reasoning: "y",
   existing_task_fixes: [],
   entries: [
-    { name: "a", file_path: "a.ts", start_line: 1 },
-    { name: "b", file_path: "b.ts", start_line: 2 },
+    { name: "a", file_path: "a.ts", start_line: 1, kind: "function" },
+    { name: "b", file_path: "b.ts", start_line: 2, kind: "function" },
   ],
 };
 

@@ -31,13 +31,14 @@
  */
 
 import fs from "fs";
-import path from "path";
-import { parse_project_arg, require_state_file } from "../src/triage_state_paths.js";
+import { parse_project_arg, parse_run_id_arg } from "../src/cli_args.js";
+import { require_run } from "../src/triage_state_paths.js";
 import { merge_results } from "../src/merge_results.js";
 import type { TriageEntry, TriageState } from "../src/triage_state_types.js";
 import "../src/guard_tsx_invocation.js";
 
-const USAGE = "Usage: get_next_triage_entry.ts --project <name> [--count <n>] [--active <indices>]";
+const USAGE =
+  "Usage: get_next_triage_entry.ts --project <name> [--run-id <id>] [--count <n>] [--active <indices>]";
 
 interface CliArgs {
   project: string;
@@ -112,7 +113,8 @@ function is_main_module(): boolean {
 
 if (is_main_module()) {
   const { project, count, active } = parse_args(process.argv);
-  const state_path = require_state_file(project);
+  const run_id_opt = parse_run_id_arg(process.argv);
+  const { state_path, run_dir } = require_run(project, run_id_opt);
 
   let state: TriageState;
   try {
@@ -122,8 +124,7 @@ if (is_main_module()) {
     process.exit(1);
   }
 
-  const triage_dir = path.dirname(state_path);
-  merge_results(state, triage_dir);
+  merge_results(state, run_dir);
 
   const picked = pick_next_entries(state.entries, count, active);
 

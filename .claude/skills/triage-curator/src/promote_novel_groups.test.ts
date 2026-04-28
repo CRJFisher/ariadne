@@ -19,7 +19,7 @@ function entry(
   file_path: string,
   start_line: number,
 ): FalsePositiveEntry {
-  return { name, file_path, start_line };
+  return { name, file_path, start_line, kind: "function" };
 }
 
 function triage(

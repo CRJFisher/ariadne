@@ -15,13 +15,14 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { parse_project_arg, require_state_file } from "../src/triage_state_paths.js";
+import { parse_project_arg, parse_run_id_arg } from "../src/cli_args.js";
+import { require_run, results_dir_for } from "../src/triage_state_paths.js";
 import type { TriageState, TriageEntry } from "../src/triage_state_types.js";
 import type { GrepHit, CallRefDiagnostic, EntryPointDiagnostics } from "../src/entry_point_types.js";
 import type { ClassifierHint } from "../src/auto_classify/types.js";
 import "../src/guard_tsx_invocation.js";
 
-const USAGE = "Usage: get_entry_context.ts --project <name> --entry <index>";
+const USAGE = "Usage: get_entry_context.ts --project <name> --entry <index> [--run-id <id>]";
 
 const THIS_FILE = fileURLToPath(import.meta.url);
 const THIS_DIR = path.dirname(THIS_FILE);
@@ -298,8 +299,8 @@ export function substitute_template(
 
 function main(): void {
   const cli = parse_args(process.argv);
-
-  const state_path = require_state_file(cli.project);
+  const run_id_opt = parse_run_id_arg(process.argv);
+  const { run_id, state_path } = require_run(cli.project, run_id_opt);
 
   const state = JSON.parse(fs.readFileSync(state_path, "utf8")) as TriageState;
 
@@ -311,7 +312,7 @@ function main(): void {
 
   const template = fs.readFileSync(TEMPLATE_PATH, "utf8");
 
-  const output_path = path.join(path.dirname(state_path), "results", `${entry.entry_index}.json`);
+  const output_path = path.join(results_dir_for(cli.project, run_id), `${entry.entry_index}.json`);
 
   const prompt = substitute_template(template, entry, entry.diagnostics, output_path);
   process.stdout.write(prompt);

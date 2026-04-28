@@ -46,8 +46,8 @@ function group(): FalsePositiveGroup {
     reasoning: "…",
     existing_task_fixes: [],
     entries: [
-      { name: "hash_digest", file_path: "src/hash.ts", start_line: 12 },
-      { name: "pipe_step", file_path: "src/pipe.ts", start_line: 25 },
+      { name: "hash_digest", file_path: "src/hash.ts", start_line: 12, kind: "function" },
+      { name: "pipe_step", file_path: "src/pipe.ts", start_line: 25, kind: "function" },
     ],
   };
 }
@@ -132,6 +132,7 @@ describe("render_ariadne_bug_body", () => {
         name: `fn_${i}`,
         file_path: `src/f${i}.ts`,
         start_line: i + 1,
+        kind: "function" as const,
       })),
     };
     const body = render_ariadne_bug_body({

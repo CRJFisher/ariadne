@@ -1,103 +1,140 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import fs from "fs";
-import os from "os";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import fsSync from "fs";
 import path from "path";
+
 import {
   list_projects_with_state,
-  parse_project_arg,
+  manifest_path_for,
+  read_latest_run_id,
+  results_dir_for,
+  run_dir_for,
   state_path_for,
+  write_latest_run_id,
+  clear_latest,
+  require_run,
 } from "./triage_state_paths.js";
 
-let triage_dir: string;
+// vi.hoisted runs before all `import` statements, so the env var is set
+// before `paths.js` (transitively imported by `triage_state_paths.js`) reads it.
+const TMP_BASE = vi.hoisted(() => {
+  const tmp_path = `${process.env.TMPDIR ?? "/tmp"}/ariadne-test-triage-paths-${process.pid}`;
+  process.env.ARIADNE_SELF_REPAIR_DIR_OVERRIDE = tmp_path;
+  return tmp_path;
+});
+
+const triage_dir = path.join(TMP_BASE, "triage_state");
 
 beforeEach(() => {
-  triage_dir = fs.mkdtempSync(path.join(os.tmpdir(), "discover-state-"));
+  fsSync.rmSync(TMP_BASE, { recursive: true, force: true });
+  fsSync.mkdirSync(triage_dir, { recursive: true });
 });
 
 afterEach(() => {
-  fs.rmSync(triage_dir, { recursive: true, force: true });
+  vi.restoreAllMocks();
+  fsSync.rmSync(TMP_BASE, { recursive: true, force: true });
 });
 
-function seed_project(project: string): string {
-  const project_dir = path.join(triage_dir, project);
-  fs.mkdirSync(project_dir, { recursive: true });
-  const state_path = path.join(project_dir, `${project}_triage.json`);
-  fs.writeFileSync(state_path, "{}");
-  return state_path;
+function seed_run(project: string, run_id: string): void {
+  const run_dir = path.join(triage_dir, project, "runs", run_id);
+  fsSync.mkdirSync(path.join(run_dir, "results"), { recursive: true });
+  fsSync.writeFileSync(path.join(run_dir, "triage.json"), "{}");
 }
 
-describe("state_path_for", () => {
-  it("builds the canonical path without checking existence", () => {
-    expect(state_path_for(triage_dir, "mocha")).toBe(
-      path.join(triage_dir, "mocha", "mocha_triage.json"),
+describe("path builders", () => {
+  it("run_dir_for / state_path_for / manifest_path_for / results_dir_for", () => {
+    const project = "express";
+    const run_id = "deadbee-2026-04-28T13-42-07.812Z";
+
+    expect(run_dir_for(project, run_id)).toBe(
+      path.join(triage_dir, project, "runs", run_id),
+    );
+    expect(state_path_for(project, run_id)).toBe(
+      path.join(triage_dir, project, "runs", run_id, "triage.json"),
+    );
+    expect(manifest_path_for(project, run_id)).toBe(
+      path.join(triage_dir, project, "runs", run_id, "manifest.json"),
+    );
+    expect(results_dir_for(project, run_id)).toBe(
+      path.join(triage_dir, project, "runs", run_id, "results"),
     );
   });
 });
 
+describe("LATEST pointer", () => {
+  it("read_latest_run_id returns null when absent", () => {
+    expect(read_latest_run_id("nope")).toBeNull();
+  });
+
+  it("write then read round-trip", () => {
+    write_latest_run_id("express", "deadbee-2026-04-28T13-42-07.812Z");
+    expect(read_latest_run_id("express")).toBe("deadbee-2026-04-28T13-42-07.812Z");
+  });
+
+  it("clear_latest removes the pointer", () => {
+    write_latest_run_id("express", "abc-1");
+    clear_latest("express");
+    expect(read_latest_run_id("express")).toBeNull();
+  });
+
+  it("clear_latest is a no-op when pointer is absent", () => {
+    expect(() => clear_latest("nope")).not.toThrow();
+  });
+});
+
 describe("list_projects_with_state", () => {
-  it("returns only subdirectories that contain a *_triage.json file", () => {
-    seed_project("express");
-    seed_project("mocha");
-    fs.mkdirSync(path.join(triage_dir, "empty"), { recursive: true });
+  it("returns projects whose runs/ directory has at least one run subdir", () => {
+    seed_run("express", "abc-1");
+    seed_run("mocha", "def-2");
+    fsSync.mkdirSync(path.join(triage_dir, "empty"), { recursive: true });
+    fsSync.mkdirSync(path.join(triage_dir, "stale", "runs"), { recursive: true });
     expect(list_projects_with_state(triage_dir).sort()).toEqual(["express", "mocha"]);
   });
 
   it("returns an empty array when triage_dir does not exist", () => {
-    fs.rmSync(triage_dir, { recursive: true });
-    expect(list_projects_with_state(triage_dir)).toEqual([]);
+    expect(list_projects_with_state(path.join(triage_dir, "nope"))).toEqual([]);
   });
 });
 
-describe("parse_project_arg", () => {
-  it("returns the project name when --project is present", () => {
-    expect(parse_project_arg(["node", "script.ts", "--project", "mocha"], "usage")).toBe("mocha");
+describe("require_run", () => {
+  it("resolves explicit run_id when state file exists", () => {
+    seed_run("express", "abc-1");
+    const resolved = require_run("express", "abc-1");
+    expect(resolved.run_id).toBe("abc-1");
+    expect(resolved.state_path).toBe(state_path_for("express", "abc-1"));
   });
 
-  it("ignores unrelated flags", () => {
-    expect(
-      parse_project_arg(["node", "script.ts", "--count", "5", "--project", "express"], "usage"),
-    ).toBe("express");
+  it("falls back to LATEST when run_id is null", () => {
+    seed_run("express", "abc-1");
+    write_latest_run_id("express", "abc-1");
+    const resolved = require_run("express", null);
+    expect(resolved.run_id).toBe("abc-1");
   });
 
-  it("exits via process.exit(1) when --project is missing", () => {
-    const original_exit = process.exit;
-    const original_stderr_write = process.stderr.write;
-    let exit_code: number | null = null;
-    let stderr_captured = "";
-    process.exit = ((code?: number) => {
-      exit_code = code ?? 0;
-      throw new Error("__exit__");
-    }) as typeof process.exit;
-    process.stderr.write = ((chunk: string | Uint8Array) => {
-      stderr_captured += String(chunk);
-      return true;
-    }) as typeof process.stderr.write;
+  it("exits when LATEST is missing", () => {
+    const exit_spy = vi.spyOn(process, "exit").mockImplementation(((code?: number) => {
+      throw new Error(`__exit__:${code ?? 0}`);
+    }) as never);
+    const stderr_spy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
     try {
-      expect(() => parse_project_arg(["node", "script.ts"], "Usage: foo --project <name>")).toThrow(
-        "__exit__",
-      );
+      expect(() => require_run("nope", null)).toThrow("__exit__:1");
     } finally {
-      process.exit = original_exit;
-      process.stderr.write = original_stderr_write;
+      exit_spy.mockRestore();
+      stderr_spy.mockRestore();
     }
-    expect(exit_code).toBe(1);
-    expect(stderr_captured).toBe("Usage: foo --project <name>\n");
   });
 
-  it("exits via process.exit(1) when --project value is empty", () => {
-    const original_exit = process.exit;
-    const original_stderr_write = process.stderr.write;
-    process.exit = (() => {
-      throw new Error("__exit__");
-    }) as typeof process.exit;
-    process.stderr.write = (() => true) as typeof process.stderr.write;
+  it("exits when explicit run_id has no state file", () => {
+    const exit_spy = vi.spyOn(process, "exit").mockImplementation(((code?: number) => {
+      throw new Error(`__exit__:${code ?? 0}`);
+    }) as never);
+    const stderr_spy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
     try {
-      expect(() =>
-        parse_project_arg(["node", "script.ts", "--project"], "Usage: foo --project <name>"),
-      ).toThrow("__exit__");
+      expect(() => require_run("express", "missing-run")).toThrow("__exit__:1");
     } finally {
-      process.exit = original_exit;
-      process.stderr.write = original_stderr_write;
+      exit_spy.mockRestore();
+      stderr_spy.mockRestore();
     }
   });
 });
+
+// CLI parser tests live in `cli_args.test.ts`.

@@ -25,6 +25,7 @@ function make_entry(overrides: Partial<TriageEntry> & { entry_index: number }): 
     },
     auto_classified: false,
     classifier_hints: [],
+    tp_source_run_id: null,
     ...overrides,
   };
 }

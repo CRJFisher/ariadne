@@ -213,6 +213,7 @@ describe("derive_languages_for_upsert", () => {
         name: `e${i}`,
         file_path: `src/e${i}${ext}`,
         start_line: 1,
+        kind: "function" as const,
       })),
     };
   }
@@ -568,7 +569,7 @@ describe("apply_proposals", () => {
         reasoning: "",
         existing_task_fixes: [],
         entries: [
-          { name: "x", file_path: "src/x.ts", start_line: 1 },
+          { name: "x", file_path: "src/x.ts", start_line: 1, kind: "function" },
         ],
       },
     };
@@ -598,8 +599,8 @@ describe("apply_proposals", () => {
         reasoning: "",
         existing_task_fixes: [],
         entries: [
-          { name: "a", file_path: "src/a.rs", start_line: 1 },
-          { name: "b", file_path: "src/b.ts", start_line: 2 },
+          { name: "a", file_path: "src/a.rs", start_line: 1, kind: "function" },
+          { name: "b", file_path: "src/b.ts", start_line: 2, kind: "function" },
         ],
       },
     };

@@ -71,6 +71,7 @@ export function build_triage_entries(input: BuildTriageEntriesInput): TriageEntr
       error: null,
       auto_classified: true,
       classifier_hints: [],
+      tp_source_run_id: null,
     });
   }
 
@@ -85,6 +86,7 @@ export function build_triage_entries(input: BuildTriageEntriesInput): TriageEntr
       error: null,
       auto_classified: false,
       classifier_hints,
+      tp_source_run_id: null,
     });
   }
 
