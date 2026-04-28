@@ -13,7 +13,11 @@ export interface ToolDefinition {
   description: string;
   input_schema: z.ZodType;
   annotations?: ToolAnnotations;
-  handler: (project: Project, args: Record<string, unknown>) => Promise<string>;
+  handler: (
+    project: Project,
+    args: Record<string, unknown>,
+    project_path: string,
+  ) => Promise<string>;
 }
 
 /**
@@ -95,7 +99,7 @@ export function register_tool_groups(
               project_path,
               storage,
             );
-            const result = await tool.handler(project, parsed_args);
+            const result = await tool.handler(project, parsed_args, project_path);
 
             record_tool_call({
               tool_name: tool.name,

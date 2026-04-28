@@ -1,7 +1,9 @@
+import path from "path";
 import { z } from "zod";
 import type { Project } from "@ariadnejs/core";
 import type { CallGraph, CallableNode, SymbolId } from "@ariadnejs/types";
 import { build_signature } from "./list_entrypoints.js";
+import { path_within_project } from "../path_within_project.js";
 
 /**
  * Input schema for show_call_graph_neighborhood tool
@@ -515,7 +517,8 @@ function format_output(
  */
 export async function show_call_graph_neighborhood(
   project: Pick<Project, "get_call_graph">,
-  request: ShowCallGraphNeighborhoodRequest
+  request: ShowCallGraphNeighborhoodRequest,
+  project_path: string,
 ): Promise<string> {
   const {
     symbol_ref,
@@ -526,6 +529,16 @@ export async function show_call_graph_neighborhood(
 
   // Parse symbol reference - let errors propagate for MCP isError handling
   const parsed_ref = parse_symbol_ref(symbol_ref);
+
+  // Absolute file paths outside the loaded project root indicate the agent is
+  // querying the wrong project — fail loudly rather than silently report
+  // "Could not find callable matching ..." which buries the misconfiguration.
+  if (path.isAbsolute(parsed_ref.file_path) && !path_within_project(parsed_ref.file_path, project_path)) {
+    throw new Error(
+      `symbol_ref file path '${parsed_ref.file_path}' is outside the loaded project root '${project_path}'. ` +
+        "Configure the MCP server's PROJECT_PATH to include this path, or supply a symbol_ref within the project.",
+    );
+  }
 
   // Get call graph
   const call_graph = project.get_call_graph();
