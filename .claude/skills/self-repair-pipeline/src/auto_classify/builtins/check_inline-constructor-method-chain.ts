@@ -3,16 +3,16 @@
 //
 // A method invoked on a chained receiver — typically `new X(...).method(...)` or `factory().method(...)` — where Ariadne records callers (diagnosis 'callers-in-registry-unresolved') but every call ref has receiver_kind 'call_chain' and a name_resolution failure 'name_not_in_scope'. Triggered for typeorm SubjectExecutor.ts:676/682 calling NestedSetSubjectExecutor.remove via `await new NestedSetSubjectExecutor(this.queryRunner).remove(subjects)`, and matches the F3 webpack-corpus shape `new Builder().with_x().build()`.
 
-import type { EnrichedFunctionEntry } from "../../entry_point_types.js";
+import type { EnrichedEntryPoint } from "../../entry_point_types.js";
 import type { FileLinesReader } from "../types.js";
 
 export function check_inline_constructor_method_chain(
-  entry: EnrichedFunctionEntry,
+  entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
 ): boolean {
   void read_file_lines;
-  const check_0 = entry.diagnostics.diagnosis === "callers-in-registry-unresolved";
-  const check_1 = entry.diagnostics.ariadne_call_refs.some((r) => r.receiver_kind === "call_chain");
-  const check_2 = entry.diagnostics.ariadne_call_refs.some((r) => r.resolution_failure !== null && r.resolution_failure.reason === "name_not_in_scope");
+  const check_0 = entry_point.diagnostics.diagnosis === "callers-in-registry-unresolved";
+  const check_1 = entry_point.diagnostics.ariadne_call_refs.some((r) => r.receiver_kind === "call_chain");
+  const check_2 = entry_point.diagnostics.ariadne_call_refs.some((r) => r.resolution_failure !== null && r.resolution_failure.reason === "name_not_in_scope");
   return check_0 && check_1 && check_2;
 }

@@ -3,15 +3,15 @@
 //
 // ECMAScript private class field methods (#name) on TS/JS classes whose call sites this.#method() are not captured by the tree-sitter query. The class-body capture for definitions matches private_property_identifier, but the call_expression query for instance method calls only matches property_identifier, so this.#method() invocations never produce @reference.call captures.
 
-import type { EnrichedFunctionEntry } from "../../entry_point_types.js";
+import type { EnrichedEntryPoint } from "../../entry_point_types.js";
 import type { FileLinesReader } from "../types.js";
 
 export function check_private_field_method_resolution(
-  entry: EnrichedFunctionEntry,
+  entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
 ): boolean {
   void read_file_lines;
-  const check_0 = new RegExp("^#").test(entry.name);
-  const check_1 = new RegExp("\\.(ts|tsx|js|jsx|mjs|cjs)$").test(entry.file_path);
+  const check_0 = new RegExp("^#").test(entry_point.name);
+  const check_1 = new RegExp("\\.(ts|tsx|js|jsx|mjs|cjs)$").test(entry_point.file_path);
   return check_0 && check_1;
 }

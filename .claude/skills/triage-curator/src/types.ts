@@ -78,11 +78,11 @@ export interface CurationOutcome {
   investigated_groups: number;
   classifiers_proposed: number;
   /**
-   * Introspection-gap sub-tasks proposed for `INTROSPECTION_GAP_PARENT_TASK_ID`.
+   * Signal-library gap sub-tasks proposed for `SIGNAL_LIBRARY_GAP_PARENT_TASK_ID`.
    * Persisted in full so Step 6a is replayable from the sentinel if the main
    * agent crashes between finalize and backlog filing.
    */
-  introspection_gap_tasks: IntrospectionGapTaskToCreate[];
+  signal_library_gap_tasks: SignalLibraryGapTaskToCreate[];
   /**
    * Ariadne-bug top-level tasks proposed. Persisted in full so Step 6b is
    * replayable from the sentinel; crash between finalize and
@@ -188,9 +188,9 @@ export const ARIADNE_ROOT_CAUSE_CATEGORIES: readonly AriadneRootCauseCategory[] 
 /**
  * Deficiency in Ariadne's **introspection / classifier DSL** that blocks the
  * investigator from expressing a precise classifier. Drafts a backlog sub-task
- * under the single static parent (`INTROSPECTION_GAP_PARENT_TASK_ID`).
+ * under the single static parent (`SIGNAL_LIBRARY_GAP_PARENT_TASK_ID`).
  */
-export interface IntrospectionGap {
+export interface SignalLibraryGap {
   /** Kebab-case identifiers of the signals the classifier would need. */
   signals_needed: string[];
   title: string;
@@ -218,11 +218,11 @@ export interface AriadneBug {
 }
 
 /**
- * Introspection-gap task produced by `apply_proposals` and filed by the main
- * agent under `INTROSPECTION_GAP_PARENT_TASK_ID` in Step 6a. One per
- * investigator response that populated `introspection_gap`.
+ * Signal-library gap task produced by `apply_proposals` and filed by the main
+ * agent under `SIGNAL_LIBRARY_GAP_PARENT_TASK_ID` in Step 6a. One per
+ * investigator response that populated `signal_library_gap`.
  */
-export interface IntrospectionGapTaskToCreate {
+export interface SignalLibraryGapTaskToCreate {
   /** Source group that surfaced this gap. */
   group_id: string;
   title: string;
@@ -341,9 +341,9 @@ export interface InvestigateResponse {
   /**
    * Signal-library / classifier-DSL deficiency. Non-null ↔ `signals_needed`
    * is non-empty. Finalize files this as a sub-task under
-   * `INTROSPECTION_GAP_PARENT_TASK_ID`.
+   * `SIGNAL_LIBRARY_GAP_PARENT_TASK_ID`.
    */
-  introspection_gap: IntrospectionGap | null;
+  signal_library_gap: SignalLibraryGap | null;
   /**
    * Resolver-level root cause behind this false-positive group. REQUIRED when
    * `proposed_classifier` is non-null and its `kind` is not `"none"` — the

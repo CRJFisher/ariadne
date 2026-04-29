@@ -385,7 +385,7 @@ All library modules live under `src/`:
 | `aggregation/prepare_slices.ts`       | Slice completed false positives into rough-aggregator inputs                   |
 | `aggregation/merge_rough_groups.ts`   | Merge pass1 outputs into canonical pass3 input                                 |
 | `aggregation/finalize_aggregation.ts` | Apply pass3 verdicts back to triage state                                      |
-| `entry_point_types.ts`                | Entry-point shapes (`EnrichedFunctionEntry`, diagnostics)                      |
+| `entry_point_types.ts`                | Entry-point shapes (`EnrichedEntryPoint`, diagnostics)                         |
 | `known_issues_types.ts`               | Known-issues registry DSL (`ClassifierSpec`, `PredicateExpr`, `KnownIssue`, …) |
 | `triage_state_types.ts`               | Triage state types (`TriageState`, `TriageEntry`, `TriageEntryResult`)         |
 | `triage_state_paths.ts`               | Triage state file locations + required-flag CLI helpers                        |

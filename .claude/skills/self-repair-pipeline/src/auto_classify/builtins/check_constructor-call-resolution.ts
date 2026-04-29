@@ -3,7 +3,7 @@
 //
 // JavaScript named function expressions assigned to a `var` (e.g. `var Chrome = function Chrome(chrome) { ... }`) that are invoked intra-file via `new Chrome(...)`. The tree-sitter query fires `@reference.constructor`, so a CallReference exists, but the resolver fails at `constructor_lookup` with `name_not_in_scope` because the var-bound named-function-expression name is not registered as a constructible target in the enclosing script scope. Filtered to PascalCase names so the rule does not fire on lowercase function-valued vars.
 
-import type { EnrichedFunctionEntry } from "../../entry_point_types.js";
+import type { EnrichedEntryPoint } from "../../entry_point_types.js";
 import type { FileLinesReader } from "../types.js";
 
 function detect_language(file_path: string): string | null {
@@ -15,14 +15,14 @@ function detect_language(file_path: string): string | null {
 }
 
 export function check_constructor_call_resolution(
-  entry: EnrichedFunctionEntry,
+  entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
 ): boolean {
   void read_file_lines;
-  const check_0 = detect_language(entry.file_path) === "javascript";
-  const check_1 = entry.diagnostics.diagnosis === "callers-in-registry-unresolved";
-  const check_2 = entry.diagnostics.ariadne_call_refs.some((r) => r.syntactic_features.is_new_expression === true);
-  const check_3 = entry.diagnostics.ariadne_call_refs.some((r) => r.resolution_failure !== null && r.resolution_failure.reason === "name_not_in_scope");
-  const check_4 = new RegExp("^[A-Z][A-Za-z0-9_$]*$").test(entry.name);
+  const check_0 = detect_language(entry_point.file_path) === "javascript";
+  const check_1 = entry_point.diagnostics.diagnosis === "callers-in-registry-unresolved";
+  const check_2 = entry_point.diagnostics.ariadne_call_refs.some((r) => r.syntactic_features.is_new_expression === true);
+  const check_3 = entry_point.diagnostics.ariadne_call_refs.some((r) => r.resolution_failure !== null && r.resolution_failure.reason === "name_not_in_scope");
+  const check_4 = new RegExp("^[A-Z][A-Za-z0-9_$]*$").test(entry_point.name);
   return check_0 && check_1 && check_2 && check_3 && check_4;
 }

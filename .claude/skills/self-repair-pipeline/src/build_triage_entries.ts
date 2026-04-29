@@ -14,35 +14,35 @@
  * calling this function so the bucketing here is final.
  */
 
-import type { EnrichedFunctionEntry } from "./entry_point_types.js";
+import type { EnrichedEntryPoint } from "./entry_point_types.js";
 import type { TriageEntry } from "./triage_state_types.js";
-import type { AutoClassifiedEntry, ClassifierHint } from "./auto_classify/types.js";
+import type { ClassifiedEntryPointResult, ClassifierHint } from "./auto_classify/types.js";
 
 export interface BuildTriageEntriesInput {
-  auto_classified: AutoClassifiedEntry[];
-  residual: ResidualEntry[];
+  auto_classified: ClassifiedEntryPointResult[];
+  residual: ResidualEntryPoint[];
 }
 
 /** A residual entry that did not match any predicate classifier. */
-export interface ResidualEntry {
-  entry: EnrichedFunctionEntry;
+export interface ResidualEntryPoint {
+  entry_point: EnrichedEntryPoint;
   classifier_hints: ClassifierHint[];
 }
 
-function entry_to_triage_base(entry: EnrichedFunctionEntry): Pick<
+function entry_point_to_triage_base(entry_point: EnrichedEntryPoint): Pick<
   TriageEntry,
   "name" | "file_path" | "start_line" | "kind" | "signature" | "diagnosis" | "is_exported" | "access_modifier" | "diagnostics"
 > {
   return {
-    name: entry.name,
-    file_path: entry.file_path,
-    start_line: entry.start_line,
-    kind: entry.kind,
-    signature: entry.signature ?? null,
-    diagnosis: entry.diagnostics.diagnosis,
-    is_exported: entry.is_exported,
-    access_modifier: entry.access_modifier ?? null,
-    diagnostics: entry.diagnostics,
+    name: entry_point.name,
+    file_path: entry_point.file_path,
+    start_line: entry_point.start_line,
+    kind: entry_point.kind,
+    signature: entry_point.signature ?? null,
+    diagnosis: entry_point.diagnostics.diagnosis,
+    is_exported: entry_point.is_exported,
+    access_modifier: entry_point.access_modifier ?? null,
+    diagnostics: entry_point.diagnostics,
   };
 }
 
@@ -50,7 +50,7 @@ export function build_triage_entries(input: BuildTriageEntriesInput): TriageEntr
   const entries: TriageEntry[] = [];
   let index = 0;
 
-  for (const { entry, result } of input.auto_classified) {
+  for (const { entry_point, result } of input.auto_classified) {
     if (!result.auto_classified) {
       throw new Error(
         "build_triage_entries: auto_classified bucket must contain only classified entries",
@@ -58,7 +58,7 @@ export function build_triage_entries(input: BuildTriageEntriesInput): TriageEntr
     }
     entries.push({
       entry_index: index++,
-      ...entry_to_triage_base(entry),
+      ...entry_point_to_triage_base(entry_point),
       route: "known-unreachable",
       known_source: result.auto_group_id,
       status: "completed",
@@ -75,10 +75,10 @@ export function build_triage_entries(input: BuildTriageEntriesInput): TriageEntr
     });
   }
 
-  for (const { entry, classifier_hints } of input.residual) {
+  for (const { entry_point, classifier_hints } of input.residual) {
     entries.push({
       entry_index: index++,
-      ...entry_to_triage_base(entry),
+      ...entry_point_to_triage_base(entry_point),
       route: "llm-triage",
       known_source: null,
       status: "pending",

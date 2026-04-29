@@ -3,7 +3,7 @@
 //
 // Function whose only textual references appear inside string literals passed to `new Function(...)` or `eval(...)`. The runtime constructs and invokes the function from a string, so the call site is invisible to static analysis. Restricted to JavaScript with zero resolved Ariadne callers and at least one grep hit on a line that invokes `new Function(` or `eval(`.
 
-import type { EnrichedFunctionEntry } from "../../entry_point_types.js";
+import type { EnrichedEntryPoint } from "../../entry_point_types.js";
 import type { FileLinesReader } from "../types.js";
 
 function detect_language(file_path: string): string | null {
@@ -15,12 +15,12 @@ function detect_language(file_path: string): string | null {
 }
 
 export function check_dynamic_new_function_dispatch(
-  entry: EnrichedFunctionEntry,
+  entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
 ): boolean {
   void read_file_lines;
-  const check_0 = detect_language(entry.file_path) === "javascript";
-  const check_1 = entry.diagnostics.ariadne_call_refs.length <= 0;
-  const check_2 = (() => { const pattern = new RegExp("\\b(?:new\\s+Function|eval)\\s*\\("); return entry.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })();
+  const check_0 = detect_language(entry_point.file_path) === "javascript";
+  const check_1 = entry_point.diagnostics.ariadne_call_refs.length <= 0;
+  const check_2 = (() => { const pattern = new RegExp("\\b(?:new\\s+Function|eval)\\s*\\("); return entry_point.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })();
   return check_0 && check_1 && check_2;
 }

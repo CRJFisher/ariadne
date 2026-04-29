@@ -3,7 +3,7 @@
 //
 // Definition has zero resolved Ariadne callers, but at least one textual grep hit, with every grep hit residing in the same file as the definition. Captures named function expressions assigned to var/let/const where the resolver fails to link intra-file call sites back to the definition (e.g. `var f = function f(...) {...}` called as `f(...)` elsewhere in the same module).
 
-import type { EnrichedFunctionEntry } from "../../entry_point_types.js";
+import type { EnrichedEntryPoint } from "../../entry_point_types.js";
 import type { FileLinesReader } from "../types.js";
 
 function detect_language(file_path: string): string | null {
@@ -15,12 +15,12 @@ function detect_language(file_path: string): string | null {
 }
 
 export function check_same_file_call_missed(
-  entry: EnrichedFunctionEntry,
+  entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
 ): boolean {
   void read_file_lines;
-  const check_0 = detect_language(entry.file_path) === "javascript";
-  const check_1 = entry.diagnostics.ariadne_call_refs.length <= 0;
-  const check_2 = (entry.diagnostics.grep_call_sites.length > 0 && entry.diagnostics.grep_call_sites.every((h) => h.file_path === entry.file_path)) === true;
+  const check_0 = detect_language(entry_point.file_path) === "javascript";
+  const check_1 = entry_point.diagnostics.ariadne_call_refs.length <= 0;
+  const check_2 = (entry_point.diagnostics.grep_call_sites.length > 0 && entry_point.diagnostics.grep_call_sites.every((h) => h.file_path === entry_point.file_path)) === true;
   return check_0 && check_1 && check_2;
 }

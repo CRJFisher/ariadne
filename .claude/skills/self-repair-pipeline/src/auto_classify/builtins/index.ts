@@ -2,7 +2,7 @@
 // Regenerated whenever the known-issues registry mutates. The orchestrator
 // looks up a builtin classifier by `function_name` via BUILTIN_CHECKS.
 
-import type { EnrichedFunctionEntry } from "../../entry_point_types.js";
+import type { EnrichedEntryPoint } from "../../entry_point_types.js";
 import type { FileLinesReader } from "../types.js";
 
 import { check_constructor_new_expression } from "./check_constructor-new-expression.js";
@@ -70,7 +70,7 @@ import { check_private_class_field_method } from "./check_private-class-field-me
 import { check_private_field_method_resolution } from "./check_private-field-method-resolution.js";
 
 export type BuiltinCheckFn = (
-  entry: EnrichedFunctionEntry,
+  entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
 ) => boolean;
 

@@ -3,13 +3,13 @@ import {
   build_triage_entries,
   type BuildTriageEntriesInput,
 } from "./build_triage_entries.js";
-import type { EnrichedFunctionEntry } from "./entry_point_types.js";
+import type { EnrichedEntryPoint } from "./entry_point_types.js";
 import type { TriageEntry } from "./triage_state_types.js";
-import type { AutoClassifiedEntry } from "./auto_classify/types.js";
+import type { ClassifiedEntryPointResult } from "./auto_classify/types.js";
 
 // ===== Test Helpers =====
 
-function make_entry(overrides: Partial<EnrichedFunctionEntry>): EnrichedFunctionEntry {
+function make_entry(overrides: Partial<EnrichedEntryPoint>): EnrichedEntryPoint {
   return {
     name: "test_func",
     file_path: "/projects/myapp/src/test.ts",
@@ -32,11 +32,11 @@ function make_entry(overrides: Partial<EnrichedFunctionEntry>): EnrichedFunction
 }
 
 function make_auto_classified(
-  entry: EnrichedFunctionEntry,
+  entry_point: EnrichedEntryPoint,
   group_id: string,
-): AutoClassifiedEntry {
+): ClassifiedEntryPointResult {
   return {
-    entry,
+    entry_point,
     result: {
       auto_classified: true,
       auto_group_id: group_id,
@@ -51,8 +51,8 @@ const EMPTY_INPUT: BuildTriageEntriesInput = { auto_classified: [], residual: []
 // ===== Tests =====
 
 describe("build_triage_entries — auto_classified bucket", () => {
-  it("produces a known-unreachable completed entry with auto_classified=true", () => {
-    const entry = make_entry({
+  it("produces a known-unreachable completed entry_point with auto_classified=true", () => {
+    const entry_point = make_entry({
       name: "render_button",
       file_path: "/projects/myapp/src/ui.tsx",
       diagnostics: {
@@ -64,7 +64,7 @@ describe("build_triage_entries — auto_classified bucket", () => {
     });
     const input: BuildTriageEntriesInput = {
       ...EMPTY_INPUT,
-      auto_classified: [make_auto_classified(entry, "method-chain-dispatch")],
+      auto_classified: [make_auto_classified(entry_point, "method-chain-dispatch")],
     };
 
     const result = build_triage_entries(input);
@@ -102,12 +102,12 @@ describe("build_triage_entries — auto_classified bucket", () => {
     expect(result).toEqual(expected);
   });
 
-  it("throws when the bucket contains an un-classified entry", () => {
-    const entry = make_entry({});
+  it("throws when the bucket contains an un-classified entry_point", () => {
+    const entry_point = make_entry({});
     const input: BuildTriageEntriesInput = {
       ...EMPTY_INPUT,
       auto_classified: [{
-        entry,
+        entry_point,
         result: {
           auto_classified: false,
           auto_group_id: null,
@@ -124,7 +124,7 @@ describe("build_triage_entries — auto_classified bucket", () => {
 
 describe("build_triage_entries — residual bucket", () => {
   it("becomes llm-triage pending with propagated hints", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       name: "mystery_func",
       signature: "def mystery_func(x: int) -> str",
       diagnostics: {
@@ -137,7 +137,7 @@ describe("build_triage_entries — residual bucket", () => {
     const input: BuildTriageEntriesInput = {
       ...EMPTY_INPUT,
       residual: [{
-        entry,
+        entry_point,
         classifier_hints: [{
           group_id: "maybe-decorated",
           confidence: 0.7,
@@ -190,8 +190,8 @@ describe("build_triage_entries — two-bucket composition", () => {
     const input: BuildTriageEntriesInput = {
       auto_classified: [make_auto_classified(auto, "py-pytest-fixture")],
       residual: [
-        { entry: residual_a, classifier_hints: [] },
-        { entry: residual_b, classifier_hints: [] },
+        { entry_point: residual_a, classifier_hints: [] },
+        { entry_point: residual_b, classifier_hints: [] },
       ],
     };
 

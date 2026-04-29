@@ -1,7 +1,7 @@
 /**
  * Types for the `auto_classify` pipeline stage.
  *
- * Kept narrow on purpose: the evaluator is pure over `EnrichedFunctionEntry` +
+ * Kept narrow on purpose: the evaluator is pure over `EnrichedEntryPoint` +
  * a lazy file reader, so any future classifier axis introduces its own context
  * shape rather than widening this one up-front.
  *
@@ -10,7 +10,7 @@
  * pipeline-internal value. Re-exported for convenience.
  */
 
-import type { EnrichedFunctionEntry } from "../entry_point_types.js";
+import type { EnrichedEntryPoint } from "../entry_point_types.js";
 import type { ClassifierHint } from "../triage_state_types.js";
 
 export type { ClassifierHint };
@@ -29,8 +29,8 @@ export type AutoClassifyResult =
       classifier_hints: ClassifierHint[];
     };
 
-export interface AutoClassifiedEntry {
-  entry: EnrichedFunctionEntry;
+export interface ClassifiedEntryPointResult {
+  entry_point: EnrichedEntryPoint;
   result: AutoClassifyResult;
 }
 
@@ -38,6 +38,6 @@ export interface AutoClassifiedEntry {
 export type FileLinesReader = (file_path: string) => readonly string[];
 
 export interface PredicateContext {
-  entry: EnrichedFunctionEntry;
+  entry_point: EnrichedEntryPoint;
   read_file_lines: FileLinesReader;
 }

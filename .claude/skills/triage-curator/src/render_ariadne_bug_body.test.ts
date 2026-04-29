@@ -32,7 +32,7 @@ function investigate(overrides: Partial<InvestigateResponse> = {}): InvestigateR
       description: "matches method chains",
     },
     retargets_to: null,
-    introspection_gap: null,
+    signal_library_gap: null,
     ariadne_bug: bug(),
     reasoning: "Grep finds the call sites but MCP does not resolve them.",
     ...overrides,

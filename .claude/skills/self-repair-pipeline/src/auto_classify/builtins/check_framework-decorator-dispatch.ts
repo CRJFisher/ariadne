@@ -3,7 +3,7 @@
 //
 // NestJS method-level framework-dispatch decorators. The NestJS router/DI container reads these decorators at startup via reflect-metadata and invokes the decorated method when a matching HTTP request, microservice message, WebSocket event, or scheduler tick arrives. There is no textual call site, so Ariadne's reference extractor sees zero inbound edges and marks the method unreachable. The decorator block immediately above the definition is the discriminant: HTTP verbs (@Get/@Post/@Put/@Delete/@Patch/@All/@Options/@Head/@Search), WebSocket handlers (@SubscribeMessage), microservice handlers (@MessagePattern/@EventPattern/@GrpcMethod/@GrpcStreamMethod/@GrpcStreamCall), and scheduler hooks (@Cron/@Interval/@Timeout/@Sse).
 
-import type { EnrichedFunctionEntry } from "../../entry_point_types.js";
+import type { EnrichedEntryPoint } from "../../entry_point_types.js";
 import type { FileLinesReader } from "../types.js";
 
 function detect_language(file_path: string): string | null {
@@ -33,10 +33,10 @@ function extract_decorator_block(
 }
 
 export function check_framework_decorator_dispatch(
-  entry: EnrichedFunctionEntry,
+  entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
 ): boolean {
-  const check_0 = detect_language(entry.file_path) === "typescript";
-  const check_1 = new RegExp("^\\s*@(Get|Post|Put|Delete|Patch|All|Options|Head|Search|SubscribeMessage|MessagePattern|EventPattern|GrpcMethod|GrpcStreamMethod|GrpcStreamCall|Cron|Interval|Timeout|Sse)\\s*\\(").test(extract_decorator_block(read_file_lines(entry.file_path), entry.start_line));
+  const check_0 = detect_language(entry_point.file_path) === "typescript";
+  const check_1 = new RegExp("^\\s*@(Get|Post|Put|Delete|Patch|All|Options|Head|Search|SubscribeMessage|MessagePattern|EventPattern|GrpcMethod|GrpcStreamMethod|GrpcStreamCall|Cron|Interval|Timeout|Sse)\\s*\\(").test(extract_decorator_block(read_file_lines(entry_point.file_path), entry_point.start_line));
   return check_0 && check_1;
 }

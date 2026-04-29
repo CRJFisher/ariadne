@@ -44,7 +44,7 @@ export function render_classifier(spec: BuiltinClassifierSpec): string {
     lines.push(`// ${desc_line}`);
   }
   lines.push("");
-  lines.push("import type { EnrichedFunctionEntry } from \"../../entry_point_types.js\";");
+  lines.push("import type { EnrichedEntryPoint } from \"../../entry_point_types.js\";");
   lines.push("import type { FileLinesReader } from \"../types.js\";");
   lines.push("");
 
@@ -84,7 +84,7 @@ export function render_classifier(spec: BuiltinClassifierSpec): string {
   }
 
   lines.push(`export function ${spec.function_name}(`);
-  lines.push("  entry: EnrichedFunctionEntry,");
+  lines.push("  entry_point: EnrichedEntryPoint,");
   lines.push("  read_file_lines: FileLinesReader,");
   lines.push("): boolean {");
 
@@ -114,17 +114,17 @@ export function render_classifier(spec: BuiltinClassifierSpec): string {
 function render_check(check: SignalCheck, helpers: HelperRequirements): string {
   switch (check.op) {
     case "diagnosis_eq":
-      return `entry.diagnostics.diagnosis === ${JSON.stringify(check.value)}`;
+      return `entry_point.diagnostics.diagnosis === ${JSON.stringify(check.value)}`;
 
     case "language_eq":
       helpers.detect_language = true;
-      return `detect_language(entry.file_path) === ${JSON.stringify(check.value)}`;
+      return `detect_language(entry_point.file_path) === ${JSON.stringify(check.value)}`;
 
     case "syntactic_feature_eq":
       // Feature names are a closed enum (SyntacticFeatureName) of valid identifiers
       // — emit direct property access for type safety.
       return (
-        "entry.diagnostics.ariadne_call_refs.some((r) => " +
+        "entry_point.diagnostics.ariadne_call_refs.some((r) => " +
         `r.syntactic_features.${check.name} === ${JSON.stringify(check.value)})`
       );
 
@@ -133,7 +133,7 @@ function render_check(check: SignalCheck, helpers: HelperRequirements): string {
       // Compile once per check evaluation, not per grep hit.
       return (
         `(() => { const pattern = new RegExp(${re}); ` +
-        "return entry.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })()"
+        "return entry_point.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })()"
       );
     }
 
@@ -143,55 +143,55 @@ function render_check(check: SignalCheck, helpers: HelperRequirements): string {
       const re = JSON.stringify(check.pattern);
       return (
         `new RegExp(${re}).test(extract_decorator_block(` +
-        "read_file_lines(entry.file_path), entry.start_line))"
+        "read_file_lines(entry_point.file_path), entry_point.start_line))"
       );
     }
 
     case "has_capture_at_grep_hit":
       return (
-        "entry.diagnostics.grep_call_sites.some((h) => " +
+        "entry_point.diagnostics.grep_call_sites.some((h) => " +
         `h.captures.includes(${JSON.stringify(check.capture_name)}))`
       );
 
     case "missing_capture_at_grep_hit":
       return (
-        "entry.diagnostics.grep_call_sites.some((h) => " +
+        "entry_point.diagnostics.grep_call_sites.some((h) => " +
         `!h.captures.includes(${JSON.stringify(check.capture_name)}))`
       );
 
     case "receiver_kind_eq":
       return (
-        "entry.diagnostics.ariadne_call_refs.some((r) => " +
+        "entry_point.diagnostics.ariadne_call_refs.some((r) => " +
         `r.receiver_kind === ${JSON.stringify(check.value)})`
       );
 
     case "resolution_failure_reason_eq":
       return (
-        "entry.diagnostics.ariadne_call_refs.some((r) => " +
+        "entry_point.diagnostics.ariadne_call_refs.some((r) => " +
         `r.resolution_failure !== null && r.resolution_failure.reason === ${JSON.stringify(check.value)})`
       );
 
     case "callers_count_at_least":
-      return `entry.diagnostics.ariadne_call_refs.length >= ${check.n}`;
+      return `entry_point.diagnostics.ariadne_call_refs.length >= ${check.n}`;
 
     case "callers_count_at_most":
-      return `entry.diagnostics.ariadne_call_refs.length <= ${check.n}`;
+      return `entry_point.diagnostics.ariadne_call_refs.length <= ${check.n}`;
 
     case "file_path_matches": {
       const re = JSON.stringify(check.pattern);
-      return `new RegExp(${re}).test(entry.file_path)`;
+      return `new RegExp(${re}).test(entry_point.file_path)`;
     }
 
     case "name_matches": {
       const re = JSON.stringify(check.pattern);
-      return `new RegExp(${re}).test(entry.name)`;
+      return `new RegExp(${re}).test(entry_point.name)`;
     }
 
     case "grep_hits_all_intra_file": {
       const expected = check.value;
       return (
-        "(entry.diagnostics.grep_call_sites.length > 0 && " +
-        "entry.diagnostics.grep_call_sites.every((h) => h.file_path === entry.file_path)) " +
+        "(entry_point.diagnostics.grep_call_sites.length > 0 && " +
+        "entry_point.diagnostics.grep_call_sites.every((h) => h.file_path === entry_point.file_path)) " +
         `=== ${expected ? "true" : "false"}`
       );
     }
@@ -204,7 +204,7 @@ function render_check(check: SignalCheck, helpers: HelperRequirements): string {
       // it for every line of every grep hit.
       return (
         `(() => { const pattern = new RegExp(${re}); ` +
-        "return entry.diagnostics.grep_call_sites.some((h) => { " +
+        "return entry_point.diagnostics.grep_call_sites.some((h) => { " +
         "const lines = read_file_lines(h.file_path); " +
         `const start = Math.max(0, h.line - 1 - ${window}); ` +
         "for (let i = start; i < h.line - 1; i++) { " +
@@ -216,20 +216,20 @@ function render_check(check: SignalCheck, helpers: HelperRequirements): string {
     case "definition_feature_eq": {
       // Feature names are a closed enum (DefinitionFeatureName) of valid identifiers
       // — emit direct property access for type safety.
-      return `entry.definition_features.${check.name} === ${check.value ? "true" : "false"}`;
+      return `entry_point.definition_features.${check.name} === ${check.value ? "true" : "false"}`;
     }
 
     case "accessor_kind_eq": {
       if (check.value === "none") {
-        return "entry.definition_features.accessor_kind === null";
+        return "entry_point.definition_features.accessor_kind === null";
       }
-      return `entry.definition_features.accessor_kind === ${JSON.stringify(check.value)}`;
+      return `entry_point.definition_features.accessor_kind === ${JSON.stringify(check.value)}`;
     }
 
     case "has_unindexed_test_caller": {
       const expected = check.value;
       return (
-        "(entry.diagnostics.grep_call_sites_unindexed_tests.length > 0) === " +
+        "(entry_point.diagnostics.grep_call_sites_unindexed_tests.length > 0) === " +
         `${expected ? "true" : "false"}`
       );
     }

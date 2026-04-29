@@ -74,7 +74,7 @@ function valid_builtin_response(overrides: Record<string, unknown> = {}): unknow
       description: "d",
     },
     retargets_to: null,
-    introspection_gap: null,
+    signal_library_gap: null,
     ariadne_bug: valid_ariadne_bug(),
     reasoning: "r",
     ...overrides,
@@ -186,7 +186,7 @@ describe("validate_response", () => {
       proposed_classifier: { kind: "none" },
       classifier_spec: null,
       retargets_to: null,
-      introspection_gap: null,
+      signal_library_gap: null,
       ariadne_bug: null,
       reasoning: "r",
     };
@@ -195,13 +195,13 @@ describe("validate_response", () => {
     expect(issues[0].code).toBe("kind_none_no_signals_no_failure");
   });
 
-  it("accepts kind='none' when introspection_gap is populated", () => {
+  it("accepts kind='none' when signal_library_gap is populated", () => {
     const raw = {
       group_id: "dispatch-group",
       proposed_classifier: { kind: "none" },
       classifier_spec: null,
       retargets_to: null,
-      introspection_gap: {
+      signal_library_gap: {
         signals_needed: ["some-signal"],
         title: "new signal",
         description: "body",
@@ -219,7 +219,7 @@ describe("validate_response", () => {
       proposed_classifier: { kind: "none" },
       classifier_spec: null,
       retargets_to: null,
-      introspection_gap: null,
+      signal_library_gap: null,
       ariadne_bug: null,
       reasoning: "r",
     };
@@ -292,13 +292,13 @@ describe("validate_response", () => {
     expect(issues[0].message).toContain("existing_task_id");
   });
 
-  it("rejects a response with the introspection_gap key entirely absent", () => {
+  it("rejects a response with the signal_library_gap key entirely absent", () => {
     const raw = valid_builtin_response();
-    delete (raw as Record<string, unknown>).introspection_gap;
+    delete (raw as Record<string, unknown>).signal_library_gap;
     const issues = validate_response({ ...base_input(), response_raw: raw });
     expect(issues.length).toBe(1);
     expect(issues[0].code).toBe("shape_error");
-    expect(issues[0].message).toContain("introspection_gap field is required");
+    expect(issues[0].message).toContain("signal_library_gap field is required");
   });
 
   it("rejects a response with the ariadne_bug key entirely absent", () => {
@@ -310,9 +310,9 @@ describe("validate_response", () => {
     expect(issues[0].message).toContain("ariadne_bug field is required");
   });
 
-  it("rejects introspection_gap with empty signals_needed", () => {
+  it("rejects signal_library_gap with empty signals_needed", () => {
     const raw = valid_builtin_response({
-      introspection_gap: { signals_needed: [], title: "t", description: "d" },
+      signal_library_gap: { signals_needed: [], title: "t", description: "d" },
     });
     const issues = validate_response({ ...base_input(), response_raw: raw });
     expect(issues.length).toBe(1);
@@ -340,7 +340,7 @@ describe("validate_run_coherence", () => {
         description: "",
       },
       retargets_to,
-      introspection_gap: null,
+      signal_library_gap: null,
       ariadne_bug: {
         root_cause_category: "receiver_resolution",
         title: "t",

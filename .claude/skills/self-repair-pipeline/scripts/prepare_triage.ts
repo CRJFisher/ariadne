@@ -194,7 +194,7 @@ async function main(): Promise<void> {
 
   const registry = load_registry();
   const { entries, stats } = prepare_triage({
-    entries: analysis.entry_points,
+    entry_points: analysis.entry_points,
     registry,
     read_file_lines: make_file_lines_reader(),
     max_count: cli.max_count,

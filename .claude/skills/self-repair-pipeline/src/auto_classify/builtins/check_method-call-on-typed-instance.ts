@@ -3,7 +3,7 @@
 //
 // TypeScript class method whose only callers are method-calls on a typed instance receiver (e.g. `column.compareEntityValue(...)` inside `(column: ColumnMetadata) => ...`), where Ariadne resolves zero CallReferences but grep finds identifier-dot-method call sites. Receiver type is statically knowable (typed local, callback parameter from `T[]`, or `Class.prototype.method` extraction) but Ariadne's receiver-resolution pipeline drops the type — particularly when the class is brought in via `import type { Class }` and the receiver is a callback parameter whose type flows from the array element.
 
-import type { EnrichedFunctionEntry } from "../../entry_point_types.js";
+import type { EnrichedEntryPoint } from "../../entry_point_types.js";
 import type { FileLinesReader } from "../types.js";
 
 function detect_language(file_path: string): string | null {
@@ -15,12 +15,12 @@ function detect_language(file_path: string): string | null {
 }
 
 export function check_method_call_on_typed_instance(
-  entry: EnrichedFunctionEntry,
+  entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
 ): boolean {
   void read_file_lines;
-  const check_0 = detect_language(entry.file_path) === "typescript";
-  const check_1 = entry.diagnostics.ariadne_call_refs.length <= 0;
-  const check_2 = (() => { const pattern = new RegExp("\\b[a-zA-Z_$][\\w$]*\\.[a-zA-Z_$][\\w$]*\\s*\\("); return entry.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })();
+  const check_0 = detect_language(entry_point.file_path) === "typescript";
+  const check_1 = entry_point.diagnostics.ariadne_call_refs.length <= 0;
+  const check_2 = (() => { const pattern = new RegExp("\\b[a-zA-Z_$][\\w$]*\\.[a-zA-Z_$][\\w$]*\\s*\\("); return entry_point.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })();
   return check_0 && check_1 && check_2;
 }

@@ -25,7 +25,7 @@ import type { Language } from "@ariadnejs/types";
 import { log_info, log_warn } from "@ariadnejs/core";
 import type {
   DefinitionFeatures,
-  EnrichedFunctionEntry,
+  EnrichedEntryPoint,
   EntryPointDiagnostics,
   GrepHit,
   CallRefDiagnostic,
@@ -84,7 +84,7 @@ export function extract_entry_points(
   source_files: ReadonlyMap<string, string>,
   class_name_by_constructor_id?: ReadonlyMap<SymbolId, SymbolName>,
   class_method_symbol_ids?: ReadonlySet<SymbolId>,
-): EnrichedFunctionEntry[] {
+): EnrichedEntryPoint[] {
   const lines_by_file = build_lines_by_file(source_files);
   const call_refs_by_name = build_call_refs_by_name(call_graph);
   const call_refs_by_file_line = build_call_refs_by_file_line(call_graph);
@@ -97,7 +97,7 @@ export function extract_entry_points(
   log_info(`extract_entry_points: N=${total}`);
   const phase_start = Date.now();
 
-  const entry_points: EnrichedFunctionEntry[] = [];
+  const entry_points: EnrichedEntryPoint[] = [];
 
   for (let i = 0; i < total; i++) {
     const entry_point_id = call_graph.entry_points[i];

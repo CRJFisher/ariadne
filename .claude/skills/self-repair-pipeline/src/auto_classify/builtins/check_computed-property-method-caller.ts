@@ -3,13 +3,13 @@
 //
 // JS/TS class methods whose property key is a computed well-known-symbol expression (`[Symbol.iterator]`, `[Symbol.asyncIterator]`, `[Symbol.dispose]`, etc.) are not captured as definitions by the tree-sitter scm queries (which match only `(property_identifier)` on `method_definition`). When such a method calls another method on the same class, the callee shows up as an entry point with no callers. The grep hit on the callee falls inside the unindexed computed-property method body; checking the lines just above the hit for a method header of the form `^\s*(async\s+)?\*?\s*[Symbol.<name>](` discriminates this pattern.
 
-import type { EnrichedFunctionEntry } from "../../entry_point_types.js";
+import type { EnrichedEntryPoint } from "../../entry_point_types.js";
 import type { FileLinesReader } from "../types.js";
 
 export function check_computed_property_method_caller(
-  entry: EnrichedFunctionEntry,
+  entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
 ): boolean {
-  const check_0 = (() => { const pattern = new RegExp("^\\s*(async\\s+)?\\*?\\s*\\[Symbol\\.[A-Za-z]+\\]\\s*\\("); return entry.diagnostics.grep_call_sites.some((h) => { const lines = read_file_lines(h.file_path); const start = Math.max(0, h.line - 1 - 5); for (let i = start; i < h.line - 1; i++) { if (pattern.test(lines[i] ?? "")) return true; } return false; }); })();
+  const check_0 = (() => { const pattern = new RegExp("^\\s*(async\\s+)?\\*?\\s*\\[Symbol\\.[A-Za-z]+\\]\\s*\\("); return entry_point.diagnostics.grep_call_sites.some((h) => { const lines = read_file_lines(h.file_path); const start = Math.max(0, h.line - 1 - 5); for (let i = start; i < h.line - 1; i++) { if (pattern.test(lines[i] ?? "")) return true; } return false; }); })();
   return check_0;
 }

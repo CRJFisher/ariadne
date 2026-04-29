@@ -22,7 +22,7 @@ import type {
   BuiltinClassifierSpec,
   ClassifierSpecProposal,
   FalsePositiveGroup,
-  IntrospectionGap,
+  SignalLibraryGap,
   InvestigateResponse,
   InvestigatorSessionLog,
   KnownIssue,
@@ -132,7 +132,7 @@ export function validate_response(inp: ValidationInput): ValidationIssue[] {
   }
 
   if (parsed.proposed_classifier?.kind === "none") {
-    const has_gap = parsed.introspection_gap !== null;
+    const has_gap = parsed.signal_library_gap !== null;
     const has_failure =
       inp.session_log?.status === "failure" &&
       inp.session_log.failure_category !== null;
@@ -142,9 +142,9 @@ export function validate_response(inp: ValidationInput): ValidationIssue[] {
         response_path: inp.response_path,
         code: "kind_none_no_signals_no_failure",
         message:
-          "proposed_classifier.kind='none' but response carries no introspection_gap " +
+          "proposed_classifier.kind='none' but response carries no signal_library_gap " +
           "and session log has no failure_category — this is a silent dead-end. " +
-          "Either declare the introspection gap (introspection_gap.signals_needed[]) " +
+          "Either declare the signal-library gap (signal_library_gap.signals_needed[]) " +
           "or record a failure_category in the session log.",
       });
     }
@@ -254,13 +254,13 @@ export function parse_response_shape(raw: unknown): InvestigateResponse | ShapeE
   const classifier_result = parse_classifier_proposal(obj.proposed_classifier);
   if ("error" in classifier_result) return classifier_result;
 
-  if (!("introspection_gap" in obj)) {
+  if (!("signal_library_gap" in obj)) {
     return {
       error:
-        "response: introspection_gap field is required (set to null when no signal gap exists)",
+        "response: signal_library_gap field is required (set to null when no signal gap exists)",
     };
   }
-  const gap_result = parse_introspection_gap(obj.introspection_gap);
+  const gap_result = parse_signal_library_gap(obj.signal_library_gap);
   if ("error" in gap_result) return gap_result;
 
   if (!("ariadne_bug" in obj)) {
@@ -280,7 +280,7 @@ export function parse_response_shape(raw: unknown): InvestigateResponse | ShapeE
     proposed_classifier: classifier_result.value,
     classifier_spec: spec_result.value,
     retargets_to,
-    introspection_gap: gap_result.value,
+    signal_library_gap: gap_result.value,
     ariadne_bug: bug_result.value,
     reasoning: obj.reasoning,
   };
@@ -318,21 +318,21 @@ function parse_min_confidence(raw: unknown): number | ShapeError {
   return raw;
 }
 
-function parse_introspection_gap(
+function parse_signal_library_gap(
   raw: unknown,
-): { value: IntrospectionGap | null } | ShapeError {
+): { value: SignalLibraryGap | null } | ShapeError {
   if (raw === null || raw === undefined) return { value: null };
   if (typeof raw !== "object") {
-    return { error: "introspection_gap must be an object or null" };
+    return { error: "signal_library_gap must be an object or null" };
   }
   const obj = raw as Record<string, unknown>;
   if (!Array.isArray(obj.signals_needed)) {
-    return { error: "introspection_gap.signals_needed must be an array" };
+    return { error: "signal_library_gap.signals_needed must be an array" };
   }
   for (const [idx, s] of obj.signals_needed.entries()) {
     if (typeof s !== "string" || s.length === 0) {
       return {
-        error: `introspection_gap.signals_needed[${idx}] must be a non-empty string`,
+        error: `signal_library_gap.signals_needed[${idx}] must be a non-empty string`,
       };
     }
   }
@@ -340,14 +340,14 @@ function parse_introspection_gap(
   if (signals_needed.length === 0) {
     return {
       error:
-        "introspection_gap.signals_needed must be non-empty — drop introspection_gap to null if no signals are missing",
+        "signal_library_gap.signals_needed must be non-empty — drop signal_library_gap to null if no signals are missing",
     };
   }
   if (typeof obj.title !== "string" || obj.title.length === 0) {
-    return { error: "introspection_gap.title must be a non-empty string" };
+    return { error: "signal_library_gap.title must be a non-empty string" };
   }
   if (typeof obj.description !== "string") {
-    return { error: "introspection_gap.description must be a string" };
+    return { error: "signal_library_gap.description must be a string" };
   }
   return {
     value: { signals_needed, title: obj.title, description: obj.description },

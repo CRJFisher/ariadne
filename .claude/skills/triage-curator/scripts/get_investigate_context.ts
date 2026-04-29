@@ -37,7 +37,7 @@ import {
   type QaResponse,
   type TriageResultsFile,
 } from "../src/types.js";
-import { INTROSPECTION_GAP_PARENT_TASK_ID } from "../src/apply_proposals.js";
+import { SIGNAL_LIBRARY_GAP_PARENT_TASK_ID } from "../src/apply_proposals.js";
 import "../src/require_node_import_tsx.js";
 
 const THIS_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -171,7 +171,7 @@ async function main(): Promise<void> {
     writable_paths,
     signal_check_ops: SIGNAL_CHECK_OPS,
     ariadne_root_cause_categories: ARIADNE_ROOT_CAUSE_CATEGORIES,
-    introspection_gap_parent_task_id: INTROSPECTION_GAP_PARENT_TASK_ID,
+    signal_library_gap_parent_task_id: SIGNAL_LIBRARY_GAP_PARENT_TASK_ID,
     authoring_rules: {
       signal_check_ops: SIGNAL_CHECK_OPS,
       ariadne_root_cause_categories: ARIADNE_ROOT_CAUSE_CATEGORIES,
@@ -190,7 +190,7 @@ async function main(): Promise<void> {
         `(= ${group.entries.length} for this group). Same rule for negative_examples. ` +
         "When retargeting (response.retargets_to set), leave both arrays empty.",
       kind_none_rule:
-        "If proposed_classifier.kind === 'none', you must either populate introspection_gap " +
+        "If proposed_classifier.kind === 'none', you must either populate signal_library_gap " +
         "(signals_needed + title + description) naming the missing signal, or emit a session " +
         "log with failure_category set. Silent dead-ends (kind='none', no gap, no failure) are rejected.",
       ariadne_bug_rule:
@@ -201,9 +201,9 @@ async function main(): Promise<void> {
       ariadne_bug_existing_task_id_format:
         "ariadne_bug.existing_task_id, when non-null, MUST match /^TASK-[0-9]+(\\.[0-9]+)*$/ " +
         "(e.g. 'TASK-205' or 'TASK-190.16.3'). Lowercase or missing prefix is rejected.",
-      introspection_gap_rule:
-        "introspection_gap.signals_needed MUST be non-empty when introspection_gap is non-null. " +
-        "If no signals are missing, set introspection_gap to null. One gap per coherent missing " +
+      signal_library_gap_rule:
+        "signal_library_gap.signals_needed MUST be non-empty when signal_library_gap is non-null. " +
+        "If no signals are missing, set signal_library_gap to null. One gap per coherent missing " +
         "capability — list all related new ops in signals_needed[], not one task per op name.",
       spec_function_name_rule:
         "classifier_spec.function_name MUST equal proposed_classifier.function_name. " +
@@ -217,7 +217,7 @@ async function main(): Promise<void> {
           "NOT nested inside checks[].",
         "Renaming response.group_id to target an existing registry entry. Use retargets_to instead.",
         "Listing positive_examples that reference indices >= group.entries.length.",
-        "Emitting kind='none' with a null introspection_gap when the investigation never tried " +
+        "Emitting kind='none' with a null signal_library_gap when the investigation never tried " +
           "to land a classifier. Record a failure_category in the session log instead.",
         "Proposing a working classifier without populating ariadne_bug. The classifier routes around " +
           "the bug; the bug must still be filed (or attached to an existing_task_id).",

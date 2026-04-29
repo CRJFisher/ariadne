@@ -3,7 +3,7 @@
 //
 // Anonymous JavaScript function expression (name '<anonymous>') passed as an inline callback argument to a higher-order method (jQuery's `this.each(...)`) whose implementation dispatches it via `callback.call(obj[i], i, obj[i])`. Ariadne's resolver cannot trace the function value from the argument position through the renamed parameter to the `.call(...)` invocation, so the lambda has zero resolved inbound callers and surfaces as an entry point. Discriminator: anonymous JS function with no resolved callers — in JavaScript, such functions are always callbacks, event handlers, or IIFEs rather than genuine unreachable entries.
 
-import type { EnrichedFunctionEntry } from "../../entry_point_types.js";
+import type { EnrichedEntryPoint } from "../../entry_point_types.js";
 import type { FileLinesReader } from "../types.js";
 
 function detect_language(file_path: string): string | null {
@@ -15,12 +15,12 @@ function detect_language(file_path: string): string | null {
 }
 
 export function check_call_apply_dispatch(
-  entry: EnrichedFunctionEntry,
+  entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
 ): boolean {
   void read_file_lines;
-  const check_0 = detect_language(entry.file_path) === "javascript";
-  const check_1 = new RegExp("^<anonymous>$").test(entry.name);
-  const check_2 = entry.diagnostics.ariadne_call_refs.length <= 0;
+  const check_0 = detect_language(entry_point.file_path) === "javascript";
+  const check_1 = new RegExp("^<anonymous>$").test(entry_point.name);
+  const check_2 = entry_point.diagnostics.ariadne_call_refs.length <= 0;
   return check_0 && check_1 && check_2;
 }
