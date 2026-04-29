@@ -1,5 +1,9 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { parse_cli_args, resolve_toolsets } from "./server";
+import {
+  parse_cli_args,
+  resolve_show_suppressed,
+  resolve_toolsets,
+} from "./server";
 
 /**
  * Tests for server.ts CLI argument parsing logic
@@ -116,6 +120,26 @@ describe("server CLI argument parsing", () => {
       const result = parse_cli_args([]);
       expect(result.toolsets).toBeUndefined();
     });
+
+    it("parses --show-suppressed", () => {
+      const result = parse_cli_args(["--show-suppressed"]);
+      expect(result.show_suppressed).toBe(true);
+    });
+
+    it("parses --no-show-suppressed", () => {
+      const result = parse_cli_args(["--no-show-suppressed"]);
+      expect(result.show_suppressed).toBe(false);
+    });
+
+    it("returns undefined show_suppressed when neither flag is present", () => {
+      const result = parse_cli_args(["--watch"]);
+      expect(result.show_suppressed).toBeUndefined();
+    });
+
+    it("lets --no-show-suppressed override an earlier --show-suppressed", () => {
+      const result = parse_cli_args(["--show-suppressed", "--no-show-suppressed"]);
+      expect(result.show_suppressed).toBe(false);
+    });
   });
 
   describe("resolve_toolsets", () => {
@@ -152,6 +176,58 @@ describe("server CLI argument parsing", () => {
     it("should filter empty strings from env var", () => {
       process.env.ARIADNE_TOOLSETS = "core,,topology,";
       expect(resolve_toolsets(undefined)).toEqual(["core", "topology"]);
+    });
+  });
+
+  describe("resolve_show_suppressed", () => {
+    const original_env = process.env.ARIADNE_SHOW_SUPPRESSED;
+
+    afterEach(() => {
+      if (original_env === undefined) {
+        delete process.env.ARIADNE_SHOW_SUPPRESSED;
+      } else {
+        process.env.ARIADNE_SHOW_SUPPRESSED = original_env;
+      }
+    });
+
+    it("returns CLI value when explicitly true", () => {
+      process.env.ARIADNE_SHOW_SUPPRESSED = "0";
+      expect(resolve_show_suppressed(true)).toBe(true);
+    });
+
+    it("returns CLI value when explicitly false", () => {
+      process.env.ARIADNE_SHOW_SUPPRESSED = "1";
+      expect(resolve_show_suppressed(false)).toBe(false);
+    });
+
+    it("falls back to env var '1' as true", () => {
+      process.env.ARIADNE_SHOW_SUPPRESSED = "1";
+      expect(resolve_show_suppressed(undefined)).toBe(true);
+    });
+
+    it("falls back to env var 'true' (any case) as true", () => {
+      process.env.ARIADNE_SHOW_SUPPRESSED = "TRUE";
+      expect(resolve_show_suppressed(undefined)).toBe(true);
+    });
+
+    it("falls back to env var 'yes' as true", () => {
+      process.env.ARIADNE_SHOW_SUPPRESSED = "yes";
+      expect(resolve_show_suppressed(undefined)).toBe(true);
+    });
+
+    it("treats env var '0' as false", () => {
+      process.env.ARIADNE_SHOW_SUPPRESSED = "0";
+      expect(resolve_show_suppressed(undefined)).toBe(false);
+    });
+
+    it("treats unset env var as false", () => {
+      delete process.env.ARIADNE_SHOW_SUPPRESSED;
+      expect(resolve_show_suppressed(undefined)).toBe(false);
+    });
+
+    it("treats arbitrary string as false", () => {
+      process.env.ARIADNE_SHOW_SUPPRESSED = "maybe";
+      expect(resolve_show_suppressed(undefined)).toBe(false);
     });
   });
 });

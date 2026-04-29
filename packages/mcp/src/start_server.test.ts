@@ -4,6 +4,7 @@ import { start_server } from "./start_server";
 import { ProjectManager } from "./project_manager";
 import { register_tool_groups } from "./tools/tool_registry";
 import { is_analytics_enabled, init_analytics } from "./analytics/analytics";
+import { create_core_tool_group } from "./tools/core/tool_group";
 
 vi.mock("@modelcontextprotocol/sdk/server/mcp.js", () => ({
   McpServer: vi.fn().mockImplementation(function () {
@@ -36,7 +37,11 @@ vi.mock("./tools/tool_registry", () => ({
 }));
 
 vi.mock("./tools/core/tool_group", () => ({
-  CORE_TOOL_GROUP: { group_name: "core", description: "Core tools", tools: [] },
+  create_core_tool_group: vi.fn(() => ({
+    group_name: "core",
+    description: "Core tools",
+    tools: [],
+  })),
 }));
 
 vi.mock("@ariadnejs/core", () => ({
@@ -115,5 +120,21 @@ describe("start_server", () => {
 
     expect(result).toBeDefined();
     expect(result.connect).toBeDefined();
+  });
+
+  it("threads show_suppressed: true into create_core_tool_group", async () => {
+    await start_server({ project_path: "/test/path", show_suppressed: true });
+
+    expect(create_core_tool_group).toHaveBeenCalledWith({
+      list_entrypoints: { show_suppressed: true },
+    });
+  });
+
+  it("defaults show_suppressed to false in create_core_tool_group", async () => {
+    await start_server({ project_path: "/test/path" });
+
+    expect(create_core_tool_group).toHaveBeenCalledWith({
+      list_entrypoints: { show_suppressed: false },
+    });
   });
 });

@@ -3,6 +3,8 @@ import type { Project } from "@ariadnejs/core";
 import type {
   CallGraph,
   CallableNode,
+  ClassifiedEntryPoint,
+  EntryPointClassification,
   SymbolId,
   AnyDefinition,
   FunctionDefinition,
@@ -11,7 +13,13 @@ import type {
 } from "@ariadnejs/types";
 
 /**
- * Input schema for list_entrypoints tool
+ * Input schema for list_entrypoints tool.
+ *
+ * Suppressed-entry rendering (`show_suppressed`) is intentionally absent here
+ * — it is a server-level configuration concern set via CLI flag or env var
+ * (`--show-suppressed` / `ARIADNE_SHOW_SUPPRESSED=1`), not a per-call
+ * argument. Triage workflows opt in by configuring the MCP server with the
+ * flag enabled in `.mcp.json`; everyday callers see the clean default output.
  */
 export const list_entrypoints_schema = z.object({
   files: z
@@ -31,12 +39,36 @@ export const list_entrypoints_schema = z.object({
 export type ListEntrypointsRequest = z.infer<typeof list_entrypoints_schema>;
 
 /**
+ * Tool-level configuration for `list_entrypoints`. Set once at server startup
+ * (CLI flag / env var) and threaded through to every invocation.
+ */
+export interface ListEntrypointsConfig {
+  /**
+   * When true, append a "Suppressed" section listing entry points the
+   * permanent registry classifies as known false positives. Default false —
+   * everyday agents don't need to see the suppressed bucket.
+   */
+  readonly show_suppressed: boolean;
+}
+
+/**
  * Entry data for sorting and formatting
  */
 interface EntryPointData {
   node: CallableNode;
   tree_size: number;
   unresolved_count: number;
+}
+
+/**
+ * Suppressed entry data: a known false positive paired with its node and
+ * classification verdict. Sorted alphabetically by file path + line for
+ * deterministic output (tree size is irrelevant — these are not entry points
+ * worth ranking).
+ */
+export interface SuppressedEntryData {
+  readonly node: CallableNode;
+  readonly classification: SuppressedClassification;
 }
 
 /**
@@ -184,6 +216,44 @@ function build_symbol_ref(node: CallableNode): string {
 }
 
 /**
+ * Classifications that can appear in the suppressed bucket. True positives
+ * never get suppressed, so they're excluded at the type level — that lets
+ * the switch in `format_classification_tag` enumerate exactly the four
+ * variants it needs to handle and lean on TS exhaustiveness for safety.
+ */
+export type SuppressedClassification = Exclude<
+  EntryPointClassification,
+  { readonly kind: "true_entry_point" }
+>;
+
+/**
+ * Format a classification verdict as a `[label: detail]` tag.
+ *
+ * Framework-invoked rules carry both a `group_id` (registry rule identity) and
+ * a `framework` (human-readable label) — those produce the canonical
+ * `[group_id: framework]` form. Other kinds substitute available metadata
+ * (protocol name, indirect-reachability `via.type`) so callers always see a
+ * consistent two-part tag — except `test_only`, whose classification type
+ * carries no extra field and renders as bare `[test_only]`. The bare form is
+ * intentional, not an oversight.
+ */
+export function format_classification_tag(
+  classification: SuppressedClassification
+): string {
+  switch (classification.kind) {
+    case "framework_invoked":
+      return `[${classification.group_id}: ${classification.framework}]`;
+    case "dunder_protocol":
+      return `[dunder_protocol: ${classification.protocol}]`;
+    case "test_only":
+      // Classification type carries no detail; bare tag is canonical here.
+      return "[test_only]";
+    case "indirect_only":
+      return `[indirect_only: ${classification.via.type}]`;
+  }
+}
+
+/**
  * Format the output as ASCII text.
  *
  * Example:
@@ -217,9 +287,7 @@ function format_output(entries: EntryPointData[]): string {
     let size_info = `${entry.tree_size} ${function_word}`;
 
     if (entry.unresolved_count > 0) {
-      const unresolved_word =
-        entry.unresolved_count === 1 ? "unresolved" : "unresolved";
-      size_info += ` + ${entry.unresolved_count} ${unresolved_word}`;
+      size_info += ` + ${entry.unresolved_count} unresolved`;
     }
 
     lines.push(`- ${signature} -- ${size_info}${test_indicator}`);
@@ -235,6 +303,93 @@ function format_output(entries: EntryPointData[]): string {
 }
 
 /**
+ * Sort suppressed entries deterministically by (file_path, start_line, name).
+ */
+export function sort_suppressed(
+  entries: SuppressedEntryData[]
+): SuppressedEntryData[] {
+  return [...entries].sort((a, b) => {
+    const file_cmp = a.node.location.file_path.localeCompare(
+      b.node.location.file_path
+    );
+    if (file_cmp !== 0) return file_cmp;
+    const line_cmp = a.node.location.start_line - b.node.location.start_line;
+    if (line_cmp !== 0) return line_cmp;
+    return a.node.name.localeCompare(b.node.name);
+  });
+}
+
+/**
+ * Format the suppressed section appended when `show_suppressed: true`.
+ *
+ * Example:
+ * ```
+ * ============================================================
+ * Suppressed (known false positives):
+ *
+ * - __str__(self): unknown [dunder_protocol: __str__]
+ *   Location: src/foo.py:12
+ *   Ref: src/foo.py:12#__str__
+ *
+ * Total: 1 suppressed
+ * ```
+ */
+export function format_suppressed_section(
+  entries: SuppressedEntryData[]
+): string {
+  const sep = "=".repeat(60);
+  const lines: string[] = ["", sep, "Suppressed (known false positives):", ""];
+
+  if (entries.length === 0) {
+    lines.push("(none)");
+    return lines.join("\n");
+  }
+
+  for (const entry of entries) {
+    const signature = build_signature(entry.node.definition, entry.node.location);
+    const location = `${entry.node.location.file_path}:${entry.node.location.start_line}`;
+    const symbol_ref = build_symbol_ref(entry.node);
+    const tag = format_classification_tag(entry.classification);
+
+    lines.push(`- ${signature} ${tag}`);
+    lines.push(`  Location: ${location}`);
+    lines.push(`  Ref: ${symbol_ref}`);
+    lines.push("");
+  }
+
+  lines.push(`Total: ${entries.length} suppressed`);
+
+  return lines.join("\n");
+}
+
+/**
+ * Build suppressed-entry data from classified entry points and the call graph.
+ *
+ * Suppressed entries' nodes live on `call_graph.nodes` (the full callable set)
+ * even though their `symbol_id` is filtered out of `call_graph.entry_points`.
+ * Entries whose node cannot be resolved are silently skipped — this only
+ * happens if the classification result references a stale symbol, which the
+ * cache invalidation in `Project` should make impossible.
+ */
+export function build_suppressed_entries(
+  known_false_positives: readonly ClassifiedEntryPoint[],
+  call_graph: CallGraph
+): SuppressedEntryData[] {
+  const entries: SuppressedEntryData[] = [];
+  for (const fp of known_false_positives) {
+    const node = call_graph.nodes.get(fp.symbol_id);
+    if (!node) continue;
+    const classification = fp.classification;
+    // The core contract is that `known_false_positives` never contains
+    // `true_entry_point` (those go in `true_entry_points`). Guarding here
+    // narrows the type for the consumer and keeps render code total.
+    if (classification.kind === "true_entry_point") continue;
+    entries.push({ node, classification });
+  }
+  return sort_suppressed(entries);
+}
+
+/**
  * List all entry point functions ordered by call tree size.
  *
  * Entry points are functions that are never called by any other function
@@ -244,17 +399,28 @@ function format_output(entries: EntryPointData[]): string {
  * The tree size is the total number of unique functions transitively called
  * by the entry point, calculated via depth-first search with cycle detection.
  *
+ * `Project.get_call_graph()` already filters out known false positives (Python
+ * dunders, framework-invoked routes, etc.) and test entry points (when
+ * `include_tests` is false). When the server is configured with
+ * `show_suppressed: true`, the suppressed bucket from
+ * `Project.get_classified_entry_points()` is appended below the default list
+ * under a clearly delimited header.
+ *
  * @param project - The Ariadne project instance
  * @param request - Optional request with filtering and include_tests options
- * @returns Formatted ASCII text listing entry points
+ * @param config - Server-level tool config (e.g. show_suppressed)
+ * @returns Formatted ASCII text listing entry points (and optionally suppressed entries)
  */
 export async function list_entrypoints(
-  project: Pick<Project, "get_call_graph">,
-  request: ListEntrypointsRequest = {}
+  project: Pick<Project, "get_call_graph" | "get_classified_entry_points">,
+  request: ListEntrypointsRequest = {},
+  config: ListEntrypointsConfig = { show_suppressed: false }
 ): Promise<string> {
   const { include_tests = false } = request;
+  const { show_suppressed } = config;
 
-  // Get call graph (always up-to-date)
+  // Get call graph (always up-to-date). entry_points are already filtered to
+  // true positives; tests are excluded by `include_tests: false`.
   const call_graph = project.get_call_graph({ include_tests });
 
   // Calculate tree size for each entry point
@@ -263,9 +429,6 @@ export async function list_entrypoints(
   for (const entry_point_id of call_graph.entry_points) {
     const node = call_graph.nodes.get(entry_point_id);
     if (!node) continue;
-
-    // Filter test entry points when not included
-    if (!include_tests && node.is_test) continue;
 
     // Count tree size with fresh visited set for each entry point
     const counts = count_tree_size(entry_point_id, call_graph, new Set());
@@ -280,6 +443,16 @@ export async function list_entrypoints(
   // Sort by tree size descending (most complex first)
   entries.sort((a, b) => b.tree_size - a.tree_size);
 
-  // Format and return
-  return format_output(entries);
+  let output = format_output(entries);
+
+  if (show_suppressed) {
+    const classified = project.get_classified_entry_points({ include_tests });
+    const suppressed_entries = build_suppressed_entries(
+      classified.known_false_positives,
+      call_graph
+    );
+    output += "\n" + format_suppressed_section(suppressed_entries);
+  }
+
+  return output;
 }

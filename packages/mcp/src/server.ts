@@ -5,6 +5,7 @@ export interface CliOptions {
   project_path?: string;
   watch?: boolean;
   toolsets?: string[];
+  show_suppressed?: boolean;
 }
 
 /**
@@ -13,6 +14,7 @@ export interface CliOptions {
  *   --project-path <path>, -p <path>, --project-path=<path>
  *   --watch, --no-watch
  *   --toolsets=core,topology (comma-separated tool group names)
+ *   --show-suppressed, --no-show-suppressed
  */
 export function parse_cli_args(argv: string[] = process.argv.slice(2)): CliOptions {
   const result: CliOptions = {};
@@ -45,6 +47,15 @@ export function parse_cli_args(argv: string[] = process.argv.slice(2)): CliOptio
         i++;
       }
     }
+
+    // Suppressed-section visibility flag (server-level, applies to every
+    // list_entrypoints call). Triage workflows enable this via .mcp.json;
+    // everyday agents leave it off and see the clean default output.
+    if (arg === "--show-suppressed") {
+      result.show_suppressed = true;
+    } else if (arg === "--no-show-suppressed") {
+      result.show_suppressed = false;
+    }
   }
 
   return result;
@@ -64,9 +75,26 @@ export function resolve_toolsets(cli_toolsets?: string[]): string[] {
   return [];
 }
 
+/**
+ * Resolve show_suppressed from CLI > env var > default (false).
+ *
+ * Env var accepts truthy strings: "1", "true", "yes" (case-insensitive).
+ * Anything else — including unset — resolves to false.
+ */
+export function resolve_show_suppressed(cli_value?: boolean): boolean {
+  if (cli_value !== undefined) {
+    return cli_value;
+  }
+  const env = process.env.ARIADNE_SHOW_SUPPRESSED;
+  if (env === undefined) return false;
+  const normalized = env.trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes";
+}
+
 const cli_options = parse_cli_args();
 start_server({
   project_path: cli_options.project_path,
   watch: cli_options.watch,
   toolsets: resolve_toolsets(cli_options.toolsets),
+  show_suppressed: resolve_show_suppressed(cli_options.show_suppressed),
 }).catch(console.error);

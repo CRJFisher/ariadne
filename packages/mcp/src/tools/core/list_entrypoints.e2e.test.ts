@@ -7,6 +7,11 @@
  * 3. Discovers available tools
  * 4. Calls list_entrypoints tool on packages/core codebase
  * 5. Validates the response format and content
+ *
+ * `show_suppressed` is a server-level flag (CLI / env var), not a per-call
+ * argument. The default suite below runs without the flag; a second suite
+ * (`with show_suppressed enabled`) spawns a separate server with
+ * `--show-suppressed` and verifies the Suppressed section appears.
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
@@ -99,6 +104,9 @@ describe("MCP Server E2E - list_entrypoints tool", () => {
     expect(schema.properties.files.type).toBe("array");
     expect(schema.properties.folders).toBeDefined();
     expect(schema.properties.folders.type).toBe("array");
+
+    // show_suppressed is a server-level config, not a per-call arg.
+    expect(schema.properties.show_suppressed).toBeUndefined();
   });
 
   it("should call list_entrypoints on packages/core and get valid response", async () => {
@@ -217,7 +225,10 @@ describe("MCP Server E2E - list_entrypoints tool", () => {
   }, 120000);
 
   it("should filter out test functions when include_tests is false", async () => {
-    // First get results with tests included
+    // Filtering happens in core (`Project.get_call_graph`). The MCP forwards
+    // include_tests verbatim and renders whatever core returns. This test
+    // also serves as an AC #11 / Risk-4 anchor: any drift in include_tests
+    // semantics from MCP→core surfaces here as a count discrepancy.
     const with_tests_response = await client.callTool({
       name: "list_entrypoints",
       arguments: { include_tests: true },
@@ -225,7 +236,6 @@ describe("MCP Server E2E - list_entrypoints tool", () => {
     const with_tests_text = (with_tests_response.content as any[])[0]
       .text as string;
 
-    // Then get results without tests
     const without_tests_response = await client.callTool({
       name: "list_entrypoints",
       arguments: { include_tests: false },
@@ -233,10 +243,8 @@ describe("MCP Server E2E - list_entrypoints tool", () => {
     const without_tests_text = (without_tests_response.content as any[])[0]
       .text as string;
 
-    // Without tests should not contain [TEST] marker
     expect(without_tests_text).not.toContain("[TEST]");
 
-    // Extract counts
     const with_tests_match = with_tests_text.match(
       /Total:\s+(\d+)\s+entry points?/
     );
@@ -251,7 +259,6 @@ describe("MCP Server E2E - list_entrypoints tool", () => {
       const with_tests_count = parseInt(with_tests_match[1], 10);
       const without_tests_count = parseInt(without_tests_match[1], 10);
 
-      // With tests should have more entry points than without
       expect(with_tests_count).toBeGreaterThan(without_tests_count);
 
       console.log(`\nWith tests: ${with_tests_count} entry points`);
@@ -260,6 +267,18 @@ describe("MCP Server E2E - list_entrypoints tool", () => {
         `Test entry points filtered: ${with_tests_count - without_tests_count}`
       );
     }
+  }, 120000);
+
+  it("default output does not contain a Suppressed section", async () => {
+    // show_suppressed defaults to false at server level. Without the flag,
+    // every list_entrypoints call must produce the clean default output.
+    const response = await client.callTool({
+      name: "list_entrypoints",
+      arguments: {},
+    });
+    const text = (response.content as any[])[0].text as string;
+
+    expect(text).not.toContain("Suppressed (known false positives)");
   }, 120000);
 
   it("should handle tool call errors gracefully", async () => {
@@ -276,4 +295,72 @@ describe("MCP Server E2E - list_entrypoints tool", () => {
       expect(error).toBeDefined();
     }
   });
+});
+
+describe("MCP Server E2E - list_entrypoints with show_suppressed enabled", () => {
+  let client: Client;
+  let transport: StdioClientTransport;
+
+  const PACKAGES_CORE_PATH = path.resolve(__dirname, "../../../../core");
+  const SERVER_PATH = path.resolve(__dirname, "../../../dist/server.js");
+
+  beforeAll(async () => {
+    // Spawn a separate server with the suppressed-section flag enabled.
+    // Mirrors the `.mcp.json` deployment shape for triage workflows.
+    transport = new StdioClientTransport({
+      command: "node",
+      args: [SERVER_PATH, "--no-watch", "--show-suppressed"],
+      env: {
+        ...process.env,
+        PROJECT_PATH: PACKAGES_CORE_PATH,
+        ARIADNE_ANALYTICS: "",
+      },
+    });
+
+    client = new Client(
+      { name: "test-client-show-suppressed", version: "1.0.0" },
+      { capabilities: {} }
+    );
+    await client.connect(transport);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }, 60000);
+
+  afterAll(async () => {
+    if (client) {
+      await client.close();
+    }
+  });
+
+  it("appends a Suppressed section under the default output", async () => {
+    const response = await client.callTool({
+      name: "list_entrypoints",
+      arguments: {},
+    });
+    const text = (response.content as any[])[0].text as string;
+
+    expect(text).toContain("Entry Points (by call tree size):");
+    expect(text).toContain("Suppressed (known false positives):");
+  }, 120000);
+
+  it("Suppressed section uses the canonical [label: detail] tag format", async () => {
+    const response = await client.callTool({
+      name: "list_entrypoints",
+      arguments: {},
+    });
+    const text = (response.content as any[])[0].text as string;
+
+    // Locate the Suppressed section and inspect only its body.
+    const sup_index = text.indexOf("Suppressed (known false positives):");
+    expect(sup_index).toBeGreaterThan(0);
+    const sup_section = text.slice(sup_index);
+
+    // The section either lists '(none)' or includes at least one tag in
+    // canonical `[label: detail]` form. Bare `[label]` (test_only) is also
+    // accepted because no detail field exists for that variant.
+    const tag_pattern = /\[(?:[a-z0-9_-]+)(?::\s+\S+)?\]/;
+    const has_none = sup_section.includes("(none)");
+    const has_tag = tag_pattern.test(sup_section);
+
+    expect(has_none || has_tag).toBe(true);
+  }, 120000);
 });
