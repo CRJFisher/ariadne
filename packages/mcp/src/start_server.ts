@@ -10,18 +10,20 @@ import {
   record_session_client_info,
 } from "./analytics/analytics";
 import { register_tool_groups } from "./tools/tool_registry";
-import { CORE_TOOL_GROUP } from "./tools/core/tool_group";
-
-/**
- * All available tool groups. Adding a new group requires one import + one entry here.
- */
-const ALL_TOOL_GROUPS = [CORE_TOOL_GROUP];
+import { create_core_tool_group } from "./tools/core/tool_group";
 
 export interface AriadneMCPServerOptions {
   project_path?: string;
   transport?: "stdio";
   watch?: boolean;
   toolsets?: string[];
+  /**
+   * Server-level config for `list_entrypoints`: when true, every tool
+   * invocation appends a "Suppressed" section with the registry-classified
+   * known false positives. Set via CLI (`--show-suppressed`) or env var
+   * (`ARIADNE_SHOW_SUPPRESSED=1`); defaults to false.
+   */
+  show_suppressed?: boolean;
 }
 
 export async function start_server(
@@ -77,8 +79,14 @@ export async function start_server(
       (project_manager.is_watching() ? " (watching for changes)" : ""),
   );
 
+  // Build tool groups with server-level config baked in.
+  const core_tool_group = create_core_tool_group({
+    list_entrypoints: { show_suppressed: options.show_suppressed ?? false },
+  });
+  const all_tool_groups = [core_tool_group];
+
   // Register tool groups (filtered by --toolsets if specified)
-  register_tool_groups(ALL_TOOL_GROUPS, {
+  register_tool_groups(all_tool_groups, {
     mcp_server,
     project_manager,
     project_path,
