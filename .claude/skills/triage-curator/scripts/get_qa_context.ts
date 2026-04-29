@@ -24,6 +24,7 @@
 
 import * as fs from "node:fs/promises";
 
+import { parse_known_issues_registry_json } from "@ariadnejs/types";
 import { get_registry_file_path } from "../src/paths.js";
 import { SAMPLE_SIZE, read_source_excerpt } from "../src/source_excerpt.js";
 import type {
@@ -97,7 +98,7 @@ async function main(): Promise<void> {
   }
 
   const registry_raw = await fs.readFile(get_registry_file_path(), "utf8");
-  const registry = JSON.parse(registry_raw) as KnownIssue[];
+  const registry = parse_known_issues_registry_json(registry_raw) as unknown as KnownIssue[];
   const registry_entry = registry.find((e) => e.group_id === group_id) ?? null;
 
   const sampled = sample_members(group.entries, SAMPLE_SIZE);

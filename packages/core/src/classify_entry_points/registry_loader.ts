@@ -14,14 +14,38 @@
  * without re-parsing.
  */
 
-import type { KnownIssuesRegistry, PredicateExpr } from "@ariadnejs/types";
-import { PERMANENT_REGISTRY } from "./registry_permanent";
+import type { KnownIssue, KnownIssuesRegistry, PredicateExpr } from "@ariadnejs/types";
+import { KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION } from "@ariadnejs/types";
+import { PERMANENT_REGISTRY, PERMANENT_REGISTRY_SCHEMA_VERSION } from "./registry_permanent";
 
 let permanent_registry_cache: KnownIssuesRegistry | null = null;
+
+/**
+ * Loader error surfaced when the bundled slice is corrupt or out of date.
+ * Fails loud rather than silently degrading classification: a slice that
+ * carries a non-permanent or `kind: "none"` rule indicates the sync script
+ * regressed and the next user of the library would mis-classify.
+ */
+export class PermanentRegistryError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PermanentRegistryError";
+  }
+}
 
 export function load_permanent_registry(): KnownIssuesRegistry {
   if (permanent_registry_cache !== null) {
     return permanent_registry_cache;
+  }
+  if (PERMANENT_REGISTRY_SCHEMA_VERSION !== KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION) {
+    throw new PermanentRegistryError(
+      `bundled permanent slice schema_version ${PERMANENT_REGISTRY_SCHEMA_VERSION} ` +
+        `does not match @ariadnejs/types ${KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION} — ` +
+        "regenerate via `pnpm sync-permanent-rules`",
+    );
+  }
+  for (const issue of PERMANENT_REGISTRY) {
+    assert_permanent_non_none(issue);
   }
   // Deep-clone so the in-place regex compilation does not mutate the
   // exported module constant (which would defeat HMR / repeated loads).
@@ -33,6 +57,21 @@ export function load_permanent_registry(): KnownIssuesRegistry {
   }
   permanent_registry_cache = cloned;
   return cloned;
+}
+
+function assert_permanent_non_none(issue: KnownIssue): void {
+  if (issue.status !== "permanent") {
+    throw new PermanentRegistryError(
+      `bundled slice contains non-permanent rule "${issue.group_id}" (status="${issue.status}") — ` +
+        "the sync script must filter on status === \"permanent\"",
+    );
+  }
+  if (issue.classifier.kind === "none") {
+    throw new PermanentRegistryError(
+      `bundled slice contains kind:"none" rule "${issue.group_id}" — ` +
+        "the sync script must drop unclassified rules from the slice",
+    );
+  }
 }
 
 function compile_regex_in_place(expr: PredicateExpr): void {

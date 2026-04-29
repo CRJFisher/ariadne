@@ -4,6 +4,7 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
+  parse_known_issues_registry_json,
   PREDICATE_OPERATORS,
   type KnownIssuesRegistry,
   type PredicateOperator,
@@ -34,7 +35,55 @@ describe("load_registry", () => {
     expect(p.endsWith(path.join("self-repair-pipeline", "known_issues", "registry.json"))).toBe(true);
     expect(fs.existsSync(p)).toBe(true);
   });
+
+  it("loads `wip`-status rules alongside `permanent` ones", () => {
+    const registry = load_registry();
+    const has_wip = registry.some((e) => e.status === "wip");
+    expect(has_wip).toBe(true);
+  });
+
+  it("loads `kind: \"none\"` rules (registry placeholders without a classifier)", () => {
+    const registry = load_registry();
+    const has_kind_none = registry.some((e) => e.classifier.kind === "none");
+    expect(has_kind_none).toBe(true);
+  });
 });
+
+// ===== Wire-format envelope =====
+
+describe("registry.json envelope", () => {
+  it("is a `{ schema_version, rules }` object with schema_version=1", () => {
+    const raw = fs.readFileSync(get_registry_file_path(), "utf8");
+    const parsed = JSON.parse(raw) as { schema_version: number; rules: unknown };
+    expect(parsed.schema_version).toEqual(1);
+    expect(Array.isArray(parsed.rules)).toBe(true);
+  });
+
+  it("rejects a JSON array (legacy bare-array shape)", () => {
+    expect(() => validate_registry_envelope_via_load_registry([])).toThrow(/schema_version/);
+  });
+
+  it("rejects a `{ schema_version: 2, rules: [] }` mismatch", () => {
+    expect(() =>
+      validate_registry_envelope_via_load_registry({ schema_version: 2, rules: [] }),
+    ).toThrow(/schema_version mismatch/);
+  });
+
+  it("rejects an envelope with a missing `rules` array", () => {
+    expect(() =>
+      validate_registry_envelope_via_load_registry({ schema_version: 1 }),
+    ).toThrow(/rules/);
+  });
+});
+
+/**
+ * Drive the wire-format parser the loader uses with a synthetic JSON value.
+ * Lets envelope-shape tests assert without writing to a tmp file or rewiring
+ * `get_registry_file_path`.
+ */
+function validate_registry_envelope_via_load_registry(value: unknown): void {
+  parse_known_issues_registry_json(JSON.stringify(value));
+}
 
 // ===== Shape =====
 

@@ -18,6 +18,7 @@
 
 import * as fs from "node:fs/promises";
 
+import { parse_known_issues_registry_json } from "@ariadnejs/types";
 import { render_impact_report } from "../src/impact_report.js";
 import { get_registry_file_path } from "../src/paths.js";
 import type { KnownIssue } from "../src/types.js";
@@ -94,7 +95,9 @@ async function main(): Promise<void> {
   const args = parse_argv(process.argv.slice(2));
 
   const registry_path = get_registry_file_path();
-  const registry = JSON.parse(await fs.readFile(registry_path, "utf8")) as KnownIssue[];
+  const registry = parse_known_issues_registry_json(
+    await fs.readFile(registry_path, "utf8"),
+  ) as unknown as KnownIssue[];
   const prior_counts = await load_prior(args.prior_path);
 
   const markdown = render_impact_report({

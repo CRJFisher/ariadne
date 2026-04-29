@@ -15,8 +15,10 @@
 
 import * as fs from "node:fs/promises";
 
-import type {
-  KnownIssue as SelfRepairKnownIssue,
+import {
+  parse_known_issues_registry_json,
+  serialize_known_issues_registry_json,
+  type KnownIssue as SelfRepairKnownIssue,
 } from "@ariadnejs/types";
 import { get_registry_file_path } from "../src/paths.js";
 import {
@@ -115,7 +117,7 @@ async function main(): Promise<void> {
   const aggregates = aggregate_novel_groups(runs);
 
   const registry_path = get_registry_file_path();
-  const registry = JSON.parse(
+  const registry = parse_known_issues_registry_json(
     await fs.readFile(registry_path, "utf8"),
   ) as SelfRepairKnownIssue[];
 
@@ -124,7 +126,7 @@ async function main(): Promise<void> {
   const { next, promoted } = apply_promotions(registry, promotable);
 
   if (!args.dry_run && promoted.length > 0) {
-    await fs.writeFile(registry_path, JSON.stringify(next, null, 2) + "\n", "utf8");
+    await fs.writeFile(registry_path, serialize_known_issues_registry_json(next), "utf8");
   }
 
   process.stdout.write(

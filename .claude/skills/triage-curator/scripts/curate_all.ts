@@ -26,6 +26,7 @@ import {
   get_scripts_rel,
   run_output_dir,
 } from "../src/paths.js";
+import { parse_known_issues_registry_json } from "@ariadnejs/types";
 import { scan_runs } from "../src/scan_runs.js";
 import type {
   KnownIssue,
@@ -148,9 +149,9 @@ async function main(): Promise<void> {
   const opts = parse_argv(process.argv.slice(2));
   await fs.mkdir(CURATOR_RUNS_DIR, { recursive: true });
 
-  const registry = JSON.parse(
+  const registry = parse_known_issues_registry_json(
     await fs.readFile(get_registry_file_path(), "utf8"),
-  ) as KnownIssue[];
+  ) as unknown as KnownIssue[];
   const known_group_ids = new Set(registry.map((e) => e.group_id));
 
   const items = await scan_runs(opts);

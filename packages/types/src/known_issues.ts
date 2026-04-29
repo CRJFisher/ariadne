@@ -138,5 +138,61 @@ export const PREDICATE_OPERATORS = [
 
 export type PredicateOperator = typeof PREDICATE_OPERATORS[number];
 
-/** The full registry file on disk is a JSON array of `KnownIssue`. */
+/** In-memory list of known issues. Loaders return this shape regardless of wire format. */
 export type KnownIssuesRegistry = KnownIssue[];
+
+/** Current schema version for the on-disk registry file. */
+export const KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION = 1 as const;
+export type KnownIssuesRegistrySchemaVersion = typeof KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION;
+
+/**
+ * Wire format for `registry.json` on disk and for the bundled permanent
+ * slice. Carrying `schema_version` separately from the in-memory array shape
+ * means future field changes can be detected by loaders without forcing
+ * downstream consumers to thread the version through.
+ */
+export interface KnownIssuesRegistryFile {
+  schema_version: KnownIssuesRegistrySchemaVersion;
+  rules: KnownIssue[];
+}
+
+/**
+ * Parse the JSON wire format of `registry.json` and return the inner rule
+ * array. Verifies the envelope shape and the `schema_version` field; deep
+ * shape validation of individual rules is the loader's responsibility.
+ */
+export function parse_known_issues_registry_json(raw: string): KnownIssue[] {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (e) {
+    const reason = e instanceof Error ? e.message : String(e);
+    throw new Error(`registry.json is not valid JSON: ${reason}`);
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    throw new Error("registry.json must be a JSON object with `schema_version` and `rules`");
+  }
+  const record = parsed as Record<string, unknown>;
+  if (record["schema_version"] !== KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION) {
+    throw new Error(
+      `registry.json: schema_version mismatch (expected ${KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION}, got ${String(record["schema_version"])})`,
+    );
+  }
+  if (!Array.isArray(record["rules"])) {
+    throw new Error("registry.json: `rules` must be an array");
+  }
+  return record["rules"] as KnownIssue[];
+}
+
+/**
+ * Serialize an in-memory rule array to the canonical on-disk JSON format,
+ * wrapping in the `{ schema_version, rules }` envelope and producing a
+ * trailing newline so the file diffs cleanly.
+ */
+export function serialize_known_issues_registry_json(rules: readonly KnownIssue[]): string {
+  const file: KnownIssuesRegistryFile = {
+    schema_version: KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION,
+    rules: [...rules],
+  };
+  return JSON.stringify(file, null, 2) + "\n";
+}

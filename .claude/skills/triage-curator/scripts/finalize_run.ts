@@ -28,7 +28,10 @@ import {
   write_outputs as write_unsupported_features_outputs,
 } from "../../self-repair-pipeline/scripts/render_unsupported_features.js";
 import { render_builtins_barrel } from "../../self-repair-pipeline/src/auto_classify/render_builtins_barrel.js";
-import type { KnownIssue as SelfRepairKnownIssue } from "@ariadnejs/types";
+import {
+  parse_known_issues_registry_json,
+  type KnownIssue as SelfRepairKnownIssue,
+} from "@ariadnejs/types";
 import { is_curated, save_outcome } from "../src/curation_outcome.js";
 import { error_code } from "../src/errors.js";
 import {
@@ -312,7 +315,7 @@ async function main(): Promise<void> {
   // map). Any registry upsert or drift tag invalidates both.
   const derived_files: string[] = [];
   if (!dry_run && (result.registry_upserts.length > 0 || result.drift_tagged_groups.length > 0)) {
-    const registry_after = JSON.parse(
+    const registry_after = parse_known_issues_registry_json(
       await fs.readFile(get_registry_file_path(), "utf8"),
     ) as SelfRepairKnownIssue[];
     const outputs = render_unsupported_features_all(registry_after);

@@ -11,6 +11,7 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
+import { parse_known_issues_registry_json } from "@ariadnejs/types";
 import { error_code } from "../src/errors.js";
 import {
   derive_run_id,
@@ -93,9 +94,9 @@ async function main(): Promise<void> {
 
   const triage = JSON.parse(await fs.readFile(run_path, "utf8")) as TriageResultsFile;
   const triage_groups: Record<string, FalsePositiveGroup> = triage.false_positive_groups;
-  const registry = JSON.parse(
+  const registry = parse_known_issues_registry_json(
     await fs.readFile(get_registry_file_path(), "utf8"),
-  ) as KnownIssue[];
+  ) as unknown as KnownIssue[];
 
   const files = await read_dir_safe(investigate_dir);
   const issues: ValidationIssue[] = [];

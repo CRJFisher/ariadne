@@ -1,5 +1,11 @@
 import * as fs from "node:fs/promises";
 
+import {
+  parse_known_issues_registry_json,
+  serialize_known_issues_registry_json,
+} from "@ariadnejs/types";
+import type { KnownIssue as CoreKnownIssue } from "@ariadnejs/types";
+
 import { error_code } from "./errors.js";
 import { render_ariadne_bug_body } from "./render_ariadne_bug_body.js";
 import type {
@@ -202,7 +208,7 @@ export async function apply_proposals(
   opts: ApplyOptions,
 ): Promise<ApplyResult> {
   const raw = await fs.readFile(opts.registry_path, "utf8");
-  const registry = JSON.parse(raw) as KnownIssue[];
+  const registry = parse_known_issues_registry_json(raw) as unknown as KnownIssue[];
 
   const { updated: after_drift, drift_tagged_groups } = mark_drift_in_registry(
     registry,
@@ -293,7 +299,7 @@ export async function apply_proposals(
   if (!opts.dry_run && registry_mutated) {
     await fs.writeFile(
       opts.registry_path,
-      JSON.stringify(next_registry, null, 2) + "\n",
+      serialize_known_issues_registry_json(next_registry as unknown as CoreKnownIssue[]),
       "utf8",
     );
   }
@@ -359,7 +365,7 @@ export async function link_ariadne_bug_tasks(
   if (entries.length === 0) return { updated_groups: [] };
 
   const raw = await fs.readFile(registry_path, "utf8");
-  const registry = JSON.parse(raw) as KnownIssue[];
+  const registry = parse_known_issues_registry_json(raw) as unknown as KnownIssue[];
 
   const updated_groups: string[] = [];
   const next = registry.map((issue) => {
@@ -372,7 +378,11 @@ export async function link_ariadne_bug_tasks(
 
   if (updated_groups.length === 0) return { updated_groups: [] };
 
-  await fs.writeFile(registry_path, JSON.stringify(next, null, 2) + "\n", "utf8");
+  await fs.writeFile(
+    registry_path,
+    serialize_known_issues_registry_json(next as unknown as CoreKnownIssue[]),
+    "utf8",
+  );
   return { updated_groups };
 }
 
