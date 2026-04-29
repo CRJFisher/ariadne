@@ -3,8 +3,8 @@
 //
 // TypeScript class constructors with zero resolved inbound call references. `new ClassName(...)` sites are captured by tree-sitter (`@reference.constructor` fires at the grep hits) but the resolver does not link them back to the class's constructor member, leaving the constructor with an empty `ariadne_call_refs`. Classifies as the existing `constructor-new-expression` false-positive pattern.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

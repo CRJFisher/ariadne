@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { KnownIssue } from "../known_issues_types.js";
+import type { KnownIssue } from "@ariadnejs/types";
 import {
   collect_barrel_entries,
   render_builtins_barrel,
@@ -59,10 +59,10 @@ describe("render_builtins_barrel", () => {
     ];
     const rendered = render_builtins_barrel(registry);
     expect(rendered).toContain(
-      "import { check_dispatch_group } from \"./check_dispatch-group.js\";",
+      "import { check_dispatch_group } from \"./check_dispatch-group\";",
     );
     expect(rendered).toContain(
-      "import { check_other_issue } from \"./check_other-issue.js\";",
+      "import { check_other_issue } from \"./check_other-issue\";",
     );
     expect(rendered).toContain("export const BUILTIN_CHECKS: Record<string, BuiltinCheckFn> = {");
     expect(rendered).toContain("  check_dispatch_group,");

@@ -14,9 +14,9 @@
  * calling this function so the bucketing here is final.
  */
 
-import type { EnrichedEntryPoint } from "./entry_point_types.js";
+import type { EnrichedEntryPoint, ClassifierHint } from "@ariadnejs/types";
 import type { TriageEntry } from "./triage_state_types.js";
-import type { ClassifiedEntryPointResult, ClassifierHint } from "./auto_classify/types.js";
+import type { ClassifiedEntryPointResult } from "@ariadnejs/core";
 
 export interface BuildTriageEntriesInput {
   auto_classified: ClassifiedEntryPointResult[];

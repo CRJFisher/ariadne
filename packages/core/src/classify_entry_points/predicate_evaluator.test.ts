@@ -5,11 +5,14 @@ import type {
   DefinitionFeatures,
   EnrichedEntryPoint,
   EntryPointDiagnostics,
+  FilePath,
   GrepHit,
   SyntacticFeatures,
-} from "../entry_point_types.js";
-import type { PredicateExpr } from "../known_issues_types.js";
-import { evaluate_predicate } from "./predicate_evaluator.js";
+  PredicateExpr,
+} from "@ariadnejs/types";
+import { evaluate_predicate } from "./predicate_evaluator";
+
+const fp = (s: string) => s as FilePath;
 
 // ===== Fixtures =====
 
@@ -25,7 +28,7 @@ const BASE_FEATURES: SyntacticFeatures = {
 
 function make_grep_hit(overrides: Partial<GrepHit> = {}): GrepHit {
   return {
-    file_path: "src/caller.ts",
+    file_path: fp("src/caller.ts"),
     line: 10,
     content: "foo()",
     captures: [],
@@ -36,7 +39,7 @@ function make_grep_hit(overrides: Partial<GrepHit> = {}): GrepHit {
 function make_call_ref(overrides: Partial<CallRefDiagnostic> = {}): CallRefDiagnostic {
   return {
     caller_function: "caller",
-    caller_file: "src/caller.ts",
+    caller_file: fp("src/caller.ts"),
     call_line: 10,
     call_type: "function",
     resolution_count: 0,
@@ -70,7 +73,7 @@ function make_entry(
 ): EnrichedEntryPoint {
   return {
     name: "target",
-    file_path: "src/target.ts",
+    file_path: fp("src/target.ts"),
     start_line: 5,
     kind: "function",
     tree_size: 0,
@@ -106,8 +109,8 @@ describe("evaluate_predicate — leaf operators", () => {
   });
 
   it("language_eq reads language from file extension", () => {
-    const py_entry = make_entry({ file_path: "app/main.py" });
-    const ts_entry = make_entry({ file_path: "src/server.ts" });
+    const py_entry = make_entry({ file_path: fp("app/main.py") });
+    const ts_entry = make_entry({ file_path: fp("src/server.ts") });
     const expr: PredicateExpr = { op: "language_eq", value: "python" };
     expect(evaluate_predicate(expr, ctx(py_entry))).toBe(true);
     expect(evaluate_predicate(expr, ctx(ts_entry))).toBe(false);
@@ -140,14 +143,14 @@ describe("evaluate_predicate — leaf operators", () => {
   });
 
   it("decorator_matches reads preceding decorator block", () => {
-    const entry_point = make_entry({ file_path: "app.py", start_line: 2 });
+    const entry_point = make_entry({ file_path: fp("app.py"), start_line: 2 });
     const lines = ["@pytest.fixture", "def load_config():", "    pass"];
     const expr: PredicateExpr = { op: "decorator_matches", pattern: "pytest\\.fixture" };
     expect(evaluate_predicate(expr, ctx(entry_point, { "app.py": lines }))).toBe(true);
   });
 
   it("decorator_matches false when no decorator above the definition", () => {
-    const entry_point = make_entry({ file_path: "app.py", start_line: 1 });
+    const entry_point = make_entry({ file_path: fp("app.py"), start_line: 1 });
     const lines = ["def load_config():", "    pass"];
     const expr: PredicateExpr = { op: "decorator_matches", pattern: "pytest\\.fixture" };
     expect(evaluate_predicate(expr, ctx(entry_point, { "app.py": lines }))).toBe(false);
@@ -275,11 +278,11 @@ describe("evaluate_predicate — leaf operators", () => {
 
   it("grep_hits_all_intra_file matches when every hit shares the entry_point file", () => {
     const entry_point = make_entry({
-      file_path: "src/foo.js",
+      file_path: fp("src/foo.js"),
       diagnostics: make_diagnostics({
         grep_call_sites: [
-          make_grep_hit({ file_path: "src/foo.js" }),
-          make_grep_hit({ file_path: "src/foo.js" }),
+          make_grep_hit({ file_path: fp("src/foo.js") }),
+          make_grep_hit({ file_path: fp("src/foo.js") }),
         ],
       }),
     });
@@ -289,11 +292,11 @@ describe("evaluate_predicate — leaf operators", () => {
 
   it("grep_hits_all_intra_file rejects when any hit is cross-file", () => {
     const entry_point = make_entry({
-      file_path: "src/foo.js",
+      file_path: fp("src/foo.js"),
       diagnostics: make_diagnostics({
         grep_call_sites: [
-          make_grep_hit({ file_path: "src/foo.js" }),
-          make_grep_hit({ file_path: "src/bar.js" }),
+          make_grep_hit({ file_path: fp("src/foo.js") }),
+          make_grep_hit({ file_path: fp("src/bar.js") }),
         ],
       }),
     });
@@ -303,17 +306,17 @@ describe("evaluate_predicate — leaf operators", () => {
 
   it("grep_hits_all_intra_file with value:false negates the predicate", () => {
     const all_intra = make_entry({
-      file_path: "src/foo.js",
+      file_path: fp("src/foo.js"),
       diagnostics: make_diagnostics({
-        grep_call_sites: [make_grep_hit({ file_path: "src/foo.js" })],
+        grep_call_sites: [make_grep_hit({ file_path: fp("src/foo.js") })],
       }),
     });
     const cross_file = make_entry({
-      file_path: "src/foo.js",
+      file_path: fp("src/foo.js"),
       diagnostics: make_diagnostics({
         grep_call_sites: [
-          make_grep_hit({ file_path: "src/foo.js" }),
-          make_grep_hit({ file_path: "src/bar.js" }),
+          make_grep_hit({ file_path: fp("src/foo.js") }),
+          make_grep_hit({ file_path: fp("src/bar.js") }),
         ],
       }),
     });
@@ -324,7 +327,7 @@ describe("evaluate_predicate — leaf operators", () => {
 
   it("grep_hits_all_intra_file with empty grep array reads as 'not all intra'", () => {
     const entry_point = make_entry({
-      file_path: "src/foo.js",
+      file_path: fp("src/foo.js"),
       diagnostics: make_diagnostics({ grep_call_sites: [] }),
     });
     const yes: PredicateExpr = { op: "grep_hits_all_intra_file", value: true };
@@ -336,7 +339,7 @@ describe("evaluate_predicate — leaf operators", () => {
   it("grep_hit_neighbourhood_matches scans lines above the hit", () => {
     const entry_point = make_entry({
       diagnostics: make_diagnostics({
-        grep_call_sites: [make_grep_hit({ file_path: "src/caller.js", line: 10 })],
+        grep_call_sites: [make_grep_hit({ file_path: fp("src/caller.js"), line: 10 })],
       }),
     });
     const lines_by_file = {
@@ -365,7 +368,7 @@ describe("evaluate_predicate — leaf operators", () => {
   it("grep_hit_neighbourhood_matches handles top-of-file (window larger than hit line)", () => {
     const entry_point = make_entry({
       diagnostics: make_diagnostics({
-        grep_call_sites: [make_grep_hit({ file_path: "src/caller.js", line: 2 })],
+        grep_call_sites: [make_grep_hit({ file_path: fp("src/caller.js"), line: 2 })],
       }),
     });
     const lines_by_file = {
@@ -385,7 +388,7 @@ describe("evaluate_predicate — leaf operators", () => {
   it("grep_hit_neighbourhood_matches returns false when the hit's file is not in lines_by_file", () => {
     const entry_point = make_entry({
       diagnostics: make_diagnostics({
-        grep_call_sites: [make_grep_hit({ file_path: "src/missing.js", line: 5 })],
+        grep_call_sites: [make_grep_hit({ file_path: fp("src/missing.js"), line: 5 })],
       }),
     });
     const expr: PredicateExpr = {
@@ -435,7 +438,7 @@ describe("evaluate_predicate — leaf operators", () => {
   it("has_unindexed_test_caller reflects grep_call_sites_unindexed_tests presence", () => {
     const with_test = make_entry({
       diagnostics: make_diagnostics({
-        grep_call_sites_unindexed_tests: [make_grep_hit({ file_path: "test/foo.test.js" })],
+        grep_call_sites_unindexed_tests: [make_grep_hit({ file_path: fp("test/foo.test.js") })],
       }),
     });
     const without_test = make_entry();
@@ -449,7 +452,7 @@ describe("evaluate_predicate — leaf operators", () => {
 
 describe("evaluate_predicate — combinators", () => {
   const py_entry = make_entry({
-    file_path: "app.py",
+    file_path: fp("app.py"),
     diagnostics: make_diagnostics({ diagnosis: "no-textual-callers" }),
   });
 

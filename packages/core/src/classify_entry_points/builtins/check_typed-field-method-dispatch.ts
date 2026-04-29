@@ -3,8 +3,8 @@
 //
 // Matches methods whose inbound call sites are `this.<field>.<method>(...)` where the resolver knows the receiver is `self_keyword` but fails with `member_type_unknown` because it cannot walk the field's declared class type to look up the method. Positive examples: `Logger.debug` (entry_point 0) called via `this.logger.debug(...)` where `logger = new Logger(...)`, and `MicroservicesModule.register` (entry_point 1) called via `this.microservicesModule.register(...)` where `microservicesModule = new MicroservicesModule()`. Negative examples: `Injector.loadController` (entry_point 2) is `callers-not-in-registry` with zero call refs (different failure shape — generic-parameter field type `TInjector extends Injector`, call site never indexed as a method ref); `KafkaParser.parse` (entry_point 3) is a name collision with `JSON.parse(...)` — all 25 call refs resolve to identifier-receiver `JSON.parse`, failure reason `name_not_in_scope`, unrelated to typed-field dispatch.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 export function check_typed_field_method_dispatch(
   entry_point: EnrichedEntryPoint,

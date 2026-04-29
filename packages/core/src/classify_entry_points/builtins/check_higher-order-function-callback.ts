@@ -3,8 +3,8 @@
 //
 // Anonymous TypeScript functions whose only caller is a higher-order function that invokes its function-typed parameter. The static call graph cannot link the lambda back to the callee that calls it indirectly, and no textual caller exists because the function literal has no name to grep for. Diagnosis 'no-textual-callers' plus an anonymous name is the structural fingerprint.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

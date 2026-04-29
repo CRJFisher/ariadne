@@ -3,8 +3,8 @@
 //
 // TypeScript method calls on a receiver typed via an aliased import (e.g. `import { ViewRef as InternalViewRef }`) where Ariadne cannot follow the import alias to the original class. Surfaces as a `type_cast` call-ref with `receiver_type_unknown`, paired with grep evidence of an `as <AliasedType<...>>` cast pattern in the call sites.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

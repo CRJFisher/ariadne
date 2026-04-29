@@ -18,8 +18,12 @@ import { fileURLToPath } from "url";
 import { parse_project_arg, parse_run_id_arg } from "../src/cli_args.js";
 import { require_run, results_dir_for } from "../src/triage_state_paths.js";
 import type { TriageState, TriageEntry } from "../src/triage_state_types.js";
-import type { GrepHit, CallRefDiagnostic, EntryPointDiagnostics } from "../src/entry_point_types.js";
-import type { ClassifierHint } from "../src/auto_classify/types.js";
+import type {
+  GrepHit,
+  CallRefDiagnostic,
+  EntryPointDiagnostics,
+  ClassifierHint,
+} from "@ariadnejs/types";
 import "../src/guard_tsx_invocation.js";
 
 const USAGE = "Usage: get_entry_context.ts --project <name> --entry <index> [--run-id <id>]";

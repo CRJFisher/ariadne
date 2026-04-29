@@ -11,15 +11,17 @@
  *   3. Delegate shape assembly to `build_triage_entries`.
  */
 
-import { auto_classify } from "./auto_classify/orchestrator.js";
-import type { ClassifiedEntryPointResult, FileLinesReader } from "./auto_classify/types.js";
+import {
+  auto_classify,
+  type ClassifiedEntryPointResult,
+  type FileLinesReader,
+} from "@ariadnejs/core";
 import {
   build_triage_entries,
   type BuildTriageEntriesInput,
   type ResidualEntryPoint,
 } from "./build_triage_entries.js";
-import type { EnrichedEntryPoint } from "./entry_point_types.js";
-import type { KnownIssuesRegistry } from "./known_issues_types.js";
+import type { EnrichedEntryPoint, KnownIssuesRegistry } from "@ariadnejs/types";
 import type { TriageEntry } from "./triage_state_types.js";
 
 export interface PrepareTriageInput {

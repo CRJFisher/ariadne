@@ -1,19 +1,12 @@
 /**
- * Types for the `auto_classify` pipeline stage.
+ * Types internal to the `classify_entry_points` orchestrator.
  *
  * Kept narrow on purpose: the evaluator is pure over `EnrichedEntryPoint` +
  * a lazy file reader, so any future classifier axis introduces its own context
  * shape rather than widening this one up-front.
- *
- * `ClassifierHint` is not defined here: it lives in `../triage_state_types.ts`
- * because it is part of the persisted `TriageEntry` shape, not a transient
- * pipeline-internal value. Re-exported for convenience.
  */
 
-import type { EnrichedEntryPoint } from "../entry_point_types.js";
-import type { ClassifierHint } from "../triage_state_types.js";
-
-export type { ClassifierHint };
+import type { EnrichedEntryPoint, ClassifierHint } from "@ariadnejs/types";
 
 export type AutoClassifyResult =
   | {

@@ -3,8 +3,8 @@
 //
 // JavaScript function whose definition is attached to a module-prototype object by direct property assignment (e.g. `app.path = function path() { return this.parent ? this.parent.path() + this.mountpath : ''; }` at lib/application.js:399, where `var app = exports = module.exports = {}` at lib/application.js:40). The function's body dispatches through `this` (here `this.parent.path()` — a recursive call via a `this`-rooted field access). Ariadne records the inbound call reference with `receiver_kind: self_keyword` but `resolve_keyword_base` cannot find an enclosing class scope (the prototype object is a plain literal, not a class), so the call fails with `resolution_failure.reason: no_enclosing_class_scope` and the definition surfaces as unreached even though the real caller exists on line 401.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

@@ -3,8 +3,8 @@
 //
 // JavaScript function definitions whose only call sites live in the same file but the resolver returns name_not_in_scope for bare-name calls. Diagnostic shape: diagnosis=callers-in-registry-unresolved, all ariadne_call_refs failing with name_not_in_scope and receiver_kind=none, all grep hits intra-file. Captures the var-bound function expression pattern (var X = function X(...)) where the function symbol is extracted but the var-name binding is not added to the enclosing scope's symbol table.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

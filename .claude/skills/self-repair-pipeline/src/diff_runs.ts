@@ -7,7 +7,7 @@
  * as "appeared/disappeared".
  */
 
-import type { FalsePositiveEntry, FalsePositiveGroup } from "./entry_point_types.js";
+import type { FalsePositiveEntry, FalsePositiveGroup } from "@ariadnejs/types";
 import type { FinalizationOutput } from "./build_finalization_output.js";
 
 export interface EntryRef {

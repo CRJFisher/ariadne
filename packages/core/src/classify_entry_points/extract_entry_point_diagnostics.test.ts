@@ -6,7 +6,7 @@ import {
   count_tree_size,
   derive_definition_features,
   detect_language,
-} from "./extract_entry_points.js";
+} from "./extract_entry_point_diagnostics";
 import type {
   AnyDefinition,
   CallGraph,
@@ -227,8 +227,8 @@ describe("build_grep_index", () => {
   }
 
   it("indexes simple identifier-followed-by-paren calls", () => {
-    const lines_by_file = new Map<string, string[]>([
-      ["a.ts", as_lines("const x = foo();\nconst y = bar();")],
+    const lines_by_file = new Map<FilePath, string[]>([
+      [fp("a.ts"), as_lines("const x = foo();\nconst y = bar();")],
     ]);
 
     const index = build_grep_index(lines_by_file, new Map());
@@ -242,9 +242,9 @@ describe("build_grep_index", () => {
   });
 
   it("collects all occurrences of a repeated name across files", () => {
-    const lines_by_file = new Map<string, string[]>([
-      ["a.ts", as_lines("foo(); foo();")],
-      ["b.ts", as_lines("foo();")],
+    const lines_by_file = new Map<FilePath, string[]>([
+      [fp("a.ts"), as_lines("foo(); foo();")],
+      [fp("b.ts"), as_lines("foo();")],
     ]);
 
     const index = build_grep_index(lines_by_file, new Map());
@@ -259,8 +259,8 @@ describe("build_grep_index", () => {
   });
 
   it("ignores identifiers not followed by an open paren", () => {
-    const lines_by_file = new Map<string, string[]>([
-      ["a.ts", as_lines("const foo = 1;\nfoo.bar;\nfoo[0];")],
+    const lines_by_file = new Map<FilePath, string[]>([
+      [fp("a.ts"), as_lines("const foo = 1;\nfoo.bar;\nfoo[0];")],
     ]);
 
     const index = build_grep_index(lines_by_file, new Map());
@@ -270,8 +270,8 @@ describe("build_grep_index", () => {
   });
 
   it("matches across whitespace between name and paren", () => {
-    const lines_by_file = new Map<string, string[]>([
-      ["a.ts", as_lines("foo  ();\n  bar (x);")],
+    const lines_by_file = new Map<FilePath, string[]>([
+      [fp("a.ts"), as_lines("foo  ();\n  bar (x);")],
     ]);
 
     const index = build_grep_index(lines_by_file, new Map());
@@ -281,8 +281,8 @@ describe("build_grep_index", () => {
   });
 
   it("supports $ and _ in identifiers", () => {
-    const lines_by_file = new Map<string, string[]>([
-      ["a.js", as_lines("$(selector); _private();")],
+    const lines_by_file = new Map<FilePath, string[]>([
+      [fp("a.js"), as_lines("$(selector); _private();")],
     ]);
 
     const index = build_grep_index(lines_by_file, new Map());
@@ -292,8 +292,8 @@ describe("build_grep_index", () => {
   });
 
   it("attaches captures from call_refs_by_file_line when refs exist at the line", () => {
-    const lines_by_file = new Map<string, string[]>([
-      ["a.ts", as_lines("foo();")],
+    const lines_by_file = new Map<FilePath, string[]>([
+      [fp("a.ts"), as_lines("foo();")],
     ]);
     const refs_at_line: CallReference[] = [
       {
@@ -305,8 +305,8 @@ describe("build_grep_index", () => {
         is_callback_invocation: false,
       },
     ];
-    const call_refs_by_file_line = new Map<string, Map<number, CallReference[]>>([
-      ["a.ts", new Map([[1, refs_at_line]])],
+    const call_refs_by_file_line = new Map<FilePath, Map<number, CallReference[]>>([
+      [fp("a.ts"), new Map([[1, refs_at_line]])],
     ]);
 
     const index = build_grep_index(lines_by_file, call_refs_by_file_line);
@@ -436,8 +436,8 @@ describe("derive_definition_features", () => {
       kind: "method",
       start_line: 2,
     });
-    const lines = new Map<string, string[]>([
-      ["src/o.ts", ["const o = {", "  foo() { return 1; },", "};"]],
+    const lines = new Map<FilePath, string[]>([
+      [fp("src/o.ts"), ["const o = {", "  foo() { return 1; },", "};"]],
     ]);
     const out = derive_definition_features(node, new Set(), lines);
     expect(out).toEqual({
@@ -453,8 +453,8 @@ describe("derive_definition_features", () => {
       kind: "method",
       start_line: 2,
     });
-    const lines = new Map<string, string[]>([
-      ["src/c.ts", ["class C {", "  foo() {}", "}"]],
+    const lines = new Map<FilePath, string[]>([
+      [fp("src/c.ts"), ["class C {", "  foo() {}", "}"]],
     ]);
     const class_methods = new Set<SymbolId>([sym("class_method")]);
     const out = derive_definition_features(node, class_methods, lines);
@@ -470,8 +470,8 @@ describe("derive_definition_features", () => {
       kind: "function",
       start_line: 1,
     });
-    const lines = new Map<string, string[]>([
-      ["src/f.ts", ["function foo() {", "  return 1;", "}"]],
+    const lines = new Map<FilePath, string[]>([
+      [fp("src/f.ts"), ["function foo() {", "  return 1;", "}"]],
     ]);
     const out = derive_definition_features(node, new Set(), lines);
     expect(out).toEqual({
@@ -487,8 +487,8 @@ describe("derive_definition_features", () => {
       kind: "method",
       start_line: 2,
     });
-    const lines = new Map<string, string[]>([
-      ["src/c.ts", ["class C {", "  get name() { return this._n; }", "}"]],
+    const lines = new Map<FilePath, string[]>([
+      [fp("src/c.ts"), ["class C {", "  get name() { return this._n; }", "}"]],
     ]);
     const class_methods = new Set<SymbolId>([sym("class_method")]);
     const out = derive_definition_features(node, class_methods, lines);
@@ -505,8 +505,8 @@ describe("derive_definition_features", () => {
       kind: "method",
       start_line: 2,
     });
-    const lines = new Map<string, string[]>([
-      ["src/c.ts", ["class C {", "  set name(v: string) { this._n = v; }", "}"]],
+    const lines = new Map<FilePath, string[]>([
+      [fp("src/c.ts"), ["class C {", "  set name(v: string) { this._n = v; }", "}"]],
     ]);
     const class_methods = new Set<SymbolId>([sym("class_method")]);
     const out = derive_definition_features(node, class_methods, lines);

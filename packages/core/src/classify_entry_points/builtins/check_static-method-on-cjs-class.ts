@@ -3,8 +3,8 @@
 //
 // Static method on a CommonJS-exported class: `class Cls { static m() {...} } module.exports = Cls;` invoked at call sites as `Cls.m(...)` where `Cls` is a local identifier bound by `const Cls = require('./mod')`. Ariadne indexes both the method and the call refs but fails to bind the identifier receiver to the class type, so `method_not_on_type` is returned and the static method looks unreached. Identified by: JS language, diagnosis `callers-in-registry-unresolved`, at least one call ref with `receiver_kind=identifier` + `resolution_failure_reason=method_not_on_type`, and grep evidence of a `PascalCase.method(` call pattern.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

@@ -3,8 +3,8 @@
 //
 // Entry has zero resolved inbound callers but grep located call sites inside unindexed test directories. The function is exercised by tests that Ariadne does not index, so it appears unreachable in the call graph.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 export function check_test_file_callers_missed(
   entry_point: EnrichedEntryPoint,

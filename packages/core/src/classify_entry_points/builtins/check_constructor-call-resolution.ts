@@ -3,8 +3,8 @@
 //
 // JavaScript named function expressions assigned to a `var` (e.g. `var Chrome = function Chrome(chrome) { ... }`) that are invoked intra-file via `new Chrome(...)`. The tree-sitter query fires `@reference.constructor`, so a CallReference exists, but the resolver fails at `constructor_lookup` with `name_not_in_scope` because the var-bound named-function-expression name is not registered as a constructible target in the enclosing script scope. Filtered to PascalCase names so the rule does not fire on lowercase function-valued vars.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

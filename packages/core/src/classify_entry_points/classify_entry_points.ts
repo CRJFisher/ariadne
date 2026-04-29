@@ -1,5 +1,5 @@
 /**
- * Orchestrator for the auto-classify pipeline stage.
+ * Orchestrator for the entry-point classification stage.
  *
  * For every `EnrichedEntryPoint`, walk the known-issues registry in priority
  * order and evaluate each entry's classifier:
@@ -11,8 +11,8 @@
  *     barrel was never regenerated for. Throw `MissingBuiltinError` so the
  *     pipeline stops loudly instead of silently dropping the classifier.
  *
- * First auto-classification short-circuits the walk for that entry; sub-threshold
- * hits accumulate so the agent prompt can weigh them before starting investigation.
+ * First match short-circuits the walk for that entry; sub-threshold hits
+ * accumulate so the agent prompt can weigh them before starting investigation.
  *
  * Classifiers are binary: they score `1.0` on match, and non-matching entries are
  * filtered out before scoring — with `min_confidence ∈ [0, 1]` enforced at registry
@@ -20,17 +20,19 @@
  * exists so non-binary scorers could be introduced without reshaping callers.
  */
 
-import type { EnrichedEntryPoint } from "../entry_point_types.js";
-import type { KnownIssuesRegistry } from "../known_issues_types.js";
-import { BUILTIN_CHECKS, type BuiltinCheckFn } from "./builtins/index.js";
-import { evaluate_predicate } from "./predicate_evaluator.js";
+import type {
+  EnrichedEntryPoint,
+  KnownIssuesRegistry,
+  ClassifierHint,
+} from "@ariadnejs/types";
+import { BUILTIN_CHECKS, type BuiltinCheckFn } from "./builtins/index";
+import { evaluate_predicate } from "./predicate_evaluator";
 import type {
   ClassifiedEntryPointResult,
   AutoClassifyResult,
-  ClassifierHint,
   FileLinesReader,
   PredicateContext,
-} from "./types.js";
+} from "./auto_classify_types";
 
 export interface AutoClassifyOptions {
   /**
@@ -49,8 +51,8 @@ export class MissingBuiltinError extends Error {
     super(
       `Registry entry "${group_id}" references builtin classifier "${function_name}" ` +
         "but no implementation is registered in BUILTIN_CHECKS. The generated " +
-        "barrel `auto_classify/builtins/index.ts` is stale — re-run the " +
-        "triage-curator finalize step to regenerate it.",
+        "barrel `packages/core/src/classify_entry_points/builtins/index.ts` is " +
+        "stale — re-run the triage-curator finalize step to regenerate it.",
     );
     this.name = "MissingBuiltinError";
   }

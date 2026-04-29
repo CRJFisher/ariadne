@@ -3,8 +3,8 @@
 //
 // JavaScript CommonJS exports invoked through a require-bound namespace variable (e.g. `var utils = require('./utils'); utils.canonicalType(...)`). Ariadne's method_lookup stage reports `method_not_on_type` against an identifier receiver even though the receiver's `partial_info.import_target_file` is the entry_point's own file. Matches the dominant sub-case (method_lookup failure with identifier receiver); entries where tree-sitter missed the call capture entirely do not match this rule and are left for a future capture-gap classifier.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

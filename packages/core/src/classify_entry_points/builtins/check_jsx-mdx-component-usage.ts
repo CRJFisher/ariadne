@@ -3,8 +3,8 @@
 //
 // PascalCase exported components defined in .tsx files with zero grep evidence and zero resolved callers. The pattern indicates a React component whose only usage is in an unindexed file type (typically .mdx documentation files), since Ariadne does not include .mdx in SUPPORTED_EXTENSIONS and so neither greps nor parses those files.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

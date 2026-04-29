@@ -43,6 +43,12 @@ export const ALLOWED_ROOT_FILES = new Set([
 // Directories in packages that have special naming (prefix instead of suffix)
 export const EXTRACTOR_DIRS = ["extractors"];
 
+// Directories that allow kebab-case file names because they hold auto-generated
+// classifier source where each file's stem is a known-issues `group_id`
+// (validated as kebab-case by `validate_registry`). Matching the file name to
+// the group_id keeps the curator's renderer trivial.
+export const KEBAB_FILENAME_DIRS = ["builtins"];
+
 // File extensions that are always allowed in src (non-TypeScript)
 export const ALLOWED_SRC_EXTENSIONS = [".scm", ".md"];
 
@@ -147,6 +153,22 @@ export function validate_src_file(relative_path: string, parts: string[]): Valid
       return {
         valid: false,
         error: `Blocked: '${relative_path}' - extractor files must be snake_case`
+      };
+    }
+    return { valid: true };
+  }
+
+  // Auto-generated classifier sources: file stem must match a kebab-case
+  // group_id from the known-issues registry, so hyphens are allowed.
+  if (KEBAB_FILENAME_DIRS.includes(folder_name)) {
+    const ok =
+      filename === "index.ts" ||
+      /^[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*\.ts$/.test(filename) ||
+      /^[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*\.test\.ts$/.test(filename);
+    if (!ok) {
+      return {
+        valid: false,
+        error: `Blocked: '${relative_path}' - classifier files must be kebab-case (matching a registry group_id)`
       };
     }
     return { valid: true };

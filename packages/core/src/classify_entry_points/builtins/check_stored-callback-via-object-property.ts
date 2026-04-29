@@ -3,8 +3,8 @@
 //
 // Function definition whose value flows through an object-property store + destructure before being invoked as a bare identifier. All ariadne_call_refs fail with name_not_in_scope and receiver_kind=none, while tree-sitter already captured reference.call at the grep hits — ruling out syntactic-extraction gaps and narrowing to a cross-file-flow resolver miss. Concretely: `const extractValue = (...args) => ...; return { extractValue, ... }` later destructured as `const { extractValue } = param; extractValue(...params)` in nestjs rpc-context-creator.ts:238.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

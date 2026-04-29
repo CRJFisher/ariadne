@@ -21,7 +21,7 @@ import * as fs from "node:fs/promises";
 
 import type {
   KnownIssue as SelfRepairKnownIssue,
-} from "../../self-repair-pipeline/src/known_issues_types.js";
+} from "@ariadnejs/types";
 import { get_registry_file_path } from "../src/paths.js";
 import { propose_backlog_tasks } from "../src/propose_backlog_tasks.js";
 import "../src/require_node_import_tsx.js";

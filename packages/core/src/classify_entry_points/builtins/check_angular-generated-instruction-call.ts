@@ -3,8 +3,8 @@
 //
 // Angular Ivy compiler-generated runtime instructions: TypeScript functions whose names start with the double `ɵɵ` (U+0275) prefix and whose definitions live under packages/core/src/render3/. These are invoked from compiler-emitted code (`o.importExpr(R3.<name>).callFn(...)`) and through JIT environment string-keyed dispatch, never via static TypeScript call expressions, so they appear unreachable to Ariadne. The `ɵɵ` prefix is the deliberate, public Angular convention marking @codeGenApi members; combining it with the render3 path constraint avoids matching unrelated symbols that might happen to share the prefix.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

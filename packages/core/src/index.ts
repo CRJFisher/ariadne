@@ -7,10 +7,29 @@
 
 // Main coordinator
 export { Project } from "./project";
+export type { ClassifyOptions } from "./project/project";
 
 // Core processing functions
 export { build_index_single_file } from "./index_single_file/index_single_file";
 export { trace_call_graph, type TraceCallGraphOptions } from "./trace_call_graph/trace_call_graph";
+
+// Entry-point classification (rule-application against known-issues registry)
+export {
+  enrich_call_graph,
+  type EnrichedCallGraph,
+  type EnrichCallGraphOptions,
+  auto_classify,
+  MissingBuiltinError,
+  type AutoClassifyOptions,
+  type AutoClassifyResult,
+  type ClassifiedEntryPointResult,
+  type FileLinesReader,
+  extract_entry_point_diagnostics,
+  attach_unindexed_test_grep_hits,
+  collect_unindexed_test_files,
+  build_class_name_by_constructor_position,
+  load_permanent_registry,
+} from "./classify_entry_points";
 
 // Tree-sitter query execution (used by self-repair pipeline for diagnostic capture analysis)
 export { query_tree } from "./index_single_file/query_code_tree/query_code_tree";

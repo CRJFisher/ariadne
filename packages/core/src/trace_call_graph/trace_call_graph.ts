@@ -1,13 +1,16 @@
-import type { CallGraph, SymbolId, CallableNode, Language, FilePath } from "@ariadnejs/types";
+import type {
+  CallGraph,
+  SymbolId,
+  CallableNode,
+  Language,
+  FilePath,
+  TraceCallGraphOptions,
+} from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../resolve_references/registries/definition";
 import type { ResolutionRegistry } from "../resolve_references/resolve_references";
 import { is_test_file } from "../project/detect_test_file";
-import { should_filter_entry_point } from "./filter_entry_points";
 
-export interface TraceCallGraphOptions {
-  /** Include test file functions in entry point detection. Default: false */
-  include_tests?: boolean;
-}
+export type { TraceCallGraphOptions };
 
 /**
  * Detect language from file extension
@@ -93,7 +96,11 @@ function build_function_nodes(
  *    - Polymorphic calls mark all implementations as called
  *    - Collection dispatch marks all stored functions as called
  * 2. Find function nodes whose SymbolId is NOT in that set
- * 3. Filter out framework-invoked methods (e.g., Python dunder methods)
+ *
+ * Framework-invoked false positives (Python dunders, Flask routes, pytest
+ * fixtures, etc.) are filtered later by `enrich_call_graph` against the
+ * permanent known-issues registry — `trace_call_graph` returns the raw
+ * unfiltered set so callers can choose whether to apply classification.
  *
  * @param nodes - All function nodes in the call graph
  * @param resolutions - Resolution registry (get_all_referenced_symbols iterates all resolutions)
@@ -121,11 +128,6 @@ function detect_entry_points(
 
     // Skip test file functions unless explicitly included
     if (!include_tests && node.is_test) {
-      continue;
-    }
-
-    // Filter framework-invoked methods (e.g., Python dunder methods)
-    if (should_filter_entry_point(node.name, node.location.file_path)) {
       continue;
     }
 

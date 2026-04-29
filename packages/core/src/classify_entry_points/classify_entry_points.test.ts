@@ -1,9 +1,16 @@
 import { describe, it, expect } from "vitest";
 
-import type { EnrichedEntryPoint } from "../entry_point_types.js";
-import type { KnownIssue, KnownIssuesRegistry, PredicateExpr } from "../known_issues_types.js";
-import type { ClassifierHint } from "../triage_state_types.js";
-import { auto_classify, MissingBuiltinError } from "./orchestrator.js";
+import type {
+  EnrichedEntryPoint,
+  FilePath,
+  KnownIssue,
+  KnownIssuesRegistry,
+  PredicateExpr,
+  ClassifierHint,
+} from "@ariadnejs/types";
+import { auto_classify, MissingBuiltinError } from "./classify_entry_points";
+
+const fp = (s: string) => s as FilePath;
 
 // ===== Fixtures =====
 
@@ -12,7 +19,7 @@ function make_entry(
 ): EnrichedEntryPoint {
   return {
     name: "target",
-    file_path: "src/target.ts",
+    file_path: fp("src/target.ts"),
     start_line: 5,
     kind: "function",
     tree_size: 0,
@@ -216,7 +223,7 @@ describe("auto_classify — sub-threshold hints", () => {
 
 describe("auto_classify — file reader plumbing", () => {
   it("passes read_file_lines through to the evaluator so decorator_matches works", () => {
-    const entry_point = make_entry({ file_path: "app.py", start_line: 2 });
+    const entry_point = make_entry({ file_path: fp("app.py"), start_line: 2 });
     const registry: KnownIssuesRegistry = [
       predicate_issue(
         "py-fixture",

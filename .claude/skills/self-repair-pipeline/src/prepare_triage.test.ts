@@ -13,14 +13,18 @@ import { describe, it, expect } from "vitest";
 
 import { prepare_triage, sort_residual_entry_points } from "./prepare_triage.js";
 import type { ResidualEntryPoint } from "./build_triage_entries.js";
-import type { EnrichedEntryPoint } from "./entry_point_types.js";
-import type { KnownIssue, KnownIssuesRegistry } from "./known_issues_types.js";
+import type {
+  EnrichedEntryPoint,
+  FilePath,
+  KnownIssue,
+  KnownIssuesRegistry,
+} from "@ariadnejs/types";
 
 // ===== Fixtures =====
 
 function make_entry(overrides: Partial<EnrichedEntryPoint> & { name: string }): EnrichedEntryPoint {
   return {
-    file_path: `src/${overrides.name}.ts`,
+    file_path: `src/${overrides.name}.ts` as FilePath,
     start_line: 1,
     kind: "function",
     tree_size: 10,
@@ -137,7 +141,7 @@ describe("prepare_triage — two-bucket end-to-end", () => {
     const entry_points: EnrichedEntryPoint[] = Array.from({ length: 100 }, (_, i) =>
       make_entry({
         name: `entry_${i}`,
-        file_path: `src/${String(i).padStart(3, "0")}.ts`,
+        file_path: `src/${String(i).padStart(3, "0")}.ts` as FilePath,
         tree_size: (i * 13) % 97,
       }),
     );
@@ -199,10 +203,10 @@ describe("sort_residual_entry_points — tie-breaking", () => {
   it("breaks tree_size ties by file_path ascending then start_line ascending", () => {
     const to_residual = (e: EnrichedEntryPoint): ResidualEntryPoint => ({ entry_point: e, classifier_hints: [] });
     const input: ResidualEntryPoint[] = [
-      to_residual(make_entry({ name: "x1", file_path: "src/z.ts",     start_line: 10, tree_size: 5 })),
-      to_residual(make_entry({ name: "x2", file_path: "src/a.ts",     start_line: 20, tree_size: 5 })),
-      to_residual(make_entry({ name: "x3", file_path: "src/a.ts",     start_line: 10, tree_size: 5 })),
-      to_residual(make_entry({ name: "x4", file_path: "src/middle.ts", start_line: 1,  tree_size: 9 })),
+      to_residual(make_entry({ name: "x1", file_path: "src/z.ts" as FilePath,     start_line: 10, tree_size: 5 })),
+      to_residual(make_entry({ name: "x2", file_path: "src/a.ts" as FilePath,     start_line: 20, tree_size: 5 })),
+      to_residual(make_entry({ name: "x3", file_path: "src/a.ts" as FilePath,     start_line: 10, tree_size: 5 })),
+      to_residual(make_entry({ name: "x4", file_path: "src/middle.ts" as FilePath, start_line: 1,  tree_size: 9 })),
     ];
 
     const ordered = sort_residual_entry_points(input);

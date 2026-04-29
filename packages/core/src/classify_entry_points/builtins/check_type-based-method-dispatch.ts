@@ -3,8 +3,8 @@
 //
 // Method call where the receiver is reached through a property/field hop (e.g. `this.fixture.debugElement.query(...)`). Ariadne resolves the head identifier (`this` -> RouterTestingHarness) but `walk_property_chain` (receiver_resolution.ts:301) cannot carry the declared type of an intermediate field (`fixture: ComponentFixture<RootCmp>`, `debugElement: DebugElement`) forward, so the final method dispatch fails with `type_inference / member_type_unknown`. The callers exist in the resolution registry but the call edge is dropped; the method appears unreached. This is the same receiver-resolution shape as TASK-205.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 export function check_type_based_method_dispatch(
   entry_point: EnrichedEntryPoint,

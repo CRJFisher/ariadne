@@ -3,8 +3,8 @@
 //
 // Functions (including nested anonymous lambdas) defined inside files in the prisma fill-plugin/fillers/ directory. These files are referenced exclusively via path.join(__dirname, 'fillers', '<name>.ts') string arguments passed to esbuild's `imports` and `globals` injection fields in fillPlugin.ts. There is no source-level import statement targeting these files, so every top-level export and every nested function inside them appears unreachable to a static call graph. The directory itself acts as the discriminator — it contains only polyfill targets registered via the build plugin's dynamic file-path injection mechanism.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 export function check_dynamic_runtime_injection(
   entry_point: EnrichedEntryPoint,

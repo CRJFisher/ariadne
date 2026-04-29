@@ -3,8 +3,8 @@
 //
 // Capitalised JavaScript constructor functions invoked exclusively through a local variable alias (`var X = NS.X; ... new X();`) within the same indexed file. Ariadne records zero call-refs, the diagnosis lands as 'callers-not-in-registry', and tree-sitter does not fire @reference.constructor at the grep hit because the call target binds to a local var whose initialiser is a member expression rather than a function declaration.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

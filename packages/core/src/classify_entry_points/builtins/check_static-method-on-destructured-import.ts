@@ -3,8 +3,8 @@
 //
 // JavaScript static-method call on a class imported via destructured CommonJS `require()`. Ariadne resolves the receiver identifier to the destructured `variable:` binding (not a class type), so `method_lookup` fails with `method_not_on_type`. Shape: diagnosis=callers-in-registry-unresolved, at least one call-ref has receiver_kind=identifier with method_not_on_type failure, and some grep hit matches the `ClassName.method(` literal shape.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

@@ -3,8 +3,8 @@
 //
 // yargs CommandModule handler methods. Each entry_point is a method named exactly `handler` defined inside a class file under `commands/<Name>Command.ts` (the canonical yargs CommandModule layout used by typeorm and many other CLIs). The class implements `yargs.CommandModule`; yargs invokes `.handler(args)` at runtime via the interface contract, with no in-source call site. The classifier triangulates the convention via the entry_point name + file-path layout + language.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

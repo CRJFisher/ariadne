@@ -11,7 +11,7 @@
 
 import path from "path";
 
-import type { FalsePositiveEntry, FalsePositiveGroup } from "./entry_point_types.js";
+import type { FalsePositiveEntry, FalsePositiveGroup } from "@ariadnejs/types";
 import type { TriageState, TriageEntry } from "./triage_state_types.js";
 
 export const FINALIZATION_OUTPUT_SCHEMA_VERSION = 2;

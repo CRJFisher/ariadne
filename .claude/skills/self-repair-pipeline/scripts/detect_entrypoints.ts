@@ -34,14 +34,13 @@ import {
   resolve_cache_dir,
   log_info,
   log_warn,
+  trace_call_graph,
+  extract_entry_point_diagnostics,
+  attach_unindexed_test_grep_hits,
+  build_class_name_by_constructor_position,
 } from "@ariadnejs/core";
 import type { PersistenceStorage } from "@ariadnejs/core";
-import type { EnrichedEntryPoint } from "../src/entry_point_types.js";
-import {
-  build_constructor_to_class_name_map,
-  detect_language,
-  extract_entry_points,
-} from "../src/extract_entry_points.js";
+import type { EnrichedEntryPoint, Language } from "@ariadnejs/types";
 import { save_json, OutputType } from "../src/analysis_output.js";
 import { path_to_project_id, project_id_from_config } from "../src/project_id.js";
 import { should_log, SLOW_ITEM_MS } from "../src/progress.js";
@@ -50,6 +49,15 @@ import * as fs from "fs/promises";
 import * as os from "os";
 import { execSync } from "child_process";
 import "../src/guard_tsx_invocation.js";
+
+/** Best-effort language detector matching the core helper. */
+function detect_language(file_path: string): Language | null {
+  if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript" as Language;
+  if (file_path.endsWith(".js") || file_path.endsWith(".jsx")) return "javascript" as Language;
+  if (file_path.endsWith(".py")) return "python" as Language;
+  if (file_path.endsWith(".rs")) return "rust" as Language;
+  return null;
+}
 
 // ===== Types =====
 
@@ -454,44 +462,25 @@ async function analyze_directory(
     log_warn(`${unreadable} source file(s) were unreadable and silently dropped`);
   }
 
-  // Build call graph
+  // Build call graph (raw, then extract diagnostics — classification happens
+  // later in the triage pipeline against the full skill registry).
   console.error("Building call graph...");
   const callgraph_start = Date.now();
-  const call_graph = project.get_call_graph();
+  // Use the unfiltered shape: the trace_call_graph layer no longer filters
+  // dunders, but Project.get_call_graph filters via the bundled permanent
+  // registry. The triage pipeline needs the raw set so it can classify
+  // against the full skill registry (permanent + wip rules).
+  const call_graph = trace_call_graph(project.definitions, project.resolutions, {
+    include_tests: options.include_tests,
+  });
   console.error(
     `Found ${call_graph.entry_points.length} entry points in ${Date.now() - callgraph_start}ms`
   );
 
-  // Build constructor → class name map for grep heuristic
-  const class_definitions = project.definitions.get_class_definitions();
-  const class_name_by_constructor_id = build_constructor_to_class_name_map(class_definitions);
-  // Position-keyed (file:line) map used by the second-pass test-dir grep,
-  // which only sees `EnrichedEntryPoint` (no symbol_id). Same data, keyed
-  // by the same coordinates the entry already carries.
-  const class_name_by_constructor_position = new Map<string, string>();
-  for (const class_def of class_definitions) {
-    for (const ctor of class_def.constructors ?? []) {
-      const key = `${ctor.location.file_path}:${ctor.location.start_line}`;
-      class_name_by_constructor_position.set(key, class_def.name as string);
-    }
-  }
-
-  // Build class-method symbol_id set so the extractor can discriminate
-  // class methods from object-literal shorthand methods.
-  const class_method_symbol_ids = new Set<import("@ariadnejs/types").SymbolId>();
-  for (const class_def of class_definitions) {
-    for (const m of class_def.methods) {
-      class_method_symbol_ids.add(m.symbol_id);
-    }
-  }
-
-  // Extract entry points
-  const entry_points = extract_entry_points(
-    call_graph,
-    source_files,
-    class_name_by_constructor_id,
-    class_method_symbol_ids,
-  );
+  // Extract per-entry diagnostics from the call graph + project. The new core
+  // primitive reads source bytes from `project.get_file_contents()` and builds
+  // the constructor / class-method indexes internally.
+  const entry_points = extract_entry_point_diagnostics(call_graph, project);
 
   // Second grep pass: scan common test-directory patterns OUTSIDE the indexed
   // scope. Attach matching call-site hits to
@@ -503,7 +492,7 @@ async function analyze_directory(
       entry_points,
       project_path,
       source_files,
-      class_name_by_constructor_position,
+      build_class_name_by_constructor_position(project),
       combined_patterns,
     );
   }
@@ -514,117 +503,6 @@ async function analyze_directory(
     files_analyzed: stats.file_count,
     entry_points,
   };
-}
-
-// Common conventions for test-directory siting. Kept narrow on purpose —
-// project-specific patterns should extend this list via a config entry, not
-// by broadening the default.
-const UNINDEXED_TEST_DIR_SEGMENTS: readonly string[] = [
-  "/test/",
-  "/tests/",
-  "/__tests__/",
-  "/spec/",
-];
-
-const TEST_FILE_EXTENSIONS: readonly string[] = [
-  ".ts",
-  ".tsx",
-  ".js",
-  ".jsx",
-  ".mjs",
-  ".cjs",
-  ".py",
-  ".rs",
-];
-
-export async function attach_unindexed_test_grep_hits(
-  entry_points: EnrichedEntryPoint[],
-  project_path: string,
-  indexed_source_files: ReadonlyMap<string, string>,
-  class_name_by_constructor_position: ReadonlyMap<string, string>,
-  ignore_patterns: readonly string[],
-): Promise<void> {
-  const test_files = await collect_unindexed_test_files(
-    project_path,
-    indexed_source_files,
-    ignore_patterns,
-  );
-  if (test_files.size === 0) return;
-
-  // Per-identifier inverted index over the test files.
-  const grep_index = new Map<string, { file_path: string; line: number; content: string }[]>();
-  const pattern = /(?<![A-Za-z0-9_$])([A-Za-z_$][\w$]*)\s*\(/g;
-  for (const [file_path, content] of test_files) {
-    const lines = content.split("\n");
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      pattern.lastIndex = 0;
-      let m: RegExpExecArray | null;
-      let trimmed: string | null = null;
-      while ((m = pattern.exec(line)) !== null) {
-        const name = m[1];
-        let hits = grep_index.get(name);
-        if (!hits) {
-          hits = [];
-          grep_index.set(name, hits);
-        }
-        if (trimmed === null) trimmed = line.trim();
-        hits.push({ file_path, line: i + 1, content: trimmed });
-      }
-    }
-  }
-
-  for (const entry of entry_points) {
-    // Constructors are grepped by class name, not __init__/constructor —
-    // mirror the behaviour of the primary grep pass.
-    let grep_name: string;
-    if (entry.kind === "constructor") {
-      const key = `${entry.file_path}:${entry.start_line}`;
-      grep_name = class_name_by_constructor_position.get(key) ?? entry.name;
-    } else {
-      grep_name = entry.name;
-    }
-    if (grep_name === "<anonymous>") continue;
-    const hits = grep_index.get(grep_name);
-    if (!hits) continue;
-    entry.diagnostics.grep_call_sites_unindexed_tests = hits.map((h) => ({
-      file_path: h.file_path,
-      line: h.line,
-      content: h.content,
-      captures: [],
-    }));
-  }
-}
-
-export async function collect_unindexed_test_files(
-  project_path: string,
-  indexed_source_files: ReadonlyMap<string, string>,
-  ignore_patterns: readonly string[],
-): Promise<Map<string, string>> {
-  const out = new Map<string, string>();
-  // Reuse core's gitignore-aware walker so test-dir discovery honours the
-  // same exclusion rules as primary indexing (`.gitignore` + `options.exclude`
-  // + `IGNORED_DIRECTORIES`). Output is then narrowed to test directories
-  // and to files not already indexed.
-  let candidates: string[];
-  try {
-    candidates = await find_source_files(project_path, project_path, [...ignore_patterns]);
-  } catch {
-    return out;
-  }
-  for (const full of candidates) {
-    if (indexed_source_files.has(full)) continue;
-    if (!TEST_FILE_EXTENSIONS.some((ext) => full.endsWith(ext))) continue;
-    const rel = `/${path.relative(project_path, full)}/`;
-    if (!UNINDEXED_TEST_DIR_SEGMENTS.some((seg) => rel.includes(seg))) continue;
-    try {
-      const content = await fs.readFile(full, "utf-8");
-      out.set(full, content);
-    } catch {
-      // silently skip unreadable
-    }
-  }
-  return out;
 }
 
 // ===== Main Entry Point =====

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { KnownIssue as SelfRepairKnownIssue } from "../../self-repair-pipeline/src/known_issues_types.js";
+import type { KnownIssue as SelfRepairKnownIssue } from "@ariadnejs/types";
 import {
   aggregate_novel_groups,
   apply_promotions,

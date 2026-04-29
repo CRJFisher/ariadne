@@ -3,8 +3,8 @@
 //
 // JavaScript method whose only callers invoke it as `<identifier>.<name>(...)` where the receiver's type cannot be statically inferred (local variable assigned from an array/object method, parameter with no JSDoc, dynamically-assigned property). Ariadne produces no CallReference at all — diagnosis is `callers-not-in-registry` and `ariadne_call_refs` is empty — so the method-call-shaped grep hit plus the absence of a call ref is the discriminator. Strictly narrower than `callers-outside-scope-strict-grep-evidence` (adds the identifier-receiver grep shape) and distinct from `aliased-receiver-type-lost` (F1), which requires a call-ref with resolution_failure.reason=receiver_type_unknown — unavailable here because no call-ref exists.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

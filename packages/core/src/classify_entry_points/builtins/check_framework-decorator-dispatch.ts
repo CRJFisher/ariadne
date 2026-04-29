@@ -3,8 +3,8 @@
 //
 // NestJS method-level framework-dispatch decorators. The NestJS router/DI container reads these decorators at startup via reflect-metadata and invokes the decorated method when a matching HTTP request, microservice message, WebSocket event, or scheduler tick arrives. There is no textual call site, so Ariadne's reference extractor sees zero inbound edges and marks the method unreachable. The decorator block immediately above the definition is the discriminant: HTTP verbs (@Get/@Post/@Put/@Delete/@Patch/@All/@Options/@Head/@Search), WebSocket handlers (@SubscribeMessage), microservice handlers (@MessagePattern/@EventPattern/@GrpcMethod/@GrpcStreamMethod/@GrpcStreamCall), and scheduler hooks (@Cron/@Interval/@Timeout/@Sse).
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

@@ -38,7 +38,7 @@ import {
   type TriageState,
 } from "../src/triage_state_types.js";
 import { apply_tp_cache_to_entries, derive_tp_cache } from "../src/confirmed_unreachable_reuse.js";
-import type { AnalysisResult } from "../src/entry_point_types.js";
+import type { AnalysisResult } from "@ariadnejs/types";
 import "../src/guard_tsx_invocation.js";
 
 const DEFAULT_MAX_COUNT = 150;

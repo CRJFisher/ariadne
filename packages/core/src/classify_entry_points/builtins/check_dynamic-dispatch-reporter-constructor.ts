@@ -3,8 +3,8 @@
 //
 // Reporter class constructors in a test-runner `lib/reporters/` convention directory that have zero resolved inbound callers. Instantiated via dynamic string-keyed dispatch (e.g. `new this._reporter(runner, options)` after `builtinReporters[name]` lookup), so Ariadne sees no direct `new ClassName()` call. Narrow to language=javascript, entry_point name=constructor, path under `/reporters/*.js`, and zero `ariadne_call_refs`.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

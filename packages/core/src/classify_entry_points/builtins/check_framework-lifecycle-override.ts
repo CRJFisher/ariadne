@@ -3,8 +3,8 @@
 //
 // Node.js stream lifecycle override methods (_transform, _flush, _read, _write, _writev, _construct, _destroy, _final) on subclasses of Transform/Readable/Writable/Duplex/PassThrough are invoked by Node.js stream internals, not by explicit application code. These method names are drawn verbatim from the Node.js stream protocol (underscore-prefixed by convention to indicate framework-only invocation). On TypeScript/JavaScript entries, the precise name set is a strong discriminant for this framework-lifecycle pattern.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

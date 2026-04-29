@@ -3,8 +3,8 @@
 //
 // A method invoked on a chained receiver — typically `new X(...).method(...)` or `factory().method(...)` — where Ariadne records callers (diagnosis 'callers-in-registry-unresolved') but every call ref has receiver_kind 'call_chain' and a name_resolution failure 'name_not_in_scope'. Triggered for typeorm SubjectExecutor.ts:682 calling ClosureSubjectExecutor.remove via `await new ClosureSubjectExecutor(this.queryRunner).remove(subjects)`.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 export function check_constructor_instance_method_resolution(
   entry_point: EnrichedEntryPoint,

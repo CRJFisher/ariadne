@@ -3,8 +3,8 @@
 //
 // TypeScript named-import direct-call where Ariadne fails to link the call to the imported function. Pattern: an entry_point has zero resolved callers, but its grep hits include both an `import { ... }` line and a call-with-parens line in a file other than the definition file. Observed on `generateLocaleGlobalFile` in the Angular corpus, where the caller in `bin/write-locale-files-to-dist.ts` directly imports and calls the function from `../locale-global-file` and Ariadne's import resolver does not cross the `bin/` subdirectory boundary.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

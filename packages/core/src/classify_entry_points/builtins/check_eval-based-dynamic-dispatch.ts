@@ -3,8 +3,8 @@
 //
 // JavaScript dunder-named local helpers (e.g. __link__, __loop__, __escape__, __bind__, __path__) defined inside template-compiler functions and invoked exclusively from generated source strings passed to eval(...) or new Function(...). The dunder-name convention plus zero resolved callers is a precise signal: production source rarely uses Python-style __name__ for ordinary JS locals — these names exist solely to be referenced by name from runtime-generated code. Confirmed in /Users/chuck/.ariadne/self-repair-pipeline/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js where __link__ (14374, 14600), __escape__ (14390), __loop__ (14412, 14615), __bind__ (14595), and __path__ (14628) are all locals inside compileMarkup / compileDOM, both of which end with eval(js) at lines 14439 and 14652.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

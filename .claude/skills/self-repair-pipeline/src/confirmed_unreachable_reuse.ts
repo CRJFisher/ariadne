@@ -21,7 +21,7 @@ import {
   FINALIZATION_OUTPUT_SCHEMA_VERSION,
   type FinalizationOutput,
 } from "./build_finalization_output.js";
-import type { FalsePositiveEntry } from "./entry_point_types.js";
+import type { FalsePositiveEntry } from "@ariadnejs/types";
 import {
   most_recent_finalized_triage_results,
   read_triage_results,

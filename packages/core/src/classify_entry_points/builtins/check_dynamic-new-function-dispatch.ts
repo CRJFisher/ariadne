@@ -3,8 +3,8 @@
 //
 // Function whose only textual references appear inside string literals passed to `new Function(...)` or `eval(...)`. The runtime constructs and invokes the function from a string, so the call site is invisible to static analysis. Restricted to JavaScript with zero resolved Ariadne callers and at least one grep hit on a line that invokes `new Function(` or `eval(`.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

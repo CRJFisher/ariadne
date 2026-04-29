@@ -6,7 +6,9 @@
  * - "complete": all entries processed, ready to finalize
  */
 
-import type { EntryPointDiagnostics } from "./entry_point_types.js";
+import type { EntryPointDiagnostics, ClassifierHint } from "@ariadnejs/types";
+
+export type { ClassifierHint };
 
 // ===== Top-Level State =====
 
@@ -75,16 +77,6 @@ export interface TriageEntryResult {
   /** "confirmed-unreachable" when ariadne_correct=true; kebab-case detection gap id otherwise */
   group_id: string;
   root_cause: string;
-  reasoning: string;
-}
-
-// ===== Classifier Hints (persisted on TriageEntry) =====
-
-export interface ClassifierHint {
-  /** Known-issue group this hint points at. */
-  group_id: string;
-  /** Score in [0, 1]. Predicates return 1.0; sub-threshold means `< min_confidence`. */
-  confidence: number;
   reasoning: string;
 }
 

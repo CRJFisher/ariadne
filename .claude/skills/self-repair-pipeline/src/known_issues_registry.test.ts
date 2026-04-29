@@ -7,7 +7,7 @@ import {
   PREDICATE_OPERATORS,
   type KnownIssuesRegistry,
   type PredicateOperator,
-} from "./known_issues_types.js";
+} from "@ariadnejs/types";
 import {
   RegistryValidationError,
   get_registry_file_path,

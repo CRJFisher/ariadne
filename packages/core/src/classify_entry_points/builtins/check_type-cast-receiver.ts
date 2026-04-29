@@ -3,8 +3,8 @@
 //
 // TypeScript methods unreachable because their call sites invoke them on a receiver introduced by an explicit type cast — either the `x as Type` form or the angle-bracket `<Type>x` form. Ariadne's resolver does not propagate the cast's target type to method lookup, so the call cannot be linked to the concrete implementation. Detected via a grep neighbourhood scan that finds either cast form within 10 lines preceding a grep hit on the entry_point name.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

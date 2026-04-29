@@ -3,8 +3,8 @@
 //
 // yargs CommandModule lifecycle hook: a `builder` method on a class that implements `yargs.CommandModule` is invoked by the yargs runtime when the registered command instance is dispatched. Ariadne does not model framework interface dispatch, so these methods appear unreachable. Classifier matches typescript `builder` methods inside files following the conventional `<dir>/commands/<Name>Command.ts` shape used by yargs-style CLI projects. The proper resolver-level fix is to trace method calls through interface implementations (TASK-198).
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

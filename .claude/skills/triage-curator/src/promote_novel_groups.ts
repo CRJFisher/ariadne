@@ -17,7 +17,7 @@
 import type {
   KnownIssue as SelfRepairKnownIssue,
   KnownIssueLanguage,
-} from "../../self-repair-pipeline/src/known_issues_types.js";
+} from "@ariadnejs/types";
 import type { TriageResultsFile } from "./types.js";
 
 export const NOVEL_PREFIX = "novel:";
