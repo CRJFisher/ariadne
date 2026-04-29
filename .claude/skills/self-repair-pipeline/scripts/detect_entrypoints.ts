@@ -35,13 +35,14 @@ import {
   log_info,
   log_warn,
   trace_call_graph,
-  extract_entry_point_diagnostics,
+  enrich_call_graph,
   attach_unindexed_test_grep_hits,
   build_class_name_by_constructor_position,
 } from "@ariadnejs/core";
 import type { PersistenceStorage } from "@ariadnejs/core";
 import type { EnrichedEntryPoint, Language } from "@ariadnejs/types";
 import { save_json, OutputType } from "../src/analysis_output.js";
+import { load_registry } from "../src/known_issues_registry.js";
 import { path_to_project_id, project_id_from_config } from "../src/project_id.js";
 import { should_log, SLOW_ITEM_MS } from "../src/progress.js";
 import * as path from "path";
@@ -462,14 +463,12 @@ async function analyze_directory(
     log_warn(`${unreadable} source file(s) were unreadable and silently dropped`);
   }
 
-  // Build call graph (raw, then extract diagnostics — classification happens
-  // later in the triage pipeline against the full skill registry).
+  // Build the raw call graph (unfiltered: every uncalled callable). The
+  // triage pipeline needs the full set so it can classify against the
+  // permanent + wip registry rules; `Project.get_call_graph()` would drop
+  // known FPs against the bundled permanent slice and lose curator candidates.
   console.error("Building call graph...");
   const callgraph_start = Date.now();
-  // Use the unfiltered shape: the trace_call_graph layer no longer filters
-  // dunders, but Project.get_call_graph filters via the bundled permanent
-  // registry. The triage pipeline needs the raw set so it can classify
-  // against the full skill registry (permanent + wip rules).
   const call_graph = trace_call_graph(project.definitions, project.resolutions, {
     include_tests: options.include_tests,
   });
@@ -477,16 +476,24 @@ async function analyze_directory(
     `Found ${call_graph.entry_points.length} entry points in ${Date.now() - callgraph_start}ms`
   );
 
-  // Extract per-entry diagnostics from the call graph + project. The new core
-  // primitive reads source bytes from `project.get_file_contents()` and builds
-  // the constructor / class-method indexes internally.
-  const entry_points = extract_entry_point_diagnostics(call_graph, project);
+  // Drive the canonical enrichment + classification primitive against the
+  // full skill registry. Classification metadata is produced as a side
+  // product (not persisted in `AnalysisResult`); the call-graph stage owns
+  // diagnostics extraction and the triage pipeline re-classifies in
+  // `prepare_triage` to incorporate `tp_cache` decisions.
+  const skill_registry = load_registry();
+  const enriched = enrich_call_graph(call_graph, project, {
+    registry: skill_registry,
+  });
+  // `attach_unindexed_test_grep_hits` mutates the entries' diagnostics; spread
+  // the readonly array into a mutable one without losing identity.
+  const entry_points: EnrichedEntryPoint[] = [...enriched.enriched_entry_points];
 
   // Second grep pass: scan common test-directory patterns OUTSIDE the indexed
-  // scope. Attach matching call-site hits to
+  // scope. Attaches matching call-site hits to
   // `diagnostics.grep_call_sites_unindexed_tests` so classifiers can detect
-  // the `unindexed-test-files` root cause. Skipped when include_tests is true
-  // (test directories are already part of source_files).
+  // the `unindexed-test-files` root cause. Skipped when `include_tests` is
+  // true (test directories are already part of `source_files`).
   if (!options.include_tests) {
     await attach_unindexed_test_grep_hits(
       entry_points,
