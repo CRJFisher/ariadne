@@ -10,10 +10,15 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 import { prepare_triage, sort_residual_entry_points } from "./prepare_triage.js";
 import type { ResidualEntryPoint } from "./build_triage_entries.js";
+import { Project, trace_call_graph } from "@ariadnejs/core";
 import type {
+  CallGraph,
   EnrichedEntryPoint,
   FilePath,
   KnownIssue,
@@ -21,6 +26,50 @@ import type {
 } from "@ariadnejs/types";
 
 // ===== Fixtures =====
+
+async function make_project_with(
+  files: Record<string, string>,
+): Promise<{ project: Project; call_graph: CallGraph }> {
+  const root = await mkdtemp(join(tmpdir(), "ariadne-prepare-triage-"));
+  const project = new Project();
+  for (const rel of Object.keys(files)) {
+    const dir = join(root, rel.split("/").slice(0, -1).join("/"));
+    if (dir !== root) await mkdir(dir, { recursive: true });
+    await writeFile(join(root, rel), files[rel], "utf8");
+  }
+  await project.initialize(root as FilePath);
+  for (const [rel, content] of Object.entries(files)) {
+    project.update_file(join(root, rel) as FilePath, content);
+  }
+  const call_graph = trace_call_graph(project.definitions, project.resolutions, {
+    include_tests: false,
+  });
+  return { project, call_graph };
+}
+
+function predicate_issue(
+  group_id: string,
+  diagnosis_value: string,
+): KnownIssue {
+  return {
+    group_id,
+    title: `Title for ${group_id}`,
+    description: `Desc for ${group_id}`,
+    status: "permanent",
+    languages: ["python"],
+    examples: [],
+    classifier: {
+      kind: "predicate",
+      axis: "A",
+      expression: { op: "diagnosis_eq", value: diagnosis_value },
+      min_confidence: 1.0,
+    },
+    classification: {
+      kind: "framework_invoked",
+      framework: "test_framework",
+    },
+  };
+}
 
 function make_entry(overrides: Partial<EnrichedEntryPoint> & { name: string }): EnrichedEntryPoint {
   return {
@@ -43,159 +92,137 @@ function make_entry(overrides: Partial<EnrichedEntryPoint> & { name: string }): 
   };
 }
 
-function predicate_issue(
-  group_id: string,
-  diagnosis_value: string,
-): KnownIssue {
-  return {
-    group_id,
-    title: `Title for ${group_id}`,
-    description: `Desc for ${group_id}`,
-    status: "permanent",
-    languages: ["typescript"],
-    examples: [],
-    classifier: {
-      kind: "predicate",
-      axis: "A",
-      expression: { op: "diagnosis_eq", value: diagnosis_value },
-      min_confidence: 1.0,
-    },
-  };
-}
-
-const EMPTY_READER = (_: string) => [] as readonly string[];
-
 // ===== Tests =====
 
 describe("prepare_triage — two-bucket end-to-end", () => {
-  it("max-count caps only the residual bucket; auto_classified entries are always kept in full", () => {
+  it("max-count caps only the residual bucket; auto_classified entries are always kept in full", async () => {
+    // 5 functions with no callers anywhere → diagnosis `no-textual-callers`
+    // (matches the auto-classifier predicate).
+    const auto_lines: string[] = [];
+    for (let i = 0; i < 5; i++) {
+      auto_lines.push(`def auto_${i}():`);
+      auto_lines.push("    pass");
+      auto_lines.push("");
+    }
+    // 12 functions referenced only inside a Python comment. The grep pass
+    // picks up the textual occurrence, but tree-sitter ignores the comment so
+    // Ariadne emits no CallReference → diagnosis `callers-not-in-registry`
+    // (does NOT match the auto-classifier predicate).
+    const residual_lines: string[] = [];
+    for (let i = 0; i < 12; i++) {
+      residual_lines.push(`def resid_${String(i).padStart(2, "0")}():`);
+      residual_lines.push("    pass");
+      residual_lines.push("");
+    }
+    const comment_lines: string[] = [];
+    for (let i = 0; i < 12; i++) {
+      comment_lines.push(`# resid_${String(i).padStart(2, "0")}()`);
+    }
+
+    const code = [...auto_lines, ...residual_lines, ...comment_lines, ""].join("\n");
+    const { project, call_graph } = await make_project_with({ "mod.py": code });
+
     const registry: KnownIssuesRegistry = [
       predicate_issue("match-no-textual-callers", "no-textual-callers"),
     ];
 
-    // 50 auto-classified + 97 residual = 147 synthetic entries.
-    const auto_entry_points: EnrichedEntryPoint[] = Array.from({ length: 50 }, (_, i) =>
-      make_entry({
-        name: `auto_${i}`,
-        tree_size: 100 + i,
-        diagnostics: {
-          grep_call_sites: [],
-          grep_call_sites_unindexed_tests: [],
-          ariadne_call_refs: [],
-          diagnosis: "no-textual-callers",
-        },
-      }),
-    );
-    const residual_entry_points: EnrichedEntryPoint[] = Array.from({ length: 97 }, (_, i) =>
-      make_entry({
-        name: `residual_${String(i).padStart(2, "0")}`,
-        tree_size: 97 - i,
-      }),
-    );
-
     const report = prepare_triage({
-      entry_points: [...auto_entry_points, ...residual_entry_points],
+      call_graph,
+      project,
       registry,
-      read_file_lines: EMPTY_READER,
-      max_count: 20,
+      max_count: 5,
     });
 
-    // Auto-classified (50) + residual top-20 = 70 entries.
-    expect(report.entries.length).toEqual(70);
-    expect(report.stats).toEqual({
-      auto_count: 50,
-      residual_total: 97,
-      residual_kept: 20,
-    });
+    expect(report.stats.auto_count).toEqual(5);
+    expect(report.stats.residual_total).toEqual(12);
+    expect(report.stats.residual_kept).toEqual(5);
+    expect(report.entries.length).toEqual(10);
 
-    // Bucket ordering: auto → residual. Build a compact signature per entry so a
-    // single toEqual against the expected array pinpoints any drift.
-    const signatures = report.entries.map((e) => ({
+    const auto_signatures = report.entries.slice(0, 5).map((e) => ({
       route: e.route,
       status: e.status,
       auto_classified: e.auto_classified,
       known_source: e.known_source,
     }));
-    const auto_sig = {
-      route: "known-unreachable" as const,
-      status: "completed" as const,
-      auto_classified: true,
-      known_source: "match-no-textual-callers",
-    };
-    const residual_sig = {
-      route: "llm-triage" as const,
-      status: "pending" as const,
-      auto_classified: false,
-      known_source: null,
-    };
-    const expected_signatures = [
-      ...Array(50).fill(auto_sig),
-      ...Array(20).fill(residual_sig),
-    ];
-    expect(signatures).toEqual(expected_signatures);
-  });
-
-  it("residual sampling is deterministic across runs", () => {
-    const registry: KnownIssuesRegistry = [];
-    // 100 residual entries with varied tree_size / file_path to exercise the ordering.
-    const entry_points: EnrichedEntryPoint[] = Array.from({ length: 100 }, (_, i) =>
-      make_entry({
-        name: `entry_${i}`,
-        file_path: `src/${String(i).padStart(3, "0")}.ts` as FilePath,
-        tree_size: (i * 13) % 97,
+    expect(auto_signatures).toEqual(
+      Array(5).fill({
+        route: "known-unreachable",
+        status: "completed",
+        auto_classified: true,
+        known_source: "match-no-textual-callers",
       }),
     );
+    const residual_signatures = report.entries.slice(5).map((e) => ({
+      route: e.route,
+      status: e.status,
+      auto_classified: e.auto_classified,
+      known_source: e.known_source,
+    }));
+    expect(residual_signatures).toEqual(
+      Array(5).fill({
+        route: "llm-triage",
+        status: "pending",
+        auto_classified: false,
+        known_source: null,
+      }),
+    );
+  });
 
-    const first = prepare_triage({
-      entry_points,
-      registry,
-      read_file_lines: EMPTY_READER,
-      max_count: 20,
-    });
-    const second = prepare_triage({
-      entry_points,
-      registry,
-      read_file_lines: EMPTY_READER,
-      max_count: 20,
-    });
+  it("residual sampling is deterministic across runs", async () => {
+    // 6 residual entries with no auto-classifier match.
+    const lines: string[] = [];
+    for (let i = 0; i < 6; i++) {
+      lines.push(`def fn_${i}():`);
+      lines.push("    pass");
+      lines.push("");
+    }
+    const code = [...lines, ""].join("\n");
+    const { project, call_graph } = await make_project_with({ "mod.py": code });
 
-    expect(first.entries.length).toEqual(20);
+    const registry: KnownIssuesRegistry = [];
+
+    const first = prepare_triage({ call_graph, project, registry, max_count: 3 });
+    const second = prepare_triage({ call_graph, project, registry, max_count: 3 });
+
+    expect(first.entries.length).toEqual(3);
     expect(first.entries.map((e) => e.name)).toEqual(second.entries.map((e) => e.name));
   });
 
-  it("no max_count keeps every residual entry", () => {
+  it("no max_count keeps every residual entry", async () => {
+    const lines: string[] = [];
+    for (let i = 0; i < 4; i++) {
+      lines.push(`def fn_${i}():`);
+      lines.push("    pass");
+      lines.push("");
+    }
+    const code = [...lines, ""].join("\n");
+    const { project, call_graph } = await make_project_with({ "mod.py": code });
+
     const registry: KnownIssuesRegistry = [];
-    const entry_points: EnrichedEntryPoint[] = Array.from({ length: 7 }, (_, i) =>
-      make_entry({ name: `e_${i}` }),
-    );
 
-    const report = prepare_triage({
-      entry_points,
-      registry,
-      read_file_lines: EMPTY_READER,
-      max_count: null,
-    });
+    const report = prepare_triage({ call_graph, project, registry, max_count: null });
 
-    expect(report.stats.residual_total).toEqual(7);
-    expect(report.stats.residual_kept).toEqual(7);
-    expect(report.entries.length).toEqual(7);
+    expect(report.stats.residual_total).toEqual(4);
+    expect(report.stats.residual_kept).toEqual(4);
+    expect(report.entries.length).toEqual(4);
   });
 
-  it("max_count greater than residual_total keeps all residual entries", () => {
+  it("max_count greater than residual_total keeps all residual entries", async () => {
+    const lines: string[] = [];
+    for (let i = 0; i < 3; i++) {
+      lines.push(`def fn_${i}():`);
+      lines.push("    pass");
+      lines.push("");
+    }
+    const code = [...lines, ""].join("\n");
+    const { project, call_graph } = await make_project_with({ "mod.py": code });
+
     const registry: KnownIssuesRegistry = [];
-    const entry_points: EnrichedEntryPoint[] = Array.from({ length: 5 }, (_, i) =>
-      make_entry({ name: `e_${i}` }),
-    );
 
-    const report = prepare_triage({
-      entry_points,
-      registry,
-      read_file_lines: EMPTY_READER,
-      max_count: 20,
-    });
+    const report = prepare_triage({ call_graph, project, registry, max_count: 20 });
 
-    expect(report.stats.residual_kept).toEqual(5);
-    expect(report.entries.length).toEqual(5);
+    expect(report.stats.residual_kept).toEqual(3);
+    expect(report.entries.length).toEqual(3);
   });
 });
 
