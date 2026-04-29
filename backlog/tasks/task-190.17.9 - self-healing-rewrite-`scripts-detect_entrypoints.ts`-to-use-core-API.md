@@ -1,7 +1,7 @@
 ---
 id: TASK-190.17.9
 title: "self-healing: rewrite `scripts/detect_entrypoints.ts` to use core API"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-04-28 19:17"
 updated_date: "2026-04-28 19:33"
@@ -65,11 +65,11 @@ Downstream (`prepare_triage`, `tp_cache`, `build_finalization_output`) depends o
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 scripts/detect_entrypoints.ts:460-509 replaced with enrich_call_graph call
-- [ ] #2 AnalysisResult producer contract preserved (project_name, absolute project_path, absolute entry_point file_path)
-- [ ] #3 Helpers attach_unindexed_test_grep_hits, collect_unindexed_test_files moved to core or kept in skill based on Project dependency
-- [ ] #4 Imports at scripts/detect_entrypoints.ts:39-44 cleaned up to drop now-unused references
-- [ ] #5 scripts/detect_entrypoints.test.ts updated for type renames
-- [ ] #6 Producing AnalysisResult JSON shape unchanged (same field names) so prepare_triage works without changes
-- [ ] #7 pnpm test passes in .claude/skills/self-repair-pipeline/
+- [x] #1 scripts/detect_entrypoints.ts:460-509 replaced with enrich_call_graph call
+- [x] #2 AnalysisResult producer contract preserved (project_name, absolute project_path, absolute entry_point file_path)
+- [x] #3 Helpers attach_unindexed_test_grep_hits, collect_unindexed_test_files moved to core or kept in skill based on Project dependency
+- [x] #4 Imports at scripts/detect_entrypoints.ts:39-44 cleaned up to drop now-unused references
+- [x] #5 scripts/detect_entrypoints.test.ts updated for type renames
+- [x] #6 Producing AnalysisResult JSON shape unchanged (same field names) so prepare_triage works without changes
+- [x] #7 pnpm test passes in .claude/skills/self-repair-pipeline/
 <!-- AC:END -->
