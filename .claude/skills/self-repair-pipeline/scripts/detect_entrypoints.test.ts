@@ -8,7 +8,7 @@ import {
   attach_unindexed_test_grep_hits,
   collect_unindexed_test_files,
 } from "./detect_entrypoints.js";
-import type { EnrichedFunctionEntry } from "../src/entry_point_types.js";
+import type { EnrichedEntryPoint } from "../src/entry_point_types.js";
 
 let tmpdir: string;
 
@@ -32,7 +32,7 @@ function entry(
   file_path: string,
   start_line: number,
   kind: "function" | "method" | "constructor" = "function",
-): EnrichedFunctionEntry {
+): EnrichedEntryPoint {
   return {
     name,
     file_path,

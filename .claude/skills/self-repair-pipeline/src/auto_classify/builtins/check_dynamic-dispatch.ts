@@ -3,7 +3,7 @@
 //
 // Webpack dependency-template apply() methods invoked via dependencyTemplates.get(constructor).apply(...). Narrowed to JavaScript `apply` methods under lib/dependencies/ to exclude the serializer-registry dispatch pattern (entries 1-3 are serialize() methods dispatched via ObjectMiddleware/ClassSerializer, not the dependencyTemplates Map).
 
-import type { EnrichedFunctionEntry } from "../../entry_point_types.js";
+import type { EnrichedEntryPoint } from "../../entry_point_types.js";
 import type { FileLinesReader } from "../types.js";
 
 function detect_language(file_path: string): string | null {
@@ -15,12 +15,12 @@ function detect_language(file_path: string): string | null {
 }
 
 export function check_dynamic_dispatch(
-  entry: EnrichedFunctionEntry,
+  entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
 ): boolean {
   void read_file_lines;
-  const check_0 = detect_language(entry.file_path) === "javascript";
-  const check_1 = new RegExp("^apply$").test(entry.name);
-  const check_2 = new RegExp("/lib/dependencies/[^/]+\\.js$").test(entry.file_path);
+  const check_0 = detect_language(entry_point.file_path) === "javascript";
+  const check_1 = new RegExp("^apply$").test(entry_point.name);
+  const check_2 = new RegExp("/lib/dependencies/[^/]+\\.js$").test(entry_point.file_path);
   return check_0 && check_1 && check_2;
 }

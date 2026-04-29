@@ -1,6 +1,6 @@
 ---
 name: triage-curator
-description: Offline sweep that QAs auto-classified false-positive groups and investigates residuals from completed self-repair-pipeline runs. Tags drifting classifiers, proposes new ones, re-investigates classifiers QA found mis-matching, files introspection-gap sub-tasks under TASK-190.16 and Ariadne-bug top-level tasks (linked back into the registry), and commits the result.
+description: Offline sweep that QAs auto-classified false-positive groups and investigates residuals from completed self-repair-pipeline runs. Tags drifting classifiers, proposes new ones, re-investigates classifiers QA found mis-matching, files signal-library-gap sub-tasks under TASK-190.16 and Ariadne-bug top-level tasks (linked back into the registry), and commits the result.
 argument-hint: "[--project <name>] [--last <n>] [--run <path>] [--dry-run] [--commit-to current|new|pr] [--branch <name>] [--pr <number>]"
 disable-model-invocation: true
 allowed-tools: Bash(node --import tsx:*), Bash(git *), Bash(gh *), AskUserQuestion, Read, Write, Edit, Glob, Task(triage-curator-qa, triage-curator-investigator), mcp__backlog__task_create, mcp__backlog__task_search
@@ -140,7 +140,7 @@ the shape schema, and checks:
 - `retargets_to`, when set, names an existing registry entry.
 - When retargeting, `positive_examples` and `negative_examples` are empty.
 - `positive_examples` / `negative_examples` indices are in-range.
-- `kind: "none"` carries either `introspection_gap` or a session log
+- `kind: "none"` carries either `signal_library_gap` or a session log
   with `failure_category` set (no silent dead-ends).
 - Every working classifier (`kind: "builtin"`) carries an `ariadne_bug`
   (root-cause fix task — new task body or `existing_task_id` attached).
@@ -198,7 +198,7 @@ Finalize handles several housekeeping steps:
   `observed_count`); delete the sentinel to force.
 
 Capture each printed JSON as `FINALIZE[run_id]`. Aggregate `authored_files`,
-`deleted_orphan_files`, `failed_authoring`, `introspection_gap_tasks`,
+`deleted_orphan_files`, `failed_authoring`, `signal_library_gap_tasks`,
 `ariadne_bug_tasks`, `failed_groups`, `skipped_permanent_upserts` across runs.
 
 ### Step 6 — File backlog tasks
@@ -206,9 +206,9 @@ Capture each printed JSON as `FINALIZE[run_id]`. Aggregate `authored_files`,
 Skip entirely when `--dry-run` was set. Otherwise file two distinct task
 flights from the finalize summaries.
 
-#### Introspection-gap sub-tasks
+#### Signal-library gap sub-tasks
 
-For every entry across all finalize summaries' `introspection_gap_tasks[]`,
+For every entry across all finalize summaries' `signal_library_gap_tasks[]`,
 first dedup via `mcp__backlog__task_search` using a query derived from
 `title` + joined `signals_needed`. If a sub-task already exists under
 `TASK-190.16` that covers the same signal(s), skip create and remember the
@@ -327,7 +327,7 @@ Runs:
 New classifiers:
   - <group_id> (builtin: check_<id>.ts)
 Drift tagged: <group_id_x>
-Introspection-gap sub-tasks: <n>
+Signal-library gap sub-tasks: <n>
   - TASK-190.16.<n+1> (<group_id>): <signals_needed>
 Ariadne-bug tasks: <n>
   - TASK-<N> (<group_id>, <root_cause_category>): <title>
@@ -474,7 +474,7 @@ response. Finalize folds the statuses into the summary and commit message.
 
 - **`success`** — valid classifier (`kind: "builtin"`), paired with a
   required `ariadne_bug` (new task or `existing_task_id`).
-- **`blocked_missing_signal`** — `kind: "none"` plus `introspection_gap`
+- **`blocked_missing_signal`** — `kind: "none"` plus `signal_library_gap`
   populated. Legitimate outcome when the signal library cannot express
   the pattern. `ariadne_bug` may still be populated to name the
   underlying resolver deficiency.

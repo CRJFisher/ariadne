@@ -1,7 +1,7 @@
 /**
  * Orchestrator for the auto-classify pipeline stage.
  *
- * For every `EnrichedFunctionEntry`, walk the known-issues registry in priority
+ * For every `EnrichedEntryPoint`, walk the known-issues registry in priority
  * order and evaluate each entry's classifier:
  *   - `classifier.kind === "none"`      → skip (known issue, no automated detection)
  *   - `classifier.kind === "predicate"` → evaluate via `predicate_evaluator`.
@@ -20,12 +20,12 @@
  * exists so non-binary scorers could be introduced without reshaping callers.
  */
 
-import type { EnrichedFunctionEntry } from "../entry_point_types.js";
+import type { EnrichedEntryPoint } from "../entry_point_types.js";
 import type { KnownIssuesRegistry } from "../known_issues_types.js";
 import { BUILTIN_CHECKS, type BuiltinCheckFn } from "./builtins/index.js";
 import { evaluate_predicate } from "./predicate_evaluator.js";
 import type {
-  AutoClassifiedEntry,
+  ClassifiedEntryPointResult,
   AutoClassifyResult,
   ClassifierHint,
   FileLinesReader,
@@ -57,22 +57,24 @@ export class MissingBuiltinError extends Error {
 }
 
 export function auto_classify(
-  entries: readonly EnrichedFunctionEntry[],
+  entry_points: readonly EnrichedEntryPoint[],
   registry: KnownIssuesRegistry,
   read_file_lines: FileLinesReader,
   options: AutoClassifyOptions = {},
-): AutoClassifiedEntry[] {
+): ClassifiedEntryPointResult[] {
   const builtin_checks = options.builtin_checks ?? BUILTIN_CHECKS;
-  return entries.map((entry) => classify_one(entry, registry, read_file_lines, builtin_checks));
+  return entry_points.map((entry_point) =>
+    classify_one(entry_point, registry, read_file_lines, builtin_checks),
+  );
 }
 
 function classify_one(
-  entry: EnrichedFunctionEntry,
+  entry_point: EnrichedEntryPoint,
   registry: KnownIssuesRegistry,
   read_file_lines: FileLinesReader,
   builtin_checks: Readonly<Record<string, BuiltinCheckFn>>,
-): AutoClassifiedEntry {
-  const ctx: PredicateContext = { entry, read_file_lines };
+): ClassifiedEntryPointResult {
+  const ctx: PredicateContext = { entry_point, read_file_lines };
   const hints: ClassifierHint[] = [];
 
   for (const issue of registry) {
@@ -88,7 +90,7 @@ function classify_one(
       if (check === undefined) {
         throw new MissingBuiltinError(issue.group_id, spec.function_name);
       }
-      if (!check(entry, read_file_lines)) continue;
+      if (!check(entry_point, read_file_lines)) continue;
       reasoning = `Matched builtin classifier ${spec.function_name} for ${issue.group_id}`;
       min_confidence = spec.min_confidence;
     } else {
@@ -103,7 +105,7 @@ function classify_one(
         reasoning,
         classifier_hints: hints,
       };
-      return { entry, result };
+      return { entry_point, result };
     }
     hints.push({ group_id: issue.group_id, confidence, reasoning });
   }
@@ -114,5 +116,5 @@ function classify_one(
     reasoning: null,
     classifier_hints: hints,
   };
-  return { entry, result };
+  return { entry_point, result };
 }

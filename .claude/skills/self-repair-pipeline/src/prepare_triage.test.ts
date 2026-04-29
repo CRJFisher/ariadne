@@ -11,14 +11,14 @@
 
 import { describe, it, expect } from "vitest";
 
-import { prepare_triage, sort_residual_entries } from "./prepare_triage.js";
-import type { ResidualEntry } from "./build_triage_entries.js";
-import type { EnrichedFunctionEntry } from "./entry_point_types.js";
+import { prepare_triage, sort_residual_entry_points } from "./prepare_triage.js";
+import type { ResidualEntryPoint } from "./build_triage_entries.js";
+import type { EnrichedEntryPoint } from "./entry_point_types.js";
 import type { KnownIssue, KnownIssuesRegistry } from "./known_issues_types.js";
 
 // ===== Fixtures =====
 
-function make_entry(overrides: Partial<EnrichedFunctionEntry> & { name: string }): EnrichedFunctionEntry {
+function make_entry(overrides: Partial<EnrichedEntryPoint> & { name: string }): EnrichedEntryPoint {
   return {
     file_path: `src/${overrides.name}.ts`,
     start_line: 1,
@@ -70,7 +70,7 @@ describe("prepare_triage — two-bucket end-to-end", () => {
     ];
 
     // 50 auto-classified + 97 residual = 147 synthetic entries.
-    const auto_entries: EnrichedFunctionEntry[] = Array.from({ length: 50 }, (_, i) =>
+    const auto_entry_points: EnrichedEntryPoint[] = Array.from({ length: 50 }, (_, i) =>
       make_entry({
         name: `auto_${i}`,
         tree_size: 100 + i,
@@ -82,7 +82,7 @@ describe("prepare_triage — two-bucket end-to-end", () => {
         },
       }),
     );
-    const residual_entries: EnrichedFunctionEntry[] = Array.from({ length: 97 }, (_, i) =>
+    const residual_entry_points: EnrichedEntryPoint[] = Array.from({ length: 97 }, (_, i) =>
       make_entry({
         name: `residual_${String(i).padStart(2, "0")}`,
         tree_size: 97 - i,
@@ -90,7 +90,7 @@ describe("prepare_triage — two-bucket end-to-end", () => {
     );
 
     const report = prepare_triage({
-      entries: [...auto_entries, ...residual_entries],
+      entry_points: [...auto_entry_points, ...residual_entry_points],
       registry,
       read_file_lines: EMPTY_READER,
       max_count: 20,
@@ -134,7 +134,7 @@ describe("prepare_triage — two-bucket end-to-end", () => {
   it("residual sampling is deterministic across runs", () => {
     const registry: KnownIssuesRegistry = [];
     // 100 residual entries with varied tree_size / file_path to exercise the ordering.
-    const entries: EnrichedFunctionEntry[] = Array.from({ length: 100 }, (_, i) =>
+    const entry_points: EnrichedEntryPoint[] = Array.from({ length: 100 }, (_, i) =>
       make_entry({
         name: `entry_${i}`,
         file_path: `src/${String(i).padStart(3, "0")}.ts`,
@@ -143,13 +143,13 @@ describe("prepare_triage — two-bucket end-to-end", () => {
     );
 
     const first = prepare_triage({
-      entries,
+      entry_points,
       registry,
       read_file_lines: EMPTY_READER,
       max_count: 20,
     });
     const second = prepare_triage({
-      entries,
+      entry_points,
       registry,
       read_file_lines: EMPTY_READER,
       max_count: 20,
@@ -161,12 +161,12 @@ describe("prepare_triage — two-bucket end-to-end", () => {
 
   it("no max_count keeps every residual entry", () => {
     const registry: KnownIssuesRegistry = [];
-    const entries: EnrichedFunctionEntry[] = Array.from({ length: 7 }, (_, i) =>
+    const entry_points: EnrichedEntryPoint[] = Array.from({ length: 7 }, (_, i) =>
       make_entry({ name: `e_${i}` }),
     );
 
     const report = prepare_triage({
-      entries,
+      entry_points,
       registry,
       read_file_lines: EMPTY_READER,
       max_count: null,
@@ -179,12 +179,12 @@ describe("prepare_triage — two-bucket end-to-end", () => {
 
   it("max_count greater than residual_total keeps all residual entries", () => {
     const registry: KnownIssuesRegistry = [];
-    const entries: EnrichedFunctionEntry[] = Array.from({ length: 5 }, (_, i) =>
+    const entry_points: EnrichedEntryPoint[] = Array.from({ length: 5 }, (_, i) =>
       make_entry({ name: `e_${i}` }),
     );
 
     const report = prepare_triage({
-      entries,
+      entry_points,
       registry,
       read_file_lines: EMPTY_READER,
       max_count: 20,
@@ -195,18 +195,18 @@ describe("prepare_triage — two-bucket end-to-end", () => {
   });
 });
 
-describe("sort_residual_entries — tie-breaking", () => {
+describe("sort_residual_entry_points — tie-breaking", () => {
   it("breaks tree_size ties by file_path ascending then start_line ascending", () => {
-    const to_residual = (e: EnrichedFunctionEntry): ResidualEntry => ({ entry: e, classifier_hints: [] });
-    const input: ResidualEntry[] = [
+    const to_residual = (e: EnrichedEntryPoint): ResidualEntryPoint => ({ entry_point: e, classifier_hints: [] });
+    const input: ResidualEntryPoint[] = [
       to_residual(make_entry({ name: "x1", file_path: "src/z.ts",     start_line: 10, tree_size: 5 })),
       to_residual(make_entry({ name: "x2", file_path: "src/a.ts",     start_line: 20, tree_size: 5 })),
       to_residual(make_entry({ name: "x3", file_path: "src/a.ts",     start_line: 10, tree_size: 5 })),
       to_residual(make_entry({ name: "x4", file_path: "src/middle.ts", start_line: 1,  tree_size: 9 })),
     ];
 
-    const ordered = sort_residual_entries(input);
+    const ordered = sort_residual_entry_points(input);
 
-    expect(ordered.map((r) => r.entry.name)).toEqual(["x4", "x3", "x2", "x1"]);
+    expect(ordered.map((r) => r.entry_point.name)).toEqual(["x4", "x3", "x2", "x1"]);
   });
 });

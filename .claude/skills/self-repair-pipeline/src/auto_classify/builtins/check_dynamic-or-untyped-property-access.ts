@@ -3,7 +3,7 @@
 //
 // TypeScript class getters with diagnosis 'no-textual-callers'. Pre-triage grep uses a function-call pattern (identifier followed by '(') that misses bare property-access reads of getters. When a getter is exposed via property access on an untyped or any-typed receiver, the access leaves no grep hit and no resolved call reference, marking the getter unreachable despite real callers.
 
-import type { EnrichedFunctionEntry } from "../../entry_point_types.js";
+import type { EnrichedEntryPoint } from "../../entry_point_types.js";
 import type { FileLinesReader } from "../types.js";
 
 function detect_language(file_path: string): string | null {
@@ -15,12 +15,12 @@ function detect_language(file_path: string): string | null {
 }
 
 export function check_ts_class_getter_no_textual_callers(
-  entry: EnrichedFunctionEntry,
+  entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
 ): boolean {
   void read_file_lines;
-  const check_0 = detect_language(entry.file_path) === "typescript";
-  const check_1 = entry.definition_features.accessor_kind === "getter";
-  const check_2 = entry.diagnostics.diagnosis === "no-textual-callers";
+  const check_0 = detect_language(entry_point.file_path) === "typescript";
+  const check_1 = entry_point.definition_features.accessor_kind === "getter";
+  const check_2 = entry_point.diagnostics.diagnosis === "no-textual-callers";
   return check_0 && check_1 && check_2;
 }

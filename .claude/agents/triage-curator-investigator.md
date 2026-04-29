@@ -1,6 +1,6 @@
 ---
 name: triage-curator-investigator
-description: Investigates a false-positive group — either residual (no existing classifier) or promoted (QA found the existing classifier is mis-matching enough members to warrant re-investigation) — and emits three distinct proposals: a classifier (workaround), an Ariadne-bug task (root cause), and any introspection gap (signal-library deficiency).
+description: Investigates a false-positive group — either residual (no existing classifier) or promoted (QA found the existing classifier is mis-matching enough members to warrant re-investigation) — and emits three distinct proposals: a classifier (workaround), an Ariadne-bug task (root cause), and any signal-library gap (signal-library deficiency).
 tools: Bash(node --import tsx .claude/skills/triage-curator/scripts/get_investigate_context.ts:*), Read, Grep, Glob, Write(~/.ariadne/triage-curator/**)
 mcpServers:
   - ariadne
@@ -49,11 +49,11 @@ Branch your investigation on it. In both modes the bundle includes:
 - `signal_check_ops` — the closed list of `SignalCheck.op` values that are
   valid inside a `classifier_spec`. Choose only from this list. Adding a
   new op requires a type + renderer change first; propose via
-  `introspection_gap.signals_needed` if you need one.
+  `signal_library_gap.signals_needed` if you need one.
 - `ariadne_root_cause_categories` — closed list of valid
   `ariadne_bug.root_cause_category` values.
-- `introspection_gap_parent_task_id` — the static parent task under which
-  introspection-gap sub-tasks are filed (e.g. `TASK-190.16`).
+- `signal_library_gap_parent_task_id` — the static parent task under which
+  signal-library-gap sub-tasks are filed (e.g. `TASK-190.16`).
 
 In promoted mode the bundle adds:
 
@@ -92,7 +92,7 @@ The group has no registry entry yet. Propose one.
 5. **Capture the Ariadne bug.** See deliverable 3 in "Three deliverables"
    below. Search the backlog first via `mcp__backlog__task_search`.
 
-6. **Capture any introspection gap.** See deliverable 2 in "Three
+6. **Capture any signal-library gap.** See deliverable 2 in "Three
    deliverables" below (populate only if the signal library cannot
    express the needed rule).
 
@@ -130,7 +130,7 @@ found the existing classifier is mis-matching (`qa_outliers`). Pick one of
 resolver bug (the permanent entry exists because the bug is real), and
 set session log `status: "failure"`, `failure_category: "permanent_locked"`.
 
-## Three deliverables — classifier, introspection gap, Ariadne bug
+## Three deliverables — classifier, signal-library gap, Ariadne bug
 
 Each response has three distinct outputs, each tracking a different aspect:
 
@@ -141,17 +141,17 @@ Each response has three distinct outputs, each tracking a different aspect:
    - `kind: "builtin"` — accompanied by a non-null `classifier_spec`
      matching `function_name` and `min_confidence`. The main agent
      renders it to source in Step 4.5; you never emit code.
-   - `kind: "none"` — permitted **only** when `introspection_gap` is
+   - `kind: "none"` — permitted **only** when `signal_library_gap` is
      non-null (i.e. the signal library cannot express the needed rule).
 
    `proposed_classifier: null` is reserved for the promoted **split** and
    **keep** actions and for residual `group_incoherent` failures. Pair it
    with a session log status that matches the intent.
 
-2. **Introspection gap** (`introspection_gap`) — the signal-library /
+2. **Signal-library gap** (`signal_library_gap`) — the signal-library /
    classifier-DSL deficiency. Non-null when the signals you need to
    discriminate the pattern are missing. Finalize files this as a
-   sub-task under `introspection_gap_parent_task_id` (currently
+   sub-task under `signal_library_gap_parent_task_id` (currently
    `TASK-190.16`); Backlog.md auto-assigns `.n+1`.
 
    ```json
@@ -316,7 +316,7 @@ Write **two files** to `~/.ariadne/triage-curator/**` before returning.
   "proposed_classifier": <one of the shapes below> | null,
   "classifier_spec": <BuiltinClassifierSpec> | null,
   "retargets_to": "string" | null,
-  "introspection_gap": {
+  "signal_library_gap": {
     "signals_needed": ["kebab-case-signal-1"],
     "title": "string",
     "description": "string"
@@ -343,7 +343,7 @@ Classifier shapes (exclusive):
   "Classifier spec" above for the full shape.
 - For any other `kind`, `classifier_spec` **must** be `null`.
 - `min_confidence` — optional; defaults to `0.9`.
-- `introspection_gap` — non-null when the signal library cannot express
+- `signal_library_gap` — non-null when the signal library cannot express
   the needed classifier rule. `signals_needed` must be non-empty when the
   object is non-null.
 - `ariadne_bug` — **required** whenever `proposed_classifier.kind ===
@@ -372,14 +372,14 @@ Step 4.25 validates every response before rendering. The validator rejects:
 - `retargets_to` non-null while `positive_examples` or `negative_examples`
   is non-empty.
 - `positive_examples` / `negative_examples` indices `>= group.entries.length`.
-- `kind: "none"` with null `introspection_gap` AND a session log that
+- `kind: "none"` with null `signal_library_gap` AND a session log that
   carries no `failure_category` (silent dead-end).
 - Working classifier proposed (`kind: "builtin"`) with `ariadne_bug:
 null` (the workaround is not allowed to stand alone — the resolver bug
   must also be filed or attached).
 - `ariadne_bug.root_cause_category` not in `ariadne_root_cause_categories`.
 - `ariadne_bug.existing_task_id` not matching `^TASK-[0-9]+(\.[0-9]+)*$`.
-- `introspection_gap.signals_needed` empty (drop `introspection_gap` to
+- `signal_library_gap.signals_needed` empty (drop `signal_library_gap` to
   `null` instead).
 
 The hydrated context carries an `authoring_rules` stanza that names the
@@ -414,7 +414,7 @@ Status semantics:
   discriminate the pattern and which kind of classifier you chose.
   `ariadne_bug` is required.
 - `blocked_missing_signal` — `proposed_classifier: { kind: "none" }`,
-  `introspection_gap` set. Legitimate, expected outcome when the signal
+  `signal_library_gap` set. Legitimate, expected outcome when the signal
   library is insufficient. `ariadne_bug` may still be populated to name
   the underlying resolver deficiency (recommended when identifiable).
 - `failure` — anything else: group cannot be classified for a structural

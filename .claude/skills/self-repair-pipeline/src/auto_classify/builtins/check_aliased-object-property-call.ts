@@ -3,16 +3,16 @@
 //
 // Anonymous function expression assigned as an object-literal property where the parent object is reached only through a local alias variable (e.g. `var Utils = Firebug.NetMonitor.Utils; Utils.findHeader(...)`). Ariadne records the function definition but does not propagate the parent object's value into the alias variable, so `<alias>.<prop>(...)` call sites do not link to the property's function expression. The discriminating signal `definition_is_object_literal_method` (added by TASK-190.16.13) only fires on TS/JS object-literal property values, so the language check is implicit. Filtered to zero resolved callers so we do not mask functions that already have edges from non-aliased call sites.
 
-import type { EnrichedFunctionEntry } from "../../entry_point_types.js";
+import type { EnrichedEntryPoint } from "../../entry_point_types.js";
 import type { FileLinesReader } from "../types.js";
 
 export function check_aliased_object_property_call(
-  entry: EnrichedFunctionEntry,
+  entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
 ): boolean {
   void read_file_lines;
-  const check_0 = new RegExp("^<anonymous>$").test(entry.name);
-  const check_1 = entry.definition_features.definition_is_object_literal_method === true;
-  const check_2 = entry.diagnostics.ariadne_call_refs.length <= 0;
+  const check_0 = new RegExp("^<anonymous>$").test(entry_point.name);
+  const check_1 = entry_point.definition_features.definition_is_object_literal_method === true;
+  const check_2 = entry_point.diagnostics.ariadne_call_refs.length <= 0;
   return check_0 && check_1 && check_2;
 }

@@ -3,7 +3,7 @@
 //
 // Angular Ivy compiler-generated instruction functions: ɵɵ-prefixed names defined under packages/core/src/render3/instructions/. These are invoked indirectly via the string-keyed angularCoreEnv map (packages/core/src/render3/jit/environment.ts) and via ExternalReference identifiers in packages/compiler/src/render3/r3_identifiers.ts; the compiler emits string names that the runtime resolves through the map, so no static call site exists in the source graph. The name + path combination is highly specific to this framework convention.
 
-import type { EnrichedFunctionEntry } from "../../entry_point_types.js";
+import type { EnrichedEntryPoint } from "../../entry_point_types.js";
 import type { FileLinesReader } from "../types.js";
 
 function detect_language(file_path: string): string | null {
@@ -15,12 +15,12 @@ function detect_language(file_path: string): string | null {
 }
 
 export function check_compiler_generated_dynamic_dispatch(
-  entry: EnrichedFunctionEntry,
+  entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
 ): boolean {
   void read_file_lines;
-  const check_0 = detect_language(entry.file_path) === "typescript";
-  const check_1 = new RegExp("^ɵɵ[A-Za-z][A-Za-z0-9_]*$").test(entry.name);
-  const check_2 = new RegExp("/packages/core/src/render3/instructions/").test(entry.file_path);
+  const check_0 = detect_language(entry_point.file_path) === "typescript";
+  const check_1 = new RegExp("^ɵɵ[A-Za-z][A-Za-z0-9_]*$").test(entry_point.name);
+  const check_2 = new RegExp("/packages/core/src/render3/instructions/").test(entry_point.file_path);
   return check_0 && check_1 && check_2;
 }

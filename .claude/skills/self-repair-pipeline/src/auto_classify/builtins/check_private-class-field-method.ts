@@ -3,7 +3,7 @@
 //
 // TypeScript entries whose grep call-site evidence contains `.#identifier` — the ECMAScript private-class-field access syntax. The tree-sitter query in packages/core/src/index_single_file/query_code_tree/queries/typescript.scm only captures `property: (property_identifier)` for member-expression calls; it misses `private_property_identifier`, so `this.#m()` call sites are never emitted as `@reference.call`. Both private-method definitions (`#m()`) and public methods reached only through a private-field receiver (`this.#field.m()`) hit this gap.
 
-import type { EnrichedFunctionEntry } from "../../entry_point_types.js";
+import type { EnrichedEntryPoint } from "../../entry_point_types.js";
 import type { FileLinesReader } from "../types.js";
 
 function detect_language(file_path: string): string | null {
@@ -15,11 +15,11 @@ function detect_language(file_path: string): string | null {
 }
 
 export function check_private_class_field_method(
-  entry: EnrichedFunctionEntry,
+  entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
 ): boolean {
   void read_file_lines;
-  const check_0 = detect_language(entry.file_path) === "typescript";
-  const check_1 = (() => { const pattern = new RegExp("\\.#[A-Za-z_]"); return entry.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })();
+  const check_0 = detect_language(entry_point.file_path) === "typescript";
+  const check_1 = (() => { const pattern = new RegExp("\\.#[A-Za-z_]"); return entry_point.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })();
   return check_0 && check_1;
 }

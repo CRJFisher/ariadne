@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import type {
   CallRefDiagnostic,
   DefinitionFeatures,
-  EnrichedFunctionEntry,
+  EnrichedEntryPoint,
   EntryPointDiagnostics,
   GrepHit,
   SyntacticFeatures,
@@ -66,8 +66,8 @@ const BASE_DEFINITION_FEATURES: DefinitionFeatures = {
 };
 
 function make_entry(
-  overrides: Partial<EnrichedFunctionEntry> = {},
-): EnrichedFunctionEntry {
+  overrides: Partial<EnrichedEntryPoint> = {},
+): EnrichedEntryPoint {
   return {
     name: "target",
     file_path: "src/target.ts",
@@ -81,9 +81,9 @@ function make_entry(
   };
 }
 
-function ctx(entry: EnrichedFunctionEntry, lines_by_file: Record<string, string[]> = {}) {
+function ctx(entry_point: EnrichedEntryPoint, lines_by_file: Record<string, string[]> = {}) {
   return {
-    entry,
+    entry_point,
     read_file_lines: (p: string) => lines_by_file[p] ?? [],
   };
 }
@@ -91,18 +91,18 @@ function ctx(entry: EnrichedFunctionEntry, lines_by_file: Record<string, string[
 // ===== Leaves =====
 
 describe("evaluate_predicate — leaf operators", () => {
-  it("diagnosis_eq matches when entry diagnosis equals value", () => {
-    const entry = make_entry({
+  it("diagnosis_eq matches when entry_point diagnosis equals value", () => {
+    const entry_point = make_entry({
       diagnostics: make_diagnostics({ diagnosis: "no-textual-callers" }),
     });
     const expr: PredicateExpr = { op: "diagnosis_eq", value: "no-textual-callers" };
-    expect(evaluate_predicate(expr, ctx(entry))).toBe(true);
+    expect(evaluate_predicate(expr, ctx(entry_point))).toBe(true);
   });
 
   it("diagnosis_eq false on mismatch", () => {
-    const entry = make_entry();
+    const entry_point = make_entry();
     const expr: PredicateExpr = { op: "diagnosis_eq", value: "no-textual-callers" };
-    expect(evaluate_predicate(expr, ctx(entry))).toBe(false);
+    expect(evaluate_predicate(expr, ctx(entry_point))).toBe(false);
   });
 
   it("language_eq reads language from file extension", () => {
@@ -114,19 +114,19 @@ describe("evaluate_predicate — leaf operators", () => {
   });
 
   it("grep_line_regex matches any grep hit content", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       diagnostics: make_diagnostics({
         grep_call_sites: [make_grep_hit({ content: "this._hooks[name].call(arg)" })],
       }),
     });
     const yes: PredicateExpr = { op: "grep_line_regex", pattern: "\\[.*\\]\\.call" };
     const no: PredicateExpr = { op: "grep_line_regex", pattern: "\\bawait\\b" };
-    expect(evaluate_predicate(yes, ctx(entry))).toBe(true);
-    expect(evaluate_predicate(no, ctx(entry))).toBe(false);
+    expect(evaluate_predicate(yes, ctx(entry_point))).toBe(true);
+    expect(evaluate_predicate(no, ctx(entry_point))).toBe(false);
   });
 
   it("grep_line_regex uses compiled_pattern when attached", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       diagnostics: make_diagnostics({
         grep_call_sites: [make_grep_hit({ content: "super.foo()" })],
       }),
@@ -136,25 +136,25 @@ describe("evaluate_predicate — leaf operators", () => {
       pattern: "NEVER_MATCHES",
       compiled_pattern: /super\./,
     };
-    expect(evaluate_predicate(node, ctx(entry))).toBe(true);
+    expect(evaluate_predicate(node, ctx(entry_point))).toBe(true);
   });
 
   it("decorator_matches reads preceding decorator block", () => {
-    const entry = make_entry({ file_path: "app.py", start_line: 2 });
+    const entry_point = make_entry({ file_path: "app.py", start_line: 2 });
     const lines = ["@pytest.fixture", "def load_config():", "    pass"];
     const expr: PredicateExpr = { op: "decorator_matches", pattern: "pytest\\.fixture" };
-    expect(evaluate_predicate(expr, ctx(entry, { "app.py": lines }))).toBe(true);
+    expect(evaluate_predicate(expr, ctx(entry_point, { "app.py": lines }))).toBe(true);
   });
 
   it("decorator_matches false when no decorator above the definition", () => {
-    const entry = make_entry({ file_path: "app.py", start_line: 1 });
+    const entry_point = make_entry({ file_path: "app.py", start_line: 1 });
     const lines = ["def load_config():", "    pass"];
     const expr: PredicateExpr = { op: "decorator_matches", pattern: "pytest\\.fixture" };
-    expect(evaluate_predicate(expr, ctx(entry, { "app.py": lines }))).toBe(false);
+    expect(evaluate_predicate(expr, ctx(entry_point, { "app.py": lines }))).toBe(false);
   });
 
   it("has_capture_at_grep_hit matches when any hit includes the capture", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       diagnostics: make_diagnostics({
         grep_call_sites: [
           make_grep_hit({ captures: ["@reference.call"] }),
@@ -167,12 +167,12 @@ describe("evaluate_predicate — leaf operators", () => {
       op: "has_capture_at_grep_hit",
       capture_name: "@reference.constructor",
     };
-    expect(evaluate_predicate(yes, ctx(entry))).toBe(true);
-    expect(evaluate_predicate(no, ctx(entry))).toBe(false);
+    expect(evaluate_predicate(yes, ctx(entry_point))).toBe(true);
+    expect(evaluate_predicate(no, ctx(entry_point))).toBe(false);
   });
 
   it("missing_capture_at_grep_hit matches when any hit is missing the capture", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       diagnostics: make_diagnostics({
         grep_call_sites: [
           make_grep_hit({ captures: ["@reference.constructor"] }),
@@ -184,11 +184,11 @@ describe("evaluate_predicate — leaf operators", () => {
       op: "missing_capture_at_grep_hit",
       capture_name: "@reference.constructor",
     };
-    expect(evaluate_predicate(expr, ctx(entry))).toBe(true);
+    expect(evaluate_predicate(expr, ctx(entry_point))).toBe(true);
   });
 
   it("missing_capture_at_grep_hit false when every hit has the capture", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       diagnostics: make_diagnostics({
         grep_call_sites: [
           make_grep_hit({ captures: ["@reference.constructor"] }),
@@ -200,11 +200,11 @@ describe("evaluate_predicate — leaf operators", () => {
       op: "missing_capture_at_grep_hit",
       capture_name: "@reference.constructor",
     };
-    expect(evaluate_predicate(expr, ctx(entry))).toBe(false);
+    expect(evaluate_predicate(expr, ctx(entry_point))).toBe(false);
   });
 
   it("resolution_failure_reason_eq matches when any call_ref has matching failure reason", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       diagnostics: make_diagnostics({
         ariadne_call_refs: [
           make_call_ref({
@@ -225,24 +225,24 @@ describe("evaluate_predicate — leaf operators", () => {
       op: "resolution_failure_reason_eq",
       value: "polymorphic_no_implementations",
     };
-    expect(evaluate_predicate(yes, ctx(entry))).toBe(true);
-    expect(evaluate_predicate(no, ctx(entry))).toBe(false);
+    expect(evaluate_predicate(yes, ctx(entry_point))).toBe(true);
+    expect(evaluate_predicate(no, ctx(entry_point))).toBe(false);
   });
 
   it("receiver_kind_eq matches when any call_ref has the receiver_kind", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       diagnostics: make_diagnostics({
         ariadne_call_refs: [make_call_ref({ receiver_kind: "index_access" })],
       }),
     });
     const yes: PredicateExpr = { op: "receiver_kind_eq", value: "index_access" };
     const no: PredicateExpr = { op: "receiver_kind_eq", value: "identifier" };
-    expect(evaluate_predicate(yes, ctx(entry))).toBe(true);
-    expect(evaluate_predicate(no, ctx(entry))).toBe(false);
+    expect(evaluate_predicate(yes, ctx(entry_point))).toBe(true);
+    expect(evaluate_predicate(no, ctx(entry_point))).toBe(false);
   });
 
   it("syntactic_feature_eq matches for is_dynamic_dispatch=true", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       diagnostics: make_diagnostics({
         ariadne_call_refs: [
           make_call_ref({
@@ -256,11 +256,11 @@ describe("evaluate_predicate — leaf operators", () => {
       name: "is_dynamic_dispatch",
       value: true,
     };
-    expect(evaluate_predicate(expr, ctx(entry))).toBe(true);
+    expect(evaluate_predicate(expr, ctx(entry_point))).toBe(true);
   });
 
   it("syntactic_feature_eq false when no call_ref carries the feature", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       diagnostics: make_diagnostics({
         ariadne_call_refs: [make_call_ref()],
       }),
@@ -270,11 +270,11 @@ describe("evaluate_predicate — leaf operators", () => {
       name: "is_super_call",
       value: true,
     };
-    expect(evaluate_predicate(expr, ctx(entry))).toBe(false);
+    expect(evaluate_predicate(expr, ctx(entry_point))).toBe(false);
   });
 
-  it("grep_hits_all_intra_file matches when every hit shares the entry file", () => {
-    const entry = make_entry({
+  it("grep_hits_all_intra_file matches when every hit shares the entry_point file", () => {
+    const entry_point = make_entry({
       file_path: "src/foo.js",
       diagnostics: make_diagnostics({
         grep_call_sites: [
@@ -284,11 +284,11 @@ describe("evaluate_predicate — leaf operators", () => {
       }),
     });
     const yes: PredicateExpr = { op: "grep_hits_all_intra_file", value: true };
-    expect(evaluate_predicate(yes, ctx(entry))).toBe(true);
+    expect(evaluate_predicate(yes, ctx(entry_point))).toBe(true);
   });
 
   it("grep_hits_all_intra_file rejects when any hit is cross-file", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       file_path: "src/foo.js",
       diagnostics: make_diagnostics({
         grep_call_sites: [
@@ -298,7 +298,7 @@ describe("evaluate_predicate — leaf operators", () => {
       }),
     });
     const expr: PredicateExpr = { op: "grep_hits_all_intra_file", value: true };
-    expect(evaluate_predicate(expr, ctx(entry))).toBe(false);
+    expect(evaluate_predicate(expr, ctx(entry_point))).toBe(false);
   });
 
   it("grep_hits_all_intra_file with value:false negates the predicate", () => {
@@ -323,18 +323,18 @@ describe("evaluate_predicate — leaf operators", () => {
   });
 
   it("grep_hits_all_intra_file with empty grep array reads as 'not all intra'", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       file_path: "src/foo.js",
       diagnostics: make_diagnostics({ grep_call_sites: [] }),
     });
     const yes: PredicateExpr = { op: "grep_hits_all_intra_file", value: true };
     const no: PredicateExpr = { op: "grep_hits_all_intra_file", value: false };
-    expect(evaluate_predicate(yes, ctx(entry))).toBe(false);
-    expect(evaluate_predicate(no, ctx(entry))).toBe(true);
+    expect(evaluate_predicate(yes, ctx(entry_point))).toBe(false);
+    expect(evaluate_predicate(no, ctx(entry_point))).toBe(true);
   });
 
   it("grep_hit_neighbourhood_matches scans lines above the hit", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       diagnostics: make_diagnostics({
         grep_call_sites: [make_grep_hit({ file_path: "src/caller.js", line: 10 })],
       }),
@@ -358,12 +358,12 @@ describe("evaluate_predicate — leaf operators", () => {
       pattern: "require\\(",
       window: 1, // hit on line 10, window 1 means just line 9 — no match
     };
-    expect(evaluate_predicate(yes, ctx(entry, lines_by_file))).toBe(true);
-    expect(evaluate_predicate(no, ctx(entry, lines_by_file))).toBe(false);
+    expect(evaluate_predicate(yes, ctx(entry_point, lines_by_file))).toBe(true);
+    expect(evaluate_predicate(no, ctx(entry_point, lines_by_file))).toBe(false);
   });
 
   it("grep_hit_neighbourhood_matches handles top-of-file (window larger than hit line)", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       diagnostics: make_diagnostics({
         grep_call_sites: [make_grep_hit({ file_path: "src/caller.js", line: 2 })],
       }),
@@ -379,11 +379,11 @@ describe("evaluate_predicate — leaf operators", () => {
       pattern: "require\\(",
       window: 10, // window dwarfs available lines; Math.max(0, ...) protects start index
     };
-    expect(evaluate_predicate(expr, ctx(entry, lines_by_file))).toBe(true);
+    expect(evaluate_predicate(expr, ctx(entry_point, lines_by_file))).toBe(true);
   });
 
   it("grep_hit_neighbourhood_matches returns false when the hit's file is not in lines_by_file", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       diagnostics: make_diagnostics({
         grep_call_sites: [make_grep_hit({ file_path: "src/missing.js", line: 5 })],
       }),
@@ -393,11 +393,11 @@ describe("evaluate_predicate — leaf operators", () => {
       pattern: "require\\(",
       window: 5,
     };
-    expect(evaluate_predicate(expr, ctx(entry, {}))).toBe(false);
+    expect(evaluate_predicate(expr, ctx(entry_point, {}))).toBe(false);
   });
 
   it("definition_feature_eq reads definition-site features", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       definition_features: {
         definition_is_object_literal_method: true,
         accessor_kind: null,
@@ -413,8 +413,8 @@ describe("evaluate_predicate — leaf operators", () => {
       name: "definition_is_object_literal_method",
       value: false,
     };
-    expect(evaluate_predicate(yes, ctx(entry))).toBe(true);
-    expect(evaluate_predicate(no, ctx(entry))).toBe(false);
+    expect(evaluate_predicate(yes, ctx(entry_point))).toBe(true);
+    expect(evaluate_predicate(no, ctx(entry_point))).toBe(false);
   });
 
   it("accessor_kind_eq matches getter/setter/none", () => {
@@ -499,7 +499,7 @@ describe("evaluate_predicate — runtime guards", () => {
   it("throws on an operator that bypassed registry validation", () => {
     // Bypass TS via JSON.parse so we can feed a bad `op` through.
     const bad = JSON.parse("{\"op\":\"unknown_operator\",\"value\":\"x\"}") as PredicateExpr;
-    const entry = make_entry();
-    expect(() => evaluate_predicate(bad, ctx(entry))).toThrow(/Unknown predicate operator/);
+    const entry_point = make_entry();
+    expect(() => evaluate_predicate(bad, ctx(entry_point))).toThrow(/Unknown predicate operator/);
   });
 });

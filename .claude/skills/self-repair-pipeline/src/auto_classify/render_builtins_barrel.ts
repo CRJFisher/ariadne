@@ -44,7 +44,7 @@ export function render_builtins_barrel(registry: readonly KnownIssue[]): string 
     "// Regenerated whenever the known-issues registry mutates. The orchestrator",
     "// looks up a builtin classifier by `function_name` via BUILTIN_CHECKS.",
     "",
-    "import type { EnrichedFunctionEntry } from \"../../entry_point_types.js\";",
+    "import type { EnrichedEntryPoint } from \"../../entry_point_types.js\";",
     "import type { FileLinesReader } from \"../types.js\";",
     "",
   );
@@ -56,7 +56,7 @@ export function render_builtins_barrel(registry: readonly KnownIssue[]): string 
   if (entries.length > 0) lines.push("");
   lines.push(
     "export type BuiltinCheckFn = (",
-    "  entry: EnrichedFunctionEntry,",
+    "  entry_point: EnrichedEntryPoint,",
     "  read_file_lines: FileLinesReader,",
     ") => boolean;",
     "",

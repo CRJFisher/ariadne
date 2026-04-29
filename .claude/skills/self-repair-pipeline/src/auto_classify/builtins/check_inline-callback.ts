@@ -3,7 +3,7 @@
 //
 // Anonymous TypeScript functions whose grep scan finds no textual callers. These are inline arrow / function expressions passed as callback arguments (most commonly to higher-order methods like Array.prototype.map / forEach / filter, Map.forEach, Promise.then). Ariadne does not synthesize a call edge from the higher-order callee to the inline lambda, and grep cannot find them by name (`<anonymous>` is not a real identifier). The combination name=='<anonymous>' AND diagnosis=='no-textual-callers' AND language=='typescript' precisely describes this systematic false positive.
 
-import type { EnrichedFunctionEntry } from "../../entry_point_types.js";
+import type { EnrichedEntryPoint } from "../../entry_point_types.js";
 import type { FileLinesReader } from "../types.js";
 
 function detect_language(file_path: string): string | null {
@@ -15,12 +15,12 @@ function detect_language(file_path: string): string | null {
 }
 
 export function check_inline_callback(
-  entry: EnrichedFunctionEntry,
+  entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
 ): boolean {
   void read_file_lines;
-  const check_0 = new RegExp("^<anonymous>$").test(entry.name);
-  const check_1 = entry.diagnostics.diagnosis === "no-textual-callers";
-  const check_2 = detect_language(entry.file_path) === "typescript";
+  const check_0 = new RegExp("^<anonymous>$").test(entry_point.name);
+  const check_1 = entry_point.diagnostics.diagnosis === "no-textual-callers";
+  const check_2 = detect_language(entry_point.file_path) === "typescript";
   return check_0 && check_1 && check_2;
 }

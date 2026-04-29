@@ -87,7 +87,7 @@ function builtin_inv(
     },
     classifier_spec: minimal_spec(`check_${group_id}`),
     retargets_to: null,
-    introspection_gap: null,
+    signal_library_gap: null,
     ariadne_bug: null,
     reasoning: "",
     ...overrides,
@@ -308,7 +308,7 @@ describe("apply_proposals", () => {
     expect(result.failed_authoring).toEqual([]);
     expect(result.drift_tagged_groups).toEqual(["a"]);
     expect(result.registry_upserts).toEqual(["new-group"]);
-    expect(result.introspection_gap_tasks).toEqual([]);
+    expect(result.signal_library_gap_tasks).toEqual([]);
     expect(result.ariadne_bug_tasks).toEqual([]);
 
     const on_disk = await read_registry_json();
@@ -429,7 +429,7 @@ describe("apply_proposals", () => {
     expect(result.authored_files).toEqual([]);
   });
 
-  it("collects introspection_gap entries as separate tasks (one per response)", async () => {
+  it("collects signal_library_gap entries as separate tasks (one per response)", async () => {
     await write_registry([]);
     const inv: InvestigateResponse[] = [
       {
@@ -437,7 +437,7 @@ describe("apply_proposals", () => {
         proposed_classifier: null,
         classifier_spec: null,
         retargets_to: null,
-        introspection_gap: {
+        signal_library_gap: {
           signals_needed: ["grep_call_sites", "decorator_scan"],
           title: "a-gap",
           description: "",
@@ -450,7 +450,7 @@ describe("apply_proposals", () => {
         proposed_classifier: null,
         classifier_spec: null,
         retargets_to: null,
-        introspection_gap: {
+        signal_library_gap: {
           signals_needed: ["decorator_scan", "receiver_kind"],
           title: "b-gap",
           description: "",
@@ -466,7 +466,7 @@ describe("apply_proposals", () => {
       run_id: "test-run",
       authored_files_by_group: {},
     });
-    expect(result.introspection_gap_tasks).toEqual([
+    expect(result.signal_library_gap_tasks).toEqual([
       {
         group_id: "a",
         title: "a-gap",

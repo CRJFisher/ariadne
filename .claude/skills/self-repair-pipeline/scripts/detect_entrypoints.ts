@@ -36,7 +36,7 @@ import {
   log_warn,
 } from "@ariadnejs/core";
 import type { PersistenceStorage } from "@ariadnejs/core";
-import type { EnrichedFunctionEntry } from "../src/entry_point_types.js";
+import type { EnrichedEntryPoint } from "../src/entry_point_types.js";
 import {
   build_constructor_to_class_name_map,
   detect_language,
@@ -66,7 +66,7 @@ interface AnalysisResult {
   source: SourceInfo;
   total_files_analyzed: number;
   total_entry_points: number;
-  entry_points: EnrichedFunctionEntry[];
+  entry_points: EnrichedEntryPoint[];
   generated_at: string;
 }
 
@@ -341,7 +341,7 @@ async function analyze_directory(
   }
 ): Promise<{
   files_analyzed: number;
-  entry_points: EnrichedFunctionEntry[];
+  entry_points: EnrichedEntryPoint[];
 }> {
   const start_time = Date.now();
 
@@ -466,7 +466,7 @@ async function analyze_directory(
   const class_definitions = project.definitions.get_class_definitions();
   const class_name_by_constructor_id = build_constructor_to_class_name_map(class_definitions);
   // Position-keyed (file:line) map used by the second-pass test-dir grep,
-  // which only sees `EnrichedFunctionEntry` (no symbol_id). Same data, keyed
+  // which only sees `EnrichedEntryPoint` (no symbol_id). Same data, keyed
   // by the same coordinates the entry already carries.
   const class_name_by_constructor_position = new Map<string, string>();
   for (const class_def of class_definitions) {
@@ -538,7 +538,7 @@ const TEST_FILE_EXTENSIONS: readonly string[] = [
 ];
 
 export async function attach_unindexed_test_grep_hits(
-  entry_points: EnrichedFunctionEntry[],
+  entry_points: EnrichedEntryPoint[],
   project_path: string,
   indexed_source_files: ReadonlyMap<string, string>,
   class_name_by_constructor_position: ReadonlyMap<string, string>,

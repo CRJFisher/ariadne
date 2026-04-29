@@ -1,7 +1,7 @@
 /**
  * Evaluator for the known-issues predicate DSL.
  *
- * Pure over an `EnrichedFunctionEntry` and a lazy per-file line reader.
+ * Pure over an `EnrichedEntryPoint` and a lazy per-file line reader.
  * Consumers (see `auto_classify.ts`) pre-cache the reader so each source file
  * is read at most once per run.
  *
@@ -35,24 +35,24 @@ export function evaluate_predicate(expr: PredicateExpr, ctx: PredicateContext): 
       return !evaluate_predicate(expr.of, ctx);
 
     case "diagnosis_eq":
-      return ctx.entry.diagnostics.diagnosis === expr.value;
+      return ctx.entry_point.diagnostics.diagnosis === expr.value;
 
     case "language_eq":
-      return detect_language(ctx.entry.file_path) === expr.value;
+      return detect_language(ctx.entry_point.file_path) === expr.value;
 
     case "decorator_matches": {
-      const lines = ctx.read_file_lines(ctx.entry.file_path);
-      const block = extract_decorator_block(lines, ctx.entry.start_line);
+      const lines = ctx.read_file_lines(ctx.entry_point.file_path);
+      const block = extract_decorator_block(lines, ctx.entry_point.start_line);
       return compiled_regex_for(expr).test(block);
     }
 
     case "grep_line_regex": {
       const re = compiled_regex_for(expr);
-      return ctx.entry.diagnostics.grep_call_sites.some((h) => re.test(h.content));
+      return ctx.entry_point.diagnostics.grep_call_sites.some((h) => re.test(h.content));
     }
 
     case "has_capture_at_grep_hit":
-      return ctx.entry.diagnostics.grep_call_sites.some((h) =>
+      return ctx.entry_point.diagnostics.grep_call_sites.some((h) =>
         h.captures.includes(expr.capture_name),
       );
 
@@ -60,36 +60,36 @@ export function evaluate_predicate(expr: PredicateExpr, ctx: PredicateContext): 
       // "Some grep hit failed to fire the expected capture" — matches the
       // intent of entries like `constructor-new-expression`, where grep sees
       // `new Name(` but the `.scm` query did not fire `@reference.constructor`.
-      return ctx.entry.diagnostics.grep_call_sites.some(
+      return ctx.entry_point.diagnostics.grep_call_sites.some(
         (h) => !h.captures.includes(expr.capture_name),
       );
 
     case "resolution_failure_reason_eq":
-      return ctx.entry.diagnostics.ariadne_call_refs.some(
+      return ctx.entry_point.diagnostics.ariadne_call_refs.some(
         (r) => r.resolution_failure !== null && r.resolution_failure.reason === expr.value,
       );
 
     case "receiver_kind_eq":
-      return ctx.entry.diagnostics.ariadne_call_refs.some(
+      return ctx.entry_point.diagnostics.ariadne_call_refs.some(
         (r) => r.receiver_kind === expr.value,
       );
 
     case "syntactic_feature_eq":
-      return ctx.entry.diagnostics.ariadne_call_refs.some(
+      return ctx.entry_point.diagnostics.ariadne_call_refs.some(
         (r) => syntactic_feature_value(r.syntactic_features, expr.name) === expr.value,
       );
 
     case "grep_hits_all_intra_file": {
-      const hits = ctx.entry.diagnostics.grep_call_sites;
+      const hits = ctx.entry_point.diagnostics.grep_call_sites;
       if (hits.length === 0) return false === expr.value;
-      const all_intra = hits.every((h) => h.file_path === ctx.entry.file_path);
+      const all_intra = hits.every((h) => h.file_path === ctx.entry_point.file_path);
       return all_intra === expr.value;
     }
 
     case "grep_hit_neighbourhood_matches": {
       const re = compiled_regex_for(expr);
       const window = expr.window;
-      return ctx.entry.diagnostics.grep_call_sites.some((h) => {
+      return ctx.entry_point.diagnostics.grep_call_sites.some((h) => {
         const lines = ctx.read_file_lines(h.file_path);
         const start = Math.max(0, h.line - 1 - window);
         const end = h.line - 1; // exclusive of the hit line itself
@@ -102,16 +102,16 @@ export function evaluate_predicate(expr: PredicateExpr, ctx: PredicateContext): 
 
     case "definition_feature_eq":
       return (
-        definition_feature_value(ctx.entry.definition_features, expr.name) === expr.value
+        definition_feature_value(ctx.entry_point.definition_features, expr.name) === expr.value
       );
 
     case "accessor_kind_eq": {
-      const actual = ctx.entry.definition_features.accessor_kind ?? "none";
+      const actual = ctx.entry_point.definition_features.accessor_kind ?? "none";
       return actual === expr.value;
     }
 
     case "has_unindexed_test_caller": {
-      const hits = ctx.entry.diagnostics.grep_call_sites_unindexed_tests;
+      const hits = ctx.entry_point.diagnostics.grep_call_sites_unindexed_tests;
       const has = hits.length > 0;
       return has === expr.value;
     }

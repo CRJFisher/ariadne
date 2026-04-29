@@ -7,7 +7,7 @@ import type {
   BuiltinClassifierSpec,
   ClassifierSpecProposal,
   FalsePositiveGroup,
-  IntrospectionGapTaskToCreate,
+  SignalLibraryGapTaskToCreate,
   InvestigateResponse,
   InvestigatorSessionLog,
   KnownIssue,
@@ -16,10 +16,10 @@ import type {
 } from "./types.js";
 
 /**
- * Single static parent task for all introspection-gap sub-tasks emitted by
+ * Single static parent task for all signal-library-gap sub-tasks emitted by
  * the curator. Sub-task ids are auto-assigned by Backlog.md via `parentTaskId`.
  */
-export const INTROSPECTION_GAP_PARENT_TASK_ID = "TASK-190.16";
+export const SIGNAL_LIBRARY_GAP_PARENT_TASK_ID = "TASK-190.16";
 
 /**
  * Outlier rate at or above which a classifier is considered drifting. Denominator
@@ -178,9 +178,9 @@ export interface ApplyResult {
   drift_tagged_groups: string[];
   /**
    * Signal-library gaps to file as sub-tasks under
-   * `INTROSPECTION_GAP_PARENT_TASK_ID`. One per `introspection_gap` emitted.
+   * `SIGNAL_LIBRARY_GAP_PARENT_TASK_ID`. One per `signal_library_gap` emitted.
    */
-  introspection_gap_tasks: IntrospectionGapTaskToCreate[];
+  signal_library_gap_tasks: SignalLibraryGapTaskToCreate[];
   /**
    * Ariadne resolver bugs to file as top-level tasks (or attach to
    * `existing_task_id`). One per `ariadne_bug` emitted.
@@ -298,11 +298,11 @@ export async function apply_proposals(
     );
   }
 
-  const introspection_gap_tasks: IntrospectionGapTaskToCreate[] = [];
+  const signal_library_gap_tasks: SignalLibraryGapTaskToCreate[] = [];
   for (const r of inv) {
-    const gap = r.introspection_gap;
+    const gap = r.signal_library_gap;
     if (gap == null) continue;
-    introspection_gap_tasks.push({
+    signal_library_gap_tasks.push({
       group_id: r.group_id,
       title: gap.title,
       description: gap.description,
@@ -338,7 +338,7 @@ export async function apply_proposals(
     registry_upserts,
     skipped_permanent_upserts,
     drift_tagged_groups,
-    introspection_gap_tasks,
+    signal_library_gap_tasks,
     ariadne_bug_tasks,
   };
 }

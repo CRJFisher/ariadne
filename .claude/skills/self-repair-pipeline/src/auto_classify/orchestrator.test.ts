@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import type { EnrichedFunctionEntry } from "../entry_point_types.js";
+import type { EnrichedEntryPoint } from "../entry_point_types.js";
 import type { KnownIssue, KnownIssuesRegistry, PredicateExpr } from "../known_issues_types.js";
 import type { ClassifierHint } from "../triage_state_types.js";
 import { auto_classify, MissingBuiltinError } from "./orchestrator.js";
@@ -8,8 +8,8 @@ import { auto_classify, MissingBuiltinError } from "./orchestrator.js";
 // ===== Fixtures =====
 
 function make_entry(
-  overrides: Partial<EnrichedFunctionEntry> = {},
-): EnrichedFunctionEntry {
+  overrides: Partial<EnrichedEntryPoint> = {},
+): EnrichedEntryPoint {
   return {
     name: "target",
     file_path: "src/target.ts",
@@ -72,7 +72,7 @@ const EMPTY_READER = (_: string) => [] as readonly string[];
 
 describe("auto_classify — priority and match semantics", () => {
   it("first matching predicate wins when two predicates both match", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       diagnostics: {
         grep_call_sites: [],
         grep_call_sites_unindexed_tests: [],
@@ -85,7 +85,7 @@ describe("auto_classify — priority and match semantics", () => {
       predicate_issue("second", { op: "diagnosis_eq", value: "no-textual-callers" }, 1.0),
     ];
 
-    const [classified] = auto_classify([entry], registry, EMPTY_READER);
+    const [classified] = auto_classify([entry_point], registry, EMPTY_READER);
 
     expect(classified.result.auto_classified).toBe(true);
     expect(classified.result.auto_group_id).toBe("first");
@@ -93,7 +93,7 @@ describe("auto_classify — priority and match semantics", () => {
   });
 
   it("non-matching predicates are skipped without emitting hints", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       diagnostics: {
         grep_call_sites: [],
         grep_call_sites_unindexed_tests: [],
@@ -106,15 +106,15 @@ describe("auto_classify — priority and match semantics", () => {
       predicate_issue("will-match", { op: "diagnosis_eq", value: "callers-not-in-registry" }, 1.0),
     ];
 
-    const [classified] = auto_classify([entry], registry, EMPTY_READER);
+    const [classified] = auto_classify([entry_point], registry, EMPTY_READER);
 
     expect(classified.result.auto_classified).toBe(true);
     expect(classified.result.auto_group_id).toBe("will-match");
     expect(classified.result.classifier_hints).toEqual([]);
   });
 
-  it("kind: none entries are skipped silently", () => {
-    const entry = make_entry({
+  it("kind: none entry_points are skipped silently", () => {
+    const entry_point = make_entry({
       diagnostics: {
         grep_call_sites: [],
         grep_call_sites_unindexed_tests: [],
@@ -127,14 +127,14 @@ describe("auto_classify — priority and match semantics", () => {
       predicate_issue("match", { op: "diagnosis_eq", value: "no-textual-callers" }, 1.0),
     ];
 
-    const [classified] = auto_classify([entry], registry, EMPTY_READER);
+    const [classified] = auto_classify([entry_point], registry, EMPTY_READER);
 
     expect(classified.result.auto_classified).toBe(true);
     expect(classified.result.auto_group_id).toBe("match");
   });
 
   it("no match anywhere → auto_classified: false with empty hints", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       diagnostics: {
         grep_call_sites: [],
         grep_call_sites_unindexed_tests: [],
@@ -147,7 +147,7 @@ describe("auto_classify — priority and match semantics", () => {
       predicate_issue("b", { op: "language_eq", value: "python" }, 1.0),
     ];
 
-    const [classified] = auto_classify([entry], registry, EMPTY_READER);
+    const [classified] = auto_classify([entry_point], registry, EMPTY_READER);
 
     expect(classified.result.auto_classified).toBe(false);
     expect(classified.result.auto_group_id).toBeNull();
@@ -158,7 +158,7 @@ describe("auto_classify — priority and match semantics", () => {
 
 describe("auto_classify — sub-threshold hints", () => {
   it("predicate match below min_confidence becomes a hint without classifying", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       diagnostics: {
         grep_call_sites: [],
         grep_call_sites_unindexed_tests: [],
@@ -175,7 +175,7 @@ describe("auto_classify — sub-threshold hints", () => {
       predicate_issue("hint-only", { op: "diagnosis_eq", value: "no-textual-callers" }, 1.1),
     ];
 
-    const [classified] = auto_classify([entry], registry, EMPTY_READER);
+    const [classified] = auto_classify([entry_point], registry, EMPTY_READER);
 
     expect(classified.result.auto_classified).toBe(false);
     expect(classified.result.auto_group_id).toBeNull();
@@ -189,7 +189,7 @@ describe("auto_classify — sub-threshold hints", () => {
   });
 
   it("hints accumulate then get attached to an eventual auto-classification", () => {
-    const entry = make_entry({
+    const entry_point = make_entry({
       diagnostics: {
         grep_call_sites: [],
         grep_call_sites_unindexed_tests: [],
@@ -203,7 +203,7 @@ describe("auto_classify — sub-threshold hints", () => {
       predicate_issue("final", { op: "diagnosis_eq", value: "no-textual-callers" }, 1.0),
     ];
 
-    const [classified] = auto_classify([entry], registry, EMPTY_READER);
+    const [classified] = auto_classify([entry_point], registry, EMPTY_READER);
 
     expect(classified.result.auto_classified).toBe(true);
     expect(classified.result.auto_group_id).toBe("final");
@@ -216,7 +216,7 @@ describe("auto_classify — sub-threshold hints", () => {
 
 describe("auto_classify — file reader plumbing", () => {
   it("passes read_file_lines through to the evaluator so decorator_matches works", () => {
-    const entry = make_entry({ file_path: "app.py", start_line: 2 });
+    const entry_point = make_entry({ file_path: "app.py", start_line: 2 });
     const registry: KnownIssuesRegistry = [
       predicate_issue(
         "py-fixture",
@@ -227,7 +227,7 @@ describe("auto_classify — file reader plumbing", () => {
     const reader = (p: string): readonly string[] =>
       p === "app.py" ? ["@pytest.fixture", "def load():", "    pass"] : [];
 
-    const [classified] = auto_classify([entry], registry, reader);
+    const [classified] = auto_classify([entry_point], registry, reader);
 
     expect(classified.result.auto_classified).toBe(true);
     expect(classified.result.auto_group_id).toBe("py-fixture");
@@ -248,37 +248,37 @@ describe("auto_classify — builtin dispatch", () => {
   }
 
   it("dispatches builtin via BUILTIN_CHECKS lookup on function_name", () => {
-    const entry = make_entry();
+    const entry_point = make_entry();
     const registry: KnownIssuesRegistry = [builtin_issue("bg", "check_thing")];
-    let invoked_with: EnrichedFunctionEntry | null = null;
+    let invoked_with: EnrichedEntryPoint | null = null;
     const builtin_checks = {
-      check_thing: (e: EnrichedFunctionEntry) => {
+      check_thing: (e: EnrichedEntryPoint) => {
         invoked_with = e;
         return true;
       },
     };
-    const [classified] = auto_classify([entry], registry, EMPTY_READER, { builtin_checks });
+    const [classified] = auto_classify([entry_point], registry, EMPTY_READER, { builtin_checks });
     expect(classified.result.auto_classified).toBe(true);
     expect(classified.result.auto_group_id).toBe("bg");
     expect(classified.result.reasoning).toBe(
       "Matched builtin classifier check_thing for bg",
     );
-    expect(invoked_with).toBe(entry);
+    expect(invoked_with).toBe(entry_point);
   });
 
   it("throws MissingBuiltinError when function_name is missing from the barrel", () => {
-    const entry = make_entry();
+    const entry_point = make_entry();
     const registry: KnownIssuesRegistry = [builtin_issue("stale", "check_stale")];
-    expect(() => auto_classify([entry], registry, EMPTY_READER, { builtin_checks: {} })).toThrow(
+    expect(() => auto_classify([entry_point], registry, EMPTY_READER, { builtin_checks: {} })).toThrow(
       MissingBuiltinError,
     );
-    expect(() => auto_classify([entry], registry, EMPTY_READER, { builtin_checks: {} })).toThrow(
+    expect(() => auto_classify([entry_point], registry, EMPTY_READER, { builtin_checks: {} })).toThrow(
       /check_stale/,
     );
   });
 
   it("builtin that returns false does not classify and does not emit a hint", () => {
-    const entry = make_entry();
+    const entry_point = make_entry();
     const registry: KnownIssuesRegistry = [
       builtin_issue("b", "check_b"),
       predicate_issue(
@@ -287,7 +287,7 @@ describe("auto_classify — builtin dispatch", () => {
         1.0,
       ),
     ];
-    const [classified] = auto_classify([entry], registry, EMPTY_READER, {
+    const [classified] = auto_classify([entry_point], registry, EMPTY_READER, {
       builtin_checks: { check_b: () => false },
     });
     expect(classified.result.auto_classified).toBe(true);

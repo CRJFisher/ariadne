@@ -3,17 +3,17 @@
 //
 // Anonymous function expression assigned as the value of an object-literal property (`propName: function(args) { ... }`) and dispatched only through `this.propName(...)` from sibling members of the same object literal. Ariadne does not bind the `this` receiver back to the enclosing object literal's property table, so the resolver records zero inbound call edges and grep finds no literal call sites under the function's anonymous name. The classifier is anchored on `definition_is_object_literal_method=true` (TASK-190.16.13 feature) plus the no-grep / no-resolved-call shape that distinguishes the `this.method()` failure mode from object-literal methods that have a named external caller (`obj.method()` with an indexable receiver name).
 
-import type { EnrichedFunctionEntry } from "../../entry_point_types.js";
+import type { EnrichedEntryPoint } from "../../entry_point_types.js";
 import type { FileLinesReader } from "../types.js";
 
 export function check_this_based_method_dispatch(
-  entry: EnrichedFunctionEntry,
+  entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
 ): boolean {
   void read_file_lines;
-  const check_0 = entry.definition_features.definition_is_object_literal_method === true;
-  const check_1 = new RegExp("^<anonymous>$").test(entry.name);
-  const check_2 = entry.diagnostics.diagnosis === "no-textual-callers";
-  const check_3 = entry.diagnostics.ariadne_call_refs.length <= 0;
+  const check_0 = entry_point.definition_features.definition_is_object_literal_method === true;
+  const check_1 = new RegExp("^<anonymous>$").test(entry_point.name);
+  const check_2 = entry_point.diagnostics.diagnosis === "no-textual-callers";
+  const check_3 = entry_point.diagnostics.ariadne_call_refs.length <= 0;
   return check_0 && check_1 && check_2 && check_3;
 }

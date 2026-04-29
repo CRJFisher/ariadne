@@ -35,3 +35,6 @@ export * from "./errors";
 export { TypeKind } from "./type_kind";
 export * from "./aliases";
 export * from "./result";
+export * from "./entry_point";
+export * from "./false_positive_results";
+export * from "./known_issues";
