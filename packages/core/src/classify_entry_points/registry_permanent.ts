@@ -10,6 +10,14 @@
 
 import type { KnownIssuesRegistry } from "@ariadnejs/types";
 
+/**
+ * Schema version copied verbatim from the source registry by
+ * `pnpm sync-permanent-rules`. The core loader cross-checks this against
+ * `KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION` from `@ariadnejs/types` to detect
+ * a stale slice without inspecting the JSON.
+ */
+export const PERMANENT_REGISTRY_SCHEMA_VERSION = 1 as const;
+
 export const PERMANENT_REGISTRY: KnownIssuesRegistry = [
   {
     "group_id": "dynamic-property-keyed-callback",

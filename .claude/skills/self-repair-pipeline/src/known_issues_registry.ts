@@ -13,6 +13,8 @@ import { fileURLToPath } from "node:url";
 import {
   DEFINITION_FEATURE_NAMES,
   SYNTACTIC_FEATURE_NAMES,
+  KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION,
+  parse_known_issues_registry_json,
   type DefinitionFeatureName,
   type SyntacticFeatureName,
   PREDICATE_OPERATORS,
@@ -69,16 +71,19 @@ export function get_registry_file_path(): string {
 
 export function load_registry(): KnownIssuesRegistry {
   const raw = fs.readFileSync(get_registry_file_path(), "utf8");
-  let parsed: unknown;
+  let rules: KnownIssue[];
   try {
-    parsed = JSON.parse(raw);
+    rules = parse_known_issues_registry_json(raw);
   } catch (e) {
-    const reason = e instanceof Error ? e.message : String(e);
-    throw new RegistryValidationError(`registry.json is not valid JSON: ${reason}`);
+    throw new RegistryValidationError(e instanceof Error ? e.message : String(e));
   }
-  validate_registry(parsed);
-  return parsed;
+  // Deep validation (rule shapes, predicate ops, regex compile) — the wire
+  // format helper only checks the envelope.
+  validate_registry(rules);
+  return rules;
 }
+
+export { KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION };
 
 // ===== Validation =====
 

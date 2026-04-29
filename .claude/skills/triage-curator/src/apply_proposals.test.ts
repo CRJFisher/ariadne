@@ -28,7 +28,7 @@ beforeEach(async () => {
   authored_dir = path.join(tmp_dir, "authored");
   await fs.mkdir(authored_dir, { recursive: true });
   registry_path = path.join(tmp_dir, "registry.json");
-  await fs.writeFile(registry_path, "[]", "utf8");
+  await fs.writeFile(registry_path, '{"schema_version":1,"rules":[]}\n', "utf8");
 });
 
 afterEach(async () => {
@@ -49,12 +49,14 @@ function known(group_id: string, overrides: Partial<KnownIssue> = {}): KnownIssu
 }
 
 async function write_registry(entries: KnownIssue[]): Promise<void> {
-  await fs.writeFile(registry_path, JSON.stringify(entries, null, 2) + "\n", "utf8");
+  const file = { schema_version: 1, rules: entries };
+  await fs.writeFile(registry_path, JSON.stringify(file, null, 2) + "\n", "utf8");
 }
 
 async function read_registry_json(): Promise<KnownIssue[]> {
   const raw = await fs.readFile(registry_path, "utf8");
-  return JSON.parse(raw) as KnownIssue[];
+  const parsed = JSON.parse(raw) as { schema_version: number; rules: KnownIssue[] };
+  return parsed.rules;
 }
 
 function minimal_spec(function_name: string): BuiltinClassifierSpec {

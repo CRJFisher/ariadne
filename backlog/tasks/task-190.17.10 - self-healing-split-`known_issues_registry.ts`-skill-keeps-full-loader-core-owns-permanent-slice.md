@@ -3,7 +3,7 @@ id: TASK-190.17.10
 title: >-
   self-healing: split `known_issues_registry.ts` (skill keeps full loader; core
   owns permanent slice)
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-04-28 19:17"
 labels:
@@ -51,12 +51,12 @@ Both loaders share the `KnownIssue` type from `@ariadnejs/types` (graduated in `
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 Skill known_issues_registry.ts retains full-registry loading + compiled_pattern injection
-- [ ] #2 Core registry_loader.ts loads only permanent + non-none rules from bundled JSON
-- [ ] #3 Both loaders import the shared KnownIssue type from @ariadnejs/types
-- [ ] #4 schema_version: 1 added to registry.json + both loaders validate it
-- [ ] #5 Skill loader rejects mismatched schema_version; core loader trusts slice generator
-- [ ] #6 Skill tests cover wip and kind: none paths
-- [ ] #7 Core tests cover permanent-only loading and rejection of non-permanent synthetic entries
-- [ ] #8 pnpm test passes in skill and packages/core
+- [x] #1 Skill known_issues_registry.ts retains full-registry loading + compiled_pattern injection
+- [x] #2 Core registry_loader.ts loads only permanent + non-none rules from bundled JSON
+- [x] #3 Both loaders import the shared KnownIssue type from @ariadnejs/types
+- [x] #4 schema_version: 1 added to registry.json + both loaders validate it
+- [x] #5 Skill loader rejects mismatched schema_version; core loader trusts slice generator
+- [x] #6 Skill tests cover wip and kind: none paths
+- [x] #7 Core tests cover permanent-only loading and rejection of non-permanent synthetic entries
+- [x] #8 pnpm test passes in skill and packages/core
 <!-- AC:END -->

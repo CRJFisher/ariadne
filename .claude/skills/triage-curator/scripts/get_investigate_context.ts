@@ -22,6 +22,7 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { parse_known_issues_registry_json } from "@ariadnejs/types";
 import { error_code } from "../src/errors.js";
 import {
   derive_run_id,
@@ -154,7 +155,7 @@ async function main(): Promise<void> {
 
   const registry_path = get_registry_file_path();
   const registry_raw = await fs.readFile(registry_path, "utf8");
-  const registry = JSON.parse(registry_raw) as KnownIssue[];
+  const registry = parse_known_issues_registry_json(registry_raw) as unknown as KnownIssue[];
 
   const signal_inventory = await read_optional_file(SIGNAL_INVENTORY_PATH);
 
