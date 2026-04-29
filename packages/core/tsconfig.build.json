@@ -4,7 +4,8 @@
     "rootDir": "./src"
   },
   "include": [
-    "src/**/*",
+    "src/**/*.ts",
+    "src/**/*.json",
     "tree_sitter_grammars.d.ts"
   ],
   "exclude": [

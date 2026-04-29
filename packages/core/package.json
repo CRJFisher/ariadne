@@ -10,8 +10,9 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && npm run copy-scm-files",
+    "build": "tsc -p tsconfig.build.json && npm run copy-scm-files && npm run copy-permanent-registry",
     "copy-scm-files": "mkdir -p dist/index_single_file/query_code_tree/queries && cp src/index_single_file/query_code_tree/queries/*.scm dist/index_single_file/query_code_tree/queries/",
+    "copy-permanent-registry": "mkdir -p dist/classify_entry_points && cp src/classify_entry_points/registry.permanent.json dist/classify_entry_points/registry.permanent.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:with-types": "npm run typecheck && npm test",
