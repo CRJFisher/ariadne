@@ -10,6 +10,8 @@
     "strict": true,
     "skipLibCheck": true,
     "composite": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },

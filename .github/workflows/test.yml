@@ -37,6 +37,12 @@ jobs:
       - name: Check file sizes
         run: pnpm run check:size
 
+      - name: Check permanent rules slice + builtins barrel are in sync
+        # Regenerates `packages/core/src/classify_entry_points/registry.permanent.json`
+        # and `builtins/index.ts` from the skill registry, then asserts a clean
+        # diff. Catches drift between the registry and the bundled core slice.
+        run: pnpm run check-permanent-rules
+
       - name: Run tests
         run: pnpm test
 

@@ -3,7 +3,7 @@ id: TASK-190.17.11
 title: >-
   self-healing: retarget `render_builtins_barrel.ts`; add `pnpm
   sync-permanent-rules`
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-04-28 19:18"
 updated_date: "2026-04-28 21:27"
@@ -79,13 +79,13 @@ If `.claude/hooks/` already runs hooks on registry edits, wire a hook that invok
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 render_builtins_barrel.ts emits to packages/core/src/classify_entry_points/builtins/index.ts
-- [ ] #2 Emitted import header uses @ariadnejs/types and EnrichedEntryPoint
-- [ ] #3 scripts/sync_permanent_rules.ts generates registry.permanent.json from full registry filtering status==permanent && classifier.kind!=none
-- [ ] #4 sync_permanent_rules preserves field order for stable diffs
-- [ ] #5 pnpm sync-permanent-rules root script wraps both generators in one command
-- [ ] #6 CI step runs pnpm sync-permanent-rules then git diff --exit-code packages/core/src/classify_entry_points/ to catch drift
-- [ ] #7 Generated registry.permanent.json and barrel build cleanly via tsc
-- [ ] #8 pnpm test passes in packages/core/ with regenerated builtins
-- [ ] #9 This task documented as authoritative owner of the builtins regen contract; .5 and .12 reference rather than duplicate the build steps
+- [x] #1 render_builtins_barrel.ts emits to packages/core/src/classify_entry_points/builtins/index.ts
+- [x] #2 Emitted import header uses @ariadnejs/types and EnrichedEntryPoint
+- [x] #3 scripts/sync_permanent_rules.ts generates registry.permanent.json from full registry filtering status==permanent && classifier.kind!=none
+- [x] #4 sync_permanent_rules preserves field order for stable diffs
+- [x] #5 pnpm sync-permanent-rules root script wraps both generators in one command
+- [x] #6 CI step runs pnpm sync-permanent-rules then git diff --exit-code packages/core/src/classify_entry_points/ to catch drift
+- [x] #7 Generated registry.permanent.json and barrel build cleanly via tsc
+- [x] #8 pnpm test passes in packages/core/ with regenerated builtins
+- [x] #9 This task documented as authoritative owner of the builtins regen contract; .5 and .12 reference rather than duplicate the build steps
 <!-- AC:END -->

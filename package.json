@@ -9,6 +9,8 @@
   ],
   "scripts": {
     "build": "pnpm --filter @ariadnejs/types build && pnpm --filter @ariadnejs/core build && pnpm --filter @ariadnejs/mcp build",
+    "sync-permanent-rules": "pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/sync_permanent_rules.ts",
+    "check-permanent-rules": "pnpm sync-permanent-rules && git diff --exit-code packages/core/src/classify_entry_points/registry.permanent.json packages/core/src/classify_entry_points/builtins/index.ts",
     "typecheck": "pnpm exec tsc --noEmit -p packages/types/tsconfig.json && pnpm exec tsc --noEmit -p packages/core/tsconfig.json && pnpm exec tsc --noEmit -p packages/mcp/tsconfig.json && pnpm exec tsc --noEmit -p .claude/skills/self-repair-pipeline/tsconfig.json",
     "test": "pnpm --filter './packages/*' test",
     "lint": "eslint 'packages/*/src/**/*.ts' 'packages/*/tests/**/*.ts' '.claude/skills/self-repair-pipeline/**/*.ts'",
