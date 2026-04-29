@@ -3,8 +3,8 @@
 //
 // Module-level helper function whose only textual references live inside its own file but Ariadne resolved zero callers. Targets the JS/TS shape where class-method bodies (static or instance) call a top-level free function declared with `function name(...)` at module scope — observed in prisma's helpers/compile/plugins/fill-plugin/fillers/buffer-small.ts where stringToBuffer / assertNumber / assertUnsigned / assertInteger / assertBounds / assertString / assertUint8Array / bufferPolyfillDoesNotImplement are each called dozens of times from within the BufferClass body but reported as entry points with zero callees. The combinator is structural: callers_count_at_most(0) ensures Ariadne sees no inbound calls; grep_hits_all_intra_file(true) ensures no external callers either; the negative-lookahead regex on `function ` ensures at least one grep hit is a call site (not the definition line itself), eliminating the genuinely-uncalled dead-code edge case.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 export function check_intra_file_call_not_resolved(
   entry_point: EnrichedEntryPoint,

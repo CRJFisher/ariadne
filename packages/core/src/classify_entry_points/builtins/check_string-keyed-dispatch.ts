@@ -3,8 +3,8 @@
 //
 // Angular runtime instruction functions exported under the `ɵɵ`-prefixed naming convention from `packages/core/src/...`. The Angular JIT compiler stores these in a string-keyed dispatch map (`angularCoreEnv` in `packages/core/src/render3/jit/environment.ts`) and invokes them via `new Function(...)` over compiler-emitted source; no static AST call site exists, so Ariadne cannot link the call sites to the definitions. The double-`ɵ` (U+0275 GREEK SMALL LETTER BARRED O) prefix is Angular's convention for compiler-injected runtime APIs and is exclusive to this dispatch path.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

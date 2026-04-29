@@ -3,8 +3,8 @@
 //
 // TypeScript class method whose only call sites are intra-class `this.<name>(...)` invocations. The resolver loses the `this` receiver-to-class binding for self-reference method calls, so no inbound edge is produced despite grep finding the literal call sites. Distinguishing signals: grep hits contain `this.<identifier>` AND Ariadne produced zero resolved inbound call refs.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

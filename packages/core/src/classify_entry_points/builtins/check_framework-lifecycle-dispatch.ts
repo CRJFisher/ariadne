@@ -3,8 +3,8 @@
 //
 // Method-level NestJS handler decorators (HTTP routes via @Get/@Post/etc., WebSocket handlers via @SubscribeMessage, microservice handlers via @MessagePattern/@EventPattern/@GrpcMethod, scheduler hooks via @Cron/@Interval/@Timeout). The NestJS runtime reads these decorators at startup and dispatches to the method without a textual call site, so the resolver sees zero inbound edges and marks the method unreachable. The decorator block immediately above the definition is the discriminant. Does not cover constructors of @Injectable/@Controller/@WebSocketGateway classes — the framework-registering decorator sits on the enclosing class, not on the constructor, and the current signal library has no enclosing-class-decorator op. That sub-pattern is filed as an signal-library gap.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

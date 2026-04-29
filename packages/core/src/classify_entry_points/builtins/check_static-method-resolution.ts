@@ -3,8 +3,8 @@
 //
 // Static method invoked on an imported class via `ClassName.method(...)`. Ariadne records the call sites in the registry but the resolver fails at name_resolution with name_not_in_scope because it does not bind the imported class identifier in the caller's scope when used as a value (left of dot). Discriminators: diagnosis is `callers-in-registry-unresolved`, the call-ref's receiver_kind is `identifier`, the resolution_failure.reason is `name_not_in_scope`, at least one grep hit shows a PascalCase identifier dot-call shape, and the callers count is at least 1 (rules out entries with no call-site evidence).
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 export function check_static_method_resolution(
   entry_point: EnrichedEntryPoint,

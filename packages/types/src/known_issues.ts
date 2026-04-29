@@ -32,11 +32,36 @@ export interface KnownIssue {
   backlog_task?: string;
   examples: KnownIssueExample[];
   classifier: ClassifierSpec;
+  /**
+   * Public-facing classification kind that this rule produces when it matches.
+   * Drives the `EntryPointClassification` value returned to library consumers
+   * via `Project.get_classified_entry_points()`. Permanent-registry rules
+   * carry this; wip rules MAY omit it (defaults to `framework_invoked` keyed
+   * by the rule's `group_id`).
+   *
+   * The registry-side `classifier` field is the *match mechanism* (predicate
+   * vs builtin). `classification` is the *user-facing label*. Two distinct
+   * concerns; keeping them separate lets a single classifier kind drive
+   * different public labels.
+   */
+  classification?: KnownIssueClassificationMeta;
   // Curator-populated fields — never edited by hand, never used for matching.
   observed_count?: number;
   observed_projects?: string[];
   last_seen_run?: string;
 }
+
+/**
+ * Metadata about how a registry rule should be reported in
+ * `EntryPointClassification`. Decoupled from `EntryPointClassification` so
+ * the registry doesn't carry per-match fields (e.g. `protocol: entry.name`)
+ * that only exist at evaluation time.
+ */
+export type KnownIssueClassificationMeta =
+  | { kind: "framework_invoked"; framework: string }
+  | { kind: "dunder_protocol" }
+  | { kind: "test_only" }
+  | { kind: "indirect_only" };
 
 export type ClassifierAxis = "A" | "B" | "C";
 

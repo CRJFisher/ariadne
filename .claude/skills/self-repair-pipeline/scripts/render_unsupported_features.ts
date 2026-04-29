@@ -20,7 +20,7 @@ import type {
   KnownIssue,
   KnownIssueLanguage,
   PredicateExpr,
-} from "../src/known_issues_types.js";
+} from "@ariadnejs/types";
 
 // ===== Paths =====
 

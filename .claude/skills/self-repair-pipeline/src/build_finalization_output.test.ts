@@ -8,7 +8,7 @@ import {
   type FinalizationSummary,
 } from "./build_finalization_output.js";
 import type { TriageState, TriageEntry, TriageEntryResult } from "./triage_state_types.js";
-import type { FalsePositiveGroup } from "./entry_point_types.js";
+import type { FalsePositiveGroup } from "@ariadnejs/types";
 
 // ===== Test Helpers =====
 

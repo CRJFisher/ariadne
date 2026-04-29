@@ -3,8 +3,8 @@
 //
 // JavaScript named-function-expression definitions assigned to a `var` (`var X = function X(...) { ... }`) whose only call sites live in the same file. Diagnostic fingerprint: diagnosis=callers-not-in-registry (resolver never registered any call refs), ariadne_call_refs=[] (callers_count_at_most:0), and every grep hit's file_path equals the definition's file_path (grep_hits_all_intra_file:true). The textual call sites exist (grep finds them) but Ariadne never produced a CallReference for them, so the function is reported as having zero callers.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

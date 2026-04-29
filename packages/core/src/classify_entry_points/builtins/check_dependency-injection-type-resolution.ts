@@ -3,8 +3,8 @@
 //
 // Method invoked as the chained continuation of an Angular-style dependency-injection lookup of the form `<id>.get(<TypeToken>).<method>(...)`. Ariadne cannot statically resolve the generic return type of `Injector.get<T>(token: Type<T>): T`, so the chained method receiver is opaque and the call edge is dropped. The grep hit fires on the chained `.method(` continuation line; a 3-line look-back catches the `.get(<TypeToken>)` line that establishes the receiver.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

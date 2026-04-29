@@ -3,8 +3,8 @@
 //
 // TypeScript class method whose only callers are method-calls on a typed instance receiver (e.g. `column.compareEntityValue(...)` inside `(column: ColumnMetadata) => ...`), where Ariadne resolves zero CallReferences but grep finds identifier-dot-method call sites. Receiver type is statically knowable (typed local, callback parameter from `T[]`, or `Class.prototype.method` extraction) but Ariadne's receiver-resolution pipeline drops the type — particularly when the class is brought in via `import type { Class }` and the receiver is a callback parameter whose type flows from the array element.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

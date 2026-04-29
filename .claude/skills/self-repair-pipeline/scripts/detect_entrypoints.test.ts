@@ -7,8 +7,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   attach_unindexed_test_grep_hits,
   collect_unindexed_test_files,
-} from "./detect_entrypoints.js";
-import type { EnrichedEntryPoint } from "../src/entry_point_types.js";
+} from "@ariadnejs/core";
+import type { EnrichedEntryPoint, FilePath } from "@ariadnejs/types";
 
 let tmpdir: string;
 
@@ -35,7 +35,7 @@ function entry(
 ): EnrichedEntryPoint {
   return {
     name,
-    file_path,
+    file_path: file_path as FilePath,
     start_line,
     signature: undefined,
     tree_size: 0,

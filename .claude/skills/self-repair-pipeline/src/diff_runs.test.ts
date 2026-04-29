@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { diff_runs, format_diff_text } from "./diff_runs.js";
 import type { FinalizationOutput } from "./build_finalization_output.js";
-import type { FalsePositiveEntry, FalsePositiveGroup } from "./entry_point_types.js";
+import type { FalsePositiveEntry, FalsePositiveGroup } from "@ariadnejs/types";
 
 function entry(
   name: string,

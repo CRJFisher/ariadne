@@ -3,8 +3,8 @@
 //
 // TypeScript entries whose grep call-site evidence contains `.#identifier` — the ECMAScript private-class-field access syntax. The tree-sitter query in packages/core/src/index_single_file/query_code_tree/queries/typescript.scm only captures `property: (property_identifier)` for member-expression calls; it misses `private_property_identifier`, so `this.#m()` call sites are never emitted as `@reference.call`. Both private-method definitions (`#m()`) and public methods reached only through a private-field receiver (`this.#field.m()`) hit this gap.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

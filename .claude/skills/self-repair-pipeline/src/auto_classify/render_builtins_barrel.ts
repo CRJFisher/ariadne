@@ -1,8 +1,9 @@
 /**
- * Render the `auto_classify/builtins/index.ts` barrel file.
+ * Render the builtins barrel file at
+ * `packages/core/src/classify_entry_points/builtins/index.ts`.
  *
  * For every `kind:"builtin"` entry in the registry we emit:
- *   import { <function_name> } from "./check_<group_id>.js";
+ *   import { <function_name> } from "./check_<group_id>";
  * and collect the exports into a `Record<function_name, BuiltinCheckFn>`.
  *
  * The orchestrator dispatches builtins by `function_name` via this map.
@@ -10,7 +11,7 @@
  * registries render byte-identical barrels.
  */
 
-import type { KnownIssue } from "../known_issues_types.js";
+import type { KnownIssue } from "@ariadnejs/types";
 
 export interface BarrelEntry {
   group_id: string;
@@ -44,13 +45,13 @@ export function render_builtins_barrel(registry: readonly KnownIssue[]): string 
     "// Regenerated whenever the known-issues registry mutates. The orchestrator",
     "// looks up a builtin classifier by `function_name` via BUILTIN_CHECKS.",
     "",
-    "import type { EnrichedEntryPoint } from \"../../entry_point_types.js\";",
-    "import type { FileLinesReader } from \"../types.js\";",
+    "import type { EnrichedEntryPoint } from \"@ariadnejs/types\";",
+    "import type { FileLinesReader } from \"../auto_classify_types\";",
     "",
   );
   for (const entry of entries) {
     lines.push(
-      `import { ${entry.function_name} } from "./check_${entry.group_id}.js";`,
+      `import { ${entry.function_name} } from "./check_${entry.group_id}";`,
     );
   }
   if (entries.length > 0) lines.push("");

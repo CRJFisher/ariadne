@@ -3,8 +3,8 @@
 //
 // JavaScript class constructors whose triage grep-prefilter (which searches for the literal definition name 'constructor') finds no textual call sites, and whose resolved call-ref list is empty. The real call sites write `new ClassName(...)` not `new constructor(...)`, so the prefilter cannot discover them; when the class identity additionally flows through a dynamic require/property lookup (e.g. `require(require.resolve(name))`, `this._reporter = require(...)`, `rewiremock.proxy(() => require(...))`), Ariadne's resolver cannot link the `new` expression either, leaving the constructor as an apparent unreachable entry point.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

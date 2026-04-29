@@ -14,7 +14,7 @@
 import type {
   ClassifierSpec,
   KnownIssue as SelfRepairKnownIssue,
-} from "../../self-repair-pipeline/src/known_issues_types.js";
+} from "@ariadnejs/types";
 
 /**
  * JSON shape consumed by the main agent's `mcp__backlog__task_create` call. One

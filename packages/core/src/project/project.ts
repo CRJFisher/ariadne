@@ -1,8 +1,16 @@
-import type { FilePath, SymbolId, Language } from "@ariadnejs/types";
+import type {
+  FilePath,
+  SymbolId,
+  Language,
+  AnyDefinition,
+  CallGraph,
+  ClassifiedEntryPoints,
+  KnownIssuesRegistry,
+  TraceCallGraphOptions,
+} from "@ariadnejs/types";
 import type { ParsedFile } from "../index_single_file/parsed_file";
 import { build_index_single_file } from "../index_single_file/index_single_file";
 import type { SemanticIndex } from "../index_single_file/index_single_file";
-import type { AnyDefinition } from "@ariadnejs/types";
 import { DefinitionRegistry } from "../resolve_references/registries/definition";
 import { TypeRegistry } from "../resolve_references/registries/type";
 import { ScopeRegistry } from "../resolve_references/registries/scope";
@@ -11,11 +19,11 @@ import { ReferenceRegistry } from "../resolve_references/registries/reference";
 import { ImportGraph } from "./import_graph";
 import { ResolutionRegistry } from "../resolve_references/resolve_references";
 import { preprocess_references } from "../resolve_references/preprocess_references";
-import { type CallGraph } from "@ariadnejs/types";
+import { trace_call_graph } from "../trace_call_graph/trace_call_graph";
 import {
-  trace_call_graph,
-  type TraceCallGraphOptions,
-} from "../trace_call_graph/trace_call_graph";
+  enrich_call_graph,
+  type EnrichedCallGraph,
+} from "../classify_entry_points/enrich_call_graph";
 import { fix_import_definition_locations } from "./fix_import_locations";
 import { extract_all_parameters } from "./extract_nested_definitions";
 import Parser from "tree-sitter";
@@ -35,6 +43,16 @@ import {
   serialize_manifest,
 } from "../persistence/cache_manifest";
 import { serialize_semantic_index } from "../persistence/serialize_index";
+
+/**
+ * Options for the classification pipeline. Extends `TraceCallGraphOptions`
+ * (e.g. `include_tests`) with a registry override used by the self-healing
+ * pipeline to substitute the full skill registry for the bundled permanent
+ * slice.
+ */
+export interface ClassifyOptions extends TraceCallGraphOptions {
+  readonly registry?: KnownIssuesRegistry;
+}
 
 /**
  * Detect language from file path extension
@@ -140,6 +158,19 @@ export class Project {
   private root_folder?: FileSystemFolder = undefined;
   private excluded_folders: Set<string> = new Set();
 
+  // ===== EnrichedCallGraph cache =====
+  // LRU-1 keyed by (registry-identity, include_tests). Sufficient because:
+  //   - Project state is invalidated by clearing the cache on every
+  //     `update_file`/`remove_file`/`restore_file`/`clear` call.
+  //   - Within a stable Project state, repeated calls with the same options
+  //     should reuse work; differing options recompute.
+  //   - Most sessions hit one shape (no override) so a single slot is plenty.
+  private enriched_cache: {
+    registry: KnownIssuesRegistry | undefined;
+    include_tests: boolean;
+    enriched: EnrichedCallGraph;
+  } | null = null;
+
   async initialize(
     root_folder_abs_path?: FilePath,
     excluded_folders?: string[]
@@ -176,6 +207,9 @@ export class Project {
     }
 
     profiler.start_file(file_id);
+
+    // Any file mutation invalidates the EnrichedCallGraph cache.
+    this.enriched_cache = null;
 
     // Phase 0: Track who depends on this file (before updating imports)
     const dependents = this.imports.get_dependents(file_id);
@@ -225,6 +259,8 @@ export class Project {
     if (!this.root_folder) {
       throw new Error("Project not initialized");
     }
+
+    this.enriched_cache = null;
 
     const dependents = this.imports.get_dependents(file_id);
 
@@ -404,6 +440,8 @@ export class Project {
       throw new Error("Project not initialized");
     }
 
+    this.enriched_cache = null;
+
     const dependents = this.imports.get_dependents(file_id);
 
     // Remove from file-level stores
@@ -481,19 +519,57 @@ export class Project {
   /**
    * Get the call graph for the project.
    *
-   * Builds the call graph from current state. All resolutions are maintained
-   * up-to-date by update_file() and remove_file(), so this method always returns
+   * Builds the call graph from current state, then filters out entry points
+   * that match the bundled permanent known-issues registry (Python dunders,
+   * Flask routes, pytest fixtures, etc.). All resolutions are maintained
+   * up-to-date by `update_file()` and `remove_file()`, so this always returns
    * accurate results.
    *
-   * Note: This method does not cache. If you need to call it multiple times,
-   * consider caching the result yourself.
+   * The returned `CallGraph.entry_points` contains true positives only. Use
+   * `get_classified_entry_points()` for the full set with classification labels.
    *
-   * @returns The call graph
+   * @returns The call graph (with entry_points filtered to true positives only)
    */
-  get_call_graph(options?: TraceCallGraphOptions): CallGraph {
-    // Build call graph from current state
-    // All resolutions are always up-to-date (eager resolution)
-    return trace_call_graph(this.definitions, this.resolutions, options);
+  get_call_graph(options?: ClassifyOptions): CallGraph {
+    const enriched = this.compute_enriched_call_graph(options);
+    const true_ids = new Set(
+      enriched.classified_entry_points.true_entry_points.map((e) => e.symbol_id),
+    );
+    const filtered_entry_points = enriched.call_graph.entry_points.filter((id) =>
+      true_ids.has(id),
+    );
+    return {
+      nodes: enriched.call_graph.nodes,
+      entry_points: filtered_entry_points,
+      indirect_reachability: enriched.call_graph.indirect_reachability,
+    };
+  }
+
+  /**
+   * Get classified entry points: every candidate entry point paired with its
+   * classification verdict, split into true positives and known false
+   * positives. Used by triage workflows; library callers typically prefer the
+   * cleaner `get_call_graph().entry_points` shape.
+   */
+  get_classified_entry_points(options?: ClassifyOptions): ClassifiedEntryPoints {
+    return this.compute_enriched_call_graph(options).classified_entry_points;
+  }
+
+  private compute_enriched_call_graph(options?: ClassifyOptions): EnrichedCallGraph {
+    const include_tests = options?.include_tests ?? false;
+    const registry = options?.registry;
+    const cached = this.enriched_cache;
+    if (
+      cached !== null &&
+      cached.registry === registry &&
+      cached.include_tests === include_tests
+    ) {
+      return cached.enriched;
+    }
+    const raw = trace_call_graph(this.definitions, this.resolutions, { include_tests });
+    const enriched = enrich_call_graph(raw, this, { registry });
+    this.enriched_cache = { registry, include_tests, enriched };
+    return enriched;
   }
 
   /**
@@ -543,6 +619,16 @@ export class Project {
    */
   get_all_scope_graphs(): ReadonlyMap<FilePath, SemanticIndex> {
     return this.index_single_filees;
+  }
+
+  /**
+   * Read-only view of all indexed source-file contents. Diagnostics passes
+   * (e.g. `extract_entry_point_diagnostics`) walk this map instead of touching
+   * the filesystem so they see exactly the bytes the resolver saw — including
+   * in-memory edits applied via `update_file`.
+   */
+  get_file_contents(): ReadonlyMap<FilePath, string> {
+    return this.file_contents;
   }
 
   /**
@@ -705,5 +791,6 @@ export class Project {
     this.references.clear();
     this.imports.clear();
     this.resolutions.clear();
+    this.enriched_cache = null;
   }
 }

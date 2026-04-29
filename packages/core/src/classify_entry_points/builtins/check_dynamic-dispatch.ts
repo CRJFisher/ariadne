@@ -3,8 +3,8 @@
 //
 // Webpack dependency-template apply() methods invoked via dependencyTemplates.get(constructor).apply(...). Narrowed to JavaScript `apply` methods under lib/dependencies/ to exclude the serializer-registry dispatch pattern (entries 1-3 are serialize() methods dispatched via ObjectMiddleware/ClassSerializer, not the dependencyTemplates Map).
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

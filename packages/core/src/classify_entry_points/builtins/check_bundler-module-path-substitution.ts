@@ -3,8 +3,8 @@
 //
 // Functions defined in files under a bundler fill-plugin's fillers directory are module-substitution polyfills (e.g. browser shims for Node.js built-ins like 'crypto'). The bundler intercepts imports of the original module name at build time via an esbuild onResolve hook and redirects them to the filler file. Static call graph analysis follows the literal import string to the original built-in, so callers never link to the filler's exports. Match definitions whose file_path lives under a `/fill-plugin/fillers/` directory and that have zero resolved callers — they are reachable through the bundler's runtime path substitution, not the static call graph.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

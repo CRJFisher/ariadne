@@ -338,11 +338,11 @@ describe("trace_call_graph", () => {
     });
   });
 
-  describe("Python dunder method filtering", () => {
+  describe("Python dunder methods (raw trace_call_graph; classification happens in enrich_call_graph)", () => {
     const python_file = "test.py" as FilePath;
     const python_scope = `scope:${python_file}:module` as ScopeId;
 
-    it("should filter framework-invoked dunder methods from entry points", () => {
+    it("includes framework-invoked dunder methods in raw entry points (classifier filters later)", () => {
       // Create __str__ method (framework-invoked, should be filtered)
       const class_id = class_symbol("MyClass" as SymbolName, {
         file_path: python_file,
@@ -402,12 +402,14 @@ describe("trace_call_graph", () => {
       // __str__ should be in nodes (it has a body)
       expect(call_graph.nodes.has(str_method_id)).toBe(true);
 
-      // But __str__ should NOT be an entry point (filtered)
-      expect(call_graph.entry_points).not.toContain(str_method_id);
-      expect(call_graph.entry_points.length).toBe(0);
+      // After 190.17.6 the dunder filter is enforced by enrich_call_graph
+      // (via the py-dunder-protocol permanent registry rule), not by
+      // trace_call_graph. The raw call graph surfaces all uncalled callables.
+      expect(call_graph.entry_points).toContain(str_method_id);
+      expect(call_graph.entry_points.length).toBe(1);
     });
 
-    it("should NOT filter traceable dunder methods like __init__", () => {
+    it("includes __init__ in entry points (resolver tracks it via constructor calls)", () => {
       const class_id = class_symbol("MyClass" as SymbolName, {
         file_path: python_file,
         start_line: 1,
@@ -470,7 +472,7 @@ describe("trace_call_graph", () => {
       expect(call_graph.entry_points).toContain(init_method_id);
     });
 
-    it("should NOT filter traceable dunder methods like __call__", () => {
+    it("includes __call__ in entry points (resolver tracks it via callable-instance calls)", () => {
       const class_id = class_symbol("Callable" as SymbolName, {
         file_path: python_file,
         start_line: 1,
@@ -533,7 +535,7 @@ describe("trace_call_graph", () => {
       expect(call_graph.entry_points).toContain(call_method_id);
     });
 
-    it("should filter multiple framework-invoked dunder methods", () => {
+    it("includes multiple framework-invoked dunder methods in raw entry points", () => {
       const class_id = class_symbol("MyClass" as SymbolName, {
         file_path: python_file,
         start_line: 1,
@@ -645,14 +647,16 @@ describe("trace_call_graph", () => {
       expect(call_graph.nodes.has(eq_method_id)).toBe(true);
       expect(call_graph.nodes.has(process_method_id)).toBe(true);
 
-      // Only the regular method should be an entry point
-      expect(call_graph.entry_points).not.toContain(repr_method_id);
-      expect(call_graph.entry_points).not.toContain(eq_method_id);
+      // After 190.17.6 trace_call_graph returns all uncalled callables; the
+      // dunder filter is applied later by enrich_call_graph against the
+      // py-dunder-protocol permanent registry rule.
+      expect(call_graph.entry_points).toContain(repr_method_id);
+      expect(call_graph.entry_points).toContain(eq_method_id);
       expect(call_graph.entry_points).toContain(process_method_id);
-      expect(call_graph.entry_points.length).toBe(1);
+      expect(call_graph.entry_points.length).toBe(3);
     });
 
-    it("should NOT filter dunder methods in TypeScript files", () => {
+    it("does not classify TypeScript dunder-named methods (Python-only rule)", () => {
       // TypeScript doesn't have dunder method convention
       const ts_file = "test.ts" as FilePath;
       const ts_scope = `scope:${ts_file}:module` as ScopeId;

@@ -3,16 +3,17 @@ import {
   build_triage_entries,
   type BuildTriageEntriesInput,
 } from "./build_triage_entries.js";
-import type { EnrichedEntryPoint } from "./entry_point_types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FilePath } from "@ariadnejs/types";
 import type { TriageEntry } from "./triage_state_types.js";
-import type { ClassifiedEntryPointResult } from "./auto_classify/types.js";
+import type { ClassifiedEntryPointResult } from "@ariadnejs/core";
 
 // ===== Test Helpers =====
 
 function make_entry(overrides: Partial<EnrichedEntryPoint>): EnrichedEntryPoint {
   return {
     name: "test_func",
-    file_path: "/projects/myapp/src/test.ts",
+    file_path: "/projects/myapp/src/test.ts" as FilePath,
     start_line: 10,
     kind: "function",
     tree_size: 0,
@@ -54,7 +55,7 @@ describe("build_triage_entries — auto_classified bucket", () => {
   it("produces a known-unreachable completed entry_point with auto_classified=true", () => {
     const entry_point = make_entry({
       name: "render_button",
-      file_path: "/projects/myapp/src/ui.tsx",
+      file_path: "/projects/myapp/src/ui.tsx" as FilePath,
       diagnostics: {
         grep_call_sites: [],
         grep_call_sites_unindexed_tests: [],
@@ -72,7 +73,7 @@ describe("build_triage_entries — auto_classified bucket", () => {
     const expected: TriageEntry[] = [{
       entry_index: 0,
       name: "render_button",
-      file_path: "/projects/myapp/src/ui.tsx",
+      file_path: "/projects/myapp/src/ui.tsx" as FilePath,
       start_line: 10,
       kind: "function",
       signature: null,
@@ -151,7 +152,7 @@ describe("build_triage_entries — residual bucket", () => {
     const expected: TriageEntry[] = [{
       entry_index: 0,
       name: "mystery_func",
-      file_path: "/projects/myapp/src/test.ts",
+      file_path: "/projects/myapp/src/test.ts" as FilePath,
       start_line: 10,
       kind: "function",
       signature: "def mystery_func(x: int) -> str",

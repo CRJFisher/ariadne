@@ -3,8 +3,8 @@
 //
 // Method-call false positives where the receiver's static type is lost across a method or field hop, leaving the resolver unable to dispatch to the concrete implementation. Matches when ariadne_call_refs contains at least one entry_point whose resolution_failure.reason is 'receiver_type_unknown' (factory/method-chain return types — e.g. baseEntity.getRepository().save(...)) or 'member_type_unknown' (field-hop / self-keyword member access — e.g. this.metadata.target). Excludes the no-textual-callers entries in this group (overallOrder, saveDatabase, addDependency) which have zero ariadne_call_refs and thus do not match either reason.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 export function check_method_call_unresolved_receiver_type_lost(
   entry_point: EnrichedEntryPoint,

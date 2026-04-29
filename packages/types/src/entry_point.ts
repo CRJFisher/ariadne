@@ -8,12 +8,13 @@
  */
 
 import type { ReceiverKind, ResolutionFailure } from "./call_chains.js";
+import type { FilePath } from "./common.js";
 
 // ===== Enriched Entry Point (with CallableNode metadata + diagnostics) =====
 
 export interface EnrichedEntryPoint {
   name: string;
-  file_path: string;
+  file_path: FilePath;
   start_line: number;
   kind: "function" | "method" | "constructor";
   signature?: string;
@@ -81,7 +82,7 @@ export interface EntryPointDiagnostics {
 }
 
 export interface GrepHit {
-  file_path: string;
+  file_path: FilePath;
   line: number;
   content: string;
   /**
@@ -136,7 +137,7 @@ export type SyntacticFeatureName = typeof SYNTACTIC_FEATURE_NAMES[number];
 
 export interface CallRefDiagnostic {
   caller_function: string;
-  caller_file: string;
+  caller_file: FilePath;
   call_line: number;
   call_type: "function" | "method" | "constructor";
   resolution_count: number;

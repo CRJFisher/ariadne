@@ -15,8 +15,6 @@ import {
   SYNTACTIC_FEATURE_NAMES,
   type DefinitionFeatureName,
   type SyntacticFeatureName,
-} from "./entry_point_types.js";
-import {
   PREDICATE_OPERATORS,
   type ClassifierSpec,
   type KnownIssue,
@@ -25,7 +23,7 @@ import {
   type KnownIssuesRegistry,
   type PredicateExpr,
   type PredicateOperator,
-} from "./known_issues_types.js";
+} from "@ariadnejs/types";
 
 // ===== Constants =====
 

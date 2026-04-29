@@ -11,8 +11,9 @@ import type {
   CallRefDiagnostic,
   EntryPointDiagnostics,
   SyntacticFeatures,
-} from "../src/entry_point_types.js";
-import type { ClassifierHint } from "../src/auto_classify/types.js";
+  ClassifierHint,
+} from "@ariadnejs/types";
+import type { FilePath } from "@ariadnejs/types";
 
 const BASE_SYNTACTIC_FEATURES: SyntacticFeatures = {
   is_new_expression: false,
@@ -33,8 +34,8 @@ describe("format_grep_hits", () => {
 
   it("formats hits with file:line and trimmed content", () => {
     const hits: GrepHit[] = [
-      { file_path: "src/main.ts", line: 10, content: "  foo(42)  ", captures: [] },
-      { file_path: "src/utils.ts", line: 25, content: "bar.foo()", captures: [] },
+      { file_path: "src/main.ts" as FilePath, line: 10, content: "  foo(42)  ", captures: [] },
+      { file_path: "src/utils.ts" as FilePath, line: 25, content: "bar.foo()", captures: [] },
     ];
     const result = format_grep_hits(hits);
     expect(result).toContain("src/main.ts:10  foo(42)");
@@ -53,7 +54,7 @@ describe("format_call_refs", () => {
     const refs: CallRefDiagnostic[] = [
       {
         caller_function: "main",
-        caller_file: "src/main.ts",
+        caller_file: "src/main.ts" as FilePath,
         call_line: 5,
         call_type: "function",
         resolution_count: 1,
@@ -73,7 +74,7 @@ describe("format_call_refs", () => {
     const refs: CallRefDiagnostic[] = [
       {
         caller_function: "handler",
-        caller_file: "src/api.ts",
+        caller_file: "src/api.ts" as FilePath,
         call_line: 42,
         call_type: "method",
         resolution_count: 0,
@@ -94,7 +95,7 @@ describe("substitute_template", () => {
   const mock_entry: TriageEntry = {
     entry_index: 5,
     name: "handle_request",
-    file_path: "src/server.ts",
+    file_path: "src/server.ts" as FilePath,
     start_line: 42,
     kind: "function",
     signature: "function handle_request(req: Request): Response",
@@ -114,7 +115,7 @@ describe("substitute_template", () => {
 
   const mock_diagnostics: EntryPointDiagnostics = {
     grep_call_sites: [
-      { file_path: "test/server.test.ts", line: 10, content: "handle_request(req)", captures: [] },
+      { file_path: "test/server.test.ts" as FilePath, line: 10, content: "handle_request(req)", captures: [] },
     ],
     grep_call_sites_unindexed_tests: [],
     ariadne_call_refs: [],

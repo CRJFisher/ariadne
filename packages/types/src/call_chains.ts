@@ -68,7 +68,17 @@ export interface IndirectReachability {
 }
 
 /**
- * Complete call graph structure
+ * Complete call graph structure.
+ *
+ * `entry_points` semantics depend on the producer:
+ *   - When produced via `Project.get_call_graph()`, the array is filtered to
+ *     true positives only — known false positives (framework-invoked routes,
+ *     Python dunders, etc.) are removed by the bundled permanent registry.
+ *     Use `Project.get_classified_entry_points()` for the full set with
+ *     classification labels.
+ *   - When produced via the free function `trace_call_graph(...)`, the array
+ *     is unfiltered — every uncalled callable is included. Callers that want
+ *     filtering must run `enrich_call_graph` themselves.
  */
 export interface CallGraph {
   readonly nodes: ReadonlyMap<SymbolId, CallableNode>;

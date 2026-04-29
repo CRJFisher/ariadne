@@ -3,8 +3,8 @@
 //
 // JavaScript class constructors exported via the CommonJS `module.exports = ClassName` default-export idiom. Grep for the literal entry_point name `constructor` finds nothing (diagnosis: `no-textual-callers`) because real callers invoke `new ClassName(...)` through a `require('./mod')` binding, not the `constructor` keyword. Ariadne does not walk the `new (require(path))()` chain back to the exported class's constructor, so the definition appears to have zero inbound callers. Narrow to language=javascript, entry_point name=constructor, no-textual-callers diagnosis, and zero resolved call refs.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

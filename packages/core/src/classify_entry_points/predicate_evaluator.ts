@@ -1,16 +1,17 @@
 /**
  * Evaluator for the known-issues predicate DSL.
  *
- * Pure over an `EnrichedEntryPoint` and a lazy per-file line reader.
- * Consumers (see `auto_classify.ts`) pre-cache the reader so each source file
+ * Pure over an `EnrichedEntryPoint` and a lazy per-file line reader. Callers
+ * (see `classify_entry_points.ts`) pre-cache the reader so each source file
  * is read at most once per run.
  *
  * Design notes:
  * - The switch over `PredicateExpr.op` is exhaustive; TypeScript narrows the
  *   default branch to `never` at the end, and any unhandled discriminant is a
  *   compile error. Registry-side validation rejects unknown operators at load
- *   time (see `known_issues_registry.ts`).
- * - Regex patterns are pre-compiled during registry load and attached as
+ *   time (see the skill's `known_issues_registry.ts`; the bundled permanent
+ *   slice is pre-validated).
+ * - Regex patterns are pre-compiled by `registry_loader.ts` and attached as
  *   `compiled_pattern: RegExp` on the node; we prefer it here and fall back to
  *   `new RegExp(pattern)` only to keep unit tests tolerant of hand-built nodes.
  */
@@ -20,10 +21,10 @@ import type {
   DefinitionFeatures,
   SyntacticFeatures,
   SyntacticFeatureName,
-} from "../entry_point_types.js";
-import type { PredicateExpr } from "../known_issues_types.js";
-import { detect_language } from "../extract_entry_points.js";
-import type { PredicateContext } from "./types.js";
+  PredicateExpr,
+} from "@ariadnejs/types";
+import { detect_language } from "./extract_entry_point_diagnostics";
+import type { PredicateContext } from "./auto_classify_types";
 
 export function evaluate_predicate(expr: PredicateExpr, ctx: PredicateContext): boolean {
   switch (expr.op) {

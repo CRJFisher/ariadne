@@ -1,10 +1,26 @@
 /**
- * Shared entry point extraction utilities
+ * Extract per-entry-point diagnostics from a `CallGraph` against a `Project`.
  *
- * Extracts enriched entry point data from Ariadne's call graph,
- * including CallableNode metadata and pre-gathered diagnostics.
+ * For each entry point, captures basic info (name, location, signature,
+ * tree_size, kind), CallableNode metadata (`is_exported`, `access_modifier`),
+ * and pre-gathered diagnostics (grep call sites, Ariadne call references,
+ * diagnosis classification).
  *
- * Used by both detect_entrypoints_using_ariadne.ts and analyze_external_repo.ts.
+ * Algorithmic invariants:
+ *   - Each indexed source file's content is split into lines exactly once
+ *     (into `lines_by_file`).
+ *   - The grep index is built in a single pass over `lines_by_file`: every
+ *     `identifier\s*\(` occurrence maps from `identifier` → `GrepHit[]`.
+ *     Per-entry grep becomes an O(1) `Map.get` plus a small filter — no
+ *     quadratic regression on large repos.
+ *   - File contents come from `Project.get_file_contents()` rather than the
+ *     filesystem so diagnostics see exactly what the resolver saw (no TOCTOU
+ *     drift, supports in-memory edits via `Project.update_file`).
+ *
+ * The unindexed-test grep pass (`attach_unindexed_test_grep_hits`) is the
+ * only diagnostic that touches FS outside the indexed source set; it lives
+ * here as a separate exported helper that callers chain after extraction
+ * when they need `grep_call_sites_unindexed_tests` populated.
  */
 
 import type {
@@ -19,10 +35,9 @@ import type {
   ParameterDefinition,
   SymbolId,
   SymbolName,
+  Language,
+  FilePath,
 } from "@ariadnejs/types";
-
-import type { Language } from "@ariadnejs/types";
-import { log_info, log_warn } from "@ariadnejs/core";
 import type {
   DefinitionFeatures,
   EnrichedEntryPoint,
@@ -30,8 +45,13 @@ import type {
   GrepHit,
   CallRefDiagnostic,
   SyntacticFeatures,
-} from "./entry_point_types.js";
-import { should_log, SLOW_ITEM_MS } from "./progress.js";
+} from "@ariadnejs/types";
+
+import { log_info, log_warn } from "../logging";
+import type { Project } from "../project/project";
+import { find_source_files } from "../project/file_loading";
+import * as path from "node:path";
+import * as fs from "node:fs/promises";
 
 /**
  * Tree-sitter capture names associated with each call type.
@@ -47,6 +67,14 @@ const CAPTURE_NAMES_BY_CALL_TYPE: Record<"function" | "method" | "constructor", 
   method: ["@reference.call"],
   constructor: ["@reference.constructor"],
 };
+
+const SLOW_ITEM_MS = 50;
+
+function should_log(i: number, total: number): boolean {
+  if (total <= 50) return false;
+  const step = Math.max(1, Math.floor(total / 20));
+  return i % step === 0;
+}
 
 /**
  * Build a map from constructor SymbolId to the owning class name.
@@ -64,37 +92,54 @@ export function build_constructor_to_class_name_map(
   return map;
 }
 
-// ===== Entry Point Extraction =====
+/**
+ * Options for the optional unindexed-test grep pass.
+ */
+export interface UnindexedTestGrepOptions {
+  /**
+   * Project root used to discover unindexed-test files.
+   */
+  readonly project_path: string;
+  /**
+   * Additional ignore patterns passed through to `find_source_files` so the
+   * unindexed-test walk honours the same exclusions as primary indexing.
+   */
+  readonly ignore_patterns?: readonly string[];
+}
 
 /**
- * Extract enriched entry points from a call graph.
+ * Extract enriched entry-point diagnostics from a call graph + Project.
  *
- * For each entry point, captures basic info (name, location, signature, tree_size, kind),
- * CallableNode metadata (is_exported, access_modifier), and pre-gathered diagnostics
- * (grep call sites, Ariadne call references, diagnosis).
+ * `Project.get_file_contents()` is the source of truth for indexed source
+ * bytes — diagnostics never re-read these files from disk.
  *
- * Algorithmic invariants:
- *   - Each source file's content is split into lines exactly once (into `lines_by_file`).
- *   - The grep index (`grep_index`) is built in a single pass over `lines_by_file`:
- *     every `identifier\s*\(` occurrence maps from `identifier` → `GrepHit[]`. Per-entry
- *     grep becomes an O(1) Map lookup + filter.
+ * Synchronous and free of FS I/O. The opt-in unindexed-test grep is a
+ * separate async pass (`attach_unindexed_test_grep_hits`) — chain it after
+ * this function when classifiers need `grep_call_sites_unindexed_tests`.
  */
-export function extract_entry_points(
+export function extract_entry_point_diagnostics(
   call_graph: CallGraph,
-  source_files: ReadonlyMap<string, string>,
-  class_name_by_constructor_id?: ReadonlyMap<SymbolId, SymbolName>,
-  class_method_symbol_ids?: ReadonlySet<SymbolId>,
+  project: Project,
 ): EnrichedEntryPoint[] {
+  const source_files = project.get_file_contents();
   const lines_by_file = build_lines_by_file(source_files);
   const call_refs_by_name = build_call_refs_by_name(call_graph);
   const call_refs_by_file_line = build_call_refs_by_file_line(call_graph);
   const grep_index = build_grep_index(lines_by_file, call_refs_by_file_line);
-  const class_methods = class_method_symbol_ids ?? new Set<SymbolId>();
+
+  const class_definitions = project.definitions.get_class_definitions();
+  const class_name_by_constructor_id = build_constructor_to_class_name_map(class_definitions);
+  const class_method_symbol_ids = new Set<SymbolId>();
+  for (const class_def of class_definitions) {
+    for (const m of class_def.methods) {
+      class_method_symbol_ids.add(m.symbol_id);
+    }
+  }
 
   check_name_collision_gate(call_refs_by_name);
 
   const total = call_graph.entry_points.length;
-  log_info(`extract_entry_points: N=${total}`);
+  log_info(`extract_entry_point_diagnostics: N=${total}`);
   const phase_start = Date.now();
 
   const entry_points: EnrichedEntryPoint[] = [];
@@ -122,7 +167,7 @@ export function extract_entry_points(
 
     const definition_features = derive_definition_features(
       node,
-      class_methods,
+      class_method_symbol_ids,
       lines_by_file,
     );
 
@@ -149,11 +194,29 @@ export function extract_entry_points(
 
   const phase_elapsed = Date.now() - phase_start;
   const rate = phase_elapsed > 0 ? ((total * 1000) / phase_elapsed).toFixed(1) : "∞";
-  log_info(`extract_entry_points: done ${total}/${total} in ${phase_elapsed}ms (${rate}/s)`);
+  log_info(`extract_entry_point_diagnostics: done ${total}/${total} in ${phase_elapsed}ms (${rate}/s)`);
 
   entry_points.sort((a, b) => b.tree_size - a.tree_size);
 
   return entry_points;
+}
+
+/**
+ * Build the constructor → class name map keyed by `file_path:start_line`. The
+ * unindexed-test grep pass uses this to grep for `ClassName(` instead of
+ * `__init__()` — same heuristic as the in-source grep pass.
+ */
+export function build_class_name_by_constructor_position(
+  project: Project,
+): ReadonlyMap<string, string> {
+  const out = new Map<string, string>();
+  for (const class_def of project.definitions.get_class_definitions()) {
+    for (const ctor of class_def.constructors ?? []) {
+      const key = `${ctor.location.file_path}:${ctor.location.start_line}`;
+      out.set(key, class_def.name as string);
+    }
+  }
+  return out;
 }
 
 /**
@@ -205,9 +268,9 @@ function extract_metadata(node: CallableNode): EntryPointMetadata {
  * Split every source file into lines, exactly once.
  */
 function build_lines_by_file(
-  source_files: ReadonlyMap<string, string>,
-): Map<string, string[]> {
-  const lines_by_file = new Map<string, string[]>();
+  source_files: ReadonlyMap<FilePath, string>,
+): Map<FilePath, string[]> {
+  const lines_by_file = new Map<FilePath, string[]>();
   for (const [file_path, content] of source_files) {
     lines_by_file.set(file_path, content.split("\n"));
   }
@@ -245,8 +308,8 @@ function build_call_refs_by_name(
  */
 function build_call_refs_by_file_line(
   call_graph: CallGraph,
-): Map<string, Map<number, CallReference[]>> {
-  const index = new Map<string, Map<number, CallReference[]>>();
+): Map<FilePath, Map<number, CallReference[]>> {
+  const index = new Map<FilePath, Map<number, CallReference[]>>();
   for (const [, caller_node] of call_graph.nodes) {
     for (const call_ref of caller_node.enclosed_calls) {
       const file = call_ref.location.file_path;
@@ -273,8 +336,8 @@ function build_call_refs_by_file_line(
  * diagnostic pass without requiring per-language lexing.
  */
 export function build_grep_index(
-  lines_by_file: ReadonlyMap<string, string[]>,
-  call_refs_by_file_line: Map<string, Map<number, CallReference[]>>,
+  lines_by_file: ReadonlyMap<FilePath, string[]>,
+  call_refs_by_file_line: Map<FilePath, Map<number, CallReference[]>>,
 ): Map<string, GrepHit[]> {
   const index = new Map<string, GrepHit[]>();
   // Lookbehind form of word-boundary that also respects `$` as an identifier
@@ -335,7 +398,7 @@ function gather_diagnostics(
   entry_point_id: string,
   call_refs_by_name: Map<string, { caller_node: CallableNode; call_ref: CallReference }[]>,
   grep_index: Map<string, GrepHit[]>,
-  lines_by_file: ReadonlyMap<string, string[]>,
+  lines_by_file: ReadonlyMap<FilePath, string[]>,
   class_name_by_constructor_id?: ReadonlyMap<SymbolId, SymbolName>,
 ): EntryPointDiagnostics {
   // For constructors, grep for class name (e.g. ClassName() instead of __init__())
@@ -365,9 +428,9 @@ function gather_diagnostics(
 
   return {
     grep_call_sites,
-    // Populated by a separate pass in detect_entrypoints when an unindexed
-    // test-dir grep is configured; defaults to empty so builtin classifiers
-    // reading this field degrade gracefully when no pass has run.
+    // Populated by the optional unindexed-test grep pass when
+    // `include_unindexed_tests` is set; defaults to empty so builtin
+    // classifiers reading this field degrade gracefully.
     grep_call_sites_unindexed_tests: [],
     ariadne_call_refs,
     diagnosis,
@@ -430,7 +493,7 @@ function find_matching_call_refs(
   name: string,
   _entry_point_id: string,
   call_refs_by_name: Map<string, { caller_node: CallableNode; call_ref: CallReference }[]>,
-  lines_by_file: ReadonlyMap<string, string[]>,
+  lines_by_file: ReadonlyMap<FilePath, string[]>,
 ): CallRefDiagnostic[] {
   const matching = call_refs_by_name.get(name) ?? [];
   const slice = matching.length > MAX_DIAGNOSTICS_PER_ENTRY
@@ -458,8 +521,8 @@ function find_matching_call_refs(
 }
 
 function read_source_line(
-  lines_by_file: ReadonlyMap<string, string[]>,
-  file_path: string,
+  lines_by_file: ReadonlyMap<FilePath, string[]>,
+  file_path: FilePath,
   line: number,
 ): string {
   return lines_by_file.get(file_path)?.[line - 1] ?? "";
@@ -512,7 +575,7 @@ function derive_syntactic_features(
 export function derive_definition_features(
   node: CallableNode,
   class_methods: ReadonlySet<SymbolId>,
-  lines_by_file: ReadonlyMap<string, string[]>,
+  lines_by_file: ReadonlyMap<FilePath, string[]>,
 ): DefinitionFeatures {
   const file_path = node.location.file_path;
   const start_line = node.location.start_line;
@@ -668,4 +731,121 @@ export function detect_language(file_path: string): Language | null {
  */
 function escape_regex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// ===== Unindexed-test-dir grep (opt-in) =====
+
+// Common conventions for test-directory siting. Kept narrow on purpose —
+// project-specific patterns should extend this list via a config entry, not
+// by broadening the default.
+export const UNINDEXED_TEST_DIR_SEGMENTS: readonly string[] = [
+  "/test/",
+  "/tests/",
+  "/__tests__/",
+  "/spec/",
+];
+
+const TEST_FILE_EXTENSIONS: readonly string[] = [
+  ".ts",
+  ".tsx",
+  ".js",
+  ".jsx",
+  ".mjs",
+  ".cjs",
+  ".py",
+  ".rs",
+];
+
+export async function attach_unindexed_test_grep_hits(
+  entry_points: EnrichedEntryPoint[],
+  project_path: string,
+  indexed_source_files: ReadonlyMap<string, string>,
+  class_name_by_constructor_position: ReadonlyMap<string, string>,
+  ignore_patterns: readonly string[],
+): Promise<void> {
+  const test_files = await collect_unindexed_test_files(
+    project_path,
+    indexed_source_files,
+    ignore_patterns,
+  );
+  if (test_files.size === 0) return;
+
+  // Per-identifier inverted index over the test files.
+  const grep_index = new Map<string, { file_path: string; line: number; content: string }[]>();
+  const pattern = /(?<![A-Za-z0-9_$])([A-Za-z_$][\w$]*)\s*\(/g;
+  for (const [file_path, content] of test_files) {
+    const lines = content.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      pattern.lastIndex = 0;
+      let m: RegExpExecArray | null;
+      let trimmed: string | null = null;
+      while ((m = pattern.exec(line)) !== null) {
+        const name = m[1];
+        let hits = grep_index.get(name);
+        if (!hits) {
+          hits = [];
+          grep_index.set(name, hits);
+        }
+        if (trimmed === null) trimmed = line.trim();
+        hits.push({ file_path, line: i + 1, content: trimmed });
+      }
+    }
+  }
+
+  for (const entry of entry_points) {
+    // Constructors are grepped by class name, not __init__/constructor —
+    // mirror the behaviour of the primary grep pass.
+    let grep_name: string;
+    if (entry.kind === "constructor") {
+      const key = `${entry.file_path}:${entry.start_line}`;
+      grep_name = class_name_by_constructor_position.get(key) ?? entry.name;
+    } else {
+      grep_name = entry.name;
+    }
+    if (grep_name === "<anonymous>") continue;
+    const hits = grep_index.get(grep_name);
+    if (!hits) continue;
+    entry.diagnostics.grep_call_sites_unindexed_tests = hits.map((h) => ({
+      file_path: h.file_path as FilePath,
+      line: h.line,
+      content: h.content,
+      captures: [],
+    }));
+  }
+}
+
+export async function collect_unindexed_test_files(
+  project_path: string,
+  indexed_source_files: ReadonlyMap<string, string>,
+  ignore_patterns: readonly string[],
+): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  // Reuse core's gitignore-aware walker so test-dir discovery honours the
+  // same exclusion rules as primary indexing (`.gitignore` + `options.exclude`
+  // + `IGNORED_DIRECTORIES`). Output is then narrowed to test directories
+  // and to files not already indexed.
+  let candidates: string[];
+  try {
+    candidates = await find_source_files(
+      project_path,
+      project_path,
+      [...ignore_patterns],
+    );
+  } catch {
+    return out;
+  }
+  for (const full of candidates) {
+    if (indexed_source_files.has(full)) continue;
+    if (!TEST_FILE_EXTENSIONS.some((ext) => full.endsWith(ext))) continue;
+    const rel = `/${path.relative(project_path, full)}/`;
+    if (!UNINDEXED_TEST_DIR_SEGMENTS.some((seg) => rel.includes(seg))) continue;
+    try {
+      const content = await fs.readFile(full, "utf-8");
+      out.set(full, content);
+    } catch {
+      // silently skip unreadable
+    }
+  }
+  return out;
 }

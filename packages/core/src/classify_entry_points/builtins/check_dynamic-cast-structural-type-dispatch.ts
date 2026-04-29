@@ -3,8 +3,8 @@
 //
 // TypeScript method invoked through an `as`-cast receiver (e.g. `(factory as {componentReplaced?: (id: string) => void}).componentReplaced?.(...)`). At least one inbound call reference has receiver_kind=type_cast and the entry_point's diagnosis is callers-in-registry-unresolved, indicating Ariadne saw the call sites but cannot resolve the concrete class through the cast — typically because the cast target is an inline anonymous structural object type literal.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

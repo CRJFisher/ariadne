@@ -3,8 +3,8 @@
 //
 // JavaScript function expressions defined as values of object-literal property pairs (`key: function() {...}`) or prototype assignments are extracted by Ariadne with `name = '<anonymous>'`. Because grep is keyed on the entry_point name, no textual callers are ever found (`diagnosis = no-textual-callers`), and `this`-qualified intra-object dispatch (`this.sendRequest()`) plus property-reference callback registration (`setTimeout(this.sendRequest, 10)`) cannot be resolved. The triple `language=javascript` AND `name=<anonymous>` AND `diagnosis=no-textual-callers` discriminates the pattern: a truly unreachable anonymous function (e.g. an unused IIFE-style expression) is exceedingly rare in real code, while `key: function() {}` is the canonical pre-ES6 module/object pattern and the dominant shape seen in vendored libraries such as firebug-lite.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

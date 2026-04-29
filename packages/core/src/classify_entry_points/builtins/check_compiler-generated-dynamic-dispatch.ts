@@ -3,8 +3,8 @@
 //
 // Angular Ivy compiler-generated instruction functions: ɵɵ-prefixed names defined under packages/core/src/render3/instructions/. These are invoked indirectly via the string-keyed angularCoreEnv map (packages/core/src/render3/jit/environment.ts) and via ExternalReference identifiers in packages/compiler/src/render3/r3_identifiers.ts; the compiler emits string names that the runtime resolves through the map, so no static call site exists in the source graph. The name + path combination is highly specific to this framework convention.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

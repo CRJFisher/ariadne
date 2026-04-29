@@ -3,8 +3,8 @@
 //
 // TypeScript/JavaScript getter accessors (`get name()`) are invoked through property-read syntax (`obj.name`), not call syntax (`obj.name()`). The tree-sitter `.scm` query does not emit `@reference.call` on property-read AST nodes, so getters whose only call sites are property accesses appear unreachable. The `accessor_kind` definition feature (TASK-190.16.15) is populated only for JS/TS getter/setter declarations, so `accessor_kind_eq: "getter"` is implicitly language-scoped. Pairing it with `callers_count_at_most: 0` anchors on the false-positive shape (zero resolved callers) and prevents the rule from firing on genuinely-reached getters.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 export function check_getter_accessor_not_tracked(
   entry_point: EnrichedEntryPoint,

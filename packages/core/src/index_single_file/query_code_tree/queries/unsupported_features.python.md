@@ -2,7 +2,7 @@
 
 Canonical list of known Ariadne failure modes that affect this language. Generated from `.claude/skills/self-repair-pipeline/known_issues/registry.json` by `.claude/skills/self-repair-pipeline/scripts/render_unsupported_features.ts`. Do not edit by hand — edit the registry and re-render.
 
-Entries: 18
+Entries: 19
 
 ## `method-chain-dispatch` — Method call on call-chain receiver unresolved
 
@@ -338,3 +338,19 @@ Stricter variant of `callers-outside-scope-grep-evidence`: diagnosis is `callers
 **Examples**
 
 - `src/utils.ts`:1 — `foo(...)`
+
+## `py-dunder-protocol` — Python framework-invoked dunder method (`__str__`, `__repr__`, etc.)
+
+Python dunder methods invoked by the runtime via the language protocol layer (`__str__`/`__repr__` for string conversion, `__eq__`/`__hash__`/`__lt__`/`__gt__` for comparisons, `__iter__`/`__next__` for iteration, `__enter__`/`__exit__` for context managers, etc.) are never called from user code. Excludes the traceable subset (`__init__`, `__call__`, `__new__`) which Ariadne can resolve through constructor / callable-instance dispatch. Replaces the hardcoded `filter_entry_points.python.ts` list.
+
+| Field        | Value                                                  |
+| ------------ | ------------------------------------------------------ |
+| Status       | `permanent`                                            |
+| Languages    | `python`                                               |
+| Backlog task | _none_                                                 |
+| Classifier   | builtin, `check_py_dunder_protocol` (min_confidence 1) |
+
+**Examples**
+
+- `src/model.py`:5 — `def __str__(self): return self.name`
+- `src/iterable.py`:8 — `def __iter__(self): return iter(self._items)`

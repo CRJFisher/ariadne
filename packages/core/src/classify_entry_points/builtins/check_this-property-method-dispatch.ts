@@ -3,8 +3,8 @@
 //
 // Object-literal property methods invoked via this.<name>() from a sibling method in the same object literal. Ariadne cannot resolve the this receiver to the surrounding object literal, so the method shows zero callers despite an intra-file this.<name>(...) call site.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

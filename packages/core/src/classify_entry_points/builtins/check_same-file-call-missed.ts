@@ -3,8 +3,8 @@
 //
 // Definition has zero resolved Ariadne callers, but at least one textual grep hit, with every grep hit residing in the same file as the definition. Captures named function expressions assigned to var/let/const where the resolver fails to link intra-file call sites back to the definition (e.g. `var f = function f(...) {...}` called as `f(...)` elsewhere in the same module).
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

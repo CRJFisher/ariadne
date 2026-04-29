@@ -3,8 +3,8 @@
 //
 // TypeScript/JavaScript class getter accessors are invoked through property-read expressions (`obj.x`) rather than explicit call expressions (`obj.x()`). Tree-sitter's `@reference.call` capture only fires on call expressions, so property reads of getters never produce CallReferences and the getter appears unreachable. Match entries whose definition_features.accessor_kind === "getter". Language gating is implicit: derive_definition_features only sets accessor_kind for JS/TS-family files (extract_entry_points.ts:519, regex /\.(ts|tsx|js|jsx|mjs|cjs)$/); Python and Rust entries always carry accessor_kind: null.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 export function check_property_getter_dispatch(
   entry_point: EnrichedEntryPoint,

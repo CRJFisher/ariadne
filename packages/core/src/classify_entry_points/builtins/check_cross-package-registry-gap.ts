@@ -3,8 +3,8 @@
 //
 // TypeScript getter override with no resolved callers whose grep evidence includes an `abstract get` declaration of the same name. Captures the pathology where an abstract base class declares a getter, a concrete subclass overrides it, and call sites typed against the abstract base type fail to dispatch to the override — leaving the override entry_point unreachable in Ariadne's call graph.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 function detect_language(file_path: string): string | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";

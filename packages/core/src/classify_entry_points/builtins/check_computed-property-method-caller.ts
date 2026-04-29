@@ -3,8 +3,8 @@
 //
 // JS/TS class methods whose property key is a computed well-known-symbol expression (`[Symbol.iterator]`, `[Symbol.asyncIterator]`, `[Symbol.dispose]`, etc.) are not captured as definitions by the tree-sitter scm queries (which match only `(property_identifier)` on `method_definition`). When such a method calls another method on the same class, the callee shows up as an entry point with no callers. The grep hit on the callee falls inside the unindexed computed-property method body; checking the lines just above the hit for a method header of the form `^\s*(async\s+)?\*?\s*[Symbol.<name>](` discriminates this pattern.
 
-import type { EnrichedEntryPoint } from "../../entry_point_types.js";
-import type { FileLinesReader } from "../types.js";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { FileLinesReader } from "../auto_classify_types";
 
 export function check_computed_property_method_caller(
   entry_point: EnrichedEntryPoint,

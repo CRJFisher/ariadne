@@ -8,7 +8,7 @@ import {
   render_language,
 } from "./render_unsupported_features.js";
 import { load_registry } from "../src/known_issues_registry.js";
-import type { KnownIssue } from "../src/known_issues_types.js";
+import type { KnownIssue } from "@ariadnejs/types";
 
 describe("render_unsupported_features — golden file pinning", () => {
   const registry = load_registry();
