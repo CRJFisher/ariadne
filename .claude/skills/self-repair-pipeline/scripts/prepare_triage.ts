@@ -21,6 +21,17 @@ import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as path from "path";
 
+import {
+  IGNORED_DIRECTORIES,
+  is_test_file,
+  load_project,
+  trace_call_graph,
+  FileSystemStorage,
+  resolve_cache_dir,
+} from "@ariadnejs/core";
+import type { PersistenceStorage } from "@ariadnejs/core";
+import type { Language } from "@ariadnejs/types";
+
 import { load_json } from "../src/analysis_output.js";
 import { load_registry } from "../src/known_issues_registry.js";
 import { prepare_triage } from "../src/prepare_triage.js";
@@ -95,21 +106,16 @@ function parse_args(argv: string[]): CliArgs {
   return { analysis_path, project, max_count, no_reuse_tp, tp_source_run };
 }
 
-/** Cached synchronous line reader. One read per file per run. */
-function make_file_lines_reader(): (p: string) => readonly string[] {
-  const cache = new Map<string, readonly string[]>();
-  return (file_path) => {
-    const cached = cache.get(file_path);
-    if (cached !== undefined) return cached;
-    let lines: readonly string[];
-    try {
-      lines = fs.readFileSync(file_path, "utf8").split("\n");
-    } catch {
-      lines = [];
-    }
-    cache.set(file_path, lines);
-    return lines;
-  };
+/**
+ * Best-effort language detector. Mirrors core's per-extension list so the
+ * test-file filter agrees with the indexer.
+ */
+function detect_language(file_path: string): Language | null {
+  if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript" as Language;
+  if (file_path.endsWith(".js") || file_path.endsWith(".jsx")) return "javascript" as Language;
+  if (file_path.endsWith(".py")) return "python" as Language;
+  if (file_path.endsWith(".rs")) return "rust" as Language;
+  return null;
 }
 
 /**
@@ -178,6 +184,38 @@ function warn_if_analysis_stale(
   );
 }
 
+/**
+ * Re-load the project from disk and produce a raw call graph (with all entry
+ * points, including known false positives) for `enrich_call_graph`. The
+ * triage classifier needs the raw set so it can match the full skill registry
+ * (permanent + wip rules) against every candidate.
+ *
+ * Persisted indexes from `FileSystemStorage` are reused when available so the
+ * second-run cost is parse-free.
+ */
+async function load_project_for_classification(project_path: string) {
+  const cache_dir = resolve_cache_dir(project_path);
+  const storage: PersistenceStorage | undefined = cache_dir
+    ? new FileSystemStorage(cache_dir)
+    : undefined;
+  const project = await load_project({
+    project_path,
+    exclude: [...IGNORED_DIRECTORIES],
+    file_filter: (file: string) => {
+      const language = detect_language(file);
+      return !language || !is_test_file(file, language);
+    },
+    storage,
+  });
+  // Raw call graph: every uncalled callable. The triage classifier needs the
+  // unfiltered set so it can route both permanent and wip registry rules
+  // against every candidate.
+  const call_graph = trace_call_graph(project.definitions, project.resolutions, {
+    include_tests: false,
+  });
+  return { project, call_graph };
+}
+
 async function main(): Promise<void> {
   const cli = parse_args(process.argv);
 
@@ -193,10 +231,11 @@ async function main(): Promise<void> {
   const run_id = build_run_id(head?.short ?? null);
 
   const registry = load_registry();
+  const { project, call_graph } = await load_project_for_classification(project_path);
   const { entries, stats } = prepare_triage({
-    entry_points: analysis.entry_points,
+    call_graph,
+    project,
     registry,
-    read_file_lines: make_file_lines_reader(),
     max_count: cli.max_count,
   });
 

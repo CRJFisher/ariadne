@@ -3,7 +3,7 @@ id: TASK-190.17.8
 title: >-
   self-healing: rewrite `src/prepare_triage.ts` to call core via
   `enrich_call_graph`
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-04-28 19:16"
 updated_date: "2026-04-28 19:39"
@@ -67,13 +67,13 @@ The pipeline calls `enrich_call_graph(call_graph, project, { registry: full_skil
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 src/prepare_triage.ts:58 calls enrich_call_graph from @ariadnejs/core instead of auto_classify
-- [ ] #2 src/prepare_triage.ts:14 import of in-skill auto_classify removed
-- [ ] #3 Skill's prepare_triage() function still returns the { entries, stats } shape
-- [ ] #4 Mapping from EnrichedCallGraph.classified_entry_points to skill-internal entries preserved
-- [ ] #5 scripts/prepare_triage.ts is not modified (tp_cache flow unaffected)
-- [ ] #6 Full skill registry is passed to enrich_call_graph (not the permanent slice)
-- [ ] #7 pnpm test passes in .claude/skills/self-repair-pipeline/
-- [ ] #8 Diff vs pre-rewrite shows zero classification changes on a representative fixture
-- [ ] #9 Out-of-scope (explicit non-changes): src/tp_cache.ts, src/run_discovery.ts, src/triage_state_paths.ts, src/triage_state_types.ts, RunManifest/TpCacheRecord types, and lifecycle scripts (list_runs, abandon_run, prune_runs, diff_runs, migrate_legacy_state) all remain in the skill; they are operator-state concerns wrapping the new core API and do not depend on classifier internals
+- [x] #1 src/prepare_triage.ts:58 calls enrich_call_graph from @ariadnejs/core instead of auto_classify
+- [x] #2 src/prepare_triage.ts:14 import of in-skill auto_classify removed
+- [x] #3 Skill's prepare_triage() function still returns the { entries, stats } shape
+- [x] #4 Mapping from EnrichedCallGraph.classified_entry_points to skill-internal entries preserved
+- [x] #5 scripts/prepare_triage.ts is not modified (tp_cache flow unaffected)
+- [x] #6 Full skill registry is passed to enrich_call_graph (not the permanent slice)
+- [x] #7 pnpm test passes in .claude/skills/self-repair-pipeline/
+- [x] #8 Diff vs pre-rewrite shows zero classification changes on a representative fixture
+- [x] #9 Out-of-scope (explicit non-changes): src/tp_cache.ts, src/run_discovery.ts, src/triage_state_paths.ts, src/triage_state_types.ts, RunManifest/TpCacheRecord types, and lifecycle scripts (list_runs, abandon_run, prune_runs, diff_runs, migrate_legacy_state) all remain in the skill; they are operator-state concerns wrapping the new core API and do not depend on classifier internals
 <!-- AC:END -->
