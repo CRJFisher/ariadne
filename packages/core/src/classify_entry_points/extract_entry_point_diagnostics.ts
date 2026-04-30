@@ -712,7 +712,12 @@ export function detect_language(file_path: string): Language | null {
   if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) {
     return "typescript";
   }
-  if (file_path.endsWith(".js") || file_path.endsWith(".jsx")) {
+  if (
+    file_path.endsWith(".js") ||
+    file_path.endsWith(".jsx") ||
+    file_path.endsWith(".mjs") ||
+    file_path.endsWith(".cjs")
+  ) {
     return "javascript";
   }
   if (file_path.endsWith(".py")) {

@@ -19,6 +19,7 @@ export {
   attach_unindexed_test_grep_hits,
   collect_unindexed_test_files,
   build_class_name_by_constructor_position,
+  detect_language,
 } from "./extract_entry_point_diagnostics";
 export { load_permanent_registry, PermanentRegistryError } from "./registry_loader";
 export {

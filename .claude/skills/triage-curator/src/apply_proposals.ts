@@ -4,6 +4,7 @@ import {
   parse_known_issues_registry_json,
   serialize_known_issues_registry_json,
 } from "@ariadnejs/types";
+import { detect_language } from "@ariadnejs/core";
 
 import { error_code } from "./errors.js";
 import { render_ariadne_bug_body } from "./render_ariadne_bug_body.js";
@@ -410,7 +411,7 @@ export function derive_languages_for_upsert(
   if (group === undefined) return [];
   const langs = new Set<KnownIssueLanguage>();
   for (const e of group.entries) {
-    const lang = language_from_file_path(e.file_path);
+    const lang = detect_language(e.file_path);
     if (lang !== null) langs.add(lang);
   }
   return sort_languages([...langs]);
@@ -433,21 +434,6 @@ function declared_languages(spec: BuiltinClassifierSpec | null): KnownIssueLangu
 
 function is_known_issue_language(value: string): value is KnownIssueLanguage {
   return value === "typescript" || value === "javascript" || value === "python" || value === "rust";
-}
-
-function language_from_file_path(file_path: string): KnownIssueLanguage | null {
-  if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";
-  if (
-    file_path.endsWith(".js") ||
-    file_path.endsWith(".jsx") ||
-    file_path.endsWith(".mjs") ||
-    file_path.endsWith(".cjs")
-  ) {
-    return "javascript";
-  }
-  if (file_path.endsWith(".py")) return "python";
-  if (file_path.endsWith(".rs")) return "rust";
-  return null;
 }
 
 interface UpsertOutcome {
