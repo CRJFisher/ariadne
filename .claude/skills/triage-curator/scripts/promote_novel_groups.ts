@@ -119,7 +119,7 @@ async function main(): Promise<void> {
   const registry_path = get_registry_file_path();
   const registry = parse_known_issues_registry_json(
     await fs.readFile(registry_path, "utf8"),
-  ) as SelfRepairKnownIssue[];
+  );
 
   const summary = summarize_promotions(aggregates, registry, args.threshold);
   const promotable = filter_promotable(aggregates, registry, args.threshold);

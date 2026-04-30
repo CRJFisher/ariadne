@@ -332,7 +332,7 @@ async function main(): Promise<void> {
   if (!dry_run && (result.registry_upserts.length > 0 || result.drift_tagged_groups.length > 0)) {
     const registry_after = parse_known_issues_registry_json(
       await fs.readFile(get_registry_file_path(), "utf8"),
-    ) as SelfRepairKnownIssue[];
+    );
     const outputs = render_unsupported_features_all(registry_after);
     derived_files.push(...write_unsupported_features_outputs(outputs));
 

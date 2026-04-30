@@ -4,7 +4,6 @@ import {
   parse_known_issues_registry_json,
   serialize_known_issues_registry_json,
 } from "@ariadnejs/types";
-import type { KnownIssue as CoreKnownIssue } from "@ariadnejs/types";
 
 import { error_code } from "./errors.js";
 import { render_ariadne_bug_body } from "./render_ariadne_bug_body.js";
@@ -208,7 +207,7 @@ export async function apply_proposals(
   opts: ApplyOptions,
 ): Promise<ApplyResult> {
   const raw = await fs.readFile(opts.registry_path, "utf8");
-  const registry = parse_known_issues_registry_json(raw) as unknown as KnownIssue[];
+  const registry = parse_known_issues_registry_json(raw);
 
   const { updated: after_drift, drift_tagged_groups } = mark_drift_in_registry(
     registry,
@@ -252,7 +251,7 @@ export async function apply_proposals(
     if (rejected_builtin_groups.has(r.group_id)) continue;
     const target_group_id = r.retargets_to ?? r.group_id;
     const existing = next_registry.find((e) => e.group_id === target_group_id);
-    let languages: string[];
+    let languages: KnownIssueLanguage[];
     if (existing !== undefined) {
       languages = existing.languages;
     } else {
@@ -299,7 +298,7 @@ export async function apply_proposals(
   if (!opts.dry_run && registry_mutated) {
     await fs.writeFile(
       opts.registry_path,
-      serialize_known_issues_registry_json(next_registry as unknown as CoreKnownIssue[]),
+      serialize_known_issues_registry_json(next_registry),
       "utf8",
     );
   }
@@ -365,7 +364,7 @@ export async function link_ariadne_bug_tasks(
   if (entries.length === 0) return { updated_groups: [] };
 
   const raw = await fs.readFile(registry_path, "utf8");
-  const registry = parse_known_issues_registry_json(raw) as unknown as KnownIssue[];
+  const registry = parse_known_issues_registry_json(raw);
 
   const updated_groups: string[] = [];
   const next = registry.map((issue) => {
@@ -380,7 +379,7 @@ export async function link_ariadne_bug_tasks(
 
   await fs.writeFile(
     registry_path,
-    serialize_known_issues_registry_json(next as unknown as CoreKnownIssue[]),
+    serialize_known_issues_registry_json(next),
     "utf8",
   );
   return { updated_groups };
@@ -460,7 +459,7 @@ function upsert_classifier(
   registry: KnownIssue[],
   group_id: string,
   proposal: ClassifierSpecProposal,
-  languages: string[],
+  languages: KnownIssueLanguage[],
 ): UpsertOutcome {
   const existing_idx = registry.findIndex((e) => e.group_id === group_id);
   if (existing_idx === -1) {

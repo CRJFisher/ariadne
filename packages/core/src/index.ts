@@ -29,6 +29,7 @@ export {
   collect_unindexed_test_files,
   build_class_name_by_constructor_position,
   load_permanent_registry,
+  PermanentRegistryError,
 } from "./classify_entry_points";
 
 // Tree-sitter query execution (used by self-repair pipeline for diagnostic capture analysis)

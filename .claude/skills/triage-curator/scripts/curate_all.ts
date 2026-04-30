@@ -151,7 +151,7 @@ async function main(): Promise<void> {
 
   const registry = parse_known_issues_registry_json(
     await fs.readFile(get_registry_file_path(), "utf8"),
-  ) as unknown as KnownIssue[];
+  );
   const known_group_ids = new Set(registry.map((e) => e.group_id));
 
   const items = await scan_runs(opts);
