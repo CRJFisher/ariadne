@@ -14,10 +14,8 @@
  * the output via the Write tool). Every builtin proposal requires an entry.
  */
 
-import { execFile } from "node:child_process";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { promisify } from "node:util";
 import * as ts from "typescript";
 
 import {
@@ -30,21 +28,13 @@ import {
   write_outputs as write_unsupported_features_outputs,
 } from "../../self-repair-pipeline/scripts/render_unsupported_features.js";
 import {
+  BARREL_PATH,
+  PERMANENT_JSON_PATH,
+  sync_permanent_rules,
+} from "../../self-repair-pipeline/scripts/sync_permanent_rules.js";
+import {
   parse_known_issues_registry_json,
-  type KnownIssue as SelfRepairKnownIssue,
 } from "@ariadnejs/types";
-
-const exec_file_async = promisify(execFile);
-
-/**
- * Invoke `pnpm sync-permanent-rules` to regenerate the bundled permanent
- * slice (`registry.permanent.json`) and the orchestrator barrel
- * (`builtins/index.ts`). TASK-190.17.11 owns this contract; finalize_run
- * delegates so the slice generation logic lives in one place.
- */
-async function run_sync_permanent_rules(repo_root: string): Promise<void> {
-  await exec_file_async("pnpm", ["sync-permanent-rules"], { cwd: repo_root });
-}
 import { is_curated, save_outcome } from "../src/curation_outcome.js";
 import { error_code } from "../src/errors.js";
 import {
@@ -324,10 +314,9 @@ async function main(): Promise<void> {
   }
 
   // Derived-file regeneration: the registry feeds `unsupported_features.<lang>.md`
-  // (golden files), the bundled permanent slice (`registry.permanent.json`)
-  // and the orchestrator dispatch map (`builtins/index.ts`). The slice +
-  // barrel are owned by the self-repair-pipeline's `pnpm sync-permanent-rules`
-  // command (TASK-190.17.11); we shell out instead of duplicating its logic.
+  // (golden files), the bundled permanent slice, and the orchestrator dispatch
+  // map. The slice + barrel paths and the regen function are owned by
+  // sync_permanent_rules.ts so derived-path knowledge lives in one place.
   const derived_files: string[] = [];
   if (!dry_run && (result.registry_upserts.length > 0 || result.drift_tagged_groups.length > 0)) {
     const registry_after = parse_known_issues_registry_json(
@@ -335,21 +324,9 @@ async function main(): Promise<void> {
     );
     const outputs = render_unsupported_features_all(registry_after);
     derived_files.push(...write_unsupported_features_outputs(outputs));
-
-    const repo_root = path.resolve(
-      path.dirname(get_registry_file_path()),
-      "..", "..", "..", "..",
-    );
-    const classify_dir = path.resolve(
-      repo_root,
-      "packages",
-      "core",
-      "src",
-      "classify_entry_points",
-    );
-    await run_sync_permanent_rules(repo_root);
-    derived_files.push(path.join(classify_dir, "registry.permanent.json"));
-    derived_files.push(path.join(classify_dir, "builtins", "index.ts"));
+    await sync_permanent_rules();
+    derived_files.push(PERMANENT_JSON_PATH);
+    derived_files.push(BARREL_PATH);
   }
 
   const sessions = aggregate_session_logs(session_logs);

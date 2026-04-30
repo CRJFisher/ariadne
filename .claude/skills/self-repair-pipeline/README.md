@@ -24,7 +24,7 @@ flowchart TD
     %% ── Phase 2: Prepare Triage ──────────────────────────────
     subgraph P2["Phase 2: Prepare Triage"]
         PREPARE(["prepare_triage.ts"]) --> LOAD_REG["Load known-issues registry"]
-        LOAD_REG --> CLASSIFY{"Auto-classify<br/>each entry"}
+        LOAD_REG --> CLASSIFY{"enrich_call_graph<br/>against registry"}
         CLASSIFY -->|"Classifier match"| KNOWN_UR["known-unreachable<br/>(completed immediately)"]
         CLASSIFY -->|"No match"| LLM_TRIAGE["llm-triage<br/>(pending, with diagnostics)"]
         KNOWN_UR --> STATE
