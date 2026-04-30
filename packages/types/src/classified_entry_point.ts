@@ -24,7 +24,8 @@ export interface TraceCallGraphOptions {
 
 /**
  * Classification verdict for a candidate entry point. Mutually exclusive —
- * each entry point carries exactly one classification.
+ * each entry point carries exactly one classification. Every non-`true_entry_point`
+ * verdict carries the matched registry rule's `group_id`.
  */
 export type EntryPointClassification =
   | { readonly kind: "true_entry_point" }
@@ -35,10 +36,15 @@ export type EntryPointClassification =
       /** Human-readable framework label (e.g. "flask", "pytest", "angular"). */
       readonly framework: string;
     }
-  | { readonly kind: "dunder_protocol"; readonly protocol: string }
-  | { readonly kind: "test_only" }
+  | {
+      readonly kind: "dunder_protocol";
+      readonly group_id: string;
+      readonly protocol: string;
+    }
+  | { readonly kind: "test_only"; readonly group_id: string }
   | {
       readonly kind: "indirect_only";
+      readonly group_id: string;
       readonly via: IndirectReachabilityReason;
     };
 

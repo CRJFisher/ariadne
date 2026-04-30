@@ -100,20 +100,16 @@ export function prepare_triage(input: PrepareTriageInput): PrepareTriageReport {
 function collect_auto_hits(enriched: EnrichedCallGraph): ClassifiedEntryPointResult[] {
   const out: ClassifiedEntryPointResult[] = [];
   for (const fp of enriched.classified_entry_points.known_false_positives) {
+    if (fp.classification.kind === "true_entry_point") continue;
     const entry_point = lookup_entry_point(enriched.entry_points_by_id, fp.symbol_id);
-    const group_id = enriched.group_id_by_id.get(fp.symbol_id);
-    if (group_id === undefined) {
-      throw new Error(
-        `prepare_triage: known-FP ${fp.symbol_id} missing group_id_by_id entry — invariant violated`,
-      );
-    }
+    const group_id = fp.classification.group_id;
     out.push({
       entry_point,
       result: {
         auto_classified: true,
         auto_group_id: group_id,
         reasoning: `Matched known-issue: ${group_id}`,
-        classifier_hints: [...(enriched.classifier_hints_by_id.get(fp.symbol_id) ?? [])],
+        classifier_hints: enriched.classifier_hints_by_id.get(fp.symbol_id) ?? [],
       },
     });
   }
@@ -131,7 +127,7 @@ function collect_residual_pool(enriched: EnrichedCallGraph): ResidualEntryPoint[
     const entry_point = lookup_entry_point(enriched.entry_points_by_id, tp.symbol_id);
     out.push({
       entry_point,
-      classifier_hints: [...(enriched.classifier_hints_by_id.get(tp.symbol_id) ?? [])],
+      classifier_hints: enriched.classifier_hints_by_id.get(tp.symbol_id) ?? [],
     });
   }
   return out;
