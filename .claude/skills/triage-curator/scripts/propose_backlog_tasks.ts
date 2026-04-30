@@ -19,8 +19,9 @@
 
 import * as fs from "node:fs/promises";
 
-import type {
-  KnownIssue as SelfRepairKnownIssue,
+import {
+  parse_known_issues_registry_json,
+  type KnownIssue as SelfRepairKnownIssue,
 } from "@ariadnejs/types";
 import { get_registry_file_path } from "../src/paths.js";
 import { propose_backlog_tasks } from "../src/propose_backlog_tasks.js";
@@ -91,9 +92,9 @@ async function main(): Promise<void> {
   const args = parse_argv(process.argv.slice(2));
 
   const registry_path = get_registry_file_path();
-  const registry = JSON.parse(
+  const registry = parse_known_issues_registry_json(
     await fs.readFile(registry_path, "utf8"),
-  ) as SelfRepairKnownIssue[];
+  );
   const prior_counts = await load_prior(args.prior_path);
 
   const result = propose_backlog_tasks({ registry, prior_counts });

@@ -34,41 +34,17 @@ export interface TriageResultsFile {
 }
 
 // ===== Known-issues registry shape (read/write) =====
+//
+// The canonical types live in `@ariadnejs/types`. Re-exported here so the
+// curator's domain-vocabulary imports stay together and so a downstream
+// renaming only has to touch one file.
 
-export type KnownIssueStatus = "permanent" | "wip" | "fixed";
-
-/**
- * Closed enum mirroring `self-repair-pipeline/src/known_issues_types.ts`.
- * The canonical source for validation lives in self-repair-pipeline; this copy
- * is used to type derived language lists on the curator side so authored
- * upserts can't drift from the four supported targets.
- */
-export type KnownIssueLanguage = "typescript" | "javascript" | "python" | "rust";
-
-export interface KnownIssueExample {
-  file: string;
-  line: number;
-  snippet: string;
-}
-
-export interface KnownIssue {
-  group_id: string;
-  title: string;
-  description: string;
-  status: KnownIssueStatus;
-  languages: string[];
-  backlog_task?: string;
-  examples: KnownIssueExample[];
-  classifier: unknown; // opaque to the curator; self-repair-pipeline is authoritative for validation
-  /** Curator-populated tag indicating the classifier is producing too many outliers. */
-  drift_detected?: boolean;
-  /** Cumulative count of false-positive entries observed across curated runs. */
-  observed_count?: number;
-  /** Project names in which this group has been observed at least once. */
-  observed_projects?: string[];
-  /** Run id of the most recent run that observed this group. */
-  last_seen_run?: string;
-}
+export type {
+  KnownIssue,
+  KnownIssueExample,
+  KnownIssueLanguage,
+  KnownIssueStatus,
+} from "@ariadnejs/types";
 
 // ===== Curator state (per-run sentinel files under runs/<id>/finalized.json) =====
 

@@ -97,7 +97,7 @@ async function main(): Promise<void> {
   const registry_path = get_registry_file_path();
   const registry = parse_known_issues_registry_json(
     await fs.readFile(registry_path, "utf8"),
-  ) as unknown as KnownIssue[];
+  );
   const prior_counts = await load_prior(args.prior_path);
 
   const markdown = render_impact_report({

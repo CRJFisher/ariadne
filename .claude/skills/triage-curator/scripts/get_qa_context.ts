@@ -98,7 +98,7 @@ async function main(): Promise<void> {
   }
 
   const registry_raw = await fs.readFile(get_registry_file_path(), "utf8");
-  const registry = parse_known_issues_registry_json(registry_raw) as unknown as KnownIssue[];
+  const registry = parse_known_issues_registry_json(registry_raw);
   const registry_entry = registry.find((e) => e.group_id === group_id) ?? null;
 
   const sampled = sample_members(group.entries, SAMPLE_SIZE);

@@ -49,6 +49,8 @@ export interface KnownIssue {
   observed_count?: number;
   observed_projects?: string[];
   last_seen_run?: string;
+  /** Set by the curator when a classifier's outlier rate breaches the drift threshold. */
+  drift_detected?: boolean;
 }
 
 /**

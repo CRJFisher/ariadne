@@ -155,7 +155,7 @@ async function main(): Promise<void> {
 
   const registry_path = get_registry_file_path();
   const registry_raw = await fs.readFile(registry_path, "utf8");
-  const registry = parse_known_issues_registry_json(registry_raw) as unknown as KnownIssue[];
+  const registry = parse_known_issues_registry_json(registry_raw);
 
   const signal_inventory = await read_optional_file(SIGNAL_INVENTORY_PATH);
 
