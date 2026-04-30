@@ -22,6 +22,7 @@ import * as fsp from "node:fs/promises";
 import * as path from "path";
 
 import {
+  detect_language,
   IGNORED_DIRECTORIES,
   is_test_file,
   load_project,
@@ -30,7 +31,6 @@ import {
   resolve_cache_dir,
 } from "@ariadnejs/core";
 import type { PersistenceStorage } from "@ariadnejs/core";
-import type { Language } from "@ariadnejs/types";
 
 import { load_json } from "../src/analysis_output.js";
 import { load_registry } from "../src/known_issues_registry.js";
@@ -104,18 +104,6 @@ function parse_args(argv: string[]): CliArgs {
   }
 
   return { analysis_path, project, max_count, no_reuse_tp, tp_source_run };
-}
-
-/**
- * Best-effort language detector. Mirrors core's per-extension list so the
- * test-file filter agrees with the indexer.
- */
-function detect_language(file_path: string): Language | null {
-  if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript" as Language;
-  if (file_path.endsWith(".js") || file_path.endsWith(".jsx")) return "javascript" as Language;
-  if (file_path.endsWith(".py")) return "python" as Language;
-  if (file_path.endsWith(".rs")) return "rust" as Language;
-  return null;
 }
 
 /**

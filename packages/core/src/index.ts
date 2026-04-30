@@ -28,6 +28,7 @@ export {
   attach_unindexed_test_grep_hits,
   collect_unindexed_test_files,
   build_class_name_by_constructor_position,
+  detect_language,
   load_permanent_registry,
   PermanentRegistryError,
 } from "./classify_entry_points";

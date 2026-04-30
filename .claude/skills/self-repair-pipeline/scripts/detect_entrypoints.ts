@@ -25,6 +25,7 @@
  */
 
 import {
+  detect_language,
   load_project,
   is_test_file,
   find_source_files,
@@ -40,7 +41,7 @@ import {
   build_class_name_by_constructor_position,
 } from "@ariadnejs/core";
 import type { PersistenceStorage } from "@ariadnejs/core";
-import type { EnrichedEntryPoint, Language } from "@ariadnejs/types";
+import type { EnrichedEntryPoint } from "@ariadnejs/types";
 import { save_json, OutputType } from "../src/analysis_output.js";
 import { load_registry } from "../src/known_issues_registry.js";
 import { path_to_project_id, project_id_from_config } from "../src/project_id.js";
@@ -50,15 +51,6 @@ import * as fs from "fs/promises";
 import * as os from "os";
 import { execSync } from "child_process";
 import "../src/guard_tsx_invocation.js";
-
-/** Best-effort language detector matching the core helper. */
-function detect_language(file_path: string): Language | null {
-  if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript" as Language;
-  if (file_path.endsWith(".js") || file_path.endsWith(".jsx")) return "javascript" as Language;
-  if (file_path.endsWith(".py")) return "python" as Language;
-  if (file_path.endsWith(".rs")) return "rust" as Language;
-  return null;
-}
 
 // ===== Types =====
 
