@@ -485,9 +485,9 @@ async function analyze_directory(
   const enriched = enrich_call_graph(call_graph, project, {
     registry: skill_registry,
   });
-  // `attach_unindexed_test_grep_hits` mutates the entries' diagnostics; spread
-  // the readonly array into a mutable one without losing identity.
-  const entry_points: EnrichedEntryPoint[] = [...enriched.enriched_entry_points];
+  // `attach_unindexed_test_grep_hits` mutates the entries' diagnostics;
+  // materialize a mutable array from the by-id map without losing identity.
+  const entry_points: EnrichedEntryPoint[] = Array.from(enriched.entry_points_by_id.values());
 
   // Second grep pass: scan common test-directory patterns OUTSIDE the indexed
   // scope. Attaches matching call-site hits to

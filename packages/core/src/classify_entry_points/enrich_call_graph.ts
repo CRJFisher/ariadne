@@ -25,7 +25,6 @@ import type {
   ClassifierHint,
   EnrichedEntryPoint,
   EntryPointClassification,
-  EntryPointDiagnostics,
   FilePath,
   KnownIssue,
   KnownIssuesRegistry,
@@ -40,25 +39,16 @@ import { load_permanent_registry } from "./registry_loader";
 export interface EnrichedCallGraph {
   readonly call_graph: CallGraph;
   readonly classified_entry_points: ClassifiedEntryPoints;
-  readonly enriched_entry_points: readonly EnrichedEntryPoint[];
-  readonly diagnostics_by_id: ReadonlyMap<SymbolId, EntryPointDiagnostics>;
+  /** EnrichedEntryPoint indexed by SymbolId so callers can pair classifications with diagnostics. */
+  readonly entry_points_by_id: ReadonlyMap<SymbolId, EnrichedEntryPoint>;
   /**
    * Sub-threshold predicate matches accumulated during classification, keyed
    * by entry-point SymbolId. Surfaces to the self-healing pipeline so the
    * residual (LLM-triage) bucket can carry these hints into the agent prompt.
-   * Empty for symbols that hit a classifier (the matching group_id is in
-   * `classified_entry_points.known_false_positives` instead).
+   * Empty for symbols that hit a classifier (the matching group_id is on
+   * `classified_entry_points.known_false_positives[i].classification.group_id`).
    */
   readonly classifier_hints_by_id: ReadonlyMap<SymbolId, readonly ClassifierHint[]>;
-  /** EnrichedEntryPoint indexed by SymbolId so callers can pair classifications with diagnostics. */
-  readonly entry_points_by_id: ReadonlyMap<SymbolId, EnrichedEntryPoint>;
-  /**
-   * Matched-rule `group_id` per known-FP symbol. Surfaces to the self-healing
-   * pipeline so the auto-classified bucket can persist `auto_group_id` even
-   * for classification kinds (`dunder_protocol`, `test_only`, `indirect_only`)
-   * that drop the group_id from their public shape.
-   */
-  readonly group_id_by_id: ReadonlyMap<SymbolId, string>;
 }
 
 export interface EnrichCallGraphOptions {
@@ -109,10 +99,8 @@ export function enrich_call_graph(
 
   const true_entry_points: ClassifiedEntryPoint[] = [];
   const known_false_positives: ClassifiedEntryPoint[] = [];
-  const diagnostics_by_id = new Map<SymbolId, EntryPointDiagnostics>();
   const classifier_hints_by_id = new Map<SymbolId, readonly ClassifierHint[]>();
   const entry_points_by_id = new Map<SymbolId, EnrichedEntryPoint>();
-  const group_id_by_id = new Map<SymbolId, string>();
 
   for (const { entry_point, result } of classified_results) {
     const key = `${entry_point.file_path}:${entry_point.start_line}:${entry_point.name}`;
@@ -122,7 +110,6 @@ export function enrich_call_graph(
     if (used >= candidates.length) continue;
     const symbol_id = candidates[used];
     consumed_at_position.set(key, used + 1);
-    diagnostics_by_id.set(symbol_id, entry_point.diagnostics);
     entry_points_by_id.set(symbol_id, entry_point);
     classifier_hints_by_id.set(symbol_id, result.classifier_hints);
 
@@ -137,7 +124,6 @@ export function enrich_call_graph(
     const issue = issues_by_id.get(result.auto_group_id);
     const classification = build_classification(entry_point, issue, result.auto_group_id);
     known_false_positives.push({ symbol_id, classification });
-    group_id_by_id.set(symbol_id, result.auto_group_id);
   }
 
   return {
@@ -146,11 +132,8 @@ export function enrich_call_graph(
       true_entry_points,
       known_false_positives,
     },
-    enriched_entry_points,
-    diagnostics_by_id,
-    classifier_hints_by_id,
     entry_points_by_id,
-    group_id_by_id,
+    classifier_hints_by_id,
   };
 }
 
@@ -188,12 +171,13 @@ function build_classification(
     case "framework_invoked":
       return { kind: "framework_invoked", group_id, framework: meta.framework };
     case "dunder_protocol":
-      return { kind: "dunder_protocol", protocol: entry_point.name };
+      return { kind: "dunder_protocol", group_id, protocol: entry_point.name };
     case "test_only":
-      return { kind: "test_only" };
+      return { kind: "test_only", group_id };
     case "indirect_only":
       return {
         kind: "indirect_only",
+        group_id,
         via: { type: "function_reference", read_location: entry_point_location(entry_point) },
       };
   }
