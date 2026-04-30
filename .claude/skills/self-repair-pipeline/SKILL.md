@@ -19,7 +19,7 @@ Each invocation produces a self-contained run under `triage_state/<project>/runs
 | Phase          | Script / Agent                       | Purpose                                                              |
 | -------------- | ------------------------------------ | -------------------------------------------------------------------- |
 | 1. Detect      | `scripts/detect_entrypoints.ts`      | Run entry point detection                                            |
-| 2. Prepare     | `scripts/prepare_triage.ts`          | Auto-classify against the known-issues registry, build triage state  |
+| 2. Prepare     | `scripts/prepare_triage.ts`          | Classify against the known-issues registry via `enrich_call_graph`, build triage state |
 | 3. Triage Loop | triage-investigator                  | Investigate pending (residual) entries with a continuous worker pool |
 | 4. Aggregate   | rough-aggregator, group-investigator | Group false positives by root cause, verify membership               |
 | 5. Finalize    | `scripts/finalize_triage.ts`         | Save triage-results JSON                                             |

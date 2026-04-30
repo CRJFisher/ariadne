@@ -99,8 +99,7 @@
             },
             {
               "op": "decorator_matches",
-              "pattern": "@property",
-              "compiled_pattern": {}
+              "pattern": "@property"
             }
           ]
         }
@@ -138,8 +137,7 @@
             },
             {
               "op": "grep_line_regex",
-              "pattern": "[A-Za-z_][A-Za-z0-9_]*!\\s*[\\(\\[{]",
-              "compiled_pattern": {}
+              "pattern": "[A-Za-z_][A-Za-z0-9_]*!\\s*[\\(\\[{]"
             }
           ]
         }
@@ -177,8 +175,7 @@
             },
             {
               "op": "decorator_matches",
-              "pattern": "@pytest.fixture*",
-              "compiled_pattern": {}
+              "pattern": "@pytest.fixture*"
             }
           ]
         }
@@ -216,8 +213,7 @@
             },
             {
               "op": "decorator_matches",
-              "pattern": "@*.route*",
-              "compiled_pattern": {}
+              "pattern": "@*.route*"
             }
           ]
         }
@@ -249,8 +245,7 @@
         "min_confidence": 0.95,
         "expression": {
           "op": "decorator_matches",
-          "pattern": "@Component*",
-          "compiled_pattern": {}
+          "pattern": "@Component*"
         }
       },
       "classification": {

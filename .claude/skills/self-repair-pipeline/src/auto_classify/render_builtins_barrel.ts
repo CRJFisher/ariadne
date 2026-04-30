@@ -33,9 +33,10 @@ export function collect_barrel_entries(
 }
 
 /**
- * Render a barrel file whose location is `auto_classify/builtins/index.ts`.
- * Sibling `check_<group_id>.ts` files and parent-dir type imports are resolved
- * relative to that path.
+ * Render a barrel file whose target location is
+ * `packages/core/src/classify_entry_points/builtins/index.ts`. Sibling
+ * `check_<group_id>.ts` files and the `../auto_classify_types` import are
+ * resolved relative to that path.
  */
 export function render_builtins_barrel(registry: readonly KnownIssue[]): string {
   const entries = collect_barrel_entries(registry);

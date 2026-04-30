@@ -103,13 +103,14 @@ function collect_auto_hits(enriched: EnrichedCallGraph): ClassifiedEntryPointRes
     if (fp.classification.kind === "true_entry_point") continue;
     const entry_point = lookup_entry_point(enriched.entry_points_by_id, fp.symbol_id);
     const group_id = fp.classification.group_id;
+    const hints = enriched.classifier_hints_by_id.get(fp.symbol_id);
     out.push({
       entry_point,
       result: {
         auto_classified: true,
         auto_group_id: group_id,
         reasoning: `Matched known-issue: ${group_id}`,
-        classifier_hints: enriched.classifier_hints_by_id.get(fp.symbol_id) ?? [],
+        classifier_hints: hints === undefined ? [] : [...hints],
       },
     });
   }
@@ -125,9 +126,10 @@ function collect_residual_pool(enriched: EnrichedCallGraph): ResidualEntryPoint[
   const out: ResidualEntryPoint[] = [];
   for (const tp of enriched.classified_entry_points.true_entry_points) {
     const entry_point = lookup_entry_point(enriched.entry_points_by_id, tp.symbol_id);
+    const hints = enriched.classifier_hints_by_id.get(tp.symbol_id);
     out.push({
       entry_point,
-      classifier_hints: enriched.classifier_hints_by_id.get(tp.symbol_id) ?? [],
+      classifier_hints: hints === undefined ? [] : [...hints],
     });
   }
   return out;
