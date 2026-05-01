@@ -202,7 +202,7 @@ null` and write a full task body.
 
 When `proposed_classifier.kind === "builtin"`, emit a `classifier_spec`
 describing the classifier as structured data. The main agent renders it
-to `.claude/skills/self-repair-pipeline/src/auto_classify/builtins/check_<group_id>.ts`
+to `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`
 in Step 4.5 via a deterministic template; you do not author source.
 
 ```json

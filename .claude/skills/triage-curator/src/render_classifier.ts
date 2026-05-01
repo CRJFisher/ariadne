@@ -1,6 +1,6 @@
 /**
  * Renders a BuiltinClassifierSpec into a complete TypeScript module body for
- * `self-repair-pipeline/src/auto_classify/builtins/check_<group_id>.ts`.
+ * `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
  *
  * The renderer is pure, deterministic, and exhaustive over `SignalCheck.op`.
  * Unknown ops throw — the dispatcher treats a throw as a Step 4.5 authoring
@@ -44,8 +44,8 @@ export function render_classifier(spec: BuiltinClassifierSpec): string {
     lines.push(`// ${desc_line}`);
   }
   lines.push("");
-  lines.push("import type { EnrichedEntryPoint } from \"../../entry_point_types.js\";");
-  lines.push("import type { FileLinesReader } from \"../types.js\";");
+  lines.push("import type { EnrichedEntryPoint } from \"@ariadnejs/types\";");
+  lines.push("import type { FileLinesReader } from \"../auto_classify_types\";");
   lines.push("");
 
   if (helpers.detect_language) {

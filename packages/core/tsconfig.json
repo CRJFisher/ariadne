@@ -9,7 +9,6 @@
   },
   "include": [
     "src/**/*.ts",
-    "src/**/*.json",
     "tests/**/*.ts",
     "tests/**/*.json",
     "tree_sitter_grammars.d.ts"

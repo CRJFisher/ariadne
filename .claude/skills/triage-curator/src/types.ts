@@ -1,4 +1,4 @@
-// ===== Triage results shape (read-only, mirrors self-repair-pipeline canonical output) =====
+// ===== Triage results shape (read-only) =====
 //
 // Schema v2 fields: `schema_version`, `project_path`, `commit_hash` on the file;
 // `kind` on every entry. `file_path` is relative to `project_path`.
@@ -35,9 +35,9 @@ export interface TriageResultsFile {
 
 // ===== Known-issues registry shape (read/write) =====
 //
-// The canonical types live in `@ariadnejs/types`. Re-exported here so the
-// curator's domain-vocabulary imports stay together and so a downstream
-// renaming only has to touch one file.
+// Canonical types live in `@ariadnejs/types`. Re-exported here so the
+// curator's domain-vocabulary imports stay grouped and a downstream rename
+// only touches one file.
 
 export type {
   KnownIssue,
@@ -115,9 +115,9 @@ export interface QaResponse {
 }
 
 /**
- * Curator-emitted classifier shape. Mirrors `ClassifierSpec` in self-repair-pipeline
- * but narrowed: the curator only emits "none" (retire) or "builtin" (author source).
- * Hand-authored predicate classifiers exist in the registry but are not produced here.
+ * Classifier shape the curator emits per investigated group. `kind: "none"`
+ * retires a classifier; `kind: "builtin"` authors a check function. Predicate
+ * classifiers are hand-authored directly in the registry.
  */
 export type ClassifierSpecProposal =
   | { kind: "none" }

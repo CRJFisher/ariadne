@@ -141,7 +141,9 @@ export function render_task_body(issue: SelfRepairKnownIssue): string {
   );
   parts.push(
     "- [ ] Remove the classifier entry from " +
-      "`.claude/skills/self-repair-pipeline/known_issues/registry.json` (or flip status to `fixed`).",
+      "`.claude/skills/self-repair-pipeline/known_issues/registry.json` (or flip status to `fixed`); " +
+      "run `pnpm sync-permanent-rules` to regenerate " +
+      "`packages/core/src/classify_entry_points/permanent_data.ts`.",
   );
   parts.push(
     "- [ ] Add a regression test reproducing the observed examples; confirm the fix covers them.",

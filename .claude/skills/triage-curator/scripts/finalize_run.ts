@@ -27,11 +27,7 @@ import {
   render_all as render_unsupported_features_all,
   write_outputs as write_unsupported_features_outputs,
 } from "../../self-repair-pipeline/scripts/render_unsupported_features.js";
-import {
-  BARREL_PATH,
-  PERMANENT_JSON_PATH,
-  sync_permanent_rules,
-} from "../../self-repair-pipeline/scripts/sync_permanent_rules.js";
+import { sync_permanent_rules } from "../../self-repair-pipeline/scripts/sync_permanent_rules.js";
 import {
   parse_known_issues_registry_json,
 } from "@ariadnejs/types";
@@ -41,6 +37,9 @@ import {
   CURATOR_RUNS_DIR,
   derive_project,
   derive_run_id,
+  get_core_builtins_barrel_path,
+  get_core_builtins_dir,
+  get_permanent_slice_path,
   get_registry_file_path,
   run_output_dir,
 } from "../src/paths.js";
@@ -301,8 +300,17 @@ async function main(): Promise<void> {
     result.authored_files,
   );
   const deleted_orphan_files: string[] = [];
+  const refused_orphan_paths: string[] = [];
   if (!dry_run) {
+    const builtins_dir_with_sep = get_core_builtins_dir() + path.sep;
     for (const orphan_path of orphan_candidates) {
+      // Cross-package destructive write: refuse to unlink anything that did
+      // not land under the core builtins directory. A malformed authored-files
+      // map otherwise becomes an arbitrary-delete primitive.
+      if (!orphan_path.startsWith(builtins_dir_with_sep)) {
+        refused_orphan_paths.push(orphan_path);
+        continue;
+      }
       try {
         await fs.unlink(orphan_path);
         deleted_orphan_files.push(orphan_path);
@@ -325,8 +333,8 @@ async function main(): Promise<void> {
     const outputs = render_unsupported_features_all(registry_after);
     derived_files.push(...write_unsupported_features_outputs(outputs));
     await sync_permanent_rules();
-    derived_files.push(PERMANENT_JSON_PATH);
-    derived_files.push(BARREL_PATH);
+    derived_files.push(get_permanent_slice_path());
+    derived_files.push(get_core_builtins_barrel_path());
   }
 
   const sessions = aggregate_session_logs(session_logs);
@@ -363,6 +371,7 @@ async function main(): Promise<void> {
     investigated_groups: outcome_entry.outcome.investigated_groups,
     authored_files: [...result.authored_files, ...derived_files],
     deleted_orphan_files,
+    refused_orphan_paths,
     failed_authoring,
     skipped_permanent_upserts: result.skipped_permanent_upserts,
     drift_tagged_groups: result.drift_tagged_groups,
