@@ -1,0 +1,7 @@
+# Mark auto-generated artifacts so GitHub collapses them in diffs and Linguist
+# excludes them from language stats. Source-of-truth for the slice + barrel is
+# `.claude/skills/self-repair-pipeline/known_issues/registry.json`; regenerate
+# via `pnpm sync-permanent-rules`.
+packages/core/src/classify_entry_points/permanent_data.ts linguist-generated=true
+packages/core/src/classify_entry_points/builtins/index.ts linguist-generated=true
+packages/core/src/classify_entry_points/builtins/check_*.ts linguist-generated=true

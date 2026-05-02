@@ -121,6 +121,15 @@ function strip_runtime_only_fields(issue: KnownIssue): KnownIssue {
   };
 }
 
+/**
+ * Walk every node in a predicate tree, returning a structurally-equivalent
+ * copy with the runtime-injected `compiled_pattern` field stripped from
+ * regex-bearing leaves. Combinators recurse; non-regex leaves pass through
+ * unchanged. The exhaustive switch forces a sync-script update whenever a
+ * new `PredicateOperator` lands — falling through `default: return expr`
+ * would silently leak any future regex-bearing op's `compiled_pattern` into
+ * the published slice.
+ */
 function strip_compiled_pattern(expr: PredicateExpr): PredicateExpr {
   switch (expr.op) {
     case "all":
@@ -133,9 +142,24 @@ function strip_compiled_pattern(expr: PredicateExpr): PredicateExpr {
       return { op: expr.op, pattern: expr.pattern };
     case "grep_hit_neighbourhood_matches":
       return { op: expr.op, pattern: expr.pattern, window: expr.window };
-    default:
+    case "diagnosis_eq":
+    case "language_eq":
+    case "has_capture_at_grep_hit":
+    case "missing_capture_at_grep_hit":
+    case "resolution_failure_reason_eq":
+    case "receiver_kind_eq":
+    case "syntactic_feature_eq":
+    case "grep_hits_all_intra_file":
+    case "definition_feature_eq":
+    case "accessor_kind_eq":
+    case "has_unindexed_test_caller":
       return expr;
   }
+  // Force exhaustiveness: a new `PredicateOperator` lands → tsc compile error
+  // here, prompting the sync-script author to decide whether the new op
+  // carries a regex (and therefore needs stripping).
+  const _exhaustive: never = expr;
+  return _exhaustive;
 }
 
 async function main(): Promise<void> {

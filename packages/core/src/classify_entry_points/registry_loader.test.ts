@@ -1,41 +1,52 @@
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, beforeEach } from "vitest";
 import type { KnownIssue } from "@ariadnejs/types";
 import {
   load_permanent_registry,
   PermanentRegistryError,
   reset_permanent_registry_cache_for_tests,
+  validate_permanent_slice,
 } from "./registry_loader";
-import { PERMANENT_REGISTRY } from "./registry_permanent";
 
 describe("registry_loader", () => {
   beforeEach(() => {
     reset_permanent_registry_cache_for_tests();
   });
 
-  it("loads the bundled permanent slice", () => {
+  it("loads the bundled permanent slice with only permanent + non-none rules", () => {
     const registry = load_permanent_registry();
     expect(registry.length).toBeGreaterThan(0);
-    // Every loaded rule is permanent and has a non-`none` classifier.
     for (const issue of registry) {
-      expect(issue.status).toBe("permanent");
-      expect(issue.classifier.kind).not.toBe("none");
+      expect(issue.status).toEqual("permanent");
+      expect(issue.classifier.kind === "none").toEqual(false);
     }
   });
 
   it("includes the py-dunder-protocol rule that replaces filter_entry_points.python.ts", () => {
     const registry = load_permanent_registry();
     const dunder = registry.find((i) => i.group_id === "py-dunder-protocol");
-    expect(dunder).toBeDefined();
-    expect(dunder!.classifier.kind).toBe("builtin");
+    if (!dunder) throw new Error("py-dunder-protocol not present in bundled slice");
+    expect(dunder.classifier.kind).toEqual("builtin");
   });
 
   it("pre-compiles regex patterns on predicate nodes", () => {
     const registry = load_permanent_registry();
-    const py_property = registry.find((i) => i.group_id === "py-property-decorator-access");
-    expect(py_property).toBeDefined();
-    const expr = (py_property!.classifier as { expression: { of: { compiled_pattern?: RegExp; op: string }[] } }).expression;
-    const decorator_node = expr.of.find((n) => n.op === "decorator_matches");
-    expect(decorator_node?.compiled_pattern).toBeInstanceOf(RegExp);
+    const py_property = registry.find(
+      (i) => i.group_id === "py-property-decorator-access",
+    );
+    if (!py_property) throw new Error("py-property-decorator-access missing");
+    if (py_property.classifier.kind !== "predicate") {
+      throw new Error("py-property-decorator-access: expected predicate classifier");
+    }
+    const expression = py_property.classifier.expression;
+    if (expression.op !== "all" && expression.op !== "any") {
+      throw new Error(`expected combinator at root, got op=${expression.op}`);
+    }
+    const decorator_node = expression.of.find((n) => n.op === "decorator_matches");
+    if (decorator_node === undefined || decorator_node.op !== "decorator_matches") {
+      throw new Error("decorator_matches node missing from expression");
+    }
+    expect(decorator_node.compiled_pattern instanceof RegExp).toEqual(true);
+    expect(decorator_node.compiled_pattern?.source).toEqual(decorator_node.pattern);
   });
 
   it("returns the same registry instance on repeated calls (cache hit)", () => {
@@ -45,28 +56,17 @@ describe("registry_loader", () => {
   });
 });
 
-describe("registry_loader — defense-in-depth", () => {
-  let restored: KnownIssue[];
+describe("validate_permanent_slice — pure validator", () => {
+  // Pure function — operates on the synthetic input, no module-level state.
+  // Each test constructs the slice it wants to assert against; no mutation
+  // of the bundled `PERMANENT_REGISTRY` constant required.
 
-  beforeEach(() => {
-    reset_permanent_registry_cache_for_tests();
-    // Snapshot the bundled slice so each negative test can mutate the
-    // module-level constant and restore it after the assertion.
-    restored = [...PERMANENT_REGISTRY];
-  });
-
-  afterEach(() => {
-    PERMANENT_REGISTRY.length = 0;
-    PERMANENT_REGISTRY.push(...restored);
-    reset_permanent_registry_cache_for_tests();
-  });
-
-  it("rejects a synthetic non-permanent rule injected into the bundled slice", () => {
-    PERMANENT_REGISTRY.push({
-      group_id: "synthetic-wip-rule",
-      title: "synthetic",
-      description: "synthetic",
-      status: "wip",
+  function make_permanent_predicate_rule(group_id: string): KnownIssue {
+    return {
+      group_id,
+      title: group_id,
+      description: group_id,
+      status: "permanent",
       languages: ["typescript"],
       examples: [],
       classifier: {
@@ -75,22 +75,35 @@ describe("registry_loader — defense-in-depth", () => {
         expression: { op: "diagnosis_eq", value: "no-textual-callers" },
         min_confidence: 1.0,
       },
-    });
-    expect(() => load_permanent_registry()).toThrow(PermanentRegistryError);
-    expect(() => load_permanent_registry()).toThrow(/non-permanent/);
+    };
+  }
+
+  it("accepts a slice of permanent + non-none rules", () => {
+    const slice: readonly KnownIssue[] = [make_permanent_predicate_rule("ok-1")];
+    expect(() => validate_permanent_slice(slice)).not.toThrow();
   });
 
-  it("rejects a synthetic kind:\"none\" rule injected into the bundled slice", () => {
-    PERMANENT_REGISTRY.push({
-      group_id: "synthetic-kind-none-rule",
-      title: "synthetic",
-      description: "synthetic",
-      status: "permanent",
-      languages: ["typescript"],
-      examples: [],
-      classifier: { kind: "none" },
-    });
-    expect(() => load_permanent_registry()).toThrow(PermanentRegistryError);
-    expect(() => load_permanent_registry()).toThrow(/kind:"none"/);
+  it("rejects a synthetic non-permanent rule with PermanentRegistryError", () => {
+    const slice: readonly KnownIssue[] = [
+      { ...make_permanent_predicate_rule("synthetic-wip-rule"), status: "wip" },
+    ];
+    expect(() => validate_permanent_slice(slice)).toThrow(PermanentRegistryError);
+    expect(() => validate_permanent_slice(slice)).toThrow(/non-permanent/);
+  });
+
+  it('rejects a synthetic kind:"none" rule with PermanentRegistryError', () => {
+    const slice: readonly KnownIssue[] = [
+      {
+        group_id: "synthetic-kind-none-rule",
+        title: "synthetic",
+        description: "synthetic",
+        status: "permanent",
+        languages: ["typescript"],
+        examples: [],
+        classifier: { kind: "none" },
+      },
+    ];
+    expect(() => validate_permanent_slice(slice)).toThrow(PermanentRegistryError);
+    expect(() => validate_permanent_slice(slice)).toThrow(/kind:"none"/);
   });
 });

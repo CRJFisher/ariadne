@@ -23,6 +23,13 @@ interface HelperRequirements {
   extract_decorator_block: boolean;
   /** True if any check uses read_file_lines — prevents an unused-parameter warning. */
   uses_read_file_lines: boolean;
+  /**
+   * Regex patterns hoisted to module-level constants in render order. Each
+   * `RE_<i>` is `new RegExp(pattern)` evaluated at module load, replacing the
+   * per-call `new RegExp(...)` constructions across all check ops that read a
+   * fixed pattern. Index = position in this array.
+   */
+  hoisted_patterns: string[];
 }
 
 export function render_classifier(spec: BuiltinClassifierSpec): string {
@@ -31,6 +38,7 @@ export function render_classifier(spec: BuiltinClassifierSpec): string {
     detect_language: false,
     extract_decorator_block: false,
     uses_read_file_lines: false,
+    hoisted_patterns: [],
   };
 
   const check_exprs = spec.checks.map((c) => render_check(c, helpers));
@@ -46,20 +54,16 @@ export function render_classifier(spec: BuiltinClassifierSpec): string {
   lines.push("");
   lines.push("import type { EnrichedEntryPoint } from \"@ariadnejs/types\";");
   lines.push("import type { FileLinesReader } from \"../auto_classify_types\";");
-  lines.push("");
-
+  // `detect_language` is the canonical helper exported from the diagnostics
+  // extractor in core. Importing it here (instead of inlining) keeps every
+  // generated builtin aligned with its `.mjs` / `.cjs` widening — see
+  // commit `da630f8b` for the dedup across skill consumers.
   if (helpers.detect_language) {
     lines.push(
-      "function detect_language(file_path: string): string | null {",
-      "  if (file_path.endsWith(\".ts\") || file_path.endsWith(\".tsx\")) return \"typescript\";",
-      "  if (file_path.endsWith(\".js\") || file_path.endsWith(\".jsx\")) return \"javascript\";",
-      "  if (file_path.endsWith(\".py\")) return \"python\";",
-      "  if (file_path.endsWith(\".rs\")) return \"rust\";",
-      "  return null;",
-      "}",
-      "",
+      "import { detect_language } from \"../extract_entry_point_diagnostics\";",
     );
   }
+  lines.push("");
   if (helpers.extract_decorator_block) {
     lines.push(
       "function extract_decorator_block(",
@@ -81,6 +85,16 @@ export function render_classifier(spec: BuiltinClassifierSpec): string {
       "}",
       "",
     );
+  }
+
+  // Module-level hoisted patterns. Compiling at module load (instead of on
+  // every entry-point evaluation) saves ~25-50k `new RegExp(...)` allocations
+  // per pipeline run on the largest fixtures.
+  if (helpers.hoisted_patterns.length > 0) {
+    for (let i = 0; i < helpers.hoisted_patterns.length; i++) {
+      lines.push(`const RE_${i} = new RegExp(${helpers.hoisted_patterns[i]});`);
+    }
+    lines.push("");
   }
 
   lines.push(`export function ${spec.function_name}(`);
@@ -129,20 +143,20 @@ function render_check(check: SignalCheck, helpers: HelperRequirements): string {
       );
 
     case "grep_line_regex": {
-      const re = JSON.stringify(check.pattern);
-      // Compile once per check evaluation, not per grep hit.
+      const idx = helpers.hoisted_patterns.length;
+      helpers.hoisted_patterns.push(JSON.stringify(check.pattern));
       return (
-        `(() => { const pattern = new RegExp(${re}); ` +
-        "return entry_point.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })()"
+        `entry_point.diagnostics.grep_call_sites.some((h) => RE_${idx}.test(h.content))`
       );
     }
 
     case "decorator_matches": {
       helpers.extract_decorator_block = true;
       helpers.uses_read_file_lines = true;
-      const re = JSON.stringify(check.pattern);
+      const idx = helpers.hoisted_patterns.length;
+      helpers.hoisted_patterns.push(JSON.stringify(check.pattern));
       return (
-        `new RegExp(${re}).test(extract_decorator_block(` +
+        `RE_${idx}.test(extract_decorator_block(` +
         "read_file_lines(entry_point.file_path), entry_point.start_line))"
       );
     }
@@ -178,13 +192,15 @@ function render_check(check: SignalCheck, helpers: HelperRequirements): string {
       return `entry_point.diagnostics.ariadne_call_refs.length <= ${check.n}`;
 
     case "file_path_matches": {
-      const re = JSON.stringify(check.pattern);
-      return `new RegExp(${re}).test(entry_point.file_path)`;
+      const idx = helpers.hoisted_patterns.length;
+      helpers.hoisted_patterns.push(JSON.stringify(check.pattern));
+      return `RE_${idx}.test(entry_point.file_path)`;
     }
 
     case "name_matches": {
-      const re = JSON.stringify(check.pattern);
-      return `new RegExp(${re}).test(entry_point.name)`;
+      const idx = helpers.hoisted_patterns.length;
+      helpers.hoisted_patterns.push(JSON.stringify(check.pattern));
+      return `RE_${idx}.test(entry_point.name)`;
     }
 
     case "grep_hits_all_intra_file": {
@@ -198,18 +214,16 @@ function render_check(check: SignalCheck, helpers: HelperRequirements): string {
 
     case "grep_hit_neighbourhood_matches": {
       helpers.uses_read_file_lines = true;
-      const re = JSON.stringify(check.pattern);
+      const idx = helpers.hoisted_patterns.length;
+      helpers.hoisted_patterns.push(JSON.stringify(check.pattern));
       const window = check.window;
-      // Compile the regex once outside the per-line loop so we don't re-parse
-      // it for every line of every grep hit.
       return (
-        `(() => { const pattern = new RegExp(${re}); ` +
-        "return entry_point.diagnostics.grep_call_sites.some((h) => { " +
+        "entry_point.diagnostics.grep_call_sites.some((h) => { " +
         "const lines = read_file_lines(h.file_path); " +
         `const start = Math.max(0, h.line - 1 - ${window}); ` +
         "for (let i = start; i < h.line - 1; i++) { " +
-        "if (pattern.test(lines[i] ?? \"\")) return true; " +
-        "} return false; }); })()"
+        `if (RE_${idx}.test(lines[i] ?? "")) return true; ` +
+        "} return false; })"
       );
     }
 

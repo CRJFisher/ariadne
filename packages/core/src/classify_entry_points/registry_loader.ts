@@ -8,12 +8,17 @@
  * the slice is a `.ts` module, tsc emits it into `dist/` as part of the normal
  * build — no separate copy step is needed.
  *
- * On first call we deep-clone and pre-compile regex patterns onto each
- * predicate node so `predicate_evaluator` can read `compiled_pattern`
- * without re-parsing.
+ * On first call we structurally-clone the bundled slice and pre-compile each
+ * predicate's regex pattern. Cloning is a typed pure function (no JSON
+ * round-trip) so non-serializable fields can never be silently dropped.
  */
 
-import type { KnownIssue, KnownIssuesRegistry, PredicateExpr } from "@ariadnejs/types";
+import type {
+  ClassifierSpec,
+  KnownIssue,
+  KnownIssuesRegistry,
+  PredicateExpr,
+} from "@ariadnejs/types";
 import { KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION } from "@ariadnejs/types";
 import { PERMANENT_REGISTRY, PERMANENT_REGISTRY_SCHEMA_VERSION } from "./registry_permanent";
 
@@ -36,6 +41,17 @@ export function load_permanent_registry(): KnownIssuesRegistry {
   if (permanent_registry_cache !== null) {
     return permanent_registry_cache;
   }
+  validate_permanent_slice(PERMANENT_REGISTRY);
+  permanent_registry_cache = PERMANENT_REGISTRY.map(clone_with_compiled_pattern);
+  return permanent_registry_cache;
+}
+
+/**
+ * Cross-check the slice against the published schema version and reject
+ * non-permanent or `kind: "none"` rules. Pure — no caching or mutation —
+ * so tests can call it directly against a synthetic slice.
+ */
+export function validate_permanent_slice(rules: readonly KnownIssue[]): void {
   if (PERMANENT_REGISTRY_SCHEMA_VERSION !== KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION) {
     throw new PermanentRegistryError(
       `bundled permanent slice schema_version ${PERMANENT_REGISTRY_SCHEMA_VERSION} ` +
@@ -43,19 +59,9 @@ export function load_permanent_registry(): KnownIssuesRegistry {
         "regenerate via `pnpm sync-permanent-rules`",
     );
   }
-  for (const issue of PERMANENT_REGISTRY) {
+  for (const issue of rules) {
     assert_permanent_non_none(issue);
   }
-  // Deep-clone so the in-place regex compilation does not mutate the
-  // exported module constant (which would defeat HMR / repeated loads).
-  const cloned: KnownIssuesRegistry = JSON.parse(JSON.stringify(PERMANENT_REGISTRY));
-  for (const issue of cloned) {
-    if (issue.classifier.kind === "predicate") {
-      compile_regex_in_place(issue.classifier.expression);
-    }
-  }
-  permanent_registry_cache = cloned;
-  return cloned;
 }
 
 function assert_permanent_non_none(issue: KnownIssue): void {
@@ -73,25 +79,61 @@ function assert_permanent_non_none(issue: KnownIssue): void {
   }
 }
 
-function compile_regex_in_place(expr: PredicateExpr): void {
+/**
+ * Return a fresh `KnownIssue` whose predicate expression has `compiled_pattern`
+ * pre-attached on every regex-bearing leaf. Pure: callers receive a tree that
+ * shares no mutable substructure with `PERMANENT_REGISTRY`, so an HMR reload
+ * (or a test that swaps the slice) cannot leak a `RegExp` back into the
+ * exported module constant.
+ */
+function clone_with_compiled_pattern(issue: KnownIssue): KnownIssue {
+  return { ...issue, classifier: clone_classifier(issue.classifier) };
+}
+
+function clone_classifier(spec: ClassifierSpec): ClassifierSpec {
+  if (spec.kind !== "predicate") return { ...spec };
+  return { ...spec, expression: clone_expr_with_compiled_pattern(spec.expression) };
+}
+
+function clone_expr_with_compiled_pattern(expr: PredicateExpr): PredicateExpr {
   switch (expr.op) {
     case "all":
     case "any":
-      for (const child of expr.of) compile_regex_in_place(child);
-      return;
+      return { op: expr.op, of: expr.of.map(clone_expr_with_compiled_pattern) };
     case "not":
-      compile_regex_in_place(expr.of);
-      return;
+      return { op: "not", of: clone_expr_with_compiled_pattern(expr.of) };
     case "decorator_matches":
     case "grep_line_regex":
+      return {
+        op: expr.op,
+        pattern: expr.pattern,
+        compiled_pattern: new RegExp(expr.pattern),
+      };
     case "grep_hit_neighbourhood_matches":
-      // Mutate in place — the registry-load contract documented in the skill
-      // is that consumers may read `compiled_pattern` without re-parsing.
-      expr.compiled_pattern = new RegExp(expr.pattern);
-      return;
-    default:
-      return;
+      return {
+        op: expr.op,
+        pattern: expr.pattern,
+        window: expr.window,
+        compiled_pattern: new RegExp(expr.pattern),
+      };
+    case "diagnosis_eq":
+    case "language_eq":
+    case "has_capture_at_grep_hit":
+    case "missing_capture_at_grep_hit":
+    case "resolution_failure_reason_eq":
+    case "receiver_kind_eq":
+    case "syntactic_feature_eq":
+    case "grep_hits_all_intra_file":
+    case "definition_feature_eq":
+    case "accessor_kind_eq":
+    case "has_unindexed_test_caller":
+      return { ...expr };
   }
+  // Force exhaustiveness: a new `PredicateOperator` lands → tsc compile error
+  // here, prompting the loader author to decide whether the new op carries a
+  // regex.
+  const _exhaustive: never = expr;
+  return _exhaustive;
 }
 
 /**

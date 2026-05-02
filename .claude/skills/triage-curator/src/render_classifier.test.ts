@@ -267,15 +267,21 @@ describe("render_classifier", () => {
     }
   });
 
-  it("emits detect_language helper only when needed", () => {
+  it("imports detect_language from core only when needed", () => {
+    // The renderer used to inline a copy of `detect_language` in every
+    // generated builtin (~340 lines of duplication across the registry).
+    // It now imports the canonical helper from the core diagnostics module.
     const without_helper = render_classifier(
       make_spec({ checks: [{ op: "name_matches", pattern: "x" }] }),
     );
-    expect(without_helper).not.toContain("function detect_language");
+    expect(without_helper).not.toContain("detect_language");
     const with_helper = render_classifier(
       make_spec({ checks: [{ op: "language_eq", value: "rust" }] }),
     );
-    expect(with_helper).toContain("function detect_language");
+    expect(with_helper).toContain(
+      'import { detect_language } from "../extract_entry_point_diagnostics";',
+    );
+    expect(with_helper).not.toContain("function detect_language");
     assert_syntactically_valid(without_helper);
     assert_syntactically_valid(with_helper);
   });

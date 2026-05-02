@@ -5,14 +5,7 @@
 
 import type { EnrichedEntryPoint } from "@ariadnejs/types";
 import type { FileLinesReader } from "../auto_classify_types";
-
-function detect_language(file_path: string): string | null {
-  if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) return "typescript";
-  if (file_path.endsWith(".js") || file_path.endsWith(".jsx")) return "javascript";
-  if (file_path.endsWith(".py")) return "python";
-  if (file_path.endsWith(".rs")) return "rust";
-  return null;
-}
+import { detect_language } from "../extract_entry_point_diagnostics";
 
 export function check_aliased_import_method_dispatch(
   entry_point: EnrichedEntryPoint,

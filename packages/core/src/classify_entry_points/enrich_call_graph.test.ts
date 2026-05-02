@@ -162,4 +162,191 @@ describe("enrich_call_graph", () => {
     expect(enriched.classified_entry_points.known_false_positives.length).toBe(0);
     expect(enriched.classified_entry_points.true_entry_points.length).toBeGreaterThan(0);
   });
+
+  it("emits framework_invoked classification with framework and group_id from rule metadata", async () => {
+    const { project } = await make_project_with({
+      "routes.py": "def handler():\n    return 'ok'\n",
+    });
+    const raw = trace_call_graph(project.definitions, project.resolutions);
+    const registry: KnownIssuesRegistry = [
+      {
+        group_id: "flask-route-decorator",
+        title: "Flask route handler",
+        description: "Handlers registered via @app.route are framework-invoked.",
+        status: "permanent",
+        languages: ["python"],
+        examples: [],
+        classifier: {
+          kind: "predicate",
+          axis: "B",
+          expression: { op: "diagnosis_eq", value: "no-textual-callers" },
+          min_confidence: 1.0,
+        },
+        classification: { kind: "framework_invoked", framework: "flask" },
+      },
+    ];
+    const enriched = enrich_call_graph(raw, project, { registry });
+    const fps = enriched.classified_entry_points.known_false_positives;
+    expect(fps.length).toBeGreaterThan(0);
+    for (const fp of fps) {
+      if (fp.classification.kind !== "framework_invoked") continue;
+      expect(fp.classification.framework).toEqual("flask");
+      expect(fp.classification.group_id).toEqual("flask-route-decorator");
+    }
+  });
+
+  it("emits test_only classification carrying the rule's group_id", async () => {
+    const { project } = await make_project_with({
+      "tests/test_x.py": "def helper():\n    return 1\n",
+    });
+    const raw = trace_call_graph(project.definitions, project.resolutions, {
+      include_tests: true,
+    });
+    const registry: KnownIssuesRegistry = [
+      {
+        group_id: "test-only-helpers",
+        title: "Test-only helpers",
+        description: "Helpers that exist only inside tests/ trees.",
+        status: "permanent",
+        languages: ["python"],
+        examples: [],
+        classifier: {
+          kind: "predicate",
+          axis: "C",
+          expression: { op: "diagnosis_eq", value: "no-textual-callers" },
+          min_confidence: 1.0,
+        },
+        classification: { kind: "test_only" },
+      },
+    ];
+    const enriched = enrich_call_graph(raw, project, { registry });
+    const fps = enriched.classified_entry_points.known_false_positives;
+    expect(fps.length).toBeGreaterThan(0);
+    for (const fp of fps) {
+      if (fp.classification.kind !== "test_only") continue;
+      expect(fp.classification.group_id).toEqual("test-only-helpers");
+    }
+  });
+
+  it("emits indirect_only classification with via.type and group_id", async () => {
+    const { project } = await make_project_with({
+      "x.py": "def callback():\n    return 1\n",
+    });
+    const raw = trace_call_graph(project.definitions, project.resolutions);
+    const registry: KnownIssuesRegistry = [
+      {
+        group_id: "function-reference-callback",
+        title: "Function reference passed as callback",
+        description: "Reached only via a stored callable reference.",
+        status: "permanent",
+        languages: ["python"],
+        examples: [],
+        classifier: {
+          kind: "predicate",
+          axis: "B",
+          expression: { op: "diagnosis_eq", value: "no-textual-callers" },
+          min_confidence: 1.0,
+        },
+        classification: { kind: "indirect_only" },
+      },
+    ];
+    const enriched = enrich_call_graph(raw, project, { registry });
+    const fps = enriched.classified_entry_points.known_false_positives;
+    expect(fps.length).toBeGreaterThan(0);
+    for (const fp of fps) {
+      if (fp.classification.kind !== "indirect_only") continue;
+      expect(fp.classification.group_id).toEqual("function-reference-callback");
+      expect(fp.classification.via.type).toEqual("function_reference");
+    }
+  });
+
+  it("falls back to framework_invoked + group_id when a rule has no classification metadata", async () => {
+    const { project } = await make_project_with({
+      "x.py": "def lonely():\n    return 1\n",
+    });
+    const raw = trace_call_graph(project.definitions, project.resolutions);
+    // No `classification` field on the rule → fallback path in build_classification.
+    const registry: KnownIssuesRegistry = [
+      {
+        group_id: "wip-rule-no-metadata",
+        title: "Wip rule",
+        description: "Authored before classification metadata was annotated.",
+        status: "wip",
+        languages: ["python"],
+        examples: [],
+        classifier: {
+          kind: "predicate",
+          axis: "A",
+          expression: { op: "diagnosis_eq", value: "no-textual-callers" },
+          min_confidence: 1.0,
+        },
+      },
+    ];
+    const enriched = enrich_call_graph(raw, project, { registry });
+    const fps = enriched.classified_entry_points.known_false_positives;
+    expect(fps.length).toBeGreaterThan(0);
+    for (const fp of fps) {
+      if (fp.classification.kind !== "framework_invoked") continue;
+      expect(fp.classification.group_id).toEqual("wip-rule-no-metadata");
+      expect(fp.classification.framework).toEqual("wip-rule-no-metadata");
+    }
+  });
+
+  it("throws MissingBuiltinError when a registry builtin rule references a function_name not in the barrel", async () => {
+    const { project } = await make_project_with({
+      "x.py": "def lonely():\n    return 1\n",
+    });
+    const raw = trace_call_graph(project.definitions, project.resolutions);
+    const registry: KnownIssuesRegistry = [
+      {
+        group_id: "bogus-builtin",
+        title: "Bogus",
+        description: "Points at a function_name not in the generated barrel.",
+        status: "permanent",
+        languages: ["python"],
+        examples: [],
+        classifier: {
+          kind: "builtin",
+          function_name: "check_does_not_exist",
+          min_confidence: 1.0,
+        },
+      },
+    ];
+    expect(() => enrich_call_graph(raw, project, { registry })).toThrow(
+      /MissingBuiltinError|check_does_not_exist|barrel/i,
+    );
+  });
+
+  it("refuses runs whose registry uses has_unindexed_test_caller without unindexed_test_grep: applied", async () => {
+    const { project } = await make_project_with({
+      "x.py": "def lonely():\n    return 1\n",
+    });
+    const raw = trace_call_graph(project.definitions, project.resolutions);
+    const registry: KnownIssuesRegistry = [
+      {
+        group_id: "unindexed-test-only",
+        title: "Reached only from unindexed tests",
+        description: "Caller lives outside the indexed source set.",
+        status: "permanent",
+        languages: ["python"],
+        examples: [],
+        classifier: {
+          kind: "predicate",
+          axis: "B",
+          expression: { op: "has_unindexed_test_caller", value: true },
+          min_confidence: 1.0,
+        },
+      },
+    ];
+    expect(() => enrich_call_graph(raw, project, { registry })).toThrow(
+      /unindexed_test_grep|attach_unindexed_test_grep_hits/,
+    );
+    // Acknowledging the contract silences the guard.
+    expect(() =>
+      enrich_call_graph(raw, project, {
+        registry,
+        unindexed_test_grep: "applied",
+      }),
+    ).not.toThrow();
+  });
 });
