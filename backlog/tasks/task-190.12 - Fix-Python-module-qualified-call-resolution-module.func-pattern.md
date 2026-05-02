@@ -22,6 +22,18 @@ priority: medium
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 
+> **Note (TASK-190.17 path/type-moves):** Paths and types referenced below moved when TASK-190.17 landed.
+> - `EnrichedFunctionEntry` → `EnrichedEntryPoint` (now in `@ariadnejs/types`).
+> - `AutoClassifiedEntry` → `AutoClassifiedEntryPoint`.
+> - `IntrospectionGap` → `SignalLibraryGap` (triage-curator).
+> - `.claude/skills/self-repair-pipeline/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
+> - `.claude/skills/self-repair-pipeline/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
+> - Generated builtins live at `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
+> - Bundled permanent slice at `packages/core/src/classify_entry_points/permanent_data.ts` (regen via `pnpm sync-permanent-rules`).
+> See TASK-190.17 for the full migration scope.
+
+
+
 ## Description
 
 Ariadne fails to resolve calls made via module-qualified syntax (`module.func()`) in Python. When code does `from projections.runtime import check_gpu; check_gpu.reset_peak_gpu_memory()`, Ariadne treats `check_gpu` as a class instance and tries class method lookup, which fails. The function has real callers but appears as an unreachable entry point.

@@ -29,7 +29,10 @@ export function collect_barrel_entries(
       function_name: issue.classifier.function_name,
     });
   }
-  return out;
+  // Stable sort by `function_name` so registry reordering (e.g. grouping rules
+  // by axis) does not produce a noisy 60+-line diff in `builtins/index.ts`.
+  // Runtime semantics are unaffected — `BUILTIN_CHECKS` is keyed by name.
+  return out.sort((a, b) => a.function_name.localeCompare(b.function_name));
 }
 
 /**

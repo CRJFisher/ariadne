@@ -15,7 +15,7 @@ This document outlines current limitations in `@ariadnejs/core` that prevent ful
 **Impact**:
 
 - Cannot extract complete function implementation text
-- Limits usefulness for code generation agents  
+- Limits usefulness for code generation agents
 - Core tests have incorrect assumptions about `enclosing_range`
 
 **Current Workaround**: Use `metadata.line_count` for metrics, manual line extraction for body text
@@ -39,23 +39,36 @@ This document outlines current limitations in `@ariadnejs/core` that prevent ful
 
 **Current Workaround**: Assume references are in the same file as definition
 
-## 3. ~~Incomplete Relationship Analysis~~ **RESOLVED**
+## 3. Inheritance and Non-Function Symbol Dependencies (Not Exposed)
 
-**UPDATE**: Core DOES provide call graph analysis via `Project.get_call_graph()`!
+**Issue**: Core's call-graph and classification APIs cover function-level reachability, but not class-relationship topology.
 
 **Available Capabilities**:
 
-- ✅ Function call analysis via `get_call_graph()`
-- ✅ `calls` and `called_by` relationships in CallGraphNode
-- ❌ Class inheritance chains (what does this class extend?)
-- ❌ Interface implementations  
-- ❌ General symbol dependencies (imports, variable usage)
+- Function call analysis via `Project.get_call_graph()` — `entry_points` returns true positives only.
+- Triage view via `Project.get_classified_entry_points()` — `{ true_entry_points, known_false_positives }` paired with an `EntryPointClassification` discriminated union (`framework_invoked` / `dunder_protocol` / `test_only` / `indirect_only`).
+- `calls` and `called_by` relationships in `CallGraphNode`.
+
+**Gaps**:
+
+- Class inheritance chains (what does this class extend?)
+- Interface implementations
+- General symbol dependencies (imports, variable usage)
+
+**Classification taxonomy (the blind-spot map)**:
+
+The `EntryPointClassification` kinds carry the residual blind spots Ariadne's static resolver cannot see, surfaced by the bundled permanent registry:
+
+- `framework_invoked` — called by a framework (Flask `@app.route`, Angular DI, JSX component instantiation, etc.). Carries `framework` and `group_id`.
+- `dunder_protocol` — invoked via Python's protocol mechanism (`__str__`, `__eq__`, `__getitem__`, etc.). Carries `protocol`.
+- `test_only` — only ever called from test files / harnesses.
+- `indirect_only` — reached only via collection reads or dynamic dispatch.
 
 **Impact**:
 
-- Can implement `calls` and `calledBy` for functions
-- Still missing inheritance and interface relationships
-- Still missing non-function symbol dependencies
+- Default callers see a clean `entry_points` list; framework noise is filtered automatically.
+- Triage callers can inspect _why_ a given entry was suppressed via the classification verdict.
+- Inheritance, interface, and non-function dependency analysis are still gaps.
 
 ## 4. Limited Test Detection Context
 
@@ -77,25 +90,23 @@ This document outlines current limitations in `@ariadnejs/core` that prevent ful
 - Test reference detection is crude (file-based rather than context-based)
 - May incorrectly categorize references in non-test files that happen to be in test directories
 
-## 5. ~~Missing Documentation Extraction~~ **RESOLVED**
+## 5. Documentation Extraction (Available)
 
-**UPDATE**: Core DOES provide comprehensive documentation extraction!
+Core exposes documentation extraction for all supported languages. This is not a gap; it is listed here so MCP-tool authors know the surface exists.
 
 **Available APIs**:
 
-- ✅ `Project.get_source_with_context(def, file_path)` - Returns `{ source, docstring, decorators }`
-- ✅ `extract_jsdoc_context()` for JavaScript/TypeScript JSDoc parsing
-- ✅ `extract_python_context()` for Python docstrings and decorators
-- ✅ `Def.docstring` field already available in type definitions
+- `Project.get_source_with_context(def, file_path)` — returns `{ source, docstring, decorators }`.
+- `extract_jsdoc_context()` for JavaScript / TypeScript JSDoc parsing.
+- `extract_python_context()` for Python docstrings and decorators.
+- `Def.docstring` field on definition records.
 
 **Capabilities**:
 
-- JSDoc comment extraction with proper formatting
-- Decorator/annotation extraction (e.g., `@deprecated`)
-- Python docstring extraction
-- Language-specific context extraction
-
-**Resolution**: Implemented in MCP tool using existing core APIs
+- JSDoc comment extraction with proper formatting.
+- Decorator / annotation extraction (e.g., `@deprecated`).
+- Python docstring extraction.
+- Language-specific context extraction.
 
 ## 6. No Complexity Metrics
 
@@ -128,7 +139,7 @@ This document outlines current limitations in `@ariadnejs/core` that prevent ful
 2. **Add file path to Ref type** (task-51)
 3. **Expose AST traversal utilities** for relationship analysis
 
-### Medium Priority  
+### Medium Priority
 
 4. **Add documentation extraction utilities**
 5. **Implement complexity calculation**

@@ -26,6 +26,7 @@ export function helper${index}(x: number) { return x + ${index}; }
 const val${index} = func${index}();`;
 }
 
+// Call-graph + classification benchmarks live in `project.bench.test.ts`.
 describe("Persistence - Performance Benchmarks", () => {
   it(
     "serialization throughput",

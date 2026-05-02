@@ -302,9 +302,12 @@ describe("list_entrypoints_schema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts extra properties (ignored)", () => {
+  it("rejects extra properties (strict)", () => {
+    // The schema is `.strict()` so unknown keys raise a validation error
+    // rather than being silently dropped. This guards against silent
+    // server-level-flag confusion (see the `show_suppressed` test below).
     const result = list_entrypoints_schema.safeParse({ extra: "value" });
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
   });
 
   it("accepts include_tests boolean", () => {
@@ -339,14 +342,19 @@ describe("list_entrypoints_schema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("does not accept show_suppressed on the per-call schema", () => {
-    // `show_suppressed` is a server-level config flag, not a per-request
-    // argument. Confirm the schema does not surface it: parsed output
-    // should not carry `show_suppressed`. (Zod ignores unknown keys, so
-    // safeParse still succeeds — what matters is that the parsed shape
-    // omits the field.)
-    const parsed = list_entrypoints_schema.parse({ show_suppressed: true });
-    expect("show_suppressed" in parsed).toBe(false);
+  it("rejects show_suppressed on the per-call schema", () => {
+    // `show_suppressed` is a server-level config flag (CLI / env var), not a
+    // per-request argument. The schema is `.strict()` so unknown keys raise
+    // a validation error rather than being silently dropped — silent drop
+    // would let a triage operator believe the toggle had taken effect.
+    const result = list_entrypoints_schema.safeParse({ show_suppressed: true });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const message = result.error.issues
+        .map((issue) => issue.message)
+        .join(" ");
+      expect(message).toContain("show_suppressed");
+    }
   });
 });
 

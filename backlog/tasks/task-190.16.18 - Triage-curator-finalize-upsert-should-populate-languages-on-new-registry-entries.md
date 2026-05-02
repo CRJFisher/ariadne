@@ -17,6 +17,18 @@ parent_task_id: TASK-190.16
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
+> **Note (TASK-190.17 path/type-moves):** Paths and types referenced below moved when TASK-190.17 landed.
+> - `EnrichedFunctionEntry` → `EnrichedEntryPoint` (now in `@ariadnejs/types`).
+> - `AutoClassifiedEntry` → `AutoClassifiedEntryPoint`.
+> - `IntrospectionGap` → `SignalLibraryGap` (triage-curator).
+> - `.claude/skills/self-repair-pipeline/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
+> - `.claude/skills/self-repair-pipeline/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
+> - Generated builtins live at `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
+> - Bundled permanent slice at `packages/core/src/classify_entry_points/permanent_data.ts` (regen via `pnpm sync-permanent-rules`).
+> See TASK-190.17 for the full migration scope.
+
+
 When `curate_run --phase finalize` upserts new registry entries for groups it has not seen before, the entries are written with `languages: []`. The `known_issues_registry` validator rejects entries with empty `languages`, so the post-commit hook (`pnpm test`) fails with `[N](group_id="X").languages: must not be empty`.
 
 Observed during the webpack sweep at 2026-04-16T18-10-16.855Z — 8 new `wip`-status entries were written with empty `languages` for: context-object-destructuring, dynamic-dispatch, intra-file-call-not-resolved, property-accessor-not-tracked, require-indirection, static-method-call-resolution, unindexed-test-files, wasm-cross-language-call. The sweep worked around this by hand-patching `languages` before re-staging.

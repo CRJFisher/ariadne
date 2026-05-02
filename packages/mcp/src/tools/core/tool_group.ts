@@ -31,7 +31,7 @@ export function create_core_tool_group(
       {
         name: "list_entrypoints",
         description:
-          "Lists all entry point functions ordered by call tree complexity. Entry points are functions never called by other functions in the analyzed scope. Shows function signatures with parameters and return types, call tree size, and a reference ID (Ref) for use with other tools. Supports filtering by specific files or folders for scoped analysis. Test functions are marked with [TEST].",
+          "Lists all entry point functions ordered by call tree complexity. Entry points are functions never called by other functions in the analyzed scope. Output excludes known false positives (framework-invoked routes such as Flask `@app.route`, Python dunder protocol methods, dynamic dispatch, indirect-only calls, test-only code). Shows function signatures with parameters and return types, call tree size, and a reference ID (Ref) for use with other tools. Supports filtering by specific files or folders. Test functions are marked with [TEST]. For triage workflows that need to audit the suppressed bucket, ask the operator to start the MCP server with `--show-suppressed` (or `ARIADNE_SHOW_SUPPRESSED=1`); a clearly-delimited \"Suppressed\" section will be appended with a `[group_id: detail]` tag per entry.",
         input_schema: list_entrypoints_schema,
         handler: async (project, args) =>
           list_entrypoints(

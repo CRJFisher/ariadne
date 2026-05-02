@@ -25,6 +25,18 @@ priority: high
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 
+> **Note (TASK-190.17 path/type-moves):** Paths and types referenced below moved when TASK-190.17 landed.
+> - `EnrichedFunctionEntry` → `EnrichedEntryPoint` (now in `@ariadnejs/types`).
+> - `AutoClassifiedEntry` → `AutoClassifiedEntryPoint`.
+> - `IntrospectionGap` → `SignalLibraryGap` (triage-curator).
+> - `.claude/skills/self-repair-pipeline/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
+> - `.claude/skills/self-repair-pipeline/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
+> - Generated builtins live at `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
+> - Bundled permanent slice at `packages/core/src/classify_entry_points/permanent_data.ts` (regen via `pnpm sync-permanent-rules`).
+> See TASK-190.17 for the full migration scope.
+
+
+
 Plan reference: `~/.claude/plans/open-that-plan-up-hazy-cloud.md` — Phase C1 + C3.
 
 Create the `src/auto_classify/` module inside the self-repair-pipeline skill. It runs between `extract_entry_points` and `build_triage_entries`, loads the registry, dispatches classifiers in priority order (first-match with confidence gate ≥ 0.9), and emits per-entry `AutoClassifyResult`.

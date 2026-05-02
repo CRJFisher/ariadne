@@ -16,13 +16,13 @@ Each invocation produces a self-contained run under `triage_state/<project>/runs
 
 ## Pipeline Overview
 
-| Phase          | Script / Agent                       | Purpose                                                              |
-| -------------- | ------------------------------------ | -------------------------------------------------------------------- |
-| 1. Detect      | `scripts/detect_entrypoints.ts`      | Run entry point detection                                            |
+| Phase          | Script / Agent                       | Purpose                                                                                |
+| -------------- | ------------------------------------ | -------------------------------------------------------------------------------------- |
+| 1. Detect      | `scripts/detect_entrypoints.ts`      | Run entry point detection                                                              |
 | 2. Prepare     | `scripts/prepare_triage.ts`          | Classify against the known-issues registry via `enrich_call_graph`, build triage state |
-| 3. Triage Loop | triage-investigator                  | Investigate pending (residual) entries with a continuous worker pool |
-| 4. Aggregate   | rough-aggregator, group-investigator | Group false positives by root cause, verify membership               |
-| 5. Finalize    | `scripts/finalize_triage.ts`         | Save triage-results JSON                                             |
+| 3. Triage Loop | triage-investigator                  | Investigate pending (residual) entries with a continuous worker pool                   |
+| 4. Aggregate   | rough-aggregator, group-investigator | Group false positives by root cause, verify membership                                 |
+| 5. Finalize    | `scripts/finalize_triage.ts`         | Save triage-results JSON                                                               |
 
 ## Analysis Target
 
@@ -350,6 +350,21 @@ node --import tsx scripts/migrate_legacy_state.ts --project <name> --purge
 
 `prepare_triage` emits a one-line stderr warning when it detects unmigrated legacy state.
 
+## Persisted-State Preservation Policy
+
+The pipeline writes three kinds of persisted state under `~/.ariadne/self-repair-pipeline/`. Each has a different preservation contract — wiping the wrong one silently destroys cross-run TP reuse.
+
+| State                                                                      | Status               | Action on upgrade                                                                                                                                                                                                                                                                                                       |
+| -------------------------------------------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `analysis_output/<project>/triage_results/`                                | **Preserve**         | Never `rm -rf`. These finalized triage-results JSON files are the permanent source of truth for the TP cache (read by `confirmed_unreachable_reuse.derive_tp_cache` via `triage_results_store.most_recent_finalized_triage_results`). Wiping them forces every prior-confirmed entry back through the LLM investigator. |
+| `triage_state/<project>/runs/`                                             | **Preserve**         | Active and abandoned runs never auto-prune. `prune_runs.ts` keeps the last `--keep <n>` finalized runs and protects any run referenced as another run's `tp_cache.source_run_id`.                                                                                                                                       |
+| `triage_state/<project>/<project>_triage.json` (legacy single-file layout) | **Migrate**          | Run `migrate_legacy_state.ts --project <name>` to wrap into `runs/legacy-<ts>/` (default `status=abandoned`), or `--purge` to drop history.                                                                                                                                                                             |
+| `~/.ariadne/cache/<slug>/manifest.json` (core's persistence cache)         | **Auto-invalidates** | The cache schema version is checked on load; mismatched manifests are dropped via `deserialize_manifest` and the cache rebuilds on next run. No user action required.                                                                                                                                                   |
+
+**Stale-LATEST handling.** If a `LATEST` pointer remains from an in-flight run at upgrade time, clear it via `abandon_run.ts --project <name>` or by deleting the file. The run dir stays visible to `list_runs.ts`. `abandon_run.ts` also marks the manifest abandoned.
+
+**FalsePositiveEntry schema:** `FINALIZATION_OUTPUT_SCHEMA_VERSION` is `2`. Existing `triage_results/<run-id>.json` files are read by the TP cache without migration.
+
 ## Dead-code guardrail
 
 Orthogonal to the self-repair pipeline. The `detect_dead_code` Stop hook (`.claude/hooks/detect_dead_code.ts`, registered in `.claude/settings.json`) runs Ariadne against git-modified packages after each Claude Code session and cross-checks flagged entry points against a per-package whitelist at `~/.ariadne/self-repair-pipeline/known_entrypoints/<package>.json`. Exported-but-uncalled entry points not on the whitelist block the session.
@@ -372,26 +387,25 @@ The self-repair pipeline does not read or write this whitelist. If you previousl
 
 ## Architecture: Key Modules
 
-All library modules live under `src/`:
+The skill is a thin caller of `@ariadnejs/core`. Classification (`enrich_call_graph`, `extract_entry_point_diagnostics`, the predicate evaluator, builtins, and the bundled permanent registry slice) lives in `packages/core/src/classify_entry_points/`. Entry-point and known-issues types live in `@ariadnejs/types`. The skill modules under `src/` orchestrate the run lifecycle on top of that core API.
 
-| Module                                | Purpose                                                                        |
-| ------------------------------------- | ------------------------------------------------------------------------------ |
-| `extract_entry_points.ts`             | Shared extraction with enriched metadata + diagnostics                         |
-| `known_issues_registry.ts`            | Known-issues registry loader + predicate-expression schema validator           |
-| `prepare_triage.ts`                   | Two-bucket orchestration (auto-classified / residual)                          |
-| `build_triage_entries.ts`             | Assemble `TriageEntry` records from prepared buckets                           |
-| `build_finalization_output.ts`        | Build final results from a completed triage state                              |
-| `merge_results.ts`                    | Merge investigator result files into triage state                              |
-| `aggregation/prepare_slices.ts`       | Slice completed false positives into rough-aggregator inputs                   |
-| `aggregation/merge_rough_groups.ts`   | Merge pass1 outputs into canonical pass3 input                                 |
-| `aggregation/finalize_aggregation.ts` | Apply pass3 verdicts back to triage state                                      |
-| `entry_point_types.ts`                | Entry-point shapes (`EnrichedEntryPoint`, diagnostics)                         |
-| `known_issues_types.ts`               | Known-issues registry DSL (`ClassifierSpec`, `PredicateExpr`, `KnownIssue`, …) |
-| `triage_state_types.ts`               | Triage state types (`TriageState`, `TriageEntry`, `TriageEntryResult`)         |
-| `triage_state_paths.ts`               | Triage state file locations + required-flag CLI helpers                        |
-| `analysis_output.ts`                  | Timestamped analysis output JSON I/O                                           |
-| `project_id.ts`                       | Project-identifier derivation (`path_to_project_id`, `project_id_from_config`) |
-| `guard_tsx_invocation.ts`             | Enforce `node --import tsx` invocation (sandbox-compatible)                    |
+| Module                                | Purpose                                                                                                                                                                 |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `known_issues_registry.ts`            | Full-registry loader (skill-side) — reads the canonical `known_issues/registry.json`, including `wip` rules, and hands it to `enrich_call_graph` as a registry override |
+| `prepare_triage.ts`                   | Run-namespaced orchestration: call core's `enrich_call_graph` with the full registry, partition into known-unreachable / TP-cache / llm-triage                          |
+| `build_triage_entries.ts`             | Assemble `TriageEntry` records from prepared buckets                                                                                                                    |
+| `build_finalization_output.ts`        | Build final results from a completed triage state                                                                                                                       |
+| `merge_results.ts`                    | Merge investigator result files into triage state                                                                                                                       |
+| `aggregation/prepare_slices.ts`       | Slice completed false positives into rough-aggregator inputs                                                                                                            |
+| `aggregation/merge_rough_groups.ts`   | Merge pass1 outputs into canonical pass3 input                                                                                                                          |
+| `aggregation/finalize_aggregation.ts` | Apply pass3 verdicts back to triage state                                                                                                                               |
+| `triage_state_types.ts`               | Triage state types (`TriageState`, `TriageEntry`, `TriageEntryResult`)                                                                                                  |
+| `triage_state_paths.ts`               | Triage state file locations + required-flag CLI helpers                                                                                                                 |
+| `confirmed_unreachable_reuse.ts`      | TP cache derivation — short-circuits the LLM investigator across runs at the same commit                                                                                |
+| `run_discovery.ts`                    | Run-id enumeration, manifest reading, prune protection                                                                                                                  |
+| `analysis_output.ts`                  | Timestamped analysis output JSON I/O                                                                                                                                    |
+| `project_id.ts`                       | Project-identifier derivation (`path_to_project_id`, `project_id_from_config`)                                                                                          |
+| `guard_tsx_invocation.ts`             | Enforce `node --import tsx` invocation (sandbox-compatible)                                                                                                             |
 
 ## Reference
 

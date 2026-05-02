@@ -21,20 +21,25 @@ import type {
  * argument. Triage workflows opt in by configuring the MCP server with the
  * flag enabled in `.mcp.json`; everyday callers see the clean default output.
  */
-export const list_entrypoints_schema = z.object({
-  files: z
-    .array(z.string())
-    .optional()
-    .describe("Specific file paths to analyze (relative or absolute)"),
-  folders: z
-    .array(z.string())
-    .optional()
-    .describe("Folder paths to include recursively"),
-  include_tests: z
-    .boolean()
-    .optional()
-    .describe("Include test functions in output (default: false)"),
-});
+export const list_entrypoints_schema = z
+  .object({
+    files: z
+      .array(z.string())
+      .optional()
+      .describe("Specific file paths to analyze (relative or absolute)"),
+    folders: z
+      .array(z.string())
+      .optional()
+      .describe("Folder paths to include recursively"),
+    include_tests: z
+      .boolean()
+      .optional()
+      .describe("Include test functions in output (default: false)"),
+  })
+  // Reject unknown keys explicitly. `show_suppressed` is a server-level flag
+  // (CLI/env), not a per-call argument; silently dropping it would let triage
+  // operators think the toggle had taken effect.
+  .strict();
 
 export type ListEntrypointsRequest = z.infer<typeof list_entrypoints_schema>;
 

@@ -8,6 +8,7 @@ import {
 } from "./serialize_index";
 import { InMemoryStorage } from "./storage.test";
 import { FileSystemStorage } from "./file_system_storage";
+import { CURRENT_SCHEMA_VERSION } from "./cache_manifest";
 import { load_project } from "../project/load_project";
 import { execFile } from "child_process";
 import { promisify } from "util";
@@ -989,7 +990,7 @@ describe("load_project + FileSystemStorage", { timeout: 30_000 }, () => {
       const manifest_raw = await storage.read_manifest();
       expect(manifest_raw).not.toBeNull();
       const manifest = JSON.parse(manifest_raw!);
-      expect(manifest.schema_version).toEqual(1);
+      expect(manifest.schema_version).toEqual(CURRENT_SCHEMA_VERSION);
       expect(manifest.entries.length).toEqual(2);
 
       // Indexes should exist on disk

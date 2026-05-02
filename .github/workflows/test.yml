@@ -38,7 +38,7 @@ jobs:
         run: pnpm run check:size
 
       - name: Check permanent rules slice + builtins barrel are in sync
-        # Regenerates `packages/core/src/classify_entry_points/registry.permanent.json`
+        # Regenerates `packages/core/src/classify_entry_points/permanent_data.ts`
         # and `builtins/index.ts` from the skill registry, then asserts a clean
         # diff. Catches drift between the registry and the bundled core slice.
         run: pnpm run check-permanent-rules
@@ -51,10 +51,3 @@ jobs:
           pnpm --filter @ariadnejs/types pack --pack-destination /tmp
           pnpm --filter @ariadnejs/core pack --pack-destination /tmp
           pnpm --filter @ariadnejs/mcp pack --pack-destination /tmp
-
-      - name: Self-analysis validation
-        # Run validation but don't fail the build yet (accuracy improvements in progress)
-        continue-on-error: true
-        run: |
-          echo "🔍 Running Ariadne self-analysis validation..."
-          pnpm exec tsx packages/core/agent-validation/ci-validation.ts || echo "⚠️ Validation thresholds not met (expected during development)"

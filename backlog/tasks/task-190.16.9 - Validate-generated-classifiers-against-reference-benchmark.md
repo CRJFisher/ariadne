@@ -24,6 +24,18 @@ priority: high
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 
+> **Note (TASK-190.17 path/type-moves):** Paths and types referenced below moved when TASK-190.17 landed.
+> - `EnrichedFunctionEntry` → `EnrichedEntryPoint` (now in `@ariadnejs/types`).
+> - `AutoClassifiedEntry` → `AutoClassifiedEntryPoint`.
+> - `IntrospectionGap` → `SignalLibraryGap` (triage-curator).
+> - `.claude/skills/self-repair-pipeline/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
+> - `.claude/skills/self-repair-pipeline/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
+> - Generated builtins live at `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
+> - Bundled permanent slice at `packages/core/src/classify_entry_points/permanent_data.ts` (regen via `pnpm sync-permanent-rules`).
+> See TASK-190.17 for the full migration scope.
+
+
+
 Audit the set of classifiers produced by TASK-190.16.8 (curator-driven generation from webpack triage data) against the reference benchmark table documented in TASK-190.16.8's description. The reference table is the human-designed taxonomy of the 10 failure-mode groups we expected to see on the webpack corpus; this task asks whether the curator actually found them, where it diverged, and whether each divergence is justified by the data.
 
 **Reference benchmark (copied from TASK-190.16.8 — authoritative source lives there):**

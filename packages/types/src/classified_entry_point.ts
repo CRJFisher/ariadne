@@ -74,8 +74,8 @@ export interface ClassifiedEntryPoints {
  */
 export interface ClassifierHint {
   /** Known-issue group this hint points at. */
-  group_id: string;
+  readonly group_id: string;
   /** Score in [0, 1]. Predicates return 1.0; sub-threshold means `< min_confidence`. */
-  confidence: number;
-  reasoning: string;
+  readonly confidence: number;
+  readonly reasoning: string;
 }

@@ -99,51 +99,42 @@ npx ariadne-mcp
 Or programmatically:
 
 ```javascript
-import { startServer } from '@ariadnejs/mcp';
+import { startServer } from "@ariadnejs/mcp";
 
 startServer({
-  projectPath: './my-project'
+  projectPath: "./my-project",
 });
 ```
 
-### Available Tool
+### Available Tools
 
-The MCP server currently provides one powerful context-oriented tool:
+The MCP server provides context-oriented tools for entry-point discovery and call-graph navigation:
 
-#### `get_symbol_context`
+#### `list_entrypoints`
 
-Get comprehensive information about any symbol by name - no file position needed!
-
-```typescript
-// Example usage by AI:
-{
-  "tool": "get_symbol_context",
-  "arguments": {
-    "symbol": "processPayment",
-    "includeTests": true
-  }
-}
-```
+Lists entry point functions ordered by call tree size. Entry points are functions that no other function calls within the analyzed scope. The output is filtered to true positives by default — framework-invoked routes, Python dunders, pytest fixtures, and other known false positives are suppressed.
 
 Parameters:
 
-- `symbol` (required): Name of the function, class, or variable to look up
-- `searchScope` (optional): "file" | "project" | "dependencies" (default: "project")
-- `includeTests` (optional): Whether to include test file references (default: false)
+- `files` (optional): Specific file paths to analyze
+- `folders` (optional): Folder paths to include recursively
+- `include_tests` (optional): Include test functions in output (default: false)
 
-Returns:
+Returns ASCII text with function signatures, call tree sizes, and a `Ref` identifier for use with `show_call_graph_neighborhood`.
 
-- Full function/class implementation with documentation
-- Usage statistics (references, imports, tests)
-- Call relationships (calls/called by)
-- Class inheritance and interface implementations
-- File location and signature
+For triage workflows that need to see the suppressed bucket, start the server with the `--show-suppressed` CLI flag (or `ARIADNE_SHOW_SUPPRESSED=1`). The default tool output then appends a "Suppressed (known false positives)" section listing each filtered entry with its `[group_id: framework]` tag. The flag is server-level so everyday agents always see the clean default.
 
-Coming soon:
+#### `show_call_graph_neighborhood`
 
-- `get_call_graph` - Analyze function call relationships
-- `get_references` - Find all references to a symbol
-- `preview_refactor` - Preview the impact of refactoring changes
+Shows callers (upstream) and callees (downstream) around a callable. Use the `Ref` from `list_entrypoints` or construct one as `file_path:line#name`.
+
+Parameters:
+
+- `symbol_ref` (required): Reference identifier in `file_path:line#name` format
+- `callers_depth` (optional): Levels of callers to show (`null` = unlimited, default: `1`)
+- `callees_depth` (optional): Levels of callees to show (`null` = unlimited, default: `1`)
+- `show_full_signature` (optional): Show full signature with params/return type vs just name (default: `true`)
+- `files` / `folders` (optional): Filter by scope
 
 ## Example Use Cases
 

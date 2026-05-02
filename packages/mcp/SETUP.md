@@ -101,6 +101,7 @@ Key components:
 ### Cursor
 
 1. **Create Configuration File**:
+
    - **Project-specific**: `.cursor/mcp.json` in your project directory
    - **Global**: `~/.cursor/mcp.json` in your home directory
 
@@ -185,43 +186,54 @@ Configure multiple Ariadne instances for different projects:
 
 Once configured, the following tools are available:
 
-### `get_symbol_context`
+### `list_entrypoints`
 
-Get comprehensive information about any symbol by name - no file position needed!
+Lists entry point functions ordered by call tree complexity. The default output contains true positives only — known false positives like Flask `@app.route` handlers, pytest fixtures, JSX components, dynamic dispatch, and Python dunders are filtered out by the bundled known-issues registry.
 
 **Parameters:**
 
-- `symbol` (required): Name of the function, class, or variable
-- `searchScope` (optional): "file" | "project" | "dependencies" (default: "project")
-- `includeTests` (optional): boolean (default: false)
+- `files` (optional): Specific file paths to analyze
+- `folders` (optional): Folder paths to include recursively
+- `include_tests` (optional): Include test functions (default: false)
 
-**Example prompts:**
+**Show-suppressed mode** (triage):
 
+Pass `--show-suppressed` when starting the MCP server (or set `ARIADNE_SHOW_SUPPRESSED=1`) to append a "Suppressed (known false positives)" section to every `list_entrypoints` response. Each suppressed entry carries a `[group_id: framework]` tag identifying the registry rule that matched. This is a server-level setting (not a per-call argument) so triage workflows enable it once via `.mcp.json` and everyday agents see the clean default.
+
+Configure either via the `args` array (CLI flag) or the `env` block (env var). CLI takes precedence over env, and explicit `--no-show-suppressed` always wins:
+
+```json
+{
+  "mcpServers": {
+    "ariadne-triage": {
+      "command": "npx",
+      "args": ["-y", "@ariadnejs/mcp", "--show-suppressed"],
+      "env": { "PROJECT_PATH": "/path/to/project" }
+    }
+  }
+}
 ```
-"Show me the implementation of the authenticate function"
-"What does the UserService class look like?"
-"Find all usages of processPayment including tests"
-```
 
-**Returns:**
-- Full implementation with documentation
-- Usage statistics and references
-- Call relationships (calls/called by)
-- Class inheritance and interfaces
-- Test coverage information
+Accepted truthy values for `ARIADNE_SHOW_SUPPRESSED`: `1`, `true`, `yes` (case-insensitive). Anything else — including `0`, `false`, empty string, and unset — resolves to false.
 
-### Coming Soon
+### `show_call_graph_neighborhood`
 
-Additional tools are in development:
-- `get_call_graph` - Analyze function call relationships
-- `get_references` - Find all references to a symbol
-- `preview_refactor` - Preview the impact of refactoring changes
+Shows callers and callees around a callable. Use a `Ref` from `list_entrypoints` (or construct one as `file_path:line#name`) as the `symbol_ref` input.
+
+**Parameters:**
+
+- `symbol_ref` (required): Reference identifier in `file_path:line#name` format
+- `callers_depth` (optional): Levels of callers to show (`null` = unlimited, default: `1`)
+- `callees_depth` (optional): Levels of callees to show (`null` = unlimited, default: `1`)
+- `show_full_signature` (optional): Show full signature with params/return type vs just name (default: `true`)
+- `files` / `folders` (optional): Filter by scope
 
 ## Verification
 
 To verify the setup:
 
 1. **Check Server Status**:
+
    - Claude Desktop: Developer settings should show the server
    - VS Code: Extensions view → MCP Servers section
    - Cursor: Output panel → MCP Logs

@@ -17,6 +17,20 @@ function ch(s: string): ContentHash {
 }
 
 describe("cache_manifest", () => {
+  describe("CURRENT_SCHEMA_VERSION", () => {
+    it("is 2", () => {
+      expect(CURRENT_SCHEMA_VERSION).toEqual(2);
+    });
+
+    it("rejects v1 manifests via deserialize_manifest", () => {
+      const v1_manifest = JSON.stringify({
+        schema_version: 1,
+        entries: [],
+      });
+      expect(deserialize_manifest(v1_manifest)).toBeNull();
+    });
+  });
+
   describe("serialize_manifest / deserialize_manifest round-trip", () => {
     it("round-trips an empty manifest", () => {
       const manifest: CacheManifest = {

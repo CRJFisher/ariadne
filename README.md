@@ -76,11 +76,12 @@ Add to your AI assistant's MCP config:
 
 ```typescript
 import { Project } from "@ariadnejs/core";
+import type { FilePath } from "@ariadnejs/types";
 import * as fs from "fs";
 import * as path from "path";
 
 const project = new Project();
-await project.initialize("/path/to/project");
+await project.initialize("/path/to/project" as FilePath);
 
 // Load source files into the project
 function load_dir(dir: string) {
@@ -93,15 +94,22 @@ function load_dir(dir: string) {
     ) {
       load_dir(full);
     } else if (/\.(ts|tsx|js|jsx|py|rs)$/.test(entry.name)) {
-      project.update_file(full, fs.readFileSync(full, "utf-8"));
+      project.update_file(full as FilePath, fs.readFileSync(full, "utf-8"));
     }
   }
 }
 load_dir("/path/to/project");
 
-// Analyze
+// Analyze. entry_points is the clean list of true positives — known
+// false positives like Flask routes and Python dunders are filtered out.
 const call_graph = project.get_call_graph();
 console.log(call_graph.entry_points);
+
+// For triage, see what was suppressed and why.
+const { known_false_positives } = project.get_classified_entry_points();
+for (const fp of known_false_positives) {
+  console.log(fp.symbol_id, fp.classification);
+}
 ```
 
 [→ See full API documentation](packages/core/README.md)

@@ -28,7 +28,6 @@ import {
 import type {
   EnrichedEntryPoint,
   KnownIssuesRegistry,
-  PredicateExpr,
   SymbolId,
 } from "@ariadnejs/types";
 import type { TriageEntry } from "./triage_state_types.js";
@@ -67,23 +66,10 @@ export function sort_residual_entry_points(entries: ResidualEntryPoint[]): Resid
 }
 
 export function prepare_triage(input: PrepareTriageInput): PrepareTriageReport {
-  // `enrich_call_graph` here does not run the unindexed-test grep pass —
-  // that's a `detect_entrypoints` concern (it has access to source files +
-  // ignore patterns). The skill's prepare_triage rebuilds the call graph
-  // from the project, so it cannot satisfy `has_unindexed_test_caller`
-  // predicates. Refuse the run rather than silently mis-classifying.
-  for (const issue of input.registry) {
-    if (issue.classifier.kind !== "predicate") continue;
-    if (predicate_uses_unindexed_test_caller(issue.classifier.expression)) {
-      throw new Error(
-        `prepare_triage: registry rule "${issue.group_id}" uses ` +
-          "`has_unindexed_test_caller`, which is only populated by " +
-          "`attach_unindexed_test_grep_hits` in detect_entrypoints. " +
-          "Run prepare_triage against analysis output (the existing path) " +
-          "or extend prepare_triage to invoke the unindexed-test pass.",
-      );
-    }
-  }
+  // The skill's `prepare_triage` rebuilds the call graph from the in-memory
+  // project, so it cannot satisfy `has_unindexed_test_caller` predicates.
+  // Leave `unindexed_test_grep` at the default `"skipped"` so core's guard
+  // refuses the run rather than silently mis-classifying.
   const enriched = enrich_call_graph(input.call_graph, input.project, {
     registry: input.registry,
   });
@@ -153,29 +139,18 @@ function collect_residual_pool(enriched: EnrichedCallGraph): ResidualEntryPoint[
   return out;
 }
 
-function predicate_uses_unindexed_test_caller(expr: PredicateExpr): boolean {
-  switch (expr.op) {
-    case "all":
-    case "any":
-      return expr.of.some(predicate_uses_unindexed_test_caller);
-    case "not":
-      return predicate_uses_unindexed_test_caller(expr.of);
-    case "has_unindexed_test_caller":
-      return true;
-    default:
-      return false;
-  }
-}
-
 function lookup_entry_point(
   entry_points_by_id: ReadonlyMap<SymbolId, EnrichedEntryPoint>,
   symbol_id: SymbolId,
 ): EnrichedEntryPoint {
+  // `enrich_call_graph` always inserts into `entry_points_by_id` before
+  // pushing onto the classification arrays (see `enrich_call_graph.ts`), so
+  // a missing key would mean the core invariant is broken — which deserves
+  // a loud failure rather than a silent `undefined`.
   const entry_point = entry_points_by_id.get(symbol_id);
   if (entry_point === undefined) {
     throw new Error(
-      `prepare_triage: enriched_call_graph emitted classification for ${symbol_id} ` +
-        "without a matching enriched entry point — invariant violated",
+      `prepare_triage: enrich_call_graph invariant broken — no entry for ${symbol_id}`,
     );
   }
   return entry_point;

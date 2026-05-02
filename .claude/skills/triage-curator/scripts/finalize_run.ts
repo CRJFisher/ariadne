@@ -302,18 +302,25 @@ async function main(): Promise<void> {
   const deleted_orphan_files: string[] = [];
   const refused_orphan_paths: string[] = [];
   if (!dry_run) {
-    const builtins_dir_with_sep = get_core_builtins_dir() + path.sep;
+    const builtins_dir_with_sep = path.resolve(get_core_builtins_dir()) + path.sep;
     for (const orphan_path of orphan_candidates) {
       // Cross-package destructive write: refuse to unlink anything that did
       // not land under the core builtins directory. A malformed authored-files
-      // map otherwise becomes an arbitrary-delete primitive.
-      if (!orphan_path.startsWith(builtins_dir_with_sep)) {
+      // map otherwise becomes an arbitrary-delete primitive. Resolve and
+      // normalize first so `..` segments embedded in the path can't escape
+      // the prefix check.
+      const resolved_path = path.resolve(orphan_path);
+      const basename = path.basename(resolved_path);
+      const escapes_dir = !resolved_path.startsWith(builtins_dir_with_sep);
+      const wrong_shape =
+        !basename.startsWith("check_") || !basename.endsWith(".ts");
+      if (escapes_dir || wrong_shape) {
         refused_orphan_paths.push(orphan_path);
         continue;
       }
       try {
-        await fs.unlink(orphan_path);
-        deleted_orphan_files.push(orphan_path);
+        await fs.unlink(resolved_path);
+        deleted_orphan_files.push(resolved_path);
       } catch (err) {
         if (error_code(err) === "ENOENT") continue;
         throw err;

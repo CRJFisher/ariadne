@@ -12,6 +12,18 @@ parent_task_id: TASK-190
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
+> **Note (TASK-190.17 path/type-moves):** Paths and types referenced below moved when TASK-190.17 landed.
+> - `EnrichedFunctionEntry` → `EnrichedEntryPoint` (now in `@ariadnejs/types`).
+> - `AutoClassifiedEntry` → `AutoClassifiedEntryPoint`.
+> - `IntrospectionGap` → `SignalLibraryGap` (triage-curator).
+> - `.claude/skills/self-repair-pipeline/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
+> - `.claude/skills/self-repair-pipeline/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
+> - Generated builtins live at `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
+> - Bundled permanent slice at `packages/core/src/classify_entry_points/permanent_data.ts` (regen via `pnpm sync-permanent-rules`).
+> See TASK-190.17 for the full migration scope.
+
+
 ## Description
 
 Functions that grep evidence shows are called from outside Ariadne's indexed scope are reported as unreachable entry points. The pipeline triage sends these to LLM classification even though the diagnosis field already encodes the answer: `diagnosis === "callers-not-in-registry"` is set by `compute_diagnosis` in `extract_entry_points.ts` when `grep_hits.length > 0 && call_refs.length === 0`. The `deterministic-fp` route in `TriageRoute` exists for exactly this kind of predicate-classified false positive but is never assigned anywhere in the codebase.

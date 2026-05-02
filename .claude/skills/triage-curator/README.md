@@ -7,13 +7,19 @@ classifier + backlog + signal proposals, and commits the result.
 ## Authored classifiers
 
 Builtin classifiers live at
-`.claude/skills/self-repair-pipeline/src/auto_classify/builtins/check_<group_id>.ts`.
-Each file is a **pure function of its `BuiltinClassifierSpec`** — the
-investigator emits the spec, the main agent runs `render_classifier.ts`,
+`packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`. The
+finalize step writes them across the package boundary into core; the CI gate
+`pnpm check-permanent-rules` keeps the bundled permanent slice
+(`packages/core/src/classify_entry_points/permanent_data.ts`) and the builtins
+barrel in sync with the curator's working registry at
+`.claude/skills/self-repair-pipeline/known_issues/registry.json`.
+
+Each `check_*.ts` file is a **pure function of its `BuiltinClassifierSpec`** —
+the investigator emits the spec, the main agent runs `render_classifier.ts`,
 and the rendered source is written to disk. Finalize AST-parses each file
-before upserting the registry. Never hand-edit a generated classifier;
-change the spec (or flip the registry entry to `status: "permanent"` to
-lock it) and re-run the sweep.
+before upserting the registry. Never hand-edit a generated classifier; change
+the spec (or flip the registry entry to `status: "permanent"` to lock it) and
+re-run the sweep.
 
 Sub-agents:
 

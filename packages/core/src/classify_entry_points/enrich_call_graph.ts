@@ -29,6 +29,7 @@ import type {
   KnownIssue,
   KnownIssuesRegistry,
   Location,
+  PredicateExpr,
   SymbolId,
 } from "@ariadnejs/types";
 import type { Project } from "../project/project";
@@ -58,6 +59,34 @@ export interface EnrichCallGraphOptions {
    * leave this off and get the permanent slice.
    */
   readonly registry?: KnownIssuesRegistry;
+  /**
+   * Whether the caller has already run `attach_unindexed_test_grep_hits` on
+   * the call graph's source files. Defaults to `"skipped"` — predicates that
+   * read `has_unindexed_test_caller` will then see an empty grep set, so any
+   * registry rule using that predicate is a misuse and `enrich_call_graph`
+   * throws. Set to `"applied"` from the self-healing pipeline (which runs the
+   * grep pass in `detect_entrypoints.ts`) to silence the guard.
+   */
+  readonly unindexed_test_grep?: "applied" | "skipped";
+}
+
+/**
+ * Visit `expr` and every nested combinator child, returning `true` as soon as
+ * a `has_unindexed_test_caller` leaf is found. Used by the unindexed-test
+ * guard below.
+ */
+function predicate_uses_unindexed_test_caller(expr: PredicateExpr): boolean {
+  switch (expr.op) {
+    case "all":
+    case "any":
+      return expr.of.some(predicate_uses_unindexed_test_caller);
+    case "not":
+      return predicate_uses_unindexed_test_caller(expr.of);
+    case "has_unindexed_test_caller":
+      return true;
+    default:
+      return false;
+  }
 }
 
 /**
@@ -71,6 +100,28 @@ export function enrich_call_graph(
 ): EnrichedCallGraph {
   const enriched_entry_points = extract_entry_point_diagnostics(call_graph, project);
   const registry = options?.registry ?? load_permanent_registry();
+
+  // Guard: any rule using `has_unindexed_test_caller` requires the caller to
+  // have populated the grep set first (via `attach_unindexed_test_grep_hits`).
+  // The skill's `detect_entrypoints` runs that pass and passes
+  // `unindexed_test_grep: "applied"`; library callers and `prepare_triage`
+  // (which rebuilds the call graph in-process) cannot satisfy the predicate
+  // and would silently misclassify. Refuse the run instead.
+  const unindexed_test_grep = options?.unindexed_test_grep ?? "skipped";
+  if (unindexed_test_grep === "skipped") {
+    for (const issue of registry) {
+      if (issue.classifier.kind !== "predicate") continue;
+      if (predicate_uses_unindexed_test_caller(issue.classifier.expression)) {
+        throw new Error(
+          `enrich_call_graph: registry rule "${issue.group_id}" uses ` +
+            "`has_unindexed_test_caller`, which is only populated by " +
+            "`attach_unindexed_test_grep_hits`. Pass " +
+            "`{ unindexed_test_grep: \"applied\" }` after running that pass " +
+            "(see `detect_entrypoints.ts`), or drop rules that depend on it.",
+        );
+      }
+    }
+  }
 
   const read_file_lines = build_lazy_line_reader(project);
   const classified_results = auto_classify(

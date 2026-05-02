@@ -129,6 +129,71 @@ describe("Project - Performance Benchmarks", () => {
     });
   });
 
+  describe("get_call_graph performance", () => {
+    async function build_chained_project(file_count: number): Promise<Project> {
+      const project = new Project();
+      await project.initialize();
+      for (let i = 0; i < file_count; i++) {
+        const imports = i > 0 ? `import { func${i - 1} } from './file${i - 1}'` : "";
+        project.update_file(
+          `file${i}.ts` as FilePath,
+          `
+            ${imports}
+            export function func${i}() {
+              ${i > 0 ? `return func${i - 1}() + ${i}` : `return ${i}`}
+            }
+            export function helper${i}() { return func${i}() * 2 }
+          `,
+        );
+      }
+      return project;
+    }
+
+    it("should baseline call-graph build + classification cost", { timeout: 30000 }, async () => {
+      const file_count = 50;
+      const project = await build_chained_project(file_count);
+
+      const cold_start = performance.now();
+      const cold = project.get_call_graph();
+      const cold_time = performance.now() - cold_start;
+
+      const warm_start = performance.now();
+      const warm = project.get_call_graph();
+      const warm_time = performance.now() - warm_start;
+
+      console.log(
+        `\nget_call_graph (${file_count} files):\n  Cold: ${cold_time.toFixed(2)}ms\n  Warm: ${warm_time.toFixed(2)}ms\n  Entry points: ${cold.entry_points.length}`,
+      );
+
+      // Cache identity: warm reads the same EnrichedCallGraph the cold
+      // call populated. Asserts the cache key holds without depending on
+      // wall-clock timing.
+      expect(warm.nodes).toBe(cold.nodes);
+      expect(warm.entry_points).toEqual(cold.entry_points);
+    });
+
+    it("should baseline get_classified_entry_points cost", { timeout: 30000 }, async () => {
+      const file_count = 50;
+      const project = await build_chained_project(file_count);
+
+      project.get_call_graph();
+
+      const start = performance.now();
+      const first = project.get_classified_entry_points();
+      const elapsed = performance.now() - start;
+      const second = project.get_classified_entry_points();
+
+      console.log(
+        `get_classified_entry_points (warm, ${file_count} files): ${elapsed.toFixed(2)}ms; ${first.true_entry_points.length} TP / ${first.known_false_positives.length} FP`,
+      );
+
+      // Cache identity between get_call_graph and get_classified_entry_points
+      // — both methods share a single EnrichedCallGraph, so triage callers
+      // never repeat classification.
+      expect(second).toBe(first);
+    });
+  });
+
   describe("cache hit rate", () => {
     it("should measure resolution cache behavior", async () => {
       const project = new Project();

@@ -60,9 +60,10 @@ Phases 3-5 run on the changed file **and** all its dependents (files that import
 `trace_call_graph(definitions, resolutions)` builds the call graph from resolved data:
 
 1. Create a `CallableNode` for each callable definition with its enclosed `CallReference[]`
-2. Identify entry points — functions with no incoming call edges and no indirect reachability, after applying language-specific filtering (e.g., excluding Python dunder methods) and tracking test file origin via the `is_test` flag on `CallableNode`
+2. Identify entry points — functions with no incoming call edges and no indirect reachability — and track test file origin via the `is_test` flag on `CallableNode`
+3. Classify entry points against the bundled known-issues registry (`classify_entry_points/`). Permanent rules cover framework-invocation patterns (Flask routes, pytest fixtures, JSX components, dynamic dispatch) and Python dunders. Matched candidates are filtered out of `CallGraph.entry_points` and surfaced separately by `Project.get_classified_entry_points()` for triage workflows.
 
-Entry points are functions never called by any other function in the codebase. Indirect reachability (functions stored in collections or passed as references) is tracked to avoid false positives.
+Entry points are functions never called by any other function in the codebase, after both indirect-reachability tracking (functions stored in collections or passed as references) and classification against known false positives.
 
 ## Data Flow
 
@@ -73,7 +74,10 @@ Registries (project-level, incrementally updated)
     ↓
 Name Resolution → Type Resolution → Call Resolution
     ↓
-CallGraph { nodes, entry_points, indirect_reachability }
+trace_call_graph → raw CallGraph
+    ↓
+classify_entry_points → CallGraph { nodes, entry_points (true positives), indirect_reachability }
+                      ↘ ClassifiedEntryPoints { true_entry_points, known_false_positives }
 ```
 
 ## Language Support

@@ -28,7 +28,7 @@ beforeEach(async () => {
   authored_dir = path.join(tmp_dir, "authored");
   await fs.mkdir(authored_dir, { recursive: true });
   registry_path = path.join(tmp_dir, "registry.json");
-  await fs.writeFile(registry_path, '{"schema_version":1,"rules":[]}\n', "utf8");
+  await fs.writeFile(registry_path, "{\"schema_version\":1,\"rules\":[]}\n", "utf8");
 });
 
 afterEach(async () => {
@@ -372,6 +372,24 @@ describe("apply_proposals", () => {
       function_name: "check_a",
       min_confidence: 0.9,
     });
+  });
+
+  it("preserves schema_version: 1 on the registry envelope after a mutation", async () => {
+    await write_registry([]);
+    const authored_path = path.join(authored_dir, "check_a.ts");
+    await write_authored_file(authored_path);
+    await apply_proposals([], [builtin_inv("a")], {}, {
+      dry_run: false,
+      registry_path,
+      project: "test-project",
+      run_id: "test-run",
+      authored_files_by_group: { a: authored_path },
+    });
+
+    const raw = await fs.readFile(registry_path, "utf8");
+    const parsed = JSON.parse(raw) as { schema_version: number; rules: KnownIssue[] };
+    expect(parsed.schema_version).toEqual(1);
+    expect(parsed.rules).toHaveLength(1);
   });
 
   it("upserts against retargets_to and looks up authored file by the retarget key", async () => {

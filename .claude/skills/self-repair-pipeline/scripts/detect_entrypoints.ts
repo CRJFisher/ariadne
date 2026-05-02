@@ -36,12 +36,16 @@ import {
   log_info,
   log_warn,
   trace_call_graph,
-  enrich_call_graph,
+  extract_entry_point_diagnostics,
   attach_unindexed_test_grep_hits,
   build_class_name_by_constructor_position,
 } from "@ariadnejs/core";
 import type { PersistenceStorage } from "@ariadnejs/core";
-import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type {
+  AnalysisResult as CoreAnalysisResult,
+  AnalysisSourceInfo,
+  EnrichedEntryPoint,
+} from "@ariadnejs/types";
 import { save_json, OutputType } from "../src/analysis_output.js";
 import { load_registry } from "../src/known_issues_registry.js";
 import { path_to_project_id, project_id_from_config } from "../src/project_id.js";
@@ -54,20 +58,14 @@ import "../src/guard_tsx_invocation.js";
 
 // ===== Types =====
 
-interface SourceInfo {
-  type: "local" | "github";
-  github_url?: string;
-  branch?: string;
-  commit_hash?: string;
-}
-
-interface AnalysisResult {
-  project_name: string;
-  project_path: string;
-  source: SourceInfo;
+// Skill-side widening of `@ariadnejs/types#AnalysisResult` that adds the
+// counter fields the prepare-triage and finalization stages read out of the
+// analysis JSON. Source provenance reuses the canonical type so a producer-
+// side field add propagates without duplication.
+interface AnalysisResult extends CoreAnalysisResult {
+  source: AnalysisSourceInfo;
   total_files_analyzed: number;
   total_entry_points: number;
-  entry_points: EnrichedEntryPoint[];
   generated_at: string;
 }
 
@@ -95,7 +93,7 @@ interface CloneResult {
 interface ResolvedMode {
   project_path: string;
   project_name: string;
-  source_info: SourceInfo;
+  source_info: AnalysisSourceInfo;
   include_tests: boolean;
   folders?: string[];
   exclude?: string[];
@@ -468,18 +466,19 @@ async function analyze_directory(
     `Found ${call_graph.entry_points.length} entry points in ${Date.now() - callgraph_start}ms`
   );
 
-  // Drive the canonical enrichment + classification primitive against the
-  // full skill registry. Classification metadata is produced as a side
-  // product (not persisted in `AnalysisResult`); the call-graph stage owns
-  // diagnostics extraction and the triage pipeline re-classifies in
-  // `prepare_triage` to incorporate `tp_cache` decisions.
-  const skill_registry = load_registry();
-  const enriched = enrich_call_graph(call_graph, project, {
-    registry: skill_registry,
-  });
-  // `attach_unindexed_test_grep_hits` mutates the entries' diagnostics;
-  // materialize a mutable array from the by-id map without losing identity.
-  const entry_points: EnrichedEntryPoint[] = Array.from(enriched.entry_points_by_id.values());
+  // Build per-entry diagnostics. Classification is intentionally NOT run
+  // here — the triage pipeline re-classifies in `prepare_triage` so it can
+  // incorporate `tp_cache` decisions. Running classifier rules now would
+  // also fire before `attach_unindexed_test_grep_hits` populates the
+  // `has_unindexed_test_caller` predicate input, producing wrong verdicts.
+  const entry_points: EnrichedEntryPoint[] = extract_entry_point_diagnostics(
+    call_graph,
+    project,
+  );
+  // `load_registry()` validates the skill registry shape on disk; calling it
+  // here keeps the parse-on-startup invariant even though `detect_entrypoints`
+  // no longer drives classification directly.
+  load_registry();
 
   // Second grep pass: scan common test-directory patterns OUTSIDE the indexed
   // scope. Attaches matching call-site hits to

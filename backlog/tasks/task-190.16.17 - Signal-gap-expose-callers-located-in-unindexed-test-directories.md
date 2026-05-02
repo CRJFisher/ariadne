@@ -14,6 +14,18 @@ parent_task_id: TASK-190.16
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
+> **Note (TASK-190.17 path/type-moves):** Paths and types referenced below moved when TASK-190.17 landed.
+> - `EnrichedFunctionEntry` → `EnrichedEntryPoint` (now in `@ariadnejs/types`).
+> - `AutoClassifiedEntry` → `AutoClassifiedEntryPoint`.
+> - `IntrospectionGap` → `SignalLibraryGap` (triage-curator).
+> - `.claude/skills/self-repair-pipeline/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
+> - `.claude/skills/self-repair-pipeline/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
+> - Generated builtins live at `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
+> - Bundled permanent slice at `packages/core/src/classify_entry_points/permanent_data.ts` (regen via `pnpm sync-permanent-rules`).
+> See TASK-190.17 for the full migration scope.
+
+
 The `unindexed-test-files` false-positive group in the webpack run cannot be classified with the existing signal library. Its single entry (`addModule` at /lib/Chunk.js:177) is a false positive because the only real caller — `chunk.addModule(module)` at /test/configCases/deprecations/chunk-and-module/webpack.config.js:21 — lives in the `/test/` directory, which Ariadne's file-coverage configuration excludes from indexing.
 
 Caveat / missing-signal scope:

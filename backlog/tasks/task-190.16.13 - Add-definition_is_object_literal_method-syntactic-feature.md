@@ -16,6 +16,18 @@ parent_task_id: TASK-190.16
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
+> **Note (TASK-190.17 path/type-moves):** Paths and types referenced below moved when TASK-190.17 landed.
+> - `EnrichedFunctionEntry` → `EnrichedEntryPoint` (now in `@ariadnejs/types`).
+> - `AutoClassifiedEntry` → `AutoClassifiedEntryPoint`.
+> - `IntrospectionGap` → `SignalLibraryGap` (triage-curator).
+> - `.claude/skills/self-repair-pipeline/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
+> - `.claude/skills/self-repair-pipeline/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
+> - Generated builtins live at `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
+> - Bundled permanent slice at `packages/core/src/classify_entry_points/permanent_data.ts` (regen via `pnpm sync-permanent-rules`).
+> See TASK-190.17 for the full migration scope.
+
+
 The `context-object-destructuring` false-positive pattern occurs when a method is defined as an object-literal property-shorthand (e.g. `let ctx = { rollback(snapshot) { ... }, ... }` at `lib/serialization/ObjectMiddleware.js:541`), passed as an argument to another function, and then destructured at the call site (e.g. `serialize({ write, snapshot, rollback, logger, profile })` at `lib/cache/PackFileCacheStrategy.js:720`), with the destructured name invoked as a bare identifier (`rollback(s);` at lines 745, 771, 781).
 
 Ariadne does not walk the chain `object-literal-property -> argument binding -> parameter destructuring -> bare call`, so such methods are marked unreachable even though real callers exist.
