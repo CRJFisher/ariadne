@@ -63,6 +63,8 @@ interface EnrichedCallGraph {
 
 The `entry_points_by_id` and `classifier_hints_by_id` maps are what the self-healing pipeline uses to build LLM-triage prompts for the residual bucket; library callers never need them.
 
+`enrich_call_graph` accepts a second option — `unindexed_test_grep: "applied" | "skipped"` (default `"skipped"`). When `"skipped"`, the function refuses any registry that contains a rule using the `has_unindexed_test_caller` predicate, because that predicate's input is only populated by `attach_unindexed_test_grep_hits` (a filesystem pass that runs in `detect_entrypoints`). Set it to `"applied"` after running the grep pass yourself; library callers and the in-process `prepare_triage` pipeline leave the default and get a loud refusal instead of silent misclassification.
+
 ---
 
 ## 4. Where the rules come from
@@ -127,15 +129,15 @@ Before TASK-190.17, the self-repair-pipeline skill _owned_ the orchestrator and 
 
 | Skill responsibility                                              | Where                                                                                                                                                        |
 | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Build `AnalysisResult` from a project for a downstream triage run | `.claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts` (calls `enrich_call_graph` directly)                                                     |
-| Drive the triage loop on residuals                                | `.claude/skills/self-repair-pipeline/src/prepare_triage.ts:87` (calls `enrich_call_graph` with the **full** registry — permanent + wip)                      |
+| Build `AnalysisResult` from a project for a downstream triage run | `.claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts` calls `extract_entry_point_diagnostics` directly (it does not classify here — the triage pipeline re-classifies once `attach_unindexed_test_grep_hits` has populated the grep set), then runs `attach_unindexed_test_grep_hits` |
+| Drive the triage loop on residuals                                | `.claude/skills/self-repair-pipeline/src/prepare_triage.ts:73` calls `enrich_call_graph` with the **full** registry — permanent + wip                        |
 | Operator state (run dirs, `LATEST` pointer, TP cache)             | `.claude/skills/self-repair-pipeline/src/run_discovery.ts`, `triage_state_paths.ts`, `triage_results_store.ts`, `confirmed_unreachable_reuse.ts` (unchanged) |
 | Curate new rules                                                  | `triage-curator` skill (separate; writes to `registry.json`, then `pnpm sync-permanent-rules` graduates qualifying rules into core)                          |
 | Render builtins barrel                                            | `.claude/skills/self-repair-pipeline/src/auto_classify/render_builtins_barrel.ts` (the only file left in `auto_classify/`; emits to core's path)             |
 
 Why the skill keeps a full-registry loader: the pipeline wants to see **wip** rule matches too, so it can collect classifier hints into the LLM-triage prompt. Library callers only ever see the permanent slice.
 
-The `prepare_triage` script refuses to run when the **full** registry contains a rule that uses the `has_unindexed_test_caller` predicate but the call site does not provide unindexed-test grep hits — see `.claude/skills/self-repair-pipeline/src/prepare_triage.ts:75`. That predicate is only populated by `detect_entrypoints` (which has filesystem access); refusing the run is better than silently mis-classifying.
+The unindexed-test guard lives in `enrich_call_graph` itself (see Section 3). Both library callers and the in-process `prepare_triage` pipeline leave `unindexed_test_grep` at its `"skipped"` default and get a loud refusal if the registry contains a rule using `has_unindexed_test_caller`. `detect_entrypoints` does not call `enrich_call_graph` at all — it builds the diagnostics with `extract_entry_point_diagnostics`, attaches grep hits via `attach_unindexed_test_grep_hits`, and writes the resulting `EnrichedEntryPoint[]` straight into the analysis JSON.
 
 ---
 
@@ -231,7 +233,27 @@ If you want to sanity-check the migration yourself:
    Should show declarations of both methods plus the private `compute_enriched_call_graph`.
 
 5. **MCP server-level flag**:
+
    ```
    grep -n "show_suppressed" packages/mcp/src/server.ts packages/mcp/src/start_server.ts
    ```
+
    Should show CLI parsing, env-var fallback, and the threading into the tool factory.
+
+6. **Generated builtins import the canonical `detect_language`** (no inline copies):
+
+   ```
+   grep -l "function detect_language" packages/core/src/classify_entry_points/builtins/check_*.ts | wc -l
+   ```
+
+   Should print `0`. Each generated `check_*.ts` that needs the helper imports it from `../extract_entry_point_diagnostics`. Any future spec that requires `detect_language` produces an `import` line in the rendered output, not a duplicated function definition.
+
+7. **The unindexed-test guard refuses misuse**:
+
+   ```ts
+   // Without `unindexed_test_grep: "applied"` and a registry that uses
+   // `has_unindexed_test_caller`, this throws at the call site.
+   enrich_call_graph(call_graph, project, { registry });
+   ```
+
+   Library callers should leave the option at its `"skipped"` default; `detect_entrypoints` does not call `enrich_call_graph` at all and so doesn't need the option. See `packages/core/src/classify_entry_points/enrich_call_graph.test.ts` ("refuses runs whose registry uses has_unindexed_test_caller…") for the regression coverage.
