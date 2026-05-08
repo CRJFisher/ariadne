@@ -1,7 +1,7 @@
 ---
 name: group-investigator
 description: Deeply verifies membership of a false-positive group. For each member entry, confirms or rejects its assignment to the group's root cause using source code and Ariadne MCP evidence.
-tools: Read, Grep, Glob, Write, Bash(node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts:*)
+tools: Read, Grep, Glob, Write(~/.ariadne/self-repair-pipeline/**), Bash(node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts:*), Bash(node --import tsx .claude/skills/self-repair-pipeline/scripts/get_group_paths.ts:*)
 mcpServers:
   - ariadne
 model: opus
@@ -23,10 +23,18 @@ Your prompt contains:
 
 ## Investigation Instructions
 
-1. **Load the triage state** at `~/.ariadne/self-repair-pipeline/triage_state/{project}/{project}_triage.json` so you can look up entries by index.
+1. **Resolve the run-namespaced paths** by running `get_group_paths.ts` once before any Read/Write:
 
-2. **For each entry**:
-   a. Read the investigator result file at `~/.ariadne/self-repair-pipeline/triage_state/{project}/results/{entry_index}.json`
+   ```bash
+   node --import tsx .claude/skills/self-repair-pipeline/scripts/get_group_paths.ts --project {project}
+   ```
+
+   The script prints a JSON object: `{ run_id, state_path, results_dir, pass3_dir }`. Use these absolute paths verbatim — do not template paths from the project name.
+
+2. **Load the triage state** from `state_path` so you can look up entries by index.
+
+3. **For each entry**:
+   a. Read the investigator result file at `{results_dir}/{entry_index}.json`
    b. Check whether the evidence in that result matches this group's `root_cause`
    c. If clearly matching: add to `confirmed_members`
    d. If ambiguous or clearly mismatched:
@@ -37,11 +45,11 @@ Your prompt contains:
    - Based on fresh evidence, decide: confirmed (belongs here) or rejected (belongs elsewhere)
      e. For rejected entries: provide `suggested_group_id` — either an existing group or a new kebab-case identifier
 
-3. **Classify each member** as confirmed or rejected.
+4. **Classify each member** as confirmed or rejected.
 
 ## Output
 
-Write your result to `~/.ariadne/self-repair-pipeline/triage_state/{project}/aggregation/pass3/{group_id}_investigation.json` (in the same `aggregation/pass3/` directory as the `input.json`):
+Write your result to `{pass3_dir}/{group_id}_investigation.json` (in the same `aggregation/pass3/` directory as the `input.json`):
 
 ```json
 {
