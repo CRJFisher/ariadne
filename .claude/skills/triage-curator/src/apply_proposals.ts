@@ -6,6 +6,7 @@ import {
 } from "@ariadnejs/types";
 import { detect_language } from "@ariadnejs/core";
 
+import { atomic_write_file } from "./atomic_write.js";
 import { error_code } from "./errors.js";
 import { render_ariadne_bug_body } from "./render_ariadne_bug_body.js";
 import type {
@@ -38,25 +39,32 @@ export const DRIFT_OUTLIER_RATE_THRESHOLD = 0.15;
 
 /**
  * For each QA response whose outlier rate meets the drift threshold, flip
- * `drift_detected` to true on the matching registry entry. Pure.
+ * `drift_detected` to true on the matching registry entry — provided that
+ * entry has an authored classifier (`classifier.kind !== "none"`). Drift on a
+ * `kind: "none"` rule has no classifier to be drifting and yields a sticky
+ * tag with no consumer. Pure.
  */
 export function mark_drift_in_registry(
   registry: KnownIssue[],
   qa: QaResponse[],
   member_counts: Record<string, number>,
 ): { updated: KnownIssue[]; drift_tagged_groups: string[] } {
-  const drifting = new Set<string>();
+  const candidate_drifting = new Set<string>();
   for (const r of qa) {
     const n = member_counts[r.group_id] ?? 0;
     if (n <= 0) continue;
     if (r.outliers.length / n >= DRIFT_OUTLIER_RATE_THRESHOLD) {
-      drifting.add(r.group_id);
+      candidate_drifting.add(r.group_id);
     }
   }
-  const updated = registry.map((issue) =>
-    drifting.has(issue.group_id) ? { ...issue, drift_detected: true } : issue,
-  );
-  return { updated, drift_tagged_groups: [...drifting] };
+  const drift_tagged_groups: string[] = [];
+  const updated = registry.map((issue) => {
+    if (!candidate_drifting.has(issue.group_id)) return issue;
+    if (issue.classifier.kind === "none") return issue;
+    drift_tagged_groups.push(issue.group_id);
+    return { ...issue, drift_detected: true };
+  });
+  return { updated, drift_tagged_groups };
 }
 
 // ===== Observed-count bookkeeping =====
@@ -297,10 +305,9 @@ export async function apply_proposals(
     registry_upserts.length > 0 ||
     bumped_groups.length > 0;
   if (!opts.dry_run && registry_mutated) {
-    await fs.writeFile(
+    await atomic_write_file(
       opts.registry_path,
       serialize_known_issues_registry_json(next_registry),
-      "utf8",
     );
   }
 
@@ -378,11 +385,7 @@ export async function link_ariadne_bug_tasks(
 
   if (updated_groups.length === 0) return { updated_groups: [] };
 
-  await fs.writeFile(
-    registry_path,
-    serialize_known_issues_registry_json(next),
-    "utf8",
-  );
+  await atomic_write_file(registry_path, serialize_known_issues_registry_json(next));
   return { updated_groups };
 }
 

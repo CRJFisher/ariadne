@@ -159,6 +159,42 @@ describe("mark_drift_in_registry", () => {
     expect(drift_tagged_groups).toEqual([]);
     expect(updated[0].drift_detected).toBe(true);
   });
+
+  it("does not tag rules with classifier.kind='none' even at high outlier rate", () => {
+    // A `kind: "none"` rule has no classifier to be drifting — drift signal
+    // only makes sense for rules that carry an authored classifier.
+    const reg: KnownIssue[] = [
+      known("a", { classifier: { kind: "none" } }),
+      known("b"), // default classifier.kind: "builtin"
+    ];
+    const qa: QaResponse[] = [
+      {
+        group_id: "a",
+        outliers: [
+          { entry_index: 0, reason: "" },
+          { entry_index: 1, reason: "" },
+          { entry_index: 2, reason: "" },
+        ],
+        notes: "",
+      },
+      {
+        group_id: "b",
+        outliers: [
+          { entry_index: 0, reason: "" },
+          { entry_index: 1, reason: "" },
+          { entry_index: 2, reason: "" },
+        ],
+        notes: "",
+      },
+    ];
+    const { updated, drift_tagged_groups } = mark_drift_in_registry(reg, qa, {
+      a: 20, // 3/20 = 15% → would drift if classifier were authored
+      b: 20, // 3/20 = 15% → drifts (builtin)
+    });
+    expect(drift_tagged_groups).toEqual(["b"]);
+    expect(updated.find((e) => e.group_id === "a")?.drift_detected).toBeUndefined();
+    expect(updated.find((e) => e.group_id === "b")?.drift_detected).toBe(true);
+  });
 });
 
 describe("bump_observed_stats", () => {

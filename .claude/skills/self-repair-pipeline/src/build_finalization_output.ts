@@ -14,9 +14,33 @@ import path from "path";
 import type { FalsePositiveEntry, FalsePositiveGroup } from "@ariadnejs/types";
 import type { TriageState, TriageEntry } from "./triage_state_types.js";
 
-export const FINALIZATION_OUTPUT_SCHEMA_VERSION = 2;
+export const FINALIZATION_OUTPUT_SCHEMA_VERSION = 3;
 
 // ===== Output Types =====
+
+/**
+ * Per-run match accounting for one registry group_id. Preserved through
+ * finalization so downstream tooling (curator's promotion-candidate scoring,
+ * fix-sequencer's diff_runs) can compute cross-run firing statistics. Without
+ * this, rule attribution would be discarded at the boundary.
+ */
+export interface GroupMatchHistory {
+  group_id: string;
+  /**
+   * Entries auto-suppressed by this rule's predicate/builtin classifier in
+   * this run. Equals the count of TriageEntry rows where
+   * `auto_classified === true` and `known_source === "registry:<group_id>"`.
+   */
+  match_count: number;
+  /**
+   * Entries the LLM independently attributed to this group_id (route
+   * "llm-triage", non-auto-classified, `result.ariadne_correct === false`,
+   * `result.group_id` matching). Cross-verification signal: how often the LLM
+   * agrees with the classifier's group attribution on entries the classifier
+   * did NOT auto-suppress.
+   */
+  llm_attributed_count: number;
+}
 
 export interface FinalizationOutput {
   schema_version: number;
@@ -30,6 +54,7 @@ export interface FinalizationOutput {
   commit_hash: string | null;
   confirmed_unreachable: FalsePositiveEntry[];
   false_positive_groups: Record<string, FalsePositiveGroup>;
+  group_match_history: GroupMatchHistory[];
   last_updated: string;
 }
 
@@ -73,6 +98,38 @@ function entry_to_fp_entry(entry: TriageEntry, project_path: string): FalsePosit
   return result;
 }
 
+const REGISTRY_KNOWN_SOURCE_PREFIX = "registry:";
+
+function registry_group_id_from_source(known_source: string | null): string | null {
+  if (known_source === null) return null;
+  if (!known_source.startsWith(REGISTRY_KNOWN_SOURCE_PREFIX)) return null;
+  return known_source.slice(REGISTRY_KNOWN_SOURCE_PREFIX.length);
+}
+
+function build_group_match_history(state: TriageState): GroupMatchHistory[] {
+  const by_group = new Map<string, GroupMatchHistory>();
+  const get = (group_id: string): GroupMatchHistory => {
+    let row = by_group.get(group_id);
+    if (row === undefined) {
+      row = { group_id, match_count: 0, llm_attributed_count: 0 };
+      by_group.set(group_id, row);
+    }
+    return row;
+  };
+  for (const entry of state.entries) {
+    if (entry.auto_classified) {
+      const group_id = registry_group_id_from_source(entry.known_source);
+      if (group_id !== null) get(group_id).match_count += 1;
+      continue;
+    }
+    if (entry.status !== "completed" || entry.result === null) continue;
+    if (entry.result.ariadne_correct) continue;
+    if (entry.result.group_id === "confirmed-unreachable") continue;
+    get(entry.result.group_id).llm_attributed_count += 1;
+  }
+  return [...by_group.values()].sort((a, b) => a.group_id.localeCompare(b.group_id));
+}
+
 export function build_finalization_output(
   state: TriageState,
   context: FinalizationContext,
@@ -112,6 +169,7 @@ export function build_finalization_output(
     commit_hash: context.commit_hash,
     confirmed_unreachable,
     false_positive_groups,
+    group_match_history: build_group_match_history(state),
     last_updated: state.updated_at,
   };
 }

@@ -22,14 +22,16 @@ export interface FalsePositiveGroup {
 }
 
 export interface TriageResultsFile {
-  /** Schema version of this published artifact. v1 lacks this field. */
-  schema_version?: number;
-  /** Absolute path to the target repo when the run was finalized. v1 lacks this field. */
-  project_path?: string;
+  /** Schema version of this published artifact. Required; readers reject mismatched versions. */
+  schema_version: number;
+  /** Absolute path to the target repo when the run was finalized. */
+  project_path: string;
   /** Full HEAD commit hash for the target repo when the run was finalized. */
-  commit_hash?: string | null;
+  commit_hash: string | null;
   confirmed_unreachable: FalsePositiveEntry[];
   false_positive_groups: Record<string, FalsePositiveGroup>;
+  /** Per-run match accounting per registry group_id. See build_finalization_output's GroupMatchHistory. */
+  group_match_history: { group_id: string; match_count: number; llm_attributed_count: number }[];
   last_updated: string;
 }
 
@@ -45,6 +47,35 @@ export type {
   KnownIssueLanguage,
   KnownIssueStatus,
 } from "@ariadnejs/types";
+
+/**
+ * Row in the `pnpm find-promotion-candidates` output. Surfaces the evidence
+ * that recommends (or precludes) promoting a `wip` classifier rule into the
+ * bundled `permanent` slice. Emitted purely for human review; the script
+ * itself never mutates `registry.json`.
+ */
+export interface PromotionCandidate {
+  group_id: string;
+  classifier_kind: "predicate" | "builtin";
+  observed_count: number;
+  observed_projects_count: number;
+  runs_observed_in: number;
+  match_count_total: number;
+  llm_attributed_total: number;
+  drift_detected: boolean;
+  backlog_task: string | null;
+  /**
+   * 0..1+ score combining observed count, project breadth, and run-history
+   * depth. Values ≥ 0.9 indicate the rule has cleared the stability bar.
+   */
+  score: number;
+  /**
+   * Hard reasons the rule cannot be promoted regardless of score. When
+   * non-empty, the candidate is informational only — the human should
+   * resolve each veto before considering promotion.
+   */
+  vetoes: readonly string[];
+}
 
 // ===== Curator state (per-run sentinel files under runs/<id>/finalized.json) =====
 

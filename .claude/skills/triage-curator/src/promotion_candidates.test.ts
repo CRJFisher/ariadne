@@ -1,0 +1,172 @@
+import { describe, expect, it } from "vitest";
+
+import type { KnownIssue } from "./types.js";
+import {
+  aggregate_promotion_candidates,
+  PROMOTION_SCORE_CUTOFF,
+  score_candidate,
+  summarize_match_history,
+  type GroupMatchHistorySummary,
+} from "./promotion_candidates.js";
+
+function known(group_id: string, overrides: Partial<KnownIssue> = {}): KnownIssue {
+  return {
+    group_id,
+    title: group_id,
+    description: "",
+    status: "wip",
+    languages: ["typescript"],
+    examples: [],
+    classifier: { kind: "builtin", function_name: group_id, min_confidence: 0.9 },
+    observed_count: 12,
+    observed_projects: ["p1", "p2"],
+    backlog_task: "TASK-190.16.42",
+    ...overrides,
+  };
+}
+
+function summary(overrides: Partial<GroupMatchHistorySummary> & { group_id: string }): GroupMatchHistorySummary {
+  return {
+    match_count_total: 0,
+    llm_attributed_total: 0,
+    runs_observed_in: 2,
+    ...overrides,
+  };
+}
+
+describe("summarize_match_history", () => {
+  it("sums match and llm_attributed counts across runs per group_id", () => {
+    const out = summarize_match_history([
+      { group_id: "a", match_count: 3, llm_attributed_count: 1 },
+      { group_id: "a", match_count: 2, llm_attributed_count: 0 },
+      { group_id: "b", match_count: 5, llm_attributed_count: 2 },
+    ]);
+    expect(out.get("a")).toEqual({
+      group_id: "a",
+      match_count_total: 5,
+      llm_attributed_total: 1,
+      runs_observed_in: 2,
+    });
+    expect(out.get("b")).toEqual({
+      group_id: "b",
+      match_count_total: 5,
+      llm_attributed_total: 2,
+      runs_observed_in: 1,
+    });
+  });
+
+  it("skips empty rows (both counts zero) when computing runs_observed_in", () => {
+    const out = summarize_match_history([
+      { group_id: "a", match_count: 0, llm_attributed_count: 0 },
+      { group_id: "a", match_count: 1, llm_attributed_count: 0 },
+    ]);
+    expect(out.get("a")?.runs_observed_in).toBe(1);
+  });
+});
+
+describe("score_candidate", () => {
+  it("a fully-met rule scores 1.0 (no LLM cross-verification bonus)", () => {
+    const result = score_candidate(known("a"), summary({ group_id: "a" }));
+    expect(result.vetoes).toEqual([]);
+    expect(result.score).toBeCloseTo(1.0);
+  });
+
+  it("scores < 1.0 when observed_count is below target", () => {
+    const result = score_candidate(known("a", { observed_count: 5 }), summary({ group_id: "a" }));
+    // 0.4 * (5/10) + 0.3 + 0.3 = 0.2 + 0.6 = 0.8
+    expect(result.score).toBeCloseTo(0.8);
+  });
+
+  it("scores < 1.0 when runs_observed_in is below target", () => {
+    const result = score_candidate(known("a"), summary({ group_id: "a", runs_observed_in: 1 }));
+    // 0.4 + 0.3 + 0.3 * (1/2) = 0.85
+    expect(result.score).toBeCloseTo(0.85);
+  });
+
+  it("adds LLM cross-verification bonus when llm_attributed_total > 0", () => {
+    const result = score_candidate(
+      known("a"),
+      summary({ group_id: "a", llm_attributed_total: 3 }),
+    );
+    // 1.0 + 0.1 bonus
+    expect(result.score).toBeCloseTo(1.1);
+  });
+
+  it("vetoes a rule with classifier.kind=none", () => {
+    const result = score_candidate(known("a", { classifier: { kind: "none" } }), summary({ group_id: "a" }));
+    expect(result.vetoes).toContain("no classifier authored");
+  });
+
+  it("vetoes a rule with missing backlog_task", () => {
+    const result = score_candidate(known("a", { backlog_task: undefined }), summary({ group_id: "a" }));
+    expect(result.vetoes).toContain("missing backlog_task");
+  });
+
+  it("vetoes a drifting rule", () => {
+    const result = score_candidate(known("a", { drift_detected: true }), summary({ group_id: "a" }));
+    expect(result.vetoes).toContain("classifier drifting (drift_detected=true)");
+  });
+});
+
+describe("aggregate_promotion_candidates", () => {
+  it("emits a fully-met wip rule above the cutoff", () => {
+    const registry: KnownIssue[] = [known("a")];
+    const history = summarize_match_history([
+      { group_id: "a", match_count: 5, llm_attributed_count: 0 },
+      { group_id: "a", match_count: 4, llm_attributed_count: 0 },
+    ]);
+    const result = aggregate_promotion_candidates(registry, history);
+    expect(result).toHaveLength(1);
+    expect(result[0].group_id).toBe("a");
+    expect(result[0].score).toBeGreaterThanOrEqual(PROMOTION_SCORE_CUTOFF);
+    expect(result[0].vetoes).toEqual([]);
+  });
+
+  it("excludes wip rules with classifier.kind=none (no classifier to ship)", () => {
+    const registry: KnownIssue[] = [known("a", { classifier: { kind: "none" } })];
+    const result = aggregate_promotion_candidates(registry, new Map());
+    expect(result).toEqual([]);
+  });
+
+  it("excludes already-permanent rules", () => {
+    const registry: KnownIssue[] = [known("a", { status: "permanent" })];
+    const result = aggregate_promotion_candidates(registry, new Map());
+    expect(result).toEqual([]);
+  });
+
+  it("excludes rules whose score is below cutoff (early-stage data)", () => {
+    // observed_count = 1, projects = 1, runs = 0: nowhere near the targets
+    const registry: KnownIssue[] = [
+      known("a", { observed_count: 1, observed_projects: ["p1"] }),
+    ];
+    const result = aggregate_promotion_candidates(registry, new Map());
+    expect(result).toEqual([]);
+  });
+
+  it("includes a high-scoring rule WITH vetoes so the human sees why it cannot promote", () => {
+    const registry: KnownIssue[] = [known("a", { drift_detected: true })];
+    const history = summarize_match_history([
+      { group_id: "a", match_count: 5, llm_attributed_count: 0 },
+      { group_id: "a", match_count: 4, llm_attributed_count: 0 },
+    ]);
+    const result = aggregate_promotion_candidates(registry, history);
+    expect(result).toHaveLength(1);
+    expect(result[0].vetoes).toContain("classifier drifting (drift_detected=true)");
+  });
+
+  it("sorts candidates by score desc, then group_id asc", () => {
+    const registry: KnownIssue[] = [
+      known("z"),
+      known("a", { observed_count: 5 }), // lower score (0.8)
+    ];
+    const history = summarize_match_history([
+      { group_id: "z", match_count: 5, llm_attributed_count: 0 },
+      { group_id: "z", match_count: 4, llm_attributed_count: 0 },
+      { group_id: "a", match_count: 5, llm_attributed_count: 0 },
+      { group_id: "a", match_count: 4, llm_attributed_count: 0 },
+    ]);
+    const result = aggregate_promotion_candidates(registry, history);
+    // "a" has score 0.8 < cutoff → filtered out; only "z" remains
+    expect(result.map((c) => c.group_id)).toEqual(["z"]);
+  });
+});

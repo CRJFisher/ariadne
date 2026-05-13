@@ -17,10 +17,7 @@
 import * as fs from "node:fs/promises";
 import path from "path";
 
-import {
-  FINALIZATION_OUTPUT_SCHEMA_VERSION,
-  type FinalizationOutput,
-} from "./build_finalization_output.js";
+import type { FinalizationOutput } from "./build_finalization_output.js";
 import type { FalsePositiveEntry } from "@ariadnejs/types";
 import {
   most_recent_finalized_triage_results,
@@ -73,35 +70,17 @@ function key_for_published(entry: FalsePositiveEntry): TpCacheKey {
 }
 
 /**
- * Build a `TpCache` from a published source. Returns `null` when the source has
- * zero usable entries (e.g. a pre-v2 file whose entries lack `kind`); the
- * caller treats that as "no eligible source" rather than "matched zero entries
- * from this source", which would mislead provenance.
+ * Build a `TpCache` from a published source. Returns `null` when the source
+ * has zero entries. Schema validation (rejecting legacy formats) happens
+ * upstream in `triage_results_store.parse_finalization_output`; by the time
+ * we get here, every entry's `kind` is one of the canonical values.
  */
 function build_cache(source_run_id: string, output: FinalizationOutput): TpCache | null {
   const entries_by_key = new Map<string, FalsePositiveEntry>();
-  let dropped_legacy = 0;
   for (const fp of output.confirmed_unreachable) {
-    if (
-      fp.kind !== "function" &&
-      fp.kind !== "method" &&
-      fp.kind !== "constructor"
-    ) {
-      dropped_legacy++;
-      continue;
-    }
     entries_by_key.set(cache_key_string(key_for_published(fp)), fp);
   }
-  if (entries_by_key.size === 0) {
-    if (dropped_legacy > 0) {
-      process.stderr.write(
-        `[tp_cache] source run ${source_run_id} is pre-schema-v${FINALIZATION_OUTPUT_SCHEMA_VERSION} ` +
-          "(every entry lacks \"kind\"); skipping cache reuse. " +
-          "Re-finalize the source under the new schema or run with --no-reuse-tp.\n",
-      );
-    }
-    return null;
-  }
+  if (entries_by_key.size === 0) return null;
   return { source_run_id, entries_by_key };
 }
 

@@ -52,4 +52,25 @@ fi
 EOF
 
 chmod +x .git/hooks/pre-commit
+
+cat > .git/hooks/commit-msg << 'EOF'
+#!/bin/sh
+
+# commit-msg hook: validates the commit convention documented at
+# .claude/rules/commit-convention.md. Permissive — only intervenes when the
+# subject's scope looks like a task id (`190.16.42`, `343`, `190.17.12-14`).
+# Named scopes and unscoped commits pass through.
+
+MSG_FILE="$1"
+PROJECT_DIR="$(git rev-parse --show-toplevel)"
+
+if [ ! -f "$PROJECT_DIR/scripts/check-commit-message.ts" ]; then
+  # Validator missing — skip silently rather than block commits.
+  exit 0
+fi
+
+node --import tsx "$PROJECT_DIR/scripts/check-commit-message.ts" "$MSG_FILE"
+EOF
+
+chmod +x .git/hooks/commit-msg
 echo "✅ Git hooks installed successfully"

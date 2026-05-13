@@ -32,11 +32,12 @@ function output(
   groups: Record<string, FalsePositiveGroup> = {},
 ): FinalizationOutput {
   return {
-    schema_version: 2,
+    schema_version: 3,
     project_path: "/p",
     commit_hash: "deadbee",
     confirmed_unreachable: confirmed,
     false_positive_groups: groups,
+    group_match_history: [],
     last_updated: "2026-04-28T00-00-00.000Z",
   };
 }

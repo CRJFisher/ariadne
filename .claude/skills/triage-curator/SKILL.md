@@ -441,6 +441,12 @@ scanner can run safely after `curate_all`. Promoted placeholders carry
 `classifier: { kind: "none" }` — the next curator run dispatches an
 investigator to author the real classifier.
 
+## Classifier lifecycle (write boundaries)
+
+The curator is the single autonomous writer for every `wip` transition: minting (`promote_novel_groups.ts`), classifier authoring (`apply_proposals.ts:upsert_classifier`), drift tagging (`apply_proposals.ts:mark_drift_in_registry`, gated on `classifier.kind !== "none"`), and observed-stat bookkeeping. `wip → permanent` is the only manual transition — surfaced by `pnpm find-promotion-candidates` for human review. `wip → fixed` is owned by the fix-sequencer reconciler (TASK-190.18.3). See `.claude/rules/classifier-lifecycle.md` for the canonical writer matrix.
+
+All registry writes go through `atomic_write_file` (`src/atomic_write.ts`) so concurrent curator + reconciler runs cannot lose data.
+
 ## Cross-package write contract
 
 `finalize_run` is a **cross-package writer**: when a curation run produces
@@ -448,11 +454,11 @@ classifier upserts or drift tags, it writes generated source into the
 versioned `@ariadnejs/core` package alongside its own skill-local outputs.
 A successful sweep's commit therefore spans both the skill and the package.
 
-| Path                                                              | Owner                         | Trigger                             |
-| ----------------------------------------------------------------- | ----------------------------- | ----------------------------------- |
-| `.claude/skills/self-repair-pipeline/known_issues/registry.json`  | Skill (canonical)             | Every classifier upsert / drift tag |
-| `packages/core/src/classify_entry_points/builtins/check_*.ts`     | Skill writes core path        | Per builtin proposal in Step 4      |
-| `packages/core/src/classify_entry_points/builtins/index.ts`       | Auto — `sync_permanent_rules` | Registry mutated this run           |
+| Path                                                             | Owner                         | Trigger                             |
+| ---------------------------------------------------------------- | ----------------------------- | ----------------------------------- |
+| `.claude/skills/self-repair-pipeline/known_issues/registry.json` | Skill (canonical)             | Every classifier upsert / drift tag |
+| `packages/core/src/classify_entry_points/builtins/check_*.ts`    | Skill writes core path        | Per builtin proposal in Step 4      |
+| `packages/core/src/classify_entry_points/builtins/index.ts`      | Auto — `sync_permanent_rules` | Registry mutated this run           |
 | `packages/core/src/classify_entry_points/permanent_data.ts`      | Auto — `sync_permanent_rules` | Registry mutated this run           |
 
 Path resolution lives in `src/paths.ts` (`get_core_builtins_dir`,

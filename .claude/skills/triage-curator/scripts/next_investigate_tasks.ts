@@ -18,6 +18,7 @@
 
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
+import { pathToFileURL } from "node:url";
 
 import { parse_known_issues_registry_json } from "@ariadnejs/types";
 import { error_code } from "../src/errors.js";
@@ -47,11 +48,33 @@ const PROMOTE_SAMPLE_OUTLIER_RATE_THRESHOLD = 0.4;
 /** Minimum QA sample size below which promotion is skipped as too noisy. */
 const PROMOTE_MIN_SAMPLE_SIZE = 4;
 
-interface DispatchEntry {
+export interface DispatchEntry {
   run_path: string;
   group_id: string;
   output_path: string;
   get_context_cmd: string;
+}
+
+/**
+ * Stable-sort dispatches so drift-flagged `wip` rules come first. A drifting
+ * classifier is one whose existing match shape has shifted relative to the QA
+ * sample, and we want to investigate it before the puller's limit fills with
+ * non-drifting candidates. Pure.
+ */
+export function sort_by_drift_priority(
+  entries: DispatchEntry[],
+  registry_by_group: Map<string, KnownIssue>,
+): DispatchEntry[] {
+  const priority = (entry: DispatchEntry): number => {
+    const reg = registry_by_group.get(entry.group_id);
+    if (reg === undefined) return 1;
+    if (reg.status === "wip" && reg.drift_detected === true) return 0;
+    return 1;
+  };
+  return entries
+    .map((entry, index) => ({ entry, index, prio: priority(entry) }))
+    .sort((a, b) => (a.prio !== b.prio ? a.prio - b.prio : a.index - b.index))
+    .map(({ entry }) => entry);
 }
 
 interface CliArgs {
@@ -201,12 +224,15 @@ async function main(): Promise<void> {
   }
 
   // Merge residual + promoted; dedupe by output_path (same file means same
-  // dispatch from this puller's perspective).
+  // dispatch from this puller's perspective). Then sort so drift-flagged
+  // `wip` rules float to the front of the queue — they are the strongest
+  // signal of a classifier needing re-authoring, and we want them inside the
+  // limit-sized slice before non-drifting candidates absorb the budget.
   const by_output = new Map<string, DispatchEntry>();
   for (const e of [...residual_entries, ...promoted_entries]) {
     by_output.set(e.output_path, e);
   }
-  const combined = [...by_output.values()];
+  const combined = sort_by_drift_priority([...by_output.values()], registry_by_group);
 
   const not_done: DispatchEntry[] = [];
   for (const entry of combined) {
@@ -219,9 +245,12 @@ async function main(): Promise<void> {
   );
 }
 
-main().catch((err) => {
-  process.stderr.write(
-    `next_investigate_tasks failed: ${err instanceof Error ? err.stack ?? err.message : String(err)}\n`,
-  );
-  process.exit(1);
-});
+// Only run when invoked as the entry point (skips when imported by tests).
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => {
+    process.stderr.write(
+      `next_investigate_tasks failed: ${err instanceof Error ? err.stack ?? err.message : String(err)}\n`,
+    );
+    process.exit(1);
+  });
+}

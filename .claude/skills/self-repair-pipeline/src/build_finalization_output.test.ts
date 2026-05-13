@@ -105,6 +105,7 @@ describe("build_finalization_output", () => {
         { name: "handler", file_path: "src/handler.ts", start_line: 5, kind: "function" },
       ],
       false_positive_groups: {},
+      group_match_history: [],
       last_updated: "2026-01-15T00:00:00Z",
     };
     expect(output).toEqual(expected);
@@ -156,6 +157,7 @@ describe("build_finalization_output", () => {
       commit_hash: COMMIT,
       confirmed_unreachable: [],
       false_positive_groups: { "builder-chain": expected_group },
+      group_match_history: [{ group_id: "builder-chain", match_count: 0, llm_attributed_count: 2 }],
       last_updated: "2026-01-15T00:00:00Z",
     });
   });
@@ -228,6 +230,7 @@ describe("build_finalization_output", () => {
       commit_hash: COMMIT,
       confirmed_unreachable: [],
       false_positive_groups: {},
+      group_match_history: [],
       last_updated: "2026-01-15T00:00:00Z",
     };
     expect(output).toEqual(expected);
@@ -251,6 +254,97 @@ describe("build_finalization_output", () => {
       project_path: PROJECT_PATH,
     });
     expect(output.commit_hash).toBe(null);
+  });
+
+  it("group_match_history counts auto-classified entries by registry known_source", () => {
+    const state = make_state({
+      entries: [
+        make_entry({
+          name: "a",
+          route: "known-unreachable",
+          known_source: "registry:rule-x",
+          auto_classified: true,
+          result: make_result({ ariadne_correct: true, group_id: "confirmed-unreachable" }),
+        }),
+        make_entry({
+          name: "b",
+          route: "known-unreachable",
+          known_source: "registry:rule-x",
+          auto_classified: true,
+          result: make_result({ ariadne_correct: true, group_id: "confirmed-unreachable" }),
+        }),
+        make_entry({
+          name: "c",
+          route: "known-unreachable",
+          known_source: "registry:rule-y",
+          auto_classified: true,
+          result: make_result({ ariadne_correct: true, group_id: "confirmed-unreachable" }),
+        }),
+      ],
+    });
+    const output = build_finalization_output(state, CONTEXT);
+    expect(output.group_match_history).toEqual([
+      { group_id: "rule-x", match_count: 2, llm_attributed_count: 0 },
+      { group_id: "rule-y", match_count: 1, llm_attributed_count: 0 },
+    ]);
+  });
+
+  it("group_match_history counts LLM attributions for non-auto-classified entries", () => {
+    const state = make_state({
+      entries: [
+        // Auto-suppressed by predicate — counts as match.
+        make_entry({
+          name: "matched",
+          route: "known-unreachable",
+          known_source: "registry:rule-x",
+          auto_classified: true,
+          result: make_result({ ariadne_correct: true, group_id: "confirmed-unreachable" }),
+        }),
+        // LLM-triaged, LLM attributed to the SAME group_id — cross-verifies.
+        make_entry({
+          name: "llm_attr",
+          route: "llm-triage",
+          known_source: null,
+          auto_classified: false,
+          result: make_result({ ariadne_correct: false, group_id: "rule-x" }),
+        }),
+        // LLM-triaged, LLM said "this is genuinely unreachable" — does NOT count.
+        make_entry({
+          name: "llm_kept_unreachable",
+          route: "llm-triage",
+          known_source: null,
+          auto_classified: false,
+          result: make_result({ ariadne_correct: true, group_id: "confirmed-unreachable" }),
+        }),
+      ],
+    });
+    const output = build_finalization_output(state, CONTEXT);
+    expect(output.group_match_history).toEqual([
+      { group_id: "rule-x", match_count: 1, llm_attributed_count: 1 },
+    ]);
+  });
+
+  it("group_match_history ignores entries with known_source not prefixed 'registry:'", () => {
+    const state = make_state({
+      entries: [
+        // TP-cache reuse — not a registry classifier match.
+        make_entry({
+          name: "tp_reuse",
+          route: "known-unreachable",
+          known_source: "previously-confirmed-tp",
+          auto_classified: false,
+          result: make_result({ ariadne_correct: true, group_id: "confirmed-unreachable" }),
+        }),
+      ],
+    });
+    const output = build_finalization_output(state, CONTEXT);
+    expect(output.group_match_history).toEqual([]);
+  });
+
+  it("group_match_history bumps schema version to 3", () => {
+    const state = make_state({ entries: [] });
+    const output = build_finalization_output(state, CONTEXT);
+    expect(output.schema_version).toBe(3);
   });
 });
 

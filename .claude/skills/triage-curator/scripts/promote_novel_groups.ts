@@ -18,8 +18,8 @@ import * as fs from "node:fs/promises";
 import {
   parse_known_issues_registry_json,
   serialize_known_issues_registry_json,
-  type KnownIssue as SelfRepairKnownIssue,
 } from "@ariadnejs/types";
+import { atomic_write_file } from "../src/atomic_write.js";
 import { get_registry_file_path } from "../src/paths.js";
 import {
   aggregate_novel_groups,
@@ -126,7 +126,7 @@ async function main(): Promise<void> {
   const { next, promoted } = apply_promotions(registry, promotable);
 
   if (!args.dry_run && promoted.length > 0) {
-    await fs.writeFile(registry_path, serialize_known_issues_registry_json(next), "utf8");
+    await atomic_write_file(registry_path, serialize_known_issues_registry_json(next));
   }
 
   process.stdout.write(

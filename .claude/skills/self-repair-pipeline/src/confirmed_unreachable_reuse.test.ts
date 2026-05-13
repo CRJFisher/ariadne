@@ -50,7 +50,7 @@ function build_output(
   confirmed: { name: string; file: string; line: number; kind?: "function" | "method" | "constructor" }[],
 ): FinalizationOutput {
   return {
-    schema_version: 2,
+    schema_version: 3,
     project_path: "/some/path",
     commit_hash: null,
     confirmed_unreachable: confirmed.map((c) => ({
@@ -60,6 +60,7 @@ function build_output(
       kind: c.kind ?? "function",
     })),
     false_positive_groups: {},
+    group_match_history: [],
     last_updated: "2026-04-28T13:42:07.812Z",
   };
 }
@@ -104,10 +105,11 @@ describe("derive_tp_cache", () => {
     expect(cache!.entries_by_key.has(k)).toBe(true);
   });
 
-  it("returns null and warns when pre-v2 source has zero usable entries", async () => {
-    // Simulates a legacy on-disk v1 record where confirmed_unreachable entries
-    // do not carry `kind`. Written as raw JSON so we don't have to fight the
-    // FinalizationOutput type to express an invalid record.
+  it("throws schema-mismatch on a legacy v1 source file", async () => {
+    // Pre-v3 files are hard-rejected at parse time (constitution: no BC).
+    // Operators re-finalize the run under the current schema or remove the
+    // stale file; the persisted-state policy still forbids `rm -rf` of the
+    // whole analysis_output/ tree.
     const legacy_record = {
       schema_version: 1,
       commit_hash: null,
@@ -118,19 +120,9 @@ describe("derive_tp_cache", () => {
       last_updated: "2026-04-28T13:42:07.812Z",
     };
     seed_raw_triage_results("p", "deadbee-2026-04-26T00-00-00.000Z", legacy_record);
-
-    const stderr_chunks: string[] = [];
-    const stderr_spy = vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
-      stderr_chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
-      return true;
-    });
-    try {
-      const cache = await derive_tp_cache("p", "deadbee", NO_OPTS);
-      expect(cache).toBeNull();
-      expect(stderr_chunks.join("")).toMatch(/pre-schema-v2/);
-    } finally {
-      stderr_spy.mockRestore();
-    }
+    await expect(derive_tp_cache("p", "deadbee", NO_OPTS)).rejects.toThrow(
+      /schema_version=1/,
+    );
   });
 
   it("throws when pinned source run-id has the wrong commit prefix", async () => {

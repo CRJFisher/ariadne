@@ -36,8 +36,12 @@ function triage(
     };
   }
   return {
+    schema_version: 3,
+    project_path: "/fixture",
+    commit_hash: null,
     confirmed_unreachable: [],
     false_positive_groups,
+    group_match_history: [],
     last_updated: "2026-04-24T00:00:00Z",
   };
 }

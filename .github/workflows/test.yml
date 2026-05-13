@@ -46,6 +46,15 @@ jobs:
       - name: Run tests
         run: pnpm test
 
+      - name: Run root-level script tests (e.g. check-commit-message)
+        run: pnpm exec vitest run scripts/
+
+      - name: Validate commit message convention
+        # Permissive validator — only intervenes when a commit subject's scope
+        # looks task-shaped (e.g. `fix(190.16.42):`). See
+        # `.claude/rules/commit-convention.md`.
+        run: node --import tsx scripts/check-commit-message.ts --ci
+
       - name: Check packages
         run: |
           pnpm --filter @ariadnejs/types pack --pack-destination /tmp

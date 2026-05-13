@@ -88,21 +88,23 @@ If no arguments are provided or the input is ambiguous, **ask the user** before 
 
 Scripts that operate on existing triage state take `--project <name>` (`prepare_triage` uses `--project` at creation time; `get_triage_summary` enumerates every project and takes no flags). Each pipeline invocation operates on exactly one project, and different projects can run in parallel against the same `triage_state/` dir — the project name is the isolation boundary.
 
-| File                                                                                   | Purpose                                                                               |
-| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `project_configs/{name}.json`                                                          | Per-project detection config (folders, excludes)                                      |
-| `triage_state/{project}/LATEST`                                                        | Pointer to the active run-id; absent when no run is in progress                       |
-| `triage_state/{project}/runs/{run-id}/manifest.json`                                   | Per-run metadata (status, commit_hash, tp_cache record)                               |
-| `triage_state/{project}/runs/{run-id}/triage.json`                                     | Per-run triage state (entries, per-entry results)                                     |
-| `triage_state/{project}/runs/{run-id}/results/{entry_index}.json`                      | Per-entry investigator outputs (written by sub-agents)                                |
-| `triage_state/{project}/runs/{run-id}/aggregation/slices/slice_{n}.json`               | Pass 1 input slices (false-positive entries)                                          |
-| `triage_state/{project}/runs/{run-id}/aggregation/pass1/slice_{n}.output.json`         | Pass 1 rough groupings                                                                |
-| `triage_state/{project}/runs/{run-id}/aggregation/pass3/input.json`                    | Pass 3 canonical group list                                                           |
-| `triage_state/{project}/runs/{run-id}/aggregation/pass3/{group_id}_investigation.json` | Pass 3 per-group investigation results                                                |
-| `analysis_output/{project}/detect_entrypoints/{ts}.json`                               | Detection output (kept project-scoped; one detection feeds many triage runs)          |
-| `analysis_output/{project}/triage_results/{run-id}.json`                               | Published triage results (schema v2, with `commit_hash`, `kind`, relative file paths) |
+| File                                                                                   | Purpose                                                                                                      |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `project_configs/{name}.json`                                                          | Per-project detection config (folders, excludes)                                                             |
+| `triage_state/{project}/LATEST`                                                        | Pointer to the active run-id; absent when no run is in progress                                              |
+| `triage_state/{project}/runs/{run-id}/manifest.json`                                   | Per-run metadata (status, commit_hash, tp_cache record)                                                      |
+| `triage_state/{project}/runs/{run-id}/triage.json`                                     | Per-run triage state (entries, per-entry results)                                                            |
+| `triage_state/{project}/runs/{run-id}/results/{entry_index}.json`                      | Per-entry investigator outputs (written by sub-agents)                                                       |
+| `triage_state/{project}/runs/{run-id}/aggregation/slices/slice_{n}.json`               | Pass 1 input slices (false-positive entries)                                                                 |
+| `triage_state/{project}/runs/{run-id}/aggregation/pass1/slice_{n}.output.json`         | Pass 1 rough groupings                                                                                       |
+| `triage_state/{project}/runs/{run-id}/aggregation/pass3/input.json`                    | Pass 3 canonical group list                                                                                  |
+| `triage_state/{project}/runs/{run-id}/aggregation/pass3/{group_id}_investigation.json` | Pass 3 per-group investigation results                                                                       |
+| `analysis_output/{project}/detect_entrypoints/{ts}.json`                               | Detection output (kept project-scoped; one detection feeds many triage runs)                                 |
+| `analysis_output/{project}/triage_results/{run-id}.json`                               | Published triage results (schema v3, with `commit_hash`, `kind`, relative file paths, `group_match_history`) |
 
 All paths above are relative to `~/.ariadne/self-repair-pipeline/`. Run-ids have the form `<short-commit>-<iso-ts>` (e.g. `deadbee-2026-04-28T13-42-07.812Z`); `nogit-<iso-ts>` when the target is not a git repo.
+
+**Classifier registry write boundary**: this skill reads `known_issues/registry.json` but **never writes to it**. All registry mutations go through the triage-curator (`wip` lifecycle) and the fix-sequencer reconciler (`wip → fixed`). See `.claude/rules/classifier-lifecycle.md` for the canonical writer matrix.
 
 Phase 3-5 scripts default to the run pointed at by `LATEST`; pass `--run-id <id>` to operate on a specific run. `prepare_triage` writes `LATEST` and `finalize_triage` clears it.
 
