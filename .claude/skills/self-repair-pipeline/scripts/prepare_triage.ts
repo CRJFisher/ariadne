@@ -33,7 +33,7 @@ import {
 import type { PersistenceStorage } from "@ariadnejs/core";
 
 import { load_json } from "../src/analysis_output.js";
-import { load_registry } from "../src/known_issues_registry.js";
+import { active_rules_for_classification, load_registry } from "../src/known_issues_registry.js";
 import { prepare_triage } from "../src/prepare_triage.js";
 import {
   manifest_path_for,
@@ -57,6 +57,7 @@ const DEFAULT_MAX_COUNT = 150;
 interface CliArgs {
   analysis_path: string;
   project: string | null;
+  config_path: string | null;
   max_count: number;
   no_reuse_tp: boolean;
   tp_source_run: string | null;
@@ -66,6 +67,7 @@ function parse_args(argv: string[]): CliArgs {
   const args = argv.slice(2);
   let analysis_path: string | null = null;
   let project: string | null = null;
+  let config_path: string | null = null;
   let max_count: number = DEFAULT_MAX_COUNT;
   let no_reuse_tp = false;
   let tp_source_run: string | null = null;
@@ -77,6 +79,9 @@ function parse_args(argv: string[]): CliArgs {
         break;
       case "--project":
         project = args[++i];
+        break;
+      case "--config":
+        config_path = args[++i];
         break;
       case "--max-count": {
         const n = parseInt(args[++i], 10);
@@ -98,12 +103,28 @@ function parse_args(argv: string[]): CliArgs {
 
   if (!analysis_path) {
     console.error(
-      `Usage: prepare_triage.ts --analysis <path> [--project <name>] [--max-count <n> (default: ${DEFAULT_MAX_COUNT})] [--no-reuse-tp] [--tp-source-run <run-id>]`,
+      `Usage: prepare_triage.ts --analysis <path> [--project <name>] [--config <path>] [--max-count <n> (default: ${DEFAULT_MAX_COUNT})] [--no-reuse-tp] [--tp-source-run <run-id>]`,
     );
     process.exit(1);
   }
 
-  return { analysis_path, project, max_count, no_reuse_tp, tp_source_run };
+  return { analysis_path, project, config_path, max_count, no_reuse_tp, tp_source_run };
+}
+
+interface IndexScopeFromConfig {
+  folders: string[] | undefined;
+  exclude: string[];
+}
+
+function load_index_scope(config_path: string | null): IndexScopeFromConfig {
+  if (config_path === null) {
+    return { folders: undefined, exclude: [] };
+  }
+  const raw = fs.readFileSync(path.resolve(config_path), "utf-8");
+  const parsed = JSON.parse(raw) as Record<string, unknown>;
+  const folders = Array.isArray(parsed.folders) ? (parsed.folders as string[]) : undefined;
+  const exclude = Array.isArray(parsed.exclude) ? (parsed.exclude as string[]) : [];
+  return { folders, exclude };
 }
 
 /**
@@ -181,14 +202,18 @@ function warn_if_analysis_stale(
  * Persisted indexes from `FileSystemStorage` are reused when available so the
  * second-run cost is parse-free.
  */
-async function load_project_for_classification(project_path: string) {
+async function load_project_for_classification(
+  project_path: string,
+  scope: IndexScopeFromConfig,
+) {
   const cache_dir = resolve_cache_dir(project_path);
   const storage: PersistenceStorage | undefined = cache_dir
     ? new FileSystemStorage(cache_dir)
     : undefined;
   const project = await load_project({
     project_path,
-    exclude: [...IGNORED_DIRECTORIES],
+    folders: scope.folders,
+    exclude: [...IGNORED_DIRECTORIES, ...scope.exclude],
     file_filter: (file: string) => {
       const language = detect_language(file);
       return !language || !is_test_file(file, language);
@@ -218,8 +243,22 @@ async function main(): Promise<void> {
 
   const run_id = build_run_id(head?.short ?? null);
 
-  const registry = load_registry();
-  const { project, call_graph } = await load_project_for_classification(project_path);
+  const full_registry = load_registry();
+  // Lifecycle filter: skip `fixed` rules (reconciler-stamped; underlying bug
+  // is resolved) and `wip + drift_detected` rules (curator QA flagged them).
+  // Without this filter the loop never closes — a fixed rule keeps firing
+  // forever, and drifting wip rules silently suppress entries that the
+  // investigate wave is supposed to re-examine.
+  const registry = active_rules_for_classification(full_registry);
+  const skipped_count = full_registry.length - registry.length;
+  if (skipped_count > 0) {
+    process.stderr.write(
+      `[prepare_triage] lifecycle filter skipped ${skipped_count} classifier(s) ` +
+        `(status=fixed or wip+drift_detected)\n`,
+    );
+  }
+  const scope = load_index_scope(cli.config_path);
+  const { project, call_graph } = await load_project_for_classification(project_path, scope);
   const { entries, stats } = prepare_triage({
     call_graph,
     project,

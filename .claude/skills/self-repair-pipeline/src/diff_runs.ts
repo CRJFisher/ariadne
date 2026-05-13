@@ -32,6 +32,24 @@ export interface GroupChange {
   to_group_id: string;
 }
 
+/**
+ * Per-group firing-count delta between two runs. Computed from
+ * `FinalizationOutput.group_match_history`. The fix-sequencer's
+ * `--annotate-fixes` post-processor (TASK-190.18.5) uses these deltas to
+ * label expected FP↔TP transitions after a fix lands; the curator's
+ * promotion-candidate scorer uses cross-run accumulation of the same data.
+ *
+ * Absent input fields default to 0 — a group that appears in one run but
+ * not the other has a zero count on the missing side.
+ */
+export interface GroupFiringDelta {
+  group_id: string;
+  match_count_from: number;
+  match_count_to: number;
+  llm_attributed_from: number;
+  llm_attributed_to: number;
+}
+
 export interface DiffSummary {
   totals_from: SetTotals;
   totals_to: SetTotals;
@@ -42,6 +60,12 @@ export interface DiffSummary {
   groups_added: string[];
   groups_removed: string[];
   groups_membership_delta: Record<string, { added: EntryRef[]; removed: EntryRef[] }>;
+  /**
+   * Per-group firing-count delta. Includes every `group_id` that appears in
+   * either run's `group_match_history`. Empty when both inputs have an empty
+   * match history (legacy v2 artifacts).
+   */
+  group_firing_deltas: GroupFiringDelta[];
 }
 
 interface SetTotals {
@@ -203,7 +227,31 @@ export function diff_runs(from: FinalizationOutput, to: FinalizationOutput): Dif
     groups_added,
     groups_removed,
     groups_membership_delta,
+    group_firing_deltas: compute_group_firing_deltas(from, to),
   };
+}
+
+function compute_group_firing_deltas(
+  from: FinalizationOutput,
+  to: FinalizationOutput,
+): GroupFiringDelta[] {
+  const from_by_group = new Map(from.group_match_history.map((row) => [row.group_id, row]));
+  const to_by_group = new Map(to.group_match_history.map((row) => [row.group_id, row]));
+  const all_ids = new Set<string>([...from_by_group.keys(), ...to_by_group.keys()]);
+  const deltas: GroupFiringDelta[] = [];
+  for (const group_id of all_ids) {
+    const f = from_by_group.get(group_id);
+    const t = to_by_group.get(group_id);
+    deltas.push({
+      group_id,
+      match_count_from: f?.match_count ?? 0,
+      match_count_to: t?.match_count ?? 0,
+      llm_attributed_from: f?.llm_attributed_count ?? 0,
+      llm_attributed_to: t?.llm_attributed_count ?? 0,
+    });
+  }
+  deltas.sort((a, b) => a.group_id.localeCompare(b.group_id));
+  return deltas;
 }
 
 // Helper used by the CLI for the text output format.
@@ -249,6 +297,22 @@ export function format_diff_text(diff: DiffSummary, from_id: string, to_id: stri
 
   if (diff.groups_added.length > 0) lines.push(`Groups added: ${diff.groups_added.join(", ")}`);
   if (diff.groups_removed.length > 0) lines.push(`Groups removed: ${diff.groups_removed.join(", ")}`);
+
+  const significant_deltas = diff.group_firing_deltas.filter(
+    (d) =>
+      d.match_count_from !== d.match_count_to ||
+      d.llm_attributed_from !== d.llm_attributed_to,
+  );
+  if (significant_deltas.length > 0) {
+    if (lines[lines.length - 1] !== "") lines.push("");
+    lines.push("Per-group firing deltas:");
+    for (const d of significant_deltas) {
+      lines.push(
+        `  ${d.group_id}: match ${d.match_count_from}→${d.match_count_to}, ` +
+          `llm_attr ${d.llm_attributed_from}→${d.llm_attributed_to}`,
+      );
+    }
+  }
 
   return lines.join("\n");
 }

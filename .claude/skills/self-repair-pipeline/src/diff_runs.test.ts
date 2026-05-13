@@ -30,6 +30,7 @@ function group(
 function output(
   confirmed: FalsePositiveEntry[],
   groups: Record<string, FalsePositiveGroup> = {},
+  group_match_history: { group_id: string; match_count: number; llm_attributed_count: number }[] = [],
 ): FinalizationOutput {
   return {
     schema_version: 3,
@@ -37,7 +38,7 @@ function output(
     commit_hash: "deadbee",
     confirmed_unreachable: confirmed,
     false_positive_groups: groups,
-    group_match_history: [],
+    group_match_history,
     last_updated: "2026-04-28T00-00-00.000Z",
   };
 }
@@ -54,6 +55,26 @@ describe("diff_runs", () => {
     expect(d.groups_removed).toEqual([]);
     expect(d.groups_membership_delta).toEqual({});
     expect(d.totals_from).toEqual(d.totals_to);
+    expect(d.group_firing_deltas).toEqual([]);
+  });
+
+  it("surfaces per-group firing deltas from group_match_history", () => {
+    // Reads canonical 'fix landed' signal: rule X's match_count went 12 → 0.
+    const from = output([], {}, [
+      { group_id: "rule-fixed", match_count: 12, llm_attributed_count: 2 },
+      { group_id: "rule-stable", match_count: 5, llm_attributed_count: 0 },
+    ]);
+    const to = output([], {}, [
+      { group_id: "rule-fixed", match_count: 0, llm_attributed_count: 0 },
+      { group_id: "rule-stable", match_count: 5, llm_attributed_count: 0 },
+      { group_id: "rule-new", match_count: 3, llm_attributed_count: 0 },
+    ]);
+    const d = diff_runs(from, to);
+    expect(d.group_firing_deltas).toEqual([
+      { group_id: "rule-fixed", match_count_from: 12, match_count_to: 0, llm_attributed_from: 2, llm_attributed_to: 0 },
+      { group_id: "rule-new", match_count_from: 0, match_count_to: 3, llm_attributed_from: 0, llm_attributed_to: 0 },
+      { group_id: "rule-stable", match_count_from: 5, match_count_to: 5, llm_attributed_from: 0, llm_attributed_to: 0 },
+    ]);
   });
 
   it("entries appearing in 'to' but not 'from' are reported", () => {

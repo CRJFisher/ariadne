@@ -11,11 +11,13 @@ import {
 } from "@ariadnejs/types";
 import {
   RegistryValidationError,
+  active_rules_for_classification,
   get_registry_file_path,
   load_registry,
   validate_predicate_expr,
   validate_registry,
 } from "./known_issues_registry.js";
+import type { KnownIssue } from "@ariadnejs/types";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_ROOT = path.resolve(HERE, "..");
@@ -46,6 +48,60 @@ describe("load_registry", () => {
     const registry = load_registry();
     const has_kind_none = registry.some((e) => e.classifier.kind === "none");
     expect(has_kind_none).toBe(true);
+  });
+});
+
+// ===== Lifecycle filter =====
+
+describe("active_rules_for_classification", () => {
+  function rule(
+    group_id: string,
+    overrides: Partial<KnownIssue> = {},
+  ): KnownIssue {
+    return {
+      group_id,
+      title: group_id,
+      description: "",
+      status: "wip",
+      languages: ["typescript"],
+      examples: [],
+      classifier: { kind: "builtin", function_name: group_id, min_confidence: 0.9 },
+      ...overrides,
+    };
+  }
+
+  it("excludes rules whose status is 'fixed' (loop-closure: stop firing reconciler-fixed rules)", () => {
+    const registry = [
+      rule("a", { status: "wip" }),
+      rule("b", { status: "fixed" }),
+      rule("c", { status: "permanent" }),
+    ];
+    const active = active_rules_for_classification(registry);
+    expect(active.map((r) => r.group_id)).toEqual(["a", "c"]);
+  });
+
+  it("excludes wip rules with drift_detected=true (prevents drifting classifiers from auto-suppressing entries)", () => {
+    const registry = [
+      rule("a", { status: "wip", drift_detected: true }),
+      rule("b", { status: "wip", drift_detected: false }),
+      rule("c", { status: "wip" }), // undefined drift_detected → treated as not drifting
+    ];
+    const active = active_rules_for_classification(registry);
+    expect(active.map((r) => r.group_id)).toEqual(["b", "c"]);
+  });
+
+  it("keeps permanent rules even if drift_detected is set (drift only gates wip)", () => {
+    // A permanent rule with drift_detected is an operator-resolved anomaly;
+    // automatic disable would be too disruptive for the bundled core slice.
+    const registry = [rule("a", { status: "permanent", drift_detected: true })];
+    expect(active_rules_for_classification(registry)).toEqual(registry);
+  });
+
+  it("is pure (returns a new array; preserves order)", () => {
+    const registry = [rule("a"), rule("b"), rule("c")];
+    const active = active_rules_for_classification(registry);
+    expect(active).not.toBe(registry);
+    expect(active.map((r) => r.group_id)).toEqual(["a", "b", "c"]);
   });
 });
 
