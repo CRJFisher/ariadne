@@ -1,6 +1,6 @@
 #!/usr/bin/env node --import tsx
 /**
- * CLI: collect rough-aggregator outputs into canonical pass3 input.
+ * CLI: collect rough-aggregator outputs into canonical pass2 input.
  *
  * Delegates merging to `src/aggregation/merge_rough_groups.ts`.
  *
@@ -41,12 +41,12 @@ const pass1_outputs: Pass1Output[] = fs
 
 const canonical_groups = merge_rough_groups(pass1_outputs);
 
-const pass3_dir = path.join(aggregation_dir, "pass3");
-fs.mkdirSync(pass3_dir, { recursive: true });
+const pass2_dir = path.join(aggregation_dir, "pass2");
+fs.mkdirSync(pass2_dir, { recursive: true });
 fs.writeFileSync(
-  path.join(pass3_dir, "input.json"),
+  path.join(pass2_dir, "input.json"),
   JSON.stringify({ canonical_groups }, null, 2) + "\n",
 );
 
-console.error(`Wrote ${canonical_groups.length} canonical group(s) to pass3/input.json`);
+console.error(`Wrote ${canonical_groups.length} canonical group(s) to pass2/input.json`);
 process.stdout.write(JSON.stringify({ group_count: canonical_groups.length }) + "\n");

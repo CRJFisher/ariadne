@@ -1,6 +1,6 @@
 #!/usr/bin/env node --import tsx
 /**
- * CLI: apply pass3 group-investigator verdicts back to triage state.
+ * CLI: apply pass2 group-investigator verdicts back to triage state.
  *
  * Delegates the mutation + reject reallocation logic to
  * `src/aggregation/finalize_aggregation.ts`.
@@ -33,19 +33,19 @@ try {
   process.exit(1);
 }
 
-const pass3_dir = path.join(run_dir, "aggregation", "pass3");
-if (!fs.existsSync(pass3_dir)) {
-  process.stderr.write(`Error: pass3 directory not found at ${pass3_dir}\n`);
+const pass2_dir = path.join(run_dir, "aggregation", "pass2");
+if (!fs.existsSync(pass2_dir)) {
+  process.stderr.write(`Error: pass2 directory not found at ${pass2_dir}\n`);
   process.exit(1);
 }
 
 const investigations: GroupInvestigation[] = fs
-  .readdirSync(pass3_dir)
+  .readdirSync(pass2_dir)
   .filter((f) => f.endsWith("_investigation.json"))
-  .map((f) => JSON.parse(fs.readFileSync(path.join(pass3_dir, f), "utf8")) as GroupInvestigation);
+  .map((f) => JSON.parse(fs.readFileSync(path.join(pass2_dir, f), "utf8")) as GroupInvestigation);
 
 if (investigations.length === 0) {
-  process.stderr.write(`Error: no investigation files found in ${pass3_dir}\n`);
+  process.stderr.write(`Error: no investigation files found in ${pass2_dir}\n`);
   process.exit(1);
 }
 

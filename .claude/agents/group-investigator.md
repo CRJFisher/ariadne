@@ -29,7 +29,7 @@ Your prompt contains:
    node --import tsx .claude/skills/self-repair-pipeline/scripts/get_group_paths.ts --project {project}
    ```
 
-   The script prints a JSON object: `{ run_id, state_path, results_dir, pass3_dir }`. Use these absolute paths verbatim — do not template paths from the project name.
+   The script prints a JSON object: `{ run_id, state_path, results_dir, pass2_dir }`. Use these absolute paths verbatim — do not template paths from the project name.
 
 2. **Load the triage state** from `state_path` so you can look up entries by index.
 
@@ -49,7 +49,7 @@ Your prompt contains:
 
 ## Output
 
-Write your result to `{pass3_dir}/{group_id}_investigation.json` (in the same `aggregation/pass3/` directory as the `input.json`):
+Write your result to `{pass2_dir}/{group_id}_investigation.json` (in the same `aggregation/pass2/` directory as the `input.json`):
 
 ```json
 {

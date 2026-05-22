@@ -97,8 +97,8 @@ Scripts that operate on existing triage state take `--project <name>` (`prepare_
 | `triage_state/{project}/runs/{run-id}/results/{entry_index}.json`                      | Per-entry investigator outputs (written by sub-agents)                                                       |
 | `triage_state/{project}/runs/{run-id}/aggregation/slices/slice_{n}.json`               | Pass 1 input slices (false-positive entries)                                                                 |
 | `triage_state/{project}/runs/{run-id}/aggregation/pass1/slice_{n}.output.json`         | Pass 1 rough groupings                                                                                       |
-| `triage_state/{project}/runs/{run-id}/aggregation/pass3/input.json`                    | Pass 3 canonical group list                                                                                  |
-| `triage_state/{project}/runs/{run-id}/aggregation/pass3/{group_id}_investigation.json` | Pass 3 per-group investigation results                                                                       |
+| `triage_state/{project}/runs/{run-id}/aggregation/pass2/input.json`                    | Pass 2 canonical group list                                                                                  |
+| `triage_state/{project}/runs/{run-id}/aggregation/pass2/{group_id}_investigation.json` | Pass 2 per-group investigation results                                                                       |
 | `analysis_output/{project}/detect_entrypoints/{ts}.json`                               | Detection output (kept project-scoped; one detection feeds many triage runs)                                 |
 | `analysis_output/{project}/triage_results/{run-id}.json`                               | Published triage results (schema v3, with `commit_hash`, `kind`, relative file paths, `group_match_history`) |
 
@@ -232,9 +232,9 @@ node --import tsx .claude/skills/self-repair-pipeline/scripts/merge_rough_groups
   --project <name>
 ```
 
-Output: `{ "group_count": N }`. Writes `aggregation/pass3/input.json`. If `group_count` is 0, stop and investigate — at least one false-positive slice was expected.
+Output: `{ "group_count": N }`. Writes `aggregation/pass2/input.json`. If `group_count` is 0, stop and investigate — at least one false-positive slice was expected.
 
-**Step 4:** Read `aggregation/pass3/input.json` to get the group list. Launch one **group-investigator** agent per false-positive group in parallel (`run_in_background: true`). Prompt each agent with the following **key-value plain text** (not JSON, not a file path):
+**Step 4:** Read `aggregation/pass2/input.json` to get the group list. Launch one **group-investigator** agent per false-positive group in parallel (`run_in_background: true`). Prompt each agent with the following **key-value plain text** (not JSON, not a file path):
 
 ```
 project: <name>
@@ -243,7 +243,7 @@ root_cause: <root_cause>
 entry_indices: [N, ...]
 ```
 
-Each agent verifies member assignments and writes `aggregation/pass3/{group_id}_investigation.json`.
+Each agent verifies member assignments and writes `aggregation/pass2/{group_id}_investigation.json`.
 
 **Step 5:** Apply investigation results and finalize group assignments:
 
@@ -399,8 +399,8 @@ The skill is a thin caller of `@ariadnejs/core`. Classification (`enrich_call_gr
 | `build_finalization_output.ts`        | Build final results from a completed triage state                                                                                                                       |
 | `merge_results.ts`                    | Merge investigator result files into triage state                                                                                                                       |
 | `aggregation/prepare_slices.ts`       | Slice completed false positives into rough-aggregator inputs                                                                                                            |
-| `aggregation/merge_rough_groups.ts`   | Merge pass1 outputs into canonical pass3 input                                                                                                                          |
-| `aggregation/finalize_aggregation.ts` | Apply pass3 verdicts back to triage state                                                                                                                               |
+| `aggregation/merge_rough_groups.ts`   | Merge pass1 outputs into canonical pass2 input                                                                                                                          |
+| `aggregation/finalize_aggregation.ts` | Apply pass2 verdicts back to triage state                                                                                                                               |
 | `triage_state_types.ts`               | Triage state types (`TriageState`, `TriageEntry`, `TriageEntryResult`)                                                                                                  |
 | `triage_state_paths.ts`               | Triage state file locations + required-flag CLI helpers                                                                                                                 |
 | `confirmed_unreachable_reuse.ts`      | TP cache derivation — short-circuits the LLM investigator across runs at the same commit                                                                                |

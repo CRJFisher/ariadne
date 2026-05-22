@@ -10,7 +10,7 @@ const TMP_BASE = vi.hoisted(() => {
 });
 
 describe("build_group_paths", () => {
-  it("derives run-namespaced paths for results and pass3 from the resolved run", () => {
+  it("derives run-namespaced paths for results and pass2 from the resolved run", () => {
     const project = "sqlx";
     const run_id = "6956cef-2026-05-06T20-13-03.463Z";
     const run_dir = path.join(TMP_BASE, "triage_state", project, "runs", run_id);
@@ -26,7 +26,7 @@ describe("build_group_paths", () => {
       run_id,
       state_path,
       results_dir: path.join(run_dir, "results"),
-      pass3_dir: path.join(run_dir, "aggregation", "pass3"),
+      pass2_dir: path.join(run_dir, "aggregation", "pass2"),
     });
   });
 });
