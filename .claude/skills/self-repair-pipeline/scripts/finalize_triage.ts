@@ -55,6 +55,7 @@ async function main(): Promise<void> {
     output,
     state.project_name,
     `${run_id}.json`,
+    "confirmed_unreachable",
   );
 
   manifest.status = "finalized";

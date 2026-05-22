@@ -537,7 +537,12 @@ async function main() {
     generated_at: new Date().toISOString(),
   };
 
-  const output_file = await save_json(OutputType.DETECT_ENTRYPOINTS, result, resolved.project_name);
+  const output_file = await save_json(
+    OutputType.DETECT_ENTRYPOINTS,
+    result,
+    resolved.project_name,
+    "entry_points",
+  );
   console.error(`Output written to: ${output_file}`);
 
   console.error("\nAnalysis complete:");
