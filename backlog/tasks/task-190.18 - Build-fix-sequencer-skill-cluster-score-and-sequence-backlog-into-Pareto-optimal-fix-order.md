@@ -33,30 +33,113 @@ Two upstream skills (`self-repair-pipeline`, `triage-curator`) currently land ta
 
 ## High-level flow
 
-```mermaid
-flowchart LR
-  SRP["self-repair-pipeline<br/>(detect FPs)"]
-  TC["triage-curator<br/>(file bug tasks)"]
-  FS["fix-sequencer<br/>(cluster · score · signoff)"]
-  W["worker<br/>(local or cloud worktree)"]
-  REG[("registry.json<br/>status · fixed_commit")]
-  BL[("backlog/tasks/*.md<br/>task content")]
-  GRAPH[("graph.json + state.jsonl<br/>priority · events")]
+Seven phases stacked top-to-bottom in pipeline order: cluster → score → prepare plan → sign off → enqueue (writes the three persistent stores), then worker (async, /schedule-driven) and reconciler (runs at the start of the *next* SRP invocation). The persistent stores sit between the in-skill phases and the worker; the loop-closure edge from `wip → fixed` back to curator's registry read is the only red dotted arrow. (For where this skill fits in the broader chain see [self-repair-pipeline → Self-healing pipeline](../../.claude/skills/self-repair-pipeline/README.md#self-healing-pipeline).)
 
-  SRP -->|finds FPs · updates observed_count| REG
-  TC -->|files bug tasks · stamps touched_files + cluster_hint| BL
-  TC -->|writes backlog_task link| REG
-  FS -->|reads impact_report.json + tasks| BL
-  FS -->|reads observed_count| REG
-  FS -->|merges accepted clusters · appends ready| GRAPH
-  W -->|folds state · claims ready node| GRAPH
-  W -->|implements fix · marks tasks Done| BL
-  W -->|appends done event with merge_commit| GRAPH
-  GRAPH -. reconciler reads done events .-> REG
-  REG -. next run skips superseded classifiers .-> SRP
+```mermaid
+flowchart TD
+  classDef ext        fill:#e3f2fd,stroke:#1565c0,stroke-width:1.5px,color:#0d47a1
+  classDef store      fill:#ede7f6,stroke:#4527a0,stroke-width:1.5px,color:#311b92
+  classDef artifact   fill:#e8f5e9,stroke:#2e7d32,stroke-width:1.2px,color:#1b5e20
+  classDef step       fill:#fff8e1,stroke:#b58900,stroke-width:1.5px,color:#5d4037
+  classDef inter      fill:#f5f5f5,stroke:#616161,stroke-width:1px,color:#212121,stroke-dasharray:3 3
+  classDef branch     fill:#ffe0b2,stroke:#e65100,stroke-width:2px,color:#bf360c
+  classDef worker     fill:#e1f5fe,stroke:#0277bd,stroke-width:1.5px,color:#01579b
+  classDef recon      fill:#ffebee,stroke:#c62828,stroke-width:1.5px,color:#b71c1c
+  classDef regwrite   fill:#fecaca,stroke:#991b1b,stroke-width:2.5px,color:#7f1d1d
+
+  BL[/"backlog tasks<br/>touched_files · cluster_hint"/]:::ext
+  IR[/"impact_report.json<br/>rows: ImpactRow[]"/]:::ext
+  REG_R[("registry.json<br/>observed_count · observed_projects<br/><i>read</i>")]:::ext
+
+  subgraph P1["Phase 1 · Cluster"]
+    direction TB
+    S1("cluster_tasks_by_overlap<br/>category × Jaccard(touched_files ∪ labels)"):::step
+    I_RC(["raw clusters · member_task_ids"]):::inter
+  end
+
+  subgraph P2["Phase 2 · Score"]
+    direction TB
+    S2("score_fix_impact + size_fix_complexity<br/>+ Pareto frontier flag"):::step
+    I_SC(["scored clusters · rank · is_pareto_frontier"]):::inter
+  end
+
+  subgraph P3["Phase 3 · Prepare plan"]
+    direction TB
+    S3("prepare_plan.ts<br/>render plan.md + clusters.json"):::step
+    PLAN[/"plan.md + clusters.json<br/>(run-scoped)"/]:::artifact
+  end
+
+  subgraph P4["Phase 4 · Sign off (per cluster)"]
+    direction TB
+    SO{{"AskUserQuestion<br/>accept · drop · defer"}}:::branch
+    DEC[/"decisions.json<br/>(resumable)"/]:::artifact
+  end
+
+  subgraph P5["Phase 5 · Enqueue accepted clusters"]
+    direction TB
+    S5("enqueue_signed_off_fixes<br/>atomic graph write + O_APPEND events"):::step
+    SCHED[/"/schedule one-liner<br/>(printed, not exec'd)"/]:::artifact
+  end
+
+  GRAPH[("graph.json<br/>cluster DAG<br/><i>atomic temp+rename</i>")]:::store
+  STATE[("state.jsonl<br/>append-only events<br/>ready · claim · progress · done")]:::store
+  CAL[("calibration.jsonl<br/>predicted · landed rows")]:::store
+
+  subgraph P6["Phase 6 · Worker (async · single worker · /schedule driven)"]
+    direction TB
+    W1("drain_graph<br/>fold state · pick lowest-rank ready"):::worker
+    W2("ship fix<br/>edits + tests + fix(task_id): commit"):::worker
+  end
+
+  subgraph P7["Phase 7 · Reconciler (runs at start of NEXT SRP invocation)"]
+    direction TB
+    OOB[/"git-log scan<br/>fix(190.x): + trailers<br/>+ range expansion"/]:::recon
+    BR_REC{{"latest event = done?<br/>OR OOB match?"}}:::branch
+    REC("reconcile_registry_with_completed_nodes.ts<br/>find_groups_by_backlog_task"):::recon
+    REG_W[("registry.json<br/><b>wip → fixed</b><br/>stamp fixed_commit + fixed_in_run")]:::regwrite
+  end
+
+  BL --> S1
+  IR --> S1
+  S1 --> I_RC
+  I_RC --> S2
+  REG_R -. read .-> S2
+  S2 --> I_SC
+  I_SC --> S3
+  S3 --> PLAN
+  PLAN --> SO
+
+  SO -- "accept" --> DEC
+  SO -- "drop · no-op" --> DEC
+  SO -- "defer · +reason" --> DEC
+  DEC -- "decision == accept" --> S5
+  S5 --> SCHED
+
+  S5 -- "atomic write" --> GRAPH
+  S5 -- "append ready" --> STATE
+  S5 -- "append predicted" --> CAL
+
+  SCHED -. "user runs /schedule" .-> W1
+  GRAPH --> W1
+  STATE --> W1
+  W1 --> W2
+  W2 -- "append claim → done" --> STATE
+  W2 -- "append landed" --> CAL
+
+  STATE -. "fold latest event (next run)" .-> BR_REC
+  GRAPH -. read DAG .-> BR_REC
+  W2 -. "fix(task_id): commit (next run)" .-> OOB
+  OOB -. "synthesized done (in-memory)" .-> BR_REC
+  BR_REC -- "match" --> REC
+  REC -- "flip wip → fixed" --> REG_W
+
+  REG_W -. "observed by next SRP detect pass" .-> REG_R
+
+  linkStyle default stroke:#cbd5e1,stroke-width:1.5px
+  linkStyle 29 stroke:#ef5350,stroke-width:2.2px,stroke-dasharray:6 4
 ```
 
-The dotted arrows close the self-healing loop: a `done` event causes the reconciler to flip `registry.status: wip → fixed` on the next pipeline prep, after which superseded classifiers are skipped and `diff_runs --annotate-fixes` labels the resulting FP↔TP transitions as "expected".
+**What to look for**: seven phase bands stacked top-to-bottom (strict reading order); read-only inputs sit on a left rail and only feed the phases that touch them. The sign-off diamond has three labeled exits (`accept` / `drop` / `defer`); only `accept` reaches `enqueue_signed_off_fixes` — `drop`/`defer` terminate non-destructively at `decisions.json`. Phase 5 is the **only fan-out write** in the in-skill phases — one accept decision lands writes on all three persistent stores; misalignment would mean a partial accept. Phases 6 and 7 run on separate invocations (Phase 6 async via `/schedule`; Phase 7 as a pre-step of the next SRP run). The reconciler has two input sources (state.jsonl done events + project-repo git-log Conventional-Commits scan); OOB-synthesized done events are in-memory only — never appended to state.jsonl. The red dotted edge (`wip → fixed` back to curator's registry read) fires on the *next* pipeline run, not synchronously. The sequencer never writes the registry directly — the only registry-write path is `reconciler → REG_W` in Phase 7 (a separate skill invocation), so the write boundary is visually enforced.
 
 ## Vocabulary
 
