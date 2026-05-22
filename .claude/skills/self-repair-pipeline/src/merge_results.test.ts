@@ -66,7 +66,7 @@ describe("merge_results", () => {
 
   afterEach(() => {
     if (fs.existsSync(test_dir)) {
-      fs.rmSync(test_dir, { recursive: true });
+      fs.rmSync(test_dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
     }
   });
 
