@@ -31,9 +31,13 @@ Once the registry tracks `fixed_commit`, run-diff output should distinguish *exp
 - If the previous run is at a commit BEFORE `fixed_commit` and the new run is at/after, label the transition as `expected: registry entry <group_id> fixed at <commit>`
 - Otherwise leave the transition unannotated
 
+## Schema note
+
+`diff_runs.ts` reads `triage_results/<run-id>.json`. The schema is bumped to v4 by TASK-190.19.5 (`novel_issues[]` + `classifier_regressions[]` instead of `groups[]` / `residual-fp` / `residual-ungrouped`). Implementer reads whichever shape is current when this task lands — per the constitution, no compat shim for the older shape.
+
 ## Out of scope
 
-- Generating registry entries (covered by 190.18.3, 190.18.4)
+- Generating registry entries (covered by 190.18.3)
 - Replacing the existing diff output structure
 <!-- SECTION:DESCRIPTION:END -->
 
