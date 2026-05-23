@@ -39,6 +39,7 @@ function output(
     confirmed_unreachable: confirmed,
     false_positive_groups: groups,
     group_match_history,
+    classifier_regressions: [],
     last_updated: "2026-04-28T00-00-00.000Z",
   };
 }

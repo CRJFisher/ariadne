@@ -13,13 +13,23 @@
 
 import * as fs from "node:fs/promises";
 
+import path from "node:path";
+
 import { OutputType, save_json_with_filename } from "../src/analysis_output.js";
 import {
   build_finalization_output,
   build_finalization_summary,
 } from "../src/build_finalization_output.js";
 import { parse_project_arg, parse_run_id_arg } from "../src/cli_args.js";
-import { clear_latest, require_run } from "../src/triage_state_paths.js";
+import {
+  aggregate_classifier_regressions,
+  read_classifier_regression_records,
+} from "../src/classifier_regressions.js";
+import {
+  CLASSIFIER_REGRESSIONS_FILENAME,
+  clear_latest,
+  require_run,
+} from "../src/triage_state_paths.js";
 import type { RunManifest, TriageState } from "../src/triage_state_types.js";
 import "../src/guard_tsx_invocation.js";
 
@@ -33,7 +43,7 @@ async function load_json<T>(path: string): Promise<T> {
 async function main(): Promise<void> {
   const project = parse_project_arg(process.argv, USAGE);
   const run_id_opt = parse_run_id_arg(process.argv);
-  const { run_id, state_path, manifest_path } = require_run(project, run_id_opt);
+  const { run_id, state_path, manifest_path, run_dir } = require_run(project, run_id_opt);
 
   const state = await load_json<TriageState>(state_path);
 
@@ -44,9 +54,15 @@ async function main(): Promise<void> {
 
   const manifest = await load_json<RunManifest>(manifest_path);
 
+  const regression_records = await read_classifier_regression_records(
+    path.join(run_dir, CLASSIFIER_REGRESSIONS_FILENAME),
+  );
+  const classifier_regressions = aggregate_classifier_regressions(regression_records);
+
   const output = build_finalization_output(state, {
     commit_hash: manifest.commit_hash,
     project_path: state.project_path,
+    classifier_regressions,
   });
   const summary = build_finalization_summary(state, output);
 

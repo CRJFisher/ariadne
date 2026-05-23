@@ -61,6 +61,7 @@ function build_output(
     })),
     false_positive_groups: {},
     group_match_history: [],
+    classifier_regressions: [],
     last_updated: "2026-04-28T13:42:07.812Z",
   };
 }

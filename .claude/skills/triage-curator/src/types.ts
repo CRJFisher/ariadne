@@ -1,3 +1,5 @@
+import type { ClassifierRegressionFlag } from "@ariadnejs/types";
+
 // ===== Triage results shape (read-only) =====
 //
 // Schema v2 fields: `schema_version`, `project_path`, `commit_hash` on the file;
@@ -32,6 +34,11 @@ export interface TriageResultsFile {
   false_positive_groups: Record<string, FalsePositiveGroup>;
   /** Per-run match accounting per registry group_id. See build_finalization_output's GroupMatchHistory. */
   group_match_history: { group_id: string; match_count: number; llm_attributed_count: number }[];
+  /**
+   * Per-rule aggregate of `fp-classifier-regression` verdicts from the run's
+   * per-entry triage. Drives the curator's in-flight drift absorb path.
+   */
+  classifier_regressions: ClassifierRegressionFlag[];
   last_updated: string;
 }
 
@@ -42,6 +49,10 @@ export interface TriageResultsFile {
 // only touches one file.
 
 export type {
+  ClassifierRegressionFlag,
+  ClassifierRegressionFlaggedEntry,
+  DriftEvidence,
+  DriftEvidenceSource,
   KnownIssue,
   KnownIssueExample,
   KnownIssueLanguage,

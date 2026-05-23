@@ -51,6 +51,55 @@ export interface KnownIssue {
   last_seen_run?: string;
   /** Set by the curator when a classifier's outlier rate breaches the drift threshold. */
   drift_detected?: boolean;
+  /**
+   * Per-citation evidence accumulated alongside `drift_detected`. Two writers
+   * append here:
+   *
+   * - `source: "qa-sample"` — the curator's lagging QA-loop tag when an
+   *   outlier rate over the sample crosses the drift threshold.
+   * - `source: "in-flight"` — the per-entry triage-investigator's
+   *   `fp-classifier-regression` verdict, surfaced through the SRP run's
+   *   `classifier_regressions` aggregate.
+   *
+   * Both signals coexist; the field is append-only across runs so the human
+   * promotion reviewer can see every flag that recommended re-investigation.
+   */
+  drift_evidence?: DriftEvidence[];
+}
+
+export type DriftEvidenceSource = "qa-sample" | "in-flight";
+
+export interface DriftEvidence {
+  /**
+   * For `source: "in-flight"`, the entry index from the SRP run's per-entry
+   * triage state that produced the verdict. For `source: "qa-sample"`, the
+   * `entry_index` field from the QA outlier the curator's QA sub-agent
+   * flagged.
+   */
+  entry_index: number;
+  /**
+   * For `source: "in-flight"`, a short evidence snippet (decorator, call
+   * site) the investigator captured. For `source: "qa-sample"`, the QA
+   * outlier's `reason` string.
+   */
+  evidence_excerpt: string;
+  source: DriftEvidenceSource;
+}
+
+/**
+ * One rule's flagged entries from a single SRP run's `classifier_regressions`
+ * aggregate. Mirrors the on-disk JSONL record shape emitted by the per-entry
+ * triage-investigator's `fp-classifier-regression` verdict, grouped by
+ * `rule_id` for the curator's drift-absorb path.
+ */
+export interface ClassifierRegressionFlag {
+  rule_id: string;
+  flagged_entries: ClassifierRegressionFlaggedEntry[];
+}
+
+export interface ClassifierRegressionFlaggedEntry {
+  entry_index: number;
+  evidence_excerpt: string;
 }
 
 /**

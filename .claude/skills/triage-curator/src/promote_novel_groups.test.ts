@@ -42,6 +42,7 @@ function triage(
     confirmed_unreachable: [],
     false_positive_groups,
     group_match_history: [],
+    classifier_regressions: [],
     last_updated: "2026-04-24T00:00:00Z",
   };
 }

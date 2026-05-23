@@ -24,6 +24,7 @@ export const RESULTS_SUBDIR = "results";
 export const AGGREGATION_SUBDIR = "aggregation";
 export const NOVEL_ISSUES_FILENAME = "novel_issues.json";
 export const COORDINATOR_LOG_FILENAME = "coordinator_log.jsonl";
+export const CLASSIFIER_REGRESSIONS_FILENAME = "classifier_regressions.jsonl";
 
 // ===== Pure path builders (no I/O) =====
 
@@ -60,6 +61,11 @@ export function novel_issues_path_for(project: string, run_id: string): string {
 /** Path to a run's coordinator_log.jsonl. Existence is not checked. */
 export function coordinator_log_path_for(project: string, run_id: string): string {
   return path.join(run_dir_for(project, run_id), COORDINATOR_LOG_FILENAME);
+}
+
+/** Path to a run's classifier_regressions.jsonl. Existence is not checked. */
+export function classifier_regressions_path_for(project: string, run_id: string): string {
+  return path.join(run_dir_for(project, run_id), CLASSIFIER_REGRESSIONS_FILENAME);
 }
 
 // ===== LATEST pointer I/O =====

@@ -161,6 +161,55 @@ describe("mark_drift_in_registry", () => {
     expect(updated[0].drift_detected).toBe(true);
   });
 
+  it("appends drift_evidence with source qa-sample for every outlier", () => {
+    const reg: KnownIssue[] = [known("a")];
+    const qa: QaResponse[] = [
+      {
+        group_id: "a",
+        outliers: [
+          { entry_index: 5, reason: "outlier reason 5" },
+          { entry_index: 9, reason: "outlier reason 9" },
+          { entry_index: 12, reason: "outlier reason 12" },
+        ],
+        notes: "",
+      },
+    ];
+    const { updated } = mark_drift_in_registry(reg, qa, { a: 20 });
+    expect(updated[0].drift_evidence).toEqual([
+      { entry_index: 5, evidence_excerpt: "outlier reason 5", source: "qa-sample" },
+      { entry_index: 9, evidence_excerpt: "outlier reason 9", source: "qa-sample" },
+      { entry_index: 12, evidence_excerpt: "outlier reason 12", source: "qa-sample" },
+    ]);
+  });
+
+  it("dedupes drift_evidence on (entry_index, source=qa-sample) across re-runs", () => {
+    const reg: KnownIssue[] = [
+      known("a", {
+        drift_detected: true,
+        drift_evidence: [
+          { entry_index: 5, evidence_excerpt: "first time", source: "qa-sample" },
+        ],
+      }),
+    ];
+    const qa: QaResponse[] = [
+      {
+        group_id: "a",
+        outliers: [
+          { entry_index: 5, reason: "second time" },
+          { entry_index: 9, reason: "new outlier" },
+          { entry_index: 12, reason: "third outlier" },
+        ],
+        notes: "",
+      },
+    ];
+    const { updated } = mark_drift_in_registry(reg, qa, { a: 20 });
+    expect(updated[0].drift_evidence).toEqual([
+      { entry_index: 5, evidence_excerpt: "first time", source: "qa-sample" },
+      { entry_index: 9, evidence_excerpt: "new outlier", source: "qa-sample" },
+      { entry_index: 12, evidence_excerpt: "third outlier", source: "qa-sample" },
+    ]);
+  });
+
   it("does not tag rules with classifier.kind='none' even at high outlier rate", () => {
     // A `kind: "none"` rule has no classifier to be drifting — drift signal
     // only makes sense for rules that carry an authored classifier.
@@ -340,6 +389,7 @@ describe("apply_proposals", () => {
       registry_path,
       project: "test-project",
       run_id: "test-run",
+      classifier_regressions: [],
       authored_files_by_group: { "new-group": authored_path },
     });
 
@@ -361,6 +411,7 @@ describe("apply_proposals", () => {
       registry_path,
       project: "test-project",
       run_id: "test-run",
+      classifier_regressions: [],
       authored_files_by_group: {},
     });
 
@@ -380,6 +431,7 @@ describe("apply_proposals", () => {
       registry_path,
       project: "test-project",
       run_id: "test-run",
+      classifier_regressions: [],
       authored_files_by_group: { a: missing },
     });
 
@@ -396,6 +448,7 @@ describe("apply_proposals", () => {
       registry_path,
       project: "test-project",
       run_id: "test-run",
+      classifier_regressions: [],
       authored_files_by_group: { a: authored_path },
     });
 
@@ -420,6 +473,7 @@ describe("apply_proposals", () => {
       registry_path,
       project: "test-project",
       run_id: "test-run",
+      classifier_regressions: [],
       authored_files_by_group: { a: authored_path },
     });
 
@@ -453,6 +507,7 @@ describe("apply_proposals", () => {
       registry_path,
       project: "test-project",
       run_id: "test-run",
+      classifier_regressions: [],
       authored_files_by_group: { "existing-entry": authored_path },
     });
 
@@ -479,6 +534,7 @@ describe("apply_proposals", () => {
       registry_path,
       project: "test-project",
       run_id: "test-run",
+      classifier_regressions: [],
       authored_files_by_group: {},
     });
     expect(result.registry_upserts).toEqual([]);
@@ -523,6 +579,7 @@ describe("apply_proposals", () => {
       registry_path,
       project: "test-project",
       run_id: "test-run",
+      classifier_regressions: [],
       authored_files_by_group: {},
     });
     expect(result.signal_library_gap_tasks).toEqual([
@@ -562,6 +619,7 @@ describe("apply_proposals", () => {
       registry_path,
       project: "test-project",
       run_id: "test-run",
+      classifier_regressions: [],
       authored_files_by_group: { "existing-entry": authored_path },
     });
 
@@ -593,6 +651,7 @@ describe("apply_proposals", () => {
       registry_path,
       project: "test-project",
       run_id: "test-run",
+      classifier_regressions: [],
       authored_files_by_group: {},
     });
     expect(result.skipped_permanent_upserts).toEqual(["a"]);
@@ -637,6 +696,7 @@ describe("apply_proposals", () => {
       registry_path,
       project: "p",
       run_id: "r",
+      classifier_regressions: [],
       authored_files_by_group: { "py-only": authored_path },
       triage_groups,
     });
@@ -668,6 +728,7 @@ describe("apply_proposals", () => {
       registry_path,
       project: "p",
       run_id: "r",
+      classifier_regressions: [],
       authored_files_by_group: {},
       triage_groups,
     });
@@ -696,6 +757,7 @@ describe("apply_proposals", () => {
       registry_path,
       project: "p",
       run_id: "r",
+      classifier_regressions: [],
       authored_files_by_group: { x: authored_path },
     });
     expect(result.registry_upserts).toEqual(["x"]);
@@ -719,6 +781,7 @@ describe("apply_proposals", () => {
       registry_path,
       project: "p",
       run_id: "r",
+      classifier_regressions: [],
       authored_files_by_group: { "no-lang": authored_path },
     });
     expect(result.failed_authoring).toHaveLength(1);
@@ -738,6 +801,7 @@ describe("apply_proposals", () => {
       registry_path,
       project: "test-project",
       run_id: "test-run",
+      classifier_regressions: [],
       authored_files_by_group: {},
     });
     expect(result.registry_upserts).toEqual(["a"]);
@@ -745,6 +809,134 @@ describe("apply_proposals", () => {
     expect(on_disk[0].status).toBe("wip");
     expect(on_disk[0].drift_detected).toBe(true);
     expect(on_disk[0].classifier).toEqual({ kind: "none" });
+  });
+});
+
+describe("apply_proposals — classifier_regressions integration", () => {
+  it("tags drift_detected + writes in-flight drift_evidence end-to-end", async () => {
+    await write_registry([known("decorator-route")]);
+    const result = await apply_proposals(
+      [],
+      [],
+      {},
+      {
+        dry_run: false,
+        registry_path,
+        project: "test-project",
+        run_id: "test-run",
+        classifier_regressions: [
+          {
+            rule_id: "decorator-route",
+            flagged_entries: [
+              { entry_index: 3, evidence_excerpt: "@route('/x')" },
+              { entry_index: 7, evidence_excerpt: "@route('/y')" },
+            ],
+          },
+        ],
+        authored_files_by_group: {},
+      },
+    );
+    expect(result.drift_tagged_groups).toEqual(["decorator-route"]);
+    expect(result.skipped_permanent_upserts).toEqual([]);
+    const on_disk = await read_registry_json();
+    expect(on_disk[0].drift_detected).toBe(true);
+    expect(on_disk[0].drift_evidence).toEqual([
+      { entry_index: 3, evidence_excerpt: "@route('/x')", source: "in-flight" },
+      { entry_index: 7, evidence_excerpt: "@route('/y')", source: "in-flight" },
+    ]);
+  });
+
+  it("coexists with qa-sample drift on the same group: both signals land in drift_evidence", async () => {
+    await write_registry([known("decorator-route")]);
+    const qa: QaResponse[] = [
+      {
+        group_id: "decorator-route",
+        outliers: [
+          { entry_index: 100, reason: "qa outlier a" },
+          { entry_index: 101, reason: "qa outlier b" },
+          { entry_index: 102, reason: "qa outlier c" },
+          { entry_index: 103, reason: "qa outlier d" },
+        ],
+        notes: "",
+      },
+    ];
+    const result = await apply_proposals(
+      qa,
+      [],
+      { "decorator-route": 20 },
+      {
+        dry_run: false,
+        registry_path,
+        project: "test-project",
+        run_id: "test-run",
+        classifier_regressions: [
+          {
+            rule_id: "decorator-route",
+            flagged_entries: [
+              { entry_index: 3, evidence_excerpt: "@route('/x')" },
+            ],
+          },
+        ],
+        authored_files_by_group: {},
+      },
+    );
+    // Drift tagged exactly once (deduped across both signals).
+    expect(result.drift_tagged_groups).toEqual(["decorator-route"]);
+    const on_disk = await read_registry_json();
+    expect(on_disk[0].drift_evidence).toEqual([
+      { entry_index: 3, evidence_excerpt: "@route('/x')", source: "in-flight" },
+      { entry_index: 100, evidence_excerpt: "qa outlier a", source: "qa-sample" },
+      { entry_index: 101, evidence_excerpt: "qa outlier b", source: "qa-sample" },
+      { entry_index: 102, evidence_excerpt: "qa outlier c", source: "qa-sample" },
+      { entry_index: 103, evidence_excerpt: "qa outlier d", source: "qa-sample" },
+    ]);
+  });
+
+  it("merges in-flight regressions against permanent rules into skipped_permanent_upserts", async () => {
+    await write_registry([known("perm-rule", { status: "permanent" })]);
+    const result = await apply_proposals(
+      [],
+      [],
+      {},
+      {
+        dry_run: false,
+        registry_path,
+        project: "test-project",
+        run_id: "test-run",
+        classifier_regressions: [
+          {
+            rule_id: "perm-rule",
+            flagged_entries: [{ entry_index: 1, evidence_excerpt: "x" }],
+          },
+        ],
+        authored_files_by_group: {},
+      },
+    );
+    expect(result.skipped_permanent_upserts).toEqual(["perm-rule"]);
+    expect(result.drift_tagged_groups).toEqual([]);
+    const on_disk = await read_registry_json();
+    expect(on_disk[0].drift_detected).toBeUndefined();
+    expect(on_disk[0].drift_evidence).toBeUndefined();
+  });
+
+  it("is a no-op when classifier_regressions is empty (no spurious registry write)", async () => {
+    await write_registry([known("a")]);
+    const result = await apply_proposals(
+      [],
+      [],
+      {},
+      {
+        dry_run: false,
+        registry_path,
+        project: "test-project",
+        run_id: "test-run",
+        classifier_regressions: [],
+        authored_files_by_group: {},
+      },
+    );
+    expect(result.drift_tagged_groups).toEqual([]);
+    const on_disk = await read_registry_json();
+    expect(on_disk).toEqual([known("a")]);
   });
 });
 

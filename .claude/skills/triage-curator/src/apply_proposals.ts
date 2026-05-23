@@ -7,11 +7,16 @@ import {
 import { detect_language } from "@ariadnejs/core";
 
 import { atomic_write_file } from "./atomic_write.js";
+import {
+  absorb_classifier_regressions,
+} from "./curator_drift_absorb.js";
+import { append_drift_evidence } from "./drift_evidence.js";
 import { error_code } from "./errors.js";
 import { render_ariadne_bug_body } from "./render_ariadne_bug_body.js";
 import type {
   AriadneBugTaskToCreate,
   BuiltinClassifierSpec,
+  ClassifierRegressionFlag,
   ClassifierSpecProposal,
   FalsePositiveGroup,
   SignalLibraryGapTaskToCreate,
@@ -43,26 +48,43 @@ export const DRIFT_OUTLIER_RATE_THRESHOLD = 0.15;
  * entry has an authored classifier (`classifier.kind !== "none"`). Drift on a
  * `kind: "none"` rule has no classifier to be drifting and yields a sticky
  * tag with no consumer. Pure.
+ *
+ * Also appends one `drift_evidence` row per QA outlier with
+ * `source: "qa-sample"`, deduped against any prior qa-sample evidence for the
+ * same `entry_index`. The companion in-flight signal
+ * (`absorb_classifier_regressions`) writes to the same field with
+ * `source: "in-flight"`.
  */
 export function mark_drift_in_registry(
   registry: KnownIssue[],
   qa: QaResponse[],
   member_counts: Record<string, number>,
 ): { updated: KnownIssue[]; drift_tagged_groups: string[] } {
-  const candidate_drifting = new Set<string>();
+  const drifting_by_group = new Map<string, QaResponse>();
   for (const r of qa) {
     const n = member_counts[r.group_id] ?? 0;
     if (n <= 0) continue;
     if (r.outliers.length / n >= DRIFT_OUTLIER_RATE_THRESHOLD) {
-      candidate_drifting.add(r.group_id);
+      drifting_by_group.set(r.group_id, r);
     }
   }
   const drift_tagged_groups: string[] = [];
   const updated = registry.map((issue) => {
-    if (!candidate_drifting.has(issue.group_id)) return issue;
+    const qa_response = drifting_by_group.get(issue.group_id);
+    if (qa_response === undefined) return issue;
     if (issue.classifier.kind === "none") return issue;
+    const candidates = qa_response.outliers.map((o) => ({
+      entry_index: o.entry_index,
+      evidence_excerpt: o.reason,
+    }));
+    const { issue: next_issue, changed } = append_drift_evidence(
+      issue,
+      candidates,
+      "qa-sample",
+    );
+    if (!changed) return issue;
     drift_tagged_groups.push(issue.group_id);
-    return { ...issue, drift_detected: true };
+    return next_issue;
   });
   return { updated, drift_tagged_groups };
 }
@@ -172,6 +194,14 @@ export interface ApplyOptions {
    * declare a language gate.
    */
   triage_groups?: Record<string, FalsePositiveGroup>;
+  /**
+   * Per-rule aggregate of `fp-classifier-regression` verdicts from the SRP
+   * run's per-entry triage. Each flagged rule's wip row is tagged
+   * `drift_detected: true` and gains `drift_evidence` rows with
+   * `source: "in-flight"` before the QA-sample drift pass runs. Pass `[]`
+   * when the SRP run produced no regression verdicts.
+   */
+  classifier_regressions: ClassifierRegressionFlag[];
 }
 
 export interface ApplyResult {
@@ -189,6 +219,12 @@ export interface ApplyResult {
    * routed to a human-authored backlog task.
    */
   skipped_permanent_upserts: string[];
+  /**
+   * Rule ids newly tagged as drifting in this finalize run, from either the
+   * QA sample-rate path (`mark_drift_in_registry`) OR the in-flight
+   * regression path (`absorb_classifier_regressions`). The per-row
+   * `drift_evidence` array carries the source discriminator.
+   */
   drift_tagged_groups: string[];
   /**
    * Signal-library gaps to file as sub-tasks under
@@ -218,8 +254,15 @@ export async function apply_proposals(
   const raw = await fs.readFile(opts.registry_path, "utf8");
   const registry = parse_known_issues_registry_json(raw);
 
-  const { updated: after_drift, drift_tagged_groups } = mark_drift_in_registry(
+  // In-flight regressions first: the per-entry investigator's
+  // `fp-classifier-regression` verdicts pre-stage drift signal so the
+  // downstream QA-sample drift pass sees the freshest registry state.
+  const regression_result = absorb_classifier_regressions(
     registry,
+    opts.classifier_regressions,
+  );
+  const { updated: after_drift, drift_tagged_groups } = mark_drift_in_registry(
+    regression_result.updated_registry,
     qa,
     member_counts,
   );
@@ -302,6 +345,7 @@ export async function apply_proposals(
 
   const registry_mutated =
     drift_tagged_groups.length > 0 ||
+    regression_result.drift_tagged_rule_ids.length > 0 ||
     registry_upserts.length > 0 ||
     bumped_groups.length > 0;
   if (!opts.dry_run && registry_mutated) {
@@ -345,12 +389,30 @@ export async function apply_proposals(
     });
   }
 
+  // Merge in-flight drift tags into the unified drift_tagged_groups list
+  // (preserve order: in-flight absorb ran first, so its tags come first).
+  const merged_drift_tagged: string[] = [
+    ...regression_result.drift_tagged_rule_ids,
+    ...drift_tagged_groups.filter(
+      (g) => !regression_result.drift_tagged_rule_ids.includes(g),
+    ),
+  ];
+  // In-flight regressions against permanent rows merge into the existing
+  // skipped_permanent_upserts list — both are "curator declined to mutate
+  // this permanent row, surface to human".
+  const merged_skipped_permanent: string[] = [
+    ...skipped_permanent_upserts,
+    ...regression_result.skipped_permanent_rule_ids.filter(
+      (g) => !skipped_permanent_upserts.includes(g),
+    ),
+  ];
+
   return {
     authored_files,
     failed_authoring,
     registry_upserts,
-    skipped_permanent_upserts,
-    drift_tagged_groups,
+    skipped_permanent_upserts: merged_skipped_permanent,
+    drift_tagged_groups: merged_drift_tagged,
     signal_library_gap_tasks,
     ariadne_bug_tasks,
   };

@@ -8,6 +8,10 @@ import {
   type AbsorbVerdictOptions,
   type CoordinatorFn,
 } from "./absorb_verdict.js";
+import {
+  read_classifier_regression_records,
+  type ClassifierRegressionRecord,
+} from "./classifier_regressions.js";
 import type { CoordinatorDecision } from "./coordinator/decision.js";
 import {
   read_coordinator_log,
@@ -68,11 +72,13 @@ describe("absorb_verdict", () => {
   let tmp_dir: string;
   let novel_path: string;
   let log_path: string;
+  let regressions_path: string;
 
   beforeEach(async () => {
     tmp_dir = await fs.mkdtemp(path.join(os.tmpdir(), "absorb-verdict-"));
     novel_path = path.join(tmp_dir, "novel_issues.json");
     log_path = path.join(tmp_dir, "coordinator_log.jsonl");
+    regressions_path = path.join(tmp_dir, "classifier_regressions.jsonl");
   });
 
   afterEach(async () => {
@@ -89,6 +95,7 @@ describe("absorb_verdict", () => {
       const opts: AbsorbVerdictOptions = {
         novel_issues_path: novel_path,
         coordinator_log_path: log_path,
+        classifier_regressions_path: regressions_path,
         coordinator: async () => {
           coordinator_called = true;
           throw new Error("coordinator should not be called");
@@ -100,11 +107,42 @@ describe("absorb_verdict", () => {
       expect(result).toEqual({ kind: verdict.kind });
     });
 
-    it("does not touch novel_issues.json or coordinator_log.jsonl on direct absorb", async () => {
-      const opts = build_opts(novel_path, log_path, throwing_coordinator);
+    it("does not touch novel_issues.json or coordinator_log.jsonl on tp/uncertain absorb", async () => {
+      const opts = build_opts(novel_path, log_path, regressions_path, throwing_coordinator);
       await absorb_verdict(3, VERDICT_TP, opts);
       await expect(fs.access(novel_path)).rejects.toThrow();
       await expect(fs.access(log_path)).rejects.toThrow();
+      await expect(fs.access(regressions_path)).rejects.toThrow();
+    });
+  });
+
+  describe("classifier-regression absorb", () => {
+    it("appends a record to classifier_regressions.jsonl with the verdict payload", async () => {
+      const opts = build_opts(novel_path, log_path, regressions_path, throwing_coordinator);
+      const result = await absorb_verdict(7, VERDICT_REGRESSION, opts);
+      expect(result).toEqual({ kind: "fp-classifier-regression" });
+
+      const expected: ClassifierRegressionRecord[] = [
+        {
+          timestamp: FIXED_NOW,
+          entry_index: 7,
+          should_have_matched_rule_id: "decorator-route",
+          evidence_excerpt: "@route('/x')",
+          member_evidence: { file: "src/b.ts", line: 5, why: "should have matched" },
+        },
+      ];
+      expect(await read_classifier_regression_records(regressions_path)).toEqual(expected);
+      // No novel-issue side effects.
+      await expect(fs.access(novel_path)).rejects.toThrow();
+      await expect(fs.access(log_path)).rejects.toThrow();
+    });
+
+    it("appends a second record without rewriting the first", async () => {
+      const opts = build_opts(novel_path, log_path, regressions_path, throwing_coordinator);
+      await absorb_verdict(7, VERDICT_REGRESSION, opts);
+      await absorb_verdict(9, VERDICT_REGRESSION, opts);
+      const records = await read_classifier_regression_records(regressions_path);
+      expect(records.map((r) => r.entry_index)).toEqual([7, 9]);
     });
   });
 
@@ -119,6 +157,7 @@ describe("absorb_verdict", () => {
       const opts = build_opts(
         novel_path,
         log_path,
+        regressions_path,
         constant_coordinator(decision),
       );
       const result = await absorb_verdict(4, VERDICT_NOVEL_NEW, opts);
@@ -160,6 +199,7 @@ describe("absorb_verdict", () => {
       const opts = build_opts(
         novel_path,
         log_path,
+        regressions_path,
         constant_coordinator(decision),
       );
       await absorb_verdict(4, VERDICT_NOVEL_NEW, opts);
@@ -198,6 +238,7 @@ describe("absorb_verdict", () => {
       const opts = build_opts(
         novel_path,
         log_path,
+        regressions_path,
         constant_coordinator(decision),
       );
       const result = await absorb_verdict(9, VERDICT_NOVEL_NEW, opts);
@@ -234,6 +275,7 @@ describe("absorb_verdict", () => {
       const opts = build_opts(
         novel_path,
         log_path,
+        regressions_path,
         constant_coordinator(decision),
       );
       const result = await absorb_verdict(9, VERDICT_NOVEL_CITED, opts);
@@ -288,6 +330,7 @@ describe("absorb_verdict", () => {
       const opts = build_opts(
         novel_path,
         log_path,
+        regressions_path,
         constant_coordinator(decision),
       );
       await absorb_verdict(9, VERDICT_NOVEL_CITED, opts);
@@ -324,6 +367,7 @@ describe("absorb_verdict", () => {
       const opts = build_opts(
         novel_path,
         log_path,
+        regressions_path,
         constant_coordinator(decision),
       );
       const result = await absorb_verdict(9, VERDICT_NOVEL_CITED, opts);
@@ -385,6 +429,7 @@ describe("absorb_verdict", () => {
       const opts = build_opts(
         novel_path,
         log_path,
+        regressions_path,
         constant_coordinator(decision),
       );
       const result = await absorb_verdict(11, VERDICT_NOVEL_NEW, opts);
@@ -443,6 +488,7 @@ describe("absorb_verdict", () => {
       const opts: AbsorbVerdictOptions = {
         novel_issues_path: novel_path,
         coordinator_log_path: log_path,
+        classifier_regressions_path: regressions_path,
         coordinator: async () => {
           coordinator_called = true;
           return { kind: "flag", reason: "should not be called" };
@@ -477,6 +523,7 @@ describe("absorb_verdict", () => {
       const opts: AbsorbVerdictOptions = {
         novel_issues_path: novel_path,
         coordinator_log_path: log_path,
+        classifier_regressions_path: regressions_path,
         coordinator: async () => {
           coordinator_called = true;
           return { kind: "flag", reason: "should not be called" };
@@ -498,6 +545,7 @@ describe("absorb_verdict", () => {
       const opts: AbsorbVerdictOptions = {
         novel_issues_path: novel_path,
         coordinator_log_path: log_path,
+        classifier_regressions_path: regressions_path,
         coordinator: async () => {
           throw new Error("sub-agent timed out");
         },
@@ -563,6 +611,7 @@ describe("absorb_verdict", () => {
       const opts: AbsorbVerdictOptions = {
         novel_issues_path: novel_path,
         coordinator_log_path: log_path,
+        classifier_regressions_path: regressions_path,
         coordinator: async () => {
           coordinator_call_count += 1;
           return decision;
@@ -590,6 +639,7 @@ describe("absorb_verdict", () => {
       const opts: AbsorbVerdictOptions = {
         novel_issues_path: novel_path,
         coordinator_log_path: log_path,
+        classifier_regressions_path: regressions_path,
         coordinator: async () => {
           coordinator_call_count += 1;
           return decision;
@@ -620,6 +670,7 @@ describe("absorb_verdict", () => {
       const opts: AbsorbVerdictOptions = {
         novel_issues_path: novel_path,
         coordinator_log_path: log_path,
+        classifier_regressions_path: regressions_path,
         coordinator: async () => ({
           kind: "flag",
           reason: "test",
@@ -658,6 +709,7 @@ describe("absorb_verdict", () => {
       const opts: AbsorbVerdictOptions = {
         novel_issues_path: novel_path,
         coordinator_log_path: log_path,
+        classifier_regressions_path: regressions_path,
         coordinator: async (input) => {
           seen_inputs.push({
             entry_index: input.entry_index,
@@ -678,7 +730,7 @@ describe("absorb_verdict", () => {
 
   describe("verdict shape validation at the boundary (H1)", () => {
     it("rejects a malformed verdict before any I/O", async () => {
-      const opts = build_opts(novel_path, log_path, throwing_coordinator);
+      const opts = build_opts(novel_path, log_path, regressions_path, throwing_coordinator);
       const malformed = {
         kind: "fp-novel-new",
         proposed_root_cause: "x",
@@ -713,11 +765,13 @@ describe("absorb_verdict", () => {
       const opts_a = build_opts(
         novel_path,
         log_path,
+        regressions_path,
         constant_coordinator(decision_a),
       );
       const opts_b = build_opts(
         novel_path,
         log_path,
+        regressions_path,
         constant_coordinator(decision_b),
       );
       await Promise.all([
@@ -735,11 +789,13 @@ describe("absorb_verdict", () => {
 function build_opts(
   novel_issues_path: string,
   coordinator_log_path: string,
+  classifier_regressions_path: string,
   coordinator: CoordinatorFn,
 ): AbsorbVerdictOptions {
   return {
     novel_issues_path,
     coordinator_log_path,
+    classifier_regressions_path,
     coordinator,
     now: () => FIXED_NOW,
   };

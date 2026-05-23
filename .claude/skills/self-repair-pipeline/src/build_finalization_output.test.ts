@@ -18,6 +18,7 @@ const COMMIT = "deadbeefcafebabe";
 const CONTEXT: FinalizationContext = {
   commit_hash: COMMIT,
   project_path: PROJECT_PATH,
+  classifier_regressions: [],
 };
 
 function make_result(overrides: Partial<TriageEntryResult> = {}): TriageEntryResult {
@@ -106,6 +107,7 @@ describe("build_finalization_output", () => {
       ],
       false_positive_groups: {},
       group_match_history: [],
+      classifier_regressions: [],
       last_updated: "2026-01-15T00:00:00Z",
     };
     expect(output).toEqual(expected);
@@ -158,6 +160,7 @@ describe("build_finalization_output", () => {
       confirmed_unreachable: [],
       false_positive_groups: { "builder-chain": expected_group },
       group_match_history: [{ group_id: "builder-chain", match_count: 0, llm_attributed_count: 2 }],
+      classifier_regressions: [],
       last_updated: "2026-01-15T00:00:00Z",
     });
   });
@@ -231,6 +234,7 @@ describe("build_finalization_output", () => {
       confirmed_unreachable: [],
       false_positive_groups: {},
       group_match_history: [],
+      classifier_regressions: [],
       last_updated: "2026-01-15T00:00:00Z",
     };
     expect(output).toEqual(expected);
@@ -252,6 +256,7 @@ describe("build_finalization_output", () => {
     const output = build_finalization_output(state, {
       commit_hash: null,
       project_path: PROJECT_PATH,
+      classifier_regressions: [],
     });
     expect(output.commit_hash).toBe(null);
   });
@@ -345,6 +350,51 @@ describe("build_finalization_output", () => {
     const state = make_state({ entries: [] });
     const output = build_finalization_output(state, CONTEXT);
     expect(output.schema_version).toBe(3);
+  });
+
+  it("publishes the classifier_regressions aggregate verbatim from context", () => {
+    const state = make_state({ entries: [] });
+    const context: FinalizationContext = {
+      commit_hash: COMMIT,
+      project_path: PROJECT_PATH,
+      classifier_regressions: [
+        {
+          rule_id: "decorator-route",
+          flagged_entries: [
+            { entry_index: 3, evidence_excerpt: "@route('/x')" },
+            { entry_index: 7, evidence_excerpt: "@route('/y')" },
+          ],
+        },
+        {
+          rule_id: "framework-loader",
+          flagged_entries: [{ entry_index: 11, evidence_excerpt: "loader.register(handler)" }],
+        },
+      ],
+    };
+    const output = build_finalization_output(state, context);
+    const expected: FinalizationOutput = {
+      schema_version: FINALIZATION_OUTPUT_SCHEMA_VERSION,
+      project_path: PROJECT_PATH,
+      commit_hash: COMMIT,
+      confirmed_unreachable: [],
+      false_positive_groups: {},
+      group_match_history: [],
+      classifier_regressions: [
+        {
+          rule_id: "decorator-route",
+          flagged_entries: [
+            { entry_index: 3, evidence_excerpt: "@route('/x')" },
+            { entry_index: 7, evidence_excerpt: "@route('/y')" },
+          ],
+        },
+        {
+          rule_id: "framework-loader",
+          flagged_entries: [{ entry_index: 11, evidence_excerpt: "loader.register(handler)" }],
+        },
+      ],
+      last_updated: "2026-01-15T00:00:00Z",
+    };
+    expect(output).toEqual(expected);
   });
 });
 

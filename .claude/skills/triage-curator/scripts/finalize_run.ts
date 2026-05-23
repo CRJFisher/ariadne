@@ -312,6 +312,7 @@ async function main(): Promise<void> {
       authored_files_by_group,
       session_logs,
       triage_groups: triage.false_positive_groups,
+      classifier_regressions: triage.classifier_regressions,
     },
   );
 

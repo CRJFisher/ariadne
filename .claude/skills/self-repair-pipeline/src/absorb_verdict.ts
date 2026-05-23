@@ -2,8 +2,12 @@
  * Dispatcher absorb path for one per-entry `TriageVerdict`.
  *
  * Routing:
- *   - `tp` | `fp-classifier-regression` | `uncertain` — absorbed directly; no
- *     coordinator call, no `novel_issues.json` write.
+ *   - `tp` | `uncertain` — absorbed directly; no coordinator call, no
+ *     persistent write.
+ *   - `fp-classifier-regression` — absorbed directly; appends a record to the
+ *     per-run `classifier_regressions.jsonl` so `finalize_triage` can
+ *     aggregate `should_have_matched_rule_id`s into the published
+ *     `classifier_regressions` slice. No coordinator call.
  *   - `fp-novel-new` | `fp-novel-cited` — invoke the `triage-coordinator`
  *     sub-agent synchronously; apply its decision via
  *     `apply_coordinator_decision`; persist atomically; append to the
@@ -40,6 +44,10 @@
  *   `(entry_index, timestamp)` are recoverable by curator dedupe.
  */
 
+import {
+  append_classifier_regression_record,
+  type ClassifierRegressionRecord,
+} from "./classifier_regressions.js";
 import {
   find_flagged,
   find_issue_citing,
@@ -85,6 +93,12 @@ export type CoordinatorFn = (
 export interface AbsorbVerdictOptions {
   novel_issues_path: string;
   coordinator_log_path: string;
+  /**
+   * Per-run append-only log of every `fp-classifier-regression` verdict
+   * absorbed. Read by `finalize_triage` to publish the
+   * `classifier_regressions` slice.
+   */
+  classifier_regressions_path: string;
   coordinator: CoordinatorFn;
   /** Clock for log timestamps. Required to keep absorbs deterministic in
    *  tests; production callers pass `() => new Date().toISOString()`. */
@@ -92,7 +106,11 @@ export interface AbsorbVerdictOptions {
 }
 
 export interface AbsorbResultDirect {
-  kind: "tp" | "fp-classifier-regression" | "uncertain";
+  kind: "tp" | "uncertain";
+}
+
+export interface AbsorbResultRegression {
+  kind: "fp-classifier-regression";
 }
 
 export interface AbsorbResultReplay {
@@ -127,6 +145,7 @@ export type AbsorbResultFlagged = AbsorbResultCoordinatedBase & {
 
 export type AbsorbVerdictResult =
   | AbsorbResultDirect
+  | AbsorbResultRegression
   | AbsorbResultReplay
   | AbsorbResultMerged
   | AbsorbResultRegistered
@@ -143,8 +162,22 @@ export async function absorb_verdict(
   const parsed = parse_triage_verdict(verdict);
   switch (parsed.kind) {
     case "tp":
-    case "fp-classifier-regression":
     case "uncertain":
+      return { kind: parsed.kind };
+    case "fp-classifier-regression":
+      await with_path_lock(opts.classifier_regressions_path, async () => {
+        const record: ClassifierRegressionRecord = {
+          timestamp: opts.now(),
+          entry_index,
+          should_have_matched_rule_id: parsed.should_have_matched_rule_id,
+          evidence_excerpt: parsed.evidence_excerpt,
+          member_evidence: parsed.member_evidence,
+        };
+        await append_classifier_regression_record(
+          opts.classifier_regressions_path,
+          record,
+        );
+      });
       return { kind: parsed.kind };
     case "fp-novel-new":
     case "fp-novel-cited":

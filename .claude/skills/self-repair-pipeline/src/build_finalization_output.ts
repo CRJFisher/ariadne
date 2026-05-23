@@ -12,6 +12,7 @@
 import path from "path";
 
 import type { FalsePositiveEntry, FalsePositiveGroup } from "@ariadnejs/types";
+import type { ClassifierRegressionFlag } from "./classifier_regressions.js";
 import type { TriageState, TriageEntry } from "./triage_state_types.js";
 
 export const FINALIZATION_OUTPUT_SCHEMA_VERSION = 3;
@@ -55,6 +56,13 @@ export interface FinalizationOutput {
   confirmed_unreachable: FalsePositiveEntry[];
   false_positive_groups: Record<string, FalsePositiveGroup>;
   group_match_history: GroupMatchHistory[];
+  /**
+   * Per-run aggregate of every `fp-classifier-regression` verdict the per-entry
+   * investigator emitted, keyed by the rule the investigator believes should
+   * have caught the entry. The curator's drift-absorb path consumes this and
+   * marks the named wip rows as drifting (see `.claude/rules/classifier-lifecycle.md`).
+   */
+  classifier_regressions: ClassifierRegressionFlag[];
   last_updated: string;
 }
 
@@ -63,6 +71,12 @@ export interface FinalizationContext {
   commit_hash: string | null;
   /** Absolute project path. Used to relativize entry `file_path` values and published verbatim. */
   project_path: string;
+  /**
+   * Aggregate of `fp-classifier-regression` verdicts absorbed during the run,
+   * as produced by `aggregate_classifier_regressions` over the per-run
+   * `classifier_regressions.jsonl`. Defaults to `[]` when no regressions fired.
+   */
+  classifier_regressions: ClassifierRegressionFlag[];
 }
 
 export interface FinalizationSummary {
@@ -170,6 +184,7 @@ export function build_finalization_output(
     confirmed_unreachable,
     false_positive_groups,
     group_match_history: build_group_match_history(state),
+    classifier_regressions: context.classifier_regressions,
     last_updated: state.updated_at,
   };
 }
