@@ -59,6 +59,13 @@ export type TriageVerdict =
   | VerdictFpClassifierRegression
   | VerdictUncertain;
 
+/**
+ * The subset of `TriageVerdict` variants that route through the
+ * `triage-coordinator` sub-agent. All other verdicts are absorbed directly by
+ * the dispatcher with no coordinator call.
+ */
+export type NovelVerdict = VerdictFpNovelNew | VerdictFpNovelCited;
+
 type TriageVerdictKind = TriageVerdict["kind"];
 
 const VERDICT_KINDS: readonly TriageVerdictKind[] = [

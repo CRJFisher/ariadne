@@ -3,12 +3,13 @@
  *
  * The triage dispatcher is the single writer: each absorbed
  * `fp-novel-new` / `fp-novel-cited` verdict produces a new file value (via
- * `register_issue` or `add_citation`) which the dispatcher persists with
- * `write_novel_issues`. Sub-agents never write this file directly.
+ * `register_issue`, `add_citation`, or `flag_verdict`) which the dispatcher
+ * persists with `write_novel_issues`. Sub-agents never write this file
+ * directly.
  *
- * Mutators are pure (`add_citation`, `register_issue`) and return new
- * `NovelIssuesFile` values; I/O lives only in `read_novel_issues` and
- * `write_novel_issues`.
+ * Mutators are pure (`add_citation`, `register_issue`, `flag_verdict`) and
+ * return new `NovelIssuesFile` values; I/O lives only in `read_novel_issues`
+ * and `write_novel_issues`.
  */
 
 import * as fs from "node:fs/promises";
@@ -20,6 +21,7 @@ import {
   expect_object,
   parse_non_empty_string,
 } from "./strict_parse.js";
+import { parse_triage_verdict, type NovelVerdict } from "./triage_verdict.js";
 
 export interface NovelIssueCitation {
   entry_index: number;
@@ -33,13 +35,25 @@ export interface NovelIssue {
   citations: NovelIssueCitation[];
 }
 
+export interface FlaggedVerdict {
+  entry_index: number;
+  verdict: NovelVerdict;
+  reason: string;
+}
+
 export interface NovelIssuesFile {
   issues: NovelIssue[];
+  flagged: FlaggedVerdict[];
 }
+
+export const EMPTY_NOVEL_ISSUES_FILE: NovelIssuesFile = {
+  issues: [],
+  flagged: [],
+};
 
 /**
  * Read and validate the per-run novel-issues file. Returns
- * `{ issues: [] }` if the file does not exist (first-write case).
+ * `EMPTY_NOVEL_ISSUES_FILE` if the file does not exist (first-write case).
  *
  * Throws on malformed JSON or shape violations — silent coercion would hide
  * dispatcher bugs that corrupt the file. Duplicate `id`s are rejected because
@@ -50,7 +64,7 @@ export async function read_novel_issues(path: string): Promise<NovelIssuesFile> 
   try {
     raw = await fs.readFile(path, "utf8");
   } catch (err) {
-    if (is_enoent(err)) return { issues: [] };
+    if (is_enoent(err)) return EMPTY_NOVEL_ISSUES_FILE;
     throw err;
   }
   const parsed: unknown = JSON.parse(raw);
@@ -98,7 +112,7 @@ export function add_citation(
   };
   const next_issues = [...file.issues];
   next_issues[idx] = next_issue;
-  return { issues: next_issues };
+  return { ...file, issues: next_issues };
 }
 
 export interface RegisterIssueInput {
@@ -141,16 +155,60 @@ export function register_issue(
     citations: [input.initial_citation],
   };
   return {
-    file: { issues: [...file.issues, issue] },
+    file: { ...file, issues: [...file.issues, issue] },
     issue,
   };
+}
+
+/**
+ * Idempotently record a `flag` decision against an entry. Dedupes by
+ * `entry_index` — re-flagging the same entry leaves the file value unchanged
+ * (returns the same reference). Pure.
+ *
+ * Flagged verdicts are first-class storage so the curator's human-review
+ * surface and downstream summary tooling can consume them without grepping
+ * `coordinator_log.jsonl`.
+ */
+export function flag_verdict(
+  file: NovelIssuesFile,
+  flagged: FlaggedVerdict,
+): NovelIssuesFile {
+  if (file.flagged.some((f) => f.entry_index === flagged.entry_index)) {
+    return file;
+  }
+  return { ...file, flagged: [...file.flagged, flagged] };
+}
+
+/**
+ * Lookup helper: find the issue whose citations include `entry_index`, or
+ * `null`. Used by the dispatcher's replay guard to detect verdicts that were
+ * already absorbed in a prior pass.
+ */
+export function find_issue_citing(
+  file: NovelIssuesFile,
+  entry_index: number,
+): NovelIssue | null {
+  for (const issue of file.issues) {
+    if (issue.citations.some((c) => c.entry_index === entry_index)) {
+      return issue;
+    }
+  }
+  return null;
+}
+
+/** Lookup helper: find a previously-flagged verdict for `entry_index`, or `null`. */
+export function find_flagged(
+  file: NovelIssuesFile,
+  entry_index: number,
+): FlaggedVerdict | null {
+  return file.flagged.find((f) => f.entry_index === entry_index) ?? null;
 }
 
 // ===== Internal: parsing =====
 
 function parse_novel_issues_file(raw: unknown): NovelIssuesFile {
   const obj = expect_object(raw, "novel_issues");
-  assert_keys(obj, ["issues"], "novel_issues");
+  assert_keys(obj, ["issues", "flagged"], "novel_issues");
   const issues_raw = obj["issues"];
   if (!Array.isArray(issues_raw)) {
     throw new Error(`novel_issues.issues: expected array, got ${describe(issues_raw)}`);
@@ -165,7 +223,16 @@ function parse_novel_issues_file(raw: unknown): NovelIssuesFile {
     }
     seen.add(issue.id);
   }
-  return { issues };
+  const flagged_raw = obj["flagged"];
+  if (!Array.isArray(flagged_raw)) {
+    throw new Error(
+      `novel_issues.flagged: expected array, got ${describe(flagged_raw)}`,
+    );
+  }
+  const flagged = flagged_raw.map((entry, idx) =>
+    parse_flagged(entry, `novel_issues.flagged[${idx}]`),
+  );
+  return { issues, flagged };
 }
 
 function parse_novel_issue(raw: unknown, ctx: string): NovelIssue {
@@ -201,6 +268,25 @@ function parse_citation(raw: unknown, ctx: string): NovelIssueCitation {
     `${ctx}.evidence_excerpt`,
   );
   return { entry_index, evidence_excerpt };
+}
+
+function parse_flagged(raw: unknown, ctx: string): FlaggedVerdict {
+  const obj = expect_object(raw, ctx);
+  assert_keys(obj, ["entry_index", "verdict", "reason"], ctx);
+  const entry_index = obj["entry_index"];
+  if (typeof entry_index !== "number" || !Number.isInteger(entry_index) || entry_index < 0) {
+    throw new Error(
+      `${ctx}.entry_index: must be a non-negative integer, got ${describe(entry_index)}`,
+    );
+  }
+  const verdict = parse_triage_verdict(obj["verdict"]);
+  if (verdict.kind !== "fp-novel-new" && verdict.kind !== "fp-novel-cited") {
+    throw new Error(
+      `${ctx}.verdict: kind '${verdict.kind}' is not a novel verdict; flagged storage is reserved for fp-novel-* verdicts`,
+    );
+  }
+  const reason = parse_non_empty_string(obj["reason"], `${ctx}.reason`);
+  return { entry_index, verdict, reason };
 }
 
 function is_enoent(err: unknown): boolean {
