@@ -17,8 +17,10 @@
 import * as fs from "node:fs/promises";
 import path from "path";
 
-import type { FinalizationOutput } from "./build_finalization_output.js";
-import type { FalsePositiveEntry } from "@ariadnejs/types";
+import type {
+  FinalizationOutput,
+  PublishedConfirmedUnreachable,
+} from "./build_finalization_output.js";
 import {
   most_recent_finalized_triage_results,
   read_triage_results,
@@ -27,7 +29,6 @@ import {
 import type {
   TpCacheEntryKey,
   TriageEntry,
-  TriageEntryResult,
 } from "./triage_state_types.js";
 
 export interface TpCacheKey {
@@ -40,7 +41,7 @@ export interface TpCacheKey {
 export interface TpCache {
   source_run_id: string;
   /** Canonical key string → published entry. */
-  entries_by_key: Map<string, FalsePositiveEntry>;
+  entries_by_key: Map<string, PublishedConfirmedUnreachable>;
 }
 
 export interface DeriveTpCacheOpts {
@@ -60,7 +61,7 @@ export function cache_key_string(key: TpCacheKey): string {
   return `${key.name}${KEY_SEP}${key.file_path_rel}${KEY_SEP}${key.kind}${KEY_SEP}${key.start_line}`;
 }
 
-function key_for_published(entry: FalsePositiveEntry): TpCacheKey {
+function key_for_published(entry: PublishedConfirmedUnreachable): TpCacheKey {
   return {
     name: entry.name,
     file_path_rel: entry.file_path,
@@ -76,7 +77,7 @@ function key_for_published(entry: FalsePositiveEntry): TpCacheKey {
  * we get here, every entry's `kind` is one of the canonical values.
  */
 function build_cache(source_run_id: string, output: FinalizationOutput): TpCache | null {
-  const entries_by_key = new Map<string, FalsePositiveEntry>();
+  const entries_by_key = new Map<string, PublishedConfirmedUnreachable>();
   for (const fp of output.confirmed_unreachable) {
     entries_by_key.set(cache_key_string(key_for_published(fp)), fp);
   }
@@ -156,19 +157,12 @@ export function apply_tp_cache_to_entries(
     });
     if (!cache.entries_by_key.has(k)) continue;
 
-    const result: TriageEntryResult = {
-      ariadne_correct: true,
-      group_id: "previously-confirmed-tp",
-      root_cause: `Confirmed unreachable by run ${cache.source_run_id}`,
-      reasoning: "Reused TP verdict from prior run at the same commit.",
-    };
-
     entry.route = "known-unreachable";
     entry.auto_classified = true;
     entry.status = "completed";
     entry.known_source = "previously-confirmed-tp";
     entry.tp_source_run_id = cache.source_run_id;
-    entry.result = result;
+    entry.result = null;
 
     skipped.push({
       name: entry.name,

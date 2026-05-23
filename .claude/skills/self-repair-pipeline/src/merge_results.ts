@@ -1,16 +1,24 @@
 /**
  * Merge per-entry result files from a run's `results/` subdir into its triage state.
  *
- * Each triage-investigator agent writes its result to
- * `triage_state/<project>/runs/<run-id>/results/<entry_index>.json`. This
- * function scans that directory (passed as `triage_dir` = the run's directory),
- * parses results, and updates the corresponding entries in the state. Returns
- * the count of entries merged.
+ * Each triage-investigator agent writes its verdict to
+ * `triage_state/<project>/runs/<run-id>/results/<entry_index>.json` as a
+ * `TriageVerdict` (discriminated union). This function scans that directory,
+ * validates each file via `parse_triage_verdict`, and flips the corresponding
+ * entry's `status` to `"completed"` (or `"failed"` on parse error). Returns
+ * the count of entries transitioned.
+ *
+ * The verdict itself is *not* stored on the entry — `entry.result` is left as
+ * `null`. `finalize_triage` re-reads the result files (via
+ * `load_verdicts_by_entry_index`) when building the published output, so the
+ * verdict ledger lives on disk in `results/` and the triage state is a pure
+ * control-plane log of routing + status.
  */
 
 import fs from "fs";
 import path from "path";
-import type { TriageState, TriageEntryResult } from "./triage_state_types.js";
+import { parse_triage_verdict } from "./triage_verdict.js";
+import type { TriageState } from "./triage_state_types.js";
 
 export function merge_results(state: TriageState, triage_dir: string): number {
   const results_dir = path.join(triage_dir, "results");
@@ -31,12 +39,13 @@ export function merge_results(state: TriageState, triage_dir: string): number {
     const file_path = path.join(results_dir, file);
     try {
       const raw = fs.readFileSync(file_path, "utf8");
-      const result = JSON.parse(raw) as TriageEntryResult;
-      entry.result = result;
+      parse_triage_verdict(JSON.parse(raw));
+      entry.result = null;
       entry.status = "completed";
     } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
       entry.status = "failed";
-      entry.error = `Failed to parse result file: ${err}`;
+      entry.error = `Failed to parse verdict file: ${message}`;
     }
     merged++;
   }

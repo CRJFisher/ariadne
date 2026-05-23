@@ -76,31 +76,21 @@ flowchart TD
 
   subgraph P3["Phase 3 · Triage Loop (worker pool, N=5)"]
     direction TB
-    S3("get_next_triage_entry.ts<br/>+ merge_results · dispense/absorb cycle"):::step
+    S3("get_next_triage_entry.ts<br/>dispense/absorb cycle"):::step
     AG3[["triage-investigator<br/>sonnet · parallel"]]:::agent
-    A3[/"results/&#123;idx&#125;.json"/]:::artifact
+    A3[/"results/&#123;idx&#125;.json<br/>TriageVerdict"/]:::artifact
+    BR{novel verdict?}:::branch
+    AG_CO[["triage-coordinator<br/>sonnet · per novel absorb"]]:::agent
+    NI[/"novel_issues.json<br/>+ classifier_regressions.jsonl"/]:::artifact
   end
 
-  subgraph P4["Phase 4 · Aggregate (3 passes)"]
-    direction TB
-    S4a("prepare_aggregation_slices.ts"):::step
-    A4a[/"aggregation/slices/<br/>slice_n.json"/]:::artifact
-    AG4a[["rough-aggregator<br/>sonnet · per slice"]]:::agent
-    A4b[/"aggregation/pass1/<br/>slice_n.output.json"/]:::artifact
-    S4b("merge_rough_groups.ts<br/>union per-slice groups by id<br/>→ canonical group list"):::step
-    A4c[/"aggregation/pass2/input.json"/]:::artifact
-    AG4b[["group-investigator<br/>opus · per group"]]:::agent
-    A4d[/"aggregation/pass2/<br/>&lt;gid&gt;_investigation.json"/]:::artifact
-    S4c("finalize_aggregation.ts<br/>apply confirm/reject verdicts<br/>· reallocate rejected entries"):::step
-  end
-
-  subgraph P5["Phase 5 · Finalize"]
+  subgraph P4["Phase 4 · Finalize"]
     direction TB
     S5("finalize_triage.ts<br/>build_finalization_output · seal manifest"):::step
-    PUB[/"analysis_output/&lt;p&gt;/<br/>triage_results/&lt;run-id&gt;.json<br/>schema v3"/]:::published
+    PUB[/"analysis_output/&lt;p&gt;/<br/>triage_results/&lt;run-id&gt;.json<br/>schema v4"/]:::published
   end
 
-  CUR[["triage-curator<br/>(novel-group investigation)"]]:::downstream
+  CUR[["triage-curator<br/>(promotion + drift)"]]:::downstream
   FX[["fix-sequencer reconciler<br/>(via prepare_triage)"]]:::downstream
   DIF[["diff_runs.ts<br/>(regression audit)"]]:::downstream
 
@@ -118,11 +108,14 @@ flowchart TD
 
   A2 --> S3
   S3 --> AG3 --> A3
-  A3 -- "merge_results" --> S3
-  S3 -- "all pending drained" --> S4a
-
-  S4a --> A4a --> AG4a --> A4b --> S4b --> A4c --> AG4b --> A4d --> S4c
-  S4c --> S5 --> PUB
+  A3 --> S3
+  S3 --> BR
+  BR -- "fp-novel-*" --> AG_CO --> NI
+  BR -- "tp · regression · uncertain" --> NI
+  NI -. "next dispense" .-> S3
+  S3 -- "all pending drained" --> S5
+  NI --> S5
+  S5 --> PUB
 
   PUB --> CUR
   PUB --> FX
@@ -131,18 +124,16 @@ flowchart TD
   PUB -. "next run · TP cache" .-> PRIOR
 
   linkStyle default stroke:#cbd5e1,stroke-width:1.5px
-  linkStyle 29 stroke:#ef5350,stroke-width:2.2px,stroke-dasharray:6 4
 ```
 
-**What to look for**: five phase bands stacked top-to-bottom (strict reading order); two read-only stores (registry, prior triage_results) sit outside the phase bands — this skill **never** writes the registry (lifecycle contract); three Phase-2 buckets (auto / TP / residual) determine whether an entry skips the triage loop entirely; two sub-agent fleets in Phase 4 (rough-aggregator over slices, then group-investigator per canonical group). The red dotted edge is the only backward arrow: today's `triage_results` becomes tomorrow's TP cache.
+**What to look for**: four phase bands stacked top-to-bottom (strict reading order); two read-only stores (registry, prior triage_results) sit outside the phase bands — this skill **never** writes the registry (lifecycle contract); three Phase-2 buckets (auto / TP / residual) determine whether an entry skips the triage loop entirely; the coordinator sub-agent only fires on novel verdicts, while `tp`, `fp-classifier-regression`, and `uncertain` absorb directly. Today's published `triage_results` becomes tomorrow's TP cache.
 
 ## Sub-Agent Summary
 
 | Agent               | Model  | Multiplicity              | Purpose                                                                                |
 | ------------------- | ------ | ------------------------- | -------------------------------------------------------------------------------------- |
-| triage-investigator | Sonnet | 1 per entry (worker pool) | Fetch own context via `get_entry_context.ts`, determine if Ariadne missed real callers |
-| rough-aggregator    | Sonnet | 1 per slice               | Group false-positive entries by semantic similarity of root cause                      |
-| group-investigator  | Opus   | 1 per group               | Verify per-entry group membership using source code and Ariadne MCP evidence           |
+| triage-investigator | Sonnet | 1 per entry (worker pool) | Fetch own context via `get_entry_context.ts`, emit one `TriageVerdict`                 |
+| triage-coordinator  | Sonnet | 1 per novel absorb        | Sense-check novel verdicts against the run's `novel_issues.json`; merge / register / flag |
 
 ## Key Modules
 

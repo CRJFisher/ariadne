@@ -23,8 +23,8 @@ import {
 /**
  * Single chokepoint for parsing a published `triage_results/<run-id>.json`.
  * Rejects any file whose `schema_version` does not match the current version
- * — legacy files age out naturally per TASK-190.17.16's persisted-state
- * policy (do not `rm -rf analysis_output/`).
+ * — legacy files age out naturally per the persisted-state policy in
+ * `SKILL.md` (do not `rm -rf analysis_output/`).
  */
 function parse_finalization_output(
   source_label: string,

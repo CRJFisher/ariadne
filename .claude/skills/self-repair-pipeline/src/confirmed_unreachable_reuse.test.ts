@@ -50,18 +50,22 @@ function build_output(
   confirmed: { name: string; file: string; line: number; kind?: "function" | "method" | "constructor" }[],
 ): FinalizationOutput {
   return {
-    schema_version: 3,
+    schema_version: 4,
     project_path: "/some/path",
     commit_hash: null,
-    confirmed_unreachable: confirmed.map((c) => ({
+    novel_issues: [],
+    flagged_novel_verdicts: [],
+    classifier_regressions: [],
+    confirmed_unreachable: confirmed.map((c, idx) => ({
+      entry_index: idx,
       name: c.name,
       file_path: c.file,
       start_line: c.line,
       kind: c.kind ?? "function",
+      source: { kind: "llm-tp" } as const,
+      member_evidence: null,
     })),
-    false_positive_groups: {},
-    group_match_history: [],
-    classifier_regressions: [],
+    uncertain: [],
     last_updated: "2026-04-28T13:42:07.812Z",
   };
 }
@@ -106,23 +110,23 @@ describe("derive_tp_cache", () => {
     expect(cache!.entries_by_key.has(k)).toBe(true);
   });
 
-  it("throws schema-mismatch on a legacy v1 source file", async () => {
-    // Pre-v3 files are hard-rejected at parse time (constitution: no BC).
+  it("throws schema-mismatch on a legacy v3 source file", async () => {
+    // Pre-v4 files are hard-rejected at parse time (constitution: no BC).
     // Operators re-finalize the run under the current schema or remove the
     // stale file; the persisted-state policy still forbids `rm -rf` of the
     // whole analysis_output/ tree.
     const legacy_record = {
-      schema_version: 1,
+      schema_version: 3,
       commit_hash: null,
       confirmed_unreachable: [
-        { name: "legacy", file_path: "src/l.ts", start_line: 1 },
+        { name: "legacy", file_path: "src/l.ts", start_line: 1, kind: "function" },
       ],
       false_positive_groups: {},
       last_updated: "2026-04-28T13:42:07.812Z",
     };
     seed_raw_triage_results("p", "deadbee-2026-04-26T00-00-00.000Z", legacy_record);
     await expect(derive_tp_cache("p", "deadbee", NO_OPTS)).rejects.toThrow(
-      /schema_version=1/,
+      /schema_version=3/,
     );
   });
 
@@ -173,9 +177,9 @@ describe("apply_tp_cache_to_entries", () => {
     return {
       source_run_id: run_id,
       entries_by_key: new Map(
-        items.map((i) => [
+        items.map((i, idx) => [
           cache_key_string({ name: i.name, file_path_rel: i.file_path, kind: i.kind, start_line: i.start_line }),
-          { ...i },
+          { entry_index: idx, source: { kind: "llm-tp" } as const, member_evidence: null, ...i },
         ]),
       ),
     };
@@ -223,8 +227,10 @@ describe("apply_tp_cache_to_entries", () => {
     expect(e.status).toBe("completed");
     expect(e.known_source).toBe("previously-confirmed-tp");
     expect(e.tp_source_run_id).toBe("source-run-id");
-    expect(e.result?.ariadne_correct).toBe(true);
-    expect(e.result?.group_id).toBe("previously-confirmed-tp");
+    // v4: TP-cache reuse no longer synthesizes a TriageEntryResult; the
+    // confirmed_unreachable record is built from (route, known_source,
+    // tp_source_run_id) at finalize time, not from entry.result.
+    expect(e.result).toBe(null);
   });
 
   it("does not override registry-classified entries (route=known-unreachable)", () => {

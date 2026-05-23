@@ -1,14 +1,25 @@
 /**
- * Pure diff over two `FinalizationOutput`s.
+ * Pure diff over two `FinalizationOutput`s (schema v4).
  *
- * Match key: `(name, file_path_relative, kind, start_line)` (exact),
- * with `(name, file_path_relative, kind)` as a fuzzy fallback to absorb
- * line-shift noise so a mere insertion above a function does not register
- * as "appeared/disappeared".
+ * Surface the cross-run signals the iteration loop cares about:
+ *   - Entry-level appearance/disappearance and TP↔uncertain flips on the
+ *     `confirmed_unreachable` / `uncertain` partitions.
+ *   - Novel-issue diff: which `novel_issue.id`s are added / removed, plus
+ *     citation-count deltas on surviving issues.
+ *   - Classifier-regression diff: which wip rule_ids picked up new flagged
+ *     entries between runs (curator drift signal).
+ *
+ * Match key for entries: `(name, file_path_relative, kind, start_line)`
+ * exactly, with `(name, file_path_relative, kind)` as a fuzzy fallback to
+ * absorb line-shift noise so a mere insertion above a function does not
+ * register as "appeared/disappeared".
  */
 
-import type { FalsePositiveEntry, FalsePositiveGroup } from "@ariadnejs/types";
-import type { FinalizationOutput } from "./build_finalization_output.js";
+import type {
+  FinalizationOutput,
+  PublishedConfirmedUnreachable,
+  PublishedUncertain,
+} from "./build_finalization_output.js";
 
 export interface EntryRef {
   name: string;
@@ -18,36 +29,24 @@ export interface EntryRef {
   signature?: string;
 }
 
+type Classification = "tp" | "uncertain";
+
 export interface FlippedEntry {
   entry: EntryRef;
-  from_classification: "tp" | "fp";
-  to_classification: "tp" | "fp";
-  from_group_id: string | null;
-  to_group_id: string | null;
+  from_classification: Classification;
+  to_classification: Classification;
 }
 
-export interface GroupChange {
-  entry: EntryRef;
-  from_group_id: string;
-  to_group_id: string;
+export interface NovelIssueCitationDelta {
+  novel_issue_id: string;
+  citations_from: number;
+  citations_to: number;
 }
 
-/**
- * Per-group firing-count delta between two runs. Computed from
- * `FinalizationOutput.group_match_history`. The fix-sequencer's
- * `--annotate-fixes` post-processor (TASK-190.18.5) uses these deltas to
- * label expected FP↔TP transitions after a fix lands; the curator's
- * promotion-candidate scorer uses cross-run accumulation of the same data.
- *
- * Absent input fields default to 0 — a group that appears in one run but
- * not the other has a zero count on the missing side.
- */
-export interface GroupFiringDelta {
-  group_id: string;
-  match_count_from: number;
-  match_count_to: number;
-  llm_attributed_from: number;
-  llm_attributed_to: number;
+export interface ClassifierRegressionDelta {
+  rule_id: string;
+  flagged_from: number;
+  flagged_to: number;
 }
 
 export interface DiffSummary {
@@ -56,35 +55,29 @@ export interface DiffSummary {
   appearing: EntryRef[];
   disappearing: EntryRef[];
   flipped: FlippedEntry[];
-  group_id_changes: GroupChange[];
-  groups_added: string[];
-  groups_removed: string[];
-  groups_membership_delta: Record<string, { added: EntryRef[]; removed: EntryRef[] }>;
-  /**
-   * Per-group firing-count delta. Includes every `group_id` that appears in
-   * either run's `group_match_history`. Empty when both inputs have an empty
-   * match history (legacy v2 artifacts).
-   */
-  group_firing_deltas: GroupFiringDelta[];
+  novel_issues_added: string[];
+  novel_issues_removed: string[];
+  novel_issue_citation_deltas: NovelIssueCitationDelta[];
+  classifier_regressions_added: string[];
+  classifier_regressions_removed: string[];
+  classifier_regression_deltas: ClassifierRegressionDelta[];
 }
 
 interface SetTotals {
   total_entries: number;
   confirmed_unreachable: number;
-  false_positive_entries: number;
-  false_positive_groups: number;
+  uncertain: number;
+  novel_issues: number;
+  classifier_regression_rules: number;
 }
 
 function totals(output: FinalizationOutput): SetTotals {
-  const fp_entries = Object.values(output.false_positive_groups).reduce(
-    (sum, g) => sum + g.entries.length,
-    0,
-  );
   return {
-    total_entries: output.confirmed_unreachable.length + fp_entries,
+    total_entries: output.confirmed_unreachable.length + output.uncertain.length,
     confirmed_unreachable: output.confirmed_unreachable.length,
-    false_positive_entries: fp_entries,
-    false_positive_groups: Object.keys(output.false_positive_groups).length,
+    uncertain: output.uncertain.length,
+    novel_issues: output.novel_issues.length,
+    classifier_regression_rules: output.classifier_regressions.length,
   };
 }
 
@@ -96,35 +89,34 @@ function fuzzy_key(e: { name: string; file_path: string; kind: string }): string
   return `${e.name}\t${e.file_path}\t${e.kind}`;
 }
 
+interface IndexedEntry {
+  entry: PublishedConfirmedUnreachable | PublishedUncertain;
+  classification: Classification;
+}
+
 interface Indexed {
-  by_exact: Map<string, { entry: FalsePositiveEntry; classification: "tp" | "fp"; group_id: string | null }>;
-  by_fuzzy: Map<string, Array<{ entry: FalsePositiveEntry; classification: "tp" | "fp"; group_id: string | null }>>;
+  by_exact: Map<string, IndexedEntry>;
+  by_fuzzy: Map<string, IndexedEntry[]>;
 }
 
 function index_output(output: FinalizationOutput): Indexed {
   const by_exact: Indexed["by_exact"] = new Map();
   const by_fuzzy: Indexed["by_fuzzy"] = new Map();
 
-  function insert(
-    entry: FalsePositiveEntry,
-    classification: "tp" | "fp",
-    group_id: string | null,
-  ): void {
-    by_exact.set(exact_key(entry), { entry, classification, group_id });
-    const fk = fuzzy_key(entry);
+  function insert(record: IndexedEntry): void {
+    by_exact.set(exact_key(record.entry), record);
+    const fk = fuzzy_key(record.entry);
     const list = by_fuzzy.get(fk) ?? [];
-    list.push({ entry, classification, group_id });
+    list.push(record);
     by_fuzzy.set(fk, list);
   }
 
-  for (const fp of output.confirmed_unreachable) insert(fp, "tp", "confirmed-unreachable");
-  for (const [group_id, group] of Object.entries(output.false_positive_groups)) {
-    for (const fp of group.entries) insert(fp, "fp", group_id);
-  }
+  for (const fp of output.confirmed_unreachable) insert({ entry: fp, classification: "tp" });
+  for (const u of output.uncertain) insert({ entry: u, classification: "uncertain" });
   return { by_exact, by_fuzzy };
 }
 
-function entry_ref(e: FalsePositiveEntry): EntryRef {
+function entry_ref(e: PublishedConfirmedUnreachable | PublishedUncertain): EntryRef {
   return {
     name: e.name,
     file_path: e.file_path,
@@ -141,7 +133,6 @@ export function diff_runs(from: FinalizationOutput, to: FinalizationOutput): Dif
   const appearing: EntryRef[] = [];
   const disappearing: EntryRef[] = [];
   const flipped: FlippedEntry[] = [];
-  const group_id_changes: GroupChange[] = [];
 
   const matched_in_from = new Set<string>();
 
@@ -149,9 +140,17 @@ export function diff_runs(from: FinalizationOutput, to: FinalizationOutput): Dif
     let from_record = idx_from.by_exact.get(k);
     let from_key = k;
     if (from_record === undefined) {
-      // Fuzzy fallback: same name+file+kind, different start_line.
-      const candidates = idx_from.by_fuzzy.get(fuzzy_key(to_record.entry)) ?? [];
-      const candidate = candidates.find((c) => !matched_in_from.has(exact_key(c.entry)));
+      // Fuzzy fallback: same name+file+kind, different start_line. Prefer a
+      // candidate with the same classification so a TP↔uncertain line shift
+      // does not synthesize a flip; only fall back across classifications
+      // when no same-classification candidate is available (genuine flip).
+      const candidates = (idx_from.by_fuzzy.get(fuzzy_key(to_record.entry)) ?? []).filter(
+        (c) => !matched_in_from.has(exact_key(c.entry)),
+      );
+      const same_classification = candidates.find(
+        (c) => c.classification === to_record.classification,
+      );
+      const candidate = same_classification ?? candidates[0];
       if (candidate !== undefined) {
         from_record = candidate;
         from_key = exact_key(candidate.entry);
@@ -170,17 +169,6 @@ export function diff_runs(from: FinalizationOutput, to: FinalizationOutput): Dif
         entry: entry_ref(to_record.entry),
         from_classification: from_record.classification,
         to_classification: to_record.classification,
-        from_group_id: from_record.group_id,
-        to_group_id: to_record.group_id,
-      });
-    } else if (
-      from_record.classification === "fp" &&
-      from_record.group_id !== to_record.group_id
-    ) {
-      group_id_changes.push({
-        entry: entry_ref(to_record.entry),
-        from_group_id: from_record.group_id ?? "",
-        to_group_id: to_record.group_id ?? "",
       });
     }
   }
@@ -190,68 +178,79 @@ export function diff_runs(from: FinalizationOutput, to: FinalizationOutput): Dif
     disappearing.push(entry_ref(from_record.entry));
   }
 
-  const from_groups = new Set(Object.keys(from.false_positive_groups));
-  const to_groups = new Set(Object.keys(to.false_positive_groups));
-  const groups_added: string[] = [];
-  const groups_removed: string[] = [];
-  for (const g of to_groups) if (!from_groups.has(g)) groups_added.push(g);
-  for (const g of from_groups) if (!to_groups.has(g)) groups_removed.push(g);
-  groups_added.sort();
-  groups_removed.sort();
-
-  const groups_membership_delta: DiffSummary["groups_membership_delta"] = {};
-  for (const g of from_groups) {
-    if (!to_groups.has(g)) continue;
-    const from_members = new Map(
-      from.false_positive_groups[g].entries.map((e) => [exact_key(e), e]),
-    );
-    const to_members = new Map(
-      to.false_positive_groups[g].entries.map((e) => [exact_key(e), e]),
-    );
-    const added: EntryRef[] = [];
-    const removed: EntryRef[] = [];
-    for (const [k, e] of to_members) if (!from_members.has(k)) added.push(entry_ref(e));
-    for (const [k, e] of from_members) if (!to_members.has(k)) removed.push(entry_ref(e));
-    if (added.length > 0 || removed.length > 0) {
-      groups_membership_delta[g] = { added, removed };
-    }
-  }
-
   return {
     totals_from: totals(from),
     totals_to: totals(to),
     appearing,
     disappearing,
     flipped,
-    group_id_changes,
-    groups_added,
-    groups_removed,
-    groups_membership_delta,
-    group_firing_deltas: compute_group_firing_deltas(from, to),
+    ...novel_issue_diff(from, to),
+    ...classifier_regression_diff(from, to),
   };
 }
 
-function compute_group_firing_deltas(
+function novel_issue_diff(
   from: FinalizationOutput,
   to: FinalizationOutput,
-): GroupFiringDelta[] {
-  const from_by_group = new Map(from.group_match_history.map((row) => [row.group_id, row]));
-  const to_by_group = new Map(to.group_match_history.map((row) => [row.group_id, row]));
-  const all_ids = new Set<string>([...from_by_group.keys(), ...to_by_group.keys()]);
-  const deltas: GroupFiringDelta[] = [];
-  for (const group_id of all_ids) {
-    const f = from_by_group.get(group_id);
-    const t = to_by_group.get(group_id);
-    deltas.push({
-      group_id,
-      match_count_from: f?.match_count ?? 0,
-      match_count_to: t?.match_count ?? 0,
-      llm_attributed_from: f?.llm_attributed_count ?? 0,
-      llm_attributed_to: t?.llm_attributed_count ?? 0,
+): {
+  novel_issues_added: string[];
+  novel_issues_removed: string[];
+  novel_issue_citation_deltas: NovelIssueCitationDelta[];
+} {
+  const from_by_id = new Map(from.novel_issues.map((i) => [i.id, i]));
+  const to_by_id = new Map(to.novel_issues.map((i) => [i.id, i]));
+  const novel_issues_added: string[] = [];
+  const novel_issues_removed: string[] = [];
+  const novel_issue_citation_deltas: NovelIssueCitationDelta[] = [];
+  for (const id of to_by_id.keys()) if (!from_by_id.has(id)) novel_issues_added.push(id);
+  for (const id of from_by_id.keys()) if (!to_by_id.has(id)) novel_issues_removed.push(id);
+  novel_issues_added.sort();
+  novel_issues_removed.sort();
+  const all_ids = new Set<string>([...from_by_id.keys(), ...to_by_id.keys()]);
+  for (const id of [...all_ids].sort()) {
+    const f = from_by_id.get(id);
+    const t = to_by_id.get(id);
+    novel_issue_citation_deltas.push({
+      novel_issue_id: id,
+      citations_from: f?.citations.length ?? 0,
+      citations_to: t?.citations.length ?? 0,
     });
   }
-  deltas.sort((a, b) => a.group_id.localeCompare(b.group_id));
-  return deltas;
+  return { novel_issues_added, novel_issues_removed, novel_issue_citation_deltas };
+}
+
+function classifier_regression_diff(
+  from: FinalizationOutput,
+  to: FinalizationOutput,
+): {
+  classifier_regressions_added: string[];
+  classifier_regressions_removed: string[];
+  classifier_regression_deltas: ClassifierRegressionDelta[];
+} {
+  const from_by_rule = new Map(from.classifier_regressions.map((r) => [r.rule_id, r]));
+  const to_by_rule = new Map(to.classifier_regressions.map((r) => [r.rule_id, r]));
+  const classifier_regressions_added: string[] = [];
+  const classifier_regressions_removed: string[] = [];
+  const classifier_regression_deltas: ClassifierRegressionDelta[] = [];
+  for (const id of to_by_rule.keys()) if (!from_by_rule.has(id)) classifier_regressions_added.push(id);
+  for (const id of from_by_rule.keys()) if (!to_by_rule.has(id)) classifier_regressions_removed.push(id);
+  classifier_regressions_added.sort();
+  classifier_regressions_removed.sort();
+  const all_ids = new Set<string>([...from_by_rule.keys(), ...to_by_rule.keys()]);
+  for (const id of [...all_ids].sort()) {
+    const f = from_by_rule.get(id);
+    const t = to_by_rule.get(id);
+    classifier_regression_deltas.push({
+      rule_id: id,
+      flagged_from: f?.flagged_entries.length ?? 0,
+      flagged_to: t?.flagged_entries.length ?? 0,
+    });
+  }
+  return {
+    classifier_regressions_added,
+    classifier_regressions_removed,
+    classifier_regression_deltas,
+  };
 }
 
 // Helper used by the CLI for the text output format.
@@ -262,14 +261,18 @@ export function format_diff_text(diff: DiffSummary, from_id: string, to_id: stri
   lines.push("Set-level deltas:");
   lines.push(`  total_entries:           ${diff.totals_from.total_entries} → ${diff.totals_to.total_entries}`);
   lines.push(`  confirmed_unreachable:   ${diff.totals_from.confirmed_unreachable} → ${diff.totals_to.confirmed_unreachable}`);
-  lines.push(`  false_positive_entries:  ${diff.totals_from.false_positive_entries} → ${diff.totals_to.false_positive_entries}`);
-  lines.push(`  false_positive_groups:   ${diff.totals_from.false_positive_groups} → ${diff.totals_to.false_positive_groups}`);
+  lines.push(`  uncertain:               ${diff.totals_from.uncertain} → ${diff.totals_to.uncertain}`);
+  lines.push(`  novel_issues:            ${diff.totals_from.novel_issues} → ${diff.totals_to.novel_issues}`);
+  lines.push(
+    `  classifier_regressions:  ${diff.totals_from.classifier_regression_rules} → ` +
+      `${diff.totals_to.classifier_regression_rules} rule(s)`,
+  );
   lines.push("");
 
   if (diff.flipped.length > 0) {
     lines.push("Verdict flips (regression candidates):");
     for (const f of diff.flipped) {
-      const arrow = `${f.from_classification.toUpperCase()} (${f.from_group_id ?? ""}) → ${f.to_classification.toUpperCase()} (${f.to_group_id ?? ""})`;
+      const arrow = `${f.from_classification.toUpperCase()} → ${f.to_classification.toUpperCase()}`;
       lines.push(`  ${f.entry.file_path}:${f.entry.start_line} ${f.entry.name} — ${arrow}`);
     }
     lines.push("");
@@ -287,35 +290,39 @@ export function format_diff_text(diff: DiffSummary, from_id: string, to_id: stri
     lines.push("");
   }
 
-  if (diff.group_id_changes.length > 0) {
-    lines.push("FP entries that changed group_id:");
-    for (const c of diff.group_id_changes) {
-      lines.push(`  ${c.entry.file_path}:${c.entry.start_line} ${c.entry.name}: ${c.from_group_id} → ${c.to_group_id}`);
+  if (diff.novel_issues_added.length > 0) {
+    lines.push(`Novel issues added: ${diff.novel_issues_added.join(", ")}`);
+  }
+  if (diff.novel_issues_removed.length > 0) {
+    lines.push(`Novel issues removed: ${diff.novel_issues_removed.join(", ")}`);
+  }
+  const novel_significant = diff.novel_issue_citation_deltas.filter(
+    (d) => d.citations_from !== d.citations_to,
+  );
+  if (novel_significant.length > 0) {
+    if (lines[lines.length - 1] !== "") lines.push("");
+    lines.push("Novel-issue citation deltas:");
+    for (const d of novel_significant) {
+      lines.push(`  ${d.novel_issue_id}: ${d.citations_from} → ${d.citations_to}`);
     }
-    lines.push("");
   }
 
-  if (diff.groups_added.length > 0) lines.push(`Groups added: ${diff.groups_added.join(", ")}`);
-  if (diff.groups_removed.length > 0) lines.push(`Groups removed: ${diff.groups_removed.join(", ")}`);
-
-  const significant_deltas = diff.group_firing_deltas.filter(
-    (d) =>
-      d.match_count_from !== d.match_count_to ||
-      d.llm_attributed_from !== d.llm_attributed_to,
+  if (diff.classifier_regressions_added.length > 0) {
+    lines.push(`Classifier regressions added: ${diff.classifier_regressions_added.join(", ")}`);
+  }
+  if (diff.classifier_regressions_removed.length > 0) {
+    lines.push(`Classifier regressions removed: ${diff.classifier_regressions_removed.join(", ")}`);
+  }
+  const regression_significant = diff.classifier_regression_deltas.filter(
+    (d) => d.flagged_from !== d.flagged_to,
   );
-  if (significant_deltas.length > 0) {
+  if (regression_significant.length > 0) {
     if (lines[lines.length - 1] !== "") lines.push("");
-    lines.push("Per-group firing deltas:");
-    for (const d of significant_deltas) {
-      lines.push(
-        `  ${d.group_id}: match ${d.match_count_from}→${d.match_count_to}, ` +
-          `llm_attr ${d.llm_attributed_from}→${d.llm_attributed_to}`,
-      );
+    lines.push("Classifier-regression deltas:");
+    for (const d of regression_significant) {
+      lines.push(`  ${d.rule_id}: ${d.flagged_from} → ${d.flagged_to} flagged`);
     }
   }
 
   return lines.join("\n");
 }
-
-// Suppress unused warning for FalsePositiveGroup type (re-exported for callers via types only).
-export type { FalsePositiveGroup };

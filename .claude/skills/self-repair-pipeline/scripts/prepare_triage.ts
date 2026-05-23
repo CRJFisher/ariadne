@@ -156,9 +156,9 @@ function build_run_id(short_commit: string | null): string {
 
 /**
  * Detect pre-run-namespacing legacy state and warn the user so they don't
- * silently leave orphaned `<project>_triage.json` / `results/` / `aggregation/`
- * directories on disk. Per the migration plan, this is one-line guidance
- * pointing at `migrate_legacy_state.ts`; we never auto-migrate.
+ * silently leave orphaned `<project>_triage.json` / `results/` directories on
+ * disk. Per the migration plan, this is one-line guidance pointing at
+ * `migrate_legacy_state.ts`; we never auto-migrate.
  */
 function warn_about_legacy_state(project_name: string): void {
   const project_dir = path.join(TRIAGE_STATE_DIR, project_name);

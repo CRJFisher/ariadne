@@ -5,14 +5,16 @@
  * Old layout (legacy):
  *   triage_state/<project>/<project>_triage.json
  *   triage_state/<project>/results/
- *   triage_state/<project>/aggregation/
+ *   triage_state/<project>/aggregation/    (deleted on migrate; obsolete v3 cascade)
  *
  * New layout:
- *   triage_state/<project>/runs/<run-id>/{triage.json, manifest.json, results/, aggregation/}
+ *   triage_state/<project>/runs/<run-id>/{triage.json, manifest.json, results/}
  *
  * This script wraps the legacy files into a synthetic
  * `runs/legacy-<iso-ts>/` directory with `manifest.status="abandoned"`. It
- * does NOT set `LATEST` — legacy state is treated as historical.
+ * does NOT set `LATEST` — legacy state is treated as historical. Legacy
+ * `aggregation/` dirs are always deleted: the v4 pipeline has no aggregation
+ * cascade and the data is unreadable.
  *
  * Usage:
  *   node --import tsx migrate_legacy_state.ts --project <name> [--purge]
@@ -114,7 +116,9 @@ async function main(): Promise<void> {
     await fs.rename(legacy.legacy_results_dir, path.join(run_dir, "results"));
   }
   if (legacy.legacy_aggregation_dir !== null) {
-    await fs.rename(legacy.legacy_aggregation_dir, path.join(run_dir, "aggregation"));
+    // The v4 pipeline has no aggregation cascade; legacy aggregation data is
+    // unreadable. Drop it on migration rather than carrying dead state forward.
+    await fs.rm(legacy.legacy_aggregation_dir, { recursive: true });
   }
 
   const now = new Date().toISOString();

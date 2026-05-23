@@ -1,20 +1,11 @@
 import { describe, it, expect, afterEach } from "vitest";
 import fs from "fs";
 import path from "path";
-import type { TriageState, TriageEntry, TriageEntryResult } from "./triage_state_types.js";
+import type { TriageState, TriageEntry } from "./triage_state_types.js";
+import type { TriageVerdict } from "./triage_verdict.js";
 import { merge_results } from "./merge_results.js";
 
 // ===== Test Helpers =====
-
-function build_mock_result(overrides: Partial<TriageEntryResult> = {}): TriageEntryResult {
-  return {
-    ariadne_correct: false,
-    group_id: "group-a",
-    root_cause: "missing export detection",
-    reasoning: "test reasoning",
-    ...overrides,
-  };
-}
 
 let mock_entry_index = 0;
 
@@ -36,7 +27,12 @@ function build_mock_entry(overrides: Partial<TriageEntry> = {}): TriageEntry {
       error: null,
       is_exported: true,
       access_modifier: null,
-      diagnostics: { grep_call_sites: [], grep_call_sites_unindexed_tests: [], ariadne_call_refs: [], diagnosis: "no-textual-callers" },
+      diagnostics: {
+        grep_call_sites: [],
+        grep_call_sites_unindexed_tests: [],
+        ariadne_call_refs: [],
+        diagnosis: "no-textual-callers",
+      },
       auto_classified: false,
       classifier_hints: [],
       tp_source_run_id: null,
@@ -58,6 +54,11 @@ function build_mock_state(overrides: Partial<TriageState> = {}): TriageState {
   };
 }
 
+const VALID_TP_VERDICT: TriageVerdict = {
+  kind: "tp",
+  member_evidence: { file: "src/test.ts", line: 1, why: "no callers" },
+};
+
 // ===== Tests =====
 
 describe("merge_results", () => {
@@ -77,7 +78,7 @@ describe("merge_results", () => {
     expect(merge_results(state, "/tmp/claude/nonexistent_merge_test")).toEqual(0);
   });
 
-  it("merges valid result into correct entry", () => {
+  it("flips matching entry to completed (without storing the verdict on entry.result)", () => {
     const state = build_mock_state({
       entries: [
         build_mock_entry({ entry_index: 0, status: "pending" }),
@@ -86,43 +87,30 @@ describe("merge_results", () => {
     });
 
     fs.mkdirSync(results_dir, { recursive: true });
-    const result: TriageEntryResult = {
-      ariadne_correct: true,
-      group_id: "confirmed-unreachable",
-      root_cause: "No callers found",
-      reasoning: "Grep found no call sites",
-    };
-    fs.writeFileSync(path.join(results_dir, "1.json"), JSON.stringify(result));
+    fs.writeFileSync(path.join(results_dir, "1.json"), JSON.stringify(VALID_TP_VERDICT));
 
     const merged = merge_results(state, test_dir);
 
     expect(merged).toEqual(1);
     expect(state.entries[1].status).toEqual("completed");
-    expect(state.entries[1].result).toEqual(result);
+    // Verdict lives in the result file on disk; entry.result stays null and
+    // finalize_triage re-reads from results/ at publish time.
+    expect(state.entries[1].result).toBeNull();
     expect(state.entries[0].status).toEqual("pending");
   });
 
   it("skips already-completed entries (idempotent)", () => {
-    const existing_result = build_mock_result({ group_id: "original" });
     const state = build_mock_state({
-      entries: [
-        build_mock_entry({ entry_index: 0, status: "completed", result: existing_result }),
-      ],
+      entries: [build_mock_entry({ entry_index: 0, status: "completed", result: null })],
     });
 
     fs.mkdirSync(results_dir, { recursive: true });
-    const new_result: TriageEntryResult = {
-      ariadne_correct: false,
-      group_id: "different-group",
-      root_cause: "Different cause",
-      reasoning: "Should not overwrite",
-    };
-    fs.writeFileSync(path.join(results_dir, "0.json"), JSON.stringify(new_result));
+    fs.writeFileSync(path.join(results_dir, "0.json"), JSON.stringify(VALID_TP_VERDICT));
 
     const merged = merge_results(state, test_dir);
 
     expect(merged).toEqual(0);
-    expect(state.entries[0].result).toEqual(existing_result);
+    expect(state.entries[0].status).toEqual("completed");
   });
 
   it("marks entry failed on malformed JSON", () => {
@@ -137,7 +125,25 @@ describe("merge_results", () => {
 
     expect(merged).toEqual(1);
     expect(state.entries[0].status).toEqual("failed");
-    expect(state.entries[0].error).toContain("Failed to parse result file");
+    expect(state.entries[0].error).toContain("Failed to parse verdict file");
+  });
+
+  it("marks entry failed when verdict shape is invalid (e.g. unknown kind)", () => {
+    const state = build_mock_state({
+      entries: [build_mock_entry({ entry_index: 0, status: "pending" })],
+    });
+
+    fs.mkdirSync(results_dir, { recursive: true });
+    fs.writeFileSync(
+      path.join(results_dir, "0.json"),
+      JSON.stringify({ kind: "not-a-valid-kind" }),
+    );
+
+    const merged = merge_results(state, test_dir);
+
+    expect(merged).toEqual(1);
+    expect(state.entries[0].status).toEqual("failed");
+    expect(state.entries[0].error).toContain("Failed to parse verdict file");
   });
 
   it("ignores non-numeric filenames", () => {
@@ -161,13 +167,7 @@ describe("merge_results", () => {
     });
 
     fs.mkdirSync(results_dir, { recursive: true });
-    const result: TriageEntryResult = {
-      ariadne_correct: true,
-      group_id: "confirmed-unreachable",
-      root_cause: "No callers",
-      reasoning: "Grep found nothing",
-    };
-    fs.writeFileSync(path.join(results_dir, "99.json"), JSON.stringify(result));
+    fs.writeFileSync(path.join(results_dir, "99.json"), JSON.stringify(VALID_TP_VERDICT));
 
     const merged = merge_results(state, test_dir);
 

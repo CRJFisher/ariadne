@@ -27,13 +27,14 @@ afterEach(() => {
 });
 
 const EMPTY_OUTPUT: FinalizationOutput = {
-  schema_version: 3,
+  schema_version: 4,
   project_path: "/some/path",
   commit_hash: null,
-  confirmed_unreachable: [],
-  false_positive_groups: {},
-  group_match_history: [],
+  novel_issues: [],
+  flagged_novel_verdicts: [],
   classifier_regressions: [],
+  confirmed_unreachable: [],
+  uncertain: [],
   last_updated: "2026-04-28T13:42:07.812Z",
 };
 
@@ -73,16 +74,16 @@ describe("read_triage_results", () => {
   it("returns the parsed output when the file exists", async () => {
     seed("p", "deadbee-2026-04-26T00-00-00.000Z");
     const result = await read_triage_results("p", "deadbee-2026-04-26T00-00-00.000Z");
-    expect(result.schema_version).toBe(3);
+    expect(result.schema_version).toBe(4);
   });
 
   it("throws when the file is missing", async () => {
     await expect(read_triage_results("p", "nope")).rejects.toThrow();
   });
 
-  it("rejects a legacy v2 file with an explicit schema-mismatch error", async () => {
-    const v2_file = {
-      schema_version: 2,
+  it("rejects a legacy v3 file with an explicit schema-mismatch error", async () => {
+    const v3_file = {
+      schema_version: 3,
       project_path: "/some/path",
       commit_hash: null,
       confirmed_unreachable: [],
@@ -91,7 +92,7 @@ describe("read_triage_results", () => {
     };
     const dir = path.join(ANALYSIS_OUTPUT, "p", "triage_results");
     fsSync.mkdirSync(dir, { recursive: true });
-    fsSync.writeFileSync(path.join(dir, "legacy.json"), JSON.stringify(v2_file));
-    await expect(read_triage_results("p", "legacy")).rejects.toThrow(/schema_version=2/);
+    fsSync.writeFileSync(path.join(dir, "legacy.json"), JSON.stringify(v3_file));
+    await expect(read_triage_results("p", "legacy")).rejects.toThrow(/schema_version=3/);
   });
 });
