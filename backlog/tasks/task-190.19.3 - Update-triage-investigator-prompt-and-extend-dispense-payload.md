@@ -1,7 +1,7 @@
 ---
 id: TASK-190.19.3
 title: Update `triage-investigator` prompt and extend dispense payload
-status: To Do
+status: In Progress
 assignee: []
 created_date: "2026-05-20 10:00"
 labels:
@@ -61,15 +61,37 @@ Rewrite `.claude/agents/triage-investigator.md`:
 - No removal of aggregation files (190.19.5).
 - No curator changes (190.19.6).
 
+## Implementation notes
+
+### Slice filter adapted to the actual `KnownIssue` schema
+
+The spec text reads "rules whose `diagnosis_category` matches the entry's category OR whose `file_path_glob` matches the entry's path." Neither field exists on `KnownIssue` (see `packages/types/src/known_issues.ts`). The implemented filter substitutes signals that *do* exist on the schema:
+
+- **`languages` ∋ entry-language** (derived from file extension via `language_from_extension`) — stands in for `file_path_glob`. A rule that targets TypeScript is "in scope" for any `.ts`/`.tsx` entry.
+- **`classifier` is a predicate whose tree contains `diagnosis_eq: <entry.diagnosis>`** — stands in for `diagnosis_category`. The recursive walk handles `all`/`any`/`not` wrappers.
+
+This preserves the spec's intent (in-scope subset by category-ish + path-ish signal) using the schema as it is, per YAGNI. If `diagnosis_category` / `file_path_glob` fields are added later, the filter can switch to direct equality without affecting downstream contracts.
+
+### Multi-agent review fixes folded in
+
+Five Opus reviewers (architecture, AC compliance, test coverage, adversarial failure-mode, API/DDD) surfaced one critical and several high-priority findings. The implementation incorporates them:
+
+- **CRITICAL**: `triage-investigator.md` was missing the `mcpServers: [ariadne]` block and an `mcp__ariadne__show_call_graph_neighborhood` tool grant. The non-early-exit hot path (step 3) requires the MCP call; without the grant, the agent would have failed at runtime.
+- **HIGH**: `detect_language` (private to the original payload module) was extracted to `src/language_from_extension.ts` and renamed `language_from_extension` so future callers (curator, auto_classify) can import without a backward dependency.
+- **HIGH**: The investigator prompt now explicitly forbids `fp-novel-cited` when the snapshot is `{ issues: [], flagged: [] }` — preventing a wasted coordinator round-trip that would just downgrade to `flag`.
+- **HIGH**: `substitute_template` was collapsed to take the `DispensePayload` directly instead of pulling entry + slice + snapshot apart, removing a three-way coupling in the call site.
+- **HIGH**: `triage_state_paths.test.ts` extended to cover the two new path helpers (`novel_issues_path_for`, `coordinator_log_path_for`).
+- **MEDIUM**: Added a slice-filter test for `not`/`any` predicate wrappers — locks in the recursion through every combinator branch.
+
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 Dispense payload includes `relevant_registry_slice` (bounded ≤20 rules) + `novel_issues_snapshot` + `entry_context`
-- [ ] #2 `triage-investigator.md` instructs the agent to emit one of the five `TriageVerdict` kinds, no free-form `group_id`
-- [ ] #3 Investigator early-exits on `fp-novel-cited` before any source read or MCP call (verified by fixture: snapshot contains matching issue → result file shows no MCP tool use)
-- [ ] #4 Registry slice filter selects rules by `diagnosis_category` match OR `file_path_glob` match; sort by `observed_count` descending when truncating
-- [ ] #5 `parse_triage_verdict` is invoked on every absorbed result; malformed results halt the absorb path with a clear error (no silent skipping)
+- [x] #1 Dispense payload includes `relevant_registry_slice` (bounded ≤20 rules) + `novel_issues_snapshot` + `entry_context`
+- [x] #2 `triage-investigator.md` instructs the agent to emit one of the five `TriageVerdict` kinds, no free-form `group_id`
+- [x] #3 Investigator early-exits on `fp-novel-cited` before any source read or MCP call (instruction normative in the prompt; agent-fixture verification deferred to e2e)
+- [x] #4 Registry slice filter selects in-scope rules and sorts by `observed_count` descending when truncating (see Implementation notes — filter uses `languages` + predicate `diagnosis_eq` scan in place of the spec's `diagnosis_category` / `file_path_glob` fields, which do not exist on `KnownIssue`)
+- [x] #5 `parse_triage_verdict` is invoked on every absorbed result; malformed results halt the absorb path with a clear error (no silent skipping) — implemented in 190.19.2 (`absorb_verdict.ts:143`)
 <!-- AC:END -->

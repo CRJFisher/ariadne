@@ -3,8 +3,10 @@ import fsSync from "fs";
 import path from "path";
 
 import {
+  coordinator_log_path_for,
   list_projects_with_state,
   manifest_path_for,
+  novel_issues_path_for,
   read_latest_run_id,
   results_dir_for,
   run_dir_for,
@@ -56,6 +58,12 @@ describe("path builders", () => {
     );
     expect(results_dir_for(project, run_id)).toBe(
       path.join(triage_dir, project, "runs", run_id, "results"),
+    );
+    expect(novel_issues_path_for(project, run_id)).toBe(
+      path.join(triage_dir, project, "runs", run_id, "novel_issues.json"),
+    );
+    expect(coordinator_log_path_for(project, run_id)).toBe(
+      path.join(triage_dir, project, "runs", run_id, "coordinator_log.jsonl"),
     );
   });
 });

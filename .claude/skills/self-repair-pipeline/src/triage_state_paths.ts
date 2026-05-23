@@ -22,6 +22,8 @@ export const TRIAGE_STATE_FILENAME = "triage.json";
 export const RUN_MANIFEST_FILENAME = "manifest.json";
 export const RESULTS_SUBDIR = "results";
 export const AGGREGATION_SUBDIR = "aggregation";
+export const NOVEL_ISSUES_FILENAME = "novel_issues.json";
+export const COORDINATOR_LOG_FILENAME = "coordinator_log.jsonl";
 
 // ===== Pure path builders (no I/O) =====
 
@@ -48,6 +50,16 @@ export function results_dir_for(project: string, run_id: string): string {
 /** Path to a run's aggregation/ subdir. Existence is not checked. */
 export function aggregation_dir_for(project: string, run_id: string): string {
   return path.join(run_dir_for(project, run_id), AGGREGATION_SUBDIR);
+}
+
+/** Path to a run's novel_issues.json. Existence is not checked. */
+export function novel_issues_path_for(project: string, run_id: string): string {
+  return path.join(run_dir_for(project, run_id), NOVEL_ISSUES_FILENAME);
+}
+
+/** Path to a run's coordinator_log.jsonl. Existence is not checked. */
+export function coordinator_log_path_for(project: string, run_id: string): string {
+  return path.join(run_dir_for(project, run_id), COORDINATOR_LOG_FILENAME);
 }
 
 // ===== LATEST pointer I/O =====

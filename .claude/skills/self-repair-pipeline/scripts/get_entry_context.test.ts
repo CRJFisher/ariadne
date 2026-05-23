@@ -6,14 +6,29 @@ import {
   substitute_template,
 } from "./get_entry_context.js";
 import type { TriageEntry } from "../src/triage_state_types.js";
+import type { NovelIssuesFile } from "../src/novel_issues.js";
+import type { DispensePayload } from "../src/dispense_payload.js";
 import type {
   GrepHit,
   CallRefDiagnostic,
   EntryPointDiagnostics,
   SyntacticFeatures,
   ClassifierHint,
+  KnownIssue,
 } from "@ariadnejs/types";
 import type { FilePath } from "@ariadnejs/types";
+
+const EMPTY_REGISTRY_SLICE: KnownIssue[] = [];
+const EMPTY_NOVEL_ISSUES: NovelIssuesFile = { issues: [], flagged: [] };
+
+function payload_for(entry: TriageEntry, overrides: Partial<DispensePayload> = {}): DispensePayload {
+  return {
+    entry_context: entry,
+    relevant_registry_slice: EMPTY_REGISTRY_SLICE,
+    novel_issues_snapshot: EMPTY_NOVEL_ISSUES,
+    ...overrides,
+  };
+}
 
 const BASE_SYNTACTIC_FEATURES: SyntacticFeatures = {
   is_new_expression: false,
@@ -92,6 +107,15 @@ describe("format_call_refs", () => {
 // ===== substitute_template =====
 
 describe("substitute_template", () => {
+  const mock_diagnostics: EntryPointDiagnostics = {
+    grep_call_sites: [
+      { file_path: "test/server.test.ts" as FilePath, line: 10, content: "handle_request(req)", captures: [] },
+    ],
+    grep_call_sites_unindexed_tests: [],
+    ariadne_call_refs: [],
+    diagnosis: "callers-not-in-registry",
+  };
+
   const mock_entry: TriageEntry = {
     entry_index: 5,
     name: "handle_request",
@@ -107,19 +131,10 @@ describe("substitute_template", () => {
     error: null,
     is_exported: true,
     access_modifier: null,
-    diagnostics: { grep_call_sites: [], grep_call_sites_unindexed_tests: [], ariadne_call_refs: [], diagnosis: "callers-not-in-registry" },
+    diagnostics: mock_diagnostics,
     auto_classified: false,
     classifier_hints: [],
     tp_source_run_id: null,
-  };
-
-  const mock_diagnostics: EntryPointDiagnostics = {
-    grep_call_sites: [
-      { file_path: "test/server.test.ts" as FilePath, line: 10, content: "handle_request(req)", captures: [] },
-    ],
-    grep_call_sites_unindexed_tests: [],
-    ariadne_call_refs: [],
-    diagnosis: "callers-not-in-registry",
   };
 
   it("substitutes all placeholders", () => {
@@ -134,9 +149,15 @@ describe("substitute_template", () => {
       "Output: {{output_path}}",
       "Grep: {{entry.diagnostics.grep_call_sites_formatted}}",
       "Refs: {{entry.diagnostics.ariadne_call_refs_formatted}}",
+      "Slice: {{relevant_registry_slice}}",
+      "Snapshot: {{novel_issues_snapshot}}",
     ].join("\n");
 
-    const result = substitute_template(template, mock_entry, mock_diagnostics, "/tmp/results/5.json");
+    const result = substitute_template({
+      template,
+      payload: payload_for(mock_entry),
+      output_path: "/tmp/results/5.json",
+    });
 
     expect(result).toContain("Name: handle_request");
     expect(result).toContain("Kind: function");
@@ -148,25 +169,37 @@ describe("substitute_template", () => {
     expect(result).toContain("Output: /tmp/results/5.json");
     expect(result).toContain("test/server.test.ts:10");
     expect(result).toContain("(none found)"); // ariadne_call_refs is empty
+    expect(result).toContain("Slice: []");
+    expect(result).toContain('"issues": []');
+    expect(result).toContain('"flagged": []');
   });
 
   it("handles null signature", () => {
     const entry = { ...mock_entry, signature: null };
-    const template = "Sig: {{entry.signature}}";
-    const result = substitute_template(template, entry, mock_diagnostics, "/tmp/out.json");
+    const result = substitute_template({
+      template: "Sig: {{entry.signature}}",
+      payload: payload_for(entry),
+      output_path: "/tmp/out.json",
+    });
     expect(result).toEqual("Sig: (none)");
   });
 
   it("empty classifier_hints expand to nothing", () => {
-    const template = "before{{classifier_hints}}after";
-    const result = substitute_template(template, mock_entry, mock_diagnostics, "/tmp/out.json");
+    const result = substitute_template({
+      template: "before{{classifier_hints}}after",
+      payload: payload_for(mock_entry),
+      output_path: "/tmp/out.json",
+    });
     expect(result).toEqual("beforeafter");
   });
 
   it("unknown diagnosis falls back to the generic hints title", () => {
     const entry: TriageEntry = { ...mock_entry, diagnosis: "no-textual-callers" };
-    const template = "{{diagnosis.title}}";
-    const result = substitute_template(template, entry, mock_diagnostics, "/tmp/out.json");
+    const result = substitute_template({
+      template: "{{diagnosis.title}}",
+      payload: payload_for(entry),
+      output_path: "/tmp/out.json",
+    });
     expect(result).toEqual("General Entry Point Analysis");
   });
 
@@ -184,11 +217,54 @@ describe("substitute_template", () => {
       },
     ];
     const entry: TriageEntry = { ...mock_entry, classifier_hints: hints };
-    const template = "{{classifier_hints}}";
-    const result = substitute_template(template, entry, mock_diagnostics, "/tmp/out.json");
+    const result = substitute_template({
+      template: "{{classifier_hints}}",
+      payload: payload_for(entry),
+      output_path: "/tmp/out.json",
+    });
     expect(result).toContain("### Classifier hints (sub-threshold matches)");
     expect(result).toContain("- method-chain-dispatch (confidence 0.80): receiver_kind=call_chain on the call site");
     expect(result).toContain("- constructor-new-expression (confidence 0.55): grep saw `new Name(` without a @reference.constructor capture");
+  });
+
+  it("renders relevant_registry_slice as pretty-printed JSON", () => {
+    const slice: KnownIssue[] = [
+      {
+        group_id: "demo-rule",
+        title: "Demo",
+        description: "Demo rule",
+        status: "wip",
+        languages: ["typescript"],
+        examples: [],
+        classifier: { kind: "none" },
+      },
+    ];
+    const result = substitute_template({
+      template: "{{relevant_registry_slice}}",
+      payload: payload_for(mock_entry, { relevant_registry_slice: slice }),
+      output_path: "/tmp/out.json",
+    });
+    expect(result).toEqual(JSON.stringify(slice, null, 2));
+  });
+
+  it("renders novel_issues_snapshot as pretty-printed JSON", () => {
+    const snapshot: NovelIssuesFile = {
+      issues: [
+        {
+          id: "decorator-route-registration",
+          canonical_name: "Decorator route registration",
+          root_cause: "framework registers handler via @route decorator",
+          citations: [{ entry_index: 4, evidence_excerpt: "@route('/x')" }],
+        },
+      ],
+      flagged: [],
+    };
+    const result = substitute_template({
+      template: "{{novel_issues_snapshot}}",
+      payload: payload_for(mock_entry, { novel_issues_snapshot: snapshot }),
+      output_path: "/tmp/out.json",
+    });
+    expect(result).toEqual(JSON.stringify(snapshot, null, 2));
   });
 });
 

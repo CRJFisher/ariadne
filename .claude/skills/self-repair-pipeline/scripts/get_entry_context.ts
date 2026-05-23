@@ -16,14 +16,24 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { parse_project_arg, parse_run_id_arg } from "../src/cli_args.js";
-import { require_run, results_dir_for } from "../src/triage_state_paths.js";
-import type { TriageState, TriageEntry } from "../src/triage_state_types.js";
+import {
+  novel_issues_path_for,
+  require_run,
+  results_dir_for,
+} from "../src/triage_state_paths.js";
+import type { TriageState } from "../src/triage_state_types.js";
 import type {
   GrepHit,
   CallRefDiagnostic,
-  EntryPointDiagnostics,
   ClassifierHint,
+  KnownIssuesRegistry,
 } from "@ariadnejs/types";
+import {
+  build_dispense_payload,
+  type DispensePayload,
+} from "../src/dispense_payload.js";
+import { load_registry } from "../src/known_issues_registry.js";
+import { read_novel_issues } from "../src/novel_issues.js";
 import "../src/guard_tsx_invocation.js";
 
 const USAGE = "Usage: get_entry_context.ts --project <name> --entry <index> [--run-id <id>]";
@@ -39,7 +49,6 @@ export interface DiagnosisHints {
   title: string;
   summary: string;
   investigation_guide: string;
-  classification_hint: string;
 }
 
 const GENERIC_HINTS: DiagnosisHints = {
@@ -71,12 +80,8 @@ const GENERIC_HINTS: DiagnosisHints = {
     "",
     "   - The `Pre-Gathered Evidence → Ariadne call references` block lists every call site Ariadne saw, with `resolution_count`, `resolved_to`, `call_type`, and `caller_function` — this is Ariadne's view of the callers, no live query needed",
     "",
-    "5. **Classify the entry**:",
-    "   - If no real callers exist anywhere in the codebase → `ariadne_correct: true`, `group_id: \"confirmed-unreachable\"`",
-    "   - If real callers exist that Ariadne missed → `ariadne_correct: false`, `group_id` = kebab-case detection gap",
+    "5. **Emit a verdict** using the schema in the **Output** section below: `tp` when no real callers exist, `fp-classifier-regression` when an in-scope rule's predicate should have caught the real caller, `fp-novel-cited` when the snapshot already covers it, `fp-novel-new` for a brand-new detection gap, or `uncertain` when you cannot reduce to a single kind.",
   ].join("\n"),
-  classification_hint:
-    "kebab-case detection gap (e.g., `\"dynamic-dispatch\"`, `\"callback-registration\"`, `\"framework-lifecycle\"`).",
 };
 
 const DIAGNOSIS_HINTS: Record<string, DiagnosisHints> = {
@@ -107,12 +112,8 @@ const DIAGNOSIS_HINTS: Record<string, DiagnosisHints> = {
       "",
       "   - The `Pre-Gathered Evidence → Ariadne call references` block is Ariadne's view of the callers — if it is empty for this entry, that confirms the registry gap, no live query needed",
       "",
-      "5. **Classify the entry**:",
-      "   - If real callers exist in unindexed files → `ariadne_correct: false` (Ariadne has a file coverage gap)",
-      "   - If all grep hits are false matches (comments, strings, different functions with the same name) and no other callers exist → `ariadne_correct: true`",
+      "5. **Emit a verdict** using the schema in the **Output** section below: real callers in unindexed files ⇒ `fp-novel-new` (or `fp-novel-cited` if the snapshot already names the gap, or `fp-classifier-regression` if an in-scope rule should have caught it); all grep hits false with no other callers ⇒ `tp`.",
     ].join("\n"),
-    classification_hint:
-      "kebab-case detection gap (e.g., `\"unindexed-test-files\"`, `\"cross-package-call\"`, `\"template-file-call\"`).",
   },
   "callers-in-registry-unresolved": {
     title: "Resolution Failure",
@@ -153,12 +154,8 @@ const DIAGNOSIS_HINTS: Record<string, DiagnosisHints> = {
       "   - Is this a type resolution failure (method call on an untyped or dynamically-typed receiver)?",
       "   - Is this an import resolution failure (import path not followed correctly)?",
       "",
-      "6. **Classify the entry**:",
-      "   - If real callers exist and resolution genuinely failed → `ariadne_correct: false` with a group_id describing the resolution gap",
-      "   - If the unresolved references are not actually calling this function (name collision) and no other callers exist → `ariadne_correct: true`",
+      "6. **Emit a verdict** using the schema in the **Output** section below: resolution genuinely failed ⇒ `fp-novel-new` (or `fp-novel-cited` if the snapshot already names the resolution gap, or `fp-classifier-regression` if an in-scope rule should have caught it); name collision with no other callers ⇒ `tp`.",
     ].join("\n"),
-    classification_hint:
-      "kebab-case resolution gap (e.g., `\"aliased-import-resolution\"`, `\"barrel-reexport\"`, `\"prototype-method-dispatch\"`, `\"generic-type-erasure\"`).",
   },
   "callers-in-registry-wrong-target": {
     title: "Wrong Resolution Target",
@@ -196,12 +193,8 @@ const DIAGNOSIS_HINTS: Record<string, DiagnosisHints> = {
       "",
       "   - The `Pre-Gathered Evidence → Ariadne call references` block already lists every call site Ariadne saw with its `resolved_to` targets — confirm whether those targets point at this entry or somewhere else",
       "",
-      "6. **Classify the entry**:",
-      "   - If real callers exist but resolved to wrong target → `ariadne_correct: false` with a group_id describing the mismatch",
-      "   - If the resolved targets are correct and this entry truly has no callers → `ariadne_correct: true`",
+      "6. **Emit a verdict** using the schema in the **Output** section below: real callers resolved to the wrong target ⇒ `fp-novel-new` (or `fp-novel-cited` if the snapshot already names the mismatch, or `fp-classifier-regression` if an in-scope rule should have caught it); resolved targets are correct and no other callers exist ⇒ `tp`.",
     ].join("\n"),
-    classification_hint:
-      "kebab-case mismatch type (e.g., `\"class-hierarchy-dispatch\"`, `\"interface-impl-mismatch\"`, `\"module-shadow-resolution\"`, `\"overloaded-name-collision\"`).",
   },
 };
 
@@ -265,12 +258,14 @@ export function format_classifier_hints(hints: readonly ClassifierHint[]): strin
 
 // ===== Template Substitution =====
 
-export function substitute_template(
-  template: string,
-  entry: TriageEntry,
-  diagnostics: EntryPointDiagnostics,
-  output_path: string,
-): string {
+export interface SubstituteTemplateInput {
+  template: string;
+  payload: DispensePayload;
+  output_path: string;
+}
+
+export function substitute_template(input: SubstituteTemplateInput): string {
+  const entry = input.payload.entry_context;
   const hints = DIAGNOSIS_HINTS[entry.diagnosis] ?? GENERIC_HINTS;
 
   const replacements: Record<string, string> = {
@@ -282,17 +277,30 @@ export function substitute_template(
     "{{entry.is_exported}}": String(entry.is_exported),
     "{{entry.access_modifier}}": entry.access_modifier ?? "(none)",
     "{{entry.diagnosis}}": entry.diagnosis,
-    "{{output_path}}": output_path,
-    "{{entry.diagnostics.grep_call_sites_formatted}}": format_grep_hits(diagnostics.grep_call_sites),
-    "{{entry.diagnostics.ariadne_call_refs_formatted}}": format_call_refs(diagnostics.ariadne_call_refs),
+    "{{output_path}}": input.output_path,
+    "{{entry.diagnostics.grep_call_sites_formatted}}": format_grep_hits(
+      entry.diagnostics.grep_call_sites,
+    ),
+    "{{entry.diagnostics.ariadne_call_refs_formatted}}": format_call_refs(
+      entry.diagnostics.ariadne_call_refs,
+    ),
     "{{classifier_hints}}": format_classifier_hints(entry.classifier_hints),
     "{{diagnosis.title}}": hints.title,
     "{{diagnosis.summary}}": hints.summary,
     "{{diagnosis.investigation_guide}}": hints.investigation_guide,
-    "{{diagnosis.classification_hint}}": hints.classification_hint,
+    "{{relevant_registry_slice}}": JSON.stringify(
+      input.payload.relevant_registry_slice,
+      null,
+      2,
+    ),
+    "{{novel_issues_snapshot}}": JSON.stringify(
+      input.payload.novel_issues_snapshot,
+      null,
+      2,
+    ),
   };
 
-  let result = template;
+  let result = input.template;
   for (const [placeholder, value] of Object.entries(replacements)) {
     result = result.replaceAll(placeholder, value);
   }
@@ -301,7 +309,7 @@ export function substitute_template(
 
 // ===== Main =====
 
-function main(): void {
+async function main(): Promise<void> {
   const cli = parse_args(process.argv);
   const run_id_opt = parse_run_id_arg(process.argv);
   const { run_id, state_path } = require_run(cli.project, run_id_opt);
@@ -318,17 +326,24 @@ function main(): void {
 
   const output_path = path.join(results_dir_for(cli.project, run_id), `${entry.entry_index}.json`);
 
-  const prompt = substitute_template(template, entry, entry.diagnostics, output_path);
+  const registry: KnownIssuesRegistry = load_registry();
+  const novel_issues = await read_novel_issues(novel_issues_path_for(cli.project, run_id));
+
+  const payload = build_dispense_payload({
+    entry,
+    registry,
+    novel_issues,
+  });
+
+  const prompt = substitute_template({ template, payload, output_path });
   process.stdout.write(prompt);
 }
 
 const this_file = fileURLToPath(import.meta.url);
 if (process.argv[1] && path.resolve(process.argv[1]) === this_file) {
-  try {
-    main();
-  } catch (error) {
+  main().catch((error: unknown) => {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`Error: ${message}`);
     process.exit(1);
-  }
+  });
 }
