@@ -1,7 +1,7 @@
 ---
 id: TASK-190.19.4
 title: Wire `fp-classifier-regression` flag into curator drift signal
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-05-20 10:00"
 labels:
