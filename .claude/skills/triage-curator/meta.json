@@ -43,25 +43,6 @@
       "is_primary": false
     },
     {
-      "id": "validator-redispatch",
-      "name": "Validator rejects spec → re-dispatch to investigator",
-      "representativeness": 0.10,
-      "representativeness_anchor": "self-maintenance",
-      "entry": {
-        "kind": "internal_branch",
-        "from_flow_id": "novel-to-classifier",
-        "condition": "BR3 = 'ok=false' (validate_responses.ts rejects proposed classifier spec)"
-      },
-      "exit": {
-        "kind": "store_write",
-        "target": "registry-write"
-      },
-      "phases": ["P3", "P4"],
-      "bypasses": ["P1", "P2", "P5"],
-      "diagram_anchor": "maintenance-entries",
-      "is_primary": false
-    },
-    {
       "id": "human-wip-to-permanent",
       "name": "Operator promotes wip rows to permanent",
       "representativeness": 0.10,

@@ -258,9 +258,9 @@ export interface AriadneBugTaskToCreate {
 // ===== Builtin classifier spec =====
 //
 // Emitted by the investigator when `proposed_classifier.kind === "builtin"`.
-// The main agent consumes it in Step 4.5 (via `render_classifier`) to author
-// the `.ts` source file at the pre-assigned path. The union is closed — every
-// op is enumerated in both the type and the renderer's translation table.
+// The main agent consumes it via `render_classifier` to author the `.ts`
+// source file at the pre-assigned path. The union is closed — every op is
+// enumerated in both the type and the renderer's translation table.
 
 export type SignalCheck =
   // ===== predicate-DSL-expressible ops (reusable in builtin context) =====
@@ -328,12 +328,28 @@ export interface BuiltinClassifierSpec {
   description: string;
 }
 
+/**
+ * Group member the investigator chose NOT to cover with the proposed
+ * classifier. Names the entry by its index into the source `group.entries[]`
+ * and carries the investigator's reason. A non-empty `rejected_members` is a
+ * signal that the upstream rough-aggregator over-grouped — those entries
+ * fall through to the next sweep as residuals and may be re-grouped with
+ * different neighbours.
+ */
+export interface RejectedMember {
+  /** Index into the source group's `entries[]`. */
+  entry_index: number;
+  /** Why the entry does not fit the proposed classifier. */
+  reason: string;
+}
+
 export interface InvestigateResponse {
   group_id: string;
   proposed_classifier: ClassifierSpecProposal | null;
   /**
    * Required when `proposed_classifier.kind === "builtin"`; null otherwise.
-   * The main agent renders the spec to TypeScript source in Step 4.5.
+   * The main agent renders the spec to TypeScript source via
+   * `scripts/render_classifier.ts` after the investigator returns.
    */
   classifier_spec: BuiltinClassifierSpec | null;
   /**
@@ -359,6 +375,15 @@ export interface InvestigateResponse {
    * id into the registry entry's `backlog_task` field.
    */
   ariadne_bug: AriadneBug | null;
+  /**
+   * Group members the investigator could not fit under the proposed
+   * classifier. Audit trail for "rough-aggregator over-grouped this set".
+   * Each `entry_index` must be in range for `group.entries[]`, must not
+   * appear in `classifier_spec.positive_examples`, and must be unique.
+   * Absent or empty array means the investigator vouches that every entry is
+   * covered.
+   */
+  rejected_members: RejectedMember[];
   reasoning: string;
 }
 

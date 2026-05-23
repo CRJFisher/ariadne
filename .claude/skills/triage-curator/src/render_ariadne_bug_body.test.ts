@@ -34,6 +34,7 @@ function investigate(overrides: Partial<InvestigateResponse> = {}): InvestigateR
     retargets_to: null,
     signal_library_gap: null,
     ariadne_bug: bug(),
+    rejected_members: [],
     reasoning: "Grep finds the call sites but MCP does not resolve them.",
     ...overrides,
   };

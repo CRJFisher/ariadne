@@ -10,8 +10,9 @@
  *     [--authored-files <path-to-json-map>]
  *
  * The `--authored-files` JSON is a { [group_id]: absolute_file_path } map
- * produced by Step 4.5 (main agent invokes render_classifier.ts and writes
- * the output via the Write tool). Every builtin proposal requires an entry.
+ * produced by the render step (main agent invokes render_classifier.ts and
+ * writes the output via the Write tool). Every builtin proposal requires
+ * an entry.
  */
 
 import * as fs from "node:fs/promises";
@@ -52,6 +53,10 @@ import type {
   QaResponse,
   TriageResultsFile,
 } from "../src/types.js";
+import {
+  validate_run_coherence,
+  type RunCoherenceInput,
+} from "../src/validate_investigate_responses.js";
 import "../src/require_node_import_tsx.js";
 
 interface CliArgs {
@@ -269,6 +274,27 @@ async function main(): Promise<void> {
   const qa_responses = await read_json_dir<QaResponse>(path.join(output_dir, "qa"));
   const investigate_responses = await read_json_dir<InvestigateResponse>(investigate_dir);
   const session_logs = await read_session_logs(investigate_dir);
+
+  // Cross-response coherence: two responses targeting the same classifier
+  // file would silently overwrite both the rendered `.ts` and the registry
+  // upsert. The investigator's self-validation cannot see sibling responses,
+  // so this is the one boundary check that has to run here.
+  const coherence_inputs: RunCoherenceInput[] = investigate_responses.map(
+    (parsed) => ({
+      dispatch_group_id: parsed.group_id,
+      response_path: path.join(investigate_dir, `${parsed.group_id}.json`),
+      parsed,
+    }),
+  );
+  const coherence_failures = validate_run_coherence(coherence_inputs);
+  if (coherence_failures.length > 0) {
+    process.stderr.write(
+      `finalize_run: ${coherence_failures.length} cross-response coherence violation(s); ` +
+        "refusing to apply proposals.\n" +
+        JSON.stringify(coherence_failures, null, 2) + "\n",
+    );
+    process.exit(3);
+  }
 
   const authored_files_raw = await load_authored_files_map(authored_files_path);
   const { ast_failures, passing: authored_files_by_group } =

@@ -29,7 +29,6 @@ import {
 import { parse_known_issues_registry_json } from "@ariadnejs/types";
 import { scan_runs } from "../src/scan_runs.js";
 import type {
-  KnownIssue,
   ScanOptions,
   ScanResultItem,
   TriageResultsFile,
@@ -87,7 +86,6 @@ interface RunDispatch {
   run_path: string;
   qa_groups: DispatchGroup[];
   investigate_groups: DispatchGroup[];
-  validate_cmd: string;
   finalize_cmd: string;
 }
 
@@ -105,7 +103,6 @@ async function plan_for_run(
 
   const qa_script = path.join(scripts_rel, "get_qa_context.ts");
   const inv_script = path.join(scripts_rel, "get_investigate_context.ts");
-  const validate_script = path.join(scripts_rel, "validate_responses.ts");
   const finalize_script = path.join(scripts_rel, "finalize_run.ts");
   const run_rel = path.relative(repo_root, item.run_path);
 
@@ -130,7 +127,6 @@ async function plan_for_run(
     }
   }
 
-  const validate_cmd = `node --import tsx ${validate_script} --run ${run_rel}`;
   const finalize_cmd =
     `node --import tsx ${finalize_script} --run ${run_rel}` + (dry_run ? " --dry-run" : "");
 
@@ -140,7 +136,6 @@ async function plan_for_run(
     run_path: item.run_path,
     qa_groups,
     investigate_groups,
-    validate_cmd,
     finalize_cmd,
   };
 }

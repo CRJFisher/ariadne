@@ -25,8 +25,8 @@ export interface SessionLogParseError {
 
 /**
  * Shape + invariant check for investigator-written session logs. This is the
- * LLM boundary — the sub-agent writes the JSON; the validator (step 4.25) runs
- * this before finalize touches the file. Finalize trusts shape after validation.
+ * LLM boundary — the sub-agent writes the JSON and the per-response validator
+ * runs this inside its iterate loop. Finalize trusts shape after validation.
  *
  * Required field invariants:
  *   status="failure"  → failure_category + failure_details non-null

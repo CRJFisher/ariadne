@@ -91,6 +91,7 @@ function builtin_inv(
     retargets_to: null,
     signal_library_gap: null,
     ariadne_bug: null,
+    rejected_members: [],
     reasoning: "",
     ...overrides,
   };
@@ -499,6 +500,7 @@ describe("apply_proposals", () => {
           description: "",
         },
         ariadne_bug: null,
+        rejected_members: [],
         reasoning: "",
       },
       {
@@ -512,6 +514,7 @@ describe("apply_proposals", () => {
           description: "",
         },
         ariadne_bug: null,
+        rejected_members: [],
         reasoning: "",
       },
     ];

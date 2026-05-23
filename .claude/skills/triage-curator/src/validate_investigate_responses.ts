@@ -1,18 +1,24 @@
 /**
- * Step 4.25 validation — runs over every investigator response AFTER Task()
- * dispatch and BEFORE Step 4.5 authoring. Boundary check on LLM-produced JSON:
+ * Pure validation of investigator-authored JSON responses. The
+ * `triage-curator-investigator` sub-agent calls
+ * `scripts/validate_responses.ts` against each draft inside its
+ * propose → validate → iterate loop; `finalize_run.ts` calls
+ * `validate_run_coherence` once per run before applying any registry
+ * mutation. Boundary check on LLM-produced JSON:
  *
  *   - Unknown SignalCheck ops (renderer would die mid-render)
  *   - `response.group_id` rename without an explicit retarget declaration
  *   - `retargets_to` pointing at a non-existent registry entry
  *   - Retarget responses carrying `positive_examples` that index the wrong group
  *   - `positive_examples` / `negative_examples` out-of-range vs source group
+ *   - `rejected_members` indices out-of-range, overlapping positive examples,
+ *     or duplicated
  *   - `kind: "none"` proposals with no missing-signal claim and no session-log
  *     failure category (silent dead-end)
- *   - Two responses targeting the same classifier file (silent overwrite)
+ *   - Two responses targeting the same classifier file (silent overwrite —
+ *     enforced at finalize time, not by the per-response validator)
  *
- * The module is pure and test-focused: no I/O. The companion script
- * `scripts/validate_responses.ts` handles file-system loading.
+ * No I/O lives here. File-system loading is in `scripts/validate_responses.ts`.
  */
 
 import { validate_spec_example_indexes } from "./apply_proposals.js";
@@ -26,6 +32,7 @@ import type {
   InvestigateResponse,
   InvestigatorSessionLog,
   KnownIssue,
+  RejectedMember,
   SignalCheck,
 } from "./types.js";
 import { ARIADNE_ROOT_CAUSE_CATEGORIES, SIGNAL_CHECK_OPS } from "./types.js";
@@ -40,7 +47,10 @@ export type ValidationIssueCode =
   | "example_index_out_of_range"
   | "kind_none_no_signals_no_failure"
   | "missing_ariadne_bug"
-  | "target_conflict";
+  | "target_conflict"
+  | "rejected_member_index_out_of_range"
+  | "rejected_member_overlaps_positive_example"
+  | "rejected_member_duplicate_index";
 
 export interface ValidationIssue {
   group_id: string;
@@ -165,6 +175,59 @@ export function validate_response(inp: ValidationInput): ValidationIssue[] {
     });
   }
 
+  issues.push(...validate_rejected_members(parsed, inp));
+
+  return issues;
+}
+
+function validate_rejected_members(
+  parsed: InvestigateResponse,
+  inp: ValidationInput,
+): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  if (parsed.rejected_members.length === 0) return issues;
+
+  const positives = new Set(parsed.classifier_spec?.positive_examples ?? []);
+  const seen = new Set<number>();
+  const group_size = inp.source_group?.entries.length ?? null;
+
+  for (const [idx, rejected] of parsed.rejected_members.entries()) {
+    if (group_size !== null && rejected.entry_index >= group_size) {
+      issues.push({
+        group_id: inp.dispatch_group_id,
+        response_path: inp.response_path,
+        code: "rejected_member_index_out_of_range",
+        message:
+          `rejected_members[${idx}].entry_index=${rejected.entry_index} ` +
+          `is out of range for source group (group has ${group_size} entries).`,
+      });
+      continue;
+    }
+    if (positives.has(rejected.entry_index)) {
+      issues.push({
+        group_id: inp.dispatch_group_id,
+        response_path: inp.response_path,
+        code: "rejected_member_overlaps_positive_example",
+        message:
+          `rejected_members[${idx}].entry_index=${rejected.entry_index} also appears in ` +
+          "classifier_spec.positive_examples — an entry cannot be both rejected and a " +
+          "positive example. Either drop it from rejected_members (the classifier covers it) " +
+          "or remove it from positive_examples (the classifier does not cover it).",
+      });
+    }
+    if (seen.has(rejected.entry_index)) {
+      issues.push({
+        group_id: inp.dispatch_group_id,
+        response_path: inp.response_path,
+        code: "rejected_member_duplicate_index",
+        message:
+          `rejected_members[${idx}].entry_index=${rejected.entry_index} is a duplicate ` +
+          "entry index within rejected_members. Each rejected entry must appear at most once.",
+      });
+    }
+    seen.add(rejected.entry_index);
+  }
+
   return issues;
 }
 
@@ -275,6 +338,9 @@ export function parse_response_shape(raw: unknown): InvestigateResponse | ShapeE
   const spec_result = parse_classifier_spec(obj.classifier_spec, classifier_result.value);
   if ("error" in spec_result) return spec_result;
 
+  const rejected_result = parse_rejected_members(obj.rejected_members);
+  if ("error" in rejected_result) return rejected_result;
+
   return {
     group_id: obj.group_id,
     proposed_classifier: classifier_result.value,
@@ -282,8 +348,39 @@ export function parse_response_shape(raw: unknown): InvestigateResponse | ShapeE
     retargets_to,
     signal_library_gap: gap_result.value,
     ariadne_bug: bug_result.value,
+    rejected_members: rejected_result.value,
     reasoning: obj.reasoning,
   };
+}
+
+function parse_rejected_members(
+  raw: unknown,
+): { value: RejectedMember[] } | ShapeError {
+  if (raw === undefined || raw === null) return { value: [] };
+  if (!Array.isArray(raw)) {
+    return { error: "rejected_members must be an array (or omitted)" };
+  }
+  const out: RejectedMember[] = [];
+  for (const [idx, item] of raw.entries()) {
+    if (typeof item !== "object" || item === null) {
+      return { error: `rejected_members[${idx}] must be an object` };
+    }
+    const member = item as Record<string, unknown>;
+    if (
+      typeof member.entry_index !== "number" ||
+      !Number.isInteger(member.entry_index) ||
+      member.entry_index < 0
+    ) {
+      return {
+        error: `rejected_members[${idx}].entry_index must be a non-negative integer`,
+      };
+    }
+    if (typeof member.reason !== "string" || member.reason.length === 0) {
+      return { error: `rejected_members[${idx}].reason must be a non-empty string` };
+    }
+    out.push({ entry_index: member.entry_index, reason: member.reason });
+  }
+  return { value: out };
 }
 
 function parse_classifier_proposal(

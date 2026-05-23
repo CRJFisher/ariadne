@@ -36,7 +36,7 @@ flowchart LR
 
 **Where this lands**: three skills in a row (sense → classify → actuate); the curator's **primary trigger** is a residual group from the latest `triage_results`, and its primary outputs (wip row + classifier source + backlog task) are exactly what `fix-sequencer` reads on the next run; one durable surface (`registry.json`) sits below the chain and anchors the loop-closure red dotted edge that fires on the _next_ SRP invocation. Internals deferred to the per-step diagram below — the QA-of-classified-groups flow is a maintenance sibling diagrammed in its own H2.
 
-**Primary trigger**: a residual group in a freshly published `triage_results/<run-id>.json` that has no matching registry entry; this diagram traces that flow from entry through to the `wip` row in `registry.json`, the `check_<id>.ts` written to core builtins, and the backlog task filed for the underlying signal/bug. Maintenance flows live below.
+**Primary trigger**: a residual group in a freshly published `triage_results/<run-id>.json` that has no matching registry entry; this diagram traces that flow from entry through to the `wip` row in `registry.json`, the `check_<id>.ts` written to core builtins, and the backlog task filed for the underlying signal/bug. Validation is folded into the investigator's own propose → validate → iterate loop; there is no separate post-investigation validation phase. Maintenance flows live below.
 
 ```mermaid
 flowchart TD
@@ -60,26 +60,23 @@ flowchart TD
     MX(["see Maintenance flow:<br/>QA classified groups"]):::inter
   end
 
-  subgraph P3["Phase 3 · Investigate residual (puller loop · ≤5 concurrent)"]
+  subgraph P3["Phase 3 · Investigate residual (puller loop · ≤5 concurrent · self-validating)"]
     direction TB
     DLIST[/"dispatch list<br/>residual + promoted entries"/]:::artifact
     PULL("next_investigate_tasks.ts<br/>puller · drift-priority sort"):::step
-    AG_INV[["triage-curator-investigator<br/>opus · 200t · residual | promoted"]]:::agent
-    INV_OUT[/"investigate/&lt;gid&gt;.json<br/>proposed_classifier · signal_gap · ariadne_bug"/]:::artifact
+    AG_INV[["triage-curator-investigator<br/>opus · 200t · residual | promoted<br/>propose → validate → iterate"]]:::agent
+    INV_OUT[/"investigate/&lt;gid&gt;.json<br/>proposed_classifier · signal_gap · ariadne_bug<br/>· rejected_members"/]:::artifact
   end
 
-  subgraph P4["Phase 4 · Validate + render classifier"]
+  subgraph P4["Phase 4 · Render classifier source"]
     direction TB
-    VAL("validate_responses.ts"):::step
-    BR3{validation.ok?}:::branch
-    MX2(["see Maintenance entries:<br/>validator re-dispatch"]):::inter
     REND("render_classifier.ts<br/>spec → check_&lt;id&gt;.ts"):::step
     AUTH[/"authored-files.json<br/>{ gid → check_*.ts path }"/]:::artifact
   end
 
   subgraph P5["Phase 5 · Finalize + ship"]
     direction TB
-    FIN("finalize_run.ts<br/>apply_proposals · sync_permanent_rules"):::step
+    FIN("finalize_run.ts<br/>validate_run_coherence · apply_proposals<br/>· AST-parse · sync_permanent_rules"):::step
     SENT[/"finalized.json (sentinel)"/]:::artifact
     BLOG("backlog flight<br/>task_create + link_ariadne_bug_tasks"):::step
     COMM("git commit<br/>AskUserQuestion · current/new/pr/skip"):::step
@@ -100,13 +97,11 @@ flowchart TD
   REG_R -. read · investigator context .-> AG_INV
   DLIST --> PULL
   PULL -- "pending ≤ 5" --> AG_INV
+  AG_INV -- "validate · iterate" --> AG_INV
   AG_INV --> INV_OUT
   INV_OUT -. "remaining &gt; 0 · re-pull" .-> PULL
 
-  INV_OUT --> VAL
-  VAL --> BR3
-  BR3 -- "ok=false" --> MX2
-  BR3 -- "ok=true" --> REND
+  INV_OUT --> REND
   REND --> AUTH
   REND --> CORE
   AUTH --> FIN
@@ -127,11 +122,11 @@ flowchart TD
   linkStyle default stroke:#cbd5e1,stroke-width:1.5px
 ```
 
-**What to look for**: residual groups (the `no` arm of `BR1`) thread Phases 3 → 4 → 5 into a new `check_<id>.ts`, a `wip` row, and a backlog task; four phase bands stacked top-to-bottom (Phase 2's QA loop is omitted — see [_Maintenance flow_](#maintenance-flow-qa-of-already-classified-groups) below); two read-only inputs (`triage_results` + `registry.json`) sit on the left rail and only feed the steps that touch them; one sub-agent on the primary path (`triage-curator-investigator`, opus, ≤5 concurrent); one contained back-edge inside Phase 3 (`INV_OUT → PULL`, puller re-pull); two branch decisions gate the forward flow (`has registry entry?` with `yes` stubbed to the maintenance flow, and `validation.ok?` with `false` stubbed to a maintenance entry). The bottom-row stores make the curator's write surface explicit: it is the **single autonomous writer of `wip` rows** — `permanent` (human-edited, via `find-promotion-candidates`) and `fixed` (`fix-sequencer` reconciler) are owned by other writers. Maintenance flows (`QA of already-classified groups` below) and self-triage entries (`validator re-dispatch`; `wip → permanent` human promotion) are noted separately so the primary stays a clean top-down flow.
+**What to look for**: residual groups (the "no · residual" arm of the registry-hit branch in Phase 1) thread Phases 3 → 4 → 5 into a new `check_<id>.ts`, a `wip` row, and a backlog task; four phase bands stacked top-to-bottom (Phase 2's QA loop is omitted — see [_Maintenance flow_](#maintenance-flow-qa-of-already-classified-groups) below); two read-only inputs (`triage_results` + `registry.json`) sit above the phase bands and only feed the steps that touch them; one sub-agent on the primary path (`triage-curator-investigator`, opus, ≤5 concurrent) which owns its own propose → validate → iterate loop (the self-edge on `AG_INV`); one contained back-edge inside Phase 3 (the puller re-pull when investigation output remains); one branch decision gates the forward flow ("has registry entry?" in Phase 1, with the "yes" arm stubbed to the maintenance flow). Cross-response coherence (two responses targeting the same classifier file) is enforced once at the top of Phase 5 by `finalize_run.ts` before any registry mutation; the per-response validator inside Phase 3 cannot see sibling responses. The `rejected_members` field on `INV_OUT` is the investigator's audit trail for entries the chosen classifier cannot cover — a non-empty list signals that the upstream rough-aggregator over-grouped, and those entries naturally re-surface as residuals on the next sweep. The bottom-row stores make the curator's write surface explicit: it is the **single autonomous writer of `wip` rows** — `permanent` (human-edited, via `find-promotion-candidates`) and `fixed` (`fix-sequencer` reconciler) are owned by other writers. Maintenance flow ("QA of already-classified groups" below) and `wip → permanent` human promotion are noted separately so the primary stays a clean top-down flow.
 
 ## Maintenance flow: QA of already-classified groups
 
-Maintenance flow: drift detection over groups that already match a registry entry. Fires when `curate_all.ts` finds entries whose `gid` already has a classifier hit — the `yes · classified` arm of `BR1` in the primary diagram. Reuses Phase 1 (`S1`, `BR1`), Phase 3's dispatch list (`DLIST`), and Phase 5's finalize step (`FIN`) from the primary diagram (not redrawn). The surface this flow exposes that the primary does not is the `triage-curator-qa` sub-agent and its drift signal — outliers above threshold are _promoted back_ into the investigator queue; everything below threshold short-circuits to finalize with a `drift_detected` tag.
+Maintenance flow: drift detection over groups that already match a registry entry. Fires when `curate_all.ts` finds entries whose `gid` already has a classifier hit — the "yes · classified" arm of the registry-hit branch in the primary flow's Phase 1. Reuses Phase 1's partition step and branch, Phase 3's dispatch list, and Phase 5's finalize step from the primary diagram (not redrawn). The surface this flow exposes that the primary does not is the `triage-curator-qa` sub-agent and its drift signal — outliers above threshold are _promoted back_ into the investigator queue; everything below threshold short-circuits to finalize with a `drift_detected` tag.
 
 ```mermaid
 flowchart TD
@@ -144,7 +139,7 @@ flowchart TD
   TR_M[/"triage_results entries<br/>with registry hit"/]:::ext
   REG_R_M[("registry.json<br/><i>read-only · QA context</i>")]:::ext
 
-  BR1_yes(["BR1 yes-arm<br/>(in primary diagram)"]):::inter
+  BR1_yes(["registry-hit branch · yes arm<br/>(Phase 1 of primary flow)"]):::inter
 
   subgraph P2["Phase 2 · QA classified groups (parallel)"]
     direction TB
@@ -153,8 +148,8 @@ flowchart TD
     BR2{QA outlier rate?}:::branch
   end
 
-  DLIST_P(["DLIST in primary diagram<br/>(promoted entries join residuals)"]):::inter
-  FIN_P(["FIN in primary diagram<br/>(drift_detected tag on existing wip row)"]):::inter
+  DLIST_P(["dispatch list in primary flow<br/>(promoted entries join residuals)"]):::inter
+  FIN_P(["finalize step in primary flow<br/>(writes drift_detected tag)"]):::inter
 
   TR_M --> BR1_yes
   BR1_yes -- "yes · classified" --> AG_QA
@@ -167,34 +162,9 @@ flowchart TD
   linkStyle default stroke:#cbd5e1,stroke-width:1.5px
 ```
 
-**What to look for (maintenance)**: classified groups (the `yes` arm of `BR1` in the primary) get parallel QA from `triage-curator-qa` (sonnet, 50t, per group); the lone branch decision is `QA outlier rate?` with two labelled exits — outliers above threshold re-enter the primary diagram at `DLIST` (promoting the group back into investigation as if it were residual); everything below threshold re-enters the primary diagram at `FIN` with a `drift_detected` tag on the existing `wip` row. This flow never authors a new classifier; it only mutates `drift_detected` and `observed_count` on rows the primary flow already wrote. Re-enters the primary diagram at `DLIST` (Phase 3) and `FIN` (Phase 5).
+**What to look for (maintenance)**: classified groups (the "yes" arm of the registry-hit branch in the primary's Phase 1) get parallel QA from `triage-curator-qa` (sonnet, 50t, per group); the lone branch decision is "QA outlier rate?" with two labelled exits — outliers above threshold re-enter the primary diagram at its dispatch list in Phase 3 (promoting the group back into investigation as if it were residual); everything below threshold re-enters the primary diagram at its finalize step in Phase 5 with a `drift_detected` tag on the existing `wip` row. This flow never authors a new classifier; it only mutates `drift_detected` and `observed_count` on rows the primary flow already wrote. Re-enters the primary diagram at the dispatch list (Phase 3) and the finalize step (Phase 5).
 
 ## Maintenance entries
-
-Self-triage loops factored out of the primary diagram because their back-edges would otherwise flatten the primary's vertical layout (see [skill-diagrammer · anatomy.md → Layout pitfalls](../../../../.claude/skills/skill-diagrammer/anatomy.md#layout-pitfalls)).
-
-### Validator re-dispatch
-
-Maintenance entry: when `validate_responses.ts` rejects an investigator's proposed classifier spec (the `BR3 = ok=false` arm in the primary, stubbed via `MX2`), the gid plus per-error feedback notes are appended back to the dispatch list; the puller picks the gid up again and re-runs `triage-curator-investigator` with the failure feedback in context. The loop continues until validation passes (control re-enters the primary flow at `BR3 = ok=true → REND`) or the puller hits a retry limit.
-
-```mermaid
-flowchart TD
-  classDef artifact   fill:#e8f5e9,stroke:#2e7d32,stroke-width:1.2px,color:#1b5e20
-  classDef inter      fill:#f5f5f5,stroke:#616161,stroke-width:1px,color:#212121,stroke-dasharray:3 3
-
-  BR3_P(["BR3 ok=false<br/>(in primary diagram, Phase 4)"]):::inter
-  FAIL[/"validation failure feedback<br/>{ gid → error notes }"/]:::artifact
-  DLIST_P(["DLIST in primary diagram<br/>(Phase 3 — re-queued for puller)"]):::inter
-  AG_INV_P(["AG_INV in primary diagram<br/>(re-runs investigator with feedback)"]):::inter
-
-  BR3_P --> FAIL
-  FAIL --> DLIST_P
-  DLIST_P --> AG_INV_P
-
-  linkStyle default stroke:#cbd5e1,stroke-width:1.5px
-```
-
-**What to look for (maintenance entry)**: three anchor `inter` nodes (`BR3`, `DLIST`, `AG_INV`) match the primary diagram by Mermaid ID — the loop closes through them. One new artifact (`validation failure feedback`) is unique to this entry and is not present in the primary. Re-enters the primary diagram at `DLIST` (Phase 3) on the failure arm, and rejoins the primary's `BR3 → REND` arm only after validation eventually passes.
 
 ### `wip → permanent` human promotion
 

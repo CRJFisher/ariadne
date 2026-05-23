@@ -20,16 +20,15 @@ or `npx tsx`.
 
 ## Pipeline Overview
 
-| #   | Step          | Actor                                                          | Output                                                       |
-| --- | ------------- | -------------------------------------------------------------- | ------------------------------------------------------------ |
-| 1   | Plan          | `scripts/curate_all.ts`                                        | List of runs with QA + residual-investigate dispatches       |
-| 2   | QA            | `triage-curator-qa` (sonnet, 50 turns)                         | One `QaResponse` per auto-classified group                   |
-| 3   | Investigate   | `triage-curator-investigator` (opus, 200 turns, ≤5 concurrent) | One `InvestigateResponse` + `<id>.session.json` per dispatch |
-| 3.5 | Validate      | `scripts/validate_responses.ts`                                | `<run>/validation.json`; non-zero exit on any issue          |
-| 4   | Author source | Main agent + `scripts/render_classifier.ts`                    | One `check_<target>.ts` per builtin proposal                 |
-| 5   | Finalize      | `scripts/finalize_run.ts`                                      | Apply proposals, write `finalized.json`, print summary       |
-| 6   | Backlog       | `mcp__backlog__task_create` + `link_ariadne_bug_tasks`         | Gap sub-tasks under `TASK-190.16`; bug tasks + registry link |
-| 7   | Commit        | `git` / `gh` via `AskUserQuestion`                             | Committed sweep on current branch, a new branch, or a PR     |
+| #   | Step          | Actor                                                          | Output                                                                                                                                                  |
+| --- | ------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Plan          | `scripts/curate_all.ts`                                        | List of runs with QA + residual-investigate dispatches                                                                                                  |
+| 2   | QA            | `triage-curator-qa` (sonnet, 50 turns)                         | One `QaResponse` per auto-classified group                                                                                                              |
+| 3   | Investigate   | `triage-curator-investigator` (opus, 200 turns, ≤5 concurrent) | One validated `InvestigateResponse` + `<id>.session.json` per dispatch. The investigator self-validates via `scripts/validate_responses.ts --response`. |
+| 4   | Author source | Main agent + `scripts/render_classifier.ts`                    | One `check_<target>.ts` per builtin proposal                                                                                                            |
+| 5   | Finalize      | `scripts/finalize_run.ts`                                      | Apply proposals, write `finalized.json`, print summary                                                                                                  |
+| 6   | Backlog       | `mcp__backlog__task_create` + `link_ariadne_bug_tasks`         | Gap sub-tasks under `TASK-190.16`; bug tasks + registry link                                                                                            |
+| 7   | Commit        | `git` / `gh` via `AskUserQuestion`                             | Committed sweep on current branch, a new branch, or a PR                                                                                                |
 
 ## Arguments
 
@@ -57,9 +56,8 @@ node --import tsx .claude/skills/triage-curator/scripts/curate_all.ts <FORWARDED
 ```
 
 Capture the printed JSON as `PLAN`. It holds `runs[]`, each with
-`run_path`, `qa_groups[]`, `investigate_groups[]`, `validate_cmd`, and
-`finalize_cmd`. Each dispatch carries a `get_context_cmd` and
-pre-allocated `output_path`.
+`run_path`, `qa_groups[]`, `investigate_groups[]`, and `finalize_cmd`.
+Each dispatch carries a `get_context_cmd` and pre-allocated `output_path`.
 
 ### Step 2 — Dispatch the QA wave
 
@@ -115,48 +113,29 @@ For each entry in `pending[]`, fire one `Task(triage-curator-investigator)`
 in a single message so the wave runs in parallel:
 
 > Investigate group `<group_id>` in run `<run_path>`. Hydrate with the
-> command in `<get_context_cmd>`. Write the `InvestigateResponse` JSON to
-> `<output_path>` and the session log to the sibling `<group_id>.session.json`.
-> For any `kind: "builtin"` proposal, populate `classifier_spec` as
-> structured data — never TypeScript. Return nothing inline.
+> command in `<get_context_cmd>`. Run the validator
+> (`scripts/validate_responses.ts --response <output_path> --run <run_path>`)
+> against your draft until it returns clean before writing the final
+> `InvestigateResponse` JSON to `<output_path>` and the session log to the
+> sibling `<group_id>.session.json`. Members the classifier cannot fit go
+> into `rejected_members` rather than weakening the spec. For any `kind:
+"builtin"` proposal, populate `classifier_spec` as structured data — never
+> TypeScript. Return nothing inline.
 
 Wait for every `Task()` in the wave to return before calling the puller
 again. Exit the loop when `pending[]` is empty.
 
-### Step 3.5 — Validate investigator responses
-
-Every response must pass the validator before anything is rendered. Use
-each run's `validate_cmd` from `PLAN`:
-
-```bash
-node --import tsx .claude/skills/triage-curator/scripts/validate_responses.ts --run <run_path>
-```
-
-The validator walks `<run>/investigate/`, parses each response against
-the shape schema, and checks:
-
-- Unknown SignalCheck ops, malformed proposal shape.
-- `response.group_id` matches the dispatch id derived from the filename.
-- `retargets_to`, when set, names an existing registry entry.
-- When retargeting, `positive_examples` and `negative_examples` are empty.
-- `positive_examples` / `negative_examples` indices are in-range.
-- `kind: "none"` carries either `signal_library_gap` or a session log
-  with `failure_category` set (no silent dead-ends).
-- Every working classifier (`kind: "builtin"`) carries an `ariadne_bug`
-  (root-cause fix task — new task body or `existing_task_id` attached).
-- No two responses target the same classifier file.
-
-Output: `<run>/validation.json` with `{ ok: boolean, issues: [...] }`.
-Non-zero exit when any issue is present.
-
-When `ok === false`, halt. Read each issue, decide which investigators
-to re-dispatch with corrections, re-run those `Task()` calls, then
-re-invoke the validator.
+Each investigator self-validates inside its own loop using
+`scripts/validate_responses.ts --response <path> --run <run_path>`.
+Cross-response coherence (two responses targeting the same classifier
+file) is enforced inside `finalize_run.ts` before any registry mutation.
 
 ### Step 4 — Author builtin classifier source
 
-For every validated investigate response with a non-null `classifier_spec`,
-render it to TypeScript. The renderer derives the filename from
+For every investigate response with a non-null `classifier_spec`, render
+it to TypeScript. (The investigator self-validates each response before
+returning, so anything that lands here has already passed the structural
+checks.) The renderer derives the filename from
 `response.retargets_to ?? response.group_id`, so the main agent does not
 compose paths by hand:
 

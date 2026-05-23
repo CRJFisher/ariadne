@@ -158,7 +158,7 @@ export interface ApplyOptions {
   run_id: string;
   /**
    * Map of `retargets_to ?? group_id` → absolute path to the authored
-   * `check_<id>.ts` file written in Step 4.5 by the main agent.
+   * `check_<id>.ts` file rendered by the main agent before finalize runs.
    */
   authored_files_by_group: Record<string, string>;
   /**
@@ -206,8 +206,8 @@ export interface ApplyResult {
  * Apply curator proposals. In `dry_run` mode no registry mutation is written;
  * the returned `ApplyResult` describes what *would* have happened.
  *
- * Source authoring (`check_<id>.ts`) happens in Step 4.5 before this call.
- * Backlog task creation happens in the main agent via MCP after this call.
+ * Source authoring (`check_<id>.ts`) happens in the render step before this
+ * call. Backlog task creation happens in the main agent via MCP after.
  */
 export async function apply_proposals(
   qa: QaResponse[],

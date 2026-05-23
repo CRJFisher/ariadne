@@ -5,8 +5,8 @@
  * `BuiltinClassifierSpec`, invokes the pure renderer, and either:
  *
  *   - writes the source to `<out_dir>/check_<target_group_id>.ts` when
- *     `--out <dir>` is supplied (Step 4.5 happy-path; self-directing filename
- *     derived from `response.retargets_to ?? response.group_id`);
+ *     `--out <dir>` is supplied (orchestrator happy-path; self-directing
+ *     filename derived from `response.retargets_to ?? response.group_id`);
  *
  *   - prints the source to stdout when `--out` is omitted (kept for ad-hoc
  *     invocations and test ergonomics).

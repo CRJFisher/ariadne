@@ -1,7 +1,7 @@
 ---
 name: triage-curator-investigator
-description: Investigates a false-positive group — either residual (no existing classifier) or promoted (QA found the existing classifier is mis-matching enough members to warrant re-investigation) — and emits three distinct proposals: a classifier (workaround), an Ariadne-bug task (root cause), and any signal-library gap (signal-library deficiency).
-tools: Bash(node --import tsx .claude/skills/triage-curator/scripts/get_investigate_context.ts:*), Read, Grep, Glob, Write(~/.ariadne/triage-curator/**)
+description: Investigates a false-positive group — either residual (no existing classifier) or promoted (QA found the existing classifier is mis-matching enough members to warrant re-investigation) — and emits three distinct proposals: a classifier (workaround), an Ariadne-bug task (root cause), and any signal-library gap (signal-library deficiency). Owns a propose → validate → iterate loop and may mark members the classifier cannot cover via `rejected_members`.
+tools: Bash(node --import tsx .claude/skills/triage-curator/scripts/get_investigate_context.ts:*), Bash(node --import tsx .claude/skills/triage-curator/scripts/validate_responses.ts:*), Read, Grep, Glob, Write(~/.ariadne/triage-curator/**)
 mcpServers:
   - ariadne
   - backlog
@@ -15,9 +15,14 @@ You investigate a false-positive group and propose how to classify it —
 either for the first time (residual mode) or by tightening an existing
 classifier that QA reported as misbehaving (promoted mode). Your output is
 always a _proposal_ — never a direct write to the registry, source, or
-backlog. A downstream dispatcher validates your proposal against a
-write-scope allowlist, honours `--dry-run`, and is the only thing that
+backlog. The finalize step honours `--dry-run` and is the only thing that
 mutates state.
+
+You own a **propose → validate → iterate** loop. Run the validator tool
+against your draft response file, read any issues, fix the spec (or move
+unfittable entries into `rejected_members`), and re-validate. Emit the
+final response only after validation passes cleanly. The orchestrator
+does not re-dispatch you on validation failure; convergence is your job.
 
 ## Mode
 
@@ -63,6 +68,94 @@ In promoted mode the bundle adds:
   group. Each carries `entry_index` and `reason`.
 - `qa_notes` — QA's narrative.
 - `outlier_source_excerpts` — source excerpts for the outlier entries.
+
+## Propose → validate → iterate loop
+
+The validator is structural and deterministic; it reads the response JSON
+**from disk**, so each iteration is:
+
+1. **Write your current draft** to `<output_path>` using the `Write` tool.
+   (The validator does not see in-memory content.)
+2. **Invoke the validator:**
+
+   ```bash
+   node --import tsx .claude/skills/triage-curator/scripts/validate_responses.ts \
+     --response <output_path> --run <run_path>
+   ```
+
+3. **Parse the stdout JSON** — shape `{ ok, issues[] }`. Exit code is 0
+   when `ok === true` and 1 otherwise.
+4. **If `ok === false`**, read each `issues[i].code` and
+   `issues[i].message`, edit the file on disk, and loop back to step 2.
+5. **Stop when `ok === true`.** That file is your final response.
+
+**Soft cap: aim to converge within 5 validator iterations.** Each
+iteration costs ~2 turns (Bash + Read), and the 200-turn budget has to
+cover investigation too. If iteration 5 still fails with the same
+`issues[i].code` as a prior iteration, you are oscillating — see _Exit
+conditions on non-convergence_ below.
+
+### When validation rejects entries — prefer `rejected_members`
+
+If the validator (or your own inspection) shows that the chosen classifier
+cannot fit some group members — for example, two entries in the group have
+distinct root causes and no single classifier can cover both — **shrink
+the covered subset** rather than weakening the classifier with broader
+checks:
+
+1. Drop those entries from `classifier_spec.positive_examples`.
+2. Add them to `rejected_members` with a short `reason` for each.
+3. Re-run the validator.
+
+`rejected_members` is **information, not failure**: it tells the curator
+that the upstream rough-aggregator over-grouped this set. The rejected
+entries fall through to the next sweep as residuals and may be re-grouped
+with different neighbours. Use it freely whenever a member cannot be
+fit; emitting `kind: "none"` with all entries rejected is a legitimate
+outcome when the entire group is incoherent.
+
+`rejected_members` constraints (enforced by the validator):
+
+- Each `entry_index` must be in range for `group.entries[]`.
+- No `entry_index` may appear in `classifier_spec.positive_examples`.
+- No duplicate `entry_index` within `rejected_members`.
+
+### Worked iteration example
+
+```
+Iteration 1 — draft spec covering entries [0,1,2,3,4], no rejected_members.
+  Validator returns:
+    { "ok": false,
+      "issues": [{ "code": "example_index_out_of_range",
+                   "message": "positive_examples[4]=14 out of range; group has 12 entries" }] }
+  Action: index 14 is bogus — drop it from positive_examples.
+
+Iteration 2 — spec covers [0,1,2,3]; entry 11 is JSX reflection, doesn't fit.
+  Validator returns { "ok": true } structurally, but inspection shows the
+  classifier misses entry 11.
+  Action: move entry 11 to rejected_members with reason "JSX template
+  literal — distinct root cause from the rest of the group".
+
+Iteration 3 — validator returns { "ok": true }. Emit the response.
+```
+
+### Exit conditions on non-convergence
+
+If validation fails 5 times with no progress (the same `issues[i].code`
+repeating across iterations), stop iterating. Emit:
+
+- `proposed_classifier: { "kind": "none" }`
+- `classifier_spec: null`
+- `rejected_members`: every entry in the group, each with `reason`
+  describing why it could not be fit.
+- Session log `status: "failure"`, `failure_category: "classifier_infeasible"`,
+  `failure_details` summarising the last validator output and what you
+  tried.
+
+This is a **clean exit**, not a contract violation. The curator reads it
+as "this group is genuinely incoherent or the signal library is
+insufficient" and the rejected entries re-surface as residuals on the
+next sweep.
 
 ## Residual path
 
@@ -140,7 +233,7 @@ Each response has three distinct outputs, each tracking a different aspect:
 
    - `kind: "builtin"` — accompanied by a non-null `classifier_spec`
      matching `function_name` and `min_confidence`. The main agent
-     renders it to source in Step 4.5; you never emit code.
+     renders it to source after finalize; you never emit code.
    - `kind: "none"` — permitted **only** when `signal_library_gap` is
      non-null (i.e. the signal library cannot express the needed rule).
 
@@ -203,7 +296,7 @@ null` and write a full task body.
 When `proposed_classifier.kind === "builtin"`, emit a `classifier_spec`
 describing the classifier as structured data. The main agent renders it
 to `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`
-in Step 4.5 via a deterministic template; you do not author source.
+after finalize via a deterministic template; you do not author source.
 
 ```json
 {
@@ -327,6 +420,9 @@ Write **two files** to `~/.ariadne/triage-curator/**` before returning.
     "description": "string",
     "existing_task_id": "TASK-<N>" | null
   } | null,
+  "rejected_members": [
+    { "entry_index": 0, "reason": "string" }
+  ],
   "reasoning": "string"
 }
 ```
@@ -362,7 +458,7 @@ Classifier shapes (exclusive):
 
 ### Authoring rules — quick-reference
 
-Step 4.25 validates every response before rendering. The validator rejects:
+The validator you call in the iterate loop rejects:
 
 - `classifier_spec.checks[].op` not in `signal_check_ops` (from the
   hydrated context). No nested `{ op: "any", of: [...] }` combinators —
@@ -381,6 +477,9 @@ null` (the workaround is not allowed to stand alone — the resolver bug
 - `ariadne_bug.existing_task_id` not matching `^TASK-[0-9]+(\.[0-9]+)*$`.
 - `signal_library_gap.signals_needed` empty (drop `signal_library_gap` to
   `null` instead).
+- `rejected_members[i].entry_index` out of range, overlapping
+  `classifier_spec.positive_examples`, or duplicated within
+  `rejected_members`.
 
 The hydrated context carries an `authoring_rules` stanza that names the
 exact rules; consult it before emitting the response.

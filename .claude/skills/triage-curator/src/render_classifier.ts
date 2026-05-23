@@ -3,8 +3,8 @@
  * `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
  *
  * The renderer is pure, deterministic, and exhaustive over `SignalCheck.op`.
- * Unknown ops throw — the dispatcher treats a throw as a Step 4.5 authoring
- * failure and skips the registry upsert for that group.
+ * Unknown ops throw — the dispatcher treats a throw as an authoring failure
+ * and skips the registry upsert for that group.
  *
  * Regenerate by re-running `/triage-curator`; hand edits are clobbered.
  */

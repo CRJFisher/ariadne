@@ -319,6 +319,221 @@ describe("validate_response", () => {
     expect(issues[0].code).toBe("shape_error");
     expect(issues[0].message).toContain("signals_needed");
   });
+
+  it("accepts a builtin response with a valid rejected_members entry", () => {
+    const raw = valid_builtin_response({
+      rejected_members: [{ entry_index: 1, reason: "different root cause" }],
+    });
+    const issues = validate_response({ ...base_input(), response_raw: raw });
+    expect(issues).toEqual([]);
+  });
+
+  it("reports rejected_member_index_out_of_range when index exceeds group size", () => {
+    const raw = valid_builtin_response({
+      rejected_members: [{ entry_index: 5, reason: "out of bounds" }],
+    });
+    const issues = validate_response({ ...base_input(), response_raw: raw });
+    expect(issues.length).toBe(1);
+    expect(issues[0].code).toBe("rejected_member_index_out_of_range");
+    expect(issues[0].message).toContain("group has 2 entries");
+  });
+
+  it("reports rejected_member_overlaps_positive_example when an entry is in both lists", () => {
+    const raw = valid_builtin_response({
+      classifier_spec: {
+        function_name: "check_dispatch_group",
+        min_confidence: 0.9,
+        combinator: "all",
+        checks: [{ op: "language_eq", value: "typescript" }],
+        positive_examples: [0],
+        negative_examples: [],
+        description: "d",
+      },
+      rejected_members: [{ entry_index: 0, reason: "contradicts spec" }],
+    });
+    const issues = validate_response({ ...base_input(), response_raw: raw });
+    expect(issues.length).toBe(1);
+    expect(issues[0].code).toBe("rejected_member_overlaps_positive_example");
+  });
+
+  it("reports rejected_member_duplicate_index when entry_index repeats", () => {
+    const raw = valid_builtin_response({
+      classifier_spec: {
+        function_name: "check_dispatch_group",
+        min_confidence: 0.9,
+        combinator: "all",
+        checks: [{ op: "language_eq", value: "typescript" }],
+        positive_examples: [],
+        negative_examples: [],
+        description: "d",
+      },
+      rejected_members: [
+        { entry_index: 1, reason: "first" },
+        { entry_index: 1, reason: "second" },
+      ],
+    });
+    const issues = validate_response({ ...base_input(), response_raw: raw });
+    expect(issues.length).toBe(1);
+    expect(issues[0].code).toBe("rejected_member_duplicate_index");
+  });
+
+  it("rejects rejected_members entries with a missing reason", () => {
+    const raw = valid_builtin_response({
+      rejected_members: [{ entry_index: 1 }],
+    });
+    const issues = validate_response({ ...base_input(), response_raw: raw });
+    expect(issues.length).toBe(1);
+    expect(issues[0].code).toBe("shape_error");
+    expect(issues[0].message).toContain("reason");
+  });
+
+  it("accepts rejected_members: null as empty", () => {
+    const raw = valid_builtin_response({ rejected_members: null });
+    const issues = validate_response({ ...base_input(), response_raw: raw });
+    expect(issues).toEqual([]);
+  });
+
+  it("rejects non-array rejected_members", () => {
+    const raw = valid_builtin_response({ rejected_members: {} });
+    const issues = validate_response({ ...base_input(), response_raw: raw });
+    expect(issues.length).toBe(1);
+    expect(issues[0].code).toBe("shape_error");
+    expect(issues[0].message).toContain("must be an array");
+  });
+
+  it("rejects non-object rejected_members element", () => {
+    const raw = valid_builtin_response({ rejected_members: [42] });
+    const issues = validate_response({ ...base_input(), response_raw: raw });
+    expect(issues.length).toBe(1);
+    expect(issues[0].code).toBe("shape_error");
+    expect(issues[0].message).toContain("must be an object");
+  });
+
+  it("rejects rejected_members entry with empty-string reason", () => {
+    const raw = valid_builtin_response({
+      rejected_members: [{ entry_index: 0, reason: "" }],
+    });
+    const issues = validate_response({ ...base_input(), response_raw: raw });
+    expect(issues.length).toBe(1);
+    expect(issues[0].code).toBe("shape_error");
+    expect(issues[0].message).toContain("reason");
+  });
+
+  it("rejects rejected_members entry with negative entry_index", () => {
+    const raw = valid_builtin_response({
+      rejected_members: [{ entry_index: -1, reason: "x" }],
+    });
+    const issues = validate_response({ ...base_input(), response_raw: raw });
+    expect(issues.length).toBe(1);
+    expect(issues[0].code).toBe("shape_error");
+    expect(issues[0].message).toContain("non-negative integer");
+  });
+
+  it("rejects rejected_members entry with non-integer entry_index", () => {
+    const raw = valid_builtin_response({
+      rejected_members: [{ entry_index: 1.5, reason: "x" }],
+    });
+    const issues = validate_response({ ...base_input(), response_raw: raw });
+    expect(issues.length).toBe(1);
+    expect(issues[0].code).toBe("shape_error");
+    expect(issues[0].message).toContain("non-negative integer");
+  });
+
+  it("skips range check when source_group is null", () => {
+    // When the dispatch group is missing from triage_results the validator
+    // cannot bound-check indices; it must still accept the response so the
+    // investigator can land a kind:"none" + rejected_members exit.
+    const raw = valid_builtin_response({
+      proposed_classifier: { kind: "none" },
+      classifier_spec: null,
+      signal_library_gap: {
+        signals_needed: ["x"],
+        title: "t",
+        description: "d",
+      },
+      ariadne_bug: null,
+      rejected_members: [{ entry_index: 999, reason: "out of range allowed" }],
+    });
+    const issues = validate_response({
+      ...base_input(),
+      response_raw: raw,
+      source_group: null,
+    });
+    expect(issues).toEqual([]);
+  });
+
+  it("accepts a retarget response carrying rejected_members against the source group", () => {
+    const raw = valid_builtin_response({
+      retargets_to: "existing-entry",
+      classifier_spec: {
+        function_name: "check_dispatch_group",
+        min_confidence: 0.9,
+        combinator: "all",
+        checks: [{ op: "language_eq", value: "typescript" }],
+        positive_examples: [],
+        negative_examples: [],
+        description: "d",
+      },
+      rejected_members: [{ entry_index: 1, reason: "fits source-group bounds" }],
+    });
+    const issues = validate_response({ ...base_input(), response_raw: raw });
+    expect(issues).toEqual([]);
+  });
+
+  it("accepts kind:'none' with rejected_members covering every entry", () => {
+    const raw = {
+      group_id: "dispatch-group",
+      proposed_classifier: { kind: "none" },
+      classifier_spec: null,
+      retargets_to: null,
+      signal_library_gap: null,
+      ariadne_bug: null,
+      rejected_members: [
+        { entry_index: 0, reason: "incoherent with rest of group" },
+        { entry_index: 1, reason: "incoherent with rest of group" },
+      ],
+      reasoning: "rough-aggregator over-grouped",
+    };
+    const session_log: InvestigatorSessionLog = {
+      group_id: "dispatch-group",
+      mode: "residual",
+      status: "failure",
+      reasoning: "no single classifier fits",
+      failure_category: "classifier_infeasible",
+      failure_details: "loop did not converge",
+      success_summary: null,
+      entries_examined_count: 2,
+      timestamp: "2026-04-22T00:00:00Z",
+    };
+    const issues = validate_response({
+      ...base_input(),
+      response_raw: raw,
+      session_log,
+    });
+    expect(issues).toEqual([]);
+  });
+
+  it("shape_error short-circuits rejected_members checks", () => {
+    const raw = valid_builtin_response({
+      classifier_spec: {
+        function_name: "check_dispatch_group",
+        min_confidence: 0.9,
+        combinator: "all",
+        // unknown op → shape_error.
+        checks: [{ op: "totally_made_up_op", value: "x" }],
+        positive_examples: [0],
+        negative_examples: [],
+        description: "d",
+      },
+      rejected_members: [
+        { entry_index: 1, reason: "first" },
+        { entry_index: 1, reason: "second" },
+      ],
+    });
+    const issues = validate_response({ ...base_input(), response_raw: raw });
+    expect(issues.length).toBe(1);
+    expect(issues[0].code).toBe("shape_error");
+  });
 });
 
 describe("validate_run_coherence", () => {
@@ -347,6 +562,7 @@ describe("validate_run_coherence", () => {
         description: "d",
         existing_task_id: null,
       },
+      rejected_members: [],
       reasoning: "",
     };
   }
