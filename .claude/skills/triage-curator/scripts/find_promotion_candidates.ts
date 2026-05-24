@@ -40,11 +40,11 @@ function parse_argv(argv: string[]): CliArgs {
 
 /**
  * Walk recent finalized runs and emit one per-run match-history row per
- * (run, group_id). Under v4 the row is reconstructed from
- * `confirmed_unreachable[]` entries with `source.kind === "registry"` —
- * one `match_count` increment per row, attributed to `llm_attributed_count`
- * when the source is `llm-tp` rather than `registry`. 190.19.8 layers the
- * drift-source split (qa-sample vs in-flight) on top of this output.
+ * (run, group_id). Each row is reconstructed from `confirmed_unreachable[]`
+ * entries with `source.kind === "registry"` — one `match_count` increment
+ * per row. Per-source drift breakdown for each rule's history is read from
+ * the registry entry's `drift_evidence[]` field directly, not from this
+ * per-run aggregate.
  */
 async function load_recent_match_history(): Promise<
   { group_id: string; match_count: number; llm_attributed_count: number }[]
@@ -72,7 +72,15 @@ async function load_recent_match_history(): Promise<
   return rows;
 }
 
-function format_table(candidates: readonly PromotionCandidate[]): string {
+/**
+ * Render the per-candidate table emitted to stdout. The `drift_inf` and
+ * `drift_qa` columns are the per-source split of `drift_evidence[]` —
+ * in-flight rows are the per-entry investigator's sharp regression verdicts,
+ * qa-sample rows are the curator QA loop's statistical drift signal. Two
+ * columns instead of one boolean so the human reviewer can weight them
+ * (an in-flight row counts more than a qa-sample row of equal count).
+ */
+export function format_table(candidates: readonly PromotionCandidate[]): string {
   if (candidates.length === 0) {
     return (
       "No promotion candidates found.\n" +
@@ -89,7 +97,8 @@ function format_table(candidates: readonly PromotionCandidate[]): string {
     "runs",
     "match",
     "llm",
-    "drift",
+    "drift_inf",
+    "drift_qa",
     "task",
     "score",
     "vetoes",
@@ -102,7 +111,8 @@ function format_table(candidates: readonly PromotionCandidate[]): string {
     String(c.runs_observed_in),
     String(c.match_count_total),
     String(c.llm_attributed_total),
-    c.drift_detected ? "yes" : "no",
+    String(c.drift_in_flight_count),
+    String(c.drift_qa_sample_count),
     c.backlog_task ?? "(none)",
     c.score.toFixed(2),
     c.vetoes.length === 0 ? "" : c.vetoes.join(", "),

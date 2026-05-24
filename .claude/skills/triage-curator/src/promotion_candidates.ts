@@ -9,7 +9,7 @@
  * cohort is genuinely small). Re-tune by recomputing percentiles once
  * cross-run match history accumulates.
  */
-import type { KnownIssue } from "./types.js";
+import type { DriftEvidenceSource, KnownIssue } from "./types.js";
 import type { PromotionCandidate } from "./types.js";
 
 export const PROMOTION_SCORE_CUTOFF = 0.9;
@@ -61,6 +61,43 @@ export function summarize_match_history(
     summary.runs_observed_in += 1;
   }
   return by_group;
+}
+
+/**
+ * Per-source breakdown of a rule's `drift_evidence[]` rows. Both signals
+ * coexist on the same rule; the renderer surfaces them as separate columns so
+ * the human reviewer can weight `in-flight` (per-entry sharp verdict) above
+ * `qa-sample` (statistical lagging signal) when deciding `wip → permanent`.
+ */
+export interface DriftEvidenceCounts {
+  in_flight: number;
+  qa_sample: number;
+}
+
+export function count_drift_evidence_by_source(
+  issue: KnownIssue,
+): DriftEvidenceCounts {
+  const counts: DriftEvidenceCounts = { in_flight: 0, qa_sample: 0 };
+  const evidence = issue.drift_evidence ?? [];
+  for (const row of evidence) {
+    // Exhaustive over `DriftEvidenceSource`. Adding a new variant upstream
+    // raises a TS error on the unreachable line below until this branch is
+    // updated — prevents silent mis-attribution to one of the existing buckets.
+    const source: DriftEvidenceSource = row.source;
+    switch (source) {
+      case "in-flight":
+        counts.in_flight += 1;
+        break;
+      case "qa-sample":
+        counts.qa_sample += 1;
+        break;
+      default: {
+        const _exhaustive: never = source;
+        void _exhaustive;
+      }
+    }
+  }
+  return counts;
 }
 
 /**
@@ -120,6 +157,7 @@ export function aggregate_promotion_candidates(
     const history = match_history_summary.get(issue.group_id) ?? null;
     const { score, vetoes } = score_candidate(issue, history);
     if (score < PROMOTION_SCORE_CUTOFF) continue;
+    const drift_counts = count_drift_evidence_by_source(issue);
     candidates.push({
       group_id: issue.group_id,
       classifier_kind: issue.classifier.kind,
@@ -129,6 +167,8 @@ export function aggregate_promotion_candidates(
       match_count_total: history?.match_count_total ?? 0,
       llm_attributed_total: history?.llm_attributed_total ?? 0,
       drift_detected: issue.drift_detected ?? false,
+      drift_in_flight_count: drift_counts.in_flight,
+      drift_qa_sample_count: drift_counts.qa_sample,
       backlog_task: issue.backlog_task ?? null,
       score,
       vetoes,

@@ -120,7 +120,25 @@ export interface PromotionCandidate {
   runs_observed_in: number;
   match_count_total: number;
   llm_attributed_total: number;
+  /**
+   * Authoritative veto flag — when true, the rule cannot promote regardless
+   * of score. Copied straight from the registry entry's `drift_detected`
+   * field. The `drift_in_flight_count` + `drift_qa_sample_count` fields below
+   * are informational: they break down the evidence that recommended setting
+   * this flag so the human reviewer can weight in-flight rows above
+   * qa-sample rows. The boolean is the gate; the counts are the detail.
+   */
   drift_detected: boolean;
+  /**
+   * Per-source split of `KnownIssue.drift_evidence[]`. The in-flight count is
+   * the stronger signal — each row is a per-entry investigator's sharp
+   * `fp-classifier-regression` verdict against this rule. The qa-sample count
+   * is the lagging statistical signal from the curator's QA sub-agent sample
+   * loop. Surfaced separately so the human promotion reviewer can weight a
+   * row with N in-flight regressions above one with N qa-sample drifts.
+   */
+  drift_in_flight_count: number;
+  drift_qa_sample_count: number;
   backlog_task: string | null;
   /**
    * 0..1+ score combining observed count, project breadth, and run-history

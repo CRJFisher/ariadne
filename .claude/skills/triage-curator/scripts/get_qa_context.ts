@@ -23,6 +23,7 @@
  */
 
 import * as fs from "node:fs/promises";
+import { pathToFileURL } from "node:url";
 
 import { parse_known_issues_registry_json } from "@ariadnejs/types";
 import { get_registry_file_path } from "../src/paths.js";
@@ -68,12 +69,33 @@ function parse_argv(argv: string[]): CliArgs {
   return { group_id, run_path };
 }
 
-function sample_members(
+/**
+ * Filter the v4 `confirmed_unreachable[]` to the rows the named classifier
+ * matched. SRP writes each row's provenance as
+ * `source: { kind: "registry", group_id }` when the match came from a known
+ * rule, vs. `kind: "llm-tp"` for per-entry confirmations. The QA loop only
+ * audits the registry-attributed slice.
+ */
+export function select_registry_matches(
+  triage: TriageResultsFile,
+  group_id: string,
+): PublishedConfirmedUnreachable[] {
+  return triage.confirmed_unreachable.filter(
+    (e) => e.source.kind === "registry" && e.source.group_id === group_id,
+  );
+}
+
+/**
+ * Evenly-spaced sub-sample of `entries`, length ≤ `max`. The QA sub-agent's
+ * tool budget is fixed (`SAMPLE_SIZE`); for large registry hit-lists we want
+ * the sampled members to span the population (first, mid, last) rather than
+ * an arbitrary contiguous slice.
+ */
+export function sample_members(
   entries: PublishedConfirmedUnreachable[],
   max: number,
 ): PublishedConfirmedUnreachable[] {
   if (entries.length <= max) return entries;
-  // Evenly-spaced indices so the sample spans the rule's matches.
   const step = entries.length / max;
   const out: PublishedConfirmedUnreachable[] = [];
   for (let i = 0; i < max; i++) {
@@ -88,9 +110,7 @@ async function main(): Promise<void> {
   const triage_raw = await fs.readFile(run_path, "utf8");
   const triage = JSON.parse(triage_raw) as TriageResultsFile;
 
-  const rule_matches = triage.confirmed_unreachable.filter(
-    (e) => e.source.kind === "registry" && e.source.group_id === group_id,
-  );
+  const rule_matches = select_registry_matches(triage, group_id);
   if (rule_matches.length === 0) {
     throw new Error(
       `group_id "${group_id}" has no confirmed_unreachable matches in ${run_path}`,
@@ -124,9 +144,11 @@ async function main(): Promise<void> {
   process.stdout.write(JSON.stringify(out, null, 2) + "\n");
 }
 
-main().catch((err) => {
-  process.stderr.write(
-    `get_qa_context failed: ${err instanceof Error ? err.stack ?? err.message : String(err)}\n`,
-  );
-  process.exit(1);
-});
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => {
+    process.stderr.write(
+      `get_qa_context failed: ${err instanceof Error ? err.stack ?? err.message : String(err)}\n`,
+    );
+    process.exit(1);
+  });
+}
