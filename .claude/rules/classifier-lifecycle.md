@@ -11,7 +11,7 @@ The classifier registry at `.claude/skills/triage-entrypoints/known_issues/regis
 | **fix-sequencer reconciler** (TASK-190.18.3) | `status: "fixed"`, `fixed_commit`, `fixed_in_run`                                                                            | autonomous; `done` event in `state.jsonl` OR Conventional-Commits scope in target project's git log |
 | **Human (manual edit)**                      | `status: "permanent"`                                                                                                        | reviewing `pnpm find-promotion-candidates` output                                                   |
 
-triage-entrypoints reads the registry to filter classifier hits but never mutates it. Any new code under `.claude/skills/triage-entrypoints/` that calls `writeFile` against `registry.json` (or invokes `serialize_known_issues_registry_json` with the registry path) is a contract violation.
+triage-entrypoints reads the registry to filter classifier hits but never mutates it. The `triage-coordinator` sub-agent that runs inside triage-entrypoints writes only the per-run `novel_issues.json` (under `triage_state/<project>/runs/<run-id>/`); it never touches `registry.json`. Any new code under `.claude/skills/triage-entrypoints/` that calls `writeFile` against `registry.json` (or invokes `serialize_known_issues_registry_json` with the registry path) is a contract violation.
 
 `drift_evidence` is the shared ledger for both drift signals: the curator's QA sample-rate path writes rows with `source: "qa-sample"`; the in-flight `fp-classifier-regression` absorb writes rows with `source: "in-flight"`. Both signals are curator-owned writes; triage-entrypoints only emits per-entry verdicts that the curator converts to evidence rows at finalize time.
 
@@ -55,7 +55,9 @@ This protects against concurrent writers (curator + reconciler running on the sa
                                                      └───────────┘
 ```
 
-`wip → permanent` is the only manual transition. The candidate-analysis script (`pnpm find-promotion-candidates`) surfaces qualifying rules; the human flips `status` and runs `pnpm sync-permanent-rules` to rebuild the bundled core slice. Auto-flip is deferred until the script demonstrates non-zero output for ≥2 consecutive sweeps (see `let-s-make-a-plan-radiant-dragon.md` for the escalation criteria).
+`wip → permanent` is the only manual transition. The candidate-analysis script (`pnpm find-promotion-candidates`) surfaces qualifying rules; the human flips `status` and runs `pnpm sync-permanent-rules` to rebuild the bundled core slice. The transition stays manual until the script produces non-zero output for ≥2 consecutive sweeps; see `let-s-make-a-plan-radiant-dragon.md` for the auto-flip escalation criteria.
+
+A `fixed` row that resurfaces in a later run (its `novel_issue.id` appears again in v4 `triage_results`) is surfaced by the curator for human review — there is no automatic re-flip back to `wip`, because the reconciler is the only authorized writer of `fixed`-row status.
 
 ## Cross-references
 

@@ -1,6 +1,6 @@
 # Triage Entrypoints
 
-Triage pipeline for entry point analysis: detect false positives and classify root causes.
+Triage pipeline for entry point analysis: detect false positives and classify root causes. The per-entry `triage-investigator` emits one `TriageVerdict` — a discriminated union with `tp`, `fp-novel-new`, `fp-novel-cited`, `fp-classifier-regression`, or `uncertain` arms. A `triage-coordinator` sub-agent dedupes each novel verdict against the run's `novel_issues.json` snapshot inline, so the curator downstream consumes a pre-consolidated novel-issue set.
 
 Each invocation produces a self-contained run under `triage_state/<project>/runs/<run-id>/`. Run-id format is `<short-commit>-<iso-ts>` (or `nogit-<iso-ts>` for non-git projects). Re-running at the same target commit reuses prior `confirmed_unreachable` verdicts via the TP cache (skip with `--no-reuse-tp`). The classifier registry at `known_issues/registry.json` is the canonical registry, updated by the `triage-curator` skill. A generated `permanent`-status slice is bundled into `@ariadnejs/core` at `packages/core/src/classify_entry_points/permanent_data.ts`, so library consumers of `Project.get_call_graph()` filter framework noise without depending on this skill. Regenerate the slice with `pnpm sync-permanent-rules` (run pre-commit on registry edits and verified in CI).
 
@@ -8,7 +8,7 @@ Orthogonally, the `detect_dead_code` Stop hook (`.claude/hooks/detect_dead_code.
 
 ## Self-healing pipeline
 
-This skill is the first link in a three-skill chain: triage-entrypoints (sense) → triage-curator (classify) → fix-sequencer (actuate). What makes it _self-healing_ rather than a linear pipeline is two durable surfaces that survive between runs — `registry.json` (what we learned) and the target repo (what we changed). Both are read on the _next_ triage-entrypoints run; the two red dotted edges below are the loop closure.
+This skill is the first link in a three-skill chain: triage-entrypoints (sense) → triage-curator (classify) → fix-sequencer (actuate). It is _self-healing_ because two durable surfaces survive between runs — `registry.json` (what we learned) and the target repo (what we changed) — and both are read on the _next_ triage-entrypoints run. The two red dotted edges below are the loop closure.
 
 ```mermaid
 flowchart LR
@@ -37,7 +37,7 @@ flowchart LR
   linkStyle 6 stroke:#ef5350,stroke-width:2.4px,stroke-dasharray:6 4
 ```
 
-**Reading the diagram**: three skills feed forward (sense → classify → actuate); two durable surfaces (registry + target repo) survive between runs and feed the next iteration; the two red dotted edges are the loop closure — both fire on the _next_ triage-entrypoints invocation, not synchronously. Detail hidden here (covered in the per-step diagrams below + sibling READMEs): registry's lifecycle states and writers, the worker / reconciler / git-log scanner as distinct nodes, sub-agent fleets, the per-cluster sign-off branch, all other persistent stores.
+**Reading the diagram**: three skills feed forward (sense → classify → actuate); two durable surfaces (registry + target repo) survive between runs and feed the next iteration; the two red dotted edges are the loop closure — both fire on the _next_ triage-entrypoints invocation, not synchronously. See per-step diagrams below and sibling READMEs for the registry lifecycle states + writers, the worker / reconciler / git-log scanner nodes, sub-agent fleets, the per-cluster sign-off branch, and all other persistent stores.
 
 ## Pipeline Flow
 
@@ -81,7 +81,8 @@ flowchart TD
     A3[/"results/&#123;idx&#125;.json<br/>TriageVerdict"/]:::artifact
     BR{novel verdict?}:::branch
     AG_CO[["triage-coordinator<br/>sonnet · per novel absorb"]]:::agent
-    NI[/"novel_issues.json<br/>+ classifier_regressions.jsonl"/]:::artifact
+    NI[/"novel_issues.json<br/><i>dispatcher: single writer · atomic</i>"/]:::artifact
+    CR[/"classifier_regressions.jsonl<br/><i>dispatcher: append-only</i>"/]:::artifact
   end
 
   subgraph P4["Phase 4 · Finalize"]
@@ -111,10 +112,12 @@ flowchart TD
   A3 --> S3
   S3 --> BR
   BR -- "fp-novel-*" --> AG_CO --> NI
-  BR -- "tp · regression · uncertain" --> NI
+  BR -- "fp-classifier-regression" --> CR
+  BR -- "tp · uncertain" --> S3
   NI -. "next dispense" .-> S3
   S3 -- "all pending drained" --> S5
   NI --> S5
+  CR --> S5
   S5 --> PUB
 
   PUB --> CUR
@@ -126,7 +129,7 @@ flowchart TD
   linkStyle default stroke:#cbd5e1,stroke-width:1.5px
 ```
 
-**What to look for**: four phase bands stacked top-to-bottom (strict reading order); two read-only stores (registry, prior triage_results) sit outside the phase bands — this skill **never** writes the registry (lifecycle contract); three Phase-2 buckets (auto / TP / residual) determine whether an entry skips the triage loop entirely; the coordinator sub-agent only fires on novel verdicts, while `tp`, `fp-classifier-regression`, and `uncertain` absorb directly. Today's published `triage_results` becomes tomorrow's TP cache.
+**What to look for**: four phase bands stacked top-to-bottom (strict reading order); two read-only stores (registry, prior triage_results) sit outside the phase bands — this skill **never** writes the registry (lifecycle contract); three Phase-2 buckets (auto / TP / residual) determine whether an entry skips the triage loop entirely. The dispatcher is the **single writer** of both `novel_issues.json` (atomic, via the coordinator path on novel verdicts) and `classifier_regressions.jsonl` (append-only, directly on `fp-classifier-regression`). The coordinator sub-agent only fires on novel verdicts; `tp` and `uncertain` are absorbed in-memory and surfaced at finalize. Each run's published `triage_results` becomes the next same-commit run's TP cache.
 
 ## Sub-Agent Summary
 

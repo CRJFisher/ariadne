@@ -33,7 +33,7 @@ Two upstream skills (`triage-entrypoints`, `triage-curator`) currently land task
 
 ## High-level flow
 
-Seven phases stacked top-to-bottom in pipeline order: cluster → score → prepare plan → sign off → enqueue (writes the three persistent stores), then worker (async, /schedule-driven) and reconciler (runs at the start of the *next* SRP invocation). The persistent stores sit between the in-skill phases and the worker; the loop-closure edge from `wip → fixed` back to curator's registry read is the only red dotted arrow. (For where this skill fits in the broader chain see [triage-entrypoints → Self-healing pipeline](../../.claude/skills/triage-entrypoints/README.md#self-healing-pipeline).)
+Seven phases stacked top-to-bottom in pipeline order: cluster → score → prepare plan → sign off → enqueue (writes the three persistent stores), then worker (async, /schedule-driven) and reconciler (runs at the start of the *next* triage-entrypoints invocation). The persistent stores sit between the in-skill phases and the worker; the loop-closure edge from `wip → fixed` back to curator's registry read is the only red dotted arrow. (For where this skill fits in the broader chain see [triage-entrypoints → Self-healing pipeline](../../.claude/skills/triage-entrypoints/README.md#self-healing-pipeline).)
 
 ```mermaid
 flowchart TD
@@ -91,7 +91,7 @@ flowchart TD
     W2("ship fix<br/>edits + tests + fix(task_id): commit"):::worker
   end
 
-  subgraph P7["Phase 7 · Reconciler (runs at start of NEXT SRP invocation)"]
+  subgraph P7["Phase 7 · Reconciler (runs at start of NEXT triage-entrypoints invocation)"]
     direction TB
     OOB[/"git-log scan<br/>fix(190.x): + trailers<br/>+ range expansion"/]:::recon
     BR_REC{{"latest event = done?<br/>OR OOB match?"}}:::branch
@@ -133,13 +133,13 @@ flowchart TD
   BR_REC -- "match" --> REC
   REC -- "flip wip → fixed" --> REG_W
 
-  REG_W -. "observed by next SRP detect pass" .-> REG_R
+  REG_W -. "observed by next triage-entrypoints detect pass" .-> REG_R
 
   linkStyle default stroke:#cbd5e1,stroke-width:1.5px
   linkStyle 29 stroke:#ef5350,stroke-width:2.2px,stroke-dasharray:6 4
 ```
 
-**What to look for**: seven phase bands stacked top-to-bottom (strict reading order); read-only inputs sit on a left rail and only feed the phases that touch them. The sign-off diamond has three labeled exits (`accept` / `drop` / `defer`); only `accept` reaches `enqueue_signed_off_fixes` — `drop`/`defer` terminate non-destructively at `decisions.json`. Phase 5 is the **only fan-out write** in the in-skill phases — one accept decision lands writes on all three persistent stores; misalignment would mean a partial accept. Phases 6 and 7 run on separate invocations (Phase 6 async via `/schedule`; Phase 7 as a pre-step of the next SRP run). The reconciler has two input sources (state.jsonl done events + project-repo git-log Conventional-Commits scan); OOB-synthesized done events are in-memory only — never appended to state.jsonl. The red dotted edge (`wip → fixed` back to curator's registry read) fires on the *next* pipeline run, not synchronously. The sequencer never writes the registry directly — the only registry-write path is `reconciler → REG_W` in Phase 7 (a separate skill invocation), so the write boundary is visually enforced.
+**What to look for**: seven phase bands stacked top-to-bottom (strict reading order); read-only inputs sit on a left rail and only feed the phases that touch them. The sign-off diamond has three labeled exits (`accept` / `drop` / `defer`); only `accept` reaches `enqueue_signed_off_fixes` — `drop`/`defer` terminate non-destructively at `decisions.json`. Phase 5 is the **only fan-out write** in the in-skill phases — one accept decision lands writes on all three persistent stores; misalignment would mean a partial accept. Phases 6 and 7 run on separate invocations (Phase 6 async via `/schedule`; Phase 7 as a pre-step of the next triage-entrypoints run). The reconciler has two input sources (state.jsonl done events + project-repo git-log Conventional-Commits scan); OOB-synthesized done events are in-memory only — never appended to state.jsonl. The red dotted edge (`wip → fixed` back to curator's registry read) fires on the *next* pipeline run, not synchronously. The sequencer never writes the registry directly — the only registry-write path is `reconciler → REG_W` in Phase 7 (a separate skill invocation), so the write boundary is visually enforced.
 
 ## Vocabulary
 
