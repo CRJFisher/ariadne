@@ -204,11 +204,11 @@ export interface ApplyOptions {
    */
   novel_issues_by_id?: Record<string, NovelIssue>;
   /**
-   * Per-rule aggregate of `fp-classifier-regression` verdicts from the SRP
+   * Per-rule aggregate of `fp-classifier-regression` verdicts from the triage-entrypoints
    * run's per-entry triage. Each flagged rule's wip row is tagged
    * `drift_detected: true` and gains `drift_evidence` rows with
    * `source: "in-flight"` before the QA-sample drift pass runs. Pass `[]`
-   * when the SRP run produced no regression verdicts.
+   * when the triage-entrypoints run produced no regression verdicts.
    */
   classifier_regressions: ClassifierRegressionFlag[];
 }

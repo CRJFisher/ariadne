@@ -7,7 +7,7 @@ status: Done
 assignee: []
 created_date: '2026-04-22 14:01'
 labels:
-  - self-repair-pipeline
+  - triage-entrypoints
   - signal-gap
 dependencies: []
 parent_task_id: TASK-190.16

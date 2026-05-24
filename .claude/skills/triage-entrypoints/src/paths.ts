@@ -2,14 +2,14 @@ import os from "os";
 import path from "path";
 
 /**
- * Base directory for all self-repair-pipeline state. Defaults to
- * `~/.ariadne/self-repair-pipeline`. Tests set
+ * Base directory for all triage-entrypoints state. Defaults to
+ * `~/.ariadne/triage-entrypoints`. Tests set
  * `ARIADNE_SELF_REPAIR_DIR_OVERRIDE` to an isolated temp directory before
  * importing this module.
  */
 const STATE_DIR =
   process.env.ARIADNE_SELF_REPAIR_DIR_OVERRIDE ??
-  path.join(os.homedir(), ".ariadne", "self-repair-pipeline");
+  path.join(os.homedir(), ".ariadne", "triage-entrypoints");
 
 export const ANALYSIS_OUTPUT_DIR = path.join(STATE_DIR, "analysis_output");
 export const TRIAGE_STATE_DIR = path.join(STATE_DIR, "triage_state");

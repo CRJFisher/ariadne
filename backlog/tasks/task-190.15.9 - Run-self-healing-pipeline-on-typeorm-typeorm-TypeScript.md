@@ -19,7 +19,7 @@ priority: medium
 
 **Why**: ORM built for the TS decorator ecosystem. `@Entity`, `@Column`, `@ManyToOne` entity decorators, generic repository patterns, abstract base classes, mapped types for partial/deep partials, union/intersection types in query builders, `emitDecoratorMetadata` patterns.
 
-**Run**: `/self-repair-pipeline typeorm/typeorm`
+**Run**: `/triage-entrypoints typeorm/typeorm`
 
 Record any false positives, parse errors, or pipeline crashes.
 <!-- SECTION:DESCRIPTION:END -->

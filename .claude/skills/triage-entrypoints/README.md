@@ -1,14 +1,14 @@
-# Self-Repair Pipeline
+# Triage Entrypoints
 
 Triage pipeline for entry point analysis: detect false positives and classify root causes.
 
 Each invocation produces a self-contained run under `triage_state/<project>/runs/<run-id>/`. Run-id format is `<short-commit>-<iso-ts>` (or `nogit-<iso-ts>` for non-git projects). Re-running at the same target commit reuses prior `confirmed_unreachable` verdicts via the TP cache (skip with `--no-reuse-tp`). The classifier registry at `known_issues/registry.json` is the canonical registry, updated by the `triage-curator` skill. A generated `permanent`-status slice is bundled into `@ariadnejs/core` at `packages/core/src/classify_entry_points/permanent_data.ts`, so library consumers of `Project.get_call_graph()` filter framework noise without depending on this skill. Regenerate the slice with `pnpm sync-permanent-rules` (run pre-commit on registry edits and verified in CI).
 
-Orthogonally, the `detect_dead_code` Stop hook (`.claude/hooks/detect_dead_code.ts`) reads a human-maintained whitelist at `~/.ariadne/self-repair-pipeline/known_entrypoints/<package>.json` to guard against dead code introduced during coding sessions. That whitelist is not read or written by any script in this skill — see [SKILL.md → Dead-code guardrail](SKILL.md#dead-code-guardrail).
+Orthogonally, the `detect_dead_code` Stop hook (`.claude/hooks/detect_dead_code.ts`) reads a human-maintained whitelist at `~/.ariadne/triage-entrypoints/known_entrypoints/<package>.json` to guard against dead code introduced during coding sessions. That whitelist is not read or written by any script in this skill — see [SKILL.md → Dead-code guardrail](SKILL.md#dead-code-guardrail).
 
 ## Self-healing pipeline
 
-This skill is the first link in a three-skill chain: SRP (sense) → triage-curator (classify) → fix-sequencer (actuate). What makes it _self-healing_ rather than a linear pipeline is two durable surfaces that survive between runs — `registry.json` (what we learned) and the target repo (what we changed). Both are read on the _next_ SRP run; the two red dotted edges below are the loop closure.
+This skill is the first link in a three-skill chain: triage-entrypoints (sense) → triage-curator (classify) → fix-sequencer (actuate). What makes it _self-healing_ rather than a linear pipeline is two durable surfaces that survive between runs — `registry.json` (what we learned) and the target repo (what we changed). Both are read on the _next_ triage-entrypoints run; the two red dotted edges below are the loop closure.
 
 ```mermaid
 flowchart LR
@@ -16,7 +16,7 @@ flowchart LR
   classDef artifact  fill:#e8f5e9,stroke:#2e7d32,stroke-width:1.5px,color:#1b5e20
   classDef store     fill:#ede7f6,stroke:#4527a0,stroke-width:1.8px,color:#311b92
 
-  SRP(["self-repair-pipeline · <i>sense</i><br/>find unreachable funcs"]):::step
+  SRP(["triage-entrypoints · <i>sense</i><br/>find unreachable funcs"]):::step
   TR[/"triage_results<br/>(per-run handoff)"/]:::artifact
   CUR(["triage-curator · <i>classify</i><br/>author classifier rule<br/>file backlog task"]):::step
   FS(["fix-sequencer · <i>actuate</i><br/>cluster · sign off · ship fix"]):::step
@@ -37,7 +37,7 @@ flowchart LR
   linkStyle 6 stroke:#ef5350,stroke-width:2.4px,stroke-dasharray:6 4
 ```
 
-**Reading the diagram**: three skills feed forward (sense → classify → actuate); two durable surfaces (registry + target repo) survive between runs and feed the next iteration; the two red dotted edges are the loop closure — both fire on the _next_ SRP invocation, not synchronously. Detail hidden here (covered in the per-step diagrams below + sibling READMEs): registry's lifecycle states and writers, the worker / reconciler / git-log scanner as distinct nodes, sub-agent fleets, the per-cluster sign-off branch, all other persistent stores.
+**Reading the diagram**: three skills feed forward (sense → classify → actuate); two durable surfaces (registry + target repo) survive between runs and feed the next iteration; the two red dotted edges are the loop closure — both fire on the _next_ triage-entrypoints invocation, not synchronously. Detail hidden here (covered in the per-step diagrams below + sibling READMEs): registry's lifecycle states and writers, the worker / reconciler / git-log scanner as distinct nodes, sub-agent fleets, the per-cluster sign-off branch, all other persistent stores.
 
 ## Pipeline Flow
 

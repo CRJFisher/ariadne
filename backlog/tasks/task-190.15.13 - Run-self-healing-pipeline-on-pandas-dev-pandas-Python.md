@@ -19,7 +19,7 @@ priority: medium
 
 **Why**: `CachedProperty` and accessor descriptors (`.str`, `.dt`, `.cat`), `__getitem__`/`__setitem__`/`__getattr__` overrides, complex class hierarchy (`DataFrame` → `NDFrame` → `PandasObject`), generators in iteration, `__slots__`, `@abstractmethod`, typing generics, `option_context` context managers. ~400k+ lines.
 
-**Run**: `/self-repair-pipeline pandas-dev/pandas`
+**Run**: `/triage-entrypoints pandas-dev/pandas`
 
 Record any false positives, parse errors, or pipeline crashes.
 <!-- SECTION:DESCRIPTION:END -->

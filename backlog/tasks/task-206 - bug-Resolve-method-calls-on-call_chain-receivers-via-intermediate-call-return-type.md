@@ -28,7 +28,7 @@ Concrete TypeORM evidence: `BaseEntity.ts:551` (`getRepository().X()`), `DataSou
 ## Acceptance criteria
 - [ ] Ariadne resolves `<call>().method()` chains using the return-type annotation of the inner call
 - [ ] Regression test reproducing the typeorm corpus pattern lands and passes
-- [ ] Self-repair pipeline re-run on typeorm/prisma no longer surfaces this group at scale
+- [ ] Self-healing pipeline re-run on typeorm/prisma no longer surfaces this group at scale
 
 Source: triage-curator sweep (top-impact, observed_count=107).
 <!-- SECTION:DESCRIPTION:END -->

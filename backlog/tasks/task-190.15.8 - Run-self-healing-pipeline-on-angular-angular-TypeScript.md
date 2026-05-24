@@ -19,7 +19,7 @@ priority: medium
 
 **Why**: Full UI framework with 11+ year history. `@Component`, `@NgModule`, `@Input` decorators, abstract classes, complex generics, enums, declaration merging, mapped types for reactive forms, deep conditional/inferred types in the Angular compiler.
 
-**Run**: `/self-repair-pipeline angular/angular`
+**Run**: `/triage-entrypoints angular/angular`
 
 Record any false positives, parse errors, or pipeline crashes.
 <!-- SECTION:DESCRIPTION:END -->

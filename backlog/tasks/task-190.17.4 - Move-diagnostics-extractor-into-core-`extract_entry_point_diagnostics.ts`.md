@@ -24,7 +24,7 @@ Move per-entry-point diagnostics extraction (grep call sites, decorator scrape, 
 
 ## Move
 
-`git mv .claude/skills/self-repair-pipeline/src/extract_entry_points.ts packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`
+`git mv .claude/skills/triage-entrypoints/src/extract_entry_points.ts packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`
 
 Plus its colocated test, helpers (`build_constructor_to_class_name_map`, `attach_unindexed_test_grep_hits`, `collect_unindexed_test_files`, `UNINDEXED_TEST_DIR_SEGMENTS`).
 
@@ -58,5 +58,5 @@ Skill keeps a thin re-export until `.8` retargets `prepare_triage.ts`. The skill
 - [ ] #5 grep_call_sites_unindexed_tests gated behind include_unindexed_tests opt-in flag
 - [ ] #6 Skill re-export module preserves old import path
 - [ ] #7 Inverted grep-index optimization preserved (no quadratic regression)
-- [ ] #8 pnpm test passes in packages/core and self-repair-pipeline
+- [ ] #8 pnpm test passes in packages/core and triage-entrypoints
 <!-- AC:END -->

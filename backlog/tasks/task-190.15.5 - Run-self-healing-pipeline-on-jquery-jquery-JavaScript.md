@@ -19,7 +19,7 @@ priority: medium
 
 **Why**: Most studied JS codebase ever. `jQuery.fn` prototype chain, IIFE module pattern, method chaining, event delegation, closures, cross-env compatibility shims, AMD/CJS/global factory pattern. Nearly 20-year history.
 
-**Run**: `/self-repair-pipeline jquery/jquery`
+**Run**: `/triage-entrypoints jquery/jquery`
 
 Record any false positives, parse errors, or pipeline crashes.
 <!-- SECTION:DESCRIPTION:END -->

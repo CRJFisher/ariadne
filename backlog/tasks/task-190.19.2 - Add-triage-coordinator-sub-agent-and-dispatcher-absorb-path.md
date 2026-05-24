@@ -6,7 +6,7 @@ assignee: []
 created_date: "2026-05-20 10:00"
 labels:
   - self-repair
-  - self-repair-pipeline
+  - triage-entrypoints
   - srp-redesign
 dependencies:
   - TASK-190.19.1
@@ -25,7 +25,7 @@ Once novel verdicts can be emitted, something has to decide whether each one is 
 
 ## Architecture
 
-The absorb path lives in a new module `.claude/skills/self-repair-pipeline/src/absorb_verdict.ts` — the successor to `merge_results.ts` for the verdict-shaped result file world. The legacy `merge_results.ts` is unchanged for now; 190.19.3 wires investigators to emit `TriageVerdict` and 190.19.5 collapses Phase 4, at which point `absorb_verdict` becomes the sole absorb surface.
+The absorb path lives in a new module `.claude/skills/triage-entrypoints/src/absorb_verdict.ts` — the successor to `merge_results.ts` for the verdict-shaped result file world. The legacy `merge_results.ts` is unchanged for now; 190.19.3 wires investigators to emit `TriageVerdict` and 190.19.5 collapses Phase 4, at which point `absorb_verdict` becomes the sole absorb surface.
 
 Module decomposition under `src/coordinator/`:
 

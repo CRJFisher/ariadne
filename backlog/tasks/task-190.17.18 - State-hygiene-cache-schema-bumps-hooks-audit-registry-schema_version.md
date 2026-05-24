@@ -32,11 +32,11 @@ If the per-entry-point `FalsePositiveEntry` shape changes (e.g. classification f
 
 ## Hooks audit
 
-Confirm the following still work post-move (the migration **keeps** the `self-repair-pipeline/` skill directory in place — only the classifier moves out):
+Confirm the following still work post-move (the migration **keeps** the `triage-entrypoints/` skill directory in place — only the classifier moves out):
 
-- `.claude/hooks/eslint_stop.ts:86` — hard-codes `"self-repair-pipeline"`
+- `.claude/hooks/eslint_stop.ts:86` — hard-codes `"triage-entrypoints"`
 - `.claude/hooks/utils.ts:110,129,135-136,173` — same literal
-- `.claude/hooks/detect_dead_code.ts:7,96` — same; also writes to `~/.ariadne/self-repair-pipeline/known_entrypoints/<package>.json` (separate file from the registry; don't conflate)
+- `.claude/hooks/detect_dead_code.ts:7,96` — same; also writes to `~/.ariadne/triage-entrypoints/known_entrypoints/<package>.json` (separate file from the registry; don't conflate)
 
 If any hook references a moved file directly (rather than the directory name), update it.
 
@@ -47,7 +47,7 @@ If any hook references a moved file directly (rather than the directory name), u
 ## Verification
 
 - `cat ~/.ariadne/cache/<slug>/manifest.json` against a pre-bump cache — `deserialize_manifest` returns `null` and the cache is rebuilt.
-- Hooks fire correctly when working in `.claude/skills/self-repair-pipeline/`.
+- Hooks fire correctly when working in `.claude/skills/triage-entrypoints/`.
 - `packages/core/src/persistence/persistence.test.ts`, `persistence.property.test.ts`, `cache_manifest.test.ts` updated for the bump.
 - Skill `src/build_finalization_output.test.ts` and `src/run_discovery.test.ts` updated if `FINALIZATION_OUTPUT_SCHEMA_VERSION` bumps.
 <!-- SECTION:DESCRIPTION:END -->
@@ -59,9 +59,9 @@ If any hook references a moved file directly (rather than the directory name), u
 - [ ] #1 cache_manifest.ts CURRENT_SCHEMA_VERSION bumped 1 -> 2
 - [ ] #2 Pre-bump cache manifest in ~/.ariadne/cache/<slug>/manifest.json invalidated (deserialize_manifest returns null) and rebuilt on next run
 - [ ] #3 FalsePositiveEntry shape audited; FINALIZATION_OUTPUT_SCHEMA_VERSION bumped 2 -> 3 if shape changed, otherwise documented as unchanged in implementation notes
-- [ ] #4 Each .claude/hooks/ literal 'self-repair-pipeline' reference (eslint_stop.ts:86, utils.ts:110/129/135-136/173, detect_dead_code.ts:7,96) verified to resolve to a still-existing path post-move
+- [ ] #4 Each .claude/hooks/ literal 'triage-entrypoints' reference (eslint_stop.ts:86, utils.ts:110/129/135-136/173, detect_dead_code.ts:7,96) verified to resolve to a still-existing path post-move
 - [ ] #5 registry.json carries schema_version: 1 written by curator on every mutation (cross-check with .10 via apply_proposals.ts and promote_novel_groups.ts)
 - [ ] #6 packages/core/src/persistence/persistence.test.ts and persistence.property.test.ts and cache_manifest.test.ts updated for CURRENT_SCHEMA_VERSION 1 -> 2 bump (mismatch-discard path covered)
 - [ ] #7 Skill tests src/build_finalization_output.test.ts and src/run_discovery.test.ts updated for FINALIZATION_OUTPUT_SCHEMA_VERSION bump (if FalsePositiveEntry shape changed) and TP cache mismatch handling
-- [ ] #8 pnpm test passes in packages/core and self-repair-pipeline
+- [ ] #8 pnpm test passes in packages/core and triage-entrypoints
 <!-- AC:END -->

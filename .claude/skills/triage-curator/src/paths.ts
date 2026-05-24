@@ -14,15 +14,15 @@ export const CURATOR_RUNS_DIR = path.join(
 export const SELF_REPAIR_ANALYSIS_OUTPUT_DIR = path.join(
   os.homedir(),
   ".ariadne",
-  "self-repair-pipeline",
+  "triage-entrypoints",
   "analysis_output",
 );
 
-/** Resolves to the self-repair-pipeline known_issues/registry.json in the current repo checkout. */
+/** Resolves to the triage-entrypoints known_issues/registry.json in the current repo checkout. */
 export function get_registry_file_path(): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
-  // src/ → skill root → ../self-repair-pipeline/known_issues/registry.json
-  return path.resolve(here, "..", "..", "self-repair-pipeline", "known_issues", "registry.json");
+  // src/ → skill root → ../triage-entrypoints/known_issues/registry.json
+  return path.resolve(here, "..", "..", "triage-entrypoints", "known_issues", "registry.json");
 }
 
 /** Absolute repo root — same value every script derives. Consumed by get_context_cmd builders. */

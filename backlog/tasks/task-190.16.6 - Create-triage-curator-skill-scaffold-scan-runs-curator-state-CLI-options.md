@@ -11,8 +11,8 @@ labels:
 dependencies: []
 references:
   - /Users/chuck/.claude/plans/open-that-plan-up-hazy-cloud.md
-  - .claude/skills/self-repair-pipeline/
-  - /Users/chuck/.ariadne/self-repair-pipeline/analysis_output/
+  - .claude/skills/triage-entrypoints/
+  - /Users/chuck/.ariadne/triage-entrypoints/analysis_output/
 parent_task_id: TASK-190.16
 priority: medium
 ---
@@ -23,7 +23,7 @@ priority: medium
 
 Plan reference: `~/.claude/plans/open-that-plan-up-hazy-cloud.md` — Phase F1 + F2 + F3.
 
-Create the new `triage-curator` skill that sweeps completed self-repair-pipeline runs and feeds improvements back into the registry, the backlog, and (where new code is needed) the codebase. This task scaffolds the skill and implements the run-discovery + state + CLI layers. The LLM-powered QA and investigation work live in the next task.
+Create the new `triage-curator` skill that sweeps completed triage-entrypoints runs and feeds improvements back into the registry, the backlog, and (where new code is needed) the codebase. This task scaffolds the skill and implements the run-discovery + state + CLI layers. The LLM-powered QA and investigation work live in the next task.
 
 **Skill layout:**
 
@@ -62,11 +62,11 @@ interface CuratorState {
 }
 ```
 
-**CLI options:** `--project <name>`, `--last <n>`, `--run <path>`, `--dry-run`, `--reinvestigate`. Default behavior: scan `~/.ariadne/self-repair-pipeline/*/triage_results/*.json`, diff against `CuratorState.curated_runs`, process un-curated runs in chronological order.
+**CLI options:** `--project <name>`, `--last <n>`, `--run <path>`, `--dry-run`, `--reinvestigate`. Default behavior: scan `~/.ariadne/triage-entrypoints/*/triage_results/*.json`, diff against `CuratorState.curated_runs`, process un-curated runs in chronological order.
 
 No LLM dispatch at this stage — `curate_run.ts` contains stub hooks that the next task fills in. The LLM dispatchers and `templates/` directory (`prompt_group_qa.md`, `prompt_group_investigate.md`) are added by TASK-190.16.7. Reporting scripts (`generate_impact_report.ts`, `propose_backlog_tasks.ts`) are added by TASK-190.16.12.
 
-**Curator invocation boundary:** the curator is run explicitly (manually, on cron, or in CI on a regular cadence). Running the self-repair-pipeline does NOT trigger the curator automatically. The two skills communicate solely through files on disk (pipeline triage output → curator reads).
+**Curator invocation boundary:** the curator is run explicitly (manually, on cron, or in CI on a regular cadence). Running triage-entrypoints does NOT trigger the curator automatically. The two skills communicate solely through files on disk (pipeline triage output → curator reads).
 
 **`signal_inventory.md` content:** enumerates the six signal categories available to classifiers and to the opus investigator:
 

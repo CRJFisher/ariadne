@@ -20,15 +20,15 @@ ordinal: 3000
 
 ## Scope
 
-Move type definitions from the self-repair-pipeline skill into `@ariadnejs/types` so both core (post-Phase-3) and skill consumers import the canonical shapes from one place. No behavior changes; this is an additive type relocation with skill re-exports preserved temporarily.
+Move type definitions from the triage-entrypoints skill into `@ariadnejs/types` so both core (post-Phase-3) and skill consumers import the canonical shapes from one place. No behavior changes; this is an additive type relocation with skill re-exports preserved temporarily.
 
 ## Moves
 
 | Source (skill)                                                                                                              | Destination                                                 |
 | --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| `.claude/skills/self-repair-pipeline/src/entry_point_types.ts`                                                              | `packages/types/src/classified_entry_point.ts`              |
-| `.claude/skills/self-repair-pipeline/src/known_issues_types.ts`                                                             | `packages/types/src/known_issues.ts`                        |
-| `.claude/skills/self-repair-pipeline/src/auto_classify/predicate_evaluator.ts` (types only — keep impl in skill until `.5`) | extract type defs into `packages/types/src/known_issues.ts` |
+| `.claude/skills/triage-entrypoints/src/entry_point_types.ts`                                                              | `packages/types/src/classified_entry_point.ts`              |
+| `.claude/skills/triage-entrypoints/src/known_issues_types.ts`                                                             | `packages/types/src/known_issues.ts`                        |
+| `.claude/skills/triage-entrypoints/src/auto_classify/predicate_evaluator.ts` (types only — keep impl in skill until `.5`) | extract type defs into `packages/types/src/known_issues.ts` |
 
 ## Skill re-exports (temporary)
 
@@ -43,7 +43,7 @@ Until subsequent sub-sub-tasks consume the new paths directly, the skill keeps t
 - `pnpm build` passes in `packages/types`, `packages/core`, `packages/mcp`, and both skills.
 - `pnpm test` passes everywhere.
 - `tsc --noEmit` shows no errors at any package boundary.
-- `grep -rn "from .*self-repair-pipeline.*entry_point_types\|from .*self-repair-pipeline.*known_issues_types" packages/` returns no hits (packages no longer reach into skill internals for types).
+- `grep -rn "from .*triage-entrypoints.*entry_point_types\|from .*triage-entrypoints.*known_issues_types" packages/` returns no hits (packages no longer reach into skill internals for types).
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

@@ -22,7 +22,7 @@ ordinal: 13000
 
 ## Scope
 
-The triage-curator imports `KnownIssue*` and `ClassifierSpec` types from the self-repair-pipeline skill via relative paths (`../../self-repair-pipeline/...`). After `.3` graduates these types to `@ariadnejs/types`, the curator should import directly from there — eliminating cross-skill coupling.
+The triage-curator imports `KnownIssue*` and `ClassifierSpec` types from the triage-entrypoints skill via relative paths (`../../triage-entrypoints/...`). After `.3` graduates these types to `@ariadnejs/types`, the curator should import directly from there — eliminating cross-skill coupling.
 
 ## Sites to retarget
 
@@ -32,17 +32,17 @@ The triage-curator imports `KnownIssue*` and `ClassifierSpec` types from the sel
 - `.claude/skills/triage-curator/src/propose_backlog_tasks.test.ts:3` — same
 - `.claude/skills/triage-curator/scripts/finalize_run.ts:29-31` — `KnownIssue`, plus `render_unsupported_features` (skill-internal — keep as-is) and `render_builtins_barrel` (covered by `.11`'s output path change)
 - `.claude/skills/triage-curator/scripts/promote_novel_groups.ts:18-20`, `scripts/propose_backlog_tasks.ts:22-24`
-- `.claude/skills/triage-curator/src/types.ts:1,38-46,142` — collapse the duplicated `KnownIssue*` "mirrors" comments. Line 1 is the "mirrors self-repair-pipeline canonical output" header; lines 38-46 carry the `KnownIssueStatus` / "Closed enum mirroring" comment / `KnownIssueLanguage` type; line 142 is the "Mirrors `ClassifierSpec`" comment. Either re-export from `@ariadnejs/types` or remove the local copies entirely.
+- `.claude/skills/triage-curator/src/types.ts:1,38-46,142` — collapse the duplicated `KnownIssue*` "mirrors" comments. Line 1 is the "mirrors triage-entrypoints canonical output" header; lines 38-46 carry the `KnownIssueStatus` / "Closed enum mirroring" comment / `KnownIssueLanguage` type; line 142 is the "Mirrors `ClassifierSpec`" comment. Either re-export from `@ariadnejs/types` or remove the local copies entirely.
 - `.claude/skills/triage-curator/src/paths.ts:14-26` — `get_registry_file_path()` resolves the skill registry; this stays. Add `get_permanent_slice_path()` sibling pointing at `packages/core/src/classify_entry_points/registry.permanent.json` (used by `.14`).
 
 ## Constraint
 
-The triage-curator's _own_ types (`InvestigateResponse`, `QaResponse`, `CuratorRunSummary`, etc.) stay local. Only types that are properly shared with self-repair-pipeline graduate.
+The triage-curator's _own_ types (`InvestigateResponse`, `QaResponse`, `CuratorRunSummary`, etc.) stay local. Only types that are properly shared with triage-entrypoints graduate.
 
 ## Verification
 
 - `pnpm test` passes in `.claude/skills/triage-curator/`.
-- `grep -rn "from.*self-repair-pipeline" .claude/skills/triage-curator` returns no hits except for paths-only references (e.g. `paths.ts` resolving the skill registry file).
+- `grep -rn "from.*triage-entrypoints" .claude/skills/triage-curator` returns no hits except for paths-only references (e.g. `paths.ts` resolving the skill registry file).
 - `pnpm build` clean across both skills.
 <!-- SECTION:DESCRIPTION:END -->
 
@@ -56,7 +56,7 @@ The triage-curator's _own_ types (`InvestigateResponse`, `QaResponse`, `CuratorR
 - [ ] #4 scripts/finalize_run.ts, scripts/promote_novel_groups.ts, scripts/propose_backlog_tasks.ts cross-skill imports retargeted
 - [ ] #5 src/types.ts mirror comments collapsed; either re-exports or local copies removed
 - [ ] #6 paths.ts gains get_permanent_slice_path() sibling resolving to core's slice
-- [ ] #7 grep returns no remaining 'from .\*self-repair-pipeline' type imports in triage-curator (paths-only references allowed)
+- [ ] #7 grep returns no remaining 'from .\*triage-entrypoints' type imports in triage-curator (paths-only references allowed)
 - [ ] #8 Triage-curator's own InvestigateResponse, QaResponse, CuratorRunSummary types stay local
 - [ ] #9 pnpm test passes in .claude/skills/triage-curator/
 - [ ] #10 pnpm build clean across both skills

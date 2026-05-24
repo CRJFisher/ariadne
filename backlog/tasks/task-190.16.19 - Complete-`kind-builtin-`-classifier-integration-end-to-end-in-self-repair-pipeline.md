@@ -2,12 +2,12 @@
 id: TASK-190.16.19
 title: >-
   Complete `kind:"builtin"` classifier integration end-to-end in
-  self-repair-pipeline
+  triage-entrypoints
 status: Done
 assignee: []
 created_date: "2026-04-24 13:09"
 labels:
-  - self-repair-pipeline
+  - triage-entrypoints
   - auto-classifier
   - curator
   - bug
@@ -25,8 +25,8 @@ priority: high
 > - `EnrichedFunctionEntry` → `EnrichedEntryPoint` (now in `@ariadnejs/types`).
 > - `AutoClassifiedEntry` → `AutoClassifiedEntryPoint`.
 > - `IntrospectionGap` → `SignalLibraryGap` (triage-curator).
-> - `.claude/skills/self-repair-pipeline/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
-> - `.claude/skills/self-repair-pipeline/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
+> - `.claude/skills/triage-entrypoints/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
+> - `.claude/skills/triage-entrypoints/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
 > - Generated builtins live at `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
 > - Bundled permanent slice at `packages/core/src/classify_entry_points/permanent_data.ts` (regen via `pnpm sync-permanent-rules`).
 > See TASK-190.17 for the full migration scope.
@@ -35,9 +35,9 @@ priority: high
 
 ## Problem
 
-The triage-curator emits `classifier.kind === "builtin"` proposals — its validator enforces the shape, its renderer drops a matching `check_<group_id>.ts` into `.claude/skills/self-repair-pipeline/src/auto_classify/builtins/`, and `apply_proposals` writes registry entries with `classifier: { kind: "builtin", function_name, min_confidence }`.
+The triage-curator emits `classifier.kind === "builtin"` proposals — its validator enforces the shape, its renderer drops a matching `check_<group_id>.ts` into `.claude/skills/triage-entrypoints/src/auto_classify/builtins/`, and `apply_proposals` writes registry entries with `classifier: { kind: "builtin", function_name, min_confidence }`.
 
-The downstream `self-repair-pipeline` only knows `"none"` and `"predicate"`, so the refactor that introduced builtins is incomplete. Any registry mutation that lands a builtin entry crashes the post-commit test suite and the downstream renderer, and even when those pass the classifier never actually runs.
+The downstream `triage-entrypoints` only knows `"none"` and `"predicate"`, so the refactor that introduced builtins is incomplete. Any registry mutation that lands a builtin entry crashes the post-commit test suite and the downstream renderer, and even when those pass the classifier never actually runs.
 
 Concrete failure sites (all observed during the 2026-04-24 five-project sweep, artifacts preserved under `~/.ariadne/triage-curator/runs/`):
 
@@ -53,13 +53,13 @@ Complete the builtin integration so an investigator-authored `check_<group_id>.t
 
 ### Type / validator / test
 
-- Extend `ClassifierSpec` in `.claude/skills/self-repair-pipeline/src/known_issues_types.ts` with `{ kind: "builtin"; function_name: string; min_confidence: number }`.
-- Update `validate_classifier_spec` in `.claude/skills/self-repair-pipeline/src/known_issues_registry.ts` to accept `"builtin"` and validate `function_name` is non-empty + `min_confidence ∈ [0, 1]`.
-- Update the kind assertion in `.claude/skills/self-repair-pipeline/src/known_issues_registry.test.ts:77` to include `"builtin"`.
+- Extend `ClassifierSpec` in `.claude/skills/triage-entrypoints/src/known_issues_types.ts` with `{ kind: "builtin"; function_name: string; min_confidence: number }`.
+- Update `validate_classifier_spec` in `.claude/skills/triage-entrypoints/src/known_issues_registry.ts` to accept `"builtin"` and validate `function_name` is non-empty + `min_confidence ∈ [0, 1]`.
+- Update the kind assertion in `.claude/skills/triage-entrypoints/src/known_issues_registry.test.ts:77` to include `"builtin"`.
 
 ### Derived-markdown renderer
 
-- Add a `"builtin"` case to `render_classifier_short` in `.claude/skills/self-repair-pipeline/scripts/render_unsupported_features.ts:135` (e.g. `` `builtin, \`${classifier.function_name}\` (min_confidence ${classifier.min_confidence})` ``).
+- Add a `"builtin"` case to `render_classifier_short` in `.claude/skills/triage-entrypoints/scripts/render_unsupported_features.ts:135` (e.g. `` `builtin, \`${classifier.function_name}\` (min_confidence ${classifier.min_confidence})` ``).
 - Audit `render_entry` at line 99 — the `if (entry.classifier.kind === "predicate")` branch rendering the "Predicate" block must stay unchanged; builtins have no DSL predicate to render.
 
 ### Orchestrator dispatch
@@ -73,11 +73,11 @@ export function check_<function_name>(
 ): boolean;
 ```
 
-Extend `classify_one` in `.claude/skills/self-repair-pipeline/src/auto_classify/orchestrator.ts` so that when `spec.kind === "builtin"`, it loads and invokes the rendered function.
+Extend `classify_one` in `.claude/skills/triage-entrypoints/src/auto_classify/orchestrator.ts` so that when `spec.kind === "builtin"`, it loads and invokes the rendered function.
 
 Design decision to make: static registration vs dynamic lookup. Options:
 
-- **Generated barrel** — finalize regenerates `.claude/skills/self-repair-pipeline/src/auto_classify/builtins/index.ts` exporting a `Record<string, CheckFn>` keyed on `function_name`. Orchestrator imports the map at module load and looks up by `spec.function_name`. Static + type-checked + test-friendly.
+- **Generated barrel** — finalize regenerates `.claude/skills/triage-entrypoints/src/auto_classify/builtins/index.ts` exporting a `Record<string, CheckFn>` keyed on `function_name`. Orchestrator imports the map at module load and looks up by `spec.function_name`. Static + type-checked + test-friendly.
 - **Dynamic import** — orchestrator does `await import(`./builtins/check\_${target_group_id}.js`)` on match. Defers loading; breaks ESM sync semantics of `classify_one`.
 
 Prefer the barrel approach — it keeps `classify_one` synchronous and the dispatch map greppable. Finalize already regenerates derived markdown on registry mutation; adding the barrel to that list is natural.
@@ -91,7 +91,7 @@ Have `finalize_run.ts` regenerate `auto_classify/builtins/index.ts` whenever the
 Resume the in-flight sweep (artifacts preserved under `~/.ariadne/triage-curator/runs/`) — re-render the 23 builtin classifier files, partition the authored-files map per-run (blocked on TASK-190.16.20), and run `finalize_run.ts` for each run. Confirm:
 
 - All 5 runs' finalize exits 0.
-- Registry contains builtin entries without breaking `pnpm test` in `.claude/skills/self-repair-pipeline`.
+- Registry contains builtin entries without breaking `pnpm test` in `.claude/skills/triage-entrypoints`.
 - A follow-up `auto_classify` run against one of the five corpora shows builtin-classifier hits contributing to the auto-classified count.
 
 ## References
@@ -111,7 +111,7 @@ Resume the in-flight sweep (artifacts preserved under `~/.ariadne/triage-curator
 - [x] #4 render_classifier_short handles kind='builtin' with a concise printed form; derived markdown tests cover it
 - [x] #5 auto_classify orchestrator dispatches kind='builtin' classifiers via a regenerated builtins/index.ts barrel and an in-process function call
 - [x] #6 finalize_run regenerates builtins/index.ts whenever the registry mutates, and leaves it consistent with the registry entries
-- [ ] #7 All five triage-curator runs preserved under ~/.ariadne/triage-curator/runs/ finalize successfully with no crash; .claude/skills/self-repair-pipeline pnpm test passes — depends on TASK-190.16.20; deferred to a future sweep run.
+- [ ] #7 All five triage-curator runs preserved under ~/.ariadne/triage-curator/runs/ finalize successfully with no crash; .claude/skills/triage-entrypoints pnpm test passes — depends on TASK-190.16.20; deferred to a future sweep run.
 <!-- AC:END -->
 
 ## Implementation notes

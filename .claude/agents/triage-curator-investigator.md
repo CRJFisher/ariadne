@@ -13,7 +13,7 @@ maxTurns: 200
 
 The novel-issue discovery work — clustering false-positive entries by root
 cause, naming them, picking a canonical name across parallel agents — is
-done by the time you run. The self-repair pipeline's per-entry
+done by the time you run. The triage-entrypoints skill's per-entry
 `triage-investigator` emits per-entry verdicts; the `triage-coordinator`
 consolidates them into `novel_issues[]`; the curator's puller hands you
 exactly one of those consolidated issues.

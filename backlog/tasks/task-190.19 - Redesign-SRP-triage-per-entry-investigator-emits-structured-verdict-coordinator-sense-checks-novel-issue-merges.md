@@ -8,7 +8,7 @@ assignee: []
 created_date: "2026-05-20 10:00"
 labels:
   - self-repair
-  - self-repair-pipeline
+  - triage-entrypoints
   - srp-redesign
   - capstone
 dependencies: []
@@ -148,7 +148,7 @@ Phase E — curator integration:
 
 Phase F — skill rename:
 
-- **190.19.9** — Rename `self-repair-pipeline` skill to `triage-entrypoints` (`git mv` + cross-ref sweep). Macro-name "self-healing pipeline" retained for the chain-level concept.
+- **190.19.9** — Rename `triage-entrypoints` skill to `triage-entrypoints` (`git mv` + cross-ref sweep). Macro-name "self-healing pipeline" retained for the chain-level concept.
 
 Phase G — docs & diagrams:
 
@@ -174,5 +174,5 @@ Phase G — docs & diagrams:
 - [ ] #5 No backwards-compatibility shims; downstream consumers (curator, fix-sequencer reconciler, `diff_runs`) updated to read `novel_issues.json` directly
 - [ ] #6 `triage-entrypoints` README and curator README diagrams reflect the collapsed Phase 4 — no `rough-aggregator` / `group-investigator` boxes remain
 - [ ] #7 Classifier-lifecycle write-boundary contract is preserved — `triage-coordinator` writes only the per-run `novel_issues.json`
-- [ ] #8 Skill renamed from `self-repair-pipeline` to `triage-entrypoints` via `git mv`; macro-name "self-healing pipeline" retained as the chain-level concept
+- [ ] #8 Skill renamed from `triage-entrypoints` to `triage-entrypoints` via `git mv`; macro-name "self-healing pipeline" retained as the chain-level concept
 <!-- AC:END -->

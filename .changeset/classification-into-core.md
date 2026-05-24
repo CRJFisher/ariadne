@@ -32,7 +32,7 @@ The new types are: `ClassifiedEntryPoint`, `ClassifiedEntryPoints`,
 ## Persisted-state preservation policy
 
 If you run the self-healing pipeline locally, **do not** delete
-`~/.ariadne/self-repair-pipeline/analysis_output/`. That directory is the
+`~/.ariadne/triage-entrypoints/analysis_output/`. That directory is the
 permanent source of truth for the per-project TP cache; wiping it kills
 cross-run TP reuse and forces every previously-confirmed entry point back
 through the LLM investigator.
@@ -40,10 +40,10 @@ through the LLM investigator.
 Upgrade steps for projects with pre-run-namespaced state:
 
 - Stale "active" runs: clear the `LATEST` pointer with
-  `.claude/skills/self-repair-pipeline/scripts/abandon_run.ts` or by deleting
+  `.claude/skills/triage-entrypoints/scripts/abandon_run.ts` or by deleting
   the `LATEST` file.
 - Pre-run-namespaced state: run
-  `.claude/skills/self-repair-pipeline/scripts/migrate_legacy_state.ts --project <name>`
+  `.claude/skills/triage-entrypoints/scripts/migrate_legacy_state.ts --project <name>`
   (or `--purge` to drop history).
 
 The persistence-cache schema version (`packages/core/src/persistence/cache_manifest.ts`)

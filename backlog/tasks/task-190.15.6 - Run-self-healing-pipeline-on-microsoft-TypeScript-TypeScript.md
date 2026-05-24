@@ -19,7 +19,7 @@ priority: medium
 
 **Why**: The TypeScript compiler itself. Conditional types, mapped types, recursive generics, complex type inference, declaration merging, namespaces, discriminated unions, utility type implementations. ~100k+ lines.
 
-**Run**: `/self-repair-pipeline microsoft/TypeScript`
+**Run**: `/triage-entrypoints microsoft/TypeScript`
 
 Record any false positives, parse errors, or pipeline crashes.
 <!-- SECTION:DESCRIPTION:END -->

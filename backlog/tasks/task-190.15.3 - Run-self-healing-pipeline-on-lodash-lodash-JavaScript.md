@@ -19,7 +19,7 @@ priority: medium
 
 **Why**: Definitive JS functional utility library. Currying, partial application, lazy evaluation via `_.chain()`, memoization, HOF, iteratee shorthands, dual CJS/ESM build, `lodash/fp` auto-curried variants.
 
-**Run**: `/self-repair-pipeline lodash/lodash`
+**Run**: `/triage-entrypoints lodash/lodash`
 
 Record any false positives, parse errors, or pipeline crashes.
 <!-- SECTION:DESCRIPTION:END -->

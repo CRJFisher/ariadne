@@ -9,7 +9,7 @@
  * the prompt to stdout.
  *
  * Usage:
- *   node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts --project mocha --entry 62
+ *   node --import tsx .claude/skills/triage-entrypoints/scripts/get_entry_context.ts --project mocha --entry 62
  */
 
 import fs from "fs";

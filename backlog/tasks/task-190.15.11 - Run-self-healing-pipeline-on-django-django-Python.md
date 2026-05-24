@@ -19,7 +19,7 @@ priority: medium
 
 **Why**: `ModelBase` metaclass inspects class bodies to build field registries, custom descriptors for field access, `__dunder__` methods (`__get__`, `__set__`, `__init_subclass__`), class-based views with deep inheritance, decorators for routing/permissions/caching, `transaction.atomic` context managers. ~300k+ lines, dates to 2005.
 
-**Run**: `/self-repair-pipeline django/django`
+**Run**: `/triage-entrypoints django/django`
 
 Record any false positives, parse errors, or pipeline crashes.
 <!-- SECTION:DESCRIPTION:END -->

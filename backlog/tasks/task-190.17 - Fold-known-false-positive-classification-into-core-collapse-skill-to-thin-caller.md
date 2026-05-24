@@ -25,7 +25,7 @@ priority: high
 
 ## Why
 
-Today `Project.get_call_graph().entry_points` returns a raw `SymbolId[]` that mixes true positives with **known false positives** — `@app.route` handlers, pytest fixtures, Python dunders, JSX components, dynamic dispatch, etc. The knowledge of these blind spots already exists, but it lives in `.claude/skills/self-repair-pipeline/` (179 rules: 8 `permanent`, 171 `wip`). Every fresh consumer of the core API (the MCP `list_entrypoints` tool, library users, future skills) re-receives the noise.
+Today `Project.get_call_graph().entry_points` returns a raw `SymbolId[]` that mixes true positives with **known false positives** — `@app.route` handlers, pytest fixtures, Python dunders, JSX components, dynamic dispatch, etc. The knowledge of these blind spots already exists, but it lives in `.claude/skills/triage-entrypoints/` (179 rules: 8 `permanent`, 171 `wip`). Every fresh consumer of the core API (the MCP `list_entrypoints` tool, library users, future skills) re-receives the noise.
 
 This sub-tree moves classification into `@ariadnejs/core` so that:
 

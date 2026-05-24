@@ -7,7 +7,7 @@ status: Done
 assignee: []
 created_date: '2026-04-22 14:00'
 labels:
-  - self-repair-pipeline
+  - triage-entrypoints
   - signal-gap
 dependencies: []
 parent_task_id: TASK-190.16
@@ -21,8 +21,8 @@ parent_task_id: TASK-190.16
 > - `EnrichedFunctionEntry` → `EnrichedEntryPoint` (now in `@ariadnejs/types`).
 > - `AutoClassifiedEntry` → `AutoClassifiedEntryPoint`.
 > - `IntrospectionGap` → `SignalLibraryGap` (triage-curator).
-> - `.claude/skills/self-repair-pipeline/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
-> - `.claude/skills/self-repair-pipeline/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
+> - `.claude/skills/triage-entrypoints/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
+> - `.claude/skills/triage-entrypoints/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
 > - Generated builtins live at `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
 > - Bundled permanent slice at `packages/core/src/classify_entry_points/permanent_data.ts` (regen via `pnpm sync-permanent-rules`).
 > See TASK-190.17 for the full migration scope.

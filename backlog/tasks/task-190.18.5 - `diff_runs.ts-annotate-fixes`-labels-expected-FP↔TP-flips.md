@@ -25,7 +25,7 @@ Once the registry tracks `fixed_commit`, run-diff output should distinguish *exp
 
 ## Scope
 
-- File: `.claude/skills/self-repair-pipeline/scripts/diff_runs.ts`
+- File: `.claude/skills/triage-entrypoints/scripts/diff_runs.ts`
 - Add `--annotate-fixes` flag (opt-in; default off)
 - For each transitioned entry, look up the registry's `fixed_commit`
 - If the previous run is at a commit BEFORE `fixed_commit` and the new run is at/after, label the transition as `expected: registry entry <group_id> fixed at <commit>`

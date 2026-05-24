@@ -1,5 +1,5 @@
 /**
- * Curator absorb path for the SRP run's `classifier_regressions` aggregate.
+ * Curator absorb path for the triage-entrypoints run's `classifier_regressions` aggregate.
  *
  * For each `rule_id` the per-entry triage-investigator flagged as having
  * *should-have-matched* this run, the curator marks the wip registry row as
@@ -45,7 +45,7 @@ export function absorb_classifier_regressions(
   regressions: readonly ClassifierRegressionFlag[],
 ): AbsorbClassifierRegressionsResult {
   // Merge flagged_entries across any duplicate `rule_id` entries in the
-  // input. The SRP aggregator dedupes upstream, but the function contract
+  // input. The triage-entrypoints aggregator dedupes upstream, but the function contract
   // does not forbid duplicate rule_id flags from a future caller.
   const entries_by_rule_id = new Map<string, ClassifierRegressionFlaggedEntry[]>();
   for (const flag of regressions) {

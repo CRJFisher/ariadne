@@ -4,11 +4,11 @@
  *
  * Runs Ariadne against git-modified packages and cross-checks flagged entry
  * points against the project's static known-entrypoints whitelist at
- * ~/.ariadne/self-repair-pipeline/known_entrypoints/<package>.json. Blocks the
+ * ~/.ariadne/triage-entrypoints/known_entrypoints/<package>.json. Blocks the
  * session if any exported-but-uncalled entry point is not on the whitelist.
  *
  * The whitelist is human-maintained (edit the JSON and commit). This hook only
- * reads it — it never writes. The self-repair pipeline's classifier registry is
+ * reads it — it never writes. The triage-entrypoints skill's classifier registry is
  * a separate concern and is not consulted here.
  */
 
@@ -93,7 +93,7 @@ async function load_whitelist(package_name: string): Promise<Set<string>> {
   const registry_path = path.join(
     os.homedir(),
     ".ariadne",
-    "self-repair-pipeline",
+    "triage-entrypoints",
     "known_entrypoints",
     `${package_name}.json`
   );

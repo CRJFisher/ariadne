@@ -19,7 +19,7 @@ priority: medium
 
 **Why**: Async-first SQL toolkit with compile-time query checking. Proc macros that query a live DB at compile time (`query!`, `query_as!`), complex lifetime management for borrowed query results, `Executor`/`Encode`/`Decode` trait abstraction, async streams (implementing `Stream`), unsafe FFI with native DB clients, multi-crate workspace.
 
-**Run**: `/self-repair-pipeline launchbadge/sqlx`
+**Run**: `/triage-entrypoints launchbadge/sqlx`
 
 Record any false positives, parse errors, or pipeline crashes.
 <!-- SECTION:DESCRIPTION:END -->

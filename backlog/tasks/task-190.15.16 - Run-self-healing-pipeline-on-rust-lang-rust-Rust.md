@@ -19,7 +19,7 @@ priority: medium
 
 **Why**: The Rust compiler itself. Proc macros (bootstrapped), complex trait hierarchies and generics, lifetimes everywhere, unsafe (LLVM bindings), pattern matching on deeply nested enums (AST/HIR/MIR), closures and iterators, modules at massive scale, trait objects for compiler passes.
 
-**Run**: `/self-repair-pipeline rust-lang/rust`
+**Run**: `/triage-entrypoints rust-lang/rust`
 
 Record any false positives, parse errors, or pipeline crashes.
 <!-- SECTION:DESCRIPTION:END -->

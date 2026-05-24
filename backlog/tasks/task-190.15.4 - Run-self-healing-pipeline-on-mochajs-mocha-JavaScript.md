@@ -19,7 +19,7 @@ priority: medium
 
 **Why**: Mature JS testing framework (Node + browser). Prototypal inheritance for Runner/Suite/Test, multiple async patterns (callbacks, Promises, async/await, generators), EventEmitter composition, plugin-style reporters, CommonJS modules.
 
-**Run**: `/self-repair-pipeline mochajs/mocha`
+**Run**: `/triage-entrypoints mochajs/mocha`
 
 Record any false positives, parse errors, or pipeline crashes.
 <!-- SECTION:DESCRIPTION:END -->

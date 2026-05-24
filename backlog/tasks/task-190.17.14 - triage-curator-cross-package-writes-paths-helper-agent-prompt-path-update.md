@@ -41,7 +41,7 @@ The triage-curator's `finalize_run.ts` script writes generated classifier source
   const barrel_path = get_core_builtins_barrel_path(); // resolves to packages/core/src/classify_entry_points/builtins/index.ts
   ```
 - ADD: `get_core_builtins_barrel_path()` and `get_core_builtins_dir()` helpers in `.claude/skills/triage-curator/src/paths.ts` (or wherever curator path helpers live).
-- `.claude/agents/triage-curator-investigator.md:205` — update path string from `.claude/skills/self-repair-pipeline/src/auto_classify/builtins/check_<group_id>.ts` to `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
+- `.claude/agents/triage-curator-investigator.md:205` — update path string from `.claude/skills/triage-entrypoints/src/auto_classify/builtins/check_<group_id>.ts` to `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
 - Update bug-task body templates in `render_ariadne_bug_body.ts:108-110` and `propose_backlog_tasks.ts:144` — AC checklists should now reference `registry.permanent.json` (the regenerated slice) alongside the canonical registry, not just the skill-local registry.
 - Add a SKILL.md section to `.claude/skills/triage-curator/SKILL.md` documenting that curator's `finalize_run` writes core source on every run; the commit story now spans both skill and package.
 

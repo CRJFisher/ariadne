@@ -1,12 +1,12 @@
 ---
-name: self-repair-pipeline
-description: Runs the full entry point self-repair pipeline. Detects entry points in Ariadne packages or external codebases, triages false positives via per-entry investigators, and consolidates novel issues inline via a coordinator.
+name: triage-entrypoints
+description: Triage stage for entry-point candidates. Detects entry points in Ariadne packages or external codebases, triages false positives via per-entry investigators, and consolidates novel issues inline via a coordinator.
 argument-hint: "[config-name | /path/to/repo | owner/repo (GitHub)]"
 disable-model-invocation: true
 allowed-tools: Bash(node --import tsx:*), Bash(ls:*), Read, Write, Glob, Task(triage-investigator, triage-coordinator)
 ---
 
-# Self-Repair Pipeline
+# Triage Entrypoints
 
 Triage pipeline for entry point analysis: detect false positives and classify root causes. Supports both self-analysis (Ariadne packages) and external codebase analysis.
 
@@ -39,8 +39,8 @@ Resolve the analysis target from the remaining input using this routing table:
 
 | Input pattern                       | Example                                                  | Action                                                                                                                           |
 | ----------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Empty or blank                      | `/self-repair-pipeline`                                  | List available configs below, ask user what to analyze                                                                           |
-| Config name                         | `core`, `mcp`, `types`, `projections`                    | Use `--config ~/.ariadne/self-repair-pipeline/project_configs/{name}.json`                                                       |
+| Empty or blank                      | `/triage-entrypoints`                                  | List available configs below, ask user what to analyze                                                                           |
+| Config name                         | `core`, `mcp`, `types`, `projections`                    | Use `--config ~/.ariadne/triage-entrypoints/project_configs/{name}.json`                                                       |
 | Absolute or relative directory path | `/Users/chuck/workspace/some-repo`, `../other-repo`      | If a project config exists for this path, use `--config <config-path>`; otherwise follow **Creating a New Project Config** below |
 | `owner/repo` or GitHub URL          | `anthropics/sdk-python`, `https://github.com/owner/repo` | Use `--github <value>`                                                                                                           |
 | Natural language                    | "analyze the core package"                               | Interpret intent and map to one of the above                                                                                     |
@@ -53,7 +53,7 @@ When the input is a directory path and a project config already exists for that 
 2. Run the folder preview to see what would be indexed:
 
    ```bash
-   node --import tsx .claude/skills/self-repair-pipeline/scripts/preview_folders.ts \
+   node --import tsx .claude/skills/triage-entrypoints/scripts/preview_folders.ts \
      --path <abs_path>
    ```
 
@@ -65,23 +65,23 @@ When the input is a directory path and a project config already exists for that 
    - `exclude`: the list the user confirmed in step 4
    - `project_name` is auto-derived for external projects via `path_to_project_id(project_path)` — do not include it in the config. Only internal projects (`project_path: "."`) require an explicit `project_name`.
 6. Show the proposed config and ask for final confirmation.
-7. Save to `~/.ariadne/self-repair-pipeline/project_configs/{name}.json`.
-8. Continue the pipeline with `--config ~/.ariadne/self-repair-pipeline/project_configs/{name}.json`.
+7. Save to `~/.ariadne/triage-entrypoints/project_configs/{name}.json`.
+8. Continue the pipeline with `--config ~/.ariadne/triage-entrypoints/project_configs/{name}.json`.
 
 Available project configs:
 
 | Config name   | Config path                                                        |
 | ------------- | ------------------------------------------------------------------ |
-| `core`        | `~/.ariadne/self-repair-pipeline/project_configs/core.json`        |
-| `mcp`         | `~/.ariadne/self-repair-pipeline/project_configs/mcp.json`         |
-| `types`       | `~/.ariadne/self-repair-pipeline/project_configs/types.json`       |
-| `projections` | `~/.ariadne/self-repair-pipeline/project_configs/projections.json` |
+| `core`        | `~/.ariadne/triage-entrypoints/project_configs/core.json`        |
+| `mcp`         | `~/.ariadne/triage-entrypoints/project_configs/mcp.json`         |
+| `types`       | `~/.ariadne/triage-entrypoints/project_configs/types.json`       |
+| `projections` | `~/.ariadne/triage-entrypoints/project_configs/projections.json` |
 
 If no arguments are provided or the input is ambiguous, **ask the user** before proceeding.
 
 ## Current State
 
-!`node --import tsx .claude/skills/self-repair-pipeline/scripts/get_triage_summary.ts 2>/dev/null || echo "No active triage"`
+!`node --import tsx .claude/skills/triage-entrypoints/scripts/get_triage_summary.ts 2>/dev/null || echo "No active triage"`
 
 ## State and Output Locations
 
@@ -100,13 +100,13 @@ Scripts that operate on existing triage state take `--project <name>` (`prepare_
 | `analysis_output/{project}/detect_entrypoints/{ts}.json`            | Detection output (kept project-scoped; one detection feeds many triage runs)                                                                     |
 | `analysis_output/{project}/triage_results/{run-id}.json`            | Published triage results (schema v4: `novel_issues`, `classifier_regressions`, `confirmed_unreachable`, `uncertain`, with relative file paths) |
 
-All paths above are relative to `~/.ariadne/self-repair-pipeline/`. Run-ids have the form `<short-commit>-<iso-ts>` (e.g. `deadbee-2026-04-28T13-42-07.812Z`); `nogit-<iso-ts>` when the target is not a git repo.
+All paths above are relative to `~/.ariadne/triage-entrypoints/`. Run-ids have the form `<short-commit>-<iso-ts>` (e.g. `deadbee-2026-04-28T13-42-07.812Z`); `nogit-<iso-ts>` when the target is not a git repo.
 
 **Classifier registry write boundary**: this skill reads `known_issues/registry.json` but **never writes to it**. All registry mutations go through the triage-curator (`wip` lifecycle) and the fix-sequencer reconciler (`wip → fixed`). See `.claude/rules/classifier-lifecycle.md` for the canonical writer matrix.
 
 Phase 3-4 scripts default to the run pointed at by `LATEST`; pass `--run-id <id>` to operate on a specific run. `prepare_triage` writes `LATEST` and `finalize_triage` clears it.
 
-The dead-code whitelist at `known_entrypoints/<package>.json` (also under `~/.ariadne/self-repair-pipeline/`) is owned by the `detect_dead_code` Stop hook and is never read or written by this pipeline. See **Dead-code guardrail** below.
+The dead-code whitelist at `known_entrypoints/<package>.json` (also under `~/.ariadne/triage-entrypoints/`) is owned by the `detect_dead_code` Stop hook and is never read or written by this pipeline. See **Dead-code guardrail** below.
 
 ## Phase 1: Detect
 
@@ -114,19 +114,19 @@ Use the target resolved from the **Analysis Target** section above to construct 
 
 ```bash
 # From project config (preferred for Ariadne packages)
-node --import tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts \
-  --config ~/.ariadne/self-repair-pipeline/project_configs/core.json
+node --import tsx .claude/skills/triage-entrypoints/scripts/detect_entrypoints.ts \
+  --config ~/.ariadne/triage-entrypoints/project_configs/core.json
 
 # Local repository
-node --import tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts --path /path/to/repo
+node --import tsx .claude/skills/triage-entrypoints/scripts/detect_entrypoints.ts --path /path/to/repo
 
 # GitHub repository
-node --import tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts --github owner/repo
+node --import tsx .claude/skills/triage-entrypoints/scripts/detect_entrypoints.ts --github owner/repo
 ```
 
 Options: `--config <file>`, `--path <dir>`, `--github <repo>`, `--branch <name>`, `--depth <n>`. Folder filters, exclusions, and test inclusion are declared in the project config file, not as CLI flags.
 
-Tracked project configs for Ariadne packages: `~/.ariadne/self-repair-pipeline/project_configs/{core,mcp,types}.json`
+Tracked project configs for Ariadne packages: `~/.ariadne/triage-entrypoints/project_configs/{core,mcp,types}.json`
 
 Output: `analysis_output/<project>/detect_entrypoints/<timestamp>.json`
 
@@ -135,8 +135,8 @@ Output: `analysis_output/<project>/detect_entrypoints/<timestamp>.json`
 Build triage state from the latest analysis output:
 
 ```bash
-node --import tsx .claude/skills/self-repair-pipeline/scripts/prepare_triage.ts \
-  --analysis ~/.ariadne/self-repair-pipeline/analysis_output/<project>/detect_entrypoints/<timestamp>.json \
+node --import tsx .claude/skills/triage-entrypoints/scripts/prepare_triage.ts \
+  --analysis ~/.ariadne/triage-entrypoints/analysis_output/<project>/detect_entrypoints/<timestamp>.json \
   --project <name> \
   [--max-count $MAX_COUNT]   # omit to use default of 150
 ```
@@ -176,7 +176,7 @@ Every script takes `--project <name>` — use the project captured in Phase 2. T
 Run once to pick up to `N` pending entries:
 
 ```bash
-node --import tsx .claude/skills/self-repair-pipeline/scripts/get_next_triage_entry.ts \
+node --import tsx .claude/skills/triage-entrypoints/scripts/get_next_triage_entry.ts \
   --project <name> --count 5
 ```
 
@@ -198,7 +198,7 @@ Track the set of in-flight entry indices locally — it seeds `--active` on the 
 Whenever any background investigator completes, remove its entry index from the in-flight set, then run the script once with the remaining in-flight indices:
 
 ```bash
-node --import tsx .claude/skills/self-repair-pipeline/scripts/get_next_triage_entry.ts \
+node --import tsx .claude/skills/triage-entrypoints/scripts/get_next_triage_entry.ts \
   --project <name> --active 7,12,18,23
 ```
 
@@ -245,7 +245,7 @@ Per-run, the dispatcher is the **single writer** of `novel_issues.json`. Each is
 Run after Phase 3 sets `phase = "complete"`.
 
 ```bash
-node --import tsx .claude/skills/self-repair-pipeline/scripts/finalize_triage.ts \
+node --import tsx .claude/skills/triage-entrypoints/scripts/finalize_triage.ts \
   --project <name>
 ```
 
@@ -285,7 +285,7 @@ Two known leaks (accepted; document for users):
 ## Comparing Runs
 
 ```bash
-node --import tsx .claude/skills/self-repair-pipeline/scripts/diff_runs.ts \
+node --import tsx .claude/skills/triage-entrypoints/scripts/diff_runs.ts \
   --project <name> --from <run-id> --to <run-id> [--format text|json]
 ```
 
@@ -294,7 +294,7 @@ Output highlights TP↔FP flips (regression candidates), entries that appeared/d
 ## Run Retention
 
 ```bash
-node --import tsx .claude/skills/self-repair-pipeline/scripts/prune_runs.ts \
+node --import tsx .claude/skills/triage-entrypoints/scripts/prune_runs.ts \
   --project <name> [--keep <n>] [--dry-run]
 ```
 
@@ -346,7 +346,7 @@ node --import tsx scripts/migrate_legacy_state.ts --project <name> --purge
 
 ## Persisted-State Preservation Policy
 
-The pipeline writes three kinds of persisted state under `~/.ariadne/self-repair-pipeline/`. Each has a different preservation contract — wiping the wrong one silently destroys cross-run TP reuse.
+The pipeline writes three kinds of persisted state under `~/.ariadne/triage-entrypoints/`. Each has a different preservation contract — wiping the wrong one silently destroys cross-run TP reuse.
 
 | State                                                                      | Status               | Action on upgrade                                                                                                                                                                                                                                                                                                       |
 | -------------------------------------------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -361,7 +361,7 @@ The pipeline writes three kinds of persisted state under `~/.ariadne/self-repair
 
 ## Dead-code guardrail
 
-Orthogonal to the self-repair pipeline. The `detect_dead_code` Stop hook (`.claude/hooks/detect_dead_code.ts`, registered in `.claude/settings.json`) runs Ariadne against git-modified packages after each Claude Code session and cross-checks flagged entry points against a per-package whitelist at `~/.ariadne/self-repair-pipeline/known_entrypoints/<package>.json`. Exported-but-uncalled entry points not on the whitelist block the session.
+Orthogonal to this skill. The `detect_dead_code` Stop hook (`.claude/hooks/detect_dead_code.ts`, registered in `.claude/settings.json`) runs Ariadne against git-modified packages after each Claude Code session and cross-checks flagged entry points against a per-package whitelist at `~/.ariadne/triage-entrypoints/known_entrypoints/<package>.json`. Exported-but-uncalled entry points not on the whitelist block the session.
 
 The whitelist is **human-owned**. Add a legitimate entry point by editing the package's JSON file and committing:
 
@@ -377,7 +377,7 @@ The whitelist is **human-owned**. Add a legitimate entry point by editing the pa
 ]
 ```
 
-The self-repair pipeline does not read or write this whitelist. If you previously ran the pipeline under an older version that auto-appended `confirmed-unreachable` entries, audit each `known_entrypoints/<package>.json` once and delete any entries you do not actually want gated as legitimate entry points.
+This skill does not read or write this whitelist. If you previously ran the pipeline under an older version that auto-appended `confirmed-unreachable` entries, audit each `known_entrypoints/<package>.json` once and delete any entries you do not actually want gated as legitimate entry points.
 
 ## Architecture: Key Modules
 

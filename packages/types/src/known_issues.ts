@@ -1,12 +1,12 @@
 /**
  * Canonical catalog of Ariadne's known failure modes. Stored on disk as
- * `.claude/skills/self-repair-pipeline/known_issues/registry.json` and consumed
+ * `.claude/skills/triage-entrypoints/known_issues/registry.json` and consumed
  * by the `auto_classify` pipeline stage and by the triage-curator skill.
  *
  * Orthogonal to the dead-code whitelist read by the `detect_dead_code` Stop
- * hook — that lives at `~/.ariadne/self-repair-pipeline/known_entrypoints/<pkg>.json`
+ * hook — that lives at `~/.ariadne/triage-entrypoints/known_entrypoints/<pkg>.json`
  * and is a separate, human-maintained list of legitimate entry points. The
- * self-repair pipeline never reads or writes that whitelist.
+ * triage-entrypoints never reads or writes that whitelist.
  */
 
 import type { DefinitionFeatureName, SyntacticFeatureName } from "./entry_point.js";
@@ -58,7 +58,7 @@ export interface KnownIssue {
    * - `source: "qa-sample"` — the curator's lagging QA-loop tag when an
    *   outlier rate over the sample crosses the drift threshold.
    * - `source: "in-flight"` — the per-entry triage-investigator's
-   *   `fp-classifier-regression` verdict, surfaced through the SRP run's
+   *   `fp-classifier-regression` verdict, surfaced through the triage-entrypoints run's
    *   `classifier_regressions` aggregate.
    *
    * Both signals coexist; the field is append-only across runs so the human
@@ -71,7 +71,7 @@ export type DriftEvidenceSource = "qa-sample" | "in-flight";
 
 export interface DriftEvidence {
   /**
-   * For `source: "in-flight"`, the entry index from the SRP run's per-entry
+   * For `source: "in-flight"`, the entry index from the triage-entrypoints run's per-entry
    * triage state that produced the verdict. For `source: "qa-sample"`, the
    * `entry_index` field from the QA outlier the curator's QA sub-agent
    * flagged.
@@ -87,7 +87,7 @@ export interface DriftEvidence {
 }
 
 /**
- * One rule's flagged entries from a single SRP run's `classifier_regressions`
+ * One rule's flagged entries from a single triage-entrypoints run's `classifier_regressions`
  * aggregate. Mirrors the on-disk JSONL record shape emitted by the per-entry
  * triage-investigator's `fp-classifier-regression` verdict, grouped by
  * `rule_id` for the curator's drift-absorb path.

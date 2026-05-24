@@ -43,22 +43,22 @@ If a future renderer change drifts (a regression), CI catches it via the `git di
 
 ## Renderer retarget
 
-`.claude/skills/self-repair-pipeline/src/auto_classify/render_builtins_barrel.ts`:
+`.claude/skills/triage-entrypoints/src/auto_classify/render_builtins_barrel.ts`:
 
-- Output path: `packages/core/src/classify_entry_points/builtins/index.ts` (was: `.claude/skills/self-repair-pipeline/src/auto_classify/builtins/index.ts`).
+- Output path: `packages/core/src/classify_entry_points/builtins/index.ts` (was: `.claude/skills/triage-entrypoints/src/auto_classify/builtins/index.ts`).
 - Emitted import header: `import type { EnrichedEntryPoint } from "@ariadnejs/types"` (was: `import type { EnrichedFunctionEntry } from "../../entry_point_types.js"`).
 - Source data: full skill registry filter `status: "permanent" && classifier.kind === "builtin"`. (`predicate` and `none` rules don't need a barrel entry.)
 
 ## Permanent-slice generator
 
-ADD: `.claude/skills/self-repair-pipeline/scripts/sync_permanent_rules.ts` — generates `packages/core/src/classify_entry_points/registry.permanent.json` from `.claude/skills/self-repair-pipeline/known_issues/registry.json`, filtering `status === "permanent" && classifier.kind !== "none"`. Preserves field order for stable diffs.
+ADD: `.claude/skills/triage-entrypoints/scripts/sync_permanent_rules.ts` — generates `packages/core/src/classify_entry_points/registry.permanent.json` from `.claude/skills/triage-entrypoints/known_issues/registry.json`, filtering `status === "permanent" && classifier.kind !== "none"`. Preserves field order for stable diffs.
 
 ## Build wrapper
 
 ADD: `pnpm sync-permanent-rules` script in the **root** `package.json` (or a workspace-level command). Runs:
 
-1. `tsx .claude/skills/self-repair-pipeline/scripts/sync_permanent_rules.ts`
-2. `tsx .claude/skills/self-repair-pipeline/src/auto_classify/render_builtins_barrel.ts` (or whatever the new entry-point command is)
+1. `tsx .claude/skills/triage-entrypoints/scripts/sync_permanent_rules.ts`
+2. `tsx .claude/skills/triage-entrypoints/src/auto_classify/render_builtins_barrel.ts` (or whatever the new entry-point command is)
 
 ## CI integration
 

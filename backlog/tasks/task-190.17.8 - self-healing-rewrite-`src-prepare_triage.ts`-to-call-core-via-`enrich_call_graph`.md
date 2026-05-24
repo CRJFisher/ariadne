@@ -27,7 +27,7 @@ Replace the in-skill `auto_classify` invocation with a call to the new core API.
 
 ## Changes
 
-- `.claude/skills/self-repair-pipeline/src/prepare_triage.ts:58` — replace the call:
+- `.claude/skills/triage-entrypoints/src/prepare_triage.ts:58` — replace the call:
 
   ```ts
   // before
@@ -44,7 +44,7 @@ Replace the in-skill `auto_classify` invocation with a call to the new core API.
   // map enriched.classified_entry_points into the existing skill-internal shape
   ```
 
-- `.claude/skills/self-repair-pipeline/src/prepare_triage.ts:14` — drop the `auto_classify` import; add `enrich_call_graph` from `@ariadnejs/core`.
+- `.claude/skills/triage-entrypoints/src/prepare_triage.ts:14` — drop the `auto_classify` import; add `enrich_call_graph` from `@ariadnejs/core`.
 - The skill's `prepare_triage()` function must still return the `{ entries, stats }` shape consumed by `scripts/prepare_triage.ts`. Adapt the core output via a small mapping function.
 - The script (`scripts/prepare_triage.ts`) is unchanged — it already does the run-lifecycle work (manifest, LATEST pointer, tp*cache integration at lines 203-249). The tp_cache is layered \_on top of* classification, so it still works correctly with classification-from-core.
 
@@ -58,7 +58,7 @@ The pipeline calls `enrich_call_graph(call_graph, project, { registry: full_skil
 
 ## Verification
 
-- `pnpm test` in `.claude/skills/self-repair-pipeline/` passes.
+- `pnpm test` in `.claude/skills/triage-entrypoints/` passes.
 - `pnpm exec tsx scripts/prepare_triage.ts --analysis <fixture> --project <name>` produces a run directory with the same shape as before.
 - The classification output for permanent + wip rule matches lines up with what `auto_classify` produced pre-rewrite (sanity check via a one-off diff).
 <!-- SECTION:DESCRIPTION:END -->
@@ -73,7 +73,7 @@ The pipeline calls `enrich_call_graph(call_graph, project, { registry: full_skil
 - [x] #4 Mapping from EnrichedCallGraph.classified_entry_points to skill-internal entries preserved
 - [x] #5 scripts/prepare_triage.ts is not modified (tp_cache flow unaffected)
 - [x] #6 Full skill registry is passed to enrich_call_graph (not the permanent slice)
-- [x] #7 pnpm test passes in .claude/skills/self-repair-pipeline/
+- [x] #7 pnpm test passes in .claude/skills/triage-entrypoints/
 - [x] #8 Diff vs pre-rewrite shows zero classification changes on a representative fixture
 - [x] #9 Out-of-scope (explicit non-changes): src/tp_cache.ts, src/run_discovery.ts, src/triage_state_paths.ts, src/triage_state_types.ts, RunManifest/TpCacheRecord types, and lifecycle scripts (list_runs, abandon_run, prune_runs, diff_runs, migrate_legacy_state) all remain in the skill; they are operator-state concerns wrapping the new core API and do not depend on classifier internals
 <!-- AC:END -->

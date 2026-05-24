@@ -22,7 +22,7 @@ Ariadne's entry-point detector flags inline arrow callbacks passed as arguments 
 
 ## Observed false positives (current `main` of `feat/self-healing-pipeline-debug`)
 
-7 sites in `packages/core`, all whitelisted under `~/.ariadne/self-repair-pipeline/known_entrypoints/core.json` source `known-false-positives`:
+7 sites in `packages/core`, all whitelisted under `~/.ariadne/triage-entrypoints/known_entrypoints/core.json` source `known-false-positives`:
 
 - `packages/core/src/index_single_file/definitions/definitions.ts:201` — `(state, id) => {…}` passed to `Map.forEach` on `this.functions`
 - `packages/core/src/index_single_file/definitions/definitions.ts:204` — same pattern on `this.classes`
@@ -52,7 +52,7 @@ For built-ins (`Map.forEach`, `Array.forEach`, `Array.map`, `Array.filter`, `Arr
 - [ ] Inline arrow callbacks passed to `Map<K,V>.forEach` / `Array.forEach` / `Array.map` / `Array.filter` / `Array.reduce` / `Promise.then` are not reported as entry points.
 - [ ] Inline arrow callbacks passed as function-typed arguments to user-defined functions/methods are not reported as entry points when the callee invokes that parameter.
 - [ ] Existing entry-point detection still flags genuine unreached exported callables.
-- [ ] Once fixed, remove the `known-false-positives` source from `~/.ariadne/self-repair-pipeline/known_entrypoints/core.json`. Verify the Stop hook passes against the 7 sites listed above without that whitelist entry.
+- [ ] Once fixed, remove the `known-false-positives` source from `~/.ariadne/triage-entrypoints/known_entrypoints/core.json`. Verify the Stop hook passes against the 7 sites listed above without that whitelist entry.
 
 ## Out of scope
 
@@ -62,6 +62,6 @@ For built-ins (`Map.forEach`, `Array.forEach`, `Array.map`, `Array.filter`, `Arr
 ## References
 
 - Detection hook: `.claude/hooks/detect_dead_code.ts`
-- Whitelist file: `~/.ariadne/self-repair-pipeline/known_entrypoints/core.json` (source `known-false-positives`)
+- Whitelist file: `~/.ariadne/triage-entrypoints/known_entrypoints/core.json` (source `known-false-positives`)
 - Related call-resolution code: `packages/core/src/resolve_references/call_resolution/`
 <!-- SECTION:DESCRIPTION:END -->

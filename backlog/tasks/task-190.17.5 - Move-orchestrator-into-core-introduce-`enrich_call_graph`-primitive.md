@@ -27,11 +27,11 @@ Move the rule-application orchestrator and predicate evaluator from the skill in
 
 | Source (skill)                                                                             | Destination                                                        |
 | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| `.claude/skills/self-repair-pipeline/src/auto_classify/orchestrator.ts`                    | `packages/core/src/classify_entry_points/classify_entry_points.ts` |
-| `.claude/skills/self-repair-pipeline/src/auto_classify/predicate_evaluator.ts` (impl)      | `packages/core/src/classify_entry_points/predicate_evaluator.ts`   |
-| `.claude/skills/self-repair-pipeline/src/auto_classify/builtins/index.ts` (generated)      | `packages/core/src/classify_entry_points/builtins/index.ts`        |
-| `.claude/skills/self-repair-pipeline/src/auto_classify/builtins/check_*.ts` (~60-90 files) | `packages/core/src/classify_entry_points/builtins/check_*.ts`      |
-| `.claude/skills/self-repair-pipeline/src/known_issues_registry.ts` (loader)                | split — see `.10`                                                  |
+| `.claude/skills/triage-entrypoints/src/auto_classify/orchestrator.ts`                    | `packages/core/src/classify_entry_points/classify_entry_points.ts` |
+| `.claude/skills/triage-entrypoints/src/auto_classify/predicate_evaluator.ts` (impl)      | `packages/core/src/classify_entry_points/predicate_evaluator.ts`   |
+| `.claude/skills/triage-entrypoints/src/auto_classify/builtins/index.ts` (generated)      | `packages/core/src/classify_entry_points/builtins/index.ts`        |
+| `.claude/skills/triage-entrypoints/src/auto_classify/builtins/check_*.ts` (~60-90 files) | `packages/core/src/classify_entry_points/builtins/check_*.ts`      |
+| `.claude/skills/triage-entrypoints/src/known_issues_registry.ts` (loader)                | split — see `.10`                                                  |
 
 All `check_*.ts` need their internal imports updated to use `@ariadnejs/types` for `EnrichedEntryPoint`. The renderer (`render_classifier.ts` in triage-curator) is updated separately in `.12` to emit the new path; for this sub-sub-task, codemod the existing files in place.
 
@@ -85,7 +85,7 @@ Skill keeps thin re-exports of the old `auto_classify/orchestrator.ts` path. Pha
 - [ ] #8 Skill re-export of old orchestrator path preserves prepare_triage.ts compatibility
 - [ ] #9 Orchestrator tests cover predicate, builtin, and kind: none skip paths
 - [ ] #10 No new circular dependency introduced between packages or skills
-- [ ] #11 pnpm test passes in packages/core and self-repair-pipeline
+- [ ] #11 pnpm test passes in packages/core and triage-entrypoints
 - [ ] #12 Persistence cache integration: enrich_call_graph results keyed as classify:{registry_hash}:{project_content_hash}:{symbol_id} against cache_manifest.ts so warm runs are effectively free
 - [ ] #13 New core test asserts EnrichedCallGraph cache hit: enrich_call_graph called twice with same (call_graph_hash, registry_hash) returns cached instance (single classifier run)
 - [ ] #14 New core test asserts cache invalidates on registry change (different registry_hash → fresh enrichment)

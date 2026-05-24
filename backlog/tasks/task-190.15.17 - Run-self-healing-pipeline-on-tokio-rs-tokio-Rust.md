@@ -19,7 +19,7 @@ priority: medium
 
 **Why**: Canonical async runtime. `Future` trait implementations, `Pin<Box<dyn ...>>` trait objects, wakers and polling machinery, unsafe for scheduler internals, complex generic bounds, `tokio::select!` and `tokio::spawn` macros, concurrent data structures.
 
-**Run**: `/self-repair-pipeline tokio-rs/tokio`
+**Run**: `/triage-entrypoints tokio-rs/tokio`
 
 Record any false positives, parse errors, or pipeline crashes.
 <!-- SECTION:DESCRIPTION:END -->

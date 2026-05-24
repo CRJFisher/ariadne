@@ -3,7 +3,7 @@
  * Hydrates the context for the `triage-curator-investigator` sub-agent.
  *
  * The dispatch source under v4 is a `novel_issue` record consolidated by the
- * SRP per-entry triage + coordinator. The investigator gets the issue's
+ * triage-entrypoints per-entry triage + coordinator. The investigator gets the issue's
  * canonical name, root_cause hint, and citation excerpts, plus the current
  * registry slice and the signal inventory, and authors a `BuiltinClassifierSpec`
  * + `ariadne_bug` proposal.

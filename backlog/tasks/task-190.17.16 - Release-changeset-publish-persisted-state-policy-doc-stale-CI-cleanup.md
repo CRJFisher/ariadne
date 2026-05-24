@@ -43,7 +43,7 @@ Move known-false-positive classification into core. Project.get_call_graph().ent
 
 Document in the changeset / release note that:
 
-- **Do not** `rm -rf ~/.ariadne/self-repair-pipeline/analysis_output/`. The directory is the permanent source of truth for the TP cache (`triage_results_store.ts:most_recent_finalized_triage_results`, called from `confirmed_unreachable_reuse.ts:derive_tp_cache`). Wiping kills cross-run TP reuse.
+- **Do not** `rm -rf ~/.ariadne/triage-entrypoints/analysis_output/`. The directory is the permanent source of truth for the TP cache (`triage_results_store.ts:most_recent_finalized_triage_results`, called from `confirmed_unreachable_reuse.ts:derive_tp_cache`). Wiping kills cross-run TP reuse.
 - For projects with pre-run-namespaced state, run `migrate_legacy_state.ts --project <name>` (or `--purge` to drop history). Touches only `triage_state/`.
 - For stale runs in flight at upgrade time, clear the `LATEST` pointer via `abandon_run.ts` or by deleting the LATEST file. Old run dirs remain visible to `list_runs`.
 

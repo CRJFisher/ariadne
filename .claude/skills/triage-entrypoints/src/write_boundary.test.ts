@@ -24,10 +24,10 @@ function ts_sources(dir: string): string[] {
   return out;
 }
 
-describe("write-boundary contract: self-repair-pipeline never writes the classifier registry", () => {
-  it("no source file under self-repair-pipeline contains a registry-write call", () => {
+describe("write-boundary contract: triage-entrypoints never writes the classifier registry", () => {
+  it("no source file under triage-entrypoints contains a registry-write call", () => {
     // The contract documented in .claude/rules/classifier-lifecycle.md:
-    // self-repair-pipeline reads the registry but never mutates it. Only the
+    // triage-entrypoints reads the registry but never mutates it. Only the
     // triage-curator (wip lifecycle) and the fix-sequencer reconciler (wip →
     // fixed) are permitted writers.
     const violations: { file: string; lines: string[] }[] = [];

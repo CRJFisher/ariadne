@@ -89,7 +89,7 @@ function render_task_title(issue: SelfRepairKnownIssue): string {
 }
 
 function render_task_labels(issue: SelfRepairKnownIssue): string[] {
-  const labels = ["self-repair-pipeline", "known-issue", issue.group_id];
+  const labels = ["triage-entrypoints", "known-issue", issue.group_id];
   for (const lang of issue.languages) labels.push(`lang-${lang}`);
   return labels;
 }
@@ -141,7 +141,7 @@ export function render_task_body(issue: SelfRepairKnownIssue): string {
   );
   parts.push(
     "- [ ] Remove the classifier entry from " +
-      "`.claude/skills/self-repair-pipeline/known_issues/registry.json` (or flip status to `fixed`); " +
+      "`.claude/skills/triage-entrypoints/known_issues/registry.json` (or flip status to `fixed`); " +
       "run `pnpm sync-permanent-rules` to regenerate " +
       "`packages/core/src/classify_entry_points/permanent_data.ts`.",
   );
@@ -149,7 +149,7 @@ export function render_task_body(issue: SelfRepairKnownIssue): string {
     "- [ ] Add a regression test reproducing the observed examples; confirm the fix covers them.",
   );
   parts.push(
-    "- [ ] Re-run the self-repair pipeline on affected corpora; confirm `observed_count` stops climbing.",
+    "- [ ] Re-run the self-healing pipeline on affected corpora; confirm `observed_count` stops climbing.",
   );
   return parts.join("\n") + "\n";
 }

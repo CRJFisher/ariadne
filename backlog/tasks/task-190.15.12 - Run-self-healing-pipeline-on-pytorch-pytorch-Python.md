@@ -19,7 +19,7 @@ priority: medium
 
 **Why**: `__torch_function__` and `__torch_dispatch__` dunder protocols, custom metaclasses for tensor types, generators/iterators in DataLoader (`__iter__`/`__next__`), `@property` descriptors, dataclasses in config objects, type hints with generics, `torch.no_grad()` context managers.
 
-**Run**: `/self-repair-pipeline pytorch/pytorch`
+**Run**: `/triage-entrypoints pytorch/pytorch`
 
 Record any false positives, parse errors, or pipeline crashes.
 <!-- SECTION:DESCRIPTION:END -->

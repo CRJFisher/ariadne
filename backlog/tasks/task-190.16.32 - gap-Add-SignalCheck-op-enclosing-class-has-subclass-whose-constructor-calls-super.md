@@ -7,7 +7,7 @@ status: To Do
 assignee: []
 created_date: '2026-04-28 11:52'
 labels:
-  - self-repair-pipeline
+  - triage-entrypoints
   - signal-gap
   - triage-curator
   - super-constructor-call

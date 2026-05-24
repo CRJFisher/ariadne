@@ -19,7 +19,7 @@ priority: medium
 
 **Why**: Sophisticated generated client type system. Conditional types (`IsKnownRequest`), mapped types for select/include/where builders, template literal types, recursive generic types for nested relations, `Partial`/`Pick`/`Omit` pushed to limits, inferred return types that change by query shape.
 
-**Run**: `/self-repair-pipeline prisma/prisma`
+**Run**: `/triage-entrypoints prisma/prisma`
 
 Record any false positives, parse errors, or pipeline crashes.
 <!-- SECTION:DESCRIPTION:END -->

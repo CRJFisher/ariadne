@@ -17,8 +17,8 @@ dependencies:
 references:
   - /Users/chuck/.claude/plans/open-that-plan-up-hazy-cloud.md
   - >-
-    /Users/chuck/.ariadne/self-repair-pipeline/analysis_output/webpack/triage_results/
-  - .claude/skills/self-repair-pipeline/src/auto_classify/
+    /Users/chuck/.ariadne/triage-entrypoints/analysis_output/webpack/triage_results/
+  - .claude/skills/triage-entrypoints/src/auto_classify/
   - .claude/skills/triage-curator/
 parent_task_id: TASK-190.16
 priority: high
@@ -32,8 +32,8 @@ priority: high
 > - `EnrichedFunctionEntry` → `EnrichedEntryPoint` (now in `@ariadnejs/types`).
 > - `AutoClassifiedEntry` → `AutoClassifiedEntryPoint`.
 > - `IntrospectionGap` → `SignalLibraryGap` (triage-curator).
-> - `.claude/skills/self-repair-pipeline/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
-> - `.claude/skills/self-repair-pipeline/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
+> - `.claude/skills/triage-entrypoints/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
+> - `.claude/skills/triage-entrypoints/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
 > - Generated builtins live at `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
 > - Bundled permanent slice at `packages/core/src/classify_entry_points/permanent_data.ts` (regen via `pnpm sync-permanent-rules`).
 > See TASK-190.17 for the full migration scope.
@@ -46,7 +46,7 @@ Run the `triage-curator` skill (TASK-190.16.6 scaffold + TASK-190.16.7 dispatche
 
 **Inputs:**
 
-- `~/.ariadne/self-repair-pipeline/analysis_output/webpack/triage_results/*.json` — the curator's target.
+- `~/.ariadne/triage-entrypoints/analysis_output/webpack/triage_results/*.json` — the curator's target.
 - Enriched `CallReference` facts from TASK-190.16.1/.2 and the introspection APIs from TASK-190.16.3.
 - `known_issues/registry.json` schema (TASK-190.16.4) and predicate DSL evaluator (TASK-190.16.5).
 - `.claude/skills/triage-curator/reference/signal_inventory.md` (TASK-190.16.6 AC #4) — the authoritative signal inventory opus consults.
@@ -54,7 +54,7 @@ Run the `triage-curator` skill (TASK-190.16.6 scaffold + TASK-190.16.7 dispatche
 **Workflow:**
 
 1. Run `curate_all --project webpack` against the triage output with the curator's opus investigator enabled.
-2. For each residual group, opus proposes a `ClassifierSpec` + (where `kind: builtin`) a new `.ts` file in `.claude/skills/self-repair-pipeline/src/auto_classify/builtins/`, writing both through the dispatcher's allowed-write scope.
+2. For each residual group, opus proposes a `ClassifierSpec` + (where `kind: builtin`) a new `.ts` file in `.claude/skills/triage-entrypoints/src/auto_classify/builtins/`, writing both through the dispatcher's allowed-write scope.
 3. Each proposed classifier comes with co-located fixture tests drawn from the webpack entries that seeded the group.
 4. A human reviews the curator's PR-shaped output before any registry entry is promoted from `status: "wip"` to active.
 
@@ -94,8 +94,8 @@ The opus investigator and any human reviewer should consult `signal_inventory.md
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 Curator opus investigation has been run end-to-end against `~/.ariadne/self-repair-pipeline/analysis_output/webpack/triage_results/*.json` with an initially empty classifier set
-- [ ] #2 Every residual group with `observed_count` above the curator's threshold has a proposed `ClassifierSpec` in `known_issues/registry.json` with `status: "wip"` plus (where `kind: builtin`) a co-located `.ts` file in `.claude/skills/self-repair-pipeline/src/auto_classify/builtins/`
+- [ ] #1 Curator opus investigation has been run end-to-end against `~/.ariadne/triage-entrypoints/analysis_output/webpack/triage_results/*.json` with an initially empty classifier set
+- [ ] #2 Every residual group with `observed_count` above the curator's threshold has a proposed `ClassifierSpec` in `known_issues/registry.json` with `status: "wip"` plus (where `kind: builtin`) a co-located `.ts` file in `.claude/skills/triage-entrypoints/src/auto_classify/builtins/`
 - [ ] #3 Each proposed builtin classifier has a co-located `.test.ts` with fixtures drawn from the webpack entries that seeded the group plus synthetic edge cases
 - [ ] #4 Each classifier's measured precision on its fixture set meets the registry-declared `min_confidence`
 - [ ] #5 Classifiers promoted from `wip` to active after human review are registered in the registry with a correct `ClassifierSpec`

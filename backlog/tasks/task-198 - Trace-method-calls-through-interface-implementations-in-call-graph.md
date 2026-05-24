@@ -12,7 +12,7 @@ dependencies: []
 references:
   - packages/core/src/resolve_references/call_resolution/
   - packages/core/src/resolve_references/registries/type.ts
-  - .claude/self-repair-pipeline-state/known_entrypoints/core.json
+  - .claude/triage-entrypoints-state/known_entrypoints/core.json
 priority: medium
 ---
 
@@ -35,7 +35,7 @@ This causes false positives in entry point detection — interface method implem
 
 - Call resolution: `packages/core/src/resolve_references/call_resolution/`
 - Type registry (tracks interface/class relationships): `packages/core/src/resolve_references/registries/type.ts`
-- Known entrypoints whitelist: `.claude/self-repair-pipeline-state/known_entrypoints/core.json`
+- Known entrypoints whitelist: `.claude/triage-entrypoints-state/known_entrypoints/core.json`
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

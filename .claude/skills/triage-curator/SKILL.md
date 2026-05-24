@@ -1,6 +1,6 @@
 ---
 name: triage-curator
-description: Offline sweep that consumes the self-repair-pipeline's v4 triage results — promotes novel issues into the registry with authored classifiers, absorbs classifier-regression flags as drift signals, files signal-library-gap sub-tasks under TASK-190.16 and Ariadne-bug top-level tasks (linked back into the registry), and commits the result.
+description: Offline sweep that consumes the triage-entrypoints skill's v4 triage results — promotes novel issues into the registry with authored classifiers, absorbs classifier-regression flags as drift signals, files signal-library-gap sub-tasks under TASK-190.16 and Ariadne-bug top-level tasks (linked back into the registry), and commits the result.
 argument-hint: "[--project <name>] [--last <n>] [--run <path>] [--dry-run] [--commit-to current|new|pr] [--branch <name>] [--pr <number>]"
 disable-model-invocation: true
 allowed-tools: Bash(node --import tsx:*), Bash(git *), Bash(gh *), AskUserQuestion, Read, Write, Edit, Glob, Task(triage-curator-investigator), mcp__backlog__task_create, mcp__backlog__task_search
@@ -8,13 +8,13 @@ allowed-tools: Bash(node --import tsx:*), Bash(git *), Bash(gh *), AskUserQuesti
 
 # Triage Curator
 
-Offline sweep over `self-repair-pipeline` triage outputs. One sub-agent
-wave: investigators author classifiers for novel issues the per-entry SRP
-triage already named. The puller floats drift-flagged wip rules to the
+Offline sweep over `triage-entrypoints` triage outputs. One sub-agent
+wave: investigators author classifiers for novel issues the per-entry
+triage-entrypoints triage already named. The puller floats drift-flagged wip rules to the
 front of the queue. Finalize applies proposals; backlog captures signal
 gaps; commit seals the sweep.
 
-The curator reads `analysis_output/<project>/triage_results/<run-id>.json` (schema v4 — includes `project_path`, `commit_hash`, `novel_issues[]`, `classifier_regressions[]`, `confirmed_unreachable[]`, `uncertain[]`). The `<run-id>` is the same identifier the self-repair-pipeline emits (`<short-commit>-<iso-ts>`): run-id is the shared identifier across the two skills.
+The curator reads `analysis_output/<project>/triage_results/<run-id>.json` (schema v4 — includes `project_path`, `commit_hash`, `novel_issues[]`, `classifier_regressions[]`, `confirmed_unreachable[]`, `uncertain[]`). The `<run-id>` is the same identifier the triage-entrypoints skill emits (`<short-commit>-<iso-ts>`): run-id is the shared identifier across the two skills.
 
 **Script invocation:** always `node --import tsx`. Never `pnpm exec tsx`
 or `npx tsx`.
@@ -184,7 +184,7 @@ mcp__backlog__task_create({
   title,
   description,
   parentTaskId: "TASK-190.16",
-  labels: ["self-repair-pipeline", "signal-gap", "triage-curator", group_id],
+  labels: ["triage-entrypoints", "signal-gap", "triage-curator", group_id],
 })
 ```
 
@@ -333,7 +333,7 @@ markdown to the backlog as a document for ongoing reference:
 mcp__backlog__document_create({
   title: "Self-repair impact report — <YYYY-MM-DD>",
   content: <markdown from --out>,
-  tags: ["self-repair-pipeline", "impact-report"],
+  tags: ["triage-entrypoints", "impact-report"],
 })
 ```
 
@@ -364,7 +364,7 @@ Output shape:
       "title": "[novel:xxx] …",
       "description": "<markdown body with observed_count, examples, classifier spec, AC checklist>",
       "labels": [
-        "self-repair-pipeline",
+        "triage-entrypoints",
         "known-issue",
         "novel:xxx",
         "lang-typescript"
@@ -402,7 +402,7 @@ A successful sweep's commit therefore spans both the skill and the package.
 
 | Path                                                             | Owner                         | Trigger                             |
 | ---------------------------------------------------------------- | ----------------------------- | ----------------------------------- |
-| `.claude/skills/self-repair-pipeline/known_issues/registry.json` | Skill (canonical)             | Every classifier upsert / drift tag |
+| `.claude/skills/triage-entrypoints/known_issues/registry.json` | Skill (canonical)             | Every classifier upsert / drift tag |
 | `packages/core/src/classify_entry_points/builtins/check_*.ts`    | Skill writes core path        | Per builtin proposal in Step 4      |
 | `packages/core/src/classify_entry_points/builtins/index.ts`      | Auto — `sync_permanent_rules` | Registry mutated this run           |
 | `packages/core/src/classify_entry_points/permanent_data.ts`      | Auto — `sync_permanent_rules` | Registry mutated this run           |
@@ -419,11 +419,11 @@ matching regen fails fast.
 
 ### State
 
-- **Input:** `~/.ariadne/self-repair-pipeline/analysis_output/{project}/triage_results/{iso}.json`
+- **Input:** `~/.ariadne/triage-entrypoints/analysis_output/{project}/triage_results/{iso}.json`
 - **Working dir:** `~/.ariadne/triage-curator/runs/{run_id}/{qa|investigate}/{group_id}.json`
 - **Session logs:** `~/.ariadne/triage-curator/runs/{run_id}/investigate/{group_id}.session.json`
 - **Sentinel:** `~/.ariadne/triage-curator/runs/{run_id}/finalized.json` (presence → run is curated)
-- **Registry writes:** `.claude/skills/self-repair-pipeline/known_issues/registry.json`
+- **Registry writes:** `.claude/skills/triage-entrypoints/known_issues/registry.json`
   (only when not `--dry-run`; drift tags + classifier upserts + `backlog_task`
   linkage for Ariadne-bug tasks created in Step 5)
 - **Core writes:** `packages/core/src/classify_entry_points/builtins/check_*.ts`
@@ -437,7 +437,7 @@ Both write into `KnownIssue.drift_evidence[]` with a `source` discriminator
 so the curator's promotion sweeps can weight them separately.
 
 - **`source: "in-flight"`** — per-entry `fp-classifier-regression` verdict
-  emitted by the SRP triage-investigator the moment it spots an entry the
+  emitted by the triage-investigator the moment it spots an entry the
   classifier *should* have caught. Surfaced via the run's
   `classifier_regressions[]` aggregate; absorbed by
   `curator_drift_absorb.ts:absorb_classifier_regressions`. Sharp signal.

@@ -12,11 +12,11 @@ labels:
 dependencies: []
 references:
   - /Users/chuck/.claude/plans/open-that-plan-up-hazy-cloud.md
-  - .claude/skills/self-repair-pipeline/scripts/prepare_triage.ts
-  - .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts
-  - .claude/skills/self-repair-pipeline/src/build_triage_entries.ts
-  - .claude/skills/self-repair-pipeline/templates/prompt.md
-  - .claude/skills/self-repair-pipeline/scripts/get_next_triage_entry.ts
+  - .claude/skills/triage-entrypoints/scripts/prepare_triage.ts
+  - .claude/skills/triage-entrypoints/scripts/get_entry_context.ts
+  - .claude/skills/triage-entrypoints/src/build_triage_entries.ts
+  - .claude/skills/triage-entrypoints/templates/prompt.md
+  - .claude/skills/triage-entrypoints/scripts/get_next_triage_entry.ts
 parent_task_id: TASK-190.16
 priority: high
 ---
@@ -29,8 +29,8 @@ priority: high
 > - `EnrichedFunctionEntry` → `EnrichedEntryPoint` (now in `@ariadnejs/types`).
 > - `AutoClassifiedEntry` → `AutoClassifiedEntryPoint`.
 > - `IntrospectionGap` → `SignalLibraryGap` (triage-curator).
-> - `.claude/skills/self-repair-pipeline/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
-> - `.claude/skills/self-repair-pipeline/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
+> - `.claude/skills/triage-entrypoints/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
+> - `.claude/skills/triage-entrypoints/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
 > - Generated builtins live at `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
 > - Bundled permanent slice at `packages/core/src/classify_entry_points/permanent_data.ts` (regen via `pnpm sync-permanent-rules`).
 > See TASK-190.17 for the full migration scope.
@@ -39,7 +39,7 @@ priority: high
 
 Plan reference: `~/.claude/plans/open-that-plan-up-hazy-cloud.md` — Phase C1 + C3.
 
-Create the `src/auto_classify/` module inside the self-repair-pipeline skill. It runs between `extract_entry_points` and `build_triage_entries`, loads the registry, dispatches classifiers in priority order (first-match with confidence gate ≥ 0.9), and emits per-entry `AutoClassifyResult`.
+Create the `src/auto_classify/` module inside the triage-entrypoints skill. It runs between `extract_entry_points` and `build_triage_entries`, loads the registry, dispatches classifiers in priority order (first-match with confidence gate ≥ 0.9), and emits per-entry `AutoClassifyResult`.
 
 Contract:
 
@@ -75,7 +75,7 @@ Wire into `scripts/prepare_triage.ts`: after (or replacing) the existing `filter
 
 <!-- AC:BEGIN -->
 
-- [x] #1 `.claude/skills/self-repair-pipeline/src/auto_classify/{auto_classify,predicate_evaluator,types}.ts` exist with tests
+- [x] #1 `.claude/skills/triage-entrypoints/src/auto_classify/{auto_classify,predicate_evaluator,types}.ts` exist with tests
 - [x] #2 `auto_classify()` returns per-entry results with correct `auto_classified` flag and `classifier_hints` attached for sub-threshold matches
 - [x] #3 Predicate DSL evaluator covers all 12 operators enumerated in the description and rejects unknown operators at parse time
 - [x] #4 `prepare_triage.ts` invokes `auto_classify()` and writes state with per-entry `auto_classified` flag

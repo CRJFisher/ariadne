@@ -13,7 +13,7 @@ dependencies: []
 references:
   - /Users/chuck/.claude/plans/open-that-plan-up-hazy-cloud.md
   - .claude/skills/triage-curator/
-  - .claude/skills/self-repair-pipeline/known_issues/registry.json
+  - .claude/skills/triage-entrypoints/known_issues/registry.json
 parent_task_id: TASK-190.16
 priority: medium
 ---
@@ -26,8 +26,8 @@ priority: medium
 > - `EnrichedFunctionEntry` → `EnrichedEntryPoint` (now in `@ariadnejs/types`).
 > - `AutoClassifiedEntry` → `AutoClassifiedEntryPoint`.
 > - `IntrospectionGap` → `SignalLibraryGap` (triage-curator).
-> - `.claude/skills/self-repair-pipeline/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
-> - `.claude/skills/self-repair-pipeline/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
+> - `.claude/skills/triage-entrypoints/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
+> - `.claude/skills/triage-entrypoints/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
 > - Generated builtins live at `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
 > - Bundled permanent slice at `packages/core/src/classify_entry_points/permanent_data.ts` (regen via `pnpm sync-permanent-rules`).
 > See TASK-190.17 for the full migration scope.
@@ -47,7 +47,7 @@ Cost discipline: one prompt, max ~5000 input tokens; agent does NOT read source 
 File: `src/group_investigate.ts` + `templates/prompt_group_investigate.md`.
 Opus sub-agent per residual group. Input: `group_id` (possibly `novel:`-prefixed), all member entries with full diagnostics, current classifier inventory (from `known_issues/registry.json`), signal inventory (from `reference/signal_inventory.md`), Ariadne introspection APIs. Task: propose a uniquely-identifying `ClassifierSpec`, linked backlog task, any new signal/API needed, and any code changes. Output JSON: `{ proposed_classifier, backlog_ref, new_signals_needed, code_changes, reasoning }`.
 
-Allowed tools for the opus agent: full Read/Grep/Glob; Edit/Write on `known_issues/registry.json` and `.claude/skills/self-repair-pipeline/src/auto_classify/builtins/*.ts`; MCP `mcp__backlog__task_search`/`task_create`/`task_edit`; MCP `mcp__ariadne__*` for call-graph queries.
+Allowed tools for the opus agent: full Read/Grep/Glob; Edit/Write on `known_issues/registry.json` and `.claude/skills/triage-entrypoints/src/auto_classify/builtins/*.ts`; MCP `mcp__backlog__task_search`/`task_create`/`task_edit`; MCP `mcp__ariadne__*` for call-graph queries.
 
 Reviewability: opus output is proposals + code diffs; a human approves in a PR. The investigation is autonomous; the application isn't — or if `--dry-run` is passed, nothing is written.
 
@@ -67,7 +67,7 @@ Reviewability: opus output is proposals + code diffs; a human approves in a PR. 
 - [x] #8 Drift-tagging threshold is 15% (outlier rate) as a configurable constant; test asserts tagging fires at 15% and not at 14%
 - [x] #9 Opus investigator output JSON matches the specified shape: `{ proposed_classifier, backlog_ref, new_signals_needed, code_changes, reasoning }`; sonnet QA output matches `{ outliers, confidence_remains_high, notes }` — _shape refined: `code_changes` replaced by `classifier_spec: BuiltinClassifierSpec | null` (main agent renders source from the spec in Step 4.5); QA response dropped `confidence_remains_high` (drift is computed from outlier rate, not self-reported confidence)_
 - [x] #10 When current signals are insufficient to uniquely identify a group, the opus investigator surfaces this by emitting a non-empty `new_signals_needed` array — tested with a synthetic residual group that requires a new resolver field
-- [x] #11 Opus write-scope is restricted to `known_issues/registry.json`, `.claude/skills/self-repair-pipeline/src/auto_classify/builtins/*.ts`, and MCP `backlog__task_*` calls; any write outside this set is rejected by the dispatcher — _tightened: investigator's Write scope is `~/.ariadne/triage-curator/**` only (response + session log); classifier source files and the registry are authored by the main agent from the investigator's structured spec, eliminating the need for filesystem write-scope enforcement on the sub-agent_
+- [x] #11 Opus write-scope is restricted to `known_issues/registry.json`, `.claude/skills/triage-entrypoints/src/auto_classify/builtins/*.ts`, and MCP `backlog__task_*` calls; any write outside this set is rejected by the dispatcher — _tightened: investigator's Write scope is `~/.ariadne/triage-curator/**` only (response + session log); classifier source files and the registry are authored by the main agent from the investigator's structured spec, eliminating the need for filesystem write-scope enforcement on the sub-agent_
 <!-- AC:END -->
 
 ## Implementation Notes
@@ -92,7 +92,7 @@ Sub-agent write-scope is `Write(~/.ariadne/triage-curator/**)` only (response JS
 2. **qa** — main agent spawns `triage-curator-qa` per QA candidate; each writes `qa/<group_id>.json`.
 3. **promote** — `src/promote_to_investigate.ts` + `scripts/promote_qa_to_investigate.ts` read the QA outputs and promote groups whose outlier rate exceeds `DRIFT_OUTLIER_RATE_THRESHOLD` (15%) into a second investigator wave under `investigate_promoted/`.
 4. **investigate** — main agent spawns `triage-curator-investigator` per residual + promoted candidate; each writes `investigate/<group_id>.json` (or `investigate_promoted/<group_id>.json`) plus a session log.
-5. **author** (Step 4.5) — for every investigate response with `classifier_spec !== null`, the main agent invokes `scripts/render_classifier.ts` to generate `check_<group_id>.ts` under `.claude/skills/self-repair-pipeline/src/auto_classify/builtins/`.
+5. **author** (Step 4.5) — for every investigate response with `classifier_spec !== null`, the main agent invokes `scripts/render_classifier.ts` to generate `check_<group_id>.ts` under `.claude/skills/triage-entrypoints/src/auto_classify/builtins/`.
 6. **finalize** — `src/apply_proposals.ts` validates each authored file, runs an AST syntax check (`ts.transpileModule`), upserts registry entries, tags `drift_detected`, emits backlog-task proposals, and aggregates `CurationOutcome` telemetry.
 
 ### Investigator output shape

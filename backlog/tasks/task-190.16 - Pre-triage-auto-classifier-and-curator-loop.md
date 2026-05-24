@@ -12,9 +12,9 @@ labels:
 dependencies: []
 references:
   - /Users/chuck/.claude/plans/open-that-plan-up-hazy-cloud.md
-  - .claude/skills/self-repair-pipeline/SKILL.md
-  - ~/.ariadne/self-repair-pipeline/triage_patterns.json
-  - ~/.ariadne/self-repair-pipeline/analysis_output/webpack/triage_results
+  - .claude/skills/triage-entrypoints/SKILL.md
+  - ~/.ariadne/triage-entrypoints/triage_patterns.json
+  - ~/.ariadne/triage-entrypoints/analysis_output/webpack/triage_results
 parent_task_id: TASK-190
 priority: high
 ---
@@ -27,8 +27,8 @@ priority: high
 > - `EnrichedFunctionEntry` → `EnrichedEntryPoint` (now in `@ariadnejs/types`).
 > - `AutoClassifiedEntry` → `AutoClassifiedEntryPoint`.
 > - `IntrospectionGap` → `SignalLibraryGap` (triage-curator).
-> - `.claude/skills/self-repair-pipeline/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
-> - `.claude/skills/self-repair-pipeline/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
+> - `.claude/skills/triage-entrypoints/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
+> - `.claude/skills/triage-entrypoints/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
 > - Generated builtins live at `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
 > - Bundled permanent slice at `packages/core/src/classify_entry_points/permanent_data.ts` (regen via `pnpm sync-permanent-rules`).
 > See TASK-190.17 for the full migration scope.
@@ -41,17 +41,17 @@ The full architectural plan for this initiative lives at `~/.claude/plans/open-t
 
 ### Summary
 
-This task is the umbrella for a new initiative: **stop re-discovering Ariadne's known failure modes on every pipeline run; start classifying them deterministically.** The self-repair pipeline currently sends every flagged entry point through an LLM triage agent, which re-derives the same conclusions every run. We replace that with a two-sided loop.
+This task is the umbrella for a new initiative: **stop re-discovering Ariadne's known failure modes on every pipeline run; start classifying them deterministically.** The triage-entrypoints currently sends every flagged entry point through an LLM triage agent, which re-derives the same conclusions every run. We replace that with a two-sided loop.
 
 ### The two sides of the loop
 
-**Consumer side — `self-repair-pipeline` (existing skill, updated).** Between entry-point detection and LLM triage, a new `auto_classify` stage runs entries against a canonical registry of known Ariadne gaps. High-confidence matches get labelled automatically; the LLM only sees residual entries that genuinely might be true positives or unknown failure modes. Deterministic signals come from Ariadne itself — new `CallReference` fields carry _why_ a call didn't resolve (resolver stage + reason, receiver kind, syntactic features) so classifiers can read the resolver's internal state instead of re-implementing it.
+**Consumer side — `triage-entrypoints` (existing skill, updated).** Between entry-point detection and LLM triage, a new `auto_classify` stage runs entries against a canonical registry of known Ariadne gaps. High-confidence matches get labelled automatically; the LLM only sees residual entries that genuinely might be true positives or unknown failure modes. Deterministic signals come from Ariadne itself — new `CallReference` fields carry _why_ a call didn't resolve (resolver stage + reason, receiver kind, syntactic features) so classifiers can read the resolver's internal state instead of re-implementing it.
 
 **Curator side — new `triage-curator` skill.** Analyses completed pipeline runs. Sonnet agents QA auto-classified groups (single-prompt outlier checks, no source-file deep dives). Opus agents investigate residual groups, proposing new classifier specs, linked backlog tasks, and — when current signals aren't sufficient — new Ariadne introspection APIs or resolver fields. Every registry entry links to a backlog task via `group_id`, so an impact report can rank Ariadne's unsupported language constructs by real-world `observed_count` across projects. This is how backlog prioritisation becomes data-driven rather than intuition-driven.
 
 ### Why this is its own initiative
 
-Removing the self-repair pipeline's triage cache is a fundamental architectural shift, not a bug fix. The Stop hook's static whitelist (`~/.ariadne/self-repair-pipeline/known_entrypoints/<pkg>.json`) is a separate concern — it's the dead-code guardrail that fires on coding sessions, is human-maintained, and remains in place. What changes here is the pipeline's own interaction with that file:
+Removing the triage-entrypoints' triage cache is a fundamental architectural shift, not a bug fix. The Stop hook's static whitelist (`~/.ariadne/triage-entrypoints/known_entrypoints/<pkg>.json`) is a separate concern — it's the dead-code guardrail that fires on coding sessions, is human-maintained, and remains in place. What changes here is the pipeline's own interaction with that file:
 
 1. **Stateless pipeline runs.** The pipeline no longer reads or writes the whitelist; its previous memoization of triage results into those files drifted silently when the target repo changed. The auto-classifier re-derives labels each run from the current tree-sitter queries, current resolver state, and current (version-controlled) registry. No pipeline-maintained per-project state; no drift. (The human-maintained whitelist consumed by the Stop hook is deliberately stateful — it's the codebase's own record of legitimate entry points.)
 2. **LLM effort becomes narrow and purposeful.** The residual set shrinks as classifiers cover dominant failure modes (webpack corpus shows 4 groups account for ~70% of false positives). When the LLM does emit a novel `group_id`, that's a signal we've found a genuinely new gap worth tracking.
@@ -70,7 +70,7 @@ Each axis needs its own classifier family because the evidence differs:
 This initiative draws a hard layering boundary that every subtask respects:
 
 - **`@ariadnejs/core` and `@ariadnejs/types` emit neutral facts only** — resolver-state diagnostics (what stage/reason the resolver tripped on) and AST-shape metadata (receiver kind, syntactic discriminators). Core has *no knowledge* of F-codes, classifier rules, registry entries, or the triage taxonomy. **Adding a new failure category must require zero changes to core.**
-- **The skills own all opinions** — `self-repair-pipeline` owns the F-code taxonomy, the predicate DSL, `known_issues/registry.json`, and the classifiers; `triage-curator` owns investigation, drift detection, and backlog linkage. New signals are added to core only when the curator (TASK-190.16.7) proves that existing facts cannot disambiguate a group.
+- **The skills own all opinions** — `triage-entrypoints` owns the F-code taxonomy, the predicate DSL, `known_issues/registry.json`, and the classifiers; `triage-curator` owns investigation, drift detection, and backlog linkage. New signals are added to core only when the curator (TASK-190.16.7) proves that existing facts cannot disambiguate a group.
 
 Future iteration happens almost entirely in the skills: adding/refining classifiers, editing the registry, tuning predicates. Core stays still; the skills evolve. When reviewing a subtask PR, ask: "Would adding F11 tomorrow need to touch this file?" If the answer is yes and the file is under `packages/`, the abstraction is wrong.
 
@@ -115,7 +115,7 @@ Phase F2 — Curator backlog linkage + reporting:
 ### Cross-cutting norms
 
 - **No backwards-compatibility hedging.** Rename types, remove old fields, change resolver signatures in the same PR as the replacement. If `EntryPointDiagnostics` should become `EntryPointContext`, do it; don't leave shims.
-- **Curator is invoked explicitly.** Running the self-repair-pipeline does NOT trigger the curator. The curator is run manually, on cron, or in CI on a regular cadence. The two skills communicate through files on disk only.
+- **Curator is invoked explicitly.** Running triage-entrypoints does NOT trigger the curator. The curator is run manually, on cron, or in CI on a regular cadence. The two skills communicate through files on disk only.
 - **Feedback loop only proposes.** The pipeline's registry-update path never auto-writes an active `ClassifierSpec` — only `kind: "none"` entries with `status: "wip"`. Promotion to an active classifier is always a human-reviewed PR.
 
 ### What "done" looks like
@@ -133,7 +133,7 @@ Phase F2 — Curator backlog linkage + reporting:
 <!-- AC:BEGIN -->
 
 - [ ] #1 All 12 sub-tasks (TASK-190.16.1 through TASK-190.16.12) are complete
-- [ ] #2 Pipeline runs produce identical output back-to-back on webpack with no pipeline-maintained per-project state between runs (cache removal verified). The static dead-code whitelist at `~/.ariadne/self-repair-pipeline/known_entrypoints/<pkg>.json` is outside the pipeline's scope and is unchanged.
+- [ ] #2 Pipeline runs produce identical output back-to-back on webpack with no pipeline-maintained per-project state between runs (cache removal verified). The static dead-code whitelist at `~/.ariadne/triage-entrypoints/known_entrypoints/<pkg>.json` is outside the pipeline's scope and is unchanged.
 - [ ] #3 `known_issues/registry.json` seeded with ≥15 entries covering webpack-dominant groups, Axis B F1–F10, Axis C framework patterns
 - [ ] #4 Auto-classify rate ≥40% on webpack corpus; per-classifier precision ≥ registered `min_confidence`
 - [ ] #5 `triage-curator` skill can curate a full run end-to-end: sonnet QA on auto-classified groups, opus investigation on residual groups, registry/backlog updates with bidirectional links

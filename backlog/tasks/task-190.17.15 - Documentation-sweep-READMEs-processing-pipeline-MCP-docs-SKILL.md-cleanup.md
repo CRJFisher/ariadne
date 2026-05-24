@@ -34,10 +34,10 @@ Update all repo documentation that references the old API shape, paths, or types
 - `packages/mcp/README.md:144` — replace the `get_call_graph` "Coming Soon" line with `list_entrypoints` semantics + new `show_suppressed` flag (this section currently lists future tools; the entry should be promoted to active and updated).
 - `packages/mcp/SETUP.md:216` — same: replace the `get_call_graph` "Coming Soon" line with current `list_entrypoints` + `show_suppressed` description.
 - `packages/mcp/docs/core-limitations.md:44,48` — describe Ariadne's blind spots in terms of the new classification taxonomy. (Note: this file is at `packages/mcp/docs/core-limitations.md`, not `docs/core-limitations.md`.)
-- `.claude/skills/self-repair-pipeline/SKILL.md:379` — drop the `extract_entry_points.ts` row from the "Architecture: Key Modules" table (file moved to core).
-- `.claude/skills/self-repair-pipeline/SKILL.md:388` — drop or update the `entry_point_types.ts` row (graduated to `@ariadnejs/types`; rename `EnrichedFunctionEntry` → `EnrichedEntryPoint`).
-- `.claude/skills/self-repair-pipeline/SKILL.md` (general) — frame the "thin caller of `@ariadnejs/core`" prose within the existing run-lifecycle narrative; the operator loop (`prepare_triage` → triage → `finalize_triage` / `abandon_run`) is preserved; only the classifier's _home_ moves.
-- `.claude/skills/self-repair-pipeline/README.md` — mention the generated `permanent` slice in core alongside the canonical registry.
+- `.claude/skills/triage-entrypoints/SKILL.md:379` — drop the `extract_entry_points.ts` row from the "Architecture: Key Modules" table (file moved to core).
+- `.claude/skills/triage-entrypoints/SKILL.md:388` — drop or update the `entry_point_types.ts` row (graduated to `@ariadnejs/types`; rename `EnrichedFunctionEntry` → `EnrichedEntryPoint`).
+- `.claude/skills/triage-entrypoints/SKILL.md` (general) — frame the "thin caller of `@ariadnejs/core`" prose within the existing run-lifecycle narrative; the operator loop (`prepare_triage` → triage → `finalize_triage` / `abandon_run`) is preserved; only the classifier's _home_ moves.
+- `.claude/skills/triage-entrypoints/README.md` — mention the generated `permanent` slice in core alongside the canonical registry.
 
 ## Verification
 
@@ -55,10 +55,10 @@ Update all repo documentation that references the old API shape, paths, or types
 - [ ] #4 packages/mcp/README.md updated for show_suppressed flag and classification semantics
 - [ ] #5 packages/mcp/SETUP.md updated for show_suppressed flag
 - [ ] #6 docs/core-limitations.md describes blind spots in terms of new classification taxonomy
-- [ ] #7 self-repair-pipeline SKILL.md:337 stale extract_entry_points.ts row removed
-- [ ] #8 self-repair-pipeline SKILL.md:346 stale entry_point_types.ts row removed/updated
-- [ ] #9 self-repair-pipeline SKILL.md prose frames new thin-caller role inside the existing run-lifecycle narrative
-- [ ] #10 self-repair-pipeline README.md mentions the generated permanent slice in core alongside the canonical registry
+- [ ] #7 triage-entrypoints SKILL.md:337 stale extract_entry_points.ts row removed
+- [ ] #8 triage-entrypoints SKILL.md:346 stale entry_point_types.ts row removed/updated
+- [ ] #9 triage-entrypoints SKILL.md prose frames new thin-caller role inside the existing run-lifecycle narrative
+- [ ] #10 triage-entrypoints README.md mentions the generated permanent slice in core alongside the canonical registry
 - [ ] #11 Code samples in docs compile via pnpm build (no broken example)
 - [ ] #12 All updated docs are written in canonical, present-tense style (no 'old approach' / 'new way' framing)
 <!-- AC:END -->

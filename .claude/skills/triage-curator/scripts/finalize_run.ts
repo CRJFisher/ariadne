@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Finalize a single self-repair-pipeline run: read all per-group JSONs written
+ * Finalize a single triage-entrypoints run: read all per-group JSONs written
  * by the sub-agents, AST-check each authored classifier file, apply proposals
  * (registry upserts, drift tags), write the run's finalized.json sentinel,
  * and print a summary.
@@ -27,8 +27,8 @@ import { compute_orphan_paths } from "../src/orphan_cleanup.js";
 import {
   render_all as render_unsupported_features_all,
   write_outputs as write_unsupported_features_outputs,
-} from "../../self-repair-pipeline/scripts/render_unsupported_features.js";
-import { sync_permanent_rules } from "../../self-repair-pipeline/scripts/sync_permanent_rules.js";
+} from "../../triage-entrypoints/scripts/render_unsupported_features.js";
+import { sync_permanent_rules } from "../../triage-entrypoints/scripts/sync_permanent_rules.js";
 import {
   parse_known_issues_registry_json,
 } from "@ariadnejs/types";

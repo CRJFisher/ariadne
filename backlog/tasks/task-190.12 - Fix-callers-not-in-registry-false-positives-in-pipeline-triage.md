@@ -17,8 +17,8 @@ parent_task_id: TASK-190
 > - `EnrichedFunctionEntry` → `EnrichedEntryPoint` (now in `@ariadnejs/types`).
 > - `AutoClassifiedEntry` → `AutoClassifiedEntryPoint`.
 > - `IntrospectionGap` → `SignalLibraryGap` (triage-curator).
-> - `.claude/skills/self-repair-pipeline/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
-> - `.claude/skills/self-repair-pipeline/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
+> - `.claude/skills/triage-entrypoints/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
+> - `.claude/skills/triage-entrypoints/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
 > - Generated builtins live at `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
 > - Bundled permanent slice at `packages/core/src/classify_entry_points/permanent_data.ts` (regen via `pnpm sync-permanent-rules`).
 > See TASK-190.17 for the full migration scope.
@@ -41,8 +41,8 @@ Any function where Ariadne's indexed scope does not include all caller files wil
 
 ## Root Cause
 
-- **Pipeline stage**: pre-LLM classification (self-repair pipeline)
-- **Module**: `.claude/skills/self-repair-pipeline/src/classify_entrypoints.ts`
+- **Pipeline stage**: pre-LLM classification (triage-entrypoints)
+- **Module**: `.claude/skills/triage-entrypoints/src/classify_entrypoints.ts`
 - **Code path**: `PreClassificationResult` has only `known_true_positives` and `unclassified` buckets. There is no `deterministic_false_positives` bucket and no branch in `build_triage_entries` that writes `route: "deterministic-fp"`. Entries with `diagnosis === "callers-not-in-registry"` fall through to `unclassified` and are routed to LLM triage unnecessarily.
 
 ## Fix Approach

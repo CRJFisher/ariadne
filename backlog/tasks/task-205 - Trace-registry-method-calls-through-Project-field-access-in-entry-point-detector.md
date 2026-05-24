@@ -23,7 +23,7 @@ Ariadne's entry-point detector flags public methods of `Project`-held registries
 
 ## Observed false positives (current `main` of `feat/self-healing-pipeline-debug`)
 
-Both whitelisted under `~/.ariadne/self-repair-pipeline/known_entrypoints/core.json` source `ground-truth` as of 2026-04-20:
+Both whitelisted under `~/.ariadne/triage-entrypoints/known_entrypoints/core.json` source `ground-truth` as of 2026-04-20:
 
 - `packages/core/src/resolve_references/registries/definition.ts` — `DefinitionRegistry.get_definitions_by_name` — called by `list_name_collisions` at `packages/core/src/introspection/list_name_collisions.ts` via `project.definitions.get_definitions_by_name(name)`.
 - `packages/core/src/resolve_references/resolve_references.ts` — `ResolutionRegistry.get_calls_for_file` — called by `explain_call_site` at `packages/core/src/introspection/explain_call_site.ts` via `project.resolutions.get_calls_for_file(file)`.
@@ -62,7 +62,7 @@ The fix is not specific to `Project`; any `class C { public reg: R = …; }` wit
 - [ ] Calls of the form `project.resolutions.get_calls_for_file(...)` from `explain_call_site` are tracked as edges, so `ResolutionRegistry.get_calls_for_file` is no longer flagged as an entry point.
 - [ ] The same fix covers the pre-existing `DefinitionRegistry.get_class_definitions` whitelist entry and any other registry methods currently whitelisted under `ground-truth` that follow this shape.
 - [ ] Existing entry-point detection still flags genuine unreached exported callables.
-- [ ] Once fixed, remove the `get_definitions_by_name`, `get_calls_for_file`, and any newly-redundant entries from `~/.ariadne/self-repair-pipeline/known_entrypoints/core.json` under source `ground-truth`. Verify the Stop hook passes without them.
+- [ ] Once fixed, remove the `get_definitions_by_name`, `get_calls_for_file`, and any newly-redundant entries from `~/.ariadne/triage-entrypoints/known_entrypoints/core.json` under source `ground-truth`. Verify the Stop hook passes without them.
 
 ## Out of scope
 
@@ -73,7 +73,7 @@ The fix is not specific to `Project`; any `class C { public reg: R = …; }` wit
 ## References
 
 - Detection hook: `.claude/hooks/detect_dead_code.ts`
-- Whitelist file: `~/.ariadne/self-repair-pipeline/known_entrypoints/core.json` (source `ground-truth`)
+- Whitelist file: `~/.ariadne/triage-entrypoints/known_entrypoints/core.json` (source `ground-truth`)
 - Related call-resolution code: `packages/core/src/resolve_references/call_resolution/receiver_resolution.*.ts`, `method_lookup.ts`
 - Introduced by: TASK-190.16.3 (added the two introspection APIs that exposed this gap)
 - Parent-plan context: `~/.claude/plans/open-that-plan-up-hazy-cloud.md` classifies this as an F1-adjacent resolver gap; fixing it shrinks the classifier's auto-whitelist surface.

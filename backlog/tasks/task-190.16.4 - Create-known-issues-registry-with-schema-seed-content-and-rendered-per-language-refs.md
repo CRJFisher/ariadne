@@ -13,12 +13,12 @@ labels:
 dependencies: []
 references:
   - /Users/chuck/.claude/plans/open-that-plan-up-hazy-cloud.md
-  - .claude/skills/self-repair-pipeline/src/types.ts
+  - .claude/skills/triage-entrypoints/src/types.ts
   - >-
     packages/core/src/index_single_file/query_code_tree/queries/CAPTURE-SCHEMA.md
-  - /Users/chuck/.ariadne/self-repair-pipeline/triage_patterns.json
+  - /Users/chuck/.ariadne/triage-entrypoints/triage_patterns.json
   - >-
-    /Users/chuck/.ariadne/self-repair-pipeline/analysis_output/webpack/triage_results/
+    /Users/chuck/.ariadne/triage-entrypoints/analysis_output/webpack/triage_results/
 parent_task_id: TASK-190.16
 priority: high
 ---
@@ -31,8 +31,8 @@ priority: high
 > - `EnrichedFunctionEntry` → `EnrichedEntryPoint` (now in `@ariadnejs/types`).
 > - `AutoClassifiedEntry` → `AutoClassifiedEntryPoint`.
 > - `IntrospectionGap` → `SignalLibraryGap` (triage-curator).
-> - `.claude/skills/self-repair-pipeline/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
-> - `.claude/skills/self-repair-pipeline/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
+> - `.claude/skills/triage-entrypoints/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
+> - `.claude/skills/triage-entrypoints/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
 > - Generated builtins live at `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
 > - Bundled permanent slice at `packages/core/src/classify_entry_points/permanent_data.ts` (regen via `pnpm sync-permanent-rules`).
 > See TASK-190.17 for the full migration scope.
@@ -41,9 +41,9 @@ priority: high
 
 Plan reference: `~/.claude/plans/open-that-plan-up-hazy-cloud.md` — Phase B1 + B2.
 
-Create the canonical `known_issues/registry.json` that lists every known Ariadne failure mode, with a classifier spec for each. This replaces the self-repair pipeline's previous triage-memoization write path into `known_entrypoints/<pkg>.json` with a repo-tracked, drift-free source of classifier rules.
+Create the canonical `known_issues/registry.json` that lists every known Ariadne failure mode, with a classifier spec for each. This replaces the triage-entrypoints' previous triage-memoization write path into `known_entrypoints/<pkg>.json` with a repo-tracked, drift-free source of classifier rules.
 
-**Orthogonal to the dead-code whitelist.** The Stop hook `detect_dead_code.ts` reads a *separate* static whitelist at `~/.ariadne/self-repair-pipeline/known_entrypoints/<pkg>.json` to catch dead code introduced during Claude coding sessions. That whitelist is human-maintained and unchanged by this initiative. The `known_issues/registry.json` created here stores **classifier rules** (how to label an unreachable entry when the triage pipeline runs). The two catalogs do not share entries, formats, writeback paths, or consumers.
+**Orthogonal to the dead-code whitelist.** The Stop hook `detect_dead_code.ts` reads a *separate* static whitelist at `~/.ariadne/triage-entrypoints/known_entrypoints/<pkg>.json` to catch dead code introduced during Claude coding sessions. That whitelist is human-maintained and unchanged by this initiative. The `known_issues/registry.json` created here stores **classifier rules** (how to label an unreachable entry when the triage pipeline runs). The two catalogs do not share entries, formats, writeback paths, or consumers.
 
 Schema includes `group_id`, `title`, `description`, `status`, `languages`, `backlog_task?`, `examples`, `classifier: ClassifierSpec`, plus curator-populated optional fields `observed_count`, `observed_projects`, `last_seen_run`. `ClassifierSpec` is a tagged union: `none | builtin { function_name, min_confidence } | predicate { axis, expression, min_confidence }` with a structured predicate DSL (no eval).
 
@@ -59,7 +59,7 @@ Seed ~15 entries drawn from:
 - Axis A tree-sitter gaps: `ts-jsx-component-call`, `ts-decorator-factory-call`, `ts-private-method-unreachable`, `py-property-decorator-access`, `py-wildcard-import-caller`, `rust-macro-invocation-call`, `rust-trait-method-dispatch`, `js-commonjs-require-destructure`
 - Axis C decorator patterns: `framework-pytest-fixture`, `framework-flask-route`, `framework-component-decorator`
 
-Seed the four entries in `~/.ariadne/self-repair-pipeline/triage_patterns.json` verbatim with their pre-measured precision values (0.923–1.0) — these are LLM-proposed rules from previous runs already validated against the webpack corpus. Where registry entries have existing Ariadne backlog tasks (e.g. F1–F10 linking to `task-epic-11.107.*` audit tasks, `task-190.11`, `task-156`, `task-198`, `task-108`), set `backlog_task?` accordingly.
+Seed the four entries in `~/.ariadne/triage-entrypoints/triage_patterns.json` verbatim with their pre-measured precision values (0.923–1.0) — these are LLM-proposed rules from previous runs already validated against the webpack corpus. Where registry entries have existing Ariadne backlog tasks (e.g. F1–F10 linking to `task-epic-11.107.*` audit tasks, `task-190.11`, `task-156`, `task-198`, `task-108`), set `backlog_task?` accordingly.
 
 Also build `scripts/render_unsupported_features.ts` that generates per-language markdown files (`packages/core/src/index_single_file/query_code_tree/queries/unsupported_features.{typescript,javascript,python,rust}.md`) from the registry. These are read by the residual-only triage agent and by the curator.
 
@@ -69,8 +69,8 @@ Also build `scripts/render_unsupported_features.ts` that generates per-language 
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 `.claude/skills/self-repair-pipeline/known_issues/registry.json` exists with 15+ seed entries
-- [ ] #2 TypeScript type definitions for `KnownIssue` and `ClassifierSpec` live in `.claude/skills/self-repair-pipeline/src/types.ts`
+- [ ] #1 `.claude/skills/triage-entrypoints/known_issues/registry.json` exists with 15+ seed entries
+- [ ] #2 TypeScript type definitions for `KnownIssue` and `ClassifierSpec` live in `.claude/skills/triage-entrypoints/src/types.ts`
 - [ ] #3 JSON schema validation test ensures every entry conforms to the schema
 - [ ] #4 Each seed entry's `backlog_task?` either matches an existing backlog task or is intentionally absent
 - [ ] #5 `scripts/render_unsupported_features.ts` generates 4 markdown files; golden-file test pins the output

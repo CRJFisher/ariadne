@@ -19,7 +19,7 @@ priority: medium
 
 **Why**: Richest single source of advanced Python idioms. `DeclarativeMeta` metaclass, full descriptor protocol (`__get__`/`__set__`/`__delete__`), `__init_subclass__`, `__class_getitem__`, `__slots__`, async ORM (`asyncio`/`async with`/`async for`), dataclasses integration, deeply layered type generics. ~200k+ lines, founded 2006.
 
-**Run**: `/self-repair-pipeline sqlalchemy/sqlalchemy`
+**Run**: `/triage-entrypoints sqlalchemy/sqlalchemy`
 
 Record any false positives, parse errors, or pipeline crashes.
 <!-- SECTION:DESCRIPTION:END -->

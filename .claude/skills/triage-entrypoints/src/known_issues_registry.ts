@@ -1,7 +1,7 @@
 /**
  * Loader and schema validator for the known-issues registry.
  *
- * Registry source of truth: `.claude/skills/self-repair-pipeline/known_issues/registry.json`.
+ * Registry source of truth: `.claude/skills/triage-entrypoints/known_issues/registry.json`.
  * The validator walks every entry, checks shape and enum values, and walks every
  * predicate expression so that unknown `op` values are rejected.
  */

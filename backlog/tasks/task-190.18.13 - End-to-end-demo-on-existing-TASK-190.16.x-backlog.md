@@ -36,7 +36,7 @@ Acceptance gate for the umbrella TASK-190.18. Wire-up smoke test against the rea
 4. Verify `~/.ariadne/fix-sequencer/graph.json` contains a node for the accepted cluster, and `state.jsonl` has a `ready` event.
 5. Append a `claim` event then a `done` event (with a synthetic `merge_commit`) to `state.jsonl` — manually or via `drain_graph.ts` stub.
 6. Mark the corresponding member task Done in backlog (`mcp__backlog__task_complete`).
-7. Run `self-repair-pipeline/scripts/prepare_triage.ts` — confirm `reconcile_registry_with_completed_nodes.ts` flips the registry entry's `status` to `fixed` and stamps `fixed_commit`.
+7. Run `triage-entrypoints/scripts/prepare_triage.ts` — confirm `reconcile_registry_with_completed_nodes.ts` flips the registry entry's `status` to `fixed` and stamps `fixed_commit`.
 8. Run `diff_runs.ts <prev> <new> --annotate-fixes` — confirm the resolved FP transitions are labeled "expected".
 
 ## Cleanup

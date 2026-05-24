@@ -3,7 +3,7 @@
  * Hydrates the context for the `triage-curator-qa` sub-agent.
  *
  * The main agent passes pointers (`--group`, `--run`). This script loads the
- * v4 triage_results JSON, samples up to ~10 of the entries the upstream SRP
+ * v4 triage_results JSON, samples up to ~10 of the entries the upstream triage-entrypoints
  * classified as `confirmed_unreachable` via the named registry rule, attaches
  * each one's source excerpt, looks up the registry entry, and prints the
  * bundle as JSON. The sub-agent decides which members look suspicious and
@@ -71,7 +71,7 @@ function parse_argv(argv: string[]): CliArgs {
 
 /**
  * Filter the v4 `confirmed_unreachable[]` to the rows the named classifier
- * matched. SRP writes each row's provenance as
+ * matched. triage-entrypoints writes each row's provenance as
  * `source: { kind: "registry", group_id }` when the match came from a known
  * rule, vs. `kind: "llm-tp"` for per-entry confirmations. The QA loop only
  * audits the registry-attributed slice.

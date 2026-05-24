@@ -23,17 +23,17 @@ ordinal: 18000
 
 ## Why
 
-Two upstream skills (`self-repair-pipeline`, `triage-curator`) currently land tasks in the backlog one-by-one with no view of which to ship first, no cross-task overlap analysis, and no closed loop from "task shipped" to "registry status updated." `fix-sequencer` is the third and final skill in the self-healing chain — the only stage that asks the user a _strategic_ question. It earns its place in the intention tree by accelerating the rate at which root-cause fixes land, which directly improves call-graph fidelity (the trunk).
+Two upstream skills (`triage-entrypoints`, `triage-curator`) currently land tasks in the backlog one-by-one with no view of which to ship first, no cross-task overlap analysis, and no closed loop from "task shipped" to "registry status updated." `fix-sequencer` is the third and final skill in the self-healing chain — the only stage that asks the user a _strategic_ question. It earns its place in the intention tree by accelerating the rate at which root-cause fixes land, which directly improves call-graph fidelity (the trunk).
 
 ## Three-store architecture (one per concern)
 
-- **Registry (`.claude/skills/self-repair-pipeline/known_issues/registry.json`)** = shared truth between detection and fix-delivery. Group status (`wip` / `fixed`) and `fixed_commit` / `fixed_in_run`.
+- **Registry (`.claude/skills/triage-entrypoints/known_issues/registry.json`)** = shared truth between detection and fix-delivery. Group status (`wip` / `fixed`) and `fixed_commit` / `fixed_in_run`.
 - **Backlog (`backlog/tasks/*.md`)** = canonical store of _task content_ (descriptions, AC, references). A "dumping ground" with no inherent ordering.
 - **fix-sequencer graph + state log (`~/.ariadne/fix-sequencer/{graph.json,state.jsonl}`)** = canonical store of _priority and ordering_ + append-only execution events. Git-independent so parallel cloud workers can drain it without competing for git state.
 
 ## High-level flow
 
-Seven phases stacked top-to-bottom in pipeline order: cluster → score → prepare plan → sign off → enqueue (writes the three persistent stores), then worker (async, /schedule-driven) and reconciler (runs at the start of the *next* SRP invocation). The persistent stores sit between the in-skill phases and the worker; the loop-closure edge from `wip → fixed` back to curator's registry read is the only red dotted arrow. (For where this skill fits in the broader chain see [self-repair-pipeline → Self-healing pipeline](../../.claude/skills/self-repair-pipeline/README.md#self-healing-pipeline).)
+Seven phases stacked top-to-bottom in pipeline order: cluster → score → prepare plan → sign off → enqueue (writes the three persistent stores), then worker (async, /schedule-driven) and reconciler (runs at the start of the *next* SRP invocation). The persistent stores sit between the in-skill phases and the worker; the loop-closure edge from `wip → fixed` back to curator's registry read is the only red dotted arrow. (For where this skill fits in the broader chain see [triage-entrypoints → Self-healing pipeline](../../.claude/skills/triage-entrypoints/README.md#self-healing-pipeline).)
 
 ```mermaid
 flowchart TD
@@ -161,7 +161,7 @@ flowchart TD
 4. AskUserQuestion accept/drop/defer per cluster
 5. Merge accepted clusters into `graph.json` and append `ready` events to `state.jsonl`
 6. Worker drains graph (single-worker assumption in v1)
-7. Reconciler in self-repair-pipeline reads `state.jsonl` `done` events to flip registry `status: wip → fixed`
+7. Reconciler in triage-entrypoints reads `state.jsonl` `done` events to flip registry `status: wip → fixed`
 
 ## Sub-tasks (10 active; 4 archived after Reviewer 2 merges)
 
@@ -194,6 +194,6 @@ Full plan: `/Users/chuck/.claude/plans/i-d-like-to-make-nested-creek.md`
 - [ ] #1 All 10 active sub-tasks (190.18.1, .2, .3, .5, .6, .7, .9, .11, .13, .14) created and linked under this umbrella; .4/.8/.10/.12 archived per Reviewer 2 merges
 - [ ] #2 Running `prepare_plan.ts` + `finalize_plan.ts` on the existing TASK-190.16.x backlog produces ≥1 cluster node in `graph.json` and prints a `/schedule` one-liner — without needing 190.18.3/.5 to ship
 - [ ] #3 Loop closure verified end-to-end: after appending a synthetic `done` event with `merge_commit: <sha>`, the targeted registry entry's `status === 'fixed'` AND `fixed_commit === <sha>` (assert exact values, not existence)
-- [ ] #4 Three skill READMEs cross-reference correctly (self-repair-pipeline → triage-curator → fix-sequencer)
+- [ ] #4 Three skill READMEs cross-reference correctly (triage-entrypoints → triage-curator → fix-sequencer)
 - [ ] #5 No backwards-compatibility shims; intention-tree namings only (no `enhanced_*` / `*_v2` files)
 <!-- AC:END -->

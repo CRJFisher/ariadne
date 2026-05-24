@@ -1,7 +1,7 @@
 ---
 name: triage-investigator
 description: Investigates one entry point candidate and emits a single TriageVerdict — one of `tp`, `fp-novel-new`, `fp-novel-cited`, `fp-classifier-regression`, `uncertain`. Early-exits on `fp-novel-cited` when the run's novel-issues snapshot already names the gap.
-tools: Bash(node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts:*), Read, Grep, Glob, Write(~/.ariadne/self-repair-pipeline/**), mcp__ariadne__show_call_graph_neighborhood
+tools: Bash(node --import tsx .claude/skills/triage-entrypoints/scripts/get_entry_context.ts:*), Read, Grep, Glob, Write(~/.ariadne/triage-entrypoints/**), mcp__ariadne__show_call_graph_neighborhood
 mcpServers:
   - ariadne
 model: sonnet
@@ -25,7 +25,7 @@ The verdict is parsed by `parse_triage_verdict` on absorb. Any shape violation h
 Your prompt contains a `project` and an `entry_index`. Run `get_entry_context.ts` to fetch the dispense payload:
 
 ```bash
-node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts --project <project> --entry <entry_index>
+node --import tsx .claude/skills/triage-entrypoints/scripts/get_entry_context.ts --project <project> --entry <entry_index>
 ```
 
 The script outputs the full payload:

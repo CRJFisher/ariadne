@@ -6,7 +6,7 @@ assignee: []
 created_date: "2026-05-20 10:00"
 labels:
   - self-repair
-  - self-repair-pipeline
+  - triage-entrypoints
   - srp-redesign
 dependencies:
   - TASK-190.19.1
@@ -28,7 +28,7 @@ The per-entry investigator becomes the heavy lifter: it must produce one of the 
 
 ### Dispense payload extension
 
-`.claude/skills/self-repair-pipeline/scripts/get_next_triage_entry.ts` (or its successor) extends the dispense payload with:
+`.claude/skills/triage-entrypoints/scripts/get_next_triage_entry.ts` (or its successor) extends the dispense payload with:
 
 - `relevant_registry_slice` — list of wip + permanent classifier rules whose `diagnosis_category` matches the entry's category OR whose `file_path_glob` matches the entry's path. Bounded to ~20 rules; sort by `observed_count` descending if more match.
 - `novel_issues_snapshot` — the current `novel_issues.json` content at dispense time (issues + citations).

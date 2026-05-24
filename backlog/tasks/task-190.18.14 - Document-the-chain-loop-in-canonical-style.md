@@ -31,8 +31,8 @@ Future agents (and humans) need a clear picture of how the three skills compose 
 
 ### Cross-references between skill READMEs
 
-- `.claude/skills/self-repair-pipeline/README.md` (or SKILL.md): reference downstream `triage-curator` and `fix-sequencer`
-- `.claude/skills/triage-curator/README.md`: reference upstream `self-repair-pipeline` and downstream `fix-sequencer`
+- `.claude/skills/triage-entrypoints/README.md` (or SKILL.md): reference downstream `triage-curator` and `fix-sequencer`
+- `.claude/skills/triage-curator/README.md`: reference upstream `triage-entrypoints` and downstream `fix-sequencer`
 - `.claude/skills/fix-sequencer/README.md`: reference upstream chain and the worker-contract doc
 
 ### Loop closure docs in fix-sequencer SKILL.md
@@ -45,7 +45,7 @@ Future agents (and humans) need a clear picture of how the three skills compose 
 
 ### Chain diagram
 
-- ASCII or Mermaid chain diagram of `self-repair-pipeline → triage-curator → fix-sequencer → worker → reconciler` showing the three stores
+- ASCII or Mermaid chain diagram of `triage-entrypoints → triage-curator → fix-sequencer → worker → reconciler` showing the three stores
 
 ## Style
 

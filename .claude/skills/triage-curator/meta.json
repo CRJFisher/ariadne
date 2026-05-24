@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "skill": "triage-curator",
-  "description": "Offline sweep over completed self-repair-pipeline runs. Audits auto-classified false-positive groups, investigates residuals, produces classifier + backlog + signal proposals, and commits the result.",
+  "description": "Offline sweep over completed triage-entrypoints runs. Audits auto-classified false-positive groups, investigates residuals, produces classifier + backlog + signal proposals, and commits the result.",
 
   "flows": [
     {
@@ -11,7 +11,7 @@
       "representativeness_anchor": "purpose",
       "entry": {
         "kind": "sibling_skill_artifact",
-        "skill": "self-repair-pipeline",
+        "skill": "triage-entrypoints",
         "path_pattern": "analysis_output/<project>/triage_results/<run-id>.json"
       },
       "exit": {
@@ -65,7 +65,7 @@
   "stores": [
     {
       "id": "registry-read",
-      "path": ".claude/skills/self-repair-pipeline/known_issues/registry.json",
+      "path": ".claude/skills/triage-entrypoints/known_issues/registry.json",
       "access": "read-only",
       "writer_owner": "triage-curator",
       "semantic_role": "filter for already-known issues; investigator + QA context",
@@ -73,7 +73,7 @@
     },
     {
       "id": "registry-write",
-      "path": ".claude/skills/self-repair-pipeline/known_issues/registry.json",
+      "path": ".claude/skills/triage-entrypoints/known_issues/registry.json",
       "access": "write",
       "writer_owner": null,
       "semantic_role": "single autonomous writer of wip rows; classifier.kind, drift_detected, observed_count, observed_projects, last_seen_run, backlog_task fields. permanent rows owned by human reviewer; fixed rows owned by fix-sequencer reconciler.",
@@ -117,16 +117,16 @@
   "published_outputs": [
     {
       "id": "wip-rows",
-      "path_pattern": ".claude/skills/self-repair-pipeline/known_issues/registry.json (status=wip)",
+      "path_pattern": ".claude/skills/triage-entrypoints/known_issues/registry.json (status=wip)",
       "schema_version": null,
-      "consumed_by": ["self-repair-pipeline", "fix-sequencer"],
+      "consumed_by": ["triage-entrypoints", "fix-sequencer"],
       "written_by_flows": ["novel-to-classifier", "qa-classified-groups"]
     },
     {
       "id": "core-builtin-classifiers",
       "path_pattern": "packages/core/src/classify_entry_points/builtins/check_<gid>.ts",
       "schema_version": "BuiltinClassifierSpec",
-      "consumed_by": ["self-repair-pipeline"],
+      "consumed_by": ["triage-entrypoints"],
       "written_by_flows": ["novel-to-classifier"]
     },
     {
@@ -140,11 +140,11 @@
 
   "external_inputs": [
     {
-      "from_skill": "self-repair-pipeline",
+      "from_skill": "triage-entrypoints",
       "path_pattern": "analysis_output/<project>/triage_results/<run-id>.json",
       "read_by_flows": ["novel-to-classifier", "qa-classified-groups"]
     }
   ],
 
-  "downstream_consumers": ["fix-sequencer", "self-repair-pipeline"]
+  "downstream_consumers": ["fix-sequencer", "triage-entrypoints"]
 }

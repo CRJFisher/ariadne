@@ -21,7 +21,7 @@ ordinal: 9000
 
 ## Scope
 
-`.claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts:460-509` runs `project.get_call_graph()` then locally calls `extract_entry_points(call_graph, source_files, ...)` and `attach_unindexed_test_grep_hits(...)`. After `.4` and `.5` move that logic into core, the script becomes a thin caller of the new primitive.
+`.claude/skills/triage-entrypoints/scripts/detect_entrypoints.ts:460-509` runs `project.get_call_graph()` then locally calls `extract_entry_points(call_graph, source_files, ...)` and `attach_unindexed_test_grep_hits(...)`. After `.4` and `.5` move that logic into core, the script becomes a thin caller of the new primitive.
 
 ## Rewrite
 
@@ -50,13 +50,13 @@ Downstream (`prepare_triage`, `tp_cache`, `build_finalization_output`) depends o
 
 ## File touches
 
-- `.claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts:39-44` — drop imports for `EnrichedFunctionEntry`, `extract_entry_points`, `build_constructor_to_class_name_map`, `detect_language` if they are no longer used after rewrite.
-- `.claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts:460-509` — the rewrite.
-- `.claude/skills/self-repair-pipeline/scripts/detect_entrypoints.test.ts:11` — update import (mechanical from `.1`).
+- `.claude/skills/triage-entrypoints/scripts/detect_entrypoints.ts:39-44` — drop imports for `EnrichedFunctionEntry`, `extract_entry_points`, `build_constructor_to_class_name_map`, `detect_language` if they are no longer used after rewrite.
+- `.claude/skills/triage-entrypoints/scripts/detect_entrypoints.ts:460-509` — the rewrite.
+- `.claude/skills/triage-entrypoints/scripts/detect_entrypoints.test.ts:11` — update import (mechanical from `.1`).
 
 ## Verification
 
-- `pnpm test` in `.claude/skills/self-repair-pipeline/` passes.
+- `pnpm test` in `.claude/skills/triage-entrypoints/` passes.
 - `pnpm exec tsx scripts/detect_entrypoints.ts --config project_configs/core.json` produces an `AnalysisResult` JSON whose entry-point shapes are identical to the pre-rewrite output (modulo `EnrichedFunctionEntry` → `EnrichedEntryPoint` rename).
 - `prepare_triage.ts` consumes the new output without changes.
 <!-- SECTION:DESCRIPTION:END -->
@@ -71,5 +71,5 @@ Downstream (`prepare_triage`, `tp_cache`, `build_finalization_output`) depends o
 - [x] #4 Imports at scripts/detect_entrypoints.ts:39-44 cleaned up to drop now-unused references
 - [x] #5 scripts/detect_entrypoints.test.ts updated for type renames
 - [x] #6 Producing AnalysisResult JSON shape unchanged (same field names) so prepare_triage works without changes
-- [x] #7 pnpm test passes in .claude/skills/self-repair-pipeline/
+- [x] #7 pnpm test passes in .claude/skills/triage-entrypoints/
 <!-- AC:END -->

@@ -31,8 +31,8 @@ This sub-sub-task formalizes the split.
 
 ## Files
 
-- KEEP: `.claude/skills/self-repair-pipeline/src/known_issues_registry.ts` — drops core-overlap responsibilities; remains as the canonical full-registry loader. `compiled_pattern` injection (regex precompile at load time) stays here since it's runtime-only.
-- KEEP: `.claude/skills/self-repair-pipeline/src/known_issues_registry.test.ts` — focuses on full-registry validation including `wip` and `kind: none` paths.
+- KEEP: `.claude/skills/triage-entrypoints/src/known_issues_registry.ts` — drops core-overlap responsibilities; remains as the canonical full-registry loader. `compiled_pattern` injection (regex precompile at load time) stays here since it's runtime-only.
+- KEEP: `.claude/skills/triage-entrypoints/src/known_issues_registry.test.ts` — focuses on full-registry validation including `wip` and `kind: none` paths.
 - ENSURE: `packages/core/src/classify_entry_points/registry_loader.ts` (added in `.6`) does not duplicate validation already covered in the skill loader; instead, it trusts the slice generator's invariants.
 - ADD `schema_version: 1` field to `registry.json` (currently a bare `KnownIssue[]`) — bump on future shape changes. Skill loader rejects mismatched versions; core loader's slice always carries the matching version because the sync script copies it.
 
@@ -42,7 +42,7 @@ Both loaders share the `KnownIssue` type from `@ariadnejs/types` (graduated in `
 
 ## Verification
 
-- `pnpm test` passes in `.claude/skills/self-repair-pipeline/` and `packages/core/`.
+- `pnpm test` passes in `.claude/skills/triage-entrypoints/` and `packages/core/`.
 - Skill's full-registry loader + tests still cover the `wip` + `kind: none` cases.
 - Core's permanent-slice loader rejects a synthetic non-permanent entry (defense in depth).
 <!-- SECTION:DESCRIPTION:END -->

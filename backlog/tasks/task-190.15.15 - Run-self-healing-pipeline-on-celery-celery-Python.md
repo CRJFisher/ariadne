@@ -19,7 +19,7 @@ priority: medium
 
 **Why**: `@app.task` decorators, metaclasses for task class registration, `__reduce__` and pickle protocols, context managers for connection pooling, generators for result iteration, signals via descriptor-like patterns, dynamic imports, `__init_subclass__` for plugin registration. Sync and async execution backends. ~150k+ lines, founded 2009.
 
-**Run**: `/self-repair-pipeline celery/celery`
+**Run**: `/triage-entrypoints celery/celery`
 
 Record any false positives, parse errors, or pipeline crashes.
 <!-- SECTION:DESCRIPTION:END -->

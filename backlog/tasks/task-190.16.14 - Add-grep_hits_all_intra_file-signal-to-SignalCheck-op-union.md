@@ -5,7 +5,7 @@ status: Done
 assignee: []
 created_date: '2026-04-22 14:00'
 labels:
-  - self-repair-pipeline
+  - triage-entrypoints
   - signal-gap
 dependencies: []
 parent_task_id: TASK-190.16
@@ -16,7 +16,7 @@ parent_task_id: TASK-190.16
 <!-- SECTION:DESCRIPTION:BEGIN -->
 The investigator cannot classify the residual group `intra-file-call-not-resolved` because the discriminating signal — `every grep_call_site.file_path === entry.file_path` — is not expressible in the closed `SignalCheck` op list at `.claude/skills/triage-curator/src/types.ts` (`SIGNAL_CHECK_OPS`).
 
-Evidence (from `/Users/chuck/.ariadne/self-repair-pipeline/analysis_output/webpack/detect_entrypoints/2026-04-16T16-19-50.394Z.json`):
+Evidence (from `/Users/chuck/.ariadne/triage-entrypoints/analysis_output/webpack/detect_entrypoints/2026-04-16T16-19-50.394Z.json`):
 
 - `mimeScore` at `lib/util/mimeTypes.js:72` has `diagnosis = callers-not-in-registry`, empty `ariadne_call_refs`, and two grep hits at lines 98–99, both inside `mimeTypes.js` itself.
 - `preferredType` at `lib/util/mimeTypes.js:97` is a `const` arrow function that calls `mimeScore`. `list_entrypoints` indexes both symbols but `show_call_graph_neighborhood` fails to look up either, confirming the intra-file call edge was never materialised.

@@ -6,13 +6,13 @@ assignee: []
 created_date: "2026-03-28 14:39"
 labels:
   - bug
-  - self-repair-pipeline
+  - triage-entrypoints
   - auto-generated
 dependencies: []
 references:
-  - .claude/skills/self-repair-pipeline/src/classify_entrypoints.ts
-  - .claude/skills/self-repair-pipeline/src/build_triage_entries.ts
-  - .claude/skills/self-repair-pipeline/src/triage_state_types.ts
+  - .claude/skills/triage-entrypoints/src/classify_entrypoints.ts
+  - .claude/skills/triage-entrypoints/src/build_triage_entries.ts
+  - .claude/skills/triage-entrypoints/src/triage_state_types.ts
 parent_task_id: TASK-190
 priority: medium
 ---
@@ -38,8 +38,8 @@ Also affects: for_profile, update_field_names (×2), date_util functions, preced
 
 ## Root Cause
 
-- **Pipeline stage**: self-repair-pipeline (classify_entrypoints)
-- **Module**: `.claude/skills/self-repair-pipeline/src/classify_entrypoints.ts`
+- **Pipeline stage**: triage-entrypoints (classify_entrypoints)
+- **Module**: `.claude/skills/triage-entrypoints/src/classify_entrypoints.ts`
 - **Code path**: `PreClassificationResult` only has `known_true_positives` and `unclassified` buckets. The `deterministic-fp` route exists in `TriageRoute` but is never assigned. Entries with `diagnosis === "callers-not-in-registry"` (95.2% accuracy on training data) pass through to LLM triage instead of being deterministically classified.
 
 ## Fix Approach (incorporating reviewer feedback)

@@ -1,5 +1,5 @@
 /**
- * Progress-reporting helpers for long-running loops in the self-repair pipeline.
+ * Progress-reporting helpers for long-running loops in the triage-entrypoints.
  *
  * Cadence rule: for small loops (N ≤ 50) log every iteration; for larger loops
  * log the first, last, and every N/20-th. A per-iteration slow-item check

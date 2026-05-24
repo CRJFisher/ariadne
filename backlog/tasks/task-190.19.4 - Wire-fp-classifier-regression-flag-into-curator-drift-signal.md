@@ -6,7 +6,7 @@ assignee: []
 created_date: "2026-05-20 10:00"
 labels:
   - self-repair
-  - self-repair-pipeline
+  - triage-entrypoints
   - srp-redesign
   - triage-curator-extension
 dependencies:

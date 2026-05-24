@@ -19,7 +19,7 @@ priority: medium
 
 **Why**: Server-side framework built around decorators and DI. `@Controller`, `@Injectable`, `@Module`, parameter decorators, abstract classes, interfaces, generics, module augmentation, complex generic factory patterns, metadata reflection.
 
-**Run**: `/self-repair-pipeline nestjs/nest`
+**Run**: `/triage-entrypoints nestjs/nest`
 
 Record any false positives, parse errors, or pipeline crashes.
 <!-- SECTION:DESCRIPTION:END -->

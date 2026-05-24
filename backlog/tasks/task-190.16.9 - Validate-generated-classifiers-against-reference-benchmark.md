@@ -13,9 +13,9 @@ dependencies:
 references:
   - /Users/chuck/.claude/plans/open-that-plan-up-hazy-cloud.md
   - >-
-    /Users/chuck/.ariadne/self-repair-pipeline/analysis_output/webpack/triage_results/
-  - .claude/skills/self-repair-pipeline/src/auto_classify/
-  - .claude/skills/self-repair-pipeline/known_issues/registry.json
+    /Users/chuck/.ariadne/triage-entrypoints/analysis_output/webpack/triage_results/
+  - .claude/skills/triage-entrypoints/src/auto_classify/
+  - .claude/skills/triage-entrypoints/known_issues/registry.json
 parent_task_id: TASK-190.16
 priority: high
 ---
@@ -28,8 +28,8 @@ priority: high
 > - `EnrichedFunctionEntry` → `EnrichedEntryPoint` (now in `@ariadnejs/types`).
 > - `AutoClassifiedEntry` → `AutoClassifiedEntryPoint`.
 > - `IntrospectionGap` → `SignalLibraryGap` (triage-curator).
-> - `.claude/skills/self-repair-pipeline/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
-> - `.claude/skills/self-repair-pipeline/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
+> - `.claude/skills/triage-entrypoints/src/auto_classify/orchestrator.ts` → `packages/core/src/classify_entry_points/classify_entry_points.ts`.
+> - `.claude/skills/triage-entrypoints/src/extract_entry_points.ts` → `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`.
 > - Generated builtins live at `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
 > - Bundled permanent slice at `packages/core/src/classify_entry_points/permanent_data.ts` (regen via `pnpm sync-permanent-rules`).
 > See TASK-190.17 for the full migration scope.

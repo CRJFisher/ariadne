@@ -32,9 +32,9 @@ describe("load_registry", () => {
     expect(registry.length).toBeGreaterThanOrEqual(15);
   });
 
-  it("points at .claude/skills/self-repair-pipeline/known_issues/registry.json", () => {
+  it("points at .claude/skills/triage-entrypoints/known_issues/registry.json", () => {
     const p = get_registry_file_path();
-    expect(p.endsWith(path.join("self-repair-pipeline", "known_issues", "registry.json"))).toBe(true);
+    expect(p.endsWith(path.join("triage-entrypoints", "known_issues", "registry.json"))).toBe(true);
     expect(fs.existsSync(p)).toBe(true);
   });
 

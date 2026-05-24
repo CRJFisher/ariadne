@@ -6,7 +6,7 @@ assignee: []
 created_date: "2026-05-20 10:00"
 labels:
   - self-repair
-  - self-repair-pipeline
+  - triage-entrypoints
   - srp-redesign
 dependencies: []
 parent_task_id: TASK-190.19
@@ -26,7 +26,7 @@ Foundation pass: define the types and I/O contract that every later sub-task dep
 
 ### Verdict schema
 
-New file `.claude/skills/self-repair-pipeline/src/triage_verdict.ts`:
+New file `.claude/skills/triage-entrypoints/src/triage_verdict.ts`:
 
 - Discriminated union `TriageVerdict` with `kind: "tp" | "fp-novel-new" | "fp-novel-cited" | "fp-classifier-regression" | "uncertain"`.
 - Each kind carries its required payload (no `?:` everywhere):
@@ -40,7 +40,7 @@ New file `.claude/skills/self-repair-pipeline/src/triage_verdict.ts`:
 
 ### Novel issues storage
 
-New file `.claude/skills/self-repair-pipeline/src/novel_issues.ts`:
+New file `.claude/skills/triage-entrypoints/src/novel_issues.ts`:
 
 - `NovelIssue = { id: string, canonical_name: string, root_cause: string, citations: NovelIssueCitation[] }`
 - `NovelIssueCitation = { entry_index: number, evidence_excerpt: string }`

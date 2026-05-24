@@ -19,7 +19,7 @@ priority: medium
 
 **Why**: Classic Node.js middleware framework. Prototype-chain extension (`app` built on `http.IncomingMessage`), HOF middleware factories, closures for route scope, callback-based async, CommonJS throughout. 15+ year history.
 
-**Run**: `/self-repair-pipeline expressjs/express`
+**Run**: `/triage-entrypoints expressjs/express`
 
 Record any false positives, parse errors, or pipeline crashes.
 <!-- SECTION:DESCRIPTION:END -->

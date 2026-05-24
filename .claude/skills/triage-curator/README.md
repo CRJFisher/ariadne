@@ -2,21 +2,21 @@
 
 > **Note (TASK-190.19.6).** The diagrams and prose below still narrate the
 > pre-v4 "residual groups + QA wave" flow. Authoritative behavior now lives
-> in `SKILL.md`: the curator consumes the SRP's v4 `triage_results` with
+> in `SKILL.md`: the curator consumes the triage-entrypoints skill's v4 `triage_results` with
 > `novel_issues[]` and `classifier_regressions[]`, dispatches a single
 > investigate wave (promote-novel + drift-flagged wip), and absorbs
 > regression flags via the drift path. The full diagram rewrite is scoped
 > to TASK-190.19.10.
 
-Offline sweep over completed `self-repair-pipeline` runs. Authors
-classifiers for novel issues the SRP triage-investigator already named,
+Offline sweep over completed `triage-entrypoints` runs. Authors
+classifiers for novel issues the triage-investigator already named,
 absorbs classifier-regression flags into the registry's drift signal,
 files signal-library-gap + Ariadne-bug backlog tasks, and commits the
 result.
 
 ## Pipeline Flow
 
-(For where this skill fits in the broader chain see [self-repair-pipeline → Self-healing pipeline](../self-repair-pipeline/README.md#self-healing-pipeline).)
+(For where this skill fits in the broader chain see [triage-entrypoints → Self-healing pipeline](../triage-entrypoints/README.md#self-healing-pipeline).)
 
 ### Where this lands
 
@@ -28,7 +28,7 @@ flowchart LR
   classDef artifact  fill:#e8f5e9,stroke:#2e7d32,stroke-width:1.5px,color:#1b5e20
   classDef store     fill:#ede7f6,stroke:#4527a0,stroke-width:1.8px,color:#311b92
 
-  SRP(["self-repair-pipeline · <i>sense</i><br/>publish triage_results"]):::step
+  SRP(["triage-entrypoints · <i>sense</i><br/>publish triage_results"]):::step
   TR_IN[/"triage_results<br/>residual groups"/]:::artifact
   CUR(["triage-curator · <i>primary</i><br/>residual → classifier + wip"]):::step
   HANDOFF[/"wip rows · check_*.ts<br/>· backlog task"/]:::artifact
@@ -44,7 +44,7 @@ flowchart LR
   linkStyle 5 stroke:#ef5350,stroke-width:2.4px,stroke-dasharray:6 4
 ```
 
-**Where this lands**: three skills in a row (sense → classify → actuate); the curator's **primary trigger** is a residual group from the latest `triage_results`, and its primary outputs (wip row + classifier source + backlog task) are exactly what `fix-sequencer` reads on the next run; one durable surface (`registry.json`) sits below the chain and anchors the loop-closure red dotted edge that fires on the _next_ SRP invocation. Internals deferred to the per-step diagram below — the QA-of-classified-groups flow is a maintenance sibling diagrammed in its own H2.
+**Where this lands**: three skills in a row (sense → classify → actuate); the curator's **primary trigger** is a residual group from the latest `triage_results`, and its primary outputs (wip row + classifier source + backlog task) are exactly what `fix-sequencer` reads on the next run; one durable surface (`registry.json`) sits below the chain and anchors the loop-closure red dotted edge that fires on the _next_ triage-entrypoints invocation. Internals deferred to the per-step diagram below — the QA-of-classified-groups flow is a maintenance sibling diagrammed in its own H2.
 
 **Primary trigger**: a residual group in a freshly published `triage_results/<run-id>.json` that has no matching registry entry; this diagram traces that flow from entry through to the `wip` row in `registry.json`, the `check_<id>.ts` written to core builtins, and the backlog task filed for the underlying signal/bug. Validation is folded into the investigator's own propose → validate → iterate loop; there is no separate post-investigation validation phase. Maintenance flows live below.
 
@@ -188,7 +188,7 @@ finalize step writes them across the package boundary into core; the CI gate
 `pnpm check-permanent-rules` keeps the bundled permanent slice
 (`packages/core/src/classify_entry_points/permanent_data.ts`) and the builtins
 barrel in sync with the curator's working registry at
-`.claude/skills/self-repair-pipeline/known_issues/registry.json`.
+`.claude/skills/triage-entrypoints/known_issues/registry.json`.
 
 Each `check_*.ts` file is a **pure function of its `BuiltinClassifierSpec`** —
 the investigator emits the spec, the main agent runs `render_classifier.ts`,

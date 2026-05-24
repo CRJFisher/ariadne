@@ -107,7 +107,7 @@ export function get_changed_files(project_dir: string): ChangedFiles {
     const has_no_changes = unique_files.length === 0;
 
     // Filter to project source files only (exclude .claude/, backlog/, etc.)
-    const PROJECT_SOURCE_PREFIXES = ["packages/", ".claude/skills/self-repair-pipeline/"];
+    const PROJECT_SOURCE_PREFIXES = ["packages/", ".claude/skills/triage-entrypoints/"];
 
     // Check if any project source files changed
     const has_source_changes = unique_files.some((f) => {
@@ -126,14 +126,14 @@ export function get_changed_files(project_dir: string): ChangedFiles {
     }
     const modified_packages = Array.from(packages);
 
-    // Extract modified areas (top-level directories like packages/core, .claude/skills/self-repair-pipeline)
+    // Extract modified areas (top-level directories like packages/core, .claude/skills/triage-entrypoints)
     const areas = new Set<string>();
     for (const file of unique_files) {
       if (file.startsWith("packages/")) {
         const match = file.match(/^packages\/[^/]+/);
         if (match) areas.add(match[0]);
-      } else if (file.startsWith(".claude/skills/self-repair-pipeline/")) {
-        areas.add(".claude/skills/self-repair-pipeline");
+      } else if (file.startsWith(".claude/skills/triage-entrypoints/")) {
+        areas.add(".claude/skills/triage-entrypoints");
       }
     }
     const modified_areas = Array.from(areas);
@@ -170,7 +170,7 @@ export function get_changed_files(project_dir: string): ChangedFiles {
       has_source_changes: true,
       has_no_changes: false,
       modified_packages: ["types", "core", "mcp"],
-      modified_areas: ["packages/types", "packages/core", "packages/mcp", ".claude/skills/self-repair-pipeline"],
+      modified_areas: ["packages/types", "packages/core", "packages/mcp", ".claude/skills/triage-entrypoints"],
       changed_ts_files: [],
     };
   }

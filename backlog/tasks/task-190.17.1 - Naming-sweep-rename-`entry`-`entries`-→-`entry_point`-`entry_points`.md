@@ -27,8 +27,8 @@ Use `git mv` for files/folders to preserve history. Update all import sites and 
 
 | Current | Renamed |
 |---|---|
-| Skill type `EnrichedFunctionEntry` (in `.claude/skills/self-repair-pipeline/src/entry_point_types.ts`) | `EnrichedEntryPoint` |
-| Skill type `AutoClassifiedEntry` (in `.claude/skills/self-repair-pipeline/src/auto_classify/types.ts`) | `AutoClassifiedEntryPoint` |
+| Skill type `EnrichedFunctionEntry` (in `.claude/skills/triage-entrypoints/src/entry_point_types.ts`) | `EnrichedEntryPoint` |
+| Skill type `AutoClassifiedEntry` (in `.claude/skills/triage-entrypoints/src/auto_classify/types.ts`) | `AutoClassifiedEntryPoint` |
 | Any `entries: AutoClassifiedEntry[]` parameter / variable | `entry_points: AutoClassifiedEntryPoint[]` |
 | Any internal `entry` variable holding an entry-point record | `entry_point` |
 | Skill scripts referencing renamed identifiers (`prepare_triage.ts`, `build_triage_entries.ts`, `build_finalization_output.ts`, `triage_state_types.ts`, `extract_entry_points.ts`, all 60+ `auto_classify/builtins/check_*.ts`) | update imports + identifiers |
@@ -41,7 +41,7 @@ Do **not** rename `EntryPointDiagnostics` (already correct), `EntryPointClassifi
 
 ## Verification
 
-- `pnpm test` passes in `.claude/skills/self-repair-pipeline/`, `.claude/skills/triage-curator/`, and all `packages/`.
+- `pnpm test` passes in `.claude/skills/triage-entrypoints/`, `.claude/skills/triage-curator/`, and all `packages/`.
 - `grep -rn 'EnrichedFunctionEntry\|AutoClassifiedEntry' .claude/skills packages` returns no hits.
 <!-- SECTION:DESCRIPTION:END -->
 
@@ -52,7 +52,7 @@ Do **not** rename `EntryPointDiagnostics` (already correct), `EntryPointClassifi
 - [ ] #3 All `entries: AutoClassifiedEntry[]` parameters and variables renamed to `entry_points: AutoClassifiedEntryPoint[]`
 - [ ] #4 All internal `entry` variables holding entry-point records renamed to `entry_point`
 - [ ] #5 Triage-curator render_classifier.test.ts:51,54 literal-string assertions updated to match new emitted import
-- [ ] #6 All tests pass in self-repair-pipeline, triage-curator, packages/core, packages/mcp, packages/types
+- [ ] #6 All tests pass in triage-entrypoints, triage-curator, packages/core, packages/mcp, packages/types
 - [ ] #7 grep for the old names returns zero hits across .claude/skills/ and packages/
 - [ ] #8 Skill tests src/diff_runs.test.ts and src/build_finalization_output.test.ts updated for EnrichedFunctionEntry → EnrichedEntryPoint and AutoClassifiedEntry → AutoClassifiedEntryPoint renames
 <!-- AC:END -->

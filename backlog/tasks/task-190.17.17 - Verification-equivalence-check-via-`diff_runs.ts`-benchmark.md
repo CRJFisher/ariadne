@@ -29,21 +29,21 @@ Pick a representative project on a fixed commit. Before and after the structural
 
 ```bash
 # pre-migration baseline (run on a worktree at the commit before TASK-190.17.6 ships)
-pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts \
+pnpm exec tsx .claude/skills/triage-entrypoints/scripts/detect_entrypoints.ts \
   --config <project_config>
-pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/prepare_triage.ts \
+pnpm exec tsx .claude/skills/triage-entrypoints/scripts/prepare_triage.ts \
   --analysis <baseline_analysis_path> --project <name>
 # ... triage, finalize → produces analysis_output/<name>/triage_results/<pre_run_id>.json
 
 # post-migration (current branch, .6 has shipped)
-pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts \
+pnpm exec tsx .claude/skills/triage-entrypoints/scripts/detect_entrypoints.ts \
   --config <project_config>
-pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/prepare_triage.ts \
+pnpm exec tsx .claude/skills/triage-entrypoints/scripts/prepare_triage.ts \
   --analysis <post_analysis_path> --project <name>
 # ... triage, finalize → <post_run_id>.json
 
 # diff
-pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/diff_runs.ts \
+pnpm exec tsx .claude/skills/triage-entrypoints/scripts/diff_runs.ts \
   --project <name> --from <pre_run_id> --to <post_run_id> --format text
 ```
 

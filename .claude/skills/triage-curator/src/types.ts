@@ -3,7 +3,7 @@ import type { ClassifierRegressionFlag } from "@ariadnejs/types";
 // ===== Triage results shape (read-only) =====
 //
 // Schema v4. The published `triage_results/<run-id>.json` artifact written by
-// the self-repair pipeline's `finalize_triage.ts`. The curator's absorb path
+// the triage-entrypoints skill's `finalize_triage.ts`. The curator's absorb path
 // reads `novel_issues` and `classifier_regressions`; downstream consumers
 // (impact reports, promotion candidates) read `confirmed_unreachable[]` with
 // its `source` discriminator.

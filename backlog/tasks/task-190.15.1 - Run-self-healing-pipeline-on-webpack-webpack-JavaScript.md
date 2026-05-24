@@ -19,7 +19,7 @@ priority: medium
 
 **Why**: Complex prototypal OOP (`Compiler`, `Compilation`, `Module` subclasses), Tapable event hooks, plugin architecture, CommonJS + ESM output, generators, async patterns, closures. One of the richest plain-JS codebases.
 
-**Run**: `/self-repair-pipeline webpack/webpack`
+**Run**: `/triage-entrypoints webpack/webpack`
 
 Record any false positives, parse errors, or pipeline crashes.
 <!-- SECTION:DESCRIPTION:END -->

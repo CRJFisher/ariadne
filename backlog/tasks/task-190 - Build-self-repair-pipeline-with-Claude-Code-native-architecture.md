@@ -1,6 +1,6 @@
 ---
 id: task-190
-title: Build self-repair pipeline with Claude Code native architecture
+title: Build triage-entrypoints with Claude Code native architecture
 status: To Do
 assignee: []
 created_date: '2026-02-17 16:56'
@@ -123,7 +123,7 @@ Stop hooks are the primary orchestration mechanism. Agent teams are deferred as 
 ### Skill Directory Structure
 
 ```
-.claude/skills/self-repair-pipeline/
+.claude/skills/triage-entrypoints/
 ├── SKILL.md                              # Main orchestration (always in context)
 ├── package.json                          # Standalone deps (tsx, typescript, clinic)
 ├── tsconfig.json
@@ -196,7 +196,7 @@ Stop hooks are the primary orchestration mechanism. Agent teams are deferred as 
 | `.claude/agents/plan-reviewer.md` | Sub-agent | Reviews plan from specific angle |
 | `.claude/agents/task-writer.md` | Sub-agent | Creates backlog task from reviewed plan |
 
-All files are under `.claude/skills/self-repair-pipeline/` unless an absolute path is shown.
+All files are under `.claude/skills/triage-entrypoints/` unless an absolute path is shown.
 
 ### Edge Cases
 
@@ -234,7 +234,7 @@ Three sub-task types would benefit from agent teams (once the experimental API s
 
 ### Architecture Re-structuring (task-190.7)
 
-The `entrypoint-analysis/` top-level directory has been fully merged into `.claude/skills/self-repair-pipeline/`:
+The `entrypoint-analysis/` top-level directory has been fully merged into `.claude/skills/triage-entrypoints/`:
 
 - **Library code** (`entrypoint-analysis/src/`) → `src/` (types, classification, extraction, known-entrypoints, triage entries, finalization output)
 - **Detection scripts** → `scripts/detect_entrypoints.ts` (unified from the former `detect_self_entrypoints.ts` + `detect_external_entrypoints.ts`)
@@ -243,7 +243,7 @@ The `entrypoint-analysis/` top-level directory has been fully merged into `.clau
 
 ### Skill Consolidation
 
-The `self-entrypoint-analysis` and `external-entrypoint-analysis` skills have been deleted. `self-repair-pipeline` is the single skill entry point. Detection is invoked via:
+The `self-entrypoint-analysis` and `external-entrypoint-analysis` skills have been deleted. `triage-entrypoints` is the single skill entry point. Detection is invoked via:
 
 - **Self-analysis**: `npx tsx scripts/detect_entrypoints.ts --config project_configs/core.json`
 - **External analysis**: `npx tsx scripts/detect_entrypoints.ts --path /path/to/project`

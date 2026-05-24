@@ -26,7 +26,7 @@ ordinal: 10000
 
 ## Why
 
-Once the code, schema, and skill rename land, canonical docs must describe the system as it now IS — `triage-entrypoints` instead of `self-repair-pipeline`, no Phase 4 aggregation, no `rough-aggregator` / `group-investigator`, no `pass1` / `pass2` directories. Diagrams updated to match. Cross-references in the fix-sequencer task realigned.
+Once the code, schema, and skill rename land, canonical docs must describe the system as it now IS — `triage-entrypoints` instead of `triage-entrypoints`, no Phase 4 aggregation, no `rough-aggregator` / `group-investigator`, no `pass1` / `pass2` directories. Diagrams updated to match. Cross-references in the fix-sequencer task realigned.
 
 ## Scope
 
@@ -53,7 +53,7 @@ Once the code, schema, and skill rename land, canonical docs must describe the s
 
 ### Style
 
-All updates follow the canonical / self-contained documentation style: present tense, describe the system as it IS, no references to "previously", "old", "deprecated", "Phase 4 aggregation", "self-repair-pipeline".
+All updates follow the canonical / self-contained documentation style: present tense, describe the system as it IS, no references to "previously", "old", "deprecated", "Phase 4 aggregation", "triage-entrypoints".
 
 ## Out of scope
 
@@ -70,6 +70,6 @@ All updates follow the canonical / self-contained documentation style: present t
 - [ ] #2 `triage-entrypoints` README Sub-Agent Summary table lists `triage-investigator` and `triage-coordinator`; `rough-aggregator` and `group-investigator` are gone
 - [ ] #3 Curator README Pipeline Flow diagram shows the curator consuming `novel_issues.json` + `classifier_regressions` from `triage-entrypoints`; no residual-group framing
 - [ ] #4 Cross-reference in `task-190.18` and `.claude/rules/classifier-lifecycle.md` is verified consistent with the renamed skill and new architecture
-- [ ] #5 No documentation uses "previously", "old", "deprecated", "Phase 4 aggregation", "self-repair-pipeline", or comparable historical-framing language
+- [ ] #5 No documentation uses "previously", "old", "deprecated", "Phase 4 aggregation", "triage-entrypoints", or comparable historical-framing language
 - [ ] #6 `## Self-healing pipeline` section heading remains in the renamed README as the chain-level umbrella term
 <!-- AC:END -->

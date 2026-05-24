@@ -15,8 +15,8 @@ dependencies: []
 references:
   - /Users/chuck/.claude/plans/open-that-plan-up-hazy-cloud.md
   - .claude/agents/triage-investigator.md
-  - .claude/skills/self-repair-pipeline/scripts/finalize_aggregation.ts
-  - .claude/skills/self-repair-pipeline/templates/prompt.md
+  - .claude/skills/triage-entrypoints/scripts/finalize_aggregation.ts
+  - .claude/skills/triage-entrypoints/templates/prompt.md
 parent_task_id: TASK-190.16
 priority: medium
 ---

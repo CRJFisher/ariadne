@@ -107,10 +107,10 @@ function render_acceptance_criteria(target_group_id: string): string {
     `- [ ] Root cause is fixed in Ariadne core — the \`${target_group_id}\` pattern resolves without the classifier.`,
     "- [ ] Regression test reproducing the example entries lands and passes.",
     `- [ ] Registry entry \`${target_group_id}\` is either removed from ` +
-      "`.claude/skills/self-repair-pipeline/known_issues/registry.json` " +
+      "`.claude/skills/triage-entrypoints/known_issues/registry.json` " +
       "or its `status` is flipped to `fixed`. Run `pnpm sync-permanent-rules` " +
       "to regenerate `packages/core/src/classify_entry_points/permanent_data.ts`.",
-    "- [ ] Self-repair pipeline re-run on affected corpora no longer surfaces this group.",
+    "- [ ] Self-healing pipeline re-run on affected corpora no longer surfaces this group.",
     "",
   ].join("\n");
 }

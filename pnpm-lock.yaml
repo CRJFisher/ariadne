@@ -39,7 +39,7 @@ importers:
         specifier: ^6.0.2
         version: 6.0.2
 
-  .claude/skills/self-repair-pipeline:
+  .claude/skills/triage-entrypoints:
     dependencies:
       '@ariadnejs/core':
         specifier: workspace:*

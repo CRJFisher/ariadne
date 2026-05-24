@@ -33,7 +33,7 @@ describe("propose_backlog_tasks", () => {
       "[method-chain-dispatch] Method call on call-chain receiver unresolved",
     );
     expect(proposal.labels).toEqual([
-      "self-repair-pipeline",
+      "triage-entrypoints",
       "known-issue",
       "method-chain-dispatch",
       "lang-typescript",

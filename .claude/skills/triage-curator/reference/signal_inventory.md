@@ -123,11 +123,11 @@ A registry entry's `classifier` field is one of:
   that can be decided from entry-local evidence (decorator presence,
   grep-line shape, diagnosis discriminant). `axis` is one of `"A"`, `"B"`,
   `"C"` and groups classifiers by the dimension they test (see
-  `self-repair-pipeline/known_issues/` for the axis definitions).
+  `triage-entrypoints/known_issues/` for the axis definitions).
 
 - **`{ kind: "builtin", function_name, min_confidence }`** — Reference to a
   TypeScript function in
-  `self-repair-pipeline/src/auto_classify/builtins/{function_name}.ts` that
+  `triage-entrypoints/src/auto_classify/builtins/{function_name}.ts` that
   receives the full `Project` + entry and returns a confidence score.
   Chosen when the classifier needs resolution-graph access, aggregate
   call-reference shape, or other signals not expressible in the predicate

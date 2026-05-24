@@ -1,4 +1,4 @@
-// Mirror of .claude/skills/self-repair-pipeline/src/atomic_write.ts — keep
+// Mirror of .claude/skills/triage-entrypoints/src/atomic_write.ts — keep
 // behavior identical. The skills are independent pnpm packages with no shared
 // workspace layer, so the helper is duplicated rather than imported across
 // package boundaries. Any change here must be applied to the mirror.

@@ -6,7 +6,7 @@ assignee: []
 created_date: "2026-05-20 10:00"
 labels:
   - self-repair
-  - self-repair-pipeline
+  - triage-entrypoints
   - srp-redesign
 dependencies:
   - TASK-190.19.3
@@ -30,15 +30,15 @@ With novel-issue consolidation happening inline at absorb time (190.19.2), the e
 
 - `.claude/agents/rough-aggregator.md`
 - `.claude/agents/group-investigator.md`
-- `.claude/skills/self-repair-pipeline/scripts/prepare_aggregation_slices.ts`
-- `.claude/skills/self-repair-pipeline/scripts/merge_rough_groups.ts`
-- `.claude/skills/self-repair-pipeline/scripts/finalize_aggregation.ts`
-- `.claude/skills/self-repair-pipeline/src/aggregation/` (entire directory: `types.ts`, `prepare_slices.ts`, `merge_rough_groups.ts`, `finalize_aggregation.ts`, and all colocated `.test.ts` files)
+- `.claude/skills/triage-entrypoints/scripts/prepare_aggregation_slices.ts`
+- `.claude/skills/triage-entrypoints/scripts/merge_rough_groups.ts`
+- `.claude/skills/triage-entrypoints/scripts/finalize_aggregation.ts`
+- `.claude/skills/triage-entrypoints/src/aggregation/` (entire directory: `types.ts`, `prepare_slices.ts`, `merge_rough_groups.ts`, `finalize_aggregation.ts`, and all colocated `.test.ts` files)
 - Per-run `aggregation/{slices,pass1,pass2}/` directory creation in `prepare_triage.ts` and any other writer.
 
 ### Re-target `finalize_triage.ts`
 
-`.claude/skills/self-repair-pipeline/scripts/finalize_triage.ts` and its helper `src/build_finalization_output.ts`:
+`.claude/skills/triage-entrypoints/scripts/finalize_triage.ts` and its helper `src/build_finalization_output.ts`:
 
 - Read `novel_issues.json` directly from the run directory.
 - Read the per-entry results to surface the `classifier_regressions` aggregate (190.19.4).
@@ -52,7 +52,7 @@ With novel-issue consolidation happening inline at absorb time (190.19.2), the e
 
 ### Update SKILL.md
 
-`.claude/skills/self-repair-pipeline/SKILL.md`:
+`.claude/skills/triage-entrypoints/SKILL.md`:
 
 - Remove the Phase 4 aggregation section.
 - Replace with a Phase 3 deep-dive describing the verdict schema, coordinator path, and `novel_issues.json` lifecycle.
@@ -128,7 +128,7 @@ Five Opus reviewers (architecture, AC compliance, test coverage, code correctnes
 
 ### Out-of-scope references retained
 
-The strict reading of AC #1 ("git grep finds no references") is satisfied within `.claude/skills/self-repair-pipeline/` and `packages/`. Curator-side references in `.claude/skills/triage-curator/` and `.claude/agents/triage-curator-investigator.md` remain (mentions of "rough-aggregator" in prompt text, the `FalsePositiveGroup` type alias) and will be cleaned up under 190.19.6 per this task's explicit out-of-scope clause. Historical task docs and backlog entries are not touched.
+The strict reading of AC #1 ("git grep finds no references") is satisfied within `.claude/skills/triage-entrypoints/` and `packages/`. Curator-side references in `.claude/skills/triage-curator/` and `.claude/agents/triage-curator-investigator.md` remain (mentions of "rough-aggregator" in prompt text, the `FalsePositiveGroup` type alias) and will be cleaned up under 190.19.6 per this task's explicit out-of-scope clause. Historical task docs and backlog entries are not touched.
 
 <!-- SECTION:DESCRIPTION:END -->
 

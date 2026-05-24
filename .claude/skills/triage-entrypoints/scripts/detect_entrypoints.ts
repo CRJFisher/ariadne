@@ -197,7 +197,7 @@ async function load_project_config(config_path: string): Promise<ProjectConfig> 
 
 // ===== GitHub Cloning =====
 
-const ARIADNE_REPOS_DIR = path.join(os.homedir(), ".ariadne", "self-repair-pipeline", "repos");
+const ARIADNE_REPOS_DIR = path.join(os.homedir(), ".ariadne", "triage-entrypoints", "repos");
 
 function parse_github_url(repo: string): string {
   // Already a full URL
