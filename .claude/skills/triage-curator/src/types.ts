@@ -453,12 +453,12 @@ export interface InvestigateResponse {
    */
   ariadne_bug: AriadneBug | null;
   /**
-   * Group members the investigator could not fit under the proposed
-   * classifier. Audit trail for "rough-aggregator over-grouped this set".
-   * Each `entry_index` must be in range for `group.entries[]`, must not
-   * appear in `classifier_spec.positive_examples`, and must be unique.
-   * Absent or empty array means the investigator vouches that every entry is
-   * covered.
+   * Citations the investigator could not fit under the proposed classifier.
+   * Audit trail for "the registered novel_issue grouped these together but
+   * they do not share the predicate I am authoring". Each `entry_index` must
+   * be in range for the dispatched group's citations, must not appear in
+   * `classifier_spec.positive_examples`, and must be unique. Absent or empty
+   * array means the investigator vouches that every citation is covered.
    */
   rejected_members: RejectedMember[];
   reasoning: string;

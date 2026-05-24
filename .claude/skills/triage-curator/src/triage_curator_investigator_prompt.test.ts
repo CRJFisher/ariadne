@@ -139,7 +139,7 @@ describe("triage-curator-investigator agent prompt — frontmatter", () => {
       name: "triage-curator-investigator",
       tools:
         "Bash(node --import tsx .claude/skills/triage-curator/scripts/get_investigate_context.ts:*), Bash(node --import tsx .claude/skills/triage-curator/scripts/validate_responses.ts:*), Read, Grep, Glob, Write(~/.ariadne/triage-curator/**)",
-      mcp_servers: ["ariadne", "backlog"],
+      mcp_servers: ["backlog"],
       model: "opus",
       max_turns: 200,
     };

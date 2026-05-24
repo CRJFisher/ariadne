@@ -414,6 +414,7 @@ async function main(): Promise<void> {
     refused_orphan_paths,
     failed_authoring,
     skipped_permanent_upserts: result.skipped_permanent_upserts,
+    skipped_fixed_upserts: result.skipped_fixed_upserts,
     drift_tagged_groups: result.drift_tagged_groups,
     registry_upserts: result.registry_upserts,
     signal_library_gap_tasks: result.signal_library_gap_tasks,

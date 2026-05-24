@@ -20,7 +20,7 @@ import {
 // before `paths.js` (transitively imported by `triage_state_paths.js`) reads it.
 const TMP_BASE = vi.hoisted(() => {
   const tmp_path = `${process.env.TMPDIR ?? "/tmp"}/ariadne-test-triage-paths-${process.pid}`;
-  process.env.ARIADNE_SELF_REPAIR_DIR_OVERRIDE = tmp_path;
+  process.env.ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE = tmp_path;
   return tmp_path;
 });
 

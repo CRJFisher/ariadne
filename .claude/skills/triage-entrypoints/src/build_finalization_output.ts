@@ -291,6 +291,14 @@ export function build_finalization_summary(
  * `parse_triage_verdict`; a malformed file aborts the load with a clear error
  * so a finalize never silently drops verdicts.
  */
+/**
+ * Strict non-negative-integer filename: rejects `-3.json`, `01.json`,
+ * `5.5.json`, ` 5.json`, `5.json.bak`, and any other shape outside the
+ * dispatcher's `<entry_index>.json` contract. Shared with `merge_results.ts`
+ * so the absorb-time gate and the finalize-time gate cannot diverge.
+ */
+export const VERDICT_FILE_BASENAME = /^(0|[1-9]\d*)$/;
+
 export async function load_verdicts_by_entry_index(
   results_dir: string,
 ): Promise<Map<number, TriageVerdict>> {
@@ -302,10 +310,6 @@ export async function load_verdicts_by_entry_index(
     if (is_enoent(err)) return out;
     throw err;
   }
-  // Strict non-negative-integer filename: rejects -3.json, 01.json, 5.5.json,
-  // ' 5.json', '5.json.bak' (the .endsWith filter already excludes the latter),
-  // and any other shape outside the dispatcher's `<entry_index>.json` contract.
-  const VERDICT_FILE_BASENAME = /^(0|[1-9]\d*)$/;
   for (const file of files) {
     if (!file.endsWith(".json")) continue;
     const basename = file.slice(0, -".json".length);

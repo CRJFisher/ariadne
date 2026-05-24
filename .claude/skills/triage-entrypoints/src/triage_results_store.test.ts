@@ -10,7 +10,7 @@ import {
 
 const TMP = vi.hoisted(() => {
   const tmp_path = `${process.env.TMPDIR ?? "/tmp"}/ariadne-test-triage-results-store-${process.pid}`;
-  process.env.ARIADNE_SELF_REPAIR_DIR_OVERRIDE = tmp_path;
+  process.env.ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE = tmp_path;
   return tmp_path;
 });
 

@@ -14,7 +14,7 @@ import {
 // before `paths.js` (transitively imported by `confirmed_unreachable_reuse.js`) reads it.
 const TMP = vi.hoisted(() => {
   const tmp_path = `${process.env.TMPDIR ?? "/tmp"}/ariadne-test-tp-cache-${process.pid}`;
-  process.env.ARIADNE_SELF_REPAIR_DIR_OVERRIDE = tmp_path;
+  process.env.ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE = tmp_path;
   return tmp_path;
 });
 

@@ -13,10 +13,12 @@
  * The atomic write to disk is the caller's responsibility (kept in
  * `apply_proposals.ts` so the registry is written once per finalize).
  *
- * Permanent rules are protected: a regression flag against a permanent row is
- * surfaced via `skipped_permanent_rule_ids` so the curator's finalize summary
- * can route it for human review, but the curator never auto-tags drift on
- * permanent rows.
+ * Permanent and fixed rules are protected: a regression flag against either
+ * is surfaced via `skipped_permanent_rule_ids` / `skipped_fixed_rule_ids` so
+ * the curator's finalize summary can route it for human review, but the
+ * curator never auto-tags drift on them. The lifecycle contract reserves
+ * `fixed`-row mutations for the fix-sequencer reconciler — see
+ * `.claude/rules/classifier-lifecycle.md`.
  */
 
 import type {
@@ -38,6 +40,12 @@ export interface AbsorbClassifierRegressionsResult {
   drift_tagged_rule_ids: string[];
   /** Rule ids skipped because the matching registry entry has `status: "permanent"`. */
   skipped_permanent_rule_ids: string[];
+  /**
+   * Rule ids skipped because the matching registry entry has `status: "fixed"`.
+   * A `fixed` row that resurfaces is the reconciler's domain — see
+   * `.claude/rules/classifier-lifecycle.md` for the write-boundary contract.
+   */
+  skipped_fixed_rule_ids: string[];
 }
 
 export function absorb_classifier_regressions(
@@ -55,12 +63,17 @@ export function absorb_classifier_regressions(
 
   const drift_tagged_rule_ids: string[] = [];
   const skipped_permanent_rule_ids: string[] = [];
+  const skipped_fixed_rule_ids: string[] = [];
 
   const updated_registry = registry.map((issue) => {
     const entries = entries_by_rule_id.get(issue.group_id);
     if (entries === undefined) return issue;
     if (issue.status === "permanent") {
       skipped_permanent_rule_ids.push(issue.group_id);
+      return issue;
+    }
+    if (issue.status === "fixed") {
+      skipped_fixed_rule_ids.push(issue.group_id);
       return issue;
     }
     const { issue: next_issue, changed } = append_drift_evidence(
@@ -77,5 +90,6 @@ export function absorb_classifier_regressions(
     updated_registry,
     drift_tagged_rule_ids,
     skipped_permanent_rule_ids,
+    skipped_fixed_rule_ids,
   };
 }

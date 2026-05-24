@@ -4,11 +4,11 @@ import path from "path";
 /**
  * Base directory for all triage-entrypoints state. Defaults to
  * `~/.ariadne/triage-entrypoints`. Tests set
- * `ARIADNE_SELF_REPAIR_DIR_OVERRIDE` to an isolated temp directory before
- * importing this module.
+ * `ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE` to an isolated temp directory
+ * before importing this module.
  */
 const STATE_DIR =
-  process.env.ARIADNE_SELF_REPAIR_DIR_OVERRIDE ??
+  process.env.ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE ??
   path.join(os.homedir(), ".ariadne", "triage-entrypoints");
 
 export const ANALYSIS_OUTPUT_DIR = path.join(STATE_DIR, "analysis_output");

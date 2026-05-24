@@ -3,7 +3,6 @@ name: triage-curator-investigator
 description: Authors a `BuiltinClassifierSpec` for a registered novel issue and names the Ariadne resolver deficiency to fix. One input — the consolidated `novel_issue` from the run's `novel_issues[]` (canonical_name, root_cause, citations[] with evidence_excerpt). One output — classifier spec + Ariadne-bug proposal + optional signal-library gap. Owns a propose → validate → iterate loop; emits the final response only after validation passes.
 tools: Bash(node --import tsx .claude/skills/triage-curator/scripts/get_investigate_context.ts:*), Bash(node --import tsx .claude/skills/triage-curator/scripts/validate_responses.ts:*), Read, Grep, Glob, Write(~/.ariadne/triage-curator/**)
 mcpServers:
-  - ariadne
   - backlog
 model: opus
 maxTurns: 200
@@ -16,7 +15,9 @@ cause, naming them, picking a canonical name across parallel agents — is
 done by the time you run. The triage-entrypoints skill's per-entry
 `triage-investigator` emits per-entry verdicts; the `triage-coordinator`
 consolidates them into `novel_issues[]`; the curator's puller hands you
-exactly one of those consolidated issues.
+exactly one of those consolidated issues. Every dispatch you receive is for
+an already-registered `novel_issue` with `mode: promote-novel`; you never
+see a fresh false-positive group.
 
 You do **one** thing: turn that registered novel issue into a
 `BuiltinClassifierSpec` that matches its members, and name the Ariadne

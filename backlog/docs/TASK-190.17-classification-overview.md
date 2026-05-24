@@ -6,7 +6,7 @@ This document is a plain-English map between **what TASK-190.17 changes** and **
 
 ## 1. The problem in one paragraph
 
-Before this task, `Project.get_call_graph()` returned a list of "entry points" that mixed real probably-dead functions with **noise** — things that look unreachable to a static analyzer but are in fact called by frameworks (Flask routes via `@app.route`, pytest fixtures, JSX components, dynamic dispatch) or by the language runtime (`__str__`, `__repr__`, …). Knowledge of these blind spots already existed inside the `self-repair-pipeline` skill (179 rules), but it never made its way back into the library, so every fresh consumer (the MCP `list_entrypoints` tool, library users, future skills) re-received the noise. TASK-190.17 fixes that by **moving classification into `@ariadnejs/core` itself**, so a fresh `npm install @ariadnejs/core` followed by `Project.get_call_graph()` already produces a clean list.
+Before this task, `Project.get_call_graph()` returned a list of "entry points" that mixed real probably-dead functions with **noise** — things that look unreachable to a static analyzer but are in fact called by frameworks (Flask routes via `@app.route`, pytest fixtures, JSX components, dynamic dispatch) or by the language runtime (`__str__`, `__repr__`, …). Knowledge of these blind spots already existed inside the `triage-entrypoints` skill (179 rules), but it never made its way back into the library, so every fresh consumer (the MCP `list_entrypoints` tool, library users, future skills) re-received the noise. TASK-190.17 fixes that by **moving classification into `@ariadnejs/core` itself**, so a fresh `npm install @ariadnejs/core` followed by `Project.get_call_graph()` already produces a clean list.
 
 ---
 
@@ -72,7 +72,7 @@ The `entry_points_by_id` and `classifier_hints_by_id` maps are what the self-hea
 Rules live in **two synchronized locations** with a single source of truth:
 
 ```
-.claude/skills/self-repair-pipeline/known_issues/registry.json    ← source of truth (180 rules, mix of permanent / wip / fixed)
+.claude/skills/triage-entrypoints/known_issues/registry.json    ← source of truth (180 rules, mix of permanent / wip / fixed)
                             │
                             │  pnpm sync-permanent-rules
                             ▼
@@ -81,7 +81,7 @@ packages/core/src/classify_entry_points/permanent_data.ts          ← bundled s
 
 - **Skill registry** (`.../registry.json`) is the curator's working copy. Includes `permanent`, `wip`, and `fixed` rules. The triage-curator skill mutates this file as new patterns are discovered.
 - **Bundled slice** (`packages/core/src/classify_entry_points/permanent_data.ts`) is auto-generated TypeScript. Filtered to `status === "permanent" && classifier.kind !== "none"`. Ships in `dist/` because it's a `.ts` file emitted by tsc — no JSON files to thread through `package.json#files`.
-- **Generator script**: `.claude/skills/self-repair-pipeline/scripts/sync_permanent_rules.ts`. Wired as `pnpm sync-permanent-rules` (root `package.json:12`). It also re-renders the builtins barrel (`packages/core/src/classify_entry_points/builtins/index.ts`) via `render_builtins_barrel` so dispatch always tracks the registry.
+- **Generator script**: `.claude/skills/triage-entrypoints/scripts/sync_permanent_rules.ts`. Wired as `pnpm sync-permanent-rules` (root `package.json:12`). It also re-renders the builtins barrel (`packages/core/src/classify_entry_points/builtins/index.ts`) via `render_builtins_barrel` so dispatch always tracks the registry.
 - **CI gate**: `pnpm check-permanent-rules` (`package.json:13`) regenerates and asserts a clean diff. Wired into `.github/workflows/test.yml:44`.
 
 The slice loader is `packages/core/src/classify_entry_points/registry_loader.ts` — it cross-checks `schema_version`, asserts only permanent + non-none rules, deep-clones, and pre-compiles regex patterns. Fails loud (`PermanentRegistryError`) on any drift the CI gate might have missed.
@@ -125,15 +125,15 @@ Code:
 
 ## 7. The self-healing pipeline becomes a thin caller
 
-Before TASK-190.17, the self-repair-pipeline skill _owned_ the orchestrator and the diagnostics extractor. After, it **calls core**:
+Before TASK-190.17, the triage-entrypoints skill _owned_ the orchestrator and the diagnostics extractor. After, it **calls core**:
 
 | Skill responsibility                                              | Where                                                                                                                                                        |
 | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Build `AnalysisResult` from a project for a downstream triage run | `.claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts` calls `extract_entry_point_diagnostics` directly (it does not classify here — the triage pipeline re-classifies once `attach_unindexed_test_grep_hits` has populated the grep set), then runs `attach_unindexed_test_grep_hits` |
-| Drive the triage loop on residuals                                | `.claude/skills/self-repair-pipeline/src/prepare_triage.ts:73` calls `enrich_call_graph` with the **full** registry — permanent + wip                        |
-| Operator state (run dirs, `LATEST` pointer, TP cache)             | `.claude/skills/self-repair-pipeline/src/run_discovery.ts`, `triage_state_paths.ts`, `triage_results_store.ts`, `confirmed_unreachable_reuse.ts` (unchanged) |
+| Build `AnalysisResult` from a project for a downstream triage run | `.claude/skills/triage-entrypoints/scripts/detect_entrypoints.ts` calls `extract_entry_point_diagnostics` directly (it does not classify here — the triage pipeline re-classifies once `attach_unindexed_test_grep_hits` has populated the grep set), then runs `attach_unindexed_test_grep_hits` |
+| Drive the triage loop on residuals                                | `.claude/skills/triage-entrypoints/src/prepare_triage.ts:73` calls `enrich_call_graph` with the **full** registry — permanent + wip                        |
+| Operator state (run dirs, `LATEST` pointer, TP cache)             | `.claude/skills/triage-entrypoints/src/run_discovery.ts`, `triage_state_paths.ts`, `triage_results_store.ts`, `confirmed_unreachable_reuse.ts` (unchanged) |
 | Curate new rules                                                  | `triage-curator` skill (separate; writes to `registry.json`, then `pnpm sync-permanent-rules` graduates qualifying rules into core)                          |
-| Render builtins barrel                                            | `.claude/skills/self-repair-pipeline/src/auto_classify/render_builtins_barrel.ts` (the only file left in `auto_classify/`; emits to core's path)             |
+| Render builtins barrel                                            | `.claude/skills/triage-entrypoints/src/auto_classify/render_builtins_barrel.ts` (the only file left in `auto_classify/`; emits to core's path)             |
 
 Why the skill keeps a full-registry loader: the pipeline wants to see **wip** rule matches too, so it can collect classifier hints into the LLM-triage prompt. Library callers only ever see the permanent slice.
 
@@ -165,12 +165,12 @@ These were prerequisites: doing the renames before structural moves kept the pos
 
 ## 10. Persisted-state policy
 
-Important contract for upgraders: **do not** `rm -rf ~/.ariadne/self-repair-pipeline/analysis_output/`. That directory is the permanent source of truth for the TP cache (consumed by `most_recent_finalized_triage_results` in `.claude/skills/self-repair-pipeline/src/triage_results_store.ts`). Wiping it kills cross-run TP reuse and forces every previously-confirmed entry point back through the LLM investigator.
+Important contract for upgraders: **do not** `rm -rf ~/.ariadne/triage-entrypoints/analysis_output/`. That directory is the permanent source of truth for the TP cache (consumed by `most_recent_finalized_triage_results` in `.claude/skills/triage-entrypoints/src/triage_results_store.ts`). Wiping it kills cross-run TP reuse and forces every previously-confirmed entry point back through the LLM investigator.
 
 For pre-existing per-project state at upgrade time:
 
-- Stale "active" runs: clear the `LATEST` pointer via `.claude/skills/self-repair-pipeline/scripts/abandon_run.ts` or by deleting the LATEST file.
-- Pre-run-namespaced state: run `.claude/skills/self-repair-pipeline/scripts/migrate_legacy_state.ts --project <name>` (or `--purge` to drop history).
+- Stale "active" runs: clear the `LATEST` pointer via `.claude/skills/triage-entrypoints/scripts/abandon_run.ts` or by deleting the LATEST file.
+- Pre-run-namespaced state: run `.claude/skills/triage-entrypoints/scripts/migrate_legacy_state.ts --project <name>` (or `--purge` to drop history).
 
 ---
 
@@ -184,12 +184,12 @@ Equivalence check via `diff_runs.ts` on a fixed commit pre/post — expect zero 
 
 | Before                                                                                  | After                                                                                |
 | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `.claude/skills/self-repair-pipeline/src/extract_entry_points.ts`                       | `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`         |
-| `.claude/skills/self-repair-pipeline/src/auto_classify/orchestrator.ts`                 | `packages/core/src/classify_entry_points/classify_entry_points.ts`                   |
-| `.claude/skills/self-repair-pipeline/src/auto_classify/predicate_evaluator.ts`          | `packages/core/src/classify_entry_points/predicate_evaluator.ts`                     |
-| `.claude/skills/self-repair-pipeline/src/auto_classify/builtins/check_*.ts` (~64 files) | `packages/core/src/classify_entry_points/builtins/check_*.ts`                        |
-| `.claude/skills/self-repair-pipeline/src/entry_point_types.ts`                          | `packages/types/src/entry_point.ts` + `packages/types/src/classified_entry_point.ts` |
-| `.claude/skills/self-repair-pipeline/src/known_issues_types.ts`                         | `packages/types/src/known_issues.ts`                                                 |
+| `.claude/skills/triage-entrypoints/src/extract_entry_points.ts`                       | `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts`         |
+| `.claude/skills/triage-entrypoints/src/auto_classify/orchestrator.ts`                 | `packages/core/src/classify_entry_points/classify_entry_points.ts`                   |
+| `.claude/skills/triage-entrypoints/src/auto_classify/predicate_evaluator.ts`          | `packages/core/src/classify_entry_points/predicate_evaluator.ts`                     |
+| `.claude/skills/triage-entrypoints/src/auto_classify/builtins/check_*.ts` (~64 files) | `packages/core/src/classify_entry_points/builtins/check_*.ts`                        |
+| `.claude/skills/triage-entrypoints/src/entry_point_types.ts`                          | `packages/types/src/entry_point.ts` + `packages/types/src/classified_entry_point.ts` |
+| `.claude/skills/triage-entrypoints/src/known_issues_types.ts`                         | `packages/types/src/known_issues.ts`                                                 |
 | `packages/core/src/trace_call_graph/filter_entry_points.python.ts`                      | DELETED — replaced by the `py-dunder-protocol` registry rule                         |
 
 The skill kept (`auto_classify/render_builtins_barrel.ts`) because it's a _generator that writes into core_ — owned by the skill, target lives in core. Same story for `scripts/sync_permanent_rules.ts`.
@@ -219,7 +219,7 @@ If you want to sanity-check the migration yourself:
 3. **Skill no longer owns the orchestrator**:
 
    ```
-   ls .claude/skills/self-repair-pipeline/src/auto_classify/
+   ls .claude/skills/triage-entrypoints/src/auto_classify/
    ```
 
    Should show only `render_builtins_barrel.ts` and its test.

@@ -483,7 +483,7 @@ describe("validate_response", () => {
         { entry_index: 0, reason: "incoherent with rest of group" },
         { entry_index: 1, reason: "incoherent with rest of group" },
       ],
-      reasoning: "rough-aggregator over-grouped",
+      reasoning: "investigator could not group these citations",
     };
     const session_log: InvestigatorSessionLog = {
       group_id: "dispatch-group",

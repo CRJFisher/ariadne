@@ -23,6 +23,13 @@ function permanent(group_id: string, overrides: Partial<KnownIssue> = {}): Known
   };
 }
 
+function fixed(group_id: string, overrides: Partial<KnownIssue> = {}): KnownIssue {
+  return {
+    ...wip(group_id, overrides),
+    status: "fixed",
+  };
+}
+
 const FLAG_DECORATOR: ClassifierRegressionFlag = {
   rule_id: "decorator-route",
   flagged_entries: [
@@ -53,6 +60,7 @@ describe("absorb_classifier_regressions", () => {
     expect(result.updated_registry).toEqual(expected_registry);
     expect(result.drift_tagged_rule_ids).toEqual(["decorator-route"]);
     expect(result.skipped_permanent_rule_ids).toEqual([]);
+    expect(result.skipped_fixed_rule_ids).toEqual([]);
   });
 
   it("coexists with prior qa-sample drift evidence — appends rather than overwriting", () => {
@@ -95,6 +103,16 @@ describe("absorb_classifier_regressions", () => {
     expect(result.updated_registry).toEqual(registry);
     expect(result.drift_tagged_rule_ids).toEqual([]);
     expect(result.skipped_permanent_rule_ids).toEqual(["decorator-route"]);
+    expect(result.skipped_fixed_rule_ids).toEqual([]);
+  });
+
+  it("skips fixed rules and records them under skipped_fixed_rule_ids", () => {
+    const registry: KnownIssue[] = [fixed("decorator-route")];
+    const result = absorb_classifier_regressions(registry, [FLAG_DECORATOR]);
+    expect(result.updated_registry).toEqual(registry);
+    expect(result.drift_tagged_rule_ids).toEqual([]);
+    expect(result.skipped_permanent_rule_ids).toEqual([]);
+    expect(result.skipped_fixed_rule_ids).toEqual(["decorator-route"]);
   });
 
   it("silently skips rule_ids absent from the registry", () => {
@@ -103,6 +121,7 @@ describe("absorb_classifier_regressions", () => {
     expect(result.updated_registry).toEqual(registry);
     expect(result.drift_tagged_rule_ids).toEqual([]);
     expect(result.skipped_permanent_rule_ids).toEqual([]);
+    expect(result.skipped_fixed_rule_ids).toEqual([]);
   });
 
   it("returns the registry unchanged when the aggregate is empty", () => {
@@ -112,6 +131,7 @@ describe("absorb_classifier_regressions", () => {
       updated_registry: registry,
       drift_tagged_rule_ids: [],
       skipped_permanent_rule_ids: [],
+      skipped_fixed_rule_ids: [],
     });
   });
 

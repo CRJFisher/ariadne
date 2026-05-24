@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
   "skill": "triage-curator",
-  "description": "Offline sweep over completed triage-entrypoints runs. Audits auto-classified false-positive groups, investigates residuals, produces classifier + backlog + signal proposals, and commits the result.",
+  "description": "Offline sweep over completed triage-entrypoints runs. Absorbs the per-run novel_issues and classifier_regressions; promotes registered novel issues to permanent classifier rules; produces classifier + backlog + signal proposals; QAs already-classified groups for drift; and commits the result.",
 
   "flows": [
     {
       "id": "novel-to-classifier",
-      "name": "Novel residual group → classifier authored",
+      "name": "Registered novel issue → classifier authored",
       "representativeness": 0.95,
       "representativeness_anchor": "purpose",
       "entry": {
@@ -109,7 +109,7 @@
       "id": "triage-curator-investigator",
       "model": "opus",
       "max_turns": 200,
-      "multiplicity": "per residual or promoted group; puller bounds concurrency to 5",
+      "multiplicity": "per registered novel issue; puller bounds concurrency to 5",
       "used_in_flows": ["novel-to-classifier"]
     }
   ],

@@ -1,20 +1,15 @@
 #!/usr/bin/env node --import tsx
 /**
- * Migrate pre-run-namespaced triage state to the new layout, optionally.
+ * Migrate pre-run-namespaced triage state to the run-namespaced layout.
  *
- * Old layout (legacy):
- *   triage_state/<project>/<project>_triage.json
- *   triage_state/<project>/results/
- *   triage_state/<project>/aggregation/    (deleted on migrate; obsolete v3 cascade)
- *
- * New layout:
+ * Layout this migrator produces:
  *   triage_state/<project>/runs/<run-id>/{triage.json, manifest.json, results/}
  *
- * This script wraps the legacy files into a synthetic
- * `runs/legacy-<iso-ts>/` directory with `manifest.status="abandoned"`. It
- * does NOT set `LATEST` — legacy state is treated as historical. Legacy
- * `aggregation/` dirs are always deleted: the v4 pipeline has no aggregation
- * cascade and the data is unreadable.
+ * It wraps any pre-existing flat `<project>_triage.json` + `results/` pair
+ * under a synthetic `runs/legacy-<iso-ts>/` directory with
+ * `manifest.status="abandoned"`. It does NOT set `LATEST` — historical state
+ * stays historical. Any stale `aggregation/` directories left over from an
+ * earlier pipeline shape are deleted unconditionally.
  *
  * Usage:
  *   node --import tsx migrate_legacy_state.ts --project <name> [--purge]

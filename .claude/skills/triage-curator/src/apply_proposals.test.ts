@@ -879,8 +879,38 @@ describe("apply_proposals — classifier_regressions integration", () => {
       },
     );
     expect(result.skipped_permanent_upserts).toEqual(["perm-rule"]);
+    expect(result.skipped_fixed_upserts).toEqual([]);
     expect(result.drift_tagged_groups).toEqual([]);
     const on_disk = await read_registry_json();
+    expect(on_disk[0].drift_detected).toBeUndefined();
+    expect(on_disk[0].drift_evidence).toBeUndefined();
+  });
+
+  it("routes in-flight regressions against fixed rules into skipped_fixed_upserts (reconciler owns mutations)", async () => {
+    await write_registry([known("fixed-rule", { status: "fixed" })]);
+    const result = await apply_proposals(
+      [],
+      [],
+      {},
+      {
+        dry_run: false,
+        registry_path,
+        project: "test-project",
+        run_id: "test-run",
+        classifier_regressions: [
+          {
+            rule_id: "fixed-rule",
+            flagged_entries: [{ entry_index: 1, evidence_excerpt: "resurfaced" }],
+          },
+        ],
+        authored_files_by_group: {},
+      },
+    );
+    expect(result.skipped_fixed_upserts).toEqual(["fixed-rule"]);
+    expect(result.skipped_permanent_upserts).toEqual([]);
+    expect(result.drift_tagged_groups).toEqual([]);
+    const on_disk = await read_registry_json();
+    expect(on_disk[0].status).toEqual("fixed");
     expect(on_disk[0].drift_detected).toBeUndefined();
     expect(on_disk[0].drift_evidence).toBeUndefined();
   });

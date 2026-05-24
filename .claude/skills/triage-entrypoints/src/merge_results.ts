@@ -17,6 +17,7 @@
 
 import fs from "fs";
 import path from "path";
+import { VERDICT_FILE_BASENAME } from "./build_finalization_output.js";
 import { parse_triage_verdict } from "./triage_verdict.js";
 import type { TriageState } from "./triage_state_types.js";
 
@@ -29,8 +30,10 @@ export function merge_results(state: TriageState, triage_dir: string): number {
 
   for (const file of files) {
     const basename = path.basename(file, ".json");
-    const entry_index = parseInt(basename, 10);
-    if (isNaN(entry_index)) continue;
+    // Reuse the finalize-time regex so the absorb and finalize gates never
+    // diverge — a verdict marked `completed` here must be loadable there.
+    if (!VERDICT_FILE_BASENAME.test(basename)) continue;
+    const entry_index = Number.parseInt(basename, 10);
 
     const entry = state.entries.find((e) => e.entry_index === entry_index);
     if (!entry) continue;

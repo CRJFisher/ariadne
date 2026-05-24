@@ -229,6 +229,13 @@ export interface ApplyResult {
    */
   skipped_permanent_upserts: string[];
   /**
+   * Rule ids skipped because the matching registry entry has `status: "fixed"`.
+   * A `fixed` row that resurfaces under an in-flight regression flag is the
+   * fix-sequencer reconciler's domain — see `.claude/rules/classifier-lifecycle.md`
+   * for the write-boundary contract.
+   */
+  skipped_fixed_upserts: string[];
+  /**
    * Rule ids newly tagged as drifting in this finalize run, from either the
    * QA sample-rate path (`mark_drift_in_registry`) OR the in-flight
    * regression path (`absorb_classifier_regressions`). The per-row
@@ -421,6 +428,7 @@ export async function apply_proposals(
     failed_authoring,
     registry_upserts,
     skipped_permanent_upserts: merged_skipped_permanent,
+    skipped_fixed_upserts: regression_result.skipped_fixed_rule_ids,
     drift_tagged_groups: merged_drift_tagged,
     signal_library_gap_tasks,
     ariadne_bug_tasks,

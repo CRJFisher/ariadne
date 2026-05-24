@@ -167,6 +167,30 @@ export function parse_triage_verdict(raw: unknown): TriageVerdict {
   }
 }
 
+/**
+ * Narrows a parsed `TriageVerdict` to a `NovelVerdict`. Throws if the verdict
+ * is `tp`, `fp-classifier-regression`, or `uncertain` — kinds that route
+ * around the coordinator and must never reach the novel-issue storage
+ * mutators.
+ */
+export function expect_novel_verdict(verdict: TriageVerdict): NovelVerdict {
+  if (verdict.kind === "fp-novel-new" || verdict.kind === "fp-novel-cited") {
+    return verdict;
+  }
+  throw new Error(
+    `expected a NovelVerdict (fp-novel-new | fp-novel-cited), got kind '${verdict.kind}'`,
+  );
+}
+
+/**
+ * Strict parser that combines `parse_triage_verdict` with `expect_novel_verdict`
+ * — for callers that consume raw JSON known to be a novel verdict (e.g. the
+ * dispatcher's coordinator-bound branch).
+ */
+export function parse_novel_verdict(raw: unknown): NovelVerdict {
+  return expect_novel_verdict(parse_triage_verdict(raw));
+}
+
 function parse_member_evidence(raw: unknown, ctx: string): MemberEvidence {
   const obj = expect_object(raw, ctx);
   assert_keys(obj, ["file", "line", "why"], ctx);

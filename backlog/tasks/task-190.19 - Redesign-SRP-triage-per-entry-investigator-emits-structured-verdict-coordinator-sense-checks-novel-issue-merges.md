@@ -167,12 +167,82 @@ Phase G — docs & diagrams:
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 All 10 sub-tasks (190.19.1 through 190.19.10) created and linked under this umbrella
-- [ ] #2 End-to-end run on a representative project produces a non-empty `novel_issues.json` and zero artifacts under `aggregation/`
-- [ ] #3 At least one `fp-classifier-regression` flag is detected and surfaced to the curator when a wip classifier is intentionally narrowed to miss known matches (regression test fixture)
-- [ ] #4 `aggregation/` directory tree is removed from the repository; `rough-aggregator`, `group-investigator`, `prepare_aggregation_slices.ts`, `merge_rough_groups.ts`, `finalize_aggregation.ts` no longer exist
-- [ ] #5 No backwards-compatibility shims; downstream consumers (curator, fix-sequencer reconciler, `diff_runs`) updated to read `novel_issues.json` directly
-- [ ] #6 `triage-entrypoints` README and curator README diagrams reflect the collapsed Phase 4 — no `rough-aggregator` / `group-investigator` boxes remain
-- [ ] #7 Classifier-lifecycle write-boundary contract is preserved — `triage-coordinator` writes only the per-run `novel_issues.json`
-- [ ] #8 Skill renamed from `triage-entrypoints` to `triage-entrypoints` via `git mv`; macro-name "self-healing pipeline" retained as the chain-level concept
+- [x] #1 All 10 sub-tasks (190.19.1 through 190.19.10) created and linked under this umbrella
+- [ ] #2 End-to-end run on a representative project produces a non-empty `novel_issues.json` and zero artifacts under `aggregation/` *(manual verification — see Implementation Notes below)*
+- [x] #3 At least one `fp-classifier-regression` flag is detected and surfaced to the curator when a wip classifier is intentionally narrowed to miss known matches (regression test fixture at `.claude/skills/triage-curator/src/classifier_regression_chain.test.ts`)
+- [x] #4 `aggregation/` directory tree is removed from the repository; `rough-aggregator`, `group-investigator`, `prepare_aggregation_slices.ts`, `merge_rough_groups.ts`, `finalize_aggregation.ts` no longer exist
+- [x] #5 No backwards-compatibility shims; downstream consumers (curator, fix-sequencer reconciler, `diff_runs`) updated to read `novel_issues.json` directly
+- [x] #6 `triage-entrypoints` README and curator README diagrams reflect the collapsed Phase 4 — no `rough-aggregator` / `group-investigator` boxes remain
+- [x] #7 Classifier-lifecycle write-boundary contract is preserved — `triage-coordinator` writes only the per-run `novel_issues.json`
+- [x] #8 Skill renamed from `self-repair-pipeline` to `triage-entrypoints` via `git mv`; macro-name "self-healing pipeline" retained as the chain-level concept
 <!-- AC:END -->
+
+## Implementation Notes
+
+### Final review (15 parallel Opus agents)
+
+After the ten sub-tasks landed, a 15-agent parallel review surfaced one
+contract gap, several skill-rename leftovers, and a divergent filename gate.
+Acted-on findings:
+
+- **`fixed`-row protection in curator drift absorb** —
+  `absorb_classifier_regressions` was guarding only `permanent` rows, so a
+  `fixed` rule whose `group_id` resurfaces in `classifier_regressions[]`
+  would have been silently drift-tagged. Lifecycle contract reserves
+  `fixed`-row mutations for the fix-sequencer reconciler. Added a
+  `skipped_fixed_rule_ids` partition in `curator_drift_absorb.ts`, wired
+  into `apply_proposals` and surfaced in the finalize summary.
+- **`parse_novel_verdict` narrowing helper** — added `expect_novel_verdict`
+  + `parse_novel_verdict` to `triage_verdict.ts` so callers consuming raw
+  JSON known to be a novel verdict cannot accidentally pass a `tp` or
+  `fp-classifier-regression` shape into the novel-issue storage mutators.
+- **Filename-gate divergence between `merge_results` and finalize** —
+  `merge_results.ts` accepted `parseInt(basename)` (which tolerates `-3`,
+  `01`, `+5`) while `load_verdicts_by_entry_index` already required
+  `^(0|[1-9]\d*)$`. Hoisted `VERDICT_FILE_BASENAME` out of
+  `build_finalization_output.ts` and reused it in `merge_results.ts` so
+  the absorb-time gate matches the finalize-time gate.
+- **Skill-rename completion** — renamed
+  `ARIADNE_SELF_REPAIR_DIR_OVERRIDE` →
+  `ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE` across `paths.ts` + five test
+  files, and bulk-replaced stale `.claude/skills/self-repair-pipeline/`
+  and `~/.ariadne/self-repair-pipeline/` references in
+  `backlog/docs/TASK-190.17-classification-overview.md`.
+- **AC#3 regression fixture** — added
+  `classifier_regression_chain.test.ts` exercising the wire chain end-to-
+  end: dispatcher-side `append_classifier_regression_record` →
+  `read_classifier_regression_records` → `aggregate_classifier_regressions`
+  → curator `apply_proposals` → `drift_evidence` with
+  `source: "in-flight"` persisted to the wip rule.
+- **Stale framing sweep** — purged "rough-aggregator over-grouped" and
+  "residuals" wording from `types.ts`, `validate_investigate_responses.ts`
+  JSDoc and test fixtures, `meta.json` flow names, the curator-
+  investigator agent's `Purpose` opener, and `migrate_legacy_state.ts`
+  header doc. Dropped the latent `ariadne` MCP grant from
+  `triage-curator-investigator.md` since the narrowed promote-novel role
+  only needs `backlog`.
+
+Deferred (filed as follow-up considerations, not blockers for this
+umbrella):
+
+- **Information-architecture sub-folder reorganisation** — the
+  architecture-review agent recommended grouping
+  `triage-entrypoints/src/` into stage folders (`dispense/`, `verdict/`,
+  `absorb/`, `finalize/`, `store/`) and hoisting `atomic_write.ts` +
+  tsx-invocation guard + `errors.ts` into a shared workspace package.
+  This is a 50+ file reshuffle and warrants its own task — the cost on
+  top of the 190.19 work would obscure the redesign's diff.
+- **AC#2 live-run verification** — running the pipeline against a
+  representative project to confirm a non-empty `novel_issues.json` is a
+  manual step; the mechanical chain is covered by
+  `classifier_regression_chain.test.ts`, `build_finalization_output.test.ts`,
+  `absorb_verdict.test.ts`, and the curator absorb tests. The AC remains
+  unchecked here because it requires operator-side verification, not a
+  code change.
+- **Settings allowlist entry update** — `.claude/settings.local.json`
+  still allows `Write(~/.ariadne/self-repair-pipeline/**)`; the
+  auto-mode sandbox blocked the rewrite (self-modification of agent
+  config). Operator action: replace with
+  `Write(~/.ariadne/triage-entrypoints/**)` and `mv`
+  `~/.ariadne/self-repair-pipeline` → `~/.ariadne/triage-entrypoints`
+  one-time to migrate live state.

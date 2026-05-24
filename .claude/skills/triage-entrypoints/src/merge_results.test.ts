@@ -173,4 +173,28 @@ describe("merge_results", () => {
 
     expect(merged).toEqual(0);
   });
+
+  it("rejects malformed numeric filenames (leading-zero, negative, decimal) so the absorb gate matches finalize", () => {
+    const state = build_mock_state({
+      entries: [
+        build_mock_entry({ entry_index: 1, status: "pending" }),
+        build_mock_entry({ entry_index: 5, status: "pending" }),
+      ],
+    });
+
+    fs.mkdirSync(results_dir, { recursive: true });
+    // All of these would have passed the old `parseInt + isNaN` gate but are
+    // rejected by `load_verdicts_by_entry_index` at finalize, so the absorb
+    // gate must reject them too.
+    fs.writeFileSync(path.join(results_dir, "01.json"), JSON.stringify(VALID_TP_VERDICT));
+    fs.writeFileSync(path.join(results_dir, "-3.json"), JSON.stringify(VALID_TP_VERDICT));
+    fs.writeFileSync(path.join(results_dir, "+5.json"), JSON.stringify(VALID_TP_VERDICT));
+    fs.writeFileSync(path.join(results_dir, "5.5.json"), JSON.stringify(VALID_TP_VERDICT));
+
+    const merged = merge_results(state, test_dir);
+
+    expect(merged).toEqual(0);
+    expect(state.entries[0].status).toEqual("pending");
+    expect(state.entries[1].status).toEqual("pending");
+  });
 });

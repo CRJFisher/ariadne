@@ -227,6 +227,7 @@ describe("curate_all absorb path — novel issues + classifier regressions", () 
       updated_registry: expected_registry,
       drift_tagged_rule_ids: ["drifting-rule"],
       skipped_permanent_rule_ids: [],
+      skipped_fixed_rule_ids: [],
     });
   });
 });
