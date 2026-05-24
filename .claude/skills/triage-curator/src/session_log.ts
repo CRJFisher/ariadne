@@ -9,7 +9,6 @@ const FAILURE_CATEGORIES = new Set<InvestigatorFailureCategory>([
   "pattern_unclear",
   "classifier_infeasible",
   "registry_conflict",
-  "permanent_locked",
   "other",
 ]);
 
@@ -43,8 +42,8 @@ export function parse_investigator_session_log(
   if (typeof obj.group_id !== "string" || obj.group_id.length === 0) {
     return { error: "session log: group_id must be a non-empty string" };
   }
-  if (obj.mode !== "residual" && obj.mode !== "promoted") {
-    return { error: "session log: mode must be 'residual' or 'promoted'" };
+  if (obj.mode !== "promote-novel") {
+    return { error: "session log: mode must be 'promote-novel'" };
   }
   if (typeof obj.status !== "string" || !STATUSES.has(obj.status as InvestigatorSessionStatus)) {
     return { error: "session log: status must be success|failure|blocked_missing_signal" };

@@ -6,7 +6,7 @@ import type { InvestigatorSessionLog } from "./types.js";
 function base_log(overrides: Partial<InvestigatorSessionLog> = {}): InvestigatorSessionLog {
   return {
     group_id: "g",
-    mode: "residual",
+    mode: "promote-novel",
     status: "success",
     reasoning: "identified signals A and B; predicate DSL suffices",
     failure_category: null,

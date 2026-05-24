@@ -373,13 +373,14 @@ export interface BuiltinClassifierSpec {
   combinator: "all" | "any";
   checks: SignalCheck[];
   /**
-   * Entry indexes from the group's `entries[]` array that the classifier is
-   * designed to match. Validated by the dispatcher against `group.entries.length`.
+   * Positional indexes into the dispatched novel issue's `citations[]` that
+   * the classifier is designed to match. Validated against
+   * `novel_issue.citations.length`.
    */
   positive_examples: number[];
   /**
-   * Entry indexes from the group's `entries[]` array (typically QA outliers in
-   * promoted mode) that the classifier must NOT match.
+   * Positional indexes into `citations[]` that the classifier must NOT match.
+   * Typically empty — outlier carving happens upstream in the coordinator.
    */
   negative_examples: number[];
   /** Copied into the generated file header and the commit-message body. */
@@ -387,17 +388,17 @@ export interface BuiltinClassifierSpec {
 }
 
 /**
- * Group member the investigator chose NOT to cover with the proposed
- * classifier. Names the entry by its index into the source `group.entries[]`
- * and carries the investigator's reason. A non-empty `rejected_members` is a
- * signal that the upstream rough-aggregator over-grouped — those entries
- * fall through to the next sweep as residuals and may be re-grouped with
- * different neighbours.
+ * Citation the investigator chose NOT to cover with the proposed
+ * classifier. Names the citation by its positional index into the dispatched
+ * novel issue's `citations[]` and carries the investigator's reason. A
+ * non-empty `rejected_members` is a signal that the upstream coordinator
+ * over-grouped — those citations fall through to the next sweep and may
+ * be re-grouped with different neighbours.
  */
 export interface RejectedMember {
-  /** Index into the source group's `entries[]`. */
+  /** Positional index into the source novel issue's `citations[]`. */
   entry_index: number;
-  /** Why the entry does not fit the proposed classifier. */
+  /** Why the citation does not fit the proposed classifier. */
   reason: string;
 }
 
@@ -453,11 +454,10 @@ export type InvestigatorSessionStatus = "success" | "failure" | "blocked_missing
  * Why the investigator could not produce a working classifier. Only populated when
  * status is "failure".
  *
- * - `group_incoherent`      the FalsePositiveGroup mixes unrelated root causes
+ * - `group_incoherent`      citations on the novel issue mix unrelated root causes
  * - `pattern_unclear`       single pattern, but discriminating signals unclear
  * - `classifier_infeasible` pattern understood, no DSL/builtin can express it
  * - `registry_conflict`     another registry entry already claims these members
- * - `permanent_locked`      promoted group's existing entry is status: "permanent"
  * - `other`                 anything else; details field must explain
  */
 export type InvestigatorFailureCategory =
@@ -465,12 +465,12 @@ export type InvestigatorFailureCategory =
   | "pattern_unclear"
   | "classifier_infeasible"
   | "registry_conflict"
-  | "permanent_locked"
   | "other";
 
 export interface InvestigatorSessionLog {
   group_id: string;
-  mode: "residual" | "promoted";
+  /** Discriminant identifying the curator-investigator role that produced this log. */
+  mode: "promote-novel";
   status: InvestigatorSessionStatus;
   /**
    * Full narrative. On failure, cite specific files/lines/patterns examined and why
