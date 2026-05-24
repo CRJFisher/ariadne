@@ -231,7 +231,8 @@ umbrella):
   `absorb/`, `finalize/`, `store/`) and hoisting `atomic_write.ts` +
   tsx-invocation guard + `errors.ts` into a shared workspace package.
   This is a 50+ file reshuffle and warrants its own task — the cost on
-  top of the 190.19 work would obscure the redesign's diff.
+  top of the 190.19 work would obscure the redesign's diff. Filed as
+  [TASK-190.21](task-190.21%20-%20Reorganise-self-healing-skill-src-trees-into-pipeline-stage-folders.md).
 - **AC#2 live-run verification** — running the pipeline against a
   representative project to confirm a non-empty `novel_issues.json` is a
   manual step; the mechanical chain is covered by
