@@ -2,20 +2,14 @@
 /**
  * Hydrates the context for the `triage-curator-investigator` sub-agent.
  *
- * Two modes:
- *
- *   residual  (default)  The group was not auto-classified. Hydrate the full
- *                        group, current registry, and signal inventory.
- *
- *   promoted  (--promoted) The group WAS auto-classified but QA found the
- *                          classifier is mis-matching enough members to
- *                          warrant re-investigation. Adds the existing
- *                          registry entry, the QA outliers, and source
- *                          excerpts for the outlier entries.
+ * The dispatch source under v4 is a `novel_issue` record consolidated by the
+ * SRP per-entry triage + coordinator. The investigator gets the issue's
+ * canonical name, root_cause hint, and citation excerpts, plus the current
+ * registry slice and the signal inventory, and authors a `BuiltinClassifierSpec`
+ * + `ariadne_bug` proposal.
  *
  * Usage:
- *   node --import tsx get_investigate_context.ts --group <id> --run <path>
- *   node --import tsx get_investigate_context.ts --group <id> --run <path> --promoted
+ *   node --import tsx get_investigate_context.ts --novel-issue <id> --run <path>
  */
 
 import * as fs from "node:fs/promises";
@@ -24,18 +18,12 @@ import { fileURLToPath } from "node:url";
 
 import { parse_known_issues_registry_json } from "@ariadnejs/types";
 import { error_code } from "../src/errors.js";
-import {
-  derive_run_id,
-  get_registry_file_path,
-  run_output_dir,
-} from "../src/paths.js";
-import { read_source_excerpt } from "../src/source_excerpt.js";
+import { read_v4_triage_results } from "../src/parse_triage_results.js";
+import { get_registry_file_path } from "../src/paths.js";
 import {
   ARIADNE_ROOT_CAUSE_CATEGORIES,
   SIGNAL_CHECK_OPS,
-  type KnownIssue,
-  type QaOutlier,
-  type QaResponse,
+  type NovelIssue,
   type TriageResultsFile,
 } from "../src/types.js";
 import { SIGNAL_LIBRARY_GAP_PARENT_TASK_ID } from "../src/apply_proposals.js";
@@ -46,31 +34,26 @@ const SKILL_DIR = path.resolve(THIS_DIR, "..");
 const SIGNAL_INVENTORY_PATH = path.join(SKILL_DIR, "reference", "signal_inventory.md");
 
 interface CliArgs {
-  group_id: string;
+  novel_issue_id: string;
   run_path: string;
-  promoted: boolean;
 }
 
 function parse_argv(argv: string[]): CliArgs {
-  let group_id: string | null = null;
+  let novel_issue_id: string | null = null;
   let run_path: string | null = null;
-  let promoted = false;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     switch (arg) {
-      case "--group":
-        group_id = argv[++i];
+      case "--novel-issue":
+        novel_issue_id = argv[++i];
         break;
       case "--run":
         run_path = argv[++i];
         break;
-      case "--promoted":
-        promoted = true;
-        break;
       case "--help":
       case "-h":
         process.stdout.write(
-          "Usage: get_investigate_context --group <id> --run <path> [--promoted]\n",
+          "Usage: get_investigate_context --novel-issue <id> --run <path>\n",
         );
         process.exit(0);
         break;
@@ -78,13 +61,13 @@ function parse_argv(argv: string[]): CliArgs {
         throw new Error(`Unknown argument: ${arg}`);
     }
   }
-  if (group_id === null || group_id.length === 0) {
-    throw new Error("--group <id> is required");
+  if (novel_issue_id === null || novel_issue_id.length === 0) {
+    throw new Error("--novel-issue <id> is required");
   }
   if (run_path === null || run_path.length === 0) {
     throw new Error("--run <path> is required");
   }
-  return { group_id, run_path, promoted };
+  return { novel_issue_id, run_path };
 }
 
 async function read_optional_file(file_path: string): Promise<string | null> {
@@ -96,62 +79,23 @@ async function read_optional_file(file_path: string): Promise<string | null> {
   }
 }
 
-interface PromotedContext {
-  registry_entry: KnownIssue;
-  qa_outliers: QaOutlier[];
-  qa_notes: string;
-  outlier_source_excerpts: Array<{ entry_index: number; excerpt: string }>;
-}
-
-async function load_promoted_context(
-  group_id: string,
+function find_novel_issue(
   triage: TriageResultsFile,
-  run_path: string,
-  registry: KnownIssue[],
-): Promise<PromotedContext> {
-  const registry_entry = registry.find((e) => e.group_id === group_id);
-  if (registry_entry === undefined) {
-    throw new Error(
-      `--promoted: no registry entry for group_id "${group_id}"; promoted groups must have been auto-classified`,
-    );
+  novel_issue_id: string,
+): NovelIssue {
+  const issue = triage.novel_issues.find((i) => i.id === novel_issue_id);
+  if (issue === undefined) {
+    throw new Error(`novel_issue '${novel_issue_id}' not found in triage results`);
   }
-
-  const run_id = derive_run_id(run_path);
-  const qa_file = path.join(run_output_dir(run_id), "qa", `${group_id}.json`);
-  const qa = JSON.parse(await fs.readFile(qa_file, "utf8")) as QaResponse;
-
-  const group = triage.false_positive_groups[group_id];
-  const outlier_source_excerpts = await Promise.all(
-    qa.outliers.map(async (o) => {
-      const entry = group.entries[o.entry_index];
-      if (entry === undefined) {
-        return { entry_index: o.entry_index, excerpt: "<entry_index out of range>" };
-      }
-      return {
-        entry_index: o.entry_index,
-        excerpt: await read_source_excerpt(entry.file_path, entry.start_line, triage.project_path),
-      };
-    }),
-  );
-
-  return {
-    registry_entry,
-    qa_outliers: qa.outliers,
-    qa_notes: qa.notes,
-    outlier_source_excerpts,
-  };
+  return issue;
 }
 
 async function main(): Promise<void> {
-  const { group_id, run_path, promoted } = parse_argv(process.argv.slice(2));
+  const { novel_issue_id, run_path } = parse_argv(process.argv.slice(2));
 
-  const triage_raw = await fs.readFile(run_path, "utf8");
-  const triage = JSON.parse(triage_raw) as TriageResultsFile;
+  const triage = await read_v4_triage_results(run_path);
 
-  const group = triage.false_positive_groups[group_id];
-  if (group === undefined) {
-    throw new Error(`group_id "${group_id}" not found in ${run_path}`);
-  }
+  const novel_issue = find_novel_issue(triage, novel_issue_id);
 
   const registry_path = get_registry_file_path();
   const registry_raw = await fs.readFile(registry_path, "utf8");
@@ -161,11 +105,11 @@ async function main(): Promise<void> {
 
   const writable_paths = [registry_path];
 
-  const base = {
-    group_id,
+  const out = {
+    novel_issue_id,
     run_path,
-    mode: promoted ? "promoted" as const : "residual" as const,
-    group,
+    mode: "promote-novel" as const,
+    novel_issue,
     registry,
     signal_inventory_path: SIGNAL_INVENTORY_PATH,
     signal_inventory,
@@ -178,18 +122,18 @@ async function main(): Promise<void> {
       ariadne_root_cause_categories: ARIADNE_ROOT_CAUSE_CATEGORIES,
       combinator_values: ["all", "any"] as const,
       response_group_id_rule:
-        `response.group_id must equal '${group_id}' (the dispatch group). ` +
+        `response.group_id must equal '${novel_issue_id}' (the dispatched novel-issue id). ` +
         "To extend an existing registry entry, set response.retargets_to='<existing_group_id>' " +
         "and keep response.group_id unchanged.",
       retarget_rules:
         "response.retargets_to is optional. When set, it MUST name an existing " +
         "registry group_id. The authored classifier file then shadows that entry's " +
         "classifier. When retargeting, positive_examples and negative_examples must be " +
-        "empty — their indices would reference the source group, not the target.",
+        "empty — their indices would reference the source citations, not the target.",
       positive_example_rules:
-        "classifier_spec.positive_examples indices must satisfy 0 <= i < group.entries.length " +
-        `(= ${group.entries.length} for this group). Same rule for negative_examples. ` +
-        "When retargeting (response.retargets_to set), leave both arrays empty.",
+        "classifier_spec.positive_examples indices must satisfy 0 <= i < citations.length " +
+        `(= ${novel_issue.citations.length} for this novel issue). Same rule for ` +
+        "negative_examples. When retargeting (response.retargets_to set), leave both arrays empty.",
       kind_none_rule:
         "If proposed_classifier.kind === 'none', you must either populate signal_library_gap " +
         "(signals_needed + title + description) naming the missing signal, or emit a session " +
@@ -211,29 +155,9 @@ async function main(): Promise<void> {
         "Mismatched names are rejected before render.",
       example_uniqueness_rule:
         "Entries in positive_examples and negative_examples must be unique integers " +
-        "(duplicates are rejected) and in-range vs group.entries.length.",
-      common_mistakes: [
-        "Using an op not in signal_check_ops — e.g. 'any' as a top-level combinator. " +
-          "The combinator field goes on the classifier_spec itself (combinator: 'all' | 'any'), " +
-          "NOT nested inside checks[].",
-        "Renaming response.group_id to target an existing registry entry. Use retargets_to instead.",
-        "Listing positive_examples that reference indices >= group.entries.length.",
-        "Emitting kind='none' with a null signal_library_gap when the investigation never tried " +
-          "to land a classifier. Record a failure_category in the session log instead.",
-        "Proposing a working classifier without populating ariadne_bug. The classifier routes around " +
-          "the bug; the bug must still be filed (or attached to an existing_task_id).",
-        "Emitting proposed_classifier: { kind: 'none' } for the promoted 'keep' action. " +
-          "Keep uses proposed_classifier: null (existing entry retained), not kind: 'none' (retire).",
-      ],
+        "(duplicates are rejected) and in-range vs citations.length.",
     },
   };
-
-  const out = promoted
-    ? {
-        ...base,
-        ...(await load_promoted_context(group_id, triage, run_path, registry)),
-      }
-    : base;
 
   process.stdout.write(JSON.stringify(out, null, 2) + "\n");
 }

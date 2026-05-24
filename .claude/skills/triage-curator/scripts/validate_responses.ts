@@ -22,13 +22,10 @@ import * as path from "node:path";
 
 import { parse_known_issues_registry_json } from "@ariadnejs/types";
 import { error_code } from "../src/errors.js";
+import { read_v4_triage_results } from "../src/parse_triage_results.js";
 import { get_registry_file_path } from "../src/paths.js";
 import { parse_investigator_session_log } from "../src/session_log.js";
-import type {
-  FalsePositiveGroup,
-  InvestigatorSessionLog,
-  TriageResultsFile,
-} from "../src/types.js";
+import type { InvestigatorSessionLog } from "../src/types.js";
 import {
   validate_response,
   type ValidationIssue,
@@ -92,11 +89,7 @@ async function validate_single_response(
   response_path: string,
   run_path: string,
 ): Promise<ValidationIssue[]> {
-  const triage = JSON.parse(
-    await fs.readFile(run_path, "utf8"),
-  ) as TriageResultsFile;
-  const triage_groups: Record<string, FalsePositiveGroup> =
-    triage.false_positive_groups;
+  const triage = await read_v4_triage_results(run_path);
   const registry = parse_known_issues_registry_json(
     await fs.readFile(get_registry_file_path(), "utf8"),
   );
@@ -120,12 +113,16 @@ async function validate_single_response(
   }
 
   const session_log = await load_session_log(investigate_dir, dispatch_group_id);
-  const source_group = triage_groups[dispatch_group_id] ?? null;
+  // Under v4 the dispatch source is a `novel_issue`; the entry count for
+  // index-range validation is its citation count. null when the issue cannot
+  // be resolved in the run artifact (e.g. response filename mismatches).
+  const novel_issue = triage.novel_issues.find((i) => i.id === dispatch_group_id) ?? null;
+  const source_entry_count = novel_issue === null ? null : novel_issue.citations.length;
   return validate_response({
     dispatch_group_id,
     response_path,
     response_raw,
-    source_group,
+    source_entry_count,
     registry,
     session_log,
   });

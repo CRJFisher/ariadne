@@ -1,19 +1,20 @@
 ---
 name: triage-curator
-description: Offline sweep that QAs auto-classified false-positive groups and investigates residuals from completed self-repair-pipeline runs. Tags drifting classifiers, proposes new ones, re-investigates classifiers QA found mis-matching, files signal-library-gap sub-tasks under TASK-190.16 and Ariadne-bug top-level tasks (linked back into the registry), and commits the result.
+description: Offline sweep that consumes the self-repair-pipeline's v4 triage results — promotes novel issues into the registry with authored classifiers, absorbs classifier-regression flags as drift signals, files signal-library-gap sub-tasks under TASK-190.16 and Ariadne-bug top-level tasks (linked back into the registry), and commits the result.
 argument-hint: "[--project <name>] [--last <n>] [--run <path>] [--dry-run] [--commit-to current|new|pr] [--branch <name>] [--pr <number>]"
 disable-model-invocation: true
-allowed-tools: Bash(node --import tsx:*), Bash(git *), Bash(gh *), AskUserQuestion, Read, Write, Edit, Glob, Task(triage-curator-qa, triage-curator-investigator), mcp__backlog__task_create, mcp__backlog__task_search
+allowed-tools: Bash(node --import tsx:*), Bash(git *), Bash(gh *), AskUserQuestion, Read, Write, Edit, Glob, Task(triage-curator-investigator), mcp__backlog__task_create, mcp__backlog__task_search
 ---
 
 # Triage Curator
 
-Offline sweep over `self-repair-pipeline` triage outputs. Two sub-agent
-waves (QA, then Investigate); the puller folds QA-broken classifiers into
-the investigate wave automatically. Finalize applies proposals; backlog
-captures signal gaps; commit seals the sweep.
+Offline sweep over `self-repair-pipeline` triage outputs. One sub-agent
+wave: investigators author classifiers for novel issues the per-entry SRP
+triage already named. The puller floats drift-flagged wip rules to the
+front of the queue. Finalize applies proposals; backlog captures signal
+gaps; commit seals the sweep.
 
-The curator reads `analysis_output/<project>/triage_results/<run-id>.json` (schema v2 — includes `project_path`, `commit_hash`, and `kind` per entry; `file_path` is relative to `project_path`). The `<run-id>` is the same identifier the self-repair-pipeline emits (`<short-commit>-<iso-ts>`): run-id is the shared identifier across the two skills.
+The curator reads `analysis_output/<project>/triage_results/<run-id>.json` (schema v4 — includes `project_path`, `commit_hash`, `novel_issues[]`, `classifier_regressions[]`, `confirmed_unreachable[]`, `uncertain[]`). The `<run-id>` is the same identifier the self-repair-pipeline emits (`<short-commit>-<iso-ts>`): run-id is the shared identifier across the two skills.
 
 **Script invocation:** always `node --import tsx`. Never `pnpm exec tsx`
 or `npx tsx`.
@@ -22,13 +23,12 @@ or `npx tsx`.
 
 | #   | Step          | Actor                                                          | Output                                                                                                                                                  |
 | --- | ------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Plan          | `scripts/curate_all.ts`                                        | List of runs with QA + residual-investigate dispatches                                                                                                  |
-| 2   | QA            | `triage-curator-qa` (sonnet, 50 turns)                         | One `QaResponse` per auto-classified group                                                                                                              |
-| 3   | Investigate   | `triage-curator-investigator` (opus, 200 turns, ≤5 concurrent) | One validated `InvestigateResponse` + `<id>.session.json` per dispatch. The investigator self-validates via `scripts/validate_responses.ts --response`. |
-| 4   | Author source | Main agent + `scripts/render_classifier.ts`                    | One `check_<target>.ts` per builtin proposal                                                                                                            |
-| 5   | Finalize      | `scripts/finalize_run.ts`                                      | Apply proposals, write `finalized.json`, print summary                                                                                                  |
-| 6   | Backlog       | `mcp__backlog__task_create` + `link_ariadne_bug_tasks`         | Gap sub-tasks under `TASK-190.16`; bug tasks + registry link                                                                                            |
-| 7   | Commit        | `git` / `gh` via `AskUserQuestion`                             | Committed sweep on current branch, a new branch, or a PR                                                                                                |
+| 1   | Plan          | `scripts/curate_all.ts`                                        | List of runs with promote-novel investigate dispatches + classifier-regression flag summaries                                                           |
+| 2   | Investigate   | `triage-curator-investigator` (opus, 200 turns, ≤5 concurrent) | One validated `InvestigateResponse` + `<id>.session.json` per dispatch. The investigator self-validates via `scripts/validate_responses.ts --response`. |
+| 3   | Author source | Main agent + `scripts/render_classifier.ts`                    | One `check_<target>.ts` per builtin proposal                                                                                                            |
+| 4   | Finalize      | `scripts/finalize_run.ts`                                      | Apply proposals, write `finalized.json`, print summary                                                                                                  |
+| 5   | Backlog       | `mcp__backlog__task_create` + `link_ariadne_bug_tasks`         | Gap sub-tasks under `TASK-190.16`; bug tasks + registry link                                                                                            |
+| 6   | Commit        | `git` / `gh` via `AskUserQuestion`                             | Committed sweep on current branch, a new branch, or a PR                                                                                                |
 
 ## Arguments
 
@@ -39,7 +39,7 @@ or `npx tsx`.
 | `--project <name>`               | Restrict to one project directory under `analysis_output`                                                   |
 | `--last <n>`                     | Keep the most recent N runs after filtering                                                                 |
 | `--run <path>`                   | Short-circuit discovery; curate a single `triage_results` JSON                                              |
-| `--dry-run`                      | Run QA + investigation but apply no writes and skip commit                                                  |
+| `--dry-run`                      | Run the investigation wave but apply no writes and skip commit                                              |
 | `--commit-to <current\|new\|pr>` | Where to commit curation outputs. If omitted and not `--dry-run`, the main agent asks via `AskUserQuestion` |
 | `--branch <name>`                | Branch name for `--commit-to new`                                                                           |
 | `--pr <number>`                  | Existing PR number for `--commit-to pr`                                                                     |
@@ -56,42 +56,26 @@ node --import tsx .claude/skills/triage-curator/scripts/curate_all.ts <FORWARDED
 ```
 
 Capture the printed JSON as `PLAN`. It holds `runs[]`, each with
-`run_path`, `qa_groups[]`, `investigate_groups[]`, and `finalize_cmd`.
-Each dispatch carries a `get_context_cmd` and pre-allocated `output_path`.
+`run_path`, `novel_promote_dispatches[]`,
+`already_registered_novel_issues[]`, `classifier_regressions[]`, and
+`finalize_cmd`. Promote-novel dispatches carry a `get_context_cmd` and
+pre-allocated `output_path`; already-registered novel issues need no
+dispatch (finalize bumps `observed_count` from the source triage file
+directly); classifier regressions flow through finalize via the in-flight
+drift absorb path (190.19.4 — no separate dispatch).
 
-### Step 2 — Dispatch the QA wave
-
-For every run, fire one `Task(triage-curator-qa)` per entry in
-`qa_groups[]`, in parallel:
-
-> QA group `<group_id>` in run `<run_path>`. Write the `QaResponse` JSON to
-> `<output_path>`. Return nothing inline.
-
-Wait for all `Task()` calls to return before continuing.
-
-### Step 3 — Dispatch the investigate wave
+### Step 2 — Dispatch the investigate wave
 
 The investigator is opus/200-turn, so cap concurrency at
 `MAX_CONCURRENT_INVESTIGATORS = 5` and drain the queue in waves using
-the puller — which internally folds in any QA-broken classifier that
-needs re-investigation (sample outlier rate ≥ 0.40, not `permanent`).
+the puller.
 
-**1. Write the residual dispatch list.** Flatten every entry in
-`PLAN.runs[*].investigate_groups[]` into a single array — these are the
-groups without a registry entry. Tag each with the `run_path` it came
-from:
-
-```json
-{
-  "run_path": "...",
-  "group_id": "...",
-  "output_path": "...",
-  "get_context_cmd": "..."
-}
-```
-
-Using the `Write` tool, persist to a temp file as `$DISPATCH_LIST`
-(e.g. `/tmp/curator-dispatch-<stamp>.json`).
+**1. Write the dispatch list.** Concatenate every entry in
+`PLAN.runs[*].novel_promote_dispatches[]` into a single array. Each entry
+already carries `run_path`, `group_id` (= novel-issue id), `output_path`,
+and `get_context_cmd` — the producer's shape matches the puller's
+`DispatchEntry` directly. Persist via the `Write` tool to a temp file as
+`$DISPATCH_LIST` (e.g. `/tmp/curator-dispatch-<stamp>.json`).
 
 **2. Pull-and-dispatch loop.** Until `pending[]` is empty:
 
@@ -100,8 +84,8 @@ node --import tsx .claude/skills/triage-curator/scripts/next_investigate_tasks.t
   --dispatch-list "$DISPATCH_LIST" --limit 5
 ```
 
-The puller reads residuals from the list, inspects each run's `qa/` dir
-to compute promotions on the fly, merges, filters done, and prints:
+The puller dedupes by `output_path`, floats drift-flagged wip rules to
+the front, filters done dispatches, and prints:
 
 ```json
 { "pending": [ /* ≤5 entries */ ], "remaining": <total_not_done> }
@@ -112,15 +96,15 @@ A dispatch is "done" when its `output_path` exists and parses as JSON.
 For each entry in `pending[]`, fire one `Task(triage-curator-investigator)`
 in a single message so the wave runs in parallel:
 
-> Investigate group `<group_id>` in run `<run_path>`. Hydrate with the
-> command in `<get_context_cmd>`. Run the validator
+> Investigate novel issue `<group_id>` in run `<run_path>`. Hydrate with
+> the command in `<get_context_cmd>`. Run the validator
 > (`scripts/validate_responses.ts --response <output_path> --run <run_path>`)
 > against your draft until it returns clean before writing the final
 > `InvestigateResponse` JSON to `<output_path>` and the session log to the
-> sibling `<group_id>.session.json`. Members the classifier cannot fit go
-> into `rejected_members` rather than weakening the spec. For any `kind:
-"builtin"` proposal, populate `classifier_spec` as structured data — never
-> TypeScript. Return nothing inline.
+> sibling `<group_id>.session.json`. Citations the classifier cannot fit
+> go into `rejected_members` rather than weakening the spec. For any
+> `kind: "builtin"` proposal, populate `classifier_spec` as structured
+> data — never TypeScript. Return nothing inline.
 
 Wait for every `Task()` in the wave to return before calling the puller
 again. Exit the loop when `pending[]` is empty.
@@ -130,7 +114,7 @@ Each investigator self-validates inside its own loop using
 Cross-response coherence (two responses targeting the same classifier
 file) is enforced inside `finalize_run.ts` before any registry mutation.
 
-### Step 4 — Author builtin classifier source
+### Step 3 — Author builtin classifier source
 
 For every investigate response with a non-null `classifier_spec`, render
 it to TypeScript. (The investigator self-validates each response before
@@ -151,9 +135,9 @@ non-zero and does NOT create the file.
 
 Build the authored-files map keyed by `response.retargets_to ?? response.group_id`
 (values are the stdout paths from render_classifier), persist via `Write`,
-and pass it to Step 5 via `--authored-files`.
+and pass it to Step 4 via `--authored-files`.
 
-### Step 5 — Finalize per run
+### Step 4 — Finalize per run
 
 Invoke the `finalize_cmd` from `PLAN` with the authored-files map:
 
@@ -180,7 +164,7 @@ Capture each printed JSON as `FINALIZE[run_id]`. Aggregate `authored_files`,
 `deleted_orphan_files`, `failed_authoring`, `signal_library_gap_tasks`,
 `ariadne_bug_tasks`, `failed_groups`, `skipped_permanent_upserts` across runs.
 
-### Step 6 — File backlog tasks
+### Step 5 — File backlog tasks
 
 Skip entirely when `--dry-run` was set. Otherwise file two distinct task
 flights from the finalize summaries.
@@ -256,7 +240,7 @@ the full `outcome.ariadne_bug_tasks[]` array. Re-running this sub-step
 from that array reconstructs the mapping without re-dispatching
 investigators.
 
-### Step 7 — Commit the sweep
+### Step 6 — Commit the sweep
 
 Skip when `--dry-run` was set or no files were written across all runs.
 
@@ -403,26 +387,9 @@ with the supplied fields, then feeds `{ [group_id]: "TASK-<N>" }` back through
 it calls `mcp__backlog__task_edit` on the `backlog_task` with the new
 `description`.
 
-## Promoting novel groups (on demand)
-
-The triage-investigator emits `novel:<kebab-case>` group_ids for detection
-gaps that do not match any existing registry entry. The novel-group scanner
-aggregates those across finalized runs and mints a `wip` registry placeholder
-once a group accumulates at least `PROMOTION_THRESHOLD` (5) distinct members.
-
-```bash
-node --import tsx .claude/skills/triage-curator/scripts/promote_novel_groups.ts \
-  [--dry-run] [--threshold 5]
-```
-
-Only curated runs (runs with a `finalized.json` sentinel) are scanned, so the
-scanner can run safely after `curate_all`. Promoted placeholders carry
-`classifier: { kind: "none" }` — the next curator run dispatches an
-investigator to author the real classifier.
-
 ## Classifier lifecycle (write boundaries)
 
-The curator is the single autonomous writer for every `wip` transition: minting (`promote_novel_groups.ts`), classifier authoring (`apply_proposals.ts:upsert_classifier`), drift tagging (`apply_proposals.ts:mark_drift_in_registry`, gated on `classifier.kind !== "none"`), and observed-stat bookkeeping. `wip → permanent` is the only manual transition — surfaced by `pnpm find-promotion-candidates` for human review. `wip → fixed` is owned by the fix-sequencer reconciler (TASK-190.18.3). See `.claude/rules/classifier-lifecycle.md` for the canonical writer matrix.
+The curator is the single autonomous writer for every `wip` transition: minting via the investigator's first classifier upsert against a previously-unregistered `novel_issue.id` (`apply_proposals.ts:upsert_classifier`), drift tagging (`apply_proposals.ts:mark_drift_in_registry` for the QA-sample path, `curator_drift_absorb.ts:absorb_classifier_regressions` for the in-flight path; both gated on `classifier.kind !== "none"`), and observed-stat bookkeeping. `wip → permanent` is the only manual transition — surfaced by `pnpm find-promotion-candidates` for human review. `wip → fixed` is owned by the fix-sequencer reconciler (TASK-190.18.3). See `.claude/rules/classifier-lifecycle.md` for the canonical writer matrix.
 
 All registry writes go through `atomic_write_file` (`src/atomic_write.ts`) so concurrent curator + reconciler runs cannot lose data.
 
@@ -458,25 +425,30 @@ matching regen fails fast.
 - **Sentinel:** `~/.ariadne/triage-curator/runs/{run_id}/finalized.json` (presence → run is curated)
 - **Registry writes:** `.claude/skills/self-repair-pipeline/known_issues/registry.json`
   (only when not `--dry-run`; drift tags + classifier upserts + `backlog_task`
-  linkage for Ariadne-bug tasks created in Step 6b)
+  linkage for Ariadne-bug tasks created in Step 5)
 - **Core writes:** `packages/core/src/classify_entry_points/builtins/check_*.ts`
   (per builtin proposal) plus `builtins/index.ts` and `permanent_data.ts`
   (auto-regenerated by `sync_permanent_rules` whenever the registry mutates).
   See _Cross-package write contract_ above.
 
-### Drift vs promotion — two thresholds, two denominators
+### Drift signals — two sources, one ledger
 
-Both consume the same QA `outliers[]` list but answer different questions.
+Both write into `KnownIssue.drift_evidence[]` with a `source` discriminator
+so the curator's promotion sweeps can weight them separately.
 
-- **`DRIFT_OUTLIER_RATE_THRESHOLD = 0.15`** — denominator is full group size.
-  Tags the registry entry as `drift_detected: true`. Sticky: the curator
-  never clears it. A human (or follow-up task) resets after fixing the
-  classifier.
-- **`PROMOTE_SAMPLE_OUTLIER_RATE_THRESHOLD = 0.40`** — denominator is
-  QA sample size (≤ 10). Triggers re-investigation inside the puller.
-- **`PROMOTE_MIN_SAMPLE_SIZE = 4`** guards against noisy small samples.
-- `status: "permanent"` entries are never promoted — promotion attempts
-  route to a human-authored backlog task instead.
+- **`source: "in-flight"`** — per-entry `fp-classifier-regression` verdict
+  emitted by the SRP triage-investigator the moment it spots an entry the
+  classifier *should* have caught. Surfaced via the run's
+  `classifier_regressions[]` aggregate; absorbed by
+  `curator_drift_absorb.ts:absorb_classifier_regressions`. Sharp signal.
+- **`source: "qa-sample"`** — statistical lagging signal computed by the
+  curator's QA pass over auto-classified entries. Absorbed by
+  `apply_proposals.ts:mark_drift_in_registry` at the
+  `DRIFT_OUTLIER_RATE_THRESHOLD = 0.15` rate (denominator is the run's full
+  rule-match count).
+- `status: "permanent"` rows are never drift-tagged automatically;
+  regression flags against them surface in `skipped_permanent_upserts` for
+  human review.
 
 ### Session log statuses
 

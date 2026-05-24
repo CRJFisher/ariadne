@@ -4,8 +4,6 @@ import {
   parse_known_issues_registry_json,
   serialize_known_issues_registry_json,
 } from "@ariadnejs/types";
-import { detect_language } from "@ariadnejs/core";
-
 import { atomic_write_file } from "./atomic_write.js";
 import {
   absorb_classifier_regressions,
@@ -18,7 +16,7 @@ import type {
   BuiltinClassifierSpec,
   ClassifierRegressionFlag,
   ClassifierSpecProposal,
-  FalsePositiveGroup,
+  NovelIssue,
   SignalLibraryGapTaskToCreate,
   InvestigateResponse,
   InvestigatorSessionLog,
@@ -34,9 +32,11 @@ import type {
 export const SIGNAL_LIBRARY_GAP_PARENT_TASK_ID = "TASK-190.16";
 
 /**
- * Outlier rate at or above which a classifier is considered drifting. Denominator
- * is full group size (sticky registry tag signal). Complementary to
- * `PROMOTE_SAMPLE_OUTLIER_RATE_THRESHOLD` in `promote_to_investigate.ts`.
+ * Outlier rate at or above which a QA-sample classifier is considered
+ * drifting. Denominator is the run's full rule-match count (sticky registry
+ * tag signal). The in-flight drift path (`absorb_classifier_regressions`)
+ * complements this with a sharp per-entry signal — both share
+ * `KnownIssue.drift_evidence` with a `source` discriminator.
  */
 export const DRIFT_OUTLIER_RATE_THRESHOLD = 0.15;
 
@@ -100,6 +100,11 @@ export function mark_drift_in_registry(
  *   `upsert_classifier` is the only path that can mint a new registry entry, and
  *   when it does, this function will increment the entry's counts on the next
  *   pass (the order is drift → upserts → observed bump in `apply_proposals`).
+ * - `status: "fixed"` rows are skipped. The fix-sequencer reconciler is the
+ *   only authorized `fixed` writer (see `.claude/rules/classifier-lifecycle.md`),
+ *   so the curator must not mutate observed-stat fields on these rows; a
+ *   resurfacing novel issue on a `fixed` rule is surfaced separately under
+ *   `RunDispatch.fixed_novel_issue_resurfacings` for human review.
  * - `observed_count` accumulates across runs; re-running the curator on the same
  *   run_id does double-count, which is why finalize's `finalized.json` sentinel
  *   is the guard against redundant invocation.
@@ -112,6 +117,7 @@ export function bump_observed_stats(
 ): { updated: KnownIssue[]; bumped_groups: string[] } {
   const bumped_groups: string[] = [];
   const updated = registry.map((issue) => {
+    if (issue.status === "fixed") return issue;
     const count = member_counts[issue.group_id];
     if (count === undefined || count <= 0) return issue;
     bumped_groups.push(issue.group_id);
@@ -189,11 +195,14 @@ export interface ApplyOptions {
    */
   session_logs?: InvestigatorSessionLog[];
   /**
-   * Groups from the source triage run, keyed by group_id. Used to derive
-   * `languages` on new registry upserts when the classifier spec does not
-   * declare a language gate.
+   * Novel issues from the source triage run, keyed by `id`. The investigator
+   * is dispatched per novel issue, so finalize looks up the dispatched source
+   * here to surface citation excerpts in the Ariadne-bug body. Optional only
+   * to ease unit-level tests that exercise the registry / spec paths in
+   * isolation — production callers (`finalize_run`) always pass it. Omitting
+   * it surfaces a citation-free Ariadne-bug body rather than throwing.
    */
-  triage_groups?: Record<string, FalsePositiveGroup>;
+  novel_issues_by_id?: Record<string, NovelIssue>;
   /**
    * Per-rule aggregate of `fp-classifier-regression` verdicts from the SRP
    * run's per-entry triage. Each flagged rule's wip row is tagged
@@ -307,14 +316,14 @@ export async function apply_proposals(
     if (existing !== undefined) {
       languages = existing.languages;
     } else {
-      languages = derive_languages_for_upsert(r, opts.triage_groups?.[r.group_id]);
+      languages = derive_languages_for_upsert(r);
       if (languages.length === 0) {
         failed_authoring.push({
           group_id: r.group_id,
           reason:
             `cannot derive languages for new registry entry '${target_group_id}': ` +
-            "classifier_spec has no language_eq check and the source group's " +
-            "member file paths carry no recognizable extension (.ts/.tsx/.js/.jsx/.mjs/.cjs/.py/.rs)",
+            "classifier_spec has no language_eq check (under v4 the published artifact " +
+            "carries no FP entry file paths to fall back to).",
         });
         continue;
       }
@@ -375,7 +384,7 @@ export async function apply_proposals(
     const target_entry = next_registry.find((e) => e.group_id === target_group_id);
     const description = render_ariadne_bug_body({
       response: r,
-      group: opts.triage_groups?.[r.group_id],
+      novel_issue: opts.novel_issues_by_id?.[r.group_id] ?? null,
       target_entry,
       current_project: opts.project,
     });
@@ -462,24 +471,17 @@ async function is_readable(file_path: string): Promise<boolean> {
 }
 
 /**
- * Derive the `languages` field for a new registry entry. Prefers the
- * classifier spec's own `language_eq` gate (authoritative); falls back to the
- * source group's observed file extensions. Returns a sorted unique list so
- * the on-disk registry diff is stable across runs.
+ * Derive the `languages` field for a new registry entry from the classifier
+ * spec's `language_eq` gate. Returns a sorted unique list so the on-disk
+ * registry diff is stable across runs. An empty result means the caller must
+ * fail authoring — under v4 the published artifact carries no FP entry file
+ * paths to infer from.
  */
 export function derive_languages_for_upsert(
   response: InvestigateResponse,
-  group: FalsePositiveGroup | undefined,
 ): KnownIssueLanguage[] {
   const from_spec = declared_languages(response.classifier_spec);
-  if (from_spec.length > 0) return sort_languages(from_spec);
-  if (group === undefined) return [];
-  const langs = new Set<KnownIssueLanguage>();
-  for (const e of group.entries) {
-    const lang = detect_language(e.file_path);
-    if (lang !== null) langs.add(lang);
-  }
-  return sort_languages([...langs]);
+  return sort_languages(from_spec);
 }
 
 function sort_languages(langs: KnownIssueLanguage[]): KnownIssueLanguage[] {

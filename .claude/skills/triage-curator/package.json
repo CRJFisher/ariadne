@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Offline curator for self-repair-pipeline runs: QA auto-classified groups, investigate residuals, propose registry + backlog updates",
+  "description": "Offline curator for self-repair-pipeline runs: absorbs v4 novel_issues and classifier_regressions, authors classifiers, files backlog tasks",
   "scripts": {
     "test": "vitest run"
   },

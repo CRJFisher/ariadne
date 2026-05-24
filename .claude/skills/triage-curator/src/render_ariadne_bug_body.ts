@@ -6,16 +6,17 @@
  * The body combines:
  *   - the investigator's narrative (from `InvestigateResponse.ariadne_bug.description`)
  *   - registry bookkeeping (`observed_count`, `observed_projects`, `last_seen_run`)
- *   - example entry links pulled from the source false-positive group
+ *   - citation excerpts from the dispatched novel issue
  *   - the proposed classifier spec that will serve as the workaround
  *   - a deterministic acceptance-criteria checklist
  */
 
-import type { FalsePositiveGroup, InvestigateResponse, KnownIssue } from "./types.js";
+import type { InvestigateResponse, KnownIssue, NovelIssue } from "./types.js";
 
 export interface RenderAriadneBugBodyInput {
   response: InvestigateResponse;
-  group: FalsePositiveGroup | undefined;
+  /** Source novel issue the response targets; null when no matching record exists. */
+  novel_issue: NovelIssue | null;
   target_entry: KnownIssue | undefined;
   /** Project name of the source run — included in body even if not yet in `observed_projects`. */
   current_project: string;
@@ -38,7 +39,7 @@ export function render_ariadne_bug_body(input: RenderAriadneBugBodyInput): strin
   parts.push(bug.description);
   parts.push("");
   parts.push(render_observations(input));
-  const examples = render_examples(input.group);
+  const examples = render_examples(input.novel_issue);
   if (examples !== null) {
     parts.push(examples);
   }
@@ -71,15 +72,15 @@ function render_observations(input: RenderAriadneBugBodyInput): string {
 
 const EXAMPLE_LIMIT = 5;
 
-function render_examples(group: FalsePositiveGroup | undefined): string | null {
-  if (group === undefined || group.entries.length === 0) return null;
-  const lines = ["## Example entries", ""];
-  const examples = group.entries.slice(0, EXAMPLE_LIMIT);
-  for (const e of examples) {
-    lines.push(`- \`${e.file_path}:${e.start_line}\` — ${e.name}`);
+function render_examples(novel_issue: NovelIssue | null): string | null {
+  if (novel_issue === null || novel_issue.citations.length === 0) return null;
+  const lines = ["## Example citations", ""];
+  const examples = novel_issue.citations.slice(0, EXAMPLE_LIMIT);
+  for (const c of examples) {
+    lines.push(`- entry \`${c.entry_index}\` — ${c.evidence_excerpt}`);
   }
-  if (group.entries.length > EXAMPLE_LIMIT) {
-    lines.push(`- …and ${group.entries.length - EXAMPLE_LIMIT} more.`);
+  if (novel_issue.citations.length > EXAMPLE_LIMIT) {
+    lines.push(`- …and ${novel_issue.citations.length - EXAMPLE_LIMIT} more.`);
   }
   lines.push("");
   return lines.join("\n");

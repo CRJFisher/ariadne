@@ -1,9 +1,9 @@
 /**
  * Build task-creation proposals for registry entries that do not yet have a
  * linked `backlog_task`. Closes the F5 gap from TASK-190.16.12: the curator
- * currently files Ariadne-bug tasks only when the investigator emits an
- * `ariadne_bug` proposal. Entries that pre-exist (seed `wip`) or that land
- * via `promote_novel_groups` have no linked task until this sweeper runs.
+ * files Ariadne-bug tasks only when the investigator emits an `ariadne_bug`
+ * proposal, so seed `wip` entries and any registry rows that pre-date the
+ * Ariadne-bug flow have no linked task until this sweeper runs.
  *
  * The sweeper is pure: given a registry, it returns `TaskProposal[]` plus an
  * updates list for entries whose `observed_count` has changed since their last

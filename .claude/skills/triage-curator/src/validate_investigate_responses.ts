@@ -27,7 +27,6 @@ import type {
   AriadneRootCauseCategory,
   BuiltinClassifierSpec,
   ClassifierSpecProposal,
-  FalsePositiveGroup,
   SignalLibraryGap,
   InvestigateResponse,
   InvestigatorSessionLog,
@@ -66,8 +65,12 @@ export interface ValidationInput {
   response_path: string;
   /** JSON.parse'd content of the response file (raw, pre-shape-validated). */
   response_raw: unknown;
-  /** Source-group view from the triage run; null when the dispatch group is absent. */
-  source_group: FalsePositiveGroup | null;
+  /**
+   * Number of entries in the dispatched source (citations on the promote-novel
+   * dispatch or members on a promoted QA-broken classifier). null when the
+   * dispatch source is not resolvable in the run artifact.
+   */
+  source_entry_count: number | null;
   /** Current registry — needed to verify `retargets_to` references an existing entry. */
   registry: KnownIssue[];
   /** Sibling `<group>.session.json`, if present; null otherwise. */
@@ -127,9 +130,9 @@ export function validate_response(inp: ValidationInput): ValidationIssue[] {
         });
       }
     }
-  } else if (parsed.classifier_spec !== null && inp.source_group !== null) {
+  } else if (parsed.classifier_spec !== null && inp.source_entry_count !== null) {
     const index_errors = validate_spec_example_indexes(parsed, {
-      [parsed.group_id]: inp.source_group.entries.length,
+      [parsed.group_id]: inp.source_entry_count,
     });
     for (const err of index_errors) {
       issues.push({
@@ -189,7 +192,7 @@ function validate_rejected_members(
 
   const positives = new Set(parsed.classifier_spec?.positive_examples ?? []);
   const seen = new Set<number>();
-  const group_size = inp.source_group?.entries.length ?? null;
+  const group_size = inp.source_entry_count;
 
   for (const [idx, rejected] of parsed.rejected_members.entries()) {
     if (group_size !== null && rejected.entry_index >= group_size) {

@@ -34,6 +34,8 @@ import {
 } from "@ariadnejs/types";
 import { is_curated, save_outcome } from "../src/curation_outcome.js";
 import { error_code } from "../src/errors.js";
+import { compute_observation_counts } from "../src/observation_counts.js";
+import { read_v4_triage_results } from "../src/parse_triage_results.js";
 import {
   CURATOR_RUNS_DIR,
   derive_project,
@@ -50,7 +52,7 @@ import type {
   InvestigateResponse,
   InvestigatorFailureCategory,
   InvestigatorSessionLog,
-  QaResponse,
+  NovelIssue,
   TriageResultsFile,
 } from "../src/types.js";
 import {
@@ -138,12 +140,12 @@ async function read_session_logs(dir: string): Promise<InvestigatorSessionLog[]>
   return logs;
 }
 
-function member_counts_from_triage(triage: TriageResultsFile): Record<string, number> {
-  const counts: Record<string, number> = {};
-  for (const [group_id, group] of Object.entries(triage.false_positive_groups)) {
-    counts[group_id] = group.entries.length;
+function novel_issues_by_id(triage: TriageResultsFile): Record<string, NovelIssue> {
+  const out: Record<string, NovelIssue> = {};
+  for (const issue of triage.novel_issues) {
+    out[issue.id] = issue;
   }
-  return counts;
+  return out;
 }
 
 interface SessionAggregate {
@@ -269,9 +271,15 @@ async function main(): Promise<void> {
     process.exit(2);
   }
 
-  const triage = JSON.parse(await fs.readFile(run_path, "utf8")) as TriageResultsFile;
+  let triage: TriageResultsFile;
+  try {
+    triage = await read_v4_triage_results(run_path);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    process.stderr.write(`finalize_run: ${msg}\n`);
+    process.exit(4);
+  }
 
-  const qa_responses = await read_json_dir<QaResponse>(path.join(output_dir, "qa"));
   const investigate_responses = await read_json_dir<InvestigateResponse>(investigate_dir);
   const session_logs = await read_session_logs(investigate_dir);
 
@@ -301,9 +309,9 @@ async function main(): Promise<void> {
     await ast_check_authored_files(authored_files_raw);
 
   const result = await apply_proposals(
-    qa_responses,
+    [],
     investigate_responses,
-    member_counts_from_triage(triage),
+    compute_observation_counts(triage),
     {
       dry_run,
       registry_path: get_registry_file_path(),
@@ -311,7 +319,7 @@ async function main(): Promise<void> {
       run_id,
       authored_files_by_group,
       session_logs,
-      triage_groups: triage.false_positive_groups,
+      novel_issues_by_id: novel_issues_by_id(triage),
       classifier_regressions: triage.classifier_regressions,
     },
   );
@@ -379,8 +387,8 @@ async function main(): Promise<void> {
     run_path,
     curated_at: new Date().toISOString(),
     outcome: {
-      qa_groups_checked: qa_responses.length,
-      qa_outliers_found: qa_responses.reduce((sum, r) => sum + r.outliers.length, 0),
+      qa_groups_checked: 0,
+      qa_outliers_found: 0,
       investigated_groups: investigate_responses.length,
       classifiers_proposed: result.registry_upserts.length,
       signal_library_gap_tasks: result.signal_library_gap_tasks,
@@ -400,8 +408,6 @@ async function main(): Promise<void> {
     run_id,
     project,
     dry_run,
-    qa_groups_checked: outcome_entry.outcome.qa_groups_checked,
-    qa_outliers_found: outcome_entry.outcome.qa_outliers_found,
     investigated_groups: outcome_entry.outcome.investigated_groups,
     authored_files: [...result.authored_files, ...derived_files],
     deleted_orphan_files,

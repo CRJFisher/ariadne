@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import { render_ariadne_bug_body } from "./render_ariadne_bug_body.js";
 import type {
   AriadneBug,
-  FalsePositiveGroup,
   InvestigateResponse,
   KnownIssue,
+  NovelIssue,
 } from "./types.js";
 
 function bug(overrides: Partial<AriadneBug> = {}): AriadneBug {
@@ -40,15 +40,14 @@ function investigate(overrides: Partial<InvestigateResponse> = {}): InvestigateR
   };
 }
 
-function group(): FalsePositiveGroup {
+function novel(): NovelIssue {
   return {
-    group_id: "method-chain-dispatch",
+    id: "method-chain-dispatch",
+    canonical_name: "Method chain dispatch",
     root_cause: "Method chain dispatch",
-    reasoning: "…",
-    existing_task_fixes: [],
-    entries: [
-      { name: "hash_digest", file_path: "src/hash.ts", start_line: 12, kind: "function" },
-      { name: "pipe_step", file_path: "src/pipe.ts", start_line: 25, kind: "function" },
+    citations: [
+      { entry_index: 0, evidence_excerpt: "hash_digest at src/hash.ts:12" },
+      { entry_index: 1, evidence_excerpt: "pipe_step at src/pipe.ts:25" },
     ],
   };
 }
@@ -70,10 +69,10 @@ function entry(overrides: Partial<KnownIssue> = {}): KnownIssue {
 }
 
 describe("render_ariadne_bug_body", () => {
-  it("includes observations, examples, classifier, and acceptance criteria", () => {
+  it("includes observations, citations, classifier, and acceptance criteria", () => {
     const body = render_ariadne_bug_body({
       response: investigate(),
-      group: group(),
+      novel_issue: novel(),
       target_entry: entry(),
       current_project: "webpack",
     });
@@ -82,8 +81,9 @@ describe("render_ariadne_bug_body", () => {
     expect(body).toContain("Observed count: **7**");
     expect(body).toContain("`webpack`");
     expect(body).toContain("Last seen in run: `2026-04-24T12-00-00Z`");
-    expect(body).toContain("`src/hash.ts:12`");
-    expect(body).toContain("`src/pipe.ts:25`");
+    expect(body).toContain("## Example citations");
+    expect(body).toContain("entry `0` — hash_digest at src/hash.ts:12");
+    expect(body).toContain("entry `1` — pipe_step at src/pipe.ts:25");
     expect(body).toContain("## Proposed classifier (workaround)");
     expect(body).toContain("\"function_name\": \"check_chain\"");
     expect(body).toContain("## Acceptance criteria");
@@ -94,7 +94,7 @@ describe("render_ariadne_bug_body", () => {
   it("appends the current project to observed_projects when not yet recorded", () => {
     const body = render_ariadne_bug_body({
       response: investigate(),
-      group: group(),
+      novel_issue: novel(),
       target_entry: entry({ observed_projects: ["react"] }),
       current_project: "webpack",
     });
@@ -104,7 +104,7 @@ describe("render_ariadne_bug_body", () => {
   it("reports observed_count 0 when the target entry is missing", () => {
     const body = render_ariadne_bug_body({
       response: investigate(),
-      group: group(),
+      novel_issue: novel(),
       target_entry: undefined,
       current_project: "new-project",
     });
@@ -113,32 +113,29 @@ describe("render_ariadne_bug_body", () => {
     expect(body).not.toContain("Last seen in run:");
   });
 
-  it("omits the examples section when the group is unavailable", () => {
+  it("omits the citations section when the novel issue is unavailable", () => {
     const body = render_ariadne_bug_body({
       response: investigate(),
-      group: undefined,
+      novel_issue: null,
       target_entry: entry(),
       current_project: "webpack",
     });
-    expect(body).not.toContain("## Example entries");
+    expect(body).not.toContain("## Example citations");
   });
 
-  it("truncates examples beyond the display limit", () => {
-    const g: FalsePositiveGroup = {
-      group_id: "method-chain-dispatch",
+  it("truncates citations beyond the display limit", () => {
+    const n: NovelIssue = {
+      id: "method-chain-dispatch",
+      canonical_name: "Method chain dispatch",
       root_cause: "…",
-      reasoning: "…",
-      existing_task_fixes: [],
-      entries: Array.from({ length: 9 }, (_, i) => ({
-        name: `fn_${i}`,
-        file_path: `src/f${i}.ts`,
-        start_line: i + 1,
-        kind: "function" as const,
+      citations: Array.from({ length: 9 }, (_, i) => ({
+        entry_index: i,
+        evidence_excerpt: `fn_${i}`,
       })),
     };
     const body = render_ariadne_bug_body({
       response: investigate(),
-      group: g,
+      novel_issue: n,
       target_entry: entry(),
       current_project: "webpack",
     });
@@ -150,7 +147,7 @@ describe("render_ariadne_bug_body", () => {
   it("reports no classifier when proposed_classifier is null", () => {
     const body = render_ariadne_bug_body({
       response: investigate({ proposed_classifier: null, classifier_spec: null }),
-      group: group(),
+      novel_issue: novel(),
       target_entry: entry(),
       current_project: "webpack",
     });
@@ -160,7 +157,7 @@ describe("render_ariadne_bug_body", () => {
   it("uses retargets_to for the target registry entry reference", () => {
     const body = render_ariadne_bug_body({
       response: investigate({ retargets_to: "aliased-receiver" }),
-      group: group(),
+      novel_issue: novel(),
       target_entry: entry({ group_id: "aliased-receiver" }),
       current_project: "webpack",
     });

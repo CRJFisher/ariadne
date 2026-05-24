@@ -7,22 +7,13 @@ import {
   type ValidationInput,
 } from "./validate_investigate_responses.js";
 import type {
-  FalsePositiveGroup,
   InvestigateResponse,
   InvestigatorSessionLog,
   KnownIssue,
 } from "./types.js";
 
-const SOURCE_GROUP: FalsePositiveGroup = {
-  group_id: "dispatch-group",
-  root_cause: "x",
-  reasoning: "y",
-  existing_task_fixes: [],
-  entries: [
-    { name: "a", file_path: "a.ts", start_line: 1, kind: "function" },
-    { name: "b", file_path: "b.ts", start_line: 2, kind: "function" },
-  ],
-};
+/** Citation count for the dispatched source under v4 (two-entry novel issue). */
+const SOURCE_ENTRY_COUNT = 2;
 
 const REGISTRY: KnownIssue[] = [
   {
@@ -41,7 +32,7 @@ function base_input(): ValidationInput {
     dispatch_group_id: "dispatch-group",
     response_path: "/tmp/dispatch-group.json",
     response_raw: {},
-    source_group: SOURCE_GROUP,
+    source_entry_count: SOURCE_ENTRY_COUNT,
     registry: REGISTRY,
     session_log: null,
   };
@@ -457,7 +448,7 @@ describe("validate_response", () => {
     const issues = validate_response({
       ...base_input(),
       response_raw: raw,
-      source_group: null,
+      source_entry_count: null,
     });
     expect(issues).toEqual([]);
   });

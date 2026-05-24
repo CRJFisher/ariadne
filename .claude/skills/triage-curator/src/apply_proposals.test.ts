@@ -13,7 +13,6 @@ import {
 } from "./apply_proposals.js";
 import type {
   BuiltinClassifierSpec,
-  FalsePositiveGroup,
   InvestigateResponse,
   KnownIssue,
   QaResponse,
@@ -285,28 +284,30 @@ describe("bump_observed_stats", () => {
     expect(bumped_groups).toEqual(["a"]);
     expect(updated[1]).toEqual(known("b"));
   });
+
+  it("skips status='fixed' rows even when observed in this run (reconciler owns the row)", () => {
+    const reg: KnownIssue[] = [
+      known("a", { status: "fixed", observed_count: 99, observed_projects: ["old"] }),
+      known("b"),
+    ];
+    const { updated, bumped_groups } = bump_observed_stats(
+      reg,
+      { a: 7, b: 3 },
+      "new-proj",
+      "run-id",
+    );
+    expect(bumped_groups).toEqual(["b"]);
+    // The fixed row is returned unchanged — no observed_count bump, no
+    // observed_projects merge, no last_seen_run set.
+    expect(updated[0]).toEqual(
+      known("a", { status: "fixed", observed_count: 99, observed_projects: ["old"] }),
+    );
+    expect(updated[1].observed_count).toBe(3);
+  });
 });
 
 describe("derive_languages_for_upsert", () => {
-  function group_with_extensions(
-    group_id: string,
-    extensions: string[],
-  ): FalsePositiveGroup {
-    return {
-      group_id,
-      root_cause: "",
-      reasoning: "",
-      existing_task_fixes: [],
-      entries: extensions.map((ext, i) => ({
-        name: `e${i}`,
-        file_path: `src/e${i}${ext}`,
-        start_line: 1,
-        kind: "function" as const,
-      })),
-    };
-  }
-
-  it("prefers declared language_eq values from the classifier spec", () => {
+  it("returns declared language_eq values from the classifier spec", () => {
     const spec: BuiltinClassifierSpec = {
       ...minimal_spec("check_x"),
       checks: [
@@ -314,52 +315,38 @@ describe("derive_languages_for_upsert", () => {
         { op: "callers_count_at_most", n: 0 },
       ],
     };
-    const group = group_with_extensions("g", [".ts", ".ts"]);
-    expect(derive_languages_for_upsert(builtin_inv("g", { classifier_spec: spec }), group)).toEqual([
+    expect(derive_languages_for_upsert(builtin_inv("g", { classifier_spec: spec }))).toEqual([
       "python",
     ]);
   });
 
-  it("falls back to member file extensions when no language_eq in spec", () => {
+  it("returns empty when the spec has no language_eq check", () => {
     const spec: BuiltinClassifierSpec = {
       ...minimal_spec("check_x"),
       checks: [{ op: "callers_count_at_most", n: 0 }],
     };
-    const group = group_with_extensions("g", [".js", ".jsx", ".mjs"]);
-    expect(derive_languages_for_upsert(builtin_inv("g", { classifier_spec: spec }), group)).toEqual([
-      "javascript",
-    ]);
+    expect(derive_languages_for_upsert(builtin_inv("g", { classifier_spec: spec }))).toEqual([]);
   });
 
-  it("returns empty for kind='none' when group has no recognizable extensions", () => {
+  it("returns empty for kind='none' (no spec to scan)", () => {
     const response: InvestigateResponse = builtin_inv("g", {
       proposed_classifier: { kind: "none" },
       classifier_spec: null,
     });
-    const group = group_with_extensions("g", [".txt", ".md"]);
-    expect(derive_languages_for_upsert(response, group)).toEqual([]);
+    expect(derive_languages_for_upsert(response)).toEqual([]);
   });
 
-  it("derives mixed languages from mixed-extension groups", () => {
-    const response: InvestigateResponse = builtin_inv("g", {
-      proposed_classifier: { kind: "none" },
-      classifier_spec: null,
-    });
-    const group = group_with_extensions("g", [".ts", ".py", ".rs"]);
-    expect(derive_languages_for_upsert(response, group)).toEqual([
-      "python",
-      "rust",
-      "typescript",
-    ]);
-  });
-
-  it("returns languages in deterministic sorted order", () => {
-    const response: InvestigateResponse = builtin_inv("g", {
-      proposed_classifier: { kind: "none" },
-      classifier_spec: null,
-    });
-    const group = group_with_extensions("g", [".rs", ".py", ".ts", ".js"]);
-    expect(derive_languages_for_upsert(response, group)).toEqual([
+  it("returns languages in deterministic sorted order across multiple language_eq checks", () => {
+    const spec: BuiltinClassifierSpec = {
+      ...minimal_spec("check_x"),
+      checks: [
+        { op: "language_eq", value: "rust" },
+        { op: "language_eq", value: "python" },
+        { op: "language_eq", value: "typescript" },
+        { op: "language_eq", value: "javascript" },
+      ],
+    };
+    expect(derive_languages_for_upsert(builtin_inv("g", { classifier_spec: spec }))).toEqual([
       "javascript",
       "python",
       "rust",
@@ -666,8 +653,8 @@ describe("apply_proposals", () => {
 
   it("populates languages on a new builtin upsert using classifier_spec language_eq", async () => {
     // New entry → no existing registry row. The classifier_spec declares
-    // language_eq='python'; upsert must land languages=['python'] even though
-    // the triage_groups payload observed a .ts file (language_eq wins).
+    // language_eq='python'; upsert must land languages=['python']. Under v4
+    // language_eq is the sole source of language derivation for new entries.
     await write_registry([]);
     const authored_path = path.join(authored_dir, "check_py-only.ts");
     await write_authored_file(authored_path);
@@ -680,17 +667,6 @@ describe("apply_proposals", () => {
         ],
       },
     });
-    const triage_groups: Record<string, FalsePositiveGroup> = {
-      "py-only": {
-        group_id: "py-only",
-        root_cause: "",
-        reasoning: "",
-        existing_task_fixes: [],
-        entries: [
-          { name: "x", file_path: "src/x.ts", start_line: 1, kind: "function" },
-        ],
-      },
-    };
     const result = await apply_proposals([], [inv], { "py-only": 1 }, {
       dry_run: false,
       registry_path,
@@ -698,31 +674,22 @@ describe("apply_proposals", () => {
       run_id: "r",
       classifier_regressions: [],
       authored_files_by_group: { "py-only": authored_path },
-      triage_groups,
     });
     expect(result.registry_upserts).toEqual(["py-only"]);
     const on_disk = await read_registry_json();
     expect(on_disk[0].languages).toEqual(["python"]);
   });
 
-  it("derives languages from triage group member paths for kind='none' new upsert", async () => {
+  it("fails authoring for a new kind='none' upsert with no language gate", async () => {
+    // Under v4 the published artifact carries no FP entry file paths to
+    // infer from — language_eq in the spec is the only source for new
+    // entries. A kind='none' proposal with no spec must surface as failed
+    // authoring rather than landing an entry with an empty languages list.
     await write_registry([]);
     const inv: InvestigateResponse = builtin_inv("member-path-only", {
       proposed_classifier: { kind: "none" },
       classifier_spec: null,
     });
-    const triage_groups: Record<string, FalsePositiveGroup> = {
-      "member-path-only": {
-        group_id: "member-path-only",
-        root_cause: "",
-        reasoning: "",
-        existing_task_fixes: [],
-        entries: [
-          { name: "a", file_path: "src/a.rs", start_line: 1, kind: "function" },
-          { name: "b", file_path: "src/b.ts", start_line: 2, kind: "function" },
-        ],
-      },
-    };
     const result = await apply_proposals([], [inv], { "member-path-only": 2 }, {
       dry_run: false,
       registry_path,
@@ -730,12 +697,11 @@ describe("apply_proposals", () => {
       run_id: "r",
       classifier_regressions: [],
       authored_files_by_group: {},
-      triage_groups,
     });
-    expect(result.registry_upserts).toEqual(["member-path-only"]);
-    const on_disk = await read_registry_json();
-    expect(on_disk[0].languages).toEqual(["rust", "typescript"]);
-    expect(on_disk[0].classifier).toEqual({ kind: "none" });
+    expect(result.registry_upserts).toEqual([]);
+    expect(result.failed_authoring).toHaveLength(1);
+    expect(result.failed_authoring[0].group_id).toBe("member-path-only");
+    expect(result.failed_authoring[0].reason).toMatch(/cannot derive languages/);
   });
 
   it("does not downgrade languages when upserting onto an existing entry", async () => {

@@ -40,16 +40,11 @@ function parse_argv(argv: string[]): CliArgs {
 
 /**
  * Walk recent finalized runs and emit one per-run match-history row per
- * (run, group_id). Prefers the published `group_match_history` array (schema
- * v3); falls back to `false_positive_groups` for legacy v2 files where the
- * field was not yet emitted.
- *
- * The fallback reconstructs `match_count` from `entries.length` per group
- * and treats `llm_attributed_count` as 0 (unknown). This is the **bootstrap
- * path**: until enough v3 runs accumulate, the script would otherwise return
- * zero candidates indefinitely because `runs_observed_in` would be 0 for
- * every rule. With the fallback, rules whose evidence already exists in
- * legacy artifacts can surface as candidates immediately.
+ * (run, group_id). Under v4 the row is reconstructed from
+ * `confirmed_unreachable[]` entries with `source.kind === "registry"` —
+ * one `match_count` increment per row, attributed to `llm_attributed_count`
+ * when the source is `llm-tp` rather than `registry`. 190.19.8 layers the
+ * drift-source split (qa-sample vs in-flight) on top of this output.
  */
 async function load_recent_match_history(): Promise<
   { group_id: string; match_count: number; llm_attributed_count: number }[]
@@ -63,26 +58,15 @@ async function load_recent_match_history(): Promise<
   for (const run of runs) {
     const text = await fs.readFile(run.run_path, "utf8");
     const triage = JSON.parse(text) as Partial<TriageResultsFile>;
-    const history = triage.group_match_history;
-    if (history !== undefined && history.length > 0) {
-      for (const row of history) {
-        rows.push({
-          group_id: row.group_id,
-          match_count: row.match_count,
-          llm_attributed_count: row.llm_attributed_count,
-        });
-      }
-      continue;
+    const confirmed = triage.confirmed_unreachable ?? [];
+    const per_group = new Map<string, number>();
+    for (const entry of confirmed) {
+      if (entry.source.kind !== "registry") continue;
+      const id = entry.source.group_id;
+      per_group.set(id, (per_group.get(id) ?? 0) + 1);
     }
-    // Fallback for legacy artifacts without group_match_history.
-    const fp_groups = triage.false_positive_groups ?? {};
-    for (const [group_id, group] of Object.entries(fp_groups)) {
-      if (group_id === "confirmed-unreachable") continue;
-      rows.push({
-        group_id,
-        match_count: group.entries.length,
-        llm_attributed_count: 0,
-      });
+    for (const [group_id, match_count] of per_group) {
+      rows.push({ group_id, match_count, llm_attributed_count: 0 });
     }
   }
   return rows;

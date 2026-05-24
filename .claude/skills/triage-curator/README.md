@@ -1,8 +1,18 @@
 # triage-curator
 
-Offline sweep over completed `self-repair-pipeline` runs. Audits
-auto-classified false-positive groups, investigates residuals, produces
-classifier + backlog + signal proposals, and commits the result.
+> **Note (TASK-190.19.6).** The diagrams and prose below still narrate the
+> pre-v4 "residual groups + QA wave" flow. Authoritative behavior now lives
+> in `SKILL.md`: the curator consumes the SRP's v4 `triage_results` with
+> `novel_issues[]` and `classifier_regressions[]`, dispatches a single
+> investigate wave (promote-novel + drift-flagged wip), and absorbs
+> regression flags via the drift path. The full diagram rewrite is scoped
+> to TASK-190.19.10.
+
+Offline sweep over completed `self-repair-pipeline` runs. Authors
+classifiers for novel issues the SRP triage-investigator already named,
+absorbs classifier-regression flags into the registry's drift signal,
+files signal-library-gap + Ariadne-bug backlog tasks, and commits the
+result.
 
 ## Pipeline Flow
 

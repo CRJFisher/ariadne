@@ -2,25 +2,67 @@ import type { ClassifierRegressionFlag } from "@ariadnejs/types";
 
 // ===== Triage results shape (read-only) =====
 //
-// Schema v2 fields: `schema_version`, `project_path`, `commit_hash` on the file;
-// `kind` on every entry. `file_path` is relative to `project_path`.
+// Schema v4. The published `triage_results/<run-id>.json` artifact written by
+// the self-repair pipeline's `finalize_triage.ts`. The curator's absorb path
+// reads `novel_issues` and `classifier_regressions`; downstream consumers
+// (impact reports, promotion candidates) read `confirmed_unreachable[]` with
+// its `source` discriminator.
 
-export interface FalsePositiveEntry {
+/** Citation rolled up under a single `novel_issue` — entry-level evidence. */
+export interface NovelIssueCitation {
+  entry_index: number;
+  evidence_excerpt: string;
+}
+
+/**
+ * One consolidated novel issue from the per-entry triage. Aggregated by the
+ * coordinator at absorb time; the curator's primary input on the `novel:` path.
+ */
+export interface NovelIssue {
+  /** Slug derived from `canonical_name`. Becomes the registry `group_id` after promotion. */
+  id: string;
+  canonical_name: string;
+  root_cause: string;
+  citations: NovelIssueCitation[];
+}
+
+/** Novel verdict the coordinator declined to merge or register. */
+export interface FlaggedNovelVerdict {
+  entry_index: number;
+  reason: string;
+}
+
+/** Provenance for a `confirmed_unreachable[]` row. */
+export type ConfirmedUnreachableSource =
+  | { kind: "llm-tp" }
+  | { kind: "previously-confirmed-tp" }
+  | { kind: "registry"; group_id: string };
+
+/** Per-entry investigator's named evidence attached to a verdict. */
+export interface MemberEvidence {
+  summary: string;
+  excerpt: string;
+}
+
+/** Entry identifiers shared by `confirmed_unreachable[]` and `uncertain[]`. */
+export interface PublishedEntryRef {
+  entry_index: number;
   name: string;
-  /** Relative to the file's `project_path`. */
+  /** Relative to the run's `project_path`. */
   file_path: string;
   start_line: number;
-  /** Definition kind. Required since schema v2. */
   kind: "function" | "method" | "constructor";
   signature?: string;
 }
 
-export interface FalsePositiveGroup {
-  group_id: string;
-  root_cause: string;
-  reasoning: string;
-  existing_task_fixes: string[];
-  entries: FalsePositiveEntry[];
+export interface PublishedConfirmedUnreachable extends PublishedEntryRef {
+  source: ConfirmedUnreachableSource;
+  member_evidence: MemberEvidence | null;
+}
+
+export interface PublishedUncertain extends PublishedEntryRef {
+  reason: string;
+  member_evidence: MemberEvidence;
 }
 
 export interface TriageResultsFile {
@@ -30,17 +72,22 @@ export interface TriageResultsFile {
   project_path: string;
   /** Full HEAD commit hash for the target repo when the run was finalized. */
   commit_hash: string | null;
-  confirmed_unreachable: FalsePositiveEntry[];
-  false_positive_groups: Record<string, FalsePositiveGroup>;
-  /** Per-run match accounting per registry group_id. See build_finalization_output's GroupMatchHistory. */
-  group_match_history: { group_id: string; match_count: number; llm_attributed_count: number }[];
+  /** Consolidated novel issues for the run. Curator absorb's primary input. */
+  novel_issues: NovelIssue[];
+  /** Novel verdicts the coordinator could not assign — surfaced for human review. */
+  flagged_novel_verdicts: FlaggedNovelVerdict[];
   /**
    * Per-rule aggregate of `fp-classifier-regression` verdicts from the run's
    * per-entry triage. Drives the curator's in-flight drift absorb path.
    */
   classifier_regressions: ClassifierRegressionFlag[];
+  confirmed_unreachable: PublishedConfirmedUnreachable[];
+  uncertain: PublishedUncertain[];
   last_updated: string;
 }
+
+/** Expected `schema_version` of a v4 `triage_results/<run-id>.json`. */
+export const TRIAGE_RESULTS_SCHEMA_VERSION = 4;
 
 // ===== Known-issues registry shape (read/write) =====
 //

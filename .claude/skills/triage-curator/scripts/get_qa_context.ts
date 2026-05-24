@@ -2,12 +2,12 @@
 /**
  * Hydrates the context for the `triage-curator-qa` sub-agent.
  *
- * The main agent only passes pointers (`--group`, `--run`, `--output`). This
- * script loads the triage_results JSON, picks a sample of up to ~10 members of
- * the group, attaches each member's source excerpt, looks up the classifier
- * entry the group was auto-labeled under, and prints the whole bundle as JSON
- * to stdout. The sub-agent can then decide which members look suspicious and
- * do further grep / Ariadne calls on its own.
+ * The main agent passes pointers (`--group`, `--run`). This script loads the
+ * v4 triage_results JSON, samples up to ~10 of the entries the upstream SRP
+ * classified as `confirmed_unreachable` via the named registry rule, attaches
+ * each one's source excerpt, looks up the registry entry, and prints the
+ * bundle as JSON. The sub-agent decides which members look suspicious and
+ * runs further grep / Ariadne calls on its own.
  *
  * Usage:
  *   node --import tsx .claude/skills/triage-curator/scripts/get_qa_context.ts \
@@ -28,8 +28,7 @@ import { parse_known_issues_registry_json } from "@ariadnejs/types";
 import { get_registry_file_path } from "../src/paths.js";
 import { SAMPLE_SIZE, read_source_excerpt } from "../src/source_excerpt.js";
 import type {
-  FalsePositiveEntry,
-  KnownIssue,
+  PublishedConfirmedUnreachable,
   TriageResultsFile,
 } from "../src/types.js";
 import "../src/require_node_import_tsx.js";
@@ -70,18 +69,15 @@ function parse_argv(argv: string[]): CliArgs {
 }
 
 function sample_members(
-  entries: FalsePositiveEntry[],
+  entries: PublishedConfirmedUnreachable[],
   max: number,
-): Array<{ entry_index: number; entry: FalsePositiveEntry }> {
-  if (entries.length <= max) {
-    return entries.map((entry, entry_index) => ({ entry_index, entry }));
-  }
-  // Evenly-spaced indices so the sample spans the group.
+): PublishedConfirmedUnreachable[] {
+  if (entries.length <= max) return entries;
+  // Evenly-spaced indices so the sample spans the rule's matches.
   const step = entries.length / max;
-  const out: Array<{ entry_index: number; entry: FalsePositiveEntry }> = [];
+  const out: PublishedConfirmedUnreachable[] = [];
   for (let i = 0; i < max; i++) {
-    const entry_index = Math.floor(i * step);
-    out.push({ entry_index, entry: entries[entry_index] });
+    out.push(entries[Math.floor(i * step)]);
   }
   return out;
 }
@@ -92,19 +88,23 @@ async function main(): Promise<void> {
   const triage_raw = await fs.readFile(run_path, "utf8");
   const triage = JSON.parse(triage_raw) as TriageResultsFile;
 
-  const group = triage.false_positive_groups[group_id];
-  if (group === undefined) {
-    throw new Error(`group_id "${group_id}" not found in ${run_path}`);
+  const rule_matches = triage.confirmed_unreachable.filter(
+    (e) => e.source.kind === "registry" && e.source.group_id === group_id,
+  );
+  if (rule_matches.length === 0) {
+    throw new Error(
+      `group_id "${group_id}" has no confirmed_unreachable matches in ${run_path}`,
+    );
   }
 
   const registry_raw = await fs.readFile(get_registry_file_path(), "utf8");
   const registry = parse_known_issues_registry_json(registry_raw);
   const registry_entry = registry.find((e) => e.group_id === group_id) ?? null;
 
-  const sampled = sample_members(group.entries, SAMPLE_SIZE);
+  const sampled = sample_members(rule_matches, SAMPLE_SIZE);
   const members = await Promise.all(
-    sampled.map(async ({ entry_index, entry }) => ({
-      entry_index,
+    sampled.map(async (entry) => ({
+      entry_index: entry.entry_index,
       name: entry.name,
       file_path: entry.file_path,
       start_line: entry.start_line,
@@ -117,9 +117,7 @@ async function main(): Promise<void> {
     group_id,
     run_path,
     registry_entry,
-    root_cause: group.root_cause,
-    reasoning: group.reasoning,
-    total_members: group.entries.length,
+    total_members: rule_matches.length,
     sample_size: members.length,
     members,
   };
