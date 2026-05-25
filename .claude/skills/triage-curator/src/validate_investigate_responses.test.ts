@@ -216,7 +216,6 @@ describe("validate_response", () => {
     };
     const session_log: InvestigatorSessionLog = {
       group_id: "dispatch-group",
-      mode: "promote-novel",
       status: "failure",
       reasoning: "group members split across unrelated root causes",
       failure_category: "group_incoherent",
@@ -487,7 +486,6 @@ describe("validate_response", () => {
     };
     const session_log: InvestigatorSessionLog = {
       group_id: "dispatch-group",
-      mode: "promote-novel",
       status: "failure",
       reasoning: "no single classifier fits",
       failure_category: "classifier_infeasible",

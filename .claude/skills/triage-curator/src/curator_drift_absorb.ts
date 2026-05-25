@@ -3,11 +3,7 @@
  *
  * For each `rule_id` the per-entry triage-investigator flagged as having
  * *should-have-matched* this run, the curator marks the wip registry row as
- * drifting and appends each flagged entry to the row's `drift_evidence` with
- * `source: "in-flight"`. The existing QA sample-rate drift signal (with
- * `source: "qa-sample"`) writes to the same field via
- * `mark_drift_in_registry` — both signals coexist in one chronological list
- * per rule, distinguished only by `source`.
+ * drifting and appends each flagged entry to the row's `drift_evidence`.
  *
  * Pure: returns a new registry value plus the list of rule_ids that flipped.
  * The atomic write to disk is the caller's responsibility (kept in
@@ -76,11 +72,7 @@ export function absorb_classifier_regressions(
       skipped_fixed_rule_ids.push(issue.group_id);
       return issue;
     }
-    const { issue: next_issue, changed } = append_drift_evidence(
-      issue,
-      entries,
-      "in-flight",
-    );
+    const { issue: next_issue, changed } = append_drift_evidence(issue, entries);
     if (!changed) return issue;
     drift_tagged_rule_ids.push(issue.group_id);
     return next_issue;

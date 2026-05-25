@@ -49,41 +49,23 @@ export interface KnownIssue {
   observed_count?: number;
   observed_projects?: string[];
   last_seen_run?: string;
-  /** Set by the curator when a classifier's outlier rate breaches the drift threshold. */
+  /** Set by the curator when a per-entry `fp-classifier-regression` verdict lands against this rule. */
   drift_detected?: boolean;
   /**
-   * Per-citation evidence accumulated alongside `drift_detected`. Two writers
-   * append here:
-   *
-   * - `source: "qa-sample"` — the curator's lagging QA-loop tag when an
-   *   outlier rate over the sample crosses the drift threshold.
-   * - `source: "in-flight"` — the per-entry triage-investigator's
-   *   `fp-classifier-regression` verdict, surfaced through the triage-entrypoints run's
-   *   `classifier_regressions` aggregate.
-   *
-   * Both signals coexist; the field is append-only across runs so the human
-   * promotion reviewer can see every flag that recommended re-investigation.
+   * Per-citation evidence accumulated alongside `drift_detected`. Each row is
+   * a per-entry triage-investigator's `fp-classifier-regression` verdict,
+   * surfaced through the triage-entrypoints run's `classifier_regressions`
+   * aggregate. Append-only across runs so the human promotion reviewer can
+   * see every flag that recommended re-investigation.
    */
   drift_evidence?: DriftEvidence[];
 }
 
-export type DriftEvidenceSource = "qa-sample" | "in-flight";
-
 export interface DriftEvidence {
-  /**
-   * For `source: "in-flight"`, the entry index from the triage-entrypoints run's per-entry
-   * triage state that produced the verdict. For `source: "qa-sample"`, the
-   * `entry_index` field from the QA outlier the curator's QA sub-agent
-   * flagged.
-   */
+  /** Entry index from the triage-entrypoints run's per-entry triage state that produced the verdict. */
   entry_index: number;
-  /**
-   * For `source: "in-flight"`, a short evidence snippet (decorator, call
-   * site) the investigator captured. For `source: "qa-sample"`, the QA
-   * outlier's `reason` string.
-   */
+  /** Short evidence snippet (decorator, call site) the investigator captured. */
   evidence_excerpt: string;
-  source: DriftEvidenceSource;
 }
 
 /**

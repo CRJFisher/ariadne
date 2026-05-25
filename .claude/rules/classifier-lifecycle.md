@@ -13,7 +13,7 @@ The classifier registry at `.claude/skills/triage-entrypoints/known_issues/regis
 
 triage-entrypoints reads the registry to filter classifier hits but never mutates it. The `triage-coordinator` sub-agent that runs inside triage-entrypoints writes only the per-run `novel_issues.json` (under `triage_state/<project>/runs/<run-id>/`); it never touches `registry.json`. Any new code under `.claude/skills/triage-entrypoints/` that calls `writeFile` against `registry.json` (or invokes `serialize_known_issues_registry_json` with the registry path) is a contract violation.
 
-`drift_evidence` is the shared ledger for both drift signals: the curator's QA sample-rate path writes rows with `source: "qa-sample"`; the in-flight `fp-classifier-regression` absorb writes rows with `source: "in-flight"`. Both signals are curator-owned writes; triage-entrypoints only emits per-entry verdicts that the curator converts to evidence rows at finalize time.
+`drift_evidence` rows are appended by the in-flight `fp-classifier-regression` absorb path. The rows are curator-owned writes; triage-entrypoints only emits per-entry verdicts that the curator converts to evidence rows at finalize time.
 
 ## Atomic-write contract
 
@@ -41,7 +41,7 @@ This protects against concurrent writers (curator + reconciler running on the sa
                           ┌───────────────┼────────────────┐
                           │               │                │
                 triage-curator     human review        fix-sequencer
-                (drift QA)         (find-promotion-     (reconciler:
+                (drift absorb)     (find-promotion-     (reconciler:
                           │         candidates +         done event /
                           ▼         hand-edit)           git-log scan)
                   ┌─────────────┐         │                │

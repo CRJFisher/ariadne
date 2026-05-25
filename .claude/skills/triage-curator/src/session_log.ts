@@ -29,7 +29,6 @@ export interface SessionLogParseError {
  *
  * Required field invariants:
  *   status="failure"  → failure_category + failure_details non-null
- *   status="blocked_missing_signal" → mode-specific checks in the main validator
  */
 export function parse_investigator_session_log(
   raw: unknown,
@@ -41,9 +40,6 @@ export function parse_investigator_session_log(
 
   if (typeof obj.group_id !== "string" || obj.group_id.length === 0) {
     return { error: "session log: group_id must be a non-empty string" };
-  }
-  if (obj.mode !== "promote-novel") {
-    return { error: "session log: mode must be 'promote-novel'" };
   }
   if (typeof obj.status !== "string" || !STATUSES.has(obj.status as InvestigatorSessionStatus)) {
     return { error: "session log: status must be success|failure|blocked_missing_signal" };
@@ -95,7 +91,6 @@ export function parse_investigator_session_log(
 
   return {
     group_id: obj.group_id,
-    mode: obj.mode,
     status,
     reasoning: obj.reasoning,
     failure_category,

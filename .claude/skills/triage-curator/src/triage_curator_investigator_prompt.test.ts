@@ -197,7 +197,6 @@ describe("triage-curator-investigator agent prompt — body structure", () => {
       "root_cause",
       "citations[]",
       "evidence_excerpt",
-      "promote-novel",
       "propose → validate → iterate",
       "rejected_members",
       "retargets_to",

@@ -15,9 +15,9 @@ cause, naming them, picking a canonical name across parallel agents — is
 done by the time you run. The triage-entrypoints skill's per-entry
 `triage-investigator` emits per-entry verdicts; the `triage-coordinator`
 consolidates them into `novel_issues[]`; the curator's puller hands you
-exactly one of those consolidated issues. Every dispatch you receive is for
-an already-registered `novel_issue` with `mode: promote-novel`; you never
-see a fresh false-positive group.
+exactly one of those consolidated issues. Every dispatch you receive is
+for an already-registered `novel_issue`; you never see a fresh
+false-positive group.
 
 You do **one** thing: turn that registered novel issue into a
 `BuiltinClassifierSpec` that matches its members, and name the Ariadne
@@ -50,8 +50,7 @@ node --import tsx .claude/skills/triage-curator/scripts/get_investigate_context.
   --novel-issue <novel_issue_id> --run <run_path>
 ```
 
-The hydrated bundle's `mode` field is the literal string `"promote-novel"`
-— there is no other mode. The bundle includes:
+The hydrated bundle includes:
 
 - `novel_issue` — the consolidated `NovelIssue` record:
   - `id` (= the dispatched `novel_issue_id`; becomes the registry `group_id`)
@@ -465,7 +464,6 @@ Alongside `<output_path>`, write a sibling file with the same stem plus
 ```json
 {
   "group_id": "string",
-  "mode": "promote-novel",
   "status": "success" | "failure" | "blocked_missing_signal",
   "reasoning": "full narrative",
   "failure_category": null | "group_incoherent" | "pattern_unclear" | "classifier_infeasible" | "registry_conflict" | "other",

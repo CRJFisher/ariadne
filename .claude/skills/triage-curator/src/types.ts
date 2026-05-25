@@ -99,7 +99,6 @@ export type {
   ClassifierRegressionFlag,
   ClassifierRegressionFlaggedEntry,
   DriftEvidence,
-  DriftEvidenceSource,
   KnownIssue,
   KnownIssueExample,
   KnownIssueLanguage,
@@ -123,22 +122,16 @@ export interface PromotionCandidate {
   /**
    * Authoritative veto flag — when true, the rule cannot promote regardless
    * of score. Copied straight from the registry entry's `drift_detected`
-   * field. The `drift_in_flight_count` + `drift_qa_sample_count` fields below
-   * are informational: they break down the evidence that recommended setting
-   * this flag so the human reviewer can weight in-flight rows above
-   * qa-sample rows. The boolean is the gate; the counts are the detail.
+   * field. The `drift_in_flight_count` field below is informational: it
+   * counts the evidence rows that recommended setting this flag. The boolean
+   * is the gate; the count is the detail.
    */
   drift_detected: boolean;
   /**
-   * Per-source split of `KnownIssue.drift_evidence[]`. The in-flight count is
-   * the stronger signal — each row is a per-entry investigator's sharp
-   * `fp-classifier-regression` verdict against this rule. The qa-sample count
-   * is the lagging statistical signal from the curator's QA sub-agent sample
-   * loop. Surfaced separately so the human promotion reviewer can weight a
-   * row with N in-flight regressions above one with N qa-sample drifts.
+   * Count of `KnownIssue.drift_evidence[]` rows for this rule — each is a
+   * per-entry investigator's sharp `fp-classifier-regression` verdict.
    */
   drift_in_flight_count: number;
-  drift_qa_sample_count: number;
   backlog_task: string | null;
   /**
    * 0..1+ score combining observed count, project breadth, and run-history
@@ -156,8 +149,6 @@ export interface PromotionCandidate {
 // ===== Curator state (per-run sentinel files under runs/<id>/finalized.json) =====
 
 export interface CurationOutcome {
-  qa_groups_checked: number;
-  qa_outliers_found: number;
   investigated_groups: number;
   classifiers_proposed: number;
   /**
@@ -209,17 +200,6 @@ export interface ScanResultItem {
 }
 
 // ===== Sub-agent output shapes =====
-
-export interface QaOutlier {
-  entry_index: number;
-  reason: string;
-}
-
-export interface QaResponse {
-  group_id: string;
-  outliers: QaOutlier[];
-  notes: string;
-}
 
 /**
  * Classifier shape the curator emits per investigated group. `kind: "none"`
@@ -426,7 +406,7 @@ export interface InvestigateResponse {
   /**
    * Required when `proposed_classifier.kind === "builtin"`; null otherwise.
    * The main agent renders the spec to TypeScript source via
-   * `scripts/render_classifier.ts` after the investigator returns.
+   * `src/render_classifier.ts` from within `finalize_run.ts`.
    */
   classifier_spec: BuiltinClassifierSpec | null;
   /**
@@ -487,8 +467,6 @@ export type InvestigatorFailureCategory =
 
 export interface InvestigatorSessionLog {
   group_id: string;
-  /** Discriminant identifying the curator-investigator role that produced this log. */
-  mode: "promote-novel";
   status: InvestigatorSessionStatus;
   /**
    * Full narrative. On failure, cite specific files/lines/patterns examined and why

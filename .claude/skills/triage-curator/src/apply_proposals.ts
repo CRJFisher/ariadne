@@ -5,10 +5,7 @@ import {
   serialize_known_issues_registry_json,
 } from "@ariadnejs/types";
 import { atomic_write_file } from "./atomic_write.js";
-import {
-  absorb_classifier_regressions,
-} from "./curator_drift_absorb.js";
-import { append_drift_evidence } from "./drift_evidence.js";
+import { absorb_classifier_regressions } from "./curator_drift_absorb.js";
 import { error_code } from "./errors.js";
 import { render_ariadne_bug_body } from "./render_ariadne_bug_body.js";
 import type {
@@ -22,7 +19,6 @@ import type {
   InvestigatorSessionLog,
   KnownIssue,
   KnownIssueLanguage,
-  QaResponse,
 } from "./types.js";
 
 /**
@@ -30,64 +26,6 @@ import type {
  * the curator. Sub-task ids are auto-assigned by Backlog.md via `parentTaskId`.
  */
 export const SIGNAL_LIBRARY_GAP_PARENT_TASK_ID = "TASK-190.16";
-
-/**
- * Outlier rate at or above which a QA-sample classifier is considered
- * drifting. Denominator is the run's full rule-match count (sticky registry
- * tag signal). The in-flight drift path (`absorb_classifier_regressions`)
- * complements this with a sharp per-entry signal — both share
- * `KnownIssue.drift_evidence` with a `source` discriminator.
- */
-export const DRIFT_OUTLIER_RATE_THRESHOLD = 0.15;
-
-// ===== Drift tagging =====
-
-/**
- * For each QA response whose outlier rate meets the drift threshold, flip
- * `drift_detected` to true on the matching registry entry — provided that
- * entry has an authored classifier (`classifier.kind !== "none"`). Drift on a
- * `kind: "none"` rule has no classifier to be drifting and yields a sticky
- * tag with no consumer. Pure.
- *
- * Also appends one `drift_evidence` row per QA outlier with
- * `source: "qa-sample"`, deduped against any prior qa-sample evidence for the
- * same `entry_index`. The companion in-flight signal
- * (`absorb_classifier_regressions`) writes to the same field with
- * `source: "in-flight"`.
- */
-export function mark_drift_in_registry(
-  registry: KnownIssue[],
-  qa: QaResponse[],
-  member_counts: Record<string, number>,
-): { updated: KnownIssue[]; drift_tagged_groups: string[] } {
-  const drifting_by_group = new Map<string, QaResponse>();
-  for (const r of qa) {
-    const n = member_counts[r.group_id] ?? 0;
-    if (n <= 0) continue;
-    if (r.outliers.length / n >= DRIFT_OUTLIER_RATE_THRESHOLD) {
-      drifting_by_group.set(r.group_id, r);
-    }
-  }
-  const drift_tagged_groups: string[] = [];
-  const updated = registry.map((issue) => {
-    const qa_response = drifting_by_group.get(issue.group_id);
-    if (qa_response === undefined) return issue;
-    if (issue.classifier.kind === "none") return issue;
-    const candidates = qa_response.outliers.map((o) => ({
-      entry_index: o.entry_index,
-      evidence_excerpt: o.reason,
-    }));
-    const { issue: next_issue, changed } = append_drift_evidence(
-      issue,
-      candidates,
-      "qa-sample",
-    );
-    if (!changed) return issue;
-    drift_tagged_groups.push(issue.group_id);
-    return next_issue;
-  });
-  return { updated, drift_tagged_groups };
-}
 
 // ===== Observed-count bookkeeping =====
 
@@ -103,8 +41,9 @@ export function mark_drift_in_registry(
  * - `status: "fixed"` rows are skipped. The fix-sequencer reconciler is the
  *   only authorized `fixed` writer (see `.claude/rules/classifier-lifecycle.md`),
  *   so the curator must not mutate observed-stat fields on these rows; a
- *   resurfacing novel issue on a `fixed` rule is surfaced separately under
- *   `RunDispatch.fixed_novel_issue_resurfacings` for human review.
+ *   resurfacing novel issue on a `fixed` rule is surfaced in
+ *   `curate_all`'s `RunDispatch.fixed_novel_issue_resurfacings[]` for human
+ *   review (read straight off the run-plan stdout).
  * - `observed_count` accumulates across runs; re-running the curator on the same
  *   run_id does double-count, which is why finalize's `finalized.json` sentinel
  *   is the guard against redundant invocation.
@@ -206,9 +145,8 @@ export interface ApplyOptions {
   /**
    * Per-rule aggregate of `fp-classifier-regression` verdicts from the triage-entrypoints
    * run's per-entry triage. Each flagged rule's wip row is tagged
-   * `drift_detected: true` and gains `drift_evidence` rows with
-   * `source: "in-flight"` before the QA-sample drift pass runs. Pass `[]`
-   * when the triage-entrypoints run produced no regression verdicts.
+   * `drift_detected: true` and gains `drift_evidence` rows. Pass `[]` when the
+   * triage-entrypoints run produced no regression verdicts.
    */
   classifier_regressions: ClassifierRegressionFlag[];
 }
@@ -236,10 +174,8 @@ export interface ApplyResult {
    */
   skipped_fixed_upserts: string[];
   /**
-   * Rule ids newly tagged as drifting in this finalize run, from either the
-   * QA sample-rate path (`mark_drift_in_registry`) OR the in-flight
-   * regression path (`absorb_classifier_regressions`). The per-row
-   * `drift_evidence` array carries the source discriminator.
+   * Rule ids newly tagged as drifting in this finalize run by the in-flight
+   * regression path (`absorb_classifier_regressions`).
    */
   drift_tagged_groups: string[];
   /**
@@ -262,7 +198,6 @@ export interface ApplyResult {
  * call. Backlog task creation happens in the main agent via MCP after.
  */
 export async function apply_proposals(
-  qa: QaResponse[],
   inv: InvestigateResponse[],
   member_counts: Record<string, number>,
   opts: ApplyOptions,
@@ -270,18 +205,14 @@ export async function apply_proposals(
   const raw = await fs.readFile(opts.registry_path, "utf8");
   const registry = parse_known_issues_registry_json(raw);
 
-  // In-flight regressions first: the per-entry investigator's
-  // `fp-classifier-regression` verdicts pre-stage drift signal so the
-  // downstream QA-sample drift pass sees the freshest registry state.
+  // In-flight regressions from the per-entry investigator's
+  // `fp-classifier-regression` verdicts stage drift signal before the
+  // registry upserts run.
   const regression_result = absorb_classifier_regressions(
     registry,
     opts.classifier_regressions,
   );
-  const { updated: after_drift, drift_tagged_groups } = mark_drift_in_registry(
-    regression_result.updated_registry,
-    qa,
-    member_counts,
-  );
+  const after_drift = regression_result.updated_registry;
 
   // Authored files are keyed by the target group id (retargets_to ?? group_id) —
   // the same derivation the renderer uses and finalize looks up by.
@@ -360,7 +291,6 @@ export async function apply_proposals(
   next_registry = after_observed;
 
   const registry_mutated =
-    drift_tagged_groups.length > 0 ||
     regression_result.drift_tagged_rule_ids.length > 0 ||
     registry_upserts.length > 0 ||
     bumped_groups.length > 0;
@@ -405,14 +335,6 @@ export async function apply_proposals(
     });
   }
 
-  // Merge in-flight drift tags into the unified drift_tagged_groups list
-  // (preserve order: in-flight absorb ran first, so its tags come first).
-  const merged_drift_tagged: string[] = [
-    ...regression_result.drift_tagged_rule_ids,
-    ...drift_tagged_groups.filter(
-      (g) => !regression_result.drift_tagged_rule_ids.includes(g),
-    ),
-  ];
   // In-flight regressions against permanent rows merge into the existing
   // skipped_permanent_upserts list — both are "curator declined to mutate
   // this permanent row, surface to human".
@@ -429,7 +351,7 @@ export async function apply_proposals(
     registry_upserts,
     skipped_permanent_upserts: merged_skipped_permanent,
     skipped_fixed_upserts: regression_result.skipped_fixed_rule_ids,
-    drift_tagged_groups: merged_drift_tagged,
+    drift_tagged_groups: regression_result.drift_tagged_rule_ids,
     signal_library_gap_tasks,
     ariadne_bug_tasks,
   };

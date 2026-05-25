@@ -1,18 +1,13 @@
 #!/usr/bin/env node
 /**
  * Finalize a single triage-entrypoints run: read all per-group JSONs written
- * by the sub-agents, AST-check each authored classifier file, apply proposals
- * (registry upserts, drift tags), write the run's finalized.json sentinel,
- * and print a summary.
+ * by the sub-agents, render each builtin spec to TypeScript source under the
+ * core builtins dir, AST-check each authored file, apply proposals (registry
+ * upserts, drift tags), write the run's finalized.json sentinel, and print a
+ * summary.
  *
  * Usage:
  *   node --import tsx finalize_run.ts --run <path> [--dry-run]
- *     [--authored-files <path-to-json-map>]
- *
- * The `--authored-files` JSON is a { [group_id]: absolute_file_path } map
- * produced by the render step (main agent invokes render_classifier.ts and
- * writes the output via the Write tool). Every builtin proposal requires
- * an entry.
  */
 
 import * as fs from "node:fs/promises";
@@ -46,6 +41,7 @@ import {
   get_registry_file_path,
   run_output_dir,
 } from "../src/paths.js";
+import { render_authored_files } from "../src/render_authored_files.js";
 import { parse_investigator_session_log } from "../src/session_log.js";
 import type {
   CuratedRunEntry,
@@ -64,13 +60,11 @@ import "../src/require_node_import_tsx.js";
 interface CliArgs {
   run_path: string;
   dry_run: boolean;
-  authored_files_path: string | null;
 }
 
 function parse_argv(argv: string[]): CliArgs {
   let run_path: string | null = null;
   let dry_run = false;
-  let authored_files_path: string | null = null;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     switch (arg) {
@@ -80,14 +74,9 @@ function parse_argv(argv: string[]): CliArgs {
       case "--dry-run":
         dry_run = true;
         break;
-      case "--authored-files":
-        authored_files_path = argv[++i];
-        break;
       case "--help":
       case "-h":
-        process.stdout.write(
-          "Usage: finalize_run --run <path> [--dry-run] [--authored-files <path>]\n",
-        );
+        process.stdout.write("Usage: finalize_run --run <path> [--dry-run]\n");
         process.exit(0);
         break;
       default:
@@ -95,7 +84,7 @@ function parse_argv(argv: string[]): CliArgs {
     }
   }
   if (run_path === null || run_path.length === 0) throw new Error("--run <path> is required");
-  return { run_path, dry_run, authored_files_path };
+  return { run_path, dry_run };
 }
 
 async function read_json_dir<T>(
@@ -184,29 +173,6 @@ function aggregate_session_logs(logs: InvestigatorSessionLog[]): SessionAggregat
   return { success_count, failure_count, blocked_count, failed_groups };
 }
 
-async function load_authored_files_map(
-  authored_files_path: string | null,
-): Promise<Record<string, string>> {
-  if (authored_files_path === null) return {};
-  const raw = await fs.readFile(authored_files_path, "utf8");
-  const parsed = JSON.parse(raw) as unknown;
-  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    throw new Error(
-      `--authored-files ${authored_files_path} must be a JSON object mapping group_id → path`,
-    );
-  }
-  const out: Record<string, string> = {};
-  for (const [group_id, value] of Object.entries(parsed as Record<string, unknown>)) {
-    if (typeof value !== "string" || value.length === 0) {
-      throw new Error(
-        `--authored-files entry for group '${group_id}' must be a non-empty string path`,
-      );
-    }
-    out[group_id] = value;
-  }
-  return out;
-}
-
 /**
  * Parse each authored file through the TypeScript compiler and surface syntactic
  * diagnostics. Files with any diagnostic are treated as failed authoring — their
@@ -255,7 +221,7 @@ async function ast_check_authored_files(
 }
 
 async function main(): Promise<void> {
-  const { run_path, dry_run, authored_files_path } = parse_argv(process.argv.slice(2));
+  const { run_path, dry_run } = parse_argv(process.argv.slice(2));
   await fs.mkdir(CURATOR_RUNS_DIR, { recursive: true });
 
   const run_id = derive_run_id(run_path);
@@ -304,12 +270,13 @@ async function main(): Promise<void> {
     process.exit(3);
   }
 
-  const authored_files_raw = await load_authored_files_map(authored_files_path);
+  const builtins_dir = get_core_builtins_dir();
+  const { authored_files_by_group: authored_files_raw, render_failures } =
+    await render_authored_files(investigate_responses, builtins_dir);
   const { ast_failures, passing: authored_files_by_group } =
     await ast_check_authored_files(authored_files_raw);
 
   const result = await apply_proposals(
-    [],
     investigate_responses,
     compute_observation_counts(triage),
     {
@@ -324,7 +291,7 @@ async function main(): Promise<void> {
     },
   );
 
-  const failed_authoring = [...ast_failures, ...result.failed_authoring];
+  const failed_authoring = [...render_failures, ...ast_failures, ...result.failed_authoring];
 
   const orphan_candidates = compute_orphan_paths(
     authored_files_raw,
@@ -387,8 +354,6 @@ async function main(): Promise<void> {
     run_path,
     curated_at: new Date().toISOString(),
     outcome: {
-      qa_groups_checked: 0,
-      qa_outliers_found: 0,
       investigated_groups: investigate_responses.length,
       classifiers_proposed: result.registry_upserts.length,
       signal_library_gap_tasks: result.signal_library_gap_tasks,

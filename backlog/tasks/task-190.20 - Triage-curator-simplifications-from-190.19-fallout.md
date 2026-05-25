@@ -92,12 +92,12 @@ and .6 are correctness fixes; .7 is the shared-package extraction;
       (190.20.7 was superseded by 190.21.1)
 - [ ] #2 `pnpm test` is green inside `.claude/skills/triage-curator/` and
       `.claude/skills/triage-entrypoints/`
-- [ ] #3 No file under `.claude/skills/triage-curator/` references
+- [x] #3 No file under `.claude/skills/triage-curator/` references
       `QaResponse`, `QaOutlier`, `mark_drift_in_registry`,
       `triage-curator-qa`, `get_qa_context`, or `source_excerpt`
-- [ ] #4 No occurrence of `qa-sample` as a `DriftEvidenceSource` discriminator
+- [x] #4 No occurrence of `qa-sample` as a `DriftEvidenceSource` discriminator
       remains (collapsed to single-source after the QA wave is removed)
-- [ ] #5 `scripts/render_classifier.ts` is no longer dispatched from
+- [x] #5 `scripts/render_classifier.ts` is no longer dispatched from
       `SKILL.md`'s top-level phase flow; the README primary diagram either
       omits a render phase or has it folded into the investigator subgraph
 - [ ] #6 `scripts/finalize_run.ts` has a colocated test file covering at
@@ -112,6 +112,37 @@ and .6 are correctness fixes; .7 is the shared-package extraction;
 ## Implementation Notes
 
 <!-- SECTION:DESCRIPTION:END -->
+
+### Wave A landed (2026-05-25)
+
+Sub-tasks 190.20.1, .2, .3, .4 landed as the "subtract + collapse" wave:
+
+- **190.20.1** — entire QA wave deleted (script, agent, types, drift source).
+  `DriftEvidence` collapsed to single-source `{ entry_index, evidence_excerpt }`.
+- **190.20.2** — Phase 4 render collapsed into `finalize_run.ts` (Option B,
+  finalize-owned). New helper `src/render_authored_files.ts` with 6 unit
+  tests. `--authored-files` plumbing removed; standalone
+  `scripts/render_classifier.ts` deleted (the pure renderer in
+  `src/render_classifier.ts` is now invoked from inside finalize).
+- **190.20.3** — `InvestigatorSessionLog.mode` singleton dropped;
+  `sort_by_drift_priority` deleted (puller no longer reads the registry);
+  `RunDispatch.classifier_regressions` count-echo dropped. Decision on
+  `fixed_novel_issue_resurfacings`: kept (surfaced via `curate_all` stdout
+  for human review).
+- **190.20.4** — `group_id` → `novel_issue_id` rename on dispatch-side
+  types (`NovelPromoteDispatch`, `DispatchEntry`). Registry-side types
+  (`KnownIssue.group_id`, `InvestigateResponse.group_id`,
+  `InvestigatorSessionLog.group_id`) retained per the lifecycle boundary.
+
+Wave A reviewed by 5 opus agents post-implementation; their fixes landed
+inline (lifecycle-doc label cleanup, JSDoc rephrasing, state-files path
+canonicalization, meta.json `bypasses` cleanup, helper-idempotency test,
+dedupe-assumption comment).
+
+Tests: 213 passing in `.claude/skills/triage-curator/`; typecheck clean.
+
+Wave B (190.20.5, .6, .8 — atomic finalize + exhaustiveness sweep + tests
+and residual cleanup) is the remaining work under this umbrella.
 
 ### Review provenance
 

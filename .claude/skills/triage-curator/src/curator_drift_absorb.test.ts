@@ -39,7 +39,7 @@ const FLAG_DECORATOR: ClassifierRegressionFlag = {
 };
 
 describe("absorb_classifier_regressions", () => {
-  it("flips drift_detected=true on a matching wip row and appends drift_evidence with source=in-flight", () => {
+  it("flips drift_detected=true on a matching wip row and appends drift_evidence", () => {
     const registry: KnownIssue[] = [
       wip("decorator-route"),
       wip("other-rule"),
@@ -51,8 +51,8 @@ describe("absorb_classifier_regressions", () => {
         ...wip("decorator-route"),
         drift_detected: true,
         drift_evidence: [
-          { entry_index: 3, evidence_excerpt: "@route('/x')", source: "in-flight" },
-          { entry_index: 7, evidence_excerpt: "@route('/y')", source: "in-flight" },
+          { entry_index: 3, evidence_excerpt: "@route('/x')" },
+          { entry_index: 7, evidence_excerpt: "@route('/y')" },
         ],
       },
       wip("other-rule"),
@@ -63,12 +63,12 @@ describe("absorb_classifier_regressions", () => {
     expect(result.skipped_fixed_rule_ids).toEqual([]);
   });
 
-  it("coexists with prior qa-sample drift evidence — appends rather than overwriting", () => {
+  it("appends new entries onto a row that already carries drift_evidence", () => {
     const seeded: KnownIssue = {
       ...wip("decorator-route"),
       drift_detected: true,
       drift_evidence: [
-        { entry_index: 99, evidence_excerpt: "QA outlier reason", source: "qa-sample" },
+        { entry_index: 99, evidence_excerpt: "earlier flag" },
       ],
     };
     const registry: KnownIssue[] = [seeded];
@@ -79,9 +79,9 @@ describe("absorb_classifier_regressions", () => {
         ...wip("decorator-route"),
         drift_detected: true,
         drift_evidence: [
-          { entry_index: 99, evidence_excerpt: "QA outlier reason", source: "qa-sample" },
-          { entry_index: 3, evidence_excerpt: "@route('/x')", source: "in-flight" },
-          { entry_index: 7, evidence_excerpt: "@route('/y')", source: "in-flight" },
+          { entry_index: 99, evidence_excerpt: "earlier flag" },
+          { entry_index: 3, evidence_excerpt: "@route('/x')" },
+          { entry_index: 7, evidence_excerpt: "@route('/y')" },
         ],
       },
     ];
@@ -89,7 +89,7 @@ describe("absorb_classifier_regressions", () => {
     expect(result.drift_tagged_rule_ids).toEqual(["decorator-route"]);
   });
 
-  it("is idempotent on (entry_index, source=in-flight) — re-absorbing the same flag is a no-op", () => {
+  it("is idempotent on entry_index — re-absorbing the same flag is a no-op", () => {
     const registry: KnownIssue[] = [wip("decorator-route")];
     const first = absorb_classifier_regressions(registry, [FLAG_DECORATOR]);
     const second = absorb_classifier_regressions(first.updated_registry, [FLAG_DECORATOR]);
@@ -149,8 +149,8 @@ describe("absorb_classifier_regressions", () => {
     ];
     const result = absorb_classifier_regressions(registry, flags);
     expect(result.updated_registry[0].drift_evidence).toEqual([
-      { entry_index: 1, evidence_excerpt: "first", source: "in-flight" },
-      { entry_index: 2, evidence_excerpt: "second", source: "in-flight" },
+      { entry_index: 1, evidence_excerpt: "first" },
+      { entry_index: 2, evidence_excerpt: "second" },
     ]);
   });
 
@@ -181,12 +181,12 @@ describe("absorb_classifier_regressions", () => {
       {
         ...wip("rule-a"),
         drift_detected: true,
-        drift_evidence: [{ entry_index: 1, evidence_excerpt: "ea", source: "in-flight" }],
+        drift_evidence: [{ entry_index: 1, evidence_excerpt: "ea" }],
       },
       {
         ...wip("rule-b"),
         drift_detected: true,
-        drift_evidence: [{ entry_index: 2, evidence_excerpt: "eb", source: "in-flight" }],
+        drift_evidence: [{ entry_index: 2, evidence_excerpt: "eb" }],
       },
     ];
     expect(result.updated_registry).toEqual(expected_registry);

@@ -73,12 +73,9 @@ async function load_recent_match_history(): Promise<
 }
 
 /**
- * Render the per-candidate table emitted to stdout. The `drift_inf` and
- * `drift_qa` columns are the per-source split of `drift_evidence[]` —
- * in-flight rows are the per-entry investigator's sharp regression verdicts,
- * qa-sample rows are the curator QA loop's statistical drift signal. Two
- * columns instead of one boolean so the human reviewer can weight them
- * (an in-flight row counts more than a qa-sample row of equal count).
+ * Render the per-candidate table emitted to stdout. The `drift_inf` column
+ * is the count of `drift_evidence[]` rows — each is a per-entry investigator's
+ * sharp `fp-classifier-regression` verdict against this rule.
  */
 export function format_table(candidates: readonly PromotionCandidate[]): string {
   if (candidates.length === 0) {
@@ -98,7 +95,6 @@ export function format_table(candidates: readonly PromotionCandidate[]): string 
     "match",
     "llm",
     "drift_inf",
-    "drift_qa",
     "task",
     "score",
     "vetoes",
@@ -112,7 +108,6 @@ export function format_table(candidates: readonly PromotionCandidate[]): string 
     String(c.match_count_total),
     String(c.llm_attributed_total),
     String(c.drift_in_flight_count),
-    String(c.drift_qa_sample_count),
     c.backlog_task ?? "(none)",
     c.score.toFixed(2),
     c.vetoes.length === 0 ? "" : c.vetoes.join(", "),

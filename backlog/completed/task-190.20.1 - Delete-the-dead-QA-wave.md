@@ -1,7 +1,7 @@
 ---
 id: TASK-190.20.1
 title: Delete the dead QA wave (script, agent, types, drift source)
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-05-24 12:00"
 labels:
@@ -80,19 +80,19 @@ remaining variant for the wip-row contract).
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 None of the files listed in the "Scope — Delete" subsection
+- [x] #1 None of the files listed in the "Scope — Delete" subsection
       remain in the repo
-- [ ] #2 `pnpm test` is green in `.claude/skills/triage-curator/` and
+- [x] #2 `pnpm test` is green in `.claude/skills/triage-curator/` and
       `.claude/skills/triage-entrypoints/`
-- [ ] #3 `grep -rn "QaResponse\|QaOutlier\|mark_drift_in_registry\|qa-sample\|get_qa_context\|triage-curator-qa\|source_excerpt"` returns no hits inside
+- [x] #3 `grep -rn "QaResponse\|QaOutlier\|mark_drift_in_registry\|qa-sample\|get_qa_context\|triage-curator-qa\|source_excerpt"` returns no hits inside
       `.claude/skills/triage-curator/` (matches in commit messages /
       changelogs / `backlog/` allowed)
-- [ ] #4 `finalize_run.ts` no longer hard-codes `qa_groups_checked` /
+- [x] #4 `finalize_run.ts` no longer hard-codes `qa_groups_checked` /
       `qa_outliers_found` literals — those fields are gone from the summary
       altogether
-- [ ] #5 `apply_proposals` signature has one parameter dropped (`qa:
+- [x] #5 `apply_proposals` signature has one parameter dropped (`qa:
 QaResponse[]`); all callers updated
-- [ ] #6 README + SKILL.md no longer describe the QA wave; meta.json
+- [x] #6 README + SKILL.md no longer describe the QA wave; meta.json
       flow list is reduced accordingly
 
 <!-- AC:END -->
@@ -105,3 +105,34 @@ This is pure subtraction. No new tests, no new logic. The only
 non-trivial bit is the `DriftEvidenceSource` union collapse in
 `packages/types/` — that crosses a package boundary, so coordinate with
 any in-flight consumers there.
+
+### Resolution (2026-05-25)
+
+Landed as part of Wave A. Deletions performed:
+
+- `.claude/skills/triage-curator/scripts/get_qa_context.ts`
+- `.claude/skills/triage-curator/scripts/triage_curator_qa_prompt.test.ts`
+- `.claude/skills/triage-curator/src/source_excerpt.ts`
+- `.claude/agents/triage-curator-qa.md`
+- `mark_drift_in_registry` + `DRIFT_OUTLIER_RATE_THRESHOLD` in `apply_proposals.ts`
+- `QaResponse` / `QaOutlier` types
+- `qa: QaResponse[]` parameter on `apply_proposals` and all call sites
+- `CurationOutcome.qa_groups_checked` / `qa_outliers_found` fields (and the
+  literal-zero writers in `finalize_run.ts`)
+- `PromotionCandidate.drift_qa_sample_count` field + `drift_qa` column in
+  `find_promotion_candidates.ts`
+- `count_drift_evidence_by_source` (replaced with flat `count_drift_evidence`)
+- QA-wave entries in `meta.json` (`qa-classified-groups` flow + `triage-curator-qa`
+  sub-agent)
+- QA-wave prose in `README.md` and `SKILL.md`
+- `DriftEvidenceSource` union in `packages/types/src/known_issues.ts` —
+  collapsed to single-source; `DriftEvidence` is now `{ entry_index,
+  evidence_excerpt }`. `append_drift_evidence` signature simplified to drop the
+  `source` parameter. Dedupe key narrowed from `(entry_index, source)` to
+  `entry_index` alone (assumption now load-bearing — documented inline in
+  `drift_evidence.ts`).
+
+Cross-skill verification (post-landing review): no consumer in
+`packages/core/`, `packages/mcp/`, or `.claude/skills/triage-entrypoints/`
+references the removed types. The on-disk registry carries no legacy
+`source: "qa-sample"` rows, so the schema collapse is a clean round-trip.

@@ -3,11 +3,10 @@ import { describe, expect, it } from "vitest";
 import type { DriftEvidence, KnownIssue, PromotionCandidate } from "./types.js";
 import {
   aggregate_promotion_candidates,
-  count_drift_evidence_by_source,
+  count_drift_evidence,
   PROMOTION_SCORE_CUTOFF,
   score_candidate,
   summarize_match_history,
-  type DriftEvidenceCounts,
   type GroupMatchHistorySummary,
 } from "./promotion_candidates.js";
 
@@ -66,26 +65,20 @@ describe("summarize_match_history", () => {
   });
 });
 
-describe("count_drift_evidence_by_source", () => {
-  it("returns zero counts when the rule has no drift_evidence rows", () => {
-    const result = count_drift_evidence_by_source(known("a"));
-    const expected: DriftEvidenceCounts = { in_flight: 0, qa_sample: 0 };
-    expect(result).toEqual(expected);
+describe("count_drift_evidence", () => {
+  it("returns zero when the rule has no drift_evidence rows", () => {
+    expect(count_drift_evidence(known("a"))).toBe(0);
   });
 
-  it("partitions mixed in-flight + qa-sample rows by source", () => {
+  it("counts every drift_evidence row on the rule", () => {
     const evidence: DriftEvidence[] = [
-      { entry_index: 1, evidence_excerpt: "inf-A", source: "in-flight" },
-      { entry_index: 2, evidence_excerpt: "qa-A", source: "qa-sample" },
-      { entry_index: 3, evidence_excerpt: "inf-B", source: "in-flight" },
-      { entry_index: 4, evidence_excerpt: "inf-C", source: "in-flight" },
-      { entry_index: 5, evidence_excerpt: "qa-B", source: "qa-sample" },
+      { entry_index: 1, evidence_excerpt: "inf-A" },
+      { entry_index: 2, evidence_excerpt: "inf-B" },
+      { entry_index: 3, evidence_excerpt: "inf-C" },
     ];
-    const result = count_drift_evidence_by_source(
-      known("a", { drift_evidence: evidence }),
-    );
-    const expected: DriftEvidenceCounts = { in_flight: 3, qa_sample: 2 };
-    expect(result).toEqual(expected);
+    expect(
+      count_drift_evidence(known("a", { drift_evidence: evidence })),
+    ).toBe(3);
   });
 });
 
@@ -179,10 +172,10 @@ describe("aggregate_promotion_candidates", () => {
     expect(result[0].vetoes).toContain("classifier drifting (drift_detected=true)");
   });
 
-  it("emits zero drift counts when the registry entry has no drift_evidence field", () => {
+  it("emits zero drift count when the registry entry has no drift_evidence field", () => {
     // Exercises the `?? []` fallback at the emit boundary. `wip_rule` defaults
     // omit `drift_evidence` entirely (undefined); the candidate row must
-    // still carry numeric `0` counts, not undefined.
+    // still carry a numeric `0` count, not undefined.
     const registry: KnownIssue[] = [known("a")];
     const history = summarize_match_history([
       { group_id: "a", match_count: 5, llm_attributed_count: 0 },
@@ -191,14 +184,13 @@ describe("aggregate_promotion_candidates", () => {
     const result = aggregate_promotion_candidates(registry, history);
     expect(result).toHaveLength(1);
     expect(result[0].drift_in_flight_count).toBe(0);
-    expect(result[0].drift_qa_sample_count).toBe(0);
   });
 
-  it("surfaces the per-source drift split on each emitted candidate", () => {
+  it("surfaces the drift_evidence count on each emitted candidate", () => {
     const evidence: DriftEvidence[] = [
-      { entry_index: 1, evidence_excerpt: "in-flight #1", source: "in-flight" },
-      { entry_index: 2, evidence_excerpt: "in-flight #2", source: "in-flight" },
-      { entry_index: 3, evidence_excerpt: "qa-sample #1", source: "qa-sample" },
+      { entry_index: 1, evidence_excerpt: "in-flight #1" },
+      { entry_index: 2, evidence_excerpt: "in-flight #2" },
+      { entry_index: 3, evidence_excerpt: "in-flight #3" },
     ];
     const registry: KnownIssue[] = [
       known("a", { drift_detected: true, drift_evidence: evidence }),
@@ -218,8 +210,7 @@ describe("aggregate_promotion_candidates", () => {
       match_count_total: 9,
       llm_attributed_total: 0,
       drift_detected: true,
-      drift_in_flight_count: 2,
-      drift_qa_sample_count: 1,
+      drift_in_flight_count: 3,
       backlog_task: "TASK-190.16.42",
       score: result[0].score,
       vetoes: ["classifier drifting (drift_detected=true)"],

@@ -89,7 +89,7 @@ function parse_argv(argv: string[]): CliOpts {
 export interface NovelPromoteDispatch {
   run_path: string;
   /** Novel-issue id — becomes the registry `group_id` once the investigator promotes it. */
-  group_id: string;
+  novel_issue_id: string;
   citation_count: number;
   output_path: string;
   get_context_cmd: string;
@@ -104,20 +104,14 @@ export interface AlreadyRegisteredNovelIssue {
 
 /**
  * Bookkeeping row for a novel issue whose registry row is `fixed`. Surfaced
- * for human review rather than dispatched: the fix-sequencer reconciler owns
- * any `fixed → ?` transition (see `.claude/rules/classifier-lifecycle.md`), so
- * the curator does not auto-route these into investigation or auto-bump
- * `observed_count`.
+ * in the run summary for human review rather than dispatched: the
+ * fix-sequencer reconciler owns any `fixed → ?` transition (see
+ * `.claude/rules/classifier-lifecycle.md`), so the curator does not auto-route
+ * these into investigation or auto-bump `observed_count`.
  */
 export interface FixedNovelIssueResurfacing {
   novel_issue_id: string;
   citation_count: number;
-}
-
-/** Per-rule regression flag mirrored verbatim into the dispatch plan. */
-export interface ClassifierRegressionDispatch {
-  rule_id: string;
-  flagged_entry_count: number;
 }
 
 export interface RunDispatch {
@@ -127,7 +121,6 @@ export interface RunDispatch {
   novel_promote_dispatches: NovelPromoteDispatch[];
   already_registered_novel_issues: AlreadyRegisteredNovelIssue[];
   fixed_novel_issue_resurfacings: FixedNovelIssueResurfacing[];
-  classifier_regressions: ClassifierRegressionDispatch[];
   finalize_cmd: string;
 }
 
@@ -136,9 +129,10 @@ export interface RunDispatch {
  *
  *   - `wip` or `permanent` row → bookkeeping bump in finalize via
  *     `compute_observation_counts` + `bump_observed_stats`.
- *   - `fixed` row → surfaced under `fixed_novel_issue_resurfacings` for human
- *     review. The reconciler is the only authorized `fixed` writer, so the
- *     curator neither re-dispatches the issue nor bumps its observed counts.
+ *   - `fixed` row → surfaced in the run-plan stdout under
+ *     `fixed_novel_issue_resurfacings` for human review. The reconciler is the
+ *     only authorized `fixed` writer, so the curator neither re-dispatches the
+ *     issue nor bumps its observed counts.
  *   - No matching row → promote-novel dispatch into the puller.
  */
 export function classify_novel_issues(
@@ -197,19 +191,13 @@ async function plan_for_run(
       registry_by_group_id,
       (issue) => ({
         run_path: item.run_path,
-        group_id: issue.id,
+        novel_issue_id: issue.id,
         citation_count: issue.citations.length,
         output_path: path.join(output_dir, "investigate", `${issue.id}.json`),
         get_context_cmd:
           `node --import tsx ${inv_script} --novel-issue ${issue.id} --run ${run_rel}`,
       }),
     );
-
-  const classifier_regressions: ClassifierRegressionDispatch[] =
-    triage.classifier_regressions.map((flag) => ({
-      rule_id: flag.rule_id,
-      flagged_entry_count: flag.flagged_entries.length,
-    }));
 
   const finalize_cmd =
     `node --import tsx ${finalize_script} --run ${run_rel}` + (dry_run ? " --dry-run" : "");
@@ -221,7 +209,6 @@ async function plan_for_run(
     novel_promote_dispatches,
     already_registered_novel_issues: already_registered,
     fixed_novel_issue_resurfacings: fixed_resurfacings,
-    classifier_regressions,
     finalize_cmd,
   };
 }

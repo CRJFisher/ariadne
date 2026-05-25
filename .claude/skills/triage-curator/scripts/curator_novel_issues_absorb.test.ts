@@ -130,7 +130,7 @@ describe("curate_all absorb path — novel issues + classifier regressions", () 
   function build_dispatch(issue: NovelIssue): NovelPromoteDispatch {
     return {
       run_path: "/runs/r1.json",
-      group_id: issue.id,
+      novel_issue_id: issue.id,
       citation_count: issue.citations.length,
       output_path: `/out/investigate/${issue.id}.json`,
       get_context_cmd: `node --import tsx get_investigate_context.ts --novel-issue ${issue.id} --run /runs/r1.json`,
@@ -148,7 +148,7 @@ describe("curate_all absorb path — novel issues + classifier regressions", () 
     const expected_novel_dispatches: NovelPromoteDispatch[] = [
       {
         run_path: "/runs/r1.json",
-        group_id: "brand-new-issue",
+        novel_issue_id: "brand-new-issue",
         citation_count: 2,
         output_path: "/out/investigate/brand-new-issue.json",
         get_context_cmd:
@@ -218,7 +218,6 @@ describe("curate_all absorb path — novel issues + classifier regressions", () 
           {
             entry_index: 11,
             evidence_excerpt: "should-have-matched call site",
-            source: "in-flight",
           },
         ],
       },

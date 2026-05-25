@@ -3,7 +3,7 @@ id: TASK-190.20.3
 title: >-
   Drop vestigial dispatch concepts (mode singleton, drift-priority no-op,
   RunDispatch echo, fixed-resurfacing bookkeeping)
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-05-24 12:00"
 labels:
@@ -87,14 +87,14 @@ partition entirely.
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 `InvestigatorSessionLog.mode` no longer exists; tests updated
-- [ ] #2 `sort_by_drift_priority` is removed; puller reads no registry
+- [x] #1 `InvestigatorSessionLog.mode` no longer exists; tests updated
+- [x] #2 `sort_by_drift_priority` is removed; puller reads no registry
       data
-- [ ] #3 `RunDispatch.classifier_regressions` is removed; finalize keeps
+- [x] #3 `RunDispatch.classifier_regressions` is removed; finalize keeps
       reading from `triage.classifier_regressions` directly
-- [ ] #4 `fixed_novel_issue_resurfacings` either appears in the commit
+- [x] #4 `fixed_novel_issue_resurfacings` either appears in the commit
       message body or is removed from the data shape
-- [ ] #5 `pnpm test` is green inside the curator skill
+- [x] #5 `pnpm test` is green inside the curator skill
 <!-- AC:END -->
 
 ## Implementation Notes
@@ -105,3 +105,40 @@ These four items are independent but small enough that a single PR is
 cheaper than four. Order: #1 (mode field) and #3 (RunDispatch echo) are
 pure type/field deletions. #2 (drift-priority) and #4
 (fixed_resurfacings) need a small operational decision before subtracting.
+
+### Resolution (2026-05-25)
+
+All four items landed as part of Wave A.
+
+**#1 — `InvestigatorSessionLog.mode` singleton dropped.** Field gone from
+`src/types.ts`, parser check removed from `src/session_log.ts`,
+`mode: "promote-novel" as const` removed from `scripts/get_investigate_context.ts`
+output, `mode` mention removed from `.claude/agents/triage-curator-investigator.md`
+(prompt + JSON schema). `src/session_log.test.ts` updated (dropped the
+`mode: "promote-novel"` field from the base fixture and the "rejects unknown
+mode" test); `src/validate_investigate_responses.test.ts` updated (two
+fixtures dropped the field).
+
+**#2 — `sort_by_drift_priority` dropped.** The function and its registry-read
+helpers removed from `scripts/next_investigate_tasks.ts`. The puller no
+longer loads `registry.json` at all (the `parse_known_issues_registry_json`
+and `get_registry_file_path` imports are gone). The reduced loop is:
+dedupe-by-`output_path` → filter `is_done` → `slice(0, limit)`.
+`scripts/next_investigate_tasks.test.ts` rewritten to cover the new
+contract (3 tests: shape, dedupe-by-output, distinct outputs preserved).
+Drift-priority prose removed from `SKILL.md` and the `README.md` mermaid
+puller label (`puller · dedup + slice`).
+
+**#3 — `RunDispatch.classifier_regressions` count-only echo dropped.** The
+`ClassifierRegressionDispatch` type and the `RunDispatch.classifier_regressions`
+field are gone from `scripts/curate_all.ts`. `finalize_run.ts` still reads
+the per-rule aggregate straight from `triage.classifier_regressions` on the
+v4 published artifact (no per-run echo needed). SKILL.md Step 1 prose updated.
+
+**#4 — `fixed_novel_issue_resurfacings` — KEPT (surfaced to operator via
+`curate_all` stdout).** The partition is emitted as part of the per-run
+`RunDispatch` JSON that `curate_all` prints; operators see it as part of the
+sweep plan. The previous claim that "nothing reads it" was inaccurate — the
+human reading `curate_all`'s output is the reader. Documentation updated in
+`scripts/curate_all.ts`, `src/apply_proposals.ts` (cross-reference comment),
+and `SKILL.md` Step 1 to name this consumer explicitly.

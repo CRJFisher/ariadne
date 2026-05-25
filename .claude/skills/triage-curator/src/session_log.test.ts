@@ -6,7 +6,6 @@ import type { InvestigatorSessionLog } from "./types.js";
 function base_log(overrides: Partial<InvestigatorSessionLog> = {}): InvestigatorSessionLog {
   return {
     group_id: "g",
-    mode: "promote-novel",
     status: "success",
     reasoning: "identified signals A and B; predicate DSL suffices",
     failure_category: null,
@@ -54,11 +53,6 @@ describe("parse_investigator_session_log — structural errors", () => {
 
   it("rejects an empty group_id", () => {
     const result = parse_investigator_session_log(base_log({ group_id: "" }));
-    expect("error" in result).toBe(true);
-  });
-
-  it("rejects an unknown mode", () => {
-    const result = parse_investigator_session_log({ ...base_log(), mode: "other" });
     expect("error" in result).toBe(true);
   });
 

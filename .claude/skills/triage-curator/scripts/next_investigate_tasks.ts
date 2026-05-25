@@ -6,12 +6,6 @@
  * malformed response files count as pending; malformed ones emit a stderr
  * warning.
  *
- * Drift-flagged wip rules float to the front of the queue: any registry row
- * whose `drift_detected === true` (set by either the QA-sample drift path or
- * the in-flight `fp-classifier-regression` absorb in 190.19.4) sorts ahead of
- * its peers so the strongest classifier-rework signal lands inside the
- * limit-sized slice.
- *
  * Input shape and caller protocol are documented in SKILL.md Step 4.
  *
  * Usage:
@@ -22,44 +16,19 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { parse_known_issues_registry_json } from "@ariadnejs/types";
 import { error_code } from "../src/errors.js";
-import { get_registry_file_path } from "../src/paths.js";
-import type { KnownIssue } from "../src/types.js";
 import "../src/require_node_import_tsx.js";
 
 export interface DispatchEntry {
   run_path: string;
   /**
-   * Dispatch key — under v4 this is a `novel_issue.id` for promote-novel
-   * dispatches. The puller does not interpret the value; it only uses it for
-   * stable ordering and registry lookup against `KnownIssue.group_id`.
+   * Dispatch key — under v4 this is a `novel_issue.id`. The puller does not
+   * interpret the value; it only uses it for stable identity via
+   * `output_path`.
    */
-  group_id: string;
+  novel_issue_id: string;
   output_path: string;
   get_context_cmd: string;
-}
-
-/**
- * Stable-sort dispatches so drift-flagged `wip` rules come first. A drifting
- * classifier is one whose existing match shape has shifted relative to the QA
- * sample, and we want to investigate it before the puller's limit fills with
- * non-drifting candidates. Pure.
- */
-export function sort_by_drift_priority(
-  entries: DispatchEntry[],
-  registry_by_group: Map<string, KnownIssue>,
-): DispatchEntry[] {
-  const priority = (entry: DispatchEntry): number => {
-    const reg = registry_by_group.get(entry.group_id);
-    if (reg === undefined) return 1;
-    if (reg.status === "wip" && reg.drift_detected === true) return 0;
-    return 1;
-  };
-  return entries
-    .map((entry, index) => ({ entry, index, prio: priority(entry) }))
-    .sort((a, b) => (a.prio !== b.prio ? a.prio - b.prio : a.index - b.index))
-    .map(({ entry }) => entry);
 }
 
 interface CliArgs {
@@ -122,21 +91,14 @@ async function main(): Promise<void> {
     throw new Error("dispatch list must be a JSON array");
   }
 
-  const registry = parse_known_issues_registry_json(
-    await fs.readFile(get_registry_file_path(), "utf8"),
-  );
-  const registry_by_group = new Map(registry.map((e) => [e.group_id, e]));
-
-  // Dedupe by output_path (same file means same dispatch). Drift-flagged
-  // wip rules float to the front of the queue.
+  // Dedupe by output_path (same file means same dispatch).
   const by_output = new Map<string, DispatchEntry>();
   for (const e of dispatch_entries) {
     by_output.set(e.output_path, e);
   }
-  const ordered = sort_by_drift_priority([...by_output.values()], registry_by_group);
 
   const not_done: DispatchEntry[] = [];
-  for (const entry of ordered) {
+  for (const entry of by_output.values()) {
     if (!(await is_done(entry.output_path))) not_done.push(entry);
   }
   const pending = not_done.slice(0, limit);

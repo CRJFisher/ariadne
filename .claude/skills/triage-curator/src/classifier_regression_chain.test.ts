@@ -10,7 +10,7 @@
  *   3. `aggregate_classifier_regressions` collapses the JSONL into the
  *      `classifier_regressions[]` array embedded in the v4 finalize output.
  *   4. The curator's `apply_proposals` consumes that array and persists
- *      `drift_evidence` rows with `source: "in-flight"` onto the wip rule.
+ *      `drift_evidence` rows onto the wip rule.
  *
  * This is the integration anchor for "intentionally narrowed wip classifier
  * → fp-classifier-regression detected end-to-end" — the call-graph and the
@@ -129,7 +129,6 @@ describe("classifier-regression chain (AC#3)", () => {
     // ── 4. Curator absorbs the aggregate and mutates the registry.
     const result = await apply_proposals(
       [],
-      [],
       {},
       {
         dry_run: false,
@@ -149,16 +148,8 @@ describe("classifier-regression chain (AC#3)", () => {
     expect(on_disk[0].group_id).toEqual("decorator-route-handler");
     expect(on_disk[0].drift_detected).toEqual(true);
     expect(on_disk[0].drift_evidence).toEqual([
-      {
-        entry_index: 7,
-        evidence_excerpt: "@router.get('/users')",
-        source: "in-flight",
-      },
-      {
-        entry_index: 11,
-        evidence_excerpt: "@router.post('/items')",
-        source: "in-flight",
-      },
+      { entry_index: 7, evidence_excerpt: "@router.get('/users')" },
+      { entry_index: 11, evidence_excerpt: "@router.post('/items')" },
     ]);
   });
 });

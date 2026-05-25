@@ -108,7 +108,6 @@ async function main(): Promise<void> {
   const out = {
     novel_issue_id,
     run_path,
-    mode: "promote-novel" as const,
     novel_issue,
     registry,
     signal_inventory_path: SIGNAL_INVENTORY_PATH,

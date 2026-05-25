@@ -1,7 +1,7 @@
 ---
 id: TASK-190.20.2
 title: Collapse Phase 4 render into the investigator loop (or finalize)
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-05-24 12:00"
 labels:
@@ -63,15 +63,15 @@ Either way:
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 The README primary mermaid diagram no longer has a P4 subgraph;
+- [x] #1 The README primary mermaid diagram no longer has a P4 subgraph;
       rendering is shown either inside the investigator's P3 subgraph or as
       the first action inside P5's `finalize_run.ts` node
-- [ ] #2 SKILL.md's pipeline table is reduced by one row (no separate
+- [x] #2 SKILL.md's pipeline table is reduced by one row (no separate
       "Author source" step)
-- [ ] #3 `--authored-files` JSON map plumbing is gone (no script in
+- [x] #3 `--authored-files` JSON map plumbing is gone (no script in
       `.claude/skills/triage-curator/scripts/` produces or consumes it)
-- [ ] #4 `pnpm test` is green inside `.claude/skills/triage-curator/`
-- [ ] #5 An end-to-end fixture test exercises the chosen collapse path
+- [x] #4 `pnpm test` is green inside `.claude/skills/triage-curator/`
+- [x] #5 An end-to-end fixture test exercises the chosen collapse path
       (investigator writes `.ts` and finalize picks it up, OR finalize renders
   - writes + AST-checks in one pass)
 
@@ -86,3 +86,38 @@ LLM boundary, easier for the agent to self-verify by reading its own
 output. Option B keeps the LLM agent's responsibilities narrower (it
 never touches the core builtins path). Decision criterion: whichever
 collapse causes the smaller `finalize_run.ts` diff.
+
+### Resolution (2026-05-25) — Option B chosen
+
+Implemented Option B (finalize-owned). Rationale: keeps the LLM
+investigator's responsibility narrow (it never invokes `Bash` for
+rendering), removes the orchestrator's `--authored-files` map plumbing,
+and lets `finalize_run.ts` discover what to render directly from the
+investigate responses it already loads.
+
+Changes:
+
+- New helper `src/render_authored_files.ts` exposes the rendering loop:
+  iterates responses with non-null `classifier_spec`, renders each via
+  `src/render_classifier.ts`, writes to `<builtins_dir>/check_<target>.ts`,
+  folds renderer throws into `render_failures`. Pure-ish (single side-effect
+  is `fs.writeFile`).
+- `scripts/finalize_run.ts` calls `render_authored_files()` before
+  `ast_check_authored_files()`, then `apply_proposals()`. The three failure
+  collections (`render_failures`, `ast_failures`, `result.failed_authoring`)
+  union into the summary's `failed_authoring`.
+- `scripts/render_classifier.ts` deleted. `src/render_classifier.ts` (the
+  pure renderer) retained — now invoked from the new helper only.
+- `--authored-files` CLI flag + the `load_authored_files_map` loader
+  removed from `finalize_run.ts`. The orphan-cleanup logic still uses
+  `authored_files_raw` (now built in-process from the render step).
+- `SKILL.md` pipeline table reduced by one row (Plan / Investigate /
+  Finalize / Backlog / Commit).
+- `README.md` mermaid: P4 subgraph + the `REND` step + `AUTH` artifact
+  removed; the `FIN` node copy now mentions `render_classifier · …` to make
+  the inline-render explicit.
+- `meta.json` `phases: ["P1","P3","P5"]` (P4 dropped from both `phases` and
+  `bypasses`).
+- New test `src/render_authored_files.test.ts` — 6 cases: happy path,
+  skip-on-null-spec, retargets_to renaming, builtins dir auto-creation,
+  renderer-throw → render_failures, idempotency on re-run.

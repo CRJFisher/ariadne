@@ -1,12 +1,11 @@
 /**
  * Renderer fixture for `pnpm find-promotion-candidates`. The script's only
  * non-IO surface is `format_table`; pinning it against a literal expected
- * string proves the per-source drift split (`drift_inf` + `drift_qa`) is
- * surfaced in the human-readable table.
+ * string proves the `drift_inf` column surfaces the `drift_evidence` count
+ * in the human-readable table.
  *
  * Coverage:
- *   - mixed-source `drift_evidence` produces both `drift_inf` and `drift_qa`
- *     columns with the correct per-row counts.
+ *   - a `drift_evidence`-bearing rule renders the row count under `drift_inf`.
  *   - the empty-set message is unchanged when no rules clear the cutoff.
  */
 import { describe, expect, it } from "vitest";
@@ -38,14 +37,13 @@ function wip_rule(
 }
 
 describe("find_promotion_candidates format_table", () => {
-  it("renders the per-source drift split for a mixed-source registry fixture", () => {
+  it("renders the drift_inf count for a registry fixture with drift_evidence", () => {
     // `drift_detected` is deliberately false so the row has no veto: the test
-    // pins the rendering of `drift_inf` + `drift_qa` columns, not the veto
-    // string. Both drift columns are present and split by source.
+    // pins the rendering of the `drift_inf` column, not the veto string.
     const evidence: DriftEvidence[] = [
-      { entry_index: 1, evidence_excerpt: "inf-A", source: "in-flight" },
-      { entry_index: 2, evidence_excerpt: "inf-B", source: "in-flight" },
-      { entry_index: 3, evidence_excerpt: "qa-A", source: "qa-sample" },
+      { entry_index: 1, evidence_excerpt: "inf-A" },
+      { entry_index: 2, evidence_excerpt: "inf-B" },
+      { entry_index: 3, evidence_excerpt: "inf-C" },
     ];
     const registry: KnownIssue[] = [
       wip_rule("rule", { drift_evidence: evidence }),
@@ -62,9 +60,9 @@ describe("find_promotion_candidates format_table", () => {
     // at its own header width (6).
     const expected =
       [
-        "group_id  kind     obs  proj  runs  match  llm  drift_inf  drift_qa  task            score  vetoes",
-        "--------  -------  ---  ----  ----  -----  ---  ---------  --------  --------------  -----  ------",
-        "rule      builtin  12   2     2     9      0    2          1         TASK-190.16.42  1.00         ",
+        "group_id  kind     obs  proj  runs  match  llm  drift_inf  task            score  vetoes",
+        "--------  -------  ---  ----  ----  -----  ---  ---------  --------------  -----  ------",
+        "rule      builtin  12   2     2     9      0    3          TASK-190.16.42  1.00         ",
       ].join("\n") + "\n";
 
     expect(format_table(candidates)).toEqual(expected);

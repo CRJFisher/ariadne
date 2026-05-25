@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "skill": "triage-curator",
-  "description": "Offline sweep over completed triage-entrypoints runs. Absorbs the per-run novel_issues and classifier_regressions; promotes registered novel issues to permanent classifier rules; produces classifier + backlog + signal proposals; QAs already-classified groups for drift; and commits the result.",
+  "description": "Offline sweep over completed triage-entrypoints runs. Absorbs the per-run novel_issues and classifier_regressions; promotes registered novel issues to permanent classifier rules; produces classifier + backlog + signal proposals; and commits the result.",
 
   "flows": [
     {
@@ -18,29 +18,10 @@
         "kind": "store_write",
         "target": "registry-write"
       },
-      "phases": ["P1", "P3", "P4", "P5"],
+      "phases": ["P1", "P3", "P5"],
       "bypasses": ["P2"],
       "diagram_anchor": "pipeline-flow",
       "is_primary": true
-    },
-    {
-      "id": "qa-classified-groups",
-      "name": "QA already-classified groups → drift detection",
-      "representativeness": 0.30,
-      "representativeness_anchor": "sub-mode",
-      "entry": {
-        "kind": "internal_branch",
-        "from_flow_id": "novel-to-classifier",
-        "condition": "BR1 = 'yes · classified' (group already has registry entry)"
-      },
-      "exit": {
-        "kind": "store_write",
-        "target": "registry-write"
-      },
-      "phases": ["P1", "P2", "P5"],
-      "bypasses": ["P3", "P4"],
-      "diagram_anchor": "maintenance-flow-qa-of-already-classified-groups",
-      "is_primary": false
     },
     {
       "id": "human-wip-to-permanent",
@@ -56,7 +37,7 @@
         "target": "core-builtins"
       },
       "phases": [],
-      "bypasses": ["P1", "P2", "P3", "P4", "P5"],
+      "bypasses": ["P1", "P2", "P3", "P5"],
       "diagram_anchor": "maintenance-entries",
       "is_primary": false
     }
@@ -68,8 +49,8 @@
       "path": ".claude/skills/triage-entrypoints/known_issues/registry.json",
       "access": "read-only",
       "writer_owner": "triage-curator",
-      "semantic_role": "filter for already-known issues; investigator + QA context",
-      "touched_by_flows": ["novel-to-classifier", "qa-classified-groups"]
+      "semantic_role": "filter for already-known issues; investigator context",
+      "touched_by_flows": ["novel-to-classifier"]
     },
     {
       "id": "registry-write",
@@ -77,7 +58,7 @@
       "access": "write",
       "writer_owner": null,
       "semantic_role": "single autonomous writer of wip rows; classifier.kind, drift_detected, observed_count, observed_projects, last_seen_run, backlog_task fields. permanent rows owned by human reviewer; fixed rows owned by fix-sequencer reconciler.",
-      "touched_by_flows": ["novel-to-classifier", "qa-classified-groups"]
+      "touched_by_flows": ["novel-to-classifier"]
     },
     {
       "id": "core-builtins",
@@ -99,13 +80,6 @@
 
   "sub_agents": [
     {
-      "id": "triage-curator-qa",
-      "model": "sonnet",
-      "max_turns": 50,
-      "multiplicity": "per classified group",
-      "used_in_flows": ["qa-classified-groups"]
-    },
-    {
       "id": "triage-curator-investigator",
       "model": "opus",
       "max_turns": 200,
@@ -120,7 +94,7 @@
       "path_pattern": ".claude/skills/triage-entrypoints/known_issues/registry.json (status=wip)",
       "schema_version": null,
       "consumed_by": ["triage-entrypoints", "fix-sequencer"],
-      "written_by_flows": ["novel-to-classifier", "qa-classified-groups"]
+      "written_by_flows": ["novel-to-classifier"]
     },
     {
       "id": "core-builtin-classifiers",
@@ -142,7 +116,7 @@
     {
       "from_skill": "triage-entrypoints",
       "path_pattern": "analysis_output/<project>/triage_results/<run-id>.json",
-      "read_by_flows": ["novel-to-classifier", "qa-classified-groups"]
+      "read_by_flows": ["novel-to-classifier"]
     }
   ],
 

@@ -9,13 +9,11 @@ import {
   bump_observed_stats,
   derive_languages_for_upsert,
   link_ariadne_bug_tasks,
-  mark_drift_in_registry,
 } from "./apply_proposals.js";
 import type {
   BuiltinClassifierSpec,
   InvestigateResponse,
   KnownIssue,
-  QaResponse,
 } from "./types.js";
 
 let tmp_dir: string;
@@ -95,156 +93,6 @@ function builtin_inv(
     ...overrides,
   };
 }
-
-describe("mark_drift_in_registry", () => {
-  it("tags groups whose outlier rate meets threshold", () => {
-    const reg: KnownIssue[] = [known("a"), known("b"), known("c")];
-    const qa: QaResponse[] = [
-      {
-        group_id: "a",
-        outliers: [
-          { entry_index: 0, reason: "" },
-          { entry_index: 1, reason: "" },
-          { entry_index: 2, reason: "" },
-        ],
-        notes: "",
-      },
-      { group_id: "b", outliers: [{ entry_index: 0, reason: "" }], notes: "" },
-    ];
-    const { updated, drift_tagged_groups } = mark_drift_in_registry(reg, qa, {
-      a: 20, // 3/20 = 15% → drift
-      b: 20, // 1/20 = 5% → no drift
-    });
-    expect(drift_tagged_groups).toEqual(["a"]);
-    expect(updated.find((e) => e.group_id === "a")?.drift_detected).toBe(true);
-    expect(updated.find((e) => e.group_id === "b")?.drift_detected).toBeUndefined();
-    expect(updated.find((e) => e.group_id === "c")?.drift_detected).toBeUndefined();
-  });
-
-  it("is pure (does not mutate input registry)", () => {
-    const reg: KnownIssue[] = [known("a")];
-    mark_drift_in_registry(
-      reg,
-      [
-        {
-          group_id: "a",
-          outliers: [
-            { entry_index: 0, reason: "" },
-            { entry_index: 1, reason: "" },
-            { entry_index: 2, reason: "" },
-          ],
-          notes: "",
-        },
-      ],
-      { a: 20 },
-    );
-    expect(reg[0].drift_detected).toBeUndefined();
-  });
-
-  it("skips groups with zero members", () => {
-    const reg: KnownIssue[] = [known("a")];
-    const { drift_tagged_groups } = mark_drift_in_registry(
-      reg,
-      [{ group_id: "a", outliers: [{ entry_index: 0, reason: "" }], notes: "" }],
-      { a: 0 },
-    );
-    expect(drift_tagged_groups).toEqual([]);
-  });
-
-  it("tags previously-clean entries but does not clear existing drift flags", () => {
-    // Drift-tagging is sticky — a clean follow-up run does not untag.
-    const reg: KnownIssue[] = [known("a", { drift_detected: true })];
-    const qa: QaResponse[] = [{ group_id: "a", outliers: [], notes: "" }];
-    const { updated, drift_tagged_groups } = mark_drift_in_registry(reg, qa, { a: 20 });
-    expect(drift_tagged_groups).toEqual([]);
-    expect(updated[0].drift_detected).toBe(true);
-  });
-
-  it("appends drift_evidence with source qa-sample for every outlier", () => {
-    const reg: KnownIssue[] = [known("a")];
-    const qa: QaResponse[] = [
-      {
-        group_id: "a",
-        outliers: [
-          { entry_index: 5, reason: "outlier reason 5" },
-          { entry_index: 9, reason: "outlier reason 9" },
-          { entry_index: 12, reason: "outlier reason 12" },
-        ],
-        notes: "",
-      },
-    ];
-    const { updated } = mark_drift_in_registry(reg, qa, { a: 20 });
-    expect(updated[0].drift_evidence).toEqual([
-      { entry_index: 5, evidence_excerpt: "outlier reason 5", source: "qa-sample" },
-      { entry_index: 9, evidence_excerpt: "outlier reason 9", source: "qa-sample" },
-      { entry_index: 12, evidence_excerpt: "outlier reason 12", source: "qa-sample" },
-    ]);
-  });
-
-  it("dedupes drift_evidence on (entry_index, source=qa-sample) across re-runs", () => {
-    const reg: KnownIssue[] = [
-      known("a", {
-        drift_detected: true,
-        drift_evidence: [
-          { entry_index: 5, evidence_excerpt: "first time", source: "qa-sample" },
-        ],
-      }),
-    ];
-    const qa: QaResponse[] = [
-      {
-        group_id: "a",
-        outliers: [
-          { entry_index: 5, reason: "second time" },
-          { entry_index: 9, reason: "new outlier" },
-          { entry_index: 12, reason: "third outlier" },
-        ],
-        notes: "",
-      },
-    ];
-    const { updated } = mark_drift_in_registry(reg, qa, { a: 20 });
-    expect(updated[0].drift_evidence).toEqual([
-      { entry_index: 5, evidence_excerpt: "first time", source: "qa-sample" },
-      { entry_index: 9, evidence_excerpt: "new outlier", source: "qa-sample" },
-      { entry_index: 12, evidence_excerpt: "third outlier", source: "qa-sample" },
-    ]);
-  });
-
-  it("does not tag rules with classifier.kind='none' even at high outlier rate", () => {
-    // A `kind: "none"` rule has no classifier to be drifting — drift signal
-    // only makes sense for rules that carry an authored classifier.
-    const reg: KnownIssue[] = [
-      known("a", { classifier: { kind: "none" } }),
-      known("b"), // default classifier.kind: "builtin"
-    ];
-    const qa: QaResponse[] = [
-      {
-        group_id: "a",
-        outliers: [
-          { entry_index: 0, reason: "" },
-          { entry_index: 1, reason: "" },
-          { entry_index: 2, reason: "" },
-        ],
-        notes: "",
-      },
-      {
-        group_id: "b",
-        outliers: [
-          { entry_index: 0, reason: "" },
-          { entry_index: 1, reason: "" },
-          { entry_index: 2, reason: "" },
-        ],
-        notes: "",
-      },
-    ];
-    const { updated, drift_tagged_groups } = mark_drift_in_registry(reg, qa, {
-      a: 20, // 3/20 = 15% → would drift if classifier were authored
-      b: 20, // 3/20 = 15% → drifts (builtin)
-    });
-    expect(drift_tagged_groups).toEqual(["b"]);
-    expect(updated.find((e) => e.group_id === "a")?.drift_detected).toBeUndefined();
-    expect(updated.find((e) => e.group_id === "b")?.drift_detected).toBe(true);
-  });
-});
 
 describe("bump_observed_stats", () => {
   it("increments observed_count, merges observed_projects, sets last_seen_run", () => {
@@ -358,25 +206,23 @@ describe("derive_languages_for_upsert", () => {
 describe("apply_proposals", () => {
   it("dry_run does not mutate the registry", async () => {
     await write_registry([known("a")]);
-    const qa: QaResponse[] = [
-      {
-        group_id: "a",
-        outliers: [
-          { entry_index: 0, reason: "" },
-          { entry_index: 1, reason: "" },
-          { entry_index: 2, reason: "" },
-        ],
-        notes: "",
-      },
-    ];
     const authored_path = path.join(authored_dir, "check_new-group.ts");
     await write_authored_file(authored_path);
-    const result = await apply_proposals(qa, [builtin_inv("new-group")], { a: 20 }, {
+    const result = await apply_proposals([builtin_inv("new-group")], { a: 20 }, {
       dry_run: true,
       registry_path,
       project: "test-project",
       run_id: "test-run",
-      classifier_regressions: [],
+      classifier_regressions: [
+        {
+          rule_id: "a",
+          flagged_entries: [
+            { entry_index: 0, evidence_excerpt: "" },
+            { entry_index: 1, evidence_excerpt: "" },
+            { entry_index: 2, evidence_excerpt: "" },
+          ],
+        },
+      ],
       authored_files_by_group: { "new-group": authored_path },
     });
 
@@ -393,7 +239,7 @@ describe("apply_proposals", () => {
 
   it("records failed_authoring when a builtin group has no authored file", async () => {
     await write_registry([]);
-    const result = await apply_proposals([], [builtin_inv("a")], {}, {
+    const result = await apply_proposals([builtin_inv("a")], {}, {
       dry_run: false,
       registry_path,
       project: "test-project",
@@ -413,7 +259,7 @@ describe("apply_proposals", () => {
   it("records failed_authoring when the authored file is missing on disk", async () => {
     await write_registry([]);
     const missing = path.join(authored_dir, "check_a.ts");
-    const result = await apply_proposals([], [builtin_inv("a")], {}, {
+    const result = await apply_proposals([builtin_inv("a")], {}, {
       dry_run: false,
       registry_path,
       project: "test-project",
@@ -430,7 +276,7 @@ describe("apply_proposals", () => {
     await write_registry([]);
     const authored_path = path.join(authored_dir, "check_a.ts");
     await write_authored_file(authored_path);
-    const result = await apply_proposals([], [builtin_inv("a")], {}, {
+    const result = await apply_proposals([builtin_inv("a")], {}, {
       dry_run: false,
       registry_path,
       project: "test-project",
@@ -455,7 +301,7 @@ describe("apply_proposals", () => {
     await write_registry([]);
     const authored_path = path.join(authored_dir, "check_a.ts");
     await write_authored_file(authored_path);
-    await apply_proposals([], [builtin_inv("a")], {}, {
+    await apply_proposals([builtin_inv("a")], {}, {
       dry_run: false,
       registry_path,
       project: "test-project",
@@ -489,7 +335,7 @@ describe("apply_proposals", () => {
       classifier_spec: minimal_spec("check_dispatch_group"),
       retargets_to: "existing-entry",
     });
-    const result = await apply_proposals([], [inv], { "dispatch-group": 2 }, {
+    const result = await apply_proposals([inv], { "dispatch-group": 2 }, {
       dry_run: false,
       registry_path,
       project: "test-project",
@@ -516,7 +362,7 @@ describe("apply_proposals", () => {
 
   it("does not write registry when nothing changed", async () => {
     await write_registry([known("a")]);
-    const result = await apply_proposals([], [], {}, {
+    const result = await apply_proposals([], {}, {
       dry_run: false,
       registry_path,
       project: "test-project",
@@ -561,7 +407,7 @@ describe("apply_proposals", () => {
         reasoning: "",
       },
     ];
-    const result = await apply_proposals([], inv, {}, {
+    const result = await apply_proposals(inv, {}, {
       dry_run: true,
       registry_path,
       project: "test-project",
@@ -601,7 +447,7 @@ describe("apply_proposals", () => {
     const authored_path = path.join(authored_dir, "check_existing-entry.ts");
     await write_authored_file(authored_path);
 
-    const result = await apply_proposals([], [inv], { "dispatch-group": 2 }, {
+    const result = await apply_proposals([inv], { "dispatch-group": 2 }, {
       dry_run: false,
       registry_path,
       project: "test-project",
@@ -633,7 +479,7 @@ describe("apply_proposals", () => {
       proposed_classifier: { kind: "none" },
       classifier_spec: null,
     });
-    const result = await apply_proposals([], [inv], {}, {
+    const result = await apply_proposals([inv], {}, {
       dry_run: false,
       registry_path,
       project: "test-project",
@@ -667,7 +513,7 @@ describe("apply_proposals", () => {
         ],
       },
     });
-    const result = await apply_proposals([], [inv], { "py-only": 1 }, {
+    const result = await apply_proposals([inv], { "py-only": 1 }, {
       dry_run: false,
       registry_path,
       project: "p",
@@ -690,7 +536,7 @@ describe("apply_proposals", () => {
       proposed_classifier: { kind: "none" },
       classifier_spec: null,
     });
-    const result = await apply_proposals([], [inv], { "member-path-only": 2 }, {
+    const result = await apply_proposals([inv], { "member-path-only": 2 }, {
       dry_run: false,
       registry_path,
       project: "p",
@@ -718,7 +564,7 @@ describe("apply_proposals", () => {
         checks: [{ op: "language_eq", value: "python" }],
       },
     });
-    const result = await apply_proposals([], [inv], { x: 1 }, {
+    const result = await apply_proposals([inv], { x: 1 }, {
       dry_run: false,
       registry_path,
       project: "p",
@@ -742,7 +588,7 @@ describe("apply_proposals", () => {
         checks: [{ op: "callers_count_at_most", n: 0 }],
       },
     });
-    const result = await apply_proposals([], [inv], { "no-lang": 1 }, {
+    const result = await apply_proposals([inv], { "no-lang": 1 }, {
       dry_run: false,
       registry_path,
       project: "p",
@@ -762,7 +608,7 @@ describe("apply_proposals", () => {
       proposed_classifier: { kind: "none" },
       classifier_spec: null,
     });
-    const result = await apply_proposals([], [inv], {}, {
+    const result = await apply_proposals([inv], {}, {
       dry_run: false,
       registry_path,
       project: "test-project",
@@ -782,7 +628,6 @@ describe("apply_proposals — classifier_regressions integration", () => {
   it("tags drift_detected + writes in-flight drift_evidence end-to-end", async () => {
     await write_registry([known("decorator-route")]);
     const result = await apply_proposals(
-      [],
       [],
       {},
       {
@@ -807,61 +652,14 @@ describe("apply_proposals — classifier_regressions integration", () => {
     const on_disk = await read_registry_json();
     expect(on_disk[0].drift_detected).toBe(true);
     expect(on_disk[0].drift_evidence).toEqual([
-      { entry_index: 3, evidence_excerpt: "@route('/x')", source: "in-flight" },
-      { entry_index: 7, evidence_excerpt: "@route('/y')", source: "in-flight" },
-    ]);
-  });
-
-  it("coexists with qa-sample drift on the same group: both signals land in drift_evidence", async () => {
-    await write_registry([known("decorator-route")]);
-    const qa: QaResponse[] = [
-      {
-        group_id: "decorator-route",
-        outliers: [
-          { entry_index: 100, reason: "qa outlier a" },
-          { entry_index: 101, reason: "qa outlier b" },
-          { entry_index: 102, reason: "qa outlier c" },
-          { entry_index: 103, reason: "qa outlier d" },
-        ],
-        notes: "",
-      },
-    ];
-    const result = await apply_proposals(
-      qa,
-      [],
-      { "decorator-route": 20 },
-      {
-        dry_run: false,
-        registry_path,
-        project: "test-project",
-        run_id: "test-run",
-        classifier_regressions: [
-          {
-            rule_id: "decorator-route",
-            flagged_entries: [
-              { entry_index: 3, evidence_excerpt: "@route('/x')" },
-            ],
-          },
-        ],
-        authored_files_by_group: {},
-      },
-    );
-    // Drift tagged exactly once (deduped across both signals).
-    expect(result.drift_tagged_groups).toEqual(["decorator-route"]);
-    const on_disk = await read_registry_json();
-    expect(on_disk[0].drift_evidence).toEqual([
-      { entry_index: 3, evidence_excerpt: "@route('/x')", source: "in-flight" },
-      { entry_index: 100, evidence_excerpt: "qa outlier a", source: "qa-sample" },
-      { entry_index: 101, evidence_excerpt: "qa outlier b", source: "qa-sample" },
-      { entry_index: 102, evidence_excerpt: "qa outlier c", source: "qa-sample" },
-      { entry_index: 103, evidence_excerpt: "qa outlier d", source: "qa-sample" },
+      { entry_index: 3, evidence_excerpt: "@route('/x')" },
+      { entry_index: 7, evidence_excerpt: "@route('/y')" },
     ]);
   });
 
   it("merges in-flight regressions against permanent rules into skipped_permanent_upserts", async () => {
     await write_registry([known("perm-rule", { status: "permanent" })]);
     const result = await apply_proposals(
-      [],
       [],
       {},
       {
@@ -890,7 +688,6 @@ describe("apply_proposals — classifier_regressions integration", () => {
     await write_registry([known("fixed-rule", { status: "fixed" })]);
     const result = await apply_proposals(
       [],
-      [],
       {},
       {
         dry_run: false,
@@ -918,7 +715,6 @@ describe("apply_proposals — classifier_regressions integration", () => {
   it("is a no-op when classifier_regressions is empty (no spurious registry write)", async () => {
     await write_registry([known("a")]);
     const result = await apply_proposals(
-      [],
       [],
       {},
       {

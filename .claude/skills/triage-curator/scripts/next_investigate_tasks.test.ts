@@ -1,75 +1,44 @@
 import { describe, expect, it } from "vitest";
 
-import type { KnownIssue } from "../src/types.js";
-import { sort_by_drift_priority, type DispatchEntry } from "./next_investigate_tasks.js";
+import type { DispatchEntry } from "./next_investigate_tasks.js";
 
-function known(group_id: string, overrides: Partial<KnownIssue> = {}): KnownIssue {
+function dispatch(novel_issue_id: string, output_suffix = ""): DispatchEntry {
   return {
-    group_id,
-    title: group_id,
-    description: "",
-    status: "wip",
-    languages: ["typescript"],
-    examples: [],
-    classifier: { kind: "builtin", function_name: group_id, min_confidence: 0.9 },
-    ...overrides,
+    run_path: `/runs/${novel_issue_id}.json`,
+    novel_issue_id,
+    output_path: `/out/${novel_issue_id}${output_suffix}.json`,
+    get_context_cmd: `cmd ${novel_issue_id}`,
   };
 }
 
-function dispatch(group_id: string): DispatchEntry {
-  return {
-    run_path: `/runs/${group_id}.json`,
-    group_id,
-    output_path: `/out/${group_id}.json`,
-    get_context_cmd: `cmd ${group_id}`,
-  };
-}
+describe("DispatchEntry", () => {
+  it("carries the four canonical dispatch fields", () => {
+    const entry = dispatch("a");
+    expect(entry).toEqual({
+      run_path: "/runs/a.json",
+      novel_issue_id: "a",
+      output_path: "/out/a.json",
+      get_context_cmd: "cmd a",
+    });
+  });
+});
 
-describe("sort_by_drift_priority", () => {
-  it("floats drift-flagged wip rules ahead of non-drifting siblings", () => {
-    const registry = new Map<string, KnownIssue>([
-      ["a", known("a")],
-      ["b", known("b", { drift_detected: true })],
-      ["c", known("c")],
-    ]);
-    const sorted = sort_by_drift_priority([dispatch("a"), dispatch("b"), dispatch("c")], registry);
-    expect(sorted.map((e) => e.group_id)).toEqual(["b", "a", "c"]);
+describe("dedupe by output_path (puller invariant)", () => {
+  it("treats identical output_paths as the same dispatch", () => {
+    const a = dispatch("a");
+    const a_dup = dispatch("a");
+    const map = new Map<string, DispatchEntry>();
+    map.set(a.output_path, a);
+    map.set(a_dup.output_path, a_dup);
+    expect(map.size).toBe(1);
   });
 
-  it("is stable — preserves original order within the same priority bucket", () => {
-    const registry = new Map<string, KnownIssue>([
-      ["a", known("a")],
-      ["b", known("b")],
-      ["c", known("c")],
-    ]);
-    const sorted = sort_by_drift_priority([dispatch("a"), dispatch("b"), dispatch("c")], registry);
-    expect(sorted.map((e) => e.group_id)).toEqual(["a", "b", "c"]);
-  });
-
-  it("treats drift_detected on a permanent rule as low-priority (not a wip)", () => {
-    // Only `wip` rules get the drift priority bump. A permanent rule with
-    // drift_detected is an anomaly handled separately (manual quarantine).
-    const registry = new Map<string, KnownIssue>([
-      ["a", known("a")],
-      ["b", known("b", { drift_detected: true, status: "permanent" })],
-    ]);
-    const sorted = sort_by_drift_priority([dispatch("a"), dispatch("b")], registry);
-    expect(sorted.map((e) => e.group_id)).toEqual(["a", "b"]);
-  });
-
-  it("treats missing registry entries as low-priority (residual novel groups)", () => {
-    const registry = new Map<string, KnownIssue>([["a", known("a", { drift_detected: true })]]);
-    const sorted = sort_by_drift_priority([dispatch("novel"), dispatch("a")], registry);
-    expect(sorted.map((e) => e.group_id)).toEqual(["a", "novel"]);
-  });
-
-  it("orders multiple drift-flagged wip rules among themselves by insertion order", () => {
-    const registry = new Map<string, KnownIssue>([
-      ["a", known("a", { drift_detected: true })],
-      ["b", known("b", { drift_detected: true })],
-      ["c", known("c")],
-    ]);
-    const sorted = sort_by_drift_priority([dispatch("c"), dispatch("b"), dispatch("a")], registry);
-    expect(sorted.map((e) => e.group_id)).toEqual(["b", "a", "c"]);
+  it("preserves entries with distinct output_paths", () => {
+    const a = dispatch("a");
+    const b = dispatch("b");
+    const map = new Map<string, DispatchEntry>();
+    map.set(a.output_path, a);
+    map.set(b.output_path, b);
+    expect(map.size).toBe(2);
   });
 });
