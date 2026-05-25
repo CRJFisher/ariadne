@@ -14,6 +14,8 @@ labels:
   - refactor
 dependencies:
   - TASK-190.19
+  - TASK-190.20.1
+  - TASK-190.20.2
 parent_task_id: TASK-190
 priority: medium
 ordinal: 21000
@@ -101,24 +103,31 @@ triage-curator/src/
     promotion_candidates.ts
     propose_backlog_tasks.ts
     validate_investigate_responses.ts
+    render_ariadne_bug_body.ts   ← folded in: only consumer is propose-stage apply_proposals
+    impact_report.ts             ← folded in: standalone reporter, same authoring stage
   apply/
     apply_proposals.ts
     orphan_cleanup.ts
-  render/
-    render_classifier.ts
-    render_ariadne_bug_body.ts
-    impact_report.ts
   store/
     paths.ts
     scan_runs.ts
     curation_outcome.ts
     session_log.ts
     parse_triage_results.ts
-  (top level: types.ts, source_excerpt.ts — cross-stage.)
+  (top level: types.ts — cross-stage.)
 ```
 
 Drop the `curator_` prefix from `curator_drift_absorb.ts` — the folder
 already names the actor.
+
+Note on `render/`: after **190.20.1** deletes `source_excerpt.ts` (QA-only)
+and **190.20.2** collapses `render_classifier.ts` into the investigator
+loop or finalize, the proposed `render/` folder collapses to 1–2 files
+(`render_ariadne_bug_body.ts`, `impact_report.ts`). A one-or-two-file
+folder fails the IA test of "folder names a stage". Both surviving
+modules belong to the propose stage — they author content the curator
+will commit (bug-report bodies, impact summaries) — so they fold into
+`propose/` and the `render/` folder is dropped.
 
 ### Shared workspace package: `@ariadnejs/skill-fs`
 
@@ -213,8 +222,11 @@ in any order once A is in):
 Phase C — triage-curator reorganisation:
 
 - **190.21.6** — Move files into `absorb/`, `propose/`, `apply/`,
-  `render/`, `store/`; rename `curator_drift_absorb.ts` →
-  `drift_absorb.ts`.
+  `store/`; rename `curator_drift_absorb.ts` → `drift_absorb.ts`.
+  Folds `render_ariadne_bug_body.ts` + `impact_report.ts` into
+  `propose/` (no separate `render/` folder). Depends on 190.20.1
+  (deletes `source_excerpt.ts`) and 190.20.2 (collapses
+  `render_classifier.ts`) landing first.
 
 Phase D — test relocation:
 
@@ -247,7 +259,7 @@ Phase D — test relocation:
 
 - [ ] #1 `@ariadnejs/skill-fs` package exists at `packages/skill-fs/`; both skills import `atomic_write_file`, `require_node_import_tsx`, and `error_code` from it; no duplicate copies remain under either `src/`
 - [ ] #2 `triage-entrypoints/src/` has top-level folders `dispense/`, `verdict/`, `absorb/`, `finalize/`, `store/`, `cross_run/`; the `coordinator/` folder no longer exists
-- [ ] #3 `triage-curator/src/` has top-level folders `absorb/`, `propose/`, `apply/`, `render/`, `store/`
+- [ ] #3 `triage-curator/src/` has top-level folders `absorb/`, `propose/`, `apply/`, `store/` (no `render/`; `render_ariadne_bug_body.ts` + `impact_report.ts` live in `propose/`)
 - [ ] #4 `build_finalization_output.ts` is split into `finalize/output.ts` + `finalize/verdict_ledger.ts`; `merge_results.ts` and `finalize/output.ts` both consume the shared loader (no duplicate `results/` walk)
 - [ ] #5 `paths.ts` and `triage_state_paths.ts` are merged into `store/paths.ts`; LATEST-pointer I/O lives in `store/latest_pointer.ts`
 - [ ] #6 `curator_drift_absorb.ts` is renamed to `drift_absorb.ts` (folder names the actor); no `curator_*` prefix survives under `triage-curator/src/`

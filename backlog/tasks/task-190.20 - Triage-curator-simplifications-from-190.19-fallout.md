@@ -77,9 +77,9 @@ and .6 are correctness fixes; .7 is the shared-package extraction;
   MCP-created task ids before linkage
 - **TASK-190.20.6** — Type exhaustiveness sweep (`Set`-based runtime
   lookups → `satisfies Record<Union, …>` patterns)
-- **TASK-190.20.7** — Hoist `atomic_write` + tsx-invocation guard +
-  `errors.ts` to a shared workspace package; drop the cross-skill deep
-  import in `finalize_run.ts`
+- **TASK-190.20.7** — _Superseded by TASK-190.21.1_ (shared
+  `@ariadnejs/skill-fs` package covers the atomic_write +
+  tsx-invocation guard + `errors.ts` hoist).
 - **TASK-190.20.8** — Add `finalize_run.ts` test coverage + residual doc
   / cast / naming sweep
 
@@ -87,8 +87,9 @@ and .6 are correctness fixes; .7 is the shared-package extraction;
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 All eight sub-tasks land or have been explicitly de-scoped with a
-      written rationale
+- [ ] #1 All seven remaining sub-tasks (190.20.1–6, 190.20.8) land or
+      have been explicitly de-scoped with a written rationale
+      (190.20.7 was superseded by 190.21.1)
 - [ ] #2 `pnpm test` is green inside `.claude/skills/triage-curator/` and
       `.claude/skills/triage-entrypoints/`
 - [ ] #3 No file under `.claude/skills/triage-curator/` references
