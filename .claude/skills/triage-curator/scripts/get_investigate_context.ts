@@ -17,11 +17,13 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { error_code } from "@ariadnejs/skill-fs";
-import { parse_known_issues_registry_json } from "@ariadnejs/types";
+import {
+  ARIADNE_ROOT_CAUSE_CATEGORIES,
+  parse_known_issues_registry_json,
+} from "@ariadnejs/types";
 import { read_v4_triage_results } from "../src/store/parse_triage_results.js";
 import { get_registry_file_path } from "../src/store/paths.js";
 import {
-  ARIADNE_ROOT_CAUSE_CATEGORIES,
   SIGNAL_CHECK_OPS,
   type NovelIssue,
   type TriageResultsFile,

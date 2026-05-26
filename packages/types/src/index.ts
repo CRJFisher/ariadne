@@ -39,3 +39,6 @@ export * from "./entry_point";
 export * from "./classified_entry_point";
 export * from "./false_positive_results";
 export * from "./known_issues";
+export * from "./ariadne_root_cause";
+export * from "./impact_report";
+export * from "./backlog_task";

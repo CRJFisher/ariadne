@@ -22,9 +22,10 @@
  */
 
 import { validate_spec_example_indexes } from "../apply/apply_proposals.js";
+import type { AriadneRootCauseCategory } from "@ariadnejs/types";
+import { ARIADNE_ROOT_CAUSE_CATEGORIES, is_ariadne_root_cause_category } from "@ariadnejs/types";
 import type {
   AriadneBug,
-  AriadneRootCauseCategory,
   BuiltinClassifierSpec,
   ClassifierSpecProposal,
   SignalLibraryGap,
@@ -36,9 +37,7 @@ import type {
   SignalCheck,
 } from "../types.js";
 import {
-  ARIADNE_ROOT_CAUSE_CATEGORIES,
   SIGNAL_CHECK_OPS,
-  is_ariadne_root_cause_category,
   is_known_issue_language,
   is_signal_check_op,
 } from "../types.js";

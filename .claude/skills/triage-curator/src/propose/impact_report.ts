@@ -13,7 +13,7 @@
  * new-since-last-report delta).
  */
 
-import type { KnownIssue } from "../types.js";
+import type { ImpactRow, KnownIssue } from "@ariadnejs/types";
 
 export interface ImpactReportInput {
   registry: KnownIssue[];
@@ -21,21 +21,6 @@ export interface ImpactReportInput {
   top_n: number;
   /** ISO timestamp embedded in the report header. */
   generated_at: string;
-}
-
-/**
- * Row rendered in the top-N table. Holds the raw numeric fields so the markdown
- * renderer and any JSON consumer share one shape.
- */
-export interface ImpactRow {
-  group_id: string;
-  title: string;
-  status: string;
-  observed_count: number;
-  observed_projects: string[];
-  languages: string[];
-  backlog_task: string | null;
-  delta_since_prior: number;
 }
 
 export function build_impact_rows(registry: KnownIssue[], prior_counts: Record<string, number>): ImpactRow[] {
