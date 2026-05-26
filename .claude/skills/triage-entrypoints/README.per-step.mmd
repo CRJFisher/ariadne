@@ -1,0 +1,83 @@
+flowchart TD
+  classDef ext        fill:#e3f2fd,stroke:#1565c0,stroke-width:1.5px,color:#0d47a1
+  classDef store      fill:#ede7f6,stroke:#4527a0,stroke-width:1.5px,color:#311b92
+  classDef artifact   fill:#e8f5e9,stroke:#2e7d32,stroke-width:1.2px,color:#1b5e20
+  classDef step       fill:#fff8e1,stroke:#b58900,stroke-width:1.5px,color:#5d4037
+  classDef agent      fill:#ffe5ec,stroke:#c2185b,stroke-width:1.5px,color:#5a0922
+  classDef inter      fill:#f5f5f5,stroke:#616161,stroke-width:1px,color:#212121,stroke-dasharray:3 3
+  classDef published  fill:#a8e6a3,stroke:#0e5510,stroke-width:3px,color:#062c08
+  classDef downstream fill:#e5e7eb,stroke:#374151,stroke-width:1px,color:#111827
+
+  CORE[/"@ariadnejs/core API<br/>load_project · trace_call_graph<br/>extract_entry_point_diagnostics<br/>enrich_call_graph"/]:::ext
+
+  REG[("known_issues/registry.json<br/><i>read-only here</i><br/>permanent + wip rules")]:::store
+  PRIOR[("prior triage_results/<br/>&lt;run-id&gt;.json<br/><i>TP cache source</i>")]:::store
+
+  subgraph P1["Phase 1 · Detect"]
+    direction TB
+    S1("detect_entrypoints.ts"):::step
+    A1[/"analysis_output/&lt;p&gt;/<br/>detect_entrypoints/&lt;ts&gt;.json"/]:::artifact
+  end
+
+  subgraph P2["Phase 2 · Prepare"]
+    direction TB
+    S2("prepare_triage.ts<br/>enrich_call_graph · lifecycle filter<br/>derive TP cache · top-N by tree_size"):::step
+    I_AUTO(["auto-classified<br/>(predicate/builtin hit)"]):::inter
+    I_TP(["TP-cache reuse<br/>(same commit)"]):::inter
+    I_RES(["residual<br/>(llm-triage)"]):::inter
+    A2[/"runs/&lt;run-id&gt;/<br/>manifest.json · triage.json · LATEST"/]:::artifact
+  end
+
+  subgraph P3["Phase 3 · Triage Loop (worker pool, N=5)"]
+    direction TB
+    S3("get_next_triage_entry.ts<br/>dispense/absorb cycle"):::step
+    AG3[["triage-investigator<br/>sonnet · parallel"]]:::agent
+    A3[/"results/&#123;idx&#125;.json<br/>TriageVerdict"/]:::artifact
+    BR{novel verdict?}:::branch
+    AG_CO[["triage-coordinator<br/>sonnet · per novel absorb"]]:::agent
+    NI[/"novel_issues.json<br/><i>dispatcher: single writer · atomic</i>"/]:::artifact
+    CR[/"classifier_regressions.jsonl<br/><i>dispatcher: append-only</i>"/]:::artifact
+  end
+
+  subgraph P4["Phase 4 · Finalize"]
+    direction TB
+    S5("finalize_triage.ts<br/>finalize/output · seal manifest"):::step
+    PUB[/"analysis_output/&lt;p&gt;/<br/>triage_results/&lt;run-id&gt;.json<br/>schema v4"/]:::published
+  end
+
+  CUR[["triage-curator<br/>(promotion + drift)"]]:::downstream
+  FX[["fix-sequencer reconciler<br/>(via prepare_triage)"]]:::downstream
+  DIF[["diff_runs.ts<br/>(regression audit)"]]:::downstream
+
+  CORE --> S1
+  S1 --> A1 --> S2
+  REG -. "read · lifecycle filter" .-> S2
+  PRIOR -. "read · TP cache" .-> S2
+
+  S2 --> I_AUTO
+  S2 --> I_TP
+  S2 --> I_RES
+  I_AUTO --> A2
+  I_TP --> A2
+  I_RES --> A2
+
+  A2 --> S3
+  S3 --> AG3 --> A3
+  A3 --> S3
+  S3 --> BR
+  BR -- "fp-novel-*" --> AG_CO --> NI
+  BR -- "fp-classifier-regression" --> CR
+  BR -- "tp · uncertain" --> S3
+  NI -. "next dispense" .-> S3
+  S3 -- "all pending drained" --> S5
+  NI --> S5
+  CR --> S5
+  S5 --> PUB
+
+  PUB --> CUR
+  PUB --> FX
+  PUB --> DIF
+
+  PUB -. "next run · TP cache" .-> PRIOR
+
+  linkStyle default stroke:#cbd5e1,stroke-width:1.5px

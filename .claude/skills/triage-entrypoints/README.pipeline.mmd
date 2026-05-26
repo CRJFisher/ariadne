@@ -1,0 +1,24 @@
+flowchart LR
+  classDef step      fill:#fff8e1,stroke:#b58900,stroke-width:1.8px,color:#5d4037
+  classDef artifact  fill:#e8f5e9,stroke:#2e7d32,stroke-width:1.5px,color:#1b5e20
+  classDef store     fill:#ede7f6,stroke:#4527a0,stroke-width:1.8px,color:#311b92
+
+  SRP(["triage-entrypoints · <i>sense</i><br/>find unreachable funcs"]):::step
+  TR[/"triage_results<br/>(per-run handoff)"/]:::artifact
+  CUR(["triage-curator · <i>classify</i><br/>author classifier rule<br/>file backlog task"]):::step
+  FS(["fix-sequencer · <i>actuate</i><br/>cluster · sign off · ship fix"]):::step
+
+  REG[("registry.json<br/><b>what we learned</b>")]:::store
+  REPO[("target repo<br/><b>what we changed</b>")]:::store
+
+  SRP --> TR --> CUR --> FS
+
+  CUR -- "writes wip rows" --> REG
+  FS  -- "fix(task_id): commits" --> REPO
+
+  REG  -. "next run: filter known issues" .-> SRP
+  REPO -. "next run: scan commits → flip wip → fixed" .-> REG
+
+  linkStyle default stroke:#cbd5e1,stroke-width:1.6px
+  linkStyle 5 stroke:#ef5350,stroke-width:2.4px,stroke-dasharray:6 4
+  linkStyle 6 stroke:#ef5350,stroke-width:2.4px,stroke-dasharray:6 4

@@ -10,32 +10,8 @@ Orthogonally, the `detect_dead_code` Stop hook (`.claude/hooks/detect_dead_code.
 
 This skill is the first link in a three-skill chain: triage-entrypoints (sense) → triage-curator (classify) → fix-sequencer (actuate). It is _self-healing_ because two durable surfaces survive between runs — `registry.json` (what we learned) and the target repo (what we changed) — and both are read on the _next_ triage-entrypoints run. The two red dotted edges below are the loop closure.
 
-```mermaid
-flowchart LR
-  classDef step      fill:#fff8e1,stroke:#b58900,stroke-width:1.8px,color:#5d4037
-  classDef artifact  fill:#e8f5e9,stroke:#2e7d32,stroke-width:1.5px,color:#1b5e20
-  classDef store     fill:#ede7f6,stroke:#4527a0,stroke-width:1.8px,color:#311b92
-
-  SRP(["triage-entrypoints · <i>sense</i><br/>find unreachable funcs"]):::step
-  TR[/"triage_results<br/>(per-run handoff)"/]:::artifact
-  CUR(["triage-curator · <i>classify</i><br/>author classifier rule<br/>file backlog task"]):::step
-  FS(["fix-sequencer · <i>actuate</i><br/>cluster · sign off · ship fix"]):::step
-
-  REG[("registry.json<br/><b>what we learned</b>")]:::store
-  REPO[("target repo<br/><b>what we changed</b>")]:::store
-
-  SRP --> TR --> CUR --> FS
-
-  CUR -- "writes wip rows" --> REG
-  FS  -- "fix(task_id): commits" --> REPO
-
-  REG  -. "next run: filter known issues" .-> SRP
-  REPO -. "next run: scan commits → flip wip → fixed" .-> REG
-
-  linkStyle default stroke:#cbd5e1,stroke-width:1.6px
-  linkStyle 5 stroke:#ef5350,stroke-width:2.4px,stroke-dasharray:6 4
-  linkStyle 6 stroke:#ef5350,stroke-width:2.4px,stroke-dasharray:6 4
-```
+<!-- Source: ./README.pipeline.mmd — edit there, run `pnpm render-mermaid-diagrams` -->
+![Self-healing pipeline (sense → classify → actuate)](./README.pipeline.svg)
 
 **Reading the diagram**: three skills feed forward (sense → classify → actuate); two durable surfaces (registry + target repo) survive between runs and feed the next iteration; the two red dotted edges are the loop closure — both fire on the _next_ triage-entrypoints invocation, not synchronously. See per-step diagrams below and sibling READMEs for the registry lifecycle states + writers, the worker / reconciler / git-log scanner nodes, sub-agent fleets, the per-cluster sign-off branch, and all other persistent stores.
 
@@ -43,91 +19,8 @@ flowchart LR
 
 This skill's internal flow is a top-down 5-phase pipeline. Read-only stores sit on a left rail and only feed the phases that touch them; the published `triage_results/<run-id>.json` fans out to three downstream consumers and (on the _next_ same-commit run) becomes the TP-cache source.
 
-```mermaid
-flowchart TD
-  classDef ext        fill:#e3f2fd,stroke:#1565c0,stroke-width:1.5px,color:#0d47a1
-  classDef store      fill:#ede7f6,stroke:#4527a0,stroke-width:1.5px,color:#311b92
-  classDef artifact   fill:#e8f5e9,stroke:#2e7d32,stroke-width:1.2px,color:#1b5e20
-  classDef step       fill:#fff8e1,stroke:#b58900,stroke-width:1.5px,color:#5d4037
-  classDef agent      fill:#ffe5ec,stroke:#c2185b,stroke-width:1.5px,color:#5a0922
-  classDef inter      fill:#f5f5f5,stroke:#616161,stroke-width:1px,color:#212121,stroke-dasharray:3 3
-  classDef published  fill:#a8e6a3,stroke:#0e5510,stroke-width:3px,color:#062c08
-  classDef downstream fill:#e5e7eb,stroke:#374151,stroke-width:1px,color:#111827
-
-  CORE[/"@ariadnejs/core API<br/>load_project · trace_call_graph<br/>extract_entry_point_diagnostics<br/>enrich_call_graph"/]:::ext
-
-  REG[("known_issues/registry.json<br/><i>read-only here</i><br/>permanent + wip rules")]:::store
-  PRIOR[("prior triage_results/<br/>&lt;run-id&gt;.json<br/><i>TP cache source</i>")]:::store
-
-  subgraph P1["Phase 1 · Detect"]
-    direction TB
-    S1("detect_entrypoints.ts"):::step
-    A1[/"analysis_output/&lt;p&gt;/<br/>detect_entrypoints/&lt;ts&gt;.json"/]:::artifact
-  end
-
-  subgraph P2["Phase 2 · Prepare"]
-    direction TB
-    S2("prepare_triage.ts<br/>enrich_call_graph · lifecycle filter<br/>derive TP cache · top-N by tree_size"):::step
-    I_AUTO(["auto-classified<br/>(predicate/builtin hit)"]):::inter
-    I_TP(["TP-cache reuse<br/>(same commit)"]):::inter
-    I_RES(["residual<br/>(llm-triage)"]):::inter
-    A2[/"runs/&lt;run-id&gt;/<br/>manifest.json · triage.json · LATEST"/]:::artifact
-  end
-
-  subgraph P3["Phase 3 · Triage Loop (worker pool, N=5)"]
-    direction TB
-    S3("get_next_triage_entry.ts<br/>dispense/absorb cycle"):::step
-    AG3[["triage-investigator<br/>sonnet · parallel"]]:::agent
-    A3[/"results/&#123;idx&#125;.json<br/>TriageVerdict"/]:::artifact
-    BR{novel verdict?}:::branch
-    AG_CO[["triage-coordinator<br/>sonnet · per novel absorb"]]:::agent
-    NI[/"novel_issues.json<br/><i>dispatcher: single writer · atomic</i>"/]:::artifact
-    CR[/"classifier_regressions.jsonl<br/><i>dispatcher: append-only</i>"/]:::artifact
-  end
-
-  subgraph P4["Phase 4 · Finalize"]
-    direction TB
-    S5("finalize_triage.ts<br/>finalize/output · seal manifest"):::step
-    PUB[/"analysis_output/&lt;p&gt;/<br/>triage_results/&lt;run-id&gt;.json<br/>schema v4"/]:::published
-  end
-
-  CUR[["triage-curator<br/>(promotion + drift)"]]:::downstream
-  FX[["fix-sequencer reconciler<br/>(via prepare_triage)"]]:::downstream
-  DIF[["diff_runs.ts<br/>(regression audit)"]]:::downstream
-
-  CORE --> S1
-  S1 --> A1 --> S2
-  REG -. "read · lifecycle filter" .-> S2
-  PRIOR -. "read · TP cache" .-> S2
-
-  S2 --> I_AUTO
-  S2 --> I_TP
-  S2 --> I_RES
-  I_AUTO --> A2
-  I_TP --> A2
-  I_RES --> A2
-
-  A2 --> S3
-  S3 --> AG3 --> A3
-  A3 --> S3
-  S3 --> BR
-  BR -- "fp-novel-*" --> AG_CO --> NI
-  BR -- "fp-classifier-regression" --> CR
-  BR -- "tp · uncertain" --> S3
-  NI -. "next dispense" .-> S3
-  S3 -- "all pending drained" --> S5
-  NI --> S5
-  CR --> S5
-  S5 --> PUB
-
-  PUB --> CUR
-  PUB --> FX
-  PUB --> DIF
-
-  PUB -. "next run · TP cache" .-> PRIOR
-
-  linkStyle default stroke:#cbd5e1,stroke-width:1.5px
-```
+<!-- Source: ./README.per-step.mmd — edit there, run `pnpm render-mermaid-diagrams` -->
+![Triage-entrypoints 5-phase pipeline](./README.per-step.svg)
 
 **What to look for**: four phase bands stacked top-to-bottom (strict reading order); two read-only stores (registry, prior triage_results) sit outside the phase bands — this skill **never** writes the registry (lifecycle contract); three Phase-2 buckets (auto / TP / residual) determine whether an entry skips the triage loop entirely. The dispatcher is the **single writer** of both `novel_issues.json` (atomic, via the coordinator path on novel verdicts) and `classifier_regressions.jsonl` (append-only, directly on `fp-classifier-regression`). The coordinator sub-agent only fires on novel verdicts; `tp` and `uncertain` are absorbed in-memory and surfaced at finalize. Each run's published `triage_results` becomes the next same-commit run's TP cache.
 

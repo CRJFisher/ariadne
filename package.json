@@ -23,7 +23,9 @@
     "prepublishOnly": "pnpm build",
     "check:size": "pnpm exec tsx scripts/check-file-sizes.ts",
     "check:size:warn": "pnpm exec tsx scripts/check-file-sizes.ts || true",
-    "validate:captures": "pnpm exec tsx scripts/validate_captures.ts"
+    "validate:captures": "pnpm exec tsx scripts/validate_captures.ts",
+    "render-mermaid-diagrams": "node --import tsx scripts/render-mermaid-diagrams.ts",
+    "check-mermaid-diagrams": "node --import tsx scripts/check-mermaid-diagrams.ts"
   },
   "devDependencies": {
     "@ariadnejs/core": "workspace:*",

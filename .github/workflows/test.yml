@@ -43,6 +43,13 @@ jobs:
         # diff. Catches drift between the registry and the bundled core slice.
         run: pnpm run check-permanent-rules
 
+      - name: Check mermaid diagrams are in sync with sources
+        # Pure-Node SHA256 verification. No Chrome required at check time. Fails
+        # when any `.mmd` source is edited without regenerating its sibling
+        # `.svg` via `pnpm render-mermaid-diagrams`. See
+        # `backlog/tasks/task-345 - ...md` for the workflow.
+        run: pnpm run check-mermaid-diagrams
+
       - name: Run tests
         run: pnpm test
 
