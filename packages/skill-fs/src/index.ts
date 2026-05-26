@@ -11,5 +11,5 @@ export {
   type ClassifierRegressionFlag,
   type ClassifierRegressionFlaggedEntry,
   type ClassifierRegressionRecord,
-  type MemberEvidence,
+  type VerdictMemberEvidence,
 } from "./classifier_regressions.js";

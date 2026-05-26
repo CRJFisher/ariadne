@@ -12,7 +12,8 @@ labels:
   - fix-sequencer
   - self-repair-pipeline-extension
   - loop-closure
-dependencies: []
+dependencies:
+  - TASK-190.18.6
 parent_task_id: TASK-190.18
 priority: high
 ordinal: 3000
@@ -38,8 +39,9 @@ The registry is the loop-closure surface. Schema fields and the reconciler that 
 
 ## Scope — reconciler
 
-- New file: `.claude/skills/fix-sequencer/scripts/reconcile_registry_with_completed_nodes.ts`
-- The reconciler lives under the **fix-sequencer skill**, not triage-entrypoints. The classifier-lifecycle contract (`.claude/rules/classifier-lifecycle.md:14`) forbids any code under `triage-entrypoints/` from writing `registry.json`; the three-store model also forbids triage-entrypoints from knowing `~/.ariadne/fix-sequencer/` paths. Until the fix-sequencer skill exists, this task lands the scripts/ directory and the reconciler together.
+- New file (the only file this task lands under fix-sequencer): `.claude/skills/fix-sequencer/scripts/reconcile_registry_with_completed_nodes.ts`. The skill scaffold — `SKILL.md`, `package.json`, `tsconfig.json`, `src/`, `templates/`, `paths.ts`, and the rest of `scripts/` — is owned by TASK-190.18.6 and lands first (see `dependencies`).
+- The reconciler lives under the **fix-sequencer skill**, not triage-entrypoints. The classifier-lifecycle contract (`.claude/rules/classifier-lifecycle.md`) forbids any code under `triage-entrypoints/` from writing `registry.json`; the three-store model also forbids triage-entrypoints from knowing `~/.ariadne/fix-sequencer/` paths.
+- Writes the registry via `atomic_update_registry(path, mutator)` from `@ariadnejs/skill-fs` — the same locked read-mutate-write helper the curator uses. Add `.claude/skills/fix-sequencer/scripts/reconcile_registry_with_completed_nodes.ts` to `ALLOWED_REGISTRY_WRITERS` in `packages/skill-fs/src/registry_writers.test.ts` (already pre-registered; verify it remains present).
 - Reads `~/.ariadne/fix-sequencer/graph.json`
 - Folds `~/.ariadne/fix-sequencer/state.jsonl` to find nodes whose latest event is `done`
 - For each such node:
@@ -47,8 +49,9 @@ The registry is the loop-closure surface. Schema fields and the reconciler that 
   - For each task_id, call `find_groups_by_backlog_task(task_id)` to resolve matching registry entries
   - For each resolved entry whose `status !== 'fixed'`: flip `status: wip → fixed`, stamp `fixed_commit` (from the `done` event's `merge_commit`) and `fixed_in_run` (current pipeline run-id)
   - For each resolved entry already `fixed`: skip silently (idempotent, no double-stamping)
-- Invoked as a pre-step by `.claude/skills/triage-entrypoints/scripts/prepare_triage.ts` so it runs BEFORE classifiers are bucketed. Cross-skill invocation is a **CLI shell-out** (`node --import tsx .claude/skills/fix-sequencer/scripts/reconcile_registry_with_completed_nodes.ts`), not a TypeScript import; both scripts already run as separate Node processes. Triage-entrypoints must never `import` from fix-sequencer.
-- Reuses `expand_task_scope` from `scripts/check-commit-message.ts:38` rather than re-implementing range expansion; the commit-msg hook already owns that semantics.
+- The reconciler must short-circuit before calling `atomic_update_registry` when the fold produces zero flips, so identical inputs leave `registry.json` mtime-stable (AC #5).
+- Invoked as a pre-step by `.claude/skills/triage-entrypoints/scripts/prepare_triage.ts` via **CLI shell-out** (`childProcess.execFileSync("node", ["--import", "tsx", RECONCILER_PATH, "--project", project, "--run-id", run_id])`), not a TypeScript import. Precedent: `prepare_triage.ts` already uses `execFileSync` for `git rev-parse`, and `detect_entrypoints.ts` uses `execSync` extensively. Triage-entrypoints must never `import` from fix-sequencer; exit code and stderr are surfaced as the reconciler's failure signal.
+- Reuses `expand_task_scope` from `scripts/check-commit-message.ts:38` rather than re-implementing range expansion; the commit-msg hook already owns that semantics. (Long-term, consider promoting `expand_task_scope` into a workspace package so both the hook and the reconciler import from one place. Out of scope here; the relative import `../../../../scripts/check-commit-message.js` is acceptable as a placeholder.)
 - Idempotent
 - Missing `graph.json` / `state.jsonl` is non-fatal (logs and continues — handles fresh installs)
 - Backlog consulted only as a fallback signal if a `done` event lacks `merge_commit`
@@ -66,14 +69,6 @@ Rationale: real Ariadne devs land fixes outside the fix-sequencer worker workflo
 
 Synthesized events are NOT appended to `state.jsonl` (which would duplicate on every run); only the registry flip persists. Idempotent because the reconciler's `status === "fixed"` skip path applies uniformly to both event sources.
 
-## Cut from earlier draft
-
-`superseded_by_fix` was originally proposed but is dropped per YAGNI — set-but-never-read in v1. If superseded-classifier skipping is needed later, derive it on the fly from `(status === 'fixed' AND fixed_commit ancestor of HEAD)`.
-
-## Merge note
-
-Originally split as TASK-190.18.3 (schema) + TASK-190.18.4 (reconciler). Merged after Reviewer 2 pointed out that the schema-only change has no testable behavior without its only consumer; .4 archived. Out-of-band detection (AC #12-16) folded in here rather than spawning a new sub-task — it reuses the reconciler's existing write path.
-
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
@@ -82,9 +77,9 @@ Originally split as TASK-190.18.3 (schema) + TASK-190.18.4 (reconciler). Merged 
 
 - [ ] #1 `fixed_commit` and `fixed_in_run` fields added to known_issues_types.ts and the runtime registry shape
 - [ ] #2 Back-compat read tests pass (entries written before this change still parse)
-- [ ] #3 Documented in triage-entrypoints SKILL.md registry section
+- [ ] #3 Schema additions (`fixed_commit`, `fixed_in_run`) documented in triage-entrypoints `SKILL.md` registry section; reconciler behavior (write path, OOB detection, idempotency, cross-project scope) documented in fix-sequencer `SKILL.md` (created by TASK-190.18.6)
 - [ ] #4 `find_groups_by_backlog_task(task_id)` helper exported from the registry module; tested with single-match, no-match, and multi-match cases
-- [ ] #5 Re-running reconciler on identical inputs leaves `registry.json` byte-equal AND emits zero log lines tagged `flipped`
+- [ ] #5 Re-running reconciler on identical inputs leaves `registry.json` mtime-stable (zero-flip short-circuit before `atomic_update_registry`) AND emits zero log lines tagged `flipped`
 - [ ] #6 Wired into prepare_triage.ts so it runs before classifiers are bucketed
 - [ ] #7 Logs which registry entries flipped status this run (one line per flip, tagged `flipped`)
 - [ ] #8 Missing graph.json / state.jsonl is non-fatal (logs and continues)
@@ -98,4 +93,5 @@ Originally split as TASK-190.18.3 (schema) + TASK-190.18.4 (reconciler). Merged 
 - [ ] #16 Cross-project scope discipline: the scan targets the project under analysis's repo, not the Ariadne repo. A `fix(190.16.42)` commit in the Ariadne repo will NOT trigger a flip while preparing a run on an external corpus. Documented in SKILL.md as expected behavior
 - [ ] #17 The reconciler module lives under the fix-sequencer skill (`.claude/skills/fix-sequencer/scripts/reconcile_registry_with_completed_nodes.ts`); triage-entrypoints invokes it without importing any of its modules (CLI shell-out only)
 - [ ] #18 The reconciler imports `expand_task_scope` from `scripts/check-commit-message.ts:38` rather than re-implementing range expansion
+- [ ] #19 Registry writes go through `atomic_update_registry` from `@ariadnejs/skill-fs`; the reconciler appears in `ALLOWED_REGISTRY_WRITERS` AND `ALLOWED_SERIALIZER_CALLERS` in `packages/skill-fs/src/registry_writers.test.ts` (verify the pre-registered entry survives the merge)
 <!-- AC:END -->

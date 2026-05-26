@@ -30,7 +30,7 @@ import {
   type KnownIssuesRegistryFile,
   type PredicateExpr,
 } from "@ariadnejs/types";
-import { render_builtins_barrel } from "../src/render/render_builtins_barrel.js";
+import { render_builtins_barrel } from "../src/render_builtins_barrel.js";
 import {
   get_core_builtins_barrel_path,
   get_permanent_slice_path,

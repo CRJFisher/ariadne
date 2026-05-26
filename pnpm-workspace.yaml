@@ -5,6 +5,7 @@ packages:
 allowBuilds:
   es5-ext: false
   esbuild: true
+  puppeteer: false
   tree-sitter: true
   tree-sitter-javascript: true
   tree-sitter-python: true

@@ -52,6 +52,19 @@ const ALLOWED_REGISTRY_WRITERS: ReadonlySet<string> = new Set([
   ".claude/skills/fix-sequencer/scripts/reconcile_registry_with_completed_nodes.ts",
 ]);
 
+/**
+ * Files allowed to call `serialize_known_issues_registry_json` directly. The
+ * function exists to produce the registry's on-disk bytes; using it outside
+ * an `atomic_update_registry` mutator closure means somebody is computing
+ * those bytes and writing them without the lock. The only legitimate callers
+ * are the curator's apply path (whose serializer calls are inside the
+ * mutator returned to `atomic_update_registry`) and the future reconciler.
+ */
+const ALLOWED_SERIALIZER_CALLERS: ReadonlySet<string> = new Set([
+  ".claude/skills/triage-curator/src/apply/apply_proposals.ts",
+  ".claude/skills/fix-sequencer/scripts/reconcile_registry_with_completed_nodes.ts",
+]);
+
 const SCAN_ROOTS: readonly string[] = [
   ".claude/skills",
   "packages",
@@ -94,11 +107,14 @@ function collect_workspace_sources(): string[] {
   return out;
 }
 
+type ViolationKind = "raw-write" | "serializer";
+
 interface WriteCall {
   file: string;
   line: number;
   callee: string;
   arg_text: string;
+  kind: ViolationKind;
 }
 
 /**
@@ -170,6 +186,7 @@ function find_local_initializer(
     if (found !== null) return;
     if (ts.isVariableStatement(node)) {
       for (const decl of node.declarationList.declarations) {
+        // Direct `const x = expr;`
         if (
           ts.isIdentifier(decl.name) &&
           decl.name.text === name &&
@@ -177,6 +194,30 @@ function find_local_initializer(
         ) {
           found = decl.initializer;
           return;
+        }
+        // `const { registry_path: x } = opts;` — destructured alias of a key
+        // that contains "registry" rebinds to a benign name; treat the
+        // aliased name as registry-shaped so the writer cannot launder its
+        // first arg through a rename.
+        if (
+          ts.isObjectBindingPattern(decl.name) &&
+          decl.initializer !== undefined
+        ) {
+          for (const element of decl.name.elements) {
+            if (!ts.isIdentifier(element.name) || element.name.text !== name) {
+              continue;
+            }
+            const property_name =
+              element.propertyName !== undefined && ts.isIdentifier(element.propertyName)
+                ? element.propertyName.text
+                : element.name.text;
+            if (/registry/i.test(property_name)) {
+              // Synthesize a marker identifier so `arg_targets_registry`
+              // detects the name on the next recursion.
+              found = ts.factory.createIdentifier(property_name);
+              return;
+            }
+          }
         }
       }
     }
@@ -207,8 +248,25 @@ function scan_file(abs_path: string): WriteCall[] {
             line: line + 1,
             callee: name,
             arg_text: first_arg.getText(source),
+            kind: "raw-write",
           });
         }
+      }
+      // Second pass: any call to `serialize_known_issues_registry_json` is a
+      // tell that this file intends to overwrite `registry.json` bytes — even
+      // if the first-arg resolution above misses the writer (renamed binding,
+      // indirect helper, parameter passing). The function is narrow-purpose:
+      // it exists only to produce the on-disk wire format. Outside an
+      // `atomic_update_registry` mutator closure it bypasses the lock.
+      if (name === "serialize_known_issues_registry_json") {
+        const { line } = source.getLineAndCharacterOfPosition(node.getStart(source));
+        hits.push({
+          file: abs_path,
+          line: line + 1,
+          callee: name,
+          arg_text: "<serializer call>",
+          kind: "serializer",
+        });
       }
     }
     ts.forEachChild(node, visit);
@@ -218,21 +276,25 @@ function scan_file(abs_path: string): WriteCall[] {
 }
 
 describe("registry-writer boundary (AST scan over the workspace)", () => {
-  it("only the allowlisted files call a raw write function against a registry-shaped path", () => {
+  it("only the allowlisted files call a raw write function against a registry-shaped path or serialize the registry", () => {
     const all_sources = collect_workspace_sources();
     const violations: WriteCall[] = [];
     for (const file of all_sources) {
       const rel = path.relative(REPO_ROOT, file);
       const hits = scan_file(file);
-      if (hits.length === 0) continue;
-      if (ALLOWED_REGISTRY_WRITERS.has(rel)) continue;
-      violations.push(...hits);
+      for (const hit of hits) {
+        const allowed =
+          hit.kind === "raw-write"
+            ? ALLOWED_REGISTRY_WRITERS.has(rel)
+            : ALLOWED_SERIALIZER_CALLERS.has(rel);
+        if (!allowed) violations.push(hit);
+      }
     }
     if (violations.length > 0) {
       const message = violations
         .map(
           (v) =>
-            `${path.relative(REPO_ROOT, v.file)}:${v.line}  ${v.callee}(${v.arg_text}, …)`,
+            `${path.relative(REPO_ROOT, v.file)}:${v.line}  [${v.kind}]  ${v.callee}(${v.arg_text}, …)`,
         )
         .join("\n");
       throw new Error(
@@ -240,11 +302,46 @@ describe("registry-writer boundary (AST scan over the workspace)", () => {
           message +
           "\n\nUse `atomic_update_registry(path, mutator)` from `@ariadnejs/skill-fs` " +
           "instead; the helper holds the `.lock` sidecar over the read-mutate-write " +
-          "cycle. If a new site is contractually permitted to write the registry " +
-          "directly, add it to `ALLOWED_REGISTRY_WRITERS` in this test and document " +
-          "the reason in `.claude/rules/classifier-lifecycle.md`.",
+          "cycle. If a new site is contractually permitted to call the raw writer or " +
+          "serializer directly, add it to `ALLOWED_REGISTRY_WRITERS` / " +
+          "`ALLOWED_SERIALIZER_CALLERS` in this test and document the reason in " +
+          "`.claude/rules/classifier-lifecycle.md`.",
       );
     }
     expect(violations).toEqual([]);
+  });
+
+  it("negative control: a synthetic violation is flagged (scanner is not silently no-op)", async () => {
+    // Defends against a refactor that breaks every branch of
+    // `arg_targets_registry` — the main test would still pass with zero hits
+    // because the live workspace contains no real violations. This control
+    // writes a known-bad file to a temp dir and asserts the scanner returns
+    // at least one hit of each kind.
+    const fsp = await import("node:fs/promises");
+    const os = await import("node:os");
+    const tmp = await fsp.mkdtemp(path.join(os.tmpdir(), "registry-scan-control-"));
+    try {
+      const synthetic = path.join(tmp, "bad_writer.ts");
+      await fsp.writeFile(
+        synthetic,
+        [
+          'import { atomic_write_file } from "@ariadnejs/skill-fs";',
+          'import { serialize_known_issues_registry_json } from "@ariadnejs/types";',
+          "async function go(reg: KnownIssue[]) {",
+          '  await atomic_write_file("/tmp/registry.json", "{}");',
+          "  const wire = serialize_known_issues_registry_json(reg);",
+          '  await atomic_write_file("/tmp/other.json", wire);',
+          "}",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      const hits = scan_file(synthetic);
+      const kinds = new Set(hits.map((h) => h.kind));
+      expect(kinds.has("raw-write")).toBe(true);
+      expect(kinds.has("serializer")).toBe(true);
+    } finally {
+      await fsp.rm(tmp, { recursive: true, force: true });
+    }
   });
 });

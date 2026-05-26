@@ -25,10 +25,12 @@ export type { ClassifierRegressionFlag, ClassifierRegressionFlaggedEntry };
  * Verdict-time member evidence carried by each regression record. Pinpoints
  * the source location the per-entry investigator cited when emitting
  * `fp-classifier-regression`. Distinct from the published-artifact
- * `MemberEvidence` shape (`summary`/`excerpt`) consumed by downstream readers
- * of `triage_results/<run-id>.json`.
+ * `MemberEvidence` shape (`summary`/`excerpt`) defined in the curator's
+ * `src/types.ts` and consumed by downstream readers of
+ * `triage_results/<run-id>.json` — the two carry different fields and serve
+ * different stages, hence the disambiguated names.
  */
-export interface MemberEvidence {
+export interface VerdictMemberEvidence {
   file: string;
   line: number;
   why: string;
@@ -39,7 +41,7 @@ export interface ClassifierRegressionRecord {
   entry_index: number;
   should_have_matched_rule_id: string;
   evidence_excerpt: string;
-  member_evidence: MemberEvidence;
+  member_evidence: VerdictMemberEvidence;
 }
 
 /**
@@ -191,7 +193,7 @@ function parse_classifier_regression_record(
   };
 }
 
-function parse_member_evidence(raw: unknown, ctx: string): MemberEvidence {
+function parse_member_evidence(raw: unknown, ctx: string): VerdictMemberEvidence {
   const obj = expect_object(raw, ctx);
   assert_keys(obj, ["file", "line", "why"], ctx);
   const file = parse_non_empty_string(obj["file"], `${ctx}.file`);

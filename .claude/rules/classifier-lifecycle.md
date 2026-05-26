@@ -25,6 +25,13 @@ The structural enforcement lives in `packages/skill-fs/src/registry_writers.test
 
 `atomic_write_file` remains the contract for non-shared files (per-run novel-issues snapshots, curated-run sentinels, analysis-output JSON) where there is exactly one writer per path.
 
+### Stale-lock recovery
+
+`atomic_update_registry` retries lock acquisition 100 times at 50ms (≈5s budget) before throwing `could not acquire <path>.lock after 5000ms — stale lock?`. Two recovery paths:
+
+- **Honest contention**: a slow mutator legitimately exceeded the budget. Increase the budget at the call site, or split the mutation into smaller transactions. The curator's serialize + drift + upsert + observed-bump pass runs sub-second on registries up to several hundred rules, so a real bump would be evidence of a runaway loop.
+- **Crashed writer**: a previous writer was killed (SIGKILL, OOM, kernel panic, `pkill -9`) after acquiring the lock and before `finally` ran. The sidecar persists indefinitely. Manual cleanup is `rm <registry-path>.lock`; verify no live writer process holds the file (`lsof <registry-path>.lock`) before deleting. We do not auto-break stale locks based on mtime because the cure is worse than the disease: a false positive (legitimate slow writer) would interleave two mutators on the same registry, which is exactly the race the lock exists to prevent.
+
 ## Lifecycle transitions
 
 ```
