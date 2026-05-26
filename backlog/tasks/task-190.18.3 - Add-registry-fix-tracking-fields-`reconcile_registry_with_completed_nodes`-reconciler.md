@@ -38,7 +38,8 @@ The registry is the loop-closure surface. Schema fields and the reconciler that 
 
 ## Scope — reconciler
 
-- New file: `.claude/skills/triage-entrypoints/scripts/reconcile_registry_with_completed_nodes.ts`
+- New file: `.claude/skills/fix-sequencer/scripts/reconcile_registry_with_completed_nodes.ts`
+- The reconciler lives under the **fix-sequencer skill**, not triage-entrypoints. The classifier-lifecycle contract (`.claude/rules/classifier-lifecycle.md:14`) forbids any code under `triage-entrypoints/` from writing `registry.json`; the three-store model also forbids triage-entrypoints from knowing `~/.ariadne/fix-sequencer/` paths. Until the fix-sequencer skill exists, this task lands the scripts/ directory and the reconciler together.
 - Reads `~/.ariadne/fix-sequencer/graph.json`
 - Folds `~/.ariadne/fix-sequencer/state.jsonl` to find nodes whose latest event is `done`
 - For each such node:
@@ -46,7 +47,8 @@ The registry is the loop-closure surface. Schema fields and the reconciler that 
   - For each task_id, call `find_groups_by_backlog_task(task_id)` to resolve matching registry entries
   - For each resolved entry whose `status !== 'fixed'`: flip `status: wip → fixed`, stamp `fixed_commit` (from the `done` event's `merge_commit`) and `fixed_in_run` (current pipeline run-id)
   - For each resolved entry already `fixed`: skip silently (idempotent, no double-stamping)
-- Wire as a pre-step in `.claude/skills/triage-entrypoints/scripts/prepare_triage.ts` so it runs BEFORE classifiers are bucketed
+- Invoked as a pre-step by `.claude/skills/triage-entrypoints/scripts/prepare_triage.ts` so it runs BEFORE classifiers are bucketed. Cross-skill invocation is a **CLI shell-out** (`node --import tsx .claude/skills/fix-sequencer/scripts/reconcile_registry_with_completed_nodes.ts`), not a TypeScript import; both scripts already run as separate Node processes. Triage-entrypoints must never `import` from fix-sequencer.
+- Reuses `expand_task_scope` from `scripts/check-commit-message.ts:38` rather than re-implementing range expansion; the commit-msg hook already owns that semantics.
 - Idempotent
 - Missing `graph.json` / `state.jsonl` is non-fatal (logs and continues — handles fresh installs)
 - Backlog consulted only as a fallback signal if a `done` event lacks `merge_commit`
@@ -94,4 +96,6 @@ Originally split as TASK-190.18.3 (schema) + TASK-190.18.4 (reconciler). Merged 
 - [ ] #14 First-run / missing-prior-commit: when `RunManifest.commit_hash` is `null`, the git-log scan is skipped silently with a `git-log-scan: no prior commit` log line. Not fatal
 - [ ] #15 Unreachable prior SHA (rebase/squash): when `git log <stale_sha>..HEAD` exits non-zero, fall back to a date-bounded range using `RunManifest.created_at` as the lower bound. Logged at info level. Not fatal
 - [ ] #16 Cross-project scope discipline: the scan targets the project under analysis's repo, not the Ariadne repo. A `fix(190.16.42)` commit in the Ariadne repo will NOT trigger a flip while preparing a run on an external corpus. Documented in SKILL.md as expected behavior
+- [ ] #17 The reconciler module lives under the fix-sequencer skill (`.claude/skills/fix-sequencer/scripts/reconcile_registry_with_completed_nodes.ts`); triage-entrypoints invokes it without importing any of its modules (CLI shell-out only)
+- [ ] #18 The reconciler imports `expand_task_scope` from `scripts/check-commit-message.ts:38` rather than re-implementing range expansion
 <!-- AC:END -->
