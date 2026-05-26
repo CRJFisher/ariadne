@@ -11,14 +11,14 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { TRIAGE_STATE_DIR } from "../src/paths.js";
 import {
+  TRIAGE_STATE_DIR,
   list_projects_with_state,
-  read_latest_run_id,
   state_path_for,
-} from "../src/triage_state_paths.js";
+} from "../src/store/paths.js";
+import { read_latest_run_id } from "../src/store/latest_pointer.js";
 import type { TriageState } from "../src/triage_state_types.js";
-import "../src/guard_tsx_invocation.js";
+import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 function summarize(project: string, run_id: string, state_path: string): string {
   try {

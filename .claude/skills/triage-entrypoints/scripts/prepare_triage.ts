@@ -32,25 +32,25 @@ import {
 } from "@ariadnejs/core";
 import type { PersistenceStorage } from "@ariadnejs/core";
 
-import { load_json } from "../src/analysis_output.js";
+import { load_json } from "../src/store/analysis_output.js";
 import { active_rules_for_classification, load_registry } from "../src/known_issues_registry.js";
 import { prepare_triage } from "../src/prepare_triage.js";
 import {
+  TRIAGE_STATE_DIR,
   manifest_path_for,
   run_dir_for,
   state_path_for,
-  write_latest_run_id,
-} from "../src/triage_state_paths.js";
-import { TRIAGE_STATE_DIR } from "../src/paths.js";
+} from "../src/store/paths.js";
+import { write_latest_run_id } from "../src/store/latest_pointer.js";
 import {
   RUN_MANIFEST_SCHEMA_VERSION,
   type RunManifest,
   type TpCacheEntryKey,
   type TriageState,
 } from "../src/triage_state_types.js";
-import { apply_tp_cache_to_entries, derive_tp_cache } from "../src/confirmed_unreachable_reuse.js";
+import { apply_tp_cache_to_entries, derive_tp_cache } from "../src/finalize/confirmed_unreachable_reuse.js";
 import type { AnalysisResult } from "@ariadnejs/types";
-import "../src/guard_tsx_invocation.js";
+import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const DEFAULT_MAX_COUNT = 150;
 
@@ -254,7 +254,7 @@ async function main(): Promise<void> {
   if (skipped_count > 0) {
     process.stderr.write(
       `[prepare_triage] lifecycle filter skipped ${skipped_count} classifier(s) ` +
-        `(status=fixed or wip+drift_detected)\n`,
+        "(status=fixed or wip+drift_detected)\n",
     );
   }
   const scope = load_index_scope(cli.config_path);

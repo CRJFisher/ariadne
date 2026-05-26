@@ -3,7 +3,7 @@
  * `packages/core/src/classify_entry_points/builtins/index.ts`.
  *
  * For every `kind:"builtin"` entry in the registry we emit:
- *   import { <function_name> } from "./check_<group_id>";
+ *   import { <function_name> } from "./check_<group_id>.js";
  * and collect the exports into a `Record<function_name, BuiltinCheckFn>`.
  *
  * The orchestrator dispatches builtins by `function_name` via this map.

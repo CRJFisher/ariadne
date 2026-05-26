@@ -20,7 +20,7 @@ import {
   novel_issues_path_for,
   require_run,
   results_dir_for,
-} from "../src/triage_state_paths.js";
+} from "../src/store/paths.js";
 import type { TriageState } from "../src/triage_state_types.js";
 import type {
   GrepHit,
@@ -31,10 +31,10 @@ import type {
 import {
   build_dispense_payload,
   type DispensePayload,
-} from "../src/dispense_payload.js";
+} from "../src/dispense/dispense_payload.js";
 import { load_registry } from "../src/known_issues_registry.js";
-import { read_novel_issues } from "../src/novel_issues.js";
-import "../src/guard_tsx_invocation.js";
+import { read_novel_issues } from "../src/absorb/novel_issues.js";
+import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const USAGE = "Usage: get_entry_context.ts --project <name> --entry <index> [--run-id <id>]";
 
@@ -133,7 +133,7 @@ const DIAGNOSIS_HINTS: Record<string, DiagnosisHints> = {
       "   - Check if the call uses patterns that complicate resolution:",
       "     - Aliased imports (`import { foo as bar }`)",
       "     - Destructured assignments (`const { method } = object`)",
-      "     - Re-exports through barrel files (`export { foo } from './module'`)",
+      "     - Re-exports through barrel files (`export { foo } from './module.js'`)",
       "     - Generic type parameters affecting method dispatch",
       "     - Prototype chain or mixin patterns",
       "",

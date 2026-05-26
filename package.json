@@ -8,14 +8,14 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "pnpm --filter @ariadnejs/types build && pnpm --filter @ariadnejs/core build && pnpm --filter @ariadnejs/mcp build",
+    "build": "pnpm --filter @ariadnejs/skill-fs build && pnpm --filter @ariadnejs/types build && pnpm --filter @ariadnejs/core build && pnpm --filter @ariadnejs/mcp build",
     "sync-permanent-rules": "pnpm exec tsx .claude/skills/triage-entrypoints/scripts/sync_permanent_rules.ts",
     "check-permanent-rules": "pnpm sync-permanent-rules && git diff --exit-code -- packages/core/src/classify_entry_points/permanent_data.ts packages/core/src/classify_entry_points/builtins/index.ts",
     "find-promotion-candidates": "node --import tsx .claude/skills/triage-curator/scripts/find_promotion_candidates.ts",
-    "typecheck": "pnpm exec tsc --noEmit -p packages/types/tsconfig.json && pnpm exec tsc --noEmit -p packages/core/tsconfig.json && pnpm exec tsc --noEmit -p packages/mcp/tsconfig.json && pnpm exec tsc --noEmit -p .claude/skills/triage-entrypoints/tsconfig.json",
+    "typecheck": "pnpm exec tsc --noEmit -p packages/skill-fs/tsconfig.json && pnpm exec tsc --noEmit -p packages/types/tsconfig.json && pnpm exec tsc --noEmit -p packages/core/tsconfig.json && pnpm exec tsc --noEmit -p packages/mcp/tsconfig.json && pnpm exec tsc --noEmit -p .claude/skills/triage-entrypoints/tsconfig.json && pnpm exec tsc --noEmit -p .claude/skills/triage-curator/tsconfig.json",
     "test": "pnpm --filter './packages/*' test",
-    "lint": "eslint 'packages/*/src/**/*.ts' 'packages/*/tests/**/*.ts' '.claude/skills/triage-entrypoints/**/*.ts'",
-    "lint:fix": "eslint --fix 'packages/*/src/**/*.ts' 'packages/*/tests/**/*.ts' '.claude/skills/triage-entrypoints/**/*.ts'",
+    "lint": "eslint 'packages/*/src/**/*.ts' 'packages/*/tests/**/*.ts' '.claude/skills/triage-entrypoints/**/*.ts' '.claude/skills/triage-curator/**/*.ts'",
+    "lint:fix": "eslint --fix 'packages/*/src/**/*.ts' 'packages/*/tests/**/*.ts' '.claude/skills/triage-entrypoints/**/*.ts' '.claude/skills/triage-curator/**/*.ts'",
     "clean": "pnpm --filter './packages/*' clean && rm -rf node_modules",
     "changeset": "changeset",
     "version": "changeset version",
@@ -26,7 +26,9 @@
     "validate:captures": "pnpm exec tsx scripts/validate_captures.ts"
   },
   "devDependencies": {
+    "@ariadnejs/core": "workspace:*",
     "@changesets/cli": "^2.27.1",
+    "@eslint/js": "^9.37.0",
     "@types/node": "^24.0.14",
     "@typescript-eslint/eslint-plugin": "^8.46.0",
     "@typescript-eslint/parser": "^8.46.0",
@@ -35,17 +37,8 @@
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-unused-imports": "^4.3.0",
     "markdownlint-cli": "^0.47.0",
+    "tsx": "^4.19.2",
     "typescript": "^6.0.2"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "tree-sitter",
-      "tree-sitter-javascript",
-      "tree-sitter-python",
-      "tree-sitter-rust",
-      "tree-sitter-typescript"
-    ]
   },
   "engines": {
     "node": ">=20.0.0"

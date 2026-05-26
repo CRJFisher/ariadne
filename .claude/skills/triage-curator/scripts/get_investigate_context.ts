@@ -16,18 +16,18 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { error_code } from "@ariadnejs/skill-fs";
 import { parse_known_issues_registry_json } from "@ariadnejs/types";
-import { error_code } from "../src/errors.js";
-import { read_v4_triage_results } from "../src/parse_triage_results.js";
-import { get_registry_file_path } from "../src/paths.js";
+import { read_v4_triage_results } from "../src/store/parse_triage_results.js";
+import { get_registry_file_path } from "../src/store/paths.js";
 import {
   ARIADNE_ROOT_CAUSE_CATEGORIES,
   SIGNAL_CHECK_OPS,
   type NovelIssue,
   type TriageResultsFile,
 } from "../src/types.js";
-import { SIGNAL_LIBRARY_GAP_PARENT_TASK_ID } from "../src/apply_proposals.js";
-import "../src/require_node_import_tsx.js";
+import { SIGNAL_LIBRARY_GAP_PARENT_TASK_ID } from "../src/apply/apply_proposals.js";
+import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const THIS_DIR = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_DIR = path.resolve(THIS_DIR, "..");

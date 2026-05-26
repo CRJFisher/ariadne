@@ -16,8 +16,8 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { error_code } from "../src/errors.js";
-import "../src/require_node_import_tsx.js";
+import { error_code } from "@ariadnejs/skill-fs";
+import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 export interface DispatchEntry {
   run_path: string;

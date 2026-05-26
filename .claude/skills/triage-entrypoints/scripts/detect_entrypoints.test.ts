@@ -106,7 +106,7 @@ describe("collect_unindexed_test_files", () => {
 describe("attach_unindexed_test_grep_hits", () => {
   it("populates grep_call_sites_unindexed_tests with caller hits", async () => {
     await write("src/foo.ts", "export function foo() {}\n");
-    await write("tests/foo.test.ts", "import { foo } from '../src/foo';\nfoo();\n");
+    await write("tests/foo.test.ts", "import { foo } from '../src/foo.js';\nfoo();\n");
 
     const e = entry("foo", path.join(tmpdir, "src/foo.ts"), 1);
     await attach_unindexed_test_grep_hits(

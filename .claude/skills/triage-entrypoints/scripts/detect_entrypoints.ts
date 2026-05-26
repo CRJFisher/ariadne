@@ -46,7 +46,7 @@ import type {
   AnalysisSourceInfo,
   EnrichedEntryPoint,
 } from "@ariadnejs/types";
-import { save_json, OutputType } from "../src/analysis_output.js";
+import { save_json, OutputType } from "../src/store/analysis_output.js";
 import { load_registry } from "../src/known_issues_registry.js";
 import { path_to_project_id, project_id_from_config } from "../src/project_id.js";
 import { should_log, SLOW_ITEM_MS } from "../src/progress.js";
@@ -54,7 +54,7 @@ import * as path from "path";
 import * as fs from "fs/promises";
 import * as os from "os";
 import { execSync } from "child_process";
-import "../src/guard_tsx_invocation.js";
+import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 // ===== Types =====
 

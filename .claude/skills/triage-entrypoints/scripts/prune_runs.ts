@@ -16,9 +16,9 @@
 
 import * as fs from "node:fs/promises";
 
-import { list_runs } from "../src/run_discovery.js";
+import { list_runs } from "../src/store/run_discovery.js";
 import { parse_project_arg } from "../src/cli_args.js";
-import "../src/guard_tsx_invocation.js";
+import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const USAGE = "Usage: prune_runs.ts --project <name> [--keep <n>] [--dry-run]";
 

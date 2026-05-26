@@ -19,10 +19,10 @@
 import * as fs from "node:fs/promises";
 
 import { parse_known_issues_registry_json } from "@ariadnejs/types";
-import { render_impact_report } from "../src/impact_report.js";
-import { get_registry_file_path } from "../src/paths.js";
+import { render_impact_report } from "../src/propose/impact_report.js";
+import { get_registry_file_path } from "../src/store/paths.js";
 import type { KnownIssue } from "../src/types.js";
-import "../src/require_node_import_tsx.js";
+import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 interface CliArgs {
   top_n: number;

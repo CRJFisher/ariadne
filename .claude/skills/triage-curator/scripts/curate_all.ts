@@ -30,17 +30,17 @@ import {
   get_repo_root,
   get_scripts_rel,
   run_output_dir,
-} from "../src/paths.js";
+} from "../src/store/paths.js";
 import { parse_known_issues_registry_json } from "@ariadnejs/types";
-import { read_v4_triage_results } from "../src/parse_triage_results.js";
-import { scan_runs } from "../src/scan_runs.js";
+import { read_v4_triage_results } from "../src/store/parse_triage_results.js";
+import { scan_runs } from "../src/store/scan_runs.js";
 import type {
   KnownIssue,
   NovelIssue,
   ScanOptions,
   ScanResultItem,
 } from "../src/types.js";
-import "../src/require_node_import_tsx.js";
+import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 interface CliOpts extends ScanOptions {
   dry_run: boolean;

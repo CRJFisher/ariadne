@@ -17,28 +17,28 @@ import * as fs from "node:fs/promises";
 
 import path from "node:path";
 
-import { atomic_write_file } from "../src/atomic_write.js";
+import { atomic_write_file } from "@ariadnejs/skill-fs";
 import {
   build_finalization_output,
   build_finalization_summary,
-  load_verdicts_by_entry_index,
-} from "../src/build_finalization_output.js";
+} from "../src/finalize/output.js";
+import { load_verdicts_by_entry_index } from "../src/finalize/verdict_ledger.js";
 import { parse_project_arg, parse_run_id_arg } from "../src/cli_args.js";
 import {
   aggregate_classifier_regressions,
   read_classifier_regression_records,
-} from "../src/classifier_regressions.js";
-import { read_novel_issues } from "../src/novel_issues.js";
-import { ANALYSIS_OUTPUT_DIR } from "../src/paths.js";
+} from "../src/absorb/classifier_regressions.js";
+import { read_novel_issues } from "../src/absorb/novel_issues.js";
 import {
+  ANALYSIS_OUTPUT_DIR,
   classifier_regressions_path_for,
-  clear_latest,
   novel_issues_path_for,
   require_run,
   results_dir_for,
-} from "../src/triage_state_paths.js";
+} from "../src/store/paths.js";
+import { clear_latest } from "../src/store/latest_pointer.js";
 import type { RunManifest, TriageState } from "../src/triage_state_types.js";
-import "../src/guard_tsx_invocation.js";
+import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const USAGE = "Usage: finalize_triage.ts --project <name> [--run-id <id>]";
 

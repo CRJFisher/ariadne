@@ -16,14 +16,14 @@ import { pathToFileURL } from "node:url";
 
 import { parse_known_issues_registry_json } from "@ariadnejs/types";
 
-import { get_registry_file_path } from "../src/paths.js";
+import { get_registry_file_path } from "../src/store/paths.js";
 import {
   aggregate_promotion_candidates,
   summarize_match_history,
-} from "../src/promotion_candidates.js";
-import { discover_runs } from "../src/scan_runs.js";
+} from "../src/propose/promotion_candidates.js";
+import { discover_runs } from "../src/store/scan_runs.js";
 import type { PromotionCandidate, TriageResultsFile } from "../src/types.js";
-import "../src/require_node_import_tsx.js";
+import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 interface CliArgs {
   json: boolean;
@@ -83,7 +83,7 @@ export function format_table(candidates: readonly PromotionCandidate[]): string 
       "No promotion candidates found.\n" +
       "With current registry data, no `wip` rule meets the minimum stability criteria.\n" +
       "See `.claude/rules/classifier-lifecycle.md` (when present) or the promotion-criteria comments\n" +
-      "in `.claude/skills/triage-curator/src/promotion_candidates.ts` for the gate definition.\n"
+      "in `.claude/skills/triage-curator/src/propose/promotion_candidates.ts` for the gate definition.\n"
     );
   }
   const header = [

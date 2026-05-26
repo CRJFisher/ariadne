@@ -23,9 +23,9 @@ import {
   parse_known_issues_registry_json,
   type KnownIssue as SelfRepairKnownIssue,
 } from "@ariadnejs/types";
-import { get_registry_file_path } from "../src/paths.js";
-import { propose_backlog_tasks } from "../src/propose_backlog_tasks.js";
-import "../src/require_node_import_tsx.js";
+import { get_registry_file_path } from "../src/store/paths.js";
+import { propose_backlog_tasks } from "../src/propose/propose_backlog_tasks.js";
+import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 interface CliArgs {
   prior_path: string | null;

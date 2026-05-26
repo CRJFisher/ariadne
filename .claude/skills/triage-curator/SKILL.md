@@ -373,9 +373,9 @@ it calls `mcp__backlog__task_edit` on the `backlog_task` with the new
 
 ## Classifier lifecycle (write boundaries)
 
-The curator is the single autonomous writer for every `wip` transition: minting via the investigator's first classifier upsert against a previously-unregistered `novel_issue.id` (`apply_proposals.ts:upsert_classifier`), drift tagging (`curator_drift_absorb.ts:absorb_classifier_regressions`, gated on `classifier.kind !== "none"`), and observed-stat bookkeeping. `wip → permanent` is the only manual transition — surfaced by `pnpm find-promotion-candidates` for human review. `wip → fixed` is owned by the fix-sequencer reconciler (TASK-190.18.3). See `.claude/rules/classifier-lifecycle.md` for the canonical writer matrix.
+The curator is the single autonomous writer for every `wip` transition: minting via the investigator's first classifier upsert against a previously-unregistered `novel_issue.id` (`apply/apply_proposals.ts:upsert_classifier`), drift tagging (`absorb/drift_absorb.ts:absorb_classifier_regressions`, gated on `classifier.kind !== "none"`), and observed-stat bookkeeping. `wip → permanent` is the only manual transition — surfaced by `pnpm find-promotion-candidates` for human review. `wip → fixed` is owned by the fix-sequencer reconciler (TASK-190.18.3). See `.claude/rules/classifier-lifecycle.md` for the canonical writer matrix.
 
-All registry writes go through `atomic_write_file` (`src/atomic_write.ts`) so concurrent curator + reconciler runs cannot lose data.
+All registry writes go through `atomic_write_file` from the shared `@ariadnejs/skill-fs` package so concurrent curator + reconciler runs cannot lose data.
 
 ## Cross-package write contract
 
@@ -391,7 +391,7 @@ A successful sweep's commit therefore spans both the skill and the package.
 | `packages/core/src/classify_entry_points/builtins/index.ts`      | Auto — `sync_permanent_rules` | Registry mutated this run           |
 | `packages/core/src/classify_entry_points/permanent_data.ts`      | Auto — `sync_permanent_rules` | Registry mutated this run           |
 
-Path resolution lives in `src/paths.ts` (`get_core_builtins_dir`,
+Path resolution lives in `src/store/paths.ts` (`get_core_builtins_dir`,
 `get_core_builtins_barrel_path`, `get_permanent_slice_path`); never
 hardcode the `packages/core/...` prefix in finalize / cleanup code.
 
@@ -421,7 +421,7 @@ matching regen fails fast.
 `fp-classifier-regression` verdicts emitted by the triage-investigator the
 moment it spots an entry the classifier *should* have caught. Surfaced via
 the run's `classifier_regressions[]` aggregate; absorbed by
-`curator_drift_absorb.ts:absorb_classifier_regressions`.
+`absorb/drift_absorb.ts:absorb_classifier_regressions`.
 
 `status: "permanent"` rows are never drift-tagged automatically; regression
 flags against them surface in `skipped_permanent_upserts` for human review.

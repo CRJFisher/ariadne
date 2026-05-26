@@ -13,12 +13,14 @@
   },
   "dependencies": {
     "@ariadnejs/core": "workspace:*",
+    "@ariadnejs/skill-fs": "workspace:*",
     "@ariadnejs/types": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.0.14",
     "clinic": "^13.0.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   }
 }

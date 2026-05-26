@@ -23,8 +23,8 @@ import {
   type FixedNovelIssueResurfacing,
   type NovelPromoteDispatch,
 } from "./curate_all.js";
-import { absorb_classifier_regressions } from "../src/curator_drift_absorb.js";
-import { compute_observation_counts } from "../src/observation_counts.js";
+import { absorb_classifier_regressions } from "../src/absorb/drift_absorb.js";
+import { compute_observation_counts } from "../src/absorb/observation_counts.js";
 import type {
   ClassifierRegressionFlag,
   KnownIssue,

@@ -1,3 +1,13 @@
 packages:
   - "packages/*"
   - ".claude/skills/triage-entrypoints"
+  - ".claude/skills/triage-curator"
+allowBuilds:
+  es5-ext: false
+  esbuild: true
+  tree-sitter: true
+  tree-sitter-javascript: true
+  tree-sitter-python: true
+  tree-sitter-rust: true
+  tree-sitter-typescript: true
+  unrs-resolver: false

@@ -1,0 +1,40 @@
+{
+  "name": "@ariadnejs/skill-fs",
+  "version": "0.1.0",
+  "description": "Filesystem and runtime-guard helpers shared by Ariadne self-healing skills",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./require-node-import-tsx": {
+      "types": "./dist/require_node_import_tsx.d.ts",
+      "import": "./dist/require_node_import_tsx.js"
+    }
+  },
+  "files": [
+    "dist/**/*",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.json",
+    "test": "vitest run",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo"
+  },
+  "keywords": [
+    "ariadne",
+    "skill",
+    "filesystem"
+  ],
+  "author": "Chuck",
+  "license": "ISC",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^24.0.14",
+    "typescript": "^6.0.2",
+    "vitest": "^3.2.4"
+  }
+}

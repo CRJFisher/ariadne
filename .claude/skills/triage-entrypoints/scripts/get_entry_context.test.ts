@@ -6,8 +6,8 @@ import {
   substitute_template,
 } from "./get_entry_context.js";
 import type { TriageEntry } from "../src/triage_state_types.js";
-import type { NovelIssuesFile } from "../src/novel_issues.js";
-import type { DispensePayload } from "../src/dispense_payload.js";
+import type { NovelIssuesFile } from "../src/absorb/novel_issues.js";
+import type { DispensePayload } from "../src/dispense/dispense_payload.js";
 import type {
   GrepHit,
   CallRefDiagnostic,
@@ -170,8 +170,8 @@ describe("substitute_template", () => {
     expect(result).toContain("test/server.test.ts:10");
     expect(result).toContain("(none found)"); // ariadne_call_refs is empty
     expect(result).toContain("Slice: []");
-    expect(result).toContain('"issues": []');
-    expect(result).toContain('"flagged": []');
+    expect(result).toContain("\"issues\": []");
+    expect(result).toContain("\"flagged\": []");
   });
 
   it("handles null signature", () => {

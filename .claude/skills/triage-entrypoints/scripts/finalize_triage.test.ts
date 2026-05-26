@@ -16,19 +16,19 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
   build_finalization_output,
-  load_verdicts_by_entry_index,
   type FinalizationOutput,
-} from "../src/build_finalization_output.js";
+} from "../src/finalize/output.js";
+import { load_verdicts_by_entry_index } from "../src/finalize/verdict_ledger.js";
 import {
   aggregate_classifier_regressions,
   read_classifier_regression_records,
-} from "../src/classifier_regressions.js";
-import { read_novel_issues, write_novel_issues } from "../src/novel_issues.js";
+} from "../src/absorb/classifier_regressions.js";
+import { read_novel_issues, write_novel_issues } from "../src/absorb/novel_issues.js";
 import type {
   TriageEntry,
   TriageState,
 } from "../src/triage_state_types.js";
-import type { TriageVerdict } from "../src/triage_verdict.js";
+import type { TriageVerdict } from "../src/verdict/triage_verdict.js";
 
 const PROJECT_PATH = "/projects/sample";
 

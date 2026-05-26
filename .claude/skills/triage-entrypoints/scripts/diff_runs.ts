@@ -7,10 +7,10 @@
  *     [--format text|json]
  */
 
-import { diff_runs, format_diff_text } from "../src/diff_runs.js";
-import { read_triage_results } from "../src/triage_results_store.js";
+import { diff_runs, format_diff_text } from "../src/cross_run/diff_runs.js";
+import { read_triage_results } from "../src/store/triage_results_store.js";
 import { parse_project_arg } from "../src/cli_args.js";
-import "../src/guard_tsx_invocation.js";
+import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const USAGE =
   "Usage: diff_runs.ts --project <name> --from <run-id> --to <run-id> [--format text|json]";

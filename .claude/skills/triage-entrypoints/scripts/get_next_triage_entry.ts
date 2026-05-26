@@ -32,10 +32,10 @@
 
 import fs from "fs";
 import { parse_project_arg, parse_run_id_arg } from "../src/cli_args.js";
-import { require_run } from "../src/triage_state_paths.js";
-import { merge_results } from "../src/merge_results.js";
+import { require_run } from "../src/store/paths.js";
+import { merge_results } from "../src/finalize/merge_results.js";
 import type { TriageEntry, TriageState } from "../src/triage_state_types.js";
-import "../src/guard_tsx_invocation.js";
+import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const USAGE =
   "Usage: get_next_triage_entry.ts --project <name> [--run-id <id>] [--count <n>] [--active <indices>]";
@@ -124,7 +124,12 @@ if (is_main_module()) {
     process.exit(1);
   }
 
-  merge_results(state, run_dir);
+  try {
+    await merge_results(state, run_dir);
+  } catch (err) {
+    process.stderr.write(`Error: failed to merge results: ${err}\n`);
+    process.exit(1);
+  }
 
   const picked = pick_next_entries(state.entries, count, active);
 

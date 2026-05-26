@@ -10,7 +10,7 @@ import * as fs from "fs/promises";
 import * as path from "path";
 
 import { DEFAULT_MAX_DEPTH, preview_folders } from "../src/preview_folders.js";
-import "../src/guard_tsx_invocation.js";
+import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 interface CliArgs {
   project_path: string;

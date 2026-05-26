@@ -13,14 +13,11 @@
 
 import * as fs from "node:fs/promises";
 
-import { read_manifest } from "../src/run_discovery.js";
+import { read_manifest } from "../src/store/run_discovery.js";
 import { parse_project_arg, parse_run_id_arg } from "../src/cli_args.js";
-import {
-  clear_latest,
-  read_latest_run_id,
-  require_run,
-} from "../src/triage_state_paths.js";
-import "../src/guard_tsx_invocation.js";
+import { require_run } from "../src/store/paths.js";
+import { clear_latest, read_latest_run_id } from "../src/store/latest_pointer.js";
+import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const USAGE = "Usage: abandon_run.ts --project <name> [--run-id <id>]";
 

@@ -14,7 +14,7 @@ import { format_table } from "./find_promotion_candidates.js";
 import {
   aggregate_promotion_candidates,
   summarize_match_history,
-} from "../src/promotion_candidates.js";
+} from "../src/propose/promotion_candidates.js";
 import type { DriftEvidence, KnownIssue } from "../src/types.js";
 
 function wip_rule(
@@ -73,7 +73,7 @@ describe("find_promotion_candidates format_table", () => {
       "No promotion candidates found.\n" +
       "With current registry data, no `wip` rule meets the minimum stability criteria.\n" +
       "See `.claude/rules/classifier-lifecycle.md` (when present) or the promotion-criteria comments\n" +
-      "in `.claude/skills/triage-curator/src/promotion_candidates.ts` for the gate definition.\n";
+      "in `.claude/skills/triage-curator/src/propose/promotion_candidates.ts` for the gate definition.\n";
     expect(format_table([])).toEqual(expected);
   });
 });

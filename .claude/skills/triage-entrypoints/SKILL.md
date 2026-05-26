@@ -388,7 +388,8 @@ The skill is a thin caller of `@ariadnejs/core`. Classification (`enrich_call_gr
 | `known_issues_registry.ts`            | Full-registry loader (skill-side) — reads the canonical `known_issues/registry.json`, including `wip` rules, and hands it to `enrich_call_graph` as a registry override |
 | `prepare_triage.ts`                   | Run-namespaced orchestration: call core's `enrich_call_graph` with the full registry, partition into known-unreachable / TP-cache / llm-triage                          |
 | `build_triage_entries.ts`             | Assemble `TriageEntry` records from prepared buckets                                                                                                                    |
-| `build_finalization_output.ts`        | Build the published v4 envelope from per-run sources; loads per-entry verdict files via `parse_triage_verdict`                                                          |
+| `finalize/output.ts`                  | Build the published v4 envelope from per-run sources (pure)                                                                                                             |
+| `finalize/verdict_ledger.ts`          | Shared per-entry verdict loader (`results/<entry_index>.json`); used by both `merge_results.ts` and `finalize_triage.ts`                                                |
 | `merge_results.ts`                    | Merge investigator result files into triage state                                                                                                                       |
 | `triage_verdict.ts`                   | `TriageVerdict` discriminated union + strict runtime parser                                                                                                             |
 | `novel_issues.ts`                     | Per-run `novel_issues.json` schema, reader, atomic writer, and pure-function mutators (register / cite / flag)                                                          |
@@ -402,7 +403,7 @@ The skill is a thin caller of `@ariadnejs/core`. Classification (`enrich_call_gr
 | `run_discovery.ts`                    | Run-id enumeration, manifest reading, prune protection                                                                                                                  |
 | `analysis_output.ts`                  | Timestamped analysis output JSON I/O                                                                                                                                    |
 | `project_id.ts`                       | Project-identifier derivation (`path_to_project_id`, `project_id_from_config`)                                                                                          |
-| `guard_tsx_invocation.ts`             | Enforce `node --import tsx` invocation (sandbox-compatible)                                                                                                             |
+| `@ariadnejs/skill-fs/require-node-import-tsx` | Side-effect guard shared with `triage-curator`: aborts if invoked via `tsx` CLI instead of `node --import tsx`                                                  |
 
 ## Reference
 

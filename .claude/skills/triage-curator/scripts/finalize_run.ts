@@ -17,8 +17,8 @@ import * as ts from "typescript";
 import {
   apply_proposals,
   type FailedAuthoring,
-} from "../src/apply_proposals.js";
-import { compute_orphan_paths } from "../src/orphan_cleanup.js";
+} from "../src/apply/apply_proposals.js";
+import { compute_orphan_paths } from "../src/apply/orphan_cleanup.js";
 import {
   render_all as render_unsupported_features_all,
   write_outputs as write_unsupported_features_outputs,
@@ -27,10 +27,10 @@ import { sync_permanent_rules } from "../../triage-entrypoints/scripts/sync_perm
 import {
   parse_known_issues_registry_json,
 } from "@ariadnejs/types";
-import { is_curated, save_outcome } from "../src/curation_outcome.js";
-import { error_code } from "../src/errors.js";
-import { compute_observation_counts } from "../src/observation_counts.js";
-import { read_v4_triage_results } from "../src/parse_triage_results.js";
+import { error_code } from "@ariadnejs/skill-fs";
+import { is_curated, save_outcome } from "../src/store/curation_outcome.js";
+import { compute_observation_counts } from "../src/absorb/observation_counts.js";
+import { read_v4_triage_results } from "../src/store/parse_triage_results.js";
 import {
   CURATOR_RUNS_DIR,
   derive_project,
@@ -40,9 +40,9 @@ import {
   get_permanent_slice_path,
   get_registry_file_path,
   run_output_dir,
-} from "../src/paths.js";
-import { render_authored_files } from "../src/render_authored_files.js";
-import { parse_investigator_session_log } from "../src/session_log.js";
+} from "../src/store/paths.js";
+import { render_authored_files } from "../src/apply/render_authored_files.js";
+import { parse_investigator_session_log } from "../src/store/session_log.js";
 import type {
   CuratedRunEntry,
   InvestigateResponse,
@@ -54,8 +54,8 @@ import type {
 import {
   validate_run_coherence,
   type RunCoherenceInput,
-} from "../src/validate_investigate_responses.js";
-import "../src/require_node_import_tsx.js";
+} from "../src/propose/validate_investigate_responses.js";
+import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 interface CliArgs {
   run_path: string;

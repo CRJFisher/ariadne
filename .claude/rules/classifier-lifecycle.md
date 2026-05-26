@@ -17,7 +17,7 @@ triage-entrypoints reads the registry to filter classifier hits but never mutate
 
 ## Atomic-write contract
 
-Every writer must use temp+rename (POSIX-atomic) to write the registry file. The curator uses the shared `atomic_write_file` helper at `.claude/skills/triage-curator/src/atomic_write.ts`. The reconciler must use the same helper when it lands.
+Every writer must use temp+rename (POSIX-atomic) to write the registry file. The curator uses the shared `atomic_write_file` helper from the `@ariadnejs/skill-fs` workspace package (`packages/skill-fs/src/atomic_write.ts`). The reconciler must use the same helper when it lands.
 
 This protects against concurrent writers (curator + reconciler running on the same machine) racing the read-mutate-write cycle and silently losing data.
 

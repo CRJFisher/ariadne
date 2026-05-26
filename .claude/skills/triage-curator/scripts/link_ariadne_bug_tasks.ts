@@ -14,9 +14,9 @@
 
 import * as fs from "node:fs/promises";
 
-import { link_ariadne_bug_tasks } from "../src/apply_proposals.js";
-import { get_registry_file_path } from "../src/paths.js";
-import "../src/require_node_import_tsx.js";
+import { link_ariadne_bug_tasks } from "../src/apply/apply_proposals.js";
+import { get_registry_file_path } from "../src/store/paths.js";
+import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 interface CliArgs {
   mapping_path: string;

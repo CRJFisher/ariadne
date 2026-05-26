@@ -21,19 +21,19 @@ import * as fs from "node:fs/promises";
 import * as fsSync from "node:fs";
 import path from "path";
 
-import { TRIAGE_STATE_DIR } from "../src/paths.js";
+import { TRIAGE_STATE_DIR } from "../src/store/paths.js";
 import { parse_project_arg } from "../src/cli_args.js";
 import {
   manifest_path_for,
   run_dir_for,
   state_path_for,
-} from "../src/triage_state_paths.js";
+} from "../src/store/paths.js";
 import {
   RUN_MANIFEST_SCHEMA_VERSION,
   type RunManifest,
   type TriageState,
 } from "../src/triage_state_types.js";
-import "../src/guard_tsx_invocation.js";
+import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const USAGE = "Usage: migrate_legacy_state.ts --project <name> [--purge]";
 

@@ -87,7 +87,7 @@ flowchart TD
 
   subgraph P4["Phase 4 · Finalize"]
     direction TB
-    S5("finalize_triage.ts<br/>build_finalization_output · seal manifest"):::step
+    S5("finalize_triage.ts<br/>finalize/output · seal manifest"):::step
     PUB[/"analysis_output/&lt;p&gt;/<br/>triage_results/&lt;run-id&gt;.json<br/>schema v4"/]:::published
   end
 
