@@ -55,14 +55,17 @@ Compute Pareto frontier on `(impact, -complexity, -risk)`; surface as one ordere
 
 ## Reuse
 
-Import `build_impact_rows()` from triage-curator (per workspace setup in 190.18.6). Do not duplicate.
+Consume the curator-emitted `impact_report.json` (`{ schema_version: 1, rows: ImpactRow[] }` — see 190.18.1) off disk; do NOT import curator source. The three-store architecture forbids cross-skill source imports — fix-sequencer's only inputs are the impact-report JSON and the existing backlog markdown.
+
+`ImpactRow` is imported from `@ariadnejs/types`.
 
 ## Files
 
-- `.claude/skills/fix-sequencer/src/cluster_tasks_by_overlap.ts` (clustering)
-- `.claude/skills/fix-sequencer/src/score_fix_impact.ts` (scoring)
-- `.claude/skills/fix-sequencer/src/size_fix_complexity.ts` (heuristic complexity, v1)
-- `.claude/skills/fix-sequencer/src/sequence_next_fixes.ts` (orchestrator: cluster → score → ranked list)
+- `.claude/skills/fix-sequencer/src/sequence/cluster_tasks_by_overlap.ts` (clustering)
+- `.claude/skills/fix-sequencer/src/sequence/score_fix_impact.ts` (scoring)
+- `.claude/skills/fix-sequencer/src/sequence/size_fix_complexity.ts` (heuristic complexity, v1)
+- `.claude/skills/fix-sequencer/src/sequence/sequence_next_fixes.ts` (orchestrator: cluster → score → ranked list)
+- `.claude/skills/fix-sequencer/src/sequence/pareto_frontier.ts` (Pareto algorithm, pure function)
 
 ## Cut from earlier draft
 
@@ -90,6 +93,6 @@ Part of the minimum-cut critical path.
 - [ ] #6 Complexity heuristic is a pure function with table-driven tests
 - [ ] #7 Pareto algorithm is its own pure function with 4+ corner-case tests
 - [ ] #8 Output `scored_clusters.json` carries `score`, `rank`, and `is_pareto_frontier: bool`
-- [ ] #9 Imports `build_impact_rows` from triage-curator (no duplication; cross-skill import works)
+- [ ] #9 Reads `impact_report.json` (`{ schema_version: 1, rows: ImpactRow[] }`) off disk; imports `ImpactRow` from `@ariadnejs/types`; no `triage-curator` source imports
 - [ ] #10 Score is finite for all inputs (guard `complexity * risk > 0`); rank tiebreak deterministic by `cluster_id` ascending
 <!-- AC:END -->

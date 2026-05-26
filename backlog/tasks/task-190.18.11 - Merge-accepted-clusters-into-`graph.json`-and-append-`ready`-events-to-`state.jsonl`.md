@@ -29,8 +29,9 @@ This is the _materialization_ step — accepted clusters become nodes in the wor
 
 ## Scope
 
-- File: `.claude/skills/fix-sequencer/src/enqueue_signed_off_fixes.ts`
+- File: `.claude/skills/fix-sequencer/src/enqueue/enqueue_signed_off_fixes.ts`
 - Wired into `.claude/skills/fix-sequencer/scripts/finalize_plan.ts`
+- Graph + state-log writes go through `.claude/skills/fix-sequencer/src/store/graph.ts` and `src/store/state_log.ts`; calibration appends through `src/store/calibration.ts`
 - For each cluster decision = `accept`:
   1. Add a node to `~/.ariadne/fix-sequencer/graph.json` with these fields:
      - `cluster_id`, `kind: "cluster"`, `rank`, `score`, `complexity`, `blast_radius`, `is_pareto_frontier`, `member_task_ids`, `intra_order`, `source_run_id`, `accepted_at`
@@ -70,7 +71,7 @@ This subtask is part of the minimum-cut critical path.
 - [ ] #2 Idempotent: re-running on identical decisions leaves graph.json byte-equal AND appends zero new lines to state.jsonl AND zero new lines to calibration.jsonl
 - [ ] #3 Atomic write semantics for graph.json (temp file + rename); tested against one concurrent reader (the reconciler)
 - [ ] #4 state.jsonl writes use single `O_APPEND` for atomic event append
-- [ ] #5 Schema validated against types defined in `fix_plan_types.ts`; node uses `is_pareto_frontier` (not `frontier`)
+- [ ] #5 Schema validated against types defined in `src/fix_plan_types.ts`; node uses `is_pareto_frontier` (not `frontier`)
 - [ ] #6 When `decisions.json[cluster_id].refactor_proposal_requested === true`, a refactor backlog task is created and its ID appended to `member_task_ids[0]` and `intra_order[0]`
 - [ ] #7 Validation rejects a node whose `member_task_ids` overlap any existing graph node's `member_task_ids`
 - [ ] #8 Per accepted cluster, exactly one `predicted` row appended to calibration.jsonl with fields { event, cluster_id, run_id, complexity, impact, members, ts }

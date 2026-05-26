@@ -28,8 +28,9 @@ The investigator already knows likely fix locations from its evidence collection
 - File: `.claude/skills/triage-curator/src/propose_backlog_tasks.ts` (and the schema validator that backs it)
 - Add `touched_files: string[]` to the proposed task's frontmatter (best-effort; empty list valid)
 - Add `cluster_hint: <root_cause_category>` as a label on each created ariadne-bug task
-- Forward-only: existing TASK-190.16.x tasks are NOT backfilled (fix-sequencer treats absent `touched_files` as singleton-cluster signal)
 - Validation: malformed `touched_files` (non-string entries, paths with `..`) rejected before write
+- **Backfill script** (`scripts/backfill_touched_files.ts` or similar): walk every existing 190.16.x ariadne-bug task under `backlog/tasks/` and stamp `touched_files` + `cluster_hint` retrospectively (best-effort from task prose / git log of files modified in the linked commits). Idempotent — re-running does not duplicate or overwrite stamps that already match. Run once as part of this task and commit the resulting frontmatter edits.
+  - Without backfill, fix-sequencer's DOGFOOD-1 against the real 117-task backlog emits 117 singleton clusters and produces no useful signal. The backfill is a one-shot data-quality investment, not ongoing infrastructure.
 
 ## Critical-path
 
@@ -46,4 +47,5 @@ This subtask is part of the minimum-cut critical path — clustering quality is 
 - [ ] #3 Existing tasks unaffected (only forward-going)
 - [ ] #4 Validation rejects malformed `touched_files`
 - [ ] #5 Unit tests cover empty-list, single-file, multi-file, and rejection cases
+- [ ] #6 A one-shot backfill script (`scripts/backfill_touched_files.ts` or similar) populates `touched_files` and `cluster_hint` on every existing 190.16.x ariadne-bug task under `backlog/tasks/`. The script is idempotent — re-running it does not duplicate or overwrite stamps that already match. Run it once as part of this task and commit the resulting frontmatter edits.
 <!-- AC:END -->
