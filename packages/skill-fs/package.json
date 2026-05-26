@@ -32,6 +32,9 @@
   "license": "ISC",
   "private": true,
   "type": "module",
+  "dependencies": {
+    "@ariadnejs/types": "workspace:*"
+  },
   "devDependencies": {
     "@types/node": "^24.0.14",
     "typescript": "^6.0.2",

@@ -11,7 +11,7 @@ import {
 import {
   read_classifier_regression_records,
   type ClassifierRegressionRecord,
-} from "./classifier_regressions.js";
+} from "@ariadnejs/skill-fs";
 import type { CoordinatorDecision } from "./coordinator_decision.js";
 import {
   read_coordinator_log,

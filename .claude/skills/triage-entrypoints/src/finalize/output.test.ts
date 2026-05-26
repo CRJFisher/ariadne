@@ -9,7 +9,7 @@ import {
   type FinalizationSummary,
 } from "./output.js";
 import type { TriageState, TriageEntry } from "../triage_state_types.js";
-import type { ClassifierRegressionFlag } from "../absorb/classifier_regressions.js";
+import type { ClassifierRegressionFlag } from "@ariadnejs/types";
 import type { NovelIssue } from "../absorb/novel_issues.js";
 import type { TriageVerdict } from "../verdict/triage_verdict.js";
 

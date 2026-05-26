@@ -22,7 +22,7 @@ import { load_verdicts_by_entry_index } from "../src/finalize/verdict_ledger.js"
 import {
   aggregate_classifier_regressions,
   read_classifier_regression_records,
-} from "../src/absorb/classifier_regressions.js";
+} from "@ariadnejs/skill-fs";
 import { read_novel_issues, write_novel_issues } from "../src/absorb/novel_issues.js";
 import type {
   TriageEntry,

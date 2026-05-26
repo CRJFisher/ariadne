@@ -25,27 +25,20 @@ import { fileURLToPath } from "node:url";
 
 import {
   KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION,
+  parse_known_issues_registry_json,
   type KnownIssue,
   type KnownIssuesRegistryFile,
   type PredicateExpr,
 } from "@ariadnejs/types";
-import { load_registry } from "../src/known_issues_registry.js";
-import { render_builtins_barrel } from "../src/auto_classify/render_builtins_barrel.js";
+import { render_builtins_barrel } from "../src/render/render_builtins_barrel.js";
+import {
+  get_core_builtins_barrel_path,
+  get_permanent_slice_path,
+  get_registry_file_path,
+} from "../src/store/paths.js";
 
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-// scripts/ → skill root → ../.. (skills) → ../.. (.claude) → ../.. (repo root)
-const REPO_ROOT = path.resolve(HERE, "..", "..", "..", "..");
-
-const CLASSIFY_DIR = path.join(
-  REPO_ROOT,
-  "packages",
-  "core",
-  "src",
-  "classify_entry_points",
-);
-
-const PERMANENT_DATA_PATH = path.join(CLASSIFY_DIR, "permanent_data.ts");
-const BARREL_PATH = path.join(CLASSIFY_DIR, "builtins", "index.ts");
+const PERMANENT_DATA_PATH = get_permanent_slice_path();
+const BARREL_PATH = get_core_builtins_barrel_path();
 
 interface SyncResult {
   permanent_count: number;
@@ -62,7 +55,8 @@ interface SyncResult {
  * (`permanent_data.ts`) gates which rules ship in core's default flow.
  */
 export async function sync_permanent_rules(): Promise<SyncResult> {
-  const registry = load_registry();
+  const raw = await fs.readFile(get_registry_file_path(), "utf8");
+  const registry = parse_known_issues_registry_json(raw);
   const permanent = filter_permanent_slice(registry);
   await write_permanent_data(permanent);
   await write_builtins_barrel(registry);

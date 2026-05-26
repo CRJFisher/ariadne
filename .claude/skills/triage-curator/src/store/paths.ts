@@ -21,14 +21,15 @@ export const TRIAGE_ENTRYPOINTS_ANALYSIS_OUTPUT_DIR = path.join(
 /** Resolves to the triage-entrypoints known_issues/registry.json in the current repo checkout. */
 export function get_registry_file_path(): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
-  // src/ → skill root → ../triage-entrypoints/known_issues/registry.json
-  return path.resolve(here, "..", "..", "triage-entrypoints", "known_issues", "registry.json");
+  // src/store/ → src/ → triage-curator/ → ../triage-entrypoints/known_issues/registry.json
+  return path.resolve(here, "..", "..", "..", "triage-entrypoints", "known_issues", "registry.json");
 }
 
 /** Absolute repo root — same value every script derives. Consumed by get_context_cmd builders. */
 export function get_repo_root(): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
-  return path.resolve(here, "..", "..", "..", "..");
+  // src/store/ → src/ → triage-curator/ → skills/ → .claude/ → repo root
+  return path.resolve(here, "..", "..", "..", "..", "..");
 }
 
 function get_core_classify_dir(): string {

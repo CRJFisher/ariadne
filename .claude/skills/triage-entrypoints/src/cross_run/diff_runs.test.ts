@@ -7,7 +7,7 @@ import type {
   PublishedUncertain,
 } from "../finalize/output.js";
 import type { NovelIssue } from "../absorb/novel_issues.js";
-import type { ClassifierRegressionFlag } from "../absorb/classifier_regressions.js";
+import type { ClassifierRegressionFlag } from "@ariadnejs/types";
 
 function tp(
   name: string,

@@ -22,8 +22,8 @@ import { compute_orphan_paths } from "../src/apply/orphan_cleanup.js";
 import {
   render_all as render_unsupported_features_all,
   write_outputs as write_unsupported_features_outputs,
-} from "../../triage-entrypoints/scripts/render_unsupported_features.js";
-import { sync_permanent_rules } from "../../triage-entrypoints/scripts/sync_permanent_rules.js";
+} from "./render_unsupported_features.js";
+import { sync_permanent_rules } from "./sync_permanent_rules.js";
 import {
   parse_known_issues_registry_json,
 } from "@ariadnejs/types";

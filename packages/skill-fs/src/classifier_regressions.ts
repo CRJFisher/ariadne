@@ -19,15 +19,20 @@ import type {
   ClassifierRegressionFlaggedEntry,
 } from "@ariadnejs/types";
 
-import {
-  assert_keys,
-  describe,
-  expect_object,
-  parse_non_empty_string,
-} from "../verdict/strict_parse.js";
-import type { MemberEvidence } from "../verdict/triage_verdict.js";
-
 export type { ClassifierRegressionFlag, ClassifierRegressionFlaggedEntry };
+
+/**
+ * Verdict-time member evidence carried by each regression record. Pinpoints
+ * the source location the per-entry investigator cited when emitting
+ * `fp-classifier-regression`. Distinct from the published-artifact
+ * `MemberEvidence` shape (`summary`/`excerpt`) consumed by downstream readers
+ * of `triage_results/<run-id>.json`.
+ */
+export interface MemberEvidence {
+  file: string;
+  line: number;
+  why: string;
+}
 
 export interface ClassifierRegressionRecord {
   timestamp: string;
@@ -106,6 +111,47 @@ export function aggregate_classifier_regressions(
 }
 
 // ===== Internal: parsing =====
+
+function expect_object(raw: unknown, ctx: string): Record<string, unknown> {
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+    throw new Error(`${ctx}: expected object, got ${describe(raw)}`);
+  }
+  return raw as Record<string, unknown>;
+}
+
+function assert_keys(
+  obj: Record<string, unknown>,
+  allowed: readonly string[],
+  ctx: string,
+): void {
+  for (const key of allowed) {
+    if (!(key in obj)) {
+      throw new Error(`${ctx}: missing required field '${key}'`);
+    }
+  }
+  const allowed_set = new Set<string>(allowed);
+  for (const key of Object.keys(obj)) {
+    if (!allowed_set.has(key)) {
+      throw new Error(`${ctx}: unexpected field '${key}'`);
+    }
+  }
+}
+
+function parse_non_empty_string(raw: unknown, ctx: string): string {
+  if (typeof raw !== "string") {
+    throw new Error(`${ctx}: must be a string, got ${describe(raw)}`);
+  }
+  if (raw.length === 0) {
+    throw new Error(`${ctx}: must be non-empty`);
+  }
+  return raw;
+}
+
+function describe(value: unknown): string {
+  if (value === null) return "null";
+  if (Array.isArray(value)) return "array";
+  return typeof value;
+}
 
 function parse_classifier_regression_record(
   raw: unknown,

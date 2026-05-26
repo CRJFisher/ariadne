@@ -14,21 +14,20 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { load_registry } from "../src/known_issues_registry.js";
-import type {
-  ClassifierSpec,
-  KnownIssue,
-  KnownIssueLanguage,
-  PredicateExpr,
+import {
+  parse_known_issues_registry_json,
+  type ClassifierSpec,
+  type KnownIssue,
+  type KnownIssueLanguage,
+  type PredicateExpr,
 } from "@ariadnejs/types";
+
+import { get_registry_file_path, get_repo_root } from "../src/store/paths.js";
 
 // ===== Paths =====
 
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-const SKILL_ROOT = path.resolve(HERE, "..");
-const REPO_ROOT = path.resolve(SKILL_ROOT, "..", "..", "..");
 export const QUERIES_DIR = path.resolve(
-  REPO_ROOT,
+  get_repo_root(),
   "packages",
   "core",
   "src",
@@ -68,7 +67,7 @@ export function render_language(language: KnownIssueLanguage, registry: KnownIss
   header.push(
     "Canonical list of known Ariadne failure modes that affect this language. " +
       "Generated from `.claude/skills/triage-entrypoints/known_issues/registry.json` by " +
-      "`.claude/skills/triage-entrypoints/scripts/render_unsupported_features.ts`. " +
+      "`.claude/skills/triage-curator/scripts/render_unsupported_features.ts`. " +
       "Do not edit by hand — edit the registry and re-render.",
   );
   header.push("");
@@ -200,11 +199,12 @@ export function write_outputs(outputs: RenderOutput[]): string[] {
 // ===== Main =====
 
 function main(): void {
-  const registry = load_registry();
+  const raw = fs.readFileSync(get_registry_file_path(), "utf8");
+  const registry = parse_known_issues_registry_json(raw);
   const outputs = render_all(registry);
   const written = write_outputs(outputs);
   for (const p of written) {
-    console.error(`wrote ${path.relative(REPO_ROOT, p)}`);
+    console.error(`wrote ${path.relative(get_repo_root(), p)}`);
   }
 }
 

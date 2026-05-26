@@ -14,7 +14,7 @@
 
 import * as path from "node:path";
 
-import type { ClassifierRegressionFlag } from "../absorb/classifier_regressions.js";
+import type { ClassifierRegressionFlag } from "@ariadnejs/types";
 import type { NovelIssue, FlaggedVerdict } from "../absorb/novel_issues.js";
 import type { MemberEvidence, TriageVerdict } from "../verdict/triage_verdict.js";
 import type { TriageEntry, TriageState } from "../triage_state_types.js";

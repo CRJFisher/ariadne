@@ -7,8 +7,12 @@ import {
   render_all,
   render_language,
 } from "./render_unsupported_features.js";
-import { load_registry } from "../src/known_issues_registry.js";
-import type { KnownIssue } from "@ariadnejs/types";
+import { parse_known_issues_registry_json, type KnownIssue } from "@ariadnejs/types";
+import { get_registry_file_path } from "../src/store/paths.js";
+
+function load_registry(): KnownIssue[] {
+  return parse_known_issues_registry_json(fs.readFileSync(get_registry_file_path(), "utf8"));
+}
 
 describe("render_unsupported_features — golden file pinning", () => {
   const registry = load_registry();

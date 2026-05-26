@@ -29,7 +29,7 @@ import {
   append_classifier_regression_record,
   read_classifier_regression_records,
   type ClassifierRegressionRecord,
-} from "../../../triage-entrypoints/src/absorb/classifier_regressions.js";
+} from "@ariadnejs/skill-fs";
 import { apply_proposals } from "../apply/apply_proposals.js";
 import type { KnownIssue } from "../types.js";
 

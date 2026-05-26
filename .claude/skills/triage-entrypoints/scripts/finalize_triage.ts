@@ -27,7 +27,7 @@ import { parse_project_arg, parse_run_id_arg } from "../src/cli_args.js";
 import {
   aggregate_classifier_regressions,
   read_classifier_regression_records,
-} from "../src/absorb/classifier_regressions.js";
+} from "@ariadnejs/skill-fs";
 import { read_novel_issues } from "../src/absorb/novel_issues.js";
 import {
   ANALYSIS_OUTPUT_DIR,

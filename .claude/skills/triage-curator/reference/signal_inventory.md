@@ -127,7 +127,7 @@ A registry entry's `classifier` field is one of:
 
 - **`{ kind: "builtin", function_name, min_confidence }`** — Reference to a
   TypeScript function in
-  `triage-entrypoints/src/auto_classify/builtins/{function_name}.ts` that
+  `packages/core/src/classify_entry_points/builtins/check_{group_id}.ts` that
   receives the full `Project` + entry and returns a confidence score.
   Chosen when the classifier needs resolution-graph access, aggregate
   call-reference shape, or other signals not expressible in the predicate

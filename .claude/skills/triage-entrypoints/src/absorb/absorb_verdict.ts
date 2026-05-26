@@ -47,7 +47,7 @@
 import {
   append_classifier_regression_record,
   type ClassifierRegressionRecord,
-} from "./classifier_regressions.js";
+} from "@ariadnejs/skill-fs";
 import {
   find_flagged,
   find_issue_citing,
