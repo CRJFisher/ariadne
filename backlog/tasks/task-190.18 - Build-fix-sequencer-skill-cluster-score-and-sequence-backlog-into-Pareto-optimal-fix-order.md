@@ -36,6 +36,7 @@ Two upstream skills (`triage-entrypoints`, `triage-curator`) currently land task
 Seven phases stacked top-to-bottom in pipeline order: cluster → score → prepare plan → sign off → enqueue (writes the three persistent stores) inside the fix-sequencer skill's single-invocation boundary, then worker (async, /schedule-driven) and reconciler (fix-sequencer-owned but invoked as a pre-step of the next triage-entrypoints run). The persistent stores sit between the in-skill phases and the worker; `target project git log` joins them as a second reconciler input so out-of-band human fixes are caught alongside worker `done` events. The loop-closure edge from `wip → fixed` back to curator's registry read is the only red dotted arrow. (For where this skill fits in the broader chain see [triage-entrypoints → Self-healing pipeline](../../.claude/skills/triage-entrypoints/README.md#self-healing-pipeline).)
 
 ```mermaid
+%%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%
 flowchart TD
   classDef step       fill:#fff8e1,stroke:#b58900,stroke-width:1.5px,color:#5d4037
   classDef artifact   fill:#e8f5e9,stroke:#2e7d32,stroke-width:1.2px,color:#1b5e20
