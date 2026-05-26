@@ -20,13 +20,13 @@ ordinal: 1000
 
 ## Why
 
-The new `fix-sequencer` skill must NOT parse markdown to ingest impact data. Triage-curator's `impact_report.ts` already builds rows in memory; emitting a sibling JSON file costs ~30 lines and unblocks downstream automation.
+The new `fix-sequencer` skill must NOT parse markdown to ingest impact data. Triage-curator's `propose/impact_report.ts` already builds rows in memory; emitting a sibling JSON file costs ~30 lines and unblocks the downstream skill's file-only consumption path (per the three-store architecture, fix-sequencer never imports curator source).
 
 ## Scope
 
-- File: `.claude/skills/triage-curator/src/impact_report.ts`
+- File: `.claude/skills/triage-curator/src/propose/impact_report.ts`
 - Add a JSON emitter sibling to the existing markdown renderer
-- Schema: `{ rows: ImpactRow[] }` where `ImpactRow` is the existing in-memory shape (`group_id`, `observed_count`, `observed_projects[]`, `languages[]`, `backlog_task`)
+- Schema: `ImpactReportFile = { schema_version: 1, rows: ImpactRow[] }` — both types imported from `@ariadnejs/types` (lifted in `fbe0488a`)
 - Wire into `scripts/generate_impact_report.ts` to write `impact_report.json` next to `impact_report.md`
 - Reuse `build_impact_rows()` — do not duplicate the rank/sort logic
 
@@ -41,7 +41,7 @@ The new `fix-sequencer` skill must NOT parse markdown to ingest impact data. Tri
 <!-- AC:BEGIN -->
 
 - [ ] #1 impact_report.json written next to impact_report.md per run
-- [ ] #2 Schema has `rows: ImpactRow[]` with group_id, observed_count, observed_projects[], languages[], backlog_task
+- [ ] #2 Schema is the `ImpactReportFile` envelope from `@ariadnejs/types` (`{ schema_version: 1, rows: ImpactRow[] }`); writer and reader share one type — no field enumeration in this AC
 - [ ] #3 Existing markdown output unchanged
 - [ ] #4 Tested on a recorded run fixture (fixture under `triage-curator/__fixtures__/` or equivalent)
 - [ ] #5 build_impact_rows() reused, not duplicated
