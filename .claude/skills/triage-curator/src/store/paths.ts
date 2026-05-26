@@ -60,6 +60,20 @@ export function run_output_dir(run_id: string): string {
   return path.join(CURATOR_RUNS_DIR, run_id);
 }
 
+/**
+ * Sidecar file that the main agent appends to after each
+ * `mcp__backlog__task_create` call in Step 4. Maps a created task's
+ * `target_registry_group_id` (Ariadne-bug flight) or `signal_library_gap`
+ * source `group_id` (signal-library flight) to the resolved `TASK-<N>` id.
+ * `link_ariadne_bug_tasks.ts` reads this file to drive registry linkage,
+ * so a crash between `task_create` and linkage does not strand the
+ * registry row without a backlink — the next run picks up where the
+ * previous one stopped.
+ */
+export function created_task_ids_path(run_id: string): string {
+  return path.join(run_output_dir(run_id), "created_task_ids.json");
+}
+
 export function derive_run_id(run_path: string): string {
   return path.basename(run_path, ".json");
 }

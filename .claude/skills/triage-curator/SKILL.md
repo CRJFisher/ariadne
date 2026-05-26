@@ -196,33 +196,41 @@ resolve a task id using this precedence:
    })
    ```
 
-Build the registry-linkage mapping file:
+**Sidecar: `created_task_ids.json`.** The main agent persists each task id
+to disk **immediately after** the `mcp__backlog__task_create` call resolves
+(and equally when an entry is attached via `existing_task_id` or matched via
+`task_search`). The sidecar lives at:
 
-```bash
-STAMP=$(date -u +%Y-%m-%dT%H-%M-%SZ)
-MAPPING_PATH="/tmp/curator-ariadne-bug-mapping-${STAMP}.json"
+```
+~/.ariadne/triage-curator/runs/<run_id>/created_task_ids.json
 ```
 
-The mapping is a JSON object `{ [target_registry_group_id]: "TASK-<N>" }`.
-**Every resolved entry contributes — whether attached via `existing_task_id`,
-found via `task_search`, or freshly created.** Omitting attached entries
-would leave their registry rows with `backlog_task: undefined`.
-
-Write the mapping via `Write`, then invoke:
+and has shape `{ [target_registry_group_id]: "TASK-<N>" }`. Update via
+`Read` → merge → `Write` so a crash between `task_create` and the next
+write loses at most one entry's bookkeeping. Then invoke linkage:
 
 ```bash
 node --import tsx .claude/skills/triage-curator/scripts/link_ariadne_bug_tasks.ts \
-  --mapping "$MAPPING_PATH"
+  --run-id "<run_id>"
 ```
 
-This writes `backlog_task` onto matching registry entries. The helper is a
-thin wrapper around `link_ariadne_bug_tasks` in `apply_proposals.ts`.
+This reads the sidecar, then writes `backlog_task` onto matching registry
+entries via `link_ariadne_bug_tasks` in `apply_proposals.ts`.
 
-**Crash recovery.** If the orchestrator crashes between finalize and
-successful linkage, the run's `runs/<id>/finalized.json` already contains
-the full `outcome.ariadne_bug_tasks[]` array. Re-running this sub-step
-from that array reconstructs the mapping without re-dispatching
-investigators.
+**Crash recovery.** Two sentinels protect this step:
+
+- `runs/<run_id>/finalized.json` (or its in-progress sibling
+  `finalize_started.json`) — finalize itself short-circuits if either
+  exists, so apply_proposals never double-bumps `observed_count`.
+- `runs/<run_id>/created_task_ids.json` — every resolved task id is
+  recorded here before linkage. Re-running `link_ariadne_bug_tasks.ts`
+  with the same `--run-id` is idempotent: `link_ariadne_bug_tasks`
+  no-ops when `backlog_task` already matches.
+
+If the orchestrator crashes between `mcp__backlog__task_create` and the
+sidecar append, the next sweep re-creates the task; `mcp__backlog__task_search`
+de-dups by `title` + `root_cause_category` so the duplicate is suppressed
+before linkage.
 
 ### Step 5 — Commit the sweep
 

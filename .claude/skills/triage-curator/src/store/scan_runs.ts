@@ -46,8 +46,10 @@ export async function discover_runs(
 }
 
 /**
- * Return the set of run_ids that have been curated (i.e. have a
- * `runs/<id>/finalized.json` sentinel).
+ * Return the set of run_ids that have been curated, where "curated" means
+ * either a completed `finalized.json` sentinel or a `finalize_started.json`
+ * in-progress marker. Either signal means a re-curation would double-bump
+ * `observed_count` — they share the skip semantics.
  */
 export async function list_curated_run_ids(
   runs_dir: string = CURATOR_RUNS_DIR,
@@ -61,12 +63,15 @@ export async function list_curated_run_ids(
     throw err;
   }
   for (const run_id of entries) {
-    try {
-      await fs.access(path.join(runs_dir, run_id, "finalized.json"));
-      out.add(run_id);
-    } catch (err) {
-      if (error_code(err) === "ENOENT") continue;
-      throw err;
+    for (const marker of ["finalized.json", "finalize_started.json"]) {
+      try {
+        await fs.access(path.join(runs_dir, run_id, marker));
+        out.add(run_id);
+        break;
+      } catch (err) {
+        if (error_code(err) === "ENOENT") continue;
+        throw err;
+      }
     }
   }
   return out;

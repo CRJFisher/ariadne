@@ -48,8 +48,9 @@ export const SIGNAL_LIBRARY_GAP_PARENT_TASK_ID = "TASK-190.16";
  *   `curate_all`'s `RunDispatch.fixed_novel_issue_resurfacings[]` for human
  *   review (read straight off the run-plan stdout).
  * - `observed_count` accumulates across runs; re-running the curator on the same
- *   run_id does double-count, which is why finalize's `finalized.json` sentinel
- *   is the guard against redundant invocation.
+ *   run_id does double-count, which is why finalize's `finalized.json` (or
+ *   in-progress `finalize_started.json`) sentinel is the guard against
+ *   redundant invocation.
  */
 export function bump_observed_stats(
   registry: KnownIssue[],

@@ -28,7 +28,11 @@ import {
   parse_known_issues_registry_json,
 } from "@ariadnejs/types";
 import { error_code } from "@ariadnejs/skill-fs";
-import { is_curated, save_outcome } from "../src/store/curation_outcome.js";
+import {
+  is_curated,
+  mark_finalize_started,
+  save_outcome,
+} from "../src/store/curation_outcome.js";
 import { compute_observation_counts } from "../src/absorb/observation_counts.js";
 import { read_v4_triage_results } from "../src/store/parse_triage_results.js";
 import {
@@ -222,20 +226,28 @@ async function ast_check_authored_files(
 
 async function main(): Promise<void> {
   const { run_path, dry_run } = parse_argv(process.argv.slice(2));
-  await fs.mkdir(CURATOR_RUNS_DIR, { recursive: true });
 
   const run_id = derive_run_id(run_path);
   const project = derive_project(run_path);
-  const output_dir = run_output_dir(run_id);
-  const investigate_dir = path.join(output_dir, "investigate");
 
+  // Sentinel guard MUST run before any other side effects. Either
+  // `finalized.json` (completed) or `finalize_started.json` (crashed mid-run)
+  // signals "this run has already been touched"; either way, refuse to
+  // re-enter apply_proposals so observed_count is not double-bumped. Manual
+  // recovery: delete both sentinel files after inspecting the registry.
   if (!dry_run && (await is_curated(run_id))) {
     process.stderr.write(
-      `finalize_run: run '${run_id}' already has finalized.json; refusing to re-apply ` +
-        "proposals (would double-bump observed_count). Delete the sentinel to force.\n",
+      `finalize_run: run '${run_id}' already has a sentinel under runs/<id>/; refusing to re-apply ` +
+        "proposals (would double-bump observed_count). Delete finalized.json and " +
+        "finalize_started.json to force a re-run after verifying the registry.\n",
     );
     process.exit(2);
   }
+
+  await fs.mkdir(CURATOR_RUNS_DIR, { recursive: true });
+
+  const output_dir = run_output_dir(run_id);
+  const investigate_dir = path.join(output_dir, "investigate");
 
   let triage: TriageResultsFile;
   try {
@@ -275,6 +287,13 @@ async function main(): Promise<void> {
     await render_authored_files(investigate_responses, builtins_dir);
   const { ast_failures, passing: authored_files_by_group } =
     await ast_check_authored_files(authored_files_raw);
+
+  // Mark the run as in-progress before any registry mutation. Crash between
+  // here and `save_outcome` leaves `finalize_started.json` behind; the next
+  // `finalize_run` invocation's `is_curated` guard skips re-apply.
+  if (!dry_run) {
+    await mark_finalize_started(run_id, run_path);
+  }
 
   const result = await apply_proposals(
     investigate_responses,

@@ -624,6 +624,34 @@ describe("apply_proposals", () => {
   });
 });
 
+describe("apply_proposals — replay safety (sentinel-guard contract)", () => {
+  // The sentinel guard lives in finalize_run.ts (mark_finalize_started +
+  // is_curated). This test captures the underlying invariant: a re-entry of
+  // apply_proposals on the same run_id WOULD double-bump observed_count if
+  // the guard did not short-circuit. Documents the guarantee finalize_run
+  // depends on; the unit-level guard test lives in curation_outcome.test.ts.
+  it("bump_observed_stats double-counts on direct re-entry (motivates the sentinel guard)", async () => {
+    await write_registry([known("a", { observed_count: 0 })]);
+    const opts = {
+      dry_run: false,
+      registry_path,
+      project: "p",
+      run_id: "crash-replay-run",
+      classifier_regressions: [],
+      authored_files_by_group: {},
+    };
+    await apply_proposals([], { a: 5 }, opts);
+    const after_first = await read_registry_json();
+    expect(after_first[0].observed_count).toBe(5);
+
+    // Crash-replay: same run_id, same member_counts, sentinel never written.
+    // Without the finalize_run sentinel guard, observed_count would now be 10.
+    await apply_proposals([], { a: 5 }, opts);
+    const after_replay = await read_registry_json();
+    expect(after_replay[0].observed_count).toBe(10);
+  });
+});
+
 describe("apply_proposals — classifier_regressions integration", () => {
   it("tags drift_detected + writes in-flight drift_evidence end-to-end", async () => {
     await write_registry([known("decorator-route")]);
