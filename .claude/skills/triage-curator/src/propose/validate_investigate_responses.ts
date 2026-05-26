@@ -31,10 +31,17 @@ import type {
   InvestigateResponse,
   InvestigatorSessionLog,
   KnownIssue,
+  KnownIssueLanguage,
   RejectedMember,
   SignalCheck,
 } from "../types.js";
-import { ARIADNE_ROOT_CAUSE_CATEGORIES, SIGNAL_CHECK_OPS } from "../types.js";
+import {
+  ARIADNE_ROOT_CAUSE_CATEGORIES,
+  SIGNAL_CHECK_OPS,
+  is_ariadne_root_cause_category,
+  is_known_issue_language,
+  is_signal_check_op,
+} from "../types.js";
 
 const TASK_ID_PATTERN = /^TASK-[0-9]+(?:\.[0-9]+)*$/;
 
@@ -461,14 +468,14 @@ function parse_ariadne_bug(raw: unknown): { value: AriadneBug | null } | ShapeEr
   const obj = raw as Record<string, unknown>;
   if (
     typeof obj.root_cause_category !== "string" ||
-    !ARIADNE_ROOT_CAUSE_CATEGORIES.includes(obj.root_cause_category as AriadneRootCauseCategory)
+    !is_ariadne_root_cause_category(obj.root_cause_category)
   ) {
     return {
       error:
         `ariadne_bug.root_cause_category must be one of: ${ARIADNE_ROOT_CAUSE_CATEGORIES.join(", ")}`,
     };
   }
-  const root_cause_category = obj.root_cause_category as AriadneRootCauseCategory;
+  const root_cause_category: AriadneRootCauseCategory = obj.root_cause_category;
   if (typeof obj.title !== "string" || obj.title.length === 0) {
     return { error: "ariadne_bug.title must be a non-empty string" };
   }
@@ -556,7 +563,6 @@ function parse_classifier_spec(
   };
 }
 
-const LANGUAGE_VALUES = new Set(["typescript", "javascript", "python", "rust"]);
 
 function parse_signal_check(raw: unknown, idx: number): { value: SignalCheck } | ShapeError {
   if (typeof raw !== "object" || raw === null) {
@@ -566,6 +572,12 @@ function parse_signal_check(raw: unknown, idx: number): { value: SignalCheck } |
   if (typeof obj.op !== "string") {
     return { error: `checks[${idx}].op must be a string` };
   }
+  if (!is_signal_check_op(obj.op)) {
+    return {
+      error: `checks[${idx}].op '${obj.op}' is not a known SignalCheck op (allowed: ${SIGNAL_CHECK_OPS.join(", ")})`,
+    };
+  }
+  const op = obj.op;
   const prefix = `checks[${idx}]`;
   const s = (field: string): { ok: string } | ShapeError => {
     const v = obj[field];
@@ -580,18 +592,17 @@ function parse_signal_check(raw: unknown, idx: number): { value: SignalCheck } |
     return { ok: v };
   };
 
-  switch (obj.op) {
+  switch (op) {
     case "diagnosis_eq": {
       const r = s("value");
       if ("error" in r) return r;
       return { value: { op: "diagnosis_eq", value: r.ok } };
     }
     case "language_eq": {
-      if (typeof obj.value !== "string" || !LANGUAGE_VALUES.has(obj.value)) {
+      if (typeof obj.value !== "string" || !is_known_issue_language(obj.value)) {
         return { error: `${prefix}.value must be typescript|javascript|python|rust` };
       }
-      // Narrowed by LANGUAGE_VALUES membership check.
-      const value = obj.value as "typescript" | "javascript" | "python" | "rust";
+      const value: KnownIssueLanguage = obj.value;
       return { value: { op: "language_eq", value } };
     }
     case "syntactic_feature_eq": {
@@ -730,11 +741,13 @@ function parse_signal_check(raw: unknown, idx: number): { value: SignalCheck } |
       }
       return { value: { op: "has_unindexed_test_caller", value: obj.value } };
     }
-    default:
-      return {
-        error: `${prefix}.op '${obj.op}' is not a known SignalCheck op (allowed: ${SIGNAL_CHECK_OPS.join(", ")})`,
-      };
   }
+  // Exhaustiveness assertion: `op` has been narrowed by `is_signal_check_op`
+  // to `SignalCheck["op"]`. If every case above is covered, `op` here is
+  // `never`. Adding a new variant to `SignalCheck` without handling it in the
+  // switch widens this type and fails compilation.
+  const exhaustive: never = op;
+  throw new Error(`unreachable SignalCheck op: ${String(exhaustive)}`);
 }
 
 function parse_example_indexes(raw: unknown, field: string): { value: number[] } | ShapeError {

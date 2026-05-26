@@ -3,20 +3,10 @@ import type {
   InvestigatorSessionLog,
   InvestigatorSessionStatus,
 } from "../types.js";
-
-const FAILURE_CATEGORIES = new Set<InvestigatorFailureCategory>([
-  "group_incoherent",
-  "pattern_unclear",
-  "classifier_infeasible",
-  "registry_conflict",
-  "other",
-]);
-
-const STATUSES = new Set<InvestigatorSessionStatus>([
-  "success",
-  "failure",
-  "blocked_missing_signal",
-]);
+import {
+  is_investigator_failure_category,
+  is_investigator_session_status,
+} from "../types.js";
 
 export interface SessionLogParseError {
   error: string;
@@ -41,10 +31,10 @@ export function parse_investigator_session_log(
   if (typeof obj.group_id !== "string" || obj.group_id.length === 0) {
     return { error: "session log: group_id must be a non-empty string" };
   }
-  if (typeof obj.status !== "string" || !STATUSES.has(obj.status as InvestigatorSessionStatus)) {
+  if (typeof obj.status !== "string" || !is_investigator_session_status(obj.status)) {
     return { error: "session log: status must be success|failure|blocked_missing_signal" };
   }
-  const status = obj.status as InvestigatorSessionStatus;
+  const status: InvestigatorSessionStatus = obj.status;
   if (typeof obj.reasoning !== "string") {
     return { error: "session log: reasoning must be a string" };
   }
@@ -54,9 +44,9 @@ export function parse_investigator_session_log(
     failure_category = null;
   } else if (
     typeof obj.failure_category === "string" &&
-    FAILURE_CATEGORIES.has(obj.failure_category as InvestigatorFailureCategory)
+    is_investigator_failure_category(obj.failure_category)
   ) {
-    failure_category = obj.failure_category as InvestigatorFailureCategory;
+    failure_category = obj.failure_category;
   } else {
     return { error: "session log: failure_category must be null or a known category" };
   }

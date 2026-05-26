@@ -23,6 +23,7 @@ import type {
   KnownIssue,
   KnownIssueLanguage,
 } from "../types.js";
+import { is_known_issue_language } from "../types.js";
 
 /**
  * Single static parent task for all signal-library-gap sub-tasks emitted by
@@ -481,9 +482,6 @@ function declared_languages(spec: BuiltinClassifierSpec | null): KnownIssueLangu
   return [...out];
 }
 
-function is_known_issue_language(value: string): value is KnownIssueLanguage {
-  return value === "typescript" || value === "javascript" || value === "python" || value === "rust";
-}
 
 interface UpsertOutcome {
   registry: KnownIssue[];

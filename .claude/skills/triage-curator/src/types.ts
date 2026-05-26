@@ -1,4 +1,4 @@
-import type { ClassifierRegressionFlag } from "@ariadnejs/types";
+import type { ClassifierRegressionFlag, KnownIssueLanguage } from "@ariadnejs/types";
 
 // ===== Triage results shape (read-only) =====
 //
@@ -229,24 +229,31 @@ export type ClassifierSpecProposal =
  *                             lambdas through higher-order calls, object-literal
  *                             method through destructure, factory return types).
  * - `other`                   anything else; description must explain.
+ *
+ * The runtime lookup is the single source of truth — the type derives from it
+ * via `keyof typeof`, so adding a variant means adding one row to the lookup
+ * and TypeScript propagates the change everywhere downstream.
  */
-export type AriadneRootCauseCategory =
-  | "receiver_resolution"
-  | "import_resolution"
-  | "syntactic_extraction"
-  | "coverage_config"
-  | "cross_file_flow"
-  | "other";
+export const ARIADNE_ROOT_CAUSE_CATEGORY_LOOKUP = {
+  receiver_resolution: true,
+  import_resolution: true,
+  syntactic_extraction: true,
+  coverage_config: true,
+  cross_file_flow: true,
+  other: true,
+} as const;
 
-/** String-form enumeration of `AriadneRootCauseCategory`. Kept in sync with the union above. */
-export const ARIADNE_ROOT_CAUSE_CATEGORIES: readonly AriadneRootCauseCategory[] = [
-  "receiver_resolution",
-  "import_resolution",
-  "syntactic_extraction",
-  "coverage_config",
-  "cross_file_flow",
-  "other",
-];
+export type AriadneRootCauseCategory = keyof typeof ARIADNE_ROOT_CAUSE_CATEGORY_LOOKUP;
+
+export function is_ariadne_root_cause_category(
+  s: string,
+): s is AriadneRootCauseCategory {
+  return s in ARIADNE_ROOT_CAUSE_CATEGORY_LOOKUP;
+}
+
+/** String-form enumeration of `AriadneRootCauseCategory`, derived from the lookup. */
+export const ARIADNE_ROOT_CAUSE_CATEGORIES: readonly AriadneRootCauseCategory[] =
+  Object.keys(ARIADNE_ROOT_CAUSE_CATEGORY_LOOKUP) as AriadneRootCauseCategory[];
 
 /**
  * Deficiency in Ariadne's **introspection / classifier DSL** that blocks the
@@ -321,7 +328,7 @@ export interface AriadneBugTaskToCreate {
 export type SignalCheck =
   // ===== predicate-DSL-expressible ops (reusable in builtin context) =====
   | { op: "diagnosis_eq"; value: string }
-  | { op: "language_eq"; value: "typescript" | "javascript" | "python" | "rust" }
+  | { op: "language_eq"; value: KnownIssueLanguage }
   | { op: "syntactic_feature_eq"; name: string; value: string | number | boolean }
   | { op: "grep_line_regex"; pattern: string }
   | { op: "decorator_matches"; pattern: string }
@@ -343,27 +350,56 @@ export type SignalCheck =
   | { op: "file_path_matches"; pattern: string }
   | { op: "name_matches"; pattern: string };
 
-/** String-form enumeration of `SignalCheck.op` values. Kept in sync with the union above. */
-export const SIGNAL_CHECK_OPS: readonly string[] = [
-  "diagnosis_eq",
-  "language_eq",
-  "syntactic_feature_eq",
-  "grep_line_regex",
-  "decorator_matches",
-  "has_capture_at_grep_hit",
-  "missing_capture_at_grep_hit",
-  "receiver_kind_eq",
-  "resolution_failure_reason_eq",
-  "grep_hits_all_intra_file",
-  "grep_hit_neighbourhood_matches",
-  "definition_feature_eq",
-  "accessor_kind_eq",
-  "has_unindexed_test_caller",
-  "callers_count_at_least",
-  "callers_count_at_most",
-  "file_path_matches",
-  "name_matches",
-];
+/**
+ * Exhaustive lookup over the `SignalCheck` op union. Adding a new variant to
+ * `SignalCheck` fails this `satisfies` check, not runtime. The lookup is the
+ * single source of truth — `SIGNAL_CHECK_OPS` (array form) and
+ * `is_signal_check_op` (predicate) both derive from it.
+ */
+export const SIGNAL_CHECK_OP_LOOKUP = {
+  diagnosis_eq: true,
+  language_eq: true,
+  syntactic_feature_eq: true,
+  grep_line_regex: true,
+  decorator_matches: true,
+  has_capture_at_grep_hit: true,
+  missing_capture_at_grep_hit: true,
+  receiver_kind_eq: true,
+  resolution_failure_reason_eq: true,
+  grep_hits_all_intra_file: true,
+  grep_hit_neighbourhood_matches: true,
+  definition_feature_eq: true,
+  accessor_kind_eq: true,
+  has_unindexed_test_caller: true,
+  callers_count_at_least: true,
+  callers_count_at_most: true,
+  file_path_matches: true,
+  name_matches: true,
+} as const satisfies Record<SignalCheck["op"], true>;
+
+/** String-form enumeration of `SignalCheck.op` values, derived from the lookup. */
+export const SIGNAL_CHECK_OPS: readonly SignalCheck["op"][] =
+  Object.keys(SIGNAL_CHECK_OP_LOOKUP) as SignalCheck["op"][];
+
+export function is_signal_check_op(s: string): s is SignalCheck["op"] {
+  return Object.hasOwn(SIGNAL_CHECK_OP_LOOKUP, s);
+}
+
+/**
+ * Exhaustive lookup over `KnownIssueLanguage`. `is_known_issue_language` is
+ * the typed predicate used at LLM-boundary parsers; adding a language to the
+ * union fails the `satisfies` check here.
+ */
+export const KNOWN_ISSUE_LANGUAGE_LOOKUP = {
+  typescript: true,
+  javascript: true,
+  python: true,
+  rust: true,
+} as const satisfies Record<KnownIssueLanguage, true>;
+
+export function is_known_issue_language(s: string): s is KnownIssueLanguage {
+  return Object.hasOwn(KNOWN_ISSUE_LANGUAGE_LOOKUP, s);
+}
 
 export interface BuiltinClassifierSpec {
   function_name: string;
@@ -464,6 +500,40 @@ export type InvestigatorFailureCategory =
   | "classifier_infeasible"
   | "registry_conflict"
   | "other";
+
+/**
+ * Exhaustive lookup over `InvestigatorSessionStatus`. Adding a status to the
+ * union fails the `satisfies` check here.
+ */
+export const INVESTIGATOR_SESSION_STATUS_LOOKUP = {
+  success: true,
+  failure: true,
+  blocked_missing_signal: true,
+} as const satisfies Record<InvestigatorSessionStatus, true>;
+
+export function is_investigator_session_status(
+  s: string,
+): s is InvestigatorSessionStatus {
+  return Object.hasOwn(INVESTIGATOR_SESSION_STATUS_LOOKUP, s);
+}
+
+/**
+ * Exhaustive lookup over `InvestigatorFailureCategory`. Adding a category to
+ * the union fails the `satisfies` check here.
+ */
+export const INVESTIGATOR_FAILURE_CATEGORY_LOOKUP = {
+  group_incoherent: true,
+  pattern_unclear: true,
+  classifier_infeasible: true,
+  registry_conflict: true,
+  other: true,
+} as const satisfies Record<InvestigatorFailureCategory, true>;
+
+export function is_investigator_failure_category(
+  s: string,
+): s is InvestigatorFailureCategory {
+  return Object.hasOwn(INVESTIGATOR_FAILURE_CATEGORY_LOOKUP, s);
+}
 
 export interface InvestigatorSessionLog {
   group_id: string;
