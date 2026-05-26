@@ -1,0 +1,19 @@
+flowchart LR
+  classDef step      fill:#fff8e1,stroke:#b58900,stroke-width:1.8px,color:#5d4037
+  classDef artifact  fill:#e8f5e9,stroke:#2e7d32,stroke-width:1.5px,color:#1b5e20
+  classDef store     fill:#ede7f6,stroke:#4527a0,stroke-width:1.8px,color:#311b92
+
+  SRP(["triage-entrypoints · <i>sense</i><br/>publish v4 triage_results"]):::step
+  TR_IN[/"novel_issues[]<br/>+ classifier_regressions[]"/]:::artifact
+  CUR(["triage-curator · <i>classify</i><br/>novel_issue → classifier + wip<br/>regression → drift_evidence"]):::step
+  HANDOFF[/"wip rows · check_*.ts<br/>· backlog task"/]:::artifact
+  FS(["fix-sequencer · <i>actuate</i><br/>cluster · sign off · ship fix"]):::step
+
+  REG[("registry.json<br/><b>what we learned</b>")]:::store
+
+  SRP --> TR_IN --> CUR --> HANDOFF --> FS
+  CUR -- "writes wip · drift_evidence" --> REG
+  REG -. "next run: filter known issues" .-> SRP
+
+  linkStyle default stroke:#cbd5e1,stroke-width:1.6px
+  linkStyle 5 stroke:#ef5350,stroke-width:2.4px,stroke-dasharray:6 4
