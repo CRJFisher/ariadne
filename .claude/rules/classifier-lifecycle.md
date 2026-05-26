@@ -17,9 +17,13 @@ triage-entrypoints reads the registry to filter classifier hits but never mutate
 
 ## Atomic-write contract
 
-Every writer must use temp+rename (POSIX-atomic) to write the registry file. The curator uses the shared `atomic_write_file` helper from the `@ariadnejs/skill-fs` workspace package (`packages/skill-fs/src/atomic_write.ts`). The reconciler must use the same helper when it lands.
+Every writer must reach `registry.json` through `atomic_update_registry(path, mutator)` from the `@ariadnejs/skill-fs` workspace package (`packages/skill-fs/src/atomic_update_registry.ts`). The helper acquires a `.lock` sidecar (`fs.open(path + ".lock", "wx")`) over the full read-mutate-write cycle, then writes via `atomic_write_file` (temp + POSIX rename) and releases the lock on both success and failure paths.
 
-This protects against concurrent writers (curator + reconciler running on the same machine) racing the read-mutate-write cycle and silently losing data.
+The lock is what protects against concurrent writers (curator sweep + fix-sequencer reconciler on the same machine) computing independent mutations from a stale read and silently losing each other's work. Bare `atomic_write_file` is rename-atomic at the filesystem level but does NOT prevent that race, so direct calls to `atomic_write_file` against a registry-shaped path are a contract violation.
+
+The structural enforcement lives in `packages/skill-fs/src/registry_writers.test.ts`: an AST walk over every `.ts` file under `.claude/skills/**/src`, `.claude/skills/**/scripts`, and `packages/**/src` flags any call to a raw write function (`atomic_write_file`, `writeFile`, `writeFileSync`, `appendFile`, `appendFileSync`) whose first argument resolves to a registry-shaped target. Only sites in that test's `ALLOWED_REGISTRY_WRITERS` set are permitted; the curator's `apply_proposals.ts` and `link_ariadne_bug_tasks` both reach the registry through `atomic_update_registry` and therefore do not appear in the allowlist.
+
+`atomic_write_file` remains the contract for non-shared files (per-run novel-issues snapshots, curated-run sentinels, analysis-output JSON) where there is exactly one writer per path.
 
 ## Lifecycle transitions
 

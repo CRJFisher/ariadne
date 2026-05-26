@@ -4,7 +4,11 @@ import {
   parse_known_issues_registry_json,
   serialize_known_issues_registry_json,
 } from "@ariadnejs/types";
-import { atomic_write_file, error_code } from "@ariadnejs/skill-fs";
+import {
+  atomic_update_registry,
+  error_code,
+  type RegistryUpdate,
+} from "@ariadnejs/skill-fs";
 import { absorb_classifier_regressions } from "../absorb/drift_absorb.js";
 import { render_ariadne_bug_body } from "../propose/render_ariadne_bug_body.js";
 import type {
@@ -201,20 +205,10 @@ export async function apply_proposals(
   member_counts: Record<string, number>,
   opts: ApplyOptions,
 ): Promise<ApplyResult> {
-  const raw = await fs.readFile(opts.registry_path, "utf8");
-  const registry = parse_known_issues_registry_json(raw);
-
-  // In-flight regressions from the per-entry investigator's
-  // `fp-classifier-regression` verdicts stage drift signal before the
-  // registry upserts run.
-  const regression_result = absorb_classifier_regressions(
-    registry,
-    opts.classifier_regressions,
-  );
-  const after_drift = regression_result.updated_registry;
-
   // Authored files are keyed by the target group id (retargets_to ?? group_id) —
-  // the same derivation the renderer uses and finalize looks up by.
+  // the same derivation the renderer uses and finalize looks up by. Readability
+  // is decided against the filesystem outside the registry lock; the result
+  // feeds the in-lock mutator via `rejected_builtin_groups`.
   const failed_authoring: FailedAuthoring[] = [];
   const authored_files: string[] = [];
   const rejected_builtin_groups = new Set<string>();
@@ -241,64 +235,116 @@ export async function apply_proposals(
     authored_files.push(authored_path);
   }
 
-  const registry_upserts: string[] = [];
-  const skipped_permanent_upserts: string[] = [];
-  let next_registry = after_drift;
-  for (const r of inv) {
-    if (r.proposed_classifier === null) continue;
-    if (rejected_builtin_groups.has(r.group_id)) continue;
-    const target_group_id = r.retargets_to ?? r.group_id;
-    const existing = next_registry.find((e) => e.group_id === target_group_id);
-    let languages: KnownIssueLanguage[];
-    if (existing !== undefined) {
-      languages = existing.languages;
-    } else {
-      languages = derive_languages_for_upsert(r);
-      if (languages.length === 0) {
-        failed_authoring.push({
-          group_id: r.group_id,
-          reason:
-            `cannot derive languages for new registry entry '${target_group_id}': ` +
-            "classifier_spec has no language_eq check (under v4 the published artifact " +
-            "carries no FP entry file paths to fall back to).",
-        });
+  interface RegistryMutation {
+    registry_upserts: string[];
+    skipped_permanent_upserts: string[];
+    bumped_groups: string[];
+    drift_tagged_rule_ids: string[];
+    skipped_permanent_rule_ids: string[];
+    skipped_fixed_rule_ids: string[];
+    next_registry: KnownIssue[];
+    failed_language_groups: FailedAuthoring[];
+  }
+
+  const compute_mutation = (raw: string): RegistryMutation => {
+    const registry = parse_known_issues_registry_json(raw);
+
+    // In-flight regressions from the per-entry investigator's
+    // `fp-classifier-regression` verdicts stage drift signal before the
+    // registry upserts run.
+    const regression_result = absorb_classifier_regressions(
+      registry,
+      opts.classifier_regressions,
+    );
+    const after_drift = regression_result.updated_registry;
+
+    const registry_upserts: string[] = [];
+    const skipped_permanent_upserts: string[] = [];
+    const failed_language_groups: FailedAuthoring[] = [];
+    let next_registry = after_drift;
+    for (const r of inv) {
+      if (r.proposed_classifier === null) continue;
+      if (rejected_builtin_groups.has(r.group_id)) continue;
+      const target_group_id = r.retargets_to ?? r.group_id;
+      const existing = next_registry.find((e) => e.group_id === target_group_id);
+      let languages: KnownIssueLanguage[];
+      if (existing !== undefined) {
+        languages = existing.languages;
+      } else {
+        languages = derive_languages_for_upsert(r);
+        if (languages.length === 0) {
+          failed_language_groups.push({
+            group_id: r.group_id,
+            reason:
+              `cannot derive languages for new registry entry '${target_group_id}': ` +
+              "classifier_spec has no language_eq check (under v4 the published artifact " +
+              "carries no FP entry file paths to fall back to).",
+          });
+          continue;
+        }
+      }
+      const { registry: after_upsert, skipped_permanent } = upsert_classifier(
+        next_registry,
+        target_group_id,
+        r.proposed_classifier,
+        languages,
+      );
+      if (skipped_permanent) {
+        skipped_permanent_upserts.push(target_group_id);
         continue;
       }
+      next_registry = after_upsert;
+      registry_upserts.push(target_group_id);
     }
-    const { registry: after_upsert, skipped_permanent } = upsert_classifier(
+
+    // Observed-stat bookkeeping runs after drift + upsert so newly-minted
+    // entries still pick up the current run's counts.
+    const { updated: after_observed, bumped_groups } = bump_observed_stats(
       next_registry,
-      target_group_id,
-      r.proposed_classifier,
-      languages,
+      member_counts,
+      opts.project,
+      opts.run_id,
     );
-    if (skipped_permanent) {
-      skipped_permanent_upserts.push(target_group_id);
-      continue;
-    }
-    next_registry = after_upsert;
-    registry_upserts.push(target_group_id);
-  }
+    next_registry = after_observed;
 
-  // Observed-stat bookkeeping runs after drift + upsert so newly-minted
-  // entries still pick up the current run's counts.
-  const { updated: after_observed, bumped_groups } = bump_observed_stats(
-    next_registry,
-    member_counts,
-    opts.project,
-    opts.run_id,
-  );
-  next_registry = after_observed;
+    return {
+      registry_upserts,
+      skipped_permanent_upserts,
+      bumped_groups,
+      drift_tagged_rule_ids: regression_result.drift_tagged_rule_ids,
+      skipped_permanent_rule_ids: regression_result.skipped_permanent_rule_ids,
+      skipped_fixed_rule_ids: regression_result.skipped_fixed_rule_ids,
+      next_registry,
+      failed_language_groups,
+    };
+  };
 
-  const registry_mutated =
-    regression_result.drift_tagged_rule_ids.length > 0 ||
-    registry_upserts.length > 0 ||
-    bumped_groups.length > 0;
-  if (!opts.dry_run && registry_mutated) {
-    await atomic_write_file(
+  let mutation: RegistryMutation;
+  if (opts.dry_run) {
+    const raw = await fs.readFile(opts.registry_path, "utf8");
+    mutation = compute_mutation(raw);
+  } else {
+    mutation = await atomic_update_registry<RegistryMutation>(
       opts.registry_path,
-      serialize_known_issues_registry_json(next_registry),
+      async (raw): Promise<RegistryUpdate<RegistryMutation>> => {
+        const m = compute_mutation(raw);
+        const registry_mutated =
+          m.drift_tagged_rule_ids.length > 0 ||
+          m.registry_upserts.length > 0 ||
+          m.bumped_groups.length > 0;
+        if (registry_mutated) {
+          return {
+            kind: "write",
+            next: serialize_known_issues_registry_json(m.next_registry),
+            result: m,
+          };
+        }
+        return { kind: "noop", result: m };
+      },
     );
   }
+  failed_authoring.push(...mutation.failed_language_groups);
+  const { registry_upserts, skipped_permanent_upserts, next_registry } = mutation;
 
   const signal_library_gap_tasks: SignalLibraryGapTaskToCreate[] = [];
   for (const r of inv) {
@@ -339,7 +385,7 @@ export async function apply_proposals(
   // this permanent row, surface to human".
   const merged_skipped_permanent: string[] = [
     ...skipped_permanent_upserts,
-    ...regression_result.skipped_permanent_rule_ids.filter(
+    ...mutation.skipped_permanent_rule_ids.filter(
       (g) => !skipped_permanent_upserts.includes(g),
     ),
   ];
@@ -349,8 +395,8 @@ export async function apply_proposals(
     failed_authoring,
     registry_upserts,
     skipped_permanent_upserts: merged_skipped_permanent,
-    skipped_fixed_upserts: regression_result.skipped_fixed_rule_ids,
-    drift_tagged_groups: regression_result.drift_tagged_rule_ids,
+    skipped_fixed_upserts: mutation.skipped_fixed_rule_ids,
+    drift_tagged_groups: mutation.drift_tagged_rule_ids,
     signal_library_gap_tasks,
     ariadne_bug_tasks,
   };
@@ -371,22 +417,28 @@ export async function link_ariadne_bug_tasks(
   const entries = Object.entries(task_ids_by_target_group_id);
   if (entries.length === 0) return { updated_groups: [] };
 
-  const raw = await fs.readFile(registry_path, "utf8");
-  const registry = parse_known_issues_registry_json(raw);
-
-  const updated_groups: string[] = [];
-  const next = registry.map((issue) => {
-    const task_id = task_ids_by_target_group_id[issue.group_id];
-    if (task_id === undefined) return issue;
-    if (issue.backlog_task === task_id) return issue;
-    updated_groups.push(issue.group_id);
-    return { ...issue, backlog_task: task_id };
-  });
-
-  if (updated_groups.length === 0) return { updated_groups: [] };
-
-  await atomic_write_file(registry_path, serialize_known_issues_registry_json(next));
-  return { updated_groups };
+  return atomic_update_registry<{ updated_groups: string[] }>(
+    registry_path,
+    async (raw): Promise<RegistryUpdate<{ updated_groups: string[] }>> => {
+      const registry = parse_known_issues_registry_json(raw);
+      const updated_groups: string[] = [];
+      const next = registry.map((issue) => {
+        const task_id = task_ids_by_target_group_id[issue.group_id];
+        if (task_id === undefined) return issue;
+        if (issue.backlog_task === task_id) return issue;
+        updated_groups.push(issue.group_id);
+        return { ...issue, backlog_task: task_id };
+      });
+      if (updated_groups.length === 0) {
+        return { kind: "noop", result: { updated_groups: [] } };
+      }
+      return {
+        kind: "write",
+        next: serialize_known_issues_registry_json(next),
+        result: { updated_groups },
+      };
+    },
+  );
 }
 
 async function is_readable(file_path: string): Promise<boolean> {
