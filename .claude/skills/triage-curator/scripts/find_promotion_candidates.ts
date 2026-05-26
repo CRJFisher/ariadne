@@ -57,7 +57,20 @@ async function load_recent_match_history(): Promise<
     llm_attributed_count: number;
   }[] = [];
   for (const run of runs) {
-    const triage = await read_v4_triage_results(run.run_path);
+    // `discover_runs` walks every `*.json` under
+    // `analysis_output/<project>/triage_results/`. Older artifacts (pre-v4
+    // schema, malformed dev files, partial writes) accumulate there; one
+    // such file should not abort the entire sweep. Skip with a stderr note.
+    let triage;
+    try {
+      triage = await read_v4_triage_results(run.run_path);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      process.stderr.write(
+        `find_promotion_candidates: skipping ${run.run_path} — ${msg}\n`,
+      );
+      continue;
+    }
     const per_group = new Map<string, number>();
     for (const entry of triage.confirmed_unreachable) {
       if (entry.source.kind !== "registry") continue;

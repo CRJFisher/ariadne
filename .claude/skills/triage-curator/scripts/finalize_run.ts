@@ -16,7 +16,9 @@
  */
 
 import * as fs from "node:fs/promises";
+import { realpathSync } from "node:fs";
 import * as path from "node:path";
+import { pathToFileURL } from "node:url";
 import * as ts from "typescript";
 
 import {
@@ -267,12 +269,15 @@ export interface FinalizeRunOptions {
   registry_path?: string;
   /** Injectable for testing. Production callers omit. */
   builtins_dir?: string;
-  /** Injectable for testing. Production callers omit. */
-  permanent_slice_path?: string;
-  /** Injectable for testing. Production callers omit. */
-  builtins_barrel_path?: string;
-  /** Injectable for testing. Production caller is `sync_permanent_rules`. */
-  sync_permanent_rules?: () => Promise<void>;
+  /**
+   * Single injectable seam for the entire derived-files regeneration block:
+   * unsupported-features golden files + permanent-slice TS module + builtins
+   * barrel. Production caller is `regenerate_derived_files_default`; tests
+   * pass a noop so they can never accidentally clobber repo files via the
+   * non-injectable `write_unsupported_features_outputs` (which targets a
+   * module-level path).
+   */
+  regenerate_derived_files?: (registry_path: string) => Promise<string[]>;
 }
 
 export interface FinalizeRunSummary {
@@ -303,6 +308,26 @@ export interface FinalizeRunResult {
   summary: FinalizeRunSummary | null;
 }
 
+/**
+ * Default `regenerate_derived_files`: re-renders the unsupported-features
+ * golden files, regenerates the bundled permanent slice and builtins
+ * barrel via `sync_permanent_rules`, and returns every absolute path it
+ * touched. Production callers use this; tests inject a noop.
+ */
+export async function regenerate_derived_files_default(
+  registry_path: string,
+): Promise<string[]> {
+  const registry_after = parse_known_issues_registry_json(
+    await fs.readFile(registry_path, "utf8"),
+  );
+  const outputs = render_unsupported_features_all(registry_after);
+  const touched = [...write_unsupported_features_outputs(outputs)];
+  await sync_permanent_rules();
+  touched.push(get_permanent_slice_path());
+  touched.push(get_core_builtins_barrel_path());
+  return touched;
+}
+
 export async function finalize_run(
   opts: FinalizeRunOptions,
 ): Promise<FinalizeRunResult> {
@@ -312,9 +337,7 @@ export async function finalize_run(
     runs_dir = CURATOR_RUNS_DIR,
     registry_path = get_registry_file_path(),
     builtins_dir = get_core_builtins_dir(),
-    permanent_slice_path = get_permanent_slice_path(),
-    builtins_barrel_path = get_core_builtins_barrel_path(),
-    sync_permanent_rules: regen_permanent = sync_permanent_rules,
+    regenerate_derived_files = regenerate_derived_files_default,
   } = opts;
 
   const run_id = derive_run_id(run_path);
@@ -436,18 +459,12 @@ export async function finalize_run(
 
   // Derived-file regeneration: the registry feeds `unsupported_features.<lang>.md`
   // (golden files), the bundled permanent slice, and the orchestrator dispatch
-  // map. The slice + barrel paths and the regen function are owned by
-  // sync_permanent_rules.ts so derived-path knowledge lives in one place.
+  // map. Gated behind a single injectable seam so tests cannot accidentally
+  // touch repo-level paths (`write_unsupported_features_outputs` writes to a
+  // module-level queries dir that is not injectable on its own).
   const derived_files: string[] = [];
   if (!dry_run && (result.registry_upserts.length > 0 || result.drift_tagged_groups.length > 0)) {
-    const registry_after = parse_known_issues_registry_json(
-      await fs.readFile(registry_path, "utf8"),
-    );
-    const outputs = render_unsupported_features_all(registry_after);
-    derived_files.push(...write_unsupported_features_outputs(outputs));
-    await regen_permanent();
-    derived_files.push(permanent_slice_path);
-    derived_files.push(builtins_barrel_path);
+    derived_files.push(...(await regenerate_derived_files(registry_path)));
   }
 
   const sessions = aggregate_session_logs(session_logs);
@@ -509,10 +526,10 @@ async function main(): Promise<void> {
 }
 
 // Run main only when invoked directly (skip when imported by tests).
-if (
-  import.meta.url === `file://${process.argv[1]}` ||
-  import.meta.url === new URL(`file://${process.argv[1]}`).href
-) {
+// Use `pathToFileURL(realpathSync(...))` so symlink-traversal paths
+// (macOS `/tmp` → `/private/tmp`, CI temp dirs, Docker mounts) and Windows
+// paths all hash to the same URL form `import.meta.url` carries.
+if (import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
   main().catch((err) => {
     process.stderr.write(
       `finalize_run failed: ${err instanceof Error ? err.stack ?? err.message : String(err)}\n`,

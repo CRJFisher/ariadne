@@ -211,8 +211,8 @@ export type ClassifierSpecProposal =
   | { kind: "builtin"; function_name: string; min_confidence: number };
 
 /**
- * Closed enumeration of the resolver-level root causes behind a false-positive
- * group. Used to label Ariadne-bug backlog tasks so they can be rolled up by
+ * Closed enumeration of the resolver-level root causes behind a `novel_issue`.
+ * Used to label Ariadne-bug backlog tasks so they can be rolled up by
  * category in impact reports.
  *
  * - `receiver_resolution`     member-access receiver type lost across a field or

@@ -20,8 +20,6 @@ let runs_dir: string;
 let analysis_output_dir: string;
 let registry_path: string;
 let builtins_dir: string;
-let permanent_slice_path: string;
-let builtins_barrel_path: string;
 
 const PROJECT = "fixture-proj";
 const RUN_ID = "abc-2026-05-26T00-00-00Z";
@@ -76,8 +74,6 @@ beforeEach(async () => {
   analysis_output_dir = path.join(tmp_root, "analysis_output");
   registry_path = path.join(tmp_root, "registry.json");
   builtins_dir = path.join(tmp_root, "builtins");
-  permanent_slice_path = path.join(tmp_root, "permanent_data.ts");
-  builtins_barrel_path = path.join(builtins_dir, "index.ts");
   await fs.mkdir(builtins_dir, { recursive: true });
 });
 
@@ -113,9 +109,7 @@ describe("finalize_run — sentinel guard (exit code 2)", () => {
       runs_dir,
       registry_path,
       builtins_dir,
-      permanent_slice_path,
-      builtins_barrel_path,
-      sync_permanent_rules: async () => {},
+      regenerate_derived_files: async () => [],
     });
     expect(result.exit_code).toBe(2);
     expect(result.summary).toBeNull();
@@ -133,9 +127,7 @@ describe("finalize_run — sentinel guard (exit code 2)", () => {
       runs_dir,
       registry_path,
       builtins_dir,
-      permanent_slice_path,
-      builtins_barrel_path,
-      sync_permanent_rules: async () => {},
+      regenerate_derived_files: async () => [],
     });
     expect(result.exit_code).toBe(2);
     expect(result.summary).toBeNull();
@@ -153,9 +145,7 @@ describe("finalize_run — sentinel guard (exit code 2)", () => {
       runs_dir,
       registry_path,
       builtins_dir,
-      permanent_slice_path,
-      builtins_barrel_path,
-      sync_permanent_rules: async () => {},
+      regenerate_derived_files: async () => [],
     });
     expect(result.exit_code).toBe(0);
     expect(result.summary).not.toBeNull();
@@ -205,9 +195,7 @@ describe("finalize_run — validate_run_coherence failure (exit code 3)", () => 
       runs_dir,
       registry_path,
       builtins_dir,
-      permanent_slice_path,
-      builtins_barrel_path,
-      sync_permanent_rules: async () => {},
+      regenerate_derived_files: async () => [],
     });
     expect(result.exit_code).toBe(3);
     expect(result.summary).toBeNull();
@@ -229,9 +217,7 @@ describe("finalize_run — read_v4_triage_results failure (exit code 4)", () => 
       runs_dir,
       registry_path,
       builtins_dir,
-      permanent_slice_path,
-      builtins_barrel_path,
-      sync_permanent_rules: async () => {},
+      regenerate_derived_files: async () => [],
     });
     expect(result.exit_code).toBe(4);
     expect(result.summary).toBeNull();
@@ -254,9 +240,7 @@ describe("finalize_run — read_v4_triage_results failure (exit code 4)", () => 
       runs_dir,
       registry_path,
       builtins_dir,
-      permanent_slice_path,
-      builtins_barrel_path,
-      sync_permanent_rules: async () => {},
+      regenerate_derived_files: async () => [],
     });
     expect(result.exit_code).toBe(4);
     expect(result.stderr_message).toMatch(/schema_version=3/);
