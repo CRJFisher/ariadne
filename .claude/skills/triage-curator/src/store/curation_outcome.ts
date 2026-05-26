@@ -12,11 +12,13 @@ import type { CuratedRunEntry } from "../types.js";
  *
  * `finalize_started.json` is the in-progress marker. finalize writes it via
  * `mark_finalize_started` immediately after the sentinel-guard check and
- * before any registry mutation; `save_outcome` clears it once the full
- * sentinel lands. A `finalize_started.json` left behind means a previous run
- * crashed between the registry write and the final sentinel — `is_curated`
- * still returns true so re-runs short-circuit without double-bumping
- * `observed_count`. Human recovery: inspect the registry, decide whether to
+ * before any side effect (builtin `.ts` rendering, registry mutation, orphan
+ * unlinks, derived-file regeneration); `save_outcome` clears it once the
+ * full sentinel lands. A `finalize_started.json` left behind means a
+ * previous run crashed somewhere in that window — `is_curated` still returns
+ * true so re-runs short-circuit without double-bumping `observed_count`.
+ * Human recovery: inspect the registry AND the rendered builtin files under
+ * `packages/core/src/classify_entry_points/builtins/`, decide whether to
  * re-run, then delete both sentinel files.
  *
  * `runs_dir` is injectable so tests can drive a temp directory; production

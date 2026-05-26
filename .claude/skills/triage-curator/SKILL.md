@@ -197,17 +197,24 @@ resolve a task id using this precedence:
    ```
 
 **Sidecar: `created_task_ids.json`.** The main agent persists each task id
-to disk **immediately after** the `mcp__backlog__task_create` call resolves
-(and equally when an entry is attached via `existing_task_id` or matched via
-`task_search`). The sidecar lives at:
+to disk in the **same tool turn** that resolves the id — never batch multiple
+`mcp__backlog__task_create` calls before the first sidecar Write. The
+sidecar lives at:
 
 ```
 ~/.ariadne/triage-curator/runs/<run_id>/created_task_ids.json
 ```
 
-and has shape `{ [target_registry_group_id]: "TASK-<N>" }`. Update via
-`Read` → merge → `Write` so a crash between `task_create` and the next
-write loses at most one entry's bookkeeping. Then invoke linkage:
+and has shape `{ [target_registry_group_id]: "TASK-<N>" }`. The per-task
+turn must:
+
+1. Call `mcp__backlog__task_create` (or resolve `existing_task_id` /
+   `task_search`).
+2. Read the sidecar (treat missing as `{}`), merge the new entry, Write the
+   merged file. Same applies to entries attached via `existing_task_id` and
+   `task_search` matches — every resolved task contributes.
+
+Only after every Ariadne-bug task is in the sidecar, invoke linkage:
 
 ```bash
 node --import tsx .claude/skills/triage-curator/scripts/link_ariadne_bug_tasks.ts \
@@ -228,9 +235,10 @@ entries via `link_ariadne_bug_tasks` in `apply_proposals.ts`.
   no-ops when `backlog_task` already matches.
 
 If the orchestrator crashes between `mcp__backlog__task_create` and the
-sidecar append, the next sweep re-creates the task; `mcp__backlog__task_search`
-de-dups by `title` + `root_cause_category` so the duplicate is suppressed
-before linkage.
+same-turn sidecar Write, the next sweep treats the task as not-yet-created
+and re-creates it; `mcp__backlog__task_search` (Step 4's Dedup precedence
+rule) de-dups by `title` + `root_cause_category` so the duplicate is
+suppressed before linkage.
 
 ### Step 5 — Commit the sweep
 
@@ -374,10 +382,27 @@ Output shape:
 ```
 
 For each `creates[]` entry the main agent calls `mcp__backlog__task_create`
-with the supplied fields, then feeds `{ [group_id]: "TASK-<N>" }` back through
-`link_ariadne_bug_tasks.ts` to record the linkage. For each `updates[]` entry
-it calls `mcp__backlog__task_edit` on the `backlog_task` with the new
-`description`.
+with the supplied fields, then records the resulting `{ [group_id]: "TASK-<N>" }`
+mapping into the canonical sidecar so linkage shares one code path with the
+main curator flow.
+
+Pick a synthetic run_id for the sweep (e.g. `ondemand-$(date -u +%Y%m%dT%H%M%SZ)`)
+and write the sidecar at:
+
+```
+~/.ariadne/triage-curator/runs/<synth_run_id>/created_task_ids.json
+```
+
+Use the same same-tool-turn discipline as Step 4 — Read → merge → Write
+inside the turn that resolves each task. Then invoke linkage:
+
+```bash
+node --import tsx .claude/skills/triage-curator/scripts/link_ariadne_bug_tasks.ts \
+  --run-id "<synth_run_id>"
+```
+
+For each `updates[]` entry the main agent calls `mcp__backlog__task_edit`
+on the `backlog_task` with the new `description`.
 
 ## Classifier lifecycle (write boundaries)
 

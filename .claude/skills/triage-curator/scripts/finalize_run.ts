@@ -374,17 +374,22 @@ export async function finalize_run(
     };
   }
 
+  // Mark the run as in-progress BEFORE any side effect: `render_authored_files`
+  // writes builtin `.ts` files to the core builtins directory, so a crash
+  // between rendering and `save_outcome` would otherwise leave overwritten
+  // builtins on disk with no marker. The marker is the cross-side-effect
+  // recovery surface for everything between this point and `save_outcome`
+  // (rendered builtins, registry mutations, orphan unlinks, derived-file
+  // regeneration). Human recovery: inspect the registry AND the rendered
+  // builtin files, then delete both sentinels.
+  if (!dry_run) {
+    await mark_finalize_started(run_id, run_path, runs_dir);
+  }
+
   const { authored_files_by_group: authored_files_raw, render_failures } =
     await render_authored_files(investigate_responses, builtins_dir);
   const { ast_failures, passing: authored_files_by_group } =
     await ast_check_authored_files(authored_files_raw);
-
-  // Mark the run as in-progress before any registry mutation. Crash between
-  // here and `save_outcome` leaves `finalize_started.json` behind; the next
-  // `finalize_run` invocation's `is_curated` guard skips re-apply.
-  if (!dry_run) {
-    await mark_finalize_started(run_id, run_path, runs_dir);
-  }
 
   const result = await apply_proposals(
     investigate_responses,
