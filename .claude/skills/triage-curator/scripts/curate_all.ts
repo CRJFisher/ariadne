@@ -23,6 +23,7 @@
 
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
+import { pathToFileURL } from "node:url";
 
 import {
   CURATOR_RUNS_DIR,
@@ -255,7 +256,7 @@ async function main(): Promise<void> {
 }
 
 // Only run when invoked as the entry point (skips when imported by tests).
-if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((err) => {
     process.stderr.write(
       `curate_all failed: ${err instanceof Error ? err.stack ?? err.message : String(err)}\n`,
