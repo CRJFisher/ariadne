@@ -248,7 +248,7 @@ export type AriadneRootCauseCategory = keyof typeof ARIADNE_ROOT_CAUSE_CATEGORY_
 export function is_ariadne_root_cause_category(
   s: string,
 ): s is AriadneRootCauseCategory {
-  return s in ARIADNE_ROOT_CAUSE_CATEGORY_LOOKUP;
+  return Object.hasOwn(ARIADNE_ROOT_CAUSE_CATEGORY_LOOKUP, s);
 }
 
 /** String-form enumeration of `AriadneRootCauseCategory`, derived from the lookup. */
