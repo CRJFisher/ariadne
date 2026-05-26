@@ -33,7 +33,7 @@ Two upstream skills (`triage-entrypoints`, `triage-curator`) currently land task
 
 ## High-level flow
 
-Seven phases stacked top-to-bottom in pipeline order: cluster → score → prepare plan → sign off → enqueue (writes the three persistent stores), then worker (async, /schedule-driven) and reconciler (runs at the start of the *next* triage-entrypoints invocation). The persistent stores sit between the in-skill phases and the worker; the loop-closure edge from `wip → fixed` back to curator's registry read is the only red dotted arrow. (For where this skill fits in the broader chain see [triage-entrypoints → Self-healing pipeline](../../.claude/skills/triage-entrypoints/README.md#self-healing-pipeline).)
+Seven phases stacked top-to-bottom in pipeline order: cluster → score → prepare plan → sign off → enqueue (writes the three persistent stores) inside the fix-sequencer skill's single-invocation boundary, then worker (async, /schedule-driven) and reconciler (fix-sequencer-owned but invoked as a pre-step of the next triage-entrypoints run). The persistent stores sit between the in-skill phases and the worker; `target project git log` joins them as a second reconciler input so out-of-band human fixes are caught alongside worker `done` events. The loop-closure edge from `wip → fixed` back to curator's registry read is the only red dotted arrow. (For where this skill fits in the broader chain see [triage-entrypoints → Self-healing pipeline](../../.claude/skills/triage-entrypoints/README.md#self-healing-pipeline).)
 
 ```mermaid
 flowchart TD
@@ -46,44 +46,50 @@ flowchart TD
   classDef worker     fill:#e1f5fe,stroke:#0277bd,stroke-width:1.5px,color:#01579b
   classDef recon      fill:#ffebee,stroke:#c62828,stroke-width:1.5px,color:#b71c1c
   classDef regwrite   fill:#fecaca,stroke:#991b1b,stroke-width:2.5px,color:#7f1d1d
+  classDef boundary   fill:#fafafa,stroke:#424242,stroke-width:2.5px,color:#212121,stroke-dasharray:5 3
 
   BL[/"backlog tasks<br/>touched_files · cluster_hint"/]:::ext
   IR[/"impact_report.json<br/>rows: ImpactRow[]"/]:::ext
-  REG_R[("registry.json<br/>observed_count · observed_projects<br/><i>read</i>")]:::ext
+  REG_R[("registry.json<br/>observed_count · observed_projects · drift_evidence<br/><i>read</i>")]:::ext
 
-  subgraph P1["Phase 1 · Cluster"]
+  subgraph SKILL["Fix-Sequencer skill · in-skill phases (single invocation)"]
     direction TB
-    S1("cluster_tasks_by_overlap<br/>category × Jaccard(touched_files ∪ labels)"):::step
-    I_RC(["raw clusters · member_task_ids"]):::inter
-  end
+    subgraph P1["Phase 1 · Cluster"]
+      direction TB
+      S1("cluster_tasks_by_overlap<br/>category × Jaccard(touched_files ∪ labels)"):::step
+      I_RC(["raw clusters · member_task_ids"]):::inter
+    end
 
-  subgraph P2["Phase 2 · Score"]
-    direction TB
-    S2("score_fix_impact + size_fix_complexity<br/>+ Pareto frontier flag"):::step
-    I_SC(["scored clusters · rank · is_pareto_frontier"]):::inter
-  end
+    subgraph P2["Phase 2 · Score"]
+      direction TB
+      S2("score_fix_impact + size_fix_complexity<br/>+ Pareto frontier flag"):::step
+      I_SC(["scored clusters · rank · is_pareto_frontier"]):::inter
+    end
 
-  subgraph P3["Phase 3 · Prepare plan"]
-    direction TB
-    S3("prepare_plan.ts<br/>render plan.md + clusters.json"):::step
-    PLAN[/"plan.md + clusters.json<br/>(run-scoped)"/]:::artifact
-  end
+    subgraph P3["Phase 3 · Prepare plan"]
+      direction TB
+      S3("prepare_plan.ts<br/>render plan.md + clusters.json"):::step
+      PLAN[/"plan.md + clusters.json<br/>(run-scoped)"/]:::artifact
+    end
 
-  subgraph P4["Phase 4 · Sign off (per cluster)"]
-    direction TB
-    SO{{"AskUserQuestion<br/>accept · drop · defer"}}:::branch
-    DEC[/"decisions.json<br/>(resumable)"/]:::artifact
-  end
+    subgraph P4["Phase 4 · Sign off (per cluster)"]
+      direction TB
+      SO{{"AskUserQuestion<br/>accept · drop · defer"}}:::branch
+      DEC[/"decisions.json<br/>(resumable)"/]:::artifact
+    end
 
-  subgraph P5["Phase 5 · Enqueue accepted clusters"]
-    direction TB
-    S5("enqueue_signed_off_fixes<br/>atomic graph write + O_APPEND events"):::step
-    SCHED[/"/schedule one-liner<br/>(printed, not exec'd)"/]:::artifact
+    subgraph P5["Phase 5 · Enqueue accepted clusters"]
+      direction TB
+      S5("enqueue_signed_off_fixes<br/>atomic graph write + O_APPEND events"):::step
+      SCHED[/"/schedule one-liner<br/>(printed, not exec'd)"/]:::artifact
+    end
   end
+  class SKILL boundary
 
   GRAPH[("graph.json<br/>cluster DAG<br/><i>atomic temp+rename</i>")]:::store
   STATE[("state.jsonl<br/>append-only events<br/>ready · claim · progress · done")]:::store
   CAL[("calibration.jsonl<br/>predicted · landed rows")]:::store
+  GITLOG[/"target project git log<br/>fix(task_id): commits<br/>(worker + human)"/]:::ext
 
   subgraph P6["Phase 6 · Worker (async · single worker · /schedule driven)"]
     direction TB
@@ -91,7 +97,7 @@ flowchart TD
     W2("ship fix<br/>edits + tests + fix(task_id): commit"):::worker
   end
 
-  subgraph P7["Phase 7 · Reconciler (runs at start of NEXT triage-entrypoints invocation)"]
+  subgraph P7["Phase 7 · Reconciler (fix-sequencer-owned; invoked as pre-step of next triage-entrypoints run)"]
     direction TB
     OOB[/"git-log scan<br/>fix(190.x): + trailers<br/>+ range expansion"/]:::recon
     BR_REC{{"latest event = done?<br/>OR OOB match?"}}:::branch
@@ -125,10 +131,11 @@ flowchart TD
   W1 --> W2
   W2 -- "append claim → done" --> STATE
   W2 -- "append landed" --> CAL
+  W2 -. "fix(task_id): commit lands in" .-> GITLOG
 
   STATE -. "fold latest event (next run)" .-> BR_REC
   GRAPH -. read DAG .-> BR_REC
-  W2 -. "fix(task_id): commit (next run)" .-> OOB
+  GITLOG -. "scan <prior_commit>..HEAD" .-> OOB
   OOB -. "synthesized done (in-memory)" .-> BR_REC
   BR_REC -- "match" --> REC
   REC -- "flip wip → fixed" --> REG_W
@@ -136,10 +143,10 @@ flowchart TD
   REG_W -. "observed by next triage-entrypoints detect pass" .-> REG_R
 
   linkStyle default stroke:#cbd5e1,stroke-width:1.5px
-  linkStyle 29 stroke:#ef5350,stroke-width:2.2px,stroke-dasharray:6 4
+  linkStyle 30 stroke:#ef5350,stroke-width:2.2px,stroke-dasharray:6 4
 ```
 
-**What to look for**: seven phase bands stacked top-to-bottom (strict reading order); read-only inputs sit on a left rail and only feed the phases that touch them. The sign-off diamond has three labeled exits (`accept` / `drop` / `defer`); only `accept` reaches `enqueue_signed_off_fixes` — `drop`/`defer` terminate non-destructively at `decisions.json`. Phase 5 is the **only fan-out write** in the in-skill phases — one accept decision lands writes on all three persistent stores; misalignment would mean a partial accept. Phases 6 and 7 run on separate invocations (Phase 6 async via `/schedule`; Phase 7 as a pre-step of the next triage-entrypoints run). The reconciler has two input sources (state.jsonl done events + project-repo git-log Conventional-Commits scan); OOB-synthesized done events are in-memory only — never appended to state.jsonl. The red dotted edge (`wip → fixed` back to curator's registry read) fires on the *next* pipeline run, not synchronously. The sequencer never writes the registry directly — the only registry-write path is `reconciler → REG_W` in Phase 7 (a separate skill invocation), so the write boundary is visually enforced.
+**What to look for**: the dashed skill-boundary box contains Phases 1–5 (the in-skill, single-invocation slice); Phase 6 (worker) and Phase 7 (reconciler) sit outside it because they run on separate invocations. Read-only inputs feed only the phases that touch them. The sign-off diamond has three labeled exits (`accept` / `drop` / `defer`); only `accept` reaches `enqueue_signed_off_fixes` — `drop`/`defer` terminate non-destructively at `decisions.json`. Phase 5 is the **only fan-out write** in the in-skill phases — one accept decision lands writes on all three persistent stores; misalignment would mean a partial accept. Phases 6 and 7 run on separate invocations (Phase 6 async via `/schedule`; Phase 7 as a pre-step of the next triage-entrypoints run; fix-sequencer-owned but invoked across the skill boundary by triage-entrypoints' `prepare_triage` via CLI shell-out, never a TS import). The reconciler has **two input sources** wired explicitly: `state.jsonl → BR_REC` (worker-driven `done` events) and `GITLOG → OOB → BR_REC` (target project's git log; worker and human commits both flow through `GITLOG`, so out-of-band fixes are caught even when the worker never ran). OOB-synthesized done events are in-memory only — never appended to state.jsonl. The reconciler reads more than just `observed_count`/`observed_projects` from `REG_R`: `drift_evidence` is now a curator-owned write the scorer weighs against promotion candidates. The red dotted edge (`wip → fixed` back to curator's registry read) fires on the *next* pipeline run, not synchronously. The sequencer never writes the registry directly — the only registry-write path is `reconciler → REG_W` in Phase 7 (under `atomic_update_registry`'s lock), so the write boundary is visually enforced.
 
 ## Vocabulary
 
