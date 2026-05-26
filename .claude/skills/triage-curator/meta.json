@@ -40,6 +40,42 @@
       "bypasses": ["P1", "P2", "P3", "P5"],
       "diagram_anchor": "maintenance-entries",
       "is_primary": false
+    },
+    {
+      "id": "impact-report",
+      "name": "Operator generates the impact-ranked registry snapshot",
+      "representativeness": 0.05,
+      "representativeness_anchor": "reporting",
+      "entry": {
+        "kind": "user_invocation",
+        "command": "node --import tsx scripts/generate_impact_report.ts [--top-n N] [--prior <json>] [--out <md>] [--snapshot <json>]"
+      },
+      "exit": {
+        "kind": "stdout",
+        "target": "human-readable-markdown"
+      },
+      "phases": [],
+      "bypasses": ["P1", "P2", "P3", "P5"],
+      "diagram_anchor": "maintenance-entries",
+      "is_primary": false
+    },
+    {
+      "id": "propose-backlog-tasks",
+      "name": "Operator sweeps unlinked registry rows for backlog tasks",
+      "representativeness": 0.05,
+      "representativeness_anchor": "self-maintenance",
+      "entry": {
+        "kind": "user_invocation",
+        "command": "node --import tsx scripts/propose_backlog_tasks.ts [--prior <json>] [--out <json>] [--snapshot <json>]"
+      },
+      "exit": {
+        "kind": "store_write",
+        "target": "backlog"
+      },
+      "phases": [],
+      "bypasses": ["P1", "P2", "P3", "P5"],
+      "diagram_anchor": "maintenance-entries",
+      "is_primary": false
     }
   ],
 

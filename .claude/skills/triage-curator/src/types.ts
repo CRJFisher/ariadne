@@ -269,8 +269,8 @@ export interface SignalLibraryGap {
 
 /**
  * Deficiency in Ariadne's **resolver** that is the real root cause of the
- * false-positive group. Drafts a top-level backlog task, or attaches to an
- * existing one when `existing_task_id` is set.
+ * dispatched `novel_issue`. Drafts a top-level backlog task, or attaches to
+ * an existing one when `existing_task_id` is set.
  *
  * Required on every response that proposes a working classifier (`predicate`
  * or `builtin`): the classifier is a workaround; the bug is the real fix.
@@ -461,7 +461,7 @@ export interface InvestigateResponse {
    */
   signal_library_gap: SignalLibraryGap | null;
   /**
-   * Resolver-level root cause behind this false-positive group. REQUIRED when
+   * Resolver-level root cause behind this `novel_issue`. REQUIRED when
    * `proposed_classifier` is non-null and its `kind` is not `"none"` — the
    * classifier is a workaround; this is the real fix. Finalize files this as a
    * top-level task (or attaches to `existing_task_id`) and writes the resolved

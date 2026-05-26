@@ -19,7 +19,6 @@ import type {
   NovelIssue,
   SignalLibraryGapTaskToCreate,
   InvestigateResponse,
-  InvestigatorSessionLog,
   KnownIssue,
   KnownIssueLanguage,
 } from "../types.js";
@@ -133,11 +132,6 @@ export interface ApplyOptions {
    * `check_<id>.ts` file rendered by the main agent before finalize runs.
    */
   authored_files_by_group: Record<string, string>;
-  /**
-   * Session logs written alongside each InvestigateResponse. Folded into
-   * the summary so finalize can surface failed groups.
-   */
-  session_logs?: InvestigatorSessionLog[];
   /**
    * Novel issues from the source triage run, keyed by `id`. The investigator
    * is dispatched per novel issue, so finalize looks up the dispatched source

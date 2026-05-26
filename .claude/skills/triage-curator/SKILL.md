@@ -314,7 +314,7 @@ The report has four sections: top N by `observed_count`, per-language breakdown,
 per-project breakdown, and "new since prior snapshot". Every registry entry
 carries its accumulated `observed_count`, `observed_projects`, and
 `last_seen_run`; these are bumped automatically by `finalize_run` each time a
-false-positive group is seen.
+`novel_issue` lands against the rule.
 
 ### Posting the report to the backlog
 
@@ -330,7 +330,7 @@ mcp__backlog__document_create({
 ```
 
 Post a fresh document each time rather than editing an existing one — old
-reports are useful as a historical record of where false-positive pressure
+reports are useful as a historical record of where `novel_issue` pressure
 sat at a given point.
 
 ## Sweeping registry entries without a linked backlog task (on demand)

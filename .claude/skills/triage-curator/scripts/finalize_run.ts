@@ -8,6 +8,11 @@
  *
  * Usage:
  *   node --import tsx finalize_run.ts --run <path> [--dry-run]
+ *
+ * Library export: `finalize_run({run_path, dry_run, ...})` is the same
+ * implementation, callable from tests with injectable filesystem
+ * dependencies. The CLI wrapper at the bottom of this file forwards
+ * `process.argv` into it and handles `process.exit`.
  */
 
 import * as fs from "node:fs/promises";
@@ -182,7 +187,7 @@ function aggregate_session_logs(logs: InvestigatorSessionLog[]): SessionAggregat
  * diagnostics. Files with any diagnostic are treated as failed authoring — their
  * group_id is excluded from the registry upsert step.
  */
-async function ast_check_authored_files(
+export async function ast_check_authored_files(
   authored_files_by_group: Record<string, string>,
 ): Promise<{ ast_failures: FailedAuthoring[]; passing: Record<string, string> }> {
   const ast_failures: FailedAuthoring[] = [];
@@ -224,8 +229,93 @@ async function ast_check_authored_files(
   return { ast_failures, passing };
 }
 
-async function main(): Promise<void> {
-  const { run_path, dry_run } = parse_argv(process.argv.slice(2));
+/**
+ * Partition orphan-cleanup candidates into safe-to-unlink and refused. An
+ * orphan path is refused when it escapes the builtins directory (defends
+ * against `..` traversal) or has a basename outside the `check_*.ts`
+ * convention. This is the boundary check that prevents a malformed
+ * authored-files map from becoming an arbitrary-delete primitive.
+ */
+export function partition_orphan_paths(
+  orphan_candidates: string[],
+  builtins_dir: string,
+): { safe_paths: string[]; refused_paths: string[] } {
+  const builtins_dir_with_sep = path.resolve(builtins_dir) + path.sep;
+  const safe_paths: string[] = [];
+  const refused_paths: string[] = [];
+  for (const orphan_path of orphan_candidates) {
+    const resolved_path = path.resolve(orphan_path);
+    const basename = path.basename(resolved_path);
+    const escapes_dir = !resolved_path.startsWith(builtins_dir_with_sep);
+    const wrong_shape =
+      !basename.startsWith("check_") || !basename.endsWith(".ts");
+    if (escapes_dir || wrong_shape) {
+      refused_paths.push(orphan_path);
+    } else {
+      safe_paths.push(resolved_path);
+    }
+  }
+  return { safe_paths, refused_paths };
+}
+
+export interface FinalizeRunOptions {
+  run_path: string;
+  dry_run: boolean;
+  /** Injectable for testing. Production callers omit. */
+  runs_dir?: string;
+  /** Injectable for testing. Production callers omit. */
+  registry_path?: string;
+  /** Injectable for testing. Production callers omit. */
+  builtins_dir?: string;
+  /** Injectable for testing. Production callers omit. */
+  permanent_slice_path?: string;
+  /** Injectable for testing. Production callers omit. */
+  builtins_barrel_path?: string;
+  /** Injectable for testing. Production caller is `sync_permanent_rules`. */
+  sync_permanent_rules?: () => Promise<void>;
+}
+
+export interface FinalizeRunSummary {
+  run_id: string;
+  project: string;
+  dry_run: boolean;
+  investigated_groups: number;
+  authored_files: string[];
+  deleted_orphan_files: string[];
+  refused_orphan_paths: string[];
+  failed_authoring: FailedAuthoring[];
+  skipped_permanent_upserts: string[];
+  skipped_fixed_upserts: string[];
+  drift_tagged_groups: string[];
+  registry_upserts: string[];
+  signal_library_gap_tasks: unknown[];
+  ariadne_bug_tasks: unknown[];
+  success_count: number;
+  failure_count: number;
+  blocked_count: number;
+  failed_groups: SessionAggregate["failed_groups"];
+}
+
+export interface FinalizeRunResult {
+  /** 0 success, 2 sentinel guard, 3 coherence failure, 4 triage-read failure. */
+  exit_code: 0 | 2 | 3 | 4;
+  stderr_message: string | null;
+  summary: FinalizeRunSummary | null;
+}
+
+export async function finalize_run(
+  opts: FinalizeRunOptions,
+): Promise<FinalizeRunResult> {
+  const {
+    run_path,
+    dry_run,
+    runs_dir = CURATOR_RUNS_DIR,
+    registry_path = get_registry_file_path(),
+    builtins_dir = get_core_builtins_dir(),
+    permanent_slice_path = get_permanent_slice_path(),
+    builtins_barrel_path = get_core_builtins_barrel_path(),
+    sync_permanent_rules: regen_permanent = sync_permanent_rules,
+  } = opts;
 
   const run_id = derive_run_id(run_path);
   const project = derive_project(run_path);
@@ -235,27 +325,27 @@ async function main(): Promise<void> {
   // signals "this run has already been touched"; either way, refuse to
   // re-enter apply_proposals so observed_count is not double-bumped. Manual
   // recovery: delete both sentinel files after inspecting the registry.
-  if (!dry_run && (await is_curated(run_id))) {
-    process.stderr.write(
-      `finalize_run: run '${run_id}' already has a sentinel under runs/<id>/; refusing to re-apply ` +
+  if (!dry_run && (await is_curated(run_id, runs_dir))) {
+    return {
+      exit_code: 2,
+      stderr_message:
+        `finalize_run: run '${run_id}' already has a sentinel under runs/<id>/; refusing to re-apply ` +
         "proposals (would double-bump observed_count). Delete finalized.json and " +
-        "finalize_started.json to force a re-run after verifying the registry.\n",
-    );
-    process.exit(2);
+        "finalize_started.json to force a re-run after verifying the registry.",
+      summary: null,
+    };
   }
 
-  await fs.mkdir(CURATOR_RUNS_DIR, { recursive: true });
+  await fs.mkdir(runs_dir, { recursive: true });
 
-  const output_dir = run_output_dir(run_id);
-  const investigate_dir = path.join(output_dir, "investigate");
+  const investigate_dir = path.join(runs_dir, run_id, "investigate");
 
   let triage: TriageResultsFile;
   try {
     triage = await read_v4_triage_results(run_path);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    process.stderr.write(`finalize_run: ${msg}\n`);
-    process.exit(4);
+    return { exit_code: 4, stderr_message: `finalize_run: ${msg}`, summary: null };
   }
 
   const investigate_responses = await read_json_dir<InvestigateResponse>(investigate_dir);
@@ -274,15 +364,16 @@ async function main(): Promise<void> {
   );
   const coherence_failures = validate_run_coherence(coherence_inputs);
   if (coherence_failures.length > 0) {
-    process.stderr.write(
-      `finalize_run: ${coherence_failures.length} cross-response coherence violation(s); ` +
+    return {
+      exit_code: 3,
+      stderr_message:
+        `finalize_run: ${coherence_failures.length} cross-response coherence violation(s); ` +
         "refusing to apply proposals.\n" +
-        JSON.stringify(coherence_failures, null, 2) + "\n",
-    );
-    process.exit(3);
+        JSON.stringify(coherence_failures, null, 2),
+      summary: null,
+    };
   }
 
-  const builtins_dir = get_core_builtins_dir();
   const { authored_files_by_group: authored_files_raw, render_failures } =
     await render_authored_files(investigate_responses, builtins_dir);
   const { ast_failures, passing: authored_files_by_group } =
@@ -292,7 +383,7 @@ async function main(): Promise<void> {
   // here and `save_outcome` leaves `finalize_started.json` behind; the next
   // `finalize_run` invocation's `is_curated` guard skips re-apply.
   if (!dry_run) {
-    await mark_finalize_started(run_id, run_path);
+    await mark_finalize_started(run_id, run_path, runs_dir);
   }
 
   const result = await apply_proposals(
@@ -300,11 +391,10 @@ async function main(): Promise<void> {
     compute_observation_counts(triage),
     {
       dry_run,
-      registry_path: get_registry_file_path(),
+      registry_path,
       project,
       run_id,
       authored_files_by_group,
-      session_logs,
       novel_issues_by_id: novel_issues_by_id(triage),
       classifier_regressions: triage.classifier_regressions,
     },
@@ -323,22 +413,12 @@ async function main(): Promise<void> {
   const deleted_orphan_files: string[] = [];
   const refused_orphan_paths: string[] = [];
   if (!dry_run) {
-    const builtins_dir_with_sep = path.resolve(get_core_builtins_dir()) + path.sep;
-    for (const orphan_path of orphan_candidates) {
-      // Cross-package destructive write: refuse to unlink anything that did
-      // not land under the core builtins directory. A malformed authored-files
-      // map otherwise becomes an arbitrary-delete primitive. Resolve and
-      // normalize first so `..` segments embedded in the path can't escape
-      // the prefix check.
-      const resolved_path = path.resolve(orphan_path);
-      const basename = path.basename(resolved_path);
-      const escapes_dir = !resolved_path.startsWith(builtins_dir_with_sep);
-      const wrong_shape =
-        !basename.startsWith("check_") || !basename.endsWith(".ts");
-      if (escapes_dir || wrong_shape) {
-        refused_orphan_paths.push(orphan_path);
-        continue;
-      }
+    const { safe_paths, refused_paths } = partition_orphan_paths(
+      orphan_candidates,
+      builtins_dir,
+    );
+    refused_orphan_paths.push(...refused_paths);
+    for (const resolved_path of safe_paths) {
       try {
         await fs.unlink(resolved_path);
         deleted_orphan_files.push(resolved_path);
@@ -356,13 +436,13 @@ async function main(): Promise<void> {
   const derived_files: string[] = [];
   if (!dry_run && (result.registry_upserts.length > 0 || result.drift_tagged_groups.length > 0)) {
     const registry_after = parse_known_issues_registry_json(
-      await fs.readFile(get_registry_file_path(), "utf8"),
+      await fs.readFile(registry_path, "utf8"),
     );
     const outputs = render_unsupported_features_all(registry_after);
     derived_files.push(...write_unsupported_features_outputs(outputs));
-    await sync_permanent_rules();
-    derived_files.push(get_permanent_slice_path());
-    derived_files.push(get_core_builtins_barrel_path());
+    await regen_permanent();
+    derived_files.push(permanent_slice_path);
+    derived_files.push(builtins_barrel_path);
   }
 
   const sessions = aggregate_session_logs(session_logs);
@@ -385,10 +465,10 @@ async function main(): Promise<void> {
   };
 
   if (!dry_run) {
-    await save_outcome(outcome_entry);
+    await save_outcome(outcome_entry, runs_dir);
   }
 
-  const summary = {
+  const summary: FinalizeRunSummary = {
     run_id,
     project,
     dry_run,
@@ -408,12 +488,30 @@ async function main(): Promise<void> {
     blocked_count: sessions.blocked_count,
     failed_groups: sessions.failed_groups,
   };
-  process.stdout.write(JSON.stringify(summary, null, 2) + "\n");
+  return { exit_code: 0, stderr_message: null, summary };
 }
 
-main().catch((err) => {
-  process.stderr.write(
-    `finalize_run failed: ${err instanceof Error ? err.stack ?? err.message : String(err)}\n`,
-  );
-  process.exit(1);
-});
+async function main(): Promise<void> {
+  const args = parse_argv(process.argv.slice(2));
+  const result = await finalize_run(args);
+  if (result.stderr_message !== null) {
+    process.stderr.write(result.stderr_message + "\n");
+  }
+  if (result.summary !== null) {
+    process.stdout.write(JSON.stringify(result.summary, null, 2) + "\n");
+  }
+  process.exit(result.exit_code);
+}
+
+// Run main only when invoked directly (skip when imported by tests).
+if (
+  import.meta.url === `file://${process.argv[1]}` ||
+  import.meta.url === new URL(`file://${process.argv[1]}`).href
+) {
+  main().catch((err) => {
+    process.stderr.write(
+      `finalize_run failed: ${err instanceof Error ? err.stack ?? err.message : String(err)}\n`,
+    );
+    process.exit(1);
+  });
+}

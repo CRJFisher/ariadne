@@ -21,8 +21,9 @@ import {
   aggregate_promotion_candidates,
   summarize_match_history,
 } from "../src/propose/promotion_candidates.js";
+import { read_v4_triage_results } from "../src/store/parse_triage_results.js";
 import { discover_runs } from "../src/store/scan_runs.js";
-import type { PromotionCandidate, TriageResultsFile } from "../src/types.js";
+import type { PromotionCandidate } from "../src/types.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 interface CliArgs {
@@ -56,11 +57,9 @@ async function load_recent_match_history(): Promise<
     llm_attributed_count: number;
   }[] = [];
   for (const run of runs) {
-    const text = await fs.readFile(run.run_path, "utf8");
-    const triage = JSON.parse(text) as Partial<TriageResultsFile>;
-    const confirmed = triage.confirmed_unreachable ?? [];
+    const triage = await read_v4_triage_results(run.run_path);
     const per_group = new Map<string, number>();
-    for (const entry of confirmed) {
+    for (const entry of triage.confirmed_unreachable) {
       if (entry.source.kind !== "registry") continue;
       const id = entry.source.group_id;
       per_group.set(id, (per_group.get(id) ?? 0) + 1);
