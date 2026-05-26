@@ -3,7 +3,7 @@ id: TASK-190.20
 title: >-
   Triage-curator simplifications enabled by 190.19 (dead-code subtraction,
   Phase 4 collapse, foundational hardening)
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-05-24 12:00"
 labels:
@@ -87,10 +87,10 @@ and .6 are correctness fixes; .7 is the shared-package extraction;
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 All seven remaining sub-tasks (190.20.1–6, 190.20.8) land or
+- [x] #1 All seven remaining sub-tasks (190.20.1–6, 190.20.8) land or
       have been explicitly de-scoped with a written rationale
       (190.20.7 was superseded by 190.21.1)
-- [ ] #2 `pnpm test` is green inside `.claude/skills/triage-curator/` and
+- [x] #2 `pnpm test` is green inside `.claude/skills/triage-curator/` and
       `.claude/skills/triage-entrypoints/`
 - [x] #3 No file under `.claude/skills/triage-curator/` references
       `QaResponse`, `QaOutlier`, `mark_drift_in_registry`,
@@ -100,12 +100,12 @@ and .6 are correctness fixes; .7 is the shared-package extraction;
 - [x] #5 `scripts/render_classifier.ts` is no longer dispatched from
       `SKILL.md`'s top-level phase flow; the README primary diagram either
       omits a render phase or has it folded into the investigator subgraph
-- [ ] #6 `scripts/finalize_run.ts` has a colocated test file covering at
+- [x] #6 `scripts/finalize_run.ts` has a colocated test file covering at
       minimum: sentinel guard, coherence-violation exit code, orphan-cleanup
       safety check, and replay safety after partial failure
-- [ ] #7 `src/atomic_write.ts` no longer carries the "Mirror of …"
+- [x] #7 `src/atomic_write.ts` no longer carries the "Mirror of …"
       comment — both writers import from a single shared module
-- [ ] #8 `finalize_run.ts` no longer reaches across the skill boundary
+- [x] #8 `finalize_run.ts` no longer reaches across the skill boundary
     with `../../triage-entrypoints/scripts/...` imports
 <!-- AC:END -->
 
@@ -143,6 +143,29 @@ Tests: 213 passing in `.claude/skills/triage-curator/`; typecheck clean.
 
 Wave B (190.20.5, .6, .8 — atomic finalize + exhaustiveness sweep + tests
 and residual cleanup) is the remaining work under this umbrella.
+
+### Wave B landed (2026-05-26)
+
+- **190.20.5** — `finalize_run.ts` made atomic + idempotent (sentinel
+  guard, MCP task-id persistence before linkage, replay-safe after
+  partial failure). Sidecar contract tightened. Commits `aa27ea72`,
+  `3cfc0c9f`.
+- **190.20.6** — Type-exhaustiveness sweep: runtime `Set<Union>` lookups
+  replaced with `satisfies Record<Union, …>` patterns; ariadne
+  root-cause predicate tightened. Commits `2e07149f`, `fdc8d98c`.
+- **190.20.8** — `finalize_run.ts` colocated test file added (sentinel
+  guard, coherence-violation exit code, orphan-cleanup safety, replay
+  safety). CLI guard hardened, tolerant scan, single DI seam.
+  Cross-skill `../../triage-entrypoints/scripts/...` import removed
+  (AC#8). Commits `3858bc22`, `7e181215`.
+
+The `atomic_write` "Mirror of …" duplication (AC#7) closed via
+TASK-190.21.1's `@ariadnejs/skill-fs` extraction — both writers now
+import from the shared workspace package.
+
+Parallel scope note: the equivalent `Set<Union>` sweep on the
+triage-entrypoints side is parked under **TASK-346**, filed
+independently (commit `8ec229dd`). It is not part of this umbrella.
 
 ### Review provenance
 
