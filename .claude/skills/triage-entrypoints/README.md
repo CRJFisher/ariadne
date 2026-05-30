@@ -8,12 +8,12 @@ Orthogonally, the `detect_dead_code` Stop hook (`.claude/hooks/detect_dead_code.
 
 ## Self-healing pipeline
 
-This skill is the first link in a three-skill chain: triage-entrypoints (sense) → triage-curator (classify) → fix-sequencer (actuate). It is _self-healing_ because two durable surfaces survive between runs — `registry.json` (what we learned) and the target repo (what we changed) — and both are read on the _next_ triage-entrypoints run. The two red dotted edges below are the loop closure.
+This skill is the first link in a three-skill chain: triage-entrypoints (sense) → triage-curator (classify) → fix-sequencer (actuate). It is _self-healing_ because two durable surfaces survive between runs — `registry.json` (what we learned) and the target repo's git log (what we changed) — and both are read on the _next_ triage-entrypoints run. The diagram below traces the data those runs deposit and the processes that read/write each artifact.
 
 <!-- Source: ./README.pipeline.mmd — edit there, run `pnpm render-mermaid-diagrams` -->
-![Self-healing pipeline (sense → classify → actuate)](./README.pipeline.svg)
+![Self-healing pipeline data layout (sense → classify → actuate)](./README.pipeline.svg)
 
-**Reading the diagram**: three skills feed forward (sense → classify → actuate); two durable surfaces (registry + target repo) survive between runs and feed the next iteration; the two red dotted edges are the loop closure — both fire on the _next_ triage-entrypoints invocation, not synchronously. See per-step diagrams below and sibling READMEs for the registry lifecycle states + writers, the worker / reconciler / git-log scanner nodes, sub-agent fleets, the per-cluster sign-off branch, and all other persistent stores.
+**Reading the diagram**: top-to-bottom is temporal order. Each node is a **data artifact or persistent store**, labelled inline with **W** (writer skill) and **R** (reader skill). Green tags are per-run files; purple cylinders are persistent stores that survive between runs. The red-bordered `registry.json` on the right is the loop-closing surface — the curator writes `wip` rows, the fix-sequencer reconciler flips them to `fixed` after a `fix(task_id):` commit lands, and the next triage-entrypoints run reads it as a filter. See the per-step diagram below and the sibling skill READMEs for the scripts, sub-agents, and intra-skill flow.
 
 ## Pipeline Flow
 
