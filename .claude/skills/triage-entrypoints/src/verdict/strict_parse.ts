@@ -1,8 +1,7 @@
 /**
- * Strict JSON-shape parsing primitives shared by the per-run storage modules
- * (`triage_verdict.ts`, `novel_issues.ts`). The contract is "no silent
- * coercion": every helper throws on shape violation so downstream code can
- * assume fully validated values.
+ * Strict JSON-shape parsing primitives used by `triage_verdict.ts`. The
+ * contract is "no silent coercion": every helper throws on shape violation so
+ * downstream code can assume fully validated values.
  */
 
 export function is_record(raw: unknown): raw is Record<string, unknown> {

@@ -484,9 +484,17 @@ describe("build_finalization_output", () => {
       [2, TP_VERDICT],
     ]);
     const output = build_finalization_output(state, context_with(verdicts));
+    // Every published FP row must trace back to an fp-novel verdict, and the
+    // count must equal the number of fp-novel verdicts (no row without a
+    // backing verdict, no fp-novel verdict silently dropped).
+    const fp_novel_count = [...verdicts.values()].filter((v) => v.kind === "fp-novel").length;
+    expect(output.novel_issues.length).toBe(fp_novel_count);
     for (const issue of output.novel_issues) {
       const verdict = verdicts.get(issue.entry_index);
-      expect(verdict?.kind).toBe("fp-novel");
+      if (verdict === undefined) {
+        throw new Error(`published novel_issues row ${issue.id} has no backing verdict`);
+      }
+      expect(verdict.kind).toBe("fp-novel");
     }
     expect(output.novel_issues.map((i) => i.entry_index)).toEqual([1]);
   });

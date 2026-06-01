@@ -68,7 +68,7 @@ The structural enforcement lives in `packages/skill-fs/src/registry_writers.test
 
 `wip → permanent` is the only manual transition. The candidate-analysis script (`pnpm find-promotion-candidates`) surfaces qualifying rules; the human flips `status` and runs `pnpm sync-permanent-rules` to rebuild the bundled core slice. The transition stays manual until the script produces non-zero output for ≥2 consecutive sweeps; see `let-s-make-a-plan-radiant-dragon.md` for the auto-flip escalation criteria.
 
-A `fixed` row that resurfaces in a later run (its `novel_issue.id` appears again in v4 `triage_results`) is surfaced by the curator for human review — there is no automatic re-flip back to `wip`, because the reconciler is the only authorized writer of `fixed`-row status.
+A `fixed` row that resurfaces in a later run (its `novel_issue.id` appears again in the published `triage_results`) is surfaced by the curator for human review — there is no automatic re-flip back to `wip`, because the reconciler is the only authorized writer of `fixed`-row status.
 
 ## Cross-references
 

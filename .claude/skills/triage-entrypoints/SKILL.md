@@ -203,7 +203,7 @@ node --import tsx .claude/skills/triage-entrypoints/scripts/get_next_triage_entr
 - If `entries` is empty and the in-flight set is empty, proceed to Phase 4.
 - If `entries` is empty but the in-flight set is non-empty, wait for the next completion and call the script again.
 
-Call the script **sequentially** (not in parallel) for replacements — each call needs a fresh absorb pass to see the just-completed entry before picking the next pending one. Pass an empty `--active` (omit the flag) if every worker has finished and you're doing a final drain check.
+Call the script **sequentially** (not in parallel) for replacements — each call needs a fresh read of `results/` to see the just-completed entry's verdict file before picking the next pending one. Pass an empty `--active` (omit the flag) if every worker has finished and you're doing a final drain check.
 
 ### Verdict schema
 

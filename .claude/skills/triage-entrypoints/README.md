@@ -10,6 +10,8 @@ Orthogonally, the `detect_dead_code` Stop hook (`.claude/hooks/detect_dead_code.
 
 This skill is the first link in a three-skill chain: triage-entrypoints (sense) → triage-curator (classify) → fix-sequencer (actuate). It is _self-healing_ because two durable surfaces survive between runs — `registry.json` (what we learned) and the target repo's git log (what we changed) — and both are read on the _next_ triage-entrypoints run. The diagram below traces the data those runs deposit and the processes that read/write each artifact.
 
+> **Note:** the rendered pipeline diagrams in this README still show the removed in-run coordinator (`novel_issues.json` / `classifier_regressions.jsonl` / `coordinator_log.jsonl`); they are regenerated when this skill is renamed to `triage` (TASK-190.22.3). The current flow: each investigator writes one self-contained `TriageVerdict` to `results/`, and finalize builds every published slice from those files.
+
 <!-- Source: ./README.pipeline.mmd — edit there, then re-render with the /mermaid-pre-render skill -->
 
 ![Self-healing pipeline data layout (sense → classify → actuate)](./README.pipeline.svg)
@@ -25,8 +27,6 @@ This skill's internal flow is a top-down 5-phase pipeline. Read-only stores sit 
 ![Triage-entrypoints 5-phase pipeline](./README.per-step.svg)
 
 **What to look for**: four phase bands stacked top-to-bottom (strict reading order); two read-only stores (registry, prior triage_results) sit outside the phase bands — this skill **never** writes the registry (lifecycle contract); three Phase-2 buckets (auto / TP / residual) determine whether an entry skips the triage loop entirely. Each investigator writes one self-contained `TriageVerdict` to `results/<entry_index>.json`; finalize is the single reader, building `novel_issues[]` (one-per-`fp-novel`) and `classifier_regressions[]` (rolled up from `fp-classifier-regression`) directly from those files. Each run's published `triage_results` becomes the next same-commit run's TP cache.
-
-> **Note:** the rendered pipeline diagrams below still show the removed in-run coordinator (`novel_issues.json` / `classifier_regressions.jsonl` / `coordinator_log.jsonl`); they are regenerated when this skill is renamed to `triage` (TASK-190.22.3).
 
 ## Sub-Agent Summary
 

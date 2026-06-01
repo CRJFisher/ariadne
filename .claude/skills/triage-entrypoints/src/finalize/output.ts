@@ -227,7 +227,7 @@ export function build_finalization_output(
     if (verdict === undefined) {
       throw new Error(
         `build_finalization_output: entry ${entry.entry_index} (${entry.name}) is completed on the llm-triage route but has no verdict in results/. ` +
-          "Re-run the dispatcher's absorb pass before finalizing.",
+          "Re-run the per-entry investigator (get_next_triage_entry) for this entry before finalizing.",
       );
     }
 
