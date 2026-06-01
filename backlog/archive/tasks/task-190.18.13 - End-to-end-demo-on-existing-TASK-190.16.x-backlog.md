@@ -4,17 +4,13 @@ title: End-to-end demo on existing TASK-190.16.x backlog
 status: To Do
 assignee: []
 created_date: "2026-04-29 10:34"
-updated_date: "2026-04-29 14:27"
+updated_date: "2026-06-01 10:48"
 labels:
   - self-repair
   - fix-sequencer
   - verification
   - demo
-dependencies:
-  - TASK-190.18.3
-  - TASK-190.18.5
-  - TASK-190.18.9
-  - TASK-190.18.11
+dependencies: []
 parent_task_id: TASK-190.18
 priority: high
 ordinal: 13000

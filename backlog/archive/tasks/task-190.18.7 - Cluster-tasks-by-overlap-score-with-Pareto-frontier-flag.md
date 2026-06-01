@@ -4,15 +4,13 @@ title: Cluster tasks by overlap + score with Pareto frontier flag
 status: To Do
 assignee: []
 created_date: "2026-04-29 10:32"
-updated_date: "2026-04-29 14:24"
+updated_date: "2026-06-01 10:48"
 labels:
   - self-repair
   - fix-sequencer
   - clustering
   - critical-path
-dependencies:
-  - TASK-190.18.2
-  - TASK-190.18.6
+dependencies: []
 parent_task_id: TASK-190.18
 priority: high
 ordinal: 7000

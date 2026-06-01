@@ -4,16 +4,12 @@ title: Document the chain & loop in canonical style
 status: To Do
 assignee: []
 created_date: "2026-04-29 10:35"
-updated_date: "2026-04-29 14:27"
+updated_date: "2026-06-01 10:48"
 labels:
   - self-repair
   - fix-sequencer
   - documentation
-dependencies:
-  - TASK-190.18.3
-  - TASK-190.18.5
-  - TASK-190.18.9
-  - TASK-190.18.11
+dependencies: []
 parent_task_id: TASK-190.18
 priority: medium
 ordinal: 14000

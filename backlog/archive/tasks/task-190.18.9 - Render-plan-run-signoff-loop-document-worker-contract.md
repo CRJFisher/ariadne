@@ -4,13 +4,12 @@ title: "Render plan, run signoff loop, document worker contract"
 status: To Do
 assignee: []
 created_date: "2026-04-29 10:33"
-updated_date: "2026-04-29 14:26"
+updated_date: "2026-06-01 10:48"
 labels:
   - self-repair
   - fix-sequencer
   - rendering
-dependencies:
-  - TASK-190.18.7
+dependencies: []
 parent_task_id: TASK-190.18
 priority: high
 ordinal: 9000

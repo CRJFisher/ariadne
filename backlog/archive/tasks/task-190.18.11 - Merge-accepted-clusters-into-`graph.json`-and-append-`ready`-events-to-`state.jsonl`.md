@@ -6,14 +6,13 @@ title: >-
 status: To Do
 assignee: []
 created_date: "2026-04-29 10:34"
-updated_date: "2026-04-29 14:27"
+updated_date: "2026-06-01 10:48"
 labels:
   - self-repair
   - fix-sequencer
   - graph-write
   - critical-path
-dependencies:
-  - TASK-190.18.9
+dependencies: []
 parent_task_id: TASK-190.18
 priority: high
 ordinal: 11000

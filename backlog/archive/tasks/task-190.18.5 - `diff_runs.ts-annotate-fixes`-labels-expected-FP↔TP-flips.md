@@ -4,13 +4,13 @@ title: '`diff_runs.ts --annotate-fixes` labels expected FP↔TP flips'
 status: To Do
 assignee: []
 created_date: '2026-04-29 10:31'
+updated_date: '2026-06-01 10:47'
 labels:
   - self-repair
   - fix-sequencer
   - self-repair-pipeline-extension
   - loop-closure
-dependencies:
-  - TASK-190.18.3
+dependencies: []
 parent_task_id: TASK-190.18
 priority: medium
 ordinal: 5000

@@ -4,14 +4,13 @@ title: Scaffold `fix-sequencer` skill package
 status: To Do
 assignee: []
 created_date: "2026-04-29 10:32"
+updated_date: "2026-06-01 10:47"
 labels:
   - self-repair
   - fix-sequencer
   - scaffolding
   - critical-path
-dependencies:
-  - TASK-190.18.1
-  - TASK-190.18.2
+dependencies: []
 parent_task_id: TASK-190.18
 priority: high
 ordinal: 6000
