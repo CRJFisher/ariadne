@@ -23,15 +23,12 @@
     "prepublishOnly": "pnpm build",
     "check:size": "pnpm exec tsx scripts/check-file-sizes.ts",
     "check:size:warn": "pnpm exec tsx scripts/check-file-sizes.ts || true",
-    "validate:captures": "pnpm exec tsx scripts/validate_captures.ts",
-    "render-mermaid-diagrams": "node --import tsx scripts/render-mermaid-diagrams.ts",
-    "check-mermaid-diagrams": "node --import tsx scripts/check-mermaid-diagrams.ts"
+    "validate:captures": "pnpm exec tsx scripts/validate_captures.ts"
   },
   "devDependencies": {
     "@ariadnejs/core": "workspace:*",
     "@changesets/cli": "^2.27.1",
     "@eslint/js": "^9.37.0",
-    "@mermaid-js/mermaid-cli": "^11.15.0",
     "@types/node": "^24.0.14",
     "@typescript-eslint/eslint-plugin": "^8.46.0",
     "@typescript-eslint/parser": "^8.46.0",

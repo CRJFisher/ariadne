@@ -49,14 +49,6 @@ if git diff --cached --name-only | grep -qE '\.(ts|tsx|js|jsx)$'; then
   echo "🧪 Running full test suites..."
   scripts/run_all_tests.sh
 fi
-
-# Mermaid pre-render: regenerate sibling SVGs for any staged .mmd sources.
-# Silent no-op when Chrome is not detected so contributors without Chrome
-# remain unblocked. Exits non-zero only on mmdc syntax errors.
-if git diff --cached --name-only --diff-filter=ACMR | grep -q '\.mmd$'; then
-  PROJECT_DIR="$(git rev-parse --show-toplevel)"
-  node --import tsx "$PROJECT_DIR/scripts/render-mermaid-diagrams.ts" --staged
-fi
 EOF
 
 chmod +x .git/hooks/pre-commit

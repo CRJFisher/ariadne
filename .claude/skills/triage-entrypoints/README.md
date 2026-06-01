@@ -10,7 +10,8 @@ Orthogonally, the `detect_dead_code` Stop hook (`.claude/hooks/detect_dead_code.
 
 This skill is the first link in a three-skill chain: triage-entrypoints (sense) → triage-curator (classify) → fix-sequencer (actuate). It is _self-healing_ because two durable surfaces survive between runs — `registry.json` (what we learned) and the target repo's git log (what we changed) — and both are read on the _next_ triage-entrypoints run. The diagram below traces the data those runs deposit and the processes that read/write each artifact.
 
-<!-- Source: ./README.pipeline.mmd — edit there, run `pnpm render-mermaid-diagrams` -->
+<!-- Source: ./README.pipeline.mmd — edit there, then re-render with the /mermaid-pre-render skill -->
+
 ![Self-healing pipeline data layout (sense → classify → actuate)](./README.pipeline.svg)
 
 **Reading the diagram**: top-to-bottom is temporal order. Each node is a **data artifact or persistent store**, labelled inline with **W** (writer skill) and **R** (reader skill). Green tags are per-run files; purple cylinders are persistent stores that survive between runs. The red-bordered `registry.json` on the right is the loop-closing surface — the curator writes `wip` rows, the fix-sequencer reconciler flips them to `fixed` after a `fix(task_id):` commit lands, and the next triage-entrypoints run reads it as a filter. See the per-step diagram below and the sibling skill READMEs for the scripts, sub-agents, and intra-skill flow.
@@ -19,16 +20,17 @@ This skill is the first link in a three-skill chain: triage-entrypoints (sense) 
 
 This skill's internal flow is a top-down 5-phase pipeline. Read-only stores sit on a left rail and only feed the phases that touch them; the published `triage_results/<run-id>.json` fans out to three downstream consumers and (on the _next_ same-commit run) becomes the TP-cache source.
 
-<!-- Source: ./README.per-step.mmd — edit there, run `pnpm render-mermaid-diagrams` -->
+<!-- Source: ./README.per-step.mmd — edit there, then re-render with the /mermaid-pre-render skill -->
+
 ![Triage-entrypoints 5-phase pipeline](./README.per-step.svg)
 
 **What to look for**: four phase bands stacked top-to-bottom (strict reading order); two read-only stores (registry, prior triage_results) sit outside the phase bands — this skill **never** writes the registry (lifecycle contract); three Phase-2 buckets (auto / TP / residual) determine whether an entry skips the triage loop entirely. The dispatcher is the **single writer** of both `novel_issues.json` (atomic, via the coordinator path on novel verdicts) and `classifier_regressions.jsonl` (append-only, directly on `fp-classifier-regression`). The coordinator sub-agent only fires on novel verdicts; `tp` and `uncertain` are absorbed in-memory and surfaced at finalize. Each run's published `triage_results` becomes the next same-commit run's TP cache.
 
 ## Sub-Agent Summary
 
-| Agent               | Model  | Multiplicity              | Purpose                                                                                |
-| ------------------- | ------ | ------------------------- | -------------------------------------------------------------------------------------- |
-| triage-investigator | Sonnet | 1 per entry (worker pool) | Fetch own context via `get_entry_context.ts`, emit one `TriageVerdict`                 |
+| Agent               | Model  | Multiplicity              | Purpose                                                                                   |
+| ------------------- | ------ | ------------------------- | ----------------------------------------------------------------------------------------- |
+| triage-investigator | Sonnet | 1 per entry (worker pool) | Fetch own context via `get_entry_context.ts`, emit one `TriageVerdict`                    |
 | triage-coordinator  | Sonnet | 1 per novel absorb        | Sense-check novel verdicts against the run's `novel_issues.json`; merge / register / flag |
 
 ## Key Modules
