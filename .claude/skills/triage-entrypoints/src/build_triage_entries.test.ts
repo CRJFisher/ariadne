@@ -79,7 +79,7 @@ describe("build_triage_entries — auto_classified bucket", () => {
       signature: null,
       route: "known-unreachable",
       diagnosis: "callers-not-in-registry",
-      known_source: "method-chain-dispatch",
+      known_source: "registry:method-chain-dispatch",
       status: "completed",
       result: {
         ariadne_correct: true,
@@ -207,7 +207,7 @@ describe("build_triage_entries — two-bucket composition", () => {
       known_source: r.known_source,
     }));
     expect(summary).toEqual([
-      { entry_index: 0, name: "my_fixture", route: "known-unreachable", status: "completed", auto_classified: true,  known_source: "py-pytest-fixture" },
+      { entry_index: 0, name: "my_fixture", route: "known-unreachable", status: "completed", auto_classified: true,  known_source: "registry:py-pytest-fixture" },
       { entry_index: 1, name: "helper_a",   route: "llm-triage",        status: "pending",   auto_classified: false, known_source: null },
       { entry_index: 2, name: "helper_b",   route: "llm-triage",        status: "pending",   auto_classified: false, known_source: null },
     ]);

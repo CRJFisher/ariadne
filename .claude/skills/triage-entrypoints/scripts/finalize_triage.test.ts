@@ -2,10 +2,12 @@
  * Fixture integration test for `finalize_triage`.
  *
  * Stages a tmp run directory with a mixed set of investigator verdicts (one
- * each of `tp`, `fp-novel-new`, `fp-novel-cited`, `fp-classifier-regression`,
- * `uncertain`) plus an auto-classified registry entry, then runs the same
- * load+build pipeline that `finalize_triage.ts` exercises and asserts the
- * published v4 `triage_results` payload exactly via `toEqual`.
+ * each of `tp`, `fp-novel` ×2, `fp-classifier-regression`, `uncertain`) plus an
+ * auto-classified registry entry, then runs the same load+build pipeline that
+ * `finalize_triage.ts` exercises and asserts the published v5 `triage_results`
+ * payload exactly via `toEqual`. Both `novel_issues[]` and
+ * `classifier_regressions[]` are derived from the verdict files — no
+ * `novel_issues.json` / `classifier_regressions.jsonl` exists in the run dir.
  */
 
 import * as fs from "node:fs/promises";
@@ -19,11 +21,11 @@ import {
   type FinalizationOutput,
 } from "../src/finalize/output.js";
 import { load_verdicts_by_entry_index } from "../src/finalize/verdict_ledger.js";
-import {
-  aggregate_classifier_regressions,
-  read_classifier_regression_records,
-} from "@ariadnejs/skill-fs";
-import { read_novel_issues, write_novel_issues } from "../src/absorb/novel_issues.js";
+import type {
+  EntryPointDiagnostics,
+  FilePath,
+  SyntacticFeatures,
+} from "@ariadnejs/types";
 import type {
   TriageEntry,
   TriageState,
@@ -31,6 +33,16 @@ import type {
 import type { TriageVerdict } from "../src/verdict/triage_verdict.js";
 
 const PROJECT_PATH = "/projects/sample";
+
+const BASE_SYNTACTIC_FEATURES: SyntacticFeatures = {
+  is_new_expression: false,
+  is_super_call: false,
+  is_optional_chain: false,
+  is_awaited: false,
+  is_callback_arg: false,
+  is_inside_try: false,
+  is_dynamic_dispatch: false,
+};
 
 function make_entry(over: Partial<TriageEntry>): TriageEntry {
   const base: TriageEntry = {
@@ -61,6 +73,25 @@ function make_entry(over: Partial<TriageEntry>): TriageEntry {
   return { ...base, ...over };
 }
 
+const NOVEL_DIAGNOSTICS: EntryPointDiagnostics = {
+  grep_call_sites: [],
+  grep_call_sites_unindexed_tests: [],
+  ariadne_call_refs: [
+    {
+      caller_function: "register_routes",
+      caller_file: "src/app.ts" as FilePath,
+      call_line: 12,
+      call_type: "method",
+      resolution_count: 0,
+      resolved_to: [],
+      receiver_kind: "identifier",
+      resolution_failure: { stage: "method_lookup", reason: "method_not_on_type", partial_info: {} },
+      syntactic_features: BASE_SYNTACTIC_FEATURES,
+    },
+  ],
+  diagnosis: "callers-in-registry-unresolved",
+};
+
 let run_dir: string;
 
 beforeEach(async () => {
@@ -81,7 +112,7 @@ async function write_verdict(entry_index: number, verdict: TriageVerdict): Promi
 }
 
 describe("finalize_triage (fixture integration)", () => {
-  it("publishes the exact v4 envelope for a mixed-verdict run", async () => {
+  it("publishes the exact v5 envelope, deriving novel_issues and classifier_regressions from the verdict files", async () => {
     // ===== Triage state =====
     const state: TriageState = {
       project_name: "sample",
@@ -106,18 +137,19 @@ describe("finalize_triage (fixture integration)", () => {
           start_line: 3,
           signature: "function lonely_main(): void",
         }),
-        // Investigator emitted fp-novel-new.
+        // Investigator emitted fp-novel; entry carries a resolution failure.
         make_entry({
           entry_index: 2,
           name: "novel_fp",
           file_path: `${PROJECT_PATH}/src/novel.ts`,
           start_line: 10,
+          diagnostics: NOVEL_DIAGNOSTICS,
         }),
-        // Investigator emitted fp-novel-cited.
+        // Investigator emitted fp-novel; entry has no failing call ref.
         make_entry({
           entry_index: 3,
-          name: "cited_fp",
-          file_path: `${PROJECT_PATH}/src/cited.ts`,
+          name: "novel_fp_2",
+          file_path: `${PROJECT_PATH}/src/novel2.ts`,
           start_line: 20,
         }),
         // Investigator emitted fp-classifier-regression.
@@ -139,21 +171,22 @@ describe("finalize_triage (fixture integration)", () => {
       updated_at: "2026-05-20T01:00:00.000Z",
     };
 
-    // ===== Per-entry result files =====
+    // ===== Per-entry result files (the single source of truth) =====
     await write_verdict(1, {
       kind: "tp",
       member_evidence: { file: "src/lonely.ts", line: 3, why: "no callers" },
     });
     await write_verdict(2, {
-      kind: "fp-novel-new",
+      kind: "fp-novel",
       proposed_root_cause: "decorator-route registration",
       evidence_excerpt: "@route('/novel')",
       member_evidence: { file: "src/novel.ts", line: 10, why: "registered via decorator" },
     });
     await write_verdict(3, {
-      kind: "fp-novel-cited",
-      novel_issue_id: "decorator-route-registration",
-      evidence_excerpt: "@route('/cited')",
+      kind: "fp-novel",
+      proposed_root_cause: "callback registration missed",
+      evidence_excerpt: "emitter.on('x', novel_fp_2)",
+      member_evidence: { file: "src/novel2.ts", line: 20, why: "registered via emitter" },
     });
     await write_verdict(4, {
       kind: "fp-classifier-regression",
@@ -167,40 +200,7 @@ describe("finalize_triage (fixture integration)", () => {
       member_evidence: { file: "src/ambig.ts", line: 40, why: "two plausible paths" },
     });
 
-    // ===== novel_issues.json =====
-    await write_novel_issues(path.join(run_dir, "novel_issues.json"), {
-      issues: [
-        {
-          id: "decorator-route-registration",
-          canonical_name: "Decorator route registration",
-          root_cause: "Handlers reached only via @route decorator",
-          citations: [
-            { entry_index: 2, evidence_excerpt: "@route('/novel')" },
-            { entry_index: 3, evidence_excerpt: "@route('/cited')" },
-          ],
-        },
-      ],
-      flagged: [],
-    });
-
-    // ===== classifier_regressions.jsonl =====
-    await fs.writeFile(
-      path.join(run_dir, "classifier_regressions.jsonl"),
-      JSON.stringify({
-        timestamp: "2026-05-20T00:30:00.000Z",
-        entry_index: 4,
-        should_have_matched_rule_id: "framework-loader",
-        evidence_excerpt: "loader.register(handler)",
-        member_evidence: { file: "src/drifty.ts", line: 30, why: "loader entry missed" },
-      }) + "\n",
-      "utf8",
-    );
-
     // ===== Drive the same load+build path finalize_triage.ts uses =====
-    const novel_issues_file = await read_novel_issues(path.join(run_dir, "novel_issues.json"));
-    const regression_records = await read_classifier_regression_records(
-      path.join(run_dir, "classifier_regressions.jsonl"),
-    );
     const verdicts_by_entry_index = await load_verdicts_by_entry_index(
       path.join(run_dir, "results"),
     );
@@ -209,30 +209,35 @@ describe("finalize_triage (fixture integration)", () => {
       commit_hash: "deadbeefcafebabe",
       project_path: PROJECT_PATH,
       sources: {
-        novel_issues: novel_issues_file.issues,
-        flagged_novel_verdicts: novel_issues_file.flagged,
-        classifier_regressions: aggregate_classifier_regressions(regression_records),
         verdicts_by_entry_index,
       },
     });
 
     // ===== Exact assertion against a typed literal =====
     const expected: FinalizationOutput = {
-      schema_version: 4,
+      schema_version: 5,
       project_path: PROJECT_PATH,
       commit_hash: "deadbeefcafebabe",
       novel_issues: [
         {
-          id: "decorator-route-registration",
-          canonical_name: "Decorator route registration",
-          root_cause: "Handlers reached only via @route decorator",
-          citations: [
-            { entry_index: 2, evidence_excerpt: "@route('/novel')" },
-            { entry_index: 3, evidence_excerpt: "@route('/cited')" },
-          ],
+          id: "novel-2",
+          entry_index: 2,
+          member_evidence: { file: "src/novel.ts", line: 10, why: "registered via decorator" },
+          proposed_root_cause: "decorator-route registration",
+          evidence_excerpt: "@route('/novel')",
+          diagnosis: "callers-in-registry-unresolved",
+          resolution_failure: { stage: "method_lookup", reason: "method_not_on_type" },
+          receiver_kind: "identifier",
+        },
+        {
+          id: "novel-3",
+          entry_index: 3,
+          member_evidence: { file: "src/novel2.ts", line: 20, why: "registered via emitter" },
+          proposed_root_cause: "callback registration missed",
+          evidence_excerpt: "emitter.on('x', novel_fp_2)",
+          diagnosis: "no-textual-callers",
         },
       ],
-      flagged_novel_verdicts: [],
       classifier_regressions: [
         {
           rule_id: "framework-loader",
@@ -276,5 +281,11 @@ describe("finalize_triage (fixture integration)", () => {
       last_updated: "2026-05-20T01:00:00.000Z",
     };
     expect(output).toEqual(expected);
+
+    // No in-run absorb files are written under the run dir.
+    const run_files = await fs.readdir(run_dir);
+    expect(run_files.includes("novel_issues.json")).toBe(false);
+    expect(run_files.includes("classifier_regressions.jsonl")).toBe(false);
+    expect(run_files.includes("coordinator_log.jsonl")).toBe(false);
   });
 });

@@ -27,11 +27,10 @@ afterEach(() => {
 });
 
 const EMPTY_OUTPUT: FinalizationOutput = {
-  schema_version: 4,
+  schema_version: 5,
   project_path: "/some/path",
   commit_hash: null,
   novel_issues: [],
-  flagged_novel_verdicts: [],
   classifier_regressions: [],
   confirmed_unreachable: [],
   uncertain: [],
@@ -74,7 +73,7 @@ describe("read_triage_results", () => {
   it("returns the parsed output when the file exists", async () => {
     seed("p", "deadbee-2026-04-26T00-00-00.000Z");
     const result = await read_triage_results("p", "deadbee-2026-04-26T00-00-00.000Z");
-    expect(result.schema_version).toBe(4);
+    expect(result.schema_version).toBe(5);
   });
 
   it("throws when the file is missing", async () => {

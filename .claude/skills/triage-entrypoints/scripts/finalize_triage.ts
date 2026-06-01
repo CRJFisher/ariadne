@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 /**
- * Finalize triage: read completed state + per-run novel issues + classifier
- * regressions, save the published v4 results JSON, seal the run.
+ * Finalize triage: read completed state + the per-entry verdict files, save the
+ * published v5 results JSON, seal the run.
  *
- * Reads the active (or pinned) run, builds the v4 `triage_results/<run-id>.json`
- * payload from `novel_issues.json`, `classifier_regressions.jsonl`, and the
- * per-entry verdict files, marks the run finalized in its manifest, and clears
- * the project's LATEST pointer. The run directory itself is preserved for
- * diffing and audit; `prune_runs.ts` is the only script that deletes run dirs.
+ * Reads the active (or pinned) run, builds the v5 `triage_results/<run-id>.json`
+ * payload entirely from the per-entry verdict files under `results/` (the single
+ * source of truth — `novel_issues[]` one-per-`fp-novel`-verdict and
+ * `classifier_regressions[]` rolled up from `fp-classifier-regression`
+ * verdicts), marks the run finalized in its manifest, and clears the project's
+ * LATEST pointer. The run directory itself is preserved for diffing and audit;
+ * `prune_runs.ts` is the only script that deletes run dirs.
  *
  * Usage:
  *   node --import tsx finalize_triage.ts --project <name> [--run-id <id>]
@@ -25,14 +27,7 @@ import {
 import { load_verdicts_by_entry_index } from "../src/finalize/verdict_ledger.js";
 import { parse_project_arg, parse_run_id_arg } from "../src/cli_args.js";
 import {
-  aggregate_classifier_regressions,
-  read_classifier_regression_records,
-} from "@ariadnejs/skill-fs";
-import { read_novel_issues } from "../src/absorb/novel_issues.js";
-import {
   ANALYSIS_OUTPUT_DIR,
-  classifier_regressions_path_for,
-  novel_issues_path_for,
   require_run,
   results_dir_for,
 } from "../src/store/paths.js";
@@ -69,11 +64,6 @@ async function main(): Promise<void> {
     process.exit(2);
   }
 
-  const novel_issues_file = await read_novel_issues(novel_issues_path_for(project, run_id));
-  const regression_records = await read_classifier_regression_records(
-    classifier_regressions_path_for(project, run_id),
-  );
-  const classifier_regressions = aggregate_classifier_regressions(regression_records);
   const verdicts_by_entry_index = await load_verdicts_by_entry_index(
     results_dir_for(project, run_id),
   );
@@ -82,9 +72,6 @@ async function main(): Promise<void> {
     commit_hash: manifest.commit_hash,
     project_path: state.project_path,
     sources: {
-      novel_issues: novel_issues_file.issues,
-      flagged_novel_verdicts: novel_issues_file.flagged,
-      classifier_regressions,
       verdicts_by_entry_index,
     },
   });
@@ -110,10 +97,7 @@ async function main(): Promise<void> {
   console.error(`  Run id:                       ${run_id}`);
   console.error(`  Total entries:                ${summary.total_entries}`);
   console.error(`  Confirmed unreachable:        ${summary.confirmed_unreachable_count}`);
-  console.error(
-    `  Novel issues:                 ${summary.novel_issue_count} ` +
-      `(${summary.novel_citation_count} citations)`,
-  );
+  console.error(`  Novel issues:                 ${summary.novel_issue_count}`);
   console.error(
     `  Classifier regressions:       ${summary.classifier_regression_rule_count} rule(s), ` +
       `${summary.classifier_regression_entry_count} entry/entries`,

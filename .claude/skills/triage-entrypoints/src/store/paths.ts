@@ -2,7 +2,7 @@
  * Triage state file locations and shared CLI helpers.
  *
  * Layout: triage_state/<project>/runs/<run-id>/{triage.json, manifest.json,
- *   results/, novel_issues.json, coordinator_log.jsonl, classifier_regressions.jsonl}
+ *   results/}
  * Plus a LATEST pointer at triage_state/<project>/LATEST recording the active run-id.
  *
  * Each call to a state-reading script may either default to the LATEST run for
@@ -38,9 +38,6 @@ export const LATEST_FILENAME = "LATEST";
 export const TRIAGE_STATE_FILENAME = "triage.json";
 export const RUN_MANIFEST_FILENAME = "manifest.json";
 export const RESULTS_SUBDIR = "results";
-export const NOVEL_ISSUES_FILENAME = "novel_issues.json";
-export const COORDINATOR_LOG_FILENAME = "coordinator_log.jsonl";
-export const CLASSIFIER_REGRESSIONS_FILENAME = "classifier_regressions.jsonl";
 
 // ===== Pure path builders (no I/O) =====
 
@@ -77,21 +74,6 @@ export function manifest_path_for(project: string, run_id: string): string {
 /** Path to a run's results/ subdir. Existence is not checked. */
 export function results_dir_for(project: string, run_id: string): string {
   return path.join(run_dir_for(project, run_id), RESULTS_SUBDIR);
-}
-
-/** Path to a run's novel_issues.json. Existence is not checked. */
-export function novel_issues_path_for(project: string, run_id: string): string {
-  return path.join(run_dir_for(project, run_id), NOVEL_ISSUES_FILENAME);
-}
-
-/** Path to a run's coordinator_log.jsonl. Existence is not checked. */
-export function coordinator_log_path_for(project: string, run_id: string): string {
-  return path.join(run_dir_for(project, run_id), COORDINATOR_LOG_FILENAME);
-}
-
-/** Path to a run's classifier_regressions.jsonl. Existence is not checked. */
-export function classifier_regressions_path_for(project: string, run_id: string): string {
-  return path.join(run_dir_for(project, run_id), CLASSIFIER_REGRESSIONS_FILENAME);
 }
 
 // ===== Discovery =====

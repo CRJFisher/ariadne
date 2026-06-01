@@ -1,6 +1,6 @@
 # Triage Entrypoints
 
-Triage pipeline for entry point analysis: detect false positives and classify root causes. The per-entry `triage-investigator` emits one `TriageVerdict` — a discriminated union with `tp`, `fp-novel-new`, `fp-novel-cited`, `fp-classifier-regression`, or `uncertain` arms. A `triage-coordinator` sub-agent dedupes each novel verdict against the run's `novel_issues.json` snapshot inline, so the curator downstream consumes a pre-consolidated novel-issue set.
+Triage pipeline for entry point analysis: detect false positives and classify root causes. The per-entry `triage-investigator` emits one `TriageVerdict` — a discriminated union with `tp`, `fp-novel`, `fp-classifier-regression`, or `uncertain` arms. Each false-positive verdict is self-contained: it carries its own evidence and (for `fp-novel`) the deterministic core fault diagnostics, so the published `triage_results` need no in-run consolidation. Offline grouping of false positives happens downstream in the `plan` skill.
 
 Each invocation produces a self-contained run under `triage_state/<project>/runs/<run-id>/`. Run-id format is `<short-commit>-<iso-ts>` (or `nogit-<iso-ts>` for non-git projects). Re-running at the same target commit reuses prior `confirmed_unreachable` verdicts via the TP cache (skip with `--no-reuse-tp`). The classifier registry at `known_issues/registry.json` is the canonical registry, updated by the `triage-curator` skill. A generated `permanent`-status slice is bundled into `@ariadnejs/core` at `packages/core/src/classify_entry_points/permanent_data.ts`, so library consumers of `Project.get_call_graph()` filter framework noise without depending on this skill. Regenerate the slice with `pnpm sync-permanent-rules` (run pre-commit on registry edits and verified in CI).
 
@@ -24,14 +24,15 @@ This skill's internal flow is a top-down 5-phase pipeline. Read-only stores sit 
 
 ![Triage-entrypoints 5-phase pipeline](./README.per-step.svg)
 
-**What to look for**: four phase bands stacked top-to-bottom (strict reading order); two read-only stores (registry, prior triage_results) sit outside the phase bands — this skill **never** writes the registry (lifecycle contract); three Phase-2 buckets (auto / TP / residual) determine whether an entry skips the triage loop entirely. The dispatcher is the **single writer** of both `novel_issues.json` (atomic, via the coordinator path on novel verdicts) and `classifier_regressions.jsonl` (append-only, directly on `fp-classifier-regression`). The coordinator sub-agent only fires on novel verdicts; `tp` and `uncertain` are absorbed in-memory and surfaced at finalize. Each run's published `triage_results` becomes the next same-commit run's TP cache.
+**What to look for**: four phase bands stacked top-to-bottom (strict reading order); two read-only stores (registry, prior triage_results) sit outside the phase bands — this skill **never** writes the registry (lifecycle contract); three Phase-2 buckets (auto / TP / residual) determine whether an entry skips the triage loop entirely. Each investigator writes one self-contained `TriageVerdict` to `results/<entry_index>.json`; finalize is the single reader, building `novel_issues[]` (one-per-`fp-novel`) and `classifier_regressions[]` (rolled up from `fp-classifier-regression`) directly from those files. Each run's published `triage_results` becomes the next same-commit run's TP cache.
+
+> **Note:** the rendered pipeline diagrams below still show the removed in-run coordinator (`novel_issues.json` / `classifier_regressions.jsonl` / `coordinator_log.jsonl`); they are regenerated when this skill is renamed to `triage` (TASK-190.22.3).
 
 ## Sub-Agent Summary
 
 | Agent               | Model  | Multiplicity              | Purpose                                                                                   |
 | ------------------- | ------ | ------------------------- | ----------------------------------------------------------------------------------------- |
 | triage-investigator | Sonnet | 1 per entry (worker pool) | Fetch own context via `get_entry_context.ts`, emit one `TriageVerdict`                    |
-| triage-coordinator  | Sonnet | 1 per novel absorb        | Sense-check novel verdicts against the run's `novel_issues.json`; merge / register / flag |
 
 ## Key Modules
 

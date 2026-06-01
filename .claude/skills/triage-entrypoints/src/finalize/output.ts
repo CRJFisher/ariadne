@@ -1,11 +1,16 @@
 /**
- * Convert completed TriageState into the published v4 `triage_results/<run-id>.json`.
+ * Convert completed TriageState into the published v5 `triage_results/<run-id>.json`.
  *
- * Sources:
- *   - per-run `novel_issues.json`            → `novel_issues`
- *   - per-run `classifier_regressions.jsonl` → `classifier_regressions`
- *   - per-entry verdict files under `results/`+ the triage state itself
- *                                            → `confirmed_unreachable`, `uncertain`
+ * The per-entry verdict files under `results/` are the single source of truth.
+ * `build_finalization_output` reads them (already loaded into
+ * `verdicts_by_entry_index`) and:
+ *   - builds `novel_issues[]` one-per-`fp-novel`-verdict (no merge), each row
+ *     carrying the investigator's evidence plus the deterministic core fault
+ *     diagnostics attached from the entry's `EntryPointDiagnostics`;
+ *   - derives `classifier_regressions[]` by rolling up the
+ *     `fp-classifier-regression` verdicts per `should_have_matched_rule_id`;
+ *   - partitions `tp` / `uncertain` verdicts into `confirmed_unreachable[]` /
+ *     `uncertain[]`.
  *
  * File paths in entry-shaped sections are published relative to
  * `project_path` so the artifact is portable across machines and worktrees
@@ -14,12 +19,18 @@
 
 import * as path from "node:path";
 
-import type { ClassifierRegressionFlag } from "@ariadnejs/types";
-import type { NovelIssue, FlaggedVerdict } from "../absorb/novel_issues.js";
-import type { MemberEvidence, TriageVerdict } from "../verdict/triage_verdict.js";
+import type {
+  ClassifierRegressionFlag,
+  EntryPointDiagnostics,
+} from "@ariadnejs/types";
+import {
+  aggregate_classifier_regressions,
+  type ClassifierRegressionInput,
+} from "@ariadnejs/skill-fs";
+import type { MemberEvidence, NovelIssue, TriageVerdict } from "../verdict/triage_verdict.js";
 import type { TriageEntry, TriageState } from "../triage_state_types.js";
 
-export const FINALIZATION_OUTPUT_SCHEMA_VERSION = 4;
+export const FINALIZATION_OUTPUT_SCHEMA_VERSION = 5;
 
 // ===== Output Types =====
 
@@ -71,7 +82,7 @@ export interface PublishedUncertain extends PublishedEntryRef {
 export interface FinalizationOutput {
   schema_version: number;
   /**
-   * Absolute path to the target repo at run time. Consumers (curator, diff_runs)
+   * Absolute path to the target repo at run time. Consumers (plan, diff_runs)
    * resolve `file_path` against this to read source. Travels with the run-id and
    * the commit_hash to make the artifact self-contained.
    */
@@ -79,22 +90,16 @@ export interface FinalizationOutput {
   /** Full HEAD commit hash for the target repo at run time, or `null` for non-git projects. */
   commit_hash: string | null;
   /**
-   * Consolidated novel issues registered against this run, as written by the
-   * dispatcher into `novel_issues.json`. The curator's promotion path reads
-   * this list verbatim.
+   * Self-contained false-positive rows, one per `fp-novel` verdict file. Each
+   * carries the investigator's evidence plus the deterministic core fault
+   * diagnostics attached from the entry. Built at finalize; never merged.
    */
   novel_issues: NovelIssue[];
   /**
-   * Flagged novel verdicts the coordinator could not assign (ambiguous merge
-   * candidates). Published so the curator's human-review surface can pick them
-   * up without grepping `coordinator_log.jsonl`.
-   */
-  flagged_novel_verdicts: FlaggedVerdict[];
-  /**
    * Per-rule aggregate of every `fp-classifier-regression` verdict the per-entry
-   * investigator emitted in this run. The curator's drift-absorb path consumes
-   * this and marks the named wip rows as drifting (see
-   * `.claude/rules/classifier-lifecycle.md`).
+   * investigator emitted in this run, derived from the verdict files. The
+   * curator's drift-absorb path consumes this and marks the named wip rows as
+   * drifting (see `.claude/rules/classifier-lifecycle.md`).
    */
   classifier_regressions: ClassifierRegressionFlag[];
   confirmed_unreachable: PublishedConfirmedUnreachable[];
@@ -103,9 +108,6 @@ export interface FinalizationOutput {
 }
 
 export interface FinalizationSources {
-  novel_issues: NovelIssue[];
-  flagged_novel_verdicts: FlaggedVerdict[];
-  classifier_regressions: ClassifierRegressionFlag[];
   /** Per-entry verdicts keyed by `entry_index`. Auto-classified entries are absent. */
   verdicts_by_entry_index: Map<number, TriageVerdict>;
 }
@@ -122,7 +124,6 @@ export interface FinalizationSummary {
   total_entries: number;
   confirmed_unreachable_count: number;
   novel_issue_count: number;
-  novel_citation_count: number;
   classifier_regression_rule_count: number;
   classifier_regression_entry_count: number;
   uncertain_count: number;
@@ -157,11 +158,36 @@ function entry_ref(entry: TriageEntry, project_path: string): PublishedEntryRef 
 }
 
 /**
- * Build the published v4 output from the run's resolved sources.
+ * Attach the deterministic core fault diagnostics to a published FP row. The
+ * `diagnosis` enum is always present; `resolution_failure` (narrowed to
+ * `{ stage, reason }`) and `receiver_kind` come from the first call site that
+ * carries a resolution failure — the resolver's own observation of where it
+ * gave up. `receiver_kind` is emitted only when that call site is a method call
+ * (function/constructor sites have `receiver_kind === "none"`).
+ */
+function attach_fault_diagnostics(
+  diagnostics: EntryPointDiagnostics,
+): Pick<NovelIssue, "diagnosis" | "resolution_failure" | "receiver_kind"> {
+  const result: Pick<NovelIssue, "diagnosis" | "resolution_failure" | "receiver_kind"> = {
+    diagnosis: diagnostics.diagnosis,
+  };
+  const failing = diagnostics.ariadne_call_refs.find(
+    (ref) => ref.resolution_failure !== null,
+  );
+  if (failing === undefined || failing.resolution_failure === null) return result;
+  const failure = failing.resolution_failure;
+  result.resolution_failure = { stage: failure.stage, reason: failure.reason };
+  if (failing.call_type === "method" && failing.receiver_kind !== "none") {
+    result.receiver_kind = failing.receiver_kind;
+  }
+  return result;
+}
+
+/**
+ * Build the published v5 output from the run's per-entry verdict files.
  *
- * The function is pure: callers (`finalize_triage.ts`) load `novel_issues.json`,
- * the classifier-regressions log, and the per-entry verdict files first and
- * pass them in via `FinalizationContext.sources`.
+ * The function is pure: callers (`finalize_triage.ts`) load the per-entry
+ * verdict files first and pass them in via `FinalizationContext.sources`.
  */
 export function build_finalization_output(
   state: TriageState,
@@ -169,6 +195,8 @@ export function build_finalization_output(
 ): FinalizationOutput {
   const confirmed_unreachable: PublishedConfirmedUnreachable[] = [];
   const uncertain: PublishedUncertain[] = [];
+  const novel_issues: NovelIssue[] = [];
+  const regression_inputs: ClassifierRegressionInput[] = [];
 
   for (const entry of state.entries) {
     if (entry.status === "failed") continue;
@@ -218,36 +246,32 @@ export function build_finalization_output(
           member_evidence: verdict.member_evidence,
         });
         break;
-      // fp-novel-new / fp-novel-cited are already captured in novel_issues.
-      // fp-classifier-regression is already captured in classifier_regressions.
-      case "fp-novel-new":
-      case "fp-novel-cited":
+      case "fp-novel":
+        novel_issues.push({
+          id: `novel-${entry.entry_index}`,
+          entry_index: entry.entry_index,
+          member_evidence: verdict.member_evidence,
+          proposed_root_cause: verdict.proposed_root_cause,
+          evidence_excerpt: verdict.evidence_excerpt,
+          ...attach_fault_diagnostics(entry.diagnostics),
+        });
+        break;
       case "fp-classifier-regression":
+        regression_inputs.push({
+          should_have_matched_rule_id: verdict.should_have_matched_rule_id,
+          entry_index: entry.entry_index,
+          evidence_excerpt: verdict.evidence_excerpt,
+        });
         break;
     }
   }
-
-  // Cross-source consistency: every novel-issue citation and every classifier
-  // regression entry_index must map to a matching verdict kind. A mismatch
-  // means the dispatcher absorbed a verdict but the per-entry file holds a
-  // contradictory one (or vice versa) — silently double-publishing would
-  // confuse downstream consumers.
-  assert_citations_consistent(
-    context.sources.novel_issues,
-    context.sources.verdicts_by_entry_index,
-  );
-  assert_classifier_regressions_consistent(
-    context.sources.classifier_regressions,
-    context.sources.verdicts_by_entry_index,
-  );
 
   return {
     schema_version: FINALIZATION_OUTPUT_SCHEMA_VERSION,
     project_path: context.project_path,
     commit_hash: context.commit_hash,
-    novel_issues: context.sources.novel_issues,
-    flagged_novel_verdicts: context.sources.flagged_novel_verdicts,
-    classifier_regressions: context.sources.classifier_regressions,
+    novel_issues,
+    classifier_regressions: aggregate_classifier_regressions(regression_inputs),
     confirmed_unreachable,
     uncertain,
     last_updated: state.updated_at,
@@ -260,10 +284,6 @@ export function build_finalization_summary(
 ): FinalizationSummary {
   const failed_count = state.entries.filter((e) => e.status === "failed").length;
 
-  const novel_citation_count = output.novel_issues.reduce(
-    (sum, issue) => sum + issue.citations.length,
-    0,
-  );
   const classifier_regression_entry_count = output.classifier_regressions.reduce(
     (sum, flag) => sum + flag.flagged_entries.length,
     0,
@@ -273,7 +293,6 @@ export function build_finalization_summary(
     total_entries: state.entries.length,
     confirmed_unreachable_count: output.confirmed_unreachable.length,
     novel_issue_count: output.novel_issues.length,
-    novel_citation_count,
     classifier_regression_rule_count: output.classifier_regressions.length,
     classifier_regression_entry_count,
     uncertain_count: output.uncertain.length,
@@ -281,7 +300,7 @@ export function build_finalization_summary(
   };
 }
 
-// ===== Internal: provenance + cross-source consistency =====
+// ===== Internal: provenance =====
 
 const REGISTRY_PREFIX = "registry:";
 
@@ -299,60 +318,4 @@ function parse_known_source(known_source: string): ConfirmedUnreachableSource {
   throw new Error(
     `build_finalization_output: unrecognised known_source '${known_source}'. Expected 'previously-confirmed-tp' or 'registry:<group_id>'.`,
   );
-}
-
-function assert_citations_consistent(
-  issues: readonly NovelIssue[],
-  verdicts: ReadonlyMap<number, TriageVerdict>,
-): void {
-  const mismatches: string[] = [];
-  for (const issue of issues) {
-    for (const citation of issue.citations) {
-      const verdict = verdicts.get(citation.entry_index);
-      if (verdict === undefined) {
-        mismatches.push(
-          `novel_issue '${issue.id}' cites entry ${citation.entry_index} but no verdict file is present`,
-        );
-        continue;
-      }
-      if (verdict.kind !== "fp-novel-new" && verdict.kind !== "fp-novel-cited") {
-        mismatches.push(
-          `novel_issue '${issue.id}' cites entry ${citation.entry_index} (verdict.kind='${verdict.kind}'); expected fp-novel-new or fp-novel-cited`,
-        );
-      }
-    }
-  }
-  if (mismatches.length > 0) {
-    throw new Error(
-      `build_finalization_output: novel-issue citations are inconsistent with per-entry verdicts:\n  - ${mismatches.join("\n  - ")}`,
-    );
-  }
-}
-
-function assert_classifier_regressions_consistent(
-  regressions: readonly { rule_id: string; flagged_entries: readonly { entry_index: number; evidence_excerpt: string }[] }[],
-  verdicts: ReadonlyMap<number, TriageVerdict>,
-): void {
-  const mismatches: string[] = [];
-  for (const flag of regressions) {
-    for (const entry of flag.flagged_entries) {
-      const verdict = verdicts.get(entry.entry_index);
-      if (verdict === undefined) {
-        mismatches.push(
-          `classifier_regression '${flag.rule_id}' flags entry ${entry.entry_index} but no verdict file is present`,
-        );
-        continue;
-      }
-      if (verdict.kind !== "fp-classifier-regression") {
-        mismatches.push(
-          `classifier_regression '${flag.rule_id}' flags entry ${entry.entry_index} (verdict.kind='${verdict.kind}'); expected fp-classifier-regression`,
-        );
-      }
-    }
-  }
-  if (mismatches.length > 0) {
-    throw new Error(
-      `build_finalization_output: classifier-regression flags are inconsistent with per-entry verdicts:\n  - ${mismatches.join("\n  - ")}`,
-    );
-  }
 }

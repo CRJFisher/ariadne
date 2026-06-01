@@ -6,7 +6,6 @@ import {
   substitute_template,
 } from "./get_entry_context.js";
 import type { TriageEntry } from "../src/triage_state_types.js";
-import type { NovelIssuesFile } from "../src/absorb/novel_issues.js";
 import type { DispensePayload } from "../src/dispense/dispense_payload.js";
 import type {
   GrepHit,
@@ -19,13 +18,11 @@ import type {
 import type { FilePath } from "@ariadnejs/types";
 
 const EMPTY_REGISTRY_SLICE: KnownIssue[] = [];
-const EMPTY_NOVEL_ISSUES: NovelIssuesFile = { issues: [], flagged: [] };
 
 function payload_for(entry: TriageEntry, overrides: Partial<DispensePayload> = {}): DispensePayload {
   return {
     entry_context: entry,
     relevant_registry_slice: EMPTY_REGISTRY_SLICE,
-    novel_issues_snapshot: EMPTY_NOVEL_ISSUES,
     ...overrides,
   };
 }
@@ -150,7 +147,6 @@ describe("substitute_template", () => {
       "Grep: {{entry.diagnostics.grep_call_sites_formatted}}",
       "Refs: {{entry.diagnostics.ariadne_call_refs_formatted}}",
       "Slice: {{relevant_registry_slice}}",
-      "Snapshot: {{novel_issues_snapshot}}",
     ].join("\n");
 
     const result = substitute_template({
@@ -170,8 +166,6 @@ describe("substitute_template", () => {
     expect(result).toContain("test/server.test.ts:10");
     expect(result).toContain("(none found)"); // ariadne_call_refs is empty
     expect(result).toContain("Slice: []");
-    expect(result).toContain("\"issues\": []");
-    expect(result).toContain("\"flagged\": []");
   });
 
   it("handles null signature", () => {
@@ -245,26 +239,6 @@ describe("substitute_template", () => {
       output_path: "/tmp/out.json",
     });
     expect(result).toEqual(JSON.stringify(slice, null, 2));
-  });
-
-  it("renders novel_issues_snapshot as pretty-printed JSON", () => {
-    const snapshot: NovelIssuesFile = {
-      issues: [
-        {
-          id: "decorator-route-registration",
-          canonical_name: "Decorator route registration",
-          root_cause: "framework registers handler via @route decorator",
-          citations: [{ entry_index: 4, evidence_excerpt: "@route('/x')" }],
-        },
-      ],
-      flagged: [],
-    };
-    const result = substitute_template({
-      template: "{{novel_issues_snapshot}}",
-      payload: payload_for(mock_entry, { novel_issues_snapshot: snapshot }),
-      output_path: "/tmp/out.json",
-    });
-    expect(result).toEqual(JSON.stringify(snapshot, null, 2));
   });
 });
 

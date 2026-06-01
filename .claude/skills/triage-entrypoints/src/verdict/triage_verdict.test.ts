@@ -1,13 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  expect_novel_verdict,
-  parse_novel_verdict,
   parse_triage_verdict,
   type TriageVerdict,
   type VerdictFpClassifierRegression,
-  type VerdictFpNovelCited,
-  type VerdictFpNovelNew,
+  type VerdictFpNovel,
   type VerdictTp,
   type VerdictUncertain,
 } from "./triage_verdict.js";
@@ -22,21 +19,12 @@ describe("parse_triage_verdict", () => {
       expect(parse_triage_verdict(verdict)).toEqual(verdict);
     });
 
-    it("fp-novel-new", () => {
-      const verdict: VerdictFpNovelNew = {
-        kind: "fp-novel-new",
+    it("fp-novel", () => {
+      const verdict: VerdictFpNovel = {
+        kind: "fp-novel",
         proposed_root_cause: "framework registers route via decorator",
         evidence_excerpt: "@route('/x') public handler() { ... }",
         member_evidence: { file: "src/routes.ts", line: 7, why: "decorator-registered route" },
-      };
-      expect(parse_triage_verdict(verdict)).toEqual(verdict);
-    });
-
-    it("fp-novel-cited", () => {
-      const verdict: VerdictFpNovelCited = {
-        kind: "fp-novel-cited",
-        novel_issue_id: "decorator-route-registration",
-        evidence_excerpt: "@route('/y') public other() { ... }",
       };
       expect(parse_triage_verdict(verdict)).toEqual(verdict);
     });
@@ -107,18 +95,14 @@ describe("parse_triage_verdict", () => {
       expect(() => parse_triage_verdict({ kind: "tp" })).toThrow(
         /missing required field 'member_evidence'/,
       );
-      // fp-novel-new missing evidence_excerpt
+      // fp-novel missing evidence_excerpt
       expect(() =>
         parse_triage_verdict({
-          kind: "fp-novel-new",
+          kind: "fp-novel",
           proposed_root_cause: "x",
           member_evidence: { file: "a", line: 1, why: "y" },
         }),
       ).toThrow(/missing required field 'evidence_excerpt'/);
-      // fp-novel-cited missing novel_issue_id
-      expect(() =>
-        parse_triage_verdict({ kind: "fp-novel-cited", evidence_excerpt: "x" }),
-      ).toThrow(/missing required field 'novel_issue_id'/);
       // fp-classifier-regression missing should_have_matched_rule_id
       expect(() =>
         parse_triage_verdict({
@@ -149,7 +133,7 @@ describe("parse_triage_verdict", () => {
     it("rejects empty-string fields", () => {
       expect(() =>
         parse_triage_verdict({
-          kind: "fp-novel-new",
+          kind: "fp-novel",
           proposed_root_cause: "",
           evidence_excerpt: "x",
           member_evidence: { file: "a", line: 1, why: "y" },
@@ -215,67 +199,5 @@ describe("parse_triage_verdict", () => {
         }),
       ).toThrow(/member_evidence: expected object/);
     });
-  });
-});
-
-describe("expect_novel_verdict / parse_novel_verdict", () => {
-  const NOVEL_NEW: VerdictFpNovelNew = {
-    kind: "fp-novel-new",
-    proposed_root_cause: "decorator route handlers not detected",
-    evidence_excerpt: "@route('/x')",
-    member_evidence: { file: "src/r.ts", line: 7, why: "called via decorator" },
-  };
-  const NOVEL_CITED: VerdictFpNovelCited = {
-    kind: "fp-novel-cited",
-    novel_issue_id: "decorator-route",
-    evidence_excerpt: "@route('/y')",
-  };
-
-  it("expect_novel_verdict round-trips both novel kinds", () => {
-    expect(expect_novel_verdict(NOVEL_NEW)).toEqual(NOVEL_NEW);
-    expect(expect_novel_verdict(NOVEL_CITED)).toEqual(NOVEL_CITED);
-  });
-
-  it.each(["tp", "fp-classifier-regression", "uncertain"] as const)(
-    "expect_novel_verdict rejects non-novel kind %s",
-    (kind) => {
-      const verdict = { kind, member_evidence: { file: "x", line: 1, why: "y" } } as
-        | VerdictTp
-        | VerdictUncertain;
-      const ready: TriageVerdict =
-        kind === "fp-classifier-regression"
-          ? ({
-              kind: "fp-classifier-regression",
-              should_have_matched_rule_id: "r",
-              evidence_excerpt: "e",
-              member_evidence: verdict.member_evidence,
-            } satisfies VerdictFpClassifierRegression)
-          : kind === "uncertain"
-            ? ({ kind: "uncertain", reason: "r", member_evidence: verdict.member_evidence } satisfies VerdictUncertain)
-            : ({ kind: "tp", member_evidence: verdict.member_evidence } satisfies VerdictTp);
-      expect(() => expect_novel_verdict(ready)).toThrow(
-        /expected a NovelVerdict.*got kind/,
-      );
-    },
-  );
-
-  it("parse_novel_verdict accepts raw JSON of either novel kind", () => {
-    expect(parse_novel_verdict(NOVEL_NEW)).toEqual(NOVEL_NEW);
-    expect(parse_novel_verdict(NOVEL_CITED)).toEqual(NOVEL_CITED);
-  });
-
-  it("parse_novel_verdict rejects raw JSON of a non-novel kind with the narrowing message", () => {
-    expect(() =>
-      parse_novel_verdict({
-        kind: "tp",
-        member_evidence: { file: "x", line: 1, why: "y" },
-      }),
-    ).toThrow(/expected a NovelVerdict.*got kind 'tp'/);
-  });
-
-  it("parse_novel_verdict still rejects malformed raw input via parse_triage_verdict", () => {
-    expect(() => parse_novel_verdict({ kind: "fp-novel-new" })).toThrow(
-      /verdict\(fp-novel-new\)/,
-    );
   });
 });

@@ -6,10 +6,7 @@ export {
 export { error_code } from "./errors.js";
 export {
   aggregate_classifier_regressions,
-  append_classifier_regression_record,
-  read_classifier_regression_records,
   type ClassifierRegressionFlag,
   type ClassifierRegressionFlaggedEntry,
-  type ClassifierRegressionRecord,
-  type VerdictMemberEvidence,
+  type ClassifierRegressionInput,
 } from "./classifier_regressions.js";

@@ -9,9 +9,13 @@ import {
   type FinalizationSummary,
 } from "./output.js";
 import type { TriageState, TriageEntry } from "../triage_state_types.js";
-import type { ClassifierRegressionFlag } from "@ariadnejs/types";
-import type { NovelIssue } from "../absorb/novel_issues.js";
-import type { TriageVerdict } from "../verdict/triage_verdict.js";
+import type {
+  CallRefDiagnostic,
+  EntryPointDiagnostics,
+  FilePath,
+  SyntacticFeatures,
+} from "@ariadnejs/types";
+import type { NovelIssue, TriageVerdict } from "../verdict/triage_verdict.js";
 
 // ===== Test Helpers =====
 
@@ -22,11 +26,18 @@ const EMPTY_CONTEXT: FinalizationContext = {
   commit_hash: COMMIT,
   project_path: PROJECT_PATH,
   sources: {
-    novel_issues: [],
-    flagged_novel_verdicts: [],
-    classifier_regressions: [],
     verdicts_by_entry_index: new Map(),
   },
+};
+
+const BASE_SYNTACTIC_FEATURES: SyntacticFeatures = {
+  is_new_expression: false,
+  is_super_call: false,
+  is_optional_chain: false,
+  is_awaited: false,
+  is_callback_arg: false,
+  is_inside_try: false,
+  is_dynamic_dispatch: false,
 };
 
 let entry_counter = 0;
@@ -64,6 +75,36 @@ function make_entry(overrides: Partial<TriageEntry> = {}): TriageEntry {
   );
 }
 
+/**
+ * Diagnostics with a single unresolved call ref carrying a `resolution_failure`
+ * — the shape `attach_fault_diagnostics` reads to enrich a published FP row.
+ */
+function diagnostics_with_failure(
+  diagnosis: EntryPointDiagnostics["diagnosis"],
+  resolution_failure: CallRefDiagnostic["resolution_failure"],
+  call_type: CallRefDiagnostic["call_type"],
+  receiver_kind: CallRefDiagnostic["receiver_kind"],
+): EntryPointDiagnostics {
+  return {
+    grep_call_sites: [],
+    grep_call_sites_unindexed_tests: [],
+    ariadne_call_refs: [
+      {
+        caller_function: "caller",
+        caller_file: "src/caller.ts" as FilePath,
+        call_line: 3,
+        call_type,
+        resolution_count: 0,
+        resolved_to: [],
+        receiver_kind,
+        resolution_failure,
+        syntactic_features: BASE_SYNTACTIC_FEATURES,
+      },
+    ],
+    diagnosis,
+  };
+}
+
 function make_state(overrides: Partial<TriageState> = {}): TriageState {
   return {
     project_name: "test-project",
@@ -87,6 +128,13 @@ const UNCERTAIN_VERDICT: TriageVerdict = {
   member_evidence: { file: "src/test.ts", line: 10, why: "two possible paths" },
 };
 
+function context_with(verdicts: Map<number, TriageVerdict>): FinalizationContext {
+  return {
+    ...EMPTY_CONTEXT,
+    sources: { verdicts_by_entry_index: verdicts },
+  };
+}
+
 // ===== build_finalization_output =====
 
 describe("build_finalization_output", () => {
@@ -103,18 +151,16 @@ describe("build_finalization_output", () => {
         }),
       ],
     });
-    const verdicts = new Map<number, TriageVerdict>([[100, TP_VERDICT]]);
-    const output = build_finalization_output(state, {
-      ...EMPTY_CONTEXT,
-      sources: { ...EMPTY_CONTEXT.sources, verdicts_by_entry_index: verdicts },
-    });
+    const output = build_finalization_output(
+      state,
+      context_with(new Map<number, TriageVerdict>([[100, TP_VERDICT]])),
+    );
 
     const expected: FinalizationOutput = {
       schema_version: FINALIZATION_OUTPUT_SCHEMA_VERSION,
       project_path: PROJECT_PATH,
       commit_hash: COMMIT,
       novel_issues: [],
-      flagged_novel_verdicts: [],
       classifier_regressions: [],
       confirmed_unreachable: [
         {
@@ -204,11 +250,10 @@ describe("build_finalization_output", () => {
         }),
       ],
     });
-    const verdicts = new Map<number, TriageVerdict>([[3, UNCERTAIN_VERDICT]]);
-    const output = build_finalization_output(state, {
-      ...EMPTY_CONTEXT,
-      sources: { ...EMPTY_CONTEXT.sources, verdicts_by_entry_index: verdicts },
-    });
+    const output = build_finalization_output(
+      state,
+      context_with(new Map<number, TriageVerdict>([[3, UNCERTAIN_VERDICT]])),
+    );
     expect(output.uncertain).toEqual([
       {
         entry_index: 3,
@@ -223,11 +268,10 @@ describe("build_finalization_output", () => {
     expect(output.confirmed_unreachable).toEqual([]);
   });
 
-  it("novel-* and classifier-regression verdicts do NOT appear in confirmed_unreachable or uncertain", () => {
+  it("fp-novel and fp-classifier-regression verdicts populate novel_issues/classifier_regressions, not confirmed_unreachable/uncertain", () => {
     const state = make_state({
       entries: [
         make_entry({ entry_index: 5, route: "llm-triage" }),
-        make_entry({ entry_index: 6, route: "llm-triage" }),
         make_entry({ entry_index: 7, route: "llm-triage" }),
       ],
     });
@@ -235,13 +279,12 @@ describe("build_finalization_output", () => {
       [
         5,
         {
-          kind: "fp-novel-new",
+          kind: "fp-novel",
           proposed_root_cause: "rc",
           evidence_excerpt: "ev",
           member_evidence: { file: "f", line: 1, why: "w" },
         },
       ],
-      [6, { kind: "fp-novel-cited", novel_issue_id: "iss-1", evidence_excerpt: "ev2" }],
       [
         7,
         {
@@ -252,65 +295,200 @@ describe("build_finalization_output", () => {
         },
       ],
     ]);
-    const output = build_finalization_output(state, {
-      ...EMPTY_CONTEXT,
-      sources: { ...EMPTY_CONTEXT.sources, verdicts_by_entry_index: verdicts },
-    });
+    const output = build_finalization_output(state, context_with(verdicts));
     expect(output.confirmed_unreachable).toEqual([]);
     expect(output.uncertain).toEqual([]);
+    expect(output.novel_issues.map((i) => i.entry_index)).toEqual([5]);
+    expect(output.classifier_regressions.map((r) => r.rule_id)).toEqual(["rule-z"]);
   });
 
-  it("publishes novel_issues, flagged_novel_verdicts, and classifier_regressions verbatim from sources", () => {
-    // Citations and regression flags must have matching verdicts in the
-    // per-entry results map — the cross-source consistency check rejects any
-    // mismatch.
-    const state = make_state({ entries: [] });
-    const novel_issues: NovelIssue[] = [
+  it("builds novel_issues one-per-fp-novel-verdict and attaches the entry's deterministic fault diagnostics", () => {
+    const state = make_state({
+      entries: [
+        make_entry({
+          entry_index: 5,
+          name: "via_method",
+          file_path: "/projects/myapp/src/m.ts",
+          route: "llm-triage",
+          diagnostics: diagnostics_with_failure(
+            "callers-in-registry-unresolved",
+            { stage: "method_lookup", reason: "method_not_on_type", partial_info: {} },
+            "method",
+            "identifier",
+          ),
+        }),
+        make_entry({
+          entry_index: 6,
+          name: "no_failure",
+          file_path: "/projects/myapp/src/n.ts",
+          route: "llm-triage",
+          // default diagnostics: diagnosis present, no failing call ref.
+        }),
+      ],
+    });
+    const verdicts = new Map<number, TriageVerdict>([
+      [
+        5,
+        {
+          kind: "fp-novel",
+          proposed_root_cause: "receiver type unknown",
+          evidence_excerpt: "obj.via_method()",
+          member_evidence: { file: "src/caller.ts", line: 3, why: "called on obj" },
+        },
+      ],
+      [
+        6,
+        {
+          kind: "fp-novel",
+          proposed_root_cause: "no callers in registry",
+          evidence_excerpt: "no_failure()",
+          member_evidence: { file: "src/caller.ts", line: 9, why: "plain call" },
+        },
+      ],
+    ]);
+    const output = build_finalization_output(state, context_with(verdicts));
+
+    const expected: NovelIssue[] = [
       {
-        id: "issue-a",
-        canonical_name: "Issue A",
-        root_cause: "rc-a",
-        citations: [{ entry_index: 1, evidence_excerpt: "ev" }],
+        id: "novel-5",
+        entry_index: 5,
+        member_evidence: { file: "src/caller.ts", line: 3, why: "called on obj" },
+        proposed_root_cause: "receiver type unknown",
+        evidence_excerpt: "obj.via_method()",
+        diagnosis: "callers-in-registry-unresolved",
+        resolution_failure: { stage: "method_lookup", reason: "method_not_on_type" },
+        receiver_kind: "identifier",
+      },
+      {
+        id: "novel-6",
+        entry_index: 6,
+        member_evidence: { file: "src/caller.ts", line: 9, why: "plain call" },
+        proposed_root_cause: "no callers in registry",
+        evidence_excerpt: "no_failure()",
+        diagnosis: "no-textual-callers",
       },
     ];
-    const classifier_regressions: ClassifierRegressionFlag[] = [
+    expect(output.novel_issues).toEqual(expected);
+  });
+
+  it("omits receiver_kind when the failing call site is not a method call", () => {
+    const state = make_state({
+      entries: [
+        make_entry({
+          entry_index: 8,
+          route: "llm-triage",
+          diagnostics: diagnostics_with_failure(
+            "callers-in-registry-unresolved",
+            { stage: "name_resolution", reason: "name_not_in_scope", partial_info: {} },
+            "function",
+            "none",
+          ),
+        }),
+      ],
+    });
+    const verdicts = new Map<number, TriageVerdict>([
+      [
+        8,
+        {
+          kind: "fp-novel",
+          proposed_root_cause: "name not in scope",
+          evidence_excerpt: "fn()",
+          member_evidence: { file: "src/caller.ts", line: 1, why: "free call" },
+        },
+      ],
+    ]);
+    const output = build_finalization_output(state, context_with(verdicts));
+    expect(output.novel_issues).toEqual([
       {
-        rule_id: "decorator-route",
-        flagged_entries: [{ entry_index: 3, evidence_excerpt: "@route('/x')" }],
+        id: "novel-8",
+        entry_index: 8,
+        member_evidence: { file: "src/caller.ts", line: 1, why: "free call" },
+        proposed_root_cause: "name not in scope",
+        evidence_excerpt: "fn()",
+        diagnosis: "callers-in-registry-unresolved",
+        resolution_failure: { stage: "name_resolution", reason: "name_not_in_scope" },
       },
-    ];
+    ]);
+  });
+
+  it("derives classifier_regressions[] per-rule from fp-classifier-regression verdicts", () => {
+    const state = make_state({
+      entries: [
+        make_entry({ entry_index: 1, route: "llm-triage" }),
+        make_entry({ entry_index: 2, route: "llm-triage" }),
+        make_entry({ entry_index: 3, route: "llm-triage" }),
+      ],
+    });
     const verdicts = new Map<number, TriageVerdict>([
       [
         1,
         {
-          kind: "fp-novel-new",
-          proposed_root_cause: "rc",
-          evidence_excerpt: "ev",
+          kind: "fp-classifier-regression",
+          should_have_matched_rule_id: "decorator-route",
+          evidence_excerpt: "@route('/a')",
           member_evidence: { file: "f", line: 1, why: "w" },
+        },
+      ],
+      [
+        2,
+        {
+          kind: "fp-classifier-regression",
+          should_have_matched_rule_id: "decorator-route",
+          evidence_excerpt: "@route('/b')",
+          member_evidence: { file: "f", line: 2, why: "w" },
         },
       ],
       [
         3,
         {
           kind: "fp-classifier-regression",
-          should_have_matched_rule_id: "decorator-route",
-          evidence_excerpt: "@route('/x')",
-          member_evidence: { file: "f", line: 1, why: "w" },
+          should_have_matched_rule_id: "test-fixture",
+          evidence_excerpt: "export const fix = {}",
+          member_evidence: { file: "f", line: 3, why: "w" },
         },
       ],
     ]);
-    const output = build_finalization_output(state, {
-      ...EMPTY_CONTEXT,
-      sources: {
-        novel_issues,
-        flagged_novel_verdicts: [],
-        classifier_regressions,
-        verdicts_by_entry_index: verdicts,
+    const output = build_finalization_output(state, context_with(verdicts));
+    expect(output.classifier_regressions).toEqual([
+      {
+        rule_id: "decorator-route",
+        flagged_entries: [
+          { entry_index: 1, evidence_excerpt: "@route('/a')" },
+          { entry_index: 2, evidence_excerpt: "@route('/b')" },
+        ],
       },
+      {
+        rule_id: "test-fixture",
+        flagged_entries: [{ entry_index: 3, evidence_excerpt: "export const fix = {}" }],
+      },
+    ]);
+  });
+
+  it("every published novel_issues row has a backing fp-novel verdict", () => {
+    const state = make_state({
+      entries: [
+        make_entry({ entry_index: 1, route: "llm-triage" }),
+        make_entry({ entry_index: 2, route: "llm-triage" }),
+      ],
     });
-    expect(output.novel_issues).toEqual(novel_issues);
-    expect(output.classifier_regressions).toEqual(classifier_regressions);
-    expect(output.schema_version).toBe(4);
+    const verdicts = new Map<number, TriageVerdict>([
+      [
+        1,
+        {
+          kind: "fp-novel",
+          proposed_root_cause: "rc",
+          evidence_excerpt: "ev",
+          member_evidence: { file: "f", line: 1, why: "w" },
+        },
+      ],
+      [2, TP_VERDICT],
+    ]);
+    const output = build_finalization_output(state, context_with(verdicts));
+    for (const issue of output.novel_issues) {
+      const verdict = verdicts.get(issue.entry_index);
+      expect(verdict?.kind).toBe("fp-novel");
+    }
+    expect(output.novel_issues.map((i) => i.entry_index)).toEqual([1]);
   });
 
   it("failed entries are excluded; pending entries in a complete run throw", () => {
@@ -354,60 +532,14 @@ describe("build_finalization_output", () => {
     );
   });
 
-  it("throws on cross-source mismatch: novel_issues cites an entry whose verdict is tp", () => {
-    const state = make_state({
-      entries: [make_entry({ entry_index: 1, route: "llm-triage" })],
-    });
-    const verdicts = new Map<number, TriageVerdict>([[1, TP_VERDICT]]);
-    expect(() =>
-      build_finalization_output(state, {
-        ...EMPTY_CONTEXT,
-        sources: {
-          novel_issues: [
-            {
-              id: "i",
-              canonical_name: "I",
-              root_cause: "rc",
-              citations: [{ entry_index: 1, evidence_excerpt: "ev" }],
-            },
-          ],
-          flagged_novel_verdicts: [],
-          classifier_regressions: [],
-          verdicts_by_entry_index: verdicts,
-        },
-      }),
-    ).toThrow(/novel-issue citations are inconsistent/);
-  });
-
-  it("throws on cross-source mismatch: classifier_regressions flags an entry whose verdict is uncertain", () => {
-    const state = make_state({
-      entries: [make_entry({ entry_index: 2, route: "llm-triage" })],
-    });
-    const verdicts = new Map<number, TriageVerdict>([[2, UNCERTAIN_VERDICT]]);
-    expect(() =>
-      build_finalization_output(state, {
-        ...EMPTY_CONTEXT,
-        sources: {
-          novel_issues: [],
-          flagged_novel_verdicts: [],
-          classifier_regressions: [
-            { rule_id: "r", flagged_entries: [{ entry_index: 2, evidence_excerpt: "ev" }] },
-          ],
-          verdicts_by_entry_index: verdicts,
-        },
-      }),
-    ).toThrow(/classifier-regression flags are inconsistent/);
-  });
-
-  it("empty state → fully empty v4 envelope", () => {
+  it("empty state → fully empty v5 envelope", () => {
     const state = make_state({ entries: [] });
     const output = build_finalization_output(state, EMPTY_CONTEXT);
     const expected: FinalizationOutput = {
-      schema_version: 4,
+      schema_version: 5,
       project_path: PROJECT_PATH,
       commit_hash: COMMIT,
       novel_issues: [],
-      flagged_novel_verdicts: [],
       classifier_regressions: [],
       confirmed_unreachable: [],
       uncertain: [],
@@ -445,18 +577,11 @@ describe("build_finalization_output", () => {
 
 describe("build_finalization_summary", () => {
   it("aggregates counts across confirmed_unreachable, uncertain, novel issues, and regressions", () => {
-    // Construct a state in which every cited / flagged entry has a matching
-    // verdict (cross-source consistency check requires this).
-    const novel_new_verdict: TriageVerdict = {
-      kind: "fp-novel-new",
+    const novel_verdict: TriageVerdict = {
+      kind: "fp-novel",
       proposed_root_cause: "rc",
       evidence_excerpt: "ev",
       member_evidence: { file: "f", line: 1, why: "w" },
-    };
-    const novel_cited_verdict: TriageVerdict = {
-      kind: "fp-novel-cited",
-      novel_issue_id: "iss-1",
-      evidence_excerpt: "ev",
     };
     const regression_verdict: TriageVerdict = {
       kind: "fp-classifier-regression",
@@ -470,10 +595,10 @@ describe("build_finalization_summary", () => {
         make_entry({ entry_index: 1, route: "llm-triage" }),
         make_entry({ entry_index: 2, route: "llm-triage" }),
         make_entry({ entry_index: 3, status: "failed", result: null, error: "timeout" }),
-        // Two novel-issue citations:
+        // Two novel issues:
         make_entry({ entry_index: 5, route: "llm-triage" }),
         make_entry({ entry_index: 6, route: "llm-triage" }),
-        // Three classifier-regression flags:
+        // Three classifier-regression flags (one rule):
         make_entry({ entry_index: 7, route: "llm-triage" }),
         make_entry({ entry_index: 8, route: "llm-triage" }),
         make_entry({ entry_index: 9, route: "llm-triage" }),
@@ -483,48 +608,18 @@ describe("build_finalization_summary", () => {
       [0, TP_VERDICT],
       [1, TP_VERDICT],
       [2, UNCERTAIN_VERDICT],
-      [5, novel_new_verdict],
-      [6, novel_cited_verdict],
+      [5, novel_verdict],
+      [6, novel_verdict],
       [7, regression_verdict],
       [8, regression_verdict],
       [9, regression_verdict],
     ]);
-    const novel_issues: NovelIssue[] = [
-      {
-        id: "iss-1",
-        canonical_name: "i",
-        root_cause: "rc",
-        citations: [
-          { entry_index: 5, evidence_excerpt: "a" },
-          { entry_index: 6, evidence_excerpt: "b" },
-        ],
-      },
-    ];
-    const classifier_regressions: ClassifierRegressionFlag[] = [
-      {
-        rule_id: "r",
-        flagged_entries: [
-          { entry_index: 7, evidence_excerpt: "c" },
-          { entry_index: 8, evidence_excerpt: "d" },
-          { entry_index: 9, evidence_excerpt: "e" },
-        ],
-      },
-    ];
-    const output = build_finalization_output(state, {
-      ...EMPTY_CONTEXT,
-      sources: {
-        novel_issues,
-        flagged_novel_verdicts: [],
-        classifier_regressions,
-        verdicts_by_entry_index: verdicts,
-      },
-    });
+    const output = build_finalization_output(state, context_with(verdicts));
     const summary = build_finalization_summary(state, output);
     const expected: FinalizationSummary = {
       total_entries: 9,
       confirmed_unreachable_count: 2,
-      novel_issue_count: 1,
-      novel_citation_count: 2,
+      novel_issue_count: 2,
       classifier_regression_rule_count: 1,
       classifier_regression_entry_count: 3,
       uncertain_count: 1,
@@ -541,7 +636,6 @@ describe("build_finalization_summary", () => {
       total_entries: 0,
       confirmed_unreachable_count: 0,
       novel_issue_count: 0,
-      novel_citation_count: 0,
       classifier_regression_rule_count: 0,
       classifier_regression_entry_count: 0,
       uncertain_count: 0,
@@ -550,4 +644,3 @@ describe("build_finalization_summary", () => {
     expect(summary).toEqual(expected);
   });
 });
-

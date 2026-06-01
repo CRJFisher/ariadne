@@ -6,7 +6,6 @@ import {
   select_relevant_registry_slice,
   type DispensePayload,
 } from "./dispense_payload.js";
-import type { NovelIssuesFile } from "../absorb/novel_issues.js";
 import type { TriageEntry } from "../triage_state_types.js";
 
 const BASE_SYNTACTIC_FEATURES: SyntacticFeatures = {
@@ -259,30 +258,14 @@ describe("build_dispense_payload", () => {
         diagnosis: "callers-not-in-registry",
       },
     });
-    const novel_issues: NovelIssuesFile = {
-      issues: [
-        {
-          id: "decorator-route-registration",
-          canonical_name: "Decorator route registration",
-          root_cause: "framework registers handler via @route decorator",
-          citations: [
-            { entry_index: 4, evidence_excerpt: "@route('/x') def handler_x(): ..." },
-          ],
-        },
-      ],
-      flagged: [],
-    };
-
     const payload = build_dispense_payload({
       entry,
       registry: [ts_rule, py_rule, fixed_rule],
-      novel_issues,
     });
 
     const expected: DispensePayload = {
       entry_context: entry,
       relevant_registry_slice: [ts_rule],
-      novel_issues_snapshot: novel_issues,
     };
     expect(payload).toEqual(expected);
   });
@@ -299,23 +282,20 @@ describe("build_dispense_payload", () => {
     const payload = build_dispense_payload({
       entry,
       registry: rules,
-      novel_issues: { issues: [], flagged: [] },
       max_rules: 2,
     });
     expect(payload.relevant_registry_slice).toEqual([rules[0], rules[1]]);
   });
 
-  it("includes an empty novel_issues_snapshot verbatim on the first novel absorb of a run", () => {
+  it("returns only the registry slice for an entry with no in-scope rules", () => {
     const entry = make_entry({ file_path: "src/x.ts" as FilePath });
     const payload = build_dispense_payload({
       entry,
       registry: [],
-      novel_issues: { issues: [], flagged: [] },
     });
     expect(payload).toEqual({
       entry_context: entry,
       relevant_registry_slice: [],
-      novel_issues_snapshot: { issues: [], flagged: [] },
     });
   });
 });

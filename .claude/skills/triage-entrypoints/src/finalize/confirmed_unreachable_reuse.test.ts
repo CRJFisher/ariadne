@@ -50,11 +50,10 @@ function build_output(
   confirmed: { name: string; file: string; line: number; kind?: "function" | "method" | "constructor" }[],
 ): FinalizationOutput {
   return {
-    schema_version: 4,
+    schema_version: 5,
     project_path: "/some/path",
     commit_hash: null,
     novel_issues: [],
-    flagged_novel_verdicts: [],
     classifier_regressions: [],
     confirmed_unreachable: confirmed.map((c, idx) => ({
       entry_index: idx,

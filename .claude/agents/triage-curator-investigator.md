@@ -13,9 +13,9 @@ maxTurns: 200
 The novel-issue discovery work — clustering false-positive entries by root
 cause, naming them, picking a canonical name across parallel agents — is
 done by the time you run. The triage-entrypoints skill's per-entry
-`triage-investigator` emits per-entry verdicts; the `triage-coordinator`
-consolidates them into `novel_issues[]`; the curator's puller hands you
-exactly one of those consolidated issues. Every dispatch you receive is
+`triage-investigator` emits per-entry verdicts; finalize publishes each
+`fp-novel` verdict as one self-contained `novel_issues[]` row; the curator's
+puller hands you exactly one of those rows. Every dispatch you receive is
 for an already-registered `novel_issue`; you never see a fresh
 false-positive group.
 

@@ -17,7 +17,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { parse_project_arg, parse_run_id_arg } from "../src/cli_args.js";
 import {
-  novel_issues_path_for,
   require_run,
   results_dir_for,
 } from "../src/store/paths.js";
@@ -33,7 +32,6 @@ import {
   type DispensePayload,
 } from "../src/dispense/dispense_payload.js";
 import { load_registry } from "../src/known_issues_registry.js";
-import { read_novel_issues } from "../src/absorb/novel_issues.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const USAGE = "Usage: get_entry_context.ts --project <name> --entry <index> [--run-id <id>]";
@@ -80,7 +78,7 @@ const GENERIC_HINTS: DiagnosisHints = {
     "",
     "   - The `Pre-Gathered Evidence → Ariadne call references` block lists every call site Ariadne saw, with `resolution_count`, `resolved_to`, `call_type`, and `caller_function` — this is Ariadne's view of the callers, no live query needed",
     "",
-    "5. **Emit a verdict** using the schema in the **Output** section below: `tp` when no real callers exist, `fp-classifier-regression` when an in-scope rule's predicate should have caught the real caller, `fp-novel-cited` when the snapshot already covers it, `fp-novel-new` for a brand-new detection gap, or `uncertain` when you cannot reduce to a single kind.",
+    "5. **Emit a verdict** using the schema in the **Output** section below: `tp` when no real callers exist, `fp-classifier-regression` when an in-scope rule's predicate should have caught the real caller, `fp-novel` for a detection gap no in-scope rule covers, or `uncertain` when you cannot reduce to a single kind.",
   ].join("\n"),
 };
 
@@ -112,7 +110,7 @@ const DIAGNOSIS_HINTS: Record<string, DiagnosisHints> = {
       "",
       "   - The `Pre-Gathered Evidence → Ariadne call references` block is Ariadne's view of the callers — if it is empty for this entry, that confirms the registry gap, no live query needed",
       "",
-      "5. **Emit a verdict** using the schema in the **Output** section below: real callers in unindexed files ⇒ `fp-novel-new` (or `fp-novel-cited` if the snapshot already names the gap, or `fp-classifier-regression` if an in-scope rule should have caught it); all grep hits false with no other callers ⇒ `tp`.",
+      "5. **Emit a verdict** using the schema in the **Output** section below: real callers in unindexed files ⇒ `fp-novel` (or `fp-classifier-regression` if an in-scope rule should have caught it); all grep hits false with no other callers ⇒ `tp`.",
     ].join("\n"),
   },
   "callers-in-registry-unresolved": {
@@ -154,7 +152,7 @@ const DIAGNOSIS_HINTS: Record<string, DiagnosisHints> = {
       "   - Is this a type resolution failure (method call on an untyped or dynamically-typed receiver)?",
       "   - Is this an import resolution failure (import path not followed correctly)?",
       "",
-      "6. **Emit a verdict** using the schema in the **Output** section below: resolution genuinely failed ⇒ `fp-novel-new` (or `fp-novel-cited` if the snapshot already names the resolution gap, or `fp-classifier-regression` if an in-scope rule should have caught it); name collision with no other callers ⇒ `tp`.",
+      "6. **Emit a verdict** using the schema in the **Output** section below: resolution genuinely failed ⇒ `fp-novel` (or `fp-classifier-regression` if an in-scope rule should have caught it); name collision with no other callers ⇒ `tp`.",
     ].join("\n"),
   },
   "callers-in-registry-wrong-target": {
@@ -193,7 +191,7 @@ const DIAGNOSIS_HINTS: Record<string, DiagnosisHints> = {
       "",
       "   - The `Pre-Gathered Evidence → Ariadne call references` block already lists every call site Ariadne saw with its `resolved_to` targets — confirm whether those targets point at this entry or somewhere else",
       "",
-      "6. **Emit a verdict** using the schema in the **Output** section below: real callers resolved to the wrong target ⇒ `fp-novel-new` (or `fp-novel-cited` if the snapshot already names the mismatch, or `fp-classifier-regression` if an in-scope rule should have caught it); resolved targets are correct and no other callers exist ⇒ `tp`.",
+      "6. **Emit a verdict** using the schema in the **Output** section below: real callers resolved to the wrong target ⇒ `fp-novel` (or `fp-classifier-regression` if an in-scope rule should have caught it); resolved targets are correct and no other callers exist ⇒ `tp`.",
     ].join("\n"),
   },
 };
@@ -293,11 +291,6 @@ export function substitute_template(input: SubstituteTemplateInput): string {
       null,
       2,
     ),
-    "{{novel_issues_snapshot}}": JSON.stringify(
-      input.payload.novel_issues_snapshot,
-      null,
-      2,
-    ),
   };
 
   let result = input.template;
@@ -327,12 +320,10 @@ async function main(): Promise<void> {
   const output_path = path.join(results_dir_for(cli.project, run_id), `${entry.entry_index}.json`);
 
   const registry: KnownIssuesRegistry = load_registry();
-  const novel_issues = await read_novel_issues(novel_issues_path_for(cli.project, run_id));
 
   const payload = build_dispense_payload({
     entry,
     registry,
-    novel_issues,
   });
 
   const prompt = substitute_template({ template, payload, output_path });

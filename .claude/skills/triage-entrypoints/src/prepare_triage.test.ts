@@ -149,7 +149,7 @@ describe("prepare_triage — two-bucket end-to-end", () => {
         route: "known-unreachable",
         status: "completed",
         auto_classified: true,
-        known_source: "match-no-textual-callers",
+        known_source: "registry:match-no-textual-callers",
       }),
     );
     const residual_signatures = report.entries.slice(5).map((e) => ({

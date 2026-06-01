@@ -1,12 +1,20 @@
 /**
  * Per-entry verdict emitted by `triage-investigator`. One discriminated union
- * with five `kind`s; each carries its own required payload (no
+ * with four `kind`s; each carries its own required payload (no
  * optional-everywhere shape).
  *
- * The dispatcher consumes verdicts in the order they land and routes novel
- * verdicts (`fp-novel-new`, `fp-novel-cited`) through the `triage-coordinator`
- * before the next dispense. Other kinds are absorbed directly.
+ * The investigator writes one verdict to `results/<entry_index>.json`. The
+ * verdict files are the single source of truth: `finalize/output.ts` reads them
+ * to build the published `triage_results/<run-id>.json`. Every false-positive
+ * verdict is self-contained — it carries its own evidence so offline grouping
+ * in the downstream `plan` skill needs no in-run consolidation.
  */
+
+import type {
+  EntryPointDiagnostics,
+  ReceiverKind,
+  ResolutionFailure,
+} from "@ariadnejs/types";
 
 import {
   assert_keys,
@@ -26,17 +34,11 @@ export interface VerdictTp {
   member_evidence: MemberEvidence;
 }
 
-export interface VerdictFpNovelNew {
-  kind: "fp-novel-new";
+export interface VerdictFpNovel {
+  kind: "fp-novel";
   proposed_root_cause: string;
   evidence_excerpt: string;
   member_evidence: MemberEvidence;
-}
-
-export interface VerdictFpNovelCited {
-  kind: "fp-novel-cited";
-  novel_issue_id: string;
-  evidence_excerpt: string;
 }
 
 export interface VerdictFpClassifierRegression {
@@ -54,24 +56,42 @@ export interface VerdictUncertain {
 
 export type TriageVerdict =
   | VerdictTp
-  | VerdictFpNovelNew
-  | VerdictFpNovelCited
+  | VerdictFpNovel
   | VerdictFpClassifierRegression
   | VerdictUncertain;
 
 /**
- * The subset of `TriageVerdict` variants that route through the
- * `triage-coordinator` sub-agent. All other verdicts are absorbed directly by
- * the dispatcher with no coordinator call.
+ * One published false-positive row in `triage_results/<run-id>.json`'s
+ * `novel_issues[]`. Built one-per-`fp-novel`-verdict at finalize (no merge):
+ * the investigator-authored evidence (`member_evidence`, `proposed_root_cause`,
+ * `evidence_excerpt`) is carried verbatim, and the deterministic core fault
+ * diagnostics (`diagnosis`, `resolution_failure`, `receiver_kind`) are attached
+ * from the entry's `EntryPointDiagnostics`. The `id` is deterministic, keyed by
+ * `entry_index`.
+ *
+ * `resolution_failure` is the `{ stage, reason }` subset of the failing call
+ * site's `ResolutionFailure` (the resolver's `partial_info` is not published).
+ * `receiver_kind` is present only when the failing call site is a method call.
  */
-export type NovelVerdict = VerdictFpNovelNew | VerdictFpNovelCited;
+export interface NovelIssue {
+  id: string;
+  entry_index: number;
+  member_evidence: MemberEvidence;
+  proposed_root_cause: string;
+  evidence_excerpt: string;
+  diagnosis: EntryPointDiagnostics["diagnosis"];
+  resolution_failure?: {
+    stage: ResolutionFailure["stage"];
+    reason: ResolutionFailure["reason"];
+  };
+  receiver_kind?: ReceiverKind;
+}
 
 type TriageVerdictKind = TriageVerdict["kind"];
 
 const VERDICT_KINDS: readonly TriageVerdictKind[] = [
   "tp",
-  "fp-novel-new",
-  "fp-novel-cited",
+  "fp-novel",
   "fp-classifier-regression",
   "uncertain",
 ] as const;
@@ -99,38 +119,25 @@ export function parse_triage_verdict(raw: unknown): TriageVerdict {
         kind: "tp",
         member_evidence: parse_member_evidence(obj["member_evidence"], "verdict(tp).member_evidence"),
       };
-    case "fp-novel-new":
+    case "fp-novel":
       assert_keys(
         obj,
         ["kind", "proposed_root_cause", "evidence_excerpt", "member_evidence"],
-        "verdict(fp-novel-new)",
+        "verdict(fp-novel)",
       );
       return {
-        kind: "fp-novel-new",
+        kind: "fp-novel",
         proposed_root_cause: parse_non_empty_string(
           obj["proposed_root_cause"],
-          "verdict(fp-novel-new).proposed_root_cause",
+          "verdict(fp-novel).proposed_root_cause",
         ),
         evidence_excerpt: parse_non_empty_string(
           obj["evidence_excerpt"],
-          "verdict(fp-novel-new).evidence_excerpt",
+          "verdict(fp-novel).evidence_excerpt",
         ),
         member_evidence: parse_member_evidence(
           obj["member_evidence"],
-          "verdict(fp-novel-new).member_evidence",
-        ),
-      };
-    case "fp-novel-cited":
-      assert_keys(obj, ["kind", "novel_issue_id", "evidence_excerpt"], "verdict(fp-novel-cited)");
-      return {
-        kind: "fp-novel-cited",
-        novel_issue_id: parse_non_empty_string(
-          obj["novel_issue_id"],
-          "verdict(fp-novel-cited).novel_issue_id",
-        ),
-        evidence_excerpt: parse_non_empty_string(
-          obj["evidence_excerpt"],
-          "verdict(fp-novel-cited).evidence_excerpt",
+          "verdict(fp-novel).member_evidence",
         ),
       };
     case "fp-classifier-regression":
@@ -165,30 +172,6 @@ export function parse_triage_verdict(raw: unknown): TriageVerdict {
         ),
       };
   }
-}
-
-/**
- * Narrows a parsed `TriageVerdict` to a `NovelVerdict`. Throws if the verdict
- * is `tp`, `fp-classifier-regression`, or `uncertain` — kinds that route
- * around the coordinator and must never reach the novel-issue storage
- * mutators.
- */
-export function expect_novel_verdict(verdict: TriageVerdict): NovelVerdict {
-  if (verdict.kind === "fp-novel-new" || verdict.kind === "fp-novel-cited") {
-    return verdict;
-  }
-  throw new Error(
-    `expected a NovelVerdict (fp-novel-new | fp-novel-cited), got kind '${verdict.kind}'`,
-  );
-}
-
-/**
- * Strict parser that combines `parse_triage_verdict` with `expect_novel_verdict`
- * — for callers that consume raw JSON known to be a novel verdict (e.g. the
- * dispatcher's coordinator-bound branch).
- */
-export function parse_novel_verdict(raw: unknown): NovelVerdict {
-  return expect_novel_verdict(parse_triage_verdict(raw));
 }
 
 function parse_member_evidence(raw: unknown, ctx: string): MemberEvidence {

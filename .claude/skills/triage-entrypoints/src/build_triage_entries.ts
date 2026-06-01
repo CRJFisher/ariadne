@@ -60,7 +60,7 @@ export function build_triage_entries(input: BuildTriageEntriesInput): TriageEntr
       entry_index: index++,
       ...entry_point_to_triage_base(entry_point),
       route: "known-unreachable",
-      known_source: result.auto_group_id,
+      known_source: `registry:${result.auto_group_id}`,
       status: "completed",
       result: {
         ariadne_correct: true,

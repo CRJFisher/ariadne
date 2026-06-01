@@ -1,11 +1,10 @@
 /**
- * Pure diff over two `FinalizationOutput`s (schema v4).
+ * Pure diff over two `FinalizationOutput`s (schema v5).
  *
  * Surface the cross-run signals the iteration loop cares about:
  *   - Entry-level appearance/disappearance and TP↔uncertain flips on the
  *     `confirmed_unreachable` / `uncertain` partitions.
- *   - Novel-issue diff: which `novel_issue.id`s are added / removed, plus
- *     citation-count deltas on surviving issues.
+ *   - Novel-issue diff: which `novel_issue.id`s are added / removed between runs.
  *   - Classifier-regression diff: which wip rule_ids picked up new flagged
  *     entries between runs (curator drift signal).
  *
@@ -37,12 +36,6 @@ export interface FlippedEntry {
   to_classification: Classification;
 }
 
-export interface NovelIssueCitationDelta {
-  novel_issue_id: string;
-  citations_from: number;
-  citations_to: number;
-}
-
 export interface ClassifierRegressionDelta {
   rule_id: string;
   flagged_from: number;
@@ -57,7 +50,6 @@ export interface DiffSummary {
   flipped: FlippedEntry[];
   novel_issues_added: string[];
   novel_issues_removed: string[];
-  novel_issue_citation_deltas: NovelIssueCitationDelta[];
   classifier_regressions_added: string[];
   classifier_regressions_removed: string[];
   classifier_regression_deltas: ClassifierRegressionDelta[];
@@ -195,28 +187,16 @@ function novel_issue_diff(
 ): {
   novel_issues_added: string[];
   novel_issues_removed: string[];
-  novel_issue_citation_deltas: NovelIssueCitationDelta[];
 } {
-  const from_by_id = new Map(from.novel_issues.map((i) => [i.id, i]));
-  const to_by_id = new Map(to.novel_issues.map((i) => [i.id, i]));
+  const from_ids = new Set(from.novel_issues.map((i) => i.id));
+  const to_ids = new Set(to.novel_issues.map((i) => i.id));
   const novel_issues_added: string[] = [];
   const novel_issues_removed: string[] = [];
-  const novel_issue_citation_deltas: NovelIssueCitationDelta[] = [];
-  for (const id of to_by_id.keys()) if (!from_by_id.has(id)) novel_issues_added.push(id);
-  for (const id of from_by_id.keys()) if (!to_by_id.has(id)) novel_issues_removed.push(id);
+  for (const id of to_ids) if (!from_ids.has(id)) novel_issues_added.push(id);
+  for (const id of from_ids) if (!to_ids.has(id)) novel_issues_removed.push(id);
   novel_issues_added.sort();
   novel_issues_removed.sort();
-  const all_ids = new Set<string>([...from_by_id.keys(), ...to_by_id.keys()]);
-  for (const id of [...all_ids].sort()) {
-    const f = from_by_id.get(id);
-    const t = to_by_id.get(id);
-    novel_issue_citation_deltas.push({
-      novel_issue_id: id,
-      citations_from: f?.citations.length ?? 0,
-      citations_to: t?.citations.length ?? 0,
-    });
-  }
-  return { novel_issues_added, novel_issues_removed, novel_issue_citation_deltas };
+  return { novel_issues_added, novel_issues_removed };
 }
 
 function classifier_regression_diff(
@@ -295,16 +275,6 @@ export function format_diff_text(diff: DiffSummary, from_id: string, to_id: stri
   }
   if (diff.novel_issues_removed.length > 0) {
     lines.push(`Novel issues removed: ${diff.novel_issues_removed.join(", ")}`);
-  }
-  const novel_significant = diff.novel_issue_citation_deltas.filter(
-    (d) => d.citations_from !== d.citations_to,
-  );
-  if (novel_significant.length > 0) {
-    if (lines[lines.length - 1] !== "") lines.push("");
-    lines.push("Novel-issue citation deltas:");
-    for (const d of novel_significant) {
-      lines.push(`  ${d.novel_issue_id}: ${d.citations_from} → ${d.citations_to}`);
-    }
   }
 
   if (diff.classifier_regressions_added.length > 0) {

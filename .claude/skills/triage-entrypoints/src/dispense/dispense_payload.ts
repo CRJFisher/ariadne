@@ -10,9 +10,6 @@
  *   that are in scope for the entry. The investigator uses this to detect
  *   `fp-classifier-regression` (a rule whose predicate *should* have matched
  *   but did not) without loading the full registry.
- * - `novel_issues_snapshot` — the run's current `novel_issues.json` content.
- *   The investigator early-exits with `fp-novel-cited` when an existing issue
- *   already covers the entry's evidence — no source read, no MCP call.
  *
  * The slice filter is pure and deterministic: two investigators dispensed with
  * the same inputs see the same slice. The cap (`max_rules`) is an
@@ -27,7 +24,6 @@ import type {
 } from "@ariadnejs/types";
 
 import { language_from_extension } from "./language_from_extension.js";
-import type { NovelIssuesFile } from "../absorb/novel_issues.js";
 import type { TriageEntry } from "../triage_state_types.js";
 
 export const DEFAULT_REGISTRY_SLICE_MAX = 20;
@@ -35,13 +31,11 @@ export const DEFAULT_REGISTRY_SLICE_MAX = 20;
 export interface DispensePayload {
   entry_context: TriageEntry;
   relevant_registry_slice: KnownIssue[];
-  novel_issues_snapshot: NovelIssuesFile;
 }
 
 export interface BuildDispensePayloadInput {
   entry: TriageEntry;
   registry: KnownIssuesRegistry;
-  novel_issues: NovelIssuesFile;
   max_rules?: number;
 }
 
@@ -57,7 +51,6 @@ export function build_dispense_payload(input: BuildDispensePayloadInput): Dispen
       input.entry,
       max_rules,
     ),
-    novel_issues_snapshot: input.novel_issues,
   };
 }
 

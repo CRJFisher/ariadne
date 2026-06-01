@@ -6,8 +6,19 @@ import type {
   PublishedConfirmedUnreachable,
   PublishedUncertain,
 } from "../finalize/output.js";
-import type { NovelIssue } from "../absorb/novel_issues.js";
+import type { NovelIssue } from "../verdict/triage_verdict.js";
 import type { ClassifierRegressionFlag } from "@ariadnejs/types";
+
+function ni(id: string, entry_index: number): NovelIssue {
+  return {
+    id,
+    entry_index,
+    member_evidence: { file: `src/${id}.ts`, line: entry_index, why: "missed caller" },
+    proposed_root_cause: "resolver gap",
+    evidence_excerpt: `call-${entry_index}`,
+    diagnosis: "callers-not-in-registry",
+  };
+}
 
 function tp(
   name: string,
@@ -50,11 +61,10 @@ function output(
   classifier_regressions: ClassifierRegressionFlag[] = [],
 ): FinalizationOutput {
   return {
-    schema_version: 4,
+    schema_version: 5,
     project_path: "/p",
     commit_hash: "deadbee",
     novel_issues,
-    flagged_novel_verdicts: [],
     classifier_regressions,
     confirmed_unreachable: confirmed,
     uncertain: uncertain_entries,
@@ -122,39 +132,12 @@ describe("diff_runs", () => {
     expect(d.flipped).toEqual([]);
   });
 
-  it("novel_issues_added / removed and per-issue citation deltas surface across runs", () => {
-    const from = output(
-      [],
-      [],
-      [
-        { id: "iss-stable", canonical_name: "S", root_cause: "rc", citations: [{ entry_index: 1, evidence_excerpt: "a" }] },
-        { id: "iss-gone", canonical_name: "G", root_cause: "rc", citations: [{ entry_index: 2, evidence_excerpt: "b" }] },
-      ],
-    );
-    const to = output(
-      [],
-      [],
-      [
-        {
-          id: "iss-stable",
-          canonical_name: "S",
-          root_cause: "rc",
-          citations: [
-            { entry_index: 1, evidence_excerpt: "a" },
-            { entry_index: 3, evidence_excerpt: "c" },
-          ],
-        },
-        { id: "iss-new", canonical_name: "N", root_cause: "rc", citations: [{ entry_index: 4, evidence_excerpt: "d" }] },
-      ],
-    );
+  it("novel_issues_added / removed surface across runs", () => {
+    const from = output([], [], [ni("iss-stable", 1), ni("iss-gone", 2)]);
+    const to = output([], [], [ni("iss-stable", 1), ni("iss-new", 4)]);
     const d = diff_runs(from, to);
     expect(d.novel_issues_added).toEqual(["iss-new"]);
     expect(d.novel_issues_removed).toEqual(["iss-gone"]);
-    expect(d.novel_issue_citation_deltas).toEqual([
-      { novel_issue_id: "iss-gone", citations_from: 1, citations_to: 0 },
-      { novel_issue_id: "iss-new", citations_from: 0, citations_to: 1 },
-      { novel_issue_id: "iss-stable", citations_from: 1, citations_to: 2 },
-    ]);
   });
 
   it("classifier-regression deltas surface added/removed rules and per-rule flagged counts", () => {
@@ -196,7 +179,7 @@ describe("diff_runs", () => {
     const o = output(
       [tp("u1"), tp("u2")],
       [uncertain("a")],
-      [{ id: "i1", canonical_name: "n", root_cause: "rc", citations: [] }],
+      [ni("i1", 1)],
       [{ rule_id: "r1", flagged_entries: [] }],
     );
     const d = diff_runs(o, o);
@@ -228,34 +211,11 @@ describe("format_diff_text", () => {
     expect(text).not.toContain("Verdict flips");
   });
 
-  it("renders novel-issue added/removed and per-issue citation deltas", () => {
-    const from = output(
-      [],
-      [],
-      [
-        { id: "iss-a", canonical_name: "A", root_cause: "rc", citations: [{ entry_index: 1, evidence_excerpt: "x" }] },
-      ],
-    );
-    const to = output(
-      [],
-      [],
-      [
-        {
-          id: "iss-a",
-          canonical_name: "A",
-          root_cause: "rc",
-          citations: [
-            { entry_index: 1, evidence_excerpt: "x" },
-            { entry_index: 2, evidence_excerpt: "y" },
-          ],
-        },
-        { id: "iss-b", canonical_name: "B", root_cause: "rc", citations: [] },
-      ],
-    );
+  it("renders novel-issue added/removed", () => {
+    const from = output([], [], [ni("iss-a", 1)]);
+    const to = output([], [], [ni("iss-a", 1), ni("iss-b", 2)]);
     const text = format_diff_text(diff_runs(from, to), "r1", "r2");
     expect(text).toContain("Novel issues added: iss-b");
-    expect(text).toContain("Novel-issue citation deltas");
-    expect(text).toContain("iss-a: 1 → 2");
   });
 
   it("renders classifier-regression added/removed and per-rule flagged-count deltas", () => {
