@@ -12,7 +12,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { pathToFileURL } from "node:url";
 
 import {
   parse_known_issues_registry_json,
@@ -22,7 +22,8 @@ import {
   type PredicateExpr,
 } from "@ariadnejs/types";
 
-import { get_registry_file_path, get_repo_root } from "../src/store/paths.js";
+import { get_repo_root } from "../src/store/paths.js";
+import { known_issues_registry_path } from "@ariadnejs/skill-protocol";
 
 // ===== Paths =====
 
@@ -199,7 +200,7 @@ export function write_outputs(outputs: RenderOutput[]): string[] {
 // ===== Main =====
 
 function main(): void {
-  const raw = fs.readFileSync(get_registry_file_path(), "utf8");
+  const raw = fs.readFileSync(known_issues_registry_path(), "utf8");
   const registry = parse_known_issues_registry_json(raw);
   const outputs = render_all(registry);
   const written = write_outputs(outputs);

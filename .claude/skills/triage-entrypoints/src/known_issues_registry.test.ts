@@ -12,11 +12,11 @@ import {
 import {
   RegistryValidationError,
   active_rules_for_classification,
-  get_registry_file_path,
   load_registry,
   validate_predicate_expr,
   validate_registry,
 } from "./known_issues_registry.js";
+import { known_issues_registry_path } from "@ariadnejs/skill-protocol";
 import type { KnownIssue } from "@ariadnejs/types";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -33,7 +33,7 @@ describe("load_registry", () => {
   });
 
   it("points at .claude/skills/triage-entrypoints/known_issues/registry.json", () => {
-    const p = get_registry_file_path();
+    const p = known_issues_registry_path();
     expect(p.endsWith(path.join("triage-entrypoints", "known_issues", "registry.json"))).toBe(true);
     expect(fs.existsSync(p)).toBe(true);
   });
@@ -109,7 +109,7 @@ describe("active_rules_for_classification", () => {
 
 describe("registry.json envelope", () => {
   it("is a `{ schema_version, rules }` object with schema_version=1", () => {
-    const raw = fs.readFileSync(get_registry_file_path(), "utf8");
+    const raw = fs.readFileSync(known_issues_registry_path(), "utf8");
     const parsed = JSON.parse(raw) as { schema_version: number; rules: unknown };
     expect(parsed.schema_version).toEqual(1);
     expect(Array.isArray(parsed.rules)).toBe(true);
@@ -135,7 +135,7 @@ describe("registry.json envelope", () => {
 /**
  * Drive the wire-format parser the loader uses with a synthetic JSON value.
  * Lets envelope-shape tests assert without writing to a tmp file or rewiring
- * `get_registry_file_path`.
+ * `known_issues_registry_path`.
  */
 function validate_registry_envelope_via_load_registry(value: unknown): void {
   parse_known_issues_registry_json(JSON.stringify(value));

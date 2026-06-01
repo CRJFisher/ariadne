@@ -1,97 +1,31 @@
 import type {
   AriadneRootCauseCategory,
-  ClassifierRegressionFlag,
   KnownIssueLanguage,
 } from "@ariadnejs/types";
 
 // ===== Triage results shape (read-only) =====
 //
-// Schema v4. The published `triage_results/<run-id>.json` artifact written by
-// the triage-entrypoints skill's `finalize_triage.ts`. The curator's absorb path
-// reads `novel_issues` and `classifier_regressions`; downstream consumers
-// (impact reports, promotion candidates) read `confirmed_unreachable[]` with
-// its `source` discriminator.
+// The published `triage_results/<run-id>.json` wire contract is owned by
+// `@ariadnejs/skill-protocol` — the single source of truth shared with the
+// producing triage-entrypoints skill. Re-exported here so the curator's
+// domain-vocabulary imports stay grouped (matching the `@ariadnejs/types`
+// re-export below). The curator's `novel:` path reads `novel_issues` and
+// `classifier_regressions`; downstream consumers read `confirmed_unreachable[]`
+// with its `source` discriminator.
 
-/** Citation rolled up under a single `novel_issue` — entry-level evidence. */
-export interface NovelIssueCitation {
-  entry_index: number;
-  evidence_excerpt: string;
-}
+export {
+  TRIAGE_RESULTS_SCHEMA_VERSION,
+} from "@ariadnejs/skill-protocol";
 
-/**
- * One consolidated novel issue from the per-entry triage. Aggregated by the
- * coordinator at absorb time; the curator's primary input on the `novel:` path.
- */
-export interface NovelIssue {
-  /** Slug derived from `canonical_name`. Becomes the registry `group_id` after promotion. */
-  id: string;
-  canonical_name: string;
-  root_cause: string;
-  citations: NovelIssueCitation[];
-}
-
-/** Novel verdict the coordinator declined to merge or register. */
-export interface FlaggedNovelVerdict {
-  entry_index: number;
-  reason: string;
-}
-
-/** Provenance for a `confirmed_unreachable[]` row. */
-export type ConfirmedUnreachableSource =
-  | { kind: "llm-tp" }
-  | { kind: "previously-confirmed-tp" }
-  | { kind: "registry"; group_id: string };
-
-/** Per-entry investigator's named evidence attached to a verdict. */
-export interface MemberEvidence {
-  summary: string;
-  excerpt: string;
-}
-
-/** Entry identifiers shared by `confirmed_unreachable[]` and `uncertain[]`. */
-export interface PublishedEntryRef {
-  entry_index: number;
-  name: string;
-  /** Relative to the run's `project_path`. */
-  file_path: string;
-  start_line: number;
-  kind: "function" | "method" | "constructor";
-  signature?: string;
-}
-
-export interface PublishedConfirmedUnreachable extends PublishedEntryRef {
-  source: ConfirmedUnreachableSource;
-  member_evidence: MemberEvidence | null;
-}
-
-export interface PublishedUncertain extends PublishedEntryRef {
-  reason: string;
-  member_evidence: MemberEvidence;
-}
-
-export interface TriageResultsFile {
-  /** Schema version of this published artifact. Required; readers reject mismatched versions. */
-  schema_version: number;
-  /** Absolute path to the target repo when the run was finalized. */
-  project_path: string;
-  /** Full HEAD commit hash for the target repo when the run was finalized. */
-  commit_hash: string | null;
-  /** Consolidated novel issues for the run. Curator absorb's primary input. */
-  novel_issues: NovelIssue[];
-  /** Novel verdicts the coordinator could not assign — surfaced for human review. */
-  flagged_novel_verdicts: FlaggedNovelVerdict[];
-  /**
-   * Per-rule aggregate of `fp-classifier-regression` verdicts from the run's
-   * per-entry triage. Drives the curator's in-flight drift absorb path.
-   */
-  classifier_regressions: ClassifierRegressionFlag[];
-  confirmed_unreachable: PublishedConfirmedUnreachable[];
-  uncertain: PublishedUncertain[];
-  last_updated: string;
-}
-
-/** Expected `schema_version` of a v4 `triage_results/<run-id>.json`. */
-export const TRIAGE_RESULTS_SCHEMA_VERSION = 4;
+export type {
+  ConfirmedUnreachableSource,
+  MemberEvidence,
+  NovelIssue,
+  PublishedConfirmedUnreachable,
+  PublishedEntryRef,
+  PublishedUncertain,
+  TriageResultsFile,
+} from "@ariadnejs/skill-protocol";
 
 // ===== Known-issues registry shape (read/write) =====
 //

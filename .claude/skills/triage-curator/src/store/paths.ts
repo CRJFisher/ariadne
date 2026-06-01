@@ -10,21 +10,6 @@ export const CURATOR_RUNS_DIR = path.join(
   "runs",
 );
 
-/** Read-only source of triage_results JSON files. */
-export const TRIAGE_ENTRYPOINTS_ANALYSIS_OUTPUT_DIR = path.join(
-  os.homedir(),
-  ".ariadne",
-  "triage-entrypoints",
-  "analysis_output",
-);
-
-/** Resolves to the triage-entrypoints known_issues/registry.json in the current repo checkout. */
-export function get_registry_file_path(): string {
-  const here = path.dirname(fileURLToPath(import.meta.url));
-  // src/store/ → src/ → triage-curator/ → ../triage-entrypoints/known_issues/registry.json
-  return path.resolve(here, "..", "..", "..", "triage-entrypoints", "known_issues", "registry.json");
-}
-
 /** Absolute repo root — same value every script derives. Consumed by get_context_cmd builders. */
 export function get_repo_root(): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
@@ -74,11 +59,3 @@ export function created_task_ids_path(run_id: string): string {
   return path.join(run_output_dir(run_id), "created_task_ids.json");
 }
 
-export function derive_run_id(run_path: string): string {
-  return path.basename(run_path, ".json");
-}
-
-export function derive_project(run_path: string): string {
-  // analysis_output/{project}/triage_results/{run_id}.json
-  return path.basename(path.dirname(path.dirname(run_path)));
-}

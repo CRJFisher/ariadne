@@ -17,7 +17,6 @@
 
 import * as fs from "node:fs/promises";
 
-import path from "node:path";
 
 import { atomic_write_file } from "@ariadnejs/skill-fs";
 import {
@@ -26,8 +25,8 @@ import {
 } from "../src/finalize/output.js";
 import { load_verdicts_by_entry_index } from "../src/finalize/verdict_ledger.js";
 import { parse_project_arg, parse_run_id_arg } from "../src/cli_args.js";
+import { triage_results_dir, triage_results_path } from "@ariadnejs/skill-protocol";
 import {
-  ANALYSIS_OUTPUT_DIR,
   require_run,
   results_dir_for,
 } from "../src/store/paths.js";
@@ -80,9 +79,9 @@ async function main(): Promise<void> {
   // Atomic write of the published triage_results: a concurrent finalize would
   // otherwise interleave bytes into the same file, and the file is the
   // permanent source of truth for the TP cache, diff_runs, and the curator.
-  const output_dir = path.join(ANALYSIS_OUTPUT_DIR, state.project_name, "triage_results");
+  const output_dir = triage_results_dir(state.project_name);
   await fs.mkdir(output_dir, { recursive: true });
-  const output_file = path.join(output_dir, `${run_id}.json`);
+  const output_file = triage_results_path(state.project_name, run_id);
   await atomic_write_file(output_file, JSON.stringify(output, null, 2) + "\n");
 
   manifest.status = "finalized";

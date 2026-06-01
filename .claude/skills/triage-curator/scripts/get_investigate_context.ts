@@ -21,8 +21,8 @@ import {
   ARIADNE_ROOT_CAUSE_CATEGORIES,
   parse_known_issues_registry_json,
 } from "@ariadnejs/types";
-import { read_v4_triage_results } from "../src/store/parse_triage_results.js";
-import { get_registry_file_path } from "../src/store/paths.js";
+import { read_triage_results_file } from "@ariadnejs/skill-protocol";
+import { known_issues_registry_path } from "@ariadnejs/skill-protocol";
 import {
   SIGNAL_CHECK_OPS,
   type NovelIssue,
@@ -95,11 +95,11 @@ function find_novel_issue(
 async function main(): Promise<void> {
   const { novel_issue_id, run_path } = parse_argv(process.argv.slice(2));
 
-  const triage = await read_v4_triage_results(run_path);
+  const triage = await read_triage_results_file(run_path);
 
   const novel_issue = find_novel_issue(triage, novel_issue_id);
 
-  const registry_path = get_registry_file_path();
+  const registry_path = known_issues_registry_path();
   const registry_raw = await fs.readFile(registry_path, "utf8");
   const registry = parse_known_issues_registry_json(registry_raw);
 
@@ -132,8 +132,8 @@ async function main(): Promise<void> {
         "classifier. When retargeting, positive_examples and negative_examples must be " +
         "empty — their indices would reference the source citations, not the target.",
       positive_example_rules:
-        "classifier_spec.positive_examples indices must satisfy 0 <= i < citations.length " +
-        `(= ${novel_issue.citations.length} for this novel issue). Same rule for ` +
+        "classifier_spec.positive_examples indices must satisfy 0 <= i < 1 " +
+        "(this novel issue references a single false-positive entry). Same rule for " +
         "negative_examples. When retargeting (response.retargets_to set), leave both arrays empty.",
       kind_none_rule:
         "If proposed_classifier.kind === 'none', you must either populate signal_library_gap " +

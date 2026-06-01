@@ -2,27 +2,34 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
 import { error_code } from "@ariadnejs/skill-fs";
-import { CURATOR_RUNS_DIR, TRIAGE_ENTRYPOINTS_ANALYSIS_OUTPUT_DIR } from "./paths.js";
+import {
+  analysis_output_dir,
+  is_run_id,
+  parse_triage_results_path,
+} from "@ariadnejs/skill-protocol";
+import { CURATOR_RUNS_DIR } from "./paths.js";
 import type { ScanOptions, ScanResultItem } from "../types.js";
 
 /**
  * Walk `analysis_output/{project}/triage_results/*.json` under the given root.
- * Returns runs sorted ASC by run_id (ISO timestamps sort lexically).
+ * Files whose name is not a well-formed run-id are skipped (legacy or partial
+ * writes never abort the sweep). Returns runs sorted ASC by run_id (ISO
+ * timestamps sort lexically within a commit).
  */
 export async function discover_runs(
-  analysis_output_dir: string = TRIAGE_ENTRYPOINTS_ANALYSIS_OUTPUT_DIR,
+  root_dir: string = analysis_output_dir(),
 ): Promise<ScanResultItem[]> {
   const runs: ScanResultItem[] = [];
   let project_dirs: string[];
   try {
-    project_dirs = await fs.readdir(analysis_output_dir);
+    project_dirs = await fs.readdir(root_dir);
   } catch (err) {
     if (error_code(err) === "ENOENT") return [];
     throw err;
   }
 
   for (const project of project_dirs) {
-    const tr_dir = path.join(analysis_output_dir, project, "triage_results");
+    const tr_dir = path.join(root_dir, project, "triage_results");
     let files: string[];
     try {
       files = await fs.readdir(tr_dir);
@@ -33,6 +40,7 @@ export async function discover_runs(
     for (const file of files) {
       if (!file.endsWith(".json")) continue;
       const run_id = file.slice(0, -".json".length);
+      if (!is_run_id(run_id)) continue;
       runs.push({
         run_id,
         project,
@@ -103,16 +111,15 @@ export function filter_uncurated(
  */
 export async function scan_runs(
   opts: ScanOptions,
-  analysis_output_dir?: string,
+  root_dir?: string,
   runs_dir?: string,
 ): Promise<ScanResultItem[]> {
   const curated = await list_curated_run_ids(runs_dir);
   if (opts.run !== null) {
     const run_path = path.resolve(opts.run);
-    const run_id = path.basename(run_path, ".json");
-    const project = path.basename(path.dirname(path.dirname(run_path)));
+    const { project, run_id } = parse_triage_results_path(run_path);
     return filter_uncurated([{ run_id, project, run_path }], curated, opts);
   }
-  const discovered = await discover_runs(analysis_output_dir);
+  const discovered = await discover_runs(root_dir);
   return filter_uncurated(discovered, curated, opts);
 }

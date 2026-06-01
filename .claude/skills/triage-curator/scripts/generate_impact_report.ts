@@ -20,7 +20,7 @@ import * as fs from "node:fs/promises";
 
 import { parse_known_issues_registry_json } from "@ariadnejs/types";
 import { render_impact_report } from "../src/propose/impact_report.js";
-import { get_registry_file_path } from "../src/store/paths.js";
+import { known_issues_registry_path } from "@ariadnejs/skill-protocol";
 import type { KnownIssue } from "../src/types.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
@@ -94,7 +94,7 @@ function snapshot_counts(registry: KnownIssue[]): Record<string, number> {
 async function main(): Promise<void> {
   const args = parse_argv(process.argv.slice(2));
 
-  const registry_path = get_registry_file_path();
+  const registry_path = known_issues_registry_path();
   const registry = parse_known_issues_registry_json(
     await fs.readFile(registry_path, "utf8"),
   );

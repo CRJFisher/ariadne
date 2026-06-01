@@ -19,93 +19,24 @@
 
 import * as path from "node:path";
 
-import type {
-  ClassifierRegressionFlag,
-  EntryPointDiagnostics,
-} from "@ariadnejs/types";
+import type { EntryPointDiagnostics } from "@ariadnejs/types";
 import {
   aggregate_classifier_regressions,
   type ClassifierRegressionInput,
 } from "@ariadnejs/skill-fs";
-import type { MemberEvidence, NovelIssue, TriageVerdict } from "../verdict/triage_verdict.js";
+import {
+  TRIAGE_RESULTS_SCHEMA_VERSION,
+  type ConfirmedUnreachableSource,
+  type NovelIssue,
+  type PublishedConfirmedUnreachable,
+  type PublishedEntryRef,
+  type PublishedUncertain,
+  type TriageResultsFile,
+} from "@ariadnejs/skill-protocol";
+import type { TriageVerdict } from "../verdict/triage_verdict.js";
 import type { TriageEntry, TriageState } from "../triage_state_types.js";
 
-export const FINALIZATION_OUTPUT_SCHEMA_VERSION = 5;
-
-// ===== Output Types =====
-
-/**
- * Identifier fields shared by every entry-shaped row in the published output.
- * `file_path` is relative to `project_path` so the TP cache match key
- * (`name, file_path, kind, start_line`) is stable across machines.
- */
-interface PublishedEntryRef {
-  entry_index: number;
-  name: string;
-  file_path: string;
-  start_line: number;
-  kind: "function" | "method" | "constructor";
-  signature?: string;
-}
-
-/**
- * Why an entry landed in `confirmed_unreachable[]`. Discriminated by `kind` so
- * consumers can exhaustively switch and so the `registry:<group_id>` case
- * carries its parameter structurally instead of via string parsing.
- */
-export type ConfirmedUnreachableSource =
-  | { kind: "llm-tp" }
-  | { kind: "previously-confirmed-tp" }
-  | { kind: "registry"; group_id: string };
-
-/**
- * One row in `confirmed_unreachable[]`. Carries identifiers for the TP cache
- * plus the investigator's `member_evidence` when the verdict came from an LLM
- * pass. Auto-classified rows (registry hits, previously-confirmed-TP reuse)
- * have `member_evidence: null` — no investigator visited the entry.
- */
-export interface PublishedConfirmedUnreachable extends PublishedEntryRef {
-  source: ConfirmedUnreachableSource;
-  member_evidence: MemberEvidence | null;
-}
-
-/**
- * One row in `uncertain[]` — investigator could not reduce the entry to a
- * single verdict. Always carries `member_evidence` and `reason` because the
- * source verdict (`kind: "uncertain"`) requires them.
- */
-export interface PublishedUncertain extends PublishedEntryRef {
-  reason: string;
-  member_evidence: MemberEvidence;
-}
-
-export interface FinalizationOutput {
-  schema_version: number;
-  /**
-   * Absolute path to the target repo at run time. Consumers (plan, diff_runs)
-   * resolve `file_path` against this to read source. Travels with the run-id and
-   * the commit_hash to make the artifact self-contained.
-   */
-  project_path: string;
-  /** Full HEAD commit hash for the target repo at run time, or `null` for non-git projects. */
-  commit_hash: string | null;
-  /**
-   * Self-contained false-positive rows, one per `fp-novel` verdict file. Each
-   * carries the investigator's evidence plus the deterministic core fault
-   * diagnostics attached from the entry. Built at finalize; never merged.
-   */
-  novel_issues: NovelIssue[];
-  /**
-   * Per-rule aggregate of every `fp-classifier-regression` verdict the per-entry
-   * investigator emitted in this run, derived from the verdict files. The
-   * curator's drift-absorb path consumes this and marks the named wip rows as
-   * drifting (see `.claude/rules/classifier-lifecycle.md`).
-   */
-  classifier_regressions: ClassifierRegressionFlag[];
-  confirmed_unreachable: PublishedConfirmedUnreachable[];
-  uncertain: PublishedUncertain[];
-  last_updated: string;
-}
+// ===== Build inputs (producer-private) =====
 
 export interface FinalizationSources {
   /** Per-entry verdicts keyed by `entry_index`. Auto-classified entries are absent. */
@@ -192,7 +123,7 @@ function attach_fault_diagnostics(
 export function build_finalization_output(
   state: TriageState,
   context: FinalizationContext,
-): FinalizationOutput {
+): TriageResultsFile {
   const confirmed_unreachable: PublishedConfirmedUnreachable[] = [];
   const uncertain: PublishedUncertain[] = [];
   const novel_issues: NovelIssue[] = [];
@@ -267,7 +198,7 @@ export function build_finalization_output(
   }
 
   return {
-    schema_version: FINALIZATION_OUTPUT_SCHEMA_VERSION,
+    schema_version: TRIAGE_RESULTS_SCHEMA_VERSION,
     project_path: context.project_path,
     commit_hash: context.commit_hash,
     novel_issues,
@@ -280,7 +211,7 @@ export function build_finalization_output(
 
 export function build_finalization_summary(
   state: TriageState,
-  output: FinalizationOutput,
+  output: TriageResultsFile,
 ): FinalizationSummary {
   const failed_count = state.entries.filter((e) => e.status === "failed").length;
 

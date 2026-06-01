@@ -17,14 +17,14 @@
 import * as fs from "node:fs/promises";
 import path from "path";
 
-import type {
-  FinalizationOutput,
-  PublishedConfirmedUnreachable,
-} from "./output.js";
+import {
+  triage_results_path,
+  type PublishedConfirmedUnreachable,
+  type TriageResultsFile,
+} from "@ariadnejs/skill-protocol";
 import {
   most_recent_finalized_triage_results,
   read_triage_results,
-  triage_results_dir_for,
 } from "../store/triage_results_store.js";
 import type {
   TpCacheEntryKey,
@@ -73,10 +73,10 @@ function key_for_published(entry: PublishedConfirmedUnreachable): TpCacheKey {
 /**
  * Build a `TpCache` from a published source. Returns `null` when the source
  * has zero entries. Schema validation (rejecting legacy formats) happens
- * upstream in `triage_results_store.parse_finalization_output`; by the time
+ * upstream in `@ariadnejs/skill-protocol`'s `parse_triage_results`; by the time
  * we get here, every entry's `kind` is one of the canonical values.
  */
-function build_cache(source_run_id: string, output: FinalizationOutput): TpCache | null {
+function build_cache(source_run_id: string, output: TriageResultsFile): TpCache | null {
   const entries_by_key = new Map<string, PublishedConfirmedUnreachable>();
   for (const fp of output.confirmed_unreachable) {
     entries_by_key.set(cache_key_string(key_for_published(fp)), fp);
@@ -111,7 +111,7 @@ export async function derive_tp_cache(
         `Pinned tp_source_run_id "${pinned}" is not at the current commit "${current_short_commit}". Refusing to reuse across commits.`,
       );
     }
-    const file = path.join(triage_results_dir_for(project), `${pinned}.json`);
+    const file = triage_results_path(project, pinned);
     try {
       await fs.access(file);
     } catch {

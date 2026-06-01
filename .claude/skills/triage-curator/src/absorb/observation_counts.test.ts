@@ -1,15 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { compute_observation_counts } from "./observation_counts.js";
-import type { TriageResultsFile } from "../types.js";
+import type { NovelIssue, TriageResultsFile } from "../types.js";
 
-function v4(partial: Partial<TriageResultsFile> = {}): TriageResultsFile {
+function results(partial: Partial<TriageResultsFile> = {}): TriageResultsFile {
   return {
-    schema_version: 4,
+    schema_version: 5,
     project_path: "/p",
     commit_hash: null,
     novel_issues: [],
-    flagged_novel_verdicts: [],
     classifier_regressions: [],
     confirmed_unreachable: [],
     uncertain: [],
@@ -18,39 +17,34 @@ function v4(partial: Partial<TriageResultsFile> = {}): TriageResultsFile {
   };
 }
 
+function novel(id: string, entry_index: number): NovelIssue {
+  return {
+    id,
+    entry_index,
+    member_evidence: { file: `src/${id}.ts`, line: entry_index + 1, why: `why ${id}` },
+    proposed_root_cause: `root cause ${id}`,
+    evidence_excerpt: `excerpt ${id}`,
+    diagnosis: "callers-in-registry-unresolved",
+  };
+}
+
 describe("compute_observation_counts", () => {
   it("returns an empty map when the run has neither novel issues nor registry hits", () => {
-    expect(compute_observation_counts(v4())).toEqual({});
+    expect(compute_observation_counts(results())).toEqual({});
   });
 
-  it("counts one observation per citation per novel issue, keyed by id", () => {
-    const triage = v4({
-      novel_issues: [
-        {
-          id: "issue-a",
-          canonical_name: "issue a",
-          root_cause: "root cause a",
-          citations: [
-            { entry_index: 0, evidence_excerpt: "e0" },
-            { entry_index: 4, evidence_excerpt: "e4" },
-          ],
-        },
-        {
-          id: "issue-b",
-          canonical_name: "issue b",
-          root_cause: "root cause b",
-          citations: [{ entry_index: 1, evidence_excerpt: "e1" }],
-        },
-      ],
+  it("counts one observation per novel issue, keyed by id", () => {
+    const triage = results({
+      novel_issues: [novel("issue-a", 0), novel("issue-b", 1)],
     });
     expect(compute_observation_counts(triage)).toEqual({
-      "issue-a": 2,
+      "issue-a": 1,
       "issue-b": 1,
     });
   });
 
   it("counts one observation per confirmed_unreachable row whose source is a registry hit", () => {
-    const triage = v4({
+    const triage = results({
       confirmed_unreachable: [
         {
           entry_index: 0,
@@ -77,7 +71,7 @@ describe("compute_observation_counts", () => {
           start_line: 3,
           kind: "function",
           source: { kind: "llm-tp" },
-          member_evidence: { summary: "s", excerpt: "e" },
+          member_evidence: { file: "src/c.ts", line: 3, why: "no callers" },
         },
         {
           entry_index: 3,
@@ -95,16 +89,10 @@ describe("compute_observation_counts", () => {
 
   it("merges counts when a novel issue id and a registry hit share the same id", () => {
     // The novel issue id is `shared-id`; the registry-classified row also
-    // names `shared-id` as its source group_id. Counts sum.
-    const triage = v4({
-      novel_issues: [
-        {
-          id: "shared-id",
-          canonical_name: "shared",
-          root_cause: "root",
-          citations: [{ entry_index: 0, evidence_excerpt: "e0" }],
-        },
-      ],
+    // names `shared-id` as its source group_id. The novel row contributes 1
+    // and the registry row contributes 1, so the counts sum to 2.
+    const triage = results({
+      novel_issues: [novel("shared-id", 0)],
       confirmed_unreachable: [
         {
           entry_index: 1,

@@ -27,10 +27,8 @@ import * as fs from "node:fs/promises";
 
 import { error_code } from "@ariadnejs/skill-fs";
 import { link_ariadne_bug_tasks } from "../src/apply/apply_proposals.js";
-import {
-  created_task_ids_path,
-  get_registry_file_path,
-} from "../src/store/paths.js";
+import { known_issues_registry_path } from "@ariadnejs/skill-protocol";
+import { created_task_ids_path } from "../src/store/paths.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 interface CliArgs {
@@ -97,7 +95,7 @@ async function load_sidecar(sidecar_path: string): Promise<Record<string, string
 async function main(): Promise<void> {
   const { run_id } = parse_argv(process.argv.slice(2));
   const mapping = await load_sidecar(created_task_ids_path(run_id));
-  const result = await link_ariadne_bug_tasks(get_registry_file_path(), mapping);
+  const result = await link_ariadne_bug_tasks(known_issues_registry_path(), mapping);
   process.stdout.write(JSON.stringify(result, null, 2) + "\n");
 }
 

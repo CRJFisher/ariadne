@@ -1,13 +1,16 @@
 import { describe, it, expect } from "vitest";
 
 import {
-  FINALIZATION_OUTPUT_SCHEMA_VERSION,
   build_finalization_output,
   build_finalization_summary,
   type FinalizationContext,
-  type FinalizationOutput,
   type FinalizationSummary,
 } from "./output.js";
+import {
+  TRIAGE_RESULTS_SCHEMA_VERSION,
+  type NovelIssue,
+  type TriageResultsFile,
+} from "@ariadnejs/skill-protocol";
 import type { TriageState, TriageEntry } from "../triage_state_types.js";
 import type {
   CallRefDiagnostic,
@@ -15,7 +18,7 @@ import type {
   FilePath,
   SyntacticFeatures,
 } from "@ariadnejs/types";
-import type { NovelIssue, TriageVerdict } from "../verdict/triage_verdict.js";
+import type { TriageVerdict } from "../verdict/triage_verdict.js";
 
 // ===== Test Helpers =====
 
@@ -156,8 +159,8 @@ describe("build_finalization_output", () => {
       context_with(new Map<number, TriageVerdict>([[100, TP_VERDICT]])),
     );
 
-    const expected: FinalizationOutput = {
-      schema_version: FINALIZATION_OUTPUT_SCHEMA_VERSION,
+    const expected: TriageResultsFile = {
+      schema_version: TRIAGE_RESULTS_SCHEMA_VERSION,
       project_path: PROJECT_PATH,
       commit_hash: COMMIT,
       novel_issues: [],
@@ -543,7 +546,7 @@ describe("build_finalization_output", () => {
   it("empty state → fully empty v5 envelope", () => {
     const state = make_state({ entries: [] });
     const output = build_finalization_output(state, EMPTY_CONTEXT);
-    const expected: FinalizationOutput = {
+    const expected: TriageResultsFile = {
       schema_version: 5,
       project_path: PROJECT_PATH,
       commit_hash: COMMIT,

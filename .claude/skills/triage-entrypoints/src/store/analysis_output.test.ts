@@ -3,7 +3,7 @@ import * as fsSync from "fs";
 import * as fs from "fs/promises";
 import path from "path";
 
-import { ANALYSIS_OUTPUT_DIR } from "./paths.js";
+import { analysis_output_dir } from "@ariadnejs/skill-protocol";
 import {
   OutputType,
   load_json,
@@ -82,7 +82,7 @@ describe("save_json + load_json round-trip", () => {
       "demo",
       "entry_points",
     );
-    expect(file.startsWith(path.join(ANALYSIS_OUTPUT_DIR, "demo", "detect_entrypoints"))).toBe(true);
+    expect(file.startsWith(path.join(analysis_output_dir(), "demo", "detect_entrypoints"))).toBe(true);
     const reloaded = await load_json<SamplePayload>(file);
     expect(reloaded).toEqual(payload);
   });
@@ -107,7 +107,7 @@ describe("save_json + load_json round-trip", () => {
 
   it("loads a legacy whole-file pretty-printed JSON file", async () => {
     const payload = build_payload(2);
-    const dir = path.join(ANALYSIS_OUTPUT_DIR, "demo", "detect_entrypoints");
+    const dir = path.join(analysis_output_dir(), "demo", "detect_entrypoints");
     fsSync.mkdirSync(dir, { recursive: true });
     const file = path.join(dir, "legacy.json");
     await fs.writeFile(file, JSON.stringify(payload, null, 2) + "\n", "utf-8");

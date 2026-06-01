@@ -6,7 +6,7 @@
  * The body combines:
  *   - the investigator's narrative (from `InvestigateResponse.ariadne_bug.description`)
  *   - registry bookkeeping (`observed_count`, `observed_projects`, `last_seen_run`)
- *   - citation excerpts from the dispatched novel issue
+ *   - the dispatched novel issue's evidence excerpt and member evidence
  *   - the proposed classifier spec that will serve as the workaround
  *   - a deterministic acceptance-criteria checklist
  */
@@ -70,18 +70,12 @@ function render_observations(input: RenderAriadneBugBodyInput): string {
   return lines.join("\n");
 }
 
-const EXAMPLE_LIMIT = 5;
-
 function render_examples(novel_issue: NovelIssue | null): string | null {
-  if (novel_issue === null || novel_issue.citations.length === 0) return null;
-  const lines = ["## Example citations", ""];
-  const examples = novel_issue.citations.slice(0, EXAMPLE_LIMIT);
-  for (const c of examples) {
-    lines.push(`- entry \`${c.entry_index}\` — ${c.evidence_excerpt}`);
-  }
-  if (novel_issue.citations.length > EXAMPLE_LIMIT) {
-    lines.push(`- …and ${novel_issue.citations.length - EXAMPLE_LIMIT} more.`);
-  }
+  if (novel_issue === null) return null;
+  const ev = novel_issue.member_evidence;
+  const lines = ["## Example", ""];
+  lines.push(`- entry \`${novel_issue.entry_index}\` — ${novel_issue.evidence_excerpt}`);
+  lines.push(`- evidence: \`${ev.file}:${ev.line}\` — ${ev.why}`);
   lines.push("");
   return lines.join("\n");
 }

@@ -43,12 +43,11 @@ function investigate(overrides: Partial<InvestigateResponse> = {}): InvestigateR
 function novel(): NovelIssue {
   return {
     id: "method-chain-dispatch",
-    canonical_name: "Method chain dispatch",
-    root_cause: "Method chain dispatch",
-    citations: [
-      { entry_index: 0, evidence_excerpt: "hash_digest at src/hash.ts:12" },
-      { entry_index: 1, evidence_excerpt: "pipe_step at src/pipe.ts:25" },
-    ],
+    entry_index: 0,
+    member_evidence: { file: "src/hash.ts", line: 12, why: "only caller is itself dead" },
+    proposed_root_cause: "Method chain dispatch",
+    evidence_excerpt: "hash_digest at src/hash.ts:12",
+    diagnosis: "callers-in-registry-unresolved",
   };
 }
 
@@ -69,7 +68,7 @@ function entry(overrides: Partial<KnownIssue> = {}): KnownIssue {
 }
 
 describe("render_ariadne_bug_body", () => {
-  it("includes observations, citations, classifier, and acceptance criteria", () => {
+  it("includes observations, the example, classifier, and acceptance criteria", () => {
     const body = render_ariadne_bug_body({
       response: investigate(),
       novel_issue: novel(),
@@ -81,9 +80,9 @@ describe("render_ariadne_bug_body", () => {
     expect(body).toContain("Observed count: **7**");
     expect(body).toContain("`webpack`");
     expect(body).toContain("Last seen in run: `2026-04-24T12-00-00Z`");
-    expect(body).toContain("## Example citations");
+    expect(body).toContain("## Example");
     expect(body).toContain("entry `0` — hash_digest at src/hash.ts:12");
-    expect(body).toContain("entry `1` — pipe_step at src/pipe.ts:25");
+    expect(body).toContain("evidence: `src/hash.ts:12` — only caller is itself dead");
     expect(body).toContain("## Proposed classifier (workaround)");
     expect(body).toContain("\"function_name\": \"check_chain\"");
     expect(body).toContain("## Acceptance criteria");
@@ -113,35 +112,14 @@ describe("render_ariadne_bug_body", () => {
     expect(body).not.toContain("Last seen in run:");
   });
 
-  it("omits the citations section when the novel issue is unavailable", () => {
+  it("omits the example section when the novel issue is unavailable", () => {
     const body = render_ariadne_bug_body({
       response: investigate(),
       novel_issue: null,
       target_entry: entry(),
       current_project: "webpack",
     });
-    expect(body).not.toContain("## Example citations");
-  });
-
-  it("truncates citations beyond the display limit", () => {
-    const n: NovelIssue = {
-      id: "method-chain-dispatch",
-      canonical_name: "Method chain dispatch",
-      root_cause: "…",
-      citations: Array.from({ length: 9 }, (_, i) => ({
-        entry_index: i,
-        evidence_excerpt: `fn_${i}`,
-      })),
-    };
-    const body = render_ariadne_bug_body({
-      response: investigate(),
-      novel_issue: n,
-      target_entry: entry(),
-      current_project: "webpack",
-    });
-    expect(body).toContain("and 4 more");
-    expect(body).not.toContain("fn_5");
-    expect(body).toContain("fn_4");
+    expect(body).not.toContain("## Example");
   });
 
   it("reports no classifier when proposed_classifier is null", () => {

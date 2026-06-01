@@ -1,5 +1,5 @@
 /**
- * Pure diff over two `FinalizationOutput`s (schema v5).
+ * Pure diff over two `TriageResultsFile`s (schema v5).
  *
  * Surface the cross-run signals the iteration loop cares about:
  *   - Entry-level appearance/disappearance and TP↔uncertain flips on the
@@ -15,10 +15,10 @@
  */
 
 import type {
-  FinalizationOutput,
+  TriageResultsFile,
   PublishedConfirmedUnreachable,
   PublishedUncertain,
-} from "../finalize/output.js";
+} from "@ariadnejs/skill-protocol";
 
 export interface EntryRef {
   name: string;
@@ -63,7 +63,7 @@ interface SetTotals {
   classifier_regression_rules: number;
 }
 
-function totals(output: FinalizationOutput): SetTotals {
+function totals(output: TriageResultsFile): SetTotals {
   return {
     total_entries: output.confirmed_unreachable.length + output.uncertain.length,
     confirmed_unreachable: output.confirmed_unreachable.length,
@@ -91,7 +91,7 @@ interface Indexed {
   by_fuzzy: Map<string, IndexedEntry[]>;
 }
 
-function index_output(output: FinalizationOutput): Indexed {
+function index_output(output: TriageResultsFile): Indexed {
   const by_exact: Indexed["by_exact"] = new Map();
   const by_fuzzy: Indexed["by_fuzzy"] = new Map();
 
@@ -118,7 +118,7 @@ function entry_ref(e: PublishedConfirmedUnreachable | PublishedUncertain): Entry
   };
 }
 
-export function diff_runs(from: FinalizationOutput, to: FinalizationOutput): DiffSummary {
+export function diff_runs(from: TriageResultsFile, to: TriageResultsFile): DiffSummary {
   const idx_from = index_output(from);
   const idx_to = index_output(to);
 
@@ -182,8 +182,8 @@ export function diff_runs(from: FinalizationOutput, to: FinalizationOutput): Dif
 }
 
 function novel_issue_diff(
-  from: FinalizationOutput,
-  to: FinalizationOutput,
+  from: TriageResultsFile,
+  to: TriageResultsFile,
 ): {
   novel_issues_added: string[];
   novel_issues_removed: string[];
@@ -200,8 +200,8 @@ function novel_issue_diff(
 }
 
 function classifier_regression_diff(
-  from: FinalizationOutput,
-  to: FinalizationOutput,
+  from: TriageResultsFile,
+  to: TriageResultsFile,
 ): {
   classifier_regressions_added: string[];
   classifier_regressions_removed: string[];

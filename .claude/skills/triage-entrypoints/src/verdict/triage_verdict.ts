@@ -10,11 +10,7 @@
  * in the downstream `plan` skill needs no in-run consolidation.
  */
 
-import type {
-  EntryPointDiagnostics,
-  ReceiverKind,
-  ResolutionFailure,
-} from "@ariadnejs/types";
+import type { MemberEvidence } from "@ariadnejs/skill-protocol";
 
 import {
   assert_keys,
@@ -23,11 +19,7 @@ import {
   parse_non_empty_string,
 } from "./strict_parse.js";
 
-export interface MemberEvidence {
-  file: string;
-  line: number;
-  why: string;
-}
+export type { MemberEvidence };
 
 export interface VerdictTp {
   kind: "tp";
@@ -59,33 +51,6 @@ export type TriageVerdict =
   | VerdictFpNovel
   | VerdictFpClassifierRegression
   | VerdictUncertain;
-
-/**
- * One published false-positive row in `triage_results/<run-id>.json`'s
- * `novel_issues[]`. Built one-per-`fp-novel`-verdict at finalize (no merge):
- * the investigator-authored evidence (`member_evidence`, `proposed_root_cause`,
- * `evidence_excerpt`) is carried verbatim, and the deterministic core fault
- * diagnostics (`diagnosis`, `resolution_failure`, `receiver_kind`) are attached
- * from the entry's `EntryPointDiagnostics`. The `id` is deterministic, keyed by
- * `entry_index`.
- *
- * `resolution_failure` is the `{ stage, reason }` subset of the failing call
- * site's `ResolutionFailure` (the resolver's `partial_info` is not published).
- * `receiver_kind` is present only when the failing call site is a method call.
- */
-export interface NovelIssue {
-  id: string;
-  entry_index: number;
-  member_evidence: MemberEvidence;
-  proposed_root_cause: string;
-  evidence_excerpt: string;
-  diagnosis: EntryPointDiagnostics["diagnosis"];
-  resolution_failure?: {
-    stage: ResolutionFailure["stage"];
-    reason: ResolutionFailure["reason"];
-  };
-  receiver_kind?: ReceiverKind;
-}
 
 type TriageVerdictKind = TriageVerdict["kind"];
 

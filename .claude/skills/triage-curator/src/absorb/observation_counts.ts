@@ -1,13 +1,14 @@
 /**
- * Compute per-registry-group observation counts from a v4 triage_results file.
+ * Compute per-registry-group observation counts from a triage_results file.
  *
  * The curator's `bump_observed_stats` pass increments `observed_count` for
- * every registry entry whose `group_id` is observed in the run. Under v4 the
- * observations come from two sources:
+ * every registry entry whose `group_id` is observed in the run. Observations
+ * come from two sources:
  *
  *   - `novel_issues[]`           a registered novel issue with the same id as
- *                                the registry entry; each citation counts as
- *                                one observation.
+ *                                the registry entry; each published row is one
+ *                                false-positive entry, so it counts as one
+ *                                observation.
  *   - `confirmed_unreachable[]`  rows whose `source.kind === "registry"`;
  *                                each row counts as one observation for the
  *                                named `group_id`.
@@ -26,8 +27,7 @@ export function compute_observation_counts(
 ): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const issue of triage.novel_issues) {
-    if (issue.citations.length === 0) continue;
-    counts[issue.id] = (counts[issue.id] ?? 0) + issue.citations.length;
+    counts[issue.id] = (counts[issue.id] ?? 0) + 1;
   }
   for (const entry of triage.confirmed_unreachable) {
     if (entry.source.kind !== "registry") continue;

@@ -27,7 +27,6 @@ const STATE_DIR =
   process.env.ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE ??
   path.join(os.homedir(), ".ariadne", "triage-entrypoints");
 
-export const ANALYSIS_OUTPUT_DIR = path.join(STATE_DIR, "analysis_output");
 export const TRIAGE_STATE_DIR = path.join(STATE_DIR, "triage_state");
 
 export const RUNS_SUBDIR = "runs";

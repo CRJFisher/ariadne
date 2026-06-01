@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@ariadnejs/skill-fs": "workspace:*",
+    "@ariadnejs/skill-protocol": "workspace:*",
     "@ariadnejs/types": "workspace:*"
   },
   "devDependencies": {

@@ -41,16 +41,16 @@ import {
   save_outcome,
 } from "../src/store/curation_outcome.js";
 import { compute_observation_counts } from "../src/absorb/observation_counts.js";
-import { read_v4_triage_results } from "../src/store/parse_triage_results.js";
+import {
+  known_issues_registry_path,
+  parse_triage_results_path,
+  read_triage_results_file,
+} from "@ariadnejs/skill-protocol";
 import {
   CURATOR_RUNS_DIR,
-  derive_project,
-  derive_run_id,
   get_core_builtins_barrel_path,
   get_core_builtins_dir,
   get_permanent_slice_path,
-  get_registry_file_path,
-  run_output_dir,
 } from "../src/store/paths.js";
 import { render_authored_files } from "../src/apply/render_authored_files.js";
 import { parse_investigator_session_log } from "../src/store/session_log.js";
@@ -335,13 +335,12 @@ export async function finalize_run(
     run_path,
     dry_run,
     runs_dir = CURATOR_RUNS_DIR,
-    registry_path = get_registry_file_path(),
+    registry_path = known_issues_registry_path(),
     builtins_dir = get_core_builtins_dir(),
     regenerate_derived_files = regenerate_derived_files_default,
   } = opts;
 
-  const run_id = derive_run_id(run_path);
-  const project = derive_project(run_path);
+  const { project, run_id } = parse_triage_results_path(run_path);
 
   // Sentinel guard MUST run before any other side effects. Either
   // `finalized.json` (completed) or `finalize_started.json` (crashed mid-run)
@@ -365,7 +364,7 @@ export async function finalize_run(
 
   let triage: TriageResultsFile;
   try {
-    triage = await read_v4_triage_results(run_path);
+    triage = await read_triage_results_file(run_path);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return { exit_code: 4, stderr_message: `finalize_run: ${msg}`, summary: null };

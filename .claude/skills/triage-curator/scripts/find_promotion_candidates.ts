@@ -16,12 +16,12 @@ import { pathToFileURL } from "node:url";
 
 import { parse_known_issues_registry_json } from "@ariadnejs/types";
 
-import { get_registry_file_path } from "../src/store/paths.js";
+import { known_issues_registry_path } from "@ariadnejs/skill-protocol";
 import {
   aggregate_promotion_candidates,
   summarize_match_history,
 } from "../src/propose/promotion_candidates.js";
-import { read_v4_triage_results } from "../src/store/parse_triage_results.js";
+import { read_triage_results_file } from "@ariadnejs/skill-protocol";
 import { discover_runs } from "../src/store/scan_runs.js";
 import type { PromotionCandidate } from "../src/types.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
@@ -63,7 +63,7 @@ async function load_recent_match_history(): Promise<
     // such file should not abort the entire sweep. Skip with a stderr note.
     let triage;
     try {
-      triage = await read_v4_triage_results(run.run_path);
+      triage = await read_triage_results_file(run.run_path);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       process.stderr.write(
@@ -135,7 +135,7 @@ export function format_table(candidates: readonly PromotionCandidate[]): string 
 
 async function main(): Promise<void> {
   const args = parse_argv(process.argv.slice(2));
-  const registry_text = await fs.readFile(get_registry_file_path(), "utf8");
+  const registry_text = await fs.readFile(known_issues_registry_path(), "utf8");
   const registry = parse_known_issues_registry_json(registry_text);
   const per_run_history = await load_recent_match_history();
   const summary = summarize_match_history(per_run_history);

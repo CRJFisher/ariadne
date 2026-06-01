@@ -72,8 +72,9 @@ export interface ValidationInput {
   /** JSON.parse'd content of the response file (raw, pre-shape-validated). */
   response_raw: unknown;
   /**
-   * Number of entries in `novel_issue.citations[]` for the dispatched group.
-   * null when the dispatch source is not resolvable in the run artifact.
+   * Number of source false-positive entries for the dispatched group — 1 under
+   * the canonical one-row-per-entry shape. null when the dispatch source is not
+   * resolvable in the run artifact.
    */
   source_entry_count: number | null;
   /** Current registry — needed to verify `retargets_to` references an existing entry. */

@@ -20,6 +20,9 @@
       "path": "./packages/types"
     },
     {
+      "path": "./packages/skill-protocol"
+    },
+    {
       "path": "./packages/skill-fs"
     },
     {

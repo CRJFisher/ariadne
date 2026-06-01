@@ -59,28 +59,26 @@ function fixed(group_id: string, overrides: Partial<KnownIssue> = {}): KnownIssu
   };
 }
 
-function novel(id: string, citation_count: number): NovelIssue {
+function novel(id: string, entry_index: number): NovelIssue {
   return {
     id,
-    canonical_name: id.replaceAll("-", " "),
-    root_cause: `root cause for ${id}`,
-    citations: Array.from({ length: citation_count }, (_, i) => ({
-      entry_index: i,
-      evidence_excerpt: `${id} sample evidence #${i}`,
-    })),
+    entry_index,
+    member_evidence: { file: `src/${id}.ts`, line: entry_index + 1, why: `${id} evidence` },
+    proposed_root_cause: `root cause for ${id}`,
+    evidence_excerpt: `${id} sample evidence`,
+    diagnosis: "callers-in-registry-unresolved",
   };
 }
 
-function v4_triage(
+function triage_results(
   novel_issues: NovelIssue[],
   classifier_regressions: ClassifierRegressionFlag[],
 ): TriageResultsFile {
   return {
-    schema_version: 4,
+    schema_version: 5,
     project_path: "/repo",
     commit_hash: "deadbeefcafe",
     novel_issues,
-    flagged_novel_verdicts: [],
     classifier_regressions,
     confirmed_unreachable: [],
     uncertain: [],
@@ -97,11 +95,14 @@ describe("curate_all absorb path — novel issues + classifier regressions", () 
   //   - `brand-new-issue`         not in registry                  → promote-novel
   // Plus two regression flags, one matching a wip row, one matching a row
   // not in the registry (skipped silently).
+  // Each published novel issue is one false-positive entry, so every observed
+  // increment / citation_count below is 1; the aggregate "count of FP entries"
+  // is preserved by the one-row-per-entry shape.
   const NOVEL_ISSUES: NovelIssue[] = [
-    novel("already-wip-rule", 3),
-    novel("already-permanent-rule", 4),
-    novel("already-fixed-rule", 5),
-    novel("brand-new-issue", 2),
+    novel("already-wip-rule", 0),
+    novel("already-permanent-rule", 1),
+    novel("already-fixed-rule", 2),
+    novel("brand-new-issue", 3),
   ];
 
   const REGISTRY: KnownIssue[] = [
@@ -131,7 +132,7 @@ describe("curate_all absorb path — novel issues + classifier regressions", () 
     return {
       run_path: "/runs/r1.json",
       novel_issue_id: issue.id,
-      citation_count: issue.citations.length,
+      citation_count: 1,
       output_path: `/out/investigate/${issue.id}.json`,
       get_context_cmd: `node --import tsx get_investigate_context.ts --novel-issue ${issue.id} --run /runs/r1.json`,
     };
@@ -149,7 +150,7 @@ describe("curate_all absorb path — novel issues + classifier regressions", () 
       {
         run_path: "/runs/r1.json",
         novel_issue_id: "brand-new-issue",
-        citation_count: 2,
+        citation_count: 1,
         output_path: "/out/investigate/brand-new-issue.json",
         get_context_cmd:
           "node --import tsx get_investigate_context.ts --novel-issue brand-new-issue --run /runs/r1.json",
@@ -159,16 +160,16 @@ describe("curate_all absorb path — novel issues + classifier regressions", () 
       {
         novel_issue_id: "already-wip-rule",
         registry_status: "wip",
-        observed_increment: 3,
+        observed_increment: 1,
       },
       {
         novel_issue_id: "already-permanent-rule",
         registry_status: "permanent",
-        observed_increment: 4,
+        observed_increment: 1,
       },
     ];
     const expected_fixed_resurfacings: FixedNovelIssueResurfacing[] = [
-      { novel_issue_id: "already-fixed-rule", citation_count: 5 },
+      { novel_issue_id: "already-fixed-rule", citation_count: 1 },
     ];
 
     expect(result).toEqual({
@@ -192,12 +193,12 @@ describe("curate_all absorb path — novel issues + classifier regressions", () 
   });
 
   it("compute_observation_counts surfaces one count per registered novel issue id (fixed status still aggregates — bump is gated downstream)", () => {
-    const triage = v4_triage(NOVEL_ISSUES, REGRESSION_FLAGS);
+    const triage = triage_results(NOVEL_ISSUES, REGRESSION_FLAGS);
     expect(compute_observation_counts(triage)).toEqual({
-      "already-wip-rule": 3,
-      "already-permanent-rule": 4,
-      "already-fixed-rule": 5,
-      "brand-new-issue": 2,
+      "already-wip-rule": 1,
+      "already-permanent-rule": 1,
+      "already-fixed-rule": 1,
+      "brand-new-issue": 1,
     });
   });
 

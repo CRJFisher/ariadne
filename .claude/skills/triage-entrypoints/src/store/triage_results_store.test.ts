@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import * as fsSync from "fs";
 import path from "path";
 
-import type { FinalizationOutput } from "../finalize/output.js";
+import type { TriageResultsFile } from "@ariadnejs/skill-protocol";
 import {
   most_recent_finalized_triage_results,
   read_triage_results,
@@ -26,7 +26,7 @@ afterEach(() => {
   fsSync.rmSync(TMP, { recursive: true, force: true });
 });
 
-const EMPTY_OUTPUT: FinalizationOutput = {
+const EMPTY_OUTPUT: TriageResultsFile = {
   schema_version: 5,
   project_path: "/some/path",
   commit_hash: null,
@@ -37,7 +37,7 @@ const EMPTY_OUTPUT: FinalizationOutput = {
   last_updated: "2026-04-28T13:42:07.812Z",
 };
 
-function seed(project: string, run_id: string, output: FinalizationOutput = EMPTY_OUTPUT): void {
+function seed(project: string, run_id: string, output: TriageResultsFile = EMPTY_OUTPUT): void {
   const dir = path.join(ANALYSIS_OUTPUT, project, "triage_results");
   fsSync.mkdirSync(dir, { recursive: true });
   fsSync.writeFileSync(path.join(dir, `${run_id}.json`), JSON.stringify(output));

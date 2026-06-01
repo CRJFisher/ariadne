@@ -22,8 +22,8 @@ import * as path from "node:path";
 
 import { error_code } from "@ariadnejs/skill-fs";
 import { parse_known_issues_registry_json } from "@ariadnejs/types";
-import { read_v4_triage_results } from "../src/store/parse_triage_results.js";
-import { get_registry_file_path } from "../src/store/paths.js";
+import { read_triage_results_file } from "@ariadnejs/skill-protocol";
+import { known_issues_registry_path } from "@ariadnejs/skill-protocol";
 import { parse_investigator_session_log } from "../src/store/session_log.js";
 import type { InvestigatorSessionLog } from "../src/types.js";
 import {
@@ -89,9 +89,9 @@ async function validate_single_response(
   response_path: string,
   run_path: string,
 ): Promise<ValidationIssue[]> {
-  const triage = await read_v4_triage_results(run_path);
+  const triage = await read_triage_results_file(run_path);
   const registry = parse_known_issues_registry_json(
-    await fs.readFile(get_registry_file_path(), "utf8"),
+    await fs.readFile(known_issues_registry_path(), "utf8"),
   );
 
   const dispatch_group_id = path.basename(response_path, ".json");
@@ -113,11 +113,12 @@ async function validate_single_response(
   }
 
   const session_log = await load_session_log(investigate_dir, dispatch_group_id);
-  // Under v4 the dispatch source is a `novel_issue`; the entry count for
-  // index-range validation is its citation count. null when the issue cannot
-  // be resolved in the run artifact (e.g. response filename mismatches).
+  // The dispatch source is a `novel_issue`, now one published false-positive
+  // entry per row, so the entry count for index-range validation is 1. null
+  // when the issue cannot be resolved in the run artifact (e.g. response
+  // filename mismatches).
   const novel_issue = triage.novel_issues.find((i) => i.id === dispatch_group_id) ?? null;
-  const source_entry_count = novel_issue === null ? null : novel_issue.citations.length;
+  const source_entry_count = novel_issue === null ? null : 1;
   return validate_response({
     dispatch_group_id,
     response_path,

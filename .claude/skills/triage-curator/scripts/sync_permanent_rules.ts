@@ -31,10 +31,10 @@ import {
   type PredicateExpr,
 } from "@ariadnejs/types";
 import { render_builtins_barrel } from "../src/render_builtins_barrel.js";
+import { known_issues_registry_path } from "@ariadnejs/skill-protocol";
 import {
   get_core_builtins_barrel_path,
   get_permanent_slice_path,
-  get_registry_file_path,
 } from "../src/store/paths.js";
 
 const PERMANENT_DATA_PATH = get_permanent_slice_path();
@@ -55,7 +55,7 @@ interface SyncResult {
  * (`permanent_data.ts`) gates which rules ship in core's default flow.
  */
 export async function sync_permanent_rules(): Promise<SyncResult> {
-  const raw = await fs.readFile(get_registry_file_path(), "utf8");
+  const raw = await fs.readFile(known_issues_registry_path(), "utf8");
   const registry = parse_known_issues_registry_json(raw);
   const permanent = filter_permanent_slice(registry);
   await write_permanent_data(permanent);

@@ -8,10 +8,10 @@ import {
   render_language,
 } from "./render_unsupported_features.js";
 import { parse_known_issues_registry_json, type KnownIssue } from "@ariadnejs/types";
-import { get_registry_file_path } from "../src/store/paths.js";
+import { known_issues_registry_path } from "@ariadnejs/skill-protocol";
 
 function load_registry(): KnownIssue[] {
-  return parse_known_issues_registry_json(fs.readFileSync(get_registry_file_path(), "utf8"));
+  return parse_known_issues_registry_json(fs.readFileSync(known_issues_registry_path(), "utf8"));
 }
 
 describe("render_unsupported_features — golden file pinning", () => {

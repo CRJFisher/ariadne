@@ -7,9 +7,8 @@
  */
 
 import * as fs from "node:fs";
-import * as path from "node:path";
-import { fileURLToPath } from "node:url";
 
+import { known_issues_registry_path } from "@ariadnejs/skill-protocol";
 import {
   DEFINITION_FEATURE_NAMES,
   SYNTACTIC_FEATURE_NAMES,
@@ -64,13 +63,8 @@ const KEBAB_CASE = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 
 // ===== Loader =====
 
-export function get_registry_file_path(): string {
-  const here = path.dirname(fileURLToPath(import.meta.url));
-  return path.resolve(here, "..", "known_issues", "registry.json");
-}
-
 export function load_registry(): KnownIssuesRegistry {
-  const raw = fs.readFileSync(get_registry_file_path(), "utf8");
+  const raw = fs.readFileSync(known_issues_registry_path(), "utf8");
   let rules: KnownIssue[];
   try {
     rules = parse_known_issues_registry_json(raw);

@@ -14,36 +14,12 @@
 import * as fs from "node:fs/promises";
 import path from "path";
 
-import { ANALYSIS_OUTPUT_DIR } from "./paths.js";
 import {
-  FINALIZATION_OUTPUT_SCHEMA_VERSION,
-  type FinalizationOutput,
-} from "../finalize/output.js";
-
-/**
- * Single chokepoint for parsing a published `triage_results/<run-id>.json`.
- * Rejects any file whose `schema_version` does not match the current version
- * — legacy files age out naturally per the persisted-state policy in
- * `SKILL.md` (do not `rm -rf analysis_output/`).
- */
-function parse_finalization_output(
-  source_label: string,
-  text: string,
-): FinalizationOutput {
-  const parsed = JSON.parse(text) as Partial<FinalizationOutput>;
-  if (parsed.schema_version !== FINALIZATION_OUTPUT_SCHEMA_VERSION) {
-    throw new Error(
-      `${source_label}: schema_version=${String(parsed.schema_version)} does not match ` +
-        `current ${FINALIZATION_OUTPUT_SCHEMA_VERSION}. Re-finalize the run or remove the stale file.`,
-    );
-  }
-  return parsed as FinalizationOutput;
-}
-
-/** Path to a project's triage_results directory. Existence is not checked. */
-export function triage_results_dir_for(project: string): string {
-  return path.join(ANALYSIS_OUTPUT_DIR, project, "triage_results");
-}
+  parse_triage_results,
+  triage_results_dir,
+  triage_results_path,
+  type TriageResultsFile,
+} from "@ariadnejs/skill-protocol";
 
 /**
  * Find the most-recent published `triage_results/<run-id>.json` whose run-id
@@ -56,8 +32,8 @@ export function triage_results_dir_for(project: string): string {
 export async function most_recent_finalized_triage_results(
   project: string,
   short_commit: string,
-): Promise<{ run_id: string; output: FinalizationOutput } | null> {
-  const dir = triage_results_dir_for(project);
+): Promise<{ run_id: string; output: TriageResultsFile } | null> {
+  const dir = triage_results_dir(project);
   let files: string[];
   try {
     files = await fs.readdir(dir);
@@ -73,7 +49,7 @@ export async function most_recent_finalized_triage_results(
   const winner = matching[matching.length - 1];
   const winner_path = path.join(dir, winner);
   const text = await fs.readFile(winner_path, "utf-8");
-  const output = parse_finalization_output(winner_path, text);
+  const output = parse_triage_results(winner_path, text);
   return { run_id: winner.slice(0, -".json".length), output };
 }
 
@@ -83,8 +59,8 @@ export async function most_recent_finalized_triage_results(
 export async function read_triage_results(
   project: string,
   run_id: string,
-): Promise<FinalizationOutput> {
-  const file = path.join(triage_results_dir_for(project), `${run_id}.json`);
+): Promise<TriageResultsFile> {
+  const file = triage_results_path(project, run_id);
   const text = await fs.readFile(file, "utf-8");
-  return parse_finalization_output(file, text);
+  return parse_triage_results(file, text);
 }

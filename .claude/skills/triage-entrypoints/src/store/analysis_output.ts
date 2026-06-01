@@ -2,7 +2,7 @@ import * as fs from "node:fs/promises";
 import { createReadStream, createWriteStream } from "node:fs";
 import * as readline from "node:readline";
 import path from "path";
-import { ANALYSIS_OUTPUT_DIR } from "./paths.js";
+import { analysis_output_dir } from "@ariadnejs/skill-protocol";
 
 export enum OutputType {
   DETECT_ENTRYPOINTS = "detect_entrypoints",
@@ -47,7 +47,7 @@ export async function save_json_with_filename<T extends object>(
   filename: string,
   bulk_array_field?: keyof T & string,
 ): Promise<string> {
-  const output_dir = path.join(ANALYSIS_OUTPUT_DIR, project_name, output_type);
+  const output_dir = path.join(analysis_output_dir(), project_name, output_type);
   await fs.mkdir(output_dir, { recursive: true });
 
   const file_path = path.join(output_dir, filename);

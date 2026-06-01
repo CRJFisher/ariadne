@@ -2,11 +2,11 @@ import { describe, it, expect } from "vitest";
 
 import { diff_runs, format_diff_text } from "./diff_runs.js";
 import type {
-  FinalizationOutput,
+  TriageResultsFile,
   PublishedConfirmedUnreachable,
   PublishedUncertain,
-} from "../finalize/output.js";
-import type { NovelIssue } from "../verdict/triage_verdict.js";
+} from "@ariadnejs/skill-protocol";
+import type { NovelIssue } from "@ariadnejs/skill-protocol";
 import type { ClassifierRegressionFlag } from "@ariadnejs/types";
 
 function ni(id: string, entry_index: number): NovelIssue {
@@ -59,7 +59,7 @@ function output(
   uncertain_entries: PublishedUncertain[] = [],
   novel_issues: NovelIssue[] = [],
   classifier_regressions: ClassifierRegressionFlag[] = [],
-): FinalizationOutput {
+): TriageResultsFile {
   return {
     schema_version: 5,
     project_path: "/p",

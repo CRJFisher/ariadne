@@ -16,10 +16,8 @@ import * as path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import {
-  build_finalization_output,
-  type FinalizationOutput,
-} from "../src/finalize/output.js";
+import { build_finalization_output } from "../src/finalize/output.js";
+import type { TriageResultsFile } from "@ariadnejs/skill-protocol";
 import { load_verdicts_by_entry_index } from "../src/finalize/verdict_ledger.js";
 import type {
   EntryPointDiagnostics,
@@ -214,7 +212,7 @@ describe("finalize_triage (fixture integration)", () => {
     });
 
     // ===== Exact assertion against a typed literal =====
-    const expected: FinalizationOutput = {
+    const expected: TriageResultsFile = {
       schema_version: 5,
       project_path: PROJECT_PATH,
       commit_hash: "deadbeefcafebabe",

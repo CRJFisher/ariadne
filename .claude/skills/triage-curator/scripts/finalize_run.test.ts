@@ -22,15 +22,14 @@ let registry_path: string;
 let builtins_dir: string;
 
 const PROJECT = "fixture-proj";
-const RUN_ID = "abc-2026-05-26T00-00-00Z";
+const RUN_ID = "abc1234-2026-05-26T00-00-00.000Z";
 
-function v4_triage_results(): TriageResultsFile {
+function triage_results(): TriageResultsFile {
   return {
-    schema_version: 4,
+    schema_version: 5,
     project_path: "/fake/project",
     commit_hash: "deadbeef",
     novel_issues: [],
-    flagged_novel_verdicts: [],
     classifier_regressions: [],
     confirmed_unreachable: [],
     uncertain: [],
@@ -38,7 +37,7 @@ function v4_triage_results(): TriageResultsFile {
   };
 }
 
-async function seed_triage_run(triage: TriageResultsFile = v4_triage_results()): Promise<string> {
+async function seed_triage_run(triage: TriageResultsFile = triage_results()): Promise<string> {
   const tr_dir = path.join(analysis_output_dir, PROJECT, "triage_results");
   await fs.mkdir(tr_dir, { recursive: true });
   const run_path = path.join(tr_dir, `${RUN_ID}.json`);
@@ -209,10 +208,10 @@ describe("finalize_run — validate_run_coherence failure (exit code 3)", () => 
   });
 });
 
-describe("finalize_run — read_v4_triage_results failure (exit code 4)", () => {
+describe("finalize_run — triage-results read failure (exit code 4)", () => {
   it("returns exit 4 with a clear error when the run file is missing", async () => {
     const result = await finalize_run({
-      run_path: path.join(analysis_output_dir, PROJECT, "triage_results", "missing.json"),
+      run_path: path.join(analysis_output_dir, PROJECT, "triage_results", "deadbee-2026-05-26T00-00-00.000Z.json"),
       dry_run: false,
       runs_dir,
       registry_path,
@@ -227,7 +226,7 @@ describe("finalize_run — read_v4_triage_results failure (exit code 4)", () => 
   it("returns exit 4 when schema_version does not match", async () => {
     const tr_dir = path.join(analysis_output_dir, PROJECT, "triage_results");
     await fs.mkdir(tr_dir, { recursive: true });
-    const run_path = path.join(tr_dir, "wrong-schema.json");
+    const run_path = path.join(tr_dir, "feedf00-2026-05-26T00-00-00.000Z.json");
     await fs.writeFile(
       run_path,
       JSON.stringify({ schema_version: 3, novel_issues: [] }),

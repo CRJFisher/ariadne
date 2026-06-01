@@ -23,7 +23,7 @@ import {
   parse_known_issues_registry_json,
   type KnownIssue as SelfRepairKnownIssue,
 } from "@ariadnejs/types";
-import { get_registry_file_path } from "../src/store/paths.js";
+import { known_issues_registry_path } from "@ariadnejs/skill-protocol";
 import { propose_backlog_tasks } from "../src/propose/propose_backlog_tasks.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
@@ -91,7 +91,7 @@ function snapshot_counts(registry: SelfRepairKnownIssue[]): Record<string, numbe
 async function main(): Promise<void> {
   const args = parse_argv(process.argv.slice(2));
 
-  const registry_path = get_registry_file_path();
+  const registry_path = known_issues_registry_path();
   const registry = parse_known_issues_registry_json(
     await fs.readFile(registry_path, "utf8"),
   );

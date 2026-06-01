@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import * as fsSync from "fs";
 import path from "path";
 
-import type { FinalizationOutput } from "./output.js";
+import type { TriageResultsFile } from "@ariadnejs/skill-protocol";
 import type { TriageEntry } from "../triage_state_types.js";
 import {
   apply_tp_cache_to_entries,
@@ -30,14 +30,14 @@ afterEach(() => {
   fsSync.rmSync(TMP, { recursive: true, force: true });
 });
 
-function seed_triage_results(project: string, run_id: string, output: FinalizationOutput): void {
+function seed_triage_results(project: string, run_id: string, output: TriageResultsFile): void {
   const dir = path.join(ANALYSIS_OUTPUT, project, "triage_results");
   fsSync.mkdirSync(dir, { recursive: true });
   fsSync.writeFileSync(path.join(dir, `${run_id}.json`), JSON.stringify(output));
 }
 
 /**
- * Write a raw on-disk record without forcing it to satisfy `FinalizationOutput`.
+ * Write a raw on-disk record without forcing it to satisfy `TriageResultsFile`.
  * Used to simulate legacy v1 records that lack the `kind` field on entries.
  */
 function seed_raw_triage_results(project: string, run_id: string, raw: unknown): void {
@@ -48,7 +48,7 @@ function seed_raw_triage_results(project: string, run_id: string, raw: unknown):
 
 function build_output(
   confirmed: { name: string; file: string; line: number; kind?: "function" | "method" | "constructor" }[],
-): FinalizationOutput {
+): TriageResultsFile {
   return {
     schema_version: 5,
     project_path: "/some/path",

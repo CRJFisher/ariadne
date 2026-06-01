@@ -32,6 +32,7 @@ import {
 } from "@ariadnejs/core";
 import type { PersistenceStorage } from "@ariadnejs/core";
 
+import { build_run_id } from "@ariadnejs/skill-protocol";
 import { load_json } from "../src/store/analysis_output.js";
 import { active_rules_for_classification, load_registry } from "../src/known_issues_registry.js";
 import { prepare_triage } from "../src/prepare_triage.js";
@@ -146,12 +147,6 @@ function capture_head_commit(project_path: string): { short: string; full: strin
   } catch {
     return null;
   }
-}
-
-function build_run_id(short_commit: string | null): string {
-  const ts = new Date().toISOString().replace(/:/g, "-");
-  const prefix = short_commit ?? "nogit";
-  return `${prefix}-${ts}`;
 }
 
 /**

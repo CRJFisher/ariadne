@@ -27,13 +27,15 @@ import { pathToFileURL } from "node:url";
 
 import {
   CURATOR_RUNS_DIR,
-  get_registry_file_path,
   get_repo_root,
   get_scripts_rel,
   run_output_dir,
 } from "../src/store/paths.js";
 import { parse_known_issues_registry_json } from "@ariadnejs/types";
-import { read_v4_triage_results } from "../src/store/parse_triage_results.js";
+import {
+  known_issues_registry_path,
+  read_triage_results_file,
+} from "@ariadnejs/skill-protocol";
 import { scan_runs } from "../src/store/scan_runs.js";
 import type {
   KnownIssue,
@@ -154,14 +156,14 @@ export function classify_novel_issues(
       already_registered.push({
         novel_issue_id: issue.id,
         registry_status: reg.status,
-        observed_increment: issue.citations.length,
+        observed_increment: 1,
       });
       continue;
     }
     if (reg !== undefined && reg.status === "fixed") {
       fixed_resurfacings.push({
         novel_issue_id: issue.id,
-        citation_count: issue.citations.length,
+        citation_count: 1,
       });
       continue;
     }
@@ -177,7 +179,7 @@ async function plan_for_run(
   repo_root: string,
   dry_run: boolean,
 ): Promise<RunDispatch> {
-  const triage = await read_v4_triage_results(item.run_path);
+  const triage = await read_triage_results_file(item.run_path);
 
   const output_dir = run_output_dir(item.run_id);
   await fs.mkdir(path.join(output_dir, "investigate"), { recursive: true });
@@ -193,7 +195,7 @@ async function plan_for_run(
       (issue) => ({
         run_path: item.run_path,
         novel_issue_id: issue.id,
-        citation_count: issue.citations.length,
+        citation_count: 1,
         output_path: path.join(output_dir, "investigate", `${issue.id}.json`),
         get_context_cmd:
           `node --import tsx ${inv_script} --novel-issue ${issue.id} --run ${run_rel}`,
@@ -219,7 +221,7 @@ async function main(): Promise<void> {
   await fs.mkdir(CURATOR_RUNS_DIR, { recursive: true });
 
   const registry = parse_known_issues_registry_json(
-    await fs.readFile(get_registry_file_path(), "utf8"),
+    await fs.readFile(known_issues_registry_path(), "utf8"),
   );
   const registry_by_group_id = new Map(registry.map((e) => [e.group_id, e]));
 
