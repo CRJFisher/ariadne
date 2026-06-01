@@ -36,6 +36,11 @@ describe("triage_results_path / parse_triage_results_path", () => {
     expect(parsed).toEqual({ project: "express", run_id });
   });
 
+  it("recovers the project from an independently-constructed nested path", () => {
+    const p = path.join("/some/where", "myproj", "triage_results", `${run_id}.json`);
+    expect(parse_triage_results_path(p)).toEqual({ project: "myproj", run_id });
+  });
+
   it("throws when the filename is not a valid run-id", () => {
     const bad = path.join(triage_results_dir("express"), "r1.json");
     expect(() => parse_triage_results_path(bad)).toThrow(/Invalid run-id/);

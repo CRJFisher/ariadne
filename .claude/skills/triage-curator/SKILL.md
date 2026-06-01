@@ -1,6 +1,6 @@
 ---
 name: triage-curator
-description: Offline sweep that consumes the triage-entrypoints skill's v4 triage results — promotes novel issues into the registry with authored classifiers, absorbs classifier-regression flags as drift signals, files signal-library-gap sub-tasks under TASK-190.16 and Ariadne-bug top-level tasks (linked back into the registry), and commits the result.
+description: Offline sweep that consumes the triage-entrypoints skill's v5 triage results — promotes novel issues into the registry with authored classifiers, absorbs classifier-regression flags as drift signals, files signal-library-gap sub-tasks under TASK-190.16 and Ariadne-bug top-level tasks (linked back into the registry), and commits the result.
 argument-hint: "[--project <name>] [--last <n>] [--run <path>] [--dry-run] [--commit-to current|new|pr] [--branch <name>] [--pr <number>]"
 disable-model-invocation: true
 allowed-tools: Bash(node --import tsx:*), Bash(git *), Bash(gh *), AskUserQuestion, Read, Write, Edit, Glob, Task(triage-curator-investigator), mcp__backlog__task_create, mcp__backlog__task_search
@@ -13,7 +13,7 @@ wave: investigators author classifiers for novel issues the per-entry
 triage-entrypoints triage already named. Finalize applies proposals;
 backlog captures signal gaps; commit seals the sweep.
 
-The curator reads `analysis_output/<project>/triage_results/<run-id>.json` (schema v4 — includes `project_path`, `commit_hash`, `novel_issues[]`, `classifier_regressions[]`, `confirmed_unreachable[]`, `uncertain[]`). The `<run-id>` is the same identifier the triage-entrypoints skill emits (`<short-commit>-<iso-ts>`): run-id is the shared identifier across the two skills.
+The curator reads `analysis_output/<project>/triage_results/<run-id>.json` (schema v5, defined by `@ariadnejs/skill-protocol` — includes `project_path`, `commit_hash`, `novel_issues[]`, `classifier_regressions[]`, `confirmed_unreachable[]`, `uncertain[]`). The `<run-id>` is the same identifier the triage-entrypoints skill emits (`<short-commit>-<iso-ts>`): run-id is the shared identifier across the two skills.
 
 **Script invocation:** always `node --import tsx`. Never `pnpm exec tsx`
 or `npx tsx`.
@@ -62,7 +62,7 @@ already-registered novel issues need no dispatch (finalize bumps
 `observed_count` from the source triage file directly); fixed
 resurfacings are surfaced for human review (the reconciler is the only
 authorized `fixed` writer). Classifier regressions flow through finalize
-directly from the v4 triage_results artifact — no separate dispatch field.
+directly from the v5 triage_results artifact — no separate dispatch field.
 
 ### Step 2 — Dispatch the investigate wave
 

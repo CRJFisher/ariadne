@@ -300,14 +300,14 @@ export interface BuiltinClassifierSpec {
   combinator: "all" | "any";
   checks: SignalCheck[];
   /**
-   * Positional indexes into the dispatched novel issue's `citations[]` that
-   * the classifier is designed to match. Validated against
-   * `novel_issue.citations.length`.
+   * Positional indexes into the dispatched novel issue's source entries that
+   * the classifier is designed to match. The canonical novel issue is a single
+   * false-positive entry, so the only valid index is 0.
    */
   positive_examples: number[];
   /**
-   * Positional indexes into `citations[]` that the classifier must NOT match.
-   * Typically empty — outlier carving happens upstream in the coordinator.
+   * Positional indexes the classifier must NOT match. Typically empty — with a
+   * single-entry novel issue there is no outlier to carve.
    */
   negative_examples: number[];
   /** Copied into the generated file header and the commit-message body. */
@@ -315,17 +315,14 @@ export interface BuiltinClassifierSpec {
 }
 
 /**
- * Citation the investigator chose NOT to cover with the proposed
- * classifier. Names the citation by its positional index into the dispatched
- * novel issue's `citations[]` and carries the investigator's reason. A
- * non-empty `rejected_members` is a signal that the upstream coordinator
- * over-grouped — those citations fall through to the next sweep and may
- * be re-grouped with different neighbours.
+ * A source entry the investigator chose NOT to cover with the proposed
+ * classifier. Names the entry by its positional index into the dispatched
+ * novel issue's source entries and carries the investigator's reason.
  */
 export interface RejectedMember {
-  /** Positional index into the source novel issue's `citations[]`. */
+  /** Positional index into the source novel issue's entries. */
   entry_index: number;
-  /** Why the citation does not fit the proposed classifier. */
+  /** Why the entry does not fit the proposed classifier. */
   reason: string;
 }
 
@@ -362,12 +359,11 @@ export interface InvestigateResponse {
    */
   ariadne_bug: AriadneBug | null;
   /**
-   * Citations the investigator could not fit under the proposed classifier.
-   * Audit trail for "the registered novel_issue grouped these together but
-   * they do not share the predicate I am authoring". Each `entry_index` must
-   * be in range for the dispatched group's citations, must not appear in
+   * Source entries the investigator could not fit under the proposed
+   * classifier. Each `entry_index` must be in range for the dispatched novel
+   * issue's source entries, must not appear in
    * `classifier_spec.positive_examples`, and must be unique. Absent or empty
-   * array means the investigator vouches that every citation is covered.
+   * array means the investigator vouches that the source entry is covered.
    */
   rejected_members: RejectedMember[];
   reasoning: string;

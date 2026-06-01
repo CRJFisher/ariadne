@@ -1,11 +1,12 @@
 # triage-curator
 
-Offline sweep over completed `triage-entrypoints` runs. Consumes the v4
-`triage_results/<run-id>.json` published by triage-entrypoints —
-specifically `novel_issues[]` (issues named by the per-entry investigator
-and run-time coordinator) and `classifier_regressions[]` (in-flight
-drift flags the per-entry investigator raised when a wip classifier
-failed to match an entry it should have caught).
+Offline sweep over completed `triage-entrypoints` runs. Consumes the v5
+`triage_results/<run-id>.json` published by triage-entrypoints (schema
+owned by `@ariadnejs/skill-protocol`) — specifically `novel_issues[]`
+(one row per false-positive entry named by the per-entry investigator)
+and `classifier_regressions[]` (in-flight drift flags the per-entry
+investigator raised when a wip classifier failed to match an entry it
+should have caught).
 
 For each novel issue with no registry row yet, the curator dispatches a
 single `triage-curator-investigator` (opus) to author a

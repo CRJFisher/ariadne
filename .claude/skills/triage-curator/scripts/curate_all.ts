@@ -2,7 +2,7 @@
 /**
  * Default entry for `/triage-curator`.
  *
- * Reads each uncurated v4 `triage_results/<run-id>.json` and routes its
+ * Reads each uncurated `triage_results/<run-id>.json` and routes its
  * `novel_issues[]` and `classifier_regressions[]` into the curator's downstream
  * orchestration:
  *
@@ -93,6 +93,10 @@ export interface NovelPromoteDispatch {
   run_path: string;
   /** Novel-issue id — becomes the registry `group_id` once the investigator promotes it. */
   novel_issue_id: string;
+  /**
+   * Always 1: each published novel issue is exactly one false-positive entry.
+   * Field name retained to match the puller's `DispatchEntry` (renamed in Phase 4).
+   */
   citation_count: number;
   output_path: string;
   get_context_cmd: string;
@@ -102,6 +106,7 @@ export interface NovelPromoteDispatch {
 export interface AlreadyRegisteredNovelIssue {
   novel_issue_id: string;
   registry_status: "wip" | "permanent";
+  /** Always 1: one published novel issue == one false-positive entry. */
   observed_increment: number;
 }
 
@@ -114,6 +119,7 @@ export interface AlreadyRegisteredNovelIssue {
  */
 export interface FixedNovelIssueResurfacing {
   novel_issue_id: string;
+  /** Always 1: one published novel issue == one false-positive entry. */
   citation_count: number;
 }
 

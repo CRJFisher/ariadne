@@ -2,11 +2,11 @@
 /**
  * Hydrates the context for the `triage-curator-investigator` sub-agent.
  *
- * The dispatch source under v4 is a `novel_issue` record consolidated by the
- * triage-entrypoints per-entry triage + coordinator. The investigator gets the issue's
- * canonical name, root_cause hint, and citation excerpts, plus the current
- * registry slice and the signal inventory, and authors a `BuiltinClassifierSpec`
- * + `ariadne_bug` proposal.
+ * The dispatch source is one published `novel_issue` row — a single
+ * false-positive entry from the triage-entrypoints per-entry triage. The
+ * investigator gets the issue's `proposed_root_cause` and `evidence_excerpt`
+ * plus its `member_evidence`, the current registry slice, and the signal
+ * inventory, and authors a `BuiltinClassifierSpec` + `ariadne_bug` proposal.
  *
  * Usage:
  *   node --import tsx get_investigate_context.ts --novel-issue <id> --run <path>
@@ -130,7 +130,7 @@ async function main(): Promise<void> {
         "response.retargets_to is optional. When set, it MUST name an existing " +
         "registry group_id. The authored classifier file then shadows that entry's " +
         "classifier. When retargeting, positive_examples and negative_examples must be " +
-        "empty — their indices would reference the source citations, not the target.",
+        "empty — their indices would reference the source entry, not the target.",
       positive_example_rules:
         "classifier_spec.positive_examples indices must satisfy 0 <= i < 1 " +
         "(this novel issue references a single false-positive entry). Same rule for " +
@@ -156,7 +156,7 @@ async function main(): Promise<void> {
         "Mismatched names are rejected before render.",
       example_uniqueness_rule:
         "Entries in positive_examples and negative_examples must be unique integers " +
-        "(duplicates are rejected) and in-range vs citations.length.",
+        "(duplicates are rejected) and in range 0 <= i < 1 (one source entry).",
     },
   };
 
