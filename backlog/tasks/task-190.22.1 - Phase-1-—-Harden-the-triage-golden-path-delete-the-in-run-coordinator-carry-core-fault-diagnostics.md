@@ -3,10 +3,10 @@ id: TASK-190.22.1
 title: >-
   Phase 1 — Harden the triage golden path; delete the in-run coordinator; carry
   core fault diagnostics
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-06-01 10:45'
-updated_date: '2026-06-01 14:52'
+updated_date: '2026-06-02'
 labels:
   - self-repair
   - triage

@@ -1,10 +1,10 @@
 ---
 id: TASK-190.22.2
 title: Phase 2 — Extract @ariadnejs/skill-protocol shared data contract
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-06-01 10:45'
-updated_date: '2026-06-01 14:52'
+updated_date: '2026-06-02'
 labels:
   - self-repair
   - data-contract
@@ -49,17 +49,17 @@ Do NOT introduce a new hand-designed fault-area taxonomy/enum here. The FP fault
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 New private `packages/skill-protocol` (`@ariadnejs/skill-protocol`) exists with `src/{triage_results,run_id,paths}.ts` + barrel; depends on `@ariadnejs/types`; builds to `dist/`
-- [ ] #2 `TRIAGE_RESULTS_SCHEMA_VERSION` and the `TriageResultsFile` type exist once in the package; both skills import them and the two duplicate local declarations are deleted
-- [ ] #3 `MemberEvidence` is collapsed onto `{ file, line, why }` everywhere; the curator's `{ summary, excerpt }` shape is removed
-- [ ] #4 `known_issues_registry_path()` is the single registry-path resolver; both `../../../`-style traversal sites are deleted and import it
-- [ ] #5 Run-id has a branded type + `build_run_id`/`parse_run_id`/`RUN_ID_REGEX`; curator basename/dirname magic is replaced by `parse_triage_results_path`/`parse_run_id` and throws on malformed names
-- [ ] #6 Colocated package tests: producer-shaped `TriageResultsFile` round-trips through the parser (deep-equal + `satisfies`); a `schema_version:3` fixture throws; run-id + registry-path round-trips pass
-- [ ] #7 `pnpm build` (correct dist ordering), `pnpm typecheck`, `pnpm test`, `pnpm lint` are green; `triage-entrypoints/src/store/paths.test.ts` (the `*_OVERRIDE` isolation contract) still passes
-- [ ] #8 No backwards-compat shims; every caller updated to the shared package
-- [ ] #9 The canonical `TriageResultsFile` carries the deterministic FP fault diagnostics (`diagnosis`, `resolution_failure {stage,reason}`, `receiver_kind`) by reusing the `@ariadnejs/types` enums — no duplicated enum definitions
-- [ ] #10 `NovelIssue`/`NovelIssueCitation`/`MemberEvidence` live in `@ariadnejs/skill-protocol` (relocated from their Phase-1 local home); both skills import them
-- [ ] #11 Explicit non-goal honored: NO new fault-area taxonomy/enum is added to the contract in this phase; the `AriadneFaultArea` type lives in `@ariadnejs/types` (TASK-190.22.3), not this package
+- [x] #1 New private `packages/skill-protocol` (`@ariadnejs/skill-protocol`) exists with `src/{triage_results,run_id,paths}.ts` + barrel; depends on `@ariadnejs/types`; builds to `dist/`
+- [x] #2 `TRIAGE_RESULTS_SCHEMA_VERSION` and the `TriageResultsFile` type exist once in the package; both skills import them and the two duplicate local declarations are deleted
+- [x] #3 `MemberEvidence` is collapsed onto `{ file, line, why }` everywhere; the curator's `{ summary, excerpt }` shape is removed
+- [x] #4 `known_issues_registry_path()` is the single registry-path resolver; both `../../../`-style traversal sites are deleted and import it
+- [x] #5 Run-id has a branded type + `build_run_id`/`parse_run_id`/`RUN_ID_REGEX`; curator basename/dirname magic is replaced by `parse_triage_results_path`/`parse_run_id` and throws on malformed names
+- [x] #6 Colocated package tests: producer-shaped `TriageResultsFile` round-trips through the parser (deep-equal + `satisfies`); a `schema_version:3` fixture throws; run-id + registry-path round-trips pass
+- [x] #7 `pnpm build` (correct dist ordering), `pnpm typecheck`, `pnpm test`, `pnpm lint` are green; `triage-entrypoints/src/store/paths.test.ts` (the `*_OVERRIDE` isolation contract) still passes
+- [x] #8 No backwards-compat shims; every caller updated to the shared package
+- [x] #9 The canonical `TriageResultsFile` carries the deterministic FP fault diagnostics (`diagnosis`, `resolution_failure {stage,reason}`, `receiver_kind`) by reusing the `@ariadnejs/types` enums — no duplicated enum definitions
+- [x] #10 `NovelIssue` + `MemberEvidence` live in `@ariadnejs/skill-protocol` (relocated from their Phase-1 local home); both skills import them. (`NovelIssueCitation` was eliminated in Phase 1 when `fp-novel-cited` collapsed into a single `fp-novel` verdict, so it does not appear in the package.)
+- [x] #11 Explicit non-goal honored: NO new fault-area taxonomy/enum is added to the contract in this phase; the `AriadneFaultArea` type lives in `@ariadnejs/types` (TASK-190.22.3), not this package
 <!-- AC:END -->
 
 ## Implementation Notes
