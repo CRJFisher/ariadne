@@ -40,11 +40,11 @@ The `plan` skill reads triage outputs across many repos, groups false-positives 
 
 ## Scope — keep & evolve the readers
 
-`src/store/{scan_runs,parse_triage_results}.ts` (read finalized runs across repos/projects); the pure `render_task_*` row-builders from `propose_backlog_tasks.ts` + `impact_report.ts` aggregation (the substrate to evolve — feeding `PlanTask` records now, not `mcp__backlog`).
+`src/store/{scan_runs,parse_triage_results}.ts` (read finalized runs across repos/projects); the pure `render_task_*` row-builders from `render_task.ts` + `impact_report.ts` aggregation (the substrate to evolve — feeding `PlanTask` records now, not `mcp__backlog`).
 
 ## Scope — the strategist agent
 
-Rewrite the renamed `plan-strategist` agent prompt (file moved in 190.22.5): group issues by root cause / `AriadneFaultArea` and produce a strategic, hierarchical fix plan — NOT a `BuiltinClassifierSpec`.
+Rewrite the renamed `plan-strategist` agent prompt (file moved in 190.22.5): group issues by root cause / `AriadneFaultArea` and produce a strategic, hierarchical fix plan — NOT a `BuiltinClassifierSpec`. This rewrite must also complete the backlog firewall at the agent boundary (190.22.6 firewalled the skill's `.ts`/SKILL.md surface but deferred the agent prompt here): drop the mutating `backlog` MCP access (`mcpServers`/`mcp_servers: ["backlog"]`, pinned by `agent_prompt_pin.test.ts`) and the task-filing prose, and remove the now-dangling `signal_library_gap_parent_task_id` references (prompt context-field list + the "file a sub-task under …" instruction) — 190.22.6 already removed that field from `get_investigate_context.ts`'s hydrated bundle, so the prompt currently documents a context field it is no longer fed.
 
 ## Scope — grouping (lightweight, two-pass)
 

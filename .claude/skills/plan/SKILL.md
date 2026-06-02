@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Offline sweep that consumes the triage skill's v5 triage results, dispatches an investigator wave to author classifier and root-cause proposals for each novel issue, and emits those proposals plus on-demand impact and backlog reports. Planning-only — the deferred actuator applies proposals to the registry.
+description: Offline sweep that consumes the triage skill's v5 triage results, dispatches an investigator wave to author classifier and root-cause proposals for each novel issue, and emits those proposals plus an on-demand impact report. Planning-only — the deferred actuator applies proposals to the registry.
 argument-hint: "[--project <name>] [--last <n>] [--run <path>]"
 disable-model-invocation: true
 allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read, Write, Glob, Task(plan-strategist), mcp__backlog__task_search

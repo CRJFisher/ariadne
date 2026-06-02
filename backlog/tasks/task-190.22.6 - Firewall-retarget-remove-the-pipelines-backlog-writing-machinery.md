@@ -1,7 +1,7 @@
 ---
 id: TASK-190.22.6
 title: "Firewall: retarget/remove the pipeline's backlog-writing machinery"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-06-01 15:18"
 labels:
@@ -41,11 +41,11 @@ priority: high
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 No `mcp__backlog__task_create`/`task_edit`/`task_complete`/`task_archive` calls or `backlog/`-path writes remain anywhere under the `plan` skill (src, scripts, SKILL.md `allowed-tools`)
-- [ ] #2 `link_ariadne_bug_tasks` (script + apply_proposals path) and the `created_task_ids.json` sidecar are deleted; any registry backlink points at the task-DB id, not a `TASK-<N>`
-- [ ] #3 The pure row-builders (`render_task_*`) are retained as feedstock for `PlanTask` records; backlog-specific proposal types + `SIGNAL_LIBRARY_GAP_PARENT_TASK_ID` are removed
-- [ ] #4 SKILL.md Step-4 rewritten to 'write proposals to the task-DB'; only read-only `task_search`/`task_view` may remain (for dedup)
-- [ ] #5 `pnpm -r build && pnpm -r test` green; no dangling imports
+- [x] #1 No `mcp__backlog__task_create`/`task_edit`/`task_complete`/`task_archive` calls or `backlog/`-path writes remain anywhere under the `plan` skill (src, scripts, SKILL.md `allowed-tools`)
+- [x] #2 `link_ariadne_bug_tasks` (script + apply_proposals path) and the `created_task_ids.json` sidecar are deleted; any registry backlink points at the task-DB id, not a `TASK-<N>`
+- [x] #3 The pure row-builders (`render_task_*`) are retained as feedstock for `PlanTask` records; backlog-specific proposal types + `SIGNAL_LIBRARY_GAP_PARENT_TASK_ID` are removed
+- [x] #4 SKILL.md Step-4 rewritten to 'write proposals to the task-DB'; only read-only `task_search`/`task_view` may remain (for dedup)
+- [x] #5 `pnpm -r build && pnpm -r test` green; no dangling imports
 <!-- AC:END -->
 
 ## Implementation Notes
@@ -65,6 +65,23 @@ priority: high
 - **meta.json.** Remove the `backlog` write-artifact and `backlog-tasks` published-output entries so the skill's metadata no longer declares a backlog write.
 
 Read-only backlog dedup (`mcp__backlog__task_search`, frontmatter parse) is retained per 190.22.10. The strategist agent prompt's classifier-author→strategist rewrite stays out of scope (Phase 4). The structural AST enforcement is 190.22.7.
+
+## What changed
+
+- `scripts/propose_backlog_tasks.ts` deleted; `src/propose/propose_backlog_tasks.ts` → `src/propose/render_task.ts` (`git mv`, history preserved), reduced to the three exported pure builders + the private `render_classifier_for_body` helper. The `propose_backlog_tasks` function and the `TaskProposal`/`TaskUpdateProposal`/`ProposeBacklogTasksInput`/`ProposeBacklogTasksResult` types are gone.
+- `src/types.ts`: `SIGNAL_LIBRARY_GAP_PARENT_TASK_ID` removed; `SignalLibraryGap`/`AriadneBug`/`InvestigateResponse` docstrings retargeted from "drafts a backlog (sub-)task" to "grounds a task in the plan engine's task-DB".
+- `scripts/get_investigate_context.ts`: dropped the `SIGNAL_LIBRARY_GAP_PARENT_TASK_ID` import and the `signal_library_gap_parent_task_id` field from the hydrated context bundle.
+- `SKILL.md`: `allowed-tools` reduced to read-only `mcp__backlog__task_search`; the `mcp__backlog__document_create` impact-report-posting block removed; the registry-sweep section rewritten to "Rendering task content for the task-DB"; the frontmatter `description` no longer advertises "backlog reports".
+- `meta.json`: removed the `backlog` write-artifact, the `backlog-tasks` published-output, and the `propose-backlog-tasks` flow; the `description` no longer advertises "backlog reports".
+- `src/propose/render_task.test.ts`: renamed with the source; the deleted-function tests removed; dedicated `render_task_title`/`render_task_labels` cases added; the body test tightened to an exact full-string `toEqual`.
+
+## Review outcome
+
+Four opus reviewers (completeness, firewall-residue/correctness, information architecture, constitution/test-quality). Verified findings actioned:
+
+- **Applied:** stale "backlog reports" wording in the `SKILL.md` + `meta.json` descriptions removed; the comprehensive `render_task_body` test tightened from fragmented `toContain` checks to an exact `toEqual`.
+- **Routed to 190.22.9 (Phase 4):** `.claude/agents/plan-strategist.md` still grants the mutating `backlog` MCP server (pinned by `agent_prompt_pin.test.ts`), still carries task-filing prose, and still references the now-removed `signal_library_gap_parent_task_id` context field. These are one entangled unit owned by the Phase-4 strategist-prompt rewrite, carry no live regression (no actuator files tasks today), and a partial edit would fight the pin and leave a worse intermediate. The 190.22.9 scope now explicitly tracks completing the firewall at the agent boundary.
+- **Considered, not actioned:** renaming the `src/propose/` folder (now holding renderers + validation, not a "propose" verb) is a separate IA concern beyond this firewall task, and the suggested `src/render/` fits only two of its three files.
 
 ## Follow-up to-do
 
