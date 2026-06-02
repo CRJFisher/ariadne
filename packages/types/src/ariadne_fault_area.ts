@@ -130,10 +130,13 @@ export interface DeriveFaultAreaInput {
 }
 
 /**
- * `(stage, reason) → area`, keyed on `reason`. Every reason maps to a single
- * area regardless of emitting stage EXCEPT `method_not_on_type`, which is
- * resolved by stage in `derive_fault_area` (receiver-side vs member-lookup-side)
- * — verified against the core emit sites as the sole stage-ambiguous reason.
+ * `(stage, reason) → area`, keyed on `reason`. `method_not_on_type` is the only
+ * reason whose AREA depends on the emitting stage (receiver-side inference vs
+ * direct member lookup) and is resolved by stage in `derive_fault_area`. Several
+ * other reasons are emitted from more than one stage (e.g. `name_not_in_scope`,
+ * `no_parent_class`, `collection_dispatch_miss`), but every stage they fire from
+ * maps to the SAME area, so keying on reason alone is correct for them. Verified
+ * against the core emit sites.
  *
  * Being a `Record<ResolutionFailureReason, AriadneFaultArea>`, a new reason added
  * to the source enum is a missing-key compile error here until it is mapped.
@@ -194,7 +197,10 @@ function other_location(description: string, language?: Language): AriadneFaultL
  *
  * Precedence: the per-call `ResolutionFailure` is the most specific signal and
  * is consulted first; the `diagnosis` is the fallback when no failure was
- * emitted. Unknown raw values route to the `other` escape hatch.
+ * emitted. Within the fallback, the coverage-gap signal
+ * (`callers_only_in_unindexed_tests`) wins over the diagnosis, because callers
+ * confined to excluded dirs surface as `no-textual-callers`. Unknown raw values
+ * route to the `other` escape hatch.
  *
  * Residual-judgement cases return a deterministic default with
  * `needs_judgement: true` (the `plan` strategist decides):
@@ -251,6 +257,16 @@ export function derive_fault_area(input: DeriveFaultAreaInput): AriadneFaultLoca
   if (!is_entry_point_diagnosis(diagnosis)) {
     return other_location(`unrecognized diagnosis "${diagnosis}"`, language);
   }
+
+  // Coverage gap takes precedence over the diagnosis. When every caller lives in
+  // a directory excluded from indexing, the indexed grep finds nothing, so the
+  // diagnosis is `no-textual-callers` even though real callers exist. Routing on
+  // the diagnosis alone would misread this as a genuine entry point, so the
+  // unindexed-test signal is consulted first.
+  if (input.callers_only_in_unindexed_tests) {
+    return { area: "coverage_config", language, needs_judgement: false };
+  }
+
   switch (diagnosis) {
     case "no-textual-callers":
       // Residual case 3: genuine entry point vs true-positive classification miss.
@@ -265,9 +281,6 @@ export function derive_fault_area(input: DeriveFaultAreaInput): AriadneFaultLoca
         language,
       );
     case "callers-not-in-registry":
-      if (input.callers_only_in_unindexed_tests) {
-        return { area: "coverage_config", language, needs_judgement: false };
-      }
       if (input.has_uncaptured_indexed_grep_hit) {
         // The query never captured the call site — a deterministic extraction gap.
         return { area: "syntactic_extraction", language, needs_judgement: false };

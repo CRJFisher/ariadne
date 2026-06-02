@@ -236,7 +236,22 @@ describe("derive_fault_area — diagnosis fallback", () => {
     });
   });
 
-  test("callers-not-in-registry + callers only in unindexed tests → coverage_config", () => {
+  test("no-textual-callers + callers only in unindexed tests → coverage_config (the real coverage-gap shape)", () => {
+    // compute_diagnosis returns no-textual-callers when the indexed grep is
+    // empty, which is exactly the case when every caller is in an excluded dir.
+    // The coverage signal must win over the no-textual-callers default.
+    expect(
+      derive_fault_area(
+        input({ diagnosis: "no-textual-callers", callers_only_in_unindexed_tests: true }),
+      ),
+    ).toEqual({
+      area: "coverage_config",
+      language: undefined,
+      needs_judgement: false,
+    });
+  });
+
+  test("coverage signal wins over the diagnosis regardless of which diagnosis is set", () => {
     expect(
       derive_fault_area(
         input({ diagnosis: "callers-not-in-registry", callers_only_in_unindexed_tests: true }),
@@ -315,20 +330,27 @@ describe("derive_fault_area — precedence: resolution_failure beats diagnosis",
 });
 
 describe("derive_fault_area — escape hatch for forward-incompatible signals", () => {
-  test("unknown resolution_failure reason → other with the raw signal quoted", () => {
-    const result = derive_fault_area(
-      input({ resolution_failure: { stage: "name_resolution", reason: "brand_new_reason" } }),
-    );
-    expect(result.area).toEqual("other");
-    expect(result.needs_judgement).toEqual(true);
-    expect(result.description).toContain("brand_new_reason");
+  test("unknown resolution_failure reason → other, exact shape (no resolution_stage/reason leak)", () => {
+    expect(
+      derive_fault_area(
+        input({ resolution_failure: { stage: "name_resolution", reason: "brand_new_reason" } }),
+      ),
+    ).toEqual({
+      area: "other",
+      language: undefined,
+      needs_judgement: true,
+      description:
+        "unrecognized resolution_failure reason \"brand_new_reason\" at stage \"name_resolution\"",
+    });
   });
 
-  test("unknown diagnosis → other with the raw signal quoted", () => {
-    const result = derive_fault_area(input({ diagnosis: "some-future-diagnosis" }));
-    expect(result.area).toEqual("other");
-    expect(result.needs_judgement).toEqual(true);
-    expect(result.description).toContain("some-future-diagnosis");
+  test("unknown diagnosis → other, exact shape", () => {
+    expect(derive_fault_area(input({ diagnosis: "some-future-diagnosis" }))).toEqual({
+      area: "other",
+      language: undefined,
+      needs_judgement: true,
+      description: "unrecognized diagnosis \"some-future-diagnosis\"",
+    });
   });
 
   test("a known reason at an unrecognized stage still derives (stage is omitted)", () => {
