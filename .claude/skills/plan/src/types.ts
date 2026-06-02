@@ -13,11 +13,11 @@ export const SIGNAL_LIBRARY_GAP_PARENT_TASK_ID = "TASK-190.16";
 //
 // The published `triage_results/<run-id>.json` wire contract is owned by
 // `@ariadnejs/skill-protocol` — the single source of truth shared with the
-// producing triage skill. Re-exported here so the curator's
-// domain-vocabulary imports stay grouped (matching the `@ariadnejs/types`
-// re-export below). The curator's `novel:` path reads `novel_issues` and
-// `classifier_regressions`; downstream consumers read `confirmed_unreachable[]`
-// with its `source` discriminator.
+// producing triage skill. Re-exported here so plan's domain-vocabulary
+// imports stay grouped (matching the `@ariadnejs/types` re-export below).
+// Plan's `novel:` path reads `novel_issues` and `classifier_regressions`;
+// downstream consumers read `confirmed_unreachable[]` with its `source`
+// discriminator.
 
 export {
   TRIAGE_RESULTS_SCHEMA_VERSION,
@@ -35,9 +35,9 @@ export type {
 
 // ===== Known-issues registry shape (read/write) =====
 //
-// Canonical types live in `@ariadnejs/types`. Re-exported here so the
-// curator's domain-vocabulary imports stay grouped and a downstream rename
-// only touches one file.
+// Canonical types live in `@ariadnejs/types`. Re-exported here so plan's
+// domain-vocabulary imports stay grouped and a downstream rename only touches
+// one file.
 
 export type {
   KnownIssue,
@@ -63,7 +63,7 @@ export interface ScanResultItem {
 // ===== Sub-agent output shapes =====
 
 /**
- * Classifier shape the curator emits per investigated group. `kind: "none"`
+ * Classifier shape plan emits per investigated group. `kind: "none"`
  * retires a classifier; `kind: "builtin"` authors a check function. Predicate
  * classifiers are hand-authored directly in the registry.
  */
@@ -97,8 +97,8 @@ export interface AriadneBug {
   description: string;
   /**
    * Set when `mcp__backlog__task_search` already found a task covering this
-   * root cause. Finalize attaches to it instead of creating a new one.
-   * Format: `TASK-<N>` or `TASK-<N>.<M>...`.
+   * root cause. The deferred actuator attaches to it instead of creating a new
+   * one. Format: `TASK-<N>` or `TASK-<N>.<M>...`.
    */
   existing_task_id: string | null;
 }

@@ -8,7 +8,7 @@
  *   - the `plan` engine's task-DB under `~/.ariadne/plan/` (one JSON file per
  *     task plus per-sweep event logs).
  *
- * Per-run scratch state (`triage_state/<project>/runs/...`) and curator-private
+ * Per-run scratch state (`triage_state/<project>/runs/...`) and plan-private
  * run-state stay owned by their respective skills; only the cross-skill
  * protocol paths are centralized here.
  *

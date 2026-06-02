@@ -93,7 +93,7 @@ async function load_whitelist(package_name: string): Promise<Set<string>> {
   const registry_path = path.join(
     os.homedir(),
     ".ariadne",
-    "triage",
+    "triage-entrypoints",
     "known_entrypoints",
     `${package_name}.json`
   );

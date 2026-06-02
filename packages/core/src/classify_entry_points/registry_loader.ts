@@ -26,8 +26,9 @@ let permanent_registry_cache: KnownIssuesRegistry | null = null;
 /**
  * Loader error surfaced when the bundled slice is corrupt or out of date.
  * Fails loud rather than silently degrading classification: a slice that
- * carries a non-permanent or `kind: "none"` rule indicates the sync script
- * regressed and the next user of the library would mis-classify.
+ * carries a non-permanent or `kind: "none"` rule indicates the actuator's
+ * slice regeneration regressed and the next user of the library would
+ * mis-classify.
  */
 export class PermanentRegistryError extends Error {
   constructor(message: string) {
@@ -67,13 +68,13 @@ function assert_permanent_non_none(issue: KnownIssue): void {
   if (issue.status !== "permanent") {
     throw new PermanentRegistryError(
       `bundled slice contains non-permanent rule "${issue.group_id}" (status="${issue.status}") — ` +
-        "the sync script must filter on status === \"permanent\"",
+        "the slice must filter on status === \"permanent\"",
     );
   }
   if (issue.classifier.kind === "none") {
     throw new PermanentRegistryError(
       `bundled slice contains kind:"none" rule "${issue.group_id}" — ` +
-        "the sync script must drop unclassified rules from the slice",
+        "the slice must drop unclassified rules",
     );
   }
 }

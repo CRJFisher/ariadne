@@ -3,7 +3,7 @@ name: plan
 description: Offline sweep that consumes the triage skill's v5 triage results, dispatches an investigator wave to author classifier and root-cause proposals for each novel issue, and emits those proposals plus on-demand impact and backlog reports. Planning-only — the deferred actuator applies proposals to the registry.
 argument-hint: "[--project <name>] [--last <n>] [--run <path>]"
 disable-model-invocation: true
-allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read, Write, Glob, Task(plan-strategist), mcp__backlog__task_create, mcp__backlog__task_search
+allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read, Write, Glob, Task(plan-strategist), mcp__backlog__task_create, mcp__backlog__task_search, mcp__backlog__task_edit
 ---
 
 # Plan
@@ -201,6 +201,8 @@ fix-sequencer reconciler (TASK-190.18.3). See
 ## Reference
 
 ### State
+
+`triage-entrypoints` and `triage-curator` are fixed on-disk storage namespaces, independent of the skill names. They are distinct from `~/.ariadne/plan/`, which holds the plan engine's task-DB (defined in `@ariadnejs/skill-protocol`).
 
 - **Input:** `~/.ariadne/triage-entrypoints/analysis_output/{project}/triage_results/{iso}.json`
 - **Working dir:** `~/.ariadne/triage-curator/runs/{run_id}/investigate/{novel_issue_id}.json`

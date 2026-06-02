@@ -61,7 +61,7 @@ Rewrite the renamed `plan-strategist` agent prompt (file moved in 190.22.5): gro
 
 ## Scope — docs
 
-Finalize `meta.json` flows to the planning-only reality; regenerate diagrams via the `mermaid-pre-render` skill.
+Finalize `meta.json` flows to the planning-only reality (190.22.5 left the flow/store topology pre-strip behind a `_deferred` marker); regenerate diagrams via the `mermaid-pre-render` skill. Include the `triage` skill's `README.per-step.{mmd,svg}`: it still renders the Phase-1-deleted `triage-coordinator` node, the removed in-run `novel_issues.json`/`classifier_regressions.jsonl` artifacts, and `schema v4` — regenerate it to the verdict-files-derive-finalize / schema-v5 model.
 
 ## Verification
 

@@ -1,7 +1,8 @@
 {
   "schema_version": 1,
+  "_deferred": "The flows/stores topology below still describes the pre-strip curator that wrote the registry. The planning-only flow rewrite and diagram regen land in TASK-190.22.9; only names and path-patterns are current.",
   "skill": "plan",
-  "description": "Offline sweep over completed triage runs. Absorbs the per-run novel_issues and classifier_regressions; promotes registered novel issues to permanent classifier rules; produces classifier + backlog + signal proposals; and commits the result.",
+  "description": "Offline sweep over completed triage runs. Reads the registry, dispatches an investigator wave to author classifier and root-cause proposals for each novel issue, and emits those proposals plus on-demand impact and backlog reports. Planning-only — the deferred actuator applies proposals.",
 
   "flows": [
     {
@@ -84,7 +85,7 @@
       "id": "registry-read",
       "path": ".claude/skills/triage/known_issues/registry.json",
       "access": "read-only",
-      "writer_owner": "plan",
+      "writer_owner": "actuator",
       "semantic_role": "filter for already-known issues; investigator context",
       "touched_by_flows": ["novel-to-classifier"]
     },

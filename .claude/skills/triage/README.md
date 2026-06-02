@@ -1,4 +1,4 @@
-# Triage Entrypoints
+# Triage
 
 Triage pipeline for entry point analysis: detect false positives and classify root causes. The per-entry `triage-investigator` emits one `TriageVerdict` — a discriminated union with `tp`, `fp-novel`, `fp-classifier-regression`, or `uncertain` arms. Each false-positive verdict is self-contained: it carries its own evidence and (for `fp-novel`) the deterministic core fault diagnostics, so the published `triage_results` need no in-run consolidation. Offline grouping of false positives happens downstream in the `plan` skill.
 
@@ -8,7 +8,7 @@ Orthogonally, the `detect_dead_code` Stop hook (`.claude/hooks/detect_dead_code.
 
 ## Self-healing pipeline
 
-This skill is the first link in a three-skill chain: triage (sense) → plan (classify) → fix-sequencer (actuate). It is _self-healing_ because two durable surfaces survive between runs — `registry.json` (what we learned) and the target repo's git log (what we changed) — and both are read on the _next_ triage run. The diagram below traces the data those runs deposit and the processes that read/write each artifact.
+This skill is the first link in the self-healing chain: triage (sense) → plan (classify) → actuator (actuate). It is _self-healing_ because two durable surfaces survive between runs — `registry.json` (what we learned) and the target repo's git log (what we changed) — and both are read on the _next_ triage run. The diagram below traces the data those runs deposit and the processes that read/write each artifact.
 
 > **Note:** the rendered pipeline diagrams in this README still show the removed in-run coordinator (`novel_issues.json` / `classifier_regressions.jsonl` / `coordinator_log.jsonl`); they are regenerated when this skill is renamed to `triage` (TASK-190.22.5). The current flow: each investigator writes one self-contained `TriageVerdict` to `results/`, and finalize builds every published slice from those files.
 

@@ -1,13 +1,11 @@
 /**
- * Wire types for the impact report the plan emits and the
- * fix-sequencer consumes. The curator produces `impact_report.json` at the
- * end of a curation sweep; the fix-sequencer reads it off disk during its
- * cluster + score stage.
+ * Wire types for the impact report the plan skill emits and the fix-sequencer
+ * consumes. Plan produces `impact_report.json` at the end of a sweep; the
+ * fix-sequencer reads it off disk during its cluster + score stage.
  *
  * Identity field is `group_id` (registry-side identity), not `novel_issue_id`
- * (dispatch-side identity). The two are deliberately distinct per the curator
- * lifecycle: dispatch types were renamed in 190.20.4; registry types
- * intentionally were not.
+ * (dispatch-side identity). The two are deliberately distinct: `group_id` keys
+ * the registry row, `novel_issue_id` keys a single dispatch.
  */
 
 /**

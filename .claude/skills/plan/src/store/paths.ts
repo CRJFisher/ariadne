@@ -7,7 +7,8 @@ import { fileURLToPath } from "node:url";
  *
  * `triage-curator` is the fixed on-disk storage namespace, independent of the
  * skill name. The plan-strategist agent's `Write` grant and the SKILL/README
- * run paths reference the same namespace.
+ * run paths reference the same namespace. This is distinct from `~/.ariadne/plan/`
+ * (the plan engine's task-DB, `plan_dir()` in `@ariadnejs/skill-protocol`).
  */
 export const CURATOR_RUNS_DIR = path.join(
   os.homedir(),
