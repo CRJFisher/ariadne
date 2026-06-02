@@ -13,7 +13,7 @@ labels:
 dependencies: []
 references:
   - /Users/chuck/.claude/plans/i-should-have-mentioned-sorted-quiche.md
-parent_task_id: 190.22.5
+parent_task_id: 190.22.9
 priority: low
 ---
 
@@ -22,7 +22,7 @@ priority: low
 <!-- SECTION:DESCRIPTION:BEGIN -->
 ## Why deferred (YAGNI until measured)
 
-The JSON one-file-per-task store (190.22.5.1) satisfies the `plan` engine's queries (by fault-area/status/hierarchy/dedup_key) at the real corpus size (dozens–hundreds of tasks) in milliseconds. SQLite and vector/hybrid search are genuine follow-ons, NOT now — and they are drop-in because everything goes through the `PlanTaskRepository` interface (190.22.2.1). This draft records the thresholds so the upgrade is a deliberate, measured decision.
+The JSON one-file-per-task store (190.22.8) satisfies the `plan` engine's queries (by fault-area/status/hierarchy/dedup_key) at the real corpus size (dozens–hundreds of tasks) in milliseconds. SQLite and vector/hybrid search are genuine follow-ons, NOT now — and they are drop-in because everything goes through the `PlanTaskRepository` interface (190.22.4). This draft records the thresholds so the upgrade is a deliberate, measured decision.
 
 ## SQLite — earns its place when
 

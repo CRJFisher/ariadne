@@ -1,5 +1,5 @@
 ---
-id: TASK-190.22.5.5
+id: TASK-190.22.12
 title: >-
   Tidy backlog/tasks: migrate the 234 auto-filed classifier tickets into the
   task-DB (archive-not-delete)
@@ -11,10 +11,10 @@ labels:
   - cleanup
   - migration
 dependencies:
-  - TASK-190.22.5.1
+  - TASK-190.22.8
 references:
   - /Users/chuck/.claude/plans/i-should-have-mentioned-sorted-quiche.md
-parent_task_id: TASK-190.22.5
+parent_task_id: TASK-190.22
 priority: high
 ---
 

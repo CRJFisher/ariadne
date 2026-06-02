@@ -47,14 +47,23 @@ This restructure supersedes the `fix-sequencer` design (TASK-190.18 and its subt
 
 ## Subtasks
 
+Numbered in canonical execution order — the task number is the dependency order.
+
 - **190.22.1** — Phase 1: harden the `triage` golden path; delete the in-run coordinator; carry deterministic fault diagnostics.
-- **190.22.2** — Phase 2: extract `@ariadnejs/skill-protocol` shared data contract.
-- **190.22.3** — Phase 3: rename `triage-entrypoints`→`triage`, `triage-curator`→`plan`; strip code-mutating machinery.
-- **190.22.4** — Author `AriadneFaultArea` taxonomy + deterministic derivation (replaces `AriadneRootCauseCategory`). _(depends on .1)_
-- **190.22.5** — Phase 4: build the `plan` engine — group → strategize → hierarchical plans → reconcile. _(depends on .3 + .4)_
+- **190.22.2** — Phase 2: extract `@ariadnejs/skill-protocol` shared data contract. _(depends on .1)_
+- **190.22.3** — Author `AriadneFaultArea` taxonomy + deterministic derivation (replaces `AriadneRootCauseCategory`). _(depends on .1)_
+- **190.22.4** — Define the plan task-DB contract (`PlanTask` + `PlanTaskRepository` + `~/.ariadne/plan/` paths) in `@ariadnejs/skill-protocol`. _(depends on .2 + .3)_
+- **190.22.5** — Phase 3: rename `triage-entrypoints`→`triage`, `triage-curator`→`plan`; strip code-mutating machinery. _(depends on .2)_
+- **190.22.6** — Firewall: retarget/remove the pipeline's backlog-writing machinery. _(depends on .4)_
+- **190.22.7** — Backlog firewall rule-doc + AST enforcement test.
+- **190.22.8** — Implement the JSON plan-task store behind `PlanTaskRepository`. _(depends on .4)_
+- **190.22.9** — Phase 4: build the `plan` engine — group → strategize → hierarchical plans → reconcile. _(depends on .5 + .3)_
+- **190.22.10** — Wire the `plan` engine to write `PlanTask` rows + reconcile within the task-DB. _(depends on .8 + .3)_
+- **190.22.11** — User-invoked export/promotion adapter (task-DB → `backlog/`; the sole backlog writer). _(depends on .8 + .7)_
+- **190.22.12** — Tidy `backlog/tasks/`: migrate the 234 auto-filed classifier tickets into the task-DB (archive-not-delete). _(depends on .8)_
 - **DRAFT-5** — Deferred: actuator (path A core fixes, path B classifier scripts).
 
-Execution order: .1 → .2 → .3, with .4 after .1 and .5 last.
+Execution order is numeric: .1 → .2 → … → .12.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

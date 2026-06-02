@@ -1,5 +1,5 @@
 ---
-id: TASK-190.22.3.1
+id: TASK-190.22.6
 title: "Firewall: retarget/remove the pipeline's backlog-writing machinery"
 status: To Do
 assignee: []
@@ -9,10 +9,10 @@ labels:
   - firewall
   - plan-skill
 dependencies:
-  - TASK-190.22.2.1
+  - TASK-190.22.4
 references:
   - /Users/chuck/.claude/plans/i-should-have-mentioned-sorted-quiche.md
-parent_task_id: TASK-190.22.3
+parent_task_id: TASK-190.22
 priority: high
 ---
 
@@ -22,18 +22,18 @@ priority: high
 
 ## Why
 
-`backlog/` becomes exclusively user-operated. As part of stripping `plan`'s code-mutating machinery (Phase 3), remove every path by which the pipeline writes the user's backlog — the pipeline will instead write its own task-DB (impl in 190.22.5.1; engine wiring in 190.22.5.3). The only sanctioned backlog writer is the user-invoked export adapter (190.22.5.4).
+`backlog/` becomes exclusively user-operated. As part of stripping `plan`'s code-mutating machinery (Phase 3), remove every path by which the pipeline writes the user's backlog — the pipeline will instead write its own task-DB (impl in 190.22.8; engine wiring in 190.22.10). The only sanctioned backlog writer is the user-invoked export adapter (190.22.11).
 
 ## Scope
 
 - **Retarget the pure row-builders, drop the MCP feed.** `triage-curator/src/propose/propose_backlog_tasks.ts` — keep `render_task_title`/`render_task_body`/`render_task_labels` (reused by the engine + export adapter), but they become feedstock for `PlanTask` records, not for `mcp__backlog__task_create`. Strip the `mcp__backlog__*` references from docstrings.
 - **Remove the backlog-coupling.** Delete `scripts/link_ariadne_bug_tasks.ts` + the `link_ariadne_bug_tasks` path in `src/apply/apply_proposals.ts` + the `created_task_ids.json` sidecar (`src/store/paths.ts` `created_task_ids_path`). If a registry backlink is still wanted, it points at the task-DB id, not a `TASK-<N>` backlog id. (Most of `src/apply/*` is already being stripped/parked by Phase 3; this ensures the backlog-specific pieces go with it.)
-- **SKILL.md** — remove `mcp__backlog__task_create`/`task_edit` from the `plan` `allowed-tools`; rewrite the "File backlog tasks" step (curator SKILL.md:151-241) as "write proposals to the task-DB"; drop the `created_task_ids.json` handshake. Keep `mcp__backlog__task_search`/`task_view` ONLY for read-only dedup (see 190.22.5.3).
-- **Types** — drop `AriadneBugTaskToCreate`/`SignalLibraryGapTaskToCreate`/`TaskProposal`/`TaskUpdateProposal` + `SIGNAL_LIBRARY_GAP_PARENT_TASK_ID` (backlog-specific); their role is taken by `PlanTask` (190.22.2.1). Update `get_investigate_context.ts:145` + `types.ts:242` (`existing_task_id`) to mean "existing DB task".
+- **SKILL.md** — remove `mcp__backlog__task_create`/`task_edit` from the `plan` `allowed-tools`; rewrite the "File backlog tasks" step (curator SKILL.md:151-241) as "write proposals to the task-DB"; drop the `created_task_ids.json` handshake. Keep `mcp__backlog__task_search`/`task_view` ONLY for read-only dedup (see 190.22.10).
+- **Types** — drop `AriadneBugTaskToCreate`/`SignalLibraryGapTaskToCreate`/`TaskProposal`/`TaskUpdateProposal` + `SIGNAL_LIBRARY_GAP_PARENT_TASK_ID` (backlog-specific); their role is taken by `PlanTask` (190.22.4). Update `get_investigate_context.ts:145` + `types.ts:242` (`existing_task_id`) to mean "existing DB task".
 
 ## Verification
 
-`grep` finds no `mcp__backlog__task_create`/`task_edit` and no writes to `backlog/` anywhere under the `plan` skill; build/tests green. (The structural AST enforcement is added in 190.22.5.2.)
+`grep` finds no `mcp__backlog__task_create`/`task_edit` and no writes to `backlog/` anywhere under the `plan` skill; build/tests green. (The structural AST enforcement is added in 190.22.7.)
 
 <!-- SECTION:DESCRIPTION:END -->
 

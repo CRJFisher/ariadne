@@ -1,5 +1,5 @@
 ---
-id: TASK-190.22.5.4
+id: TASK-190.22.11
 title: >-
   User-invoked export/promotion adapter (task-DB → backlog), the sole backlog
   writer
@@ -11,11 +11,11 @@ labels:
   - firewall
   - export
 dependencies:
-  - TASK-190.22.5.1
-  - TASK-190.22.5.2
+  - TASK-190.22.8
+  - TASK-190.22.7
 references:
   - /Users/chuck/.claude/plans/i-should-have-mentioned-sorted-quiche.md
-parent_task_id: TASK-190.22.5
+parent_task_id: TASK-190.22
 priority: high
 ---
 
@@ -36,7 +36,7 @@ The control gate + the portability seam. The USER (or me on their behalf) decide
 
 ## Verification
 
-`--dry-run` lists the selected rows and writes nothing; a real run creates backlog tasks, flips the DB rows to `exported`, and a second identical run is a no-op. The adapter is the only file the 190.22.5.2 firewall test allows to touch backlog.
+`--dry-run` lists the selected rows and writes nothing; a real run creates backlog tasks, flips the DB rows to `exported`, and a second identical run is a no-op. The adapter is the only file the 190.22.7 firewall test allows to touch backlog.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

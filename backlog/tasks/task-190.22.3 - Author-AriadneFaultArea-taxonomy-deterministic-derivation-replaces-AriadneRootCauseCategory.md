@@ -1,5 +1,5 @@
 ---
-id: TASK-190.22.4
+id: TASK-190.22.3
 title: >-
   Author AriadneFaultArea taxonomy + deterministic derivation (replaces
   AriadneRootCauseCategory)
@@ -28,7 +28,7 @@ priority: high
 
 ## Why
 
-The `plan` engine (TASK-190.22.5) groups false-positives by "which part of Ariadne is at fault" and routes each fix to the right code area. This requires a standardised fault-area taxonomy. The key design decision: the fault area is a **DERIVED VIEW** over the deterministic signal Ariadne core already emits — NOT a new independently-stored enum. Phase 1 (190.22.1) stores `diagnosis` + `resolution_failure {stage,reason}` on each verdict; the area is **computed-on-read** from those by a pure total function. This is grounded entirely in existing code, adds no speculative stored field, and is refactor-safe (a core IA refactor edits only the folder-map, never stored data). It strictly refines and REPLACES the coarse 6-value `AriadneRootCauseCategory` (`packages/types/src/ariadne_root_cause.ts`) — a no-shim replacement, not a parallel taxonomy.
+The `plan` engine (TASK-190.22.9) groups false-positives by "which part of Ariadne is at fault" and routes each fix to the right code area. This requires a standardised fault-area taxonomy. The key design decision: the fault area is a **DERIVED VIEW** over the deterministic signal Ariadne core already emits — NOT a new independently-stored enum. Phase 1 (190.22.1) stores `diagnosis` + `resolution_failure {stage,reason}` on each verdict; the area is **computed-on-read** from those by a pure total function. This is grounded entirely in existing code, adds no speculative stored field, and is refactor-safe (a core IA refactor edits only the folder-map, never stored data). It strictly refines and REPLACES the coarse 6-value `AriadneRootCauseCategory` (`packages/types/src/ariadne_root_cause.ts`) — a no-shim replacement, not a parallel taxonomy.
 
 ## The taxonomy — `AriadneFaultArea` (9 values + `other`), each anchored 1:1 to a core folder
 
@@ -61,7 +61,7 @@ CRITICAL correctness point (verified against emit sites): the same `reason` is e
 - `packages/types/src/backlog_task.ts:23` — `cluster_hint: AriadneRootCauseCategory` → `AriadneFaultArea`.
 - Delete `packages/types/src/ariadne_root_cause.ts` once consumers move (it's strictly refined by the new taxonomy).
 - `packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts` — populate the two disambiguators (`has_uncaptured_indexed_grep_hit` from `GrepHit.captures`; `callers_only_in_unindexed_tests` from `grep_call_sites_unindexed_tests`) so the planner derives without re-grepping.
-- Consumed by the `plan` engine (TASK-190.22.5): it derives the area per verdict at grouping time and routes groups to `ARIADNE_FAULT_AREA_FOLDER[area]`.
+- Consumed by the `plan` engine (TASK-190.22.9): it derives the area per verdict at grouping time and routes groups to `ARIADNE_FAULT_AREA_FOLDER[area]`.
 
 ## Residual-judgement cases (deterministic default + `needs_judgement: true`; the plan strategist decides)
 

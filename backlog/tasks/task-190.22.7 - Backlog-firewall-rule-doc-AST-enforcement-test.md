@@ -1,5 +1,5 @@
 ---
-id: TASK-190.22.5.2
+id: TASK-190.22.7
 title: "Backlog firewall: rule doc + AST enforcement test"
 status: To Do
 assignee: []
@@ -11,7 +11,7 @@ labels:
 dependencies: []
 references:
   - /Users/chuck/.claude/plans/i-should-have-mentioned-sorted-quiche.md
-parent_task_id: TASK-190.22.5
+parent_task_id: TASK-190.22
 priority: high
 ---
 
@@ -21,7 +21,7 @@ priority: high
 
 ## Why
 
-Make the firewall structural, not just convention — mirror the registry write-boundary contract (`.claude/rules/classifier-lifecycle.md` + `packages/skill-fs/src/registry_writers.test.ts`). `backlog/` is exclusively user-operated; the only sanctioned backlog writer is the user-invoked export adapter (190.22.5.4).
+Make the firewall structural, not just convention — mirror the registry write-boundary contract (`.claude/rules/classifier-lifecycle.md` + `packages/skill-fs/src/registry_writers.test.ts`). `backlog/` is exclusively user-operated; the only sanctioned backlog writer is the user-invoked export adapter (190.22.11).
 
 ## Scope
 
@@ -30,7 +30,7 @@ Make the firewall structural, not just convention — mirror the registry write-
 
 ## Note
 
-Read-only backlog access (`mcp__backlog__task_search`/`task_view`, frontmatter parse) is permitted as a dedup signal (190.22.5.3) — the test flags writes + mutator calls only, so reads pass.
+Read-only backlog access (`mcp__backlog__task_search`/`task_view`, frontmatter parse) is permitted as a dedup signal (190.22.10) — the test flags writes + mutator calls only, so reads pass.
 
 <!-- SECTION:DESCRIPTION:END -->
 
@@ -42,5 +42,5 @@ Read-only backlog access (`mcp__backlog__task_search`/`task_view`, frontmatter p
 - [ ] #2 `packages/skill-fs/src/backlog_writers.test.ts` flags raw writes to `backlog/`-shaped paths AND references to mutating `mcp__backlog__*` tools across the skills/packages tree
 - [ ] #3 `ALLOWED_BACKLOG_WRITERS` contains only the export adapter; the test has a negative control proving the scanner is not a no-op
 - [ ] #4 Read-only `task_search`/`task_view`/frontmatter parse is NOT flagged
-- [ ] #5 The test passes against the post-firewall tree (after 190.22.3.1); `pnpm -r test` green
+- [ ] #5 The test passes against the post-firewall tree (after 190.22.6); `pnpm -r test` green
 <!-- AC:END -->

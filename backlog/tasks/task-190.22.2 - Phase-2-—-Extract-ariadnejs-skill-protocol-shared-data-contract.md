@@ -44,7 +44,7 @@ Package `name`/`exports`/`build` + `references:[{path:"../types"}]`; add `{path:
 
 ## Non-goal
 
-Do NOT introduce a new hand-designed fault-area taxonomy/enum here. The FP fault signal carried in the contract is the existing deterministic enums (`diagnosis`/`resolution_failure`) + free-text `proposed_root_cause`. The `AriadneFaultArea` type lives in `@ariadnejs/types` (TASK-190.22.4), not this package; this phase stays mechanical (consolidate the shape that exists).
+Do NOT introduce a new hand-designed fault-area taxonomy/enum here. The FP fault signal carried in the contract is the existing deterministic enums (`diagnosis`/`resolution_failure`) + free-text `proposed_root_cause`. The `AriadneFaultArea` type lives in `@ariadnejs/types` (TASK-190.22.3), not this package; this phase stays mechanical (consolidate the shape that exists).
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
@@ -59,7 +59,7 @@ Do NOT introduce a new hand-designed fault-area taxonomy/enum here. The FP fault
 - [ ] #8 No backwards-compat shims; every caller updated to the shared package
 - [ ] #9 The canonical `TriageResultsFile` carries the deterministic FP fault diagnostics (`diagnosis`, `resolution_failure {stage,reason}`, `receiver_kind`) by reusing the `@ariadnejs/types` enums — no duplicated enum definitions
 - [ ] #10 `NovelIssue`/`NovelIssueCitation`/`MemberEvidence` live in `@ariadnejs/skill-protocol` (relocated from their Phase-1 local home); both skills import them
-- [ ] #11 Explicit non-goal honored: NO new fault-area taxonomy/enum is added to the contract in this phase; the `AriadneFaultArea` type lives in `@ariadnejs/types` (TASK-190.22.4), not this package
+- [ ] #11 Explicit non-goal honored: NO new fault-area taxonomy/enum is added to the contract in this phase; the `AriadneFaultArea` type lives in `@ariadnejs/types` (TASK-190.22.3), not this package
 <!-- AC:END -->
 
 ## Implementation Notes

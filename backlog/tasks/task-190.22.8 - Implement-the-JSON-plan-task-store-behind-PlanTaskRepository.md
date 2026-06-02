@@ -1,5 +1,5 @@
 ---
-id: TASK-190.22.5.1
+id: TASK-190.22.8
 title: Implement the JSON plan task-store behind PlanTaskRepository
 status: To Do
 assignee: []
@@ -9,10 +9,10 @@ labels:
   - task-db
   - engine
 dependencies:
-  - TASK-190.22.2.1
+  - TASK-190.22.4
 references:
   - /Users/chuck/.claude/plans/i-should-have-mentioned-sorted-quiche.md
-parent_task_id: TASK-190.22.5
+parent_task_id: TASK-190.22
 priority: high
 ---
 
@@ -22,7 +22,7 @@ priority: high
 
 ## Why
 
-The concrete storage behind the `PlanTaskRepository` interface (190.22.2.1). JSON-on-disk now; the interface is the seam that makes SQLite/vector a drop-in follow-on (deferred draft). Lives in the `plan` skill's `src/store/` (domain logic; not in skill-protocol, which is types-only, nor skill-fs, which is generic primitives).
+The concrete storage behind the `PlanTaskRepository` interface (190.22.4). JSON-on-disk now; the interface is the seam that makes SQLite/vector a drop-in follow-on (deferred draft). Lives in the `plan` skill's `src/store/` (domain logic; not in skill-protocol, which is types-only, nor skill-fs, which is generic primitives).
 
 ## Scope
 
@@ -34,7 +34,7 @@ The concrete storage behind the `PlanTaskRepository` interface (190.22.2.1). JSO
 
 ## Out of scope
 
-No SQLite, no vector index (deferred). No global lock (one writer per task file). The repository interface is fixed by 190.22.2.1 — do not change its signatures.
+No SQLite, no vector index (deferred). No global lock (one writer per task file). The repository interface is fixed by 190.22.4 — do not change its signatures.
 
 <!-- SECTION:DESCRIPTION:END -->
 

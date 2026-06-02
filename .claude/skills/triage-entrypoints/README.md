@@ -10,7 +10,7 @@ Orthogonally, the `detect_dead_code` Stop hook (`.claude/hooks/detect_dead_code.
 
 This skill is the first link in a three-skill chain: triage-entrypoints (sense) → triage-curator (classify) → fix-sequencer (actuate). It is _self-healing_ because two durable surfaces survive between runs — `registry.json` (what we learned) and the target repo's git log (what we changed) — and both are read on the _next_ triage-entrypoints run. The diagram below traces the data those runs deposit and the processes that read/write each artifact.
 
-> **Note:** the rendered pipeline diagrams in this README still show the removed in-run coordinator (`novel_issues.json` / `classifier_regressions.jsonl` / `coordinator_log.jsonl`); they are regenerated when this skill is renamed to `triage` (TASK-190.22.3). The current flow: each investigator writes one self-contained `TriageVerdict` to `results/`, and finalize builds every published slice from those files.
+> **Note:** the rendered pipeline diagrams in this README still show the removed in-run coordinator (`novel_issues.json` / `classifier_regressions.jsonl` / `coordinator_log.jsonl`); they are regenerated when this skill is renamed to `triage` (TASK-190.22.5). The current flow: each investigator writes one self-contained `TriageVerdict` to `results/`, and finalize builds every published slice from those files.
 
 <!-- Source: ./README.pipeline.mmd — edit there, then re-render with the /mermaid-pre-render skill -->
 
