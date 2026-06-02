@@ -137,7 +137,8 @@ row-builders in `src/propose/render_task.ts` (`render_task_title`,
 content. The plan engine (TASK-190.22.10) renders these into `PlanTask` records;
 the user-invoked export adapter (TASK-190.22.11) reuses the same builders when
 promoting a DB task into `backlog/`. The sweep itself writes nothing to
-`backlog/`.
+`backlog/`. The full write-boundary contract — and the structural test that
+enforces it — is `.claude/rules/backlog-firewall.md`.
 
 ## Classifier lifecycle (write boundaries)
 

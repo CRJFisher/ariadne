@@ -10,9 +10,10 @@
  *
  * Detection is syntactic and per-file. We walk every `.ts` file under the
  * workspace, parse with the TypeScript compiler, and flag two kinds:
- *   - "raw-write": a call to a write function (`writeFile`, `atomic_write_file`,
- *     `rename`, `rm`, `mkdir`, `createWriteStream`, …) whose first argument
- *     resolves to a `backlog/`-shaped path.
+ *   - "raw-write": a call to a write function (the byte-writers plus the
+ *     destructive `rename`/`rm`/`mkdir`/`cp`/`truncate`/`createWriteStream`
+ *     — see `WRITE_FUNCTIONS`) whose path argument resolves to a
+ *     `backlog/`-shaped path.
  *   - "mutating-tool": any string-literal-like node containing an
  *     `mcp__backlog__<name>` token whose `<name>` is not on the read-only
  *     allowlist (deny-by-default — a future mutator is caught with no edit).
@@ -74,6 +75,8 @@ const WRITE_FUNCTIONS: ReadonlySet<string> = new Set([
   "cpSync",
   "copyFile",
   "copyFileSync",
+  "truncate",
+  "truncateSync",
   "createWriteStream",
 ]);
 
@@ -225,20 +228,29 @@ function is_backlog_join_segment(text: string): boolean {
  * Decide whether `expr` targets a `backlog/`-shaped path. Accepted shapes,
  * all purely syntactic:
  *   1. A string/template literal carrying a `backlog/` segment.
- *   2. A `path.join(...)` / `path.resolve(...)` whose string-literal args
- *      reconstruct a `backlog/` segment — the pipeline's dominant
- *      path-building idiom, which no single string literal would catch.
- *   3. An identifier resolved to its same-file `const … = expr;` initializer.
+ *   2. A `path.join(...)` / `path.resolve(...)` any of whose args (string
+ *      literal or nested expression) reconstruct a `backlog/` segment — the
+ *      pipeline's dominant path-building idiom, which no single string
+ *      literal would catch.
+ *   3. A `+` concatenation either side of which carries a `backlog/` segment
+ *      (`repo + "/backlog/tasks/" + id`).
+ *   4. An identifier resolved to its same-file `const … = expr;` initializer.
  *
  * Deliberately does NOT match on an identifier or property *name* containing
  * "backlog": `backlog_task`, `exported_backlog_task`, `backlog_task_id` are
  * domain nouns throughout the plan engine, so a name heuristic (the registry
  * twin's `/registry/i` branch) would be a false-positive bomb here. Only the
  * resolved path *value* decides.
+ *
+ * `seen` guards against a self-referential or cyclic local binding
+ * (`const x = x;`, `const a = b; const b = a;`): without it the identifier
+ * recursion never terminates and a single such file anywhere in the tree
+ * would crash the whole scan — a firewall that fails open on malformed input.
  */
 function arg_targets_backlog(
   expr: ts.Expression,
   source: ts.SourceFile,
+  seen: ReadonlySet<string> = new Set(),
 ): boolean {
   if (ts.isStringLiteralLike(expr)) {
     return is_backlog_path(expr.text);
@@ -251,15 +263,24 @@ function arg_targets_backlog(
     const name = callee_name(expr.expression);
     if (name === "join" || name === "resolve") {
       return expr.arguments.some(
-        (a) => ts.isStringLiteralLike(a) && is_backlog_join_segment(a.text),
+        (a) =>
+          (ts.isStringLiteralLike(a) && is_backlog_join_segment(a.text)) ||
+          (!ts.isStringLiteralLike(a) && arg_targets_backlog(a, source, seen)),
       );
     }
     return false;
   }
+  if (ts.isBinaryExpression(expr) && expr.operatorToken.kind === ts.SyntaxKind.PlusToken) {
+    return (
+      arg_targets_backlog(expr.left, source, seen) ||
+      arg_targets_backlog(expr.right, source, seen)
+    );
+  }
   if (ts.isIdentifier(expr)) {
+    if (seen.has(expr.text)) return false;
     const initializer = find_local_initializer(source, expr.text);
     if (initializer !== null) {
-      return arg_targets_backlog(initializer, source);
+      return arg_targets_backlog(initializer, source, new Set([...seen, expr.text]));
     }
   }
   return false;
@@ -373,6 +394,13 @@ function scan_file(abs_path: string): WriteCall[] {
 describe("backlog-writer boundary (AST scan over the workspace)", () => {
   it("only the allowlisted export adapter writes a backlog-shaped path or names a mutating mcp__backlog__* tool", () => {
     const all_sources = collect_workspace_sources();
+    // Guard against a silent no-op: if `REPO_ROOT` ever resolves wrong (a moved
+    // file, a change to the `../../..` hop), `collect_workspace_sources()`
+    // returns [] and the scan passes green while inspecting nothing. Anchor on
+    // a stable non-test source that must be in the walked set.
+    const scanned = new Set(all_sources.map((f) => path.relative(REPO_ROOT, f)));
+    expect(scanned.has("packages/skill-fs/src/atomic_update_registry.ts")).toBe(true);
+
     const violations: WriteCall[] = [];
     for (const file of all_sources) {
       const rel = path.relative(REPO_ROOT, file);
@@ -420,14 +448,23 @@ describe("backlog-writer boundary (AST scan over the workspace)", () => {
           '  await writeFile("backlog/tasks/x.md", body);',
           // path.join idiom → join-segment branch
           '  await writeFile(path.join(repo, "backlog", "tasks", "y.md"), body);',
-          // destructive primitive → expanded WRITE_FUNCTIONS
+          // destructive primitive, dest is the SECOND arg → target_arg_indices
           '  await rename("/tmp/z.md", "backlog/drafts/z.md");',
           // const-initializer laundering → find_local_initializer branch
           '  const target = path.join(repo, "backlog", "tasks", "w.md");',
           "  await writeFile(target, body);",
+          // string concatenation → BinaryExpression branch
+          '  await writeFile(repo + "/backlog/tasks/" + id + ".md", body);',
+          // nested path.join → join-arg recursion branch
+          '  await writeFile(path.join(path.join(repo, "backlog"), "n.md"), body);',
           // mutating tool named in prose → mutating-tool branch
           '  const prompt = "call mcp__backlog__task_create to file it";',
           "  return prompt;",
+          "}",
+          // self-referential binding must NOT crash the scan (cycle guard)
+          "function cyclic(b: string) {",
+          "  const a = a;",
+          "  return writeFile(a, b);",
           "}",
           "",
         ].join("\n"),
@@ -436,8 +473,9 @@ describe("backlog-writer boundary (AST scan over the workspace)", () => {
       const hits = scan_file(bad);
       const raw_writes = hits.filter((h) => h.kind === "raw-write");
       const mutating = hits.filter((h) => h.kind === "mutating-tool");
-      // Four independent raw-write branches must each fire.
-      expect(raw_writes.length).toBe(4);
+      // Six independent raw-write branches must each fire (string literal,
+      // path.join, rename-dest, const launder, string concat, nested join).
+      expect(raw_writes.length).toBe(6);
       expect(mutating.length).toBe(1);
       expect(mutating[0].callee).toBe("mcp__backlog__task_create");
     } finally {

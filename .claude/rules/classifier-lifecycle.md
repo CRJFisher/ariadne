@@ -77,6 +77,7 @@ A `fixed` row that resurfaces in a later run (its `novel_issue.id` appears again
 
 ## Cross-references
 
+- The sibling write-boundary contract for the user's task tracker: `.claude/rules/backlog-firewall.md`
 - The plan skill's role in the lifecycle: `.claude/skills/plan/SKILL.md`
 - The pipeline's read-only relationship to the registry: `.claude/skills/triage/SKILL.md`
 - The reconciler's role + out-of-band detector: `backlog/tasks/task-190.18.3 - Add-registry-fix-tracking-fields-*.md`

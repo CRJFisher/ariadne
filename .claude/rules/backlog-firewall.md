@@ -2,7 +2,7 @@
 
 The user's `backlog/` directory is the human-owned planning surface. It is firewalled from the self-healing pipeline: the pipeline skills (`triage`, `plan`) are read-only against it. Proposed work flows through the plan engine's own task-DB (`~/.ariadne/plan/`); a single human-invoked export adapter is the sole programmatic bridge from that DB into `backlog/`. This mirrors the registry write-boundary contract (`.claude/rules/classifier-lifecycle.md`): one named writer per transition, an auditable surface, structural enforcement.
 
-The asymmetry is the whole point. The pipeline runs autonomously, and `backlog/` is the human's task tracker. Letting the pipeline mutate it without review would let an unattended run reorder, file, or close the user's work. So the boundary is enforced two ways — a writer table that names who may touch `backlog/`, and an AST test that fails the build if pipeline code crosses it.
+The boundary is one-directional by design: the pipeline runs autonomously and `backlog/` is the human's task tracker, so an unattended run must not reorder, file, or close the user's work. The boundary is enforced two ways — a writer table that names who may touch `backlog/`, and an AST test that fails the build if pipeline code crosses it.
 
 ## Writers
 
@@ -21,7 +21,7 @@ The mutating tools — gated to the human and the export adapter — are `task_c
 
 Structural enforcement lives in `packages/skill-fs/src/backlog_writers.test.ts` — the twin of `registry_writers.test.ts`. It walks every `.ts` file under `.claude/skills/**` and `packages/**` (excluding `.test.ts`), parses each with the TypeScript compiler, and flags two violation kinds:
 
-- **raw-write** — a call to a write primitive (`writeFile`/`atomic_write_file`/`appendFile`, the destructive `rename`/`rm`/`unlink`/`mkdir`/`cp`/`copyFile`, and `createWriteStream`) whose path argument resolves to a `backlog/`-shaped path. Resolution is syntactic and same-file: string and template literals, `path.join`/`path.resolve` segment reconstruction, and local `const` initializers. Move/copy primitives are checked at the endpoint they write.
+- **raw-write** — a call to a write primitive (`writeFile`/`atomic_write_file`/`appendFile`, the destructive `rename`/`rm`/`unlink`/`mkdir`/`cp`/`copyFile`/`truncate`, and `createWriteStream`) whose path argument resolves to a `backlog/`-shaped path. Resolution is syntactic and same-file: string and template literals, `path.join`/`path.resolve` segment reconstruction, `+` concatenation, and local `const` initializers. Move/copy primitives are checked at the endpoint they write.
 - **mutating-tool** — any string-literal-like node naming an `mcp__backlog__<name>` tool whose `<name>` is not on the read-only allowlist. Tool names reach the runtime as prompt and grant strings an agent could be told to call, so naming a mutator in pipeline code is itself the violation.
 
 `ALLOWED_BACKLOG_WRITERS = { ".claude/skills/plan/scripts/export_to_backlog.ts" }` is the sole exception, gating both kinds — the export adapter writes `backlog/` by whatever means it chooses (raw filesystem write or a mutating MCP call), and only it may. Adding a new permitted site requires both an allowlist entry in the test and an update to this doc. A new read-only tool goes in `READ_ONLY_BACKLOG_TOOLS` instead.
@@ -30,11 +30,11 @@ The export adapter is named in the allowlist pre-emptively; the file lands with 
 
 ## Known limitations
 
-The test stops accidental and direct backlog writes from pipeline TypeScript. It is a static, per-file, syntactic scan, so three vectors are out of its reach and must be guarded by review:
+The test stops accidental and direct backlog writes from pipeline TypeScript. It is a static, per-file, syntactic scan, so the following vectors are out of its reach and must be guarded by review. Their common shape: the test enforces only that pipeline `.ts` does not *write* a backlog path or *name* a mutating tool in a string literal — it cannot see runtime calls, nor the grant surfaces that decide which tools an agent may call.
 
-- **SKILL.md `allowed-tools` front-matter.** The most likely real breach vector. The pipeline skills run agents whose tool grants live in the `allowed-tools` line of `triage`/`plan` `SKILL.md` — markdown the `.ts` scan never sees. If a mutating `mcp__backlog__*` tool were granted there, an agent could mutate the backlog with no TypeScript involved. **The `allowed-tools` front-matter of `triage`/`plan` `SKILL.md` must never list a mutating `mcp__backlog__*` tool** (today `plan` grants only the read-only `task_search`). A dedicated front-matter lint is a sensible follow-up.
+- **Agent grant surfaces.** The primary breach vector. The pipeline skills run agents whose tool grants live in markdown the `.ts` scan never sees — the `allowed-tools` line of `triage`/`plan` `SKILL.md`, and the `mcpServers:` / `tools:` front-matter of any sub-agent they dispatch (e.g. `.claude/agents/plan-strategist.md`). A mutating `mcp__backlog__*` tool granted there lets an agent mutate the backlog with no pipeline TypeScript involved. **No `allowed-tools` line and no sub-agent grant on the `triage`/`plan` path may admit a mutating `mcp__backlog__*` tool, nor a whole-server `mcpServers: - backlog` grant** (which admits every mutator). Today `plan` `SKILL.md` grants only the read-only `task_search`; `plan-strategist` still carries a whole-server `backlog` grant left over from the pre-restructure curator and is narrowed to read-only by the plan-engine rewrite (TASK-190.22.10).
 - **Shell-out.** A script that shells out (`execSync`, `child_process`, a `Bash(...)` invocation) with a redirect into `backlog/` is opaque to the static scan.
-- **Cross-module path helpers.** The scan resolves a write target only within the same file. A `backlog/` path imported from another module, or a tool name laundered through a variable or template interpolation, is not chased — a deliberate scoping decision shared with the registry twin.
+- **Cross-module path helpers and dynamic names.** The scan resolves a write target only within the same file. A `backlog/` path imported from another module, or a tool name assembled at runtime (`"mcp__backlog__" + verb`, a `${verb}` interpolation), is not chased — a deliberate scoping decision shared with the registry twin. The same applies to `fs.open` with a write flag (its read/write intent is decided by a later argument) and to a detached `createWriteStream` handle whose `.write()` is called separately.
 
 ## Cross-references
 
