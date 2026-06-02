@@ -1,6 +1,6 @@
 # Unsupported features — typescript
 
-Canonical list of known Ariadne failure modes that affect this language. Generated from `.claude/skills/triage-entrypoints/known_issues/registry.json` by `.claude/skills/triage-curator/scripts/render_unsupported_features.ts`. Do not edit by hand — edit the registry and re-render.
+Canonical list of known Ariadne failure modes that affect this language. Generated from `.claude/skills/triage/known_issues/registry.json` by `.claude/skills/plan/scripts/render_unsupported_features.ts`. Do not edit by hand — edit the registry and re-render.
 
 Entries: 110
 
@@ -349,7 +349,7 @@ Stricter variant of `callers-outside-scope-grep-evidence`: diagnosis is `callers
 
 ## `wasm-cross-language-call` — wasm-cross-language-call
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -360,7 +360,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `abstract-class-polymorphic-dispatch` — abstract-class-polymorphic-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -371,7 +371,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `anonymous-class-inheritance-resolution` — anonymous-class-inheritance-resolution
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -382,7 +382,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `barrel-reexport` — barrel-reexport
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -393,7 +393,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `cross-package-call-untracked` — cross-package-call-untracked
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -404,7 +404,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `cross-package-method-resolution` — cross-package-method-resolution
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -415,7 +415,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `destructured-property-method-call` — destructured-property-method-call
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -426,7 +426,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `dynamic-constructor-dispatch` — dynamic-constructor-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -437,7 +437,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `dynamic-require-resolution` — dynamic-require-resolution
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -448,7 +448,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `framework-decorator-dispatch` — framework-decorator-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                              |
 | ------------ | ------------------------------------------------------------------ |
@@ -459,7 +459,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `framework-lifecycle-dispatch` — framework-lifecycle-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                              |
 | ------------ | ------------------------------------------------------------------ |
@@ -470,7 +470,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `framework-lifecycle-override` — framework-lifecycle-override
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                              |
 | ------------ | ------------------------------------------------------------------ |
@@ -481,7 +481,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `generic-type-erasure` — generic-type-erasure
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -492,7 +492,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `inherited-method-call` — inherited-method-call
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -503,7 +503,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `interface-polymorphic-dispatch` — interface-polymorphic-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -514,7 +514,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `intra-class-method-call` — intra-class-method-call
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                         |
 | ------------ | ------------------------------------------------------------- |
@@ -525,7 +525,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `method-call-in-callback-unresolved` — method-call-in-callback-unresolved
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -536,7 +536,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `method-call-on-typed-receiver` — method-call-on-typed-receiver
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -547,7 +547,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `polymorphic-interface-dispatch` — polymorphic-interface-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -558,7 +558,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `stored-callback-via-object-property` — stored-callback-via-object-property
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                                     |
 | ------------ | ------------------------------------------------------------------------- |
@@ -569,7 +569,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `tsconfig-path-alias` — tsconfig-path-alias
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -580,7 +580,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `tsconfig-paths-not-resolved` — tsconfig-paths-not-resolved
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -591,7 +591,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `typed-field-method-dispatch` — typed-field-method-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                             |
 | ------------ | ----------------------------------------------------------------- |
@@ -602,7 +602,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `unindexed-caller-files` — unindexed-caller-files
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -613,7 +613,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `aliased-import-method-dispatch` — aliased-import-method-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                                |
 | ------------ | -------------------------------------------------------------------- |
@@ -624,7 +624,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `angular-framework-lifecycle-dispatch` — angular-framework-lifecycle-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -635,7 +635,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `angular-generated-instruction-call` — angular-generated-instruction-call
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                                     |
 | ------------ | ------------------------------------------------------------------------- |
@@ -646,7 +646,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `any-typed-receiver-method-call` — any-typed-receiver-method-call
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -657,7 +657,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `compiler-generated-dynamic-dispatch` — compiler-generated-dynamic-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                                      |
 | ------------ | -------------------------------------------------------------------------- |
@@ -668,7 +668,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `cross-file-import-resolution` — cross-file-import-resolution
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -679,7 +679,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `cross-package-registry-gap` — cross-package-registry-gap
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                            |
 | ------------ | ---------------------------------------------------------------- |
@@ -690,7 +690,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `dependency-injection-type-resolution` — dependency-injection-type-resolution
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                                      |
 | ------------ | -------------------------------------------------------------------------- |
@@ -701,7 +701,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `dynamic-cast-structural-type-dispatch` — dynamic-cast-structural-type-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                                       |
 | ------------ | --------------------------------------------------------------------------- |
@@ -712,7 +712,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `external-framework-interface-dispatch` — external-framework-interface-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -723,7 +723,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `getter-property-access` — getter-property-access
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -734,7 +734,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `higher-order-function-callback` — higher-order-function-callback
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                                |
 | ------------ | -------------------------------------------------------------------- |
@@ -745,7 +745,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `import-resolution-missed` — import-resolution-missed
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                          |
 | ------------ | -------------------------------------------------------------- |
@@ -756,7 +756,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `instance-method-call-unresolved` — instance-method-call-unresolved
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -767,7 +767,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `instance-method-dispatch` — instance-method-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -778,7 +778,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `interface-method-dispatch` — interface-method-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -789,7 +789,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `missed-named-import-call` — missed-named-import-call
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -800,7 +800,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `property-getter-dispatch` — property-getter-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                          |
 | ------------ | -------------------------------------------------------------- |
@@ -811,7 +811,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `singleton-instance-method-call` — singleton-instance-method-call
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -822,7 +822,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `static-method-resolution` — static-method-resolution
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                          |
 | ------------ | -------------------------------------------------------------- |
@@ -833,7 +833,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `string-keyed-dispatch` — string-keyed-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                        |
 | ------------ | ------------------------------------------------------------ |
@@ -844,7 +844,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `type-based-method-dispatch` — type-based-method-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                            |
 | ------------ | ---------------------------------------------------------------- |
@@ -855,7 +855,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `anonymous-function-in-object-or-chain` — anonymous-function-in-object-or-chain
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -866,7 +866,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `builtin-higher-order-callback` — builtin-higher-order-callback
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -877,7 +877,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `constructor-instance-method-resolution` — constructor-instance-method-resolution
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                                        |
 | ------------ | ---------------------------------------------------------------------------- |
@@ -888,7 +888,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `cross-package-call` — cross-package-call
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -899,7 +899,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `dynamic-or-untyped-property-access` — dynamic-or-untyped-property-access
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                                    |
 | ------------ | ------------------------------------------------------------------------ |
@@ -910,7 +910,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `framework-command-builder-callback` — framework-command-builder-callback
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                                    |
 | ------------ | ------------------------------------------------------------------------ |
@@ -921,7 +921,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `framework-lifecycle-handler` — framework-lifecycle-handler
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                             |
 | ------------ | ----------------------------------------------------------------- |
@@ -932,7 +932,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `getter-accessor-not-tracked` — getter-accessor-not-tracked
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                             |
 | ------------ | ----------------------------------------------------------------- |
@@ -943,7 +943,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `import-resolution-miss` — import-resolution-miss
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -954,7 +954,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `inherited-method-dispatch` — inherited-method-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -965,7 +965,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `inherited-static-method-dispatch` — inherited-static-method-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -976,7 +976,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `inline-callback` — inline-callback
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                 |
 | ------------ | ----------------------------------------------------- |
@@ -987,7 +987,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `interface-dispatch` — interface-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -998,7 +998,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `jsx-mdx-component-usage` — jsx-mdx-component-usage
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                         |
 | ------------ | ------------------------------------------------------------- |
@@ -1009,7 +1009,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `method-call-on-callback-parameter` — method-call-on-callback-parameter
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -1020,7 +1020,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `method-call-on-typed-instance` — method-call-on-typed-instance
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                                |
 | ------------ | -------------------------------------------------------------------- |
@@ -1031,7 +1031,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `method-call-unresolved` — method-call-unresolved
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                                           |
 | ------------ | ------------------------------------------------------------------------------- |
@@ -1042,7 +1042,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `method-chain-return-type-resolution` — method-chain-return-type-resolution
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -1053,7 +1053,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `static-method-call-unresolved` — static-method-call-unresolved
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -1064,7 +1064,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `static-method-call` — static-method-call
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -1075,7 +1075,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `test-file-callers-missed` — test-file-callers-missed
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                          |
 | ------------ | -------------------------------------------------------------- |
@@ -1086,7 +1086,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `type-cast-dispatch` — type-cast-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                    |
 | ------------ | -------------------------------------------------------- |
@@ -1097,7 +1097,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `type-cast-receiver` — type-cast-receiver
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                    |
 | ------------ | -------------------------------------------------------- |
@@ -1108,7 +1108,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `unindexed-callers` — unindexed-callers
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -1119,7 +1119,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `bundler-module-path-substitution` — bundler-module-path-substitution
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                                  |
 | ------------ | ---------------------------------------------------------------------- |
@@ -1130,7 +1130,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `bundler-module-substitution` — bundler-module-substitution
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                             |
 | ------------ | ----------------------------------------------------------------- |
@@ -1141,7 +1141,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `callback-stored-in-dictionary` — callback-stored-in-dictionary
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -1152,7 +1152,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `computed-property-method-caller` — computed-property-method-caller
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                                 |
 | ------------ | --------------------------------------------------------------------- |
@@ -1163,7 +1163,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `const-arrow-function-export` — const-arrow-function-export
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -1174,7 +1174,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `cross-package-import-resolution` — cross-package-import-resolution
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -1185,7 +1185,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `cross-package-workspace-import` — cross-package-workspace-import
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -1196,7 +1196,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `dynamic-class-instantiation` — dynamic-class-instantiation
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -1207,7 +1207,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `dynamic-runtime-injection` — dynamic-runtime-injection
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                           |
 | ------------ | --------------------------------------------------------------- |
@@ -1218,7 +1218,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `getter-access-not-tracked` — getter-access-not-tracked
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -1229,7 +1229,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `iife-not-tracked` — iife-not-tracked
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -1240,7 +1240,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `indirect-function-reference` — indirect-function-reference
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -1251,7 +1251,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `namespace-reexport-member-access` — namespace-reexport-member-access
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -1262,7 +1262,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `private-class-field-method` — private-class-field-method
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                            |
 | ------------ | ---------------------------------------------------------------- |
@@ -1273,7 +1273,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `private-field-method-resolution` — private-field-method-resolution
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                                                  |
 | ------------ | ---------------------------------------------------------------------- |
@@ -1284,7 +1284,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `proxy-dispatch` — proxy-dispatch
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -1295,7 +1295,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `test-file-exclusion` — test-file-exclusion
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -1306,7 +1306,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `tsconfig-paths-import-resolution` — tsconfig-paths-import-resolution
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -1317,7 +1317,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `unindexed-script-caller` — unindexed-script-caller
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -1328,7 +1328,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `unresolved-import-caller` — unresolved-import-caller
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |
@@ -1339,7 +1339,7 @@ Proposed by triage-curator investigator — fill in before enabling.
 
 ## `unresolved-instance-method-call` — unresolved-instance-method-call
 
-Proposed by triage-curator investigator — fill in before enabling.
+Proposed by plan investigator — fill in before enabling.
 
 | Field        | Value                                   |
 | ------------ | --------------------------------------- |

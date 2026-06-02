@@ -19,11 +19,12 @@
  * Allowlist below names the few sites that are contractually permitted to
  * call a raw writer against the registry: `atomic_update_registry` itself
  * (where the wrapping is legal under the lock) and the upcoming
- * fix-sequencer reconciler (TASK-190.18.3). The curator's
- * `apply_proposals.ts` upsert + link paths intentionally do NOT appear —
- * those now route through `atomic_update_registry`.
+ * fix-sequencer reconciler (TASK-190.18.3). Every other site reaches the
+ * registry through `atomic_update_registry`.
  */
 import * as fs from "node:fs";
+import * as fsp from "node:fs/promises";
+import * as os from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as ts from "typescript";
@@ -56,12 +57,11 @@ const ALLOWED_REGISTRY_WRITERS: ReadonlySet<string> = new Set([
  * Files allowed to call `serialize_known_issues_registry_json` directly. The
  * function exists to produce the registry's on-disk bytes; using it outside
  * an `atomic_update_registry` mutator closure means somebody is computing
- * those bytes and writing them without the lock. The only legitimate callers
- * are the curator's apply path (whose serializer calls are inside the
- * mutator returned to `atomic_update_registry`) and the future reconciler.
+ * those bytes and writing them without the lock. The only legitimate caller
+ * is the future reconciler, whose serializer calls are inside the mutator
+ * returned to `atomic_update_registry`.
  */
 const ALLOWED_SERIALIZER_CALLERS: ReadonlySet<string> = new Set([
-  ".claude/skills/triage-curator/src/apply/apply_proposals.ts",
   ".claude/skills/fix-sequencer/scripts/reconcile_registry_with_completed_nodes.ts",
 ]);
 
@@ -317,20 +317,18 @@ describe("registry-writer boundary (AST scan over the workspace)", () => {
     // because the live workspace contains no real violations. This control
     // writes a known-bad file to a temp dir and asserts the scanner returns
     // at least one hit of each kind.
-    const fsp = await import("node:fs/promises");
-    const os = await import("node:os");
     const tmp = await fsp.mkdtemp(path.join(os.tmpdir(), "registry-scan-control-"));
     try {
       const synthetic = path.join(tmp, "bad_writer.ts");
       await fsp.writeFile(
         synthetic,
         [
-          'import { atomic_write_file } from "@ariadnejs/skill-fs";',
-          'import { serialize_known_issues_registry_json } from "@ariadnejs/types";',
+          "import { atomic_write_file } from \"@ariadnejs/skill-fs\";",
+          "import { serialize_known_issues_registry_json } from \"@ariadnejs/types\";",
           "async function go(reg: KnownIssue[]) {",
-          '  await atomic_write_file("/tmp/registry.json", "{}");',
+          "  await atomic_write_file(\"/tmp/registry.json\", \"{}\");",
           "  const wire = serialize_known_issues_registry_json(reg);",
-          '  await atomic_write_file("/tmp/other.json", wire);',
+          "  await atomic_write_file(\"/tmp/other.json\", wire);",
           "}",
           "",
         ].join("\n"),

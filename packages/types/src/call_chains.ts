@@ -105,7 +105,7 @@ export type ResolutionFailureStage =
  * classifier verdict or failure category. Values read as "the resolver got
  * as far as X and observed Y," not as "this is an F-coded failure mode."
  *
- * Downstream classifiers (in `.claude/skills/triage-entrypoints`) compose
+ * Downstream classifiers (in `.claude/skills/triage`) compose
  * these observations with syntactic facts to produce taxonomic labels; the
  * enum itself stays taxonomy-free. New resolver paths must extend this enum
  * so classifiers can pattern-match exhaustively.
@@ -192,7 +192,7 @@ export type ReceiverKind =
  *
  * These are observational facts about the AST. They are not classifier outputs
  * and do not encode any taxonomy; classifiers (in
- * `.claude/skills/triage-entrypoints`) compose them with other signals to
+ * `.claude/skills/triage`) compose them with other signals to
  * produce labels.
  */
 export interface CallSiteSyntax {

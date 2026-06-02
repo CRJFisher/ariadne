@@ -48,7 +48,7 @@ importers:
         specifier: ^6.0.2
         version: 6.0.2
 
-  .claude/skills/triage-curator:
+  .claude/skills/plan:
     dependencies:
       '@ariadnejs/skill-fs':
         specifier: workspace:*
@@ -73,7 +73,7 @@ importers:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@24.10.9)
 
-  .claude/skills/triage-entrypoints:
+  .claude/skills/triage:
     dependencies:
       '@ariadnejs/core':
         specifier: workspace:*
@@ -5353,7 +5353,7 @@ snapshots:
       protocol-buffers: 4.2.0
       pump: 3.0.3
       pumpify: 2.0.1
-      semver: 7.7.3
+      semver: 7.8.1
       showdown: 1.9.1
       stream-template: 0.0.10
       streaming-json-stringify: 3.1.0
@@ -6414,7 +6414,7 @@ snapshots:
       progress: 2.0.3
       reinterval: 1.1.0
       retimer: 3.0.0
-      semver: 7.7.3
+      semver: 7.8.1
       subarg: 1.0.0
       timestring: 6.0.0
 
@@ -10400,7 +10400,7 @@ snapshots:
       is-yarn-global: 0.3.0
       latest-version: 5.1.0
       pupa: 2.1.1
-      semver: 7.7.3
+      semver: 7.8.1
       semver-diff: 3.1.1
       xdg-basedir: 4.0.0
 

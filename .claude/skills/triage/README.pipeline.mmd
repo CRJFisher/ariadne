@@ -1,0 +1,18 @@
+flowchart TB
+  classDef artifact   fill:#e8f5e9,stroke:#2e7d32,stroke-width:1.5px,color:#1b5e20
+  classDef store      fill:#ede7f6,stroke:#4527a0,stroke-width:1.8px,color:#311b92
+  classDef regwrite   fill:#fecaca,stroke:#991b1b,stroke-width:2.5px,color:#7f1d1d
+
+  D1[/"analysis_output/&lt;p&gt;/<br/>triage_results/&lt;run-id&gt;.json<br/><br/><b>W</b> triage<br/><b>R</b> plan"/]:::artifact
+  D2[/"impact_report.json  ·  backlog tasks<br/>(touched_files · cluster_hint)<br/><br/><b>W</b> plan<br/><b>R</b> fix-sequencer"/]:::artifact
+  D3[("~/.ariadne/fix-sequencer/<br/>graph.json  ·  state.jsonl  ·  calibration.jsonl<br/><br/><b>W</b> fix-sequencer (enqueue + worker)<br/><b>R</b> fix-sequencer (worker + reconciler)")]:::store
+  D4[("target repo git log<br/>fix(task_id): commits<br/><br/><b>W</b> fix-sequencer worker<br/><b>R</b> fix-sequencer reconciler  (next run)")]:::store
+  REG[("known_issues/registry.json<br/><b>shared mutable surface</b><br/><br/><b>W</b> plan (wip)<br/><b>W</b> fix-sequencer reconciler (wip → fixed)<br/><b>R</b> triage  (next run · filter)")]:::regwrite
+
+  D1 --> D2 --> D3 --> D4
+
+  D2 -. "wip writes" .-> REG
+  D4 -. "wip → fixed" .-> REG
+  REG -. "next run" .-> D1
+
+  linkStyle default stroke:#94a3b8,stroke-width:1.8px

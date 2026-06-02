@@ -105,7 +105,7 @@ export interface MethodCallReference extends BaseReference {
    * classifier label. Populated when the receiver AST shape is determinable
    * at index time, and copied onto the emitted `CallReference` during call
    * resolution. Consumers (including the auto-classifier in
-   * `.claude/skills/triage-entrypoints`) compose it with `resolution_failure`
+   * `.claude/skills/triage`) compose it with `resolution_failure`
    * and other signals; core stores only the observation.
    */
   readonly call_site_syntax?: CallSiteSyntax;

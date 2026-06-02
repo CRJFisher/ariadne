@@ -40,10 +40,10 @@ through the LLM investigator.
 Upgrade steps for projects with pre-run-namespaced state:
 
 - Stale "active" runs: clear the `LATEST` pointer with
-  `.claude/skills/triage-entrypoints/scripts/abandon_run.ts` or by deleting
+  `.claude/skills/triage/scripts/abandon_run.ts` or by deleting
   the `LATEST` file.
 - Pre-run-namespaced state: run
-  `.claude/skills/triage-entrypoints/scripts/migrate_legacy_state.ts --project <name>`
+  `.claude/skills/triage/scripts/migrate_legacy_state.ts --project <name>`
   (or `--purge` to drop history).
 
 The persistence-cache schema version (`packages/core/src/persistence/cache_manifest.ts`)

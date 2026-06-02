@@ -8,7 +8,7 @@ Take **RADICAL-SIMPLIFICATION (Proposal 4)** as the spine: collapse the pipeline
 
 ## Current architecture in one breath
 
-Three skills under `.claude/skills/` chain detect → curate → (planned) fix, joined only by filesystem strings (`run-id = <short-commit>-<iso-ts>`) and convention-only `~/.ariadne` paths. `triage-entrypoints` traces the call graph (twice — `detect_entrypoints.ts` then `prepare_triage.ts` re-trace from live HEAD), classifies known FPs against `known_issues/registry.json`, runs an LLM investigator pool, and publishes a v4 `triage_results` artifact; `triage-curator` sweeps those runs, registers recurring FPs as `wip` registry rows, authors classifiers + backlog tasks, and manages a `wip→permanent(→fixed)` lifecycle. The entire fix-delivery half (`fix-sequencer` skill + reconciler + the `fixed_*` storage fields) **does not exist on disk** — verified absent — so the registry only ever grows.
+Three skills under `.claude/skills/` chain detect → curate → (planned) fix, joined only by filesystem strings (`run-id = <short-commit>-<iso-ts>`) and convention-only `~/.ariadne` paths. `triage` traces the call graph (twice — `detect_entrypoints.ts` then `prepare_triage.ts` re-trace from live HEAD), classifies known FPs against `known_issues/registry.json`, runs an LLM investigator pool, and publishes a v4 `triage_results` artifact; `plan` sweeps those runs, registers recurring FPs as `wip` registry rows, authors classifiers + backlog tasks, and manages a `wip→permanent(→fixed)` lifecycle. The entire fix-delivery half (`fix-sequencer` skill + reconciler + the `fixed_*` storage fields) **does not exist on disk** — verified absent — so the registry only ever grows.
 
 ## The core problems
 
@@ -37,14 +37,14 @@ Ranked by leverage on the top intention (drive down FP entry points by fixing re
 Re-cut on the two memory horizons (Proposal 2), but **without** the high-blast-radius rename theatrics judges rejected:
 
 ```
-before:  triage-entrypoints  +  triage-curator  +  fix-sequencer(absent)
+before:  triage  +  plan  +  fix-sequencer(absent)
 after:   triage (per-run, run-id keyed)  +  heal (cross-run, registry keyed)
 ```
 
 - **`triage`** = one `analyze` pass (load+trace **once**, classify inline, emit work queue — kills the second call-graph trace and the `include_tests` divergence) → investigate → publish. Novel FPs go straight into the run artifact (the dead absorb/coordinator cluster is deleted; dedupe moves to the `heal` sweep where the cross-run registry actually lives).
 - **`heal`** = sweep → author classifiers + backlog tasks → **reconcile**. The reconciler is a ~80-line step, **not a skill**: scan the target repo's `git log` for the Conventional-Commits scope matching `rule.backlog_task` (the commit hook already guarantees this link), confirm the row's member call-sites are now reachable in the freshly-built call graph (distinguish "fixed" from merely "deleted"), and flip `wip→fixed` via `atomic_update_registry`. Fix ordering degrades to `ORDER BY observed_count DESC` (counts up to 219 are a strong proxy; clustering is empty on this corpus).
 
-> Conflict resolution — reconciler placement: Proposals 4/5 put the reconciler inside detection/finalize, which **violates** the write-boundary contract (`triage-entrypoints` must never write the registry, per `classifier-lifecycle.md`). It lives in **`heal`**, which already owns all registry writes. This keeps the lifecycle contract intact while still being one process.
+> Conflict resolution — reconciler placement: Proposals 4/5 put the reconciler inside detection/finalize, which **violates** the write-boundary contract (`triage` must never write the registry, per `classifier-lifecycle.md`). It lives in **`heal`**, which already owns all registry writes. This keeps the lifecycle contract intact while still being one process.
 
 ### Naming / IA — adopt the cheap wins only
 
@@ -61,7 +61,7 @@ after:   triage (per-run, run-id keyed)  +  heal (cross-run, registry keyed)
 ## What gets deleted
 
 - **Entire planned fix-sequencer** scope: union-find/Jaccard clustering, Fibonacci/risk scoring, Pareto frontier, `graph.json`/`state.jsonl`/`calibration.jsonl` 3-store DAG, worker concurrency (`task-190.18.4–.12`). Replaced by the ~80-line `heal` reconciler + `observed_count DESC` ordering.
-- **Entire absorb/coordinator cluster** in `triage-entrypoints/src/absorb/` (`absorb_verdict.ts` + coordinator decision/apply/prompt/log + replay-guard) — zero production callers.
+- **Entire absorb/coordinator cluster** in `triage/src/absorb/` (`absorb_verdict.ts` + coordinator decision/apply/prompt/log + replay-guard) — zero production callers.
 - **Second call-graph pass:** `detect_entrypoints.ts` as a separate stage + `detect_entrypoints/*.json` + `warn_if_analysis_stale` + the ~200-line bespoke streaming-JSON reader (no large artifact remains after the merge).
 - **Legacy binary `TriageEntryResult`** + the binary section of `diagnosis_routes.md`; one of the two duplicate published shapes; one of the two `=4` constants; duplicate `relativize()`/`describe()`/`MemberEvidence`.
 - **`LATEST` pointer** (a third write idiom) + the curator sentinel files — run selection collapses to `manifest.status`; idempotency moves into the bump function.

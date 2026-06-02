@@ -215,7 +215,7 @@ export default [
     }
   },
   {
-    files: [".claude/skills/triage-entrypoints/**/*.ts"],
+    files: [".claude/skills/triage/**/*.ts"],
     languageOptions: {
       globals: {
         // Node.js globals for analysis scripts
@@ -236,9 +236,9 @@ export default [
       "packages/*/node_modules/**",
       "**/tests/fixtures/**/*.js", // Ignore JavaScript fixture files
       "**/.claude/hooks/**", // Ignore Claude hook files
-      "**/.claude/skills/triage-entrypoints/templates/**", // Ignore templates
-      "**/.claude/skills/triage-entrypoints/reference/**", // Ignore reference docs
-      "**/.claude/skills/triage-entrypoints/examples/**", // Ignore examples
+      "**/.claude/skills/triage/templates/**", // Ignore templates
+      "**/.claude/skills/triage/reference/**", // Ignore reference docs
+      "**/.claude/skills/triage/examples/**", // Ignore examples
       "**/.clinic/**", // Ignore clinic profiler output
       "test_*.ts", // Ignore root-level test/debug scripts
       "debug_*.ts" // Ignore root-level debug scripts

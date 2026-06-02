@@ -2,9 +2,9 @@
  * `@ariadnejs/skill-protocol` — the shared data contract for the `triage` → `plan`
  * self-healing seam.
  *
- * The producer (the triage-entrypoints skill's finalize step) writes one
+ * The producer (the triage skill's finalize step) writes one
  * `analysis_output/<project>/triage_results/<run-id>.json` per run; the consumer
- * (the triage-curator skill) reads them back. This package owns the pieces both
+ * (the plan skill) reads them back. This package owns the pieces both
  * sides must agree on, declared and exported in this order:
  *
  *   - `run_id` — the `<commit>-<timestamp>` grammar that joins a run across skills.

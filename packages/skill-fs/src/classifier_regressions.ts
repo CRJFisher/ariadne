@@ -1,7 +1,7 @@
 /**
  * Per-rule rollup of `fp-classifier-regression` verdicts.
  *
- * At finalize, `triage-entrypoints` reads every per-entry verdict file in
+ * At finalize, `triage` reads every per-entry verdict file in
  * `results/` and feeds the `fp-classifier-regression` ones through
  * `aggregate_classifier_regressions`, which groups them by
  * `should_have_matched_rule_id` into the `classifier_regressions[]` slice of

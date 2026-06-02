@@ -63,7 +63,7 @@ describe("known_issues_registry_path", () => {
     const p = known_issues_registry_path();
     expect(
       p.endsWith(
-        path.join(".claude", "skills", "triage-entrypoints", "known_issues", "registry.json"),
+        path.join(".claude", "skills", "triage", "known_issues", "registry.json"),
       ),
     ).toBe(true);
     expect(fs.existsSync(p)).toBe(true);

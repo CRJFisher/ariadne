@@ -83,7 +83,7 @@ function main(): void {
     "packages/types": "packages/types",
     "packages/core": "packages/core",
     "packages/mcp": "packages/mcp",
-    ".claude/skills/triage-entrypoints": ".claude/skills/triage-entrypoints",
+    ".claude/skills/triage": ".claude/skills/triage",
   };
 
   for (const area of changed.modified_areas) {

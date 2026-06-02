@@ -1,5 +1,5 @@
 /**
- * Wire types for the impact report the triage-curator emits and the
+ * Wire types for the impact report the plan emits and the
  * fix-sequencer consumes. The curator produces `impact_report.json` at the
  * end of a curation sweep; the fix-sequencer reads it off disk during its
  * cluster + score stage.

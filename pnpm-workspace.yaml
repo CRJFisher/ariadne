@@ -1,7 +1,7 @@
 packages:
   - "packages/*"
-  - ".claude/skills/triage-entrypoints"
-  - ".claude/skills/triage-curator"
+  - ".claude/skills/triage"
+  - ".claude/skills/plan"
 allowBuilds:
   es5-ext: false
   esbuild: true

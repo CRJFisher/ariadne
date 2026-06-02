@@ -31,6 +31,9 @@ const TRIAGE_RESULTS_SUBDIR = "triage_results";
  * Base state directory for the triage pipeline. Defaults to
  * `~/.ariadne/triage-entrypoints`; overridable for test isolation via
  * `ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE`. Read lazily.
+ *
+ * `triage-entrypoints` is the fixed on-disk storage namespace, independent of
+ * the skill name.
  */
 function state_dir(): string {
   return (
@@ -118,7 +121,7 @@ export function known_issues_registry_path(): string {
     find_repo_root(),
     ".claude",
     "skills",
-    "triage-entrypoints",
+    "triage",
     "known_issues",
     "registry.json",
   );

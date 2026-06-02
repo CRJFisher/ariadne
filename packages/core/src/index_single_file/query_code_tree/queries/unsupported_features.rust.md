@@ -1,6 +1,6 @@
 # Unsupported features — rust
 
-Canonical list of known Ariadne failure modes that affect this language. Generated from `.claude/skills/triage-entrypoints/known_issues/registry.json` by `.claude/skills/triage-curator/scripts/render_unsupported_features.ts`. Do not edit by hand — edit the registry and re-render.
+Canonical list of known Ariadne failure modes that affect this language. Generated from `.claude/skills/triage/known_issues/registry.json` by `.claude/skills/plan/scripts/render_unsupported_features.ts`. Do not edit by hand — edit the registry and re-render.
 
 Entries: 11
 

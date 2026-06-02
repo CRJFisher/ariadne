@@ -85,7 +85,7 @@ describe("validate_commit_message", () => {
 
   it("passes a non-Conventional-Commits message (we are not enforcing CC universally)", () => {
     const result = validate_commit_message(
-      "triage-curator: file remaining 87 gap subtasks\n",
+      "plan: file remaining 87 gap subtasks\n",
       with_tasks(),
     );
     expect(result).toEqual({ ok: true, reason: null });

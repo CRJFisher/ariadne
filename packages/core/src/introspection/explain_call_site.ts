@@ -12,7 +12,7 @@ import type { Project } from "../project/project";
  *
  * Strictly factual: mirrors the resolver's internal state at `(file, line)`
  * without any classifier taxonomy. Downstream classifiers (e.g. the
- * triage-entrypoints auto-classifier) compose these facts with other
+ * triage auto-classifier) compose these facts with other
  * signals to produce labels; no field here encodes a verdict.
  */
 export interface ExplainCallSiteResult {

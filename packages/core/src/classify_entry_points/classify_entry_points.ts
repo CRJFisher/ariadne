@@ -52,7 +52,7 @@ export class MissingBuiltinError extends Error {
       `Registry entry "${group_id}" references builtin classifier "${function_name}" ` +
         "but no implementation is registered in BUILTIN_CHECKS. The generated " +
         "barrel `packages/core/src/classify_entry_points/builtins/index.ts` is " +
-        "stale — re-run the triage-curator finalize step to regenerate it.",
+        "stale — re-run the plan finalize step to regenerate it.",
     );
     this.name = "MissingBuiltinError";
   }
