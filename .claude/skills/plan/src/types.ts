@@ -3,12 +3,6 @@ import type {
   KnownIssueLanguage,
 } from "@ariadnejs/types";
 
-/**
- * Static parent task under which signal-library gap sub-tasks are filed. One
- * per `signal_library_gap` an investigator emits.
- */
-export const SIGNAL_LIBRARY_GAP_PARENT_TASK_ID = "TASK-190.16";
-
 // ===== Triage results shape (read-only) =====
 //
 // The published `triage_results/<run-id>.json` wire contract is owned by
@@ -73,8 +67,8 @@ export type ClassifierSpecProposal =
 
 /**
  * Deficiency in Ariadne's **introspection / classifier DSL** that blocks the
- * investigator from expressing a precise classifier. Drafts a backlog sub-task
- * under the single static parent (`SIGNAL_LIBRARY_GAP_PARENT_TASK_ID`).
+ * investigator from expressing a precise classifier. Grounds a signal-library
+ * gap task in the plan engine's task-DB.
  */
 export interface SignalLibraryGap {
   /** Kebab-case identifiers of the signals the classifier would need. */
@@ -85,8 +79,8 @@ export interface SignalLibraryGap {
 
 /**
  * Deficiency in Ariadne's **resolver** that is the real root cause of the
- * dispatched `novel_issue`. Drafts a top-level backlog task, or attaches to
- * an existing one when `existing_task_id` is set.
+ * dispatched `novel_issue`. Grounds a top-level task in the plan engine's
+ * task-DB, or attaches to an existing one when `existing_task_id` is set.
  *
  * Required on every response that proposes a working classifier (`predicate`
  * or `builtin`): the classifier is a workaround; the bug is the real fix.
@@ -237,8 +231,8 @@ export interface InvestigateResponse {
   retargets_to: string | null;
   /**
    * Signal-library / classifier-DSL deficiency. Non-null ↔ `signals_needed`
-   * is non-empty. Proposed as a sub-task under
-   * `SIGNAL_LIBRARY_GAP_PARENT_TASK_ID`.
+   * is non-empty. Grounds a signal-library gap task in the plan engine's
+   * task-DB.
    */
   signal_library_gap: SignalLibraryGap | null;
   /**

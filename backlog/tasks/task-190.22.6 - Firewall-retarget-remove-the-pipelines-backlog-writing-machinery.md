@@ -47,3 +47,27 @@ priority: high
 - [ ] #4 SKILL.md Step-4 rewritten to 'write proposals to the task-DB'; only read-only `task_search`/`task_view` may remain (for dedup)
 - [ ] #5 `pnpm -r build && pnpm -r test` green; no dangling imports
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+
+## High-level summary
+
+**Intent.** Make `backlog/` exclusively user-operated by severing every path through which the `plan` skill writes the user's backlog. After the 190.22.5 strip, the actuator surface (`src/apply/*`, `link_ariadne_bug_tasks.ts`, the `created_task_ids.json` sidecar) is already gone, so AC#2 is largely satisfied at the code level; the remaining backlog-writing machinery is the registry-sweep MCP feed plus the backlog-coupled docstrings, types, and metadata.
+
+**Approach.**
+
+- **Strip the MCP feed.** Delete `scripts/propose_backlog_tasks.ts` (the CLI whose JSON output the main agent piped into `mcp__backlog__task_create`/`task_edit`) and the `propose_backlog_tasks` orchestration function plus its backlog-shaped proposal types (`TaskProposal`, `TaskUpdateProposal`, `ProposeBacklogTasksInput`, `ProposeBacklogTasksResult`). Retain the pure row-builders `render_task_title`/`render_task_body`/`render_task_labels` (+ the `render_classifier_for_body` helper) and export all three — they are reused by the deferred engine (190.22.10) and export adapter (190.22.11) to render `PlanTask` content. The file is renamed `git mv propose_backlog_tasks.ts → render_task.ts` (with its test) so the filename names its surviving responsibility.
+- **Drop the signal-gap backlog coupling.** Remove `SIGNAL_LIBRARY_GAP_PARENT_TASK_ID` from `types.ts` and its surfacing in `get_investigate_context.ts`; the `SignalLibraryGap` shape stays (it grounds a future `PlanTask`), only its backlog-parent coupling goes.
+- **`existing_task_id` left as a placeholder (deferred).** Retargeting `AriadneBug.existing_task_id` from a backlog `TASK-<N>` to a task-DB id is **not done in this task** — it is gated on first deciding the task-DB id format (see the follow-up to-do below). The field, its `/^TASK-…/` validation in `validate_investigate_responses.ts`, and the `get_investigate_context` authoring rule are left untouched as a placeholder. This is a read-side reference format only (it writes nothing), so leaving it does not breach the firewall.
+- **SKILL.md.** Drop `mcp__backlog__task_create`/`task_edit` from `allowed-tools` (keep read-only `task_search`); remove the `mcp__backlog__document_create` impact-report-posting block; rewrite the "Sweeping registry entries" section so proposals land in the task-DB (`~/.ariadne/plan/`) via the engine, not backlog.
+- **meta.json.** Remove the `backlog` write-artifact and `backlog-tasks` published-output entries so the skill's metadata no longer declares a backlog write.
+
+Read-only backlog dedup (`mcp__backlog__task_search`, frontmatter parse) is retained per 190.22.10. The strategist agent prompt's classifier-author→strategist rewrite stays out of scope (Phase 4). The structural AST enforcement is 190.22.7.
+
+## Follow-up to-do
+
+- [ ] **Define the task-DB id (`PlanTaskId`) format, then retarget `existing_task_id`.** Decide a clean, new id grammar for `PlanTaskId` (the contract in `@ariadnejs/skill-protocol` deliberately fixes none; minting is the store's concern — owned by TASK-190.22.8). Once defined, repurpose `AriadneBug.existing_task_id` to a task-DB id and replace the backlog-specific `/^TASK-…/` validation in `validate_investigate_responses.ts` with a check against the new grammar (preferring the clean new format over the legacy `TASK-N` one). Until then `existing_task_id` is a placeholder.
+
+<!-- SECTION:NOTES:END -->

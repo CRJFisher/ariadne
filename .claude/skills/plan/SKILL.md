@@ -3,7 +3,7 @@ name: plan
 description: Offline sweep that consumes the triage skill's v5 triage results, dispatches an investigator wave to author classifier and root-cause proposals for each novel issue, and emits those proposals plus on-demand impact and backlog reports. Planning-only — the deferred actuator applies proposals to the registry.
 argument-hint: "[--project <name>] [--last <n>] [--run <path>]"
 disable-model-invocation: true
-allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read, Write, Glob, Task(plan-strategist), mcp__backlog__task_create, mcp__backlog__task_search, mcp__backlog__task_edit
+allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read, Write, Glob, Task(plan-strategist), mcp__backlog__task_search
 ---
 
 # Plan
@@ -124,70 +124,20 @@ run's snapshot as `--prior` to highlight groups that first appeared since then.
 The report has four sections: top N by `observed_count`, per-language breakdown,
 per-project breakdown, and "new since prior snapshot". Every registry entry
 carries its accumulated `observed_count`, `observed_projects`, and
-`last_seen_run`.
+`last_seen_run`. The report prints to stdout (and `--out`) for the user to read;
+the pipeline never writes it into `backlog/`.
 
-### Posting the report to the backlog
+## Rendering task content for the task-DB
 
-After running `generate_impact_report.ts`, the main agent optionally posts the
-markdown to the backlog as a document for ongoing reference:
-
-```
-mcp__backlog__document_create({
-  title: "Self-repair impact report — <YYYY-MM-DD>",
-  content: <markdown from --out>,
-  tags: ["triage", "impact-report"],
-})
-```
-
-Post a fresh document each time rather than editing an existing one — old
-reports are useful as a historical record of where `novel_issue` pressure
-sat at a given point.
-
-## Sweeping registry entries without a linked backlog task (on demand)
-
-Registry entries minted by the novel-group scanner, or seeded `wip` entries
-that carry no `backlog_task`, are surfaced by the sweeper. It emits
-`mcp__backlog__task_create` proposals for each unlinked entry and flags linked
-entries whose body needs refreshing because `observed_count` has changed since
-the prior sweep.
-
-```bash
-node --import tsx .claude/skills/plan/scripts/propose_backlog_tasks.ts \
-  [--prior <json>] [--out <json>] [--snapshot <json>]
-```
-
-Output shape:
-
-```json
-{
-  "creates": [
-    {
-      "group_id": "novel:xxx",
-      "title": "[novel:xxx] …",
-      "description": "<markdown body with observed_count, examples, classifier spec, AC checklist>",
-      "labels": [
-        "triage",
-        "known-issue",
-        "novel:xxx",
-        "lang-typescript"
-      ]
-    }
-  ],
-  "updates": [
-    {
-      "group_id": "method-chain-dispatch",
-      "backlog_task": "TASK-900",
-      "description": "<refreshed body>"
-    }
-  ]
-}
-```
-
-For each `creates[]` entry the main agent calls `mcp__backlog__task_create`
-with the supplied fields. For each `updates[]` entry the main agent calls
-`mcp__backlog__task_edit` on the `backlog_task` with the new `description`.
-Writing the resolved task ids back onto the registry rows is the actuator's
-responsibility.
+Registry entries minted by the novel-group scanner, or seeded `wip` entries that
+carry no linked task, need task content rendered for the plan engine's task-DB
+at `~/.ariadne/plan/` — firewalled from the user's `backlog/`. The pure
+row-builders in `src/propose/render_task.ts` (`render_task_title`,
+`render_task_body`, `render_task_labels`) turn a registry entry into that
+content. The plan engine (TASK-190.22.10) renders these into `PlanTask` records;
+the user-invoked export adapter (TASK-190.22.11) reuses the same builders when
+promoting a DB task into `backlog/`. The sweep itself writes nothing to
+`backlog/`.
 
 ## Classifier lifecycle (write boundaries)
 

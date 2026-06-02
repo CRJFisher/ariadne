@@ -1,14 +1,10 @@
 /**
- * Build task-creation proposals for registry entries that do not yet have a
- * linked `backlog_task`. Closes the F5 gap from TASK-190.16.12: the curator
- * files Ariadne-bug tasks only when the investigator emits an `ariadne_bug`
- * proposal, so seed `wip` entries and any registry rows that pre-date the
- * Ariadne-bug flow have no linked task until this sweeper runs.
- *
- * The sweeper is pure: given a registry, it returns `TaskProposal[]` plus an
- * updates list for entries whose `observed_count` has changed since their last
- * task-filing. Persistence (calling `mcp__backlog__task_create` /
- * `mcp__backlog__task_edit`) is the main agent's responsibility.
+ * Pure renderers that turn a known-issue registry entry into task content —
+ * a title, a markdown body, and a label set. They are deterministic feedstock:
+ * the plan engine (190.22.10) renders these into `PlanTask` records in the
+ * task-DB, and the user-invoked export adapter (190.22.11) reuses the same
+ * builders when promoting a DB task into the user's `backlog/`. The renderers
+ * persist nothing themselves.
  */
 
 import type {
@@ -16,79 +12,11 @@ import type {
   KnownIssue as SelfRepairKnownIssue,
 } from "@ariadnejs/types";
 
-/**
- * JSON shape consumed by the main agent's `mcp__backlog__task_create` call. One
- * proposal per registry entry that needs a new task filed.
- */
-export interface TaskProposal {
-  group_id: string;
-  title: string;
-  description: string;
-  labels: string[];
-}
-
-/**
- * JSON shape consumed by the main agent's `mcp__backlog__task_edit` call. One
- * update per entry whose linked task body needs refreshing (observed_count
- * changed since the prior snapshot).
- */
-export interface TaskUpdateProposal {
-  group_id: string;
-  backlog_task: string;
-  description: string;
-}
-
-export interface ProposeBacklogTasksInput {
-  registry: SelfRepairKnownIssue[];
-  /**
-   * Prior `{ [group_id]: observed_count }` snapshot. Entries whose current
-   * `observed_count` matches prior are skipped from `updates`. Absent entries
-   * (first sweep) default to 0, so every entry with observations triggers an
-   * update.
-   */
-  prior_counts: Record<string, number>;
-}
-
-export interface ProposeBacklogTasksResult {
-  creates: TaskProposal[];
-  updates: TaskUpdateProposal[];
-}
-
-export function propose_backlog_tasks(
-  input: ProposeBacklogTasksInput,
-): ProposeBacklogTasksResult {
-  const creates: TaskProposal[] = [];
-  const updates: TaskUpdateProposal[] = [];
-  for (const issue of input.registry) {
-    if (issue.status === "fixed") continue;
-    const body = render_task_body(issue);
-    if (issue.backlog_task === undefined || issue.backlog_task.length === 0) {
-      creates.push({
-        group_id: issue.group_id,
-        title: render_task_title(issue),
-        description: body,
-        labels: render_task_labels(issue),
-      });
-      continue;
-    }
-    const current = issue.observed_count ?? 0;
-    const prior = input.prior_counts[issue.group_id] ?? 0;
-    if (current !== prior) {
-      updates.push({
-        group_id: issue.group_id,
-        backlog_task: issue.backlog_task,
-        description: body,
-      });
-    }
-  }
-  return { creates, updates };
-}
-
-function render_task_title(issue: SelfRepairKnownIssue): string {
+export function render_task_title(issue: SelfRepairKnownIssue): string {
   return `[${issue.group_id}] ${issue.title}`;
 }
 
-function render_task_labels(issue: SelfRepairKnownIssue): string[] {
+export function render_task_labels(issue: SelfRepairKnownIssue): string[] {
   const labels = ["triage", "known-issue", issue.group_id];
   for (const lang of issue.languages) labels.push(`lang-${lang}`);
   return labels;

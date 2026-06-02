@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import type { KnownIssue as SelfRepairKnownIssue } from "@ariadnejs/types";
 import {
-  propose_backlog_tasks,
   render_task_body,
-} from "./propose_backlog_tasks.js";
+  render_task_labels,
+  render_task_title,
+} from "./render_task.js";
 
 function issue(overrides: Partial<SelfRepairKnownIssue> = {}): SelfRepairKnownIssue {
   return {
@@ -19,79 +20,23 @@ function issue(overrides: Partial<SelfRepairKnownIssue> = {}): SelfRepairKnownIs
   };
 }
 
-describe("propose_backlog_tasks", () => {
-  it("proposes a task for each unlinked entry", () => {
-    const result = propose_backlog_tasks({
-      registry: [issue()],
-      prior_counts: {},
-    });
-    expect(result.creates.length).toBe(1);
-    expect(result.updates).toEqual([]);
-    const proposal = result.creates[0];
-    expect(proposal.group_id).toBe("method-chain-dispatch");
-    expect(proposal.title).toBe(
+describe("render_task_title", () => {
+  it("prefixes the title with the group id", () => {
+    expect(render_task_title(issue())).toBe(
       "[method-chain-dispatch] Method call on call-chain receiver unresolved",
     );
-    expect(proposal.labels).toEqual([
+  });
+});
+
+describe("render_task_labels", () => {
+  it("emits triage, known-issue, the group id, and one lang- label per language", () => {
+    expect(render_task_labels(issue({ languages: ["typescript", "python"] }))).toEqual([
       "triage",
       "known-issue",
       "method-chain-dispatch",
       "lang-typescript",
+      "lang-python",
     ]);
-  });
-
-  it("skips entries that already have a backlog_task when observed_count is unchanged", () => {
-    const result = propose_backlog_tasks({
-      registry: [
-        issue({
-          backlog_task: "TASK-900",
-          observed_count: 7,
-        }),
-      ],
-      prior_counts: { "method-chain-dispatch": 7 },
-    });
-    expect(result.creates).toEqual([]);
-    expect(result.updates).toEqual([]);
-  });
-
-  it("emits an update when observed_count differs from the prior snapshot", () => {
-    const result = propose_backlog_tasks({
-      registry: [
-        issue({
-          backlog_task: "TASK-900",
-          observed_count: 9,
-          observed_projects: ["webpack"],
-        }),
-      ],
-      prior_counts: { "method-chain-dispatch": 7 },
-    });
-    expect(result.creates).toEqual([]);
-    expect(result.updates.length).toBe(1);
-    expect(result.updates[0].group_id).toBe("method-chain-dispatch");
-    expect(result.updates[0].backlog_task).toBe("TASK-900");
-    expect(result.updates[0].description).toContain("Observed count: **9**");
-  });
-
-  it("skips entries with status 'fixed'", () => {
-    const result = propose_backlog_tasks({
-      registry: [issue({ status: "fixed" })],
-      prior_counts: {},
-    });
-    expect(result.creates).toEqual([]);
-    expect(result.updates).toEqual([]);
-  });
-
-  it("treats first sweep (no prior) as equivalent to prior=0 for unseen groups", () => {
-    const result = propose_backlog_tasks({
-      registry: [
-        issue({
-          backlog_task: "TASK-900",
-          observed_count: 3,
-        }),
-      ],
-      prior_counts: {},
-    });
-    expect(result.updates.length).toBe(1);
   });
 });
 

@@ -28,7 +28,6 @@ import {
   type NovelIssue,
   type TriageResultsFile,
 } from "../src/types.js";
-import { SIGNAL_LIBRARY_GAP_PARENT_TASK_ID } from "../src/types.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const THIS_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -117,7 +116,6 @@ async function main(): Promise<void> {
     writable_paths,
     signal_check_ops: SIGNAL_CHECK_OPS,
     ariadne_fault_areas: ARIADNE_FAULT_AREAS,
-    signal_library_gap_parent_task_id: SIGNAL_LIBRARY_GAP_PARENT_TASK_ID,
     authoring_rules: {
       signal_check_ops: SIGNAL_CHECK_OPS,
       ariadne_fault_areas: ARIADNE_FAULT_AREAS,
