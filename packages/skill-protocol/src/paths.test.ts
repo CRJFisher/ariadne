@@ -8,14 +8,25 @@ import {
   triage_results_path,
   parse_triage_results_path,
   known_issues_registry_path,
+  plan_tasks_dir,
+  plan_task_path,
+  plan_sweeps_dir,
 } from "./paths.js";
 import { parse_run_id } from "./run_id.js";
 
-// vi.hoisted runs before the `import` statements, so the override is set
-// before any path function reads it. Proves the lazy env read honors it.
+// vi.hoisted runs before the `import` statements, so the overrides are set
+// before any path function reads them. Proves the lazy env read honors them.
+// The triage and plan bases are siblings under `~/.ariadne/`, each with its own
+// override.
 const TMP_BASE = vi.hoisted(() => {
   const tmp = `${process.env.TMPDIR ?? "/tmp"}/ariadne-test-skill-protocol-paths-${process.pid}`;
   process.env.ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE = tmp;
+  return tmp;
+});
+
+const PLAN_BASE = vi.hoisted(() => {
+  const tmp = `${process.env.TMPDIR ?? "/tmp"}/ariadne-test-skill-protocol-plan-${process.pid}`;
+  process.env.ARIADNE_PLAN_DIR_OVERRIDE = tmp;
   return tmp;
 });
 
@@ -56,5 +67,29 @@ describe("known_issues_registry_path", () => {
       ),
     ).toBe(true);
     expect(fs.existsSync(p)).toBe(true);
+  });
+});
+
+describe("plan task-DB paths", () => {
+  it("plan_tasks_dir composes <plan-override>/tasks, honoring the lazy env read", () => {
+    expect(plan_tasks_dir()).toBe(path.join(PLAN_BASE, "tasks"));
+  });
+
+  it("plan_sweeps_dir composes <plan-override>/sweeps", () => {
+    expect(plan_sweeps_dir()).toBe(path.join(PLAN_BASE, "sweeps"));
+  });
+
+  it("plan_task_path names <plan-override>/tasks/<id>.json", () => {
+    expect(plan_task_path("01HXYZ-abc")).toBe(
+      path.join(PLAN_BASE, "tasks", "01HXYZ-abc.json"),
+    );
+  });
+
+  it("plan_task_path composes off plan_tasks_dir", () => {
+    expect(plan_task_path("t1")).toBe(path.join(plan_tasks_dir(), "t1.json"));
+  });
+
+  it("plan base is a sibling of the triage base, not nested under it", () => {
+    expect(plan_tasks_dir().startsWith(TMP_BASE)).toBe(false);
   });
 });
