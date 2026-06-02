@@ -7,7 +7,9 @@
  * in the `plan` skill; a SQLite/vector store is a later drop-in behind these
  * exact signatures. `PlanSweepEvent` lives here, not with the record, because
  * it is a repository-method argument — the `PlanTask` record never embeds one;
- * the sweep log is a separate `sweeps/<sweep_id>.jsonl` artifact.
+ * the sweep log is a separate `sweeps/<sweep_id>.jsonl` artifact (see
+ * {@link plan_sweeps_dir} for its on-disk location, {@link plan_task_path} for
+ * the per-task file).
  */
 
 import type { AriadneFaultArea } from "@ariadnejs/types";
@@ -42,7 +44,10 @@ export interface PlanTaskQuery {
  * - `create`    a fresh task was minted this sweep.
  * - `augment`   an existing live task matched by `dedup_key`; evidence merged.
  * - `supersede` one task was replaced by another (mirrors `superseded_by`).
- * - `combine`   several tasks were folded into one.
+ * - `combine`   several tasks were combined into one. On the records this is
+ *               supersede-fan-in: each `merged_ids` task gets
+ *               `status: "superseded"` with `superseded_by = into_id`; the
+ *               event captures the N→1 grouping as a single log entry.
  * - `export`    a task was promoted to the user `backlog/` (mirrors `exported_backlog_task`).
  */
 export type PlanSweepEvent =
@@ -60,8 +65,10 @@ export type PlanSweepEvent =
 /**
  * The access seam the `plan` engine calls. All methods are async (the JSON
  * store is filesystem-backed). The engine reconciles within the DB: it computes
- * a proposal's `dedup_key`, looks it up via {@link find_by_dedup_key}, and
- * augments a live match instead of creating a duplicate.
+ * a proposal's `dedup_key` (the canonical recipe in `PlanTask.dedup_key`),
+ * looks it up via {@link PlanTaskRepository.find_by_dedup_key}, and augments a
+ * live match instead of creating a duplicate. The store never computes the key
+ * — it matches on the stored string.
  */
 export interface PlanTaskRepository {
   /** Fetch one task by id; `null` when absent (a readdir miss is normal). */
@@ -80,6 +87,6 @@ export interface PlanTaskRepository {
   put(task: PlanTask): Promise<void>;
   /** Upsert many tasks (one JSON file each). */
   put_many(tasks: PlanTask[]): Promise<void>;
-  /** Append one event to `sweeps/<sweep_id>.jsonl`. */
+  /** Append one event to `sweeps/<sweep_id>.jsonl` (the engine-minted sweep id). */
   append_sweep_event(sweep_id: string, event: PlanSweepEvent): Promise<void>;
 }

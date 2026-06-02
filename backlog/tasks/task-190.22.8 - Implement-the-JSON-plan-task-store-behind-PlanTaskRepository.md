@@ -26,7 +26,7 @@ The concrete storage behind the `PlanTaskRepository` interface (190.22.4). JSON-
 
 ## Scope
 
-- One-file-per-task: `~/.ariadne/plan/tasks/<task_id>.json`, written via `@ariadnejs/skill-fs` `atomic_write_file` (single writer per task file — rename-atomic, NO global lock needed; this deliberately stays out of the registry-writer lock contract).
+- One-file-per-task: `~/.ariadne/plan/tasks/<task_id>.json`, written via `@ariadnejs/skill-fs` `atomic_write_file` (single writer per task file — rename-atomic, NO global lock needed; this deliberately stays out of the registry-writer lock contract). The path helper `plan_task_path(id)` does NOT sanitize, so whatever mints `PlanTaskId` here must produce filesystem-safe ids (no `/`, no `..`) — the brand carries no grammar by design (190.22.4).
 - Append-only provenance: `~/.ariadne/plan/sweeps/<sweep_id>.jsonl` (`PlanSweepEvent` per line), via `appendFile`.
 - Implement `JsonPlanTaskRepository implements PlanTaskRepository`: `query`/`find_by_dedup_key`/`children_of` = `readdir` + `JSON.parse` + in-memory filter (the proven `discover_runs`/`scan_runs.ts` pattern); `put`/`put_many` = per-file `atomic_write_file`; `append_sweep_event` = `appendFile`.
 - Schema-version guard on read (reject `schema_version` mismatch, like `parse_v4_triage_results`).

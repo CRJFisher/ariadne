@@ -89,7 +89,7 @@ describe("plan task-DB paths", () => {
     expect(plan_task_path("t1")).toBe(path.join(plan_tasks_dir(), "t1.json"));
   });
 
-  it("plan base is a sibling of the triage base, not nested under it", () => {
+  it("plan base reads its own override, independent of the triage base", () => {
     expect(plan_tasks_dir().startsWith(TMP_BASE)).toBe(false);
   });
 });

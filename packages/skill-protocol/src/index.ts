@@ -4,14 +4,14 @@
  *
  * The producer (the triage-entrypoints skill's finalize step) writes one
  * `analysis_output/<project>/triage_results/<run-id>.json` per run; the consumer
- * (the triage-curator skill) reads them back. This package owns the three pieces
- * both sides must agree on:
+ * (the triage-curator skill) reads them back. This package owns the pieces both
+ * sides must agree on, declared and exported in this order:
  *
- *   - `triage_results` — the published `TriageResultsFile` wire schema + the
- *     strict parser both sides validate through.
  *   - `run_id` — the `<commit>-<timestamp>` grammar that joins a run across skills.
  *   - `paths` — where the artifacts, the known-issues registry, and the `plan`
  *     engine's task-DB live on disk.
+ *   - `triage_results` — the published `TriageResultsFile` wire schema + the
+ *     strict parser both sides validate through.
  *   - `plan_task` — the `plan` engine's task-DB record (`PlanTask`) and the
  *     `PlanTaskRepository` swap-seam it reads and writes through.
  */
