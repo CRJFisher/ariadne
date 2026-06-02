@@ -1,4 +1,8 @@
 import { describe, it, expect } from "vitest";
+import { mkdtemp, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { Project } from "../project";
 import {
   build_grep_index,
   build_signature,
@@ -6,6 +10,7 @@ import {
   count_tree_size,
   derive_definition_features,
   detect_language,
+  extract_entry_point_diagnostics,
 } from "./extract_entry_point_diagnostics";
 import type {
   AnyDefinition,
@@ -514,5 +519,32 @@ describe("derive_definition_features", () => {
       definition_is_object_literal_method: false,
       accessor_kind: "setter",
     });
+  });
+});
+
+describe("extract_entry_point_diagnostics populates the fault-area disambiguators", () => {
+  // The two booleans feed `derive_fault_area`'s diagnosis fallback so the plan
+  // engine derives the area without re-grepping. Their `true` branches require a
+  // genuine resolution gap / an unindexed-test caller; the false-baseline below
+  // proves the extractor stamps them. The derivation that consumes them is
+  // exhaustively covered in `packages/types/src/ariadne_fault_area.test.ts`.
+  it("stamps both disambiguators on an uncalled function (both false, no callers)", async () => {
+    const root = await mkdtemp(join(tmpdir(), "ariadne-diag-"));
+    const file = join(root, "orphan.py");
+    await writeFile(file, ["def orphan():", "    return 1", ""].join("\n"), "utf8");
+    const project = new Project();
+    await project.initialize(root as FilePath);
+    project.update_file(file as FilePath, ["def orphan():", "    return 1", ""].join("\n"));
+
+    const call_graph = project.get_call_graph();
+    const enriched = extract_entry_point_diagnostics(call_graph, project);
+    const orphan = enriched.find((e) => e.name === "orphan");
+    expect(orphan).toBeTruthy();
+    if (!orphan) return;
+
+    expect(orphan.diagnostics.diagnosis).toEqual("no-textual-callers");
+    expect(orphan.diagnostics.grep_call_sites).toEqual([]);
+    expect(orphan.diagnostics.has_uncaptured_indexed_grep_hit).toEqual(false);
+    expect(orphan.diagnostics.callers_only_in_unindexed_tests).toEqual(false);
   });
 });

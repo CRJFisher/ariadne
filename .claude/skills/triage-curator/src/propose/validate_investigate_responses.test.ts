@@ -40,7 +40,7 @@ function base_input(): ValidationInput {
 
 function valid_ariadne_bug(): Record<string, unknown> {
   return {
-    root_cause_category: "receiver_resolution",
+    root_cause_category: "receiver_type_inference",
     title: "Resolver loses type across Project.field hop",
     description: "Full description with file/line evidence.",
     existing_task_id: null,
@@ -242,7 +242,7 @@ describe("validate_response", () => {
   it("accepts a working classifier with ariadne_bug.existing_task_id set", () => {
     const raw = valid_builtin_response({
       ariadne_bug: {
-        root_cause_category: "receiver_resolution",
+        root_cause_category: "receiver_type_inference",
         title: "Resolver loses type across Project.field hop",
         description: "Attaching to existing resolver-bug task.",
         existing_task_id: "TASK-205",
@@ -270,7 +270,7 @@ describe("validate_response", () => {
   it("rejects a malformed existing_task_id", () => {
     const raw = valid_builtin_response({
       ariadne_bug: {
-        root_cause_category: "receiver_resolution",
+        root_cause_category: "receiver_type_inference",
         title: "t",
         description: "d",
         existing_task_id: "task-205",
@@ -546,7 +546,7 @@ describe("validate_run_coherence", () => {
       retargets_to,
       signal_library_gap: null,
       ariadne_bug: {
-        root_cause_category: "receiver_resolution",
+        root_cause_category: "receiver_type_inference",
         title: "t",
         description: "d",
         existing_task_id: null,

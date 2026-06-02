@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 
 import { error_code } from "@ariadnejs/skill-fs";
 import {
-  ARIADNE_ROOT_CAUSE_CATEGORIES,
+  ARIADNE_FAULT_AREAS,
   parse_known_issues_registry_json,
 } from "@ariadnejs/types";
 import { read_triage_results_file } from "@ariadnejs/skill-protocol";
@@ -116,11 +116,11 @@ async function main(): Promise<void> {
     signal_inventory,
     writable_paths,
     signal_check_ops: SIGNAL_CHECK_OPS,
-    ariadne_root_cause_categories: ARIADNE_ROOT_CAUSE_CATEGORIES,
+    ariadne_fault_areas: ARIADNE_FAULT_AREAS,
     signal_library_gap_parent_task_id: SIGNAL_LIBRARY_GAP_PARENT_TASK_ID,
     authoring_rules: {
       signal_check_ops: SIGNAL_CHECK_OPS,
-      ariadne_root_cause_categories: ARIADNE_ROOT_CAUSE_CATEGORIES,
+      ariadne_fault_areas: ARIADNE_FAULT_AREAS,
       combinator_values: ["all", "any"] as const,
       response_group_id_rule:
         `response.group_id must equal '${novel_issue_id}' (the dispatched novel-issue id). ` +

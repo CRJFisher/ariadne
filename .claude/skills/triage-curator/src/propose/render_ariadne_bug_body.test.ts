@@ -10,7 +10,7 @@ import type {
 
 function bug(overrides: Partial<AriadneBug> = {}): AriadneBug {
   return {
-    root_cause_category: "receiver_resolution",
+    root_cause_category: "receiver_type_inference",
     title: "Hash builder chain not resolved",
     description: "Ariadne cannot carry the intermediate call's return type.",
     existing_task_id: null,
@@ -75,7 +75,7 @@ describe("render_ariadne_bug_body", () => {
       target_entry: entry(),
       current_project: "webpack",
     });
-    expect(body).toContain("**Root cause category:** `receiver_resolution`");
+    expect(body).toContain("**Root cause category:** `receiver_type_inference`");
     expect(body).toContain("**Target registry entry:** `method-chain-dispatch`");
     expect(body).toContain("Observed count: **7**");
     expect(body).toContain("`webpack`");

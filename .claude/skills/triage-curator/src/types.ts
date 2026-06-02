@@ -1,5 +1,5 @@
 import type {
-  AriadneRootCauseCategory,
+  AriadneFaultArea,
   KnownIssueLanguage,
 } from "@ariadnejs/types";
 
@@ -169,7 +169,7 @@ export interface SignalLibraryGap {
  * or `builtin`): the classifier is a workaround; the bug is the real fix.
  */
 export interface AriadneBug {
-  root_cause_category: AriadneRootCauseCategory;
+  root_cause_category: AriadneFaultArea;
   title: string;
   description: string;
   /**
@@ -204,7 +204,7 @@ export interface AriadneBugTaskToCreate {
   group_id: string;
   /** Target registry entry that carries the linked `backlog_task` once the task lands. */
   target_registry_group_id: string;
-  root_cause_category: AriadneRootCauseCategory;
+  root_cause_category: AriadneFaultArea;
   title: string;
   description: string;
   /** Non-null when the investigator matched an existing backlog task; skip create, attach. */

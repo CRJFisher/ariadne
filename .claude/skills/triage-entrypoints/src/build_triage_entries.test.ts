@@ -25,6 +25,8 @@ function make_entry(overrides: Partial<EnrichedEntryPoint>): EnrichedEntryPoint 
     diagnostics: {
       grep_call_sites: [],
       grep_call_sites_unindexed_tests: [],
+      has_uncaptured_indexed_grep_hit: false,
+      callers_only_in_unindexed_tests: false,
       ariadne_call_refs: [],
       diagnosis: "no-textual-callers",
     },
@@ -59,6 +61,8 @@ describe("build_triage_entries — auto_classified bucket", () => {
       diagnostics: {
         grep_call_sites: [],
         grep_call_sites_unindexed_tests: [],
+        has_uncaptured_indexed_grep_hit: false,
+        callers_only_in_unindexed_tests: false,
         ariadne_call_refs: [],
         diagnosis: "callers-not-in-registry",
       },
@@ -93,6 +97,8 @@ describe("build_triage_entries — auto_classified bucket", () => {
       diagnostics: {
         grep_call_sites: [],
         grep_call_sites_unindexed_tests: [],
+        has_uncaptured_indexed_grep_hit: false,
+        callers_only_in_unindexed_tests: false,
         ariadne_call_refs: [],
         diagnosis: "callers-not-in-registry",
       },
@@ -131,6 +137,8 @@ describe("build_triage_entries — residual bucket", () => {
       diagnostics: {
         grep_call_sites: [],
         grep_call_sites_unindexed_tests: [],
+        has_uncaptured_indexed_grep_hit: false,
+        callers_only_in_unindexed_tests: false,
         ariadne_call_refs: [],
         diagnosis: "callers-not-in-registry",
       },
@@ -167,6 +175,8 @@ describe("build_triage_entries — residual bucket", () => {
       diagnostics: {
         grep_call_sites: [],
         grep_call_sites_unindexed_tests: [],
+        has_uncaptured_indexed_grep_hit: false,
+        callers_only_in_unindexed_tests: false,
         ariadne_call_refs: [],
         diagnosis: "callers-not-in-registry",
       },

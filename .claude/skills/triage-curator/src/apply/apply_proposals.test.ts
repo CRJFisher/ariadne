@@ -437,7 +437,7 @@ describe("apply_proposals", () => {
     const inv: InvestigateResponse = builtin_inv("dispatch-group", {
       retargets_to: "existing-entry",
       ariadne_bug: {
-        root_cause_category: "receiver_resolution",
+        root_cause_category: "receiver_type_inference",
         title: "Resolver loses field type",
         description: "details",
         existing_task_id: null,
@@ -460,12 +460,12 @@ describe("apply_proposals", () => {
     const task = result.ariadne_bug_tasks[0];
     expect(task.group_id).toBe("dispatch-group");
     expect(task.target_registry_group_id).toBe("existing-entry");
-    expect(task.root_cause_category).toBe("receiver_resolution");
+    expect(task.root_cause_category).toBe("receiver_type_inference");
     expect(task.title).toBe("Resolver loses field type");
     expect(task.existing_task_id).toBeNull();
     // description is now the rendered Ariadne-bug body — spot-check the
     // sections that distinguish it from the raw investigator narrative.
-    expect(task.description).toContain("**Root cause category:** `receiver_resolution`");
+    expect(task.description).toContain("**Root cause category:** `receiver_type_inference`");
     expect(task.description).toContain("**Target registry entry:** `existing-entry`");
     expect(task.description).toContain("details");
     expect(task.description).toContain("## Observations");

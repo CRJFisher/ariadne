@@ -33,6 +33,8 @@ function make_entry(
       grep_call_sites_unindexed_tests: [],
       ariadne_call_refs: [],
       diagnosis: "callers-not-in-registry",
+      has_uncaptured_indexed_grep_hit: false,
+      callers_only_in_unindexed_tests: false,
     },
     ...overrides,
   };
@@ -85,6 +87,8 @@ describe("auto_classify — priority and match semantics", () => {
         grep_call_sites_unindexed_tests: [],
         ariadne_call_refs: [],
         diagnosis: "no-textual-callers",
+        has_uncaptured_indexed_grep_hit: false,
+        callers_only_in_unindexed_tests: false,
       },
     });
     const registry: KnownIssuesRegistry = [
@@ -106,6 +110,8 @@ describe("auto_classify — priority and match semantics", () => {
         grep_call_sites_unindexed_tests: [],
         ariadne_call_refs: [],
         diagnosis: "callers-not-in-registry",
+        has_uncaptured_indexed_grep_hit: false,
+        callers_only_in_unindexed_tests: false,
       },
     });
     const registry: KnownIssuesRegistry = [
@@ -127,6 +133,8 @@ describe("auto_classify — priority and match semantics", () => {
         grep_call_sites_unindexed_tests: [],
         ariadne_call_refs: [],
         diagnosis: "no-textual-callers",
+        has_uncaptured_indexed_grep_hit: false,
+        callers_only_in_unindexed_tests: false,
       },
     });
     const registry: KnownIssuesRegistry = [
@@ -147,6 +155,8 @@ describe("auto_classify — priority and match semantics", () => {
         grep_call_sites_unindexed_tests: [],
         ariadne_call_refs: [],
         diagnosis: "callers-in-registry-wrong-target",
+        has_uncaptured_indexed_grep_hit: false,
+        callers_only_in_unindexed_tests: false,
       },
     });
     const registry: KnownIssuesRegistry = [
@@ -171,6 +181,8 @@ describe("auto_classify — sub-threshold hints", () => {
         grep_call_sites_unindexed_tests: [],
         ariadne_call_refs: [],
         diagnosis: "no-textual-callers",
+        has_uncaptured_indexed_grep_hit: false,
+        callers_only_in_unindexed_tests: false,
       },
     });
     // Construct a hint-only registry: min_confidence > 1.0 is unreachable for
@@ -202,6 +214,8 @@ describe("auto_classify — sub-threshold hints", () => {
         grep_call_sites_unindexed_tests: [],
         ariadne_call_refs: [],
         diagnosis: "no-textual-callers",
+        has_uncaptured_indexed_grep_hit: false,
+        callers_only_in_unindexed_tests: false,
       },
     });
     const registry: KnownIssuesRegistry = [

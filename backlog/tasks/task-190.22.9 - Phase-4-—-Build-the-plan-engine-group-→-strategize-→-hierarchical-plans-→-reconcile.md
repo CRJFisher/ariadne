@@ -50,6 +50,7 @@ Rewrite the renamed `plan-strategist` agent prompt (file moved in 190.22.5): gro
 
 - **Pass A (deterministic):** flatten every FP verdict across all runs; bucket by `AriadneFaultArea` via `derive_fault_area` (190.22.3) keyed on the stored `diagnosis`/`resolution_failure`; attach evidence + a per-bucket rollup (reuse `Map`-keyed `summarize_match_history`/`group_by_project`). Sort by occurrence desc.
 - **Pass B (LLM strategists):** refine/split, merge across areas, emit the hierarchical fix-plan tree. No union-find/Jaccard/Pareto/DAG.
+- **`other`-bucket handling (self-extending taxonomy):** FPs whose `AriadneFaultArea` is `other` carry a free-text `description` of the unclassified signal (the escape hatch authored in 190.22.3). For each such bucket the strategist produces TWO outputs: (1) a plan task to **extend the taxonomy** — add the missing folder-anchored area to `ariadne_fault_area.ts` + its `derive_fault_area` mapping — and (2) a plan task for the **underlying core fix**. This is how the taxonomy grows as core surfaces new fault modes.
 
 ## Scope — output + reconciliation (to the task-DB, firewalled)
 
@@ -76,4 +77,5 @@ Plan-skill smoke test over ≥2 finalized runs: writes grouped (by `AriadneFault
 - [ ] #6 `meta.json` flows finalized to the planning-only reality; diagrams regenerated via the `mermaid-pre-render` skill
 - [ ] #7 Smoke test over ≥2 finalized runs makes ZERO writes to `backlog/`, `registry.json`, or `packages/core`
 - [ ] #8 `pnpm -r build && pnpm -r test` green (incl. the firewall enforcement test from 190.22.7)
+- [ ] #9 Each `other`-bucket (escape-hatch FPs with a `description`, per 190.22.3) yields BOTH a taxonomy-extension plan task (add the missing folder-anchored area to `ariadne_fault_area.ts` + `derive_fault_area`) and an underlying-core-fix plan task
 <!-- AC:END -->

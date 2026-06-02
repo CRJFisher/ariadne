@@ -1,4 +1,4 @@
-import type { AriadneRootCauseCategory } from "./ariadne_root_cause.js";
+import type { AriadneFaultArea } from "./ariadne_fault_area.js";
 
 /**
  * Frontmatter shape of an ariadne-bug backlog task that the curator files and
@@ -15,10 +15,10 @@ export interface BacklogTaskFrontmatter {
   id: string;
   title: string;
   status: "To Do" | "In Progress" | "Done";
-  /** Includes `cluster_hint:<root_cause>` for the same value as `cluster_hint`. */
+  /** Includes `cluster_hint:<fault_area>` for the same value as `cluster_hint`. */
   labels: string[];
   /** Repo-relative POSIX paths; may be empty (treated as singleton-cluster signal). */
   touched_files: string[];
   /** Mirrors a label for type-level access. */
-  cluster_hint: AriadneRootCauseCategory;
+  cluster_hint: AriadneFaultArea;
 }

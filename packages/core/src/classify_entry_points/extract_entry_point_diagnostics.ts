@@ -434,6 +434,13 @@ function gather_diagnostics(
     grep_call_sites_unindexed_tests: [],
     ariadne_call_refs,
     diagnosis,
+    // Disambiguators for the fault-area derivation, stamped without re-grepping.
+    has_uncaptured_indexed_grep_hit: grep_call_sites.some(
+      (hit) => hit.captures.length === 0,
+    ),
+    // Recomputed by `attach_unindexed_test_grep_hits` once the unindexed-test
+    // pass populates `grep_call_sites_unindexed_tests`; false until then.
+    callers_only_in_unindexed_tests: false,
   };
 }
 
@@ -817,6 +824,10 @@ export async function attach_unindexed_test_grep_hits(
       content: h.content,
       captures: [],
     }));
+    // Callers exist only in unindexed test dirs when this pass found hits and
+    // the indexed-source grep pass found none → the `coverage_config` signal.
+    entry.diagnostics.callers_only_in_unindexed_tests =
+      entry.diagnostics.grep_call_sites.length === 0;
   }
 }
 

@@ -73,8 +73,8 @@ The hydrated bundle includes:
   valid inside a `classifier_spec`. Choose only from this list. Adding a
   new op requires a type + renderer change first; propose via
   `signal_library_gap.signals_needed` if you need one.
-- `ariadne_root_cause_categories` — closed list of valid
-  `ariadne_bug.root_cause_category` values.
+- `ariadne_fault_areas` — closed list of valid
+  `ariadne_bug.root_cause_category` values (the `AriadneFaultArea` taxonomy).
 - `signal_library_gap_parent_task_id` — the static parent task under which
   signal-library-gap sub-tasks are filed (e.g. `TASK-190.16`).
 - `authoring_rules` — the structural rules the validator enforces; consult
@@ -259,7 +259,7 @@ Each response has three distinct outputs, each tracking a different aspect:
 
    ```json
    {
-     "root_cause_category": "receiver_resolution",
+     "root_cause_category": "receiver_type_inference",
      "title": "Short imperative title",
      "description": "File/line evidence from the citations + why the resolver misses the edge.",
      "existing_task_id": null
@@ -335,36 +335,41 @@ Rules:
 
 ### Ariadne root-cause categories (deliverable 3)
 
-Choose the best-matching `root_cause_category` from this closed set:
+Choose the best-matching `root_cause_category` from this closed set. Each value
+is an `AriadneFaultArea` anchored 1:1 to the owning core folder:
 
-- **`receiver_resolution`** — the receiver **type** is lost at a field or
-  method hop. The chain `<id>.<field>.<method>()` succeeds syntactically
-  but Ariadne cannot identify the class that owns `<method>`. Example:
+- **`syntactic_extraction`** — the tree-sitter query / definition extractor
+  never produces the call site. Example: JS getter/setter accessors (TASK-208
+  territory), Rust enum-impl methods (TASK-201), JS class `extends` (TASK-202).
+- **`scope_construction`** — the scope tree is malformed or missing (no
+  enclosing class scope, definition has no body scope, no parent class, class
+  definition not found).
+- **`name_resolution`** — an in-scope name lookup fails (`name_not_in_scope`).
+- **`import_resolution`** — cross-file import/re-export linking fails: inline
+  `require()`, wildcard imports, re-export chains, module-qualified attribute
+  calls. Example: Python `mod.func()` through a namespace receiver (TASK-190.11).
+- **`receiver_type_inference`** — the receiver/member **type** is lost at a
+  field or method hop. The chain `<id>.<field>.<method>()` succeeds syntactically
+  but Ariadne cannot identify the type that owns `<method>`. Example:
   `project.definitions.method()` (TASK-205).
-- **`import_resolution`** — import-level linking fails: inline `require()`,
-  wildcard imports, re-export chains, module-qualified attribute calls.
-  Example: Python `mod.func()` resolved through namespace receiver
-  (TASK-190.11).
-- **`syntactic_extraction`** — the tree-sitter query / definition
-  extractor does not capture the node kind. Example: JS getter/setter
-  accessors (TASK-208 territory), Rust enum-impl methods (TASK-201), JS
-  class `extends` (TASK-202).
-- **`coverage_config`** — call sites exist but live in files Ariadne
-  excludes from indexing. Example: callers under `/tests/` directories
-  (TASK-210).
-- **`cross_file_flow`** — a **value** flows across a call/assignment and
-  the function identity is lost with it. The receiver type (if any) is
-  not the issue — it's the function itself that travels through an
-  argument, destructure, or return. Examples: argument lambdas through
-  higher-order calls (TASK-204), object-literal methods through
-  destructuring (TASK-206), factory-return inference, callback resolution
-  through `self_reference_call` receivers (TASK-203).
-- **`other`** — anything else. The description must explain.
+- **`method_lookup`** — the receiver type is known but the member is absent at
+  lookup (`method_not_on_type` at method lookup, `constructor_target_not_a_class`).
+- **`polymorphic_dispatch`** — an interface/abstract receiver has no concrete
+  implementations to dispatch to (`polymorphic_no_implementations`).
+- **`collection_dispatch`** — a value held in a collection or reached via a
+  dynamic key is dispatched on (`collection_dispatch_miss`, `dynamic_dispatch`).
+- **`coverage_config`** — call sites exist but live in files Ariadne excludes
+  from indexing. Example: callers under `/tests/` directories (TASK-210).
+- **`entry_point_classification`** — resolution succeeds yet the function is
+  still flagged (callers resolved to the wrong target, or a genuine entry-point
+  miss).
+- **`other`** — escape hatch: the fault fits none of the above. The description
+  must explain it; the `plan` phase uses it to extend the taxonomy.
 
 **Boundary rule:** if the receiver **type** is lost at a hop, pick
-`receiver_resolution`. If a value (lambda, method object, factory
-result) is passed across a call/assignment and loses its function
-identity, pick `cross_file_flow`.
+`receiver_type_inference`. If the type is known but the member is missing, pick
+`method_lookup`. If the call dispatches through a collection element or dynamic
+key, pick `collection_dispatch`.
 
 ## Output
 
@@ -384,7 +389,7 @@ Write **two files** to `~/.ariadne/triage-curator/**` before returning.
     "description": "string"
   } | null,
   "ariadne_bug": {
-    "root_cause_category": "receiver_resolution" | "import_resolution" | "syntactic_extraction" | "coverage_config" | "cross_file_flow" | "other",
+    "root_cause_category": "syntactic_extraction" | "scope_construction" | "name_resolution" | "import_resolution" | "receiver_type_inference" | "method_lookup" | "polymorphic_dispatch" | "collection_dispatch" | "coverage_config" | "entry_point_classification" | "other",
     "title": "string",
     "description": "string",
     "existing_task_id": "TASK-<N>" | null
@@ -444,7 +449,7 @@ The validator you call in the iterate loop rejects:
 - Working classifier proposed (`kind: "builtin"`) with `ariadne_bug:
 null` (the workaround is not allowed to stand alone — the resolver bug
   must also be filed or attached).
-- `ariadne_bug.root_cause_category` not in `ariadne_root_cause_categories`.
+- `ariadne_bug.root_cause_category` not in `ariadne_fault_areas`.
 - `ariadne_bug.existing_task_id` not matching `^TASK-[0-9]+(\.[0-9]+)*$`.
 - `signal_library_gap.signals_needed` empty (drop `signal_library_gap` to
   `null` instead).

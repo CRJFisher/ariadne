@@ -22,8 +22,8 @@
  */
 
 import { validate_spec_example_indexes } from "../apply/apply_proposals.js";
-import type { AriadneRootCauseCategory } from "@ariadnejs/types";
-import { ARIADNE_ROOT_CAUSE_CATEGORIES, is_ariadne_root_cause_category } from "@ariadnejs/types";
+import type { AriadneFaultArea } from "@ariadnejs/types";
+import { ARIADNE_FAULT_AREAS, is_ariadne_fault_area } from "@ariadnejs/types";
 import type {
   AriadneBug,
   BuiltinClassifierSpec,
@@ -468,14 +468,14 @@ function parse_ariadne_bug(raw: unknown): { value: AriadneBug | null } | ShapeEr
   const obj = raw as Record<string, unknown>;
   if (
     typeof obj.root_cause_category !== "string" ||
-    !is_ariadne_root_cause_category(obj.root_cause_category)
+    !is_ariadne_fault_area(obj.root_cause_category)
   ) {
     return {
       error:
-        `ariadne_bug.root_cause_category must be one of: ${ARIADNE_ROOT_CAUSE_CATEGORIES.join(", ")}`,
+        `ariadne_bug.root_cause_category must be one of: ${ARIADNE_FAULT_AREAS.join(", ")}`,
     };
   }
-  const root_cause_category: AriadneRootCauseCategory = obj.root_cause_category;
+  const root_cause_category: AriadneFaultArea = obj.root_cause_category;
   if (typeof obj.title !== "string" || obj.title.length === 0) {
     return { error: "ariadne_bug.title must be a non-empty string" };
   }

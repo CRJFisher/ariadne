@@ -61,6 +61,17 @@ export const DEFINITION_FEATURE_NAMES = [
 
 export type DefinitionFeatureName = typeof DEFINITION_FEATURE_NAMES[number];
 
+/**
+ * Summary diagnosis of where in Ariadne's pipeline the detection of callers
+ * failed for a flagged entry point. One of the two deterministic fault signals
+ * (the other is `ResolutionFailure`) the fault-area derivation keys on.
+ */
+export type EntryPointDiagnosis =
+  | "no-textual-callers"
+  | "callers-not-in-registry"
+  | "callers-in-registry-unresolved"
+  | "callers-in-registry-wrong-target";
+
 export interface EntryPointDiagnostics {
   /** Textual grep results for calls to this function across source files */
   grep_call_sites: GrepHit[];
@@ -74,11 +85,24 @@ export interface EntryPointDiagnostics {
   /** CallReferences in the call graph where name matches this entry point */
   ariadne_call_refs: CallRefDiagnostic[];
   /** Summary diagnosis of where in Ariadne's pipeline the detection failed */
-  diagnosis:
-    | "no-textual-callers"
-    | "callers-not-in-registry"
-    | "callers-in-registry-unresolved"
-    | "callers-in-registry-wrong-target";
+  diagnosis: EntryPointDiagnosis;
+  /**
+   * True when at least one indexed `grep_call_sites` hit has an EMPTY `captures`
+   * array — a textual call site the query/extractor produced no `CallReference`
+   * for. Distinguishes a genuine extraction gap (capture never fired →
+   * deterministic `syntactic_extraction`) from a ref-produced-but-lost case
+   * (capture present → needs judgement). Consumed by `derive_fault_area`'s
+   * `callers-not-in-registry` fallback; stamped without re-grepping.
+   */
+  has_uncaptured_indexed_grep_hit: boolean;
+  /**
+   * True when `grep_call_sites_unindexed_tests` is non-empty AND
+   * `grep_call_sites` is empty — every textual caller lives in a directory
+   * excluded from indexing. Drives the `coverage_config` fault area. Can only
+   * become true after the optional unindexed-test grep pass runs; defaults to
+   * `false` when that pass is skipped.
+   */
+  callers_only_in_unindexed_tests: boolean;
 }
 
 export interface GrepHit {

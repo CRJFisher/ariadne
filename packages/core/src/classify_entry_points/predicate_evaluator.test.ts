@@ -59,6 +59,8 @@ function make_diagnostics(
     grep_call_sites_unindexed_tests: [],
     ariadne_call_refs: [],
     diagnosis: "callers-not-in-registry",
+    has_uncaptured_indexed_grep_hit: false,
+    callers_only_in_unindexed_tests: false,
     ...overrides,
   };
 }

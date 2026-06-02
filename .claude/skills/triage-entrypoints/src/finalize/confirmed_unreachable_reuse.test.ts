@@ -200,7 +200,7 @@ describe("apply_tp_cache_to_entries", () => {
       error: null,
       is_exported: true,
       access_modifier: null,
-      diagnostics: { grep_call_sites: [], grep_call_sites_unindexed_tests: [], ariadne_call_refs: [], diagnosis: "no-textual-callers" },
+      diagnostics: { grep_call_sites: [], grep_call_sites_unindexed_tests: [], ariadne_call_refs: [], diagnosis: "no-textual-callers", has_uncaptured_indexed_grep_hit: false, callers_only_in_unindexed_tests: false },
       auto_classified: false,
       classifier_hints: [],
       tp_source_run_id: null,

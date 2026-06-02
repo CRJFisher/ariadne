@@ -48,6 +48,8 @@ function entry(
     diagnostics: {
       grep_call_sites: [],
       grep_call_sites_unindexed_tests: [],
+      has_uncaptured_indexed_grep_hit: false,
+      callers_only_in_unindexed_tests: false,
       ariadne_call_refs: [],
       diagnosis: "no-textual-callers",
     },
