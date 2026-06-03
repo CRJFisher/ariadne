@@ -1,10 +1,11 @@
 /**
  * Fixture test for the `plan-strategist` agent prompt at
- * `.claude/agents/plan-strategist.md`. The agent prompt is the
- * canonical contract between the curator orchestrator and the sub-agent — it
- * names the hydrated context fields, the validator loop, the output schema,
- * and the failure exits. A pinned snapshot guards against silent drift, in
- * particular regressions to the dropped "discover the root cause" framing.
+ * `.claude/agents/plan-strategist.md`. The agent prompt is the canonical
+ * contract between the plan engine's dispatcher and the sub-agent — it names the
+ * hydrated bucket fields, the validator loop, the `StrategistPlan` output shape,
+ * and the `other`-bucket dual-task obligation. A pinned snapshot guards against
+ * silent drift back to the dropped classifier-spec authoring + backlog-filing
+ * framing, and pins the firewall completion (no `backlog` MCP grant).
  */
 
 import * as fs from "node:fs";
@@ -15,19 +16,14 @@ import { describe, expect, it } from "vitest";
 
 const THIS_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(THIS_DIR, "..", "..", "..", "..");
-const AGENT_PATH = path.join(
-  REPO_ROOT,
-  ".claude",
-  "agents",
-  "plan-strategist.md",
-);
+const AGENT_PATH = path.join(REPO_ROOT, ".claude", "agents", "plan-strategist.md");
 
 /**
- * Frontmatter pinned by this test. `description` is intentionally excluded:
- * it is prose that legitimately churns under editorial polish, while the
- * other scalars are load-bearing contract surface (tool allowlist, model,
- * turn budget, MCP server access). Drift assertions on prose body live in
- * the forbidden/required-substring tests below.
+ * Frontmatter pinned by this test. `description` is intentionally excluded: it
+ * is prose that legitimately churns under editorial polish, while the other
+ * scalars are load-bearing contract surface (tool allowlist, model, turn budget,
+ * MCP server access). `mcp_servers` is pinned to `[]` — the backlog grant is
+ * dropped, completing the backlog firewall at the agent boundary.
  */
 interface AgentFrontmatter {
   name: string;
@@ -47,9 +43,9 @@ interface AgentDocument {
 }
 
 /**
- * Minimal frontmatter + heading extractor for an agent .md file. Tuned for the
- * curator-investigator's narrow shape (string scalars, an array of mcpServers,
- * an integer maxTurns) — not a general YAML parser.
+ * Minimal frontmatter + heading extractor for an agent .md file. An absent
+ * `mcpServers:` key parses to `[]` — which this prompt relies on (the grant is
+ * dropped entirely, not set to an empty list).
  */
 function parse_agent_document(raw: string): AgentDocument {
   const fm_match = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
@@ -113,18 +109,7 @@ function parse_agent_document(raw: string): AgentDocument {
     h2_sections.push(m[1].trim());
   }
 
-  return {
-    frontmatter: {
-      name,
-      tools,
-      mcp_servers,
-      model,
-      max_turns,
-    },
-    body,
-    h1,
-    h2_sections,
-  };
+  return { frontmatter: { name, tools, mcp_servers, model, max_turns }, body, h1, h2_sections };
 }
 
 function read_agent(): AgentDocument {
@@ -133,13 +118,13 @@ function read_agent(): AgentDocument {
 }
 
 describe("plan-strategist agent prompt — frontmatter", () => {
-  it("pins the frontmatter scalars + mcpServers", () => {
+  it("pins the frontmatter scalars and drops the backlog MCP grant", () => {
     const doc = read_agent();
     const expected: AgentFrontmatter = {
       name: "plan-strategist",
       tools:
-        "Bash(node --import tsx .claude/skills/plan/scripts/get_investigate_context.ts:*), Bash(node --import tsx .claude/skills/plan/scripts/validate_responses.ts:*), Read, Grep, Glob, Write(~/.ariadne/triage-curator/**)",
-      mcp_servers: ["backlog"],
+        "Bash(node --import tsx .claude/skills/plan/scripts/get_bucket_context.ts:*), Bash(node --import tsx .claude/skills/plan/scripts/validate_plan.ts:*), Read, Grep, Glob, Write(~/.ariadne/plan/staging/**)",
+      mcp_servers: [],
       model: "opus",
       max_turns: 200,
     };
@@ -150,61 +135,63 @@ describe("plan-strategist agent prompt — frontmatter", () => {
 describe("plan-strategist agent prompt — body structure", () => {
   it("pins the H1 + H2 section titles in document order", () => {
     const doc = read_agent();
-    const expected_h1 = "Purpose";
-    const expected_h2: string[] = [
-      "Hydrate the context",
-      "Trust the citations",
-      "Propose → validate → iterate loop",
-      "How to work the novel issue",
-      "Three deliverables — classifier, signal-library gap, Ariadne bug",
-      "Output",
-    ];
     expect({ h1: doc.h1, h2: doc.h2_sections }).toEqual({
-      h1: expected_h1,
-      h2: expected_h2,
+      h1: "Purpose",
+      h2: [
+        "Hydrate the bucket",
+        "Trust the evidence",
+        "Build the hierarchical plan",
+        "The `other` bucket — extend the taxonomy",
+        "Classifier-script work is lower priority",
+        "Self-validate → iterate loop",
+        "Output",
+      ],
     });
   });
 
-  it("does not carry any of the dropped residual / promoted / discovery framing", () => {
+  it("does not carry any of the dropped classifier-spec / backlog-filing framing", () => {
     const doc = read_agent();
     const forbidden: string[] = [
-      "Residual path",
-      "Promoted path",
-      "Residual mode",
-      "Promoted mode",
-      "discover the root cause",
-      "discover the residual",
-      "underlying detection gap",
-      "investigate residual",
-      "qa_outliers",
-      "registry_entry",
-      "permanent_locked",
-      "FalsePositiveGroup",
-      "--promoted",
-      "promoted mode",
-      "residual mode",
-      "group.entries",
+      "BuiltinClassifierSpec",
+      "classifier_spec",
+      "proposed_classifier",
+      "signal_library_gap",
+      "signal_library_gap_parent_task_id",
+      "ariadne_bug",
+      "root_cause_category",
+      "retargets_to",
+      "rejected_members",
+      "signal_check_ops",
+      "SignalCheck",
+      "signal_inventory",
+      "canonical_name",
+      "novel_issue",
+      "mcp__backlog",
+      "mcpServers",
+      "task_search",
+      "get_investigate_context",
+      "validate_responses",
     ];
     const hits = forbidden.filter((needle) => doc.body.includes(needle));
     expect(hits).toEqual([]);
   });
 
-  it("anchors the prompt to the novel-issue input shape and validator loop", () => {
+  it("anchors the prompt to the fault-area bucket input and the StrategistPlan output", () => {
     const doc = read_agent();
     const required: string[] = [
-      "novel_issue_id",
-      "canonical_name",
-      "root_cause",
-      "citations[]",
-      "evidence_excerpt",
-      "propose → validate → iterate",
-      "rejected_members",
-      "retargets_to",
-      "BuiltinClassifierSpec",
-      "ariadne_bug",
-      "signal_library_gap",
-      "get_investigate_context.ts",
-      "validate_responses.ts",
+      "fault_area",
+      "AriadneFaultArea",
+      "StrategistPlan",
+      "architectural",
+      "localized",
+      "evidence_indices",
+      "taxonomy",
+      "is_taxonomy_extension",
+      "is_classifier_work",
+      "Self-validate",
+      "get_bucket_context.ts",
+      "validate_plan.ts",
+      "~/.ariadne/plan/staging",
     ];
     const missing = required.filter((needle) => !doc.body.includes(needle));
     expect(missing).toEqual([]);

@@ -1,90 +1,90 @@
 /**
- * Pure renderers that turn a known-issue registry entry into task content —
- * a title, a markdown body, and a label set. They are deterministic feedstock:
- * the plan engine (190.22.10) renders these into `PlanTask` records in the
- * task-DB, and the user-invoked export adapter (190.22.11) reuses the same
- * builders when promoting a DB task into the user's `backlog/`. The renderers
+ * Pure renderers that turn a strategist plan node into a `PlanTask`'s title and
+ * body. They are deterministic feedstock: the reconcile engine (`build_plan_tasks`)
+ * calls them to fill `PlanTask.title`/`PlanTask.body` from the node's prose plus
+ * the evidence it grounds, and the user-invoked export adapter (190.22.11)
+ * reuses them when promoting a DB task into the user's `backlog/`. The renderers
  * persist nothing themselves.
  */
 
-import type {
-  ClassifierSpec,
-  KnownIssue as SelfRepairKnownIssue,
-} from "@ariadnejs/types";
+import { ARIADNE_FAULT_AREA_FOLDER } from "@ariadnejs/types";
+import type { PlanTaskEvidence } from "@ariadnejs/skill-protocol";
 
-export function render_task_title(issue: SelfRepairKnownIssue): string {
-  return `[${issue.group_id}] ${issue.title}`;
-}
+import type { StrategistPlanNode } from "../types.js";
 
-export function render_task_labels(issue: SelfRepairKnownIssue): string[] {
-  const labels = ["triage", "known-issue", issue.group_id];
-  for (const lang of issue.languages) labels.push(`lang-${lang}`);
-  return labels;
+/**
+ * The task title. An `architectural` cross-area root keeps the strategist's
+ * title verbatim; `fault_area`/`localized` nodes are prefixed with their area so
+ * the tier is legible in a flat task list.
+ */
+export function render_task_title(node: StrategistPlanNode): string {
+  if (node.tier === "architectural") return node.title;
+  return `[${node.fault_area}] ${node.title}`;
 }
 
 /**
- * Deterministic task body. Sections are omitted when their inputs are empty
- * (e.g. `observed_projects` skipped when the registry hasn't logged any yet),
- * keeping the body focused on the information actually available.
+ * The task body: the strategist's prose, then a deterministic observations +
+ * evidence section rendered from the grounding `PlanTaskEvidence`, then
+ * fault-area-folder-anchored acceptance criteria. Sections backed by empty
+ * inputs (no evidence) are omitted, keeping the body focused on what is
+ * actually available.
  */
-export function render_task_body(issue: SelfRepairKnownIssue): string {
+export function render_task_body(
+  node: StrategistPlanNode,
+  evidence: PlanTaskEvidence[],
+): string {
   const parts: string[] = [];
-  parts.push(`**Group ID:** \`${issue.group_id}\``);
-  parts.push(`**Status:** ${issue.status}`);
-  parts.push(`**Languages:** ${issue.languages.join(", ")}`);
+  parts.push(node.body.trimEnd());
   parts.push("");
-  parts.push("## Description");
-  parts.push("");
-  parts.push(issue.description);
-  parts.push("");
-  parts.push("## Observations");
-  parts.push("");
-  parts.push(`- Observed count: **${issue.observed_count ?? 0}**`);
-  const projects = issue.observed_projects ?? [];
-  if (projects.length > 0) {
-    parts.push(`- Observed projects: ${projects.map((p) => `\`${p}\``).join(", ")}`);
-  }
-  if (issue.last_seen_run !== undefined && issue.last_seen_run.length > 0) {
-    parts.push(`- Last seen in run: \`${issue.last_seen_run}\``);
-  }
-  parts.push("");
-  if (issue.examples.length > 0) {
-    parts.push("## Example entries");
+
+  if (evidence.length > 0) {
+    const projects = [...new Set(evidence.map((e) => e.project))].sort();
+    const runs = [...new Set(evidence.map((e) => e.run_id))].sort();
+    parts.push("## Observations");
     parts.push("");
-    for (const ex of issue.examples) {
-      parts.push(`- \`${ex.file}:${ex.line}\` — ${ex.snippet}`);
+    parts.push(`- Observed count: **${evidence.length}**`);
+    parts.push(`- Projects: ${projects.map((p) => `\`${p}\``).join(", ")}`);
+    parts.push(`- Source runs: ${runs.map((r) => `\`${r}\``).join(", ")}`);
+    parts.push("");
+    parts.push("## Evidence");
+    parts.push("");
+    const sorted = [...evidence].sort((a, b) =>
+      `${a.member_evidence.file}:${a.member_evidence.line}`.localeCompare(
+        `${b.member_evidence.file}:${b.member_evidence.line}`,
+      ),
+    );
+    for (const e of sorted) {
+      parts.push(
+        `- \`${e.member_evidence.file}:${e.member_evidence.line}\` — ${e.member_evidence.why} (project \`${e.project}\`, run \`${e.run_id}\`)`,
+      );
     }
     parts.push("");
   }
-  parts.push("## Proposed classifier");
-  parts.push("");
-  parts.push("```json");
-  parts.push(JSON.stringify(render_classifier_for_body(issue.classifier), null, 2));
-  parts.push("```");
-  parts.push("");
+
   parts.push("## Acceptance criteria");
   parts.push("");
-  parts.push(
-    `- [ ] Root-cause fix lands in Ariadne core — the ${issue.group_id} pattern resolves without the classifier.`,
-  );
-  parts.push(
-    "- [ ] Remove the classifier entry from " +
-      "`.claude/skills/triage/known_issues/registry.json` (or flip status to `fixed`); " +
-      "the bundled core slice `packages/core/src/classify_entry_points/permanent_data.ts` " +
-      "is regenerated from the source registry.",
-  );
-  parts.push(
-    "- [ ] Add a regression test reproducing the observed examples; confirm the fix covers them.",
-  );
-  parts.push(
-    "- [ ] Re-run the self-healing pipeline on affected corpora; confirm `observed_count` stops climbing.",
-  );
+  if (node.is_taxonomy_extension) {
+    parts.push(
+      "- [ ] Add the missing folder-anchored area to the `AriadneFaultArea` union and " +
+        "`ARIADNE_FAULT_AREA_FOLDER` in `packages/types/src/ariadne_fault_area.ts`, and map it in `derive_fault_area`.",
+    );
+    parts.push(
+      "- [ ] Add a `derive_fault_area` test that routes the formerly-`other` signal to the new area.",
+    );
+  } else {
+    const folder = ARIADNE_FAULT_AREA_FOLDER[node.fault_area];
+    const target = folder.length > 0 ? `\`${folder}\`` : "Ariadne core";
+    parts.push(
+      `- [ ] Root-cause fix lands in ${target} so the ${node.fault_area} pattern resolves without a classifier.`,
+    );
+    parts.push(
+      "- [ ] Add a regression test reproducing the observed evidence; confirm the fix covers it.",
+    );
+    if (node.is_classifier_work) {
+      parts.push(
+        "- [ ] (Lower priority) Author the interim classifier so triage routes around the false positive until the core fix lands.",
+      );
+    }
+  }
   return parts.join("\n") + "\n";
-}
-
-/** Strip internal-only fields (`compiled_pattern`) so the body JSON is clean. */
-function render_classifier_for_body(spec: ClassifierSpec): unknown {
-  return JSON.parse(
-    JSON.stringify(spec, (key, value) => (key === "compiled_pattern" ? undefined : value)),
-  );
 }

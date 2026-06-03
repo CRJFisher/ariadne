@@ -32,20 +32,16 @@ flowchart TD
     direction TB
     S3("get_next_triage_entry.ts<br/>dispense/absorb cycle"):::step
     AG3[["triage-investigator<br/>sonnet · parallel"]]:::agent
-    A3[/"results/&#123;idx&#125;.json<br/>TriageVerdict"/]:::artifact
-    BR{novel verdict?}:::branch
-    AG_CO[["triage-coordinator<br/>sonnet · per novel absorb"]]:::agent
-    NI[/"novel_issues.json<br/><i>dispatcher: single writer · atomic</i>"/]:::artifact
-    CR[/"classifier_regressions.jsonl<br/><i>dispatcher: append-only</i>"/]:::artifact
+    A3[/"results/&#123;idx&#125;.json<br/>TriageVerdict · self-contained<br/>tp · fp-novel · fp-classifier-regression · uncertain"/]:::artifact
   end
 
   subgraph P4["Phase 4 · Finalize"]
     direction TB
-    S5("finalize_triage.ts<br/>finalize/output · seal manifest"):::step
-    PUB[/"analysis_output/&lt;p&gt;/<br/>triage_results/&lt;run-id&gt;.json<br/>schema v4"/]:::published
+    S5("finalize_triage.ts<br/>finalize/output · seal manifest<br/>DERIVE novel_issues[] (one per fp-novel)<br/>+ classifier_regressions[] (per-rule rollup) from results/"):::step
+    PUB[/"analysis_output/&lt;p&gt;/<br/>triage_results/&lt;run-id&gt;.json<br/>schema v5"/]:::published
   end
 
-  CUR[["plan<br/>(promotion + drift)"]]:::downstream
+  CUR[["plan<br/>(group → strategize → reconcile)"]]:::downstream
   FX[["fix-sequencer reconciler<br/>(via prepare_triage)"]]:::downstream
   DIF[["diff_runs.ts<br/>(regression audit)"]]:::downstream
 
@@ -64,14 +60,8 @@ flowchart TD
   A2 --> S3
   S3 --> AG3 --> A3
   A3 --> S3
-  S3 --> BR
-  BR -- "fp-novel-*" --> AG_CO --> NI
-  BR -- "fp-classifier-regression" --> CR
-  BR -- "tp · uncertain" --> S3
-  NI -. "next dispense" .-> S3
   S3 -- "all pending drained" --> S5
-  NI --> S5
-  CR --> S5
+  A3 -- "verdict files · single source of truth" --> S5
   S5 --> PUB
 
   PUB --> CUR

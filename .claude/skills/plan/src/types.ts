@@ -1,17 +1,19 @@
 import type {
   AriadneFaultArea,
-  KnownIssueLanguage,
 } from "@ariadnejs/types";
+import type {
+  PlanTaskEvidence,
+  PlanTaskTier,
+  RunId,
+} from "@ariadnejs/skill-protocol";
 
 // ===== Triage results shape (read-only) =====
 //
 // The published `triage_results/<run-id>.json` wire contract is owned by
 // `@ariadnejs/skill-protocol` — the single source of truth shared with the
 // producing triage skill. Re-exported here so plan's domain-vocabulary
-// imports stay grouped (matching the `@ariadnejs/types` re-export below).
-// Plan's `novel:` path reads `novel_issues` and `classifier_regressions`;
-// downstream consumers read `confirmed_unreachable[]` with its `source`
-// discriminator.
+// imports stay grouped. Pass A reads `novel_issues[]` (every published
+// false-positive row) and groups them by `AriadneFaultArea`.
 
 export {
   TRIAGE_RESULTS_SCHEMA_VERSION,
@@ -27,11 +29,12 @@ export type {
   TriageResultsFile,
 } from "@ariadnejs/skill-protocol";
 
-// ===== Known-issues registry shape (read/write) =====
+// ===== Known-issues registry shape (read-only) =====
 //
-// Canonical types live in `@ariadnejs/types`. Re-exported here so plan's
-// domain-vocabulary imports stay grouped and a downstream rename only touches
-// one file.
+// Canonical types live in `@ariadnejs/types`. Re-exported here so the impact
+// report (the kept registry-ranking substrate) imports its domain vocabulary
+// from one place. The plan engine reads the registry only as a dedup/grounding
+// signal — it never writes it.
 
 export type {
   KnownIssue,
@@ -54,280 +57,105 @@ export interface ScanResultItem {
   run_path: string;
 }
 
-// ===== Sub-agent output shapes =====
+// ===== Pass A — fault-area grouping =====
 
 /**
- * Classifier shape plan emits per investigated group. `kind: "none"`
- * retires a classifier; `kind: "builtin"` authors a check function. Predicate
- * classifiers are hand-authored directly in the registry.
- */
-export type ClassifierSpecProposal =
-  | { kind: "none" }
-  | { kind: "builtin"; function_name: string; min_confidence: number };
-
-/**
- * Deficiency in Ariadne's **introspection / classifier DSL** that blocks the
- * investigator from expressing a precise classifier. Grounds a signal-library
- * gap task in the plan engine's task-DB.
- */
-export interface SignalLibraryGap {
-  /** Kebab-case identifiers of the signals the classifier would need. */
-  signals_needed: string[];
-  title: string;
-  description: string;
-}
-
-/**
- * Deficiency in Ariadne's **resolver** that is the real root cause of the
- * dispatched `novel_issue`. Grounds a top-level task in the plan engine's
- * task-DB, or attaches to an existing one when `existing_task_id` is set.
+ * One `AriadneFaultArea` bucket produced by Pass A (`group_fault_areas`): every
+ * false-positive whose `derive_fault_area` lands on this `fault_area`, with its
+ * evidence verbatim and a per-bucket rollup. The strategist (Pass B) refines
+ * one bucket into a hierarchical fix-plan tree; Pass C reconciles the tree into
+ * `PlanTask` rows.
  *
- * Required on every response that proposes a working classifier (`predicate`
- * or `builtin`): the classifier is a workaround; the bug is the real fix.
+ * `evidence` is `PlanTaskEvidence`-shaped so it carries everything
+ * `derive_fault_area` re-consumes (the area stays re-derivable on read) and
+ * flows straight into a `PlanTask`. The strategist references evidence by
+ * positional index into this array (`StrategistPlanNode.evidence_indices`).
  */
-export interface AriadneBug {
-  root_cause_category: AriadneFaultArea;
-  title: string;
-  description: string;
+export interface FaultAreaBucket {
+  fault_area: AriadneFaultArea;
+  /** One row per false-positive that grouped here; the bucket's index space. */
+  evidence: PlanTaskEvidence[];
+  /** `=== evidence.length` (one false-positive per evidence row). */
+  observed_count: number;
+  /** Distinct projects the evidence spans, sorted. */
+  projects: string[];
+  /** Distinct runs the evidence spans, sorted. */
+  source_runs: RunId[];
   /**
-   * Set when `mcp__backlog__task_search` already found a task covering this
-   * root cause. The deferred actuator attaches to it instead of creating a new
-   * one. Format: `TASK-<N>` or `TASK-<N>.<M>...`.
+   * The escape-hatch free-text descriptions carried by `other`-area rows
+   * (`AriadneFaultLocation.description`). Non-empty only when
+   * `fault_area === "other"`; the strategist uses them to extend the taxonomy.
    */
-  existing_task_id: string | null;
+  descriptions: string[];
+  /**
+   * True when ANY member's `derive_fault_area` returned `needs_judgement: true`
+   * (the deterministic derivation defaulted and the strategist must decide).
+   */
+  needs_judgement: boolean;
 }
 
-// ===== Builtin classifier spec =====
-//
-// Emitted by the investigator when `proposed_classifier.kind === "builtin"`.
-// The deferred actuator consumes it to author the `.ts` source file at the
-// pre-assigned path. The union is closed — every op is enumerated in both the
-// type and the actuator's translation table.
-
-export type SignalCheck =
-  // ===== predicate-DSL-expressible ops (reusable in builtin context) =====
-  | { op: "diagnosis_eq"; value: string }
-  | { op: "language_eq"; value: KnownIssueLanguage }
-  | { op: "syntactic_feature_eq"; name: string; value: string | number | boolean }
-  | { op: "grep_line_regex"; pattern: string }
-  | { op: "decorator_matches"; pattern: string }
-  | { op: "has_capture_at_grep_hit"; capture_name: string }
-  | { op: "missing_capture_at_grep_hit"; capture_name: string }
-  | { op: "receiver_kind_eq"; value: string }
-  | { op: "resolution_failure_reason_eq"; value: string }
-  // ===== grep-correlation ops (read ctx.entry.file_path vs hit file, neighbouring lines) =====
-  | { op: "grep_hits_all_intra_file"; value: boolean }
-  | { op: "grep_hit_neighbourhood_matches"; pattern: string; window: number }
-  // ===== definition-site feature ops =====
-  | { op: "definition_feature_eq"; name: string; value: boolean }
-  | { op: "accessor_kind_eq"; value: "getter" | "setter" | "none" }
-  // ===== unindexed-test-dir caller signal =====
-  | { op: "has_unindexed_test_caller"; value: boolean }
-  // ===== ops requiring cross-file access (why builtin, not predicate) =====
-  | { op: "callers_count_at_least"; n: number }
-  | { op: "callers_count_at_most"; n: number }
-  | { op: "file_path_matches"; pattern: string }
-  | { op: "name_matches"; pattern: string };
+// ===== Pass B — strategist plan (the agent's output contract) =====
 
 /**
- * Exhaustive lookup over the `SignalCheck` op union. Adding a new variant to
- * `SignalCheck` fails this `satisfies` check, not runtime. The lookup is the
- * single source of truth — `SIGNAL_CHECK_OPS` (array form) and
- * `is_signal_check_op` (predicate) both derive from it.
+ * The schema version of a `StrategistPlan` JSON the `plan-strategist` agent
+ * writes. Bumped only on a breaking shape change; the validator and the
+ * reconcile engine both pin it.
  */
-export const SIGNAL_CHECK_OP_LOOKUP = {
-  diagnosis_eq: true,
-  language_eq: true,
-  syntactic_feature_eq: true,
-  grep_line_regex: true,
-  decorator_matches: true,
-  has_capture_at_grep_hit: true,
-  missing_capture_at_grep_hit: true,
-  receiver_kind_eq: true,
-  resolution_failure_reason_eq: true,
-  grep_hits_all_intra_file: true,
-  grep_hit_neighbourhood_matches: true,
-  definition_feature_eq: true,
-  accessor_kind_eq: true,
-  has_unindexed_test_caller: true,
-  callers_count_at_least: true,
-  callers_count_at_most: true,
-  file_path_matches: true,
-  name_matches: true,
-} as const satisfies Record<SignalCheck["op"], true>;
-
-/** String-form enumeration of `SignalCheck.op` values, derived from the lookup. */
-export const SIGNAL_CHECK_OPS: readonly SignalCheck["op"][] =
-  Object.keys(SIGNAL_CHECK_OP_LOOKUP) as SignalCheck["op"][];
-
-export function is_signal_check_op(s: string): s is SignalCheck["op"] {
-  return Object.hasOwn(SIGNAL_CHECK_OP_LOOKUP, s);
-}
+export const STRATEGIST_PLAN_SCHEMA_VERSION = 1;
 
 /**
- * Exhaustive lookup over `KnownIssueLanguage`. `is_known_issue_language` is
- * the typed predicate used at LLM-boundary parsers; adding a language to the
- * union fails the `satisfies` check here.
- */
-export const KNOWN_ISSUE_LANGUAGE_LOOKUP = {
-  typescript: true,
-  javascript: true,
-  python: true,
-  rust: true,
-} as const satisfies Record<KnownIssueLanguage, true>;
-
-export function is_known_issue_language(s: string): s is KnownIssueLanguage {
-  return Object.hasOwn(KNOWN_ISSUE_LANGUAGE_LOOKUP, s);
-}
-
-export interface BuiltinClassifierSpec {
-  function_name: string;
-  min_confidence: number;
-  combinator: "all" | "any";
-  checks: SignalCheck[];
-  /**
-   * Positional indexes into the dispatched novel issue's source entries that
-   * the classifier is designed to match. The canonical novel issue is a single
-   * false-positive entry, so the only valid index is 0.
-   */
-  positive_examples: number[];
-  /**
-   * Positional indexes the classifier must NOT match. Typically empty — with a
-   * single-entry novel issue there is no outlier to carve.
-   */
-  negative_examples: number[];
-  /** Copied into the generated file header and the commit-message body. */
-  description: string;
-}
-
-/**
- * A source entry the investigator chose NOT to cover with the proposed
- * classifier. Names the entry by its positional index into the dispatched
- * novel issue's source entries and carries the investigator's reason.
- */
-export interface RejectedMember {
-  /** Positional index into the source novel issue's entries. */
-  entry_index: number;
-  /** Why the entry does not fit the proposed classifier. */
-  reason: string;
-}
-
-export interface InvestigateResponse {
-  group_id: string;
-  proposed_classifier: ClassifierSpecProposal | null;
-  /**
-   * Required when `proposed_classifier.kind === "builtin"`; null otherwise.
-   * The deferred actuator renders the spec to TypeScript source.
-   */
-  classifier_spec: BuiltinClassifierSpec | null;
-  /**
-   * Set when the investigator's classifier extends an existing registry entry
-   * rather than the group being investigated. `group_id` still equals the
-   * dispatch group; `retargets_to` names the existing entry to upsert against
-   * and drives the authored `.ts` filename. When set, `positive_examples` and
-   * `negative_examples` must be empty — their indices would reference the
-   * wrong group's entries.
-   */
-  retargets_to: string | null;
-  /**
-   * Signal-library / classifier-DSL deficiency. Non-null ↔ `signals_needed`
-   * is non-empty. Grounds a signal-library gap task in the plan engine's
-   * task-DB.
-   */
-  signal_library_gap: SignalLibraryGap | null;
-  /**
-   * Resolver-level root cause behind this `novel_issue`. REQUIRED when
-   * `proposed_classifier` is non-null and its `kind` is not `"none"` — the
-   * classifier is a workaround; this is the real fix. Proposed as a top-level
-   * task (or attaches to `existing_task_id`); the deferred actuator writes the
-   * resolved id into the registry entry's `backlog_task` field.
-   */
-  ariadne_bug: AriadneBug | null;
-  /**
-   * Source entries the investigator could not fit under the proposed
-   * classifier. Each `entry_index` must be in range for the dispatched novel
-   * issue's source entries, must not appear in
-   * `classifier_spec.positive_examples`, and must be unique. Absent or empty
-   * array means the investigator vouches that the source entry is covered.
-   */
-  rejected_members: RejectedMember[];
-  reasoning: string;
-}
-
-// ===== Investigator session log =====
-
-export type InvestigatorSessionStatus = "success" | "failure" | "blocked_missing_signal";
-
-/**
- * Why the investigator could not produce a working classifier. Only populated when
- * status is "failure".
+ * One node in a strategist's hierarchical fix-plan tree for a single bucket.
+ * Maps 1:1 onto a `PlanTask`: `tier`/`title`/`body`/`fault_area` carry over
+ * verbatim; `children` becomes `parent_id`/`child_ids` after Pass C mints ids;
+ * `evidence_indices` resolves against the bucket's `evidence[]` to the
+ * `PlanTaskEvidence` rows that ground this node (and feed its `dedup_key`).
  *
- * - `group_incoherent`      citations on the novel issue mix unrelated root causes
- * - `pattern_unclear`       single pattern, but discriminating signals unclear
- * - `classifier_infeasible` pattern understood, no DSL/builtin can express it
- * - `registry_conflict`     another registry entry already claims these members
- * - `other`                 anything else; details field must explain
+ * The strategist authors prose + structure only — it never mints ids,
+ * `dedup_key`s, or `PlanTaskEvidence` rows (those come verbatim from Pass A).
  */
-export type InvestigatorFailureCategory =
-  | "group_incoherent"
-  | "pattern_unclear"
-  | "classifier_infeasible"
-  | "registry_conflict"
-  | "other";
-
-/**
- * Exhaustive lookup over `InvestigatorSessionStatus`. Adding a status to the
- * union fails the `satisfies` check here.
- */
-export const INVESTIGATOR_SESSION_STATUS_LOOKUP = {
-  success: true,
-  failure: true,
-  blocked_missing_signal: true,
-} as const satisfies Record<InvestigatorSessionStatus, true>;
-
-export function is_investigator_session_status(
-  s: string,
-): s is InvestigatorSessionStatus {
-  return Object.hasOwn(INVESTIGATOR_SESSION_STATUS_LOOKUP, s);
+export interface StrategistPlanNode {
+  /** Size tier: `architectural` (cross-cutting root) → `fault_area` → `localized` leaf. */
+  tier: PlanTaskTier;
+  title: string;
+  body: string;
+  /**
+   * The owning fault area. Required & non-null on every node (mirrors
+   * `PlanTask.fault_area`). On an `architectural` cross-area root this is the
+   * bucket's primary area — the cross-area scope lives in `body` + children.
+   */
+  fault_area: AriadneFaultArea;
+  /**
+   * Positional indexes into the bucket's `evidence[]` this node DIRECTLY
+   * grounds. A `localized` leaf carries the real indexes; an `architectural` or
+   * `fault_area` node MAY carry `[]` and inherit evidence by union from its
+   * descendants. A `is_taxonomy_extension` node is grounded in the bucket's
+   * `descriptions`, not evidence rows, so it too may carry `[]`.
+   */
+  evidence_indices: number[];
+  /**
+   * Marks the taxonomy-extension task an `other` bucket must yield (add the
+   * missing folder-anchored area to `ariadne_fault_area.ts` + `derive_fault_area`).
+   * Permitted only when the bucket's `fault_area === "other"`.
+   */
+  is_taxonomy_extension: boolean;
+  /**
+   * Marks a classifier-script work item. Classifier work is included only as
+   * explicitly lower-priority `localized` nodes — the strategist never authors a
+   * classifier spec itself.
+   */
+  is_classifier_work: boolean;
+  children: StrategistPlanNode[];
 }
 
 /**
- * Exhaustive lookup over `InvestigatorFailureCategory`. Adding a category to
- * the union fails the `satisfies` check here.
+ * A strategist's full output for ONE fault-area bucket — a forest of plan nodes
+ * (usually a single `architectural` or `fault_area` root, ≥1). Self-contained:
+ * carries the bucket's `fault_area` and the `sweep_id` it was dispatched for, so
+ * the validator and reconcile engine cross-check against the bucket fed to them.
  */
-export const INVESTIGATOR_FAILURE_CATEGORY_LOOKUP = {
-  group_incoherent: true,
-  pattern_unclear: true,
-  classifier_infeasible: true,
-  registry_conflict: true,
-  other: true,
-} as const satisfies Record<InvestigatorFailureCategory, true>;
-
-export function is_investigator_failure_category(
-  s: string,
-): s is InvestigatorFailureCategory {
-  return Object.hasOwn(INVESTIGATOR_FAILURE_CATEGORY_LOOKUP, s);
-}
-
-export interface InvestigatorSessionLog {
-  group_id: string;
-  status: InvestigatorSessionStatus;
-  /**
-   * Full narrative. On failure, cite specific files/lines/patterns examined and why
-   * no classifier could be produced. On success, describe which signals discriminate
-   * the pattern and which kind of classifier was chosen.
-   */
-  reasoning: string;
-  failure_category: InvestigatorFailureCategory | null;
-  /**
-   * Concrete specifics beyond reasoning — e.g. "entries 3, 7, 12 are TypeScript
-   * reflection; entries 1, 2, 5 are re-exports; the group was mis-aggregated upstream."
-   * Required when status is "failure".
-   */
-  failure_details: string | null;
-  /** Populated on success or blocked_missing_signal. */
-  success_summary: string | null;
-  entries_examined_count: number;
-  /** ISO-8601 timestamp. */
-  timestamp: string;
+export interface StrategistPlan {
+  schema_version: number;
+  fault_area: AriadneFaultArea;
+  sweep_id: string;
+  roots: StrategistPlanNode[];
 }

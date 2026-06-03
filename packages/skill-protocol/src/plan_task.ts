@@ -165,4 +165,12 @@ export interface PlanTask {
    * identity (e.g. its model id or a fixed agent slug), stamped by the engine.
    */
   strategist: string;
+  /**
+   * True for an interim classifier-script work item — a workaround that routes
+   * triage around the false-positive until the core fix lands. These are
+   * explicitly lower-priority than the core fix; a consumer (the export adapter,
+   * a DB query) orders core-fix tasks ahead of classifier-work tasks by this
+   * flag. The core fix is always the real deliverable.
+   */
+  is_classifier_work: boolean;
 }

@@ -90,17 +90,37 @@ function entry_ref(entry: TriageEntry, project_path: string): PublishedEntryRef 
 
 /**
  * Attach the deterministic core fault diagnostics to a published FP row. The
- * `diagnosis` enum is always present; `resolution_failure` (narrowed to
- * `{ stage, reason }`) and `receiver_kind` come from the first call site that
- * carries a resolution failure — the resolver's own observation of where it
- * gave up. `receiver_kind` is emitted only when that call site is a method call
- * (function/constructor sites have `receiver_kind === "none"`).
+ * `diagnosis` enum and the two `derive_fault_area` disambiguator booleans
+ * (`has_uncaptured_indexed_grep_hit`, `callers_only_in_unindexed_tests`) are
+ * always present, copied verbatim from the entry's `EntryPointDiagnostics` so
+ * the `plan` engine re-derives the fault area with real values rather than
+ * `false/false`. `resolution_failure` (narrowed to `{ stage, reason }`) and
+ * `receiver_kind` come from the first call site that carries a resolution
+ * failure — the resolver's own observation of where it gave up. `receiver_kind`
+ * is emitted only when that call site is a method call (function/constructor
+ * sites have `receiver_kind === "none"`).
  */
 function attach_fault_diagnostics(
   diagnostics: EntryPointDiagnostics,
-): Pick<NovelIssue, "diagnosis" | "resolution_failure" | "receiver_kind"> {
-  const result: Pick<NovelIssue, "diagnosis" | "resolution_failure" | "receiver_kind"> = {
+): Pick<
+  NovelIssue,
+  | "diagnosis"
+  | "resolution_failure"
+  | "receiver_kind"
+  | "has_uncaptured_indexed_grep_hit"
+  | "callers_only_in_unindexed_tests"
+> {
+  const result: Pick<
+    NovelIssue,
+    | "diagnosis"
+    | "resolution_failure"
+    | "receiver_kind"
+    | "has_uncaptured_indexed_grep_hit"
+    | "callers_only_in_unindexed_tests"
+  > = {
     diagnosis: diagnostics.diagnosis,
+    has_uncaptured_indexed_grep_hit: diagnostics.has_uncaptured_indexed_grep_hit,
+    callers_only_in_unindexed_tests: diagnostics.callers_only_in_unindexed_tests,
   };
   const failing = diagnostics.ariadne_call_refs.find(
     (ref) => ref.resolution_failure !== null,

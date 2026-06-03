@@ -9,9 +9,11 @@
  * validate identically.
  *
  * The deterministic core fault diagnostics carried on each false-positive row
- * (`diagnosis`, `resolution_failure`, `receiver_kind`) reuse the enums already
- * published by `@ariadnejs/types` — this module introduces no new fault
- * taxonomy.
+ * (`diagnosis`, `resolution_failure`, `receiver_kind`, and the two
+ * `derive_fault_area` disambiguator booleans) reuse the enums already published
+ * by `@ariadnejs/types` — this module introduces no new fault taxonomy. The two
+ * booleans are carried verbatim so the `plan` engine can re-derive the
+ * `AriadneFaultArea` with real values rather than collapsing to `false/false`.
  */
 
 import { readFile } from "node:fs/promises";
@@ -45,6 +47,13 @@ export interface MemberEvidence {
  * `resolution_failure` is the `{ stage, reason }` subset of the failing call
  * site's `ResolutionFailure`; `receiver_kind` is present only when that call
  * site is a method call.
+ *
+ * `has_uncaptured_indexed_grep_hit` and `callers_only_in_unindexed_tests` are
+ * copied verbatim from the entry's `EntryPointDiagnostics`. They are the two
+ * disambiguators `derive_fault_area` consults on its diagnosis-fallback path:
+ * without them the `coverage_config` and deterministic-`syntactic_extraction`
+ * branches collapse. They are required (the producer always has them from
+ * `EntryPointDiagnostics`), so the `plan` engine never has to invent `false`.
  */
 export interface NovelIssue {
   id: string;
@@ -58,6 +67,8 @@ export interface NovelIssue {
     reason: ResolutionFailure["reason"];
   };
   receiver_kind?: ReceiverKind;
+  has_uncaptured_indexed_grep_hit: boolean;
+  callers_only_in_unindexed_tests: boolean;
 }
 
 /**

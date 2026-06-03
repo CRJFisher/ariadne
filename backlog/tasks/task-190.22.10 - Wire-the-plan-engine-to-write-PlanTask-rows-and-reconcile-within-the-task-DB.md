@@ -49,3 +49,16 @@ A sweep over ≥2 finalized runs writes `PlanTask` rows + a sweep log under `~/.
 - [ ] #4 Any backlog access is read-only (dedup signal only) and passes the 190.22.7 firewall test
 - [ ] #5 Grouping keys on `AriadneFaultArea` via `derive_fault_area` (190.22.3); smoke test over ≥2 runs green
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+
+**Scope largely delivered by TASK-190.22.9.** The plan-engine build (190.22.9) implemented this task's core, treating its own ACs (#3/#4/#7) as ground truth: the engine writes `PlanTask` rows + a `PlanSweepEvent` log via `JsonPlanTaskRepository` and reconciles within the task-DB by `dedup_key` (augment-not-duplicate), the `plan-strategist` backlog grant is dropped entirely (not merely narrowed), grouping keys on `AriadneFaultArea` via `derive_fault_area`, and a smoke test over ≥2 runs asserts the firewall (`tests/plan_engine_smoke.test.ts`). So **AC #1, #2, #5 here are satisfied by 190.22.9** (and #4's firewall is enforced — though backlog *reads* are not yet wired).
+
+**Genuinely remaining for this task:**
+
+- **AC #3 — supersede/combine.** The 190.22.9 reconciler emits only `create`/`augment`. It never `supersede`s or `combine`s, so a node a later sweep drops stays live (orphaned) until retired. Implement supersede/combine `PlanSweepEvent`s (and a retirement/GC pass) so the DB reflects the strategist's merge/split judgement and stale nodes are reclaimed. Note the `dedup_key`-over-aggregated-evidence contract: evidence churn re-keys affected ancestors, so reconciliation across *changed* trees (not just identical re-sweeps) is the real work here.
+- **AC #4 — read-only backlog dedup.** Wire the optional `mcp__backlog__task_search` / `backlog/` frontmatter read so the engine marks a DB task `exported` and suppresses re-proposal when the user already promoted equivalent work. 190.22.9 deferred this (the reconcile dedups within the DB only); the firewall already permits the read-only access.
+
+<!-- SECTION:NOTES:END -->

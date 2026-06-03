@@ -1,13 +1,12 @@
 {
   "schema_version": 1,
-  "_deferred": "The flows/stores topology below still describes the pre-strip curator that wrote the registry. The planning-only flow rewrite and diagram regen land in TASK-190.22.9; only names and path-patterns are current.",
   "skill": "plan",
-  "description": "Offline sweep over completed triage runs. Reads the registry, dispatches an investigator wave to author classifier and root-cause proposals for each novel issue, and emits those proposals plus an on-demand impact report. Planning-only — the deferred actuator applies proposals.",
+  "description": "Offline planning sweep over completed triage runs. Pass A deterministically groups every false-positive verdict by AriadneFaultArea (derive_fault_area); Pass B dispatches one plan-strategist (opus) per fault-area bucket to design a hierarchical fix-plan tree; Pass C reconciles within the firewalled task-DB by dedup_key and writes PlanTask rows + a per-sweep event log to ~/.ariadne/plan/. Planning-only and firewalled: never writes backlog/, registry.json, or packages/core. Graduation to backlog/ is the user-invoked export adapter.",
 
   "flows": [
     {
-      "id": "novel-to-classifier",
-      "name": "Registered novel issue → classifier authored",
+      "id": "group-strategize-reconcile",
+      "name": "Triage false-positives → grouped hierarchical plan tree",
       "representativeness": 0.95,
       "representativeness_anchor": "purpose",
       "entry": {
@@ -17,30 +16,12 @@
       },
       "exit": {
         "kind": "store_write",
-        "target": "registry-write"
+        "target": "plan-tasks"
       },
-      "phases": ["P1", "P3", "P5"],
-      "bypasses": ["P2"],
+      "phases": ["PA", "PB", "PC"],
+      "bypasses": [],
       "diagram_anchor": "pipeline-flow",
       "is_primary": true
-    },
-    {
-      "id": "human-wip-to-permanent",
-      "name": "Operator promotes wip rows to permanent",
-      "representativeness": 0.10,
-      "representativeness_anchor": "self-maintenance",
-      "entry": {
-        "kind": "user_invocation",
-        "command": "pnpm find-promotion-candidates → hand-edit status → pnpm sync-permanent-rules"
-      },
-      "exit": {
-        "kind": "store_write",
-        "target": "core-builtins"
-      },
-      "phases": [],
-      "bypasses": ["P1", "P2", "P3", "P5"],
-      "diagram_anchor": "maintenance-entries",
-      "is_primary": false
     },
     {
       "id": "impact-report",
@@ -56,7 +37,7 @@
         "target": "human-readable-markdown"
       },
       "phases": [],
-      "bypasses": ["P1", "P2", "P3", "P5"],
+      "bypasses": ["PA", "PB", "PC"],
       "diagram_anchor": "maintenance-entries",
       "is_primary": false
     }
@@ -64,28 +45,44 @@
 
   "stores": [
     {
+      "id": "plan-tasks",
+      "path": "~/.ariadne/plan/tasks/<id>.json",
+      "access": "write",
+      "writer_owner": "plan",
+      "semantic_role": "the firewalled task-DB: one PlanTask row per file (architectural -> fault_area -> localized tier). The plan engine is the single autonomous writer via PlanTaskRepository.put_many; reconciled in-DB by dedup_key (augment). status flips to exported are owned by the export adapter (190.22.11).",
+      "touched_by_flows": ["group-strategize-reconcile"]
+    },
+    {
+      "id": "plan-sweeps",
+      "path": "~/.ariadne/plan/sweeps/<sweep-id>.jsonl",
+      "access": "write",
+      "writer_owner": "plan",
+      "semantic_role": "append-only PlanSweepEvent log, one .jsonl per sweep (create/augment/supersede/combine/export). Written via PlanTaskRepository.append_sweep_event; the audit trail of each reconciliation decision.",
+      "touched_by_flows": ["group-strategize-reconcile"]
+    },
+    {
+      "id": "plan-staging",
+      "path": "~/.ariadne/plan/staging/<sweep-id>/{buckets,plans}/<area>.json",
+      "access": "write",
+      "writer_owner": "plan",
+      "semantic_role": "per-sweep scratch: Pass A writes one FaultAreaBucket per area under buckets/; the plan-strategist writes one StrategistPlan per bucket under plans/; Pass C reads both. Distinct from the canonical tasks/ + sweeps/ surfaces.",
+      "touched_by_flows": ["group-strategize-reconcile"]
+    },
+    {
       "id": "registry-read",
       "path": ".claude/skills/triage/known_issues/registry.json",
       "access": "read-only",
       "writer_owner": "actuator",
-      "semantic_role": "filter for already-known issues; investigator context",
-      "touched_by_flows": ["novel-to-classifier"]
+      "semantic_role": "read-only dedup/grounding signal — already-known issues that should not seed new plan tasks. The plan engine never writes the registry.",
+      "touched_by_flows": ["group-strategize-reconcile"]
     },
     {
-      "id": "registry-write",
-      "path": ".claude/skills/triage/known_issues/registry.json",
-      "access": "write",
-      "writer_owner": null,
-      "semantic_role": "single autonomous writer of wip rows; classifier.kind, drift_detected, observed_count, observed_projects, last_seen_run, backlog_task fields. permanent rows owned by human reviewer; fixed rows owned by fix-sequencer reconciler.",
-      "touched_by_flows": ["novel-to-classifier"]
-    },
-    {
-      "id": "core-builtins",
-      "path": "packages/core/src/classify_entry_points/builtins/",
-      "access": "write",
-      "writer_owner": null,
-      "semantic_role": "rendered check_<gid>.ts files plus permanent_data.ts (regenerated by sync-permanent-rules)",
-      "touched_by_flows": ["novel-to-classifier"]
+      "id": "backlog-read",
+      "path": "backlog/tasks/",
+      "access": "read-only",
+      "writer_owner": "user",
+      "semantic_role": "permitted (AC #4) read-only dedup signal — NOT YET WIRED into reconcile. FIREWALLED: never written by this skill; graduation is the user-invoked export adapter (190.22.11).",
+      "touched_by_flows": ["group-strategize-reconcile"]
     }
   ],
 
@@ -94,25 +91,25 @@
       "id": "plan-strategist",
       "model": "opus",
       "max_turns": 200,
-      "multiplicity": "per registered novel issue; puller bounds concurrency to 5",
-      "used_in_flows": ["novel-to-classifier"]
+      "multiplicity": "one per fault-area bucket from Pass A; dispatcher bounds concurrency to 5. Each emits a StrategistPlan (hierarchical fix-plan tree), not a classifier spec; for each 'other' bucket it emits BOTH a taxonomy-extension task and an underlying-core-fix task.",
+      "used_in_flows": ["group-strategize-reconcile"]
     }
   ],
 
   "published_outputs": [
     {
-      "id": "wip-rows",
-      "path_pattern": ".claude/skills/triage/known_issues/registry.json (status=wip)",
-      "schema_version": null,
-      "consumed_by": ["triage", "fix-sequencer"],
-      "written_by_flows": ["novel-to-classifier"]
+      "id": "plan-tasks",
+      "path_pattern": "~/.ariadne/plan/tasks/<id>.json",
+      "schema_version": "PlanTask (PLAN_TASK_SCHEMA_VERSION=1)",
+      "consumed_by": ["export-adapter"],
+      "written_by_flows": ["group-strategize-reconcile"]
     },
     {
-      "id": "core-builtin-classifiers",
-      "path_pattern": "packages/core/src/classify_entry_points/builtins/check_<gid>.ts",
-      "schema_version": "BuiltinClassifierSpec",
-      "consumed_by": ["triage"],
-      "written_by_flows": ["novel-to-classifier"]
+      "id": "plan-sweep-log",
+      "path_pattern": "~/.ariadne/plan/sweeps/<sweep-id>.jsonl",
+      "schema_version": "PlanSweepEvent",
+      "consumed_by": ["export-adapter"],
+      "written_by_flows": ["group-strategize-reconcile"]
     }
   ],
 
@@ -120,9 +117,9 @@
     {
       "from_skill": "triage",
       "path_pattern": "analysis_output/<project>/triage_results/<run-id>.json",
-      "read_by_flows": ["novel-to-classifier"]
+      "read_by_flows": ["group-strategize-reconcile"]
     }
   ],
 
-  "downstream_consumers": ["fix-sequencer", "triage"]
+  "downstream_consumers": ["export-adapter"]
 }
