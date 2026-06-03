@@ -4,7 +4,7 @@
  * consumed by any downstream script.
  *
  * Inputs:
- *   - The registry (post-curation snapshot)
+ *   - The known-issues registry (read-only)
  *   - A "prior" snapshot of `group_id → observed_count` that lets the report
  *     highlight groups that crossed an impact threshold since the last run.
  *     Pass an empty map when no prior exists.

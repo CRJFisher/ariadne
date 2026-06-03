@@ -24,7 +24,6 @@ function plan(roots: StrategistPlanNode[], fault_area: StrategistPlan["fault_are
 const NAME_RES_CTX: ValidatePlanContext = {
   bucket_fault_area: "name_resolution",
   evidence_count: 2,
-  other_description_count: 0,
 };
 
 function codes(plan_raw: unknown, ctx: ValidatePlanContext): string[] {
@@ -82,12 +81,42 @@ describe("validate_plan", () => {
     expect(codes(plan([leaf({ fault_area: "method_lookup" })]), NAME_RES_CTX)).toEqual(["node_fault_area_mismatch"]);
   });
 
+  it("flags a node fault_area that is not in the taxonomy at all", () => {
+    // distinct from node_fault_area_mismatch (a valid-but-wrong area): this is a
+    // string that is no AriadneFaultArea. Built as a raw object (the validator
+    // takes `unknown`) since the typed helper cannot express an off-taxonomy area.
+    const bad: unknown = {
+      schema_version: 1,
+      fault_area: "name_resolution",
+      sweep_id: "sweep-1",
+      roots: [
+        {
+          tier: "localized",
+          title: "fix",
+          body: "body",
+          fault_area: "not_a_real_area",
+          evidence_indices: [0],
+          is_taxonomy_extension: false,
+          is_classifier_work: false,
+          children: [],
+        },
+      ],
+    };
+    expect(codes(bad, NAME_RES_CTX)).toContain("fault_area_not_in_taxonomy");
+  });
+
+  it("flags an `other` bucket whose only task is the taxonomy extension (no core fix)", () => {
+    const other_ctx: ValidatePlanContext = { bucket_fault_area: "other", evidence_count: 1 };
+    const only_ext = plan([leaf({ fault_area: "other", is_taxonomy_extension: true, evidence_indices: [] })], "other");
+    expect(codes(only_ext, other_ctx)).toEqual(["other_bucket_missing_core_fix"]);
+  });
+
   it("flags empty title/body", () => {
     expect(codes(plan([leaf({ title: "  ", body: "" })]), NAME_RES_CTX)).toEqual(["empty_body", "empty_title"]);
   });
 
   it("requires both a taxonomy-extension and a core-fix task for an `other` bucket", () => {
-    const other_ctx: ValidatePlanContext = { bucket_fault_area: "other", evidence_count: 1, other_description_count: 1 };
+    const other_ctx: ValidatePlanContext = { bucket_fault_area: "other", evidence_count: 1 };
     // Only a core-fix, no taxonomy extension.
     const missing_ext = plan([leaf({ fault_area: "other", evidence_indices: [0] })], "other");
     expect(codes(missing_ext, other_ctx)).toEqual(["other_bucket_missing_taxonomy_extension"]);

@@ -12,7 +12,6 @@ flowchart TD
   TR[/"triage · analysis_output/&lt;p&gt;/<br/>triage_results/&lt;run-id&gt;.json<br/>schema v5 · novel_issues[]"/]:::ext
 
   REG[("known_issues/registry.json<br/><i>read-only · dedup/grounding</i>")]:::store
-  BL[("backlog/tasks/<br/><i>read-only · dedup signal</i>")]:::store
 
   subgraph PA["Pass A · Group (deterministic)"]
     direction TB
@@ -45,7 +44,6 @@ flowchart TD
   VAL -- "invalid · retry" --> AGB
   VAL --> SP
   SP --> RC
-  BL -. "read · dedup signal" .-> RC
   RC --> PT
   RC --> SW
   PT -. "next sweep · in-DB reconcile" .-> RC

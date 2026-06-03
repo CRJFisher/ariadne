@@ -182,4 +182,60 @@ describe("build_plan_tasks", () => {
     const ids = new Set(tasks.map((t) => t.id));
     expect(ids.size).toEqual(tasks.length);
   });
+
+  it("persists is_classifier_work onto the PlanTask from the node", () => {
+    const plan: StrategistPlan = {
+      schema_version: 1,
+      fault_area: "name_resolution",
+      sweep_id: "sweep-1",
+      roots: [
+        {
+          tier: "localized",
+          title: "interim classifier",
+          body: "workaround",
+          fault_area: "name_resolution",
+          evidence_indices: [0],
+          is_taxonomy_extension: false,
+          is_classifier_work: true,
+          children: [],
+        },
+      ],
+    };
+    const [task] = build_plan_tasks(plan, [ev("a.ts", 1)], OPTS);
+    expect(task.is_classifier_work).toEqual(true);
+  });
+
+  it("supports a multi-root forest and a parent carrying its own evidence_indices", () => {
+    const plan: StrategistPlan = {
+      schema_version: 1,
+      fault_area: "name_resolution",
+      sweep_id: "sweep-1",
+      roots: [
+        // Root 1: a fault_area node grounding index 2 directly, plus a leaf on index 0.
+        {
+          tier: "fault_area",
+          title: "group one",
+          body: "g1",
+          fault_area: "name_resolution",
+          evidence_indices: [2],
+          is_taxonomy_extension: false,
+          is_classifier_work: false,
+          children: [
+            { tier: "localized", title: "leaf 0", body: "l0", fault_area: "name_resolution", evidence_indices: [0], is_taxonomy_extension: false, is_classifier_work: false, children: [] },
+          ],
+        },
+        // Root 2: a standalone localized leaf on index 1.
+        { tier: "localized", title: "leaf 1", body: "l1", fault_area: "name_resolution", evidence_indices: [1], is_taxonomy_extension: false, is_classifier_work: false, children: [] },
+      ],
+    };
+    const bucket = [ev("a.ts", 1, "p"), ev("b.ts", 2, "p"), ev("c.ts", 3, "p")];
+    const tasks = build_plan_tasks(plan, bucket, OPTS);
+    expect(tasks).toHaveLength(3);
+    // Two roots, both parentless.
+    expect(tasks.filter((t) => t.parent_id === null)).toHaveLength(2);
+    // The self-grounded fault_area root aggregates its OWN index 2 ∪ child index 0.
+    const group_one = tasks.find((t) => t.tier === "fault_area");
+    expect(group_one?.evidence.map((e) => e.member_evidence.file).sort()).toEqual(["a.ts", "c.ts"]);
+    expect(group_one?.observed_count).toEqual(2);
+  });
 });

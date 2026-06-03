@@ -7,15 +7,30 @@
  *
  * Because `build_plan_tasks` mints ids deterministically from content, an
  * identical re-sweep produces candidate ids equal to the existing task ids, so
- * the hierarchy augments in place. When the strategist's tree changes between
- * sweeps the candidate ids diverge for the changed nodes; a remap pass rewrites
- * every candidate's `parent_id`/`child_ids` to the FINAL id (the existing task's
- * id when augmenting, the candidate's own when creating) so the plan stays a
- * single tree rather than forking.
+ * each candidate matches its prior task by id and the hierarchy augments in
+ * place. When the strategist's tree changes between sweeps the candidate ids
+ * diverge for the changed nodes; those fall back to a `(dedup_key, tier)` match,
+ * and a remap pass rewrites every candidate's `parent_id`/`child_ids` to the
+ * FINAL id (the existing task's id when augmenting, the candidate's own when
+ * creating) so the plan stays a single tree rather than forking.
  *
- * `dedup_key` stays pure (fault_area + location set only); a key shared by two
- * tiers (a degenerate single-leaf subtree) is disambiguated here by matching on
- * `tier` as well, never by widening the key.
+ * Matching is 1:1 — each existing task is claimed by at most one candidate. Two
+ * candidates that legitimately share a `(dedup_key, tier)` (e.g. two
+ * taxonomy-extension leaves with empty evidence, or two leaves grounding the
+ * same `file:line`) each claim a DISTINCT prior task; a second candidate with no
+ * unclaimed prior task creates a fresh one. `dedup_key` stays pure (fault_area +
+ * location set only) — the id and tier disambiguate, never a widened key.
+ *
+ * Scope: the reconciler only ever `create`s or `augment`s — never `supersede`/
+ * `combine`. Two consequences follow from `dedup_key` being a node's
+ * fault_area + its AGGREGATED evidence set (the `PlanTask.dedup_key` contract):
+ *   - An IDENTICAL re-sweep (same runs) augments the whole tree in place — the
+ *     guarantee AC #4 requires and the smoke test exercises.
+ *   - A node whose aggregated evidence CHANGES (a leaf gains/loses an evidence
+ *     row, or an ancestor's descendants change) gets a new `dedup_key` and is
+ *     created fresh; the prior node is left live (orphaned) until a later
+ *     GC/actuator pass retires it. So leaf re-ordering and unchanged-evidence
+ *     re-authoring augment, but evidence churn re-keys the affected nodes.
  */
 
 import type {
@@ -50,19 +65,38 @@ export async function reconcile_plan(
 ): Promise<ReconcileOutcome> {
   // Snapshot the committed store ONCE; all match decisions read this pre-sweep
   // state so a within-sweep create never shadows a later candidate.
-  const existing_by_key = new Map<string, PlanTask[]>();
-  for (const task of await repo.query({})) {
-    const bucket = existing_by_key.get(task.dedup_key);
-    if (bucket === undefined) existing_by_key.set(task.dedup_key, [task]);
+  const existing_tasks = await repo.query({});
+  const existing_by_id = new Map<PlanTaskId, PlanTask>();
+  const live_by_key = new Map<string, PlanTask[]>();
+  for (const task of existing_tasks) {
+    existing_by_id.set(task.id, task);
+    if (!is_live(task)) continue;
+    const bucket = live_by_key.get(task.dedup_key);
+    if (bucket === undefined) live_by_key.set(task.dedup_key, [task]);
     else bucket.push(task);
   }
+  // Sort each key's live tasks so the (dedup_key, tier) fallback is deterministic.
+  for (const bucket of live_by_key.values()) bucket.sort((a, b) => a.id.localeCompare(b.id));
 
+  // 1:1 matching — an existing task, once claimed, cannot match a second candidate.
+  const claimed = new Set<PlanTaskId>();
   const match_for = (candidate: PlanTask): PlanTask | null => {
-    const same_key = existing_by_key.get(candidate.dedup_key) ?? [];
-    const live_same_tier = same_key
-      .filter((t) => is_live(t) && t.tier === candidate.tier)
-      .sort((a, b) => a.id.localeCompare(b.id));
-    return live_same_tier[0] ?? null;
+    // Exact id (identical re-sweep): build_plan_tasks mints ids deterministically.
+    const by_id = existing_by_id.get(candidate.id);
+    if (by_id !== undefined && is_live(by_id) && !claimed.has(by_id.id)) {
+      claimed.add(by_id.id);
+      return by_id;
+    }
+    // Fallback for a moved node: first unclaimed live task with the same key+tier.
+    const pool = live_by_key.get(candidate.dedup_key) ?? [];
+    const match = pool.find(
+      (t) => t.tier === candidate.tier && !claimed.has(t.id),
+    );
+    if (match !== undefined) {
+      claimed.add(match.id);
+      return match;
+    }
+    return null;
   };
 
   const decisions = candidates.map((candidate) => ({

@@ -168,4 +168,72 @@ describe("reconcile_plan", () => {
     );
     expect(root_event?.kind).toEqual("create");
   });
+
+  it("re-sweep augments each of two same-(dedup_key, tier) siblings 1:1 (no orphan, no duplicate write)", async () => {
+    // Two localized leaves grounding the SAME evidence row → identical dedup_key
+    // AND tier. The reconciler must pair them 1:1 with the prior tasks, not
+    // collapse both onto the lexicographically-first one.
+    const collide: StrategistPlan = {
+      schema_version: 1,
+      fault_area: "syntactic_extraction",
+      sweep_id: "s1",
+      roots: [
+        {
+          tier: "fault_area",
+          title: "group",
+          body: "g",
+          fault_area: "syntactic_extraction",
+          evidence_indices: [],
+          is_taxonomy_extension: false,
+          is_classifier_work: false,
+          children: [
+            { tier: "localized", title: "leaf x", body: "x", fault_area: "syntactic_extraction", evidence_indices: [0], is_taxonomy_extension: false, is_classifier_work: false, children: [] },
+            { tier: "localized", title: "leaf y", body: "y", fault_area: "syntactic_extraction", evidence_indices: [0], is_taxonomy_extension: false, is_classifier_work: false, children: [] },
+          ],
+        },
+      ],
+    };
+    const repo = new JsonPlanTaskRepository();
+    const evidence = [ev("a.ts", 1)];
+    await reconcile_plan(repo, build_plan_tasks(collide, evidence, { sweep_id: "s1", strategist: "opus" }), "s1");
+    const after_first = await repo.query({});
+    const localized_first = after_first.filter((t) => t.tier === "localized").map((t) => t.id).sort();
+    expect(localized_first).toHaveLength(2); // two distinct files despite shared dedup_key
+
+    const { written } = await reconcile_plan(
+      repo,
+      build_plan_tasks(collide, evidence, { sweep_id: "s2", strategist: "opus" }),
+      "s2",
+    );
+    // No id written twice this sweep.
+    const written_ids = written.map((t) => t.id);
+    expect(new Set(written_ids).size).toEqual(written_ids.length);
+    // Both original leaves survive and were both bumped to s2 (no orphan frozen at s1).
+    const after_second = await repo.query({});
+    const localized_second = after_second.filter((t) => t.tier === "localized");
+    expect(localized_second.map((t) => t.id).sort()).toEqual(localized_first);
+    for (const leaf of localized_second) expect(leaf.updated_in_sweep).toEqual("s2");
+  });
+
+  it("a re-ordered tree augments via the (dedup_key, tier) fallback, not a fork", async () => {
+    // Reversing the children changes each leaf's pre-order ordinal, so its
+    // content-derived id changes — the id-first match misses. But each leaf's
+    // dedup_key (over its unchanged own evidence) is stable, so the
+    // (dedup_key, tier) fallback re-matches it to its prior task: no fresh leaf,
+    // and the prior leaf ids survive (augment keeps the existing id).
+    const repo = new JsonPlanTaskRepository();
+    const evidence = [ev("a.ts", 1), ev("b.ts", 2)];
+    await reconcile_plan(repo, build_plan_tasks(plan(), evidence, { sweep_id: "s1", strategist: "opus" }), "s1");
+    const leaf_ids_first = (await repo.query({ tier: "localized" })).map((t) => t.id).sort();
+
+    const reordered = plan();
+    reordered.roots[0].children.reverse();
+    const { events } = await reconcile_plan(
+      repo,
+      build_plan_tasks(reordered, evidence, { sweep_id: "s2", strategist: "opus" }),
+      "s2",
+    );
+    expect(events.every((e) => e.kind === "augment")).toBe(true);
+    expect((await repo.query({ tier: "localized" })).map((t) => t.id).sort()).toEqual(leaf_ids_first);
+  });
 });

@@ -38,8 +38,6 @@ export interface ValidatePlanContext {
   bucket_fault_area: AriadneFaultArea;
   /** `bucket.evidence.length` — the valid index space for `evidence_indices`. */
   evidence_count: number;
-  /** `bucket.descriptions.length`; `> 0` iff the bucket is the `other` escape hatch. */
-  other_description_count: number;
 }
 
 export interface ValidatePlanResult {
@@ -201,7 +199,7 @@ export function validate_plan(plan_raw: unknown, ctx: ValidatePlanContext): Vali
     issues.push(...check_node_rules(root, `roots[${i}]`, ctx, found));
   });
 
-  if (ctx.other_description_count > 0) {
+  if (ctx.bucket_fault_area === "other") {
     if (!found.taxonomy_extension) {
       issues.push({
         code: "other_bucket_missing_taxonomy_extension",

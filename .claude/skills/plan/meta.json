@@ -81,7 +81,7 @@
       "path": "backlog/tasks/",
       "access": "read-only",
       "writer_owner": "user",
-      "semantic_role": "OPTIONAL read-only dedup signal during reconcile. FIREWALLED: never written by this skill — graduation is the user-invoked export adapter (190.22.11).",
+      "semantic_role": "permitted (AC #4) read-only dedup signal — NOT YET WIRED into reconcile. FIREWALLED: never written by this skill; graduation is the user-invoked export adapter (190.22.11).",
       "touched_by_flows": ["group-strategize-reconcile"]
     }
   ],

@@ -40,19 +40,9 @@ export function plan_staging_plans_dir(sweep_id: string): string {
   return path.join(plan_staging_dir(sweep_id), "plans");
 }
 
-/** Absolute repo root — same value every script derives. Consumed by get_context_cmd builders. */
+/** Absolute repo root — same value every script derives. */
 export function get_repo_root(): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
   // src/store/ → src/ → plan/ → skills/ → .claude/ → repo root
   return path.resolve(here, "..", "..", "..", "..", "..");
 }
-
-/** Relative path from repo root to the scripts/ directory. */
-export function get_scripts_rel(): string {
-  return path.relative(get_repo_root(), path.join(get_repo_root(), ".claude", "skills", "plan", "scripts"));
-}
-
-export function run_output_dir(run_id: string): string {
-  return path.join(CURATOR_RUNS_DIR, run_id);
-}
-

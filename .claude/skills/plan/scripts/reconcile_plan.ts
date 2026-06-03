@@ -84,12 +84,22 @@ async function main(): Promise<void> {
   const rejected: Array<{ plan: string; issues: unknown }> = [];
 
   for (const file of plan_files) {
-    const plan_raw = await read_json<unknown>(path.join(plans_dir, file));
-    const bucket = await read_json<FaultAreaBucket>(path.join(buckets_dir, file));
+    let plan_raw: unknown;
+    let bucket: FaultAreaBucket;
+    try {
+      plan_raw = await read_json<unknown>(path.join(plans_dir, file));
+      bucket = await read_json<FaultAreaBucket>(path.join(buckets_dir, file));
+    } catch (err) {
+      // A plan with no paired bucket (or unreadable JSON) rejects that one plan,
+      // mirroring the validation-failure path — it never aborts the whole sweep.
+      const reason = err instanceof Error ? err.message : String(err);
+      rejected.push({ plan: file, issues: [{ code: "shape_error", message: reason }] });
+      process.stderr.write(`rejecting ${file}: ${reason}\n`);
+      continue;
+    }
     const result = validate_plan(plan_raw, {
       bucket_fault_area: bucket.fault_area,
       evidence_count: bucket.evidence.length,
-      other_description_count: bucket.descriptions.length,
     });
     if (!result.ok) {
       rejected.push({ plan: file, issues: result.issues });

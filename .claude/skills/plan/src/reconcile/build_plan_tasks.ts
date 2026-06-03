@@ -95,7 +95,17 @@ export function build_plan_tasks(
   const aggregated: PlanTaskEvidence[][] = new Array(flat.length);
   const compute_aggregate = (index: number): PlanTaskEvidence[] => {
     const { node, child_indices } = flat[index];
-    const own = node.evidence_indices.map((i) => bucket_evidence[i]);
+    const own = node.evidence_indices.map((i) => {
+      // Precondition: the caller has run `validate_plan` (the production path in
+      // scripts/reconcile_plan.ts does), so indices are in range. Fail loudly if not.
+      const row = bucket_evidence[i];
+      if (row === undefined) {
+        throw new Error(
+          `build_plan_tasks: evidence_index ${i} out of range [0, ${bucket_evidence.length}) — run validate_plan first`,
+        );
+      }
+      return row;
+    });
     const descendant = child_indices.flatMap((c) => compute_aggregate(c));
     const merged = union_evidence([...own, ...descendant]);
     aggregated[index] = merged;
@@ -136,6 +146,7 @@ export function build_plan_tasks(
       created_in_sweep: options.sweep_id,
       updated_in_sweep: options.sweep_id,
       strategist: options.strategist,
+      is_classifier_work: entry.node.is_classifier_work,
     } satisfies PlanTask;
   });
 }

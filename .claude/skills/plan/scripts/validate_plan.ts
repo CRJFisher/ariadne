@@ -77,7 +77,6 @@ async function main(): Promise<void> {
   const { ok, issues } = validate_plan(plan_raw, {
     bucket_fault_area: bucket.fault_area,
     evidence_count: bucket.evidence.length,
-    other_description_count: bucket.descriptions.length,
   });
   process.stdout.write(JSON.stringify({ plan_path, ok, issues }, null, 2) + "\n");
   if (!ok) process.exit(1);
