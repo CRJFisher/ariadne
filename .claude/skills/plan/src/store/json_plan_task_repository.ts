@@ -25,6 +25,9 @@ import { parse_plan_task } from "./plan_task_record.js";
  * Single writer per task file, so writes are rename-atomic with NO global lock
  * — this store deliberately stays out of the registry-writer lock contract and
  * is never added to its allowlist (the `<id>.json` path is not registry-shaped).
+ * The same single-writer assumption covers the sweep log: one engine pass owns
+ * its `sweep_id`, so `append_sweep_event` needs no lock to keep the JSONL
+ * one-object-per-line invariant.
  *
  * Reads (`get`/`query`/`children_of`/`find_by_dedup_key`) are the proven
  * `discover_runs` pattern: `readdir` + per-file parse + in-memory filter. The
@@ -75,11 +78,18 @@ export class JsonPlanTaskRepository implements PlanTaskRepository {
     await this.write_one(task);
   }
 
+  /**
+   * Upsert many tasks, one `<id>.json` each. Per-file atomic, NOT batch-atomic:
+   * a mid-batch failure leaves the already-renamed files in place. The engine
+   * owns recovery — a partial batch is reconciled on the next sweep — so no
+   * cross-file transaction is needed here.
+   */
   async put_many(tasks: PlanTask[]): Promise<void> {
     await mkdir(plan_tasks_dir(), { recursive: true });
     await Promise.all(tasks.map((task) => this.write_one(task)));
   }
 
+  /** Append one event as a JSON line to `sweeps/<sweep_id>.jsonl` (the engine-minted sweep id). */
   async append_sweep_event(sweep_id: string, event: PlanSweepEvent): Promise<void> {
     await mkdir(plan_sweeps_dir(), { recursive: true });
     const log_path = path.join(plan_sweeps_dir(), `${sweep_id}.jsonl`);

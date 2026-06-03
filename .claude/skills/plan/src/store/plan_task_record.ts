@@ -7,13 +7,25 @@ import { PLAN_TASK_SCHEMA_VERSION, type PlanTask } from "@ariadnejs/skill-protoc
  * evidence rows (the engine is the only legitimate writer of these files, so
  * deep validation is its concern, not the store's).
  *
- * Throws if the payload is not an object, the `schema_version` does not equal
- * {@link PLAN_TASK_SCHEMA_VERSION}, or a primary-key / queryable field is the
- * wrong kind — so a corrupt or stale file can never silently mis-filter a query
- * or mis-key a dedup lookup.
+ * Throws if the payload is not an object or the `schema_version` does not equal
+ * {@link PLAN_TASK_SCHEMA_VERSION}, plus a single field-kind rule: validate
+ * exactly the fields whose wrong kind would fail *silently* downstream, and
+ * trust everything else to the sole engine writer. Two such failure modes
+ * exist, so two lists:
+ *
+ *   - {@link REQUIRED_STRING_FIELDS} — the strings the store keys or filters on.
+ *     A non-string here mis-routes a query or dedup lookup with no error.
+ *   - {@link REQUIRED_ARRAY_FIELDS} — the arrays a consumer iterates. A non-array
+ *     here throws far from the store, in the engine's `.map`/`.length`.
+ *
+ * Fields outside both lists (`title`, `body`, `created_in_sweep`, `strategist`,
+ * the nullable links, `observed_count`) are returned verbatim: a wrong kind
+ * there is a harmless passthrough the engine owns, so guarding it would be
+ * surplus — the same altitude as `parse_triage_results` deferring deep-row
+ * validation to its producer.
  */
 
-/** Non-null string fields the store keys or filters on; a wrong kind would mis-route a query. */
+/** The strings the store keys or filters on; a wrong kind silently mis-routes a query. */
 const REQUIRED_STRING_FIELDS: readonly (keyof PlanTask)[] = [
   "id",
   "tier",
@@ -22,7 +34,7 @@ const REQUIRED_STRING_FIELDS: readonly (keyof PlanTask)[] = [
   "dedup_key",
 ];
 
-/** Required arrays the store returns on round-trip; the twin of triage's `REQUIRED_ARRAYS`. */
+/** The arrays a consumer iterates; a wrong kind throws far from the store. Twin of triage's `REQUIRED_ARRAYS`. */
 const REQUIRED_ARRAY_FIELDS: readonly (keyof PlanTask)[] = [
   "child_ids",
   "evidence",

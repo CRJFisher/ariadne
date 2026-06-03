@@ -148,6 +148,24 @@ describe("JsonPlanTaskRepository query", () => {
     expect(got).toEqual([match]);
   });
 
+  it("filters by tier", async () => {
+    const repo = new JsonPlanTaskRepository();
+    const root = make_task({ id: "root" as PlanTaskId, tier: "architectural" });
+    const leaf = make_task({ id: "leaf" as PlanTaskId, tier: "localized" });
+    await repo.put_many([root, leaf]);
+
+    expect(await repo.query({ tier: "architectural" })).toEqual([root]);
+  });
+
+  it("filters by dedup_key", async () => {
+    const repo = new JsonPlanTaskRepository();
+    const a = make_task({ id: "a" as PlanTaskId, dedup_key: "k1" });
+    const b = make_task({ id: "b" as PlanTaskId, dedup_key: "k2" });
+    await repo.put_many([a, b]);
+
+    expect(await repo.query({ dedup_key: "k2" })).toEqual([b]);
+  });
+
   it("an empty filter returns every task", async () => {
     const repo = new JsonPlanTaskRepository();
     const tasks = [
@@ -162,11 +180,14 @@ describe("JsonPlanTaskRepository query", () => {
 
   it("skips non-.json entries in the tasks dir", async () => {
     const repo = new JsonPlanTaskRepository();
-    await repo.put(make_task({ id: "t1" as PlanTaskId }));
+    const t1 = make_task({ id: "t1" as PlanTaskId });
+    await repo.put(t1);
     await fs.writeFile(path.join(plan_tasks_dir(), ".DS_Store"), "junk", "utf8");
-    await fs.writeFile(path.join(plan_tasks_dir(), "t1.json.tmp.partial"), "{", "utf8");
+    // Mimics atomic_write_file's interrupted-write debris (`<id>.json.tmp.<pid>.<uuid>`):
+    // a half-written temp that must be excluded by the `.json`-suffix filter, not parsed.
+    await fs.writeFile(path.join(plan_tasks_dir(), "t1.json.tmp.99.partial"), "{", "utf8");
 
-    expect(await repo.query({})).toHaveLength(1);
+    expect(await repo.query({})).toEqual([t1]);
   });
 });
 
