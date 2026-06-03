@@ -29,6 +29,7 @@ export {
   triage_results_path,
   parse_triage_results_path,
   known_issues_registry_path,
+  plan_dir,
   plan_tasks_dir,
   plan_task_path,
   plan_sweeps_dir,

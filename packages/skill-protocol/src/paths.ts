@@ -45,9 +45,11 @@ function state_dir(): string {
 /**
  * Base state directory for the `plan` engine's task-DB. Defaults to
  * `~/.ariadne/plan` (a sibling of the triage base, not a child); overridable
- * for test isolation via `ARIADNE_PLAN_DIR_OVERRIDE`. Read lazily.
+ * for test isolation via `ARIADNE_PLAN_DIR_OVERRIDE`. Read lazily. Exported so
+ * the engine can root its per-sweep `staging/` scratch under the same
+ * override-honoring base without re-deriving the env logic.
  */
-function plan_dir(): string {
+export function plan_dir(): string {
   return (
     process.env.ARIADNE_PLAN_DIR_OVERRIDE ??
     path.join(os.homedir(), ".ariadne", "plan")

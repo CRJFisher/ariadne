@@ -230,6 +230,8 @@ describe("finalize_triage (fixture integration)", () => {
           diagnosis: "callers-in-registry-unresolved",
           resolution_failure: { stage: "method_lookup", reason: "method_not_on_type" },
           receiver_kind: "identifier",
+          has_uncaptured_indexed_grep_hit: false,
+          callers_only_in_unindexed_tests: false,
         },
         {
           id: "novel-3",
@@ -238,6 +240,8 @@ describe("finalize_triage (fixture integration)", () => {
           proposed_root_cause: "callback registration missed",
           evidence_excerpt: "emitter.on('x', novel_fp_2)",
           diagnosis: "no-textual-callers",
+          has_uncaptured_indexed_grep_hit: false,
+          callers_only_in_unindexed_tests: false,
         },
       ],
       classifier_regressions: [

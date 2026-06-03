@@ -1,56 +1,54 @@
 # plan
 
-Offline sweep over completed `triage` runs. Consumes the v5
+Offline plan engine over completed `triage` runs. Consumes the v5
 `triage_results/<run-id>.json` published by triage (schema owned by
-`@ariadnejs/skill-protocol`) — specifically `novel_issues[]` (one row per
-false-positive entry named by the per-entry investigator) and
-`classifier_regressions[]` (in-flight drift flags the per-entry investigator
-raised when a wip classifier failed to match an entry it should have caught).
+`@ariadnejs/skill-protocol`) — specifically `novel_issues[]`, one row per
+published false-positive named by the per-entry investigator.
 
-The sweep is **planning-only**: it reads the registry and emits proposals. The
-deferred actuator applies them. For each novel issue with no registry row yet,
-`plan` dispatches a single `plan-strategist` (opus) to author a
-`BuiltinClassifierSpec` plus an Ariadne-bug backlog proposal. Classifier-regression
-flags and already-registered novel issues are surfaced as drift-evidence and
-observed-stat proposals for the actuator. The skill never writes the registry.
+The engine runs in three passes — **group → strategize → reconcile** — and is
+**planning-only and firewalled**: it writes only `PlanTask` rows + a per-sweep
+event log to the task-DB at `~/.ariadne/plan/`, and never writes the user's
+`backlog/`, the classifier `registry.json`, or `packages/core`.
+
+## Pipeline flow
+
+<!-- Source: ./README.per-step.mmd — edit there, then re-render with the /mermaid-pre-render skill -->
+
+![plan group → strategize → reconcile pipeline](./README.per-step.svg)
+
+- **Pass A — group** (`scripts/group_runs.ts`): scan finalized runs, flatten
+  every false-positive, and bucket them by `AriadneFaultArea` via
+  `derive_fault_area`. Each `FaultAreaBucket` carries its evidence verbatim plus
+  a rollup, staged under `~/.ariadne/plan/staging/<sweep>/buckets/<area>.json`.
+- **Pass B — strategize** (`plan-strategist`, opus, one per bucket): turn one
+  bucket into a hierarchical fix-plan tree (`architectural → fault_area →
+  localized`) as a `StrategistPlan`, self-validated via `scripts/validate_plan.ts`.
+  For an `other` bucket the strategist emits BOTH a taxonomy-extension task and
+  an underlying core-fix task; classifier-script work is a lower-priority
+  `localized` item only.
+- **Pass C — reconcile** (`scripts/reconcile_plan.ts`): flatten each tree into
+  `PlanTask` rows, compute the immutable `dedup_key`, and reconcile within the
+  task-DB — a colliding live task is augmented, not duplicated. Writes via
+  `JsonPlanTaskRepository` and a `sweeps/<sweep-id>.jsonl` event log.
 
 ## Where this fits
 
 `plan` is the middle link in the self-healing chain: triage (sense) → plan
-(classify) → actuator (actuate). For the broader chain see
-[triage → Self-healing pipeline](../triage/README.md#self-healing-pipeline).
+(group + strategize) → export/actuate. Graduation of a plan task into the user's
+`backlog/` is the separate, user-invoked export adapter (TASK-190.22.11) — the
+only firewall crossing. The write-boundary contract and its AST-enforcement test
+are in `.claude/rules/backlog-firewall.md`.
 
-A novel issue whose `id` does not match a registry row dispatches an
-investigator; `yes · wip/permanent` matches surface as observed-stat bumps;
-`yes · fixed` matches surface as resurfacings for human review (the reconciler
-owns the `fixed` write boundary). Validation is folded into the investigator's
-own propose → validate → iterate loop, scoped to a single response at a time.
-
-Write boundaries live in `.claude/rules/classifier-lifecycle.md`: `plan` reads
-the registry; the actuator writes `wip` rows and drift evidence; the
-fix-sequencer reconciler writes `fixed`; a human flips `permanent`.
-
-## Authored classifiers
-
-Builtin classifiers live at
-`packages/core/src/classify_entry_points/builtins/check_<id>.ts`. Each
-`check_*.ts` file is a pure function of its `BuiltinClassifierSpec` — the
-investigator emits the spec; the deferred actuator renders it to source, AST-parses
-it, and upserts the registry. The actuator keeps the bundled permanent slice
-(`packages/core/src/classify_entry_points/permanent_data.ts`) and the builtins
-barrel in sync with the source registry at
-`.claude/skills/triage/known_issues/registry.json`.
-
-Sub-agents:
-
-- `.claude/agents/plan-strategist.md` — opus, 200 turns, primary path
-  (promote-novel)
+Sub-agent: `.claude/agents/plan-strategist.md` — opus, 200 turns, one per
+fault-area bucket.
 
 ## Run the sweep
 
 ```bash
-# From the repo root
-node --import tsx .claude/skills/plan/scripts/curate_all.ts
+# From the repo root — Pass A
+node --import tsx .claude/skills/plan/scripts/group_runs.ts
+# (dispatch the plan-strategist wave per bucket, then) Pass C
+node --import tsx .claude/skills/plan/scripts/reconcile_plan.ts --sweep <sweep-id>
 ```
 
 Or via Claude: `/plan [--project <name>] [--last <n>] [--run <path>]`.
@@ -64,7 +62,7 @@ pnpm test
 
 ## State files
 
-- `~/.ariadne/triage-curator/runs/<run_id>/investigate/*.json` —
-  per-novel-issue investigator output.
-- `~/.ariadne/triage-curator/runs/<run_id>/investigate/<novel_issue_id>.session.json` —
-  investigator session log, one per dispatch.
+- `~/.ariadne/plan/staging/<sweep-id>/buckets/<area>.json` — Pass A buckets.
+- `~/.ariadne/plan/staging/<sweep-id>/plans/<area>.json` — Pass B strategist plans.
+- `~/.ariadne/plan/tasks/<id>.json` — `PlanTask` rows (the task-DB).
+- `~/.ariadne/plan/sweeps/<sweep-id>.jsonl` — `PlanSweepEvent` log, one per sweep.
