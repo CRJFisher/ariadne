@@ -62,13 +62,25 @@ export function get_repo_root(): string {
 
 /**
  * The user's `backlog/tasks/` directory, rooted at the repo. The plan engine
- * reads it ONLY as a dedup signal (the firewall forbids writes); it never
- * writes here. Overridable for test isolation via `ARIADNE_BACKLOG_DIR_OVERRIDE`,
- * read lazily so a test that sets it before the call still wins.
+ * reads it ONLY as a dedup signal (the firewall forbids writes); the user-invoked
+ * export adapter writes new task files here. Overridable for test isolation via
+ * `ARIADNE_BACKLOG_DIR_OVERRIDE`, read lazily so a test that sets it before the
+ * call still wins.
  */
 export function backlog_tasks_dir(): string {
   return (
     process.env.ARIADNE_BACKLOG_DIR_OVERRIDE ??
     path.join(get_repo_root(), "backlog", "tasks")
   );
+}
+
+/**
+ * The user's `backlog/` root, the tree the export adapter recursively scans to
+ * mint the next free top-level task id (a `task-<N>` in `archive/`/`completed/`
+ * can exceed the live max under `tasks/`, so the scan must cover the whole tree).
+ * Under `ARIADNE_BACKLOG_DIR_OVERRIDE` the root collapses onto the override dir,
+ * so a test isolates the scan and the write target to one temp tree.
+ */
+export function backlog_root_dir(): string {
+  return process.env.ARIADNE_BACKLOG_DIR_OVERRIDE ?? path.join(get_repo_root(), "backlog");
 }

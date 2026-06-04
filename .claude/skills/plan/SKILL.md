@@ -20,8 +20,8 @@ The engine is **planning-only and firewalled**: it reads
 `@ariadnejs/skill-protocol`) and writes only `PlanTask` rows + a per-sweep event
 log under `~/.ariadne/plan/`. It never writes the user's `backlog/`, the
 classifier `registry.json`, or `packages/core`. Graduation of a plan task into
-`backlog/` is the separate, user-invoked export adapter (TASK-190.22.11) — the
-only firewall crossing. See `.claude/rules/backlog-firewall.md`.
+`backlog/` is the separate, user-invoked export adapter (see **Export to
+backlog** below) — the only firewall crossing. See `.claude/rules/backlog-firewall.md`.
 
 **Script invocation:** always `node --import tsx`. Never `pnpm exec tsx` or
 `npx tsx`.
@@ -110,6 +110,46 @@ Writes `PlanTask` rows via `JsonPlanTaskRepository` and appends one
 same runs augments rather than duplicates; an export is idempotent (re-emitted
 only on the proposed→exported transition).
 
+## Export to backlog (user-invoked)
+
+Graduate proposed task-DB rows into the user's `backlog/` — the single firewall
+crossing, run deliberately by the human and **never on the autonomous sweep**.
+The adapter writes `backlog/tasks/*.md` **directly via the filesystem** (no
+`mcp__backlog__*` tool), so the `plan` path never holds a mutating backlog grant;
+the existing `Bash(node --import tsx:*)` grant is all it needs.
+
+```bash
+node --import tsx .claude/skills/plan/scripts/export_to_backlog.ts \
+  [--status <status>] [--fault-area <area>] [--priority core|classifier] \
+  [--id <db-task-id>...] [--dry-run]
+```
+
+| Flag                 | Effect                                                                         |
+| -------------------- | ------------------------------------------------------------------------------ |
+| `--status <status>`  | Select rows in this lifecycle state (default `proposed`)                       |
+| `--fault-area <area>`| Restrict to one `AriadneFaultArea`                                              |
+| `--priority core\|classifier` | `core` selects core-fix rows, `classifier` the interim classifier work |
+| `--id <id>...`       | Export exactly these DB task ids (the filter flags are then ignored)           |
+| `--dry-run`          | Print the planned writes (incl. the would-be backlog ids); touch nothing       |
+
+Each selected `PlanTask` becomes a new top-level `backlog/tasks/task-<id> - <slug>.md`,
+its frontmatter stamped with `plan_dedup_key: <PlanTask.dedup_key>` (the
+loop-closure link Pass C's read-only dedup reads back) and `plan_source_task` for
+traceability; `priority` is `high` for a core fix, `medium` for classifier work.
+On success the DB row flips `proposed → exported` (recording `exported_backlog_task`)
+and one `export` `PlanSweepEvent` is logged. **Idempotent:** a row already
+`exported`, or whose `dedup_key` a backlog task already carries, is skipped, so a
+re-run is a no-op.
+
+**Swappable adapter seam.** The export adapter is a thin, replaceable bridge: a
+second target (`export_to_linear.ts`, `export_to_github_issues.ts`) re-implements
+only **mint-id + render + write** against its tracker and reuses the shared
+**select → flip `proposed → exported` → log `export` event** pipeline. The
+verbatim `PlanTask.dedup_key`, persisted into a target-side dedup field, is the
+fixed idempotency contract every target honors. The full interface lives in the
+`export_to_backlog.ts` header; the firewall allowlist
+(`ALLOWED_BACKLOG_WRITERS`) names each target that writes a firewalled surface.
+
 ## Impact reporting (on demand)
 
 Generate a human-readable ranking of the known-issues registry by observed
@@ -142,5 +182,6 @@ output; `~/.ariadne/plan/` is the plan engine's task-DB (defined in
 only the task-DB under `~/.ariadne/plan/`. Pass C reads `backlog/tasks/*.md`
 frontmatter **read-only** (`src/store/backlog_dedup.ts`, keyed on
 `plan_dedup_key`) as a dedup signal — it is never written by the pipeline; the
-only writer is the user-invoked export adapter (TASK-190.22.11). The full
-contract and its AST-enforcement test are in `.claude/rules/backlog-firewall.md`.
+only writer is the user-invoked export adapter (`scripts/export_to_backlog.ts`,
+the sole `ALLOWED_BACKLOG_WRITERS` entry). The full contract and its
+AST-enforcement test are in `.claude/rules/backlog-firewall.md`.

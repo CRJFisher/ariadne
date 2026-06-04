@@ -3,6 +3,7 @@ import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
+  backlog_root_dir,
   backlog_tasks_dir,
   get_repo_root,
   plan_staging_manifest_path,
@@ -41,5 +42,17 @@ describe("backlog_tasks_dir", () => {
   it("falls back to <repo>/backlog/tasks", () => {
     delete process.env.ARIADNE_BACKLOG_DIR_OVERRIDE;
     expect(backlog_tasks_dir()).toEqual(path.join(get_repo_root(), "backlog", "tasks"));
+  });
+});
+
+describe("backlog_root_dir", () => {
+  it("collapses onto ARIADNE_BACKLOG_DIR_OVERRIDE so a test scans one temp tree", () => {
+    process.env.ARIADNE_BACKLOG_DIR_OVERRIDE = "/tmp/fake-backlog";
+    expect(backlog_root_dir()).toEqual("/tmp/fake-backlog");
+  });
+
+  it("falls back to <repo>/backlog", () => {
+    delete process.env.ARIADNE_BACKLOG_DIR_OVERRIDE;
+    expect(backlog_root_dir()).toEqual(path.join(get_repo_root(), "backlog"));
   });
 });
