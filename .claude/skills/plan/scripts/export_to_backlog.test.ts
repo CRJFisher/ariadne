@@ -224,4 +224,83 @@ describe("export_to_backlog run()", () => {
     expect(summary.exported.map((e) => e.id)).toEqual(["pt-1"]);
     expect(summary.missing_ids).toEqual(["pt-ghost"]);
   });
+
+  it("assigns sequential ids across a multi-row export", async () => {
+    const repo = new JsonPlanTaskRepository();
+    // Two distinct proposed rows; ids sort pt-a < pt-b → TASK-347, TASK-348.
+    await repo.put(make_task({ id: "pt-a" as PlanTaskId, dedup_key: "ka" }));
+    await repo.put(make_task({ id: "pt-b" as PlanTaskId, dedup_key: "kb" }));
+
+    const summary = await run([], FIXED_NOW);
+
+    expect(summary.exported.map((e) => ({ id: e.id, backlog_task: e.backlog_task }))).toEqual([
+      { id: "pt-a", backlog_task: "TASK-347" },
+      { id: "pt-b", backlog_task: "TASK-348" },
+    ]);
+    // Both files exist, each carrying its own source key.
+    expect(await read_exported_backlog_keys(backlog_dir)).toEqual(
+      new Map([
+        ["ka", "TASK-347"],
+        ["kb", "TASK-348"],
+      ]),
+    );
+    expect((await repo.get("pt-a" as PlanTaskId))?.exported_backlog_task).toEqual("TASK-347");
+    expect((await repo.get("pt-b" as PlanTaskId))?.exported_backlog_task).toEqual("TASK-348");
+    // Two export events in the one run's log.
+    const log_files = (await fs.readdir(plan_sweeps_dir())).filter((f) => f.startsWith("export-"));
+    const events = (await fs.readFile(path.join(plan_sweeps_dir(), log_files[0]), "utf8"))
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line) as PlanSweepEvent);
+    expect(events).toEqual([
+      { kind: "export", task_id: "pt-a", backlog_task: "TASK-347" },
+      { kind: "export", task_id: "pt-b", backlog_task: "TASK-348" },
+    ]);
+  });
+
+  it("skips a still-proposed row whose dedup_key a backlog task already carries (crash recovery)", async () => {
+    // Simulate a prior crash: the backlog file was written (carrying the key) but
+    // the DB row was never flipped, so it is still `proposed`. The dedup_key guard
+    // — not the DB status — must prevent a duplicate write on the next run.
+    const repo = new JsonPlanTaskRepository();
+    await repo.put(make_task({ id: "pt-1" as PlanTaskId, dedup_key: "expkey1" }));
+    await fs.writeFile(
+      path.join(backlog_dir, "task-347 - prior.md"),
+      "---\nid: TASK-347\nplan_dedup_key: expkey1\n---\n",
+      "utf8",
+    );
+
+    const before = await snapshot_tree(backlog_dir);
+    const summary = await run([], FIXED_NOW);
+    const after = await snapshot_tree(backlog_dir);
+
+    expect(after).toEqual(before);
+    expect(summary.exported).toEqual([]);
+    expect(summary.skipped_already_exported).toEqual([{ id: "pt-1", backlog_task: "TASK-347" }]);
+    // The DB row is left untouched (still proposed) — the adapter never writes it.
+    expect((await repo.get("pt-1" as PlanTaskId))?.status).toEqual("proposed");
+  });
+
+  it("filters by --priority through the CLI plumbing", async () => {
+    const repo = new JsonPlanTaskRepository();
+    await repo.put(
+      make_task({ id: "pt-core" as PlanTaskId, dedup_key: "kc", is_classifier_work: false }),
+    );
+    await repo.put(
+      make_task({ id: "pt-cls" as PlanTaskId, dedup_key: "kk", is_classifier_work: true }),
+    );
+
+    const summary = await run(["--priority", "classifier"], FIXED_NOW);
+    expect(summary.exported.map((e) => e.id)).toEqual(["pt-cls"]);
+  });
+
+  it("rejects unknown args and a non-exportable --status", async () => {
+    await expect(run(["--bogus"], FIXED_NOW)).rejects.toThrow("Unknown argument: --bogus");
+    await expect(run(["--status", "abandoned"], FIXED_NOW)).rejects.toThrow(
+      "--status expects one of proposed|accepted",
+    );
+    await expect(run(["--priority", "urgent"], FIXED_NOW)).rejects.toThrow(
+      "--priority expects core|classifier",
+    );
+  });
 });

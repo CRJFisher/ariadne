@@ -31,11 +31,18 @@
  * no-op — a row already `exported`, or whose `dedup_key` a backlog task already
  * carries, is skipped (`src/export/select_exportable_tasks.ts`).
  *
+ * The write boundary is enforced structurally: `.claude/rules/backlog-firewall.md`
+ * is the contract, and the `ALLOWED_BACKLOG_WRITERS` allowlist in
+ * `packages/skill-fs/src/backlog_writers.test.ts` admits this file alone. The
+ * `plan_dedup_key` this script stamps is read back read-only by
+ * `src/store/backlog_dedup.ts` during the plan engine's reconcile pass — that is
+ * where the dedup loop closes.
+ *
  * **Script invocation:** always `node --import tsx`. Never `pnpm exec tsx`.
  *
  * Usage:
  *   node --import tsx export_to_backlog.ts \
- *     [--status <status>] [--fault-area <area>] [--priority core|classifier] \
+ *     [--status proposed|accepted] [--fault-area <area>] [--priority core|classifier] \
  *     [--id <db-task-id>...] [--dry-run]
  */
 
@@ -50,9 +57,10 @@ import type { AriadneFaultArea } from "@ariadnejs/types";
 import { read_exported_backlog_keys } from "../src/store/backlog_dedup.js";
 import { JsonPlanTaskRepository } from "../src/store/json_plan_task_repository.js";
 import { backlog_root_dir, backlog_tasks_dir } from "../src/store/paths.js";
-import { next_backlog_task_id } from "../src/export/mint_backlog_id.js";
+import { next_backlog_task_id } from "../src/export/next_backlog_task_id.js";
 import { render_backlog_task } from "../src/export/render_backlog_task.js";
 import {
+  EXPORTABLE_STATUSES,
   select_exportable_tasks,
   type ExportPriority,
   type ExportSelectors,
@@ -60,17 +68,8 @@ import {
 } from "../src/export/select_exportable_tasks.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
-const VALID_STATUSES: ReadonlySet<PlanTaskStatus> = new Set<PlanTaskStatus>([
-  "proposed",
-  "accepted",
-  "superseded",
-  "exported",
-  "resolved",
-  "abandoned",
-]);
-
 const USAGE =
-  "Usage: export_to_backlog [--status <status>] [--fault-area <area>] " +
+  "Usage: export_to_backlog [--status proposed|accepted] [--fault-area <area>] " +
   "[--priority core|classifier] [--id <db-task-id>...] [--dry-run]\n";
 
 interface CliArgs {
@@ -91,15 +90,20 @@ function parse_argv(argv: string[]): CliArgs {
     switch (arg) {
       case "--status": {
         const value = argv[++i] as PlanTaskStatus;
-        if (!VALID_STATUSES.has(value)) {
-          throw new Error(`--status expects one of ${[...VALID_STATUSES].join("|")}`);
+        if (!EXPORTABLE_STATUSES.has(value)) {
+          throw new Error(`--status expects one of ${[...EXPORTABLE_STATUSES].join("|")}`);
         }
         selectors.status = value;
         break;
       }
-      case "--fault-area":
-        selectors.fault_area = argv[++i] as AriadneFaultArea;
+      case "--fault-area": {
+        const value = argv[++i];
+        if (value === undefined || value.startsWith("--")) {
+          throw new Error("--fault-area expects a fault-area name");
+        }
+        selectors.fault_area = value as AriadneFaultArea;
         break;
+      }
       case "--priority": {
         const value = argv[++i];
         if (value !== "core" && value !== "classifier") {
@@ -156,6 +160,8 @@ export interface ExportSummary {
   /** The created (or, under `--dry-run`, would-be) backlog tasks. */
   exported: ExportedEntry[];
   skipped_already_exported: ExportSelection["skipped_already_exported"];
+  /** Rows named via `--id` whose terminal status makes them non-exportable. */
+  skipped_non_exportable: ExportSelection["skipped_non_exportable"];
   missing_ids: string[];
 }
 
@@ -209,6 +215,7 @@ export async function run(argv: string[], now: Date = new Date()): Promise<Expor
       path: entry.rendered.filename,
     })),
     skipped_already_exported: selection.skipped_already_exported,
+    skipped_non_exportable: selection.skipped_non_exportable,
     missing_ids: selection.missing_ids,
   };
 }

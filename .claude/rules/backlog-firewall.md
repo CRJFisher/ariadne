@@ -26,7 +26,7 @@ Structural enforcement lives in `packages/skill-fs/src/backlog_writers.test.ts` 
 
 `ALLOWED_BACKLOG_WRITERS = { ".claude/skills/plan/scripts/export_to_backlog.ts" }` is the sole exception, gating both kinds — the export adapter writes `backlog/` by whatever means it chooses (raw filesystem write or a mutating MCP call), and only it may. Adding a new permitted site requires both an allowlist entry in the test and an update to this doc. A new read-only tool goes in `READ_ONLY_BACKLOG_TOOLS` instead.
 
-The export adapter is named in the allowlist pre-emptively; the file lands with TASK-190.22.11, exactly as `registry_writers.test.ts` pre-allows the fix-sequencer reconciler before its scaffolding exists.
+`.claude/skills/plan/scripts/export_to_backlog.ts` is the allowlist's sole entry — the human-invoked adapter that promotes a DB task into a `backlog/` task file, mirroring how `registry_writers.test.ts` gates the fix-sequencer reconciler.
 
 ## Known limitations
 

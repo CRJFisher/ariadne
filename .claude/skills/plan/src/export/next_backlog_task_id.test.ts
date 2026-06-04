@@ -4,7 +4,7 @@ import * as path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { next_backlog_task_id, parse_backlog_top_level_id } from "./mint_backlog_id.js";
+import { next_backlog_task_id, parse_backlog_top_level_id } from "./next_backlog_task_id.js";
 
 let root: string;
 

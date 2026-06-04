@@ -89,9 +89,21 @@ export function split_rendered_body(body: string): BodySplit {
   return { description_md, acceptance_items };
 }
 
-/** Quote a YAML scalar that may carry `[`, `:`, or other flow-significant characters. */
+/**
+ * Quote a YAML scalar that may carry `[`, `:`, or other flow-significant
+ * characters. The title is strategist-authored free text, so newlines/tabs are
+ * escaped to their C-style forms (which a YAML double-quoted scalar accepts)
+ * rather than emitted literally, where they would split the `title:` line and
+ * corrupt the frontmatter block.
+ */
 function yaml_double_quote(value: string): string {
-  return `"${value.replace(/\\/g, "\\\\").replace(/"/g, "\\\"")}"`;
+  const escaped = value
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, "\\\"")
+    .replace(/\n/g, "\\n")
+    .replace(/\r/g, "\\r")
+    .replace(/\t/g, "\\t");
+  return `"${escaped}"`;
 }
 
 /** The full backlog task file the adapter writes: filename + markdown content. */

@@ -96,6 +96,7 @@ describe("select_exportable_tasks (filtered mode)", () => {
     expect(select_exportable_tasks([], FILTER, new Map())).toEqual({
       selected: [],
       skipped_already_exported: [],
+      skipped_non_exportable: [],
       missing_ids: [],
     });
   });
@@ -126,5 +127,24 @@ describe("select_exportable_tasks (explicit id mode)", () => {
     const result = select_exportable_tasks([exported], { ...FILTER, ids: ["pt-x"] }, new Map());
     expect(result.selected).toEqual([]);
     expect(result.skipped_already_exported).toEqual([{ id: "pt-x", backlog_task: "TASK-201" }]);
+  });
+
+  it("skips an explicitly named terminal-status row as non-exportable (and never collides on its key)", () => {
+    // A superseded row sharing a dedup_key with a live proposed row: only the
+    // live one is exportable, so the two never write a duplicate backlog file.
+    const live = make_task({ id: "pt-live" as PlanTaskId, dedup_key: "shared", status: "proposed" });
+    const retired = make_task({
+      id: "pt-old" as PlanTaskId,
+      dedup_key: "shared",
+      status: "superseded",
+      superseded_by: "pt-live" as PlanTaskId,
+    });
+    const result = select_exportable_tasks(
+      [live, retired],
+      { ...FILTER, ids: ["pt-live", "pt-old"] },
+      new Map(),
+    );
+    expect(result.selected).toEqual([live]);
+    expect(result.skipped_non_exportable).toEqual([{ id: "pt-old", status: "superseded" }]);
   });
 });

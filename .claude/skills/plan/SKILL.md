@@ -102,8 +102,9 @@ immutable `dedup_key` = a hash of `fault_area` + the sorted evidence
   task whose projects it never scanned.
 - **export dedup** — the reconciler reads `backlog/tasks/*.md` frontmatter
   **read-only**, keyed on `plan_dedup_key` (stamped by the export adapter,
-  TASK-190.22.11). A DB task whose `dedup_key` a backlog task already carries is
-  marked `exported` and suppressed from re-proposal. No backlog write.
+  `scripts/export_to_backlog.ts` — see **Export to backlog** below). A DB task
+  whose `dedup_key` a backlog task already carries is marked `exported` and
+  suppressed from re-proposal. No backlog write.
 
 Writes `PlanTask` rows via `JsonPlanTaskRepository` and appends one
 `PlanSweepEvent` per decision to `sweeps/<sweep_id>.jsonl`. A re-sweep of the
@@ -126,10 +127,10 @@ node --import tsx .claude/skills/plan/scripts/export_to_backlog.ts \
 
 | Flag                 | Effect                                                                         |
 | -------------------- | ------------------------------------------------------------------------------ |
-| `--status <status>`  | Select rows in this lifecycle state (default `proposed`)                       |
+| `--status proposed\|accepted` | Select rows in this live state (default `proposed`); only live work is exportable — terminal rows (`superseded`/`resolved`/`abandoned`) are never promoted |
 | `--fault-area <area>`| Restrict to one `AriadneFaultArea`                                              |
-| `--priority core\|classifier` | `core` selects core-fix rows, `classifier` the interim classifier work |
-| `--id <id>...`       | Export exactly these DB task ids (the filter flags are then ignored)           |
+| `--priority core\|classifier` | `core` selects core-fix rows (stamped backlog `priority: high`), `classifier` the interim classifier work (`priority: medium`) |
+| `--id <id>...`       | Export exactly these DB task ids — the filter flags are ignored, but a named row that is already exported (or whose `dedup_key` a backlog task carries) is still skipped, and a terminal-status row is reported as non-exportable |
 | `--dry-run`          | Print the planned writes (incl. the would-be backlog ids); touch nothing       |
 
 Each selected `PlanTask` becomes a new top-level `backlog/tasks/task-<id> - <slug>.md`,
