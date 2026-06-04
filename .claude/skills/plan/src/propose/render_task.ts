@@ -11,6 +11,7 @@ import { ARIADNE_FAULT_AREA_FOLDER } from "@ariadnejs/types";
 import type { PlanTaskEvidence } from "@ariadnejs/skill-protocol";
 
 import type { StrategistPlanNode } from "../types.js";
+import { location_token } from "../reconcile/compute_dedup_key.js";
 
 /**
  * The task title. An `architectural` cross-area root keeps the strategist's
@@ -48,11 +49,7 @@ export function render_task_body(
     parts.push("");
     parts.push("## Evidence");
     parts.push("");
-    const sorted = [...evidence].sort((a, b) =>
-      `${a.member_evidence.file}:${a.member_evidence.line}`.localeCompare(
-        `${b.member_evidence.file}:${b.member_evidence.line}`,
-      ),
-    );
+    const sorted = [...evidence].sort((a, b) => location_token(a).localeCompare(location_token(b)));
     for (const e of sorted) {
       parts.push(
         `- \`${e.member_evidence.file}:${e.member_evidence.line}\` — ${e.member_evidence.why} (project \`${e.project}\`, run \`${e.run_id}\`)`,

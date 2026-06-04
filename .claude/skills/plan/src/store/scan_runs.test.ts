@@ -5,7 +5,6 @@ import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
-  build_sweep_manifest,
   discover_runs,
   filter_uncurated,
   list_curated_run_ids,
@@ -41,35 +40,6 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await fs.rm(root, { recursive: true, force: true });
-});
-
-describe("build_sweep_manifest", () => {
-  function item(project: string, run_id: string): ScanResultItem {
-    return { project, run_id, run_path: `/x/${project}/${run_id}.json` };
-  }
-
-  it("collects distinct projects and run_ids, sorted", () => {
-    const manifest = build_sweep_manifest([
-      item("webpack", "r2"),
-      item("express", "r1"),
-      item("webpack", "r3"),
-    ]);
-    expect(manifest).toEqual({
-      projects: ["express", "webpack"],
-      run_ids: ["r1", "r2", "r3"],
-    });
-  });
-
-  it("includes a project even when it appears once (a zero-FP run still counts as scanned)", () => {
-    // `items` are pre-grouping, so a project whose run produced no false-positive
-    // is still present — exactly what lets its stale tasks be recognised as fixed.
-    const manifest = build_sweep_manifest([item("clean-proj", "r9")]);
-    expect(manifest).toEqual({ projects: ["clean-proj"], run_ids: ["r9"] });
-  });
-
-  it("returns empty arrays for no scanned runs", () => {
-    expect(build_sweep_manifest([])).toEqual({ projects: [], run_ids: [] });
-  });
 });
 
 describe("discover_runs", () => {

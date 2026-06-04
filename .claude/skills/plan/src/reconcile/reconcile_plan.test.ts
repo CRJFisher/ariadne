@@ -460,4 +460,46 @@ describe("reconcile_plan — backlog export overlay", () => {
     const leaf_a_after_s3 = (await repo.query({})).find((t) => t.id === leaf_a.id);
     expect(leaf_a_after_s3).toEqual(leaf_a_after_s2);
   });
+
+  it("exporting a non-leaf parent leaves live children pointing at the persisted exported parent (no dangle, no resurrect)", async () => {
+    const repo = new JsonPlanTaskRepository();
+    const evidence = [ev("a.ts", 1), ev("b.ts", 2)];
+    await recon(repo, build_plan_tasks(plan(), evidence, { sweep_id: "s1", strategist: "opus" }), "s1");
+    const root = (await repo.query({})).find((t) => t.tier === "fault_area");
+    if (root === undefined) throw new Error("seed failed");
+
+    // The user promotes the fault_area PARENT (its aggregated dedup_key).
+    const keys = new Map([[root.dedup_key, "TASK-800"]]);
+    const { events: s2_events } = await recon(
+      repo,
+      build_plan_tasks(plan(), evidence, { sweep_id: "s2", strategist: "opus" }),
+      "s2",
+      { exported_backlog_keys: keys },
+    );
+    expect(s2_events.filter((e) => e.kind === "export")).toEqual([
+      { kind: "export", task_id: root.id, backlog_task: "TASK-800" },
+    ]);
+
+    // A later sweep: the exported parent is suppressed (not resurrected to
+    // proposed), and its live children re-parent onto its real, persisted id.
+    const { events: s3_events } = await recon(
+      repo,
+      build_plan_tasks(plan(), evidence, { sweep_id: "s3", strategist: "opus" }),
+      "s3",
+      { exported_backlog_keys: keys },
+    );
+    expect(s3_events.filter((e) => e.kind === "export")).toEqual([]);
+
+    const after = await repo.query({});
+    const all_ids = new Set(after.map((t) => t.id));
+    const root_after = after.find((t) => t.id === root.id);
+    expect(root_after?.status).toEqual("exported");
+    // Invariant: no live task points at a non-existent id; children point at the parent.
+    for (const t of after.filter((t) => t.status === "proposed" || t.status === "accepted")) {
+      if (t.parent_id !== null) expect(all_ids.has(t.parent_id)).toBe(true);
+    }
+    for (const leaf of after.filter((t) => t.tier === "localized")) {
+      expect(leaf.parent_id).toEqual(root.id);
+    }
+  });
 });

@@ -17,6 +17,17 @@ import type { AriadneFaultArea } from "@ariadnejs/types";
 import type { PlanTaskEvidence } from "@ariadnejs/skill-protocol";
 
 /**
+ * The `"<file>:<line>"` identity of one evidence row — THE load-bearing
+ * reconciliation primitive. `compute_dedup_key` hashes the sorted set of these
+ * tokens, `union_evidence` deduplicates on them, and the reconciler overlap-scores
+ * orphans against fresh creates on them. They must agree byte-for-byte across all
+ * those sites, so the recipe lives here, once.
+ */
+export function location_token(evidence: PlanTaskEvidence): string {
+  return `${evidence.member_evidence.file}:${evidence.member_evidence.line}`;
+}
+
+/**
  * Compute the stable `dedup_key`. Pure: same `fault_area` + same location set
  * (in any order, with any duplicates) ⇒ same sha256 hex digest. The payload is
  * `[fault_area, ...sorted_unique_locations].join("\n")` — newline-joined so a
@@ -26,9 +37,7 @@ export function compute_dedup_key(
   fault_area: AriadneFaultArea,
   evidence: PlanTaskEvidence[],
 ): string {
-  const locations = [
-    ...new Set(evidence.map((e) => `${e.member_evidence.file}:${e.member_evidence.line}`)),
-  ].sort();
+  const locations = [...new Set(evidence.map(location_token))].sort();
   const payload = [fault_area, ...locations].join("\n");
   return createHash("sha256").update(payload, "utf8").digest("hex");
 }

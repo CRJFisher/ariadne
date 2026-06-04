@@ -23,10 +23,10 @@ import { pathToFileURL } from "node:url";
 import { error_code } from "@ariadnejs/skill-fs";
 import type { PlanTask } from "@ariadnejs/skill-protocol";
 
-import { read_exported_backlog_keys } from "../src/reconcile/backlog_dedup.js";
 import { build_plan_tasks } from "../src/reconcile/build_plan_tasks.js";
 import { reconcile_plan } from "../src/reconcile/reconcile_plan.js";
 import { validate_plan } from "../src/propose/validate_plan.js";
+import { read_exported_backlog_keys } from "../src/store/backlog_dedup.js";
 import { JsonPlanTaskRepository } from "../src/store/json_plan_task_repository.js";
 import {
   backlog_tasks_dir,
@@ -34,7 +34,8 @@ import {
   plan_staging_manifest_path,
   plan_staging_plans_dir,
 } from "../src/store/paths.js";
-import type { FaultAreaBucket, StrategistPlan, SweepManifest } from "../src/types.js";
+import { type SweepManifest } from "../src/store/sweep_manifest.js";
+import type { FaultAreaBucket, StrategistPlan } from "../src/types.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 interface CliArgs {

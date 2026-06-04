@@ -57,7 +57,8 @@ export async function read_exported_backlog_keys(
   }
   for (const file of files) {
     if (!file.endsWith(".md")) continue;
-    const text = await readFile(path.join(backlog_dir, file), "utf8");
+    // Normalize CRLF so a backlog task saved with Windows line endings still parses.
+    const text = (await readFile(path.join(backlog_dir, file), "utf8")).replace(/\r\n/g, "\n");
     const block = frontmatter_block(text);
     if (block === null) continue;
     const dedup_key = scalar_field(block, "plan_dedup_key");

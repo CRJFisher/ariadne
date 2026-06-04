@@ -24,7 +24,8 @@ import { parse_run_id, read_triage_results_file } from "@ariadnejs/skill-protoco
 
 import { group_fault_areas, type ParsedRun } from "../src/group/group_fault_areas.js";
 import { plan_staging_buckets_dir, plan_staging_manifest_path } from "../src/store/paths.js";
-import { build_sweep_manifest, scan_runs } from "../src/store/scan_runs.js";
+import { scan_runs } from "../src/store/scan_runs.js";
+import { build_sweep_manifest } from "../src/store/sweep_manifest.js";
 import type { ScanOptions } from "../src/types.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
@@ -103,9 +104,10 @@ async function main(): Promise<void> {
     );
   }
 
-  // The scan manifest records the full scanned scope (incl. zero-FP runs), which
-  // Pass C reads to bound `resolved` reclamation to the projects this sweep covered.
-  const manifest = build_sweep_manifest(items);
+  // The scan manifest records the VERIFIED scope — runs whose triage_results
+  // parsed, incl. zero-FP runs but NOT parse-failed ones — which Pass C reads to
+  // bound `resolved` reclamation to the projects this sweep actually covered.
+  const manifest = build_sweep_manifest(parsed_runs);
   await atomic_write_file(
     plan_staging_manifest_path(sweep_id),
     `${JSON.stringify(manifest, null, 2)}\n`,

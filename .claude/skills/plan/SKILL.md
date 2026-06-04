@@ -140,7 +140,7 @@ output; `~/.ariadne/plan/` is the plan engine's task-DB (defined in
 
 `plan` never writes `backlog/`, `registry.json`, or `packages/core`. It writes
 only the task-DB under `~/.ariadne/plan/`. Pass C reads `backlog/tasks/*.md`
-frontmatter **read-only** (`src/reconcile/backlog_dedup.ts`, keyed on
+frontmatter **read-only** (`src/store/backlog_dedup.ts`, keyed on
 `plan_dedup_key`) as a dedup signal — it is never written by the pipeline; the
 only writer is the user-invoked export adapter (TASK-190.22.11). The full
 contract and its AST-enforcement test are in `.claude/rules/backlog-firewall.md`.

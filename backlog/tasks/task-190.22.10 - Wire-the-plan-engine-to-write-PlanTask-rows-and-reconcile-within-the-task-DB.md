@@ -1,7 +1,7 @@
 ---
 id: TASK-190.22.10
 title: Wire the plan engine to write PlanTask rows and reconcile within the task-DB
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-06-01 15:19"
 labels:
@@ -43,22 +43,38 @@ A sweep over ≥2 finalized runs writes `PlanTask` rows + a sweep log under `~/.
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 The engine writes the hierarchical plan as `PlanTask` rows (architectural→fault-area→localized) via `PlanTaskRepository.put_many` + a per-sweep `PlanSweepEvent` log; ZERO writes to `backlog/`/`registry.json`/`packages/core`
-- [ ] #2 Reconciliation is computed within the task-DB via `dedup_key`/`find_by_dedup_key`: a re-sweep over the same runs augments existing tasks (merges evidence, bumps rollups) instead of duplicating
-- [ ] #3 supersede/combine decisions are recorded as `PlanSweepEvent`s; the DB is the authoritative reconciliation surface
-- [ ] #4 Any backlog access is read-only (dedup signal only) and passes the 190.22.7 firewall test
-- [ ] #5 Grouping keys on `AriadneFaultArea` via `derive_fault_area` (190.22.3); smoke test over ≥2 runs green
+- [x] #1 The engine writes the hierarchical plan as `PlanTask` rows (architectural→fault-area→localized) via `PlanTaskRepository.put_many` + a per-sweep `PlanSweepEvent` log; ZERO writes to `backlog/`/`registry.json`/`packages/core`
+- [x] #2 Reconciliation is computed within the task-DB via `dedup_key`/`find_by_dedup_key`: a re-sweep over the same runs augments existing tasks (merges evidence, bumps rollups) instead of duplicating
+- [x] #3 supersede/combine decisions are recorded as `PlanSweepEvent`s; the DB is the authoritative reconciliation surface
+- [x] #4 Any backlog access is read-only (dedup signal only) and passes the 190.22.7 firewall test
+- [x] #5 Grouping keys on `AriadneFaultArea` via `derive_fault_area` (190.22.3); smoke test over ≥2 runs green
 <!-- AC:END -->
 
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
 
-**Scope largely delivered by TASK-190.22.9.** The plan-engine build (190.22.9) implemented this task's core, treating its own ACs (#3/#4/#7) as ground truth: the engine writes `PlanTask` rows + a `PlanSweepEvent` log via `JsonPlanTaskRepository` and reconciles within the task-DB by `dedup_key` (augment-not-duplicate), the `plan-strategist` backlog grant is dropped entirely (not merely narrowed), grouping keys on `AriadneFaultArea` via `derive_fault_area`, and a smoke test over ≥2 runs asserts the firewall (`tests/plan_engine_smoke.test.ts`). So **AC #1, #2, #5 here are satisfied by 190.22.9** (and #4's firewall is enforced — though backlog *reads* are not yet wired).
+## High-level summary
 
-**Genuinely remaining for this task:**
+The plan engine's reconcile pass (Pass C) is the authoritative reconciliation surface for the firewalled task-DB. Building on the create/augment loop from TASK-190.22.9, it now closes the full lifecycle: it retires stale orphans into `superseded`/`combined`/`resolved` records, and reads the user's `backlog/` (read-only) to recognise already-promoted work and stop re-proposing it. The whole pass is deterministic and DB-authoritative — grouping keys on `AriadneFaultArea`, reconciling on the immutable `dedup_key`, and never writing `backlog/`, `registry.json`, or `packages/core`.
 
-- **AC #3 — supersede/combine.** The 190.22.9 reconciler emits only `create`/`augment`. It never `supersede`s or `combine`s, so a node a later sweep drops stays live (orphaned) until retired. Implement supersede/combine `PlanSweepEvent`s (and a retirement/GC pass) so the DB reflects the strategist's merge/split judgement and stale nodes are reclaimed. Note the `dedup_key`-over-aggregated-evidence contract: evidence churn re-keys affected ancestors, so reconciliation across *changed* trees (not just identical re-sweeps) is the real work here.
-- **AC #4 — read-only backlog dedup.** Wire the optional `mcp__backlog__task_search` / `backlog/` frontmatter read so the engine marks a DB task `exported` and suppresses re-proposal when the user already promoted equivalent work. 190.22.9 deferred this (the reconcile dedups within the DB only); the firewall already permits the read-only access.
+## What the reconcile pass does
+
+Per sweep, the reconciler runs three ordered steps against the live DB and appends one `PlanSweepEvent` per decision to `sweeps/<sweep_id>.jsonl`:
+
+1. **create / augment** — a candidate whose `dedup_key` already names a live task augments it (evidence merged, rollups bumped) and **adopts the latest tree's structural pointers** (remapped `parent_id`, unioned `child_ids`); otherwise it is created. Pointer adoption is what keeps a re-keyed ancestor orphaning *childless*, so the next step never dangles a live pointer.
+2. **retire orphans** — a live task no candidate claimed, whose grounding projects were ALL scanned this sweep, is stale. If a fresh create in the same `(fault_area, tier)` shares an evidence `file:line`, the orphan was re-keyed into it → **supersede** (one) / **combine** (several → one, as supersede-fan-in); if nothing overlaps, its false-positives stopped recurring → **resolve**. Supersede/combine is a pure pointer flip — the live replacement keeps its own honest evidence and `dedup_key`; the retired record keeps its vanished locations.
+3. **export dedup** — the reconciler reads `backlog/tasks/*.md` frontmatter (read-only, `src/store/backlog_dedup.ts`) keyed on `plan_dedup_key`, and marks a matching DB task `exported`, suppressing re-proposal idempotently.
+
+## Key design decisions
+
+- **`resolved`, not `abandoned`.** Because a sweep processes only new (uncurated) runs, evidence vanishing means a newer run of the project no longer flags that `file:line` — the bug appears *fixed*. This is named `resolved` (a new `PlanTaskStatus` + `resolve` `PlanSweepEvent`) and is kept strictly distinct from a strategist/human *feasibility* judgement that work is intractable, which is `abandoned` — spun off to TASK-190.22.13.
+- **Scope `resolved` by a scan manifest.** Pass A (`group_runs.ts`) stages `staging/<sweep>/manifest.json` recording the projects + run_ids it actually verified (parsed runs, including zero-FP ones, excluding parse-failed). Pass C resolves an orphan only when its `projects[]` ⊆ that set, so a partial-scope sweep (`--project`, `--last`) or an unreadable run never falsely resolves a task.
+- **Structured backlog link.** The dedup signal is a `plan_dedup_key` frontmatter field carrying the source `PlanTask.dedup_key` verbatim — an exact, stable link the export adapter (TASK-190.22.11) stamps, not a fuzzy text scan. Suppression matches on `(dedup_key, tier)` and remaps a suppressed candidate to the real exported task's id, so promoting a non-leaf node never dangles a child pointer.
+- **Firewall-clean read.** The backlog reader uses `readdir`/`readFile` only — no write primitive, no `mcp__backlog__*` tool — so it passes the 190.22.7 AST firewall with no allowlist entry, and the `plan-strategist` grant stays dropped (`mcp_servers: []`).
+
+## Acceptance criteria
+
+AC #1, #2, #5 (PlanTask rows + sweep log, `dedup_key` augment-not-duplicate, `AriadneFaultArea` grouping + firewall smoke test) were delivered by TASK-190.22.9 and are preserved. This task completes **AC #3** (supersede/combine recorded as `PlanSweepEvent`s, plus the `resolved` GC the original note called for) and **AC #4** (read-only backlog dedup, firewall-test-green). The `file:line` reconciliation primitive is centralised as `location_token` so every reconciliation site agrees byte-for-byte.
 
 <!-- SECTION:NOTES:END -->

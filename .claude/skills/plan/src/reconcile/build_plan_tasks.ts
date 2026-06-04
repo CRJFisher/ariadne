@@ -26,7 +26,7 @@ import { PLAN_TASK_SCHEMA_VERSION } from "@ariadnejs/skill-protocol";
 
 import type { StrategistPlan, StrategistPlanNode } from "../types.js";
 import { render_task_body, render_task_title } from "../propose/render_task.js";
-import { compute_dedup_key } from "./compute_dedup_key.js";
+import { compute_dedup_key, location_token } from "./compute_dedup_key.js";
 
 export interface BuildPlanTasksOptions {
   sweep_id: string;
@@ -53,7 +53,7 @@ export function union_evidence(rows: PlanTaskEvidence[]): PlanTaskEvidence[] {
   const seen = new Set<string>();
   const out: PlanTaskEvidence[] = [];
   for (const row of rows) {
-    const key = `${row.member_evidence.file}:${row.member_evidence.line}`;
+    const key = location_token(row);
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(row);

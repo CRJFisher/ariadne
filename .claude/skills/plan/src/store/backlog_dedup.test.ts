@@ -37,6 +37,16 @@ describe("read_exported_backlog_keys", () => {
     );
   });
 
+  it("parses frontmatter saved with CRLF line endings", async () => {
+    await fs.writeFile(
+      path.join(backlog_dir, "task-550.md"),
+      "---\r\nid: TASK-550\r\nplan_dedup_key: ccc999\r\n---\r\n\r\nbody\r\n",
+      "utf8",
+    );
+    const keys = await read_exported_backlog_keys(backlog_dir);
+    expect(keys).toEqual(new Map([["ccc999", "TASK-550"]]));
+  });
+
   it("strips surrounding quotes from the id and key", async () => {
     await write_task("task-600.md", 'id: "TASK-600"\nplan_dedup_key: "ccc333"');
     const keys = await read_exported_backlog_keys(backlog_dir);

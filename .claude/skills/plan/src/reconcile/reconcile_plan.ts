@@ -17,6 +17,12 @@
  *   3. EXPORT overlay. A written task whose `dedup_key` the user has already
  *      promoted into `backlog/` (matched by the `plan_dedup_key` frontmatter
  *      link) moves to `status: "exported"` and is suppressed from re-proposal.
+ *      Suppression matches on `(dedup_key, tier)` so a promoted parent never
+ *      suppresses a same-key leaf (or vice versa); a suppressed candidate is
+ *      remapped to the real exported task's id so a surviving child re-parents
+ *      onto a persisted node. (In a degenerate single-leaf subtree the parent and
+ *      leaf share a `dedup_key`, so promoting either exports BOTH — they are the
+ *      same unit of work; the backlog link carries no tier to separate them.)
  *
  * Because `build_plan_tasks` mints ids deterministically from content, an
  * identical re-sweep produces candidate ids equal to the existing task ids, so
@@ -31,8 +37,10 @@
  * what keeps a partial-scope sweep (`--project`, `--last`) from resolving a task
  * whose projects it never scanned; pointer adoption (step 1) is what keeps a
  * re-keyed ancestor childless so retiring it dangles no live pointer. A live
- * task therefore always points at a live parent; only terminal records may carry
- * a stale link among themselves.
+ * task therefore always points at a parent that is itself live OR `exported` (a
+ * tracked-terminal state a user may promote a non-leaf node into); only
+ * `superseded`/`resolved` parents are guaranteed to have no live children, and
+ * no live task ever points at a non-existent id.
  *
  * Matching is 1:1 — each existing task is claimed by at most one candidate, so
  * two candidates legitimately sharing a `(dedup_key, tier)` each claim a DISTINCT
@@ -46,12 +54,12 @@ import type {
 import type {
   PlanSweepEvent,
   PlanTask,
-  PlanTaskEvidence,
   PlanTaskId,
   PlanTaskRepository,
 } from "@ariadnejs/skill-protocol";
 
 import { union_evidence } from "./build_plan_tasks.js";
+import { location_token } from "./compute_dedup_key.js";
 
 export interface ReconcileOptions {
   /**
@@ -81,14 +89,14 @@ function is_live(task: PlanTask): boolean {
   return task.status === "proposed" || task.status === "accepted";
 }
 
-/** Stable `"<file>:<line>"` identity of one evidence row — the dedup/overlap token. */
-function location_of(evidence: PlanTaskEvidence): string {
-  return `${evidence.member_evidence.file}:${evidence.member_evidence.line}`;
+/** Composite key disambiguating two tasks that share a `dedup_key` by their tier. */
+function key_tier(dedup_key: string, tier: string): string {
+  return `${dedup_key}\n${tier}`;
 }
 
 /** The set of distinct `file:line` locations a task grounds. */
 function location_set(task: PlanTask): Set<string> {
-  return new Set(task.evidence.map(location_of));
+  return new Set(task.evidence.map(location_token));
 }
 
 /** Count of `file:line` locations shared between two sets. */
@@ -117,10 +125,10 @@ export async function reconcile_plan(
   const existing_tasks = await repo.query({});
   const existing_by_id = new Map<PlanTaskId, PlanTask>();
   const live_by_key = new Map<string, PlanTask[]>();
-  const exported_keys_on_disk = new Set<string>();
+  const exported_by_key_tier = new Map<string, PlanTask>();
   for (const task of existing_tasks) {
     existing_by_id.set(task.id, task);
-    if (task.status === "exported") exported_keys_on_disk.add(task.dedup_key);
+    if (task.status === "exported") exported_by_key_tier.set(key_tier(task.dedup_key, task.tier), task);
     if (!is_live(task)) continue;
     const bucket = live_by_key.get(task.dedup_key);
     if (bucket === undefined) live_by_key.set(task.dedup_key, [task]);
@@ -129,10 +137,14 @@ export async function reconcile_plan(
   // Sort each key's live tasks so the (dedup_key, tier) fallback is deterministic.
   for (const bucket of live_by_key.values()) bucket.sort((a, b) => a.id.localeCompare(b.id));
 
-  // A candidate whose key already names an `exported` task is suppressed: the
-  // user promoted this work, so re-proposing it (create OR augment) is exactly
-  // what we must not do. This is the idempotent steady state after an export.
-  const active_candidates = candidates.filter((c) => !exported_keys_on_disk.has(c.dedup_key));
+  // A candidate whose (dedup_key, tier) already names an `exported` task is
+  // suppressed: the user promoted exactly this node, so re-proposing it (create
+  // OR augment) is what we must not do. Matching on (key, tier) — not key alone —
+  // keeps a promoted parent from suppressing a same-key leaf in a degenerate
+  // single-leaf subtree, and vice versa.
+  const is_exported_on_disk = (c: PlanTask): boolean =>
+    exported_by_key_tier.has(key_tier(c.dedup_key, c.tier));
+  const active_candidates = candidates.filter((c) => !is_exported_on_disk(c));
 
   // 1:1 matching — an existing task, once claimed, cannot match a second candidate.
   const claimed = new Set<PlanTaskId>();
@@ -159,9 +171,17 @@ export async function reconcile_plan(
   }));
 
   // Remap candidate ids → final ids (existing id on augment, own id on create).
+  // A candidate suppressed as already-exported is remapped to that exported
+  // task's REAL id, so a surviving child re-parenting onto it resolves to a
+  // persisted task rather than a fresh-minted id that names nothing.
   const remap = new Map<PlanTaskId, PlanTaskId>();
   for (const { candidate, existing } of decisions) {
     remap.set(candidate.id, existing === null ? candidate.id : existing.id);
+  }
+  for (const candidate of candidates) {
+    if (!is_exported_on_disk(candidate)) continue;
+    const exported = exported_by_key_tier.get(key_tier(candidate.dedup_key, candidate.tier));
+    if (exported !== undefined) remap.set(candidate.id, exported.id);
   }
   const remap_id = (id: PlanTaskId | null): PlanTaskId | null =>
     id === null ? null : (remap.get(id) ?? id);
@@ -209,26 +229,27 @@ export async function reconcile_plan(
   }
 
   // ----- Step 2: retire orphans -----
-  const retired: PlanTask[] = [];
-  retire_orphans({
+  const { retired, events: retire_events } = retire_orphans({
     existing_tasks,
     claimed,
     swept_projects,
     created_ids,
     written_by_id,
     sweep_id,
-    retired,
-    events,
   });
+  events.push(...retire_events);
 
   // ----- Step 3: export overlay -----
+  // A live written task whose key the user has already promoted moves to
+  // `exported`. The next sweep filters it out (its (key, tier) is exported on
+  // disk), so the export event fires exactly once — on the proposed→exported
+  // transition — without a `was_exported` guard here.
   for (const task of written_by_id.values()) {
     const backlog_task = exported_backlog_keys.get(task.dedup_key);
     if (backlog_task === undefined || !is_live(task)) continue;
-    const was_exported = existing_by_id.get(task.id)?.status === "exported";
     task.status = "exported";
     task.exported_backlog_task = backlog_task;
-    if (!was_exported) events.push({ kind: "export", task_id: task.id, backlog_task });
+    events.push({ kind: "export", task_id: task.id, backlog_task });
   }
 
   const written = [...written_by_id.values(), ...retired];
@@ -238,29 +259,29 @@ export async function reconcile_plan(
   return { written, events };
 }
 
-interface RetireArgs {
+interface RetireInput {
   existing_tasks: PlanTask[];
   claimed: Set<PlanTaskId>;
   swept_projects: Set<string>;
   created_ids: Set<PlanTaskId>;
   written_by_id: Map<PlanTaskId, PlanTask>;
   sweep_id: string;
-  retired: PlanTask[];
-  events: PlanSweepEvent[];
 }
 
 /**
  * Retire the sweep's orphans — live tasks no candidate claimed, fully within the
  * swept project scope — into `superseded`/`resolved` records and their events.
- * Mutates `retired` (the new records) and `events` (appended after create/augment,
- * supersede/combine before resolve, all deterministically ordered).
+ * Pure: returns the new terminal records and the events to log (ordered
+ * supersede/combine before resolve, each group deterministically sorted).
  *
  * An orphan superseded into a fresh create is a pure pointer flip: the create
  * keeps its own honest evidence (and dedup_key), and the orphan keeps its
  * vanished locations on its now-terminal record — no evidence is merged or lost.
  */
-function retire_orphans(args: RetireArgs): void {
-  const { existing_tasks, claimed, swept_projects, created_ids, written_by_id, sweep_id } = args;
+function retire_orphans(input: RetireInput): { retired: PlanTask[]; events: PlanSweepEvent[] } {
+  const { existing_tasks, claimed, swept_projects, created_ids, written_by_id, sweep_id } = input;
+  const retired: PlanTask[] = [];
+  const events: PlanSweepEvent[] = [];
 
   const orphans = existing_tasks
     .filter(
@@ -271,7 +292,7 @@ function retire_orphans(args: RetireArgs): void {
         t.projects.every((p) => swept_projects.has(p)),
     )
     .sort((a, b) => a.id.localeCompare(b.id));
-  if (orphans.length === 0) return;
+  if (orphans.length === 0) return { retired, events };
 
   // Fresh creates this sweep are the only supersede/combine targets, indexed by
   // (fault_area, tier) with their location sets for overlap scoring.
@@ -320,7 +341,7 @@ function retire_orphans(args: RetireArgs): void {
   for (const target_id of [...orphans_by_target.keys()].sort((a, b) => a.localeCompare(b))) {
     const group = (orphans_by_target.get(target_id) ?? []).sort((a, b) => a.id.localeCompare(b.id));
     for (const orphan of group) {
-      args.retired.push({
+      retired.push({
         ...orphan,
         status: "superseded",
         superseded_by: target_id,
@@ -328,19 +349,17 @@ function retire_orphans(args: RetireArgs): void {
       });
     }
     if (group.length === 1) {
-      args.events.push({ kind: "supersede", superseded_id: group[0].id, superseded_by: target_id });
+      events.push({ kind: "supersede", superseded_id: group[0].id, superseded_by: target_id });
     } else {
-      args.events.push({
-        kind: "combine",
-        merged_ids: group.map((o) => o.id),
-        into_id: target_id,
-      });
+      events.push({ kind: "combine", merged_ids: group.map((o) => o.id), into_id: target_id });
     }
   }
 
   // Resolve (no replacement) — the false-positives simply stopped recurring.
   for (const orphan of resolved) {
-    args.retired.push({ ...orphan, status: "resolved", updated_in_sweep: sweep_id });
-    args.events.push({ kind: "resolve", task_id: orphan.id, dedup_key: orphan.dedup_key });
+    retired.push({ ...orphan, status: "resolved", updated_in_sweep: sweep_id });
+    events.push({ kind: "resolve", task_id: orphan.id, dedup_key: orphan.dedup_key });
   }
+
+  return { retired, events };
 }

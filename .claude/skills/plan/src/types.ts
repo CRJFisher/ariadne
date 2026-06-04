@@ -57,21 +57,6 @@ export interface ScanResultItem {
   run_path: string;
 }
 
-/**
- * The per-sweep scan manifest Pass A writes and Pass C reads
- * (`staging/<sweep>/manifest.json`). It records the FULL scanned scope — every
- * project and run_id scanned this sweep, INCLUDING runs that produced zero
- * false-positives and therefore left no bucket. `projects` is the load-bearing
- * field: Pass C reclaims a live orphan as `resolved` only when its `projects[]`
- * ⊆ this `projects` set, so a zero-FP (now-clean) project is exactly what lets
- * its stale tasks be recognised as fixed. `run_ids` is kept for sweep
- * auditability (the otherwise-unrecoverable record of what was scanned).
- */
-export interface SweepManifest {
-  projects: string[];
-  run_ids: string[];
-}
-
 // ===== Pass A — fault-area grouping =====
 
 /**
