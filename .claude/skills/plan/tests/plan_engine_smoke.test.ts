@@ -191,7 +191,8 @@ function synthetic_plan(bucket: FaultAreaBucket): StrategistPlan {
 async function run_sweep(buckets: FaultAreaBucket[], sweep_id: string): Promise<void> {
   const repo = new JsonPlanTaskRepository();
   const candidates = buckets.flatMap((b) => build_plan_tasks(synthetic_plan(b), b.evidence, { sweep_id, strategist: "opus" }));
-  await reconcile_plan(repo, candidates, sweep_id);
+  const swept_projects = [...new Set(buckets.flatMap((b) => b.projects))].sort();
+  await reconcile_plan(repo, candidates, sweep_id, { swept_projects });
 }
 
 interface FileStamp {

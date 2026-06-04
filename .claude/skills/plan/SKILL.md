@@ -30,9 +30,9 @@ only firewall crossing. See `.claude/rules/backlog-firewall.md`.
 
 | #   | Pass        | Actor                                     | Output                                                                                          |
 | --- | ----------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| A   | Group       | `scripts/group_runs.ts`                   | One `FaultAreaBucket` per `AriadneFaultArea`, staged under `~/.ariadne/plan/staging/<sweep>/buckets/` + a sweep summary |
+| A   | Group       | `scripts/group_runs.ts`                   | One `FaultAreaBucket` per `AriadneFaultArea`, staged under `~/.ariadne/plan/staging/<sweep>/buckets/`, plus a `manifest.json` recording the full scanned scope (projects + run_ids, incl. zero-FP runs) and a sweep summary |
 | B   | Strategize  | `plan-strategist` (opus, ≤5 concurrent)   | One `StrategistPlan` (hierarchical fix tree) per bucket, self-validated via `scripts/validate_plan.ts` |
-| C   | Reconcile   | `scripts/reconcile_plan.ts`               | `PlanTask` rows + a `PlanSweepEvent` log in `~/.ariadne/plan/`; live tasks augmented by `dedup_key` |
+| C   | Reconcile   | `scripts/reconcile_plan.ts`               | `PlanTask` rows + a `PlanSweepEvent` log in `~/.ariadne/plan/`; live tasks augmented by `dedup_key`, orphans superseded/combined/resolved, user-promoted tasks marked `exported` |
 
 ## Arguments
 
@@ -87,12 +87,28 @@ node --import tsx .claude/skills/plan/scripts/reconcile_plan.ts --sweep <sweep_i
 For each staged `(bucket, plan)` pair the reconciler validates the plan,
 flattens it into `PlanTask` candidates (minting ids + parent/child links and the
 immutable `dedup_key` = a hash of `fault_area` + the sorted evidence
-`file:line` set), then reconciles within the DB: a candidate whose `dedup_key`
-already names a live task **augments** it (evidence merged, rollups bumped)
-instead of duplicating it; otherwise it is **created**. Writes `PlanTask` rows
-via `JsonPlanTaskRepository` and appends one `PlanSweepEvent` per decision to
-`sweeps/<sweep_id>.jsonl`. A re-sweep of the same runs augments rather than
-duplicates.
+`file:line` set), then reconciles within the DB:
+
+- **create / augment** — a candidate whose `dedup_key` already names a live task
+  **augments** it (evidence merged, rollups bumped, the latest tree's structural
+  pointers adopted) instead of duplicating it; otherwise it is **created**.
+- **retire orphans** — a live task no candidate claimed, whose grounding
+  projects were ALL scanned this sweep (`projects ⊆` the manifest's `projects`),
+  is stale. If a fresh create in the same `(fault_area, tier)` shares an evidence
+  `file:line`, the orphan was re-keyed into it → **supersede** (one) / **combine**
+  (several → one); if nothing overlaps, its false-positives stopped recurring →
+  **resolve** (`status: "resolved"` — the bug appears fixed). The manifest scope
+  is what stops a partial sweep (`--project`, `--last`) from falsely resolving a
+  task whose projects it never scanned.
+- **export dedup** — the reconciler reads `backlog/tasks/*.md` frontmatter
+  **read-only**, keyed on `plan_dedup_key` (stamped by the export adapter,
+  TASK-190.22.11). A DB task whose `dedup_key` a backlog task already carries is
+  marked `exported` and suppressed from re-proposal. No backlog write.
+
+Writes `PlanTask` rows via `JsonPlanTaskRepository` and appends one
+`PlanSweepEvent` per decision to `sweeps/<sweep_id>.jsonl`. A re-sweep of the
+same runs augments rather than duplicates; an export is idempotent (re-emitted
+only on the proposed→exported transition).
 
 ## Impact reporting (on demand)
 
@@ -116,14 +132,15 @@ output; `~/.ariadne/plan/` is the plan engine's task-DB (defined in
 (`ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE`, `ARIADNE_PLAN_DIR_OVERRIDE`).
 
 - **Input (read-only):** `~/.ariadne/triage-entrypoints/analysis_output/<project>/triage_results/<run-id>.json`
-- **Sweep staging:** `~/.ariadne/plan/staging/<sweep-id>/buckets/<area>.json` (Pass A) + `plans/<area>.json` (Pass B)
+- **Sweep staging:** `~/.ariadne/plan/staging/<sweep-id>/buckets/<area>.json` + `manifest.json` (Pass A) + `plans/<area>.json` (Pass B)
 - **Task-DB:** `~/.ariadne/plan/tasks/<id>.json` (`PlanTask` rows) + `~/.ariadne/plan/sweeps/<sweep-id>.jsonl` (`PlanSweepEvent` log)
 - **Registry (read-only):** `.claude/skills/triage/known_issues/registry.json` — a dedup/grounding signal only
 
 ## Firewall (write boundaries)
 
 `plan` never writes `backlog/`, `registry.json`, or `packages/core`. It writes
-only the task-DB under `~/.ariadne/plan/`. The user's `backlog/` may be read as
-an optional dedup signal but is never written by the pipeline; the only writer is
-the user-invoked export adapter (TASK-190.22.11). The full contract and its
-AST-enforcement test are in `.claude/rules/backlog-firewall.md`.
+only the task-DB under `~/.ariadne/plan/`. Pass C reads `backlog/tasks/*.md`
+frontmatter **read-only** (`src/reconcile/backlog_dedup.ts`, keyed on
+`plan_dedup_key`) as a dedup signal — it is never written by the pipeline; the
+only writer is the user-invoked export adapter (TASK-190.22.11). The full
+contract and its AST-enforcement test are in `.claude/rules/backlog-firewall.md`.

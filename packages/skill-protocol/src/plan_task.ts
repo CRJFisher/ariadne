@@ -46,19 +46,30 @@ export type PlanTaskId = string & { __brand: "PlanTaskId" };
 /**
  * Lifecycle state of a plan task. `proposed` and `accepted` are the LIVE set
  * the engine reconciles against by `dedup_key` (a colliding proposal augments a
- * live task instead of duplicating).
+ * live task instead of duplicating). Every other state is terminal — a terminal
+ * task is never matched, augmented, or re-orphaned by a later sweep.
  *
  * - `proposed`   engine-emitted this sweep; not yet endorsed.
  * - `accepted`   endorsed by the strategist/user; still live.
- * - `superseded` replaced by another task (see `superseded_by`).
+ * - `superseded` folded into a replacement task (see `superseded_by`); the
+ *                replacement carries its own evidence, so a superseded record
+ *                keeps its vanished locations rather than donating them.
  * - `exported`   promoted into the user's `backlog/` (see `exported_backlog_task`); suppress re-proposal.
- * - `abandoned`  dropped; no longer actionable.
+ * - `resolved`   the grounding false-positives no longer appear in newer swept
+ *                runs (the underlying bug appears fixed). A sweep marks a live
+ *                orphan `resolved` only when every project in its `projects[]`
+ *                was scanned this sweep, so a partial-scope sweep never falsely
+ *                resolves a task whose projects it did not cover. Distinct from
+ *                `superseded` (a replacement exists) and `abandoned` (a human/
+ *                strategist judged the fix not worth pursuing).
+ * - `abandoned`  judged not worth pursuing; no longer actionable.
  */
 export type PlanTaskStatus =
   | "proposed"
   | "accepted"
   | "superseded"
   | "exported"
+  | "resolved"
   | "abandoned";
 
 /**

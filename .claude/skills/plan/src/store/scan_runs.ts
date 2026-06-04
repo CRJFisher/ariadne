@@ -8,7 +8,7 @@ import {
   parse_triage_results_path,
 } from "@ariadnejs/skill-protocol";
 import { CURATOR_RUNS_DIR } from "./paths.js";
-import type { ScanOptions, ScanResultItem } from "../types.js";
+import type { ScanOptions, ScanResultItem, SweepManifest } from "../types.js";
 
 /**
  * Walk `analysis_output/{project}/triage_results/*.json` under the given root.
@@ -104,6 +104,21 @@ export function filter_uncurated(
     return items.slice(-opts.last);
   }
   return items;
+}
+
+/**
+ * Build the sweep's scan manifest from the FULL scan result — every project and
+ * run_id scanned this sweep, deduplicated and sorted. Derived from the scan
+ * `items` (all discovered+uncurated runs), NOT from the parsed/grouped runs, so
+ * a run that produced zero false-positives (or failed to parse) still counts as
+ * scanned: its absence from the buckets must not later read as "this task's
+ * grounding vanished" unless its project was genuinely re-scanned. Pure.
+ */
+export function build_sweep_manifest(items: ScanResultItem[]): SweepManifest {
+  return {
+    projects: [...new Set(items.map((i) => i.project))].sort(),
+    run_ids: [...new Set(items.map((i) => i.run_id))].sort(),
+  };
 }
 
 /**

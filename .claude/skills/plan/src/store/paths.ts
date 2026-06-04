@@ -40,9 +40,35 @@ export function plan_staging_plans_dir(sweep_id: string): string {
   return path.join(plan_staging_dir(sweep_id), "plans");
 }
 
+/**
+ * The per-sweep scan manifest: the projects and run_ids Pass A actually SCANNED
+ * this sweep, INCLUDING runs that produced zero false-positives (those leave no
+ * bucket behind). Pass C reads it to bound `resolved` marking to the swept
+ * scope — a task is reclaimed as `resolved` only when every project grounding
+ * it was scanned, so a partial-scope sweep never falsely resolves a task whose
+ * projects it did not cover. Lives flat under the sweep's staging dir beside
+ * `buckets/` and `plans/`; honors `ARIADNE_PLAN_DIR_OVERRIDE` via `plan_staging_dir`.
+ */
+export function plan_staging_manifest_path(sweep_id: string): string {
+  return path.join(plan_staging_dir(sweep_id), "manifest.json");
+}
+
 /** Absolute repo root — same value every script derives. */
 export function get_repo_root(): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
   // src/store/ → src/ → plan/ → skills/ → .claude/ → repo root
   return path.resolve(here, "..", "..", "..", "..", "..");
+}
+
+/**
+ * The user's `backlog/tasks/` directory, rooted at the repo. The plan engine
+ * reads it ONLY as a dedup signal (the firewall forbids writes); it never
+ * writes here. Overridable for test isolation via `ARIADNE_BACKLOG_DIR_OVERRIDE`,
+ * read lazily so a test that sets it before the call still wins.
+ */
+export function backlog_tasks_dir(): string {
+  return (
+    process.env.ARIADNE_BACKLOG_DIR_OVERRIDE ??
+    path.join(get_repo_root(), "backlog", "tasks")
+  );
 }

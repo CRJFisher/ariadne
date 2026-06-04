@@ -23,8 +23,8 @@ import { atomic_write_file } from "@ariadnejs/skill-fs";
 import { parse_run_id, read_triage_results_file } from "@ariadnejs/skill-protocol";
 
 import { group_fault_areas, type ParsedRun } from "../src/group/group_fault_areas.js";
-import { plan_staging_buckets_dir } from "../src/store/paths.js";
-import { scan_runs } from "../src/store/scan_runs.js";
+import { plan_staging_buckets_dir, plan_staging_manifest_path } from "../src/store/paths.js";
+import { build_sweep_manifest, scan_runs } from "../src/store/scan_runs.js";
 import type { ScanOptions } from "../src/types.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
@@ -103,9 +103,18 @@ async function main(): Promise<void> {
     );
   }
 
+  // The scan manifest records the full scanned scope (incl. zero-FP runs), which
+  // Pass C reads to bound `resolved` reclamation to the projects this sweep covered.
+  const manifest = build_sweep_manifest(items);
+  await atomic_write_file(
+    plan_staging_manifest_path(sweep_id),
+    `${JSON.stringify(manifest, null, 2)}\n`,
+  );
+
   const summary = {
     sweep_id,
     run_count: parsed_runs.length,
+    swept_projects: manifest.projects,
     bucket_count: buckets.length,
     buckets: buckets.map((b) => ({
       fault_area: b.fault_area,

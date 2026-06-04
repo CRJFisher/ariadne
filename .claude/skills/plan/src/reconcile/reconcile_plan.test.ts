@@ -4,12 +4,12 @@ import * as path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { parse_run_id, type PlanTaskEvidence } from "@ariadnejs/skill-protocol";
+import { parse_run_id, type PlanTask, type PlanTaskEvidence } from "@ariadnejs/skill-protocol";
 
-import type { StrategistPlan } from "../types.js";
+import type { StrategistPlan, StrategistPlanNode } from "../types.js";
 import { JsonPlanTaskRepository } from "../store/json_plan_task_repository.js";
 import { build_plan_tasks } from "./build_plan_tasks.js";
-import { reconcile_plan } from "./reconcile_plan.js";
+import { reconcile_plan, type ReconcileOptions, type ReconcileOutcome } from "./reconcile_plan.js";
 
 let plan_dir: string;
 let saved_override: string | undefined;
@@ -40,8 +40,42 @@ function ev(file: string, line: number, project = "p"): PlanTaskEvidence {
   };
 }
 
-/** fault_area root → two localized leaves (indices 0,1). */
-function plan(): StrategistPlan {
+/**
+ * Drive `reconcile_plan` with the swept-project scope it now requires. Defaults
+ * the scope to the union of the candidates' evidence projects (the normal
+ * full-coverage case); a test that exercises orphan retirement passes an
+ * explicit `swept_projects` to control the resolve gate.
+ */
+async function recon(
+  repo: JsonPlanTaskRepository,
+  candidates: PlanTask[],
+  sweep_id: string,
+  options: Partial<ReconcileOptions> = {},
+): Promise<ReconcileOutcome> {
+  const swept_projects =
+    options.swept_projects ??
+    [...new Set(candidates.flatMap((c) => c.evidence.map((e) => e.project)))].sort();
+  return reconcile_plan(repo, candidates, sweep_id, {
+    swept_projects,
+    exported_backlog_keys: options.exported_backlog_keys,
+  });
+}
+
+function localized_leaf(title: string, body: string, indices: number[]): StrategistPlanNode {
+  return {
+    tier: "localized",
+    title,
+    body,
+    fault_area: "syntactic_extraction",
+    evidence_indices: indices,
+    is_taxonomy_extension: false,
+    is_classifier_work: false,
+    children: [],
+  };
+}
+
+/** fault_area root → the given localized leaves. */
+function plan_with(leaves: StrategistPlanNode[]): StrategistPlan {
   return {
     schema_version: 1,
     fault_area: "syntactic_extraction",
@@ -55,31 +89,15 @@ function plan(): StrategistPlan {
         evidence_indices: [],
         is_taxonomy_extension: false,
         is_classifier_work: false,
-        children: [
-          {
-            tier: "localized",
-            title: "fix a",
-            body: "a",
-            fault_area: "syntactic_extraction",
-            evidence_indices: [0],
-            is_taxonomy_extension: false,
-            is_classifier_work: false,
-            children: [],
-          },
-          {
-            tier: "localized",
-            title: "fix b",
-            body: "b",
-            fault_area: "syntactic_extraction",
-            evidence_indices: [1],
-            is_taxonomy_extension: false,
-            is_classifier_work: false,
-            children: [],
-          },
-        ],
+        children: leaves,
       },
     ],
   };
+}
+
+/** fault_area root → two localized leaves (indices 0,1). */
+function plan(): StrategistPlan {
+  return plan_with([localized_leaf("fix a", "a", [0]), localized_leaf("fix b", "b", [1])]);
 }
 
 const OPTS = { sweep_id: "sweep-1", strategist: "opus" };
@@ -88,7 +106,7 @@ describe("reconcile_plan", () => {
   it("creates every task on an empty store", async () => {
     const repo = new JsonPlanTaskRepository();
     const candidates = build_plan_tasks(plan(), [ev("a.ts", 1), ev("b.ts", 2)], OPTS);
-    const { written, events } = await reconcile_plan(repo, candidates, "sweep-1");
+    const { written, events } = await recon(repo, candidates, "sweep-1");
 
     expect(written).toHaveLength(3);
     expect(events.map((e) => e.kind)).toEqual(["create", "create", "create"]);
@@ -101,13 +119,13 @@ describe("reconcile_plan", () => {
     const evidence = [ev("a.ts", 1), ev("b.ts", 2)];
 
     const first = build_plan_tasks(plan(), evidence, { sweep_id: "sweep-1", strategist: "opus" });
-    await reconcile_plan(repo, first, "sweep-1");
+    await recon(repo, first, "sweep-1");
     const after_first = await repo.query({});
     const ids_first = after_first.map((t) => t.id).sort();
 
     // Re-sweep the SAME runs under a new sweep id.
     const second = build_plan_tasks(plan(), evidence, { sweep_id: "sweep-2", strategist: "opus" });
-    const { events } = await reconcile_plan(repo, second, "sweep-2");
+    const { events } = await recon(repo, second, "sweep-2");
 
     const after_second = await repo.query({});
     // No new task files — same ids.
@@ -126,7 +144,7 @@ describe("reconcile_plan", () => {
 
   it("merges new evidence and bumps observed_count when a re-sweep adds a location", async () => {
     const repo = new JsonPlanTaskRepository();
-    await reconcile_plan(
+    await recon(
       repo,
       build_plan_tasks(plan(), [ev("a.ts", 1), ev("b.ts", 2)], { sweep_id: "s1", strategist: "opus" }),
       "s1",
@@ -134,7 +152,7 @@ describe("reconcile_plan", () => {
 
     // Second sweep: leaf "a" now also observed in another project at the same location's group.
     const evidence2 = [ev("a.ts", 1, "express"), ev("b.ts", 2)];
-    const { events } = await reconcile_plan(
+    const { events } = await recon(
       repo,
       build_plan_tasks(plan(), evidence2, { sweep_id: "s2", strategist: "opus" }),
       "s2",
@@ -151,14 +169,14 @@ describe("reconcile_plan", () => {
   it("ignores a superseded row sharing a dedup_key and matches the live one by tier", async () => {
     const repo = new JsonPlanTaskRepository();
     const candidates = build_plan_tasks(plan(), [ev("a.ts", 1), ev("b.ts", 2)], OPTS);
-    await reconcile_plan(repo, candidates, "sweep-1");
+    await recon(repo, candidates, "sweep-1");
 
     // Manually supersede the fault_area root, then re-sweep: it must create a new
     // live root (the superseded one is not a match), not augment the dead one.
     const live_root = (await repo.query({ tier: "fault_area" }))[0];
     await repo.put({ ...live_root, status: "superseded", superseded_by: live_root.id });
 
-    const { events } = await reconcile_plan(
+    const { events } = await recon(
       repo,
       build_plan_tasks(plan(), [ev("a.ts", 1), ev("b.ts", 2)], { sweep_id: "sweep-3", strategist: "opus" }),
       "sweep-3",
@@ -173,34 +191,15 @@ describe("reconcile_plan", () => {
     // Two localized leaves grounding the SAME evidence row → identical dedup_key
     // AND tier. The reconciler must pair them 1:1 with the prior tasks, not
     // collapse both onto the lexicographically-first one.
-    const collide: StrategistPlan = {
-      schema_version: 1,
-      fault_area: "syntactic_extraction",
-      sweep_id: "s1",
-      roots: [
-        {
-          tier: "fault_area",
-          title: "group",
-          body: "g",
-          fault_area: "syntactic_extraction",
-          evidence_indices: [],
-          is_taxonomy_extension: false,
-          is_classifier_work: false,
-          children: [
-            { tier: "localized", title: "leaf x", body: "x", fault_area: "syntactic_extraction", evidence_indices: [0], is_taxonomy_extension: false, is_classifier_work: false, children: [] },
-            { tier: "localized", title: "leaf y", body: "y", fault_area: "syntactic_extraction", evidence_indices: [0], is_taxonomy_extension: false, is_classifier_work: false, children: [] },
-          ],
-        },
-      ],
-    };
+    const collide = plan_with([localized_leaf("leaf x", "x", [0]), localized_leaf("leaf y", "y", [0])]);
     const repo = new JsonPlanTaskRepository();
     const evidence = [ev("a.ts", 1)];
-    await reconcile_plan(repo, build_plan_tasks(collide, evidence, { sweep_id: "s1", strategist: "opus" }), "s1");
+    await recon(repo, build_plan_tasks(collide, evidence, { sweep_id: "s1", strategist: "opus" }), "s1");
     const after_first = await repo.query({});
     const localized_first = after_first.filter((t) => t.tier === "localized").map((t) => t.id).sort();
     expect(localized_first).toHaveLength(2); // two distinct files despite shared dedup_key
 
-    const { written } = await reconcile_plan(
+    const { written } = await recon(
       repo,
       build_plan_tasks(collide, evidence, { sweep_id: "s2", strategist: "opus" }),
       "s2",
@@ -223,17 +222,242 @@ describe("reconcile_plan", () => {
     // and the prior leaf ids survive (augment keeps the existing id).
     const repo = new JsonPlanTaskRepository();
     const evidence = [ev("a.ts", 1), ev("b.ts", 2)];
-    await reconcile_plan(repo, build_plan_tasks(plan(), evidence, { sweep_id: "s1", strategist: "opus" }), "s1");
+    await recon(repo, build_plan_tasks(plan(), evidence, { sweep_id: "s1", strategist: "opus" }), "s1");
     const leaf_ids_first = (await repo.query({ tier: "localized" })).map((t) => t.id).sort();
 
     const reordered = plan();
     reordered.roots[0].children.reverse();
-    const { events } = await reconcile_plan(
+    const { events } = await recon(
       repo,
       build_plan_tasks(reordered, evidence, { sweep_id: "s2", strategist: "opus" }),
       "s2",
     );
     expect(events.every((e) => e.kind === "augment")).toBe(true);
     expect((await repo.query({ tier: "localized" })).map((t) => t.id).sort()).toEqual(leaf_ids_first);
+  });
+});
+
+describe("reconcile_plan — orphan retirement", () => {
+  /** Seed sweep s1 (root + leaf-a@a.ts:1 + leaf-b@b.ts:2) and return the live leaves. */
+  async function seed(repo: JsonPlanTaskRepository): Promise<{ leaf_a: PlanTask; leaf_b: PlanTask; root: PlanTask }> {
+    await recon(repo, build_plan_tasks(plan(), [ev("a.ts", 1), ev("b.ts", 2)], { sweep_id: "s1", strategist: "opus" }), "s1");
+    const after = await repo.query({});
+    const leaf_a = after.find((t) => t.tier === "localized" && t.evidence[0].member_evidence.file === "a.ts");
+    const leaf_b = after.find((t) => t.tier === "localized" && t.evidence[0].member_evidence.file === "b.ts");
+    const root = after.find((t) => t.tier === "fault_area");
+    if (leaf_a === undefined || leaf_b === undefined || root === undefined) throw new Error("seed failed");
+    return { leaf_a, leaf_b, root };
+  }
+
+  it("supersedes a re-keyed leaf into the fresh create that overlaps its location", async () => {
+    const repo = new JsonPlanTaskRepository();
+    const { leaf_a } = await seed(repo);
+
+    // s2: leaf "a" now grounds {a.ts:1, a.ts:2} → new dedup_key (orphans the old
+    // leaf-a), but the new leaf overlaps a.ts:1 → supersede.
+    const churn = plan_with([localized_leaf("fix a", "a", [0, 1]), localized_leaf("fix b", "b", [2])]);
+    const evidence2 = [ev("a.ts", 1), ev("a.ts", 2), ev("b.ts", 2)];
+    const { events } = await recon(
+      repo,
+      build_plan_tasks(churn, evidence2, { sweep_id: "s2", strategist: "opus" }),
+      "s2",
+    );
+
+    const after = await repo.query({});
+    const new_leaf_a = after.find((t) => t.tier === "localized" && t.status === "proposed" && t.evidence.length === 2);
+    if (new_leaf_a === undefined) throw new Error("expected the fresh 2-evidence leaf");
+
+    expect(events.find((e) => e.kind === "supersede" && e.superseded_id === leaf_a.id)).toEqual({
+      kind: "supersede",
+      superseded_id: leaf_a.id,
+      superseded_by: new_leaf_a.id,
+    });
+    const leaf_a_after = after.find((t) => t.id === leaf_a.id);
+    expect(leaf_a_after?.status).toEqual("superseded");
+    expect(leaf_a_after?.superseded_by).toEqual(new_leaf_a.id);
+  });
+
+  it("combines two re-keyed leaves that fold into one fresh create", async () => {
+    const repo = new JsonPlanTaskRepository();
+    const { leaf_a, leaf_b } = await seed(repo);
+
+    // s2: a single leaf grounds BOTH a.ts:1 and b.ts:2. The root's aggregated
+    // evidence is unchanged ({a.ts:1,b.ts:2}) so it augments; the two old leaves
+    // orphan and fold into the new combined leaf.
+    const merged = plan_with([localized_leaf("fix ab", "ab", [0, 1])]);
+    const { events } = await recon(
+      repo,
+      build_plan_tasks(merged, [ev("a.ts", 1), ev("b.ts", 2)], { sweep_id: "s2", strategist: "opus" }),
+      "s2",
+    );
+
+    const after = await repo.query({});
+    const new_leaf = after.find((t) => t.tier === "localized" && t.status === "proposed");
+    if (new_leaf === undefined) throw new Error("expected the combined leaf");
+
+    expect(events.find((e) => e.kind === "combine")).toEqual({
+      kind: "combine",
+      merged_ids: [leaf_a.id, leaf_b.id].sort((x, y) => x.localeCompare(y)),
+      into_id: new_leaf.id,
+    });
+    for (const old of [leaf_a, leaf_b]) {
+      const rec = after.find((t) => t.id === old.id);
+      expect(rec?.status).toEqual("superseded");
+      expect(rec?.superseded_by).toEqual(new_leaf.id);
+    }
+  });
+
+  it("resolves a leaf whose evidence vanished, when its project was swept", async () => {
+    const repo = new JsonPlanTaskRepository();
+    const { leaf_a } = await seed(repo);
+
+    // s2: the plan drops leaf-a entirely (only b.ts:2 remains). leaf-a orphans
+    // with no overlapping create → resolved; project "p" was swept.
+    const shrunk = plan_with([localized_leaf("fix b", "b", [0])]);
+    const { events } = await recon(
+      repo,
+      build_plan_tasks(shrunk, [ev("b.ts", 2)], { sweep_id: "s2", strategist: "opus" }),
+      "s2",
+      { swept_projects: ["p"] },
+    );
+
+    const leaf_a_after = (await repo.query({})).find((t) => t.id === leaf_a.id);
+    expect(leaf_a_after?.status).toEqual("resolved");
+    expect(leaf_a_after?.superseded_by).toEqual(null);
+    expect(leaf_a_after?.updated_in_sweep).toEqual("s2");
+    expect(events.find((e) => e.kind === "resolve")).toEqual({
+      kind: "resolve",
+      task_id: leaf_a.id,
+      dedup_key: leaf_a.dedup_key,
+    });
+  });
+
+  it("leaves an orphan live when its project was NOT swept (no false resolve)", async () => {
+    const repo = new JsonPlanTaskRepository();
+    const { leaf_a } = await seed(repo);
+
+    const shrunk = plan_with([localized_leaf("fix b", "b", [0])]);
+    const { events } = await recon(
+      repo,
+      build_plan_tasks(shrunk, [ev("b.ts", 2)], { sweep_id: "s2", strategist: "opus" }),
+      "s2",
+      { swept_projects: ["other"] }, // leaf-a's project "p" is out of scope
+    );
+
+    const leaf_a_after = (await repo.query({})).find((t) => t.id === leaf_a.id);
+    expect(leaf_a_after?.status).toEqual("proposed");
+    expect(leaf_a_after?.updated_in_sweep).toEqual("s1"); // untouched
+    expect(events.filter((e) => e.kind === "resolve" || e.kind === "supersede")).toEqual([]);
+  });
+
+  it("keeps every live task's parent pointing at a live task after a re-keying sweep", async () => {
+    const repo = new JsonPlanTaskRepository();
+    const { leaf_b } = await seed(repo);
+
+    // Churn leaf-a so the fault_area root re-keys (orphaned) and a fresh root is
+    // created; leaf-b augments and must adopt the NEW root as parent.
+    const churn = plan_with([localized_leaf("fix a", "a", [0, 1]), localized_leaf("fix b", "b", [2])]);
+    await recon(
+      repo,
+      build_plan_tasks(churn, [ev("a.ts", 1), ev("a.ts", 2), ev("b.ts", 2)], { sweep_id: "s2", strategist: "opus" }),
+      "s2",
+      { swept_projects: ["p"] },
+    );
+
+    const after = await repo.query({});
+    const live = after.filter((t) => t.status === "proposed" || t.status === "accepted");
+    const live_ids = new Set(live.map((t) => t.id));
+    for (const t of live) {
+      if (t.parent_id !== null) expect(live_ids.has(t.parent_id)).toBe(true);
+    }
+    // leaf-b survived (augmented) and now parents onto the live root.
+    const new_root = after.find((t) => t.tier === "fault_area" && t.status === "proposed");
+    const leaf_b_after = after.find((t) => t.id === leaf_b.id);
+    expect(leaf_b_after?.status).toEqual("proposed");
+    expect(leaf_b_after?.parent_id).toEqual(new_root?.id);
+  });
+
+  it("does not re-orphan a retired task on a later identical sweep (idempotent)", async () => {
+    const repo = new JsonPlanTaskRepository();
+    const { leaf_a } = await seed(repo);
+
+    const shrunk = plan_with([localized_leaf("fix b", "b", [0])]);
+    await recon(repo, build_plan_tasks(shrunk, [ev("b.ts", 2)], { sweep_id: "s2", strategist: "opus" }), "s2", {
+      swept_projects: ["p"],
+    });
+    const resolved_after_s2 = (await repo.query({})).find((t) => t.id === leaf_a.id);
+
+    // Re-run the SAME shrunk sweep: the resolved leaf-a is terminal, so it is not
+    // touched again and no new retirement event references it.
+    const { events } = await recon(
+      repo,
+      build_plan_tasks(shrunk, [ev("b.ts", 2)], { sweep_id: "s3", strategist: "opus" }),
+      "s3",
+      { swept_projects: ["p"] },
+    );
+    expect(events.filter((e) => e.kind === "resolve" || e.kind === "supersede" || e.kind === "combine")).toEqual([]);
+    const resolved_after_s3 = (await repo.query({})).find((t) => t.id === leaf_a.id);
+    expect(resolved_after_s3).toEqual(resolved_after_s2); // byte-identical, no re-bump
+  });
+});
+
+describe("reconcile_plan — backlog export overlay", () => {
+  it("flips a written task to exported and emits one export event when the user has promoted it", async () => {
+    const repo = new JsonPlanTaskRepository();
+    const evidence = [ev("a.ts", 1), ev("b.ts", 2)];
+    await recon(repo, build_plan_tasks(plan(), evidence, { sweep_id: "s1", strategist: "opus" }), "s1");
+    const after1 = await repo.query({});
+    const leaf_a = after1.find((t) => t.tier === "localized" && t.evidence[0].member_evidence.file === "a.ts");
+    const leaf_b = after1.find((t) => t.tier === "localized" && t.evidence[0].member_evidence.file === "b.ts");
+    if (leaf_a === undefined || leaf_b === undefined) throw new Error("seed failed");
+
+    const keys = new Map([[leaf_a.dedup_key, "TASK-700"]]);
+    const { events } = await recon(
+      repo,
+      build_plan_tasks(plan(), evidence, { sweep_id: "s2", strategist: "opus" }),
+      "s2",
+      { exported_backlog_keys: keys },
+    );
+
+    const after2 = await repo.query({});
+    const leaf_a2 = after2.find((t) => t.id === leaf_a.id);
+    expect(leaf_a2?.status).toEqual("exported");
+    expect(leaf_a2?.exported_backlog_task).toEqual("TASK-700");
+    expect(events.filter((e) => e.kind === "export")).toEqual([
+      { kind: "export", task_id: leaf_a.id, backlog_task: "TASK-700" },
+    ]);
+
+    // The non-promoted leaf is untouched.
+    const leaf_b2 = after2.find((t) => t.id === leaf_b.id);
+    expect(leaf_b2?.status).toEqual("proposed");
+    expect(leaf_b2?.exported_backlog_task).toEqual(null);
+  });
+
+  it("suppresses re-proposal of an already-exported task on a later sweep (idempotent)", async () => {
+    const repo = new JsonPlanTaskRepository();
+    const evidence = [ev("a.ts", 1), ev("b.ts", 2)];
+    await recon(repo, build_plan_tasks(plan(), evidence, { sweep_id: "s1", strategist: "opus" }), "s1");
+    const leaf_a = (await repo.query({})).find(
+      (t) => t.tier === "localized" && t.evidence[0].member_evidence.file === "a.ts",
+    );
+    if (leaf_a === undefined) throw new Error("seed failed");
+
+    const keys = new Map([[leaf_a.dedup_key, "TASK-700"]]);
+    await recon(repo, build_plan_tasks(plan(), evidence, { sweep_id: "s2", strategist: "opus" }), "s2", {
+      exported_backlog_keys: keys,
+    });
+    const leaf_a_after_s2 = (await repo.query({})).find((t) => t.id === leaf_a.id);
+
+    // s3 with the same promotion: the exported task is filtered out, so no export
+    // event re-fires and its record (incl. updated_in_sweep) is unchanged.
+    const { events } = await recon(
+      repo,
+      build_plan_tasks(plan(), evidence, { sweep_id: "s3", strategist: "opus" }),
+      "s3",
+      { exported_backlog_keys: keys },
+    );
+    expect(events.filter((e) => e.kind === "export")).toEqual([]);
+    const leaf_a_after_s3 = (await repo.query({})).find((t) => t.id === leaf_a.id);
+    expect(leaf_a_after_s3).toEqual(leaf_a_after_s2);
   });
 });

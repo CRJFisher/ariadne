@@ -43,11 +43,16 @@ export interface PlanTaskQuery {
  *
  * - `create`    a fresh task was minted this sweep.
  * - `augment`   an existing live task matched by `dedup_key`; evidence merged.
- * - `supersede` one task was replaced by another (mirrors `superseded_by`).
+ * - `supersede` one task was folded into a replacement (mirrors `superseded_by`).
  * - `combine`   several tasks were combined into one. On the records this is
  *               supersede-fan-in: each `merged_ids` task gets
  *               `status: "superseded"` with `superseded_by = into_id`; the
  *               event captures the N→1 grouping as a single log entry.
+ * - `resolve`   a live orphan's grounding false-positives no longer recur in
+ *               newer swept runs; the record moves to `status: "resolved"`. No
+ *               replacement pointer — the bug vanished rather than moved — so
+ *               unlike `supersede` the event names only the resolved task.
+ *               `dedup_key` is carried for log-side correlation, matching `create`.
  * - `export`    a task was promoted to the user `backlog/` (mirrors `exported_backlog_task`).
  */
 export type PlanSweepEvent =
@@ -60,6 +65,7 @@ export type PlanSweepEvent =
     }
   | { kind: "supersede"; superseded_id: PlanTaskId; superseded_by: PlanTaskId }
   | { kind: "combine"; merged_ids: PlanTaskId[]; into_id: PlanTaskId }
+  | { kind: "resolve"; task_id: PlanTaskId; dedup_key: string }
   | { kind: "export"; task_id: PlanTaskId; backlog_task: string };
 
 /**
