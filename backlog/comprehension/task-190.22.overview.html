@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Restructure the self-healing pipeline — triage → plan</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px;display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:40px}
+  .main{min-width:0}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:33px;line-height:1.13;margin:0 0 14px;letter-spacing:-.01em}
+  h2{font-family:var(--serif);font-weight:600;font-size:22px;margin:46px 0 12px;letter-spacing:-.01em}
+  p{margin:0 0 12px}
+  .lead{font-size:16.5px;color:var(--g600);max-width:68ch}
+  code{font-family:var(--mono);font-size:.9em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:18px 0}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 6px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)}
+  .callout p{margin:0}
+  .diagram{overflow-x:auto;background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:14px;margin:14px 0}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:8px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:14px;height:14px;border-radius:4px;display:inline-block}
+  /* stages */
+  .stages{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;margin:14px 0}
+  .stage{border:1px solid var(--g200);background:var(--paper);padding:14px}
+  .stage:first-child{border-radius:var(--r) 0 0 var(--r)} .stage:last-child{border-radius:0 var(--r) var(--r) 0}
+  .stage+.stage{border-left:none}
+  .stage h4{margin:0 0 4px;font-family:var(--mono);font-size:13px}
+  .stage .tg{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--ivory);background:var(--olive);border-radius:5px;padding:2px 7px;display:inline-block;margin-bottom:8px}
+  .stage.def .tg{background:var(--g400)}
+  .stage p{font-size:12.5px;color:var(--g600);margin:0}
+  /* nav index */
+  aside{position:sticky;top:28px;align-self:start}
+  aside .navttl{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10px;color:var(--g400);margin:0 0 10px}
+  .doc-link,.pending{display:block;border:1px solid var(--g200);border-radius:9px;padding:9px 11px;margin-bottom:7px;text-decoration:none;font-size:12.5px;background:var(--paper)}
+  .doc-link{color:var(--slate)} .doc-link:hover{border-color:var(--clay);background:#fff}
+  .pending{color:var(--g400);background:transparent;border-style:dashed}
+  .doc-link .n,.pending .n{font-family:var(--mono);font-size:11px;color:var(--clay);display:block;margin-bottom:2px}
+  .pending .n{color:var(--g400)}
+  .doc-link .tag{font-family:var(--mono);font-size:9.5px;color:var(--olive);text-transform:uppercase;letter-spacing:.06em}
+  .pending .tag{color:var(--g400)}
+  /* sub-task list */
+  .subs{display:grid;gap:8px;margin:14px 0;counter-reset:none}
+  .sub{display:grid;grid-template-columns:54px 1fr auto;gap:14px;align-items:center;border:1px solid var(--g200);background:var(--paper);border-radius:10px;padding:10px 14px}
+  .sub .id{font-family:var(--mono);font-size:12px;color:var(--clay);font-weight:600}
+  .sub .body{min-width:0}
+  .sub .body strong{font-weight:600;font-size:14px}
+  .sub .body span{display:block;font-size:12.5px;color:var(--g600)}
+  .st{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .st.done{background:rgba(108,122,74,.16);color:var(--olive)}
+  .st.todo{background:rgba(185,121,79,.16);color:var(--clay)}
+  .sub.here{box-shadow:0 0 0 1px var(--clay);border-color:var(--clay)}
+  footer{grid-column:1/-1;margin-top:50px;border-top:1px solid var(--g200);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400);line-height:1.7}
+  @media(max-width:900px){
+    .wrap{grid-template-columns:1fr}
+    aside{position:static}
+    .stages{grid-template-columns:1fr}
+    .stage,.stage:first-child,.stage:last-child{border-radius:var(--r);border-left:1px solid var(--g200)}
+    .stage+.stage{margin-top:8px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<main class="main">
+<header>
+  <p class="eyebrow">TASK-190.22 · self-repair / architecture / restructure</p>
+  <h1>The self-healing pipeline becomes two stages: detect, then plan</h1>
+  <p class="lead">The pipeline under <code>.claude/skills/</code> has never run end-to-end. Rather than building the full automated build-out at once, the architecture collapses to the part that delivers value first — and defers code mutation entirely. There are two live stages and no automated actuator in scope.</p>
+  <div class="meta">
+    <span class="chip"><strong>13</strong> sub-tasks</span>
+    <span class="chip"><strong>10</strong> done</span>
+    <span class="chip"><strong>3</strong> open</span>
+    <span class="chip">parent <strong>TASK-190</strong></span>
+  </div>
+</header>
+
+<section>
+<h2>What the pipeline is for</h2>
+<p>Two golden-path stages run autonomously; the third is a deferred draft. The boundary between "the machine proposes" and "code or the user's tracker changes" is the whole point of the restructure — autonomous stages never mutate code, the classifier registry, or the user's backlog.</p>
+<div class="stages">
+  <div class="stage">
+    <span class="tg">stage 1 · golden path</span>
+    <h4>triage</h4>
+    <p>Detect entry points → per-entry investigator verdicts (<code>tp</code> = real dead code, <code>fp-*</code> = an Ariadne resolver bug) → publish <code>triage_results</code>, each false-positive carrying deterministic core fault diagnostics.</p>
+  </div>
+  <div class="stage">
+    <span class="tg">stage 2 · golden path</span>
+    <h4>plan</h4>
+    <p>Read all <code>triage_results</code> → group by <code>AriadneFaultArea</code> → opus strategists propose architectural upgrades → emit hierarchical, size-tiered fix plans into the task-DB → reconcile (augment / supersede / combine). Produces plans; never mutates code or the registry.</p>
+  </div>
+  <div class="stage def">
+    <span class="tg">deferred</span>
+    <h4>actuator</h4>
+    <p>Out of scope. Executes the plans manually at first: path A = localized Ariadne-core fixes, path B = classifier-script fixes. The apply / promotion machinery the curator once held is parked here.</p>
+  </div>
+</div>
+
+<div class="callout">
+  <span class="k">The two firewalls that hold the shape</span>
+  <p>Both autonomous stages are <strong>read-only</strong> against two human/core-owned surfaces. The classifier registry (<code>registry.json</code>) and the user's <code>backlog/</code> each have exactly one named writer per transition, with an AST test that fails the build if pipeline code crosses the line. The plan engine renders proposed work into its own task-DB at <code>~/.ariadne/plan/</code>; a single human-invoked adapter is the sole bridge from there into <code>backlog/</code>.</p>
+</div>
+</section>
+
+<section>
+<h2>How the sub-tasks compose into the whole</h2>
+<p>The work moves left to right: harden the detector, extract the shared contract and taxonomy, stand up the firewalled task-DB and its write-boundary, build the plan engine on top, then open the one sanctioned gate out to the user's tracker. The diagram groups the thirteen sub-tasks by the layer they build.</p>
+
+<div class="diagram">
+<svg viewBox="0 0 940 320" role="img" aria-label="How the 13 sub-tasks of the restructure compose: foundation, the firewalled task-DB and contract, the plan engine, and the export gate" width="100%" style="min-width:880px">
+  <defs>
+    <marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#5f594f"/></marker>
+    <marker id="ac" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#b9794f"/></marker>
+  </defs>
+  <g font-family="ui-monospace,monospace" font-size="11">
+    <!-- band labels -->
+    <text x="14" y="24" fill="#9a9387" font-size="10" letter-spacing="1">FOUNDATION</text>
+    <text x="14" y="116" fill="#9a9387" font-size="10" letter-spacing="1">TASK-DB + WRITE-BOUNDARY</text>
+    <text x="14" y="208" fill="#9a9387" font-size="10" letter-spacing="1">PLAN ENGINE</text>
+    <text x="14" y="290" fill="#9a9387" font-size="10" letter-spacing="1">THE GATE OUT</text>
+
+    <!-- foundation row -->
+    <g>
+      <rect x="14" y="34" width="120" height="50" rx="9" fill="#fffdf8" stroke="#6c7a4a"/>
+      <text x="74" y="54" text-anchor="middle" fill="#2b2a28" font-weight="700">.1 harden</text>
+      <text x="74" y="68" text-anchor="middle" fill="#5f594f">triage path</text>
+      <rect x="148" y="34" width="120" height="50" rx="9" fill="#fffdf8" stroke="#6c7a4a"/>
+      <text x="208" y="54" text-anchor="middle" fill="#2b2a28" font-weight="700">.2 skill-</text>
+      <text x="208" y="68" text-anchor="middle" fill="#5f594f">protocol</text>
+      <rect x="282" y="34" width="120" height="50" rx="9" fill="#fffdf8" stroke="#6c7a4a"/>
+      <text x="342" y="54" text-anchor="middle" fill="#2b2a28" font-weight="700">.3 fault-area</text>
+      <text x="342" y="68" text-anchor="middle" fill="#5f594f">taxonomy</text>
+      <rect x="416" y="34" width="120" height="50" rx="9" fill="#fffdf8" stroke="#6c7a4a"/>
+      <text x="476" y="54" text-anchor="middle" fill="#2b2a28" font-weight="700">.5 rename</text>
+      <text x="476" y="68" text-anchor="middle" fill="#5f594f">+ strip</text>
+    </g>
+    <!-- db/boundary row -->
+    <g>
+      <rect x="14" y="126" width="120" height="50" rx="9" fill="#fffdf8" stroke="#6c7a4a"/>
+      <text x="74" y="146" text-anchor="middle" fill="#2b2a28" font-weight="700">.4 PlanTask</text>
+      <text x="74" y="160" text-anchor="middle" fill="#5f594f">contract</text>
+      <rect x="148" y="126" width="120" height="50" rx="9" fill="#fffdf8" stroke="#6c7a4a"/>
+      <text x="208" y="146" text-anchor="middle" fill="#2b2a28" font-weight="700">.8 JSON</text>
+      <text x="208" y="160" text-anchor="middle" fill="#5f594f">task-store</text>
+      <rect x="282" y="126" width="120" height="50" rx="9" fill="#fffdf8" stroke="#6c7a4a"/>
+      <text x="342" y="146" text-anchor="middle" fill="#2b2a28" font-weight="700">.6 retarget</text>
+      <text x="342" y="160" text-anchor="middle" fill="#5f594f">writers</text>
+      <rect x="416" y="126" width="120" height="50" rx="9" fill="#fffdf8" stroke="#6c7a4a"/>
+      <text x="476" y="146" text-anchor="middle" fill="#2b2a28" font-weight="700">.7 firewall</text>
+      <text x="476" y="160" text-anchor="middle" fill="#5f594f">doc + test</text>
+    </g>
+    <!-- engine row -->
+    <g>
+      <rect x="14" y="218" width="180" height="50" rx="9" fill="#fffdf8" stroke="#6c7a4a"/>
+      <text x="104" y="238" text-anchor="middle" fill="#2b2a28" font-weight="700">.9 build engine</text>
+      <text x="104" y="252" text-anchor="middle" fill="#5f594f">group→strategize→plan</text>
+      <rect x="208" y="218" width="200" height="50" rx="9" fill="#fffdf8" stroke="#6c7a4a"/>
+      <text x="308" y="238" text-anchor="middle" fill="#2b2a28" font-weight="700">.10 write rows + reconcile</text>
+      <text x="308" y="252" text-anchor="middle" fill="#5f594f">within the task-DB</text>
+    </g>
+    <!-- gate row -->
+    <g>
+      <rect x="14" y="298" width="180" height="18" rx="6" fill="#fff" stroke="#b9794f"/>
+      <text x="104" y="311" text-anchor="middle" fill="#a8472f" font-weight="700" font-size="10">.11 export adapter — sole backlog writer · YOU ARE HERE</text>
+      <rect x="208" y="298" width="120" height="18" rx="6" fill="#fffdf8" stroke="#ddd6c8" stroke-dasharray="3 2"/>
+      <text x="268" y="311" text-anchor="middle" fill="#5f594f" font-size="10">.12 tidy backlog</text>
+      <rect x="342" y="298" width="150" height="18" rx="6" fill="#fffdf8" stroke="#ddd6c8" stroke-dasharray="3 2"/>
+      <text x="417" y="311" text-anchor="middle" fill="#5f594f" font-size="10">.13 abandon judgement</text>
+    </g>
+  </g>
+  <g fill="none" stroke="#5f594f" stroke-width="1.5">
+    <line x1="74" y1="84" x2="74" y2="122" marker-end="url(#a)"/>
+    <line x1="208" y1="84" x2="208" y2="122" marker-end="url(#a)"/>
+    <line x1="476" y1="176" x2="476" y2="200"/>
+    <path d="M476,200 L104,200 L104,214" marker-end="url(#a)"/>
+    <line x1="194" y1="243" x2="204" y2="243" marker-end="url(#a)"/>
+    <line x1="308" y1="268" x2="308" y2="294" stroke="#b9794f" marker-end="url(#ac)"/>
+  </g>
+</svg>
+</div>
+<div class="legend">
+  <span><i style="background:#6c7a4a"></i> done</span>
+  <span><i style="background:#b9794f"></i> open — the export gate</span>
+  <span><i style="background:#fff;border:1px dashed #ddd6c8"></i> open — follow-on cleanup</span>
+</div>
+
+<div class="callout olive">
+  <span class="k">Where the family stands</span>
+  <p>The detector, the shared <code>@ariadnejs/skill-protocol</code> contract, the <code>AriadneFaultArea</code> taxonomy, the firewalled JSON task-store, both write-boundary firewalls, and the full plan engine (group → strategize → reconcile within the DB) are all landed. What remains is the human-facing edge: the export gate that promotes DB rows into the backlog (<strong>.11</strong>), migrating the 234 auto-filed classifier tickets into the DB (<strong>.12</strong>), and giving the strategist a feasibility judgement to abandon intractable plans (<strong>.13</strong>).</p>
+</div>
+</section>
+
+<section>
+<h2>The thirteen sub-tasks</h2>
+<div class="subs">
+  <div class="sub"><span class="id">.1</span><div class="body"><strong>Harden the triage golden path</strong><span>Delete the unwired in-run coordinator; carry deterministic fault diagnostics through to the verdict.</span></div><span class="st done">done</span></div>
+  <div class="sub"><span class="id">.2</span><div class="body"><strong>Extract @ariadnejs/skill-protocol</strong><span>One private package as the typed source of truth for the triage → plan seam.</span></div><span class="st done">done</span></div>
+  <div class="sub"><span class="id">.3</span><div class="body"><strong>AriadneFaultArea taxonomy + derivation</strong><span>Deterministic fault classification that routes a fix to the owning core folder; replaces the old root-cause category.</span></div><span class="st done">done</span></div>
+  <div class="sub"><span class="id">.4</span><div class="body"><strong>Define the plan task-DB contract</strong><span>PlanTask record + PlanTaskRepository interface + ~/.ariadne/plan/ paths.</span></div><span class="st done">done</span></div>
+  <div class="sub"><span class="id">.5</span><div class="body"><strong>Rename entrypoints→triage, curator→plan</strong><span>Re-scope plan to planning-only; strip the code-mutating machinery.</span></div><span class="st done">done</span></div>
+  <div class="sub"><span class="id">.6</span><div class="body"><strong>Retarget the backlog-writing machinery</strong><span>Remove the pipeline's old direct-to-backlog writers.</span></div><span class="st done">done</span></div>
+  <div class="sub"><span class="id">.7</span><div class="body"><strong>Backlog firewall: rule doc + AST test</strong><span>Name one writer per transition; fail the build if pipeline code crosses into backlog/.</span></div><span class="st done">done</span></div>
+  <div class="sub"><span class="id">.8</span><div class="body"><strong>JSON plan task-store</strong><span>The filesystem-backed implementation behind PlanTaskRepository.</span></div><span class="st done">done</span></div>
+  <div class="sub"><span class="id">.9</span><div class="body"><strong>Build the plan engine</strong><span>group → strategize → hierarchical plans → reconcile.</span></div><span class="st done">done</span></div>
+  <div class="sub"><span class="id">.10</span><div class="body"><strong>Write PlanTask rows + reconcile in the DB</strong><span>Emit rows via the repository; augment-not-duplicate on dedup_key; read backlog read-only to suppress already-promoted work.</span></div><span class="st done">done</span></div>
+  <div class="sub here"><span class="id">.11</span><div class="body"><strong>User-invoked export adapter</strong><span>The sole backlog writer: promote DB rows into backlog/, stamp plan_dedup_key, flip proposed→exported.</span></div><span class="st todo">to do</span></div>
+  <div class="sub"><span class="id">.12</span><div class="body"><strong>Tidy backlog: migrate 234 classifier tickets</strong><span>Move the auto-filed tickets into the task-DB (archive, not delete).</span></div><span class="st todo">to do</span></div>
+  <div class="sub"><span class="id">.13</span><div class="body"><strong>Strategist feasibility judgement</strong><span>Let the strategist propose abandoning intractable fix plans.</span></div><span class="st todo">to do</span></div>
+</div>
+</section>
+</main>
+
+<aside>
+  <p class="navttl">Detail documents</p>
+  <a class="doc-link" href="task-190.22.11.export-adapter.html">
+    <span class="n">.11 · export adapter</span>
+    The firewall crossing, the data flow, and the three open decisions
+    <span class="tag">open · companion ready</span>
+  </a>
+  <div class="pending"><span class="n">.12 · tidy backlog</span>not yet generated <span class="tag">pending</span></div>
+  <div class="pending"><span class="n">.13 · abandon judgement</span>not yet generated <span class="tag">pending</span></div>
+  <p class="navttl" style="margin-top:22px">Done sub-tasks (.1–.10)</p>
+  <div class="pending"><span class="n">.1 – .10</span>landed — no companion <span class="tag">pending</span></div>
+</aside>
+
+<footer>
+  Overview of the TASK-190.22 family · 13 sub-tasks, 10 done · re-scanned 2026-06-04<br>
+  Built from the parent task doc + a directory scan of backlog/comprehension/ for sibling companions.
+</footer>
+</div>
+</body>
+</html>
