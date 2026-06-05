@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // Method invoked as the chained continuation of an Angular-style dependency-injection lookup of the form `<id>.get(<TypeToken>).<method>(...)`. Ariadne cannot statically resolve the generic return type of `Injector.get<T>(token: Type<T>): T`, so the chained method receiver is opaque and the call edge is dropped. The grep hit fires on the chained `.method(` continuation line; a 3-line look-back catches the `.get(<TypeToken>)` line that establishes the receiver.
 

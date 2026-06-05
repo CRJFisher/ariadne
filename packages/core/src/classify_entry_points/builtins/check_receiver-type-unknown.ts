@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // JavaScript method whose only callers invoke it as `<identifier>.<name>(...)` where the receiver's type cannot be statically inferred (local variable assigned from an array/object method, parameter with no JSDoc, dynamically-assigned property). Ariadne produces no CallReference at all — diagnosis is `callers-not-in-registry` and `ariadne_call_refs` is empty — so the method-call-shaped grep hit plus the absence of a call ref is the discriminator. Strictly narrower than `callers-outside-scope-strict-grep-evidence` (adds the identifier-receiver grep shape) and distinct from `aliased-receiver-type-lost` (F1), which requires a call-ref with resolution_failure.reason=receiver_type_unknown — unavailable here because no call-ref exists.
 

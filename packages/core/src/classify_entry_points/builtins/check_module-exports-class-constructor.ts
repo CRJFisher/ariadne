@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // JavaScript class constructors exported via the CommonJS `module.exports = ClassName` default-export idiom. Grep for the literal entry_point name `constructor` finds nothing (diagnosis: `no-textual-callers`) because real callers invoke `new ClassName(...)` through a `require('./mod')` binding, not the `constructor` keyword. Ariadne does not walk the `new (require(path))()` chain back to the exported class's constructor, so the definition appears to have zero inbound callers. Narrow to language=javascript, entry_point name=constructor, no-textual-callers diagnosis, and zero resolved call refs.
 

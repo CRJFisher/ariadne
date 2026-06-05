@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // Definition has zero resolved Ariadne callers, but at least one textual grep hit, with every grep hit residing in the same file as the definition. Captures named function expressions assigned to var/let/const where the resolver fails to link intra-file call sites back to the definition (e.g. `var f = function f(...) {...}` called as `f(...)` elsewhere in the same module).
 

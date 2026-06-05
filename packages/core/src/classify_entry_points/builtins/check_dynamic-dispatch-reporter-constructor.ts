@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // Reporter class constructors in a test-runner `lib/reporters/` convention directory that have zero resolved inbound callers. Instantiated via dynamic string-keyed dispatch (e.g. `new this._reporter(runner, options)` after `builtinReporters[name]` lookup), so Ariadne sees no direct `new ClassName()` call. Narrow to language=javascript, entry_point name=constructor, path under `/reporters/*.js`, and zero `ariadne_call_refs`.
 

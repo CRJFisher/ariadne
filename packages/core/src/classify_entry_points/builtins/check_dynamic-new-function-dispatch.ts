@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // Function whose only textual references appear inside string literals passed to `new Function(...)` or `eval(...)`. The runtime constructs and invokes the function from a string, so the call site is invisible to static analysis. Restricted to JavaScript with zero resolved Ariadne callers and at least one grep hit on a line that invokes `new Function(` or `eval(`.
 

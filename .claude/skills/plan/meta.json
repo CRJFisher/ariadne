@@ -72,7 +72,7 @@
       "id": "registry-read",
       "path": ".claude/skills/triage/known_issues/registry.json",
       "access": "read-only",
-      "writer_owner": "actuator",
+      "writer_owner": "human",
       "semantic_role": "read-only dedup/grounding signal — already-known issues that should not seed new plan tasks. The plan engine never writes the registry.",
       "touched_by_flows": ["group-strategize-reconcile"]
     },

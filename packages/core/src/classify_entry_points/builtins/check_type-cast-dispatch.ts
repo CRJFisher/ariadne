@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // TypeScript methods unreachable because their call sites invoke them on a receiver introduced by an explicit type cast (`<Type>x` angle-bracket form or `x as Type`). Ariadne's resolver does not propagate the cast's target type to method-lookup, so the call cannot be linked to the concrete implementation. Detected via a grep neighbourhood scan around each grep hit on the entry_point name for either type-assertion form.
 

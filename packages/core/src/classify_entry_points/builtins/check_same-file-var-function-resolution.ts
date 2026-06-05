@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // JavaScript function definitions whose only call sites live in the same file but the resolver returns name_not_in_scope for bare-name calls. Diagnostic shape: diagnosis=callers-in-registry-unresolved, all ariadne_call_refs failing with name_not_in_scope and receiver_kind=none, all grep hits intra-file. Captures the var-bound function expression pattern (var X = function X(...)) where the function symbol is extracted but the var-name binding is not added to the enclosing scope's symbol table.
 

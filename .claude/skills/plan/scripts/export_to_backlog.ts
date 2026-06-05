@@ -31,12 +31,10 @@
  * no-op — a row already `exported`, or whose `dedup_key` a backlog task already
  * carries, is skipped (`src/export/select_exportable_tasks.ts`).
  *
- * The write boundary is enforced structurally: `.claude/rules/backlog-firewall.md`
- * is the contract, and the `ALLOWED_BACKLOG_WRITERS` allowlist in
- * `packages/skill-fs/src/backlog_writers.test.ts` admits this file alone. The
- * `plan_dedup_key` this script stamps is read back read-only by
- * `src/store/backlog_dedup.ts` during the plan engine's reconcile pass — that is
- * where the dedup loop closes.
+ * This script is the only one that writes `backlog/`; the rest of the plan
+ * engine writes only the task-DB under `~/.ariadne/plan/`. The `plan_dedup_key`
+ * this script stamps is read back read-only by `src/store/backlog_dedup.ts`
+ * during the plan engine's reconcile pass — that is where the dedup loop closes.
  *
  * **Script invocation:** always `node --import tsx`. Never `pnpm exec tsx`.
  *

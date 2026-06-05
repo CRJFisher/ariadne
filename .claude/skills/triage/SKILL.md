@@ -16,12 +16,12 @@ Each invocation produces a self-contained run under `triage_state/<project>/runs
 
 ## Pipeline Overview
 
-| Phase          | Script / Agent                         | Purpose                                                                                |
-| -------------- | -------------------------------------- | -------------------------------------------------------------------------------------- |
-| 1. Detect      | `scripts/detect_entrypoints.ts`        | Run entry point detection                                                              |
-| 2. Prepare     | `scripts/prepare_triage.ts`            | Classify against the known-issues registry via `enrich_call_graph`, build triage state |
-| 3. Triage Loop | triage-investigator                    | Investigate residual entries; each writes one self-contained verdict to `results/`     |
-| 4. Finalize    | `scripts/finalize_triage.ts`           | Publish the v5 triage-results JSON built entirely from the per-entry verdict files      |
+| Phase          | Script / Agent                  | Purpose                                                                                |
+| -------------- | ------------------------------- | -------------------------------------------------------------------------------------- |
+| 1. Detect      | `scripts/detect_entrypoints.ts` | Run entry point detection                                                              |
+| 2. Prepare     | `scripts/prepare_triage.ts`     | Classify against the known-issues registry via `enrich_call_graph`, build triage state |
+| 3. Triage Loop | triage-investigator             | Investigate residual entries; each writes one self-contained verdict to `results/`     |
+| 4. Finalize    | `scripts/finalize_triage.ts`    | Publish the v5 triage-results JSON built entirely from the per-entry verdict files     |
 
 ## Analysis Target
 
@@ -39,8 +39,8 @@ Resolve the analysis target from the remaining input using this routing table:
 
 | Input pattern                       | Example                                                  | Action                                                                                                                           |
 | ----------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Empty or blank                      | `/triage`                                  | List available configs below, ask user what to analyze                                                                           |
-| Config name                         | `core`, `mcp`, `types`, `projections`                    | Use `--config ~/.ariadne/triage-entrypoints/project_configs/{name}.json`                                                       |
+| Empty or blank                      | `/triage`                                                | List available configs below, ask user what to analyze                                                                           |
+| Config name                         | `core`, `mcp`, `types`, `projections`                    | Use `--config ~/.ariadne/triage-entrypoints/project_configs/{name}.json`                                                         |
 | Absolute or relative directory path | `/Users/chuck/workspace/some-repo`, `../other-repo`      | If a project config exists for this path, use `--config <config-path>`; otherwise follow **Creating a New Project Config** below |
 | `owner/repo` or GitHub URL          | `anthropics/sdk-python`, `https://github.com/owner/repo` | Use `--github <value>`                                                                                                           |
 | Natural language                    | "analyze the core package"                               | Interpret intent and map to one of the above                                                                                     |
@@ -70,8 +70,8 @@ When the input is a directory path and a project config already exists for that 
 
 Available project configs:
 
-| Config name   | Config path                                                        |
-| ------------- | ------------------------------------------------------------------ |
+| Config name   | Config path                                                      |
+| ------------- | ---------------------------------------------------------------- |
 | `core`        | `~/.ariadne/triage-entrypoints/project_configs/core.json`        |
 | `mcp`         | `~/.ariadne/triage-entrypoints/project_configs/mcp.json`         |
 | `types`       | `~/.ariadne/triage-entrypoints/project_configs/types.json`       |
@@ -87,19 +87,19 @@ If no arguments are provided or the input is ambiguous, **ask the user** before 
 
 Scripts that operate on existing triage state take `--project <name>` (`prepare_triage` uses `--project` at creation time; `get_triage_summary` enumerates every project and takes no flags). Each pipeline invocation operates on exactly one project, and different projects can run in parallel against the same `triage_state/` dir — the project name is the isolation boundary.
 
-| File                                                                | Purpose                                                                                                                                          |
-| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `project_configs/{name}.json`                                       | Per-project detection config (folders, excludes)                                                                                                 |
-| `triage_state/{project}/LATEST`                                     | Pointer to the active run-id; absent when no run is in progress                                                                                  |
-| `triage_state/{project}/runs/{run-id}/manifest.json`                | Per-run metadata (status, commit_hash, tp_cache record)                                                                                          |
-| `triage_state/{project}/runs/{run-id}/triage.json`                  | Per-run triage state (entries, per-entry results)                                                                                                |
-| `triage_state/{project}/runs/{run-id}/results/{entry_index}.json`   | Per-entry investigator verdict files (one `TriageVerdict` JSON per entry)                                                                        |
-| `analysis_output/{project}/detect_entrypoints/{ts}.json`            | Detection output (kept project-scoped; one detection feeds many triage runs)                                                                     |
-| `analysis_output/{project}/triage_results/{run-id}.json`            | Published triage results (schema v5: `novel_issues`, `classifier_regressions`, `confirmed_unreachable`, `uncertain`, with relative file paths) |
+| File                                                              | Purpose                                                                                                                                        |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `project_configs/{name}.json`                                     | Per-project detection config (folders, excludes)                                                                                               |
+| `triage_state/{project}/LATEST`                                   | Pointer to the active run-id; absent when no run is in progress                                                                                |
+| `triage_state/{project}/runs/{run-id}/manifest.json`              | Per-run metadata (status, commit_hash, tp_cache record)                                                                                        |
+| `triage_state/{project}/runs/{run-id}/triage.json`                | Per-run triage state (entries, per-entry results)                                                                                              |
+| `triage_state/{project}/runs/{run-id}/results/{entry_index}.json` | Per-entry investigator verdict files (one `TriageVerdict` JSON per entry)                                                                      |
+| `analysis_output/{project}/detect_entrypoints/{ts}.json`          | Detection output (kept project-scoped; one detection feeds many triage runs)                                                                   |
+| `analysis_output/{project}/triage_results/{run-id}.json`          | Published triage results (schema v5: `novel_issues`, `classifier_regressions`, `confirmed_unreachable`, `uncertain`, with relative file paths) |
 
 All paths above are relative to `~/.ariadne/triage-entrypoints/`. Run-ids have the form `<short-commit>-<iso-ts>` (e.g. `deadbee-2026-04-28T13-42-07.812Z`); `nogit-<iso-ts>` when the target is not a git repo.
 
-**Classifier registry write boundary**: this skill reads `known_issues/registry.json` but **never writes to it**. All registry mutations go through the plan (`wip` lifecycle) and the fix-sequencer reconciler (`wip → fixed`). See `.claude/rules/classifier-lifecycle.md` for the canonical writer matrix.
+**Classifier registry write boundary**: this skill reads `known_issues/registry.json` but **never writes to it**. The registry is human-maintained — every status transition (`wip`, `permanent`, `fixed`) is a human edit through `atomic_update_registry`. See `.claude/rules/classifier-lifecycle.md` for the canonical writer matrix.
 
 Phase 3-4 scripts default to the run pointed at by `LATEST`; pass `--run-id <id>` to operate on a specific run. `prepare_triage` writes `LATEST` and `finalize_triage` clears it.
 
@@ -209,12 +209,12 @@ Call the script **sequentially** (not in parallel) for replacements — each cal
 
 Each `results/{entry_index}.json` is a strict `TriageVerdict` discriminated union. Finalize re-parses every file via `parse_triage_verdict`; malformed shapes halt finalize with an explicit error. Every false-positive verdict is **self-contained** — it carries its own evidence, so there is no in-run consolidation. Offline grouping of false positives happens downstream in the `plan` skill.
 
-| `kind`                        | Required payload                                                            | Becomes at finalize …                                                          |
-| ----------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `tp`                          | `member_evidence`                                                           | one `confirmed_unreachable[]` row (`source: "llm-tp"`)                         |
-| `fp-novel`                    | `proposed_root_cause`, `evidence_excerpt`, `member_evidence`                | one `novel_issues[]` row (one-per-verdict; enriched with the entry's deterministic `diagnosis` / `resolution_failure` / `receiver_kind`) |
-| `fp-classifier-regression`    | `should_have_matched_rule_id`, `evidence_excerpt`, `member_evidence`        | rolled up into `classifier_regressions[]` by `should_have_matched_rule_id`     |
-| `uncertain`                   | `reason`, `member_evidence`                                                 | one `uncertain[]` row                                                          |
+| `kind`                     | Required payload                                                     | Becomes at finalize …                                                                                                                    |
+| -------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `tp`                       | `member_evidence`                                                    | one `confirmed_unreachable[]` row (`source: "llm-tp"`)                                                                                   |
+| `fp-novel`                 | `proposed_root_cause`, `evidence_excerpt`, `member_evidence`         | one `novel_issues[]` row (one-per-verdict; enriched with the entry's deterministic `diagnosis` / `resolution_failure` / `receiver_kind`) |
+| `fp-classifier-regression` | `should_have_matched_rule_id`, `evidence_excerpt`, `member_evidence` | rolled up into `classifier_regressions[]` by `should_have_matched_rule_id`                                                               |
+| `uncertain`                | `reason`, `member_evidence`                                          | one `uncertain[]` row                                                                                                                    |
 
 ## Phase 4: Finalize
 
@@ -227,11 +227,11 @@ node --import tsx .claude/skills/triage/scripts/finalize_triage.ts \
 
 Finalization builds the v5 `triage_results/<run-id>.json` entirely from the per-entry verdict files in `results/` and the triage state:
 
-| Source                                       | Drives                                                                                                                                |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `results/<entry_index>.json` (`fp-novel`)    | `novel_issues[]` (one-per-verdict, enriched with the entry's deterministic `diagnosis` / `resolution_failure` / `receiver_kind`)      |
-| `results/<entry_index>.json` (`fp-classifier-regression`) | `classifier_regressions[]` (rolled up by `should_have_matched_rule_id`)                                                  |
-| `results/<entry_index>.json` + `triage.json` | `confirmed_unreachable[]` (auto-classified + TP cache + `kind: "tp"`), `uncertain[]`                                                  |
+| Source                                                    | Drives                                                                                                                           |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `results/<entry_index>.json` (`fp-novel`)                 | `novel_issues[]` (one-per-verdict, enriched with the entry's deterministic `diagnosis` / `resolution_failure` / `receiver_kind`) |
+| `results/<entry_index>.json` (`fp-classifier-regression`) | `classifier_regressions[]` (rolled up by `should_have_matched_rule_id`)                                                          |
+| `results/<entry_index>.json` + `triage.json`              | `confirmed_unreachable[]` (auto-classified + TP cache + `kind: "tp"`), `uncertain[]`                                             |
 
 Each `confirmed_unreachable` row carries the identifiers needed for the cross-run TP cache (`name`, `file_path` relative to `project_path`, `kind`, `start_line`, optional `signature`) plus `source` (`"llm-tp"` for LLM-confirmed entries, `"registry:<group_id>"` for predicate hits, `"previously-confirmed-tp"` for TP-cache reuse) and the verdict's `member_evidence` when one exists. `uncertain` rows carry the same identifiers plus the verdict's `reason` and `member_evidence`.
 
@@ -359,24 +359,24 @@ This skill does not read or write this whitelist. If you previously ran the pipe
 
 The skill is a thin caller of `@ariadnejs/core`. Classification (`enrich_call_graph`, `extract_entry_point_diagnostics`, the predicate evaluator, builtins, and the bundled permanent registry slice) lives in `packages/core/src/classify_entry_points/`. Entry-point and known-issues types live in `@ariadnejs/types`. The skill modules under `src/` orchestrate the run lifecycle on top of that core API.
 
-| Module                                | Purpose                                                                                                                                                                 |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `known_issues_registry.ts`            | Full-registry loader (skill-side) — reads the canonical `known_issues/registry.json`, including `wip` rules, and hands it to `enrich_call_graph` as a registry override |
-| `prepare_triage.ts`                   | Run-namespaced orchestration: call core's `enrich_call_graph` with the full registry, partition into known-unreachable / TP-cache / llm-triage                          |
-| `build_triage_entries.ts`             | Assemble `TriageEntry` records from prepared buckets                                                                                                                    |
-| `finalize/output.ts`                  | Build the published v5 envelope from the per-entry verdict files (pure); attaches the deterministic core fault diagnostics to each `novel_issues[]` row                  |
-| `finalize/verdict_ledger.ts`          | Shared per-entry verdict loader (`results/<entry_index>.json`); used by both `merge_results.ts` and `finalize_triage.ts`                                                |
-| `merge_results.ts`                    | Merge investigator result files into triage state                                                                                                                       |
-| `triage_verdict.ts`                   | `TriageVerdict` discriminated union + strict runtime parser; the published `NovelIssue` row type                                                                         |
-| `@ariadnejs/skill-fs` · `classifier_regressions.ts` | `aggregate_classifier_regressions` — finalize-time per-rule rollup of `fp-classifier-regression` verdicts (shared with the curator)                       |
-| `dispense_payload.ts`                 | Build the per-entry dispense payload (entry context + in-scope registry slice)                                                                                          |
-| `triage_state_types.ts`               | Triage state types (`TriageState`, `TriageEntry`, `TriageEntryResult`)                                                                                                  |
-| `triage_state_paths.ts`               | Triage state file locations + required-flag CLI helpers                                                                                                                 |
-| `confirmed_unreachable_reuse.ts`      | TP cache derivation — short-circuits the LLM investigator across runs at the same commit                                                                                |
-| `run_discovery.ts`                    | Run-id enumeration, manifest reading, prune protection                                                                                                                  |
-| `analysis_output.ts`                  | Timestamped analysis output JSON I/O                                                                                                                                    |
-| `project_id.ts`                       | Project-identifier derivation (`path_to_project_id`, `project_id_from_config`)                                                                                          |
-| `@ariadnejs/skill-fs/require-node-import-tsx` | Side-effect guard shared with `plan`: aborts if invoked via `tsx` CLI instead of `node --import tsx`                                                  |
+| Module                                              | Purpose                                                                                                                                                                 |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `known_issues_registry.ts`                          | Full-registry loader (skill-side) — reads the canonical `known_issues/registry.json`, including `wip` rules, and hands it to `enrich_call_graph` as a registry override |
+| `prepare_triage.ts`                                 | Run-namespaced orchestration: call core's `enrich_call_graph` with the full registry, partition into known-unreachable / TP-cache / llm-triage                          |
+| `build_triage_entries.ts`                           | Assemble `TriageEntry` records from prepared buckets                                                                                                                    |
+| `finalize/output.ts`                                | Build the published v5 envelope from the per-entry verdict files (pure); attaches the deterministic core fault diagnostics to each `novel_issues[]` row                 |
+| `finalize/verdict_ledger.ts`                        | Shared per-entry verdict loader (`results/<entry_index>.json`); used by both `merge_results.ts` and `finalize_triage.ts`                                                |
+| `merge_results.ts`                                  | Merge investigator result files into triage state                                                                                                                       |
+| `triage_verdict.ts`                                 | `TriageVerdict` discriminated union + strict runtime parser; the published `NovelIssue` row type                                                                        |
+| `@ariadnejs/skill-fs` · `classifier_regressions.ts` | `aggregate_classifier_regressions` — finalize-time per-rule rollup of `fp-classifier-regression` verdicts (shared with the curator)                                     |
+| `dispense_payload.ts`                               | Build the per-entry dispense payload (entry context + in-scope registry slice)                                                                                          |
+| `triage_state_types.ts`                             | Triage state types (`TriageState`, `TriageEntry`, `TriageEntryResult`)                                                                                                  |
+| `triage_state_paths.ts`                             | Triage state file locations + required-flag CLI helpers                                                                                                                 |
+| `confirmed_unreachable_reuse.ts`                    | TP cache derivation — short-circuits the LLM investigator across runs at the same commit                                                                                |
+| `run_discovery.ts`                                  | Run-id enumeration, manifest reading, prune protection                                                                                                                  |
+| `analysis_output.ts`                                | Timestamped analysis output JSON I/O                                                                                                                                    |
+| `project_id.ts`                                     | Project-identifier derivation (`path_to_project_id`, `project_id_from_config`)                                                                                          |
+| `@ariadnejs/skill-fs/require-node-import-tsx`       | Side-effect guard shared with `plan`: aborts if invoked via `tsx` CLI instead of `node --import tsx`                                                                    |
 
 ## Reference
 
@@ -384,6 +384,6 @@ The skill is a thin caller of `@ariadnejs/core`. Classification (`enrich_call_gr
 
 ## Sub-Agents
 
-| Agent               | Model  | Purpose                                                                                                          |
-| ------------------- | ------ | ---------------------------------------------------------------------------------------------------------------- |
+| Agent               | Model  | Purpose                                                                                                              |
+| ------------------- | ------ | -------------------------------------------------------------------------------------------------------------------- |
 | triage-investigator | sonnet | Investigate a single residual entry; emit one `TriageVerdict` (tp / fp-novel / fp-classifier-regression / uncertain) |

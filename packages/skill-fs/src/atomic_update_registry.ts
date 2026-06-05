@@ -1,4 +1,5 @@
 import * as fs from "node:fs/promises";
+import { setTimeout as sleep } from "node:timers/promises";
 
 import { atomic_write_file } from "./atomic_write.js";
 import { error_code } from "./errors.js";
@@ -20,9 +21,9 @@ export type RegistryUpdate<R> =
  * writes the returned `next` via `atomic_write_file`, and releases the lock
  * on both success and failure paths.
  *
- * Concurrent writers (e.g. the curator sweep + the fix-sequencer reconciler
- * landing on the same machine) cannot interleave their read-mutate-write
- * cycles; whichever one acquires the lock first runs to completion before
+ * Concurrent writers landing on the same machine cannot interleave their
+ * read-mutate-write cycles; whichever one acquires the lock first runs to
+ * completion before
  * the other sees the file. Bare `atomic_write_file` is rename-atomic at the
  * filesystem level but does NOT protect against last-writer-wins data loss
  * when two writers compute independent mutations from a stale read.
@@ -50,7 +51,7 @@ export async function atomic_update_registry<R>(
     } catch (err) {
       if (error_code(err) !== "EEXIST") throw err;
       attempt++;
-      await new Promise((resolve) => setTimeout(resolve, retry_delay_ms));
+      await sleep(retry_delay_ms);
     }
   }
   if (handle === null) {

@@ -16,11 +16,10 @@
  * carries `registry`, or a string-literal path containing `registry.json`).
  * Pure AST inspection — no data-flow analysis across modules.
  *
- * Allowlist below names the few sites that are contractually permitted to
- * call a raw writer against the registry: `atomic_update_registry` itself
- * (where the wrapping is legal under the lock) and the upcoming
- * fix-sequencer reconciler (TASK-190.18.3). Every other site reaches the
- * registry through `atomic_update_registry`.
+ * Allowlist below names the one site contractually permitted to call a raw
+ * writer against the registry: `atomic_update_registry` itself, where the
+ * wrapping is legal under the lock. Every other site reaches the registry
+ * through `atomic_update_registry`.
  */
 import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
@@ -47,23 +46,17 @@ const ALLOWED_REGISTRY_WRITERS: ReadonlySet<string> = new Set([
   // The atomic-update helper wraps the only legal direct write of the
   // registry — its body holds the lock and writes via `atomic_write_file`.
   "packages/skill-fs/src/atomic_update_registry.ts",
-  // Future home of the fix-sequencer reconciler (TASK-190.18.3). It writes
-  // `status: wip → fixed` rows; the file does not exist yet but is allowed
-  // pre-emptively so the test stays green when the scaffolding lands.
-  ".claude/skills/fix-sequencer/scripts/reconcile_registry_with_completed_nodes.ts",
 ]);
 
 /**
  * Files allowed to call `serialize_known_issues_registry_json` directly. The
  * function exists to produce the registry's on-disk bytes; using it outside
  * an `atomic_update_registry` mutator closure means somebody is computing
- * those bytes and writing them without the lock. The only legitimate caller
- * is the future reconciler, whose serializer calls are inside the mutator
- * returned to `atomic_update_registry`.
+ * those bytes and writing them without the lock. No file is permitted to do
+ * so: every legitimate write reaches the registry through an
+ * `atomic_update_registry` mutator, so this set is empty.
  */
-const ALLOWED_SERIALIZER_CALLERS: ReadonlySet<string> = new Set([
-  ".claude/skills/fix-sequencer/scripts/reconcile_registry_with_completed_nodes.ts",
-]);
+const ALLOWED_SERIALIZER_CALLERS: ReadonlySet<string> = new Set<string>([]);
 
 const SCAN_ROOTS: readonly string[] = [
   ".claude/skills",

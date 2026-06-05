@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // TypeScript/JavaScript class getter accessors are invoked through property-read expressions (`obj.x`) rather than explicit call expressions (`obj.x()`). Tree-sitter's `@reference.call` capture only fires on call expressions, so property reads of getters never produce CallReferences and the getter appears unreachable. Match entries whose definition_features.accessor_kind === "getter". Language gating is implicit: derive_definition_features only sets accessor_kind for JS/TS-family files (extract_entry_points.ts:519, regex /\.(ts|tsx|js|jsx|mjs|cjs)$/); Python and Rust entries always carry accessor_kind: null.
 

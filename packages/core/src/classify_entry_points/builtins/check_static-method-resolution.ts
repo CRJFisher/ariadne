@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // Static method invoked on an imported class via `ClassName.method(...)`. Ariadne records the call sites in the registry but the resolver fails at name_resolution with name_not_in_scope because it does not bind the imported class identifier in the caller's scope when used as a value (left of dot). Discriminators: diagnosis is `callers-in-registry-unresolved`, the call-ref's receiver_kind is `identifier`, the resolution_failure.reason is `name_not_in_scope`, at least one grep hit shows a PascalCase identifier dot-call shape, and the callers count is at least 1 (rules out entries with no call-site evidence).
 

@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // JS/TS class methods whose property key is a computed well-known-symbol expression (`[Symbol.iterator]`, `[Symbol.asyncIterator]`, `[Symbol.dispose]`, etc.) are not captured as definitions by the tree-sitter scm queries (which match only `(property_identifier)` on `method_definition`). When such a method calls another method on the same class, the callee shows up as an entry point with no callers. The grep hit on the callee falls inside the unindexed computed-property method body; checking the lines just above the hit for a method header of the form `^\s*(async\s+)?\*?\s*[Symbol.<name>](` discriminates this pattern.
 

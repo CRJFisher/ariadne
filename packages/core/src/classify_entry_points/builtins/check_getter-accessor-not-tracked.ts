@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // TypeScript/JavaScript getter accessors (`get name()`) are invoked through property-read syntax (`obj.name`), not call syntax (`obj.name()`). The tree-sitter `.scm` query does not emit `@reference.call` on property-read AST nodes, so getters whose only call sites are property accesses appear unreachable. The `accessor_kind` definition feature (TASK-190.16.15) is populated only for JS/TS getter/setter declarations, so `accessor_kind_eq: "getter"` is implicitly language-scoped. Pairing it with `callers_count_at_most: 0` anchors on the false-positive shape (zero resolved callers) and prevents the rule from firing on genuinely-reached getters.
 

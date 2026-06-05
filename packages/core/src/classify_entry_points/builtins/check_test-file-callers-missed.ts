@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // Entry has zero resolved inbound callers but grep located call sites inside unindexed test directories. The function is exercised by tests that Ariadne does not index, so it appears unreachable in the call graph.
 

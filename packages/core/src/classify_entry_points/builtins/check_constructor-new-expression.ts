@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // TypeScript class constructors with zero resolved inbound call references. `new ClassName(...)` sites are captured by tree-sitter (`@reference.constructor` fires at the grep hits) but the resolver does not link them back to the class's constructor member, leaving the constructor with an empty `ariadne_call_refs`. Classifies as the existing `constructor-new-expression` false-positive pattern.
 

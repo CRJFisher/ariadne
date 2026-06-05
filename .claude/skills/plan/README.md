@@ -36,8 +36,7 @@ event log to the task-DB at `~/.ariadne/plan/`, and never writes the user's
 `plan` is the middle link in the self-healing chain: triage (sense) → plan
 (group + strategize) → export/actuate. Graduation of a plan task into the user's
 `backlog/` is the separate, user-invoked export adapter
-(`scripts/export_to_backlog.ts`) — the only firewall crossing. The write-boundary
-contract and its AST-enforcement test are in `.claude/rules/backlog-firewall.md`.
+(`scripts/export_to_backlog.ts`) — the only path that writes `backlog/`.
 
 Sub-agent: `.claude/agents/plan-strategist.md` — opus, 200 turns, one per
 fault-area bucket.

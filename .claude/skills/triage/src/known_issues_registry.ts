@@ -81,15 +81,14 @@ export function load_registry(): KnownIssuesRegistry {
  * Filter a registry to the subset that should fire during the pipeline's
  * auto-classification pass. Two rules are excluded:
  *
- * - `status === "fixed"` — the underlying Ariadne bug is resolved (recorded
- *   by the fix-sequencer reconciler, TASK-190.18.3). Continuing to apply the
+ * - `status === "fixed"` — the underlying Ariadne bug is resolved (the human
+ *   marks the row `fixed` once the fix lands). Continuing to apply the
  *   classifier would silently suppress entries that the now-fixed code path
  *   handles correctly, breaking the self-healing loop.
- * - `status === "wip" && drift_detected === true` — the curator's QA wave
- *   flagged this classifier as mis-matching. Leaving it live would
- *   auto-suppress entries the curator already suspects are mis-attributed,
- *   pre-empting the very re-investigation queue that `next_investigate_tasks`
- *   tries to prioritize.
+ * - `status === "wip" && drift_detected === true` — review flagged this
+ *   classifier as mis-matching. Leaving it live would auto-suppress entries
+ *   already suspected to be mis-attributed, pre-empting the very
+ *   re-investigation queue that `next_investigate_tasks` tries to prioritize.
  *
  * Pure. Returns a new array; preserves order.
  */

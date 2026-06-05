@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // ECMAScript private class field methods (#name) on TS/JS classes whose call sites this.#method() are not captured by the tree-sitter query. The class-body capture for definitions matches private_property_identifier, but the call_expression query for instance method calls only matches property_identifier, so this.#method() invocations never produce @reference.call captures.
 

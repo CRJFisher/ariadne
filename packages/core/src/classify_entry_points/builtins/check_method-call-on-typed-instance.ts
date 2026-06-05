@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // TypeScript class method whose only callers are method-calls on a typed instance receiver (e.g. `column.compareEntityValue(...)` inside `(column: ColumnMetadata) => ...`), where Ariadne resolves zero CallReferences but grep finds identifier-dot-method call sites. Receiver type is statically knowable (typed local, callback parameter from `T[]`, or `Class.prototype.method` extraction) but Ariadne's receiver-resolution pipeline drops the type — particularly when the class is brought in via `import type { Class }` and the receiver is a callback parameter whose type flows from the array element.
 

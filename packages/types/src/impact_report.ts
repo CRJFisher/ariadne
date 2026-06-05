@@ -1,7 +1,7 @@
 /**
- * Wire types for the impact report the plan skill emits and the fix-sequencer
- * consumes. Plan produces `impact_report.json` at the end of a sweep; the
- * fix-sequencer reads it off disk during its cluster + score stage.
+ * Wire types for the impact report the plan skill emits for human review.
+ * Plan produces `impact_report.json` at the end of a sweep, ranking registry
+ * entries by observed_count; it is not consumed by any downstream script.
  *
  * Identity field is `group_id` (registry-side identity), not `novel_issue_id`
  * (dispatch-side identity). The two are deliberately distinct: `group_id` keys
@@ -10,7 +10,7 @@
 
 /**
  * Row rendered in the top-N table and the JSON wire envelope. Holds the raw
- * numeric fields so the markdown renderer and the fix-sequencer consumer share
+ * numeric fields so the markdown renderer and the JSON wire envelope share
  * one shape.
  */
 export interface ImpactRow {

@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // JavaScript instance method that is overridden in a subclass (or calls super) and invoked through `this.<method>(...)` in subclasses that `extends` the defining class. Ariadne's JS tree-sitter query does not capture `extends_clause` (ClassDefinition.extends is always empty for JS classes), so the resolver cannot connect the subclass receiver's `this` back to the inherited method on the parent. The entry_point therefore has diagnosis `callers-not-in-registry`, zero `ariadne_call_refs`, and grep evidence of real `this.<name>()` / `super.<name>()` call sites in sibling lib/ files. Root-caused by TASK-202 (JS class extends not captured).
 

@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // JavaScript function expressions defined as values of object-literal property pairs (`key: function() {...}`) or prototype assignments are extracted by Ariadne with `name = '<anonymous>'`. Because grep is keyed on the entry_point name, no textual callers are ever found (`diagnosis = no-textual-callers`), and `this`-qualified intra-object dispatch (`this.sendRequest()`) plus property-reference callback registration (`setTimeout(this.sendRequest, 10)`) cannot be resolved. The triple `language=javascript` AND `name=<anonymous>` AND `diagnosis=no-textual-callers` discriminates the pattern: a truly unreachable anonymous function (e.g. an unused IIFE-style expression) is exceedingly rare in real code, while `key: function() {}` is the canonical pre-ES6 module/object pattern and the dominant shape seen in vendored libraries such as firebug-lite.
 

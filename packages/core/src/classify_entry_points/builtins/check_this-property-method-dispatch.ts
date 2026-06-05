@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // Object-literal property methods invoked via this.<name>() from a sibling method in the same object literal. Ariadne cannot resolve the this receiver to the surrounding object literal, so the method shows zero callers despite an intra-file this.<name>(...) call site.
 

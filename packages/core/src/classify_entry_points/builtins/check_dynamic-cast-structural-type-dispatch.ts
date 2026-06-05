@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // TypeScript method invoked through an `as`-cast receiver (e.g. `(factory as {componentReplaced?: (id: string) => void}).componentReplaced?.(...)`). At least one inbound call reference has receiver_kind=type_cast and the entry_point's diagnosis is callers-in-registry-unresolved, indicating Ariadne saw the call sites but cannot resolve the concrete class through the cast — typically because the cast target is an inline anonymous structural object type literal.
 

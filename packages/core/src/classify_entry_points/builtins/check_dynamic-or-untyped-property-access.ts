@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // TypeScript class getters with diagnosis 'no-textual-callers'. Pre-triage grep uses a function-call pattern (identifier followed by '(') that misses bare property-access reads of getters. When a getter is exposed via property access on an untyped or any-typed receiver, the access leaves no grep hit and no resolved call reference, marking the getter unreachable despite real callers.
 

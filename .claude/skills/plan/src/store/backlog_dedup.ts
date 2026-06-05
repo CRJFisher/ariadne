@@ -12,9 +12,8 @@
  * here (it is human-authored work the engine has no DB lineage for).
  *
  * This module is strictly read-only against `backlog/` — `readdir` + `readFile`
- * only, no write primitive, no `mcp__backlog__*` tool — so it stays clear of the
- * backlog firewall (`.claude/rules/backlog-firewall.md`); it needs no
- * `ALLOWED_BACKLOG_WRITERS` entry because it is not a writer.
+ * only, no write primitive, no `mcp__backlog__*` tool. It reads the user's
+ * backlog to avoid re-proposing work already tracked there; it never writes it.
  */
 
 import { readdir, readFile } from "node:fs/promises";

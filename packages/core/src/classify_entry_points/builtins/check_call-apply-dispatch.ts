@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // Anonymous JavaScript function expression (name '<anonymous>') passed as an inline callback argument to a higher-order method (jQuery's `this.each(...)`) whose implementation dispatches it via `callback.call(obj[i], i, obj[i])`. Ariadne's resolver cannot trace the function value from the argument position through the renamed parameter to the `.call(...)` invocation, so the lambda has zero resolved inbound callers and surfaces as an entry point. Discriminator: anonymous JS function with no resolved callers — in JavaScript, such functions are always callbacks, event handlers, or IIFEs rather than genuine unreachable entries.
 

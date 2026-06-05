@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // Python framework-invoked dunder methods (`__str__`, `__repr__`, `__eq__`,
 // iteration / context-manager protocols, etc.) are called by the Python

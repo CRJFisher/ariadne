@@ -21,7 +21,7 @@ The engine is **planning-only and firewalled**: it reads
 log under `~/.ariadne/plan/`. It never writes the user's `backlog/`, the
 classifier `registry.json`, or `packages/core`. Graduation of a plan task into
 `backlog/` is the separate, user-invoked export adapter (see **Export to
-backlog** below) — the only firewall crossing. See `.claude/rules/backlog-firewall.md`.
+backlog** below) — the only path that writes `backlog/`.
 
 **Script invocation:** always `node --import tsx`. Never `pnpm exec tsx` or
 `npx tsx`.
@@ -148,8 +148,7 @@ only **mint-id + render + write** against its tracker and reuses the shared
 **select → flip `proposed → exported` → log `export` event** pipeline. The
 verbatim `PlanTask.dedup_key`, persisted into a target-side dedup field, is the
 fixed idempotency contract every target honors. The full interface lives in the
-`export_to_backlog.ts` header; the firewall allowlist
-(`ALLOWED_BACKLOG_WRITERS`) names each target that writes a firewalled surface.
+`export_to_backlog.ts` header.
 
 ## Impact reporting (on demand)
 
@@ -183,6 +182,4 @@ output; `~/.ariadne/plan/` is the plan engine's task-DB (defined in
 only the task-DB under `~/.ariadne/plan/`. Pass C reads `backlog/tasks/*.md`
 frontmatter **read-only** (`src/store/backlog_dedup.ts`, keyed on
 `plan_dedup_key`) as a dedup signal — it is never written by the pipeline; the
-only writer is the user-invoked export adapter (`scripts/export_to_backlog.ts`,
-the sole `ALLOWED_BACKLOG_WRITERS` entry). The full contract and its
-AST-enforcement test are in `.claude/rules/backlog-firewall.md`.
+only writer is the user-invoked export adapter (`scripts/export_to_backlog.ts`).

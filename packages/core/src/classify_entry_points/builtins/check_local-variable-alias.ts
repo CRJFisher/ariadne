@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // Capitalised JavaScript constructor functions invoked exclusively through a local variable alias (`var X = NS.X; ... new X();`) within the same indexed file. Ariadne records zero call-refs, the diagnosis lands as 'callers-not-in-registry', and tree-sitter does not fire @reference.constructor at the grep hit because the call target binds to a local var whose initialiser is a member expression rather than a function declaration.
 

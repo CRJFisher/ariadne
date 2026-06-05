@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // Static method on a CommonJS-exported class: `class Cls { static m() {...} } module.exports = Cls;` invoked at call sites as `Cls.m(...)` where `Cls` is a local identifier bound by `const Cls = require('./mod')`. Ariadne indexes both the method and the call refs but fails to bind the identifier receiver to the class type, so `method_not_on_type` is returned and the static method looks unreached. Identified by: JS language, diagnosis `callers-in-registry-unresolved`, at least one call ref with `receiver_kind=identifier` + `resolution_failure_reason=method_not_on_type`, and grep evidence of a `PascalCase.method(` call pattern.
 

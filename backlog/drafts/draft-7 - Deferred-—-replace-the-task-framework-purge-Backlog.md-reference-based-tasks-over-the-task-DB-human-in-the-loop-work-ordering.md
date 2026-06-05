@@ -35,7 +35,7 @@ For now, the task-DB ↔ `backlog/` duplication is an **accepted non-issue** (ex
 
 ## Supersedes / relationship
 
-Supersedes the export-to-backlog adapter (190.22.11) and the archive-cleanup (190.22.12) as the long-term answer; both are interim. Sibling to DRAFT-5 (actuator) and DRAFT-6 (DB storage upgrade).
+Supersedes the export-to-backlog adapter (190.22.11) and the archive-cleanup (190.22.12) as the long-term answer; both are interim. Sibling to DRAFT-6 (DB storage upgrade).
 
 ## Trigger
 

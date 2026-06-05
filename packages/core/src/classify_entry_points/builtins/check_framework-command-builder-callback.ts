@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // yargs CommandModule lifecycle hook: a `builder` method on a class that implements `yargs.CommandModule` is invoked by the yargs runtime when the registered command instance is dispatched. Ariadne does not model framework interface dispatch, so these methods appear unreachable. Classifier matches typescript `builder` methods inside files following the conventional `<dir>/commands/<Name>Command.ts` shape used by yargs-style CLI projects. The proper resolver-level fix is to trace method calls through interface implementations (TASK-198).
 

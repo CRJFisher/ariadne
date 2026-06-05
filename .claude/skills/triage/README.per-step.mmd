@@ -42,7 +42,7 @@ flowchart TD
   end
 
   CUR[["plan<br/>(group → strategize → reconcile)"]]:::downstream
-  FX[["fix-sequencer reconciler<br/>(via prepare_triage)"]]:::downstream
+  FX[["human loop-closure<br/>(records wip → fixed in registry)"]]:::downstream
   DIF[["diff_runs.ts<br/>(regression audit)"]]:::downstream
 
   CORE --> S1

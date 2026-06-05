@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // Angular runtime instruction functions exported under the `ɵɵ`-prefixed naming convention from `packages/core/src/...`. The Angular JIT compiler stores these in a string-keyed dispatch map (`angularCoreEnv` in `packages/core/src/render3/jit/environment.ts`) and invokes them via `new Function(...)` over compiler-emitted source; no static AST call site exists, so Ariadne cannot link the call sites to the definitions. The double-`ɵ` (U+0275 GREEK SMALL LETTER BARRED O) prefix is Angular's convention for compiler-injected runtime APIs and is exclusive to this dispatch path.
 

@@ -1,6 +1,6 @@
 # Commit Message Convention
 
-Commits in this repo use Conventional Commits format with a single extension: when a commit advances or resolves a backlog task, the scope is the task id alone (no `TASK-` prefix). This lets tools — most importantly the fix-sequencer's out-of-band fix detector — extract task references reliably from `git log`.
+Commits in this repo use Conventional Commits format with a single extension: when a commit advances or resolves a backlog task, the scope is the task id alone (no `TASK-` prefix). This lets the loop-closure step extract task references reliably from `git log` when matching landed fixes back to registry rows (flipping a classifier `wip → fixed`).
 
 ## Format
 

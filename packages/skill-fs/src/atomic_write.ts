@@ -7,8 +7,8 @@ import * as crypto from "node:crypto";
  * file or the new file, never a partial write or empty file.
  *
  * Used for any file with multiple potential writers (e.g. `registry.json`,
- * which both the curator and the fix-sequencer reconciler touch) and for
- * per-run files where in-process readers may race the writer (e.g.
+ * reached only through `atomic_update_registry`) and for per-run files where
+ * in-process readers may race the writer (e.g.
  * `novel_issues.json`, which the dispatcher rewrites between dispense calls).
  *
  * On error the temp file is best-effort removed; the rename atomicity means

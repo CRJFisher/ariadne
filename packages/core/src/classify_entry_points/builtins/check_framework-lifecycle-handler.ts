@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // yargs CommandModule handler methods. Each entry_point is a method named exactly `handler` defined inside a class file under `commands/<Name>Command.ts` (the canonical yargs CommandModule layout used by typeorm and many other CLIs). The class implements `yargs.CommandModule`; yargs invokes `.handler(args)` at runtime via the interface contract, with no in-source call site. The classifier triangulates the convention via the entry_point name + file-path layout + language.
 

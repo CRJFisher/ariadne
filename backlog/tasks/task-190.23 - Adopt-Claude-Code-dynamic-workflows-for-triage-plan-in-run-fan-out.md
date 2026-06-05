@@ -45,7 +45,7 @@ A workflow is the native form of both. The verdict-file shuffling, the `--active
 ## Hard constraints that shape the design (do not fight these)
 
 1. **The workflow script body has NO filesystem or shell access — only agents do.** Our deterministic TS scripts (`detect_entrypoints`, `prepare_triage`, `finalize_triage`, `curate_all`, `finalize_run`, etc.) are invoked via `node --import tsx` and read/write state files. The workflow script **cannot** run them directly. Either (a) keep thin "run-this-script, return-its-JSON" agents at phase boundaries, or (b) inline pure logic (e.g. `pick_next_entries`) into the script body while an agent does the actual I/O. Pick per call site; do not try to make the script touch disk.
-2. **Intermediate results vanish at run end — only script variables hold them.** The durable cross-run, cross-skill state plane (`registry.json`, `triage_results/<run-id>.json`, and the classifier lifecycle that is the loop-closure surface across triage/plan/fix-sequencer per `.claude/rules/classifier-lifecycle.md`) **must still live on disk** and be written by agents through the `atomic_update_registry` contract. Workflows replace the in-run orchestration, **not** the persistent state plane. Do not move loop-closure state into memory.
+2. **Intermediate results vanish at run end — only script variables hold them.** The durable cross-run, cross-skill state plane (`registry.json`, `triage_results/<run-id>.json`, and the human-maintained classifier lifecycle that is the loop-closure surface per `.claude/rules/classifier-lifecycle.md`) **must still live on disk** and be reached through the `atomic_update_registry` contract. Workflows replace the in-run orchestration, **not** the persistent state plane. Do not move loop-closure state into memory.
 3. **Resume is same-session only.** "If you exit Claude Code while a workflow is running, the next session starts fresh." A workflow is one run's orchestration, not a durable daemon.
 
 ## Scope
@@ -58,7 +58,7 @@ A workflow is the native form of both. The verdict-file shuffling, the `--active
 ## Out of scope
 
 - Any change to the durable data contract (`@ariadnejs/skill-protocol`), the registry write-boundary contract, or the classifier lifecycle.
-- The deferred actuator.
+- Manual, human-driven fix delivery.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

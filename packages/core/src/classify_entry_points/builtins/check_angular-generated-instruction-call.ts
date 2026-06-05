@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // Angular Ivy compiler-generated runtime instructions: TypeScript functions whose names start with the double `ɵɵ` (U+0275) prefix and whose definitions live under packages/core/src/render3/. These are invoked from compiler-emitted code (`o.importExpr(R3.<name>).callFn(...)`) and through JIT environment string-keyed dispatch, never via static TypeScript call expressions, so they appear unreachable to Ariadne. The `ɵɵ` prefix is the deliberate, public Angular convention marking @codeGenApi members; combining it with the render3 path constraint avoids matching unrelated symbols that might happen to share the prefix.
 

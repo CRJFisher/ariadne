@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // Function defined as a named function expression assigned to a namespace property (`FBL.DomplateLoop = function DomplateLoop() {}`), then aliased to a local variable in the same file (`var DomplateLoop = FBL.DomplateLoop;`) and invoked through the alias (`new DomplateLoop()`). Ariadne reports zero call references for the function even though grep finds the literal call site in the same indexed file. The classifier fires only when the diagnosis is `callers-not-in-registry`, no inbound call refs were produced, and every grep hit lives in the same file as the definition — a tight intra-file pattern that distinguishes this group from the broad `callers-outside-scope-strict-grep-evidence` (which permits callers in other files). Scoped to JavaScript: the only observed entry_point is in a `.js` file (`vendor/firebug-lite/src/firebug-lite-debug.js`); a TypeScript variant would be a separate group_id when corpus evidence appears.
 

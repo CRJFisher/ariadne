@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // Webpack dependency-template apply() methods invoked via dependencyTemplates.get(constructor).apply(...). Narrowed to JavaScript `apply` methods under lib/dependencies/ to exclude the serializer-registry dispatch pattern (entries 1-3 are serialize() methods dispatched via ObjectMiddleware/ClassSerializer, not the dependencyTemplates Map).
 

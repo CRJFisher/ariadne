@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // Plain-JavaScript method calls where the receiver type is present lexically (parameter, `this`, local identifier) but Ariadne's resolver cannot carry the type across the reference. Each matching entry_point has at least one `ariadne_call_refs[i]` whose `resolution_failure.reason` is one of `method_not_on_type`, `name_not_in_scope`, or `class_definition_not_found` — the resolver enumerated a candidate call-ref but failed to bind it to the definition. Strictly narrower than `callers-outside-scope-grep-evidence` (adds language=javascript + the in-registry-unresolved diagnosis) and complementary to the sibling group `receiver-type-unknown` (which requires `callers-not-in-registry` + empty refs). Also disjoint from F1 `aliased-receiver-type-lost`, which keys on `resolution_failure_reason_eq=receiver_type_unknown` — a reason that does not appear in this group's entries.
 

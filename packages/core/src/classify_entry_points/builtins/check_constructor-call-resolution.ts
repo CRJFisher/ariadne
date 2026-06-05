@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // JavaScript named function expressions assigned to a `var` (e.g. `var Chrome = function Chrome(chrome) { ... }`) that are invoked intra-file via `new Chrome(...)`. The tree-sitter query fires `@reference.constructor`, so a CallReference exists, but the resolver fails at `constructor_lookup` with `name_not_in_scope` because the var-bound named-function-expression name is not registered as a constructible target in the enclosing script scope. Filtered to PascalCase names so the rule does not fire on lowercase function-valued vars.
 

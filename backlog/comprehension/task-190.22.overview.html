@@ -84,7 +84,7 @@
 <header>
   <p class="eyebrow">TASK-190.22 · self-repair / architecture / restructure</p>
   <h1>The self-healing pipeline becomes two stages: detect, then plan</h1>
-  <p class="lead">The pipeline under <code>.claude/skills/</code> has never run end-to-end. Rather than building the full automated build-out at once, the architecture collapses to the part that delivers value first — and defers code mutation entirely. There are two live stages and no automated actuator in scope.</p>
+  <p class="lead">The pipeline under <code>.claude/skills/</code> has never run end-to-end. Rather than building the full automated build-out at once, the architecture collapses to the part that delivers value first — and keeps code mutation a manual, human-driven step. There are two live stages; fix delivery is manual and out of scope.</p>
   <div class="meta">
     <span class="chip"><strong>13</strong> sub-tasks</span>
     <span class="chip"><strong>10</strong> done</span>
@@ -108,9 +108,9 @@
     <p>Read all <code>triage_results</code> → group by <code>AriadneFaultArea</code> → opus strategists propose architectural upgrades → emit hierarchical, size-tiered fix plans into the task-DB → reconcile (augment / supersede / combine). Produces plans; never mutates code or the registry.</p>
   </div>
   <div class="stage def">
-    <span class="tg">deferred</span>
-    <h4>actuator</h4>
-    <p>Out of scope. Executes the plans manually at first: path A = localized Ariadne-core fixes, path B = classifier-script fixes. The apply / promotion machinery the curator once held is parked here.</p>
+    <span class="tg">manual · out of scope</span>
+    <h4>fix delivery</h4>
+    <p>Out of scope. The human executes the plans by hand: path A = localized Ariadne-core fixes, path B = classifier-script fixes. Code mutation, registry maintenance, and loop-closure are all manual, human-driven steps.</p>
   </div>
 </div>
 

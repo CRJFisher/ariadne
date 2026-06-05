@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // A method invoked on a chained receiver — typically `new X(...).method(...)` or `factory().method(...)` — where Ariadne records callers (diagnosis 'callers-in-registry-unresolved') but every call ref has receiver_kind 'call_chain' and a name_resolution failure 'name_not_in_scope'. Triggered for typeorm SubjectExecutor.ts:682 calling ClosureSubjectExecutor.remove via `await new ClosureSubjectExecutor(this.queryRunner).remove(subjects)`.
 

@@ -1,5 +1,5 @@
 // AUTO-GENERATED classifier (from the known-issues registry). Do not edit by hand.
-// Provenance: rendered from .claude/skills/triage/known_issues/registry.json; the renderer lives with the deferred actuator.
+// Provenance: rendered from .claude/skills/triage/known_issues/registry.json.
 //
 // JavaScript static-method call on a class imported via destructured CommonJS `require()`. Ariadne resolves the receiver identifier to the destructured `variable:` binding (not a class type), so `method_lookup` fails with `method_not_on_type`. Shape: diagnosis=callers-in-registry-unresolved, at least one call-ref has receiver_kind=identifier with method_not_on_type failure, and some grep hit matches the `ClassName.method(` literal shape.
 
