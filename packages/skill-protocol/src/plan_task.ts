@@ -196,6 +196,13 @@ export interface PlanTask {
    * folder evolves). It is `0` on a node that proposes no core fix — a
    * taxonomy-extension task or a classifier-work task — where blast radius is
    * not meaningful.
+   *
+   * Each tier's estimate stands on its own and is NOT additive across tiers: a
+   * `localized` leaf sizes one concrete fix, while a parent (`fault_area` /
+   * `architectural`) sizes the blast radius of that whole subtree's upgrade — not
+   * the sum of its leaves. A downstream ranker therefore reads effort at a single
+   * tier (leaf for concrete work; root for the cross-cutting upgrade), never by
+   * summing a subtree.
    */
   core_fix_effort: number;
   /** The strategist's prose grounding for `core_fix_effort` (empty when effort is `0`). */

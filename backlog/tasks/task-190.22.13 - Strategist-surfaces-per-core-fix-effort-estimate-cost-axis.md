@@ -2,7 +2,7 @@
 id: TASK-190.22.13
 title: >-
   Strategist surfaces a per-core-fix effort estimate (cost axis for the plan DB)
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-06-04 00:00'
 labels:
@@ -88,5 +88,65 @@ non-core-fix node carrying a non-zero effort. The plan engine makes zero writes 
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
+
+## High-level summary
+
+The plan engine carries a cost axis alongside its existing benefit axis. Each
+`StrategistPlanNode` and `PlanTask` holds `core_fix_effort` — a positive-integer
+estimate of how much complexity a core fix would add to Ariadne (its blast
+radius) — and `core_fix_effort_rationale`, the prose grounding. The
+`plan-strategist` produces the estimate by reading the owning `fault_area`
+folder's current capability and surfaces it as a metric; it assigns no priority,
+status, or disposition. Prioritisation is left to a deterministic downstream
+consumer that weighs effort against the benefit metrics (`observed_count`,
+`projects`, `source_runs`). Because tasks stay live, a sweep re-judges the cost
+on augment as the owning folder evolves.
+
+## What changed
+
+- **Record shape.** `core_fix_effort: number` and `core_fix_effort_rationale:
+  string` are added to `PlanTask` (`packages/skill-protocol/src/plan_task.ts`)
+  and `StrategistPlanNode` (`src/types.ts`), both total fields. No
+  schema-version bump is needed: the task-DB is rebuilt from empty, so every new
+  record carries the fields natively.
+- **Validation** (`src/propose/validate_plan.ts`). A new `core_fix_effort_invalid`
+  rule requires a positive integer plus non-empty rationale on every core-fix
+  node — any node that is neither a taxonomy extension nor classifier work, at any
+  tier — and requires the `0` sentinel on taxonomy-extension and classifier-work
+  nodes (which propose no core fix). The effort-sizing obligation
+  (`proposes_core_fix`) is kept distinct from the narrower evidence-grounded
+  `found.core_fix` signal the other-bucket pairing rule uses.
+- **Pass C.** `build_plan_tasks` copies both fields verbatim from the node onto
+  the minted `PlanTask`; `reconcile_plan`'s augment branch adopts the candidate's
+  fresh estimate over the stored value, so a re-sweep re-judges cost.
+- **Strategist guidance.** `.claude/agents/plan-strategist.md` instructs the agent
+  to emit the estimate per core-fix node on the scale 1 (single-file edit) / 3
+  (new function or resolver path) / 5 (new cross-folder resolver pass), grounded
+  by reading the owning folder with `Read`/`Grep`/`Glob`, and reframes the
+  classifier as the interim mitigation that holds while a high-effort fix waits.
+  `scripts/get_bucket_context.ts` surfaces the matching authoring rule.
+
+## Per-tier semantics
+
+The estimate is not additive across tiers: a `localized` leaf sizes one concrete
+fix, while a `fault_area` or `architectural` parent sizes the blast radius of its
+whole subtree's upgrade. A ranker reads effort at a single tier rather than
+summing a subtree; this is documented on the `PlanTask.core_fix_effort` field.
+
+## Firewall and contract
+
+The firewall and planning-only contract are unchanged: the strategist writes only
+its `StrategistPlan` JSON, the deterministic reconcile pass remains the sole
+task-DB writer, and no tool grant is added (the strategist already holds
+`Read`/`Grep`/`Glob`). The backlog and registry AST write-boundary guards pass.
+
+## Tests
+
+Validation covers a missing/zero/negative/non-integer effort and an empty
+rationale on a core-fix node, and a non-zero effort on both classifier-work and
+taxonomy-extension nodes. `build_plan_tasks` asserts the carry-through;
+`reconcile_plan` asserts that augment adopts a *changed* estimate (seeded at
+effort 5, re-swept at 2). The full plan suite, the protocol package suite, the
+typecheck, and the firewall guards are green.
 
 <!-- SECTION:NOTES:END -->

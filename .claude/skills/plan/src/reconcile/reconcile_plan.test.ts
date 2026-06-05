@@ -61,7 +61,7 @@ async function recon(
   });
 }
 
-function localized_leaf(title: string, body: string, indices: number[]): StrategistPlanNode {
+function localized_leaf(title: string, body: string, indices: number[], effort = 2): StrategistPlanNode {
   return {
     tier: "localized",
     title,
@@ -70,8 +70,8 @@ function localized_leaf(title: string, body: string, indices: number[]): Strateg
     evidence_indices: indices,
     is_taxonomy_extension: false,
     is_classifier_work: false,
-    core_fix_effort: 2,
-    core_fix_effort_rationale: "extend the query capture in syntactic_extraction",
+    core_fix_effort: effort,
+    core_fix_effort_rationale: `grounded estimate (effort ${effort})`,
     children: [],
   };
 }
@@ -144,6 +144,28 @@ describe("reconcile_plan", () => {
     // Idempotent evidence: the fault_area root still has exactly its 2 rows.
     const root = after_second.find((t) => t.tier === "fault_area");
     expect(root?.observed_count).toEqual(2);
+  });
+
+  it("augment adopts the candidate's fresh core_fix_effort/rationale over the stored value", async () => {
+    // The cost estimate is re-judged each sweep: an augment must adopt the
+    // CANDIDATE's value, not keep the stored one. Seed at effort 5, re-sweep the
+    // same (dedup_key, tier) leaves at effort 2, and assert the fresh value won.
+    const repo = new JsonPlanTaskRepository();
+    const evidence = [ev("a.ts", 1), ev("b.ts", 2)];
+
+    const s1 = plan_with([localized_leaf("fix a", "a", [0], 5), localized_leaf("fix b", "b", [1], 5)]);
+    await recon(repo, build_plan_tasks(s1, evidence, { sweep_id: "sweep-1", strategist: "opus" }), "sweep-1");
+
+    const s2 = plan_with([localized_leaf("fix a", "a", [0], 2), localized_leaf("fix b", "b", [1], 2)]);
+    const { events } = await recon(repo, build_plan_tasks(s2, evidence, { sweep_id: "sweep-2", strategist: "opus" }), "sweep-2");
+
+    expect(events.every((e) => e.kind === "augment")).toBe(true);
+    const leaves = await repo.query({ tier: "localized" });
+    expect(leaves).toHaveLength(2);
+    for (const leaf of leaves) {
+      expect(leaf.core_fix_effort).toEqual(2);
+      expect(leaf.core_fix_effort_rationale).toEqual("grounded estimate (effort 2)");
+    }
   });
 
   it("merges new evidence and bumps observed_count when a re-sweep adds a location", async () => {

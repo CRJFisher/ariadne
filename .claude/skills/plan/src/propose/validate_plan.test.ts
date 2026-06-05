@@ -174,6 +174,14 @@ describe("validate_plan", () => {
     expect(codes(plan([leaf({ is_classifier_work: true, core_fix_effort: 3 })]), NAME_RES_CTX)).toEqual([
       "core_fix_effort_invalid",
     ]);
+    // A taxonomy-extension node carrying a positive effort is invalid too (other bucket).
+    const other_ctx: ValidatePlanContext = { bucket_fault_area: "other", evidence_count: 1 };
+    expect(
+      codes(
+        plan([leaf({ fault_area: "other", is_taxonomy_extension: true, evidence_indices: [], core_fix_effort: 3 })], "other"),
+        other_ctx,
+      ),
+    ).toContain("core_fix_effort_invalid");
     // The effort-0 sentinel on a classifier-work node is accepted.
     expect(validate_plan(plan([leaf({ is_classifier_work: true })]), NAME_RES_CTX)).toEqual({ ok: true, issues: [] });
   });

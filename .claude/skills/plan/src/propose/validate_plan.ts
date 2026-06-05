@@ -151,6 +151,11 @@ function check_node_rules(
   // Cost axis: a core-fix node (neither a taxonomy extension nor classifier work)
   // must carry a positive blast-radius estimate with prose grounding; a node that
   // proposes no core fix carries the `0` sentinel and no rationale.
+  //
+  // `proposes_core_fix` here is the EFFORT-SIZING obligation (any tier that
+  // proposes a core fix at all). It is a distinct notion from `found.core_fix`
+  // below, which is the narrower "an evidence-grounded fix exists" signal the
+  // other-bucket pairing rule consults.
   const proposes_core_fix = !node.is_taxonomy_extension && !node.is_classifier_work;
   if (proposes_core_fix) {
     if (node.core_fix_effort <= 0) {
