@@ -25,7 +25,8 @@ export type ValidationIssueCode =
   | "leaf_missing_evidence"
   | "other_bucket_missing_taxonomy_extension"
   | "other_bucket_missing_core_fix"
-  | "taxonomy_extension_on_non_other_bucket";
+  | "taxonomy_extension_on_non_other_bucket"
+  | "core_fix_effort_invalid";
 
 export interface ValidationIssue {
   code: ValidationIssueCode;
@@ -85,6 +86,12 @@ function check_node_shape(value: unknown, path: string): ValidationIssue[] {
   if (typeof value.is_classifier_work !== "boolean") {
     issues.push({ code: "shape_error", path: `${path}.is_classifier_work`, message: "is_classifier_work must be a boolean" });
   }
+  if (typeof value.core_fix_effort !== "number" || !Number.isInteger(value.core_fix_effort)) {
+    issues.push({ code: "shape_error", path: `${path}.core_fix_effort`, message: "core_fix_effort must be an integer" });
+  }
+  if (typeof value.core_fix_effort_rationale !== "string") {
+    issues.push({ code: "shape_error", path: `${path}.core_fix_effort_rationale`, message: "core_fix_effort_rationale must be a string" });
+  }
   if (!Array.isArray(value.children)) {
     issues.push({ code: "shape_error", path: `${path}.children`, message: "children must be an array" });
   } else {
@@ -140,6 +147,33 @@ function check_node_rules(
     });
   }
   if (node.is_taxonomy_extension) found.taxonomy_extension = true;
+
+  // Cost axis: a core-fix node (neither a taxonomy extension nor classifier work)
+  // must carry a positive blast-radius estimate with prose grounding; a node that
+  // proposes no core fix carries the `0` sentinel and no rationale.
+  const proposes_core_fix = !node.is_taxonomy_extension && !node.is_classifier_work;
+  if (proposes_core_fix) {
+    if (node.core_fix_effort <= 0) {
+      issues.push({
+        code: "core_fix_effort_invalid",
+        path: `${path}.core_fix_effort`,
+        message: "a core-fix node must carry a positive core_fix_effort estimate",
+      });
+    }
+    if (node.core_fix_effort_rationale.trim().length === 0) {
+      issues.push({
+        code: "core_fix_effort_invalid",
+        path: `${path}.core_fix_effort_rationale`,
+        message: "a core-fix node must carry a non-empty core_fix_effort_rationale",
+      });
+    }
+  } else if (node.core_fix_effort !== 0) {
+    issues.push({
+      code: "core_fix_effort_invalid",
+      path: `${path}.core_fix_effort`,
+      message: "a taxonomy-extension or classifier-work node must carry core_fix_effort 0 (no core fix to size)",
+    });
+  }
 
   const is_leaf = node.children.length === 0;
   if (node.tier === "localized" && is_leaf && !node.is_taxonomy_extension && node.evidence_indices.length === 0) {

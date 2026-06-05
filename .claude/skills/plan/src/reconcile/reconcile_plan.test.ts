@@ -70,6 +70,8 @@ function localized_leaf(title: string, body: string, indices: number[]): Strateg
     evidence_indices: indices,
     is_taxonomy_extension: false,
     is_classifier_work: false,
+    core_fix_effort: 2,
+    core_fix_effort_rationale: "extend the query capture in syntactic_extraction",
     children: [],
   };
 }
@@ -89,6 +91,8 @@ function plan_with(leaves: StrategistPlanNode[]): StrategistPlan {
         evidence_indices: [],
         is_taxonomy_extension: false,
         is_classifier_work: false,
+        core_fix_effort: 3,
+        core_fix_effort_rationale: "new query capture path",
         children: leaves,
       },
     ],

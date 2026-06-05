@@ -67,6 +67,8 @@ function make_task(overrides: Partial<PlanTask>): PlanTask {
     updated_in_sweep: "sweep-1",
     strategist: "claude-opus-4-8",
     is_classifier_work: false,
+    core_fix_effort: 2,
+    core_fix_effort_rationale: "grounded estimate",
     ...overrides,
   };
 }

@@ -4,6 +4,9 @@ import type { StrategistPlan, StrategistPlanNode } from "../types.js";
 import { validate_plan, type ValidatePlanContext } from "./validate_plan.js";
 
 function leaf(overrides: Partial<StrategistPlanNode> = {}): StrategistPlanNode {
+  // A taxonomy-extension or classifier-work node proposes no core fix, so it
+  // carries the effort-0 sentinel; a core-fix node carries a positive estimate.
+  const exempt = (overrides.is_taxonomy_extension ?? false) || (overrides.is_classifier_work ?? false);
   return {
     tier: "localized",
     title: "fix",
@@ -12,6 +15,8 @@ function leaf(overrides: Partial<StrategistPlanNode> = {}): StrategistPlanNode {
     evidence_indices: [0],
     is_taxonomy_extension: false,
     is_classifier_work: false,
+    core_fix_effort: exempt ? 0 : 2,
+    core_fix_effort_rationale: exempt ? "" : "grounded estimate",
     children: [],
     ...overrides,
   };
@@ -41,6 +46,8 @@ describe("validate_plan", () => {
         evidence_indices: [],
         is_taxonomy_extension: false,
         is_classifier_work: false,
+        core_fix_effort: 5,
+        core_fix_effort_rationale: "cross-folder resolver upgrade",
         children: [
           {
             tier: "fault_area",
@@ -50,6 +57,8 @@ describe("validate_plan", () => {
             evidence_indices: [],
             is_taxonomy_extension: false,
             is_classifier_work: false,
+            core_fix_effort: 3,
+            core_fix_effort_rationale: "new resolver path",
             children: [leaf({ evidence_indices: [0] }), leaf({ evidence_indices: [1] })],
           },
         ],
@@ -98,6 +107,8 @@ describe("validate_plan", () => {
           evidence_indices: [0],
           is_taxonomy_extension: false,
           is_classifier_work: false,
+          core_fix_effort: 2,
+          core_fix_effort_rationale: "grounded estimate",
           children: [],
         },
       ],
@@ -132,6 +143,8 @@ describe("validate_plan", () => {
           evidence_indices: [],
           is_taxonomy_extension: false,
           is_classifier_work: false,
+          core_fix_effort: 3,
+          core_fix_effort_rationale: "new resolver path",
           children: [
             leaf({ fault_area: "other", is_taxonomy_extension: true, evidence_indices: [] }),
             leaf({ fault_area: "other", evidence_indices: [0] }),
@@ -147,5 +160,21 @@ describe("validate_plan", () => {
     expect(codes(plan([leaf({ is_taxonomy_extension: true })]), NAME_RES_CTX)).toContain(
       "taxonomy_extension_on_non_other_bucket",
     );
+  });
+
+  it("requires a positive core_fix_effort with rationale on a core-fix node", () => {
+    expect(codes(plan([leaf({ core_fix_effort: 0 })]), NAME_RES_CTX)).toEqual(["core_fix_effort_invalid"]);
+    expect(codes(plan([leaf({ core_fix_effort: -1 })]), NAME_RES_CTX)).toEqual(["core_fix_effort_invalid"]);
+    expect(codes(plan([leaf({ core_fix_effort_rationale: "  " })]), NAME_RES_CTX)).toEqual(["core_fix_effort_invalid"]);
+    expect(codes(plan([leaf({ core_fix_effort: 2.5 })]), NAME_RES_CTX)).toEqual(["shape_error"]);
+  });
+
+  it("requires the effort-0 sentinel on a node that proposes no core fix", () => {
+    // A classifier-work node carrying a positive effort is invalid (no core fix to size).
+    expect(codes(plan([leaf({ is_classifier_work: true, core_fix_effort: 3 })]), NAME_RES_CTX)).toEqual([
+      "core_fix_effort_invalid",
+    ]);
+    // The effort-0 sentinel on a classifier-work node is accepted.
+    expect(validate_plan(plan([leaf({ is_classifier_work: true })]), NAME_RES_CTX)).toEqual({ ok: true, issues: [] });
   });
 });

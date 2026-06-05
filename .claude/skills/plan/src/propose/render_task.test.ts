@@ -16,6 +16,8 @@ function node(overrides: Partial<StrategistPlanNode> = {}): StrategistPlanNode {
     evidence_indices: overrides.evidence_indices ?? [],
     is_taxonomy_extension: overrides.is_taxonomy_extension ?? false,
     is_classifier_work: overrides.is_classifier_work ?? false,
+    core_fix_effort: overrides.core_fix_effort ?? 3,
+    core_fix_effort_rationale: overrides.core_fix_effort_rationale ?? "new resolver path in name_resolution",
     children: overrides.children ?? [],
   };
 }

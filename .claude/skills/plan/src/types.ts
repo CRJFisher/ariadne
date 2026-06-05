@@ -144,6 +144,17 @@ export interface StrategistPlanNode {
    * classifier spec itself.
    */
   is_classifier_work: boolean;
+  /**
+   * The strategist's blast-radius estimate for this node's core fix — a positive
+   * integer on the scale 1 (single-file edit) / 3 (new function/resolver path) /
+   * 5 (new cross-folder resolver pass), grounded by inspecting the owning
+   * `fault_area` folder's current capability. Required on every core-fix node;
+   * `0` on a taxonomy-extension or classifier-work node (no core fix to size).
+   * Pass C carries it verbatim onto the `PlanTask` as the cost axis.
+   */
+  core_fix_effort: number;
+  /** Prose grounding for `core_fix_effort` — required on core-fix nodes, empty when effort is `0`. */
+  core_fix_effort_rationale: string;
   children: StrategistPlanNode[];
 }
 

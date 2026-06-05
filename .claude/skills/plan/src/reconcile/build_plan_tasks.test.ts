@@ -35,6 +35,8 @@ function three_tier_plan(): StrategistPlan {
         evidence_indices: [],
         is_taxonomy_extension: false,
         is_classifier_work: false,
+        core_fix_effort: 5,
+        core_fix_effort_rationale: "cross-folder resolver upgrade",
         children: [
           {
             tier: "fault_area",
@@ -44,6 +46,8 @@ function three_tier_plan(): StrategistPlan {
             evidence_indices: [],
             is_taxonomy_extension: false,
             is_classifier_work: false,
+            core_fix_effort: 3,
+            core_fix_effort_rationale: "new resolver path",
             children: [
               {
                 tier: "localized",
@@ -53,6 +57,8 @@ function three_tier_plan(): StrategistPlan {
                 evidence_indices: [0],
                 is_taxonomy_extension: false,
                 is_classifier_work: false,
+                core_fix_effort: 1,
+                core_fix_effort_rationale: "single-file edit",
                 children: [],
               },
               {
@@ -63,6 +69,8 @@ function three_tier_plan(): StrategistPlan {
                 evidence_indices: [1],
                 is_taxonomy_extension: false,
                 is_classifier_work: false,
+                core_fix_effort: 1,
+                core_fix_effort_rationale: "single-file edit",
                 children: [],
               },
             ],
@@ -153,6 +161,8 @@ describe("build_plan_tasks", () => {
           evidence_indices: [],
           is_taxonomy_extension: false,
           is_classifier_work: false,
+          core_fix_effort: 3,
+          core_fix_effort_rationale: "new resolver path",
           children: [
             {
               tier: "localized",
@@ -162,6 +172,8 @@ describe("build_plan_tasks", () => {
               evidence_indices: [],
               is_taxonomy_extension: true,
               is_classifier_work: false,
+              core_fix_effort: 0,
+              core_fix_effort_rationale: "",
               children: [],
             },
             {
@@ -172,6 +184,8 @@ describe("build_plan_tasks", () => {
               evidence_indices: [0],
               is_taxonomy_extension: false,
               is_classifier_work: false,
+              core_fix_effort: 1,
+              core_fix_effort_rationale: "single-file edit",
               children: [],
             },
           ],
@@ -197,12 +211,39 @@ describe("build_plan_tasks", () => {
           evidence_indices: [0],
           is_taxonomy_extension: false,
           is_classifier_work: true,
+          core_fix_effort: 0,
+          core_fix_effort_rationale: "",
           children: [],
         },
       ],
     };
     const [task] = build_plan_tasks(plan, [ev("a.ts", 1)], OPTS);
     expect(task.is_classifier_work).toEqual(true);
+  });
+
+  it("persists core_fix_effort and its rationale onto the PlanTask from the node", () => {
+    const plan: StrategistPlan = {
+      schema_version: 1,
+      fault_area: "name_resolution",
+      sweep_id: "sweep-1",
+      roots: [
+        {
+          tier: "localized",
+          title: "core fix",
+          body: "resolver fix",
+          fault_area: "name_resolution",
+          evidence_indices: [0],
+          is_taxonomy_extension: false,
+          is_classifier_work: false,
+          core_fix_effort: 4,
+          core_fix_effort_rationale: "new resolver pass touching two folders",
+          children: [],
+        },
+      ],
+    };
+    const [task] = build_plan_tasks(plan, [ev("a.ts", 1)], OPTS);
+    expect(task.core_fix_effort).toEqual(4);
+    expect(task.core_fix_effort_rationale).toEqual("new resolver pass touching two folders");
   });
 
   it("supports a multi-root forest and a parent carrying its own evidence_indices", () => {
@@ -220,12 +261,14 @@ describe("build_plan_tasks", () => {
           evidence_indices: [2],
           is_taxonomy_extension: false,
           is_classifier_work: false,
+          core_fix_effort: 3,
+          core_fix_effort_rationale: "new resolver path",
           children: [
-            { tier: "localized", title: "leaf 0", body: "l0", fault_area: "name_resolution", evidence_indices: [0], is_taxonomy_extension: false, is_classifier_work: false, children: [] },
+            { tier: "localized", title: "leaf 0", body: "l0", fault_area: "name_resolution", evidence_indices: [0], is_taxonomy_extension: false, is_classifier_work: false, core_fix_effort: 1, core_fix_effort_rationale: "single-file edit", children: [] },
           ],
         },
         // Root 2: a standalone localized leaf on index 1.
-        { tier: "localized", title: "leaf 1", body: "l1", fault_area: "name_resolution", evidence_indices: [1], is_taxonomy_extension: false, is_classifier_work: false, children: [] },
+        { tier: "localized", title: "leaf 1", body: "l1", fault_area: "name_resolution", evidence_indices: [1], is_taxonomy_extension: false, is_classifier_work: false, core_fix_effort: 1, core_fix_effort_rationale: "single-file edit", children: [] },
       ],
     };
     const bucket = [ev("a.ts", 1, "p"), ev("b.ts", 2, "p"), ev("c.ts", 3, "p")];

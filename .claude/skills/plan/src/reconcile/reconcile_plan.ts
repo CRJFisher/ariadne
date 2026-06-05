@@ -218,6 +218,10 @@ export async function reconcile_plan(
       child_ids: merged_child_ids,
       updated_in_sweep: sweep_id,
       strategist: candidate.strategist,
+      // The cost estimate is re-judged each sweep (the owning folder's capability
+      // evolves), so adopt the candidate's fresh value rather than the stale one.
+      core_fix_effort: candidate.core_fix_effort,
+      core_fix_effort_rationale: candidate.core_fix_effort_rationale,
     };
     written_by_id.set(task.id, task);
     events.push({

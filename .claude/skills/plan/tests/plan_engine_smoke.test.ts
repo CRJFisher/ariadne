@@ -143,6 +143,8 @@ function synthetic_plan(bucket: FaultAreaBucket): StrategistPlan {
     evidence_indices: [i],
     is_taxonomy_extension: false,
     is_classifier_work: false,
+    core_fix_effort: 2,
+    core_fix_effort_rationale: "localized resolver fix",
     children: [],
   }));
   // `other` buckets must additionally yield a taxonomy-extension task.
@@ -155,6 +157,8 @@ function synthetic_plan(bucket: FaultAreaBucket): StrategistPlan {
       evidence_indices: [],
       is_taxonomy_extension: true,
       is_classifier_work: false,
+      core_fix_effort: 0,
+      core_fix_effort_rationale: "",
       children: [],
     });
   }
@@ -171,6 +175,8 @@ function synthetic_plan(bucket: FaultAreaBucket): StrategistPlan {
         evidence_indices: [],
         is_taxonomy_extension: false,
         is_classifier_work: false,
+        core_fix_effort: 5,
+        core_fix_effort_rationale: "cross-folder resolver upgrade",
         children: [
           {
             tier: "fault_area",
@@ -180,6 +186,8 @@ function synthetic_plan(bucket: FaultAreaBucket): StrategistPlan {
             evidence_indices: [],
             is_taxonomy_extension: false,
             is_classifier_work: false,
+            core_fix_effort: 3,
+            core_fix_effort_rationale: "new resolver path",
             children: leaves,
           },
         ],

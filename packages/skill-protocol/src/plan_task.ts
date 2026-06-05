@@ -184,4 +184,20 @@ export interface PlanTask {
    * flag. The core fix is always the real deliverable.
    */
   is_classifier_work: boolean;
+  /**
+   * The strategist's estimate of how much complexity a core fix would add to
+   * Ariadne — the fix's blast radius — as a positive integer on the strategist's
+   * authored scale (1 = a single-file edit; 3 = a new function/resolver path;
+   * 5 = a new cross-folder resolver pass). It is the COST axis paired with the
+   * BENEFIT axis (`observed_count`, `projects`, `source_runs`), so the live task
+   * set is cost/benefit-rankable downstream. The strategist grounds the estimate
+   * by inspecting the owning `fault_area` folder's current capability, and a
+   * sweep adopts the fresh estimate on augment (a fix's cost is re-judged as the
+   * folder evolves). It is `0` on a node that proposes no core fix — a
+   * taxonomy-extension task or a classifier-work task — where blast radius is
+   * not meaningful.
+   */
+  core_fix_effort: number;
+  /** The strategist's prose grounding for `core_fix_effort` (empty when effort is `0`). */
+  core_fix_effort_rationale: string;
 }

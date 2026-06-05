@@ -98,13 +98,30 @@ signal. This is how the taxonomy grows. For an `other` bucket you MUST emit BOTH
 
 `is_taxonomy_extension` is permitted only on an `other` bucket.
 
-## Classifier-script work is lower priority
+## The classifier is the interim mitigation
 
-A classifier is a workaround that routes triage around the false-positive until
-the core fix lands; the core fix is the real deliverable. Include classifier
-work only as an explicitly **lower-priority** `localized` node with
-`is_classifier_work: true`. Never author the classifier itself — only propose it
-as a task.
+A classifier routes triage around the false-positive while a high-effort core
+fix waits; the core fix is the durable deliverable. Include classifier work as a
+`localized` node with `is_classifier_work: true`. Never author the classifier
+itself — only propose it as a task.
+
+## Estimate each core fix's effort
+
+Every **core-fix** node (one that is neither a taxonomy-extension nor classifier
+work) carries `core_fix_effort`: a positive integer estimate of the fix's blast
+radius — how much complexity it would add to Ariadne — on the scale **1** (a
+single-file edit) / **3** (a new function or resolver path) / **5** (a new
+cross-folder resolver pass). **Ground the estimate in the code**: `Read`/`Grep`/
+`Glob` the owning `fault_area` folder (the `folder_anchor` in your hydrated
+context) to judge what Ariadne already supports, rather than guessing from the
+fault pattern. Record the grounding in `core_fix_effort_rationale` (a non-empty
+string). A taxonomy-extension or classifier-work node proposes no core fix, so it
+carries `core_fix_effort: 0` and an empty rationale.
+
+You assign no priority, status, or disposition. The integer cost you surface is
+weighed against each task's benefit signals (`observed_count`, `projects`,
+`source_runs`) by a deterministic downstream ranker — your job is to make the
+estimate honest and grounded.
 
 ## Self-validate → iterate loop
 
@@ -146,6 +163,8 @@ Write **one file** to `<output_path>` (under `~/.ariadne/plan/staging/**`): the
       "evidence_indices": [<positional indexes into the bucket's evidence[]>],
       "is_taxonomy_extension": false,
       "is_classifier_work": false,
+      "core_fix_effort": <positive integer on a core-fix node; 0 otherwise>,
+      "core_fix_effort_rationale": "string (grounding for the estimate; empty when effort is 0)",
       "children": [ <node>, ... ]
     }
   ]
