@@ -12,7 +12,7 @@ A method is invoked on the result of another call (e.g. `a.b().c()`), but Ariadn
 | ------------ | -------------------------------------------- |
 | Status       | `wip`                                        |
 | Languages    | `typescript`, `javascript`, `python`, `rust` |
-| Backlog task | `TASK-206`                                   |
+| Backlog task | _none_                                       |
 | Classifier   | _none — known, no automated classifier_      |
 
 **Examples**
@@ -63,7 +63,7 @@ A constructor is invoked via `new Name(...)`, grep sees the literal text, but th
 | ------------ | ---------------------------------------------------------------- |
 | Status       | `wip`                                                            |
 | Languages    | `typescript`, `javascript`                                       |
-| Backlog task | `TASK-228`                                                       |
+| Backlog task | _none_                                                           |
 | Classifier   | builtin, `check_constructor_new_expression` (min_confidence 0.9) |
 
 **Examples**
@@ -377,7 +377,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-309`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `barrel-reexport` — barrel-reexport
@@ -388,7 +388,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-240`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `cross-package-call-untracked` — cross-package-call-untracked
@@ -399,7 +399,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-256`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `cross-package-method-resolution` — cross-package-method-resolution
@@ -410,7 +410,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-255`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `destructured-property-method-call` — destructured-property-method-call
@@ -421,7 +421,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-305`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `dynamic-constructor-dispatch` — dynamic-constructor-dispatch
@@ -432,7 +432,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-231`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `dynamic-require-resolution` — dynamic-require-resolution
@@ -443,7 +443,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-283`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `framework-decorator-dispatch` — framework-decorator-dispatch
@@ -454,7 +454,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------------ |
 | Status       | `wip`                                                              |
 | Languages    | `typescript`                                                       |
-| Backlog task | `TASK-284`                                                         |
+| Backlog task | _none_                                                             |
 | Classifier   | builtin, `check_framework_decorator_dispatch` (min_confidence 0.9) |
 
 ## `framework-lifecycle-dispatch` — framework-lifecycle-dispatch
@@ -465,7 +465,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------------ |
 | Status       | `wip`                                                              |
 | Languages    | `typescript`                                                       |
-| Backlog task | `TASK-244`                                                         |
+| Backlog task | _none_                                                             |
 | Classifier   | builtin, `check_framework_lifecycle_dispatch` (min_confidence 0.9) |
 
 ## `framework-lifecycle-override` — framework-lifecycle-override
@@ -476,7 +476,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------------ |
 | Status       | `wip`                                                              |
 | Languages    | `typescript`                                                       |
-| Backlog task | `TASK-301`                                                         |
+| Backlog task | _none_                                                             |
 | Classifier   | builtin, `check_framework_lifecycle_override` (min_confidence 0.9) |
 
 ## `generic-type-erasure` — generic-type-erasure
@@ -487,7 +487,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-337`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `inherited-method-call` — inherited-method-call
@@ -498,7 +498,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-315`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `interface-polymorphic-dispatch` — interface-polymorphic-dispatch
@@ -520,7 +520,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------- |
 | Status       | `wip`                                                         |
 | Languages    | `typescript`                                                  |
-| Backlog task | `TASK-316`                                                    |
+| Backlog task | _none_                                                        |
 | Classifier   | builtin, `check_intra_class_method_call` (min_confidence 0.9) |
 
 ## `method-call-in-callback-unresolved` — method-call-in-callback-unresolved
@@ -564,7 +564,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------------------- |
 | Status       | `wip`                                                                     |
 | Languages    | `typescript`                                                              |
-| Backlog task | `TASK-332`                                                                |
+| Backlog task | _none_                                                                    |
 | Classifier   | builtin, `check_stored_callback_via_object_property` (min_confidence 0.9) |
 
 ## `tsconfig-path-alias` — tsconfig-path-alias
@@ -575,7 +575,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-335`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `tsconfig-paths-not-resolved` — tsconfig-paths-not-resolved
@@ -619,7 +619,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | -------------------------------------------------------------------- |
 | Status       | `wip`                                                                |
 | Languages    | `typescript`                                                         |
-| Backlog task | `TASK-321`                                                           |
+| Backlog task | _none_                                                               |
 | Classifier   | builtin, `check_aliased_import_method_dispatch` (min_confidence 0.9) |
 
 ## `angular-framework-lifecycle-dispatch` — angular-framework-lifecycle-dispatch
@@ -630,7 +630,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-259`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `angular-generated-instruction-call` — angular-generated-instruction-call
@@ -641,7 +641,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------------------- |
 | Status       | `wip`                                                                     |
 | Languages    | `typescript`                                                              |
-| Backlog task | `TASK-261`                                                                |
+| Backlog task | _none_                                                                    |
 | Classifier   | builtin, `check_angular_generated_instruction_call` (min_confidence 0.95) |
 
 ## `any-typed-receiver-method-call` — any-typed-receiver-method-call
@@ -652,7 +652,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-328`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `compiler-generated-dynamic-dispatch` — compiler-generated-dynamic-dispatch
@@ -663,7 +663,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | -------------------------------------------------------------------------- |
 | Status       | `wip`                                                                      |
 | Languages    | `typescript`                                                               |
-| Backlog task | `TASK-226`                                                                 |
+| Backlog task | _none_                                                                     |
 | Classifier   | builtin, `check_compiler_generated_dynamic_dispatch` (min_confidence 0.95) |
 
 ## `cross-file-import-resolution` — cross-file-import-resolution
@@ -674,7 +674,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-292`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `cross-package-registry-gap` — cross-package-registry-gap
@@ -696,7 +696,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | -------------------------------------------------------------------------- |
 | Status       | `wip`                                                                      |
 | Languages    | `typescript`                                                               |
-| Backlog task | `TASK-314`                                                                 |
+| Backlog task | _none_                                                                     |
 | Classifier   | builtin, `check_dependency_injection_type_resolution` (min_confidence 0.9) |
 
 ## `dynamic-cast-structural-type-dispatch` — dynamic-cast-structural-type-dispatch
@@ -707,7 +707,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------------------------------------------- |
 | Status       | `wip`                                                                       |
 | Languages    | `typescript`                                                                |
-| Backlog task | `TASK-318`                                                                  |
+| Backlog task | _none_                                                                      |
 | Classifier   | builtin, `check_dynamic_cast_structural_type_dispatch` (min_confidence 0.9) |
 
 ## `external-framework-interface-dispatch` — external-framework-interface-dispatch
@@ -718,7 +718,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-302`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `getter-property-access` — getter-property-access
@@ -729,7 +729,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-272`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `higher-order-function-callback` — higher-order-function-callback
@@ -751,7 +751,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | -------------------------------------------------------------- |
 | Status       | `wip`                                                          |
 | Languages    | `typescript`                                                   |
-| Backlog task | `TASK-334`                                                     |
+| Backlog task | _none_                                                         |
 | Classifier   | builtin, `check_import_resolution_missed` (min_confidence 0.9) |
 
 ## `instance-method-call-unresolved` — instance-method-call-unresolved
@@ -762,7 +762,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-248`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `instance-method-dispatch` — instance-method-dispatch
@@ -806,7 +806,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | -------------------------------------------------------------- |
 | Status       | `wip`                                                          |
 | Languages    | `typescript`                                                   |
-| Backlog task | `TASK-303`                                                     |
+| Backlog task | _none_                                                         |
 | Classifier   | builtin, `check_property_getter_dispatch` (min_confidence 0.9) |
 
 ## `singleton-instance-method-call` — singleton-instance-method-call
@@ -817,7 +817,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-306`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `static-method-resolution` — static-method-resolution
@@ -828,7 +828,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | -------------------------------------------------------------- |
 | Status       | `wip`                                                          |
 | Languages    | `typescript`                                                   |
-| Backlog task | `TASK-324`                                                     |
+| Backlog task | _none_                                                         |
 | Classifier   | builtin, `check_static_method_resolution` (min_confidence 0.9) |
 
 ## `string-keyed-dispatch` — string-keyed-dispatch
@@ -839,7 +839,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------ |
 | Status       | `wip`                                                        |
 | Languages    | `typescript`                                                 |
-| Backlog task | `TASK-212`                                                   |
+| Backlog task | _none_                                                       |
 | Classifier   | builtin, `check_string_keyed_dispatch` (min_confidence 0.95) |
 
 ## `type-based-method-dispatch` — type-based-method-dispatch
@@ -861,7 +861,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-241`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `builtin-higher-order-callback` — builtin-higher-order-callback
@@ -905,7 +905,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------------------ |
 | Status       | `wip`                                                                    |
 | Languages    | `typescript`                                                             |
-| Backlog task | `TASK-288`                                                               |
+| Backlog task | _none_                                                                   |
 | Classifier   | builtin, `check_ts_class_getter_no_textual_callers` (min_confidence 0.9) |
 
 ## `framework-command-builder-callback` — framework-command-builder-callback
@@ -927,7 +927,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | ----------------------------------------------------------------- |
 | Status       | `wip`                                                             |
 | Languages    | `typescript`                                                      |
-| Backlog task | `TASK-223`                                                        |
+| Backlog task | _none_                                                            |
 | Classifier   | builtin, `check_framework_lifecycle_handler` (min_confidence 0.9) |
 
 ## `getter-accessor-not-tracked` — getter-accessor-not-tracked
@@ -938,7 +938,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | ----------------------------------------------------------------- |
 | Status       | `wip`                                                             |
 | Languages    | `typescript`                                                      |
-| Backlog task | `TASK-245`                                                        |
+| Backlog task | _none_                                                            |
 | Classifier   | builtin, `check_getter_accessor_not_tracked` (min_confidence 0.9) |
 
 ## `import-resolution-miss` — import-resolution-miss
@@ -949,7 +949,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-304`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `inherited-method-dispatch` — inherited-method-dispatch
@@ -960,7 +960,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-336`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `inherited-static-method-dispatch` — inherited-static-method-dispatch
@@ -971,7 +971,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-330`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `inline-callback` — inline-callback
@@ -1004,7 +1004,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | ------------------------------------------------------------- |
 | Status       | `wip`                                                         |
 | Languages    | `typescript`                                                  |
-| Backlog task | `TASK-294`                                                    |
+| Backlog task | _none_                                                        |
 | Classifier   | builtin, `check_jsx_mdx_component_usage` (min_confidence 0.9) |
 
 ## `method-call-on-callback-parameter` — method-call-on-callback-parameter
@@ -1015,7 +1015,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-329`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `method-call-on-typed-instance` — method-call-on-typed-instance
@@ -1026,7 +1026,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | -------------------------------------------------------------------- |
 | Status       | `wip`                                                                |
 | Languages    | `typescript`                                                         |
-| Backlog task | `TASK-320`                                                           |
+| Backlog task | _none_                                                               |
 | Classifier   | builtin, `check_method_call_on_typed_instance` (min_confidence 0.85) |
 
 ## `method-call-unresolved` — method-call-unresolved
@@ -1048,7 +1048,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-249`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `static-method-call-unresolved` — static-method-call-unresolved
@@ -1059,7 +1059,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-237`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `static-method-call` — static-method-call
@@ -1092,7 +1092,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | -------------------------------------------------------- |
 | Status       | `wip`                                                    |
 | Languages    | `typescript`                                             |
-| Backlog task | `TASK-281`                                               |
+| Backlog task | _none_                                                   |
 | Classifier   | builtin, `check_type_cast_dispatch` (min_confidence 0.9) |
 
 ## `type-cast-receiver` — type-cast-receiver
@@ -1103,7 +1103,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | -------------------------------------------------------- |
 | Status       | `wip`                                                    |
 | Languages    | `typescript`                                             |
-| Backlog task | `TASK-319`                                               |
+| Backlog task | _none_                                                   |
 | Classifier   | builtin, `check_type_cast_receiver` (min_confidence 0.9) |
 
 ## `unindexed-callers` — unindexed-callers
@@ -1125,7 +1125,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | ---------------------------------------------------------------------- |
 | Status       | `wip`                                                                  |
 | Languages    | `typescript`                                                           |
-| Backlog task | `TASK-311`                                                             |
+| Backlog task | _none_                                                                 |
 | Classifier   | builtin, `check_bundler_module_path_substitution` (min_confidence 0.9) |
 
 ## `bundler-module-substitution` — bundler-module-substitution
@@ -1147,7 +1147,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-325`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `computed-property-method-caller` — computed-property-method-caller
@@ -1158,7 +1158,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------------------------------------- |
 | Status       | `wip`                                                                 |
 | Languages    | `typescript`                                                          |
-| Backlog task | `TASK-290`                                                            |
+| Backlog task | _none_                                                                |
 | Classifier   | builtin, `check_computed_property_method_caller` (min_confidence 0.9) |
 
 ## `const-arrow-function-export` — const-arrow-function-export
@@ -1180,7 +1180,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-235`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `cross-package-workspace-import` — cross-package-workspace-import
@@ -1213,7 +1213,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------------------------------- |
 | Status       | `wip`                                                           |
 | Languages    | `typescript`                                                    |
-| Backlog task | `TASK-285`                                                      |
+| Backlog task | _none_                                                          |
 | Classifier   | builtin, `check_dynamic_runtime_injection` (min_confidence 0.9) |
 
 ## `getter-access-not-tracked` — getter-access-not-tracked
@@ -1224,7 +1224,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-258`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `iife-not-tracked` — iife-not-tracked
@@ -1235,7 +1235,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-307`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `indirect-function-reference` — indirect-function-reference
@@ -1246,7 +1246,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-268`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `namespace-reexport-member-access` — namespace-reexport-member-access
@@ -1257,7 +1257,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-278`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `private-class-field-method` — private-class-field-method
@@ -1268,7 +1268,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | ---------------------------------------------------------------- |
 | Status       | `wip`                                                            |
 | Languages    | `typescript`                                                     |
-| Backlog task | `TASK-216`                                                       |
+| Backlog task | _none_                                                           |
 | Classifier   | builtin, `check_private_class_field_method` (min_confidence 0.9) |
 
 ## `private-field-method-resolution` — private-field-method-resolution
@@ -1279,7 +1279,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | ---------------------------------------------------------------------- |
 | Status       | `wip`                                                                  |
 | Languages    | `typescript`                                                           |
-| Backlog task | `TASK-230`                                                             |
+| Backlog task | _none_                                                                 |
 | Classifier   | builtin, `check_private_field_method_resolution` (min_confidence 0.95) |
 
 ## `proxy-dispatch` — proxy-dispatch
@@ -1290,7 +1290,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-280`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `test-file-exclusion` — test-file-exclusion
@@ -1312,7 +1312,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-322`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `unindexed-script-caller` — unindexed-script-caller
@@ -1323,7 +1323,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-296`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `unresolved-import-caller` — unresolved-import-caller
@@ -1334,7 +1334,7 @@ Proposed by plan investigator — fill in before enabling.
 | ------------ | --------------------------------------- |
 | Status       | `wip`                                   |
 | Languages    | `typescript`                            |
-| Backlog task | `TASK-252`                              |
+| Backlog task | _none_                                  |
 | Classifier   | _none — known, no automated classifier_ |
 
 ## `unresolved-instance-method-call` — unresolved-instance-method-call
