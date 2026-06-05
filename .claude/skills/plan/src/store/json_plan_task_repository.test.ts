@@ -113,10 +113,10 @@ describe("JsonPlanTaskRepository query", () => {
   it("filters by status", async () => {
     const repo = new JsonPlanTaskRepository();
     const live = make_task({ id: "live" as PlanTaskId, status: "proposed" });
-    const dead = make_task({ id: "dead" as PlanTaskId, status: "abandoned" });
+    const dead = make_task({ id: "dead" as PlanTaskId, status: "resolved" });
     await repo.put_many([live, dead]);
 
-    expect(await repo.query({ status: "abandoned" })).toEqual([dead]);
+    expect(await repo.query({ status: "resolved" })).toEqual([dead]);
   });
 
   it("filters by parent_id", async () => {

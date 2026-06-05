@@ -60,17 +60,14 @@ export type PlanTaskId = string & { __brand: "PlanTaskId" };
  *                orphan `resolved` only when every project in its `projects[]`
  *                was scanned this sweep, so a partial-scope sweep never falsely
  *                resolves a task whose projects it did not cover. Distinct from
- *                `superseded` (a replacement exists) and `abandoned` (a human/
- *                strategist judged the fix not worth pursuing).
- * - `abandoned`  judged not worth pursuing; no longer actionable.
+ *                `superseded`, where a replacement task exists.
  */
 export type PlanTaskStatus =
   | "proposed"
   | "accepted"
   | "superseded"
   | "exported"
-  | "resolved"
-  | "abandoned";
+  | "resolved";
 
 /**
  * Size tier of a task in the hierarchical plan tree. The engine emits one node

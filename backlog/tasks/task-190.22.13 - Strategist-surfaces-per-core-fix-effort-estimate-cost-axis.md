@@ -133,6 +133,14 @@ fix, while a `fault_area` or `architectural` parent sizes the blast radius of it
 whole subtree's upgrade. A ranker reads effort at a single tier rather than
 summing a subtree; this is documented on the `PlanTask.core_fix_effort` field.
 
+## Clean slate
+
+The `PlanTaskStatus` union holds only the states the engine produces — `proposed`,
+`accepted`, `superseded`, `exported`, `resolved`. There is no judgement-driven
+terminal state: a fix that is not worth doing now stays live and low-ranked by the
+cost/benefit metrics, so it is re-judged each sweep rather than frozen. The
+one-shot task-DB seed migration is removed and the task-DB starts empty.
+
 ## Firewall and contract
 
 The firewall and planning-only contract are unchanged: the strategist writes only

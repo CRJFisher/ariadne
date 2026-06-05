@@ -298,7 +298,7 @@ describe("export_to_backlog run()", () => {
 
   it("rejects unknown args and a non-exportable --status", async () => {
     await expect(run(["--bogus"], FIXED_NOW)).rejects.toThrow("Unknown argument: --bogus");
-    await expect(run(["--status", "abandoned"], FIXED_NOW)).rejects.toThrow(
+    await expect(run(["--status", "resolved"], FIXED_NOW)).rejects.toThrow(
       "--status expects one of proposed|accepted",
     );
     await expect(run(["--priority", "urgent"], FIXED_NOW)).rejects.toThrow(

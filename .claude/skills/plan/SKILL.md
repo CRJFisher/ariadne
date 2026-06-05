@@ -127,7 +127,7 @@ node --import tsx .claude/skills/plan/scripts/export_to_backlog.ts \
 
 | Flag                 | Effect                                                                         |
 | -------------------- | ------------------------------------------------------------------------------ |
-| `--status proposed\|accepted` | Select rows in this live state (default `proposed`); only live work is exportable — terminal rows (`superseded`/`resolved`/`abandoned`) are never promoted |
+| `--status proposed\|accepted` | Select rows in this live state (default `proposed`); only live work is exportable — terminal rows (`superseded`/`resolved`/`exported`) are never promoted |
 | `--fault-area <area>`| Restrict to one `AriadneFaultArea`                                              |
 | `--priority core\|classifier` | `core` selects core-fix rows (stamped backlog `priority: high`), `classifier` the interim classifier work (`priority: medium`) |
 | `--id <id>...`       | Export exactly these DB task ids — the filter flags are ignored, but a named row that is already exported (or whose `dedup_key` a backlog task carries) is still skipped, and a terminal-status row is reported as non-exportable |

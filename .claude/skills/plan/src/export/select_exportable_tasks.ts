@@ -12,9 +12,9 @@
  *
  * Only LIVE work is exportable: a task must be `proposed` or `accepted`
  * ({@link EXPORTABLE_STATUSES}). Terminal states (`superseded`, `resolved`,
- * `abandoned`) are retired work the engine no longer tracks as actionable, so
+ * `exported`) are retired work the engine no longer tracks as actionable, so
  * promoting them into the user's backlog is always a mistake — a filter typo
- * (`--status abandoned`) or an explicit `--id` naming a retired row is reported
+ * (`--status resolved`) or an explicit `--id` naming a retired row is reported
  * as `skipped_non_exportable`, never written. This also closes a duplicate-write
  * path: two live tasks never share a `dedup_key` (the reconciler augments rather
  * than duplicates), so once terminal rows are excluded no two selected rows can
