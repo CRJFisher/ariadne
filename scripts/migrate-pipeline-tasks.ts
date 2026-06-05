@@ -27,12 +27,24 @@
  *
  * ## Safety
  *
+ * **Commit `backlog/` before `--execute`.** Git history is the only archive, so
+ * the deletion must land on a clean tree: the documented recovery
+ * `git restore --source=HEAD -- backlog/tasks/` only restores files that were
+ * committed before the run.
+ *
  * Dry-run is the default: it classifies, prints the buckets, asserts the
  * migrate count, and mutates nothing. `--execute` is the explicit confirmation
  * gate. On execute the order is SEED then DELETE: a crash after seeding leaves
  * the markdown intact (re-run resumes idempotently); a crash mid-delete is
  * recovered with `git restore`. The seed write is byte-identical on every re-run
- * (fixed sweep id, deterministic dedup key), so re-running is safe.
+ * (fixed sweep id, deterministic dedup key), so re-running is safe. After a
+ * completed run the markdown is gone, so a re-run needs `--expect-migrate 0` (or
+ * the surviving count) — the default 234 will correctly refuse.
+ *
+ * To FULLY reverse a completed migration: remove the seeded task-DB rows
+ * (`rm -f ~/.ariadne/plan/tasks/<id>.json` for each seeded id — the exact loop
+ * is printed on execute) AND `git restore --source=HEAD -- backlog/tasks/`
+ * (pre-commit) or `git revert <migration-commit>` (post-commit).
  *
  * **Script invocation:** always `node --import tsx`. Never `pnpm exec tsx`.
  *
@@ -53,7 +65,7 @@ import {
   type PlanTaskId,
   type PlanTaskStatus,
 } from "@ariadnejs/skill-protocol";
-import { is_ariadne_fault_area, type AriadneFaultArea } from "@ariadnejs/types";
+import type { AriadneFaultArea } from "@ariadnejs/types";
 
 import { JsonPlanTaskRepository } from "../.claude/skills/plan/src/store/json_plan_task_repository.js";
 import { backlog_tasks_dir } from "../.claude/skills/plan/src/store/paths.js";
@@ -104,9 +116,12 @@ export interface ParsedBacklogTask {
 
 // ── Frontmatter + body parsing ──────────────────────────────────────────────
 // Regex/line-walk parsing, matching the repo's existing backlog-frontmatter
-// readers (`src/store/backlog_dedup.ts`). Every parse degrades toward empty
-// defaults rather than throwing, so a malformed human task is classified KEEP,
-// never silently migrated.
+// readers (`src/store/backlog_dedup.ts`). A full YAML parser is deliberately
+// avoided: only id/title/status/labels are read, the fail-soft-to-KEEP behavior
+// IS the safety property (a YAML lib would throw on a malformed human task and
+// could halt the whole sweep), and it keeps this one-shot script dependency-free.
+// Every parse degrades toward empty defaults rather than throwing, so a malformed
+// human task is classified KEEP, never silently migrated.
 
 /** Pull the leading `---\n…\n---` block (CRLF-normalized first); `null` if absent. */
 function frontmatter_block(text: string): string | null {
@@ -115,17 +130,22 @@ function frontmatter_block(text: string): string | null {
   return match === null ? null : match[1];
 }
 
+/** The C-style escapes a double-quoted YAML scalar may carry — the inverse of the export adapter's `yaml_double_quote`. */
+const DOUBLE_QUOTE_ESCAPE: Record<string, string> = {
+  n: "\n",
+  r: "\r",
+  t: "\t",
+  "\"": "\"",
+  "\\": "\\",
+};
+
 /** Unquote a YAML scalar value: double-quoted (C-escapes), single-quoted (`''`→`'`), or bare. */
 function parse_scalar(raw: string): string {
   const value = raw.trim();
   if (value.length >= 2 && value.startsWith("\"") && value.endsWith("\"")) {
-    return value
-      .slice(1, -1)
-      .replace(/\\n/g, "\n")
-      .replace(/\\r/g, "\r")
-      .replace(/\\t/g, "\t")
-      .replace(/\\"/g, "\"")
-      .replace(/\\\\/g, "\\");
+    // One left-to-right pass: each `\x` consumes its own escaped char, so an
+    // escaped backslash (`\\`) can never be re-read as the start of `\n`/`\r`/`\t`.
+    return value.slice(1, -1).replace(/\\(.)/g, (_, char: string) => DOUBLE_QUOTE_ESCAPE[char] ?? char);
   }
   if (value.length >= 2 && value.startsWith("'") && value.endsWith("'")) {
     return value.slice(1, -1).replace(/''/g, "'");
@@ -278,9 +298,12 @@ export function seed_dedup_key(id: string): string {
  * the source-of-truth id is the frontmatter `id`, not the filename.
  */
 export function seed_from_backlog_task(parsed: ParsedBacklogTask, kind: TaskKind): PlanTask {
-  const fault_area = map_fault_area(kind, parsed.labels);
-  if (!is_ariadne_fault_area(fault_area)) {
-    throw new Error(`computed non-area fault_area ${JSON.stringify(fault_area)} for ${parsed.id}`);
+  // The id names the `tasks/<id>.json` file and seeds the dedup key, so an empty
+  // id would write `tasks/.json` and let a second empty-id seed clobber the
+  // first. A migrate-classified task with no id is malformed frontmatter — fail
+  // loud before any seed/delete rather than silently collapse two tickets.
+  if (parsed.id === "") {
+    throw new Error("migrate-classified task has an empty id (malformed frontmatter)");
   }
   return {
     schema_version: PLAN_TASK_SCHEMA_VERSION,
@@ -290,7 +313,7 @@ export function seed_from_backlog_task(parsed: ParsedBacklogTask, kind: TaskKind
     child_ids: [],
     title: parsed.title,
     body: parsed.body,
-    fault_area,
+    fault_area: map_fault_area(kind, parsed.labels),
     evidence: [],
     observed_count: kind === "bug" ? parsed.observed_count : 0,
     projects: [],
@@ -394,6 +417,14 @@ export async function run(argv: string[]): Promise<MigrationSummary> {
 
   const seeds = migrate.map((c) => seed_from_backlog_task(c.parsed, c.kind));
   const seeded_ids = seeds.map((s) => s.id);
+
+  // Two migrate-classified tickets sharing an id would write the same
+  // `tasks/<id>.json` (the second clobbers the first) and then delete BOTH
+  // markdowns — a silent data-loss path. Fail loud before any mutation.
+  const duplicate_id = seeded_ids.find((id, index) => seeded_ids.indexOf(id) !== index);
+  if (duplicate_id !== undefined) {
+    throw new Error(`duplicate id ${duplicate_id} among migrate-classified tasks; no mutation performed`);
+  }
 
   let strays_removed = 0;
   const deleted_files: string[] = [];

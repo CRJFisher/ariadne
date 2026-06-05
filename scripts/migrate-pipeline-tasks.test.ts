@@ -210,6 +210,12 @@ describe("parse_backlog_task", () => {
     );
   });
 
+  it("unescapes a double-quoted title, including an escaped backslash before n", () => {
+    const md = "---\nid: TASK-3\ntitle: \"a\\tb \\\\name \\\"q\\\"\"\nstatus: To Do\nlabels: []\n---\n";
+    // YAML inner text: a\tb \\name \"q\"  →  a<tab>b \name "q"
+    expect(parse_backlog_task(md).title).toEqual("a\tb \\name \"q\"");
+  });
+
   it("parses id, status, and the labels list exactly", () => {
     const parsed = parse_backlog_task(BUG_206);
     expect(parsed.id).toEqual("TASK-206");
@@ -387,6 +393,18 @@ describe("seed_from_backlog_task", () => {
     const b = seed_from_backlog_task(parse_backlog_task(BUG_206), "bug");
     expect(JSON.stringify(a)).toEqual(JSON.stringify(b));
   });
+
+  it("throws on a migrate-classified task with an empty id", () => {
+    const parsed: ParsedBacklogTask = {
+      id: "",
+      title: "[bug] malformed: trigger title but no id",
+      status: "To Do",
+      labels: ["false-positive-root-cause"],
+      body: "",
+      observed_count: 0,
+    };
+    expect(() => seed_from_backlog_task(parsed, "bug")).toThrow(/empty id/);
+  });
 });
 
 // ── run(argv) integration ────────────────────────────────────────────────────
@@ -453,6 +471,34 @@ describe("run", () => {
 
     // Only the human task survives on disk.
     expect(await fs.readdir(backlog_dir)).toEqual(["task-108 - keep.md"]);
+
+    // The deleted set and the printed recovery commands are the documented undo
+    // path — pin them so a typo in the load-bearing inverse can't ship.
+    expect(summary.deleted_files.sort()).toEqual(["task-190.16.21 - gap.md", "task-206 - bug.md"]);
+    expect(summary.recovery).toEqual({
+      undo_seeds:
+        "for id in TASK-206 TASK-190.16.21; do rm -f \"$HOME/.ariadne/plan/tasks/$id.json\"; done",
+      restore_precommit: "git restore --source=HEAD -- backlog/tasks/",
+      restore_postcommit: "git revert <migration-commit-sha>",
+    });
+  });
+
+  it("throws on an unknown argument, mutating nothing", async () => {
+    await expect(run(["--bogus"])).rejects.toThrow(/Unknown argument/);
+  });
+
+  it("throws on a non-integer or negative --expect-migrate", async () => {
+    await expect(run(["--expect-migrate", "abc"])).rejects.toThrow(/non-negative integer/);
+    await expect(run(["--expect-migrate", "-1"])).rejects.toThrow(/non-negative integer/);
+  });
+
+  it("throws before mutation when two migrate tasks share an id", async () => {
+    // A second bug fixture re-using TASK-206's id.
+    await fs.writeFile(path.join(backlog_dir, "task-206-dupe.md"), BUG_206);
+    await expect(run(["--execute", "--expect-migrate", "3"])).rejects.toThrow(
+      /duplicate id TASK-206/,
+    );
+    await expect(fs.readdir(plan_tasks_dir())).rejects.toThrow();
   });
 
   it("throws before any mutation when the migrate count mismatches", async () => {
