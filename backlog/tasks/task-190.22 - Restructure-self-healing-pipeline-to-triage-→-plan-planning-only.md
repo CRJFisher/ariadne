@@ -57,8 +57,10 @@ Numbered in canonical execution order — the task number is the dependency orde
 - **190.22.10** — Wire the `plan` engine to write `PlanTask` rows + reconcile within the task-DB. _(depends on .8 + .3)_
 - **190.22.11** — User-invoked export/promotion adapter (task-DB → `backlog/`; the sole backlog writer). _(depends on .8 + .7)_
 - **190.22.12** — Tidy `backlog/tasks/`: migrate the 234 auto-filed classifier tickets into the task-DB (archive-not-delete). _(depends on .8)_
+- **190.22.13** — Strategist surfaces a per-core-fix effort estimate (cost axis for the plan DB). _(depends on .10)_
+- **190.22.14** — Strategist verifies bucket membership; record membership decisions across the stores. _(depends on .10)_
 
-Execution order is numeric: .1 → .2 → … → .12.
+Execution order is numeric: .1 → .2 → … → .14.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
