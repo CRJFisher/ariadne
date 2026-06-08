@@ -187,8 +187,9 @@
     <h2>Plan</h2>
     <ul>
       <li><a href="#plan">Group → strategize → reconcile</a></li>
-      <li><a href="#plan-reconcile">Reconcile &amp; the task-DB</a></li>
       <li><a href="#plan-strategist">plan-strategist</a></li>
+      <li><a href="#plan-reconcile">Reconcile &amp; the task-DB</a></li>
+      <li><a href="#prioritize">Prioritize → backlog</a></li>
     </ul>
     <h2>Shared</h2>
     <ul>
@@ -789,6 +790,103 @@
       </div>
     </section>
 
+    <section id="plan-strategist">
+      <h2>plan-strategist: one bucket → a validated fix-tree in staging</h2>
+      <p class="caption">For one deterministic fault-area bucket, the strategist hydrates context, authors a hierarchical StrategistPlan (architectural → fault_area → localized), then self-validates and iterates until clean, writing only into ~/.ariadne/plan/staging. It writes no code, registry, or backlog — and for an 'other' bucket it emits both a taxonomy-extension and a core-fix task.</p>
+      <figure>
+        <div class="figbody"><svg xmlns="http://www.w3.org/2000/svg" width="720" height="560" viewBox="0 0 720 560" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+  <defs>
+    <marker id="ah" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#64748b"/></marker>
+  </defs>
+
+  <!-- 1: hydrate -->
+  <rect x="235" y="20" width="250" height="56" rx="8" fill="#e8f1ff" stroke="#2563eb" stroke-width="1.6"/>
+  <text x="360" y="43" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e3a8a">get_bucket_context.ts</text>
+  <text x="360" y="61" text-anchor="middle" font-size="11" fill="#475569">hydrate 1 bucket + folder_anchor + rules</text>
+
+  <line x1="360" y1="76" x2="360" y2="118" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+
+  <!-- 2: author plan -->
+  <rect x="225" y="120" width="270" height="56" rx="8" fill="#e8f1ff" stroke="#2563eb" stroke-width="1.6"/>
+  <text x="360" y="143" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e3a8a">author StrategistPlan tree</text>
+  <text x="360" y="161" text-anchor="middle" font-size="11" fill="#475569">architectural → fault_area → localized</text>
+
+  <!-- side branch: other-bucket -->
+  <line x1="495" y1="148" x2="600" y2="148" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+  <rect x="475" y="116" width="20" height="14" fill="#ffffff" opacity="0.85"/>
+  <text x="548" y="140" text-anchor="middle" font-size="10.5" fill="#475569">if 'other'</text>
+  <rect x="600" y="120" width="110" height="56" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.6"/>
+  <text x="655" y="140" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#854d0e">'other' bucket</text>
+  <text x="655" y="155" text-anchor="middle" font-size="10.5" fill="#475569">taxonomy-ext</text>
+  <text x="655" y="168" text-anchor="middle" font-size="10.5" fill="#475569">+ core-fix task</text>
+
+  <line x1="360" y1="176" x2="360" y2="218" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+
+  <!-- 3: write draft -->
+  <rect x="235" y="220" width="250" height="56" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.6"/>
+  <text x="360" y="243" text-anchor="middle" font-size="13" font-weight="bold" fill="#1b5e20">write draft plan</text>
+  <text x="360" y="261" text-anchor="middle" font-size="11" fill="#475569">StrategistPlan JSON → output_path</text>
+
+  <line x1="360" y1="276" x2="360" y2="318" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+
+  <!-- 4: validate (decision) -->
+  <polygon points="360,316 480,366 360,416 240,366" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.6"/>
+  <text x="360" y="358" text-anchor="middle" font-size="13" font-weight="bold" fill="#854d0e">validate_plan.ts</text>
+  <text x="360" y="375" text-anchor="middle" font-size="11" fill="#475569">ok === true?</text>
+
+  <!-- iterate loop: no -> back to author -->
+  <line x1="240" y1="366" x2="140" y2="366" stroke="#64748b" stroke-width="1.8"/>
+  <line x1="140" y1="366" x2="140" y2="148" stroke="#64748b" stroke-width="1.8"/>
+  <line x1="140" y1="148" x2="223" y2="148" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+  <rect x="95" y="248" width="90" height="16" fill="#ffffff" opacity="0.85"/>
+  <text x="140" y="260" text-anchor="middle" font-size="10.5" fill="#475569">no — fix tree, re-run</text>
+
+  <!-- yes -> staging -->
+  <line x1="360" y1="416" x2="360" y2="468" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+  <rect x="335" y="432" width="50" height="16" fill="#ffffff" opacity="0.85"/>
+  <text x="360" y="444" text-anchor="middle" font-size="10.5" fill="#475569">yes</text>
+
+  <!-- 5: staging store -->
+  <rect x="225" y="470" width="270" height="56" rx="8" fill="#ede7f6" stroke="#6d28d9" stroke-width="1.6"/>
+  <text x="360" y="493" text-anchor="middle" font-size="13" font-weight="bold" fill="#4c1d95">~/.ariadne/plan/staging/</text>
+  <text x="360" y="511" text-anchor="middle" font-size="11" fill="#475569">final plan only — never code/registry/backlog</text>
+
+  <!-- write-boundary note -->
+  <rect x="535" y="470" width="175" height="56" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2.4"/>
+  <text x="622" y="493" text-anchor="middle" font-size="12" font-weight="bold" fill="#991b1b">write boundary</text>
+  <text x="622" y="511" text-anchor="middle" font-size="10.5" fill="#475569">staging is the only write</text>
+  <line x1="495" y1="498" x2="533" y2="498" stroke="#64748b" stroke-width="1.8" stroke-dasharray="5 4"/>
+</svg></div>
+        <figcaption>plan-strategist: one bucket → a validated fix-tree in staging</figcaption>
+      </figure>
+
+      <div class="tables">
+        <div class="tbl-wrap">
+          <div class="tbl-title">Key modules</div>
+          <table>
+            <thead><tr><th>Name</th><th>Path</th><th>Role</th></tr></thead>
+            <tbody>
+              <tr><td class="name">plan-strategist</td><td class="path">.claude/agents/plan-strategist.md</td><td class="role">The Pass-B sub-agent: turns one fault-area bucket into a hierarchical StrategistPlan, owns the self-validate→iterate loop, and writes only to staging.</td></tr>
+              <tr><td class="name">get_bucket_context.ts</td><td class="path">.claude/skills/plan/scripts/get_bucket_context.ts</td><td class="role">Hydrates one staged bucket with folder_anchor, the closed AriadneFaultArea taxonomy, and the authoring rules the validator enforces.</td></tr>
+              <tr><td class="name">validate_plan.ts</td><td class="path">.claude/skills/plan/scripts/validate_plan.ts</td><td class="role">Deterministic structural validator (CLI wrapper); returns {ok, issues[]} and exit 0/1 to drive the iterate loop.</td></tr>
+              <tr><td class="name">validate_plan (core)</td><td class="path">.claude/skills/plan/src/propose/validate_plan.ts</td><td class="role">The actual rule engine: tier nesting, fault_area match, evidence-index bounds, non-empty text, other-bucket dual-task rule.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tbl-wrap">
+          <div class="tbl-title">Artifacts</div>
+          <table>
+            <thead><tr><th>Name</th><th>Path</th><th>Writer</th><th>Readers</th><th>Persistence</th></tr></thead>
+            <tbody>
+              <tr><td class="name">fault-area bucket</td><td class="path">~/.ariadne/plan/staging/&lt;sweep_id&gt;/buckets/&lt;bucket&gt;.json</td><td class="writer">plan Pass A (derive_fault_area bucketing)</td><td class="role">get_bucket_context.ts, validate_plan.ts</td><td class="persist p-per-run">per-run</td></tr>
+              <tr><td class="name">StrategistPlan</td><td class="path">~/.ariadne/plan/staging/&lt;sweep_id&gt;/plans/&lt;output_path&gt;.json</td><td class="writer">plan-strategist (sole writer)</td><td class="role">validate_plan.ts, plan Pass C reconcile</td><td class="persist p-per-run">per-run</td></tr>
+              <tr><td class="name">AriadneFaultArea taxonomy</td><td class="path">packages/types/src/ariadne_fault_area.ts</td><td class="writer human">human (a strategist 'other'-bucket task proposes the edit; it does not apply it)</td><td class="role">get_bucket_context.ts (ARIADNE_FAULT_AREAS / ARIADNE_FAULT_AREA_FOLDER), derive_fault_area</td><td class="persist p-persistent">persistent</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <section id="plan-reconcile">
       <h2>Reconcile: flatten the strategist's plan tree, key it, fold it into the task-DB</h2>
       <p class="caption">A re-sweep flattens the strategist's fix-plan tree into PlanTask rows, stamps each with a content-derived immutable dedup_key, then reconciles against the live task-DB — a colliding live task is augmented in place (never duplicated), unclaimed orphans are superseded/combined/resolved, and tasks the user already promoted into backlog/ are marked exported. The JsonPlanTaskRepository task-DB and append-only sweep log are the persistent stores; the read-only scan of backlog/ frontmatter is the only window into the user's tracker.</p>
@@ -910,74 +1008,53 @@
       </div>
     </section>
 
-    <section id="plan-strategist">
-      <h2>plan-strategist: one bucket → a validated fix-tree in staging</h2>
-      <p class="caption">For one deterministic fault-area bucket, the strategist hydrates context, authors a hierarchical StrategistPlan (architectural → fault_area → localized), then self-validates and iterates until clean, writing only into ~/.ariadne/plan/staging. It writes no code, registry, or backlog — and for an 'other' bucket it emits both a taxonomy-extension and a core-fix task.</p>
+    <section id="prioritize">
+      <h2>Prioritize: promote planned work into backlog/</h2>
+      <p class="caption">The plan engine leaves proposed fixes as PlanTask rows in its task-DB. The human-invoked /prioritize skill drives export_to_backlog.ts — the only writer of backlog/ — to graduate selected rows: preview candidates with --dry-run, narrow the set, then promote, which writes backlog/tasks/*.md, stamps plan_dedup_key, and flips each row to exported. Never runs on the autonomous sweep.</p>
       <figure>
-        <div class="figbody"><svg xmlns="http://www.w3.org/2000/svg" width="720" height="560" viewBox="0 0 720 560" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+        <div class="figbody"><svg xmlns="http://www.w3.org/2000/svg" width="720" height="430" viewBox="0 0 720 430" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
   <defs>
     <marker id="ah" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#64748b"/></marker>
   </defs>
 
-  <!-- 1: hydrate -->
-  <rect x="235" y="20" width="250" height="56" rx="8" fill="#e8f1ff" stroke="#2563eb" stroke-width="1.6"/>
-  <text x="360" y="43" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e3a8a">get_bucket_context.ts</text>
-  <text x="360" y="61" text-anchor="middle" font-size="11" fill="#475569">hydrate 1 bucket + folder_anchor + rules</text>
+  <!-- 1. plan task-DB (persistent store) -->
+  <rect x="190" y="20" width="320" height="56" rx="8" fill="#ede7f6" stroke="#6d28d9" stroke-width="1.6"/>
+  <text x="350" y="44" text-anchor="middle" font-size="13" font-weight="bold" fill="#4c1d95">~/.ariadne/plan/tasks/&lt;id&gt;.json</text>
+  <text x="350" y="62" text-anchor="middle" font-size="11" fill="#475569">PlanTask rows · status proposed / accepted</text>
 
-  <line x1="360" y1="76" x2="360" y2="118" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+  <line x1="350" y1="76" x2="350" y2="112" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
 
-  <!-- 2: author plan -->
-  <rect x="225" y="120" width="270" height="56" rx="8" fill="#e8f1ff" stroke="#2563eb" stroke-width="1.6"/>
-  <text x="360" y="143" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e3a8a">author StrategistPlan tree</text>
-  <text x="360" y="161" text-anchor="middle" font-size="11" fill="#475569">architectural → fault_area → localized</text>
+  <!-- 2. dry-run preview (decision / prioritize) -->
+  <polygon points="350,112 480,150 350,188 220,150" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.6"/>
+  <text x="350" y="146" text-anchor="middle" font-size="13" font-weight="bold" fill="#854d0e">export --dry-run</text>
+  <text x="350" y="164" text-anchor="middle" font-size="11" fill="#475569">list candidates → prioritize</text>
 
-  <!-- side branch: other-bucket -->
-  <line x1="495" y1="148" x2="600" y2="148" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
-  <rect x="475" y="116" width="20" height="14" fill="#ffffff" opacity="0.85"/>
-  <text x="548" y="140" text-anchor="middle" font-size="10.5" fill="#475569">if 'other'</text>
-  <rect x="600" y="120" width="110" height="56" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.6"/>
-  <text x="655" y="140" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#854d0e">'other' bucket</text>
-  <text x="655" y="155" text-anchor="middle" font-size="10.5" fill="#475569">taxonomy-ext</text>
-  <text x="655" y="168" text-anchor="middle" font-size="10.5" fill="#475569">+ core-fix task</text>
+  <line x1="350" y1="188" x2="350" y2="224" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+  <rect x="262" y="198" width="176" height="16" fill="#ffffffcc"/>
+  <text x="350" y="210" text-anchor="middle" font-size="10.5" fill="#475569">narrow with --id / filters</text>
 
-  <line x1="360" y1="176" x2="360" y2="218" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+  <!-- 3. export real run (human-owned write boundary) -->
+  <rect x="190" y="224" width="320" height="64" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2.4"/>
+  <text x="350" y="248" text-anchor="middle" font-size="13" font-weight="bold" fill="#991b1b">export_to_backlog.ts (real run)</text>
+  <text x="350" y="266" text-anchor="middle" font-size="11" fill="#475569">human-invoked · the only writer of backlog/</text>
+  <text x="350" y="281" text-anchor="middle" font-size="11" fill="#475569">render · stamp plan_dedup_key</text>
 
-  <!-- 3: write draft -->
-  <rect x="235" y="220" width="250" height="56" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.6"/>
-  <text x="360" y="243" text-anchor="middle" font-size="13" font-weight="bold" fill="#1b5e20">write draft plan</text>
-  <text x="360" y="261" text-anchor="middle" font-size="11" fill="#475569">StrategistPlan JSON → output_path</text>
+  <line x1="350" y1="288" x2="350" y2="344" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
 
-  <line x1="360" y1="276" x2="360" y2="318" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+  <!-- 4. backlog task file (persistent store) -->
+  <rect x="190" y="344" width="320" height="56" rx="8" fill="#ede7f6" stroke="#6d28d9" stroke-width="1.6"/>
+  <text x="350" y="368" text-anchor="middle" font-size="13" font-weight="bold" fill="#4c1d95">backlog/tasks/&lt;id&gt;.md</text>
+  <text x="350" y="386" text-anchor="middle" font-size="11" fill="#475569">new fix task · carries plan_dedup_key</text>
 
-  <!-- 4: validate (decision) -->
-  <polygon points="360,316 480,366 360,416 240,366" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.6"/>
-  <text x="360" y="358" text-anchor="middle" font-size="13" font-weight="bold" fill="#854d0e">validate_plan.ts</text>
-  <text x="360" y="375" text-anchor="middle" font-size="11" fill="#475569">ok === true?</text>
-
-  <!-- iterate loop: no -> back to author -->
-  <line x1="240" y1="366" x2="140" y2="366" stroke="#64748b" stroke-width="1.8"/>
-  <line x1="140" y1="366" x2="140" y2="148" stroke="#64748b" stroke-width="1.8"/>
-  <line x1="140" y1="148" x2="223" y2="148" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
-  <rect x="95" y="248" width="90" height="16" fill="#ffffff" opacity="0.85"/>
-  <text x="140" y="260" text-anchor="middle" font-size="10.5" fill="#475569">no — fix tree, re-run</text>
-
-  <!-- yes -> staging -->
-  <line x1="360" y1="416" x2="360" y2="468" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
-  <rect x="335" y="432" width="50" height="16" fill="#ffffff" opacity="0.85"/>
-  <text x="360" y="444" text-anchor="middle" font-size="10.5" fill="#475569">yes</text>
-
-  <!-- 5: staging store -->
-  <rect x="225" y="470" width="270" height="56" rx="8" fill="#ede7f6" stroke="#6d28d9" stroke-width="1.6"/>
-  <text x="360" y="493" text-anchor="middle" font-size="13" font-weight="bold" fill="#4c1d95">~/.ariadne/plan/staging/</text>
-  <text x="360" y="511" text-anchor="middle" font-size="11" fill="#475569">final plan only — never code/registry/backlog</text>
-
-  <!-- write-boundary note -->
-  <rect x="535" y="470" width="175" height="56" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2.4"/>
-  <text x="622" y="493" text-anchor="middle" font-size="12" font-weight="bold" fill="#991b1b">write boundary</text>
-  <text x="622" y="511" text-anchor="middle" font-size="10.5" fill="#475569">staging is the only write</text>
-  <line x1="495" y1="498" x2="533" y2="498" stroke="#64748b" stroke-width="1.8" stroke-dasharray="5 4"/>
+  <!-- feedback: flip the DB row → exported -->
+  <line x1="510" y1="256" x2="600" y2="256" stroke="#64748b" stroke-width="1.8" stroke-dasharray="5 4"/>
+  <line x1="600" y1="256" x2="600" y2="48" stroke="#64748b" stroke-width="1.8" stroke-dasharray="5 4"/>
+  <line x1="600" y1="48" x2="510" y2="48" stroke="#64748b" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#ah)"/>
+  <rect x="548" y="138" width="120" height="32" fill="#ffffffcc"/>
+  <text x="608" y="152" text-anchor="middle" font-size="10.5" fill="#475569">row → exported</text>
+  <text x="608" y="165" text-anchor="middle" font-size="10.5" fill="#475569">(suppress re-proposal)</text>
 </svg></div>
-        <figcaption>plan-strategist: one bucket → a validated fix-tree in staging</figcaption>
+        <figcaption>Prioritize: promote planned work into backlog/</figcaption>
       </figure>
 
       <div class="tables">
@@ -986,10 +1063,11 @@
           <table>
             <thead><tr><th>Name</th><th>Path</th><th>Role</th></tr></thead>
             <tbody>
-              <tr><td class="name">plan-strategist</td><td class="path">.claude/agents/plan-strategist.md</td><td class="role">The Pass-B sub-agent: turns one fault-area bucket into a hierarchical StrategistPlan, owns the self-validate→iterate loop, and writes only to staging.</td></tr>
-              <tr><td class="name">get_bucket_context.ts</td><td class="path">.claude/skills/plan/scripts/get_bucket_context.ts</td><td class="role">Hydrates one staged bucket with folder_anchor, the closed AriadneFaultArea taxonomy, and the authoring rules the validator enforces.</td></tr>
-              <tr><td class="name">validate_plan.ts</td><td class="path">.claude/skills/plan/scripts/validate_plan.ts</td><td class="role">Deterministic structural validator (CLI wrapper); returns {ok, issues[]} and exit 0/1 to drive the iterate loop.</td></tr>
-              <tr><td class="name">validate_plan (core)</td><td class="path">.claude/skills/plan/src/propose/validate_plan.ts</td><td class="role">The actual rule engine: tier nesting, fault_area match, evidence-index bounds, non-empty text, other-bucket dual-task rule.</td></tr>
+              <tr><td class="name">prioritize SKILL.md</td><td class="path">.claude/skills/prioritize/SKILL.md</td><td class="role">Human-invoked skill: documents export_to_backlog.ts and drives the prioritization workflow — preview with --dry-run, narrow, then promote. Owns no logic of its own.</td></tr>
+              <tr><td class="name">export_to_backlog.ts</td><td class="path">.claude/skills/plan/scripts/export_to_backlog.ts</td><td class="role">The only writer of backlog/: selects exportable rows, mints the backlog id, renders the task, flips the DB row → exported, and logs one export PlanSweepEvent. Idempotent — a re-run is a no-op.</td></tr>
+              <tr><td class="name">select_exportable_tasks.ts</td><td class="path">.claude/skills/plan/src/export/select_exportable_tasks.ts</td><td class="role">Picks rows by --status/--fault-area/--priority or exact --id; skips anything already exported or whose dedup_key a backlog task already carries.</td></tr>
+              <tr><td class="name">render_backlog_task.ts</td><td class="path">.claude/skills/plan/src/export/render_backlog_task.ts</td><td class="role">Renders a PlanTask into the backlog task file, stamping plan_dedup_key into its frontmatter as the idempotency link.</td></tr>
+              <tr><td class="name">next_backlog_task_id.ts</td><td class="path">.claude/skills/plan/src/export/next_backlog_task_id.ts</td><td class="role">Mints the next free top-level backlog id via a read-only scan of the whole backlog/ tree.</td></tr>
             </tbody>
           </table>
         </div>
@@ -998,9 +1076,8 @@
           <table>
             <thead><tr><th>Name</th><th>Path</th><th>Writer</th><th>Readers</th><th>Persistence</th></tr></thead>
             <tbody>
-              <tr><td class="name">fault-area bucket</td><td class="path">~/.ariadne/plan/staging/&lt;sweep_id&gt;/buckets/&lt;bucket&gt;.json</td><td class="writer">plan Pass A (derive_fault_area bucketing)</td><td class="role">get_bucket_context.ts, validate_plan.ts</td><td class="persist p-per-run">per-run</td></tr>
-              <tr><td class="name">StrategistPlan</td><td class="path">~/.ariadne/plan/staging/&lt;sweep_id&gt;/plans/&lt;output_path&gt;.json</td><td class="writer">plan-strategist (sole writer)</td><td class="role">validate_plan.ts, plan Pass C reconcile</td><td class="persist p-per-run">per-run</td></tr>
-              <tr><td class="name">AriadneFaultArea taxonomy</td><td class="path">packages/types/src/ariadne_fault_area.ts</td><td class="writer human">human (a strategist 'other'-bucket task proposes the edit; it does not apply it)</td><td class="role">get_bucket_context.ts (ARIADNE_FAULT_AREAS / ARIADNE_FAULT_AREA_FOLDER), derive_fault_area</td><td class="persist p-persistent">persistent</td></tr>
+              <tr><td class="name">plan task-DB</td><td class="path">~/.ariadne/plan/tasks/&lt;id&gt;.json</td><td class="writer">plan engine</td><td class="role">export_to_backlog.ts (reads exportable rows, flips → exported)</td><td class="persist p-persistent">persistent</td></tr>
+              <tr><td class="name">backlog/tasks/&lt;id&gt;.md</td><td class="path">backlog/tasks/</td><td class="writer human">export_to_backlog.ts (human-invoked)</td><td class="role">human, plan reconcile (read-only dedup signal)</td><td class="persist p-persistent">persistent</td></tr>
             </tbody>
           </table>
         </div>
