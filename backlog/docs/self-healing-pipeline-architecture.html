@@ -37,7 +37,7 @@
   code, .mono { font-family: var(--mono); font-size: 0.85em; }
 
   /* ---- layout: sticky TOC + content ---- */
-  .layout { display: flex; align-items: flex-start; max-width: 1380px; margin: 0 auto; }
+  .layout { display: flex; align-items: flex-start; }
   nav.toc {
     position: sticky;
     top: 0;
@@ -77,7 +77,6 @@
   main {
     flex: 1 1 auto;
     min-width: 0;
-    max-width: 1100px;
     padding: 28px 32px 80px;
   }
 
@@ -145,7 +144,7 @@
 
   /* ---- tables ---- */
   .tables { display: grid; gap: 18px; margin-top: 8px; }
-  .tbl-wrap { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #fff; }
+  .tbl-wrap { border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; background: #fff; }
   .tbl-title {
     font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
     color: var(--muted); padding: 8px 12px; background: #fbfcfe; border-bottom: 1px solid var(--line);
