@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Offline plan engine over completed triage runs. Deterministically groups every false-positive by Ariadne fault area, dispatches one opus strategist per fault-area bucket to design a hierarchical fix plan, and reconciles the plans into the firewalled task-DB by dedup_key. Planning-only — never writes the user's backlog, the registry, or core code.
+description: Offline plan engine over completed triage runs. Deterministically groups every false-positive by Ariadne fault area, dispatches one opus strategist per fault-area bucket to design a hierarchical fix plan, and reconciles the plans into the task-DB by dedup_key. Planning-only — never writes the user's backlog, the registry, or core code.
 argument-hint: "[--project <name>] [--last <n>] [--run <path>]"
 disable-model-invocation: true
 allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read, Write, Glob, Task(plan-strategist)
@@ -12,10 +12,10 @@ Offline three-pass engine over `triage` outputs: **group → strategize →
 reconcile**. Pass A deterministically buckets every published false-positive by
 `AriadneFaultArea`; Pass B dispatches one `plan-strategist` (opus) per bucket to
 design a hierarchical fix-plan tree; Pass C reconciles the trees into the
-firewalled task-DB at `~/.ariadne/plan/`, augmenting existing tasks by
+task-DB at `~/.ariadne/plan/`, augmenting existing tasks by
 `dedup_key` rather than duplicating them.
 
-The engine is **planning-only and firewalled**: it reads
+The engine is **planning-only**: it reads
 `analysis_output/<project>/triage_results/<run-id>.json` (schema v5, owned by
 `@ariadnejs/skill-protocol`) and writes only `PlanTask` rows + a per-sweep event
 log under `~/.ariadne/plan/`. It never writes the user's `backlog/`, the
@@ -113,8 +113,8 @@ only on the proposed→exported transition).
 
 ## Export to backlog (user-invoked)
 
-Graduate proposed task-DB rows into the user's `backlog/` — the single firewall
-crossing, run deliberately by the human and **never on the autonomous sweep**.
+Graduate proposed task-DB rows into the user's `backlog/` — the only write into
+`backlog/`, run deliberately by the human and **never on the autonomous sweep**.
 The adapter writes `backlog/tasks/*.md` **directly via the filesystem** (no
 `mcp__backlog__*` tool), so the `plan` path never holds a mutating backlog grant;
 the existing `Bash(node --import tsx:*)` grant is all it needs.
@@ -176,7 +176,7 @@ output; `~/.ariadne/plan/` is the plan engine's task-DB (defined in
 - **Task-DB:** `~/.ariadne/plan/tasks/<id>.json` (`PlanTask` rows) + `~/.ariadne/plan/sweeps/<sweep-id>.jsonl` (`PlanSweepEvent` log)
 - **Registry (read-only):** `.claude/skills/triage/known_issues/registry.json` — a dedup/grounding signal only
 
-## Firewall (write boundaries)
+## Write boundaries
 
 `plan` never writes `backlog/`, `registry.json`, or `packages/core`. It writes
 only the task-DB under `~/.ariadne/plan/`. Pass C reads `backlog/tasks/*.md`

@@ -5,7 +5,7 @@
  * hydrated bucket fields, the validator loop, the `StrategistPlan` output shape,
  * and the `other`-bucket dual-task obligation. A pinned snapshot guards against
  * silent drift back to the dropped classifier-spec authoring + backlog-filing
- * framing, and pins the firewall completion (no `backlog` MCP grant).
+ * framing, and pins the planning-only boundary (no `backlog` MCP grant).
  */
 
 import * as fs from "node:fs";
@@ -23,7 +23,7 @@ const AGENT_PATH = path.join(REPO_ROOT, ".claude", "agents", "plan-strategist.md
  * is prose that legitimately churns under editorial polish, while the other
  * scalars are load-bearing contract surface (tool allowlist, model, turn budget,
  * MCP server access). `mcp_servers` is pinned to `[]` — the backlog grant is
- * dropped, completing the backlog firewall at the agent boundary.
+ * dropped, keeping the strategist planning-only at the agent boundary.
  */
 interface AgentFrontmatter {
   name: string;

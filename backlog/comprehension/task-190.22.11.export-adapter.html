@@ -105,14 +105,14 @@
 <body>
 <div class="wrap">
 <header>
-  <p class="eyebrow">TASK-190.22.11 · self-repair / firewall / export</p>
-  <h1>export_to_backlog — the one place the firewall is crossed</h1>
+  <p class="eyebrow">TASK-190.22.11 · self-repair / write-boundary / export</p>
+  <h1>export_to_backlog — the only write into backlog/</h1>
   <p class="lead">The plan engine writes only to its own task-DB at <code>~/.ariadne/plan/</code>. This adapter is the single sanctioned bridge that promotes selected DB rows into the user's <code>backlog/tasks/*.md</code>. It is the human's control gate and the portability seam: a different tracker target is a second adapter, with no engine or DB change.</p>
   <div class="meta">
     <span class="chip"><strong>writes</strong> backlog/tasks/*.md</span>
     <span class="chip"><strong>reads</strong> ~/.ariadne/plan/tasks/*.json</span>
     <span class="chip">depends <strong>.8 .7</strong></span>
-    <span class="chip">sole entry in <strong>ALLOWED_BACKLOG_WRITERS</strong></span>
+    <span class="chip">sole writer of <strong>backlog/</strong></span>
   </div>
   <div class="prompt-box">
     <p class="label">Grounded in</p>
@@ -121,7 +121,6 @@
       <li><code>packages/skill-protocol/src/plan_task.ts</code> — the PlanTask record</li>
       <li><code>.claude/skills/plan/src/store/backlog_dedup.ts</code> — the read-back that closes the loop</li>
       <li><code>.claude/skills/plan/src/propose/render_task.ts</code> — the renderers that already produced title/body</li>
-      <li><code>.claude/rules/backlog-firewall.md</code> · <code>packages/skill-fs/src/backlog_writers.test.ts</code></li>
     </ul>
   </div>
 </header>
@@ -262,7 +261,7 @@
 
 <section>
 <h2>Decision 2 — direct filesystem write vs <code>mcp__backlog__task_create</code></h2>
-<p>The adapter is a node <code>.ts</code> script. Two facts force the choice: a script cannot itself invoke MCP tools, and the firewall forbids granting a mutating <code>mcp__backlog__*</code> tool anywhere on the plan path. So the firewall-clean option is a direct filesystem write — which means the adapter must <strong>mint the backlog id itself</strong>.</p>
+<p>The adapter is a node <code>.ts</code> script. Two facts force the choice: a script cannot itself invoke MCP tools, and the write-boundary policy forbids granting a mutating <code>mcp__backlog__*</code> tool anywhere on the plan path. So the clean option is a direct filesystem write — which means the adapter must <strong>mint the backlog id itself</strong>.</p>
 <div class="opts two">
   <div class="opt">
     <span class="tag">via mcp__backlog__task_create</span>
@@ -270,22 +269,22 @@
     <p>The MCP server mints the next id and writes the file.</p>
     <div class="pc">
       <div class="pro">backlog.md owns id minting — no race to reimplement</div>
-      <div class="con"><strong>Firewall breach:</strong> granting a mutating <code>mcp__backlog__*</code> tool on the plan path is exactly what <code>backlog-firewall.md</code> forbids</div>
+      <div class="con"><strong>Write-boundary breach:</strong> granting a mutating <code>mcp__backlog__*</code> tool on the plan path is exactly what the backlog write boundary forbids</div>
       <div class="con">A node script can't call MCP tools anyway</div>
     </div>
-    <p class="verdict open">forbidden by the firewall</p>
+    <p class="verdict open">forbidden by the write boundary</p>
   </div>
   <div class="opt pick">
     <span class="tag">direct filesystem write</span>
     <h4>write the .md, mint the id locally</h4>
     <p>Scan all backlog task ids, take max top-level integer, assign next.</p>
     <div class="pc">
-      <div class="pro">Firewall-clean: the AST test already pre-allows this one file</div>
+      <div class="pro">Write-boundary-clean: keeps the plan path free of any backlog MCP grant</div>
       <div class="pro">No MCP grant on the plan path; no agent in the loop</div>
       <div class="pro">Matches backlog.md's own scan-based id assignment — same algorithm, not a divergent scheme</div>
       <div class="con">Must reimplement max-id scan + slug formatting</div>
     </div>
-    <p class="verdict">the only firewall-clean choice</p>
+    <p class="verdict">the only write-boundary-clean choice</p>
   </div>
 </div>
 
@@ -358,13 +357,13 @@
 
 <div class="invert">
   <span class="k">Verification — the gate's checklist</span>
-  <p><code>--dry-run</code> lists selected rows and writes nothing · a real run creates backlog tasks, flips rows to <code>exported</code>, stamps <code>plan_dedup_key</code> · a second identical run is a pure no-op · <code>export_to_backlog.ts</code> is the only file <code>backlog_writers.test.ts</code> permits to touch <code>backlog/</code> · <code>pnpm -r test</code> + the firewall test green.</p>
+  <p><code>--dry-run</code> lists selected rows and writes nothing · a real run creates backlog tasks, flips rows to <code>exported</code>, stamps <code>plan_dedup_key</code> · a second identical run is a pure no-op · <code>export_to_backlog.ts</code> is the only file that writes <code>backlog/</code> · <code>pnpm -r test</code> green.</p>
 </div>
 </section>
 
 <footer>
   Planning aid for a single confirmation gate · TASK-190.22.11<br>
-  Generated from the task doc + plan_task.ts, plan_task_repository.ts, backlog_dedup.ts, render_task.ts, backlog-firewall.md, backlog_writers.test.ts · 2026-06-04
+  Generated from the task doc + plan_task.ts, plan_task_repository.ts, backlog_dedup.ts, render_task.ts · 2026-06-04
 </footer>
 </div>
 </body>

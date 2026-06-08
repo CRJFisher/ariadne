@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "skill": "plan",
-  "description": "Offline planning sweep over completed triage runs. Pass A deterministically groups every false-positive verdict by AriadneFaultArea (derive_fault_area); Pass B dispatches one plan-strategist (opus) per fault-area bucket to design a hierarchical fix-plan tree; Pass C reconciles within the firewalled task-DB by dedup_key and writes PlanTask rows + a per-sweep event log to ~/.ariadne/plan/. Planning-only and firewalled: never writes backlog/, registry.json, or packages/core. Graduation to backlog/ is the user-invoked export adapter.",
+  "description": "Offline planning sweep over completed triage runs. Pass A deterministically groups every false-positive verdict by AriadneFaultArea (derive_fault_area); Pass B dispatches one plan-strategist (opus) per fault-area bucket to design a hierarchical fix-plan tree; Pass C reconciles within the task-DB by dedup_key and writes PlanTask rows + a per-sweep event log to ~/.ariadne/plan/. Planning-only: never writes backlog/, registry.json, or packages/core. Graduation to backlog/ is the user-invoked export adapter.",
 
   "flows": [
     {
@@ -49,7 +49,7 @@
       "path": "~/.ariadne/plan/tasks/<id>.json",
       "access": "write",
       "writer_owner": "plan",
-      "semantic_role": "the firewalled task-DB: one PlanTask row per file (architectural -> fault_area -> localized tier). The plan engine is the single autonomous writer via PlanTaskRepository.put_many; reconciled in-DB by dedup_key (augment). status flips to exported are owned by the export adapter (190.22.11).",
+      "semantic_role": "the plan task-DB: one PlanTask row per file (architectural -> fault_area -> localized tier). The plan engine is the single autonomous writer via PlanTaskRepository.put_many; reconciled in-DB by dedup_key (augment). status flips to exported are owned by the export adapter (190.22.11).",
       "touched_by_flows": ["group-strategize-reconcile"]
     },
     {
@@ -81,7 +81,7 @@
       "path": "backlog/tasks/",
       "access": "read-only",
       "writer_owner": "user",
-      "semantic_role": "permitted (AC #4) read-only dedup signal — NOT YET WIRED into reconcile. FIREWALLED: never written by this skill; graduation is the user-invoked export adapter (190.22.11).",
+      "semantic_role": "permitted (AC #4) read-only dedup signal — NOT YET WIRED into reconcile. WRITE BOUNDARY: never written by this skill; graduation is the user-invoked export adapter (190.22.11).",
       "touched_by_flows": ["group-strategize-reconcile"]
     }
   ],

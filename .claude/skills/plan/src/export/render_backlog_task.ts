@@ -5,7 +5,7 @@
  * ALREADY-rendered `title`/`body` (produced by `render_task_*` at mint time in
  * `build_plan_tasks`); the adapter never re-renders from a `StrategistPlanNode`
  * (a `PlanTask` carries none). The renderers persist nothing themselves — the
- * adapter script owns the single firewall-crossing write.
+ * adapter script owns the single write into `backlog/`.
  *
  * The frontmatter stamps two link fields that close the engine's dedup loop:
  *   - `plan_dedup_key` — the VERBATIM `PlanTask.dedup_key`. The reconciler's
@@ -72,7 +72,7 @@ const CHECKLIST_ITEM = /^- \[ \] (.+)$/;
  * Split a rendered `PlanTask.body` into its Description prose and the acceptance
  * checklist items. A body with no acceptance heading (a hand-edited or future
  * shape) puts everything in Description with no items — never a throw, since the
- * dedup/firewall contract depends only on frontmatter, not on the body shape.
+ * dedup contract depends only on frontmatter, not on the body shape.
  */
 export function split_rendered_body(body: string): BodySplit {
   const match = ACCEPTANCE_HEADING.exec(body);

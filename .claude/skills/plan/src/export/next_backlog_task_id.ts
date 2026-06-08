@@ -7,7 +7,7 @@
  * `completed/`, `drafts/`, and their nested sub-dirs), because an id retired
  * into `archive/`/`completed/` can exceed the max id still live under `tasks/`;
  * scanning only the write target would risk reusing it. Read-only (`readdir`
- * only) — this is not a backlog writer and needs no firewall allowlist entry.
+ * only) — this is not a backlog writer.
  */
 
 import type { Dirent } from "node:fs";

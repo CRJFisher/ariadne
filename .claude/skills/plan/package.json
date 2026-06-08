@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Offline plan engine over triage runs: groups false-positives by AriadneFaultArea, dispatches strategists to design hierarchical fix plans, and reconciles them into the firewalled task-DB. Planning-only.",
+  "description": "Offline plan engine over triage runs: groups false-positives by AriadneFaultArea, dispatches strategists to design hierarchical fix plans, and reconciles them into the task-DB. Planning-only.",
   "scripts": {
     "test": "vitest run"
   },

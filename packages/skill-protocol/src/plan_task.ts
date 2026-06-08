@@ -1,6 +1,6 @@
 /**
  * The `plan` engine's task-DB record contract — the queryable work item the
- * engine writes to `~/.ariadne/plan/` (firewalled from the user's `backlog/`).
+ * engine writes to `~/.ariadne/plan/` (never the user's `backlog/`).
  *
  * This module is type-only: it declares the record shape both the JSON store
  * and the engine agree on, and introduces no I/O and no fault taxonomy of its

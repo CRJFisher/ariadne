@@ -4,7 +4,7 @@ flowchart TB
   classDef regwrite   fill:#fecaca,stroke:#991b1b,stroke-width:2.5px,color:#7f1d1d
 
   D1[/"analysis_output/&lt;p&gt;/<br/>triage_results/&lt;run-id&gt;.json<br/><br/><b>W</b> triage<br/><b>R</b> plan"/]:::artifact
-  D2[("~/.ariadne/plan/<br/>tasks/&lt;id&gt;.json  ·  sweeps/&lt;sweep-id&gt;.jsonl<br/>PlanTask rows · PlanSweepEvent log<br/><br/><b>W</b> plan (firewalled task-DB)<br/><b>R</b> export adapter")]:::store
+  D2[("~/.ariadne/plan/<br/>tasks/&lt;id&gt;.json  ·  sweeps/&lt;sweep-id&gt;.jsonl<br/>PlanTask rows · PlanSweepEvent log<br/><br/><b>W</b> plan (plan task-DB)<br/><b>R</b> export adapter")]:::store
   D3[("backlog/tasks/&lt;id&gt;.md<br/>promoted fix tasks<br/><br/><b>W</b> export adapter (human-invoked)<br/><b>R</b> human · plan (dedup signal)")]:::store
   D4[("target repo git log<br/>fix(task_id): commits<br/><br/><b>W</b> human (lands the fix)<br/><b>R</b> human  (records wip → fixed)")]:::store
   REG[("known_issues/registry.json<br/><b>human-maintained surface</b><br/><br/><b>W</b> human (all transitions)<br/><b>R</b> triage  (next run · filter) · plan (grounding)")]:::regwrite

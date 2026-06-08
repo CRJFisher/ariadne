@@ -12,8 +12,8 @@
     --artifact-bg: #e8f5e9;
     --store: #6d28d9;
     --store-bg: #ede7f6;
-    --firewall: #dc2626;
-    --firewall-bg: #fee2e2;
+    --boundary: #dc2626;
+    --boundary-bg: #fee2e2;
     --decision: #ca8a04;
     --decision-bg: #fef9c3;
     --ink: #1f2937;
@@ -107,7 +107,7 @@
   .sw-process  { background: var(--process-bg);  border-color: var(--process); }
   .sw-artifact { background: var(--artifact-bg); border-color: var(--artifact); }
   .sw-store    { background: var(--store-bg);    border-color: var(--store); }
-  .sw-firewall { background: var(--firewall-bg); border-color: var(--firewall); }
+  .sw-boundary { background: var(--boundary-bg); border-color: var(--boundary); }
   .sw-decision { background: var(--decision-bg); border-color: var(--decision); }
   .legend .item b { font-weight: 600; }
   .legend .item span { color: var(--muted); }
@@ -163,7 +163,7 @@
   .p-per-run    { background: var(--artifact-bg); color: var(--artifact); font-weight: 600; }
   .p-schema     { background: #f1f5f9; color: var(--muted); font-weight: 600; }
   td.persist { text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
-  td.writer.human { background: var(--firewall-bg); }
+  td.writer.human { background: var(--boundary-bg); }
 
   @media (max-width: 900px) {
     nav.toc { display: none; }
@@ -181,8 +181,8 @@
     <h2>Triage</h2>
     <ul>
       <li><a href="#triage-run">4-phase run pipeline</a></li>
-      <li><a href="#triage-verdict">Verdict model &amp; finalize</a></li>
       <li><a href="#triage-investigator">triage-investigator</a></li>
+      <li><a href="#triage-verdict">Finalize: fan verdicts into triage_results</a></li>
     </ul>
     <h2>Plan</h2>
     <ul>
@@ -204,7 +204,7 @@
         <div class="item"><span class="swatch sw-process"></span><span><b>Process</b> — a script or sub-agent step</span></div>
         <div class="item"><span class="swatch sw-artifact"></span><span><b>Per-run artifact</b> — output of a single run</span></div>
         <div class="item"><span class="swatch sw-store"></span><span><b>Persistent store</b> — survives between runs</span></div>
-        <div class="item"><span class="swatch sw-firewall"></span><span><b>Human / firewall surface</b> — human-owned write boundary</span></div>
+        <div class="item"><span class="swatch sw-boundary"></span><span><b>Human-owned write boundary</b> — human is the sole writer</span></div>
         <div class="item"><span class="swatch sw-decision"></span><span><b>Decision</b> — branch / guard</span></div>
       </div>
     </header>
@@ -289,14 +289,14 @@
   <text x="616" y="524" text-anchor="middle" font-size="13" font-weight="bold" fill="#4c1d95">target repo git log</text>
   <text x="616" y="542" text-anchor="middle" font-size="11" fill="#475569">fix(task_id): commits</text>
 
-  <!-- registry (right, red firewall surface = loop-closing) -->
+  <!-- registry (right, red write-boundary surface = loop-closing) -->
   <rect x="516" y="376" width="200" height="56" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2.4"/>
   <text x="616" y="398" text-anchor="middle" font-size="13" font-weight="bold" fill="#991b1b">registry.json</text>
   <text x="616" y="414" text-anchor="middle" font-size="11" fill="#475569">human-maintained; read-only</text>
   <text x="616" y="428" text-anchor="middle" font-size="11" fill="#475569">to triage/plan · closes loop</text>
 
   <!-- caption strip -->
-  <text x="360" y="600" text-anchor="middle" font-size="11" fill="#475569">Solid = within-run dataflow · purple = persistent stores · red = human / firewall surfaces</text>
+  <text x="360" y="600" text-anchor="middle" font-size="11" fill="#475569">Solid = within-run dataflow · purple = persistent stores · red = human-owned write boundaries</text>
   <text x="360" y="618" text-anchor="middle" font-size="11" fill="#475569">Dashed = feedback: the registry filters the NEXT triage run</text>
 </svg></div>
         <figcaption>The self-healing loop (end-to-end)</figcaption>
@@ -309,9 +309,8 @@
             <thead><tr><th>Name</th><th>Path</th><th>Role</th></tr></thead>
             <tbody>
               <tr><td class="name">triage SKILL.md / README</td><td class="path">.claude/skills/triage/README.md</td><td class="role">Sense stage: per-entry triage-investigator emits TriageVerdict[]; reads the registry as a filter, never writes it.</td></tr>
-              <tr><td class="name">plan SKILL.md</td><td class="path">.claude/skills/plan/SKILL.md</td><td class="role">Classify/plan stage: groups false positives, strategizes, reconciles; planning-only, firewalled to ~/.ariadne/plan/.</td></tr>
+              <tr><td class="name">plan SKILL.md</td><td class="path">.claude/skills/plan/SKILL.md</td><td class="role">Classify/plan stage: groups false positives, strategizes, reconciles; planning-only, writes only ~/.ariadne/plan/.</td></tr>
               <tr><td class="name">classifier-lifecycle.md</td><td class="path">.claude/rules/classifier-lifecycle.md</td><td class="role">Write-boundary contract: registry is human-maintained; every wip/permanent/fixed transition is a human edit via atomic_update_registry.</td></tr>
-              <tr><td class="name">backlog-firewall.md</td><td class="path">.claude/rules/backlog-firewall.md</td><td class="role">Firewall contract: pipeline never writes backlog/; the human-invoked export adapter is the sole bridge from the plan DB into backlog/.</td></tr>
               <tr><td class="name">export_to_backlog.ts</td><td class="path">.claude/skills/plan/scripts/export_to_backlog.ts</td><td class="role">Human-invoked export adapter — the only programmatic writer of backlog/.</td></tr>
               <tr><td class="name">permanent_data.ts</td><td class="path">packages/core/src/classify_entry_points/permanent_data.ts</td><td class="role">Bundled permanent slice regenerated from the source registry when its permanent rules change.</td></tr>
             </tbody>
@@ -324,7 +323,7 @@
             <tbody>
               <tr><td class="name">known_issues/registry.json</td><td class="path">.claude/skills/triage/known_issues/registry.json</td><td class="writer human">human (all status transitions via atomic_update_registry)</td><td class="role">triage (next-run filter), plan (grounding)</td><td class="persist p-persistent">persistent</td></tr>
               <tr><td class="name">triage_results/&lt;run-id&gt;.json</td><td class="path">.claude/skills/triage/triage_state/&lt;project&gt;/analysis_output/</td><td class="writer">triage</td><td class="role">plan, next same-commit triage run (TP cache)</td><td class="persist p-per-run">per-run</td></tr>
-              <tr><td class="name">plan task-DB</td><td class="path">~/.ariadne/plan/tasks/&lt;id&gt;.json + sweeps/&lt;sweep-id&gt;.jsonl</td><td class="writer">plan (firewalled)</td><td class="role">export adapter</td><td class="persist p-persistent">persistent</td></tr>
+              <tr><td class="name">plan task-DB</td><td class="path">~/.ariadne/plan/tasks/&lt;id&gt;.json + sweeps/&lt;sweep-id&gt;.jsonl</td><td class="writer">plan (DB-only)</td><td class="role">export adapter</td><td class="persist p-persistent">persistent</td></tr>
               <tr><td class="name">backlog/tasks/&lt;id&gt;.md</td><td class="path">backlog/tasks/</td><td class="writer human">export adapter (human-invoked)</td><td class="role">human, plan (dedup signal)</td><td class="persist p-persistent">persistent</td></tr>
               <tr><td class="name">target repo git log</td><td class="path">&lt;target repo&gt;/.git</td><td class="writer human">human (lands the fix commit)</td><td class="role">human (records wip → fixed)</td><td class="persist p-persistent">persistent</td></tr>
               <tr><td class="name">permanent_data.ts</td><td class="path">packages/core/src/classify_entry_points/permanent_data.ts</td><td class="writer human">human (regenerated from source registry)</td><td class="role">@ariadnejs/core consumers of Project.get_call_graph()</td><td class="persist p-schema">schema</td></tr>
@@ -462,8 +461,107 @@
       </div>
     </section>
 
+    <section id="triage-investigator">
+      <h2>triage-investigator: one entry, one verdict</h2>
+      <p class="caption">One investigator sub-agent hydrates a single entry's context, checks it against the read-only registry slice (early-exiting to fp-classifier-regression on a rule match), then probes reachability via the call graph and emits exactly one of four verdicts to results/&lt;entry_index&gt;.json. It never writes the registry.</p>
+      <figure>
+        <div class="figbody"><svg xmlns="http://www.w3.org/2000/svg" width="720" height="600" viewBox="0 0 720 600" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+  <defs>
+    <marker id="ah" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#64748b"/></marker>
+  </defs>
+
+  <!-- 1. get_entry_context (process) -->
+  <rect x="230" y="20" width="260" height="56" rx="8" fill="#e8f1ff" stroke="#2563eb" stroke-width="1.6"/>
+  <text x="360" y="44" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e3a8a">get_entry_context.ts</text>
+  <text x="360" y="62" text-anchor="middle" font-size="11" fill="#475569">hydrate dispense payload + registry slice</text>
+
+  <!-- edge 1->2 -->
+  <line x1="360" y1="76" x2="360" y2="124" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+
+  <!-- 2. decision: rule match? (diamond) -->
+  <polygon points="360,124 470,170 360,216 250,170" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.6"/>
+  <text x="360" y="166" text-anchor="middle" font-size="13" font-weight="bold" fill="#854d0e">registry rule</text>
+  <text x="360" y="182" text-anchor="middle" font-size="11" fill="#475569">should have matched?</text>
+
+  <!-- side branch: yes -> early exit verdict -->
+  <line x1="470" y1="170" x2="582" y2="170" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+  <rect x="555" y="195" width="155" height="18" fill="#ffffff" opacity="0.85"/>
+  <text x="563" y="208" font-size="10.5" fill="#475569">yes — early exit</text>
+  <rect x="448" y="142" width="100" height="18" fill="#ffffff" opacity="0.85"/>
+  <text x="452" y="155" font-size="10.5" fill="#475569">yes (rule match)</text>
+
+  <rect x="560" y="220" width="150" height="56" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.6"/>
+  <text x="635" y="244" text-anchor="middle" font-size="13" font-weight="bold" fill="#1b5e20">fp-classifier-</text>
+  <text x="635" y="261" text-anchor="middle" font-size="11" fill="#475569">regression (cites rule)</text>
+
+  <!-- elbow from side verdict down to results -->
+  <line x1="635" y1="276" x2="635" y2="520" stroke="#64748b" stroke-width="1.8"/>
+  <line x1="635" y1="520" x2="492" y2="520" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+
+  <!-- edge 2->3 (no) -->
+  <line x1="360" y1="216" x2="360" y2="264" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+  <rect x="332" y="232" width="120" height="18" fill="#ffffff" opacity="0.85"/>
+  <text x="338" y="245" font-size="10.5" fill="#475569">no — investigate</text>
+
+  <!-- 3. show_call_graph_neighborhood (process) -->
+  <rect x="225" y="264" width="270" height="56" rx="8" fill="#e8f1ff" stroke="#2563eb" stroke-width="1.6"/>
+  <text x="360" y="288" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e3a8a">show_call_graph_neighborhood</text>
+  <text x="360" y="306" text-anchor="middle" font-size="11" fill="#475569">+ Read / Grep — probe reachability</text>
+
+  <!-- edge 3->4 -->
+  <line x1="360" y1="320" x2="360" y2="368" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+
+  <!-- 4. decision: emit one verdict -->
+  <rect x="245" y="368" width="230" height="56" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.6"/>
+  <text x="360" y="392" text-anchor="middle" font-size="13" font-weight="bold" fill="#854d0e">emit exactly one verdict</text>
+  <text x="360" y="410" text-anchor="middle" font-size="11" fill="#475569">tp / fp-novel / uncertain</text>
+
+  <!-- edge 4->5 -->
+  <line x1="360" y1="424" x2="360" y2="492" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+
+  <!-- 5. results/<entry_index>.json (per-run artifact) -->
+  <rect x="265" y="492" width="227" height="56" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.6"/>
+  <text x="378" y="516" text-anchor="middle" font-size="13" font-weight="bold" fill="#1b5e20">results/&lt;entry_index&gt;.json</text>
+  <text x="378" y="534" text-anchor="middle" font-size="11" fill="#475569">the only persistent output</text>
+
+  <!-- never-writes-registry note -->
+  <rect x="20" y="368" width="180" height="56" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2.4"/>
+  <text x="110" y="392" text-anchor="middle" font-size="13" font-weight="bold" fill="#991b1b">registry: READ-ONLY</text>
+  <text x="110" y="410" text-anchor="middle" font-size="11" fill="#475569">never writes registry.json</text>
+  <line x1="200" y1="396" x2="244" y2="396" stroke="#64748b" stroke-width="1.8" stroke-dasharray="5 4"/>
+</svg></div>
+        <figcaption>triage-investigator: one entry, one verdict</figcaption>
+      </figure>
+
+      <div class="tables">
+        <div class="tbl-wrap">
+          <div class="tbl-title">Key modules</div>
+          <table>
+            <thead><tr><th>Name</th><th>Path</th><th>Role</th></tr></thead>
+            <tbody>
+              <tr><td class="name">triage-investigator.md</td><td class="path">.claude/agents/triage-investigator.md</td><td class="role">Sub-agent definition: tool grants, the four-verdict contract, early-exit-on-registry-match rule, and the never-writes-registry constraint.</td></tr>
+              <tr><td class="name">get_entry_context.ts</td><td class="path">.claude/skills/triage/scripts/get_entry_context.ts</td><td class="role">Self-service context script: loads the entry by index, builds the dispense payload + read-only registry slice, and resolves the results/&lt;entry_index&gt;.json output path.</td></tr>
+              <tr><td class="name">dispense_payload.ts</td><td class="path">.claude/skills/triage/src/dispense/dispense_payload.ts</td><td class="role">Builds the per-entry payload — entry_context plus the in-scope relevant_registry_slice used to detect fp-classifier-regression.</td></tr>
+              <tr><td class="name">known_issues_registry.ts</td><td class="path">.claude/skills/triage/src/known_issues_registry.ts</td><td class="role">load_registry(): read-only load of the human-maintained classifier registry that backs the in-scope slice.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tbl-wrap">
+          <div class="tbl-title">Artifacts</div>
+          <table>
+            <thead><tr><th>Name</th><th>Path</th><th>Writer</th><th>Readers</th><th>Persistence</th></tr></thead>
+            <tbody>
+              <tr><td class="name">triage state file</td><td class="path">~/.ariadne/triage-entrypoints/&lt;project&gt;/runs/&lt;run-id&gt;/state.json</td><td class="writer">triage skill (orchestrator)</td><td class="role">get_entry_context.ts (loads the entry by index)</td><td class="persist p-per-run">per-run</td></tr>
+              <tr><td class="name">classifier registry</td><td class="path">.claude/skills/triage/known_issues/registry.json</td><td class="writer human">Human (manual edit via atomic_update_registry)</td><td class="role">get_entry_context.ts via load_registry() — investigator reads the in-scope slice only; NEVER writes</td><td class="persist p-persistent">persistent</td></tr>
+              <tr><td class="name">verdict JSON</td><td class="path">~/.ariadne/triage-entrypoints/&lt;project&gt;/runs/&lt;run-id&gt;/results/&lt;entry_index&gt;.json</td><td class="writer">triage-investigator (its sole persistent output)</td><td class="role">triage finalize (parse_triage_verdict)</td><td class="persist p-per-run">per-run</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <section id="triage-verdict">
-      <h2>One TriageVerdict per entry, fanned into the published triage_results</h2>
+      <h2>Finalize: fan verdicts into triage_results</h2>
       <p class="caption">Each triage-investigator writes one self-contained TriageVerdict file; finalize parses every verdict and fans its four arms into the published triage_results — fp-novel becomes one novel_issues[] row each, fp-classifier-regression rolls up per rule into classifier_regressions[].</p>
       <figure>
         <div class="figbody"><svg xmlns="http://www.w3.org/2000/svg" width="720" height="640" viewBox="0 0 720 640" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
@@ -534,7 +632,7 @@
   <text x="360" y="584" text-anchor="middle" font-size="13" font-weight="bold" fill="#4c1d95">triage_results/&lt;run-id&gt;.json</text>
   <text x="360" y="602" text-anchor="middle" font-size="11" fill="#475569">published v5 output — read by the plan skill</text>
 </svg></div>
-        <figcaption>One TriageVerdict per entry, fanned into the published triage_results</figcaption>
+        <figcaption>Finalize: fan verdicts into triage_results</figcaption>
       </figure>
 
       <div class="tables">
@@ -565,110 +663,11 @@
       </div>
     </section>
 
-    <section id="triage-investigator">
-      <h2>triage-investigator: one entry, one verdict</h2>
-      <p class="caption">One investigator sub-agent hydrates a single entry's context, checks it against the read-only registry slice (early-exiting to fp-classifier-regression on a rule match), then probes reachability via the call graph and emits exactly one of four verdicts to results/&lt;entry_index&gt;.json. It never writes the registry.</p>
-      <figure>
-        <div class="figbody"><svg xmlns="http://www.w3.org/2000/svg" width="720" height="600" viewBox="0 0 720 600" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
-  <defs>
-    <marker id="ah" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#64748b"/></marker>
-  </defs>
-
-  <!-- 1. get_entry_context (process) -->
-  <rect x="230" y="20" width="260" height="56" rx="8" fill="#e8f1ff" stroke="#2563eb" stroke-width="1.6"/>
-  <text x="360" y="44" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e3a8a">get_entry_context.ts</text>
-  <text x="360" y="62" text-anchor="middle" font-size="11" fill="#475569">hydrate dispense payload + registry slice</text>
-
-  <!-- edge 1->2 -->
-  <line x1="360" y1="76" x2="360" y2="124" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
-
-  <!-- 2. decision: rule match? (diamond) -->
-  <polygon points="360,124 470,170 360,216 250,170" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.6"/>
-  <text x="360" y="166" text-anchor="middle" font-size="13" font-weight="bold" fill="#854d0e">registry rule</text>
-  <text x="360" y="182" text-anchor="middle" font-size="11" fill="#475569">should have matched?</text>
-
-  <!-- side branch: yes -> early exit verdict -->
-  <line x1="470" y1="170" x2="582" y2="170" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
-  <rect x="555" y="195" width="155" height="18" fill="#ffffff" opacity="0.85"/>
-  <text x="563" y="208" font-size="10.5" fill="#475569">yes — early exit</text>
-  <rect x="448" y="142" width="100" height="18" fill="#ffffff" opacity="0.85"/>
-  <text x="452" y="155" font-size="10.5" fill="#475569">yes (rule match)</text>
-
-  <rect x="560" y="220" width="150" height="56" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.6"/>
-  <text x="635" y="244" text-anchor="middle" font-size="13" font-weight="bold" fill="#1b5e20">fp-classifier-</text>
-  <text x="635" y="261" text-anchor="middle" font-size="11" fill="#475569">regression (cites rule)</text>
-
-  <!-- elbow from side verdict down to results -->
-  <line x1="635" y1="276" x2="635" y2="520" stroke="#64748b" stroke-width="1.8"/>
-  <line x1="635" y1="520" x2="492" y2="520" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
-
-  <!-- edge 2->3 (no) -->
-  <line x1="360" y1="216" x2="360" y2="264" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
-  <rect x="332" y="232" width="120" height="18" fill="#ffffff" opacity="0.85"/>
-  <text x="338" y="245" font-size="10.5" fill="#475569">no — investigate</text>
-
-  <!-- 3. show_call_graph_neighborhood (process) -->
-  <rect x="225" y="264" width="270" height="56" rx="8" fill="#e8f1ff" stroke="#2563eb" stroke-width="1.6"/>
-  <text x="360" y="288" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e3a8a">show_call_graph_neighborhood</text>
-  <text x="360" y="306" text-anchor="middle" font-size="11" fill="#475569">+ Read / Grep — probe reachability</text>
-
-  <!-- edge 3->4 -->
-  <line x1="360" y1="320" x2="360" y2="368" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
-
-  <!-- 4. decision: emit one verdict -->
-  <rect x="245" y="368" width="230" height="56" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.6"/>
-  <text x="360" y="392" text-anchor="middle" font-size="13" font-weight="bold" fill="#854d0e">emit exactly one verdict</text>
-  <text x="360" y="410" text-anchor="middle" font-size="11" fill="#475569">tp / fp-novel / uncertain</text>
-
-  <!-- edge 4->5 -->
-  <line x1="360" y1="424" x2="360" y2="492" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
-
-  <!-- 5. results/<entry_index>.json (per-run artifact) -->
-  <rect x="265" y="492" width="227" height="56" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.6"/>
-  <text x="378" y="516" text-anchor="middle" font-size="13" font-weight="bold" fill="#1b5e20">results/&lt;entry_index&gt;.json</text>
-  <text x="378" y="534" text-anchor="middle" font-size="11" fill="#475569">the only persistent output</text>
-
-  <!-- never-writes-registry firewall note -->
-  <rect x="20" y="368" width="180" height="56" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2.4"/>
-  <text x="110" y="392" text-anchor="middle" font-size="13" font-weight="bold" fill="#991b1b">registry: READ-ONLY</text>
-  <text x="110" y="410" text-anchor="middle" font-size="11" fill="#475569">never writes registry.json</text>
-  <line x1="200" y1="396" x2="244" y2="396" stroke="#64748b" stroke-width="1.8" stroke-dasharray="5 4"/>
-</svg></div>
-        <figcaption>triage-investigator: one entry, one verdict</figcaption>
-      </figure>
-
-      <div class="tables">
-        <div class="tbl-wrap">
-          <div class="tbl-title">Key modules</div>
-          <table>
-            <thead><tr><th>Name</th><th>Path</th><th>Role</th></tr></thead>
-            <tbody>
-              <tr><td class="name">triage-investigator.md</td><td class="path">.claude/agents/triage-investigator.md</td><td class="role">Sub-agent definition: tool grants, the four-verdict contract, early-exit-on-registry-match rule, and the never-writes-registry constraint.</td></tr>
-              <tr><td class="name">get_entry_context.ts</td><td class="path">.claude/skills/triage/scripts/get_entry_context.ts</td><td class="role">Self-service context script: loads the entry by index, builds the dispense payload + read-only registry slice, and resolves the results/&lt;entry_index&gt;.json output path.</td></tr>
-              <tr><td class="name">dispense_payload.ts</td><td class="path">.claude/skills/triage/src/dispense/dispense_payload.ts</td><td class="role">Builds the per-entry payload — entry_context plus the in-scope relevant_registry_slice used to detect fp-classifier-regression.</td></tr>
-              <tr><td class="name">known_issues_registry.ts</td><td class="path">.claude/skills/triage/src/known_issues_registry.ts</td><td class="role">load_registry(): read-only load of the human-maintained classifier registry that backs the in-scope slice.</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="tbl-wrap">
-          <div class="tbl-title">Artifacts</div>
-          <table>
-            <thead><tr><th>Name</th><th>Path</th><th>Writer</th><th>Readers</th><th>Persistence</th></tr></thead>
-            <tbody>
-              <tr><td class="name">triage state file</td><td class="path">~/.ariadne/triage-entrypoints/&lt;project&gt;/runs/&lt;run-id&gt;/state.json</td><td class="writer">triage skill (orchestrator)</td><td class="role">get_entry_context.ts (loads the entry by index)</td><td class="persist p-per-run">per-run</td></tr>
-              <tr><td class="name">classifier registry</td><td class="path">.claude/skills/triage/known_issues/registry.json</td><td class="writer human">Human (manual edit via atomic_update_registry)</td><td class="role">get_entry_context.ts via load_registry() — investigator reads the in-scope slice only; NEVER writes</td><td class="persist p-persistent">persistent</td></tr>
-              <tr><td class="name">verdict JSON</td><td class="path">~/.ariadne/triage-entrypoints/&lt;project&gt;/runs/&lt;run-id&gt;/results/&lt;entry_index&gt;.json</td><td class="writer">triage-investigator (its sole persistent output)</td><td class="role">triage finalize (parse_triage_verdict)</td><td class="persist p-per-run">per-run</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
     <div class="group-band" id="band-plan">Plan — classify / plan</div>
 
     <section id="plan">
       <h2>Plan — group → strategize → reconcile</h2>
-      <p class="caption">The plan skill turns finalized triage runs into firewalled PlanTask rows in three passes — group every false-positive into fault-area buckets, strategize one opus plan per bucket, then reconcile trees into the task-DB by dedup_key. A separate human-invoked export adapter is the only sanctioned crossing into the user's backlog.</p>
+      <p class="caption">The plan skill turns finalized triage runs into PlanTask rows in three passes — group every false-positive into fault-area buckets, strategize one opus plan per bucket, then reconcile trees into the task-DB by dedup_key. A separate human-invoked export adapter is the only write into the user's backlog.</p>
       <figure>
         <div class="figbody"><svg xmlns="http://www.w3.org/2000/svg" width="720" height="640" viewBox="0 0 720 640" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
   <defs>
@@ -726,7 +725,7 @@
   <text x="360" y="544" text-anchor="middle" font-size="13" font-weight="bold" fill="#4c1d95">task-DB · ~/.ariadne/plan/</text>
   <text x="360" y="562" text-anchor="middle" font-size="11" fill="#475569">PlanTask rows + sweep event log</text>
 
-  <!-- side branch: human-invoked export adapter (firewall) -->
+  <!-- side branch: human-invoked export adapter (sole backlog writer) -->
   <line x1="485" y1="548" x2="560" y2="548" stroke="#64748b" stroke-width="1.8"/>
   <line x1="560" y1="548" x2="560" y2="368" stroke="#64748b" stroke-width="1.8"/>
   <line x1="560" y1="368" x2="560" y2="320" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
@@ -735,7 +734,7 @@
 
   <rect x="505" y="264" width="200" height="56" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2.4"/>
   <text x="605" y="288" text-anchor="middle" font-size="13" font-weight="bold" fill="#991b1b">export_to_backlog.ts</text>
-  <text x="605" y="306" text-anchor="middle" font-size="11" fill="#475569">sole firewall crossing</text>
+  <text x="605" y="306" text-anchor="middle" font-size="11" fill="#475569">sole writer of backlog/</text>
 
   <!-- export -> backlog -->
   <line x1="605" y1="264" x2="605" y2="172" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
@@ -764,7 +763,7 @@
           <table>
             <thead><tr><th>Name</th><th>Path</th><th>Role</th></tr></thead>
             <tbody>
-              <tr><td class="name">SKILL.md</td><td class="path">.claude/skills/plan/SKILL.md</td><td class="role">Three-pass plan engine spec: group → strategize → reconcile, plus the user-invoked export and the firewall contract</td></tr>
+              <tr><td class="name">SKILL.md</td><td class="path">.claude/skills/plan/SKILL.md</td><td class="role">Three-pass plan engine spec: group → strategize → reconcile, plus the user-invoked export and the write-boundary contract</td></tr>
               <tr><td class="name">group_runs.ts</td><td class="path">.claude/skills/plan/scripts/group_runs.ts</td><td class="role">Pass A — scans finalized triage runs, buckets every false-positive by AriadneFaultArea into FaultAreaBucket files + manifest under plan/staging/</td></tr>
               <tr><td class="name">reconcile_plan.ts</td><td class="path">.claude/skills/plan/scripts/reconcile_plan.ts</td><td class="role">Pass C — validates each StrategistPlan, flattens into PlanTask rows by dedup_key (augment-not-duplicate), writes task-DB + PlanSweepEvent log</td></tr>
               <tr><td class="name">export_to_backlog.ts</td><td class="path">.claude/skills/plan/scripts/export_to_backlog.ts</td><td class="role">The sole sanctioned writer of backlog/ — human-invoked adapter promoting PlanTask rows into backlog/tasks/*.md, stamping plan_dedup_key</td></tr>
@@ -792,7 +791,7 @@
 
     <section id="plan-reconcile">
       <h2>Reconcile: flatten the strategist's plan tree, key it, fold it into the task-DB</h2>
-      <p class="caption">A re-sweep flattens the strategist's fix-plan tree into PlanTask rows, stamps each with a content-derived immutable dedup_key, then reconciles against the live task-DB — a colliding live task is augmented in place (never duplicated), unclaimed orphans are superseded/combined/resolved, and tasks the user already promoted into backlog/ are marked exported. The JsonPlanTaskRepository task-DB and append-only sweep log are the persistent stores; the firewalled read of backlog/ frontmatter is the only window into the user's tracker.</p>
+      <p class="caption">A re-sweep flattens the strategist's fix-plan tree into PlanTask rows, stamps each with a content-derived immutable dedup_key, then reconciles against the live task-DB — a colliding live task is augmented in place (never duplicated), unclaimed orphans are superseded/combined/resolved, and tasks the user already promoted into backlog/ are marked exported. The JsonPlanTaskRepository task-DB and append-only sweep log are the persistent stores; the read-only scan of backlog/ frontmatter is the only window into the user's tracker.</p>
       <figure>
         <div class="figbody"><svg xmlns="http://www.w3.org/2000/svg" width="720" height="624" viewBox="0 0 720 624" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
   <defs>
@@ -831,7 +830,7 @@
 
   <!-- read backlog (side branch, left) -->
   <rect x="24" y="304" width="170" height="56" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2.4"/>
-  <text x="109" y="325" text-anchor="middle" font-size="13" font-weight="bold" fill="#991b1b">backlog/ (firewall)</text>
+  <text x="109" y="325" text-anchor="middle" font-size="13" font-weight="bold" fill="#991b1b">backlog/ (write boundary)</text>
   <text x="109" y="341" text-anchor="middle" font-size="11" fill="#475569">read-only dedup signal:</text>
   <text x="109" y="355" text-anchor="middle" font-size="11" fill="#475569">plan_dedup_key frontmatter</text>
   <line x1="194" y1="332" x2="233" y2="332" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
@@ -891,7 +890,7 @@
               <tr><td class="name">compute_dedup_key.ts</td><td class="path">.claude/skills/plan/src/reconcile/compute_dedup_key.ts</td><td class="role">Defines the immutable reconciliation key: sha256 of fault_area joined to the sorted, deduplicated set of file:line evidence tokens — and the load-bearing location_token primitive shared across keying, union, and overlap scoring.</td></tr>
               <tr><td class="name">reconcile_plan.ts</td><td class="path">.claude/skills/plan/src/reconcile/reconcile_plan.ts</td><td class="role">Folds the sweep's candidates into the live task-DB in three steps: create/augment (augment-not-duplicate), retire orphans (supersede/combine/resolve), export overlay; commits via put_many + one sweep event per decision.</td></tr>
               <tr><td class="name">json_plan_task_repository.ts</td><td class="path">.claude/skills/plan/src/store/json_plan_task_repository.ts</td><td class="role">The JSON-on-disk PlanTaskRepository — one atomic-rename file per task plus the append-only per-sweep JSONL event log; single-writer, no registry lock.</td></tr>
-              <tr><td class="name">backlog_dedup.ts</td><td class="path">.claude/skills/plan/src/store/backlog_dedup.ts</td><td class="role">Read-only window into the user's backlog/: maps each promoted task's plan_dedup_key frontmatter to its backlog id so reconcile suppresses already-promoted work as exported. No write primitive — stays clear of the backlog firewall.</td></tr>
+              <tr><td class="name">backlog_dedup.ts</td><td class="path">.claude/skills/plan/src/store/backlog_dedup.ts</td><td class="role">Read-only window into the user's backlog/: maps each promoted task's plan_dedup_key frontmatter to its backlog id so reconcile suppresses already-promoted work as exported. No write primitive — never writes backlog/.</td></tr>
               <tr><td class="name">group_fault_areas.ts</td><td class="path">.claude/skills/plan/src/group/group_fault_areas.ts</td><td class="role">Pass A: buckets published false-positives by AriadneFaultArea with verbatim evidence, the input the strategist turns into the plan tree that feeds reconcile.</td></tr>
             </tbody>
           </table>
@@ -903,7 +902,7 @@
             <tbody>
               <tr><td class="name">task-DB (PlanTask rows)</td><td class="path">~/.ariadne/plan/tasks/&lt;id&gt;.json</td><td class="writer">plan reconcile_plan via JsonPlanTaskRepository.put_many (atomic_write_file, single writer per file)</td><td class="role">plan reconcile_plan (pre-sweep query snapshot), backlog_dedup-driven export overlay, the human-invoked export adapter</td><td class="persist p-persistent">persistent</td></tr>
               <tr><td class="name">sweep event log</td><td class="path">~/.ariadne/plan/sweeps/&lt;sweep_id&gt;.jsonl</td><td class="writer">plan reconcile_plan via JsonPlanTaskRepository.append_sweep_event (one create/augment/supersede/combine/resolve/export event per decision)</td><td class="role">humans / audit; per-sweep provenance trail</td><td class="persist p-persistent">persistent</td></tr>
-              <tr><td class="name">backlog/ task frontmatter</td><td class="path">backlog/tasks/*.md (plan_dedup_key field)</td><td class="writer human">human-invoked export adapter (scripts/export_to_backlog.ts) — sole bridge from task-DB into backlog/</td><td class="role">plan backlog_dedup.read_exported_backlog_keys (read-only; firewalled)</td><td class="persist p-persistent">persistent</td></tr>
+              <tr><td class="name">backlog/ task frontmatter</td><td class="path">backlog/tasks/*.md (plan_dedup_key field)</td><td class="writer human">human-invoked export adapter (scripts/export_to_backlog.ts) — sole bridge from task-DB into backlog/</td><td class="role">plan backlog_dedup.read_exported_backlog_keys (read-only)</td><td class="persist p-persistent">persistent</td></tr>
               <tr><td class="name">StrategistPlan / FaultAreaBucket</td><td class="path">~/.ariadne/plan/staging/** (sweep inputs)</td><td class="writer">plan group_fault_areas (Pass A) + strategist sub-agent (Pass B)</td><td class="role">plan build_plan_tasks (flatten + key)</td><td class="persist p-per-run">per-run</td></tr>
             </tbody>
           </table>
@@ -972,9 +971,9 @@
   <text x="360" y="493" text-anchor="middle" font-size="13" font-weight="bold" fill="#4c1d95">~/.ariadne/plan/staging/</text>
   <text x="360" y="511" text-anchor="middle" font-size="11" fill="#475569">final plan only — never code/registry/backlog</text>
 
-  <!-- firewall note -->
+  <!-- write-boundary note -->
   <rect x="535" y="470" width="175" height="56" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2.4"/>
-  <text x="622" y="493" text-anchor="middle" font-size="12" font-weight="bold" fill="#991b1b">firewall</text>
+  <text x="622" y="493" text-anchor="middle" font-size="12" font-weight="bold" fill="#991b1b">write boundary</text>
   <text x="622" y="511" text-anchor="middle" font-size="10.5" fill="#475569">staging is the only write</text>
   <line x1="495" y1="498" x2="533" y2="498" stroke="#64748b" stroke-width="1.8" stroke-dasharray="5 4"/>
 </svg></div>
@@ -1012,7 +1011,7 @@
 
     <section id="shared-contracts">
       <h2>Shared contracts &amp; write-boundary enforcement</h2>
-      <p class="caption">The v5 triage_results schema is the triage-to-plan seam; two build-failing AST tests enforce that the only legal registry writer is the human via atomic_update_registry, and the only legal backlog/ writer is the export adapter. triage and plan are read-only against the human-maintained registry.</p>
+      <p class="caption">The v5 triage_results schema is the triage-to-plan seam; a build-failing AST test enforces that the only legal registry writer is the human via atomic_update_registry. The export adapter is the sole writer of backlog/ by convention. triage and plan are read-only against the human-maintained registry.</p>
       <figure>
         <div class="figbody"><svg xmlns="http://www.w3.org/2000/svg" width="720" height="560" viewBox="0 0 720 560" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
   <defs>
@@ -1044,7 +1043,7 @@
   <rect x="500" y="112" width="40" height="15" fill="#ffffffcc"/>
   <text x="520" y="123" text-anchor="middle" font-size="10.5" fill="#475569">reads</text>
 
-  <!-- registry firewall (human-maintained) -->
+  <!-- registry write boundary (human-maintained) -->
   <rect x="60" y="300" width="280" height="56" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2.4"/>
   <text x="200" y="324" text-anchor="middle" font-size="13" font-weight="bold" fill="#991b1b">known_issues/registry.json</text>
   <text x="200" y="342" text-anchor="middle" font-size="11" fill="#475569">human-maintained; sole writer = human</text>
@@ -1069,7 +1068,7 @@
   <rect x="356" y="244" width="74" height="15" fill="#ffffffcc"/>
   <text x="393" y="255" text-anchor="middle" font-size="10.5" fill="#475569">read-only</text>
 
-  <!-- backlog firewall -->
+  <!-- backlog write boundary (convention, not AST-enforced) -->
   <rect x="420" y="420" width="240" height="56" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2.4"/>
   <text x="540" y="444" text-anchor="middle" font-size="13" font-weight="bold" fill="#991b1b">backlog/ (user's tracker)</text>
   <text x="540" y="462" text-anchor="middle" font-size="11" fill="#475569">sole writer = export_to_backlog.ts</text>
@@ -1079,16 +1078,15 @@
   <rect x="430" y="300" width="220" height="15" fill="#ffffffcc"/>
   <text x="540" y="311" text-anchor="middle" font-size="10.5" fill="#475569">PlanTask rows -&gt; human-invoked export adapter</text>
 
-  <!-- AST enforcement tests box (decision/guard) -->
-  <rect x="210" y="500" width="300" height="48" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.6"/>
-  <text x="360" y="521" text-anchor="middle" font-size="13" font-weight="bold" fill="#854d0e">registry_writers + backlog_writers tests</text>
-  <text x="360" y="538" text-anchor="middle" font-size="11" fill="#475569">AST scan fails the build if a writer crosses a boundary</text>
+  <!-- AST enforcement test box (decision/guard) -->
+  <rect x="60" y="500" width="280" height="48" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.6"/>
+  <text x="200" y="521" text-anchor="middle" font-size="13" font-weight="bold" fill="#854d0e">registry_writers test</text>
+  <text x="200" y="538" text-anchor="middle" font-size="11" fill="#475569">AST scan fails the build on a non-allowlisted registry write</text>
 
-  <!-- enforcement guards both firewalls -->
-  <line x1="270" y1="500" x2="210" y2="476" marker-end="url(#ah)" stroke="#64748b" stroke-width="1.8"/>
-  <line x1="450" y1="500" x2="510" y2="476" marker-end="url(#ah)" stroke="#64748b" stroke-width="1.8"/>
-  <rect x="320" y="484" width="80" height="15" fill="#ffffffcc"/>
-  <text x="360" y="495" text-anchor="middle" font-size="10.5" fill="#475569">enforces</text>
+  <!-- enforcement guards the registry write boundary only -->
+  <line x1="200" y1="500" x2="200" y2="476" marker-end="url(#ah)" stroke="#64748b" stroke-width="1.8"/>
+  <rect x="160" y="484" width="80" height="15" fill="#ffffffcc"/>
+  <text x="200" y="495" text-anchor="middle" font-size="10.5" fill="#475569">enforces</text>
 </svg></div>
         <figcaption>Shared contracts &amp; write-boundary enforcement</figcaption>
       </figure>
@@ -1100,10 +1098,9 @@
             <thead><tr><th>Name</th><th>Path</th><th>Role</th></tr></thead>
             <tbody>
               <tr><td class="name">triage_results.ts</td><td class="path">packages/skill-protocol/src/triage_results.ts</td><td class="role">v5 published wire contract and strict parser — the triage→plan seam; producer and consumer validate identically against TRIAGE_RESULTS_SCHEMA_VERSION.</td></tr>
-              <tr><td class="name">plan_task.ts</td><td class="path">packages/skill-protocol/src/plan_task.ts</td><td class="role">PlanTask record contract for the firewalled plan task-DB under ~/.ariadne/plan/; fault_area stays re-derivable from carried evidence.</td></tr>
+              <tr><td class="name">plan_task.ts</td><td class="path">packages/skill-protocol/src/plan_task.ts</td><td class="role">PlanTask record contract for the plan task-DB under ~/.ariadne/plan/; fault_area stays re-derivable from carried evidence.</td></tr>
               <tr><td class="name">atomic_update_registry.ts</td><td class="path">packages/skill-fs/src/atomic_update_registry.ts</td><td class="role">The only legal registry write path: holds a .lock sidecar over read-mutate-write, then commits via atomic_write_file.</td></tr>
               <tr><td class="name">registry_writers.test.ts</td><td class="path">packages/skill-fs/src/registry_writers.test.ts</td><td class="role">AST scan that fails the build if any non-allowlisted site raw-writes or serializes a registry-shaped path; allowlist is only atomic_update_registry.ts.</td></tr>
-              <tr><td class="name">backlog_writers.test.ts</td><td class="path">packages/skill-fs/src/backlog_writers.test.ts</td><td class="role">AST scan that fails the build if pipeline code writes a backlog/-shaped path or names a mutating mcp__backlog__* tool; sole allowed writer is export_to_backlog.ts.</td></tr>
               <tr><td class="name">classifier-lifecycle.md</td><td class="path">.claude/rules/classifier-lifecycle.md</td><td class="role">Writer matrix declaring the human as sole registry writer and atomic_update_registry as the mandatory write contract.</td></tr>
             </tbody>
           </table>

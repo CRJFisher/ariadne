@@ -24,8 +24,8 @@ export const CURATOR_RUNS_DIR = path.join(
  * per `AriadneFaultArea` (`buckets/<area>.json`), Pass B (the plan-strategist
  * agent) writes one `StrategistPlan` per bucket (`plans/<area>.json`), and
  * Pass C reads both. Co-located under `plan_dir()` so it stays inside the
- * firewalled `~/.ariadne/plan/` namespace, but in a distinct `staging/` subtree
- * so it never collides with the canonical `tasks/` rows or `sweeps/` event log.
+ * `~/.ariadne/plan/` namespace, but in a distinct `staging/` subtree so it
+ * never collides with the canonical `tasks/` rows or `sweeps/` event log.
  * Honors `ARIADNE_PLAN_DIR_OVERRIDE` lazily via `plan_dir()`.
  */
 export function plan_staging_dir(sweep_id: string): string {
@@ -62,7 +62,7 @@ export function get_repo_root(): string {
 
 /**
  * The user's `backlog/tasks/` directory, rooted at the repo. The plan engine
- * reads it ONLY as a dedup signal (the firewall forbids writes); the user-invoked
+ * reads it ONLY as a dedup signal (it never writes here); the user-invoked
  * export adapter writes new task files here. Overridable for test isolation via
  * `ARIADNE_BACKLOG_DIR_OVERRIDE`, read lazily so a test that sets it before the
  * call still wins.

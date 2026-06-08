@@ -7,7 +7,7 @@ flowchart TD
   classDef inter      fill:#f5f5f5,stroke:#616161,stroke-width:1px,color:#212121,stroke-dasharray:3 3
   classDef published  fill:#a8e6a3,stroke:#0e5510,stroke-width:3px,color:#062c08
   classDef downstream fill:#e5e7eb,stroke:#374151,stroke-width:1px,color:#111827
-  classDef firewall   fill:#fecaca,stroke:#991b1b,stroke-width:2.5px,color:#7f1d1d
+  classDef boundary   fill:#fecaca,stroke:#991b1b,stroke-width:2.5px,color:#7f1d1d
 
   TR[/"triage · analysis_output/&lt;p&gt;/<br/>triage_results/&lt;run-id&gt;.json<br/>schema v5 · novel_issues[]"/]:::ext
 
@@ -30,12 +30,12 @@ flowchart TD
   subgraph PC["Pass C · Reconcile + write (deterministic)"]
     direction TB
     RC("scripts/reconcile_plan.ts<br/>build_plan_tasks · compute_dedup_key<br/>find_by_dedup_key → augment | create"):::step
-    PT[/"~/.ariadne/plan/tasks/&lt;id&gt;.json<br/>PlanTask rows (firewalled task-DB)"/]:::published
+    PT[/"~/.ariadne/plan/tasks/&lt;id&gt;.json<br/>PlanTask rows (plan task-DB)"/]:::published
     SW[/"~/.ariadne/plan/sweeps/&lt;sweep-id&gt;.jsonl<br/>PlanSweepEvent log"/]:::published
   end
 
   EXP[["export adapter (190.22.11)<br/>user-invoked · sole backlog writer"]]:::downstream
-  FW["firewall · backlog/ write boundary<br/>plan NEVER writes backlog/ · registry.json · packages/core"]:::firewall
+  FW["backlog/ write boundary<br/>plan NEVER writes backlog/ · registry.json · packages/core"]:::boundary
 
   TR --> SA
   REG -. "read · dedup/grounding" .-> SA
@@ -50,6 +50,6 @@ flowchart TD
 
   PT --> EXP
   SW --> EXP
-  EXP == "graduation (only crossing)" ==> FW
+  EXP == "graduation (only write into backlog/)" ==> FW
 
   linkStyle default stroke:#cbd5e1,stroke-width:1.5px

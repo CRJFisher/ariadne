@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Pass C entry for `/plan` — reconcile the strategist wave's `StrategistPlan`s
- * into the firewalled task-DB.
+ * into the plan engine's task-DB.
  *
  * Reads every `StrategistPlan` the strategists staged for this sweep
  * (`staging/<sweep-id>/plans/<area>.json`) and its paired bucket

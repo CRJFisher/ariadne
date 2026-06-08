@@ -208,7 +208,7 @@ interface FileStamp {
   mtime_ms: number;
 }
 
-/** Recursive {relpath → size+mtime} snapshot of a firewall root (file absent → empty map). */
+/** Recursive {relpath → size+mtime} snapshot of a protected root (file absent → empty map). */
 async function snapshot_tree(root: string): Promise<Map<string, FileStamp>> {
   const out = new Map<string, FileStamp>();
   async function walk(dir: string): Promise<void> {
@@ -304,19 +304,19 @@ describe("plan engine smoke (Pass A → build → reconcile)", () => {
   });
 
   it("makes ZERO writes to backlog/, registry.json, or packages/core/src", async () => {
-    const firewall_roots = [
+    const no_write_roots = [
       path.join(REPO_ROOT, "backlog"),
       known_issues_registry_path(),
       path.join(REPO_ROOT, "packages", "core", "src"),
     ];
-    const before = await Promise.all(firewall_roots.map(snapshot_tree));
+    const before = await Promise.all(no_write_roots.map(snapshot_tree));
 
     await seed_fixtures();
     await run_sweep(await group(), "sweep-1");
     await run_sweep(await group(), "sweep-2");
 
-    const after = await Promise.all(firewall_roots.map(snapshot_tree));
-    for (let i = 0; i < firewall_roots.length; i++) {
+    const after = await Promise.all(no_write_roots.map(snapshot_tree));
+    for (let i = 0; i < no_write_roots.length; i++) {
       expect(after[i]).toEqual(before[i]);
     }
 

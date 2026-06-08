@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * The user-invoked export adapter — the SOLE sanctioned writer of the user's
- * `backlog/` and the one place the self-healing pipeline's firewall is crossed.
- * Promotes selected `PlanTask` rows from the plan engine's task-DB
+ * The user-invoked export adapter — the only writer of the user's `backlog/` in
+ * the self-healing pipeline. Promotes selected `PlanTask` rows from the plan
+ * engine's task-DB
  * (`~/.ariadne/plan/`) into `backlog/tasks/*.md`. Never runs on the autonomous
  * sweep; the human runs it deliberately when graduating proposed work.
  *
@@ -21,9 +21,8 @@
  *      into the target artifact, stamping the verbatim `PlanTask.dedup_key` into
  *      a target-side dedup field (`plan_dedup_key`). Every target MUST persist
  *      this key so a re-run recognises prior exports — it is the idempotency link.
- *   4. **write** (target-specific) — the target's sole sanctioned writer; the
- *      only place a write primitive (or tracker API call) appears. A firewalled
- *      surface adds this file to the firewall allowlist.
+ *   4. **write** (target-specific) — the target's sole writer; the only place a
+ *      write primitive (or tracker API call) appears.
  *   5. **flip state** (reused) — the DB row moves `→ exported`, recording
  *      `exported_backlog_task`, and one `export` `PlanSweepEvent` is logged.
  *

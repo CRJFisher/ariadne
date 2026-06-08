@@ -115,17 +115,17 @@
 </div>
 
 <div class="callout">
-  <span class="k">The two firewalls that hold the shape</span>
-  <p>Both autonomous stages are <strong>read-only</strong> against two human/core-owned surfaces. The classifier registry (<code>registry.json</code>) and the user's <code>backlog/</code> each have exactly one named writer per transition, with an AST test that fails the build if pipeline code crosses the line. The plan engine renders proposed work into its own task-DB at <code>~/.ariadne/plan/</code>; a single human-invoked adapter is the sole bridge from there into <code>backlog/</code>.</p>
+  <span class="k">The two write boundaries that hold the shape</span>
+  <p>Both autonomous stages are <strong>read-only</strong> against two human/core-owned surfaces. The classifier registry (<code>registry.json</code>) and the user's <code>backlog/</code> each have exactly one named writer per transition; an AST test fails the build if pipeline code writes the registry, and the backlog is written only by the export adapter. The plan engine renders proposed work into its own task-DB at <code>~/.ariadne/plan/</code>; a single human-invoked adapter is the sole bridge from there into <code>backlog/</code>.</p>
 </div>
 </section>
 
 <section>
 <h2>How the sub-tasks compose into the whole</h2>
-<p>The work moves left to right: harden the detector, extract the shared contract and taxonomy, stand up the firewalled task-DB and its write-boundary, build the plan engine on top, then open the one sanctioned gate out to the user's tracker. The diagram groups the thirteen sub-tasks by the layer they build.</p>
+<p>The work moves left to right: harden the detector, extract the shared contract and taxonomy, stand up the task-DB and its write-boundary, build the plan engine on top, then open the one sanctioned gate out to the user's tracker. The diagram groups the thirteen sub-tasks by the layer they build.</p>
 
 <div class="diagram">
-<svg viewBox="0 0 940 320" role="img" aria-label="How the 13 sub-tasks of the restructure compose: foundation, the firewalled task-DB and contract, the plan engine, and the export gate" width="100%" style="min-width:880px">
+<svg viewBox="0 0 940 320" role="img" aria-label="How the 13 sub-tasks of the restructure compose: foundation, the task-DB and contract, the plan engine, and the export gate" width="100%" style="min-width:880px">
   <defs>
     <marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#5f594f"/></marker>
     <marker id="ac" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#b9794f"/></marker>
@@ -164,7 +164,7 @@
       <text x="342" y="146" text-anchor="middle" fill="#2b2a28" font-weight="700">.6 retarget</text>
       <text x="342" y="160" text-anchor="middle" fill="#5f594f">writers</text>
       <rect x="416" y="126" width="120" height="50" rx="9" fill="#fffdf8" stroke="#6c7a4a"/>
-      <text x="476" y="146" text-anchor="middle" fill="#2b2a28" font-weight="700">.7 firewall</text>
+      <text x="476" y="146" text-anchor="middle" fill="#2b2a28" font-weight="700">.7 boundary</text>
       <text x="476" y="160" text-anchor="middle" fill="#5f594f">doc + test</text>
     </g>
     <!-- engine row -->
@@ -204,7 +204,7 @@
 
 <div class="callout olive">
   <span class="k">Where the family stands</span>
-  <p>The detector, the shared <code>@ariadnejs/skill-protocol</code> contract, the <code>AriadneFaultArea</code> taxonomy, the firewalled JSON task-store, both write-boundary firewalls, and the full plan engine (group → strategize → reconcile within the DB) are all landed. What remains is the human-facing edge: the export gate that promotes DB rows into the backlog (<strong>.11</strong>), migrating the 234 auto-filed classifier tickets into the DB (<strong>.12</strong>), and giving the strategist a feasibility judgement to abandon intractable plans (<strong>.13</strong>).</p>
+  <p>The detector, the shared <code>@ariadnejs/skill-protocol</code> contract, the <code>AriadneFaultArea</code> taxonomy, the JSON task-store, both write boundaries, and the full plan engine (group → strategize → reconcile within the DB) are all landed. What remains is the human-facing edge: the export gate that promotes DB rows into the backlog (<strong>.11</strong>), migrating the 234 auto-filed classifier tickets into the DB (<strong>.12</strong>), and giving the strategist a feasibility judgement to abandon intractable plans (<strong>.13</strong>).</p>
 </div>
 </section>
 
@@ -217,7 +217,7 @@
   <div class="sub"><span class="id">.4</span><div class="body"><strong>Define the plan task-DB contract</strong><span>PlanTask record + PlanTaskRepository interface + ~/.ariadne/plan/ paths.</span></div><span class="st done">done</span></div>
   <div class="sub"><span class="id">.5</span><div class="body"><strong>Rename entrypoints→triage, curator→plan</strong><span>Re-scope plan to planning-only; strip the code-mutating machinery.</span></div><span class="st done">done</span></div>
   <div class="sub"><span class="id">.6</span><div class="body"><strong>Retarget the backlog-writing machinery</strong><span>Remove the pipeline's old direct-to-backlog writers.</span></div><span class="st done">done</span></div>
-  <div class="sub"><span class="id">.7</span><div class="body"><strong>Backlog firewall: rule doc + AST test</strong><span>Name one writer per transition; fail the build if pipeline code crosses into backlog/.</span></div><span class="st done">done</span></div>
+  <div class="sub"><span class="id">.7</span><div class="body"><strong>Backlog write boundary: rule doc + AST test</strong><span>Name one writer per transition; fail the build if pipeline code crosses into backlog/.</span></div><span class="st done">done</span></div>
   <div class="sub"><span class="id">.8</span><div class="body"><strong>JSON plan task-store</strong><span>The filesystem-backed implementation behind PlanTaskRepository.</span></div><span class="st done">done</span></div>
   <div class="sub"><span class="id">.9</span><div class="body"><strong>Build the plan engine</strong><span>group → strategize → hierarchical plans → reconcile.</span></div><span class="st done">done</span></div>
   <div class="sub"><span class="id">.10</span><div class="body"><strong>Write PlanTask rows + reconcile in the DB</strong><span>Emit rows via the repository; augment-not-duplicate on dedup_key; read backlog read-only to suppress already-promoted work.</span></div><span class="st done">done</span></div>
@@ -232,7 +232,7 @@
   <p class="navttl">Detail documents</p>
   <a class="doc-link" href="task-190.22.11.export-adapter.html">
     <span class="n">.11 · export adapter</span>
-    The firewall crossing, the data flow, and the three open decisions
+    The backlog write boundary, the data flow, and the three open decisions
     <span class="tag">open · companion ready</span>
   </a>
   <div class="pending"><span class="n">.12 · tidy backlog</span>not yet generated <span class="tag">pending</span></div>

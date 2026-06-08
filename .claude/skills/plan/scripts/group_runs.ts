@@ -8,8 +8,8 @@
  * area under the sweep's staging dir. Prints a sweep summary as JSON for the
  * main agent to fan the strategist wave out over.
  *
- * Writes only to `~/.ariadne/plan/staging/<sweep-id>/` (firewalled). Never
- * writes `backlog/`, `registry.json`, or `packages/core`.
+ * Writes only to `~/.ariadne/plan/staging/<sweep-id>/`. Never writes `backlog/`,
+ * `registry.json`, or `packages/core`.
  *
  * Usage:
  *   node --import tsx group_runs.ts [--project <name>] [--last <n>] [--run <path>]

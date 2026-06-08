@@ -17,8 +17,8 @@ JSON.
 
 You do **not** author a classifier, a registry entry, or any source code. You
 plan. The deterministic reconcile pass (Pass C) turns your tree into `PlanTask`
-rows in the firewalled task-DB; a later, human-invoked adapter is the only thing
-that ever crosses into the user's `backlog/`. Your output is always a plan.
+rows in the task-DB; a later, human-invoked adapter is the only thing
+that ever writes the user's `backlog/`. Your output is always a plan.
 
 The bucket's `fault_area` routes the fix to one core folder (the
 `ARIADNE_FAULT_AREA_FOLDER` anchor in the hydrated context). Every node in your

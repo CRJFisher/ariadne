@@ -6,9 +6,9 @@ Offline plan engine over completed `triage` runs. Consumes the v5
 published false-positive named by the per-entry investigator.
 
 The engine runs in three passes — **group → strategize → reconcile** — and is
-**planning-only and firewalled**: it writes only `PlanTask` rows + a per-sweep
-event log to the task-DB at `~/.ariadne/plan/`, and never writes the user's
-`backlog/`, the classifier `registry.json`, or `packages/core`.
+**planning-only**: it writes only `PlanTask` rows + a per-sweep event log to the
+task-DB at `~/.ariadne/plan/`, and never writes the user's `backlog/`, the
+classifier `registry.json`, or `packages/core`.
 
 ## Pipeline flow
 
