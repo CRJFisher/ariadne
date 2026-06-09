@@ -17,33 +17,18 @@
  */
 
 import * as fs from "node:fs/promises";
-import * as path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { error_code } from "@ariadnejs/skill-fs";
-import type { PlanTask } from "@ariadnejs/skill-protocol";
 
-import { build_plan_tasks } from "../src/reconcile/build_plan_tasks.js";
+import { load_staged_plans } from "../src/reconcile/load_staged_plans.js";
 import { reconcile_plan } from "../src/reconcile/reconcile_plan.js";
-import {
-  collect_membership_exclusions,
-  record_membership_decisions,
-} from "../src/reconcile/record_membership_decisions.js";
-import { validate_plan } from "../src/propose/validate_plan.js";
+import { record_membership_decisions } from "../src/reconcile/record_membership_decisions.js";
 import { read_exported_backlog_keys } from "../src/store/backlog_dedup.js";
 import { JsonPlanTaskRepository } from "../src/store/json_plan_task_repository.js";
-import {
-  JsonMembershipOverrideStore,
-  type MembershipExclusion,
-} from "../src/store/membership_override.js";
-import {
-  backlog_tasks_dir,
-  plan_staging_buckets_dir,
-  plan_staging_manifest_path,
-  plan_staging_plans_dir,
-} from "../src/store/paths.js";
+import { JsonMembershipOverrideStore } from "../src/store/membership_override.js";
+import { backlog_tasks_dir, plan_staging_manifest_path } from "../src/store/paths.js";
 import { type SweepManifest } from "../src/store/sweep_manifest.js";
-import type { FaultAreaBucket, StrategistPlan } from "../src/types.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 interface CliArgs {
@@ -76,21 +61,15 @@ function parse_argv(argv: string[]): CliArgs {
   return { sweep_id, strategist };
 }
 
-async function read_json<T>(file_path: string): Promise<T> {
-  return JSON.parse(await fs.readFile(file_path, "utf8")) as T;
-}
-
 async function main(): Promise<void> {
   const { sweep_id, strategist } = parse_argv(process.argv.slice(2));
-  const plans_dir = plan_staging_plans_dir(sweep_id);
-  const buckets_dir = plan_staging_buckets_dir(sweep_id);
 
   // The scan manifest bounds `resolved` reclamation to the swept project scope.
   // Pass A always writes it, so its absence is a malformed/partial sweep — fail loud.
   const manifest_path = plan_staging_manifest_path(sweep_id);
   let manifest: SweepManifest;
   try {
-    manifest = await read_json<SweepManifest>(manifest_path);
+    manifest = JSON.parse(await fs.readFile(manifest_path, "utf8")) as SweepManifest;
   } catch (err) {
     if (error_code(err) === "ENOENT") {
       throw new Error(
@@ -100,52 +79,11 @@ async function main(): Promise<void> {
     throw err;
   }
 
-  let plan_files: string[];
-  try {
-    plan_files = (await fs.readdir(plans_dir)).filter((f) => f.endsWith(".json"));
-  } catch (err) {
-    if (error_code(err) === "ENOENT") {
-      throw new Error(`no strategist plans staged for sweep '${sweep_id}' (missing ${plans_dir})`);
-    }
-    throw err;
-  }
-
-  const candidates: PlanTask[] = [];
-  const exclusions: MembershipExclusion[] = [];
-  const rejected: Array<{ plan: string; issues: unknown }> = [];
-
-  for (const file of plan_files) {
-    let plan_raw: unknown;
-    let bucket: FaultAreaBucket;
-    try {
-      plan_raw = await read_json<unknown>(path.join(plans_dir, file));
-      bucket = await read_json<FaultAreaBucket>(path.join(buckets_dir, file));
-    } catch (err) {
-      // A plan with no paired bucket (or unreadable JSON) rejects that one plan,
-      // mirroring the validation-failure path — it never aborts the whole sweep.
-      const reason = err instanceof Error ? err.message : String(err);
-      rejected.push({ plan: file, issues: [{ code: "shape_error", message: reason }] });
-      process.stderr.write(`rejecting ${file}: ${reason}\n`);
-      continue;
-    }
-    const result = validate_plan(plan_raw, {
-      bucket_fault_area: bucket.fault_area,
-      evidence_count: bucket.evidence.length,
-    });
-    if (!result.ok) {
-      rejected.push({ plan: file, issues: result.issues });
-      process.stderr.write(`rejecting ${file}: ${JSON.stringify(result.issues)}\n`);
-      continue;
-    }
-    const plan = plan_raw as StrategistPlan;
-    // `build_plan_tasks` grounds tasks purely on each node's `evidence_indices`;
-    // it needs no membership awareness because `validate_plan` (run above) rejects
-    // any plan whose node grounds an excluded index (`node_grounds_excluded_index`).
-    // So a plan that reaches here grounds confirmed members only, and the tasks'
-    // evidence / dedup_key / rollups exclude rejected members by construction (AC#3).
-    candidates.push(...build_plan_tasks(plan, bucket.evidence, { sweep_id, strategist }));
-    exclusions.push(...collect_membership_exclusions(plan, bucket.evidence));
-  }
+  const { candidates, exclusions, rejected, plan_count } = await load_staged_plans(
+    sweep_id,
+    strategist,
+    (line) => process.stderr.write(line),
+  );
 
   const exported_backlog_keys = await read_exported_backlog_keys(backlog_tasks_dir());
 
@@ -166,7 +104,7 @@ async function main(): Promise<void> {
 
   const summary = {
     sweep_id,
-    plans_reconciled: plan_files.length - rejected.length,
+    plans_reconciled: plan_count - rejected.length,
     rejected,
     written: written.length,
     created: events.filter((e) => e.kind === "create").length,
