@@ -238,6 +238,15 @@ describe("validate_plan — membership review", () => {
     expect(codes(p, NAME_RES_CTX)).toEqual(["membership_suggested_area_invalid"]);
   });
 
+  it("forbids a suggested_area equal to the bucket's own fault_area (cannot converge)", () => {
+    const p = plan([leaf({ evidence_indices: [0] })], "name_resolution", [
+      { index: 0, belongs: true, reason: "" },
+      // Re-routing a member back into the bucket it is excluded from never settles.
+      { index: 1, belongs: false, reason: "still belongs here?", suggested_area: "name_resolution" },
+    ]);
+    expect(codes(p, NAME_RES_CTX)).toEqual(["membership_suggested_area_is_own_bucket"]);
+  });
+
   it("forbids a node from grounding an excluded member (consistency)", () => {
     // index 1 is excluded, yet a leaf grounds it.
     const p = plan(

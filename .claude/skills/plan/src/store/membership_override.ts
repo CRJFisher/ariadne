@@ -8,7 +8,14 @@
  * future sweep re-buckets the same member via the SAME deterministic derivation,
  * an exclusion that only skipped it this sweep would be re-adjudicated forever;
  * recording it here lets Pass A re-route (or suppress) it on the next sweep
- * instead — keyed on a member identity stable across line drift.
+ * instead — keyed on a drift-tolerant member identity (see
+ * {@link member_identity_token}; a line-shifted member re-enters the review).
+ *
+ * Suppression (an override with no `suggested_area`) is unconditional and
+ * persists until a human edits the file: a suppressed member that genuinely
+ * resurfaces in a later run is silently dropped, unlike the classifier
+ * registry's resurfaced-`fixed`-row review. Clearing the override is the
+ * recovery path.
  *
  * Single accumulating JSON file at `~/.ariadne/plan/membership_overrides.json`.
  * The reconcile pass is the SOLE writer (one writer per sweep, so the read-merge-
@@ -17,7 +24,7 @@
  * outside the registry-writer lock contract.
  */
 
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
 
 import type { AriadneFaultArea } from "@ariadnejs/types";
 import {
@@ -25,6 +32,7 @@ import {
   error_code,
 } from "@ariadnejs/skill-fs";
 import {
+  plan_dir,
   plan_membership_overrides_path,
   type MemberSymbol,
 } from "@ariadnejs/skill-protocol";
@@ -46,14 +54,18 @@ export interface MembershipOverride {
 }
 
 /**
- * The line-drift-stable identity token for a member — THE membership-override
- * key primitive, defined once. `(file_path, kind, name)` is the drift-stable
- * core; `start_line` is the same-name/overload collision-breaker. Newline-joined
- * so a value cannot collide with the delimiter (twin of `location_token`'s
- * recipe, but over the FLAGGED MEMBER rather than the call site).
+ * The identity token for a member — THE membership-override key primitive,
+ * defined once. Joins the `MemberSymbol` fields in declaration order
+ * `(file_path, name, kind, start_line)`, newline-delimited so no value can
+ * collide with the delimiter. `(file_path, name, kind)` is the drift-tolerant
+ * core; `start_line` is the same-name/overload collision-breaker and still moves
+ * when surrounding lines shift, so the token is matched only while the member's
+ * start line is unchanged (a line-shifted member re-enters the review). Same
+ * delimiter-safety discipline as `location_token`, but over the FLAGGED MEMBER
+ * (a four-field tuple) rather than the call site (a `file:line` pair).
  */
 export function member_identity_token(member: MemberSymbol): string {
-  return [member.file_path, member.kind, member.name, String(member.start_line)].join("\n");
+  return [member.file_path, member.name, member.kind, String(member.start_line)].join("\n");
 }
 
 /** The override-store key: `fault_area` joined to the member identity token. */
@@ -126,6 +138,10 @@ export class JsonMembershipOverrideStore implements MembershipOverrideStore {
     const records = [...by_key.entries()]
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([, record]) => record);
+    // `atomic_write_file` does not create directories; ensure the plan root exists
+    // (mirrors the task store's mkdir-before-write invariant) so the store is
+    // self-sufficient rather than relying on a prior task write to create it.
+    await mkdir(plan_dir(), { recursive: true });
     await atomic_write_file(plan_membership_overrides_path(), `${JSON.stringify(records, null, 2)}\n`);
   }
 }

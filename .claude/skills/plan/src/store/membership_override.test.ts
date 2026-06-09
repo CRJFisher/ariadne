@@ -41,8 +41,8 @@ function exclusion(overrides: Partial<MembershipExclusion> = {}): MembershipExcl
 }
 
 describe("member_identity_token", () => {
-  it("is stable over all four fields and newline-delimited", () => {
-    expect(member_identity_token(MEMBER)).toEqual("src/router.ts\nfunction\nroute\n12");
+  it("is stable over all four fields in MemberSymbol declaration order, newline-delimited", () => {
+    expect(member_identity_token(MEMBER)).toEqual("src/router.ts\nroute\nfunction\n12");
   });
 
   it("distinguishes same-named members by file, kind, and start_line", () => {

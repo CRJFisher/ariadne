@@ -205,6 +205,41 @@ describe("build_plan_tasks", () => {
     expect(ids.size).toEqual(tasks.length);
   });
 
+  it("grounds tasks on confirmed members only — an excluded member's evidence never appears (AC#3)", () => {
+    // validate_plan forbids a node from grounding an excluded index, so a plan
+    // that reaches build_plan_tasks grounds only confirmed members. Here index 1
+    // (b.ts) is excluded and no node grounds it: the built task's evidence,
+    // rollups, and dedup_key omit b.ts entirely.
+    const plan: StrategistPlan = {
+      schema_version: 1,
+      fault_area: "name_resolution",
+      sweep_id: "sweep-1",
+      membership: [
+        { index: 0, belongs: true, reason: "" },
+        { index: 1, belongs: false, reason: "belongs to import_resolution", suggested_area: "import_resolution" },
+      ],
+      roots: [
+        {
+          tier: "localized",
+          title: "fix a.ts",
+          body: "leaf a",
+          fault_area: "name_resolution",
+          evidence_indices: [0],
+          is_taxonomy_extension: false,
+          is_classifier_work: false,
+          core_fix_effort: 1,
+          core_fix_effort_rationale: "single-file edit",
+          children: [],
+        },
+      ],
+    };
+    const [task] = build_plan_tasks(plan, BUCKET, OPTS);
+    expect(task.evidence).toEqual([ev("a.ts", 1, "webpack")]);
+    expect(task.observed_count).toEqual(1);
+    expect(task.evidence.map((e) => e.member_evidence.file)).not.toContain("b.ts");
+    expect(task.dedup_key).toEqual(compute_dedup_key("name_resolution", [ev("a.ts", 1, "webpack")]));
+  });
+
   it("persists is_classifier_work onto the PlanTask from the node", () => {
     const plan: StrategistPlan = {
       schema_version: 1,

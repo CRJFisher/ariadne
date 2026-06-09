@@ -7,10 +7,12 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   parse_run_id,
   plan_sweeps_dir,
+  type NovelIssue,
   type PlanTaskEvidence,
 } from "@ariadnejs/skill-protocol";
 
 import type { MembershipVerdict, StrategistPlan, StrategistPlanNode } from "../types.js";
+import { group_fault_areas, type ParsedRun } from "../group/group_fault_areas.js";
 import { JsonPlanTaskRepository } from "../store/json_plan_task_repository.js";
 import { JsonMembershipOverrideStore } from "../store/membership_override.js";
 import {
@@ -163,5 +165,58 @@ describe("record_membership_decisions", () => {
     expect(events).toEqual([]);
     expect(corrections).toEqual([]);
     expect(await override_store.read()).toEqual([]);
+  });
+});
+
+describe("membership feedback loop (record -> store -> next sweep's Pass A re-routes)", () => {
+  // A member derive_fault_area routes to name_resolution.
+  const MEMBER = { file_path: "src/router.ts", name: "route", kind: "function" as const, start_line: 12 };
+  function name_res_run(): ParsedRun {
+    const issue: NovelIssue = {
+      id: "novel-0",
+      entry_index: 0,
+      member_symbol: MEMBER,
+      member_evidence: { file: "src/router.ts", line: 40, why: "missed caller" },
+      proposed_root_cause: "resolver gap",
+      evidence_excerpt: "route()",
+      diagnosis: "callers-in-registry-unresolved",
+      resolution_failure: { stage: "name_resolution", reason: "name_not_in_scope" },
+      has_uncaptured_indexed_grep_hit: false,
+      callers_only_in_unindexed_tests: false,
+    };
+    return { project: "p", run_id: parse_run_id("aaaaaaa-2026-04-16T18-10-16.855Z"), novel_issues: [issue] };
+  }
+
+  it("a member excluded from name_resolution with a suggested_area is re-routed there next sweep", async () => {
+    // Baseline: with no overrides, the member buckets into its derived area.
+    expect(group_fault_areas([name_res_run()]).map((b) => b.fault_area)).toEqual(["name_resolution"]);
+
+    // Sweep N: record an exclusion of this member from name_resolution, suggesting import_resolution.
+    const repo = new JsonPlanTaskRepository();
+    const override_store = new JsonMembershipOverrideStore();
+    await record_membership_decisions(repo, override_store, "sweep-1", [
+      {
+        fault_area: "name_resolution",
+        member: MEMBER,
+        reason: "actually an import miss",
+        suggested_area: "import_resolution",
+      },
+    ]);
+
+    // Sweep N+1: Pass A reads the persisted override and re-routes the member,
+    // so it is NOT re-presented in name_resolution (no re-adjudication).
+    const overrides = await override_store.read();
+    const buckets = group_fault_areas([name_res_run()], overrides);
+    expect(buckets.map((b) => b.fault_area)).toEqual(["import_resolution"]);
+  });
+
+  it("a member suppressed (no suggested_area) is dropped from Pass A next sweep", async () => {
+    const repo = new JsonPlanTaskRepository();
+    const override_store = new JsonMembershipOverrideStore();
+    await record_membership_decisions(repo, override_store, "sweep-1", [
+      { fault_area: "name_resolution", member: MEMBER, reason: "not a real fault", suggested_area: null },
+    ]);
+    const overrides = await override_store.read();
+    expect(group_fault_areas([name_res_run()], overrides)).toEqual([]);
   });
 });

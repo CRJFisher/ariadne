@@ -86,9 +86,9 @@
   <h1>The self-healing pipeline becomes two stages: detect, then plan</h1>
   <p class="lead">The pipeline under <code>.claude/skills/</code> has never run end-to-end. Rather than building the full automated build-out at once, the architecture collapses to the part that delivers value first — and keeps code mutation a manual, human-driven step. There are two live stages; fix delivery is manual and out of scope.</p>
   <div class="meta">
-    <span class="chip"><strong>13</strong> sub-tasks</span>
+    <span class="chip"><strong>14</strong> sub-tasks</span>
     <span class="chip"><strong>10</strong> done</span>
-    <span class="chip"><strong>3</strong> open</span>
+    <span class="chip"><strong>4</strong> open</span>
     <span class="chip">parent <strong>TASK-190</strong></span>
   </div>
 </header>
@@ -209,7 +209,7 @@
 </section>
 
 <section>
-<h2>The thirteen sub-tasks</h2>
+<h2>The fourteen sub-tasks</h2>
 <div class="subs">
   <div class="sub"><span class="id">.1</span><div class="body"><strong>Harden the triage golden path</strong><span>Delete the unwired in-run coordinator; carry deterministic fault diagnostics through to the verdict.</span></div><span class="st done">done</span></div>
   <div class="sub"><span class="id">.2</span><div class="body"><strong>Extract @ariadnejs/skill-protocol</strong><span>One private package as the typed source of truth for the triage → plan seam.</span></div><span class="st done">done</span></div>
@@ -221,9 +221,10 @@
   <div class="sub"><span class="id">.8</span><div class="body"><strong>JSON plan task-store</strong><span>The filesystem-backed implementation behind PlanTaskRepository.</span></div><span class="st done">done</span></div>
   <div class="sub"><span class="id">.9</span><div class="body"><strong>Build the plan engine</strong><span>group → strategize → hierarchical plans → reconcile.</span></div><span class="st done">done</span></div>
   <div class="sub"><span class="id">.10</span><div class="body"><strong>Write PlanTask rows + reconcile in the DB</strong><span>Emit rows via the repository; augment-not-duplicate on dedup_key; read backlog read-only to suppress already-promoted work.</span></div><span class="st done">done</span></div>
-  <div class="sub here"><span class="id">.11</span><div class="body"><strong>User-invoked export adapter</strong><span>The sole backlog writer: promote DB rows into backlog/, stamp plan_dedup_key, flip proposed→exported.</span></div><span class="st todo">to do</span></div>
+  <div class="sub"><span class="id">.11</span><div class="body"><strong>User-invoked export adapter</strong><span>The sole backlog writer: promote DB rows into backlog/, stamp plan_dedup_key, flip proposed→exported.</span></div><span class="st todo">to do</span></div>
   <div class="sub"><span class="id">.12</span><div class="body"><strong>Tidy backlog: migrate 234 classifier tickets</strong><span>Move the auto-filed tickets into the task-DB (archive, not delete).</span></div><span class="st todo">to do</span></div>
   <div class="sub"><span class="id">.13</span><div class="body"><strong>Strategist feasibility judgement</strong><span>Let the strategist propose abandoning intractable fix plans.</span></div><span class="st todo">to do</span></div>
+  <div class="sub here"><span class="id">.14</span><div class="body"><strong>Strategist verifies bucket membership</strong><span>Review each member before planning; exclude mis-routes and record them across the stores keyed on a drift-stable member identity.</span></div><span class="st todo">to do</span></div>
 </div>
 </section>
 </main>
@@ -237,12 +238,17 @@
   </a>
   <div class="pending"><span class="n">.12 · tidy backlog</span>not yet generated <span class="tag">pending</span></div>
   <div class="pending"><span class="n">.13 · abandon judgement</span>not yet generated <span class="tag">pending</span></div>
+  <a class="doc-link" href="task-190.22.14.membership-verification.html">
+    <span class="n">.14 · membership verification</span>
+    The strategist verifies who belongs in a bucket; member identity across the stores
+    <span class="tag">open · companion ready</span>
+  </a>
   <p class="navttl" style="margin-top:22px">Done sub-tasks (.1–.10)</p>
   <div class="pending"><span class="n">.1 – .10</span>landed — no companion <span class="tag">pending</span></div>
 </aside>
 
 <footer>
-  Overview of the TASK-190.22 family · 13 sub-tasks, 10 done · re-scanned 2026-06-04<br>
+  Overview of the TASK-190.22 family · 14 sub-tasks, 10 done · re-scanned 2026-06-08<br>
   Built from the parent task doc + a directory scan of backlog/comprehension/ for sibling companions.
 </footer>
 </div>

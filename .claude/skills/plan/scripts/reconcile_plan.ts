@@ -138,6 +138,11 @@ async function main(): Promise<void> {
       continue;
     }
     const plan = plan_raw as StrategistPlan;
+    // `build_plan_tasks` grounds tasks purely on each node's `evidence_indices`;
+    // it needs no membership awareness because `validate_plan` (run above) rejects
+    // any plan whose node grounds an excluded index (`node_grounds_excluded_index`).
+    // So a plan that reaches here grounds confirmed members only, and the tasks'
+    // evidence / dedup_key / rollups exclude rejected members by construction (AC#3).
     candidates.push(...build_plan_tasks(plan, bucket.evidence, { sweep_id, strategist }));
     exclusions.push(...collect_membership_exclusions(plan, bucket.evidence));
   }

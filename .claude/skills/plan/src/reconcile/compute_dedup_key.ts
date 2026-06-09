@@ -17,11 +17,18 @@ import type { AriadneFaultArea } from "@ariadnejs/types";
 import type { PlanTaskEvidence } from "@ariadnejs/skill-protocol";
 
 /**
- * The `"<file>:<line>"` identity of one evidence row — THE load-bearing
- * reconciliation primitive. `compute_dedup_key` hashes the sorted set of these
- * tokens, `union_evidence` deduplicates on them, and the reconciler overlap-scores
- * orphans against fresh creates on them. They must agree byte-for-byte across all
- * those sites, so the recipe lives here, once.
+ * The `"<file>:<line>"` identity of one evidence row's CALL SITE — THE
+ * load-bearing reconciliation primitive. `compute_dedup_key` hashes the sorted
+ * set of these tokens, `union_evidence` deduplicates on them, and the reconciler
+ * overlap-scores orphans against fresh creates on them. They must agree
+ * byte-for-byte across all those sites, so the recipe lives here, once.
+ *
+ * Deliberately distinct from `member_identity_token` (the membership-override
+ * key, over the FLAGGED MEMBER): `dedup_key` reconciles a TASK by the exact set
+ * of call-site locations it grounds (exact-overlap equivalence — a task whose
+ * location set differs at all is a different task), while member identity routes
+ * a single member across sweeps. Different questions, so different primitives;
+ * `dedup_key` is not re-keyed onto member identity.
  */
 export function location_token(evidence: PlanTaskEvidence): string {
   return `${evidence.member_evidence.file}:${evidence.member_evidence.line}`;

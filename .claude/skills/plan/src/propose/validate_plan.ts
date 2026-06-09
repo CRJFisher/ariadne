@@ -32,6 +32,7 @@ export type ValidationIssueCode =
   | "membership_index_duplicate"
   | "membership_excluded_missing_reason"
   | "membership_suggested_area_invalid"
+  | "membership_suggested_area_is_own_bucket"
   | "node_grounds_excluded_index";
 
 export interface ValidationIssue {
@@ -222,6 +223,7 @@ function check_node_rules(
 function check_membership(
   membership_raw: unknown,
   evidence_count: number,
+  bucket_fault_area: AriadneFaultArea,
 ): { issues: ValidationIssue[]; excluded: Set<number> } {
   const issues: ValidationIssue[] = [];
   const excluded = new Set<number>();
@@ -270,6 +272,14 @@ function check_membership(
       }
       if (entry.suggested_area !== undefined && !is_ariadne_fault_area(entry.suggested_area)) {
         issues.push({ code: "membership_suggested_area_invalid", path: `${path}.suggested_area`, message: `'${entry.suggested_area}' is not an AriadneFaultArea` });
+      } else if (entry.suggested_area === bucket_fault_area) {
+        // A member re-routed back into the bucket it was excluded from never
+        // converges: every sweep re-buckets it here and re-excludes it. Forbid it.
+        issues.push({
+          code: "membership_suggested_area_is_own_bucket",
+          path: `${path}.suggested_area`,
+          message: `suggested_area '${entry.suggested_area}' is the bucket's own fault_area — re-routing a member into the bucket it is excluded from cannot converge`,
+        });
       }
     }
   });
@@ -323,7 +333,7 @@ export function validate_plan(plan_raw: unknown, ctx: ValidatePlanContext): Vali
 
   // Validate the membership review and derive the excluded index set first, so
   // the node walk can forbid any node from grounding an excluded member.
-  const { issues: membership_issues, excluded } = check_membership(plan_raw.membership, ctx.evidence_count);
+  const { issues: membership_issues, excluded } = check_membership(plan_raw.membership, ctx.evidence_count, ctx.bucket_fault_area);
   issues.push(...membership_issues);
 
   const roots = plan_raw.roots as StrategistPlanNode[];

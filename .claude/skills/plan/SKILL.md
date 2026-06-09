@@ -121,7 +121,9 @@ immutable `dedup_key` = a hash of `fault_area` + the sorted evidence
   node, so it never enters a node's evidence or `dedup_key`). Every `belongs: false`
   verdict is recorded three ways: an `exclude_member` `PlanSweepEvent` (audit), a
   record in the membership-override store (so Pass A re-routes/suppresses it next
-  sweep, keyed on a line-drift-stable member identity), and — when it names a
+  sweep, keyed on the flagged member's identity — drift-tolerant on
+  `(file_path, name, kind)`; `start_line` is a collision-breaker that can still
+  shift, so a line-moved member re-enters the review), and — when it names a
   `suggested_area` — a `derive_fault_area` correction signal in the sweep summary
   (`derive_fault_area_corrections[]`), the durable signal to fix the deterministic
   derivation, same spirit as the `other`-bucket taxonomy extension.
@@ -194,7 +196,7 @@ output; `~/.ariadne/plan/` is the plan engine's task-DB (defined in
 - **Input (read-only):** `~/.ariadne/triage-entrypoints/analysis_output/<project>/triage_results/<run-id>.json`
 - **Sweep staging:** `~/.ariadne/plan/staging/<sweep-id>/buckets/<area>.json` + `manifest.json` (Pass A) + `plans/<area>.json` (Pass B)
 - **Task-DB:** `~/.ariadne/plan/tasks/<id>.json` (`PlanTask` rows) + `~/.ariadne/plan/sweeps/<sweep-id>.jsonl` (`PlanSweepEvent` log)
-- **Membership overrides:** `~/.ariadne/plan/membership_overrides.json` — members a strategist judged mis-routed, keyed on a line-drift-stable member identity. Written by Pass C, read by Pass A
+- **Membership overrides:** `~/.ariadne/plan/membership_overrides.json` — members a strategist judged mis-routed, keyed on the flagged member's identity (drift-tolerant on `(file_path, name, kind)`; `start_line` can still shift). Written by Pass C, read by Pass A
 - **Registry (read-only):** `.claude/skills/triage/known_issues/registry.json` — a dedup/grounding signal only
 
 ## Write boundaries

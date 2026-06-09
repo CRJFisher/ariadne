@@ -119,11 +119,14 @@ export function group_fault_areas(
       bucket.evidence.push(evidence);
       bucket.projects.add(run.project);
       bucket.source_runs.add(run.run_id);
-      bucket.needs_judgement = bucket.needs_judgement || location.needs_judgement;
-      // The escape-hatch description only applies while the member is still in
-      // its derived `other` bucket — a re-routed member carries no `other` free text.
-      if (area === location.area && location.description !== undefined && location.description.length > 0) {
-        bucket.descriptions.add(location.description);
+      // `needs_judgement` and the escape-hatch `description` describe the member's
+      // DERIVED area; neither applies to a destination it was re-routed into (the
+      // override settled that placement), so both are gated on `area === location.area`.
+      if (area === location.area) {
+        bucket.needs_judgement = bucket.needs_judgement || location.needs_judgement;
+        if (location.description !== undefined && location.description.length > 0) {
+          bucket.descriptions.add(location.description);
+        }
       }
     }
   }
