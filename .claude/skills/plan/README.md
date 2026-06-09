@@ -20,16 +20,22 @@ classifier `registry.json`, or `packages/core`.
   every false-positive, and bucket them by `AriadneFaultArea` via
   `derive_fault_area`. Each `FaultAreaBucket` carries its evidence verbatim plus
   a rollup, staged under `~/.ariadne/plan/staging/<sweep>/buckets/<area>.json`.
+  Consults the membership-override store to re-route (or suppress) members a
+  prior sweep judged mis-routed, so a mis-route is corrected, not re-litigated.
 - **Pass B — strategize** (`plan-strategist`, opus, one per bucket): turn one
   bucket into a hierarchical fix-plan tree (`architectural → fault_area →
   localized`) as a `StrategistPlan`, self-validated via `scripts/validate_plan.ts`.
-  For an `other` bucket the strategist emits BOTH a taxonomy-extension task and
-  an underlying core-fix task; classifier-script work is a lower-priority
-  `localized` item only.
+  First reviews bucket membership — a total per-member `membership` verdict — so
+  tasks ground only on members that share the bucket's root cause. For an `other`
+  bucket the strategist emits BOTH a taxonomy-extension task and an underlying
+  core-fix task; classifier-script work is a lower-priority `localized` item only.
 - **Pass C — reconcile** (`scripts/reconcile_plan.ts`): flatten each tree into
-  `PlanTask` rows, compute the immutable `dedup_key`, and reconcile within the
-  task-DB — a colliding live task is augmented, not duplicated. Writes via
-  `JsonPlanTaskRepository` and a `sweeps/<sweep-id>.jsonl` event log.
+  `PlanTask` rows (confirmed members only), compute the immutable `dedup_key`, and
+  reconcile within the task-DB — a colliding live task is augmented, not
+  duplicated. Records each membership exclusion as an `exclude_member` event + a
+  membership-override record + (when a `suggested_area` is given) a
+  `derive_fault_area` correction signal. Writes via `JsonPlanTaskRepository`, the
+  membership-override store, and a `sweeps/<sweep-id>.jsonl` event log.
 
 ## Where this fits
 
@@ -65,3 +71,4 @@ pnpm test
 - `~/.ariadne/plan/staging/<sweep-id>/plans/<area>.json` — Pass B strategist plans.
 - `~/.ariadne/plan/tasks/<id>.json` — `PlanTask` rows (the task-DB).
 - `~/.ariadne/plan/sweeps/<sweep-id>.jsonl` — `PlanSweepEvent` log, one per sweep.
+- `~/.ariadne/plan/membership_overrides.json` — members judged mis-routed; written by Pass C, read by Pass A.

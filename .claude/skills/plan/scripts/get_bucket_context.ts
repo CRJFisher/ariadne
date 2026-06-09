@@ -16,6 +16,7 @@ import * as fs from "node:fs/promises";
 import {
   ARIADNE_FAULT_AREA_FOLDER,
   ARIADNE_FAULT_AREAS,
+  derive_fault_area,
 } from "@ariadnejs/types";
 
 import type { FaultAreaBucket } from "../src/types.js";
@@ -56,6 +57,14 @@ async function main(): Promise<void> {
   const { bucket_path, sweep_id } = parse_argv(process.argv.slice(2));
   const bucket = JSON.parse(await fs.readFile(bucket_path, "utf8")) as FaultAreaBucket;
 
+  // The evidence indices whose deterministic derivation defaulted
+  // (`needs_judgement`): the members to adjudicate first in the membership review,
+  // since the bucket they landed in is the least certain.
+  const needs_judgement_indices = bucket.evidence
+    .map((evidence, index) => ({ index, needs_judgement: derive_fault_area(evidence).needs_judgement }))
+    .filter((x) => x.needs_judgement)
+    .map((x) => x.index);
+
   const out = {
     sweep_id,
     fault_area: bucket.fault_area,
@@ -64,10 +73,19 @@ async function main(): Promise<void> {
     projects: bucket.projects,
     source_runs: bucket.source_runs,
     needs_judgement: bucket.needs_judgement,
+    needs_judgement_indices,
     descriptions: bucket.descriptions,
     evidence: bucket.evidence,
     taxonomy: ARIADNE_FAULT_AREAS,
     authoring_rules: {
+      membership_review_rule:
+        "Before planning, emit a `membership` verdict for EVERY evidence index " +
+        `[0, ${bucket.evidence.length}): { index, belongs, reason, suggested_area? }. A member ` +
+        "`belongs` when it genuinely shares this bucket's bulk root cause; mark `belongs: false` " +
+        "(with a non-empty `reason`, and a `suggested_area` when you can tell where it should route " +
+        "instead) for a member Pass A mis-routed here. The review must be TOTAL (one verdict per " +
+        "index, no gaps) and CONSISTENT (no node may carry an `evidence_index` whose verdict is " +
+        "`belongs: false`). Prioritise the needs_judgement_indices — those are the least certain.",
       schema_version_rule: "StrategistPlan.schema_version must equal 1.",
       fault_area_rule:
         `Every node's fault_area must equal this bucket's fault_area '${bucket.fault_area}' ` +

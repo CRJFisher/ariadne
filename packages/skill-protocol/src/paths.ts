@@ -113,6 +113,18 @@ export function plan_sweeps_dir(): string {
 }
 
 /**
+ * The `plan` engine's membership-override store, `<plan>/membership_overrides.json`.
+ * A single accumulating JSON file recording members the strategist judged not to
+ * belong in the fault-area bucket they were routed into, keyed on a stable member
+ * identity, so a mis-route is re-routed (or suppressed) on the next sweep instead
+ * of re-adjudicated. Written ONLY by the reconcile pass (one writer per sweep);
+ * read by Pass A. Not registry-shaped, so it stays outside the registry lock.
+ */
+export function plan_membership_overrides_path(): string {
+  return path.join(plan_dir(), "membership_overrides.json");
+}
+
+/**
  * Absolute path to the known-issues registry. The single resolver for both
  * skills: the repo root is located by walking up to the directory containing
  * `pnpm-workspace.yaml` (robust to where the importing skill lives and to the

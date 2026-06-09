@@ -159,14 +159,44 @@ export interface StrategistPlanNode {
 }
 
 /**
+ * One per-member membership verdict — the strategist's judgement of whether the
+ * evidence row at `index` genuinely shares this bucket's bulk root cause. Pass A
+ * (`derive_fault_area`) buckets deterministically and can mis-route a member; the
+ * strategist is the one stage with judgement + code access, so before it plans it
+ * reviews each member it was handed.
+ *
+ * The review is TOTAL (the validator requires one verdict per `evidence[]` index)
+ * and CONSISTENT (no node may ground an index whose verdict is `belongs: false`).
+ * A `belongs: false` verdict carries a non-empty `reason`; `suggested_area` names
+ * the `AriadneFaultArea` the member should route to instead when the strategist
+ * can tell (a confirmed `derive_fault_area` mis-route), and is omitted otherwise.
+ */
+export interface MembershipVerdict {
+  /** Positional index into the bucket's `evidence[]`. */
+  index: number;
+  /** True when the member shares this bucket's bulk root cause. */
+  belongs: boolean;
+  /** Justification; required (non-empty) on a `belongs: false` verdict. */
+  reason: string;
+  /** The area the member should route to instead (only on a `belongs: false` verdict, when tellable). */
+  suggested_area?: AriadneFaultArea;
+}
+
+/**
  * A strategist's full output for ONE fault-area bucket — a forest of plan nodes
  * (usually a single `architectural` or `fault_area` root, ≥1). Self-contained:
  * carries the bucket's `fault_area` and the `sweep_id` it was dispatched for, so
  * the validator and reconcile engine cross-check against the bucket fed to them.
+ *
+ * `membership` is the per-member review over the bucket's `evidence[]` — one
+ * verdict per index. Pass C grounds tasks on `belongs: true` members only and
+ * records each `belongs: false` decision as an `exclude_member` sweep event + a
+ * membership-override record.
  */
 export interface StrategistPlan {
   schema_version: number;
   fault_area: AriadneFaultArea;
   sweep_id: string;
   roots: StrategistPlanNode[];
+  membership: MembershipVerdict[];
 }

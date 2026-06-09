@@ -30,9 +30,9 @@ backlog** below) — the only path that writes `backlog/`.
 
 | #   | Pass        | Actor                                     | Output                                                                                          |
 | --- | ----------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| A   | Group       | `scripts/group_runs.ts`                   | One `FaultAreaBucket` per `AriadneFaultArea`, staged under `~/.ariadne/plan/staging/<sweep>/buckets/`, plus a `manifest.json` recording the full scanned scope (projects + run_ids, incl. zero-FP runs) and a sweep summary |
-| B   | Strategize  | `plan-strategist` (opus, ≤5 concurrent)   | One `StrategistPlan` (hierarchical fix tree) per bucket, self-validated via `scripts/validate_plan.ts` |
-| C   | Reconcile   | `scripts/reconcile_plan.ts`               | `PlanTask` rows + a `PlanSweepEvent` log in `~/.ariadne/plan/`; live tasks augmented by `dedup_key`, orphans superseded/combined/resolved, user-promoted tasks marked `exported` |
+| A   | Group       | `scripts/group_runs.ts`                   | One `FaultAreaBucket` per `AriadneFaultArea`, staged under `~/.ariadne/plan/staging/<sweep>/buckets/`, plus a `manifest.json` recording the full scanned scope (projects + run_ids, incl. zero-FP runs) and a sweep summary. Consults the membership-override store to re-route (or suppress) members a prior sweep judged mis-routed |
+| B   | Strategize  | `plan-strategist` (opus, ≤5 concurrent)   | One `StrategistPlan` (hierarchical fix tree) per bucket — including a total per-member `membership` review — self-validated via `scripts/validate_plan.ts` |
+| C   | Reconcile   | `scripts/reconcile_plan.ts`               | `PlanTask` rows (grounded on confirmed members only) + a `PlanSweepEvent` log in `~/.ariadne/plan/`; live tasks augmented by `dedup_key`, orphans superseded/combined/resolved, user-promoted tasks marked `exported`; membership exclusions recorded as `exclude_member` events + override records + `derive_fault_area` correction signals |
 
 ## Arguments
 
@@ -58,6 +58,13 @@ Capture the printed JSON as `SWEEP`. It holds `sweep_id`, `bucket_count`, and
 staged `FaultAreaBucket` file). The full evidence lives in the bucket files;
 the summary is the dispatch manifest.
 
+Pass A reads the membership-override store (`~/.ariadne/plan/membership_overrides.json`,
+written by prior reconcile passes) and, for each false-positive whose derived
+`(fault_area, member-identity)` matches an override, **re-routes** it to the
+override's `suggested_area` — or **suppresses** it when none was suggested. A
+member a strategist already judged mis-routed is therefore corrected here instead
+of re-adjudicated every sweep.
+
 ### Pass B — dispatch the strategist wave
 
 The strategist is opus/200-turn, so cap concurrency at
@@ -71,7 +78,10 @@ message so they run in parallel):
 > --sweep <sweep_id>`. Run the validator (`scripts/validate_plan.ts --plan
 > <output_path> --bucket <bucket_path>`) against your draft until it returns
 > clean, then write the final `StrategistPlan` JSON to `<output_path>`
-> (`~/.ariadne/plan/staging/<sweep_id>/plans/<fault_area>.json`). For an `other`
+> (`~/.ariadne/plan/staging/<sweep_id>/plans/<fault_area>.json`). First emit a
+> total per-member `membership` review (one verdict per evidence index; mark a
+> mis-routed member `belongs: false` with a reason and, when tellable, a
+> `suggested_area`) and ground tasks on confirmed members only. For an `other`
 > bucket, emit BOTH a taxonomy-extension task and an underlying core-fix task.
 > Classifier-script work is a lower-priority `localized` item only. Return
 > nothing inline.
@@ -106,10 +116,20 @@ immutable `dedup_key` = a hash of `fault_area` + the sorted evidence
   whose `dedup_key` a backlog task already carries is marked `exported` and
   suppressed from re-proposal. No backlog write.
 
-Writes `PlanTask` rows via `JsonPlanTaskRepository` and appends one
-`PlanSweepEvent` per decision to `sweeps/<sweep_id>.jsonl`. A re-sweep of the
-same runs augments rather than duplicates; an export is idempotent (re-emitted
-only on the proposed→exported transition).
+- **membership decisions** — each plan carries a per-member `membership` review.
+  Tasks are built from `belongs: true` members only (an excluded member grounds no
+  node, so it never enters a node's evidence or `dedup_key`). Every `belongs: false`
+  verdict is recorded three ways: an `exclude_member` `PlanSweepEvent` (audit), a
+  record in the membership-override store (so Pass A re-routes/suppresses it next
+  sweep, keyed on a line-drift-stable member identity), and — when it names a
+  `suggested_area` — a `derive_fault_area` correction signal in the sweep summary
+  (`derive_fault_area_corrections[]`), the durable signal to fix the deterministic
+  derivation, same spirit as the `other`-bucket taxonomy extension.
+
+Writes `PlanTask` rows via `JsonPlanTaskRepository`, the membership-override store,
+and appends one `PlanSweepEvent` per decision to `sweeps/<sweep_id>.jsonl`. A
+re-sweep of the same runs augments rather than duplicates; an export is idempotent
+(re-emitted only on the proposed→exported transition).
 
 ## Export to backlog (user-invoked)
 
@@ -174,12 +194,15 @@ output; `~/.ariadne/plan/` is the plan engine's task-DB (defined in
 - **Input (read-only):** `~/.ariadne/triage-entrypoints/analysis_output/<project>/triage_results/<run-id>.json`
 - **Sweep staging:** `~/.ariadne/plan/staging/<sweep-id>/buckets/<area>.json` + `manifest.json` (Pass A) + `plans/<area>.json` (Pass B)
 - **Task-DB:** `~/.ariadne/plan/tasks/<id>.json` (`PlanTask` rows) + `~/.ariadne/plan/sweeps/<sweep-id>.jsonl` (`PlanSweepEvent` log)
+- **Membership overrides:** `~/.ariadne/plan/membership_overrides.json` — members a strategist judged mis-routed, keyed on a line-drift-stable member identity. Written by Pass C, read by Pass A
 - **Registry (read-only):** `.claude/skills/triage/known_issues/registry.json` — a dedup/grounding signal only
 
 ## Write boundaries
 
 `plan` never writes `backlog/`, `registry.json`, or `packages/core`. It writes
-only the task-DB under `~/.ariadne/plan/`. Pass C reads `backlog/tasks/*.md`
+only the task-DB under `~/.ariadne/plan/` — `tasks/`, `sweeps/`, and the
+membership-override store, of which the reconcile pass (Pass C) is the sole
+writer; the strategist writes only its staged `StrategistPlan`. Pass C reads `backlog/tasks/*.md`
 frontmatter **read-only** (`src/store/backlog_dedup.ts`, keyed on
 `plan_dedup_key`) as a dedup signal — it is never written by the pipeline; the
 only writer is the user-invoked export adapter (`scripts/export_to_backlog.ts`).

@@ -23,7 +23,7 @@
 import type { AriadneFaultArea } from "@ariadnejs/types";
 
 import type { RunId } from "./run_id.js";
-import type { MemberEvidence } from "./triage_results.js";
+import type { MemberEvidence, MemberSymbol } from "./triage_results.js";
 
 /**
  * Schema version of a stored plan-task record. The store (the JSON
@@ -96,6 +96,15 @@ export type PlanTaskTier = "architectural" | "fault_area" | "localized";
  */
 export interface PlanTaskEvidence {
   member_evidence: MemberEvidence;
+  /**
+   * Stable identity of the flagged entry point this evidence row is about,
+   * carried verbatim from the published `NovelIssue`. The strategist reviews
+   * membership per row and the reconcile pass keys its membership-override store
+   * on this identity, so a mis-routed member survives line drift across sweeps.
+   * Distinct from the `member_evidence` call-site `file:line` that grounds the
+   * `dedup_key`: this names the FLAGGED MEMBER, that names the call site.
+   */
+  member_symbol: MemberSymbol;
   project: string;
   run_id: RunId;
   diagnosis: string;

@@ -16,6 +16,10 @@ import { derive_fault_area, type AriadneFaultArea } from "@ariadnejs/types";
 import type { NovelIssue, PlanTaskEvidence, RunId } from "@ariadnejs/skill-protocol";
 
 import type { FaultAreaBucket } from "../types.js";
+import {
+  override_key,
+  type MembershipOverride,
+} from "../store/membership_override.js";
 
 /** One scanned run's published false-positives, with its provenance. */
 export interface ParsedRun {
@@ -40,6 +44,7 @@ export function novel_issue_to_evidence(
 ): PlanTaskEvidence {
   return {
     member_evidence: issue.member_evidence,
+    member_symbol: issue.member_symbol,
     project,
     run_id,
     diagnosis: issue.diagnosis,
@@ -62,34 +67,62 @@ interface BucketAcc {
 /**
  * Group every false-positive across `runs` by `AriadneFaultArea`.
  *
+ * `overrides` are the membership-override records the reconcile pass wrote on
+ * prior sweeps (the strategist's confirmed mis-routes). A member whose
+ * `(derived_area, identity)` matches an override is RE-ROUTED to the override's
+ * `suggested_area`, or SUPPRESSED entirely when the override names no suggested
+ * area — so the strategist never re-adjudicates a mis-route it already settled.
+ * Re-routing is single-step from the derived area; a suggested area that is
+ * itself wrong is a fresh mis-route the strategist reviews again (and the
+ * `derive_fault_area` correction signal is the durable fix).
+ *
  * Buckets are returned sorted by `observed_count` descending, ties broken by
  * `fault_area` lexically — a stable order so the dispatched strategist wave and
  * any test assertion are deterministic.
  */
-export function group_fault_areas(runs: ParsedRun[]): FaultAreaBucket[] {
+export function group_fault_areas(
+  runs: ParsedRun[],
+  overrides: MembershipOverride[] = [],
+): FaultAreaBucket[] {
   const acc = new Map<AriadneFaultArea, BucketAcc>();
+  const overrides_by_key = new Map<string, MembershipOverride>();
+  for (const override of overrides) {
+    overrides_by_key.set(override_key(override.fault_area, override.member), override);
+  }
 
   for (const run of runs) {
     for (const issue of run.novel_issues) {
       const evidence = novel_issue_to_evidence(issue, run.project, run.run_id);
       const location = derive_fault_area(evidence);
-      let bucket = acc.get(location.area);
+
+      // Consult the override store BEFORE bucketing: a member the strategist
+      // already judged not to belong in `location.area` is re-routed to its
+      // suggested area, or suppressed when no area was suggested.
+      const override = overrides_by_key.get(override_key(location.area, evidence.member_symbol));
+      if (override !== undefined && override.suggested_area === null) continue;
+      const area = override !== undefined && override.suggested_area !== null
+        ? override.suggested_area
+        : location.area;
+
+      let bucket = acc.get(area);
       if (bucket === undefined) {
         bucket = {
-          fault_area: location.area,
+          fault_area: area,
           evidence: [],
           projects: new Set(),
           source_runs: new Set(),
           descriptions: new Set(),
           needs_judgement: false,
         };
-        acc.set(location.area, bucket);
+        acc.set(area, bucket);
       }
       bucket.evidence.push(evidence);
       bucket.projects.add(run.project);
       bucket.source_runs.add(run.run_id);
       bucket.needs_judgement = bucket.needs_judgement || location.needs_judgement;
-      if (location.description !== undefined && location.description.length > 0) {
+      // The escape-hatch description only applies while the member is still in
+      // its derived `other` bucket — a re-routed member carries no `other` free text.
+      if (area === location.area && location.description !== undefined && location.description.length > 0) {
         bucket.descriptions.add(location.description);
       }
     }

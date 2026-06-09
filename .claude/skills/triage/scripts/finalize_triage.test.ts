@@ -224,6 +224,7 @@ describe("finalize_triage (fixture integration)", () => {
         {
           id: "novel-2",
           entry_index: 2,
+          member_symbol: { file_path: "src/novel.ts", name: "novel_fp", kind: "function", start_line: 10 },
           member_evidence: { file: "src/novel.ts", line: 10, why: "registered via decorator" },
           proposed_root_cause: "decorator-route registration",
           evidence_excerpt: "@route('/novel')",
@@ -236,6 +237,7 @@ describe("finalize_triage (fixture integration)", () => {
         {
           id: "novel-3",
           entry_index: 3,
+          member_symbol: { file_path: "src/novel2.ts", name: "novel_fp_2", kind: "function", start_line: 20 },
           member_evidence: { file: "src/novel2.ts", line: 20, why: "registered via emitter" },
           proposed_root_cause: "callback registration missed",
           evidence_excerpt: "emitter.on('x', novel_fp_2)",

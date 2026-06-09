@@ -13,6 +13,7 @@ function ni(id: string, entry_index: number): NovelIssue {
   return {
     id,
     entry_index,
+    member_symbol: { file_path: `src/${id}.ts`, name: id, kind: "function", start_line: entry_index },
     member_evidence: { file: `src/${id}.ts`, line: entry_index, why: "missed caller" },
     proposed_root_cause: "resolver gap",
     evidence_excerpt: `call-${entry_index}`,

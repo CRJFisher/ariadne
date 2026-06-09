@@ -26,7 +26,13 @@ export type ValidationIssueCode =
   | "other_bucket_missing_taxonomy_extension"
   | "other_bucket_missing_core_fix"
   | "taxonomy_extension_on_non_other_bucket"
-  | "core_fix_effort_invalid";
+  | "core_fix_effort_invalid"
+  | "membership_incomplete"
+  | "membership_index_out_of_range"
+  | "membership_index_duplicate"
+  | "membership_excluded_missing_reason"
+  | "membership_suggested_area_invalid"
+  | "node_grounds_excluded_index";
 
 export interface ValidationIssue {
   code: ValidationIssueCode;
@@ -108,6 +114,7 @@ function check_node_rules(
   path: string,
   ctx: ValidatePlanContext,
   found: { taxonomy_extension: boolean; core_fix: boolean },
+  excluded: ReadonlySet<number>,
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
@@ -135,6 +142,11 @@ function check_node_rules(
     }
     if (seen.has(i)) {
       issues.push({ code: "evidence_index_duplicate", path: `${path}.evidence_indices`, message: `index ${i} is duplicated` });
+    }
+    // A node may not ground a member the membership review excluded — that is
+    // exactly the corrupted-evidence the review exists to prevent.
+    if (excluded.has(i)) {
+      issues.push({ code: "node_grounds_excluded_index", path: `${path}.evidence_indices`, message: `index ${i} is excluded by the membership review and cannot ground a node` });
     }
     seen.add(i);
   }
@@ -195,9 +207,86 @@ function check_node_rules(
         message: `a ${child.tier} node cannot be a child of a ${node.tier} node`,
       });
     }
-    issues.push(...check_node_rules(child, `${path}.children[${i}]`, ctx, found));
+    issues.push(...check_node_rules(child, `${path}.children[${i}]`, ctx, found, excluded));
   }
   return issues;
+}
+
+/**
+ * Validate the per-member membership review and compute the excluded index set.
+ * The review must be TOTAL — exactly one verdict per evidence index in
+ * `[0, evidence_count)` — with a non-empty reason on every exclusion and a valid
+ * `suggested_area` when one is given. Returns the excluded indices so the node
+ * walk can forbid any node from grounding one (consistency).
+ */
+function check_membership(
+  membership_raw: unknown,
+  evidence_count: number,
+): { issues: ValidationIssue[]; excluded: Set<number> } {
+  const issues: ValidationIssue[] = [];
+  const excluded = new Set<number>();
+  if (!Array.isArray(membership_raw)) {
+    issues.push({ code: "shape_error", path: "$.membership", message: "membership must be an array" });
+    return { issues, excluded };
+  }
+
+  const seen = new Set<number>();
+  membership_raw.forEach((entry, i) => {
+    const path = `$.membership[${i}]`;
+    if (!is_object(entry)) {
+      issues.push({ code: "shape_error", path, message: "membership verdict must be an object" });
+      return;
+    }
+    if (typeof entry.index !== "number" || !Number.isInteger(entry.index)) {
+      issues.push({ code: "shape_error", path: `${path}.index`, message: "index must be an integer" });
+      return;
+    }
+    if (typeof entry.belongs !== "boolean") {
+      issues.push({ code: "shape_error", path: `${path}.belongs`, message: "belongs must be a boolean" });
+      return;
+    }
+    if (typeof entry.reason !== "string") {
+      issues.push({ code: "shape_error", path: `${path}.reason`, message: "reason must be a string" });
+      return;
+    }
+    if (entry.suggested_area !== undefined && typeof entry.suggested_area !== "string") {
+      issues.push({ code: "shape_error", path: `${path}.suggested_area`, message: "suggested_area must be a string when present" });
+      return;
+    }
+
+    const index = entry.index;
+    if (index < 0 || index >= evidence_count) {
+      issues.push({ code: "membership_index_out_of_range", path: `${path}.index`, message: `index ${index} out of range [0, ${evidence_count})` });
+    }
+    if (seen.has(index)) {
+      issues.push({ code: "membership_index_duplicate", path: `${path}.index`, message: `index ${index} has more than one verdict` });
+    }
+    seen.add(index);
+
+    if (entry.belongs === false) {
+      excluded.add(index);
+      if (entry.reason.trim().length === 0) {
+        issues.push({ code: "membership_excluded_missing_reason", path: `${path}.reason`, message: "a `belongs: false` verdict must carry a non-empty reason" });
+      }
+      if (entry.suggested_area !== undefined && !is_ariadne_fault_area(entry.suggested_area)) {
+        issues.push({ code: "membership_suggested_area_invalid", path: `${path}.suggested_area`, message: `'${entry.suggested_area}' is not an AriadneFaultArea` });
+      }
+    }
+  });
+
+  const missing: number[] = [];
+  for (let index = 0; index < evidence_count; index++) {
+    if (!seen.has(index)) missing.push(index);
+  }
+  if (missing.length > 0) {
+    issues.push({
+      code: "membership_incomplete",
+      path: "$.membership",
+      message: `the membership review must cover every evidence index; missing verdict(s) for [${missing.join(", ")}]`,
+    });
+  }
+
+  return { issues, excluded };
 }
 
 export function validate_plan(plan_raw: unknown, ctx: ValidatePlanContext): ValidatePlanResult {
@@ -232,10 +321,15 @@ export function validate_plan(plan_raw: unknown, ctx: ValidatePlanContext): Vali
     return { ok: false, issues };
   }
 
+  // Validate the membership review and derive the excluded index set first, so
+  // the node walk can forbid any node from grounding an excluded member.
+  const { issues: membership_issues, excluded } = check_membership(plan_raw.membership, ctx.evidence_count);
+  issues.push(...membership_issues);
+
   const roots = plan_raw.roots as StrategistPlanNode[];
   const found = { taxonomy_extension: false, core_fix: false };
   roots.forEach((root, i) => {
-    issues.push(...check_node_rules(root, `roots[${i}]`, ctx, found));
+    issues.push(...check_node_rules(root, `roots[${i}]`, ctx, found, excluded));
   });
 
   if (ctx.bucket_fault_area === "other") {

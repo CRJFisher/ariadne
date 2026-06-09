@@ -31,6 +31,7 @@ const RUN = parse_run_id("aaaaaaa-2026-04-16T18-10-16.855Z");
 function ev(file: string, line: number, project = "p"): PlanTaskEvidence {
   return {
     member_evidence: { file, line, why: "w" },
+    member_symbol: { file_path: file, name: "flagged_fn", kind: "function", start_line: line },
     project,
     run_id: RUN,
     diagnosis: "callers-not-in-registry",
@@ -38,6 +39,13 @@ function ev(file: string, line: number, project = "p"): PlanTaskEvidence {
     has_uncaptured_indexed_grep_hit: true,
     callers_only_in_unindexed_tests: false,
   };
+}
+
+/** A total membership review confirming every index the plan's leaves ground. */
+function confirmed_for(leaves: StrategistPlanNode[]): StrategistPlan["membership"] {
+  const indices = leaves.flatMap((leaf) => leaf.evidence_indices);
+  const count = indices.length === 0 ? 0 : Math.max(...indices) + 1;
+  return Array.from({ length: count }, (_, index) => ({ index, belongs: true, reason: "" }));
 }
 
 /**
@@ -82,6 +90,7 @@ function plan_with(leaves: StrategistPlanNode[]): StrategistPlan {
     schema_version: 1,
     fault_area: "syntactic_extraction",
     sweep_id: "sweep-1",
+    membership: confirmed_for(leaves),
     roots: [
       {
         tier: "fault_area",

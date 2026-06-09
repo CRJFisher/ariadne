@@ -359,6 +359,7 @@ describe("build_finalization_output", () => {
       {
         id: "novel-5",
         entry_index: 5,
+        member_symbol: { file_path: "src/m.ts", name: "via_method", kind: "function", start_line: 10 },
         member_evidence: { file: "src/caller.ts", line: 3, why: "called on obj" },
         proposed_root_cause: "receiver type unknown",
         evidence_excerpt: "obj.via_method()",
@@ -371,6 +372,7 @@ describe("build_finalization_output", () => {
       {
         id: "novel-6",
         entry_index: 6,
+        member_symbol: { file_path: "src/n.ts", name: "no_failure", kind: "function", start_line: 10 },
         member_evidence: { file: "src/caller.ts", line: 9, why: "plain call" },
         proposed_root_cause: "no callers in registry",
         evidence_excerpt: "no_failure()",
@@ -413,6 +415,7 @@ describe("build_finalization_output", () => {
       {
         id: "novel-8",
         entry_index: 8,
+        member_symbol: { file_path: "src/test.ts", name: "test_func", kind: "function", start_line: 10 },
         member_evidence: { file: "src/caller.ts", line: 1, why: "free call" },
         proposed_root_cause: "name not in scope",
         evidence_excerpt: "fn()",
@@ -459,6 +462,7 @@ describe("build_finalization_output", () => {
       {
         id: "novel-12",
         entry_index: 12,
+        member_symbol: { file_path: "src/t.ts", name: "caller_in_tests", kind: "function", start_line: 10 },
         member_evidence: { file: "test/t.test.ts", line: 4, why: "only caller is a test" },
         proposed_root_cause: "callers live only in excluded test dirs",
         evidence_excerpt: "caller_in_tests()",

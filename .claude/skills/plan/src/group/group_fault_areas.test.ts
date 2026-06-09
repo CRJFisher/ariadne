@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { parse_run_id, type NovelIssue, type PlanTaskEvidence } from "@ariadnejs/skill-protocol";
 
 import type { FaultAreaBucket } from "../types.js";
+import type { MembershipOverride } from "../store/membership_override.js";
 import {
   group_fault_areas,
   novel_issue_to_evidence,
@@ -14,14 +15,21 @@ const RUN_B = parse_run_id("bbbbbbb-2026-04-17T09-30-00.000Z");
 
 /** Build a published `NovelIssue`; fields default to a name-resolution failure. */
 function novel(overrides: Partial<NovelIssue> = {}): NovelIssue {
+  const member_evidence = overrides.member_evidence ?? {
+    file: "src/a.ts",
+    line: 1,
+    why: "missed caller",
+  };
   return {
     id: overrides.id ?? `novel-${overrides.entry_index ?? 0}`,
     entry_index: overrides.entry_index ?? 0,
-    member_evidence: overrides.member_evidence ?? {
-      file: "src/a.ts",
-      line: 1,
-      why: "missed caller",
+    member_symbol: overrides.member_symbol ?? {
+      file_path: member_evidence.file,
+      name: "flagged_fn",
+      kind: "function",
+      start_line: member_evidence.line,
     },
+    member_evidence,
     proposed_root_cause: overrides.proposed_root_cause ?? "resolver gap",
     evidence_excerpt: overrides.evidence_excerpt ?? "fn()",
     diagnosis: overrides.diagnosis ?? "callers-in-registry-unresolved",
@@ -47,6 +55,7 @@ describe("novel_issue_to_evidence", () => {
     });
     const expected: PlanTaskEvidence = {
       member_evidence: { file: "src/x.ts", line: 9, why: "only caller is dead" },
+      member_symbol: { file_path: "src/x.ts", name: "flagged_fn", kind: "function", start_line: 9 },
       project: "express",
       run_id: RUN_A,
       diagnosis: "callers-not-in-registry",
@@ -79,6 +88,7 @@ describe("group_fault_areas", () => {
         evidence: [
           {
             member_evidence: { file: "src/router.ts", line: 12, why: "unresolved name" },
+            member_symbol: { file_path: "src/router.ts", name: "flagged_fn", kind: "function", start_line: 12 },
             project: "express",
             run_id: RUN_A,
             diagnosis: "callers-in-registry-unresolved",
@@ -231,5 +241,62 @@ describe("group_fault_areas", () => {
       },
     ]);
     expect(entry_point.map((b) => b.fault_area)).toEqual(["entry_point_classification"]);
+  });
+});
+
+describe("group_fault_areas — membership overrides", () => {
+  // A member derive_fault_area routes to name_resolution.
+  const issue = novel({
+    entry_index: 0,
+    member_evidence: { file: "src/router.ts", line: 12, why: "unresolved name" },
+    member_symbol: { file_path: "src/router.ts", name: "route", kind: "function", start_line: 12 },
+    resolution_failure: { stage: "name_resolution", reason: "name_not_in_scope" },
+  });
+  const runs: ParsedRun[] = [{ project: "express", run_id: RUN_A, novel_issues: [issue] }];
+
+  it("re-routes a member to its suggested_area when an override names one", () => {
+    const overrides: MembershipOverride[] = [
+      {
+        fault_area: "name_resolution",
+        member: { file_path: "src/router.ts", name: "route", kind: "function", start_line: 12 },
+        reason: "actually an import miss",
+        suggested_area: "import_resolution",
+        first_excluded_in_sweep: "sweep-0",
+        last_excluded_in_sweep: "sweep-0",
+      },
+    ];
+    const buckets = group_fault_areas(runs, overrides);
+    expect(buckets.map((b) => b.fault_area)).toEqual(["import_resolution"]);
+    expect(buckets[0].observed_count).toEqual(1);
+  });
+
+  it("suppresses a member entirely when its override names no suggested_area", () => {
+    const overrides: MembershipOverride[] = [
+      {
+        fault_area: "name_resolution",
+        member: { file_path: "src/router.ts", name: "route", kind: "function", start_line: 12 },
+        reason: "not a real fault here",
+        suggested_area: null,
+        first_excluded_in_sweep: "sweep-0",
+        last_excluded_in_sweep: "sweep-0",
+      },
+    ];
+    expect(group_fault_areas(runs, overrides)).toEqual([]);
+  });
+
+  it("ignores an override whose fault_area does not match the member's derived area", () => {
+    // The same member identity, but the override is keyed on a different area, so
+    // it does not match this sweep's derivation → the member buckets normally.
+    const overrides: MembershipOverride[] = [
+      {
+        fault_area: "method_lookup",
+        member: { file_path: "src/router.ts", name: "route", kind: "function", start_line: 12 },
+        reason: "stale key",
+        suggested_area: "import_resolution",
+        first_excluded_in_sweep: "sweep-0",
+        last_excluded_in_sweep: "sweep-0",
+      },
+    ];
+    expect(group_fault_areas(runs, overrides).map((b) => b.fault_area)).toEqual(["name_resolution"]);
   });
 });

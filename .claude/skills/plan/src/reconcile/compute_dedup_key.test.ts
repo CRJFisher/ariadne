@@ -9,6 +9,7 @@ const RUN = parse_run_id("aaaaaaa-2026-04-16T18-10-16.855Z");
 function ev(file: string, line: number): PlanTaskEvidence {
   return {
     member_evidence: { file, line, why: "w" },
+    member_symbol: { file_path: file, name: "flagged_fn", kind: "function", start_line: line },
     project: "p",
     run_id: RUN,
     diagnosis: "callers-not-in-registry",

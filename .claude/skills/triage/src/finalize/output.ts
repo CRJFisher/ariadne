@@ -197,16 +197,26 @@ export function build_finalization_output(
           member_evidence: verdict.member_evidence,
         });
         break;
-      case "fp-novel":
+      case "fp-novel": {
+        // Reuse `entry_ref` so the member identity shares the same kind check and
+        // `project_path`-relative `file_path` the published entry rows use.
+        const ref = entry_ref(entry, context.project_path);
         novel_issues.push({
           id: `novel-${entry.entry_index}`,
           entry_index: entry.entry_index,
+          member_symbol: {
+            file_path: ref.file_path,
+            name: ref.name,
+            kind: ref.kind,
+            start_line: ref.start_line,
+          },
           member_evidence: verdict.member_evidence,
           proposed_root_cause: verdict.proposed_root_cause,
           evidence_excerpt: verdict.evidence_excerpt,
           ...attach_fault_diagnostics(entry.diagnostics),
         });
         break;
+      }
       case "fp-classifier-regression":
         regression_inputs.push({
           should_have_matched_rule_id: verdict.should_have_matched_rule_id,

@@ -48,6 +48,7 @@ function make_task(overrides: Partial<PlanTask>): PlanTask {
     evidence: [
       {
         member_evidence: { file: "src/a.ts", line: 10, why: "unresolved call" },
+        member_symbol: { file_path: "src/a.ts", name: "flagged_fn", kind: "function", start_line: 10 },
         project: "webpack",
         run_id: "abc1234-2026-04-16T18-10-16.855Z" as RunId,
         diagnosis: "unresolved_method",

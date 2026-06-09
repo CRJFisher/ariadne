@@ -25,9 +25,17 @@ import type { PlanTask } from "@ariadnejs/skill-protocol";
 
 import { build_plan_tasks } from "../src/reconcile/build_plan_tasks.js";
 import { reconcile_plan } from "../src/reconcile/reconcile_plan.js";
+import {
+  collect_membership_exclusions,
+  record_membership_decisions,
+} from "../src/reconcile/record_membership_decisions.js";
 import { validate_plan } from "../src/propose/validate_plan.js";
 import { read_exported_backlog_keys } from "../src/store/backlog_dedup.js";
 import { JsonPlanTaskRepository } from "../src/store/json_plan_task_repository.js";
+import {
+  JsonMembershipOverrideStore,
+  type MembershipExclusion,
+} from "../src/store/membership_override.js";
 import {
   backlog_tasks_dir,
   plan_staging_buckets_dir,
@@ -103,6 +111,7 @@ async function main(): Promise<void> {
   }
 
   const candidates: PlanTask[] = [];
+  const exclusions: MembershipExclusion[] = [];
   const rejected: Array<{ plan: string; issues: unknown }> = [];
 
   for (const file of plan_files) {
@@ -130,6 +139,7 @@ async function main(): Promise<void> {
     }
     const plan = plan_raw as StrategistPlan;
     candidates.push(...build_plan_tasks(plan, bucket.evidence, { sweep_id, strategist }));
+    exclusions.push(...collect_membership_exclusions(plan, bucket.evidence));
   }
 
   const exported_backlog_keys = await read_exported_backlog_keys(backlog_tasks_dir());
@@ -139,6 +149,15 @@ async function main(): Promise<void> {
     swept_projects: manifest.projects,
     exported_backlog_keys,
   });
+
+  // Record the membership decisions: one `exclude_member` event + override record
+  // per excluded member, and the `derive_fault_area` correction signals.
+  const { events: membership_events, corrections } = await record_membership_decisions(
+    repo,
+    new JsonMembershipOverrideStore(),
+    sweep_id,
+    exclusions,
+  );
 
   const summary = {
     sweep_id,
@@ -151,6 +170,8 @@ async function main(): Promise<void> {
     combined: events.filter((e) => e.kind === "combine").length,
     resolved: events.filter((e) => e.kind === "resolve").length,
     exported: events.filter((e) => e.kind === "export").length,
+    excluded_members: membership_events.length,
+    derive_fault_area_corrections: corrections,
   };
   process.stdout.write(JSON.stringify(summary, null, 2) + "\n");
 }

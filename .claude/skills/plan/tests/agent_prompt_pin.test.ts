@@ -140,6 +140,7 @@ describe("plan-strategist agent prompt — body structure", () => {
       h2: [
         "Hydrate the bucket",
         "Trust the evidence",
+        "Verify bucket membership",
         "Build the hierarchical plan",
         "The `other` bucket — extend the taxonomy",
         "The classifier is the interim mitigation",
@@ -190,6 +191,8 @@ describe("plan-strategist agent prompt — body structure", () => {
       "is_taxonomy_extension",
       "is_classifier_work",
       "core_fix_effort",
+      "membership",
+      "suggested_area",
       "Self-validate",
       "get_bucket_context.ts",
       "validate_plan.ts",

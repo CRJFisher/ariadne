@@ -33,10 +33,12 @@ export {
   plan_tasks_dir,
   plan_task_path,
   plan_sweeps_dir,
+  plan_membership_overrides_path,
 } from "./paths.js";
 export {
   TRIAGE_RESULTS_SCHEMA_VERSION,
   type MemberEvidence,
+  type MemberSymbol,
   type NovelIssue,
   type PublishedEntryRef,
   type ConfirmedUnreachableSource,

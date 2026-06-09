@@ -23,6 +23,7 @@ import { atomic_write_file } from "@ariadnejs/skill-fs";
 import { parse_run_id, read_triage_results_file } from "@ariadnejs/skill-protocol";
 
 import { group_fault_areas, type ParsedRun } from "../src/group/group_fault_areas.js";
+import { JsonMembershipOverrideStore } from "../src/store/membership_override.js";
 import { plan_staging_buckets_dir, plan_staging_manifest_path } from "../src/store/paths.js";
 import { scan_runs } from "../src/store/scan_runs.js";
 import { build_sweep_manifest } from "../src/store/sweep_manifest.js";
@@ -92,7 +93,11 @@ async function main(): Promise<void> {
     }
   }
 
-  const buckets = group_fault_areas(parsed_runs);
+  // Consult the membership-override store written by prior reconcile passes, so
+  // a member a strategist already judged mis-routed is re-routed (or suppressed)
+  // here instead of re-adjudicated this sweep.
+  const overrides = await new JsonMembershipOverrideStore().read();
+  const buckets = group_fault_areas(parsed_runs, overrides);
   const sweep_id = mint_sweep_id();
   const buckets_dir = plan_staging_buckets_dir(sweep_id);
   await fs.mkdir(buckets_dir, { recursive: true });

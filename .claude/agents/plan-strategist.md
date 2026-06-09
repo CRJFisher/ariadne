@@ -47,9 +47,12 @@ The hydrated bundle includes:
   unclassified signal (empty otherwise).
 - `needs_judgement` — true when the deterministic derivation defaulted and you
   must decide the real area / split.
+- `needs_judgement_indices` — the evidence indices whose derivation defaulted: the
+  members to adjudicate first in the membership review (their bucket is the least
+  certain).
 - `taxonomy` — the closed `AriadneFaultArea` list (for `other`-bucket handling).
-- `authoring_rules` — the structural rules `validate_plan.ts` enforces; read them
-  before writing.
+- `authoring_rules` — the structural rules `validate_plan.ts` enforces (including
+  the membership-review rule); read them before writing.
 
 ## Trust the evidence
 
@@ -59,6 +62,34 @@ triage investigator and core recorded. **Treat the rollup as your primary
 evidence.** Use `Read` and `Grep` to spot-check source only when a plan body
 needs a concrete detail the rollup does not carry (a surrounding signature, the
 shape of a resolver hop). Do not re-read every cited file front to back.
+
+## Verify bucket membership
+
+Pass A bucketed these false-positives deterministically (`derive_fault_area`), and
+that lookup can **mis-route** a member into a bucket whose bulk root cause it does
+not actually share — a borderline `(stage, reason)`, a defaulted derivation, or a
+genuinely cross-area fault. You are the one stage with judgement and code access,
+so before you plan you **review the members you were handed**.
+
+Emit a `membership` array on your `StrategistPlan`: one verdict per evidence index.
+
+```json
+{ "index": 0, "belongs": true, "reason": "" }
+{ "index": 3, "belongs": false, "reason": "this is an import miss, not a name-resolution one", "suggested_area": "import_resolution" }
+```
+
+- A member **`belongs`** when it genuinely shares this bucket's bulk root cause.
+- Mark **`belongs: false`** for a member Pass A mis-routed here, with a non-empty
+  `reason`. When you can tell where it should route, name the `suggested_area`
+  (its true `AriadneFaultArea`) — that becomes a `derive_fault_area` correction
+  signal and re-routes the member on the next sweep.
+- The review must be **total** (one verdict per evidence index, no gaps) and
+  **consistent** (no node may carry an `evidence_index` whose verdict is
+  `belongs: false`). `validate_plan.ts` enforces both.
+- **Prioritise the `needs_judgement_indices`** — those landed in their bucket by a
+  defaulted derivation, so they are the likeliest mis-routes.
+
+Plan over the members that `belong`; an excluded member grounds nothing.
 
 ## Build the hierarchical plan
 
@@ -154,6 +185,10 @@ Write **one file** to `<output_path>` (under `~/.ariadne/plan/staging/**`): the
   "schema_version": 1,
   "fault_area": "<the bucket's AriadneFaultArea>",
   "sweep_id": "<echoed from the dispatch>",
+  "membership": [
+    { "index": 0, "belongs": true, "reason": "" },
+    { "index": 1, "belongs": false, "reason": "<why it does not belong>", "suggested_area": "<its true area, when tellable>" }
+  ],
   "roots": [
     {
       "tier": "architectural" | "fault_area" | "localized",
@@ -175,4 +210,7 @@ Write **one file** to `<output_path>` (under `~/.ariadne/plan/staging/**`): the
   value. Pass C resolves them to the grounding rows, mints the task ids and
   parent/child links, and computes each task's `dedup_key`. You author prose +
   structure only.
+- `membership` carries one verdict per evidence index — total and consistent with
+  the `evidence_indices` your nodes ground (see **Verify bucket membership**). Pass
+  C records each exclusion and re-routes the member next sweep.
 - Return nothing inline. The reconcile pass reads your file from disk.

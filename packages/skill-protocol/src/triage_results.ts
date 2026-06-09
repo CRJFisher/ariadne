@@ -39,6 +39,26 @@ export interface MemberEvidence {
 }
 
 /**
+ * The stable identity of the flagged entry point a false-positive row is about
+ * — the "member" the `plan` engine reviews for bucket membership and keys its
+ * membership-override store on. It is the coordinate tuple the triage TP cache
+ * already treats as a cross-machine match key: `(file_path, name, kind,
+ * start_line)`, with `file_path` relative to `project_path` so it is portable.
+ *
+ * `(file_path, name, kind)` is the drift-stable core; `start_line` is the
+ * same-name/overload collision-breaker and still moves when surrounding lines
+ * shift. This is the most stable identity the entry-point → triage → plan
+ * pipeline carries: a fully line-drift-immune symbol-graph identity would
+ * require columns + end-line that core's entry-point extraction does not track.
+ */
+export interface MemberSymbol {
+  file_path: string;
+  name: string;
+  kind: "function" | "method" | "constructor";
+  start_line: number;
+}
+
+/**
  * One published false-positive row, built one-per-`fp-novel`-verdict at
  * finalize. Carries the investigator-authored evidence verbatim plus the
  * deterministic core fault diagnostics attached from the entry's
@@ -58,6 +78,13 @@ export interface MemberEvidence {
 export interface NovelIssue {
   id: string;
   entry_index: number;
+  /**
+   * Stable identity of the flagged entry point this row is about — the
+   * coordinate tuple the `plan` engine keys membership decisions and its
+   * override store on. Built at finalize from the entry, `file_path` relative
+   * to `project_path`.
+   */
+  member_symbol: MemberSymbol;
   member_evidence: MemberEvidence;
   proposed_root_cause: string;
   evidence_excerpt: string;

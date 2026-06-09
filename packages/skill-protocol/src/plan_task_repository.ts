@@ -21,6 +21,7 @@ import type {
   PlanTaskStatus,
   PlanTaskTier,
 } from "./plan_task.js";
+import type { MemberSymbol } from "./triage_results.js";
 
 /**
  * Filter for {@link PlanTaskRepository.query}. Every field is optional; absent
@@ -54,6 +55,14 @@ export interface PlanTaskQuery {
  *               unlike `supersede` the event names only the resolved task.
  *               `dedup_key` is carried for log-side correlation, matching `create`.
  * - `export`    a task was promoted to the user `backlog/` (mirrors `exported_backlog_task`).
+ * - `exclude_member` the strategist judged a member NOT to belong in the
+ *               `fault_area` bucket it was routed into, so no task this sweep is
+ *               grounded on it. The audit entry for the membership review:
+ *               `member` is the excluded member's stable identity, `reason` the
+ *               strategist's justification, and `suggested_area` the area it
+ *               should route to instead (`null` when the strategist could not
+ *               tell). A non-null `suggested_area` is a confirmed
+ *               `derive_fault_area` mis-route — the correction signal.
  */
 export type PlanSweepEvent =
   | { kind: "create"; task_id: PlanTaskId; dedup_key: string }
@@ -66,7 +75,14 @@ export type PlanSweepEvent =
   | { kind: "supersede"; superseded_id: PlanTaskId; superseded_by: PlanTaskId }
   | { kind: "combine"; merged_ids: PlanTaskId[]; into_id: PlanTaskId }
   | { kind: "resolve"; task_id: PlanTaskId; dedup_key: string }
-  | { kind: "export"; task_id: PlanTaskId; backlog_task: string };
+  | { kind: "export"; task_id: PlanTaskId; backlog_task: string }
+  | {
+      kind: "exclude_member";
+      fault_area: AriadneFaultArea;
+      member: MemberSymbol;
+      reason: string;
+      suggested_area: AriadneFaultArea | null;
+    };
 
 /**
  * The access seam the `plan` engine calls. All methods are async (the JSON

@@ -25,6 +25,7 @@ function node(overrides: Partial<StrategistPlanNode> = {}): StrategistPlanNode {
 function ev(file: string, line: number, project: string): PlanTaskEvidence {
   return {
     member_evidence: { file, line, why: "missed caller" },
+    member_symbol: { file_path: file, name: "flagged_fn", kind: "function", start_line: line },
     project,
     run_id: RUN,
     diagnosis: "callers-in-registry-unresolved",

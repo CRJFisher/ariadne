@@ -62,10 +62,17 @@ afterEach(async () => {
 });
 
 function novel(overrides: Partial<NovelIssue>): NovelIssue {
+  const member_evidence = overrides.member_evidence ?? { file: "src/a.ts", line: 1, why: "w" };
   return {
     id: overrides.id ?? "novel-0",
     entry_index: overrides.entry_index ?? 0,
-    member_evidence: overrides.member_evidence ?? { file: "src/a.ts", line: 1, why: "w" },
+    member_symbol: overrides.member_symbol ?? {
+      file_path: member_evidence.file,
+      name: "flagged_fn",
+      kind: "function",
+      start_line: member_evidence.line,
+    },
+    member_evidence,
     proposed_root_cause: overrides.proposed_root_cause ?? "resolver gap",
     evidence_excerpt: overrides.evidence_excerpt ?? "fn()",
     diagnosis: overrides.diagnosis ?? "callers-in-registry-unresolved",
@@ -166,6 +173,8 @@ function synthetic_plan(bucket: FaultAreaBucket): StrategistPlan {
     schema_version: 1,
     fault_area: bucket.fault_area,
     sweep_id: "ignored",
+    // Every evidence row is grounded by a leaf above → a total, all-confirmed review.
+    membership: bucket.evidence.map((_, index) => ({ index, belongs: true, reason: "" })),
     roots: [
       {
         tier: "architectural",

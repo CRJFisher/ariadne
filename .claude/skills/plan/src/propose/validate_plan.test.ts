@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import type { StrategistPlan, StrategistPlanNode } from "../types.js";
+import type { MembershipVerdict, StrategistPlan, StrategistPlanNode } from "../types.js";
 import { validate_plan, type ValidatePlanContext } from "./validate_plan.js";
+
+/** A total membership review that confirms every index in `[0, count)`. */
+function full_membership(count: number): MembershipVerdict[] {
+  return Array.from({ length: count }, (_, index) => ({ index, belongs: true, reason: "" }));
+}
 
 function leaf(overrides: Partial<StrategistPlanNode> = {}): StrategistPlanNode {
   // A taxonomy-extension or classifier-work node proposes no core fix, so it
@@ -22,8 +27,12 @@ function leaf(overrides: Partial<StrategistPlanNode> = {}): StrategistPlanNode {
   };
 }
 
-function plan(roots: StrategistPlanNode[], fault_area: StrategistPlan["fault_area"] = "name_resolution"): StrategistPlan {
-  return { schema_version: 1, fault_area, sweep_id: "sweep-1", roots };
+function plan(
+  roots: StrategistPlanNode[],
+  fault_area: StrategistPlan["fault_area"] = "name_resolution",
+  membership: MembershipVerdict[] = full_membership(2),
+): StrategistPlan {
+  return { schema_version: 1, fault_area, sweep_id: "sweep-1", roots, membership };
 }
 
 const NAME_RES_CTX: ValidatePlanContext = {
@@ -112,13 +121,14 @@ describe("validate_plan", () => {
           children: [],
         },
       ],
+      membership: full_membership(2),
     };
     expect(codes(bad, NAME_RES_CTX)).toContain("fault_area_not_in_taxonomy");
   });
 
   it("flags an `other` bucket whose only task is the taxonomy extension (no core fix)", () => {
     const other_ctx: ValidatePlanContext = { bucket_fault_area: "other", evidence_count: 1 };
-    const only_ext = plan([leaf({ fault_area: "other", is_taxonomy_extension: true, evidence_indices: [] })], "other");
+    const only_ext = plan([leaf({ fault_area: "other", is_taxonomy_extension: true, evidence_indices: [] })], "other", full_membership(1));
     expect(codes(only_ext, other_ctx)).toEqual(["other_bucket_missing_core_fix"]);
   });
 
@@ -129,7 +139,7 @@ describe("validate_plan", () => {
   it("requires both a taxonomy-extension and a core-fix task for an `other` bucket", () => {
     const other_ctx: ValidatePlanContext = { bucket_fault_area: "other", evidence_count: 1 };
     // Only a core-fix, no taxonomy extension.
-    const missing_ext = plan([leaf({ fault_area: "other", evidence_indices: [0] })], "other");
+    const missing_ext = plan([leaf({ fault_area: "other", evidence_indices: [0] })], "other", full_membership(1));
     expect(codes(missing_ext, other_ctx)).toEqual(["other_bucket_missing_taxonomy_extension"]);
 
     // Both present → ok.
@@ -152,6 +162,7 @@ describe("validate_plan", () => {
         },
       ],
       "other",
+      full_membership(1),
     );
     expect(validate_plan(both, other_ctx)).toEqual({ ok: true, issues: [] });
   });
@@ -178,11 +189,78 @@ describe("validate_plan", () => {
     const other_ctx: ValidatePlanContext = { bucket_fault_area: "other", evidence_count: 1 };
     expect(
       codes(
-        plan([leaf({ fault_area: "other", is_taxonomy_extension: true, evidence_indices: [], core_fix_effort: 3 })], "other"),
+        plan([leaf({ fault_area: "other", is_taxonomy_extension: true, evidence_indices: [], core_fix_effort: 3 })], "other", full_membership(1)),
         other_ctx,
       ),
     ).toContain("core_fix_effort_invalid");
     // The effort-0 sentinel on a classifier-work node is accepted.
     expect(validate_plan(plan([leaf({ is_classifier_work: true })]), NAME_RES_CTX)).toEqual({ ok: true, issues: [] });
+  });
+});
+
+describe("validate_plan — membership review", () => {
+  it("requires the review to be total (a verdict for every evidence index)", () => {
+    // evidence_count 2, but only index 0 carries a verdict.
+    const p = plan([leaf({ evidence_indices: [0] })], "name_resolution", [{ index: 0, belongs: true, reason: "" }]);
+    expect(codes(p, NAME_RES_CTX)).toEqual(["membership_incomplete"]);
+  });
+
+  it("flags a membership index that is out of range and one that is duplicated", () => {
+    const out_of_range = plan([leaf({ evidence_indices: [0] })], "name_resolution", [
+      { index: 0, belongs: true, reason: "" },
+      { index: 1, belongs: true, reason: "" },
+      { index: 5, belongs: true, reason: "" },
+    ]);
+    expect(codes(out_of_range, NAME_RES_CTX)).toEqual(["membership_index_out_of_range"]);
+
+    const duplicate = plan([leaf({ evidence_indices: [0] })], "name_resolution", [
+      { index: 0, belongs: true, reason: "" },
+      { index: 1, belongs: true, reason: "" },
+      { index: 1, belongs: true, reason: "" },
+    ]);
+    expect(codes(duplicate, NAME_RES_CTX)).toEqual(["membership_index_duplicate"]);
+  });
+
+  it("requires a non-empty reason on an excluded member", () => {
+    const p = plan([leaf({ evidence_indices: [0] })], "name_resolution", [
+      { index: 0, belongs: true, reason: "" },
+      { index: 1, belongs: false, reason: "   " },
+    ]);
+    expect(codes(p, NAME_RES_CTX)).toEqual(["membership_excluded_missing_reason"]);
+  });
+
+  it("flags an invalid suggested_area on an exclusion", () => {
+    const p = plan([leaf({ evidence_indices: [0] })], "name_resolution", [
+      { index: 0, belongs: true, reason: "" },
+      // suggested_area is not an AriadneFaultArea.
+      { index: 1, belongs: false, reason: "wrong bucket", suggested_area: "not_an_area" as never },
+    ]);
+    expect(codes(p, NAME_RES_CTX)).toEqual(["membership_suggested_area_invalid"]);
+  });
+
+  it("forbids a node from grounding an excluded member (consistency)", () => {
+    // index 1 is excluded, yet a leaf grounds it.
+    const p = plan(
+      [leaf({ evidence_indices: [0] }), leaf({ evidence_indices: [1] })],
+      "name_resolution",
+      [
+        { index: 0, belongs: true, reason: "" },
+        { index: 1, belongs: false, reason: "belongs to import_resolution", suggested_area: "import_resolution" },
+      ],
+    );
+    expect(codes(p, NAME_RES_CTX)).toEqual(["node_grounds_excluded_index"]);
+  });
+
+  it("accepts a plan that excludes a member and grounds only the confirmed one", () => {
+    const p = plan([leaf({ evidence_indices: [0] })], "name_resolution", [
+      { index: 0, belongs: true, reason: "" },
+      { index: 1, belongs: false, reason: "belongs to import_resolution", suggested_area: "import_resolution" },
+    ]);
+    expect(validate_plan(p, NAME_RES_CTX)).toEqual({ ok: true, issues: [] });
+  });
+
+  it("flags membership that is not an array", () => {
+    const p = { ...plan([leaf({ evidence_indices: [0] })]), membership: "nope" as never };
+    expect(codes(p, NAME_RES_CTX)).toContain("shape_error");
   });
 });

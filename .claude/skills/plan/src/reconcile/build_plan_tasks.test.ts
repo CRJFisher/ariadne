@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { parse_run_id, type PlanTaskEvidence } from "@ariadnejs/skill-protocol";
 
-import type { StrategistPlan } from "../types.js";
+import type { MembershipVerdict, StrategistPlan } from "../types.js";
 import { build_plan_tasks } from "./build_plan_tasks.js";
 import { compute_dedup_key } from "./compute_dedup_key.js";
 
@@ -11,6 +11,7 @@ const RUN = parse_run_id("aaaaaaa-2026-04-16T18-10-16.855Z");
 function ev(file: string, line: number, project = "p"): PlanTaskEvidence {
   return {
     member_evidence: { file, line, why: "w" },
+    member_symbol: { file_path: file, name: "flagged_fn", kind: "function", start_line: line },
     project,
     run_id: RUN,
     diagnosis: "callers-in-registry-unresolved",
@@ -20,12 +21,18 @@ function ev(file: string, line: number, project = "p"): PlanTaskEvidence {
   };
 }
 
+/** A total membership review confirming every index in `[0, count)`. */
+function confirmed(count: number): MembershipVerdict[] {
+  return Array.from({ length: count }, (_, index) => ({ index, belongs: true, reason: "" }));
+}
+
 // architectural root → one fault_area node → two localized leaves (indices 0,1).
 function three_tier_plan(): StrategistPlan {
   return {
     schema_version: 1,
     fault_area: "name_resolution",
     sweep_id: "sweep-1",
+    membership: confirmed(2),
     roots: [
       {
         tier: "architectural",
@@ -152,6 +159,7 @@ describe("build_plan_tasks", () => {
       schema_version: 1,
       fault_area: "other",
       sweep_id: "sweep-1",
+      membership: confirmed(1),
       roots: [
         {
           tier: "fault_area",
@@ -202,6 +210,7 @@ describe("build_plan_tasks", () => {
       schema_version: 1,
       fault_area: "name_resolution",
       sweep_id: "sweep-1",
+      membership: confirmed(1),
       roots: [
         {
           tier: "localized",
@@ -226,6 +235,7 @@ describe("build_plan_tasks", () => {
       schema_version: 1,
       fault_area: "name_resolution",
       sweep_id: "sweep-1",
+      membership: confirmed(1),
       roots: [
         {
           tier: "localized",
@@ -251,6 +261,7 @@ describe("build_plan_tasks", () => {
       schema_version: 1,
       fault_area: "name_resolution",
       sweep_id: "sweep-1",
+      membership: confirmed(3),
       roots: [
         // Root 1: a fault_area node grounding index 2 directly, plus a leaf on index 0.
         {
