@@ -12,7 +12,6 @@
  */
 
 import * as fs from "node:fs/promises";
-import path from "path";
 
 import {
   parse_triage_results,
@@ -22,14 +21,14 @@ import {
 } from "@ariadnejs/skill-protocol";
 
 /**
- * Return all published triage_results runs whose run-id has the given
- * `<short-commit>-` prefix, sorted lexicographically descending (newest first).
+ * Return all run-ids at the given `<short-commit>-` prefix, sorted
+ * lexicographically descending (newest first).
  * Returns an empty array when no matching artifacts exist.
  */
 export async function all_finalized_runs_at_commit(
   project: string,
   short_commit: string,
-): Promise<{ run_id: string; output: TriageResultsFile }[]> {
+): Promise<string[]> {
   const dir = triage_results_dir(project);
   let files: string[];
   try {
@@ -39,22 +38,11 @@ export async function all_finalized_runs_at_commit(
   }
 
   const prefix = `${short_commit}-`;
-  const matching = files
+  return files
     .filter((f) => f.startsWith(prefix) && f.endsWith(".json"))
     .sort()
-    .reverse();
-
-  if (matching.length === 0) return [];
-
-  const results: { run_id: string; output: TriageResultsFile }[] = [];
-  for (const file of matching) {
-    const run_id = file.slice(0, -".json".length);
-    const file_path = path.join(dir, file);
-    const text = await fs.readFile(file_path, "utf-8");
-    const output = parse_triage_results(file_path, text);
-    results.push({ run_id, output });
-  }
-  return results;
+    .reverse()
+    .map((f) => f.slice(0, -".json".length));
 }
 
 /**

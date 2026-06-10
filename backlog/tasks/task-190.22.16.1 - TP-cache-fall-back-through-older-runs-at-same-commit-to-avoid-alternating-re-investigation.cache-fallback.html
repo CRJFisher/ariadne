@@ -47,7 +47,8 @@ code{font-family:var(--mono);font-size:.88em;background:var(--g1);border:1px sol
 .meta{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
 .chip{font-family:var(--mono);font-size:12px;border:1px solid var(--g2);background:#fff;border-radius:999px;padding:3px 11px;color:var(--g5)}
 .chip strong{color:var(--slate)}
-.chip.todo{border-color:var(--clay);color:var(--clay)}
+.chip.done{border-color:var(--olive);color:var(--olive)}
+.chip.done strong{color:var(--olive)}
 /* ---- callouts ---- */
 .callout{border-left:4px solid var(--clay);background:#fff;border-radius:0 var(--r) var(--r) 0;
   padding:14px 18px;margin:18px 0}
@@ -128,8 +129,8 @@ figcaption{font-size:13px;color:var(--g4);margin-top:10px;max-width:90ch}
 
 <nav class="tocbar" aria-label="Sections">
   <a href="#cycle"><span class="dot d-rust"></span>The alternating cadence</a>
-  <a href="#cause"><span class="dot d-clay"></span>Where it breaks</a>
-  <a href="#fix"><span class="dot d-olive"></span>The fix</a>
+  <a href="#cause"><span class="dot d-clay"></span>Where it broke</a>
+  <a href="#fix"><span class="dot d-olive"></span>The fix as shipped</a>
   <a href="#practice"><span class="dot d-gray"></span>Reads in practice</a>
   <a href="#tests"><span class="dot d-gray"></span>Tests &amp; acceptance</a>
 </nav>
@@ -139,29 +140,29 @@ figcaption{font-size:13px;color:var(--g4);margin-top:10px;max-width:90ch}
   <span class="eyebrow">backlog / TASK-190.22.16.1</span>
   <h1>TP cache: fall back through older runs at the same commit</h1>
   <div class="meta">
-    <span class="chip todo">status <strong>To Do</strong></span>
+    <span class="chip done">status <strong>Done</strong></span>
     <span class="chip">priority <strong>medium</strong></span>
     <span class="chip">labels <strong>self-repair · bug</strong></span>
     <span class="chip">parent <strong>TASK-190.22.16</strong></span>
   </div>
 </header>
 
-<aside class="callout">
+<aside class="callout olive">
   <span class="label">The fix in one sentence</span>
-  <p>When the most recent run at the current commit has no reusable <code>llm-tp</code> verdicts — because that run was itself a cache-reuse run — keep walking back through <em>older</em> finalized runs at the same commit until one yields a non-null cache, instead of giving up and re-investigating everything with the LLM.</p>
+  <p>When the most recent run at the current commit has no reusable <code>llm-tp</code> verdicts — because that run was itself a cache-reuse run — <code>derive_tp_cache</code> walks back through <em>older</em> finalized runs at the same commit, reading each file lazily, and stops at the first that yields a non-null cache, instead of giving up and re-investigating everything with the LLM.</p>
 </aside>
 
 <section id="cycle">
   <h2>The alternating cadence</h2>
-  <div class="prose"><p>Each run derives its cache from prior published results at the same commit. <code>build_cache</code> only indexes rows with <code>source.kind === "llm-tp"</code> — a reuse run's output (all <code>previously-confirmed-tp</code>) yields nothing. Because <code>derive_tp_cache</code> consults only the single most recent run, every second run finds an empty source and pays the full LLM cost again.</p></div>
+  <div class="prose"><p>Each run derives its cache from prior published results at the same commit. <code>build_cache</code> only indexes rows with <code>source.kind === "llm-tp"</code> — a reuse run's output (all <code>previously-confirmed-tp</code>) yields nothing. While <code>derive_tp_cache</code> consulted only the single most recent run, every second run found an empty source and paid the full LLM cost again.</p></div>
 
   <figure>
-    <svg viewBox="0 0 1180 258" role="img" aria-label="Today: four runs at commit deadbee alternate between LLM investigation and cache reuse forever">
+    <svg viewBox="0 0 1180 258" role="img" aria-label="Before the fix: four runs at commit deadbee alternate between LLM investigation and cache reuse forever">
       <defs>
         <marker id="aOlive" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7a8450"/></marker>
         <marker id="aRust" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#a23c2a"/></marker>
       </defs>
-      <text x="20" y="26" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#a23c2a" font-weight="700">TODAY — verdicts alternate forever at commit deadbee</text>
+      <text x="20" y="26" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#a23c2a" font-weight="700">BEFORE — verdicts alternated forever at commit deadbee</text>
       <g font-family="system-ui,sans-serif" font-size="14">
         <rect x="20" y="78" width="220" height="120" rx="10" fill="#fff" stroke="#ddd6c8" stroke-width="1.5"/>
         <text x="36" y="103" font-weight="600">Run 1</text>
@@ -211,14 +212,14 @@ figcaption{font-size:13px;color:var(--g4);margin-top:10px;max-width:90ch}
         <rect x="660" y="48" width="124" height="20" rx="10" fill="none" stroke="#a23c2a"/>
         <text x="722" y="62" text-anchor="middle" fill="#a23c2a">LLM cost ② … ∞</text>
       </g>
-      <text x="20" y="238" font-family="system-ui,sans-serif" font-size="13" fill="#46413a">Odd runs pay the full investigation; even runs reuse. The cycle never converges.</text>
+      <text x="20" y="238" font-family="system-ui,sans-serif" font-size="13" fill="#46413a">Odd runs paid the full investigation; even runs reused. The cycle never converged.</text>
     </svg>
 
-    <svg viewBox="0 0 1180 290" role="img" aria-label="After the fix: run 3 and run 4 skip reuse runs and fall back to run 1's llm-tp verdicts, so the LLM cost is paid once per commit" style="margin-top:22px">
+    <svg viewBox="0 0 1180 290" role="img" aria-label="As shipped: run 3 and run 4 skip reuse runs and fall back to run 1's llm-tp verdicts, so the LLM cost is paid once per commit" style="margin-top:22px">
       <defs>
         <marker id="bOlive" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7a8450"/></marker>
       </defs>
-      <text x="20" y="26" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#7a8450" font-weight="700">AFTER THE FIX — every later run falls back to run 1's verdicts</text>
+      <text x="20" y="26" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#7a8450" font-weight="700">SHIPPED — every later run falls back to run 1's verdicts</text>
       <g font-family="system-ui,sans-serif" font-size="14">
         <rect x="20" y="118" width="220" height="120" rx="10" fill="#fff" stroke="#7a8450" stroke-width="2"/>
         <text x="36" y="143" font-weight="600">Run 1</text>
@@ -271,16 +272,16 @@ figcaption{font-size:13px;color:var(--g4);margin-top:10px;max-width:90ch}
       <span><span class="sw" style="background:#a23c2a"></span>LLM re-investigation cost</span>
       <span style="color:#c46a4a"><span class="sw dash"></span>read but rejected</span>
     </div>
-    <figcaption>The published <code>source.kind</code> of each run at commit <code>deadbee</code>, and where each run's cache comes from. Today (top), run 3 finds only <code>previously-confirmed-tp</code> rows in run 2, gets a null cache, and re-runs the LLM — restarting the cycle. After the fix (bottom), run 3 and run 4 walk back to run 1, the one run holding direct <code>llm-tp</code> verdicts.</figcaption>
+    <figcaption>The published <code>source.kind</code> of each run at commit <code>deadbee</code>, and where each run's cache comes from. Before (top), run 3 found only <code>previously-confirmed-tp</code> rows in run 2, got a null cache, and re-ran the LLM — restarting the cycle. As shipped (bottom), run 3 and run 4 walk back to run 1, the one run holding direct <code>llm-tp</code> verdicts.</figcaption>
   </figure>
 </section>
 
 <section id="cause">
-  <h2>Where it breaks</h2>
-  <div class="prose"><p>Two pieces interact. The eligibility filter (landed in TASK-190.22.16) is correct and stays: a cache hit is never itself reused, because the published row carries no origin chain. The defect is in run <em>selection</em> — a single lookup that trusts whatever the lex-max run happens to contain.</p></div>
+  <h2>Where it broke</h2>
+  <div class="prose"><p>Two pieces interact. The eligibility filter (landed in TASK-190.22.16) is correct and stays: a cache hit is never itself reused, because the published row carries no origin chain. The defect was in run <em>selection</em> — a single lookup that trusted whatever the lex-max run happened to contain.</p></div>
 
   <div class="code">
-    <div class="file-label"><span>.claude/skills/triage/src/finalize/confirmed_unreachable_reuse.ts</span><span class="loc">build_cache · lines 89–97 (stays as-is)</span></div>
+    <div class="file-label"><span>.claude/skills/triage/src/finalize/confirmed_unreachable_reuse.ts</span><span class="loc">build_cache · lines 91–99 (unchanged)</span></div>
     <pre><span class="kw">function</span> <span class="fn">build_cache</span>(source_run_id: <span class="kw">string</span>, output: TriageResultsFile): TpCache | <span class="kw">null</span> {
   <span class="kw">const</span> entries_by_key = <span class="kw">new</span> <span class="fn">Map</span>&lt;<span class="kw">string</span>, PublishedConfirmedUnreachable&gt;();
   <span class="kw">for</span> (<span class="kw">const</span> fp <span class="kw">of</span> output.confirmed_unreachable) {
@@ -293,70 +294,90 @@ figcaption{font-size:13px;color:var(--g4);margin-top:10px;max-width:90ch}
   </div>
 
   <div class="code">
-    <div class="file-label"><span>.claude/skills/triage/src/finalize/confirmed_unreachable_reuse.ts</span><span class="loc">derive_tp_cache tail · lines 142–144 (the defect)</span></div>
-    <pre><span class="cm">// One lookup, taken as-is. If the lex-max run is a reuse run, this returns</span>
-<span class="cm">// null even though an older run at the same commit holds llm-tp verdicts.</span>
-<span class="hl"><span class="kw">const</span> found = <span class="kw">await</span> <span class="fn">most_recent_finalized_triage_results</span>(project, current_short_commit);</span>
-<span class="kw">if</span> (found === <span class="kw">null</span>) <span class="kw">return</span> <span class="kw">null</span>;
-<span class="kw">return</span> <span class="fn">build_cache</span>(found.run_id, found.output);</pre>
+    <div class="file-label"><span>.claude/skills/triage/src/finalize/confirmed_unreachable_reuse.ts</span><span class="loc">derive_tp_cache tail · removed — replaced by the fallback loop below</span></div>
+    <pre><span class="cm">// One lookup, taken as-is. If the lex-max run was a reuse run, this returned</span>
+<span class="cm">// null even though an older run at the same commit held llm-tp verdicts.</span>
+<span class="del"><span class="kw">const</span> found = <span class="kw">await</span> <span class="fn">most_recent_finalized_triage_results</span>(project, current_short_commit);</span>
+<span class="del"><span class="kw">if</span> (found === <span class="kw">null</span>) <span class="kw">return</span> <span class="kw">null</span>;</span>
+<span class="del"><span class="kw">return</span> <span class="fn">build_cache</span>(found.run_id, found.output);</span></pre>
   </div>
 
-  <div class="prose"><p>The loop closes at the stamp site: a cache hit publishes <code>previously-confirmed-tp</code> (<code>apply_tp_cache_to_entries</code>, line 182), which is exactly the kind <code>build_cache</code> rejects on the following run. Reuse run → empty cache → full re-investigation → fresh <code>llm-tp</code> → reuse run → …</p></div>
+  <div class="prose"><p>The loop closes at the stamp site: a cache hit publishes <code>previously-confirmed-tp</code> (<code>apply_tp_cache_to_entries</code>, :167–194), which is exactly the kind <code>build_cache</code> rejects on the following run. Reuse run → empty cache → full re-investigation → fresh <code>llm-tp</code> → reuse run → …</p></div>
 </section>
 
 <section id="fix">
-  <h2>The fix: fall back through older runs</h2>
+  <h2>The fix as shipped: fall back through older runs, reading lazily</h2>
 
   <div class="steps">
     <div class="step hot">
       <div class="badge">1</div>
       <div>
-        <h3>Add <code>all_finalized_runs_at_commit(project, short_commit)</code></h3>
-        <p>Returns every finalized run whose run-id starts with <code>&lt;short_commit&gt;-</code>, sorted lex-descending — the ISO-timestamp suffix makes lex order chronological, so index 0 is the newest run. Generalizes the directory scan that <code>most_recent_finalized_triage_results</code> already performs.</p>
-        <span class="where">.claude/skills/triage/src/store/triage_results_store.ts <i>(new export)</i></span>
+        <h3><code>all_finalized_runs_at_commit(project, short_commit)</code> returns run-ids only</h3>
+        <p>One <code>readdir</code> of the published store; filenames starting with <code>&lt;short_commit&gt;-</code> and ending <code>.json</code> become run-ids (<code>Promise&lt;string[]&gt;</code>), sorted lex-descending — the ISO-timestamp suffix makes lex order chronological, so index 0 is the newest run. No file contents are read here.</p>
+        <span class="where">.claude/skills/triage/src/store/triage_results_store.ts <i>:28-46</i></span>
       </div>
     </div>
     <div class="step hot">
       <div class="badge">2</div>
       <div>
-        <h3>Iterate newest-first in <code>derive_tp_cache</code></h3>
-        <p>Replace the single lookup with a loop that returns the first non-null cache. A run whose rows are all <code>previously-confirmed-tp</code> (or all <code>registry</code>) is skipped; the loop lands on the run that holds direct LLM verdicts. The pinned-source path (<code>--tp-source-run</code>) is untouched.</p>
-        <span class="where">.claude/skills/triage/src/finalize/confirmed_unreachable_reuse.ts <i>:142-144</i></span>
+        <h3><code>derive_tp_cache</code> reads each candidate on demand, newest first</h3>
+        <p>The loop reads one file per iteration via <code>read_triage_results</code> and returns the first non-null cache. A run whose rows are all <code>previously-confirmed-tp</code> (or all <code>registry</code>) is skipped; the loop lands on the run that holds direct LLM verdicts. The pinned-source path (<code>--tp-source-run</code>) is untouched.</p>
+        <span class="where">.claude/skills/triage/src/finalize/confirmed_unreachable_reuse.ts <i>:144-150</i></span>
       </div>
     </div>
     <div class="step">
       <div class="badge">3</div>
       <div>
-        <h3>Delete <code>most_recent_finalized_triage_results</code></h3>
-        <p>Its sole production caller is <code>derive_tp_cache</code> — verified by grep across the skills tree — so it goes away entirely. No compatibility alias.</p>
-        <span class="where">.claude/skills/triage/src/store/triage_results_store.ts <i>:32-54 (remove)</i></span>
+        <h3><code>most_recent_finalized_triage_results</code> is removed</h3>
+        <p>Its sole production caller was <code>derive_tp_cache</code>, so it is gone entirely — no compatibility alias. The triage SKILL.md references the new function name.</p>
+        <span class="where">.claude/skills/triage/src/store/triage_results_store.ts <i>(removed)</i> · .claude/skills/triage/SKILL.md <i>:329</i></span>
       </div>
     </div>
     <div class="step">
       <div class="badge">4</div>
       <div>
-        <h3>Tests for both layers</h3>
-        <p>Store-level ordering/filtering tests in <code>triage_results_store.test.ts</code> (the existing tests at lines 46–68 migrate to the new function); fallback-behaviour tests through <code>derive_tp_cache</code> in <code>confirmed_unreachable_reuse.test.ts</code>.</p>
-        <span class="where">…/store/triage_results_store.test.ts · …/finalize/confirmed_unreachable_reuse.test.ts</span>
+        <h3>Tests at both layers</h3>
+        <p>Store-level ordering/filtering tests under <code>describe("all_finalized_runs_at_commit")</code> assert the run-id-only return shape and newest-first order; fallback behaviour is exercised through <code>derive_tp_cache</code> under <code>describe("derive_tp_cache — fallback through older runs")</code>, including the alternating scenario.</p>
+        <span class="where">…/store/triage_results_store.test.ts <i>:46-71</i> · …/finalize/confirmed_unreachable_reuse.test.ts <i>:243</i></span>
       </div>
     </div>
   </div>
 
   <div class="code">
-    <div class="file-label"><span>.claude/skills/triage/src/finalize/confirmed_unreachable_reuse.ts</span><span class="loc">derive_tp_cache tail · proposed change</span></div>
-    <pre><span class="del">  <span class="kw">const</span> found = <span class="kw">await</span> <span class="fn">most_recent_finalized_triage_results</span>(project, current_short_commit);</span>
-<span class="del">  <span class="kw">if</span> (found === <span class="kw">null</span>) <span class="kw">return</span> <span class="kw">null</span>;</span>
-<span class="del">  <span class="kw">return</span> <span class="fn">build_cache</span>(found.run_id, found.output);</span>
-<span class="add">  <span class="kw">const</span> runs = <span class="kw">await</span> <span class="fn">all_finalized_runs_at_commit</span>(project, current_short_commit);</span>
-<span class="add">  <span class="kw">for</span> (<span class="kw">const</span> run <span class="kw">of</span> runs) {</span>
-<span class="add">    <span class="kw">const</span> cache = <span class="fn">build_cache</span>(run.run_id, run.output);</span>
-<span class="add">    <span class="kw">if</span> (cache !== <span class="kw">null</span>) <span class="kw">return</span> cache;   <span class="cm">// first run with ≥1 llm-tp row wins</span></span>
-<span class="add">  }</span>
-<span class="add">  <span class="kw">return</span> <span class="kw">null</span>;   <span class="cm">// no run at this commit has direct LLM verdicts</span></span></pre>
+    <div class="file-label"><span>.claude/skills/triage/src/store/triage_results_store.ts</span><span class="loc">all_finalized_runs_at_commit · lines 28–46 (as shipped)</span></div>
+    <pre><span class="kw">export async function</span> <span class="fn">all_finalized_runs_at_commit</span>(
+  project: <span class="kw">string</span>,
+  short_commit: <span class="kw">string</span>,
+<span class="hl">): Promise&lt;<span class="kw">string</span>[]&gt; {   <span class="cm">// run-ids only — no file contents are read</span></span>
+  <span class="kw">const</span> dir = <span class="fn">triage_results_dir</span>(project);
+  <span class="kw">let</span> files: <span class="kw">string</span>[];
+  <span class="kw">try</span> {
+    files = <span class="kw">await</span> fs.<span class="fn">readdir</span>(dir);
+  } <span class="kw">catch</span> {
+    <span class="kw">return</span> [];
+  }
+  <span class="kw">const</span> prefix = <span class="str">`${short_commit}-`</span>;
+  <span class="kw">return</span> files
+    .<span class="fn">filter</span>((f) =&gt; f.<span class="fn">startsWith</span>(prefix) &amp;&amp; f.<span class="fn">endsWith</span>(<span class="str">".json"</span>))
+<span class="hl">    .<span class="fn">sort</span>()
+    .<span class="fn">reverse</span>()   <span class="cm">// ISO-timestamp suffix ⇒ lex-descending = newest first</span></span>
+    .<span class="fn">map</span>((f) =&gt; f.<span class="fn">slice</span>(<span class="num">0</span>, -<span class="str">".json"</span>.length));
+}</pre>
+  </div>
+
+  <div class="code">
+    <div class="file-label"><span>.claude/skills/triage/src/finalize/confirmed_unreachable_reuse.ts</span><span class="loc">derive_tp_cache tail · lines 144–150 (as shipped)</span></div>
+    <pre>  <span class="kw">const</span> run_ids = <span class="kw">await</span> <span class="fn">all_finalized_runs_at_commit</span>(project, current_short_commit);
+  <span class="kw">for</span> (<span class="kw">const</span> run_id <span class="kw">of</span> run_ids) {
+<span class="hl">    <span class="kw">const</span> output = <span class="kw">await</span> <span class="fn">read_triage_results</span>(project, run_id);   <span class="cm">// lazy: one read per iteration</span></span>
+    <span class="kw">const</span> cache = <span class="fn">build_cache</span>(run_id, output);
+    <span class="kw">if</span> (cache !== <span class="kw">null</span>) <span class="kw">return</span> cache;   <span class="cm">// first run with ≥1 llm-tp row wins</span>
+  }
+  <span class="kw">return</span> <span class="kw">null</span>;   <span class="cm">// no run at this commit has direct LLM verdicts</span></pre>
   </div>
 
   <figure>
-    <svg viewBox="0 0 1180 392" role="img" aria-label="Decision flow of derive_tp_cache after the fix, ending in the newest-first fallback loop">
+    <svg viewBox="0 0 1180 404" role="img" aria-label="Decision flow of derive_tp_cache as shipped: list run-ids at the commit, then lazily read and build a cache per run until the first non-null cache">
       <defs>
         <marker id="fSlate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#46413a"/></marker>
         <marker id="fOlive" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7a8450"/></marker>
@@ -382,20 +403,25 @@ figcaption{font-size:13px;color:var(--g4);margin-top:10px;max-width:90ch}
         <text x="700" y="204" text-anchor="middle" fill="#2e3438">validate prefix + read pinned</text>
         <text x="700" y="220" text-anchor="middle" fill="#6b6457">(unchanged path)</text>
 
-        <rect x="290" y="288" width="370" height="40" rx="10" fill="#fff" stroke="#c46a4a" stroke-width="2"/>
-        <text x="475" y="313" text-anchor="middle" fill="#2e3438">all_finalized_runs_at_commit — newest first</text>
+        <rect x="240" y="288" width="310" height="52" rx="10" fill="#fff" stroke="#c46a4a" stroke-width="2"/>
+        <text x="395" y="309" text-anchor="middle" fill="#2e3438">all_finalized_runs_at_commit</text>
+        <text x="395" y="326" text-anchor="middle" fill="#6b6457">run-ids only · newest first · one readdir</text>
 
-        <rect x="730" y="288" width="190" height="40" rx="10" fill="#fff" stroke="#c46a4a" stroke-width="2"/>
-        <text x="825" y="313" text-anchor="middle" fill="#2e3438">build_cache(run)</text>
+        <rect x="590" y="288" width="220" height="52" rx="10" fill="#fff" stroke="#c46a4a" stroke-width="2"/>
+        <text x="700" y="309" text-anchor="middle" fill="#2e3438">read_triage_results(run_id)</text>
+        <text x="700" y="326" text-anchor="middle" fill="#6b6457">lazy — one file per iteration</text>
 
-        <rect x="980" y="288" width="84" height="40" rx="20" fill="#fff" stroke="#ddd6c8" stroke-width="1.5"/>
-        <text x="1022" y="313" text-anchor="middle" fill="#2e3438">null?</text>
+        <rect x="850" y="294" width="140" height="40" rx="10" fill="#fff" stroke="#c46a4a" stroke-width="2"/>
+        <text x="920" y="319" text-anchor="middle" fill="#2e3438">build_cache</text>
+
+        <rect x="1024" y="294" width="84" height="40" rx="20" fill="#fff" stroke="#ddd6c8" stroke-width="1.5"/>
+        <text x="1066" y="319" text-anchor="middle" fill="#2e3438">null?</text>
 
         <rect x="980" y="182" width="180" height="42" rx="21" fill="#7a8450"/>
         <text x="1070" y="208" text-anchor="middle" fill="#faf6ef">return cache ✓</text>
 
         <rect x="940" y="108" width="220" height="36" rx="18" fill="#f3eee4" stroke="#ddd6c8"/>
-        <text x="1050" y="131" text-anchor="middle" fill="#6b6457">runs exhausted → null</text>
+        <text x="1050" y="131" text-anchor="middle" fill="#6b6457">run-ids exhausted → null</text>
 
         <g fill="none" stroke="#46413a" stroke-width="1.8">
           <line x1="210" y1="63" x2="324" y2="63" marker-end="url(#fSlate)"/>
@@ -403,42 +429,48 @@ figcaption{font-size:13px;color:var(--g4);margin-top:10px;max-width:90ch}
           <line x1="415" y1="104" x2="415" y2="176" marker-end="url(#fSlate)"/>
           <line x1="500" y1="220" x2="576" y2="209" marker-end="url(#fSlate)"/>
           <line x1="415" y1="260" x2="415" y2="284" marker-end="url(#fSlate)"/>
-          <line x1="660" y1="308" x2="726" y2="308" marker-end="url(#fSlate)"/>
-          <line x1="920" y1="308" x2="976" y2="308" marker-end="url(#fSlate)"/>
+          <line x1="550" y1="314" x2="586" y2="314" marker-end="url(#fSlate)"/>
+          <line x1="810" y1="314" x2="846" y2="314" marker-end="url(#fSlate)"/>
+          <line x1="990" y1="314" x2="1020" y2="314" marker-end="url(#fSlate)"/>
         </g>
-        <line x1="1022" y1="288" x2="1052" y2="228" stroke="#7a8450" stroke-width="2" marker-end="url(#fOlive)"/>
-        <path d="M 1022 328 Q 1022 362 926 362 Q 825 362 825 332" fill="none" stroke="#c46a4a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#fClay)"/>
-        <path d="M 825 288 Q 825 128 936 128" fill="none" stroke="#a89f8d" stroke-width="1.8" stroke-dasharray="3 4" marker-end="url(#fGray)"/>
+        <line x1="1066" y1="294" x2="1074" y2="228" stroke="#7a8450" stroke-width="2" marker-end="url(#fOlive)"/>
+        <path d="M 1066 334 Q 1066 376 880 376 Q 700 376 700 344" fill="none" stroke="#c46a4a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#fClay)"/>
+        <path d="M 700 288 Q 700 128 936 128" fill="none" stroke="#a89f8d" stroke-width="1.8" stroke-dasharray="3 4" marker-end="url(#fGray)"/>
 
         <text x="528" y="54" fill="#6b6457">yes</text>
         <text x="425" y="134" fill="#6b6457">no</text>
         <text x="524" y="204" fill="#6b6457">yes</text>
         <text x="425" y="278" fill="#6b6457">no</text>
-        <text x="1052" y="254" fill="#7a8450">no → hit</text>
-        <text x="858" y="380" fill="#c46a4a">yes → next older run</text>
-        <text x="700" y="148" fill="#a89f8d">no runs left</text>
+        <text x="1090" y="258" fill="#7a8450">no → hit</text>
+        <text x="760" y="392" fill="#c46a4a">yes → read next older run</text>
+        <text x="730" y="160" fill="#a89f8d">no run-ids left</text>
       </g>
     </svg>
-    <figcaption>Decision flow after the change. Clay-bordered boxes are the two touched call sites; the dashed clay edge is the new fallback loop. Every other branch — the <code>--no-reuse-tp</code> gate, the non-git null, the pinned-run path — keeps its exact current behaviour.</figcaption>
+    <figcaption>Decision flow as shipped. Clay-bordered boxes are the fallback loop: a single directory listing yields run-ids newest-first, then each iteration reads one file and tries to build a cache, exiting on the first non-null result. Every other branch — the <code>--no-reuse-tp</code> gate, the non-git null, the pinned-run path — keeps its prior behaviour exactly.</figcaption>
   </figure>
 
+  <aside class="callout olive">
+    <span class="label">Lazy by design</span>
+    <p>The store function returns <code>string[]</code> — run-ids only — so listing candidates costs one <code>readdir</code> and zero file reads. <code>derive_tp_cache</code> reads each candidate on demand and early-exits at the first non-null cache, keeping file I/O proportional to runs actually needed rather than total runs at the commit. In the alternating scenario that is at most two reads: the reuse run (skipped) and the original investigation run (hit).</p>
+  </aside>
+
   <aside class="callout rust">
-    <span class="label">Open question for the implementer</span>
-    <p>The spec's loop calls <code>build_cache(run.run_id, run.output)</code>, which implies <code>all_finalized_runs_at_commit</code> eagerly reads and parses <em>every</em> run file at the commit before the loop starts. Returning run-ids only and reading lazily inside the loop (<code>read_triage_results</code> per iteration) preserves the early-exit read bound. Files are KB-scale either way, so eager is acceptable — but pick one shape deliberately and let the store tests assert it.</p>
-    <span class="owner">decide at implementation time · affects AC #1's return type</span>
+    <span class="label">Known edge</span>
+    <p>A corrupt or legacy-schema file encountered during the walk throws: the parse error propagates from <code>read_triage_results</code>. This matches the prior single-run behaviour and is an accepted edge — the published store is append-only and schema-validated at write time.</p>
+    <span class="owner">documented in the task's implementation notes</span>
   </aside>
 </section>
 
 <section id="practice">
   <h2>Reads in practice</h2>
-  <div class="prose"><p>What run 3 at commit <code>deadbee</code> actually does against the published store. The loop reads one file per reuse run until it lands on the investigation run — typically the second file, growing by one per additional reuse run at the same commit.</p></div>
+  <div class="prose"><p>What run 3 at commit <code>deadbee</code> actually does against the published store. Run-ids come from a single <code>readdir</code>; the loop then reads one file per reuse run until it lands on the investigation run — typically the second file, growing by one per additional reuse run at the same commit.</p></div>
 
   <div class="dirlist" role="img" aria-label="Directory listing of triage results at commit deadbee showing the fallback loop skipping the reuse run and stopping at the investigation run">
-    <div class="dh">analysis_output/p/triage_results/ <span style="color:var(--g3)">— iterated lex-descending</span></div>
+    <div class="dh">analysis_output/p/triage_results/ <span style="color:var(--g3)">— run-ids from one readdir · files read on demand, newest first</span></div>
     <div class="dirrow skip">
       <span class="n">1</span>
       <span>deadbee-2026-04-28T00-00-00.000Z.json<span class="pill prev">all previously-confirmed-tp</span></span>
-      <span class="verdict">read → build_cache returns null → skip</span>
+      <span class="verdict">read → build_cache returns null → next older run</span>
     </div>
     <div class="dirrow hit">
       <span class="n">2</span>
@@ -448,7 +480,7 @@ figcaption{font-size:13px;color:var(--g4);margin-top:10px;max-width:90ch}
     <div class="dirrow ignored">
       <span class="n">·</span>
       <span>feedf00-2026-04-20T00-00-00.000Z.json</span>
-      <span class="verdict">different commit prefix — never a candidate</span>
+      <span class="verdict">different commit prefix — never a candidate, never read</span>
     </div>
   </div>
 
@@ -460,27 +492,27 @@ figcaption{font-size:13px;color:var(--g4);margin-top:10px;max-width:90ch}
 
 <section id="tests">
   <h2>Tests &amp; acceptance</h2>
-  <div class="prose"><p>The acceptance criteria, restated as the review checklist. #3 and #4 are the behavioural heart: seed a reuse run on top of an investigation run and assert the cache's <code>source_run_id</code> points at the older run.</p></div>
+  <div class="prose"><p>All six acceptance criteria are met by the shipped change. #3 and #4 are the behavioural heart: the tests seed a reuse run on top of an investigation run and assert the cache's <code>source_run_id</code> points at the older run.</p></div>
   <div class="checks">
-    <div class="checkrow"><input type="checkbox" id="ac1"><label for="ac1"><span class="ac">AC #1</span><code>all_finalized_runs_at_commit</code> added to <code>triage_results_store.ts</code>, returning runs at the given short-commit sorted newest-first</label></div>
-    <div class="checkrow"><input type="checkbox" id="ac2"><label for="ac2"><span class="ac">AC #2</span><code>derive_tp_cache</code> iterates all runs at the commit (newest first) and uses the first one yielding a non-null cache</label></div>
-    <div class="checkrow"><input type="checkbox" id="ac3"><label for="ac3"><span class="ac">AC #3</span>a run whose <code>confirmed_unreachable</code> rows are all <code>previously-confirmed-tp</code> is skipped; the next older run's <code>llm-tp</code> rows are used</label></div>
-    <div class="checkrow"><input type="checkbox" id="ac4"><label for="ac4"><span class="ac">AC #4</span>the alternating cadence is broken: a genuine TP investigated at commit X is reused by every later run at X without re-triggering LLM investigation</label></div>
-    <div class="checkrow"><input type="checkbox" id="ac5"><label for="ac5"><span class="ac">AC #5</span>store-level tests live in <code>triage_results_store.test.ts</code> (existing lines 46–68 migrate to the new function)</label></div>
-    <div class="checkrow"><input type="checkbox" id="ac6"><label for="ac6"><span class="ac">AC #6</span>fallback behaviour covered through <code>derive_tp_cache</code> in <code>confirmed_unreachable_reuse.test.ts</code></label></div>
+    <div class="checkrow"><input type="checkbox" id="ac1" checked><label for="ac1"><span class="ac">AC #1</span><code>all_finalized_runs_at_commit</code> added to <code>triage_results_store.ts</code>, returning run-ids at the given short-commit sorted newest-first — <code>string[]</code>, no file reads</label></div>
+    <div class="checkrow"><input type="checkbox" id="ac2" checked><label for="ac2"><span class="ac">AC #2</span><code>derive_tp_cache</code> iterates all runs at the commit (newest first), reading each lazily, and uses the first one yielding a non-null cache</label></div>
+    <div class="checkrow"><input type="checkbox" id="ac3" checked><label for="ac3"><span class="ac">AC #3</span>a run whose <code>confirmed_unreachable</code> rows are all <code>previously-confirmed-tp</code> is skipped; the next older run's <code>llm-tp</code> rows are used</label></div>
+    <div class="checkrow"><input type="checkbox" id="ac4" checked><label for="ac4"><span class="ac">AC #4</span>the alternating cadence is broken: a genuine TP investigated at commit X is reused by every later run at X without re-triggering LLM investigation</label></div>
+    <div class="checkrow"><input type="checkbox" id="ac5" checked><label for="ac5"><span class="ac">AC #5</span>store-level tests live in <code>triage_results_store.test.ts</code> — <code>describe("all_finalized_runs_at_commit")</code> at :46-71 covers ordering, prefix filtering, and the empty-directory case</label></div>
+    <div class="checkrow"><input type="checkbox" id="ac6" checked><label for="ac6"><span class="ac">AC #6</span>fallback behaviour covered through <code>derive_tp_cache</code> in <code>confirmed_unreachable_reuse.test.ts</code> — <code>describe("derive_tp_cache — fallback through older runs")</code> at :243</label></div>
   </div>
 </section>
 
 <footer class="prov">
   <span class="label">Sources read</span>
   <ul>
-    <li>backlog/tasks/task-190.22.16.1 - TP-cache-fall-back-through-older-runs-at-same-commit-to-avoid-alternating-re-investigation.md</li>
+    <li>backlog/tasks/task-190.22.16.1 - TP-cache-fall-back-through-older-runs-at-same-commit-to-avoid-alternating-re-investigation.md (status Done, implementation notes)</li>
     <li>backlog/tasks/task-190.22.16 - Triage-TP-cache-must-not-reuse-registry-sourced-confirmed_unreachable-rows.md</li>
-    <li>.claude/skills/triage/src/finalize/confirmed_unreachable_reuse.ts (derive_tp_cache :110-145, build_cache :89-97, apply_tp_cache_to_entries :161-194)</li>
-    <li>.claude/skills/triage/src/store/triage_results_store.ts (most_recent_finalized_triage_results :32-54)</li>
-    <li>.claude/skills/triage/src/store/triage_results_store.test.ts · .claude/skills/triage/src/finalize/confirmed_unreachable_reuse.test.ts</li>
+    <li>.claude/skills/triage/src/finalize/confirmed_unreachable_reuse.ts (derive_tp_cache :112-151, build_cache :91-99, apply_tp_cache_to_entries :167-194)</li>
+    <li>.claude/skills/triage/src/store/triage_results_store.ts (all_finalized_runs_at_commit :28-46, read_triage_results :51-58)</li>
+    <li>.claude/skills/triage/src/store/triage_results_store.test.ts (:46-71) · .claude/skills/triage/src/finalize/confirmed_unreachable_reuse.test.ts (:243)</li>
   </ul>
-  <span class="stamp">generated 2026-06-10 · branch feat/self-healing-pipeline-debug</span>
+  <span class="stamp">regenerated 2026-06-10 after the implementation landed · branch feat/self-healing-pipeline-debug</span>
 </footer>
 </main>
 </body>

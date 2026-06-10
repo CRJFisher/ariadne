@@ -41,6 +41,7 @@ code{font-family:var(--mono);font-size:.88em;background:var(--g1);border:1px sol
 .chip{font-family:var(--mono);font-size:12px;border:1px solid var(--g2);background:#fff;border-radius:999px;padding:3px 11px;color:var(--g5)}
 .chip strong{color:var(--slate)}
 .chip.done{border-color:var(--olive);color:var(--olive)}
+.chip.done strong{color:var(--olive)}
 /* callout */
 .callout{border-left:4px solid var(--clay);background:#fff;border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:18px 0}
 .callout .label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--clay);display:block;margin-bottom:4px}
@@ -86,7 +87,7 @@ figcaption{font-size:13px;color:var(--g4);margin-top:10px;max-width:90ch}
 <nav class="docnav" aria-label="Task family">
   <span class="crumb">task family 190.22.16</span>
   <span class="here" aria-current="page">190.22.16 · overview</span>
-  <a class="doc-link" href="task-190.22.16.1%20-%20TP-cache-fall-back-through-older-runs-at-same-commit-to-avoid-alternating-re-investigation.cache-fallback.html"><span class="dot d-clay"></span>190.22.16.1 · fall back through older runs</a>
+  <a class="doc-link" href="task-190.22.16.1%20-%20TP-cache-fall-back-through-older-runs-at-same-commit-to-avoid-alternating-re-investigation.cache-fallback.html"><span class="dot d-olive"></span>190.22.16.1 · fall back through older runs</a>
 </nav>
 
 <main>
@@ -95,7 +96,7 @@ figcaption{font-size:13px;color:var(--g4);margin-top:10px;max-width:90ch}
   <h1>Triage TP cache: reuse only direct LLM verdicts, and find them across runs</h1>
   <div class="meta">
     <span class="chip done">190.22.16 <strong>Done</strong></span>
-    <span class="chip">190.22.16.1 <strong>To Do</strong></span>
+    <span class="chip done">190.22.16.1 <strong>Done</strong></span>
     <span class="chip">priority <strong>high</strong></span>
     <span class="chip">labels <strong>self-repair · bug</strong></span>
     <span class="chip">parent <strong>TASK-190.22</strong></span>
@@ -104,13 +105,13 @@ figcaption{font-size:13px;color:var(--g4);margin-top:10px;max-width:90ch}
 
 <aside class="callout">
   <span class="label">Why this work exists</span>
-  <p>The triage pipeline caches confirmed-unreachable verdicts so that repeated runs at the same commit skip LLM re-investigation. The cache originally indexed <em>every</em> published row regardless of provenance, which laundered registry-suppressed entries past rule deactivation: an entry classified by a wip rule stayed "confirmed" even after a human marked the rule fixed, defeating exactly the re-examination the classifier lifecycle exists to enable. Restricting reuse to direct LLM verdicts fixes the laundering — and exposes a second defect in how the cache picks its source run.</p>
+  <p>The triage pipeline caches confirmed-unreachable verdicts so that repeated runs at the same commit skip LLM re-investigation. The cache originally indexed <em>every</em> published row regardless of provenance, which laundered registry-suppressed entries past rule deactivation: an entry classified by a wip rule stayed "confirmed" even after a human marked the rule fixed, defeating exactly the re-examination the classifier lifecycle exists to enable. Restricting reuse to direct LLM verdicts fixed the laundering — and exposed a second defect in how the cache picked its source run, fixed in turn by the sub-task.</p>
 </aside>
 
 <section id="shape">
   <h2>Where each fix sits in the cache pipeline</h2>
   <figure>
-    <svg viewBox="0 0 1180 300" role="img" aria-label="The TP cache pipeline: derive_tp_cache selects a source run, build_cache filters rows by source kind, apply_tp_cache_to_entries stamps reused entries. Task 190.22.16 owns the eligibility filter; task 190.22.16.1 owns run selection.">
+    <svg viewBox="0 0 1180 300" role="img" aria-label="The TP cache pipeline: derive_tp_cache selects source runs, build_cache filters rows by source kind, apply_tp_cache_to_entries stamps reused entries. Task 190.22.16 owns the eligibility filter; task 190.22.16.1 owns run selection. Both are done.">
       <defs>
         <marker id="oSlate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#46413a"/></marker>
       </defs>
@@ -121,10 +122,10 @@ figcaption{font-size:13px;color:var(--g4);margin-top:10px;max-width:90ch}
         <text x="135" y="138" text-anchor="middle" fill="#6b6457">analysis_output/&lt;project&gt;/</text>
         <text x="135" y="153" text-anchor="middle" fill="#6b6457">triage_results/&lt;run-id&gt;.json</text>
         <!-- derive -->
-        <rect x="320" y="90" width="230" height="80" rx="10" fill="#fff" stroke="#c46a4a" stroke-width="2"/>
+        <rect x="320" y="90" width="230" height="80" rx="10" fill="#fff" stroke="#7a8450" stroke-width="2"/>
         <text x="435" y="120" text-anchor="middle" fill="#2e3438">derive_tp_cache</text>
-        <text x="435" y="138" text-anchor="middle" fill="#6b6457">selects the source run(s)</text>
-        <text x="435" y="153" text-anchor="middle" fill="#6b6457">at the current commit</text>
+        <text x="435" y="138" text-anchor="middle" fill="#6b6457">walks runs at the commit,</text>
+        <text x="435" y="153" text-anchor="middle" fill="#6b6457">newest first, reading lazily</text>
         <!-- build -->
         <rect x="620" y="90" width="230" height="80" rx="10" fill="#fff" stroke="#7a8450" stroke-width="2"/>
         <text x="735" y="120" text-anchor="middle" fill="#2e3438">build_cache</text>
@@ -142,10 +143,10 @@ figcaption{font-size:13px;color:var(--g4);margin-top:10px;max-width:90ch}
           <line x1="850" y1="130" x2="916" y2="130" marker-end="url(#oSlate)"/>
         </g>
         <!-- ownership badges -->
-        <rect x="320" y="196" width="230" height="44" rx="10" fill="none" stroke="#c46a4a" stroke-dasharray="4 4"/>
-        <text x="435" y="214" text-anchor="middle" fill="#c46a4a">TASK-190.22.16.1 · To Do</text>
-        <text x="435" y="230" text-anchor="middle" fill="#c46a4a">fall back through older runs</text>
-        <line x1="435" y1="170" x2="435" y2="196" stroke="#c46a4a" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <rect x="320" y="196" width="230" height="44" rx="10" fill="none" stroke="#7a8450"/>
+        <text x="435" y="214" text-anchor="middle" fill="#7a8450">TASK-190.22.16.1 · Done</text>
+        <text x="435" y="230" text-anchor="middle" fill="#7a8450">fall back through older runs</text>
+        <line x1="435" y1="170" x2="435" y2="196" stroke="#7a8450" stroke-width="1.5"/>
         <rect x="620" y="196" width="230" height="44" rx="10" fill="none" stroke="#7a8450"/>
         <text x="735" y="214" text-anchor="middle" fill="#7a8450">TASK-190.22.16 · Done</text>
         <text x="735" y="230" text-anchor="middle" fill="#7a8450">llm-tp-only eligibility filter</text>
@@ -154,10 +155,10 @@ figcaption{font-size:13px;color:var(--g4);margin-top:10px;max-width:90ch}
         <path d="M 1040 90 Q 1040 30 580 30 Q 135 30 135 86" fill="none" stroke="#a89f8d" stroke-width="1.8" stroke-dasharray="3 4" marker-end="url(#oSlate)"/>
         <text x="580" y="22" text-anchor="middle" fill="#6b6457">finalize publishes this run's results → next run's source</text>
         <!-- caption row -->
-        <text x="20" y="282" font-family="system-ui,sans-serif" font-size="13" fill="#46413a">The stamp on the right is what the filter in the middle rejects — which is why run selection on the left must look past reuse runs.</text>
+        <text x="20" y="282" font-family="system-ui,sans-serif" font-size="13" fill="#46413a">The stamp on the right is what the filter in the middle rejects — which is why run selection on the left looks past reuse runs.</text>
       </g>
     </svg>
-    <figcaption>The reuse path inside <code>.claude/skills/triage/src/finalize/confirmed_unreachable_reuse.ts</code> (with run lookup in <code>store/triage_results_store.ts</code>). The eligibility filter keeps registry-classified entries live against rule deactivation and refuses chained reuse rows. Run selection must therefore iterate past reuse runs to reach the run holding direct <code>llm-tp</code> verdicts.</figcaption>
+    <figcaption>The reuse path inside <code>.claude/skills/triage/src/finalize/confirmed_unreachable_reuse.ts</code> (with run lookup in <code>store/triage_results_store.ts</code>). The eligibility filter keeps registry-classified entries live against rule deactivation and refuses chained reuse rows. Run selection therefore iterates past reuse runs — lazily, one file read per candidate — to reach the run holding direct <code>llm-tp</code> verdicts.</figcaption>
   </figure>
 </section>
 
@@ -172,11 +173,11 @@ figcaption{font-size:13px;color:var(--g4);margin-top:10px;max-width:90ch}
       <div class="links"><span class="codepill">task-190.22.16 - Triage-TP-cache-must-not-reuse-registry-sourced-confirmed_unreachable-rows.md</span></div>
     </article>
     <article>
-      <span class="tag todo">● to do · 190.22.16.1</span>
+      <span class="tag done">● done · 190.22.16.1</span>
       <h3>Fall back through older runs at the same commit</h3>
-      <p>The filter makes a reuse run's output useless as a cache source, but <code>derive_tp_cache</code> still consults only the single most recent run — so runs alternate forever between full LLM re-investigation and reuse. The fix iterates all finalized runs at the commit, newest first, and uses the first that yields a non-null cache, so the LLM cost is paid once per commit.</p>
-      <span class="codepill">all_finalized_runs_at_commit → loop → first non-null cache</span>
-      <div class="links"><a href="task-190.22.16.1%20-%20TP-cache-fall-back-through-older-runs-at-same-commit-to-avoid-alternating-re-investigation.cache-fallback.html">failure cadence + fix walkthrough →</a></div>
+      <p>The filter makes a reuse run's output useless as a cache source, so consulting only the single most recent run made runs alternate forever between full LLM re-investigation and reuse. Now <code>all_finalized_runs_at_commit</code> lists run-ids at the commit newest-first (one <code>readdir</code>, no file reads), and <code>derive_tp_cache</code> reads each candidate lazily, stopping at the first non-null cache — at most two file reads in practice, and the LLM cost is paid once per commit.</p>
+      <span class="codepill">all_finalized_runs_at_commit → run-ids · lazy read → first non-null cache</span>
+      <div class="links"><a href="task-190.22.16.1%20-%20TP-cache-fall-back-through-older-runs-at-same-commit-to-avoid-alternating-re-investigation.cache-fallback.html">failure cadence + shipped fix walkthrough →</a></div>
     </article>
   </div>
 </section>
@@ -191,8 +192,8 @@ figcaption{font-size:13px;color:var(--g4);margin-top:10px;max-width:90ch}
     </div>
     <div class="tlrow">
       <span class="when">2026-06-10</span>
-      <span class="spine"><span class="tdot todo"></span><span class="conn"></span></span>
-      <div class="body"><b>190.22.16.1 filed.</b> <span>With reuse runs publishing only <code>previously-confirmed-tp</code> rows, the single-most-recent-run lookup alternates between empty caches and fresh investigations at the same commit. Fix direction: iterate runs at the commit newest-first and stop at the first non-null cache.</span></div>
+      <span class="spine"><span class="tdot done"></span><span class="conn"></span></span>
+      <div class="body"><b>190.22.16.1 filed and fixed.</b> <span>With reuse runs publishing only <code>previously-confirmed-tp</code> rows, the single-most-recent-run lookup alternated between empty caches and fresh investigations at the same commit. Fix: <code>all_finalized_runs_at_commit</code> returns run-ids newest-first; <code>derive_tp_cache</code> reads each lazily and stops at the first non-null cache. <code>most_recent_finalized_triage_results</code> is removed.</span></div>
     </div>
   </div>
 </section>
@@ -204,7 +205,7 @@ figcaption{font-size:13px;color:var(--g4);margin-top:10px;max-width:90ch}
     <li>backlog/tasks/task-190.22.16.1 - TP-cache-fall-back-through-older-runs-at-same-commit-to-avoid-alternating-re-investigation.md</li>
     <li>.claude/skills/triage/src/finalize/confirmed_unreachable_reuse.ts · .claude/skills/triage/src/store/triage_results_store.ts</li>
   </ul>
-  <span class="stamp">generated 2026-06-10 · sibling pages re-scanned on each refresh · branch feat/self-healing-pipeline-debug</span>
+  <span class="stamp">regenerated 2026-06-10 after 190.22.16.1 landed · sibling pages re-scanned on each refresh · branch feat/self-healing-pipeline-debug</span>
 </footer>
 </main>
 </body>
