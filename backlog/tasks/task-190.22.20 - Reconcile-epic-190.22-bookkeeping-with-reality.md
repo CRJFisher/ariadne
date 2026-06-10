@@ -1,9 +1,10 @@
 ---
 id: TASK-190.22.20
 title: Reconcile epic 190.22 bookkeeping with reality
-status: To Do
+status: In Progress
 assignee: []
-created_date: "2026-06-09 20:06"
+created_date: '2026-06-09 20:06'
+updated_date: '2026-06-10 08:52'
 labels:
   - self-repair
   - backlog-hygiene
@@ -15,7 +16,6 @@ priority: medium
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-
 ## Why
 
 A completeness audit found the epic's own records contradict the shipped state. The implementation (.1–.11, .13, .14) is done and green, but the bookkeeping is unauditable — the epic reads as untouched, one subtask's outcome was reversed without a record, and three task docs assert enforcement machinery that was deliberately removed.
@@ -38,9 +38,7 @@ A completeness audit found the epic's own records contradict the shipped state. 
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
-
 <!-- AC:BEGIN -->
-
 - [ ] #1 Epic task-190.22 status and AC checkboxes reflect verified reality, with the real-data end-to-end run recorded as the sole remaining gate
 - [ ] #2 The 190.22.12 reversal (migration run, then DB wiped and task doc deleted) is recorded in the epic's subtask list, including the disposition of the 117 registry rules with cleared backlog_task links
 - [ ] #3 Task docs 190.22.7, 190.22.10, and 190.22.11 each carry a note that the firewall enforcement was retired in c5c2ccd7 and the sole-backlog-writer property is convention documented in the SKILL.md files

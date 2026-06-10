@@ -6,6 +6,7 @@ title: >-
 status: Done
 assignee: []
 created_date: '2026-06-01 15:19'
+updated_date: '2026-06-10 08:52'
 labels:
   - self-repair
   - firewall
@@ -52,7 +53,6 @@ The control gate + the portability seam. The USER (or me on their behalf) decide
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-
 ## High-level summary
 
 The export adapter is the one place the self-healing pipeline writes the user's `backlog/`, and the only backlog-coupled code in the engine. Everything upstream — triage, group, strategize, reconcile — is read-only against `backlog/`, accumulating proposed work as `PlanTask` rows in the firewalled task-DB (`~/.ariadne/plan/`). Promotion into the user's tracker is a deliberate human act, never the autonomous sweep, so it lives behind a single command that the human runs. Keeping it a thin adapter is what makes "switch planning tools" real: a different target is a second adapter, with no change to the engine or the DB.
@@ -78,4 +78,8 @@ Start at the `scripts/export_to_backlog.ts` header — it documents the five-ste
 
 - The adapter follows the same documented-bash-invocation idiom as the existing **Impact reporting (on demand)** section — there is deliberately no separate `/export-to-backlog` slash command (the `plan` skill is already `disable-model-invocation: true`).
 - The dedup readback (`backlog_dedup.ts`) scans `backlog/tasks/` only, while the id-mint scans the whole tree; the crash-window dedup guard therefore holds while a promoted file stays under `tasks/`. The DB `status: exported` guard is the backstop for the normal flow.
+
+## Note on AC #5 (firewall reference)
+
+AC #5 references "the firewall test green". The `backlog_writers.test.ts` AST enforcement test was retired in commit c5c2ccd7. The adapter remains the sole script that writes `backlog/`; the sole-backlog-writer property is now convention documented in `plan/SKILL.md`.
 <!-- SECTION:NOTES:END -->

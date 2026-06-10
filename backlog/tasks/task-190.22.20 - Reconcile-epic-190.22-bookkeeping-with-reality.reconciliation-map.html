@@ -1,0 +1,403 @@
+<\!DOCTYPE html>
+<\!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TASK-190.22.20 — Reconciliation map</title>
+<style>
+:root{
+  --ivory:#faf6ef; --slate:#2e3338; --clay:#c06a4a; --olive:#7a8450; --oat:#e8dfd0; --rust:#a8442e;
+  --g1:#f1ece2; --g2:#d9d2c4; --g3:#a59c8d; --g4:#6e675c; --g5:#4a453d;
+  --serif:ui-serif,Georgia,'Times New Roman',serif;
+  --sans:system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ivory);color:var(--slate);font:16px/1.55 var(--sans)}
+main{width:90%;max-width:1600px;margin-inline:auto;padding:28px 0 80px}
+.prose{max-width:68ch}
+h1{font-family:var(--serif);font-size:2.1rem;line-height:1.15;margin:.2em 0 .3em}
+h2{font-family:var(--serif);font-size:1.45rem;margin:0 0 .4em}
+h3{font-size:1.05rem;margin:0 0 .35em}
+section{margin-top:56px;scroll-margin-top:120px}
+.eyebrow{font:600 .72rem var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--g4)}
+.chiprow{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.chip{font:500 .78rem var(--mono);background:var(--g1);border:1px solid var(--g2);border-radius:999px;padding:4px 12px}
+.chip strong{color:var(--clay)}
+nav.topnav{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g2);padding:9px 5%;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+nav.topnav .navlabel{font:600 .68rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--g4);margin-right:4px}
+nav.topnav a,nav.topnav span.here{font:500 .78rem var(--mono);border-radius:999px;padding:4px 12px;text-decoration:none}
+nav.topnav a{color:var(--slate);background:var(--g1);border:1px solid var(--g2)}
+nav.topnav a:hover{border-color:var(--clay);color:var(--clay)}
+nav.topnav span.here{background:var(--slate);color:var(--ivory)}
+nav.jumpnav{position:sticky;top:42px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g2);padding:8px 5%;display:flex;flex-wrap:wrap;gap:8px}
+nav.jumpnav a{display:inline-flex;align-items:center;gap:7px;font:500 .76rem var(--mono);color:var(--slate);text-decoration:none;background:var(--g1);border:1px solid var(--g2);border-radius:999px;padding:4px 12px}
+nav.jumpnav a:hover{border-color:var(--clay)}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.d-safe{background:var(--olive)} .d-med{background:var(--clay)} .d-hot{background:var(--rust)}
+.callout{border-left:4px solid var(--clay);background:var(--g1);padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0}
+.callout.olive{border-color:var(--olive)} .callout.rust{border-color:var(--rust)}
+.callout .key{font:600 .7rem var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--g4);display:block;margin-bottom:4px}
+.prov{border:1px solid var(--g2);border-radius:10px;padding:14px 18px;background:var(--g1);margin:18px 0}
+.prov .key{font:600 .7rem var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--g4);display:block;margin-bottom:6px}
+.prov code{font:.78rem var(--mono);display:block;padding:1px 0;color:var(--g5)}
+.cmap{border:1px solid var(--g2);border-radius:12px;overflow:hidden;background:#fff}
+.cmap .row{display:grid;grid-template-columns:minmax(220px,2.2fr) minmax(200px,2fr) 110px 90px;gap:0;border-top:1px solid var(--g1);align-items:center}
+.cmap .row.head{border-top:none;background:var(--g1);font:600 .68rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--g4)}
+.cmap .cell{padding:10px 14px;min-width:0}
+.cmap .file{font:.78rem var(--mono);word-break:break-word}
+.cmap .file small{color:var(--g3)}
+.pill{display:inline-block;font:600 .66rem var(--mono);letter-spacing:.06em;border-radius:999px;padding:2px 9px;margin:2px 3px 2px 0;white-space:nowrap}
+.p-status{background:#e9e2f0;color:#5b4a78}
+.p-tick{background:#e3ead3;color:#56603a}
+.p-note{background:#f0e3d6;color:#8a4f33}
+.p-rewrite{background:#f2d9cf;color:var(--rust)}
+.p-reid{background:#dfe7e8;color:#3f6066}
+.risk{display:inline-flex;align-items:center;gap:6px;font:500 .72rem var(--mono)}
+.cmap a.go{font:600 .72rem var(--mono);color:var(--clay);text-decoration:none}
+.cmap a.go:hover{text-decoration:underline}
+.acgrid{border:1px solid var(--g2);border-radius:12px;background:#fff;overflow:hidden}
+.acrow{display:grid;grid-template-columns:30px 56px 1fr;gap:10px;align-items:start;padding:10px 16px;border-top:1px solid var(--g1)}
+.acrow:first-child{border-top:none}
+.check{width:18px;height:18px;border:2px solid var(--g3);border-radius:4px;position:relative;margin-top:2px;flex:none}
+.check.done{background:var(--olive);border-color:var(--olive)}
+.check.done::after{content:'';position:absolute;left:4.5px;top:1px;width:5px;height:9px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(42deg)}
+.check.gate{border-color:var(--clay)}
+.acnum{font:600 .76rem var(--mono);color:var(--g4);margin-top:2px}
+.acrow p{margin:0;font-size:.88rem}
+.acrow .gatecap{display:block;margin-top:4px;font:500 .73rem var(--mono);color:var(--clay)}
+.acrow .newcap{display:block;margin-top:4px;font:500 .73rem var(--mono);color:var(--olive)}
+.code{background:var(--slate);color:#e9e4da;border-radius:12px;margin:14px 0;overflow:hidden}
+.code .file-label{font:600 .7rem var(--mono);letter-spacing:.08em;color:var(--g3);background:#252a2e;padding:7px 16px;display:block}
+.code pre{margin:0;padding:14px 16px;font:.78rem/1.6 var(--mono);white-space:pre;overflow-x:auto}
+.code .add{display:inline-block;width:100%;background:rgba(122,132,80,.28)}
+.code .del{display:inline-block;width:100%;background:rgba(168,68,46,.30);text-decoration:line-through;text-decoration-color:rgba(233,228,218,.5)}
+.code .dim{color:var(--g3)}
+.tl{margin:18px 0}
+.tl .ev{display:grid;grid-template-columns:150px 30px 1fr;gap:0 10px}
+.tl .when{font:500 .74rem var(--mono);color:var(--g4);text-align:right;padding-top:2px}
+.tl .spine{display:flex;flex-direction:column;align-items:center}
+.tl .spine .tdot{width:12px;height:12px;border-radius:50%;flex:none;margin-top:4px}
+.tl .spine .line{width:2px;flex:1;background:var(--g2)}
+.tl .ev:last-child .line{display:none}
+.tl .body{padding:0 0 26px}
+.tl .body h3{margin:0 0 2px}
+.tl .body p{margin:2px 0;font-size:.88rem;max-width:68ch}
+.tl .sha{font:600 .74rem var(--mono);color:var(--clay)}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:16px 0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:16px 0}
+.card{border:1px solid var(--g2);border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.card .tag{font:600 .7rem var(--mono);letter-spacing:.08em;color:var(--g4);text-transform:uppercase}
+.card blockquote{margin:0;border-left:3px solid var(--rust);padding:4px 10px;font:.76rem/1.5 var(--mono);color:var(--g5);background:var(--g1);border-radius:0 6px 6px 0;white-space:pre-wrap}
+.card p{margin:0;font-size:.85rem}
+.loc{font:.74rem var(--mono);color:var(--g4)}
+.evlist{border:1px solid var(--g2);border-radius:12px;background:#fff;overflow:hidden}
+.evrow{display:flex;gap:12px;align-items:flex-start;padding:10px 16px;border-top:1px solid var(--g1)}
+.evrow:first-child{border-top:none}
+.evrow p{margin:0;font-size:.87rem;flex:1}
+.evrow .loc{margin-left:auto;flex:none;text-align:right}
+footer{border-top:1px solid var(--g2);margin-top:60px;padding:18px 5%;font:.74rem var(--mono);color:var(--g4)}
+@media(max-width:880px){
+  .grid3,.grid2{grid-template-columns:1fr}
+  .cmap .row{grid-template-columns:1fr}
+  .cmap .row.head{display:none}
+  .tl .ev{grid-template-columns:30px 1fr}
+  .tl .when{display:none}
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav" aria-label="Related documents">
+  <span class="navlabel">Epic 190.22</span>
+  <a href="task-190.22%20-%20Restructure-self-healing-pipeline-to-triage-→-plan-planning-only.overview.html">↑ Epic overview — triage → plan restructure</a>
+  <span class="here" aria-current="page">190.22.20 · reconciliation map</span>
+</nav>
+
+<nav class="jumpnav" aria-label="Scope items">
+  <a href="#change-map"><span class="dot d-safe"></span>Change map</a>
+  <a href="#epic"><span class="dot d-med"></span>1 · Epic file</a>
+  <a href="#migration"><span class="dot d-hot"></span>2 · The .12 reversal</a>
+  <a href="#firewall"><span class="dot d-safe"></span>3 · Firewall notes ×3</a>
+  <a href="#small-edits"><span class="dot d-safe"></span>4–5 · Box ticks</a>
+  <a href="#archive"><span class="dot d-hot"></span>6 · Archive collision</a>
+  <a href="#deferral"><span class="dot d-safe"></span>7 · .14 deferral</a>
+  <a href="#verify"><span class="dot d-med"></span>Verify</a>
+</nav>
+
+<main>
+
+<header>
+  <span class="eyebrow">TASK-190.22.20 · backlog hygiene · self-repair</span>
+  <h1>Reconcile epic 190.22 bookkeeping with reality</h1>
+  <div class="chiprow">
+    <span class="chip">status <strong>To Do</strong></span>
+    <span class="chip">files touched <strong>8</strong></span>
+    <span class="chip">code changed <strong>0 lines</strong></span>
+    <span class="chip">commits referenced <strong>12371b99 · 46aa55e4 · c5c2ccd7</strong></span>
+  </div>
+</header>
+
+<div class="callout prose">
+  <span class="key">TL;DR</span>
+  The epic's implementation (.1–.11, .13, .14) is shipped and green, but its records contradict that: the epic file reads as untouched, one subtask was run then reversed with no written trace, three task docs assert an enforcement test that was deliberately deleted, and two Done tasks have unticked acceptance boxes. This task edits eight markdown files — no code — so the backlog is auditable again. Six edits are mechanical; two need careful wording (the .12 reversal record and the archive id collision).
+</div>
+
+<div class="prov">
+  <span class="key">Sources read</span>
+  <code>backlog/tasks/task-190.22.20 - Reconcile-epic-190.22-bookkeeping-with-reality.md</code>
+  <code>backlog/tasks/task-190.22 - Restructure-self-healing-pipeline-to-triage-→-plan-planning-only.md</code>
+  <code>backlog/tasks/task-190.22.{6,7,10,11,13,14} …</code>
+  <code>backlog/archive/tasks/task-190.22.4 - Deferred-—-in-run-novel-issue-coordinator-src-absorb-parked.md</code>
+  <code>git log: 12371b99 · 46aa55e4 · c5c2ccd7</code>
+</div>
+
+<section id="change-map">
+  <h2>Change map — every file, every edit type</h2>
+  <p class="prose">One row per file. The edit-type pills are the full vocabulary of this task; the risk dot marks where wording carries weight.</p>
+  <div class="cmap">
+    <div class="row head">
+      <div class="cell">File</div><div class="cell">Edits</div><div class="cell">Risk</div><div class="cell"></div>
+    </div>
+    <div class="row">
+      <div class="cell file">task-190.22 <small>(epic)</small></div>
+      <div class="cell"><span class="pill p-status">STATUS BUMP</span><span class="pill p-tick">TICK 6 ACs</span><span class="pill p-note">ANNOTATE 2 ACs</span><span class="pill p-rewrite">REWRITE .12 ENTRY</span><span class="pill p-note">NOTE .15–.20</span></div>
+      <div class="cell"><span class="risk"><span class="dot d-med"></span>wording</span></div>
+      <div class="cell"><a class="go" href="#epic">§1 →</a></div>
+    </div>
+    <div class="row">
+      <div class="cell file">task-190.22.7 <small>(firewall rule-doc + AST test)</small></div>
+      <div class="cell"><span class="pill p-note">ADD RETIREMENT NOTE</span></div>
+      <div class="cell"><span class="risk"><span class="dot d-safe"></span>paste</span></div>
+      <div class="cell"><a class="go" href="#firewall">§3 →</a></div>
+    </div>
+    <div class="row">
+      <div class="cell file">task-190.22.10 <small>(plan engine → task-DB)</small></div>
+      <div class="cell"><span class="pill p-note">NOTE ON AC#4</span></div>
+      <div class="cell"><span class="risk"><span class="dot d-safe"></span>paste</span></div>
+      <div class="cell"><a class="go" href="#firewall">§3 →</a></div>
+    </div>
+    <div class="row">
+      <div class="cell file">task-190.22.11 <small>(export adapter)</small></div>
+      <div class="cell"><span class="pill p-note">NOTE ON AC#1 + AC#5</span></div>
+      <div class="cell"><span class="risk"><span class="dot d-safe"></span>paste</span></div>
+      <div class="cell"><a class="go" href="#firewall">§3 →</a></div>
+    </div>
+    <div class="row">
+      <div class="cell file">task-190.22.13 <small>(core-fix effort estimate)</small></div>
+      <div class="cell"><span class="pill p-tick">TICK 4 ACs</span></div>
+      <div class="cell"><span class="risk"><span class="dot d-safe"></span>mechanical</span></div>
+      <div class="cell"><a class="go" href="#small-edits">§4 →</a></div>
+    </div>
+    <div class="row">
+      <div class="cell file">task-190.22.6 <small>(firewall retarget)</small></div>
+      <div class="cell"><span class="pill p-tick">CLOSE TODO ~L88</span><span class="pill p-note">ONE-LINE NOTE</span></div>
+      <div class="cell"><span class="risk"><span class="dot d-safe"></span>mechanical</span></div>
+      <div class="cell"><a class="go" href="#small-edits">§5 →</a></div>
+    </div>
+    <div class="row">
+      <div class="cell file">backlog/archive/tasks/task-190.22.4 <small>(pre-renumber artifact)</small></div>
+      <div class="cell"><span class="pill p-reid">RE-ID / ANNOTATE</span></div>
+      <div class="cell"><span class="risk"><span class="dot d-hot"></span>decision</span></div>
+      <div class="cell"><a class="go" href="#archive">§6 →</a></div>
+    </div>
+    <div class="row">
+      <div class="cell file">task-190.22.14 <small>(bucket membership)</small></div>
+      <div class="cell"><span class="pill p-note">RECORD WON'T-DO</span></div>
+      <div class="cell"><span class="risk"><span class="dot d-safe"></span>paste</span></div>
+      <div class="cell"><a class="go" href="#deferral">§7 →</a></div>
+    </div>
+  </div>
+</section>
+
+<section id="epic">
+  <h2>1 · Epic file — status, AC boxes, remaining gate</h2>
+  <p class="prose">The epic sits at <code>To Do</code> with 0/8 acceptance boxes despite 13/13 live subtasks Done. Target state below: six boxes tick on code-verified evidence; #1 and #3 stay open as the single remaining gate — the real-data end-to-end run.</p>
+
+  <div class="code">
+    <span class="file-label">task-190.22 · frontmatter</span>
+    <pre><span class="del">status: To Do</span>
+<span class="add">status: In Progress</span></pre>
+  </div>
+
+  <div class="acgrid">
+    <div class="acrow"><span class="check gate"></span><span class="acnum">#1</span><p>triage runs detect→triage→publish end-to-end on a real cloned repo and publishes a non-empty novel_issues[]<span class="gatecap">STAYS OPEN — gate: ~/.ariadne/plan/tasks/ has zero rows; no real-data run yet</span></p></div>
+    <div class="acrow"><span class="check done"></span><span class="acnum">#2</span><p>single private @ariadnejs/skill-protocol package is the source of truth for the triage→plan seam<span class="newcap">TICK — verified in code</span></p></div>
+    <div class="acrow"><span class="check gate"></span><span class="acnum">#3</span><p>triage-curator renamed/re-scoped to plan; grouped hierarchical plans; reconciles ≥1 planning doc; zero writes to registry.json or packages/core<span class="gatecap">STAYS OPEN — gate: passes B–C have only fixture smoke-test coverage</span></p></div>
+    <div class="acrow"><span class="check done"></span><span class="acnum">#4</span><p>triage-entrypoints renamed to triage; grep returns only intentional residuals<span class="newcap">TICK — verified in code</span></p></div>
+    <div class="acrow"><span class="check done"></span><span class="acnum">#5</span><p>all code-mutating machinery removed from plan; fix-delivery is manual, human-driven<span class="newcap">TICK — verified in code</span></p></div>
+    <div class="acrow"><span class="check done"></span><span class="acnum">#6</span><p>superseded automated fix-delivery subtree (TASK-190.18.*) archived<span class="newcap">TICK — verified</span></p></div>
+    <div class="acrow"><span class="check done"></span><span class="acnum">#7</span><p>no backwards-compatibility shims; intention-tree naming only<span class="newcap">TICK — verified</span></p></div>
+    <div class="acrow"><span class="check done"></span><span class="acnum">#8</span><p>build + test + typecheck + lint green after each phase<span class="newcap">TICK — verified</span></p></div>
+  </div>
+
+  <div class="callout olive prose">
+    <span class="key">Also add</span>
+    A one-line note in the epic's Subtasks section: <em>.15–.20 were added after the original .1–.14 set</em> (file-review findings plus this bookkeeping pass), so the "execution order is numeric .1 → .14" line stays honest.
+  </div>
+</section>
+
+<section id="migration">
+  <h2>2 · The .12 reversal — run, wiped, deleted, unrecorded</h2>
+  <p class="prose">The trickiest wording in this task. The epic lists .12 as a normal subtask, but no task file exists anywhere — the whole episode lives only in two commit messages from the same day. The edit writes that audit trail into the place the epic's subtask list points.</p>
+
+  <div class="tl">
+    <div class="ev">
+      <div class="when">2026-06-05</div>
+      <div class="spine"><span class="tdot" style="background:var(--clay)"></span><span class="line"></span></div>
+      <div class="body">
+        <h3>Migration runs <span class="sha">12371b99</span></h3>
+        <p><code>backlog(190.22.12): migrate 234 auto-filed tickets to task-DB; reconcile registry</code></p>
+        <p>234 auto-filed classifier tickets move into the task-DB; the migration clears 117 <code>backlog_task</code> links in <code>registry.json</code>, pointing those rules at the new DB rows instead.</p>
+      </div>
+    </div>
+    <div class="ev">
+      <div class="when">2026-06-05</div>
+      <div class="spine"><span class="tdot" style="background:var(--rust)"></span><span class="line"></span></div>
+      <div class="body">
+        <h3>Reversal <span class="sha">46aa55e4</span></h3>
+        <p><code>refactor(190.22.13): remove the abandoned PlanTaskStatus and the one-shot seed migration</code></p>
+        <p>Task-DB wiped; migration script <strong>and the .12 task doc itself</strong> deleted. The replacement rows the 117 rules pointed at are gone.</p>
+      </div>
+    </div>
+    <div class="ev">
+      <div class="when">today</div>
+      <div class="spine"><span class="tdot" style="background:var(--olive)"></span><span class="line"></span></div>
+      <div class="body">
+        <h3>Disposition of the 117 rules</h3>
+        <p>117 registry rules carry no live task pointer. They re-link when the next <em>real</em> plan sweep + export runs — that disposition is recorded in the epic entry below.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="code">
+    <span class="file-label">task-190.22 · Subtasks list, line 59 — proposed rewrite</span>
+    <pre><span class="del">- **190.22.12** — Tidy `backlog/tasks/`: migrate the 234 auto-filed classifier</span>
+<span class="del">  tickets into the task-DB (archive-not-delete). _(depends on .8)_</span>
+<span class="add">- **190.22.12** — Tidy `backlog/tasks/`: migrate the 234 auto-filed classifier</span>
+<span class="add">  tickets into the task-DB (archive-not-delete). _(depends on .8)_</span>
+<span class="add">  **Ran and reversed:** the migration landed in 12371b99, then 46aa55e4 wiped the</span>
+<span class="add">  task-DB and deleted the migration script and this subtask's doc. The 117 registry</span>
+<span class="add">  rules whose `backlog_task` links the migration cleared have no live task pointer;</span>
+<span class="add">  they re-link when the next real plan sweep + export runs.</span></pre>
+  </div>
+</section>
+
+<section id="firewall">
+  <h2>3 · Three docs claim a firewall that no longer exists</h2>
+  <p class="prose">Commit <code>c5c2ccd7</code> — <em>"scrub shelved fix-sequencer + actuator; remove backlog firewall; human-maintained registry"</em> — deliberately deleted <code>backlog-firewall.md</code>, <code>backlog_writers.test.ts</code>, and <code>ALLOWED_BACKLOG_WRITERS</code>. The sole-backlog-writer property still holds, but as convention documented in <code>plan/SKILL.md</code> + <code>prioritize/SKILL.md</code>, not as an AST test. Three docs still assert the test.</p>
+
+  <div class="grid3">
+    <div class="card">
+      <div class="tag">task-190.22.7 · whole task</div>
+      <blockquote>Deliverables: .claude/rules/backlog-firewall.md
+packages/skill-fs/src/backlog_writers.test.ts
+ALLOWED_BACKLOG_WRITERS</blockquote>
+      <p>Every deliverable was deleted in c5c2ccd7. Add a retirement note to the task body.</p>
+    </div>
+    <div class="card">
+      <div class="tag">task-190.22.10 · AC#4 <span class="loc">:49</span></div>
+      <blockquote>[x] #4 Any backlog access is read-only (dedup signal only) and passes the 190.22.7 firewall test</blockquote>
+      <p>The behavior holds; the test it cites is gone. Note under the AC.</p>
+    </div>
+    <div class="card">
+      <div class="tag">task-190.22.11 · AC#1 + AC#5 <span class="loc">:45 · :49</span></div>
+      <blockquote>[x] #1 …sole ALLOWED_BACKLOG_WRITERS entry…
+[x] #5 …the firewall test green</blockquote>
+      <p>Both cite retired machinery. One note covers both lines.</p>
+    </div>
+  </div>
+
+  <div class="code">
+    <span class="file-label">the note — paste (adapted) into all three docs</span>
+    <pre><span class="add">&gt; **Firewall retired (c5c2ccd7).** The structural enforcement — `backlog-firewall.md`,</span>
+<span class="add">&gt; `backlog_writers.test.ts`, `ALLOWED_BACKLOG_WRITERS` — was deliberately removed.</span>
+<span class="add">&gt; The sole-backlog-writer property is now convention, documented in plan/SKILL.md</span>
+<span class="add">&gt; and prioritize/SKILL.md.</span></pre>
+  </div>
+</section>
+
+<section id="small-edits">
+  <h2>4 · 190.22.13 — Done with 0/4 boxes ticked</h2>
+  <p class="prose">All four ACs are satisfied in code. Tick all four; the evidence per box:</p>
+  <div class="evlist">
+    <div class="evrow"><span class="check done"></span><p><strong>#1</strong> StrategistPlanNode + PlanTask carry <code>core_fix_effort</code> / <code>core_fix_effort_rationale</code></p><span class="loc">plan_task.ts · types.ts</span></div>
+    <div class="evrow"><span class="check done"></span><p><strong>#2</strong> strategist prompt instructs the estimate on every core-fix node; <code>get_bucket_context</code> surfaces the rule</p><span class="loc">plan-strategist prompt</span></div>
+    <div class="evrow"><span class="check done"></span><p><strong>#3</strong> validation enforces positive effort + non-empty rationale (<code>core_fix_effort_invalid</code>); Pass C carries both fields onto the PlanTask</p><span class="loc">validate_plan.ts</span></div>
+    <div class="evrow"><span class="check done"></span><p><strong>#4</strong> planning-only contract preserved; reconcile is the sole task-DB writer; no new tool grant</p><span class="loc">implementation notes</span></div>
+  </div>
+
+  <h2 id="todo-close" style="margin-top:36px">5 · 190.22.6 — moot follow-up to-do (~line 88)</h2>
+  <p class="prose">The follow-up gated on retargeting <code>existing_task_id</code>, a field of <code>AriadneBug</code>/<code>InvestigateResponse</code> — both deleted by TASK-190.22.9. <code>existing_task_id</code> greps to nothing in the codebase.</p>
+  <div class="code">
+    <span class="file-label">task-190.22.6 · Follow-up to-do, line 88</span>
+    <pre><span class="del">- [ ] **Define the task-DB id (`PlanTaskId`) format, then retarget `existing_task_id`.** …</span>
+<span class="add">- [x] **Define the task-DB id (`PlanTaskId`) format, then retarget `existing_task_id`.** …</span>
+<span class="add">  Moot — TASK-190.22.9 deleted `InvestigateResponse`/`AriadneBug`; `existing_task_id`</span>
+<span class="add">  no longer exists in the codebase (grep-confirmed).</span></pre>
+  </div>
+</section>
+
+<section id="archive">
+  <h2>6 · Archive id collision — two files answer to TASK-190.22.4</h2>
+  <p class="prose">A pre-renumber artifact in the archive still carries the live id. Anything resolving ids across <code>backlog/</code> — including the export adapter's whole-tree id-minting scan — sees two files claiming <code>TASK-190.22.4</code> with contradictory statuses.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="tag">live · backlog/tasks/</div>
+      <blockquote>id: TASK-190.22.4
+title: Define the plan task-DB contract (PlanTask, repository interface, paths)
+status: Done</blockquote>
+      <p>The real .4 — the contract task. Untouched by this edit.</p>
+    </div>
+    <div class="card">
+      <div class="tag">archived · backlog/archive/tasks/</div>
+      <blockquote>id: TASK-190.22.4
+title: Deferred — in-run novel-issue coordinator (src/absorb/*, parked)
+status: To Do</blockquote>
+      <p>Pre-renumber artifact describing the parked coordinator (since deleted in Phase 1). Collides on id <em>and</em> contradicts on status.</p>
+    </div>
+  </div>
+
+  <div class="code">
+    <span class="file-label">backlog/archive/tasks/task-190.22.4 - Deferred-… · recommended resolution</span>
+    <pre><span class="del">id: TASK-190.22.4</span>
+<span class="add">id: TASK-190.22.4-prerenumber</span>
+<span class="dim">…</span>
+<span class="add">&gt; **Pre-renumber artifact.** This id predates the epic's subtask renumbering; the live</span>
+<span class="add">&gt; TASK-190.22.4 is the plan task-DB contract task. The coordinator code this file parked</span>
+<span class="add">&gt; (`src/absorb/*`) was deleted in Phase 1 (TASK-190.22.1).</span></pre>
+  </div>
+  <div class="callout prose">
+    <span class="key">Decision point</span>
+    The task allows <em>re-id or annotate</em>. Annotation alone leaves the duplicate id in the tree for any scan to trip on; re-id with a non-numeric suffix removes the collision and stays out of the export adapter's numeric id-minting scan. Recommendation: re-id <em>and</em> carry the one-paragraph note above.
+  </div>
+</section>
+
+<section id="deferral">
+  <h2>7 · 190.22.14 — record the line-drift deferral as won't-do</h2>
+  <p class="prose">The .14 implementation notes disclose: <em>"Full line-drift immunity is deferred symbol-graph-identity work"</em> — the membership-override store keys on <code>(file_path, name, kind, start_line)</code>, so a line-moved member re-enters review. Disclosed, but unfiled. The decision: record it in the task doc as a known won't-do, not a new task.</p>
+  <div class="code">
+    <span class="file-label">task-190.22.14 · append to implementation notes</span>
+    <pre><span class="add">&gt; **Won't-do (for now): line-drift-stable member identity.** Full line-drift immunity</span>
+<span class="add">&gt; is symbol-graph-identity work; file it if/when that work begins. YAGNI until the</span>
+<span class="add">&gt; pipeline runs on real data and the drift actually bites.</span></pre>
+  </div>
+</section>
+
+<section id="verify">
+  <h2>Verify — the task's own acceptance criteria</h2>
+  <div class="evlist">
+    <div class="evrow"><span class="check"></span><p><strong>#1</strong> Epic status + AC boxes reflect verified reality; real-data run recorded as sole remaining gate</p><span class="loc">§1</span></div>
+    <div class="evrow"><span class="check"></span><p><strong>#2</strong> .12 reversal recorded in the epic's subtask list, incl. disposition of the 117 registry rules</p><span class="loc">§2</span></div>
+    <div class="evrow"><span class="check"></span><p><strong>#3</strong> .7 / .10 / .11 each carry the c5c2ccd7 retirement note</p><span class="loc">§3</span></div>
+    <div class="evrow"><span class="check"></span><p><strong>#4</strong> .13 boxes ticked; .6 moot follow-up closed with a one-line note</p><span class="loc">§4–5</span></div>
+    <div class="evrow"><span class="check"></span><p><strong>#5</strong> Archive no longer collides with live TASK-190.22.4; .14 deferral recorded as won't-do</p><span class="loc">§6–7</span></div>
+  </div>
+</section>
+
+</main>
+<footer>Generated 2026-06-10 from the task doc, the eight target files, and git log (12371b99 · 46aa55e4 · c5c2ccd7) · branch feat/self-healing-pipeline-debug</footer>
+</body>
+</html>

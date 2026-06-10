@@ -1,0 +1,279 @@
+<\!DOCTYPE html>
+<\!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Epic 190.22 — Restructure self-healing pipeline to triage → plan</title>
+<style>
+:root{
+  --ivory:#faf6ef; --slate:#2e3338; --clay:#c06a4a; --olive:#7a8450; --oat:#e8dfd0; --rust:#a8442e;
+  --g1:#f1ece2; --g2:#d9d2c4; --g3:#a59c8d; --g4:#6e675c; --g5:#4a453d;
+  --serif:ui-serif,Georgia,'Times New Roman',serif;
+  --sans:system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ivory);color:var(--slate);font:16px/1.55 var(--sans)}
+main{width:90%;max-width:1600px;margin-inline:auto;padding:28px 0 80px}
+.prose{max-width:68ch}
+h1{font-family:var(--serif);font-size:2.1rem;line-height:1.15;margin:.2em 0 .3em}
+h2{font-family:var(--serif);font-size:1.45rem;margin:0 0 .4em}
+section{margin-top:54px;scroll-margin-top:120px}
+.eyebrow{font:600 .72rem var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--g4)}
+.chiprow{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.chip{font:500 .78rem var(--mono);background:var(--g1);border:1px solid var(--g2);border-radius:999px;padding:4px 12px}
+.chip strong{color:var(--clay)}
+nav.topnav{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g2);padding:9px 5%;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+nav.topnav .navlabel{font:600 .68rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--g4);margin-right:4px}
+nav.topnav a,nav.topnav span{font:500 .72rem var(--mono);border-radius:999px;padding:3px 10px;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+nav.topnav a.doc-link{color:var(--slate);background:var(--g1);border:1px solid var(--clay)}
+nav.topnav a.doc-link:hover{color:var(--clay)}
+nav.topnav span.pending{color:var(--g3);background:none;border:1px dashed var(--g2)}
+nav.topnav span.here{background:var(--slate);color:var(--ivory)}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.d-done{background:var(--olive)} .d-todo{background:var(--g3)} .d-rev{background:var(--rust)}
+.callout{border-left:4px solid var(--clay);background:var(--g1);padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0}
+.callout.olive{border-color:var(--olive)} .callout.rust{border-color:var(--rust)}
+.callout .key{font:600 .7rem var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--g4);display:block;margin-bottom:4px}
+.prov{border:1px solid var(--g2);border-radius:10px;padding:14px 18px;background:var(--g1);margin:18px 0}
+.prov .key{font:600 .7rem var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--g4);display:block;margin-bottom:6px}
+.prov code{font:.78rem var(--mono);display:block;padding:1px 0;color:var(--g5)}
+.diagram{border:1px solid var(--g2);border-radius:12px;background:#fff;padding:14px;margin:16px 0}
+.diagram svg{width:100%;height:auto;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:18px;margin-top:10px;font:500 .74rem var(--mono);color:var(--g4)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.sw{width:26px;height:0;border-top:2.5px solid var(--slate);display:inline-block}
+.sw.cl{border-color:var(--clay);border-top-style:dashed}
+.sw.ru{border-color:var(--rust);border-top-style:dashed}
+.sw.oa{width:16px;height:12px;border:1px solid var(--g2);background:var(--oat);border-top:1px solid var(--g2)}
+.phases{display:grid;gap:0;border:1px solid var(--g2);border-radius:12px;background:#fff;overflow:hidden;margin:16px 0}
+.phase{display:grid;grid-template-columns:44px 170px 1fr;gap:12px;padding:13px 16px;border-top:1px solid var(--g1);align-items:start}
+.phase:first-child{border-top:none}
+.badge{width:30px;height:30px;border-radius:50%;background:var(--slate);color:var(--ivory);display:flex;align-items:center;justify-content:center;font:600 .82rem var(--mono);flex:none}
+.badge.fup{background:var(--clay)}
+.phase .ids{font:600 .76rem var(--mono);color:var(--clay);padding-top:5px}
+.phase p{margin:0;font-size:.9rem;padding-top:4px}
+.subs{border:1px solid var(--g2);border-radius:12px;background:#fff;overflow:hidden;margin:16px 0}
+.srow{display:grid;grid-template-columns:96px 1fr 150px 230px;gap:12px;align-items:center;padding:9px 16px;border-top:1px solid var(--g1)}
+.srow.head{border-top:none;background:var(--g1);font:600 .68rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--g4)}
+.srow .id{font:600 .78rem var(--mono)}
+.srow .t{font-size:.87rem}
+.srow .t small{color:var(--g4)}
+.spill{display:inline-flex;align-items:center;gap:7px;font:600 .68rem var(--mono);letter-spacing:.05em;border-radius:999px;padding:2px 10px}
+.s-done{background:#e3ead3;color:#56603a}
+.s-todo{background:var(--g1);color:var(--g4)}
+.s-rev{background:#f2d9cf;color:var(--rust)}
+.srow a{font:500 .74rem var(--mono);color:var(--clay)}
+.srow .none{font:500 .72rem var(--mono);color:var(--g3)}
+.acstrip{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+.ac{flex:1;min-width:150px;border:1px solid var(--g2);border-radius:10px;background:#fff;padding:10px 12px}
+.ac .n{font:600 .72rem var(--mono);display:inline-block;border-radius:999px;padding:1px 8px;margin-bottom:6px}
+.ac.ok .n{background:#e3ead3;color:#56603a}
+.ac.gate .n{background:#f0e3d6;color:#8a4f33}
+.ac p{margin:0;font-size:.78rem;color:var(--g5)}
+footer{border-top:1px solid var(--g2);margin-top:60px;padding:18px 5%;font:.74rem var(--mono);color:var(--g4)}
+@media(max-width:880px){
+  .srow{grid-template-columns:80px 1fr}
+  .srow .st,.srow .comp{grid-column:2}
+  .srow.head{display:none}
+  .phase{grid-template-columns:44px 1fr}
+  .phase .ids{grid-column:2}
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav" aria-label="Sub-task companion documents">
+  <span class="navlabel">Epic 190.22</span>
+  <span class="here" aria-current="page">overview</span>
+  <a class="doc-link" href="task-190.22.20%20-%20Reconcile-epic-190.22-bookkeeping-with-reality.reconciliation-map.html"><span class="dot d-todo"></span>.20 reconciliation map</a>
+  <span class="pending" title="not yet generated"><span class="dot d-done"></span>.1</span>
+  <span class="pending" title="not yet generated"><span class="dot d-done"></span>.2</span>
+  <span class="pending" title="not yet generated"><span class="dot d-done"></span>.3</span>
+  <span class="pending" title="not yet generated"><span class="dot d-done"></span>.4</span>
+  <span class="pending" title="not yet generated"><span class="dot d-done"></span>.5</span>
+  <span class="pending" title="not yet generated"><span class="dot d-done"></span>.6</span>
+  <span class="pending" title="not yet generated"><span class="dot d-done"></span>.7</span>
+  <span class="pending" title="not yet generated"><span class="dot d-done"></span>.8</span>
+  <span class="pending" title="not yet generated"><span class="dot d-done"></span>.9</span>
+  <span class="pending" title="not yet generated"><span class="dot d-done"></span>.10</span>
+  <span class="pending" title="not yet generated"><span class="dot d-done"></span>.11</span>
+  <span class="pending" title="ran and reversed — no task file"><span class="dot d-rev"></span>.12</span>
+  <span class="pending" title="not yet generated"><span class="dot d-done"></span>.13</span>
+  <span class="pending" title="not yet generated"><span class="dot d-done"></span>.14</span>
+  <span class="pending" title="not yet generated"><span class="dot d-todo"></span>.15</span>
+  <span class="pending" title="not yet generated"><span class="dot d-todo"></span>.16</span>
+  <span class="pending" title="not yet generated"><span class="dot d-todo"></span>.17</span>
+  <span class="pending" title="not yet generated"><span class="dot d-todo"></span>.18</span>
+  <span class="pending" title="not yet generated"><span class="dot d-todo"></span>.19</span>
+</nav>
+
+<main>
+
+<header>
+  <span class="eyebrow">TASK-190.22 · self-repair · architecture · restructure</span>
+  <h1>Restructure the self-healing pipeline to triage → plan (planning-only)</h1>
+  <div class="chiprow">
+    <span class="chip">priority <strong>high</strong></span>
+    <span class="chip">live subtasks done <strong>13/13</strong></span>
+    <span class="chip">follow-ups open <strong>.15–.20</strong></span>
+    <span class="chip">remaining gate <strong>real-data end-to-end run</strong></span>
+  </div>
+</header>
+
+<div class="callout prose">
+  <span class="key">Why this epic exists</span>
+  The self-healing pipeline (skills under <code>.claude/skills/</code>) had never run end-to-end, yet its architecture committed to fully automated fix delivery. This epic simplifies the pipeline around the part that delivers value first: <strong>detect, then plan</strong>. Code mutation and loop-closure become manual, human-driven steps; the superseded automated fix-delivery design (TASK-190.18.*) is archived.
+</div>
+
+<\!-- ============ PIPELINE SHAPE ============ -->
+<section id="shape">
+  <h2>The pipeline this epic builds</h2>
+  <p class="prose">Two autonomous stages produce plans; every write into the human's world is a deliberate human act. The curator's code-mutating machinery is gone — the plan skill reads, groups, strategizes, and reconciles, and nothing more.</p>
+  <div class="diagram">
+    <svg viewBox="0 0 1200 420" role="img" aria-label="Pipeline flow: cloned repos into triage, publishing triage results, read by plan which writes the task-DB; a user-invoked export adapter promotes rows into backlog; fix delivery is manual and out of scope; the registry is read-only to both skills; code-mutating machinery removed from plan">
+      <defs>
+        <marker id="ah-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2e3338"/></marker>
+        <marker id="ah-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#c06a4a"/></marker>
+        <marker id="ah-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#a59c8d"/></marker>
+      </defs>
+      <\!-- main autonomous row -->
+      <rect x="15" y="68" width="130" height="50" rx="10" fill="#f1ece2" stroke="#d9d2c4" stroke-width="1.5"/>
+      <text x="80" y="97" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#2e3338">cloned repos</text>
+
+      <line x1="145" y1="93" x2="193" y2="93" stroke="#2e3338" stroke-width="2" marker-end="url(#ah-s)"/>
+
+      <rect x="195" y="56" width="180" height="74" rx="10" fill="#fff" stroke="#2e3338" stroke-width="2"/>
+      <text x="285" y="84" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="19" font-weight="600" fill="#2e3338">triage</text>
+      <text x="285" y="104" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11.5" fill="#6e675c">detect → verdicts (tp / fp-*)</text>
+      <text x="285" y="119" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11.5" fill="#6e675c">+ core fault diagnostics</text>
+
+      <line x1="375" y1="93" x2="423" y2="93" stroke="#2e3338" stroke-width="2" marker-end="url(#ah-s)"/>
+
+      <rect x="425" y="68" width="170" height="50" rx="10" fill="#e8dfd0" stroke="#d9d2c4" stroke-width="1.5"/>
+      <text x="510" y="89" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#2e3338">triage_results</text>
+      <text x="510" y="106" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#6e675c">across all repos</text>
+
+      <line x1="595" y1="93" x2="643" y2="93" stroke="#2e3338" stroke-width="2" marker-end="url(#ah-s)"/>
+
+      <rect x="645" y="46" width="230" height="94" rx="10" fill="#fff" stroke="#2e3338" stroke-width="2"/>
+      <text x="760" y="74" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="19" font-weight="600" fill="#2e3338">plan</text>
+      <text x="760" y="94" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11.5" fill="#6e675c">group by AriadneFaultArea</text>
+      <text x="760" y="109" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11.5" fill="#6e675c">→ opus strategists → hierarchical</text>
+      <text x="760" y="124" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11.5" fill="#6e675c">size-tiered plans → reconcile</text>
+
+      <line x1="875" y1="93" x2="923" y2="93" stroke="#2e3338" stroke-width="2" marker-end="url(#ah-s)"/>
+
+      <rect x="925" y="68" width="190" height="50" rx="10" fill="#e8dfd0" stroke="#d9d2c4" stroke-width="1.5"/>
+      <text x="1020" y="89" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#2e3338">~/.ariadne/plan/</text>
+      <text x="1020" y="106" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#6e675c">PlanTask rows (task-DB)</text>
+
+      <\!-- human-invoked row -->
+      <polyline points="1020,118 1020,243 877,243" fill="none" stroke="#c06a4a" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#ah-c)"/>
+      <rect x="645" y="215" width="230" height="56" rx="10" fill="#fff" stroke="#c06a4a" stroke-width="2" stroke-dasharray="6 5"/>
+      <text x="760" y="239" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="16" font-weight="600" fill="#c06a4a">export adapter</text>
+      <text x="760" y="257" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11.5" fill="#6e675c">user-invoked · the sole backlog writer</text>
+
+      <line x1="645" y1="243" x2="597" y2="243" stroke="#c06a4a" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#ah-c)"/>
+      <rect x="425" y="218" width="170" height="50" rx="10" fill="#f1ece2" stroke="#d9d2c4" stroke-width="1.5"/>
+      <text x="510" y="239" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#2e3338">backlog/tasks/</text>
+      <text x="510" y="256" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#6e675c">the human's tracker</text>
+
+      <line x1="425" y1="243" x2="377" y2="243" stroke="#a59c8d" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#ah-g)"/>
+      <rect x="155" y="215" width="220" height="56" rx="10" fill="none" stroke="#a59c8d" stroke-width="1.5" stroke-dasharray="6 5"/>
+      <text x="265" y="239" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" font-weight="600" fill="#6e675c">fix delivery — manual</text>
+      <text x="265" y="257" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11.5" fill="#6e675c">human executes plans; out of scope</text>
+
+      <\!-- registry read-only -->
+      <rect x="15" y="318" width="420" height="76" rx="10" fill="#e8dfd0" stroke="#d9d2c4" stroke-width="1.5"/>
+      <text x="225" y="347" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#2e3338">known_issues/registry.json</text>
+      <text x="225" y="367" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11.5" fill="#6e675c">read-only to triage and plan — the human is the sole writer</text>
+
+      <\!-- shed machinery -->
+      <rect x="645" y="318" width="440" height="76" rx="10" fill="none" stroke="#a8442e" stroke-width="1.5" stroke-dasharray="6 5"/>
+      <line x1="660" y1="332" x2="1070" y2="380" stroke="#a8442e" stroke-width="1.5" opacity=".55"/>
+      <text x="865" y="347" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12.5" font-weight="600" fill="#a8442e">shed from the curator (Phase 3)</text>
+      <text x="865" y="366" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11.5" fill="#6e675c">classifier rendering · registry writes · promotion · sync-permanent-rules</text>
+      <text x="865" y="382" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11.5" fill="#6e675c">applied bug-task linkage · union-find / Jaccard / Pareto / DAG sequencing</text>
+    </svg>
+    <div class="legend">
+      <span><span class="sw"></span>autonomous sweep</span>
+      <span><span class="sw cl"></span>human-invoked</span>
+      <span><span class="sw ru"></span>machinery removed</span>
+      <span><span class="sw oa"></span>data at rest</span>
+    </div>
+  </div>
+  <p class="prose">One typed package — <code>@ariadnejs/skill-protocol</code> — is the source of truth for the triage→plan seam (one schema version, run-id + path helpers), replacing duplicated constants and <code>../../../</code> registry-path traversal.</p>
+</section>
+
+<\!-- ============ PHASES ============ -->
+<section id="phases">
+  <h2>How the sub-tasks compose</h2>
+  <div class="phases">
+    <div class="phase"><span class="badge">1</span><span class="ids">.1</span><p>Harden the <strong>triage</strong> golden path: verdict files build the published results; the unwired in-run coordinator (<code>src/absorb/*</code>) is deleted; every false positive carries deterministic core fault diagnostics.</p></div>
+    <div class="phase"><span class="badge">2</span><span class="ids">.2 · .3 · .4</span><p>Contracts: extract <code>@ariadnejs/skill-protocol</code>; author the <code>AriadneFaultArea</code> taxonomy + deterministic derivation; define the plan task-DB contract (<code>PlanTask</code>, repository interface, <code>~/.ariadne/plan/</code> paths).</p></div>
+    <div class="phase"><span class="badge">3</span><span class="ids">.5 · .6 · .7 · .8</span><p>Rename <code>triage-entrypoints</code>→<code>triage</code> and <code>triage-curator</code>→<code>plan</code>; strip the code-mutating machinery; remove backlog-writing machinery from the pipeline; implement the JSON plan-task store. <small>(.7's AST-test deliverables were later retired in c5c2ccd7 — the sole-backlog-writer property is convention in the SKILL.md files.)</small></p></div>
+    <div class="phase"><span class="badge">4</span><span class="ids">.9 – .14</span><p>The <strong>plan</strong> engine: group → strategize → hierarchical plans → reconcile (.9); write + reconcile <code>PlanTask</code> rows in the task-DB (.10); the user-invoked export adapter, the only place the pipeline writes <code>backlog/</code> (.11); migrate the 234 auto-filed tickets (.12 — ran, then reversed); per-core-fix effort estimates (.13); strategist-verified bucket membership (.14).</p></div>
+    <div class="phase"><span class="badge fup">+</span><span class="ids">.15 – .20</span><p>Follow-ups added after the original set — file-review findings (.15–.19: reconcile scoping, TP-cache hygiene, membership convergence, vestigial-machinery excision, doc corrections) and the bookkeeping reconciliation (.20).</p></div>
+  </div>
+</section>
+
+<\!-- ============ SUBTASK TABLE ============ -->
+<section id="subtasks">
+  <h2>Sub-tasks — status and detail pages</h2>
+  <div class="subs">
+    <div class="srow head"><span>ID</span><span>Title</span><span>Status</span><span>Detail page</span></div>
+    <div class="srow"><span class="id">190.22.1</span><span class="t">Phase 1 — harden the triage golden path; delete the in-run coordinator; carry core fault diagnostics</span><span class="st"><span class="spill s-done"><span class="dot d-done"></span>DONE</span></span><span class="comp none">not yet generated</span></div>
+    <div class="srow"><span class="id">190.22.2</span><span class="t">Phase 2 — extract @ariadnejs/skill-protocol shared data contract</span><span class="st"><span class="spill s-done"><span class="dot d-done"></span>DONE</span></span><span class="comp none">not yet generated</span></div>
+    <div class="srow"><span class="id">190.22.3</span><span class="t">AriadneFaultArea taxonomy + deterministic derivation</span><span class="st"><span class="spill s-done"><span class="dot d-done"></span>DONE</span></span><span class="comp none">not yet generated</span></div>
+    <div class="srow"><span class="id">190.22.4</span><span class="t">Plan task-DB contract: PlanTask, repository interface, paths</span><span class="st"><span class="spill s-done"><span class="dot d-done"></span>DONE</span></span><span class="comp none">not yet generated</span></div>
+    <div class="srow"><span class="id">190.22.5</span><span class="t">Phase 3 — rename triage / plan; strip code-mutating machinery</span><span class="st"><span class="spill s-done"><span class="dot d-done"></span>DONE</span></span><span class="comp none">not yet generated</span></div>
+    <div class="srow"><span class="id">190.22.6</span><span class="t">Firewall: retarget/remove the pipeline's backlog-writing machinery</span><span class="st"><span class="spill s-done"><span class="dot d-done"></span>DONE</span></span><span class="comp none">not yet generated</span></div>
+    <div class="srow"><span class="id">190.22.7</span><span class="t">Backlog firewall rule-doc + AST enforcement test <small>— deliverables retired in c5c2ccd7</small></span><span class="st"><span class="spill s-done"><span class="dot d-done"></span>DONE</span></span><span class="comp none">not yet generated</span></div>
+    <div class="srow"><span class="id">190.22.8</span><span class="t">JSON plan-task store behind PlanTaskRepository</span><span class="st"><span class="spill s-done"><span class="dot d-done"></span>DONE</span></span><span class="comp none">not yet generated</span></div>
+    <div class="srow"><span class="id">190.22.9</span><span class="t">Phase 4 — plan engine: group → strategize → hierarchical plans → reconcile</span><span class="st"><span class="spill s-done"><span class="dot d-done"></span>DONE</span></span><span class="comp none">not yet generated</span></div>
+    <div class="srow"><span class="id">190.22.10</span><span class="t">Plan engine writes PlanTask rows + reconciles within the task-DB</span><span class="st"><span class="spill s-done"><span class="dot d-done"></span>DONE</span></span><span class="comp none">not yet generated</span></div>
+    <div class="srow"><span class="id">190.22.11</span><span class="t">User-invoked export/promotion adapter — the sole backlog writer</span><span class="st"><span class="spill s-done"><span class="dot d-done"></span>DONE</span></span><span class="comp none">not yet generated</span></div>
+    <div class="srow"><span class="id">190.22.12</span><span class="t">Migrate the 234 auto-filed classifier tickets into the task-DB <small>— ran in 12371b99, reversed in 46aa55e4 (DB wiped, task doc deleted); 117 registry rules re-link at the next real plan sweep + export</small></span><span class="st"><span class="spill s-rev"><span class="dot d-rev"></span>REVERSED</span></span><span class="comp none">no task file</span></div>
+    <div class="srow"><span class="id">190.22.13</span><span class="t">Strategist surfaces a per-core-fix effort estimate (cost axis)</span><span class="st"><span class="spill s-done"><span class="dot d-done"></span>DONE</span></span><span class="comp none">not yet generated</span></div>
+    <div class="srow"><span class="id">190.22.14</span><span class="t">Strategist verifies bucket membership; decisions recorded across stores</span><span class="st"><span class="spill s-done"><span class="dot d-done"></span>DONE</span></span><span class="comp none">not yet generated</span></div>
+    <div class="srow"><span class="id">190.22.15</span><span class="t">Scope reconcile's orphan retirement to fault areas whose plans actually reconciled</span><span class="st"><span class="spill s-todo"><span class="dot d-todo"></span>TO DO</span></span><span class="comp none">not yet generated</span></div>
+    <div class="srow"><span class="id">190.22.16</span><span class="t">Triage TP cache must not reuse registry-sourced confirmed_unreachable rows</span><span class="st"><span class="spill s-todo"><span class="dot d-todo"></span>TO DO</span></span><span class="comp none">not yet generated</span></div>
+    <div class="srow"><span class="id">190.22.17</span><span class="t">Membership convergence: honor overrides on the re-routed-into area; validate plan identity</span><span class="st"><span class="spill s-todo"><span class="dot d-todo"></span>TO DO</span></span><span class="comp none">not yet generated</span></div>
+    <div class="srow"><span class="id">190.22.18</span><span class="t">Excise vestigial machinery (dead sweep-skip ledger, legacy migrator, single-impl interface, curator vocabulary)</span><span class="st"><span class="spill s-todo"><span class="dot d-todo"></span>TO DO</span></span><span class="comp none">not yet generated</span></div>
+    <div class="srow"><span class="id">190.22.19</span><span class="t">Doc corrections (removed verdict contract, phantom project configs, false registry-read claim)</span><span class="st"><span class="spill s-todo"><span class="dot d-todo"></span>TO DO</span></span><span class="comp none">not yet generated</span></div>
+    <div class="srow"><span class="id">190.22.20</span><span class="t">Reconcile epic 190.22 bookkeeping with reality</span><span class="st"><span class="spill s-todo"><span class="dot d-todo"></span>TO DO</span></span><span class="comp"><a href="task-190.22.20%20-%20Reconcile-epic-190.22-bookkeeping-with-reality.reconciliation-map.html">reconciliation map →</a></span></div>
+  </div>
+</section>
+
+<\!-- ============ ACCEPTANCE ============ -->
+<section id="acceptance">
+  <h2>Acceptance — six verified in code, one gate remaining</h2>
+  <div class="acstrip">
+    <div class="ac gate"><span class="n">#1 GATE</span><p>Real-data end-to-end triage run — ~/.ariadne/plan/tasks/ has zero rows</p></div>
+    <div class="ac ok"><span class="n">#2 ✓</span><p>skill-protocol is the seam's single source of truth</p></div>
+    <div class="ac gate"><span class="n">#3 GATE</span><p>plan end-to-end on real data — passes B–C fixture-only so far</p></div>
+    <div class="ac ok"><span class="n">#4 ✓</span><p>rename complete; only intentional residuals</p></div>
+    <div class="ac ok"><span class="n">#5 ✓</span><p>code-mutating machinery removed</p></div>
+    <div class="ac ok"><span class="n">#6 ✓</span><p>190.18.* subtree archived</p></div>
+    <div class="ac ok"><span class="n">#7 ✓</span><p>no shims; intention-tree naming</p></div>
+    <div class="ac ok"><span class="n">#8 ✓</span><p>build · test · typecheck · lint green</p></div>
+  </div>
+  <div class="callout rust prose">
+    <span class="key">Records lag the code</span>
+    The epic file itself still reads <code>To Do</code> with 0/8 boxes, three task docs cite the retired firewall test, and the .12 reversal is recorded only in commit messages. TASK-190.22.20 brings every record back in line — the edit-by-edit map is on its <a href="task-190.22.20%20-%20Reconcile-epic-190.22-bookkeeping-with-reality.reconciliation-map.html">reconciliation map</a>.
+  </div>
+</section>
+
+<div class="prov">
+  <span class="key">Sources</span>
+  <code>backlog/tasks/task-190.22 - Restructure-self-healing-pipeline-to-triage-→-plan-planning-only.md</code>
+  <code>backlog/tasks/task-190.22.* (statuses read from frontmatter, 2026-06-10)</code>
+  <code>git log: 12371b99 · 46aa55e4 · c5c2ccd7</code>
+</div>
+
+</main>
+<footer>Generated 2026-06-10 · sibling detail pages re-scanned on each refresh · branch feat/self-healing-pipeline-debug</footer>
+</body>
+</html>

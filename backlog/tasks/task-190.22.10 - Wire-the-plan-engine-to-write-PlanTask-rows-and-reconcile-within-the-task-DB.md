@@ -3,7 +3,8 @@ id: TASK-190.22.10
 title: Wire the plan engine to write PlanTask rows and reconcile within the task-DB
 status: Done
 assignee: []
-created_date: "2026-06-01 15:19"
+created_date: '2026-06-01 15:19'
+updated_date: '2026-06-10 08:51'
 labels:
   - self-repair
   - plan-skill
@@ -20,7 +21,6 @@ priority: high
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-
 ## Why
 
 The plan engine's output target is the task-DB, not `backlog/`. This is the change to TASK-190.22.9's core: emit `PlanTask` rows via `JsonPlanTaskRepository` (190.22.8) and reconcile within the DB — replacing the old "emit via mcp\_\_backlog / reconcile against backlog/tasks" behavior.
@@ -36,13 +36,10 @@ The plan engine's output target is the task-DB, not `backlog/`. This is the chan
 ## Verification
 
 A sweep over ≥2 finalized runs writes `PlanTask` rows + a sweep log under `~/.ariadne/plan/`, makes ZERO writes to `backlog/`, `registry.json`, or `packages/core`, and a second sweep over the same runs augments existing tasks (no duplicates) rather than re-creating them.
-
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
-
 <!-- AC:BEGIN -->
-
 - [x] #1 The engine writes the hierarchical plan as `PlanTask` rows (architectural→fault-area→localized) via `PlanTaskRepository.put_many` + a per-sweep `PlanSweepEvent` log; ZERO writes to `backlog/`/`registry.json`/`packages/core`
 - [x] #2 Reconciliation is computed within the task-DB via `dedup_key`/`find_by_dedup_key`: a re-sweep over the same runs augments existing tasks (merges evidence, bumps rollups) instead of duplicating
 - [x] #3 supersede/combine decisions are recorded as `PlanSweepEvent`s; the DB is the authoritative reconciliation surface
@@ -53,7 +50,6 @@ A sweep over ≥2 finalized runs writes `PlanTask` rows + a sweep log under `~/.
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-
 ## High-level summary
 
 The plan engine's reconcile pass (Pass C) is the authoritative reconciliation surface for the firewalled task-DB. Building on the create/augment loop from TASK-190.22.9, it now closes the full lifecycle: it retires stale orphans into `superseded`/`combined`/`resolved` records, and reads the user's `backlog/` (read-only) to recognise already-promoted work and stop re-proposing it. The whole pass is deterministic and DB-authoritative — grouping keys on `AriadneFaultArea`, reconciling on the immutable `dedup_key`, and never writing `backlog/`, `registry.json`, or `packages/core`.
@@ -77,4 +73,7 @@ Per sweep, the reconciler runs three ordered steps against the live DB and appen
 
 AC #1, #2, #5 (PlanTask rows + sweep log, `dedup_key` augment-not-duplicate, `AriadneFaultArea` grouping + firewall smoke test) were delivered by TASK-190.22.9 and are preserved. This task completes **AC #3** (supersede/combine recorded as `PlanSweepEvent`s, plus the `resolved` GC the original note called for) and **AC #4** (read-only backlog dedup, firewall-test-green). The `file:line` reconciliation primitive is centralised as `location_token` so every reconciliation site agrees byte-for-byte.
 
+## Note on AC #4 (firewall reference)
+
+AC #4 references "the 190.22.7 firewall test". That test (`backlog_writers.test.ts`) was retired in commit c5c2ccd7. The substance of AC #4 — read-only backlog access — is preserved; it is now convention documented in `plan/SKILL.md` rather than enforced by an AST test.
 <!-- SECTION:NOTES:END -->

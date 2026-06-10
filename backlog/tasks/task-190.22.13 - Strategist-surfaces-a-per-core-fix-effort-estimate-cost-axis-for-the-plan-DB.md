@@ -1,10 +1,10 @@
 ---
 id: TASK-190.22.13
-title: >-
-  Strategist surfaces a per-core-fix effort estimate (cost axis for the plan DB)
+title: Strategist surfaces a per-core-fix effort estimate (cost axis for the plan DB)
 status: Done
 assignee: []
 created_date: '2026-06-04 00:00'
+updated_date: '2026-06-10 08:51'
 labels:
   - self-repair
   - plan-skill
@@ -20,7 +20,6 @@ priority: medium
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-
 ## Why
 
 Every `PlanTask` already carries a BENEFIT axis — `observed_count`, `projects`,
@@ -71,24 +70,19 @@ re-sweep that augments a task adopts the fresh estimate. `validate_plan` rejects
 core-fix node missing a positive effort or rationale, and rejects a
 non-core-fix node carrying a non-zero effort. The plan engine makes zero writes to
 `backlog/`, `registry.json`, or `packages/core`.
-
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
-
 <!-- AC:BEGIN -->
-
-- [ ] #1 `StrategistPlanNode` and `PlanTask` carry `core_fix_effort` (positive integer blast-radius estimate) and `core_fix_effort_rationale` (prose grounding)
-- [ ] #2 The `plan-strategist` prompt instructs emitting the estimate on every core-fix node, grounded by reading the owning `fault_area` folder, with the `0` sentinel on taxonomy-extension and classifier-work nodes; `get_bucket_context` surfaces the rule
-- [ ] #3 `validate_plan` requires a positive effort + non-empty rationale on core-fix nodes and the `0` sentinel elsewhere; Pass C carries both fields onto the `PlanTask` and augment adopts the fresh estimate
-- [ ] #4 Firewall + planning-only contract preserved (strategist writes only its plan; reconcile is the sole task-DB writer; no new tool grant)
-
+- [x] #1 `StrategistPlanNode` and `PlanTask` carry `core_fix_effort` (positive integer blast-radius estimate) and `core_fix_effort_rationale` (prose grounding)
+- [x] #2 The `plan-strategist` prompt instructs emitting the estimate on every core-fix node, grounded by reading the owning `fault_area` folder, with the `0` sentinel on taxonomy-extension and classifier-work nodes; `get_bucket_context` surfaces the rule
+- [x] #3 `validate_plan` requires a positive effort + non-empty rationale on core-fix nodes and the `0` sentinel elsewhere; Pass C carries both fields onto the `PlanTask` and augment adopts the fresh estimate
+- [x] #4 Firewall + planning-only contract preserved (strategist writes only its plan; reconcile is the sole task-DB writer; no new tool grant)
 <!-- AC:END -->
 
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-
 ## High-level summary
 
 The plan engine carries a cost axis alongside its existing benefit axis. Each
@@ -156,5 +150,4 @@ taxonomy-extension nodes. `build_plan_tasks` asserts the carry-through;
 `reconcile_plan` asserts that augment adopts a *changed* estimate (seeded at
 effort 5, re-swept at 2). The full plan suite, the protocol package suite, the
 typecheck, and the firewall guards are green.
-
 <!-- SECTION:NOTES:END -->

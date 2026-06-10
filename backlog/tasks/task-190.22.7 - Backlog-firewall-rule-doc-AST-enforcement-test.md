@@ -1,9 +1,10 @@
 ---
 id: TASK-190.22.7
-title: "Backlog firewall: rule doc + AST enforcement test"
+title: 'Backlog firewall: rule doc + AST enforcement test'
 status: Done
 assignee: []
-created_date: "2026-06-01 15:18"
+created_date: '2026-06-01 15:18'
+updated_date: '2026-06-10 08:51'
 labels:
   - self-repair
   - firewall
@@ -18,7 +19,6 @@ priority: high
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-
 ## Why
 
 Make the firewall structural, not just convention — mirror the registry write-boundary contract (`.claude/rules/classifier-lifecycle.md` + `packages/skill-fs/src/registry_writers.test.ts`). `backlog/` is exclusively user-operated; the only sanctioned backlog writer is the user-invoked export adapter (190.22.11).
@@ -31,13 +31,10 @@ Make the firewall structural, not just convention — mirror the registry write-
 ## Note
 
 Read-only backlog access (`mcp__backlog__task_search`/`task_view`, frontmatter parse) is permitted as a dedup signal (190.22.10) — the test flags writes + mutator calls only, so reads pass.
-
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
-
 <!-- AC:BEGIN -->
-
 - [x] #1 `.claude/rules/backlog-firewall.md` exists with a writer table (pipeline = never; export adapter = sole human-invoked writer; human = direct), cross-referencing classifier-lifecycle.md + commit-convention.md
 - [x] #2 `packages/skill-fs/src/backlog_writers.test.ts` flags raw writes to `backlog/`-shaped paths AND references to mutating `mcp__backlog__*` tools across the skills/packages tree
 - [x] #3 `ALLOWED_BACKLOG_WRITERS` contains only the export adapter; the test has a negative control proving the scanner is not a no-op
@@ -48,7 +45,6 @@ Read-only backlog access (`mcp__backlog__task_search`/`task_view`, frontmatter p
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-
 ## High-level summary
 
 **Why this work exists.** `backlog/` is exclusively user-operated. The self-healing pipeline (`triage`, `plan`) must never write it — proposed work flows through the pipeline's own task-DB (`~/.ariadne/plan/`), and a single user-invoked export adapter is the only sanctioned bridge into `backlog/`. Convention alone is fragile, so this work makes the boundary structural, mirroring the registry write-boundary contract (`classifier-lifecycle.md` + `registry_writers.test.ts`).
@@ -68,4 +64,7 @@ Read-only backlog access (`mcp__backlog__task_search`/`task_view`, frontmatter p
 
 **Known gap (deliberately out of scope).** The static `.ts` scan cannot see *agent grant surfaces*. `.claude/agents/plan-strategist.md` still carries a whole-server `mcpServers: - backlog` grant left over from the pre-restructure curator — a real latent hole, since it admits every mutator to an autonomous agent. It is entangled with that file's stale, Phase-4-pending prose (which still instructs backlog-task filing), so the narrowing belongs with the plan-engine rewrite (TASK-190.22.10), where it is now noted. The rule doc's Known-limitations section discloses this vector honestly rather than implying the boundary is sealed.
 
+## Retirement note
+
+The deliverables of this task (`backlog-firewall.md`, `backlog_writers.test.ts`, `ALLOWED_BACKLOG_WRITERS`) were deliberately deleted in commit c5c2ccd7 ("refactor(self-healing): scrub shelved fix-sequencer + actuator; remove backlog firewall; human-maintained registry"). The sole-backlog-writer property is now convention, documented in `.claude/skills/plan/SKILL.md`.
 <!-- SECTION:NOTES:END -->

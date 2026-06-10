@@ -6,6 +6,7 @@ title: >-
 status: Done
 assignee: []
 created_date: '2026-06-08 00:00'
+updated_date: '2026-06-10 08:52'
 labels:
   - self-repair
   - plan-skill
@@ -19,7 +20,6 @@ priority: medium
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-
 ## Why
 
 Pass A (`group_fault_areas`) buckets every false-positive by `derive_fault_area`
@@ -96,25 +96,20 @@ exclusion; the excluded member is written to the membership-override store.
 a node on an excluded index. A re-sweep does not re-reject a member already
 recorded in the override store. The plan engine makes zero writes to `backlog/`,
 `registry.json`, or `packages/core`.
-
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
-
 <!-- AC:BEGIN -->
-
 - [x] #1 The `plan-strategist` emits a total per-member membership verdict over the bucket's `evidence[]` (`belongs` / `does-not-belong` + reason, optional `suggested_area`); the agent prompt and `get_bucket_context` surface the review rule, prioritising `needs_judgement` members
 - [x] #2 `validate_plan` requires every evidence index to carry a verdict, forbids any node from grounding an excluded index, and requires a non-empty reason on each exclusion
 - [x] #3 Pass C grounds tasks on confirmed members only — `build_plan_tasks` excludes rejected indices from evidence aggregation, `dedup_key`, and the rollup; a new `PlanSweepEvent` records each membership decision
 - [x] #4 Excluded members are written to a membership-override store keyed on a line-drift-stable member identity, so they are neither silently lost nor re-rejected each sweep; a confirmed mis-route surfaces as a `derive_fault_area` correction signal
 - [x] #5 Planning-only + write-boundary contract preserved (strategist writes only its plan; reconcile is the sole writer of the task-DB and membership store; no new tool grant)
-
 <!-- AC:END -->
 
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-
 ## High-level summary
 
 Pass A buckets every triage false-positive by `derive_fault_area`, a deterministic
@@ -196,4 +191,7 @@ a human clears the override file.
   added the dedup-key-vs-member-identity rationale, an AC#3 positive test, and an
   end-to-end feedback-loop test (exclude → store → next-sweep re-route).
 
+## Line-drift-stable identity deferral
+
+The implementation uses `MemberSymbol` (`file_path, name, kind, start_line`) as the override store key — drift-tolerant on `(file_path, name, kind)` but not `start_line`. Full line-drift immunity requires symbol-graph identity work that does not exist yet. Filing a dedicated task is YAGNI until the pipeline runs on real data and `start_line` drift proves to be a practical problem. Won't-do for now; revisit if real-data sweeps show false re-rejections from line-moved members.
 <!-- SECTION:NOTES:END -->
