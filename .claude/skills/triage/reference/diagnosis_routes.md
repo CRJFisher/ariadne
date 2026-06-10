@@ -22,18 +22,19 @@ Each entry has a `diagnosis` field from pre-gathered diagnostics during detectio
 
 ## Investigation Prompt
 
-All `llm-triage` entries render a single template — `templates/prompt.md` — which is parameterized by the entry's `diagnosis`. `scripts/get_entry_context.ts` substitutes diagnosis-specific hints (title, summary, investigation guide, classification hint) for the four diagnoses above; any other diagnosis falls back to a generic broad-investigation guide. The template itself uses `{{entry.*}}` placeholders filled from the triage state entry.
+All `llm-triage` entries render a single template — `templates/prompt.md` — which is parameterized by the entry's `diagnosis`. `scripts/get_entry_context.ts` substitutes diagnosis-specific hints (title, summary, investigation guide) for three diagnoses — `callers-not-in-registry`, `callers-in-registry-unresolved`, and `callers-in-registry-wrong-target`. The fourth diagnosis, `no-textual-callers`, and any other value fall back to a generic broad-investigation guide (`GENERIC_HINTS`). The template itself uses `{{entry.*}}` placeholders filled from the triage state entry.
 
-## Binary Classification Output
+## Verdict Output
 
-Each investigated entry produces a `TriageEntryResult` with a binary classification:
+Each investigated entry produces exactly one `TriageVerdict` (`src/verdict/triage_verdict.ts`), written as raw JSON to `results/<entry_index>.json` under the run directory. The union has four arms, discriminated by `kind`:
 
-| Classification                                    | `ariadne_correct` | `group_id`                                                                   |
-| ------------------------------------------------- | ----------------- | ---------------------------------------------------------------------------- |
-| No real callers found — Ariadne correct           | `true`            | `"confirmed-unreachable"`                                                    |
-| Real callers missed — Ariadne has a detection gap | `false`           | Kebab-case detection gap (e.g., `"barrel-reexport"`, `"cross-package-call"`) |
+| `kind`                     | Meaning                                                         | Arm-specific fields                                  |
+| -------------------------- | --------------------------------------------------------------- | ---------------------------------------------------- |
+| `tp`                       | Genuinely unreachable — the call graph is correct               | —                                                    |
+| `fp-novel`                 | Real caller exists that no in-scope rule should have caught      | `proposed_root_cause`, `evidence_excerpt`            |
+| `fp-classifier-regression` | Real caller an in-scope wip/permanent rule should have matched   | `should_have_matched_rule_id`, `evidence_excerpt`    |
+| `uncertain`                | Cannot be reduced to a single verdict                           | `reason`                                             |
 
-All results also include:
+Every arm also carries `member_evidence` (`file`, `line`, `why`).
 
-- `root_cause`: Description of the detection gap (or confirmation of unreachability)
-- `reasoning`: Evidence and explanation supporting the classification
+`parse_triage_verdict` (`src/verdict/strict_parse.ts`) parses each file at finalize. It rejects an unknown `kind`, a missing or extra field, or an empty string — a shape violation throws and halts finalize; there is no silent skipping. Finalize reads these files to build `novel_issues[]` (one per `fp-novel`) and `classifier_regressions[]` (rolled up from `fp-classifier-regression`).

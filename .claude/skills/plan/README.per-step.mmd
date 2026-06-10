@@ -11,11 +11,12 @@ flowchart TD
 
   TR[/"triage · analysis_output/&lt;p&gt;/<br/>triage_results/&lt;run-id&gt;.json<br/>schema v5 · novel_issues[]"/]:::ext
 
-  REG[("known_issues/registry.json<br/><i>read-only · dedup/grounding</i>")]:::store
+  MO[("~/.ariadne/plan/membership_overrides.json<br/><i>mis-routed members · keyed on (file,name,kind)</i>")]:::store
 
   subgraph PA["Pass A · Group (deterministic)"]
     direction TB
-    SA("scripts/group_runs.ts<br/>scan_runs · flatten FP novel_issues[]<br/>derive_fault_area · bucket by AriadneFaultArea"):::step
+    SA("scripts/group_runs.ts<br/>scan_runs · flatten FP novel_issues[]<br/>derive_fault_area · follow_override_chain<br/>bucket by AriadneFaultArea"):::step
+    MAN[/"staging/&lt;sweep&gt;/manifest.json<br/>scan manifest · swept project scope"/]:::artifact
     BK[/"staging/&lt;sweep&gt;/buckets/&lt;area&gt;.json<br/>PlanTaskEvidence[] · rollup<br/>(observed_count · projects · runs)<br/>other-bucket descriptions"/]:::artifact
   end
 
@@ -24,28 +25,31 @@ flowchart TD
     HY("get_bucket_context.ts<br/>hydrate one fault-area bucket"):::step
     AGB[["plan-strategist<br/>opus · 1 per bucket"]]:::agent
     VAL("validate_plan.ts<br/>self-validate loop"):::step
-    SP[/"staging/&lt;sweep&gt;/plans/&lt;area&gt;.json<br/>StrategistPlan<br/>architectural → fault_area → localized<br/>other → taxonomy-ext + core-fix"/]:::artifact
+    SP[/"staging/&lt;sweep&gt;/plans/&lt;area&gt;.json<br/>StrategistPlan · membership review<br/>architectural → fault_area → localized<br/>other → taxonomy-ext + core-fix"/]:::artifact
   end
 
   subgraph PC["Pass C · Reconcile + write (deterministic)"]
     direction TB
-    RC("scripts/reconcile_plan.ts<br/>build_plan_tasks · compute_dedup_key<br/>find_by_dedup_key → augment | create"):::step
+    RC("scripts/reconcile_plan.ts<br/>validate vs manifest · build_plan_tasks<br/>compute_dedup_key · record_membership_decisions<br/>find_by_dedup_key → augment | create"):::step
     PT[/"~/.ariadne/plan/tasks/&lt;id&gt;.json<br/>PlanTask rows (plan task-DB)"/]:::published
     SW[/"~/.ariadne/plan/sweeps/&lt;sweep-id&gt;.jsonl<br/>PlanSweepEvent log"/]:::published
   end
 
-  EXP[["export adapter (190.22.11)<br/>user-invoked · sole backlog writer"]]:::downstream
+  EXP[["export adapter<br/>user-invoked · sole backlog writer"]]:::downstream
   FW["backlog/ write boundary<br/>plan NEVER writes backlog/ · registry.json · packages/core"]:::boundary
 
   TR --> SA
-  REG -. "read · dedup/grounding" .-> SA
+  MO -. "read · follow override chain" .-> SA
+  SA --> MAN
   SA --> BK --> HY
+  MAN -. "scan scope" .-> RC
   HY --> AGB --> VAL
   VAL -- "invalid · retry" --> AGB
   VAL --> SP
   SP --> RC
   RC --> PT
   RC --> SW
+  RC -. "record mis-routed members" .-> MO
   PT -. "next sweep · in-DB reconcile" .-> RC
 
   PT --> EXP

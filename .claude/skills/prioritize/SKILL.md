@@ -51,9 +51,11 @@ Always invoke with `node --import tsx`. Never `pnpm exec tsx` or `npx tsx`
      --status proposed --dry-run
    ```
 
-2. **Review and narrow.** Inspect each candidate's title, `fault_area`, and
-   `core_fix_effort`. Narrow the set with the selectors below, or name exact
-   rows with `--id`, and re-run `--dry-run` until the list is the work you want.
+2. **Review and narrow.** The dry-run output lists each candidate as `{id,
+   backlog_task, path}`. To weigh a candidate by its `fault_area` or
+   `core_fix_effort`, read its source row at `~/.ariadne/plan/tasks/<id>.json`.
+   Narrow the set with the selectors below, or name exact rows with `--id`, and
+   re-run `--dry-run` until the list is the work you want.
 
 3. **Promote.** Drop `--dry-run` to write the backlog tasks and flip the rows:
 

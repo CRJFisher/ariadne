@@ -1,6 +1,6 @@
 ---
 name: triage-investigator
-description: Investigates one entry point candidate and emits a single TriageVerdict — one of `tp`, `fp-novel`, `fp-classifier-regression`, `uncertain`. Early-exits only on a registry match (`fp-classifier-regression`).
+description: Investigates one entry point candidate and emits a single TriageVerdict — one of `tp`, `fp-novel`, `fp-classifier-regression`, `uncertain`. Gathers evidence for every entry; there is no early exit (a predicate-registry match is handled upstream in Phase 2 auto-classify, before an investigator is dispatched).
 tools: Bash(node --import tsx .claude/skills/triage/scripts/get_entry_context.ts:*), Read, Grep, Glob, Write(~/.ariadne/triage-entrypoints/**), mcp__ariadne__show_call_graph_neighborhood
 mcpServers:
   - ariadne

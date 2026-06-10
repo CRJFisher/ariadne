@@ -39,8 +39,8 @@ Resolve the analysis target from the remaining input using this routing table:
 
 | Input pattern                       | Example                                                  | Action                                                                                                                           |
 | ----------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Empty or blank                      | `/triage`                                                | List available configs below, ask user what to analyze                                                                           |
-| Config name                         | `core`, `mcp`, `types`, `projections`                    | Use `--config ~/.ariadne/triage-entrypoints/project_configs/{name}.json`                                                         |
+| Empty or blank                      | `/triage`                                                | Ask the user what to analyze; if they name a path with no config yet, follow **Creating a New Project Config**                    |
+| Config name                         | a config you previously authored                         | Use `--config ~/.ariadne/triage-entrypoints/project_configs/{name}.json`                                                         |
 | Absolute or relative directory path | `/Users/chuck/workspace/some-repo`, `../other-repo`      | If a project config exists for this path, use `--config <config-path>`; otherwise follow **Creating a New Project Config** below |
 | `owner/repo` or GitHub URL          | `anthropics/sdk-python`, `https://github.com/owner/repo` | Use `--github <value>`                                                                                                           |
 | Natural language                    | "analyze the core package"                               | Interpret intent and map to one of the above                                                                                     |
@@ -68,14 +68,7 @@ When the input is a directory path and a project config already exists for that 
 7. Save to `~/.ariadne/triage-entrypoints/project_configs/{name}.json`.
 8. Continue the pipeline with `--config ~/.ariadne/triage-entrypoints/project_configs/{name}.json`.
 
-Available project configs:
-
-| Config name   | Config path                                                      |
-| ------------- | ---------------------------------------------------------------- |
-| `core`        | `~/.ariadne/triage-entrypoints/project_configs/core.json`        |
-| `mcp`         | `~/.ariadne/triage-entrypoints/project_configs/mcp.json`         |
-| `types`       | `~/.ariadne/triage-entrypoints/project_configs/types.json`       |
-| `projections` | `~/.ariadne/triage-entrypoints/project_configs/projections.json` |
+No project configs ship pre-authored — author one with the steps above. A saved config lives at `~/.ariadne/triage-entrypoints/project_configs/<name>.json` and is passed to every phase via `--config <path>`. The file is a JSON object with `project_path` (required), optional `folders` (source directories to index), optional `exclude` (directories to skip), and `project_name` (only for internal `project_path: "."` projects).
 
 If no arguments are provided or the input is ambiguous, **ask the user** before proceeding.
 
@@ -110,9 +103,9 @@ The dead-code whitelist at `known_entrypoints/<package>.json` (also under `~/.ar
 Use the target resolved from the **Analysis Target** section above to construct the detect command.
 
 ```bash
-# From project config (preferred for Ariadne packages)
+# From a project config (preferred when one has been authored)
 node --import tsx .claude/skills/triage/scripts/detect_entrypoints.ts \
-  --config ~/.ariadne/triage-entrypoints/project_configs/core.json
+  --config ~/.ariadne/triage-entrypoints/project_configs/<name>.json
 
 # Local repository
 node --import tsx .claude/skills/triage/scripts/detect_entrypoints.ts --path /path/to/repo
@@ -123,7 +116,7 @@ node --import tsx .claude/skills/triage/scripts/detect_entrypoints.ts --github o
 
 Options: `--config <file>`, `--path <dir>`, `--github <repo>`, `--branch <name>`, `--depth <n>`. Folder filters, exclusions, and test inclusion are declared in the project config file, not as CLI flags.
 
-Tracked project configs for Ariadne packages: `~/.ariadne/triage-entrypoints/project_configs/{core,mcp,types}.json`
+Author a config with **Creating a New Project Config** above; it lives at `~/.ariadne/triage-entrypoints/project_configs/<name>.json`.
 
 Output: `analysis_output/<project>/detect_entrypoints/<timestamp>.json`
 
@@ -142,6 +135,7 @@ Options:
 
 - `--analysis <path>` (required)
 - `--project <name>` (optional — falls back to the analysis file's `project_name`)
+- `--config <path>` (optional) — the project config whose `folders`/`exclude` scope re-indexing. Omitting it re-indexes the full tree, a different classification input than detect saw; pass the same config used in Phase 1.
 - `--max-count <n>` (optional, default `150`)
 - `--no-reuse-tp` (optional) — disable the TP cache for this run; every `llm-triage` entry will re-investigate even if a prior run at the same commit confirmed it unreachable
 - `--tp-source-run <run-id>` (optional) — pin a specific source run for the TP cache. Must be at the current HEAD commit; the script throws otherwise.
@@ -318,7 +312,7 @@ The pipeline persists state in three places — two under `~/.ariadne/triage-ent
 
 **Stale-LATEST handling.** If a `LATEST` pointer remains from an in-flight run at upgrade time, clear it via `abandon_run.ts --project <name>` or by deleting the file. The run dir stays visible to `list_runs.ts`. `abandon_run.ts` also marks the manifest abandoned.
 
-**Published schema:** `FINALIZATION_OUTPUT_SCHEMA_VERSION` is `5`. Readers (`triage_results_store`, `confirmed_unreachable_reuse`, `diff_runs`) hard-reject any `triage_results/<run-id>.json` whose `schema_version` does not match — there are no migration shims. Pre-v5 files age out naturally as new runs land; the persisted-state policy still forbids `rm -rf` of the whole `analysis_output/` tree.
+**Published schema:** `TRIAGE_RESULTS_SCHEMA_VERSION` is `5`. Readers (`triage_results_store`, `confirmed_unreachable_reuse`, `diff_runs`) hard-reject any `triage_results/<run-id>.json` whose `schema_version` does not match — there are no migration shims. Pre-v5 files age out naturally as new runs land; the persisted-state policy still forbids `rm -rf` of the whole `analysis_output/` tree.
 
 ## Dead-code guardrail
 
@@ -356,7 +350,8 @@ The skill is a thin caller of `@ariadnejs/core`. Classification (`enrich_call_gr
 | `@ariadnejs/skill-fs` · `classifier_regressions.ts` | `aggregate_classifier_regressions` — finalize-time per-rule rollup of `fp-classifier-regression` verdicts (used only by triage's finalize)                                     |
 | `dispense_payload.ts`                               | Build the per-entry dispense payload (entry context + in-scope registry slice)                                                                                          |
 | `triage_state_types.ts`                             | Triage state types (`TriageState`, `TriageEntry`, `TriageEntryResult`)                                                                                                  |
-| `triage_state_paths.ts`                             | Triage state file locations + required-flag CLI helpers                                                                                                                 |
+| `store/paths.ts`                                    | Triage state file locations                                                                                                                                             |
+| `cli_args.ts`                                       | Required-flag CLI helpers (`parse_project_arg`, `parse_run_id_arg`)                                                                                                     |
 | `confirmed_unreachable_reuse.ts`                    | TP cache derivation — short-circuits the LLM investigator across runs at the same commit                                                                                |
 | `run_discovery.ts`                                  | Run-id enumeration, manifest reading, prune protection                                                                                                                  |
 | `analysis_output.ts`                                | Timestamped analysis output JSON I/O                                                                                                                                    |

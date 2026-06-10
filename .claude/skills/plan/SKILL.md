@@ -93,8 +93,10 @@ Wait for every `Task()` in a wave to return before starting the next.
 ### Pass C — reconcile into the task-DB
 
 ```bash
-node --import tsx .claude/skills/plan/scripts/reconcile_plan.ts --sweep <sweep_id>
+node --import tsx .claude/skills/plan/scripts/reconcile_plan.ts --sweep <sweep_id> [--strategist <id>]
 ```
+
+`--strategist <id>` (optional, default `plan-strategist`) names which strategist's staged plans (`staging/<sweep-id>/plans/<area>.json`) the reconciler loads.
 
 For each staged `(bucket, plan)` pair the reconciler validates the plan,
 flattens it into `PlanTask` candidates (minting ids + parent/child links and the
@@ -181,7 +183,7 @@ skill's `src/store/paths.ts`). Both are overridable for tests
 - **Sweep staging:** `~/.ariadne/plan/staging/<sweep-id>/buckets/<area>.json` + `manifest.json` (Pass A) + `plans/<area>.json` (Pass B)
 - **Task-DB:** `~/.ariadne/plan/tasks/<id>.json` (`PlanTask` rows) + `~/.ariadne/plan/sweeps/<sweep-id>.jsonl` (`PlanSweepEvent` log)
 - **Membership overrides:** `~/.ariadne/plan/membership_overrides.json` — members a strategist judged mis-routed, keyed on the flagged member's identity (drift-tolerant on `(file_path, name, kind)`; `start_line` can still shift). Written by Pass C, read by Pass A
-- **Registry (read-only):** `.claude/skills/triage/known_issues/registry.json` — a dedup/grounding signal only
+- **Backlog dedup keys (read-only):** `backlog/tasks/*.md` frontmatter (`plan_dedup_key`) — the only dedup signal; read by Pass C (`src/store/backlog_dedup.ts`). The plan engine never reads `registry.json`.
 
 ## Write boundaries
 
