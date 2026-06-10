@@ -75,5 +75,5 @@ AC #1, #2, #5 (PlanTask rows + sweep log, `dedup_key` augment-not-duplicate, `Ar
 
 ## Note on AC #4 (firewall reference)
 
-AC #4 references "the 190.22.7 firewall test". That test (`backlog_writers.test.ts`) was retired in commit c5c2ccd7. The substance of AC #4 — read-only backlog access — is preserved; it is now convention documented in `plan/SKILL.md` rather than enforced by an AST test.
+AC #4 references "the 190.22.7 firewall test". That test (`backlog_writers.test.ts`) was retired in commit c5c2ccd7. The substance of AC #4 — read-only backlog access — is preserved; it is now convention documented in `.claude/skills/plan/SKILL.md` and `.claude/skills/prioritize/SKILL.md` rather than enforced by an AST test.
 <!-- SECTION:NOTES:END -->

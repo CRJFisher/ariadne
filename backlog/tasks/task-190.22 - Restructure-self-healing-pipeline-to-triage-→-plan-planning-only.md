@@ -43,7 +43,7 @@ This restructure supersedes the automated fix-delivery design (TASK-190.18 and i
 
 ## Subtasks
 
-Numbered in canonical execution order for the initial scope (.1–.14); .15–.20 are follow-up hardening tasks filed after implementation.
+Numbered in canonical execution order for the initial scope (.1–.14); .15–.20 are follow-up tasks (hardening, doc corrections, bookkeeping) filed after implementation.
 
 - **190.22.1** — Phase 1: harden the `triage` golden path; delete the in-run coordinator; carry deterministic fault diagnostics.
 - **190.22.2** — Phase 2: extract `@ariadnejs/skill-protocol` shared data contract. _(depends on .1)_
@@ -51,12 +51,12 @@ Numbered in canonical execution order for the initial scope (.1–.14); .15–.2
 - **190.22.4** — Define the plan task-DB contract (`PlanTask` + `PlanTaskRepository` + `~/.ariadne/plan/` paths) in `@ariadnejs/skill-protocol`. _(depends on .2 + .3)_
 - **190.22.5** — Phase 3: rename `triage-entrypoints`→`triage`, `triage-curator`→`plan`; strip code-mutating machinery. _(depends on .2)_
 - **190.22.6** — Firewall: retarget/remove the pipeline's backlog-writing machinery. _(depends on .4)_
-- **190.22.7** — Backlog firewall rule-doc + AST enforcement test. _(Deliverables retired in c5c2ccd7; sole-backlog-writer property is now convention in plan/SKILL.md.)_
+- **190.22.7** — ~~Backlog firewall rule-doc + AST enforcement test.~~ _Retired in c5c2ccd7._ Sole-backlog-writer property is convention in `.claude/skills/plan/SKILL.md` and `.claude/skills/prioritize/SKILL.md`.
 - **190.22.8** — Implement the JSON plan-task store behind `PlanTaskRepository`. _(depends on .4)_
 - **190.22.9** — Phase 4: build the `plan` engine — group → strategize → hierarchical plans → reconcile. _(depends on .5 + .3)_
 - **190.22.10** — Wire the `plan` engine to write `PlanTask` rows + reconcile within the task-DB. _(depends on .8 + .3)_
 - **190.22.11** — User-invoked export/promotion adapter (task-DB → `backlog/`; the sole backlog writer). _(depends on .8 + .7)_
-- **190.22.12** — ~~Tidy `backlog/tasks/`: migrate the 234 auto-filed classifier tickets into the task-DB.~~ _Reversed._ Migration ran (12371b99), then the task-DB was wiped and the task doc deleted (46aa55e4). The 117 `backlog_task` links cleared in `registry.json` have no live pointer; re-linked when a real plan sweep + export runs. _(no task file; see commits 12371b99, 46aa55e4)_
+- **190.22.12** — ~~Tidy `backlog/tasks/`: migrate the 234 auto-filed classifier tickets into the task-DB.~~ _Reversed._ Migration ran (12371b99), then the task-DB was wiped and the task doc deleted (46aa55e4). Of the 234 migrated tasks, 117 were linked from `registry.json` `backlog_task` fields; those links now dangle. The human re-links them (registry is human-maintained; see `.claude/rules/classifier-lifecycle.md`) after a real plan sweep produces replacement tasks. _(no task file; see commits 12371b99, 46aa55e4)_
 - **190.22.13** — Strategist surfaces a per-core-fix effort estimate (cost axis for the plan DB). _(depends on .10)_
 - **190.22.14** — Strategist verifies bucket membership; record membership decisions across the stores. _(depends on .10)_
 - **190.22.15** — Plan reconcile scope: orphan retirement to fault areas whose plans actually reconciled.
@@ -64,7 +64,7 @@ Numbered in canonical execution order for the initial scope (.1–.14); .15–.2
 - **190.22.17** — Plan membership convergence: honor overrides on re-routed area; validate plan identity against dispatched bucket.
 - **190.22.18** — Excise vestigial machinery (dead sweep-skip ledger, legacy migrator, single-impl repository interface, curator vocabulary).
 - **190.22.19** — Doc corrections: removed verdict contract in `diagnosis_routes`, phantom project configs, false registry-read claim.
-- **190.22.20** — Reconcile epic 190.22 bookkeeping with reality. _(this task)_
+- **190.22.20** — Reconcile epic 190.22 bookkeeping with reality.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

@@ -66,5 +66,5 @@ Read-only backlog access (`mcp__backlog__task_search`/`task_view`, frontmatter p
 
 ## Retirement note
 
-The deliverables of this task (`backlog-firewall.md`, `backlog_writers.test.ts`, `ALLOWED_BACKLOG_WRITERS`) were deliberately deleted in commit c5c2ccd7 ("refactor(self-healing): scrub shelved fix-sequencer + actuator; remove backlog firewall; human-maintained registry"). The sole-backlog-writer property is now convention, documented in `.claude/skills/plan/SKILL.md`.
+The deliverables of this task (`backlog-firewall.md`, `backlog_writers.test.ts`, `ALLOWED_BACKLOG_WRITERS`) were deliberately deleted in commit c5c2ccd7 ("refactor(self-healing): scrub shelved fix-sequencer + actuator; remove backlog firewall; human-maintained registry"). The sole-backlog-writer property is now convention, documented in `.claude/skills/plan/SKILL.md` and `.claude/skills/prioritize/SKILL.md`.
 <!-- SECTION:NOTES:END -->

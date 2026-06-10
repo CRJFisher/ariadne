@@ -85,6 +85,6 @@ Four opus reviewers (completeness, firewall-residue/correctness, information arc
 
 ## Follow-up to-do
 
-- [x] **Define the task-DB id (`PlanTaskId`) format, then retarget `existing_task_id`.** _Moot: 190.22.9 deleted `InvestigateResponse`/`AriadneBug`; `existing_task_id` no longer exists._ Decide a clean, new id grammar for `PlanTaskId` (the contract in `@ariadnejs/skill-protocol` deliberately fixes none; minting is the store's concern — owned by TASK-190.22.8). Once defined, repurpose `AriadneBug.existing_task_id` to a task-DB id and replace the backlog-specific `/^TASK-…/` validation in `validate_investigate_responses.ts` with a check against the new grammar (preferring the clean new format over the legacy `TASK-N` one). Until then `existing_task_id` is a placeholder.
+- [x] **Define the task-DB id (`PlanTaskId`) format, then retarget `existing_task_id`.** _Moot: 190.22.9 deleted `InvestigateResponse`/`AriadneBug`; `existing_task_id` no longer exists._ ~~Decide a clean, new id grammar for `PlanTaskId` (the contract in `@ariadnejs/skill-protocol` deliberately fixes none; minting is the store's concern — owned by TASK-190.22.8). Once defined, repurpose `AriadneBug.existing_task_id` to a task-DB id and replace the backlog-specific `/^TASK-…/` validation in `validate_investigate_responses.ts` with a check against the new grammar (preferring the clean new format over the legacy `TASK-N` one). Until then `existing_task_id` is a placeholder.~~
 
 <!-- SECTION:NOTES:END -->

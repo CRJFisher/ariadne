@@ -81,5 +81,5 @@ Start at the `scripts/export_to_backlog.ts` header — it documents the five-ste
 
 ## Note on AC #5 (firewall reference)
 
-AC #5 references "the firewall test green". The `backlog_writers.test.ts` AST enforcement test was retired in commit c5c2ccd7. The adapter remains the sole script that writes `backlog/`; the sole-backlog-writer property is now convention documented in `plan/SKILL.md`.
+AC #5 references "the firewall test green". The `backlog_writers.test.ts` AST enforcement test was retired in commit c5c2ccd7. The adapter remains the sole script that writes `backlog/`; the sole-backlog-writer property is now convention documented in `.claude/skills/plan/SKILL.md` and `.claude/skills/prioritize/SKILL.md`.
 <!-- SECTION:NOTES:END -->

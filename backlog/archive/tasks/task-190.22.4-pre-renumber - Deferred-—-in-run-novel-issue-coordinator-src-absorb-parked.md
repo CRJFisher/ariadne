@@ -18,6 +18,8 @@ priority: low
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+> **Pre-renumber artifact.** This file's `id` was re-keyed from `TASK-190.22.4` to `TASK-190.22.4-pre-renumber` in TASK-190.22.20: the `190.22.4` slot was reassigned to the plan task-DB contract task after an epic subtask renumber. See `backlog/tasks/task-190.22.4 - Define-the-plan-task-DB-contract…md` for the current `TASK-190.22.4` holder. The coordinator code this file parked (`src/absorb/*`) was deleted in Phase 1 (TASK-190.22.1).
+
 ## Why this is parked
 
 The golden `triage` path (TASK-190.22.1) collects raw false-positive signal at finalize and does NO in-run novel-issue dedup; grouping happens offline in the `plan` skill. The in-run coordinator subsystem — built in TASK-190.19 (May 23) but never wired to a dispatcher — is therefore taken off the hot path and parked, not deleted. This task records the intent so it can be revisited or formally retired.
