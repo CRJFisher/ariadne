@@ -96,6 +96,12 @@ async function stage(file: string, plan: unknown, bucket: FaultAreaBucket | null
   }
 }
 
+async function stage_bucket_only(file: string, bucket: FaultAreaBucket): Promise<void> {
+  const buckets_dir = plan_staging_buckets_dir(SWEEP);
+  await fs.mkdir(buckets_dir, { recursive: true });
+  await fs.writeFile(path.join(buckets_dir, file), JSON.stringify(bucket), "utf8");
+}
+
 describe("load_staged_plans", () => {
   it("flattens an accepted plan into candidates + exclusions and ignores non-json files", async () => {
     const plan = single_leaf_plan();
@@ -114,6 +120,7 @@ describe("load_staged_plans", () => {
       exclusions: collect_membership_exclusions(plan, bucket.evidence),
       rejected: [],
       plan_count: 1,
+      accepted_fault_areas: ["name_resolution"],
     });
     expect(warned).toEqual([]);
   });
@@ -142,6 +149,7 @@ describe("load_staged_plans", () => {
       exclusions: collect_membership_exclusions(good, good_bucket.evidence),
       rejected: [{ plan: "import_resolution.json", issues: expected_issues }],
       plan_count: 2,
+      accepted_fault_areas: ["name_resolution"],
     });
     expect(warned).toEqual([
       `rejecting import_resolution.json: ${JSON.stringify(expected_issues)}\n`,
@@ -163,6 +171,7 @@ describe("load_staged_plans", () => {
         { plan: "name_resolution.json", issues: [{ code: "shape_error", message: reason }] },
       ],
       plan_count: 1,
+      accepted_fault_areas: [],
     });
     expect(warned).toEqual([`rejecting name_resolution.json: ${reason}\n`]);
   });
@@ -171,5 +180,41 @@ describe("load_staged_plans", () => {
     await expect(load_staged_plans(SWEEP, STRATEGIST, () => {})).rejects.toThrow(
       `no strategist plans staged for sweep '${SWEEP}' (missing ${plan_staging_plans_dir(SWEEP)})`,
     );
+  });
+
+  it("reports a bucket with no staged plan file as a missing_plan rejected entry", async () => {
+    // Stage name_resolution with both plan and bucket (accepted).
+    const good_plan = single_leaf_plan();
+    const good_bucket = bucket_for(good_plan, [ev("src/a.ts", 10)]);
+    await stage("name_resolution.json", good_plan, good_bucket);
+
+    // Write an import_resolution bucket file with no corresponding plan — simulates
+    // a strategist that was dispatched but never wrote a plan.
+    const orphan_bucket: FaultAreaBucket = {
+      fault_area: "import_resolution",
+      evidence: [ev("src/b.ts", 20)],
+      observed_count: 1,
+      projects: ["p"],
+      source_runs: [RUN],
+      descriptions: [],
+      needs_judgement: false,
+    };
+    await stage_bucket_only("import_resolution.json", orphan_bucket);
+
+    const warned: string[] = [];
+    const result = await load_staged_plans(SWEEP, STRATEGIST, (l) => warned.push(l));
+
+    const missing_message = "no plan staged for bucket import_resolution.json";
+    expect(result).toEqual({
+      candidates: build_plan_tasks(good_plan, good_bucket.evidence, {
+        sweep_id: SWEEP,
+        strategist: STRATEGIST,
+      }),
+      exclusions: collect_membership_exclusions(good_plan, good_bucket.evidence),
+      rejected: [{ plan: "import_resolution.json", issues: [{ code: "missing_plan", message: missing_message }] }],
+      plan_count: 2,
+      accepted_fault_areas: ["name_resolution"],
+    });
+    expect(warned).toEqual([`rejecting import_resolution.json: ${missing_message}\n`]);
   });
 });

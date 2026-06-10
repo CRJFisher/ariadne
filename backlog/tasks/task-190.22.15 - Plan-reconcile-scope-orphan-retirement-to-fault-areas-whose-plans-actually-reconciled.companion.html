@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TASK-190.22.15 — Orphan retirement scoped to reconciled fault areas</title>
+<style>
+:root{
+  --ivory:#faf6ef; --slate:#2e3438; --clay:#c06e52; --olive:#7d8c5c; --oat:#e8e0d0; --rust:#a83f2e;
+  --g1:#f3eee4; --g2:#ddd6c8; --g3:#a9a294; --g4:#6f6a5e; --g5:#4a463e;
+  --serif:ui-serif,Georgia,"Times New Roman",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);font-size:15px;line-height:1.55}
+main{width:90%;max-width:1600px;margin-inline:auto;padding:28px 0 60px}
+section{scroll-margin-top:118px}
+.prose{max-width:68ch}
+h1{font-family:var(--serif);font-size:30px;line-height:1.2;margin:10px 0 6px}
+h2{font-family:var(--serif);font-size:22px;margin:44px 0 10px}
+h3{font-family:var(--serif);font-size:17px;margin:22px 0 8px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--g4)}
+/* top cross-doc nav */
+.docnav{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g2);padding:8px 5%;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.docnav .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--g3);margin-right:4px}
+.docnav a,.docnav .here{font-family:var(--mono);font-size:12px;text-decoration:none;border:1px solid var(--g2);border-radius:999px;padding:3px 12px;color:var(--slate);background:var(--g1)}
+.docnav a:hover{border-color:var(--clay);color:var(--clay)}
+.docnav .here{background:var(--slate);color:var(--ivory);border-color:var(--slate)}
+/* sticky toc */
+.toc{position:sticky;top:42px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g2);padding:7px 5%;display:flex;flex-wrap:wrap;gap:8px}
+.toc a{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--g5);border:1px solid var(--g2);border-radius:999px;padding:2px 11px;display:inline-flex;align-items:center;gap:6px}
+.toc a:hover{border-color:var(--clay);color:var(--clay)}
+.toc .dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.d-rust{background:var(--rust)} .d-olive{background:var(--olive)} .d-clay{background:var(--clay)} .d-gray{background:var(--g3)}
+/* header meta */
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
+.chip{font-family:var(--mono);font-size:11.5px;border:1px solid var(--g2);background:var(--g1);border-radius:999px;padding:3px 11px;color:var(--g5)}
+.chip strong{color:var(--slate)}
+/* provenance */
+.prov{border:1px solid var(--g2);background:var(--g1);border-radius:10px;padding:14px 18px;margin:18px 0;font-size:13px}
+.prov .label{font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--g4);margin-bottom:8px}
+.prov ul{margin:0;padding-left:0;list-style:none}
+.prov li{margin:3px 0;font-family:var(--mono);font-size:12px}
+.prov li .role{color:var(--g4);font-family:var(--sans)}
+/* callouts */
+.callout{border-left:4px solid var(--clay);background:var(--g1);border-radius:0 10px 10px 0;padding:14px 18px;margin:18px 0;max-width:80ch}
+.callout.rust{border-left-color:var(--rust)}
+.callout.olive{border-left-color:var(--olive)}
+.callout .key{font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--g4);display:block;margin-bottom:5px}
+/* diagrams */
+figure{margin:18px 0;border:1px solid var(--g2);border-radius:12px;background:#fff;padding:14px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-size:13px;color:var(--g4);padding:10px 6px 0;border-top:1px solid var(--g1);margin-top:10px}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-family:var(--mono);font-size:11.5px;color:var(--g5);padding:8px 6px 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:18px;height:10px;border-radius:3px;display:inline-block}
+.sw.solid-olive{background:#fff;border:2px solid var(--olive)}
+.sw.solid-clay{background:#fff;border:2px solid var(--clay)}
+.sw.dash-rust{background:#fff;border:2px dashed var(--rust)}
+.sw.fill-rust{background:#f3ded9;border:2px solid var(--rust)}
+.sw.fill-olive{background:#e9ecdd;border:2px solid var(--olive)}
+/* code */
+.code{background:var(--g5);color:#e8e4da;border-radius:10px;margin:14px 0;overflow:hidden}
+.code .file-label{font-family:var(--mono);font-size:11px;letter-spacing:.05em;background:#3b372f;color:var(--oat);padding:6px 14px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.code .file-label .where{color:var(--g3)}
+.code pre{margin:0;padding:14px 16px;font-family:var(--mono);font-size:12.5px;line-height:1.55;white-space:pre;overflow-x:auto}
+.kw{color:#d9a679}.str{color:#a8bf8f}.cm{color:#8d8878}.fn{color:#9fc2c9}
+.hl{background:#5a4a3a;display:inline-block;width:100%}
+.add{background:#3f4a33;display:inline-block;width:100%}
+.del{background:#553630;text-decoration:line-through;display:inline-block;width:100%;color:#c9b2a8}
+/* step list */
+.steps{margin:16px 0;display:grid;gap:12px}
+.step{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:start}
+.badge{width:32px;height:32px;border-radius:50%;background:var(--slate);color:var(--ivory);font-family:var(--mono);font-size:14px;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.step.hot .badge{background:var(--rust)}
+.step h3{margin:2px 0 4px}
+.step p{margin:0;max-width:72ch}
+.pin{font-family:var(--mono);font-size:11.5px;color:var(--g4)}
+.pin .rng{color:var(--g3)}
+/* matrix */
+table.matrix{width:100%;border-collapse:collapse;margin:16px 0;background:#fff;border:1px solid var(--g2);border-radius:12px;overflow:hidden;font-size:13px}
+table.matrix th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--g4);text-align:left;padding:10px 12px;border-bottom:2px solid var(--g2);background:var(--g1)}
+table.matrix td{padding:10px 12px;border-bottom:1px solid var(--g1);vertical-align:top}
+table.matrix tr:last-child td{border-bottom:none}
+table.matrix td.area{font-family:var(--mono);font-size:12px}
+.glyph{display:inline-flex;align-items:center;gap:7px}
+.glyph i{width:13px;height:13px;border-radius:50%;display:inline-block;flex:none}
+.glyph.ok i{background:var(--olive)}
+.glyph.bad i{background:var(--rust)}
+.glyph.warn i{background:var(--clay)}
+.glyph.none i{background:transparent;border:2px solid var(--g3);width:11px;height:11px}
+.glyph small{color:var(--g4)}
+td.shade-bad{background:#f7ebe7}
+td.shade-ok{background:#eef0e5}
+/* interface grid */
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:14px 0}
+@media(max-width:980px){.grid2{grid-template-columns:1fr}.toc{top:0;position:static}.docnav{position:static}section{scroll-margin-top:0}}
+/* checklist */
+.checks{margin:14px 0;display:grid;gap:8px;max-width:90ch}
+.check{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start;border:1px solid var(--g2);background:#fff;border-radius:10px;padding:10px 14px}
+.check .box{width:17px;height:17px;border:2px solid var(--g3);border-radius:4px;margin-top:2px}
+.check p{margin:0;font-size:13.5px}
+.check .pin{display:block;margin-top:3px}
+footer{border-top:1px solid var(--g2);margin-top:50px;padding:16px 0;font-family:var(--mono);font-size:11px;color:var(--g4)}
+</style>
+</head>
+<body>
+
+<nav class="docnav" aria-label="Related documents">
+  <span class="lbl">Epic 190.22</span>
+  <a href="task-190.22%20-%20Restructure-self-healing-pipeline-to-triage-%E2%86%92-plan-planning-only.overview.html">↰ Epic overview — triage → plan restructure</a>
+  <span class="here" aria-current="page">190.22.15 · orphan-retirement gate</span>
+</nav>
+
+<nav class="toc" aria-label="Sections">
+  <a href="#failure"><span class="dot d-rust"></span>The failure</a>
+  <a href="#buggy"><span class="dot d-rust"></span>Sweep with the project-only gate</a>
+  <a href="#fixed"><span class="dot d-olive"></span>Sweep with the fault-area gate</a>
+  <a href="#gate"><span class="dot d-clay"></span>The gate</a>
+  <a href="#interfaces"><span class="dot d-clay"></span>Interface changes</a>
+  <a href="#matrix"><span class="dot d-gray"></span>Worked sweep</a>
+  <a href="#tests"><span class="dot d-gray"></span>Tests &amp; acceptance</a>
+</nav>
+
+<main>
+<header>
+  <div class="eyebrow">TASK-190.22.15 · self-repair · bug · priority high</div>
+  <h1>Plan reconcile: orphan retirement fires only for fault areas whose plans actually reconciled</h1>
+  <div class="meta">
+    <span class="chip">status <strong>To Do</strong></span>
+    <span class="chip">parent <strong>TASK-190.22</strong></span>
+    <span class="chip">skill <strong>.claude/skills/plan</strong></span>
+    <span class="chip">pass <strong>C — reconcile</strong></span>
+  </div>
+
+  <div class="prov">
+    <div class="label">Grounded in</div>
+    <ul>
+      <li>backlog/tasks/task-190.22.15 …​.md <span class="role">— task spec</span></li>
+      <li>.claude/skills/plan/src/reconcile/load_staged_plans.ts <span class="role">— Pass C input loader (silent skip lives here)</span></li>
+      <li>.claude/skills/plan/src/reconcile/reconcile_plan.ts :285–298 <span class="role">— retire_orphans (the project-only gate)</span></li>
+      <li>.claude/skills/plan/scripts/reconcile_plan.ts :82–94 <span class="role">— Pass C driver (the threading site)</span></li>
+    </ul>
+  </div>
+</header>
+
+<section id="failure">
+  <h2>The failure</h2>
+  <aside class="callout rust">
+    <span class="key">Why this is high priority</span>
+    A routine failure — <strong>one strategist of N</strong> producing a missing or validation-rejected plan — makes the reconcile
+    pass flip <strong>every live task in that strategist's fault area</strong> to <code>resolved</code>, with false
+    <code>resolve</code> sweep events, while the false-positives that justify those tasks still sit in the bucket file.
+    Only the plan failed; the underlying issues did not go away. State self-repairs only on the next fully-successful sweep.
+  </aside>
+
+  <div class="steps">
+    <div class="step hot"><div class="badge">1</div><div>
+      <h3>A fault area contributes zero candidates</h3>
+      <p class="prose"><code>load_staged_plans</code> iterates only the plan files that exist under
+      <code>staging/&lt;sweep-id&gt;/plans/</code>. A validation-rejected plan lands in <code>rejected[]</code> and is skipped;
+      a bucket whose plan file was <em>never written</em> is not even reported — it vanishes silently. Either way the area
+      produces no <code>PlanTask</code> candidates.</p>
+      <span class="pin">.claude/skills/plan/src/reconcile/load_staged_plans.ts <span class="rng">:72–103</span></span>
+    </div></div>
+    <div class="step hot"><div class="badge">2</div><div>
+      <h3>The retirement gate never asks about fault areas</h3>
+      <p class="prose"><code>retire_orphans</code> treats any live task that is <em>unclaimed by a candidate</em> AND whose
+      <em>projects were all scanned this sweep</em> as stale. Both conditions hold for the failed area's tasks — its candidates
+      never arrived, and the projects <em>were</em> swept. There is no per-fault-area condition.</p>
+      <span class="pin">.claude/skills/plan/src/reconcile/reconcile_plan.ts <span class="rng">:290–298</span></span>
+    </div></div>
+    <div class="step hot"><div class="badge">3</div><div>
+      <h3>Live planning state is destroyed</h3>
+      <p class="prose">Nothing in the area overlaps a fresh create, so every orphan falls through to the
+      <code>resolve</code> branch — "the false-positives stopped recurring" — and gets a terminal status flip it never earned.</p>
+      <span class="pin">.claude/skills/plan/src/reconcile/reconcile_plan.ts <span class="rng">:362–366</span></span>
+    </div></div>
+  </div>
+</section>
+
+<section id="buggy">
+  <h2>Sweep with the project-only gate</h2>
+  <p class="prose">Three fault-area buckets enter Pass C. One plan validates, one fails <code>validate_plan</code>, one was never
+  staged. Follow each lane left to right — the bottom two lanes end in false terminal flips.</p>
+
+  <figure role="img" aria-label="Flow diagram: three fault-area lanes through Pass C; the two lanes whose plans failed end in falsely resolved tasks">
+  <svg viewBox="0 0 1280 600" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="ar-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a463e"/></marker>
+      <marker id="ar-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#a83f2e"/></marker>
+      <marker id="ar-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#7d8c5c"/></marker>
+    </defs>
+    <style>
+      .colh{font:600 12px ui-monospace,Menlo,monospace;fill:#6f6a5e;letter-spacing:.08em}
+      .nd{fill:#fff;stroke:#a9a294;stroke-width:1.5;rx:10}
+      .nd-ok{fill:#fff;stroke:#7d8c5c;stroke-width:2}
+      .nd-warn{fill:#fff;stroke:#c06e52;stroke-width:2}
+      .nd-bad{fill:#f3ded9;stroke:#a83f2e;stroke-width:2}
+      .nd-ghost{fill:none;stroke:#a83f2e;stroke-width:2;stroke-dasharray:6 5}
+      .t1{font:13px system-ui,sans-serif;fill:#2e3438}
+      .tm{font:11.5px ui-monospace,Menlo,monospace;fill:#2e3438}
+      .ts{font:11px system-ui,sans-serif;fill:#6f6a5e}
+      .tb{font:600 11.5px system-ui,sans-serif;fill:#a83f2e}
+      .tg{font:600 11.5px system-ui,sans-serif;fill:#7d8c5c}
+      .ed{stroke:#4a463e;stroke-width:1.5;fill:none}
+      .ed-r{stroke:#a83f2e;stroke-width:1.5;fill:none;stroke-dasharray:5 4}
+      .ed-o{stroke:#7d8c5c;stroke-width:1.8;fill:none}
+    </style>
+
+    <text x="30" y="34" class="colh">PASS A — staging/&lt;sweep&gt;/buckets/</text>
+    <text x="360" y="34" class="colh">PASS B — staging/&lt;sweep&gt;/plans/</text>
+    <text x="680" y="34" class="colh">PASS C — load_staged_plans</text>
+    <text x="990" y="34" class="colh">PASS C — retire_orphans</text>
+    <line x1="345" y1="14" x2="345" y2="560" stroke="#ddd6c8" stroke-width="1"/>
+    <line x1="665" y1="14" x2="665" y2="560" stroke="#ddd6c8" stroke-width="1"/>
+    <line x1="975" y1="14" x2="975" y2="560" stroke="#ddd6c8" stroke-width="1"/>
+
+    <!-- lane 1: import_resolution (healthy) -->
+    <rect x="30" y="62" width="280" height="62" rx="10" class="nd"/>
+    <text x="46" y="88" class="tm">import_resolution.json</text>
+    <text x="46" y="107" class="ts">bucket · 4 FP evidence rows</text>
+    <line x1="310" y1="93" x2="358" y2="93" class="ed" marker-end="url(#ar-s)"/>
+
+    <rect x="360" y="62" width="280" height="62" rx="10" class="nd-ok"/>
+    <text x="376" y="88" class="tm">import_resolution.json</text>
+    <text x="376" y="107" class="tg">plan staged · validate_plan ✓</text>
+    <line x1="640" y1="93" x2="678" y2="93" class="ed-o" marker-end="url(#ar-o)"/>
+
+    <rect x="680" y="62" width="270" height="62" rx="10" class="nd-ok"/>
+    <text x="696" y="88" class="t1">accepted → 4 candidates</text>
+    <text x="696" y="107" class="ts">build_plan_tasks flattens the tree</text>
+    <line x1="950" y1="93" x2="988" y2="93" class="ed-o" marker-end="url(#ar-o)"/>
+
+    <rect x="990" y="62" width="270" height="62" rx="10" class="nd-ok"/>
+    <text x="1006" y="88" class="t1">tasks claimed → augment</text>
+    <text x="1006" y="107" class="ts">honest retire only for re-keyed nodes</text>
+
+    <!-- lane 2: method_lookup (rejected plan) -->
+    <rect x="30" y="186" width="280" height="62" rx="10" class="nd"/>
+    <text x="46" y="212" class="tm">method_lookup.json</text>
+    <text x="46" y="231" class="ts">bucket · 6 FP evidence rows</text>
+    <line x1="310" y1="217" x2="358" y2="217" class="ed" marker-end="url(#ar-s)"/>
+
+    <rect x="360" y="186" width="280" height="62" rx="10" class="nd-warn"/>
+    <text x="376" y="212" class="tm">method_lookup.json</text>
+    <text x="376" y="231" class="ts" fill="#c06e52">plan staged · validate_plan ✗</text>
+    <line x1="640" y1="217" x2="678" y2="217" class="ed" marker-end="url(#ar-s)"/>
+
+    <rect x="680" y="186" width="270" height="62" rx="10" class="nd-warn"/>
+    <text x="696" y="212" class="t1">rejected[] · warn → 0 candidates</text>
+    <text x="696" y="231" class="ts">loop continues; sweep never aborts</text>
+    <line x1="950" y1="217" x2="988" y2="217" class="ed-r" marker-end="url(#ar-r)"/>
+
+    <rect x="990" y="186" width="270" height="74" rx="10" class="nd-bad"/>
+    <text x="1006" y="210" class="tb">all 3 live tasks → resolved</text>
+    <text x="1006" y="228" class="ts">unclaimed ✓ · projects ⊆ swept ✓</text>
+    <text x="1006" y="246" class="ts">false resolve events logged</text>
+
+    <!-- lane 3: receiver_type_inference (no plan file) -->
+    <rect x="30" y="322" width="280" height="62" rx="10" class="nd"/>
+    <text x="46" y="348" class="tm">receiver_type_inference.json</text>
+    <text x="46" y="367" class="ts">bucket · 2 FP evidence rows</text>
+    <line x1="310" y1="353" x2="358" y2="353" class="ed-r" marker-end="url(#ar-r)"/>
+
+    <rect x="360" y="322" width="280" height="62" rx="10" class="nd-ghost"/>
+    <text x="376" y="348" class="tm" fill="#a83f2e">receiver_type_inference.json</text>
+    <text x="376" y="367" class="tb">never written — strategist failed</text>
+    <line x1="640" y1="353" x2="678" y2="353" class="ed-r" marker-end="url(#ar-r)"/>
+
+    <rect x="680" y="322" width="270" height="62" rx="10" class="nd-bad"/>
+    <text x="696" y="348" class="tb">silent skip</text>
+    <text x="696" y="367" class="ts">not iterated — absent from rejected[]</text>
+    <line x1="950" y1="353" x2="988" y2="353" class="ed-r" marker-end="url(#ar-r)"/>
+
+    <rect x="990" y="322" width="270" height="74" rx="10" class="nd-bad"/>
+    <text x="1006" y="346" class="tb">both live tasks → resolved</text>
+    <text x="1006" y="364" class="ts">unclaimed ✓ · projects ⊆ swept ✓</text>
+    <text x="1006" y="382" class="ts">FPs still sit in the bucket file</text>
+
+    <!-- gate annotation -->
+    <rect x="680" y="452" width="580" height="96" rx="10" fill="#f3eee4" stroke="#c06e52" stroke-width="1.5"/>
+    <text x="700" y="480" class="colh" fill="#c06e52">THE GATE, AS IT STANDS</text>
+    <text x="700" y="504" class="tm">is_live(t) ∧ !claimed.has(t.id) ∧ t.projects ⊆ swept_projects</text>
+    <text x="700" y="528" class="ts">Project-scoped only. Whether the orphan's fault area produced an accepted plan is never consulted —</text>
+    <text x="700" y="544" class="ts">so "the strategist failed" is indistinguishable from "the false-positives stopped recurring".</text>
+    <path d="M1125 396 L1125 446" class="ed-r" marker-end="url(#ar-r)"/>
+    <path d="M1125 264 C1180 290 1180 290 1130 312" class="ed-r" fill="none"/>
+  </svg>
+  <div class="legend">
+    <span><span class="sw solid-olive"></span>accepted / healthy</span>
+    <span><span class="sw solid-clay"></span>rejected by validate_plan</span>
+    <span><span class="sw dash-rust"></span>missing — never staged</span>
+    <span><span class="sw fill-rust"></span>false terminal flip</span>
+  </div>
+  <figcaption>One failed strategist of three. Its lane carries zero candidates into reconciliation, and the project-only gate
+  retires every live task it owns. Lane 3 is worse than lane 2: the missing plan file is not even reported.</figcaption>
+  </figure>
+</section>
+
+<section id="fixed">
+  <h2>Sweep with the fault-area gate</h2>
+  <p class="prose">The same sweep under the fix. <code>load_staged_plans</code> reads the buckets directory as well as the plans
+  directory, so a bucket with no plan file becomes a <code>rejected[]</code> entry instead of vanishing — and the loader returns
+  the set of fault areas whose plans were accepted. <code>retire_orphans</code> retires only inside that set.</p>
+
+  <figure role="img" aria-label="Flow diagram of the fixed sweep: failed lanes land in rejected, accepted_fault_areas gates retirement, live tasks stay untouched">
+  <svg viewBox="0 0 1280 620" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="br-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a463e"/></marker>
+      <marker id="br-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#a83f2e"/></marker>
+      <marker id="br-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#7d8c5c"/></marker>
+    </defs>
+    <style>
+      .bcolh{font:600 12px ui-monospace,Menlo,monospace;fill:#6f6a5e;letter-spacing:.08em}
+      .bnd{fill:#fff;stroke:#a9a294;stroke-width:1.5}
+      .bnd-ok{fill:#fff;stroke:#7d8c5c;stroke-width:2}
+      .bnd-okf{fill:#e9ecdd;stroke:#7d8c5c;stroke-width:2}
+      .bnd-warn{fill:#fff;stroke:#c06e52;stroke-width:2}
+      .bnd-ghost{fill:none;stroke:#a83f2e;stroke-width:2;stroke-dasharray:6 5}
+      .bt1{font:13px system-ui,sans-serif;fill:#2e3438}
+      .btm{font:11.5px ui-monospace,Menlo,monospace;fill:#2e3438}
+      .bts{font:11px system-ui,sans-serif;fill:#6f6a5e}
+      .btb{font:600 11.5px system-ui,sans-serif;fill:#a83f2e}
+      .btg{font:600 11.5px system-ui,sans-serif;fill:#7d8c5c}
+      .bed{stroke:#4a463e;stroke-width:1.5;fill:none}
+      .bed-r{stroke:#a83f2e;stroke-width:1.5;fill:none;stroke-dasharray:5 4}
+      .bed-o{stroke:#7d8c5c;stroke-width:1.8;fill:none}
+    </style>
+
+    <text x="30" y="34" class="bcolh">PASS A — buckets/</text>
+    <text x="360" y="34" class="bcolh">PASS B — plans/</text>
+    <text x="680" y="34" class="bcolh">PASS C — load_staged_plans (reads BOTH dirs)</text>
+    <text x="990" y="34" class="bcolh">PASS C — retire_orphans</text>
+    <line x1="345" y1="14" x2="345" y2="580" stroke="#ddd6c8" stroke-width="1"/>
+    <line x1="665" y1="14" x2="665" y2="580" stroke="#ddd6c8" stroke-width="1"/>
+    <line x1="975" y1="14" x2="975" y2="580" stroke="#ddd6c8" stroke-width="1"/>
+
+    <!-- lane 1 -->
+    <rect x="30" y="62" width="280" height="62" rx="10" class="bnd"/>
+    <text x="46" y="88" class="btm">import_resolution.json</text>
+    <text x="46" y="107" class="bts">bucket · 4 FP evidence rows</text>
+    <line x1="310" y1="93" x2="358" y2="93" class="bed" marker-end="url(#br-s)"/>
+
+    <rect x="360" y="62" width="280" height="62" rx="10" class="bnd-ok"/>
+    <text x="376" y="88" class="btm">import_resolution.json</text>
+    <text x="376" y="107" class="btg">plan staged · validate_plan ✓</text>
+    <line x1="640" y1="93" x2="678" y2="93" class="bed-o" marker-end="url(#br-o)"/>
+
+    <rect x="680" y="62" width="270" height="62" rx="10" class="bnd-ok"/>
+    <text x="696" y="88" class="bt1">accepted → 4 candidates</text>
+    <text x="696" y="107" class="btg">area joins accepted_fault_areas</text>
+    <line x1="950" y1="93" x2="988" y2="93" class="bed-o" marker-end="url(#br-o)"/>
+
+    <rect x="990" y="62" width="270" height="62" rx="10" class="bnd-ok"/>
+    <text x="1006" y="88" class="bt1">retirement unchanged</text>
+    <text x="1006" y="107" class="bts">augment / supersede / honest resolve</text>
+
+    <!-- lane 2 -->
+    <rect x="30" y="186" width="280" height="62" rx="10" class="bnd"/>
+    <text x="46" y="212" class="btm">method_lookup.json</text>
+    <text x="46" y="231" class="bts">bucket · 6 FP evidence rows</text>
+    <line x1="310" y1="217" x2="358" y2="217" class="bed" marker-end="url(#br-s)"/>
+
+    <rect x="360" y="186" width="280" height="62" rx="10" class="bnd-warn"/>
+    <text x="376" y="212" class="btm">method_lookup.json</text>
+    <text x="376" y="231" class="bts" fill="#c06e52">plan staged · validate_plan ✗</text>
+    <line x1="640" y1="217" x2="678" y2="217" class="bed" marker-end="url(#br-s)"/>
+
+    <rect x="680" y="186" width="270" height="62" rx="10" class="bnd-warn"/>
+    <text x="696" y="212" class="bt1">rejected[] — validation issues</text>
+    <text x="696" y="231" class="bts">area NOT in accepted_fault_areas</text>
+    <line x1="950" y1="217" x2="988" y2="217" class="bed-o" marker-end="url(#br-o)"/>
+
+    <rect x="990" y="186" width="270" height="74" rx="10" class="bnd-okf"/>
+    <text x="1006" y="210" class="btg">gate blocks retirement</text>
+    <text x="1006" y="228" class="bts">all 3 live tasks untouched</text>
+    <text x="1006" y="246" class="bts">no events, no status flips</text>
+
+    <!-- lane 3 -->
+    <rect x="30" y="322" width="280" height="62" rx="10" class="bnd"/>
+    <text x="46" y="348" class="btm">receiver_type_inference.json</text>
+    <text x="46" y="367" class="bts">bucket · 2 FP evidence rows</text>
+    <line x1="310" y1="353" x2="358" y2="353" class="bed-r" marker-end="url(#br-r)"/>
+
+    <rect x="360" y="322" width="280" height="62" rx="10" class="bnd-ghost"/>
+    <text x="376" y="348" class="btm" fill="#a83f2e">receiver_type_inference.json</text>
+    <text x="376" y="367" class="btb">never written — strategist failed</text>
+    <line x1="640" y1="353" x2="678" y2="353" class="bed-r" marker-end="url(#br-r)"/>
+
+    <rect x="680" y="322" width="270" height="62" rx="10" class="bnd-warn"/>
+    <text x="696" y="348" class="bt1">rejected[] — code "missing_plan"</text>
+    <text x="696" y="367" class="bts">bucket scan surfaces the absent plan</text>
+    <line x1="950" y1="353" x2="988" y2="353" class="bed-o" marker-end="url(#br-o)"/>
+
+    <rect x="990" y="322" width="270" height="74" rx="10" class="bnd-okf"/>
+    <text x="1006" y="346" class="btg">gate blocks retirement</text>
+    <text x="1006" y="364" class="bts">both live tasks untouched;</text>
+    <text x="1006" y="382" class="bts">missing plan visible in sweep summary</text>
+
+    <!-- accepted set + gate -->
+    <rect x="680" y="452" width="270" height="74" rx="10" fill="#e9ecdd" stroke="#7d8c5c" stroke-width="2"/>
+    <text x="696" y="478" class="bcolh" fill="#7d8c5c">ACCEPTED_FAULT_AREAS</text>
+    <text x="696" y="500" class="btm">{ import_resolution }</text>
+    <text x="696" y="517" class="bts">returned by the loader, threaded by the driver</text>
+    <path d="M815 396 L815 446" class="bed-o" marker-end="url(#br-o)"/>
+    <path d="M950 489 L1100 489 L1100 408" class="bed-o" marker-end="url(#br-o)"/>
+
+    <rect x="680" y="552" width="580" height="52" rx="10" fill="#f3eee4" stroke="#7d8c5c" stroke-width="1.5"/>
+    <text x="700" y="574" class="bcolh" fill="#7d8c5c">THE GATE, FIXED</text>
+    <text x="700" y="594" class="btm">is_live(t) ∧ !claimed ∧ accepted_fault_areas.has(t.fault_area) ∧ projects ⊆ swept</text>
+  </svg>
+  <div class="legend">
+    <span><span class="sw solid-olive"></span>accepted / healthy</span>
+    <span><span class="sw solid-clay"></span>surfaced in rejected[]</span>
+    <span><span class="sw dash-rust"></span>missing — never staged</span>
+    <span><span class="sw fill-olive"></span>live state preserved</span>
+  </div>
+  <figcaption>Same sweep, fixed flow. Failed lanes converge into <code>rejected[]</code> (no more silent skips), the loader returns
+  <code>accepted_fault_areas</code>, and the gate confines retirement to areas whose plans actually reconciled. Lane 1's
+  behavior — the honest case — is unchanged.</figcaption>
+  </figure>
+</section>
+
+<section id="gate">
+  <h2>The gate</h2>
+  <p class="prose">The orphan filter gains exactly one conjunct. The project gate already protects against partial-<em>scope</em>
+  sweeps (<code>--project</code>, <code>--last</code>); the fault-area gate protects against partial-<em>plan</em> sweeps.
+  Both are needed — they guard different failure axes.</p>
+
+  <div class="code">
+    <div class="file-label"><span>.claude/skills/plan/src/reconcile/reconcile_plan.ts</span><span class="where">retire_orphans · :290–298</span></div>
+<pre><span class="kw">const</span> orphans = existing_tasks
+  .<span class="fn">filter</span>(
+    (t) =&gt;
+      <span class="fn">is_live</span>(t) &amp;&amp;
+      !claimed.<span class="fn">has</span>(t.id) &amp;&amp;
+<span class="add">      accepted_fault_areas.<span class="fn">has</span>(t.fault_area) &amp;&amp;  <span class="cm">// the area's plan reconciled this sweep</span></span>
+<span class="hl">      t.projects.length &gt; 0 &amp;&amp;</span>
+<span class="hl">      t.projects.<span class="fn">every</span>((p) =&gt; swept_projects.<span class="fn">has</span>(p)),</span>
+  )
+  .<span class="fn">sort</span>((a, b) =&gt; a.id.<span class="fn">localeCompare</span>(b.id));</pre>
+  </div>
+
+  <aside class="callout">
+    <span class="key">Why the gate lives in retire_orphans, not the driver</span>
+    The driver script is a thin shim by design — the logic stays in <code>src/reconcile/</code> where
+    <code>reconcile_plan.test.ts</code> can pin it with exact <code>toEqual</code> assertions. <code>RetireInput</code> carries
+    the set alongside <code>swept_projects</code>; the same wiring serves every caller.
+  </aside>
+</section>
+
+<section id="interfaces">
+  <h2>Interface changes</h2>
+  <p class="prose">Three seams move in lockstep: the loader's return shape, the reconcile options, and the driver that threads
+  one into the other.</p>
+
+  <div class="grid2">
+    <div class="code">
+      <div class="file-label"><span>load_staged_plans.ts</span><span class="where">StagedPlansLoad · :34–42</span></div>
+<pre><span class="kw">export interface</span> StagedPlansLoad {
+  candidates: PlanTask[];
+  exclusions: MembershipExclusion[];
+<span class="del">  <span class="cm">/** rejected: only plan files that exist */</span></span>
+<span class="add">  <span class="cm">/** Validation failures, unreadable pairs, AND</span></span>
+<span class="add"><span class="cm">      buckets with no staged plan file. */</span></span>
+  rejected: RejectedPlan[];
+<span class="add">  <span class="cm">/** Fault areas whose plans were accepted —</span></span>
+<span class="add"><span class="cm">      the only areas retire_orphans may sweep. */</span></span>
+<span class="add">  accepted_fault_areas: Set&lt;AriadneFaultArea&gt;;</span>
+  plan_count: number;
+}</pre>
+    </div>
+
+    <div class="code">
+      <div class="file-label"><span>reconcile_plan.ts</span><span class="where">ReconcileOptions · :64–79</span></div>
+<pre><span class="kw">export interface</span> ReconcileOptions {
+  <span class="cm">/** Projects scanned this sweep (scan manifest).</span>
+<span class="cm">      Guards partial-SCOPE sweeps. */</span>
+  swept_projects: string[];
+<span class="add">  <span class="cm">/** Fault areas whose staged plans reconciled</span></span>
+<span class="add"><span class="cm">      this sweep (from load_staged_plans).</span></span>
+<span class="add"><span class="cm">      Guards partial-PLAN sweeps: an orphan</span></span>
+<span class="add"><span class="cm">      retires only when its fault_area is here. */</span></span>
+<span class="add">  accepted_fault_areas: Set&lt;AriadneFaultArea&gt;;</span>
+  exported_backlog_keys?: Map&lt;string, string&gt;;
+}</pre>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="code">
+      <div class="file-label"><span>load_staged_plans.ts</span><span class="where">loader body · :55–105</span></div>
+<pre><span class="kw">const</span> plan_files = (<span class="kw">await</span> fs.<span class="fn">readdir</span>(plans_dir))…
+<span class="add"><span class="kw">const</span> bucket_files = (<span class="kw">await</span> fs.<span class="fn">readdir</span>(buckets_dir))…</span>
+<span class="add"><span class="kw">const</span> accepted_fault_areas = <span class="kw">new</span> Set&lt;AriadneFaultArea&gt;();</span>
+<span class="kw">for</span> (<span class="kw">const</span> file <span class="kw">of</span> plan_files) {
+  <span class="cm">// …read, validate, reject-and-continue as today…</span>
+  candidates.<span class="fn">push</span>(...<span class="fn">build_plan_tasks</span>(plan, …));
+<span class="add">  accepted_fault_areas.<span class="fn">add</span>(bucket.fault_area);</span>
+}
+<span class="add"><span class="cm">// A bucket with no plan file is a failed strategist,</span></span>
+<span class="add"><span class="cm">// not a clean area — surface it, never skip it.</span></span>
+<span class="add"><span class="kw">const</span> staged = <span class="kw">new</span> Set(plan_files);</span>
+<span class="add"><span class="kw">for</span> (<span class="kw">const</span> file <span class="kw">of</span> bucket_files) {</span>
+<span class="add">  <span class="kw">if</span> (staged.<span class="fn">has</span>(file)) <span class="kw">continue</span>;</span>
+<span class="add">  rejected.<span class="fn">push</span>({ plan: file, issues:</span>
+<span class="add">    [{ code: <span class="str">"missing_plan"</span>, message: … }] });</span>
+<span class="add">  <span class="fn">warn</span>(<span class="str">`rejecting ${file}: bucket has no staged plan\n`</span>);</span>
+<span class="add">}</span>
+<span class="del"><span class="kw">return</span> { candidates, exclusions, rejected, plan_count };</span>
+<span class="add"><span class="kw">return</span> { candidates, exclusions, rejected,</span>
+<span class="add">         accepted_fault_areas, plan_count };</span></pre>
+    </div>
+
+    <div class="code">
+      <div class="file-label"><span>scripts/reconcile_plan.ts</span><span class="where">driver threading · :82–94</span></div>
+<pre><span class="del"><span class="kw">const</span> { candidates, exclusions, rejected, plan_count } =</span>
+<span class="add"><span class="kw">const</span> { candidates, exclusions, rejected,</span>
+<span class="add">        accepted_fault_areas, plan_count } =</span>
+  <span class="kw">await</span> <span class="fn">load_staged_plans</span>(sweep_id, strategist, warn);
+
+<span class="kw">const</span> { written, events } = <span class="kw">await</span> <span class="fn">reconcile_plan</span>(
+  repo, candidates, sweep_id, {
+    swept_projects: manifest.projects,
+<span class="add">    accepted_fault_areas,</span>
+    exported_backlog_keys,
+  });
+
+<span class="cm">// summary already prints rejected[] — missing-plan</span>
+<span class="cm">// buckets now appear there with code "missing_plan".</span></pre>
+    </div>
+  </div>
+</section>
+
+<section id="matrix">
+  <h2>Worked sweep — three areas, side by side</h2>
+  <p class="prose">The same three lanes as the diagrams, as a scan-by-column matrix. The two right-hand columns are the
+  behavioral delta this task ships.</p>
+
+  <table class="matrix">
+    <thead><tr>
+      <th>fault area</th><th>plan file (Pass B)</th><th>validate_plan</th><th>in rejected[]</th>
+      <th>live tasks — project-only gate</th><th>live tasks — fault-area gate</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td class="area">import_resolution</td>
+        <td><span class="glyph ok"><i></i>staged</span></td>
+        <td><span class="glyph ok"><i></i>accepted</span></td>
+        <td><span class="glyph none"><i></i>—</td>
+        <td><span class="glyph ok"><i></i>claimed / honestly retired</span></td>
+        <td><span class="glyph ok"><i></i>identical — unchanged</span></td>
+      </tr>
+      <tr>
+        <td class="area">method_lookup</td>
+        <td><span class="glyph ok"><i></i>staged</span></td>
+        <td><span class="glyph warn"><i></i>rejected</span></td>
+        <td><span class="glyph warn"><i></i>yes <small>(validation issues)</small></span></td>
+        <td class="shade-bad"><span class="glyph bad"><i></i>falsely <code>resolved</code> ×3</span></td>
+        <td class="shade-ok"><span class="glyph ok"><i></i>untouched, still live</span></td>
+      </tr>
+      <tr>
+        <td class="area">receiver_type_inference</td>
+        <td><span class="glyph bad"><i></i>missing</span></td>
+        <td><span class="glyph none"><i></i>never runs</span></td>
+        <td class="shade-bad"><span class="glyph bad"><i></i>no — silent skip</span></td>
+        <td class="shade-bad"><span class="glyph bad"><i></i>falsely <code>resolved</code> ×2</span></td>
+        <td class="shade-ok"><span class="glyph ok"><i></i>untouched + <code>missing_plan</code> reported</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="legend">
+    <span><span class="dot d-olive" style="width:11px;height:11px;border-radius:50%;display:inline-block"></span>correct behavior</span>
+    <span><span class="dot d-clay" style="width:11px;height:11px;border-radius:50%;display:inline-block"></span>surfaced failure</span>
+    <span><span class="dot d-rust" style="width:11px;height:11px;border-radius:50%;display:inline-block"></span>defect: false terminal flip / silent skip</span>
+  </div>
+</section>
+
+<section id="tests">
+  <h2>Tests &amp; acceptance</h2>
+  <p class="prose">Both new scenarios pin exact written records and sweep events with <code>toEqual</code>; the existing
+  partial-project case stays green untouched.</p>
+
+  <div class="checks">
+    <div class="check"><div class="box"></div><div>
+      <p><strong>Rejected plan leaves its area alone.</strong> A sweep where one fault-area bucket has a validation-failed plan
+      leaves that area's live tasks untouched — no resolve/supersede events, no status flips.</p>
+      <span class="pin">reconcile_plan.test.ts <span class="rng">— new case, alongside the partial-project sweep at ~:370</span></span>
+    </div></div>
+    <div class="check"><div class="box"></div><div>
+      <p><strong>Missing plan file is surfaced, not silently skipped.</strong> A bucket with no staged plan file leaves that
+      area's live tasks untouched AND appears in the sweep outcome's <code>rejected[]</code>.</p>
+      <span class="pin">load_staged_plans.test.ts <span class="rng">— extend the accept/reject/missing-bucket coverage</span></span>
+    </div></div>
+    <div class="check"><div class="box"></div><div>
+      <p><strong>Honest retirement still fires.</strong> Areas whose plans reconciled successfully retire orphans exactly as
+      before — existing supersede/combine/resolve tests stay green.</p>
+      <span class="pin">reconcile_plan.test.ts <span class="rng">— existing suite</span></span>
+    </div></div>
+    <div class="check"><div class="box"></div><div>
+      <p><strong>Exact assertions.</strong> New cases live in the existing <code>reconcile_plan.test.ts</code> with
+      <code>toEqual</code> on typed literal records and events — never weak existence checks.</p>
+      <span class="pin">.claude/skills/plan/src/reconcile/reconcile_plan.test.ts</span>
+    </div></div>
+    <div class="check"><div class="box"></div><div>
+      <p><strong>Canonical docs.</strong> The module header of <code>reconcile_plan.ts</code> describes the fault-area-scoped
+      retirement gate as part of step 2's contract, next to the existing <code>projects ⊆ swept_projects</code> rationale.</p>
+      <span class="pin">reconcile_plan.ts <span class="rng">:11–16, :34–43 — header blocks to extend</span></span>
+    </div></div>
+  </div>
+
+  <aside class="callout olive">
+    <span class="key">Scope guard</span>
+    The alternative in the task spec — aborting the whole sweep when buckets outnumber accepted plans — trades one failed
+    strategist for zero progress on the N−1 healthy areas. The per-area gate keeps the sweep's never-abort posture
+    (each failure rejects one plan, never the sweep) while making the failure visible and harmless.
+  </aside>
+</section>
+
+<footer>
+  Generated 2026-06-10 from the task spec and source at branch feat/self-healing-pipeline-debug ·
+  worktree .worktrees/task-190-22-15 · companion to task-190.22.15
+</footer>
+</main>
+</body>
+</html>

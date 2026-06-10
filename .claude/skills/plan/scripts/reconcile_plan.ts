@@ -79,17 +79,15 @@ async function main(): Promise<void> {
     throw err;
   }
 
-  const { candidates, exclusions, rejected, plan_count } = await load_staged_plans(
-    sweep_id,
-    strategist,
-    (line) => process.stderr.write(line),
-  );
+  const { candidates, exclusions, rejected, plan_count, accepted_fault_areas } =
+    await load_staged_plans(sweep_id, strategist, (line) => process.stderr.write(line));
 
   const exported_backlog_keys = await read_exported_backlog_keys(backlog_tasks_dir());
 
   const repo = new JsonPlanTaskRepository();
   const { written, events } = await reconcile_plan(repo, candidates, sweep_id, {
     swept_projects: manifest.projects,
+    accepted_fault_areas,
     exported_backlog_keys,
   });
 

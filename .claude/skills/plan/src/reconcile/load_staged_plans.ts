@@ -8,7 +8,12 @@
  * bucket, and flattens accepted plans into `PlanTask` candidates plus the
  * strategist's membership exclusions. A plan that is unreadable, missing its
  * bucket, or rejected by `validate_plan` rejects that ONE plan — it never
- * aborts the sweep; the caller receives it in `rejected`.
+ * aborts the sweep; the caller receives it in `rejected`. A bucket that has no
+ * staged plan file at all is also surfaced in `rejected` (not silently skipped).
+ *
+ * The returned `accepted_fault_areas` is the authoritative set for gating orphan
+ * retirement: a fault area absent from this set had a plan failure or a missing
+ * plan, so its live tasks must not be retired by the reconcile engine.
  */
 
 import * as fs from "node:fs/promises";
@@ -16,6 +21,7 @@ import * as path from "node:path";
 
 import { error_code } from "@ariadnejs/skill-fs";
 import type { PlanTask } from "@ariadnejs/skill-protocol";
+import type { AriadneFaultArea } from "@ariadnejs/types";
 
 import { validate_plan } from "../propose/validate_plan.js";
 import type { MembershipExclusion } from "../store/membership_override.js";
@@ -37,8 +43,17 @@ export interface StagedPlansLoad {
   /** Membership exclusions collected from every accepted plan, in file order. */
   exclusions: MembershipExclusion[];
   rejected: RejectedPlan[];
-  /** Total staged plan files found (accepted + rejected). */
+  /**
+   * Total fault areas considered: accepted plan files + rejected plan files +
+   * buckets whose plan file was missing entirely. Equals `accepted_fault_areas.length
+   * + rejected.length`. Satisfies `plans_reconciled = plan_count - rejected.length`.
+   */
   plan_count: number;
+  /**
+   * Fault areas whose plans were accepted and flattened into `candidates`.
+   * The reconcile engine restricts orphan retirement to these areas.
+   */
+  accepted_fault_areas: AriadneFaultArea[];
 }
 
 /**
@@ -46,6 +61,7 @@ export interface StagedPlansLoad {
  *
  * Throws only when the sweep has no `plans/` directory at all (nothing staged);
  * every per-plan failure lands in `rejected` and is reported through `warn`.
+ * Buckets whose plan was never staged are also surfaced in `rejected`.
  */
 export async function load_staged_plans(
   sweep_id: string,
@@ -68,6 +84,9 @@ export async function load_staged_plans(
   const candidates: PlanTask[] = [];
   const exclusions: MembershipExclusion[] = [];
   const rejected: RejectedPlan[] = [];
+  const accepted_fault_areas: AriadneFaultArea[] = [];
+
+  const plan_files_set = new Set(plan_files);
 
   for (const file of plan_files) {
     let plan_raw: unknown;
@@ -100,9 +119,27 @@ export async function load_staged_plans(
     // evidence / dedup_key / rollups exclude rejected members by construction.
     candidates.push(...build_plan_tasks(plan, bucket.evidence, { sweep_id, strategist }));
     exclusions.push(...collect_membership_exclusions(plan, bucket.evidence));
+    accepted_fault_areas.push(plan.fault_area);
   }
 
-  return { candidates, exclusions, rejected, plan_count: plan_files.length };
+  // Surface any bucket whose plan file was never staged. These contribute to
+  // `rejected` so the caller knows the full sweep picture; they are NOT in
+  // `accepted_fault_areas`, so their live tasks are protected from false retirement.
+  let bucket_files: string[];
+  try {
+    bucket_files = (await fs.readdir(buckets_dir)).filter((f) => f.endsWith(".json"));
+  } catch (err) {
+    bucket_files = error_code(err) === "ENOENT" ? [] : (() => { throw err; })();
+  }
+  for (const file of bucket_files) {
+    if (plan_files_set.has(file)) continue;
+    const message = `no plan staged for bucket ${file}`;
+    rejected.push({ plan: file, issues: [{ code: "missing_plan", message }] });
+    warn(`rejecting ${file}: ${message}\n`);
+  }
+
+  const plan_count = accepted_fault_areas.length + rejected.length;
+  return { candidates, exclusions, rejected, plan_count, accepted_fault_areas };
 }
 
 async function read_json<T>(file_path: string): Promise<T> {
