@@ -166,6 +166,92 @@ describe("derive_tp_cache", () => {
   });
 });
 
+function build_output_with_source(
+  confirmed: {
+    name: string;
+    file: string;
+    line: number;
+    source: { kind: "llm-tp" } | { kind: "previously-confirmed-tp" } | { kind: "registry"; group_id: string };
+  }[],
+): TriageResultsFile {
+  return {
+    schema_version: 5,
+    project_path: "/some/path",
+    commit_hash: null,
+    novel_issues: [],
+    classifier_regressions: [],
+    confirmed_unreachable: confirmed.map((c, idx) => ({
+      entry_index: idx,
+      name: c.name,
+      file_path: c.file,
+      start_line: c.line,
+      kind: "function" as const,
+      source: c.source,
+      member_evidence: null,
+    })),
+    uncertain: [],
+    last_updated: "2026-04-28T13:42:07.812Z",
+  };
+}
+
+describe("build_cache source-kind filtering (via derive_tp_cache)", () => {
+  it("excludes registry-sourced rows — entry re-enters llm-triage on rule deactivation", async () => {
+    seed_triage_results(
+      "p",
+      "deadbee-2026-04-26T00-00-00.000Z",
+      build_output_with_source([
+        { name: "f", file: "src/f.ts", line: 1, source: { kind: "registry", group_id: "g1" } },
+      ]),
+    );
+    const cache = await derive_tp_cache("p", "deadbee", NO_OPTS);
+    expect(cache).toBeNull();
+  });
+
+  it("excludes previously-confirmed-tp rows — entry re-investigated once on next run", async () => {
+    seed_triage_results(
+      "p",
+      "deadbee-2026-04-26T00-00-00.000Z",
+      build_output_with_source([
+        { name: "f", file: "src/f.ts", line: 1, source: { kind: "previously-confirmed-tp" } },
+      ]),
+    );
+    const cache = await derive_tp_cache("p", "deadbee", NO_OPTS);
+    expect(cache).toBeNull();
+  });
+
+  it("includes llm-tp rows — existing reuse behavior preserved", async () => {
+    seed_triage_results(
+      "p",
+      "deadbee-2026-04-26T00-00-00.000Z",
+      build_output_with_source([
+        { name: "f", file: "src/f.ts", line: 1, source: { kind: "llm-tp" } },
+      ]),
+    );
+    const cache = await derive_tp_cache("p", "deadbee", NO_OPTS);
+    expect(cache).not.toBeNull();
+    expect(cache!.entries_by_key.size).toBe(1);
+    const k = cache_key_string({ name: "f", file_path_rel: "src/f.ts", kind: "function", start_line: 1 });
+    expect(cache!.entries_by_key.has(k)).toBe(true);
+  });
+
+  it("indexes only llm-tp rows when source file mixes all three kinds", async () => {
+    seed_triage_results(
+      "p",
+      "deadbee-2026-04-26T00-00-00.000Z",
+      build_output_with_source([
+        { name: "tp_fn",   file: "src/a.ts", line: 1, source: { kind: "llm-tp" } },
+        { name: "reg_fn",  file: "src/b.ts", line: 2, source: { kind: "registry", group_id: "g2" } },
+        { name: "prev_fn", file: "src/c.ts", line: 3, source: { kind: "previously-confirmed-tp" } },
+      ]),
+    );
+    const cache = await derive_tp_cache("p", "deadbee", NO_OPTS);
+    expect(cache).not.toBeNull();
+    expect(cache!.entries_by_key.size).toBe(1);
+    const k = cache_key_string({ name: "tp_fn", file_path_rel: "src/a.ts", kind: "function", start_line: 1 });
+    expect(cache!.entries_by_key.has(k)).toBe(true);
+  });
+});
+
 describe("apply_tp_cache_to_entries", () => {
   const PROJECT_PATH = "/projects/myapp";
 

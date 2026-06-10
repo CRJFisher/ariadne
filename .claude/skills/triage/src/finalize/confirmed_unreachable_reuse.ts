@@ -6,6 +6,12 @@
  * The cache is gated entirely by the run-id's `<short-commit>-` prefix: a
  * different commit means a different cache namespace, period.
  *
+ * **Cache eligibility rule**: only rows where `source.kind === "llm-tp"` are
+ * indexed. `registry` and `previously-confirmed-tp` rows are excluded so the
+ * cache never launders a source that was itself a cache hit or a registry
+ * classification — preserving the registry lifecycle's ability to return
+ * entries to the llm-triage pool when a rule is deactivated.
+ *
  * Source of truth: `analysis_output/<project>/triage_results/<run-id>.json`
  * (kept forever; `triage_state/<project>/runs/<run-id>/` may be pruned).
  *
@@ -79,6 +85,7 @@ function key_for_published(entry: PublishedConfirmedUnreachable): TpCacheKey {
 function build_cache(source_run_id: string, output: TriageResultsFile): TpCache | null {
   const entries_by_key = new Map<string, PublishedConfirmedUnreachable>();
   for (const fp of output.confirmed_unreachable) {
+    if (fp.source.kind !== "llm-tp") continue;
     entries_by_key.set(cache_key_string(key_for_published(fp)), fp);
   }
   if (entries_by_key.size === 0) return null;
