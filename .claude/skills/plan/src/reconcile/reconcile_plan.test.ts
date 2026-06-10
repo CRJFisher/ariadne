@@ -49,10 +49,10 @@ function confirmed_for(leaves: StrategistPlanNode[]): StrategistPlan["membership
 }
 
 /**
- * Drive `reconcile_plan` with the swept-project scope it now requires. Defaults
- * the scope to the union of the candidates' evidence projects (the normal
- * full-coverage case); a test that exercises orphan retirement passes an
- * explicit `swept_projects` to control the resolve gate.
+ * Drive `reconcile_plan` with the swept-project scope and accepted fault areas it
+ * requires. Defaults both to the union derived from the candidates' evidence (the
+ * normal full-coverage case); a test that exercises orphan retirement passes
+ * explicit values to control the gates.
  */
 async function recon(
   repo: JsonPlanTaskRepository,
@@ -63,8 +63,10 @@ async function recon(
   const swept_projects =
     options.swept_projects ??
     [...new Set(candidates.flatMap((c) => c.evidence.map((e) => e.project)))].sort();
+  const blocked_fault_areas = options.blocked_fault_areas ?? [];
   return reconcile_plan(repo, candidates, sweep_id, {
     swept_projects,
+    blocked_fault_areas,
     exported_backlog_keys: options.exported_backlog_keys,
   });
 }
@@ -410,6 +412,97 @@ describe("reconcile_plan — orphan retirement", () => {
     const leaf_b_after = after.find((t) => t.id === leaf_b.id);
     expect(leaf_b_after?.status).toEqual("proposed");
     expect(leaf_b_after?.parent_id).toEqual(new_root?.id);
+  });
+
+  it("leaves tasks in a fault area whose plan was not accepted untouched, even when its projects were fully swept (covers both rejected-plan and missing-plan cases)", async () => {
+    // Seed area A (syntactic_extraction): root + leaf_a@a.ts:1 + leaf_b@b.ts:2.
+    const repo = new JsonPlanTaskRepository();
+    await recon(
+      repo,
+      build_plan_tasks(plan(), [ev("a.ts", 1), ev("b.ts", 2)], { sweep_id: "s1", strategist: "opus" }),
+      "s1",
+    );
+
+    // Seed area B (import_resolution): root + leaf_c@c.ts:3. These will not have
+    // an accepted plan in s2 (simulates rejected or missing plan).
+    const area_b_leaf: StrategistPlanNode = {
+      tier: "localized",
+      title: "fix c",
+      body: "c",
+      fault_area: "import_resolution",
+      evidence_indices: [0],
+      is_taxonomy_extension: false,
+      is_classifier_work: false,
+      core_fix_effort: 2,
+      core_fix_effort_rationale: "fix",
+      children: [],
+    };
+    const area_b_plan: StrategistPlan = {
+      schema_version: 1,
+      fault_area: "import_resolution",
+      sweep_id: "s1",
+      membership: [{ index: 0, belongs: true, reason: "" }],
+      roots: [
+        {
+          tier: "fault_area",
+          title: "import_resolution group",
+          body: "group",
+          fault_area: "import_resolution",
+          evidence_indices: [],
+          is_taxonomy_extension: false,
+          is_classifier_work: false,
+          core_fix_effort: 2,
+          core_fix_effort_rationale: "fix",
+          children: [area_b_leaf],
+        },
+      ],
+    };
+    await recon(
+      repo,
+      build_plan_tasks(area_b_plan, [ev("c.ts", 3)], { sweep_id: "s1", strategist: "opus" }),
+      "s1",
+      { blocked_fault_areas: ["syntactic_extraction"] },  // don't retire area A tasks in this partial-area sweep
+    );
+    const area_b_after_seed = (await repo.query({})).filter((t) => t.fault_area === "import_resolution");
+    expect(area_b_after_seed).toHaveLength(2);
+
+    // s2: area A plan accepted (leaf_a dropped → orphans). Area B plan not accepted.
+    // project "p" is fully swept for BOTH areas — the only thing that protects area
+    // B from false retirement is the fault-area gate on blocked_fault_areas.
+    const shrunk = plan_with([localized_leaf("fix b", "b", [0])]);
+    const { written, events } = await recon(
+      repo,
+      build_plan_tasks(shrunk, [ev("b.ts", 2)], { sweep_id: "s2", strategist: "opus" }),
+      "s2",
+      { swept_projects: ["p"], blocked_fault_areas: ["import_resolution"] },
+    );
+
+    // Area B: untouched — no writes, no retire events.
+    const written_ids = new Set(written.map((t) => t.id));
+    const area_b_ids = new Set(area_b_after_seed.map((t) => t.id));
+    for (const task of area_b_after_seed) {
+      expect(written_ids.has(task.id)).toBe(false);
+    }
+    const after = await repo.query({});
+    for (const task of area_b_after_seed) {
+      const task_after = after.find((t) => t.id === task.id);
+      expect(task_after?.status).toEqual("proposed");
+      expect(task_after?.updated_in_sweep).toEqual("s1");
+    }
+    expect(
+      events.filter((e) => {
+        if (e.kind === "resolve") return area_b_ids.has(e.task_id);
+        if (e.kind === "supersede") return area_b_ids.has(e.superseded_id);
+        if (e.kind === "combine") return e.merged_ids.some((id) => area_b_ids.has(id));
+        return false;
+      }),
+    ).toEqual([]);
+
+    // Area A leaf_a (unclaimed, project swept, area accepted) IS resolved — existing behavior.
+    const leaf_a = (await repo.query({})).find(
+      (t) => t.fault_area === "syntactic_extraction" && t.tier === "localized" && t.status === "resolved",
+    );
+    expect(leaf_a?.updated_in_sweep).toEqual("s2");
   });
 
   it("does not re-orphan a retired task on a later identical sweep (idempotent)", async () => {
