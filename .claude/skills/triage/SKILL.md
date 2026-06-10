@@ -151,7 +151,7 @@ Options:
 The script captures the target's HEAD short-commit, generates run-id `<short-commit>-<iso-ts>`, and creates `triage_state/<project>/runs/<run-id>/`. It partitions entries into three buckets:
 
 - **known-unreachable (registry)**: A predicate classifier from `known_issues/registry.json` matched at or above its `min_confidence` — marked completed immediately with the matched `group_id`.
-- **known-unreachable (previously-confirmed-tp)**: Reused from the most recent finalized run at the same commit. Skipped via `--no-reuse-tp`. Distinguished by `known_source: "previously-confirmed-tp"` and `tp_source_run_id`.
+- **known-unreachable (previously-confirmed-tp)**: Reused from prior finalized runs at the same commit (accumulated across all runs, newest first). Skipped via `--no-reuse-tp`. Distinguished by `known_source: "previously-confirmed-tp"` and `tp_source_run_id`.
 - **llm-triage**: No classifier matched — marked pending for investigation.
 
 `prepare_triage` prints `{ "run_id": "...", "stats": { ... } }` to stdout. Capture the `run_id` if you need to pin Phase 3-4 to a specific run; otherwise the project's `LATEST` pointer makes that automatic.
@@ -244,7 +244,7 @@ The run directory is preserved for diffing and audit. Use `prune_runs.ts` to gar
 
 ## Reusing Prior TP Verdicts
 
-When you re-run the pipeline at the same target HEAD commit, `prepare_triage` reuses entries that the most recent finalized run classified as `confirmed_unreachable` — they skip Phase 3 and ship straight to the new run's `confirmed_unreachable[]` with `known_source: "previously-confirmed-tp"` and a `tp_source_run_id` that records the source.
+When you re-run the pipeline at the same target HEAD commit, `prepare_triage` reuses entries that any prior finalized run classified as `confirmed_unreachable` with `source.kind === "llm-tp"`. The cache accumulates across all finalized runs at the commit (newest first, newer run wins on collision), so entries investigated in any earlier run remain reusable even when a newer run mixed `llm-tp` and `previously-confirmed-tp` rows. Reused entries skip Phase 3 and ship straight to the new run's `confirmed_unreachable[]` with `known_source: "previously-confirmed-tp"` and a `tp_source_run_id` that records the primary source run.
 
 The cache validity gate is **the run-id's `<short-commit>-` prefix**:
 

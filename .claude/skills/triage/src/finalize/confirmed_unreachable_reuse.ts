@@ -12,11 +12,12 @@
  * entries return to the llm-triage pool. `previously-confirmed-tp` rows are
  * excluded because the published schema carries no origin chain: a cache-hit
  * entry cannot prove its verdict traces back to a real LLM investigation.
- * `derive_tp_cache` iterates through all run-ids at the current commit, newest-first,
- * reading each run's file only when needed. It stops at the first run that has at
- * least one `llm-tp` row. A run whose rows are all `previously-confirmed-tp` is
- * skipped; the original `llm-tp` investigation run is found in the next iteration.
- * In practice this is at most two file reads.
+ * `derive_tp_cache` reads all runs at the current commit (newest-first) and
+ * accumulates `llm-tp` entries across them, with newer runs taking precedence on
+ * key collision. A run with only `previously-confirmed-tp` rows contributes nothing
+ * but does not block older runs' `llm-tp` entries from being included. Corrupt or
+ * legacy-schema files are skipped with a warning. Reads all runs at the commit,
+ * typically one or two.
  *
  * Source of truth: `analysis_output/<project>/triage_results/<run-id>.json`
  * (kept forever; `triage_state/<project>/runs/<run-id>/` may be pruned).
@@ -142,12 +143,31 @@ export async function derive_tp_cache(
   }
 
   const run_ids = await all_finalized_runs_at_commit(project, current_short_commit);
+  const entries_by_key = new Map<string, PublishedConfirmedUnreachable>();
+  let source_run_id: string | null = null;
+
   for (const run_id of run_ids) {
-    const output = await read_triage_results(project, run_id);
-    const cache = build_cache(run_id, output);
-    if (cache !== null) return cache;
+    let output: TriageResultsFile;
+    try {
+      output = await read_triage_results(project, run_id);
+    } catch (err) {
+      console.warn(
+        `[TP cache] Skipping run "${run_id}" — could not read or parse (${err instanceof Error ? err.message : String(err)}).`,
+      );
+      continue;
+    }
+    for (const fp of output.confirmed_unreachable) {
+      if (fp.source.kind !== "llm-tp") continue;
+      const key = cache_key_string(key_for_published(fp));
+      if (!entries_by_key.has(key)) {
+        entries_by_key.set(key, fp);
+        source_run_id ??= run_id;
+      }
+    }
   }
-  return null;
+
+  if (entries_by_key.size === 0 || source_run_id === null) return null;
+  return { source_run_id, entries_by_key };
 }
 
 // ===== Application =====

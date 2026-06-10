@@ -94,7 +94,7 @@ describe("derive_tp_cache", () => {
     expect(await derive_tp_cache("p", "deadbee", NO_OPTS)).toBeNull();
   });
 
-  it("picks the lex-max source at the current commit", async () => {
+  it("accumulates llm-tp entries from all runs; source_run_id is the newest contributor", async () => {
     seed_triage_results("p", "deadbee-2026-04-26T00-00-00.000Z", build_output([
       { name: "old_func", file: "src/o.ts", line: 1 },
     ]));
@@ -104,16 +104,14 @@ describe("derive_tp_cache", () => {
     const cache = await derive_tp_cache("p", "deadbee", NO_OPTS);
     expect(cache).not.toBeNull();
     expect(cache!.source_run_id).toBe("deadbee-2026-04-28T00-00-00.000Z");
-    expect(cache!.entries_by_key.size).toBe(1);
-    const k = cache_key_string({ name: "new_func", file_path_rel: "src/n.ts", kind: "function", start_line: 1 });
-    expect(cache!.entries_by_key.has(k)).toBe(true);
+    expect(cache!.entries_by_key.size).toBe(2);
+    const k_new = cache_key_string({ name: "new_func", file_path_rel: "src/n.ts", kind: "function", start_line: 1 });
+    const k_old = cache_key_string({ name: "old_func", file_path_rel: "src/o.ts", kind: "function", start_line: 1 });
+    expect(cache!.entries_by_key.has(k_new)).toBe(true);
+    expect(cache!.entries_by_key.has(k_old)).toBe(true);
   });
 
-  it("throws schema-mismatch on a legacy v3 source file", async () => {
-    // Pre-v4 files are hard-rejected at parse time (constitution: no BC).
-    // Operators re-finalize the run under the current schema or remove the
-    // stale file; the persisted-state policy still forbids `rm -rf` of the
-    // whole analysis_output/ tree.
+  it("skips a legacy-schema file with a warning and returns null when no valid runs remain", async () => {
     const legacy_record = {
       schema_version: 3,
       commit_hash: null,
@@ -124,9 +122,11 @@ describe("derive_tp_cache", () => {
       last_updated: "2026-04-28T13:42:07.812Z",
     };
     seed_raw_triage_results("p", "deadbee-2026-04-26T00-00-00.000Z", legacy_record);
-    await expect(derive_tp_cache("p", "deadbee", NO_OPTS)).rejects.toThrow(
-      /schema_version=3/,
-    );
+    const warn_spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const cache = await derive_tp_cache("p", "deadbee", NO_OPTS);
+    expect(cache).toBeNull();
+    expect(warn_spy).toHaveBeenCalledWith(expect.stringContaining("deadbee-2026-04-26T00-00-00.000Z"));
+    warn_spy.mockRestore();
   });
 
   it("throws when pinned source run-id has the wrong commit prefix", async () => {
@@ -281,6 +281,59 @@ describe("derive_tp_cache — fallback through older runs", () => {
       { name: "f", file: "src/f.ts", line: 1, source: { kind: "previously-confirmed-tp" } },
     ]));
     expect(await derive_tp_cache("p", "deadbee", NO_OPTS)).toBeNull();
+  });
+
+  it("accumulates across runs: newest run has mixed kinds, older run fills in the rest", async () => {
+    // Run 1: LLM investigates fn A
+    seed_triage_results("p", "deadbee-2026-04-26T00-00-00.000Z", build_output([
+      { name: "a", file: "src/a.ts", line: 1, source: { kind: "llm-tp" } },
+    ]));
+    // Run 2: LLM investigates new fn B; reuses fn A from cache (previously-confirmed-tp)
+    seed_triage_results("p", "deadbee-2026-04-28T00-00-00.000Z", build_output([
+      { name: "b", file: "src/b.ts", line: 1, source: { kind: "llm-tp" } },
+      { name: "a", file: "src/a.ts", line: 1, source: { kind: "previously-confirmed-tp" } },
+    ]));
+    // Run 3 starting: both fn A and fn B must be in the cache
+    const cache = await derive_tp_cache("p", "deadbee", NO_OPTS);
+    expect(cache).not.toBeNull();
+    const k_a = cache_key_string({ name: "a", file_path_rel: "src/a.ts", kind: "function", start_line: 1 });
+    const k_b = cache_key_string({ name: "b", file_path_rel: "src/b.ts", kind: "function", start_line: 1 });
+    expect(cache!.entries_by_key.has(k_a)).toBe(true);
+    expect(cache!.entries_by_key.has(k_b)).toBe(true);
+    expect(cache!.entries_by_key.size).toBe(2);
+  });
+
+  it("newer run wins on key collision when the same function appears as llm-tp in multiple runs", async () => {
+    seed_triage_results("p", "deadbee-2026-04-26T00-00-00.000Z", build_output([
+      { name: "f", file: "src/f.ts", line: 1, source: { kind: "llm-tp" } },
+    ]));
+    seed_triage_results("p", "deadbee-2026-04-28T00-00-00.000Z", build_output([
+      { name: "f", file: "src/f.ts", line: 1, source: { kind: "llm-tp" } },
+    ]));
+    const cache = await derive_tp_cache("p", "deadbee", NO_OPTS);
+    expect(cache).not.toBeNull();
+    expect(cache!.entries_by_key.size).toBe(1);
+    expect(cache!.source_run_id).toBe("deadbee-2026-04-28T00-00-00.000Z");
+  });
+
+  it("skips a corrupt run and collects llm-tp entries from older valid runs", async () => {
+    seed_raw_triage_results("p", "deadbee-2026-04-28T00-00-00.000Z", {
+      schema_version: 3,
+      commit_hash: null,
+      confirmed_unreachable: [],
+      false_positive_groups: {},
+      last_updated: "2026-04-28T13:42:07.812Z",
+    });
+    seed_triage_results("p", "deadbee-2026-04-26T00-00-00.000Z", build_output([
+      { name: "f", file: "src/f.ts", line: 1, source: { kind: "llm-tp" } },
+    ]));
+    const warn_spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const cache = await derive_tp_cache("p", "deadbee", NO_OPTS);
+    expect(cache).not.toBeNull();
+    const k = cache_key_string({ name: "f", file_path_rel: "src/f.ts", kind: "function", start_line: 1 });
+    expect(cache!.entries_by_key.has(k)).toBe(true);
+    expect(warn_spy).toHaveBeenCalledWith(expect.stringContaining("deadbee-2026-04-28T00-00-00.000Z"));
+    warn_spy.mockRestore();
   });
 });
 
