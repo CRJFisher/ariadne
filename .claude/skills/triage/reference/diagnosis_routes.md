@@ -37,4 +37,4 @@ Each investigated entry produces exactly one `TriageVerdict` (`src/verdict/triag
 
 Every arm also carries `member_evidence` (`file`, `line`, `why`).
 
-`parse_triage_verdict` (`src/verdict/strict_parse.ts`) parses each file at finalize. It rejects an unknown `kind`, a missing or extra field, or an empty string — a shape violation throws and halts finalize; there is no silent skipping. Finalize reads these files to build `novel_issues[]` (one per `fp-novel`) and `classifier_regressions[]` (rolled up from `fp-classifier-regression`).
+`parse_triage_verdict` (`src/verdict/triage_verdict.ts`) parses each file at finalize. It rejects an unknown `kind`, a missing or extra field, or an empty string — a shape violation throws and halts finalize; there is no silent skipping. Finalize reads these files to build `novel_issues[]` (one per `fp-novel`) and `classifier_regressions[]` (rolled up from `fp-classifier-regression`).

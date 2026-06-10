@@ -2,7 +2,7 @@
  * Generic argv shaping helpers shared by every Phase 2-5 script.
  *
  * Pure: no I/O, no path resolution. The path-aware `require_run` helper
- * lives in `triage_state_paths.ts`; pull this module's parsers in tandem
+ * lives in `store/paths.ts`; pull this module's parsers in tandem
  * to wire up a typical script CLI.
  */
 

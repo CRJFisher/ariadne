@@ -17,7 +17,7 @@ import {
 } from "./latest_pointer.js";
 
 // vi.hoisted runs before all `import` statements, so the env var is set
-// before `paths.js` (transitively imported by `triage_state_paths.js`) reads it.
+// before `paths.js` (transitively imported by `latest_pointer.js`) reads it.
 const TMP_BASE = vi.hoisted(() => {
   const tmp_path = `${process.env.TMPDIR ?? "/tmp"}/ariadne-test-triage-paths-${process.pid}`;
   process.env.ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE = tmp_path;
