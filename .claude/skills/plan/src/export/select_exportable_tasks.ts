@@ -29,7 +29,7 @@
  */
 
 import type { AriadneFaultArea } from "@ariadnejs/types";
-import type { PlanTask, PlanTaskStatus } from "@ariadnejs/skill-protocol";
+import type { PlanTask, PlanTaskStatus } from "../store/plan_task.js";
 
 /** The live states a task may be promoted from; terminal states are retired work and never exportable. */
 export const EXPORTABLE_STATUSES: ReadonlySet<PlanTaskStatus> = new Set<PlanTaskStatus>([

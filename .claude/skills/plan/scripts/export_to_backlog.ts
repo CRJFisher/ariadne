@@ -6,24 +6,22 @@
  * (`~/.ariadne/plan/`) into `backlog/tasks/*.md`. Never runs on the autonomous
  * sweep; the human runs it deliberately when graduating proposed work.
  *
- * ## The adapter contract (a swappable portability seam)
+ * ## The adapter pipeline
  *
- * This is the first of a family — a second target (`export_to_linear.ts`,
- * `export_to_github_issues.ts`) is a drop-in that re-implements only the three
- * target-specific steps and reuses the rest:
+ * Five steps:
  *
- *   1. **select** (reused) — `select_exportable_tasks` picks the rows: filtered
- *      by `--status`/`--fault-area`/`--priority` or named by `--id`, skipping
+ *   1. **select** — `select_exportable_tasks` picks the rows: filtered by
+ *      `--status`/`--fault-area`/`--priority` or named by `--id`, skipping
  *      anything already promoted.
- *   2. **mint id** (target-specific) — here, the next free top-level backlog id
- *      from a recursive scan of `backlog/`.
- *   3. **render** (target-specific) — `render_backlog_task` turns a `PlanTask`
- *      into the target artifact, stamping the verbatim `PlanTask.dedup_key` into
- *      a target-side dedup field (`plan_dedup_key`). Every target MUST persist
- *      this key so a re-run recognises prior exports — it is the idempotency link.
- *   4. **write** (target-specific) — the target's sole writer; the only place a
- *      write primitive (or tracker API call) appears.
- *   5. **flip state** (reused) — the DB row moves `→ exported`, recording
+ *   2. **mint id** — the next free top-level backlog id from a recursive scan
+ *      of `backlog/`.
+ *   3. **render** — `render_backlog_task` turns a `PlanTask` into the backlog
+ *      task file, stamping the verbatim `PlanTask.dedup_key` into the
+ *      `plan_dedup_key` frontmatter field so a re-run recognises prior exports —
+ *      it is the idempotency link.
+ *   4. **write** — the backlog task file is written (the only place a write
+ *      primitive appears).
+ *   5. **flip state** — the DB row moves `→ exported`, recording
  *      `exported_backlog_task`, and one `export` `PlanSweepEvent` is logged.
  *
  * Idempotency: `--dry-run` writes nothing; a real run, re-run identically, is a
@@ -48,7 +46,7 @@ import * as path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { atomic_write_file } from "@ariadnejs/skill-fs";
-import type { PlanTask, PlanTaskStatus } from "@ariadnejs/skill-protocol";
+import type { PlanTask, PlanTaskStatus } from "../src/store/plan_task.js";
 import type { AriadneFaultArea } from "@ariadnejs/types";
 
 import { read_exported_backlog_keys } from "../src/store/backlog_dedup.js";

@@ -2,24 +2,20 @@ import { appendFile, mkdir, readdir, readFile } from "node:fs/promises";
 import * as path from "node:path";
 
 import { atomic_write_file, error_code } from "@ariadnejs/skill-fs";
-import {
-  plan_sweeps_dir,
-  plan_task_path,
-  plan_tasks_dir,
-  type PlanSweepEvent,
-  type PlanTask,
-  type PlanTaskId,
-  type PlanTaskQuery,
-  type PlanTaskRepository,
-} from "@ariadnejs/skill-protocol";
+import type {
+  PlanSweepEvent,
+  PlanTask,
+  PlanTaskId,
+  PlanTaskQuery,
+} from "./plan_task.js";
+import { plan_sweeps_dir, plan_task_path, plan_tasks_dir } from "./paths.js";
 
 import { parse_plan_task } from "./plan_task_record.js";
 
 /**
- * The JSON-on-disk implementation of {@link PlanTaskRepository} — the concrete
- * store behind the engine's swap-seam. One file per task at
- * `~/.ariadne/plan/tasks/<id>.json` (written via `atomic_write_file`: temp +
- * rename), plus an append-only `~/.ariadne/plan/sweeps/<sweep_id>.jsonl`
+ * The plan engine's task-DB store: a JSON-on-disk record set with one file per
+ * task at `~/.ariadne/plan/tasks/<id>.json` (written via `atomic_write_file`:
+ * temp + rename), plus an append-only `~/.ariadne/plan/sweeps/<sweep_id>.jsonl`
  * provenance log.
  *
  * Single writer per task file, so writes are rename-atomic with NO global lock
@@ -34,11 +30,11 @@ import { parse_plan_task } from "./plan_task_record.js";
  * store derives nothing — it filters on the stored `fault_area`/`dedup_key`
  * strings the engine already computed.
  *
- * Locations resolve through `@ariadnejs/skill-protocol`, which honors
- * `ARIADNE_PLAN_DIR_OVERRIDE` lazily on every call, so the store needs no
- * injected root and tests isolate purely by setting that env var.
+ * Locations resolve through `./paths.js`, which honors `ARIADNE_PLAN_DIR_OVERRIDE`
+ * lazily on every call, so the store needs no injected root and tests isolate
+ * purely by setting that env var.
  */
-export class JsonPlanTaskRepository implements PlanTaskRepository {
+export class JsonPlanTaskRepository {
   async get(id: PlanTaskId): Promise<PlanTask | null> {
     const file_path = plan_task_path(id);
     let text: string;

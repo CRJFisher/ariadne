@@ -16,7 +16,7 @@ import * as fs from "node:fs/promises";
 
 import { is_ariadne_fault_area } from "@ariadnejs/types";
 
-import { validate_plan } from "../src/propose/validate_plan.js";
+import { validate_plan } from "../src/reconcile/validate_plan.js";
 import type { FaultAreaBucket } from "../src/types.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 

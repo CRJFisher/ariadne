@@ -14,7 +14,7 @@
 import { createHash } from "node:crypto";
 
 import type { AriadneFaultArea } from "@ariadnejs/types";
-import type { PlanTaskEvidence } from "@ariadnejs/skill-protocol";
+import type { PlanTaskEvidence } from "../store/plan_task.js";
 
 /**
  * The `"<file>:<line>"` identity of one evidence row's CALL SITE — THE

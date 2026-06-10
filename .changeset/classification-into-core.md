@@ -42,9 +42,6 @@ Upgrade steps for projects with pre-run-namespaced state:
 - Stale "active" runs: clear the `LATEST` pointer with
   `.claude/skills/triage/scripts/abandon_run.ts` or by deleting
   the `LATEST` file.
-- Pre-run-namespaced state: run
-  `.claude/skills/triage/scripts/migrate_legacy_state.ts --project <name>`
-  (or `--purge` to drop history).
 
 The persistence-cache schema version (`packages/core/src/persistence/cache_manifest.ts`)
 bumps from 1 → 2; pre-bump caches in `~/.ariadne/cache/<slug>/manifest.json`

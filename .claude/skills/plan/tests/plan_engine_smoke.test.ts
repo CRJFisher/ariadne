@@ -24,14 +24,13 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   known_issues_registry_path,
   parse_run_id,
-  plan_sweeps_dir,
-  plan_tasks_dir,
   read_triage_results_file,
   TRIAGE_RESULTS_SCHEMA_VERSION,
   type NovelIssue,
-  type PlanTaskEvidence,
   type TriageResultsFile,
 } from "@ariadnejs/skill-protocol";
+import type { PlanTaskEvidence } from "../src/store/plan_task.js";
+import { plan_sweeps_dir, plan_tasks_dir } from "../src/store/paths.js";
 
 import { group_fault_areas, type ParsedRun } from "../src/group/group_fault_areas.js";
 import { build_plan_tasks } from "../src/reconcile/build_plan_tasks.js";

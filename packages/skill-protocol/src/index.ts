@@ -8,12 +8,13 @@
  * sides must agree on, declared and exported in this order:
  *
  *   - `run_id` — the `<commit>-<timestamp>` grammar that joins a run across skills.
- *   - `paths` — where the artifacts, the known-issues registry, and the `plan`
- *     engine's task-DB live on disk.
+ *   - `paths` — where the published artifacts and the known-issues registry
+ *     live on disk.
  *   - `triage_results` — the published `TriageResultsFile` wire schema + the
  *     strict parser both sides validate through.
- *   - `plan_task` — the `plan` engine's task-DB record (`PlanTask`) and the
- *     `PlanTaskRepository` swap-seam it reads and writes through.
+ *
+ * The `plan` engine's task-DB record (`PlanTask`) and store are private to the
+ * plan skill; they are not part of this shared seam.
  */
 
 export {
@@ -29,11 +30,6 @@ export {
   triage_results_path,
   parse_triage_results_path,
   known_issues_registry_path,
-  plan_dir,
-  plan_tasks_dir,
-  plan_task_path,
-  plan_sweeps_dir,
-  plan_membership_overrides_path,
 } from "./paths.js";
 export {
   TRIAGE_RESULTS_SCHEMA_VERSION,
@@ -48,16 +44,3 @@ export {
   parse_triage_results,
   read_triage_results_file,
 } from "./triage_results.js";
-export {
-  PLAN_TASK_SCHEMA_VERSION,
-  type PlanTaskId,
-  type PlanTaskStatus,
-  type PlanTaskTier,
-  type PlanTaskEvidence,
-  type PlanTask,
-} from "./plan_task.js";
-export {
-  type PlanTaskQuery,
-  type PlanSweepEvent,
-  type PlanTaskRepository,
-} from "./plan_task_repository.js";

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { parse_run_id, type NovelIssue, type PlanTaskEvidence } from "@ariadnejs/skill-protocol";
+import { parse_run_id, type NovelIssue } from "@ariadnejs/skill-protocol";
+import type { PlanTaskEvidence } from "../store/plan_task.js";
 
 import type { FaultAreaBucket } from "../types.js";
 import type { MembershipOverride } from "../store/membership_override.js";

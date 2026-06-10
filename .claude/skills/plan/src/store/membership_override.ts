@@ -31,11 +31,8 @@ import {
   atomic_write_file,
   error_code,
 } from "@ariadnejs/skill-fs";
-import {
-  plan_dir,
-  plan_membership_overrides_path,
-  type MemberSymbol,
-} from "@ariadnejs/skill-protocol";
+import type { MemberSymbol } from "@ariadnejs/skill-protocol";
+import { plan_dir, plan_membership_overrides_path } from "./paths.js";
 
 /**
  * One recorded mis-route: a member excluded from `fault_area`'s bucket. Keyed on

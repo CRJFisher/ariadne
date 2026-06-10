@@ -240,7 +240,7 @@ Finalization also:
 - Sets `manifest.status = "finalized"`, `finalized_at = now`.
 - Clears the project's `LATEST` pointer.
 
-The run directory is preserved for diffing and audit. Use `prune_runs.ts` to garbage-collect old run dirs (the published `triage_results/<run-id>.json` is kept forever — `diff_runs` and the curator depend on it).
+The run directory is preserved for diffing and audit. Use `prune_runs.ts` to garbage-collect old run dirs (the published `triage_results/<run-id>.json` is kept forever — `diff_runs` and the plan skill depend on it).
 
 ## Reusing Prior TP Verdicts
 
@@ -306,20 +306,6 @@ Two known leaks during this loop (escape hatch: `--no-reuse-tp`):
 - **Uncommitted target-repo edits** don't bust the cache (`git commit` first, or pass `--no-reuse-tp`).
 - **Ariadne core changes** don't bust it either (run once with `--no-reuse-tp` after substantive resolution improvements).
 
-## Migrating from a Pre-Run-Namespaced Pipeline
-
-If you upgraded from a version that wrote `triage_state/<project>/<project>_triage.json` directly:
-
-```bash
-# Wrap the legacy state into runs/legacy-<ts>/ with status=abandoned (default)
-node --import tsx scripts/migrate_legacy_state.ts --project <name>
-
-# OR: delete the legacy artifacts
-node --import tsx scripts/migrate_legacy_state.ts --project <name> --purge
-```
-
-`prepare_triage` emits a one-line stderr warning when it detects unmigrated legacy state.
-
 ## Persisted-State Preservation Policy
 
 The pipeline writes three kinds of persisted state under `~/.ariadne/triage-entrypoints/`. Each has a different preservation contract — wiping the wrong one silently destroys cross-run TP reuse.
@@ -328,7 +314,6 @@ The pipeline writes three kinds of persisted state under `~/.ariadne/triage-entr
 | -------------------------------------------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `analysis_output/<project>/triage_results/`                                | **Preserve**         | Never `rm -rf`. These finalized triage-results JSON files are the permanent source of truth for the TP cache (read by `confirmed_unreachable_reuse.derive_tp_cache` via `triage_results_store.all_finalized_runs_at_commit`). Wiping them forces every prior-confirmed entry back through the LLM investigator. |
 | `triage_state/<project>/runs/`                                             | **Preserve**         | Active and abandoned runs never auto-prune. `prune_runs.ts` keeps the last `--keep <n>` finalized runs and protects any run referenced as another run's `tp_cache.source_run_id`.                                                                                                                                       |
-| `triage_state/<project>/<project>_triage.json` (legacy single-file layout) | **Migrate**          | Run `migrate_legacy_state.ts --project <name>` to wrap into `runs/legacy-<ts>/` (default `status=abandoned`), or `--purge` to drop history.                                                                                                                                                                             |
 | `~/.ariadne/cache/<slug>/manifest.json` (core's persistence cache)         | **Auto-invalidates** | The cache schema version is checked on load; mismatched manifests are dropped via `deserialize_manifest` and the cache rebuilds on next run. No user action required.                                                                                                                                                   |
 
 **Stale-LATEST handling.** If a `LATEST` pointer remains from an in-flight run at upgrade time, clear it via `abandon_run.ts --project <name>` or by deleting the file. The run dir stays visible to `list_runs.ts`. `abandon_run.ts` also marks the manifest abandoned.
@@ -368,7 +353,7 @@ The skill is a thin caller of `@ariadnejs/core`. Classification (`enrich_call_gr
 | `finalize/verdict_ledger.ts`                        | Shared per-entry verdict loader (`results/<entry_index>.json`); used by both `merge_results.ts` and `finalize_triage.ts`                                                |
 | `merge_results.ts`                                  | Merge investigator result files into triage state                                                                                                                       |
 | `triage_verdict.ts`                                 | `TriageVerdict` discriminated union + strict runtime parser; the published `NovelIssue` row type                                                                        |
-| `@ariadnejs/skill-fs` · `classifier_regressions.ts` | `aggregate_classifier_regressions` — finalize-time per-rule rollup of `fp-classifier-regression` verdicts (shared with the curator)                                     |
+| `@ariadnejs/skill-fs` · `classifier_regressions.ts` | `aggregate_classifier_regressions` — finalize-time per-rule rollup of `fp-classifier-regression` verdicts (used only by triage's finalize)                                     |
 | `dispense_payload.ts`                               | Build the per-entry dispense payload (entry context + in-scope registry slice)                                                                                          |
 | `triage_state_types.ts`                             | Triage state types (`TriageState`, `TriageEntry`, `TriageEntryResult`)                                                                                                  |
 | `triage_state_paths.ts`                             | Triage state file locations + required-flag CLI helpers                                                                                                                 |

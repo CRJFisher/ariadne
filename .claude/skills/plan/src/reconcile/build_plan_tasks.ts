@@ -21,11 +21,11 @@ import type {
   PlanTask,
   PlanTaskEvidence,
   PlanTaskId,
-} from "@ariadnejs/skill-protocol";
-import { PLAN_TASK_SCHEMA_VERSION } from "@ariadnejs/skill-protocol";
+} from "../store/plan_task.js";
+import { PLAN_TASK_SCHEMA_VERSION } from "../store/plan_task.js";
 
 import type { StrategistPlan, StrategistPlanNode } from "../types.js";
-import { render_task_body, render_task_title } from "../propose/render_task.js";
+import { render_task_body, render_task_title } from "./render_task.js";
 import { compute_dedup_key, location_token } from "./compute_dedup_key.js";
 
 export interface BuildPlanTasksOptions {

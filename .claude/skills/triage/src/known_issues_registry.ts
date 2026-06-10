@@ -155,7 +155,7 @@ function validate_entry(entry: unknown, at: string): asserts entry is KnownIssue
 
   require_string(record, "group_id", at);
   require_kebab_case(record["group_id"] as string, `${at}.group_id`);
-  // All subsequent errors carry the group_id so curators don't need to count
+  // All subsequent errors carry the group_id so a reader doesn't need to count
   // array positions to find the offending entry.
   const at_id = `${at}(group_id="${record["group_id"] as string}")`;
 
@@ -192,7 +192,7 @@ function validate_entry(entry: unknown, at: string): asserts entry is KnownIssue
   validate_examples(record["examples"], `${at_id}.examples`);
   validate_classifier_spec(record["classifier"], `${at_id}.classifier`);
 
-  validate_optional_curator_fields(record, at_id);
+  validate_optional_rollup_fields(record, at_id);
 }
 
 function validate_examples(value: unknown, at: string): void {
@@ -382,7 +382,7 @@ export function validate_predicate_expr(value: unknown, at: string): asserts val
   }
 }
 
-function validate_optional_curator_fields(record: Record<string, unknown>, at: string): void {
+function validate_optional_rollup_fields(record: Record<string, unknown>, at: string): void {
   if ("observed_count" in record && record["observed_count"] !== undefined) {
     const v = record["observed_count"];
     if (typeof v !== "number" || !Number.isFinite(v) || v < 0 || !Number.isInteger(v)) {

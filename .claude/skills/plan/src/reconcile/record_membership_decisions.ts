@@ -18,7 +18,8 @@
  * store; the strategist only authored its plan.
  */
 
-import type { PlanSweepEvent, PlanTaskEvidence, PlanTaskRepository } from "@ariadnejs/skill-protocol";
+import type { PlanSweepEvent, PlanTaskEvidence } from "../store/plan_task.js";
+import type { JsonPlanTaskRepository } from "../store/json_plan_task_repository.js";
 import type { AriadneFaultArea } from "@ariadnejs/types";
 
 import type { StrategistPlan } from "../types.js";
@@ -76,7 +77,7 @@ export function collect_membership_exclusions(
  * suggested area). A no-op when there are no exclusions.
  */
 export async function record_membership_decisions(
-  repo: PlanTaskRepository,
+  repo: JsonPlanTaskRepository,
   override_store: MembershipOverrideStore,
   sweep_id: string,
   exclusions: MembershipExclusion[],

@@ -6,15 +6,13 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
   discover_runs,
-  filter_uncurated,
-  list_curated_run_ids,
+  filter_unswept,
   scan_runs,
 } from "./scan_runs.js";
 import type { ScanOptions, ScanResultItem } from "../types.js";
 
 let root: string;
 let analysis_output_dir: string;
-let runs_dir: string;
 
 const DEFAULT_OPTS: ScanOptions = { project: null, last: null, run: null };
 
@@ -26,16 +24,9 @@ async function seed_run(project: string, run_id: string): Promise<string> {
   return run_path;
 }
 
-async function mark_curated(run_id: string): Promise<void> {
-  const dir = path.join(runs_dir, run_id);
-  await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(path.join(dir, "finalized.json"), "{}", "utf8");
-}
-
 beforeEach(async () => {
-  root = await fs.mkdtemp(path.join(os.tmpdir(), "curator-scan-"));
+  root = await fs.mkdtemp(path.join(os.tmpdir(), "plan-scan-"));
   analysis_output_dir = path.join(root, "analysis_output");
-  runs_dir = path.join(root, "runs");
 });
 
 afterEach(async () => {
@@ -64,7 +55,7 @@ describe("discover_runs", () => {
 
   it("skips files whose name is not a well-formed run-id", async () => {
     await seed_run("webpack", "abc1234-2026-04-16T18-10-16.855Z");
-    // Legacy bare-timestamp file (pre-run-namespacing) must be ignored, not crash the sweep.
+    // Bare-timestamp file (no commit prefix) must be ignored, not crash the sweep.
     await seed_run("webpack", "2026-04-16T18-10-16.855Z");
     const runs = await discover_runs(analysis_output_dir);
     expect(runs.map((r) => r.run_id)).toEqual(["abc1234-2026-04-16T18-10-16.855Z"]);
@@ -80,51 +71,25 @@ describe("discover_runs", () => {
   });
 });
 
-describe("list_curated_run_ids", () => {
-  it("returns empty set when runs dir is absent", async () => {
-    const curated = await list_curated_run_ids(runs_dir);
-    expect(curated).toEqual(new Set<string>());
-  });
-
-  it("returns only run_ids whose finalized.json sentinel exists", async () => {
-    await mark_curated("r1");
-    // r2 dir exists (sub-agent outputs landed) but no sentinel.
-    await fs.mkdir(path.join(runs_dir, "r2", "qa"), { recursive: true });
-    await mark_curated("r3");
-    const curated = await list_curated_run_ids(runs_dir);
-    expect(curated).toEqual(new Set(["r1", "r3"]));
-  });
-});
-
-describe("filter_uncurated", () => {
+describe("filter_unswept", () => {
   const discovered: ScanResultItem[] = [
     { run_id: "r1", project: "p1", run_path: "/p1/r1.json" },
     { run_id: "r2", project: "p1", run_path: "/p1/r2.json" },
     { run_id: "r3", project: "p2", run_path: "/p2/r3.json" },
   ];
 
-  it("returns all runs when none are curated", () => {
-    const items = filter_uncurated(discovered, new Set(), DEFAULT_OPTS);
+  it("returns every discovered run with no filters", () => {
+    const items = filter_unswept(discovered, DEFAULT_OPTS);
     expect(items.map((i) => i.run_id)).toEqual(["r1", "r2", "r3"]);
   });
 
-  it("returns empty when all runs are curated", () => {
-    const items = filter_uncurated(discovered, new Set(["r1", "r2", "r3"]), DEFAULT_OPTS);
-    expect(items).toEqual<ScanResultItem[]>([]);
-  });
-
-  it("returns only un-curated runs (partial state)", () => {
-    const items = filter_uncurated(discovered, new Set(["r1"]), DEFAULT_OPTS);
-    expect(items.map((i) => i.run_id)).toEqual(["r2", "r3"]);
-  });
-
   it("honours --project filter", () => {
-    const items = filter_uncurated(discovered, new Set(), { ...DEFAULT_OPTS, project: "p2" });
+    const items = filter_unswept(discovered, { ...DEFAULT_OPTS, project: "p2" });
     expect(items.map((i) => i.run_id)).toEqual(["r3"]);
   });
 
   it("honours --last N filter (keeps most recent)", () => {
-    const items = filter_uncurated(discovered, new Set(), { ...DEFAULT_OPTS, last: 2 });
+    const items = filter_unswept(discovered, { ...DEFAULT_OPTS, last: 2 });
     expect(items.map((i) => i.run_id)).toEqual(["r2", "r3"]);
   });
 });
@@ -135,18 +100,19 @@ describe("scan_runs end-to-end", () => {
     const items = await scan_runs(
       { ...DEFAULT_OPTS, run: run_path },
       analysis_output_dir,
-      runs_dir,
     );
     expect(items).toHaveLength(1);
     expect(items[0].run_id).toBe("abc1234-2026-04-16T18-10-16.855Z");
     expect(items[0].project).toBe("webpack");
   });
 
-  it("walks analysis_output and filters by sentinel presence", async () => {
+  it("walks analysis_output and returns every discovered run", async () => {
     await seed_run("webpack", "aaaaaaa-2026-04-16T18-10-16.855Z");
     await seed_run("projections", "bbbbbbb-2026-04-16T18-10-16.855Z");
-    await mark_curated("aaaaaaa-2026-04-16T18-10-16.855Z");
-    const items = await scan_runs(DEFAULT_OPTS, analysis_output_dir, runs_dir);
-    expect(items.map((i) => i.run_id)).toEqual(["bbbbbbb-2026-04-16T18-10-16.855Z"]);
+    const items = await scan_runs(DEFAULT_OPTS, analysis_output_dir);
+    expect(items.map((i) => i.run_id)).toEqual([
+      "aaaaaaa-2026-04-16T18-10-16.855Z",
+      "bbbbbbb-2026-04-16T18-10-16.855Z",
+    ]);
   });
 });

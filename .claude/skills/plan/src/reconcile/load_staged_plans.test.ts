@@ -4,9 +4,10 @@ import * as path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { parse_run_id, type PlanTaskEvidence } from "@ariadnejs/skill-protocol";
+import { parse_run_id } from "@ariadnejs/skill-protocol";
+import type { PlanTaskEvidence } from "../store/plan_task.js";
 
-import { validate_plan } from "../propose/validate_plan.js";
+import { validate_plan } from "./validate_plan.js";
 import { plan_staging_buckets_dir, plan_staging_plans_dir } from "../store/paths.js";
 import type { FaultAreaBucket, MembershipVerdict, StrategistPlan } from "../types.js";
 import { build_plan_tasks } from "./build_plan_tasks.js";

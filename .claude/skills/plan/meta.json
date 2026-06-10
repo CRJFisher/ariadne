@@ -22,24 +22,6 @@
       "bypasses": [],
       "diagram_anchor": "pipeline-flow",
       "is_primary": true
-    },
-    {
-      "id": "impact-report",
-      "name": "Operator generates the impact-ranked registry snapshot",
-      "representativeness": 0.05,
-      "representativeness_anchor": "reporting",
-      "entry": {
-        "kind": "user_invocation",
-        "command": "node --import tsx scripts/generate_impact_report.ts [--top-n N] [--prior <json>] [--out <md>] [--snapshot <json>]"
-      },
-      "exit": {
-        "kind": "stdout",
-        "target": "human-readable-markdown"
-      },
-      "phases": [],
-      "bypasses": ["PA", "PB", "PC"],
-      "diagram_anchor": "maintenance-entries",
-      "is_primary": false
     }
   ],
 
@@ -49,7 +31,7 @@
       "path": "~/.ariadne/plan/tasks/<id>.json",
       "access": "write",
       "writer_owner": "plan",
-      "semantic_role": "the plan task-DB: one PlanTask row per file (architectural -> fault_area -> localized tier). The plan engine is the single autonomous writer via PlanTaskRepository.put_many; reconciled in-DB by dedup_key (augment). status flips to exported are owned by the export adapter (190.22.11).",
+      "semantic_role": "the plan task-DB: one PlanTask row per file (architectural -> fault_area -> localized tier). The plan engine is the single autonomous writer via JsonPlanTaskRepository.put_many; reconciled in-DB by dedup_key (augment). status flips to exported are owned by the export adapter (190.22.11).",
       "touched_by_flows": ["group-strategize-reconcile"]
     },
     {
@@ -57,7 +39,7 @@
       "path": "~/.ariadne/plan/sweeps/<sweep-id>.jsonl",
       "access": "write",
       "writer_owner": "plan",
-      "semantic_role": "append-only PlanSweepEvent log, one .jsonl per sweep (create/augment/supersede/combine/export). Written via PlanTaskRepository.append_sweep_event; the audit trail of each reconciliation decision.",
+      "semantic_role": "append-only PlanSweepEvent log, one .jsonl per sweep (create/augment/supersede/combine/export). Written via JsonPlanTaskRepository.append_sweep_event; the audit trail of each reconciliation decision.",
       "touched_by_flows": ["group-strategize-reconcile"]
     },
     {

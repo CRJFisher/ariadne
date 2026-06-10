@@ -5,7 +5,7 @@
  * Keeps the most recent N **finalized** runs (by lex-max run-id) plus any
  * still-active or abandoned runs. Published artifacts in
  * `analysis_output/<project>/triage_results/` are NEVER pruned — they're tiny
- * and load-bearing for diff_runs and the curator.
+ * and load-bearing for diff_runs and the plan skill.
  *
  * Usage:
  *   node --import tsx prune_runs.ts --project <name> [--keep <n>] [--dry-run]

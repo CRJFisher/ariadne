@@ -15,7 +15,7 @@
  *   - `plan_source_task` — the source `PlanTask.id`, for human traceability.
  */
 
-import type { PlanTask } from "@ariadnejs/skill-protocol";
+import type { PlanTask } from "../store/plan_task.js";
 
 /** Backlog priority stamped from the task's role: a core fix outranks interim classifier work. */
 export type BacklogPriority = "high" | "medium";

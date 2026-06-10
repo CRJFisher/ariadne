@@ -49,8 +49,8 @@ import type {
   PlanSweepEvent,
   PlanTask,
   PlanTaskId,
-  PlanTaskRepository,
-} from "@ariadnejs/skill-protocol";
+} from "../store/plan_task.js";
+import type { JsonPlanTaskRepository } from "../store/json_plan_task_repository.js";
 
 import { union_evidence } from "./build_plan_tasks.js";
 import { location_token } from "./compute_dedup_key.js";
@@ -114,7 +114,7 @@ function overlap_count(a: Set<string>, b: Set<string>): number {
  * Returns the written tasks and emitted events for assertion.
  */
 export async function reconcile_plan(
-  repo: PlanTaskRepository,
+  repo: JsonPlanTaskRepository,
   candidates: PlanTask[],
   sweep_id: string,
   options: ReconcileOptions,

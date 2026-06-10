@@ -13,7 +13,8 @@
  */
 
 import { derive_fault_area, type AriadneFaultArea } from "@ariadnejs/types";
-import type { NovelIssue, PlanTaskEvidence, RunId } from "@ariadnejs/skill-protocol";
+import type { NovelIssue, RunId } from "@ariadnejs/skill-protocol";
+import type { PlanTaskEvidence } from "../store/plan_task.js";
 
 import type { FaultAreaBucket } from "../types.js";
 import {

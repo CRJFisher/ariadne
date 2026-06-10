@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { parse_run_id, type PlanTaskEvidence } from "@ariadnejs/skill-protocol";
+import { parse_run_id } from "@ariadnejs/skill-protocol";
+import type { PlanTaskEvidence } from "../store/plan_task.js";
 
 import type { MembershipVerdict, StrategistPlan } from "../types.js";
 import { build_plan_tasks } from "./build_plan_tasks.js";

@@ -1,11 +1,8 @@
 import type {
   AriadneFaultArea,
 } from "@ariadnejs/types";
-import type {
-  PlanTaskEvidence,
-  PlanTaskTier,
-  RunId,
-} from "@ariadnejs/skill-protocol";
+import type { RunId } from "@ariadnejs/skill-protocol";
+import type { PlanTaskEvidence, PlanTaskTier } from "./store/plan_task.js";
 
 // ===== Triage results shape (read-only) =====
 //
@@ -28,20 +25,6 @@ export type {
   PublishedUncertain,
   TriageResultsFile,
 } from "@ariadnejs/skill-protocol";
-
-// ===== Known-issues registry shape (read-only) =====
-//
-// Canonical types live in `@ariadnejs/types`. Re-exported here so the impact
-// report (the kept registry-ranking substrate) imports its domain vocabulary
-// from one place. The plan engine reads the registry only as a dedup/grounding
-// signal — it never writes it.
-
-export type {
-  KnownIssue,
-  KnownIssueExample,
-  KnownIssueLanguage,
-  KnownIssueStatus,
-} from "@ariadnejs/types";
 
 // ===== Scan =====
 

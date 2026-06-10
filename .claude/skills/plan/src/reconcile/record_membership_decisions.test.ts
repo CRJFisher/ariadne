@@ -4,12 +4,9 @@ import * as path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import {
-  parse_run_id,
-  plan_sweeps_dir,
-  type NovelIssue,
-  type PlanTaskEvidence,
-} from "@ariadnejs/skill-protocol";
+import { parse_run_id, type NovelIssue } from "@ariadnejs/skill-protocol";
+import type { PlanTaskEvidence } from "../store/plan_task.js";
+import { plan_sweeps_dir } from "../store/paths.js";
 
 import type { MembershipVerdict, StrategistPlan, StrategistPlanNode } from "../types.js";
 import { group_fault_areas, type ParsedRun } from "../group/group_fault_areas.js";

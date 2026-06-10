@@ -6,7 +6,7 @@
  *     `confirmed_unreachable` / `uncertain` partitions.
  *   - Novel-issue diff: which `novel_issue.id`s are added / removed between runs.
  *   - Classifier-regression diff: which wip rule_ids picked up new flagged
- *     entries between runs (curator drift signal).
+ *     entries between runs (cross-run drift signal).
  *
  * Match key for entries: `(name, file_path_relative, kind, start_line)`
  * exactly, with `(name, file_path_relative, kind)` as a fuzzy fallback to

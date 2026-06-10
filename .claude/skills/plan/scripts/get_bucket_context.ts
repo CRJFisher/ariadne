@@ -114,8 +114,8 @@ async function main(): Promise<void> {
         `GROUNDED by reading the owning folder '${ARIADNE_FAULT_AREA_FOLDER[bucket.fault_area]}' with Read/Grep/Glob ` +
         "to judge what Ariadne already supports — not inferred from the fault pattern alone. Pair it with a " +
         "non-empty core_fix_effort_rationale. A taxonomy-extension or classifier-work node proposes no core fix, " +
-        "so it carries core_fix_effort 0 and an empty rationale. You assign no priority or status — a deterministic " +
-        "downstream ranker weighs effort against the observed_count/projects benefit signals.",
+        "so it carries core_fix_effort 0 and an empty rationale. You assign no priority or status — effort and the " +
+        "observed_count/projects benefit signals are weighed when the user exports work via export_to_backlog --priority.",
     },
   };
   process.stdout.write(JSON.stringify(out, null, 2) + "\n");

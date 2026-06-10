@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TASK-190.22.18 — Excision map</title>
+<style>
+:root{
+  --ivory:#faf6ef; --slate:#2e3338; --clay:#c06a4a; --olive:#7a8450; --oat:#e8dfd0; --rust:#a8442e;
+  --g1:#f1ece2; --g2:#d9d2c4; --g3:#a59c8d; --g4:#6e675c; --g5:#4a453d;
+  --serif:ui-serif,Georgia,'Times New Roman',serif;
+  --sans:system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ivory);color:var(--slate);font:16px/1.55 var(--sans)}
+main{width:90%;max-width:1600px;margin-inline:auto;padding:28px 0 80px}
+.prose{max-width:68ch}
+h1{font-family:var(--serif);font-size:2.1rem;line-height:1.15;margin:.2em 0 .3em}
+h2{font-family:var(--serif);font-size:1.45rem;margin:0 0 .4em}
+h3{font-size:1.02rem;margin:0 0 .35em}
+section{margin-top:56px;scroll-margin-top:120px}
+.eyebrow{font:600 .72rem var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--g4)}
+.chiprow{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.chip{font:500 .78rem var(--mono);background:var(--g1);border:1px solid var(--g2);border-radius:999px;padding:4px 12px}
+.chip strong{color:var(--clay)}
+nav.topnav{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g2);padding:9px 5%;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+nav.topnav .navlabel{font:600 .68rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--g4);margin-right:4px}
+nav.topnav a,nav.topnav span.here{font:500 .78rem var(--mono);border-radius:999px;padding:4px 12px;text-decoration:none}
+nav.topnav a{color:var(--slate);background:var(--g1);border:1px solid var(--g2)}
+nav.topnav a:hover{border-color:var(--clay);color:var(--clay)}
+nav.topnav span.here{background:var(--slate);color:var(--ivory)}
+nav.jumpnav{position:sticky;top:42px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g2);padding:8px 5%;display:flex;flex-wrap:wrap;gap:8px}
+nav.jumpnav a{display:inline-flex;align-items:center;gap:7px;font:500 .76rem var(--mono);color:var(--slate);text-decoration:none;background:var(--g1);border:1px solid var(--g2);border-radius:999px;padding:4px 12px}
+nav.jumpnav a:hover{border-color:var(--clay)}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.d-del{background:var(--rust)} .d-ren{background:var(--clay)} .d-mv{background:var(--olive)} .d-dec{background:#e8b84b}
+.callout{border-left:4px solid var(--clay);background:var(--g1);padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0}
+.callout.olive{border-color:var(--olive)} .callout.rust{border-color:var(--rust)} .callout.amber{border-color:#e8b84b}
+.callout .key{font:600 .7rem var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--g4);display:block;margin-bottom:4px}
+.callout p{margin:.4em 0 0;max-width:68ch}
+.prov{border:1px solid var(--g2);border-radius:10px;padding:14px 18px;background:var(--g1);margin:18px 0}
+.prov .key{font:600 .7rem var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--g4);display:block;margin-bottom:6px}
+.prov code{font:.78rem var(--mono);display:block;padding:1px 0;color:var(--g5)}
+.diagram{border:1px solid var(--g2);border-radius:12px;background:#fff;padding:14px;margin:16px 0}
+.diagram svg{width:100%;height:auto;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:18px;margin-top:10px;font:500 .74rem var(--mono);color:var(--g4)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend .box{width:15px;height:12px;border-radius:3px;border:1px solid var(--g2)}
+/* excision inventory */
+.inv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:16px 0}
+.exc{border:1px solid var(--g2);border-radius:12px;background:#fff;overflow:hidden;display:flex;flex-direction:column}
+.exc .hd{display:flex;align-items:center;gap:9px;padding:11px 15px;background:var(--g1);border-bottom:1px solid var(--g2)}
+.exc .hd .num{font:600 .74rem var(--mono);background:var(--slate);color:var(--ivory);border-radius:999px;padding:2px 9px;flex:none}
+.exc .hd h3{margin:0;font-size:.97rem;font-family:var(--serif)}
+.exc .hd .verb{margin-left:auto;font:600 .64rem var(--mono);letter-spacing:.07em;border-radius:999px;padding:2px 9px;text-transform:uppercase;white-space:nowrap}
+.v-del{background:#f2d9cf;color:var(--rust)} .v-ren{background:#f0e3d6;color:#8a4f33} .v-mv{background:#e3ead3;color:#56603a}
+.exc .bd{padding:12px 15px;display:flex;flex-direction:column;gap:9px;flex:1}
+.exc .gone, .exc .keep{font:.76rem/1.5 var(--mono);border-radius:0 6px 6px 0;padding:5px 11px}
+.exc .gone{background:rgba(168,68,46,.10);border-left:3px solid var(--rust)}
+.exc .gone .x{color:var(--rust);text-decoration:line-through;text-decoration-color:rgba(168,68,46,.6)}
+.exc .keep{background:rgba(122,132,80,.12);border-left:3px solid var(--olive);color:var(--g5)}
+.exc .keep b{color:#56603a}
+.exc .note{font-size:.84rem;margin:0;color:var(--g5)}
+.exc .loc{font:.72rem var(--mono);color:var(--g3)}
+/* rename map */
+.rmap{border:1px solid var(--g2);border-radius:12px;overflow:hidden;background:#fff}
+.rmap .row{display:grid;grid-template-columns:minmax(190px,1.5fr) minmax(200px,1.6fr) 90px;gap:0;border-top:1px solid var(--g1);align-items:center}
+.rmap .row.head{border-top:none;background:var(--g1);font:600 .68rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--g4)}
+.rmap .row.grp{border-top:2px solid var(--g2);background:#fbf7f0}
+.rmap .grp .cell:first-child{font:600 .72rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--g4)}
+.rmap .cell{padding:9px 14px;min-width:0;font:.78rem var(--mono);word-break:break-word}
+.rmap .from .o{color:var(--rust);text-decoration:line-through;text-decoration-color:rgba(168,68,46,.5)}
+.rmap .to .n{color:#56603a}
+.rmap .where{color:var(--g3);font-size:.72rem;text-align:right}
+.rmap .kind{font:600 .62rem var(--mono);letter-spacing:.05em;text-transform:uppercase;border-radius:999px;padding:1px 7px}
+.k-id{background:#dfe7e8;color:#3f6066} .k-prose{background:#f0e3d6;color:#8a4f33}
+.code{background:var(--slate);color:#e9e4da;border-radius:12px;margin:14px 0;overflow:hidden}
+.code .file-label{font:600 .7rem var(--mono);letter-spacing:.08em;color:var(--g3);background:#252a2e;padding:7px 16px;display:block}
+.code pre{margin:0;padding:14px 16px;font:.78rem/1.6 var(--mono);white-space:pre;overflow-x:auto}
+.code .add{display:inline-block;width:100%;background:rgba(122,132,80,.28)}
+.code .del{display:inline-block;width:100%;background:rgba(168,68,46,.30);text-decoration:line-through;text-decoration-color:rgba(233,228,218,.5)}
+.code .dim{color:var(--g3)}
+.code .kw{color:#c98a5e} .code .str{color:#a6b06a} .code .fn{color:#7fb0c0}
+/* decisions */
+.dgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:16px 0}
+.dcard{border:1px solid #e8b84b;border-radius:12px;background:#fffdf6;overflow:hidden;display:flex;flex-direction:column}
+.dcard .dh{padding:11px 15px;background:#fbf3dd;border-bottom:1px solid #ecd9a0;display:flex;align-items:center;gap:9px}
+.dcard .dh .q{font:600 .66rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#7a5c00;background:#fff5cc;border-radius:999px;padding:2px 9px}
+.dcard .dh h3{margin:0;font-size:.97rem;font-family:var(--serif)}
+.dcard .db{padding:13px 15px;display:flex;flex-direction:column;gap:10px}
+.opt{border:1px solid var(--g2);border-radius:9px;padding:9px 12px;background:#fff}
+.opt .ol{font:600 .72rem var(--mono);color:var(--g4);display:flex;justify-content:space-between;gap:8px;margin-bottom:3px}
+.opt .ol .lean{font:600 .62rem var(--mono);background:#e3ead3;color:#56603a;border-radius:999px;padding:1px 8px;letter-spacing:.05em}
+.opt p{margin:0;font-size:.82rem;color:var(--g5)}
+.acgrid{border:1px solid var(--g2);border-radius:12px;background:#fff;overflow:hidden;margin-top:8px}
+.acrow{display:grid;grid-template-columns:54px 1fr;gap:10px;align-items:start;padding:10px 16px;border-top:1px solid var(--g1)}
+.acrow:first-child{border-top:none}
+.acnum{font:600 .76rem var(--mono);color:var(--g4)}
+.acrow p{margin:0;font-size:.87rem}
+.acrow .gate{display:block;margin-top:4px;font:500 .73rem var(--mono);color:#8a4f33}
+footer{border-top:1px solid var(--g2);margin-top:60px;padding:18px 5%;font:.74rem var(--mono);color:var(--g4)}
+@media(max-width:880px){
+  .inv,.dgrid{grid-template-columns:1fr}
+  .rmap .row{grid-template-columns:1fr}
+  .rmap .row.head{display:none}
+  .rmap .where{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav" aria-label="Related documents">
+  <span class="navlabel">Epic 190.22</span>
+  <a href="task-190.22%20-%20Restructure-self-healing-pipeline-to-triage-→-plan-planning-only.overview.html">↑ Epic overview — triage → plan restructure</a>
+  <span class="here" aria-current="page">190.22.18 · excision map</span>
+</nav>
+
+<nav class="jumpnav" aria-label="Sections">
+  <a href="#propose"><span class="dot d-mv"></span>6 · propose/ dissolves</a>
+  <a href="#inventory"><span class="dot d-del"></span>What disappears</a>
+  <a href="#rename"><span class="dot d-ren"></span>4 · curator → sweep</a>
+  <a href="#types"><span class="dot d-dec"></span>3 · type relocation</a>
+  <a href="#decisions"><span class="dot d-dec"></span>Open decisions</a>
+  <a href="#verify"><span class="dot d-del"></span>Verify</a>
+</nav>
+
+<main>
+
+<header>
+  <span class="eyebrow">TASK-190.22.18 · self-repair · refactor · pure subtraction</span>
+  <h1>Excise vestigial machinery from the pipeline</h1>
+  <div class="chiprow">
+    <span class="chip">status <strong>To Do</strong></span>
+    <span class="chip">items <strong>6 excisions + 1 rename</strong></span>
+    <span class="chip">net new behavior <strong>0</strong></span>
+    <span class="chip">backwards compat <strong>none — just change the code</strong></span>
+  </div>
+</header>
+
+<div class="callout prose">
+  <span class="key">TL;DR</span>
+  Six pieces of code and prose are residue from a removed fix-delivery/curator design that still reads as live: a sweep-skip ledger that always returns the empty set, a pre-v4 migrator, a single-implementation repository interface, the curator vocabulary, two speculative-future paragraphs, and a <code>src/propose/</code> folder that matches no pipeline pass. Each item is pure subtraction. Two genuinely open decisions remain — where <code>impact_report.ts</code> lives and whether <code>render_unsupported_features.ts</code> survives.
+</div>
+
+<div class="prov">
+  <span class="key">Sources read</span>
+  <code>backlog/tasks/task-190.22.18 - Excise-vestigial-machinery-…md</code>
+  <code>.claude/skills/plan/src/store/{scan_runs,paths}.ts</code>
+  <code>.claude/skills/plan/src/propose/{validate_plan,render_task,impact_report}.ts</code>
+  <code>packages/skill-protocol/src/{plan_task_repository,plan_task}.ts</code>
+  <code>.claude/skills/triage/scripts/migrate_legacy_state.ts · grep: import-callers verified 2026-06-10</code>
+</div>
+
+<!-- ============ ITEM 6 — propose dissolution (lead visual) ============ -->
+<section id="propose">
+  <h2>Item 6 — <code>src/propose/</code> dissolves into the named passes</h2>
+  <p class="prose">The plan pipeline has three named passes: <code>group/</code> → (strategize) → <code>reconcile/</code> → <code>export/</code>. <code>propose/</code> names none of them. Its four files each have an honest home, decided by who imports them (verified by grep).</p>
+  <div class="diagram">
+    <svg viewBox="0 0 1200 470" role="img" aria-label="Before: the propose folder holds four files. After: validate_plan and render_task move into reconcile, impact_report moves to its own impact_report module, and the propose folder no longer exists. The pass spine group, strategize, reconcile, export is unchanged.">
+      <defs>
+        <marker id="ah-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2e3338"/></marker>
+        <marker id="ah-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7a8450"/></marker>
+      </defs>
+
+      <!-- column titles -->
+      <text x="290" y="28" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="13" font-weight="600" letter-spacing="1.5" fill="#6e675c">CURRENT</text>
+      <text x="910" y="28" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="13" font-weight="600" letter-spacing="1.5" fill="#6e675c">PLANNED</text>
+      <line x1="600" y1="44" x2="600" y2="450" stroke="#d9d2c4" stroke-width="1.5"/>
+      <text x="600" y="250" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="22" fill="#c06a4a">&#8594;</text>
+
+      <!-- CURRENT: propose folder with 4 files -->
+      <rect x="120" y="60" width="340" height="200" rx="12" fill="#fbf0eb" stroke="#a8442e" stroke-width="1.5" stroke-dasharray="6 5"/>
+      <text x="290" y="84" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="13" font-weight="600" fill="#a8442e">src/propose/</text>
+      <text x="290" y="100" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10.5" fill="#a59c8d">matches no pass</text>
+
+      <rect x="142" y="112" width="296" height="30" rx="7" fill="#fff" stroke="#d9d2c4" stroke-width="1"/>
+      <text x="156" y="131" font-family="ui-monospace,Menlo,monospace" font-size="11.5" fill="#2e3338">validate_plan.ts</text>
+      <text x="424" y="131" text-anchor="end" font-family="system-ui,sans-serif" font-size="9.5" fill="#a59c8d">gates reconcile</text>
+
+      <rect x="142" y="148" width="296" height="30" rx="7" fill="#fff" stroke="#d9d2c4" stroke-width="1"/>
+      <text x="156" y="167" font-family="ui-monospace,Menlo,monospace" font-size="11.5" fill="#2e3338">render_task.ts</text>
+      <text x="424" y="167" text-anchor="end" font-family="system-ui,sans-serif" font-size="9.5" fill="#a59c8d">reconcile feedstock</text>
+
+      <rect x="142" y="184" width="296" height="30" rx="7" fill="#fff" stroke="#d9d2c4" stroke-width="1"/>
+      <text x="156" y="203" font-family="ui-monospace,Menlo,monospace" font-size="11.5" fill="#2e3338">impact_report.ts</text>
+      <text x="424" y="203" text-anchor="end" font-family="system-ui,sans-serif" font-size="9.5" fill="#a59c8d">registry tooling</text>
+
+      <rect x="142" y="220" width="296" height="30" rx="7" fill="#fbf7f0" stroke="#e8b84b" stroke-width="1"/>
+      <text x="156" y="239" font-family="ui-monospace,Menlo,monospace" font-size="11.5" fill="#7a5c00">render_unsupported_features.ts</text>
+      <text x="424" y="239" text-anchor="end" font-family="system-ui,sans-serif" font-size="9.5" fill="#7a5c00">in scripts/ — open</text>
+
+      <!-- PLANNED spine -->
+      <text x="910" y="68" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="11" letter-spacing="1" fill="#6e675c">pipeline passes (unchanged)</text>
+      <rect x="660" y="84" width="118" height="40" rx="9" fill="#f1ece2" stroke="#d9d2c4" stroke-width="1.5"/>
+      <text x="719" y="109" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#2e3338">group/</text>
+      <text x="800" y="109" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" fill="#a59c8d">&#8594;</text>
+      <rect x="816" y="84" width="118" height="40" rx="9" fill="#f1ece2" stroke="#d9d2c4" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <text x="875" y="109" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#6e675c">strategize</text>
+      <text x="956" y="109" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" fill="#a59c8d">&#8594;</text>
+      <rect x="972" y="84" width="118" height="40" rx="9" fill="#e3ead3" stroke="#7a8450" stroke-width="1.8"/>
+      <text x="1031" y="109" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="12" font-weight="600" fill="#56603a">reconcile/</text>
+
+      <!-- export under reconcile -->
+      <rect x="972" y="138" width="118" height="36" rx="9" fill="#f1ece2" stroke="#d9d2c4" stroke-width="1.5"/>
+      <text x="1031" y="161" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#2e3338">export/</text>
+      <line x1="1031" y1="124" x2="1031" y2="138" stroke="#2e3338" stroke-width="1.5" marker-end="url(#ah-s)"/>
+
+      <!-- validate_plan + render_task land in reconcile -->
+      <rect x="700" y="200" width="390" height="84" rx="11" fill="#fff" stroke="#7a8450" stroke-width="1.5"/>
+      <text x="716" y="222" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="600" fill="#56603a">into reconcile/</text>
+      <rect x="716" y="232" width="358" height="22" rx="6" fill="#e3ead3"/>
+      <text x="726" y="247" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#56603a">validate_plan.ts  + .test.ts</text>
+      <rect x="716" y="256" width="358" height="22" rx="6" fill="#e3ead3"/>
+      <text x="726" y="271" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#56603a">render_task.ts  + .test.ts</text>
+      <path d="M438 157 C 560 157, 600 240, 700 242" fill="none" stroke="#7a8450" stroke-width="1.8" marker-end="url(#ah-o)"/>
+
+      <!-- impact_report own module -->
+      <rect x="700" y="312" width="390" height="56" rx="11" fill="#fff" stroke="#7a8450" stroke-width="1.5"/>
+      <text x="716" y="334" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="600" fill="#56603a">into src/impact_report/  (own module)</text>
+      <text x="716" y="354" font-family="system-ui,sans-serif" font-size="10.5" fill="#6e675c">+ .test.ts + __fixtures__/ — standalone registry tooling</text>
+      <path d="M438 199 C 580 300, 620 338, 700 340" fill="none" stroke="#7a8450" stroke-width="1.8" marker-end="url(#ah-o)"/>
+
+      <!-- render_unsupported open -->
+      <rect x="700" y="396" width="390" height="56" rx="11" fill="#fffdf6" stroke="#e8b84b" stroke-width="1.5" stroke-dasharray="6 4"/>
+      <text x="716" y="418" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="600" fill="#7a5c00">render_unsupported_features.ts — DECISION B</text>
+      <text x="716" y="438" font-family="system-ui,sans-serif" font-size="10.5" fill="#7a5c00">only caller is its own test · generator-of-record for committed core docs</text>
+      <path d="M438 235 C 600 420, 640 424, 700 424" fill="none" stroke="#e8b84b" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#ah-o)"/>
+    </svg>
+    <div class="legend">
+      <span><span class="box" style="background:#fbf0eb;border-color:#a8442e"></span>folder removed</span>
+      <span><span class="box" style="background:#e3ead3;border-color:#7a8450"></span>moved (git mv — history preserved)</span>
+      <span><span class="box" style="background:#fffdf6;border-color:#e8b84b"></span>open decision</span>
+    </div>
+  </div>
+  <p class="prose"><code>validate_plan</code> and <code>render_task</code> are imported only by <code>reconcile/</code> (and <code>render_task</code> also by <code>export/render_backlog_task.ts</code>, downstream of reconcile) — both land in <code>reconcile/</code>. <code>impact_report</code> is imported only by its generator script, so it earns its own module.</p>
+</section>
+
+<!-- ============ EXCISION INVENTORY ============ -->
+<section id="inventory">
+  <h2>What disappears entirely</h2>
+  <p class="prose">Five subtractions. Each card lists what is struck out and — where a real mechanism or data shape survives — what stays.</p>
+  <div class="inv">
+
+    <article class="exc">
+      <div class="hd"><span class="num">1</span><h3>Dead sweep-skip ledger</h3><span class="verb v-del">delete</span></div>
+      <div class="bd">
+        <div class="gone"><span class="x">list_curated_run_ids()</span> · <span class="x">CURATOR_RUNS_DIR</span> · the <span class="x">if (curated.has(run_id)) continue</span> skip branch</div>
+        <p class="note">It scans <code>~/.ariadne/triage-curator/runs</code> for <code>finalized.json</code> markers — but nothing writes them and the directory does not exist, so it always returns the empty set and never skips a run.</p>
+        <div class="keep">Real idempotency stays: reconcile-by-<b>dedup_key</b></div>
+        <span class="loc">plan/src/store/scan_runs.ts · paths.ts</span>
+      </div>
+    </article>
+
+    <article class="exc">
+      <div class="hd"><span class="num">2</span><h3>Legacy migrator</h3><span class="verb v-del">delete</span></div>
+      <div class="bd">
+        <div class="gone"><span class="x">scripts/migrate_legacy_state.ts</span> (whole file) · <span class="x">warn_about_legacy_state()</span> + its call</div>
+        <p class="note">Migrates a pre-v4 flat layout and references a removed "aggregation cascade". No run produces that layout anymore.</p>
+        <div class="keep">Also strike: 2 <b>triage/SKILL.md</b> sections (the migrate-from-pre-namespaced section + the "Migrate" persisted-state row)</div>
+        <span class="loc">triage/scripts/ · prepare_triage.ts :152–167, 234</span>
+      </div>
+    </article>
+
+    <article class="exc">
+      <div class="hd"><span class="num">3</span><h3>Single-impl repository interface</h3><span class="verb v-del">collapse</span></div>
+      <div class="bd">
+        <div class="gone"><span class="x">interface PlanTaskRepository</span> — the hypothetical "SQLite/vector drop-in" seam</div>
+        <p class="note">The only implementation is <code>JsonPlanTaskRepository</code>; tests isolate via <code>ARIADNE_PLAN_DIR_OVERRIDE</code>, not fake repos. ~8 callers type against the concrete store instead.</p>
+        <div class="keep">Survive: <b>PlanTaskQuery</b> + <b>PlanSweepEvent</b> (real data shapes — they need a new home)</div>
+        <span class="loc">skill-protocol/src/plan_task_repository.ts</span>
+      </div>
+    </article>
+
+    <article class="exc">
+      <div class="hd"><span class="num">5</span><h3>Speculative-future prose</h3><span class="verb v-del">delete</span></div>
+      <div class="bd">
+        <div class="gone"><span class="x">"swappable adapter seam"</span> para (export_to_linear / export_to_github_issues) · <span class="x">"downstream ranker"</span> hypotheticals</div>
+        <p class="note">Frames adapters and consumers that do not exist. The plan skill exports to backlog only.</p>
+        <div class="keep">Trim the ranker prose to the one sentence true today — the <b>fields stay</b> (<code>prioritize --priority</code> uses them)</div>
+        <span class="loc">plan/SKILL.md ~177–184 · skill-protocol/src/plan_task.ts ~205–211</span>
+      </div>
+    </article>
+
+    <article class="exc" style="grid-column:1/-1">
+      <div class="hd"><span class="num">6</span><h3>The <code>src/propose/</code> folder name</h3><span class="verb v-mv">move (git mv)</span></div>
+      <div class="bd">
+        <div class="gone">The folder <span class="x">src/propose/</span> — a name that maps to no pipeline pass</div>
+        <p class="note">Contents fan out to honest homes (diagram above): <code>validate_plan</code> + <code>render_task</code> → <code>reconcile/</code>; <code>impact_report</code> → its own <code>src/impact_report/</code> module. <code>git mv</code> preserves history (AC#5).</p>
+        <div class="keep">Every move verified by import-grep — no caller is left dangling</div>
+        <span class="loc">plan/src/propose/{validate_plan,render_task,impact_report}.ts (+tests, __fixtures__/)</span>
+      </div>
+    </article>
+
+  </div>
+
+  <div class="code">
+    <span class="file-label">plan/src/store/scan_runs.ts — item 1, the always-empty skip collapses</span>
+<pre><span class="del">export async function <span class="fn">list_curated_run_ids</span>(runs_dir = CURATOR_RUNS_DIR): Promise&lt;Set&lt;string&gt;&gt; {</span>
+<span class="del">  // scans ~/.ariadne/triage-curator/runs for finalized.json / finalize_started.json</span>
+<span class="del">  // … the dir never exists; this always returns the empty set</span>
+<span class="del">}</span>
+<span class="dim">// filter_uncurated  →  filter_unswept   (item 4 rename)</span>
+export function <span class="fn">filter_unswept</span>(discovered, opts) {
+  <span class="kw">for</span> (<span class="kw">const</span> run <span class="kw">of</span> discovered) {
+    <span class="kw">if</span> (opts.project !== <span class="kw">null</span> &amp;&amp; run.project !== opts.project) <span class="kw">continue</span>;
+<span class="del">    if (curated.has(run.run_id)) continue;   // never true — delete</span>
+    items.push(run);
+  }
+}</pre>
+  </div>
+</section>
+
+<!-- ============ ITEM 4 — RENAME MAP ============ -->
+<section id="rename">
+  <h2>Item 4 — curator vocabulary &#8594; sweep vocabulary</h2>
+  <p class="prose">Every site where the removed "curator" still reads as live. Scope boundary (AC#1): grep-clean under <code>.claude/skills/</code> and <code>packages/skill-*</code> only — <code>packages/types</code> is out of scope.</p>
+  <div class="rmap">
+    <div class="row head"><div class="cell">Was</div><div class="cell">Becomes</div><div class="cell where">kind</div></div>
+
+    <div class="row grp"><div class="cell">Identifiers</div><div class="cell"></div><div class="cell"></div></div>
+    <div class="row"><div class="cell from"><span class="o">filter_uncurated</span></div><div class="cell to"><span class="n">filter_unswept</span></div><div class="cell where"><span class="kind k-id">id</span><br>scan_runs.ts</div></div>
+    <div class="row"><div class="cell from"><span class="o">list_curated_run_ids</span></div><div class="cell to"><span class="n">(deleted — item 1)</span></div><div class="cell where"><span class="kind k-id">id</span><br>scan_runs.ts</div></div>
+    <div class="row"><div class="cell from"><span class="o">CURATOR_RUNS_DIR</span></div><div class="cell to"><span class="n">(deleted — item 1)</span></div><div class="cell where"><span class="kind k-id">id</span><br>paths.ts</div></div>
+    <div class="row"><div class="cell from"><span class="o">validate_optional_curator_fields</span></div><div class="cell to"><span class="n">validate_optional_sweep_fields</span></div><div class="cell where"><span class="kind k-id">id</span><br>known_issues_registry.ts</div></div>
+
+    <div class="row grp"><div class="cell">Prose &amp; comments</div><div class="cell"></div><div class="cell"></div></div>
+    <div class="row"><div class="cell from"><span class="o">"the curator depends on it"</span></div><div class="cell to"><span class="n">the plan skill depends on it</span></div><div class="cell where"><span class="kind k-prose">prose</span><br>triage/SKILL.md :243</div></div>
+    <div class="row"><div class="cell from"><span class="o">"shared with the curator"</span></div><div class="cell to"><span class="n">used only by triage's finalize</span></div><div class="cell where"><span class="kind k-prose">prose</span><br>triage/SKILL.md :371</div></div>
+    <div class="row"><div class="cell from"><span class="o">"The downstream curator consumes…"</span></div><div class="cell to"><span class="n">consumer reworded</span></div><div class="cell where"><span class="kind k-prose">prose</span><br>skill-fs/classifier_regressions.ts (header)</div></div>
+    <div class="row"><div class="cell from"><span class="o">"the curator's surface"</span></div><div class="cell to"><span class="n">the human's surface</span></div><div class="cell where"><span class="kind k-prose">prose</span><br>triage-investigator.md :94–95</div></div>
+    <div class="row"><div class="cell from"><span class="o">"so curators don't need to count"</span></div><div class="cell to"><span class="n">reworded</span></div><div class="cell where"><span class="kind k-prose">comment</span><br>known_issues_registry.ts ~158</div></div>
+    <div class="row"><div class="cell from"><span class="o">"lose curator candidates"</span></div><div class="cell to"><span class="n">reworded</span></div><div class="cell where"><span class="kind k-prose">comment</span><br>detect_entrypoints.ts :459</div></div>
+    <div class="row"><div class="cell from"><span class="o">curator comment</span></div><div class="cell to"><span class="n">reworded ×4</span></div><div class="cell where"><span class="kind k-prose">comment</span><br>prune_runs.ts :8 · finalize_triage.ts :81 · prepare_triage.ts :243 · diff_runs.ts :9</div></div>
+  </div>
+  <div class="callout olive prose">
+    <span class="key">Acceptance check (AC#1)</span>
+    After the sweep, grep under <code>.claude/skills/</code> and <code>packages/skill-*</code> for <code>curator</code>, <code>CURATOR_RUNS_DIR</code>, <code>triage-curator</code>, <code>finalized.json</code>/<code>finalize_started.json</code>, and <code>migrate_legacy_state</code> returns nothing (apart from git history and archived backlog docs).
+  </div>
+</section>
+
+<!-- ============ ITEM 3 — TYPE RELOCATION DECISION ============ -->
+<section id="types">
+  <h2>Item 3 — should <code>plan_task*</code> types leave the shared package?</h2>
+  <p class="prose">Deleting the interface leaves <code>PlanTaskQuery</code> and <code>PlanSweepEvent</code> homeless. The deeper question: <code>@ariadnejs/skill-protocol</code> is the triage&#8596;plan <em>shared</em> contract — but triage never imports <code>plan_task*</code> (grep-confirmed: zero hits under <code>.claude/skills/triage/</code>). So the plan-task types are not actually shared.</p>
+  <div class="diagram">
+    <svg viewBox="0 0 1200 250" role="img" aria-label="skill-protocol holds the shared seam imported by both triage and plan, but the plan_task types within it are imported only by plan, never by triage, so they belong in the plan skill.">
+      <defs><marker id="ah-s2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2e3338"/></marker>
+      <marker id="ah-r2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#a8442e"/></marker></defs>
+
+      <rect x="40" y="56" width="150" height="56" rx="10" fill="#fff" stroke="#2e3338" stroke-width="2"/>
+      <text x="115" y="82" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="17" font-weight="600" fill="#2e3338">triage</text>
+      <text x="115" y="100" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10.5" fill="#6e675c">never touches PlanTask</text>
+
+      <rect x="40" y="150" width="150" height="56" rx="10" fill="#fff" stroke="#2e3338" stroke-width="2"/>
+      <text x="115" y="176" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="17" font-weight="600" fill="#2e3338">plan</text>
+      <text x="115" y="194" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10.5" fill="#6e675c">sole PlanTask consumer</text>
+
+      <!-- skill-protocol box -->
+      <rect x="430" y="40" width="380" height="178" rx="12" fill="#e8dfd0" stroke="#d9d2c4" stroke-width="1.5"/>
+      <text x="620" y="64" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="12.5" font-weight="600" fill="#2e3338">@ariadnejs/skill-protocol</text>
+      <text x="620" y="80" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#6e675c">the triage &#8596; plan shared seam</text>
+
+      <rect x="452" y="92" width="336" height="44" rx="8" fill="#fff" stroke="#7a8450" stroke-width="1.5"/>
+      <text x="620" y="111" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#56603a">run-id · paths · triage_results · schema_version</text>
+      <text x="620" y="127" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9.5" fill="#6e675c">genuinely shared — stays</text>
+
+      <rect x="452" y="148" width="336" height="50" rx="8" fill="#fbf0eb" stroke="#a8442e" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <text x="620" y="168" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#a8442e">plan_task · plan_task_repository (PlanTaskQuery, PlanSweepEvent)</text>
+      <text x="620" y="185" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9.5" fill="#6e675c">imported by plan only — candidate to move out</text>
+
+      <!-- both import shared -->
+      <line x1="190" y1="84" x2="450" y2="110" stroke="#2e3338" stroke-width="1.6" marker-end="url(#ah-s2)"/>
+      <line x1="190" y1="178" x2="450" y2="116" stroke="#2e3338" stroke-width="1.6" marker-end="url(#ah-s2)"/>
+      <!-- only plan imports plan_task -->
+      <line x1="190" y1="184" x2="450" y2="173" stroke="#a8442e" stroke-width="1.8" marker-end="url(#ah-r2)"/>
+
+      <!-- target -->
+      <rect x="900" y="148" width="260" height="50" rx="10" fill="#fff" stroke="#7a8450" stroke-width="1.5"/>
+      <text x="1030" y="170" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="600" fill="#56603a">plan/src/store/types.ts</text>
+      <text x="1030" y="187" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9.5" fill="#6e675c">proposed new home</text>
+      <path d="M788 173 C 850 173, 860 173, 900 173" fill="none" stroke="#7a8450" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#ah-r2)"/>
+    </svg>
+    <div class="legend">
+      <span><span class="box" style="background:#fff;border-color:#2e3338"></span>shared import</span>
+      <span><span class="box" style="background:#fbf0eb;border-color:#a8442e"></span>plan-only — not shared</span>
+      <span><span class="box" style="background:#fff;border-color:#7a8450"></span>proposed home</span>
+    </div>
+  </div>
+  <div class="callout amber prose">
+    <span class="key">Decision A — recommended: move</span>
+    Keeping <code>plan_task*</code> in the shared package implies a seam that does not exist. Moving them into the plan skill makes <code>skill-protocol</code> hold <em>only</em> what triage and plan genuinely share, and gives the surviving <code>PlanTaskQuery</code>/<code>PlanSweepEvent</code> their home. The lighter alternative — leave them in <code>skill-protocol</code>, just delete the interface — is the smaller diff but leaves the "shared" lie in place.
+  </div>
+</section>
+
+<!-- ============ OPEN DECISIONS ============ -->
+<section id="decisions">
+  <h2>The two genuinely open decisions</h2>
+  <p class="prose">Everything above has a recommended path. These two need your call before the moves land.</p>
+  <div class="dgrid">
+
+    <article class="dcard">
+      <div class="dh"><span class="q">Decision A</span><h3><code>impact_report.ts</code> — which home?</h3></div>
+      <div class="db">
+        <p style="margin:0;font-size:.85rem;color:var(--g5)">Imported only by <code>scripts/generate_impact_report.ts</code> (grep-confirmed). It is not pipeline-pass code — it is standalone registry tooling that happened to sit in <code>propose/</code>.</p>
+        <div class="opt"><div class="ol"><span>Own module — <code>src/impact_report/</code></span><span class="lean">lean</span></div><p>Honest, self-naming home matching its single concern; carries its <code>__fixtures__/</code> with it.</p></div>
+        <div class="opt"><div class="ol"><span>Beside its script — <code>scripts/</code></span></div><p>Co-locates with the only caller, but mixes library code into a scripts folder.</p></div>
+      </div>
+    </article>
+
+    <article class="dcard">
+      <div class="dh"><span class="q">Decision B</span><h3><code>render_unsupported_features.ts</code> — stay or go?</h3></div>
+      <div class="db">
+        <p style="margin:0;font-size:.85rem;color:var(--g5)">Its only importer is its own <code>.test.ts</code>. But it is the <em>generator-of-record</em> for committed core docs (<code>packages/core/…/queries/unsupported_features.{lang}.md</code>, which exist on disk). No SKILL.md references it.</p>
+        <div class="opt"><div class="ol"><span>Keep — relocate to core tooling</span><span class="lean">lean</span></div><p>It regenerates committed core artifacts, so it belongs near <code>packages/core</code>, not in the plan skill. Deleting it orphans the generator of files still in the tree.</p></div>
+        <div class="opt"><div class="ol"><span>Delete</span></div><p>Defensible only if the core docs are now hand-maintained — which makes the committed <code>.md</code> files the source of truth. Needs confirmation they are no longer regenerated.</p></div>
+      </div>
+    </article>
+
+  </div>
+  <div class="callout rust prose">
+    <span class="key">Why these two are open</span>
+    Both are standalone tooling with exactly one caller — so the import graph alone does not dictate a home, and the right answer turns on intent (is the artifact still regenerated?) rather than on a dangling reference. The other five items are mechanical: grep proves the code is dead or the move is safe.
+  </div>
+</section>
+
+<!-- ============ VERIFY ============ -->
+<section id="verify">
+  <h2>Verify — the task's acceptance criteria</h2>
+  <div class="acgrid">
+    <div class="acrow"><span class="acnum">#1</span><p>No code or doc under <code>.claude/skills/</code> or <code>packages/skill-*</code> references curator vocabulary, <code>CURATOR_RUNS_DIR</code>, the <code>triage-curator</code> namespace, the <code>finalized.json</code>/<code>finalize_started.json</code> markers, or <code>migrate_legacy_state</code><span class="gate">grep-clean apart from git history + archived backlog · packages/types out of scope</span></p></div>
+    <div class="acrow"><span class="acnum">#2</span><p><code>PlanTaskRepository</code> no longer exists; all callers type against the concrete JSON store; <code>PlanTaskQuery</code> and <code>PlanSweepEvent</code> survive</p></div>
+    <div class="acrow"><span class="acnum">#3</span><p><code>plan/SKILL.md</code> and <code>skill-protocol/src/plan_task.ts</code> contain no speculative multi-target adapter or downstream-ranker prose</p></div>
+    <div class="acrow"><span class="acnum">#4</span><p><code>src/propose/</code> no longer exists as a folder that matches no pass; <code>validate_plan</code> lives with the pass it gates; <code>render_unsupported_features</code> has a verified caller and honest home, or is deleted<span class="gate">resolved by Decisions A &amp; B above</span></p></div>
+    <div class="acrow"><span class="acnum">#5</span><p>All four test suites (triage, plan, skill-fs, skill-protocol) pass; file moves preserve history via <code>git mv</code></p></div>
+  </div>
+</section>
+
+</main>
+<footer>Generated 2026-06-10 from the task doc + verified source (scan_runs.ts, propose/, plan_task_repository.ts) and import-grep · branch feat/self-healing-pipeline-debug</footer>
+</body>
+</html>

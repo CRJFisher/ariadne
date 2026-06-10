@@ -19,14 +19,14 @@ import * as path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import type { RunId } from "@ariadnejs/skill-protocol";
 import {
   PLAN_TASK_SCHEMA_VERSION,
-  plan_sweeps_dir,
   type PlanSweepEvent,
   type PlanTask,
   type PlanTaskId,
-  type RunId,
-} from "@ariadnejs/skill-protocol";
+} from "../src/store/plan_task.js";
+import { plan_sweeps_dir } from "../src/store/paths.js";
 
 import { read_exported_backlog_keys } from "../src/store/backlog_dedup.js";
 import { JsonPlanTaskRepository } from "../src/store/json_plan_task_repository.js";

@@ -76,9 +76,9 @@ message so they run in parallel):
 
 > Design the hierarchical fix plan for fault-area bucket `<fault_area>` in sweep
 > `<sweep_id>`. Hydrate with `node --import tsx
-> .claude/skills/plan/scripts/get_bucket_context.ts --bucket <bucket_path>
-> --sweep <sweep_id>`. Run the validator (`scripts/validate_plan.ts --plan
-> <output_path> --bucket <bucket_path> --sweep-id <sweep_id>`) against your draft until it returns
+.claude/skills/plan/scripts/get_bucket_context.ts --bucket <bucket_path>
+--sweep <sweep_id>`. Run the validator (`scripts/validate_plan.ts --plan
+<output_path> --bucket <bucket_path> --sweep-id <sweep_id>`) against your draft until it returns
 > clean, then write the final `StrategistPlan` JSON to `<output_path>`
 > (`~/.ariadne/plan/staging/<sweep_id>/plans/<fault_area>.json`). First emit a
 > total per-member `membership` review (one verdict per evidence index; mark a
@@ -170,33 +170,11 @@ and one `export` `PlanSweepEvent` is logged. **Idempotent:** a row already
 `exported`, or whose `dedup_key` a backlog task already carries, is skipped, so a
 re-run is a no-op.
 
-**Swappable adapter seam.** The export adapter is a thin, replaceable bridge: a
-second target (`export_to_linear.ts`, `export_to_github_issues.ts`) re-implements
-only **mint-id + render + write** against its tracker and reuses the shared
-**select → flip `proposed → exported` → log `export` event** pipeline. The
-verbatim `PlanTask.dedup_key`, persisted into a target-side dedup field, is the
-fixed idempotency contract every target honors. The full interface lives in the
-`export_to_backlog.ts` header.
-
-## Impact reporting (on demand)
-
-Generate a human-readable ranking of the known-issues registry by observed
-impact. Not part of the sweep — invoked separately when the user wants a
-snapshot.
-
-```bash
-node --import tsx .claude/skills/plan/scripts/generate_impact_report.ts \
-  [--top-n 20] [--prior <json>] [--out <md>] [--snapshot <json>]
-```
-
-The report prints to stdout (and optionally `--out`) for the user to read; the
-pipeline never writes it into `backlog/`.
-
 ## State
 
 `triage-entrypoints` is the fixed on-disk namespace for triage's published
-output; `~/.ariadne/plan/` is the plan engine's task-DB (defined in
-`@ariadnejs/skill-protocol`). Both are overridable for tests
+output; `~/.ariadne/plan/` is the plan engine's task-DB (defined in the plan
+skill's `src/store/paths.ts`). Both are overridable for tests
 (`ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE`, `ARIADNE_PLAN_DIR_OVERRIDE`).
 
 - **Input (read-only):** `~/.ariadne/triage-entrypoints/analysis_output/<project>/triage_results/<run-id>.json`

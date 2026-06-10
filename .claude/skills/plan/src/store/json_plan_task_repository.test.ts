@@ -6,12 +6,11 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
   PLAN_TASK_SCHEMA_VERSION,
-  plan_sweeps_dir,
-  plan_tasks_dir,
   type PlanSweepEvent,
   type PlanTask,
   type PlanTaskId,
-} from "@ariadnejs/skill-protocol";
+} from "./plan_task.js";
+import { plan_sweeps_dir, plan_tasks_dir } from "./paths.js";
 import type { RunId } from "@ariadnejs/skill-protocol";
 
 import { JsonPlanTaskRepository } from "./json_plan_task_repository.js";

@@ -6,7 +6,12 @@ import {
   backlog_root_dir,
   backlog_tasks_dir,
   get_repo_root,
+  plan_dir,
+  plan_membership_overrides_path,
   plan_staging_manifest_path,
+  plan_sweeps_dir,
+  plan_task_path,
+  plan_tasks_dir,
 } from "./paths.js";
 
 let saved_plan_override: string | undefined;
@@ -22,6 +27,35 @@ afterEach(() => {
   else process.env.ARIADNE_PLAN_DIR_OVERRIDE = saved_plan_override;
   if (saved_backlog_override === undefined) delete process.env.ARIADNE_BACKLOG_DIR_OVERRIDE;
   else process.env.ARIADNE_BACKLOG_DIR_OVERRIDE = saved_backlog_override;
+});
+
+describe("plan task-DB paths", () => {
+  it("plan_dir honors ARIADNE_PLAN_DIR_OVERRIDE, read lazily", () => {
+    process.env.ARIADNE_PLAN_DIR_OVERRIDE = "/tmp/plan-root";
+    expect(plan_dir()).toEqual("/tmp/plan-root");
+  });
+
+  it("plan_tasks_dir composes <plan-dir>/tasks", () => {
+    process.env.ARIADNE_PLAN_DIR_OVERRIDE = "/tmp/plan-root";
+    expect(plan_tasks_dir()).toEqual("/tmp/plan-root/tasks");
+  });
+
+  it("plan_sweeps_dir composes <plan-dir>/sweeps", () => {
+    process.env.ARIADNE_PLAN_DIR_OVERRIDE = "/tmp/plan-root";
+    expect(plan_sweeps_dir()).toEqual("/tmp/plan-root/sweeps");
+  });
+
+  it("plan_task_path names <plan-dir>/tasks/<id>.json", () => {
+    process.env.ARIADNE_PLAN_DIR_OVERRIDE = "/tmp/plan-root";
+    expect(plan_task_path("01HXYZ-abc")).toEqual("/tmp/plan-root/tasks/01HXYZ-abc.json");
+  });
+
+  it("plan_membership_overrides_path names <plan-dir>/membership_overrides.json", () => {
+    process.env.ARIADNE_PLAN_DIR_OVERRIDE = "/tmp/plan-root";
+    expect(plan_membership_overrides_path()).toEqual(
+      "/tmp/plan-root/membership_overrides.json",
+    );
+  });
 });
 
 describe("plan_staging_manifest_path", () => {

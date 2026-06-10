@@ -20,10 +20,10 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
 import { error_code } from "@ariadnejs/skill-fs";
-import type { PlanTask } from "@ariadnejs/skill-protocol";
+import type { PlanTask } from "../store/plan_task.js";
 import type { AriadneFaultArea } from "@ariadnejs/types";
 
-import { validate_plan } from "../propose/validate_plan.js";
+import { validate_plan } from "./validate_plan.js";
 import type { MembershipExclusion } from "../store/membership_override.js";
 import { plan_staging_buckets_dir, plan_staging_plans_dir } from "../store/paths.js";
 import type { FaultAreaBucket, StrategistPlan } from "../types.js";

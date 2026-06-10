@@ -7,7 +7,6 @@ import {
   is_run_id,
   parse_triage_results_path,
 } from "@ariadnejs/skill-protocol";
-import { CURATOR_RUNS_DIR } from "./paths.js";
 import type { ScanOptions, ScanResultItem } from "../types.js";
 
 /**
@@ -54,50 +53,18 @@ export async function discover_runs(
 }
 
 /**
- * Return the set of run_ids that have been curated, where "curated" means
- * either a completed `finalized.json` sentinel or a `finalize_started.json`
- * in-progress marker. Either signal means a re-curation would double-bump
- * `observed_count` — they share the skip semantics.
+ * Pure: given discovered runs, return those a sweep should process, honouring
+ * the --project and --last filters. Idempotency is not a concern here — the
+ * reconcile pass dedups by `dedup_key`, so re-feeding an already-swept run
+ * augments its task rather than duplicating work.
  */
-export async function list_curated_run_ids(
-  runs_dir: string = CURATOR_RUNS_DIR,
-): Promise<Set<string>> {
-  const out = new Set<string>();
-  let entries: string[];
-  try {
-    entries = await fs.readdir(runs_dir);
-  } catch (err) {
-    if (error_code(err) === "ENOENT") return out;
-    throw err;
-  }
-  for (const run_id of entries) {
-    for (const marker of ["finalized.json", "finalize_started.json"]) {
-      try {
-        await fs.access(path.join(runs_dir, run_id, marker));
-        out.add(run_id);
-        break;
-      } catch (err) {
-        if (error_code(err) === "ENOENT") continue;
-        throw err;
-      }
-    }
-  }
-  return out;
-}
-
-/**
- * Pure: given discovered runs and the curated set, return the runs that need
- * curation, honouring --project and --last filters.
- */
-export function filter_uncurated(
+export function filter_unswept(
   discovered: ScanResultItem[],
-  curated: Set<string>,
   opts: ScanOptions,
 ): ScanResultItem[] {
   const items: ScanResultItem[] = [];
   for (const run of discovered) {
     if (opts.project !== null && run.project !== opts.project) continue;
-    if (curated.has(run.run_id)) continue;
     items.push(run);
   }
   if (opts.last !== null) {
@@ -107,19 +74,17 @@ export function filter_uncurated(
 }
 
 /**
- * Top-level scan: discover runs, honour --run override, filter by curation state.
+ * Top-level scan: discover runs, honour --run override, apply --project/--last.
  */
 export async function scan_runs(
   opts: ScanOptions,
   root_dir?: string,
-  runs_dir?: string,
 ): Promise<ScanResultItem[]> {
-  const curated = await list_curated_run_ids(runs_dir);
   if (opts.run !== null) {
     const run_path = path.resolve(opts.run);
     const { project, run_id } = parse_triage_results_path(run_path);
-    return filter_uncurated([{ run_id, project, run_path }], curated, opts);
+    return filter_unswept([{ run_id, project, run_path }], opts);
   }
   const discovered = await discover_runs(root_dir);
-  return filter_uncurated(discovered, curated, opts);
+  return filter_unswept(discovered, opts);
 }

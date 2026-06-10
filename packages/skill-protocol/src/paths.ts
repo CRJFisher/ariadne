@@ -1,21 +1,18 @@
 /**
  * Filesystem-protocol path resolution for the `triage` → `plan` seam.
  *
- * Three location families live here:
+ * Two location families live here:
  *   - the published `analysis_output/<project>/triage_results/<run-id>.json`
- *     artifacts the producer writes and the consumer reads,
- *   - the single known-issues registry both skills resolve, and
- *   - the `plan` engine's task-DB under `~/.ariadne/plan/` (one JSON file per
- *     task plus per-sweep event logs).
+ *     artifacts the producer writes and the consumer reads, and
+ *   - the single known-issues registry both skills resolve.
  *
- * Per-run scratch state (`triage_state/<project>/runs/...`) and plan-private
- * run-state stay owned by their respective skills; only the cross-skill
- * protocol paths are centralized here.
+ * Per-run scratch state (`triage_state/<project>/runs/...`) and the `plan`
+ * engine's task-DB under `~/.ariadne/plan/` stay owned by their respective
+ * skills; only the cross-skill protocol paths are centralized here.
  *
- * Each base directory honors its own `ARIADNE_*_DIR_OVERRIDE` env var and is
+ * The triage base directory honors `ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE`,
  * read lazily on every call, so a test that sets the override before importing
- * a consumer module still wins. The triage and plan bases are SIBLINGS under
- * `~/.ariadne/`, each with its own override.
+ * a consumer module still wins.
  */
 
 import fs from "node:fs";
@@ -39,20 +36,6 @@ function state_dir(): string {
   return (
     process.env.ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE ??
     path.join(os.homedir(), ".ariadne", "triage-entrypoints")
-  );
-}
-
-/**
- * Base state directory for the `plan` engine's task-DB. Defaults to
- * `~/.ariadne/plan` (a sibling of the triage base, not a child); overridable
- * for test isolation via `ARIADNE_PLAN_DIR_OVERRIDE`. Read lazily. Exported so
- * the engine can root its per-sweep `staging/` scratch under the same
- * override-honoring base without re-deriving the env logic.
- */
-export function plan_dir(): string {
-  return (
-    process.env.ARIADNE_PLAN_DIR_OVERRIDE ??
-    path.join(os.homedir(), ".ariadne", "plan")
   );
 }
 
@@ -89,39 +72,6 @@ export function parse_triage_results_path(file_path: string): {
   // …/<project>/triage_results/<run-id>.json → project is two directories up.
   const project = path.basename(path.dirname(path.dirname(file_path)));
   return { project, run_id };
-}
-
-/** The `plan` task-DB's task directory, `<plan>/tasks`. Existence is not checked. */
-export function plan_tasks_dir(): string {
-  return path.join(plan_dir(), "tasks");
-}
-
-/**
- * Path to a single plan task's `<id>.json`. Existence is not checked. `id` is
- * typed `string` so callers can pass a `PlanTaskId` (a subtype) without a cast.
- */
-export function plan_task_path(id: string): string {
-  return path.join(plan_tasks_dir(), `${id}.json`);
-}
-
-/**
- * The `plan` task-DB's per-sweep event-log directory, `<plan>/sweeps` (one
- * append-only `<sweep-id>.jsonl` per sweep). Existence is not checked.
- */
-export function plan_sweeps_dir(): string {
-  return path.join(plan_dir(), "sweeps");
-}
-
-/**
- * The `plan` engine's membership-override store, `<plan>/membership_overrides.json`.
- * A single accumulating JSON file recording members the strategist judged not to
- * belong in the fault-area bucket they were routed into, keyed on a stable member
- * identity, so a mis-route is re-routed (or suppressed) on the next sweep instead
- * of re-adjudicated. Written ONLY by the reconcile pass (one writer per sweep);
- * read by Pass A. Not registry-shaped, so it stays outside the registry lock.
- */
-export function plan_membership_overrides_path(): string {
-  return path.join(plan_dir(), "membership_overrides.json");
 }
 
 /**

@@ -37,7 +37,6 @@ import { load_json } from "../src/store/analysis_output.js";
 import { active_rules_for_classification, load_registry } from "../src/known_issues_registry.js";
 import { prepare_triage } from "../src/prepare_triage.js";
 import {
-  TRIAGE_STATE_DIR,
   manifest_path_for,
   run_dir_for,
   state_path_for,
@@ -150,23 +149,6 @@ function capture_head_commit(project_path: string): { short: string; full: strin
 }
 
 /**
- * Detect pre-run-namespacing legacy state and warn the user so they don't
- * silently leave orphaned `<project>_triage.json` / `results/` directories on
- * disk. Per the migration plan, this is one-line guidance pointing at
- * `migrate_legacy_state.ts`; we never auto-migrate.
- */
-function warn_about_legacy_state(project_name: string): void {
-  const project_dir = path.join(TRIAGE_STATE_DIR, project_name);
-  const legacy_state = path.join(project_dir, `${project_name}_triage.json`);
-  if (!fs.existsSync(legacy_state)) return;
-  process.stderr.write(
-    `[prepare_triage] warning: legacy state detected at ${legacy_state}. ` +
-      "Run scripts/migrate_legacy_state.ts --project " + project_name +
-      " (optionally --purge) to remove or wrap it.\n",
-  );
-}
-
-/**
  * Compare the analysis JSON's recorded commit_hash against the current target
  * HEAD. When they differ, the verdicts produced from this analysis will be
  * labelled with the *current* HEAD by the run-id and manifest — labelling
@@ -231,8 +213,6 @@ async function main(): Promise<void> {
   const project_name = cli.project ?? analysis.project_name;
   const project_path = analysis.project_path;
 
-  warn_about_legacy_state(project_name);
-
   const head = capture_head_commit(project_path);
   warn_if_analysis_stale(analysis, head?.full ?? null);
 
@@ -240,7 +220,7 @@ async function main(): Promise<void> {
 
   const full_registry = load_registry();
   // Lifecycle filter: skip `fixed` rules (reconciler-stamped; underlying bug
-  // is resolved) and `wip + drift_detected` rules (curator QA flagged them).
+  // is resolved) and `wip + drift_detected` rules (drift QA flagged them).
   // Without this filter the loop never closes — a fixed rule keeps firing
   // forever, and drifting wip rules silently suppress entries that the
   // investigate wave is supposed to re-examine.

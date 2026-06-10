@@ -1,4 +1,4 @@
-import { PLAN_TASK_SCHEMA_VERSION, type PlanTask } from "@ariadnejs/skill-protocol";
+import { PLAN_TASK_SCHEMA_VERSION, type PlanTask } from "./plan_task.js";
 
 /**
  * The read boundary of the JSON plan task-store: parse one stored

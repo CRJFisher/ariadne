@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import type { RunId } from "@ariadnejs/skill-protocol";
 import {
   PLAN_TASK_SCHEMA_VERSION,
   type PlanTask,
   type PlanTaskId,
-  type RunId,
-} from "@ariadnejs/skill-protocol";
+} from "../store/plan_task.js";
 
 import {
   backlog_task_filename,

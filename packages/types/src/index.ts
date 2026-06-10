@@ -40,4 +40,3 @@ export * from "./classified_entry_point";
 export * from "./false_positive_results";
 export * from "./known_issues";
 export * from "./ariadne_fault_area";
-export * from "./impact_report";

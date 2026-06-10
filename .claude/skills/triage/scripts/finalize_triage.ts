@@ -78,7 +78,7 @@ async function main(): Promise<void> {
 
   // Atomic write of the published triage_results: a concurrent finalize would
   // otherwise interleave bytes into the same file, and the file is the
-  // permanent source of truth for the TP cache, diff_runs, and the curator.
+  // permanent source of truth for the TP cache, diff_runs, and the plan skill.
   const output_dir = triage_results_dir(state.project_name);
   await fs.mkdir(output_dir, { recursive: true });
   const output_file = triage_results_path(state.project_name, run_id);

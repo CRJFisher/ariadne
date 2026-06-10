@@ -1,9 +1,9 @@
 /**
  * Structural enforcement of the write-boundary contract documented in
- * `.claude/rules/classifier-lifecycle.md`. `registry.json` is mutated by
- * exactly three writers (curator, reconciler, human); they reach the file
- * through `@ariadnejs/skill-fs`'s `atomic_update_registry` which holds the
- * `.lock` sidecar over read-mutate-write. Bypassing the lock with a direct
+ * `.claude/rules/classifier-lifecycle.md`. `registry.json` is mutated only by
+ * the human (editing by hand or via a human-invoked script), always reaching
+ * the file through `@ariadnejs/skill-fs`'s `atomic_update_registry` which holds
+ * the `.lock` sidecar over read-mutate-write. Bypassing the lock with a direct
  * `atomic_write_file`/`writeFile` against a registry-shaped path
  * silently re-introduces last-writer-wins data loss; this test fails the
  * build before such a regression lands.

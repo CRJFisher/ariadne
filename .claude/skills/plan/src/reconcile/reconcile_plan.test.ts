@@ -4,7 +4,8 @@ import * as path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { parse_run_id, type PlanTask, type PlanTaskEvidence } from "@ariadnejs/skill-protocol";
+import { parse_run_id } from "@ariadnejs/skill-protocol";
+import type { PlanTask, PlanTaskEvidence } from "../store/plan_task.js";
 
 import type { StrategistPlan, StrategistPlanNode } from "../types.js";
 import { JsonPlanTaskRepository } from "../store/json_plan_task_repository.js";

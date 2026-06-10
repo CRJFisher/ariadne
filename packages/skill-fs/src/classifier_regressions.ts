@@ -5,8 +5,8 @@
  * `results/` and feeds the `fp-classifier-regression` ones through
  * `aggregate_classifier_regressions`, which groups them by
  * `should_have_matched_rule_id` into the `classifier_regressions[]` slice of
- * the published `triage_results/<run-id>.json`. The downstream curator consumes
- * that slice to mark drifting wip rules.
+ * the published `triage_results/<run-id>.json`. The human reads that slice when
+ * authoring `drift_evidence` rows to mark drifting wip rules.
  */
 
 import type {

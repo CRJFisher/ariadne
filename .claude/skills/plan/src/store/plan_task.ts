@@ -21,14 +21,12 @@
  */
 
 import type { AriadneFaultArea } from "@ariadnejs/types";
-
-import type { RunId } from "./run_id.js";
-import type { MemberEvidence, MemberSymbol } from "./triage_results.js";
+import type { MemberEvidence, MemberSymbol, RunId } from "@ariadnejs/skill-protocol";
 
 /**
- * Schema version of a stored plan-task record. The store (the JSON
- * `PlanTaskRepository` impl) rejects any mismatch on read. Twin of
- * {@link TRIAGE_RESULTS_SCHEMA_VERSION}; starts at 1 (new artifact).
+ * Schema version of a stored plan-task record. The store
+ * (`JsonPlanTaskRepository`) rejects any mismatch on read. Twin of
+ * `TRIAGE_RESULTS_SCHEMA_VERSION`; starts at 1 (new artifact).
  */
 export const PLAN_TASK_SCHEMA_VERSION = 1;
 
@@ -194,9 +192,9 @@ export interface PlanTask {
    * The strategist's estimate of how much complexity a core fix would add to
    * Ariadne — the fix's blast radius — as a positive integer on the strategist's
    * authored scale (1 = a single-file edit; 3 = a new function/resolver path;
-   * 5 = a new cross-folder resolver pass). It is the COST axis paired with the
-   * BENEFIT axis (`observed_count`, `projects`, `source_runs`), so the live task
-   * set is cost/benefit-rankable downstream. The strategist grounds the estimate
+   * 5 = a new cross-folder resolver pass). It is the cost axis paired with the
+   * benefit signals (`observed_count`, `projects`, `source_runs`) that
+   * `export_to_backlog --priority` orders by. The strategist grounds the estimate
    * by inspecting the owning `fault_area` folder's current capability, and a
    * sweep adopts the fresh estimate on augment (a fix's cost is re-judged as the
    * folder evolves). It is `0` on a node that proposes no core fix — a
@@ -206,11 +204,70 @@ export interface PlanTask {
    * Each tier's estimate stands on its own and is NOT additive across tiers: a
    * `localized` leaf sizes one concrete fix, while a parent (`fault_area` /
    * `architectural`) sizes the blast radius of that whole subtree's upgrade — not
-   * the sum of its leaves. A downstream ranker therefore reads effort at a single
-   * tier (leaf for concrete work; root for the cross-cutting upgrade), never by
-   * summing a subtree.
+   * the sum of its leaves.
    */
   core_fix_effort: number;
   /** The strategist's prose grounding for `core_fix_effort` (empty when effort is `0`). */
   core_fix_effort_rationale: string;
 }
+
+/**
+ * Filter for `JsonPlanTaskRepository.query`. Every field is optional; absent
+ * fields match everything and supplied fields are AND-ed (the in-memory filter
+ * contract the store applies after `readdir` + parse).
+ */
+export interface PlanTaskQuery {
+  fault_area?: AriadneFaultArea;
+  status?: PlanTaskStatus;
+  tier?: PlanTaskTier;
+  parent_id?: PlanTaskId;
+  dedup_key?: string;
+}
+
+/**
+ * One entry in a sweep's append-only `sweeps/<sweep_id>.jsonl` log, recording a
+ * reconciliation decision. The sweep id is NOT carried on the event — it is
+ * passed separately to `JsonPlanTaskRepository.append_sweep_event` (it names
+ * the log file). Discriminated on `kind`:
+ *
+ * - `create`    a fresh task was minted this sweep.
+ * - `augment`   an existing live task matched by `dedup_key`; evidence merged.
+ * - `supersede` one task was folded into a replacement (mirrors `superseded_by`).
+ * - `combine`   several tasks were combined into one. On the records this is
+ *               supersede-fan-in: each `merged_ids` task gets
+ *               `status: "superseded"` with `superseded_by = into_id`; the
+ *               event captures the N→1 grouping as a single log entry.
+ * - `resolve`   a live orphan's grounding false-positives no longer recur in
+ *               newer swept runs; the record moves to `status: "resolved"`. No
+ *               replacement pointer — the bug vanished rather than moved — so
+ *               unlike `supersede` the event names only the resolved task.
+ *               `dedup_key` is carried for log-side correlation, matching `create`.
+ * - `export`    a task was promoted to the user `backlog/` (mirrors `exported_backlog_task`).
+ * - `exclude_member` the strategist judged a member NOT to belong in the
+ *               `fault_area` bucket it was routed into, so no task this sweep is
+ *               grounded on it. The audit entry for the membership review:
+ *               `member` is the excluded member's stable identity, `reason` the
+ *               strategist's justification, and `suggested_area` the area it
+ *               should route to instead (`null` when the strategist could not
+ *               tell). A non-null `suggested_area` is a confirmed
+ *               `derive_fault_area` mis-route — the correction signal.
+ */
+export type PlanSweepEvent =
+  | { kind: "create"; task_id: PlanTaskId; dedup_key: string }
+  | {
+      kind: "augment";
+      task_id: PlanTaskId;
+      dedup_key: string;
+      added_evidence: PlanTaskEvidence[];
+    }
+  | { kind: "supersede"; superseded_id: PlanTaskId; superseded_by: PlanTaskId }
+  | { kind: "combine"; merged_ids: PlanTaskId[]; into_id: PlanTaskId }
+  | { kind: "resolve"; task_id: PlanTaskId; dedup_key: string }
+  | { kind: "export"; task_id: PlanTaskId; backlog_task: string }
+  | {
+      kind: "exclude_member";
+      fault_area: AriadneFaultArea;
+      member: MemberSymbol;
+      reason: string;
+      suggested_area: AriadneFaultArea | null;
+    };

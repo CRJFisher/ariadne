@@ -91,5 +91,5 @@ Write your verdict JSON to the output path from `entry_context`. Use the `Write`
 ## Guarantees and constraints
 
 - **One verdict per invocation.** Never emit more than one verdict object.
-- **`fp-classifier-regression` cites an in-scope rule id.** The `should_have_matched_rule_id` must come from `relevant_registry_slice[*].group_id`. Out-of-scope rules are not actionable for the curator's drift signal.
-- **You never write to `registry.json`.** That is the curator's surface. Your only persistent output is the verdict JSON at the path supplied in the prompt.
+- **`fp-classifier-regression` cites an in-scope rule id.** The `should_have_matched_rule_id` must come from `relevant_registry_slice[*].group_id`. Out-of-scope rules are not actionable for the registry's drift signal.
+- **You never write to `registry.json`.** That is the human's surface. Your only persistent output is the verdict JSON at the path supplied in the prompt.

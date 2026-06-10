@@ -8,10 +8,10 @@
  */
 
 import { ARIADNE_FAULT_AREA_FOLDER } from "@ariadnejs/types";
-import type { PlanTaskEvidence } from "@ariadnejs/skill-protocol";
+import type { PlanTaskEvidence } from "../store/plan_task.js";
 
 import type { StrategistPlanNode } from "../types.js";
-import { location_token } from "../reconcile/compute_dedup_key.js";
+import { location_token } from "./compute_dedup_key.js";
 
 /**
  * The task title. An `architectural` cross-area root keeps the strategist's
