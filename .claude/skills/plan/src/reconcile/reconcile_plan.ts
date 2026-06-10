@@ -1,6 +1,6 @@
 /**
  * Pass C, step 2 — reconcile the sweep's `PlanTask` candidates against the live
- * task-DB and commit. Four decisions, in order:
+ * task-DB and commit. Three decisions, in order:
  *
  *   1. CREATE / AUGMENT (the augment-not-duplicate guarantee). A candidate whose
  *      `dedup_key` + `tier` already names a LIVE task (`proposed`/`accepted`)
@@ -10,13 +10,12 @@
  *      else is created fresh.
  *   2. RETIRE orphans. A live task NOT claimed by any candidate this sweep is
  *      stale if BOTH conditions hold: (a) its grounding projects were ALL scanned
- *      this sweep (`projects ⊆ swept_projects`), AND (b) its fault area had an
- *      accepted plan this sweep (`fault_area ∈ accepted_fault_areas`). Condition
- *      (a) prevents a partial-scope sweep from resolving a task whose projects it
- *      never scanned. Condition (b) prevents a plan failure from being misread as
- *      "FPs stopped recurring" — if a strategist's plan for fault area X was
- *      rejected or missing, X's live tasks are left untouched regardless of
- *      project scope. An orphan that meets both conditions is then either
+ *      this sweep (`projects ⊆ swept_projects`), AND (b) its fault area is NOT in
+ *      `blocked_fault_areas` (areas that had a bucket but no accepted plan). A
+ *      blocked area's live tasks are left untouched — its bucket proves FPs were
+ *      observed, so a missing or rejected plan cannot be misread as "FPs stopped
+ *      recurring." An area with NO bucket this sweep is unblocked, so its orphaned
+ *      tasks resolve normally. An orphan that clears both conditions is then either
  *      superseded into an overlapping fresh create (`supersede` / `combine`) or
  *      resolved when no overlapping create exists.
  *   3. EXPORT overlay. A written task whose `dedup_key` the user has already
@@ -65,12 +64,13 @@ export interface ReconcileOptions {
    */
   swept_projects: string[];
   /**
-   * Fault areas whose plans were accepted and reconciled this sweep (from
-   * `load_staged_plans`). Orphan retirement is restricted to these areas — a
-   * live task in any absent area is left untouched because a missing or
-   * rejected plan cannot be distinguished from "FPs stopped recurring."
+   * Fault areas that had a bucket this sweep but whose plan was rejected or
+   * missing (from `load_staged_plans`). Orphan retirement is blocked for these
+   * areas — a bucket signals FPs were observed, so a missing or rejected plan
+   * must not be misread as "FPs stopped recurring." Areas with no bucket are
+   * NOT blocked and their orphaned live tasks resolve normally.
    */
-  accepted_fault_areas: AriadneFaultArea[];
+  blocked_fault_areas: AriadneFaultArea[];
   /**
    * `dedup_key` → backlog task id for work the user has already promoted into
    * `backlog/` (read read-only via `read_exported_backlog_keys`). A written task
@@ -120,7 +120,7 @@ export async function reconcile_plan(
   options: ReconcileOptions,
 ): Promise<ReconcileOutcome> {
   const swept_projects = new Set(options.swept_projects);
-  const accepted_fault_areas = new Set(options.accepted_fault_areas);
+  const blocked_fault_areas = new Set(options.blocked_fault_areas);
   const exported_backlog_keys = options.exported_backlog_keys ?? new Map<string, string>();
 
   // Snapshot the committed store ONCE; all match decisions read this pre-sweep
@@ -240,7 +240,7 @@ export async function reconcile_plan(
     existing_tasks,
     claimed,
     swept_projects,
-    accepted_fault_areas,
+    blocked_fault_areas,
     created_ids,
     written_by_id,
     sweep_id,
@@ -271,7 +271,7 @@ interface RetireInput {
   existing_tasks: PlanTask[];
   claimed: Set<PlanTaskId>;
   swept_projects: Set<string>;
-  accepted_fault_areas: Set<AriadneFaultArea>;
+  blocked_fault_areas: Set<AriadneFaultArea>;
   created_ids: Set<PlanTaskId>;
   written_by_id: Map<PlanTaskId, PlanTask>;
   sweep_id: string;
@@ -279,16 +279,17 @@ interface RetireInput {
 
 /**
  * Retire the sweep's orphans — live tasks no candidate claimed, fully within the
- * swept project scope — into `superseded`/`resolved` records and their events.
- * Pure: returns the new terminal records and the events to log (ordered
- * supersede/combine before resolve, each group deterministically sorted).
+ * swept project scope AND not in a blocked fault area — into `superseded`/`resolved`
+ * records and their events. Pure: returns the new terminal records and the events
+ * to log (ordered supersede/combine before resolve, each group deterministically
+ * sorted).
  *
  * An orphan superseded into a fresh create is a pure pointer flip: the create
  * keeps its own honest evidence (and dedup_key), and the orphan keeps its
  * vanished locations on its now-terminal record — no evidence is merged or lost.
  */
 function retire_orphans(input: RetireInput): { retired: PlanTask[]; events: PlanSweepEvent[] } {
-  const { existing_tasks, claimed, swept_projects, accepted_fault_areas, created_ids, written_by_id, sweep_id } = input;
+  const { existing_tasks, claimed, swept_projects, blocked_fault_areas, created_ids, written_by_id, sweep_id } = input;
   const retired: PlanTask[] = [];
   const events: PlanSweepEvent[] = [];
 
@@ -299,7 +300,7 @@ function retire_orphans(input: RetireInput): { retired: PlanTask[]; events: Plan
         !claimed.has(t.id) &&
         t.projects.length > 0 &&
         t.projects.every((p) => swept_projects.has(p)) &&
-        accepted_fault_areas.has(t.fault_area),
+        !blocked_fault_areas.has(t.fault_area),
     )
     .sort((a, b) => a.id.localeCompare(b.id));
   if (orphans.length === 0) return { retired, events };

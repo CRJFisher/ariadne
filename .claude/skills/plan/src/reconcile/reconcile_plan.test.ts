@@ -63,11 +63,10 @@ async function recon(
   const swept_projects =
     options.swept_projects ??
     [...new Set(candidates.flatMap((c) => c.evidence.map((e) => e.project)))].sort();
-  const accepted_fault_areas =
-    options.accepted_fault_areas ?? [...new Set(candidates.map((c) => c.fault_area))];
+  const blocked_fault_areas = options.blocked_fault_areas ?? [];
   return reconcile_plan(repo, candidates, sweep_id, {
     swept_projects,
-    accepted_fault_areas,
+    blocked_fault_areas,
     exported_backlog_keys: options.exported_backlog_keys,
   });
 }
@@ -462,19 +461,20 @@ describe("reconcile_plan — orphan retirement", () => {
       repo,
       build_plan_tasks(area_b_plan, [ev("c.ts", 3)], { sweep_id: "s1", strategist: "opus" }),
       "s1",
+      { blocked_fault_areas: ["syntactic_extraction"] },  // don't retire area A tasks in this partial-area sweep
     );
     const area_b_after_seed = (await repo.query({})).filter((t) => t.fault_area === "import_resolution");
     expect(area_b_after_seed).toHaveLength(2);
 
     // s2: area A plan accepted (leaf_a dropped → orphans). Area B plan not accepted.
     // project "p" is fully swept for BOTH areas — the only thing that protects area
-    // B from false retirement is the fault-area gate on accepted_fault_areas.
+    // B from false retirement is the fault-area gate on blocked_fault_areas.
     const shrunk = plan_with([localized_leaf("fix b", "b", [0])]);
     const { written, events } = await recon(
       repo,
       build_plan_tasks(shrunk, [ev("b.ts", 2)], { sweep_id: "s2", strategist: "opus" }),
       "s2",
-      { swept_projects: ["p"], accepted_fault_areas: ["syntactic_extraction"] },
+      { swept_projects: ["p"], blocked_fault_areas: ["import_resolution"] },
     );
 
     // Area B: untouched — no writes, no retire events.

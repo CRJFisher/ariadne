@@ -102,14 +102,18 @@ immutable `dedup_key` = a hash of `fault_area` + the sorted evidence
 - **create / augment** — a candidate whose `dedup_key` already names a live task
   **augments** it (evidence merged, rollups bumped, the latest tree's structural
   pointers adopted) instead of duplicating it; otherwise it is **created**.
-- **retire orphans** — a live task no candidate claimed, whose grounding
-  projects were ALL scanned this sweep (`projects ⊆` the manifest's `projects`),
-  is stale. If a fresh create in the same `(fault_area, tier)` shares an evidence
-  `file:line`, the orphan was re-keyed into it → **supersede** (one) / **combine**
-  (several → one); if nothing overlaps, its false-positives stopped recurring →
-  **resolve** (`status: "resolved"` — the bug appears fixed). The manifest scope
-  is what stops a partial sweep (`--project`, `--last`) from falsely resolving a
-  task whose projects it never scanned.
+- **retire orphans** — a live task no candidate claimed is stale when BOTH hold:
+  (a) its grounding projects were ALL scanned this sweep (`projects ⊆` the
+  manifest's `projects`), AND (b) its fault area is not in `blocked_fault_areas`
+  (areas that had a bucket this sweep but whose strategist plan was rejected or
+  missing). Condition (a) prevents a partial sweep from falsely resolving a task
+  whose projects it never scanned. Condition (b) prevents a plan failure from
+  being misread as "FPs stopped recurring" — an area with no bucket at all is
+  unblocked and its orphaned tasks resolve normally. An eligible orphan is either
+  re-keyed into a fresh create of the same `(fault_area, tier)` that shares a
+  `file:line` → **supersede** (one) / **combine** (several → one); or if nothing
+  overlaps, its false-positives stopped recurring → **resolve**
+  (`status: "resolved"` — the bug appears fixed).
 - **export dedup** — the reconciler reads `backlog/tasks/*.md` frontmatter
   **read-only**, keyed on `plan_dedup_key` (stamped by the export adapter,
   `scripts/export_to_backlog.ts` — see **Export to backlog** below). A DB task

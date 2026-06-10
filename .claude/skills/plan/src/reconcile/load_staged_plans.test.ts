@@ -121,6 +121,7 @@ describe("load_staged_plans", () => {
       rejected: [],
       plan_count: 1,
       accepted_fault_areas: ["name_resolution"],
+      blocked_fault_areas: [],
     });
     expect(warned).toEqual([]);
   });
@@ -150,6 +151,7 @@ describe("load_staged_plans", () => {
       rejected: [{ plan: "import_resolution.json", issues: expected_issues }],
       plan_count: 2,
       accepted_fault_areas: ["name_resolution"],
+      blocked_fault_areas: ["import_resolution"],
     });
     expect(warned).toEqual([
       `rejecting import_resolution.json: ${JSON.stringify(expected_issues)}\n`,
@@ -172,6 +174,7 @@ describe("load_staged_plans", () => {
       ],
       plan_count: 1,
       accepted_fault_areas: [],
+      blocked_fault_areas: [],
     });
     expect(warned).toEqual([`rejecting name_resolution.json: ${reason}\n`]);
   });
@@ -214,6 +217,7 @@ describe("load_staged_plans", () => {
       rejected: [{ plan: "import_resolution.json", issues: [{ code: "missing_plan", message: missing_message }] }],
       plan_count: 2,
       accepted_fault_areas: ["name_resolution"],
+      blocked_fault_areas: ["import_resolution"],
     });
     expect(warned).toEqual([`rejecting import_resolution.json: ${missing_message}\n`]);
   });
