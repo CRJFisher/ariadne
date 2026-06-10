@@ -7,10 +7,14 @@
  * different commit means a different cache namespace, period.
  *
  * **Cache eligibility rule**: only rows where `source.kind === "llm-tp"` are
- * indexed. `registry` and `previously-confirmed-tp` rows are excluded so the
- * cache never launders a source that was itself a cache hit or a registry
- * classification — preserving the registry lifecycle's ability to return
- * entries to the llm-triage pool when a rule is deactivated.
+ * indexed. `registry` rows are excluded so the cache cannot outlive a rule
+ * deactivation — when a rule is marked fixed or its drift is detected, its
+ * entries return to the llm-triage pool. `previously-confirmed-tp` rows are
+ * excluded because the published schema carries no origin chain: a cache-hit
+ * entry cannot prove its verdict traces back to a real LLM investigation.
+ * The practical cadence: a genuine TP is reused (llm-tp) for one run, then
+ * re-investigated on the next (cache miss), then confirmed again — an accepted
+ * cost; no origin-tracking is added to the published schema.
  *
  * Source of truth: `analysis_output/<project>/triage_results/<run-id>.json`
  * (kept forever; `triage_state/<project>/runs/<run-id>/` may be pruned).
@@ -78,9 +82,9 @@ function key_for_published(entry: PublishedConfirmedUnreachable): TpCacheKey {
 
 /**
  * Build a `TpCache` from a published source. Returns `null` when the source
- * has zero entries. Schema validation (rejecting legacy formats) happens
- * upstream in `@ariadnejs/skill-protocol`'s `parse_triage_results`; by the time
- * we get here, every entry's `kind` is one of the canonical values.
+ * has no eligible (llm-tp) entries. Schema validation (rejecting legacy formats)
+ * happens upstream in `@ariadnejs/skill-protocol`'s `parse_triage_results`; by
+ * the time we get here, every entry's `kind` is one of the canonical values.
  */
 function build_cache(source_run_id: string, output: TriageResultsFile): TpCache | null {
   const entries_by_key = new Map<string, PublishedConfirmedUnreachable>();
@@ -125,7 +129,14 @@ export async function derive_tp_cache(
       throw new Error(`Pinned tp_source_run_id "${pinned}" has no triage_results file at ${file}.`);
     }
     const output = await read_triage_results(project, pinned);
-    return build_cache(pinned, output);
+    const cache = build_cache(pinned, output);
+    if (cache === null && output.confirmed_unreachable.length > 0) {
+      console.warn(
+        `[TP cache] Pinned source "${pinned}" has ${output.confirmed_unreachable.length} confirmed_unreachable ` +
+          "rows but none are source.kind \"llm-tp\" — no eligible rows to reuse.",
+      );
+    }
+    return cache;
   }
 
   const found = await most_recent_finalized_triage_results(project, current_short_commit);
@@ -167,6 +178,7 @@ export function apply_tp_cache_to_entries(
     entry.route = "known-unreachable";
     entry.auto_classified = true;
     entry.status = "completed";
+    // This becomes the published source.kind; build_cache excludes it next run — a cache hit is never itself reused.
     entry.known_source = "previously-confirmed-tp";
     entry.tp_source_run_id = cache.source_run_id;
     entry.result = null;
