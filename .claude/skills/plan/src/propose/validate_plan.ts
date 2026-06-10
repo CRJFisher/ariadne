@@ -48,6 +48,7 @@ export interface ValidatePlanContext {
   bucket_fault_area: AriadneFaultArea;
   /** `bucket.evidence.length` — the valid index space for `evidence_indices`. */
   evidence_count: number;
+  /** The dispatching sweep's id; the plan must echo it (guards against a stale plan from a prior sweep). */
   sweep_id: string;
 }
 

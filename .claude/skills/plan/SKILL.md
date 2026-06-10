@@ -59,11 +59,13 @@ staged `FaultAreaBucket` file). The full evidence lives in the bucket files;
 the summary is the dispatch manifest.
 
 Pass A reads the membership-override store (`~/.ariadne/plan/membership_overrides.json`,
-written by prior reconcile passes) and, for each false-positive whose derived
-`(fault_area, member-identity)` matches an override, **re-routes** it to the
-override's `suggested_area` — or **suppresses** it when none was suggested. A
-member a strategist already judged mis-routed is therefore corrected here instead
-of re-adjudicated every sweep.
+written by prior reconcile passes) and, for each false-positive, **follows the
+override chain** from its derived area: checks for an override at the current area,
+re-routes to `suggested_area`, then checks the destination for its own override and
+follows again — stopping when no override exists (member lands there), an override
+suppresses it (`suggested_area: null`), or a cycle is detected (all areas in the
+chain have already excluded the member — suppressed). A member a strategist already
+judged mis-routed is therefore corrected here instead of re-adjudicated every sweep.
 
 ### Pass B — dispatch the strategist wave
 
@@ -74,9 +76,9 @@ message so they run in parallel):
 
 > Design the hierarchical fix plan for fault-area bucket `<fault_area>` in sweep
 > `<sweep_id>`. Hydrate with `node --import tsx
-.claude/skills/plan/scripts/get_bucket_context.ts --bucket <bucket_path>
---sweep <sweep_id>`. Run the validator (`scripts/validate_plan.ts --plan
-<output_path> --bucket <bucket_path> --sweep-id <sweep_id>`) against your draft until it returns
+> .claude/skills/plan/scripts/get_bucket_context.ts --bucket <bucket_path>
+> --sweep <sweep_id>`. Run the validator (`scripts/validate_plan.ts --plan
+> <output_path> --bucket <bucket_path> --sweep-id <sweep_id>`) against your draft until it returns
 > clean, then write the final `StrategistPlan` JSON to `<output_path>`
 > (`~/.ariadne/plan/staging/<sweep_id>/plans/<fault_area>.json`). First emit a
 > total per-member `membership` review (one verdict per evidence index; mark a

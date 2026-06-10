@@ -74,13 +74,36 @@ interface BucketAcc {
  * area — so the strategist never re-adjudicates a mis-route it already settled.
  * Re-routing is chain-following: after each re-route, the destination is checked
  * for its own override and followed again, until no override exists at the
- * current area, a suppress is reached, or a cycle is detected (the member lands
- * at the cycle-entry area deterministically).
+ * current area, a suppress is reached, or a cycle is detected (all areas in the
+ * cycle have excluded the member — suppressed).
  *
  * Buckets are returned sorted by `observed_count` descending, ties broken by
  * `fault_area` lexically — a stable order so the dispatched strategist wave and
  * any test assertion are deterministic.
  */
+/**
+ * Follow the override chain from `start_area` for `member`.
+ * Returns the final `AriadneFaultArea` where the member belongs, or `null` if
+ * it is suppressed (explicit suppress override or a cycle — every area in the
+ * cycle has already excluded this member).
+ */
+function follow_override_chain(
+  start_area: AriadneFaultArea,
+  member: MembershipOverride["member"],
+  overrides_by_key: ReadonlyMap<string, MembershipOverride>,
+): AriadneFaultArea | null {
+  let area = start_area;
+  const visited_areas = new Set<AriadneFaultArea>();
+  while (true) {
+    if (visited_areas.has(area)) return null; // cycle — all areas excluded member
+    visited_areas.add(area);
+    const override = overrides_by_key.get(override_key(area, member));
+    if (override === undefined) return area;
+    if (override.suggested_area === null) return null;
+    area = override.suggested_area;
+  }
+}
+
 export function group_fault_areas(
   runs: ParsedRun[],
   overrides: MembershipOverride[] = [],
@@ -96,24 +119,8 @@ export function group_fault_areas(
       const evidence = novel_issue_to_evidence(issue, run.project, run.run_id);
       const location = derive_fault_area(evidence);
 
-      // Consult the override store BEFORE bucketing: a member the strategist
-      // already judged not to belong in `location.area` is re-routed to its
-      // suggested area, or suppressed when no area was suggested.
-      // Chain-following: after each re-route, check the destination for its own
-      // override and follow again, stopping on suppress, no-override, or cycle.
-      let area: AriadneFaultArea = location.area;
-      const visited_keys = new Set<string>();
-      let suppressed = false;
-      while (true) {
-        const key = override_key(area, evidence.member_symbol);
-        if (visited_keys.has(key)) break; // cycle detected — stop at current area
-        visited_keys.add(key);
-        const hop = overrides_by_key.get(key);
-        if (hop === undefined) break; // no override at this area — stop here
-        if (hop.suggested_area === null) { suppressed = true; break; }
-        area = hop.suggested_area;
-      }
-      if (suppressed) continue;
+      const area = follow_override_chain(location.area, evidence.member_symbol, overrides_by_key);
+      if (area === null) continue;
 
       let bucket = acc.get(area);
       if (bucket === undefined) {

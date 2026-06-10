@@ -348,8 +348,8 @@ describe("group_fault_areas — membership overrides", () => {
     expect(buckets[0].observed_count).toEqual(1);
   });
 
-  it("cycle terminates: member lands at the cycle-entry area deterministically", () => {
-    // name_resolution → import_resolution → name_resolution (cycle) → stops at name_resolution
+  it("cycle terminates: member is suppressed when all areas in the chain excluded it", () => {
+    // name_resolution → import_resolution → name_resolution (cycle) → suppress
     const overrides: MembershipOverride[] = [
       {
         fault_area: "name_resolution",
@@ -368,8 +368,6 @@ describe("group_fault_areas — membership overrides", () => {
         last_excluded_in_sweep: "sweep-0",
       },
     ];
-    const buckets = group_fault_areas(runs, overrides);
-    expect(buckets.map((b) => b.fault_area)).toEqual(["name_resolution"]);
-    expect(buckets[0].observed_count).toEqual(1);
+    expect(group_fault_areas(runs, overrides)).toEqual([]);
   });
 });

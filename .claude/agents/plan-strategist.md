@@ -164,7 +164,7 @@ bucket from disk, so each iteration is:
 
    ```bash
    node --import tsx .claude/skills/plan/scripts/validate_plan.ts \
-     --plan <output_path> --bucket <bucket_path>
+     --plan <output_path> --bucket <bucket_path> --sweep-id <sweep_id>
    ```
 
 3. **Parse the stdout JSON** — shape `{ ok, issues[] }`; exit code is 0 when

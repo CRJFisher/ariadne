@@ -9,7 +9,7 @@
  * re-runs the same validation before reconciling.
  *
  * Usage:
- *   node --import tsx validate_plan.ts --plan <plan.json> --bucket <bucket.json>
+ *   node --import tsx validate_plan.ts --plan <plan.json> --bucket <bucket.json> --sweep-id <id>
  */
 
 import * as fs from "node:fs/promises";

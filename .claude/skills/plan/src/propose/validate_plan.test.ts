@@ -278,13 +278,14 @@ describe("validate_plan — membership review", () => {
 describe("validate_plan — identity cross-checks", () => {
   it("rejects a plan whose fault_area does not match the dispatched bucket", () => {
     // plan() defaults fault_area to "name_resolution"; ctx dispatched "method_lookup"
+    // leaf() also has fault_area "name_resolution" ≠ "method_lookup" → node_fault_area_mismatch fires too
     const ctx: ValidatePlanContext = { bucket_fault_area: "method_lookup", evidence_count: 2, sweep_id: "sweep-1" };
-    expect(codes(plan([leaf()]), ctx)).toContain("plan_fault_area_mismatch");
+    expect(codes(plan([leaf()]), ctx)).toEqual(["node_fault_area_mismatch", "plan_fault_area_mismatch"]);
   });
 
   it("rejects a plan whose sweep_id does not match the dispatched sweep", () => {
     // plan() writes sweep_id: "sweep-1"; ctx expects "sweep-2"
     const ctx: ValidatePlanContext = { bucket_fault_area: "name_resolution", evidence_count: 2, sweep_id: "sweep-2" };
-    expect(codes(plan([leaf()]), ctx)).toContain("plan_sweep_id_mismatch");
+    expect(codes(plan([leaf()]), ctx)).toEqual(["plan_sweep_id_mismatch"]);
   });
 });
