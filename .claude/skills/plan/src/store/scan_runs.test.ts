@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
   discover_runs,
-  filter_unswept,
+  apply_scan_filters,
   scan_runs,
 } from "./scan_runs.js";
 import type { ScanOptions, ScanResultItem } from "../types.js";
@@ -71,7 +71,7 @@ describe("discover_runs", () => {
   });
 });
 
-describe("filter_unswept", () => {
+describe("apply_scan_filters", () => {
   const discovered: ScanResultItem[] = [
     { run_id: "r1", project: "p1", run_path: "/p1/r1.json" },
     { run_id: "r2", project: "p1", run_path: "/p1/r2.json" },
@@ -79,17 +79,17 @@ describe("filter_unswept", () => {
   ];
 
   it("returns every discovered run with no filters", () => {
-    const items = filter_unswept(discovered, DEFAULT_OPTS);
+    const items = apply_scan_filters(discovered, DEFAULT_OPTS);
     expect(items.map((i) => i.run_id)).toEqual(["r1", "r2", "r3"]);
   });
 
   it("honours --project filter", () => {
-    const items = filter_unswept(discovered, { ...DEFAULT_OPTS, project: "p2" });
+    const items = apply_scan_filters(discovered, { ...DEFAULT_OPTS, project: "p2" });
     expect(items.map((i) => i.run_id)).toEqual(["r3"]);
   });
 
   it("honours --last N filter (keeps most recent)", () => {
-    const items = filter_unswept(discovered, { ...DEFAULT_OPTS, last: 2 });
+    const items = apply_scan_filters(discovered, { ...DEFAULT_OPTS, last: 2 });
     expect(items.map((i) => i.run_id)).toEqual(["r2", "r3"]);
   });
 });

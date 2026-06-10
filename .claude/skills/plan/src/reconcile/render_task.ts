@@ -1,10 +1,10 @@
 /**
  * Pure renderers that turn a strategist plan node into a `PlanTask`'s title and
  * body. They are deterministic feedstock: the reconcile engine (`build_plan_tasks`)
- * calls them to fill `PlanTask.title`/`PlanTask.body` from the node's prose plus
- * the evidence it grounds, and the user-invoked export adapter (190.22.11)
- * reuses them when promoting a DB task into the user's `backlog/`. The renderers
- * persist nothing themselves.
+ * calls them at mint time to fill `PlanTask.title`/`PlanTask.body` from the node's
+ * prose plus the evidence it grounds. The export adapter consumes those
+ * already-rendered fields verbatim and never re-renders. The renderers persist
+ * nothing themselves.
  */
 
 import { ARIADNE_FAULT_AREA_FOLDER } from "@ariadnejs/types";

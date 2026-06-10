@@ -58,7 +58,7 @@ export async function discover_runs(
  * reconcile pass dedups by `dedup_key`, so re-feeding an already-swept run
  * augments its task rather than duplicating work.
  */
-export function filter_unswept(
+export function apply_scan_filters(
   discovered: ScanResultItem[],
   opts: ScanOptions,
 ): ScanResultItem[] {
@@ -83,8 +83,8 @@ export async function scan_runs(
   if (opts.run !== null) {
     const run_path = path.resolve(opts.run);
     const { project, run_id } = parse_triage_results_path(run_path);
-    return filter_unswept([{ run_id, project, run_path }], opts);
+    return apply_scan_filters([{ run_id, project, run_path }], opts);
   }
   const discovered = await discover_runs(root_dir);
-  return filter_unswept(discovered, opts);
+  return apply_scan_filters(discovered, opts);
 }

@@ -45,11 +45,11 @@ export interface KnownIssue {
    * different public labels.
    */
   classification?: KnownIssueClassificationMeta;
-  // Curator-populated fields — never edited by hand, never used for matching.
+  // Cross-run observation rollups, human-maintained in the registry; never used for matching.
   observed_count?: number;
   observed_projects?: string[];
   last_seen_run?: string;
-  /** Set by the curator when a per-entry `fp-classifier-regression` verdict lands against this rule. */
+  /** Set by the human when a per-entry `fp-classifier-regression` verdict lands against this rule. */
   drift_detected?: boolean;
   /**
    * Per-citation evidence accumulated alongside `drift_detected`. Each row is
@@ -72,7 +72,7 @@ export interface DriftEvidence {
  * One rule's flagged entries from a single triage run's `classifier_regressions`
  * aggregate. Mirrors the on-disk JSONL record shape emitted by the per-entry
  * triage-investigator's `fp-classifier-regression` verdict, grouped by
- * `rule_id` for the curator's drift-absorb path.
+ * `rule_id` for the human's drift-absorb path.
  */
 export interface ClassifierRegressionFlag {
   rule_id: string;

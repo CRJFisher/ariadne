@@ -150,9 +150,9 @@ string). A taxonomy-extension or classifier-work node proposes no core fix, so i
 carries `core_fix_effort: 0` and an empty rationale.
 
 You assign no priority, status, or disposition. The integer cost you surface is
-weighed against each task's benefit signals (`observed_count`, `projects`,
-`source_runs`) by a deterministic downstream ranker — your job is to make the
-estimate honest and grounded.
+weighed against each task's benefit rollups (`observed_count`, `projects`,
+`source_runs`) by the user when promoting work to the backlog — your job is to
+make the estimate honest and grounded.
 
 ## Self-validate → iterate loop
 

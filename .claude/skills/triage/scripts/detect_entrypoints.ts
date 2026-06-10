@@ -456,7 +456,7 @@ async function analyze_directory(
   // Build the raw call graph (unfiltered: every uncalled callable). The
   // triage pipeline needs the full set so it can classify against the
   // permanent + wip registry rules; `Project.get_call_graph()` would drop
-  // known FPs against the bundled permanent slice and lose plan-sweep candidates.
+  // known FPs against the bundled permanent slice and lose entries the wip-rule classifiers must evaluate.
   console.error("Building call graph...");
   const callgraph_start = Date.now();
   const call_graph = trace_call_graph(project.definitions, project.resolutions, {

@@ -3,8 +3,9 @@
  * engine writes to `~/.ariadne/plan/` (never the user's `backlog/`).
  *
  * This module is type-only: it declares the record shape both the JSON store
- * and the engine agree on, and introduces no I/O and no fault taxonomy of its
- * own. The grouping key `fault_area` is `AriadneFaultArea` from
+ * and the engine agree on, plus the store's query filter (`PlanTaskQuery`) and
+ * sweep-event log entry (`PlanSweepEvent`); it introduces no I/O and no fault
+ * taxonomy of its own. The grouping key `fault_area` is `AriadneFaultArea` from
  * `@ariadnejs/types` (the single source of fault classification); each evidence
  * row carries the COLLAPSED `MemberEvidence {file,line,why}` plus the full raw
  * fault signal `derive_fault_area` consumes, kept verbatim so the area stays
@@ -193,8 +194,9 @@ export interface PlanTask {
    * Ariadne — the fix's blast radius — as a positive integer on the strategist's
    * authored scale (1 = a single-file edit; 3 = a new function/resolver path;
    * 5 = a new cross-folder resolver pass). It is the cost axis paired with the
-   * benefit signals (`observed_count`, `projects`, `source_runs`) that
-   * `export_to_backlog --priority` orders by. The strategist grounds the estimate
+   * benefit rollups (`observed_count`, `projects`, `source_runs`); the user weighs
+   * the two when choosing what to promote (`export_to_backlog --priority` selects
+   * the core-fix vs classifier-work partition). The strategist grounds the estimate
    * by inspecting the owning `fault_area` folder's current capability, and a
    * sweep adopts the fresh estimate on augment (a fix's cost is re-judged as the
    * folder evolves). It is `0` on a node that proposes no core fix — a

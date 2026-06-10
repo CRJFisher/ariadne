@@ -308,7 +308,7 @@ Two known leaks during this loop (escape hatch: `--no-reuse-tp`):
 
 ## Persisted-State Preservation Policy
 
-The pipeline writes three kinds of persisted state under `~/.ariadne/triage-entrypoints/`. Each has a different preservation contract — wiping the wrong one silently destroys cross-run TP reuse.
+The pipeline persists state in three places — two under `~/.ariadne/triage-entrypoints/` plus core's cache under `~/.ariadne/cache/`. Each has a different preservation contract — wiping the wrong one silently destroys cross-run TP reuse.
 
 | State                                                                      | Status               | Action on upgrade                                                                                                                                                                                                                                                                                                       |
 | -------------------------------------------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -46,7 +46,7 @@ export const EXTRACTOR_DIRS = ["extractors"];
 // Directories that allow kebab-case file names because they hold auto-generated
 // classifier source where each file's stem is a known-issues `group_id`
 // (validated as kebab-case by `validate_registry`). Matching the file name to
-// the group_id keeps the curator's renderer trivial.
+// the group_id keeps the classifier-source renderer trivial.
 export const KEBAB_FILENAME_DIRS = ["builtins"];
 
 // File extensions that are always allowed in src (non-TypeScript)

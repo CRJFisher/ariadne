@@ -37,11 +37,13 @@ permanent source of truth for the per-project TP cache; wiping it kills
 cross-run TP reuse and forces every previously-confirmed entry point back
 through the LLM investigator.
 
-Upgrade steps for projects with pre-run-namespaced state:
+Upgrade steps:
 
 - Stale "active" runs: clear the `LATEST` pointer with
   `.claude/skills/triage/scripts/abandon_run.ts` or by deleting
   the `LATEST` file.
+- Pre-run-namespaced state (a flat `<project>_triage.json`): delete it by hand;
+  the run-namespaced layout is rebuilt on the next run.
 
 The persistence-cache schema version (`packages/core/src/persistence/cache_manifest.ts`)
 bumps from 1 → 2; pre-bump caches in `~/.ariadne/cache/<slug>/manifest.json`

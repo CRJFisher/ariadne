@@ -3,7 +3,7 @@ id: TASK-190.22.18
 title: >-
   Excise vestigial machinery: dead sweep-skip ledger, legacy migrator,
   single-impl repository interface, curator vocabulary
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-06-09 20:05"
 labels:
@@ -41,9 +41,46 @@ Residue from the removed fix-delivery/curator design survives in the pipeline. P
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 No code or doc under .claude/skills/ or packages/skill-\* references curator vocabulary, CURATOR_RUNS_DIR, the triage-curator on-disk namespace, finalized.json/finalize_started.json markers, or migrate_legacy_state (grep-clean apart from git history and archived backlog docs)
-- [ ] #2 PlanTaskRepository interface no longer exists; all callers type against the concrete JSON store; PlanTaskQuery and PlanSweepEvent survive
-- [ ] #3 plan/SKILL.md and skill-protocol/src/plan_task.ts contain no speculative multi-target adapter or downstream-ranker prose
-- [ ] #4 src/propose/ no longer exists as a folder name that matches no pipeline pass; validate_plan lives with the pass it gates; render_unsupported_features either has a verified caller and an honest home, or is deleted
-- [ ] #5 All four pipeline test suites (triage, plan, skill-fs, skill-protocol) pass after the excision; file moves preserve history via git mv
+- [x] #1 No code or doc under .claude/skills/ or packages/skill-\* references curator vocabulary, CURATOR_RUNS_DIR, the triage-curator on-disk namespace, finalized.json/finalize_started.json markers, or migrate_legacy_state (grep-clean apart from git history and archived backlog docs)
+- [x] #2 PlanTaskRepository interface no longer exists; all callers type against the concrete JSON store; PlanTaskQuery and PlanSweepEvent survive
+- [x] #3 plan/SKILL.md and skill-protocol/src/plan_task.ts contain no speculative multi-target adapter or downstream-ranker prose
+- [x] #4 src/propose/ no longer exists as a folder name that matches no pipeline pass; validate_plan lives with the pass it gates; render_unsupported_features either has a verified caller and an honest home, or is deleted
+- [x] #5 All four pipeline test suites (triage, plan, skill-fs, skill-protocol) pass after the excision; file moves preserve history via git mv
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+The pipeline now carries no residue of the removed fix-delivery/curator design. A reader grepping `.claude/skills/` and `packages/skill-*` for `curator`, `CURATOR_RUNS_DIR`, the `triage-curator` namespace, the `finalized.json`/`finalize_started.json` markers, or `migrate_legacy_state` finds nothing live — and the same is true repo-wide once the shared `@ariadnejs/types` registry contract and the `file_naming` hook are swept too. `@ariadnejs/skill-protocol` now holds only the genuine triage→plan seam (`run_id`, the published `triage_results` wire schema, and the triage/registry path resolvers); the plan engine's task-DB record, store query/event types, and `~/.ariadne/plan/` path helpers live inside the plan skill where the only consumers are. The plan `src/` layout reads as its pipeline passes — `group/` → `reconcile/` → `export/` over `store/` — with no folder that maps to no pass.
+
+### What changed
+
+- **Dead sweep-skip ledger — deleted.** `list_curated_run_ids`, `CURATOR_RUNS_DIR`, and the skip branch are gone from `scan_runs.ts`/`paths.ts`. The ledger always returned the empty set (nothing wrote its markers, the directory never existed), so removing it changes no behavior; reconcile-by-`dedup_key` is the real idempotency mechanism. The surviving filter is renamed `filter_uncurated` → **`apply_scan_filters`** (see deviations).
+- **Legacy migrator — deleted.** `migrate_legacy_state.ts`, `warn_about_legacy_state` + its call in `prepare_triage.ts`, the unused `TRIAGE_STATE_DIR` import, the `triage/SKILL.md` migration section + persisted-state table row, and the stale upgrade-step in the pending changeset.
+- **`PlanTaskRepository` interface — collapsed.** The single-impl interface is deleted; `reconcile_plan.ts` and `record_membership_decisions.ts` type their `repo` parameter against the concrete `JsonPlanTaskRepository`. `PlanTaskQuery` and `PlanSweepEvent` survive, folded into `plan_task.ts` beside the record they belong to.
+- **Types + path helpers moved into the plan skill.** `plan_task.ts` (record contract + `PlanTaskQuery`/`PlanSweepEvent`) moved via `git mv` to `src/store/plan_task.ts`; the plan-only `plan_dir`/`plan_tasks_dir`/`plan_task_path`/`plan_sweeps_dir`/`plan_membership_overrides_path` helpers moved to `src/store/paths.ts`, with their tests. Verified zero consumers outside the plan skill.
+- **Curator → sweep/registry/human vocabulary.** Every prose, comment, and identifier site renamed: `validate_optional_curator_fields` → `validate_optional_rollup_fields`; the `classifier_regressions.ts` header, `triage-investigator.md`, `diff_runs`/`prune_runs`/`finalize_triage`/`prepare_triage`/`detect_entrypoints` comments, the `registry_writers.test.ts` writer-set header, the `known_issues.ts` registry-field docs, and the `file_naming.ts` hook comment.
+- **Speculative prose — deleted.** The swappable-adapter-seam paragraph in `plan/SKILL.md`, the `export_to_backlog.ts` "family of targets" header framing, and the downstream-ranker paragraphs in `plan_task.ts`, `get_bucket_context.ts`, and `plan-strategist.md`. The cost/benefit fields stay; their prose now states the truth (the user weighs cost against the benefit rollups when promoting work; `export_to_backlog --priority` selects the core/classifier partition).
+- **`src/propose/` — dissolved.** `validate_plan` (gates reconcile) and `render_task` (reconcile mint-time feedstock) `git mv`'d into `reconcile/`. `impact_report` and `render_unsupported_features` were deleted entirely (see decisions), so nothing else needed a home.
+
+### Decisions recorded (override the doc's "consider" language)
+
+These were confirmed with the user before implementation:
+
+1. **`plan_task*` types moved into the plan skill** (not kept in skill-protocol). The path helpers moved alongside them — they are equally plan-only, so leaving them in the shared-seam package would be the same misplacement this task excises.
+2. **`impact_report` machinery deleted, not relocated** — `impact_report.ts`, `generate_impact_report.ts`, the `packages/types/src/impact_report.ts` orphan (`ImpactRow`/`ImpactReportFile`), the `plan/SKILL.md` section, and the `meta.json` flow. It was on-demand human tooling with no sweep consumer; deletion is the YAGNI call.
+3. **`render_unsupported_features` deleted** with its four generated `packages/core/.../queries/unsupported_features.{lang}.md` docs — no code reads those `.md` files (the query loader reads `.scm`).
+
+### Naming deviations from the doc
+
+- `filter_uncurated` → **`apply_scan_filters`** (the doc said `filter_unswept`). Once the ledger is gone the function no longer filters by swept-ness — it only applies `--project`/`--last` — so `filter_unswept` would be a fresh misnomer.
+- `validate_optional_curator_fields` → **`validate_optional_rollup_fields`** (the doc said `_sweep_`). It validates the `observed_count`/`observed_projects`/`last_seen_run` rollups; the plan sweep never writes the registry, so "sweep" would be inaccurate.
+
+### Deliberately out of scope
+
+The `registry-read` surface (`meta.json` store, `plan/SKILL.md` State bullet, the `README.per-step.mmd` REG node) is now arguably stale — after deleting the two on-demand registry-reading scripts, no plan code reads the registry. It is left untouched here: removing it would also require reconciling `classifier-lifecycle.md` ("plan reads it to ground its planning") and re-rendering a diagram, and the doc-correction concern is already tracked by TASK-190.22.19.
+
+### Verification
+
+`pnpm build`, `pnpm typecheck`, and `pnpm lint` are clean. All four pipeline suites pass (plan 179, triage 265, skill-fs 17, skill-protocol 16) plus types 130 and core 2811. File moves are recorded as renames (`git show --stat`), preserving history.
