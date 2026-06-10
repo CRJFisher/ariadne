@@ -91,7 +91,7 @@ describe("validate_permanent_slice — pure validator", () => {
     expect(() => validate_permanent_slice(slice)).toThrow(/non-permanent/);
   });
 
-  it('rejects a synthetic kind:"none" rule with PermanentRegistryError', () => {
+  it("rejects a synthetic kind:\"none\" rule with PermanentRegistryError", () => {
     const slice: readonly KnownIssue[] = [
       {
         group_id: "synthetic-kind-none-rule",

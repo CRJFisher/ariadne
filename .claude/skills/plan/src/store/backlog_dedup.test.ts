@@ -48,7 +48,7 @@ describe("read_exported_backlog_keys", () => {
   });
 
   it("strips surrounding quotes from the id and key", async () => {
-    await write_task("task-600.md", 'id: "TASK-600"\nplan_dedup_key: "ccc333"');
+    await write_task("task-600.md", "id: \"TASK-600\"\nplan_dedup_key: \"ccc333\"");
     const keys = await read_exported_backlog_keys(backlog_dir);
     expect(keys).toEqual(new Map([["ccc333", "TASK-600"]]));
   });

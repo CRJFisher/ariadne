@@ -126,7 +126,7 @@ export function parse_name_list(
  * resolves the repo from `cwd` rather than from an inherited hook environment.
  */
 function exec_git(cwd: string, args: string[]): Promise<string> {
-  const { GIT_DIR, GIT_WORK_TREE, GIT_INDEX_FILE, ...env } = process.env;
+  const { GIT_DIR: _git_dir, GIT_WORK_TREE: _git_work_tree, GIT_INDEX_FILE: _git_index_file, ...env } = process.env;
   return new Promise((resolve, reject) => {
     execFile(
       "git",

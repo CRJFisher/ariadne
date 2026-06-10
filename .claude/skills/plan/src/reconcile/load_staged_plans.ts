@@ -86,6 +86,7 @@ export async function load_staged_plans(
     const result = validate_plan(plan_raw, {
       bucket_fault_area: bucket.fault_area,
       evidence_count: bucket.evidence.length,
+      sweep_id,
     });
     if (!result.ok) {
       rejected.push({ plan: file, issues: result.issues });

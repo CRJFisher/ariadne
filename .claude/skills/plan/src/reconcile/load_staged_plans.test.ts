@@ -129,6 +129,7 @@ describe("load_staged_plans", () => {
     const expected_issues = validate_plan(bad, {
       bucket_fault_area: bad_bucket.fault_area,
       evidence_count: bad_bucket.evidence.length,
+      sweep_id: SWEEP,
     }).issues;
 
     const warned: string[] = [];

@@ -12,7 +12,7 @@ let registry_path: string;
 beforeEach(async () => {
   tmp_dir = await fs.mkdtemp(path.join(os.tmpdir(), "atomic-update-"));
   registry_path = path.join(tmp_dir, "registry.json");
-  await fs.writeFile(registry_path, '{"rules":[]}\n', "utf8");
+  await fs.writeFile(registry_path, "{\"rules\":[]}\n", "utf8");
 });
 
 afterEach(async () => {
@@ -23,11 +23,11 @@ describe("atomic_update_registry", () => {
   it("writes the mutator's `next` content and returns its `result`", async () => {
     const result = await atomic_update_registry(registry_path, async () => ({
       kind: "write",
-      next: '{"rules":["a"]}\n',
+      next: "{\"rules\":[\"a\"]}\n",
       result: { count: 1 },
     }));
     expect(result).toEqual({ count: 1 });
-    expect(await fs.readFile(registry_path, "utf8")).toEqual('{"rules":["a"]}\n');
+    expect(await fs.readFile(registry_path, "utf8")).toEqual("{\"rules\":[\"a\"]}\n");
   });
 
   it("leaves the file untouched on `kind: 'noop'`", async () => {
@@ -64,7 +64,7 @@ describe("atomic_update_registry", () => {
       order.push("first:finish");
       return {
         kind: "write",
-        next: raw.replace('"rules":[]', '"rules":["first"]'),
+        next: raw.replace("\"rules\":[]", "\"rules\":[\"first\"]"),
         result: "first",
       };
     });

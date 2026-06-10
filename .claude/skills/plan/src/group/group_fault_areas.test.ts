@@ -299,4 +299,77 @@ describe("group_fault_areas — membership overrides", () => {
     ];
     expect(group_fault_areas(runs, overrides).map((b) => b.fault_area)).toEqual(["name_resolution"]);
   });
+
+  it("two-hop suppress: member suppressed at the second hop", () => {
+    // name_resolution → import_resolution (re-route), import_resolution → null (suppress)
+    const overrides: MembershipOverride[] = [
+      {
+        fault_area: "name_resolution",
+        member: { file_path: "src/router.ts", name: "route", kind: "function", start_line: 12 },
+        reason: "actually an import miss",
+        suggested_area: "import_resolution",
+        first_excluded_in_sweep: "sweep-0",
+        last_excluded_in_sweep: "sweep-0",
+      },
+      {
+        fault_area: "import_resolution",
+        member: { file_path: "src/router.ts", name: "route", kind: "function", start_line: 12 },
+        reason: "not a real fault anywhere",
+        suggested_area: null,
+        first_excluded_in_sweep: "sweep-0",
+        last_excluded_in_sweep: "sweep-0",
+      },
+    ];
+    expect(group_fault_areas(runs, overrides)).toEqual([]);
+  });
+
+  it("two-hop re-route: member lands in the third area after two hops", () => {
+    // name_resolution → import_resolution → method_lookup
+    const overrides: MembershipOverride[] = [
+      {
+        fault_area: "name_resolution",
+        member: { file_path: "src/router.ts", name: "route", kind: "function", start_line: 12 },
+        reason: "actually an import miss",
+        suggested_area: "import_resolution",
+        first_excluded_in_sweep: "sweep-0",
+        last_excluded_in_sweep: "sweep-0",
+      },
+      {
+        fault_area: "import_resolution",
+        member: { file_path: "src/router.ts", name: "route", kind: "function", start_line: 12 },
+        reason: "actually a method lookup issue",
+        suggested_area: "method_lookup",
+        first_excluded_in_sweep: "sweep-0",
+        last_excluded_in_sweep: "sweep-0",
+      },
+    ];
+    const buckets = group_fault_areas(runs, overrides);
+    expect(buckets.map((b) => b.fault_area)).toEqual(["method_lookup"]);
+    expect(buckets[0].observed_count).toEqual(1);
+  });
+
+  it("cycle terminates: member lands at the cycle-entry area deterministically", () => {
+    // name_resolution → import_resolution → name_resolution (cycle) → stops at name_resolution
+    const overrides: MembershipOverride[] = [
+      {
+        fault_area: "name_resolution",
+        member: { file_path: "src/router.ts", name: "route", kind: "function", start_line: 12 },
+        reason: "reroute to import",
+        suggested_area: "import_resolution",
+        first_excluded_in_sweep: "sweep-0",
+        last_excluded_in_sweep: "sweep-0",
+      },
+      {
+        fault_area: "import_resolution",
+        member: { file_path: "src/router.ts", name: "route", kind: "function", start_line: 12 },
+        reason: "cycle back",
+        suggested_area: "name_resolution",
+        first_excluded_in_sweep: "sweep-0",
+        last_excluded_in_sweep: "sweep-0",
+      },
+    ];
+    const buckets = group_fault_areas(runs, overrides);
+    expect(buckets.map((b) => b.fault_area)).toEqual(["name_resolution"]);
+    expect(buckets[0].observed_count).toEqual(1);
+  });
 });

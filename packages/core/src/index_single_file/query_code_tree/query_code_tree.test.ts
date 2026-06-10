@@ -67,7 +67,7 @@ const arrow = (a) => a + 1;
     });
 
     it("should capture scope, definition, and reference for a simple function", () => {
-      const code = `function add(a, b) { return a + b; }`;
+      const code = "function add(a, b) { return a + b; }";
       const names = unique_capture_names("javascript", JavaScript, code);
       expect(names).toContain("scope.module");
       expect(names).toContain("scope.function");
@@ -156,7 +156,7 @@ const arrow = (a: number): number => a + 1;
     });
 
     it("should capture enum definitions and members", () => {
-      const code = `enum Direction { Up, Down, Left, Right }`;
+      const code = "enum Direction { Up, Down, Left, Right }";
       const names = unique_capture_names(
         "typescript",
         TypeScript.typescript,
@@ -187,7 +187,7 @@ interface Repository {
     });
 
     it("should capture type alias definitions", () => {
-      const code = `type Result<T> = { ok: true; value: T } | { ok: false; error: Error };`;
+      const code = "type Result<T> = { ok: true; value: T } | { ok: false; error: Error };";
       const names = unique_capture_names(
         "typescript",
         TypeScript.typescript,
@@ -311,7 +311,7 @@ class Config:
     });
 
     it("should capture lambda as closure scope", () => {
-      const code = `mapper = lambda x: x * 2`;
+      const code = "mapper = lambda x: x * 2";
       const names = unique_capture_names("python", Python, code);
       expect(names).toContain("scope.closure");
       // Note: lambda parameters use lambda_parameters node, not captured as definition.parameter
@@ -426,7 +426,7 @@ enum Shape {
     });
 
     it("should capture constant definitions", () => {
-      const code = `const PI: f64 = 3.14159;`;
+      const code = "const PI: f64 = 3.14159;";
       const names = unique_capture_names("rust", Rust, code);
       expect(names).toContain("definition.constant");
     });

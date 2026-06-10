@@ -341,7 +341,7 @@ describe("Rust Cross-File Receiver Resolution Integration", () => {
 
   it("should resolve self.method() in struct defined in another file", async () => {
     const { project, temp_dir, file_paths } = await setup_project({
-      "lib.rs": `mod engine;\n`,
+      "lib.rs": "mod engine;\n",
       "engine.rs": `pub struct Engine {
     running: bool,
 }

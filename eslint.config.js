@@ -44,7 +44,7 @@ export default [
 
       // Auto-fixable unused imports detection
       "unused-imports/no-unused-imports": "error",
-      "unused-imports/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+      "unused-imports/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
 
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-non-null-assertion": "error",

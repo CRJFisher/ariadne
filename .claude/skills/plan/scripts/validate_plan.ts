@@ -23,11 +23,13 @@ import "@ariadnejs/skill-fs/require-node-import-tsx";
 interface CliArgs {
   plan_path: string;
   bucket_path: string;
+  sweep_id: string;
 }
 
 function parse_argv(argv: string[]): CliArgs {
   let plan_path: string | null = null;
   let bucket_path: string | null = null;
+  let sweep_id: string | null = null;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     switch (arg) {
@@ -37,9 +39,12 @@ function parse_argv(argv: string[]): CliArgs {
       case "--bucket":
         bucket_path = argv[++i];
         break;
+      case "--sweep-id":
+        sweep_id = argv[++i];
+        break;
       case "--help":
       case "-h":
-        process.stdout.write("Usage: validate_plan --plan <plan.json> --bucket <bucket.json>\n");
+        process.stdout.write("Usage: validate_plan --plan <plan.json> --bucket <bucket.json> --sweep-id <id>\n");
         process.exit(0);
         break;
       default:
@@ -48,11 +53,12 @@ function parse_argv(argv: string[]): CliArgs {
   }
   if (plan_path === null || plan_path.length === 0) throw new Error("--plan <path> is required");
   if (bucket_path === null || bucket_path.length === 0) throw new Error("--bucket <path> is required");
-  return { plan_path, bucket_path };
+  if (sweep_id === null || sweep_id.length === 0) throw new Error("--sweep-id <id> is required");
+  return { plan_path, bucket_path, sweep_id };
 }
 
 async function main(): Promise<void> {
-  const { plan_path, bucket_path } = parse_argv(process.argv.slice(2));
+  const { plan_path, bucket_path, sweep_id } = parse_argv(process.argv.slice(2));
 
   const bucket = JSON.parse(await fs.readFile(bucket_path, "utf8")) as FaultAreaBucket;
   if (!is_ariadne_fault_area(bucket.fault_area)) {
@@ -77,6 +83,7 @@ async function main(): Promise<void> {
   const { ok, issues } = validate_plan(plan_raw, {
     bucket_fault_area: bucket.fault_area,
     evidence_count: bucket.evidence.length,
+    sweep_id,
   });
   process.stdout.write(JSON.stringify({ plan_path, ok, issues }, null, 2) + "\n");
   if (!ok) process.exit(1);

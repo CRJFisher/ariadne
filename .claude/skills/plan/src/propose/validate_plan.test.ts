@@ -38,6 +38,7 @@ function plan(
 const NAME_RES_CTX: ValidatePlanContext = {
   bucket_fault_area: "name_resolution",
   evidence_count: 2,
+  sweep_id: "sweep-1",
 };
 
 function codes(plan_raw: unknown, ctx: ValidatePlanContext): string[] {
@@ -127,7 +128,7 @@ describe("validate_plan", () => {
   });
 
   it("flags an `other` bucket whose only task is the taxonomy extension (no core fix)", () => {
-    const other_ctx: ValidatePlanContext = { bucket_fault_area: "other", evidence_count: 1 };
+    const other_ctx: ValidatePlanContext = { bucket_fault_area: "other", evidence_count: 1, sweep_id: "sweep-1" };
     const only_ext = plan([leaf({ fault_area: "other", is_taxonomy_extension: true, evidence_indices: [] })], "other", full_membership(1));
     expect(codes(only_ext, other_ctx)).toEqual(["other_bucket_missing_core_fix"]);
   });
@@ -137,7 +138,7 @@ describe("validate_plan", () => {
   });
 
   it("requires both a taxonomy-extension and a core-fix task for an `other` bucket", () => {
-    const other_ctx: ValidatePlanContext = { bucket_fault_area: "other", evidence_count: 1 };
+    const other_ctx: ValidatePlanContext = { bucket_fault_area: "other", evidence_count: 1, sweep_id: "sweep-1" };
     // Only a core-fix, no taxonomy extension.
     const missing_ext = plan([leaf({ fault_area: "other", evidence_indices: [0] })], "other", full_membership(1));
     expect(codes(missing_ext, other_ctx)).toEqual(["other_bucket_missing_taxonomy_extension"]);
@@ -186,7 +187,7 @@ describe("validate_plan", () => {
       "core_fix_effort_invalid",
     ]);
     // A taxonomy-extension node carrying a positive effort is invalid too (other bucket).
-    const other_ctx: ValidatePlanContext = { bucket_fault_area: "other", evidence_count: 1 };
+    const other_ctx: ValidatePlanContext = { bucket_fault_area: "other", evidence_count: 1, sweep_id: "sweep-1" };
     expect(
       codes(
         plan([leaf({ fault_area: "other", is_taxonomy_extension: true, evidence_indices: [], core_fix_effort: 3 })], "other", full_membership(1)),
@@ -271,5 +272,19 @@ describe("validate_plan — membership review", () => {
   it("flags membership that is not an array", () => {
     const p = { ...plan([leaf({ evidence_indices: [0] })]), membership: "nope" as never };
     expect(codes(p, NAME_RES_CTX)).toContain("shape_error");
+  });
+});
+
+describe("validate_plan — identity cross-checks", () => {
+  it("rejects a plan whose fault_area does not match the dispatched bucket", () => {
+    // plan() defaults fault_area to "name_resolution"; ctx dispatched "method_lookup"
+    const ctx: ValidatePlanContext = { bucket_fault_area: "method_lookup", evidence_count: 2, sweep_id: "sweep-1" };
+    expect(codes(plan([leaf()]), ctx)).toContain("plan_fault_area_mismatch");
+  });
+
+  it("rejects a plan whose sweep_id does not match the dispatched sweep", () => {
+    // plan() writes sweep_id: "sweep-1"; ctx expects "sweep-2"
+    const ctx: ValidatePlanContext = { bucket_fault_area: "name_resolution", evidence_count: 2, sweep_id: "sweep-2" };
+    expect(codes(plan([leaf()]), ctx)).toContain("plan_sweep_id_mismatch");
   });
 });

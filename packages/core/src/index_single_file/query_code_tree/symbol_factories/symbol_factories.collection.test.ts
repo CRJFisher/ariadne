@@ -426,7 +426,7 @@ describe("Collection Resolution Tests", () => {
 
   describe("JS/TS new Map() and new Set() constructors", () => {
     it("should detect new Map with function references", () => {
-      const code = `const handlers = new Map([["key1", fn1], ["key2", fn2]]);`;
+      const code = "const handlers = new Map([[\"key1\", fn1], [\"key2\", fn2]]);";
       const tree = ts_parser.parse(code);
       const declaration = tree.rootNode.child(0)!;
       const declarator = declaration.namedChildren[0]!;
@@ -440,7 +440,7 @@ describe("Collection Resolution Tests", () => {
     });
 
     it("should detect new Set with function references", () => {
-      const code = `const handlers = new Set([fn1, fn2, fn3]);`;
+      const code = "const handlers = new Set([fn1, fn2, fn3]);";
       const tree = ts_parser.parse(code);
       const declaration = tree.rootNode.child(0)!;
       const declarator = declaration.namedChildren[0]!;
@@ -455,7 +455,7 @@ describe("Collection Resolution Tests", () => {
     });
 
     it("should detect new Map with arrow function values", () => {
-      const code = `const handlers = new Map([["key1", (x) => x * 2]]);`;
+      const code = "const handlers = new Map([[\"key1\", (x) => x * 2]]);";
       const tree = ts_parser.parse(code);
       const declaration = tree.rootNode.child(0)!;
       const declarator = declaration.namedChildren[0]!;
@@ -471,7 +471,7 @@ describe("Collection Resolution Tests", () => {
 
   describe("Anonymous functions/closures/lambdas in collections", () => {
     it("should detect arrow functions in JS/TS array", () => {
-      const code = `const handlers = [(x) => x + 1, (y) => y * 2];`;
+      const code = "const handlers = [(x) => x + 1, (y) => y * 2];";
       const tree = ts_parser.parse(code);
       const declaration = tree.rootNode.child(0)!;
       const declarator = declaration.namedChildren[0]!;
@@ -487,7 +487,7 @@ describe("Collection Resolution Tests", () => {
     });
 
     it("should detect arrow functions in JS/TS object values", () => {
-      const code = `const handlers = { a: (x) => x + 1, b: (y) => y * 2 };`;
+      const code = "const handlers = { a: (x) => x + 1, b: (y) => y * 2 };";
       const tree = ts_parser.parse(code);
       const declaration = tree.rootNode.child(0)!;
       const declarator = declaration.namedChildren[0]!;
@@ -545,7 +545,7 @@ describe("Collection Resolution Tests", () => {
     });
 
     it("should detect mixed references and anonymous functions in JS/TS", () => {
-      const code = `const handlers = [fn1, (x) => x * 2, fn2];`;
+      const code = "const handlers = [fn1, (x) => x * 2, fn2];";
       const tree = ts_parser.parse(code);
       const declaration = tree.rootNode.child(0)!;
       const declarator = declaration.namedChildren[0]!;
@@ -629,7 +629,7 @@ describe("Collection Resolution Tests", () => {
     });
 
     it("should return null for JS/TS object with non-function values", () => {
-      const code = `const config = { a: 1, b: "hello", c: true };`;
+      const code = "const config = { a: 1, b: \"hello\", c: true };";
       const tree = ts_parser.parse(code);
       const declaration = tree.rootNode.child(0)!;
       const declarator = declaration.namedChildren[0]!;
@@ -639,7 +639,7 @@ describe("Collection Resolution Tests", () => {
     });
 
     it("should return null for JS/TS string assignment", () => {
-      const code = `const name = "hello";`;
+      const code = "const name = \"hello\";";
       const tree = ts_parser.parse(code);
       const declaration = tree.rootNode.child(0)!;
       const declarator = declaration.namedChildren[0]!;

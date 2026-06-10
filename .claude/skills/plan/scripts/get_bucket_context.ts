@@ -110,7 +110,7 @@ async function main(): Promise<void> {
         "spec itself. The core fix is the durable deliverable.",
       core_fix_effort_rule:
         "Every core-fix node carries core_fix_effort: a positive integer estimate of the fix's blast radius " +
-        `on the scale 1 (single-file edit) / 3 (new function or resolver path) / 5 (new cross-folder resolver pass), ` +
+        "on the scale 1 (single-file edit) / 3 (new function or resolver path) / 5 (new cross-folder resolver pass), " +
         `GROUNDED by reading the owning folder '${ARIADNE_FAULT_AREA_FOLDER[bucket.fault_area]}' with Read/Grep/Glob ` +
         "to judge what Ariadne already supports — not inferred from the fault pattern alone. Pair it with a " +
         "non-empty core_fix_effort_rationale. A taxonomy-extension or classifier-work node proposes no core fix, " +

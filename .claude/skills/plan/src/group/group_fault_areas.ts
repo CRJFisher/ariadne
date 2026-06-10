@@ -72,9 +72,10 @@ interface BucketAcc {
  * `(derived_area, identity)` matches an override is RE-ROUTED to the override's
  * `suggested_area`, or SUPPRESSED entirely when the override names no suggested
  * area — so the strategist never re-adjudicates a mis-route it already settled.
- * Re-routing is single-step from the derived area; a suggested area that is
- * itself wrong is a fresh mis-route the strategist reviews again (and the
- * `derive_fault_area` correction signal is the durable fix).
+ * Re-routing is chain-following: after each re-route, the destination is checked
+ * for its own override and followed again, until no override exists at the
+ * current area, a suppress is reached, or a cycle is detected (the member lands
+ * at the cycle-entry area deterministically).
  *
  * Buckets are returned sorted by `observed_count` descending, ties broken by
  * `fault_area` lexically — a stable order so the dispatched strategist wave and
@@ -98,11 +99,21 @@ export function group_fault_areas(
       // Consult the override store BEFORE bucketing: a member the strategist
       // already judged not to belong in `location.area` is re-routed to its
       // suggested area, or suppressed when no area was suggested.
-      const override = overrides_by_key.get(override_key(location.area, evidence.member_symbol));
-      if (override !== undefined && override.suggested_area === null) continue;
-      const area = override !== undefined && override.suggested_area !== null
-        ? override.suggested_area
-        : location.area;
+      // Chain-following: after each re-route, check the destination for its own
+      // override and follow again, stopping on suppress, no-override, or cycle.
+      let area: AriadneFaultArea = location.area;
+      const visited_keys = new Set<string>();
+      let suppressed = false;
+      while (true) {
+        const key = override_key(area, evidence.member_symbol);
+        if (visited_keys.has(key)) break; // cycle detected — stop at current area
+        visited_keys.add(key);
+        const hop = overrides_by_key.get(key);
+        if (hop === undefined) break; // no override at this area — stop here
+        if (hop.suggested_area === null) { suppressed = true; break; }
+        area = hop.suggested_area;
+      }
+      if (suppressed) continue;
 
       let bucket = acc.get(area);
       if (bucket === undefined) {

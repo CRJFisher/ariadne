@@ -33,7 +33,9 @@ export type ValidationIssueCode =
   | "membership_excluded_missing_reason"
   | "membership_suggested_area_invalid"
   | "membership_suggested_area_is_own_bucket"
-  | "node_grounds_excluded_index";
+  | "node_grounds_excluded_index"
+  | "plan_fault_area_mismatch"
+  | "plan_sweep_id_mismatch";
 
 export interface ValidationIssue {
   code: ValidationIssueCode;
@@ -46,6 +48,7 @@ export interface ValidatePlanContext {
   bucket_fault_area: AriadneFaultArea;
   /** `bucket.evidence.length` — the valid index space for `evidence_indices`. */
   evidence_count: number;
+  sweep_id: string;
 }
 
 export interface ValidatePlanResult {
@@ -314,9 +317,13 @@ export function validate_plan(plan_raw: unknown, ctx: ValidatePlanContext): Vali
   }
   if (typeof plan_raw.fault_area !== "string" || !is_ariadne_fault_area(plan_raw.fault_area)) {
     issues.push({ code: "fault_area_not_in_taxonomy", path: "$.fault_area", message: `fault_area must be one of ${ARIADNE_FAULT_AREAS.join(", ")}` });
+  } else if (plan_raw.fault_area !== ctx.bucket_fault_area) {
+    issues.push({ code: "plan_fault_area_mismatch", path: "$.fault_area", message: `plan fault_area '${plan_raw.fault_area}' does not match the dispatched bucket '${ctx.bucket_fault_area}'` });
   }
   if (typeof plan_raw.sweep_id !== "string" || plan_raw.sweep_id.length === 0) {
     issues.push({ code: "shape_error", path: "$.sweep_id", message: "sweep_id must be a non-empty string" });
+  } else if (plan_raw.sweep_id !== ctx.sweep_id) {
+    issues.push({ code: "plan_sweep_id_mismatch", path: "$.sweep_id", message: `plan sweep_id '${plan_raw.sweep_id}' does not match the dispatched sweep '${ctx.sweep_id}'` });
   }
   if (!Array.isArray(plan_raw.roots) || plan_raw.roots.length === 0) {
     issues.push({ code: "shape_error", path: "$.roots", message: "roots must be a non-empty array" });

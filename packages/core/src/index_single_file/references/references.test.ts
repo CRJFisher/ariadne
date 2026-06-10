@@ -1213,7 +1213,7 @@ describe("extract_call_site_syntax", () => {
       code: string;
       expected_literal: boolean;
     }> = [
-      { code: 'arr["k"].m()', expected_literal: true },
+      { code: "arr[\"k\"].m()", expected_literal: true },
       { code: "arr[0].m()", expected_literal: true },
       { code: "arr[k].m()", expected_literal: false },
     ];
@@ -1232,7 +1232,7 @@ describe("extract_call_site_syntax", () => {
       code: string;
       expected_literal: boolean;
     }> = [
-      { code: 'arr["k"].m()', expected_literal: true },
+      { code: "arr[\"k\"].m()", expected_literal: true },
       { code: "arr[0].m()", expected_literal: true },
       { code: "arr[k].m()", expected_literal: false },
     ];

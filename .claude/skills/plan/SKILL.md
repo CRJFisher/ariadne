@@ -28,21 +28,21 @@ backlog** below) — the only path that writes `backlog/`.
 
 ## Pipeline overview
 
-| #   | Pass        | Actor                                     | Output                                                                                          |
-| --- | ----------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| A   | Group       | `scripts/group_runs.ts`                   | One `FaultAreaBucket` per `AriadneFaultArea`, staged under `~/.ariadne/plan/staging/<sweep>/buckets/`, plus a `manifest.json` recording the full scanned scope (projects + run_ids, incl. zero-FP runs) and a sweep summary. Consults the membership-override store to re-route (or suppress) members a prior sweep judged mis-routed |
-| B   | Strategize  | `plan-strategist` (opus, ≤5 concurrent)   | One `StrategistPlan` (hierarchical fix tree) per bucket — including a total per-member `membership` review — self-validated via `scripts/validate_plan.ts` |
-| C   | Reconcile   | `scripts/reconcile_plan.ts`               | `PlanTask` rows (grounded on confirmed members only) + a `PlanSweepEvent` log in `~/.ariadne/plan/`; live tasks augmented by `dedup_key`, orphans superseded/combined/resolved, user-promoted tasks marked `exported`; membership exclusions recorded as `exclude_member` events + override records + `derive_fault_area` correction signals |
+| #   | Pass       | Actor                                   | Output                                                                                                                                                                                                                                                                                                                                       |
+| --- | ---------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A   | Group      | `scripts/group_runs.ts`                 | One `FaultAreaBucket` per `AriadneFaultArea`, staged under `~/.ariadne/plan/staging/<sweep>/buckets/`, plus a `manifest.json` recording the full scanned scope (projects + run_ids, incl. zero-FP runs) and a sweep summary. Consults the membership-override store to re-route (or suppress) members a prior sweep judged mis-routed        |
+| B   | Strategize | `plan-strategist` (opus, ≤5 concurrent) | One `StrategistPlan` (hierarchical fix tree) per bucket — including a total per-member `membership` review — self-validated via `scripts/validate_plan.ts`                                                                                                                                                                                   |
+| C   | Reconcile  | `scripts/reconcile_plan.ts`             | `PlanTask` rows (grounded on confirmed members only) + a `PlanSweepEvent` log in `~/.ariadne/plan/`; live tasks augmented by `dedup_key`, orphans superseded/combined/resolved, user-promoted tasks marked `exported`; membership exclusions recorded as `exclude_member` events + override records + `derive_fault_area` correction signals |
 
 ## Arguments
 
 **User input:** `$ARGUMENTS`
 
-| Flag               | Effect                                                              |
-| ------------------ | ------------------------------------------------------------------- |
-| `--project <name>` | Restrict to one project directory under `analysis_output`           |
-| `--last <n>`       | Keep the most recent N runs after filtering                         |
-| `--run <path>`     | Short-circuit discovery; sweep a single `triage_results` JSON        |
+| Flag               | Effect                                                        |
+| ------------------ | ------------------------------------------------------------- |
+| `--project <name>` | Restrict to one project directory under `analysis_output`     |
+| `--last <n>`       | Keep the most recent N runs after filtering                   |
+| `--run <path>`     | Short-circuit discovery; sweep a single `triage_results` JSON |
 
 ## Flow
 
@@ -74,9 +74,9 @@ message so they run in parallel):
 
 > Design the hierarchical fix plan for fault-area bucket `<fault_area>` in sweep
 > `<sweep_id>`. Hydrate with `node --import tsx
-> .claude/skills/plan/scripts/get_bucket_context.ts --bucket <bucket_path>
-> --sweep <sweep_id>`. Run the validator (`scripts/validate_plan.ts --plan
-> <output_path> --bucket <bucket_path>`) against your draft until it returns
+.claude/skills/plan/scripts/get_bucket_context.ts --bucket <bucket_path>
+--sweep <sweep_id>`. Run the validator (`scripts/validate_plan.ts --plan
+<output_path> --bucket <bucket_path> --sweep-id <sweep_id>`) against your draft until it returns
 > clean, then write the final `StrategistPlan` JSON to `<output_path>`
 > (`~/.ariadne/plan/staging/<sweep_id>/plans/<fault_area>.json`). First emit a
 > total per-member `membership` review (one verdict per evidence index; mark a
@@ -147,13 +147,13 @@ node --import tsx .claude/skills/plan/scripts/export_to_backlog.ts \
   [--id <db-task-id>...] [--dry-run]
 ```
 
-| Flag                 | Effect                                                                         |
-| -------------------- | ------------------------------------------------------------------------------ |
-| `--status proposed\|accepted` | Select rows in this live state (default `proposed`); only live work is exportable — terminal rows (`superseded`/`resolved`/`exported`) are never promoted |
-| `--fault-area <area>`| Restrict to one `AriadneFaultArea`                                              |
-| `--priority core\|classifier` | `core` selects core-fix rows (stamped backlog `priority: high`), `classifier` the interim classifier work (`priority: medium`) |
-| `--id <id>...`       | Export exactly these DB task ids — the filter flags are ignored, but a named row that is already exported (or whose `dedup_key` a backlog task carries) is still skipped, and a terminal-status row is reported as non-exportable |
-| `--dry-run`          | Print the planned writes (incl. the would-be backlog ids); touch nothing       |
+| Flag                          | Effect                                                                                                                                                                                                                            |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--status proposed\|accepted` | Select rows in this live state (default `proposed`); only live work is exportable — terminal rows (`superseded`/`resolved`/`exported`) are never promoted                                                                         |
+| `--fault-area <area>`         | Restrict to one `AriadneFaultArea`                                                                                                                                                                                                |
+| `--priority core\|classifier` | `core` selects core-fix rows (stamped backlog `priority: high`), `classifier` the interim classifier work (`priority: medium`)                                                                                                    |
+| `--id <id>...`                | Export exactly these DB task ids — the filter flags are ignored, but a named row that is already exported (or whose `dedup_key` a backlog task carries) is still skipped, and a terminal-status row is reported as non-exportable |
+| `--dry-run`                   | Print the planned writes (incl. the would-be backlog ids); touch nothing                                                                                                                                                          |
 
 Each selected `PlanTask` becomes a new top-level `backlog/tasks/task-<id> - <slug>.md`,
 its frontmatter stamped with `plan_dedup_key: <PlanTask.dedup_key>` (the
