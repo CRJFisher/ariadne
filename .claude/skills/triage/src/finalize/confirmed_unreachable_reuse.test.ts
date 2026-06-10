@@ -240,6 +240,50 @@ describe("derive_tp_cache — source-kind eligibility", () => {
   });
 });
 
+describe("derive_tp_cache — fallback through older runs", () => {
+  it("falls back to an older run when the most recent run has only previously-confirmed-tp rows", async () => {
+    // Run 1: original LLM investigation
+    seed_triage_results("p", "deadbee-2026-04-26T00-00-00.000Z", build_output([
+      { name: "f", file: "src/f.ts", line: 1, source: { kind: "llm-tp" } },
+    ]));
+    // Run 2: cache hit on run 1 — reuses and publishes as previously-confirmed-tp
+    seed_triage_results("p", "deadbee-2026-04-28T00-00-00.000Z", build_output([
+      { name: "f", file: "src/f.ts", line: 1, source: { kind: "previously-confirmed-tp" } },
+    ]));
+
+    const cache = await derive_tp_cache("p", "deadbee", NO_OPTS);
+    expect(cache).not.toBeNull();
+    expect(cache!.source_run_id).toBe("deadbee-2026-04-26T00-00-00.000Z");
+    const k = cache_key_string({ name: "f", file_path_rel: "src/f.ts", kind: "function", start_line: 1 });
+    expect(cache!.entries_by_key.has(k)).toBe(true);
+  });
+
+  it("breaks the alternating cadence: run3 reuses run1's llm-tp rows without re-investigation", async () => {
+    // Run 1: LLM investigated → llm-tp
+    seed_triage_results("p", "deadbee-2026-04-26T00-00-00.000Z", build_output([
+      { name: "f", file: "src/f.ts", line: 1, source: { kind: "llm-tp" } },
+    ]));
+    // Run 2: reused run 1 → previously-confirmed-tp
+    seed_triage_results("p", "deadbee-2026-04-27T00-00-00.000Z", build_output([
+      { name: "f", file: "src/f.ts", line: 1, source: { kind: "previously-confirmed-tp" } },
+    ]));
+    // Run 3 starting: should find run 1's llm-tp rows, not return null
+    const cache = await derive_tp_cache("p", "deadbee", NO_OPTS);
+    expect(cache).not.toBeNull();
+    expect(cache!.source_run_id).toBe("deadbee-2026-04-26T00-00-00.000Z");
+  });
+
+  it("returns null when all runs at the commit have no eligible rows", async () => {
+    seed_triage_results("p", "deadbee-2026-04-26T00-00-00.000Z", build_output([
+      { name: "f", file: "src/f.ts", line: 1, source: { kind: "previously-confirmed-tp" } },
+    ]));
+    seed_triage_results("p", "deadbee-2026-04-28T00-00-00.000Z", build_output([
+      { name: "f", file: "src/f.ts", line: 1, source: { kind: "previously-confirmed-tp" } },
+    ]));
+    expect(await derive_tp_cache("p", "deadbee", NO_OPTS)).toBeNull();
+  });
+});
+
 describe("apply_tp_cache_to_entries", () => {
   const PROJECT_PATH = "/projects/myapp";
 

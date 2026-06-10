@@ -4,7 +4,7 @@ import path from "path";
 
 import type { TriageResultsFile } from "@ariadnejs/skill-protocol";
 import {
-  most_recent_finalized_triage_results,
+  all_finalized_runs_at_commit,
   read_triage_results,
 } from "./triage_results_store.js";
 
@@ -43,29 +43,37 @@ function seed(project: string, run_id: string, output: TriageResultsFile = EMPTY
   fsSync.writeFileSync(path.join(dir, `${run_id}.json`), JSON.stringify(output));
 }
 
-describe("most_recent_finalized_triage_results", () => {
-  it("returns null when no triage_results match the commit prefix", async () => {
+describe("all_finalized_runs_at_commit", () => {
+  it("returns empty array when triage_results dir is missing", async () => {
+    expect(await all_finalized_runs_at_commit("nope", "deadbee")).toEqual([]);
+  });
+
+  it("returns empty array when no triage_results match the commit prefix", async () => {
     seed("p", "feedf00-2026-04-26T00-00-00.000Z");
-    expect(await most_recent_finalized_triage_results("p", "deadbee")).toBeNull();
+    expect(await all_finalized_runs_at_commit("p", "deadbee")).toEqual([]);
   });
 
-  it("returns null when triage_results dir is missing", async () => {
-    expect(await most_recent_finalized_triage_results("nope", "deadbee")).toBeNull();
-  });
-
-  it("returns the lex-max run-id matching the commit prefix", async () => {
+  it("returns all matching runs sorted newest-first (lex-descending)", async () => {
     seed("p", "deadbee-2026-04-26T00-00-00.000Z");
     seed("p", "deadbee-2026-04-28T00-00-00.000Z");
     seed("p", "feedf00-2026-04-27T00-00-00.000Z");
 
-    const result = await most_recent_finalized_triage_results("p", "deadbee");
-    expect(result).not.toBeNull();
-    expect(result!.run_id).toBe("deadbee-2026-04-28T00-00-00.000Z");
+    const results = await all_finalized_runs_at_commit("p", "deadbee");
+    expect(results).toHaveLength(2);
+    expect(results[0].run_id).toBe("deadbee-2026-04-28T00-00-00.000Z");
+    expect(results[1].run_id).toBe("deadbee-2026-04-26T00-00-00.000Z");
   });
 
   it("does not match a partial-prefix collision (e.g. 'dead' vs 'deadbee')", async () => {
     seed("p", "deadbee-2026-04-26T00-00-00.000Z");
-    expect(await most_recent_finalized_triage_results("p", "dead")).toBeNull();
+    expect(await all_finalized_runs_at_commit("p", "dead")).toEqual([]);
+  });
+
+  it("returns parsed output for each run", async () => {
+    seed("p", "deadbee-2026-04-26T00-00-00.000Z");
+    const results = await all_finalized_runs_at_commit("p", "deadbee");
+    expect(results).toHaveLength(1);
+    expect(results[0].output.schema_version).toBe(5);
   });
 });
 

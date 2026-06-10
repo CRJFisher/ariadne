@@ -22,35 +22,39 @@ import {
 } from "@ariadnejs/skill-protocol";
 
 /**
- * Find the most-recent published `triage_results/<run-id>.json` whose run-id
- * has the given `<short-commit>-` prefix. Returns the parsed output along
- * with the run-id; returns `null` when no matching artifact exists.
- *
- * "Most recent" = lex-max of run-id within the matching commit (ISO timestamp
- * suffix gives chronological order within a commit).
+ * Return all published triage_results runs whose run-id has the given
+ * `<short-commit>-` prefix, sorted lexicographically descending (newest first).
+ * Returns an empty array when no matching artifacts exist.
  */
-export async function most_recent_finalized_triage_results(
+export async function all_finalized_runs_at_commit(
   project: string,
   short_commit: string,
-): Promise<{ run_id: string; output: TriageResultsFile } | null> {
+): Promise<{ run_id: string; output: TriageResultsFile }[]> {
   const dir = triage_results_dir(project);
   let files: string[];
   try {
     files = await fs.readdir(dir);
   } catch {
-    return null;
+    return [];
   }
 
   const prefix = `${short_commit}-`;
-  const matching = files.filter((f) => f.startsWith(prefix) && f.endsWith(".json"));
-  if (matching.length === 0) return null;
+  const matching = files
+    .filter((f) => f.startsWith(prefix) && f.endsWith(".json"))
+    .sort()
+    .reverse();
 
-  matching.sort();
-  const winner = matching[matching.length - 1];
-  const winner_path = path.join(dir, winner);
-  const text = await fs.readFile(winner_path, "utf-8");
-  const output = parse_triage_results(winner_path, text);
-  return { run_id: winner.slice(0, -".json".length), output };
+  if (matching.length === 0) return [];
+
+  const results: { run_id: string; output: TriageResultsFile }[] = [];
+  for (const file of matching) {
+    const run_id = file.slice(0, -".json".length);
+    const file_path = path.join(dir, file);
+    const text = await fs.readFile(file_path, "utf-8");
+    const output = parse_triage_results(file_path, text);
+    results.push({ run_id, output });
+  }
+  return results;
 }
 
 /**

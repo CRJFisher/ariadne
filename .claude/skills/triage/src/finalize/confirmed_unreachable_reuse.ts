@@ -12,9 +12,10 @@
  * entries return to the llm-triage pool. `previously-confirmed-tp` rows are
  * excluded because the published schema carries no origin chain: a cache-hit
  * entry cannot prove its verdict traces back to a real LLM investigation.
- * The practical cadence: a genuine TP is reused (llm-tp) for one run, then
- * re-investigated on the next (cache miss), then confirmed again — an accepted
- * cost; no origin-tracking is added to the published schema.
+ * `derive_tp_cache` iterates through all runs at the current commit, newest-first,
+ * stopping at the first run that has at least one `llm-tp` row. A run whose rows
+ * are all `previously-confirmed-tp` is skipped; the original `llm-tp` investigation
+ * run is found in the next iteration. In practice this is at most two file reads.
  *
  * Source of truth: `analysis_output/<project>/triage_results/<run-id>.json`
  * (kept forever; `triage_state/<project>/runs/<run-id>/` may be pruned).
@@ -33,7 +34,7 @@ import {
   type TriageResultsFile,
 } from "@ariadnejs/skill-protocol";
 import {
-  most_recent_finalized_triage_results,
+  all_finalized_runs_at_commit,
   read_triage_results,
 } from "../store/triage_results_store.js";
 import type {
@@ -139,9 +140,12 @@ export async function derive_tp_cache(
     return cache;
   }
 
-  const found = await most_recent_finalized_triage_results(project, current_short_commit);
-  if (found === null) return null;
-  return build_cache(found.run_id, found.output);
+  const runs = await all_finalized_runs_at_commit(project, current_short_commit);
+  for (const run of runs) {
+    const cache = build_cache(run.run_id, run.output);
+    if (cache !== null) return cache;
+  }
+  return null;
 }
 
 // ===== Application =====

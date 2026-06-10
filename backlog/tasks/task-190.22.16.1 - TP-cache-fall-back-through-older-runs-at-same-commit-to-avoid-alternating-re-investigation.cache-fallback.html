@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TASK-190.22.16.1 — TP cache: fall back through older runs at the same commit</title>
+<style>
+:root{
+  --ivory:#faf6ef; --slate:#2e3438; --clay:#c46a4a; --olive:#7a8450;
+  --oat:#e8e0d0; --rust:#a23c2a;
+  --g1:#f3eee4; --g2:#ddd6c8; --g3:#a89f8d; --g4:#6b6457; --g5:#46413a;
+  --serif:ui-serif,Georgia,"Times New Roman",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:10px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);font-size:15px;line-height:1.55}
+main{width:90%;max-width:1600px;margin-inline:auto;padding:28px 0 64px}
+section{scroll-margin-top:118px}
+h1{font-family:var(--serif);font-size:30px;line-height:1.2;margin:10px 0 6px;font-weight:600}
+h2{font-family:var(--serif);font-size:22px;margin:46px 0 6px;font-weight:600}
+h3{font-family:var(--serif);font-size:17px;margin:24px 0 6px;font-weight:600}
+.prose{max-width:68ch}
+.prose p{margin:8px 0}
+code{font-family:var(--mono);font-size:.88em;background:var(--g1);border:1px solid var(--g2);border-radius:4px;padding:1px 5px}
+/* ---- sticky top nav (cross-doc) ---- */
+.docnav{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g2);
+  display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:9px 5%}
+.docnav .crumb{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--g4);margin-right:6px}
+.docnav a.doc-link, .docnav .here{font-family:var(--mono);font-size:12px;border-radius:999px;padding:4px 12px;text-decoration:none}
+.docnav a.doc-link{color:var(--slate);border:1px solid var(--g2);background:#fff}
+.docnav a.doc-link:hover{border-color:var(--clay);color:var(--clay)}
+.docnav .here{background:var(--slate);color:var(--ivory)}
+/* ---- sticky toc rail ---- */
+.tocbar{position:sticky;top:44px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g2);
+  display:flex;flex-wrap:wrap;gap:8px;padding:8px 5%}
+.tocbar a{font-family:var(--mono);font-size:12px;color:var(--slate);text-decoration:none;border:1px solid var(--g2);
+  background:#fff;border-radius:999px;padding:3px 11px;display:inline-flex;align-items:center;gap:6px}
+.tocbar a:hover{border-color:var(--clay)}
+.tocbar a .dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.d-rust{background:var(--rust)} .d-clay{background:var(--clay)} .d-olive{background:var(--olive)} .d-gray{background:var(--g3)}
+/* ---- header ---- */
+.eyebrow{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--clay)}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
+.chip{font-family:var(--mono);font-size:12px;border:1px solid var(--g2);background:#fff;border-radius:999px;padding:3px 11px;color:var(--g5)}
+.chip strong{color:var(--slate)}
+.chip.todo{border-color:var(--clay);color:var(--clay)}
+/* ---- callouts ---- */
+.callout{border-left:4px solid var(--clay);background:#fff;border-radius:0 var(--r) var(--r) 0;
+  padding:14px 18px;margin:18px 0}
+.callout .label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--clay);display:block;margin-bottom:4px}
+.callout.olive{border-left-color:var(--olive)} .callout.olive .label{color:var(--olive)}
+.callout.rust{border-left-color:var(--rust)} .callout.rust .label{color:var(--rust)}
+.callout p{margin:4px 0;max-width:78ch}
+.callout .owner{font-family:var(--mono);font-size:12px;color:var(--g4);display:block;margin-top:6px}
+/* ---- figures ---- */
+figure{margin:18px 0;background:#fff;border:1px solid var(--g2);border-radius:var(--r);padding:16px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-size:13px;color:var(--g4);margin-top:10px;max-width:90ch}
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:10px;font-family:var(--mono);font-size:12px;color:var(--g5)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:8px;border-radius:2px;display:inline-block}
+.sw.dash{background:repeating-linear-gradient(90deg,#c46a4a 0 4px,transparent 4px 7px);height:2px;border-radius:0}
+/* ---- code panels ---- */
+.code{background:var(--slate);color:#e9e4d8;border-radius:var(--r);margin:14px 0;overflow:hidden}
+.code .file-label{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--oat);
+  background:#23282b;padding:7px 14px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.code .file-label .loc{color:var(--g3)}
+.code pre{margin:0;padding:14px 16px;font-family:var(--mono);font-size:12.5px;line-height:1.6;white-space:pre;overflow-x:auto}
+.kw{color:#d99a7c} .str{color:#aab577} .cm{color:#7d8488} .fn{color:#e3c984} .num{color:#c9b8e8}
+.hl{background:#4a4031;display:inline-block;width:100%}
+.add{background:#3a4431;display:inline-block;width:100%}
+.del{background:#4a2f2a;display:inline-block;width:100%;text-decoration:line-through;text-decoration-color:#a23c2a99}
+/* ---- numbered steps ---- */
+.steps{display:grid;gap:14px;margin:18px 0}
+.step{display:grid;grid-template-columns:44px 1fr;gap:12px;background:#fff;border:1px solid var(--g2);border-radius:var(--r);padding:14px 16px}
+.step .badge{width:32px;height:32px;border-radius:50%;background:var(--slate);color:var(--ivory);
+  display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:14px}
+.step.hot .badge{background:var(--clay)}
+.step h3{margin:2px 0 4px}
+.step p{margin:4px 0;max-width:78ch;color:var(--g5)}
+.step .where{font-family:var(--mono);font-size:11.5px;color:var(--g4)}
+.step .where i{font-style:normal;color:var(--g3)}
+/* ---- directory listing specimen ---- */
+.dirlist{background:#fff;border:1px solid var(--g2);border-radius:var(--r);padding:16px;margin:14px 0;font-family:var(--mono);font-size:13px}
+.dirlist .dh{color:var(--g4);margin-bottom:10px}
+.dirrow{display:grid;grid-template-columns:30px minmax(280px,460px) 1fr;gap:10px;align-items:center;
+  padding:8px 10px;border-radius:6px;margin:3px 0}
+.dirrow .n{color:var(--g3);text-align:right}
+.dirrow .verdict{font-size:12px}
+.dirrow.skip{background:#f6efe9}
+.dirrow.skip .verdict{color:var(--clay)}
+.dirrow.hit{background:#eef0e4;border:1px solid var(--olive)}
+.dirrow.hit .verdict{color:var(--olive);font-weight:600}
+.dirrow.ignored{opacity:.5}
+.pill{display:inline-block;border-radius:999px;padding:1px 9px;font-size:11px;margin-left:6px}
+.pill.prev{background:var(--clay);color:#fff}
+.pill.llm{background:var(--olive);color:#fff}
+/* ---- checklist ---- */
+.checks{display:grid;gap:8px;margin:14px 0}
+.checkrow{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start;background:#fff;
+  border:1px solid var(--g2);border-radius:8px;padding:10px 14px}
+.checkrow input{width:16px;height:16px;margin-top:2px;accent-color:var(--olive)}
+.checkrow label{cursor:pointer}
+.checkrow .ac{font-family:var(--mono);font-size:11px;color:var(--g4);margin-right:6px}
+/* ---- provenance ---- */
+.prov{border:1px solid var(--g2);background:var(--g1);border-radius:var(--r);padding:14px 18px;margin:36px 0 0}
+.prov .label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--g4);display:block;margin-bottom:8px}
+.prov ul{margin:4px 0;padding-left:18px}
+.prov li{font-family:var(--mono);font-size:12px;margin:3px 0;color:var(--g5)}
+.prov .stamp{font-family:var(--mono);font-size:11px;color:var(--g3);display:block;margin-top:10px}
+@media (max-width:760px){
+  .dirrow{grid-template-columns:24px 1fr}
+  .dirrow .verdict{grid-column:2}
+}
+</style>
+</head>
+<body>
+
+<nav class="docnav" aria-label="Task family">
+  <span class="crumb">task family 190.22.16</span>
+  <a class="doc-link" href="task-190.22.16%20-%20Triage-TP-cache-must-not-reuse-registry-sourced-confirmed_unreachable-rows.overview.html">190.22.16 · TP-cache reuse — overview</a>
+  <span class="here" aria-current="page">190.22.16.1 · fall back through older runs</span>
+</nav>
+
+<nav class="tocbar" aria-label="Sections">
+  <a href="#cycle"><span class="dot d-rust"></span>The alternating cadence</a>
+  <a href="#cause"><span class="dot d-clay"></span>Where it breaks</a>
+  <a href="#fix"><span class="dot d-olive"></span>The fix</a>
+  <a href="#practice"><span class="dot d-gray"></span>Reads in practice</a>
+  <a href="#tests"><span class="dot d-gray"></span>Tests &amp; acceptance</a>
+</nav>
+
+<main>
+<header>
+  <span class="eyebrow">backlog / TASK-190.22.16.1</span>
+  <h1>TP cache: fall back through older runs at the same commit</h1>
+  <div class="meta">
+    <span class="chip todo">status <strong>To Do</strong></span>
+    <span class="chip">priority <strong>medium</strong></span>
+    <span class="chip">labels <strong>self-repair · bug</strong></span>
+    <span class="chip">parent <strong>TASK-190.22.16</strong></span>
+  </div>
+</header>
+
+<aside class="callout">
+  <span class="label">The fix in one sentence</span>
+  <p>When the most recent run at the current commit has no reusable <code>llm-tp</code> verdicts — because that run was itself a cache-reuse run — keep walking back through <em>older</em> finalized runs at the same commit until one yields a non-null cache, instead of giving up and re-investigating everything with the LLM.</p>
+</aside>
+
+<section id="cycle">
+  <h2>The alternating cadence</h2>
+  <div class="prose"><p>Each run derives its cache from prior published results at the same commit. <code>build_cache</code> only indexes rows with <code>source.kind === "llm-tp"</code> — a reuse run's output (all <code>previously-confirmed-tp</code>) yields nothing. Because <code>derive_tp_cache</code> consults only the single most recent run, every second run finds an empty source and pays the full LLM cost again.</p></div>
+
+  <figure>
+    <svg viewBox="0 0 1180 258" role="img" aria-label="Today: four runs at commit deadbee alternate between LLM investigation and cache reuse forever">
+      <defs>
+        <marker id="aOlive" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7a8450"/></marker>
+        <marker id="aRust" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#a23c2a"/></marker>
+      </defs>
+      <text x="20" y="26" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#a23c2a" font-weight="700">TODAY — verdicts alternate forever at commit deadbee</text>
+      <g font-family="system-ui,sans-serif" font-size="14">
+        <rect x="20" y="78" width="220" height="120" rx="10" fill="#fff" stroke="#ddd6c8" stroke-width="1.5"/>
+        <text x="36" y="103" font-weight="600">Run 1</text>
+        <text x="36" y="123" font-family="ui-monospace,Menlo,monospace" font-size="10.5" fill="#6b6457">deadbee-…T00-00…</text>
+        <rect x="36" y="136" width="140" height="22" rx="11" fill="#a23c2a"/>
+        <text x="106" y="151" font-size="11" fill="#faf6ef" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">LLM investigates</text>
+        <rect x="36" y="164" width="76" height="22" rx="11" fill="#7a8450"/>
+        <text x="74" y="179" font-size="11" fill="#faf6ef" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">llm-tp</text>
+
+        <rect x="320" y="78" width="220" height="120" rx="10" fill="#fff" stroke="#ddd6c8" stroke-width="1.5"/>
+        <text x="336" y="103" font-weight="600">Run 2</text>
+        <text x="336" y="123" font-family="ui-monospace,Menlo,monospace" font-size="10.5" fill="#6b6457">deadbee-…T06-00…</text>
+        <rect x="336" y="136" width="124" height="22" rx="11" fill="#e8e0d0"/>
+        <text x="398" y="151" font-size="11" fill="#46413a" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">cache hit run 1</text>
+        <rect x="336" y="164" width="188" height="22" rx="11" fill="#c46a4a"/>
+        <text x="430" y="179" font-size="11" fill="#faf6ef" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">previously-confirmed-tp</text>
+
+        <rect x="620" y="78" width="220" height="120" rx="10" fill="#fff" stroke="#a23c2a" stroke-width="2"/>
+        <text x="636" y="103" font-weight="600">Run 3</text>
+        <text x="636" y="123" font-family="ui-monospace,Menlo,monospace" font-size="10.5" fill="#6b6457">deadbee-…T12-00…</text>
+        <rect x="636" y="136" width="140" height="22" rx="11" fill="#a23c2a"/>
+        <text x="706" y="151" font-size="11" fill="#faf6ef" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">LLM investigates</text>
+        <rect x="636" y="164" width="76" height="22" rx="11" fill="#7a8450"/>
+        <text x="674" y="179" font-size="11" fill="#faf6ef" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">llm-tp</text>
+
+        <rect x="920" y="78" width="220" height="120" rx="10" fill="#fff" stroke="#ddd6c8" stroke-width="1.5"/>
+        <text x="936" y="103" font-weight="600">Run 4</text>
+        <text x="936" y="123" font-family="ui-monospace,Menlo,monospace" font-size="10.5" fill="#6b6457">deadbee-…T18-00…</text>
+        <rect x="936" y="136" width="124" height="22" rx="11" fill="#e8e0d0"/>
+        <text x="998" y="151" font-size="11" fill="#46413a" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">cache hit run 3</text>
+        <rect x="936" y="164" width="188" height="22" rx="11" fill="#c46a4a"/>
+        <text x="1030" y="179" font-size="11" fill="#faf6ef" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">previously-confirmed-tp</text>
+      </g>
+      <g font-family="ui-monospace,Menlo,monospace" font-size="10.5">
+        <line x1="240" y1="140" x2="318" y2="140" stroke="#7a8450" stroke-width="2" marker-end="url(#aOlive)"/>
+        <text x="279" y="132" text-anchor="middle" fill="#7a8450">reuse</text>
+        <line x1="540" y1="140" x2="618" y2="140" stroke="#a23c2a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#aRust)"/>
+        <text x="579" y="120" text-anchor="middle" fill="#a23c2a">all rows filtered</text>
+        <text x="579" y="132" text-anchor="middle" fill="#a23c2a">→ cache null</text>
+        <line x1="840" y1="140" x2="918" y2="140" stroke="#7a8450" stroke-width="2" marker-end="url(#aOlive)"/>
+        <text x="879" y="132" text-anchor="middle" fill="#7a8450">reuse</text>
+        <text x="1150" y="145" font-size="16" fill="#6b6457">…</text>
+      </g>
+      <g font-family="ui-monospace,Menlo,monospace" font-size="10.5">
+        <rect x="60" y="48" width="96" height="20" rx="10" fill="none" stroke="#a23c2a"/>
+        <text x="108" y="62" text-anchor="middle" fill="#a23c2a">LLM cost ①</text>
+        <rect x="660" y="48" width="124" height="20" rx="10" fill="none" stroke="#a23c2a"/>
+        <text x="722" y="62" text-anchor="middle" fill="#a23c2a">LLM cost ② … ∞</text>
+      </g>
+      <text x="20" y="238" font-family="system-ui,sans-serif" font-size="13" fill="#46413a">Odd runs pay the full investigation; even runs reuse. The cycle never converges.</text>
+    </svg>
+
+    <svg viewBox="0 0 1180 290" role="img" aria-label="After the fix: run 3 and run 4 skip reuse runs and fall back to run 1's llm-tp verdicts, so the LLM cost is paid once per commit" style="margin-top:22px">
+      <defs>
+        <marker id="bOlive" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7a8450"/></marker>
+      </defs>
+      <text x="20" y="26" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#7a8450" font-weight="700">AFTER THE FIX — every later run falls back to run 1's verdicts</text>
+      <g font-family="system-ui,sans-serif" font-size="14">
+        <rect x="20" y="118" width="220" height="120" rx="10" fill="#fff" stroke="#7a8450" stroke-width="2"/>
+        <text x="36" y="143" font-weight="600">Run 1</text>
+        <text x="36" y="163" font-family="ui-monospace,Menlo,monospace" font-size="10.5" fill="#6b6457">deadbee-…T00-00…</text>
+        <rect x="36" y="176" width="140" height="22" rx="11" fill="#a23c2a"/>
+        <text x="106" y="191" font-size="11" fill="#faf6ef" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">LLM investigates</text>
+        <rect x="36" y="204" width="76" height="22" rx="11" fill="#7a8450"/>
+        <text x="74" y="219" font-size="11" fill="#faf6ef" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">llm-tp</text>
+
+        <rect x="320" y="118" width="220" height="120" rx="10" fill="#fff" stroke="#ddd6c8" stroke-width="1.5"/>
+        <text x="336" y="143" font-weight="600">Run 2</text>
+        <text x="336" y="163" font-family="ui-monospace,Menlo,monospace" font-size="10.5" fill="#6b6457">deadbee-…T06-00…</text>
+        <rect x="336" y="176" width="124" height="22" rx="11" fill="#e8e0d0"/>
+        <text x="398" y="191" font-size="11" fill="#46413a" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">cache hit run 1</text>
+        <rect x="336" y="204" width="188" height="22" rx="11" fill="#c46a4a"/>
+        <text x="430" y="219" font-size="11" fill="#faf6ef" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">previously-confirmed-tp</text>
+
+        <rect x="620" y="118" width="220" height="120" rx="10" fill="#fff" stroke="#ddd6c8" stroke-width="1.5"/>
+        <text x="636" y="143" font-weight="600">Run 3</text>
+        <text x="636" y="163" font-family="ui-monospace,Menlo,monospace" font-size="10.5" fill="#6b6457">deadbee-…T12-00…</text>
+        <rect x="636" y="176" width="178" height="22" rx="11" fill="#e8e0d0"/>
+        <text x="725" y="191" font-size="11" fill="#46413a" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">skip run 2 → hit run 1</text>
+        <rect x="636" y="204" width="188" height="22" rx="11" fill="#c46a4a"/>
+        <text x="730" y="219" font-size="11" fill="#faf6ef" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">previously-confirmed-tp</text>
+
+        <rect x="920" y="118" width="220" height="120" rx="10" fill="#fff" stroke="#ddd6c8" stroke-width="1.5"/>
+        <text x="936" y="143" font-weight="600">Run 4</text>
+        <text x="936" y="163" font-family="ui-monospace,Menlo,monospace" font-size="10.5" fill="#6b6457">deadbee-…T18-00…</text>
+        <rect x="936" y="176" width="196" height="22" rx="11" fill="#e8e0d0"/>
+        <text x="1034" y="191" font-size="11" fill="#46413a" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">skip runs 3, 2 → hit run 1</text>
+        <rect x="936" y="204" width="188" height="22" rx="11" fill="#c46a4a"/>
+        <text x="1030" y="219" font-size="11" fill="#faf6ef" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">previously-confirmed-tp</text>
+      </g>
+      <g font-family="ui-monospace,Menlo,monospace" font-size="10.5" fill="none">
+        <line x1="240" y1="180" x2="318" y2="180" stroke="#7a8450" stroke-width="2" marker-end="url(#bOlive)"/>
+        <text x="279" y="172" text-anchor="middle" fill="#7a8450">reuse</text>
+        <path d="M 150 118 Q 440 52 724 116" stroke="#7a8450" stroke-width="2" marker-end="url(#bOlive)"/>
+        <path d="M 120 118 Q 570 8 1024 116" stroke="#7a8450" stroke-width="2" marker-end="url(#bOlive)"/>
+        <text x="438" y="76" text-anchor="middle" fill="#7a8450">fallback reuse</text>
+        <text x="700" y="46" text-anchor="middle" fill="#7a8450">fallback reuse</text>
+      </g>
+      <g font-family="ui-monospace,Menlo,monospace" font-size="10.5">
+        <rect x="36" y="252" width="216" height="20" rx="10" fill="none" stroke="#7a8450"/>
+        <text x="144" y="266" text-anchor="middle" fill="#7a8450">LLM cost paid once per commit</text>
+      </g>
+    </svg>
+    <div class="legend">
+      <span><span class="sw" style="background:#7a8450"></span>llm-tp · verdict reuse</span>
+      <span><span class="sw" style="background:#c46a4a"></span>previously-confirmed-tp · skipped as a cache source</span>
+      <span><span class="sw" style="background:#a23c2a"></span>LLM re-investigation cost</span>
+      <span style="color:#c46a4a"><span class="sw dash"></span>read but rejected</span>
+    </div>
+    <figcaption>The published <code>source.kind</code> of each run at commit <code>deadbee</code>, and where each run's cache comes from. Today (top), run 3 finds only <code>previously-confirmed-tp</code> rows in run 2, gets a null cache, and re-runs the LLM — restarting the cycle. After the fix (bottom), run 3 and run 4 walk back to run 1, the one run holding direct <code>llm-tp</code> verdicts.</figcaption>
+  </figure>
+</section>
+
+<section id="cause">
+  <h2>Where it breaks</h2>
+  <div class="prose"><p>Two pieces interact. The eligibility filter (landed in TASK-190.22.16) is correct and stays: a cache hit is never itself reused, because the published row carries no origin chain. The defect is in run <em>selection</em> — a single lookup that trusts whatever the lex-max run happens to contain.</p></div>
+
+  <div class="code">
+    <div class="file-label"><span>.claude/skills/triage/src/finalize/confirmed_unreachable_reuse.ts</span><span class="loc">build_cache · lines 89–97 (stays as-is)</span></div>
+    <pre><span class="kw">function</span> <span class="fn">build_cache</span>(source_run_id: <span class="kw">string</span>, output: TriageResultsFile): TpCache | <span class="kw">null</span> {
+  <span class="kw">const</span> entries_by_key = <span class="kw">new</span> <span class="fn">Map</span>&lt;<span class="kw">string</span>, PublishedConfirmedUnreachable&gt;();
+  <span class="kw">for</span> (<span class="kw">const</span> fp <span class="kw">of</span> output.confirmed_unreachable) {
+<span class="hl">    <span class="kw">if</span> (fp.source.kind !== <span class="str">"llm-tp"</span>) <span class="kw">continue</span>;  <span class="cm">// a reuse run's rows are ALL filtered here</span></span>
+    entries_by_key.<span class="fn">set</span>(<span class="fn">cache_key_string</span>(<span class="fn">key_for_published</span>(fp)), fp);
+  }
+<span class="hl">  <span class="kw">if</span> (entries_by_key.size === <span class="num">0</span>) <span class="kw">return</span> <span class="kw">null</span>;   <span class="cm">// … so a reuse-run source yields null</span></span>
+  <span class="kw">return</span> { source_run_id, entries_by_key };
+}</pre>
+  </div>
+
+  <div class="code">
+    <div class="file-label"><span>.claude/skills/triage/src/finalize/confirmed_unreachable_reuse.ts</span><span class="loc">derive_tp_cache tail · lines 142–144 (the defect)</span></div>
+    <pre><span class="cm">// One lookup, taken as-is. If the lex-max run is a reuse run, this returns</span>
+<span class="cm">// null even though an older run at the same commit holds llm-tp verdicts.</span>
+<span class="hl"><span class="kw">const</span> found = <span class="kw">await</span> <span class="fn">most_recent_finalized_triage_results</span>(project, current_short_commit);</span>
+<span class="kw">if</span> (found === <span class="kw">null</span>) <span class="kw">return</span> <span class="kw">null</span>;
+<span class="kw">return</span> <span class="fn">build_cache</span>(found.run_id, found.output);</pre>
+  </div>
+
+  <div class="prose"><p>The loop closes at the stamp site: a cache hit publishes <code>previously-confirmed-tp</code> (<code>apply_tp_cache_to_entries</code>, line 182), which is exactly the kind <code>build_cache</code> rejects on the following run. Reuse run → empty cache → full re-investigation → fresh <code>llm-tp</code> → reuse run → …</p></div>
+</section>
+
+<section id="fix">
+  <h2>The fix: fall back through older runs</h2>
+
+  <div class="steps">
+    <div class="step hot">
+      <div class="badge">1</div>
+      <div>
+        <h3>Add <code>all_finalized_runs_at_commit(project, short_commit)</code></h3>
+        <p>Returns every finalized run whose run-id starts with <code>&lt;short_commit&gt;-</code>, sorted lex-descending — the ISO-timestamp suffix makes lex order chronological, so index 0 is the newest run. Generalizes the directory scan that <code>most_recent_finalized_triage_results</code> already performs.</p>
+        <span class="where">.claude/skills/triage/src/store/triage_results_store.ts <i>(new export)</i></span>
+      </div>
+    </div>
+    <div class="step hot">
+      <div class="badge">2</div>
+      <div>
+        <h3>Iterate newest-first in <code>derive_tp_cache</code></h3>
+        <p>Replace the single lookup with a loop that returns the first non-null cache. A run whose rows are all <code>previously-confirmed-tp</code> (or all <code>registry</code>) is skipped; the loop lands on the run that holds direct LLM verdicts. The pinned-source path (<code>--tp-source-run</code>) is untouched.</p>
+        <span class="where">.claude/skills/triage/src/finalize/confirmed_unreachable_reuse.ts <i>:142-144</i></span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="badge">3</div>
+      <div>
+        <h3>Delete <code>most_recent_finalized_triage_results</code></h3>
+        <p>Its sole production caller is <code>derive_tp_cache</code> — verified by grep across the skills tree — so it goes away entirely. No compatibility alias.</p>
+        <span class="where">.claude/skills/triage/src/store/triage_results_store.ts <i>:32-54 (remove)</i></span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="badge">4</div>
+      <div>
+        <h3>Tests for both layers</h3>
+        <p>Store-level ordering/filtering tests in <code>triage_results_store.test.ts</code> (the existing tests at lines 46–68 migrate to the new function); fallback-behaviour tests through <code>derive_tp_cache</code> in <code>confirmed_unreachable_reuse.test.ts</code>.</p>
+        <span class="where">…/store/triage_results_store.test.ts · …/finalize/confirmed_unreachable_reuse.test.ts</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="code">
+    <div class="file-label"><span>.claude/skills/triage/src/finalize/confirmed_unreachable_reuse.ts</span><span class="loc">derive_tp_cache tail · proposed change</span></div>
+    <pre><span class="del">  <span class="kw">const</span> found = <span class="kw">await</span> <span class="fn">most_recent_finalized_triage_results</span>(project, current_short_commit);</span>
+<span class="del">  <span class="kw">if</span> (found === <span class="kw">null</span>) <span class="kw">return</span> <span class="kw">null</span>;</span>
+<span class="del">  <span class="kw">return</span> <span class="fn">build_cache</span>(found.run_id, found.output);</span>
+<span class="add">  <span class="kw">const</span> runs = <span class="kw">await</span> <span class="fn">all_finalized_runs_at_commit</span>(project, current_short_commit);</span>
+<span class="add">  <span class="kw">for</span> (<span class="kw">const</span> run <span class="kw">of</span> runs) {</span>
+<span class="add">    <span class="kw">const</span> cache = <span class="fn">build_cache</span>(run.run_id, run.output);</span>
+<span class="add">    <span class="kw">if</span> (cache !== <span class="kw">null</span>) <span class="kw">return</span> cache;   <span class="cm">// first run with ≥1 llm-tp row wins</span></span>
+<span class="add">  }</span>
+<span class="add">  <span class="kw">return</span> <span class="kw">null</span>;   <span class="cm">// no run at this commit has direct LLM verdicts</span></span></pre>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 1180 392" role="img" aria-label="Decision flow of derive_tp_cache after the fix, ending in the newest-first fallback loop">
+      <defs>
+        <marker id="fSlate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#46413a"/></marker>
+        <marker id="fOlive" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7a8450"/></marker>
+        <marker id="fClay" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#c46a4a"/></marker>
+        <marker id="fGray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#a89f8d"/></marker>
+      </defs>
+      <g font-family="ui-monospace,Menlo,monospace" font-size="11.5">
+        <rect x="20" y="40" width="190" height="46" rx="23" fill="#2e3438"/>
+        <text x="115" y="68" text-anchor="middle" fill="#faf6ef">derive_tp_cache(…)</text>
+
+        <path d="M 330 63 L 415 22 L 500 63 L 415 104 Z" fill="#fff" stroke="#ddd6c8" stroke-width="1.5"/>
+        <text x="415" y="58" text-anchor="middle" fill="#2e3438">no_reuse, or</text>
+        <text x="415" y="73" text-anchor="middle" fill="#2e3438">no commit?</text>
+
+        <rect x="580" y="42" width="120" height="42" rx="21" fill="#f3eee4" stroke="#ddd6c8"/>
+        <text x="640" y="68" text-anchor="middle" fill="#6b6457">null</text>
+
+        <path d="M 330 220 L 415 180 L 500 220 L 415 260 Z" fill="#fff" stroke="#ddd6c8" stroke-width="1.5"/>
+        <text x="415" y="217" text-anchor="middle" fill="#2e3438">pinned run</text>
+        <text x="415" y="231" text-anchor="middle" fill="#2e3438">(--tp-source-run)?</text>
+
+        <rect x="580" y="180" width="240" height="56" rx="10" fill="#fff" stroke="#ddd6c8" stroke-width="1.5"/>
+        <text x="700" y="204" text-anchor="middle" fill="#2e3438">validate prefix + read pinned</text>
+        <text x="700" y="220" text-anchor="middle" fill="#6b6457">(unchanged path)</text>
+
+        <rect x="290" y="288" width="370" height="40" rx="10" fill="#fff" stroke="#c46a4a" stroke-width="2"/>
+        <text x="475" y="313" text-anchor="middle" fill="#2e3438">all_finalized_runs_at_commit — newest first</text>
+
+        <rect x="730" y="288" width="190" height="40" rx="10" fill="#fff" stroke="#c46a4a" stroke-width="2"/>
+        <text x="825" y="313" text-anchor="middle" fill="#2e3438">build_cache(run)</text>
+
+        <rect x="980" y="288" width="84" height="40" rx="20" fill="#fff" stroke="#ddd6c8" stroke-width="1.5"/>
+        <text x="1022" y="313" text-anchor="middle" fill="#2e3438">null?</text>
+
+        <rect x="980" y="182" width="180" height="42" rx="21" fill="#7a8450"/>
+        <text x="1070" y="208" text-anchor="middle" fill="#faf6ef">return cache ✓</text>
+
+        <rect x="940" y="108" width="220" height="36" rx="18" fill="#f3eee4" stroke="#ddd6c8"/>
+        <text x="1050" y="131" text-anchor="middle" fill="#6b6457">runs exhausted → null</text>
+
+        <g fill="none" stroke="#46413a" stroke-width="1.8">
+          <line x1="210" y1="63" x2="324" y2="63" marker-end="url(#fSlate)"/>
+          <line x1="500" y1="63" x2="576" y2="63" marker-end="url(#fSlate)"/>
+          <line x1="415" y1="104" x2="415" y2="176" marker-end="url(#fSlate)"/>
+          <line x1="500" y1="220" x2="576" y2="209" marker-end="url(#fSlate)"/>
+          <line x1="415" y1="260" x2="415" y2="284" marker-end="url(#fSlate)"/>
+          <line x1="660" y1="308" x2="726" y2="308" marker-end="url(#fSlate)"/>
+          <line x1="920" y1="308" x2="976" y2="308" marker-end="url(#fSlate)"/>
+        </g>
+        <line x1="1022" y1="288" x2="1052" y2="228" stroke="#7a8450" stroke-width="2" marker-end="url(#fOlive)"/>
+        <path d="M 1022 328 Q 1022 362 926 362 Q 825 362 825 332" fill="none" stroke="#c46a4a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#fClay)"/>
+        <path d="M 825 288 Q 825 128 936 128" fill="none" stroke="#a89f8d" stroke-width="1.8" stroke-dasharray="3 4" marker-end="url(#fGray)"/>
+
+        <text x="528" y="54" fill="#6b6457">yes</text>
+        <text x="425" y="134" fill="#6b6457">no</text>
+        <text x="524" y="204" fill="#6b6457">yes</text>
+        <text x="425" y="278" fill="#6b6457">no</text>
+        <text x="1052" y="254" fill="#7a8450">no → hit</text>
+        <text x="858" y="380" fill="#c46a4a">yes → next older run</text>
+        <text x="700" y="148" fill="#a89f8d">no runs left</text>
+      </g>
+    </svg>
+    <figcaption>Decision flow after the change. Clay-bordered boxes are the two touched call sites; the dashed clay edge is the new fallback loop. Every other branch — the <code>--no-reuse-tp</code> gate, the non-git null, the pinned-run path — keeps its exact current behaviour.</figcaption>
+  </figure>
+
+  <aside class="callout rust">
+    <span class="label">Open question for the implementer</span>
+    <p>The spec's loop calls <code>build_cache(run.run_id, run.output)</code>, which implies <code>all_finalized_runs_at_commit</code> eagerly reads and parses <em>every</em> run file at the commit before the loop starts. Returning run-ids only and reading lazily inside the loop (<code>read_triage_results</code> per iteration) preserves the early-exit read bound. Files are KB-scale either way, so eager is acceptable — but pick one shape deliberately and let the store tests assert it.</p>
+    <span class="owner">decide at implementation time · affects AC #1's return type</span>
+  </aside>
+</section>
+
+<section id="practice">
+  <h2>Reads in practice</h2>
+  <div class="prose"><p>What run 3 at commit <code>deadbee</code> actually does against the published store. The loop reads one file per reuse run until it lands on the investigation run — typically the second file, growing by one per additional reuse run at the same commit.</p></div>
+
+  <div class="dirlist" role="img" aria-label="Directory listing of triage results at commit deadbee showing the fallback loop skipping the reuse run and stopping at the investigation run">
+    <div class="dh">analysis_output/p/triage_results/ <span style="color:var(--g3)">— iterated lex-descending</span></div>
+    <div class="dirrow skip">
+      <span class="n">1</span>
+      <span>deadbee-2026-04-28T00-00-00.000Z.json<span class="pill prev">all previously-confirmed-tp</span></span>
+      <span class="verdict">read → build_cache returns null → skip</span>
+    </div>
+    <div class="dirrow hit">
+      <span class="n">2</span>
+      <span>deadbee-2026-04-26T00-00-00.000Z.json<span class="pill llm">has llm-tp rows</span></span>
+      <span class="verdict">read → cache built → loop stops here ✓</span>
+    </div>
+    <div class="dirrow ignored">
+      <span class="n">·</span>
+      <span>feedf00-2026-04-20T00-00-00.000Z.json</span>
+      <span class="verdict">different commit prefix — never a candidate</span>
+    </div>
+  </div>
+
+  <aside class="callout olive">
+    <span class="label">Why this terminates</span>
+    <p>Within one commit there is at most a handful of finalized runs, and the <em>first</em> run at any commit is always a full investigation (no prior runs to reuse from), so the loop always has an <code>llm-tp</code> floor to land on — unless every confirmed-unreachable verdict at that commit came from registry rules, in which case null is the correct answer: registry rows must stay live against rule deactivation and are never cached.</p>
+  </aside>
+</section>
+
+<section id="tests">
+  <h2>Tests &amp; acceptance</h2>
+  <div class="prose"><p>The acceptance criteria, restated as the review checklist. #3 and #4 are the behavioural heart: seed a reuse run on top of an investigation run and assert the cache's <code>source_run_id</code> points at the older run.</p></div>
+  <div class="checks">
+    <div class="checkrow"><input type="checkbox" id="ac1"><label for="ac1"><span class="ac">AC #1</span><code>all_finalized_runs_at_commit</code> added to <code>triage_results_store.ts</code>, returning runs at the given short-commit sorted newest-first</label></div>
+    <div class="checkrow"><input type="checkbox" id="ac2"><label for="ac2"><span class="ac">AC #2</span><code>derive_tp_cache</code> iterates all runs at the commit (newest first) and uses the first one yielding a non-null cache</label></div>
+    <div class="checkrow"><input type="checkbox" id="ac3"><label for="ac3"><span class="ac">AC #3</span>a run whose <code>confirmed_unreachable</code> rows are all <code>previously-confirmed-tp</code> is skipped; the next older run's <code>llm-tp</code> rows are used</label></div>
+    <div class="checkrow"><input type="checkbox" id="ac4"><label for="ac4"><span class="ac">AC #4</span>the alternating cadence is broken: a genuine TP investigated at commit X is reused by every later run at X without re-triggering LLM investigation</label></div>
+    <div class="checkrow"><input type="checkbox" id="ac5"><label for="ac5"><span class="ac">AC #5</span>store-level tests live in <code>triage_results_store.test.ts</code> (existing lines 46–68 migrate to the new function)</label></div>
+    <div class="checkrow"><input type="checkbox" id="ac6"><label for="ac6"><span class="ac">AC #6</span>fallback behaviour covered through <code>derive_tp_cache</code> in <code>confirmed_unreachable_reuse.test.ts</code></label></div>
+  </div>
+</section>
+
+<footer class="prov">
+  <span class="label">Sources read</span>
+  <ul>
+    <li>backlog/tasks/task-190.22.16.1 - TP-cache-fall-back-through-older-runs-at-same-commit-to-avoid-alternating-re-investigation.md</li>
+    <li>backlog/tasks/task-190.22.16 - Triage-TP-cache-must-not-reuse-registry-sourced-confirmed_unreachable-rows.md</li>
+    <li>.claude/skills/triage/src/finalize/confirmed_unreachable_reuse.ts (derive_tp_cache :110-145, build_cache :89-97, apply_tp_cache_to_entries :161-194)</li>
+    <li>.claude/skills/triage/src/store/triage_results_store.ts (most_recent_finalized_triage_results :32-54)</li>
+    <li>.claude/skills/triage/src/store/triage_results_store.test.ts · .claude/skills/triage/src/finalize/confirmed_unreachable_reuse.test.ts</li>
+  </ul>
+  <span class="stamp">generated 2026-06-10 · branch feat/self-healing-pipeline-debug</span>
+</footer>
+</main>
+</body>
+</html>

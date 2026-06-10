@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TASK-190.22.16 — Triage TP-cache reuse: overview</title>
+<style>
+:root{
+  --ivory:#faf6ef; --slate:#2e3438; --clay:#c46a4a; --olive:#7a8450;
+  --oat:#e8e0d0; --rust:#a23c2a;
+  --g1:#f3eee4; --g2:#ddd6c8; --g3:#a89f8d; --g4:#6b6457; --g5:#46413a;
+  --serif:ui-serif,Georgia,"Times New Roman",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:10px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);font-size:15px;line-height:1.55}
+main{width:90%;max-width:1600px;margin-inline:auto;padding:28px 0 64px}
+section{scroll-margin-top:70px}
+h1{font-family:var(--serif);font-size:30px;line-height:1.2;margin:10px 0 6px;font-weight:600}
+h2{font-family:var(--serif);font-size:22px;margin:46px 0 6px;font-weight:600}
+.prose{max-width:68ch}
+.prose p{margin:8px 0}
+code{font-family:var(--mono);font-size:.88em;background:var(--g1);border:1px solid var(--g2);border-radius:4px;padding:1px 5px}
+/* sticky cross-doc nav */
+.docnav{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g2);
+  display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:9px 5%}
+.docnav .crumb{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--g4);margin-right:6px}
+.docnav a.doc-link, .docnav .here{font-family:var(--mono);font-size:12px;border-radius:999px;padding:4px 12px;text-decoration:none;display:inline-flex;align-items:center;gap:7px}
+.docnav a.doc-link{color:var(--slate);border:1px solid var(--g2);background:#fff}
+.docnav a.doc-link:hover{border-color:var(--clay);color:var(--clay)}
+.docnav .here{background:var(--slate);color:var(--ivory)}
+.docnav .dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.d-olive{background:var(--olive)} .d-clay{background:var(--clay)}
+/* header */
+.eyebrow{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--clay)}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
+.chip{font-family:var(--mono);font-size:12px;border:1px solid var(--g2);background:#fff;border-radius:999px;padding:3px 11px;color:var(--g5)}
+.chip strong{color:var(--slate)}
+.chip.done{border-color:var(--olive);color:var(--olive)}
+/* callout */
+.callout{border-left:4px solid var(--clay);background:#fff;border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:18px 0}
+.callout .label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--clay);display:block;margin-bottom:4px}
+.callout p{margin:4px 0;max-width:78ch}
+/* figure */
+figure{margin:18px 0;background:#fff;border:1px solid var(--g2);border-radius:var(--r);padding:16px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-size:13px;color:var(--g4);margin-top:10px;max-width:90ch}
+/* sub-task cards */
+.fam{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:18px 0}
+.fam article{background:#fff;border:1px solid var(--g2);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.fam .tag{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.fam .tag.done{color:var(--olive)} .fam .tag.todo{color:var(--clay)}
+.fam h3{font-family:var(--serif);font-size:17px;margin:0;font-weight:600}
+.fam p{margin:0;color:var(--g5);font-size:14px}
+.fam .links{margin-top:auto;padding-top:8px}
+.fam a{font-family:var(--mono);font-size:12px;color:var(--slate);text-decoration:none;border:1px solid var(--g2);background:var(--g1);border-radius:999px;padding:3px 11px}
+.fam a:hover{border-color:var(--clay);color:var(--clay)}
+.fam .codepill{font-family:var(--mono);font-size:11.5px;color:var(--g4)}
+/* timeline */
+.tl{display:grid;gap:0;margin:16px 0}
+.tlrow{display:grid;grid-template-columns:150px 28px 1fr;gap:10px}
+.tlrow .when{font-family:var(--mono);font-size:12px;color:var(--g4);text-align:right;padding-top:2px}
+.tlrow .spine{display:flex;flex-direction:column;align-items:center}
+.tlrow .tdot{width:12px;height:12px;border-radius:50%;background:var(--g3);flex:none;margin-top:4px}
+.tlrow .tdot.done{background:var(--olive)} .tlrow .tdot.todo{background:var(--clay)}
+.tlrow .conn{width:2px;flex:1;background:var(--g2)}
+.tlrow:last-child .conn{display:none}
+.tlrow .body{padding-bottom:22px;max-width:78ch}
+.tlrow .body b{font-weight:600}
+.tlrow .body span{color:var(--g5)}
+/* provenance */
+.prov{border:1px solid var(--g2);background:var(--g1);border-radius:var(--r);padding:14px 18px;margin:36px 0 0}
+.prov .label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--g4);display:block;margin-bottom:8px}
+.prov ul{margin:4px 0;padding-left:18px}
+.prov li{font-family:var(--mono);font-size:12px;margin:3px 0;color:var(--g5)}
+.prov .stamp{font-family:var(--mono);font-size:11px;color:var(--g3);display:block;margin-top:10px}
+@media (max-width:820px){ .fam{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<nav class="docnav" aria-label="Task family">
+  <span class="crumb">task family 190.22.16</span>
+  <span class="here" aria-current="page">190.22.16 · overview</span>
+  <a class="doc-link" href="task-190.22.16.1%20-%20TP-cache-fall-back-through-older-runs-at-same-commit-to-avoid-alternating-re-investigation.cache-fallback.html"><span class="dot d-clay"></span>190.22.16.1 · fall back through older runs</a>
+</nav>
+
+<main>
+<header>
+  <span class="eyebrow">backlog / TASK-190.22.16 + sub-tasks</span>
+  <h1>Triage TP cache: reuse only direct LLM verdicts, and find them across runs</h1>
+  <div class="meta">
+    <span class="chip done">190.22.16 <strong>Done</strong></span>
+    <span class="chip">190.22.16.1 <strong>To Do</strong></span>
+    <span class="chip">priority <strong>high</strong></span>
+    <span class="chip">labels <strong>self-repair · bug</strong></span>
+    <span class="chip">parent <strong>TASK-190.22</strong></span>
+  </div>
+</header>
+
+<aside class="callout">
+  <span class="label">Why this work exists</span>
+  <p>The triage pipeline caches confirmed-unreachable verdicts so that repeated runs at the same commit skip LLM re-investigation. The cache originally indexed <em>every</em> published row regardless of provenance, which laundered registry-suppressed entries past rule deactivation: an entry classified by a wip rule stayed "confirmed" even after a human marked the rule fixed, defeating exactly the re-examination the classifier lifecycle exists to enable. Restricting reuse to direct LLM verdicts fixes the laundering — and exposes a second defect in how the cache picks its source run.</p>
+</aside>
+
+<section id="shape">
+  <h2>Where each fix sits in the cache pipeline</h2>
+  <figure>
+    <svg viewBox="0 0 1180 300" role="img" aria-label="The TP cache pipeline: derive_tp_cache selects a source run, build_cache filters rows by source kind, apply_tp_cache_to_entries stamps reused entries. Task 190.22.16 owns the eligibility filter; task 190.22.16.1 owns run selection.">
+      <defs>
+        <marker id="oSlate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#46413a"/></marker>
+      </defs>
+      <g font-family="ui-monospace,Menlo,monospace" font-size="11.5">
+        <!-- store -->
+        <rect x="20" y="90" width="230" height="80" rx="10" fill="#f3eee4" stroke="#ddd6c8" stroke-width="1.5"/>
+        <text x="135" y="120" text-anchor="middle" fill="#2e3438">published triage_results</text>
+        <text x="135" y="138" text-anchor="middle" fill="#6b6457">analysis_output/&lt;project&gt;/</text>
+        <text x="135" y="153" text-anchor="middle" fill="#6b6457">triage_results/&lt;run-id&gt;.json</text>
+        <!-- derive -->
+        <rect x="320" y="90" width="230" height="80" rx="10" fill="#fff" stroke="#c46a4a" stroke-width="2"/>
+        <text x="435" y="120" text-anchor="middle" fill="#2e3438">derive_tp_cache</text>
+        <text x="435" y="138" text-anchor="middle" fill="#6b6457">selects the source run(s)</text>
+        <text x="435" y="153" text-anchor="middle" fill="#6b6457">at the current commit</text>
+        <!-- build -->
+        <rect x="620" y="90" width="230" height="80" rx="10" fill="#fff" stroke="#7a8450" stroke-width="2"/>
+        <text x="735" y="120" text-anchor="middle" fill="#2e3438">build_cache</text>
+        <text x="735" y="138" text-anchor="middle" fill="#6b6457">keeps only rows with</text>
+        <text x="735" y="153" text-anchor="middle" fill="#6b6457">source.kind === "llm-tp"</text>
+        <!-- apply -->
+        <rect x="920" y="90" width="240" height="80" rx="10" fill="#fff" stroke="#ddd6c8" stroke-width="1.5"/>
+        <text x="1040" y="120" text-anchor="middle" fill="#2e3438">apply_tp_cache_to_entries</text>
+        <text x="1040" y="138" text-anchor="middle" fill="#6b6457">stamps reused entries as</text>
+        <text x="1040" y="153" text-anchor="middle" fill="#6b6457">previously-confirmed-tp</text>
+        <!-- arrows -->
+        <g fill="none" stroke="#46413a" stroke-width="1.8">
+          <line x1="250" y1="130" x2="316" y2="130" marker-end="url(#oSlate)"/>
+          <line x1="550" y1="130" x2="616" y2="130" marker-end="url(#oSlate)"/>
+          <line x1="850" y1="130" x2="916" y2="130" marker-end="url(#oSlate)"/>
+        </g>
+        <!-- ownership badges -->
+        <rect x="320" y="196" width="230" height="44" rx="10" fill="none" stroke="#c46a4a" stroke-dasharray="4 4"/>
+        <text x="435" y="214" text-anchor="middle" fill="#c46a4a">TASK-190.22.16.1 · To Do</text>
+        <text x="435" y="230" text-anchor="middle" fill="#c46a4a">fall back through older runs</text>
+        <line x1="435" y1="170" x2="435" y2="196" stroke="#c46a4a" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <rect x="620" y="196" width="230" height="44" rx="10" fill="none" stroke="#7a8450"/>
+        <text x="735" y="214" text-anchor="middle" fill="#7a8450">TASK-190.22.16 · Done</text>
+        <text x="735" y="230" text-anchor="middle" fill="#7a8450">llm-tp-only eligibility filter</text>
+        <line x1="735" y1="170" x2="735" y2="196" stroke="#7a8450" stroke-width="1.5"/>
+        <!-- feedback loop -->
+        <path d="M 1040 90 Q 1040 30 580 30 Q 135 30 135 86" fill="none" stroke="#a89f8d" stroke-width="1.8" stroke-dasharray="3 4" marker-end="url(#oSlate)"/>
+        <text x="580" y="22" text-anchor="middle" fill="#6b6457">finalize publishes this run's results → next run's source</text>
+        <!-- caption row -->
+        <text x="20" y="282" font-family="system-ui,sans-serif" font-size="13" fill="#46413a">The stamp on the right is what the filter in the middle rejects — which is why run selection on the left must look past reuse runs.</text>
+      </g>
+    </svg>
+    <figcaption>The reuse path inside <code>.claude/skills/triage/src/finalize/confirmed_unreachable_reuse.ts</code> (with run lookup in <code>store/triage_results_store.ts</code>). The eligibility filter keeps registry-classified entries live against rule deactivation and refuses chained reuse rows. Run selection must therefore iterate past reuse runs to reach the run holding direct <code>llm-tp</code> verdicts.</figcaption>
+  </figure>
+</section>
+
+<section id="parts">
+  <h2>The two pieces</h2>
+  <div class="fam">
+    <article>
+      <span class="tag done">● done · 190.22.16</span>
+      <h3>Cache only direct LLM verdicts</h3>
+      <p>One line in <code>build_cache</code> excludes <code>registry</code> and <code>previously-confirmed-tp</code> rows from reuse. Registry-classified entries return to the investigation pool the moment their rule is deactivated (marked fixed, or drift detected). Chained reuse rows are refused because the published schema carries no origin chain — a cache hit cannot prove its verdict traces back to a real investigation. No origin-tracking is added to the published schema.</p>
+      <span class="codepill">if (fp.source.kind !== "llm-tp") continue;</span>
+      <div class="links"><span class="codepill">task-190.22.16 - Triage-TP-cache-must-not-reuse-registry-sourced-confirmed_unreachable-rows.md</span></div>
+    </article>
+    <article>
+      <span class="tag todo">● to do · 190.22.16.1</span>
+      <h3>Fall back through older runs at the same commit</h3>
+      <p>The filter makes a reuse run's output useless as a cache source, but <code>derive_tp_cache</code> still consults only the single most recent run — so runs alternate forever between full LLM re-investigation and reuse. The fix iterates all finalized runs at the commit, newest first, and uses the first that yields a non-null cache, so the LLM cost is paid once per commit.</p>
+      <span class="codepill">all_finalized_runs_at_commit → loop → first non-null cache</span>
+      <div class="links"><a href="task-190.22.16.1%20-%20TP-cache-fall-back-through-older-runs-at-same-commit-to-avoid-alternating-re-investigation.cache-fallback.html">failure cadence + fix walkthrough →</a></div>
+    </article>
+  </div>
+</section>
+
+<section id="timeline">
+  <h2>How the family unfolded</h2>
+  <div class="tl">
+    <div class="tlrow">
+      <span class="when">2026-06-09</span>
+      <span class="spine"><span class="tdot done"></span><span class="conn"></span></span>
+      <div class="body"><b>190.22.16 filed and fixed.</b> <span>The cache indexed every published row; registry-sourced entries survived rule deactivation. Fix: the llm-tp-only eligibility rule, canonically stated in the module header, with tests covering all three source kinds.</span></div>
+    </div>
+    <div class="tlrow">
+      <span class="when">2026-06-10</span>
+      <span class="spine"><span class="tdot todo"></span><span class="conn"></span></span>
+      <div class="body"><b>190.22.16.1 filed.</b> <span>With reuse runs publishing only <code>previously-confirmed-tp</code> rows, the single-most-recent-run lookup alternates between empty caches and fresh investigations at the same commit. Fix direction: iterate runs at the commit newest-first and stop at the first non-null cache.</span></div>
+    </div>
+  </div>
+</section>
+
+<footer class="prov">
+  <span class="label">Sources read</span>
+  <ul>
+    <li>backlog/tasks/task-190.22.16 - Triage-TP-cache-must-not-reuse-registry-sourced-confirmed_unreachable-rows.md</li>
+    <li>backlog/tasks/task-190.22.16.1 - TP-cache-fall-back-through-older-runs-at-same-commit-to-avoid-alternating-re-investigation.md</li>
+    <li>.claude/skills/triage/src/finalize/confirmed_unreachable_reuse.ts · .claude/skills/triage/src/store/triage_results_store.ts</li>
+  </ul>
+  <span class="stamp">generated 2026-06-10 · sibling pages re-scanned on each refresh · branch feat/self-healing-pipeline-debug</span>
+</footer>
+</main>
+</body>
+</html>
