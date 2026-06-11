@@ -43,7 +43,7 @@ This restructure supersedes the automated fix-delivery design (TASK-190.18 and i
 
 ## Subtasks
 
-Numbered in canonical execution order for the initial scope (.1–.14); .15–.20 are follow-up tasks (hardening, doc corrections, bookkeeping) filed after implementation.
+Numbered in canonical execution order for the initial scope (.1–.14); .15–.21 are follow-up tasks (hardening, doc corrections, bookkeeping, loop-closure tooling) filed after implementation.
 
 - **190.22.1** — Phase 1: harden the `triage` golden path; delete the in-run coordinator; carry deterministic fault diagnostics.
 - **190.22.2** — Phase 2: extract `@ariadnejs/skill-protocol` shared data contract. _(depends on .1)_
@@ -65,6 +65,7 @@ Numbered in canonical execution order for the initial scope (.1–.14); .15–.2
 - **190.22.18** — Excise vestigial machinery (dead sweep-skip ledger, legacy migrator, single-impl repository interface, curator vocabulary).
 - **190.22.19** — Doc corrections: removed verdict contract in `diagnosis_routes`, phantom project configs, false registry-read claim.
 - **190.22.20** — Reconcile epic 190.22 bookkeeping with reality.
+- **190.22.21** — Tool the classifier-registry write surface with a `reconcile-registry` skill (the registry's analogue of `prioritize`).
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

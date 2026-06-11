@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan: reconcile-registry — Tooling the Registry Write Surface</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --panel-2: #1d212b; --ink: #e6e9ef; --muted: #9aa3b2;
+    --accent: #6ea8fe; --accent-2: #7ee787; --warn: #ff7b72; --border: #2a2f3a; --code-bg: #11141a;
+    --radius: 10px; --maxw: 980px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .doc-nav { position: sticky; top: 0; z-index: 10; background: rgba(15,17,21,.92);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 10px 20px;
+    display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+  .doc-nav .brand { font-weight: 700; color: var(--ink); margin-right: 10px; letter-spacing: .2px; }
+  .doc-nav a { color: var(--muted); text-decoration: none; font-size: 14px; padding: 4px 8px;
+    border-radius: 6px; white-space: nowrap; }
+  .doc-nav a:hover { color: var(--ink); background: var(--panel-2); }
+  .doc-nav a[aria-current="page"] { color: var(--bg); background: var(--accent); font-weight: 600; }
+  main { margin: 0 5%; padding: 36px 24px 96px; }
+  h1 { font-size: 30px; line-height: 1.25; margin: 8px 0 6px; }
+  h2 { font-size: 22px; margin: 38px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 17px; margin: 26px 0 8px; color: var(--accent); }
+  p, li { color: var(--ink); }
+  a { color: var(--accent); }
+  .lede { color: var(--muted); font-size: 18px; margin: 0 0 8px; }
+  code { background: var(--code-bg); border: 1px solid var(--border); border-radius: 5px;
+    padding: 1px 5px; font: 13.5px/1.5 "SF Mono", Menlo, Consolas, monospace; color: #d6deeb; }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 16px; overflow: auto; }
+  pre code { background: none; border: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--panel-2); }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; margin: 16px 0; }
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--panel-2); color: var(--muted); }
+  .callout { border-left: 3px solid var(--accent); background: var(--panel-2);
+    padding: 10px 14px; border-radius: 0 var(--radius) var(--radius) 0; margin: 16px 0; }
+  .callout.plan-banner { border-left-color: var(--warn); }
+  figure { margin: 18px 0; }
+  figure svg { max-width: 100%; height: auto; display: block; }
+  figcaption { color: var(--muted); font-size: 13px; margin-top: 6px; }
+  .stat { text-align: center; }
+  .stat .big { font-size: 34px; font-weight: 700; line-height: 1.2; }
+  .stat .big.warn { color: var(--warn); }
+  .stat .big.accent { color: var(--accent); }
+  .stat .big.good { color: var(--accent-2); }
+  .stat .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+</style>
+</head>
+<body>
+<nav class="doc-nav">
+    <span class="brand">Self-Healing Pipeline</span>
+    <a href="../../docs/self-healing-pipeline/index.html">Home</a>
+    <a href="../../docs/self-healing-pipeline/overview-loop.html">The Loop</a>
+    <a href="../../docs/self-healing-pipeline/triage-sense.html">Triage (Sense)</a>
+    <a href="../../docs/self-healing-pipeline/triage-investigator.html">Investigator</a>
+    <a href="../../docs/self-healing-pipeline/plan-classify.html">Plan (Classify)</a>
+    <a href="../../docs/self-healing-pipeline/fault-area-taxonomy.html">Fault Areas</a>
+    <a href="../../docs/self-healing-pipeline/registry-lifecycle.html">Registry</a>
+    <a href="../../docs/self-healing-pipeline/atomic-write-contract.html">Write Boundaries</a>
+    <a href="../../docs/self-healing-pipeline/actuate-and-backlog.html">Actuate (Human)</a>
+    <a href="../../docs/self-healing-pipeline/wire-contracts.html">Schemas &amp; Stores</a>
+    <a href="task-190.22.21 - Tool-the-classifier-registry-write-surface-with-a-reconcile-registry-skill.reconcile-plan.html" aria-current="page">Reconcile (plan)</a>
+  </nav>
+<main>
+  <div class="callout plan-banner">
+    <strong>Status: proposed plan — not yet built.</strong> This page visualises work to be done, the companion to backlog task <code>TASK-190.22.21</code>. The canonical pages (<a href="../../docs/self-healing-pipeline/registry-lifecycle.html">Registry</a>, <a href="../../docs/self-healing-pipeline/actuate-and-backlog.html">Actuate</a>) describe the system as it <em>is</em>; this one describes the system as it <em>will be</em> once the plan lands, and is deleted with the plan file when the work is complete.
+  </div>
+
+  <span class="tag">plan</span> <span class="tag">human-invoked skill</span> <span class="tag">registry write surface</span> <span class="tag">scope: locked, core only</span>
+  <h1>Plan: <code>reconcile-registry</code> — Tooling the Registry Write Surface</h1>
+  <p class="lede">The classifier registry is the one human-owned write surface in the pipeline with no tooling — every transition is a raw hand-edit of a 180-rule JSON file, and the reconciliation work simply isn't happening. <code>reconcile-registry</code> will be the registry's exact analogue of <code>prioritize</code>: a thin, human-invoked decision skill over a single fenced writer that detects work already done and proposes the mechanical flips.</p>
+
+  <h2 id="asymmetry">The asymmetry: three surfaces, one untooled</h2>
+  <p>The pipeline has three human-owned write surfaces. The backlog has a decision skill plus a fenced writer; core fixes are human engineering by design. The registry — the middle row — has nothing. This plan fills exactly that cell, fulfilling what <a href="../../docs/self-healing-pipeline/actuate-and-backlog.html">the actuate doc</a> already promises: <em>"Human (hand edit or human-invoked script, always via <code>atomic_update_registry</code>)"</em>. The script was never built.</p>
+  <figure>
+    <svg viewBox="0 0 932 330" role="img" aria-label="Three-column diagram of the pipeline's human-owned write surfaces. The backlog column is tooled by the prioritize skill and export_to_backlog.ts; the registry column today has nothing but raw hand-edits, and this plan slots reconcile-registry plus reconcile_registry.ts into that gap; the core column stays human engineering by design.">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#9aa3b2"/>
+        </marker>
+        <marker id="arr-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#6ea8fe"/>
+        </marker>
+      </defs>
+      <g font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+        <!-- row labels -->
+        <text x="14" y="80" fill="#9aa3b2" font-size="12" font-weight="600" letter-spacing="1">SURFACE</text>
+        <text x="14" y="178" fill="#9aa3b2" font-size="12" font-weight="600" letter-spacing="1">TODAY</text>
+        <text x="14" y="284" fill="#6ea8fe" font-size="12" font-weight="600" letter-spacing="1">THIS PLAN</text>
+
+        <!-- column captions -->
+        <text x="252" y="30" text-anchor="middle" fill="#7ee787" font-size="12" font-weight="600" letter-spacing="1">TOOLED ✓</text>
+        <text x="522" y="30" text-anchor="middle" fill="#ff7b72" font-size="12" font-weight="600" letter-spacing="1">THE GAP ✗</text>
+        <text x="792" y="30" text-anchor="middle" fill="#9aa3b2" font-size="12" font-weight="600" letter-spacing="1">UNTOOLED BY DESIGN</text>
+
+        <!-- surface row -->
+        <rect x="122" y="44" width="260" height="60" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
+        <text x="252" y="70" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">backlog/tasks/*.md</text>
+        <text x="252" y="90" text-anchor="middle" fill="#9aa3b2" font-size="11.5">prioritized work</text>
+
+        <rect x="392" y="44" width="260" height="60" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
+        <text x="522" y="70" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">registry.json</text>
+        <text x="522" y="90" text-anchor="middle" fill="#9aa3b2" font-size="11.5">180 classifier rules</text>
+
+        <rect x="662" y="44" width="260" height="60" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
+        <text x="792" y="70" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">packages/core/</text>
+        <text x="792" y="90" text-anchor="middle" fill="#9aa3b2" font-size="11.5">the actual fix</text>
+
+        <!-- today row -->
+        <rect x="122" y="142" width="260" height="70" rx="10" fill="#1d212b" stroke="#7ee787" stroke-width="1.5"/>
+        <text x="252" y="168" text-anchor="middle" fill="#e6e9ef" font-size="13" font-weight="600">prioritize → export_to_backlog.ts</text>
+        <text x="252" y="188" text-anchor="middle" fill="#9aa3b2" font-size="11.5">decision skill + sole fenced writer</text>
+
+        <rect x="392" y="142" width="260" height="70" rx="10" fill="#1d212b" stroke="#ff7b72" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="522" y="168" text-anchor="middle" fill="#ff7b72" font-size="13" font-weight="600">nothing</text>
+        <text x="522" y="188" text-anchor="middle" fill="#9aa3b2" font-size="11.5">every transition is a raw hand-edit</text>
+
+        <rect x="662" y="142" width="260" height="70" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
+        <text x="792" y="168" text-anchor="middle" fill="#e6e9ef" font-size="13" font-weight="600">human engineering</text>
+        <text x="792" y="188" text-anchor="middle" fill="#9aa3b2" font-size="11.5">fix(&lt;task_id&gt;): … commit scope</text>
+
+        <!-- plan row -->
+        <rect x="122" y="250" width="260" height="60" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
+        <text x="252" y="276" text-anchor="middle" fill="#9aa3b2" font-size="13">unchanged</text>
+        <text x="252" y="296" text-anchor="middle" fill="#9aa3b2" font-size="11.5">already the model to copy</text>
+
+        <rect x="392" y="250" width="260" height="60" rx="10" fill="#11141a" stroke="#6ea8fe" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="522" y="276" text-anchor="middle" fill="#6ea8fe" font-size="13" font-weight="600">reconcile-registry → reconcile_registry.ts</text>
+        <text x="522" y="296" text-anchor="middle" fill="#9aa3b2" font-size="11.5">the registry's prioritize</text>
+
+        <rect x="662" y="250" width="260" height="60" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
+        <text x="792" y="276" text-anchor="middle" fill="#9aa3b2" font-size="13">unchanged</text>
+        <text x="792" y="296" text-anchor="middle" fill="#9aa3b2" font-size="11.5">judgment stays human</text>
+
+        <!-- arrow into the gap -->
+        <line x1="522" y1="212" x2="522" y2="246" stroke="#6ea8fe" stroke-width="1.5" marker-end="url(#arr-a)"/>
+      </g>
+    </svg>
+    <figcaption>Where the new skill slots in. The backlog column already pairs a decision surface with one fenced writer; <code>reconcile-registry</code> gives the registry the same pair. The core column stays untooled on purpose — that is the creative work.</figcaption>
+  </figure>
+
+  <table>
+    <thead>
+      <tr><th>Surface</th><th>Decision surface</th><th>Write mechanism</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>backlog/tasks/*.md</code></td><td><code>prioritize</code> (skill)</td><td><code>export_to_backlog.ts</code></td><td>Tooled ✓</td></tr>
+      <tr><td><code>.claude/skills/triage/known_issues/registry.json</code></td><td><strong><code>reconcile-registry</code> (proposed)</strong></td><td><strong><code>reconcile_registry.ts</code> via <code>atomic_update_registry</code> (proposed)</strong></td><td><strong>The gap this plan fills</strong></td></tr>
+      <tr><td><code>packages/core/</code> (the actual fix)</td><td>Human engineering judgment</td><td>Task-scoped commit</td><td>Correctly untooled</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="numbers">The gap, in numbers</h2>
+  <p>The registry's current state shows the reconciliation isn't being done by hand:</p>
+  <div class="grid">
+    <div class="card stat">
+      <div class="big">180</div>
+      <div class="sub">rules in the registry<br>171 <code>wip</code> · 9 <code>permanent</code> · 0 <code>fixed</code></div>
+    </div>
+    <div class="card stat">
+      <div class="big warn">32 → 0</div>
+      <div class="sub"><code>wip</code> rules carry a <code>backlog_task</code>, yet <strong>zero</strong> are <code>fixed</code> — despite a steady stream of task-scoped fix commits. The smoking gun.</div>
+    </div>
+    <div class="card stat">
+      <div class="big accent">19</div>
+      <div class="sub"><code>wip</code> rules already <code>drift_detected</code> — evidence appended by hand from published <code>classifier_regressions[]</code></div>
+    </div>
+    <div class="card stat">
+      <div class="big warn">0</div>
+      <div class="sub">generators for <code>permanent_data.ts</code> — the file is headed <em>"AUTO-GENERATED — do not edit by hand"</em>, but no generator exists; it is hand-edited in violation of its own header</div>
+    </div>
+  </div>
+
+  <h2 id="scope">Scope: three mechanical writes, nothing more</h2>
+  <p>The skill never authors rule prose and never makes the <code>permanent</code> judgment — those stay human creative work. It detects three high-confidence signals, proposes the corresponding writes, shows the diff, and on confirmation writes through the one fenced writer:</p>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Signal (mechanically detected)</th><th>Proposed registry write</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td><code>git log</code> scope matches a <code>wip</code> rule's <code>backlog_task</code> (reusing the scope parser in <code>scripts/check-commit-message.ts</code>)</td><td><code>wip → fixed</code></td></tr>
+      <tr><td>2</td><td>published <code>triage_results[].classifier_regressions[]</code> names a <code>rule_id</code></td><td>set <code>drift_detected: true</code>; append new <code>drift_evidence[]</code> rows (append-only, deduped by <code>entry_index</code> — re-runs are idempotent)</td></tr>
+      <tr><td>3</td><td>human elects to promote a rule to <code>permanent</code> (<code>--id &lt;group_id&gt; --promote</code>)</td><td>flip the status <em>and</em> regenerate <code>permanent_data.ts</code>; the sync test guards it thereafter</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="flow">Preview → narrow → apply</h2>
+  <p>The workflow mirrors <code>prioritize</code> exactly: a <code>--dry-run</code> scans every signal and prints the proposed changeset writing nothing; selectors narrow the set; dropping <code>--dry-run</code> applies through <code>atomic_update_registry</code> — one lock-fenced read-mutate-write per invocation.</p>
+  <figure>
+    <svg viewBox="0 0 932 400" role="img" aria-label="Flow diagram of the proposed reconcile_registry.ts run: three signal sources — git log, published triage results, and a human promotion choice — feed a detect step, which produces a dry-run preview of the proposed changeset; the human narrows with selectors and re-previews, then applies through atomic_update_registry into registry.json; a promote apply additionally regenerates permanent_data.ts, guarded by a sync test.">
+      <defs>
+        <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#9aa3b2"/>
+        </marker>
+        <marker id="arr2a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#6ea8fe"/>
+        </marker>
+        <marker id="arr2g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#7ee787"/>
+        </marker>
+      </defs>
+      <g font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+        <!-- signal sources -->
+        <text x="110" y="14" text-anchor="middle" fill="#9aa3b2" font-size="12" font-weight="600" letter-spacing="1">SIGNALS</text>
+        <rect x="10" y="24" width="200" height="56" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
+        <text x="110" y="48" text-anchor="middle" fill="#e6e9ef" font-size="13" font-weight="600">git log</text>
+        <text x="110" y="66" text-anchor="middle" fill="#9aa3b2" font-size="11.5">task-scoped commit scopes</text>
+
+        <rect x="10" y="94" width="200" height="56" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
+        <text x="110" y="118" text-anchor="middle" fill="#e6e9ef" font-size="13" font-weight="600">triage_results</text>
+        <text x="110" y="136" text-anchor="middle" fill="#9aa3b2" font-size="11.5">classifier_regressions[]</text>
+
+        <rect x="10" y="164" width="200" height="56" rx="10" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5"/>
+        <text x="110" y="188" text-anchor="middle" fill="#e6e9ef" font-size="13" font-weight="600">human choice</text>
+        <text x="110" y="206" text-anchor="middle" fill="#9aa3b2" font-size="11.5">elects promotion (--promote)</text>
+
+        <!-- detect -->
+        <rect x="252" y="86" width="178" height="72" rx="10" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="341" y="112" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">1 · detect</text>
+        <text x="341" y="130" text-anchor="middle" fill="#9aa3b2" font-size="11.5">reconcile_registry.ts</text>
+        <text x="341" y="146" text-anchor="middle" fill="#9aa3b2" font-size="11.5">pure detectors, unit-tested</text>
+
+        <line x1="210" y1="52" x2="250" y2="100" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <line x1="210" y1="122" x2="250" y2="122" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <line x1="210" y1="192" x2="250" y2="144" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+        <!-- preview -->
+        <rect x="472" y="86" width="196" height="72" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
+        <text x="570" y="112" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">2 · preview (--dry-run)</text>
+        <text x="570" y="130" text-anchor="middle" fill="#9aa3b2" font-size="11.5">proposed changeset,</text>
+        <text x="570" y="146" text-anchor="middle" fill="#9aa3b2" font-size="11.5">grouped by transition — writes nothing</text>
+
+        <line x1="430" y1="122" x2="470" y2="122" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+        <!-- narrow -->
+        <rect x="710" y="86" width="212" height="72" rx="10" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5"/>
+        <text x="816" y="112" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">3 · narrow (human)</text>
+        <text x="816" y="130" text-anchor="middle" fill="#9aa3b2" font-size="11.5">--fixed · --drift · --id &lt;group_id&gt;</text>
+        <text x="816" y="146" text-anchor="middle" fill="#9aa3b2" font-size="11.5">until the set is exactly the work</text>
+
+        <line x1="668" y1="122" x2="708" y2="122" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+        <!-- re-preview loop -->
+        <path d="M 816 158 C 816 196, 700 196, 612 196 C 590 196, 580 180, 575 162" fill="none" stroke="#6ea8fe" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arr2a)"/>
+        <text x="700" y="188" text-anchor="middle" fill="#6ea8fe" font-size="11.5">re-preview until exact</text>
+
+        <!-- apply -->
+        <rect x="710" y="232" width="212" height="72" rx="10" fill="#1d212b" stroke="#7ee787" stroke-width="1.5"/>
+        <text x="816" y="258" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">4 · apply (drop --dry-run)</text>
+        <text x="816" y="276" text-anchor="middle" fill="#9aa3b2" font-size="11.5">atomic_update_registry</text>
+        <text x="816" y="292" text-anchor="middle" fill="#9aa3b2" font-size="11.5">one lock-fenced read-mutate-write</text>
+
+        <line x1="884" y1="158" x2="884" y2="230" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <text x="896" y="200" fill="#9aa3b2" font-size="11.5">confirm</text>
+
+        <!-- registry -->
+        <rect x="440" y="232" width="228" height="72" rx="10" fill="#11141a" stroke="#7ee787" stroke-width="1.5"/>
+        <text x="554" y="258" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">registry.json</text>
+        <text x="554" y="276" text-anchor="middle" fill="#9aa3b2" font-size="11.5">schema_version: 1 — no field changes,</text>
+        <text x="554" y="292" text-anchor="middle" fill="#9aa3b2" font-size="11.5">no schema bump</text>
+
+        <line x1="708" y1="268" x2="670" y2="268" stroke="#7ee787" stroke-width="1.5" marker-end="url(#arr2g)"/>
+
+        <!-- promote branch -->
+        <rect x="560" y="328" width="362" height="60" rx="10" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="741" y="352" text-anchor="middle" fill="#e6e9ef" font-size="12.5" font-weight="600">--promote also runs generate_permanent_data.ts</text>
+        <text x="741" y="370" text-anchor="middle" fill="#9aa3b2" font-size="11.5">regenerates core's permanent_data.ts · permanent_data.sync.test.ts guards it</text>
+        <line x1="780" y1="304" x2="765" y2="326" stroke="#6ea8fe" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arr2a)"/>
+      </g>
+    </svg>
+    <figcaption>One reconcile run. Steps 1–2 read everything and write nothing; the human owns step 3 and the confirmation into step 4 — the single place the script touches the registry, and only through <code>atomic_update_registry</code>. A promotion apply additionally regenerates the bundled core slice.</figcaption>
+  </figure>
+
+  <h3>Selectors (mirroring <code>prioritize</code>)</h3>
+  <table>
+    <thead>
+      <tr><th>Flag</th><th>Effect</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>--dry-run</code></td><td>Scan every signal and print the proposed changeset, grouped by transition; writes nothing. Always the first run.</td></tr>
+      <tr><td><code>--fixed</code></td><td>Restrict to <code>wip → fixed</code> proposals (git-log scope matches).</td></tr>
+      <tr><td><code>--drift</code></td><td>Restrict to drift-flag proposals (<code>drift_detected</code> + new <code>drift_evidence[]</code> rows).</td></tr>
+      <tr><td><code>--id &lt;group_id&gt;</code></td><td>Name exact rules; repeatable; overrides the filters.</td></tr>
+      <tr><td><code>--id &lt;group_id&gt; --promote</code></td><td>The deliberate promotion path: flip to <code>permanent</code> and regenerate <code>permanent_data.ts</code>.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Same shape as <code>prioritize</code>, deliberately.</strong> The skill owns no logic of its own, drives a single script, and is <code>disable-model-invocation: true</code> — only a human can trigger it; the model never self-invokes. The scripts live under <code>.claude/skills/triage/scripts/</code> because that is where the registry and its loaders already live, exactly as <code>prioritize</code> points at a script under <code>plan/scripts/</code>.
+  </div>
+
+  <h2 id="lifecycle-arrows">Which lifecycle arrows this mechanises</h2>
+  <p>The <a href="../../docs/self-healing-pipeline/registry-lifecycle.html">lifecycle diagram</a> shows every transition as a human edit. That stays true — the human remains the decider on every arrow. What changes is that two arrows gain a <em>detector</em> (the signal is found mechanically and proposed) and one gains a mechanical <em>apply-step</em> (the regeneration the lifecycle doc already describes but nothing performs):</p>
+  <figure>
+    <svg viewBox="0 0 920 320" role="img" aria-label="The three outbound arrows from a classified wip rule, annotated with what reconcile-registry mechanises: the drift arrow gains a detector reading classifier_regressions, the fixed arrow gains a detector matching git-log commit scopes against backlog_task, and the permanent arrow keeps human judgment but gains the generate_permanent_data apply-step. The human confirms every arrow.">
+      <defs>
+        <marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#9aa3b2"/>
+        </marker>
+      </defs>
+      <g font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+        <!-- wip classified -->
+        <rect x="330" y="16" width="260" height="56" rx="10" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5"/>
+        <text x="460" y="40" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">status: wip</text>
+        <text x="460" y="59" text-anchor="middle" fill="#9aa3b2" font-size="12">classifier.kind = predicate | builtin</text>
+
+        <!-- three branches -->
+        <path d="M 360 72 C 300 120, 220 120, 165 168" fill="none" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr3)"/>
+        <line x1="460" y1="72" x2="460" y2="168" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr3)"/>
+        <path d="M 560 72 C 620 120, 700 120, 755 168" fill="none" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+        <!-- mechanisation badges -->
+        <rect x="20" y="96" width="216" height="40" rx="8" fill="#11141a" stroke="#6ea8fe" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="128" y="113" text-anchor="middle" fill="#6ea8fe" font-size="11.5" font-weight="600">DETECTOR (new)</text>
+        <text x="128" y="129" text-anchor="middle" fill="#9aa3b2" font-size="11">reads classifier_regressions[]</text>
+
+        <rect x="352" y="96" width="216" height="40" rx="8" fill="#11141a" stroke="#6ea8fe" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="460" y="113" text-anchor="middle" fill="#6ea8fe" font-size="11.5" font-weight="600">APPLY-STEP (new)</text>
+        <text x="460" y="129" text-anchor="middle" fill="#9aa3b2" font-size="11">judgment human; regeneration scripted</text>
+
+        <rect x="684" y="96" width="216" height="40" rx="8" fill="#11141a" stroke="#6ea8fe" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="792" y="113" text-anchor="middle" fill="#6ea8fe" font-size="11.5" font-weight="600">DETECTOR (new)</text>
+        <text x="792" y="129" text-anchor="middle" fill="#9aa3b2" font-size="11">git-log scope ↔ backlog_task</text>
+
+        <!-- target boxes -->
+        <rect x="30" y="170" width="250" height="74" rx="10" fill="#1d212b" stroke="#ff7b72" stroke-width="1.5"/>
+        <text x="155" y="194" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">wip + drift_detected</text>
+        <text x="155" y="213" text-anchor="middle" fill="#9aa3b2" font-size="12">drift_evidence[] appended,</text>
+        <text x="155" y="230" text-anchor="middle" fill="#9aa3b2" font-size="12">deduped by entry_index</text>
+
+        <rect x="330" y="170" width="260" height="74" rx="10" fill="#1d212b" stroke="#7ee787" stroke-width="1.5"/>
+        <text x="460" y="194" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">status: permanent</text>
+        <text x="460" y="213" text-anchor="middle" fill="#9aa3b2" font-size="12">permanent_data.ts regenerated,</text>
+        <text x="460" y="230" text-anchor="middle" fill="#9aa3b2" font-size="12">sync test guards it in CI</text>
+
+        <rect x="640" y="170" width="250" height="74" rx="10" fill="#1d212b" stroke="#7ee787" stroke-width="1.5"/>
+        <text x="765" y="194" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">status: fixed</text>
+        <text x="765" y="213" text-anchor="middle" fill="#9aa3b2" font-size="12">commit scope matches</text>
+        <text x="765" y="230" text-anchor="middle" fill="#9aa3b2" font-size="12">backlog_task in this repo's log</text>
+
+        <!-- human decider band -->
+        <rect x="30" y="270" width="860" height="36" rx="10" fill="#11141a" stroke="#2a2f3a" stroke-width="1.5"/>
+        <text x="460" y="293" text-anchor="middle" fill="#6ea8fe" font-size="12.5" font-weight="600">the human confirms every arrow — the skill makes detection and the write cheap, never the decision</text>
+      </g>
+    </svg>
+    <figcaption>The same three branches as the lifecycle diagram, with what changes overlaid. "Records landed fix" and "flags drift" gain detectors; "promotion review" keeps its human judgment and gains the missing regeneration mechanism.</figcaption>
+  </figure>
+
+  <h2 id="enforcement">Enforcement: the surface stops relying on memory</h2>
+  <p>Cheap writes alone don't guarantee the registry gets written. Two structural guards make the surface <em>enforced</em>, paralleling the existing AST write-boundary test:</p>
+  <div class="grid">
+    <div class="card">
+      <h3 style="margin-top:0"><code>permanent_data.sync.test.ts</code> (new)</h3>
+      <p>Asserts the committed <code>permanent_data.ts</code> byte-equals the slice freshly generated from the source registry. The bundled core slice can never silently drift from the registry: a hand-edit to <em>either</em> file fails CI. This gives the "AUTO-GENERATED" header teeth for the first time.</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0"><code>registry_writers.test.ts</code> (existing)</h3>
+      <p>The AST walk in <code>packages/skill-fs/src/registry_writers.test.ts</code> already flags any raw write primitive against a registry-shaped path. <code>reconcile_registry.ts</code> reaches the registry only via <code>atomic_update_registry</code>, so it is compliant by construction — and the existing test proves it, with no new allowlist entry.</p>
+    </div>
+  </div>
+
+  <h2 id="work">Work breakdown</h2>
+  <h3>Code</h3>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Deliverable</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td><code>reconcile_registry.ts</code> + <code>reconcile_registry.test.ts</code></td><td>Pure detectors (<code>git-log → fixed-proposals</code>, <code>classifier_regressions → drift-proposals</code>) unit-tested with typed literal expectations (<code>toEqual</code>, never <code>toMatchObject</code>).</td></tr>
+      <tr><td>2</td><td><code>generate_permanent_data.ts</code> + <code>generate_permanent_data.test.ts</code></td><td>The missing permanent-slice generator: filter <code>status: "permanent"</code>, render the <code>{ schema_version, rules }</code> envelope as a typed <code>.ts</code> module, <code>schema_version</code> copied verbatim.</td></tr>
+      <tr><td>3</td><td><code>permanent_data.sync.test.ts</code></td><td>Drift guard under <code>packages/core/src/classify_entry_points/</code>.</td></tr>
+      <tr><td>4</td><td><code>.claude/skills/reconcile-registry/SKILL.md</code></td><td><code>disable-model-invocation: true</code>; <code>allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read</code>.</td></tr>
+    </tbody>
+  </table>
+  <h3>Docs — every architecture surface</h3>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Deliverable</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>5</td><td>New canonical page <code>reconcile-registry.html</code></td><td>House style; added to every page's nav, the index's "Explore the docs", and the architecture diagram. (Replaces this plan page.)</td></tr>
+      <tr><td>6</td><td><code>registry-lifecycle.html</code> update</td><td>Lifecycle arrows are now backed by a skill + script; document the generator and the sync test.</td></tr>
+      <tr><td>7</td><td><code>actuate-and-backlog.html</code> update</td><td>Name the skill in the surfaces table; add a "reconcile-registry vs script" subsection mirroring "prioritize vs export adapter"; the registry joins the full-cycle diagram as a tooled step.</td></tr>
+      <tr><td>8</td><td><code>.claude/rules/classifier-lifecycle.md</code> update</td><td>Name the skill + script as the human-invoked write path in the writers table and the transition-diagram caption. The human remains the sole <em>decider</em>; the script is the <em>mechanism</em>.</td></tr>
+      <tr><td>9</td><td>Cross-references</td><td>Pointers from <code>triage/SKILL.md</code> and <code>plan/SKILL.md</code>.</td></tr>
+      <tr><td>10</td><td>Delete the plan</td><td>Remove <code>reconcile-registry-plan.md</code> and this page once the work lands.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="deferred">Deferred — explicitly out of scope</h2>
+  <table>
+    <thead>
+      <tr><th>Item</th><th>Why deferred</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Observation rollups</strong> — refreshing <code>observed_count</code> / <code>observed_projects</code> / <code>last_seen_run</code> from accumulated runs</td><td>Bookkeeping only; never used for matching. Add later if it earns its keep.</td></tr>
+      <tr><td><strong>Review surfacing</strong> — <code>fixed</code>-rule resurfacing and "exported task has no registry rule" candidates as read-only review items</td><td>Softer signals; rule-level identity is fuzzy.</td></tr>
+      <tr><td><strong>Skill-family prefix</strong> — namespacing <code>triage</code> / <code>plan</code> / <code>prioritize</code> / <code>reconcile-registry</code> under a common prefix</td><td>A separate, deliberate refactor; not entangled with this work.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Risks &amp; notes.</strong> <code>wip → fixed</code> scans <em>this</em> repo's git log — Ariadne defects are fixed here; a target-repo fix would be a separate signal and is out of scope (YAGNI). No <code>KnownIssue</code> field changes, so the registry stays <code>schema_version: 1</code>. And the human stays the decider: the skill proposes, the human confirms every flip.
+  </div>
+</main>
+</body>
+</html>
