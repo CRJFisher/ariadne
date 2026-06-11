@@ -19,8 +19,8 @@ import * as path from "node:path";
 import { execSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
-const SUBJECT_REGEX = /^(?<type>[a-z]+)(?:\((?<scope>[^)]+)\))?:\s*(?<subject>.+)$/;
-const TASK_SCOPE_REGEX = /^\d+(?:\.\d+)*(?:-\d+)?$/;
+export const SUBJECT_REGEX = /^(?<type>[a-z]+)(?:\((?<scope>[^)]+)\))?:\s*(?<subject>.+)$/;
+export const TASK_SCOPE_REGEX = /^\d+(?:\.\d+)*(?:-\d+)?$/;
 const TASK_RANGE_REGEX = /^(?<base>(?:\d+\.)*)(?<lo>\d+)-(?<hi>\d+)$/;
 const BODY_TRAILER_REGEX = /^(?:Fixes|Implements|Closes):\s*TASK-([\w.]+)\s*$/;
 

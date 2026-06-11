@@ -92,7 +92,7 @@ Scripts that operate on existing triage state take `--project <name>` (`prepare_
 
 All paths above are relative to `~/.ariadne/triage-entrypoints/`. Run-ids have the form `<short-commit>-<iso-ts>` (e.g. `deadbee-2026-04-28T13-42-07.812Z`); `nogit-<iso-ts>` when the target is not a git repo.
 
-**Classifier registry write boundary**: this skill reads `known_issues/registry.json` but **never writes to it**. The registry is human-maintained — every status transition (`wip`, `permanent`, `fixed`) is a human edit through `atomic_update_registry`. See `.claude/rules/classifier-lifecycle.md` for the canonical writer matrix.
+**Classifier registry write boundary**: this skill reads `known_issues/registry.json` but **never writes to it**. The registry is human-maintained — every status transition (`wip`, `permanent`, `fixed`) is a human decision through `atomic_update_registry`, applied via the `reconcile-registry` skill (`.claude/skills/reconcile-registry/SKILL.md`), which reads this skill's published `classifier_regressions[]` and the repo's git log to propose the mechanical flips. See `.claude/rules/classifier-lifecycle.md` for the canonical writer matrix.
 
 Phase 3-4 scripts default to the run pointed at by `LATEST`; pass `--run-id <id>` to operate on a specific run. `prepare_triage` writes `LATEST` and `finalize_triage` clears it.
 

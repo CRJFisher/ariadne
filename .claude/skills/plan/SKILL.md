@@ -194,3 +194,6 @@ writer; the strategist writes only its staged `StrategistPlan`. Pass C reads `ba
 frontmatter **read-only** (`src/store/backlog_dedup.ts`, keyed on
 `plan_dedup_key`) as a dedup signal — it is never written by the pipeline; the
 only writer is the user-invoked export adapter (`scripts/export_to_backlog.ts`).
+The registry's analogous human-invoked write path is the `reconcile-registry`
+skill (`.claude/skills/reconcile-registry/SKILL.md`) over
+`triage/scripts/reconcile_registry.ts`; `plan` never touches the registry.

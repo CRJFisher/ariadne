@@ -30,6 +30,7 @@ export {
   triage_results_path,
   parse_triage_results_path,
   known_issues_registry_path,
+  repo_root,
 } from "./paths.js";
 export {
   TRIAGE_RESULTS_SCHEMA_VERSION,

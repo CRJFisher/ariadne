@@ -82,7 +82,7 @@ export function parse_triage_results_path(file_path: string): {
  */
 export function known_issues_registry_path(): string {
   return path.join(
-    find_repo_root(),
+    repo_root(),
     ".claude",
     "skills",
     "triage",
@@ -92,7 +92,7 @@ export function known_issues_registry_path(): string {
 }
 
 /** Walk up from this module until the directory holding `pnpm-workspace.yaml`. */
-function find_repo_root(): string {
+export function repo_root(): string {
   const start = path.dirname(fileURLToPath(import.meta.url));
   let dir = start;
   while (true) {

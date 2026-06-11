@@ -52,11 +52,16 @@ const ALLOWED_REGISTRY_WRITERS: ReadonlySet<string> = new Set([
  * Files allowed to call `serialize_known_issues_registry_json` directly. The
  * function exists to produce the registry's on-disk bytes; using it outside
  * an `atomic_update_registry` mutator closure means somebody is computing
- * those bytes and writing them without the lock. No file is permitted to do
- * so: every legitimate write reaches the registry through an
- * `atomic_update_registry` mutator, so this set is empty.
+ * those bytes and writing them without the lock. The AST scan is not
+ * scope-aware, so the one file whose mutator closure legitimately serializes
+ * the registry is allowlisted by name: `reconcile_registry.ts` calls the
+ * serializer strictly inside its `atomic_update_registry` mutator (reviewed
+ * at that call site). Every other file must reach the registry through a
+ * mutator without naming the serializer.
  */
-const ALLOWED_SERIALIZER_CALLERS: ReadonlySet<string> = new Set<string>([]);
+const ALLOWED_SERIALIZER_CALLERS: ReadonlySet<string> = new Set<string>([
+  ".claude/skills/triage/scripts/reconcile_registry.ts",
+]);
 
 const SCAN_ROOTS: readonly string[] = [
   ".claude/skills",

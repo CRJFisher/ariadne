@@ -190,6 +190,56 @@ export interface KnownIssuesRegistryFile {
 }
 
 /**
+ * Select the rules that belong in core's bundled permanent slice: rules that
+ * are `status: "permanent"` AND carry a real classifier. `kind: "none"` rules
+ * are dropped because the core loader (`validate_permanent_slice`) rejects
+ * them — a permanent rule with no classifier cannot classify anything.
+ * Source order is preserved so regeneration diffs stay minimal.
+ */
+export function select_permanent_slice_rules(
+  rules: readonly KnownIssue[],
+): KnownIssue[] {
+  return rules.filter(
+    (rule) => rule.status === "permanent" && rule.classifier.kind !== "none",
+  );
+}
+
+const PERMANENT_SLICE_MODULE_HEADER =
+  "// AUTO-GENERATED slice of the known-issues registry — do not edit by hand.\n" +
+  "// Source of truth: .claude/skills/triage/known_issues/registry.json\n" +
+  "// Regenerated from the source registry when its permanent slice changes.\n" +
+  "\n" +
+  'import type { KnownIssuesRegistryFile } from "@ariadnejs/types";\n' +
+  "\n";
+
+/**
+ * Render the bundled permanent-slice module (`permanent_data.ts` in core)
+ * from a full registry rule array: filter via
+ * {@link select_permanent_slice_rules}, wrap in the `{ schema_version, rules }`
+ * envelope with `schema_version` copied verbatim, and emit the typed `.ts`
+ * module text. Pure and byte-deterministic — `permanent_data.sync.test.ts`
+ * asserts the committed slice equals this render of the source registry.
+ *
+ * This produces a TypeScript module, never registry-JSON bytes; the registry
+ * write-boundary fence (`registry_writers.test.ts`) does not apply to it.
+ */
+export function render_permanent_slice_module(
+  schema_version: KnownIssuesRegistrySchemaVersion,
+  rules: readonly KnownIssue[],
+): string {
+  const file: KnownIssuesRegistryFile = {
+    schema_version,
+    rules: select_permanent_slice_rules(rules),
+  };
+  return (
+    PERMANENT_SLICE_MODULE_HEADER +
+    "export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = " +
+    JSON.stringify(file, null, 2) +
+    ";\n"
+  );
+}
+
+/**
  * Parse the JSON wire format of `registry.json` and return the inner rule
  * array. Verifies the envelope shape and the `schema_version` field; deep
  * shape validation of individual rules is the loader's responsibility.
