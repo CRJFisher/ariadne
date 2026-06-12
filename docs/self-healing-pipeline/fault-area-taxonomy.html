@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The AriadneFaultArea Taxonomy and dedup_key — Self-Healing Pipeline</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --panel-2: #1d212b; --ink: #e6e9ef; --muted: #9aa3b2;
+    --accent: #6ea8fe; --accent-2: #7ee787; --warn: #ff7b72; --border: #2a2f3a; --code-bg: #11141a;
+    --radius: 10px; --maxw: 980px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .doc-nav { position: sticky; top: 0; z-index: 10; background: rgba(15,17,21,.92);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 10px 20px;
+    display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+  .doc-nav .brand { font-weight: 700; color: var(--ink); margin-right: 10px; letter-spacing: .2px; }
+  .doc-nav a { color: var(--muted); text-decoration: none; font-size: 14px; padding: 4px 8px;
+    border-radius: 6px; white-space: nowrap; }
+  .doc-nav a:hover { color: var(--ink); background: var(--panel-2); }
+  .doc-nav a[aria-current="page"] { color: var(--bg); background: var(--accent); font-weight: 600; }
+  main { margin: 0 5%; padding: 36px 24px 96px; }
+  h1 { font-size: 30px; line-height: 1.25; margin: 8px 0 6px; }
+  h2 { font-size: 22px; margin: 38px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 17px; margin: 26px 0 8px; color: var(--accent); }
+  p, li { color: var(--ink); }
+  a { color: var(--accent); }
+  .lede { color: var(--muted); font-size: 18px; margin: 0 0 8px; }
+  code { background: var(--code-bg); border: 1px solid var(--border); border-radius: 5px;
+    padding: 1px 5px; font: 13.5px/1.5 "SF Mono", Menlo, Consolas, monospace; color: #d6deeb; }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 16px; overflow: auto; }
+  pre code { background: none; border: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--panel-2); }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; margin: 16px 0; }
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--panel-2); color: var(--muted); }
+  .callout { border-left: 3px solid var(--accent); background: var(--panel-2);
+    padding: 10px 14px; border-radius: 0 var(--radius) var(--radius) 0; margin: 16px 0; }
+  figure { margin: 18px 0; }
+  figure svg { max-width: 100%; height: auto; display: block; }
+  figcaption { color: var(--muted); font-size: 13px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<nav class="doc-nav">
+    <span class="brand">Self-Healing Pipeline</span>
+    <a href="index.html">Home</a>
+    <a href="overview-loop.html">The Loop</a>
+    <a href="triage-sense.html">Triage (Sense)</a>
+    <a href="triage-investigator.html">Investigator</a>
+    <a href="plan-classify.html">Plan (Classify)</a>
+    <a href="fault-area-taxonomy.html" aria-current="page">Fault Areas</a>
+    <a href="registry-lifecycle.html">Registry</a>
+    <a href="reconcile-registry.html">Reconcile (Registry)</a>
+    <a href="atomic-write-contract.html">Write Boundaries</a>
+    <a href="actuate-and-backlog.html">Actuate (Human)</a>
+    <a href="wire-contracts.html">Schemas &amp; Stores</a>
+</nav>
+<main>
+
+<span class="tag">packages/types/src/ariadne_fault_area.ts</span>
+<span class="tag">plan/src/reconcile/compute_dedup_key.ts</span>
+<span class="tag">plan/src/store/membership_override.ts</span>
+
+<h1>The AriadneFaultArea Taxonomy and <code>dedup_key</code></h1>
+<p class="lede"><code>AriadneFaultArea</code> answers "which part of Ariadne's core is at fault" for each triage false positive — a folder-anchored taxonomy that is derived on every read, never stored — and two deliberately different content-addressed keys carry that grouping across sweeps.</p>
+
+<h2>Folder-anchored taxonomy</h2>
+<p>Every fault area except <code>other</code> is anchored 1:1 to the core module that owns the fix, via <code>ARIADNE_FAULT_AREA_FOLDER</code>. The plan engine routes each bucket's proposed work to that module. The map is a <code>Record&lt;AriadneFaultArea, string&gt;</code>, so adding an area to the union without naming its folder is a compile error.</p>
+
+<table>
+  <thead><tr><th>Area</th><th>Means</th><th>Owning core module</th></tr></thead>
+  <tbody>
+    <tr><td><code>syntactic_extraction</code></td><td>Query/capture never produced the call site</td><td><code>index_single_file/query_code_tree</code></td></tr>
+    <tr><td><code>scope_construction</code></td><td>Malformed or missing scope tree</td><td><code>index_single_file/scopes</code></td></tr>
+    <tr><td><code>name_resolution</code></td><td>In-scope name lookup failed</td><td><code>resolve_references/name_resolution.ts</code></td></tr>
+    <tr><td><code>import_resolution</code></td><td>Cross-file import / re-export linking failed</td><td><code>resolve_references/import_resolution</code></td></tr>
+    <tr><td><code>receiver_type_inference</code></td><td>Receiver/member type lost</td><td><code>call_resolution/receiver_resolution.ts</code></td></tr>
+    <tr><td><code>method_lookup</code></td><td>Type known, member absent</td><td><code>call_resolution/method_lookup.ts</code></td></tr>
+    <tr><td><code>polymorphic_dispatch</code></td><td>Interface receiver, no implementations</td><td><code>call_resolution/method_lookup.ts</code></td></tr>
+    <tr><td><code>collection_dispatch</code></td><td>Value-in-collection / dynamic key</td><td><code>call_resolution/collection_dispatch.ts</code></td></tr>
+    <tr><td><code>coverage_config</code></td><td>Call sites live in excluded (unindexed) files</td><td><code>project</code></td></tr>
+    <tr><td><code>entry_point_classification</code></td><td>Resolution succeeded, function still flagged</td><td><code>classify_entry_points</code></td></tr>
+    <tr><td><code>other</code></td><td>Escape hatch — carries free-text <code>description</code>, <code>needs_judgement: true</code></td><td>— (no owning module)</td></tr>
+  </tbody>
+</table>
+<p>Core module paths are under <code>packages/core/src/</code>. <code>ARIADNE_FAULT_AREAS</code> is the string-form enumeration derived from this map, and <code>is_ariadne_fault_area</code> is its runtime guard.</p>
+
+<h2>A derived view: recompute-on-read, never persisted</h2>
+<p>The area is computed by <code>derive_fault_area</code> from the deterministic fault signal core already emits. Evidence on disk stores only the raw signal, never the derived area:</p>
+
+<div class="grid">
+  <div class="card">
+    <h3 style="margin-top:0">Persisted (raw signal)</h3>
+    <ul>
+      <li><code>diagnosis</code> — plain string</li>
+      <li><code>resolution_failure</code> — <code>{ stage, reason }</code> as plain strings, or <code>null</code></li>
+      <li><code>has_uncaptured_indexed_grep_hit</code> — boolean</li>
+      <li><code>callers_only_in_unindexed_tests</code> — boolean</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0">Derived (computed on read)</h3>
+    <ul>
+      <li><code>area</code> — the fault area</li>
+      <li><code>resolution_stage</code> / <code>resolution_reason</code> — echoed when known enum members</li>
+      <li><code>needs_judgement</code> — strategist must adjudicate</li>
+      <li><code>description</code> — present iff <code>area === "other"</code></li>
+    </ul>
+  </div>
+</div>
+
+<div class="callout">
+  <strong>Why recompute-on-read.</strong> A stored area would be a snapshot of the taxonomy as it stood at write time — a type lie the moment the taxonomy moves. Because only the raw signal persists, a core IA refactor edits exactly one thing (<code>ARIADNE_FAULT_AREA_FOLDER</code>) and every past evidence row immediately re-derives against the current taxonomy.
+</div>
+
+<h3>Raw strings, not enums — by design</h3>
+<p><code>DeriveFaultAreaInput</code> types <code>stage</code>, <code>reason</code>, and <code>diagnosis</code> as plain strings even though core emits typed unions (<code>ResolutionFailureStage</code>, <code>ResolutionFailureReason</code>, <code>EntryPointDiagnosis</code>). The asymmetry is deliberate, and it cuts both ways:</p>
+<ul>
+  <li><strong>At the read boundary:</strong> a forward-incompatible value — one a newer core emits but this package does not yet know — routes to the <code>other</code> escape hatch at runtime instead of being a type error or a misparse.</li>
+  <li><strong>Inside the derivation:</strong> the internal tables (<code>REASON_TO_AREA</code>, the stage and diagnosis sets) are <code>Record</code>s over the typed unions, so a new enum member added in code is a missing-key <em>compile</em> error until it is mapped.</li>
+</ul>
+<p>An <code>other</code> result carries a free-text <code>description</code> naming the unrecognized value; the plan engine reads that description both to extend the taxonomy and to plan the underlying fix.</p>
+
+<h2><code>derive_fault_area</code> precedence</h2>
+<p><code>derive_fault_area</code> is a pure, total function. The per-call <code>ResolutionFailure</code> is the most specific signal and is consulted first; the summary <code>diagnosis</code> is the fallback when no failure was emitted. Within the fallback, the coverage-gap boolean wins over the diagnosis itself.</p>
+
+<figure>
+<svg viewBox="0 0 940 470" role="img" aria-label="derive_fault_area precedence waterfall: resolution_failure first, then the coverage-gap boolean, then the diagnosis switch; any unrecognized raw value routes to the other escape hatch">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9aa3b2"/>
+    </marker>
+    <marker id="arrw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#ff7b72"/>
+    </marker>
+  </defs>
+
+  <!-- Step 1 -->
+  <rect x="30" y="24" width="360" height="72" rx="10" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5"/>
+  <text x="48" y="54" fill="#e6e9ef" font-size="15" font-weight="600">1 · resolution_failure { stage, reason }</text>
+  <text x="48" y="78" fill="#9aa3b2" font-size="13">per-call signal — most specific, consulted first</text>
+  <line x1="390" y1="60" x2="528" y2="60" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="404" y="50" fill="#9aa3b2" font-size="12">reason known</text>
+  <rect x="530" y="24" width="380" height="72" rx="10" fill="#171a21" stroke="#7ee787" stroke-width="1.5"/>
+  <text x="548" y="54" fill="#7ee787" font-size="14" font-weight="600">REASON_TO_AREA[reason]</text>
+  <text x="548" y="78" fill="#9aa3b2" font-size="12.5">stage breaks the method_not_on_type tie</text>
+
+  <!-- down: null -->
+  <line x1="210" y1="96" x2="210" y2="148" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="222" y="128" fill="#9aa3b2" font-size="12">null</text>
+
+  <!-- Step 2 -->
+  <rect x="30" y="150" width="360" height="72" rx="10" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5"/>
+  <text x="48" y="180" fill="#e6e9ef" font-size="15" font-weight="600">2 · callers_only_in_unindexed_tests</text>
+  <text x="48" y="204" fill="#9aa3b2" font-size="13">excluded-dir callers mask the diagnosis</text>
+  <line x1="390" y1="186" x2="528" y2="186" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="404" y="176" fill="#9aa3b2" font-size="12">true</text>
+  <rect x="530" y="150" width="380" height="72" rx="10" fill="#171a21" stroke="#7ee787" stroke-width="1.5"/>
+  <text x="548" y="180" fill="#7ee787" font-size="14" font-weight="600">coverage_config</text>
+  <text x="548" y="204" fill="#9aa3b2" font-size="12.5">real callers exist, but only in unindexed dirs</text>
+
+  <!-- down: false -->
+  <line x1="210" y1="222" x2="210" y2="274" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="222" y="254" fill="#9aa3b2" font-size="12">false</text>
+
+  <!-- Step 3 -->
+  <rect x="30" y="276" width="360" height="72" rx="10" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5"/>
+  <text x="48" y="306" fill="#e6e9ef" font-size="15" font-weight="600">3 · diagnosis (summary fallback)</text>
+  <text x="48" y="330" fill="#9aa3b2" font-size="13">switch over EntryPointDiagnosis</text>
+  <line x1="390" y1="312" x2="528" y2="312" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="404" y="302" fill="#9aa3b2" font-size="12">recognized</text>
+  <rect x="530" y="276" width="380" height="72" rx="10" fill="#171a21" stroke="#7ee787" stroke-width="1.5"/>
+  <text x="548" y="306" fill="#7ee787" font-size="14" font-weight="600">entry_point_classification ·</text>
+  <text x="548" y="326" fill="#7ee787" font-size="14" font-weight="600">syntactic_extraction · other</text>
+
+  <!-- escape hatch -->
+  <rect x="30" y="392" width="880" height="58" rx="10" fill="#171a21" stroke="#ff7b72" stroke-width="1.5"/>
+  <text x="48" y="416" fill="#ff7b72" font-size="14" font-weight="600">other — escape hatch</text>
+  <text x="48" y="438" fill="#9aa3b2" font-size="12.5">any unrecognized raw stage / reason / diagnosis routes here with a free-text description and needs_judgement: true</text>
+  <line x1="330" y1="96" x2="430" y2="390" stroke="#ff7b72" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#arrw)"/>
+  <line x1="330" y1="348" x2="380" y2="390" stroke="#ff7b72" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#arrw)"/>
+  <text x="440" y="372" fill="#ff7b72" font-size="12">unrecognized value</text>
+</svg>
+<figcaption>The derivation waterfall: per-call failure first, coverage-gap boolean second, diagnosis switch last; unknown raw values fall out to <code>other</code> at every step.</figcaption>
+</figure>
+
+<h3>Precedence rules in detail</h3>
+<ol>
+  <li><strong>Per-call <code>resolution_failure</code>.</strong> When present, <code>REASON_TO_AREA</code> maps the reason to its area. <code>method_not_on_type</code> is the sole stage-ambiguous reason: stage <code>method_lookup</code> → <code>method_lookup</code>; any other known stage → <code>receiver_type_inference</code>; an unrecognized stage cannot break the tie and routes to <code>other</code>. An unrecognized reason routes to <code>other</code> immediately.</li>
+  <li><strong>Coverage gap before diagnosis.</strong> When every caller lives in a directory excluded from indexing, the indexed grep finds nothing and the diagnosis reads <code>no-textual-callers</code> even though real callers exist. Routing on the diagnosis alone would misread this as a genuine entry point, so <code>callers_only_in_unindexed_tests</code> is consulted first and wins → <code>coverage_config</code>.</li>
+  <li><strong>Diagnosis switch.</strong> <code>no-textual-callers</code> → <code>entry_point_classification</code>; <code>callers-in-registry-wrong-target</code> → <code>entry_point_classification</code>; <code>callers-in-registry-unresolved</code> (with no failure emitted) → <code>other</code>; <code>callers-not-in-registry</code> → <code>syntactic_extraction</code>, deterministic when <code>has_uncaptured_indexed_grep_hit</code> is true.</li>
+</ol>
+
+<h3>Residual-judgement cases</h3>
+<p>Four inputs are ambiguous by nature. Each returns a deterministic default with <code>needs_judgement: true</code>; the plan strategist adjudicates.</p>
+<table>
+  <thead><tr><th>#</th><th>Signal</th><th>Default area</th><th>Why ambiguous</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><code>callers-not-in-registry</code>, every indexed grep hit has captures</td><td><code>syntactic_extraction</code></td><td>A <code>CallReference</code> was produced at every indexed hit yet none reached the registry — captured-but-lost, not a clean capture miss.</td></tr>
+    <tr><td>2</td><td><code>callers-in-registry-unresolved</code> with no <code>resolution_failure</code></td><td><code>other</code></td><td>The resolver returned empty without emitting a diagnostic — itself an Ariadne defect (a missing emit).</td></tr>
+    <tr><td>3</td><td><code>no-textual-callers</code></td><td><code>entry_point_classification</code></td><td>Genuine entry point vs true-positive classification miss.</td></tr>
+    <tr><td>4</td><td><code>collection_dispatch_miss</code></td><td><code>collection_dispatch</code></td><td>The true root cause may be an upstream unresolved import.</td></tr>
+  </tbody>
+</table>
+<p>When the deterministic routing does mis-bucket a member, the strategist excludes it from its plan and the reconcile pass records the exclusion in the membership-override store, keyed on <code>member_identity_token</code> — so the next sweep's deterministic re-derivation re-routes (or suppresses) it instead of re-adjudicating forever.</p>
+
+<h2>Two content-addressed keys, deliberately different</h2>
+<p>Two key primitives carry fault-area work across sweeps. They answer different questions, so they are built from different inputs and are never interchanged.</p>
+
+<table>
+  <thead><tr><th></th><th><code>dedup_key</code></th><th><code>member_identity_token</code></th></tr></thead>
+  <tbody>
+    <tr><th>Question</th><td>"Is this the same <em>task</em> as one already in the task-DB?"</td><td>"Is this the same <em>flagged member</em> a prior sweep excluded?"</td></tr>
+    <tr><th>Keyed on</th><td><code>fault_area</code> + the sorted, deduplicated set of evidence call-site <code>"&lt;file&gt;:&lt;line&gt;"</code> tokens</td><td>The flagged member's <code>(file_path, name, kind, start_line)</code></td></tr>
+    <tr><th>Form</th><td>sha256 hex digest of the newline-joined payload</td><td>Newline-joined four-field string (no hash)</td></tr>
+    <tr><th>Consumer</th><td>Reconcile pass — augment an existing <code>PlanTask</code> instead of duplicating; backlog frontmatter <code>plan_dedup_key</code> dedup</td><td>Membership-override store — re-route or suppress a mis-bucketed member on the next sweep</td></tr>
+    <tr><th>Equivalence</th><td>Exact overlap: a proposal whose location set differs at all is a different task</td><td>Drift-tolerant core <code>(file_path, name, kind)</code>; <code>start_line</code> breaks same-name/overload collisions</td></tr>
+    <tr><th>Defined in</th><td><code>plan/src/reconcile/compute_dedup_key.ts</code></td><td><code>plan/src/store/membership_override.ts</code></td></tr>
+  </tbody>
+</table>
+
+<h3><code>dedup_key</code> — the reconciliation primitive</h3>
+<p><code>location_token</code> is the load-bearing piece: the <code>"&lt;file&gt;:&lt;line&gt;"</code> identity of one evidence row's <strong>call site</strong>. <code>compute_dedup_key</code> hashes the sorted set of those tokens, <code>union_evidence</code> deduplicates on them, and the reconciler overlap-scores orphans against fresh creates on them — so the recipe lives in one place and must agree byte-for-byte across all three sites.</p>
+<pre><code>location_token(evidence)  =  `${member_evidence.file}:${member_evidence.line}`
+
+dedup_key  =  sha256( [fault_area, ...sorted(unique(location_tokens))].join("\n") )</code></pre>
+<ul>
+  <li><strong>Inputs are <code>fault_area</code> + the location set only</strong> — never title, body, tier, status, the rollups, or provenance. A re-sweep of the same proposal hashes identically regardless of wording.</li>
+  <li><strong>Pure and order-insensitive:</strong> same area + same location set, in any order, with any duplicates ⇒ same digest.</li>
+  <li><strong>Newline-joined payload</strong> so a <code>:</code> inside a <code>file:line</code> token can never collide with the delimiter.</li>
+</ul>
+
+<h3><code>member_identity_token</code> — the override-store key</h3>
+<pre><code>member_identity_token(member)  =  [file_path, name, kind, String(start_line)].join("\n")
+
+override_key  =  `${fault_area}\n${member_identity_token(member)}`</code></pre>
+<ul>
+  <li><strong>Keyed on the flagged member,</strong> not its callers' call sites. <code>(file_path, name, kind)</code> is the drift-tolerant core; <code>start_line</code> is the same-name/overload collision-breaker.</li>
+  <li><strong>Line shifts invalidate deliberately:</strong> <code>start_line</code> moves when surrounding lines shift, so the token matches only while the member's start line is unchanged — a line-shifted member re-enters strategist review rather than inheriting a stale exclusion.</li>
+  <li><strong>Scoped per area:</strong> the override key prefixes the area, because the same member may be a member of — and correctly excluded from — more than one area's bucket over time.</li>
+</ul>
+
+<div class="callout">
+  <strong>Why two primitives.</strong> <code>dedup_key</code> reconciles a <em>task</em> by the exact set of call-site locations grounding it (exact-overlap equivalence); <code>member_identity_token</code> routes a <em>single member</em> across sweeps. A task gains or loses evidence rows without the member's identity changing, and a member shifts lines without its task's call sites changing. Different questions, different primitives — <code>dedup_key</code> is not re-keyed onto member identity.
+</div>
+
+</main>
+</body>
+</html>

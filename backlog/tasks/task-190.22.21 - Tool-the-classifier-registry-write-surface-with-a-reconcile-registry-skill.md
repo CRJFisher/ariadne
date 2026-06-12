@@ -1,7 +1,7 @@
 ---
 id: TASK-190.22.21
 title: Tool the classifier-registry write surface with a reconcile-registry skill
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-06-11 18:06"
 labels:
@@ -71,11 +71,11 @@ The skill never authors rule prose and never makes the `permanent` judgment — 
 
 ### Detection mechanics
 
-**`wip → fixed`.** For each `wip` rule with a `backlog_task`, derive the bare task scope (`TASK-198 → 198`) and scan this repo's `git log` for a Conventional-Commits subject whose scope matches — reusing the existing scope parser in `scripts/check-commit-message.ts` rather than re-implementing the `^\d+(?:\.\d+)*(?:-\d+)?$` grammar. A match proposes the flip; the human confirms. No commit hash is stored — the `backlog_task` link plus git log are the audit trail, exactly as the lifecycle doc specifies.
+**`wip → fixed`.** For each `wip` rule with a `backlog_task`, derive the bare task scope (`TASK-198 → 198`) and scan this repo's `git log` for a fix-bearing (`fix`/`feat`) Conventional-Commits subject whose scope matches exactly — never by prefix, so a `190.22` commit cannot flip a `190.22.21` rule — reusing the existing scope parser in `scripts/check-commit-message.ts` rather than re-implementing the `^\d+(?:\.\d+)*(?:-\d+)?$` grammar. Non-fix-bearing types (`docs`, `review`, `backlog`, …) reference a task without asserting a fix landed, so they never count. A match proposes the flip; the human confirms. No commit hash is stored — the `backlog_task` link plus git log are the audit trail, exactly as the lifecycle doc specifies.
 
 **Drift flagging.** Read each project's latest finalized `analysis_output/<project>/triage_results/<run-id>.json`. Collect `classifier_regressions[].rule_id` and their `flagged_entries[]`. For each `rule_id` present in the registry: if the rule is not yet `drift_detected`, or is missing `drift_evidence` rows for some flagged `entry_index`, propose `drift_detected: true` plus the new `{entry_index, evidence_excerpt}` rows. `drift_evidence[]` is **append-only** and deduped by `entry_index` so a re-run is idempotent.
 
-**Permanent-slice generation.** `generate_permanent_data.ts` reads the source registry, filters to `status: "permanent"`, and renders `permanent_data.ts` (the `{ schema_version, rules }` envelope as a typed `.ts` module, `schema_version` copied verbatim). It is the apply-half the lifecycle doc already describes.
+**Permanent-slice generation.** `generate_permanent_data.ts` reads the source registry, filters to `status: "permanent"` rules with a real classifier (`classifier.kind` ≠ `"none"` — core's `validate_permanent_slice` rejects unclassified permanent rules, so `--promote` refuses them at the decision point too), and renders `permanent_data.ts` (the `{ schema_version, rules }` envelope as a typed `.ts` module, `schema_version` copied verbatim). It is the apply-half the lifecycle doc already describes. Promotion is its own transaction (`--promote` cannot combine with `--fixed`/`--drift`), and the slice sync runs on every `--promote` invocation so a crash between the registry write and the regeneration is recovered by re-running the same command.
 
 ### The enforcement (the actual concern: "nothing enforces the registry gets written")
 
@@ -111,6 +111,7 @@ Beyond making the writes cheap, two structural guards make the surface _enforced
 
 - **Observation rollups** — refreshing `observed_count` / `observed_projects` / `last_seen_run` from accumulated runs. Bookkeeping only (never used for matching); add later if it earns its keep.
 - **Review surfacing** — `fixed`-rule resurfacing and "exported task has no registry rule" candidates as read-only review items. Softer signals; rule-level identity is fuzzy.
+- **Multi-run drift history** — drift absorption reads each project's latest finalized run only. Evidence published in an earlier run and absent from the latest is not absorbed; scanning run history is a future refinement (the append-only, deduped evidence model makes it safe to add).
 - **Skill-family prefix** — namespacing `triage` / `plan` / `prioritize` / `reconcile-registry` under a common `sh:` (plugin) or `sh-` (name) prefix is a separate, deliberate refactor; not entangled with this work.
 <!-- SECTION:DESCRIPTION:END -->
 
@@ -118,9 +119,21 @@ Beyond making the writes cheap, two structural guards make the surface _enforced
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 reconcile-registry skill exists with disable-model-invocation true, drives reconcile_registry.ts, and writes the registry only through atomic_update_registry
-- [ ] #2 reconcile_registry.ts detects wip-to-fixed from git-log scopes and drift flags from classifier_regressions, with a --dry-run preview and --fixed/--drift/--id selectors, and pure detectors unit-tested with typed literals
-- [ ] #3 generate_permanent_data.ts regenerates the permanent slice and permanent_data.sync.test.ts fails when the committed slice drifts from the registry
-- [ ] #4 Architecture docs updated (registry-lifecycle.html, actuate-and-backlog.html, classifier-lifecycle.md, triage/plan SKILL cross-refs) and a new reconcile-registry.html added to the docs nav
-- [ ] #5 Scope held to core only; observation rollups, review surfacing, and the skill-family prefix recorded as deferred
+- [x] #1 reconcile-registry skill exists with disable-model-invocation true, drives reconcile_registry.ts, and writes the registry only through atomic_update_registry
+- [x] #2 reconcile_registry.ts detects wip-to-fixed from git-log scopes and drift flags from classifier_regressions, with a --dry-run preview and --fixed/--drift/--id selectors, and pure detectors unit-tested with typed literals
+- [x] #3 generate_permanent_data.ts regenerates the permanent slice and permanent_data.sync.test.ts fails when the committed slice drifts from the registry
+- [x] #4 Architecture docs updated (registry-lifecycle.html, actuate-and-backlog.html, classifier-lifecycle.md, triage/plan SKILL cross-refs) and a new reconcile-registry.html added to the docs nav
+- [x] #5 Scope held to core only; observation rollups, review surfacing, and the skill-family prefix recorded as deferred
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+The classifier registry is a human-owned decision surface, and until this work it was the only one without tooling: 180 rules hand-edited in raw JSON, zero `fixed` flips ever recorded, and a `permanent_data.ts` that claimed to be auto-generated with no generator in the repo. `reconcile-registry` closes that gap as the registry's `prioritize`: a `disable-model-invocation: true` skill over one fenced script that detects work the pipeline already did and proposes the mechanical writes, with the human confirming every flip.
+
+The shape follows the `prioritize` → `export_to_backlog.ts` precedent exactly. `reconcile_registry.ts` (under `triage/scripts/`, beside the registry it serves) owns pure detectors over injected inputs — git-log subjects for `wip → fixed`, published `classifier_regressions[]` for drift — a pure `fold_proposals`, and a preview→narrow→apply CLI whose every write is one `atomic_update_registry` transaction. Proposals re-fold onto the locked read, so a stale preview degrades to a no-op rather than clobbering concurrent edits. Two decisions narrow the spec deliberately: only fix-bearing (`fix`/`feat`) commits count for the fixed signal — a `docs(198)` commit references a task without fixing anything — and the permanent slice drops `classifier.kind: "none"` rules, because core's `validate_permanent_slice` cannot load an unclassified permanent rule; `--promote` refuses them at the decision point for the same reason.
+
+The pure render half (`select_permanent_slice_rules`, `render_permanent_slice_module`) lives in `@ariadnejs/types` — the one package both the triage-side generator and core's `permanent_data.sync.test.ts` can import without a dependency cycle. That sync test plus the write-boundary AST scan (whose serializer allowlist names `reconcile_registry.ts`, the single mutator-closure call site) are the structural enforcement.
+
+Front doors: `.claude/skills/reconcile-registry/SKILL.md` for the workflow and the JSON output contract; `docs/self-healing-pipeline/reconcile-registry.html` for the visual map; `.claude/rules/classifier-lifecycle.md` for the writer matrix. Drift absorption reads each project's latest finalized run only — multi-run history is recorded as deferred alongside observation rollups and review surfacing.

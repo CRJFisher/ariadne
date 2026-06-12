@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Classifier Registry: Lifecycle and Loop Closure</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --panel-2: #1d212b; --ink: #e6e9ef; --muted: #9aa3b2;
+    --accent: #6ea8fe; --accent-2: #7ee787; --warn: #ff7b72; --border: #2a2f3a; --code-bg: #11141a;
+    --radius: 10px; --maxw: 980px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .doc-nav { position: sticky; top: 0; z-index: 10; background: rgba(15,17,21,.92);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 10px 20px;
+    display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+  .doc-nav .brand { font-weight: 700; color: var(--ink); margin-right: 10px; letter-spacing: .2px; }
+  .doc-nav a { color: var(--muted); text-decoration: none; font-size: 14px; padding: 4px 8px;
+    border-radius: 6px; white-space: nowrap; }
+  .doc-nav a:hover { color: var(--ink); background: var(--panel-2); }
+  .doc-nav a[aria-current="page"] { color: var(--bg); background: var(--accent); font-weight: 600; }
+  main { margin: 0 5%; padding: 36px 24px 96px; }
+  h1 { font-size: 30px; line-height: 1.25; margin: 8px 0 6px; }
+  h2 { font-size: 22px; margin: 38px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 17px; margin: 26px 0 8px; color: var(--accent); }
+  p, li { color: var(--ink); }
+  a { color: var(--accent); }
+  .lede { color: var(--muted); font-size: 18px; margin: 0 0 8px; }
+  code { background: var(--code-bg); border: 1px solid var(--border); border-radius: 5px;
+    padding: 1px 5px; font: 13.5px/1.5 "SF Mono", Menlo, Consolas, monospace; color: #d6deeb; }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 16px; overflow: auto; }
+  pre code { background: none; border: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--panel-2); }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; margin: 16px 0; }
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--panel-2); color: var(--muted); }
+  .callout { border-left: 3px solid var(--accent); background: var(--panel-2);
+    padding: 10px 14px; border-radius: 0 var(--radius) var(--radius) 0; margin: 16px 0; }
+  figure { margin: 18px 0; }
+  figure svg { max-width: 100%; height: auto; display: block; }
+  figcaption { color: var(--muted); font-size: 13px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<nav class="doc-nav">
+    <span class="brand">Self-Healing Pipeline</span>
+    <a href="index.html">Home</a>
+    <a href="overview-loop.html">The Loop</a>
+    <a href="triage-sense.html">Triage (Sense)</a>
+    <a href="triage-investigator.html">Investigator</a>
+    <a href="plan-classify.html">Plan (Classify)</a>
+    <a href="fault-area-taxonomy.html">Fault Areas</a>
+    <a href="registry-lifecycle.html" aria-current="page">Registry</a>
+    <a href="reconcile-registry.html">Reconcile (Registry)</a>
+    <a href="atomic-write-contract.html">Write Boundaries</a>
+    <a href="actuate-and-backlog.html">Actuate (Human)</a>
+    <a href="wire-contracts.html">Schemas &amp; Stores</a>
+  </nav>
+<main>
+  <span class="tag">surface: human-owned</span>
+  <span class="tag">schema v1</span>
+  <span class="tag">.claude/skills/triage/known_issues/registry.json</span>
+  <h1>The Classifier Registry: Lifecycle and Loop Closure</h1>
+  <p class="lede">A human-curated catalog of Ariadne's known failure modes. Triage reads it to suppress already-explained false positives; its <code>permanent</code> slice bundles into <code>@ariadnejs/core</code>; and every status transition is a human decision — proposed by the <a href="reconcile-registry.html">reconcile-registry</a> skill and written through one fenced script — making the registry the surface where the loop actually closes.</p>
+
+  <h2>What the registry is</h2>
+  <p>The registry lives at <code>.claude/skills/triage/known_issues/registry.json</code> and is typed by <code>KnownIssue</code> in <code>packages/types/src/known_issues.ts</code>. On disk it is a versioned envelope — <code>{ schema_version: 1, rules: KnownIssue[] }</code> — parsed by <code>parse_known_issues_registry_json()</code>, which rejects any <code>schema_version</code> mismatch outright. Each row catalogs one failure mode of the call-graph engine: a builder-chain dispatch the resolver cannot follow, a constructor call the tree-sitter query misses, a dynamic property-keyed callback that is unresolvable in principle.</p>
+
+  <div class="card">
+    <table>
+      <tr><th>Field</th><th>Meaning</th></tr>
+      <tr><td><code>group_id</code></td><td>Canonical kebab-case identifier, e.g. <code>method-chain-dispatch</code>.</td></tr>
+      <tr><td><code>title</code> / <code>description</code> / <code>examples[]</code></td><td>Human-readable account of the failure mode, with <code>{file, line, snippet}</code> evidence.</td></tr>
+      <tr><td><code>status</code></td><td>Lifecycle state: <code>wip</code> | <code>permanent</code> | <code>fixed</code>.</td></tr>
+      <tr><td><code>languages[]</code></td><td>Which of <code>typescript</code> / <code>javascript</code> / <code>python</code> / <code>rust</code> exhibit the failure.</td></tr>
+      <tr><td><code>classifier</code></td><td>The <em>match mechanism</em>: <code>none</code>, <code>predicate</code>, or <code>builtin</code>.</td></tr>
+      <tr><td><code>classification</code></td><td>The <em>user-facing label</em> a match produces (optional; see below).</td></tr>
+      <tr><td><code>backlog_task</code></td><td>Link to prioritized work. Absent when no backlog task exists; the audit anchor for the <code>fixed</code> flip.</td></tr>
+      <tr><td><code>observed_count</code> / <code>observed_projects</code> / <code>last_seen_run</code></td><td>Cross-run observation rollups, human-maintained; never used for matching.</td></tr>
+      <tr><td><code>drift_detected</code> / <code>drift_evidence[]</code></td><td>Drift flags set by the human from triage's <code>classifier_regressions[]</code> aggregate.</td></tr>
+    </table>
+  </div>
+
+  <div class="callout"><strong>One writer.</strong> Neither pipeline skill writes the registry. <code>triage</code> reads it as a filter; <code>plan</code> neither reads nor writes it (its dedup signal is backlog frontmatter). The human is the registry's sole decider, and every edit goes through <code>atomic_update_registry</code>. The deliberate decision step is the <a href="reconcile-registry.html">reconcile-registry</a> skill over one fenced writer, <code>reconcile_registry.ts</code> — the registry's analogue of <code>prioritize</code> over <code>export_to_backlog.ts</code>. The lock, the rename-atomic write, and the AST-level write-boundary test that enforces this are covered on <a href="atomic-write-contract.html">Write Boundaries</a>.</div>
+
+  <h2>Match mechanism vs user-facing label</h2>
+  <p>Each rule carries two distinct concerns, deliberately decoupled:</p>
+  <div class="grid">
+    <div class="card">
+      <h3 style="margin-top:0"><code>classifier.kind</code> — how a rule matches</h3>
+      <ul>
+        <li><code>none</code> — a cataloged failure mode with no automated classifier yet. Documents and counts; never auto-classifies.</li>
+        <li><code>predicate</code> — a hand-authored expression over a closed, serializable DSL (<code>all</code>/<code>any</code>/<code>not</code> combinators over leaves like <code>diagnosis_eq</code>, <code>decorator_matches</code>, <code>syntactic_feature_eq</code>). No <code>eval</code>; schema validation rejects unknown operators. Carries an <code>axis</code> and a <code>min_confidence</code>.</li>
+        <li><code>builtin</code> — a TypeScript function generated into <code>auto_classify/builtins/check_&lt;group_id&gt;.ts</code> and dispatched by <code>function_name</code> through the generated barrel.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0"><code>classification</code> — what a match reports</h3>
+      <p>The public label surfaced through <code>EntryPointClassification</code> to library consumers via <code>Project.get_classified_entry_points()</code>. One of:</p>
+      <ul>
+        <li><code>framework_invoked</code> (with a <code>framework</code> name)</li>
+        <li><code>dunder_protocol</code></li>
+        <li><code>test_only</code></li>
+        <li><code>indirect_only</code></li>
+      </ul>
+      <p>Permanent rules carry it; <code>wip</code> rules may omit it, defaulting to <code>framework_invoked</code> keyed by the rule's <code>group_id</code>. Keeping label separate from mechanism lets a single classifier kind drive different public labels.</p>
+    </div>
+  </div>
+
+  <h2>Lifecycle: every arrow is a human edit</h2>
+  <figure>
+    <svg viewBox="0 0 920 470" role="img" aria-label="KnownIssue lifecycle state diagram: plan proposals lead to wip with classifier kind none, then wip with a classifier, which branches to drift-flagged wip, permanent (bundled into core), or fixed; a resurfaced fixed row is surfaced for human review with no automatic re-flip.">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#9aa3b2"/>
+        </marker>
+        <marker id="arr-warn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#ff7b72"/>
+        </marker>
+      </defs>
+      <style>
+        .box { fill: #1d212b; stroke: #2a2f3a; stroke-width: 1.5; rx: 10; }
+        .box-accent { fill: #1d212b; stroke: #6ea8fe; stroke-width: 1.5; }
+        .box-green { fill: #1d212b; stroke: #7ee787; stroke-width: 1.5; }
+        .box-warn { fill: #1d212b; stroke: #ff7b72; stroke-width: 1.5; }
+        .lbl { fill: #e6e9ef; font: 600 14px -apple-system, "Segoe UI", Roboto, sans-serif; }
+        .sub { fill: #9aa3b2; font: 12px -apple-system, "Segoe UI", Roboto, sans-serif; }
+        .edge { stroke: #9aa3b2; stroke-width: 1.5; fill: none; marker-end: url(#arr); }
+        .edge-warn { stroke: #ff7b72; stroke-width: 1.5; fill: none; stroke-dasharray: 5 4; marker-end: url(#arr-warn); }
+        .who { fill: #6ea8fe; font: 600 12px -apple-system, "Segoe UI", Roboto, sans-serif; }
+      </style>
+
+      <!-- source: plan proposals -->
+      <rect x="330" y="14" width="260" height="46" class="box" rx="10"/>
+      <text x="460" y="33" text-anchor="middle" class="sub">novel:* groups crossing the</text>
+      <text x="460" y="50" text-anchor="middle" class="sub">promotion threshold (plan's proposals)</text>
+
+      <line x1="460" y1="60" x2="460" y2="98" class="edge"/>
+      <text x="472" y="84" class="who">human authors row</text>
+
+      <!-- wip none -->
+      <rect x="330" y="100" width="260" height="56" class="box-accent" rx="10"/>
+      <text x="460" y="124" text-anchor="middle" class="lbl">status: wip</text>
+      <text x="460" y="143" text-anchor="middle" class="sub">classifier.kind = none</text>
+
+      <line x1="460" y1="156" x2="460" y2="194" class="edge"/>
+      <text x="472" y="180" class="who">human authors classifier</text>
+
+      <!-- wip classified -->
+      <rect x="330" y="196" width="260" height="56" class="box-accent" rx="10"/>
+      <text x="460" y="220" text-anchor="middle" class="lbl">status: wip</text>
+      <text x="460" y="239" text-anchor="middle" class="sub">classifier.kind = predicate | builtin</text>
+
+      <!-- three branches -->
+      <path d="M 360 252 C 300 290, 220 290, 165 318" class="edge"/>
+      <text x="140" y="288" class="who">human flags drift</text>
+      <line x1="460" y1="252" x2="460" y2="318" class="edge"/>
+      <text x="472" y="290" class="who">human promotion review</text>
+      <path d="M 560 252 C 620 290, 700 290, 755 318" class="edge"/>
+      <text x="640" y="288" class="who">human records landed fix</text>
+
+      <!-- drift box -->
+      <rect x="30" y="320" width="250" height="74" class="box-warn" rx="10"/>
+      <text x="155" y="344" text-anchor="middle" class="lbl">status: wip + drift_detected</text>
+      <text x="155" y="363" text-anchor="middle" class="sub">drift_evidence[] appended from</text>
+      <text x="155" y="380" text-anchor="middle" class="sub">classifier_regressions[]</text>
+
+      <!-- permanent box -->
+      <rect x="330" y="320" width="260" height="74" class="box-green" rx="10"/>
+      <text x="460" y="344" text-anchor="middle" class="lbl">status: permanent</text>
+      <text x="460" y="363" text-anchor="middle" class="sub">slice regenerated into core's</text>
+      <text x="460" y="380" text-anchor="middle" class="sub">permanent_data.ts</text>
+
+      <!-- fixed box -->
+      <rect x="640" y="320" width="250" height="74" class="box-green" rx="10"/>
+      <text x="765" y="344" text-anchor="middle" class="lbl">status: fixed</text>
+      <text x="765" y="363" text-anchor="middle" class="sub">commit scope matches</text>
+      <text x="765" y="380" text-anchor="middle" class="sub">backlog_task in target git log</text>
+
+      <!-- resurfaced dashed -->
+      <path d="M 765 394 C 765 430, 600 442, 530 442" class="edge-warn"/>
+      <rect x="240" y="424" width="290" height="36" class="box" rx="10"/>
+      <text x="385" y="447" text-anchor="middle" class="sub">resurfaced → surfaced for human review (no auto re-flip)</text>
+    </svg>
+    <figcaption>The <code>KnownIssue</code> lifecycle. Every solid arrow is a manual human edit through <code>atomic_update_registry</code>; the dashed arrow is a review surfacing, not a state change. The <a href="reconcile-registry.html">reconcile-registry</a> skill detects the drift and landed-fix arrows and proposes them; the human confirms each.</figcaption>
+  </figure>
+
+  <h3>State by state</h3>
+  <table>
+    <tr><th>State</th><th>Meaning</th><th>Who flips it, and on what evidence</th></tr>
+    <tr>
+      <td><code>wip</code></td>
+      <td>A cataloged failure mode under active observation. Born with <code>classifier.kind: none</code>; gains a <code>predicate</code> or <code>builtin</code> classifier when the human authors one. Once classified, triage's filter suppresses the matching false-positive class on the next run.</td>
+      <td>The human authors the row, grounded in plan's proposals — <code>novel:*</code> groups that crossed the promotion threshold.</td>
+    </tr>
+    <tr>
+      <td><code>permanent</code></td>
+      <td>A resolver limitation that holds in principle (e.g. a computed property key can never be statically linked). The rule graduates out of the skill and into the library: its row joins the bundled core slice.</td>
+      <td>The human, after promotion review, names the rule with <code>reconcile-registry --id &lt;group_id&gt; --promote</code>; the flip regenerates <code>packages/core/src/classify_entry_points/permanent_data.ts</code> via <code>generate_permanent_data.ts</code>, and <code>permanent_data.sync.test.ts</code> guards the slice against drift thereafter.</td>
+    </tr>
+    <tr>
+      <td><code>fixed</code></td>
+      <td>The underlying Ariadne defect is repaired; the rule is retired from active filtering but kept as the audit record.</td>
+      <td>The human, once a fix-bearing (<code>fix</code>/<code>feat</code>) Conventional-Commits scope in this repo's git log matches the rule's <code>backlog_task</code> by exact id — the match <code>reconcile-registry</code> detects. The schema records no commit hash — the <code>backlog_task</code> link plus the git log are the audit trail.</td>
+    </tr>
+  </table>
+
+  <h2>Drift detection</h2>
+  <p>A classifier can rot: its predicate stays valid but grows too narrow for the failure mode it covers, so entries it should explain leak through to investigation. When a <code>triage-investigator</code> returns an <code>fp-classifier-regression</code> verdict against a rule, finalize rolls it into the published run's <code>classifier_regressions[]</code> aggregate. The human reads that slice and records it on the rule:</p>
+  <ul>
+    <li><code>drift_detected: true</code> — the flag that marks the rule for re-investigation at promotion review.</li>
+    <li><code>drift_evidence[]</code> — one <code>{ entry_index, evidence_excerpt }</code> row per flagging verdict, <strong>append-only across runs</strong>, so the promotion reviewer sees every flag that recommended re-investigation.</li>
+  </ul>
+  <p>The <a href="reconcile-registry.html">reconcile-registry</a> skill reads the published <code>classifier_regressions[]</code>, proposes <code>drift_detected: true</code> plus the append-only, <code>entry_index</code>-deduped <code>drift_evidence[]</code> rows, and the human confirms. Drift is a review signal, not an automated transition: a drift-flagged rule stays <code>wip</code> until the human widens (or splits) its classifier.</p>
+
+  <h2>The permanent slice: how core consumes the registry without the skill</h2>
+  <p>The full registry — <code>wip</code> rows included — stays in the skill tree. <code>@ariadnejs/core</code> ships only the <code>permanent</code> slice, as plain TypeScript:</p>
+  <div class="card">
+    <ol>
+      <li><strong>Regenerate.</strong> The human-driven promotion (<code>reconcile-registry --id &lt;group_id&gt; --promote</code>) flips a row to <code>permanent</code> and runs <code>generate_permanent_data.ts</code>, which renders <code>classify_entry_points/permanent_data.ts</code> from the source registry through the shared <code>render_permanent_slice_module</code> in <code>/types</code>. The module exports <code>PERMANENT_REGISTRY_FILE</code> — the same <code>{ schema_version, rules }</code> envelope, with the <code>schema_version</code> copied verbatim from the source. <code>permanent_data.sync.test.ts</code> asserts the committed slice byte-equals a fresh render thereafter.</li>
+      <li><strong>Build.</strong> Because the slice is a <code>.ts</code> module, <code>tsc</code> emits it into <code>dist/</code> as part of the normal build — no copy step. <code>registry_permanent.ts</code> re-exports it as <code>PERMANENT_REGISTRY</code> plus <code>PERMANENT_REGISTRY_SCHEMA_VERSION</code>.</li>
+      <li><strong>Load.</strong> <code>load_permanent_registry()</code> in <code>registry_loader.ts</code> validates the slice on first call, then returns a cached, structurally-cloned copy with every regex-bearing predicate leaf pre-compiled (<code>compiled_pattern: new RegExp(...)</code>). The clone is a typed pure function — no JSON round-trip — so non-serializable fields can never be silently dropped, and callers share no mutable substructure with the module constant.</li>
+    </ol>
+  </div>
+
+  <h3>Fail-loud validation</h3>
+  <p><code>validate_permanent_slice()</code> throws <code>PermanentRegistryError</code> rather than silently degrading classification, on any of:</p>
+  <table>
+    <tr><th>Check</th><th>Why it fails loud</th></tr>
+    <tr><td>Slice <code>schema_version</code> ≠ <code>KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION</code> from <code>@ariadnejs/types</code></td><td>The bundled slice is stale relative to the types package — it must be regenerated from the source registry.</td></tr>
+    <tr><td>Any rule with <code>status !== "permanent"</code></td><td>The slice generator's status filter regressed; a <code>wip</code> rule in the library would classify with unreviewed logic.</td></tr>
+    <tr><td>Any rule with <code>classifier.kind === "none"</code></td><td>An unclassified rule cannot match anything; its presence means the slice must drop it, and shipping it signals a regeneration regression that would mis-classify for the next library user.</td></tr>
+  </table>
+  <p>The predicate-cloning switch is exhaustiveness-forced: adding a new <code>PredicateOperator</code> to the DSL produces a compile error in the loader until its author decides whether the new operator carries a regex.</p>
+
+  <h2>When a fixed row resurfaces</h2>
+  <p>A <code>fixed</code> row can come back: the same <code>member_symbol</code> reappears in a later run's published <code>triage_results</code>. Identity here is the stable <code>(file_path, name, kind, start_line)</code> tuple — not the positional <code>novel-&lt;entry_index&gt;</code> id, which shifts run to run. The resurfacing is <em>surfaced for human review</em>; there is no automatic re-flip back to <code>wip</code>.</p>
+  <div class="callout"><strong>Why no auto-reflip.</strong> The registry stays auditable precisely because every transition has a single accountable author. A resurfaced symbol may mean the fix regressed — or that a different defect now produces the same false positive and deserves its own rule. Only a human can tell those apart, so the system reports the resurfacing and waits.</div>
+
+  <h2>How this closes the loop</h2>
+  <ul>
+    <li><strong>Registry → triage:</strong> a <code>wip</code> or <code>permanent</code> rule authored from this run's findings suppresses that false-positive class on the next run's filter — the heal takes effect one run later.</li>
+    <li><strong>Registry → library:</strong> the <code>permanent</code> slice carries reviewed, in-principle limitations into <code>@ariadnejs/core</code>, so every consumer of <code>Project.get_classified_entry_points()</code> benefits without running the skill.</li>
+    <li><strong>Registry → audit:</strong> <code>backlog_task</code> plus the target repo's git log tie each <code>fixed</code> flip to the commit that earned it, with no stored hash to go stale.</li>
+  </ul>
+</main>
+</body>
+</html>

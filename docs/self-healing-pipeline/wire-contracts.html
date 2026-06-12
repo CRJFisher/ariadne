@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wire Contracts and Persistent Stores — Self-Healing Pipeline</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --panel-2: #1d212b; --ink: #e6e9ef; --muted: #9aa3b2;
+    --accent: #6ea8fe; --accent-2: #7ee787; --warn: #ff7b72; --border: #2a2f3a; --code-bg: #11141a;
+    --radius: 10px; --maxw: 980px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .doc-nav { position: sticky; top: 0; z-index: 10; background: rgba(15,17,21,.92);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 10px 20px;
+    display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+  .doc-nav .brand { font-weight: 700; color: var(--ink); margin-right: 10px; letter-spacing: .2px; }
+  .doc-nav a { color: var(--muted); text-decoration: none; font-size: 14px; padding: 4px 8px;
+    border-radius: 6px; white-space: nowrap; }
+  .doc-nav a:hover { color: var(--ink); background: var(--panel-2); }
+  .doc-nav a[aria-current="page"] { color: var(--bg); background: var(--accent); font-weight: 600; }
+  main { margin: 0 5%; padding: 36px 24px 96px; }
+  h1 { font-size: 30px; line-height: 1.25; margin: 8px 0 6px; }
+  h2 { font-size: 22px; margin: 38px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 17px; margin: 26px 0 8px; color: var(--accent); }
+  p, li { color: var(--ink); }
+  a { color: var(--accent); }
+  .lede { color: var(--muted); font-size: 18px; margin: 0 0 8px; }
+  code { background: var(--code-bg); border: 1px solid var(--border); border-radius: 5px;
+    padding: 1px 5px; font: 13.5px/1.5 "SF Mono", Menlo, Consolas, monospace; color: #d6deeb; }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 16px; overflow: auto; }
+  pre code { background: none; border: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--panel-2); }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; margin: 16px 0; }
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--panel-2); color: var(--muted); }
+  .callout { border-left: 3px solid var(--accent); background: var(--panel-2);
+    padding: 10px 14px; border-radius: 0 var(--radius) var(--radius) 0; margin: 16px 0; }
+  figure { margin: 18px 0; }
+  figure svg { max-width: 100%; height: auto; display: block; }
+  figcaption { color: var(--muted); font-size: 13px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<nav class="doc-nav">
+    <span class="brand">Self-Healing Pipeline</span>
+    <a href="index.html">Home</a>
+    <a href="overview-loop.html">The Loop</a>
+    <a href="triage-sense.html">Triage (Sense)</a>
+    <a href="triage-investigator.html">Investigator</a>
+    <a href="plan-classify.html">Plan (Classify)</a>
+    <a href="fault-area-taxonomy.html">Fault Areas</a>
+    <a href="registry-lifecycle.html">Registry</a>
+    <a href="reconcile-registry.html">Reconcile (Registry)</a>
+    <a href="atomic-write-contract.html">Write Boundaries</a>
+    <a href="actuate-and-backlog.html">Actuate (Human)</a>
+    <a href="wire-contracts.html" aria-current="page">Schemas &amp; Stores</a>
+  </nav>
+<main>
+
+<h1>Wire Contracts and Persistent Stores</h1>
+<p class="lede">Every seam between pipeline stages is a strict, versioned schema; every surface that survives between runs has exactly one writer. This page is the reference for both.</p>
+
+<p>
+<span class="tag">TriageResultsFile · schema v5</span>
+<span class="tag">TriageVerdict · internal</span>
+<span class="tag">PlanTask · v1</span>
+<span class="tag">StrategistPlan · v1</span>
+<span class="tag">RunId · branded</span>
+</p>
+
+<figure>
+<svg viewBox="0 0 940 320" role="img" aria-label="Contract seams from triage investigator verdicts through the published triage results file into the plan engine's strategist plans and task-DB records">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9aa3b2"/>
+    </marker>
+    <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6ea8fe"/>
+    </marker>
+  </defs>
+
+  <!-- row 1: triage side -->
+  <rect x="20" y="40" width="170" height="64" rx="10" fill="#1d212b" stroke="#2a2f3a"/>
+  <text x="105" y="66" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">triage-investigator</text>
+  <text x="105" y="86" text-anchor="middle" fill="#9aa3b2" font-size="12">one verdict per entry</text>
+
+  <rect x="240" y="40" width="200" height="64" rx="10" fill="#171a21" stroke="#2a2f3a"/>
+  <text x="340" y="62" text-anchor="middle" fill="#e6e9ef" font-size="13" font-family="Menlo,monospace">results/&lt;entry_index&gt;.json</text>
+  <text x="340" y="82" text-anchor="middle" fill="#9aa3b2" font-size="12">TriageVerdict · internal seam</text>
+
+  <rect x="490" y="40" width="120" height="64" rx="10" fill="#1d212b" stroke="#2a2f3a"/>
+  <text x="550" y="66" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">finalize</text>
+  <text x="550" y="86" text-anchor="middle" fill="#9aa3b2" font-size="12">folds verdicts</text>
+
+  <rect x="660" y="30" width="260" height="84" rx="10" fill="#11141a" stroke="#6ea8fe" stroke-width="2"/>
+  <text x="790" y="54" text-anchor="middle" fill="#6ea8fe" font-size="13" font-family="Menlo,monospace">triage_results/&lt;run-id&gt;.json</text>
+  <text x="790" y="74" text-anchor="middle" fill="#e6e9ef" font-size="12.5" font-weight="600">TriageResultsFile · schema v5</text>
+  <text x="790" y="94" text-anchor="middle" fill="#9aa3b2" font-size="12">the one published cross-skill seam</text>
+
+  <line x1="190" y1="72" x2="234" y2="72" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="440" y1="72" x2="484" y2="72" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="610" y1="72" x2="654" y2="72" stroke="#6ea8fe" stroke-width="2" marker-end="url(#arrA)"/>
+
+  <!-- drop from published seam to plan row -->
+  <path d="M790,114 L790,150 L105,150 L105,186" fill="none" stroke="#6ea8fe" stroke-width="2" marker-end="url(#arrA)"/>
+  <text x="448" y="144" text-anchor="middle" fill="#6ea8fe" font-size="12">plan reads novel_issues[] · next triage run reads confirmed_unreachable[] (TP cache)</text>
+
+  <!-- row 2: plan side -->
+  <rect x="20" y="190" width="170" height="64" rx="10" fill="#1d212b" stroke="#2a2f3a"/>
+  <text x="105" y="216" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">plan · Pass A + B</text>
+  <text x="105" y="236" text-anchor="middle" fill="#9aa3b2" font-size="12">group → strategist</text>
+
+  <rect x="240" y="190" width="220" height="64" rx="10" fill="#171a21" stroke="#2a2f3a"/>
+  <text x="350" y="212" text-anchor="middle" fill="#e6e9ef" font-size="13" font-family="Menlo,monospace">staging/&lt;sweep&gt;/plans/&lt;area&gt;.json</text>
+  <text x="350" y="232" text-anchor="middle" fill="#9aa3b2" font-size="12">StrategistPlan · v1 · agent output</text>
+
+  <rect x="510" y="190" width="130" height="64" rx="10" fill="#1d212b" stroke="#2a2f3a"/>
+  <text x="575" y="216" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">Pass C · reconcile</text>
+  <text x="575" y="236" text-anchor="middle" fill="#9aa3b2" font-size="12">sole task-DB writer</text>
+
+  <rect x="690" y="180" width="230" height="84" rx="10" fill="#11141a" stroke="#7ee787" stroke-width="2"/>
+  <text x="805" y="204" text-anchor="middle" fill="#7ee787" font-size="13" font-family="Menlo,monospace">~/.ariadne/plan/tasks/&lt;id&gt;.json</text>
+  <text x="805" y="224" text-anchor="middle" fill="#e6e9ef" font-size="12.5" font-weight="600">PlanTask · schema v1</text>
+  <text x="805" y="244" text-anchor="middle" fill="#9aa3b2" font-size="12">read back next sweep via dedup_key</text>
+
+  <line x1="190" y1="222" x2="234" y2="222" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="460" y1="222" x2="504" y2="222" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="640" y1="222" x2="684" y2="222" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <path d="M805,264 L805,294 L575,294 L575,260" fill="none" stroke="#7ee787" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arr)"/>
+  <text x="690" y="310" text-anchor="middle" fill="#9aa3b2" font-size="12">next sweep: find_by_dedup_key → augment, not duplicate</text>
+</svg>
+<figcaption>The four contracts in producer order. Each box with a colored border is a versioned, strictly-parsed artifact; every other box is the code that writes or reads it.</figcaption>
+</figure>
+
+<div class="callout">
+<strong>Schema mismatch is rejection, not migration.</strong> Each contract's own parser pins its version constant and throws on any mismatch — there are no migration shims, adapters, or version-tolerant readers anywhere in the pipeline. A stale file is re-produced (re-finalize the run, re-run the sweep), never translated. Within the plan pipeline, <code>schema_version</code> bumps <em>only</em> on a breaking shape change: additive wire-contract changes ship under the same version.
+</div>
+
+<h2 id="seam">The published seam — <code>TriageResultsFile</code> (schema v5)</h2>
+
+<p>Owned by <code>@ariadnejs/skill-protocol</code> (<code>packages/skill-protocol/src/triage_results.ts</code>). The producer (triage's finalize step) builds it from the per-entry verdict files; the consumer (plan's Pass A) reads it back through the <em>same</em> strict parser, so both sides validate identically. <code>TRIAGE_RESULTS_SCHEMA_VERSION = 5</code>.</p>
+
+<table>
+<tr><th>Top-level field</th><th>Type</th><th>Meaning</th></tr>
+<tr><td><code>schema_version</code></td><td><code>number</code></td><td>Must equal <code>5</code>; <code>parse_triage_results</code> throws on any other value.</td></tr>
+<tr><td><code>project_path</code></td><td><code>string</code></td><td>Absolute path to the target repo at run time; consumers resolve every <code>file_path</code> against it.</td></tr>
+<tr><td><code>commit_hash</code></td><td><code>string | null</code></td><td>Full HEAD hash of the target repo, <code>null</code> for non-git projects.</td></tr>
+<tr><td><code>novel_issues</code></td><td><code>NovelIssue[]</code></td><td>One self-contained row per <code>fp-novel</code> verdict — the published false positives plan consumes.</td></tr>
+<tr><td><code>classifier_regressions</code></td><td><code>ClassifierRegressionFlag[]</code></td><td>Per-rule aggregate of every <code>fp-classifier-regression</code> verdict in the run; the human reads this slice when authoring registry <code>drift_evidence</code>.</td></tr>
+<tr><td><code>confirmed_unreachable</code></td><td><code>PublishedConfirmedUnreachable[]</code></td><td>Confirmed true positives — the next same-commit run's TP cache.</td></tr>
+<tr><td><code>uncertain</code></td><td><code>PublishedUncertain[]</code></td><td>Entries the investigator could not reduce to a single verdict.</td></tr>
+<tr><td><code>last_updated</code></td><td><code>string</code></td><td>Timestamp of the finalize write.</td></tr>
+</table>
+
+<h3>Row types</h3>
+
+<div class="grid">
+<div class="card">
+<strong><code>MemberSymbol</code></strong><br>
+<code>{ file_path, name, kind, start_line }</code><br>
+<span style="color:var(--muted)">The stable identity of the flagged entry point. <code>kind</code> is <code>function | method | constructor</code>; <code>file_path</code> is relative to <code>project_path</code> so the identity is portable across machines. It is the cross-run match key for the TP cache and the key of plan's membership-override store.</span>
+</div>
+<div class="card">
+<strong><code>MemberEvidence</code></strong><br>
+<code>{ file, line, why }</code><br>
+<span style="color:var(--muted)">The investigator's named proof: the call site that grounds the verdict plus a one-line rationale. Carried verbatim from the verdict file into the published row.</span>
+</div>
+</div>
+
+<div class="card">
+<strong><code>NovelIssue</code></strong> — one per <code>fp-novel</code> verdict, built at finalize, never merged. Carries:
+<ul>
+<li><code>id</code> (deterministic, keyed by <code>entry_index</code>) and <code>entry_index</code></li>
+<li><code>member_symbol</code> + <code>member_evidence</code> — the flagged member and the call site that proves a caller exists</li>
+<li><code>proposed_root_cause</code> and <code>evidence_excerpt</code> — the investigator's prose, grounding the strategist</li>
+<li>the deterministic core fault diagnostics: <code>diagnosis</code>, optional <code>resolution_failure { stage, reason }</code>, optional <code>receiver_kind</code> (method calls only) — enums reused from <code>@ariadnejs/types</code>, no new taxonomy</li>
+<li>two <em>required</em> disambiguator booleans, <code>has_uncaptured_indexed_grep_hit</code> and <code>callers_only_in_unindexed_tests</code>, copied verbatim from <code>EntryPointDiagnostics</code> so <code>derive_fault_area</code>'s diagnosis-fallback path re-derives the fault area with real values rather than collapsed <code>false/false</code></li>
+</ul>
+</div>
+
+<div class="grid">
+<div class="card">
+<strong><code>confirmed_unreachable[]</code> rows</strong><br>
+<code>PublishedEntryRef</code> identifiers (<code>entry_index, name, file_path, start_line, kind</code>, optional <code>signature</code>) plus a discriminated <code>source</code>:
+<ul>
+<li><code>{ kind: "llm-tp" }</code> — investigator verdict this run</li>
+<li><code>{ kind: "previously-confirmed-tp" }</code> — TP-cache reuse</li>
+<li><code>{ kind: "registry", group_id }</code> — auto-classified by a rule</li>
+</ul>
+<span style="color:var(--muted)"><code>member_evidence</code> is <code>null</code> on auto-classified rows — no investigator visited the entry.</span>
+</div>
+<div class="card">
+<strong><code>uncertain[]</code> rows</strong><br>
+Same <code>PublishedEntryRef</code> identifiers, always with <code>member_evidence</code> and a <code>reason</code> string explaining why the entry resisted a single verdict.
+</div>
+</div>
+
+<p>The parser (<code>parse_triage_results</code>) enforces: valid JSON, an object payload, <code>schema_version === 5</code>, and the presence of all four arrays (<code>novel_issues</code>, <code>classifier_regressions</code>, <code>confirmed_unreachable</code>, <code>uncertain</code>). Deeper row validation is the consumer's concern — a v5 producer is the only legitimate writer.</p>
+
+<h2 id="verdict">The internal verdict seam — <code>TriageVerdict</code></h2>
+
+<p>Internal to the triage skill (<code>.claude/skills/triage/src/verdict/triage_verdict.ts</code>). Each <code>triage-investigator</code> writes exactly one verdict to its run's <code>results/&lt;entry_index&gt;.json</code>; the verdict files are finalize's single source of truth. A discriminated union on <code>kind</code>, with a strict parser (<code>parse_triage_verdict</code>) that rejects missing fields, wrong types, unknown kinds, <em>and extra unknown fields</em>.</p>
+
+<table>
+<tr><th><code>kind</code></th><th>Meaning</th><th>Required payload</th></tr>
+<tr><td><code>tp</code></td><td>Genuine dead code — the call graph is correct.</td><td><code>member_evidence</code></td></tr>
+<tr><td><code>fp-novel</code></td><td>A real caller exists and no rule should have caught it — an Ariadne detection gap.</td><td><code>proposed_root_cause</code>, <code>evidence_excerpt</code>, <code>member_evidence</code></td></tr>
+<tr><td><code>fp-classifier-regression</code></td><td>An existing registry rule's predicate is too narrow.</td><td><code>should_have_matched_rule_id</code>, <code>evidence_excerpt</code>, <code>member_evidence</code></td></tr>
+<tr><td><code>uncertain</code></td><td>The investigator cannot reduce the entry to one verdict.</td><td><code>reason</code>, <code>member_evidence</code></td></tr>
+</table>
+
+<h2 id="plantask">The task-DB record — <code>PlanTask</code> (schema v1)</h2>
+
+<p>Declared in <code>.claude/skills/plan/src/store/plan_task.ts</code>; <code>PLAN_TASK_SCHEMA_VERSION = 1</code>. One JSON file per branded <code>PlanTaskId</code> at <code>~/.ariadne/plan/tasks/&lt;id&gt;.json</code>; the store rejects a <code>schema_version</code> mismatch on read. The record is total — no optional fields; hierarchy links and lifecycle pointers use <code>| null</code>.</p>
+
+<table>
+<tr><th>Field group</th><th>Fields</th><th>Notes</th></tr>
+<tr><td>Identity &amp; tree</td><td><code>id</code>, <code>tier</code>, <code>parent_id</code>, <code>child_ids</code></td><td>Tiers: <code>architectural</code> → <code>fault_area</code> → <code>localized</code>.</td></tr>
+<tr><td>Proposal</td><td><code>title</code>, <code>body</code>, <code>fault_area</code></td><td><code>fault_area</code> is <code>AriadneFaultArea</code> from <code>@ariadnejs/types</code> — the grouping key for queries.</td></tr>
+<tr><td>Grounding</td><td><code>evidence: PlanTaskEvidence[]</code></td><td>Each row: collapsed <code>member_evidence</code>, the <code>member_symbol</code> identity, <code>project</code>, <code>run_id</code>, and the full raw fault signal — <code>diagnosis</code>, <code>resolution_failure | null</code>, and the two disambiguator booleans. The raw signal is typed plain <code>string</code> (not the published enums) so a value persisted by one version and read by a newer one routes through <code>derive_fault_area</code>'s <code>other</code> escape hatch instead of being a stored type lie. The stored <code>fault_area</code> stays re-derivable: <code>derive_fault_area(evidence)</code> recomputes it.</td></tr>
+<tr><td>Rollups</td><td><code>observed_count</code>, <code>projects</code>, <code>source_runs</code></td><td>The benefit axis; bumped on augment.</td></tr>
+<tr><td>Lifecycle</td><td><code>status</code>, <code>superseded_by</code>, <code>exported_backlog_task</code></td><td><code>proposed | accepted</code> are the live set; <code>superseded | exported | resolved</code> are terminal and never re-matched.</td></tr>
+<tr><td>Reconciliation</td><td><code>dedup_key</code></td><td>Content hash of <code>fault_area</code> + the sorted, deduplicated set of the minting proposal's evidence <code>"&lt;file&gt;:&lt;line&gt;"</code> strings. Computed once, stored immutably; augment merges evidence but never recomputes it. Exact-overlap matching only.</td></tr>
+<tr><td>Provenance</td><td><code>created_in_sweep</code>, <code>updated_in_sweep</code>, <code>strategist</code></td><td>Sweep ids name <code>sweeps/&lt;id&gt;.jsonl</code> logs; distinct from <code>RunId</code>.</td></tr>
+<tr><td>Cost axis</td><td><code>is_classifier_work</code>, <code>core_fix_effort</code>, <code>core_fix_effort_rationale</code></td><td>Effort scale: 1 = single-file edit, 3 = new function/resolver path, 5 = new cross-folder resolver pass; <code>0</code> when no core fix is proposed. Per-tier, not additive across tiers.</td></tr>
+</table>
+
+<p>The sweep event log records every reconciliation decision as a <code>PlanSweepEvent</code>, discriminated on <code>kind</code>: <code>create</code>, <code>augment</code>, <code>supersede</code>, <code>combine</code> (N→1 supersede fan-in), <code>resolve</code>, <code>export</code>, and <code>exclude_member</code> — the audit entry for a membership review, whose non-null <code>suggested_area</code> is a confirmed <code>derive_fault_area</code> mis-route.</p>
+
+<h2 id="strategist">The agent-output contract — <code>StrategistPlan</code> (schema v1)</h2>
+
+<p>Declared in <code>.claude/skills/plan/src/types.ts</code>; <code>STRATEGIST_PLAN_SCHEMA_VERSION = 1</code>, pinned by both the validator and the reconcile engine and bumped only on a breaking shape change. One file per bucket at <code>staging/&lt;sweep&gt;/plans/&lt;area&gt;.json</code>, self-contained: it carries its bucket's <code>fault_area</code> and the <code>sweep_id</code> it was dispatched for, so downstream passes cross-check against the bucket they fed it.</p>
+
+<div class="grid">
+<div class="card">
+<strong><code>StrategistPlanNode</code></strong> — one node in the fix-plan forest (<code>roots[]</code>, ≥1), mapping 1:1 onto a <code>PlanTask</code>:
+<ul>
+<li><code>tier</code>, <code>title</code>, <code>body</code>, <code>fault_area</code> carry over verbatim</li>
+<li><code>evidence_indices</code> — positional indexes into the bucket's <code>evidence[]</code>; leaves carry real indexes, parents may carry <code>[]</code> and inherit by union</li>
+<li><code>is_taxonomy_extension</code> — permitted only in an <code>other</code> bucket</li>
+<li><code>is_classifier_work</code> — lower-priority <code>localized</code> nodes only</li>
+<li><code>core_fix_effort</code> + <code>core_fix_effort_rationale</code> — carried verbatim onto the task</li>
+</ul>
+The strategist authors prose and structure only — it never mints ids, <code>dedup_key</code>s, or evidence rows.
+</div>
+<div class="card">
+<strong><code>MembershipVerdict</code></strong> — <code>{ index, belongs, reason, suggested_area? }</code>, one per bucket <code>evidence[]</code> index. The review is <em>total</em> (the validator requires every index) and <em>consistent</em> (no node may ground an index whose verdict is <code>belongs: false</code>). A <code>belongs: false</code> verdict requires a non-empty <code>reason</code>; a present <code>suggested_area</code> names the area the member should route to instead. Pass C grounds tasks on <code>belongs: true</code> members only and records each exclusion as an <code>exclude_member</code> event plus a membership-override record.
+</div>
+</div>
+
+<h2 id="runid">Run-id grammar</h2>
+
+<p>The shared identifier across the triage → plan seam, owned by <code>@ariadnejs/skill-protocol</code> (<code>run_id.ts</code>). A run-id names both the per-run scratch directory and the published <code>triage_results/&lt;run-id&gt;.json</code> file, so it is filesystem-safe by construction.</p>
+
+<pre><code>&lt;prefix&gt;-&lt;timestamp&gt;
+  prefix    = 7-char short HEAD commit hash (lowercase hex) | "nogit"
+  timestamp = ISO-8601 instant with time-component colons → hyphens
+
+regex:    /^(?:[0-9a-f]{7}|nogit)-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.\d{3}Z$/
+example:  deadbee-2026-04-28T13-42-07.812Z</code></pre>
+
+<p><code>RunId</code> is a branded string: the only ways to obtain one are <code>build_run_id</code> (construction), <code>parse_run_id</code> (validating boundary for a single specific id — throws on malformed input), and <code>is_run_id</code> (non-throwing type guard for bulk filesystem discovery). <code>PlanTaskId</code> follows the same branding discipline, but its contract fixes no grammar — minting is the plan store's concern, a single audited cast site.</p>
+
+<h2 id="stores">Persistent stores — writer and next-run reader</h2>
+
+<p>Each surface below survives between runs and has exactly one writer. The "next-run reader" column is what closes the loop: what one run writes, a later run (or the human) reads back.</p>
+
+<table>
+<tr><th>Store</th><th>Location</th><th>Sole writer</th><th>Next-run reader</th><th>Loop role</th></tr>
+<tr>
+<td>Classifier registry</td>
+<td><code>.claude/skills/triage/known_issues/registry.json</code></td>
+<td>Human — every transition, always through <code>atomic_update_registry</code></td>
+<td>Triage (read-only classification filter)</td>
+<td>A <code>wip</code>/<code>permanent</code> rule suppresses its false-positive class on the next run.</td>
+</tr>
+<tr>
+<td>Published triage results</td>
+<td><code>&lt;state&gt;/analysis_output/&lt;project&gt;/triage_results/&lt;run-id&gt;.json</code></td>
+<td>Triage finalize (the only legitimate v5 producer)</td>
+<td>Plan Pass A (<code>novel_issues[]</code>); next same-commit triage run (<code>confirmed_unreachable[]</code> as TP cache); human (<code>classifier_regressions[]</code>)</td>
+<td>The cross-skill seam; TP reuse amortizes LLM cost.</td>
+</tr>
+<tr>
+<td>Per-run triage state</td>
+<td><code>&lt;state&gt;/triage_state/&lt;project&gt;/runs/&lt;run-id&gt;/</code> (<code>triage.json</code>, <code>manifest.json</code>, <code>results/</code>) + <code>LATEST</code> pointer</td>
+<td>Triage steps; each investigator writes only its own <code>results/&lt;entry_index&gt;.json</code></td>
+<td>Finalize (same run); run discovery scripts</td>
+<td>Disposable scratch; the verdict files are finalize's source of truth.</td>
+</tr>
+<tr>
+<td>Plan task-DB</td>
+<td><code>~/.ariadne/plan/tasks/&lt;id&gt;.json</code></td>
+<td>Plan Pass C (reconcile)</td>
+<td>Next sweep's reconcile (<code>find_by_dedup_key</code> → augment / resolve); the export adapter</td>
+<td>Augment instead of duplicate; orphans whose bug vanished become <code>resolved</code>.</td>
+</tr>
+<tr>
+<td>Sweep event log</td>
+<td><code>~/.ariadne/plan/sweeps/&lt;sweep-id&gt;.jsonl</code></td>
+<td>Plan Pass C (append-only)</td>
+<td>Human; export adapter</td>
+<td>Audit trail of every reconciliation decision.</td>
+</tr>
+<tr>
+<td>Membership overrides</td>
+<td><code>~/.ariadne/plan/membership_overrides.json</code></td>
+<td>Plan Pass C (reconcile)</td>
+<td>Plan Pass A (follows the override chain when bucketing)</td>
+<td>A confirmed mis-route is re-routed on the next sweep, not re-adjudicated. Keyed on the stable member identity; not registry-shaped, so it stays outside the registry lock.</td>
+</tr>
+<tr>
+<td>Backlog</td>
+<td><code>backlog/tasks/&lt;id&gt;.md</code></td>
+<td><code>export_to_backlog.ts</code> adapter, human-invoked</td>
+<td>Plan (reads <code>plan_dedup_key</code> frontmatter as its dedup signal — never writes); human workflow</td>
+<td>Stops re-proposing work a human already promoted.</td>
+</tr>
+<tr>
+<td>Git log</td>
+<td>Target repo history</td>
+<td>Human (fix commits with Conventional-Commits task-id scopes)</td>
+<td>Human (matches a landed scope to a rule's <code>backlog_task</code> and flips it to <code>fixed</code>)</td>
+<td>The audit trail tying a landed fix to the rule it closes; no commit hash is stored in the registry.</td>
+</tr>
+</table>
+
+<p style="color:var(--muted); font-size:14px;"><code>&lt;state&gt;</code> defaults to <code>~/.ariadne/triage-entrypoints</code>. The plan task-DB root defaults to <code>~/.ariadne/plan</code> — a sibling of the triage base, not a child. Both honor test-isolation overrides (<code>ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE</code>, <code>ARIADNE_PLAN_DIR_OVERRIDE</code>, <code>ARIADNE_BACKLOG_DIR_OVERRIDE</code>), read lazily.</p>
+
+<div class="callout" style="border-left-color: var(--accent-2);">
+<strong>Per-sweep staging is not a cross-run store.</strong> <code>~/.ariadne/plan/staging/&lt;sweep&gt;/</code> holds Pass A's bucket files (<code>buckets/&lt;area&gt;.json</code>), Pass B's <code>StrategistPlan</code>s (<code>plans/&lt;area&gt;.json</code>), and the scan manifest (<code>manifest.json</code>) — the projects and runs Pass A actually scanned, including zero-false-positive runs. Pass C reads the manifest to bound <code>resolved</code> marking to the swept scope, so a partial-scope sweep never falsely resolves a task whose projects it did not cover.
+</div>
+
+</main>
+</body>
+</html>

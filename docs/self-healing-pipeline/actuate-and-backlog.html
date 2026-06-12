@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Actuate: Prioritize, Export, and Closing the Loop — Self-Healing Pipeline</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --panel-2: #1d212b; --ink: #e6e9ef; --muted: #9aa3b2;
+    --accent: #6ea8fe; --accent-2: #7ee787; --warn: #ff7b72; --border: #2a2f3a; --code-bg: #11141a;
+    --radius: 10px; --maxw: 980px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .doc-nav { position: sticky; top: 0; z-index: 10; background: rgba(15,17,21,.92);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 10px 20px;
+    display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+  .doc-nav .brand { font-weight: 700; color: var(--ink); margin-right: 10px; letter-spacing: .2px; }
+  .doc-nav a { color: var(--muted); text-decoration: none; font-size: 14px; padding: 4px 8px;
+    border-radius: 6px; white-space: nowrap; }
+  .doc-nav a:hover { color: var(--ink); background: var(--panel-2); }
+  .doc-nav a[aria-current="page"] { color: var(--bg); background: var(--accent); font-weight: 600; }
+  main { margin: 0 5%; padding: 36px 24px 96px; }
+  h1 { font-size: 30px; line-height: 1.25; margin: 8px 0 6px; }
+  h2 { font-size: 22px; margin: 38px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 17px; margin: 26px 0 8px; color: var(--accent); }
+  p, li { color: var(--ink); }
+  a { color: var(--accent); }
+  .lede { color: var(--muted); font-size: 18px; margin: 0 0 8px; }
+  code { background: var(--code-bg); border: 1px solid var(--border); border-radius: 5px;
+    padding: 1px 5px; font: 13.5px/1.5 "SF Mono", Menlo, Consolas, monospace; color: #d6deeb; }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 16px; overflow: auto; }
+  pre code { background: none; border: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--panel-2); }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; margin: 16px 0; }
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--panel-2); color: var(--muted); }
+  .callout { border-left: 3px solid var(--accent); background: var(--panel-2);
+    padding: 10px 14px; border-radius: 0 var(--radius) var(--radius) 0; margin: 16px 0; }
+  figure { margin: 18px 0; }
+  figure svg { max-width: 100%; height: auto; display: block; }
+  figcaption { color: var(--muted); font-size: 13px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<nav class="doc-nav">
+    <span class="brand">Self-Healing Pipeline</span>
+    <a href="index.html">Home</a>
+    <a href="overview-loop.html">The Loop</a>
+    <a href="triage-sense.html">Triage (Sense)</a>
+    <a href="triage-investigator.html">Investigator</a>
+    <a href="plan-classify.html">Plan (Classify)</a>
+    <a href="fault-area-taxonomy.html">Fault Areas</a>
+    <a href="registry-lifecycle.html">Registry</a>
+    <a href="reconcile-registry.html">Reconcile (Registry)</a>
+    <a href="atomic-write-contract.html">Write Boundaries</a>
+    <a href="actuate-and-backlog.html" aria-current="page">Actuate (Human)</a>
+    <a href="wire-contracts.html">Schemas &amp; Stores</a>
+  </nav>
+<main>
+  <span class="tag">actuate</span> <span class="tag">human-in-the-loop</span> <span class="tag">backlog export</span>
+  <h1>Actuate: Prioritize, Export, and Closing the Loop</h1>
+  <p class="lede">The autonomous sweep proposes; only a human promotes. This page covers the deliberate prioritize → export → commit flow that graduates planned work into the backlog, and the commit-scope convention that ties a landed fix back to the row it closes.</p>
+
+  <h2 id="sole-actuator">Human as sole actuator</h2>
+  <p>Triage senses and plan classifies, but neither acts. Every state change that commits the project to work — writing a backlog task, authoring a classifier rule, flipping a registry row — is a human decision, executed through a write-fenced surface with exactly one writer:</p>
+  <table>
+    <thead>
+      <tr><th>Surface</th><th>Sole writer</th><th>Human's role</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>backlog/tasks/*.md</code></td><td><code>export_to_backlog.ts</code> (human-invoked)</td><td>Selects which <code>PlanTask</code> rows graduate; the adapter is never run on the autonomous sweep.</td></tr>
+      <tr><td><code>.claude/skills/triage/known_issues/registry.json</code></td><td>Human via <a href="reconcile-registry.html">reconcile-registry</a> &rarr; <code>reconcile_registry.ts</code>, always via <code>atomic_update_registry</code></td><td>Authors <code>wip</code> rules, flips <code>wip → permanent</code> and <code>wip → fixed</code>.</td></tr>
+      <tr><td><code>packages/core/</code> (the actual fix)</td><td>Human engineering work</td><td>Lands the fix with a task-scoped Conventional-Commits message.</td></tr>
+    </tbody>
+  </table>
+  <div class="callout">
+    <strong>Why a human fence?</strong> Each promoted task and each registry transition commits engineering effort or changes what triage suppresses on every future run. Keeping a single, deliberate writer per surface makes the loop auditable: every backlog task traces to a <code>PlanTask</code> via frontmatter, every registry flip traces to a human edit, and every landed fix traces to a commit scope.
+  </div>
+
+  <h2 id="prioritize-vs-export">Prioritize skill vs export adapter</h2>
+  <p>Actuation splits into a <em>decision surface</em> and a <em>write mechanism</em>. The <code>prioritize</code> skill owns no logic of its own; all work runs through one script.</p>
+  <table>
+    <thead>
+      <tr><th></th><th><code>prioritize</code> (skill)</th><th><code>export_to_backlog.ts</code> (adapter)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Location</td><td><code>.claude/skills/prioritize/SKILL.md</code></td><td><code>.claude/skills/plan/scripts/export_to_backlog.ts</code></td></tr>
+      <tr><td>Role</td><td>Human decision surface: preview, weigh, narrow, then promote</td><td>The <strong>only writer of <code>backlog/</code></strong> in the pipeline</td></tr>
+      <tr><td>Invocation</td><td><code>disable-model-invocation: true</code> — only a human can trigger it; the model never self-invokes</td><td><code>node --import tsx</code> (never <code>pnpm exec tsx</code> / <code>npx tsx</code>, which open IPC sockets the sandbox blocks)</td></tr>
+      <tr><td>Preview</td><td><code>--dry-run</code> lists each candidate as <code>{id, backlog_task, path}</code> and writes nothing — the prioritization view</td><td>Same flag, honored before any write; the summary also reports <code>skipped_already_exported</code>, <code>skipped_non_exportable</code>, <code>missing_ids</code></td></tr>
+      <tr><td>Weighing</td><td>Read a candidate's source row at <code>~/.ariadne/plan/tasks/&lt;id&gt;.json</code> for its <code>fault_area</code> and <code>core_fix_effort</code></td><td>Selectors: <code>--status proposed|accepted</code>, <code>--fault-area &lt;area&gt;</code>, <code>--priority core|classifier</code>, repeatable <code>--id</code> (overrides the filters)</td></tr>
+    </tbody>
+  </table>
+  <p>The workflow is iterate-then-commit: run a filtered <code>--dry-run</code>, read the rows it lists, narrow with selectors or exact <code>--id</code>s, re-preview until the list is exactly the work wanted, then drop <code>--dry-run</code>. With no selectors at all, every exportable row is selected — which is why the skill insists on previewing first.</p>
+
+  <h2 id="reconcile-vs-script"><code>reconcile-registry</code> skill vs script</h2>
+  <p>The registry's actuation splits the same way: a <em>decision surface</em> and a <em>write mechanism</em>. The <a href="reconcile-registry.html"><code>reconcile-registry</code></a> skill owns no logic of its own; all work runs through one script.</p>
+  <table>
+    <thead>
+      <tr><th></th><th><code>reconcile-registry</code> (skill)</th><th><code>reconcile_registry.ts</code> (script)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Location</td><td><code>.claude/skills/reconcile-registry/SKILL.md</code></td><td><code>.claude/skills/triage/scripts/reconcile_registry.ts</code></td></tr>
+      <tr><td>Role</td><td>Human decision surface: preview, weigh, narrow, then apply</td><td>The <strong>only human-invoked writer of <code>registry.json</code></strong>, reaching it through <code>atomic_update_registry</code></td></tr>
+      <tr><td>Invocation</td><td><code>disable-model-invocation: true</code> &mdash; only a human can trigger it; the model never self-invokes, and the script never runs on the autonomous sweep</td><td><code>node --import tsx</code> (never <code>pnpm exec tsx</code> / <code>npx tsx</code>, which open IPC sockets the sandbox blocks)</td></tr>
+      <tr><td>Preview</td><td><code>--dry-run</code> prints the proposed changeset grouped by transition and writes nothing &mdash; the reconciliation view</td><td>Same flag, honored before any write; the JSON summary reports <code>applied</code>, <code>permanent_slice_changed</code>, <code>missing_ids</code>, <code>rejected_promotions</code>, <code>drift_unknown_rule_ids</code>, <code>skipped_sources</code></td></tr>
+      <tr><td>Weighing</td><td>Read a proposed flip's rule in the registry, or its published evidence in <code>analysis_output/&lt;project&gt;/triage_results/&lt;run-id&gt;.json</code></td><td>Selectors: <code>--fixed</code>, <code>--drift</code>, repeatable <code>--id &lt;group_id&gt;</code> (overrides the filters), and <code>--id &hellip; --promote</code> for the deliberate <code>wip &rarr; permanent</code> flip</td></tr>
+    </tbody>
+  </table>
+  <p>The workflow is iterate-then-preview: run <code>--dry-run</code>, read the proposed flips, narrow with <code>--fixed</code> / <code>--drift</code> or exact <code>--id</code>s, re-preview until the changeset is exactly the work wanted, then drop <code>--dry-run</code>. With no selectors at all, every proposal across both detection signals is selected &mdash; which is why the skill insists on previewing first.</p>
+
+  <h2 id="adapter-pipeline">The adapter pipeline: select → mint → render → write → flip</h2>
+  <figure>
+    <svg viewBox="0 0 932 250" role="img" aria-label="Five-step export adapter pipeline: select, mint id, render, write, flip state">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#9aa3b2"/>
+        </marker>
+      </defs>
+      <!-- step boxes -->
+      <g font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+        <rect x="10" y="60" width="160" height="78" rx="10" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5"/>
+        <text x="90" y="88" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">1 · select</text>
+        <text x="90" y="108" text-anchor="middle" fill="#9aa3b2" font-size="11.5">select_exportable_tasks</text>
+        <text x="90" y="124" text-anchor="middle" fill="#9aa3b2" font-size="11.5">filters + dedup guards</text>
+
+        <rect x="200" y="60" width="160" height="78" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
+        <text x="280" y="88" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">2 · mint id</text>
+        <text x="280" y="108" text-anchor="middle" fill="#9aa3b2" font-size="11.5">next_backlog_task_id</text>
+        <text x="280" y="124" text-anchor="middle" fill="#9aa3b2" font-size="11.5">recursive backlog scan</text>
+
+        <rect x="390" y="60" width="160" height="78" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
+        <text x="470" y="88" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">3 · render</text>
+        <text x="470" y="108" text-anchor="middle" fill="#9aa3b2" font-size="11.5">render_backlog_task</text>
+        <text x="470" y="124" text-anchor="middle" fill="#9aa3b2" font-size="11.5">stamps plan_dedup_key</text>
+
+        <rect x="580" y="60" width="160" height="78" rx="10" fill="#1d212b" stroke="#7ee787" stroke-width="1.5"/>
+        <text x="660" y="88" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">4 · write</text>
+        <text x="660" y="108" text-anchor="middle" fill="#9aa3b2" font-size="11.5">atomic_write_file</text>
+        <text x="660" y="124" text-anchor="middle" fill="#9aa3b2" font-size="11.5">backlog/tasks/&lt;id&gt;.md</text>
+
+        <rect x="770" y="60" width="152" height="78" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
+        <text x="846" y="88" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">5 · flip state</text>
+        <text x="846" y="108" text-anchor="middle" fill="#9aa3b2" font-size="11.5">row → exported</text>
+        <text x="846" y="124" text-anchor="middle" fill="#9aa3b2" font-size="11.5">+ export sweep event</text>
+
+        <!-- arrows -->
+        <line x1="170" y1="99" x2="198" y2="99" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="360" y1="99" x2="388" y2="99" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="550" y1="99" x2="578" y2="99" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="740" y1="99" x2="768" y2="99" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+
+        <!-- dry-run gate -->
+        <line x1="470" y1="138" x2="470" y2="176" stroke="#6ea8fe" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <rect x="330" y="178" width="280" height="40" rx="10" fill="#11141a" stroke="#6ea8fe" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <text x="470" y="203" text-anchor="middle" fill="#6ea8fe" font-size="12.5">--dry-run stops here: steps 1–3 run, 4–5 never do</text>
+
+        <!-- sources -->
+        <text x="90" y="40" text-anchor="middle" fill="#9aa3b2" font-size="11.5">reads ~/.ariadne/plan/tasks/</text>
+        <text x="280" y="40" text-anchor="middle" fill="#9aa3b2" font-size="11.5">reads backlog/ tree</text>
+        <text x="660" y="40" text-anchor="middle" fill="#7ee787" font-size="11.5">the only write into backlog/</text>
+      </g>
+    </svg>
+    <figcaption>One export run, per selected row. Step 4 is the single place a write primitive touches <code>backlog/</code>; step 5 records <code>exported_backlog_task</code> on the DB row and appends one <code>export</code> <code>PlanSweepEvent</code> under a namespaced <code>export-&lt;timestamp&gt;</code> run id.</figcaption>
+  </figure>
+
+  <h3>What each step does</h3>
+  <ol>
+    <li><strong>select</strong> — <code>select_exportable_tasks</code> (pure, in <code>src/export/select_exportable_tasks.ts</code>) picks the rows. Two modes: <em>explicit</em> (<code>--id</code> names exact rows; unknown ids surface as <code>missing_ids</code>, and the filter flags are ignored) or <em>filtered</em> (match on <code>status</code>, default <code>proposed</code>, plus optional <code>fault_area</code> and <code>priority</code> — the latter mapping to <code>is_classifier_work</code>). Selected rows are sorted by id for deterministic backlog-id assignment.</li>
+    <li><strong>mint id</strong> — <code>next_backlog_task_id</code> recursively scans the <em>whole</em> backlog tree (<code>tasks/</code>, <code>archive/</code>, <code>completed/</code>, <code>drafts/</code>) for the max <code>task-&lt;N&gt;</code> and returns N+1, so a minted id never collides with one retired into the archive.</li>
+    <li><strong>render</strong> — <code>render_backlog_task</code> reuses the <code>PlanTask</code>'s already-rendered <code>title</code>/<code>body</code> (it never re-renders from a strategist plan), splits the body into Description and Acceptance Criteria regions, derives priority (<code>high</code> for core fixes, <code>medium</code> for interim classifier work), and stamps two link fields into frontmatter: <code>plan_dedup_key</code> (the verbatim <code>PlanTask.dedup_key</code> — the idempotency link) and <code>plan_source_task</code> (the source row id, for traceability). The fault area lands as a label alongside <code>plan-export</code>.</li>
+    <li><strong>write</strong> — <code>atomic_write_file</code> writes <code>backlog/tasks/task-&lt;N&gt; - &lt;slug&gt;.md</code>. This is the only place in the pipeline a write primitive appears against <code>backlog/</code>.</li>
+    <li><strong>flip state</strong> — the DB row moves to <code>status: "exported"</code> with <code>exported_backlog_task: "TASK-&lt;N&gt;"</code>, and one <code>export</code> <code>PlanSweepEvent</code> is logged.</li>
+  </ol>
+
+  <h2 id="idempotency">Idempotency: the <code>plan_dedup_key</code> guard lives in selection</h2>
+  <p>Re-running the adapter with identical arguments is a no-op. The guarantee is enforced in <em>selection</em>, not at the write, by three guards applied to every candidate in order:</p>
+  <table>
+    <thead>
+      <tr><th>Guard</th><th>Drops a candidate when…</th><th>Reported as</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>DB status</td><td>the row is already <code>exported</code> (with its <code>exported_backlog_task</code>)</td><td><code>skipped_already_exported</code></td></tr>
+      <tr><td>Live-work fence</td><td>its status is terminal (<code>superseded</code>, <code>resolved</code>) — retired work named by a filter typo or an explicit <code>--id</code>; only <code>proposed</code>/<code>accepted</code> are exportable</td><td><code>skipped_non_exportable</code></td></tr>
+      <tr><td><code>plan_dedup_key</code></td><td>a backlog task already carries the row's <code>dedup_key</code> in frontmatter (read via <code>read_exported_backlog_keys</code>)</td><td><code>skipped_already_exported</code></td></tr>
+    </tbody>
+  </table>
+  <div class="callout">
+    <strong>Crash safety:</strong> the third guard is what makes a re-run safe even if a prior run crashed <em>after</em> writing the backlog file but <em>before</em> flipping the DB row. The <code>dedup_key</code>, not the DB status alone, is the dedup authority. And because two live tasks never share a <code>dedup_key</code> (the plan engine's reconciler augments rather than duplicates), excluding terminal rows means no two selected rows can collide on a key — the duplicate-write path is structurally closed.
+  </div>
+
+  <h2 id="dedup-signal">The stamped key becomes plan's read-only dedup signal</h2>
+  <p>The same <code>plan_dedup_key</code> frontmatter field the adapter stamps is read back — strictly read-only — by <code>src/store/backlog_dedup.ts</code> during the plan engine's reconcile pass. <code>read_exported_backlog_keys</code> maps every promoted backlog task's <code>plan_dedup_key → id</code> from <code>*.md</code> frontmatter (a file counts only when it carries <em>both</em> <code>id</code> and <code>plan_dedup_key</code>; missing directories, non-markdown entries, and frontmatter-less files are skipped, never thrown — a sparse backlog is the normal early state).</p>
+  <p>The match is a <strong>structured frontmatter link, not a fuzzy text scan</strong>: when reconcile sees a re-derived task whose <code>dedup_key</code> a backlog task already carries, it recognizes work the human has already promoted and stops re-proposing it (the DB row moves to <code>exported</code>). Hand-authored backlog tasks carry no <code>plan_dedup_key</code> and are simply invisible to the engine — it has no DB lineage for them. The module uses <code>readdir</code> + <code>readFile</code> only: no write primitive, no backlog tool.</p>
+
+  <h2 id="commit-scope">Commit scope: <code>fix(&lt;task_id&gt;)</code> ties the fix back</h2>
+  <p>Once the human lands the actual core fix, the commit message is the audit trail. Commits use Conventional Commits with one extension: a commit that advances or resolves a backlog task uses <strong>the task id alone as its scope</strong> (no <code>TASK-</code> prefix):</p>
+  <pre><code>fix(343): handle null receiver
+feat(190.16.42): implement signal X
+feat(190.17.12-14): batched retarget   # range; expands to .12, .13, .14</code></pre>
+  <p>Multiple unrelated tasks in one commit (rare) use body trailers — <code>Fixes:</code>, <code>Implements</code>, <code>Closes:</code> — each naming a task that must exist in <code>backlog/tasks/</code>. A <code>commit-msg</code> hook validates task-shaped scopes (matching <code>^\d+(?:\.\d+)*(?:-\d+)?$</code>) against <code>backlog/tasks/</code>; named-subsystem and unscoped commits pass through unvalidated, and CI re-validates the latest commit on every PR.</p>
+  <p>This parseable scope is what makes loop closure mechanical to <em>verify</em> while remaining human to <em>perform</em>: a classifier registry rule carries a <code>backlog_task</code> link, and when <code>git log</code> in the target repo shows a task-scoped commit matching that link, the human flips the rule's status to <code>fixed</code>. The <code>KnownIssue</code> schema stores no commit hash — the <code>backlog_task</code> link plus the git log are the entire audit trail. A <code>fixed</code> rule whose symbol resurfaces in a later run is surfaced for human review; there is no automatic re-flip back to <code>wip</code>.</p>
+
+  <h2 id="full-cycle">The full cross-run cycle</h2>
+  <figure>
+    <svg viewBox="0 0 932 478" role="img" aria-label="End-to-end cross-run cycle from triage through plan, prioritize, export, fix commit, and registry flip back to the next triage run">
+      <defs>
+        <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#9aa3b2"/>
+        </marker>
+        <marker id="arr2g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#7ee787"/>
+        </marker>
+      </defs>
+      <g font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+        <!-- Run N lane -->
+        <text x="16" y="30" fill="#9aa3b2" font-size="12" font-weight="600" letter-spacing="1">RUN N — AUTONOMOUS</text>
+        <rect x="16" y="44" width="200" height="64" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
+        <text x="116" y="70" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">triage (sense)</text>
+        <text x="116" y="90" text-anchor="middle" fill="#9aa3b2" font-size="11.5">publishes novel_issues[]</text>
+
+        <rect x="276" y="44" width="200" height="64" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
+        <text x="376" y="70" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">plan (classify)</text>
+        <text x="376" y="90" text-anchor="middle" fill="#9aa3b2" font-size="11.5">PlanTask rows, dedup_key</text>
+
+        <line x1="216" y1="76" x2="274" y2="76" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+        <!-- Human lane -->
+        <text x="16" y="160" fill="#6ea8fe" font-size="12" font-weight="600" letter-spacing="1">HUMAN — DELIBERATE</text>
+        <rect x="16" y="174" width="200" height="64" rx="10" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5"/>
+        <text x="116" y="200" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">prioritize (--dry-run)</text>
+        <text x="116" y="220" text-anchor="middle" fill="#9aa3b2" font-size="11.5">weigh fault_area / effort</text>
+
+        <rect x="276" y="174" width="200" height="64" rx="10" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5"/>
+        <text x="376" y="200" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">export_to_backlog</text>
+        <text x="376" y="220" text-anchor="middle" fill="#9aa3b2" font-size="11.5">stamps plan_dedup_key</text>
+
+        <rect x="536" y="174" width="200" height="64" rx="10" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5"/>
+        <text x="636" y="200" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">land the fix</text>
+        <text x="636" y="220" text-anchor="middle" fill="#9aa3b2" font-size="11.5">fix(&lt;task_id&gt;): …</text>
+
+        <rect x="732" y="44" width="190" height="64" rx="10" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5"/>
+        <text x="827" y="70" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">registry flip</text>
+        <text x="827" y="90" text-anchor="middle" fill="#9aa3b2" font-size="11.5">reconcile-registry</text>
+
+        <!-- arrows: plan -> prioritize -->
+        <path d="M 376 108 L 376 140 L 116 140 L 116 172" fill="none" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <line x1="216" y1="206" x2="274" y2="206" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <line x1="476" y1="206" x2="534" y2="206" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <path d="M 736 206 L 827 206 L 827 110" fill="none" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <text x="770" y="198" fill="#9aa3b2" font-size="11">git log scope</text>
+
+        <!-- Durable surfaces band -->
+        <text x="16" y="300" fill="#7ee787" font-size="12" font-weight="600" letter-spacing="1">DURABLE SURFACES — WRITTEN IN RUN N, READ IN RUN N+1</text>
+        <rect x="16" y="314" width="280" height="58" rx="10" fill="#11141a" stroke="#7ee787" stroke-width="1.5"/>
+        <text x="156" y="338" text-anchor="middle" fill="#e6e9ef" font-size="13">backlog/tasks/*.md</text>
+        <text x="156" y="356" text-anchor="middle" fill="#9aa3b2" font-size="11.5">plan_dedup_key frontmatter</text>
+
+        <rect x="326" y="314" width="280" height="58" rx="10" fill="#11141a" stroke="#7ee787" stroke-width="1.5"/>
+        <text x="466" y="338" text-anchor="middle" fill="#e6e9ef" font-size="13">classifier registry</text>
+        <text x="466" y="356" text-anchor="middle" fill="#9aa3b2" font-size="11.5">wip / permanent / fixed rules</text>
+
+        <rect x="636" y="314" width="286" height="58" rx="10" fill="#11141a" stroke="#7ee787" stroke-width="1.5"/>
+        <text x="779" y="338" text-anchor="middle" fill="#e6e9ef" font-size="13">git log</text>
+        <text x="779" y="356" text-anchor="middle" fill="#9aa3b2" font-size="11.5">task-scoped fix commits</text>
+
+        <!-- writes into surfaces -->
+        <path d="M 376 238 L 376 290 L 156 290 L 156 312" fill="none" stroke="#7ee787" stroke-width="1.5" marker-end="url(#arr2g)"/>
+        <path d="M 636 238 L 636 290 L 779 290 L 779 312" fill="none" stroke="#7ee787" stroke-width="1.5" marker-end="url(#arr2g)"/>
+        <path d="M 827 108 L 827 140 L 600 140 L 600 290 L 466 290 L 466 312" fill="none" stroke="#7ee787" stroke-width="1.5" marker-end="url(#arr2g)"/>
+
+        <!-- Run N+1 lane -->
+        <rect x="16" y="406" width="906" height="56" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
+        <text x="32" y="429" fill="#9aa3b2" font-size="12" font-weight="600" letter-spacing="1">RUN N+1</text>
+        <text x="469" y="430" text-anchor="middle" fill="#e6e9ef" font-size="13">triage's filter suppresses the healed class · plan's reconcile reads plan_dedup_key and stops re-proposing promoted work</text>
+        <text x="469" y="450" text-anchor="middle" fill="#9aa3b2" font-size="12">the same false positive does not come back</text>
+
+        <line x1="156" y1="372" x2="156" y2="404" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <line x1="466" y1="372" x2="466" y2="404" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <line x1="779" y1="372" x2="779" y2="404" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+      </g>
+    </svg>
+    <figcaption>One revolution of the loop. The autonomous lane senses and classifies; the human lane prioritizes, exports, fixes, and flips; the green surfaces persist between runs and are what the next run reads.</figcaption>
+  </figure>
+
+  <h3>Traced step by step</h3>
+  <ol>
+    <li><strong>Run N, triage:</strong> an investigator confirms a false positive (<code>fp-novel</code>); finalize publishes it in <code>triage_results/&lt;run-id&gt;.json</code> as a <code>novel_issues[]</code> row.</li>
+    <li><strong>Run N, plan:</strong> the sweep groups the issue into its <code>AriadneFaultArea</code> bucket, the strategist proposes a fix, and reconcile mints (or augments) a <code>PlanTask</code> keyed by its content-addressed <code>dedup_key</code> in <code>~/.ariadne/plan/tasks/</code>.</li>
+    <li><strong>Human, prioritize:</strong> a <code>--dry-run</code> previews the proposed rows; the human weighs <code>fault_area</code> and <code>core_fix_effort</code>, narrows the selection, and drops <code>--dry-run</code>.</li>
+    <li><strong>Human, export:</strong> the adapter mints <code>TASK-&lt;N&gt;</code>, writes <code>backlog/tasks/task-&lt;N&gt; - &lt;slug&gt;.md</code> with <code>plan_dedup_key</code> stamped, and flips the DB row to <code>exported</code>.</li>
+    <li><strong>Human, fix:</strong> the engineering work lands in core with a <code>fix(&lt;N&gt;):</code> commit scope. Any interim classifier rule authored for this class sits in the registry as <code>wip</code> with <code>backlog_task: TASK-&lt;N&gt;</code>.</li>
+    <li><strong>Human, flip:</strong> seeing the task-scoped commit in <code>git log</code> match the rule's <code>backlog_task</code>, the human flips the registry row <code>wip → fixed</code> using <a href="reconcile-registry.html">reconcile-registry</a> (via <code>atomic_update_registry</code>).</li>
+    <li><strong>Run N+1:</strong> triage's filter reflects the registry's current state; plan's reconcile reads the backlog's <code>plan_dedup_key</code> map and recognizes the work as already promoted, so it is not re-proposed. The defect class is healed end to end — and if a <code>fixed</code> rule's symbol ever resurfaces, it is flagged for human review rather than silently re-opened.</li>
+  </ol>
+</main>
+</body>
+</html>

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Self-Healing Pipeline — Ariadne</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --panel-2: #1d212b; --ink: #e6e9ef; --muted: #9aa3b2;
+    --accent: #6ea8fe; --accent-2: #7ee787; --warn: #ff7b72; --border: #2a2f3a; --code-bg: #11141a;
+    --radius: 10px; --maxw: 980px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .doc-nav { position: sticky; top: 0; z-index: 10; background: rgba(15,17,21,.92);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 10px 20px;
+    display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+  .doc-nav .brand { font-weight: 700; color: var(--ink); margin-right: 10px; letter-spacing: .2px; }
+  .doc-nav a { color: var(--muted); text-decoration: none; font-size: 14px; padding: 4px 8px;
+    border-radius: 6px; white-space: nowrap; }
+  .doc-nav a:hover { color: var(--ink); background: var(--panel-2); }
+  .doc-nav a[aria-current="page"] { color: var(--bg); background: var(--accent); font-weight: 600; }
+  main { margin: 0 5%; padding: 36px 24px 96px; }
+  h1 { font-size: 30px; line-height: 1.25; margin: 8px 0 6px; }
+  h2 { font-size: 22px; margin: 38px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 17px; margin: 26px 0 8px; color: var(--accent); }
+  p, li { color: var(--ink); }
+  a { color: var(--accent); }
+  .lede { color: var(--muted); font-size: 18px; margin: 0 0 8px; }
+  code { background: var(--code-bg); border: 1px solid var(--border); border-radius: 5px;
+    padding: 1px 5px; font: 13.5px/1.5 "SF Mono", Menlo, Consolas, monospace; color: #d6deeb; }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 16px; overflow: auto; }
+  pre code { background: none; border: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--panel-2); }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; margin: 16px 0; }
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--panel-2); color: var(--muted); }
+  .callout { border-left: 3px solid var(--accent); background: var(--panel-2);
+    padding: 10px 14px; border-radius: 0 var(--radius) var(--radius) 0; margin: 16px 0; }
+  figure { margin: 18px 0; }
+  figure svg { max-width: 100%; height: auto; display: block; }
+  figcaption { color: var(--muted); font-size: 13px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<nav class="doc-nav">
+    <span class="brand">Self-Healing Pipeline</span>
+    <a href="index.html" aria-current="page">Home</a>
+    <a href="overview-loop.html">The Loop</a>
+    <a href="triage-sense.html">Triage (Sense)</a>
+    <a href="triage-investigator.html">Investigator</a>
+    <a href="plan-classify.html">Plan (Classify)</a>
+    <a href="fault-area-taxonomy.html">Fault Areas</a>
+    <a href="registry-lifecycle.html">Registry</a>
+    <a href="reconcile-registry.html">Reconcile (Registry)</a>
+    <a href="atomic-write-contract.html">Write Boundaries</a>
+    <a href="actuate-and-backlog.html">Actuate (Human)</a>
+    <a href="wire-contracts.html">Schemas &amp; Stores</a>
+  </nav>
+<main>
+
+<h1>The Self-Healing Pipeline</h1>
+<p class="lede">Every false positive in Ariadne's entry-point detection is an Ariadne defect. This pipeline senses those defects (triage), classifies them into engineering work (plan), lets a human actuate the fix — and re-reads what it learned on the next run, so the same false positive never recurs.</p>
+
+<p>
+  <span class="tag">sense — triage</span>
+  <span class="tag">classify — plan</span>
+  <span class="tag">actuate — human</span>
+  <span class="tag">loop closure — durable stores</span>
+</p>
+
+<h2 id="architecture">Architecture at a glance</h2>
+
+<figure>
+<svg viewBox="0 0 1540 770" role="img" aria-label="Self-healing pipeline architecture: nine pipeline stages across three swimlanes (sense, classify, actuate) over a row of persistent stores, with dashed loop-closure arrows feeding stores back into the next run">
+  <defs>
+    <marker id="arr-mut" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9aa3b2"/>
+    </marker>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6ea8fe"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7ee787"/>
+    </marker>
+    <marker id="arr-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#e3b341"/>
+    </marker>
+  </defs>
+
+  <!-- ===== swimlane bands ===== -->
+  <rect x="12"   y="58" width="664" height="180" rx="8" fill="#171a21" stroke="#2a2f3a"/>
+  <rect x="684"  y="58" width="496" height="180" rx="8" fill="#171a21" stroke="#2a2f3a"/>
+  <rect x="1188" y="58" width="340" height="180" rx="8" fill="#1d1a14" stroke="#3a3424"/>
+  <text x="24"   y="82" font-size="13" font-weight="700" letter-spacing="2" fill="#6ea8fe">SENSE — triage</text>
+  <text x="696"  y="82" font-size="13" font-weight="700" letter-spacing="2" fill="#6ea8fe">CLASSIFY — plan</text>
+  <text x="1200" y="82" font-size="13" font-weight="700" letter-spacing="2" fill="#e3b341">ACTUATE — human</text>
+
+  <!-- ===== stage boxes (top row) ===== -->
+  <!-- 1: core detect -->
+  <rect x="20" y="110" width="144" height="104" rx="8" fill="#1d212b" stroke="#3a4152" stroke-width="1.5"/>
+  <text x="92" y="134" text-anchor="middle" font-size="12.5" font-weight="600" fill="#e6e9ef">@ariadnejs/core</text>
+  <text x="92" y="152" text-anchor="middle" font-size="12.5" font-weight="600" fill="#e6e9ef">detect</text>
+  <text x="92" y="176" text-anchor="middle" font-size="11" fill="#9aa3b2">raw entry-point</text>
+  <text x="92" y="191" text-anchor="middle" font-size="11" fill="#9aa3b2">candidates + diagnostics</text>
+
+  <!-- 2: Prepare -->
+  <rect x="188" y="110" width="144" height="104" rx="8" fill="#1d212b" stroke="#3a4152" stroke-width="1.5"/>
+  <text x="260" y="134" text-anchor="middle" font-size="12.5" font-weight="600" fill="#e6e9ef">triage Phase 2:</text>
+  <text x="260" y="152" text-anchor="middle" font-size="12.5" font-weight="600" fill="#e6e9ef">Prepare</text>
+  <text x="260" y="176" text-anchor="middle" font-size="11" fill="#9aa3b2">auto / TP-cache /</text>
+  <text x="260" y="191" text-anchor="middle" font-size="11" fill="#9aa3b2">residual buckets</text>
+
+  <!-- 3: investigator pool (stacked, LLM) -->
+  <rect x="364" y="102" width="144" height="104" rx="8" fill="#13203a" stroke="#3a5a8f"/>
+  <rect x="360" y="106" width="144" height="104" rx="8" fill="#13203a" stroke="#3a5a8f"/>
+  <rect x="356" y="110" width="144" height="104" rx="8" fill="#16263f" stroke="#6ea8fe" stroke-width="1.5"/>
+  <text x="428" y="134" text-anchor="middle" font-size="12.5" font-weight="600" fill="#e6e9ef">triage-investigator</text>
+  <text x="428" y="152" text-anchor="middle" font-size="12.5" font-weight="600" fill="#6ea8fe">pool (Sonnet ×N)</text>
+  <text x="428" y="176" text-anchor="middle" font-size="11" fill="#9aa3b2">per-entry TriageVerdicts:</text>
+  <text x="428" y="191" text-anchor="middle" font-size="10" fill="#9aa3b2">tp / fp-novel / fp-cls-regr / uncertain</text>
+
+  <!-- 4: Finalize -->
+  <rect x="524" y="110" width="144" height="104" rx="8" fill="#1d212b" stroke="#3a4152" stroke-width="1.5"/>
+  <text x="596" y="134" text-anchor="middle" font-size="12.5" font-weight="600" fill="#e6e9ef">triage Phase 4:</text>
+  <text x="596" y="152" text-anchor="middle" font-size="12.5" font-weight="600" fill="#e6e9ef">Finalize</text>
+  <text x="596" y="176" text-anchor="middle" font-size="11" fill="#9aa3b2">fold verdicts into the</text>
+  <text x="596" y="191" text-anchor="middle" font-size="11" fill="#9aa3b2">published artifact</text>
+
+  <!-- 5: Group -->
+  <rect x="692" y="110" width="144" height="104" rx="8" fill="#1d212b" stroke="#3a4152" stroke-width="1.5"/>
+  <text x="764" y="134" text-anchor="middle" font-size="12.5" font-weight="600" fill="#e6e9ef">plan Pass A:</text>
+  <text x="764" y="152" text-anchor="middle" font-size="12.5" font-weight="600" fill="#e6e9ef">Group</text>
+  <text x="764" y="176" text-anchor="middle" font-size="11" fill="#9aa3b2">bucket novel_issues by</text>
+  <text x="764" y="191" text-anchor="middle" font-size="11" fill="#9aa3b2">AriadneFaultArea</text>
+
+  <!-- 6: strategist pool (stacked, LLM) -->
+  <rect x="868" y="102" width="144" height="104" rx="8" fill="#13203a" stroke="#3a5a8f"/>
+  <rect x="864" y="106" width="144" height="104" rx="8" fill="#13203a" stroke="#3a5a8f"/>
+  <rect x="860" y="110" width="144" height="104" rx="8" fill="#16263f" stroke="#6ea8fe" stroke-width="1.5"/>
+  <text x="932" y="134" text-anchor="middle" font-size="12.5" font-weight="600" fill="#e6e9ef">plan-strategist</text>
+  <text x="932" y="152" text-anchor="middle" font-size="12.5" font-weight="600" fill="#6ea8fe">pool (Opus, 1/bucket)</text>
+  <text x="932" y="176" text-anchor="middle" font-size="11" fill="#9aa3b2">validated</text>
+  <text x="932" y="191" text-anchor="middle" font-size="11" fill="#9aa3b2">StrategistPlan trees</text>
+
+  <!-- 7: Reconcile -->
+  <rect x="1028" y="110" width="144" height="104" rx="8" fill="#1d212b" stroke="#3a4152" stroke-width="1.5"/>
+  <text x="1100" y="134" text-anchor="middle" font-size="12.5" font-weight="600" fill="#e6e9ef">plan Pass C:</text>
+  <text x="1100" y="152" text-anchor="middle" font-size="12.5" font-weight="600" fill="#e6e9ef">Reconcile</text>
+  <text x="1100" y="176" text-anchor="middle" font-size="11" fill="#9aa3b2">augment-or-create</text>
+  <text x="1100" y="191" text-anchor="middle" font-size="11" fill="#9aa3b2">PlanTask rows</text>
+
+  <!-- 8: prioritize + export (human) -->
+  <rect x="1196" y="110" width="144" height="104" rx="8" fill="#2a2414" stroke="#e3b341" stroke-width="1.5"/>
+  <text x="1268" y="134" text-anchor="middle" font-size="12.5" font-weight="600" fill="#e6e9ef">prioritize +</text>
+  <text x="1268" y="152" text-anchor="middle" font-size="12" font-weight="600" fill="#e6e9ef">export_to_backlog</text>
+  <text x="1268" y="176" text-anchor="middle" font-size="11" fill="#e3b341">⌾ human</text>
+  <text x="1268" y="191" text-anchor="middle" font-size="11" fill="#9aa3b2">graduate selected tasks</text>
+
+  <!-- 9: land fix + edit registry (human) -->
+  <rect x="1364" y="110" width="144" height="104" rx="8" fill="#2a2414" stroke="#e3b341" stroke-width="1.5"/>
+  <text x="1436" y="134" text-anchor="middle" font-size="12.5" font-weight="600" fill="#e6e9ef">human: land fix</text>
+  <text x="1436" y="152" text-anchor="middle" font-size="12" font-weight="600" fill="#e6e9ef">+ edit registry</text>
+  <text x="1436" y="176" text-anchor="middle" font-size="11" fill="#e3b341">⌾ fix(&lt;task_id&gt;) commit</text>
+  <text x="1436" y="191" text-anchor="middle" font-size="11" fill="#9aa3b2">reconcile-registry · flip rule rows</text>
+
+  <!-- ===== sequence arrows 1→9 ===== -->
+  <line x1="164" y1="162" x2="186" y2="162" stroke="#9aa3b2" stroke-width="1.6" marker-end="url(#arr-mut)"/>
+  <line x1="332" y1="162" x2="354" y2="162" stroke="#9aa3b2" stroke-width="1.6" marker-end="url(#arr-mut)"/>
+  <line x1="500" y1="162" x2="522" y2="162" stroke="#9aa3b2" stroke-width="1.6" marker-end="url(#arr-mut)"/>
+  <line x1="668" y1="162" x2="690" y2="162" stroke="#9aa3b2" stroke-width="1.6" marker-end="url(#arr-mut)"/>
+  <line x1="836" y1="162" x2="858" y2="162" stroke="#9aa3b2" stroke-width="1.6" marker-end="url(#arr-mut)"/>
+  <line x1="1004" y1="162" x2="1026" y2="162" stroke="#9aa3b2" stroke-width="1.6" marker-end="url(#arr-mut)"/>
+  <line x1="1172" y1="162" x2="1194" y2="162" stroke="#9aa3b2" stroke-width="1.6" marker-end="url(#arr-mut)"/>
+  <line x1="1340" y1="162" x2="1362" y2="162" stroke="#9aa3b2" stroke-width="1.6" marker-end="url(#arr-mut)"/>
+
+  <!-- ===== WRITE edges (solid, stage → store) ===== -->
+  <!-- 4 → triage_results -->
+  <path d="M596 214 V500 H425 V550" fill="none" stroke="#6ea8fe" stroke-width="1.8" marker-end="url(#arr-blue)"/>
+  <!-- 7 → plan task-DB -->
+  <path d="M1100 214 V465 H735 V550" fill="none" stroke="#6ea8fe" stroke-width="1.8" marker-end="url(#arr-blue)"/>
+  <!-- 8 → backlog -->
+  <path d="M1268 214 V440 H1035 V550" fill="none" stroke="#e3b341" stroke-width="1.8" marker-end="url(#arr-amber)"/>
+  <!-- 9 → git log -->
+  <path d="M1480 214 V415 H1360 V550" fill="none" stroke="#e3b341" stroke-width="1.8" marker-end="url(#arr-amber)"/>
+  <!-- 9 → registry (long human edge) -->
+  <path d="M1404 214 V530 H200 V550" fill="none" stroke="#e3b341" stroke-width="1.8" marker-end="url(#arr-amber)"/>
+  <text x="700" y="524" font-size="11" fill="#e3b341">human edits only — every transition via atomic_update_registry</text>
+
+  <!-- ===== current-run read (solid seam: triage_results → Group) ===== -->
+  <path d="M480 548 C 480 400 690 300 752 222" fill="none" stroke="#6ea8fe" stroke-width="1.8" marker-end="url(#arr-blue)"/>
+  <text x="555" y="330" font-size="11" fill="#6ea8fe">current run — the one</text>
+  <text x="555" y="345" font-size="11" fill="#6ea8fe">published cross-skill seam</text>
+
+  <!-- ===== LOOP-CLOSURE dashed feedback edges (NEXT RUN) ===== -->
+  <!-- registry → Prepare -->
+  <path d="M100 548 C 100 380 185 290 238 222" fill="none" stroke="#7ee787" stroke-width="2.2" stroke-dasharray="7 5" marker-end="url(#arr-green)"/>
+  <text x="28" y="290" font-size="11.5" font-weight="700" fill="#7ee787">NEXT RUN — the primary heal:</text>
+  <text x="28" y="305" font-size="11" fill="#7ee787">wip/permanent rules suppress</text>
+  <text x="28" y="320" font-size="11" fill="#7ee787">the FP class (read as filter)</text>
+
+  <!-- triage_results → Prepare (TP cache) -->
+  <path d="M350 548 C 350 410 310 300 296 222" fill="none" stroke="#7ee787" stroke-width="2.2" stroke-dasharray="7 5" marker-end="url(#arr-green)"/>
+  <text x="280" y="400" font-size="11.5" font-weight="700" fill="#7ee787">NEXT RUN — TP-cache</text>
+  <text x="280" y="415" font-size="11" fill="#7ee787">(same commit): reuse</text>
+  <text x="280" y="430" font-size="11" fill="#7ee787">confirmed true positives</text>
+
+  <!-- task-DB → Group and Reconcile -->
+  <path d="M660 548 C 660 420 760 320 788 222" fill="none" stroke="#7ee787" stroke-width="2.2" stroke-dasharray="7 5" marker-end="url(#arr-green)"/>
+  <path d="M800 548 C 860 430 1020 320 1058 222" fill="none" stroke="#7ee787" stroke-width="2.2" stroke-dasharray="7 5" marker-end="url(#arr-green)"/>
+  <text x="815" y="490" font-size="11.5" font-weight="700" fill="#7ee787">NEXT SWEEP:</text>
+  <text x="815" y="505" font-size="11" fill="#7ee787">dedup (augment-vs-create) + override re-route</text>
+
+  <!-- backlog → Reconcile (read-only dedup) -->
+  <path d="M1090 548 C 1090 430 1120 320 1132 222" fill="none" stroke="#9aa3b2" stroke-width="1.6" stroke-dasharray="4 5" marker-end="url(#arr-mut)"/>
+  <text x="1108" y="390" font-size="11" fill="#9aa3b2">plan_dedup_key:</text>
+  <text x="1108" y="405" font-size="11" fill="#9aa3b2">stop re-proposing</text>
+  <text x="1108" y="420" font-size="11" fill="#9aa3b2">promoted work</text>
+
+  <!-- git log → human (audit trail) -->
+  <path d="M1400 548 C 1410 430 1440 320 1448 222" fill="none" stroke="#9aa3b2" stroke-width="1.6" stroke-dasharray="4 5" marker-end="url(#arr-mut)"/>
+  <text x="1320" y="465" font-size="11" fill="#9aa3b2">scope matches backlog_task</text>
+  <text x="1320" y="480" font-size="11" fill="#9aa3b2">→ wip → fixed audit trail</text>
+
+  <!-- ===== BOTTOM ROW: persistent stores (cylinders) ===== -->
+  <!-- S1 registry -->
+  <g>
+    <path d="M30 570 v54 a115 11 0 0 0 230 0 v-54" fill="#171a21" stroke="#9aa3b2" stroke-width="1.4"/>
+    <ellipse cx="145" cy="570" rx="115" ry="11" fill="#1d212b" stroke="#9aa3b2" stroke-width="1.4"/>
+    <text x="145" y="600" text-anchor="middle" font-size="12" font-weight="600" fill="#e6e9ef">registry.json</text>
+    <text x="145" y="616" text-anchor="middle" font-size="11" fill="#9aa3b2">classifier rules</text>
+    <text x="145" y="631" text-anchor="middle" font-size="11" fill="#e3b341">sole writer: human</text>
+  </g>
+  <!-- S2 triage_results -->
+  <g>
+    <path d="M300 570 v54 a125 11 0 0 0 250 0 v-54" fill="#171a21" stroke="#9aa3b2" stroke-width="1.4"/>
+    <ellipse cx="425" cy="570" rx="125" ry="11" fill="#1d212b" stroke="#9aa3b2" stroke-width="1.4"/>
+    <text x="425" y="600" text-anchor="middle" font-size="12" font-weight="600" fill="#e6e9ef">triage_results/&lt;run-id&gt;.json</text>
+    <text x="425" y="616" text-anchor="middle" font-size="11" fill="#9aa3b2">schema v5</text>
+    <text x="425" y="631" text-anchor="middle" font-size="11" fill="#6ea8fe">writer: Finalize</text>
+  </g>
+  <!-- S3 plan task-DB -->
+  <g>
+    <path d="M590 570 v54 a145 11 0 0 0 290 0 v-54" fill="#171a21" stroke="#9aa3b2" stroke-width="1.4"/>
+    <ellipse cx="735" cy="570" rx="145" ry="11" fill="#1d212b" stroke="#9aa3b2" stroke-width="1.4"/>
+    <text x="735" y="600" text-anchor="middle" font-size="12" font-weight="600" fill="#e6e9ef">~/.ariadne/plan task-DB</text>
+    <text x="735" y="616" text-anchor="middle" font-size="11" fill="#9aa3b2">+ sweeps log + membership_overrides.json</text>
+    <text x="735" y="631" text-anchor="middle" font-size="11" fill="#6ea8fe">writer: Reconcile</text>
+  </g>
+  <!-- S4 backlog -->
+  <g>
+    <path d="M920 570 v54 a115 11 0 0 0 230 0 v-54" fill="#171a21" stroke="#9aa3b2" stroke-width="1.4"/>
+    <ellipse cx="1035" cy="570" rx="115" ry="11" fill="#1d212b" stroke="#9aa3b2" stroke-width="1.4"/>
+    <text x="1035" y="600" text-anchor="middle" font-size="12" font-weight="600" fill="#e6e9ef">backlog/tasks/*.md</text>
+    <text x="1035" y="616" text-anchor="middle" font-size="11" fill="#9aa3b2">stamped with plan_dedup_key</text>
+    <text x="1035" y="631" text-anchor="middle" font-size="11" fill="#e3b341">writer: export adapter</text>
+  </g>
+  <!-- S5 git log -->
+  <g>
+    <path d="M1190 570 v54 a115 11 0 0 0 230 0 v-54" fill="#171a21" stroke="#9aa3b2" stroke-width="1.4"/>
+    <ellipse cx="1305" cy="570" rx="115" ry="11" fill="#1d212b" stroke="#9aa3b2" stroke-width="1.4"/>
+    <text x="1305" y="600" text-anchor="middle" font-size="12" font-weight="600" fill="#e6e9ef">target repo git log</text>
+    <text x="1305" y="616" text-anchor="middle" font-size="11" fill="#9aa3b2">fix(&lt;task_id&gt;) scopes</text>
+    <text x="1305" y="631" text-anchor="middle" font-size="11" fill="#e3b341">writer: human</text>
+  </g>
+
+  <!-- ===== annotation: permanent slice → core ===== -->
+  <line x1="145" y1="646" x2="145" y2="676" stroke="#9aa3b2" stroke-width="1.2" marker-end="url(#arr-mut)"/>
+  <rect x="30" y="680" width="300" height="42" rx="8" fill="#1d212b" stroke="#2a2f3a"/>
+  <text x="180" y="698" text-anchor="middle" font-size="11.5" fill="#e6e9ef">permanent slice → @ariadnejs/core</text>
+  <text x="180" y="713" text-anchor="middle" font-size="11" fill="#9aa3b2">(bundled — library ships without the skill)</text>
+
+  <!-- ===== legend ===== -->
+  <g font-size="11.5" fill="#9aa3b2">
+    <line x1="420" y1="690" x2="460" y2="690" stroke="#6ea8fe" stroke-width="1.8" marker-end="url(#arr-blue)"/>
+    <text x="468" y="694">write / read, this run</text>
+    <line x1="640" y1="690" x2="680" y2="690" stroke="#7ee787" stroke-width="2.2" stroke-dasharray="7 5" marker-end="url(#arr-green)"/>
+    <text x="688" y="694" fill="#7ee787">loop closure — read on the NEXT run / sweep</text>
+    <line x1="1010" y1="690" x2="1050" y2="690" stroke="#9aa3b2" stroke-width="1.6" stroke-dasharray="4 5" marker-end="url(#arr-mut)"/>
+    <text x="1058" y="694">read-only dedup / audit signal</text>
+    <rect x="420" y="712" width="26" height="16" rx="4" fill="#16263f" stroke="#6ea8fe"/>
+    <text x="454" y="725">LLM agent pool</text>
+    <rect x="580" y="712" width="26" height="16" rx="4" fill="#2a2414" stroke="#e3b341"/>
+    <text x="614" y="725" fill="#e3b341">human actuator</text>
+    <ellipse cx="753" cy="720" rx="14" ry="6" fill="#1d212b" stroke="#9aa3b2"/>
+    <text x="778" y="725">persistent store</text>
+  </g>
+</svg>
+<figcaption>The full loop: nine stages flow left to right through the sense / classify / actuate swimlanes, each writing exactly one durable store. The three green dashed arrows are the self-healing edges — what one run writes, the next run reads back as a filter (registry), a cache (triage_results), and a dedup signal (plan task-DB).</figcaption>
+</figure>
+
+<h2 id="how-it-fits">How it all fits together</h2>
+
+<p>Ariadne's core job is to detect call graphs and find a codebase's entry points. Doing that well means correctly distinguishing genuinely-unreachable code from code whose callers the resolver failed to connect — and every such failure is a defect in Ariadne itself. The pipeline is the operational loop around the engine: it surfaces those defects, turns them into actionable engineering work, fences the actuation behind a human, and re-reads what it learned on the next run.</p>
+
+<h3>Sense — triage</h3>
+<p>Triage runs as a self-contained per-commit job. It calls <code>@ariadnejs/core</code> to detect entry-point candidates, then partitions every candidate into three buckets: entries an existing classifier rule already explains (auto-classified, never investigated), entries a prior same-commit run already confirmed as true dead code (the TP cache), and a residual pool. A pool of <code>triage-investigator</code> sub-agents (Sonnet) investigates the residual, each emitting one self-contained <code>TriageVerdict</code> — <code>tp</code>, <code>fp-novel</code>, <code>fp-classifier-regression</code>, or <code>uncertain</code>. Finalize folds every verdict into one published, schema-v5 <code>triage_results/&lt;run-id&gt;.json</code> — the single cross-skill seam. Triage reads the registry as a filter but never writes it.</p>
+
+<h3>Classify — plan</h3>
+<p>Plan is an offline, planning-only engine over the published <code>novel_issues[]</code> rows. Group flattens each novel issue into evidence and buckets it by <code>AriadneFaultArea</code> — a folder-anchored, recomputed-on-read taxonomy of which part of core is at fault — consulting the membership-override store for re-routes. Strategize runs one <code>plan-strategist</code> (Opus) per bucket, which reviews every member's membership and emits a validated <code>StrategistPlan</code> tree with a <code>core_fix_effort</code> estimate. Reconcile flattens accepted plans into <code>PlanTask</code> rows keyed by a content-addressed <code>dedup_key</code>, augmenting rather than duplicating, retiring orphans whose bug appears fixed, and recording mis-route corrections. Plan writes only its own task-DB under <code>~/.ariadne/plan/</code>.</p>
+
+<h3>Actuate — human</h3>
+<p>The autonomous sweep proposes; only a human promotes. The <code>prioritize</code> skill is the decision surface; the <code>export_to_backlog.ts</code> adapter — the sole writer of <code>backlog/</code> — graduates selected tasks into <code>backlog/tasks/&lt;id&gt;.md</code>, stamping each with its <code>plan_dedup_key</code>. The human likewise owns every registry transition: authoring a <code>wip</code> rule, flipping it to <code>permanent</code> (regenerating the bundled core slice), or to <code>fixed</code> once a landing commit's <code>fix(&lt;task_id&gt;)</code> scope matches the rule's <code>backlog_task</code>.</p>
+
+<h3>Loop closure</h3>
+<p>Three surfaces are written in one run and re-read on the next. The <strong>registry → triage</strong> heal: a <code>wip</code>/<code>permanent</code> rule suppresses that false-positive class on the next run's filter. The <strong>triage_results → next triage</strong> TP cache: confirmed true positives at the same commit are reused instead of re-investigated. The <strong>plan task-DB + override store → next sweep</strong>: <code>dedup_key</code> lets the sweep augment instead of duplicate, and recorded mis-routes re-route members correctly. The backlog's <code>plan_dedup_key</code> frontmatter stops plan re-proposing promoted work; the git log ties each landed fix back to the rule it closes.</p>
+
+<div class="callout">
+  <strong>Three invariants hold the system together.</strong>
+  <ul>
+    <li><strong>Single-writer ownership</strong> — each shared surface has exactly one writer: the human owns the registry, Reconcile owns the task-DB, the export adapter owns the backlog. Structurally enforced; see <a href="atomic-write-contract.html">Write Boundaries</a>.</li>
+    <li><strong>Strict, versioned wire contracts</strong> — triage_results at schema v5, <code>PlanTask</code> at v1, <code>StrategistPlan</code> at v1; each parser rejects on mismatch, with no migration shims. See <a href="wire-contracts.html">Schemas &amp; Stores</a>.</li>
+    <li><strong>Recompute-on-read</strong> — evidence stores raw fault signals only; <code>AriadneFaultArea</code> is always derived against the current taxonomy, with <code>other</code> as the escape hatch. See <a href="fault-area-taxonomy.html">Fault Areas</a>.</li>
+  </ul>
+</div>
+
+<h2 id="explore">Explore the docs</h2>
+
+<div class="grid">
+  <div class="card">
+    <h3 style="margin-top:0"><a href="overview-loop.html">The Self-Healing Loop</a></h3>
+    <p style="font-size:14px; color:var(--muted)">The orientation page: sense → classify → actuate, the durable surfaces between runs, and the three architectural invariants. Read this first.</p>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0"><a href="triage-sense.html">Triage: Sensing False Positives</a></h3>
+    <p style="font-size:14px; color:var(--muted)">The four-phase run — Detect, Prepare, Loop, Finalize — the three buckets, per-run state under <code>triage_state/</code>, and the same-commit TP-cache.</p>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0"><a href="triage-investigator.html">The Investigator &amp; Verdict Union</a></h3>
+    <p style="font-size:14px; color:var(--muted)">The Sonnet worker pool, the pump's dispatch and crash recovery, and the four-arm <code>TriageVerdict</code> union with its write boundary.</p>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0"><a href="plan-classify.html">Plan: Group, Strategize, Reconcile</a></h3>
+    <p style="font-size:14px; color:var(--muted)">Plan's three passes: fault-area bucketing with override re-routes, one Opus strategist per bucket, and dedup-keyed reconciliation.</p>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0"><a href="fault-area-taxonomy.html">Fault Areas &amp; dedup_key</a></h3>
+    <p style="font-size:14px; color:var(--muted)">The folder-anchored, recomputed-on-read <code>AriadneFaultArea</code> taxonomy, and why <code>dedup_key</code> and <code>member_identity_token</code> are deliberately different keys.</p>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0"><a href="registry-lifecycle.html">The Classifier Registry</a></h3>
+    <p style="font-size:14px; color:var(--muted)">The loop-closing surface: <code>KnownIssue</code> lifecycle (wip → permanent / fixed), drift detection, and the bundled permanent slice in core.</p>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0"><a href="reconcile-registry.html">Reconciling the Registry</a></h3>
+    <p style="font-size:14px; color:var(--muted)">The registry's decision skill over one fenced writer: three signals (landed fixes, drift, promotion), preview &rarr; narrow &rarr; apply, and the two structural guards.</p>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0"><a href="atomic-write-contract.html">Write Boundaries</a></h3>
+    <p style="font-size:14px; color:var(--muted)"><code>atomic_update_registry</code>'s locked read-mutate-write cycle, stale-lock recovery, and the AST-walk test that enforces single-writer ownership.</p>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0"><a href="actuate-and-backlog.html">Actuate: Prioritize &amp; Export</a></h3>
+    <p style="font-size:14px; color:var(--muted)">The human-as-sole-actuator model: prioritize's dry-run decision surface, the sole backlog writer, and the <code>fix(&lt;task_id&gt;)</code> commit that closes the loop.</p>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0"><a href="wire-contracts.html">Schemas &amp; Stores</a></h3>
+    <p style="font-size:14px; color:var(--muted)">The schema reference: <code>TriageResultsFile</code> v5, <code>PlanTask</code> v1, <code>StrategistPlan</code> v1, the run-id grammar, and the writer/reader table for every store.</p>
+  </div>
+</div>
+
+</main>
+</body>
+</html>

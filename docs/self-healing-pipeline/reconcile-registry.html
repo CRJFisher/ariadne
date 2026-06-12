@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Task 190.22.21: reconcile-registry — Tooling the Registry Write Surface</title>
+<title>Reconciling the Classifier Registry — Self-Healing Pipeline</title>
 <style>
   :root {
     --bg: #0f1115; --panel: #171a21; --panel-2: #1d212b; --ink: #e6e9ef; --muted: #9aa3b2;
@@ -43,123 +43,75 @@
     border: 1px solid var(--border); background: var(--panel-2); color: var(--muted); }
   .callout { border-left: 3px solid var(--accent); background: var(--panel-2);
     padding: 10px 14px; border-radius: 0 var(--radius) var(--radius) 0; margin: 16px 0; }
-  .callout.task-banner { border-left-color: var(--accent-2); }
   figure { margin: 18px 0; }
   figure svg { max-width: 100%; height: auto; display: block; }
   figcaption { color: var(--muted); font-size: 13px; margin-top: 6px; }
-  .stat { text-align: center; }
-  .stat .big { font-size: 34px; font-weight: 700; line-height: 1.2; }
-  .stat .big.warn { color: var(--warn); }
-  .stat .big.accent { color: var(--accent); }
-  .stat .big.good { color: var(--accent-2); }
-  .stat .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
 </style>
 </head>
 <body>
 <nav class="doc-nav">
     <span class="brand">Self-Healing Pipeline</span>
-    <a href="../../docs/self-healing-pipeline/index.html">Home</a>
-    <a href="../../docs/self-healing-pipeline/overview-loop.html">The Loop</a>
-    <a href="../../docs/self-healing-pipeline/triage-sense.html">Triage (Sense)</a>
-    <a href="../../docs/self-healing-pipeline/triage-investigator.html">Investigator</a>
-    <a href="../../docs/self-healing-pipeline/plan-classify.html">Plan (Classify)</a>
-    <a href="../../docs/self-healing-pipeline/fault-area-taxonomy.html">Fault Areas</a>
-    <a href="../../docs/self-healing-pipeline/registry-lifecycle.html">Registry</a>
-    <a href="../../docs/self-healing-pipeline/reconcile-registry.html">Reconcile (Registry)</a>
-    <a href="../../docs/self-healing-pipeline/atomic-write-contract.html">Write Boundaries</a>
-    <a href="../../docs/self-healing-pipeline/actuate-and-backlog.html">Actuate (Human)</a>
-    <a href="../../docs/self-healing-pipeline/wire-contracts.html">Schemas &amp; Stores</a>
-    <a href="task-190.22.21 - Tool-the-classifier-registry-write-surface-with-a-reconcile-registry-skill.reconcile-plan.html" aria-current="page">Reconcile (task)</a>
+    <a href="index.html">Home</a>
+    <a href="overview-loop.html">The Loop</a>
+    <a href="triage-sense.html">Triage (Sense)</a>
+    <a href="triage-investigator.html">Investigator</a>
+    <a href="plan-classify.html">Plan (Classify)</a>
+    <a href="fault-area-taxonomy.html">Fault Areas</a>
+    <a href="registry-lifecycle.html">Registry</a>
+    <a href="reconcile-registry.html" aria-current="page">Reconcile (Registry)</a>
+    <a href="atomic-write-contract.html">Write Boundaries</a>
+    <a href="actuate-and-backlog.html">Actuate (Human)</a>
+    <a href="wire-contracts.html">Schemas &amp; Stores</a>
   </nav>
 <main>
-  <div class="callout task-banner">
-    <strong>Task companion — <code>TASK-190.22.21</code>.</strong> This page is the visual record of the task's intent and approach. The canonical reference is <a href="../../docs/self-healing-pipeline/reconcile-registry.html">Reconciling the Classifier Registry</a>; <a href="../../docs/self-healing-pipeline/registry-lifecycle.html">Registry</a> and <a href="../../docs/self-healing-pipeline/actuate-and-backlog.html">Actuate</a> carry the rest of the surface.
-  </div>
+  <span class="tag">human-invoked skill</span>
+  <span class="tag">disable-model-invocation: true</span>
+  <span class="tag">.claude/skills/reconcile-registry/SKILL.md</span>
+  <h1>Reconciling the Classifier Registry</h1>
+  <p class="lede">The classifier registry is a human-owned write surface, like <code>backlog/</code>. <code>reconcile-registry</code> is its decision skill over one fenced writer — the registry's analogue of <code>prioritize</code> over <code>export_to_backlog.ts</code>. It detects work the rest of the pipeline has already done, previews the mechanical flips, and applies them through a single <code>atomic_update_registry</code> transaction. The human stays the sole decider; the skill makes each decision cheap.</p>
 
-  <span class="tag">task companion</span> <span class="tag">human-invoked skill</span> <span class="tag">registry write surface</span> <span class="tag">scope: core only</span>
-  <h1>Task 190.22.21: <code>reconcile-registry</code> — Tooling the Registry Write Surface</h1>
-  <p class="lede">The classifier registry is a human-owned write surface, like <code>backlog/</code>. <code>reconcile-registry</code> is its decision skill over one fenced writer — the registry's exact analogue of <code>prioritize</code> over <code>export_to_backlog.ts</code>: a thin, human-invoked surface that detects work the rest of the pipeline has already done and proposes the mechanical flips.</p>
-
-  <h2 id="symmetry">Three surfaces, each with one fenced writer</h2>
-  <p>The pipeline has three human-owned write surfaces. Each pairs a deliberate decision step with exactly one fenced writer; core fixes are human engineering by design.</p>
-  <figure>
-    <svg viewBox="0 0 932 234" role="img" aria-label="Three-column diagram of the pipeline's human-owned write surfaces. The backlog column is tooled by the prioritize skill and export_to_backlog.ts; the registry column is tooled by reconcile-registry plus reconcile_registry.ts; the core column stays human engineering by design.">
-      <defs>
-        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M0 0 L10 5 L0 10 z" fill="#9aa3b2"/>
-        </marker>
-      </defs>
-      <g font-family="-apple-system, Segoe UI, Roboto, sans-serif">
-        <!-- row labels -->
-        <text x="14" y="80" fill="#9aa3b2" font-size="12" font-weight="600" letter-spacing="1">SURFACE</text>
-        <text x="14" y="178" fill="#7ee787" font-size="12" font-weight="600" letter-spacing="1">WRITER</text>
-
-        <!-- column captions -->
-        <text x="252" y="30" text-anchor="middle" fill="#7ee787" font-size="12" font-weight="600" letter-spacing="1">TOOLED</text>
-        <text x="522" y="30" text-anchor="middle" fill="#7ee787" font-size="12" font-weight="600" letter-spacing="1">TOOLED</text>
-        <text x="792" y="30" text-anchor="middle" fill="#9aa3b2" font-size="12" font-weight="600" letter-spacing="1">UNTOOLED BY DESIGN</text>
-
-        <!-- surface row -->
-        <rect x="122" y="44" width="260" height="60" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
-        <text x="252" y="70" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">backlog/tasks/*.md</text>
-        <text x="252" y="90" text-anchor="middle" fill="#9aa3b2" font-size="11.5">prioritized work</text>
-
-        <rect x="392" y="44" width="260" height="60" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
-        <text x="522" y="70" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">registry.json</text>
-        <text x="522" y="90" text-anchor="middle" fill="#9aa3b2" font-size="11.5">classifier rules</text>
-
-        <rect x="662" y="44" width="260" height="60" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
-        <text x="792" y="70" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">packages/core/</text>
-        <text x="792" y="90" text-anchor="middle" fill="#9aa3b2" font-size="11.5">the actual fix</text>
-
-        <!-- writer row -->
-        <rect x="122" y="142" width="260" height="70" rx="10" fill="#1d212b" stroke="#7ee787" stroke-width="1.5"/>
-        <text x="252" y="168" text-anchor="middle" fill="#e6e9ef" font-size="13" font-weight="600">prioritize → export_to_backlog.ts</text>
-        <text x="252" y="188" text-anchor="middle" fill="#9aa3b2" font-size="11.5">decision skill + sole fenced writer</text>
-
-        <rect x="392" y="142" width="260" height="70" rx="10" fill="#11141a" stroke="#7ee787" stroke-width="1.5"/>
-        <text x="522" y="168" text-anchor="middle" fill="#7ee787" font-size="13" font-weight="600">reconcile-registry → reconcile_registry.ts</text>
-        <text x="522" y="188" text-anchor="middle" fill="#9aa3b2" font-size="11.5">the registry's prioritize</text>
-
-        <rect x="662" y="142" width="260" height="70" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
-        <text x="792" y="168" text-anchor="middle" fill="#e6e9ef" font-size="13" font-weight="600">human engineering</text>
-        <text x="792" y="188" text-anchor="middle" fill="#9aa3b2" font-size="11.5">fix(&lt;task_id&gt;): … commit scope</text>
-
-        <!-- vertical connectors -->
-        <line x1="252" y1="104" x2="252" y2="140" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
-        <line x1="522" y1="104" x2="522" y2="140" stroke="#7ee787" stroke-width="1.5" marker-end="url(#arr)"/>
-        <line x1="792" y1="104" x2="792" y2="140" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
-      </g>
-    </svg>
-    <figcaption>The registry pairs a decision surface with one fenced writer, the same shape as the backlog column. The core column stays untooled on purpose — that is the creative work.</figcaption>
-  </figure>
-
+  <h2 id="surfaces">Three tooled surfaces</h2>
+  <p>The pipeline has three human-owned write surfaces. Each pairs a deliberate decision step with exactly one fenced writer:</p>
   <table>
     <thead>
-      <tr><th>Surface</th><th>Decision surface</th><th>Write mechanism</th></tr>
+      <tr><th>Surface</th><th>Decision surface</th><th>Sole writer</th></tr>
     </thead>
     <tbody>
-      <tr><td><code>backlog/tasks/*.md</code></td><td><code>prioritize</code> (skill)</td><td><code>export_to_backlog.ts</code></td></tr>
-      <tr><td><code>.claude/skills/triage/known_issues/registry.json</code></td><td><code>reconcile-registry</code> (skill)</td><td><code>reconcile_registry.ts</code> via <code>atomic_update_registry</code></td></tr>
-      <tr><td><code>packages/core/</code> (the actual fix)</td><td>Human engineering judgment</td><td>Task-scoped commit</td></tr>
+      <tr><td><code>backlog/tasks/*.md</code><br><span style="color:var(--muted)">prioritized work</span></td><td><code>prioritize</code> (skill)</td><td><code>export_to_backlog.ts</code>, via <code>atomic_write_file</code></td></tr>
+      <tr><td><code>.claude/skills/triage/known_issues/registry.json</code><br><span style="color:var(--muted)">classifier rules</span></td><td><code>reconcile-registry</code> (skill)</td><td><code>reconcile_registry.ts</code>, via <code>atomic_update_registry</code></td></tr>
+      <tr><td><code>packages/core/</code><br><span style="color:var(--muted)">the actual fix</span></td><td>Human engineering judgment</td><td>Task-scoped Conventional-Commits message</td></tr>
     </tbody>
   </table>
+  <p>The skill owns no logic of its own. All work runs through one script, <code>.claude/skills/triage/scripts/reconcile_registry.ts</code> — the registry's only human-invoked writer, reaching the registry only through <code>atomic_update_registry(path, mutator)</code>, one lock-fenced read-mutate-write per invocation. The skill is <code>disable-model-invocation: true</code>: the model never self-invokes it, and the script never runs on the autonomous sweep.</p>
 
-  <h2 id="scope">Three mechanical writes, nothing more</h2>
-  <p>The skill never authors rule prose and never makes the <code>permanent</code> judgment — those stay human creative work. It detects three signals, proposes the corresponding writes, shows the diff, and on confirmation writes through the one fenced writer:</p>
+  <h2 id="signals">Three signals, three writes</h2>
+  <p>The script scans the mechanically-detectable signals and proposes the corresponding registry write. It never authors rule prose and never makes the <code>permanent</code> judgment — those stay human creative and judgment work.</p>
   <table>
     <thead>
       <tr><th>#</th><th>Signal (mechanically detected)</th><th>Proposed registry write</th></tr>
     </thead>
     <tbody>
-      <tr><td>1</td><td>A <strong>fix-bearing</strong> <code>git log</code> scope (<code>fix</code>/<code>feat</code> types only) matches a <code>wip</code> rule's <code>backlog_task</code> by <strong>exact id</strong> — never prefix (<code>190.22</code> ≠ <code>190.22.21</code>); range scopes expand via the shared grammar in <code>scripts/check-commit-message.ts</code></td><td><code>wip → fixed</code>, citing the newest matching commit subject</td></tr>
-      <tr><td>2</td><td>Each project's latest finalized <code>triage_results[].classifier_regressions[]</code> names a <code>rule_id</code> (which carries the registry rule's <code>group_id</code>)</td><td>set <code>drift_detected: true</code>; append new <code>drift_evidence[]</code> rows (append-only, deduped by <code>entry_index</code> — re-runs are idempotent)</td></tr>
-      <tr><td>3</td><td>Human elects to promote a rule to <code>permanent</code> (<code>--id &lt;group_id&gt; --promote</code>)</td><td>flip the status <em>and</em> regenerate <code>permanent_data.ts</code>; the sync test guards it thereafter</td></tr>
+      <tr>
+        <td>1</td>
+        <td>A <strong>fix-bearing</strong> <code>git log</code> scope in this repo matches a <code>wip</code> rule's <code>backlog_task</code>. Only <code>fix</code> and <code>feat</code> commits count — a <code>docs(198)</code> or <code>review(198)</code> commit references the task without fixing anything. The match is <strong>exact-id, never prefix</strong> (<code>190.22</code> does not match <code>190.22.21</code>); range scopes like <code>190.17.12-14</code> expand to their exact ids via the shared grammar in <code>scripts/check-commit-message.ts</code>.</td>
+        <td><code>wip → fixed</code>, citing the newest matching commit subject as the audit line</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Each project's <strong>latest finalized</strong> <code>triage_results/&lt;run-id&gt;.json</code> names a rule in <code>classifier_regressions[]</code> — the published <code>rule_id</code> field carries the registry rule's <code>group_id</code>.</td>
+        <td>Set <code>drift_detected: true</code>; append the missing <code>drift_evidence[]</code> rows, <strong>append-only and deduped by <code>entry_index</code></strong>, so a re-run after apply proposes nothing</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>The human elects to promote a rule (<code>--id &lt;group_id&gt; --promote</code>).</td>
+        <td>Flip to <code>permanent</code>, then regenerate core's bundled slice via <code>generate_permanent_data.ts</code></td>
+      </tr>
     </tbody>
   </table>
+  <p>Malformed or stale published files are reported in <code>skipped_sources</code> and skipped — never fatal. No commit hash is stored; the <code>backlog_task</code> link plus the git log are the entire audit trail.</p>
 
   <h2 id="flow">Preview → narrow → apply</h2>
-  <p>The workflow mirrors <code>prioritize</code> exactly: a <code>--dry-run</code> scans every signal and prints the proposed changeset writing nothing; selectors narrow the set; dropping <code>--dry-run</code> applies through <code>atomic_update_registry</code> — one lock-fenced read-mutate-write per invocation, with proposals re-folded onto the locked read so a stale preview degrades to a no-op.</p>
+  <p>A <code>--dry-run</code> scans every signal and prints the proposed changeset writing nothing; selectors narrow the set; dropping <code>--dry-run</code> applies through <code>atomic_update_registry</code> — one lock-fenced read-mutate-write per invocation. Proposals re-fold onto the locked read, so a proposal computed from a stale preview degrades to a no-op instead of clobbering a concurrent edit.</p>
   <figure>
     <svg viewBox="0 0 932 400" role="img" aria-label="Flow diagram of a reconcile_registry.ts run: three signal sources — git log, published triage results, and a human promotion choice — feed a detect step, which produces a dry-run preview of the proposed changeset; the human narrows with selectors and re-previews, then applies through atomic_update_registry into registry.json; a promote apply additionally regenerates permanent_data.ts, guarded by a sync test.">
       <defs>
@@ -230,8 +182,8 @@
         <!-- registry -->
         <rect x="440" y="232" width="228" height="72" rx="10" fill="#11141a" stroke="#7ee787" stroke-width="1.5"/>
         <text x="554" y="258" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">registry.json</text>
-        <text x="554" y="276" text-anchor="middle" fill="#9aa3b2" font-size="11.5">re-fold onto the locked read;</text>
-        <text x="554" y="292" text-anchor="middle" fill="#9aa3b2" font-size="11.5">idempotent re-run reports applied:false</text>
+        <text x="554" y="276" text-anchor="middle" fill="#9aa3b2" font-size="11.5">re-fold onto the locked read —</text>
+        <text x="554" y="292" text-anchor="middle" fill="#9aa3b2" font-size="11.5">stale previews degrade to no-ops</text>
 
         <line x1="708" y1="268" x2="670" y2="268" stroke="#7ee787" stroke-width="1.5" marker-end="url(#arr2g)"/>
 
@@ -245,26 +197,8 @@
     <figcaption>One reconcile run. Steps 1–2 read everything and write nothing; the human owns step 3 and the confirmation into step 4 — the single place the script touches the registry, and only through <code>atomic_update_registry</code>. A promotion apply additionally regenerates the bundled core slice on every <code>--promote</code> invocation, so a crash between the registry write and the regeneration is recovered by re-running.</figcaption>
   </figure>
 
-  <h3>Selectors (mirroring <code>prioritize</code>)</h3>
-  <table>
-    <thead>
-      <tr><th>Flag</th><th>Effect</th></tr>
-    </thead>
-    <tbody>
-      <tr><td><code>--dry-run</code></td><td>Scan every signal and print the proposed changeset, grouped by transition; writes nothing. Always the first run.</td></tr>
-      <tr><td><code>--fixed</code></td><td>Restrict to <code>wip → fixed</code> proposals (git-log scope matches).</td></tr>
-      <tr><td><code>--drift</code></td><td>Restrict to drift-flag proposals (<code>drift_detected</code> + new <code>drift_evidence[]</code> rows).</td></tr>
-      <tr><td><code>--id &lt;group_id&gt;</code></td><td>Name exact rules; repeatable. <strong>Overrides</strong> the <code>--fixed</code>/<code>--drift</code> filters: both signals are scanned and only the named rules' proposals survive.</td></tr>
-      <tr><td><code>--id &lt;group_id&gt; --promote</code></td><td>The deliberate promotion path: bypass detection, flip to <code>permanent</code> and regenerate <code>permanent_data.ts</code>. Cannot combine with <code>--fixed</code>/<code>--drift</code>.</td></tr>
-    </tbody>
-  </table>
-
-  <div class="callout">
-    <strong>Same shape as <code>prioritize</code>, deliberately.</strong> The skill owns no logic of its own, drives a single script, and is <code>disable-model-invocation: true</code> — only a human can trigger it; the model never self-invokes. The scripts live under <code>.claude/skills/triage/scripts/</code> because that is where the registry and its loaders already live, exactly as <code>prioritize</code> points at a script under <code>plan/scripts/</code>.
-  </div>
-
   <h2 id="lifecycle-arrows">Which lifecycle arrows carry a detector</h2>
-  <p>The <a href="../../docs/self-healing-pipeline/registry-lifecycle.html">lifecycle diagram</a> shows every transition as a human edit, and that holds — the human remains the decider on every arrow. Two arrows carry a <em>detector</em> (the signal is found mechanically and proposed) and one carries a mechanical <em>apply-step</em> (the regeneration the lifecycle doc describes):</p>
+  <p>The <a href="registry-lifecycle.html">lifecycle diagram</a> shows every transition as a human edit, and that holds: the human remains the decider on every arrow. Two arrows carry a <em>detector</em> — the signal is found mechanically and proposed — and one carries a mechanical <em>apply-step</em>, the regeneration the lifecycle describes. The human confirms each.</p>
   <figure>
     <svg viewBox="0 0 920 320" role="img" aria-label="The three outbound arrows from a classified wip rule, annotated with what reconcile-registry carries: the drift arrow carries a detector reading classifier_regressions, the fixed arrow carries a detector matching git-log commit scopes against backlog_task, and the permanent arrow keeps human judgment and carries the generate_permanent_data apply-step. The human confirms every arrow.">
       <defs>
@@ -317,23 +251,25 @@
         <text x="460" y="293" text-anchor="middle" fill="#6ea8fe" font-size="12.5" font-weight="600">the human confirms every arrow — the skill makes detection and the write cheap, never the decision</text>
       </g>
     </svg>
-    <figcaption>The same three branches as the lifecycle diagram, with what each arrow carries. "Records landed fix" and "flags drift" carry detectors; "promotion review" keeps its human judgment and carries the regeneration mechanism.</figcaption>
+    <figcaption>The three branches from a classified <code>wip</code> rule, with what each arrow carries. "Records landed fix" and "flags drift" carry detectors; "promotion review" keeps its human judgment and carries the regeneration mechanism.</figcaption>
   </figure>
 
-  <h2 id="enforcement">Two structural guards</h2>
-  <p>Cheap writes alone don't keep the surface honest. Two whole-repo invariant guards enforce it, paralleling the AST write-boundary test:</p>
-  <div class="grid">
-    <div class="card">
-      <h3 style="margin-top:0"><code>permanent_data.sync.test.ts</code></h3>
-      <p>Asserts the committed <code>permanent_data.ts</code> byte-equals the slice freshly rendered from the source registry, through the shared <code>render_permanent_slice_module</code> in <code>@ariadnejs/types</code> — the same function the generator writes through. The bundled core slice cannot silently drift from the registry: a hand-edit to <em>either</em> file fails CI. The "AUTO-GENERATED" header has teeth.</p>
-    </div>
-    <div class="card">
-      <h3 style="margin-top:0"><code>registry_writers.test.ts</code></h3>
-      <p>The AST walk in <code>packages/skill-fs/src/registry_writers.test.ts</code> flags any raw write primitive against a registry-shaped path and any serializer call outside an allowlisted file. <code>reconcile_registry.ts</code> reaches the registry only via <code>atomic_update_registry</code>; it is the one entry in <code>ALLOWED_SERIALIZER_CALLERS</code>, and its only serializer call sits inside the mutator closure.</p>
-    </div>
-  </div>
+  <h2 id="selectors">Selectors</h2>
+  <table>
+    <thead>
+      <tr><th>Flag</th><th>Selects</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>--dry-run</code></td><td>Print the proposed changeset, write nothing. Always the first run.</td></tr>
+      <tr><td><code>--fixed</code></td><td><code>wip → fixed</code> proposals only.</td></tr>
+      <tr><td><code>--drift</code></td><td>Drift-flag proposals only.</td></tr>
+      <tr><td><code>--id &lt;group_id&gt;</code></td><td>Exact rules (repeatable). <strong>Overrides</strong> <code>--fixed</code>/<code>--drift</code>: both signals are scanned, and only the named rules' proposals survive. Ids matching no proposal report in <code>missing_ids</code>.</td></tr>
+      <tr><td><code>--id &lt;group_id&gt; --promote</code></td><td>Names rules directly, bypassing detection: flip them to <code>permanent</code> and sync the slice. Cannot combine with <code>--fixed</code>/<code>--drift</code> — promotion is its own transaction.</td></tr>
+    </tbody>
+  </table>
+  <p><code>--id</code> has two modes. As a selector it overrides the signal filters and narrows the detected proposals to the named rules; with <code>--promote</code> it bypasses detection entirely and names the rules to flip. With no selectors, every proposal across both detection signals is selected.</p>
 
-  <h2 id="output">The Output summary contract</h2>
+  <h3>The JSON summary</h3>
   <p>The script's only stdout is one JSON summary:</p>
   <table>
     <thead>
@@ -349,9 +285,27 @@
       <tr><td><code>skipped_sources</code></td><td>Published files that failed to read or parse — reported, never fatal.</td></tr>
     </tbody>
   </table>
+  <p>Each <code>wip_to_fixed</code> proposal carries <code>matched_subject</code> (the newest matching commit) as its audit line; each <code>drift_detected</code> proposal carries <code>flagged_by</code>, the <code>{project, run_id}</code> provenance of every run that flagged the rule.</p>
 
   <div class="callout">
-    <strong>Promotion is guarded; the human stays the decider.</strong> A rule whose <code>classifier.kind</code> is <code>"none"</code> is refused — core's <code>validate_permanent_slice</code> cannot load an unclassified permanent rule, so the slice generator filters on <code>status === "permanent"</code> <em>and</em> <code>classifier.kind !== "none"</code>. <code>wip → fixed</code> scans <em>this</em> repo's git log — Ariadne defects are fixed here. No <code>KnownIssue</code> field changes, so the registry stays <code>schema_version: 1</code>. The skill proposes; the human confirms every flip.
+    <strong>Promotion is guarded.</strong> A rule whose <code>classifier.kind</code> is <code>"none"</code> is refused — core's <code>validate_permanent_slice</code> cannot load an unclassified permanent rule, so the slice generator filters on <code>status === "permanent"</code> <em>and</em> <code>classifier.kind !== "none"</code>. A rule already <code>permanent</code> is refused too. Both refusals exit zero and report in <code>rejected_promotions</code>.
+  </div>
+
+  <h2 id="enforcement">Two structural guards</h2>
+  <p>Two whole-repo invariant tests enforce the surface — the bundled slice cannot drift from the registry, and only the fenced writer can serialize it:</p>
+  <div class="grid">
+    <div class="card">
+      <h3 style="margin-top:0"><code>permanent_data.sync.test.ts</code></h3>
+      <p>Asserts the committed <code>packages/core/src/classify_entry_points/permanent_data.ts</code> byte-equals the slice freshly rendered from the source registry, through the shared <code>render_permanent_slice_module</code> in <code>@ariadnejs/types</code> — the same function the generator writes through. A hand-edit to <em>either</em> file fails the test; the fix is to edit the registry and re-run <code>generate_permanent_data.ts</code>.</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0"><code>registry_writers.test.ts</code></h3>
+      <p>The AST walk in <code>packages/skill-fs/src/registry_writers.test.ts</code> flags any raw write primitive against a registry-shaped path, and any call to <code>serialize_known_issues_registry_json</code> outside an allowlisted file. <code>reconcile_registry.ts</code> is the one entry in <code>ALLOWED_SERIALIZER_CALLERS</code>; its only serializer call sits strictly inside the <code>atomic_update_registry</code> mutator closure.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>The human is the sole decider.</strong> The skill proposes; the human confirms every flip. The skill is <code>disable-model-invocation: true</code> and the script never runs on the autonomous sweep — the model never writes the registry. For the full writer matrix and lifecycle, see <a href="registry-lifecycle.html">The Classifier Registry</a>; for the deliberate <code>prioritize → export</code> analogue and the cross-run cycle, see <a href="actuate-and-backlog.html">Actuate (Human)</a>.
   </div>
 </main>
 </body>

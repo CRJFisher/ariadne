@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan: Grouping, Strategizing, Reconciling — Self-Healing Pipeline</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --panel-2: #1d212b; --ink: #e6e9ef; --muted: #9aa3b2;
+    --accent: #6ea8fe; --accent-2: #7ee787; --warn: #ff7b72; --border: #2a2f3a; --code-bg: #11141a;
+    --radius: 10px; --maxw: 980px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .doc-nav { position: sticky; top: 0; z-index: 10; background: rgba(15,17,21,.92);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 10px 20px;
+    display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+  .doc-nav .brand { font-weight: 700; color: var(--ink); margin-right: 10px; letter-spacing: .2px; }
+  .doc-nav a { color: var(--muted); text-decoration: none; font-size: 14px; padding: 4px 8px;
+    border-radius: 6px; white-space: nowrap; }
+  .doc-nav a:hover { color: var(--ink); background: var(--panel-2); }
+  .doc-nav a[aria-current="page"] { color: var(--bg); background: var(--accent); font-weight: 600; }
+  main { margin: 0 5%; padding: 36px 24px 96px; }
+  h1 { font-size: 30px; line-height: 1.25; margin: 8px 0 6px; }
+  h2 { font-size: 22px; margin: 38px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 17px; margin: 26px 0 8px; color: var(--accent); }
+  p, li { color: var(--ink); }
+  a { color: var(--accent); }
+  .lede { color: var(--muted); font-size: 18px; margin: 0 0 8px; }
+  code { background: var(--code-bg); border: 1px solid var(--border); border-radius: 5px;
+    padding: 1px 5px; font: 13.5px/1.5 "SF Mono", Menlo, Consolas, monospace; color: #d6deeb; }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 16px; overflow: auto; }
+  pre code { background: none; border: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--panel-2); }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; margin: 16px 0; }
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--panel-2); color: var(--muted); }
+  .callout { border-left: 3px solid var(--accent); background: var(--panel-2);
+    padding: 10px 14px; border-radius: 0 var(--radius) var(--radius) 0; margin: 16px 0; }
+  figure { margin: 18px 0; }
+  figure svg { max-width: 100%; height: auto; display: block; }
+  figcaption { color: var(--muted); font-size: 13px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<nav class="doc-nav">
+    <span class="brand">Self-Healing Pipeline</span>
+    <a href="index.html">Home</a>
+    <a href="overview-loop.html">The Loop</a>
+    <a href="triage-sense.html">Triage (Sense)</a>
+    <a href="triage-investigator.html">Investigator</a>
+    <a href="plan-classify.html" aria-current="page">Plan (Classify)</a>
+    <a href="fault-area-taxonomy.html">Fault Areas</a>
+    <a href="registry-lifecycle.html">Registry</a>
+    <a href="reconcile-registry.html">Reconcile (Registry)</a>
+    <a href="atomic-write-contract.html">Write Boundaries</a>
+    <a href="actuate-and-backlog.html">Actuate (Human)</a>
+    <a href="wire-contracts.html">Schemas &amp; Stores</a>
+  </nav>
+<main>
+
+<p class="lede">Plan is the classify link of the loop: an offline three-pass engine that turns published triage false-positives into reconciled, deduplicated engineering proposals — without ever touching the backlog, the registry, or core.</p>
+<h1>Plan: Grouping, Strategizing, Reconciling</h1>
+<p>
+  <span class="tag">skill: plan</span>
+  <span class="tag">Pass A — group (deterministic)</span>
+  <span class="tag">Pass B — strategize (opus)</span>
+  <span class="tag">Pass C — reconcile (deterministic)</span>
+  <span class="tag">planning-only</span>
+</p>
+
+<p>The engine reads completed triage runs — <code>analysis_output/&lt;project&gt;/triage_results/&lt;run-id&gt;.json</code> (schema v5) — and writes only its own task-DB under <code>~/.ariadne/plan/</code>. The two deterministic passes (A and C) bracket a single judgement pass (B), so every LLM decision is validated structurally before it can reach durable state.</p>
+
+<figure>
+<svg viewBox="0 0 940 392" role="img" aria-label="Plan's three passes: triage results flow through Group into fault-area buckets, one strategist per bucket emits a validated plan, and Reconcile commits PlanTask rows to the task-DB. Reconcile writes the membership-override store that Group reads on the next sweep, and reads backlog frontmatter read-only.">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9aa3b2"/>
+    </marker>
+    <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6ea8fe"/>
+    </marker>
+    <marker id="arrG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7ee787"/>
+    </marker>
+  </defs>
+
+  <!-- top row -->
+  <rect x="10" y="22" width="180" height="62" rx="8" fill="#171a21" stroke="#2a2f3a"/>
+  <text x="100" y="46" text-anchor="middle" fill="#e6e9ef" font-size="13" font-weight="600">triage_results/*.json</text>
+  <text x="100" y="64" text-anchor="middle" fill="#9aa3b2" font-size="11.5">novel_issues[] · schema v5</text>
+  <text x="100" y="78" text-anchor="middle" fill="#9aa3b2" font-size="11.5">(read-only input)</text>
+
+  <line x1="190" y1="53" x2="238" y2="53" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="240" y="22" width="160" height="62" rx="8" fill="#1d212b" stroke="#6ea8fe"/>
+  <text x="320" y="46" text-anchor="middle" fill="#6ea8fe" font-size="13" font-weight="700">Pass A — Group</text>
+  <text x="320" y="64" text-anchor="middle" fill="#9aa3b2" font-size="11.5">derive_fault_area</text>
+  <text x="320" y="78" text-anchor="middle" fill="#9aa3b2" font-size="11.5">+ follow_override_chain</text>
+
+  <line x1="400" y1="53" x2="448" y2="53" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="450" y="22" width="190" height="62" rx="8" fill="#171a21" stroke="#2a2f3a"/>
+  <text x="545" y="46" text-anchor="middle" fill="#e6e9ef" font-size="13" font-weight="600">buckets/&lt;area&gt;.json</text>
+  <text x="545" y="64" text-anchor="middle" fill="#9aa3b2" font-size="11.5">one FaultAreaBucket per area</text>
+  <text x="545" y="78" text-anchor="middle" fill="#9aa3b2" font-size="11.5">+ manifest.json (scanned scope)</text>
+
+  <line x1="640" y1="53" x2="688" y2="53" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="690" y="22" width="240" height="62" rx="8" fill="#1d212b" stroke="#6ea8fe"/>
+  <text x="810" y="46" text-anchor="middle" fill="#6ea8fe" font-size="13" font-weight="700">Pass B — Strategize</text>
+  <text x="810" y="64" text-anchor="middle" fill="#9aa3b2" font-size="11.5">plan-strategist × N (opus, ≤5 concurrent)</text>
+  <text x="810" y="78" text-anchor="middle" fill="#9aa3b2" font-size="11.5">self-validate → iterate loop</text>
+
+  <!-- B down to plans -->
+  <line x1="810" y1="84" x2="810" y2="136" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="690" y="138" width="240" height="58" rx="8" fill="#171a21" stroke="#2a2f3a"/>
+  <text x="810" y="161" text-anchor="middle" fill="#e6e9ef" font-size="13" font-weight="600">plans/&lt;area&gt;.json</text>
+  <text x="810" y="179" text-anchor="middle" fill="#9aa3b2" font-size="11.5">validated StrategistPlan + membership review</text>
+
+  <line x1="690" y1="167" x2="612" y2="167" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="380" y="138" width="230" height="58" rx="8" fill="#1d212b" stroke="#6ea8fe"/>
+  <text x="495" y="161" text-anchor="middle" fill="#6ea8fe" font-size="13" font-weight="700">Pass C — Reconcile</text>
+  <text x="495" y="179" text-anchor="middle" fill="#9aa3b2" font-size="11.5">validate → build_plan_tasks → reconcile</text>
+
+  <line x1="380" y1="167" x2="282" y2="167" stroke="#7ee787" stroke-width="1.5" marker-end="url(#arrG)"/>
+  <text x="331" y="159" text-anchor="middle" fill="#7ee787" font-size="11">writes</text>
+
+  <rect x="10" y="138" width="270" height="58" rx="8" fill="#171a21" stroke="#7ee787"/>
+  <text x="145" y="161" text-anchor="middle" fill="#7ee787" font-size="13" font-weight="600">task-DB  ~/.ariadne/plan/</text>
+  <text x="145" y="179" text-anchor="middle" fill="#9aa3b2" font-size="11.5">tasks/&lt;id&gt;.json · sweeps/&lt;sweep&gt;.jsonl</text>
+
+  <!-- override store: written by C, read by A -->
+  <rect x="380" y="282" width="230" height="58" rx="8" fill="#171a21" stroke="#7ee787"/>
+  <text x="495" y="305" text-anchor="middle" fill="#7ee787" font-size="13" font-weight="600">membership_overrides.json</text>
+  <text x="495" y="323" text-anchor="middle" fill="#9aa3b2" font-size="11.5">confirmed mis-routes, by member identity</text>
+
+  <line x1="495" y1="196" x2="495" y2="280" stroke="#7ee787" stroke-width="1.5" marker-end="url(#arrG)"/>
+  <text x="540" y="240" text-anchor="middle" fill="#7ee787" font-size="11">writes (Pass C)</text>
+
+  <path d="M 380 311 C 230 311, 200 200, 290 88" fill="none" stroke="#6ea8fe" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrA)"/>
+  <text x="222" y="244" text-anchor="middle" fill="#6ea8fe" font-size="11">read next sweep (Pass A)</text>
+
+  <!-- backlog read-only -->
+  <rect x="690" y="282" width="240" height="58" rx="8" fill="#171a21" stroke="#2a2f3a" stroke-dasharray="5 4"/>
+  <text x="810" y="305" text-anchor="middle" fill="#e6e9ef" font-size="13" font-weight="600">backlog/tasks/*.md frontmatter</text>
+  <text x="810" y="323" text-anchor="middle" fill="#9aa3b2" font-size="11.5">plan_dedup_key — never written by plan</text>
+
+  <path d="M 750 282 C 700 240, 640 210, 590 196" fill="none" stroke="#9aa3b2" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr)"/>
+  <text x="700" y="234" text-anchor="middle" fill="#9aa3b2" font-size="11">read-only dedup signal</text>
+
+  <text x="10" y="380" fill="#9aa3b2" font-size="11.5">solid green = plan's only writes · dashed = read-only / next-sweep reads</text>
+</svg>
+<figcaption>The three passes and their durable surfaces. Pass C is the sole writer of the task-DB and the override store; the override store closes a loop back into Pass A on the next sweep; the backlog is consulted read-only.</figcaption>
+</figure>
+
+<h2 id="pass-a">Pass A — Group: deterministic fault-area bucketing</h2>
+
+<p><code>group_runs.ts</code> flattens every published false-positive (<code>novel_issues[]</code>) across the scanned runs into <code>PlanTaskEvidence</code> rows and buckets them by <code>AriadneFaultArea</code>. The pure core is <code>group_fault_areas.ts</code> — no I/O, no clock, no randomness; the entry script does the reading and persisting.</p>
+
+<h3>NovelIssue → PlanTaskEvidence</h3>
+<p><code>novel_issue_to_evidence</code> carries each issue's provenance (<code>member_evidence</code>, <code>member_symbol</code>, <code>project</code>, <code>run_id</code>) plus <em>exactly</em> the inputs of <code>derive_fault_area</code>, kept verbatim: <code>diagnosis</code>, <code>resolution_failure</code> (normalized <code>null</code>-not-absent), and the two disambiguator booleans (<code>has_uncaptured_indexed_grep_hit</code>, <code>callers_only_in_unindexed_tests</code>). Storing the raw fault signals — never a derived area — is what keeps the area <a href="fault-area-taxonomy.html">recomputable on read</a> against the current taxonomy.</p>
+
+<h3>The override chain</h3>
+<p>Before a member lands in its derived bucket, Pass A consults the membership-override store (<code>~/.ariadne/plan/membership_overrides.json</code>, written by prior reconcile passes) via <code>follow_override_chain</code>. Starting from the derived area, it looks up an override keyed on <code>(area, member identity)</code> and:</p>
+<table>
+<tr><th>Chain outcome</th><th>Condition</th><th>Effect</th></tr>
+<tr><td><strong>Land</strong></td><td>No override exists at the current area</td><td>Member buckets at that area</td></tr>
+<tr><td><strong>Re-route</strong></td><td>Override names a <code>suggested_area</code></td><td>Move there, then check the destination for its own override and follow again</td></tr>
+<tr><td><strong>Suppress</strong></td><td>Override has <code>suggested_area: null</code></td><td>Member is dropped from the sweep</td></tr>
+<tr><td><strong>Suppress (cycle)</strong></td><td>The chain revisits an area</td><td>Every area in the cycle has already excluded the member — dropped</td></tr>
+</table>
+<p>A member a strategist already judged mis-routed is therefore corrected here, deterministically, instead of being re-adjudicated every sweep. Two details keep re-routed members honest: <code>needs_judgement</code> and the escape-hatch <code>description</code> describe the member's <em>derived</em> area, so both are applied only when the member lands where it was derived (<code>area === location.area</code>) — an override-settled placement contributes neither.</p>
+
+<h3>Bucket output</h3>
+<p>Each <code>FaultAreaBucket</code> carries its evidence verbatim plus rollups: <code>observed_count</code>, sorted <code>projects</code> and <code>source_runs</code>, sorted <code>descriptions</code> (free-text signal, populated for the <code>other</code> escape hatch), and a <code>needs_judgement</code> flag. Buckets sort by <code>observed_count</code> descending, ties broken lexically by <code>fault_area</code>, so the strategist wave and every test assertion are deterministic. Buckets stage under <code>~/.ariadne/plan/staging/&lt;sweep&gt;/buckets/</code> alongside a <code>manifest.json</code> recording the full scanned scope — projects and run ids <em>including zero-FP runs</em>, which Pass C's orphan retirement depends on.</p>
+
+<h2 id="pass-b">Pass B — Strategize: one opus strategist per bucket</h2>
+
+<p>The skill dispatches one <code>plan-strategist</code> sub-agent (opus, 200-turn) per bucket, capped at <code>MAX_CONCURRENT_STRATEGISTS = 5</code> and drained in waves. The strategist hydrates its bucket with <code>get_bucket_context.ts</code>, plans, and writes one file — a <code>StrategistPlan</code> JSON (schema v1) under <code>staging/&lt;sweep_id&gt;/plans/&lt;fault_area&gt;.json</code> — returning nothing inline. It never writes code, the registry, or the backlog; its only write grant is <code>~/.ariadne/plan/staging/**</code>.</p>
+
+<h3>Membership review first</h3>
+<p>Pass A's deterministic lookup can mis-route a member into a bucket whose bulk root cause it does not share — a borderline <code>(stage, reason)</code>, a defaulted derivation, or a genuinely cross-area fault. The strategist is the one stage with judgement and code access, so before planning it emits a <code>membership</code> array: one verdict per evidence index, prioritizing the <code>needs_judgement_indices</code> (members whose derivation defaulted, the likeliest mis-routes).</p>
+<pre><code>{ "index": 0, "belongs": true,  "reason": "" }
+{ "index": 3, "belongs": false, "reason": "this is an import miss, not a name-resolution one",
+  "suggested_area": "import_resolution" }</code></pre>
+<p>The review must be <strong>total</strong> (one verdict per index, no gaps) and <strong>consistent</strong> (no node may ground an excluded index) — both enforced by the validator. Tasks are planned over the members that <code>belong</code>; an excluded member grounds nothing.</p>
+
+<h3>The StrategistPlan tier tree</h3>
+
+<figure>
+<svg viewBox="0 0 940 312" role="img" aria-label="StrategistPlan tier tree: an architectural root over a fault_area group node over localized leaves, including a classifier-work leaf. Each core-fix node carries a core_fix_effort estimate.">
+  <defs>
+    <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9aa3b2"/>
+    </marker>
+  </defs>
+  <rect x="270" y="16" width="400" height="60" rx="8" fill="#1d212b" stroke="#6ea8fe"/>
+  <text x="470" y="40" text-anchor="middle" fill="#6ea8fe" font-size="13" font-weight="700">architectural</text>
+  <text x="470" y="58" text-anchor="middle" fill="#9aa3b2" font-size="11.5">cross-cutting structural upgrade to the folder anchor · may inherit evidence from children</text>
+
+  <line x1="470" y1="76" x2="470" y2="112" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+  <rect x="270" y="114" width="400" height="60" rx="8" fill="#1d212b" stroke="#6ea8fe"/>
+  <text x="470" y="138" text-anchor="middle" fill="#6ea8fe" font-size="13" font-weight="700">fault_area</text>
+  <text x="470" y="156" text-anchor="middle" fill="#9aa3b2" font-size="11.5">the group node for this one AriadneFaultArea</text>
+
+  <line x1="470" y1="174" x2="190" y2="218" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+  <line x1="470" y1="174" x2="470" y2="216" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+  <line x1="470" y1="174" x2="750 " y2="218" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+  <rect x="40" y="220" width="280" height="72" rx="8" fill="#171a21" stroke="#7ee787"/>
+  <text x="180" y="244" text-anchor="middle" fill="#7ee787" font-size="13" font-weight="700">localized (core fix)</text>
+  <text x="180" y="262" text-anchor="middle" fill="#9aa3b2" font-size="11.5">leaf · grounds ≥1 evidence row</text>
+  <text x="180" y="280" text-anchor="middle" fill="#9aa3b2" font-size="11.5">core_fix_effort: 1 | 3 | 5 + rationale</text>
+
+  <rect x="340" y="220" width="260" height="72" rx="8" fill="#171a21" stroke="#7ee787"/>
+  <text x="470" y="244" text-anchor="middle" fill="#7ee787" font-size="13" font-weight="700">localized (core fix)</text>
+  <text x="470" y="262" text-anchor="middle" fill="#9aa3b2" font-size="11.5">leaf · grounds ≥1 evidence row</text>
+  <text x="470" y="280" text-anchor="middle" fill="#9aa3b2" font-size="11.5">core_fix_effort: 1 | 3 | 5 + rationale</text>
+
+  <rect x="620" y="220" width="280" height="72" rx="8" fill="#171a21" stroke="#2a2f3a" stroke-dasharray="5 4"/>
+  <text x="760" y="244" text-anchor="middle" fill="#e6e9ef" font-size="13" font-weight="700">localized (classifier work)</text>
+  <text x="760" y="262" text-anchor="middle" fill="#9aa3b2" font-size="11.5">is_classifier_work: true · interim mitigation</text>
+  <text x="760" y="280" text-anchor="middle" fill="#9aa3b2" font-size="11.5">core_fix_effort: 0 · lower priority</text>
+</svg>
+<figcaption>Tiers nest strictly <code>architectural → fault_area → localized</code>; every node carries the bucket's own <code>fault_area</code>. The real work items are the localized leaves; classifier work is an interim mitigation while a high-effort core fix waits.</figcaption>
+</figure>
+
+<h3>The <code>core_fix_effort</code> cost axis</h3>
+<p>Every core-fix node (neither taxonomy-extension nor classifier work) carries a positive blast-radius estimate — how much complexity the fix would add to Ariadne:</p>
+<table>
+<tr><th>Value</th><th>Meaning</th></tr>
+<tr><td><code>1</code></td><td>A single-file edit</td></tr>
+<tr><td><code>3</code></td><td>A new function or resolver path</td></tr>
+<tr><td><code>5</code></td><td>A new cross-folder resolver pass</td></tr>
+<tr><td><code>0</code></td><td>Sentinel on taxonomy-extension and classifier-work nodes (no core fix to size; rationale empty)</td></tr>
+</table>
+<p>The estimate must be grounded in code — the strategist reads the owning <code>fault_area</code> folder (the <code>folder_anchor</code>) to judge what Ariadne already supports — and the grounding is recorded in a non-empty <code>core_fix_effort_rationale</code>. The strategist assigns no priority or status: the cost integer is weighed against each task's benefit rollups (<code>observed_count</code>, <code>projects</code>, <code>source_runs</code>) by the <a href="actuate-and-backlog.html">human</a> when promoting work.</p>
+
+<h3>The <code>other</code> bucket extends the taxonomy</h3>
+<div class="callout">When the bucket's <code>fault_area</code> is <code>other</code>, the deterministic derivation could not classify these false-positives — the bucket's <code>descriptions[]</code> carries the free-text signal. This is how the taxonomy grows: the strategist MUST emit <strong>both</strong> a taxonomy-extension task (<code>is_taxonomy_extension: true</code> — add the missing folder-anchored area to the <code>AriadneFaultArea</code> union and map the signal in <code>derive_fault_area</code>; grounded in the descriptions, so it may carry empty <code>evidence_indices</code>) <strong>and</strong> an underlying core-fix task grounded in evidence. The validator rejects an <code>other</code> plan missing either, and rejects <code>is_taxonomy_extension</code> on any non-<code>other</code> bucket.</div>
+
+<h3>Self-validate → iterate</h3>
+<p><code>validate_plan.ts</code> is pure, structural, and deterministic: it takes the parsed plan plus the bucket context (<code>bucket_fault_area</code>, <code>evidence_count</code>, <code>sweep_id</code>) and returns <code>{ ok, issues[] }</code>. The strategist loops write → validate → fix until <code>ok === true</code>; Pass C re-runs the same validator before reconciling, so a malformed plan is rejected at both ends. The rules it enforces:</p>
+<table>
+<tr><th>Rule family</th><th>What is enforced</th></tr>
+<tr><td>Envelope</td><td><code>schema_version === 1</code>; <code>fault_area</code> in the taxonomy and equal to the dispatched bucket's; <code>sweep_id</code> echoes the dispatching sweep (guards against a stale plan from a prior sweep); non-empty <code>roots</code></td></tr>
+<tr><td>Tree structure</td><td>A child's tier is strictly deeper than its parent's; every node's <code>fault_area</code> equals the bucket's; non-empty <code>title</code>/<code>body</code></td></tr>
+<tr><td>Evidence grounding</td><td><code>evidence_indices</code> in range and unique per node; a non-taxonomy <code>localized</code> leaf grounds at least one row</td></tr>
+<tr><td>Membership</td><td>Total (every index has exactly one verdict); a <code>belongs: false</code> verdict carries a non-empty reason; a <code>suggested_area</code> must be a real area and must not be the bucket's own (re-routing a member back into the bucket that excluded it never converges); no node grounds an excluded index</td></tr>
+<tr><td>Cost axis</td><td>A core-fix node carries a positive <code>core_fix_effort</code> + non-empty rationale; a taxonomy-extension or classifier-work node carries exactly <code>0</code></td></tr>
+<tr><td><code>other</code> bucket</td><td>Both a taxonomy-extension task and an evidence-grounded core-fix task exist; <code>is_taxonomy_extension</code> only on an <code>other</code> bucket</td></tr>
+</table>
+
+<h2 id="pass-c">Pass C — Reconcile: commit the trees into the task-DB</h2>
+
+<p><code>reconcile_plan.ts</code> loads each staged <code>(bucket, plan)</code> pair, re-validates the plan, flattens it into <code>PlanTask</code> candidates, and reconciles them against the live task-DB via <code>JsonPlanTaskRepository</code> — appending one <code>PlanSweepEvent</code> per decision to <code>sweeps/&lt;sweep_id&gt;.jsonl</code>.</p>
+
+<h3>Flatten: minting deterministic candidates</h3>
+<p><code>build_plan_tasks</code> is pure and deterministic — the same plan + bucket yields byte-identical tasks. Per node:</p>
+<ul>
+  <li><strong>Evidence aggregates up the tree</strong>: a parent's evidence is the union of its own <code>evidence_indices</code> and every descendant's (unioned by <code>file:line</code> identity), so a <code>fault_area</code> or <code>architectural</code> node's key is stable across sweeps of the same runs.</li>
+  <li><strong><code>dedup_key</code></strong> is content-addressed: a hash of <code>fault_area</code> + the sorted evidence <code>file:line</code> set — nothing else. It is the immutable identity the whole loop dedups on, including the backlog's <code>plan_dedup_key</code> frontmatter.</li>
+  <li><strong>Ids</strong> are minted from <code>dedup_key + tier + pre-order ordinal</code> (<code>pt-&lt;16-hex&gt;</code>), so two nodes legitimately sharing a key (a degenerate single-leaf subtree) still land in distinct files, while an identical re-sweep mints identical ids.</li>
+  <li>Every candidate starts <code>status: "proposed"</code> with wired <code>parent_id</code>/<code>child_ids</code>, rollups (<code>observed_count</code>, <code>projects</code>, <code>source_runs</code>), the strategist identity, and the node's <code>core_fix_effort</code> + rationale.</li>
+</ul>
+
+<h3>Reconcile: three decisions, in order</h3>
+<table>
+<tr><th>Step</th><th>Decision</th><th>Events</th></tr>
+<tr>
+  <td><strong>1. Create / augment</strong></td>
+  <td>A candidate whose <code>dedup_key</code> + <code>tier</code> names a live task (<code>proposed</code>/<code>accepted</code>) <strong>augments</strong> it: evidence merged by location, rollups recomputed, the current sweep's structural pointers adopted (remapped <code>parent_id</code>; <code>child_ids</code> unioned in), and the cost estimate refreshed from the candidate (the owning folder's capability evolves, so <code>core_fix_effort</code> is re-judged each sweep). Everything else is created fresh. Matching is 1:1 — exact id first (identical re-sweep), then a <code>(dedup_key, tier)</code> fallback for a moved-but-unchanged node; each existing task is claimed by at most one candidate.</td>
+  <td><code>create</code> · <code>augment</code></td>
+</tr>
+<tr>
+  <td><strong>2. Retire orphans</strong></td>
+  <td>A live task no candidate claimed is stale only when BOTH hold: (a) its grounding projects were <em>all</em> scanned this sweep (<code>projects ⊆</code> the manifest's projects — a partial sweep never falsely resolves a task it didn't cover), and (b) its fault area is not in <code>blocked_fault_areas</code> (areas with a bucket this sweep but a rejected or missing plan — a plan failure must not read as "FPs stopped recurring"; an area with no bucket at all is unblocked). An eligible orphan sharing a <code>file:line</code> with a fresh create of the same <code>(fault_area, tier)</code> is <strong>superseded</strong> into it (one orphan) or <strong>combined</strong> (several → one), assigned by maximum location overlap; with no overlap, its false-positives stopped recurring → <strong>resolved</strong> — the bug appears fixed.</td>
+  <td><code>supersede</code> · <code>combine</code> · <code>resolve</code></td>
+</tr>
+<tr>
+  <td><strong>3. Export overlay</strong></td>
+  <td>A live written task whose <code>dedup_key</code> a backlog task already carries (the <code>plan_dedup_key</code> frontmatter stamped by the export adapter, read read-only) moves to <code>status: "exported"</code> and is suppressed from re-proposal. Suppression matches on <code>(dedup_key, tier)</code> so a promoted parent never suppresses a same-key leaf; a suppressed candidate is remapped to the real exported task's id so a surviving child re-parents onto a persisted node. The event fires exactly once, on the proposed→exported transition.</td>
+  <td><code>export</code></td>
+</tr>
+</table>
+
+<h3>Recording membership exclusions</h3>
+<p>Each plan's <code>belongs: false</code> verdicts are recorded three ways, turning one judgement into three durable signals:</p>
+<ol>
+  <li>An <code>exclude_member</code> <code>PlanSweepEvent</code> — the audit trail.</li>
+  <li>A record in the <strong>membership-override store</strong>, keyed on the flagged member's identity — drift-tolerant on <code>(file_path, name, kind)</code>; <code>start_line</code> is a collision-breaker that can still shift, so a line-moved member re-enters the review. Pass A re-routes or suppresses it next sweep.</li>
+  <li>When the verdict names a <code>suggested_area</code>, a <code>derive_fault_area</code> correction signal in the sweep summary (<code>derive_fault_area_corrections[]</code>) — the durable signal to fix the deterministic derivation itself, the same spirit as the <code>other</code>-bucket taxonomy extension.</li>
+</ol>
+
+<div class="callout">The net guarantee: a re-sweep of the same runs <strong>augments rather than duplicates</strong>; an orphan whose false-positives vanished is <strong>resolved</strong>, not leaked; and work the human already promoted is <strong>suppressed</strong>, not re-proposed.</div>
+
+<h2 id="write-boundary">The planning-only write boundary</h2>
+
+<p>Plan proposes; it never actuates. Its entire write surface is its own task-DB under <code>~/.ariadne/plan/</code>, and within the skill the reconcile pass is the sole writer of that surface — the strategist writes only its staged <code>StrategistPlan</code>.</p>
+
+<table>
+<tr><th>Surface</th><th>Plan's relationship</th><th>Writer</th></tr>
+<tr><td><code>~/.ariadne/plan/tasks/</code>, <code>sweeps/</code>, <code>membership_overrides.json</code></td><td><strong>Writes</strong></td><td>Pass C (sole writer)</td></tr>
+<tr><td><code>~/.ariadne/plan/staging/&lt;sweep&gt;/plans/</code></td><td><strong>Writes</strong></td><td>plan-strategist (its only write grant)</td></tr>
+<tr><td><code>triage_results/&lt;run-id&gt;.json</code></td><td>Read-only input (schema v5)</td><td>triage finalize</td></tr>
+<tr><td><code>backlog/tasks/*.md</code></td><td>Read-only (<code>plan_dedup_key</code> frontmatter, the dedup signal)</td><td>The user-invoked <a href="actuate-and-backlog.html">export adapter</a> only — never the autonomous sweep</td></tr>
+<tr><td>Classifier <code>registry.json</code></td><td><strong>Never read, never written</strong></td><td><a href="registry-lifecycle.html">Human</a> (sole writer)</td></tr>
+<tr><td><code>packages/core</code></td><td>Never written</td><td>Engineers, via the backlog</td></tr>
+</table>
+
+<p>Graduating a proposed task into <code>backlog/</code> is a separate, deliberate human act — <code>export_to_backlog.ts</code>, the only path that writes the backlog — covered on <a href="actuate-and-backlog.html">Actuate (Human)</a>. The contracts gating plan's seams (<code>StrategistPlan</code> v1, <code>PlanTask</code> v1, triage results v5) are detailed on <a href="wire-contracts.html">Schemas &amp; Stores</a>.</p>
+
+<h2 id="state">State on disk</h2>
+
+<table>
+<tr><th>Path</th><th>Role</th></tr>
+<tr><td><code>~/.ariadne/triage-entrypoints/analysis_output/&lt;project&gt;/triage_results/&lt;run-id&gt;.json</code></td><td>Input (read-only), schema v5</td></tr>
+<tr><td><code>~/.ariadne/plan/staging/&lt;sweep&gt;/buckets/&lt;area&gt;.json</code> + <code>manifest.json</code></td><td>Pass A output: staged buckets + scanned scope (incl. zero-FP runs)</td></tr>
+<tr><td><code>~/.ariadne/plan/staging/&lt;sweep&gt;/plans/&lt;area&gt;.json</code></td><td>Pass B output: validated <code>StrategistPlan</code> per bucket</td></tr>
+<tr><td><code>~/.ariadne/plan/tasks/&lt;id&gt;.json</code></td><td><code>PlanTask</code> rows (schema v1)</td></tr>
+<tr><td><code>~/.ariadne/plan/sweeps/&lt;sweep&gt;.jsonl</code></td><td><code>PlanSweepEvent</code> log — one event per reconciliation decision</td></tr>
+<tr><td><code>~/.ariadne/plan/membership_overrides.json</code></td><td>Confirmed mis-routes; written by Pass C, read by Pass A</td></tr>
+</table>
+<p>Both namespaces are overridable for tests: <code>ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE</code> and <code>ARIADNE_PLAN_DIR_OVERRIDE</code>. Script invocation is always <code>node --import tsx</code>.</p>
+
+</main>
+</body>
+</html>

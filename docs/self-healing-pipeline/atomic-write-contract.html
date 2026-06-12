@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Atomic-Write Contract and Write Boundaries — Self-Healing Pipeline</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --panel-2: #1d212b; --ink: #e6e9ef; --muted: #9aa3b2;
+    --accent: #6ea8fe; --accent-2: #7ee787; --warn: #ff7b72; --border: #2a2f3a; --code-bg: #11141a;
+    --radius: 10px; --maxw: 980px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .doc-nav { position: sticky; top: 0; z-index: 10; background: rgba(15,17,21,.92);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 10px 20px;
+    display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+  .doc-nav .brand { font-weight: 700; color: var(--ink); margin-right: 10px; letter-spacing: .2px; }
+  .doc-nav a { color: var(--muted); text-decoration: none; font-size: 14px; padding: 4px 8px;
+    border-radius: 6px; white-space: nowrap; }
+  .doc-nav a:hover { color: var(--ink); background: var(--panel-2); }
+  .doc-nav a[aria-current="page"] { color: var(--bg); background: var(--accent); font-weight: 600; }
+  main { margin: 0 5%; padding: 36px 24px 96px; }
+  h1 { font-size: 30px; line-height: 1.25; margin: 8px 0 6px; }
+  h2 { font-size: 22px; margin: 38px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 17px; margin: 26px 0 8px; color: var(--accent); }
+  p, li { color: var(--ink); }
+  a { color: var(--accent); }
+  .lede { color: var(--muted); font-size: 18px; margin: 0 0 8px; }
+  code { background: var(--code-bg); border: 1px solid var(--border); border-radius: 5px;
+    padding: 1px 5px; font: 13.5px/1.5 "SF Mono", Menlo, Consolas, monospace; color: #d6deeb; }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 16px; overflow: auto; }
+  pre code { background: none; border: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--panel-2); }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; margin: 16px 0; }
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--panel-2); color: var(--muted); }
+  .callout { border-left: 3px solid var(--accent); background: var(--panel-2);
+    padding: 10px 14px; border-radius: 0 var(--radius) var(--radius) 0; margin: 16px 0; }
+  figure { margin: 18px 0; }
+  figure svg { max-width: 100%; height: auto; display: block; }
+  figcaption { color: var(--muted); font-size: 13px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<nav class="doc-nav">
+    <span class="brand">Self-Healing Pipeline</span>
+    <a href="index.html">Home</a>
+    <a href="overview-loop.html">The Loop</a>
+    <a href="triage-sense.html">Triage (Sense)</a>
+    <a href="triage-investigator.html">Investigator</a>
+    <a href="plan-classify.html">Plan (Classify)</a>
+    <a href="fault-area-taxonomy.html">Fault Areas</a>
+    <a href="registry-lifecycle.html">Registry</a>
+    <a href="reconcile-registry.html">Reconcile (Registry)</a>
+    <a href="atomic-write-contract.html" aria-current="page">Write Boundaries</a>
+    <a href="actuate-and-backlog.html">Actuate (Human)</a>
+    <a href="wire-contracts.html">Schemas &amp; Stores</a>
+  </nav>
+<main>
+
+<p class="lede">Every shared surface in the pipeline has exactly one writer — and that ownership is enforced structurally, not by convention.</p>
+<h1>The Atomic-Write Contract and Write Boundaries</h1>
+<p>
+  The classifier registry is a shared file that multiple processes could plausibly touch. Two mechanisms keep it
+  safe and auditable: a <strong>locked read-mutate-write helper</strong> (<code>atomic_update_registry</code>) that makes
+  concurrent mutation impossible to interleave, and an <strong>AST-level write-boundary test</strong>
+  (<code>registry_writers.test.ts</code>) that fails the build if any code path bypasses the helper.
+  Around them sits a write-boundary map giving every durable surface in the loop a single owner.
+</p>
+
+<h2 id="locked-cycle">The locked read-mutate-write cycle</h2>
+<p>
+  <code>atomic_update_registry(registry_path, mutator)</code> in
+  <code>packages/skill-fs/src/atomic_update_registry.ts</code> is the only legal path to mutating a shared registry.
+  It holds an exclusive lock over the <em>entire</em> read-mutate-write cycle, not just the final write:
+</p>
+
+<figure>
+<svg viewBox="0 0 920 360" role="img" aria-label="Locked read-mutate-write cycle: acquire .lock sidecar, read registry, run mutator, write or noop, release lock on success and failure paths">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9aa3b2"/>
+    </marker>
+    <marker id="arr-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7ee787"/>
+    </marker>
+    <marker id="arr-w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#ff7b72"/>
+    </marker>
+  </defs>
+
+  <!-- Step 1: acquire lock -->
+  <rect x="20" y="30" width="180" height="64" rx="10" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5"/>
+  <text x="110" y="56" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">acquire lock</text>
+  <text x="110" y="76" text-anchor="middle" fill="#9aa3b2" font-size="12" font-family="Menlo,monospace">open(path+".lock","wx")</text>
+
+  <!-- retry loop-back -->
+  <path d="M 110 94 C 110 140, 60 140, 60 110 L 60 100" fill="none" stroke="#ff7b72" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr-w)"/>
+  <text x="118" y="130" fill="#ff7b72" font-size="12">EEXIST → sleep 50ms, retry (×100)</text>
+  <text x="118" y="148" fill="#9aa3b2" font-size="12">all 100 fail → throw "stale lock?"</text>
+
+  <!-- Step 2: read -->
+  <rect x="280" y="30" width="160" height="64" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
+  <text x="360" y="56" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">read</text>
+  <text x="360" y="76" text-anchor="middle" fill="#9aa3b2" font-size="12" font-family="Menlo,monospace">readFile(registry)</text>
+
+  <!-- Step 3: mutator -->
+  <rect x="520" y="30" width="170" height="64" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
+  <text x="605" y="56" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">mutator(raw)</text>
+  <text x="605" y="76" text-anchor="middle" fill="#9aa3b2" font-size="12" font-family="Menlo,monospace">→ write | noop</text>
+
+  <!-- Step 4a: write -->
+  <rect x="760" y="10" width="150" height="58" rx="10" fill="#1d212b" stroke="#7ee787" stroke-width="1.5"/>
+  <text x="835" y="33" text-anchor="middle" fill="#e6e9ef" font-size="13" font-weight="600">atomic_write_file</text>
+  <text x="835" y="52" text-anchor="middle" fill="#9aa3b2" font-size="12">temp + rename</text>
+
+  <!-- Step 4b: noop -->
+  <rect x="760" y="86" width="150" height="46" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
+  <text x="835" y="114" text-anchor="middle" fill="#9aa3b2" font-size="13">noop — no write</text>
+
+  <!-- arrows between steps -->
+  <line x1="200" y1="62" x2="276" y2="62" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="440" y1="62" x2="516" y2="62" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="690" y1="48" x2="756" y2="39" stroke="#7ee787" stroke-width="1.5" marker-end="url(#arr-g)"/>
+  <line x1="690" y1="78" x2="756" y2="105" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- lock span bracket -->
+  <rect x="20" y="190" width="890" height="120" rx="10" fill="#171a21" stroke="#2a2f3a"/>
+  <text x="40" y="218" fill="#6ea8fe" font-size="13" font-weight="600">LOCK HELD: from successful open(…, "wx") until finally { close(); unlink(.lock) }</text>
+  <line x1="40" y1="240" x2="890" y2="240" stroke="#6ea8fe" stroke-width="2"/>
+  <circle cx="40" cy="240" r="4" fill="#6ea8fe"/>
+  <circle cx="890" cy="240" r="4" fill="#6ea8fe"/>
+  <text x="40" y="266" fill="#9aa3b2" font-size="12.5">The finally block runs on both success and failure paths — a throwing mutator still releases the lock.</text>
+  <text x="40" y="288" fill="#9aa3b2" font-size="12.5">Both close() and unlink() swallow their own errors so cleanup never masks the mutator's exception.</text>
+</svg>
+<figcaption>The full cycle — acquire, read, mutate, write-or-noop, release — runs under one <code>.lock</code> sidecar. Whichever writer acquires the lock first runs to completion before any other writer sees the file.</figcaption>
+</figure>
+
+<p>The mutator returns a <code>RegistryUpdate&lt;R&gt;</code>, which lets read-only decisions skip the disk write entirely while still passing a result back to the caller:</p>
+<pre><code>type RegistryUpdate&lt;R&gt; =
+  | { kind: "write"; next: string; result: R }   // commit `next` under the held lock
+  | { kind: "noop";  result: R };                // release the lock without writing</code></pre>
+
+<h3>Why bare <code>atomic_write_file</code> is not enough</h3>
+<p>
+  <code>atomic_write_file</code> (temp file + POSIX rename) guarantees a reader never observes a torn,
+  half-written file. It does <strong>not</strong> guarantee that two writers see each other. Two processes can each
+  read the registry, compute independent mutations from the same snapshot, and rename their results in sequence —
+  the second rename silently discards the first writer's mutation. That last-writer-wins data loss is exactly the
+  race the <code>.lock</code> sidecar prevents: <code>fs.open(path + ".lock", "wx")</code> succeeds for at most one
+  process at a time, serialising the full read-mutate-write cycles rather than just the final renames.
+</p>
+
+<div class="callout">
+  The lock is <strong>cooperative</strong> — only writers that go through <code>atomic_update_registry</code> honour it.
+  A direct write bypasses it silently. That is why the contract needs a second, structural enforcement layer:
+  the <a href="#ast-boundary">AST write-boundary test</a> below.
+</div>
+
+<h3>Stale-lock recovery and the 5-second budget</h3>
+<p>
+  Lock acquisition retries <strong>100 times at 50&nbsp;ms intervals</strong> (a ≈5&nbsp;s budget), then throws
+  <code>could not acquire &lt;path&gt;.lock after 5000ms — stale lock?</code>. Hitting the budget has two possible causes
+  with two different cures:
+</p>
+
+<table>
+  <tr><th>Cause</th><th>What happened</th><th>Recovery</th></tr>
+  <tr>
+    <td><strong>Honest contention</strong></td>
+    <td>A slow mutator legitimately held the lock past the budget. A read-mutate-write pass over a registry of several hundred rules runs sub-second, so a real bump is evidence of a runaway loop.</td>
+    <td>Increase the budget at the call site, or split the mutation into smaller transactions — after ruling out the runaway.</td>
+  </tr>
+  <tr>
+    <td><strong>Crashed writer</strong></td>
+    <td>A previous writer was killed (SIGKILL, OOM, kernel panic, <code>pkill -9</code>) after acquiring the lock and before <code>finally</code> ran. The sidecar persists indefinitely.</td>
+    <td>Verify no live writer holds the file (<code>lsof &lt;registry-path&gt;.lock</code>), then <code>rm &lt;registry-path&gt;.lock</code>.</td>
+  </tr>
+</table>
+
+<div class="callout" style="border-left-color: var(--warn);">
+  Stale locks are <strong>never auto-broken</strong> based on mtime. The cure is worse than the disease: a false
+  positive against a legitimately slow writer would interleave two mutators on the same registry — exactly the race
+  the lock exists to prevent.
+</div>
+
+<h2 id="ast-boundary">Structural enforcement: the AST write-boundary test</h2>
+<p>
+  <code>packages/skill-fs/src/registry_writers.test.ts</code> turns the contract into a build gate. It walks every
+  <code>.ts</code> file under <code>.claude/skills/</code> and <code>packages/</code> (excluding
+  <code>.test.ts</code>, <code>.d.ts</code>, <code>node_modules</code>, <code>dist</code>), parses each with the
+  TypeScript compiler, and flags two kinds of violation. Detection is purely syntactic and per-file — no cross-module
+  data-flow analysis.
+</p>
+
+<h3>Violation 1: raw write against a registry-shaped path</h3>
+<p>Any call to one of the named write functions whose <em>first argument</em> resolves to a registry-shaped target:</p>
+<div class="grid">
+  <div class="card">
+    <span class="tag">write functions</span>
+    <p style="margin:8px 0 0;"><code>atomic_write_file</code>, <code>writeFile</code>, <code>writeFileSync</code>,
+    <code>appendFile</code>, <code>appendFileSync</code> — matched by the rightmost identifier of the callee chain,
+    so <code>fs.promises.writeFile(…)</code> is caught too.</p>
+  </div>
+  <div class="card">
+    <span class="tag">registry-shaped first arg</span>
+    <p style="margin:8px 0 0;">A call to <code>get_registry_file_path(…)</code>; an identifier or property access whose
+    name carries <code>registry</code> (<code>registry_path</code>, <code>opts.registry_path</code>); or a string
+    literal / template containing <code>registry…json</code>.</p>
+  </div>
+  <div class="card">
+    <span class="tag">laundering defences</span>
+    <p style="margin:8px 0 0;">An identifier is chased to its same-file <code>const x = …</code> initializer, so
+    splitting <code>get_registry_file_path()</code> into a local variable does not evade the check. A destructured
+    alias of a registry-named key (<code>const { registry_path: x } = opts</code>) is treated as registry-shaped too.</p>
+  </div>
+</div>
+
+<h3>Violation 2: any call to the registry serializer</h3>
+<p>
+  Every call to <code>serialize_known_issues_registry_json</code> is flagged regardless of where its output goes.
+  The function is narrow-purpose — it exists only to produce the registry's on-disk bytes — so calling it outside an
+  <code>atomic_update_registry</code> mutator closure means somebody is computing those bytes and writing them
+  without the lock, even when first-arg resolution would miss the writer (renamed binding, indirect helper,
+  parameter passing).
+</p>
+
+<h3>The allowlists</h3>
+<table>
+  <tr><th>Allowlist</th><th>Contents</th><th>Why</th></tr>
+  <tr>
+    <td><code>ALLOWED_REGISTRY_WRITERS</code></td>
+    <td>Exactly one file: <code>packages/skill-fs/src/atomic_update_registry.ts</code></td>
+    <td>Its body is the only legal direct write of the registry — it calls <code>atomic_write_file</code> while holding the lock. Every other site reaches the registry through it.</td>
+  </tr>
+  <tr>
+    <td><code>ALLOWED_SERIALIZER_CALLERS</code></td>
+    <td>Empty</td>
+    <td>Every legitimate write reaches the registry through an <code>atomic_update_registry</code> mutator, so no file may call the serializer at top level.</td>
+  </tr>
+</table>
+<p>
+  A violation fails the build with the offending <code>file:line</code>, the callee, and the first-argument text,
+  plus the remediation: use <code>atomic_update_registry(path, mutator)</code> from <code>@ariadnejs/skill-fs</code>,
+  or — if a new site is genuinely contractually permitted — add it to the allowlist <em>and</em> document the reason in
+  <code>.claude/rules/classifier-lifecycle.md</code>.
+</p>
+
+<h3>The negative control</h3>
+<p>
+  A scanner that silently stopped matching anything would still pass the main test, because the live workspace
+  contains no real violations. A second test defends against that: it writes a synthetic known-bad file to a temp
+  directory — one raw <code>atomic_write_file("/tmp/registry.json", …)</code> and one
+  <code>serialize_known_issues_registry_json</code> call — runs <code>scan_file</code> on it, and asserts the scanner
+  returns at least one hit of <em>each</em> violation kind. If a refactor breaks every branch of
+  <code>arg_targets_registry</code>, this control fails instead of the boundary rotting silently.
+</p>
+
+<h2 id="write-map">The full write-boundary map</h2>
+<p>
+  Single-writer ownership is one of the pipeline's three architectural invariants. Each durable surface that
+  stitches the loop together has exactly one owner; everyone else is read-only. One writer per surface means every
+  change has an unambiguous provenance — the loop stays auditable because "who wrote this row?" always has exactly
+  one answer.
+</p>
+
+<figure>
+<svg viewBox="0 0 920 330" role="img" aria-label="Write-boundary map: human writes the registry, triage finalize writes triage results, plan reconcile writes the task DB and override store, the export adapter writes the backlog; all other arrows are read-only">
+  <defs>
+    <marker id="warr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7ee787"/>
+    </marker>
+    <marker id="rarr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9aa3b2"/>
+    </marker>
+  </defs>
+
+  <!-- Writers (top row) -->
+  <rect x="30" y="20" width="190" height="52" rx="10" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5"/>
+  <text x="125" y="42" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">Human</text>
+  <text x="125" y="60" text-anchor="middle" fill="#9aa3b2" font-size="12">hand-edit / invoked script</text>
+
+  <rect x="260" y="20" width="190" height="52" rx="10" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5"/>
+  <text x="355" y="42" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">Triage (finalize)</text>
+  <text x="355" y="60" text-anchor="middle" fill="#9aa3b2" font-size="12">per-commit sense job</text>
+
+  <rect x="490" y="20" width="190" height="52" rx="10" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5"/>
+  <text x="585" y="42" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">Plan (reconcile)</text>
+  <text x="585" y="60" text-anchor="middle" fill="#9aa3b2" font-size="12">offline classify engine</text>
+
+  <rect x="720" y="20" width="180" height="52" rx="10" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5"/>
+  <text x="810" y="42" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">export_to_backlog.ts</text>
+  <text x="810" y="60" text-anchor="middle" fill="#9aa3b2" font-size="12">human-run adapter</text>
+
+  <!-- Surfaces (bottom row) -->
+  <rect x="30" y="180" width="190" height="62" rx="10" fill="#171a21" stroke="#2a2f3a" stroke-width="1.5"/>
+  <text x="125" y="205" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">classifier registry</text>
+  <text x="125" y="225" text-anchor="middle" fill="#9aa3b2" font-size="11.5" font-family="Menlo,monospace">known_issues/registry.json</text>
+
+  <rect x="260" y="180" width="190" height="62" rx="10" fill="#171a21" stroke="#2a2f3a" stroke-width="1.5"/>
+  <text x="355" y="205" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">triage_results</text>
+  <text x="355" y="225" text-anchor="middle" fill="#9aa3b2" font-size="11.5" font-family="Menlo,monospace">&lt;run-id&gt;.json (schema v5)</text>
+
+  <rect x="490" y="180" width="190" height="62" rx="10" fill="#171a21" stroke="#2a2f3a" stroke-width="1.5"/>
+  <text x="585" y="205" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">task-DB + overrides</text>
+  <text x="585" y="225" text-anchor="middle" fill="#9aa3b2" font-size="11.5" font-family="Menlo,monospace">~/.ariadne/plan/</text>
+
+  <rect x="720" y="180" width="180" height="62" rx="10" fill="#171a21" stroke="#2a2f3a" stroke-width="1.5"/>
+  <text x="810" y="205" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">backlog</text>
+  <text x="810" y="225" text-anchor="middle" fill="#9aa3b2" font-size="11.5" font-family="Menlo,monospace">backlog/tasks/&lt;id&gt;.md</text>
+
+  <!-- Write arrows (green, vertical) -->
+  <line x1="125" y1="72" x2="125" y2="176" stroke="#7ee787" stroke-width="2" marker-end="url(#warr)"/>
+  <text x="135" y="130" fill="#7ee787" font-size="11.5">writes (locked)</text>
+  <line x1="355" y1="72" x2="355" y2="176" stroke="#7ee787" stroke-width="2" marker-end="url(#warr)"/>
+  <text x="365" y="130" fill="#7ee787" font-size="11.5">writes</text>
+  <line x1="585" y1="72" x2="585" y2="176" stroke="#7ee787" stroke-width="2" marker-end="url(#warr)"/>
+  <text x="595" y="130" fill="#7ee787" font-size="11.5">writes</text>
+  <line x1="810" y1="72" x2="810" y2="176" stroke="#7ee787" stroke-width="2" marker-end="url(#warr)"/>
+  <text x="820" y="130" fill="#7ee787" font-size="11.5">writes</text>
+
+  <!-- Read-only arrows (muted, dashed, diagonal) -->
+  <path d="M 245 100 C 200 130, 160 150, 138 176" fill="none" stroke="#9aa3b2" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#rarr)"/>
+  <text x="150" y="100" fill="#9aa3b2" font-size="11.5">triage reads (filter)</text>
+
+  <path d="M 470 110 C 430 140, 390 160, 372 176" fill="none" stroke="#9aa3b2" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#rarr)"/>
+  <text x="392" y="110" fill="#9aa3b2" font-size="11.5">plan reads novel_issues[]</text>
+
+  <path d="M 700 110 C 660 140, 620 160, 602 176" fill="none" stroke="#9aa3b2" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#rarr)"/>
+  <text x="622" y="110" fill="#9aa3b2" font-size="11.5">adapter reads PlanTask rows</text>
+
+  <!-- backlog dedup read-back -->
+  <path d="M 810 246 C 810 290, 585 300, 585 250" fill="none" stroke="#9aa3b2" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#rarr)"/>
+  <text x="600" y="290" fill="#9aa3b2" font-size="11.5">plan reads plan_dedup_key frontmatter (dedup signal)</text>
+
+  <!-- legend -->
+  <line x1="30" y1="318" x2="62" y2="318" stroke="#7ee787" stroke-width="2"/>
+  <text x="70" y="322" fill="#9aa3b2" font-size="12">sole writer</text>
+  <line x1="170" y1="318" x2="202" y2="318" stroke="#9aa3b2" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="210" y="322" fill="#9aa3b2" font-size="12">read-only</text>
+</svg>
+<figcaption>Each durable surface has exactly one green (write) arrow. Every other relationship is a dashed read.</figcaption>
+</figure>
+
+<table>
+  <tr><th>Surface</th><th>Sole writer</th><th>Write mechanism</th><th>Why one writer</th></tr>
+  <tr>
+    <td>Classifier registry<br><code>known_issues/registry.json</code></td>
+    <td><strong>Human</strong> — hand edits or human-invoked scripts. Triage reads it as a filter; plan neither reads nor writes it.</td>
+    <td>Always through <code>atomic_update_registry</code> (locked read-mutate-write); enforced by the AST test.</td>
+    <td>Every lifecycle transition (<code>wip → permanent</code> / <code>fixed</code>) is a deliberate promotion decision. Keeping the autonomous skills out of it keeps the loop-closure surface auditable.</td>
+  </tr>
+  <tr>
+    <td>Published triage results<br><code>triage_results/&lt;run-id&gt;.json</code></td>
+    <td><strong>Triage finalize</strong>. Investigator sub-agents write only their own per-entry verdict files under <code>triage_state/…/results/</code>.</td>
+    <td><code>atomic_write_file</code> — one writer per path needs no lock.</td>
+    <td>One fold step owns the published schema-v5 seam, so downstream readers (plan, the next run's TP cache) consume exactly one consistent document per run.</td>
+  </tr>
+  <tr>
+    <td>Plan task-DB + override store<br><code>~/.ariadne/plan/</code></td>
+    <td><strong>Plan reconcile</strong>. Plan writes nothing else — not the backlog, not the registry, not core.</td>
+    <td><code>atomic_write_file</code> for its own single-writer files.</td>
+    <td>The <code>dedup_key</code> augment-don't-duplicate logic only holds if no other process injects or mutates rows between sweeps.</td>
+  </tr>
+  <tr>
+    <td>Backlog<br><code>backlog/tasks/&lt;id&gt;.md</code></td>
+    <td><strong><code>export_to_backlog.ts</code></strong> — the human-run adapter in the <code>prioritize</code> skill. Plan reads the <code>plan_dedup_key</code> frontmatter as its read-only dedup signal.</td>
+    <td>Adapter stamps each graduated task with its <code>plan_dedup_key</code>.</td>
+    <td>The sweep proposes; only a human promotes. Funnelling promotion through one adapter keeps the proposal→commitment boundary explicit and stamped for dedup.</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <strong>Two write disciplines, one rule.</strong> <code>atomic_update_registry</code> (lock + rename) is for the
+  <em>shared</em> registry, where multiple potential writers must not interleave. Bare <code>atomic_write_file</code>
+  (rename only) remains the contract for files with exactly one writer per path — per-entry verdict files,
+  analysis-output JSON, the published results — where torn reads are the only hazard and a lock would buy nothing.
+</div>
+
+</main>
+</body>
+</html>
