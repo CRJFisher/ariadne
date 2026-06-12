@@ -21,6 +21,10 @@
     border-radius: 6px; white-space: nowrap; }
   .doc-nav a:hover { color: var(--ink); background: var(--panel-2); }
   .doc-nav a[aria-current="page"] { color: var(--bg); background: var(--accent); font-weight: 600; }
+  .doc-nav .group { display: flex; align-items: center; gap: 2px 6px; flex-wrap: wrap;
+    padding-left: 12px; border-left: 1px solid var(--border); }
+  .doc-nav .group-label { font-size: 10.5px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .8px; color: var(--muted); opacity: .75; margin-right: 2px; }
   main { margin: 0 5%; padding: 36px 24px 96px; }
   h1 { font-size: 30px; line-height: 1.25; margin: 8px 0 6px; }
   h2 { font-size: 22px; margin: 38px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
@@ -53,15 +57,23 @@
     <span class="brand">Self-Healing Pipeline</span>
     <a href="index.html">Home</a>
     <a href="overview-loop.html" aria-current="page">The Loop</a>
-    <a href="triage-sense.html">Triage (Sense)</a>
-    <a href="triage-investigator.html">Investigator</a>
-    <a href="plan-classify.html">Plan (Classify)</a>
-    <a href="fault-area-taxonomy.html">Fault Areas</a>
-    <a href="registry-lifecycle.html">Registry</a>
-    <a href="reconcile-registry.html">Reconcile (Registry)</a>
-    <a href="atomic-write-contract.html">Write Boundaries</a>
-    <a href="actuate-and-backlog.html">Actuate (Human)</a>
-    <a href="wire-contracts.html">Schemas &amp; Stores</a>
+    <span class="group"><span class="group-label">Sense</span>
+      <a href="triage-sense.html">Triage</a>
+      <a href="triage-investigator.html">Investigator</a>
+    </span>
+    <span class="group"><span class="group-label">Classify</span>
+      <a href="plan-classify.html">Plan</a>
+      <a href="fault-area-taxonomy.html">Fault Areas</a>
+    </span>
+    <span class="group"><span class="group-label">Actuate</span>
+      <a href="actuate-and-backlog.html">Backlog</a>
+      <a href="registry-lifecycle.html">Registry</a>
+      <a href="reconcile-registry.html">Reconcile</a>
+    </span>
+    <span class="group"><span class="group-label">Contracts</span>
+      <a href="atomic-write-contract.html">Write Boundaries</a>
+      <a href="wire-contracts.html">Schemas &amp; Stores</a>
+    </span>
   </nav>
 <main>
 
