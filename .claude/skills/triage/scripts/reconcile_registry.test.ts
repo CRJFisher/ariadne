@@ -11,8 +11,12 @@ import * as path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import { known_issues_registry_path } from "@ariadnejs/skill-protocol";
 import type { KnownIssue } from "@ariadnejs/types";
-import { serialize_known_issues_registry_json } from "@ariadnejs/types";
+import {
+  parse_known_issues_registry_json,
+  serialize_known_issues_registry_json,
+} from "@ariadnejs/types";
 
 import {
   bare_task_scope,
@@ -560,7 +564,7 @@ describe("run", () => {
       read_commit_subjects: () => [],
       discover_drift_sources: async () => ({ sources: [], skipped: [] }),
       regenerate_permanent_slice: async () => {
-        throw new Error("regenerate_permanent_slice must not run in this test");
+        throw new Error("regenerate_permanent_slice must not run without --promote");
       },
       ...over,
     };
@@ -635,7 +639,7 @@ describe("run", () => {
       drift_unknown_rule_ids: [],
       skipped_sources: [],
       applied: false,
-      permanent_slice_regenerated: false,
+      permanent_slice_changed: false,
     });
     expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
   });
@@ -684,14 +688,52 @@ describe("run", () => {
     expect(summary.missing_ids).toEqual(["rule-quiet", "rule-ghost"]);
   });
 
+  it("--id overrides the signal filters: a named rule's work surfaces from a suppressed signal", async () => {
+    await seed_registry([promotable_rule, tasked_rule, quiet_rule]);
+    const summary = await run(
+      ["--dry-run", "--fixed", "--id", "rule-quiet"],
+      make_deps({
+        read_commit_subjects: () => ["fix(198): close it"],
+        discover_drift_sources: async () => ({
+          sources: [
+            {
+              project: "webpack",
+              run_id: "deadbee-2026-06-01T10-00-00.000Z",
+              classifier_regressions: [
+                {
+                  rule_id: "rule-quiet",
+                  flagged_entries: [{ entry_index: 3, evidence_excerpt: "obj[name]()" }],
+                },
+              ],
+            },
+          ],
+          skipped: [],
+        }),
+      }),
+    );
+    // rule-quiet's only work is a drift proposal; despite --fixed, --id
+    // overrides the filter and the drift signal is scanned too.
+    expect(summary.proposals.drift_detected).toEqual([
+      {
+        kind: "drift_detected",
+        group_id: "rule-quiet",
+        set_drift_flag: true,
+        new_evidence: [{ entry_index: 3, evidence_excerpt: "obj[name]()" }],
+        flagged_by: [{ project: "webpack", run_id: "deadbee-2026-06-01T10-00-00.000Z" }],
+      },
+    ]);
+    expect(summary.proposals.wip_to_fixed).toEqual([]);
+    expect(summary.missing_ids).toEqual([]);
+  });
+
   it("promotes a classified rule and regenerates the permanent slice", async () => {
     await seed_registry([promotable_rule, tasked_rule, quiet_rule]);
-    const regenerate_calls: boolean[] = [];
+    const regenerate_calls: { dry_run: boolean; preview_rules: KnownIssue[] | null }[] = [];
     const summary = await run(
       ["--id", "rule-promotable", "--promote"],
       make_deps({
-        regenerate_permanent_slice: async (dry_run) => {
-          regenerate_calls.push(dry_run);
+        regenerate_permanent_slice: async (opts) => {
+          regenerate_calls.push(opts);
           return true;
         },
       }),
@@ -700,8 +742,8 @@ describe("run", () => {
       { kind: "promote_to_permanent", group_id: "rule-promotable" },
     ]);
     expect(summary.applied).toEqual(true);
-    expect(summary.permanent_slice_regenerated).toEqual(true);
-    expect(regenerate_calls).toEqual([false]);
+    expect(summary.permanent_slice_changed).toEqual(true);
+    expect(regenerate_calls).toEqual([{ dry_run: false, preview_rules: null }]);
     expect(await fs.readFile(registry_path, "utf8")).toEqual(
       serialize_known_issues_registry_json([
         { ...promotable_rule, status: "permanent" },
@@ -711,11 +753,17 @@ describe("run", () => {
     );
   });
 
-  it("rejects promoting an unclassified rule and writes nothing", async () => {
+  it("rejects promoting an unclassified rule and writes no registry change", async () => {
     const seeded = await seed_registry([promotable_rule, tasked_rule, quiet_rule]);
+    const regenerate_calls: { dry_run: boolean; preview_rules: KnownIssue[] | null }[] = [];
     const summary = await run(
       ["--id", "rule-quiet", "--promote"],
-      make_deps({}),
+      make_deps({
+        regenerate_permanent_slice: async (opts) => {
+          regenerate_calls.push(opts);
+          return false;
+        },
+      }),
     );
     expect(summary.proposals.promote_to_permanent).toEqual([]);
     expect(summary.rejected_promotions).toEqual([
@@ -726,24 +774,37 @@ describe("run", () => {
       },
     ]);
     expect(summary.applied).toEqual(false);
+    expect(summary.permanent_slice_changed).toEqual(false);
+    // The slice sync still runs on every --promote so a crash between the
+    // registry write and the regeneration is recoverable by re-running.
+    expect(regenerate_calls).toEqual([{ dry_run: false, preview_rules: null }]);
     expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
   });
 
-  it("previews a promotion under --dry-run without writing either surface", async () => {
+  it("previews a promotion under --dry-run from the would-be-promoted rules", async () => {
     const seeded = await seed_registry([promotable_rule, tasked_rule, quiet_rule]);
-    const regenerate_calls: boolean[] = [];
+    const regenerate_calls: { dry_run: boolean; preview_rules: KnownIssue[] | null }[] = [];
     const summary = await run(
       ["--dry-run", "--id", "rule-promotable", "--promote"],
       make_deps({
-        regenerate_permanent_slice: async (dry_run) => {
-          regenerate_calls.push(dry_run);
+        regenerate_permanent_slice: async (opts) => {
+          regenerate_calls.push(opts);
           return true;
         },
       }),
     );
     expect(summary.applied).toEqual(false);
-    expect(summary.permanent_slice_regenerated).toEqual(true);
-    expect(regenerate_calls).toEqual([true]);
+    expect(summary.permanent_slice_changed).toEqual(true);
+    expect(regenerate_calls).toEqual([
+      {
+        dry_run: true,
+        preview_rules: [
+          { ...promotable_rule, status: "permanent" },
+          tasked_rule,
+          quiet_rule,
+        ],
+      },
+    ]);
     expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
   });
 
@@ -773,5 +834,21 @@ describe("run", () => {
       },
     ]);
     expect(summary.proposals.drift_detected).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Whole-repo invariant
+// ---------------------------------------------------------------------------
+
+describe("registry round-trip", () => {
+  it("the committed registry re-serializes byte-identically (noop detection depends on it)", async () => {
+    // The apply path's `next === raw` noop check assumes the on-disk file is
+    // in the canonical serializer format. A hand-edit that reformats the
+    // registry would silently turn every apply into a full-file rewrite.
+    const raw = await fs.readFile(known_issues_registry_path(), "utf8");
+    expect(
+      serialize_known_issues_registry_json(parse_known_issues_registry_json(raw)),
+    ).toEqual(raw);
   });
 });

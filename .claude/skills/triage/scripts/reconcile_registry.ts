@@ -94,9 +94,12 @@ export interface FixedProposal {
   kind: "wip_to_fixed";
   group_id: string;
   backlog_task: string;
-  /** The commit scope that matched, e.g. `198` or `190.17.12-14`. */
+  /** The rule's bare task id that a commit scope matched, e.g. `198` or `190.17.13`. */
   matched_scope: string;
-  /** The full commit subject, for the preview's audit line. */
+  /**
+   * The newest matching commit subject, for the preview's audit line —
+   * subjects arrive newest-first from `git log`.
+   */
   matched_subject: string;
 }
 
@@ -174,7 +177,7 @@ export function pick_latest_run_id(filenames: readonly string[]): string | null 
  * Signal 1 — `wip → fixed`. For each wip rule carrying a `backlog_task`,
  * propose the flip when a fix-bearing commit subject's expanded scope set
  * contains the rule's exact bare task id. One proposal per rule, citing the
- * first matching subject.
+ * newest matching subject (`commit_subjects` arrives newest-first).
  */
 export function detect_fixed_proposals(
   rules: readonly KnownIssue[],
@@ -420,8 +423,16 @@ export interface ReconcileDeps {
     sources: DriftSource[];
     skipped: SkippedSource[];
   }>;
-  /** Regenerate core's permanent slice; returns true when the slice changed (or would). */
-  regenerate_permanent_slice: (dry_run: boolean) => Promise<boolean>;
+  /**
+   * Bring core's permanent slice in sync with the registry; returns true when
+   * the slice differs from a fresh render (and, unless `dry_run`, was
+   * rewritten). `preview_rules` substitutes for the on-disk registry so a
+   * `--dry-run --promote` previews the slice the promotion would produce.
+   */
+  regenerate_permanent_slice: (opts: {
+    dry_run: boolean;
+    preview_rules: KnownIssue[] | null;
+  }) => Promise<boolean>;
 }
 
 export interface RejectedPromotion {
@@ -445,8 +456,18 @@ export interface ReconcileSummary {
   drift_unknown_rule_ids: string[];
   /** Published files that failed to read/parse; reported, never fatal. */
   skipped_sources: SkippedSource[];
+  /**
+   * True when the registry write happened. False under `--dry-run`, when
+   * nothing was proposed, AND when the folded result was byte-identical to
+   * the current registry (an idempotent re-run).
+   */
   applied: boolean;
-  permanent_slice_regenerated: boolean;
+  /**
+   * True when core's permanent slice differs from a fresh render of the
+   * registry — rewritten on a real `--promote` run, reported-only under
+   * `--dry-run` (where the render uses the would-be-promoted rules).
+   */
+  permanent_slice_changed: boolean;
 }
 
 export async function run(
@@ -483,9 +504,12 @@ export async function run(
       }
     }
   } else {
-    // No signal flags → both signals (the default preview).
-    const detect_fixed = args.fixed || !args.drift;
-    const detect_drift = args.drift || !args.fixed;
+    // No signal flags → both signals (the default preview). `--id` overrides
+    // the signal filters: every signal is scanned so a named rule's work
+    // surfaces regardless of which transition it belongs to.
+    const id_override = args.ids.length > 0;
+    const detect_fixed = id_override || args.fixed || !args.drift;
+    const detect_drift = id_override || args.drift || !args.fixed;
     if (detect_fixed) {
       fixed_proposals = detect_fixed_proposals(registry, deps.read_commit_subjects());
     }
@@ -524,11 +548,21 @@ export async function run(
     });
   }
 
-  let permanent_slice_regenerated = false;
-  if (promote_proposals.length > 0) {
-    // Registry first (source of truth), then regenerate from the fresh read.
-    // Under --dry-run the generator only reports whether the slice would change.
-    permanent_slice_regenerated = await deps.regenerate_permanent_slice(args.dry_run);
+  let permanent_slice_changed = false;
+  if (args.promote) {
+    // Registry first (source of truth), then bring the slice in sync.
+    // Unconditional on --promote (not on accepted proposals) so a re-run
+    // recovers from a crash between the registry write and the regeneration:
+    // the rule is rejected as already-permanent, but the slice still syncs.
+    // Under --dry-run the would-be-promoted rules stand in for the registry
+    // so the preview reports the slice change the promotion would produce.
+    const preview_rules = args.dry_run
+      ? fold_proposals(registry, promote_proposals)
+      : null;
+    permanent_slice_changed = await deps.regenerate_permanent_slice({
+      dry_run: args.dry_run,
+      preview_rules,
+    });
   }
 
   return {
@@ -544,7 +578,7 @@ export async function run(
     drift_unknown_rule_ids,
     skipped_sources,
     applied,
-    permanent_slice_regenerated,
+    permanent_slice_changed,
   };
 }
 
@@ -597,8 +631,13 @@ export async function build_real_deps(): Promise<ReconcileDeps> {
       }
       return { sources, skipped };
     },
-    regenerate_permanent_slice: async (dry_run) =>
-      (await generate_permanent_data({ dry_run })).changed,
+    regenerate_permanent_slice: async ({ dry_run, preview_rules }) =>
+      (
+        await generate_permanent_data({
+          dry_run,
+          ...(preview_rules === null ? {} : { source_rules: preview_rules }),
+        })
+      ).changed,
   };
 }
 

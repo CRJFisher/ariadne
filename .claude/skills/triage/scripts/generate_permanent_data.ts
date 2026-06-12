@@ -25,6 +25,7 @@ import { pathToFileURL } from "node:url";
 
 import { atomic_write_file } from "@ariadnejs/skill-fs";
 import { known_issues_registry_path, repo_root } from "@ariadnejs/skill-protocol";
+import type { KnownIssue } from "@ariadnejs/types";
 import {
   KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION,
   parse_known_issues_registry_json,
@@ -55,6 +56,12 @@ export interface GenerateSummary {
 
 export interface GenerateOptions {
   dry_run: boolean;
+  /**
+   * Render from these rules instead of reading the registry. Used by
+   * `reconcile_registry.ts --dry-run --promote` to preview the slice a
+   * would-be promotion produces without the registry write having happened.
+   */
+  source_rules?: KnownIssue[];
   /** Source registry to read; defaults to the repo's known-issues registry. Injected by tests. */
   source_registry_path?: string;
   /** Slice module to write; defaults to core's `permanent_data.ts`. Injected by tests. */
@@ -64,9 +71,11 @@ export interface GenerateOptions {
 export async function generate_permanent_data(
   opts: GenerateOptions,
 ): Promise<GenerateSummary> {
-  const source = opts.source_registry_path ?? known_issues_registry_path();
-  const raw = await readFile(source, "utf8");
-  const rules = parse_known_issues_registry_json(raw);
+  const rules =
+    opts.source_rules ??
+    parse_known_issues_registry_json(
+      await readFile(opts.source_registry_path ?? known_issues_registry_path(), "utf8"),
+    );
   const rendered = render_permanent_slice_module(
     KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION,
     rules,

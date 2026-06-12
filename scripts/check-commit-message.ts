@@ -145,7 +145,7 @@ async function main(): Promise<void> {
   }
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((err) => {
     process.stderr.write(
       `check-commit-message failed: ${err instanceof Error ? err.message : String(err)}\n`,
