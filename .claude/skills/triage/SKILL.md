@@ -31,7 +31,7 @@ Before routing, extract any pipeline flags from the arguments:
 
 | Flag              | Variable     | Default |
 | ----------------- | ------------ | ------- |
-| `--max-count <n>` | `$MAX_COUNT` | `150`   |
+| `--max-count <n>` | `$MAX_COUNT` | `250`   |
 
 Strip extracted flags from the input before applying the routing table below.
 
@@ -39,7 +39,7 @@ Resolve the analysis target from the remaining input using this routing table:
 
 | Input pattern                       | Example                                                  | Action                                                                                                                           |
 | ----------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Empty or blank                      | `/triage`                                                | Ask the user what to analyze; if they name a path with no config yet, follow **Creating a New Project Config**                    |
+| Empty or blank                      | `/triage`                                                | Ask the user what to analyze; if they name a path with no config yet, follow **Creating a New Project Config**                   |
 | Config name                         | a name with a saved config                               | Use `--config ~/.ariadne/triage-entrypoints/project_configs/{name}.json`                                                         |
 | Absolute or relative directory path | `/Users/chuck/workspace/some-repo`, `../other-repo`      | If a project config exists for this path, use `--config <config-path>`; otherwise follow **Creating a New Project Config** below |
 | `owner/repo` or GitHub URL          | `anthropics/sdk-python`, `https://github.com/owner/repo` | Use `--github <value>`                                                                                                           |
@@ -128,7 +128,7 @@ Build triage state from the latest analysis output:
 node --import tsx .claude/skills/triage/scripts/prepare_triage.ts \
   --analysis ~/.ariadne/triage-entrypoints/analysis_output/<project>/detect_entrypoints/<timestamp>.json \
   --project <name> \
-  [--max-count $MAX_COUNT]   # omit to use default of 150
+  [--max-count $MAX_COUNT]   # omit to use default of 250
 ```
 
 Options:
@@ -136,7 +136,7 @@ Options:
 - `--analysis <path>` (required)
 - `--project <name>` (optional — falls back to the analysis file's `project_name`)
 - `--config <path>` (optional) — the project config whose `folders`/`exclude` scope re-indexing. Omitting it re-indexes the full tree, a different classification input than detect saw; pass the same config used in Phase 1.
-- `--max-count <n>` (optional, default `150`)
+- `--max-count <n>` (optional, default `250`)
 - `--no-reuse-tp` (optional) — disable the TP cache for this run; every `llm-triage` entry will re-investigate even if a prior run at the same commit confirmed it unreachable
 - `--tp-source-run <run-id>` (optional) — pin a specific source run for the TP cache. Must be at the current HEAD commit; the script throws otherwise.
 
@@ -178,6 +178,7 @@ Launch one **triage-investigator** agent per returned index in a **single messag
 ```
 project: <name>
 entry_index: N
+Write your verdict to results/N.json, then reply with one line only: `done N: <kind>`. Emit no other text.
 ```
 
 The triage-investigator runs `get_entry_context.ts --project <name> --entry <index>` itself to fetch the full investigation context (entry + in-scope registry slice) and writes its verdict to `results/{entry_index}.json`.
@@ -186,7 +187,7 @@ Track the set of in-flight entry indices locally — it seeds `--active` on the 
 
 ### Step 2: Steady-state worker pool
 
-Whenever any background investigator completes, remove its entry index from the in-flight set, then run the script once with the remaining in-flight indices:
+Whenever a `<task-notification>` arrives signalling an investigator completed, **treat it only as a "slot freed" signal** — the entry index that finished. Ignore its `<result>` body entirely; the authoritative verdict is `results/{entry_index}.json`, absorbed by `get_next_triage_entry.ts` and by `finalize_triage.ts` in Phase 4. Do not read, summarize, or act on the notification's prose. Remove its entry index from the in-flight set, then run the script once with the remaining in-flight indices:
 
 ```bash
 node --import tsx .claude/skills/triage/scripts/get_next_triage_entry.ts \
@@ -304,11 +305,11 @@ Two known leaks during this loop (escape hatch: `--no-reuse-tp`):
 
 The pipeline persists state in three places — two under `~/.ariadne/triage-entrypoints/` plus core's cache under `~/.ariadne/cache/`. Each has a different preservation contract — wiping the wrong one silently destroys cross-run TP reuse.
 
-| State                                                                      | Status               | Action on upgrade                                                                                                                                                                                                                                                                                                       |
-| -------------------------------------------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `analysis_output/<project>/triage_results/`                                | **Preserve**         | Never `rm -rf`. These finalized triage-results JSON files are the permanent source of truth for the TP cache (read by `confirmed_unreachable_reuse.derive_tp_cache` via `triage_results_store.all_finalized_runs_at_commit`). Wiping them forces every prior-confirmed entry back through the LLM investigator. |
-| `triage_state/<project>/runs/`                                             | **Preserve**         | Active and abandoned runs never auto-prune. `prune_runs.ts` keeps the last `--keep <n>` finalized runs and protects any run referenced as another run's `tp_cache.source_run_id`.                                                                                                                                       |
-| `~/.ariadne/cache/<slug>/manifest.json` (core's persistence cache)         | **Auto-invalidates** | The cache schema version is checked on load; mismatched manifests are dropped via `deserialize_manifest` and the cache rebuilds on next run. No user action required.                                                                                                                                                   |
+| State                                                              | Status               | Action on upgrade                                                                                                                                                                                                                                                                                               |
+| ------------------------------------------------------------------ | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `analysis_output/<project>/triage_results/`                        | **Preserve**         | Never `rm -rf`. These finalized triage-results JSON files are the permanent source of truth for the TP cache (read by `confirmed_unreachable_reuse.derive_tp_cache` via `triage_results_store.all_finalized_runs_at_commit`). Wiping them forces every prior-confirmed entry back through the LLM investigator. |
+| `triage_state/<project>/runs/`                                     | **Preserve**         | Active and abandoned runs never auto-prune. `prune_runs.ts` keeps the last `--keep <n>` finalized runs and protects any run referenced as another run's `tp_cache.source_run_id`.                                                                                                                               |
+| `~/.ariadne/cache/<slug>/manifest.json` (core's persistence cache) | **Auto-invalidates** | The cache schema version is checked on load; mismatched manifests are dropped via `deserialize_manifest` and the cache rebuilds on next run. No user action required.                                                                                                                                           |
 
 **Stale-LATEST handling.** If a `LATEST` pointer remains from an in-flight run at upgrade time, clear it via `abandon_run.ts --project <name>` or by deleting the file. The run dir stays visible to `list_runs.ts`. `abandon_run.ts` also marks the manifest abandoned.
 
@@ -347,7 +348,7 @@ The skill is a thin caller of `@ariadnejs/core`. Classification (`enrich_call_gr
 | `finalize/verdict_ledger.ts`                        | Shared per-entry verdict loader (`results/<entry_index>.json`); used by both `merge_results.ts` and `finalize_triage.ts`                                                |
 | `merge_results.ts`                                  | Merge investigator result files into triage state                                                                                                                       |
 | `triage_verdict.ts`                                 | `TriageVerdict` discriminated union + strict runtime parser; the published `NovelIssue` row type                                                                        |
-| `@ariadnejs/skill-fs` · `classifier_regressions.ts` | `aggregate_classifier_regressions` — finalize-time per-rule rollup of `fp-classifier-regression` verdicts (used only by triage's finalize)                                     |
+| `@ariadnejs/skill-fs` · `classifier_regressions.ts` | `aggregate_classifier_regressions` — finalize-time per-rule rollup of `fp-classifier-regression` verdicts (used only by triage's finalize)                              |
 | `dispense_payload.ts`                               | Build the per-entry dispense payload (entry context + in-scope registry slice)                                                                                          |
 | `triage_state_types.ts`                             | Triage state types (`TriageState`, `TriageEntry`, `TriageEntryResult`)                                                                                                  |
 | `store/paths.ts`                                    | Triage state file locations                                                                                                                                             |

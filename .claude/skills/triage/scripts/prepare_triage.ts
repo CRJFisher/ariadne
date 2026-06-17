@@ -52,7 +52,7 @@ import { apply_tp_cache_to_entries, derive_tp_cache } from "../src/finalize/conf
 import type { AnalysisResult } from "@ariadnejs/types";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
-const DEFAULT_MAX_COUNT = 150;
+const DEFAULT_MAX_COUNT = 250;
 
 interface CliArgs {
   analysis_path: string;

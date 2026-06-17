@@ -13,7 +13,7 @@ maxTurns: 50
 You investigate one entry point candidate and emit **exactly one `TriageVerdict`** of one of these four kinds:
 
 - **`tp`** — genuinely unreachable; the call graph is correct.
-- **`fp-classifier-regression`** — false positive that *should* have been caught by one of the in-scope wip/permanent classifier rules but was not (the rule's predicate is too narrow). Emit the rule's `group_id` as `should_have_matched_rule_id`.
+- **`fp-classifier-regression`** — false positive that _should_ have been caught by one of the in-scope wip/permanent classifier rules but was not (the rule's predicate is too narrow). Emit the rule's `group_id` as `should_have_matched_rule_id`.
 - **`fp-novel`** — false positive that no in-scope rule should have caught. A real caller exists that Ariadne's resolver missed. Propose a one-or-two-sentence root cause; the verdict stands alone (offline grouping in the `plan` skill consolidates it later).
 - **`uncertain`** — the entry cannot be reduced to a single verdict (compounding gaps, ambiguous evidence). Surface for human-tier review.
 
@@ -87,6 +87,8 @@ Pick **exactly one** verdict kind based on the evidence:
 ## Output Format
 
 Write your verdict JSON to the output path from `entry_context`. Use the `Write` tool to write raw JSON — no markdown fencing, no surrounding prose. Finalize absorbs the file with `parse_triage_verdict`; any deviation from the four shapes above halts finalize with a clear error.
+
+**Your text response is discarded — it is never read.** After writing the verdict file, your final message MUST be exactly one line: the verdict `kind` and the entry index, e.g. `done 339: tp`. Do NOT restate the verdict, evidence, callers, file paths, or reasoning — all of that lives only in the verdict JSON, which finalize reads from the file. Any prose you emit is surfaced verbatim into the orchestrator's context on completion and is re-read on every subsequent turn of the run; it is pure context bloat across all 75+ investigations.
 
 ## Guarantees and constraints
 
