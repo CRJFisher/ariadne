@@ -1,10 +1,10 @@
 ---
 id: TASK-190.17.13
 title: "triage-curator: retarget cross-skill imports to `@ariadnejs/types`"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-04-28 19:19"
-updated_date: "2026-04-28 19:38"
+updated_date: '2026-06-17'
 labels:
   - triage-curator
   - skill-retarget

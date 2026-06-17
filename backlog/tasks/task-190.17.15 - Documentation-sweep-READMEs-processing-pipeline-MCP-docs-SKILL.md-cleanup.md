@@ -1,10 +1,10 @@
 ---
 id: TASK-190.17.15
 title: "Documentation sweep: READMEs, processing pipeline, MCP docs, SKILL.md cleanup"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-04-28 19:20"
-updated_date: "2026-04-28 21:25"
+updated_date: "2026-06-17"
 labels:
   - docs
 dependencies:
@@ -49,16 +49,30 @@ Update all repo documentation that references the old API shape, paths, or types
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 packages/core/README.md updated for new entry_points semantics + get_classified_entry_points example
-- [ ] #2 docs/PROCESSING_PIPELINE.md CallGraph diagram updated to reflect classification step
-- [ ] #3 Root README.md sample code refreshed for new entry_points semantics
-- [ ] #4 packages/mcp/README.md updated for show_suppressed flag and classification semantics
-- [ ] #5 packages/mcp/SETUP.md updated for show_suppressed flag
-- [ ] #6 docs/core-limitations.md describes blind spots in terms of new classification taxonomy
-- [ ] #7 triage-entrypoints SKILL.md:337 stale extract_entry_points.ts row removed
-- [ ] #8 triage-entrypoints SKILL.md:346 stale entry_point_types.ts row removed/updated
-- [ ] #9 triage-entrypoints SKILL.md prose frames new thin-caller role inside the existing run-lifecycle narrative
-- [ ] #10 triage-entrypoints README.md mentions the generated permanent slice in core alongside the canonical registry
-- [ ] #11 Code samples in docs compile via pnpm build (no broken example)
-- [ ] #12 All updated docs are written in canonical, present-tense style (no 'old approach' / 'new way' framing)
+- [x] #1 packages/core/README.md updated for new entry_points semantics + get_classified_entry_points example
+- [x] #2 docs/PROCESSING_PIPELINE.md CallGraph diagram updated to reflect classification step
+- [x] #3 Root README.md sample code refreshed for new entry_points semantics
+- [x] #4 packages/mcp/README.md updated for show_suppressed flag and classification semantics
+- [x] #5 packages/mcp/SETUP.md updated for show_suppressed flag
+- [x] #6 docs/core-limitations.md describes blind spots in terms of new classification taxonomy
+- [x] #7 triage-entrypoints SKILL.md:337 stale extract_entry_points.ts row removed
+- [x] #8 triage-entrypoints SKILL.md:346 stale entry_point_types.ts row removed/updated
+- [x] #9 triage-entrypoints SKILL.md prose frames new thin-caller role inside the existing run-lifecycle narrative
+- [x] #10 triage-entrypoints README.md mentions the generated permanent slice in core alongside the canonical registry
+- [x] #11 Code samples in docs compile via pnpm build (no broken example)
+- [x] #12 All updated docs are written in canonical, present-tense style (no 'old approach' / 'new way' framing)
 <!-- AC:END -->
+
+## Implementation Notes
+
+All ACs were satisfied by earlier commits in the 190.17 series (`feat(190.17.12-14)`, `backlog(190.17.1-3)`):
+
+- **AC#1**: `packages/core/README.md` documents `get_classified_entry_points()` with a full example showing `framework_invoked`, `dunder_protocol`, `test_only`, `indirect_only` classification arms.
+- **AC#2**: `docs/PROCESSING_PIPELINE.md` CallGraph diagram already includes the `classify_entry_points` step and `ClassifiedEntryPoints` output shape.
+- **AC#3**: Root `README.md` sample uses `project.get_call_graph()` returning true positives only + `project.get_classified_entry_points()` for triage.
+- **AC#4,5**: `packages/mcp/README.md` and `SETUP.md` document `list_entrypoints` with `--show-suppressed` CLI flag and `ARIADNE_SHOW_SUPPRESSED=1` env var.
+- **AC#6**: `packages/mcp/docs/core-limitations.md` describes blind spots in terms of `EntryPointClassification` kinds (`framework_invoked`, `dunder_protocol`, `test_only`, `indirect_only`).
+- **AC#7,8**: `.claude/skills/triage/SKILL.md` Architecture table has no `extract_entry_points.ts` or `entry_point_types.ts` rows — removed in the 190.17 series. The table correctly points to the core package for those modules.
+- **AC#9**: SKILL.md states the skill is "a thin caller of `@ariadnejs/core`" and lists the core modules it delegates to.
+- **AC#10**: `triage/README.md` mentions "A generated `permanent`-status slice is bundled into `@ariadnejs/core` at `packages/core/src/classify_entry_points/permanent_data.ts`".
+- **AC#11,12**: All documentation is in canonical present-tense style; no TS samples in docs that fall outside the build.

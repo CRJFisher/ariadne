@@ -1,10 +1,10 @@
 ---
 id: TASK-190.17.1
 title: 'Naming sweep: rename `entry`/`entries` → `entry_point`/`entry_points`'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-04-28 19:12'
-updated_date: '2026-04-28 19:32'
+updated_date: '2026-06-17'
 labels:
   - naming-hygiene
   - self-repair

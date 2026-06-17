@@ -1,10 +1,10 @@
 ---
 id: TASK-190.17.5
 title: Move orchestrator into core; introduce `enrich_call_graph()` primitive
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-04-28 19:14"
-updated_date: "2026-04-28 19:32"
+updated_date: '2026-06-17'
 labels:
   - self-repair
   - core-refactor

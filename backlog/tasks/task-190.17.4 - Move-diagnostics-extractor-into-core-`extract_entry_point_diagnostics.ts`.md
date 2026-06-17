@@ -1,9 +1,10 @@
 ---
 id: TASK-190.17.4
 title: Move diagnostics extractor into core (`extract_entry_point_diagnostics.ts`)
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-04-28 19:14"
+updated_date: '2026-06-17'
 labels:
   - self-repair
   - core-refactor

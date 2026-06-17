@@ -1,10 +1,10 @@
 ---
 id: TASK-190.17.2
 title: 'Naming hygiene: rename `IntrospectionGap` → `SignalLibraryGap`'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-04-28 19:12'
-updated_date: '2026-04-28 19:37'
+updated_date: '2026-06-17'
 labels:
   - naming-hygiene
   - triage-curator

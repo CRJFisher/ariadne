@@ -1,9 +1,10 @@
 ---
 id: TASK-190.17.3
 title: Graduate types to `@ariadnejs/types`
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-04-28 19:13"
+updated_date: '2026-06-17'
 labels:
   - self-repair
   - core-refactor

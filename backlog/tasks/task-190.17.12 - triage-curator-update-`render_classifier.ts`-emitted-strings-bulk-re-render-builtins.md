@@ -3,10 +3,10 @@ id: TASK-190.17.12
 title: >-
   triage-curator: update `render_classifier.ts` emitted strings; bulk re-render
   builtins
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-04-28 19:18"
-updated_date: "2026-04-28 19:30"
+updated_date: '2026-06-17'
 labels:
   - triage-curator
   - skill-retarget

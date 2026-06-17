@@ -1,9 +1,10 @@
 ---
 id: TASK-190.17.14
 title: "triage-curator: cross-package writes, paths helper, agent prompt path update"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-04-28 19:19"
+updated_date: '2026-06-17'
 labels:
   - triage-curator
   - skill-retarget

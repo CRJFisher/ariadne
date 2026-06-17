@@ -3,10 +3,10 @@ id: TASK-190.17.6
 title: >-
   Add `Project.get_classified_entry_points()`; ship permanent slice; filter
   `entry_points`
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-04-28 19:15"
-updated_date: "2026-04-28 21:27"
+updated_date: '2026-06-17'
 labels:
   - self-repair
   - core-refactor
