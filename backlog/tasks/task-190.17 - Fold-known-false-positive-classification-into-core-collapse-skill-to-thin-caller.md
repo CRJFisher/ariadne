@@ -3,10 +3,10 @@ id: TASK-190.17
 title: >-
   Fold known-false-positive classification into core; collapse skill to thin
   caller
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-04-28 19:11"
-updated_date: "2026-04-28 21:26"
+updated_date: "2026-06-17"
 labels:
   - self-repair
   - entrypoint-analysis
@@ -73,15 +73,15 @@ Full design rationale, file-by-file scope, performance analysis, risks, and veri
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 Sub-sub-tasks 190.17.1 through 190.17.18 are created and linked under this parent
-- [ ] #2 All 18 sub-sub-tasks land together in a single PR
-- [ ] #3 Project.get_call_graph().entry_points returns true positives only by default on a Flask fixture
-- [ ] #4 Project.get_classified_entry_points() returns { true_entry_points, known_false_positives } with EntryPointClassification labels
-- [ ] #5 MCP list_entrypoints tool defaults to clean output and accepts a show_suppressed flag
-- [ ] #6 self-healing-pipeline runs end-to-end against the new core API; no in-skill auto_classify invocation remains
-- [ ] #7 triage-curator's render_classifier emits classifier source into packages/core/src/classify_entry_points/builtins/, compiling cleanly
-- [ ] #8 Linked major bump changeset is published for @ariadnejs/core + @ariadnejs/types
-- [ ] #9 diff_runs.ts equivalence check pre/post on a fixed commit shows zero flipped verdicts and minimal group churn
+- [x] #1 Sub-sub-tasks 190.17.1 through 190.17.18 are created and linked under this parent
+- [x] #2 All 18 sub-sub-tasks land together in a single PR
+- [x] #3 Project.get_call_graph().entry_points returns true positives only by default on a Flask fixture
+- [x] #4 Project.get_classified_entry_points() returns { true_entry_points, known_false_positives } with EntryPointClassification labels
+- [x] #5 MCP list_entrypoints tool defaults to clean output and accepts a show_suppressed flag
+- [x] #6 self-healing-pipeline runs end-to-end against the new core API; no in-skill auto_classify invocation remains
+- [x] #7 triage-curator's render_classifier emits classifier source into packages/core/src/classify_entry_points/builtins/, compiling cleanly
+- [x] #8 Linked major bump changeset is published for @ariadnejs/core + @ariadnejs/types
+- [x] #9 diff_runs.ts equivalence check pre/post on a fixed commit shows zero flipped verdicts and minimal group churn
 <!-- AC:END -->
 
 ## Implementation Plan
