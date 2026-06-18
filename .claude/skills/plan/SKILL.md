@@ -8,6 +8,18 @@ allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read, Write, Glob, Ta
 
 # Plan
 
+**FIRST ACTION — run this immediately, before any other step:**
+
+```bash
+node --import tsx .claude/skills/plan/scripts/group_runs.ts $ARGUMENTS
+```
+
+Capture the printed JSON as `SWEEP`. Then follow Passes B and C below.
+Do NOT call any other Skill. Do NOT search the backlog. Do NOT read any task file.
+The pipeline is self-contained.
+
+---
+
 Offline three-pass engine over `triage` outputs: **group → strategize →
 reconcile**. Pass A deterministically buckets every published false-positive by
 `AriadneFaultArea`; Pass B dispatches one `plan-strategist` (opus) per bucket to
