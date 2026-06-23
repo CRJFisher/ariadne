@@ -1,0 +1,94 @@
+---
+id: TASK-347
+title: "Associate every member (method and constructor) with its enclosing class/struct identity in the lexical scope tree"
+status: To Do
+assignee: []
+created_date: "2026-06-23 20:45"
+labels:
+  - plan-export
+  - scope_construction
+dependencies: []
+priority: high
+plan_dedup_key: 03d9db9732b8015f10944b6905e692cf6f23fb18fef8737033fe5c215328792a
+plan_source_task: pt-24615ebc36e46864
+---
+
+## Description
+
+<!-- SECTION:DESCRIPTION:BEGIN -->
+
+## Root cause
+
+`process_scopes` builds the lexical scope tree by pure positional containment: each scope-creating capture (class body, impl body, method, constructor) becomes a `LexicalScope` keyed by its own body location, parented to the smallest containing scope. Nothing in `scopes/` records the _type identity_ a member belongs to. Two structural consequences produce this whole class of false-positive:
+
+1. **Rust multi-`impl`-block fragmentation.** `RustScopeBoundaryExtractor.extract_impl_boundaries` emits one `class`-typed scope per `impl Foo { ... }` block, keyed by that block's body location. A struct `Foo` with N impl blocks therefore yields N sibling class-scopes that the tree never unifies under a single `Foo` identity. A `self.method()` call in one impl block cannot reach a method defined in another impl block of the same struct, because downstream receiver resolution sees them as members of different (anonymous, position-keyed) scopes. This is the `no_enclosing_class_scope` signal for Rust.
+
+2. **Constructor not parented under its class.** A Python `__init__` (and `cls(...)` / explicit-mixin construction) is captured as a `constructor` scope, but the scope tree records no link from `__init__` back to the class symbol it constructs. When a statically-known `ClassName(...)` call site is resolved, there is no enclosing-class association to route it to that class's `__init__`. This is the `no_parent_class` signal for Python.
+
+## Architectural upgrade
+
+The `scopes/` pass must attach, to each method/constructor scope, the **type identity** of the class/struct/impl-target it belongs to (the struct name for a Rust impl block; the class name for a Python method/constructor), and expose a way for receiver resolution to look up all members of a type identity regardless of which physical body block they were declared in. This unifies sibling Rust impl blocks under one struct identity and gives every constructor a resolvable owning class. The fix lands entirely in `packages/core/src/index_single_file/scopes` and the type identity it records is consumed by the existing `resolve_references/call_resolution` receiver pass.
+
+This architectural node inherits its evidence from the two fault-area children below.
+
+## Observations
+
+- Observed count: **42**
+- Projects: `-Users-chuck-.ariadne-triage-entrypoints-repos-rust-lang--rust`, `celery`, `pytorch`, `sqlalchemy`, `sqlx`, `tokio`
+- Source runs: `1d715bc-2026-06-22T15-11-13.691Z`, `3da582a-2026-06-22T15-54-41.005Z`, `66e2912-2026-06-22T15-23-50.566Z`, `942ac9c-2026-06-22T19-29-32.970Z`, `aef7f13-2026-06-22T10-38-14.644Z`, `ddf3b65-2026-06-22T10-58-10.555Z`
+
+## Evidence
+
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/celery--celery/t/unit/backends/test_arangodb.py:23` — Direct constructor instantiation `ArangoDbBackend(app=self.app)` which calls `__init__` is not linked by the call graph. (project `celery`, run `aef7f13-2026-06-22T10-38-14.644Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/celery--celery/t/unit/backends/test_asynchronous.py:178` — Direct instantiation `greenletDrainer(consumer)` is a real constructor call that invokes `greenletDrainer.__init__` but is not resolved in Ariadne's call graph. (project `celery`, run `aef7f13-2026-06-22T10-38-14.644Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/celery--celery/t/unit/backends/test_azureblockblob.py:25` — Direct class instantiation of AzureBlockBlobBackend calls **init** implicitly, but Ariadne did not resolve this to the constructor definition at azureblockblob.py:27. (project `celery`, run `aef7f13-2026-06-22T10-38-14.644Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/celery--celery/t/unit/backends/test_cache.py:25` — Direct instantiation `CacheBackend(backend='memory://', app=self.app)` calls `__init__` but was not resolved by Ariadne. (project `celery`, run `aef7f13-2026-06-22T10-38-14.644Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/celery--celery/t/unit/backends/test_cassandra.py:36` — Test file directly instantiates CassandraBackend, which invokes this **init**, but Ariadne did not link the constructor call. (project `celery`, run `aef7f13-2026-06-22T10-38-14.644Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/celery--celery/t/unit/backends/test_consul.py:13` — Direct constructor call ConsulBackend(...) that Ariadne did not link to the **init** definition. (project `celery`, run `aef7f13-2026-06-22T10-38-14.644Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/celery--celery/t/unit/backends/test_cosmosdbsql.py:18` — Direct constructor call `CosmosDBSQLBackend(app=self.app, url=self.url)` in the test setup method is a real caller of `__init__` that Ariadne did not link. (project `celery`, run `aef7f13-2026-06-22T10-38-14.644Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/celery--celery/t/unit/backends/test_couchbase.py:26` — Direct class instantiation `CouchbaseBackend(app=self.app)` in test setup_method calls **init**, but Ariadne did not resolve this to CouchbaseBackend.**init**. (project `celery`, run `aef7f13-2026-06-22T10-38-14.644Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/celery--celery/t/unit/backends/test_couchdb.py:27` — Direct constructor call `CouchBackend(app=self.app)` invokes `CouchBackend.__init__` but Ariadne did not resolve this call to the entry under investigation. (project `celery`, run `aef7f13-2026-06-22T10-38-14.644Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/celery--celery/t/unit/backends/test_database.py:133` — Direct class instantiation `DatabaseBackend(self.uri, app=self.app)` implicitly calls `__init__` but Ariadne does not resolve this to the constructor definition. (project `celery`, run `aef7f13-2026-06-22T10-38-14.644Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/celery--celery/t/unit/backends/test_filesystem.py:30` — Direct instantiation of FilesystemBackend calls **init** but Ariadne shows zero resolved call references to this constructor. (project `celery`, run `aef7f13-2026-06-22T10-38-14.644Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/celery--celery/t/unit/backends/test_mongodb.py:91` — Direct instantiation `MongoBackend(app=self.app, url=self.default_url)` calls `__init__` but Ariadne does not resolve this constructor call to `MongoBackend.__init__`. (project `celery`, run `aef7f13-2026-06-22T10-38-14.644Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/celery--celery/t/unit/backends/test_redis.py:1553` — Direct instantiation of SentinelBackend calls **init** at line 718, but Ariadne did not resolve this call site to the entry. (project `celery`, run `aef7f13-2026-06-22T10-38-14.644Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/celery--celery/t/unit/backends/test_rpc.py:14` — Direct constructor call `RPCBackend(app=self.app)` that should resolve to RPCBackend.**init** at rpc.py:178 but Ariadne reports no resolved callers. (project `celery`, run `aef7f13-2026-06-22T10-38-14.644Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/celery--celery/t/unit/backends/test_s3.py:28` — Direct constructor call `S3Backend(app=self.app)` instantiates the class and thus invokes `S3Backend.__init__`, but Ariadne produced no resolved references to this `__init__` definition. (project `celery`, run `aef7f13-2026-06-22T10-38-14.644Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/celery--celery/t/unit/events/test_snapshot.py:26` — Test directly instantiates Polaroid(self.state, app=self.app) which calls **init**, but this constructor call is absent from Ariadne's call references for this entry. (project `celery`, run `aef7f13-2026-06-22T10-38-14.644Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/celery--celery/t/unit/utils/test_serialization.py:49` — Direct class instantiation call that implicitly invokes **init** but is not linked by Ariadne's resolver. (project `celery`, run `aef7f13-2026-06-22T10-38-14.644Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/examples/postgres/axum-social-with-tests/src/http/error.rs:55` — The call `self.status_code()` at line 55 in `into_response` directly invokes the method defined at line 66 in the same file's `impl Error` block, but Ariadne's resolution_count is 0. (project `sqlx`, run `3da582a-2026-06-22T15-54-41.005Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-postgres/src/arguments.rs:85` — Direct field-access method call `self.buffer.snapshot()` in `PgArguments::add` is the sole caller; Ariadne detected it (resolution_count=0, unresolved) but failed to link it to the definition at line 217. (project `sqlx`, run `3da582a-2026-06-22T15-54-41.005Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-postgres/src/message/response.rs:88` — The call `self.fields()` at line 88 in `get_raw` is a real caller of the private `fields` method at line 97, both on the same `Notice` struct but in different `impl Notice` blocks. (project `sqlx`, run `3da582a-2026-06-22T15-54-41.005Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-postgres/src/type_info.rs:1030` — Direct method call on `self` of type `PgType` within the same file as the definition, but Ariadne failed to resolve it (resolution_count=0). (project `sqlx`, run `3da582a-2026-06-22T15-54-41.005Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-postgres/src/types/cube.rs:85` — self.header() at line 85 is a direct concrete method call on PgCube within the same file, with resolution_count=0 showing Ariadne failed to link it to the definition at line 118 (project `sqlx`, run `3da582a-2026-06-22T15-54-41.005Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/pytorch--pytorch/torch/fx/_graph_pickler.py:517` — The classmethod `reduce_helper` at line 510 calls `cls(...)` which constructs a `_TensorPickleData` instance, directly invoking the `__init__` at line 521, but Ariadne does not resolve `cls(...)` in classmethods to the class constructor. (project `pytorch`, run `1d715bc-2026-06-22T15-11-13.691Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/compiler/rustc_ast_lowering/src/lib.rs:2120` — Entry point candidate: lower_lifetime_hidden_in_path at line 2120 in lib.rs (project `-Users-chuck-.ariadne-triage-entrypoints-repos-rust-lang--rust`, run `942ac9c-2026-06-22T19-29-32.970Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/compiler/rustc_ast_lowering/src/lib.rs:2599` — Entry point candidate: lower_const_item_rhs at line 2599 in lib.rs (project `-Users-chuck-.ariadne-triage-entrypoints-repos-rust-lang--rust`, run `942ac9c-2026-06-22T19-29-32.970Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/compiler/rustc_ast_lowering/src/path.rs:482` — Direct self-method call on a concrete LoweringContext receiver that Ariadne indexed but failed to resolve to the definition in lib.rs. (project `-Users-chuck-.ariadne-triage-entrypoints-repos-rust-lang--rust`, run `942ac9c-2026-06-22T19-29-32.970Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/compiler/rustc_ast_pretty/src/pprust/state.rs:2241` — Entry point candidate: print_fn_ret_ty at line 2241 in state.rs (project `-Users-chuck-.ariadne-triage-entrypoints-repos-rust-lang--rust`, run `942ac9c-2026-06-22T19-29-32.970Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/compiler/rustc_const_eval/src/interpret/validity.rs:1379` — Direct `self.try_visit_primitive(val)` call within `visit_value` (trait impl at line 1264) to a method defined in the plain `impl ValidityVisitor` block at line 875; grep confirms the call exists but Ariadne reports resolution_count=0. (project `-Users-chuck-.ariadne-triage-entrypoints-repos-rust-lang--rust`, run `942ac9c-2026-06-22T19-29-32.970Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/compiler/rustc_hir_pretty/src/lib.rs:180` — Direct self.print_trait_item() call on State within print_node (same file, same impl) shows resolution_count=0, indicating the resolver failed to link this intra-impl method call. (project `-Users-chuck-.ariadne-triage-entrypoints-repos-rust-lang--rust`, run `942ac9c-2026-06-22T19-29-32.970Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/compiler/rustc_hir_pretty/src/lib.rs:181` — Direct call `self.print_impl_item(a)` on a concrete `State` receiver in `print_node`, same file as the definition at line 976, yet Ariadne shows resolution_count=0. (project `-Users-chuck-.ariadne-triage-entrypoints-repos-rust-lang--rust`, run `942ac9c-2026-06-22T19-29-32.970Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/compiler/rustc_mir_transform/src/gvn.rs:2096` — Direct self.simplify_rvalue() call within MutVisitor impl for VnState at line 2096 is a real caller of the definition at line 1060, but Ariadne shows resolution_count=0. (project `-Users-chuck-.ariadne-triage-entrypoints-repos-rust-lang--rust`, run `942ac9c-2026-06-22T19-29-32.970Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/compiler/rustc_parse/src/parser/mod.rs:1295` — Entry point candidate: parse_const_block at line 1295 in mod.rs (project `-Users-chuck-.ariadne-triage-entrypoints-repos-rust-lang--rust`, run `942ac9c-2026-06-22T19-29-32.970Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/compiler/rustc_trait_selection/src/traits/select/mod.rs:2313` — Entry point candidate: constituent_types_for_auto_trait at line 2313 in mod.rs (project `-Users-chuck-.ariadne-triage-entrypoints-repos-rust-lang--rust`, run `942ac9c-2026-06-22T19-29-32.970Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/sqlalchemy--sqlalchemy/examples/adjacency_list/adjacency_list.py:60` — Direct constructor call `Session(engine)` is a real caller of Session.**init** at line 1518 that Ariadne failed to link. (project `sqlalchemy`, run `ddf3b65-2026-06-22T10-58-10.555Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/sqlalchemy--sqlalchemy/lib/sqlalchemy/sql/_selectable_constructors.py:637` — This line directly constructs a TableClause instance, calling the **init** under investigation, but Ariadne failed to resolve this constructor call to the TableClause.**init** definition. (project `sqlalchemy`, run `ddf3b65-2026-06-22T10-58-10.555Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/sqlalchemy--sqlalchemy/lib/sqlalchemy/sql/schema.py:4774` — Direct explicit mixin **init** call via ColumnCollectionMixin.**init**(self, ...) which Ariadne fails to resolve as a call to the mixin's constructor. (project `sqlalchemy`, run `ddf3b65-2026-06-22T10-58-10.555Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/sqlalchemy--sqlalchemy/test/dialect/mssql/test_engine.py:634` — Direct instantiation of MSDialect_pyodbc() implicitly calls **init** but Ariadne does not resolve class instantiation to the **init** definition. (project `sqlalchemy`, run `ddf3b65-2026-06-22T10-58-10.555Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/sqlalchemy--sqlalchemy/test/dialect/mysql/test_compiler.py:1958` — Direct constructor call to the mysql `match` class imported at line 61, which invokes `match.__init__` but is not resolved by Ariadne to this definition. (project `sqlalchemy`, run `ddf3b65-2026-06-22T10-58-10.555Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/sqlalchemy--sqlalchemy/test/ext/test_horizontal_shard.py:900` — Direct constructor call `ShardedSession(...)` which invokes `ShardedSession.__init__` at horizontal_shard.py:142, but Ariadne did not resolve this link. (project `sqlalchemy`, run `ddf3b65-2026-06-22T10-58-10.555Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--tokio/tokio/src/runtime/io/scheduled_io.rs:383` — Direct self.readiness_fut() call within the same impl ScheduledIo block confirms a real caller that Ariadne detected but could not resolve to the definition 7 lines below. (project `tokio`, run `66e2912-2026-06-22T15-23-50.566Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--tokio/tokio/src/runtime/scheduler/multi_thread/worker.rs:1091` — Direct method call on a struct field with a concrete generic type; grep confirms the call site exists and the field type is declared at line 127. (project `tokio`, run `66e2912-2026-06-22T15-23-50.566Z`)
+- `/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--tokio/tokio/src/runtime/scheduler/multi_thread/worker.rs:1189` — Real caller invokes has_tasks() on self.run_queue which is of type Local<T> defined in queue.rs, but Ariadne's resolution_count=0 indicates it failed to link the field's type to the method definition. (project `tokio`, run `66e2912-2026-06-22T15-23-50.566Z`)
+
+<!-- SECTION:DESCRIPTION:END -->
+
+## Acceptance Criteria
+
+<!-- AC:BEGIN -->
+
+- [ ] #1 Root-cause fix lands in `packages/core/src/index_single_file/scopes` so the scope_construction pattern resolves without a classifier.
+- [ ] #2 Add a regression test reproducing the observed evidence; confirm the fix covers it.
+
+<!-- AC:END -->
