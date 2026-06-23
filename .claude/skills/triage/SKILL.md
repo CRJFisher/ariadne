@@ -57,7 +57,10 @@ When the input is a directory path and a project config already exists for that 
      --path <abs_path>
    ```
 
-3. Pick directories to exclude from indexing. Common candidates: vendored / third-party / generated trees, directories whose contents are not first-party source, or any single directory whose file count dominates the rest of the project. A high `file_count_recursive` with a low `file_count_direct` means the directory is a container for sub-packages, not a leaf vendor blob — do not exclude it on count alone.
+3. Pick directories to exclude from indexing, with the goal of keeping the total indexed file count at **≤ ~4,000 files**. Common candidates: vendored / third-party / generated trees, directories whose contents are not first-party source, or any single directory whose file count dominates the rest of the project. A high `file_count_recursive` with a low `file_count_direct` means the directory is a container for sub-packages, not a leaf vendor blob — do not exclude it on count alone.
+
+   Estimate the post-exclusion count: subtract the `file_count_recursive` of each directory you plan to exclude from `total_source_files`. If the estimated count exceeds ~4,000 and the project cannot be reasonably reduced further, inform the user that indexing will take significantly longer than a typical run before proceeding.
+
 4. Present the **full** preview list in your message text (relative path + `file_count_recursive` per line), with your pre-selected exclusions marked and a short reason for each pick. Then use AskUserQuestion with three options: "Accept these exclusions", "Modify — I'll describe changes in my reply", "Exclude nothing". If the user chooses Modify, read their follow-up message, apply the changes, and confirm the final list before continuing. The user's final answer is authoritative.
 5. Propose a config with:
    - `project_path`: absolute path (required)
@@ -97,6 +100,21 @@ All paths above are relative to `~/.ariadne/triage-entrypoints/`. Run-ids have t
 Phase 3-4 scripts default to the run pointed at by `LATEST`; pass `--run-id <id>` to operate on a specific run. `prepare_triage` writes `LATEST` and `finalize_triage` clears it.
 
 The dead-code whitelist at `known_entrypoints/<package>.json` (also under `~/.ariadne/triage-entrypoints/`) is owned by the `detect_dead_code` Stop hook and is never read or written by this pipeline. See **Dead-code guardrail** below.
+
+## Pre-flight: File Count Check
+
+Before running detection, verify the project's effective file count is within acceptable limits. This applies whether you are using an existing config or a newly created one.
+
+For a **new config**, the exclusion selection in **Creating a New Project Config** already produced an estimate. Confirm it is ≤ ~4,000 files.
+
+For an **existing config**, re-run the folder preview against the config's `project_path` and subtract the `file_count_recursive` of each directory listed in `exclude`:
+
+```bash
+node --import tsx .claude/skills/triage/scripts/preview_folders.ts \
+  --path <project_path>
+```
+
+If the estimated post-exclusion count exceeds ~4,000 files, inform the user before running Phase 1 — indexing at that scale will take significantly longer than a typical run. Offer to revisit the config's `exclude` list if further reduction is feasible.
 
 ## Phase 1: Detect
 
