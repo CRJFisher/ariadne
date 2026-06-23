@@ -229,7 +229,7 @@ describe("export_to_backlog run()", () => {
 
   it("assigns sequential ids across a multi-row export", async () => {
     const repo = new JsonPlanTaskRepository();
-    // Two distinct proposed rows; ids sort pt-a < pt-b → TASK-347, TASK-348.
+    // Two distinct proposed roots; ids sort pt-a < pt-b → TASK-347, TASK-348.
     await repo.put(make_task({ id: "pt-a" as PlanTaskId, dedup_key: "ka" }));
     await repo.put(make_task({ id: "pt-b" as PlanTaskId, dedup_key: "kb" }));
 
@@ -258,6 +258,83 @@ describe("export_to_backlog run()", () => {
       { kind: "export", task_id: "pt-a", backlog_task: "TASK-347" },
       { kind: "export", task_id: "pt-b", backlog_task: "TASK-348" },
     ]);
+  });
+
+  it("nests a three-tier group under one top-level id with dotted child ids", async () => {
+    const repo = new JsonPlanTaskRepository();
+    // A full group: architectural root → fault_area → two localized leaves.
+    await repo.put(
+      make_task({
+        id: "pt-arch" as PlanTaskId,
+        tier: "architectural",
+        parent_id: null,
+        dedup_key: "karch",
+        title: "[name_resolution] Close the binding gap",
+      }),
+    );
+    await repo.put(
+      make_task({
+        id: "pt-area" as PlanTaskId,
+        tier: "fault_area",
+        parent_id: "pt-arch" as PlanTaskId,
+        dedup_key: "karea",
+        title: "[name_resolution] Group node",
+      }),
+    );
+    await repo.put(
+      make_task({
+        id: "pt-leaf-a" as PlanTaskId,
+        tier: "localized",
+        parent_id: "pt-area" as PlanTaskId,
+        dedup_key: "kleafa",
+        observed_count: 40,
+        title: "[name_resolution] Bind qualified paths",
+      }),
+    );
+    await repo.put(
+      make_task({
+        id: "pt-leaf-b" as PlanTaskId,
+        tier: "localized",
+        parent_id: "pt-area" as PlanTaskId,
+        dedup_key: "kleafb",
+        observed_count: 4,
+        is_classifier_work: true,
+        title: "[name_resolution] Interim classifier",
+      }),
+    );
+
+    const summary = await run([], FIXED_NOW);
+
+    // Root → 347, fault_area → 347.1, core leaf (higher impact) → 347.1.1, classifier → 347.1.2.
+    expect(summary.exported.map((e) => ({ id: e.id, backlog_task: e.backlog_task }))).toEqual([
+      { id: "pt-arch", backlog_task: "TASK-347" },
+      { id: "pt-area", backlog_task: "TASK-347.1" },
+      { id: "pt-leaf-a", backlog_task: "TASK-347.1.1" },
+      { id: "pt-leaf-b", backlog_task: "TASK-347.1.2" },
+    ]);
+
+    // The fault_area child file links up to the root.
+    const area_file = path.join(backlog_dir, "task-347.1 - name_resolution-Group-node.md");
+    const area_content = await fs.readFile(area_file, "utf8");
+    expect(area_content.includes("id: TASK-347.1")).toBe(true);
+    expect(area_content.includes("parent_task_id: TASK-347")).toBe(true);
+    expect(area_content.includes("ordinal: 1000")).toBe(true);
+
+    // The classifier leaf links up to the fault_area node and carries the second ordinal.
+    const leaf_file = path.join(backlog_dir, "task-347.1.2 - name_resolution-Interim-classifier.md");
+    const leaf_content = await fs.readFile(leaf_file, "utf8");
+    expect(leaf_content.includes("parent_task_id: TASK-347.1")).toBe(true);
+    expect(leaf_content.includes("ordinal: 2000")).toBe(true);
+
+    // Every row's dedup_key landed in the backlog under its dotted id.
+    expect(await read_exported_backlog_keys(backlog_dir)).toEqual(
+      new Map([
+        ["karch", "TASK-347"],
+        ["karea", "TASK-347.1"],
+        ["kleafa", "TASK-347.1.1"],
+        ["kleafb", "TASK-347.1.2"],
+      ]),
+    );
   });
 
   it("skips a still-proposed row whose dedup_key a backlog task already carries (crash recovery)", async () => {

@@ -72,8 +72,14 @@ describe("slugify_title", () => {
 
 describe("backlog_task_filename", () => {
   it("renders the `task-<id> - <slug>.md` convention", () => {
-    expect(backlog_task_filename(347, "[type_resolution] Narrow receiver")).toEqual(
+    expect(backlog_task_filename("347", "[type_resolution] Narrow receiver")).toEqual(
       "task-347 - type_resolution-Narrow-receiver.md",
+    );
+  });
+
+  it("renders a dotted child id into the filename", () => {
+    expect(backlog_task_filename("347.1.2", "[type_resolution] Narrow receiver")).toEqual(
+      "task-347.1.2 - type_resolution-Narrow-receiver.md",
     );
   });
 });
@@ -132,7 +138,11 @@ describe("render_backlog_task", () => {
       ].join("\n"),
     });
 
-    const rendered = render_backlog_task(task, 347, "2026-06-04 14:30");
+    const rendered = render_backlog_task(
+      task,
+      { backlog_id: "347", parent_backlog_id: null, ordinal: null },
+      "2026-06-04 14:30",
+    );
 
     expect(rendered.filename).toEqual(
       "task-347 - name_resolution-Resolve-namespace-receiver-calls.md",
@@ -177,7 +187,68 @@ describe("render_backlog_task", () => {
 
   it("stamps medium priority for classifier work", () => {
     const task = make_task({ is_classifier_work: true, body: "prose\n" });
-    const rendered = render_backlog_task(task, 12, "2026-06-04 14:30");
+    const rendered = render_backlog_task(
+      task,
+      { backlog_id: "12", parent_backlog_id: null, ordinal: null },
+      "2026-06-04 14:30",
+    );
     expect(rendered.content.includes("priority: medium")).toBe(true);
+  });
+
+  it("stamps parent_task_id and ordinal for a nested child, and a dotted id/filename", () => {
+    const task = make_task({
+      id: "pt-leaf" as PlanTaskId,
+      title: "[name_resolution] Bind sibling inner-scope names",
+      fault_area: "name_resolution",
+      dedup_key: "leafkey",
+      body: "Leaf prose.\n",
+    });
+
+    const rendered = render_backlog_task(
+      task,
+      { backlog_id: "347.1.2", parent_backlog_id: "347.1", ordinal: 2000 },
+      "2026-06-04 14:30",
+    );
+
+    expect(rendered.filename).toEqual(
+      "task-347.1.2 - name_resolution-Bind-sibling-inner-scope-names.md",
+    );
+    expect(rendered.content).toEqual(
+      [
+        "---",
+        "id: TASK-347.1.2",
+        "title: \"[name_resolution] Bind sibling inner-scope names\"",
+        "status: To Do",
+        "assignee: []",
+        "created_date: \"2026-06-04 14:30\"",
+        "labels:",
+        "  - plan-export",
+        "  - name_resolution",
+        "dependencies: []",
+        "parent_task_id: TASK-347.1",
+        "priority: high",
+        "ordinal: 2000",
+        "plan_dedup_key: leafkey",
+        "plan_source_task: pt-leaf",
+        "---",
+        "",
+        "## Description",
+        "",
+        "<!-- SECTION:DESCRIPTION:BEGIN -->",
+        "",
+        "Leaf prose.",
+        "",
+        "<!-- SECTION:DESCRIPTION:END -->",
+        "",
+        "## Acceptance Criteria",
+        "",
+        "<!-- AC:BEGIN -->",
+        "",
+        "",
+        "",
+        "<!-- AC:END -->",
+        "",
+      ].join("\n"),
+    );
   });
 });

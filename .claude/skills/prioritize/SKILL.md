@@ -3,7 +3,7 @@ name: prioritize
 description: Review the plan engine's task-DB and promote selected PlanTask rows into the user's backlog/. Drives export_to_backlog.ts — the only writer of backlog/, run deliberately by the human when graduating planned work.
 argument-hint: "[--status proposed|accepted] [--fault-area <area>] [--priority core|classifier] [--id <db-task-id>...] [--dry-run]"
 disable-model-invocation: true
-allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read, Write, Bash(open *)
+allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read, Write, Bash(open:*)
 ---
 
 # Prioritize
@@ -25,18 +25,34 @@ what this skill exists to make.
 
 ## What the export does
 
-A real run, for each selected exportable row:
+A real run mints **nested** backlog ids that mirror the plan tier tree, then for
+each selected exportable row:
 
-1. mints the next free top-level backlog id,
-2. writes `backlog/tasks/<id>.md` (rendered from the `PlanTask`'s title/body),
+1. assigns its backlog id from the plan tree (`assign_backlog_ids`): an
+   `architectural` root takes the next free top-level id (`TASK-347`); its
+   `fault_area` child nests as `TASK-347.1`; each `localized` leaf nests as
+   `TASK-347.1.<n>`, carrying a `parent_task_id` link and an `ordinal`,
+2. writes `backlog/tasks/<dotted-id> - <slug>.md` (rendered from the
+   `PlanTask`'s title/body),
 3. stamps the row's verbatim `dedup_key` into the task's `plan_dedup_key`
    frontmatter — the idempotency link,
 4. flips the DB row `→ exported` (recording `exported_backlog_task`) and logs
    one `export` `PlanSweepEvent`.
 
+So a graduated change group lands as **one epic per group** (the architectural
+root) with the fault-area node and the concrete fixes nested beneath it. Within
+a sibling level the order is core fixes first (by descending impact), then the
+interim classifier work last (`medium` priority) — the `ordinal` field fixes
+that order in the tracker. A row whose plan-tree parent is not part of the same
+selection becomes its own top-level root, so a partial selection stays
+well-formed.
+
 Only `proposed` and `accepted` rows are exportable. A row already `exported`,
 or whose `dedup_key` a backlog task already carries, is skipped — so a re-run
 with the same arguments is a no-op.
+
+Promote whole change groups together (root + fault-area node + leaves) so the
+backlog tree is complete; that is what the workflow below builds toward.
 
 ## Workflow
 
@@ -80,9 +96,12 @@ one fault area. For each group, pull from the rows the signal the user weighs:
 
 ### 3. Create an HTML comprehension doc
 
-Author a diagram-focussed HTML comprehension doc that lets the user grasp the proposed changes in each candidate set at a glance. Write it to a temp path and open it. The doc presents **one section per change group**, and for each group:
+Author a diagram-focussed HTML comprehension doc that lets the user grasp the
+proposed changes at a glance. Write it to a temp path and open it. The doc
+presents **one section per change group**, and for each group:
 
-- a pair of diagrams side by side showing the proposed change in functionality, accompanied by some minimal explanaitory text
+- a before/after pair of diagrams side by side showing the change in
+  functionality, accompanied by some minimal explanatory text
 - the impact it will have — the false-positives it removes and how broadly,
   stated concretely (e.g. "eliminates 14 false unreachable-function flags across
   6 projects"),
@@ -104,12 +123,17 @@ confirmed the set.
 ### 5. Promote
 
 Drop `--dry-run` to write the backlog tasks and flip the rows. Promote exactly
-the rows the user confirmed, by id:
+the rows the user confirmed, by id — pass **every tier of each graduated group**
+(its architectural root, fault-area node, and localized leaves) in one run so the
+nested tree is written complete:
 
 ```bash
 node --import tsx .claude/skills/plan/scripts/export_to_backlog.ts \
   --id <db-task-id> [--id <db-task-id> ...]
 ```
+
+The `--fault-area <area>` selector (without `--id`) selects a whole group's rows
+across every tier, which is the most reliable way to promote a complete group.
 
 ## Selectors
 

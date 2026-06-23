@@ -16,6 +16,7 @@
  */
 
 import type { PlanTask } from "../store/plan_task.js";
+import type { BacklogIdAssignment } from "./assign_backlog_ids.js";
 
 /** Backlog priority stamped from the task's role: a core fix outranks interim classifier work. */
 export type BacklogPriority = "high" | "medium";
@@ -45,9 +46,9 @@ export function slugify_title(title: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-/** The backlog task filename: `task-<numeric_id> - <slug>.md` (lowercase `task-`, matching the tracker). */
-export function backlog_task_filename(numeric_id: number, title: string): string {
-  return `task-${numeric_id} - ${slugify_title(title)}.md`;
+/** The backlog task filename: `task-<backlog_id> - <slug>.md` (lowercase `task-`, matching the tracker). */
+export function backlog_task_filename(backlog_id: string, title: string): string {
+  return `task-${backlog_id} - ${slugify_title(title)}.md`;
 }
 
 /**
@@ -113,13 +114,15 @@ export interface RenderedBacklogTask {
 }
 
 /**
- * Render one `PlanTask` into a complete backlog task file. The `numeric_id` is
- * minted by the adapter (a fresh top-level backlog id); `created_date` is passed
- * in (`YYYY-MM-DD HH:mm`) so the renderer stays pure and deterministic.
+ * Render one `PlanTask` into a complete backlog task file. The `assignment` is
+ * minted by the adapter (`assign_backlog_ids`): a dotted backlog id that mirrors
+ * the plan tier tree, the parent task's id (`null` at a root), and the sibling
+ * `ordinal`. `created_date` is passed in (`YYYY-MM-DD HH:mm`) so the renderer
+ * stays pure and deterministic.
  */
 export function render_backlog_task(
   task: PlanTask,
-  numeric_id: number,
+  assignment: BacklogIdAssignment,
   created_date: string,
 ): RenderedBacklogTask {
   const { description_md, acceptance_items } = split_rendered_body(task.body);
@@ -127,7 +130,7 @@ export function render_backlog_task(
 
   const frontmatter = [
     "---",
-    `id: TASK-${numeric_id}`,
+    `id: TASK-${assignment.backlog_id}`,
     `title: ${yaml_double_quote(task.title)}`,
     "status: To Do",
     "assignee: []",
@@ -136,7 +139,11 @@ export function render_backlog_task(
     "  - plan-export",
     `  - ${task.fault_area}`,
     "dependencies: []",
+    ...(assignment.parent_backlog_id !== null
+      ? [`parent_task_id: TASK-${assignment.parent_backlog_id}`]
+      : []),
     `priority: ${priority}`,
+    ...(assignment.ordinal !== null ? [`ordinal: ${assignment.ordinal}`] : []),
     `plan_dedup_key: ${task.dedup_key}`,
     `plan_source_task: ${task.id}`,
     "---",
@@ -167,5 +174,5 @@ export function render_backlog_task(
       "<!-- AC:END -->",
     ].join("\n") + "\n";
 
-  return { filename: backlog_task_filename(numeric_id, task.title), content };
+  return { filename: backlog_task_filename(assignment.backlog_id, task.title), content };
 }

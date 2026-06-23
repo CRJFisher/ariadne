@@ -13,8 +13,11 @@
  *   1. **select** — `select_exportable_tasks` picks the rows: filtered by
  *      `--status`/`--fault-area`/`--priority` or named by `--id`, skipping
  *      anything already promoted.
- *   2. **mint id** — the next free top-level backlog id from a recursive scan
- *      of `backlog/`.
+ *   2. **assign ids** — `assign_backlog_ids` mirrors the plan tier tree
+ *      (`architectural` → `fault_area` → `localized`) into the backlog's decimal
+ *      convention: each selected root takes the next free top-level id (from a
+ *      recursive scan of `backlog/`), and every descendant takes a dotted child
+ *      id (`347.1`, `347.1.2`) carrying a `parent_task_id` link.
  *   3. **render** — `render_backlog_task` turns a `PlanTask` into the backlog
  *      task file, stamping the verbatim `PlanTask.dedup_key` into the
  *      `plan_dedup_key` frontmatter field so a re-run recognises prior exports —
@@ -52,6 +55,7 @@ import type { AriadneFaultArea } from "@ariadnejs/types";
 import { read_exported_backlog_keys } from "../src/store/backlog_dedup.js";
 import { JsonPlanTaskRepository } from "../src/store/json_plan_task_repository.js";
 import { backlog_root_dir, backlog_tasks_dir } from "../src/store/paths.js";
+import { assign_backlog_ids } from "../src/export/assign_backlog_ids.js";
 import { next_backlog_task_id } from "../src/export/next_backlog_task_id.js";
 import { render_backlog_task } from "../src/export/render_backlog_task.js";
 import {
@@ -171,11 +175,15 @@ export async function run(argv: string[], now: Date = new Date()): Promise<Expor
   const export_run_id = mint_export_run_id(now);
   const created_date = format_created_date(now);
   const first_id = await next_backlog_task_id(backlog_root_dir());
+  const assignments = assign_backlog_ids(selection.selected, first_id);
 
-  const planned = selection.selected.map((task, index) => {
-    const numeric_id = first_id + index;
-    const rendered = render_backlog_task(task, numeric_id, created_date);
-    return { task, backlog_task: `TASK-${numeric_id}`, rendered };
+  const planned = selection.selected.map((task) => {
+    const assignment = assignments.get(task.id);
+    if (assignment === undefined) {
+      throw new Error(`assign_backlog_ids produced no id for selected task ${task.id}`);
+    }
+    const rendered = render_backlog_task(task, assignment, created_date);
+    return { task, backlog_task: `TASK-${assignment.backlog_id}`, rendered };
   });
 
   if (!dry_run && planned.length > 0) {
