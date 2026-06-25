@@ -113,3 +113,29 @@ export function backlog_tasks_dir(): string {
 export function backlog_root_dir(): string {
   return process.env.ARIADNE_BACKLOG_DIR_OVERRIDE ?? path.join(get_repo_root(), "backlog");
 }
+
+/**
+ * The `backlog/docs/` directory where the graduation step writes per-group
+ * refactor plan Markdown files (`TASK-<id>-<slug>-refactor.md`).
+ */
+export function backlog_docs_dir(): string {
+  return path.join(backlog_root_dir(), "docs");
+}
+
+/**
+ * Root of the `prioritize` skill's per-group investigation staging area:
+ * `<plan>/prioritize/`. The `refactor-investigator` sub-agent writes one
+ * subdirectory per `AriadneFaultArea` here; the graduation step reads them.
+ */
+export function plan_prioritize_dir(): string {
+  return path.join(plan_dir(), "prioritize");
+}
+
+/**
+ * The staging directory for one fault-area's investigation artifacts:
+ * `<plan>/prioritize/<fault_area>/`. Contains `refactor_plan.md` (from the
+ * `refactor-investigator`) and `comprehension.html` (from `comprehension-doc-architect`).
+ */
+export function plan_prioritize_area_dir(fault_area: string): string {
+  return path.join(plan_prioritize_dir(), fault_area);
+}

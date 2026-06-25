@@ -3,25 +3,33 @@ name: prioritize
 description: Review the plan engine's task-DB and promote selected PlanTask rows into the user's backlog/. Drives export_to_backlog.ts — the only writer of backlog/, run deliberately by the human when graduating planned work.
 argument-hint: "[--status proposed|accepted] [--fault-area <area>] [--priority core|classifier] [--id <db-task-id>...] [--dry-run]"
 disable-model-invocation: true
-allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read, Write, Bash(open:*)
+allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read, Write, Bash(open:*), Task(refactor-investigator), Task(comprehension-doc-architect)
 ---
 
 # Prioritize
 
 Graduate planned work into the user's `backlog/`. The `plan` skill leaves
 proposed fixes as `PlanTask` rows in its task-DB at `~/.ariadne/plan/tasks/`;
-this skill is the deliberate, human-invoked step that picks which of those rows
-become real backlog tasks.
+this skill is the deliberate, human-invoked step that turns the cheap plan into a
+verified refactoring design and picks which of those rows become real backlog
+tasks.
 
-It owns no logic of its own. All work runs through one script:
+It does two things the `plan` engine deliberately does not: it **deep-investigates
+each change group against the real `packages/core` code** (via the
+`refactor-investigator` sub-agent) to produce a concrete refactoring plan, and it
+**graduates** the selected rows into `backlog/`. Graduation runs through one
+script:
 
 ```
 .claude/skills/plan/scripts/export_to_backlog.ts
 ```
 
-That script is the **only writer of `backlog/`** in the pipeline. It is never
-run on the autonomous sweep — graduation is always a human decision, which is
-what this skill exists to make.
+That script is the **only writer of `backlog/tasks/`** in the pipeline. It is
+never run on the autonomous sweep — graduation is always a human decision, which is
+what this skill exists to make. The investigation is design-only: the
+`refactor-investigator` reads `packages/core` but never writes it, and the
+plan/comprehension artifacts it stages graduate into `backlog/` only for the
+groups the user funds.
 
 ## What the export does
 
@@ -57,8 +65,25 @@ backlog tree is complete; that is what the workflow below builds toward.
 ## Workflow
 
 Prioritization is a conversation, not a single command. You build the picture of
-the candidate work, hand the user a comprehension doc to grasp it, decide
-together which change groups graduate, then promote exactly that set.
+the candidate work, **deep-investigate each change group against the real
+`packages/core` code** to turn the plan's cheap routing-and-sizing into a
+concrete refactoring design, hand the user a comprehension doc per group to grasp
+it, decide together which groups graduate, then promote exactly that set — and
+graduate each funded group's refactor plan and comprehension doc into `backlog/`
+alongside its epic.
+
+The deep investigation runs on **every** candidate group, before the funding
+decision, so the user decides with full designs in hand. This is a deliberate
+cost: a group the user does not fund is still investigated. The fault-area count
+per sweep bounds the fan-out (a handful of groups), and the plan's
+`core_fix_effort` estimate already pre-filters the trivially cheap fixes, so the
+spend buys decision quality on the changes that actually carry blast radius.
+
+The division of labour stays clean. The `plan` engine remains the cheap,
+planning-only router-and-estimator — its strategist gains nothing here. All deep
+design lives in `prioritize`, which is already the write-capable, human-invoked
+side of the boundary (it owns `export_to_backlog.ts`, the only writer of
+`backlog/`).
 
 Always invoke with `node --import tsx`. Never `pnpm exec tsx` or `npx tsx`
 (those open IPC sockets the sandbox blocks).
@@ -94,46 +119,92 @@ one fault area. For each group, pull from the rows the signal the user weighs:
 - **Kind** — `is_classifier_work` marks an interim classifier workaround,
   explicitly lower-priority than the core fix it routes around.
 
-### 3. Create an HTML comprehension doc
+### 3. Deep-investigate each change group
 
-Author a diagram-focussed HTML comprehension doc that lets the user grasp the
-proposed changes at a glance. Write it to a temp path and open it. The doc
-presents **one section per change group**, and for each group:
+The plan engine produced each group cheaply — its strategist trusts the triage
+evidence rollup and never reads the cited files front to back, so the architectural
+node's body is a _hypothesis about the fix_, not a verified design. Turn it into a
+real design before the user decides.
 
-- a before/after pair of diagrams side by side showing the change in
-  functionality, accompanied by some minimal explanatory text
-- the impact it will have — the false-positives it removes and how broadly,
-  stated concretely (e.g. "eliminates 14 false unreachable-function flags across
-  6 projects"),
+Dispatch one `Task(refactor-investigator)` per change group, all groups in one
+message so they run in parallel (cap at ~5 concurrent; drain in waves if there are
+more). Each sub-agent reads its group's rows, gets to grips with the real
+`packages/core` code, and writes a Markdown refactoring plan to
+`~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md`. Dispatch prompt:
+
+> Investigate change group `<fault_area>` and write its refactoring plan. The
+> group's rows are at `<row_path>`, `<row_path>`, … (the architectural root, its
+> fault_area node, and the localized leaves). Read every row and its evidence,
+> investigate the owning `ARIADNE_FAULT_AREA_FOLDER[<fault_area>]` code, trace each
+> false-positive to its root cause, and design the single coherent change that
+> resolves the whole group at the right altitude — validating or collapsing the
+> plan's decomposition (catch over-decomposition, dead code, duplicate builders).
+> Write the plan to `~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md` and
+> return your one-line root cause + decomposition verdict.
+
+Wait for every `Task()` in a wave to return before starting the next. The plans
+are the verified design the comprehension docs and the export are built on.
+
+### 4. Render a comprehension doc per change group
+
+For each investigated group, dispatch one `Task(comprehension-doc-architect)` to
+render a self-contained HTML comprehension doc from that group's
+`refactor_plan.md`, written to
+`~/.ariadne/plan/prioritize/<fault_area>/comprehension.html`. Each doc presents:
+
+- a before/after pair of diagrams showing the change in functionality, grounded in
+  the refactor plan's chosen mechanism,
+- the impact — the false-positives it removes and how broadly, stated concretely
+  (e.g. "eliminates 14 false unreachable-function flags across 6 projects"),
 - the cost/blast-radius and whether it is a core fix or interim classifier work,
 - a clear benefit-vs-cost framing so the user can rank groups against each other.
 
-Lead with the groups that have the highest impact-to-cost ratio. Keep it
-scannable: the doc is a decision aid, not a transcript of the rows.
+Then author one **index** comprehension doc (written to a temp path and opened)
+that links every group's doc and leads with the highest impact-to-cost ratio.
+Keep it scannable: a decision aid, not a transcript of the rows.
 
-### 4. Decide together
+### 5. Decide together
 
-Walk the user through the comprehension doc and use `AskUserQuestion` to settle
-which change groups graduate this run. Offer the groups as options (and let the
-user pick multiple), surfacing the impact-vs-cost tradeoff in each option so the
-choice is informed. If the user wants to inspect or re-cut the set, narrow with
-the selectors below and re-run `--dry-run`. Do not promote until the user has
-confirmed the set.
+Walk the user through the comprehension docs — now backed by verified refactor
+designs, not just the plan's hypothesis — and use `AskUserQuestion` to settle which
+change groups graduate this run. Offer the groups as options (and let the user pick
+multiple), surfacing the impact-vs-cost tradeoff in each option so the choice is
+informed. If the user wants to inspect or re-cut the set, narrow with the selectors
+below and re-run `--dry-run`. Do not promote until the user has confirmed the set.
 
-### 5. Promote
+### 6. Promote
 
-Drop `--dry-run` to write the backlog tasks and flip the rows. Promote exactly
-the rows the user confirmed, by id — pass **every tier of each graduated group**
-(its architectural root, fault-area node, and localized leaves) in one run so the
-nested tree is written complete:
+Drop `--dry-run` to write the backlog tasks, flip the rows, then graduate the
+investigation artifacts. Run both scripts in sequence; pipe the first into the
+second.
+
+**Step 6a — export the rows** (every tier of each confirmed group in one run):
 
 ```bash
 node --import tsx .claude/skills/plan/scripts/export_to_backlog.ts \
-  --id <db-task-id> [--id <db-task-id> ...]
+  --fault-area <area> [--fault-area <area> ...] \
+  > /tmp/export_summary.json
 ```
 
-The `--fault-area <area>` selector (without `--id`) selects a whole group's rows
-across every tier, which is the most reliable way to promote a complete group.
+The `--fault-area <area>` selector is the most reliable way to promote a complete
+group (it selects the architectural root, fault-area node, and every localized
+leaf in one go). Use `--id` when you need to cherry-pick individual rows.
+
+**Step 6b — graduate the investigation docs** (reads the export summary, copies
+staged docs to `backlog/` for each funded architectural root):
+
+```bash
+node --import tsx .claude/skills/plan/scripts/graduate_group_docs.ts \
+  --export-summary /tmp/export_summary.json
+```
+
+This copies `~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md` to
+`backlog/docs/TASK-<id>-<slug>-refactor.md` and `comprehension.html` to
+`backlog/tasks/task-<id>.overview.html`, using the backlog ids just minted by
+step 6a. Groups with no staged docs (investigation did not run, or already
+graduated) are silently skipped — the script is idempotent. Only funded groups'
+docs land in `backlog/`; unfunded groups' investigation stays in the
+`~/.ariadne/plan/prioritize/` staging area.
 
 ## Selectors
 

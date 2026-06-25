@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TASK-348 — Phase-1 name resolution binds every in-scope name</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8; --ink:#1d1c1a;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .prose{max-width:68ch}
+  nav.toc{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200)}
+  nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;padding:9px 0}
+  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px}
+  nav.toc a:hover{border-color:var(--clay);color:var(--slate)}
+  main{width:90%;max-width:1600px;margin:0 auto;padding:34px 0 90px}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:34px;line-height:1.12;margin:0 0 14px;letter-spacing:-.01em;max-width:24ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:23px;margin:54px 0 8px;letter-spacing:-.01em}
+  section{scroll-margin-top:62px}
+  .cap{color:var(--g600);font-size:14px;margin:2px 0 16px;max-width:68ch}
+  code{font-family:var(--mono);font-size:.88em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 4px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  /* figure frame shared by every diagram */
+  figure.fig{margin:14px 0;background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:16px}
+  figure.fig svg{display:block;width:100%;height:auto}
+  figure.fig figcaption{font-family:var(--mono);font-size:11px;color:var(--g600);margin-top:11px;max-width:68ch}
+  figure.fig figcaption b{color:var(--slate)}
+  /* svg legend strip (HTML, sits under a figure) */
+  .legend{display:flex;flex-wrap:wrap;gap:16px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:10px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid var(--g200)}
+  /* callouts */
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:15px 19px;margin:18px 0}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 6px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)}
+  .callout p{margin:0;max-width:80ch}
+  .callout ul{margin:8px 0 0;padding-left:18px}
+  .callout li{font-size:13px;color:var(--g600);margin:3px 0;max-width:78ch}
+  .callout li b{color:var(--slate)}
+  /* worked-example code panel (supporting only) */
+  .exwrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+  .excol{border:1px solid var(--g200);border-radius:var(--r);overflow:hidden;background:var(--paper)}
+  .excol .hd{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;padding:8px 13px;color:#fffdf8}
+  .excol.today .hd{background:var(--rust)} .excol.after .hd{background:var(--olive)}
+  .code{background:var(--ink);color:#e9e3d6;font-family:var(--mono);font-size:12px;line-height:1.6;padding:13px 15px;overflow-x:auto;white-space:pre}
+  .code .kw{color:#c98a5b} .code .str{color:#9aab6e} .code .cm{color:#8a8377;font-style:italic}
+  .code .fn{color:#d8b878} .code .hl{background:rgba(168,71,47,.34);display:inline-block;width:100%}
+  .code .ok{background:rgba(108,122,74,.30);display:inline-block;width:100%}
+  .code .dim{color:#8a8377}
+  .extitle{font-family:var(--mono);font-size:12px;color:var(--clay);margin:30px 0 2px;font-weight:600}
+  .exloc{font-family:var(--mono);font-size:10.5px;color:var(--g400);margin:0 0 8px}
+  /* sub-task cards (supporting list under the map) */
+  .subs{display:grid;gap:9px;margin:18px 0 0}
+  .subrow{display:grid;grid-template-columns:62px 1fr auto;gap:14px;align-items:center;border:1px solid var(--g200);background:var(--paper);border-radius:10px;padding:11px 15px}
+  .subrow .sid{font-family:var(--mono);font-size:12.5px;color:var(--clay);font-weight:600}
+  .subrow .stext strong{font-weight:600;font-size:14px}
+  .subrow .stext span{display:block;font-size:12.5px;color:var(--g600);margin-top:1px}
+  .cov{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .cov.full{background:rgba(108,122,74,.16);color:var(--olive)}
+  .cov.part{background:rgba(185,121,79,.16);color:var(--clay)}
+  .cov.prop{background:var(--g100);color:var(--g600)}
+  footer{margin-top:56px;border-top:1px solid var(--g200);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400);line-height:1.7}
+  @media(max-width:860px){ .exwrap{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <div class="inner">
+    <a href="#thesis">The failure path</a>
+    <a href="#scope">Scope of the fault</a>
+    <a href="#contract">Precedence contract</a>
+    <a href="#beforeafter">Before → after</a>
+    <a href="#layers">The five layers</a>
+    <a href="#examples">Worked examples</a>
+    <a href="#map">Sub-task map</a>
+    <a href="#sequence">Sequencing &amp; risk</a>
+  </div>
+</nav>
+
+<main>
+<header>
+  <p class="eyebrow">TASK-348 · resolve_references / name_resolution / refactor</p>
+  <h1>Phase-1 binds every in-scope and intra-module name</h1>
+  <p class="cap prose">The lexical scope-walk in <code>resolve_scope_recursive</code> is widened so every in-scope name lands as a key in the per-scope map. 104 false-positive dead-code reports across 10 corpora share one cause — removed with zero Phase-2 changes.</p>
+  <div class="meta">
+    <span class="chip"><strong>104</strong> confirmed members</span>
+    <span class="chip"><strong>10</strong> corpora</span>
+    <span class="chip"><strong>4</strong> sub-tasks</span>
+    <span class="chip"><strong>9</strong> work items (WI-0…WI-8)</span>
+    <span class="chip">value-shape changes: <strong>0</strong></span>
+    <span class="chip">Phase-2 logic edits: <strong>0</strong></span>
+  </div>
+</header>
+
+<!-- ============ THESIS / FAILURE PATH ============ -->
+<section id="thesis">
+<h2>The one structural cause, as a path</h2>
+<p class="cap prose">Every one of the 104 failures runs the same path: the lexical walk can reach a name, but it never becomes a map key, so the O(1) query returns <code>null</code> and the definition is mislabelled unreachable.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 1080 360" role="img" aria-label="The shared failure path: a SymbolReference enters the lexical scope-walk, which either fails to seed the name as a map key (rust path: resolve returns null, resolution_count 0, mislabelled unreachable) or, once widened, seeds it (olive path: resolve returns a SymbolId, resolution_count above zero, correctly reachable).">
+  <defs>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#5f594f"/></marker>
+    <marker id="arR" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#a8472f"/></marker>
+    <marker id="arG" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#6c7a4a"/></marker>
+  </defs>
+  <g font-family="ui-monospace,monospace">
+    <!-- source -->
+    <rect x="20" y="150" width="170" height="58" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+    <text x="105" y="175" text-anchor="middle" fill="#2b2a28" font-size="12" font-weight="700">SymbolReference</text>
+    <text x="105" y="193" text-anchor="middle" fill="#5f594f" font-size="10">bare name + scope_id</text>
+
+    <!-- walk -->
+    <rect x="240" y="146" width="180" height="66" rx="10" fill="#eef1e6" stroke="#6c7a4a"/>
+    <text x="330" y="170" text-anchor="middle" fill="#2b2a28" font-size="12" font-weight="700">lexical scope-walk</text>
+    <text x="330" y="187" text-anchor="middle" fill="#5f594f" font-size="10">resolve_scope_recursive</text>
+    <text x="330" y="201" text-anchor="middle" fill="#5f594f" font-size="9.5">name_resolution.ts:128-224</text>
+
+    <!-- decision: did name become a key -->
+    <path d="M540,179 L612,131 L684,179 L612,227 z" fill="#fffdf8" stroke="#b9794f"/>
+    <text x="612" y="172" text-anchor="middle" fill="#2b2a28" font-size="11" font-weight="700">name in</text>
+    <text x="612" y="186" text-anchor="middle" fill="#2b2a28" font-size="11" font-weight="700">per-scope</text>
+    <text x="612" y="200" text-anchor="middle" fill="#2b2a28" font-size="11" font-weight="700">map?</text>
+
+    <!-- resolve query -->
+    <rect x="772" y="60" width="200" height="58" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+    <text x="872" y="84" text-anchor="middle" fill="#2b2a28" font-size="11.5" font-weight="700">resolve(scope, name)</text>
+    <text x="872" y="101" text-anchor="middle" fill="#5f594f" font-size="9.5">resolution_state.ts:121-127 · O(1)</text>
+
+    <!-- rust outcome -->
+    <rect x="772" y="156" width="200" height="64" rx="10" fill="#f6e4de" stroke="#a8472f"/>
+    <text x="872" y="178" text-anchor="middle" fill="#7d3220" font-size="11.5" font-weight="700">null → count = 0</text>
+    <text x="872" y="196" text-anchor="middle" fill="#7d3220" font-size="10">mislabelled UNREACHABLE</text>
+    <text x="872" y="210" text-anchor="middle" fill="#7d3220" font-size="9.5">all 104 false-positives, today</text>
+
+    <!-- olive outcome -->
+    <rect x="772" y="252" width="200" height="64" rx="10" fill="#e8eddc" stroke="#6c7a4a"/>
+    <text x="872" y="274" text-anchor="middle" fill="#3f4a26" font-size="11.5" font-weight="700">SymbolId → count &gt; 0</text>
+    <text x="872" y="292" text-anchor="middle" fill="#3f4a26" font-size="10">correctly REACHABLE</text>
+    <text x="872" y="306" text-anchor="middle" fill="#3f4a26" font-size="9.5">after the walk is widened</text>
+
+    <!-- edges -->
+    <g fill="none" stroke-width="1.7">
+      <path d="M190,179 L236,179" stroke="#5f594f" marker-end="url(#ar)"/>
+      <path d="M420,179 L536,179" stroke="#5f594f" marker-end="url(#ar)"/>
+      <!-- decision to resolve query -->
+      <path d="M684,179 L768,93" stroke="#5f594f" marker-end="url(#ar)"/>
+    </g>
+    <!-- query splits to the two outcomes -->
+    <g fill="none" stroke-width="1.7">
+      <path d="M872,118 C872,135 872,142 872,152" stroke="#a8472f" marker-end="url(#arR)"/>
+      <path d="M972,100 C1030,150 1030,240 980,278" stroke="#6c7a4a" marker-end="url(#arG)"/>
+    </g>
+    <!-- labels on the decision branches -->
+    <text x="618" y="250" fill="#a8472f" font-size="10" font-weight="700">NO — key absent (the gap)</text>
+    <text x="700" y="135" fill="#6c7a4a" font-size="10" font-weight="700">YES — key present</text>
+    <text x="790" y="138" fill="#a8472f" font-size="9.5">query misses</text>
+    <text x="990" y="200" fill="#6c7a4a" font-size="9.5">widened walk</text>
+    <text x="990" y="214" fill="#6c7a4a" font-size="9.5">seeds the key</text>
+  </g>
+</svg>
+<figcaption><b>The crux.</b> Phase-2 consumers (<code>receiver_resolution</code>, <code>constructor</code>, <code>method_lookup</code>, <code>function_call</code>) are correctly wired — starved of bindings, not broken. The only durable change is widening <b>what</b> the walk lands in the map, value-shape <code>Map&lt;ScopeId,Map&lt;SymbolName,SymbolId&gt;&gt;</code> unchanged.</figcaption>
+</figure>
+</section>
+
+<!-- ============ SCOPE OF THE FAULT ============ -->
+<section id="scope">
+<h2>Scope of the fault — 104 of 220</h2>
+<p class="cap prose">Only 104 of the 220 candidate false-positives are this binding gap. The other 116 are different faults that <em>must not</em> resolve here — the central over-binding risk lives in that boundary.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 1080 300" role="img" aria-label="Of 220 candidate false-positives, 104 are this binding gap (split 56 qualified-path terminal, 43 single-hop import, 4 sibling inner-scope, 1 JS attachment) and 116 are other faults that must stay unresolved.">
+  <g font-family="ui-monospace,monospace">
+    <text x="20" y="26" fill="#9a9387" font-size="11" letter-spacing="1">220 CANDIDATE FALSE-POSITIVES IN THIS BUCKET</text>
+
+    <!-- baseline: full bar 220 -->
+    <rect x="20" y="44" width="1040" height="30" rx="6" fill="#efeae1" stroke="#ddd6c8"/>
+    <text x="540" y="63" text-anchor="middle" fill="#5f594f" font-size="11">220 reviewed across 15 corpora</text>
+
+    <!-- split bar: 104 fixed (proportional) vs 116 must-stay -->
+    <!-- 104/220 of 1040 = 491.6 ; 116/220 = 548.4 -->
+    <g>
+      <rect x="20" y="96" width="491" height="56" rx="6" fill="#e8eddc" stroke="#6c7a4a"/>
+      <rect x="511" y="96" width="549" height="56" rx="6" fill="#f6e4de" stroke="#a8472f"/>
+      <text x="265" y="122" text-anchor="middle" fill="#3f4a26" font-size="13" font-weight="700">104 — this binding gap (FIXED here)</text>
+      <text x="265" y="140" text-anchor="middle" fill="#3f4a26" font-size="10">flip resolution_count 0 → &gt;0</text>
+      <text x="785" y="122" text-anchor="middle" fill="#7d3220" font-size="13" font-weight="700">116 — other faults (MUST STAY 0)</text>
+      <text x="785" y="140" text-anchor="middle" fill="#7d3220" font-size="10">re-export · receiver-type · polymorphic · non-static</text>
+    </g>
+
+    <!-- breakdown of the 104 into sub-task slices -->
+    <text x="20" y="190" fill="#6c7a4a" font-size="11" letter-spacing="1">THE 104, SPLIT BY SUB-TASK</text>
+    <!-- 56,43,4,1 across 491px width: scale = 491/104 = 4.72 px/member -->
+    <g>
+      <rect x="20" y="204" width="264" height="40" rx="6" fill="#fffdf8" stroke="#b9794f"/>
+      <rect x="288" y="204" width="203" height="40" rx="6" fill="#fffdf8" stroke="#b9794f"/>
+      <rect x="495" y="204" width="19" height="40" rx="4" fill="#fffdf8" stroke="#b9794f"/>
+      <rect x="518" y="204" width="6" height="40" rx="2" fill="#fffdf8" stroke="#b9794f"/>
+      <text x="152" y="222" text-anchor="middle" fill="#2b2a28" font-size="11.5" font-weight="700">56 · 348.1.1</text>
+      <text x="152" y="237" text-anchor="middle" fill="#5f594f" font-size="9.5">qualified-path terminal</text>
+      <text x="389" y="222" text-anchor="middle" fill="#2b2a28" font-size="11.5" font-weight="700">43 · 348.1.2</text>
+      <text x="389" y="237" text-anchor="middle" fill="#5f594f" font-size="9.5">single-hop import + shadow</text>
+      <text x="560" y="219" fill="#2b2a28" font-size="10" font-weight="700">4 · 348.1.3 sibling inner-scope</text>
+      <text x="560" y="234" fill="#5f594f" font-size="9.5">+ 1 JS attach (WI-7)</text>
+    </g>
+    <text x="20" y="278" fill="#9a9387" font-size="10">verified by the regression guard after every work item: the 104 flip 0 → &gt;0, the 116 stay == 0.</text>
+  </g>
+</svg>
+<figcaption><b>The boundary is the test.</b> An integration regression guard asserts both directions after <b>every</b> item — the 104 become reachable, the 116 stay correctly unreachable.</figcaption>
+</figure>
+</section>
+
+<!-- ============ PRECEDENCE CONTRACT ============ -->
+<section id="contract">
+<h2>The precedence contract</h2>
+<p class="cap prose">One sentence governs every binding layer below, written as a doc-comment above the rewritten function: a name resolves iff its anchor segment is in scope, and module-visible names are always in scope of their descendants.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 1080 260" role="img" aria-label="The governing invariant as a gate: a name resolves only if its anchor segment is in scope; module-visible names are seeded at file-root and flow down to every descendant scope, so they are always in scope of their descendants.">
+  <defs>
+    <marker id="ar2" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#5f594f"/></marker>
+    <marker id="ar2G" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#6c7a4a"/></marker>
+    <marker id="ar2R" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#a8472f"/></marker>
+  </defs>
+  <g font-family="ui-monospace,monospace">
+    <!-- left: the gate -->
+    <rect x="20" y="98" width="150" height="58" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+    <text x="95" y="123" text-anchor="middle" fill="#2b2a28" font-size="12" font-weight="700">a name</text>
+    <text x="95" y="140" text-anchor="middle" fill="#5f594f" font-size="10">anchor segment</text>
+
+    <path d="M230,127 L308,80 L386,127 L308,174 z" fill="#fffdf8" stroke="#b9794f"/>
+    <text x="308" y="123" text-anchor="middle" fill="#2b2a28" font-size="11" font-weight="700">anchor</text>
+    <text x="308" y="137" text-anchor="middle" fill="#2b2a28" font-size="11" font-weight="700">in scope?</text>
+
+    <rect x="452" y="58" width="186" height="50" rx="10" fill="#e8eddc" stroke="#6c7a4a"/>
+    <text x="545" y="79" text-anchor="middle" fill="#3f4a26" font-size="12" font-weight="700">RESOLVES</text>
+    <text x="545" y="95" text-anchor="middle" fill="#3f4a26" font-size="9.5">binds in the per-scope map</text>
+
+    <rect x="452" y="146" width="186" height="50" rx="10" fill="#f6e4de" stroke="#a8472f"/>
+    <text x="545" y="167" text-anchor="middle" fill="#7d3220" font-size="12" font-weight="700">stays unresolved</text>
+    <text x="545" y="183" text-anchor="middle" fill="#7d3220" font-size="9.5">no false call edge</text>
+
+    <g fill="none" stroke-width="1.7">
+      <path d="M170,127 L226,127" stroke="#5f594f" marker-end="url(#ar2)"/>
+      <path d="M386,110 L448,86" stroke="#6c7a4a" marker-end="url(#ar2G)"/>
+      <path d="M386,148 L448,166" stroke="#a8472f" marker-end="url(#ar2R)"/>
+    </g>
+    <text x="398" y="78" fill="#6c7a4a" font-size="10" font-weight="700">yes</text>
+    <text x="398" y="172" fill="#a8472f" font-size="10" font-weight="700">no</text>
+
+    <!-- right: module-visible cascade -->
+    <text x="730" y="40" fill="#6c7a4a" font-size="10" letter-spacing="1">…AND MODULE-VISIBLE NAMES ARE ALWAYS IN SCOPE OF DESCENDANTS</text>
+    <rect x="730" y="54" width="320" height="34" rx="8" fill="#e8eddc" stroke="#6c7a4a"/>
+    <text x="890" y="75" text-anchor="middle" fill="#3f4a26" font-size="11.5" font-weight="700">file-root scope · module-visible defs (L1)</text>
+    <rect x="762" y="106" width="256" height="30" rx="8" fill="#f1f3e8" stroke="#9aaa78"/>
+    <text x="890" y="125" text-anchor="middle" fill="#3f4a26" font-size="11">child scope · impl block</text>
+    <rect x="794" y="154" width="192" height="30" rx="8" fill="#f1f3e8" stroke="#9aaa78"/>
+    <text x="890" y="173" text-anchor="middle" fill="#3f4a26" font-size="11">descendant call site</text>
+    <g fill="none" stroke-width="1.7" stroke="#6c7a4a">
+      <path d="M890,88 L890,102" marker-end="url(#ar2G)"/>
+      <path d="M890,136 L890,150" marker-end="url(#ar2G)"/>
+    </g>
+    <text x="1030" y="125" fill="#6c7a4a" font-size="9.5" transform="rotate(90 1030 125)">inherits downward</text>
+  </g>
+</svg>
+<figcaption><b>The invariant, gated.</b> The left gate stops the 116 over-binding cases; the right cascade is why a sibling impl-block or <code>cfg(test)</code> member becomes visible at a descendant call site once L1 seeds it at file-root.</figcaption>
+</figure>
+</section>
+
+<!-- ============ BEFORE / AFTER ============ -->
+<section id="beforeafter">
+<h2>Before → after: <code>resolve_scope_recursive</code></h2>
+<p class="cap prose"><code>name_resolution.ts:128-224</code> goes from a two-step build where local defs clobber everything, to five explicitly ordered binding layers feeding one shared per-scope map. Shared nodes keep their position; tints mark what is added, changed, or removed.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 1080 430" role="img" aria-label="Before-and-after topology. CURRENT: parent inherit, then imports (export-chain only), then local defs that clobber everything unconditionally, then downward recursion with no sibling sharing. PLANNED: the same parent inherit and recursion, but five ordered layers L0 to L4 over one shared per-scope map, adding an L1 module-visible hoist and an L3 qualified-terminal layer, changing L2 imports to add a definition-backed fallback, and changing L4 local defs to be non-clobbering of import bindings; the unconditional clobber is removed.">
+  <defs>
+    <marker id="baA" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#5f594f"/></marker>
+  </defs>
+  <g font-family="ui-monospace,monospace">
+    <!-- divider arrow -->
+    <text x="505" y="30" fill="#9a9387" font-size="10" letter-spacing="1">CURRENT · 2-step build (:138-196)</text>
+    <text x="572" y="30" fill="#6c7a4a" font-size="10" letter-spacing="1">PLANNED · ordered layers L0–L4</text>
+    <line x1="540" y1="42" x2="540" y2="408" stroke="#ddd6c8" stroke-width="1.5"/>
+    <text x="540" y="232" text-anchor="middle" fill="#b9794f" font-size="22" font-weight="700">→</text>
+    <text x="540" y="252" text-anchor="middle" fill="#9a9387" font-size="8.5">widen bindings</text>
+
+    <!-- ===== CURRENT panel (x 20..510) ===== -->
+    <!-- L0 keep -->
+    <rect x="20" y="50" width="320" height="40" rx="8" fill="#fffdf8" stroke="#9a9387"/>
+    <text x="34" y="68" fill="#2b2a28" font-size="11.5" font-weight="700">L0  parent inherit</text>
+    <text x="34" y="83" fill="#5f594f" font-size="9.5">new Map(parent_resolutions)</text>
+    <!-- imports keep -->
+    <rect x="20" y="100" width="320" height="46" rx="8" fill="#fffdf8" stroke="#9a9387"/>
+    <text x="34" y="118" fill="#2b2a28" font-size="11.5" font-weight="700">imports (step 1)</text>
+    <text x="34" y="133" fill="#5f594f" font-size="9.5">export-chain only; submodule fallback</text>
+    <text x="34" y="144" fill="#5f594f" font-size="9.5">binds the import node, not the target def</text>
+    <!-- local clobber rust -->
+    <rect x="20" y="156" width="320" height="46" rx="8" fill="#f6e4de" stroke="#a8472f"/>
+    <text x="34" y="174" fill="#7d3220" font-size="11.5" font-weight="700">local defs (step 2) — CLOBBER</text>
+    <text x="34" y="189" fill="#7d3220" font-size="9.5">set(name,id) for EVERY entry · overrides</text>
+    <text x="34" y="200" fill="#7d3220" font-size="9.5">imports &amp; parent · no position info</text>
+    <!-- shared map -->
+    <rect x="78" y="222" width="204" height="38" rx="8" fill="#efeae1" stroke="#ddd6c8"/>
+    <text x="180" y="245" text-anchor="middle" fill="#5f594f" font-size="11" font-weight="700">per-scope map</text>
+    <!-- recurse -->
+    <rect x="20" y="276" width="320" height="40" rx="8" fill="#fffdf8" stroke="#9a9387"/>
+    <text x="34" y="294" fill="#2b2a28" font-size="11.5" font-weight="700">recurse  parent → child</text>
+    <text x="34" y="309" fill="#5f594f" font-size="9.5">siblings never share bindings</text>
+    <g fill="none" stroke="#5f594f" stroke-width="1.5">
+      <path d="M180,90 L180,100" marker-end="url(#baA)"/>
+      <path d="M180,146 L180,156" marker-end="url(#baA)"/>
+      <path d="M180,202 L180,218" marker-end="url(#baA)"/>
+      <path d="M180,260 L180,272" marker-end="url(#baA)"/>
+    </g>
+
+    <!-- ===== PLANNED panel (x 572..1060) ===== -->
+    <!-- L0 keep -->
+    <rect x="572" y="50" width="240" height="36" rx="8" fill="#fffdf8" stroke="#9a9387"/>
+    <text x="586" y="73" fill="#2b2a28" font-size="11" font-weight="700">L0  parent inherit · unchanged</text>
+    <!-- L1 add -->
+    <rect x="572" y="92" width="240" height="40" rx="8" fill="#e8eddc" stroke="#6c7a4a"/>
+    <text x="586" y="110" fill="#3f4a26" font-size="11" font-weight="700">L1  module/type-visible hoist  +ADD</text>
+    <text x="586" y="124" fill="#3f4a26" font-size="9.5">seed module-wide defs at file-root only</text>
+    <!-- L2 mod -->
+    <rect x="572" y="138" width="240" height="40" rx="8" fill="#f3e5d8" stroke="#b9794f"/>
+    <text x="586" y="156" fill="#7a4e29" font-size="11" font-weight="700">L2  imports  ~CHANGE</text>
+    <text x="586" y="170" fill="#7a4e29" font-size="9.5">+ definition-backed fallback</text>
+    <!-- L3 add -->
+    <rect x="572" y="184" width="240" height="40" rx="8" fill="#e8eddc" stroke="#6c7a4a"/>
+    <text x="586" y="202" fill="#3f4a26" font-size="11" font-weight="700">L3  qualified-path terminals  +ADD</text>
+    <text x="586" y="216" fill="#3f4a26" font-size="9.5">bind member_index terminals</text>
+    <!-- L4 mod -->
+    <rect x="572" y="230" width="240" height="40" rx="8" fill="#f3e5d8" stroke="#b9794f"/>
+    <text x="586" y="248" fill="#7a4e29" font-size="11" font-weight="700">L4  local defs  ~CHANGE</text>
+    <text x="586" y="262" fill="#7a4e29" font-size="9.5">non-clobbering of import bindings</text>
+    <!-- shared map (one, central) -->
+    <rect x="858" y="120" width="180" height="80" rx="10" fill="#efeae1" stroke="#9a9387" stroke-width="1.5"/>
+    <text x="948" y="150" text-anchor="middle" fill="#2b2a28" font-size="11.5" font-weight="700">ONE shared</text>
+    <text x="948" y="166" text-anchor="middle" fill="#2b2a28" font-size="11.5" font-weight="700">per-scope map</text>
+    <text x="948" y="184" text-anchor="middle" fill="#5f594f" font-size="9">value-shape unchanged</text>
+    <!-- recurse -->
+    <rect x="572" y="276" width="240" height="36" rx="8" fill="#fffdf8" stroke="#9a9387"/>
+    <text x="586" y="299" fill="#2b2a28" font-size="11" font-weight="700">recurse  parent → child · unchanged</text>
+    <!-- layer feeds into shared map -->
+    <g fill="none" stroke="#9a9387" stroke-width="1.4">
+      <path d="M812,68 C840,80 850,120 856,138" marker-end="url(#baA)"/>
+      <path d="M812,112 C840,118 850,138 856,150" marker-end="url(#baA)"/>
+      <path d="M812,158 L854,160" marker-end="url(#baA)"/>
+      <path d="M812,204 C840,196 850,178 856,170" marker-end="url(#baA)"/>
+      <path d="M812,250 C840,234 850,196 856,182" marker-end="url(#baA)"/>
+    </g>
+    <path d="M948,200 L948,272" fill="none" stroke="#5f594f" stroke-width="1.5" marker-end="url(#baA)"/>
+    <text x="900" y="246" fill="#9a9387" font-size="9">flatten</text>
+  </g>
+</svg>
+</figure>
+<div class="legend">
+  <span><i style="background:#e8eddc;border-color:#6c7a4a"></i> added layer (L1, L3)</span>
+  <span><i style="background:#f3e5d8;border-color:#b9794f"></i> changed layer (L2, L4)</span>
+  <span><i style="background:#f6e4de;border-color:#a8472f"></i> removed — the unconditional clobber</span>
+  <span><i style="background:#fffdf8;border-color:#9a9387"></i> unchanged (L0, recurse)</span>
+</div>
+</section>
+
+<!-- ============ THE FIVE LAYERS ============ -->
+<section id="layers">
+<h2>The five binding layers, into one shared map</h2>
+<p class="cap prose">Each layer is a small pure helper that unions into the same per-scope map; each closes a specific sub-task slice. WI-0 lands all five as named sections first with L1/L3 as no-ops and L4 still clobbering — identical behaviour, green-tested to lock the baseline.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 1080 380" role="img" aria-label="Five stacked binding layers L0 to L4, each feeding one central per-scope map. L0 parent inherit (unchanged), L1 module/type-visible hoist (added), L2 imports plus definition-backed fallback (changed), L3 qualified-path terminals (added), L4 local defs non-clobbering (changed). Each layer names what it binds and which sub-task it serves.">
+  <defs>
+    <marker id="lyA" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#9a9387"/></marker>
+  </defs>
+  <g font-family="ui-monospace,monospace">
+    <!-- central shared map column -->
+    <rect x="470" y="40" width="160" height="300" rx="12" fill="#efeae1" stroke="#9a9387" stroke-width="1.5"/>
+    <text x="550" y="68" text-anchor="middle" fill="#2b2a28" font-size="12.5" font-weight="700">SHARED</text>
+    <text x="550" y="85" text-anchor="middle" fill="#2b2a28" font-size="12.5" font-weight="700">per-scope</text>
+    <text x="550" y="102" text-anchor="middle" fill="#2b2a28" font-size="12.5" font-weight="700">map</text>
+    <text x="550" y="128" text-anchor="middle" fill="#5f594f" font-size="9">Map&lt;ScopeId,</text>
+    <text x="550" y="140" text-anchor="middle" fill="#5f594f" font-size="9">  Map&lt;Name,</text>
+    <text x="550" y="152" text-anchor="middle" fill="#5f594f" font-size="9">    SymbolId&gt;&gt;</text>
+    <line x1="486" y1="168" x2="614" y2="168" stroke="#ddd6c8"/>
+    <text x="550" y="300" text-anchor="middle" fill="#5f594f" font-size="9.5">value-shape</text>
+    <text x="550" y="313" text-anchor="middle" fill="#5f594f" font-size="9.5">byte-for-byte</text>
+    <text x="550" y="326" text-anchor="middle" fill="#5f594f" font-size="9.5">unchanged</text>
+
+    <!-- layer rows on the left, serves on the right -->
+    <!-- helper: each row y -->
+    <!-- L0 keep -->
+    <rect x="30" y="46" width="360" height="44" rx="9" fill="#fffdf8" stroke="#9a9387"/>
+    <text x="44" y="66" fill="#2b2a28" font-size="11.5" font-weight="700">L0 · parent inherit</text>
+    <text x="44" y="81" fill="#5f594f" font-size="9.5">new Map(parent_resolutions)</text>
+    <text x="660" y="72" fill="#9a9387" font-size="10">→ baseline (unchanged)</text>
+    <!-- L1 add -->
+    <rect x="30" y="104" width="360" height="44" rx="9" fill="#e8eddc" stroke="#6c7a4a"/>
+    <text x="44" y="124" fill="#3f4a26" font-size="11.5" font-weight="700">L1 · module/type-visible hoist  +ADD</text>
+    <text x="44" y="139" fill="#3f4a26" font-size="9.5">module-wide defs → file-root scope only</text>
+    <text x="660" y="124" fill="#6c7a4a" font-size="10">→ 348.1.3 siblings</text>
+    <text x="660" y="138" fill="#6c7a4a" font-size="10">→ anchors for 348.1.1</text>
+    <!-- L2 mod -->
+    <rect x="30" y="162" width="360" height="44" rx="9" fill="#f3e5d8" stroke="#b9794f"/>
+    <text x="44" y="182" fill="#7a4e29" font-size="11.5" font-weight="700">L2 · imports  ~CHANGE</text>
+    <text x="44" y="197" fill="#7a4e29" font-size="9.5">+ definition-backed fallback · records import names</text>
+    <text x="660" y="187" fill="#b9794f" font-size="10">→ 348.1.2 import binding</text>
+    <!-- L3 add -->
+    <rect x="30" y="220" width="360" height="44" rx="9" fill="#e8eddc" stroke="#6c7a4a"/>
+    <text x="44" y="240" fill="#3f4a26" font-size="11.5" font-weight="700">L3 · qualified-path terminals  +ADD</text>
+    <text x="44" y="255" fill="#3f4a26" font-size="9.5">bind member_index terminals of in-scope types</text>
+    <text x="660" y="245" fill="#6c7a4a" font-size="10">→ 348.1.1 terminal binding</text>
+    <!-- L4 mod -->
+    <rect x="30" y="278" width="360" height="44" rx="9" fill="#f3e5d8" stroke="#b9794f"/>
+    <text x="44" y="298" fill="#7a4e29" font-size="11.5" font-weight="700">L4 · local defs  ~CHANGE</text>
+    <text x="44" y="313" fill="#7a4e29" font-size="9.5">non-clobbering of import bindings (self-init case)</text>
+    <text x="660" y="303" fill="#b9794f" font-size="10">→ 348.1.2 shadowing</text>
+
+    <!-- arrows each layer → shared map -->
+    <g fill="none" stroke="#9a9387" stroke-width="1.3">
+      <path d="M390,68 L466,90" marker-end="url(#lyA)"/>
+      <path d="M390,126 L466,128" marker-end="url(#lyA)"/>
+      <path d="M390,184 L466,182" marker-end="url(#lyA)"/>
+      <path d="M390,242 L466,232" marker-end="url(#lyA)"/>
+      <path d="M390,300 L466,278" marker-end="url(#lyA)"/>
+    </g>
+    <text x="408" y="360" fill="#9a9387" font-size="9.5">precedence: a closer layer never overwritten by L3; L4 never clobbers an import binding</text>
+  </g>
+</svg>
+<figcaption><b>One map, five contributors.</b> The Rust <code>Type::assoc_fn</code>/<code>module::fn</code> subset ("Mode B") cannot reach the map at Phase-1 — its qualifier is destroyed at index time; one index-side change (WI-6) preserves it, then it rides the same L1+L3 binding.</figcaption>
+</figure>
+</section>
+
+<!-- ============ WORKED EXAMPLES ============ -->
+<section id="examples">
+<h2>Two examples — the scope-map state, before and after</h2>
+<p class="cap prose">Each is a real caller from the corpus. The diagram shows the key absent then present in the per-scope map; the code panel beneath is supporting detail.</p>
+
+<p class="extitle">tokio — <code>Parker::new(driver)</code> · qualified-path terminal (348.1.1)</p>
+<p class="exloc">tokio/src/runtime/scheduler/multi_thread/mod.rs:68 → calls the impl <code>Parker::new</code></p>
+<figure class="fig">
+<svg viewBox="0 0 1080 196" role="img" aria-label="Scope-map state for Parker::new. Today the map has a key for driver but no key for Parker and no key for new, so resolve(scope,new) returns null and resolution_count is 0. After WI-4 plus WI-5, L1 seeds Parker at file-root and L3 binds new to Parker::new, so resolve returns Parker::new and resolution_count is above zero.">
+  <defs><marker id="exA1" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#b9794f"/></marker></defs>
+  <g font-family="ui-monospace,monospace">
+    <!-- today map -->
+    <text x="20" y="24" fill="#a8472f" font-size="10" letter-spacing="1">TODAY · scope-map for this caller</text>
+    <rect x="20" y="34" width="420" height="120" rx="10" fill="#fffdf8" stroke="#a8472f"/>
+    <rect x="36" y="48" width="388" height="26" rx="5" fill="#eef1e6"/>
+    <text x="48" y="65" fill="#3f4a26" font-size="11">"driver"  →  let driver</text>
+    <rect x="36" y="80" width="388" height="26" rx="5" fill="#f6e4de"/>
+    <text x="48" y="97" fill="#7d3220" font-size="11">"Parker"  →  ✗ no key (anchor unseeded)</text>
+    <rect x="36" y="112" width="388" height="26" rx="5" fill="#f6e4de"/>
+    <text x="48" y="129" fill="#7d3220" font-size="11">"new"     →  ✗ no key  ⇒ resolve = null</text>
+    <text x="20" y="178" fill="#a8472f" font-size="10.5" font-weight="700">resolution_count = 0  ·  Parker::new mislabelled unreachable</text>
+
+    <!-- arrow -->
+    <path d="M468,94 L600,94" fill="none" stroke="#b9794f" stroke-width="1.8" marker-end="url(#exA1)"/>
+    <text x="534" y="84" text-anchor="middle" fill="#b9794f" font-size="9.5">WI-4 +WI-5</text>
+
+    <!-- after map -->
+    <text x="630" y="24" fill="#6c7a4a" font-size="10" letter-spacing="1">AFTER · same scope-map, widened</text>
+    <rect x="630" y="34" width="430" height="120" rx="10" fill="#fffdf8" stroke="#6c7a4a"/>
+    <rect x="646" y="48" width="398" height="26" rx="5" fill="#eef1e6"/>
+    <text x="658" y="65" fill="#3f4a26" font-size="11">"driver"  →  let driver</text>
+    <rect x="646" y="80" width="398" height="26" rx="5" fill="#e8eddc"/>
+    <text x="658" y="97" fill="#3f4a26" font-size="11">"Parker"  →  struct Parker   (L1 hoist)</text>
+    <rect x="646" y="112" width="398" height="26" rx="5" fill="#e8eddc"/>
+    <text x="658" y="129" fill="#3f4a26" font-size="11">"new"     →  Parker::new  (L3 member_index)</text>
+    <text x="630" y="178" fill="#6c7a4a" font-size="10.5" font-weight="700">resolution_count &gt; 0  ·  existing Phase-2 machinery fires unchanged</text>
+  </g>
+</svg>
+</figure>
+<div class="exwrap">
+  <div class="excol today">
+    <div class="hd">today</div>
+<pre class="code"><span class="cm">// caller, same crate</span>
+<span class="kw">let</span> parker = <span class="hl">Parker::<span class="fn">new</span>(driver);</span>
+<span class="dim">resolve(scope, "new")  =&gt; null</span></pre>
+  </div>
+  <div class="excol after">
+    <div class="hd">after WI-4 (+ WI-5 if needed)</div>
+<pre class="code"><span class="ok">  "Parker" -&gt; struct Parker      (L1)</span>
+<span class="ok">  "new"    -&gt; Parker::new         (L3)</span>
+<span class="kw">let</span> parker = <span class="fn">Parker::new</span>(driver);  <span class="dim">// resolves</span></pre>
+  </div>
+</div>
+
+<p class="extitle">serde — <code>let has_flatten = has_flatten(fields)</code> · same-statement shadow (348.1.2)</p>
+<p class="exloc">serde_derive/src/de/struct_.rs:67 · imported via <code>use crate::de::has_flatten</code></p>
+<figure class="fig">
+<svg viewBox="0 0 1080 196" role="img" aria-label="Scope-map state for serde has_flatten. Today step 1 binds the import but step 2 local defs clobber it with the local let, so the RHS call resolves to the not-yet-initialized local and resolution_count is 0. After WI-1, L4 is non-clobbering for the same-statement self-init, so the import binding survives and the call resolves to crate::de::has_flatten.">
+  <defs><marker id="exA2" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#b9794f"/></marker></defs>
+  <g font-family="ui-monospace,monospace">
+    <text x="20" y="24" fill="#a8472f" font-size="10" letter-spacing="1">TODAY · the import is clobbered</text>
+    <rect x="20" y="34" width="420" height="120" rx="10" fill="#fffdf8" stroke="#a8472f"/>
+    <rect x="36" y="48" width="388" height="26" rx="5" fill="#eef1e6"/>
+    <text x="48" y="65" fill="#3f4a26" font-size="10.5">step1: "has_flatten" → crate::de::has_flatten</text>
+    <rect x="36" y="80" width="388" height="26" rx="5" fill="#f6e4de"/>
+    <text x="48" y="97" fill="#7d3220" font-size="10.5">step2 CLOBBER: "has_flatten" → local let</text>
+    <rect x="36" y="112" width="388" height="26" rx="5" fill="#f6e4de"/>
+    <text x="48" y="129" fill="#7d3220" font-size="10.5">RHS resolves to the not-yet-init local</text>
+    <text x="20" y="178" fill="#a8472f" font-size="10.5" font-weight="700">resolution_count = 0  ·  call lost to its own variable</text>
+
+    <path d="M468,94 L600,94" fill="none" stroke="#b9794f" stroke-width="1.8" marker-end="url(#exA2)"/>
+    <text x="534" y="84" text-anchor="middle" fill="#b9794f" font-size="9.5">WI-1</text>
+
+    <text x="630" y="24" fill="#6c7a4a" font-size="10" letter-spacing="1">AFTER · L4 non-clobber</text>
+    <rect x="630" y="34" width="430" height="120" rx="10" fill="#fffdf8" stroke="#6c7a4a"/>
+    <rect x="646" y="48" width="398" height="26" rx="5" fill="#e8eddc"/>
+    <text x="658" y="65" fill="#3f4a26" font-size="10.5">L2: "has_flatten" → crate::de::has_flatten</text>
+    <rect x="646" y="80" width="398" height="26" rx="5" fill="#eef1e6"/>
+    <text x="658" y="97" fill="#3f4a26" font-size="10.5">L4: name import-bound + kind=variable → skip set()</text>
+    <rect x="646" y="112" width="398" height="26" rx="5" fill="#e8eddc"/>
+    <text x="658" y="129" fill="#3f4a26" font-size="10.5">RHS resolves to the imported fn</text>
+    <text x="630" y="178" fill="#6c7a4a" font-size="10.5" font-weight="700">resolution_count &gt; 0  ·  genuine top-level redefinition still overrides</text>
+  </g>
+</svg>
+</figure>
+<div class="exwrap">
+  <div class="excol today">
+    <div class="hd">today</div>
+<pre class="code"><span class="kw">use</span> crate::de::has_flatten;  <span class="cm">// step 1 binds</span>
+<span class="kw">let</span> has_flatten = <span class="hl"><span class="fn">has_flatten</span>(fields);</span>
+<span class="dim">// step 2 set("has_flatten", local) clobbers</span></pre>
+  </div>
+  <div class="excol after">
+    <div class="hd">after WI-1 (L4 non-clobber)</div>
+<pre class="code"><span class="kw">use</span> crate::de::has_flatten;  <span class="cm">// L2 binds + records</span>
+<span class="kw">let</span> has_flatten = <span class="fn">has_flatten</span>(fields);
+<span class="ok">  "has_flatten" -&gt; crate::de::has_flatten</span></pre>
+  </div>
+</div>
+</section>
+
+<!-- ============ SUB-TASK -> WORK-ITEM MAP ============ -->
+<section id="map">
+<h2>Sub-task → work-item map</h2>
+<p class="cap prose">Coverage is maximised through one shared layered structure. The green spine is the shared L1–L4 layering; the clay boxes are residual named point-fixes that live <em>outside</em> the layers.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 980 380" role="img" aria-label="How the four sub-tasks of TASK-348 fold into the shared layered structure WI-0 to WI-8, with three residual point-fixes outside the shared layers" style="min-width:880px">
+  <defs>
+    <marker id="ag" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#6c7a4a"/></marker>
+    <marker id="ac" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#b9794f"/></marker>
+  </defs>
+  <g font-family="ui-monospace,monospace" font-size="11">
+    <text x="20" y="20" fill="#9a9387" font-size="10" letter-spacing="1">SUB-TASKS (104 members)</text>
+    <text x="360" y="20" fill="#6c7a4a" font-size="10" letter-spacing="1">SHARED LAYERED STRUCTURE</text>
+    <text x="800" y="20" fill="#b9794f" font-size="10" letter-spacing="1">RESIDUAL POINT-FIXES</text>
+
+    <rect x="360" y="34" width="380" height="30" rx="8" fill="#2b2a28"/>
+    <text x="550" y="53" text-anchor="middle" fill="#f7f3ec" font-weight="700">WI-0 · pure restructure → lock the baseline green</text>
+
+    <rect x="20" y="86" width="300" height="46" rx="9" fill="#fffdf8" stroke="#b9794f"/>
+    <text x="32" y="106" fill="#2b2a28" font-weight="700">348.1.1 · qualified-path terminal</text>
+    <text x="32" y="123" fill="#5f594f">56 members · Type::new, module::fn, .static</text>
+
+    <rect x="20" y="148" width="300" height="46" rx="9" fill="#fffdf8" stroke="#b9794f"/>
+    <text x="32" y="168" fill="#2b2a28" font-weight="700">348.1.2 · single-hop named import</text>
+    <text x="32" y="185" fill="#5f594f">43 members · + the local-let shadow bug</text>
+
+    <rect x="20" y="210" width="300" height="46" rx="9" fill="#fffdf8" stroke="#b9794f"/>
+    <text x="32" y="230" fill="#2b2a28" font-weight="700">348.1.3 · sibling inner-scope</text>
+    <text x="32" y="247" fill="#5f594f">4 members · cross-impl, cfg(test) mod</text>
+
+    <rect x="20" y="272" width="300" height="46" rx="9" fill="#fffdf8" stroke="#9a9387" stroke-dasharray="4 3"/>
+    <text x="32" y="292" fill="#2b2a28" font-weight="700">348.1.4 · interim classifier</text>
+    <text x="32" y="309" fill="#5f594f">proposal-only · no pipeline code</text>
+
+    <rect x="360" y="82" width="180" height="40" rx="9" fill="#eef1e6" stroke="#6c7a4a"/>
+    <text x="450" y="100" text-anchor="middle" fill="#2b2a28" font-weight="700">WI-5 · L3 terminals</text>
+    <text x="450" y="115" text-anchor="middle" fill="#5f594f" font-size="10">if WI-4 leaves a residual</text>
+
+    <rect x="560" y="82" width="180" height="40" rx="9" fill="#eef1e6" stroke="#6c7a4a"/>
+    <text x="650" y="100" text-anchor="middle" fill="#2b2a28" font-weight="700">WI-4 · L1 hoist</text>
+    <text x="650" y="115" text-anchor="middle" fill="#5f594f" font-size="10">module-visibility roll-up</text>
+
+    <rect x="360" y="144" width="180" height="40" rx="9" fill="#eef1e6" stroke="#6c7a4a"/>
+    <text x="450" y="162" text-anchor="middle" fill="#2b2a28" font-weight="700">WI-3 · L2 fallback</text>
+    <text x="450" y="177" text-anchor="middle" fill="#5f594f" font-size="10">definition-backed import</text>
+
+    <rect x="560" y="144" width="180" height="40" rx="9" fill="#eef1e6" stroke="#6c7a4a"/>
+    <text x="650" y="162" text-anchor="middle" fill="#2b2a28" font-weight="700">WI-1 · L4 non-clobber</text>
+    <text x="650" y="177" text-anchor="middle" fill="#5f594f" font-size="10">serde has_flatten shadow</text>
+
+    <rect x="360" y="206" width="380" height="40" rx="9" fill="#eef1e6" stroke="#6c7a4a"/>
+    <text x="550" y="224" text-anchor="middle" fill="#2b2a28" font-weight="700">WI-4 · L1 file-root seeding (same roll-up)</text>
+    <text x="550" y="239" text-anchor="middle" fill="#5f594f" font-size="10">sibling impl blocks + cfg(test) mod → file-root</text>
+
+    <rect x="800" y="82" width="160" height="38" rx="9" fill="#fff" stroke="#b9794f" stroke-dasharray="4 3"/>
+    <text x="880" y="99" text-anchor="middle" fill="#a8472f" font-weight="700" font-size="10">WI-6 · index-side</text>
+    <text x="880" y="113" text-anchor="middle" fill="#5f594f" font-size="9">preserve Rust qualifier</text>
+
+    <rect x="800" y="144" width="160" height="38" rx="9" fill="#fff" stroke="#b9794f" stroke-dasharray="4 3"/>
+    <text x="880" y="161" text-anchor="middle" fill="#a8472f" font-weight="700" font-size="10">WI-2 · r# strip</text>
+    <text x="880" y="175" text-anchor="middle" fill="#5f594f" font-size="9">raw-identifier path</text>
+
+    <rect x="800" y="272" width="160" height="38" rx="9" fill="#fff" stroke="#b9794f" stroke-dasharray="4 3"/>
+    <text x="880" y="289" text-anchor="middle" fill="#a8472f" font-weight="700" font-size="10">WI-7 · JS attach</text>
+    <text x="880" y="303" text-anchor="middle" fill="#5f594f" font-size="9">this.cleanup = fn(){}</text>
+
+    <rect x="360" y="272" width="300" height="38" rx="9" fill="#f7f3ec" stroke="#9a9387" stroke-dasharray="4 3"/>
+    <text x="510" y="290" text-anchor="middle" fill="#5f594f" font-weight="700" font-size="11">WI-8 · classifier proposal (plan proposes; human writes)</text>
+    <text x="510" y="304" text-anchor="middle" fill="#9a9387" font-size="9">existing DSL ops · flipped to fixed once WI-1…WI-7 land</text>
+  </g>
+
+  <g fill="none" stroke="#6c7a4a" stroke-width="1.5">
+    <path d="M320,103 L356,102" marker-end="url(#ag)"/>
+    <path d="M320,113 C345,130 535,150 556,162" marker-end="url(#ag)"/>
+    <path d="M320,171 L356,164" marker-end="url(#ag)"/>
+    <path d="M320,181 C345,195 535,175 556,170" marker-end="url(#ag)"/>
+    <path d="M320,233 L356,226" marker-end="url(#ag)"/>
+  </g>
+  <g fill="none" stroke="#b9794f" stroke-width="1.5" stroke-dasharray="4 3">
+    <path d="M320,99 C600,60 740,80 796,96" marker-end="url(#ac)"/>
+    <path d="M320,160 C560,210 740,170 796,165" marker-end="url(#ac)"/>
+    <path d="M320,290 L796,290" marker-end="url(#ac)"/>
+  </g>
+</svg>
+<figcaption><b>Four sub-tasks, one spine.</b> Green edges fold into the shared layers; dashed clay edges are the three separate point-fixes (WI-2, WI-6, WI-7) that the layered walk cannot reach.</figcaption>
+</figure>
+
+<div class="subs">
+  <div class="subrow"><span class="sid">348.1.1</span><div class="stext"><strong>Bind qualified-path terminals</strong><span>Mode A (TS <code>.</code>-static, Rust <code>Type::new</code>) → WI-4 hoists the anchor, existing Phase-2 fires (WI-5 fallback). Mode B (Rust <code>Type::assoc_fn</code>/<code>module::fn</code>) <em>depends on WI-6</em> to preserve the qualifier first.</span></div><span class="cov full">fully · split by mode</span></div>
+  <div class="subrow"><span class="sid">348.1.2</span><div class="stext"><strong>Single-hop named imports + shadow</strong><span>Rust no-pub + indexed-sibling misses → WI-3 definition-backed fallback. serde same-statement clobber → WI-1. Rust <code>r#</code> raw-identifier → WI-2 (named point-fix).</span></div><span class="cov full">fully</span></div>
+  <div class="subrow"><span class="sid">348.1.3</span><div class="stext"><strong>Sibling inner-scope binding</strong><span>Rust cross-impl / <code>cfg(test)</code>-mod cases → WI-4 roll-up + L1 seeding. JS <code>this.cleanup = function(){}</code> → WI-7 (named index-time attachment fix, outside the layers).</span></div><span class="cov part">partial via shared structure</span></div>
+  <div class="subrow"><span class="sid">348.1.4</span><div class="stext"><strong>Interim classifier</strong><span>WI-8 — <code>plan</code> emits a <code>wip</code> rule from existing DSL ops; the human authors it via <code>reconcile-registry</code>. No code change, no new DSL op.</span></div><span class="cov prop">proposal-only</span></div>
+</div>
+</section>
+
+<!-- ============ SEQUENCING + RISK ============ -->
+<section id="sequence">
+<h2>Sequencing &amp; the central risk</h2>
+<p class="cap prose">WI-0 lands first as a pure restructure that locks the baseline; every later item is independently shippable and independently tested. WI-4 is measured before WI-5 is added; WI-6 depends on WI-4/WI-5 being in place to light up Mode B.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 1080 300" role="img" aria-label="The ordered work-item sequence as a dependency timeline. WI-0 restructure locks the baseline, then WI-1 L4 non-clobber, WI-2 raw-identifier strip, WI-3 definition-backed fallback (verify the 116 stay unresolved), WI-4 module-visibility roll-up (then measure), WI-5 L3 terminals only if a residual remains (depends on WI-4), WI-6 preserve Rust qualifier (depends on WI-4 and WI-5), WI-7 JS attachment any time after WI-0, and WI-8 the classifier proposal gated to flip to fixed once WI-1 through WI-7 land.">
+  <defs>
+    <marker id="seqA" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#5f594f"/></marker>
+    <marker id="seqD" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#b9794f"/></marker>
+  </defs>
+  <g font-family="ui-monospace,monospace">
+    <!-- main spine -->
+    <line x1="40" y1="120" x2="1040" y2="120" stroke="#ddd6c8" stroke-width="2"/>
+    <!-- nodes along the spine: x positions -->
+    <!-- WI-0 -->
+    <circle cx="70" cy="120" r="15" fill="#2b2a28"/><text x="70" y="125" text-anchor="middle" fill="#f7f3ec" font-size="11" font-weight="700">0</text>
+    <text x="70" y="156" text-anchor="middle" fill="#2b2a28" font-size="9.5" font-weight="700">restructure</text>
+    <text x="70" y="168" text-anchor="middle" fill="#5f594f" font-size="8.5">L0–L4, no Δ</text>
+    <text x="70" y="98" text-anchor="middle" fill="#9a9387" font-size="8">lock baseline</text>
+    <!-- WI-1 -->
+    <circle cx="190" cy="120" r="14" fill="#fffdf8" stroke="#b9794f" stroke-width="2"/><text x="190" y="125" text-anchor="middle" fill="#b9794f" font-size="11" font-weight="700">1</text>
+    <text x="190" y="156" text-anchor="middle" fill="#2b2a28" font-size="9.5" font-weight="700">L4 non-clobber</text>
+    <text x="190" y="168" text-anchor="middle" fill="#5f594f" font-size="8.5">serde has_flatten</text>
+    <!-- WI-2 -->
+    <circle cx="310" cy="120" r="14" fill="#fffdf8" stroke="#b9794f" stroke-width="2"/><text x="310" y="125" text-anchor="middle" fill="#b9794f" font-size="11" font-weight="700">2</text>
+    <text x="310" y="156" text-anchor="middle" fill="#2b2a28" font-size="9.5" font-weight="700">r# strip</text>
+    <text x="310" y="168" text-anchor="middle" fill="#5f594f" font-size="8.5">crate::r#type</text>
+    <!-- WI-3 -->
+    <circle cx="430" cy="120" r="14" fill="#fffdf8" stroke="#b9794f" stroke-width="2"/><text x="430" y="125" text-anchor="middle" fill="#b9794f" font-size="11" font-weight="700">3</text>
+    <text x="430" y="156" text-anchor="middle" fill="#2b2a28" font-size="9.5" font-weight="700">L2 fallback</text>
+    <text x="430" y="168" text-anchor="middle" fill="#a8472f" font-size="8.5">verify 116 stay 0</text>
+    <!-- WI-4 -->
+    <circle cx="560" cy="120" r="15" fill="#6c7a4a"/><text x="560" y="125" text-anchor="middle" fill="#f7f3ec" font-size="11" font-weight="700">4</text>
+    <text x="560" y="156" text-anchor="middle" fill="#2b2a28" font-size="9.5" font-weight="700">L1 roll-up</text>
+    <text x="560" y="168" text-anchor="middle" fill="#6c7a4a" font-size="8.5">then MEASURE</text>
+    <!-- WI-5 -->
+    <circle cx="690" cy="120" r="14" fill="#eef1e6" stroke="#6c7a4a" stroke-width="2"/><text x="690" y="125" text-anchor="middle" fill="#6c7a4a" font-size="11" font-weight="700">5</text>
+    <text x="690" y="156" text-anchor="middle" fill="#2b2a28" font-size="9.5" font-weight="700">L3 terminals</text>
+    <text x="690" y="168" text-anchor="middle" fill="#5f594f" font-size="8.5">only if residual</text>
+    <!-- WI-6 -->
+    <circle cx="820" cy="120" r="14" fill="#fffdf8" stroke="#a8472f" stroke-width="2"/><text x="820" y="125" text-anchor="middle" fill="#a8472f" font-size="11" font-weight="700">6</text>
+    <text x="820" y="156" text-anchor="middle" fill="#2b2a28" font-size="9.5" font-weight="700">qualifier (idx)</text>
+    <text x="820" y="168" text-anchor="middle" fill="#5f594f" font-size="8.5">Mode B</text>
+    <!-- WI-8 gate -->
+    <circle cx="1000" cy="120" r="15" fill="#a8472f"/><text x="1000" y="125" text-anchor="middle" fill="#f7f3ec" font-size="11" font-weight="700">8</text>
+    <text x="1000" y="156" text-anchor="middle" fill="#2b2a28" font-size="9.5" font-weight="700">classifier</text>
+    <text x="1000" y="168" text-anchor="middle" fill="#a8472f" font-size="8.5">human writes</text>
+
+    <!-- WI-7 off-spine (independent) -->
+    <circle cx="190" cy="56" r="13" fill="#fffdf8" stroke="#b9794f" stroke-width="2"/><text x="190" y="61" text-anchor="middle" fill="#b9794f" font-size="11" font-weight="700">7</text>
+    <text x="248" y="53" fill="#2b2a28" font-size="9.5" font-weight="700">WI-7 · JS attach</text>
+    <text x="248" y="65" fill="#5f594f" font-size="8.5">independent · any time after WI-0</text>
+
+    <!-- main flow arrows -->
+    <g fill="none" stroke="#5f594f" stroke-width="1.6">
+      <path d="M85,120 L173,120" marker-end="url(#seqA)"/>
+      <path d="M204,120 L294,120" marker-end="url(#seqA)"/>
+      <path d="M324,120 L414,120" marker-end="url(#seqA)"/>
+      <path d="M444,120 L543,120" marker-end="url(#seqA)"/>
+    </g>
+    <!-- dependency arrows (dashed) -->
+    <g fill="none" stroke="#b9794f" stroke-width="1.5" stroke-dasharray="4 3">
+      <path d="M575,120 L674,120" marker-end="url(#seqD)"/>
+      <path d="M705,120 L804,120" marker-end="url(#seqD)"/>
+      <path d="M836,120 C920,120 940,120 982,120" marker-end="url(#seqD)"/>
+    </g>
+    <!-- WI-7 join -->
+    <path d="M85,112 C120,90 150,70 176,60" fill="none" stroke="#5f594f" stroke-width="1.3" stroke-dasharray="3 3" marker-end="url(#seqA)"/>
+
+    <!-- legend row -->
+    <g font-size="9.5" fill="#5f594f">
+      <rect x="40" y="244" width="13" height="13" rx="3" fill="#fffdf8" stroke="#5f594f"/><text x="60" y="254">solid = ordered baseline chain</text>
+      <line x1="270" y1="250" x2="300" y2="250" stroke="#b9794f" stroke-width="1.5" stroke-dasharray="4 3"/><text x="308" y="254">dashed = dependency (must land first)</text>
+      <circle cx="540" cy="250" r="7" fill="#6c7a4a"/><text x="554" y="254">behavioural layer</text>
+      <circle cx="680" cy="250" r="7" fill="#a8472f"/><text x="694" y="254">gate / index-side</text>
+    </g>
+  </g>
+</svg>
+<figcaption><b>Measured, not assumed.</b> WI-4 lands and is measured before WI-5 is even added; WI-6 only lights up Mode B once WI-4/WI-5 are in place; WI-8 flips to <code>fixed</code> only after WI-1…WI-7 commit with <code>fix(348.1.x)</code> scope.</figcaption>
+</figure>
+
+<div class="callout rust">
+  <span class="k">Central risk — over-binding into false call edges</span>
+  <p>Only <strong>104 of 220</strong> candidate false-positives are this fault. The other <strong>116</strong> (re-export, receiver-type inference, polymorphic dispatch, non-static) <em>must not</em> resolve here.</p>
+  <ul>
+    <li><b>L1</b> is gated to module-visible defs only.</li>
+    <li><b>WI-3</b> fires only after export-chain and submodule both miss, for same-project resolved files.</li>
+    <li><b>L3</b> fires only when the anchor resolves in-scope, and binds only what <code>member_index</code> maps.</li>
+  </ul>
+</div>
+<div class="callout olive">
+  <span class="k">The guard that holds the shape</span>
+  <p>An integration regression test asserts both directions after <em>every</em> item: the <strong>104 flip 0 → &gt;0</strong>, the <strong>116 stay <code>== 0</code></strong>. Must-not-regress invariants:</p>
+  <ul>
+    <li>the <code>Map&lt;ScopeId, Map&lt;SymbolName, SymbolId&gt;&gt;</code> value-shape.</li>
+    <li><code>definition.ts:121</code> import exclusion from <code>by_scope</code>.</li>
+    <li><code>export.ts:187-193</code> duplicate-export throw.</li>
+    <li>exact <code>scopes.test.ts</code> tree shapes — WI-4 is a derived view, never moving <code>defining_scope_id</code>.</li>
+  </ul>
+</div>
+</section>
+
+<footer>
+  Comprehension companion for TASK-348 · root overview · refreshed 2026-06-24<br>
+  Source: backlog/docs/task-348-refactor-plan.md + task tree (348, 348.1, .1.1–.1.4) + packages/core/src/resolve_references/name_resolution.ts:128-224.<br>
+  Self-contained · inline CSS · no external dependencies · every section's primary visual is inline SVG.
+</footer>
+</main>
+</body>
+</html>

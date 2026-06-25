@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dispatch-channel reachability — the TASK-351 entry-point classification refactor</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --steel:#4a5a6c;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+  main{width:90%;max-width:1600px;margin-inline:auto;padding:30px 0 90px}
+  .prose{max-width:68ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:33px;line-height:1.12;margin:0 0 12px;letter-spacing:-.01em}
+  h2{font-family:var(--serif);font-weight:600;font-size:21px;margin:8px 0 4px;letter-spacing:-.01em}
+  .sec-cap{font-family:var(--mono);font-size:11.5px;color:var(--g600);margin:0 0 16px}
+  .lead{font-size:15px;color:var(--g600);line-height:1.5;margin:0 0 8px}
+  .thesis{font-family:var(--serif);font-style:italic;font-size:16px;color:var(--slate);margin:4px 0 0;border-left:3px solid var(--olive);padding-left:12px;max-width:72ch}
+  code{font-family:var(--mono);font-size:.88em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 4px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  section{margin-top:54px}
+  nav.toc{position:sticky;top:0;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 5%;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.toc .navlbl{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--g400);margin-right:4px}
+  nav.toc a{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:4px 11px}
+  nav.toc a:hover{border-color:var(--clay);color:var(--slate)}
+  [id]{scroll-margin-top:64px}
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:15px 19px;margin:6px 0}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)}
+  .callout.invert{background:var(--slate);color:var(--ivory);border-left-color:var(--clay)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 7px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)}
+  .callout.invert .k{color:var(--oat)}
+  .callout p{margin:0;font-size:15px}
+  .callout p+p{margin-top:9px}
+  .callout.invert code{background:rgba(255,255,255,.12);color:var(--oat)}
+  .figwrap{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:16px;margin:6px 0}
+  .figwrap svg{width:100%;height:auto;display:block}
+  .legend{display:flex;flex-wrap:wrap;gap:18px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:12px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:14px;height:14px;border-radius:4px;display:inline-block;border:1px solid var(--g200)}
+  .legend i.line{height:0;border-radius:0;border-top-width:2px}
+  /* before/after pair */
+  .ba{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin:6px 0}
+  .ba .panel{background:var(--paper);border:1px solid var(--g200);padding:12px 14px 16px}
+  .ba .panel:first-child{border-radius:var(--r) 0 0 var(--r)}
+  .ba .panel:last-child{border-radius:0 var(--r) var(--r) 0;border-left:none}
+  .ba .ptitle{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;margin:0 0 6px}
+  .ba .panel.cur .ptitle{color:var(--rust)} .ba .panel.plan .ptitle{color:var(--olive)}
+  .ba .arrow{display:flex;flex-direction:column;align-items:center;justify-content:center;width:48px;background:var(--ivory);border-top:1px solid var(--g200);border-bottom:1px solid var(--g200)}
+  .ba .arrow span{font-family:var(--mono);font-size:9px;color:var(--g400);writing-mode:vertical-rl;text-orientation:mixed;letter-spacing:.1em;margin-top:6px}
+  .ba svg{width:100%;height:auto;display:block}
+  /* two-population split */
+  .pops{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:6px 0}
+  .pop{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:16px 18px}
+  .pop.in{border-top:4px solid var(--olive)} .pop.out{border-top:4px solid var(--g400)}
+  .pop h3{margin:0 0 4px;font-family:var(--serif);font-size:17px;font-weight:600}
+  .pop .tag{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:8px}
+  .pop.in .tag{color:var(--olive)} .pop.out .tag{color:var(--g400)}
+  .pop .big{font-family:var(--serif);font-size:30px;font-weight:600;line-height:1}
+  .pop .unit{font-family:var(--mono);font-size:11px;color:var(--g600)}
+  .pop .desc{font-size:13.5px;color:var(--g600);margin:10px 0 0}
+  .pop .fp{font-family:var(--mono);font-size:11px;color:var(--slate);border:1px solid var(--g200);background:var(--g100);border-radius:8px;padding:8px 10px;margin-top:10px;line-height:1.55}
+  .pop .fp em{font-style:normal}
+  .pop.in .fp em{color:var(--olive)} .pop.out .fp em{color:var(--rust)}
+  /* sub-task matrix */
+  .tbl-wrap{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);overflow:hidden;font-size:13px}
+  thead th{text-align:left;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--g600);background:var(--g100);padding:10px 12px;border-bottom:1px solid var(--g200);vertical-align:bottom}
+  tbody td{padding:11px 12px;border-bottom:1px solid var(--g200);vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  td .sub{font-family:var(--mono);font-size:10.5px;color:var(--clay);display:block;margin-bottom:3px}
+  td .nm{font-weight:600}
+  .bar{position:relative;height:18px;background:var(--g100);border-radius:5px;overflow:hidden;min-width:60px}
+  .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--olive)}
+  .bar i.lg{background:var(--rust)} .bar i.md{background:var(--clay)}
+  .bar b{position:absolute;right:6px;top:0;line-height:18px;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--slate)}
+  .eff{font-family:var(--mono);font-size:11px;border-radius:999px;padding:3px 9px;white-space:nowrap;display:inline-block}
+  .eff.triv{background:#eaf0df;color:#4f5a33} .eff.sm{background:#eef2e6;color:#566036}
+  .eff.med{background:#f5e9dd;color:#8a5630} .eff.lg{background:#f7e0d8;color:#8a3422}
+  .sig{font-family:var(--mono);font-size:11.5px}
+  .sig.have{color:var(--olive)} .sig.new{color:var(--rust)} .sig.plumb{color:var(--clay)}
+  /* signal sources */
+  .srcs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:6px 0}
+  .src{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:14px 15px}
+  .src h4{margin:0 0 6px;font-family:var(--mono);font-size:12px;color:var(--slate)}
+  .src .cost{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:8px}
+  .src.s1{border-top:3px solid var(--olive)} .src.s1 .cost{color:var(--olive)}
+  .src.s2{border-top:3px solid var(--clay)} .src.s2 .cost{color:var(--clay)}
+  .src.s3{border-top:3px solid var(--rust)} .src.s3 .cost{color:var(--rust)}
+  .src p{margin:0;font-size:13px;color:var(--g600)}
+  .src .where{font-family:var(--mono);font-size:10.5px;color:var(--g400);display:block;margin-top:8px}
+  /* sequence strip */
+  .seq{display:flex;flex-wrap:wrap;gap:0;margin:6px 0}
+  .seq .step{flex:1;min-width:155px;border:1px solid var(--g200);background:var(--paper);padding:12px 13px}
+  .seq .step:first-child{border-radius:var(--r) 0 0 var(--r)}
+  .seq .step:last-child{border-radius:0 var(--r) var(--r) 0}
+  .seq .step+.step{border-left:none}
+  .seq .ord{font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:var(--clay);text-transform:uppercase}
+  .seq .step h4{margin:5px 0 4px;font-family:var(--mono);font-size:12px}
+  .seq .step p{margin:0;font-size:11.5px;color:var(--g600)}
+  .seq .step .tag{font-family:var(--mono);font-size:9.5px;color:var(--g400);display:block;margin-top:6px}
+  .seq .step.gate{background:#f7f1e8;border-color:var(--clay)}
+  .seq .step.big{background:#f7ece4}
+  /* open questions */
+  .oq{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin:6px 0}
+  dl.oqcard{margin:0;background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:14px 16px;border-left:4px solid var(--clay)}
+  dl.oqcard.hot{border-left-color:var(--rust)}
+  dl.oqcard dt{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--clay);display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px}
+  dl.oqcard.hot dt{color:var(--rust)}
+  dl.oqcard dt .ws{font-size:10px;color:var(--g400);background:var(--g100);border-radius:5px;padding:2px 7px}
+  dl.oqcard dd{margin:0;font-size:13.5px;color:var(--g600)}
+  footer{margin-top:56px;border-top:1px solid var(--g200);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400);line-height:1.7}
+  @media(max-width:880px){
+    .ba{grid-template-columns:1fr}
+    .ba .panel:first-child{border-radius:var(--r) var(--r) 0 0}
+    .ba .panel:last-child{border-radius:0 0 var(--r) var(--r);border-left:1px solid var(--g200);border-top:none}
+    .ba .arrow{flex-direction:row;width:auto;height:34px;border-left:1px solid var(--g200);border-right:1px solid var(--g200)}
+    .ba .arrow span{writing-mode:horizontal-tb;margin:0 0 0 6px}
+    .pops,.srcs{grid-template-columns:1fr}
+    .seq .step,.seq .step:first-child,.seq .step:last-child{border-radius:var(--r);border-left:1px solid var(--g200)}
+    .seq .step+.step{margin-top:8px}
+  }
+</style>
+</head>
+<body>
+
+<nav class="toc" aria-label="On this page">
+  <span class="navlbl">TASK-351</span>
+  <a href="#blindspot">The blind spot</a>
+  <a href="#populations">Two populations</a>
+  <a href="#architecture">Before / after</a>
+  <a href="#boundary">The scope boundary</a>
+  <a href="#signals">Signal sources</a>
+  <a href="#subtasks">Six sub-patterns</a>
+  <a href="#sequence">Migration</a>
+  <a href="#builtins">Builtin table</a>
+  <a href="#risks">Risks</a>
+</nav>
+
+<main>
+<header>
+  <p class="eyebrow">classify_entry_points · architectural refactor · 6-pattern tree</p>
+  <h1>Reachability through dispatch channels the static call graph cannot see</h1>
+  <p class="lead prose">An entry point is declared on one structural fact: the symbol has no resolved incoming call edge. But many reachable functions are invoked through non-call channels — framework registration, runners, stored callables, codegen, closures. Today 65 per-language builtins patch this; their language skew is the bug.</p>
+  <p class="thesis">Model dispatch reachability as one language-general data record on the candidate plus a few declarative predicate operators that read it — never as more imperative per-language builtins.</p>
+  <div class="meta">
+    <span class="chip"><strong>65</strong> builtins today</span>
+    <span class="chip">skew <strong>~38 TS · ~22 JS · 1 Py · 0 Rust</strong></span>
+    <span class="chip"><strong>~20</strong> absorbed into one axis</span>
+    <span class="chip"><strong>6</strong> sub-patterns</span>
+    <span class="chip"><strong>1</strong> new record · <strong>DispatchSignals</strong></span>
+  </div>
+</header>
+
+<!-- =================== BLIND SPOT =================== -->
+<section id="blindspot">
+<h2>The static call-graph blind spot</h2>
+<p class="prose sec-cap"><code>detect_entry_points</code> sees only resolved call expressions; six dispatch channels invoke functions without one, so every such function surfaces as a false-positive entry point.</p>
+<div class="figwrap">
+<svg viewBox="0 0 980 430" role="img" aria-label="Six dispatch channels invoke reachable functions through non-call mechanisms; none produces an in-repo call expression, so detect_entry_points sees no incoming edge and reports each as a false-positive entry point">
+  <defs>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#5f594f"/></marker>
+    <marker id="arR" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#a8472f"/></marker>
+  </defs>
+  <g font-family="ui-monospace,monospace">
+    <!-- channels -->
+    <g font-size="10">
+      <rect x="20" y="20" width="190" height="40" rx="9" fill="#fffdf8" stroke="#b9794f"/>
+      <text x="115" y="38" text-anchor="middle" fill="#2b2a28" font-weight="700">framework / decorator</text>
+      <text x="115" y="52" text-anchor="middle" fill="#5f594f">@Query · py_impl · register</text>
+
+      <rect x="20" y="78" width="190" height="40" rx="9" fill="#fffdf8" stroke="#b9794f"/>
+      <text x="115" y="96" text-anchor="middle" fill="#2b2a28" font-weight="700">test / benchmark runner</text>
+      <text x="115" y="110" text-anchor="middle" fill="#5f594f">#[test] · ASV time_*</text>
+
+      <rect x="20" y="136" width="190" height="40" rx="9" fill="#fffdf8" stroke="#b9794f"/>
+      <text x="115" y="154" text-anchor="middle" fill="#2b2a28" font-weight="700">stored callable</text>
+      <text x="115" y="168" text-anchor="middle" fill="#5f594f">const h = handler  (no paren)</text>
+
+      <rect x="20" y="254" width="190" height="40" rx="9" fill="#fffdf8" stroke="#b9794f"/>
+      <text x="115" y="272" text-anchor="middle" fill="#2b2a28" font-weight="700">codegen / string dispatch</text>
+      <text x="115" y="286" text-anchor="middle" fill="#5f594f">render3 ɵɵ · eval · map[k]()</text>
+
+      <rect x="20" y="312" width="190" height="40" rx="9" fill="#fffdf8" stroke="#b9794f"/>
+      <text x="115" y="330" text-anchor="middle" fill="#2b2a28" font-weight="700">anonymous closure</text>
+      <text x="115" y="344" text-anchor="middle" fill="#5f594f">name === &lt;anonymous&gt;</text>
+
+      <rect x="20" y="370" width="190" height="40" rx="9" fill="#fffdf8" stroke="#b9794f"/>
+      <text x="115" y="388" text-anchor="middle" fill="#2b2a28" font-weight="700">bundler / runtime inject</text>
+      <text x="115" y="402" text-anchor="middle" fill="#5f594f">build-time path redirection</text>
+    </g>
+
+    <!-- the function -->
+    <rect x="330" y="190" width="200" height="50" rx="10" fill="#6c7a4a" stroke="#566036"/>
+    <text x="430" y="212" text-anchor="middle" fill="#f7f3ec" font-size="12" font-weight="700">reachable function</text>
+    <text x="430" y="228" text-anchor="middle" fill="#e7ddc9" font-size="10">genuinely invoked at runtime</text>
+
+    <!-- channel edges into function (dashed = non-call dispatch) -->
+    <g fill="none" stroke="#b9794f" stroke-width="1.4" stroke-dasharray="5 4">
+      <path d="M210,40 C280,60 290,170 328,196"/>
+      <path d="M210,98 C285,120 295,180 328,204"/>
+      <path d="M210,156 C290,168 300,196 328,210"/>
+      <path d="M210,274 C290,262 300,228 328,222"/>
+      <path d="M210,332 C285,300 295,238 328,228"/>
+      <path d="M210,390 C280,350 290,250 328,234"/>
+    </g>
+    <text x="262" y="120" fill="#b9794f" font-size="9" transform="rotate(-20 262 120)">non-call dispatch</text>
+
+    <!-- static call graph -->
+    <rect x="600" y="120" width="200" height="86" rx="11" fill="#fffdf8" stroke="#ddd6c8"/>
+    <text x="700" y="142" text-anchor="middle" fill="#2b2a28" font-size="11" font-weight="700">static call graph</text>
+    <text x="700" y="160" text-anchor="middle" fill="#5f594f" font-size="9.5">resolved call edges only</text>
+    <text x="700" y="178" text-anchor="middle" fill="#a8472f" font-size="9.5">no edge from any channel</text>
+    <text x="700" y="195" text-anchor="middle" fill="#9a9387" font-size="9">trace_call_graph.ts:109-138</text>
+    <!-- the only edge type it sees -->
+    <line x1="530" y1="205" x2="598" y2="178" stroke="#5f594f" stroke-width="1.6" marker-end="url(#ar)"/>
+    <text x="556" y="205" fill="#5f594f" font-size="9">a call() edge</text>
+    <text x="556" y="217" fill="#9a9387" font-size="9">would land here</text>
+
+    <!-- verdict -->
+    <line x1="800" y1="163" x2="852" y2="163" stroke="#a8472f" stroke-width="1.8" marker-end="url(#arR)"/>
+    <rect x="855" y="120" width="115" height="86" rx="11" fill="#a8472f" stroke="#7a3b29"/>
+    <text x="912" y="148" text-anchor="middle" fill="#f7f3ec" font-size="11" font-weight="700">false-positive</text>
+    <text x="912" y="164" text-anchor="middle" fill="#f7f3ec" font-size="11" font-weight="700">entry point</text>
+    <text x="912" y="186" text-anchor="middle" fill="#f1cdc2" font-size="9">266 confirmed</text>
+
+    <!-- shared diagnosis -->
+    <rect x="330" y="300" width="470" height="56" rx="10" fill="#f0ece2" stroke="#9a9387"/>
+    <text x="565" y="322" text-anchor="middle" fill="#2b2a28" font-size="11" font-weight="700">all 266 share one fingerprint: diagnosis = no-textual-callers, no resolution_failure</text>
+    <text x="565" y="340" text-anchor="middle" fill="#5f594f" font-size="9.5">grep_call_sites empty · no ariadne_call_refs · every call-site signal uniformly empty → must key on definition-site evidence</text>
+    <line x1="430" y1="240" x2="490" y2="298" stroke="#9a9387" stroke-width="1.3" stroke-dasharray="3 3"/>
+  </g>
+</svg>
+</div>
+<div class="legend">
+  <span><i class="line" style="border-color:#b9794f;border-top-style:dashed"></i> non-call dispatch (invisible to the graph)</span>
+  <span><i class="line" style="border-color:#5f594f"></i> resolved call() edge — the only thing seen</span>
+  <span><i style="background:#a8472f;border:none"></i> false-positive verdict</span>
+</div>
+</section>
+
+<!-- =================== TWO POPULATIONS =================== -->
+<section id="populations">
+<h2>The 65 builtins are two distinct populations</h2>
+<p class="prose sec-cap">Getting this split right is the whole scope decision — only the left half belongs to this work.</p>
+<div class="pops">
+  <div class="pop in">
+    <span class="tag">IN SCOPE · this refactor</span>
+    <h3>Dispatch-channel suppressors</h3>
+    <div><span class="big">~20</span> <span class="unit">builtins · ~187 members across 6 sub-patterns</span></div>
+    <p class="desc">The symbol is genuinely invoked through a non-call channel. No static edge can ever exist — suppression is correct and permanent.</p>
+    <div class="fp"><em>fingerprint:</em> diagnosis <code>no-textual-callers</code>, <strong>no</strong> resolution_failure, and a <strong>present</strong> positive signal (anonymous, a decorator name, a bare reference).</div>
+  </div>
+  <div class="pop out">
+    <span class="tag">OUT OF SCOPE · fixed upstream</span>
+    <h3>Resolver-miss one-offs</h3>
+    <div><span class="big">~40</span> <span class="unit">builtins · the ~207 mis-routed members</span></div>
+    <p class="desc">A real call expression exists but the resolver dropped the edge. These belong to the resolver, not this axis — folding them in would mask resolver regressions.</p>
+    <div class="fp"><em>fingerprint:</em> diagnosis <code>callers-in-registry-unresolved</code> / <code>callers-not-in-registry</code> — a <code>resolution_failure</code> or a grep hit that the dispatch axis cannot read.</div>
+  </div>
+</div>
+<aside class="callout olive">
+  <span class="k">Why the boundary holds by construction</span>
+  <p>The new <code>DispatchSignals</code> record carries <strong>only positive dispatch evidence</strong> and deliberately omits <code>resolution_failure</code>, <code>receiver_kind</code>, and <code>ariadne_call_refs</code>. A resolver-miss fingerprint is therefore <em>inexpressible</em> as a dispatch rule — the split above is enforced by the type surface, not by reviewer discipline.</p>
+</aside>
+</section>
+
+<!-- =================== BEFORE / AFTER =================== -->
+<section id="architecture">
+<h2>The classification axis: today vs. unified</h2>
+<p class="prose sec-cap">Left: each channel re-implemented per language, each builtin inlining its own <code>=== 'typescript'</code> guard and its own decorator parser. Right: one record, born once upstream, read by a closed predicate vocabulary that is language-general by construction.</p>
+<div class="ba">
+  <div class="panel cur">
+    <p class="ptitle">Current — 65 scattered per-language builtins</p>
+    <svg viewBox="0 0 440 360" role="img" aria-label="Current: a candidate is matched against dozens of imperative builtins, each with its own inlined typescript guard and decorator parser, so Rust and Python closures leak through">
+      <g font-family="ui-monospace,monospace">
+        <rect x="120" y="14" width="200" height="40" rx="9" fill="#6c7a4a" stroke="#566036"/>
+        <text x="220" y="32" text-anchor="middle" fill="#f7f3ec" font-size="12" font-weight="700">EnrichedEntryPoint</text>
+        <text x="220" y="47" text-anchor="middle" fill="#e7ddc9" font-size="10">candidate, all languages</text>
+        <line x1="220" y1="54" x2="220" y2="72" stroke="#5f594f" stroke-width="1.6" marker-end="url(#ar)"/>
+
+        <rect x="36" y="78" width="368" height="186" rx="11" fill="#f7e9e2" stroke="#a8472f" stroke-dasharray="4 3"/>
+        <text x="52" y="96" fill="#a8472f" font-size="11" font-weight="700">BUILTIN_CHECKS · 65 imperative fns</text>
+        <text x="388" y="96" text-anchor="end" fill="#9a9387" font-size="9">builtins/index.ts</text>
+        <!-- builtin tiles -->
+        <g font-size="8.5">
+          <rect x="52" y="106" width="108" height="40" rx="6" fill="#fffdf8" stroke="#b9794f"/>
+          <text x="106" y="121" text-anchor="middle" fill="#2b2a28" font-weight="700">closure (TS)</text>
+          <text x="106" y="133" text-anchor="middle" fill="#a8472f">=== 'typescript'</text>
+          <text x="106" y="143" text-anchor="middle" fill="#5f594f">×6 dupes</text>
+
+          <rect x="166" y="106" width="108" height="40" rx="6" fill="#fffdf8" stroke="#b9794f"/>
+          <text x="220" y="121" text-anchor="middle" fill="#2b2a28" font-weight="700">decorator (TS/JS)</text>
+          <text x="220" y="133" text-anchor="middle" fill="#a8472f">own regex copy</text>
+          <text x="220" y="143" text-anchor="middle" fill="#5f594f">×5 + byte dupe</text>
+
+          <rect x="280" y="106" width="108" height="40" rx="6" fill="#fffdf8" stroke="#b9794f"/>
+          <text x="334" y="121" text-anchor="middle" fill="#2b2a28" font-weight="700">stored (TS/JS)</text>
+          <text x="334" y="133" text-anchor="middle" fill="#5f594f">×3</text>
+          <text x="334" y="143" text-anchor="middle" fill="#5f594f">codegen ×9 …</text>
+
+          <rect x="52" y="152" width="336" height="34" rx="6" fill="#f0ece2" stroke="#9a9387"/>
+          <text x="220" y="166" text-anchor="middle" fill="#5f594f" font-weight="700">+ ~40 resolver-miss one-offs (out of scope)</text>
+          <text x="220" y="178" text-anchor="middle" fill="#9a9387">static-method · ctor linkage · receiver-type-lost · intra-file</text>
+        </g>
+        <text x="52" y="206" fill="#a8472f" font-size="9.5" letter-spacing=".4">NO RUST BUILTINS · NO PY CLOSURE BUILTIN</text>
+        <rect x="52" y="214" width="336" height="42" rx="7" fill="#fffdf8" stroke="#a8472f"/>
+        <text x="220" y="232" text-anchor="middle" fill="#a8472f" font-size="10.5" font-weight="700">67 Rust / Python / Serde closures leak through</text>
+        <text x="220" y="247" text-anchor="middle" fill="#7a3b29" font-size="9">the TS-only guard never matches them</text>
+
+        <line x1="220" y1="264" x2="220" y2="286" stroke="#a8472f" stroke-width="1.6" marker-end="url(#arR)"/>
+        <rect x="120" y="288" width="200" height="34" rx="8" fill="#a8472f" stroke="#7a3b29"/>
+        <text x="220" y="309" text-anchor="middle" fill="#f7f3ec" font-size="11" font-weight="700">coverage skewed by language</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="arrow">
+    <svg width="20" height="20" viewBox="0 0 20 20"><path d="M3,10 H15 M11,5 L16,10 L11,15" fill="none" stroke="#9a9387" stroke-width="1.8"/></svg>
+    <span>UNIFY</span>
+  </div>
+
+  <div class="panel plan">
+    <p class="ptitle">Planned — one record + a closed predicate vocabulary</p>
+    <svg viewBox="0 0 440 360" role="img" aria-label="Planned: derive_dispatch_signals populates one DispatchSignals record for all languages; a few language-general predicate operators read it; no new engine, the existing predicate evaluator is the axis">
+      <g font-family="ui-monospace,monospace">
+        <rect x="120" y="14" width="200" height="40" rx="9" fill="#6c7a4a" stroke="#566036"/>
+        <text x="220" y="32" text-anchor="middle" fill="#f7f3ec" font-size="12" font-weight="700">EnrichedEntryPoint</text>
+        <text x="220" y="47" text-anchor="middle" fill="#e7ddc9" font-size="10">+ dispatch_signals</text>
+        <line x1="220" y1="54" x2="220" y2="72" stroke="#5f594f" stroke-width="1.6" marker-end="url(#ar)"/>
+
+        <!-- DispatchSignals record -->
+        <rect x="36" y="78" width="368" height="86" rx="11" fill="#eaf0df" stroke="#6c7a4a"/>
+        <text x="52" y="96" fill="#4f5a33" font-size="11" font-weight="700">DispatchSignals · one language-general record</text>
+        <text x="388" y="96" text-anchor="end" fill="#9a9387" font-size="9">entry_point.ts</text>
+        <g font-size="9.5">
+          <text x="56" y="116" fill="#566036">is_anonymous: boolean</text>
+          <text x="56" y="132" fill="#566036">decorators: readonly string[]</text>
+          <text x="56" y="148" fill="#566036">bare_reference_sites: BareReferenceSite[]</text>
+        </g>
+        <text x="384" y="148" text-anchor="end" fill="#4f5a33" font-size="9">no resolution_failure</text>
+
+        <line x1="220" y1="164" x2="220" y2="184" stroke="#5f594f" stroke-width="1.6" marker-end="url(#ar)"/>
+
+        <!-- predicate ops -->
+        <rect x="36" y="188" width="368" height="80" rx="11" fill="#fffdf8" stroke="#6c7a4a"/>
+        <text x="52" y="206" fill="#4f5a33" font-size="11" font-weight="700">predicate_evaluator · 5 leaf ops</text>
+        <text x="388" y="206" text-anchor="end" fill="#9a9387" font-size="9">no new engine</text>
+        <g font-size="9">
+          <rect x="52" y="216" width="100" height="20" rx="5" fill="#eaf0df" stroke="#6c7a4a"/><text x="102" y="230" text-anchor="middle" fill="#4f5a33">is_anonymous</text>
+          <rect x="158" y="216" width="116" height="20" rx="5" fill="#eaf0df" stroke="#6c7a4a"/><text x="216" y="230" text-anchor="middle" fill="#4f5a33">decorator_name_in</text>
+          <rect x="280" y="216" width="108" height="20" rx="5" fill="#eaf0df" stroke="#6c7a4a"/><text x="334" y="230" text-anchor="middle" fill="#4f5a33">has_bare_reference</text>
+          <rect x="100" y="240" width="100" height="20" rx="5" fill="#eaf0df" stroke="#6c7a4a"/><text x="150" y="254" text-anchor="middle" fill="#4f5a33">path_matches</text>
+          <rect x="206" y="240" width="100" height="20" rx="5" fill="#eaf0df" stroke="#6c7a4a"/><text x="256" y="254" text-anchor="middle" fill="#4f5a33">name_matches</text>
+        </g>
+
+        <line x1="220" y1="268" x2="220" y2="286" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#ar)"/>
+        <rect x="120" y="288" width="200" height="34" rx="8" fill="#6c7a4a" stroke="#566036"/>
+        <text x="220" y="305" text-anchor="middle" fill="#f7f3ec" font-size="10.5" font-weight="700">every language covered, no clause</text>
+        <text x="220" y="350" text-anchor="middle" fill="#6c7a4a" font-size="9">framework name-set lives as registry data — adding one is an edit, not code</text>
+      </g>
+    </svg>
+  </div>
+</div>
+<div class="legend">
+  <span><i style="background:#f7e9e2;border-color:#a8472f"></i> removed / leaking</span>
+  <span><i style="background:#eaf0df;border-color:#6c7a4a"></i> added / language-general</span>
+  <span><i style="background:#6c7a4a;border:none"></i> covered path</span>
+  <span><i style="background:#a8472f;border:none"></i> skewed coverage</span>
+</div>
+</section>
+
+<!-- =================== SCOPE BOUNDARY =================== -->
+<section id="boundary">
+<h2>The load-bearing design rule</h2>
+<p class="prose sec-cap">One type decision keeps the dispatch axis and the resolver permanently separate.</p>
+<aside class="callout invert">
+  <span class="k">DispatchSignals carries only positive evidence</span>
+  <p><code>dispatch_signals</code> is a <strong>separate field from</strong> <code>DefinitionFeatures</code> — which is JS/TS-gated by contract, the very gate that is the bug — and is populated by its own <code>derive_dispatch_signals</code> function so it can never inherit the <code>is_jsts</code> gate (<code>extract_entry_point_diagnostics.ts:589</code>).</p>
+  <p>Every dispatch rule gates on a <em>present</em> signal, never on the mere absence of a resolved edge. Resolver misses carry <code>resolution_failure</code> or grep hits the record does not expose, so they match no dispatch rule — a negative pre-emption test pins it.</p>
+</aside>
+</section>
+
+<!-- =================== SIGNAL SOURCES =================== -->
+<section id="signals">
+<h2>Where the signals come from — and why most are nearly free</h2>
+<p class="prose sec-cap">Three of the five operators read evidence the candidate already carries or that the indexer already extracts and merely drops; only one needs new machinery.</p>
+<div class="srcs">
+  <div class="src s1">
+    <span class="cost">already present</span>
+    <h4>is_anonymous · path · name</h4>
+    <p><code>name === '&lt;anonymous&gt;'</code> is already set for Rust and Python closures by the symbol factories; <code>file_path</code> and <code>name</code> are on every candidate. Pure reads — only the language gate is removed.</p>
+    <span class="where">symbol.ts:159-162 · symbol_factories.{python,rust}.ts</span>
+  </div>
+  <div class="src s2">
+    <span class="cost">drop, then project</span>
+    <h4>decorators</h4>
+    <p>The indexer already populates <code>definition.decorators</code> for TS / Python / Rust; they ride on the candidate's node but are discarded at <code>extract_metadata</code>. Stop dropping them and project the names — pure projection, no resolver work.</p>
+    <span class="where">symbol_definitions.ts:53,75,91 · dropped at extract_entry_point_diagnostics.ts:249-263</span>
+  </div>
+  <div class="src s3">
+    <span class="cost">new machinery</span>
+    <h4>bare_reference_sites</h4>
+    <p>No value-read signal exists — today's grep index matches only the <code>identifier(</code> call form. A second inverted index matches the name <em>not</em> followed by <code>(</code>, scoped to definition-adjacent sites. Additive, hermetic, reversible — isolated to the last phase.</p>
+    <span class="where">new index in extract_entry_point_diagnostics.ts (build_grep_index:338-376)</span>
+  </div>
+</div>
+</section>
+
+<!-- =================== SIX SUB-PATTERNS =================== -->
+<section id="subtasks">
+<h2>Six sub-patterns mapped to members, signal, and effort</h2>
+<p class="prose sec-cap">Bar length is the member count each pattern retires. The effort is set by one thing: whether the signal is already on the candidate.</p>
+<div class="tbl-wrap">
+<table>
+  <thead>
+    <tr>
+      <th style="width:26%">Sub-pattern</th>
+      <th style="width:24%">Members retired</th>
+      <th style="width:26%">Match rule</th>
+      <th style="width:13%">New signal?</th>
+      <th style="width:11%">Effort</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="sub">351.1.1</span><span class="nm">Stored runtime callables</span></td>
+      <td><div class="bar"><i class="lg" style="width:100%"></i><b>91</b></div></td>
+      <td><code>diagnosis_eq</code> + <code>has_bare_reference true</code></td>
+      <td><span class="sig new">bare-reference index</span></td>
+      <td><span class="eff lg">large</span></td>
+    </tr>
+    <tr>
+      <td><span class="sub">351.1.3</span><span class="nm">Framework / registration dispatch</span></td>
+      <td><div class="bar"><i class="md" style="width:82%"></i><b>75</b></div></td>
+      <td><code>decorator_name_in [Query, py_impl, …]</code></td>
+      <td><span class="sig plumb">decorators plumbing</span></td>
+      <td><span class="eff med">medium</span></td>
+    </tr>
+    <tr>
+      <td><span class="sub">351.1.2</span><span class="nm">Anonymous closures (all langs)</span></td>
+      <td><div class="bar"><i style="width:74%"></i><b>67</b></div></td>
+      <td><code>is_anonymous true</code>, <strong>no language clause</strong></td>
+      <td><span class="sig have">none — un-gate only</span></td>
+      <td><span class="eff triv">trivial</span></td>
+    </tr>
+    <tr>
+      <td><span class="sub">351.1.4</span><span class="nm">Rust <code>#[test]</code> / <code>#[cfg(test)]</code></span></td>
+      <td><div class="bar"><i class="md" style="width:22%"></i><b>20</b></div></td>
+      <td><code>decorator_name_in [test, cfg, tokio::test]</code></td>
+      <td><span class="sig plumb">decorators plumbing</span></td>
+      <td><span class="eff sm">small</span></td>
+    </tr>
+    <tr>
+      <td><span class="sub">351.1.5</span><span class="nm">ASV benchmark convention</span></td>
+      <td><div class="bar"><i style="width:15%"></i><b>14</b></div></td>
+      <td><code>path_matches</code> + <code>name_matches ^(time|mem|peakmem)_</code></td>
+      <td><span class="sig have">none — present</span></td>
+      <td><span class="eff triv">trivial</span></td>
+    </tr>
+    <tr>
+      <td><span class="sub">351.1.6</span><span class="nm">Residual no-code-caller</span></td>
+      <td><div class="bar"><i class="md" style="width:12%"></i><b>11</b></div></td>
+      <td>narrow <code>path/name/neighbourhood</code> rules + 1 human row</td>
+      <td><span class="sig have">none</span></td>
+      <td><span class="eff med">medium</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<aside class="callout">
+  <span class="k">What makes the split work</span>
+  <p>351.1.2 and 351.1.5 are <strong>trivial</strong> because their signals already ride on the candidate; the medium tier 351.1.3 and 351.1.4 shares <strong>one</strong> decorator-plumbing change; only 351.1.1 carries new machinery, isolated last.</p>
+</aside>
+<aside class="callout olive">
+  <span class="k">351.1.7 · interim classifiers are mitigation only</span>
+  <p>Each interim <code>wip</code> rule suppresses its false positives until the core rule lands, then a human flips it <code>wip → fixed</code> via <code>reconcile-registry</code>. The axis makes the interim rules redundant channel by channel; core never writes the registry, so the lifecycle is unchanged.</p>
+</aside>
+</section>
+
+<!-- =================== MIGRATION SEQUENCE =================== -->
+<section id="sequence">
+<h2>The migration sequence — value-ordered, test-gated</h2>
+<p class="prose sec-cap">At every commit the registry is a valid mix of new declarative rules and not-yet-retired builtins; each phase deletes the builtins it absorbs in the same change, one per commit.</p>
+<div class="seq">
+  <div class="step gate"><span class="ord">phase 0 · gate</span><h4>Regression harness</h4><p>A fixture per sub-pattern asserting the exact classification. The new-language cases fail here — documenting the gap.</p><span class="tag">every later step keeps this green</span></div>
+  <div class="step"><span class="ord">phase 1</span><h4>351.1.2 closures</h4><p>Add <code>dispatch_signals</code> + <code>is_anonymous</code>; author the no-clause rule; Rust/Python flip green; delete 6 builtins.</p><span class="tag">trivial</span></div>
+  <div class="step"><span class="ord">phase 2</span><h4>351.1.5 ASV</h4><p>Add <code>path_matches</code> + <code>name_matches</code>; author the rule. No builtin to delete — an uncovered gap.</p><span class="tag">trivial</span></div>
+  <div class="step"><span class="ord">phase 3</span><h4>351.1.3 + 351.1.4</h4><p>Land decorator projection; add <code>decorator_name_in</code>; author both rules; delete the framework builtins + the dead text op.</p><span class="tag">shared plumbing</span></div>
+  <div class="step"><span class="ord">phase 4</span><h4>351.1.6 codegen</h4><p>Author codegen / dynamic-string rules; collapse the Angular trio to one; record the downstream-only API as a human row.</p><span class="tag">medium</span></div>
+  <div class="step big"><span class="ord">phase 5 · isolated</span><h4>351.1.1 stored</h4><p>Land the bare-reference index; add <code>has_bare_reference</code>; delete 3 stored-callable builtins. Can slip without blocking 1–4.</p><span class="tag">large</span></div>
+  <div class="step"><span class="ord">phase 6 · sweep</span><h4>Retire interim</h4><p>Human flips 351.1.7 <code>wip → fixed</code> as each core rule lands; confirm the barrel shrank ~20 with no <code>MissingBuiltinError</code>.</p><span class="tag">sweep</span></div>
+</div>
+</section>
+
+<!-- =================== BUILTIN TABLE =================== -->
+<section id="builtins">
+<h2>What happens to the builtin table</h2>
+<p class="prose sec-cap"><code>builtins/index.ts</code> is auto-generated, so collapsing dispatch builtins into declarative rules <em>shrinks</em> it by ~20 entries — and what stays is deliberately distinct.</p>
+<div class="ba">
+  <div class="panel cur">
+    <p class="ptitle">Absorbed — deleted with their replacing rule (~20)</p>
+    <svg viewBox="0 0 420 250" role="img" aria-label="Twenty dispatch builtins absorbed by four declarative rules: six closure, five framework, three stored-callable, and a codegen and bundler cluster">
+      <g font-family="ui-monospace,monospace" font-size="9.5">
+        <rect x="14" y="14" width="392" height="48" rx="8" fill="#f7e9e2" stroke="#a8472f"/>
+        <text x="24" y="32" fill="#a8472f" font-weight="700">closure → is_anonymous</text>
+        <text x="24" y="48" fill="#7a3b29">inline_callback · higher-order (dupe) · call-apply · this-object ·this-based · aliased-property</text>
+        <rect x="14" y="68" width="392" height="48" rx="8" fill="#f7e9e2" stroke="#a8472f"/>
+        <text x="24" y="86" fill="#a8472f" font-weight="700">framework → decorator_name_in</text>
+        <text x="24" y="102" fill="#7a3b29">decorator-dispatch · lifecycle-dispatch (byte dupe) · lifecycle-handler · command-builder · override</text>
+        <rect x="14" y="122" width="392" height="48" rx="8" fill="#f7e9e2" stroke="#a8472f"/>
+        <text x="24" y="140" fill="#a8472f" font-weight="700">stored → has_bare_reference</text>
+        <text x="24" y="156" fill="#7a3b29">stored-callback-via-object-property · this-property-method · dynamic-method</text>
+        <rect x="14" y="176" width="392" height="60" rx="8" fill="#f7e9e2" stroke="#a8472f"/>
+        <text x="24" y="194" fill="#a8472f" font-weight="700">codegen / bundler → narrow path / name predicates</text>
+        <text x="24" y="210" fill="#7a3b29">angular trio → 1 · eval · new-Function · dynamic-require · reporter-ctor</text>
+        <text x="24" y="225" fill="#7a3b29">bundler-path · bundler-substitution · runtime-injection</text>
+      </g>
+    </svg>
+  </div>
+  <div class="arrow">
+    <svg width="20" height="20" viewBox="0 0 20 20"><path d="M3,10 H15 M11,5 L16,10 L11,15" fill="none" stroke="#9a9387" stroke-width="1.8"/></svg>
+    <span>SHRINK</span>
+  </div>
+  <div class="panel plan">
+    <p class="ptitle">Kept distinct — a different structural axis</p>
+    <svg viewBox="0 0 420 250" role="img" aria-label="Builtins that stay: python dunder protocol, the getter property-read family, the private-field-method pair; plus the forty resolver-miss one-offs retired upstream not here">
+      <g font-family="ui-monospace,monospace" font-size="9.5">
+        <rect x="14" y="14" width="392" height="44" rx="8" fill="#eaf0df" stroke="#6c7a4a"/>
+        <text x="24" y="32" fill="#4f5a33" font-weight="700">py-dunder-protocol</text>
+        <text x="24" y="48" fill="#566036">Python protocol name-set, no decorator at def site</text>
+        <rect x="14" y="64" width="392" height="44" rx="8" fill="#eaf0df" stroke="#6c7a4a"/>
+        <text x="24" y="82" fill="#4f5a33" font-weight="700">getter / property-read family</text>
+        <text x="24" y="98" fill="#566036">tree-sitter no-call-expr capture gap — a separate axis</text>
+        <rect x="14" y="114" width="392" height="44" rx="8" fill="#eaf0df" stroke="#6c7a4a"/>
+        <text x="24" y="132" fill="#4f5a33" font-weight="700">private-field-method pair</text>
+        <text x="24" y="148" fill="#566036">#method capture gap, not a dispatch channel</text>
+        <rect x="14" y="166" width="392" height="70" rx="8" fill="#f0ece2" stroke="#9a9387"/>
+        <text x="24" y="184" fill="#5f594f" font-weight="700">~40 resolver-miss one-offs — retired UPSTREAM, never here</text>
+        <text x="24" y="200" fill="#9a9387">static-method binding · constructor linkage · receiver-type-lost</text>
+        <text x="24" y="214" fill="#9a9387">intra-file linkage · type-cast receiver</text>
+        <text x="24" y="229" fill="#a8472f">inexpressible over DispatchSignals — the boundary in code</text>
+      </g>
+    </svg>
+  </div>
+</div>
+<div class="legend">
+  <span><i style="background:#f7e9e2;border-color:#a8472f"></i> absorbed &amp; deleted</span>
+  <span><i style="background:#eaf0df;border-color:#6c7a4a"></i> kept — distinct axis</span>
+  <span><i style="background:#f0ece2;border-color:#9a9387"></i> resolver scope</span>
+</div>
+</section>
+
+<!-- =================== RISKS =================== -->
+<section id="risks">
+<h2>Risks and open questions — resolve before each phase lands</h2>
+<p class="prose sec-cap">Five points, each gating its phase; the bare-reference detector is the single riskiest, which is why it is sequenced last.</p>
+<div class="oq">
+  <dl class="oqcard hot">
+    <dt>Bare-reference false positives <span class="ws">351.1.1</span></dt>
+    <dd>A name-keyed value-read index also matches shadowing locals, comments, and unrelated same-named symbols — over-suppressing real entry points. Constrain to definition-adjacent sites, require <code>no-textual-callers</code> as a precondition, and ship a same-named-but-unrelated fixture that must <strong>not</strong> be suppressed.</dd>
+  </dl>
+  <dl class="oqcard">
+    <dt>First-match-wins ordering <span class="ws">all</span></dt>
+    <dd>A broad rule placed too high pre-empts narrower correct rules; too low, a surviving builtin pre-empts it. Cut over one channel at a time, delete absorbed builtins in the same change, and let the parity test catch any <code>group_id</code> drift.</dd>
+  </dl>
+  <dl class="oqcard">
+    <dt>Decorator name normalization <span class="ws">351.1.3/4</span></dt>
+    <dd><code>DecoratorDefinition.name</code> may carry args / namespacing differently per language (<code>@Component()</code> vs <code>@app.route('/')</code> vs <code>#[cfg(test)]</code> vs <code>#[tokio::test]</code>). Pin the exact extracted name per language in data-layer tests <strong>before</strong> authoring any rule — never match source text.</dd>
+  </dl>
+  <dl class="oqcard">
+    <dt>is_anonymous completeness <span class="ws">351.1.2</span></dt>
+    <dd>If some Rust / Python closure form is not named <code>&lt;anonymous&gt;</code> by the symbol factories, it leaks. Verify against the 67 observed members' actual names with multi-form fixtures before declaring the pattern done.</dd>
+  </dl>
+  <dl class="oqcard hot">
+    <dt>Separate-function discipline <span class="ws">all</span></dt>
+    <dd><code>derive_dispatch_signals</code> must be its own function and field — copy-pasting the <code>is_jsts</code> gate from <code>derive_definition_features</code> would silently re-break Rust / Python, the exact bug being fixed. A Rust fixture asserting non-empty <code>decorators</code> is the tripwire.</dd>
+  </dl>
+  <dl class="oqcard">
+    <dt>Escalation path <span class="ws">351.1.1</span></dt>
+    <dd>If the hermetic grep index proves too coarse, escalate to broadening <code>indirect_reachability</code> to methods + field / hook / dict storage and surfacing it on <code>CallableNode</code> — a real <code>resolve_references</code> change, scoped as a follow-up, not part of this work.</dd>
+  </dl>
+</div>
+</section>
+
+<footer>
+  Root comprehension companion for TASK-351 · dispatch-channel reachability classification refactor<br>
+  Built from backlog/docs/TASK-351-dispatch-channel-reachability-refactor.md + task-351 (.1.1–.1.7) + the live source
+  (trace_call_graph.ts, classify_entry_points.ts, extract_entry_point_diagnostics.ts, predicate_evaluator.ts, builtins/, entry_point.ts, known_issues.ts). Self-contained · opens from file:// · generated 2026-06-23.
+</footer>
+</main>
+</body>
+</html>

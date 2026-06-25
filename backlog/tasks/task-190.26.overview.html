@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The prioritize change — verified design before the funding decision</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --ink:#1f1e1c; --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  nav.toc{position:sticky;top:0;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 0}
+  nav.toc .inner{width:90%;max-width:1500px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.toc .brand{font-family:var(--mono);font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:3px 10px}
+  nav.toc a:hover{border-color:var(--clay);color:var(--slate)}
+  main{width:90%;max-width:1500px;margin:0 auto;padding:30px 0 80px}
+  .prose{max-width:74ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:34px;line-height:1.12;margin:0 0 14px;letter-spacing:-.01em;max-width:24ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:23px;margin:52px 0 4px;letter-spacing:-.01em;scroll-margin-top:64px}
+  h2 .n{font-family:var(--mono);font-size:13px;color:var(--clay);font-weight:600;margin-right:8px}
+  .lead{font-size:16.5px;color:var(--g600);max-width:80ch;margin:0 0 6px}
+  .lead b{color:var(--slate);font-weight:600}
+  code{font-family:var(--mono);font-size:.85em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .cap{font-size:13.5px;color:var(--g600);margin:9px 2px 16px;max-width:88ch}
+  .cap b{color:var(--slate);font-weight:600}
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:18px 0;max-width:90ch}
+  .callout.olive{border-left-color:var(--olive)} .callout.slate{background:var(--slate);border-left-color:var(--clay)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 6px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.slate .k{color:var(--oat)}
+  .callout p{margin:0;font-size:14.5px} .callout.slate p{color:var(--ivory)} .callout.slate b{color:#fff} .callout.slate code{background:#3a3833;color:var(--codeink)}
+  /* side-by-side frame */
+  .sbs{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0}
+  .panel{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:16px 18px}
+  .panel.cur{border-color:var(--g200)}
+  .panel.aft{border-color:var(--clay);box-shadow:0 0 0 1px rgba(185,121,79,.25)}
+  .panel .ph{display:flex;align-items:baseline;gap:9px;margin:0 0 4px}
+  .panel .ph .tag{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.09em;border-radius:999px;padding:3px 9px}
+  .panel.cur .ph .tag{background:var(--g100);color:var(--g600)}
+  .panel.aft .ph .tag{background:var(--clay);color:var(--ivory)}
+  .panel .ph h3{font-family:var(--serif);font-size:18px;font-weight:600;margin:0;letter-spacing:-.01em}
+  .panel .sub{font-size:12.5px;color:var(--g600);margin:0 0 12px}
+  .panel svg{width:100%;height:auto;display:block}
+  /* step stack */
+  .step{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;padding:8px 0;border-top:1px solid var(--g100)}
+  .step:first-of-type{border-top:none}
+  .step .b{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:700;background:var(--g100);color:var(--g600);border:1.5px solid var(--g200)}
+  .step.new .b{background:var(--clay);color:var(--ivory);border-color:var(--clay)}
+  .step.changed .b{background:var(--olive);color:var(--ivory);border-color:var(--olive)}
+  .step .t{font-size:13.5px;line-height:1.4}
+  .step .t b{font-weight:600}
+  .step .t .badge{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.06em;border-radius:999px;padding:2px 7px;margin-left:6px;vertical-align:1px}
+  .step.new .t .badge{background:rgba(185,121,79,.16);color:var(--clay)}
+  .step.changed .t .badge{background:rgba(108,122,74,.18);color:var(--olive)}
+  .step .t small{display:block;color:var(--g600);font-size:11.5px;font-family:var(--mono);margin-top:2px}
+  /* legend */
+  .legend{display:flex;flex-wrap:wrap;gap:16px 20px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:10px 2px 4px;align-items:center}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .legend i{width:14px;height:14px;border-radius:5px;display:inline-block;border:1px solid rgba(0,0,0,.12)}
+  .legend i.cur{background:var(--g100);border-color:var(--g200)}
+  .legend i.new{background:var(--clay)}
+  .legend i.chg{background:var(--olive)}
+  .legend i.dash{width:20px;height:0;border-radius:0;border-top:2px dashed var(--g400)}
+  footer{margin-top:56px;border-top:1px solid var(--g200);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400);line-height:1.7}
+  @media(max-width:840px){ .sbs{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <div class="inner">
+    <span class="brand">prioritize · the change</span>
+    <a href="#workflow">1 · Workflow</a>
+    <a href="#decision">2 · Decision input</a>
+    <a href="#investigator">3 · Investigator</a>
+    <a href="#graduation">4 · Graduation</a>
+    <a href="#boundary">5 · Boundary</a>
+    <a href="#cost">6 · Cost</a>
+  </div>
+</nav>
+
+<main>
+<header>
+  <p class="eyebrow">self-healing pipeline · prioritize skill</p>
+  <h1>Prioritize gains a deep-investigation step: verified design, not the plan's hypothesis</h1>
+  <p class="lead prose">Today <code>prioritize</code> hands the human one thin decision aid built from the plan's <b>row prose</b> — a hypothesis about each fix, never verified against the code.</p>
+  <p class="lead prose">The change inserts one step: a <code>refactor-investigator</code> reads the real <code>packages/core</code> <b>per change group</b> and produces a code-grounded plan and doc — on <b>every</b> group, before funding.</p>
+  <p class="lead prose">So the human now decides with N verified designs in hand; on promotion each funded group's plan and doc graduate into <code>backlog/</code> — the very artifacts hand-built for 347–351.</p>
+  <div class="meta">
+    <span class="chip">scope <strong>prioritize skill only</strong></span>
+    <span class="chip">new agent <strong>refactor-investigator</strong></span>
+    <span class="chip">steps <strong>5 → 6</strong></span>
+    <span class="chip">plan engine <strong>unchanged</strong></span>
+  </div>
+  <div class="legend">
+    <span><i class="cur"></i> current behaviour</span>
+    <span><i class="new"></i> new step / artifact</span>
+    <span><i class="chg"></i> changed step</span>
+    <span><i class="dash"></i> design-only boundary (reads core, never writes)</span>
+  </div>
+</header>
+
+<!-- ============ 1. WORKFLOW BEFORE/AFTER ============ -->
+<h2 id="workflow"><span class="n">01</span>The workflow gains two steps and changes one</h2>
+<p class="cap prose">Same preview and promote at the ends. The delta is the middle: steps <b>3–4</b> are inserted before the decision, and step <b>6</b> now also graduates each group's plan and doc into <code>backlog/</code>. <code>SKILL.md</code> §Workflow 1–6.</p>
+<div class="sbs">
+
+  <div class="panel cur">
+    <div class="ph"><span class="tag">current</span><h3>5 steps · decide on the hypothesis</h3></div>
+    <p class="sub">SKILL.md as it stood — row prose drives the decision aid.</p>
+    <div class="step"><div class="b">1</div><div class="t"><b>Preview the candidates</b><small>export_to_backlog.ts --dry-run</small></div></div>
+    <div class="step"><div class="b">2</div><div class="t"><b>Gather the change groups</b><small>group rows by fault_area · pull impact + effort</small></div></div>
+    <div class="step"><div class="b">3</div><div class="t"><b>Build ONE thin comprehension doc</b><small>rendered from the rows' title + body prose</small></div></div>
+    <div class="step"><div class="b">4</div><div class="t"><b>Decide together</b><small>AskUserQuestion over the row prose</small></div></div>
+    <div class="step"><div class="b">5</div><div class="t"><b>Promote</b><small>drop --dry-run · write backlog/tasks/</small></div></div>
+  </div>
+
+  <div class="panel aft">
+    <div class="ph"><span class="tag">updated</span><h3>6 steps · decide on verified designs</h3></div>
+    <p class="sub">SKILL.md now — investigation runs on every group first.</p>
+    <div class="step"><div class="b">1</div><div class="t"><b>Preview the candidates</b><small>export_to_backlog.ts --dry-run · unchanged</small></div></div>
+    <div class="step"><div class="b">2</div><div class="t"><b>Gather the change groups</b><small>group rows by fault_area · unchanged</small></div></div>
+    <div class="step new"><div class="b">3</div><div class="t"><b>Deep-investigate each change group</b><span class="badge">new</span><small>one refactor-investigator per group · parallel ≤5/wave · reads packages/core</small></div></div>
+    <div class="step new"><div class="b">4</div><div class="t"><b>Render a comprehension doc per group</b><span class="badge">new</span><small>one comprehension-doc-architect per group · from the refactor plan</small></div></div>
+    <div class="step"><div class="b">5</div><div class="t"><b>Decide together</b><small>AskUserQuestion over the verified designs</small></div></div>
+    <div class="step changed"><div class="b">6</div><div class="t"><b>Promote &amp; graduate the docs</b><span class="badge">changed</span><small>write backlog/tasks/ · copy each funded group's plan + doc into backlog/</small></div></div>
+  </div>
+</div>
+
+<!-- ============ 2. DECISION INPUT BEFORE/AFTER ============ -->
+<h2 id="decision"><span class="n">02</span>The decision input upgrades from one hypothesis to N verified designs</h2>
+<p class="cap prose">The point of the change: the human used to decide from one aid summarising the plan's <b>guess</b>; now from one <b>code-grounded refactor design per change group</b>, each having read the real code.</p>
+<div class="sbs">
+
+  <div class="panel cur">
+    <div class="ph"><span class="tag">before</span><h3>Decide on the hypothesis</h3></div>
+    <p class="sub">One thin doc, summarising unverified row prose.</p>
+    <svg viewBox="0 0 360 250" role="img" aria-label="Plan rows feed one thin decision aid the human decides from">
+      <defs><marker id="aC" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="#9a9387"/></marker></defs>
+      <rect x="14" y="14" width="150" height="62" rx="9" fill="#efeae1" stroke="#ddd6c8"/>
+      <text x="89" y="38" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#5f594f">plan rows</text>
+      <text x="89" y="55" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#9a9387">title + body prose</text>
+      <text x="89" y="69" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#9a9387">(unverified)</text>
+      <line x1="89" y1="76" x2="89" y2="104" stroke="#9a9387" stroke-width="1.5" marker-end="url(#aC)"/>
+      <rect x="14" y="106" width="150" height="56" rx="9" fill="#fffdf8" stroke="#ddd6c8"/>
+      <text x="89" y="129" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="13" fill="#2b2a28">1 thin doc</text>
+      <text x="89" y="148" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#9a9387">summary of the prose</text>
+      <line x1="89" y1="162" x2="89" y2="190" stroke="#9a9387" stroke-width="1.5" marker-end="url(#aC)"/>
+      <rect x="14" y="192" width="150" height="46" rx="9" fill="#efeae1" stroke="#ddd6c8"/>
+      <text x="89" y="212" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="13" fill="#2b2a28">human decides</text>
+      <text x="89" y="229" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#9a9387">on a hypothesis</text>
+      <!-- annotation -->
+      <text x="248" y="120" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#a8472f">no design</text>
+      <text x="248" y="135" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#a8472f">verified</text>
+      <text x="248" y="155" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#9a9387">against the</text>
+      <text x="248" y="168" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#9a9387">real code</text>
+    </svg>
+  </div>
+
+  <div class="panel aft">
+    <div class="ph"><span class="tag">after</span><h3>Decide on verified designs</h3></div>
+    <p class="sub">One code-grounded refactor design per change group.</p>
+    <svg viewBox="0 0 360 250" role="img" aria-label="Each change group is investigated against real code into a verified design the human decides from">
+      <defs><marker id="aA" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="#b9794f"/></marker></defs>
+      <!-- groups -->
+      <rect x="14" y="14" width="100" height="22" rx="6" fill="#efeae1" stroke="#ddd6c8"/><text x="64" y="29" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">group A rows</text>
+      <rect x="14" y="40" width="100" height="22" rx="6" fill="#efeae1" stroke="#ddd6c8"/><text x="64" y="55" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">group B rows</text>
+      <rect x="14" y="66" width="100" height="22" rx="6" fill="#efeae1" stroke="#ddd6c8"/><text x="64" y="81" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">group N rows</text>
+      <!-- investigate -->
+      <line x1="114" y1="25" x2="146" y2="38" stroke="#b9794f" stroke-width="1.5" marker-end="url(#aA)"/>
+      <line x1="114" y1="51" x2="146" y2="51" stroke="#b9794f" stroke-width="1.5" marker-end="url(#aA)"/>
+      <line x1="114" y1="77" x2="146" y2="64" stroke="#b9794f" stroke-width="1.5" marker-end="url(#aA)"/>
+      <rect x="148" y="22" width="118" height="58" rx="9" fill="#fbf3ec" stroke="#b9794f"/>
+      <text x="207" y="42" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#b9794f">refactor-investigator</text>
+      <text x="207" y="57" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">×N · parallel · reads</text>
+      <text x="207" y="70" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">real packages/core</text>
+      <!-- designs -->
+      <line x1="207" y1="80" x2="207" y2="104" stroke="#b9794f" stroke-width="1.5" marker-end="url(#aA)"/>
+      <rect x="120" y="106" width="170" height="56" rx="9" fill="#fffdf8" stroke="#b9794f"/>
+      <text x="205" y="128" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="13" fill="#2b2a28">N verified designs</text>
+      <text x="205" y="147" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#6c7a4a">9-section refactor plan + doc each</text>
+      <line x1="205" y1="162" x2="205" y2="190" stroke="#b9794f" stroke-width="1.5" marker-end="url(#aA)"/>
+      <rect x="120" y="192" width="170" height="46" rx="9" fill="#eef1e6" stroke="#6c7a4a"/>
+      <text x="205" y="212" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="13" fill="#2b2a28">human decides</text>
+      <text x="205" y="229" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#6c7a4a">on verified designs</text>
+    </svg>
+  </div>
+</div>
+<div class="callout slate">
+  <span class="k">the punchline</span>
+  <p>The plan strategist <b>trusts the evidence rollup and never reads the cited files front to back</b> — its node bodies are a <i>hypothesis about the fix</i>, not a design. The new step turns that hypothesis into a verified design <b>before</b> a single dollar is funded.</p>
+</div>
+
+<!-- ============ 3. WHAT THE INVESTIGATOR DOES ============ -->
+<h2 id="investigator"><span class="n">03</span>What one refactor-investigator does per change group</h2>
+<p class="cap prose">One input (a fault-area change group), reads the real core, one output (a 9-section refactor plan). It is <b>design-only</b>: it reads <code>packages/core</code> but the dashed boundary marks everything it never writes. <code>refactor-investigator.md</code> frontmatter + §Get to grips with the code.</p>
+<div class="panel aft" style="padding:20px">
+  <svg viewBox="0 0 980 300" role="img" aria-label="The refactor-investigator takes one change group, reads real core, and outputs a nine-section refactor plan, never writing core">
+    <defs>
+      <marker id="aI" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L9,5 L0,10 z" fill="#b9794f"/></marker>
+      <marker id="aR" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L9,5 L0,10 z" fill="#6c7a4a"/></marker>
+    </defs>
+    <!-- INPUT -->
+    <text x="20" y="22" font-family="ui-monospace,monospace" font-size="10.5" letter-spacing=".08em" fill="#b9794f">INPUT · ONE CHANGE GROUP</text>
+    <rect x="20" y="32" width="210" height="200" rx="10" fill="#fffdf8" stroke="#ddd6c8"/>
+    <rect x="34" y="46" width="182" height="30" rx="6" fill="#efeae1" stroke="#ddd6c8"/><text x="125" y="65" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#2b2a28">architectural root</text>
+    <rect x="34" y="82" width="182" height="30" rx="6" fill="#efeae1" stroke="#ddd6c8"/><text x="125" y="101" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#2b2a28">fault_area node</text>
+    <rect x="48" y="118" width="168" height="26" rx="6" fill="#f3eee4" stroke="#ddd6c8"/><text x="132" y="135" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#5f594f">localized leaf · evidence</text>
+    <rect x="48" y="148" width="168" height="26" rx="6" fill="#f3eee4" stroke="#ddd6c8"/><text x="132" y="165" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#5f594f">localized leaf · evidence</text>
+    <rect x="48" y="178" width="168" height="26" rx="6" fill="#f3eee4" stroke="#ddd6c8"/><text x="132" y="195" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#5f594f">localized leaf · evidence</text>
+    <text x="125" y="222" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#9a9387">+ per-FP false-positive evidence</text>
+
+    <line x1="230" y1="132" x2="278" y2="132" stroke="#b9794f" stroke-width="2" marker-end="url(#aI)"/>
+
+    <!-- AGENT + reads core -->
+    <text x="290" y="22" font-family="ui-monospace,monospace" font-size="10.5" letter-spacing=".08em" fill="#b9794f">refactor-investigator · opus · design-only</text>
+    <rect x="290" y="32" width="250" height="200" rx="10" fill="#fbf3ec" stroke="#b9794f" stroke-width="1.5"/>
+    <text x="415" y="56" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="14" fill="#2b2a28">trace each FP to root cause</text>
+    <text x="415" y="74" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">Read / Grep / Glob · read-only Bash</text>
+    <!-- catches -->
+    <rect x="304" y="88" width="222" height="26" rx="6" fill="#fff" stroke="#a8472f"/><text x="415" y="105" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#a8472f">catches over-decomposition</text>
+    <rect x="304" y="118" width="222" height="26" rx="6" fill="#fff" stroke="#a8472f"/><text x="415" y="135" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#a8472f">catches dead code</text>
+    <rect x="304" y="148" width="222" height="26" rx="6" fill="#fff" stroke="#a8472f"/><text x="415" y="165" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#a8472f">catches duplicate builders</text>
+    <text x="415" y="190" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">resolves the WHOLE group</text>
+    <text x="415" y="204" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">as ONE change at the right altitude</text>
+    <text x="415" y="222" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#9a9387">validates or collapses the decomposition</text>
+
+    <!-- reads core (down, dashed return = never writes) -->
+    <rect x="290" y="252" width="250" height="36" rx="8" fill="#eef1e6" stroke="#6c7a4a"/>
+    <text x="415" y="268" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#5f594f">packages/core (live code)</text>
+    <text x="415" y="281" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#6c7a4a">READ ONLY</text>
+    <line x1="380" y1="232" x2="380" y2="250" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#aR)"/>
+    <line x1="450" y1="250" x2="450" y2="234" stroke="#9a9387" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text x="486" y="246" font-family="ui-monospace,monospace" font-size="8.5" fill="#9a9387">never writes</text>
+
+    <line x1="540" y1="132" x2="588" y2="132" stroke="#b9794f" stroke-width="2" marker-end="url(#aI)"/>
+
+    <!-- OUTPUT 9-section plan -->
+    <text x="600" y="22" font-family="ui-monospace,monospace" font-size="10.5" letter-spacing=".08em" fill="#b9794f">OUTPUT · refactor_plan.md (staging)</text>
+    <rect x="600" y="32" width="360" height="200" rx="10" fill="#fffdf8" stroke="#b9794f"/>
+    <text x="780" y="52" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="13" fill="#2b2a28">9-section refactor plan · cites file:line</text>
+    <!-- two columns of sections -->
+    <g font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">
+      <text x="616" y="78">1 · Problem restatement</text>
+      <text x="616" y="98">2 · Chosen structural approach</text>
+      <text x="616" y="118">3 · Data-model changes</text>
+      <text x="616" y="138">4 · Producer changes (file by file)</text>
+      <text x="616" y="158">5 · Consumer changes</text>
+      <text x="790" y="78">6 · Sub-task mapping</text>
+      <text x="790" y="98">7 · Sequencing</text>
+      <text x="790" y="118">8 · Test plan</text>
+      <text x="790" y="138">9 · Risks &amp; open questions</text>
+    </g>
+    <rect x="616" y="172" width="328" height="44" rx="7" fill="#eef1e6" stroke="#6c7a4a"/>
+    <text x="780" y="190" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#2b2a28">verdict: kept / collapsed / re-tiered</text>
+    <text x="780" y="206" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#6c7a4a">grounded in the code, at the right altitude</text>
+  </svg>
+  <div class="legend">
+    <span><i class="new"></i> investigator stage</span>
+    <span><i style="background:#fff;border-color:#a8472f"></i> the three things it catches</span>
+    <span><i class="dash"></i> reads core, never writes it · never touches registry / backlog</span>
+  </div>
+</div>
+
+<!-- ============ 4. ARTIFACT GRADUATION ============ -->
+<h2 id="graduation"><span class="n">04</span>The 347–351 artifacts, now auto-produced per funded group</h2>
+<p class="cap prose">The 347 epic's refactor plan (<code>TASK-347-…-refactor.md</code>) and overview (<code>task-347.overview.html</code>) were written <b>by hand</b>. The change makes them a per-group output of <code>prioritize</code>: investigation stages them, and on promotion each <b>funded</b> group's pair copies into <code>backlog/</code> alongside its freshly-minted epic. Unfunded groups' docs stay in staging. <code>SKILL.md</code> §6.</p>
+<div class="sbs">
+
+  <div class="panel cur">
+    <div class="ph"><span class="tag">before</span><h3>Hand-authored, once</h3></div>
+    <p class="sub">Human writes both artifacts for the series by hand.</p>
+    <svg viewBox="0 0 360 180" role="img" aria-label="Human hand-authors the refactor plan and overview HTML for task 347">
+      <rect x="20" y="20" width="120" height="44" rx="9" fill="#efeae1" stroke="#ddd6c8"/>
+      <text x="80" y="40" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="13" fill="#2b2a28">human</text>
+      <text x="80" y="56" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#9a9387">writes by hand</text>
+      <defs><marker id="aG1" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="#9a9387"/></marker></defs>
+      <line x1="140" y1="42" x2="196" y2="42" stroke="#9a9387" stroke-width="1.5" marker-end="url(#aG1)"/>
+      <rect x="200" y="14" width="148" height="44" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
+      <text x="274" y="33" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">TASK-347-…-refactor.md</text>
+      <text x="274" y="48" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#9a9387">backlog/docs/</text>
+      <rect x="200" y="64" width="148" height="44" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
+      <text x="274" y="83" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">task-347.overview.html</text>
+      <text x="274" y="98" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#9a9387">backlog/tasks/</text>
+      <line x1="140" y1="50" x2="196" y2="80" stroke="#9a9387" stroke-width="1.5" marker-end="url(#aG1)"/>
+      <text x="184" y="148" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#9a9387">manual · one series · not repeatable per sweep</text>
+    </svg>
+  </div>
+
+  <div class="panel aft">
+    <div class="ph"><span class="tag">after</span><h3>Auto-produced, per funded group</h3></div>
+    <p class="sub">Investigation stages them; promotion graduates the funded pairs.</p>
+    <svg viewBox="0 0 360 180" role="img" aria-label="prioritize auto-generates the plan and overview per funded group and graduates them into backlog">
+      <defs><marker id="aG2" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="#b9794f"/></marker></defs>
+      <rect x="20" y="20" width="120" height="44" rx="9" fill="#fbf3ec" stroke="#b9794f"/>
+      <text x="80" y="38" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="12.5" fill="#2b2a28">prioritize</text>
+      <text x="80" y="54" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#b9794f">steps 3–4 stage</text>
+      <line x1="140" y1="42" x2="196" y2="42" stroke="#b9794f" stroke-width="1.5" marker-end="url(#aG2)"/>
+      <rect x="200" y="14" width="148" height="44" rx="8" fill="#eef1e6" stroke="#6c7a4a"/>
+      <text x="274" y="33" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">TASK-&lt;id&gt;-…-refactor.md</text>
+      <text x="274" y="48" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#6c7a4a">graduated → backlog/docs/</text>
+      <rect x="200" y="64" width="148" height="44" rx="8" fill="#eef1e6" stroke="#6c7a4a"/>
+      <text x="274" y="83" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">task-&lt;id&gt;.overview.html</text>
+      <text x="274" y="98" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#6c7a4a">graduated → backlog/tasks/</text>
+      <line x1="140" y1="50" x2="196" y2="80" stroke="#b9794f" stroke-width="1.5" marker-end="url(#aG2)"/>
+      <text x="184" y="132" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#6c7a4a">funded group → graduates · &lt;id&gt; = minted epic id</text>
+      <text x="184" y="150" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#9a9387">unfunded group → stays in staging</text>
+      <text x="184" y="168" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#9a9387">repeatable on every sweep</text>
+    </svg>
+  </div>
+</div>
+
+<!-- ============ 5. THE CLEAN BOUNDARY ============ -->
+<h2 id="boundary"><span class="n">05</span>The boundary stays clean: plan plans, prioritize designs</h2>
+<p class="cap prose">No deep design leaks into the plan engine. The <code>plan-strategist</code> stays the cheap router-and-estimator that trusts the evidence and never reads cited files front to back. All new deep design lives in <code>prioritize</code> — the stage already licensed to write <code>backlog/</code>.</p>
+<div class="panel aft" style="padding:20px">
+  <svg viewBox="0 0 960 230" role="img" aria-label="Plan stays the cheap planning-only router-estimator; all new deep design lives in prioritize which already writes backlog">
+    <defs><marker id="aB" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L9,5 L0,10 z" fill="#5f594f"/></marker></defs>
+    <!-- plan engine -->
+    <rect x="20" y="40" width="280" height="150" rx="12" fill="#efeae1" stroke="#ddd6c8"/>
+    <text x="160" y="30" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" letter-spacing=".08em" fill="#5f594f">PLAN ENGINE · UNCHANGED</text>
+    <text x="160" y="72" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="15" fill="#2b2a28">plan-strategist</text>
+    <text x="160" y="96" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#5f594f">cheap router + effort estimator</text>
+    <text x="160" y="116" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#5f594f">trusts the evidence rollup</text>
+    <text x="160" y="136" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#5f594f">never reads cited files front-to-back</text>
+    <rect x="60" y="150" width="200" height="28" rx="7" fill="#fff" stroke="#ddd6c8"/>
+    <text x="160" y="168" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#9a9387">planning-only · gains nothing here</text>
+
+    <line x1="300" y1="115" x2="368" y2="115" stroke="#5f594f" stroke-width="2" marker-end="url(#aB)"/>
+    <text x="334" y="106" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#9a9387">PlanTask rows</text>
+
+    <!-- prioritize -->
+    <rect x="372" y="40" width="320" height="150" rx="12" fill="#fbf3ec" stroke="#b9794f" stroke-width="1.5"/>
+    <text x="532" y="30" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" letter-spacing=".08em" fill="#b9794f">PRIORITIZE · GAINS THE DEEP DESIGN</text>
+    <text x="532" y="72" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="15" fill="#2b2a28">prioritize skill</text>
+    <text x="532" y="96" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#b9794f">refactor-investigator reads real core</text>
+    <text x="532" y="116" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#5f594f">human-invoked · disable-model-invocation</text>
+    <rect x="412" y="150" width="240" height="28" rx="7" fill="#fff" stroke="#b9794f"/>
+    <text x="532" y="168" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#b9794f">already the only writer of backlog/</text>
+
+    <line x1="692" y1="115" x2="760" y2="115" stroke="#5f594f" stroke-width="2" marker-end="url(#aB)"/>
+    <!-- backlog -->
+    <rect x="764" y="80" width="172" height="70" rx="10" fill="#eef1e6" stroke="#6c7a4a"/>
+    <text x="850" y="110" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="14" fill="#2b2a28">backlog/</text>
+    <text x="850" y="130" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#6c7a4a">via export_to_backlog.ts</text>
+  </svg>
+  <p class="cap" style="margin-bottom:0"><b>Why it lands here:</b> the write-capable, human-invoked side of the boundary is the natural home for design that produces backlog artifacts — putting it in the autonomous plan sweep would mean designing fixes nobody chose to fund.</p>
+</div>
+
+<!-- ============ 6. COST ============ -->
+<h2 id="cost"><span class="n">06</span>The cost: every candidate group is investigated before funding</h2>
+<p class="cap prose">A deliberate, accepted cost — a group the human does not fund is still investigated. Three things keep the spend bounded and worthwhile. <code>SKILL.md</code> §Workflow intro.</p>
+<div class="sbs" style="grid-template-columns:1fr 1fr 1fr">
+  <div class="panel cur" style="border-color:var(--olive)">
+    <div class="ph"><span class="tag" style="background:rgba(108,122,74,.18);color:#5a6740">bound 1</span><h3>Fan-out</h3></div>
+    <p class="sub" style="margin:0">Bounded by the <b>fault-area count</b> per sweep — a handful of groups, run ≤5 in parallel per wave.</p>
+  </div>
+  <div class="panel cur" style="border-color:var(--olive)">
+    <div class="ph"><span class="tag" style="background:rgba(108,122,74,.18);color:#5a6740">bound 2</span><h3>Pre-filter</h3></div>
+    <p class="sub" style="margin:0">The plan's <code>core_fix_effort</code> estimate already screens out the trivially cheap fixes before they reach investigation.</p>
+  </div>
+  <div class="panel cur" style="border-color:var(--olive)">
+    <div class="ph"><span class="tag" style="background:rgba(108,122,74,.18);color:#5a6740">bound 3</span><h3>Payoff</h3></div>
+    <p class="sub" style="margin:0">The spend buys <b>decision quality</b> on exactly the changes that carry real blast radius.</p>
+  </div>
+</div>
+
+<footer>
+  Sources · <code>.claude/skills/prioritize/SKILL.md</code> (§Workflow steps 1–6, §What the export does) ·
+  <code>.claude/agents/refactor-investigator.md</code> · <code>.claude/agents/plan-strategist.md</code> ·
+  worked example <code>backlog/docs/TASK-347-type-identity-scope-tree-refactor.md</code> + <code>backlog/tasks/task-347.overview.html</code>.<br>
+  Scope · the prioritize skill change only. Canonical, self-contained · current side = today's skill, after side = the updated SKILL.md.
+</footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One complete member surface — the TASK-350 method_lookup refactor</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+  /* full-width body, narrow gutters */
+  main{width:90%;max-width:1600px;margin-inline:auto;padding:30px 0 90px}
+  .prose{max-width:68ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:33px;line-height:1.12;margin:0 0 12px;letter-spacing:-.01em}
+  h2{font-family:var(--serif);font-weight:600;font-size:21px;margin:8px 0 4px;letter-spacing:-.01em}
+  .sec-cap{font-family:var(--mono);font-size:11.5px;color:var(--g600);margin:0 0 16px}
+  code{font-family:var(--mono);font-size:.88em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  section{margin-top:54px}
+  /* sticky outline rail */
+  nav.toc{position:sticky;top:0;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 5%;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.toc .navlbl{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--g400);margin-right:4px}
+  nav.toc a{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:4px 11px}
+  nav.toc a:hover{border-color:var(--clay);color:var(--slate)}
+  [id]{scroll-margin-top:64px}
+  /* callout */
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:15px 19px;margin:6px 0}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)}
+  .callout.invert{background:var(--slate);color:var(--ivory);border-left-color:var(--clay)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 7px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)}
+  .callout.invert .k{color:var(--oat)}
+  .callout p{margin:0;font-size:15px}
+  .callout p+p{margin-top:9px}
+  .callout.invert code{background:rgba(255,255,255,.12);color:var(--oat)}
+  /* before/after diagram pair */
+  .ba{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin:6px 0}
+  .ba .panel{background:var(--paper);border:1px solid var(--g200);padding:12px 14px 16px}
+  .ba .panel:first-child{border-radius:var(--r) 0 0 var(--r)}
+  .ba .panel:last-child{border-radius:0 var(--r) var(--r) 0;border-left:none}
+  .ba .ptitle{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;margin:0 0 6px}
+  .ba .panel.cur .ptitle{color:var(--rust)} .ba .panel.plan .ptitle{color:var(--olive)}
+  .ba .arrow{display:flex;flex-direction:column;align-items:center;justify-content:center;width:48px;background:var(--ivory);border-top:1px solid var(--g200);border-bottom:1px solid var(--g200)}
+  .ba .arrow span{font-family:var(--mono);font-size:9px;color:var(--g400);writing-mode:vertical-rl;text-orientation:mixed;letter-spacing:.1em;margin-top:6px}
+  .ba .arrow svg{display:block}
+  .ba svg{width:100%;height:auto;display:block}
+  .legend{display:flex;flex-wrap:wrap;gap:18px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:12px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:14px;height:14px;border-radius:4px;display:inline-block;border:1px solid var(--g200)}
+  /* two-cause grid */
+  .causes{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:6px 0}
+  .cause{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:15px 17px;border-top:3px solid var(--rust)}
+  .cause h3{margin:0 0 8px;font-family:var(--serif);font-size:16px;font-weight:600}
+  .cause .lbl{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--rust);display:block;margin-bottom:6px}
+  .cause p{margin:0 0 10px;font-size:13.5px;color:var(--g600)}
+  .codefact{font-family:var(--mono);font-size:11.5px;color:var(--slate);border:1px solid var(--g200);border-radius:8px;padding:8px 10px;line-height:1.55;background:var(--g100)}
+  .codefact em{color:var(--rust);font-style:normal}
+  .codefact .ok{color:var(--olive)}
+  /* gap table */
+  .tbl-wrap{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);overflow:hidden;font-size:13px}
+  thead th{text-align:left;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--g600);background:var(--g100);padding:10px 12px;border-bottom:1px solid var(--g200);vertical-align:bottom}
+  tbody td{padding:11px 12px;border-bottom:1px solid var(--g200);vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  td .gap{font-weight:600}
+  td .sub{font-family:var(--mono);font-size:10.5px;color:var(--clay);display:block;margin-top:2px}
+  td.ex{color:var(--g600)} td.ex code{font-size:.84em}
+  .cnt{font-family:var(--mono);font-weight:600;font-size:15px}
+  .wschip{font-family:var(--mono);font-size:11px;background:var(--slate);color:var(--ivory);border-radius:6px;padding:2px 8px;white-space:nowrap;display:inline-block}
+  .wschip.w1{background:var(--olive)} .wschip.w2{background:var(--clay)} .wschip.w5{background:#7a5c43}
+  td.file code{display:block;font-size:.82em;color:var(--g600);margin-bottom:3px}
+  td.file code:first-child{color:var(--slate)}
+  /* workstream DAG */
+  .dag{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:14px;margin:6px 0}
+  .dag svg{width:100%;height:auto;display:block}
+  /* open questions */
+  .oq{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin:6px 0}
+  dl.oqcard{margin:0;background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:14px 16px;border-left:4px solid var(--clay)}
+  dl.oqcard dt{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--clay);display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px}
+  dl.oqcard dt .ws{font-size:10px;color:var(--g400);background:var(--g100);border-radius:5px;padding:2px 7px}
+  dl.oqcard dd{margin:0;font-size:13.5px;color:var(--g600)}
+  /* sequencing strip */
+  .seq{display:flex;flex-wrap:wrap;gap:0;margin:6px 0}
+  .seq .step{flex:1;min-width:170px;border:1px solid var(--g200);background:var(--paper);padding:12px 14px}
+  .seq .step:first-child{border-radius:var(--r) 0 0 var(--r)}
+  .seq .step:last-child{border-radius:0 var(--r) var(--r) 0}
+  .seq .step+.step{border-left:none}
+  .seq .ord{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--clay);text-transform:uppercase}
+  .seq .step h4{margin:5px 0 4px;font-family:var(--mono);font-size:13px}
+  .seq .step p{margin:0;font-size:12px;color:var(--g600)}
+  footer{margin-top:56px;border-top:1px solid var(--g200);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400);line-height:1.7}
+  @media(max-width:860px){
+    .ba{grid-template-columns:1fr}
+    .ba .panel:first-child{border-radius:var(--r) var(--r) 0 0}
+    .ba .panel:last-child{border-radius:0 0 var(--r) var(--r);border-left:1px solid var(--g200);border-top:none}
+    .ba .arrow{flex-direction:row;width:auto;height:34px;border-left:1px solid var(--g200);border-right:1px solid var(--g200)}
+    .ba .arrow span{writing-mode:horizontal-tb;margin:0 0 0 6px}
+    .causes{grid-template-columns:1fr}
+    .seq .step,.seq .step:first-child,.seq .step:last-child{border-radius:var(--r);border-left:1px solid var(--g200)}
+    .seq .step+.step{margin-top:8px}
+  }
+</style>
+</head>
+<body>
+
+<nav class="toc" aria-label="On this page">
+  <span class="navlbl">TASK-350</span>
+  <a href="#defect">The defect</a>
+  <a href="#surface">Before / after</a>
+  <a href="#causes">Two causes</a>
+  <a href="#gaps">Three gaps</a>
+  <a href="#workstreams">Workstreams</a>
+  <a href="#invariant">The invariant</a>
+  <a href="#open">Open questions</a>
+</nav>
+
+<main>
+<header>
+  <p class="eyebrow">TASK-350 · resolve_references / call_resolution / method_lookup</p>
+  <h1>A resolved receiver must exhaust the member surface before a miss</h1>
+  <p class="prose sec-cap" style="font-size:15px;color:var(--g600);line-height:1.5">
+    Thirty confirmed false positives, one defect, one structural seam — completed in one place, not three patches.
+  </p>
+  <div class="meta">
+    <span class="chip"><strong>30</strong> confirmed members</span>
+    <span class="chip"><strong>3</strong> lookup gaps</span>
+    <span class="chip"><strong>5</strong> workstreams</span>
+    <span class="chip">corpora <strong>TS · django · pandas · sqlalchemy · sqlx</strong></span>
+  </div>
+</header>
+
+<!-- ===================== THE DEFECT ===================== -->
+<section id="defect">
+<h2>The one defect</h2>
+<p class="prose sec-cap">Stated once — every member below is the same failure.</p>
+<aside class="callout rust">
+  <span class="k">The defect</span>
+  <p>An <strong>already-resolved</strong> receiver or namespace reaches a member-lookup site inside
+  <code>resolve_method_on_type</code>, that site consults only a <strong>subset</strong> of the real
+  member surface, and the function returns a terminal miss (<code>method_not_on_type</code>, L142–148).</p>
+  <p>Receiver-type inference and name resolution already succeeded — the failure is genuinely <em>inside</em> member lookup.</p>
+</aside>
+</section>
+
+<!-- ===================== BEFORE / AFTER ===================== -->
+<section id="surface">
+<h2>The dispatch surface: today vs. unified</h2>
+<p class="prose sec-cap">Left: the resolved receiver flows past two incomplete, duplicated surfaces into the miss. Right: one complete surface, built once, consumed everywhere; the namespace boundary delegates to the canonical follower.</p>
+
+<div class="ba">
+  <!-- CURRENT -->
+  <div class="panel cur">
+    <p class="ptitle">Current — incomplete &amp; duplicated</p>
+    <svg viewBox="0 0 440 360" role="img" aria-label="Current dispatch: resolved receiver passes an incomplete member surface and two duplicated builders, reaching the terminal miss">
+      <defs>
+        <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#5f594f"/></marker>
+        <marker id="arR" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#a8472f"/></marker>
+      </defs>
+      <g font-family="ui-monospace,monospace">
+        <!-- resolved receiver -->
+        <rect x="120" y="14" width="200" height="40" rx="9" fill="#6c7a4a" stroke="#566036"/>
+        <text x="220" y="32" text-anchor="middle" fill="#f7f3ec" font-size="12" font-weight="700">resolved receiver / namespace</text>
+        <text x="220" y="47" text-anchor="middle" fill="#e7ddc9" font-size="10">upstream stages succeeded</text>
+        <line x1="220" y1="54" x2="220" y2="74" stroke="#5f594f" stroke-width="1.6" marker-end="url(#ar)"/>
+
+        <!-- resolve_method_on_type box -->
+        <rect x="40" y="78" width="360" height="172" rx="11" fill="#fffdf8" stroke="#ddd6c8"/>
+        <text x="56" y="96" fill="#2b2a28" font-size="11" font-weight="700">resolve_method_on_type</text>
+        <text x="384" y="96" text-anchor="end" fill="#9a9387" font-size="9.5">method_lookup.ts</text>
+
+        <!-- incomplete member surface -->
+        <rect x="58" y="108" width="150" height="58" rx="8" fill="#f7e9e2" stroke="#a8472f" stroke-dasharray="4 3"/>
+        <text x="133" y="126" text-anchor="middle" fill="#a8472f" font-size="10.5" font-weight="700">member surface</text>
+        <text x="133" y="140" text-anchor="middle" fill="#7a3b29" font-size="9">methods + properties</text>
+        <text x="133" y="153" text-anchor="middle" fill="#a8472f" font-size="9">NO ctor key · NO aliases</text>
+
+        <!-- namespace branch -->
+        <rect x="222" y="108" width="160" height="58" rx="8" fill="#f7e9e2" stroke="#a8472f" stroke-dasharray="4 3"/>
+        <text x="302" y="126" text-anchor="middle" fill="#a8472f" font-size="10.5" font-weight="700">resolve_namespace_export</text>
+        <text x="302" y="140" text-anchor="middle" fill="#7a3b29" font-size="9">direct is_exported only</text>
+        <text x="302" y="153" text-anchor="middle" fill="#a8472f" font-size="9">stops at re-export edge</text>
+
+        <!-- both → miss -->
+        <line x1="133" y1="166" x2="180" y2="206" stroke="#a8472f" stroke-width="1.6" marker-end="url(#arR)"/>
+        <line x1="302" y1="166" x2="255" y2="206" stroke="#a8472f" stroke-width="1.6" marker-end="url(#arR)"/>
+        <rect x="120" y="208" width="200" height="34" rx="8" fill="#a8472f" stroke="#7a3b29"/>
+        <text x="220" y="229" text-anchor="middle" fill="#f7f3ec" font-size="11" font-weight="700">terminal miss · method_not_on_type</text>
+
+        <!-- duplicated builders -->
+        <text x="40" y="276" fill="#9a9387" font-size="9.5" letter-spacing="1">TWO BUILDERS, BOTH INCOMPLETE</text>
+        <rect x="40" y="284" width="170" height="60" rx="8" fill="#fffdf8" stroke="#b9794f"/>
+        <text x="125" y="302" text-anchor="middle" fill="#2b2a28" font-size="10" font-weight="700">definition.ts</text>
+        <text x="125" y="316" text-anchor="middle" fill="#5f594f" font-size="9">inline flat_members</text>
+        <text x="125" y="329" text-anchor="middle" fill="#a8472f" font-size="9">ctor omitted (L134–168)</text>
+        <rect x="230" y="284" width="170" height="60" rx="8" fill="#fffdf8" stroke="#b9794f"/>
+        <text x="315" y="302" text-anchor="middle" fill="#2b2a28" font-size="10" font-weight="700">extract_type_members</text>
+        <text x="315" y="316" text-anchor="middle" fill="#5f594f" font-size="9">TypeMemberInfo</text>
+        <text x="315" y="329" text-anchor="middle" fill="#a8472f" font-size="9">ctor as side field (L74,82)</text>
+        <path d="M210,314 L228,314" stroke="#b9794f" stroke-width="1.4" stroke-dasharray="3 3"/>
+        <text x="219" y="358" text-anchor="middle" fill="#b9794f" font-size="8.5">parallel · drift</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="arrow">
+    <svg width="20" height="20" viewBox="0 0 20 20"><path d="M3,10 H15 M11,5 L16,10 L11,15" fill="none" stroke="#9a9387" stroke-width="1.8"/></svg>
+    <span>UNIFY</span>
+  </div>
+
+  <!-- PLANNED -->
+  <div class="panel plan">
+    <p class="ptitle">Planned — one complete surface</p>
+    <svg viewBox="0 0 440 360" role="img" aria-label="Planned dispatch: one complete member surface from extract_type_members feeds every consumer; the namespace boundary delegates to resolve_export_chain">
+      <g font-family="ui-monospace,monospace">
+        <!-- resolved receiver -->
+        <rect x="120" y="14" width="200" height="40" rx="9" fill="#6c7a4a" stroke="#566036"/>
+        <text x="220" y="32" text-anchor="middle" fill="#f7f3ec" font-size="12" font-weight="700">resolved receiver / namespace</text>
+        <text x="220" y="47" text-anchor="middle" fill="#e7ddc9" font-size="10">unchanged upstream</text>
+        <line x1="220" y1="54" x2="220" y2="74" stroke="#5f594f" stroke-width="1.6" marker-end="url(#ar)"/>
+
+        <rect x="40" y="78" width="360" height="172" rx="11" fill="#fffdf8" stroke="#ddd6c8"/>
+        <text x="56" y="96" fill="#2b2a28" font-size="11" font-weight="700">resolve_method_on_type</text>
+        <text x="384" y="96" text-anchor="end" fill="#9a9387" font-size="9.5">no new branch</text>
+
+        <!-- complete member surface -->
+        <rect x="58" y="108" width="150" height="58" rx="8" fill="#eaf0df" stroke="#6c7a4a"/>
+        <text x="133" y="125" text-anchor="middle" fill="#4f5a33" font-size="10.5" font-weight="700">complete surface</text>
+        <text x="133" y="139" text-anchor="middle" fill="#566036" font-size="9">methods + properties</text>
+        <text x="133" y="152" text-anchor="middle" fill="#4f5a33" font-size="9">+ ctor key + aliases</text>
+
+        <!-- namespace → chain -->
+        <rect x="222" y="108" width="160" height="58" rx="8" fill="#eaf0df" stroke="#6c7a4a"/>
+        <text x="302" y="125" text-anchor="middle" fill="#4f5a33" font-size="10.5" font-weight="700">namespace boundary</text>
+        <text x="302" y="139" text-anchor="middle" fill="#566036" font-size="9">delegates to</text>
+        <text x="302" y="152" text-anchor="middle" fill="#4f5a33" font-size="9">resolve_export_chain</text>
+
+        <line x1="133" y1="166" x2="180" y2="206" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#ar)"/>
+        <line x1="302" y1="166" x2="255" y2="206" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#ar)"/>
+        <rect x="120" y="208" width="200" height="34" rx="8" fill="#6c7a4a" stroke="#566036"/>
+        <text x="220" y="229" text-anchor="middle" fill="#f7f3ec" font-size="11" font-weight="700">resolved · ctor / alias / re-export</text>
+
+        <!-- one builder -->
+        <text x="40" y="276" fill="#9a9387" font-size="9.5" letter-spacing="1">ONE BUILDER — SOLE PRODUCER</text>
+        <rect x="120" y="284" width="200" height="60" rx="8" fill="#fffdf8" stroke="#6c7a4a"/>
+        <text x="220" y="302" text-anchor="middle" fill="#2b2a28" font-size="10.5" font-weight="700">extract_type_members</text>
+        <text x="220" y="316" text-anchor="middle" fill="#5f594f" font-size="9">flat SymbolName → SymbolId</text>
+        <text x="220" y="329" text-anchor="middle" fill="#4f5a33" font-size="9">definition.ts builds member_index from it</text>
+        <!-- feeds every consumer -->
+        <line x1="180" y1="284" x2="150" y2="250" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#ar)"/>
+        <line x1="260" y1="284" x2="290" y2="250" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#ar)"/>
+        <text x="220" y="358" text-anchor="middle" fill="#6c7a4a" font-size="8.5">every consumer discovers the new keys for free</text>
+      </g>
+    </svg>
+  </div>
+</div>
+<div class="legend">
+  <span><i style="background:#f7e9e2;border-color:#a8472f"></i> incomplete / removed</span>
+  <span><i style="background:#eaf0df;border-color:#6c7a4a"></i> complete / added</span>
+  <span><i style="background:#6c7a4a;border:none"></i> resolved path</span>
+  <span><i style="background:#a8472f;border:none"></i> terminal miss</span>
+</div>
+</section>
+
+<!-- ===================== TWO CAUSES ===================== -->
+<section id="causes">
+<h2>Two structural causes</h2>
+<p class="prose sec-cap">The incomplete surface is incomplete in two independent ways — that is why one data fix retires gaps at every consuming site.</p>
+<div class="causes">
+  <div class="cause">
+    <span class="lbl">Cause A · serves 350.1.1 + 350.1.3</span>
+    <h3>The per-type surface is incomplete <em>and</em> duplicated</h3>
+    <p>Two builders derive members separately; both omit the constructor-as-named-member and class-body operator aliases.</p>
+    <div class="codefact">
+      <strong>definition.ts</strong> L134–168 — <code>flat_members</code> sets only<br>
+      &nbsp;&nbsp;<code>method.name</code> + <code>prop.name</code>; the ctor is registered in<br>
+      &nbsp;&nbsp;<code>by_symbol</code> only — <em>never added to flat_members</em>.<br>
+      <strong>member.ts</strong> L74,82 — keeps <em>constructor</em> as a side field,<br>
+      &nbsp;&nbsp;<em>never folded</em> into the member map. Two paths, drift.
+    </div>
+  </div>
+  <div class="cause">
+    <span class="lbl">Cause B · serves 350.1.2</span>
+    <h3>The namespace surface never follows re-export edges</h3>
+    <p>The namespace and named-import branches stop at the first file's direct definitions, although a canonical follower already exists.</p>
+    <div class="codefact">
+      <strong>method_lookup.ts</strong> L324–338 <code>resolve_namespace_export</code><br>
+      &nbsp;&nbsp;scans only <code>def.is_exported</code> in the source file.<br>
+      <strong>L352–378</strong> <code>resolve_named_import</code> — same blind spot.<br>
+      <span class="ok">export.ts L319 <code>resolve_export_chain</code> already follows</span><br>
+      &nbsp;&nbsp;<span class="ok">re-export edges with cycle detection — unused here.</span>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ===================== THREE GAPS TABLE ===================== -->
+<section id="gaps">
+<h2>Three gaps, mapped to evidence and the fixing change</h2>
+<p class="prose sec-cap">Each row is a real confirmed miss in a real corpus, the workstream that closes it, and the file that changes.</p>
+<div class="tbl-wrap">
+<table>
+  <thead>
+    <tr>
+      <th style="width:18%">Gap</th>
+      <th style="width:30%">Evidence (real call site)</th>
+      <th style="width:7%">Count</th>
+      <th style="width:13%">Fixed by</th>
+      <th style="width:32%">File / function changed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="gap">Constructor never linked to <code>__init__</code></span><span class="sub">350.1.1</span></td>
+      <td class="ex">django <code>ChangeList(...)</code>, <code>WSGIRequest(environ)</code>, <code>BaseCommand()</code>, <code>CharField(...)</code>, <code>Concat(...)</code> — class resolves, but <code>__init__</code> shows zero callers.</td>
+      <td><span class="cnt">14</span></td>
+      <td><span class="wschip w1">WS1</span> <span class="wschip w5">WS5</span></td>
+      <td class="file">
+        <code>type_preprocessing/member.ts</code>
+        <code>registries/definition.ts</code>
+        <code>call_resolution/constructor.ts — resolve_constructor_call</code>
+      </td>
+    </tr>
+    <tr>
+      <td><span class="gap">Namespace export not followed through re-exports</span><span class="sub">350.1.2</span></td>
+      <td class="ex">TypeScript <code>import * as ts; ts.readConfigFile()</code>, <code>ts.parseJsonConfigFileContent</code>, and the <code>FourSlash.*</code> barrel star re-export — <code>resolution_count=0</code>.</td>
+      <td><span class="cnt">10</span></td>
+      <td><span class="wschip" style="background:#4a5a6c">WS3</span> <span class="wschip" style="background:#4a5a6c">WS4</span></td>
+      <td class="file">
+        <code>call_resolution/method_lookup.ts — resolve_namespace_export</code>
+        <code>receiver_resolution.ts · method_call.ts · call_resolver.ts · project.ts</code>
+      </td>
+    </tr>
+    <tr>
+      <td><span class="gap">Class-body operator → method alias</span><span class="sub">350.1.3</span></td>
+      <td class="ex">sqlalchemy <code>__getitem__ = _getitem</code> (incl. <code>if not TYPE_CHECKING:</code> form); Rust <code>self.eq_impl(...)</code>; pandas <code>DataFrame.to_parquet</code>.</td>
+      <td><span class="cnt">6</span></td>
+      <td><span class="wschip w1">WS1</span> <span class="wschip w2">WS2</span></td>
+      <td class="file">
+        <code>type_preprocessing/member.ts — alias expansion</code>
+        <code>3× metadata_extractors/class_member_aliases.{py,ts,rs}</code>
+        <code>types/symbol_definitions.ts — member_aliases field</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</section>
+
+<!-- ===================== WORKSTREAMS / DAG ===================== -->
+<section id="workstreams">
+<h2>Five workstreams, one seam</h2>
+<p class="prose sec-cap">WS1 defines the data contract everything else reads. WS5 depends on it; WS2 populates it; WS3+WS4 land together and are independent of the rest.</p>
+
+<div class="dag">
+<svg viewBox="0 0 940 270" role="img" aria-label="Workstream dependency graph: WS1 defines the contract; WS2 and WS5 depend on WS1; WS3 plus WS4 land together independently">
+  <defs>
+    <marker id="da" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#5f594f"/></marker>
+  </defs>
+  <g font-family="ui-monospace,monospace">
+    <!-- WS1 -->
+    <rect x="30" y="96" width="220" height="78" rx="11" fill="#eaf0df" stroke="#6c7a4a" stroke-width="1.6"/>
+    <text x="46" y="118" fill="#4f5a33" font-size="12" font-weight="700">WS1 · collapse two surfaces</text>
+    <text x="46" y="135" fill="#566036" font-size="10">one complete builder; member_index</text>
+    <text x="46" y="149" fill="#566036" font-size="10">from extract_type_members; ctor +</text>
+    <text x="46" y="163" fill="#566036" font-size="10">alias keys; drop TypeMemberInfo.ctor</text>
+    <text x="46" y="90" fill="#6c7a4a" font-size="9" letter-spacing=".5">LAND FIRST — DATA CONTRACT</text>
+
+    <!-- WS2 -->
+    <rect x="350" y="22" width="220" height="68" rx="11" fill="#f5e9dd" stroke="#b9794f" stroke-width="1.5"/>
+    <text x="366" y="44" fill="#8a5630" font-size="12" font-weight="700">WS2 · alias extractor</text>
+    <text x="366" y="61" fill="#9a6b41" font-size="10">per-language class-body</text>
+    <text x="366" y="75" fill="#9a6b41" font-size="10">populates member_aliases</text>
+
+    <!-- WS5 -->
+    <rect x="350" y="180" width="220" height="68" rx="11" fill="#efe6dd" stroke="#7a5c43" stroke-width="1.5"/>
+    <text x="366" y="202" fill="#5e442f" font-size="12" font-weight="700">WS5 · ctor linkage fallback</text>
+    <text x="366" y="219" fill="#6e5238" font-size="10">resolve_constructor_call reads</text>
+    <text x="366" y="233" fill="#6e5238" font-size="10">member_index ctor key (WS1)</text>
+
+    <!-- WS3 + WS4 -->
+    <rect x="660" y="96" width="250" height="78" rx="11" fill="#e4ebf0" stroke="#4a5a6c" stroke-width="1.6"/>
+    <text x="676" y="118" fill="#34424f" font-size="12" font-weight="700">WS3 + WS4 · re-export follower</text>
+    <text x="676" y="135" fill="#46566a" font-size="10">route namespace branch through</text>
+    <text x="676" y="149" fill="#46566a" font-size="10">resolve_export_chain; thread exports</text>
+    <text x="676" y="163" fill="#46566a" font-size="10">+ languages + root_folder context</text>
+    <text x="676" y="90" fill="#4a5a6c" font-size="9" letter-spacing=".5">INDEPENDENT — LAND AS ONE</text>
+
+    <!-- edges WS1 -> WS2, WS1 -> WS5 -->
+    <path d="M250,128 C300,128 310,60 348,56" fill="none" stroke="#5f594f" stroke-width="1.6" marker-end="url(#da)"/>
+    <path d="M250,142 C300,142 310,210 348,214" fill="none" stroke="#5f594f" stroke-width="1.6" marker-end="url(#da)"/>
+    <text x="300" y="100" fill="#9a9387" font-size="9">depends on</text>
+    <text x="300" y="190" fill="#9a9387" font-size="9">depends on</text>
+
+    <!-- WS3+4 separation marker -->
+    <text x="785" y="200" text-anchor="middle" fill="#9a9387" font-size="9.5">no dependency on WS1 / WS2 / WS5</text>
+    <line x1="600" y1="135" x2="652" y2="135" stroke="#ddd6c8" stroke-width="1.4" stroke-dasharray="4 4"/>
+  </g>
+</svg>
+</div>
+
+<div class="seq" aria-label="Landing sequence">
+  <div class="step"><span class="ord">1 · first</span><h4>WS1</h4><p>Defines the type/shape contract. Constructor folding works immediately; alias expansion is live but empty until WS2.</p></div>
+  <div class="step"><span class="ord">2 · then</span><h4>WS2</h4><p>Populates <code>member_aliases</code>; resolve O1 before coding. Tests 350.1.3 end-to-end.</p></div>
+  <div class="step"><span class="ord">parallel</span><h4>WS3 + WS4</h4><p>One change — signature + threading, or the build breaks. Resolve O2 and the export-lifecycle check first.</p></div>
+  <div class="step"><span class="ord">3 · last</span><h4>WS5</h4><p>Depends on WS1's constructor keys; verifies the django direct-instantiation cases.</p></div>
+</div>
+
+<aside class="callout">
+  <span class="k">Why one seam, not three patches</span>
+  <p>No <code>exhaust_member_surface()</code> indirection is added. The existing <code>member_index</code> fallback
+  in <code>resolve_method_on_type</code> (L134–140) already <em>is</em> that surface.</p>
+  <p>Once the data is complete, the constructor and alias keys become ordinary name-keyed entries that every consumer
+  — the regular-type fallback, <code>walk_property_chain</code>, polymorphic dispatch, the constructor site — discovers for free. Complete the data; don't add a layer.</p>
+</aside>
+</section>
+
+<!-- ===================== INVARIANT ===================== -->
+<section id="invariant">
+<h2>The load-bearing invariant</h2>
+<p class="prose sec-cap">The whole single-surface design leans on this one fact.</p>
+<aside class="callout invert">
+  <span class="k">Constructor key — computed, not trusted</span>
+  <p>The constructor is keyed in <code>member_index</code> under its <strong>language-specific runtime name</strong>:
+  <code>__init__</code> (Python), <code>constructor</code> (TS), <code>new</code> (Rust).</p>
+  <p><code>ConstructorDefinition</code> carries only <code>name</code>, with no language marker, and is <em>not</em> guaranteed
+  to be the runtime invocation name — so WS1 must <strong>compute</strong> the key explicitly via a
+  <code>get_language_constructor_name</code> helper, never trust <code>ConstructorDefinition.name</code>.</p>
+  <p>Collision-safe: reserved names cannot equal a user method, and interfaces never receive a constructor key — polymorphic and interface dispatch are unaffected.</p>
+</aside>
+</section>
+
+<!-- ===================== OPEN QUESTIONS ===================== -->
+<section id="open">
+<h2>Open questions — resolve before the workstream lands</h2>
+<p class="prose sec-cap">Three must-answer points, each gating its workstream.</p>
+<div class="oq">
+  <dl class="oqcard">
+    <dt>O1 — class-body AST <span class="ws">WS2</span></dt>
+    <dd>Does <code>ClassDefinition</code> carry enough class-body AST for the alias extractors to read literal assignments at index time? If not, WS2 expands to thread the assignment node from the tree-sitter query pass into the class factory.</dd>
+  </dl>
+  <dl class="oqcard">
+    <dt>O2 — default-import diff <span class="ws">WS3</span></dt>
+    <dd>Does deleting <code>resolve_named_import</code> change default-import name-matching for any fixture relying on <code>export default class X</code> matched by name? <code>resolve_export_chain</code> keys default by <code>${file}:default</code>. Diff before deleting; add a regression test if they differ.</dd>
+  </dl>
+  <dl class="oqcard">
+    <dt>O3 — ctor-name invariant <span class="ws">WS1</span></dt>
+    <dd>Confirm per-language that the computed key is always the runtime constructor name; back it with per-language invariant tests asserting each language keys under its dunder/keyword name.</dd>
+  </dl>
+</div>
+</section>
+
+<footer>
+  Root comprehension companion for TASK-350 · method_lookup member-surface refactor<br>
+  Built from backlog/docs/TASK-350-method-lookup-member-surface-refactor.md + task-350(.1.1–.1.4) + the live source
+  (method_lookup.ts, member.ts, definition.ts, constructor.ts, export.ts). Self-contained · opens from file:// · generated 2026-06-23.
+</footer>
+</main>
+</body>
+</html>
