@@ -151,8 +151,11 @@ doc before its `refactor_plan.md` is written produces an empty doc.
 
 For each investigated group, dispatch one `Task(comprehension-doc-architect)` to
 render a self-contained HTML comprehension doc from that group's
-`refactor_plan.md`, written to
-`~/.ariadne/plan/prioritize/<fault_area>/comprehension.html`. Each doc presents:
+`refactor_plan.md`, written to `backlog/docs/<fault_area>.comprehension.html`
+(in the repo, so the user can open it from their tree while deciding; the
+`*.comprehension.html` glob is gitignored, so a staging never lands in a commit
+until graduation moves a funded group's doc into `backlog/tasks/`). Each doc
+presents:
 
 - a before/after pair of diagrams showing the change in functionality, grounded in
   the refactor plan's chosen mechanism,
@@ -225,12 +228,16 @@ node --import tsx .claude/skills/plan/scripts/graduate_group_docs.ts \
 ```
 
 This copies `~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md` to
-`backlog/docs/TASK-<id>-<slug>-refactor.md` and `comprehension.html` to
-`backlog/tasks/task-<id>.overview.html`, using the backlog ids just minted by
-step 6b. Groups with no staged docs (investigation did not run, or already
-graduated) are silently skipped — the script is idempotent. Only funded groups'
-docs land in `backlog/`; unfunded groups' investigation stays in the
-`~/.ariadne/plan/prioritize/` staging area.
+`backlog/docs/TASK-<id>-<slug>-refactor.md`, and **moves**
+`backlog/docs/<fault_area>.comprehension.html` to
+`backlog/tasks/task-<id> - <slug>.overview.html` — renamed to share the epic's
+filename prefix so it sorts beside it in folder views — using the backlog ids
+just minted by step 6b. The move consumes its staged source, so the funded
+group's comprehension HTML leaves `backlog/docs/` entirely. Groups with no staged
+docs (investigation did not run, or already graduated) are silently skipped — the
+script is idempotent. An unfunded group's `<fault_area>.comprehension.html` stays
+in `backlog/docs/` as a local-only file (gitignored, never committed); delete it
+once the decision is made, or leave it as a record of the investigation.
 
 ## Selectors
 

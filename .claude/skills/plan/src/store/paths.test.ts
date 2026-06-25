@@ -3,6 +3,8 @@ import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
+  backlog_comprehension_staging_path,
+  backlog_docs_dir,
   backlog_root_dir,
   backlog_tasks_dir,
   get_repo_root,
@@ -88,5 +90,21 @@ describe("backlog_root_dir", () => {
   it("falls back to <repo>/backlog", () => {
     delete process.env.ARIADNE_BACKLOG_DIR_OVERRIDE;
     expect(backlog_root_dir()).toEqual(path.join(get_repo_root(), "backlog"));
+  });
+});
+
+describe("backlog_docs_dir", () => {
+  it("composes <backlog-root>/docs under the override", () => {
+    process.env.ARIADNE_BACKLOG_DIR_OVERRIDE = "/tmp/fake-backlog";
+    expect(backlog_docs_dir()).toEqual("/tmp/fake-backlog/docs");
+  });
+});
+
+describe("backlog_comprehension_staging_path", () => {
+  it("names <backlog-root>/docs/<fault_area>.comprehension.html under the override", () => {
+    process.env.ARIADNE_BACKLOG_DIR_OVERRIDE = "/tmp/fake-backlog";
+    expect(backlog_comprehension_staging_path("scope_construction")).toEqual(
+      "/tmp/fake-backlog/docs/scope_construction.comprehension.html",
+    );
   });
 });

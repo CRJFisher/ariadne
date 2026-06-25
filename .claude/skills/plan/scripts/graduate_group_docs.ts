@@ -5,17 +5,25 @@
  *
  * Reads the `ExportSummary` JSON produced by `export_to_backlog.ts` (from
  * `--export-summary <path>` or stdin), finds the `architectural`-tier root of
- * each exported group, and copies the staged docs to their backlog destinations:
+ * each exported group, and graduates the staged docs to their backlog destinations:
  *
  *   ~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md
- *     → backlog/docs/TASK-<id>-<slug>-refactor.md
+ *     → backlog/docs/TASK-<id>-<slug>-refactor.md   (copied)
  *
- *   ~/.ariadne/plan/prioritize/<fault_area>/comprehension.html
- *     → backlog/tasks/task-<id>.overview.html
+ *   backlog/docs/<fault_area>.comprehension.html
+ *     → backlog/tasks/task-<id> - <slug>.overview.html   (moved, beside the epic)
  *
- * Groups with no staged docs are silently skipped (the `refactor-investigator`
- * may not have run yet, or the group may have been exported without investigation).
- * Already-graduated destinations are skipped (idempotent).
+ * The comprehension HTML is moved (renamed to share the task's filename prefix
+ * so it sorts next to the epic in folder views). A move always consumes its
+ * staged source — overwriting any prior overview so a regenerated doc wins, and
+ * never stranding the staged copy in the committed `backlog/docs/` tree. The
+ * refactor plan is copied, leaving its source in the `~/.ariadne` staging area.
+ *
+ * Groups with no staged docs are silently skipped (the investigator may not have
+ * run yet, or the group may have been exported without investigation). For the
+ * copied refactor plan an already-graduated destination is left untouched, so a
+ * re-run is a no-op; a re-run after the comprehension HTML already moved finds no
+ * staged source and is likewise a no-op.
  *
  * Usage:
  *   node --import tsx graduate_group_docs.ts [--export-summary <path>] [--dry-run]
@@ -25,13 +33,14 @@
  *     | node --import tsx graduate_group_docs.ts --dry-run
  */
 
-import { copyFile, mkdir, readFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, rename } from "node:fs/promises";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { JsonPlanTaskRepository } from "../src/store/json_plan_task_repository.js";
 import {
+  backlog_comprehension_staging_path,
   backlog_docs_dir,
   backlog_tasks_dir,
   plan_prioritize_area_dir,
@@ -90,11 +99,13 @@ async function read_export_summary(export_summary_path: string | null): Promise<
   return JSON.parse(raw) as ExportSummary;
 }
 
+type DocAction = "copied" | "moved" | "skipped_exists" | "skipped_no_src";
+
 interface GraduationResult {
   fault_area: string;
   backlog_id: string;
-  refactor_plan: { src: string; dest: string; action: "copied" | "skipped_exists" | "skipped_no_src" };
-  comprehension: { src: string; dest: string; action: "copied" | "skipped_exists" | "skipped_no_src" };
+  refactor_plan: { src: string; dest: string; action: DocAction };
+  comprehension: { src: string; dest: string; action: DocAction };
 }
 
 export interface GraduateSummary {
@@ -133,20 +144,23 @@ export async function run(argv: string[]): Promise<GraduateSummary> {
       `TASK-${backlog_id}-${slugify_title(task.title)}-refactor.md`,
     );
 
-    const html_src = path.join(staging_dir, "comprehension.html");
-    const html_dest = path.join(backlog_tasks_dir(), `task-${backlog_id}.overview.html`);
+    const html_src = backlog_comprehension_staging_path(task.fault_area);
+    const html_dest = path.join(
+      backlog_tasks_dir(),
+      `task-${backlog_id} - ${slugify_title(task.title)}.overview.html`,
+    );
 
-    const plan_action = await resolve_action(plan_src, plan_dest);
-    const html_action = await resolve_action(html_src, html_dest);
+    const plan_action = resolve_copy_action(plan_src, plan_dest);
+    const html_action = resolve_move_action(html_src);
 
     if (!dry_run) {
       if (plan_action === "copied") {
         await mkdir(backlog_docs_dir(), { recursive: true });
         await copyFile(plan_src, plan_dest);
       }
-      if (html_action === "copied") {
+      if (html_action === "moved") {
         await mkdir(backlog_tasks_dir(), { recursive: true });
-        await copyFile(html_src, html_dest);
+        await rename(html_src, html_dest);
       }
     }
 
@@ -161,13 +175,16 @@ export async function run(argv: string[]): Promise<GraduateSummary> {
   return { dry_run, results };
 }
 
-async function resolve_action(
-  src: string,
-  dest: string,
-): Promise<"copied" | "skipped_exists" | "skipped_no_src"> {
+/** A copy preserves an already-graduated destination, so a re-run is a no-op. */
+function resolve_copy_action(src: string, dest: string): DocAction {
   if (!fs.existsSync(src)) return "skipped_no_src";
   if (fs.existsSync(dest)) return "skipped_exists";
   return "copied";
+}
+
+/** A move consumes its source whenever one is staged; `rename` overwrites the destination. */
+function resolve_move_action(src: string): DocAction {
+  return fs.existsSync(src) ? "moved" : "skipped_no_src";
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
