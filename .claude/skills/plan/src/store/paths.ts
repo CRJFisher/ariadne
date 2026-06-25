@@ -123,7 +123,7 @@ export function backlog_docs_dir(): string {
 }
 
 /**
- * Where the `comprehension-doc-architect` writes a change group's decision-aid
+ * Where the comprehension-doc sub-agent writes a change group's decision-aid
  * HTML during investigation: `backlog/docs/<fault_area>.comprehension.html`.
  * Staged in the repo (not the `~/.ariadne` home dir) so the user can open it
  * while deciding which groups to fund. The graduation step moves it into

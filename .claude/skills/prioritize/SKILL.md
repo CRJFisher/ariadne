@@ -3,7 +3,7 @@ name: prioritize
 description: Review the plan engine's task-DB and promote selected PlanTask rows into the user's backlog/. Drives export_to_backlog.ts — the only writer of backlog/, run deliberately by the human when graduating planned work.
 argument-hint: "[--status proposed|accepted] [--fault-area <area>] [--priority core|classifier] [--id <db-task-id>...] [--dry-run]"
 disable-model-invocation: true
-allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read, Write, Bash(open:*), Task(refactor-investigator), Task(refactor-task-architect), Task(comprehension-doc-architect)
+allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read, Write, Bash(open:*), Task
 ---
 
 # Prioritize
@@ -149,13 +149,14 @@ doc before its `refactor_plan.md` is written produces an empty doc.
 
 ### 4. Render a comprehension doc per change group
 
-For each investigated group, dispatch one `Task(comprehension-doc-architect)` to
-render a self-contained HTML comprehension doc from that group's
-`refactor_plan.md`, written to `backlog/docs/<fault_area>.comprehension.html`
-(in the repo, so the user can open it from their tree while deciding; the
-`*.comprehension.html` glob is gitignored, so a staging never lands in a commit
-until graduation moves a funded group's doc into `backlog/tasks/`). Each doc
-presents:
+For each investigated group, dispatch one sub-agent to render a self-contained
+HTML comprehension doc from that group's `refactor_plan.md`, written to
+`backlog/docs/<fault_area>.comprehension.html` (in the repo, so the user can open
+it from their tree while deciding; the `*.comprehension.html` glob is gitignored,
+so a staging never lands in a commit until graduation moves a funded group's doc
+into `backlog/tasks/`). Pick a comprehension-doc specialist sub-agent if your
+environment offers one; otherwise a general-purpose sub-agent following these
+instructions produces the same artifact. Each doc presents:
 
 - a before/after pair of diagrams showing the change in functionality, grounded in
   the refactor plan's chosen mechanism,

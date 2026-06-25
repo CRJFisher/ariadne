@@ -55,9 +55,11 @@ builders. Writes a 9-section Markdown refactor plan to
   (≤5/wave) on all candidate groups. **All step-3 waves must complete before
   any step-4 task is dispatched** — the plans on disk are the verified input
   step 4 reads; this barrier must be stated explicitly in the skill spec.
-- New step 4: render one `comprehension-doc-architect` HTML per group from its
-  refactor plan (reads `~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md`
+- New step 4: dispatch one sub-agent per group to render its comprehension HTML
+  from the refactor plan (reads `~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md`
   from disk — the main agent does not transport the plan content in-memory).
+  Reference the agent by capability, not a pinned name: a comprehension-doc
+  specialist if the environment provides one, else a general-purpose sub-agent.
 - New step 6a: dispatch one **`refactor-task-architect`** agent per confirmed
   group before running the export scripts. The agent reads `refactor_plan.md`
   (sections 6 — sub-task mapping, and 7 — sequencing), applies the
