@@ -1,7 +1,7 @@
 ---
 id: TASK-190.26
 title: "Prioritize skill: auto-investigate change groups before funding decision"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-06-25 00:00"
 labels:
@@ -80,22 +80,60 @@ The `plan` engine and its strategist are unchanged — they remain the cheap,
 planning-only router-and-estimator. All new deep-design work lives in
 `prioritize`, the stage already licensed to write `backlog/`.
 
+## Implementation Notes
+
+### High-level summary
+
+The implementation adds two investigation/assignment stages to `prioritize` that
+run before any graduation decision. In step 3 the skill dispatches one
+`refactor-investigator` per change group in parallel; an explicit barrier in
+SKILL.md enforces that all waves complete before any comprehension-doc architect
+is started in step 4. The investigator reads the real `packages/core` code via
+the `ARIADNE_FAULT_AREA_FOLDER` anchor, traces each false-positive to its root
+cause, and writes a 9-section `refactor_plan.md` to
+`~/.ariadne/plan/prioritize/<fault_area>/`.
+
+Step 6 is split into three sub-steps. Step 6a dispatches one
+`refactor-task-architect` per confirmed group (all in parallel, then waits).
+The architect reads sections 6 (sub-task mapping) and 7 (sequencing) of the
+investigator's plan, applies the natural-split criterion — one top-level task
+for the fundamental refactor, sub-tasks only for independently sequenced
+downstream adaptations — and writes a `task_assignment.json` with relative
+`BacklogIdAssignment` ids (`"1"`, `"1.1"`, …). Steps 6b and 6c then run per
+confirmed group.
+
+`export_to_backlog.ts` gains `--assignments <file>` (step 6b). When supplied,
+`load_assignments` parses and validates the JSON (rejects non-dotted-decimal
+`backlog_id` / `parent_backlog_id`), then calls `remap_assignment` to substitute
+the absolute first-id for the relative root part. Tasks that share a `backlog_id`
+(collapsed by the architect) are separated into a primary writer (lowest
+`TIER_RANK`: `architectural` → `fault_area` → `localized`) and collapsed rows;
+only the primary writes a backlog file but all are flipped to `exported` in the
+DB. A write-time containment assertion blocks path-traversal in `backlog_id`
+values that somehow pass format validation.
+
+`export_to_backlog.test.ts` adds three tests: a pure-function unit test for
+`remap_assignment` (root and nested cases), an integration test for the
+collapse/dedup path (fault_area node collapses into root, leaf becomes sub-task,
+all three DB rows flip), and a tier-rank primary-selection test (three rows
+sharing one `backlog_id`, architectural wins).
+
 ## Acceptance criteria
 
-- [ ] `refactor-investigator` agent exists and produces a 9-section refactor plan
+- [x] `refactor-investigator` agent exists and produces a 9-section refactor plan
       for any fault-area change group from the plan task-DB.
-- [ ] `prioritize` dispatches one investigator per change group in parallel;
+- [x] `prioritize` dispatches one investigator per change group in parallel;
       **all step-3 waves finish before the first step-4 task is dispatched**
       (SKILL.md makes this barrier explicit).
-- [ ] `refactor-task-architect` agent exists; given a `refactor_plan.md` it
+- [x] `refactor-task-architect` agent exists; given a `refactor_plan.md` it
       produces a `task_assignment.json` that yields one top-level task per
       change group, with sub-tasks only where the investigator identified a
       genuinely separate downstream adaptation.
-- [ ] `export_to_backlog.ts` accepts `--assignments <file>` and, when supplied,
+- [x] `export_to_backlog.ts` accepts `--assignments <file>` and, when supplied,
       uses the `BacklogIdAssignment` map from that file instead of computing
       ids from `assign_backlog_ids`.
 - [x] Funded-group refactor plans and comprehension docs graduate into `backlog/`
       alongside the epic on promotion (`graduate_group_docs.ts` — pipes from
       `export_to_backlog.ts`, copies staged docs to `backlog/docs/` and
       `backlog/tasks/`, idempotent).
-- [ ] `plan` strategist prompt, tool grant, and write boundaries are unchanged.
+- [x] `plan` strategist prompt, tool grant, and write boundaries are unchanged.

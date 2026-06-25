@@ -30,7 +30,7 @@ import { plan_sweeps_dir } from "../src/store/paths.js";
 
 import { read_exported_backlog_keys } from "../src/store/backlog_dedup.js";
 import { JsonPlanTaskRepository } from "../src/store/json_plan_task_repository.js";
-import { run } from "./export_to_backlog.js";
+import { remap_assignment, run } from "./export_to_backlog.js";
 
 let plan_dir: string;
 let backlog_dir: string;
@@ -381,5 +381,128 @@ describe("export_to_backlog run()", () => {
     await expect(run(["--priority", "urgent"], FIXED_NOW)).rejects.toThrow(
       "--priority expects core|classifier",
     );
+  });
+
+  describe("--assignments flag", () => {
+    it("remap_assignment remaps root and nested ids to absolute", () => {
+      expect(
+        remap_assignment({ backlog_id: "1", parent_backlog_id: null, ordinal: null }, 347),
+      ).toEqual({ backlog_id: "347", parent_backlog_id: null, ordinal: null });
+
+      expect(
+        remap_assignment({ backlog_id: "1.2", parent_backlog_id: "1", ordinal: 2000 }, 347),
+      ).toEqual({ backlog_id: "347.2", parent_backlog_id: "347", ordinal: 2000 });
+    });
+
+    it("collapses fault_area node into root, writes primary file only, flips all rows exported", async () => {
+      const repo = new JsonPlanTaskRepository();
+      await repo.put(
+        make_task({
+          id: "pt-arch" as PlanTaskId,
+          tier: "architectural",
+          parent_id: null,
+          dedup_key: "karch",
+          title: "[name_resolution] Close the binding gap",
+        }),
+      );
+      await repo.put(
+        make_task({
+          id: "pt-area" as PlanTaskId,
+          tier: "fault_area",
+          parent_id: "pt-arch" as PlanTaskId,
+          dedup_key: "karea",
+        }),
+      );
+      await repo.put(
+        make_task({
+          id: "pt-leaf" as PlanTaskId,
+          tier: "localized",
+          parent_id: "pt-area" as PlanTaskId,
+          dedup_key: "kleaf",
+          title: "[name_resolution] Fix qualified paths",
+        }),
+      );
+
+      const assignment_file = path.join(plan_dir, "task_assignment.json");
+      await fs.writeFile(
+        assignment_file,
+        JSON.stringify({
+          "pt-arch": { backlog_id: "1", parent_backlog_id: null, ordinal: null },
+          "pt-area": { backlog_id: "1", parent_backlog_id: null, ordinal: null },
+          "pt-leaf": { backlog_id: "1.1", parent_backlog_id: "1", ordinal: 1000 },
+        }),
+        "utf8",
+      );
+
+      const summary = await run(["--assignments", assignment_file], FIXED_NOW);
+
+      // Primary (arch) and genuine sub-task (leaf) get files; collapsed (area) gets path: "".
+      expect(summary.exported).toEqual([
+        {
+          id: "pt-arch",
+          backlog_task: "TASK-347",
+          path: "task-347 - name_resolution-Close-the-binding-gap.md",
+        },
+        {
+          id: "pt-leaf",
+          backlog_task: "TASK-347.1",
+          path: "task-347.1 - name_resolution-Fix-qualified-paths.md",
+        },
+        { id: "pt-area", backlog_task: "TASK-347", path: "" },
+      ]);
+
+      // Exactly two backlog files (arch + leaf); area wrote no file.
+      const task_files = (await fs.readdir(backlog_dir)).filter((f) => f.startsWith("task-347"));
+      expect(task_files).toHaveLength(2);
+
+      // All three DB rows flipped to exported with their correct backlog ids.
+      const arch = await repo.get("pt-arch" as PlanTaskId);
+      const area = await repo.get("pt-area" as PlanTaskId);
+      const leaf = await repo.get("pt-leaf" as PlanTaskId);
+      expect(arch?.status).toEqual("exported");
+      expect(arch?.exported_backlog_task).toEqual("TASK-347");
+      expect(area?.status).toEqual("exported");
+      expect(area?.exported_backlog_task).toEqual("TASK-347");
+      expect(leaf?.status).toEqual("exported");
+      expect(leaf?.exported_backlog_task).toEqual("TASK-347.1");
+    });
+
+    it("selects architectural tier as primary when all rows share one backlog_id", async () => {
+      const repo = new JsonPlanTaskRepository();
+      await repo.put(
+        make_task({
+          id: "pt-arch" as PlanTaskId,
+          tier: "architectural",
+          dedup_key: "ka",
+          title: "[name_resolution] Arch root",
+        }),
+      );
+      await repo.put(make_task({ id: "pt-area" as PlanTaskId, tier: "fault_area", dedup_key: "kf" }));
+      await repo.put(make_task({ id: "pt-loc" as PlanTaskId, tier: "localized", dedup_key: "kl" }));
+
+      const assignment_file = path.join(plan_dir, "task_assignment.json");
+      await fs.writeFile(
+        assignment_file,
+        JSON.stringify({
+          "pt-arch": { backlog_id: "1", parent_backlog_id: null, ordinal: null },
+          "pt-area": { backlog_id: "1", parent_backlog_id: null, ordinal: null },
+          "pt-loc":  { backlog_id: "1", parent_backlog_id: null, ordinal: null },
+        }),
+        "utf8",
+      );
+
+      const summary = await run(["--assignments", assignment_file], FIXED_NOW);
+
+      // arch wins (tier rank 0); area and loc are collapsed.
+      expect(summary.exported).toEqual([
+        { id: "pt-arch", backlog_task: "TASK-347", path: "task-347 - name_resolution-Arch-root.md" },
+        { id: "pt-area", backlog_task: "TASK-347", path: "" },
+        { id: "pt-loc",  backlog_task: "TASK-347", path: "" },
+      ]);
+
+      // Only one backlog file written.
+      const task_files = (await fs.readdir(backlog_dir)).filter((f) => f.startsWith("task-347"));
+      expect(task_files).toHaveLength(1);
+    });
   });
 });

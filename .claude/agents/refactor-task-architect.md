@@ -52,6 +52,10 @@ Read the full `refactor_plan.md`. The two sections that drive your decision:
   dependent separate items with different owners or test scopes they may warrant
   a sub-task.
 
+If sections 6 and 7 are absent or empty, produce a trivial assignment: map every
+id in `row_ids[]` to `{ backlog_id: "1", parent_backlog_id: null, ordinal: null
+}` (all rows collapse to the top-level task, no sub-tasks).
+
 ## How to apply the natural-split criterion
 
 Ask for **each** row id in `row_ids[]`:

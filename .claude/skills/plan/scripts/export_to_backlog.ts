@@ -17,7 +17,13 @@
  *      (`architectural` → `fault_area` → `localized`) into the backlog's decimal
  *      convention: each selected root takes the next free top-level id (from a
  *      recursive scan of `backlog/`), and every descendant takes a dotted child
- *      id (`347.1`, `347.1.2`) carrying a `parent_task_id` link.
+ *      id (`347.1`, `347.1.2`) carrying a `parent_task_id` link. With
+ *      `--assignments <file>`, the map comes from `task_assignment.json`
+ *      (produced by `refactor-task-architect`) instead; relative ids are resolved
+ *      to absolute by `remap_assignment`. Multiple plan tasks may share a
+ *      `backlog_id` (architect collapsed them); among a shared group the
+ *      `architectural`-tier row writes the file — the others are only flipped in
+ *      the DB (step 5).
  *   3. **render** — `render_backlog_task` turns a `PlanTask` into the backlog
  *      task file, stamping the verbatim `PlanTask.dedup_key` into the
  *      `plan_dedup_key` frontmatter field so a re-run recognises prior exports —
@@ -49,7 +55,7 @@ import * as path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { atomic_write_file } from "@ariadnejs/skill-fs";
-import type { PlanTask, PlanTaskStatus } from "../src/store/plan_task.js";
+import type { PlanTask, PlanTaskStatus, PlanTaskTier } from "../src/store/plan_task.js";
 import type { AriadneFaultArea } from "@ariadnejs/types";
 
 import { read_exported_backlog_keys } from "../src/store/backlog_dedup.js";
@@ -173,8 +179,10 @@ export interface ExportSummary {
   missing_ids: string[];
 }
 
+const RELATIVE_ID_RE = /^\d+(?:\.\d+)*$/;
+
 /** Re-map a relative BacklogIdAssignment (root = "1") to absolute ids. */
-function remap_assignment(relative: BacklogIdAssignment, first_id: number): BacklogIdAssignment {
+export function remap_assignment(relative: BacklogIdAssignment, first_id: number): BacklogIdAssignment {
   const remap = (id: string): string => {
     const parts = id.split(".");
     parts[0] = String(first_id);
@@ -192,10 +200,40 @@ async function load_assignments(
   assignments_path: string,
   first_id: number,
 ): Promise<Map<string, BacklogIdAssignment>> {
-  const raw = JSON.parse(await readFile(assignments_path, "utf8")) as Record<string, BacklogIdAssignment>;
+  let raw: Record<string, Record<string, unknown>>;
+  try {
+    raw = JSON.parse(await readFile(assignments_path, "utf8")) as Record<
+      string,
+      Record<string, unknown>
+    >;
+  } catch (err) {
+    throw new Error(
+      `--assignments file "${assignments_path}": ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
   const result = new Map<string, BacklogIdAssignment>();
-  for (const [plan_task_id, relative] of Object.entries(raw)) {
-    result.set(plan_task_id, remap_assignment(relative, first_id));
+  for (const [plan_task_id, value] of Object.entries(raw)) {
+    const { backlog_id, parent_backlog_id, ordinal } = value;
+    if (typeof backlog_id !== "string" || !RELATIVE_ID_RE.test(backlog_id)) {
+      throw new Error(
+        `--assignments file "${assignments_path}": entry "${plan_task_id}.backlog_id" must be a dotted-decimal id (e.g. "1" or "1.2"), got ${JSON.stringify(backlog_id)}`,
+      );
+    }
+    if (
+      parent_backlog_id !== null &&
+      (typeof parent_backlog_id !== "string" || !RELATIVE_ID_RE.test(parent_backlog_id))
+    ) {
+      throw new Error(
+        `--assignments file "${assignments_path}": entry "${plan_task_id}.parent_backlog_id" must be a dotted-decimal id or null`,
+      );
+    }
+    result.set(
+      plan_task_id,
+      remap_assignment(
+        { backlog_id, parent_backlog_id: parent_backlog_id as string | null, ordinal: (ordinal as number | null) ?? null },
+        first_id,
+      ),
+    );
   }
   return result;
 }
@@ -219,7 +257,7 @@ export async function run(argv: string[], now: Date = new Date()): Promise<Expor
   // When --assignments is used, multiple plan tasks may share a backlog_id (collapsed
   // leaves merging into the core fix). Deduplicate: only the primary task per unique
   // backlog_id writes a file; collapsed tasks are still flipped to exported in the DB.
-  const TIER_RANK: Record<string, number> = { architectural: 0, fault_area: 1, localized: 2 };
+  const TIER_RANK: Record<PlanTaskTier, number> = { architectural: 0, fault_area: 1, localized: 2 };
   let primary_selected = selection.selected;
   let collapsed_selected: PlanTask[] = [];
   if (assignments_path !== null) {
@@ -243,7 +281,11 @@ export async function run(argv: string[], now: Date = new Date()): Promise<Expor
   const planned = primary_selected.map((task) => {
     const assignment = assignments.get(task.id);
     if (assignment === undefined) {
-      throw new Error(`assign_backlog_ids produced no id for selected task ${task.id}`);
+      throw new Error(
+        assignments_path !== null
+          ? `--assignments file is missing an entry for selected task ${task.id} — the assignment map must cover every row in the selection`
+          : `assign_backlog_ids produced no id for selected task ${task.id}`,
+      );
     }
     const rendered = render_backlog_task(task, assignment, created_date);
     return { task, backlog_task: `TASK-${assignment.backlog_id}`, rendered };
@@ -251,11 +293,16 @@ export async function run(argv: string[], now: Date = new Date()): Promise<Expor
 
   if (!dry_run && planned.length > 0) {
     await mkdir(backlog_tasks_dir(), { recursive: true });
+    const resolved_base = path.resolve(backlog_tasks_dir());
     for (const entry of planned) {
-      await atomic_write_file(
-        path.join(backlog_tasks_dir(), entry.rendered.filename),
-        entry.rendered.content,
-      );
+      const target = path.join(backlog_tasks_dir(), entry.rendered.filename);
+      const resolved_target = path.resolve(target);
+      if (!resolved_target.startsWith(resolved_base + path.sep) && resolved_target !== resolved_base) {
+        throw new Error(
+          `write-boundary violation: "${resolved_target}" is outside the backlog tasks dir "${resolved_base}"`,
+        );
+      }
+      await atomic_write_file(target, entry.rendered.content);
       const updated: PlanTask = {
         ...entry.task,
         status: "exported",
@@ -270,8 +317,7 @@ export async function run(argv: string[], now: Date = new Date()): Promise<Expor
       });
     }
     for (const task of collapsed_selected) {
-      const assignment = assignments.get(task.id);
-      if (assignment === undefined) continue;
+      const assignment = assignments.get(task.id)!; // always present: task was grouped by its assignment
       const backlog_task = `TASK-${assignment.backlog_id}`;
       const updated: PlanTask = {
         ...task,
@@ -300,7 +346,7 @@ export async function run(argv: string[], now: Date = new Date()): Promise<Expor
       })),
       ...collapsed_selected.map((task) => ({
         id: task.id,
-        backlog_task: `TASK-${assignments.get(task.id)?.backlog_id ?? ""}`,
+        backlog_task: `TASK-${assignments.get(task.id)!.backlog_id}`,
         path: "",
       })),
     ],

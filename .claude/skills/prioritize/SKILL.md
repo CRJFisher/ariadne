@@ -20,7 +20,7 @@ each change group against the real `packages/core` code** (via the
 **graduates** the selected rows into `backlog/`. Graduation runs through one
 script:
 
-```
+```text
 .claude/skills/plan/scripts/export_to_backlog.ts
 ```
 
@@ -176,8 +176,9 @@ below and re-run `--dry-run`. Do not promote until the user has confirmed the se
 
 ### 6. Promote
 
-For each confirmed group, run steps 6a → 6b → 6c in sequence. Repeat for every
-funded group.
+Step 6a dispatches one architect per confirmed group, all in parallel, and waits
+for all to finish. Steps 6b and 6c then run per confirmed group, one group at a
+time.
 
 **Step 6a — assign backlog ids** (one `refactor-task-architect` per confirmed group):
 
@@ -192,7 +193,8 @@ tier labels are a routing concept, not the splitting axis. Dispatch prompt:
 > Assign backlog ids for change group `<fault_area>`. The refactor plan is at
 > `~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md`. The plan task ids
 > for this group are: `<row_id>`, `<row_id>`, … (architectural root, fault_area
-> node, localized leaves). Apply the natural-split criterion and write the
+> node, localized leaves — the ids from your step 2 grouping for this
+> fault_area). Apply the natural-split criterion and write the
 > BacklogIdAssignment map to
 > `~/.ariadne/plan/prioritize/<fault_area>/task_assignment.json`.
 
@@ -210,9 +212,9 @@ node --import tsx .claude/skills/plan/scripts/export_to_backlog.ts \
 
 The `--assignments` flag accepts the `task_assignment.json` produced in 6a and
 uses its `BacklogIdAssignment` map instead of computing ids from
-`assign_backlog_ids`. Without the flag the script behaves as before (tier-based
-id assignment). The `--fault-area <area>` selector picks the architectural root,
-fault-area node, and every localized leaf in one go.
+`assign_backlog_ids`. Without the flag the script uses `assign_backlog_ids` to
+derive ids from the plan tier tree. The `--fault-area <area>` selector picks the
+architectural root, fault-area node, and every localized leaf in one go.
 
 **Step 6c — graduate the investigation docs** (reads the export summary, copies
 staged docs to `backlog/` for each funded architectural root):
