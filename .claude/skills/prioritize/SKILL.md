@@ -3,7 +3,7 @@ name: prioritize
 description: Review the plan engine's task-DB and promote selected PlanTask rows into the user's backlog/. Drives export_to_backlog.ts — the only writer of backlog/, run deliberately by the human when graduating planned work.
 argument-hint: "[--status proposed|accepted] [--fault-area <area>] [--priority core|classifier] [--id <db-task-id>...] [--dry-run]"
 disable-model-invocation: true
-allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read, Write, Bash(open:*), Task(refactor-investigator), Task(comprehension-doc-architect)
+allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read, Write, Bash(open:*), Task(refactor-investigator), Task(refactor-task-architect), Task(comprehension-doc-architect)
 ---
 
 # Prioritize
@@ -142,8 +142,10 @@ more). Each sub-agent reads its group's rows, gets to grips with the real
 > Write the plan to `~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md` and
 > return your one-line root cause + decomposition verdict.
 
-Wait for every `Task()` in a wave to return before starting the next. The plans
-are the verified design the comprehension docs and the export are built on.
+Wait for every `Task()` in a wave to return before starting the next wave.
+**All step-3 waves must complete before any step-4 task is dispatched.** The
+plans on disk are the verified input step 4 reads; dispatching a comprehension
+doc before its `refactor_plan.md` is written produces an empty doc.
 
 ### 4. Render a comprehension doc per change group
 
@@ -174,34 +176,56 @@ below and re-run `--dry-run`. Do not promote until the user has confirmed the se
 
 ### 6. Promote
 
-Drop `--dry-run` to write the backlog tasks, flip the rows, then graduate the
-investigation artifacts. Run both scripts in sequence; pipe the first into the
-second.
+For each confirmed group, run steps 6a → 6b → 6c in sequence. Repeat for every
+funded group.
 
-**Step 6a — export the rows** (every tier of each confirmed group in one run):
+**Step 6a — assign backlog ids** (one `refactor-task-architect` per confirmed group):
+
+Dispatch one `Task(refactor-task-architect)` per confirmed group. The agent reads
+`~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md` (sections 6 and 7),
+applies the natural-split criterion — one top-level task for the fundamental
+refactor, sub-tasks only for genuinely separate downstream adaptations — and
+writes a `BacklogIdAssignment` map with relative ids to
+`~/.ariadne/plan/prioritize/<fault_area>/task_assignment.json`. The plan engine's
+tier labels are a routing concept, not the splitting axis. Dispatch prompt:
+
+> Assign backlog ids for change group `<fault_area>`. The refactor plan is at
+> `~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md`. The plan task ids
+> for this group are: `<row_id>`, `<row_id>`, … (architectural root, fault_area
+> node, localized leaves). Apply the natural-split criterion and write the
+> BacklogIdAssignment map to
+> `~/.ariadne/plan/prioritize/<fault_area>/task_assignment.json`.
+
+Run these architects in parallel (one message per group) and wait for all to
+complete before proceeding to 6b.
+
+**Step 6b — export the rows** (one run per confirmed group):
 
 ```bash
 node --import tsx .claude/skills/plan/scripts/export_to_backlog.ts \
-  --fault-area <area> [--fault-area <area> ...] \
-  > /tmp/export_summary.json
+  --fault-area <area> \
+  --assignments ~/.ariadne/plan/prioritize/<area>/task_assignment.json \
+  > /tmp/export_summary_<area>.json
 ```
 
-The `--fault-area <area>` selector is the most reliable way to promote a complete
-group (it selects the architectural root, fault-area node, and every localized
-leaf in one go). Use `--id` when you need to cherry-pick individual rows.
+The `--assignments` flag accepts the `task_assignment.json` produced in 6a and
+uses its `BacklogIdAssignment` map instead of computing ids from
+`assign_backlog_ids`. Without the flag the script behaves as before (tier-based
+id assignment). The `--fault-area <area>` selector picks the architectural root,
+fault-area node, and every localized leaf in one go.
 
-**Step 6b — graduate the investigation docs** (reads the export summary, copies
+**Step 6c — graduate the investigation docs** (reads the export summary, copies
 staged docs to `backlog/` for each funded architectural root):
 
 ```bash
 node --import tsx .claude/skills/plan/scripts/graduate_group_docs.ts \
-  --export-summary /tmp/export_summary.json
+  --export-summary /tmp/export_summary_<area>.json
 ```
 
 This copies `~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md` to
 `backlog/docs/TASK-<id>-<slug>-refactor.md` and `comprehension.html` to
 `backlog/tasks/task-<id>.overview.html`, using the backlog ids just minted by
-step 6a. Groups with no staged docs (investigation did not run, or already
+step 6b. Groups with no staged docs (investigation did not run, or already
 graduated) are silently skipped — the script is idempotent. Only funded groups'
 docs land in `backlog/`; unfunded groups' investigation stays in the
 `~/.ariadne/plan/prioritize/` staging area.

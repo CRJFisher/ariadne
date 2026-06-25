@@ -67,6 +67,19 @@
   .step.new .t .badge{background:rgba(185,121,79,.16);color:var(--clay)}
   .step.changed .t .badge{background:rgba(108,122,74,.18);color:var(--olive)}
   .step .t small{display:block;color:var(--g600);font-size:11.5px;font-family:var(--mono);margin-top:2px}
+  /* sub-steps nested under a parent step */
+  .substep{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;padding:5px 0 5px 0;margin-left:0}
+  .substep .b{width:22px;height:22px;font-size:10.5px;background:var(--paper);color:var(--clay);border:1.5px dashed var(--clay)}
+  .substep.new2 .b{background:var(--clay);color:var(--ivory);border-style:solid}
+  .substep .t{font-size:12.5px;line-height:1.35}
+  .substep .t small{font-size:11px}
+  .substep .t .badge{font-family:var(--mono);font-size:8.5px;text-transform:uppercase;letter-spacing:.06em;border-radius:999px;padding:2px 6px;margin-left:6px;vertical-align:1px}
+  .substep.new2 .t .badge{background:rgba(185,121,79,.16);color:var(--clay)}
+  .substep.chg2 .t .badge{background:rgba(108,122,74,.18);color:var(--olive)}
+  /* barrier row */
+  .barrier{display:flex;align-items:center;gap:10px;margin:7px 0 4px 0;padding:6px 0}
+  .barrier .line{flex:1;height:0;border-top:2px dashed var(--rust)}
+  .barrier .lbl{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--rust);background:rgba(168,71,47,.1);border:1px solid rgba(168,71,47,.35);border-radius:999px;padding:3px 9px;white-space:nowrap}
   /* legend */
   .legend{display:flex;flex-wrap:wrap;gap:16px 20px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:10px 2px 4px;align-items:center}
   .legend span{display:inline-flex;align-items:center;gap:7px}
@@ -74,6 +87,7 @@
   .legend i.cur{background:var(--g100);border-color:var(--g200)}
   .legend i.new{background:var(--clay)}
   .legend i.chg{background:var(--olive)}
+  .legend i.barr{width:20px;height:0;border-radius:0;border-top:2px dashed var(--rust)}
   .legend i.dash{width:20px;height:0;border-radius:0;border-top:2px dashed var(--g400)}
   footer{margin-top:56px;border-top:1px solid var(--g200);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400);line-height:1.7}
   @media(max-width:840px){ .sbs{grid-template-columns:1fr} }
@@ -87,9 +101,10 @@
     <a href="#workflow">1 · Workflow</a>
     <a href="#decision">2 · Decision input</a>
     <a href="#investigator">3 · Investigator</a>
-    <a href="#graduation">4 · Graduation</a>
-    <a href="#boundary">5 · Boundary</a>
-    <a href="#cost">6 · Cost</a>
+    <a href="#architect">4 · Task architect</a>
+    <a href="#graduation">5 · Graduation</a>
+    <a href="#boundary">6 · Boundary</a>
+    <a href="#cost">7 · Cost</a>
   </div>
 </nav>
 
@@ -98,25 +113,26 @@
   <p class="eyebrow">self-healing pipeline · prioritize skill</p>
   <h1>Prioritize gains a deep-investigation step: verified design, not the plan's hypothesis</h1>
   <p class="lead prose">Today <code>prioritize</code> hands the human one thin decision aid built from the plan's <b>row prose</b> — a hypothesis about each fix, never verified against the code.</p>
-  <p class="lead prose">The change inserts one step: a <code>refactor-investigator</code> reads the real <code>packages/core</code> <b>per change group</b> and produces a code-grounded plan and doc — on <b>every</b> group, before funding.</p>
-  <p class="lead prose">So the human now decides with N verified designs in hand; on promotion each funded group's plan and doc graduate into <code>backlog/</code> — the very artifacts hand-built for 347–351.</p>
+  <p class="lead prose">The change inserts investigation and design: a <code>refactor-investigator</code> reads the real <code>packages/core</code> <b>per change group</b>, a <code>refactor-task-architect</code> derives the backlog split from its grounded verdict — on <b>every</b> group, before funding.</p>
+  <p class="lead prose">So the human decides with N verified designs in hand; on promotion each funded group's plan and doc graduate into <code>backlog/</code>, split into tasks the investigator validated.</p>
   <div class="meta">
     <span class="chip">scope <strong>prioritize skill only</strong></span>
-    <span class="chip">new agent <strong>refactor-investigator</strong></span>
-    <span class="chip">steps <strong>5 → 6</strong></span>
+    <span class="chip">new agents <strong>refactor-investigator · refactor-task-architect</strong></span>
+    <span class="chip">steps <strong>5 → 7</strong></span>
     <span class="chip">plan engine <strong>unchanged</strong></span>
   </div>
   <div class="legend">
     <span><i class="cur"></i> current behaviour</span>
     <span><i class="new"></i> new step / artifact</span>
     <span><i class="chg"></i> changed step</span>
+    <span><i class="barr"></i> hard barrier · all waves complete first</span>
     <span><i class="dash"></i> design-only boundary (reads core, never writes)</span>
   </div>
 </header>
 
 <!-- ============ 1. WORKFLOW BEFORE/AFTER ============ -->
-<h2 id="workflow"><span class="n">01</span>The workflow gains two steps and changes one</h2>
-<p class="cap prose">Same preview and promote at the ends. The delta is the middle: steps <b>3–4</b> are inserted before the decision, and step <b>6</b> now also graduates each group's plan and doc into <code>backlog/</code>. <code>SKILL.md</code> §Workflow 1–6.</p>
+<h2 id="workflow"><span class="n">01</span>The workflow grows from 5 steps to 7, with a hard barrier in the middle</h2>
+<p class="cap prose">Same ends; the middle changes: steps <b>3–4</b> investigate and render before the decision, separated by a <b>barrier</b>; step <b>6</b> now splits into three sub-steps. <code>SKILL.md</code> §Workflow.</p>
 <div class="sbs">
 
   <div class="panel cur">
@@ -130,15 +146,23 @@
   </div>
 
   <div class="panel aft">
-    <div class="ph"><span class="tag">updated</span><h3>6 steps · decide on verified designs</h3></div>
+    <div class="ph"><span class="tag">updated</span><h3>7 steps · decide on verified designs</h3></div>
     <p class="sub">SKILL.md now — investigation runs on every group first.</p>
     <div class="step"><div class="b">1</div><div class="t"><b>Preview the candidates</b><small>export_to_backlog.ts --dry-run · unchanged</small></div></div>
     <div class="step"><div class="b">2</div><div class="t"><b>Gather the change groups</b><small>group rows by fault_area · unchanged</small></div></div>
     <div class="step new"><div class="b">3</div><div class="t"><b>Deep-investigate each change group</b><span class="badge">new</span><small>one refactor-investigator per group · parallel ≤5/wave · reads packages/core</small></div></div>
-    <div class="step new"><div class="b">4</div><div class="t"><b>Render a comprehension doc per group</b><span class="badge">new</span><small>one comprehension-doc-architect per group · from the refactor plan</small></div></div>
+    <div class="barrier"><span class="line"></span><span class="lbl">barrier · all step-3 waves complete</span><span class="line"></span></div>
+    <div class="step new"><div class="b">4</div><div class="t"><b>Render a comprehension doc per group</b><span class="badge">new</span><small>reads each refactor_plan.md from disk · never before step 3 finishes</small></div></div>
     <div class="step"><div class="b">5</div><div class="t"><b>Decide together</b><small>AskUserQuestion over the verified designs</small></div></div>
-    <div class="step changed"><div class="b">6</div><div class="t"><b>Promote &amp; graduate the docs</b><span class="badge">changed</span><small>write backlog/tasks/ · copy each funded group's plan + doc into backlog/</small></div></div>
+    <div class="step changed"><div class="b">6</div><div class="t"><b>Promote &amp; graduate the docs</b><span class="badge">3 sub-steps</span><small>derive the split, export with it, graduate the funded docs</small></div></div>
+    <div class="substep new2"><div class="b">6a</div><div class="t"><b>Derive the backlog split</b><span class="badge">new</span><small>one refactor-task-architect per group → task_assignment.json</small></div></div>
+    <div class="substep chg2"><div class="b">6b</div><div class="t"><b>Export the rows</b><span class="badge">changed</span><small>export_to_backlog.ts --assignments task_assignment.json</small></div></div>
+    <div class="substep"><div class="b">6c</div><div class="t"><b>Graduate the docs</b><small>graduate_group_docs.ts → copy funded plan + doc to backlog/</small></div></div>
   </div>
+</div>
+<div class="callout">
+  <span class="k">the barrier between 3 and 4</span>
+  <p>Step 4 reads each group's <code>refactor_plan.md</code> <b>from disk</b>, not from memory — so every step-3 investigation wave must complete before the first step-4 doc is dispatched. The verified plans on disk are the input the rest of the workflow is built on.</p>
 </div>
 
 <!-- ============ 2. DECISION INPUT BEFORE/AFTER ============ -->
@@ -260,8 +284,8 @@
       <text x="616" y="118">3 · Data-model changes</text>
       <text x="616" y="138">4 · Producer changes (file by file)</text>
       <text x="616" y="158">5 · Consumer changes</text>
-      <text x="790" y="78">6 · Sub-task mapping</text>
-      <text x="790" y="98">7 · Sequencing</text>
+      <text x="790" y="78" fill="#b9794f">6 · Sub-task mapping</text>
+      <text x="790" y="98" fill="#b9794f">7 · Sequencing</text>
       <text x="790" y="118">8 · Test plan</text>
       <text x="790" y="138">9 · Risks &amp; open questions</text>
     </g>
@@ -272,13 +296,77 @@
   <div class="legend">
     <span><i class="new"></i> investigator stage</span>
     <span><i style="background:#fff;border-color:#a8472f"></i> the three things it catches</span>
+    <span><i style="background:#fbf3ec;border-color:#b9794f"></i> §6 + §7 — read next by the task architect</span>
     <span><i class="dash"></i> reads core, never writes it · never touches registry / backlog</span>
   </div>
 </div>
 
-<!-- ============ 4. ARTIFACT GRADUATION ============ -->
-<h2 id="graduation"><span class="n">04</span>The 347–351 artifacts, now auto-produced per funded group</h2>
-<p class="cap prose">The 347 epic's refactor plan (<code>TASK-347-…-refactor.md</code>) and overview (<code>task-347.overview.html</code>) were written <b>by hand</b>. The change makes them a per-group output of <code>prioritize</code>: investigation stages them, and on promotion each <b>funded</b> group's pair copies into <code>backlog/</code> alongside its freshly-minted epic. Unfunded groups' docs stay in staging. <code>SKILL.md</code> §6.</p>
+<!-- ============ 4. THE TASK ARCHITECT ============ -->
+<h2 id="architect"><span class="n">04</span>refactor-task-architect derives the backlog split from the grounded verdict</h2>
+<p class="cap prose">After investigation, before export, one <code>refactor-task-architect</code> per group reads its plan's <b>§6 sub-task mapping</b> and <b>§7 sequencing</b> and writes a <code>BacklogIdAssignment</code> map. The plan engine's <code>tier</code> labels are a <b>routing</b> concept — the wrong axis; the architect re-derives the split from the grounded verdict. <code>SKILL.md</code> §6a.</p>
+<div class="sbs">
+
+  <div class="panel cur">
+    <div class="ph"><span class="tag">wrong axis</span><h3>Tier-based decomposition</h3></div>
+    <p class="sub">The plan engine's tiers — a routing concept, not a splitting axis.</p>
+    <svg viewBox="0 0 360 230" role="img" aria-label="The plan tier tree would split a fault area into a root, fault-area node and one localized leaf per evidence row, an over-decomposition">
+      <defs><marker id="aT" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="#9a9387"/></marker></defs>
+      <rect x="110" y="12" width="140" height="34" rx="8" fill="#efeae1" stroke="#ddd6c8"/>
+      <text x="180" y="29" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#2b2a28">architectural root</text>
+      <text x="180" y="41" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#9a9387">tier = architectural</text>
+      <line x1="180" y1="46" x2="180" y2="62" stroke="#9a9387" stroke-width="1.5" marker-end="url(#aT)"/>
+      <rect x="110" y="64" width="140" height="34" rx="8" fill="#efeae1" stroke="#ddd6c8"/>
+      <text x="180" y="81" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#2b2a28">fault_area node</text>
+      <text x="180" y="93" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#9a9387">tier = fault_area</text>
+      <line x1="180" y1="98" x2="70" y2="124" stroke="#9a9387" stroke-width="1.5" marker-end="url(#aT)"/>
+      <line x1="180" y1="98" x2="180" y2="124" stroke="#9a9387" stroke-width="1.5" marker-end="url(#aT)"/>
+      <line x1="180" y1="98" x2="290" y2="124" stroke="#9a9387" stroke-width="1.5" marker-end="url(#aT)"/>
+      <rect x="22" y="126" width="96" height="30" rx="7" fill="#f3eee4" stroke="#ddd6c8"/><text x="70" y="145" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">leaf · tier=localized</text>
+      <rect x="132" y="126" width="96" height="30" rx="7" fill="#f3eee4" stroke="#ddd6c8"/><text x="180" y="145" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">leaf · tier=localized</text>
+      <rect x="242" y="126" width="96" height="30" rx="7" fill="#f3eee4" stroke="#ddd6c8"/><text x="290" y="145" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">leaf · tier=localized</text>
+      <text x="180" y="184" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#a8472f">one task per tier label</text>
+      <text x="180" y="200" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#a8472f">N "independent" leaves that are really one change</text>
+      <text x="180" y="216" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#9a9387">tier = routing, not splitting</text>
+    </svg>
+  </div>
+
+  <div class="panel aft">
+    <div class="ph"><span class="tag">right axis</span><h3>Grounded natural split</h3></div>
+    <p class="sub">Re-derived from the investigator's verified §6 + §7.</p>
+    <svg viewBox="0 0 360 230" role="img" aria-label="The refactor-task-architect reads sections 6 and 7 of the refactor plan and writes a task assignment of one top-level task plus a sub-task only where a separate downstream adaptation was identified">
+      <defs><marker id="aN" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="#b9794f"/></marker><marker id="aO" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="#6c7a4a"/></marker></defs>
+      <rect x="18" y="14" width="120" height="48" rx="8" fill="#fbf3ec" stroke="#b9794f"/>
+      <text x="78" y="33" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#b9794f">refactor_plan.md</text>
+      <text x="78" y="47" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">§6 sub-task map</text>
+      <text x="78" y="58" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">§7 sequencing</text>
+      <line x1="138" y1="38" x2="172" y2="38" stroke="#b9794f" stroke-width="1.5" marker-end="url(#aN)"/>
+      <rect x="174" y="14" width="124" height="48" rx="8" fill="#fff7ef" stroke="#b9794f" stroke-width="1.5"/>
+      <text x="236" y="31" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#b9794f">refactor-task-architect</text>
+      <text x="236" y="45" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">natural-split criterion</text>
+      <text x="236" y="56" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#9a9387">re-derives from verdict</text>
+      <!-- output tree -->
+      <line x1="236" y1="62" x2="236" y2="82" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#aO)"/>
+      <rect x="146" y="84" width="180" height="34" rx="8" fill="#eef1e6" stroke="#6c7a4a"/>
+      <text x="236" y="101" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">top-level task</text>
+      <text x="236" y="113" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#6c7a4a">the fundamental refactor</text>
+      <line x1="236" y1="118" x2="236" y2="136" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#aO)"/>
+      <rect x="146" y="138" width="180" height="34" rx="8" fill="#f1f4ea" stroke="#6c7a4a" stroke-dasharray="4 3"/>
+      <text x="236" y="155" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">sub-task (only if needed)</text>
+      <text x="236" y="167" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#6c7a4a">separate downstream adaptation</text>
+      <text x="172" y="196" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#6c7a4a">→ task_assignment.json</text>
+      <text x="172" y="211" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#9a9387">e.g. language-specific consumer change</text>
+      <text x="172" y="224" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#9a9387">never re-splits leaves unless each validated</text>
+    </svg>
+  </div>
+</div>
+<div class="callout olive">
+  <span class="k">the natural-split criterion</span>
+  <p>One top-level task for the fundamental refactor; a sub-task <b>only</b> where the investigator identified a genuinely separate downstream adaptation. The plan's original per-leaf split is never re-introduced unless the investigator validated each leaf as an independently addressable change.</p>
+</div>
+
+<!-- ============ 5. ARTIFACT GRADUATION ============ -->
+<h2 id="graduation"><span class="n">05</span>The 347–351 artifacts, now auto-produced and split per funded group</h2>
+<p class="cap prose">The 347 pair was written <b>by hand</b>; the change makes it a per-group output of <code>prioritize</code>: investigation stages it, the architect's <code>task_assignment.json</code> drives the export ids, and on promotion each <b>funded</b> group's pair graduates into <code>backlog/</code>. <code>SKILL.md</code> §6.</p>
 <div class="sbs">
 
   <div class="panel cur">
@@ -303,30 +391,39 @@
 
   <div class="panel aft">
     <div class="ph"><span class="tag">after</span><h3>Auto-produced, per funded group</h3></div>
-    <p class="sub">Investigation stages them; promotion graduates the funded pairs.</p>
-    <svg viewBox="0 0 360 180" role="img" aria-label="prioritize auto-generates the plan and overview per funded group and graduates them into backlog">
+    <p class="sub">Investigation stages them; the assignments map drives the export; promotion graduates the funded pairs.</p>
+    <svg viewBox="0 0 360 196" role="img" aria-label="prioritize auto-generates the plan and overview per funded group, exports with the task assignment map, and graduates them into backlog">
       <defs><marker id="aG2" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="#b9794f"/></marker></defs>
-      <rect x="20" y="20" width="120" height="44" rx="9" fill="#fbf3ec" stroke="#b9794f"/>
-      <text x="80" y="38" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="12.5" fill="#2b2a28">prioritize</text>
-      <text x="80" y="54" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#b9794f">steps 3–4 stage</text>
-      <line x1="140" y1="42" x2="196" y2="42" stroke="#b9794f" stroke-width="1.5" marker-end="url(#aG2)"/>
+      <rect x="20" y="14" width="118" height="44" rx="9" fill="#fbf3ec" stroke="#b9794f"/>
+      <text x="79" y="32" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="12.5" fill="#2b2a28">prioritize</text>
+      <text x="79" y="48" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#b9794f">steps 3–4 stage</text>
+      <!-- assignments map feeding the export -->
+      <rect x="20" y="64" width="118" height="40" rx="8" fill="#fff7ef" stroke="#b9794f" stroke-width="1.5"/>
+      <text x="79" y="80" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#b9794f">task_assignment.json</text>
+      <text x="79" y="93" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">--assignments · step 6b</text>
+      <text x="79" y="102" text-anchor="middle" font-family="ui-monospace,monospace" font-size="7.5" fill="#9a9387">bypasses assign_backlog_ids</text>
+      <line x1="138" y1="36" x2="196" y2="36" stroke="#b9794f" stroke-width="1.5" marker-end="url(#aG2)"/>
+      <line x1="138" y1="84" x2="196" y2="78" stroke="#b9794f" stroke-width="1.5" marker-end="url(#aG2)"/>
       <rect x="200" y="14" width="148" height="44" rx="8" fill="#eef1e6" stroke="#6c7a4a"/>
       <text x="274" y="33" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">TASK-&lt;id&gt;-…-refactor.md</text>
       <text x="274" y="48" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#6c7a4a">graduated → backlog/docs/</text>
       <rect x="200" y="64" width="148" height="44" rx="8" fill="#eef1e6" stroke="#6c7a4a"/>
       <text x="274" y="83" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">task-&lt;id&gt;.overview.html</text>
       <text x="274" y="98" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#6c7a4a">graduated → backlog/tasks/</text>
-      <line x1="140" y1="50" x2="196" y2="80" stroke="#b9794f" stroke-width="1.5" marker-end="url(#aG2)"/>
-      <text x="184" y="132" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#6c7a4a">funded group → graduates · &lt;id&gt; = minted epic id</text>
-      <text x="184" y="150" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#9a9387">unfunded group → stays in staging</text>
+      <text x="184" y="132" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#6c7a4a">&lt;id&gt; comes from task_assignment.json, not assign_backlog_ids</text>
+      <text x="184" y="150" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#9a9387">funded → graduates · unfunded → stays in staging</text>
       <text x="184" y="168" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#9a9387">repeatable on every sweep</text>
     </svg>
   </div>
 </div>
+<div class="callout">
+  <span class="k">the export flag</span>
+  <p><code>export_to_backlog.ts</code> gains <code>--assignments &lt;file&gt;</code>: when supplied, it takes the backlog ids from <code>task_assignment.json</code> and bypasses <code>assign_backlog_ids</code>. Without the flag the script behaves exactly as today, so non-<code>prioritize</code> callers are unaffected.</p>
+</div>
 
-<!-- ============ 5. THE CLEAN BOUNDARY ============ -->
-<h2 id="boundary"><span class="n">05</span>The boundary stays clean: plan plans, prioritize designs</h2>
-<p class="cap prose">No deep design leaks into the plan engine. The <code>plan-strategist</code> stays the cheap router-and-estimator that trusts the evidence and never reads cited files front to back. All new deep design lives in <code>prioritize</code> — the stage already licensed to write <code>backlog/</code>.</p>
+<!-- ============ 6. THE CLEAN BOUNDARY ============ -->
+<h2 id="boundary"><span class="n">06</span>The boundary stays clean: plan plans, prioritize designs</h2>
+<p class="cap prose">No deep design leaks into the plan engine. The <code>plan-strategist</code> stays the cheap router-and-estimator; all new deep design — the investigator <b>and</b> the task architect — lives in <code>prioritize</code>, the stage already licensed to write <code>backlog/</code>.</p>
 <div class="panel aft" style="padding:20px">
   <svg viewBox="0 0 960 230" role="img" aria-label="Plan stays the cheap planning-only router-estimator; all new deep design lives in prioritize which already writes backlog">
     <defs><marker id="aB" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L9,5 L0,10 z" fill="#5f594f"/></marker></defs>
@@ -346,9 +443,10 @@
     <!-- prioritize -->
     <rect x="372" y="40" width="320" height="150" rx="12" fill="#fbf3ec" stroke="#b9794f" stroke-width="1.5"/>
     <text x="532" y="30" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" letter-spacing=".08em" fill="#b9794f">PRIORITIZE · GAINS THE DEEP DESIGN</text>
-    <text x="532" y="72" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="15" fill="#2b2a28">prioritize skill</text>
-    <text x="532" y="96" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#b9794f">refactor-investigator reads real core</text>
-    <text x="532" y="116" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#5f594f">human-invoked · disable-model-invocation</text>
+    <text x="532" y="68" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="15" fill="#2b2a28">prioritize skill</text>
+    <text x="532" y="90" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#b9794f">refactor-investigator reads real core</text>
+    <text x="532" y="108" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#b9794f">refactor-task-architect derives the split</text>
+    <text x="532" y="126" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#5f594f">human-invoked · disable-model-invocation</text>
     <rect x="412" y="150" width="240" height="28" rx="7" fill="#fff" stroke="#b9794f"/>
     <text x="532" y="168" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#b9794f">already the only writer of backlog/</text>
 
@@ -361,8 +459,8 @@
   <p class="cap" style="margin-bottom:0"><b>Why it lands here:</b> the write-capable, human-invoked side of the boundary is the natural home for design that produces backlog artifacts — putting it in the autonomous plan sweep would mean designing fixes nobody chose to fund.</p>
 </div>
 
-<!-- ============ 6. COST ============ -->
-<h2 id="cost"><span class="n">06</span>The cost: every candidate group is investigated before funding</h2>
+<!-- ============ 7. COST ============ -->
+<h2 id="cost"><span class="n">07</span>The cost: every candidate group is investigated before funding</h2>
 <p class="cap prose">A deliberate, accepted cost — a group the human does not fund is still investigated. Three things keep the spend bounded and worthwhile. <code>SKILL.md</code> §Workflow intro.</p>
 <div class="sbs" style="grid-template-columns:1fr 1fr 1fr">
   <div class="panel cur" style="border-color:var(--olive)">
@@ -380,8 +478,9 @@
 </div>
 
 <footer>
-  Sources · <code>.claude/skills/prioritize/SKILL.md</code> (§Workflow steps 1–6, §What the export does) ·
-  <code>.claude/agents/refactor-investigator.md</code> · <code>.claude/agents/plan-strategist.md</code> ·
+  Sources · <code>.claude/skills/prioritize/SKILL.md</code> (§Workflow steps 1–6, §6a–6c, §What the export does) ·
+  <code>.claude/agents/refactor-investigator.md</code> · <code>.claude/agents/refactor-task-architect.md</code> · <code>.claude/agents/plan-strategist.md</code> ·
+  <code>export_to_backlog.ts --assignments &lt;file&gt;</code> (bypasses assign_backlog_ids) ·
   worked example <code>backlog/docs/TASK-347-type-identity-scope-tree-refactor.md</code> + <code>backlog/tasks/task-347.overview.html</code>.<br>
   Scope · the prioritize skill change only. Canonical, self-contained · current side = today's skill, after side = the updated SKILL.md.
 </footer>

@@ -27,7 +27,18 @@ code-grounded designs in hand.
 
 ## Changes
 
-**New sub-agent — `refactor-investigator`** (`.claude/agents/refactor-investigator.md`)
+**New sub-agent — `refactor-investigator`** (`.claude/agents/refactor-investigator.md`)  
+**New sub-agent — `refactor-task-architect`** (`.claude/agents/refactor-task-architect.md`)
+
+`refactor-task-architect` receives one `refactor_plan.md` and produces a
+`BacklogIdAssignment` map that reflects the investigator's grounded verdict:
+one top-level task for the fundamental refactor, with sub-tasks only where the
+investigator identified a genuinely separate downstream adaptation (e.g.,
+language-specific consumer changes). It never re-introduces the plan engine's
+original leaf decomposition unless the investigator's plan validates each leaf
+as an independently addressable change.
+
+**`refactor-investigator`** (`.claude/agents/refactor-investigator.md`)
 Receives one change group (the `architectural` root, `fault_area` node, and
 `localized` leaves for one `AriadneFaultArea`, with their false-positive
 evidence). Reads the real `packages/core` code via the `ARIADNE_FAULT_AREA_FOLDER`
@@ -41,13 +52,29 @@ builders. Writes a 9-section Markdown refactor plan to
 **Updated `prioritize` workflow** (`.claude/skills/prioritize/SKILL.md`)
 
 - New step 3: dispatch one `refactor-investigator` per change group in parallel
-  (≤5/wave) on all candidate groups.
+  (≤5/wave) on all candidate groups. **All step-3 waves must complete before
+  any step-4 task is dispatched** — the plans on disk are the verified input
+  step 4 reads; this barrier must be stated explicitly in the skill spec.
 - New step 4: render one `comprehension-doc-architect` HTML per group from its
-  refactor plan.
-- Updated step 6 (promote): graduate each funded group's
-  `refactor_plan.md` → `backlog/docs/TASK-<id>-…-refactor.md` and
-  `comprehension.html` → `backlog/tasks/task-<id>.overview.html` alongside its
-  epic. Unfunded groups' docs stay in staging.
+  refactor plan (reads `~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md`
+  from disk — the main agent does not transport the plan content in-memory).
+- New step 6a: dispatch one **`refactor-task-architect`** agent per confirmed
+  group before running the export scripts. The agent reads `refactor_plan.md`
+  (sections 6 — sub-task mapping, and 7 — sequencing), applies the
+  natural-split criterion ("fundamental refactor → top-level task;
+  language-specific downstream adapter → sub-task"), and writes a
+  `BacklogIdAssignment` map to
+  `~/.ariadne/plan/prioritize/<fault_area>/task_assignment.json`. The plan
+  engine's `tier` labels (`architectural`/`fault_area`/`localized`) are a
+  routing concept and are not the right splitting axis.
+- Updated step 6b (promote): `export_to_backlog.ts` gains an `--assignments
+  <file>` flag that accepts the `task_assignment.json` produced by
+  `refactor-task-architect`, bypassing `assign_backlog_ids`. Without the flag
+  the script behaves exactly as today (backwards-compatible for non-`prioritize`
+  callers). Graduate each funded group's `refactor_plan.md` →
+  `backlog/docs/TASK-<id>-…-refactor.md` and `comprehension.html` →
+  `backlog/tasks/task-<id>.overview.html` alongside its epic. Unfunded groups'
+  docs stay in staging.
 
 The `plan` engine and its strategist are unchanged — they remain the cheap,
 planning-only router-and-estimator. All new deep-design work lives in
@@ -57,8 +84,16 @@ planning-only router-and-estimator. All new deep-design work lives in
 
 - [ ] `refactor-investigator` agent exists and produces a 9-section refactor plan
       for any fault-area change group from the plan task-DB.
-- [ ] `prioritize` dispatches one investigator per change group before
-      `AskUserQuestion`, in parallel, on all candidate groups.
+- [ ] `prioritize` dispatches one investigator per change group in parallel;
+      **all step-3 waves finish before the first step-4 task is dispatched**
+      (SKILL.md makes this barrier explicit).
+- [ ] `refactor-task-architect` agent exists; given a `refactor_plan.md` it
+      produces a `task_assignment.json` that yields one top-level task per
+      change group, with sub-tasks only where the investigator identified a
+      genuinely separate downstream adaptation.
+- [ ] `export_to_backlog.ts` accepts `--assignments <file>` and, when supplied,
+      uses the `BacklogIdAssignment` map from that file instead of computing
+      ids from `assign_backlog_ids`.
 - [x] Funded-group refactor plans and comprehension docs graduate into `backlog/`
       alongside the epic on promotion (`graduate_group_docs.ts` — pipes from
       `export_to_backlog.ts`, copies staged docs to `backlog/docs/` and
