@@ -546,6 +546,132 @@ class MyComponent {
     });
   });
 
+  // TASK-350: optional constructor parameter-properties must emit their implicit
+  // class field so the declared receiver type survives indexing. Before the .scm
+  // fix, `optional_parameter` bound only @definition.parameter.optional, so the
+  // field — and its type — was lost.
+  describe("Optional constructor parameter properties (TASK-350)", () => {
+    it("emits an implicit field carrying the type for a private readonly optional param-property", () => {
+      const code = `class Service {
+  constructor(private readonly config?: ApplicationConfig) {}
+}`;
+      const index = build_index_from_code(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Service")!;
+
+      const config_prop = cls.properties.find(p => p.name === "config")!;
+      expect(config_prop.kind).toBe("property");
+      expect(config_prop.type).toBe("ApplicationConfig");
+      expect(config_prop.access_modifier).toBe("private");
+      expect(config_prop.readonly).toBe(true);
+
+      // The optional flag lives on the ParameterDefinition, not the property.
+      const config_param = cls.constructors![0].parameters.find(p => p.name === "config")!;
+      expect(config_param.kind).toBe("parameter");
+      expect(config_param.optional).toBe(true);
+      expect(config_param.type).toBe("ApplicationConfig");
+
+      // Exactly one property and one parameter — the mirrored rules must not duplicate.
+      expect(cls.properties.filter(p => p.name === "config").length).toBe(1);
+      expect(cls.constructors![0].parameters.filter(p => p.name === "config").length).toBe(1);
+    });
+
+    it("emits an implicit field for an accessibility-modifier-only optional param-property", () => {
+      const code = `class Container {
+  constructor(public injector?: Injector) {}
+}`;
+      const index = build_index_from_code(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Container")!;
+
+      const injector_prop = cls.properties.find(p => p.name === "injector")!;
+      expect(injector_prop.kind).toBe("property");
+      expect(injector_prop.type).toBe("Injector");
+      expect(injector_prop.access_modifier).toBe("public");
+      expect(injector_prop.readonly).toBe(false);
+
+      const injector_param = cls.constructors![0].parameters.find(p => p.name === "injector")!;
+      expect(injector_param.optional).toBe(true);
+    });
+
+    it("emits an implicit field for a readonly-only optional param-property", () => {
+      const code = `class Holder {
+  constructor(readonly opts?: Opts) {}
+}`;
+      const index = build_index_from_code(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Holder")!;
+
+      const opts_prop = cls.properties.find(p => p.name === "opts")!;
+      expect(opts_prop.kind).toBe("property");
+      expect(opts_prop.type).toBe("Opts");
+      expect(opts_prop.readonly).toBe(true);
+      expect(opts_prop.access_modifier).toBeUndefined();
+
+      const opts_param = cls.constructors![0].parameters.find(p => p.name === "opts")!;
+      expect(opts_param.optional).toBe(true);
+    });
+
+    it("does NOT create a class field for a plain optional param without a modifier", () => {
+      const code = `class Greeter {
+  constructor(name?: string) {}
+}`;
+      const index = build_index_from_code(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Greeter")!;
+
+      expect(cls.properties.length).toBe(0);
+
+      const name_param = cls.constructors![0].parameters.find(p => p.name === "name")!;
+      expect(name_param.kind).toBe("parameter");
+      expect(name_param.optional).toBe(true);
+      expect(name_param.type).toBe("string");
+    });
+
+    it("counts parameters and properties exactly for a mixed constructor", () => {
+      const code = `class Mixed {
+  constructor(
+    private readonly a?: A,
+    b?: string,
+    public c: C
+  ) {}
+}`;
+      const index = build_index_from_code(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Mixed")!;
+      const ctor = cls.constructors![0];
+
+      // 3 parameters, no duplicates from the mirrored optional rules.
+      expect(ctor.parameters.map(p => p.name).sort()).toEqual(["a", "b", "c"]);
+      // 2 implicit properties: `a` (optional param-property) and `c` (required param-property);
+      // `b` has no modifier so it stays a plain parameter.
+      expect(cls.properties.map(p => p.name).sort()).toEqual(["a", "c"]);
+
+      expect(ctor.parameters.find(p => p.name === "a")!.optional).toBe(true);
+      expect(ctor.parameters.find(p => p.name === "b")!.optional).toBe(true);
+      expect(ctor.parameters.find(p => p.name === "c")!.optional).toBe(false);
+
+      expect(cls.properties.find(p => p.name === "a")!.type).toBe("A");
+      expect(cls.properties.find(p => p.name === "c")!.type).toBe("C");
+    });
+
+    it("captures an optional self-typed param-property used in a recursive this.previous?.method() call", () => {
+      const code = `class MergedExtensionsList {
+  constructor(private readonly previous?: MergedExtensionsList) {}
+
+  getAllComputedFields() {
+    return this.previous?.getAllComputedFields();
+  }
+}`;
+      const index = build_index_from_code(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "MergedExtensionsList")!;
+
+      const previous_prop = cls.properties.find(p => p.name === "previous")!;
+      expect(previous_prop.kind).toBe("property");
+      expect(previous_prop.type).toBe("MergedExtensionsList");
+      expect(previous_prop.readonly).toBe(true);
+      expect(previous_prop.access_modifier).toBe("private");
+
+      const previous_param = cls.constructors![0].parameters.find(p => p.name === "previous")!;
+      expect(previous_param.optional).toBe(true);
+    });
+  });
+
   describe("Function handling via integration", () => {
     it("should process named function declarations", () => {
       const code = "function greet(name: string): string { return \"Hello \" + name; }";
