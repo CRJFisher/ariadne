@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Change A · 349.4 — Link Rust new() as the struct's constructor</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --ink:#1f1e1c; --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  nav.cross{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 0}
+  nav.cross .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.cross .brand{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.cross a,nav.cross span.pending,nav.cross span.cur{font-family:var(--mono);font-size:11px;text-decoration:none;border-radius:999px;padding:4px 10px;border:1px solid var(--g200)}
+  nav.cross a{color:var(--g600);background:var(--paper)}
+  nav.cross a:hover{border-color:var(--clay);color:var(--slate)}
+  nav.cross span.cur{color:var(--slate);background:#fbf2ef;border-color:var(--clay)}
+  nav.cross span.pending{color:var(--g400);background:transparent;border-style:dashed}
+  nav.cross span.pending .tag{font-size:8.5px;letter-spacing:.04em;color:var(--g400);margin-left:5px}
+  nav.toc{position:sticky;top:42px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
+  nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.toc .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--g600);margin-right:6px}
+  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:3px 10px}
+  nav.toc a:hover,nav.toc a.active{border-color:var(--clay);color:var(--slate);background:#fbf2ef}
+  main{width:90%;max-width:1600px;margin:0 auto;padding:26px 0 80px}
+  .prose{max-width:72ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:32px;line-height:1.12;margin:0 0 12px;letter-spacing:-.01em;max-width:28ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:22px;margin:50px 0 6px;letter-spacing:-.01em;scroll-margin-top:96px}
+  h3{font-family:var(--mono);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);margin:20px 0 8px}
+  p{margin:0 0 10px}
+  code{font-family:var(--mono);font-size:.85em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .chip.rust strong{color:var(--rust)} .chip.olive strong{color:var(--olive)} .chip.clay strong{color:var(--clay)}
+  .cap{font-size:13.5px;color:var(--g600);margin:8px 2px 0}
+  .cap b{color:var(--slate);font-weight:600}
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:18px 0;max-width:94ch}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)} .callout.slate{border-left-color:var(--slate);background:var(--slate);color:var(--ivory)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 6px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)} .callout.slate .k{color:#c9a25a}
+  .callout p{margin:0;font-size:14px}
+  .callout.slate code{background:rgba(255,255,255,.13);color:#f3e9d6}
+  .callout.slate b{color:#fff}
+  .ba{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin:14px 0}
+  .ba .panel{background:var(--paper);border:1px solid var(--g200);padding:16px}
+  .ba .panel:first-child{border-radius:var(--r) 0 0 var(--r)}
+  .ba .panel:last-child{border-radius:0 var(--r) var(--r) 0;border-left:none}
+  .ba .arrow{display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--ivory);padding:0 4px}
+  .ba .arrow .ar{font-family:var(--mono);font-size:20px;color:var(--clay)}
+  .ba .arrow .arl{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);writing-mode:vertical-rl;margin-top:6px}
+  .ba .ttl{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px}
+  .ba .ttl.cur{color:var(--rust)} .ba .ttl.plan{color:var(--olive)}
+  .ba svg{width:100%;height:auto;display:block}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:12px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,.12)}
+  .legend i.edge{width:18px;height:0;border-radius:0;border-top:2px solid var(--olive)}
+  .legend i.fail{width:18px;height:0;border-radius:0;border-top:2px solid var(--rust)}
+  .diagram{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:18px;margin:14px 0}
+  .diagram svg{width:100%;height:auto;display:block}
+  .fieldtbl{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);overflow:hidden;margin:16px 0}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--g200);vertical-align:top}
+  th{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--g600);background:var(--paper)}
+  td.in code{font-size:.92em}
+  td.now{font-family:var(--mono);font-size:11.5px;color:var(--rust)}
+  td.now b{color:var(--rust)}
+  td.after{font-family:var(--mono);font-size:11.5px;color:var(--olive)}
+  td.after b{color:var(--olive)}
+  tr:last-child td{border-bottom:none}
+  .code{background:var(--code);border-radius:var(--r);overflow:hidden;margin:14px 0;border:1px solid #1a1815}
+  .code .fl{font-family:var(--mono);font-size:10.5px;color:#b9b0a0;background:#1c1a16;padding:8px 14px;border-bottom:1px solid #000;letter-spacing:.03em}
+  .code pre{margin:0;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.62;color:var(--codeink)}
+  .code .kw{color:#c98a5a} .code .str{color:#9bb06a} .code .cm{color:#6f685c} .code .fn{color:#d8c98a}
+  .code .hl{background:rgba(168,71,47,.22);display:inline-block;width:100%}
+  .code .ok{background:rgba(108,122,74,.20);display:inline-block;width:100%}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+  .opt{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:15px 17px;display:flex;flex-direction:column}
+  .opt .top{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+  .opt .badge{font-family:var(--mono);font-weight:700;font-size:12px;color:var(--ivory);background:var(--slate);border-radius:7px;padding:3px 9px}
+  .opt.a .badge{background:var(--olive)} .opt.b .badge{background:var(--clay)}
+  .opt h4{font-family:var(--serif);font-size:16px;font-weight:600;margin:0;letter-spacing:-.01em}
+  .opt .where{font-family:var(--mono);font-size:10.5px;color:var(--clay);margin:0 0 9px}
+  .opt .pros{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+  .opt .pros li{font-size:12.5px;padding-left:16px;position:relative;color:var(--slate)}
+  .opt .pros li.pro::before,.opt .pros li.con::before{content:"";position:absolute;left:0;top:6px;width:7px;height:7px;border-radius:50%}
+  .opt .pros li.pro::before{background:var(--olive)} .opt .pros li.con::before{background:var(--rust)}
+  .opt .verdict{margin-top:auto;padding-top:11px;border-top:1px solid var(--g200);font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+  .opt.a .verdict{color:var(--olive)} .opt.b .verdict{color:var(--clay)}
+  .acs{display:grid;gap:7px;margin:14px 0;padding:0;list-style:none}
+  .acs li{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start;font-size:13.5px;background:var(--paper);border:1px solid var(--g200);border-radius:9px;padding:10px 13px}
+  .acs .n{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ivory);background:var(--olive);border-radius:6px;width:24px;height:22px;display:flex;align-items:center;justify-content:center}
+  .acs li.risk .n{background:var(--rust)}
+  .acs code{font-size:.9em}
+  @media(max-width:860px){.ba{grid-template-columns:1fr}.ba .arrow{flex-direction:row;padding:8px 0}.ba .arrow .arl{writing-mode:horizontal-tb;margin:0 0 0 6px}.ba .panel:last-child{border-left:1px solid var(--g200);border-radius:0 0 var(--r) var(--r)}.ba .panel:first-child{border-radius:var(--r) var(--r) 0 0}.opts{grid-template-columns:1fr}}
+  footer{font-family:var(--mono);font-size:10.5px;color:var(--g400);margin-top:56px;border-top:1px solid var(--g200);padding-top:14px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<nav class="cross">
+  <div class="inner">
+    <span class="brand">task-349 · name_resolution</span>
+    <a href="task-349 - Resolve-the-name_resolution-false-positive-cluster-across-three-independent-root-causes.overview.html">Epic overview</a>
+    <a href="task-349.1 - Reduce-Rust-qualified-call-references-to-their-terminal-name-and-carry-the-path-prefix.rust-qualified-paths.html">A1 · Producer + fn calls</a>
+    <span class="cur">A4 · Constructor linking</span>
+    <a href="task-349.5 - Resolve-inline-full-path-Rust-constructors-via-path-prefix-type-walking.path-walk-constructors.html">A5 · Inline-path types</a>
+    <a href="task-349.2 - Make-is_exported-govern-implicit-visibility-only-—-let-explicit-named-imports-bind-regardless.python-underscore-imports.html">B · Python imports</a>
+    <a href="task-349.3 - Apply-two-small-Phase-1-corrections-self-initializer-ordering-and-siblinghoist-propagation.same-file-binding-gaps.html">C · Same-file gaps</a>
+  </div>
+</nav>
+<nav class="toc">
+  <div class="inner">
+    <span class="brand">on this page</span>
+    <a href="#crux">The missing link</a>
+    <a href="#index">Member index vs constructors[]</a>
+    <a href="#altitude">Two altitudes</a>
+    <a href="#self">Self::new</a>
+    <a href="#ac">Acceptance</a>
+  </div>
+</nav>
+
+<main>
+
+  <p class="eyebrow">Change A · sub-task 349.4 · second of A · depends on 349.1</p>
+  <h1>A Rust struct indexes as a class with an empty <code>constructors[]</code>, so <code>Type::new()</code> binds to the class, never the function</h1>
+
+  <div class="meta">
+    <span class="chip rust"><strong>constructors: []</strong> on every Rust struct</span>
+    <span class="chip"><strong>new</strong> stored as a plain method</span>
+    <span class="chip clay"><strong>2</strong> resolver edits</span>
+    <span class="chip olive"><strong>+ Self::new</strong> substitution</span>
+  </div>
+  <p class="cap prose">349.1 makes <code>Parker::new()</code> carry the terminal type name and a <code>path_prefix</code>; this change makes that reference resolve to the <code>new</code> function instead of stopping at the <code>Parker</code> class symbol.</p>
+
+  <section id="crux">
+    <h2>The crux: the associated <code>new()</code> is captured as a method, never linked as the constructor</h2>
+    <p class="cap prose">An <code>impl Parker { fn new() -&gt; Self {…} }</code> is captured by <code>handle_definition_constructor</code> and added via <code>add_method_to_class</code> — registering <code>new</code> in the member index but leaving <code>ClassDefinition.constructors</code> empty.</p>
+
+    <div class="ba">
+      <div class="panel">
+        <p class="ttl cur">Current — empty constructors[], falls back to the class</p>
+        <svg viewBox="0 0 320 262" role="img" aria-label="Current flow: Parker::new resolves type Parker to a ClassDefinition whose constructors array is empty, hierarchy walk returns null, resolver falls back to the class symbol, new is never reachable">
+          <defs><marker id="ahf" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#a8472f"/></marker></defs>
+          <rect x="56" y="6" width="208" height="34" rx="8" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.4"/>
+          <text x="160" y="22" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#2b2a28">Parker::new()</text>
+          <text x="160" y="34" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">name "Parker" bound in scope</text>
+          <line x1="160" y1="40" x2="160" y2="60" stroke="#a8472f" stroke-width="1.4" marker-end="url(#ahf)"/>
+          <rect x="34" y="64" width="252" height="40" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="160" y="80" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">resolve type → ClassDefinition</text>
+          <text x="160" y="96" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" font-weight="700" fill="#a8472f">kind:"class" · constructors: []</text>
+          <line x1="160" y1="104" x2="160" y2="124" stroke="#a8472f" stroke-width="1.4" marker-end="url(#ahf)"/>
+          <rect x="34" y="128" width="252" height="40" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="160" y="144" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">find_constructor_in_class_hierarchy</text>
+          <text x="160" y="160" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" font-weight="700" fill="#a8472f">returns null</text>
+          <line x1="160" y1="168" x2="160" y2="188" stroke="#a8472f" stroke-width="1.4" marker-end="url(#ahf)"/>
+          <rect x="34" y="192" width="252" height="34" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="160" y="207" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">fall back to the class symbol</text>
+          <text x="160" y="218" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">constructor.ts:100</text>
+          <line x1="160" y1="226" x2="160" y2="244" stroke="#a8472f" stroke-width="1.6" marker-end="url(#ahf)"/>
+          <rect x="58" y="246" width="204" height="16" rx="6" fill="#f7ece9" stroke="#a8472f" stroke-width="1.3"/>
+          <text x="160" y="258" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" font-weight="700" fill="#a8472f">new unreachable → false entry point</text>
+        </svg>
+      </div>
+      <div class="arrow"><span class="ar">&rarr;</span><span class="arl">349.4</span></div>
+      <div class="panel">
+        <p class="ttl plan">Planned — member-index link binds new()</p>
+        <svg viewBox="0 0 320 262" role="img" aria-label="Planned flow: when the hierarchy walk yields nothing, look up the new associated function in the member index keyed by the type id and return that method symbol so new is reachable">
+          <defs><marker id="aho" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker></defs>
+          <rect x="56" y="6" width="208" height="34" rx="8" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.4"/>
+          <text x="160" y="22" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#2b2a28">Parker::new()</text>
+          <text x="160" y="34" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">name "Parker" bound in scope</text>
+          <line x1="160" y1="40" x2="160" y2="60" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#aho)"/>
+          <rect x="34" y="64" width="252" height="40" rx="8" fill="#eef0e6" stroke="#5b6840"/>
+          <text x="160" y="80" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">resolve type → ClassDefinition</text>
+          <text x="160" y="96" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">type_id = Parker's SymbolId</text>
+          <line x1="160" y1="104" x2="160" y2="124" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#aho)"/>
+          <rect x="34" y="128" width="252" height="40" rx="8" fill="#f0ece2" stroke="#7a4636"/>
+          <text x="160" y="144" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">member_index.get(type_id).get("new")</text>
+          <text x="160" y="160" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#7a4636">member-index fallback (new branch)</text>
+          <line x1="160" y1="168" x2="160" y2="188" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#aho)"/>
+          <rect x="34" y="192" width="252" height="34" rx="8" fill="#eef0e6" stroke="#5b6840"/>
+          <text x="160" y="207" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">return the new method symbol</text>
+          <text x="160" y="218" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">not double-counted (AC #3)</text>
+          <line x1="160" y1="226" x2="160" y2="244" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#aho)"/>
+          <rect x="74" y="246" width="172" height="16" rx="6" fill="#eef0e6" stroke="#6c7a4a" stroke-width="1.3"/>
+          <text x="160" y="258" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#5b6840">new reachable → no false positive</text>
+        </svg>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i class="fail"></i> resolution stops at the class today</span>
+      <span><i class="edge"></i> binds to new() under 349.4</span>
+      <span>resolver: <code>call_resolution/constructor.ts</code></span>
+    </div>
+  </section>
+
+  <section id="index">
+    <h2>Two stores, one of them empty — what the indexer writes for a Rust struct</h2>
+    <p class="cap prose">The <code>new</code> function lands in the member index but not in <code>constructors[]</code>; the constructor resolver only consults <code>constructors[]</code>, so the link is never made even when <code>Parker</code> is already bound in scope.</p>
+    <div class="fieldtbl">
+      <table>
+        <thead><tr><th>What the indexer captures</th><th>member index</th><th>ClassDefinition.constructors[]</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="in"><code>impl Parker { fn new() }</code><br><span style="font-size:11px;color:var(--g400)">add_method_to_class</span></td>
+            <td class="after"><b>{ "new" → method:new }</b></td>
+            <td class="now"><b>[ ] empty</b></td>
+          </tr>
+          <tr>
+            <td class="in"><code>get_definitions_by_name("new")</code><br><span style="font-size:11px;color:var(--g400)">what resolution sees</span></td>
+            <td class="after"><b>method:new</b></td>
+            <td class="now"><b>—</b> never linked</td>
+          </tr>
+          <tr>
+            <td class="in"><code>find_constructor_in_class_hierarchy</code><br><span style="font-size:11px;color:var(--g400)">constructor.ts:159</span></td>
+            <td class="after">add member-index lookup here</td>
+            <td class="now"><b>null</b> → class fallback</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="code">
+      <div class="fl">constructor.ts:100 — current class fallback, and the member-index link to add</div>
+<pre><span class="cm">// CURRENT — hierarchy walk finds nothing, so the resolver returns the class:</span>
+<span class="hl">  <span class="kw">const</span> constructor_symbol = find_constructor_in_class_hierarchy(class_def, …);
+  <span class="kw">return</span> ok([constructor_symbol || class_symbol]);   <span class="cm">// new never reached</span></span>
+
+<span class="cm">// CHANGE 349.4 — member-index fallback to the associated new() function:</span>
+<span class="ok">  <span class="kw">if</span> (!constructor_symbol) {
+    <span class="kw">const</span> assoc = registry.get_member_index().get(class_symbol)?.get(<span class="str">"new"</span>);
+    <span class="kw">if</span> (assoc) <span class="kw">return</span> ok([assoc]);   <span class="cm">// the Rust convention IS the constructor</span>
+  }</span>
+</pre>
+    </div>
+  </section>
+
+  <section id="altitude">
+    <h2>Two equally valid altitudes — pick one, do not double-count</h2>
+    <p class="cap prose">Either populate <code>constructors[]</code> at capture time so the existing hierarchy walk finds <code>new</code>, or add the member-index fallback in the resolver. Both bind the constructor; the only hard constraint is that <code>new</code> is exposed exactly once.</p>
+    <div class="opts">
+      <article class="opt a">
+        <div class="top"><span class="badge">a</span><h4>Populate at capture time</h4></div>
+        <p class="where">methods.rust.ts · handle_definition_constructor</p>
+        <ul class="pros">
+          <li class="pro">Cleaner root-cause fix — Rust's <code>new</code> convention <em>is</em> the constructor</li>
+          <li class="pro">The existing hierarchy walk then just works, no resolver change</li>
+          <li class="con">Must not register <code>new</code> as both a method <em>and</em> a constructor</li>
+        </ul>
+        <div class="verdict">cleaner · guard against double-count</div>
+      </article>
+      <article class="opt b">
+        <div class="top"><span class="badge">b</span><h4>Member-index fallback in the resolver</h4></div>
+        <p class="where">constructor.ts · resolve_constructor_call</p>
+        <ul class="pros">
+          <li class="pro">Localized to one function, fires only after the walk misses</li>
+          <li class="pro">No capture-time bookkeeping to keep the two stores in sync</li>
+          <li class="con">Leaves the empty <code>constructors[]</code> in place as a known shape</li>
+        </ul>
+        <div class="verdict">localized · single insertion point</div>
+      </article>
+    </div>
+    <div class="callout rust">
+      <span class="k">the hard constraint — exactly one constructor target (AC #3)</span>
+      <p>A struct with one <code>fn new</code> must expose exactly one reachable constructor target. Option (a) risks counting <code>new</code> as both a method and a constructor; whichever altitude is chosen, <code>new</code> appears once, not twice.</p>
+    </div>
+  </section>
+
+  <section id="self">
+    <h2><code>Self::new()</code> — substitute the enclosing impl type</h2>
+    <p class="cap prose">A <code>Self::new()</code> call inside an <code>impl</code> carries <code>name = "Self"</code>; resolve <code>Self</code> to the enclosing impl/trait type by walking the call's scope to its containing class scope, then resolve the constructor as above.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 760 210" role="img" aria-label="Self substitution flow: a Self::new call walks from its scope to the containing class scope via find_containing_class_scope, resolves the enclosing impl type via find_class_from_scope which must be exported, then resolves the new constructor through the member-index link; this requires threading the ScopeRegistry into resolve_constructor_call">
+        <defs>
+          <marker id="s-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker>
+          <marker id="s-cl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#b9794f"/></marker>
+        </defs>
+        <rect x="14" y="78" width="150" height="50" rx="9" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.5"/>
+        <text x="89" y="99" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#2b2a28">Self::new()</text>
+        <text x="89" y="114" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">name = "Self"</text>
+        <line x1="164" y1="103" x2="200" y2="103" stroke="#b9794f" stroke-width="1.5" marker-end="url(#s-cl)"/>
+        <rect x="202" y="74" width="170" height="58" rx="9" fill="#f0ece2" stroke="#7a4636" stroke-width="1.5"/>
+        <text x="287" y="92" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#7a4636">walk to class scope</text>
+        <text x="287" y="106" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">find_containing_class_scope</text>
+        <text x="287" y="118" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">+ find_class_from_scope (export it)</text>
+        <line x1="372" y1="103" x2="408" y2="103" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#s-ok)"/>
+        <rect x="410" y="74" width="160" height="58" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
+        <text x="490" y="92" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#5b6840">Self → impl type</text>
+        <text x="490" y="106" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">enclosing impl/trait</text>
+        <text x="490" y="118" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">type SymbolId</text>
+        <line x1="570" y1="103" x2="606" y2="103" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#s-ok)"/>
+        <rect x="608" y="74" width="138" height="58" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
+        <text x="677" y="92" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#5b6840">resolve new()</text>
+        <text x="677" y="106" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">via member-index</text>
+        <text x="677" y="118" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">link above</text>
+        <rect x="202" y="160" width="368" height="34" rx="8" fill="#fffdf8" stroke="#b9794f" stroke-dasharray="4 3"/>
+        <text x="386" y="176" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">precondition: thread ScopeRegistry into resolve_constructor_call</text>
+        <text x="386" y="188" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">(absent from its signature today; sole caller call_resolver.ts:241)</text>
+        <line x1="287" y1="132" x2="287" y2="158" stroke="#b9794f" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#s-cl)"/>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i class="edge"></i> Self bound and constructor resolved</span>
+      <span><i style="background:#fffdf8;border-color:#b9794f"></i> signature precondition</span>
+      <span>reuses receiver_resolution.ts helpers</span>
+    </div>
+
+    <div class="callout">
+      <span class="k">why this is independent of 349.1 and 349.5</span>
+      <p>Even with the type already bound in scope (<code>use sync::Parker</code>), the constructor link is missing — so this defect stands apart from the name-reduction of 349.1 and the inline-path walk of 349.5. It is the connective tissue: 349.1 carries the name, 349.4 makes the name reach the function.</p>
+    </div>
+  </section>
+
+  <section id="ac">
+    <h2>Acceptance — what proves the change</h2>
+    <ol class="acs">
+      <li><span class="n">1</span><div><b>In-scope link:</b> a <code>use</code>-imported <code>Parker::new()</code> resolves to the <code>new</code> associated function (reachable, not an entry point) — not merely to the <code>Parker</code> class symbol.</div></li>
+      <li><span class="n">2</span><div><b>Self:</b> <code>Self::new()</code> inside an <code>impl</code> resolves to the enclosing type's <code>new</code> constructor.</div></li>
+      <li class="risk"><span class="n">3</span><div><b>No double-count:</b> a struct with one <code>fn new</code> exposes exactly one constructor target; no duplicate reachable symbols.</div></li>
+      <li><span class="n">4</span><div><b>Gated:</b> existing TypeScript / Python constructor-resolution tests stay green — the change does not alter the TS <code>[namespace, class]</code> <code>property_chain</code> branch.</div></li>
+    </ol>
+    <div class="callout slate">
+      <span class="k">where 349.4 sits in Change A</span>
+      <p>349.1 (producer + function-call resolution) lands first and is its dependency; 349.4 links the in-scope constructor; <b>349.5</b> then closes the inline-full-path case where the type is not bound by a bare name in scope — reusing 349.1's path resolver. <code>Self</code> and the member-index link built here are the foundation 349.5 walks a path into.</p>
+    </div>
+  </section>
+
+  <footer>
+    task-349.4 · depends on 349.1 · resolver: call_resolution/constructor.ts (find_constructor_in_class_hierarchy :159 · class fallback :100) · capture: methods.rust.ts handle_definition_constructor :146 · Self via receiver_resolution.ts find_containing_class_scope + find_class_from_scope (export) · thread ScopeRegistry through call_resolver.ts:241 · gated to the Rust associated-constructor path
+  </footer>
+
+</main>
+
+<script>
+  (function(){
+    var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+    var map = {};
+    links.forEach(function(a){ map[a.getAttribute('href').slice(1)] = a; });
+    var obs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(e.isIntersecting){
+          links.forEach(function(l){ l.classList.remove('active'); });
+          var a = map[e.target.id]; if(a) a.classList.add('active');
+        }
+      });
+    }, {rootMargin:'-15% 0px -75% 0px'});
+    document.querySelectorAll('main section[id]').forEach(function(s){ obs.observe(s); });
+  })();
+</script>
+</body>
+</html>

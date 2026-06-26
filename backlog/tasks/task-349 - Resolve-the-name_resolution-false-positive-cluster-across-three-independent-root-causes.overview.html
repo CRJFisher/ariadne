@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>name_resolution — funding decision aid</title>
+<title>task-349 — name_resolution false-positive cluster</title>
 <style>
   :root{
     --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
@@ -19,32 +19,37 @@
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
   body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  /* cross-doc nav */
+  nav.cross{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 0}
+  nav.cross .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.cross .brand{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.cross a,nav.cross span.cur{font-family:var(--mono);font-size:11px;text-decoration:none;border-radius:999px;padding:4px 10px;border:1px solid var(--g200)}
+  nav.cross a{color:var(--g600);background:var(--paper)}
+  nav.cross a:hover{border-color:var(--clay);color:var(--slate)}
+  nav.cross span.cur{color:var(--slate);background:#fbf2ef;border-color:var(--clay)}
   /* in-page outline bar */
-  nav.toc{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 0}
+  nav.toc{position:sticky;top:42px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
   nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
-  nav.toc .brand{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--clay);margin-right:6px}
-  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:4px 10px}
-  nav.toc a:hover{border-color:var(--clay);color:var(--slate)}
-  nav.toc a.active{border-color:var(--clay);color:var(--slate);background:#fbf2ef}
-  main{width:90%;max-width:1600px;margin:0 auto;padding:28px 0 80px}
-  .prose{max-width:68ch}
+  nav.toc .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--g600);margin-right:6px}
+  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:3px 10px}
+  nav.toc a:hover,nav.toc a.active{border-color:var(--clay);color:var(--slate);background:#fbf2ef}
+  main{width:90%;max-width:1600px;margin:0 auto;padding:26px 0 80px}
+  .prose{max-width:72ch}
   .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
   h1{font-family:var(--serif);font-weight:600;font-size:34px;line-height:1.1;margin:0 0 12px;letter-spacing:-.01em;max-width:26ch}
-  h2{font-family:var(--serif);font-weight:600;font-size:23px;margin:52px 0 6px;letter-spacing:-.01em;scroll-margin-top:64px}
-  h3{font-family:var(--mono);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);margin:20px 0 8px}
+  h2{font-family:var(--serif);font-weight:600;font-size:23px;margin:50px 0 6px;letter-spacing:-.01em;scroll-margin-top:96px}
   p{margin:0 0 10px}
   code{font-family:var(--mono);font-size:.85em;background:var(--g100);border-radius:5px;padding:1px 5px}
   .meta{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 2px}
   .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
   .chip strong{color:var(--slate);font-weight:600}
   .chip.rust strong{color:var(--rust)} .chip.olive strong{color:var(--olive)} .chip.clay strong{color:var(--clay)}
-  .cap{font-size:13px;color:var(--g600);margin:8px 2px 0;max-width:80ch}
+  .cap{font-size:13.5px;color:var(--g600);margin:8px 2px 0}
   .cap b{color:var(--slate);font-weight:600}
-  /* callouts */
-  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:18px 0;max-width:90ch}
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:18px 0;max-width:94ch}
   .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)} .callout.slate{border-left-color:var(--slate);background:var(--slate);color:var(--ivory)}
   .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 6px;display:block}
-  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)} .callout.slate .k{color:var(--oat)}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)} .callout.slate .k{color:#c9a25a}
   .callout p{margin:0;font-size:14px}
   .callout.slate code{background:rgba(255,255,255,.12);color:#f3e9d6}
   .callout.slate b{color:#fff}
@@ -52,9 +57,7 @@
   .ranklist li{font-size:13.5px;color:#f3e9d6;padding-left:16px;position:relative}
   .ranklist li::before{content:"";position:absolute;left:0;top:7px;width:7px;height:7px;border-radius:50%;background:#c9a25a}
   .ranklist li b{color:#fff}
-  /* diagrams */
-  .diagram{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:18px;margin:14px 0}
-  .diagram svg{width:100%;height:auto;display:block}
+  /* before/after */
   .ba{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin:14px 0}
   .ba .panel{background:var(--paper);border:1px solid var(--g200);padding:16px}
   .ba .panel:first-child{border-radius:var(--r) 0 0 var(--r)}
@@ -70,9 +73,10 @@
   .legend i{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,.12)}
   .legend i.edge{width:18px;height:0;border-radius:0;border-top:2px solid var(--olive)}
   .legend i.fail{width:18px;height:0;border-radius:0;border-top:2px solid var(--rust)}
-  /* root-cause cards */
+  /* root-cause cards (now linked) */
   .rcs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:16px 0}
-  .rc{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column}
+  a.rc{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;text-decoration:none;color:inherit;transition:border-color .12s,box-shadow .12s}
+  a.rc:hover{border-color:var(--clay);box-shadow:0 4px 16px rgba(43,42,40,.08)}
   .rc .top{display:flex;align-items:center;gap:9px;margin-bottom:4px}
   .rc .badge{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--ivory);background:var(--slate);border-radius:7px;padding:3px 9px}
   .rc.a .badge{background:#7a4636} .rc.b .badge{background:#5b6840} .rc.c .badge{background:#7a5a3a}
@@ -86,8 +90,22 @@
   .rc .foot{margin-top:auto;border-top:1px solid var(--g200);padding-top:11px;display:flex;align-items:center;gap:8px}
   .rc .tag{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;padding:3px 9px;border-radius:999px}
   .rc .tag.core{background:rgba(108,122,74,.16);color:var(--olive)}
-  .rc .seq{font-family:var(--mono);font-size:11px;color:var(--g600);margin-left:auto}
-  .rc .seq strong{color:var(--slate)}
+  .rc .seq{font-family:var(--mono);font-size:11px;color:var(--clay);margin-left:auto;font-weight:600}
+  .rc .open{font-family:var(--mono);font-size:10px;color:var(--g400);margin-top:9px}
+  /* change-A sequence strip */
+  .seqstrip{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;margin:14px 0}
+  a.step{background:var(--paper);border:1px solid var(--g200);border-left:none;padding:14px 16px;display:flex;flex-direction:column;text-decoration:none;color:inherit;transition:border-color .12s,box-shadow .12s}
+  a.step:first-child{border-left:1px solid var(--g200);border-radius:var(--r) 0 0 var(--r)}
+  a.step:last-child{border-radius:0 var(--r) var(--r) 0}
+  a.step:hover{border-color:var(--clay);box-shadow:0 4px 14px rgba(43,42,40,.07);z-index:1}
+  .step .sn{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .step .sn .num{font-family:var(--mono);font-weight:700;font-size:11px;color:var(--ivory);background:#7a4636;border-radius:6px;padding:3px 8px}
+  .step .sn .ord{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--clay)}
+  .step h5{font-family:var(--serif);font-size:15px;font-weight:600;margin:0 0 5px;letter-spacing:-.01em}
+  .step .sd{font-size:12px;color:var(--g600);margin:0 0 9px}
+  .step .sd code{font-size:.9em}
+  .step .sfile{font-family:var(--mono);font-size:9.5px;color:var(--clay);margin-top:auto}
+  .step .reg{font-family:var(--mono);font-size:9.5px;color:var(--rust);margin-top:6px}
   /* disposition table */
   table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13px}
   th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--g200);vertical-align:top}
@@ -97,75 +115,67 @@
   .disp{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.04em;padding:3px 9px;border-radius:999px;display:inline-block;white-space:nowrap}
   .disp.keep{background:rgba(108,122,74,.16);color:var(--olive)}
   .disp.collapse{background:rgba(108,122,74,.16);color:var(--olive)}
-  .disp.retier{background:rgba(185,121,79,.18);color:var(--clay)}
   .disp.exclude{background:rgba(185,121,79,.18);color:var(--clay)}
   .disp.retire{background:rgba(168,71,47,.16);color:var(--rust)}
   tr.gone td{opacity:.62}
   tr.gone td.leaf code{text-decoration:line-through}
-  /* magnitude bars */
-  .bars{margin:16px 0;border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);padding:18px 20px}
-  .bars .row{display:grid;grid-template-columns:160px 1fr 64px;align-items:center;gap:12px;padding:7px 0}
-  .bars .lab{font-family:var(--mono);font-size:11.5px;color:var(--slate)}
-  .bars .track{height:18px;background:var(--g100);border-radius:6px;overflow:hidden;position:relative}
-  .bars .fill{height:100%;border-radius:6px}
-  .bars .fill.this{background:var(--rust)}
-  .bars .fill.eff{background:var(--clay)}
-  .bars .val{font-family:var(--mono);font-size:12px;color:var(--slate);text-align:right;font-weight:600}
-  .bars .note{font-family:var(--mono);font-size:10.5px;color:var(--g600);margin-top:10px}
   /* code panel */
   .code{background:var(--code);border-radius:var(--r);overflow:hidden;margin:14px 0;border:1px solid #1a1815}
   .code .fl{font-family:var(--mono);font-size:10.5px;color:#b9b0a0;background:#1c1a16;padding:8px 14px;border-bottom:1px solid #000;letter-spacing:.03em}
   .code pre{margin:0;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.6;color:var(--codeink)}
   .code .kw{color:#c98a5a} .code .str{color:#9bb06a} .code .cm{color:#6f685c} .code .fn{color:#d8c98a} .code .hl{background:rgba(168,71,47,.22);display:inline-block;width:100%}
   .code .ok{background:rgba(108,122,74,.20);display:inline-block;width:100%}
-  /* ranking grid */
-  .rankgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:16px 0}
-  .kpi{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);padding:16px 18px}
-  .kpi .lab{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--g600);margin:0 0 6px}
-  .kpi .big{font-family:var(--serif);font-size:38px;font-weight:600;line-height:1;color:var(--slate)}
-  .kpi .big.rust{color:var(--rust)} .kpi .big.clay{color:var(--clay)} .kpi .big.olive{color:var(--olive)}
-  .kpi .sub{font-size:12px;color:var(--g600);margin-top:6px}
-  @media(max-width:820px){.ba{grid-template-columns:1fr}.ba .arrow{flex-direction:row;padding:8px 0}.ba .arrow .arl{writing-mode:horizontal-tb;margin:0 0 0 6px}.ba .panel:last-child{border-left:1px solid var(--g200);border-radius:0 0 var(--r) var(--r)}.ba .panel:first-child{border-radius:var(--r) var(--r) 0 0}.rcs{grid-template-columns:1fr}.bars .row{grid-template-columns:110px 1fr 54px}}
+  @media(max-width:820px){.ba{grid-template-columns:1fr}.ba .arrow{flex-direction:row;padding:8px 0}.ba .arrow .arl{writing-mode:horizontal-tb;margin:0 0 0 6px}.ba .panel:last-child{border-left:1px solid var(--g200);border-radius:0 0 var(--r) var(--r)}.ba .panel:first-child{border-radius:var(--r) var(--r) 0 0}.rcs{grid-template-columns:1fr}.seqstrip{grid-template-columns:1fr}a.step,a.step:first-child,a.step:last-child{border-left:1px solid var(--g200);border-radius:0}a.step:first-child{border-radius:var(--r) var(--r) 0 0}a.step:last-child{border-radius:0 0 var(--r) var(--r)}}
   footer{font-family:var(--mono);font-size:10.5px;color:var(--g400);margin-top:56px;border-top:1px solid var(--g200);padding-top:14px}
 </style>
 </head>
 <body>
 
+<nav class="cross">
+  <div class="inner">
+    <span class="brand">task-349 · name_resolution</span>
+    <span class="cur">Epic overview</span>
+    <a href="task-349.1 - Reduce-Rust-qualified-call-references-to-their-terminal-name-and-carry-the-path-prefix.rust-qualified-paths.html">A1 · Producer + fn calls</a>
+    <a href="task-349.4 - Link-Rust-associated-new-constructors-and-substitute-Self-so-Type-new-resolves-to-the-constructor.constructor-linking.html">A4 · Constructor linking</a>
+    <a href="task-349.5 - Resolve-inline-full-path-Rust-constructors-via-path-prefix-type-walking.path-walk-constructors.html">A5 · Inline-path types</a>
+    <a href="task-349.2 - Make-is_exported-govern-implicit-visibility-only-—-let-explicit-named-imports-bind-regardless.python-underscore-imports.html">B · Python imports</a>
+    <a href="task-349.3 - Apply-two-small-Phase-1-corrections-self-initializer-ordering-and-siblinghoist-propagation.same-file-binding-gaps.html">C · Same-file gaps</a>
+  </div>
+</nav>
 <nav class="toc">
   <div class="inner">
-    <span class="brand">name_resolution</span>
-    <a href="#verdict">Verdict</a>
-    <a href="#mechanism">Mechanism</a>
-    <a href="#causes">Three fixes</a>
-    <a href="#disposition">Disposition</a>
-    <a href="#rank">Benefit vs cost</a>
+    <span class="brand">on this page</span>
+    <a href="#shape">One failure, three causes</a>
+    <a href="#dominant">The dominant fix</a>
+    <a href="#changea">Change A · three causes</a>
+    <a href="#subtasks">The sub-tasks</a>
+    <a href="#disposition">Disposition &amp; scope</a>
+    <a href="#risks">Cross-cutting risks</a>
   </div>
 </nav>
 
 <main>
 
-  <p class="eyebrow">Funding decision aid &middot; false unreachable-function flags</p>
-  <h1>The &ldquo;one binding gap&rdquo; is really three unrelated fixes in three files</h1>
+  <p class="eyebrow">Epic · false unreachable-function flags · sequenced A → B → C</p>
+  <h1>One failure code, <code>name_not_in_scope</code> — three unrelated defects in three files</h1>
 
   <div class="meta">
-    <span class="chip rust"><strong>103</strong> false unreachable flags</span>
-    <span class="chip"><strong>10</strong> projects</span>
-    <span class="chip"><strong>10</strong> runs</span>
-    <span class="chip clay"><strong>5</strong> core_fix_effort</span>
-    <span class="chip olive"><strong>3</strong> core fixes</span>
-    <span class="chip"><strong>1</strong> leaf re-tiered out</span>
-    <span class="chip rust"><strong>1</strong> classifier retired</span>
+    <span class="chip rust"><strong>name_not_in_scope</strong> single failure code</span>
+    <span class="chip"><strong>3</strong> root causes · 3 files</span>
+    <span class="chip clay"><strong>A = 3</strong> sub-causes · 349.1→.4→.5</span>
+    <span class="chip olive"><strong>3</strong> core changes</span>
+    <span class="chip"><strong>0</strong> classifiers authored</span>
   </div>
-  <p class="cap prose">Every flag in this group is a real call that Ariadne fails to resolve, so a live function is reported as dead. <b>Funding this group removes 103 such false flags</b> across the corpus &mdash; but the work splits into three independent changes, only one of which lives in the named folder.</p>
+  <p class="cap prose">Every flag in this group is a <code>function_call</code> / <code>constructor_call</code> whose <code>resolution_failure</code> is <code>{stage: "name_resolution", reason: "name_not_in_scope"}</code>. That single code is emitted from three structurally unrelated upstream defects — only one of which lives in <code>name_resolution.ts</code>.</p>
 
-  <section id="verdict">
-    <h2>What the plan claimed vs. what the code shows</h2>
-    <p class="cap prose">The plan framed one root in <code>name_resolution.ts</code> with three leaves and a classifier. The source shows <b>three structurally different defects in three files</b>, plus one leaf that belongs elsewhere and one classifier worth retiring.</p>
+  <section id="shape">
+    <h2>The shape of the work: one code re-decomposed into three real causes</h2>
+    <p class="cap prose">The plan engine framed one Phase-1 scope-walk binding gap. The source shows three structurally different defects in three files — and Change A is itself three independent Rust root causes, plus one leaf that belongs to <code>import_resolution</code> and one classifier worth retiring.</p>
 
     <div class="ba">
       <div class="panel">
         <p class="ttl cur">As planned — one binding gap</p>
-        <svg viewBox="0 0 300 248" role="img" aria-label="Plan's claimed tree: one root in name_resolution with three leaves and one classifier">
+        <svg viewBox="0 0 300 248" role="img" aria-label="Plan's claimed tree: one root in name_resolution with three leaves and one interim classifier">
           <defs><marker id="ah1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9a9387"/></marker></defs>
           <rect x="70" y="10" width="160" height="38" rx="9" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.5"/>
           <text x="150" y="26" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" font-weight="700" fill="#2b2a28">Phase-1 scope-walk</text>
@@ -177,54 +187,55 @@
             <rect x="8" y="96" width="84" height="46" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
             <text x="50" y="113" text-anchor="middle" fill="#2b2a28">qualified paths</text>
             <text x="50" y="126" text-anchor="middle" fill="#5f594f">56 members</text>
-            <text x="50" y="138" text-anchor="middle" fill="#9a9387">pt-9082…</text>
+            <text x="50" y="138" text-anchor="middle" fill="#9a9387">leaf 1.1</text>
             <rect x="108" y="96" width="84" height="46" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
             <text x="150" y="113" text-anchor="middle" fill="#2b2a28">named imports</text>
             <text x="150" y="126" text-anchor="middle" fill="#5f594f">43 members</text>
-            <text x="150" y="138" text-anchor="middle" fill="#9a9387">pt-5752…</text>
+            <text x="150" y="138" text-anchor="middle" fill="#9a9387">leaf 1.2</text>
             <rect x="208" y="96" width="84" height="46" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
             <text x="250" y="113" text-anchor="middle" fill="#2b2a28">sibling-scope</text>
             <text x="250" y="126" text-anchor="middle" fill="#5f594f">4 members</text>
-            <text x="250" y="138" text-anchor="middle" fill="#9a9387">pt-c009…</text>
+            <text x="250" y="138" text-anchor="middle" fill="#9a9387">leaf 1.3</text>
           </g>
           <line x1="150" y1="142" x2="150" y2="186" stroke="#9a9387" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#ah1)"/>
           <rect x="70" y="190" width="160" height="44" rx="8" fill="#fffdf8" stroke="#b9794f" stroke-dasharray="4 3"/>
           <text x="150" y="208" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#2b2a28">interim classifier</text>
-          <text x="150" y="222" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">pt-ed81… (63 dup)</text>
+          <text x="150" y="222" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">63 duplicate members</text>
         </svg>
       </div>
       <div class="arrow"><span class="ar">&rarr;</span><span class="arl">re-decomposed</span></div>
       <div class="panel">
-        <p class="ttl plan">As found — three fixes, three files</p>
-        <svg viewBox="0 0 300 248" role="img" aria-label="Investigation's true tree: three independent fixes in three files plus one re-tiered leaf and one retired classifier">
+        <p class="ttl plan">As found — three changes, Change A is three sub-causes</p>
+        <svg viewBox="0 0 300 248" role="img" aria-label="True tree: three independent changes in three files; Change A is itself sequenced 349.1, 349.4, 349.5; plus one re-tiered leaf and one retired classifier">
           <g font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">
-            <rect x="6" y="12" width="90" height="58" rx="8" fill="#f0ece2" stroke="#7a4636" stroke-width="1.6"/>
-            <text x="51" y="28" text-anchor="middle" fill="#2b2a28" font-weight="700">Change A</text>
-            <text x="51" y="41" text-anchor="middle" fill="#5f594f">reference builder</text>
-            <text x="51" y="52" text-anchor="middle" fill="#5f594f">+ Rust extractor</text>
-            <text x="51" y="64" text-anchor="middle" fill="#9a9387">56 members</text>
-            <rect x="105" y="12" width="90" height="58" rx="8" fill="#eef0e6" stroke="#5b6840" stroke-width="1.6"/>
+            <rect x="6" y="10" width="90" height="64" rx="8" fill="#f0ece2" stroke="#7a4636" stroke-width="1.6"/>
+            <text x="51" y="25" text-anchor="middle" fill="#2b2a28" font-weight="700">Change A</text>
+            <text x="51" y="37" text-anchor="middle" fill="#5f594f">Rust qualified</text>
+            <text x="51" y="48" text-anchor="middle" fill="#7a4636" font-weight="700">3 sub-causes</text>
+            <text x="51" y="59" text-anchor="middle" fill="#5f594f">349.1→.4→.5</text>
+            <text x="51" y="70" text-anchor="middle" fill="#9a9387">56 members</text>
+            <rect x="105" y="10" width="90" height="64" rx="8" fill="#eef0e6" stroke="#5b6840" stroke-width="1.6"/>
             <text x="150" y="28" text-anchor="middle" fill="#2b2a28" font-weight="700">Change B</text>
-            <text x="150" y="41" text-anchor="middle" fill="#5f594f">export.ts</text>
-            <text x="150" y="52" text-anchor="middle" fill="#5f594f">widen lookup</text>
-            <text x="150" y="64" text-anchor="middle" fill="#9a9387">Python rows</text>
-            <rect x="204" y="12" width="90" height="58" rx="8" fill="#f2ece2" stroke="#7a5a3a" stroke-width="1.6"/>
+            <text x="150" y="42" text-anchor="middle" fill="#5f594f">export.ts</text>
+            <text x="150" y="54" text-anchor="middle" fill="#5f594f">widen lookup</text>
+            <text x="150" y="68" text-anchor="middle" fill="#9a9387">Python rows</text>
+            <rect x="204" y="10" width="90" height="64" rx="8" fill="#f2ece2" stroke="#7a5a3a" stroke-width="1.6"/>
             <text x="249" y="28" text-anchor="middle" fill="#2b2a28" font-weight="700">Change C</text>
-            <text x="249" y="41" text-anchor="middle" fill="#5f594f">name_resolution.ts</text>
-            <text x="249" y="52" text-anchor="middle" fill="#5f594f">ordering + hoist</text>
-            <text x="249" y="64" text-anchor="middle" fill="#9a9387">5 members</text>
+            <text x="249" y="42" text-anchor="middle" fill="#5f594f">name_resolution</text>
+            <text x="249" y="54" text-anchor="middle" fill="#5f594f">ordering + hoist</text>
+            <text x="249" y="68" text-anchor="middle" fill="#9a9387">4 members</text>
           </g>
-          <text x="150" y="92" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#6c7a4a" font-weight="700">3 core fixes &mdash; 3 separate files</text>
-          <line x1="20" y1="100" x2="280" y2="100" stroke="#ddd6c8" stroke-width="1"/>
+          <text x="150" y="94" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#6c7a4a" font-weight="700">3 core changes &mdash; 3 separate files</text>
+          <line x1="20" y1="102" x2="280" y2="102" stroke="#ddd6c8" stroke-width="1"/>
           <g font-family="ui-monospace,monospace" font-size="8.5">
-            <rect x="6" y="116" width="138" height="52" rx="8" fill="#f7eee6" stroke="#b9794f" stroke-width="1.4"/>
-            <text x="75" y="133" text-anchor="middle" font-weight="700" fill="#b9794f">RE-TIERED OUT</text>
-            <text x="75" y="146" text-anchor="middle" fill="#5f594f">TS barrel namespace</text>
-            <text x="75" y="158" text-anchor="middle" fill="#5f594f">&rarr; import_resolution</text>
-            <rect x="156" y="116" width="138" height="52" rx="8" fill="#f7ece9" stroke="#a8472f" stroke-width="1.4"/>
-            <text x="225" y="133" text-anchor="middle" font-weight="700" fill="#a8472f">RETIRED</text>
-            <text x="225" y="146" text-anchor="middle" fill="#5f594f">interim classifier</text>
-            <text x="225" y="158" text-anchor="middle" fill="#5f594f">pt-ed81… (no work)</text>
+            <rect x="6" y="118" width="138" height="50" rx="8" fill="#f7eee6" stroke="#b9794f" stroke-width="1.4"/>
+            <text x="75" y="135" text-anchor="middle" font-weight="700" fill="#b9794f">RE-TIERED OUT</text>
+            <text x="75" y="148" text-anchor="middle" fill="#5f594f">TS barrel namespace</text>
+            <text x="75" y="160" text-anchor="middle" fill="#5f594f">&rarr; import_resolution</text>
+            <rect x="156" y="118" width="138" height="50" rx="8" fill="#f7ece9" stroke="#a8472f" stroke-width="1.4"/>
+            <text x="225" y="135" text-anchor="middle" font-weight="700" fill="#a8472f">RETIRED</text>
+            <text x="225" y="148" text-anchor="middle" fill="#5f594f">interim classifier</text>
+            <text x="225" y="160" text-anchor="middle" fill="#5f594f">no work grounded</text>
           </g>
           <rect x="6" y="184" width="288" height="50" rx="8" fill="#fffdf8" stroke="#ddd6c8" stroke-dasharray="4 3"/>
           <text x="150" y="203" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">cfg-gated dups &amp; alias re-exports flagged as</text>
@@ -233,15 +244,15 @@
       </div>
     </div>
     <div class="legend">
-      <span><i style="background:#f0ece2;border-color:#7a4636"></i> core fix (kept &amp; re-tiered to its true file)</span>
+      <span><i style="background:#f0ece2;border-color:#7a4636"></i> core change (re-tiered to its true file)</span>
       <span><i style="background:#f7eee6;border-color:#b9794f"></i> re-tiered to another folder</span>
       <span><i style="background:#f7ece9;border-color:#a8472f"></i> retired — no work grounded</span>
     </div>
   </section>
 
-  <section id="mechanism">
-    <h2>The dominant fix, before and after</h2>
-    <p class="cap prose">Change A clears the largest population (56 members, the Rust qualified-call leaf). Today the call&rsquo;s <code>name</code> is set to the whole scoped path, which Phase-1&rsquo;s scope map &mdash; holding only bare terminal names &mdash; can never match.</p>
+  <section id="dominant">
+    <h2>The dominant change (Change A), before and after</h2>
+    <p class="cap prose">Change A clears the largest population, the Rust qualified-call leaf. Today the call's <code>name</code> is set to the whole scoped path, which Phase-1's scope map — holding only bare terminal names — can never match.</p>
 
     <div class="ba">
       <div class="panel">
@@ -258,7 +269,7 @@
           <line x1="160" y1="106" x2="160" y2="128" stroke="#a8472f" stroke-width="1.4" marker-end="url(#ahf)"/>
           <rect x="40" y="132" width="240" height="34" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
           <text x="160" y="148" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">scope map holds bare names</text>
-          <text x="160" y="160" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">create, Driver, Wheel &hellip;</text>
+          <text x="160" y="160" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">create, Driver, Parker &hellip;</text>
           <line x1="160" y1="166" x2="160" y2="186" stroke="#a8472f" stroke-width="1.6" marker-end="url(#ahf)"/>
           <rect x="86" y="188" width="148" height="20" rx="6" fill="#f7ece9" stroke="#a8472f" stroke-width="1.4"/>
           <text x="160" y="202" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#a8472f">MISS &rarr; false unreachable</text>
@@ -266,8 +277,8 @@
       </div>
       <div class="arrow"><span class="ar">&rarr;</span><span class="arl">Change A</span></div>
       <div class="panel">
-        <p class="ttl plan">Planned — terminal name + path prefix, bound</p>
-        <svg viewBox="0 0 320 210" role="img" aria-label="Planned flow: scoped call reduced to terminal name plus property_chain prefix, two-tier resolution binds the call">
+        <p class="ttl plan">Planned — terminal name + path_prefix, bound</p>
+        <svg viewBox="0 0 320 210" role="img" aria-label="Planned flow: scoped call reduced to terminal name plus a separate path_prefix, resolved via the path first to honour the qualifier">
           <defs><marker id="aho" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker></defs>
           <rect x="60" y="8" width="200" height="34" rx="8" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.4"/>
           <text x="160" y="24" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#2b2a28">worker::create(7)</text>
@@ -277,13 +288,13 @@
           <text x="87" y="84" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">name = terminal</text>
           <text x="87" y="98" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" font-weight="700" fill="#6c7a4a">"create"</text>
           <rect x="165" y="68" width="135" height="38" rx="8" fill="#f0ece2" stroke="#7a4636"/>
-          <text x="232" y="84" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">property_chain</text>
+          <text x="232" y="84" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">path_prefix</text>
           <text x="232" y="98" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" font-weight="700" fill="#7a4636">["worker"]</text>
           <line x1="87" y1="106" x2="120" y2="128" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#aho)"/>
           <line x1="232" y1="106" x2="200" y2="128" stroke="#7a4636" stroke-width="1.4" marker-end="url(#aho)"/>
           <rect x="40" y="132" width="240" height="38" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
-          <text x="160" y="148" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">tier 1: bare terminal in scope</text>
-          <text x="160" y="162" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">tier 2: prefix disambiguates collisions</text>
+          <text x="160" y="148" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">prefix present → resolve via path first</text>
+          <text x="160" y="162" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">qualifier honoured · prefix guards collisions</text>
           <line x1="160" y1="170" x2="160" y2="188" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#aho)"/>
           <rect x="100" y="190" width="120" height="18" rx="6" fill="#eef0e6" stroke="#6c7a4a" stroke-width="1.4"/>
           <text x="160" y="203" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#6c7a4a">BOUND &rarr; reachable</text>
@@ -293,111 +304,152 @@
     <div class="legend">
       <span><i class="fail"></i> resolution fails today</span>
       <span><i class="edge"></i> resolves under Change A</span>
-      <span>tier 2 prefix guards <code>Parker::new</code> vs <code>Idle::new</code> collisions</span>
+      <span>prefix guards <code>utils::helper</code> import vs local shadow</span>
     </div>
 
     <div class="code">
-      <div class="fl">references.ts:563 &mdash; current vs Change A (Rust qualified call)</div>
+      <div class="fl">references.ts — current vs Change A (Rust qualified call), path_prefix held apart from property_chain</div>
 <pre><span class="cm">// current: extract_call_name returns undefined for a bare scoped_identifier,</span>
 <span class="cm">// so the whole path text leaks through as the reference name</span>
-<span class="hl">reference_name = capture.text          <span class="cm">// "crate::runtime::Driver::start"</span></span>
+<span class="hl">name = capture.text                      <span class="cm">// "crate::runtime::Driver::new"</span></span>
 
-<span class="cm">// Change A: reduce to terminal + carry the prefix as property_chain</span>
-<span class="ok">name           = <span class="str">"start"</span>                                  <span class="cm">// terminal</span></span>
-<span class="ok">property_chain = [<span class="str">"crate"</span>, <span class="str">"runtime"</span>, <span class="str">"Driver"</span>]   <span class="cm">// turbofish stripped</span></span>
+<span class="cm">// Change A: reduce to terminal + carry a SEPARATE path_prefix (type-last)</span>
+<span class="ok">name        = <span class="str">"Driver"</span>                              <span class="cm">// terminal</span></span>
+<span class="ok">path_prefix = [<span class="str">"crate"</span>, <span class="str">"runtime"</span>, <span class="str">"Driver"</span>]    <span class="cm">// NOT property_chain (TS [ns,class])</span></span>
 </pre>
     </div>
-    <p class="cap prose">The same shape fixes <code>Type::new()</code> constructors (carry the path on <code>property_chain</code>, symmetric to the existing TS <code>new namespace.Class()</code> branch) and <code>Self::new</code> (bind <code>Self</code> to the enclosing impl type).</p>
   </section>
 
-  <section id="causes">
-    <h2>Three coherent changes — what each costs</h2>
-    <p class="cap prose">The 103 flags collapse to <b>three</b> changes, not 56+43+4 localized fixes. One is the load-bearing indexing edit; two are small predicate/ordering corrections.</p>
+  <section id="changea">
+    <h2>Change A is three independent root causes — sequenced 349.1 → 349.4 → 349.5</h2>
+    <p class="cap prose">Implementation revealed Change A is not one change: the name-reduction (349.1) is only correct shipped with the function-call resolver (it regresses shadowing alone), and the constructor case splits into two further defects with no regression of their own. Open each for its data-flow and acceptance.</p>
+    <div class="seqstrip">
+      <a class="step" href="task-349.1 - Reduce-Rust-qualified-call-references-to-their-terminal-name-and-carry-the-path-prefix.rust-qualified-paths.html">
+        <div class="sn"><span class="num">349.1</span><span class="ord">land 1st</span></div>
+        <h5>Producer + function-call resolution</h5>
+        <p class="sd">Reduce a qualified call to its terminal <code>name</code> + a separate <code>path_prefix</code>; resolve <code>module::fn</code> and <code>Type::fn</code> via the path. <b>One atomic unit</b> — the producer alone regresses shadowing.</p>
+        <p class="reg">regression guard: shadowing.rs · helper count 2→3</p>
+        <p class="sfile">metadata_extractors.rust.ts · references.ts · function_call.ts</p>
+      </a>
+      <a class="step" href="task-349.4 - Link-Rust-associated-new-constructors-and-substitute-Self-so-Type-new-resolves-to-the-constructor.constructor-linking.html">
+        <div class="sn"><span class="num">349.4</span><span class="ord">then</span></div>
+        <h5>Link Rust new() + Self</h5>
+        <p class="sd">A struct indexes <code>kind:class</code> with <code>constructors: []</code>; <code>new</code> is stored as a method, so <code>Type::new()</code> stops at the class. Link via the member index; substitute <code>Self</code> → enclosing impl type.</p>
+        <p class="reg">in-scope type, link still missing</p>
+        <p class="sfile">call_resolution/constructor.ts · methods.rust.ts</p>
+      </a>
+      <a class="step" href="task-349.5 - Resolve-inline-full-path-Rust-constructors-via-path-prefix-type-walking.path-walk-constructors.html">
+        <div class="sn"><span class="num">349.5</span><span class="ord">last</span></div>
+        <h5>Inline-full-path type walking</h5>
+        <p class="sd"><code>crate::runtime::Driver::new()</code> writes the type inline; <code>Driver</code> is never in scope. Walk the type-last <code>path_prefix</code> to bind the type, reusing 349.1's resolver; normalize <code>crate</code>/<code>self</code>/<code>super</code>.</p>
+        <p class="reg">type unbound by any bare name</p>
+        <p class="sfile">call_resolution/constructor.ts</p>
+      </a>
+    </div>
+    <div class="callout rust">
+      <span class="k">excluded from Change A — TS static dispatch → method_lookup (AC #5)</span>
+      <p><code>LanguageServiceTestEnv.setup()</code> is captured as a <code>MethodCallReference</code> (<code>is_method_call</code> returns true for a <code>member_expression</code> callee) on the method-lookup lane and shares no mechanism with the terminal-name path. <b>Excluded to <code>method_lookup</code></b> — decided in 349.1, not folded.</p>
+    </div>
+  </section>
+
+  <section id="subtasks">
+    <h2>The three changes — sequenced A → B → C</h2>
+    <p class="cap prose">The cluster collapses to three coherent changes, not 56 + 43 + 4 localized fixes. Change A is the load-bearing indexing edit (itself three sub-causes); B and C are small predicate / ordering corrections.</p>
     <div class="rcs">
-      <article class="rc a">
+      <a class="rc a" href="task-349.1 - Reduce-Rust-qualified-call-references-to-their-terminal-name-and-carry-the-path-prefix.rust-qualified-paths.html">
         <div class="top"><span class="badge">A</span><h4>Rust qualified paths</h4></div>
         <p class="file">metadata_extractors.rust.ts &middot; references.ts &middot; constructor.ts &middot; function_call.ts</p>
-        <p class="what">Reduce a scoped call to its <code>terminal name</code> and carry the leading segments as <code>property_chain</code>; resolve in two tiers. Covers <code>module::fn</code>, <code>Type::new</code>, <code>Self::new</code>, turbofish, alias hops.</p>
+        <p class="what">Reduce a scoped call to its <code>terminal name</code> + a separate <code>path_prefix</code>; resolve via the path first. Three sub-causes: producer + fn calls (349.1), <code>new()</code> linking + <code>Self</code> (349.4), inline-path types (349.5).</p>
         <div class="stats">
           <span class="s"><strong>56</strong> members</span>
-          <span class="s">Rust-heavy +1 TS</span>
-          <span class="s">collapses 56&rarr;1</span>
+          <span class="s">Rust-heavy</span>
+          <span class="s">3 sub-causes</span>
         </div>
-        <div class="foot"><span class="tag core">core fix</span><span class="seq">land <strong>1st</strong> &middot; highest benefit</span></div>
-      </article>
-      <article class="rc b">
+        <div class="foot"><span class="tag core">core change</span><span class="seq">land 1st &middot; open &rarr;</span></div>
+        <p class="open">sequence: 349.1 → 349.4 → 349.5</p>
+      </a>
+      <a class="rc b" href="task-349.2 - Make-is_exported-govern-implicit-visibility-only-—-let-explicit-named-imports-bind-regardless.python-underscore-imports.html">
         <div class="top"><span class="badge">B</span><h4>Underscore Python imports</h4></div>
         <p class="file">resolve_references/registries/export.ts</p>
-        <p class="what">An explicit <code>from .x import _y</code> never binds because <code>is_exported=false</code> gates the export chain. Widen one lookup: fall back to a by-name definition lookup for explicit named imports; keep the filter for wildcard re-exports.</p>
+        <p class="what">An explicit <code>from .x import _y</code> never binds because <code>is_exported=false</code> gates the export chain. Widen one lookup: by-name definition fallback for explicit named imports; keep the gate for wildcard / namespace / re-export.</p>
         <div class="stats">
-          <span class="s"><strong>~Python rows</strong> of 43</span>
+          <span class="s"><strong>43</strong>-member leaf</span>
           <span class="s">data-completeness</span>
           <span class="s">one widened predicate</span>
         </div>
-        <div class="foot"><span class="tag core">core fix</span><span class="seq">land <strong>2nd</strong> &middot; clears Python pop.</span></div>
-      </article>
-      <article class="rc c">
+        <div class="foot"><span class="tag core">core change</span><span class="seq">land 2nd &middot; open &rarr;</span></div>
+        <p class="open">scope boundary: TS barrel rows &rarr; import_resolution</p>
+      </a>
+      <a class="rc c" href="task-349.3 - Apply-two-small-Phase-1-corrections-self-initializer-ordering-and-siblinghoist-propagation.same-file-binding-gaps.html">
         <div class="top"><span class="badge">C</span><h4>Same-file binding gaps</h4></div>
         <p class="file">resolve_references/name_resolution.ts (Step-2 &amp; resolve_scope_recursive)</p>
         <p class="what">C.1 a <code>let x = … x(…)</code> self-initializer must not shadow the import. C.2 a sibling-inner / hoisted function must reach the calling scope. Two small Phase-1 edits in the named folder.</p>
         <div class="stats">
-          <span class="s"><strong>5</strong> members</span>
+          <span class="s"><strong>4</strong> members</span>
           <span class="s">ordering + propagation</span>
           <span class="s">smallest</span>
         </div>
-        <div class="foot"><span class="tag core">core fix</span><span class="seq">land <strong>3rd</strong> &middot; small</span></div>
-      </article>
+        <div class="foot"><span class="tag core">core change</span><span class="seq">land 3rd &middot; open &rarr;</span></div>
+        <p class="open">risk: keep both corrections narrowly scoped</p>
+      </a>
     </div>
     <div class="callout rust">
-      <span class="k">retired — no work grounded</span>
-      <p>The interim classifier <code>pt-ed81fc2dd04836a1</code> (63 duplicate members) only suppressed these flags <i>while</i> the fixes were sequenced &mdash; and the core fixes retire it immediately. <b>No rule is written; no registry row is created.</b></p>
+      <span class="k">retired — no work grounded (AC #2)</span>
+      <p>The interim classifier (63 duplicate members) only suppressed these flags while the changes were sequenced. <b>No rule is authored and no registry row is created</b> — the core changes retire it on landing, so a classifier would be surplus work.</p>
     </div>
   </section>
 
   <section id="disposition">
-    <h2>Disposition of every original leaf</h2>
-    <p class="cap prose">The plan&rsquo;s decomposition is corrected in both directions: <b>collapsed</b> where it over-split (56 &ldquo;independent&rdquo; Rust fixes are one change) and <b>re-tiered</b> where it mis-located altitude (two of three fixes are not in <code>name_resolution.ts</code>).</p>
+    <h2>Disposition of every original leaf, and the scope decisions owned here</h2>
+    <p class="cap prose">The plan's decomposition is corrected in both directions: <b>collapsed</b> where it over-split (56 "independent" Rust fixes are one change of three sub-causes) and <b>re-tiered</b> where it mis-located altitude (two of three changes are not in <code>name_resolution.ts</code>).</p>
     <table>
       <thead><tr><th>Original leaf</th><th>Evidence shape</th><th style="text-align:center">Members</th><th>Lands as</th><th>Disposition</th></tr></thead>
       <tbody>
         <tr>
-          <td class="leaf"><code>pt-908261da97472d8f</code></td>
-          <td><code>Type::new</code>, <code>module::fn</code>, <code>Self::new</code>, turbofish, alias paths</td>
+          <td class="leaf">qualified-path leaf</td>
+          <td><code>module::fn</code>, <code>Type::new</code>, <code>Self::new</code>, inline full paths, turbofish</td>
           <td class="cnt">56</td>
-          <td>Change A &middot; reference builder + Rust extractor</td>
+          <td>Change A &middot; 349.1 → 349.4 → 349.5</td>
           <td><span class="disp collapse">collapse + re-tier</span></td>
         </tr>
         <tr>
-          <td class="leaf"><code>pt-57521973c069ab2e</code> <span style="color:var(--g600)">— Python</span></td>
+          <td class="leaf">named-import leaf <span style="color:var(--g600)">— Python</span></td>
           <td><code>from .x import _y</code> underscore-private, both indexed</td>
           <td class="cnt">&mdash;</td>
           <td>Change B &middot; export-chain widening</td>
           <td><span class="disp keep">keep</span></td>
         </tr>
         <tr class="gone">
-          <td class="leaf"><code>pt-57521973c069ab2e</code> <span style="color:var(--g600)">— TypeScript</span></td>
+          <td class="leaf">named-import leaf <span style="color:var(--g600)">— TypeScript</span></td>
           <td>destructured from <code>./_namespaces/ts</code> barrel namespace</td>
           <td class="cnt">&mdash;</td>
           <td>&rarr; <code>import_resolution</code> folder</td>
           <td><span class="disp exclude">exclude / re-tier</span></td>
         </tr>
         <tr>
-          <td class="leaf"><code>pt-57521973c069ab2e</code> <span style="color:var(--g600)">— serde let</span></td>
+          <td class="leaf">named-import leaf <span style="color:var(--g600)">— serde let</span></td>
           <td>import clobbered by same-statement <code>let</code></td>
           <td class="cnt">1</td>
           <td>Change C.1 &middot; Phase-1 ordering</td>
           <td><span class="disp keep">keep</span></td>
         </tr>
         <tr>
-          <td class="leaf"><code>pt-c009557cba419023</code></td>
+          <td class="leaf">sibling-scope leaf</td>
           <td>nested <code>cleanup</code>, intra-file <code>content_as_str</code>, same-file unqualified</td>
           <td class="cnt">4</td>
           <td>Change C.2 (+ C.1) &middot; sibling/hoist propagation</td>
           <td><span class="disp keep">keep</span></td>
         </tr>
         <tr class="gone">
-          <td class="leaf"><code>pt-ed81fc2dd04836a1</code></td>
-          <td>interim classifier, duplicate evidence</td>
+          <td class="leaf">Angular TS static dispatch</td>
+          <td><code>LanguageServiceTestEnv.setup()</code> — MethodCallReference</td>
+          <td class="cnt">1</td>
+          <td>&rarr; <code>method_lookup</code> lane</td>
+          <td><span class="disp exclude">exclude → method_lookup</span></td>
+        </tr>
+        <tr class="gone">
+          <td class="leaf">interim classifier</td>
+          <td>duplicate evidence, suppression only</td>
           <td class="cnt">63</td>
           <td>&mdash; no work grounded</td>
           <td><span class="disp retire">retired</span></td>
@@ -405,72 +457,44 @@
       </tbody>
     </table>
     <div class="callout">
-      <span class="k">open question — counted, not yet confirmed</span>
-      <p>Many <code>sqlx</code>/<code>tokio</code> rows live under <code>examples/</code> and <code>tests/</code>. If the pipeline excludes those directories from indexing, those rows are <b>coverage_config</b>, not <code>name_resolution</code>, and Change A would not flip them. Confirm the indexed-file set before counting the full 56 as resolved here.</p>
+      <span class="k">scope decisions owned by this epic (AC #3, #5)</span>
+      <p>The <b>TypeScript barrel-namespace rows</b> (destructured from <code>./_namespaces/ts</code>) are <b>excluded</b> to <code>import_resolution</code> as a separate group, named here so they are not lost. The <b>Angular TS static-dispatch row</b> is <b>excluded to <code>method_lookup</code></b> — captured as a <code>MethodCallReference</code>, sharing no mechanism with the terminal-name path. The <b>interim-classifier leaf is retired</b> with no work of its own.</p>
     </div>
   </section>
 
-  <section id="rank">
-    <h2>Benefit vs. cost — ranking against the other six groups</h2>
-    <div class="rankgrid">
-      <div class="kpi"><p class="lab">False flags removed</p><div class="big rust">103</div><p class="sub">across 10 projects, observed over 10 runs</p></div>
-      <div class="kpi"><p class="lab">Core fix effort</p><div class="big clay">5</div><p class="sub">three changes; one indexing edit carries it</p></div>
-      <div class="kpi"><p class="lab">Work is</p><div class="big olive">3&times;</div><p class="sub">core fixes — no interim classifier authored</p></div>
-      <div class="kpi"><p class="lab">Scope leakage</p><div class="big clay">2</div><p class="sub">leaves leave this folder (1 re-tiered, 1 retired)</p></div>
+  <section id="risks">
+    <h2>Cross-cutting risks to track before counting rows resolved</h2>
+    <div class="callout rust">
+      <span class="k">examples/tests indexing precondition (AC #4)</span>
+      <p>Most <code>sqlx</code> rows live under <code>examples/…</code> and many <code>tokio</code> rows under <code>tests/…</code>. If the live pipeline excludes those directories from indexing, those rows are <b>coverage_config</b>, not <code>name_resolution</code>, and Change A would not flip them. Confirm the corpus' indexed-file set before counting them as resolved.</p>
     </div>
-
-    <div class="bars">
-      <div class="row">
-        <span class="lab">Change A (Rust)</span>
-        <div class="track"><div class="fill this" style="width:54%"></div></div>
-        <span class="val">56</span>
-      </div>
-      <div class="row">
-        <span class="lab">Change B (Python)</span>
-        <div class="track"><div class="fill this" style="width:41%"></div></div>
-        <span class="val">~43</span>
-      </div>
-      <div class="row">
-        <span class="lab">Change C (same-file)</span>
-        <div class="track"><div class="fill this" style="width:5%"></div></div>
-        <span class="val">5</span>
-      </div>
-      <div class="row" style="border-top:1px solid var(--g200);margin-top:6px;padding-top:12px">
-        <span class="lab">Effort A &middot; indexing</span>
-        <div class="track"><div class="fill eff" style="width:60%"></div></div>
-        <span class="val">~3</span>
-      </div>
-      <div class="row">
-        <span class="lab">Effort B &middot; predicate</span>
-        <div class="track"><div class="fill eff" style="width:20%"></div></div>
-        <span class="val">~1</span>
-      </div>
-      <div class="row">
-        <span class="lab">Effort C &middot; Phase-1</span>
-        <div class="track"><div class="fill eff" style="width:20%"></div></div>
-        <span class="val">~1</span>
-      </div>
-      <p class="note">rust bars = false flags removed &middot; clay bars = relative effort (sums to core_fix_effort 5)</p>
+    <div class="callout">
+      <span class="k">cfg-gated duplicate definitions — known limitation</span>
+      <p><code>Mutex::new</code> resolving to mocked vs std under <code>cfg(all(test, loom))</code>: Ariadne does not evaluate <code>cfg</code>, so these may resolve to the wrong arm. Out of scope for binding correctness; flag as a known limitation (carried in 349.5).</p>
+    </div>
+    <div class="callout olive">
+      <span class="k">Angular TS static dispatch — decided: excluded to method_lookup (AC #5)</span>
+      <p><code>LanguageServiceTestEnv.setup()</code> is captured as a <code>MethodCallReference</code> on the method-lookup lane, not the terminal-name path — so it is <b>excluded to <code>method_lookup</code></b>, decided in 349.1. Not folded into Change A.</p>
     </div>
 
     <div class="callout slate">
-      <span class="k">how to rank this group</span>
+      <span class="k">how the epic sequences</span>
       <ul class="ranklist">
-        <li><b>Fund A first.</b> One indexing edit, ~3 of 5 points, removes the majority of the 103 flags &mdash; it stands alone even if B and C wait.</li>
+        <li><b>A first.</b> One indexing edit removes the majority of the cluster — sequenced 349.1 (producer + fn calls, with the shadowing guard) → 349.4 (link <code>new()</code> + <code>Self</code>) → 349.5 (inline full-path types).</li>
         <li><b>B is a one-predicate win.</b> A single widened lookup clears the entire underscore-Python population.</li>
-        <li><b>No classifier debt.</b> Every point buys durable core correctness, not an interim suppression a later fix retires.</li>
+        <li><b>C is two small Phase-1 corrections,</b> kept narrow so correct shadowing elsewhere is unchanged.</li>
+        <li><b>No classifier debt.</b> Every change buys durable core correctness, not an interim suppression a later fix retires.</li>
       </ul>
     </div>
   </section>
 
   <footer>
-    Source: ~/.ariadne/plan/prioritize/name_resolution/refactor_plan.md (investigator root-cause + decomposition verdict) &middot; 103 false unreachable-function flags &middot; 10 projects &middot; 10 runs &middot; core_fix_effort 5 &middot; generated 2026-06-25
+    task-349 epic · failure code name_not_in_scope · 3 root causes in metadata_extractors.rust.ts/references.ts, registries/export.ts, name_resolution.ts · Change A sequenced 349.1 (producer + fn calls) → 349.4 (new() link + Self) → 349.5 (inline full-path types) · then B (349.2) → C (349.3) · TS barrel rows → import_resolution · Angular static dispatch → method_lookup · no interim classifier authored
   </footer>
 
 </main>
 
 <script>
-  // progressive enhancement: highlight the in-view section in the outline bar
   (function(){
     var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
     var map = {};

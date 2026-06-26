@@ -21,7 +21,7 @@ Every false-positive in this group is a `function_call`/`constructor_call` whose
 
 This epic is the fundamental refactor; it coordinates the three coherent changes carried by its sub-tasks and owns the cross-cutting decisions and risks. The three root causes are:
 
-- **Root cause A (largest, Rust-heavy, 56 members):** Rust qualified call references carry the _full scoped path text_ as `name` (`worker::create`, `crate::runtime::Driver`, `Cell::<u8>`, `Self`), so Phase-1 — which only ever holds bare terminal names — can never match. Fixed in the reference builder + Rust metadata extractor (sub-task 1.1).
+- **Root cause A (largest, Rust-heavy, 56 members):** Rust qualified call references carry the _full scoped path text_ as `name` (`worker::create`, `crate::runtime::Driver`, `Cell::<u8>`, `Self`), so Phase-1 — which only ever holds bare terminal names — can never match. Implementation revealed Change A is itself **three** independent root causes, split into sub-tasks: **349.1** (producer — emit terminal `name` + `path_prefix`; landed), **349.4** (link Rust `new()` as the struct's constructor + `Self` substitution), **349.5** (consume `path_prefix` to resolve inline-full-path module/type-qualified calls cross-file).
 - **Root cause B (Python imports, 43-member leaf):** `is_exported=false` for single-underscore Python names excludes them from the export registry, and Phase-1's `resolve_export_chain` gates on `is_exported`, so an explicit `from .x import _y` never binds. Fixed by widening the export lookup (sub-task 1.2).
 - **Root cause C (same-file binding gaps, 4 members):** a local-`let` self-initializer shadows an explicit import in the same statement, and sibling-inner-scope / hoisted functions are absent from the calling scope's scope map. Fixed by two small Phase-1 corrections (sub-task 1.3).
 
@@ -42,10 +42,10 @@ This epic is the fundamental refactor; it coordinates the three coherent changes
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 The three sub-tasks (1.1 Change A, 1.2 Change B, 1.3 Change C) land in the sequenced order: A first, then B, then C.
+- [ ] #1 The three root-cause changes land in the sequenced order: A first, then B (349.2), then C (349.3). Change A is itself sequenced **349.1 → 349.4 → 349.5** (producer + function-call resolution; then constructor linking + `Self`; then inline-full-path constructors), because investigation showed A spans three coherent changes and the producer name-reduction is only correct together with the function-call path-prefix resolver (349.1).
 - [ ] #2 No interim classifier rule is authored and no registry row is created for this group.
 - [ ] #3 The TypeScript barrel-namespace rows are routed to a separate `import_resolution` group and are not silently dropped.
 - [ ] #4 Before counting `examples/`-resident sqlx and `tests/`-resident tokio rows as resolved, the corpus' indexed-file set is confirmed to include those caller files.
-- [ ] #5 The Angular TS static-dispatch row is explicitly classified (folded into 1.1 if it shares the terminal-name mechanism, else excluded to method_lookup).
+- [ ] #5 The Angular TS static-dispatch row is explicitly classified — **excluded to method_lookup**: it is captured as a `MethodCallReference` and shares no mechanism with the terminal-name path (decided in 349.1).
 
 <!-- AC:END -->

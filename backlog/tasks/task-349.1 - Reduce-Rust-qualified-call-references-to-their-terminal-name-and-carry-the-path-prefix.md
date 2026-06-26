@@ -19,29 +19,60 @@ plan_source_task: pt-908261da97472d8f
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 
-A Rust qualified-path call (`worker::create(7)`, `crate::runtime::Driver::start(8)`, `Parker::make(5)`) is emitted with `name` set to the _entire scoped path text_, and `Type::new()` associated constructors are emitted with `name` = the full path and **no `property_chain`**. Phase-1's scope map only ever holds bare terminal names (`create`, `Driver`, `make`), so every multi-segment / turbofish / `Self` form misses. This is the largest population in the group (56 members, Rust-heavy + one TS static row). The correct altitude is the **reference builder**, where the `name` is first assigned — not Phase-1, which is being asked to resolve a name that does not exist.
+A Rust qualified-path call (`worker::create(7)`, `crate::runtime::Driver::start(8)`, `Parker::make(5)`) is emitted with `name` set to the _entire scoped path text_, and `Type::new()` associated constructors are emitted with `name` = the full path and **no path prefix**. Phase-1's scope map only ever holds bare terminal names (`create`, `Driver`, `make`), so every multi-segment / turbofish / `Self` form misses with `{stage: "name_resolution", reason: "name_not_in_scope"}`. The correct altitude is the **reference builder**, where the `name` is first assigned — not Phase-1, which is being asked to resolve a name that does not exist.
 
-This is one coherent change, not 56 independent localized fixes.
+## Scope: producer + function-call resolution (one atomic unit)
+
+A prototype showed the producer change is **not independently landable**. Reducing `utils::helper()` to the bare name `helper` makes it indistinguishable from a local `helper()`, so when a local function shadows an import (`tests/fixtures/rust/code/modules/shadowing.rs`: `use utils::{helper}` plus a local `fn helper`), the qualified `utils::helper()` call resolves to the **local shadow instead of the import** — a correctness regression caught by `project.rust.integration.test.ts > Shadowing` (helper-call count `2 → 3`). The producer's name reduction is only correct **with** the path-prefix resolver that honours the qualifier. They are therefore one task.
+
+This task covers Rust **function calls** (qualified `mod::fn` and associated `Type::fn`). Constructor resolution is two further, separable root causes (no regression on their own) handled in order afterward:
+
+- **TASK-349.4** — Rust `fn new()` is stored as a plain method, so `Type::new()` resolves to the class, never the constructor; plus `Self::new()` substitution.
+- **TASK-349.5** — resolve inline-full-path constructors (`crate::…::Driver::new`) whose type is not bound by a bare name in scope, via the path-prefix type walk (reuses the resolver built here).
+
+The TS static-dispatch row (`LanguageServiceTestEnv.setup()`) is **excluded**: it is captured as a `MethodCallReference` (`is_method_call` returns true for `member_expression` callees) on the method-lookup lane and shares no mechanism with the terminal-name path.
+
+## Capture facts (verified against `rust.scm` + `tree-sitter-rust`)
+
+The producer must branch on the **actual captured node**, which differs by call shape — no `.scm` edit is needed; all in-scope forms are already captured (with the wrong name):
+
+| Source | Capture (`rust.scm`) | `capture.node.type` handed to the builder |
+| --- | --- | --- |
+| `worker::create(7)` | `@reference.call` on the whole `scoped_identifier` (rust.scm:655-660, `#not-match new`) | `scoped_identifier` |
+| `Parker::make(5)` | same | `scoped_identifier` |
+| `Cell::<u8>::make()` | same | `scoped_identifier` (path child is a `generic_type`) |
+| `crate::runtime::Driver::new()` | `@reference.constructor.associated` on the **`path` child** (rust.scm:663-669) | `scoped_identifier` (`crate::runtime::Driver`) |
+| `Cell::<u8>::new()` | same | `generic_type` (`Cell::<u8>`) |
+| `Self::new()` | same | `identifier` (`Self`) |
+| `worker::create::<i32>()` (outer turbofish) | **uncaptured** — the `generic_function` rule (rust.scm:671-676) matches only `function: (identifier)` | — |
+
+Out of scope: the outer-turbofish form is a real `.scm` gap but is not in any acceptance criterion — track as a separate query-gap follow-up, do not block this task.
 
 ## Producer edits
 
-- **`index_single_file/query_code_tree/metadata_extractors/metadata_extractors.rust.ts`** — extend `extract_call_name` to return the terminal `name` for a bare `scoped_identifier` (the `path: … name: (identifier)` field); it currently returns `undefined` for that node (`metadata_extractors.rust.ts:766`). Add a path-prefix extractor that returns the leading segments with turbofish (`::<…>`) stripped. This is the load-bearing edit.
-- **`index_single_file/references/references.ts`** — in the `FUNCTION_CALL` and `CONSTRUCTOR_CALL` branches, when the node is a `scoped_identifier` (or `constructor.associated`), set `name` to the terminal identifier and attach the leading segments as a `property_chain`. Remove the `capture.text` full-path fallback (`references.ts:563`) for Rust qualified calls.
+- **`metadata_extractors.rust.ts`** (`extract_call_name`, ~line 766) — add a branch for a bare `scoped_identifier` (return the `name` field) and for a `generic_type` (return the `type` field, turbofish stripped). **Do not** add a bare-`identifier` branch: the existing test "should return undefined for non-call nodes" (`metadata_extractors.rust.test.ts:1279`, a bare `x`) depends on `identifier` returning `undefined`. `Self`/`Config` keep `name` via `capture.text` (correct by identity).
+- **`metadata_extractors.rust.ts`** — add a **new** `extract_call_path_prefix(node, mode)` (a separate function from `extract_property_chain` at line 292, which must stay byte-for-byte behaviourally identical — `extract_property_chain` returns the full chain _including_ the terminal and is asserted by `extract_property_chain` tests; reusing it would break AC #5). `"function"` mode drops the terminal segment (`worker::create` → `["worker"]`); `"constructor"` mode keeps the full type path (`crate::runtime::Driver` → `["crate","runtime","Driver"]`, `Cell::<u8>` → `["Cell"]`, `Self` → `["Self"]`). Strip turbofish at every segment (a `generic_type` segment → its `type` child).
+- **`metadata_extractors/types.ts`** — declare `extract_call_path_prefix?` as an **optional** method on the `MetadataExtractors` interface (Rust-only; TS/JS/Python never carry a scoped-path prefix, so they omit it and `references.ts` calls it as `?.`).
+- **`references.ts`** (`process`, FUNCTION_CALL ~592 and CONSTRUCTOR_CALL ~607) — attach the prefix via `extractors?.extract_call_path_prefix?.(capture.node, mode)`. The terminal-name refinement makes the `capture.text` full-path fallback inert for Rust qualified calls (the fallback switch at ~563 only handles TS/JS `call_expression`/`new_expression`, so it is left untouched — this is why no TS/JS path regresses).
 
-## Data-model edits (additive; no schema bump per project memory)
+## Data-model edits (additive; no schema bump per project memory `project_plan_pipeline_no_schema_bumps`)
 
-- Add `property_chain` to Rust `function_call` references (mirrors `MethodCallReference.property_chain`).
-- Populate `property_chain` on Rust associated `constructor_call` references (currently always `null` for `Type::new()`), carrying the type path.
+- A dedicated `path_prefix?: readonly SymbolName[]` field on `FunctionCallReference` and `ConstructorCallReference` (`packages/types/src/symbol_references.ts`), plus the matching optional params on `create_function_call_reference` / `create_constructor_call_reference` (`references/factories.ts`). It is **held separately from `property_chain`** rather than overloading it: `property_chain` carries the TS `[namespace, class]` shape and two TS-oriented consumers bake in that index convention — `call_resolution/constructor.ts:56` (reads `[0]`=namespace, `[1]`=class) and `type_preprocessing/constructor.ts:59` (`length > 1` ⇒ namespace-qualified) — so a Rust type-last chain in the same field would mis-bind them. `path_prefix` is the Rust `mod`/type path that scopes a terminal-name lookup; `FunctionCallReference` has no `property_chain` field today, and `ConstructorCallReference.property_chain` stays unset for Rust.
 
-## Consumer edits
+## Consumer edits — function calls (required for the safe landing)
 
-- **`call_resolution/constructor.ts`** (`resolve_constructor_call`, line 47) — consume the new `property_chain`: when present, resolve the leading type path against the in-scope module/type/alias and look up the terminal type, symmetric to the existing TS `property_chain` namespace branch (lines 56-67). Add `Self` substitution to the enclosing impl type (bind `Self` in each impl/trait scope to the enclosing type's `SymbolId`, or special-case `name === "Self"` at the constructor resolver).
-- **`call_resolution/function_call.ts`** (`resolve_function_call`, line 129) — when the bare terminal name does not resolve, consult the path-prefix `property_chain` to scope the lookup (module-qualified `worker::create`, type-qualified `Parker::make`).
-- `function_call.ts`/`method_call.ts` need no edit for the common case where the terminal name is uniquely in scope — the function-call resolver already resolves `ref.name` via the scope map.
+- **`call_resolution/function_call.ts`** (`resolve_function_call` ~129, `find_function_resolution` ~34) — when `ref.path_prefix` is present, resolve **via the path first** (the author wrote the qualifier; honour it), falling back to the bare terminal only on a path miss. This is sound by construction and avoids the unsound global `get_definitions_by_name` ambiguity scan.
+  - **Module-qualified** (`worker::create`, and the shadow case `utils::helper`): resolve the leading segment to the `mod`/`use` module, then resolve the terminal as that module's export/member. This is what makes `utils::helper()` bind to the import rather than the local shadow.
+  - **Type-qualified associated fn** (`Parker::make`): resolve the leading segment to a type, then look up the terminal in `DefinitionRegistry.get_member_index().get(type_id)`. Associated functions are stored as `kind: "method"`, so the method-rejection gate at `function_call.ts:53` must be **bypassed only when `path_prefix` is non-empty** (a bare `make()` must still be rejected).
+  - Normalize a leading `crate`/`self`/`super` segment (anchor to crate/module roots) before resolving.
 
 ## Collision safety
 
-Resolution proceeds in two tiers: (1) bare terminal name in the scope map, used only when the terminal name is **unambiguous**; (2) path-prefix scoping otherwise. The terminal name alone is not a safe global key (two types can both define `new`); the retained path-prefix is the disambiguating guard and must be enforced, not assumed. Alias hops (`ll::Semaphore`, `time_alt::Timer`, type/cfg aliases) ride on tier-2 but additionally require the leading segment to resolve through a `use`/type alias — if the alias is itself a cross-file re-export, that hop is `import_resolution`, so verify the alias target is in the same crate before assuming this change covers it.
+The retained `path_prefix` is the disambiguating guard and must be **enforced, not assumed**. When the terminal name is ambiguous (a local shadow, or two in-scope modules/types exposing the same name), the prefix selects the correct target. Evaluate ambiguity **in scope**, not via a global name scan; the single-valued `by_scope` map collapses same-name bindings, so path-prefix resolution must detect its own collisions rather than trust last-write-wins. Same-crate alias hops (`use ll::Semaphore`) ride this path only when the leading segment resolves through a `use`/type alias in the same crate; a cross-file re-export hop is `import_resolution` and out of scope — bail rather than fabricate an edge.
+
+## Verification — evidence-case integration tests + fixtures
+
+Unit assertions on the producer are necessary but not sufficient. The fix must be demonstrated against the **actual evidence cases** from the `name_resolution` false-positive cluster — the real qualified-function-call shapes in the corpus (e.g. sqlx `examples/…` module-qualified calls, tokio `tests/…` associated calls). Add integration tests that reproduce each evidence shape as a fixture under `tests/fixtures/rust/code/` (or inline `Project` + `update_file`) and assert the called definition flips from a **false-positive entry point** to **resolved/reachable**. Update any existing fixtures whose expected call graph changes under the new resolution. Honour the indexed-file-set precondition the epic flags (epic risk: sqlx rows live under `examples/`, tokio under `tests/`) — confirm those caller directories are actually indexed by the corpus run, otherwise the rows are `coverage_config`, not `name_resolution`, and the fix would not flip them.
 
 <!-- SECTION:DESCRIPTION:END -->
 
@@ -49,10 +80,12 @@ Resolution proceeds in two tiers: (1) bare terminal name in the scope map, used 
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 `build_index_single_file` on inline Rust asserts each qualified call emits the terminal `name` plus the expected path-prefix `property_chain`: `worker::create` → name `create`, chain `["worker"]`; `crate::runtime::Driver::new` → constructor name `Driver`, chain `["crate","runtime","Driver"]`; `Cell::<u8>::new` → name `Cell`, turbofish stripped.
-- [ ] #2 `Self::new` resolves to the enclosing impl/trait type's `new`.
-- [ ] #3 `Project` + `update_file` cross-file: `Parker::new`, `worker::create`, and `crate::…::Driver::new` resolve to their definitions.
-- [ ] #4 Tier-1 bare-terminal lookup short-circuits only when the terminal name is unambiguous in scope; an ambiguous terminal (two in-scope types defining `new`) is disambiguated via the path-prefix tier-2 lookup.
-- [ ] #5 All existing `metadata_extractors.rust.test.ts` `extract_call_name`/`extract_property_chain` cases stay green.
+- [ ] #1 `build_index_single_file` on inline Rust asserts each qualified call emits the terminal `name` plus the expected `path_prefix`: `worker::create` → name `create`, prefix `["worker"]`; `crate::runtime::Driver::new` → constructor name `Driver`, prefix `["crate","runtime","Driver"]`; `Cell::<u8>::new` → name `Cell`, turbofish stripped.
+- [ ] #2 All existing `metadata_extractors.rust.test.ts` `extract_call_name`/`extract_property_chain` cases stay green; new `extract_call_name` and `extract_call_path_prefix` cases assert the terminal-name and prefix behaviour directly.
+- [ ] #3 `Project` + `update_file` cross-file: `worker::create(7)` (module-qualified) resolves `create` in the `worker` module — `create` is reachable, not an entry point.
+- [ ] #4 `Parker::make(5)` (type-qualified associated function) resolves to `make` in `Parker`'s member index.
+- [ ] #5 **Regression guard:** `project.rust.integration.test.ts > Shadowing` stays green — when a local `fn helper` shadows `use utils::{helper}`, bare `helper()` resolves to the local while `utils::helper()` resolves to the **import**; the terminal-name reduction does not collapse the qualified call onto the local shadow.
+- [ ] #6 A bare unqualified call (no `path_prefix`) resolves exactly as before — the method-rejection gate is only bypassed when `path_prefix` is non-empty.
+- [ ] #7 Integration tests over fixtures reproducing the cluster's qualified-function-call evidence cases (sqlx/tokio module- and type-qualified calls) demonstrate each called function resolves (no longer an entry point); fixture additions/updates accompany any changed call-graph expectations, and the caller files are confirmed within the corpus' indexed-file set.
 
 <!-- AC:END -->

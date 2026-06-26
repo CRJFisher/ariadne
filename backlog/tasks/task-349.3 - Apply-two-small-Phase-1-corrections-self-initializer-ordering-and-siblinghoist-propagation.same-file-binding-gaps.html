@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Change C — Two same-file binding gaps</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --ink:#1f1e1c; --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  nav.cross{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 0}
+  nav.cross .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.cross .brand{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.cross a,nav.cross span.cur{font-family:var(--mono);font-size:11px;text-decoration:none;border-radius:999px;padding:4px 10px;border:1px solid var(--g200)}
+  nav.cross a{color:var(--g600);background:var(--paper)}
+  nav.cross a:hover{border-color:var(--clay);color:var(--slate)}
+  nav.cross span.cur{color:var(--slate);background:#fbf2ef;border-color:var(--clay)}
+  nav.toc{position:sticky;top:42px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
+  nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.toc .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--g600);margin-right:6px}
+  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:3px 10px}
+  nav.toc a:hover,nav.toc a.active{border-color:var(--clay);color:var(--slate);background:#fbf2ef}
+  main{width:90%;max-width:1600px;margin:0 auto;padding:26px 0 80px}
+  .prose{max-width:72ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:32px;line-height:1.12;margin:0 0 12px;letter-spacing:-.01em;max-width:30ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:22px;margin:50px 0 6px;letter-spacing:-.01em;scroll-margin-top:96px}
+  .tag-cc{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ivory);background:var(--slate);border-radius:6px;padding:2px 8px;margin-right:8px;vertical-align:middle}
+  .tag-cc.c1{background:#7a5a3a}.tag-cc.c2{background:#5b6840}
+  p{margin:0 0 10px}
+  code{font-family:var(--mono);font-size:.85em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .chip.rust strong{color:var(--rust)} .chip.olive strong{color:var(--olive)} .chip.clay strong{color:var(--clay)}
+  .cap{font-size:13.5px;color:var(--g600);margin:8px 2px 0}
+  .cap b{color:var(--slate);font-weight:600}
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:18px 0;max-width:94ch}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)} .callout.slate{border-left-color:var(--slate);background:var(--slate);color:var(--ivory)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 6px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)} .callout.slate .k{color:#c9a25a}
+  .callout p{margin:0;font-size:14px}
+  .callout.slate code{background:rgba(255,255,255,.13);color:#f3e9d6}
+  .callout.slate b{color:#fff}
+  /* before/after */
+  .ba{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin:14px 0}
+  .ba .panel{background:var(--paper);border:1px solid var(--g200);padding:16px}
+  .ba .panel:first-child{border-radius:var(--r) 0 0 var(--r)}
+  .ba .panel:last-child{border-radius:0 var(--r) var(--r) 0;border-left:none}
+  .ba .arrow{display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--ivory);padding:0 4px}
+  .ba .arrow .ar{font-family:var(--mono);font-size:20px;color:var(--clay)}
+  .ba .arrow .arl{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);writing-mode:vertical-rl;margin-top:6px}
+  .ba .ttl{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px}
+  .ba .ttl.cur{color:var(--rust)} .ba .ttl.plan{color:var(--olive)}
+  .ba svg{width:100%;height:auto;display:block}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:12px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,.12)}
+  .code{background:var(--code);border-radius:var(--r);overflow:hidden;margin:14px 0;border:1px solid #1a1815}
+  .code .fl{font-family:var(--mono);font-size:10.5px;color:#b9b0a0;background:#1c1a16;padding:8px 14px;border-bottom:1px solid #000;letter-spacing:.03em}
+  .code pre{margin:0;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.62;color:var(--codeink)}
+  .code .kw{color:#c98a5a} .code .str{color:#9bb06a} .code .cm{color:#6f685c} .code .fn{color:#d8c98a}
+  .code .hl{background:rgba(168,71,47,.22);display:inline-block;width:100%}
+  .code .ok{background:rgba(108,122,74,.20);display:inline-block;width:100%}
+  .acs{display:grid;gap:7px;margin:14px 0;padding:0;list-style:none}
+  .acs li{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start;font-size:13.5px;background:var(--paper);border:1px solid var(--g200);border-radius:9px;padding:10px 13px}
+  .acs .n{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ivory);background:var(--olive);border-radius:6px;width:24px;height:22px;display:flex;align-items:center;justify-content:center}
+  .acs li.risk .n{background:var(--rust)}
+  .acs code{font-size:.9em}
+  @media(max-width:860px){.ba{grid-template-columns:1fr}.ba .arrow{flex-direction:row;padding:8px 0}.ba .arrow .arl{writing-mode:horizontal-tb;margin:0 0 0 6px}.ba .panel:last-child{border-left:1px solid var(--g200);border-radius:0 0 var(--r) var(--r)}.ba .panel:first-child{border-radius:var(--r) var(--r) 0 0}}
+  footer{font-family:var(--mono);font-size:10.5px;color:var(--g400);margin-top:56px;border-top:1px solid var(--g200);padding-top:14px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<nav class="cross">
+  <div class="inner">
+    <span class="brand">task-349 · name_resolution</span>
+    <a href="task-349 - Resolve-the-name_resolution-false-positive-cluster-across-three-independent-root-causes.overview.html">Epic overview</a>
+    <a href="task-349.1 - Reduce-Rust-qualified-call-references-to-their-terminal-name-and-carry-the-path-prefix.rust-qualified-paths.html">A · Rust qualified paths</a>
+    <a href="task-349.2 - Make-is_exported-govern-implicit-visibility-only-—-let-explicit-named-imports-bind-regardless.python-underscore-imports.html">B · Python imports</a>
+    <span class="cur">C · Same-file gaps</span>
+  </div>
+</nav>
+<nav class="toc">
+  <div class="inner">
+    <span class="brand">on this page</span>
+    <a href="#c1">C.1 · self-initializer</a>
+    <a href="#c2">C.2 · sibling/hoist</a>
+    <a href="#scope">Narrow scoping</a>
+    <a href="#ac">Acceptance</a>
+  </div>
+</nav>
+
+<main>
+
+  <p class="eyebrow">Change C · sub-task 1.3 · land 3rd</p>
+  <h1>Two same-file binding gaps — the only rows whose failure is genuinely a Phase-1 defect</h1>
+
+  <div class="meta">
+    <span class="chip rust"><strong>4</strong>-member leaf (smallest)</span>
+    <span class="chip"><strong>1</strong> file: name_resolution.ts</span>
+    <span class="chip clay"><strong>2</strong> small corrections</span>
+    <span class="chip olive"><strong>Step-2</strong> + resolve_scope_recursive</span>
+  </div>
+  <p class="cap prose">Both edits stay inside <code>resolve_references/name_resolution.ts</code>: C.1 corrects how local <code>let</code> bindings layer over imports; C.2 propagates sibling/hoisted functions into the calling scope's map.</p>
+
+  <section id="c1">
+    <h2><span class="tag-cc c1">C.1</span>A <code>let x = … x(…)</code> self-initializer shadows the import for the call in its own initializer</h2>
+    <p class="cap prose">Step-2 (<code>name_resolution.ts:191–196</code>) layers <i>all</i> local definitions over imports unconditionally. For <code>let has_flatten = has_flatten(fields)</code> (serde <code>struct_.rs:67</code>), the local binding is registered first, so the call inside the initializer resolves to the just-declared variable instead of the imported function.</p>
+
+    <div class="ba">
+      <div class="panel">
+        <p class="ttl cur">Current — local clobbers import, call resolves to itself</p>
+        <svg viewBox="0 0 320 230" role="img" aria-label="Current: Step-2 layers the local let binding over the import unconditionally, so the call inside the initializer resolves to the local variable, an unreachable cycle">
+          <defs><marker id="c-fl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#a8472f"/></marker></defs>
+          <rect x="20" y="8" width="280" height="40" rx="8" fill="#26241f" stroke="#1a1815"/>
+          <text x="34" y="26" font-family="ui-monospace,monospace" font-size="9.5" fill="#9bb06a">import</text>
+          <text x="92" y="26" font-family="ui-monospace,monospace" font-size="9.5" fill="#e8e1d2">{ has_flatten }</text>
+          <text x="34" y="40" font-family="ui-monospace,monospace" font-size="9.5" fill="#c98a5a">let</text>
+          <text x="70" y="40" font-family="ui-monospace,monospace" font-size="9.5" fill="#e8e1d2">has_flatten = has_flatten(fields)</text>
+          <!-- scope map -->
+          <text x="20" y="72" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">scope map · "has_flatten" →</text>
+          <rect x="20" y="80" width="130" height="34" rx="7" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="85" y="98" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">import binding</text>
+          <text x="85" y="109" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#9a9387">added Step-1</text>
+          <line x1="150" y1="97" x2="178" y2="97" stroke="#a8472f" stroke-width="1.6" marker-end="url(#c-fl)"/>
+          <text x="164" y="90" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#a8472f">overwritten</text>
+          <rect x="180" y="80" width="130" height="34" rx="7" fill="#f7ece9" stroke="#a8472f" stroke-width="1.5"/>
+          <text x="245" y="98" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#a8472f">local let var</text>
+          <text x="245" y="109" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">Step-2 OVERRIDES</text>
+          <!-- call -->
+          <rect x="56" y="140" width="208" height="34" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="160" y="158" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">call has_flatten(fields)</text>
+          <text x="160" y="169" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">inside the initializer</text>
+          <line x1="245" y1="114" x2="200" y2="138" stroke="#a8472f" stroke-width="1.5" marker-end="url(#c-fl)"/>
+          <line x1="160" y1="174" x2="160" y2="196" stroke="#a8472f" stroke-width="1.6" marker-end="url(#c-fl)"/>
+          <rect x="84" y="200" width="152" height="24" rx="7" fill="#f7ece9" stroke="#a8472f" stroke-width="1.5"/>
+          <text x="160" y="216" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#a8472f">resolves to itself → imported fn dead</text>
+        </svg>
+      </div>
+      <div class="arrow"><span class="ar">&rarr;</span><span class="arl">C.1</span></div>
+      <div class="panel">
+        <p class="ttl plan">Planned — self-initializer does not shadow its own import</p>
+        <svg viewBox="0 0 320 230" role="img" aria-label="Planned: the reference inside a let x = ... x(...) self-initializer resolves against the import in scope, not the just-declared local; correct shadowing elsewhere unchanged">
+          <defs><marker id="c-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker></defs>
+          <rect x="20" y="8" width="280" height="40" rx="8" fill="#26241f" stroke="#1a1815"/>
+          <text x="34" y="26" font-family="ui-monospace,monospace" font-size="9.5" fill="#9bb06a">import</text>
+          <text x="92" y="26" font-family="ui-monospace,monospace" font-size="9.5" fill="#e8e1d2">{ has_flatten }</text>
+          <text x="34" y="40" font-family="ui-monospace,monospace" font-size="9.5" fill="#c98a5a">let</text>
+          <text x="70" y="40" font-family="ui-monospace,monospace" font-size="9.5" fill="#e8e1d2">has_flatten = has_flatten(fields)</text>
+          <text x="20" y="72" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">at the reference position →</text>
+          <rect x="20" y="80" width="130" height="34" rx="7" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
+          <text x="85" y="98" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#5b6840">import binding</text>
+          <text x="85" y="109" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">in scope here</text>
+          <rect x="180" y="80" width="130" height="34" rx="7" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="245" y="98" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">local let var</text>
+          <text x="245" y="109" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#9a9387">not yet in scope</text>
+          <rect x="56" y="140" width="208" height="34" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="160" y="158" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">call has_flatten(fields)</text>
+          <text x="160" y="169" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">inside the initializer</text>
+          <line x1="85" y1="114" x2="120" y2="138" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#c-ok)"/>
+          <line x1="160" y1="174" x2="160" y2="196" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#c-ok)"/>
+          <rect x="84" y="200" width="152" height="24" rx="7" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
+          <text x="160" y="216" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#5b6840">resolves to imported fn → reachable</text>
+        </svg>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i style="background:#f7ece9;border-color:#a8472f"></i> resolves to local (wrong)</span>
+      <span><i style="background:#eef0e6;border-color:#5b6840"></i> resolves to import (correct)</span>
+      <span>serde <code>struct_.rs:67</code></span>
+    </div>
+  </section>
+
+  <section id="c2">
+    <h2><span class="tag-cc c2">C.2</span>A sibling-inner / hoisted function is absent from the calling sibling scope's map</h2>
+    <p class="cap prose">A function defined in a sibling inner scope — or hoisted in JS — never enters the scope map of the sibling scope that lexically reaches it: a nested <code>cleanup</code> called inside a <code>this.done</code> arrow before its sibling <code>function cleanup</code> declaration; serde <code>content_as_str</code> intra-file.</p>
+
+    <div class="ba">
+      <div class="panel">
+        <p class="ttl cur">Current — sibling scope cannot see the function</p>
+        <svg viewBox="0 0 320 220" role="img" aria-label="Current: cleanup defined in a sibling inner scope is not propagated to the calling sibling arrow scope, so the call misses">
+          <defs><marker id="d-fl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#a8472f"/></marker></defs>
+          <rect x="14" y="8" width="292" height="204" rx="9" fill="none" stroke="#ddd6c8" stroke-dasharray="3 3"/>
+          <text x="22" y="22" font-family="ui-monospace,monospace" font-size="8" fill="#9a9387">enclosing scope</text>
+          <!-- sibling A: arrow caller -->
+          <rect x="26" y="34" width="128" height="86" rx="8" fill="#f7ece9" stroke="#a8472f" stroke-width="1.4"/>
+          <text x="90" y="50" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">sibling · this.done arrow</text>
+          <text x="90" y="74" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">cleanup()</text>
+          <text x="90" y="92" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#a8472f">scope map: ∅</text>
+          <text x="90" y="106" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#a8472f">"cleanup" not found</text>
+          <!-- sibling B: declaration -->
+          <rect x="166" y="34" width="128" height="86" rx="8" fill="#eef0e6" stroke="#5b6840" stroke-width="1.4"/>
+          <text x="230" y="50" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">sibling · later in body</text>
+          <text x="230" y="78" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">function cleanup(){…}</text>
+          <text x="230" y="98" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5b6840">defined here</text>
+          <!-- broken link -->
+          <line x1="166" y1="77" x2="156" y2="77" stroke="#a8472f" stroke-width="1.6" stroke-dasharray="3 2" marker-end="url(#d-fl)"/>
+          <text x="160" y="135" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#a8472f">no propagation across siblings</text>
+          <line x1="90" y1="120" x2="90" y2="160" stroke="#a8472f" stroke-width="1.6" marker-end="url(#d-fl)"/>
+          <rect x="22" y="164" width="136" height="42" rx="8" fill="#f7ece9" stroke="#a8472f" stroke-width="1.5"/>
+          <text x="90" y="183" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#a8472f">MISS</text>
+          <text x="90" y="197" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">cleanup flagged dead</text>
+        </svg>
+      </div>
+      <div class="arrow"><span class="ar">&rarr;</span><span class="arl">C.2</span></div>
+      <div class="panel">
+        <p class="ttl plan">Planned — function propagated to sibling scopes that reach it</p>
+        <svg viewBox="0 0 320 220" role="img" aria-label="Planned: resolve_scope_recursive propagates the function definition into the scope maps of sibling scopes that lexically reach it, so the call binds">
+          <defs><marker id="e-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker></defs>
+          <rect x="14" y="8" width="292" height="204" rx="9" fill="none" stroke="#ddd6c8" stroke-dasharray="3 3"/>
+          <text x="22" y="22" font-family="ui-monospace,monospace" font-size="8" fill="#9a9387">enclosing scope · "cleanup" hoisted in</text>
+          <rect x="26" y="34" width="128" height="86" rx="8" fill="#eef0e6" stroke="#5b6840" stroke-width="1.4"/>
+          <text x="90" y="50" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">sibling · this.done arrow</text>
+          <text x="90" y="74" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">cleanup()</text>
+          <text x="90" y="92" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5b6840">"cleanup" → fn ✓</text>
+          <text x="90" y="106" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">propagated in</text>
+          <rect x="166" y="34" width="128" height="86" rx="8" fill="#eef0e6" stroke="#5b6840" stroke-width="1.4"/>
+          <text x="230" y="50" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">sibling · later in body</text>
+          <text x="230" y="78" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">function cleanup(){…}</text>
+          <text x="230" y="98" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5b6840">defined here</text>
+          <line x1="166" y1="77" x2="156" y2="77" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#e-ok)"/>
+          <text x="160" y="135" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5b6840">child recursion propagates fn def</text>
+          <line x1="90" y1="120" x2="90" y2="160" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#e-ok)"/>
+          <rect x="22" y="164" width="136" height="42" rx="8" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
+          <text x="90" y="183" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#5b6840">BOUND</text>
+          <text x="90" y="197" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">cleanup reachable</text>
+        </svg>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i style="background:#f7ece9;border-color:#a8472f"></i> sibling cannot reach</span>
+      <span><i style="background:#eef0e6;border-color:#5b6840"></i> propagated &amp; bound</span>
+      <span>JS function hoisting · Rust same-module items</span>
+    </div>
+
+    <div class="code">
+      <div class="fl">name_resolution.ts — resolve_scope_recursive child recursion (the propagation to add)</div>
+<pre><span class="cm">// Step 2 today layers local defs unconditionally (name_resolution.ts:191):</span>
+<span class="kw">for</span> (<span class="kw">const</span> [name, symbol_id] <span class="kw">of</span> local_defs) scope_resolutions.<span class="fn">set</span>(name, symbol_id);
+
+<span class="cm">// C.1 — do not let a self-initializer shadow its own import at the reference:</span>
+<span class="ok"><span class="kw">if</span> (!is_self_initializer_reference(name)) scope_resolutions.<span class="fn">set</span>(name, symbol_id);</span>
+
+<span class="cm">// C.2 — in child recursion, hoist a function def into sibling scopes that reach it:</span>
+<span class="ok"><span class="kw">for</span> (<span class="kw">const</span> child_id <span class="kw">of</span> scope.child_ids)</span>
+<span class="ok">  propagate_hoisted_functions(child_id, scope_resolutions, context);  <span class="cm">// JS hoist · Rust items</span></span>
+</pre>
+    </div>
+  </section>
+
+  <section id="scope">
+    <h2>The riskiest part: keep both corrections narrow</h2>
+    <div class="callout rust">
+      <span class="k">narrow scoping — correct shadowing elsewhere must be unchanged (AC #3)</span>
+      <p>C.1 applies <b>only</b> to the self-initializer case — a <code>let x = … x(…)</code> reference inside its own initializer; every other shadowing case must continue to resolve to the local.</p>
+      <p style="margin-top:8px">C.2 propagates a function only into sibling scopes that <b>lexically reach it</b>, never into unrelated scopes. Over-widening either edit reintroduces wrong bindings the corpus depends on.</p>
+    </div>
+    <div class="callout olive">
+      <span class="k">confinement (AC #4)</span>
+      <p>Both corrections live entirely in <code>resolve_references/name_resolution.ts</code> — Step-2 layering and <code>resolve_scope_recursive</code>. No other file changes.</p>
+    </div>
+  </section>
+
+  <section id="ac">
+    <h2>Acceptance — what proves the change</h2>
+    <ol class="acs">
+      <li><span class="n">1</span><div><code>Project</code> + <code>update_file</code>: a serde-style <code>let x = … x(…)</code> self-initializer resolves the call to the <b>imported function</b>, not the local binding.</div></li>
+      <li><span class="n">2</span><div>A nested function called before its sibling declaration (nest-style hoisting) resolves to the function definition.</div></li>
+      <li class="risk"><span class="n">3</span><div><b>Correct shadowing in non-self-initializer cases is unchanged</b> — the ordering fix is scoped to the self-initializer.</div></li>
+      <li><span class="n">4</span><div>Both corrections are confined to <code>resolve_references/name_resolution.ts</code> (Step-2 and <code>resolve_scope_recursive</code>).</div></li>
+    </ol>
+  </section>
+
+  <footer>
+    Both edits in resolve_references/name_resolution.ts — C.1 Step-2 layering (lines 191–196) · C.2 resolve_scope_recursive child recursion · evidence: serde struct_.rs:67, content_as_str intra-file · sequenced 3rd of A→B→C
+  </footer>
+
+</main>
+
+<script>
+  (function(){
+    var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+    var map = {};
+    links.forEach(function(a){ map[a.getAttribute('href').slice(1)] = a; });
+    var obs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(e.isIntersecting){
+          links.forEach(function(l){ l.classList.remove('active'); });
+          var a = map[e.target.id]; if(a) a.classList.add('active');
+        }
+      });
+    }, {rootMargin:'-15% 0px -75% 0px'});
+    document.querySelectorAll('main section[id]').forEach(function(s){ obs.observe(s); });
+  })();
+</script>
+</body>
+</html>
