@@ -513,6 +513,48 @@ describe("Project Integration - Rust", () => {
       );
     });
 
+    it("resolves an inline module-qualified call (worker::create) over a same-name local shadow", async () => {
+      const file = file_path("modules/inline_qualified.rs");
+      project.update_file(file, load_source("modules/inline_qualified.rs"));
+
+      const index = project.get_index_single_file(file)!;
+      const functions = Array.from(index.functions.values());
+      // Two `create` functions: the module one and the local shadow.
+      const module_create = functions.find(
+        (f) => f.name === ("create" as SymbolName) && f.location.start_line === 6
+      );
+      const local_create = functions.find(
+        (f) => f.name === ("create" as SymbolName) && f.location.start_line === 12
+      );
+      expect(module_create).toBeDefined();
+      expect(local_create).toBeDefined();
+
+      const call_graph = project.get_call_graph();
+      const run_node = Array.from(call_graph.nodes.values()).find(
+        (n) =>
+          project.definitions.get(n.symbol_id)?.name === ("run" as SymbolName)
+      );
+      expect(run_node).toBeDefined();
+
+      const create_calls = run_node!.enclosed_calls.filter(
+        (c) => c.name === ("create" as SymbolName)
+      );
+      expect(create_calls.length).toBe(2);
+
+      // Bare create() (line 18) binds to the local shadow.
+      const bare_targets = create_calls
+        .filter((c) => c.location.start_line === 18)
+        .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
+      expect(bare_targets).toEqual([local_create!.symbol_id]);
+
+      // worker::create() (line 20) binds to the MODULE function via the module
+      // body scope — the qualifier overrides the same-name local shadow.
+      const qualified_targets = create_calls
+        .filter((c) => c.location.start_line === 20)
+        .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
+      expect(qualified_targets).toEqual([module_create!.symbol_id]);
+    });
+
     it("resolves a type-qualified associated function (Parker::make) via the member index", async () => {
       const af_file = file_path("modules/associated_fn.rs");
       project.update_file(af_file, load_source("modules/associated_fn.rs"));

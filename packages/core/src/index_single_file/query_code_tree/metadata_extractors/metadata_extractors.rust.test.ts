@@ -1398,12 +1398,14 @@ impl MyStruct {
     });
 
     it("returns undefined for an unqualified call (no path prefix)", () => {
+      // A bare call is captured as the callee `identifier` (rust.scm), so that
+      // is the node the builder hands the extractor.
       const code = "func()";
       const tree = parser.parse(code);
-      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+      const callee = tree.rootNode.descendantsOfType("identifier")[0];
 
       const result = RUST_METADATA_EXTRACTORS.extract_call_path_prefix!(
-        call_expr,
+        callee,
         "function",
       );
 

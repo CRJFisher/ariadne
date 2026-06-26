@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Change A · 349.1 — Rust qualified calls: producer + function-call resolution</title>
+<title>349.1 — Rust qualified calls: terminal name + path_prefix resolution</title>
 <style>
   :root{
     --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
@@ -94,6 +94,7 @@
   .acs li{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start;font-size:13.5px;background:var(--paper);border:1px solid var(--g200);border-radius:9px;padding:10px 13px}
   .acs .n{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ivory);background:var(--olive);border-radius:6px;width:24px;height:22px;display:flex;align-items:center;justify-content:center}
   .acs li.risk .n{background:var(--rust)}
+  .acs li.partial .n{background:var(--clay)}
   .acs code{font-size:.9em}
   @media(max-width:860px){.ba{grid-template-columns:1fr}.ba .arrow{flex-direction:row;padding:8px 0}.ba .arrow .arl{writing-mode:horizontal-tb;margin:0 0 0 6px}.ba .panel:last-child{border-left:1px solid var(--g200);border-radius:0 0 var(--r) var(--r)}.ba .panel:first-child{border-radius:var(--r) var(--r) 0 0}}
   footer{font-family:var(--mono);font-size:10.5px;color:var(--g400);margin-top:56px;border-top:1px solid var(--g200);padding-top:14px;line-height:1.7}
@@ -127,19 +128,19 @@
 <main>
 
   <p class="eyebrow">Change A · sub-task 349.1 · first of A · producer + function-call resolution (one atomic unit)</p>
-  <h1>A scoped Rust call carries its whole path as the name — reducing it to the terminal alone regresses shadowing, so the resolver ships with it</h1>
+  <h1>A scoped Rust call carries its qualifier as data — reduced to a terminal name, with the path honoured at resolution</h1>
 
   <div class="meta">
-    <span class="chip rust"><strong>worker::create</strong> name = full path text</span>
-    <span class="chip"><strong>2</strong> producers · 2 consumers</span>
+    <span class="chip olive"><strong>worker::create</strong> → name create + prefix ["worker"]</span>
+    <span class="chip"><strong>2</strong> producers · 1 consumer</span>
     <span class="chip clay"><strong>path_prefix</strong> held apart from property_chain</span>
-    <span class="chip olive"><strong>Shadowing</strong> regression guard</span>
+    <span class="chip olive"><strong>3</strong> qualifier resolution paths</span>
   </div>
-  <p class="cap prose"><code>worker::create(7)</code>, <code>Parker::make(5)</code> and <code>Cell::&lt;u8&gt;::make()</code> reach Phase-1 as the full path text; the scope map holds only bare terminal names, so every one misses with <code>name_not_in_scope</code>.</p>
+  <p class="cap prose">The reference builder reduces <code>worker::create(7)</code> to the bare name <code>create</code> and records the dropped path on <code>path_prefix</code>; call resolution binds the terminal <b>under its qualifier</b> — even where a same-name local would shadow it.</p>
 
   <section id="shadow">
     <h2>The crux: the producer alone is not landable — it regresses shadowing</h2>
-    <p class="cap prose">Reducing <code>utils::helper()</code> to the bare name <code>helper</code> makes it indistinguishable from a local <code>helper()</code>. In the <code>shadowing.rs</code> fixture a local <code>fn helper</code> shadows <code>use utils::{helper}</code> — so the qualified call collapses onto the local shadow. The path-prefix resolver that honours the qualifier is what keeps them apart; the two are one task.</p>
+    <p class="cap prose">Reducing <code>utils::helper()</code> to the bare name <code>helper</code> makes it indistinguishable from a local <code>helper()</code>, so the qualified call collapses onto the local shadow — the path-prefix resolver keeps them apart, and the two ship as one task.</p>
 
     <div class="ba">
       <div class="panel">
@@ -149,11 +150,11 @@
           <rect x="14" y="8" width="148" height="46" rx="8" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.4"/>
           <text x="88" y="26" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">use utils::{helper}</text>
           <text x="88" y="40" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">import</text>
-          <text x="88" y="50" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">(2 expected calls)</text>
+          <text x="88" y="50" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">(qualified call belongs here)</text>
           <rect x="168" y="8" width="148" height="46" rx="8" fill="#f7ece9" stroke="#a8472f" stroke-width="1.4"/>
           <text x="242" y="26" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">fn helper()</text>
           <text x="242" y="40" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">local shadow</text>
-          <text x="242" y="50" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#a8472f">(2 real calls)</text>
+          <text x="242" y="50" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#a8472f">(2 bare calls)</text>
           <rect x="60" y="78" width="210" height="40" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
           <text x="165" y="94" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">utils::helper() reduced to</text>
           <text x="165" y="110" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" font-weight="700" fill="#a8472f">bare "helper"</text>
@@ -190,7 +191,7 @@
           <line x1="100" y1="118" x2="140" y2="140" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#aho)"/>
           <rect x="44" y="144" width="242" height="40" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
           <text x="165" y="160" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">prefix present → resolve via path first</text>
-          <text x="165" y="175" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">utils module → helper export · bare → local</text>
+          <text x="165" y="175" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">utils import → helper target · bare → local</text>
           <line x1="165" y1="184" x2="165" y2="206" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#aho)"/>
           <rect x="46" y="210" width="238" height="34" rx="8" fill="#eef0e6" stroke="#5b6840" stroke-width="1.4"/>
           <text x="165" y="227" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" font-weight="700" fill="#5b6840">helper-call count stays 2</text>
@@ -205,16 +206,16 @@
     </div>
     <div class="callout slate">
       <span class="k">why they are one task — not independently landable</span>
-      <p>A prototype proved the name reduction alone flips <code>project.rust.integration.test.ts &gt; Shadowing</code> red (helper-call count <code>2 → 3</code>). The producer's terminal-name reduction is only correct <b>with</b> the path-prefix resolver that honours the qualifier — so 349.1 ships both. <b>Constructors</b> have no such regression and are split off: <a href="task-349.4 - Link-Rust-associated-new-constructors-and-substitute-Self-so-Type-new-resolves-to-the-constructor.constructor-linking.html" style="color:#c9a25a">349.4 links Rust new()</a>, <a href="task-349.5 - Resolve-inline-full-path-Rust-constructors-via-path-prefix-type-walking.path-walk-constructors.html" style="color:#c9a25a">349.5 walks inline full paths</a>.</p>
+      <p>A prototype proved the name reduction alone flips <code>project.rust.integration.test.ts &gt; Shadowing</code> red (helper-call count <code>2 → 3</code>). The producer's terminal-name reduction is correct only <b>with</b> the path-prefix resolver that honours the qualifier — so 349.1 ships both. <b>Constructors</b> have no such regression and are split off: <a href="task-349.4 - Link-Rust-associated-new-constructors-and-substitute-Self-so-Type-new-resolves-to-the-constructor.constructor-linking.html" style="color:#c9a25a">349.4 links Rust new()</a>, <a href="task-349.5 - Resolve-inline-full-path-Rust-constructors-via-path-prefix-type-walking.path-walk-constructors.html" style="color:#c9a25a">349.5 walks inline full paths</a>.</p>
     </div>
   </section>
 
   <section id="crux">
     <h2>Where name is born — the reference builder, one altitude above Phase-1</h2>
-    <p class="cap prose">By the time Phase-1 runs, <code>name</code> already equals <code>"worker::create"</code> — a string no bare-name scope map can hold. The fix belongs in the reference builder, where <code>name</code> is first assigned.</p>
+    <p class="cap prose">By the time Phase-1 runs, <code>name</code> already equalled <code>"worker::create"</code> — a string no bare-name scope map can hold. The reduction lives in the reference builder, where <code>name</code> is first assigned.</p>
 
     <div class="diagram">
-      <svg viewBox="0 0 760 200" role="img" aria-label="Producer flow: a Rust scoped_identifier reaches extract_call_name which today returns undefined for a bare scoped_identifier, so the capture.text fallback leaks the whole path; Change A adds branches that return the terminal name and a separate path-prefix extractor, attached in references.ts">
+      <svg viewBox="0 0 760 200" role="img" aria-label="Producer flow: a Rust scoped_identifier reaches extract_call_name which now returns the terminal name field for a bare scoped_identifier and the bare type field for a generic_type; a separate extract_call_path_prefix carries the qualifier, attached on the function-call and constructor-call cases in references.ts">
         <defs>
           <marker id="p-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker>
           <marker id="p-rs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#a8472f"/></marker>
@@ -224,43 +225,43 @@
           <text x="91" y="94" text-anchor="middle" font-size="9.5" fill="#2b2a28">worker::create(7)</text>
           <text x="91" y="108" text-anchor="middle" font-size="8" fill="#5f594f">scoped_identifier</text>
           <line x1="166" y1="99" x2="202" y2="99" stroke="#9a9387" stroke-width="1.4" marker-end="url(#p-ok)"/>
-          <rect x="204" y="68" width="176" height="62" rx="9" fill="#fffdf8" stroke="#ddd6c8"/>
-          <text x="292" y="86" text-anchor="middle" font-size="9" font-weight="700" fill="#2b2a28">extract_call_name :766</text>
-          <text x="292" y="100" text-anchor="middle" font-size="8" fill="#a8472f">today: undefined for scoped_id</text>
-          <text x="292" y="112" text-anchor="middle" font-size="8" fill="#5b6840">add: scoped_identifier → name field</text>
-          <text x="292" y="122" text-anchor="middle" font-size="8" fill="#5b6840">generic_type → type field (turbofish)</text>
-          <line x1="380" y1="86" x2="416" y2="70" stroke="#a8472f" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#p-rs)"/>
+          <rect x="204" y="64" width="176" height="70" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.4"/>
+          <text x="292" y="82" text-anchor="middle" font-size="9" font-weight="700" fill="#5b6840">extract_call_name :794</text>
+          <text x="292" y="96" text-anchor="middle" font-size="8" fill="#5b6840">scoped_identifier → name field</text>
+          <text x="292" y="108" text-anchor="middle" font-size="8" fill="#5b6840">generic_type → type field (turbofish)</text>
+          <text x="292" y="122" text-anchor="middle" font-size="8" fill="#a8472f">bare identifier → undefined (Self kept)</text>
+          <line x1="380" y1="84" x2="416" y2="62" stroke="#a8472f" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#p-rs)"/>
           <line x1="380" y1="112" x2="416" y2="128" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#p-ok)"/>
-          <rect x="418" y="40" width="160" height="40" rx="8" fill="#f7ece9" stroke="#a8472f" stroke-width="1.4"/>
-          <text x="498" y="58" text-anchor="middle" font-size="8.5" font-weight="700" fill="#a8472f">capture.text fallback</text>
-          <text x="498" y="70" text-anchor="middle" font-size="8" fill="#5f594f">"worker::create" — removed</text>
-          <rect x="418" y="118" width="160" height="44" rx="8" fill="#f0ece2" stroke="#7a4636" stroke-width="1.4"/>
-          <text x="498" y="136" text-anchor="middle" font-size="8.5" font-weight="700" fill="#7a4636">extract_call_path_prefix</text>
-          <text x="498" y="148" text-anchor="middle" font-size="8" fill="#5f594f">new fn, separate from</text>
-          <text x="498" y="158" text-anchor="middle" font-size="8" fill="#5f594f">extract_property_chain :292</text>
-          <line x1="578" y1="140" x2="614" y2="120" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#p-ok)"/>
-          <line x1="578" y1="60" x2="614" y2="100" stroke="#9a9387" stroke-width="1.3" stroke-dasharray="3 3"/>
-          <rect x="616" y="80" width="132" height="50" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
-          <text x="682" y="100" text-anchor="middle" font-size="9" font-weight="700" fill="#5b6840">references.ts</text>
-          <text x="682" y="113" text-anchor="middle" font-size="8" fill="#5f594f">attach via ?. (Rust-only)</text>
-          <text x="682" y="123" text-anchor="middle" font-size="8" fill="#5f594f">FUNCTION_CALL :592</text>
+          <rect x="418" y="36" width="160" height="40" rx="8" fill="#eef0e6" stroke="#5b6840" stroke-width="1.4"/>
+          <text x="498" y="54" text-anchor="middle" font-size="8.5" font-weight="700" fill="#5b6840">terminal name "create"</text>
+          <text x="498" y="66" text-anchor="middle" font-size="8" fill="#5f594f">bare-name scope can hold it</text>
+          <rect x="418" y="118" width="160" height="48" rx="8" fill="#f0ece2" stroke="#7a4636" stroke-width="1.4"/>
+          <text x="498" y="136" text-anchor="middle" font-size="8.5" font-weight="700" fill="#7a4636">extract_call_path_prefix :877</text>
+          <text x="498" y="148" text-anchor="middle" font-size="8" fill="#5f594f">new fn on scoped_path_segments</text>
+          <text x="498" y="160" text-anchor="middle" font-size="8" fill="#5f594f">≠ extract_property_chain :320</text>
+          <line x1="578" y1="142" x2="614" y2="122" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#p-ok)"/>
+          <line x1="578" y1="56" x2="614" y2="100" stroke="#6c7a4a" stroke-width="1.3" stroke-dasharray="3 3"/>
+          <rect x="616" y="78" width="132" height="56" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
+          <text x="682" y="98" text-anchor="middle" font-size="9" font-weight="700" fill="#5b6840">references.ts :592</text>
+          <text x="682" y="111" text-anchor="middle" font-size="8" fill="#5f594f">attach via ?. (Rust-only)</text>
+          <text x="682" y="123" text-anchor="middle" font-size="8" fill="#5f594f">fn :600 / ctor :629</text>
         </g>
       </svg>
     </div>
     <div class="legend">
-      <span><i style="background:#f7ece9;border-color:#a8472f"></i> removed fallback (Rust qualified calls)</span>
+      <span><i style="background:#eef0e6;border-color:#5b6840"></i> terminal name (bare-name scope can bind)</span>
       <span><i style="background:#f0ece2;border-color:#7a4636"></i> new path-prefix extractor</span>
       <span><i class="edge"></i> terminal name + prefix attached</span>
     </div>
     <div class="callout">
       <span class="k">why the TS/JS fallback is untouched — no TS/JS regression</span>
-      <p>The <code>capture.text</code> fallback switch (<code>references.ts</code> ~563) only handles TS/JS <code>call_expression</code> / <code>new_expression</code>, so the terminal-name refinement leaves it inert for those — only Rust qualified calls change. <b>Do not</b> add a bare-<code>identifier</code> branch: the test "returns undefined for non-call nodes" depends on a bare <code>x</code> staying <code>undefined</code>.</p>
+      <p>The <code>capture.text</code> fallback in <code>references.ts</code> only handles TS/JS <code>call_expression</code> / <code>new_expression</code>, so only Rust qualified calls change. A bare <code>identifier</code> is left unhandled by <code>extract_call_name</code>, so it returns <code>undefined</code> and the fallback preserves <code>Self</code> / <code>Config</code>.</p>
     </div>
   </section>
 
   <section id="capture">
     <h2>The producer branches on the captured node — six shapes, one query</h2>
-    <p class="cap prose">No <code>.scm</code> edit is needed: every in-scope form is already captured (with the wrong name). The producer branches on the actual <code>capture.node.type</code> handed to the builder.</p>
+    <p class="cap prose">No <code>.scm</code> edit is needed: every in-scope form is already captured. The producer branches on the actual <code>capture.node.type</code> handed to the builder.</p>
     <div class="fieldtbl">
       <table>
         <thead><tr><th>Source</th><th>Capture (rust.scm)</th><th>node.type to builder</th></tr></thead>
@@ -303,7 +304,7 @@
         </tbody>
       </table>
     </div>
-    <p class="cap prose">The outer-turbofish form is a real <code>.scm</code> gap (the <code>generic_function</code> rule matches only <code>function: (identifier)</code>) but is in no acceptance criterion — tracked as a separate query-gap follow-up, not blocking this task.</p>
+    <p class="cap prose">The outer-turbofish form remains an uncaptured <code>.scm</code> gap (the <code>generic_function</code> rule matches only <code>function: (identifier)</code>) — tracked as a separate query-gap follow-up, in no acceptance criterion here.</p>
   </section>
 
   <section id="fields">
@@ -327,7 +328,7 @@
       </table>
     </div>
     <div class="code">
-      <div class="fl">metadata_extractors.rust.ts — extract_call_path_prefix, separate from extract_property_chain (line 292)</div>
+      <div class="fl">metadata_extractors.rust.ts — extract_call_path_prefix (:877), built on the shared scoped_path_segments helper, separate from extract_property_chain (:320)</div>
 <pre><span class="cm">// "function" mode drops the terminal segment:</span>
 <span class="ok">extract_call_path_prefix(<span class="str">worker::create</span>, <span class="str">"function"</span>)    <span class="cm">// → ["worker"]</span></span>
 <span class="cm">// "constructor" mode keeps the full type path (type-last):</span>
@@ -335,91 +336,108 @@
                                        <span class="cm">// → ["crate","runtime","Driver"]</span></span>
 <span class="ok">extract_call_path_prefix(<span class="str">Cell::&lt;u8&gt;</span>, <span class="str">"constructor"</span>)   <span class="cm">// → ["Cell"]  turbofish stripped</span></span>
 
-<span class="cm">// extract_property_chain :292 stays byte-for-byte identical — it returns the</span>
-<span class="cm">// FULL chain including the terminal and is asserted by its own tests (AC #2).</span>
+<span class="cm">// scoped_path_segments flattens nested scoped paths and strips the turbofish</span>
+<span class="cm">// at every level; extract_property_chain :320 is untouched (full chain, AC #2).</span>
 </pre>
     </div>
-    <p class="cap prose"><code>FunctionCallReference</code> has no <code>property_chain</code> field today; <code>ConstructorCallReference.property_chain</code> stays unset for Rust. The field is additive — no schema bump (per project memory <code>project_plan_pipeline_no_schema_bumps</code>).</p>
+    <p class="cap prose"><code>FunctionCallReference</code> has no <code>property_chain</code> field; <code>ConstructorCallReference.path_prefix</code> is produced now but consumed by 349.4 / 349.5. The field is additive — no schema bump (per project memory <code>project_plan_pipeline_no_schema_bumps</code>).</p>
   </section>
 
   <section id="resolve">
     <h2>Function-call resolution — resolve via the path first, honour the qualifier</h2>
-    <p class="cap prose">When <code>ref.path_prefix</code> is present, resolve via the path first (the author wrote the qualifier), falling back to the bare terminal only on a path miss — sound by construction, avoiding the unsound global <code>get_definitions_by_name</code> ambiguity scan.</p>
+    <p class="cap prose">When <code>ref.path_prefix</code> is non-empty, <code>resolve_function_call</code> (:324) calls <code>resolve_via_path_prefix</code> (:55) <b>before</b> any bare lookup; on a path miss it falls back to the bare terminal. A leading <code>crate</code>/<code>self</code>/<code>super</code> anchor is stripped first.</p>
 
     <div class="diagram">
-      <svg viewBox="0 0 760 240" role="img" aria-label="Function-call resolution decision flow: when path_prefix is present, branch on module-qualified versus type-qualified; module-qualified resolves the leading segment to a mod or use module then the terminal as that module's export, binding the import over a local shadow; type-qualified resolves the leading segment to a type then looks up the terminal in the member index, bypassing the method-rejection gate only when path_prefix is non-empty">
+      <svg viewBox="0 0 760 300" role="img" aria-label="Function-call resolution: a non-empty path_prefix routes to resolve_via_path_prefix, which tries three qualifier paths in order — type-qualified associated function via the member index with a callable guard, module-qualified to an in-scope mod via the module body scope, and module-qualified via a matching use import with segment-wise path matching and in-scope collision detection. On a path miss it falls back to bare resolution, where a bare call still hits the method-rejection gate.">
         <defs>
           <marker id="r-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker>
           <marker id="r-cl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#b9794f"/></marker>
+          <marker id="r-rs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#a8472f"/></marker>
         </defs>
-        <rect x="16" y="98" width="140" height="46" rx="9" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.5"/>
-        <text x="86" y="118" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">resolve_function_call</text>
-        <text x="86" y="132" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">path_prefix present?</text>
-        <path d="M256 78 L330 121 L256 164 L182 121 Z" fill="#fffdf8" stroke="#b9794f" stroke-width="1.5"/>
-        <text x="256" y="116" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">leading seg</text>
-        <text x="256" y="128" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">is module or type?</text>
-        <line x1="156" y1="121" x2="182" y2="121" stroke="#b9794f" stroke-width="1.4" marker-end="url(#r-cl)"/>
-        <line x1="256" y1="78" x2="256" y2="52" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#r-ok)"/>
-        <text x="268" y="66" font-family="ui-monospace,monospace" font-size="8.5" fill="#6c7a4a">module</text>
-        <rect x="356" y="26" width="246" height="52" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
-        <text x="479" y="44" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" font-weight="700" fill="#5b6840">module-qualified · worker::create</text>
-        <text x="479" y="58" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">leading → mod/use module, terminal → its export</text>
-        <text x="479" y="70" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5b6840">utils::helper binds the IMPORT over the local shadow</text>
-        <line x1="330" y1="100" x2="356" y2="60" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#r-ok)"/>
-        <line x1="256" y1="164" x2="256" y2="190" stroke="#b9794f" stroke-width="1.5" marker-end="url(#r-cl)"/>
-        <text x="268" y="180" font-family="ui-monospace,monospace" font-size="8.5" fill="#b9794f">type</text>
-        <rect x="120" y="194" width="282" height="42" rx="9" fill="#f0ece2" stroke="#7a4636" stroke-width="1.5"/>
-        <text x="261" y="212" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" font-weight="700" fill="#7a4636">type-qualified · Parker::make</text>
-        <text x="261" y="225" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">leading → type, terminal → member_index.get(type_id)</text>
-        <line x1="402" y1="215" x2="436" y2="215" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#r-ok)"/>
-        <rect x="438" y="190" width="164" height="50" rx="9" fill="#f7eee6" stroke="#b9794f" stroke-width="1.5"/>
-        <text x="520" y="208" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" font-weight="700" fill="#b9794f">bypass method-reject gate</text>
-        <text x="520" y="221" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">function_call.ts:53 — ONLY when</text>
-        <text x="520" y="232" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#a8472f">path_prefix non-empty (bare make() still rejected)</text>
-        <rect x="620" y="98" width="128" height="60" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
-        <text x="684" y="120" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#5b6840">bound</text>
-        <text x="684" y="134" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">crate/self/super</text>
-        <text x="684" y="145" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">normalized first</text>
-        <line x1="602" y1="52" x2="660" y2="96" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#r-ok)"/>
-        <line x1="602" y1="208" x2="664" y2="158" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#r-ok)"/>
+        <g font-family="ui-monospace,monospace">
+          <rect x="14" y="124" width="148" height="52" rx="9" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.5"/>
+          <text x="88" y="145" text-anchor="middle" font-size="9.5" font-weight="700" fill="#2b2a28">resolve_function_call</text>
+          <text x="88" y="159" text-anchor="middle" font-size="8" fill="#5f594f">path_prefix non-empty?</text>
+          <text x="88" y="170" text-anchor="middle" font-size="8" fill="#5f594f">strip crate/self/super</text>
+
+          <line x1="162" y1="150" x2="194" y2="150" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#r-ok)"/>
+          <text x="178" y="143" text-anchor="middle" font-size="8" fill="#6c7a4a">yes</text>
+          <rect x="196" y="116" width="150" height="68" rx="9" fill="#fffdf8" stroke="#7a4636" stroke-width="1.5"/>
+          <text x="271" y="135" text-anchor="middle" font-size="9" font-weight="700" fill="#7a4636">resolve_via_path_prefix</text>
+          <text x="271" y="149" text-anchor="middle" font-size="8" fill="#5f594f">resolve(scope, qualifier)</text>
+          <text x="271" y="161" text-anchor="middle" font-size="8" fill="#5f594f">try 3 paths in order;</text>
+          <text x="271" y="172" text-anchor="middle" font-size="8" fill="#5f594f">first hit wins</text>
+
+          <line x1="346" y1="130" x2="396" y2="46" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#r-ok)"/>
+          <line x1="346" y1="150" x2="396" y2="150" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#r-ok)"/>
+          <line x1="346" y1="170" x2="396" y2="252" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#r-ok)"/>
+
+          <rect x="398" y="20" width="354" height="56" rx="9" fill="#f0ece2" stroke="#7a4636" stroke-width="1.5"/>
+          <text x="408" y="38" font-size="8.5" font-weight="700" fill="#7a4636">1 · type-qualified · Parker::make</text>
+          <text x="408" y="51" font-size="8" fill="#5f594f">qualifier kind=class → member_index.get(type_id).get(make)</text>
+          <text x="408" y="63" font-size="8" fill="#a8472f">is_callable_definition guard — Type::field() cannot bind a property</text>
+          <text x="408" y="73" font-size="7.5" fill="#5f594f">associated fns are kind:"method" — the bare gate is never reached on this path</text>
+
+          <rect x="398" y="122" width="354" height="56" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
+          <text x="408" y="140" font-size="8.5" font-weight="700" fill="#5b6840">2 · module-qualified to a mod in scope · worker::create</text>
+          <text x="408" y="153" font-size="8" fill="#5f594f">qualifier kind=namespace → resolve_in_module_body(defining_scope)</text>
+          <text x="408" y="165" font-size="8" fill="#5b6840">named module-type child scope → terminal in its definitions</text>
+          <text x="408" y="175" font-size="7.5" fill="#5f594f">binds with NO use, over a same-name local shadow (inline_qualified.rs)</text>
+
+          <rect x="398" y="224" width="354" height="60" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
+          <text x="408" y="242" font-size="8.5" font-weight="700" fill="#5b6840">3 · module-qualified via use import · utils::helper</text>
+          <text x="408" y="255" font-size="8" fill="#5f594f">walk scope chain → use whose terminal = name AND import_path</text>
+          <text x="408" y="267" font-size="8" fill="#5f594f">matches prefix segment-wise → resolve_export_chain (cross-file)</text>
+          <text x="408" y="278" font-size="7.5" fill="#a8472f">2 distinct in-scope matches = ambiguous collision → miss (not first-won)</text>
+
+          <line x1="271" y1="184" x2="271" y2="252" stroke="#a8472f" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#r-rs)"/>
+          <text x="283" y="222" font-size="8" fill="#a8472f">path miss</text>
+          <rect x="150" y="254" width="200" height="42" rx="9" fill="#f7ece9" stroke="#a8472f" stroke-width="1.4"/>
+          <text x="250" y="271" text-anchor="middle" font-size="8.5" font-weight="700" fill="#a8472f">fall back to bare resolution</text>
+          <text x="250" y="284" text-anchor="middle" font-size="8" fill="#5f594f">find_function_resolution :229 — method-reject gate :302</text>
+        </g>
       </svg>
     </div>
     <div class="legend">
-      <span><i style="background:#eef0e6;border-color:#5b6840"></i> module-qualified path</span>
-      <span><i style="background:#f0ece2;border-color:#7a4636"></i> type-qualified path</span>
-      <span><i style="background:#f7eee6;border-color:#b9794f"></i> gate bypass guarded by prefix</span>
+      <span><i style="background:#f0ece2;border-color:#7a4636"></i> type-qualified (member index)</span>
+      <span><i style="background:#eef0e6;border-color:#5b6840"></i> module-qualified (mod body / use import)</span>
+      <span><i style="background:#f7ece9;border-color:#a8472f"></i> path miss → bare fallback</span>
     </div>
 
     <div class="callout rust">
       <span class="k">collision safety — the prefix is enforced, not assumed (AC #5, #6)</span>
-      <p>The retained <code>path_prefix</code> is the disambiguating guard. When the terminal is ambiguous (a local shadow, or two in-scope modules/types exposing the same name) the prefix selects the target — evaluated <b>in scope</b>, not via a global name scan, because the single-valued <code>by_scope</code> map collapses same-name bindings.</p>
-      <p style="margin-top:8px">A bare unqualified call (no <code>path_prefix</code>) resolves exactly as before — the gate is bypassed <b>only</b> when <code>path_prefix</code> is non-empty.</p>
-      <p style="margin-top:8px">Same-crate alias hops (<code>use ll::Semaphore</code>) ride this path only when the leading segment resolves through a same-crate <code>use</code>/type alias; a cross-file re-export is <code>import_resolution</code> — bail rather than fabricate an edge.</p>
+      <p>Ambiguity is evaluated <b>in scope</b>, not via a global name scan: the single-valued <code>by_scope</code> map collapses same-name bindings, so the import path is matched segment-wise and two distinct in-scope matches are treated as a collision (a miss), never silently first-won.</p>
+      <p style="margin-top:8px">The bare <code>find_function_resolution</code> path is unchanged: a type-qualified associated function (<code>kind:"method"</code>) binds inside <code>resolve_via_path_prefix</code> and returns before the method-rejection gate is reached, while a bare <code>make()</code> still hits that gate. The path-prefix lookup additionally requires the matched member to be callable (<code>is_callable_definition</code>).</p>
     </div>
     <div class="callout">
       <span class="k">excluded — the TS static-dispatch row (epic AC #5)</span>
-      <p><code>LanguageServiceTestEnv.setup()</code> is captured as a <code>MethodCallReference</code> (<code>is_method_call</code> returns true for a <code>member_expression</code> callee) on the method-lookup lane — it shares no mechanism with the terminal-name path. <b>Excluded to <code>method_lookup</code></b>, not folded here.</p>
+      <p><code>LanguageServiceTestEnv.setup()</code> is captured as a <code>MethodCallReference</code> (<code>is_method_call</code> returns true for a <code>member_expression</code> callee) on the method-lookup lane — it shares no mechanism with the terminal-name path, and is handled in <code>method_lookup</code>, not here.</p>
     </div>
   </section>
 
   <section id="ac">
     <h2>Acceptance — what proves the change</h2>
     <ol class="acs">
-      <li><span class="n">1</span><div><b>Extraction:</b> <code>worker::create</code> → name <code>create</code>, prefix <code>["worker"]</code>; <code>crate::runtime::Driver::new</code> → constructor name <code>Driver</code>, prefix <code>["crate","runtime","Driver"]</code>; <code>Cell::&lt;u8&gt;::new</code> → name <code>Cell</code>, turbofish stripped.</div></li>
-      <li><span class="n">2</span><div>All existing <code>extract_call_name</code> / <code>extract_property_chain</code> cases stay green; new <code>extract_call_name</code> and <code>extract_call_path_prefix</code> cases assert terminal-name and prefix behaviour directly.</div></li>
-      <li><span class="n">3</span><div><b>Module-qualified:</b> <code>worker::create(7)</code> resolves <code>create</code> in the <code>worker</code> module — reachable, not an entry point.</div></li>
-      <li><span class="n">4</span><div><b>Type-qualified:</b> <code>Parker::make(5)</code> resolves to <code>make</code> in <code>Parker</code>'s member index.</div></li>
-      <li class="risk"><span class="n">5</span><div><b>Regression guard:</b> <code>project.rust.integration.test.ts &gt; Shadowing</code> stays green — bare <code>helper()</code> resolves to the local, <code>utils::helper()</code> to the <b>import</b>; the reduction does not collapse the qualified call onto the shadow.</div></li>
-      <li><span class="n">6</span><div><b>Bare call unchanged:</b> an unqualified call (no <code>path_prefix</code>) resolves exactly as before — the method-rejection gate is bypassed only when <code>path_prefix</code> is non-empty.</div></li>
+      <li><span class="n">1</span><div><b>Extraction:</b> <code>worker::create</code> → name <code>create</code>, prefix <code>["worker"]</code>; <code>crate::runtime::Driver::new</code> → constructor name <code>Driver</code>, prefix <code>["crate","runtime","Driver"]</code>; <code>Cell::&lt;u8&gt;::new</code> → name <code>Cell</code>, turbofish stripped. <span style="color:var(--g400)">index_single_file.rust.test.ts + extract_call_name / extract_call_path_prefix units.</span></div></li>
+      <li><span class="n">2</span><div>All existing <code>extract_call_name</code> / <code>extract_property_chain</code> cases stay green; <code>extract_property_chain</code> is unchanged.</div></li>
+      <li><span class="n">3</span><div><b>Module-qualified:</b> <code>worker::create(7)</code> resolves <code>create</code> in the <code>worker</code> module — reachable, not an entry point. <span style="color:var(--g400)">fixtures worker.rs + uses_worker.rs.</span></div></li>
+      <li><span class="n">4</span><div><b>Type-qualified:</b> <code>Parker::make(5)</code> resolves to <code>make</code> in <code>Parker</code>'s member index. <span style="color:var(--g400)">fixture associated_fn.rs.</span></div></li>
+      <li class="risk"><span class="n">5</span><div><b>Regression guard:</b> <code>project.rust.integration.test.ts &gt; Shadowing</code> green — the two bare <code>helper()</code> calls resolve to the local <code>fn helper</code>, while <code>utils::helper()</code> resolves to the <b>import</b> in <code>utils.rs</code> via the matching <code>use</code>.</div></li>
+      <li><span class="n">6</span><div><b>Bare call unchanged:</b> an unqualified call (no <code>path_prefix</code>) takes the bare path exactly as before — the qualifier lookup and the callable guard live strictly inside the <code>path_prefix.length &gt; 0</code> branch.</div></li>
+      <li class="partial"><span class="n">7</span><div><b>Evidence shapes (partial, by design):</b> the cluster's module- and type-qualified shapes are reproduced as fixtures and verified end-to-end; the literal sqlx/tokio corpus flip + indexed-file-set confirmation is a corpus-rerun verification step that remains the closing check.</div></li>
     </ol>
+    <div class="callout olive">
+      <span class="k">also verified — inline mod with no use</span>
+      <p><code>inline_qualified.rs</code> exercises <code>mod worker { fn create } / fn create / worker::create()</code>: bare <code>create()</code> binds the local shadow, <code>worker::create()</code> binds the module function via the module body scope — the <code>no-use</code> module-qualified path.</p>
+    </div>
     <div class="callout slate">
       <span class="k">where 349.1 sits in Change A — and what comes next</span>
-      <p>349.1 ships the producer plus function-call resolution as one unit (the shadowing guard forces it). Constructors follow as separable root causes with no regression of their own: <b>349.4</b> links Rust <code>new()</code> + <code>Self</code> substitution, then <b>349.5</b> walks inline full paths — both reuse the path resolver built here.</p>
+      <p>349.1 ships the producer plus function-call resolution as one unit (the shadowing guard forces it). The constructor-side <code>path_prefix</code> is produced here but consumed downstream: <b>349.4</b> links Rust <code>new()</code> + <code>Self</code> substitution, then <b>349.5</b> walks inline full paths — both reuse the path resolver built here.</p>
     </div>
   </section>
 
   <footer>
-    task-349.1 · producer + function-call resolution (one atomic unit) · producer: metadata_extractors.rust.ts extract_call_name :766 + new extract_call_path_prefix (≠ extract_property_chain :292) · references.ts FUNCTION_CALL :592 / CONSTRUCTOR_CALL :607 · consumer: function_call.ts resolve_function_call :129 (gate :53) · additive path_prefix on FunctionCall + ConstructorCall (no schema bump) · regression guard: shadowing.rs · TS static dispatch excluded → method_lookup · land 1st of A
+    task-349.1 (status: Done) · producer + function-call resolution (one atomic unit) · producer: metadata_extractors.rust.ts extract_call_name :794 + extract_call_path_prefix :877 on scoped_path_segments (≠ extract_property_chain :320) · references.ts FUNCTION_CALL :592 (prefix :600) / CONSTRUCTOR_CALL :612 (prefix :629) · consumer: function_call.ts resolve_function_call :324 → resolve_via_path_prefix :55 (3 paths: type via member index, mod body scope, use import) · additive path_prefix on FunctionCall + ConstructorCall (no schema bump) · fixtures: worker.rs, uses_worker.rs, associated_fn.rs, inline_qualified.rs, shadowing.rs · TS static dispatch handled in method_lookup
   </footer>
 
 </main>
