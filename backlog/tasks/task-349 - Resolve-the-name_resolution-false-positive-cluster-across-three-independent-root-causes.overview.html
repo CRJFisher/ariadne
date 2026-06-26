@@ -219,8 +219,8 @@
             <text x="51" y="70" text-anchor="middle" fill="#9a9387">56 members</text>
             <rect x="105" y="10" width="90" height="64" rx="8" fill="#eef0e6" stroke="#5b6840" stroke-width="1.6"/>
             <text x="150" y="28" text-anchor="middle" fill="#2b2a28" font-weight="700">Change B</text>
-            <text x="150" y="42" text-anchor="middle" fill="#5f594f">export.ts</text>
-            <text x="150" y="54" text-anchor="middle" fill="#5f594f">widen lookup</text>
+            <text x="150" y="42" text-anchor="middle" fill="#5f594f">name_resolution</text>
+            <text x="150" y="54" text-anchor="middle" fill="#5f594f">named-import fallback</text>
             <text x="150" y="68" text-anchor="middle" fill="#9a9387">Python rows</text>
             <rect x="204" y="10" width="90" height="64" rx="8" fill="#f2ece2" stroke="#7a5a3a" stroke-width="1.6"/>
             <text x="249" y="28" text-anchor="middle" fill="#2b2a28" font-weight="700">Change C</text>
@@ -373,8 +373,8 @@
       </a>
       <a class="rc b" href="task-349.2 - Make-is_exported-govern-implicit-visibility-only-—-let-explicit-named-imports-bind-regardless.python-underscore-imports.html">
         <div class="top"><span class="badge">B</span><h4>Underscore Python imports</h4></div>
-        <p class="file">resolve_references/registries/export.ts</p>
-        <p class="what">An explicit <code>from .x import _y</code> never binds because <code>is_exported=false</code> gates the export chain. Widen one lookup: by-name definition fallback for explicit named imports; keep the gate for wildcard / namespace / re-export.</p>
+        <p class="file">resolve_references/name_resolution.ts (fallback cascade, :175–184)</p>
+        <p class="what">An explicit <code>from ._lib import _y</code> never binds because <code>is_exported=false</code> hides the private name from <code>resolve_export_chain</code>. Add a named-import fallback to the existing cascade: a module-scope <code>DefinitionRegistry</code> lookup that binds any module-level def. The export chain and its gate stay untouched, so wildcard / namespace / re-export keep gating.</p>
         <div class="stats">
           <span class="s"><strong>43</strong>-member leaf</span>
           <span class="s">data-completeness</span>
@@ -404,7 +404,7 @@
 
   <section id="disposition">
     <h2>Disposition of every original leaf, and the scope decisions owned here</h2>
-    <p class="cap prose">The plan's decomposition is corrected in both directions: <b>collapsed</b> where it over-split (56 "independent" Rust fixes are one change of three sub-causes) and <b>re-tiered</b> where it mis-located altitude (two of three changes are not in <code>name_resolution.ts</code>).</p>
+    <p class="cap prose">The plan's decomposition is corrected in both directions: <b>collapsed</b> where it over-split (56 "independent" Rust fixes are one change of three sub-causes) and <b>re-tiered</b> where it mis-located altitude (Change A lives in the Rust extractor and call-reference reducer, not in <code>name_resolution.ts</code>).</p>
     <table>
       <thead><tr><th>Original leaf</th><th>Evidence shape</th><th style="text-align:center">Members</th><th>Lands as</th><th>Disposition</th></tr></thead>
       <tbody>
@@ -419,7 +419,7 @@
           <td class="leaf">named-import leaf <span style="color:var(--g600)">— Python</span></td>
           <td><code>from .x import _y</code> underscore-private, both indexed</td>
           <td class="cnt">&mdash;</td>
-          <td>Change B &middot; export-chain widening</td>
+          <td>Change B &middot; named-import fallback in name_resolution.ts</td>
           <td><span class="disp keep">keep</span></td>
         </tr>
         <tr class="gone">
@@ -492,7 +492,7 @@
   </section>
 
   <footer>
-    task-349 epic · failure code name_not_in_scope · 3 root causes in metadata_extractors.rust.ts/references.ts, registries/export.ts, name_resolution.ts · Change A sequenced 349.1 (producer + fn calls) → 349.4 (new() link + Self) → 349.5 (inline full-path types) · then B (349.2) → C (349.3) · TS barrel rows → import_resolution · Angular static dispatch → method_lookup · no interim classifier authored
+    task-349 epic · failure code name_not_in_scope · 3 root causes in metadata_extractors.rust.ts/references.ts, name_resolution.ts (Change B fallback + Change C) · Change A sequenced 349.1 (producer + fn calls) → 349.4 (new() link + Self) → 349.5 (inline full-path types) · then B (349.2) → C (349.3) · TS barrel rows → import_resolution · Angular static dispatch → method_lookup · no interim classifier authored
   </footer>
 
 </main>

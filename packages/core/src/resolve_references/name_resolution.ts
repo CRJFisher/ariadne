@@ -178,7 +178,9 @@ function resolve_scope_recursive(
       // the export registry rejects for is_exported=false (Python single-
       // underscore names, Rust non-`pub` items). Restricted to the source
       // file's module scope so it cannot bind to a nested-scope definition,
-      // and to `named` imports so default/namespace/wildcard stay gated.
+      // and to `named` imports so default/namespace/wildcard stay gated. Runs
+      // before the submodule fallback below, so a real module-level definition
+      // takes precedence over a same-named sibling submodule.
       if (!resolved && imp_def.import_kind === "named") {
         const root_scope = context.scopes.get_file_root_scope(source_file);
         if (root_scope) {

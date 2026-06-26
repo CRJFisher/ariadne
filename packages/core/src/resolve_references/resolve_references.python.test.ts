@@ -298,6 +298,99 @@ def run():
       expect(resolved_to_private).toEqual(false);
     });
 
+    it("binds an aliased underscore import under its alias and resolves the call to the original definition", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "_lib.py": LIB,
+        "app.py": `from ._lib import _make_block as mb
+
+def run():
+    mb(1)
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const app_scope = project.scopes.get_file_root_scope(file_paths["app.py"]);
+      expect(app_scope).not.toBeUndefined();
+
+      // The alias is the bound name; the original private name is not in scope.
+      const resolved_alias = project.resolutions.resolve(
+        app_scope!.id,
+        "mb" as SymbolName
+      );
+      expect(resolved_alias).not.toBeNull();
+      expect(resolved_alias).toContain("_lib.py");
+      expect(resolved_alias).toContain("_make_block");
+      expect(
+        project.resolutions.resolve(app_scope!.id, "_make_block" as SymbolName)
+      ).toBeNull();
+
+      const call_graph = project.get_call_graph();
+      const run_node = find_caller_node(call_graph, "run", file_paths["app.py"]);
+      const call = run_node!.enclosed_calls.find(
+        (c) => c.name === ("mb" as SymbolName)
+      );
+      expect(call!.resolution_failure).toBeUndefined();
+      const target = call_graph.nodes.get(call!.resolutions[0].symbol_id);
+      expect(target?.location.file_path).toEqual(file_paths["_lib.py"]);
+      expect(target?.name).toEqual("_make_block" as SymbolName);
+      expect(
+        is_entry_point(call_graph, "_make_block", file_paths["_lib.py"])
+      ).toEqual(false);
+    });
+
+    it("binds an explicit import to the module-level definition, never a nested same-named definition", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "_lib.py": `def _make_block(x):
+    return x
+
+def _outer():
+    def _make_block(y):
+        return y
+
+    return _make_block(0)
+`,
+        "app.py": `from ._lib import _make_block
+
+def run():
+    _make_block(1)
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const call_graph = project.get_call_graph();
+      const run_node = find_caller_node(call_graph, "run", file_paths["app.py"]);
+      const call = run_node!.enclosed_calls.find(
+        (c) => c.name === ("_make_block" as SymbolName)
+      );
+      expect(call!.resolution_failure).toBeUndefined();
+      const target = call_graph.nodes.get(call!.resolutions[0].symbol_id);
+      expect(target?.location.file_path).toEqual(file_paths["_lib.py"]);
+      // The module-level def is on line 1; the nested one is on line 5. The
+      // module-scope lookup must bind the former.
+      expect(target?.location.start_line).toEqual(1);
+    });
+
+    it("leaves an explicit import of a name absent from the source module unbound", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "_lib.py": LIB,
+        "app.py": `from ._lib import _does_not_exist
+
+def run():
+    _does_not_exist(1)
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const app_scope = project.scopes.get_file_root_scope(file_paths["app.py"]);
+      expect(app_scope).not.toBeUndefined();
+      expect(
+        project.resolutions.resolve(
+          app_scope!.id,
+          "_does_not_exist" as SymbolName
+        )
+      ).toBeNull();
+    });
+
     it("does not place an underscore-private name on the package surface for a re-export consumer", async () => {
       const { project, temp_dir, file_paths } = await setup_project({
         "pkg/_lib.py": LIB,

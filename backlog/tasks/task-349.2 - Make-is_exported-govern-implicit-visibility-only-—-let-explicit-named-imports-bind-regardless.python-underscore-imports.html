@@ -73,8 +73,16 @@
   .code .fl{font-family:var(--mono);font-size:10.5px;color:#b9b0a0;background:#1c1a16;padding:8px 14px;border-bottom:1px solid #000;letter-spacing:.03em}
   .code pre{margin:0;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.62;color:var(--codeink)}
   .code .kw{color:#c98a5a} .code .str{color:#9bb06a} .code .cm{color:#6f685c} .code .fn{color:#d8c98a}
+  .code .dim{color:#7d756a}
   .code .hl{background:rgba(168,71,47,.22);display:inline-block;width:100%}
   .code .ok{background:rgba(108,122,74,.20);display:inline-block;width:100%}
+  .tests{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+  @media(max-width:860px){.tests{grid-template-columns:1fr}}
+  .tcard{background:var(--paper);border:1px solid var(--g200);border-radius:10px;padding:12px 14px}
+  .tcard .id{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--clay);letter-spacing:.04em}
+  .tcard .loc{font-family:var(--mono);font-size:10px;color:var(--g400);margin-top:3px;word-break:break-all}
+  .tcard .what{font-size:12.5px;color:var(--slate);margin-top:8px}
+  .tcard.gate{border-color:rgba(108,122,74,.5)} .tcard.gate .id{color:var(--olive)}
   .acs{display:grid;gap:7px;margin:14px 0;padding:0;list-style:none}
   .acs li{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start;font-size:13.5px;background:var(--paper);border:1px solid var(--g200);border-radius:9px;padding:10px 13px}
   .acs .n{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ivory);background:var(--olive);border-radius:6px;width:24px;height:22px;display:flex;align-items:center;justify-content:center}
@@ -98,8 +106,9 @@
   <div class="inner">
     <span class="brand">on this page</span>
     <a href="#crux">The gate that blocks</a>
-    <a href="#widen">The widened lookup</a>
+    <a href="#widen">The fallback in the cascade</a>
     <a href="#matrix">What still gates</a>
+    <a href="#tests">Tests</a>
     <a href="#ac">Acceptance</a>
   </div>
 </nav>
@@ -107,141 +116,193 @@
 <main>
 
   <p class="eyebrow">Change B · sub-task 1.2 · land 2nd</p>
-  <h1>An explicit <code>from .x import _y</code> never binds — because <code>is_exported=false</code> on the private name hides it from the export registry</h1>
+  <h1>An explicit <code>from ._lib import _y</code> never binds — because <code>is_exported=false</code> on the private name hides it from <code>resolve_export_chain</code></h1>
 
   <div class="meta">
-    <span class="chip rust"><strong>43</strong>-member leaf (Python population)</span>
-    <span class="chip"><strong>1</strong> producer edit</span>
-    <span class="chip clay"><strong>1</strong> widened lookup</span>
-    <span class="chip olive"><strong>gate kept</strong> for wildcard / namespace / re-export</span>
+    <span class="chip rust"><strong>whole</strong> Python population (underscore-prefixed)</span>
+    <span class="chip clay"><strong>1</strong> fallback added to the name_resolution cascade</span>
+    <span class="chip olive"><strong>export chain</strong> untouched — gate intact</span>
+    <span class="chip"><strong>module-scope</strong> lookup excludes nested defs</span>
   </div>
   <p class="cap prose">Nearly every Python row is underscore-prefixed (<code>_make_block</code>, <code>_ensure_sync_result</code>, <code>_parse_mapper_argument</code>, …); one data-completeness defect accounts for the whole Python population.</p>
 
   <section id="crux">
-    <h2>The crux: the export registry refuses to surface a definition that the importer explicitly names</h2>
-    <p class="cap prose">The defining symbol already exists in the <code>DefinitionRegistry</code> keyed by <code>(file, name)</code>. The chain breaks only because <code>ExportRegistry.add_to_registry</code> drops non-exported symbols, and Phase-1's import binding goes <i>through</i> that registry.</p>
+    <h2>The crux: the export chain refuses a definition the importer explicitly names</h2>
+    <p class="cap prose">The defining symbol already lives in the <code>DefinitionRegistry</code> at module scope. The chain breaks only because <code>resolve_export_chain</code> reads the <code>is_exported</code>-gated export set, and the underscore name was never admitted to it.</p>
 
     <div class="diagram">
-      <svg viewBox="0 0 780 250" role="img" aria-label="Current chain: Python indexer sets is_exported false for single-underscore names, export registry drops them, resolve_export_chain returns null, no scope-map binding, false unreachable. The definition still lives in the DefinitionRegistry.">
+      <svg viewBox="0 0 800 252" role="img" aria-label="Current chain: name_resolution calls resolve_export_chain at line 166, the export set is gated on is_exported equals true at export.ts line 89, the single-underscore name is excluded, the chain returns null, no scope-map binding, false unreachable. The definition still lives at module scope in the DefinitionRegistry.">
         <defs>
           <marker id="b-fl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#a8472f"/></marker>
           <marker id="b-cl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9a9387"/></marker>
           <marker id="b-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker>
         </defs>
         <!-- import -->
-        <rect x="14" y="98" width="150" height="50" rx="9" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.5"/>
-        <text x="89" y="118" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">from .x import _y</text>
-        <text x="89" y="133" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">explicit named import</text>
+        <rect x="12" y="98" width="152" height="50" rx="9" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.5"/>
+        <text x="88" y="118" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">from ._lib import _y</text>
+        <text x="88" y="133" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">import_kind = "named"</text>
         <line x1="164" y1="123" x2="200" y2="123" stroke="#9a9387" stroke-width="1.4" marker-end="url(#b-cl)"/>
         <!-- resolve_export_chain -->
-        <rect x="202" y="96" width="158" height="54" rx="9" fill="#fffdf8" stroke="#ddd6c8"/>
-        <text x="281" y="113" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">resolve_export_chain</text>
-        <text x="281" y="126" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">name_resolution.ts:166</text>
-        <text x="281" y="140" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">→ ExportRegistry</text>
-        <line x1="360" y1="123" x2="396" y2="123" stroke="#9a9387" stroke-width="1.4" marker-end="url(#b-cl)"/>
+        <rect x="202" y="96" width="160" height="54" rx="9" fill="#fffdf8" stroke="#ddd6c8"/>
+        <text x="282" y="113" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">resolve_export_chain</text>
+        <text x="282" y="126" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">name_resolution.ts:166</text>
+        <text x="282" y="140" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">reads gated export set</text>
+        <line x1="362" y1="123" x2="398" y2="123" stroke="#9a9387" stroke-width="1.4" marker-end="url(#b-cl)"/>
         <!-- gate -->
-        <path d="M476 80 L552 123 L476 166 L400 123 Z" fill="#f7ece9" stroke="#a8472f" stroke-width="1.6"/>
-        <text x="476" y="116" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">is_exported</text>
-        <text x="476" y="129" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">=== true ?</text>
-        <text x="476" y="142" text-anchor="middle" font-family="ui-monospace,monospace" font-size="7.5" fill="#5f594f">export.ts:89</text>
+        <path d="M478 80 L556 123 L478 166 L400 123 Z" fill="#f7ece9" stroke="#a8472f" stroke-width="1.6"/>
+        <text x="478" y="116" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">is_exported</text>
+        <text x="478" y="129" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">=== true ?</text>
+        <text x="478" y="143" text-anchor="middle" font-family="ui-monospace,monospace" font-size="7.5" fill="#5f594f">export.ts:89</text>
         <!-- false branch -->
-        <line x1="476" y1="166" x2="476" y2="196" stroke="#a8472f" stroke-width="1.6" marker-end="url(#b-fl)"/>
-        <text x="486" y="184" font-family="ui-monospace,monospace" font-size="8.5" fill="#a8472f">false (underscore)</text>
-        <rect x="368" y="200" width="216" height="42" rx="9" fill="#f7ece9" stroke="#a8472f" stroke-width="1.5"/>
-        <text x="476" y="218" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" font-weight="700" fill="#a8472f">chain returns null</text>
-        <text x="476" y="231" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">no scope-map binding → false unreachable</text>
+        <line x1="478" y1="166" x2="478" y2="196" stroke="#a8472f" stroke-width="1.6" marker-end="url(#b-fl)"/>
+        <text x="488" y="184" font-family="ui-monospace,monospace" font-size="8.5" fill="#a8472f">false (underscore)</text>
+        <rect x="370" y="200" width="216" height="42" rx="9" fill="#f7ece9" stroke="#a8472f" stroke-width="1.5"/>
+        <text x="478" y="218" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" font-weight="700" fill="#a8472f">chain returns null</text>
+        <text x="478" y="231" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">no scope-map binding → false unreachable</text>
         <!-- definition registry, off to the right, holding the symbol -->
-        <rect x="600" y="36" width="166" height="60" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
-        <text x="683" y="56" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#5b6840">DefinitionRegistry</text>
-        <text x="683" y="70" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">key (file, "_y")</text>
-        <text x="683" y="84" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#6c7a4a">symbol already here ✓</text>
-        <line x1="552" y1="116" x2="600" y2="80" stroke="#6c7a4a" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#b-ok)"/>
-        <text x="556" y="92" font-family="ui-monospace,monospace" font-size="8" fill="#6c7a4a">refused, not absent</text>
+        <rect x="606" y="34" width="184" height="64" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
+        <text x="698" y="54" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#5b6840">DefinitionRegistry</text>
+        <text x="698" y="68" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">_lib.py · module root scope</text>
+        <text x="698" y="82" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">"_y" → SymbolId</text>
+        <text x="698" y="94" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#6c7a4a">symbol already here ✓</text>
+        <line x1="556" y1="116" x2="606" y2="82" stroke="#6c7a4a" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#b-ok)"/>
+        <text x="560" y="92" font-family="ui-monospace,monospace" font-size="8" fill="#6c7a4a">refused, not absent</text>
       </svg>
     </div>
     <div class="legend">
       <span><i class="fail"></i> chain breaks at the gate</span>
-      <span><i style="background:#eef0e6;border-color:#5b6840"></i> symbol exists in DefinitionRegistry</span>
+      <span><i style="background:#eef0e6;border-color:#5b6840"></i> symbol exists at module scope</span>
       <span>verified: <code>capture_handlers.python.test.ts:1388–1406</code></span>
     </div>
   </section>
 
   <section id="widen">
-    <h2>The fix: widen the explicit-named-import lookup to a by-name DefinitionRegistry fallback</h2>
-    <p class="cap prose">When the <code>is_exported</code>-gated export set has no entry for an <b>explicit named import</b>, fall back to the by-name <code>DefinitionRegistry</code> lookup in the source file. The caller at <code>name_resolution.ts:166</code> picks this up automatically.</p>
+    <h2>The fix: a named-import fallback alongside the submodule fallback</h2>
+    <p class="cap prose"><code>resolve_export_chain</code> stays strictly gated — it is shared by re-export recursion. The new path joins the fallback <b>cascade</b> already sitting at <code>name_resolution.ts:175–184</code>, firing only when the chain returned <code>null</code> and the import is <code>named</code>.</p>
 
     <div class="code">
-      <div class="fl">registries/export.ts — explicit-named-import fallback (the is_exported gate stays for everyone else)</div>
-<pre><span class="cm">// CURRENT — add_to_registry drops every non-exported symbol (export.ts:89):</span>
-<span class="hl"><span class="kw">if</span> (!def.is_exported) <span class="kw">return</span>;     <span class="cm">// _y never enters the export set</span></span>
+      <div class="fl">resolve_references/name_resolution.ts — new fallback added BEFORE the submodule fallback (export.ts is NOT touched)</div>
+<pre><span class="cm">// 162: import_name = original_name || name — original (not alias) for the lookup.</span>
+<span class="cm">// 166: resolve_export_chain runs first — still gated on is_exported.</span>
+<span class="dim">resolved = context.exports.<span class="fn">resolve_export_chain</span>(source_file, import_name, imp_def.import_kind, …);</span>
 
-<span class="cm">// CHANGE B — explicit-named-import resolution falls back to the definition</span>
-<span class="cm">// registry when the gated export set has no entry:</span>
-<span class="ok"><span class="kw">if</span> (import_kind === <span class="str">"named"</span> && !gated_export_hit) {</span>
-<span class="ok">  resolved = definitions.<span class="fn">get_by_name</span>(source_file, import_name);  <span class="cm">// (file, name) key</span></span>
+<span class="cm">// CHANGE B — explicit-named-import fallback, next link in the cascade.</span>
+<span class="cm">// Runs BEFORE the submodule fallback, so a real module-level definition</span>
+<span class="cm">// takes precedence over a same-named sibling submodule.</span>
+<span class="ok"><span class="kw">if</span> (!resolved && imp_def.import_kind === <span class="str">"named"</span>) {</span>
+<span class="ok">  <span class="kw">const</span> root = context.scopes.<span class="fn">get_file_root_scope</span>(source_file);     <span class="cm">// module scope ONLY — never nested</span></span>
+<span class="ok">  <span class="kw">if</span> (root) resolved = context.definitions.<span class="fn">get_scope_definitions</span>(root.id)</span>
+<span class="ok">                       .<span class="fn">get</span>(import_name) ?? <span class="kw">null</span>;  <span class="cm">// miss → stays null (absent name)</span></span>
 <span class="ok">}</span>
+
+<span class="cm">// then the existing submodule fallback (only reached if still null).</span>
+<span class="kw">if</span> (!resolved) {
+  <span class="kw">const</span> submodule_path = context.imports.<span class="fn">get_submodule_import_path</span>(imp_def.symbol_id);
+  <span class="kw">if</span> (submodule_path) resolved = imp_def.symbol_id;
+}
+
+<span class="cm">// bound under imp_def.name — the ALIAS, not import_name (line 207).</span>
+scope_resolutions.<span class="fn">set</span>(imp_def.name, resolved);
 </pre>
     </div>
+    <div class="callout slate">
+      <span class="k">the mental model</span>
+      <p><code>is_exported</code> governs only <b>implicit</b> visibility — the public surface that wildcard, namespace, and re-export resolution read. An <b>explicit named import</b> binds to any <b>module-level</b> definition regardless.</p>
+    </div>
     <div class="callout rust">
-      <span class="k">riskiest part — keep the gate for everything that is NOT an explicit named import (AC #4)</span>
-      <p><code>is_exported=false</code> correctly models <b>"not part of the public surface."</b> The fallback must fire only for an <b>explicit named import</b>. Wildcard (<code>from .x import *</code>), namespace, and re-export paths must keep gating on <code>is_exported</code> — widening them would surface private names into public re-export chains, which is wrong.</p>
+      <span class="k">why module scope only — nested defs are also is_exported=false (AC #2, B2)</span>
+      <p>Nested functions carry <code>is_exported=false</code> too, so a naive "any def by this name" lookup would wrongly bind an explicit import to a nested function. Restricting the lookup to <code>get_file_root_scope(source_file)</code> → <code>get_scope_definitions(root.id)</code> sees only module-level names; nested defs live in different scopes and stay invisible.</p>
     </div>
   </section>
 
   <section id="matrix">
     <h2>Which resolution paths widen, and which keep the gate</h2>
-    <p class="cap prose">Exactly one path changes. The contract is: <code>is_exported</code> governs implicit visibility only; an explicit name beats it.</p>
+    <p class="cap prose">Only the <code>named</code> path widens. Everything else keeps reading the <code>is_exported</code>-gated export set, so private names stay off the public surface.</p>
     <div class="gate">
       <table>
-        <thead><tr><th>Import shape</th><th>Names the symbol?</th><th>is_exported gate</th><th>Result for <code>_y</code></th></tr></thead>
+        <thead><tr><th>Import shape</th><th>import_kind</th><th>Path taken</th><th>Result for <code>_make_block</code></th></tr></thead>
         <tbody>
           <tr>
-            <td class="path"><b>from .x import _y</b><br><span style="font-size:11px;color:var(--g400)">explicit named</span></td>
-            <td>yes — by name</td>
-            <td><span class="badge widen">widened — by-name fallback</span></td>
+            <td class="path"><b>from ._lib import _make_block</b><br><span style="font-size:11px;color:var(--g400)">explicit named</span></td>
+            <td><code>"named"</code></td>
+            <td><span class="badge widen">widened — module-scope fallback</span></td>
             <td style="color:var(--olive);font-family:var(--mono);font-size:12px">binds ✓</td>
           </tr>
           <tr>
-            <td class="path"><b>from .x import *</b><br><span style="font-size:11px;color:var(--g400)">wildcard</span></td>
-            <td>no</td>
-            <td><span class="badge gate">kept — gate applies</span></td>
+            <td class="path"><b>from ._lib import *</b><br><span style="font-size:11px;color:var(--g400)">wildcard — binds the name "*"</span></td>
+            <td><code>"named"</code> on <code>"*"</code></td>
+            <td><span class="badge gate">gated — "_make_block" never named</span></td>
             <td style="color:var(--g600);font-family:var(--mono);font-size:12px">private, excluded</td>
           </tr>
           <tr>
-            <td class="path"><b>import x as ns; ns._y</b><br><span style="font-size:11px;color:var(--g400)">namespace</span></td>
-            <td>no</td>
-            <td><span class="badge gate">kept — gate applies</span></td>
+            <td class="path"><b>import _lib as ns; ns._make_block()</b><br><span style="font-size:11px;color:var(--g400)">namespace</span></td>
+            <td><code>"namespace"</code></td>
+            <td><span class="badge gate">gated — handled earlier, not "named"</span></td>
             <td style="color:var(--g600);font-family:var(--mono);font-size:12px">private, excluded</td>
           </tr>
           <tr>
-            <td class="path"><b>re-export chain</b><br><span style="font-size:11px;color:var(--g400)">x re-exports y</span></td>
-            <td>no</td>
-            <td><span class="badge gate">kept — gate applies</span></td>
-            <td style="color:var(--g600);font-family:var(--mono);font-size:12px">not on public surface</td>
+            <td class="path"><b>from package import _make_block</b><br><span style="font-size:11px;color:var(--g400)">re-export via __init__.py</span></td>
+            <td><code>"named"</code></td>
+            <td><span class="badge gate">gated — not defined in resolved file's module scope</span></td>
+            <td style="color:var(--g600);font-family:var(--mono);font-size:12px">unbound — __init__ doesn't re-export it</td>
+          </tr>
+          <tr>
+            <td class="path"><b>use crate::x::y; y()</b><br><span style="font-size:11px;color:var(--g400)">Rust single-hop named</span></td>
+            <td><code>"named"</code></td>
+            <td><span class="badge widen">widened — same module-scope fallback</span></td>
+            <td style="color:var(--olive);font-family:var(--mono);font-size:12px">binds ✓ when y is module-level</td>
           </tr>
         </tbody>
       </table>
     </div>
     <div class="callout">
+      <span class="k">why the re-export row stays unbound</span>
+      <p>The fallback only finds names physically defined in the <b>resolved source file's</b> module scope. <code>from package import _make_block</code> resolves the source to <code>__init__.py</code>, which does not <i>define</i> <code>_make_block</code> — so the module-scope lookup misses and the private name stays off the package's public surface (B7).</p>
+    </div>
+    <div class="callout olive">
       <span class="k">scope boundary — out of this change</span>
-      <p>The TypeScript rows in this leaf (destructured from the <code>./_namespaces/ts</code> barrel namespace) fail for an unrelated reason — re-export-chain indirection — and belong to <code>import_resolution</code>.</p>
-      <p style="margin-top:8px">The sqlx/tokio Rust <code>use crate::x::y</code> single-hop named imports resolve via the same export chain and the submodule fallback (<code>name_resolution.ts:177</code>); confirm against the widened lookup, and only if they don't resolve does a small Rust-import adapter become necessary.</p>
+      <p>The TypeScript rows in this leaf (destructured from the <code>./_namespaces/ts</code> barrel namespace) fail for an unrelated reason — re-export-chain indirection — and belong to <code>import_resolution</code> (AC #7).</p>
+    </div>
+    <div class="callout">
+      <span class="k">language-agnostic by design — a non-exported TS/JS named import also binds</span>
+      <p>The fallback keys only on <code>import_kind === "named"</code>, so a non-<code>export</code>'d TS/JS or non-<code>pub</code> Rust named import binds too — intended, a strict call-graph improvement. A correctly-exported target is never diverted: <code>resolve_export_chain</code> returns first, so the fallback only runs after a real miss.</p>
+    </div>
+  </section>
+
+  <section id="tests">
+    <h2>Tests — inline multi-file fixtures via <code>setup_project</code></h2>
+    <p class="cap prose">Cross-file cases use the existing <code>setup_project</code> helper in the per-language <code>resolve_references</code> tests (inline temp-dir content, not on-disk fixture files); the contract case is an inline <code>build_index_single_file</code> assertion. Each asserts the exact resolution with <code>toEqual</code> — never existence-only.</p>
+    <div class="tests">
+      <div class="tcard"><div class="id">B1 — binds</div><div class="loc">resolve_references.python.test.ts</div><div class="what">Inline <code>_lib.py</code> + <code>app.py</code>: each <code>_make_block</code> / <code>_ensure_sync_result</code> / <code>_parse_mapper_argument</code> callee resolves to its module-level def; none is an entry point.</div></div>
+      <div class="tcard"><div class="id">B2 — contract</div><div class="loc">capture_handlers.python.test.ts (1388–1448)</div><div class="what">Inline <code>build_index_single_file</code>: <code>is_exported === false</code> for an underscore module-level name, <code>true</code> for a public one — the public-surface contract is unchanged.</div></div>
+      <div class="tcard"><div class="id">B3 — control</div><div class="loc">resolve_references.python.test.ts</div><div class="what">Public-name control <code>make_block</code> resolves through the unchanged export chain; behavior unchanged.</div></div>
+      <div class="tcard"><div class="id">B4 — control</div><div class="loc">resolve_references.typescript.test.ts</div><div class="what">Existing exported <code>import { foo }</code> named-import control stays green.</div></div>
+      <div class="tcard gate"><div class="id">B5 — gate kept</div><div class="loc">resolve_references.python.test.ts</div><div class="what">Inline <code>wildcard_app.py</code>: <code>from ._lib import *</code> then a reference to <code>_make_block</code> — <b>not</b> bound in the consumer scope.</div></div>
+      <div class="tcard gate"><div class="id">B6 — gate kept</div><div class="loc">resolve_references.python.test.ts</div><div class="what">Inline <code>namespace_app.py</code>: <code>import _lib as ns; ns._make_block()</code> — the member access is <b>not</b> resolved.</div></div>
+      <div class="tcard gate"><div class="id">B7 — gate kept</div><div class="loc">resolve_references.python.test.ts</div><div class="what">Inline <code>__init__.py</code> + <code>reexport_app.py</code>: importing the private name through the package leaves it <b>unbound</b>.</div></div>
+      <div class="tcard"><div class="id">B8 — Rust</div><div class="loc">resolve_references.rust.test.ts</div><div class="what">Inline <code>use crate::x::y; y()</code> in the sqlx/tokio shape: the call resolves via the same widened module-scope fallback.</div></div>
+      <div class="tcard"><div class="id">B9 — regression</div><div class="loc">capture_handlers.python.test.ts (1388–1448)</div><div class="what">Existing <code>is_exported</code> cases stay green — the gate logic is not edited.</div></div>
+      <div class="tcard"><div class="id">R1 — aliased import</div><div class="loc">resolve_references.python.test.ts › underscore-private explicit named imports</div><div class="what"><code>from ._lib import _make_block as mb; mb(1)</code> binds under <code>mb</code> and resolves to <code>_lib.py:_make_block</code> — exercises the <code>original_name || name</code> lookup vs the <code>imp_def.name</code> bind-key divergence.</div></div>
+      <div class="tcard"><div class="id">R2 — module-scope only</div><div class="loc">resolve_references.python.test.ts › underscore-private explicit named imports</div><div class="what"><code>_lib.py</code> has a module-level <code>_make_block</code> AND a nested <code>def _make_block</code> in <code>_outer()</code>; the import binds the module-level one (<code>target.location.start_line === 1</code>) — proves the "never a nested-scope def" invariant.</div></div>
+      <div class="tcard gate"><div class="id">R3 — absent stays unbound</div><div class="loc">resolve_references.python.test.ts › underscore-private explicit named imports</div><div class="what"><code>from ._lib import _does_not_exist</code> resolves to <code>null</code> — the fallback's <code>.get(import_name) ?? null</code> miss branch.</div></div>
     </div>
   </section>
 
   <section id="ac">
     <h2>Acceptance — what proves the change</h2>
     <ol class="acs">
-      <li><span class="n">1</span><div>Cross-file Python (<code>Project</code> + <code>update_file</code>): <code>from .m import _private_fn</code> resolves to the underscore-private definition.</div></li>
-      <li><span class="n">2</span><div>A <code>build_index_single_file</code> assertion confirms <code>is_exported</code> stays <code>false</code> for underscore names — the public-surface contract is unchanged; only explicit-import resolution widens.</div></li>
-      <li><span class="n">3</span><div>Existing public-name Python and TS named-import resolution controls stay green.</div></li>
-      <li class="risk"><span class="n">4</span><div><b>The <code>is_exported</code> filter still applies</b> to wildcard / namespace / re-export resolution paths.</div></li>
-      <li><span class="n">5</span><div><code>capture_handlers.python.test.ts</code> <code>is_exported</code> cases (1388–1448) stay green.</div></li>
+      <li><span class="n">1</span><div>(B1) <code>from ._lib import _make_block, _ensure_sync_result, _parse_mapper_argument</code> resolves each call to its underscore-private module-level definition; none appears as an entry point.</div></li>
+      <li><span class="n">2</span><div>(B2) A <code>build_index_single_file</code> assertion confirms <code>is_exported</code> stays <code>false</code> for underscore module-level names and <code>true</code> for public names — only explicit-import resolution widens, the contract is intact.</div></li>
+      <li><span class="n">3</span><div>(B3, B4) The public-name Python control (<code>make_block</code>) and the TS named-import control stay green.</div></li>
+      <li class="risk"><span class="n">4</span><div>(B5, B6, B7) The <code>is_exported</code> gate still applies to wildcard, namespace, and re-export-chain paths: the private name stays unbound in each consumer.</div></li>
+      <li><span class="n">5</span><div>(B8) The Rust <code>use crate::x::y</code> single-hop named import resolves via the widened module-scope fallback.</div></li>
+      <li><span class="n">6</span><div>(B9) Existing <code>capture_handlers.python.test.ts</code> <code>is_exported</code> cases (1388–1448) stay green.</div></li>
+      <li class="risk"><span class="n">7</span><div>The TypeScript barrel-namespace (<code>./_namespaces/ts</code>) rows are not tested here — routed to <code>import_resolution</code>.</div></li>
     </ol>
   </section>
 
   <footer>
-    Producer: resolve_references/registries/export.ts:89 — Caller picks it up: name_resolution.ts:166 · submodule fallback name_resolution.ts:177 · evidence: capture_handlers.python.test.ts:1388–1406 · sequenced 2nd of A→B→C
+    Fallback added at name_resolution.ts:175–184 cascade (after the submodule fallback) — resolve_export_chain (name_resolution.ts:166) and its is_exported gate (export.ts:89) left untouched · lookup: get_file_root_scope → get_scope_definitions (module scope only) · evidence: capture_handlers.python.test.ts:1388–1406 · sequenced 2nd of A→B→C
   </footer>
 
 </main>
