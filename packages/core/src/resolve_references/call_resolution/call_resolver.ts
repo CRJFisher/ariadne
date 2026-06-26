@@ -250,6 +250,7 @@ function resolve_calls(
           dispatch_result = resolve_constructor_call(
             ref,
             context.definitions,
+            context.scopes,
             context.resolutions,
             context.exports,
             context.languages,

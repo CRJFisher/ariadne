@@ -427,7 +427,7 @@ export function find_containing_class_scope(
  * @param definitions - Definition registry
  * @returns Class symbol_id, or null if not found
  */
-function find_class_from_scope(
+export function find_class_from_scope(
   class_scope_id: ScopeId,
   definitions: DefinitionRegistry
 ): SymbolId | null {

@@ -8,8 +8,9 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { resolve_constructor_call, find_constructor_in_class_hierarchy, include_constructors_for_class_symbols } from "./constructor";
+import { resolve_constructor_call, find_constructor_in_class_hierarchy, include_constructors_for_class_symbols, find_associated_constructor } from "./constructor";
 import { DefinitionRegistry } from "../registries/definition";
+import { ScopeRegistry } from "../registries/scope";
 import { ResolutionRegistry } from "../resolve_references";
 import { ExportRegistry } from "../registries/export";
 import type { FileSystemFolder } from "../file_folders";
@@ -48,6 +49,7 @@ const MOCK_LOCATION: Location = {
 
 describe("Constructor Call Resolution", () => {
   let definitions: DefinitionRegistry;
+  let scopes: ScopeRegistry;
   let resolutions: ResolutionRegistry;
   let exports: ExportRegistry;
   let languages: Map<FilePath, Language>;
@@ -55,6 +57,7 @@ describe("Constructor Call Resolution", () => {
 
   beforeEach(() => {
     definitions = new DefinitionRegistry();
+    scopes = new ScopeRegistry();
     resolutions = new ResolutionRegistry();
     ({ exports, languages, root_folder } = make_export_chain_context());
   });
@@ -117,6 +120,7 @@ describe("Constructor Call Resolution", () => {
       const resolved = resolve_constructor_call(
         call_ref,
         definitions,
+        scopes,
         resolutions,
         exports,
         languages,
@@ -193,6 +197,7 @@ describe("Constructor Call Resolution", () => {
       const resolved = resolve_constructor_call(
         call_ref,
         definitions,
+        scopes,
         resolutions,
         exports,
         languages,
@@ -243,6 +248,7 @@ describe("Constructor Call Resolution", () => {
       const resolved = resolve_constructor_call(
         call_ref,
         definitions,
+        scopes,
         resolutions,
         exports,
         languages,
@@ -285,6 +291,7 @@ describe("Constructor Call Resolution", () => {
       const resolved = resolve_constructor_call(
         call_ref,
         definitions,
+        scopes,
         resolutions,
         exports,
         languages,
@@ -292,6 +299,122 @@ describe("Constructor Call Resolution", () => {
       );
 
       expect(unwrap(resolved)).toEqual([class_id]);
+    });
+  });
+
+  describe("Rust associated constructor (member-index link)", () => {
+    // Rust `impl T { fn new() }` indexes `new` as a plain method, leaving
+    // ClassDefinition.constructors empty. A qualified `T::new()` call carries a
+    // path_prefix; the resolver links it to the `new` member rather than falling
+    // back to the bare class symbol.
+    function make_rust_struct_with_new(struct_name: string): {
+      class_id: SymbolId;
+      new_method_id: SymbolId;
+    } {
+      const class_id = class_symbol(struct_name, MOCK_LOCATION);
+      const new_method_id =
+        `method:test.rs:2:4:4:5:new` as SymbolId;
+      const new_method: MethodDefinition = {
+        kind: "method",
+        symbol_id: new_method_id,
+        name: "new" as SymbolName,
+        defining_scope_id: CLASS_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 2 },
+        parameters: [],
+        static: true,
+        body_scope_id: CONSTRUCTOR_SCOPE_ID,
+      };
+      const class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: class_id,
+        name: struct_name as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: true,
+        extends: [],
+        methods: [new_method], // Rust `new` lives in methods, not constructors
+        properties: [],
+        decorators: [],
+        constructors: [],
+      };
+      definitions.update_file(TEST_FILE, [class_def]);
+      const scope_resolutions = new Map<SymbolName, SymbolId>();
+      scope_resolutions.set(struct_name as SymbolName, class_id);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
+      return { class_id, new_method_id };
+    }
+
+    it("links an in-scope Type::new() to the `new` member, not the class symbol", () => {
+      const { new_method_id } = make_rust_struct_with_new("Parker");
+
+      const call_ref = create_constructor_call_reference(
+        "Parker" as SymbolName,
+        MOCK_LOCATION,
+        FILE_SCOPE_ID,
+        undefined,
+        undefined,
+        ["Parker"] as SymbolName[]
+      );
+
+      const resolved = resolve_constructor_call(
+        call_ref,
+        definitions,
+        scopes,
+        resolutions,
+        exports,
+        languages,
+        root_folder
+      );
+
+      expect(unwrap(resolved)).toEqual([new_method_id]);
+    });
+
+    it("does not fire the member-index link without a path_prefix (TS new ClassName() untouched)", () => {
+      const { class_id } = make_rust_struct_with_new("Parker");
+
+      // No path_prefix → the TS `new ClassName()` path: a class with no
+      // constructor falls back to the class symbol, never the `new` method.
+      const call_ref = create_constructor_call_reference(
+        "Parker" as SymbolName,
+        MOCK_LOCATION,
+        FILE_SCOPE_ID
+      );
+
+      const resolved = resolve_constructor_call(
+        call_ref,
+        definitions,
+        scopes,
+        resolutions,
+        exports,
+        languages,
+        root_folder
+      );
+
+      expect(unwrap(resolved)).toEqual([class_id]);
+    });
+
+    it("find_associated_constructor returns the `new` member, or null when absent", () => {
+      const { class_id, new_method_id } = make_rust_struct_with_new("Parker");
+      expect(find_associated_constructor(class_id, definitions)).toEqual(
+        new_method_id
+      );
+
+      const bare_class_id = class_symbol("Bare", MOCK_LOCATION);
+      const bare_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: bare_class_id,
+        name: "Bare" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: true,
+        extends: [],
+        methods: [],
+        properties: [],
+        decorators: [],
+        constructors: [],
+      };
+      definitions.update_file("bare.rs" as FilePath, [bare_def]);
+      expect(find_associated_constructor(bare_class_id, definitions)).toBe(null);
     });
   });
 
@@ -309,6 +432,7 @@ describe("Constructor Call Resolution", () => {
       const resolved = resolve_constructor_call(
         call_ref,
         definitions,
+        scopes,
         resolutions,
         exports,
         languages,
@@ -355,6 +479,7 @@ describe("Constructor Call Resolution", () => {
       const resolved = resolve_constructor_call(
         call_ref,
         definitions,
+        scopes,
         resolutions,
         exports,
         languages,
@@ -388,6 +513,7 @@ describe("Constructor Call Resolution", () => {
       const resolved = resolve_constructor_call(
         call_ref,
         definitions,
+        scopes,
         resolutions,
         exports,
         languages,
@@ -444,6 +570,7 @@ describe("Constructor Call Resolution", () => {
       const resolved = resolve_constructor_call(
         call_ref,
         definitions,
+        scopes,
         resolutions,
         exports,
         languages,

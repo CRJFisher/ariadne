@@ -26,9 +26,25 @@ import type {
 import { err, ok } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../registries/definition";
 import type { ExportRegistry } from "../registries/export";
+import type { ScopeRegistry } from "../registries/scope";
 import type { ResolutionRegistry } from "../resolve_references";
 import type { FileSystemFolder } from "../file_folders";
 import { resolve_namespace_export } from "./method_lookup";
+import { find_containing_class_scope, find_class_from_scope } from "./receiver_resolution";
+
+/**
+ * The terminal name of a Rust associated constructor. The `rust.scm` query only
+ * captures `^new$` as an associated constructor, so the member-index lookup that
+ * links a `Type::new()` call to its function always keys on this name.
+ */
+const RUST_ASSOCIATED_CONSTRUCTOR_NAME = "new" as SymbolName;
+
+/**
+ * The `Self` type keyword a Rust associated function uses to name its own impl
+ * type, e.g. `Self::new()`. A constructor call whose terminal type name is
+ * `Self` is resolved to the enclosing impl/trait type by walking the call scope.
+ */
+const SELF_TYPE_KEYWORD = "Self" as SymbolName;
 
 /**
  * Resolve a constructor call to zero, one, or more symbols
@@ -43,6 +59,7 @@ import { resolve_namespace_export } from "./method_lookup";
  *
  * @param call_ref - Constructor call reference from semantic index
  * @param definitions - Definition registry for class lookup
+ * @param scopes - Scope registry (for resolving `Self::new()` to the enclosing impl type)
  * @param resolutions - Resolution registry with eager resolutions
  * @param exports - Export registry (for following namespace re-export chains)
  * @param languages - File-path → language map (for module-path resolution in re-export chains)
@@ -53,6 +70,7 @@ import { resolve_namespace_export } from "./method_lookup";
 export function resolve_constructor_call(
   call_ref: ConstructorCallReference,
   definitions: DefinitionRegistry,
+  scopes: ScopeRegistry,
   resolutions: ResolutionRegistry,
   exports: ExportRegistry,
   languages: ReadonlyMap<FilePath, Language>,
@@ -75,7 +93,17 @@ export function resolve_constructor_call(
     }
   }
 
-  // Simple constructor: new ClassName()
+  // Rust `Self::new()`: the terminal type name is the `Self` keyword, which is
+  // never in scope. Substitute it with the enclosing impl/trait type by walking
+  // the call's scope up to the containing class scope.
+  if (!class_symbol && call_ref.name === SELF_TYPE_KEYWORD) {
+    const class_scope_id = find_containing_class_scope(call_ref.scope_id, scopes, definitions);
+    if (class_scope_id) {
+      class_symbol = find_class_from_scope(class_scope_id, definitions);
+    }
+  }
+
+  // Simple constructor: new ClassName() / in-scope Type::new()
   if (!class_symbol) {
     class_symbol = resolutions.resolve(call_ref.scope_id, call_ref.name as SymbolName);
   }
@@ -99,14 +127,43 @@ export function resolve_constructor_call(
     });
   }
 
-  // Walk class hierarchy for constructor, fall back to class symbol
-  const constructor_symbol = find_constructor_in_class_hierarchy(
+  // Walk class hierarchy for constructor.
+  let constructor_symbol = find_constructor_in_class_hierarchy(
     class_def,
     definitions,
     resolutions
   );
 
+  // Rust associated constructor: `fn new()` is stored as a plain method, so the
+  // hierarchy walk (which reads `ClassDefinition.constructors`) finds nothing.
+  // Link the call to the `new` member directly. Gated to the Rust qualified path
+  // by `path_prefix`, so the TS/Python `new ClassName()` path is untouched.
+  if (!constructor_symbol && call_ref.path_prefix && call_ref.path_prefix.length > 0) {
+    constructor_symbol = find_associated_constructor(class_def.symbol_id, definitions);
+  }
+
   return ok([constructor_symbol || class_symbol]);
+}
+
+/**
+ * Find a Rust associated constructor (`fn new`) for a type via the member index.
+ *
+ * Rust's `impl T { fn new() -> Self }` is indexed as a plain method on `T`
+ * rather than a `ConstructorDefinition`, so it never populates
+ * `ClassDefinition.constructors`. This links a resolved `Type::new()` /
+ * `Self::new()` call to that member so the constructor is reachable instead of
+ * surfacing as a false-positive entry point.
+ *
+ * @param type_id - Resolved struct/enum symbol
+ * @param definitions - Definition registry holding the member index
+ * @returns The `new` member symbol, or null when the type exposes no `new`
+ */
+export function find_associated_constructor(
+  type_id: SymbolId,
+  definitions: DefinitionRegistry
+): SymbolId | null {
+  const members = definitions.get_member_index().get(type_id);
+  return members?.get(RUST_ASSOCIATED_CONSTRUCTOR_NAME) ?? null;
 }
 
 /**

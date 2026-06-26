@@ -594,6 +594,90 @@ describe("Project Integration - Rust", () => {
     });
   });
 
+  describe("Associated Constructor Resolution", () => {
+    it("resolves a use-imported Type::new() to the associated constructor, not the class symbol", async () => {
+      const user_mod_file = file_path("modules/user_mod.rs");
+      const uses_user_file = file_path("modules/uses_user.rs");
+      project.update_file(user_mod_file, load_source("modules/user_mod.rs"));
+      project.update_file(uses_user_file, load_source("modules/uses_user.rs"));
+
+      // User::new(...) is a constructor call: terminal type name `User`,
+      // path_prefix ["User"] (the producer reduction from 349.1).
+      const uses_user_index = project.get_index_single_file(uses_user_file)!;
+      const new_call = uses_user_index.references.find(
+        (r): r is ConstructorCallReference =>
+          r.kind === "constructor_call" && r.name === ("User" as SymbolName)
+      );
+      expect(new_call).toBeDefined();
+      expect(new_call!.path_prefix).toEqual(["User"] as SymbolName[]);
+
+      const user_struct = Array.from(
+        project.get_index_single_file(user_mod_file)!.classes.values()
+      ).find((c) => c.name === ("User" as SymbolName))!;
+      const user_new = project.definitions
+        .get_member_index()
+        .get(user_struct.symbol_id)
+        ?.get("new" as SymbolName);
+      expect(user_new).toBeDefined();
+
+      const call_graph = project.get_call_graph();
+      const main_node = Array.from(call_graph.nodes.values()).find(
+        (n) =>
+          project.definitions.get(n.symbol_id)?.name === ("main" as SymbolName)
+      )!;
+
+      // The User::new() call resolves to the `new` member — exactly one target,
+      // not the bare `User` class symbol (AC#1) and not duplicated (AC#3).
+      const targets = main_node.enclosed_calls
+        .filter((c) => c.name === ("User" as SymbolName))
+        .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
+      expect(targets).toEqual([user_new!]);
+      expect(targets).not.toContain(user_struct.symbol_id);
+
+      // `new` is now reachable, not a false-positive entry point.
+      expect(new Set(call_graph.entry_points).has(user_new!)).toBe(false);
+    });
+
+    it("resolves Self::new() inside an impl to the enclosing type's constructor", async () => {
+      const file = file_path("modules/self_constructor.rs");
+      project.update_file(file, load_source("modules/self_constructor.rs"));
+
+      // Self::new() is a constructor call: terminal type name `Self`,
+      // path_prefix ["Self"].
+      const index = project.get_index_single_file(file)!;
+      const self_new_call = index.references.find(
+        (r): r is ConstructorCallReference =>
+          r.kind === "constructor_call" && r.name === ("Self" as SymbolName)
+      );
+      expect(self_new_call).toBeDefined();
+      expect(self_new_call!.path_prefix).toEqual(["Self"] as SymbolName[]);
+
+      const widget = Array.from(index.classes.values()).find(
+        (c) => c.name === ("Widget" as SymbolName)
+      )!;
+      const widget_new = project.definitions
+        .get_member_index()
+        .get(widget.symbol_id)
+        ?.get("new" as SymbolName);
+      expect(widget_new).toBeDefined();
+
+      const call_graph = project.get_call_graph();
+      const zeroed_node = Array.from(call_graph.nodes.values()).find(
+        (n) =>
+          project.definitions.get(n.symbol_id)?.name === ("zeroed" as SymbolName)
+      )!;
+
+      // Self::new() resolves to Widget::new via the enclosing-impl substitution.
+      const targets = zeroed_node.enclosed_calls
+        .filter((c) => c.name === ("Self" as SymbolName))
+        .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
+      expect(targets).toEqual([widget_new!]);
+
+      // `new` is reachable from zeroed(), not a false-positive entry point.
+      expect(new Set(call_graph.entry_points).has(widget_new!)).toBe(false);
+    });
+  });
+
   describe("Builder Pattern", () => {
     it("should resolve method chains in builder pattern", async () => {
       const source = load_source("structs/constructor_workflow.rs");
