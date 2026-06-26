@@ -9,8 +9,10 @@ labels:
   - entry_point_classification
 dependencies: []
 priority: high
-plan_dedup_key: 5a7523de87fbd48bf7f46da7ea0b41cf910596781bc9693fc729faa39c04c4a0
-plan_source_task: pt-9770be4dbff8b73b
+plan_dedup_keys:
+  - 5a7523de87fbd48bf7f46da7ea0b41cf910596781bc9693fc729faa39c04c4a0
+plan_source_tasks:
+  - pt-9770be4dbff8b73b
 ---
 
 ## Description

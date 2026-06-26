@@ -9,8 +9,10 @@ labels:
   - name_resolution
 dependencies: []
 priority: high
-plan_dedup_key: aadecf5dbd628fc82ae827677df9c82d713f2af9cd40d453c6adbedd6f48b617
-plan_source_task: pt-448af9fb80c21abf
+plan_dedup_keys:
+  - aadecf5dbd628fc82ae827677df9c82d713f2af9cd40d453c6adbedd6f48b617
+plan_source_tasks:
+  - pt-448af9fb80c21abf
 ---
 
 ## Description

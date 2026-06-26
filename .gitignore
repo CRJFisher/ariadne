@@ -63,9 +63,5 @@ docs/tmp/
 .security-key
 logs/security/
 
-# prioritize skill: per-group comprehension docs stage here for local review and
-# move into backlog/tasks/ only when the group is funded. Unfunded stagings stay
-# local — never committed.
-backlog/docs/*.comprehension.html
-
+.test_failures_*
 

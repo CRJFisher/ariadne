@@ -11,8 +11,10 @@ dependencies: []
 parent_task_id: TASK-350
 priority: high
 ordinal: 2000
-plan_dedup_key: d39bdbea8cc46145edad9776b0089ce9887d7c5528c6bd553181965ba48dc651
-plan_source_task: pt-abdc058f8c56abae
+plan_dedup_keys:
+  - d39bdbea8cc46145edad9776b0089ce9887d7c5528c6bd553181965ba48dc651
+plan_source_tasks:
+  - pt-abdc058f8c56abae
 ---
 
 ## Description
