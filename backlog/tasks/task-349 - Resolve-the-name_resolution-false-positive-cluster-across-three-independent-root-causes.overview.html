@@ -106,6 +106,9 @@
   .step .sd code{font-size:.9em}
   .step .sfile{font-family:var(--mono);font-size:9.5px;color:var(--clay);margin-top:auto}
   .step .reg{font-family:var(--mono);font-size:9.5px;color:var(--rust);margin-top:6px}
+  .step .sn .ord.done{color:var(--olive);font-weight:700}
+  .step .sn .num.done{background:var(--olive)}
+  .step .reg.done{color:var(--olive)}
   /* disposition table */
   table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13px}
   th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--g200);vertical-align:top}
@@ -332,11 +335,11 @@
         <p class="sfile">metadata_extractors.rust.ts · references.ts · function_call.ts</p>
       </a>
       <a class="step" href="task-349.4 - Link-Rust-associated-new-constructors-and-substitute-Self-so-Type-new-resolves-to-the-constructor.constructor-linking.html">
-        <div class="sn"><span class="num">349.4</span><span class="ord">then</span></div>
+        <div class="sn"><span class="num done">349.4</span><span class="ord done">done</span></div>
         <h5>Link Rust new() + Self</h5>
-        <p class="sd">A struct indexes <code>kind:class</code> with <code>constructors: []</code>; <code>new</code> is stored as a method, so <code>Type::new()</code> stops at the class. Link via the member index; substitute <code>Self</code> → enclosing impl type.</p>
-        <p class="reg">in-scope type, link still missing</p>
-        <p class="sfile">call_resolution/constructor.ts · methods.rust.ts</p>
+        <p class="sd">A struct indexes <code>kind:class</code> with <code>constructors: []</code>; <code>new</code> is stored as a method, so <code>Type::new()</code> stops at the class. The resolver links the <code>new</code> member by type id (path_prefix-gated, callable-only); <code>Self</code> resolves to the enclosing impl type.</p>
+        <p class="reg done">landed · suite 2845 green</p>
+        <p class="sfile">call_resolution/constructor.ts · receiver_resolution.ts</p>
       </a>
       <a class="step" href="task-349.5 - Resolve-inline-full-path-Rust-constructors-via-path-prefix-type-walking.path-walk-constructors.html">
         <div class="sn"><span class="num">349.5</span><span class="ord">last</span></div>

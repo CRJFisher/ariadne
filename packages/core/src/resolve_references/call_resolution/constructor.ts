@@ -156,14 +156,22 @@ export function resolve_constructor_call(
  *
  * @param type_id - Resolved struct/enum symbol
  * @param definitions - Definition registry holding the member index
- * @returns The `new` member symbol, or null when the type exposes no `new`
+ * @returns The `new` member symbol, or null when the type exposes no callable `new`
  */
 export function find_associated_constructor(
   type_id: SymbolId,
   definitions: DefinitionRegistry
 ): SymbolId | null {
   const members = definitions.get_member_index().get(type_id);
-  return members?.get(RUST_ASSOCIATED_CONSTRUCTOR_NAME) ?? null;
+  const member = members?.get(RUST_ASSOCIATED_CONSTRUCTOR_NAME);
+  if (!member) {
+    return null;
+  }
+  // A field named `new` (`struct T { new: ... }`) overwrites the `fn new` method
+  // in the flat member index; only a callable target is the constructor. Mirrors
+  // the `is_callable_definition` guard on the function-call member lookup.
+  const kind = definitions.get(member)?.kind;
+  return kind === "method" || kind === "function" ? member : null;
 }
 
 /**

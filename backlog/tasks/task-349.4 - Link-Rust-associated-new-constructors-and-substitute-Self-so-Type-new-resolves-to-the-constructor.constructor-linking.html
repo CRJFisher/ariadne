@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Change A · 349.4 — Link Rust new() as the struct's constructor</title>
+<title>Change A · 349.4 — Rust new() links as the struct's constructor</title>
 <style>
   :root{
     --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
@@ -28,6 +28,7 @@
   nav.cross span.cur{color:var(--slate);background:#fbf2ef;border-color:var(--clay)}
   nav.cross span.pending{color:var(--g400);background:transparent;border-style:dashed}
   nav.cross span.pending .tag{font-size:8.5px;letter-spacing:.04em;color:var(--g400);margin-left:5px}
+  nav.cross .done{color:var(--olive)}
   nav.toc{position:sticky;top:42px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
   nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
   nav.toc .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--g600);margin-right:6px}
@@ -45,6 +46,7 @@
   .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
   .chip strong{color:var(--slate);font-weight:600}
   .chip.rust strong{color:var(--rust)} .chip.olive strong{color:var(--olive)} .chip.clay strong{color:var(--clay)}
+  .status{font-family:var(--mono);font-size:11px;background:#eef0e6;border:1px solid var(--olive);border-radius:999px;padding:4px 11px;color:var(--olive)}
   .cap{font-size:13.5px;color:var(--g600);margin:8px 2px 0}
   .cap b{color:var(--slate);font-weight:600}
   .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:18px 0;max-width:94ch}
@@ -87,25 +89,13 @@
   .code .kw{color:#c98a5a} .code .str{color:#9bb06a} .code .cm{color:#6f685c} .code .fn{color:#d8c98a}
   .code .hl{background:rgba(168,71,47,.22);display:inline-block;width:100%}
   .code .ok{background:rgba(108,122,74,.20);display:inline-block;width:100%}
-  .opts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
-  .opt{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:15px 17px;display:flex;flex-direction:column}
-  .opt .top{display:flex;align-items:center;gap:9px;margin-bottom:7px}
-  .opt .badge{font-family:var(--mono);font-weight:700;font-size:12px;color:var(--ivory);background:var(--slate);border-radius:7px;padding:3px 9px}
-  .opt.a .badge{background:var(--olive)} .opt.b .badge{background:var(--clay)}
-  .opt h4{font-family:var(--serif);font-size:16px;font-weight:600;margin:0;letter-spacing:-.01em}
-  .opt .where{font-family:var(--mono);font-size:10.5px;color:var(--clay);margin:0 0 9px}
-  .opt .pros{list-style:none;margin:0;padding:0;display:grid;gap:6px}
-  .opt .pros li{font-size:12.5px;padding-left:16px;position:relative;color:var(--slate)}
-  .opt .pros li.pro::before,.opt .pros li.con::before{content:"";position:absolute;left:0;top:6px;width:7px;height:7px;border-radius:50%}
-  .opt .pros li.pro::before{background:var(--olive)} .opt .pros li.con::before{background:var(--rust)}
-  .opt .verdict{margin-top:auto;padding-top:11px;border-top:1px solid var(--g200);font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
-  .opt.a .verdict{color:var(--olive)} .opt.b .verdict{color:var(--clay)}
   .acs{display:grid;gap:7px;margin:14px 0;padding:0;list-style:none}
   .acs li{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start;font-size:13.5px;background:var(--paper);border:1px solid var(--g200);border-radius:9px;padding:10px 13px}
   .acs .n{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ivory);background:var(--olive);border-radius:6px;width:24px;height:22px;display:flex;align-items:center;justify-content:center}
-  .acs li.risk .n{background:var(--rust)}
+  .acs li.defer .n{background:var(--clay)}
   .acs code{font-size:.9em}
-  @media(max-width:860px){.ba{grid-template-columns:1fr}.ba .arrow{flex-direction:row;padding:8px 0}.ba .arrow .arl{writing-mode:horizontal-tb;margin:0 0 0 6px}.ba .panel:last-child{border-left:1px solid var(--g200);border-radius:0 0 var(--r) var(--r)}.ba .panel:first-child{border-radius:var(--r) var(--r) 0 0}.opts{grid-template-columns:1fr}}
+  .testtag{display:inline-block;font-family:var(--mono);font-size:9.5px;color:var(--g600);background:var(--g100);border:1px solid var(--g200);border-radius:5px;padding:1px 6px;margin-top:5px}
+  @media(max-width:860px){.ba{grid-template-columns:1fr}.ba .arrow{flex-direction:row;padding:8px 0}.ba .arrow .arl{writing-mode:horizontal-tb;margin:0 0 0 6px}.ba .panel:last-child{border-left:1px solid var(--g200);border-radius:0 0 var(--r) var(--r)}.ba .panel:first-child{border-radius:var(--r) var(--r) 0 0}}
   footer{font-family:var(--mono);font-size:10.5px;color:var(--g400);margin-top:56px;border-top:1px solid var(--g200);padding-top:14px;line-height:1.7}
 </style>
 </head>
@@ -116,7 +106,7 @@
     <span class="brand">task-349 · name_resolution</span>
     <a href="task-349 - Resolve-the-name_resolution-false-positive-cluster-across-three-independent-root-causes.overview.html">Epic overview</a>
     <a href="task-349.1 - Reduce-Rust-qualified-call-references-to-their-terminal-name-and-carry-the-path-prefix.rust-qualified-paths.html">A1 · Producer + fn calls</a>
-    <span class="cur">A4 · Constructor linking</span>
+    <span class="cur">A4 · Constructor linking <span class="done">· done</span></span>
     <a href="task-349.5 - Resolve-inline-full-path-Rust-constructors-via-path-prefix-type-walking.path-walk-constructors.html">A5 · Inline-path types</a>
     <a href="task-349.2 - Make-is_exported-govern-implicit-visibility-only-—-let-explicit-named-imports-bind-regardless.python-underscore-imports.html">B · Python imports</a>
     <a href="task-349.3 - Apply-two-small-Phase-1-corrections-self-initializer-ordering-and-siblinghoist-propagation.same-file-binding-gaps.html">C · Same-file gaps</a>
@@ -127,33 +117,34 @@
     <span class="brand">on this page</span>
     <a href="#crux">The missing link</a>
     <a href="#index">Member index vs constructors[]</a>
-    <a href="#altitude">Two altitudes</a>
+    <a href="#resolver">The resolver edit</a>
     <a href="#self">Self::new</a>
-    <a href="#ac">Acceptance</a>
+    <a href="#ac">What proves it</a>
   </div>
 </nav>
 
 <main>
 
-  <p class="eyebrow">Change A · sub-task 349.4 · second of A · depends on 349.1</p>
-  <h1>A Rust struct indexes as a class with an empty <code>constructors[]</code>, so <code>Type::new()</code> binds to the class, never the function</h1>
+  <p class="eyebrow">Change A · sub-task 349.4 · second of A · built on 349.1</p>
+  <h1>A Rust struct indexes as a class with an empty <code>constructors[]</code>, so the resolver links <code>Type::new()</code> to the function through the member index</h1>
 
   <div class="meta">
+    <span class="status">Done · committed</span>
     <span class="chip rust"><strong>constructors: []</strong> on every Rust struct</span>
     <span class="chip"><strong>new</strong> stored as a plain method</span>
-    <span class="chip clay"><strong>2</strong> resolver edits</span>
+    <span class="chip clay"><strong>path_prefix</strong>-gated</span>
     <span class="chip olive"><strong>+ Self::new</strong> substitution</span>
   </div>
   <p class="cap prose">349.1 makes <code>Parker::new()</code> carry the terminal type name and a <code>path_prefix</code>; this change makes that reference resolve to the <code>new</code> function instead of stopping at the <code>Parker</code> class symbol.</p>
 
   <section id="crux">
     <h2>The crux: the associated <code>new()</code> is captured as a method, never linked as the constructor</h2>
-    <p class="cap prose">An <code>impl Parker { fn new() -&gt; Self {…} }</code> is captured by <code>handle_definition_constructor</code> and added via <code>add_method_to_class</code> — registering <code>new</code> in the member index but leaving <code>ClassDefinition.constructors</code> empty.</p>
+    <p class="cap prose">An <code>impl Parker { fn new() -&gt; Self {…} }</code> is captured via <code>add_method_to_class</code> — registering <code>new</code> in the member index but leaving <code>ClassDefinition.constructors</code> empty, so the hierarchy walk finds nothing and the call falls back to the class.</p>
 
     <div class="ba">
       <div class="panel">
-        <p class="ttl cur">Current — empty constructors[], falls back to the class</p>
-        <svg viewBox="0 0 320 262" role="img" aria-label="Current flow: Parker::new resolves type Parker to a ClassDefinition whose constructors array is empty, hierarchy walk returns null, resolver falls back to the class symbol, new is never reachable">
+        <p class="ttl cur">Before — empty constructors[], falls back to the class</p>
+        <svg viewBox="0 0 320 262" role="img" aria-label="Before: Parker::new resolves type Parker to a ClassDefinition whose constructors array is empty, the hierarchy walk returns null, the resolver falls back to the class symbol, and new is never reachable">
           <defs><marker id="ahf" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#a8472f"/></marker></defs>
           <rect x="56" y="6" width="208" height="34" rx="8" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.4"/>
           <text x="160" y="22" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#2b2a28">Parker::new()</text>
@@ -169,7 +160,7 @@
           <line x1="160" y1="168" x2="160" y2="188" stroke="#a8472f" stroke-width="1.4" marker-end="url(#ahf)"/>
           <rect x="34" y="192" width="252" height="34" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
           <text x="160" y="207" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">fall back to the class symbol</text>
-          <text x="160" y="218" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">constructor.ts:100</text>
+          <text x="160" y="218" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">constructor_symbol || class_symbol</text>
           <line x1="160" y1="226" x2="160" y2="244" stroke="#a8472f" stroke-width="1.6" marker-end="url(#ahf)"/>
           <rect x="58" y="246" width="204" height="16" rx="6" fill="#f7ece9" stroke="#a8472f" stroke-width="1.3"/>
           <text x="160" y="258" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" font-weight="700" fill="#a8472f">new unreachable → false entry point</text>
@@ -177,24 +168,24 @@
       </div>
       <div class="arrow"><span class="ar">&rarr;</span><span class="arl">349.4</span></div>
       <div class="panel">
-        <p class="ttl plan">Planned — member-index link binds new()</p>
-        <svg viewBox="0 0 320 262" role="img" aria-label="Planned flow: when the hierarchy walk yields nothing, look up the new associated function in the member index keyed by the type id and return that method symbol so new is reachable">
+        <p class="ttl plan">After — member-index link binds new()</p>
+        <svg viewBox="0 0 320 262" role="img" aria-label="After: when the hierarchy walk yields nothing and the call carries a path_prefix, find_associated_constructor looks up the new member by the type's symbol id and returns it only when it is callable, so new is reachable">
           <defs><marker id="aho" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker></defs>
           <rect x="56" y="6" width="208" height="34" rx="8" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.4"/>
           <text x="160" y="22" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#2b2a28">Parker::new()</text>
-          <text x="160" y="34" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">name "Parker" bound in scope</text>
+          <text x="160" y="34" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">path_prefix ["Parker"]</text>
           <line x1="160" y1="40" x2="160" y2="60" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#aho)"/>
           <rect x="34" y="64" width="252" height="40" rx="8" fill="#eef0e6" stroke="#5b6840"/>
           <text x="160" y="80" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">resolve type → ClassDefinition</text>
-          <text x="160" y="96" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">type_id = Parker's SymbolId</text>
+          <text x="160" y="96" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">class_def.symbol_id = type id</text>
           <line x1="160" y1="104" x2="160" y2="124" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#aho)"/>
           <rect x="34" y="128" width="252" height="40" rx="8" fill="#f0ece2" stroke="#7a4636"/>
-          <text x="160" y="144" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">member_index.get(type_id).get("new")</text>
-          <text x="160" y="160" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#7a4636">member-index fallback (new branch)</text>
+          <text x="160" y="144" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">find_associated_constructor(type_id)</text>
+          <text x="160" y="160" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#7a4636">gated on path_prefix · callable only</text>
           <line x1="160" y1="168" x2="160" y2="188" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#aho)"/>
           <rect x="34" y="192" width="252" height="34" rx="8" fill="#eef0e6" stroke="#5b6840"/>
           <text x="160" y="207" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">return the new method symbol</text>
-          <text x="160" y="218" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">not double-counted (AC #3)</text>
+          <text x="160" y="218" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">exactly one target (AC #3)</text>
           <line x1="160" y1="226" x2="160" y2="244" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#aho)"/>
           <rect x="74" y="246" width="172" height="16" rx="6" fill="#eef0e6" stroke="#6c7a4a" stroke-width="1.3"/>
           <text x="160" y="258" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#5b6840">new reachable → no false positive</text>
@@ -202,15 +193,15 @@
       </div>
     </div>
     <div class="legend">
-      <span><i class="fail"></i> resolution stops at the class today</span>
-      <span><i class="edge"></i> binds to new() under 349.4</span>
+      <span><i class="fail"></i> resolution stopped at the class before</span>
+      <span><i class="edge"></i> binds to new() now</span>
       <span>resolver: <code>call_resolution/constructor.ts</code></span>
     </div>
   </section>
 
   <section id="index">
     <h2>Two stores, one of them empty — what the indexer writes for a Rust struct</h2>
-    <p class="cap prose">The <code>new</code> function lands in the member index but not in <code>constructors[]</code>; the constructor resolver only consults <code>constructors[]</code>, so the link is never made even when <code>Parker</code> is already bound in scope.</p>
+    <p class="cap prose">The <code>new</code> function lands in the member index but not in <code>constructors[]</code>; the hierarchy walk only consults <code>constructors[]</code>, so the link is made by a member-index lookup keyed on the type's <code>symbol_id</code>.</p>
     <div class="fieldtbl">
       <table>
         <thead><tr><th>What the indexer captures</th><th>member index</th><th>ClassDefinition.constructors[]</th></tr></thead>
@@ -221,70 +212,67 @@
             <td class="now"><b>[ ] empty</b></td>
           </tr>
           <tr>
-            <td class="in"><code>get_definitions_by_name("new")</code><br><span style="font-size:11px;color:var(--g400)">what resolution sees</span></td>
+            <td class="in"><code>get_member_index().get(type_id)</code><br><span style="font-size:11px;color:var(--g400)">what the resolver reads</span></td>
             <td class="after"><b>method:new</b></td>
             <td class="now"><b>—</b> never linked</td>
           </tr>
           <tr>
-            <td class="in"><code>find_constructor_in_class_hierarchy</code><br><span style="font-size:11px;color:var(--g400)">constructor.ts:159</span></td>
-            <td class="after">add member-index lookup here</td>
+            <td class="in"><code>find_constructor_in_class_hierarchy</code><br><span style="font-size:11px;color:var(--g400)">constructor.ts :233</span></td>
+            <td class="after">member-index lookup follows</td>
             <td class="now"><b>null</b> → class fallback</td>
           </tr>
         </tbody>
       </table>
     </div>
-    <div class="code">
-      <div class="fl">constructor.ts:100 — current class fallback, and the member-index link to add</div>
-<pre><span class="cm">// CURRENT — hierarchy walk finds nothing, so the resolver returns the class:</span>
-<span class="hl">  <span class="kw">const</span> constructor_symbol = find_constructor_in_class_hierarchy(class_def, …);
-  <span class="kw">return</span> ok([constructor_symbol || class_symbol]);   <span class="cm">// new never reached</span></span>
-
-<span class="cm">// CHANGE 349.4 — member-index fallback to the associated new() function:</span>
-<span class="ok">  <span class="kw">if</span> (!constructor_symbol) {
-    <span class="kw">const</span> assoc = registry.get_member_index().get(class_symbol)?.get(<span class="str">"new"</span>);
-    <span class="kw">if</span> (assoc) <span class="kw">return</span> ok([assoc]);   <span class="cm">// the Rust convention IS the constructor</span>
-  }</span>
-</pre>
-    </div>
   </section>
 
-  <section id="altitude">
-    <h2>Two equally valid altitudes — pick one, do not double-count</h2>
-    <p class="cap prose">Either populate <code>constructors[]</code> at capture time so the existing hierarchy walk finds <code>new</code>, or add the member-index fallback in the resolver. Both bind the constructor; the only hard constraint is that <code>new</code> is exposed exactly once.</p>
-    <div class="opts">
-      <article class="opt a">
-        <div class="top"><span class="badge">a</span><h4>Populate at capture time</h4></div>
-        <p class="where">methods.rust.ts · handle_definition_constructor</p>
-        <ul class="pros">
-          <li class="pro">Cleaner root-cause fix — Rust's <code>new</code> convention <em>is</em> the constructor</li>
-          <li class="pro">The existing hierarchy walk then just works, no resolver change</li>
-          <li class="con">Must not register <code>new</code> as both a method <em>and</em> a constructor</li>
-        </ul>
-        <div class="verdict">cleaner · guard against double-count</div>
-      </article>
-      <article class="opt b">
-        <div class="top"><span class="badge">b</span><h4>Member-index fallback in the resolver</h4></div>
-        <p class="where">constructor.ts · resolve_constructor_call</p>
-        <ul class="pros">
-          <li class="pro">Localized to one function, fires only after the walk misses</li>
-          <li class="pro">No capture-time bookkeeping to keep the two stores in sync</li>
-          <li class="con">Leaves the empty <code>constructors[]</code> in place as a known shape</li>
-        </ul>
-        <div class="verdict">localized · single insertion point</div>
-      </article>
+  <section id="resolver">
+    <h2>The resolver edit — a path_prefix-gated, callable-only member-index link</h2>
+    <p class="cap prose">The link lives in <code>resolve_constructor_call</code>: when the hierarchy walk returns null and the call carries a non-empty <code>path_prefix</code>, <code>find_associated_constructor</code> looks up <code>new</code> by the type id and returns it only when it is a callable kind.</p>
+
+    <div class="code">
+      <div class="fl">constructor.ts — resolve_constructor_call (as built)</div>
+<pre><span class="kw">let</span> constructor_symbol = find_constructor_in_class_hierarchy(
+  class_def, definitions, resolutions
+);
+
+<span class="cm">// Rust associated constructor: `fn new()` is stored as a plain method, so the</span>
+<span class="cm">// hierarchy walk (which reads ClassDefinition.constructors) finds nothing.</span>
+<span class="cm">// Gated to the Rust qualified path by path_prefix — the TS/Python</span>
+<span class="cm">// `new ClassName()` path is untouched.</span>
+<span class="ok"><span class="kw">if</span> (!constructor_symbol &amp;&amp; call_ref.path_prefix &amp;&amp; call_ref.path_prefix.length &gt; 0) {
+  constructor_symbol = find_associated_constructor(class_def.symbol_id, definitions);
+}</span>
+
+<span class="kw">return</span> ok([constructor_symbol || class_symbol]);
+</pre>
     </div>
+
+    <div class="code">
+      <div class="fl">constructor.ts — find_associated_constructor (callability guard)</div>
+<pre><span class="kw">const</span> members = definitions.get_member_index().get(type_id);
+<span class="kw">const</span> member = members?.get(RUST_ASSOCIATED_CONSTRUCTOR_NAME); <span class="cm">// "new"</span>
+<span class="kw">if</span> (!member) <span class="kw">return</span> null;
+
+<span class="cm">// A field named `new` (struct T { new: ... }) overwrites the `fn new` method</span>
+<span class="cm">// in the flat member index; only a callable target is the constructor.</span>
+<span class="ok"><span class="kw">const</span> kind = definitions.get(member)?.kind;
+<span class="kw">return</span> kind === <span class="str">"method"</span> || kind === <span class="str">"function"</span> ? member : null;</span>
+</pre>
+    </div>
+
     <div class="callout rust">
-      <span class="k">the hard constraint — exactly one constructor target (AC #3)</span>
-      <p>A struct with one <code>fn new</code> must expose exactly one reachable constructor target. Option (a) risks counting <code>new</code> as both a method and a constructor; whichever altitude is chosen, <code>new</code> appears once, not twice.</p>
+      <span class="k">two guards keep the link Rust-only and field-safe</span>
+      <p>The <code>path_prefix</code> gate confines the link to qualified Rust calls, leaving the TS / Python <code>new ClassName()</code> branch untouched; the callability guard rejects a struct field named <code>new</code> that shadows the method.</p>
     </div>
   </section>
 
   <section id="self">
     <h2><code>Self::new()</code> — substitute the enclosing impl type</h2>
-    <p class="cap prose">A <code>Self::new()</code> call inside an <code>impl</code> carries <code>name = "Self"</code>; resolve <code>Self</code> to the enclosing impl/trait type by walking the call's scope to its containing class scope, then resolve the constructor as above.</p>
+    <p class="cap prose">A <code>Self::new()</code> call inside an <code>impl</code> carries <code>name = "Self"</code>; the resolver substitutes <code>Self</code> with the enclosing impl/trait type by walking the call's scope to its containing class scope, then resolves the constructor through the same member-index link.</p>
 
     <div class="diagram">
-      <svg viewBox="0 0 760 210" role="img" aria-label="Self substitution flow: a Self::new call walks from its scope to the containing class scope via find_containing_class_scope, resolves the enclosing impl type via find_class_from_scope which must be exported, then resolves the new constructor through the member-index link; this requires threading the ScopeRegistry into resolve_constructor_call">
+      <svg viewBox="0 0 760 210" role="img" aria-label="Self substitution: a Self::new call walks from its scope to the containing class scope via find_containing_class_scope, resolves the enclosing impl type via find_class_from_scope exported from receiver_resolution, then resolves the new constructor through the member-index link; this needed a ScopeRegistry parameter threaded into resolve_constructor_call">
         <defs>
           <marker id="s-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker>
           <marker id="s-cl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#b9794f"/></marker>
@@ -296,7 +284,7 @@
         <rect x="202" y="74" width="170" height="58" rx="9" fill="#f0ece2" stroke="#7a4636" stroke-width="1.5"/>
         <text x="287" y="92" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#7a4636">walk to class scope</text>
         <text x="287" y="106" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">find_containing_class_scope</text>
-        <text x="287" y="118" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">+ find_class_from_scope (export it)</text>
+        <text x="287" y="118" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">+ find_class_from_scope (exported)</text>
         <line x1="372" y1="103" x2="408" y2="103" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#s-ok)"/>
         <rect x="410" y="74" width="160" height="58" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
         <text x="490" y="92" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#5b6840">Self → impl type</text>
@@ -307,40 +295,42 @@
         <text x="677" y="92" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#5b6840">resolve new()</text>
         <text x="677" y="106" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">via member-index</text>
         <text x="677" y="118" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">link above</text>
-        <rect x="202" y="160" width="368" height="34" rx="8" fill="#fffdf8" stroke="#b9794f" stroke-dasharray="4 3"/>
-        <text x="386" y="176" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">precondition: thread ScopeRegistry into resolve_constructor_call</text>
-        <text x="386" y="188" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">(absent from its signature today; sole caller call_resolver.ts:241)</text>
-        <line x1="287" y1="132" x2="287" y2="158" stroke="#b9794f" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#s-cl)"/>
+        <rect x="202" y="160" width="368" height="34" rx="8" fill="#eef0e6" stroke="#5b6840" stroke-dasharray="4 3"/>
+        <text x="386" y="176" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5b6840">done: ScopeRegistry threaded into resolve_constructor_call</text>
+        <text x="386" y="188" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">find_class_from_scope newly exported from receiver_resolution.ts</text>
+        <line x1="287" y1="132" x2="287" y2="158" stroke="#5b6840" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#s-ok)"/>
       </svg>
     </div>
     <div class="legend">
       <span><i class="edge"></i> Self bound and constructor resolved</span>
-      <span><i style="background:#fffdf8;border-color:#b9794f"></i> signature precondition</span>
+      <span><i style="background:#eef0e6;border-color:#5b6840"></i> signature change landed</span>
       <span>reuses receiver_resolution.ts helpers</span>
     </div>
 
     <div class="callout">
       <span class="k">why this is independent of 349.1 and 349.5</span>
-      <p>Even with the type already bound in scope (<code>use sync::Parker</code>), the constructor link is missing — so this defect stands apart from the name-reduction of 349.1 and the inline-path walk of 349.5. It is the connective tissue: 349.1 carries the name, 349.4 makes the name reach the function.</p>
+      <p>Even with the type already bound in scope (<code>use sync::Parker</code>), the constructor link was missing — a defect distinct from 349.1's name-reduction and 349.5's inline-path walk.</p>
     </div>
   </section>
 
   <section id="ac">
-    <h2>Acceptance — what proves the change</h2>
+    <h2>What proves the change — the tests that ship with it</h2>
     <ol class="acs">
-      <li><span class="n">1</span><div><b>In-scope link:</b> a <code>use</code>-imported <code>Parker::new()</code> resolves to the <code>new</code> associated function (reachable, not an entry point) — not merely to the <code>Parker</code> class symbol.</div></li>
-      <li><span class="n">2</span><div><b>Self:</b> <code>Self::new()</code> inside an <code>impl</code> resolves to the enclosing type's <code>new</code> constructor.</div></li>
-      <li class="risk"><span class="n">3</span><div><b>No double-count:</b> a struct with one <code>fn new</code> exposes exactly one constructor target; no duplicate reachable symbols.</div></li>
-      <li><span class="n">4</span><div><b>Gated:</b> existing TypeScript / Python constructor-resolution tests stay green — the change does not alter the TS <code>[namespace, class]</code> <code>property_chain</code> branch.</div></li>
+      <li><span class="n">1</span><div><b>In-scope link.</b> A <code>use</code>-imported <code>User::new()</code> resolves to the <code>new</code> associated function (reachable, not an entry point), not the <code>User</code> class symbol.<br><span class="testtag">project.rust.integration · "resolves a use-imported Type::new() …" (uses_user.rs + user_mod.rs)</span></div></li>
+      <li><span class="n">2</span><div><b>Self.</b> <code>Self::new()</code> inside <code>impl Widget</code> resolves to <code>Widget::new</code> via the enclosing-impl substitution; <code>new</code> is reachable from <code>zeroed()</code>.<br><span class="testtag">project.rust.integration · "resolves Self::new() inside an impl …" (self_constructor.rs)</span></div></li>
+      <li><span class="n">3</span><div><b>Exactly one target.</b> The resolved <code>User::new()</code> target array equals <code>[user_new]</code> — never the class symbol, never duplicated.<br><span class="testtag">constructor.test · "links an in-scope Type::new() to the `new` member …"</span></div></li>
+      <li><span class="n">4</span><div><b>path_prefix gate.</b> Without a <code>path_prefix</code>, the TS <code>new ClassName()</code> path falls back to the class symbol — the link never fires.<br><span class="testtag">constructor.test · "does not fire the member-index link without a path_prefix …"</span></div></li>
+      <li><span class="n">5</span><div><b>Field guard.</b> <code>find_associated_constructor</code> returns the <code>new</code> member, <code>null</code> when absent, and <code>null</code> for a non-callable member named <code>new</code> (a field).<br><span class="testtag">constructor.test · "find_associated_constructor returns …" + "ignores a non-callable member named `new` …"</span></div></li>
+      <li class="defer"><span class="n">6</span><div><b>Corpus rerun (deferred).</b> Confirming the cluster-wide false-positive drop on a corpus rerun is a follow-up, mirroring 349.1's deferred AC.</div></li>
     </ol>
     <div class="callout slate">
       <span class="k">where 349.4 sits in Change A</span>
-      <p>349.1 (producer + function-call resolution) lands first and is its dependency; 349.4 links the in-scope constructor; <b>349.5</b> then closes the inline-full-path case where the type is not bound by a bare name in scope — reusing 349.1's path resolver. <code>Self</code> and the member-index link built here are the foundation 349.5 walks a path into.</p>
+      <p>349.1 carries the terminal name; 349.4 links the in-scope constructor and <code>Self::new()</code>; <b>349.5</b> next walks an inline full path into the same link. Full suite: 2845 green.</p>
     </div>
   </section>
 
   <footer>
-    task-349.4 · depends on 349.1 · resolver: call_resolution/constructor.ts (find_constructor_in_class_hierarchy :159 · class fallback :100) · capture: methods.rust.ts handle_definition_constructor :146 · Self via receiver_resolution.ts find_containing_class_scope + find_class_from_scope (export) · thread ScopeRegistry through call_resolver.ts:241 · gated to the Rust associated-constructor path
+    task-349.4 · status Done (committed) · depends on 349.1 · resolver: call_resolution/constructor.ts — resolve_constructor_call (path_prefix-gated member-index link · class fallback) + find_associated_constructor (callable-only guard, keyed on class_def.symbol_id) · Self via receiver_resolution.ts find_containing_class_scope + find_class_from_scope (newly exported) · ScopeRegistry threaded into resolve_constructor_call · tests: project.rust.integration.test.ts "Associated Constructor Resolution" + constructor.test.ts "Rust associated constructor (member-index link)" · AC corpus rerun deferred
   </footer>
 
 </main>

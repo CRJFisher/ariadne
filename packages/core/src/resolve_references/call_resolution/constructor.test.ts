@@ -416,6 +416,38 @@ describe("Constructor Call Resolution", () => {
       definitions.update_file("bare.rs" as FilePath, [bare_def]);
       expect(find_associated_constructor(bare_class_id, definitions)).toBe(null);
     });
+
+    it("find_associated_constructor ignores a non-callable member named `new` (a field)", () => {
+      // A Rust `struct T { new: u32 }` field overwrites a `fn new` in the flat
+      // member index; the constructor link must not bind to the property.
+      const class_id = class_symbol("Shadowed", MOCK_LOCATION);
+      const field_id = "property:test.rs:2:4:2:14:new" as SymbolId;
+      const class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: class_id,
+        name: "Shadowed" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: true,
+        extends: [],
+        methods: [],
+        properties: [
+          {
+            kind: "property",
+            symbol_id: field_id,
+            name: "new" as SymbolName,
+            defining_scope_id: CLASS_SCOPE_ID,
+            location: { ...MOCK_LOCATION, start_line: 2 },
+            decorators: [],
+          },
+        ],
+        decorators: [],
+        constructors: [],
+      };
+      definitions.update_file(TEST_FILE, [class_def]);
+
+      expect(find_associated_constructor(class_id, definitions)).toBe(null);
+    });
   });
 
   describe("Unresolved Cases", () => {
