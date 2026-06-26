@@ -104,7 +104,7 @@
   .rows.zero{color:var(--g400);font-weight:400}
   tr.t-core td:first-child{box-shadow:inset 3px 0 0 var(--olive)}
   tr.t-del td:first-child{box-shadow:inset 3px 0 0 var(--rust)}
-  tr.t-bound td:first-child{box-shadow:inset 3px 0 0 var(--clay)}
+  tr.t-bound td:first-child{box-shadow:inset 3px 0 0 var(--olive)}
   tr.t-retired{opacity:.62}
   /* boundary / excluded routing */
   .excl-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0}
@@ -116,6 +116,10 @@
   .ex .route{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--rust);border-top:1px dashed var(--g200);padding-top:9px}
   .ex.clay .route{color:var(--clay)}
   .ex .route b{color:var(--slate)}
+  /* index-time lift flow */
+  .lift{display:grid;grid-template-columns:1fr;gap:0;margin:14px 0}
+  .lift .panel{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:14px 16px 16px}
+  .lift svg{width:100%;height:auto;display:block}
   /* code panel */
   .code{background:var(--code);border-radius:var(--r);padding:0;margin:14px 0;overflow:hidden;border:1px solid #000}
   .code .fl{font-family:var(--mono);font-size:10.5px;color:#b9b09c;background:#1c1a16;padding:7px 14px;border-bottom:1px solid #000;letter-spacing:.03em}
@@ -140,7 +144,7 @@
   <span class="brand">on this page</span>
   <a href="#change">the change</a>
   <a href="#mechanisms">three mechanisms</a>
-  <a href="#boundary">the scope boundary</a>
+  <a href="#conditional">conditional alias at index time</a>
   <a href="#impact">what resolved</a>
   <a href="#excluded">routes elsewhere</a>
   <a href="#next">follow-up</a>
@@ -151,16 +155,15 @@
   <h1>Complete the member surface a resolved receiver exposes</h1>
   <div class="meta">
     <span class="chip done">status · <strong>done</strong></span>
-    <span class="chip">commit · <strong>87193294</strong></span>
-    <span class="chip olive">false flags removed · <strong>26</strong></span>
+    <span class="chip olive">in-scope rows covered · <strong>25 / 25</strong></span>
     <span class="chip clay">follow-up · <strong>347.1 (to do)</strong></span>
     <span class="chip">data-model change · <strong>none</strong></span>
-    <span class="chip olive">core suite · <strong>2814 green</strong></span>
+    <span class="chip olive">core suite · <strong>2816 green</strong></span>
   </div>
   <p class="cap prose">A method call resolves only when the resolver reaches the member it targets; three indirections left that member unreachable, so the real target looked uncalled and lost a call-graph edge. The fix completes the member surface where the lookups are <b>built</b>.</p>
 
   <h2 id="change">What changed: complete the surface at the builder</h2>
-  <p class="cap prose">A correctly resolved receiver reached member lookup and missed. The flat member index omitted the <b>constructor</b>; namespace lookup never followed <b>re-export chains</b>. Both are fixed in the builder; the consumer code is unchanged.</p>
+  <p class="cap prose">A correctly resolved receiver reached member lookup and missed. The flat member index omitted the <b>constructor</b>; namespace lookup never followed <b>re-export chains</b>; class-body operator aliases — direct and inside an <code>if not TYPE_CHECKING:</code> block — were not keyed. All are fixed in the builder; the consumer code is unchanged.</p>
   <div class="ba">
     <div class="panel before">
       <p class="ttl">Before — surface built incomplete</p>
@@ -194,7 +197,7 @@
     <div class="arrow"><span class="a">→</span><span class="l">complete the builder</span></div>
     <div class="panel after">
       <p class="ttl">After — surface completed, with a fan-out guard</p>
-      <svg viewBox="0 0 360 300" role="img" aria-label="After: the same resolved receiver hits a member index that keys the constructor, a constructor short-circuit resolves to one concrete constructor, and namespace lookup delegates to resolve_export_chain; lookup hits and the call edge is recorded.">
+      <svg viewBox="0 0 360 300" role="img" aria-label="After: the same resolved receiver hits a member index that keys the constructor and both direct and conditional class-body aliases, a constructor short-circuit resolves to one concrete constructor, and namespace lookup delegates to resolve_export_chain; lookup hits and the call edge is recorded.">
         <defs>
           <marker id="aO" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#6c7a4a"/></marker>
           <marker id="aN2" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#9a9387"/></marker>
@@ -206,7 +209,7 @@
         <rect x="8" y="80" width="166" height="62" rx="9" fill="#eef1e4" stroke="#6c7a4a" stroke-width="1.5"/>
         <text x="91" y="99" text-anchor="middle" font-family="ui-sans-serif,system-ui" font-size="11" fill="#2b2a28">flat member index</text>
         <text x="91" y="115" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#445233">+ ctor.name keyed ✓</text>
-        <text x="91" y="130" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#445233">+ class-body alias ✓</text>
+        <text x="91" y="130" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#445233">+ alias: direct & conditional ✓</text>
         <rect x="186" y="80" width="166" height="62" rx="9" fill="#eef1e4" stroke="#6c7a4a" stroke-width="1.5"/>
         <text x="269" y="99" text-anchor="middle" font-family="ui-sans-serif,system-ui" font-size="11" fill="#2b2a28">namespace export</text>
         <text x="269" y="115" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">→ resolve_export_chain</text>
@@ -230,7 +233,7 @@
   </div>
 
   <h2 id="mechanisms">The three mechanisms that shipped</h2>
-  <p class="cap prose">Two core member-surface completions plus a scoped operator-alias capture, all in the builder. Mechanism A is <b>not</b> a one-liner — keying the constructor needs a fan-out guard so a constructor call resolves to one concrete constructor, not every subclass.</p>
+  <p class="cap prose">Two core member-surface completions plus operator-alias capture in both class-body forms, all in the builder. Mechanism A is <b>not</b> a one-liner — keying the constructor needs a fan-out guard so a constructor call resolves to one concrete constructor, not every subclass.</p>
   <table>
     <thead><tr><th>Mechanism</th><th>What shipped</th><th>Kind</th><th class="c">rows</th></tr></thead>
     <tbody>
@@ -238,7 +241,7 @@
         <td><span class="mech">A · Constructor linkage + fan-out guard</span><span class="file">definition.ts · method_lookup.ts:165-169</span></td>
         <td><code>flat_members.set(ctor.name, …)</code> keys the constructor under <code>__init__</code>/<code>constructor</code>. A short-circuit in <code>resolve_method_on_type</code> detects <code>kind === "constructor"</code> and skips the class-polymorphic expansion, so <code>self.__init__()</code> / <code>super().__init__()</code> resolve to ONE concrete constructor.<span class="file">collision-free: ctors live only in def.constructors, never def.methods</span></td>
         <td><span class="pill core">core fix</span></td>
-        <td class="c"><span class="rows">14</span></td>
+        <td class="c"><span class="rows">13</span></td>
       </tr>
       <tr class="t-core">
         <td><span class="mech">B · Namespace re-export chains</span><span class="file">method_lookup.ts · constructor.ts · registries/type.ts</span></td>
@@ -247,9 +250,9 @@
         <td class="c"><span class="rows">10</span></td>
       </tr>
       <tr class="t-bound">
-        <td><span class="mech">Operator-method alias (direct form)</span><span class="file">definition.ts · capture_member_aliases</span></td>
-        <td>Captures literal class-body <code>name = other_member</code> assignments (which index as class properties) — e.g. sqlalchemy's <code>__getitem__ = _getitem</code> — rebinding the alias to the real member's symbol. <b>Direct class-body form only</b>; the conditional form is a deliberate boundary (below).<span class="file">rides along with mechanism A in the member-index build</span></td>
-        <td><span class="pill bound">core · scoped</span></td>
+        <td><span class="mech">Operator-method alias · direct + conditional</span><span class="file">definition.ts · query_code_tree/queries/python.scm</span></td>
+        <td>Captures literal class-body <code>name = other_member</code> assignments as alias entries — sqlalchemy's <code>__getitem__ = _getitem</code>. The direct form indexes as a class property; the <code>if not TYPE_CHECKING:</code> conditional form is lifted to a class attribute by a tree-sitter query at index time, so <b>both</b> reach the same property-driven rebind. <b>Both path_registry rows now covered.</b><span class="file">no scope-parent tree, no line-range heuristic</span></td>
+        <td><span class="pill core">core · both forms</span></td>
         <td class="c"><span class="rows">2</span></td>
       </tr>
       <tr class="t-del">
@@ -277,70 +280,89 @@
 <span class="add">+   return exports.<span class="fn">resolve_export_chain</span>(source_file, export_name, <span class="str">"namespace"</span>, languages, root_folder);</span></pre>
   </div>
 
-  <h2 id="boundary">The scope boundary: conditional aliases are a deliberate non-goal</h2>
-  <p class="cap prose">The plan asked for both the direct and the <code>if not TYPE_CHECKING:</code> conditional alias forms; only the <b>direct</b> form shipped. A review reproduced that a line-range heuristic mis-keys nested-function variables — a justified boundary, not a gap.</p>
-  <div class="ba">
-    <div class="panel after">
-      <p class="ttl" style="color:var(--olive)">Shipped — direct class-body form</p>
-      <svg viewBox="0 0 360 150" role="img" aria-label="Direct form: __getitem__ = _getitem at class-body indentation indexes as a class property, binds cleanly.">
-        <rect x="14" y="14" width="332" height="56" rx="9" fill="#eef1e4" stroke="#6c7a4a" stroke-width="1.5"/>
-        <text x="180" y="34" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#2b2a28">class C:</text>
-        <text x="180" y="52" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#445233">  __getitem__ = _getitem</text>
-        <line x1="180" y1="70" x2="180" y2="92" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#aO)"/>
-        <rect x="48" y="94" width="264" height="44" rx="9" fill="#fffdf8" stroke="#6c7a4a"/>
-        <text x="180" y="112" text-anchor="middle" font-family="ui-sans-serif,system-ui" font-size="10.5" fill="#445233">indexes as a class property</text>
-        <text x="180" y="128" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#5f594f">bind_member_alias → flat_members ✓</text>
-      </svg>
-    </div>
-    <div class="arrow"><span class="a">⊘</span><span class="l">not approximated</span></div>
-    <div class="panel before">
-      <p class="ttl" style="color:var(--clay)">Out of scope — conditional block form</p>
-      <svg viewBox="0 0 360 150" role="img" aria-label="Conditional form: __setitem__ inside an if not TYPE_CHECKING block indexes as a variable nested in a block; a line-range heuristic cannot tell it from a method-local variable.">
-        <rect x="14" y="14" width="332" height="56" rx="9" fill="#faf1ea" stroke="#b9794f" stroke-width="1.5"/>
-        <text x="180" y="32" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#2b2a28">if not TYPE_CHECKING:</text>
-        <text x="180" y="50" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#7a4a2f">    __setitem__ = _getitem</text>
-        <line x1="180" y1="70" x2="180" y2="92" stroke="#b9794f" stroke-width="1.8" marker-end="url(#aF)"/>
-        <rect x="34" y="94" width="292" height="44" rx="9" fill="#fbf2ef" stroke="#a8472f"/>
-        <text x="180" y="112" text-anchor="middle" font-family="ui-sans-serif,system-ui" font-size="10" fill="#a8472f">a block scope ≡ a nested function body</text>
-        <text x="180" y="128" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">line-range guess mis-keys method locals</text>
+  <h2 id="conditional">The conditional alias, handled at index time</h2>
+  <p class="cap prose">The <code>if not TYPE_CHECKING: __getitem__ = _getitem</code> form is fixed at the <b>right altitude</b>: a tree-sitter query in <code>python.scm</code> lifts the conditional-block assignment to a class attribute, so it flows through the <b>same</b> property-driven rebind as the direct form — no registry-side line-range heuristic.</p>
+  <div class="lift">
+    <div class="panel">
+      <svg viewBox="0 0 760 220" role="img" aria-label="Index-time lift: a class-body if-not-TYPE_CHECKING block assignment is matched by a tree-sitter query as a direct child of the conditional body, lifted to a class attribute, and rebound through the existing alias path; a nested-function local inside the block is structurally excluded.">
+        <defs>
+          <marker id="lO" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#6c7a4a"/></marker>
+          <marker id="lF" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#a8472f"/></marker>
+        </defs>
+        <!-- source -->
+        <rect x="10" y="20" width="210" height="180" rx="9" fill="#faf6ee" stroke="#ddd6c8"/>
+        <text x="22" y="42" font-family="ui-monospace,monospace" font-size="11" fill="#2b2a28">class C:</text>
+        <text x="22" y="62" font-family="ui-monospace,monospace" font-size="11" fill="#7a4a2f">  if not TYPE_CHECKING:</text>
+        <text x="22" y="80" font-family="ui-monospace,monospace" font-size="11" fill="#445233">    __getitem__ = _getitem</text>
+        <text x="22" y="106" font-family="ui-monospace,monospace" font-size="10.5" fill="#5f594f">    def helper():</text>
+        <text x="22" y="123" font-family="ui-monospace,monospace" font-size="10.5" fill="#a8472f">      local = _getitem</text>
+        <text x="22" y="160" font-family="ui-monospace,monospace" font-size="9" fill="#445233">● direct child of if-body</text>
+        <text x="22" y="178" font-family="ui-monospace,monospace" font-size="9" fill="#a8472f">● nested in def → excluded</text>
+        <line x1="220" y1="71" x2="266" y2="71" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#lO)"/>
+        <line x1="220" y1="120" x2="266" y2="120" stroke="#a8472f" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#lF)"/>
+        <!-- query -->
+        <rect x="270" y="34" width="200" height="74" rx="9" fill="#eef1e4" stroke="#6c7a4a" stroke-width="1.5"/>
+        <text x="370" y="58" text-anchor="middle" font-family="ui-sans-serif,system-ui" font-size="11" fill="#2b2a28">python.scm query</text>
+        <text x="370" y="76" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#445233">matches direct children</text>
+        <text x="370" y="92" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#445233">of the conditional body</text>
+        <rect x="270" y="118" width="200" height="58" rx="9" fill="#fbf2ef" stroke="#a8472f"/>
+        <text x="370" y="142" text-anchor="middle" font-family="ui-sans-serif,system-ui" font-size="10" fill="#a8472f">def-local: no match</text>
+        <text x="370" y="159" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">excluded by AST shape</text>
+        <line x1="470" y1="71" x2="516" y2="71" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#lO)"/>
+        <!-- lift + rebind -->
+        <rect x="520" y="20" width="230" height="88" rx="9" fill="#eef1e4" stroke="#6c7a4a" stroke-width="1.5"/>
+        <text x="635" y="44" text-anchor="middle" font-family="ui-sans-serif,system-ui" font-size="11" fill="#2b2a28">lifted to class attribute</text>
+        <text x="635" y="62" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#445233">__getitem__ : property</text>
+        <text x="635" y="80" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">same shape as direct form</text>
+        <text x="635" y="98" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">no scope-parent tree needed</text>
+        <line x1="635" y1="108" x2="635" y2="132" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#lO)"/>
+        <rect x="520" y="134" width="230" height="62" rx="9" fill="#6c7a4a"/>
+        <text x="635" y="160" text-anchor="middle" font-family="ui-sans-serif,system-ui" font-size="11" fill="#fff" font-weight="600">property-driven alias rebind</text>
+        <text x="635" y="178" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#e8e1d2">→ flat_members (existing path)</text>
       </svg>
     </div>
   </div>
-  <div class="callout clay" style="border-left-color:var(--clay)">
-    <span class="k" style="color:var(--clay)">why it stops here</span>
-    <p>Distinguishing the block from a nested function body needs the <b>scope-parent tree</b> the registry does not hold; the line-range approximation reproducibly mis-keyed method locals, so the correct fix threads the scope tree and is left for a future change.</p>
+  <div class="legend prose">
+    <span><i style="background:#eef1e4;border-color:#6c7a4a"></i> matched & lifted (alias)</span>
+    <span><i style="background:#fbf2ef;border-color:#a8472f"></i> nested-function local · excluded</span>
+    <span><i class="edge"></i> lifts → rebinds</span>
+    <span><i class="fail"></i> no match (false-positive-free)</span>
+  </div>
+  <div class="callout olive">
+    <span class="k">false-positive-free by AST shape</span>
+    <p>The query matches only assignments that are <b>direct children of the conditional's body</b>, so a <code>def helper(): local = _getitem</code> inside the same block is structurally excluded — verified it does not leak into the member index. No line-range guessing, no scope reasoning in the registry.</p>
   </div>
 
-  <h2 id="impact">What resolved: 26 false flags removed, 3 routed away, 1 follow-up</h2>
-  <p class="cap prose">The two core mechanisms remove the constructor and namespace misses (24); the direct operator alias removes 2 more. The Rust <code>eq_impl</code> row became a follow-up; three rows route to other fault areas.</p>
+  <h2 id="impact">What resolved: all 25 in-scope rows covered, 3 routed away, 1 follow-up</h2>
+  <p class="cap prose">The two core mechanisms remove the constructor and namespace misses (23); operator-alias capture covers <b>both</b> sqlalchemy path_registry rows (2). The Rust <code>eq_impl</code> row became a follow-up; three rows route to other fault areas.</p>
   <div class="impact">
     <div class="ibar">
-      <div class="lab"><span class="t">Constructor misses</span><span class="s">django bucket · mechanism A + guard</span></div>
-      <div class="track"><div class="fill core" style="width:53.8%"></div></div>
-      <div class="n">14</div>
+      <div class="lab"><span class="t">Constructor misses</span><span class="s">django direct + namespace · mechanism A + guard</span></div>
+      <div class="track"><div class="fill core" style="width:52%"></div></div>
+      <div class="n">13</div>
     </div>
     <div class="ibar">
       <div class="lab"><span class="t">Namespace re-export misses</span><span class="s">TypeScript barrels · mechanism B</span></div>
-      <div class="track"><div class="fill core" style="width:38.5%"></div></div>
+      <div class="track"><div class="fill core" style="width:40%"></div></div>
       <div class="n">10</div>
     </div>
     <div class="ibar">
-      <div class="lab"><span class="t">Operator alias (direct)</span><span class="s">sqlalchemy <code>__getitem__</code> · shipped</span></div>
-      <div class="track"><div class="fill alias" style="width:7.7%"></div></div>
+      <div class="lab"><span class="t">Operator alias · direct + conditional</span><span class="s">sqlalchemy <code>path_registry</code> · both shipped</span></div>
+      <div class="track"><div class="fill core" style="width:8%"></div></div>
       <div class="n">2</div>
     </div>
     <div class="ibar">
       <div class="lab"><span class="t">Rust <code>eq_impl</code></span><span class="s">→ split to task 347.1 (to do)</span></div>
-      <div class="track"><div class="fill maybe" style="width:3.8%"></div></div>
+      <div class="track"><div class="fill maybe" style="width:4%"></div></div>
       <div class="n maybe">1</div>
     </div>
     <div class="ibar">
       <div class="lab"><span class="t">Routed → other fault areas</span><span class="s">name-resolution &amp; receiver-type inference</span></div>
-      <div class="track"><div class="fill excl" style="width:11.5%"></div></div>
+      <div class="track"><div class="fill excl" style="width:12%"></div></div>
       <div class="n excl">3</div>
     </div>
     <div class="itot">
-      <span class="b fund">resolved here · <strong>26</strong></span>
+      <span class="b fund">in-scope covered · <strong>25 / 25</strong></span>
       <span class="b next">follow-up · <strong>1</strong> <span style="font-weight:400">(task 347.1)</span></span>
       <span class="b away">route elsewhere · <strong>3</strong></span>
     </div>
@@ -381,15 +403,15 @@
 
   <div class="callout invert">
     <span class="k">how it shipped</span>
-    <p><b>High benefit, low blast-radius.</b> 26 durable false-flag removals across 5 projects, with no data-model or wire-contract change and no schema bump; the two big arms <i>collapse</i> into the existing index and chain-follower instead of adding parallel resolver paths. The full <code>packages/core</code> suite (2814 tests) passes.</p>
+    <p><b>High benefit, low blast-radius.</b> All 25 in-scope false flags removed across 5 projects, with no data-model or wire-contract change and no schema bump; the two big arms <i>collapse</i> into the existing index and chain-follower, and the conditional alias is lifted by one added <code>python.scm</code> query rather than a registry heuristic. The full <code>packages/core</code> suite (2816 tests) passes.</p>
   </div>
   <div class="callout olive">
     <span class="k">tests added</span>
-    <p>Regressions for the TypeScript barrel re-export, the Python <code>self.__init__()</code> no-fan-out case, the direct operator alias, and a unit-level fan-out guard — each pinned to the member surface, not the call sites.</p>
+    <p>A django-shaped integration test (direct <code>C(...)</code> and namespace-through-barrel <code>module.C(...)</code> linking <code>__init__</code>), a sqlalchemy test asserting <b>both</b> the direct and conditional <code>__getitem__</code> alias forms exist, the TypeScript barrel re-export, and a unit-level fan-out guard — each pinned to the member surface.</p>
   </div>
 
   <p class="cap prose" style="margin-top:40px;border-top:1px solid var(--g200);padding-top:14px">
-    Reflects what shipped in commit <code>87193294</code> and the task's final implementation notes — fault area <code>packages/core/src/resolve_references/call_resolution/</code>. Constructor linkage + fan-out guard, namespace re-export delegation, the direct operator alias, and the dead-field removal landed; the conditional-alias form and the Rust <code>eq_impl</code> miss (347.1) are deliberate follow-ups.
+    Reflects the task's final implementation notes — fault area <code>packages/core/src/resolve_references/call_resolution/</code> plus the <code>python.scm</code> conditional-alias lift. Constructor linkage + fan-out guard, namespace re-export delegation, both operator-alias forms, and the dead-field removal landed (25/25 in-scope covered); the Rust <code>eq_impl</code> miss (347.1) is the one deliberate follow-up.
   </p>
 </main>
 </body>

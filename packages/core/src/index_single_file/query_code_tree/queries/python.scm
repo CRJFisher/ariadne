@@ -368,6 +368,26 @@
   )
 )
 
+; Class attributes assigned inside a class-body conditional block, e.g.
+; `if not TYPE_CHECKING: __getitem__ = _getitem`. The assignment runs at
+; class-definition time, so it is a class attribute, but it is nested in the
+; `if` block rather than directly in the class body. Matching only direct
+; children of the `if` consequence keeps nested-function locals out.
+(class_definition
+  body: (block
+    (if_statement
+      consequence: (block
+        (expression_statement
+          (assignment
+            left: (identifier) @definition.field
+            right: (_)? @reference.variable
+          )
+        )
+      )
+    )
+  )
+)
+
 ; Variable assignments
 (assignment
   left: (identifier) @definition.variable @assignment.variable

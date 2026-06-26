@@ -141,21 +141,31 @@ describe("Python Submodule Import Resolution Integration", () => {
 });
 
 describe("Operator-alias member resolution", () => {
-  it("binds a class-body operator alias to the target member", async () => {
+  // Mirrors the sqlalchemy path_registry evidence: a direct class-body alias and
+  // the conditional `if not TYPE_CHECKING:` form both make `_getitem` the runtime
+  // `__getitem__` / `__setitem__` implementation, so subscript callers must link
+  // back to `_getitem`.
+  it("binds direct and conditional class-body operator aliases to the target member", async () => {
     const { project, temp_dir, file_paths } = await setup_project({
-      "reg.py": `class Reg:
+      "reg.py": `from typing import TYPE_CHECKING
+
+
+class PathRegistry:
     def _getitem(self, key):
         return key
 
     __getitem__ = _getitem
     bogus = not_a_member
+
+    if not TYPE_CHECKING:
+        __setitem__ = _getitem
 `,
     });
     temp_dirs.push(temp_dir);
 
     const index = project.get_index_single_file(file_paths["reg.py"]);
     const reg_class = [...index!.classes.values()].find(
-      (c) => c.name === ("Reg" as SymbolName)
+      (c) => c.name === ("PathRegistry" as SymbolName)
     );
     expect(reg_class).toBeDefined();
 
@@ -167,9 +177,13 @@ describe("Operator-alias member resolution", () => {
     const getitem_target = members!.get("_getitem" as SymbolName);
     expect(getitem_target).toBeDefined();
 
-    // The direct alias (`__getitem__ = _getitem`) binds to the underlying
-    // `_getitem` method.
+    // The direct alias (`__getitem__ = _getitem`) binds to the `_getitem` method.
     expect(members!.get("__getitem__" as SymbolName)).toEqual(getitem_target);
+
+    // The conditional alias (`__setitem__ = _getitem` under `if not
+    // TYPE_CHECKING:`) is lifted to a class attribute at index time and binds the
+    // same way.
+    expect(members!.get("__setitem__" as SymbolName)).toEqual(getitem_target);
 
     // An assignment whose right-hand side is not a member of the class keeps its
     // own symbol — it is not mis-bound to another member.
@@ -221,5 +235,67 @@ class Circle(Base):
       init_calls.flatMap((c) => c.resolutions.map((r) => r.symbol_id))
     );
     expect(resolved).toEqual(new Set([base_init]));
+  });
+
+  // Mirrors the django evidence shape: a direct instantiation `C(...)` of an
+  // imported class is a real caller of `C.__init__` (e.g. `ChangeList(request)`,
+  // `BaseCommand()`).
+  it("direct instantiation of an imported class links its __init__", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "models.py": `class ChangeList:
+    def __init__(self, request):
+        self.request = request
+`,
+      "admin.py": `from models import ChangeList
+
+
+def get_changelist(request):
+    return ChangeList(request)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    // ChangeList.__init__ is called via the instantiation, so it is reachable
+    // and not a (false) entry point.
+    const call_graph = project.get_call_graph();
+    const init_entry = call_graph.entry_points.find((ep) => {
+      const node = call_graph.nodes.get(ep);
+      return (
+        node?.name === ("__init__" as SymbolName) &&
+        node.location.file_path === file_paths["models.py"]
+      );
+    });
+    expect(init_entry).toBeUndefined();
+  });
+
+  // Mirrors the django evidence shape: a namespace-qualified instantiation
+  // `pkg.C(...)` where the class is re-exported through a barrel package
+  // (e.g. `forms.CharField(required=False)`, `from django import forms`).
+  it("namespace-qualified instantiation through a barrel links __init__", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "fields.py": `class CharField:
+    def __init__(self, required=True):
+        self.required = required
+`,
+      "forms/__init__.py": `from fields import CharField
+`,
+      "main.py": `import forms
+
+
+def build():
+    return forms.CharField(required=False)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const call_graph = project.get_call_graph();
+    const init_entry = call_graph.entry_points.find((ep) => {
+      const node = call_graph.nodes.get(ep);
+      return (
+        node?.name === ("__init__" as SymbolName) &&
+        node.location.file_path === file_paths["fields.py"]
+      );
+    });
+    expect(init_entry).toBeUndefined();
   });
 });

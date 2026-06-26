@@ -405,15 +405,15 @@ export class DefinitionRegistry {
    * `__getitem__ = _getitem`). Rebinds the alias name in `flat_members` to the
    * target member's symbol so calls through the alias resolve to the real member.
    *
-   * Scoped to assignments at class-body indentation, which index as class
-   * PropertyDefinitions carrying the right-hand side in `initial_value`. Only
-   * literal member-to-member aliases bind; an RHS that is not a bare member name
-   * has no matching key in `flat_members` and is ignored.
+   * Driven by class PropertyDefinitions carrying the right-hand side in
+   * `initial_value`. Only literal member-to-member aliases bind; an RHS that is
+   * not a bare member name has no matching key in `flat_members` and is ignored.
    *
-   * Aliases hidden inside a class-body block (e.g. under `if not TYPE_CHECKING:`)
-   * are deliberately out of scope: distinguishing such a block from a nested
-   * function body needs the scope-parent tree, which this registry does not hold,
-   * and a line-range approximation would mis-key method-local variables.
+   * Both class-body-level assignments and ones inside a class-body conditional
+   * block (e.g. `if not TYPE_CHECKING: __getitem__ = _getitem`) arrive here as
+   * class properties: the indexer lifts the conditional form to a class
+   * attribute (query_code_tree/queries/python.scm), so no scope reasoning is
+   * needed in the registry.
    */
   private capture_member_aliases(
     class_def: ClassDefinition,

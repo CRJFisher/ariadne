@@ -10,8 +10,10 @@ labels:
   - method_lookup
 dependencies: []
 priority: high
-plan_dedup_key: 0625f655075bb953250e838c93ba3fe72df1675d663a578963fcd8e4463fe687
-plan_source_task: pt-577457222a209bca
+plan_dedup_keys:
+  - 0625f655075bb953250e838c93ba3fe72df1675d663a578963fcd8e4463fe687
+plan_source_tasks:
+  - pt-577457222a209bca
 ---
 
 ## Description
@@ -55,14 +57,14 @@ What changed, at altitude: `ReceiverResolutionContext` and `CallResolutionContex
 
 How to navigate the result: start at `resolve_references/call_resolution/method_lookup.ts` (`resolve_method_on_type`) — the member lookup all three mechanisms feed, where the constructor fan-out guard lives. The member index and alias capture are in `registries/definition.ts` (`update_file`); the export-chain delegation runs `resolve_namespace_export` → `ExportRegistry.resolve_export_chain` in `registries/export.ts`; `project.ts` wires the export graph into both the apply and remove resolution paths.
 
-What to know / watch: constructor keying is collision-free by construction — `__init__`/`constructor` live only in `def.constructors`, never `def.methods`, and Rust's `new` is an ordinary method that never enters the constructor loop. Operator-alias capture is scoped to class-body assignments (which index as class properties). Aliases hidden inside a class-body block such as `if not TYPE_CHECKING:` are a deliberate non-goal: telling such a block apart from a nested function body needs the scope-parent tree the registry does not hold, and a line-range approximation mis-keys method locals (a multi-agent review reproduced exactly that). If those rows matter, the correct fix threads the scope tree rather than approximating.
+What to know / watch: constructor keying is collision-free by construction — `__init__`/`constructor` live only in `def.constructors`, never `def.methods`, and Rust's `new` is an ordinary method that never enters the constructor loop. Operator-alias capture is driven entirely by class properties: both class-body-level assignments and ones inside a class-body conditional block (`if not TYPE_CHECKING: __getitem__ = _getitem`) reach the registry as class attributes, because the Python indexer lifts the conditional form to a class attribute (`query_code_tree/queries/python.scm`). The lift matches only assignments that are direct children of the conditional's body, so a nested-function local inside such a block is never mistaken for a member alias — no scope reasoning lives in the registry.
 
 ### Implementation notes
 
 - **Mechanism A** (`registries/definition.ts`): `update_file` keys each constructor into `flat_members` under its name; `method_lookup.ts` short-circuits when the resolved member's kind is `constructor`, so `self.__init__()` / `super().__init__()` resolve to the single concrete constructor.
 - **Mechanism B** (`method_lookup.ts`, `constructor.ts`, `registries/type.ts`): `resolve_namespace_export` delegates to `resolve_export_chain`; all four callers (namespace branch, submodule fallback, `new ns.Foo()`, and the namespace-constructor type binding) now pass the export graph.
 - **Dead-field removal**: `TypeMemberInfo.constructor` deleted from the type and both producers (`type_preprocessing/member.ts`, `registries/type.ts`); tests re-pointed at the member index (no `Object.prototype.constructor` footgun left behind).
-- **Operator-alias capture**: literal class-body `name = other_member` aliases are rebound in the member index; the `if not TYPE_CHECKING:` form is out of scope (see above).
+- **Operator-alias capture**: literal class-body `name = other_member` aliases are rebound in the member index. The conditional `if not TYPE_CHECKING:` form is captured at index time — `python.scm` lifts a class-body conditional-block assignment to a class attribute, so it flows through the same property-driven rebind (covers the 2 sqlalchemy `path_registry` rows).
 - **Excluded** per the work plan: the interim classifier was not authored (the registry is human-owned), and the scope-shadowing / return-type rows route to other fault areas.
 - **Tests**: regressions added for the TS barrel re-export, the Python `self.__init__()` no-fan-out case, the operator alias, and a unit-level fan-out guard. Full `resolve_references` + `index_single_file` suites and the whole `packages/core` suite (2814 tests) pass; the package typechecks clean (one pre-existing, unrelated `import.meta` error).
 </content>
