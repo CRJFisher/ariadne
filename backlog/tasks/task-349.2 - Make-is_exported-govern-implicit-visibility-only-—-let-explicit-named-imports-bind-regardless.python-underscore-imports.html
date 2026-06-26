@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Change B — Python underscore named imports</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --ink:#1f1e1c; --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  nav.cross{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 0}
+  nav.cross .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.cross .brand{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.cross a,nav.cross span.cur{font-family:var(--mono);font-size:11px;text-decoration:none;border-radius:999px;padding:4px 10px;border:1px solid var(--g200)}
+  nav.cross a{color:var(--g600);background:var(--paper)}
+  nav.cross a:hover{border-color:var(--clay);color:var(--slate)}
+  nav.cross span.cur{color:var(--slate);background:#fbf2ef;border-color:var(--clay)}
+  nav.toc{position:sticky;top:42px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
+  nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.toc .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--g600);margin-right:6px}
+  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:3px 10px}
+  nav.toc a:hover,nav.toc a.active{border-color:var(--clay);color:var(--slate);background:#fbf2ef}
+  main{width:90%;max-width:1600px;margin:0 auto;padding:26px 0 80px}
+  .prose{max-width:72ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:32px;line-height:1.12;margin:0 0 12px;letter-spacing:-.01em;max-width:30ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:22px;margin:50px 0 6px;letter-spacing:-.01em;scroll-margin-top:96px}
+  p{margin:0 0 10px}
+  code{font-family:var(--mono);font-size:.85em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .chip.rust strong{color:var(--rust)} .chip.olive strong{color:var(--olive)} .chip.clay strong{color:var(--clay)}
+  .cap{font-size:13.5px;color:var(--g600);margin:8px 2px 0}
+  .cap b{color:var(--slate);font-weight:600}
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:18px 0;max-width:94ch}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)} .callout.slate{border-left-color:var(--slate);background:var(--slate);color:var(--ivory)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 6px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)} .callout.slate .k{color:#c9a25a}
+  .callout p{margin:0;font-size:14px}
+  .callout.slate code{background:rgba(255,255,255,.13);color:#f3e9d6}
+  .callout.slate b{color:#fff}
+  .diagram{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:18px;margin:14px 0}
+  .diagram svg{width:100%;height:auto;display:block}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:12px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,.12)}
+  .legend i.edge{width:18px;height:0;border-radius:0;border-top:2px solid var(--olive)}
+  .legend i.fail{width:18px;height:0;border-radius:0;border-top:2px solid var(--rust)}
+  /* gate matrix */
+  .gate{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);overflow:hidden;margin:16px 0}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--g200);vertical-align:top}
+  th{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--g600);background:var(--paper)}
+  td.path{font-family:var(--mono);font-size:11.5px;color:var(--slate)}
+  td.path b{color:var(--slate)}
+  .badge{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;padding:3px 9px;border-radius:999px;display:inline-block;white-space:nowrap;font-weight:600}
+  .badge.gate{background:rgba(108,122,74,.16);color:var(--olive)}
+  .badge.widen{background:rgba(185,121,79,.2);color:var(--clay)}
+  tr:last-child td{border-bottom:none}
+  .code{background:var(--code);border-radius:var(--r);overflow:hidden;margin:14px 0;border:1px solid #1a1815}
+  .code .fl{font-family:var(--mono);font-size:10.5px;color:#b9b0a0;background:#1c1a16;padding:8px 14px;border-bottom:1px solid #000;letter-spacing:.03em}
+  .code pre{margin:0;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.62;color:var(--codeink)}
+  .code .kw{color:#c98a5a} .code .str{color:#9bb06a} .code .cm{color:#6f685c} .code .fn{color:#d8c98a}
+  .code .hl{background:rgba(168,71,47,.22);display:inline-block;width:100%}
+  .code .ok{background:rgba(108,122,74,.20);display:inline-block;width:100%}
+  .acs{display:grid;gap:7px;margin:14px 0;padding:0;list-style:none}
+  .acs li{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start;font-size:13.5px;background:var(--paper);border:1px solid var(--g200);border-radius:9px;padding:10px 13px}
+  .acs .n{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ivory);background:var(--olive);border-radius:6px;width:24px;height:22px;display:flex;align-items:center;justify-content:center}
+  .acs li.risk .n{background:var(--rust)}
+  .acs code{font-size:.9em}
+  footer{font-family:var(--mono);font-size:10.5px;color:var(--g400);margin-top:56px;border-top:1px solid var(--g200);padding-top:14px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<nav class="cross">
+  <div class="inner">
+    <span class="brand">task-349 · name_resolution</span>
+    <a href="task-349 - Resolve-the-name_resolution-false-positive-cluster-across-three-independent-root-causes.overview.html">Epic overview</a>
+    <a href="task-349.1 - Reduce-Rust-qualified-call-references-to-their-terminal-name-and-carry-the-path-prefix.rust-qualified-paths.html">A · Rust qualified paths</a>
+    <span class="cur">B · Python imports</span>
+    <a href="task-349.3 - Apply-two-small-Phase-1-corrections-self-initializer-ordering-and-siblinghoist-propagation.same-file-binding-gaps.html">C · Same-file gaps</a>
+  </div>
+</nav>
+<nav class="toc">
+  <div class="inner">
+    <span class="brand">on this page</span>
+    <a href="#crux">The gate that blocks</a>
+    <a href="#widen">The widened lookup</a>
+    <a href="#matrix">What still gates</a>
+    <a href="#ac">Acceptance</a>
+  </div>
+</nav>
+
+<main>
+
+  <p class="eyebrow">Change B · sub-task 1.2 · land 2nd</p>
+  <h1>An explicit <code>from .x import _y</code> never binds — because <code>is_exported=false</code> on the private name hides it from the export registry</h1>
+
+  <div class="meta">
+    <span class="chip rust"><strong>43</strong>-member leaf (Python population)</span>
+    <span class="chip"><strong>1</strong> producer edit</span>
+    <span class="chip clay"><strong>1</strong> widened lookup</span>
+    <span class="chip olive"><strong>gate kept</strong> for wildcard / namespace / re-export</span>
+  </div>
+  <p class="cap prose">Nearly every Python row is underscore-prefixed (<code>_make_block</code>, <code>_ensure_sync_result</code>, <code>_parse_mapper_argument</code>, …); one data-completeness defect accounts for the whole Python population.</p>
+
+  <section id="crux">
+    <h2>The crux: the export registry refuses to surface a definition that the importer explicitly names</h2>
+    <p class="cap prose">The defining symbol already exists in the <code>DefinitionRegistry</code> keyed by <code>(file, name)</code>. The chain breaks only because <code>ExportRegistry.add_to_registry</code> drops non-exported symbols, and Phase-1's import binding goes <i>through</i> that registry.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 780 250" role="img" aria-label="Current chain: Python indexer sets is_exported false for single-underscore names, export registry drops them, resolve_export_chain returns null, no scope-map binding, false unreachable. The definition still lives in the DefinitionRegistry.">
+        <defs>
+          <marker id="b-fl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#a8472f"/></marker>
+          <marker id="b-cl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9a9387"/></marker>
+          <marker id="b-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker>
+        </defs>
+        <!-- import -->
+        <rect x="14" y="98" width="150" height="50" rx="9" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.5"/>
+        <text x="89" y="118" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">from .x import _y</text>
+        <text x="89" y="133" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">explicit named import</text>
+        <line x1="164" y1="123" x2="200" y2="123" stroke="#9a9387" stroke-width="1.4" marker-end="url(#b-cl)"/>
+        <!-- resolve_export_chain -->
+        <rect x="202" y="96" width="158" height="54" rx="9" fill="#fffdf8" stroke="#ddd6c8"/>
+        <text x="281" y="113" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">resolve_export_chain</text>
+        <text x="281" y="126" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">name_resolution.ts:166</text>
+        <text x="281" y="140" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">→ ExportRegistry</text>
+        <line x1="360" y1="123" x2="396" y2="123" stroke="#9a9387" stroke-width="1.4" marker-end="url(#b-cl)"/>
+        <!-- gate -->
+        <path d="M476 80 L552 123 L476 166 L400 123 Z" fill="#f7ece9" stroke="#a8472f" stroke-width="1.6"/>
+        <text x="476" y="116" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">is_exported</text>
+        <text x="476" y="129" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">=== true ?</text>
+        <text x="476" y="142" text-anchor="middle" font-family="ui-monospace,monospace" font-size="7.5" fill="#5f594f">export.ts:89</text>
+        <!-- false branch -->
+        <line x1="476" y1="166" x2="476" y2="196" stroke="#a8472f" stroke-width="1.6" marker-end="url(#b-fl)"/>
+        <text x="486" y="184" font-family="ui-monospace,monospace" font-size="8.5" fill="#a8472f">false (underscore)</text>
+        <rect x="368" y="200" width="216" height="42" rx="9" fill="#f7ece9" stroke="#a8472f" stroke-width="1.5"/>
+        <text x="476" y="218" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" font-weight="700" fill="#a8472f">chain returns null</text>
+        <text x="476" y="231" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">no scope-map binding → false unreachable</text>
+        <!-- definition registry, off to the right, holding the symbol -->
+        <rect x="600" y="36" width="166" height="60" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
+        <text x="683" y="56" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#5b6840">DefinitionRegistry</text>
+        <text x="683" y="70" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">key (file, "_y")</text>
+        <text x="683" y="84" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#6c7a4a">symbol already here ✓</text>
+        <line x1="552" y1="116" x2="600" y2="80" stroke="#6c7a4a" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#b-ok)"/>
+        <text x="556" y="92" font-family="ui-monospace,monospace" font-size="8" fill="#6c7a4a">refused, not absent</text>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i class="fail"></i> chain breaks at the gate</span>
+      <span><i style="background:#eef0e6;border-color:#5b6840"></i> symbol exists in DefinitionRegistry</span>
+      <span>verified: <code>capture_handlers.python.test.ts:1388–1406</code></span>
+    </div>
+  </section>
+
+  <section id="widen">
+    <h2>The fix: widen the explicit-named-import lookup to a by-name DefinitionRegistry fallback</h2>
+    <p class="cap prose">When the <code>is_exported</code>-gated export set has no entry for an <b>explicit named import</b>, fall back to the by-name <code>DefinitionRegistry</code> lookup in the source file. The caller at <code>name_resolution.ts:166</code> picks this up automatically.</p>
+
+    <div class="code">
+      <div class="fl">registries/export.ts — explicit-named-import fallback (the is_exported gate stays for everyone else)</div>
+<pre><span class="cm">// CURRENT — add_to_registry drops every non-exported symbol (export.ts:89):</span>
+<span class="hl"><span class="kw">if</span> (!def.is_exported) <span class="kw">return</span>;     <span class="cm">// _y never enters the export set</span></span>
+
+<span class="cm">// CHANGE B — explicit-named-import resolution falls back to the definition</span>
+<span class="cm">// registry when the gated export set has no entry:</span>
+<span class="ok"><span class="kw">if</span> (import_kind === <span class="str">"named"</span> && !gated_export_hit) {</span>
+<span class="ok">  resolved = definitions.<span class="fn">get_by_name</span>(source_file, import_name);  <span class="cm">// (file, name) key</span></span>
+<span class="ok">}</span>
+</pre>
+    </div>
+    <div class="callout rust">
+      <span class="k">riskiest part — keep the gate for everything that is NOT an explicit named import (AC #4)</span>
+      <p><code>is_exported=false</code> correctly models <b>"not part of the public surface."</b> The fallback must fire only for an <b>explicit named import</b>. Wildcard (<code>from .x import *</code>), namespace, and re-export paths must keep gating on <code>is_exported</code> — widening them would surface private names into public re-export chains, which is wrong.</p>
+    </div>
+  </section>
+
+  <section id="matrix">
+    <h2>Which resolution paths widen, and which keep the gate</h2>
+    <p class="cap prose">Exactly one path changes. The contract is: <code>is_exported</code> governs implicit visibility only; an explicit name beats it.</p>
+    <div class="gate">
+      <table>
+        <thead><tr><th>Import shape</th><th>Names the symbol?</th><th>is_exported gate</th><th>Result for <code>_y</code></th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="path"><b>from .x import _y</b><br><span style="font-size:11px;color:var(--g400)">explicit named</span></td>
+            <td>yes — by name</td>
+            <td><span class="badge widen">widened — by-name fallback</span></td>
+            <td style="color:var(--olive);font-family:var(--mono);font-size:12px">binds ✓</td>
+          </tr>
+          <tr>
+            <td class="path"><b>from .x import *</b><br><span style="font-size:11px;color:var(--g400)">wildcard</span></td>
+            <td>no</td>
+            <td><span class="badge gate">kept — gate applies</span></td>
+            <td style="color:var(--g600);font-family:var(--mono);font-size:12px">private, excluded</td>
+          </tr>
+          <tr>
+            <td class="path"><b>import x as ns; ns._y</b><br><span style="font-size:11px;color:var(--g400)">namespace</span></td>
+            <td>no</td>
+            <td><span class="badge gate">kept — gate applies</span></td>
+            <td style="color:var(--g600);font-family:var(--mono);font-size:12px">private, excluded</td>
+          </tr>
+          <tr>
+            <td class="path"><b>re-export chain</b><br><span style="font-size:11px;color:var(--g400)">x re-exports y</span></td>
+            <td>no</td>
+            <td><span class="badge gate">kept — gate applies</span></td>
+            <td style="color:var(--g600);font-family:var(--mono);font-size:12px">not on public surface</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <span class="k">scope boundary — out of this change</span>
+      <p>The TypeScript rows in this leaf (destructured from the <code>./_namespaces/ts</code> barrel namespace) fail for an unrelated reason — re-export-chain indirection — and belong to <code>import_resolution</code>.</p>
+      <p style="margin-top:8px">The sqlx/tokio Rust <code>use crate::x::y</code> single-hop named imports resolve via the same export chain and the submodule fallback (<code>name_resolution.ts:177</code>); confirm against the widened lookup, and only if they don't resolve does a small Rust-import adapter become necessary.</p>
+    </div>
+  </section>
+
+  <section id="ac">
+    <h2>Acceptance — what proves the change</h2>
+    <ol class="acs">
+      <li><span class="n">1</span><div>Cross-file Python (<code>Project</code> + <code>update_file</code>): <code>from .m import _private_fn</code> resolves to the underscore-private definition.</div></li>
+      <li><span class="n">2</span><div>A <code>build_index_single_file</code> assertion confirms <code>is_exported</code> stays <code>false</code> for underscore names — the public-surface contract is unchanged; only explicit-import resolution widens.</div></li>
+      <li><span class="n">3</span><div>Existing public-name Python and TS named-import resolution controls stay green.</div></li>
+      <li class="risk"><span class="n">4</span><div><b>The <code>is_exported</code> filter still applies</b> to wildcard / namespace / re-export resolution paths.</div></li>
+      <li><span class="n">5</span><div><code>capture_handlers.python.test.ts</code> <code>is_exported</code> cases (1388–1448) stay green.</div></li>
+    </ol>
+  </section>
+
+  <footer>
+    Producer: resolve_references/registries/export.ts:89 — Caller picks it up: name_resolution.ts:166 · submodule fallback name_resolution.ts:177 · evidence: capture_handlers.python.test.ts:1388–1406 · sequenced 2nd of A→B→C
+  </footer>
+
+</main>
+
+<script>
+  (function(){
+    var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+    var map = {};
+    links.forEach(function(a){ map[a.getAttribute('href').slice(1)] = a; });
+    var obs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(e.isIntersecting){
+          links.forEach(function(l){ l.classList.remove('active'); });
+          var a = map[e.target.id]; if(a) a.classList.add('active');
+        }
+      });
+    }, {rootMargin:'-15% 0px -75% 0px'});
+    document.querySelectorAll('main section[id]').forEach(function(s){ obs.observe(s); });
+  })();
+</script>
+</body>
+</html>

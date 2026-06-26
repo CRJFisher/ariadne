@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Change A · 349.1 — Rust qualified calls: producer + function-call resolution</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --ink:#1f1e1c; --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  nav.cross{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 0}
+  nav.cross .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.cross .brand{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.cross a,nav.cross span.pending,nav.cross span.cur{font-family:var(--mono);font-size:11px;text-decoration:none;border-radius:999px;padding:4px 10px;border:1px solid var(--g200)}
+  nav.cross a{color:var(--g600);background:var(--paper)}
+  nav.cross a:hover{border-color:var(--clay);color:var(--slate)}
+  nav.cross span.cur{color:var(--slate);background:#fbf2ef;border-color:var(--clay)}
+  nav.cross span.pending{color:var(--g400);background:transparent;border-style:dashed}
+  nav.cross span.pending .tag{font-size:8.5px;letter-spacing:.04em;color:var(--g400);margin-left:5px}
+  nav.toc{position:sticky;top:42px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
+  nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.toc .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--g600);margin-right:6px}
+  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:3px 10px}
+  nav.toc a:hover,nav.toc a.active{border-color:var(--clay);color:var(--slate);background:#fbf2ef}
+  main{width:90%;max-width:1600px;margin:0 auto;padding:26px 0 80px}
+  .prose{max-width:72ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:32px;line-height:1.12;margin:0 0 12px;letter-spacing:-.01em;max-width:30ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:22px;margin:50px 0 6px;letter-spacing:-.01em;scroll-margin-top:96px}
+  h3{font-family:var(--mono);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);margin:20px 0 8px}
+  p{margin:0 0 10px}
+  code{font-family:var(--mono);font-size:.85em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .chip.rust strong{color:var(--rust)} .chip.olive strong{color:var(--olive)} .chip.clay strong{color:var(--clay)}
+  .cap{font-size:13.5px;color:var(--g600);margin:8px 2px 0}
+  .cap b{color:var(--slate);font-weight:600}
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:18px 0;max-width:94ch}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)} .callout.slate{border-left-color:var(--slate);background:var(--slate);color:var(--ivory)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 6px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)} .callout.slate .k{color:#c9a25a}
+  .callout p{margin:0;font-size:14px}
+  .callout.slate code{background:rgba(255,255,255,.13);color:#f3e9d6}
+  .callout.slate b{color:#fff}
+  .ba{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin:14px 0}
+  .ba .panel{background:var(--paper);border:1px solid var(--g200);padding:16px}
+  .ba .panel:first-child{border-radius:var(--r) 0 0 var(--r)}
+  .ba .panel:last-child{border-radius:0 var(--r) var(--r) 0;border-left:none}
+  .ba .arrow{display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--ivory);padding:0 4px}
+  .ba .arrow .ar{font-family:var(--mono);font-size:20px;color:var(--clay)}
+  .ba .arrow .arl{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);writing-mode:vertical-rl;margin-top:6px}
+  .ba .ttl{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px}
+  .ba .ttl.cur{color:var(--rust)} .ba .ttl.plan{color:var(--olive)}
+  .ba svg{width:100%;height:auto;display:block}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:12px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,.12)}
+  .legend i.edge{width:18px;height:0;border-radius:0;border-top:2px solid var(--olive)}
+  .legend i.fail{width:18px;height:0;border-radius:0;border-top:2px solid var(--rust)}
+  .fieldtbl{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);overflow:hidden;margin:16px 0}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--g200);vertical-align:top}
+  th{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--g600);background:var(--paper)}
+  td.in code{font-size:.92em}
+  td.now{font-family:var(--mono);font-size:11.5px;color:var(--rust)}
+  td.now b{color:var(--rust)}
+  td.after{font-family:var(--mono);font-size:11.5px;color:var(--olive)}
+  td.after b{color:var(--olive)}
+  td.chain{font-family:var(--mono);font-size:11.5px;color:var(--clay)}
+  td.cap2{font-family:var(--mono);font-size:11px;color:var(--g600)}
+  tr:last-child td{border-bottom:none}
+  tr.uncap td{opacity:.6}
+  .diagram{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:18px;margin:14px 0}
+  .diagram svg{width:100%;height:auto;display:block}
+  .code{background:var(--code);border-radius:var(--r);overflow:hidden;margin:14px 0;border:1px solid #1a1815}
+  .code .fl{font-family:var(--mono);font-size:10.5px;color:#b9b0a0;background:#1c1a16;padding:8px 14px;border-bottom:1px solid #000;letter-spacing:.03em}
+  .code pre{margin:0;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.62;color:var(--codeink)}
+  .code .kw{color:#c98a5a} .code .str{color:#9bb06a} .code .cm{color:#6f685c} .code .fn{color:#d8c98a}
+  .code .hl{background:rgba(168,71,47,.22);display:inline-block;width:100%}
+  .code .ok{background:rgba(108,122,74,.20);display:inline-block;width:100%}
+  .acs{display:grid;gap:7px;margin:14px 0;padding:0;list-style:none}
+  .acs li{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start;font-size:13.5px;background:var(--paper);border:1px solid var(--g200);border-radius:9px;padding:10px 13px}
+  .acs .n{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ivory);background:var(--olive);border-radius:6px;width:24px;height:22px;display:flex;align-items:center;justify-content:center}
+  .acs li.risk .n{background:var(--rust)}
+  .acs code{font-size:.9em}
+  @media(max-width:860px){.ba{grid-template-columns:1fr}.ba .arrow{flex-direction:row;padding:8px 0}.ba .arrow .arl{writing-mode:horizontal-tb;margin:0 0 0 6px}.ba .panel:last-child{border-left:1px solid var(--g200);border-radius:0 0 var(--r) var(--r)}.ba .panel:first-child{border-radius:var(--r) var(--r) 0 0}}
+  footer{font-family:var(--mono);font-size:10.5px;color:var(--g400);margin-top:56px;border-top:1px solid var(--g200);padding-top:14px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<nav class="cross">
+  <div class="inner">
+    <span class="brand">task-349 · name_resolution</span>
+    <a href="task-349 - Resolve-the-name_resolution-false-positive-cluster-across-three-independent-root-causes.overview.html">Epic overview</a>
+    <span class="cur">A1 · Producer + fn calls</span>
+    <a href="task-349.4 - Link-Rust-associated-new-constructors-and-substitute-Self-so-Type-new-resolves-to-the-constructor.constructor-linking.html">A4 · Constructor linking</a>
+    <a href="task-349.5 - Resolve-inline-full-path-Rust-constructors-via-path-prefix-type-walking.path-walk-constructors.html">A5 · Inline-path types</a>
+    <a href="task-349.2 - Make-is_exported-govern-implicit-visibility-only-—-let-explicit-named-imports-bind-regardless.python-underscore-imports.html">B · Python imports</a>
+    <a href="task-349.3 - Apply-two-small-Phase-1-corrections-self-initializer-ordering-and-siblinghoist-propagation.same-file-binding-gaps.html">C · Same-file gaps</a>
+  </div>
+</nav>
+<nav class="toc">
+  <div class="inner">
+    <span class="brand">on this page</span>
+    <a href="#shadow">Why producer + resolver are one unit</a>
+    <a href="#crux">Where name is born</a>
+    <a href="#capture">Capture shapes</a>
+    <a href="#fields">path_prefix vs property_chain</a>
+    <a href="#resolve">Function-call resolution</a>
+    <a href="#ac">Acceptance</a>
+  </div>
+</nav>
+
+<main>
+
+  <p class="eyebrow">Change A · sub-task 349.1 · first of A · producer + function-call resolution (one atomic unit)</p>
+  <h1>A scoped Rust call carries its whole path as the name — reducing it to the terminal alone regresses shadowing, so the resolver ships with it</h1>
+
+  <div class="meta">
+    <span class="chip rust"><strong>worker::create</strong> name = full path text</span>
+    <span class="chip"><strong>2</strong> producers · 2 consumers</span>
+    <span class="chip clay"><strong>path_prefix</strong> held apart from property_chain</span>
+    <span class="chip olive"><strong>Shadowing</strong> regression guard</span>
+  </div>
+  <p class="cap prose"><code>worker::create(7)</code>, <code>Parker::make(5)</code> and <code>Cell::&lt;u8&gt;::make()</code> reach Phase-1 as the full path text; the scope map holds only bare terminal names, so every one misses with <code>name_not_in_scope</code>.</p>
+
+  <section id="shadow">
+    <h2>The crux: the producer alone is not landable — it regresses shadowing</h2>
+    <p class="cap prose">Reducing <code>utils::helper()</code> to the bare name <code>helper</code> makes it indistinguishable from a local <code>helper()</code>. In the <code>shadowing.rs</code> fixture a local <code>fn helper</code> shadows <code>use utils::{helper}</code> — so the qualified call collapses onto the local shadow. The path-prefix resolver that honours the qualifier is what keeps them apart; the two are one task.</p>
+
+    <div class="ba">
+      <div class="panel">
+        <p class="ttl cur">Producer alone — qualified call collapses onto the local shadow</p>
+        <svg viewBox="0 0 330 250" role="img" aria-label="Producer alone regresses shadowing: a local fn helper shadows use utils helper; reducing utils::helper to bare helper makes the qualified call bind to the local shadow, raising the helper-call count from 2 to 3, caught by the Shadowing integration test">
+          <defs><marker id="ahf" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#a8472f"/></marker></defs>
+          <rect x="14" y="8" width="148" height="46" rx="8" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.4"/>
+          <text x="88" y="26" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">use utils::{helper}</text>
+          <text x="88" y="40" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">import</text>
+          <text x="88" y="50" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">(2 expected calls)</text>
+          <rect x="168" y="8" width="148" height="46" rx="8" fill="#f7ece9" stroke="#a8472f" stroke-width="1.4"/>
+          <text x="242" y="26" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">fn helper()</text>
+          <text x="242" y="40" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">local shadow</text>
+          <text x="242" y="50" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#a8472f">(2 real calls)</text>
+          <rect x="60" y="78" width="210" height="40" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="165" y="94" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">utils::helper() reduced to</text>
+          <text x="165" y="110" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" font-weight="700" fill="#a8472f">bare "helper"</text>
+          <line x1="165" y1="118" x2="165" y2="140" stroke="#a8472f" stroke-width="1.4" marker-end="url(#ahf)"/>
+          <rect x="60" y="144" width="210" height="38" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="165" y="160" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">indistinguishable from local call</text>
+          <text x="165" y="174" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">binds to the local shadow, not the import</text>
+          <line x1="165" y1="182" x2="165" y2="204" stroke="#a8472f" stroke-width="1.6" marker-end="url(#ahf)"/>
+          <rect x="44" y="208" width="242" height="36" rx="8" fill="#f7ece9" stroke="#a8472f" stroke-width="1.4"/>
+          <text x="165" y="225" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" font-weight="700" fill="#a8472f">helper-call count 2 → 3</text>
+          <text x="165" y="237" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">project.rust.integration.test.ts &gt; Shadowing fails</text>
+        </svg>
+      </div>
+      <div class="arrow"><span class="ar">&rarr;</span><span class="arl">+ resolver</span></div>
+      <div class="panel">
+        <p class="ttl plan">Producer + resolver — qualifier honoured, import bound</p>
+        <svg viewBox="0 0 330 250" role="img" aria-label="Producer plus the path-prefix resolver: the qualified utils::helper carries path_prefix utils; resolving via the path first binds the import, while bare helper still resolves to the local shadow, keeping the Shadowing test green">
+          <defs><marker id="aho" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker></defs>
+          <rect x="14" y="8" width="148" height="46" rx="8" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.4"/>
+          <text x="88" y="26" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">use utils::{helper}</text>
+          <text x="88" y="40" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">import</text>
+          <text x="88" y="50" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#6c7a4a">utils::helper() binds here</text>
+          <rect x="168" y="8" width="148" height="46" rx="8" fill="#eef0e6" stroke="#5b6840" stroke-width="1.4"/>
+          <text x="242" y="26" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">fn helper()</text>
+          <text x="242" y="40" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">local shadow</text>
+          <text x="242" y="50" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5b6840">bare helper() binds here</text>
+          <rect x="40" y="78" width="120" height="40" rx="8" fill="#eef0e6" stroke="#5b6840"/>
+          <text x="100" y="94" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">name "helper"</text>
+          <text x="100" y="108" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">terminal</text>
+          <rect x="168" y="78" width="148" height="40" rx="8" fill="#f0ece2" stroke="#7a4636"/>
+          <text x="242" y="94" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">path_prefix</text>
+          <text x="242" y="108" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" font-weight="700" fill="#7a4636">["utils"]</text>
+          <line x1="242" y1="118" x2="200" y2="140" stroke="#7a4636" stroke-width="1.4" marker-end="url(#aho)"/>
+          <line x1="100" y1="118" x2="140" y2="140" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#aho)"/>
+          <rect x="44" y="144" width="242" height="40" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="165" y="160" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">prefix present → resolve via path first</text>
+          <text x="165" y="175" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">utils module → helper export · bare → local</text>
+          <line x1="165" y1="184" x2="165" y2="206" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#aho)"/>
+          <rect x="46" y="210" width="238" height="34" rx="8" fill="#eef0e6" stroke="#5b6840" stroke-width="1.4"/>
+          <text x="165" y="227" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" font-weight="700" fill="#5b6840">helper-call count stays 2</text>
+          <text x="165" y="239" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">Shadowing test green (AC #5)</text>
+        </svg>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i class="fail"></i> producer alone regresses (shadow wins)</span>
+      <span><i class="edge"></i> resolver honours the qualifier</span>
+      <span>fixture: <code>tests/fixtures/rust/code/modules/shadowing.rs</code></span>
+    </div>
+    <div class="callout slate">
+      <span class="k">why they are one task — not independently landable</span>
+      <p>A prototype proved the name reduction alone flips <code>project.rust.integration.test.ts &gt; Shadowing</code> red (helper-call count <code>2 → 3</code>). The producer's terminal-name reduction is only correct <b>with</b> the path-prefix resolver that honours the qualifier — so 349.1 ships both. <b>Constructors</b> have no such regression and are split off: <a href="task-349.4 - Link-Rust-associated-new-constructors-and-substitute-Self-so-Type-new-resolves-to-the-constructor.constructor-linking.html" style="color:#c9a25a">349.4 links Rust new()</a>, <a href="task-349.5 - Resolve-inline-full-path-Rust-constructors-via-path-prefix-type-walking.path-walk-constructors.html" style="color:#c9a25a">349.5 walks inline full paths</a>.</p>
+    </div>
+  </section>
+
+  <section id="crux">
+    <h2>Where name is born — the reference builder, one altitude above Phase-1</h2>
+    <p class="cap prose">By the time Phase-1 runs, <code>name</code> already equals <code>"worker::create"</code> — a string no bare-name scope map can hold. The fix belongs in the reference builder, where <code>name</code> is first assigned.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 760 200" role="img" aria-label="Producer flow: a Rust scoped_identifier reaches extract_call_name which today returns undefined for a bare scoped_identifier, so the capture.text fallback leaks the whole path; Change A adds branches that return the terminal name and a separate path-prefix extractor, attached in references.ts">
+        <defs>
+          <marker id="p-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker>
+          <marker id="p-rs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#a8472f"/></marker>
+        </defs>
+        <g font-family="ui-monospace,monospace">
+          <rect x="16" y="74" width="150" height="50" rx="9" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.5"/>
+          <text x="91" y="94" text-anchor="middle" font-size="9.5" fill="#2b2a28">worker::create(7)</text>
+          <text x="91" y="108" text-anchor="middle" font-size="8" fill="#5f594f">scoped_identifier</text>
+          <line x1="166" y1="99" x2="202" y2="99" stroke="#9a9387" stroke-width="1.4" marker-end="url(#p-ok)"/>
+          <rect x="204" y="68" width="176" height="62" rx="9" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="292" y="86" text-anchor="middle" font-size="9" font-weight="700" fill="#2b2a28">extract_call_name :766</text>
+          <text x="292" y="100" text-anchor="middle" font-size="8" fill="#a8472f">today: undefined for scoped_id</text>
+          <text x="292" y="112" text-anchor="middle" font-size="8" fill="#5b6840">add: scoped_identifier → name field</text>
+          <text x="292" y="122" text-anchor="middle" font-size="8" fill="#5b6840">generic_type → type field (turbofish)</text>
+          <line x1="380" y1="86" x2="416" y2="70" stroke="#a8472f" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#p-rs)"/>
+          <line x1="380" y1="112" x2="416" y2="128" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#p-ok)"/>
+          <rect x="418" y="40" width="160" height="40" rx="8" fill="#f7ece9" stroke="#a8472f" stroke-width="1.4"/>
+          <text x="498" y="58" text-anchor="middle" font-size="8.5" font-weight="700" fill="#a8472f">capture.text fallback</text>
+          <text x="498" y="70" text-anchor="middle" font-size="8" fill="#5f594f">"worker::create" — removed</text>
+          <rect x="418" y="118" width="160" height="44" rx="8" fill="#f0ece2" stroke="#7a4636" stroke-width="1.4"/>
+          <text x="498" y="136" text-anchor="middle" font-size="8.5" font-weight="700" fill="#7a4636">extract_call_path_prefix</text>
+          <text x="498" y="148" text-anchor="middle" font-size="8" fill="#5f594f">new fn, separate from</text>
+          <text x="498" y="158" text-anchor="middle" font-size="8" fill="#5f594f">extract_property_chain :292</text>
+          <line x1="578" y1="140" x2="614" y2="120" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#p-ok)"/>
+          <line x1="578" y1="60" x2="614" y2="100" stroke="#9a9387" stroke-width="1.3" stroke-dasharray="3 3"/>
+          <rect x="616" y="80" width="132" height="50" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
+          <text x="682" y="100" text-anchor="middle" font-size="9" font-weight="700" fill="#5b6840">references.ts</text>
+          <text x="682" y="113" text-anchor="middle" font-size="8" fill="#5f594f">attach via ?. (Rust-only)</text>
+          <text x="682" y="123" text-anchor="middle" font-size="8" fill="#5f594f">FUNCTION_CALL :592</text>
+        </g>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i style="background:#f7ece9;border-color:#a8472f"></i> removed fallback (Rust qualified calls)</span>
+      <span><i style="background:#f0ece2;border-color:#7a4636"></i> new path-prefix extractor</span>
+      <span><i class="edge"></i> terminal name + prefix attached</span>
+    </div>
+    <div class="callout">
+      <span class="k">why the TS/JS fallback is untouched — no TS/JS regression</span>
+      <p>The <code>capture.text</code> fallback switch (<code>references.ts</code> ~563) only handles TS/JS <code>call_expression</code> / <code>new_expression</code>, so the terminal-name refinement leaves it inert for those — only Rust qualified calls change. <b>Do not</b> add a bare-<code>identifier</code> branch: the test "returns undefined for non-call nodes" depends on a bare <code>x</code> staying <code>undefined</code>.</p>
+    </div>
+  </section>
+
+  <section id="capture">
+    <h2>The producer branches on the captured node — six shapes, one query</h2>
+    <p class="cap prose">No <code>.scm</code> edit is needed: every in-scope form is already captured (with the wrong name). The producer branches on the actual <code>capture.node.type</code> handed to the builder.</p>
+    <div class="fieldtbl">
+      <table>
+        <thead><tr><th>Source</th><th>Capture (rust.scm)</th><th>node.type to builder</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="in"><code>worker::create(7)</code></td>
+            <td class="cap2">@reference.call :655-660 <span style="color:var(--g400)">#not-match new</span></td>
+            <td class="after"><b>scoped_identifier</b></td>
+          </tr>
+          <tr>
+            <td class="in"><code>Parker::make(5)</code></td>
+            <td class="cap2">@reference.call (same)</td>
+            <td class="after"><b>scoped_identifier</b></td>
+          </tr>
+          <tr>
+            <td class="in"><code>Cell::&lt;u8&gt;::make()</code></td>
+            <td class="cap2">@reference.call (same)</td>
+            <td class="after"><b>scoped_identifier</b> <span style="color:var(--g400)">(path child generic_type)</span></td>
+          </tr>
+          <tr>
+            <td class="in"><code>crate::runtime::Driver::new()</code></td>
+            <td class="cap2">@reference.constructor.associated :663-669 <span style="color:var(--g400)">path child</span></td>
+            <td class="after"><b>scoped_identifier</b> <span style="color:var(--g400)">(crate::runtime::Driver)</span></td>
+          </tr>
+          <tr>
+            <td class="in"><code>Cell::&lt;u8&gt;::new()</code></td>
+            <td class="cap2">@reference.constructor.associated (same)</td>
+            <td class="after"><b>generic_type</b> <span style="color:var(--g400)">(Cell::&lt;u8&gt;)</span></td>
+          </tr>
+          <tr>
+            <td class="in"><code>Self::new()</code></td>
+            <td class="cap2">@reference.constructor.associated (same)</td>
+            <td class="after"><b>identifier</b> <span style="color:var(--g400)">(Self — kept by identity)</span></td>
+          </tr>
+          <tr class="uncap">
+            <td class="in"><code>worker::create::&lt;i32&gt;()</code></td>
+            <td class="cap2">uncaptured — generic_function :671-676</td>
+            <td class="after">— <span style="color:var(--g400)">query gap, out of scope</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap prose">The outer-turbofish form is a real <code>.scm</code> gap (the <code>generic_function</code> rule matches only <code>function: (identifier)</code>) but is in no acceptance criterion — tracked as a separate query-gap follow-up, not blocking this task.</p>
+  </section>
+
+  <section id="fields">
+    <h2><code>path_prefix</code> is held apart from <code>property_chain</code> — not overloaded</h2>
+    <p class="cap prose">A dedicated <code>path_prefix?: readonly SymbolName[]</code> field is added to <code>FunctionCallReference</code> and <code>ConstructorCallReference</code> rather than reusing <code>property_chain</code>: two TS-oriented consumers bake in the <code>[namespace, class]</code> index convention and would mis-bind a Rust type-last chain.</p>
+    <div class="fieldtbl">
+      <table>
+        <thead><tr><th>Field</th><th>Shape it carries</th><th>Consumers that depend on the shape</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="in"><code>property_chain</code><br><span style="font-size:11px;color:var(--g400)">existing, TS/JS</span></td>
+            <td class="chain">[namespace, class] — namespace-first</td>
+            <td class="cap2"><code>constructor.ts:56</code> reads [0]=ns, [1]=class · <code>type_preprocessing/constructor.ts:59</code> length&gt;1 ⇒ ns-qualified</td>
+          </tr>
+          <tr>
+            <td class="in"><code>path_prefix</code><br><span style="font-size:11px;color:var(--g400)">new, Rust-only</span></td>
+            <td class="after">["worker"] fn · ["crate","runtime","Driver"] ctor — type-last</td>
+            <td class="cap2">optional method on MetadataExtractors · called as <code>?.</code> (TS/JS/Python omit it)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="code">
+      <div class="fl">metadata_extractors.rust.ts — extract_call_path_prefix, separate from extract_property_chain (line 292)</div>
+<pre><span class="cm">// "function" mode drops the terminal segment:</span>
+<span class="ok">extract_call_path_prefix(<span class="str">worker::create</span>, <span class="str">"function"</span>)    <span class="cm">// → ["worker"]</span></span>
+<span class="cm">// "constructor" mode keeps the full type path (type-last):</span>
+<span class="ok">extract_call_path_prefix(<span class="str">crate::runtime::Driver</span>, <span class="str">"constructor"</span>)
+                                       <span class="cm">// → ["crate","runtime","Driver"]</span></span>
+<span class="ok">extract_call_path_prefix(<span class="str">Cell::&lt;u8&gt;</span>, <span class="str">"constructor"</span>)   <span class="cm">// → ["Cell"]  turbofish stripped</span></span>
+
+<span class="cm">// extract_property_chain :292 stays byte-for-byte identical — it returns the</span>
+<span class="cm">// FULL chain including the terminal and is asserted by its own tests (AC #2).</span>
+</pre>
+    </div>
+    <p class="cap prose"><code>FunctionCallReference</code> has no <code>property_chain</code> field today; <code>ConstructorCallReference.property_chain</code> stays unset for Rust. The field is additive — no schema bump (per project memory <code>project_plan_pipeline_no_schema_bumps</code>).</p>
+  </section>
+
+  <section id="resolve">
+    <h2>Function-call resolution — resolve via the path first, honour the qualifier</h2>
+    <p class="cap prose">When <code>ref.path_prefix</code> is present, resolve via the path first (the author wrote the qualifier), falling back to the bare terminal only on a path miss — sound by construction, avoiding the unsound global <code>get_definitions_by_name</code> ambiguity scan.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 760 240" role="img" aria-label="Function-call resolution decision flow: when path_prefix is present, branch on module-qualified versus type-qualified; module-qualified resolves the leading segment to a mod or use module then the terminal as that module's export, binding the import over a local shadow; type-qualified resolves the leading segment to a type then looks up the terminal in the member index, bypassing the method-rejection gate only when path_prefix is non-empty">
+        <defs>
+          <marker id="r-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker>
+          <marker id="r-cl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#b9794f"/></marker>
+        </defs>
+        <rect x="16" y="98" width="140" height="46" rx="9" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.5"/>
+        <text x="86" y="118" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">resolve_function_call</text>
+        <text x="86" y="132" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">path_prefix present?</text>
+        <path d="M256 78 L330 121 L256 164 L182 121 Z" fill="#fffdf8" stroke="#b9794f" stroke-width="1.5"/>
+        <text x="256" y="116" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">leading seg</text>
+        <text x="256" y="128" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">is module or type?</text>
+        <line x1="156" y1="121" x2="182" y2="121" stroke="#b9794f" stroke-width="1.4" marker-end="url(#r-cl)"/>
+        <line x1="256" y1="78" x2="256" y2="52" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#r-ok)"/>
+        <text x="268" y="66" font-family="ui-monospace,monospace" font-size="8.5" fill="#6c7a4a">module</text>
+        <rect x="356" y="26" width="246" height="52" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
+        <text x="479" y="44" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" font-weight="700" fill="#5b6840">module-qualified · worker::create</text>
+        <text x="479" y="58" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">leading → mod/use module, terminal → its export</text>
+        <text x="479" y="70" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5b6840">utils::helper binds the IMPORT over the local shadow</text>
+        <line x1="330" y1="100" x2="356" y2="60" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#r-ok)"/>
+        <line x1="256" y1="164" x2="256" y2="190" stroke="#b9794f" stroke-width="1.5" marker-end="url(#r-cl)"/>
+        <text x="268" y="180" font-family="ui-monospace,monospace" font-size="8.5" fill="#b9794f">type</text>
+        <rect x="120" y="194" width="282" height="42" rx="9" fill="#f0ece2" stroke="#7a4636" stroke-width="1.5"/>
+        <text x="261" y="212" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" font-weight="700" fill="#7a4636">type-qualified · Parker::make</text>
+        <text x="261" y="225" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">leading → type, terminal → member_index.get(type_id)</text>
+        <line x1="402" y1="215" x2="436" y2="215" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#r-ok)"/>
+        <rect x="438" y="190" width="164" height="50" rx="9" fill="#f7eee6" stroke="#b9794f" stroke-width="1.5"/>
+        <text x="520" y="208" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" font-weight="700" fill="#b9794f">bypass method-reject gate</text>
+        <text x="520" y="221" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">function_call.ts:53 — ONLY when</text>
+        <text x="520" y="232" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#a8472f">path_prefix non-empty (bare make() still rejected)</text>
+        <rect x="620" y="98" width="128" height="60" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
+        <text x="684" y="120" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#5b6840">bound</text>
+        <text x="684" y="134" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">crate/self/super</text>
+        <text x="684" y="145" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">normalized first</text>
+        <line x1="602" y1="52" x2="660" y2="96" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#r-ok)"/>
+        <line x1="602" y1="208" x2="664" y2="158" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#r-ok)"/>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i style="background:#eef0e6;border-color:#5b6840"></i> module-qualified path</span>
+      <span><i style="background:#f0ece2;border-color:#7a4636"></i> type-qualified path</span>
+      <span><i style="background:#f7eee6;border-color:#b9794f"></i> gate bypass guarded by prefix</span>
+    </div>
+
+    <div class="callout rust">
+      <span class="k">collision safety — the prefix is enforced, not assumed (AC #5, #6)</span>
+      <p>The retained <code>path_prefix</code> is the disambiguating guard. When the terminal is ambiguous (a local shadow, or two in-scope modules/types exposing the same name) the prefix selects the target — evaluated <b>in scope</b>, not via a global name scan, because the single-valued <code>by_scope</code> map collapses same-name bindings.</p>
+      <p style="margin-top:8px">A bare unqualified call (no <code>path_prefix</code>) resolves exactly as before — the gate is bypassed <b>only</b> when <code>path_prefix</code> is non-empty.</p>
+      <p style="margin-top:8px">Same-crate alias hops (<code>use ll::Semaphore</code>) ride this path only when the leading segment resolves through a same-crate <code>use</code>/type alias; a cross-file re-export is <code>import_resolution</code> — bail rather than fabricate an edge.</p>
+    </div>
+    <div class="callout">
+      <span class="k">excluded — the TS static-dispatch row (epic AC #5)</span>
+      <p><code>LanguageServiceTestEnv.setup()</code> is captured as a <code>MethodCallReference</code> (<code>is_method_call</code> returns true for a <code>member_expression</code> callee) on the method-lookup lane — it shares no mechanism with the terminal-name path. <b>Excluded to <code>method_lookup</code></b>, not folded here.</p>
+    </div>
+  </section>
+
+  <section id="ac">
+    <h2>Acceptance — what proves the change</h2>
+    <ol class="acs">
+      <li><span class="n">1</span><div><b>Extraction:</b> <code>worker::create</code> → name <code>create</code>, prefix <code>["worker"]</code>; <code>crate::runtime::Driver::new</code> → constructor name <code>Driver</code>, prefix <code>["crate","runtime","Driver"]</code>; <code>Cell::&lt;u8&gt;::new</code> → name <code>Cell</code>, turbofish stripped.</div></li>
+      <li><span class="n">2</span><div>All existing <code>extract_call_name</code> / <code>extract_property_chain</code> cases stay green; new <code>extract_call_name</code> and <code>extract_call_path_prefix</code> cases assert terminal-name and prefix behaviour directly.</div></li>
+      <li><span class="n">3</span><div><b>Module-qualified:</b> <code>worker::create(7)</code> resolves <code>create</code> in the <code>worker</code> module — reachable, not an entry point.</div></li>
+      <li><span class="n">4</span><div><b>Type-qualified:</b> <code>Parker::make(5)</code> resolves to <code>make</code> in <code>Parker</code>'s member index.</div></li>
+      <li class="risk"><span class="n">5</span><div><b>Regression guard:</b> <code>project.rust.integration.test.ts &gt; Shadowing</code> stays green — bare <code>helper()</code> resolves to the local, <code>utils::helper()</code> to the <b>import</b>; the reduction does not collapse the qualified call onto the shadow.</div></li>
+      <li><span class="n">6</span><div><b>Bare call unchanged:</b> an unqualified call (no <code>path_prefix</code>) resolves exactly as before — the method-rejection gate is bypassed only when <code>path_prefix</code> is non-empty.</div></li>
+    </ol>
+    <div class="callout slate">
+      <span class="k">where 349.1 sits in Change A — and what comes next</span>
+      <p>349.1 ships the producer plus function-call resolution as one unit (the shadowing guard forces it). Constructors follow as separable root causes with no regression of their own: <b>349.4</b> links Rust <code>new()</code> + <code>Self</code> substitution, then <b>349.5</b> walks inline full paths — both reuse the path resolver built here.</p>
+    </div>
+  </section>
+
+  <footer>
+    task-349.1 · producer + function-call resolution (one atomic unit) · producer: metadata_extractors.rust.ts extract_call_name :766 + new extract_call_path_prefix (≠ extract_property_chain :292) · references.ts FUNCTION_CALL :592 / CONSTRUCTOR_CALL :607 · consumer: function_call.ts resolve_function_call :129 (gate :53) · additive path_prefix on FunctionCall + ConstructorCall (no schema bump) · regression guard: shadowing.rs · TS static dispatch excluded → method_lookup · land 1st of A
+  </footer>
+
+</main>
+
+<script>
+  (function(){
+    var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+    var map = {};
+    links.forEach(function(a){ map[a.getAttribute('href').slice(1)] = a; });
+    var obs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(e.isIntersecting){
+          links.forEach(function(l){ l.classList.remove('active'); });
+          var a = map[e.target.id]; if(a) a.classList.add('active');
+        }
+      });
+    }, {rootMargin:'-15% 0px -75% 0px'});
+    document.querySelectorAll('main section[id]').forEach(function(s){ obs.observe(s); });
+  })();
+</script>
+</body>
+</html>

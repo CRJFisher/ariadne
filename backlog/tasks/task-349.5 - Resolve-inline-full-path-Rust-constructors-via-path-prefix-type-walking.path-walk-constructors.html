@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Change A · 349.5 — Inline-full-path Rust constructor type walking</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --ink:#1f1e1c; --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  nav.cross{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 0}
+  nav.cross .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.cross .brand{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.cross a,nav.cross span.pending,nav.cross span.cur{font-family:var(--mono);font-size:11px;text-decoration:none;border-radius:999px;padding:4px 10px;border:1px solid var(--g200)}
+  nav.cross a{color:var(--g600);background:var(--paper)}
+  nav.cross a:hover{border-color:var(--clay);color:var(--slate)}
+  nav.cross span.cur{color:var(--slate);background:#fbf2ef;border-color:var(--clay)}
+  nav.cross span.pending{color:var(--g400);background:transparent;border-style:dashed}
+  nav.cross span.pending .tag{font-size:8.5px;letter-spacing:.04em;color:var(--g400);margin-left:5px}
+  nav.toc{position:sticky;top:42px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
+  nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.toc .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--g600);margin-right:6px}
+  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:3px 10px}
+  nav.toc a:hover,nav.toc a.active{border-color:var(--clay);color:var(--slate);background:#fbf2ef}
+  main{width:90%;max-width:1600px;margin:0 auto;padding:26px 0 80px}
+  .prose{max-width:72ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:32px;line-height:1.12;margin:0 0 12px;letter-spacing:-.01em;max-width:28ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:22px;margin:50px 0 6px;letter-spacing:-.01em;scroll-margin-top:96px}
+  h3{font-family:var(--mono);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);margin:20px 0 8px}
+  p{margin:0 0 10px}
+  code{font-family:var(--mono);font-size:.85em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .chip.rust strong{color:var(--rust)} .chip.olive strong{color:var(--olive)} .chip.clay strong{color:var(--clay)}
+  .cap{font-size:13.5px;color:var(--g600);margin:8px 2px 0}
+  .cap b{color:var(--slate);font-weight:600}
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:18px 0;max-width:94ch}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)} .callout.slate{border-left-color:var(--slate);background:var(--slate);color:var(--ivory)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 6px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)} .callout.slate .k{color:#c9a25a}
+  .callout p{margin:0;font-size:14px}
+  .callout.slate code{background:rgba(255,255,255,.13);color:#f3e9d6}
+  .callout.slate b{color:#fff}
+  .ba{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin:14px 0}
+  .ba .panel{background:var(--paper);border:1px solid var(--g200);padding:16px}
+  .ba .panel:first-child{border-radius:var(--r) 0 0 var(--r)}
+  .ba .panel:last-child{border-radius:0 var(--r) var(--r) 0;border-left:none}
+  .ba .arrow{display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--ivory);padding:0 4px}
+  .ba .arrow .ar{font-family:var(--mono);font-size:20px;color:var(--clay)}
+  .ba .arrow .arl{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);writing-mode:vertical-rl;margin-top:6px}
+  .ba .ttl{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px}
+  .ba .ttl.cur{color:var(--rust)} .ba .ttl.plan{color:var(--olive)}
+  .ba svg{width:100%;height:auto;display:block}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:12px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,.12)}
+  .legend i.edge{width:18px;height:0;border-radius:0;border-top:2px solid var(--olive)}
+  .legend i.fail{width:18px;height:0;border-radius:0;border-top:2px solid var(--rust)}
+  .diagram{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:18px;margin:14px 0}
+  .diagram svg{width:100%;height:auto;display:block}
+  .fieldtbl{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);overflow:hidden;margin:16px 0}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--g200);vertical-align:top}
+  th{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--g600);background:var(--paper)}
+  td.in code{font-size:.92em}
+  td.now{font-family:var(--mono);font-size:11.5px;color:var(--rust)}
+  td.now b{color:var(--rust)}
+  td.after{font-family:var(--mono);font-size:11.5px;color:var(--olive)}
+  td.after b{color:var(--olive)}
+  td.seg{font-family:var(--mono);font-size:11.5px;color:var(--clay)}
+  tr:last-child td{border-bottom:none}
+  .code{background:var(--code);border-radius:var(--r);overflow:hidden;margin:14px 0;border:1px solid #1a1815}
+  .code .fl{font-family:var(--mono);font-size:10.5px;color:#b9b0a0;background:#1c1a16;padding:8px 14px;border-bottom:1px solid #000;letter-spacing:.03em}
+  .code pre{margin:0;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.62;color:var(--codeink)}
+  .code .kw{color:#c98a5a} .code .str{color:#9bb06a} .code .cm{color:#6f685c} .code .fn{color:#d8c98a}
+  .code .hl{background:rgba(168,71,47,.22);display:inline-block;width:100%}
+  .code .ok{background:rgba(108,122,74,.20);display:inline-block;width:100%}
+  .acs{display:grid;gap:7px;margin:14px 0;padding:0;list-style:none}
+  .acs li{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start;font-size:13.5px;background:var(--paper);border:1px solid var(--g200);border-radius:9px;padding:10px 13px}
+  .acs .n{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ivory);background:var(--olive);border-radius:6px;width:24px;height:22px;display:flex;align-items:center;justify-content:center}
+  .acs li.risk .n{background:var(--rust)}
+  .acs code{font-size:.9em}
+  @media(max-width:860px){.ba{grid-template-columns:1fr}.ba .arrow{flex-direction:row;padding:8px 0}.ba .arrow .arl{writing-mode:horizontal-tb;margin:0 0 0 6px}.ba .panel:last-child{border-left:1px solid var(--g200);border-radius:0 0 var(--r) var(--r)}.ba .panel:first-child{border-radius:var(--r) var(--r) 0 0}}
+  footer{font-family:var(--mono);font-size:10.5px;color:var(--g400);margin-top:56px;border-top:1px solid var(--g200);padding-top:14px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<nav class="cross">
+  <div class="inner">
+    <span class="brand">task-349 · name_resolution</span>
+    <a href="task-349 - Resolve-the-name_resolution-false-positive-cluster-across-three-independent-root-causes.overview.html">Epic overview</a>
+    <a href="task-349.1 - Reduce-Rust-qualified-call-references-to-their-terminal-name-and-carry-the-path-prefix.rust-qualified-paths.html">A1 · Producer + fn calls</a>
+    <a href="task-349.4 - Link-Rust-associated-new-constructors-and-substitute-Self-so-Type-new-resolves-to-the-constructor.constructor-linking.html">A4 · Constructor linking</a>
+    <span class="cur">A5 · Inline-path types</span>
+    <a href="task-349.2 - Make-is_exported-govern-implicit-visibility-only-—-let-explicit-named-imports-bind-regardless.python-underscore-imports.html">B · Python imports</a>
+    <a href="task-349.3 - Apply-two-small-Phase-1-corrections-self-initializer-ordering-and-siblinghoist-propagation.same-file-binding-gaps.html">C · Same-file gaps</a>
+  </div>
+</nav>
+<nav class="toc">
+  <div class="inner">
+    <span class="brand">on this page</span>
+    <a href="#crux">The unbound type</a>
+    <a href="#walk">Type-last path walk</a>
+    <a href="#normalize">crate / self / super</a>
+    <a href="#collision">Collision safety</a>
+    <a href="#scope">Out of scope</a>
+    <a href="#ac">Acceptance</a>
+  </div>
+</nav>
+
+<main>
+
+  <p class="eyebrow">Change A · sub-task 349.5 · last of A · depends on 349.1 + 349.4</p>
+  <h1>An inline full path writes the type name only in the call — so <code>Driver</code> is never bound in scope</h1>
+
+  <div class="meta">
+    <span class="chip rust"><strong>crate::runtime::Driver::new()</strong> type unbound</span>
+    <span class="chip"><strong>path_prefix</strong> is type-last</span>
+    <span class="chip clay"><strong>1</strong> resolver branch</span>
+    <span class="chip olive"><strong>reuses</strong> 349.1's path walk</span>
+  </div>
+  <p class="cap prose">349.4 binds an <code>in-scope</code> type's constructor; this closes the remaining case — a type written inline as a full path that is never imported, so the bare-name lookup for <code>Driver</code> misses.</p>
+
+  <section id="crux">
+    <h2>The crux: inline type paths place no bare type name in scope</h2>
+    <p class="cap prose">After 349.1 + 349.4, a <code>use</code>-imported <code>Parker::new()</code> resolves; but <code>crate::runtime::Driver::new()</code> writes the type path inline — <code>Driver</code> is never imported, so the in-scope terminal lookup misses and the type cannot be bound.</p>
+
+    <div class="ba">
+      <div class="panel">
+        <p class="ttl cur">Current — bare-name lookup of Driver misses</p>
+        <svg viewBox="0 0 320 252" role="img" aria-label="Current flow: an inline full path constructor reaches resolve_constructor_call with name Driver and a path_prefix; the bare-name resolve of Driver in scope misses because the type is never imported, so the constructor cannot bind and new is a false entry point">
+          <defs><marker id="ahf" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#a8472f"/></marker></defs>
+          <rect x="40" y="6" width="240" height="34" rx="8" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.4"/>
+          <text x="160" y="22" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#2b2a28">crate::runtime::Driver::new()</text>
+          <text x="160" y="34" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">Driver never imported</text>
+          <line x1="160" y1="40" x2="160" y2="60" stroke="#a8472f" stroke-width="1.4" marker-end="url(#ahf)"/>
+          <rect x="34" y="64" width="252" height="40" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="160" y="80" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">name "Driver" · prefix present</text>
+          <text x="160" y="96" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">["crate","runtime","Driver"]</text>
+          <line x1="160" y1="104" x2="160" y2="124" stroke="#a8472f" stroke-width="1.4" marker-end="url(#ahf)"/>
+          <rect x="34" y="128" width="252" height="40" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="160" y="144" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">resolutions.resolve(scope, "Driver")</text>
+          <text x="160" y="160" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" font-weight="700" fill="#a8472f">misses — type unbound</text>
+          <line x1="160" y1="168" x2="160" y2="188" stroke="#a8472f" stroke-width="1.4" marker-end="url(#ahf)"/>
+          <rect x="34" y="192" width="252" height="34" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="160" y="207" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">constructor cannot bind</text>
+          <text x="160" y="218" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">constructor.ts:71</text>
+          <line x1="160" y1="226" x2="160" y2="244" stroke="#a8472f" stroke-width="1.6" marker-end="url(#ahf)"/>
+          <rect x="58" y="246" width="204" height="6" rx="3" fill="#a8472f"/>
+        </svg>
+      </div>
+      <div class="arrow"><span class="ar">&rarr;</span><span class="arl">349.5</span></div>
+      <div class="panel">
+        <p class="ttl plan">Planned — walk the prefix to bind the type</p>
+        <svg viewBox="0 0 320 252" role="img" aria-label="Planned flow: when the bare-name resolve misses and a path_prefix is present, walk the type-last prefix to bind Driver, then resolve the constructor via the member-index link from 349.4">
+          <defs><marker id="aho" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker></defs>
+          <rect x="40" y="6" width="240" height="34" rx="8" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.4"/>
+          <text x="160" y="22" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#2b2a28">crate::runtime::Driver::new()</text>
+          <text x="160" y="34" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">path_prefix is type-last</text>
+          <line x1="160" y1="40" x2="160" y2="60" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#aho)"/>
+          <rect x="34" y="64" width="252" height="40" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="160" y="80" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">bare resolve misses + prefix present</text>
+          <text x="160" y="96" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#6c7a4a">→ enter path-walk branch</text>
+          <line x1="160" y1="104" x2="160" y2="124" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#aho)"/>
+          <rect x="34" y="128" width="252" height="40" rx="8" fill="#f0ece2" stroke="#7a4636"/>
+          <text x="160" y="144" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">walk crate → runtime → Driver</text>
+          <text x="160" y="160" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#7a4636">349.1 path resolver, type-last</text>
+          <line x1="160" y1="168" x2="160" y2="188" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#aho)"/>
+          <rect x="34" y="192" width="252" height="34" rx="8" fill="#eef0e6" stroke="#5b6840"/>
+          <text x="160" y="207" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">type bound → new() via 349.4 link</text>
+          <text x="160" y="218" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">member-index lookup</text>
+          <line x1="160" y1="226" x2="160" y2="244" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#aho)"/>
+          <rect x="58" y="246" width="204" height="6" rx="3" fill="#6c7a4a"/>
+        </svg>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i class="fail"></i> type unbound today</span>
+      <span><i class="edge"></i> bound via the path walk</span>
+      <span>resolver: <code>call_resolution/constructor.ts</code></span>
+    </div>
+  </section>
+
+  <section id="walk">
+    <h2>The path-prefix is type-last — the final segment <em>is</em> the type</h2>
+    <p class="cap prose">Unlike a function call (where the terminal is dropped from the prefix), a constructor's <code>path_prefix</code> keeps the full type path: leading segments are the module path, the final segment is the type that owns <code>new</code>.</p>
+    <div class="fieldtbl">
+      <table>
+        <thead><tr><th>Constructor call</th><th>name (terminal type)</th><th>path_prefix (type-last)</th><th>walk binds</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="in"><code>crate::runtime::Driver::new()</code><br><span style="font-size:11px;color:var(--g400)">inline full path</span></td>
+            <td class="after"><b>"Driver"</b></td>
+            <td class="seg">["crate","runtime","Driver"]</td>
+            <td class="after">crate root → runtime → Driver</td>
+          </tr>
+          <tr>
+            <td class="in"><code>self::pool::Worker::new()</code><br><span style="font-size:11px;color:var(--g400)">module-relative</span></td>
+            <td class="after"><b>"Worker"</b></td>
+            <td class="seg">["self","pool","Worker"]</td>
+            <td class="after">current module → pool → Worker</td>
+          </tr>
+          <tr>
+            <td class="in"><code>super::Driver::new()</code><br><span style="font-size:11px;color:var(--g400)">parent-relative</span></td>
+            <td class="after"><b>"Driver"</b></td>
+            <td class="seg">["super","Driver"]</td>
+            <td class="after">parent module → Driver</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="code">
+      <div class="fl">constructor.ts:71 — the type-last path-walk branch to add (after the bare-name miss)</div>
+<pre><span class="cm">// CURRENT — only an in-scope bare name binds the type:</span>
+<span class="hl">  class_symbol = resolutions.resolve(call_ref.scope_id, call_ref.name);  <span class="cm">// misses</span></span>
+
+<span class="cm">// CHANGE 349.5 — on a miss, walk the type-last path_prefix:</span>
+<span class="ok">  <span class="kw">if</span> (!class_symbol && call_ref.path_prefix?.length) {
+    <span class="kw">const</span> segs = normalize_anchors(call_ref.path_prefix);  <span class="cm">// crate/self/super</span>
+    class_symbol = walk_type_path(segs, call_ref.scope_id);  <span class="cm">// reuse 349.1</span>
+  }
+  <span class="cm">// then resolve new() via the 349.4 member-index link</span></span>
+</pre>
+    </div>
+    <p class="cap prose">The walk reuses the module/type path resolver introduced for function calls in 349.1: resolve the leading segment to a <code>mod</code>/<code>use</code> module or type, then walk the remaining segments to the final type.</p>
+  </section>
+
+  <section id="normalize">
+    <h2><code>crate</code> / <code>self</code> / <code>super</code> — normalize the anchor before walking</h2>
+    <p class="cap prose">A leading <code>crate</code> / <code>self</code> / <code>super</code> segment is a path anchor, not a module name — <code>["crate","runtime","Driver"]</code> must not die on the literal <code>crate</code> segment, so each anchor is resolved to a crate or module root first.</p>
+    <div class="diagram">
+      <svg viewBox="0 0 760 196" role="img" aria-label="Anchor normalization: a leading crate segment anchors to the crate root, self to the current module, super to the parent module; the remaining segments are then walked as ordinary module steps to the type">
+        <defs>
+          <marker id="n-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker>
+          <marker id="n-cl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#b9794f"/></marker>
+        </defs>
+        <g font-family="ui-monospace,monospace">
+          <rect x="16" y="20" width="150" height="36" rx="8" fill="#f7eee6" stroke="#b9794f" stroke-width="1.4"/>
+          <text x="91" y="36" text-anchor="middle" font-size="10" font-weight="700" fill="#b9794f">crate</text>
+          <text x="91" y="48" text-anchor="middle" font-size="8" fill="#5f594f">anchor → crate root</text>
+          <rect x="16" y="66" width="150" height="36" rx="8" fill="#f7eee6" stroke="#b9794f" stroke-width="1.4"/>
+          <text x="91" y="82" text-anchor="middle" font-size="10" font-weight="700" fill="#b9794f">self</text>
+          <text x="91" y="94" text-anchor="middle" font-size="8" fill="#5f594f">anchor → current module</text>
+          <rect x="16" y="112" width="150" height="36" rx="8" fill="#f7eee6" stroke="#b9794f" stroke-width="1.4"/>
+          <text x="91" y="128" text-anchor="middle" font-size="10" font-weight="700" fill="#b9794f">super</text>
+          <text x="91" y="140" text-anchor="middle" font-size="8" fill="#5f594f">anchor → parent module</text>
+          <line x1="166" y1="84" x2="206" y2="84" stroke="#b9794f" stroke-width="1.5" marker-end="url(#n-cl)"/>
+          <rect x="208" y="58" width="172" height="52" rx="9" fill="#f0ece2" stroke="#7a4636" stroke-width="1.5"/>
+          <text x="294" y="78" text-anchor="middle" font-size="9.5" font-weight="700" fill="#7a4636">anchored root</text>
+          <text x="294" y="92" text-anchor="middle" font-size="8" fill="#5f594f">resolved module scope</text>
+          <text x="294" y="103" text-anchor="middle" font-size="8" fill="#5f594f">remaining segs follow</text>
+          <line x1="380" y1="84" x2="416" y2="84" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#n-ok)"/>
+          <rect x="418" y="58" width="150" height="52" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
+          <text x="493" y="78" text-anchor="middle" font-size="9" font-weight="700" fill="#5b6840">walk modules</text>
+          <text x="493" y="92" text-anchor="middle" font-size="8" fill="#5f594f">runtime → …</text>
+          <text x="493" y="103" text-anchor="middle" font-size="8" fill="#5f594f">step by step</text>
+          <line x1="568" y1="84" x2="604" y2="84" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#n-ok)"/>
+          <rect x="606" y="58" width="142" height="52" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
+          <text x="677" y="78" text-anchor="middle" font-size="9" font-weight="700" fill="#5b6840">type bound</text>
+          <text x="677" y="92" text-anchor="middle" font-size="8" fill="#5f594f">Driver → new()</text>
+          <text x="677" y="103" text-anchor="middle" font-size="8" fill="#5f594f">via 349.4 link</text>
+        </g>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i style="background:#f7eee6;border-color:#b9794f"></i> anchor normalization</span>
+      <span><i style="background:#f0ece2;border-color:#7a4636"></i> anchored root scope</span>
+      <span><i class="edge"></i> type bound, constructor resolved</span>
+    </div>
+  </section>
+
+  <section id="collision">
+    <h2>Collision safety — the prefix is the guard, enforced not assumed</h2>
+    <p class="cap prose">When two in-scope modules expose a same-named type each with a <code>new</code>, the <code>path_prefix</code> selects the correct one; ambiguity is evaluated <b>in scope</b>, not via a global name scan, because the single-valued <code>by_scope</code> map collapses same-name bindings.</p>
+    <div class="diagram">
+      <svg viewBox="0 0 760 220" role="img" aria-label="Collision disambiguation: two in-scope modules a and b each expose a Driver type with a new; the by_scope map collapses both same-name bindings, so the inline path crate::a::Driver::new must use its own prefix to select module a's Driver, not trust last-write-wins">
+        <defs>
+          <marker id="c-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker>
+          <marker id="c-rs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#a8472f"/></marker>
+        </defs>
+        <g font-family="ui-monospace,monospace">
+          <rect x="20" y="20" width="200" height="40" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="120" y="38" text-anchor="middle" font-size="9.5" fill="#2b2a28">mod a { Driver::new }</text>
+          <text x="120" y="51" text-anchor="middle" font-size="8" fill="#5f594f">in-scope type "Driver"</text>
+          <rect x="20" y="76" width="200" height="40" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="120" y="94" text-anchor="middle" font-size="9.5" fill="#2b2a28">mod b { Driver::new }</text>
+          <text x="120" y="107" text-anchor="middle" font-size="8" fill="#5f594f">same name, different type</text>
+          <line x1="220" y1="40" x2="262" y2="58" stroke="#a8472f" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#c-rs)"/>
+          <line x1="220" y1="96" x2="262" y2="74" stroke="#a8472f" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#c-rs)"/>
+          <rect x="264" y="42" width="186" height="48" rx="9" fill="#f7ece9" stroke="#a8472f" stroke-width="1.5"/>
+          <text x="357" y="62" text-anchor="middle" font-size="9.5" font-weight="700" fill="#a8472f">by_scope collapses</text>
+          <text x="357" y="76" text-anchor="middle" font-size="8" fill="#5f594f">bare "Driver" → one binding</text>
+          <text x="357" y="86" text-anchor="middle" font-size="8" fill="#a8472f">last-write-wins is unsound</text>
+          <rect x="20" y="148" width="430" height="50" rx="9" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.4"/>
+          <text x="235" y="168" text-anchor="middle" font-size="10" fill="#2b2a28">crate::a::Driver::new()</text>
+          <text x="235" y="182" text-anchor="middle" font-size="8.5" fill="#5f594f">prefix detects its own collision, selects mod a</text>
+          <line x1="450" y1="66" x2="492" y2="66" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#c-ok)"/>
+          <line x1="450" y1="173" x2="492" y2="120" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#c-ok)"/>
+          <rect x="494" y="78" width="252" height="60" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.6"/>
+          <text x="620" y="100" text-anchor="middle" font-size="10" font-weight="700" fill="#5b6840">prefix disambiguates → mod a's Driver</text>
+          <text x="620" y="116" text-anchor="middle" font-size="8.5" fill="#5f594f">collision detected in path-prefix resolution,</text>
+          <text x="620" y="128" text-anchor="middle" font-size="8.5" fill="#5f594f">not trusted from the collapsed map</text>
+        </g>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i style="background:#f7ece9;border-color:#a8472f"></i> collapsed same-name binding (unsound to trust)</span>
+      <span><i class="edge"></i> prefix selects the right type</span>
+    </div>
+    <div class="callout rust">
+      <span class="k">riskiest part — detect collisions in the walk itself (AC #3)</span>
+      <p>Path-prefix resolution must detect its own collisions rather than trust the collapsed <code>by_scope</code> map's last-write-wins. Same-crate alias hops (<code>use ll::Semaphore</code>, type/cfg aliases) ride this path <b>only</b> when the leading segment resolves through a <code>use</code>/type alias in the same crate; a cross-file re-export hop is <code>import_resolution</code> — bail rather than fabricate an edge.</p>
+    </div>
+  </section>
+
+  <section id="scope">
+    <h2>Out of scope — flagged, not solved</h2>
+    <div class="callout">
+      <span class="k">cfg-gated duplicate definitions — known limitation</span>
+      <p><code>Mutex::new</code> resolving to mocked vs std under <code>cfg(all(test, loom))</code>: Ariadne does not evaluate <code>cfg</code>, so the path walk may reach the wrong arm. Flagged as a known limitation; the branch does not try to disambiguate cfg arms.</p>
+    </div>
+    <div class="callout">
+      <span class="k">outer turbofish over a qualified path — query gap</span>
+      <p><code>worker::create::&lt;i32&gt;()</code> is not captured by <code>rust.scm</code> today (the <code>generic_function</code> rule matches only a bare <code>function: (identifier)</code>). A separate query-gap follow-up, also noted in 349.1 — not blocked by this task.</p>
+    </div>
+  </section>
+
+  <section id="ac">
+    <h2>Acceptance — what proves the change</h2>
+    <ol class="acs">
+      <li><span class="n">1</span><div><b>Inline full path:</b> <code>crate::runtime::Driver::new()</code> (type not imported) resolves to the <code>Driver</code> constructor — <code>new</code> reachable, not an entry point.</div></li>
+      <li><span class="n">2</span><div><b>Anchors:</b> leading <code>crate</code> / <code>self</code> / <code>super</code> segments are normalized so deep paths resolve.</div></li>
+      <li class="risk"><span class="n">3</span><div><b>Ambiguity:</b> two in-scope modules each exposing a same-named type with a <code>new</code> are disambiguated to the correct type via <code>path_prefix</code>.</div></li>
+      <li><span class="n">4</span><div><b>Gated:</b> 349.4's in-scope <code>Parker::new()</code> and the TS <code>[namespace, class]</code> <code>property_chain</code> branch stay green — the new branch fires only when the bare type name misses and <code>path_prefix</code> is present.</div></li>
+    </ol>
+    <div class="callout slate">
+      <span class="k">how 349.5 closes Change A</span>
+      <p>349.1 carries the terminal name plus the type-last <code>path_prefix</code> and resolves qualified <b>function</b> calls; 349.4 links Rust <code>new()</code> so an <b>in-scope</b> type's constructor resolves; <b>349.5</b> reuses 349.1's path walk for the last constructor case — an inline full path whose type is bound by no bare name in scope. With this, every Change-A constructor form binds.</p>
+    </div>
+  </section>
+
+  <footer>
+    task-349.5 · depends on 349.1 + 349.4 · resolver: call_resolution/constructor.ts (bare-name miss :71) · type-last path_prefix walk reuses 349.1's module/type resolver · normalize crate/self/super anchors · enforce collision detection in the walk · cfg-gated dups + outer-turbofish out of scope · gated to the Rust associated-constructor path
+  </footer>
+
+</main>
+
+<script>
+  (function(){
+    var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+    var map = {};
+    links.forEach(function(a){ map[a.getAttribute('href').slice(1)] = a; });
+    var obs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(e.isIntersecting){
+          links.forEach(function(l){ l.classList.remove('active'); });
+          var a = map[e.target.id]; if(a) a.classList.add('active');
+        }
+      });
+    }, {rootMargin:'-15% 0px -75% 0px'});
+    document.querySelectorAll('main section[id]').forEach(function(s){ obs.observe(s); });
+  })();
+</script>
+</body>
+</html>
