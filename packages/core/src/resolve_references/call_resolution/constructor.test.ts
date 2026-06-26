@@ -450,6 +450,74 @@ describe("Constructor Call Resolution", () => {
     });
   });
 
+  describe("Inline-full-path constructor (module-path walk)", () => {
+    // The terminal type name misses in scope and a type-last path_prefix is
+    // present; the resolver walks the module path to bind the type. These cases
+    // assert the bail boundaries — the positive resolution is exercised
+    // end-to-end in project.rust.integration.test.ts.
+    it("bails when the module qualifier is not an in-scope namespace", () => {
+      // crate::runtime::Driver::new(): `Driver` not in scope, and `runtime` does
+      // not resolve to a namespace — bail rather than fabricate an edge.
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, new Map());
+
+      const call_ref = create_constructor_call_reference(
+        "Driver" as SymbolName,
+        MOCK_LOCATION,
+        FILE_SCOPE_ID,
+        undefined,
+        undefined,
+        ["crate", "runtime", "Driver"] as SymbolName[]
+      );
+
+      const resolved = resolve_constructor_call(
+        call_ref,
+        definitions,
+        scopes,
+        resolutions,
+        exports,
+        languages,
+        root_folder
+      );
+
+      expect(resolved.ok).toBe(false);
+      if (is_err(resolved)) {
+        expect(resolved.error.stage).toBe("constructor_lookup");
+        expect(resolved.error.reason).toBe("name_not_in_scope");
+      }
+    });
+
+    it("bails when the path_prefix carries no module path (lone type segment)", () => {
+      // Cell::<u8>::new() reduces to name `Cell`, prefix ["Cell"] — a single
+      // segment is the type itself with no module to walk, so the bare miss stands.
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, new Map());
+
+      const call_ref = create_constructor_call_reference(
+        "Cell" as SymbolName,
+        MOCK_LOCATION,
+        FILE_SCOPE_ID,
+        undefined,
+        undefined,
+        ["Cell"] as SymbolName[]
+      );
+
+      const resolved = resolve_constructor_call(
+        call_ref,
+        definitions,
+        scopes,
+        resolutions,
+        exports,
+        languages,
+        root_folder
+      );
+
+      expect(resolved.ok).toBe(false);
+      if (is_err(resolved)) {
+        expect(resolved.error.stage).toBe("constructor_lookup");
+        expect(resolved.error.reason).toBe("name_not_in_scope");
+      }
+    });
+  });
+
   describe("Unresolved Cases", () => {
     it("should return empty array when class not found in scope", () => {
       // Class name not resolved - e.g., undefined class or missing import

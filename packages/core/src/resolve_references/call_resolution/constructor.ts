@@ -31,6 +31,7 @@ import type { ResolutionRegistry } from "../resolve_references";
 import type { FileSystemFolder } from "../file_folders";
 import { resolve_namespace_export } from "./method_lookup";
 import { find_containing_class_scope, find_class_from_scope } from "./receiver_resolution";
+import { normalize_path_prefix, resolve_in_module_body } from "./path_resolution";
 
 /**
  * The terminal name of a Rust associated constructor. The `rust.scm` query only
@@ -108,6 +109,16 @@ export function resolve_constructor_call(
     class_symbol = resolutions.resolve(call_ref.scope_id, call_ref.name as SymbolName);
   }
 
+  // Inline full-path Rust constructor: the terminal type name is not bound by a
+  // bare name in scope (`crate::runtime::Driver::new()` never imports `Driver`),
+  // so the simple lookup above misses. Walk the type's module path to bind it.
+  // Gated to the Rust qualified path by `path_prefix`, after the bare-name miss,
+  // so the in-scope `Type::new()` (349.4) and TS/Python `new ClassName()` paths
+  // are untouched.
+  if (!class_symbol && call_ref.path_prefix && call_ref.path_prefix.length > 0) {
+    class_symbol = resolve_type_via_module_path(call_ref, definitions, scopes, resolutions);
+  }
+
   if (!class_symbol) {
     return err({
       stage: "constructor_lookup",
@@ -143,6 +154,54 @@ export function resolve_constructor_call(
   }
 
   return ok([constructor_symbol || class_symbol]);
+}
+
+/**
+ * Bind an inline-full-path Rust constructor's type by walking its module path.
+ *
+ * A constructor `path_prefix` is **type-last**: the final segment is the type
+ * (`crate::runtime::Driver` → `["crate","runtime","Driver"]`, type `Driver`), the
+ * leading segments are its module path. When the bare type name misses in scope
+ * (the type is never imported), resolve the module qualifier in scope and look the
+ * type up in that module's body. The module qualifier disambiguates same-named
+ * types across modules, so two in-scope modules each exposing a `Driver` resolve
+ * to the correct one via the prefix.
+ *
+ * Bails (returns null) when the qualifier is not an in-scope `mod` whose body
+ * holds the type — a cross-file re-export hop belongs to import_resolution, so we
+ * do not fabricate an edge.
+ *
+ * @returns The resolved type symbol, or null when the path does not bind in scope
+ */
+function resolve_type_via_module_path(
+  call_ref: ConstructorCallReference,
+  definitions: DefinitionRegistry,
+  scopes: ScopeRegistry,
+  resolutions: ResolutionRegistry
+): SymbolId | null {
+  const prefix = normalize_path_prefix(call_ref.path_prefix ?? []);
+  // Need at least [module, Type]: the type is the last segment, its immediate
+  // module is the segment before it. A lone type segment (`["Driver"]`) has no
+  // module path to walk and already missed the bare lookup.
+  if (prefix.length < 2) return null;
+
+  const type_name = call_ref.name as SymbolName;
+  const qualifier = prefix[prefix.length - 2];
+
+  const qualifier_id = resolutions.resolve(call_ref.scope_id, qualifier);
+  if (!qualifier_id) return null;
+
+  // Rust `mod` declarations are captured as namespace definitions.
+  const qualifier_def = definitions.get(qualifier_id);
+  if (qualifier_def?.kind !== "namespace") return null;
+
+  return resolve_in_module_body(
+    qualifier,
+    qualifier_def.defining_scope_id,
+    type_name,
+    scopes,
+    definitions
+  );
 }
 
 /**

@@ -678,6 +678,110 @@ describe("Project Integration - Rust", () => {
     });
   });
 
+  describe("Inline-Full-Path Constructor Resolution", () => {
+    it("resolves crate::runtime::Driver::new() by walking the inline module path to the type", async () => {
+      const file = file_path("modules/inline_path_constructor.rs");
+      project.update_file(file, load_source("modules/inline_path_constructor.rs"));
+
+      // crate::runtime::Driver::new() is a constructor call: terminal type name
+      // `Driver`, type-last path_prefix ["crate","runtime","Driver"] (349.1).
+      const index = project.get_index_single_file(file)!;
+      const new_call = index.references.find(
+        (r): r is ConstructorCallReference =>
+          r.kind === "constructor_call" && r.name === ("Driver" as SymbolName)
+      );
+      expect(new_call).toBeDefined();
+      expect(new_call!.path_prefix).toEqual([
+        "crate",
+        "runtime",
+        "Driver",
+      ] as SymbolName[]);
+
+      // The bare type name does not bind in scope — the type lives in the inline
+      // `runtime` module and is never imported.
+      expect(
+        project.resolutions.resolve(new_call!.scope_id, "Driver" as SymbolName)
+      ).toBeNull();
+
+      const driver = Array.from(index.classes.values()).find(
+        (c) => c.name === ("Driver" as SymbolName)
+      )!;
+      const driver_new = project.definitions
+        .get_member_index()
+        .get(driver.symbol_id)
+        ?.get("new" as SymbolName);
+      expect(driver_new).toBeDefined();
+
+      const call_graph = project.get_call_graph();
+      const run_node = Array.from(call_graph.nodes.values()).find(
+        (n) =>
+          project.definitions.get(n.symbol_id)?.name === ("run" as SymbolName)
+      )!;
+
+      // The inline-path call resolves to the `new` member — exactly one target,
+      // not the bare `Driver` class symbol.
+      const targets = run_node.enclosed_calls
+        .filter((c) => c.name === ("Driver" as SymbolName))
+        .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
+      expect(targets).toEqual([driver_new!]);
+      expect(targets).not.toContain(driver.symbol_id);
+
+      // `new` is now reachable, not a false-positive entry point.
+      expect(new Set(call_graph.entry_points).has(driver_new!)).toBe(false);
+    });
+
+    it("disambiguates same-named types across modules via the path_prefix", async () => {
+      const file = file_path("modules/ambiguous_path_constructor.rs");
+      project.update_file(file, load_source("modules/ambiguous_path_constructor.rs"));
+
+      const index = project.get_index_single_file(file)!;
+
+      // Two distinct `Driver` types, one per inline module, ordered by location.
+      const drivers = Array.from(index.classes.values())
+        .filter((c) => c.name === ("Driver" as SymbolName))
+        .sort((a, b) => a.location.start_line - b.location.start_line);
+      expect(drivers.length).toBe(2);
+      const [alpha_driver, beta_driver] = drivers;
+
+      // The constructor resolves to the module's `new` member when linked, else
+      // falls back to the type symbol — exactly the resolver's own contract. The
+      // expected target per call is therefore the correct module's Driver,
+      // computed from the member index rather than hard-coded, so this stays
+      // honest if the same-file same-name impl→type linking (which currently
+      // attaches both `impl Driver` blocks to alpha's type) changes.
+      const member_index = project.definitions.get_member_index();
+      const alpha_target =
+        member_index.get(alpha_driver.symbol_id)?.get("new" as SymbolName) ??
+        alpha_driver.symbol_id;
+      const beta_target =
+        member_index.get(beta_driver.symbol_id)?.get("new" as SymbolName) ??
+        beta_driver.symbol_id;
+      // A global bare-name resolve would collapse both `Driver` names onto one
+      // type; the path_prefix walk binds each call to its own module's type.
+      expect(alpha_target).not.toEqual(beta_target);
+
+      const call_graph = project.get_call_graph();
+      const run_node = Array.from(call_graph.nodes.values()).find(
+        (n) =>
+          project.definitions.get(n.symbol_id)?.name === ("run" as SymbolName)
+      )!;
+
+      // Both calls share the terminal name `Driver`; the earlier call site
+      // (crate::alpha::…) binds alpha's type, the later (crate::beta::…) beta's.
+      const driver_calls = run_node.enclosed_calls
+        .filter((c) => c.name === ("Driver" as SymbolName))
+        .sort((a, b) => a.location.start_line - b.location.start_line);
+      expect(driver_calls.length).toBe(2);
+
+      expect(driver_calls[0].resolutions.map((r) => r.symbol_id)).toEqual([
+        alpha_target,
+      ]);
+      expect(driver_calls[1].resolutions.map((r) => r.symbol_id)).toEqual([
+        beta_target,
+      ]);
+    });
+  });
+
   describe("Builder Pattern", () => {
     it("should resolve method chains in builder pattern", async () => {
       const source = load_source("structs/constructor_workflow.rs");

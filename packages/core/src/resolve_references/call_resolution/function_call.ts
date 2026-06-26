@@ -26,12 +26,11 @@ import type { CallResolutionContext } from "./call_resolver";
 import type { ResolutionRegistry } from "../resolve_references";
 import { resolve_collection_dispatch } from "./collection_dispatch";
 import { resolve_callable_instance } from "./callable_instance.python";
-
-/**
- * Leading path segments that pin a Rust path to a module root rather than
- * naming a resolvable binding in scope.
- */
-const PATH_ANCHORS: ReadonlySet<string> = new Set(["crate", "self", "super"]);
+import {
+  is_callable_definition,
+  normalize_path_prefix,
+  resolve_in_module_body,
+} from "./path_resolution";
 
 /**
  * Resolve a qualified call via its scoped-path prefix, honouring the author's
@@ -73,7 +72,7 @@ function resolve_via_path_prefix(
         .get_member_index()
         .get(qualifier_id)
         ?.get(terminal);
-      if (member && is_callable_definition(member, context)) {
+      if (member && is_callable_definition(member, context.definitions)) {
         return member;
       }
     }
@@ -85,7 +84,8 @@ function resolve_via_path_prefix(
         qualifier,
         qualifier_def.defining_scope_id,
         terminal,
-        context
+        context.scopes,
+        context.definitions
       );
       if (member) return member;
     }
@@ -93,59 +93,6 @@ function resolve_via_path_prefix(
 
   // Module-qualified via a matching `use` import (cross-file).
   return resolve_via_import_anchor(ref, prefix, terminal, context);
-}
-
-/**
- * Drop leading crate/self/super anchors — they pin the path to a module root
- * but do not name a binding the scope resolver can look up.
- */
-function normalize_path_prefix(
-  path_prefix: readonly SymbolName[]
-): readonly SymbolName[] {
-  let start = 0;
-  while (start < path_prefix.length && PATH_ANCHORS.has(path_prefix[start])) {
-    start++;
-  }
-  return path_prefix.slice(start);
-}
-
-/**
- * A function call may only bind to a callable target — guards the type-qualified
- * member lookup against binding `Type::field()` to a non-callable property.
- */
-function is_callable_definition(
-  symbol_id: SymbolId,
-  context: CallResolutionContext
-): boolean {
-  const kind = context.definitions.get(symbol_id)?.kind;
-  return kind === "method" || kind === "constructor" || kind === "function";
-}
-
-/**
- * Resolve a terminal as a member of a `mod <qualifier> { ... }` whose body scope
- * is a named child of the module's defining scope. Covers the in-file module
- * call (`worker::create`) without a matching `use`, binding over a local shadow.
- */
-function resolve_in_module_body(
-  qualifier: SymbolName,
-  defining_scope_id: ScopeId,
-  terminal: SymbolName,
-  context: CallResolutionContext
-): SymbolId | null {
-  const parent_scope = context.scopes.get_scope(defining_scope_id);
-  if (!parent_scope) return null;
-
-  for (const child_id of parent_scope.child_ids) {
-    const child = context.scopes.get_scope(child_id);
-    if (child?.name === qualifier && child.type === "module") {
-      const member = context.definitions
-        .get_scope_definitions(child_id)
-        .get(terminal);
-      if (member) return member;
-    }
-  }
-
-  return null;
 }
 
 /**
