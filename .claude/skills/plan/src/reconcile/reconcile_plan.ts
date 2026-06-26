@@ -19,7 +19,7 @@
  *      superseded into an overlapping fresh create (`supersede` / `combine`) or
  *      resolved when no overlapping create exists.
  *   3. EXPORT overlay. A written task whose `dedup_key` the user has already
- *      promoted into `backlog/` (matched by the `plan_dedup_key` frontmatter
+ *      promoted into `backlog/` (matched by the `plan_dedup_keys` frontmatter
  *      link) moves to `status: "exported"` and is suppressed from re-proposal.
  *      Suppression matches on `(dedup_key, tier)` so a promoted parent never
  *      suppresses a same-key leaf (or vice versa); a suppressed candidate is

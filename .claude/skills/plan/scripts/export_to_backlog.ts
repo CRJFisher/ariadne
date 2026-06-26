@@ -25,11 +25,11 @@
  *      resolved to absolute backlog ids — each top-level root takes the next free
  *      id (from a recursive scan of `backlog/`), sub-tasks nest under it. Every
  *      selected row must be claimed by some authored task's `plan_task_ids`;
- *      multiple rows may collapse into one task (the lowest-tier row supplies the
- *      dedup frontmatter).
+ *      multiple rows may collapse into one task (the architectural roots — one per
+ *      collapsed group — supply the dedup frontmatter).
  *   3. **render** — `render_backlog_task` renders each authored task into the
- *      backlog file from its authored title/body/acceptance, stamping the
- *      primary row's verbatim `PlanTask.dedup_key` into `plan_dedup_key` — the
+ *      backlog file from its authored title/body/acceptance, stamping each source
+ *      group's verbatim `PlanTask.dedup_key` into the `plan_dedup_keys` list — the
  *      idempotency link.
  *   4. **write** — the backlog task file is written (the only place a write
  *      primitive appears).
@@ -42,8 +42,8 @@
  * task finds no still-exportable rows and is itself skipped.
  *
  * This script is the only one that writes `backlog/`; the rest of the plan
- * engine writes only the task-DB under `~/.ariadne/plan/`. The `plan_dedup_key`
- * this script stamps is read back read-only by `src/store/backlog_dedup.ts`
+ * engine writes only the task-DB under `~/.ariadne/plan/`. The `plan_dedup_keys`
+ * this script stamps are read back read-only by `src/store/backlog_dedup.ts`
  * during the plan engine's reconcile pass — that is where the dedup loop closes.
  *
  * **Script invocation:** always `node --import tsx`. Never `pnpm exec tsx`.
@@ -240,7 +240,8 @@ export async function run(argv: string[], now: Date = new Date()): Promise<Expor
 
   // One backlog file per authored task. A task whose claimed rows are all already
   // exported (not in this selection) contributes no write — that is what makes a
-  // re-run idempotent. The lowest-tier claimed row is the primary (dedup source).
+  // re-run idempotent. The lowest-tier claimed row is the primary (summary
+  // representative); the architectural roots are the dedup sources.
   const planned = authored.flatMap((task) => {
     const rows = task.plan_task_ids
       .map((id) => selected_by_id.get(id))
@@ -249,7 +250,11 @@ export async function run(argv: string[], now: Date = new Date()): Promise<Expor
     const primary = rows
       .slice()
       .sort((a, b) => (TIER_RANK[a.tier] ?? 99) - (TIER_RANK[b.tier] ?? 99) || a.id.localeCompare(b.id))[0];
-    const rendered = render_backlog_task(task, primary, created_date);
+    // One dedup source per collapsed group: the architectural roots (a consolidated
+    // epic has several), or the lowest-tier row when a sub-task claims only leaves.
+    const arch_rows = rows.filter((row) => row.tier === "architectural");
+    const primaries = arch_rows.length > 0 ? arch_rows : [primary];
+    const rendered = render_backlog_task(task, primaries, created_date);
     return [{ task, primary, rows, backlog_task: `TASK-${task.backlog_id}`, rendered }];
   });
 

@@ -5,17 +5,20 @@
  *
  * The body is the architect's authored imperative work plan (`description_md` +
  * `acceptance_criteria`), transformed from the verified `refactor_plan.md`. The
- * `primary` `PlanTask` contributes only the loop-closure frontmatter, never body
- * prose. The renderer persists nothing — the adapter owns the single write into
- * `backlog/`.
+ * `primaries` `PlanTask`s — one per source change group collapsed into this task
+ * (a single group for an ordinary epic, several for a consolidated cluster) —
+ * contribute only the loop-closure frontmatter, never body prose. The renderer
+ * persists nothing — the adapter owns the single write into `backlog/`.
  *
- * The frontmatter stamps two link fields that close the engine's dedup loop:
- *   - `plan_dedup_key` — the VERBATIM `PlanTask.dedup_key` of the primary row.
- *     The reconciler's read-only backlog dedup (`src/store/backlog_dedup.ts`)
- *     keys on exactly this field to recognise already-promoted work and suppress
- *     re-proposal. The name and value are a fixed contract; never rename or
- *     transform them.
- *   - `plan_source_task` — the primary `PlanTask.id`, for human traceability.
+ * The frontmatter stamps two list link fields that close the engine's dedup loop,
+ * one entry per source group so a consolidated epic records every group it
+ * graduated, not just one:
+ *   - `plan_dedup_keys` — the VERBATIM `PlanTask.dedup_key` of each source row.
+ *     The reconciler's read-only backlog dedup (`src/store/backlog_dedup.ts`) maps
+ *     every entry back to this task to recognise already-promoted work and
+ *     suppress re-proposal. The field name and the verbatim values are a fixed
+ *     contract; never rename or transform them.
+ *   - `plan_source_tasks` — each source `PlanTask.id`, for human traceability.
  */
 
 import type { PlanTask } from "../store/plan_task.js";
@@ -78,17 +81,21 @@ export interface RenderedBacklogTask {
 
 /**
  * Render one `AuthoredBacklogTask` into a complete backlog task file. The task
- * carries absolute backlog ids (already remapped). `primary` is the source
- * `PlanTask` whose `dedup_key`/`id` close the loop and whose `is_classifier_work`
- * sets the priority and `fault_area` the label. `created_date` is passed in
+ * carries absolute backlog ids (already remapped). `primaries` are the source
+ * `PlanTask`s whose `dedup_key`/`id` close the loop (one per collapsed source
+ * group), whose `fault_area`s become the labels, and whose `is_classifier_work`
+ * sets the priority — a core fix outranks classifier work, so the task is `high`
+ * unless every source row is classifier work. `created_date` is passed in
  * (`YYYY-MM-DD HH:mm`) so the renderer stays pure and deterministic.
  */
 export function render_backlog_task(
   task: AuthoredBacklogTask,
-  primary: PlanTask,
+  primaries: PlanTask[],
   created_date: string,
 ): RenderedBacklogTask {
-  const priority = derive_backlog_priority(primary.is_classifier_work);
+  const sources = primaries.slice().sort((a, b) => a.id.localeCompare(b.id));
+  const priority = derive_backlog_priority(sources.every((p) => p.is_classifier_work));
+  const fault_area_labels = [...new Set(sources.map((p) => p.fault_area))];
 
   const frontmatter = [
     "---",
@@ -99,13 +106,15 @@ export function render_backlog_task(
     `created_date: ${yaml_double_quote(created_date)}`,
     "labels:",
     "  - plan-export",
-    `  - ${primary.fault_area}`,
+    ...fault_area_labels.map((fault_area) => `  - ${fault_area}`),
     "dependencies: []",
     ...(task.parent_backlog_id !== null ? [`parent_task_id: TASK-${task.parent_backlog_id}`] : []),
     `priority: ${priority}`,
     ...(task.ordinal !== null ? [`ordinal: ${task.ordinal}`] : []),
-    `plan_dedup_key: ${primary.dedup_key}`,
-    `plan_source_task: ${primary.id}`,
+    "plan_dedup_keys:",
+    ...sources.map((p) => `  - ${p.dedup_key}`),
+    "plan_source_tasks:",
+    ...sources.map((p) => `  - ${p.id}`),
     "---",
   ].join("\n");
 

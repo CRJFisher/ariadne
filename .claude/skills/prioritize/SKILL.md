@@ -14,9 +14,11 @@ this skill is the deliberate, human-invoked step that turns the cheap plan into 
 verified refactoring design and picks which of those rows become real backlog
 tasks.
 
-It does two things the `plan` engine deliberately does not: it **deep-investigates
-each change group against the real `packages/core` code** (via the
-`refactor-investigator` sub-agent) to produce a concrete refactoring plan, and it
+It does three things the `plan` engine deliberately does not: it
+**deep-investigates each change group against the real `packages/core` code** (via
+the `refactor-investigator` sub-agent) to produce a concrete refactoring plan, it
+**consolidates across those investigations** (via the `refactor-consolidator`
+sub-agent) to decide which groups are linked and must graduate as one epic, and it
 **graduates** the selected rows into `backlog/`. Graduation runs through one
 script:
 
@@ -48,16 +50,18 @@ A real (`--assignments`) run, for each authored backlog task:
    `TASK-347.1`, carrying a `parent_task_id` link and an `ordinal`,
 2. writes `backlog/tasks/<dotted-id> - <slug>.md`, rendered from the authored
    `title` / `description_md` / `acceptance_criteria`,
-3. stamps the verbatim `dedup_key` of the task's lowest-tier (architectural) source
-   row into `plan_dedup_key` — the idempotency link,
+3. stamps the verbatim `dedup_key` of each source group's architectural row into
+   the `plan_dedup_keys` list — the idempotency link (one entry per group, so a
+   consolidated epic records every group it graduated),
 4. flips **every** claimed source row `→ exported` (recording
    `exported_backlog_task`) and logs one `export` `PlanSweepEvent` per row.
 
-So a graduated change group lands as **one epic per group** (the fundamental
-refactor) with the genuinely-separate downstream adaptations nested beneath it as
-sub-tasks — the split the architect chose, not the plan tier tree. The collapsed
-rows (fault-area node, merged leaves) write no file of their own; they fold into
-the epic and are still flipped to `exported`.
+So a graduated cluster lands as **one epic** (the fundamental refactor) with the
+genuinely-separate downstream adaptations — and, for a consolidated cluster, each
+linked group — nested beneath it as ordered sub-tasks, the split the architect
+chose, not the plan tier tree. The collapsed rows (fault-area node, merged leaves)
+write no file of their own; they fold into the epic and are still flipped to
+`exported`.
 
 Only `proposed` and `accepted` rows are exportable. A row already `exported`, or
 whose `dedup_key` a backlog task already carries, is dropped from the selection —
@@ -70,10 +74,11 @@ arguments is a no-op. Every selected row must be claimed by some authored task's
 Prioritization is a conversation, not a single command. You build the picture of
 the candidate work, **deep-investigate each change group against the real
 `packages/core` code** to turn the plan's cheap routing-and-sizing into a
-concrete refactoring design, hand the user a comprehension doc per group to grasp
-it, decide together which groups graduate, then promote exactly that set — each
-funded group becoming backlog tasks authored from its verified design, with the
-comprehension doc graduated alongside the epic.
+concrete refactoring design, **consolidate across those designs** to decide which
+groups are linked and become one epic, hand the user a comprehension doc per
+cluster to grasp it, decide together which clusters graduate, then promote exactly
+that set — each funded cluster becoming backlog tasks authored from its verified
+design, with the comprehension doc graduated alongside the epic.
 
 The deep investigation runs on **every** candidate group, before the funding
 decision, so the user decides with full designs in hand. This is a deliberate
@@ -81,6 +86,28 @@ cost: a group the user does not fund is still investigated. The fault-area count
 per sweep bounds the fan-out (a handful of groups), and the plan's
 `core_fix_effort` estimate already pre-filters the trivially cheap fixes, so the
 spend buys decision quality on the changes that actually carry blast radius.
+
+Consolidation runs **after** the per-group investigations, because the signal for
+linkage — a shared core surface, a feeder→consumer dependency, a deeper root cause
+spanning two areas — only becomes visible once each group has been designed
+against the real code. It is the one stage that reasons across groups: the
+investigators run in parallel, each blind to the others, so without it two linked
+groups would graduate as two unordered epics with their dependency lost and any
+shared refactor authored twice.
+
+### Staging root
+
+Mint one staging root per invocation so runs never collide and each leaves an
+audit trail. At the start, take a UTC timestamp (`date -u +%Y%m%dT%H%M%SZ`) and use
+
+```text
+~/.ariadne/prioritize/<timestamp>/
+```
+
+as the run's root for everything below. Each investigated group writes under
+`<root>/<fault_area>/`; the consolidator writes `<root>/consolidation.json` and a
+`<root>/clusters/<slug>/` folder per merged cluster. Use this concrete path
+(timestamp resolved) wherever the steps below write `<root>`.
 
 The division of labour stays clean. The `plan` engine remains the cheap,
 planning-only router-and-estimator — its strategist gains nothing here. All deep
@@ -135,7 +162,7 @@ Dispatch one `Task(refactor-investigator)` per change group, all groups in one
 message so they run in parallel (cap at ~5 concurrent; drain in waves if there are
 more). Each sub-agent reads its group's rows, gets to grips with the real
 `packages/core` code, and writes a Markdown refactoring plan to
-`~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md`. Dispatch prompt:
+`<root>/<fault_area>/refactor_plan.md`. Dispatch prompt:
 
 > Investigate change group `<fault_area>` and write its refactoring plan. The
 > group's rows are at `<row_path>`, `<row_path>`, … (the architectural root, its
@@ -144,110 +171,153 @@ more). Each sub-agent reads its group's rows, gets to grips with the real
 > false-positive to its root cause, and design the single coherent change that
 > resolves the whole group at the right altitude — validating or collapsing the
 > plan's decomposition (catch over-decomposition, dead code, duplicate builders).
-> Write the plan to `~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md` and
-> return your one-line root cause + decomposition verdict.
+> Write the plan to `<root>/<fault_area>/refactor_plan.md` and return your
+> one-line root cause + decomposition verdict.
 
 Wait for every `Task()` in a wave to return before starting the next wave.
-**All step-3 waves must complete before any step-4 task is dispatched.** The
-plans on disk are the verified input step 4 reads; dispatching a comprehension
-doc before its `refactor_plan.md` is written produces an empty doc.
+**All step-3 waves must complete before consolidation (step 4) is dispatched.**
+The consolidator reads every group's plan front to back to judge linkage, so all
+plans must be on disk first.
 
-### 4. Render a comprehension doc per change group
+### 4. Consolidate into epics
 
-For each investigated group, dispatch one sub-agent to render a self-contained
-HTML comprehension doc from that group's `refactor_plan.md`, written to
-`backlog/docs/<fault_area>.comprehension.html` (in the repo, so the user can open
-it from their tree while deciding; the `*.comprehension.html` glob is gitignored,
-so a staging never lands in a commit until graduation moves a funded group's doc
-into `backlog/tasks/`). Pick a comprehension-doc specialist sub-agent if your
+The investigators ran in parallel, each blind to the others. This is the one stage
+that reads **across** them, to decide the epic boundaries: which groups are
+independent (each its own epic) and which are **linked** and must graduate as
+**one epic with ordered sub-tasks**. Top-level backlog ids carry only creation
+order; order is meaningful _within_ an epic, where sub-task ordinals are the work
+sequence. So linked work — groups that share a core surface, or whose fixes have a
+feeder→consumer dependency, or that a deeper root cause unifies — belongs under one
+epic; independent work stays separate, and a loose preference to do one epic before
+another is left unstated (it carries no obligation).
+
+With only one investigated group there is nothing to consolidate — skip to step 5.
+Otherwise dispatch one `Task(refactor-consolidator)` over the whole set:
+
+> Consolidate the investigated change groups for this prioritize run. The staging
+> root is `<root>`. The groups are: `<fault_area>` (plan `<root>/<fault_area>/refactor_plan.md`,
+> rows `<row_id>`…), `<fault_area>` (plan …, rows …), … — one entry per
+> investigated group with its plan path and row ids. Read every plan, decide the
+> epic boundaries (merge only on a code-cited shared surface or load-bearing
+> dependency; default to independent), write a `consolidated_plan.md` for each
+> merged cluster, and write the cluster map to `<root>/consolidation.json`. Return
+> how many groups in, how many epics out, and one line per merge.
+
+The consolidator merges conservatively — over-consolidation is as harmful as
+over-decomposition. Its `<root>/consolidation.json` is the spine of the rest of
+the run: each `clusters[]` entry is one epic, carrying its `member_fault_areas`,
+the union `member_row_ids`, the `plan_path` (a merged `consolidated_plan.md` or a
+singleton's own `refactor_plan.md`), a `rationale`, and a suggested cross-cluster
+`ordering`. Steps 5–7 iterate clusters, not raw groups.
+
+### 5. Render a comprehension doc per cluster
+
+For each cluster in `consolidation.json`, dispatch one sub-agent to render a
+self-contained HTML comprehension doc from that cluster's `plan_path` (a merged
+`consolidated_plan.md` or a singleton's `refactor_plan.md`), written to
+`backlog/docs/<slug>.comprehension.html` (in the repo, so the user can open it
+from their tree while deciding; the `*.comprehension.html` glob is gitignored, so a
+staging never lands in a commit until graduation moves a funded cluster's doc into
+`backlog/tasks/`). Pick a comprehension-doc specialist sub-agent if your
 environment offers one; otherwise a general-purpose sub-agent following these
 instructions produces the same artifact. Each doc presents:
 
 - a before/after pair of diagrams showing the change in functionality, grounded in
-  the refactor plan's chosen mechanism,
+  the plan's chosen mechanism,
 - the impact — the false-positives it removes and how broadly, stated concretely
   (e.g. "eliminates 14 false unreachable-function flags across 6 projects"),
 - the cost/blast-radius and whether it is a core fix or interim classifier work,
-- a clear benefit-vs-cost framing so the user can rank groups against each other.
+- for a merged cluster, **why its groups are linked** (the shared surface or
+  dependency) and the sub-task work order,
+- a clear benefit-vs-cost framing so the user can rank clusters against each other.
 
 Then author one **index** comprehension doc (written to a temp path and opened)
-that links every group's doc and leads with the highest impact-to-cost ratio.
-Keep it scannable: a decision aid, not a transcript of the rows.
+that links every cluster's doc and presents the clusters in `consolidation.json`'s
+suggested `ordering` — upstream work first — with impact-to-cost as the secondary
+sort. Keep it scannable: a decision aid, not a transcript of the rows.
 
-### 5. Decide together
+### 6. Decide together
 
 Walk the user through the comprehension docs — now backed by verified refactor
-designs, not just the plan's hypothesis — and use `AskUserQuestion` to settle which
-change groups graduate this run. Offer the groups as options (and let the user pick
-multiple), surfacing the impact-vs-cost tradeoff in each option so the choice is
-informed. If the user wants to inspect or re-cut the set, narrow with the selectors
-below and re-run `--dry-run`. Do not promote until the user has confirmed the set.
+designs and the consolidation's epic boundaries — and use `AskUserQuestion` to
+settle which clusters graduate this run. Offer the clusters as options (and let
+the user pick multiple), surfacing the impact-vs-cost tradeoff and, for merged
+clusters, the linkage in each option so the choice is informed. The suggested
+`ordering` is a recommendation the user may override; it shapes how you present the
+options, never a gate. If the user wants to inspect or re-cut the set, narrow with
+the selectors below and re-run `--dry-run`. Do not promote until the user has
+confirmed the set.
 
-### 6. Promote
+### 7. Promote
 
-Step 6a dispatches one architect per confirmed group, all in parallel, and waits
-for all to finish. Steps 6b and 6c then run per confirmed group, one group at a
-time.
+Step 7a dispatches one architect per confirmed cluster, all in parallel, and waits
+for all to finish. Steps 7b and 7c then run per confirmed cluster, one at a time.
 
-**Step 6a — author the backlog tasks** (one `refactor-task-architect` per confirmed group):
+**Step 7a — author the backlog tasks** (one `refactor-task-architect` per confirmed cluster):
 
-Dispatch one `Task(refactor-task-architect)` per confirmed group. The agent reads
-the full `~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md`, applies the
-natural-split criterion — one top-level task for the fundamental refactor,
-sub-tasks only for genuinely separate downstream adaptations — and **authors each
-task as an imperative work plan** (title + body + acceptance criteria) transformed
-from the verified design. It writes a `tasks[]` assignment file with relative ids
-to `~/.ariadne/plan/prioritize/<fault_area>/task_assignment.json`. The plan
-engine's tier labels are a routing concept, not the splitting axis; the cheap
-`PlanTask.body` is never carried over. Dispatch prompt:
+Dispatch one `Task(refactor-task-architect)` per confirmed cluster. The agent
+reads the full plan at the cluster's `plan_path`, applies the natural-split
+criterion — one top-level task for the fundamental refactor, sub-tasks only for
+genuinely separate downstream adaptations (for a merged cluster, the linked groups
+become the epic's ordered sub-tasks) — and **authors each task as an imperative
+work plan** (title + body + acceptance criteria) transformed from the verified
+design. It writes a `tasks[]` assignment file with relative ids to
+`task_assignment.json` beside the plan. The plan engine's tier labels are a routing
+concept, not the splitting axis; the cheap `PlanTask.body` is never carried over.
+Dispatch prompt:
 
-> Author the backlog tasks for change group `<fault_area>`. The refactor plan is
-> at `~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md`. The plan task ids
-> for this group are: `<row_id>`, `<row_id>`, … (architectural root, fault_area
-> node, localized leaves — the ids from your step 2 grouping for this
-> fault_area). Apply the natural-split criterion, author each task's imperative
-> work plan from the refactor plan, and write the task_assignment.json (a
-> `tasks[]` array, every row id claimed by exactly one task's `plan_task_ids`) to
-> `~/.ariadne/plan/prioritize/<fault_area>/task_assignment.json`.
+> Author the backlog tasks for cluster `<slug>`. The plan is at `<plan_path>`. The
+> plan task ids for this cluster are: `<row_id>`, `<row_id>`, … (its
+> `member_row_ids` from `consolidation.json`). Apply the natural-split criterion,
+> author each task's imperative work plan from the plan — each work plan must
+> include an explicit step to add integration tests (and any supporting fixture
+> updates) demonstrating the fix handles every case in the group's triage
+> evidence — and write the task_assignment.json (a `tasks[]` array, every row id
+> claimed by exactly one task's `plan_task_ids`) beside the plan.
 
-Run these architects in parallel (one message per group) and wait for all to
-complete before proceeding to 6b.
+Run these architects in parallel (one message per cluster) and wait for all to
+complete before proceeding to 7b.
 
-**Step 6b — export the rows** (one run per confirmed group):
+**Step 7b — export the rows** (one run per confirmed cluster):
 
 ```bash
 node --import tsx .claude/skills/plan/scripts/export_to_backlog.ts \
-  --fault-area <area> \
-  --assignments ~/.ariadne/plan/prioritize/<area>/task_assignment.json \
-  > "$SCRATCH/export_summary_<area>.json"
+  --id <row_id> --id <row_id> … \
+  --assignments <root>/clusters/<slug>/task_assignment.json \
+  > "$SCRATCH/export_summary_<slug>.json"
 ```
 
 `--assignments` is **required** for a write: it supplies the authored `tasks[]`
 that become the backlog cards (without it the script only previews candidates).
-The `--fault-area <area>` selector picks the architectural root, fault-area node,
-and every localized leaf in one go — every one must be claimed by some authored
-task, or the export errors. Redirect the summary into your scratchpad directory
-(the sandbox blocks `/tmp`); use that path in 6c.
+Select the cluster's rows by repeating `--id` for every id in the cluster's
+`member_row_ids` — this spans a merged cluster's multiple fault areas in one run,
+and every selected id must be claimed by some authored task or the export errors.
+(For a singleton cluster `--fault-area <area>` selects the same rows.) Redirect the
+summary into your scratchpad directory (the sandbox blocks `/tmp`); use that path
+in 7c.
 
-**Step 6c — graduate the comprehension doc** (reads the export summary, moves the
-staged comprehension doc beside the epic for each funded group):
+**Step 7c — graduate the comprehension doc** (reads the export summary, moves the
+staged comprehension doc beside the epic for each funded cluster):
 
 ```bash
 node --import tsx .claude/skills/plan/scripts/graduate_group_docs.ts \
-  --export-summary "$SCRATCH/export_summary_<area>.json"
+  --slug <slug> \
+  --export-summary "$SCRATCH/export_summary_<slug>.json"
 ```
 
-This **moves** `backlog/docs/<fault_area>.comprehension.html` to
-`backlog/tasks/task-<id> - <slug>.overview.html` — sharing the epic's filename
-prefix (derived from the epic's rendered `.md` path) so it sorts beside it in
-folder views. The move consumes its staged source, so the funded group's
-comprehension HTML leaves `backlog/docs/` entirely. The verified `refactor_plan.md`
-is **not** copied into the repo — the epic's card is already its imperative
-transformation, so an in-repo design doc would duplicate it; the plan stays in
-`~/.ariadne` staging as the investigation record. Groups with no staged
-comprehension doc (investigation did not run, or already graduated) are silently
-skipped — the script is idempotent. An unfunded group's
-`<fault_area>.comprehension.html` stays in `backlog/docs/` as a local-only file
+`--slug` is the cluster's slug (its `consolidation.json` `slug`; a singleton's is
+its `fault_area`) — the stable key the comprehension doc was staged under. The
+script **moves** `backlog/docs/<slug>.comprehension.html` to
+`backlog/tasks/task-<id> - <title-slug>.overview.html` — sharing the epic's
+filename prefix (derived from the epic's rendered `.md` path, found as the
+cluster's one top-level `TASK-<n>`) so it sorts beside it in folder views. The
+move consumes its staged source, so the funded cluster's comprehension HTML leaves
+`backlog/docs/` entirely. The verified plan is **not** copied into the repo — the
+epic's card is already its imperative transformation, so an in-repo design doc
+would duplicate it; the plan stays in `~/.ariadne` staging as the investigation
+record. A cluster with no staged comprehension doc (already graduated) is silently
+skipped — the script is idempotent. An unfunded cluster's
+`<slug>.comprehension.html` stays in `backlog/docs/` as a local-only file
 (gitignored, never committed); delete it once the decision is made, or leave it as
 a record of the investigation.
 

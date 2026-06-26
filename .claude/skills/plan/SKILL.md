@@ -131,7 +131,7 @@ immutable `dedup_key` = a hash of `fault_area` + the sorted evidence
   overlaps, its false-positives stopped recurring → **resolve**
   (`status: "resolved"` — the bug appears fixed).
 - **export dedup** — the reconciler reads `backlog/tasks/*.md` frontmatter
-  **read-only**, keyed on `plan_dedup_key` (stamped by the export adapter,
+  **read-only**, keyed on `plan_dedup_keys` (stamped by the export adapter,
   `scripts/export_to_backlog.ts` — see **Export to backlog** below). A DB task
   whose `dedup_key` a backlog task already carries is marked `exported` and
   suppressed from re-proposal. No backlog write.
@@ -176,9 +176,10 @@ node --import tsx .claude/skills/plan/scripts/export_to_backlog.ts \
 | `--dry-run`                   | Print the planned writes (incl. the would-be backlog ids); touch nothing                                                                                                                                                          |
 
 Each selected `PlanTask` becomes a new top-level `backlog/tasks/task-<id> - <slug>.md`,
-its frontmatter stamped with `plan_dedup_key: <PlanTask.dedup_key>` (the
-loop-closure link Pass C's read-only dedup reads back) and `plan_source_task` for
-traceability; `priority` is `high` for a core fix, `medium` for classifier work.
+its frontmatter stamped with `plan_dedup_keys: [<PlanTask.dedup_key>, …]` (the
+loop-closure link Pass C's read-only dedup reads back, one entry per source group)
+and `plan_source_tasks` for traceability; `priority` is `high` for a core fix,
+`medium` for classifier work.
 On success the DB row flips `proposed → exported` (recording `exported_backlog_task`)
 and one `export` `PlanSweepEvent` is logged. **Idempotent:** a row already
 `exported`, or whose `dedup_key` a backlog task already carries, is skipped, so a
@@ -195,7 +196,7 @@ skill's `src/store/paths.ts`). Both are overridable for tests
 - **Sweep staging:** `~/.ariadne/plan/staging/<sweep-id>/buckets/<area>.json` + `manifest.json` (Pass A) + `plans/<area>.json` (Pass B)
 - **Task-DB:** `~/.ariadne/plan/tasks/<id>.json` (`PlanTask` rows) + `~/.ariadne/plan/sweeps/<sweep-id>.jsonl` (`PlanSweepEvent` log)
 - **Membership overrides:** `~/.ariadne/plan/membership_overrides.json` — members a strategist judged mis-routed, keyed on the flagged member's identity (drift-tolerant on `(file_path, name, kind)`; `start_line` can still shift). Written by Pass C, read by Pass A
-- **Backlog dedup keys (read-only):** `backlog/tasks/*.md` frontmatter (`plan_dedup_key`) — the only dedup signal; read by Pass C (`src/store/backlog_dedup.ts`). The plan engine never reads `registry.json`.
+- **Backlog dedup keys (read-only):** `backlog/tasks/*.md` frontmatter (`plan_dedup_keys`) — the only dedup signal; read by Pass C (`src/store/backlog_dedup.ts`). The plan engine never reads `registry.json`.
 
 ## Write boundaries
 
@@ -204,7 +205,7 @@ only the task-DB under `~/.ariadne/plan/` — `tasks/`, `sweeps/`, and the
 membership-override store, of which the reconcile pass (Pass C) is the sole
 writer; the strategist writes only its staged `StrategistPlan`. Pass C reads `backlog/tasks/*.md`
 frontmatter **read-only** (`src/store/backlog_dedup.ts`, keyed on
-`plan_dedup_key`) as a dedup signal — it is never written by the pipeline; the
+`plan_dedup_keys`) as a dedup signal — it is never written by the pipeline; the
 only writer is the user-invoked export adapter (`scripts/export_to_backlog.ts`).
 The registry's analogous human-invoked write path is the `reconcile-registry`
 skill (`.claude/skills/reconcile-registry/SKILL.md`) over

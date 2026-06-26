@@ -123,37 +123,18 @@ export function backlog_docs_dir(): string {
 }
 
 /**
- * Where the comprehension-doc sub-agent writes a change group's decision-aid
- * HTML during investigation: `backlog/docs/<fault_area>.comprehension.html`.
- * Staged in the repo (not the `~/.ariadne` home dir) so the user can open it
- * while deciding which groups to fund. The graduation step moves it into
- * `backlog/tasks/` beside the group's epic once the group is funded.
+ * Where the comprehension-doc sub-agent writes a cluster's decision-aid HTML:
+ * `backlog/docs/<slug>.comprehension.html`, keyed by the cluster slug (a
+ * singleton cluster's slug is its `AriadneFaultArea`). Staged in the repo (not
+ * the `~/.ariadne` home dir) so the user can open it while deciding which
+ * clusters to fund. The graduation step moves it into `backlog/tasks/` beside the
+ * cluster's epic once the cluster is funded.
  *
  * Lives under `backlog/docs/` — not the similarly-named `backlog/comprehension/`,
  * which is unwired legacy — and the `*.comprehension.html` glob is gitignored, so
- * a staging never reaches a commit: a funded group's doc graduates into
- * `backlog/tasks/` (committed), an unfunded group's stays local until removed.
+ * a staging never reaches a commit: a funded cluster's doc graduates into
+ * `backlog/tasks/` (committed), an unfunded cluster's stays local until removed.
  */
-export function backlog_comprehension_staging_path(fault_area: string): string {
-  return path.join(backlog_docs_dir(), `${fault_area}.comprehension.html`);
-}
-
-/**
- * Root of the `prioritize` skill's per-group investigation staging area:
- * `<plan>/prioritize/`. The `refactor-investigator` sub-agent writes one
- * subdirectory per `AriadneFaultArea` here; the graduation step reads them.
- */
-export function plan_prioritize_dir(): string {
-  return path.join(plan_dir(), "prioritize");
-}
-
-/**
- * The staging directory for one fault-area's investigation artifacts:
- * `<plan>/prioritize/<fault_area>/`. Contains `refactor_plan.md` (from the
- * `refactor-investigator`) and `task_assignment.json` (from
- * `refactor-task-architect`). The comprehension HTML stages in the repo instead
- * — see `backlog_comprehension_staging_path`.
- */
-export function plan_prioritize_area_dir(fault_area: string): string {
-  return path.join(plan_prioritize_dir(), fault_area);
+export function backlog_comprehension_staging_path(slug: string): string {
+  return path.join(backlog_docs_dir(), `${slug}.comprehension.html`);
 }

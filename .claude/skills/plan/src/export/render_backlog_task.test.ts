@@ -112,7 +112,7 @@ describe("render_backlog_task", () => {
       is_classifier_work: false,
     });
 
-    const rendered = render_backlog_task(authored, primary, "2026-06-04 14:30");
+    const rendered = render_backlog_task(authored, [primary], "2026-06-04 14:30");
 
     expect(rendered.filename).toEqual(
       "task-347 - Complete-the-member-surface-a-resolved-receiver-exposes.md",
@@ -130,8 +130,10 @@ describe("render_backlog_task", () => {
         "  - name_resolution",
         "dependencies: []",
         "priority: high",
-        "plan_dedup_key: a1b2c3d4e5f6",
-        "plan_source_task: pt-abc123",
+        "plan_dedup_keys:",
+        "  - a1b2c3d4e5f6",
+        "plan_source_tasks:",
+        "  - pt-abc123",
         "---",
         "",
         "## Description",
@@ -155,10 +157,80 @@ describe("render_backlog_task", () => {
     );
   });
 
+  it("stamps every source group's dedup key, source id, and label for a consolidated epic", () => {
+    const authored = make_authored({
+      backlog_id: "352",
+      title: "Restore receiver types and complete the member surface",
+      description_md: "Restore def.type upstream, then key the constructor into the member index.",
+      acceptance_criteria: ["Both clusters' false-positives clear."],
+      plan_task_ids: ["pt-recv", "pt-method"],
+    });
+    const recv = make_task({
+      id: "pt-recv" as PlanTaskId,
+      fault_area: "receiver_type_inference",
+      dedup_key: "recvkey",
+      is_classifier_work: false,
+    });
+    const method = make_task({
+      id: "pt-method" as PlanTaskId,
+      fault_area: "method_lookup",
+      dedup_key: "methodkey",
+      is_classifier_work: true,
+    });
+
+    const rendered = render_backlog_task(authored, [method, recv], "2026-06-04 14:30");
+
+    expect(rendered.filename).toEqual(
+      "task-352 - Restore-receiver-types-and-complete-the-member-surface.md",
+    );
+    expect(rendered.content).toEqual(
+      [
+        "---",
+        "id: TASK-352",
+        "title: \"Restore receiver types and complete the member surface\"",
+        "status: To Do",
+        "assignee: []",
+        "created_date: \"2026-06-04 14:30\"",
+        "labels:",
+        "  - plan-export",
+        // Sources sorted by id (pt-method < pt-recv), so labels and lists follow that order.
+        "  - method_lookup",
+        "  - receiver_type_inference",
+        "dependencies: []",
+        // High: not every source is classifier work.
+        "priority: high",
+        "plan_dedup_keys:",
+        "  - methodkey",
+        "  - recvkey",
+        "plan_source_tasks:",
+        "  - pt-method",
+        "  - pt-recv",
+        "---",
+        "",
+        "## Description",
+        "",
+        "<!-- SECTION:DESCRIPTION:BEGIN -->",
+        "",
+        "Restore def.type upstream, then key the constructor into the member index.",
+        "",
+        "<!-- SECTION:DESCRIPTION:END -->",
+        "",
+        "## Acceptance Criteria",
+        "",
+        "<!-- AC:BEGIN -->",
+        "",
+        "- [ ] #1 Both clusters' false-positives clear.",
+        "",
+        "<!-- AC:END -->",
+        "",
+      ].join("\n"),
+    );
+  });
+
   it("stamps medium priority when the primary row is classifier work", () => {
     const rendered = render_backlog_task(
       make_authored({}),
-      make_task({ is_classifier_work: true }),
+      [make_task({ is_classifier_work: true })],
       "2026-06-04 14:30",
     );
     expect(rendered.content.includes("priority: medium")).toBe(true);
@@ -181,7 +253,7 @@ describe("render_backlog_task", () => {
       dedup_key: "leafkey",
     });
 
-    const rendered = render_backlog_task(authored, primary, "2026-06-04 14:30");
+    const rendered = render_backlog_task(authored, [primary], "2026-06-04 14:30");
 
     expect(rendered.filename).toEqual(
       "task-347.1.2 - Bind-sibling-inner-scope-names.md",
@@ -201,8 +273,10 @@ describe("render_backlog_task", () => {
         "parent_task_id: TASK-347.1",
         "priority: high",
         "ordinal: 2000",
-        "plan_dedup_key: leafkey",
-        "plan_source_task: pt-leaf",
+        "plan_dedup_keys:",
+        "  - leafkey",
+        "plan_source_tasks:",
+        "  - pt-leaf",
         "---",
         "",
         "## Description",

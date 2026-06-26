@@ -36,8 +36,8 @@ export interface AuthoredBacklogTask {
   acceptance_criteria: string[];
   /**
    * Every `PlanTask` id that collapses into this backlog task. All are flipped to
-   * `exported`; the lowest-tier row (architectural first) supplies the card's
-   * `plan_dedup_key`/`plan_source_task` frontmatter. Non-empty.
+   * `exported`; the architectural rows (one per collapsed source group) supply the
+   * card's `plan_dedup_keys`/`plan_source_tasks` frontmatter lists. Non-empty.
    */
   plan_task_ids: string[];
 }

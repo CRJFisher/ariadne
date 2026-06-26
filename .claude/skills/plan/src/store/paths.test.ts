@@ -101,7 +101,7 @@ describe("backlog_docs_dir", () => {
 });
 
 describe("backlog_comprehension_staging_path", () => {
-  it("names <backlog-root>/docs/<fault_area>.comprehension.html under the override", () => {
+  it("names <backlog-root>/docs/<slug>.comprehension.html under the override", () => {
     process.env.ARIADNE_BACKLOG_DIR_OVERRIDE = "/tmp/fake-backlog";
     expect(backlog_comprehension_staging_path("scope_construction")).toEqual(
       "/tmp/fake-backlog/docs/scope_construction.comprehension.html",

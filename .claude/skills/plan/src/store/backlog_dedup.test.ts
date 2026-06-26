@@ -22,17 +22,21 @@ async function write_task(name: string, frontmatter: string, body = "body"): Pro
 }
 
 describe("read_exported_backlog_keys", () => {
-  it("maps plan_dedup_key → task id for tasks carrying both fields", async () => {
-    await write_task("task-500.md", "id: TASK-500\nstatus: To Do\nplan_dedup_key: aaa111");
-    await write_task("task-501.md", "id: TASK-501\nstatus: To Do\nplan_dedup_key: bbb222");
-    // A human-authored task with no plan_dedup_key is invisible to the engine.
-    await write_task("task-502.md", "id: TASK-502\nstatus: To Do");
+  it("maps every plan_dedup_keys entry → task id for tasks carrying both fields", async () => {
+    await write_task("task-500.md", "id: TASK-500\nstatus: To Do\nplan_dedup_keys:\n  - aaa111");
+    await write_task("task-501.md", "id: TASK-501\nstatus: To Do\nplan_dedup_keys:\n  - bbb222");
+    // A consolidated epic carries one key per merged source group; all map back to it.
+    await write_task("task-502.md", "id: TASK-502\nstatus: To Do\nplan_dedup_keys:\n  - ccc333\n  - ddd444");
+    // A human-authored task with no plan_dedup_keys is invisible to the engine.
+    await write_task("task-503.md", "id: TASK-503\nstatus: To Do");
 
     const keys = await read_exported_backlog_keys(backlog_dir);
     expect(keys).toEqual(
       new Map([
         ["aaa111", "TASK-500"],
         ["bbb222", "TASK-501"],
+        ["ccc333", "TASK-502"],
+        ["ddd444", "TASK-502"],
       ]),
     );
   });
@@ -40,27 +44,27 @@ describe("read_exported_backlog_keys", () => {
   it("parses frontmatter saved with CRLF line endings", async () => {
     await fs.writeFile(
       path.join(backlog_dir, "task-550.md"),
-      "---\r\nid: TASK-550\r\nplan_dedup_key: ccc999\r\n---\r\n\r\nbody\r\n",
+      "---\r\nid: TASK-550\r\nplan_dedup_keys:\r\n  - ccc999\r\n---\r\n\r\nbody\r\n",
       "utf8",
     );
     const keys = await read_exported_backlog_keys(backlog_dir);
     expect(keys).toEqual(new Map([["ccc999", "TASK-550"]]));
   });
 
-  it("strips surrounding quotes from the id and key", async () => {
-    await write_task("task-600.md", "id: \"TASK-600\"\nplan_dedup_key: \"ccc333\"");
+  it("strips surrounding quotes from the id and keys", async () => {
+    await write_task("task-600.md", "id: \"TASK-600\"\nplan_dedup_keys:\n  - \"ccc333\"");
     const keys = await read_exported_backlog_keys(backlog_dir);
     expect(keys).toEqual(new Map([["ccc333", "TASK-600"]]));
   });
 
-  it("excludes a task carrying plan_dedup_key but no id", async () => {
-    await write_task("task-700.md", "status: To Do\nplan_dedup_key: ddd444");
+  it("excludes a task carrying plan_dedup_keys but no id", async () => {
+    await write_task("task-700.md", "status: To Do\nplan_dedup_keys:\n  - ddd444");
     const keys = await read_exported_backlog_keys(backlog_dir);
     expect(keys).toEqual(new Map());
   });
 
   it("ignores non-.md files and files with no frontmatter", async () => {
-    await fs.writeFile(path.join(backlog_dir, "notes.txt"), "id: TASK-1\nplan_dedup_key: x", "utf8");
+    await fs.writeFile(path.join(backlog_dir, "notes.txt"), "id: TASK-1\nplan_dedup_keys:\n  - x", "utf8");
     await fs.writeFile(path.join(backlog_dir, "task-800.md"), "no frontmatter here\n", "utf8");
     const keys = await read_exported_backlog_keys(backlog_dir);
     expect(keys).toEqual(new Map());

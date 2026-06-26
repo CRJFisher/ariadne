@@ -219,8 +219,8 @@ describe("export_to_backlog run()", () => {
     expect(content.includes("title: \"Resolve namespace receiver calls\"")).toBe(true);
     expect(content.includes("Carry the receiver type through the namespace hop.")).toBe(true);
     expect(content.includes("- [ ] #1 Root-cause fix lands in `core`.")).toBe(true);
-    expect(content.includes("plan_dedup_key: expkey1")).toBe(true);
-    expect(content.includes("plan_source_task: pt-1")).toBe(true);
+    expect(content.includes("plan_dedup_keys:\n  - expkey1")).toBe(true);
+    expect(content.includes("plan_source_tasks:\n  - pt-1")).toBe(true);
     // The cheap plan-engine body is never rendered.
     expect(content.includes("cheap plan-engine body")).toBe(false);
 
@@ -290,7 +290,7 @@ describe("export_to_backlog run()", () => {
     await repo.put(make_task({ id: "pt-1" as PlanTaskId, dedup_key: "expkey1" }));
     await fs.writeFile(
       path.join(backlog_dir, "task-347 - prior.md"),
-      "---\nid: TASK-347\nplan_dedup_key: expkey1\n---\n",
+      "---\nid: TASK-347\nplan_dedup_keys:\n  - expkey1\n---\n",
       "utf8",
     );
     const file = await write_assignment([
@@ -392,8 +392,8 @@ describe("export_to_backlog run()", () => {
 
       // The epic stamps the architectural row's dedup key; the sub-task links up.
       const epic = await fs.readFile(path.join(backlog_dir, "task-347 - Complete-the-member-surface.md"), "utf8");
-      expect(epic.includes("plan_dedup_key: karch")).toBe(true);
-      expect(epic.includes("plan_source_task: pt-arch")).toBe(true);
+      expect(epic.includes("plan_dedup_keys:\n  - karch")).toBe(true);
+      expect(epic.includes("plan_source_tasks:\n  - pt-arch")).toBe(true);
       const sub = await fs.readFile(path.join(backlog_dir, "task-347.1 - Follow-re-export-chains.md"), "utf8");
       expect(sub.includes("parent_task_id: TASK-347")).toBe(true);
       expect(sub.includes("ordinal: 1000")).toBe(true);

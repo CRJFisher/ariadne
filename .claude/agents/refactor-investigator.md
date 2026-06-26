@@ -1,7 +1,7 @@
 ---
 name: refactor-investigator
 description: Turns ONE change group (the PlanTask rows that fix one AriadneFaultArea) into a single, code-grounded refactoring plan that resolves EVERY issue in the group as one coherent change at the right altitude. One input — a fault-area change group (the architectural root, its fault_area node, and the localized leaves, with their false-positive evidence). One output — a Markdown refactor plan written to a staging path. Investigates the real `packages/core` code: validates or collapses the plan's decomposition, names the concrete mechanism, and catches over-decomposition, dead code, and duplicate builders. Design-only — never writes `packages/core`, the registry, or the user's backlog.
-tools: Read, Grep, Glob, Bash(node --import tsx:*), Write(~/.ariadne/plan/prioritize/**), Write(/tmp/**)
+tools: Read, Grep, Glob, Bash(node --import tsx:*), Write(~/.ariadne/prioritize/**), Write(/tmp/**)
 model: opus
 maxTurns: 200
 ---
@@ -37,7 +37,7 @@ Your dispatch prompt contains:
 - `row_paths[]` — the `~/.ariadne/plan/tasks/<id>.json` files for the group's
   rows (root + fault_area node + localized leaves).
 - `output_path` — where to write your plan (under
-  `~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md`).
+  `~/.ariadne/prioritize/<timestamp>/<fault_area>/refactor_plan.md`).
 
 Read every row. Each `PlanTask` carries `tier`, `title`, `body`, `fault_area`,
 `core_fix_effort` / `core_fix_effort_rationale`, and `evidence[]` — one row per

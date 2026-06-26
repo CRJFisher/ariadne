@@ -5,11 +5,12 @@
  * `status: "exported"`).
  *
  * The match is a STRUCTURED FRONTMATTER LINK, not a fuzzy text scan: a promoted
- * backlog task carries a `plan_dedup_key: <hash>` frontmatter field — the
- * verbatim `PlanTask.dedup_key` of the DB task it was promoted from. The
- * user-invoked export adapter (TASK-190.22.11, the sole backlog writer) stamps
- * it; this reader keys on it. A backlog task without the field is invisible
- * here (it is human-authored work the engine has no DB lineage for).
+ * backlog task carries a `plan_dedup_keys` frontmatter list — the verbatim
+ * `PlanTask.dedup_key` of every source group it was promoted from (one for an
+ * ordinary epic, several for a consolidated cluster). The user-invoked export
+ * adapter (the sole backlog writer) stamps it; this reader maps every entry back
+ * to the task. A backlog task without the field is invisible here (it is
+ * human-authored work the engine has no DB lineage for).
  *
  * This module is strictly read-only against `backlog/` — `readdir` + `readFile`
  * only, no write primitive, no `mcp__backlog__*` tool. It reads the user's
@@ -35,13 +36,26 @@ function scalar_field(block: string, field: string): string | null {
   return match[1].trim().replace(/^["']|["']$/g, "");
 }
 
+/** Read a YAML block-sequence field (`field:\n  - a\n  - b`) as a string list; `[]` if absent. */
+function list_field(block: string, field: string): string[] {
+  const re = new RegExp(`^${field}:[ \\t]*\\n((?:[ \\t]*-[ \\t]*.+\\n?)+)`, "m");
+  const match = block.match(re);
+  if (match === null) return [];
+  return match[1]
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("-"))
+    .map((line) => line.replace(/^-[ \t]*/, "").replace(/^["']|["']$/g, ""));
+}
+
 /**
- * Map every promoted backlog task's `plan_dedup_key` → its backlog task `id`,
- * read from `*.md` frontmatter under `backlog_dir`. A file is included only when
- * it carries BOTH `id` and `plan_dedup_key` (a key with no owning task id is
- * unusable). A missing directory, a non-`.md` entry, or a file with no
- * frontmatter is skipped — never a throw: an absent or sparse backlog is the
- * normal early state, not corruption.
+ * Map every promoted backlog task's `plan_dedup_keys` entries → its backlog task
+ * `id`, read from `*.md` frontmatter under `backlog_dir`. A file contributes only
+ * when it carries BOTH `id` and a non-empty `plan_dedup_keys` (a key with no
+ * owning task id is unusable); every key in the list maps to the one owning task,
+ * so a consolidated epic's many source groups all resolve back to it. A missing
+ * directory, a non-`.md` entry, or a file with no frontmatter is skipped — never a
+ * throw: an absent or sparse backlog is the normal early state, not corruption.
  */
 export async function read_exported_backlog_keys(
   backlog_dir: string,
@@ -60,10 +74,10 @@ export async function read_exported_backlog_keys(
     const text = (await readFile(path.join(backlog_dir, file), "utf8")).replace(/\r\n/g, "\n");
     const block = frontmatter_block(text);
     if (block === null) continue;
-    const dedup_key = scalar_field(block, "plan_dedup_key");
+    const dedup_keys = list_field(block, "plan_dedup_keys");
     const id = scalar_field(block, "id");
-    if (dedup_key === null || id === null) continue;
-    out.set(dedup_key, id);
+    if (dedup_keys.length === 0 || id === null) continue;
+    for (const dedup_key of dedup_keys) out.set(dedup_key, id);
   }
   return out;
 }
