@@ -81,6 +81,7 @@
   td.after{font-family:var(--mono);font-size:11.5px;color:var(--olive)}
   td.after b{color:var(--olive)}
   td.seg{font-family:var(--mono);font-size:11.5px;color:var(--clay)}
+  td.seg b{color:var(--clay)}
   tr:last-child td{border-bottom:none}
   .code{background:var(--code);border-radius:var(--r);overflow:hidden;margin:14px 0;border:1px solid #1a1815}
   .code .fl{font-family:var(--mono);font-size:10.5px;color:#b9b0a0;background:#1c1a16;padding:8px 14px;border-bottom:1px solid #000;letter-spacing:.03em}
@@ -92,6 +93,7 @@
   .acs li{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start;font-size:13.5px;background:var(--paper);border:1px solid var(--g200);border-radius:9px;padding:10px 13px}
   .acs .n{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ivory);background:var(--olive);border-radius:6px;width:24px;height:22px;display:flex;align-items:center;justify-content:center}
   .acs li.risk .n{background:var(--rust)}
+  .acs li.partial .n{background:var(--clay)}
   .acs code{font-size:.9em}
   @media(max-width:860px){.ba{grid-template-columns:1fr}.ba .arrow{flex-direction:row;padding:8px 0}.ba .arrow .arl{writing-mode:horizontal-tb;margin:0 0 0 6px}.ba .panel:last-child{border-left:1px solid var(--g200);border-radius:0 0 var(--r) var(--r)}.ba .panel:first-child{border-radius:var(--r) var(--r) 0 0}}
   footer{font-family:var(--mono);font-size:10.5px;color:var(--g400);margin-top:56px;border-top:1px solid var(--g200);padding-top:14px;line-height:1.7}
@@ -114,35 +116,35 @@
   <div class="inner">
     <span class="brand">on this page</span>
     <a href="#crux">The unbound type</a>
-    <a href="#walk">Type-last path walk</a>
-    <a href="#normalize">crate / self / super</a>
-    <a href="#collision">Collision safety</a>
-    <a href="#scope">Out of scope</a>
+    <a href="#shape">Type-last prefix</a>
+    <a href="#shared">Shared resolver</a>
+    <a href="#boundary">In-scope only</a>
+    <a href="#collision">Disambiguation</a>
     <a href="#ac">Acceptance</a>
   </div>
 </nav>
 
 <main>
 
-  <p class="eyebrow">Change A · sub-task 349.5 · last of A · depends on 349.1 + 349.4</p>
-  <h1>An inline full path writes the type name only in the call — so <code>Driver</code> is never bound in scope</h1>
+  <p class="eyebrow">Change A · sub-task 349.5 · status Done · builds on 349.1 + 349.4</p>
+  <h1>An inline full path writes the type name only in the call — so <code>Driver</code> binds by walking its module</h1>
 
   <div class="meta">
-    <span class="chip rust"><strong>crate::runtime::Driver::new()</strong> type unbound</span>
+    <span class="chip rust"><strong>crate::runtime::Driver::new()</strong> type never imported</span>
     <span class="chip"><strong>path_prefix</strong> is type-last</span>
     <span class="chip clay"><strong>1</strong> resolver branch</span>
-    <span class="chip olive"><strong>reuses</strong> 349.1's path walk</span>
+    <span class="chip olive"><strong>shares</strong> 349.1's path resolver</span>
   </div>
-  <p class="cap prose">349.4 binds an <code>in-scope</code> type's constructor; this closes the remaining case — a type written inline as a full path that is never imported, so the bare-name lookup for <code>Driver</code> misses.</p>
+  <p class="cap prose">349.4 binds an <code>in-scope</code> type's constructor; this closes the remaining case — a type written inline as a full path that no bare name carries in scope — by resolving its immediate module qualifier and looking the type up in that module's body.</p>
 
   <section id="crux">
-    <h2>The crux: inline type paths place no bare type name in scope</h2>
-    <p class="cap prose">After 349.1 + 349.4, a <code>use</code>-imported <code>Parker::new()</code> resolves; but <code>crate::runtime::Driver::new()</code> writes the type path inline — <code>Driver</code> is never imported, so the in-scope terminal lookup misses and the type cannot be bound.</p>
+    <h2>The crux: an inline type path places no bare type name in scope</h2>
+    <p class="cap prose">After 349.1 + 349.4 a <code>use</code>-imported <code>Parker::new()</code> resolves; <code>crate::runtime::Driver::new()</code> writes the type path inline — <code>Driver</code> is never imported, so the bare lookup misses and the type stays unbound until the module qualifier is walked.</p>
 
     <div class="ba">
       <div class="panel">
         <p class="ttl cur">Current — bare-name lookup of Driver misses</p>
-        <svg viewBox="0 0 320 252" role="img" aria-label="Current flow: an inline full path constructor reaches resolve_constructor_call with name Driver and a path_prefix; the bare-name resolve of Driver in scope misses because the type is never imported, so the constructor cannot bind and new is a false entry point">
+        <svg viewBox="0 0 320 252" role="img" aria-label="Current flow: an inline full-path constructor reaches resolve_constructor_call with name Driver and a path_prefix; the bare-name resolve of Driver in scope misses because the type is never imported, so the constructor cannot bind and new is a false entry point">
           <defs><marker id="ahf" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#a8472f"/></marker></defs>
           <rect x="40" y="6" width="240" height="34" rx="8" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.4"/>
           <text x="160" y="22" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#2b2a28">crate::runtime::Driver::new()</text>
@@ -158,15 +160,15 @@
           <line x1="160" y1="168" x2="160" y2="188" stroke="#a8472f" stroke-width="1.4" marker-end="url(#ahf)"/>
           <rect x="34" y="192" width="252" height="34" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
           <text x="160" y="207" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">constructor cannot bind</text>
-          <text x="160" y="218" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">constructor.ts:71</text>
+          <text x="160" y="218" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">new() is a false entry point</text>
           <line x1="160" y1="226" x2="160" y2="244" stroke="#a8472f" stroke-width="1.6" marker-end="url(#ahf)"/>
           <rect x="58" y="246" width="204" height="6" rx="3" fill="#a8472f"/>
         </svg>
       </div>
       <div class="arrow"><span class="ar">&rarr;</span><span class="arl">349.5</span></div>
       <div class="panel">
-        <p class="ttl plan">Planned — walk the prefix to bind the type</p>
-        <svg viewBox="0 0 320 252" role="img" aria-label="Planned flow: when the bare-name resolve misses and a path_prefix is present, walk the type-last prefix to bind Driver, then resolve the constructor via the member-index link from 349.4">
+        <p class="ttl plan">Built — resolve the immediate module qualifier in scope</p>
+        <svg viewBox="0 0 320 252" role="img" aria-label="Built flow: when the bare-name resolve misses and a path_prefix is present, resolve_type_via_module_path takes runtime as the type's immediate module qualifier, resolves it in scope, requires it to be a mod namespace, looks Driver up in that module's body, then links new via the 349.4 member index">
           <defs><marker id="aho" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker></defs>
           <rect x="40" y="6" width="240" height="34" rx="8" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.4"/>
           <text x="160" y="22" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#2b2a28">crate::runtime::Driver::new()</text>
@@ -174,187 +176,244 @@
           <line x1="160" y1="40" x2="160" y2="60" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#aho)"/>
           <rect x="34" y="64" width="252" height="40" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
           <text x="160" y="80" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">bare resolve misses + prefix present</text>
-          <text x="160" y="96" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#6c7a4a">→ enter path-walk branch</text>
+          <text x="160" y="96" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#6c7a4a">→ resolve_type_via_module_path</text>
           <line x1="160" y1="104" x2="160" y2="124" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#aho)"/>
           <rect x="34" y="128" width="252" height="40" rx="8" fill="#f0ece2" stroke="#7a4636"/>
-          <text x="160" y="144" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">walk crate → runtime → Driver</text>
-          <text x="160" y="160" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#7a4636">349.1 path resolver, type-last</text>
+          <text x="160" y="143" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">qualifier = prefix[len-2] = "runtime"</text>
+          <text x="160" y="158" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" font-weight="700" fill="#7a4636">resolve in scope → require mod</text>
           <line x1="160" y1="168" x2="160" y2="188" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#aho)"/>
           <rect x="34" y="192" width="252" height="34" rx="8" fill="#eef0e6" stroke="#5b6840"/>
-          <text x="160" y="207" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">type bound → new() via 349.4 link</text>
-          <text x="160" y="218" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">member-index lookup</text>
+          <text x="160" y="207" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">Driver in mod body → new() via 349.4</text>
+          <text x="160" y="218" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">member-index link · new() reachable</text>
           <line x1="160" y1="226" x2="160" y2="244" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#aho)"/>
           <rect x="58" y="246" width="204" height="6" rx="3" fill="#6c7a4a"/>
         </svg>
       </div>
     </div>
     <div class="legend">
-      <span><i class="fail"></i> type unbound today</span>
-      <span><i class="edge"></i> bound via the path walk</span>
+      <span><i class="fail"></i> type unbound, new() a false entry point</span>
+      <span><i class="edge"></i> bound via the module qualifier</span>
       <span>resolver: <code>call_resolution/constructor.ts</code></span>
     </div>
   </section>
 
-  <section id="walk">
-    <h2>The path-prefix is type-last — the final segment <em>is</em> the type</h2>
-    <p class="cap prose">Unlike a function call (where the terminal is dropped from the prefix), a constructor's <code>path_prefix</code> keeps the full type path: leading segments are the module path, the final segment is the type that owns <code>new</code>.</p>
+  <section id="shape">
+    <h2>The prefix is type-last — the qualifier is the segment <em>before</em> the type</h2>
+    <p class="cap prose">A constructor's <code>path_prefix</code> keeps the full type path: the final segment <em>is</em> the type (carried also as <code>name</code>), and the type's immediate module qualifier is the second-to-last segment — that single qualifier is resolved in scope, not every leading segment.</p>
     <div class="fieldtbl">
       <table>
-        <thead><tr><th>Constructor call</th><th>name (terminal type)</th><th>path_prefix (type-last)</th><th>walk binds</th></tr></thead>
+        <thead><tr><th>Constructor call</th><th>name (terminal type)</th><th>path_prefix (type-last)</th><th>qualifier = prefix[len-2]</th></tr></thead>
         <tbody>
           <tr>
-            <td class="in"><code>crate::runtime::Driver::new()</code><br><span style="font-size:11px;color:var(--g400)">inline full path</span></td>
+            <td class="in"><code>crate::runtime::Driver::new()</code><br><span style="font-size:11px;color:var(--g400)">inline full path · resolves</span></td>
             <td class="after"><b>"Driver"</b></td>
             <td class="seg">["crate","runtime","Driver"]</td>
-            <td class="after">crate root → runtime → Driver</td>
+            <td class="seg"><b>"runtime"</b> → mod body holds Driver</td>
           </tr>
           <tr>
-            <td class="in"><code>self::pool::Worker::new()</code><br><span style="font-size:11px;color:var(--g400)">module-relative</span></td>
-            <td class="after"><b>"Worker"</b></td>
-            <td class="seg">["self","pool","Worker"]</td>
-            <td class="after">current module → pool → Worker</td>
-          </tr>
-          <tr>
-            <td class="in"><code>super::Driver::new()</code><br><span style="font-size:11px;color:var(--g400)">parent-relative</span></td>
+            <td class="in"><code>crate::alpha::Driver::new()</code><br><span style="font-size:11px;color:var(--g400)">disambiguated</span></td>
             <td class="after"><b>"Driver"</b></td>
-            <td class="seg">["super","Driver"]</td>
-            <td class="after">parent module → Driver</td>
+            <td class="seg">["crate","alpha","Driver"]</td>
+            <td class="seg"><b>"alpha"</b> → alpha's Driver, not beta's</td>
+          </tr>
+          <tr>
+            <td class="in"><code>crate::a::b::Driver::new()</code><br><span style="font-size:11px;color:var(--g400)">intermediate mod not in scope</span></td>
+            <td class="after"><b>"Driver"</b></td>
+            <td class="seg">["crate","a","b","Driver"]</td>
+            <td class="now"><b>"b"</b> unresolved in scope → bail</td>
           </tr>
         </tbody>
       </table>
     </div>
     <div class="code">
-      <div class="fl">constructor.ts:71 — the type-last path-walk branch to add (after the bare-name miss)</div>
-<pre><span class="cm">// CURRENT — only an in-scope bare name binds the type:</span>
-<span class="hl">  class_symbol = resolutions.resolve(call_ref.scope_id, call_ref.name);  <span class="cm">// misses</span></span>
+      <div class="fl">constructor.ts — resolve_type_via_module_path (the built branch, after the bare-name miss)</div>
+<pre><span class="cm">// resolve_constructor_call, after the simple in-scope lookup misses:</span>
+<span class="kw">if</span> (!class_symbol &amp;&amp; call_ref.path_prefix &amp;&amp; call_ref.path_prefix.length &gt; 0) {
+  class_symbol = <span class="fn">resolve_type_via_module_path</span>(call_ref, definitions, scopes, resolutions);
+}
 
-<span class="cm">// CHANGE 349.5 — on a miss, walk the type-last path_prefix:</span>
-<span class="ok">  <span class="kw">if</span> (!class_symbol && call_ref.path_prefix?.length) {
-    <span class="kw">const</span> segs = normalize_anchors(call_ref.path_prefix);  <span class="cm">// crate/self/super</span>
-    class_symbol = walk_type_path(segs, call_ref.scope_id);  <span class="cm">// reuse 349.1</span>
-  }
-  <span class="cm">// then resolve new() via the 349.4 member-index link</span></span>
+<span class="cm">// the branch — type-last prefix, immediate-module qualifier only:</span>
+<span class="ok">  <span class="kw">const</span> prefix = <span class="fn">normalize_path_prefix</span>(call_ref.path_prefix ?? []);  <span class="cm">// drop crate/self/super</span>
+  <span class="kw">if</span> (prefix.length &lt; 2) <span class="kw">return</span> null;              <span class="cm">// need [module, Type]</span>
+  <span class="kw">const</span> type_name = call_ref.name;                  <span class="cm">// last segment = the type</span>
+  <span class="kw">const</span> qualifier = prefix[prefix.length - 2];      <span class="cm">// segment BEFORE the type</span>
+  <span class="kw">const</span> qualifier_id = resolutions.<span class="fn">resolve</span>(call_ref.scope_id, qualifier);
+  <span class="kw">if</span> (!qualifier_id) <span class="kw">return</span> null;              <span class="cm">// qualifier not in scope → bail</span>
+  <span class="kw">if</span> (definitions.<span class="fn">get</span>(qualifier_id)?.kind !== <span class="str">"namespace"</span>) <span class="kw">return</span> null; <span class="cm">// must be a Rust `mod`</span>
+  <span class="kw">return</span> <span class="fn">resolve_in_module_body</span>(qualifier, ...defining_scope_id, type_name, scopes, definitions);</span>
 </pre>
     </div>
-    <p class="cap prose">The walk reuses the module/type path resolver introduced for function calls in 349.1: resolve the leading segment to a <code>mod</code>/<code>use</code> module or type, then walk the remaining segments to the final type.</p>
+    <p class="cap prose">A lone leading <code>crate</code> / <code>self</code> / <code>super</code> is stripped by <code>normalize_path_prefix</code> so the path does not die on a literal anchor segment; the qualifier must then resolve to a <code>mod</code> (namespace) in scope or the branch returns <code>null</code>.</p>
   </section>
 
-  <section id="normalize">
-    <h2><code>crate</code> / <code>self</code> / <code>super</code> — normalize the anchor before walking</h2>
-    <p class="cap prose">A leading <code>crate</code> / <code>self</code> / <code>super</code> segment is a path anchor, not a module name — <code>["crate","runtime","Driver"]</code> must not die on the literal <code>crate</code> segment, so each anchor is resolved to a crate or module root first.</p>
+  <section id="shared">
+    <h2>One shared resolver — type-last for constructors, terminal-last for function calls</h2>
+    <p class="cap prose">The path-resolution helpers 349.1 wrote for function calls now live in <code>path_resolution.ts</code> and serve both callers; the callers differ only in which prefix segment names the qualifier, then both hand the same terminal to <code>resolve_in_module_body</code>.</p>
     <div class="diagram">
-      <svg viewBox="0 0 760 196" role="img" aria-label="Anchor normalization: a leading crate segment anchors to the crate root, self to the current module, super to the parent module; the remaining segments are then walked as ordinary module steps to the type">
+      <svg viewBox="0 0 780 250" role="img" aria-label="Shared resolver: function_call.ts is terminal-last so its qualifier is the last prefix segment with the terminal in ref.name; constructor.ts is type-last so its qualifier is the second-to-last segment with the type as the last segment; both call the shared normalize_path_prefix and resolve_in_module_body in path_resolution.ts">
         <defs>
-          <marker id="n-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker>
-          <marker id="n-cl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#b9794f"/></marker>
+          <marker id="s-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker>
+          <marker id="s-cl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#b9794f"/></marker>
         </defs>
         <g font-family="ui-monospace,monospace">
-          <rect x="16" y="20" width="150" height="36" rx="8" fill="#f7eee6" stroke="#b9794f" stroke-width="1.4"/>
-          <text x="91" y="36" text-anchor="middle" font-size="10" font-weight="700" fill="#b9794f">crate</text>
-          <text x="91" y="48" text-anchor="middle" font-size="8" fill="#5f594f">anchor → crate root</text>
-          <rect x="16" y="66" width="150" height="36" rx="8" fill="#f7eee6" stroke="#b9794f" stroke-width="1.4"/>
-          <text x="91" y="82" text-anchor="middle" font-size="10" font-weight="700" fill="#b9794f">self</text>
-          <text x="91" y="94" text-anchor="middle" font-size="8" fill="#5f594f">anchor → current module</text>
-          <rect x="16" y="112" width="150" height="36" rx="8" fill="#f7eee6" stroke="#b9794f" stroke-width="1.4"/>
-          <text x="91" y="128" text-anchor="middle" font-size="10" font-weight="700" fill="#b9794f">super</text>
-          <text x="91" y="140" text-anchor="middle" font-size="8" fill="#5f594f">anchor → parent module</text>
-          <line x1="166" y1="84" x2="206" y2="84" stroke="#b9794f" stroke-width="1.5" marker-end="url(#n-cl)"/>
-          <rect x="208" y="58" width="172" height="52" rx="9" fill="#f0ece2" stroke="#7a4636" stroke-width="1.5"/>
-          <text x="294" y="78" text-anchor="middle" font-size="9.5" font-weight="700" fill="#7a4636">anchored root</text>
-          <text x="294" y="92" text-anchor="middle" font-size="8" fill="#5f594f">resolved module scope</text>
-          <text x="294" y="103" text-anchor="middle" font-size="8" fill="#5f594f">remaining segs follow</text>
-          <line x1="380" y1="84" x2="416" y2="84" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#n-ok)"/>
-          <rect x="418" y="58" width="150" height="52" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
-          <text x="493" y="78" text-anchor="middle" font-size="9" font-weight="700" fill="#5b6840">walk modules</text>
-          <text x="493" y="92" text-anchor="middle" font-size="8" fill="#5f594f">runtime → …</text>
-          <text x="493" y="103" text-anchor="middle" font-size="8" fill="#5f594f">step by step</text>
-          <line x1="568" y1="84" x2="604" y2="84" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#n-ok)"/>
-          <rect x="606" y="58" width="142" height="52" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
-          <text x="677" y="78" text-anchor="middle" font-size="9" font-weight="700" fill="#5b6840">type bound</text>
-          <text x="677" y="92" text-anchor="middle" font-size="8" fill="#5f594f">Driver → new()</text>
-          <text x="677" y="103" text-anchor="middle" font-size="8" fill="#5f594f">via 349.4 link</text>
+          <rect x="14" y="20" width="248" height="74" rx="9" fill="#fffdf8" stroke="#ddd6c8" stroke-width="1.4"/>
+          <text x="138" y="40" text-anchor="middle" font-size="9.5" font-weight="700" fill="#2b2a28">function_call.ts</text>
+          <text x="138" y="56" text-anchor="middle" font-size="8.5" fill="#5f594f">terminal-last · worker::create</text>
+          <text x="138" y="70" text-anchor="middle" font-size="8.5" fill="#b9794f">name = create · prefix ["worker"]</text>
+          <text x="138" y="84" text-anchor="middle" font-size="8.5" fill="#5b6840">qualifier = prefix[len-1] = worker</text>
+
+          <rect x="14" y="156" width="248" height="74" rx="9" fill="#fffdf8" stroke="#ddd6c8" stroke-width="1.4"/>
+          <text x="138" y="176" text-anchor="middle" font-size="9.5" font-weight="700" fill="#2b2a28">constructor.ts</text>
+          <text x="138" y="192" text-anchor="middle" font-size="8.5" fill="#5f594f">type-last · runtime::Driver::new</text>
+          <text x="138" y="206" text-anchor="middle" font-size="8.5" fill="#b9794f">name = Driver · prefix [..,runtime,Driver]</text>
+          <text x="138" y="220" text-anchor="middle" font-size="8.5" fill="#5b6840">qualifier = prefix[len-2] = runtime</text>
+
+          <line x1="262" y1="57" x2="316" y2="100" stroke="#b9794f" stroke-width="1.5" marker-end="url(#s-cl)"/>
+          <line x1="262" y1="193" x2="316" y2="148" stroke="#b9794f" stroke-width="1.5" marker-end="url(#s-cl)"/>
+
+          <rect x="318" y="92" width="210" height="64" rx="10" fill="#f0ece2" stroke="#7a4636" stroke-width="1.6"/>
+          <text x="423" y="112" text-anchor="middle" font-size="9.5" font-weight="700" fill="#7a4636">path_resolution.ts (shared)</text>
+          <text x="423" y="128" text-anchor="middle" font-size="8.5" fill="#5f594f">normalize_path_prefix</text>
+          <text x="423" y="142" text-anchor="middle" font-size="8.5" fill="#5f594f">resolve_in_module_body · is_callable</text>
+
+          <line x1="528" y1="124" x2="582" y2="124" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#s-ok)"/>
+
+          <rect x="584" y="92" width="182" height="64" rx="10" fill="#eef0e6" stroke="#5b6840" stroke-width="1.6"/>
+          <text x="675" y="114" text-anchor="middle" font-size="9.5" font-weight="700" fill="#5b6840">terminal in mod body</text>
+          <text x="675" y="130" text-anchor="middle" font-size="8.5" fill="#5f594f">find mod child scope,</text>
+          <text x="675" y="143" text-anchor="middle" font-size="8.5" fill="#5f594f">look terminal up in it</text>
         </g>
       </svg>
     </div>
     <div class="legend">
-      <span><i style="background:#f7eee6;border-color:#b9794f"></i> anchor normalization</span>
-      <span><i style="background:#f0ece2;border-color:#7a4636"></i> anchored root scope</span>
-      <span><i class="edge"></i> type bound, constructor resolved</span>
+      <span><i style="background:#fffdf8;border-color:#ddd6c8"></i> caller picks its qualifier segment</span>
+      <span><i style="background:#f0ece2;border-color:#7a4636"></i> shared helper (qualifier-agnostic)</span>
+      <span><i class="edge"></i> terminal bound in the module body</span>
+    </div>
+    <div class="callout olive">
+      <span class="k">extraction · path_resolution.ts</span>
+      <p><code>function_call.ts</code> now imports <code>normalize_path_prefix</code>, <code>resolve_in_module_body</code> and <code>is_callable_definition</code> from the shared module with identical behaviour; the helpers take explicit <code>scopes</code> + <code>definitions</code> registries so the constructor resolver reuses them without threading the full <code>CallResolutionContext</code>. The function-call import-anchor branch (<code>use mod::terminal</code>) stays local to <code>function_call.ts</code>.</p>
+    </div>
+  </section>
+
+  <section id="boundary">
+    <h2>The walk is in-scope only — a separate-file <code>mod foo;</code> bails</h2>
+    <p class="cap prose">The resolvable shape is an inline <code>mod runtime { … }</code> in the caller's file, whose body scope holds the type; a sibling-file type declared only via <code>mod gadget;</code> with no <code>use</code> has no in-scope body, so the walk bails to <code>import_resolution</code> rather than fabricate a cross-file edge.</p>
+    <div class="diagram">
+      <svg viewBox="0 0 780 252" role="img" aria-label="In-scope boundary: an inline mod runtime block in the caller's file gives a child module scope whose body holds Driver, so the qualifier resolves and the type binds; a separate-file mod gadget declared with no use of Gadget gives no in-scope module body, so resolve_in_module_body finds no child scope and the walk returns null, leaving the call for import_resolution">
+        <defs>
+          <marker id="b-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker>
+          <marker id="b-rs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#a8472f"/></marker>
+        </defs>
+        <g font-family="ui-monospace,monospace">
+          <text x="14" y="16" font-size="9" font-weight="700" fill="#5b6840">RESOLVES — inline mod</text>
+          <rect x="14" y="24" width="232" height="50" rx="9" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="130" y="44" text-anchor="middle" font-size="9" fill="#2b2a28">mod runtime { struct Driver }</text>
+          <text x="130" y="60" text-anchor="middle" font-size="8" fill="#5f594f">same file → child module scope</text>
+          <line x1="246" y1="49" x2="296" y2="49" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#b-ok)"/>
+          <rect x="298" y="24" width="214" height="50" rx="9" fill="#f0ece2" stroke="#7a4636" stroke-width="1.4"/>
+          <text x="405" y="44" text-anchor="middle" font-size="8.5" fill="#2b2a28">runtime resolves to a `mod`</text>
+          <text x="405" y="60" text-anchor="middle" font-size="8.5" fill="#5f594f">body scope holds Driver</text>
+          <line x1="512" y1="49" x2="562" y2="49" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#b-ok)"/>
+          <rect x="564" y="24" width="202" height="50" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.6"/>
+          <text x="665" y="44" text-anchor="middle" font-size="9" font-weight="700" fill="#5b6840">type bound → new()</text>
+          <text x="665" y="60" text-anchor="middle" font-size="8" fill="#5f594f">new() reachable</text>
+
+          <line x1="390" y1="92" x2="390" y2="118" stroke="#9a9387" stroke-width="1" stroke-dasharray="3 3"/>
+
+          <text x="14" y="146" font-size="9" font-weight="700" fill="#a8472f">BAILS — separate file, no use</text>
+          <rect x="14" y="154" width="232" height="62" rx="9" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="130" y="174" text-anchor="middle" font-size="9" fill="#2b2a28">mod gadget;  (no use Gadget)</text>
+          <text x="130" y="190" text-anchor="middle" font-size="8" fill="#5f594f">Gadget lives in gadget.rs</text>
+          <text x="130" y="204" text-anchor="middle" font-size="8" fill="#a8472f">no in-scope module body to walk</text>
+          <line x1="246" y1="185" x2="296" y2="185" stroke="#a8472f" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#b-rs)"/>
+          <rect x="298" y="160" width="214" height="50" rx="9" fill="#f7ece9" stroke="#a8472f" stroke-width="1.4"/>
+          <text x="405" y="180" text-anchor="middle" font-size="8.5" fill="#2b2a28">resolve_in_module_body</text>
+          <text x="405" y="196" text-anchor="middle" font-size="8.5" font-weight="700" fill="#a8472f">no child scope → null</text>
+          <line x1="512" y1="185" x2="562" y2="185" stroke="#a8472f" stroke-width="1.6" stroke-dasharray="4 3" marker-end="url(#b-rs)"/>
+          <rect x="564" y="160" width="202" height="50" rx="9" fill="#f7ece9" stroke="#a8472f" stroke-width="1.5"/>
+          <text x="665" y="180" text-anchor="middle" font-size="9" font-weight="700" fill="#a8472f">walk returns [] — no edge</text>
+          <text x="665" y="196" text-anchor="middle" font-size="8" fill="#5f594f">import_resolution's job</text>
+        </g>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i class="edge"></i> inline mod body → type bound</span>
+      <span><i class="fail"></i> separate-file hop → bail, no fabricated edge</span>
+      <span>negative fixture: <code>uses_separate_gadget.rs</code> + <code>gadget.rs</code></span>
+    </div>
+    <div class="callout">
+      <span class="k">how AC #1's "cross-file" is realized</span>
+      <p>The root-cause shape — a type reached only via an inline path — is the in-scope inline-<code>mod</code> block; a separate-file <code>mod gadget;</code> hop is pinned as a negative case resolving to <code>[]</code>. A cross-file re-export hop bails by design.</p>
     </div>
   </section>
 
   <section id="collision">
-    <h2>Collision safety — the prefix is the guard, enforced not assumed</h2>
-    <p class="cap prose">When two in-scope modules expose a same-named type each with a <code>new</code>, the <code>path_prefix</code> selects the correct one; ambiguity is evaluated <b>in scope</b>, not via a global name scan, because the single-valued <code>by_scope</code> map collapses same-name bindings.</p>
+    <h2>Disambiguation — the lookup is scoped to one module's body, never a global scan</h2>
+    <p class="cap prose">Two in-scope modules each exposing a <code>Driver</code> resolve to the correct one because the type is looked up in the specific module body its qualifier names — <code>alpha</code> for one call, <code>beta</code> for the other — never a collapsed global name map.</p>
     <div class="diagram">
-      <svg viewBox="0 0 760 220" role="img" aria-label="Collision disambiguation: two in-scope modules a and b each expose a Driver type with a new; the by_scope map collapses both same-name bindings, so the inline path crate::a::Driver::new must use its own prefix to select module a's Driver, not trust last-write-wins">
+      <svg viewBox="0 0 780 224" role="img" aria-label="Disambiguation: module alpha holds its own Driver and module beta holds its own Driver; the call crate alpha Driver new resolves the qualifier alpha and looks Driver up in alpha's module body, while crate beta Driver new resolves qualifier beta and looks Driver up in beta's body, so each call binds its own module's type with no global name collision">
         <defs>
-          <marker id="c-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker>
-          <marker id="c-rs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#a8472f"/></marker>
+          <marker id="d-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker>
+          <marker id="d-b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#b9794f"/></marker>
         </defs>
         <g font-family="ui-monospace,monospace">
-          <rect x="20" y="20" width="200" height="40" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
-          <text x="120" y="38" text-anchor="middle" font-size="9.5" fill="#2b2a28">mod a { Driver::new }</text>
-          <text x="120" y="51" text-anchor="middle" font-size="8" fill="#5f594f">in-scope type "Driver"</text>
-          <rect x="20" y="76" width="200" height="40" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
-          <text x="120" y="94" text-anchor="middle" font-size="9.5" fill="#2b2a28">mod b { Driver::new }</text>
-          <text x="120" y="107" text-anchor="middle" font-size="8" fill="#5f594f">same name, different type</text>
-          <line x1="220" y1="40" x2="262" y2="58" stroke="#a8472f" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#c-rs)"/>
-          <line x1="220" y1="96" x2="262" y2="74" stroke="#a8472f" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#c-rs)"/>
-          <rect x="264" y="42" width="186" height="48" rx="9" fill="#f7ece9" stroke="#a8472f" stroke-width="1.5"/>
-          <text x="357" y="62" text-anchor="middle" font-size="9.5" font-weight="700" fill="#a8472f">by_scope collapses</text>
-          <text x="357" y="76" text-anchor="middle" font-size="8" fill="#5f594f">bare "Driver" → one binding</text>
-          <text x="357" y="86" text-anchor="middle" font-size="8" fill="#a8472f">last-write-wins is unsound</text>
-          <rect x="20" y="148" width="430" height="50" rx="9" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.4"/>
-          <text x="235" y="168" text-anchor="middle" font-size="10" fill="#2b2a28">crate::a::Driver::new()</text>
-          <text x="235" y="182" text-anchor="middle" font-size="8.5" fill="#5f594f">prefix detects its own collision, selects mod a</text>
-          <line x1="450" y1="66" x2="492" y2="66" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#c-ok)"/>
-          <line x1="450" y1="173" x2="492" y2="120" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#c-ok)"/>
-          <rect x="494" y="78" width="252" height="60" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.6"/>
-          <text x="620" y="100" text-anchor="middle" font-size="10" font-weight="700" fill="#5b6840">prefix disambiguates → mod a's Driver</text>
-          <text x="620" y="116" text-anchor="middle" font-size="8.5" fill="#5f594f">collision detected in path-prefix resolution,</text>
-          <text x="620" y="128" text-anchor="middle" font-size="8.5" fill="#5f594f">not trusted from the collapsed map</text>
+          <rect x="20" y="22" width="216" height="44" rx="8" fill="#eef0e6" stroke="#5b6840" stroke-width="1.3"/>
+          <text x="128" y="42" text-anchor="middle" font-size="9.5" fill="#2b2a28">mod alpha { struct Driver }</text>
+          <text x="128" y="56" text-anchor="middle" font-size="8" fill="#5f594f">alpha's body holds its own Driver</text>
+          <rect x="20" y="150" width="216" height="44" rx="8" fill="#f6efe7" stroke="#b9794f" stroke-width="1.3"/>
+          <text x="128" y="170" text-anchor="middle" font-size="9.5" fill="#2b2a28">mod beta { struct Driver }</text>
+          <text x="128" y="184" text-anchor="middle" font-size="8" fill="#5f594f">beta's body holds its own Driver</text>
+
+          <rect x="300" y="22" width="232" height="44" rx="8" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.4"/>
+          <text x="416" y="42" text-anchor="middle" font-size="9.5" fill="#2b2a28">crate::alpha::Driver::new()</text>
+          <text x="416" y="56" text-anchor="middle" font-size="8" fill="#5f594f">qualifier = alpha</text>
+          <rect x="300" y="150" width="232" height="44" rx="8" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.4"/>
+          <text x="416" y="170" text-anchor="middle" font-size="9.5" fill="#2b2a28">crate::beta::Driver::new()</text>
+          <text x="416" y="184" text-anchor="middle" font-size="8" fill="#5f594f">qualifier = beta</text>
+
+          <line x1="300" y1="44" x2="240" y2="44" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#d-a)"/>
+          <line x1="300" y1="172" x2="240" y2="172" stroke="#b9794f" stroke-width="1.6" marker-end="url(#d-b)"/>
+
+          <line x1="532" y1="44" x2="586" y2="44" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#d-a)"/>
+          <line x1="532" y1="172" x2="586" y2="172" stroke="#b9794f" stroke-width="1.6" marker-end="url(#d-b)"/>
+          <rect x="588" y="22" width="178" height="44" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.6"/>
+          <text x="677" y="42" text-anchor="middle" font-size="9" font-weight="700" fill="#5b6840">alpha's Driver::new</text>
+          <text x="677" y="56" text-anchor="middle" font-size="8" fill="#5f594f">scoped to alpha's body</text>
+          <rect x="588" y="150" width="178" height="44" rx="9" fill="#f6efe7" stroke="#b9794f" stroke-width="1.6"/>
+          <text x="677" y="170" text-anchor="middle" font-size="9" font-weight="700" fill="#7a4636">beta's Driver::new</text>
+          <text x="677" y="184" text-anchor="middle" font-size="8" fill="#5f594f">scoped to beta's body</text>
         </g>
       </svg>
     </div>
     <div class="legend">
-      <span><i style="background:#f7ece9;border-color:#a8472f"></i> collapsed same-name binding (unsound to trust)</span>
-      <span><i class="edge"></i> prefix selects the right type</span>
-    </div>
-    <div class="callout rust">
-      <span class="k">riskiest part — detect collisions in the walk itself (AC #3)</span>
-      <p>Path-prefix resolution must detect its own collisions rather than trust the collapsed <code>by_scope</code> map's last-write-wins. Same-crate alias hops (<code>use ll::Semaphore</code>, type/cfg aliases) ride this path <b>only</b> when the leading segment resolves through a <code>use</code>/type alias in the same crate; a cross-file re-export hop is <code>import_resolution</code> — bail rather than fabricate an edge.</p>
-    </div>
-  </section>
-
-  <section id="scope">
-    <h2>Out of scope — flagged, not solved</h2>
-    <div class="callout">
-      <span class="k">cfg-gated duplicate definitions — known limitation</span>
-      <p><code>Mutex::new</code> resolving to mocked vs std under <code>cfg(all(test, loom))</code>: Ariadne does not evaluate <code>cfg</code>, so the path walk may reach the wrong arm. Flagged as a known limitation; the branch does not try to disambiguate cfg arms.</p>
+      <span><i style="background:#eef0e6;border-color:#5b6840"></i> alpha qualifier → alpha's Driver</span>
+      <span><i style="background:#f6efe7;border-color:#b9794f"></i> beta qualifier → beta's Driver</span>
+      <span>fixture: <code>ambiguous_path_constructor.rs</code></span>
     </div>
     <div class="callout">
-      <span class="k">outer turbofish over a qualified path — query gap</span>
-      <p><code>worker::create::&lt;i32&gt;()</code> is not captured by <code>rust.scm</code> today (the <code>generic_function</code> rule matches only a bare <code>function: (identifier)</code>). A separate query-gap follow-up, also noted in 349.1 — not blocked by this task.</p>
+      <span class="k">why a module-scoped lookup is the guard</span>
+      <p>The type binds through the module's scope definitions, not its file-level exports — so the <code>alpha</code>/<code>beta</code> structs need not be <code>pub</code>, and each call's qualifier names one specific <code>mod</code> body, never a collapsed global name map.</p>
     </div>
   </section>
 
   <section id="ac">
     <h2>Acceptance — what proves the change</h2>
     <ol class="acs">
-      <li><span class="n">1</span><div><b>Inline full path:</b> <code>crate::runtime::Driver::new()</code> (type not imported) resolves to the <code>Driver</code> constructor — <code>new</code> reachable, not an entry point.</div></li>
-      <li><span class="n">2</span><div><b>Anchors:</b> leading <code>crate</code> / <code>self</code> / <code>super</code> segments are normalized so deep paths resolve.</div></li>
-      <li class="risk"><span class="n">3</span><div><b>Ambiguity:</b> two in-scope modules each exposing a same-named type with a <code>new</code> are disambiguated to the correct type via <code>path_prefix</code>.</div></li>
-      <li><span class="n">4</span><div><b>Gated:</b> 349.4's in-scope <code>Parker::new()</code> and the TS <code>[namespace, class]</code> <code>property_chain</code> branch stay green — the new branch fires only when the bare type name misses and <code>path_prefix</code> is present.</div></li>
+      <li><span class="n">1</span><div><b>Inline full path:</b> <code>crate::runtime::Driver::new()</code> (type not imported) resolves to exactly the <code>new</code> member; <code>resolve(scope,"Driver")</code> is confirmed <code>null</code> and <code>new</code> is absent from <code>entry_points</code> — over a <b>unit-struct</b> fixture so the flip is observable.</div></li>
+      <li><span class="n">2</span><div><b>Anchors:</b> <code>normalize_path_prefix</code> strips a leading <code>crate</code> / <code>self</code> / <code>super</code> and the type's immediate module is walked; deeper nesting whose intermediate module is not in scope bails, matching the function-call resolver.</div></li>
+      <li class="risk"><span class="n">3</span><div><b>Disambiguation:</b> <code>alpha</code> and <code>beta</code> each expose a <code>Driver</code>; each call resolves to its own module's Driver-derived target via the qualifier — a collapsed walk would bind <code>beta</code>'s call to <code>alpha</code>'s target.</div></li>
+      <li><span class="n">4</span><div><b>Gated:</b> 349.4's in-scope <code>Parker::new()</code> and the TS <code>property_chain</code> branch stay green (full suite, 2849 tests); the branch bails when the qualifier is unresolved or resolves to a non-namespace.</div></li>
+      <li class="partial"><span class="n">5</span><div><b>Fixtures:</b> evidence shapes reproduced and verified end-to-end, with the separate-file <code>uses_separate_gadget.rs</code>/<code>gadget.rs</code> negative case pinning the bail; the literal corpus flip is a corpus-rerun step outside this repo.</div></li>
     </ol>
     <div class="callout slate">
       <span class="k">how 349.5 closes Change A</span>
-      <p>349.1 carries the terminal name plus the type-last <code>path_prefix</code> and resolves qualified <b>function</b> calls; 349.4 links Rust <code>new()</code> so an <b>in-scope</b> type's constructor resolves; <b>349.5</b> reuses 349.1's path walk for the last constructor case — an inline full path whose type is bound by no bare name in scope. With this, every Change-A constructor form binds.</p>
+      <p>349.1 carries the terminal name plus the type-last <code>path_prefix</code> and resolves qualified <b>function</b> calls; 349.4 links Rust <code>new()</code> for an <b>in-scope</b> type; <b>349.5</b> reuses 349.1's shared resolver for the inline full path, binding its type via the module qualifier. Every in-scope Change-A constructor form now binds.</p>
     </div>
   </section>
 
   <footer>
-    task-349.5 · depends on 349.1 + 349.4 · resolver: call_resolution/constructor.ts (bare-name miss :71) · type-last path_prefix walk reuses 349.1's module/type resolver · normalize crate/self/super anchors · enforce collision detection in the walk · cfg-gated dups + outer-turbofish out of scope · gated to the Rust associated-constructor path
+    task-349.5 · Done · builds on 349.1 + 349.4 · resolver: call_resolution/constructor.ts → resolve_type_via_module_path · shared helpers: call_resolution/path_resolution.ts (normalize_path_prefix · resolve_in_module_body · is_callable_definition) · type-last qualifier = path_prefix[len-2], must be a `mod` namespace in scope · in-scope-only walk; separate-file mod bails to import_resolution · fixtures: inline_path_constructor.rs · ambiguous_path_constructor.rs · uses_separate_gadget.rs + gadget.rs
   </footer>
 
 </main>

@@ -161,15 +161,21 @@ export function resolve_constructor_call(
  *
  * A constructor `path_prefix` is **type-last**: the final segment is the type
  * (`crate::runtime::Driver` → `["crate","runtime","Driver"]`, type `Driver`), the
- * leading segments are its module path. When the bare type name misses in scope
- * (the type is never imported), resolve the module qualifier in scope and look the
- * type up in that module's body. The module qualifier disambiguates same-named
- * types across modules, so two in-scope modules each exposing a `Driver` resolve
- * to the correct one via the prefix.
+ * leading segments are its module path. Contrast the function-call resolver, whose
+ * terminal lives in `ref.name` and whose qualifier is therefore the *last* prefix
+ * segment; here the type is the last segment, so its module qualifier is the
+ * *second-to-last*. When the bare type name misses in scope (the type is never
+ * imported), resolve that module qualifier in scope and look the type up in that
+ * module's body. The module qualifier disambiguates same-named types across
+ * modules, so two in-scope modules each exposing a `Driver` resolve to the correct
+ * one via the prefix.
  *
- * Bails (returns null) when the qualifier is not an in-scope `mod` whose body
- * holds the type — a cross-file re-export hop belongs to import_resolution, so we
- * do not fabricate an edge.
+ * Only the type's immediate module is walked: the qualifier must itself resolve in
+ * the caller's scope, so a deeper path (`crate::a::b::Driver`) whose intermediate
+ * module `b` is not bound in scope bails, exactly as the function-call resolver
+ * does. Bails (returns null) likewise when the qualifier is not an in-scope `mod`
+ * whose body holds the type — a cross-file re-export hop belongs to
+ * import_resolution, so we do not fabricate an edge.
  *
  * @returns The resolved type symbol, or null when the path does not bind in scope
  */
@@ -186,6 +192,7 @@ function resolve_type_via_module_path(
   if (prefix.length < 2) return null;
 
   const type_name = call_ref.name as SymbolName;
+  // Type-last prefix: the type is the last segment, its module the one before it.
   const qualifier = prefix[prefix.length - 2];
 
   const qualifier_id = resolutions.resolve(call_ref.scope_id, qualifier);

@@ -768,6 +768,10 @@ describe("Project Integration - Rust", () => {
 
       // Both calls share the terminal name `Driver`; the earlier call site
       // (crate::alpha::…) binds alpha's type, the later (crate::beta::…) beta's.
+      // These per-call equalities are the disambiguation proof: each call must
+      // resolve to ITS module's Driver-derived target. A collapsed walk that
+      // bound both `Driver` names to one module would make beta's call resolve to
+      // alpha_target (≠ beta_target) and fail the second assertion.
       const driver_calls = run_node.enclosed_calls
         .filter((c) => c.name === ("Driver" as SymbolName))
         .sort((a, b) => a.location.start_line - b.location.start_line);
@@ -779,6 +783,38 @@ describe("Project Integration - Rust", () => {
       expect(driver_calls[1].resolutions.map((r) => r.symbol_id)).toEqual([
         beta_target,
       ]);
+    });
+
+    it("bails on a separate-file module hop rather than fabricating a cross-file edge", async () => {
+      const caller_file = file_path("modules/uses_separate_gadget.rs");
+      const gadget_file = file_path("modules/gadget.rs");
+      project.update_file(gadget_file, load_source("modules/gadget.rs"));
+      project.update_file(caller_file, load_source("modules/uses_separate_gadget.rs"));
+
+      // crate::gadget::Gadget::new(): the type is in a sibling file declared only
+      // via `mod gadget;` with no `use`. There is no in-scope module body to walk,
+      // so the walk bails — the call stays unresolved (no fabricated edge).
+      const caller_index = project.get_index_single_file(caller_file)!;
+      const new_call = caller_index.references.find(
+        (r): r is ConstructorCallReference =>
+          r.kind === "constructor_call" && r.name === ("Gadget" as SymbolName)
+      );
+      expect(new_call).toBeDefined();
+      expect(new_call!.path_prefix).toEqual([
+        "crate",
+        "gadget",
+        "Gadget",
+      ] as SymbolName[]);
+
+      const call_graph = project.get_call_graph();
+      const run_node = Array.from(call_graph.nodes.values()).find(
+        (n) =>
+          project.definitions.get(n.symbol_id)?.name === ("run" as SymbolName)
+      )!;
+      const targets = run_node.enclosed_calls
+        .filter((c) => c.name === ("Gadget" as SymbolName))
+        .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
+      expect(targets).toEqual([]);
     });
   });
 

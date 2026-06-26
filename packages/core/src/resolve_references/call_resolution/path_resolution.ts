@@ -5,6 +5,18 @@
  * its qualifier as a `path_prefix` rather than a bare name Phase-1 can bind. These
  * helpers resolve a terminal under the module/type named by that prefix — honouring
  * the author's qualifier over a same-name local that would shadow it in the scope map.
+ *
+ * The two callers carry the qualifier in different prefix shapes, so each picks the
+ * qualifier segment itself:
+ * - **Function call** — *terminal-last*: the terminal lives in `ref.name`, NOT in the
+ *   prefix, so the module/type qualifier is the LAST prefix segment (`worker::create`
+ *   → name `create`, prefix `["worker"]`, qualifier `worker`).
+ * - **Constructor** — *type-last*: the terminal type IS the last prefix segment, so its
+ *   module qualifier is the segment BEFORE it (`crate::runtime::Driver::new` → name
+ *   `Driver`, prefix `["crate","runtime","Driver"]`, qualifier `runtime`).
+ *
+ * `resolve_in_module_body` is qualifier-agnostic: each caller resolves the qualifier
+ * segment first, then hands it the matching terminal.
  */
 
 import type {

@@ -455,9 +455,9 @@ describe("Constructor Call Resolution", () => {
     // present; the resolver walks the module path to bind the type. These cases
     // assert the bail boundaries — the positive resolution is exercised
     // end-to-end in project.rust.integration.test.ts.
-    it("bails when the module qualifier is not an in-scope namespace", () => {
+    it("bails when the module qualifier does not resolve in scope", () => {
       // crate::runtime::Driver::new(): `Driver` not in scope, and `runtime` does
-      // not resolve to a namespace — bail rather than fabricate an edge.
+      // not resolve at all — bail rather than fabricate an edge.
       set_test_resolutions(resolutions, FILE_SCOPE_ID, new Map());
 
       const call_ref = create_constructor_call_reference(
@@ -467,6 +467,55 @@ describe("Constructor Call Resolution", () => {
         undefined,
         undefined,
         ["crate", "runtime", "Driver"] as SymbolName[]
+      );
+
+      const resolved = resolve_constructor_call(
+        call_ref,
+        definitions,
+        scopes,
+        resolutions,
+        exports,
+        languages,
+        root_folder
+      );
+
+      expect(resolved.ok).toBe(false);
+      if (is_err(resolved)) {
+        expect(resolved.error.stage).toBe("constructor_lookup");
+        expect(resolved.error.reason).toBe("name_not_in_scope");
+      }
+    });
+
+    it("bails when the module qualifier resolves to a non-namespace definition", () => {
+      // Outer::Inner::new(): `Inner` not in scope, and the qualifier `Outer`
+      // resolves to a type, not a `mod` — only a namespace has a module body to
+      // walk, so bail rather than treat a type as a module.
+      const outer_id = class_symbol("Outer", MOCK_LOCATION);
+      const outer_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: outer_id,
+        name: "Outer" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: true,
+        extends: [],
+        methods: [],
+        properties: [],
+        decorators: [],
+        constructors: [],
+      };
+      definitions.update_file(TEST_FILE, [outer_def]);
+      const scope_resolutions = new Map<SymbolName, SymbolId>();
+      scope_resolutions.set("Outer" as SymbolName, outer_id);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
+
+      const call_ref = create_constructor_call_reference(
+        "Inner" as SymbolName,
+        MOCK_LOCATION,
+        FILE_SCOPE_ID,
+        undefined,
+        undefined,
+        ["Outer", "Inner"] as SymbolName[]
       );
 
       const resolved = resolve_constructor_call(
