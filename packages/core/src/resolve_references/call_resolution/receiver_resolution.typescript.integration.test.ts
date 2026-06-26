@@ -9,6 +9,12 @@
  * indexing time, the call could not resolve, and the member was reported as an
  * unreachable entry point (false positive). These tests assert the members are
  * reachable now that the field's type survives indexing.
+ *
+ * The evidence cases are committed fixtures under
+ * tests/fixtures/typescript/code/integration/optional_param_properties/ rather
+ * than inline strings: the NestJS cases span two files that import each other,
+ * so they are grouped in their own subdirectory and copied into an isolated
+ * temp dir per test to keep cross-file resolution self-contained.
  */
 
 import { describe, it, expect, afterAll } from "vitest";
@@ -82,6 +88,23 @@ function entry_point_for(
   });
 }
 
+/**
+ * Asserts the member is a real graph node AND is not reported as an entry
+ * point. The node-presence guard stops the entry-point check from passing
+ * vacuously if the member ever disappears from the graph entirely.
+ */
+function assert_member_reachable(
+  call_graph: CallGraph,
+  member: string,
+  file: FilePath
+): void {
+  const node_present = Array.from(call_graph.nodes.values()).some(
+    (n) => n.name === (member as SymbolName) && n.location.file_path === file
+  );
+  expect(node_present).toBe(true);
+  expect(entry_point_for(call_graph, member, file)).toBeUndefined();
+}
+
 describe("TypeScript optional ctor param-property receiver resolution (TASK-350)", () => {
   describe("NestJS ApplicationConfig cluster", () => {
     it("getGlobalPipes is reachable via a private readonly optional param-property receiver", async () => {
@@ -91,9 +114,7 @@ describe("TypeScript optional ctor param-property receiver resolution (TASK-350)
       ]);
       const call_graph = project.get_call_graph();
 
-      expect(
-        entry_point_for(call_graph, "getGlobalPipes", file_paths["application_config.ts"])
-      ).toBeUndefined();
+      assert_member_reachable(call_graph, "getGlobalPipes", file_paths["application_config.ts"]);
     });
 
     it("getGlobalGuards is reachable via the same optional param-property receiver", async () => {
@@ -103,9 +124,7 @@ describe("TypeScript optional ctor param-property receiver resolution (TASK-350)
       ]);
       const call_graph = project.get_call_graph();
 
-      expect(
-        entry_point_for(call_graph, "getGlobalGuards", file_paths["application_config.ts"])
-      ).toBeUndefined();
+      assert_member_reachable(call_graph, "getGlobalGuards", file_paths["application_config.ts"]);
     });
   });
 
@@ -117,12 +136,15 @@ describe("TypeScript optional ctor param-property receiver resolution (TASK-350)
       ]);
       const call_graph = project.get_call_graph();
 
-      expect(
-        entry_point_for(call_graph, "setMocker", file_paths["application_config.ts"])
-      ).toBeUndefined();
+      assert_member_reachable(call_graph, "setMocker", file_paths["application_config.ts"]);
     });
   });
 
+  // The recursive members have no external caller, so rather than asserting
+  // entry-point absence (as the NestJS cases do), these tests pin the exact
+  // resolved self-edge — the method's own call site resolving back to itself
+  // through `this.previous` — which is a stronger proof that the optional
+  // self-typed param-property receiver resolved.
   describe("Prisma MergedExtensionsList recursive cluster", () => {
     it("getAllComputedFields resolves its recursive this.previous?.method() self-call", async () => {
       const { project, file_paths } = await project_from_fixtures([
@@ -131,18 +153,17 @@ describe("TypeScript optional ctor param-property receiver resolution (TASK-350)
       const call_graph = project.get_call_graph();
       const file = file_paths["merged_extensions_list.ts"];
 
-      // The recursive call resolves to the same member: the caller node carries a
-      // resolved `getAllComputedFields` call edge.
       const method_node = Array.from(call_graph.nodes.values()).find(
         (n) =>
           n.name === ("getAllComputedFields" as SymbolName) &&
           n.location.file_path === file
-      )!;
-      const self_call = method_node.enclosed_calls.find(
+      );
+      expect(method_node).toBeDefined();
+      const self_call = method_node!.enclosed_calls.find(
         (c) => c.name === ("getAllComputedFields" as SymbolName)
-      )!;
-      expect(self_call.resolutions.length).toBeGreaterThan(0);
-      expect(self_call.resolutions.some((r) => r.symbol_id === method_node.symbol_id)).toBe(true);
+      );
+      expect(self_call).toBeDefined();
+      expect(self_call!.resolutions.some((r) => r.symbol_id === method_node!.symbol_id)).toBe(true);
     });
 
     it("getAllQueryCallbacks resolves its recursive self-call", async () => {
@@ -156,12 +177,13 @@ describe("TypeScript optional ctor param-property receiver resolution (TASK-350)
         (n) =>
           n.name === ("getAllQueryCallbacks" as SymbolName) &&
           n.location.file_path === file
-      )!;
-      const self_call = method_node.enclosed_calls.find(
+      );
+      expect(method_node).toBeDefined();
+      const self_call = method_node!.enclosed_calls.find(
         (c) => c.name === ("getAllQueryCallbacks" as SymbolName)
-      )!;
-      expect(self_call.resolutions.length).toBeGreaterThan(0);
-      expect(self_call.resolutions.some((r) => r.symbol_id === method_node.symbol_id)).toBe(true);
+      );
+      expect(self_call).toBeDefined();
+      expect(self_call!.resolutions.some((r) => r.symbol_id === method_node!.symbol_id)).toBe(true);
     });
   });
 });

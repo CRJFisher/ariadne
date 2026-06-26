@@ -1,7 +1,7 @@
 ---
 id: TASK-350
 title: "Restore lost receiver types at indexing time (TypeScript optional ctor param-properties)"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-06-26 11:16"
 labels:
@@ -9,8 +9,10 @@ labels:
   - receiver_type_inference
 dependencies: []
 priority: high
-plan_dedup_key: dc80bdf53c0f162e1cd0b07335bdaa7b2ac23b0c3b29803f7cf28762fc8fcdeb
-plan_source_task: pt-4bab06ce92cb530a
+plan_dedup_keys:
+  - dc80bdf53c0f162e1cd0b07335bdaa7b2ac23b0c3b29803f7cf28762fc8fcdeb
+plan_source_tasks:
+  - pt-4bab06ce92cb530a
 ---
 
 ## Description
@@ -44,3 +46,30 @@ plan_source_task: pt-4bab06ce92cb530a
 <!-- AC:BEGIN -->
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+Optional TypeScript constructor parameter-properties now emit their implicit class field at indexing time, so the property's declared type survives into the registries. A method call whose receiver is such a property (`this.applicationConfig?.getGlobalPipes()`) resolves against that type, the called member gains an incoming call edge, and it is no longer reported as an unreachable entry point. The fix lives entirely in the TypeScript tree-sitter query; the resolution pipeline already did the right thing once the field's type was present.
+
+## What changed
+
+The TypeScript query (`packages/core/src/index_single_file/query_code_tree/queries/typescript.scm`) bound `@definition.field` for **required** constructor parameter-properties (`constructor(private readonly x: T)`) but not for **optional** ones. An optional parameter parses as an `optional_parameter` node, which only a generic rule matched — binding `@definition.parameter.optional` alone. The implicit class field, and with it the property's `type`, was therefore dropped at indexing time.
+
+Two `optional_parameter` rules now mirror the required-parameter rules — an accessibility-modifier variant and a readonly variant — each binding `@definition.parameter.optional @definition.field` on the parameter's identifier. The pair is split because a single tree-sitter pattern cannot OR the two child constraints; a `private readonly x?` parameter matches both rules, but the duplicate captures collapse downstream through the location-keyed `symbol_id`, so exactly one parameter and one property result.
+
+## Why no handler change
+
+The `@definition.field` capture dispatches to `handle_ts_definition_field`, which already branches on `optional_parameter` parents and extracts `type`, `access_modifier`, and `readonly` via the parameter-property path. No capture handler, data-model, or schema change was needed.
+
+This corrects work-plan item 4, which assumed the field had to route through `handle_definition_field_param_property`. That handler is registered under the capture name `definition.field.param_property`, which no query emits — it is unreached on this path. Routing the new captures through it would in fact have been wrong, since it lacks the `static`/`abstract` branching `handle_ts_definition_field` provides. Removing that dead handler is a separate cleanup, out of scope here.
+
+`PropertyDefinition` carries `type`/`readonly`/`access_modifier` but no `optional` flag; the optional flag lives on the `ParameterDefinition`. Tests assert each on the correct definition.
+
+## How the acceptance criteria are met
+
+- **Fix A** (items 2–4): the two `optional_parameter` rules. No edits to `receiver_resolution.ts`, `type_preprocessing/bindings.ts`, `constructor.ts`, or `member.ts`; no schema bump (item 5).
+- **Evidence clusters** (item 6): committed fixtures under `packages/core/tests/fixtures/typescript/code/integration/optional_param_properties/` reproduce the NestJS `ApplicationConfig` cluster (`pipes_context_creator.ts` importing `application_config.ts`), `TestingInjector` (the public, non-readonly variant), and the Prisma `MergedExtensionsList` recursive self-call. Because the fix is one uniform query rule, resolving one cluster member proves the rest; the fixtures additionally exercise all three syntactic variants (private-readonly, public-only, readonly-only).
+- **Tests** (item 9): unit coverage in `capture_handlers.typescript.test.ts` asserts type/readonly/access-modifier extraction for each variant, the no-modifier negative case (a plain optional param emits no field), and exact parameter/property counts under the double-matching rules. The integration test `receiver_resolution.typescript.integration.test.ts` asserts the NestJS members are reachable (present in the graph and absent from `entry_points`) and pins the Prisma recursive self-edge. Reverting the query change makes these tests fail, confirming they exercise the fix; the existing TS regression suites stay green with unchanged counts.
+- **Out of scope** (items 7–8): the Python verification targets and the tokio Rust index row belong to sibling tasks (350.2 and the syntactic-extraction fault area) and were not touched.

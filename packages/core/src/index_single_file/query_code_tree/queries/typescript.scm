@@ -178,15 +178,17 @@
   pattern: (identifier) @definition.parameter @definition.field
 )
 
-; Optional constructor parameter properties (with access modifiers)
-; These create both an optional parameter AND an implicit class property
+; Optional constructor parameter properties — same dual-capture as the required
+; variants above. Split into an accessibility-modifier rule and a readonly rule
+; because a single pattern cannot OR the two child constraints; a
+; `private readonly x?` param matches both, but the duplicate @definition.field
+; (and @definition.parameter.optional) captures collapse downstream via the
+; location-keyed symbol_id, so exactly one property and one parameter result.
 (optional_parameter
   (accessibility_modifier)
   pattern: (identifier) @definition.parameter.optional @definition.field
 )
 
-; Optional constructor parameter properties (readonly)
-; These create both an optional parameter AND an implicit class property
 (optional_parameter
   "readonly"
   pattern: (identifier) @definition.parameter.optional @definition.field
