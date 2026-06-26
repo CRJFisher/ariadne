@@ -219,10 +219,8 @@ export function calculate(a: number, b: number): number {
     });
     expect(calculate_entry).toBeDefined();
 
-    // add and multiply are not entry points: the barrel file's re-exports
-    // create function references that mark them as indirectly reachable.
-    // However, the call edges from calculate → add/multiply are missing because
-    // resolve_namespace_method skips import-kind definitions (re-exports).
+    // add and multiply resolve through the barrel file's re-export chain, so
+    // they are reachable (called by calculate) and not entry points.
     const add_entry = call_graph.entry_points.find((ep) => {
       const node = call_graph.nodes.get(ep);
       return (
@@ -241,31 +239,35 @@ export function calculate(a: number, b: number): number {
     expect(add_entry).toBeUndefined();
     expect(multiply_entry).toBeUndefined();
 
-    // calculate emits CallReferences for math.add() and math.multiply() but
-    // they fail to resolve through the barrel file's re-export imports.
-    // Each emitted CallReference carries an empty resolutions array and a
-    // resolution_failure diagnostic.
+    // calculate's math.add() and math.multiply() call sites resolve through the
+    // barrel file's re-exports to the terminal functions in add.ts / multiply.ts,
+    // with no resolution_failure.
     const calculate_node = [...call_graph.nodes.values()].find(
       (node) =>
         node.name === ("calculate" as SymbolName) &&
         node.location.file_path === file_paths["calculator.ts"]
     );
     expect(calculate_node).toBeDefined();
-    const method_calls = calculate_node!.enclosed_calls.filter(
-      (call) =>
-        call.call_type === "method" &&
-        (call.name === "add" || call.name === "multiply")
+    const barrel_calls = calculate_node!.enclosed_calls.filter(
+      (call) => call.name === "add" || call.name === "multiply"
     );
-    // Each math.X(...) call site emits at least one CallReference.
-    expect(method_calls.length).toBeGreaterThanOrEqual(2);
     expect(
-      new Set(method_calls.map((c) => c.name as string))
+      new Set(barrel_calls.map((c) => c.name as string))
     ).toEqual(new Set(["add", "multiply"]));
-    for (const call of method_calls) {
-      expect(call.resolutions).toEqual([]);
-      expect(call.resolution_failure?.stage).toBe("method_lookup");
-      expect(call.resolution_failure?.reason).toBe("method_not_on_type");
-    }
+
+    const add_call = barrel_calls.find((c) => c.name === "add");
+    const multiply_call = barrel_calls.find((c) => c.name === "multiply");
+    expect(add_call!.resolution_failure).toBeUndefined();
+    expect(multiply_call!.resolution_failure).toBeUndefined();
+
+    const add_target = call_graph.nodes.get(add_call!.resolutions[0].symbol_id);
+    expect(add_target?.location.file_path).toBe(file_paths["math/add.ts"]);
+    const multiply_target = call_graph.nodes.get(
+      multiply_call!.resolutions[0].symbol_id
+    );
+    expect(multiply_target?.location.file_path).toBe(
+      file_paths["math/multiply.ts"]
+    );
   });
 });
 

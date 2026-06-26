@@ -14,6 +14,46 @@ import type {
 import { is_exportable, location_key } from "@ariadnejs/types";
 
 /**
+ * Rebind `alias_name` in `flat_members` to the symbol of the member named by
+ * `target_name`, when `target_name` is a bare reference to another member. A
+ * no-op when there is no such member or the alias points at itself.
+ */
+function bind_member_alias(
+  alias_name: SymbolName,
+  target_name: string | undefined,
+  alias_symbol: SymbolId,
+  flat_members: Map<SymbolName, SymbolId>
+): void {
+  if (!target_name) {
+    return;
+  }
+  const target = flat_members.get(target_name as SymbolName);
+  if (target && target !== alias_symbol) {
+    flat_members.set(alias_name, target);
+  }
+}
+
+/**
+ * Source line range of a scope. Scope ids encode
+ * `kind:file:start_line:start_col:end_line:end_col`; the line numbers are the
+ * 4th- and 2nd-from-last colon-separated tokens.
+ */
+function scope_line_range(
+  scope_id: ScopeId
+): { start: number; end: number } | null {
+  const parts = scope_id.split(":");
+  if (parts.length < 4) {
+    return null;
+  }
+  const start = Number(parts[parts.length - 4]);
+  const end = Number(parts[parts.length - 2]);
+  if (Number.isNaN(start) || Number.isNaN(end)) {
+    return null;
+  }
+  return { start, end };
+}
+
+/**
  * Central registry for all definitions across the project.
  *
  * Maintains multiple indexes for fast lookups:
@@ -156,13 +196,22 @@ export class DefinitionRegistry {
           this.location_to_symbol.set(prop_loc_key, prop.symbol_id);
         }
 
-        // Register class constructors for call_type inference
+        // Register class constructors for call_type inference, and key each
+        // into the flat member index under its method name (__init__ for
+        // Python, constructor for TS/JS). This makes member-style constructor
+        // calls — self.__init__(), super().__init__() — resolvable through the
+        // same member lookup that serves ordinary methods.
         if (def.kind === "class" && def.constructors) {
           for (const ctor of def.constructors) {
             this.by_symbol.set(ctor.symbol_id, ctor);
             const ctor_loc_key = location_key(ctor.location);
             this.location_to_symbol.set(ctor_loc_key, ctor.symbol_id);
+            flat_members.set(ctor.name, ctor.symbol_id);
           }
+        }
+
+        if (def.kind === "class") {
+          this.capture_member_aliases(def, flat_members, definitions);
         }
 
         this.member_index.set(def.symbol_id, flat_members);
@@ -363,6 +412,74 @@ export class DefinitionRegistry {
     }
 
     return index;
+  }
+
+  /**
+   * Capture class-body member aliases — `name = other_member` assignments whose
+   * right-hand side names another member of the same class (e.g. sqlalchemy's
+   * `__getitem__ = _getitem`). Rebinds the alias name in `flat_members` to the
+   * target member's symbol so calls through the alias resolve to the real member.
+   *
+   * Two index shapes are handled:
+   * - Direct (`__getitem__ = _getitem` at class-body indentation) indexes as a
+   *   class PropertyDefinition whose `initial_value` names the target.
+   * - Conditional (`if not TYPE_CHECKING: __setitem__ = _getitem`) indexes as a
+   *   VariableDefinition scoped to a block nested directly in the class body.
+   *   Variables inside method bodies are excluded so method locals are never
+   *   mistaken for member aliases.
+   *
+   * Only literal member-to-member aliases bind; an RHS that is not a bare member
+   * name has no matching key in `flat_members` and is ignored.
+   */
+  private capture_member_aliases(
+    class_def: ClassDefinition,
+    flat_members: Map<SymbolName, SymbolId>,
+    all_definitions: AnyDefinition[]
+  ): void {
+    for (const prop of class_def.properties) {
+      bind_member_alias(prop.name, prop.initial_value, prop.symbol_id, flat_members);
+    }
+
+    const class_body_scope =
+      class_def.methods[0]?.defining_scope_id ??
+      class_def.properties[0]?.defining_scope_id;
+    if (!class_body_scope) {
+      return;
+    }
+    const class_range = scope_line_range(class_body_scope);
+    if (!class_range) {
+      return;
+    }
+    const method_body_ranges = class_def.methods
+      .map((m) => m.body_scope_id)
+      .filter((s): s is ScopeId => s !== undefined)
+      .map(scope_line_range)
+      .filter((r): r is { start: number; end: number } => r !== null);
+
+    for (const def of all_definitions) {
+      if (def.kind !== "variable" && def.kind !== "constant") {
+        continue;
+      }
+      if (def.defining_scope_id === class_body_scope) {
+        continue; // class-body-level assignment — already keyed via properties
+      }
+      const range = scope_line_range(def.defining_scope_id);
+      if (!range) {
+        continue;
+      }
+      const within_class =
+        range.start >= class_range.start && range.end <= class_range.end;
+      if (!within_class) {
+        continue;
+      }
+      const within_method = method_body_ranges.some(
+        (m) => range.start >= m.start && range.end <= m.end
+      );
+      if (within_method) {
+        continue;
+      }
+      bind_member_alias(def.name, def.initial_value, def.symbol_id, flat_members);
+    }
   }
 
   /**

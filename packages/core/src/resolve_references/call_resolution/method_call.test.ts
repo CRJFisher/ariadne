@@ -17,6 +17,9 @@ import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ResolutionRegistry } from "../resolve_references";
 import { ImportGraph } from "../../project/import_graph";
+import { ExportRegistry } from "../registries/export";
+import type { FileSystemFolder } from "../file_folders";
+import { make_export_chain_context } from "../file_folders_test_helper";
 import { set_test_resolutions, unwrap } from "../resolve_references.test";
 import { create_method_call_reference } from "../../index_single_file/references/factories";
 import { method_symbol, class_symbol, function_symbol, variable_symbol, is_err } from "@ariadnejs/types";
@@ -26,6 +29,7 @@ import type {
   ScopeId,
   Location,
   FilePath,
+  Language,
   ModulePath,
   MethodDefinition,
   ClassDefinition,
@@ -60,6 +64,9 @@ describe("Method Call Resolution", () => {
   let types: TypeRegistry;
   let resolutions: ResolutionRegistry;
   let imports: ImportGraph;
+  let exports: ExportRegistry;
+  let languages: Map<FilePath, Language>;
+  let root_folder: FileSystemFolder;
 
   beforeEach(() => {
     scopes = new ScopeRegistry();
@@ -67,6 +74,7 @@ describe("Method Call Resolution", () => {
     types = new TypeRegistry();
     resolutions = new ResolutionRegistry();
     imports = new ImportGraph();
+    ({ exports, languages, root_folder } = make_export_chain_context());
   });
 
   describe("Basic Method Calls", () => {
@@ -165,7 +173,10 @@ describe("Method Call Resolution", () => {
         definitions,
         types,
         resolutions,
-        imports
+        imports,
+        exports,
+        languages,
+        root_folder
       );
 
       // Assert
@@ -224,7 +235,10 @@ describe("Method Call Resolution", () => {
         definitions,
         types,
         resolutions,
-        imports
+        imports,
+        exports,
+        languages,
+        root_folder
       );
 
       // Assert
@@ -285,7 +299,10 @@ describe("Method Call Resolution", () => {
         definitions,
         types,
         resolutions,
-        imports
+        imports,
+        exports,
+        languages,
+        root_folder
       );
 
       // Assert
@@ -355,7 +372,10 @@ describe("Method Call Resolution", () => {
         definitions,
         types,
         resolutions,
-        imports
+        imports,
+        exports,
+        languages,
+        root_folder
       );
 
       expect(unwrap(resolved_first)).toEqual([set_name_id]);
@@ -379,7 +399,10 @@ describe("Method Call Resolution", () => {
         definitions,
         types,
         resolutions,
-        imports
+        imports,
+        exports,
+        languages,
+        root_folder
       );
 
       expect(unwrap(resolved_second)).toEqual([set_age_id]);
@@ -454,7 +477,10 @@ describe("Method Call Resolution", () => {
         definitions,
         types,
         resolutions,
-        imports
+        imports,
+        exports,
+        languages,
+        root_folder
       );
 
       // Assert
@@ -496,6 +522,7 @@ describe("Method Call Resolution", () => {
         body_scope_id: "scope:utils.ts:helper:1:0" as ScopeId,
         decorators: [],
       }]);
+      exports.update_file(UTILS_FILE, definitions);
 
       // Create import in current file with proper import definition
       definitions.update_file(TEST_FILE, [{
@@ -532,7 +559,10 @@ describe("Method Call Resolution", () => {
         definitions,
         types,
         resolutions,
-        imports
+        imports,
+        exports,
+        languages,
+        root_folder
       );
 
       // Assert - should resolve to the helper function
@@ -603,7 +633,10 @@ describe("Method Call Resolution", () => {
         definitions,
         types,
         resolutions,
-        imports
+        imports,
+        exports,
+        languages,
+        root_folder
       );
 
       // Assert - should return empty (cannot resolve without import path registered)
@@ -652,7 +685,10 @@ describe("Method Call Resolution", () => {
         definitions,
         types,
         resolutions,
-        imports
+        imports,
+        exports,
+        languages,
+        root_folder
       );
 
       // Assert - should return empty (external module not in project)
@@ -704,7 +740,10 @@ describe("Method Call Resolution", () => {
         definitions,
         types,
         resolutions,
-        imports
+        imports,
+        exports,
+        languages,
+        root_folder
       );
 
       // Assert
@@ -739,7 +778,10 @@ describe("Method Call Resolution", () => {
         definitions,
         types,
         resolutions,
-        imports
+        imports,
+        exports,
+        languages,
+        root_folder
       );
 
       // Assert
@@ -794,7 +836,10 @@ describe("Method Call Resolution", () => {
         definitions,
         types,
         resolutions,
-        imports
+        imports,
+        exports,
+        languages,
+        root_folder
       );
 
       // Assert
@@ -823,7 +868,10 @@ describe("Method Call Resolution", () => {
         definitions,
         types,
         resolutions,
-        imports
+        imports,
+        exports,
+        languages,
+        root_folder
       );
 
       // Assert
@@ -878,7 +926,10 @@ describe("Method Call Resolution", () => {
         definitions,
         types,
         resolutions,
-        imports
+        imports,
+        exports,
+        languages,
+        root_folder
       );
 
       // Assert
@@ -1054,7 +1105,10 @@ describe("Method Call Resolution", () => {
         definitions,
         types,
         resolutions,
-        imports
+        imports,
+        exports,
+        languages,
+        root_folder
       );
 
       // Assert: Should resolve to BOTH implementations
@@ -1135,7 +1189,10 @@ describe("Method Call Resolution", () => {
         definitions,
         types,
         resolutions,
-        imports
+        imports,
+        exports,
+        languages,
+        root_folder
       );
 
       // Assert: Should return single resolution (not polymorphic)
@@ -1212,7 +1269,10 @@ describe("Method Call Resolution", () => {
         definitions,
         types,
         resolutions,
-        imports
+        imports,
+        exports,
+        languages,
+        root_folder
       );
 
       // Assert: Should return empty array (no implementations found)

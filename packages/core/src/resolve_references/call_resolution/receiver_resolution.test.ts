@@ -11,6 +11,7 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
+import { make_export_chain_context } from "../file_folders_test_helper";
 import {
   extract_receiver,
   resolve_receiver_type,
@@ -490,7 +491,14 @@ describe("resolve_receiver_type", () => {
     types = new TypeRegistry();
     resolutions = new ResolutionRegistry();
     imports = new ImportGraph();
-    context = { scopes, definitions, types, resolutions, imports };
+    context = {
+      scopes,
+      definitions,
+      types,
+      resolutions,
+      imports,
+      ...make_export_chain_context(),
+    };
 
     // Create test symbols
     my_class_id = class_symbol("MyClass", MOCK_LOCATION);

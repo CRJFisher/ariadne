@@ -22,6 +22,9 @@ import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ResolutionRegistry } from "../resolve_references";
 import { ImportGraph } from "../../project/import_graph";
+import { ExportRegistry } from "../registries/export";
+import type { FileSystemFolder } from "../file_folders";
+import { make_export_chain_context } from "../file_folders_test_helper";
 import { set_test_resolutions, unwrap } from "../resolve_references.test";
 import type {
   SymbolId,
@@ -29,8 +32,10 @@ import type {
   ScopeId,
   Location,
   FilePath,
+  Language,
   MethodDefinition,
   ClassDefinition,
+  ConstructorDefinition,
   InterfaceDefinition,
   FunctionDefinition,
   VariableDefinition,
@@ -68,6 +73,9 @@ describe("resolve_method_on_type", () => {
   let types: TypeRegistry;
   let resolutions: ResolutionRegistry;
   let imports: ImportGraph;
+  let exports: ExportRegistry;
+  let languages: Map<FilePath, Language>;
+  let root_folder: FileSystemFolder;
   let context: ReceiverResolutionContext;
 
   beforeEach(() => {
@@ -76,7 +84,17 @@ describe("resolve_method_on_type", () => {
     types = new TypeRegistry();
     resolutions = new ResolutionRegistry();
     imports = new ImportGraph();
-    context = { scopes, definitions, types, resolutions, imports };
+    ({ exports, languages, root_folder } = make_export_chain_context());
+    context = {
+      scopes,
+      definitions,
+      types,
+      resolutions,
+      imports,
+      exports,
+      languages,
+      root_folder,
+    };
   });
 
   describe("Regular class method lookup", () => {
@@ -455,6 +473,86 @@ describe("resolve_method_on_type", () => {
       expect(unwrap(result)).toContain(child_method_id);
     });
 
+    it("does not fan a constructor call out to subclass constructors", () => {
+      // self.__init__() / super().__init__() resolve the receiver to a class,
+      // and the constructor is keyed into the member index. The guard must keep
+      // this a single concrete resolution rather than expanding across subtypes.
+      const base_class_id = class_symbol("Base", MOCK_LOCATION);
+      const child_class_id = class_symbol("Child", {
+        ...MOCK_LOCATION,
+        start_line: 10,
+      });
+      const base_ctor_id = method_symbol("__init__" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 2,
+      });
+      const child_ctor_id = method_symbol("__init__" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 11,
+      });
+
+      const base_ctor_def: ConstructorDefinition = {
+        kind: "constructor",
+        symbol_id: base_ctor_id,
+        name: "__init__" as SymbolName,
+        defining_scope_id: "scope:test.ts:Base:1:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line: 2 },
+        parameters: [],
+        body_scope_id: "scope:test.ts:Base.__init__:2:2" as ScopeId,
+      };
+      const base_class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: base_class_id,
+        name: "Base" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        extends: [],
+        methods: [],
+        properties: [],
+        decorators: [],
+        constructors: [base_ctor_def],
+      };
+
+      const child_ctor_def: ConstructorDefinition = {
+        kind: "constructor",
+        symbol_id: child_ctor_id,
+        name: "__init__" as SymbolName,
+        defining_scope_id: "scope:test.ts:Child:10:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line: 11 },
+        parameters: [],
+        body_scope_id: "scope:test.ts:Child.__init__:11:2" as ScopeId,
+      };
+      const child_class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: child_class_id,
+        name: "Child" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 10 },
+        is_exported: false,
+        extends: ["Base" as SymbolName],
+        methods: [],
+        properties: [],
+        decorators: [],
+        constructors: [child_ctor_def],
+      };
+
+      definitions.update_file(TEST_FILE, [base_class_def, child_class_def]);
+      definitions["type_subtypes"] = new Map();
+      definitions["type_subtypes"].set(
+        base_class_id,
+        new Set([child_class_id])
+      );
+
+      const result = resolve_method_on_type(
+        base_class_id,
+        "__init__" as SymbolName,
+        context
+      );
+
+      expect(unwrap(result)).toEqual([base_ctor_id]);
+    });
+
     it("should resolve multi-level inheritance (3 levels)", () => {
       const class_a_id = class_symbol("A", MOCK_LOCATION);
       const class_b_id = class_symbol("B", { ...MOCK_LOCATION, start_line: 10 });
@@ -796,6 +894,7 @@ describe("resolve_method_on_type", () => {
 
       definitions.update_file(TEST_FILE, [import_def]);
       definitions.update_file(UTILS_FILE, [helper_def]);
+      exports.update_file(UTILS_FILE, definitions);
 
       const imports_for_test = new ImportGraph();
       imports_for_test["resolved_import_paths"].set(namespace_import_id, UTILS_FILE);
@@ -845,6 +944,7 @@ describe("resolve_method_on_type", () => {
 
       definitions.update_file(TEST_FILE, [import_def]);
       definitions.update_file(UTILS_FILE, [private_def]);
+      exports.update_file(UTILS_FILE, definitions);
 
       const imports_for_test = new ImportGraph();
       imports_for_test["resolved_import_paths"].set(namespace_import_id, UTILS_FILE);
@@ -1317,6 +1417,7 @@ describe("resolve_method_on_type", () => {
 
       definitions.update_file(TEST_FILE, [import_def]);
       definitions.update_file(PIPELINE_FILE, [train_def]);
+      exports.update_file(PIPELINE_FILE, definitions);
 
       const imports_for_test = new ImportGraph();
       imports_for_test["resolved_import_paths"].set(import_id, "/project/training/__init__.py" as FilePath);

@@ -22,7 +22,9 @@
 import type {
   SymbolId,
   SymbolName,
+  FilePath,
   ScopeId,
+  Language,
   SelfReferenceCall,
   MethodCallReference,
   SelfReferenceKeyword,
@@ -33,8 +35,10 @@ import { err, ok } from "@ariadnejs/types";
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import type { TypeRegistry } from "../registries/type";
+import type { ExportRegistry } from "../registries/export";
 import type { ResolutionRegistry } from "../resolve_references";
 import type { ImportGraph } from "../../project/import_graph";
+import type { FileSystemFolder } from "../file_folders";
 
 /**
  * Receiver expression - normalized form for both self-reference and method calls
@@ -62,6 +66,9 @@ export interface ReceiverResolutionContext {
   readonly types: TypeRegistry;
   readonly resolutions: ResolutionRegistry;
   readonly imports: ImportGraph;
+  readonly exports: ExportRegistry;
+  readonly languages: ReadonlyMap<FilePath, Language>;
+  readonly root_folder: FileSystemFolder;
 }
 
 /**

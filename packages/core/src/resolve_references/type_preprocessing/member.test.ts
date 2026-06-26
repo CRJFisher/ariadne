@@ -78,7 +78,6 @@ describe("Member Extraction - JavaScript", () => {
       ["getEmail", "getName"] as SymbolName[]
     );
     expect(user_members.properties.size).toBe(0);
-    expect(user_members.constructor).toBeUndefined();
     expect(user_members.extends).toEqual([]);
   });
 
@@ -109,7 +108,6 @@ describe("Member Extraction - JavaScript", () => {
     expect(members.size).toBe(1);
 
     const user_members = Array.from(members.values())[0];
-    expect(user_members.constructor).toBeDefined();
     expect(user_members.methods.size).toBe(0);
     // JS does not extract `this.x = ...` assignments as properties
     expect(user_members.properties.size).toBe(0);
@@ -238,40 +236,7 @@ describe("Member Extraction - TypeScript", () => {
     expect(Array.from(user_members.properties.keys()).sort()).toEqual(
       ["email", "name"] as SymbolName[]
     );
-    expect(user_members.constructor).toBeUndefined();
     expect(user_members.extends).toEqual([]);
-  });
-
-  it("should track constructor", () => {
-    const code = `
-      class User {
-        constructor(name: string) {
-          this.name = name;
-        }
-      }
-    `;
-
-    const tree = parser.parse(code);
-    const parsed_file = create_parsed_file(
-      code,
-      "test.ts" as FilePath,
-      tree,
-      "typescript"
-    );
-    const index = build_index_single_file(parsed_file, tree, "typescript");
-    const members = extract_type_members({
-      classes: index.classes,
-      interfaces: index.interfaces,
-      enums: index.enums,
-    });
-
-    expect(members.size).toBe(1);
-
-    const user_members = Array.from(members.values())[0];
-    expect(user_members.constructor).toBeDefined();
-    expect(user_members.constructor!.endsWith(":constructor")).toBe(true);
-    expect(user_members.methods.size).toBe(0);
-    expect(user_members.properties.size).toBe(0);
   });
 
   it("should extract interface methods and properties", () => {
@@ -307,7 +272,6 @@ describe("Member Extraction - TypeScript", () => {
     expect(Array.from(iface_members.properties.keys()).sort()).toEqual(
       ["email", "name"] as SymbolName[]
     );
-    expect(iface_members.constructor).toBeUndefined();
     expect(iface_members.extends).toEqual([]);
   });
 
@@ -395,7 +359,6 @@ describe("Member Extraction - TypeScript", () => {
     expect(
       Array.from(color_members.properties.keys()).sort()
     ).toEqual(["Blue", "Green", "Red"] as SymbolName[]);
-    expect(color_members.constructor).toBeUndefined();
     expect(color_members.extends).toEqual([]);
   });
 
@@ -437,7 +400,6 @@ describe("Member Extraction - TypeScript", () => {
     expect(
       Array.from(status_members.properties.keys()).sort()
     ).toEqual(["Active", "Inactive", "Pending"] as SymbolName[]);
-    expect(status_members.constructor).toBeUndefined();
     expect(status_members.extends).toEqual([]);
   });
 
@@ -515,11 +477,10 @@ class User:
       ["get_email", "get_name"] as SymbolName[]
     );
     expect(user_members.properties.size).toBe(0);
-    expect(user_members.constructor).toBeUndefined();
     expect(user_members.extends).toEqual([]);
   });
 
-  it("should extract class with __init__ constructor", () => {
+  it("extracts instance attributes assigned in __init__ as properties", () => {
     const code = `
 class User:
     def __init__(self, name: str):
@@ -543,8 +504,6 @@ class User:
     expect(members.size).toBe(1);
 
     const user_members = Array.from(members.values())[0];
-    expect(user_members.constructor).toBeDefined();
-    expect(user_members.constructor!.endsWith(":__init__")).toBe(true);
     expect(user_members.methods.size).toBe(0);
     expect(Array.from(user_members.properties.keys())).toEqual([
       "name",
@@ -653,7 +612,6 @@ class Drawable(Protocol):
       "draw",
     ] as SymbolName[]);
     expect(drawable_members.properties.size).toBe(0);
-    expect(drawable_members.constructor).toBeUndefined();
     expect(drawable_members.extends).toEqual([]);
   });
 
@@ -688,7 +646,6 @@ class Color(Enum):
     expect(
       Array.from(color_members.properties.keys()).sort()
     ).toEqual(["BLUE", "GREEN", "RED"] as SymbolName[]);
-    expect(color_members.constructor).toBeUndefined();
     expect(color_members.extends).toEqual([]);
   });
 });
@@ -736,7 +693,6 @@ describe("Member Extraction - Rust", () => {
       ["get_name", "new"] as SymbolName[]
     );
     expect(user_members.properties.size).toBe(0);
-    expect(user_members.constructor).toBeUndefined();
     expect(user_members.extends).toEqual([]);
   });
 
@@ -776,7 +732,6 @@ describe("Member Extraction - Rust", () => {
     expect(Array.from(enum_members.properties.keys()).sort()).toEqual(
       ["Err", "Ok"] as SymbolName[]
     );
-    expect(enum_members.constructor).toBeUndefined();
   });
 
   it("should handle struct with fields", () => {
@@ -816,7 +771,6 @@ describe("Member Extraction - Rust", () => {
     expect(Array.from(user_members.properties.keys()).sort()).toEqual(
       ["email", "name"] as SymbolName[]
     );
-    expect(user_members.constructor).toBeUndefined();
   });
 
   it("should handle enum without methods", () => {
@@ -849,7 +803,6 @@ describe("Member Extraction - Rust", () => {
     expect(Array.from(color_members.properties.keys()).sort()).toEqual(
       ["Blue", "Green", "Red"] as SymbolName[]
     );
-    expect(color_members.constructor).toBeUndefined();
     expect(color_members.extends).toEqual([]);
   });
 });
@@ -890,7 +843,6 @@ describe("Member Extraction - Edge Cases", () => {
     const empty_members = Array.from(members.values())[0];
     expect(empty_members.methods.size).toBe(0);
     expect(empty_members.properties.size).toBe(0);
-    expect(empty_members.constructor).toBeUndefined();
     expect(empty_members.extends).toEqual([]);
   });
 
@@ -918,7 +870,7 @@ describe("Member Extraction - Edge Cases", () => {
     expect(members.size).toBe(0);
   });
 
-  it("should handle class with only constructor", () => {
+  it("produces empty method and property maps for a class with only a constructor", () => {
     const code = `
       class OnlyConstructor {
         constructor(name) {
@@ -944,8 +896,6 @@ describe("Member Extraction - Edge Cases", () => {
     expect(members.size).toBe(1);
 
     const class_members = Array.from(members.values())[0];
-    expect(class_members.constructor).toBeDefined();
-    expect(class_members.constructor!.endsWith(":constructor")).toBe(true);
     expect(class_members.methods.size).toBe(0);
     expect(class_members.properties.size).toBe(0);
   });

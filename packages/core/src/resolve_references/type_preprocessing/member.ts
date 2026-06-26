@@ -1,7 +1,7 @@
 /**
  * Type Member Extraction
  *
- * Extracts member information (methods, properties, constructor) from type definitions.
+ * Extracts member information (methods, properties) from type definitions.
  * Maps type SymbolIds to their member information for efficient lookup during method resolution.
  *
  * Resolution of member types happens in task 11.109 using TypeContext.
@@ -42,7 +42,6 @@ import type {
  * //   User_SymbolId => {
  * //     methods: Map { "getName" => getName_SymbolId },
  * //     properties: Map { "email" => email_SymbolId },
- * //     constructor: undefined,
  * //     extends: []
  * //   }
  * // }
@@ -70,16 +69,12 @@ export function extract_type_members(definitions: {
       properties.set(prop.name, prop.symbol_id);
     }
 
-    // Get constructor (if any)
-    const constructor_id = class_def.constructors?.[0]?.symbol_id;
-
     // Get extends (store as SymbolName strings, resolved later in 11.109)
     const extends_names = class_def.extends || [];
 
     members.set(class_id, {
       methods,
       properties,
-      constructor: constructor_id,
       extends: extends_names,
     });
   }
@@ -105,7 +100,6 @@ export function extract_type_members(definitions: {
     members.set(iface_id, {
       methods,
       properties,
-      constructor: undefined, // Interfaces don't have constructors
       extends: extends_names,
     });
   }
@@ -130,7 +124,6 @@ export function extract_type_members(definitions: {
     members.set(enum_id, {
       methods,
       properties,
-      constructor: undefined,
       extends: [],
     });
   }

@@ -3,10 +3,13 @@ import type {
   FilePath,
   LocationKey,
   SymbolName,
+  Language,
   TypeMemberInfo,
 } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../index_single_file/index_single_file";
 import type { DefinitionRegistry } from "./definition";
+import type { ExportRegistry } from "./export";
+import type { FileSystemFolder } from "../file_folders";
 import {
   extract_type_bindings,
   extract_constructor_bindings,
@@ -93,6 +96,9 @@ export class TypeRegistry {
    * @param index - Semantic index containing type information
    * @param definitions - Definition registry (for location/scope lookups)
    * @param resolutions - Resolution registry (for name → SymbolId resolution)
+   * @param exports - Export registry (for following namespace re-export chains)
+   * @param languages - File-path → language map (for module-path resolution in re-export chains)
+   * @param root_folder - Project root folder (for module-path resolution in re-export chains)
    * @param import_source_resolver - Resolves a namespace import symbol to its source file path
    */
   update_file(
@@ -100,6 +106,9 @@ export class TypeRegistry {
     index: SemanticIndex,
     definitions: DefinitionRegistry,
     resolutions: ResolutionRegistry,
+    exports: ExportRegistry,
+    languages: ReadonlyMap<FilePath, Language>,
+    root_folder: FileSystemFolder,
     import_source_resolver?: (import_id: SymbolId) => FilePath | undefined
   ): void {
     // Store definitions reference for get_type_members()
@@ -112,7 +121,16 @@ export class TypeRegistry {
     const extracted = this.extract_type_data(index);
 
     // Phase 3: Resolve type metadata (names → SymbolIds) - PERSISTED
-    this.resolve_type_metadata(file_path, extracted, definitions, resolutions, import_source_resolver);
+    this.resolve_type_metadata(
+      file_path,
+      extracted,
+      definitions,
+      resolutions,
+      exports,
+      languages,
+      root_folder,
+      import_source_resolver
+    );
   }
 
   /**
@@ -187,6 +205,9 @@ export class TypeRegistry {
    * @param extracted - Extracted type data (transient)
    * @param definitions - Definition registry for location/scope lookups
    * @param resolutions - Resolution registry for name → SymbolId lookups
+   * @param exports - Export registry (for following namespace re-export chains)
+   * @param languages - File-path → language map (for module-path resolution in re-export chains)
+   * @param root_folder - Project root folder (for module-path resolution in re-export chains)
    * @param import_source_resolver - Resolves a namespace import symbol to its source file path
    */
   private resolve_type_metadata(
@@ -194,6 +215,9 @@ export class TypeRegistry {
     extracted: ExtractedTypeData,
     definitions: DefinitionRegistry,
     resolutions: ResolutionRegistry,
+    exports: ExportRegistry,
+    languages: ReadonlyMap<FilePath, Language>,
+    root_folder: FileSystemFolder,
     import_source_resolver?: (import_id: SymbolId) => FilePath | undefined
   ): void {
     const resolved_symbols = new Set<SymbolId>();
@@ -239,7 +263,7 @@ export class TypeRegistry {
         const source_file = import_source_resolver(namespace_id);
         if (!source_file) continue;
 
-        const class_id = resolve_namespace_export(source_file, chain[1], definitions);
+        const class_id = resolve_namespace_export(source_file, chain[1], exports, languages, root_folder);
         if (class_id) {
           this.symbol_types.set(symbol_id, class_id);
           resolved_symbols.add(symbol_id);
@@ -332,7 +356,7 @@ export class TypeRegistry {
    * Delegates to DefinitionRegistry for type member metadata.
    *
    * @param type_id - The type SymbolId (class, interface, enum, etc.)
-   * @returns TypeMemberInfo with methods, properties, constructor, extends
+   * @returns TypeMemberInfo with methods, properties, extends
    */
   get_type_members(type_id: SymbolId): TypeMemberInfo | undefined {
     if (!this.definitions) {
@@ -345,9 +369,6 @@ export class TypeRegistry {
 
     // Build TypeMemberInfo from definition
     if (def.kind === "class") {
-      // Use the constructors field from ClassDefinition (language-agnostic)
-      const constructor_symbol_id = def.constructors?.[0]?.symbol_id;
-
       return {
         methods: new Map(
           def.methods.map((m) => [m.name as SymbolName, m.symbol_id])
@@ -355,7 +376,6 @@ export class TypeRegistry {
         properties: new Map(
           def.properties.map((p) => [p.name as SymbolName, p.symbol_id])
         ),
-        constructor: constructor_symbol_id,
         extends: def.extends ?? [],
       };
     } else if (def.kind === "interface") {
@@ -366,7 +386,6 @@ export class TypeRegistry {
         properties: new Map(
           def.properties.map((p) => [p.name as SymbolName, p.symbol_id])
         ),
-        constructor: undefined,
         extends: def.extends ?? [],
       };
     } else if (def.kind === "enum") {
@@ -375,7 +394,6 @@ export class TypeRegistry {
       return {
         methods: new Map(),
         properties: member_map || new Map(),
-        constructor: undefined,
         extends: [],
       };
     }

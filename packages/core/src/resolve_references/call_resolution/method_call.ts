@@ -16,6 +16,8 @@
 
 import type {
   SymbolId,
+  FilePath,
+  Language,
   MethodCallReference,
   SelfReferenceCall,
   Result,
@@ -25,7 +27,9 @@ import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import type { ResolutionRegistry } from "../resolve_references";
 import type { TypeRegistry } from "../registries/type";
+import type { ExportRegistry } from "../registries/export";
 import type { ImportGraph } from "../../project/import_graph";
+import type { FileSystemFolder } from "../file_folders";
 import {
   extract_receiver,
   resolve_receiver_type,
@@ -52,7 +56,10 @@ export function resolve_method_call(
   definitions: DefinitionRegistry,
   types: TypeRegistry,
   resolutions: ResolutionRegistry,
-  imports: ImportGraph
+  imports: ImportGraph,
+  exports: ExportRegistry,
+  languages: ReadonlyMap<FilePath, Language>,
+  root_folder: FileSystemFolder
 ): Result<SymbolId[], ResolutionFailure> {
   // Build resolution context
   const context: ReceiverResolutionContext = {
@@ -61,6 +68,9 @@ export function resolve_method_call(
     types,
     resolutions,
     imports,
+    exports,
+    languages,
+    root_folder,
   };
 
   // Phase 1: Extract and resolve the receiver expression to a type

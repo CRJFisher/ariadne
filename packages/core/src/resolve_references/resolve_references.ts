@@ -135,6 +135,9 @@ export class ResolutionRegistry {
    * @param types - Type registry (for method/constructor resolution) - MUST BE POPULATED
    * @param definitions - Definition registry
    * @param imports - Import graph (for resolving namespace import paths)
+   * @param exports - Export registry (for following namespace re-export chains)
+   * @param languages - File-path → language map (for module-path resolution in re-export chains)
+   * @param root_folder - Project root folder (for module-path resolution in re-export chains)
    */
   resolve_calls_for_files(
     file_ids: Set<FilePath>,
@@ -142,7 +145,10 @@ export class ResolutionRegistry {
     scopes: ScopeRegistry,
     types: TypeRegistry,
     definitions: DefinitionRegistry,
-    imports: ImportGraph
+    imports: ImportGraph,
+    exports: ExportRegistry,
+    languages: ReadonlyMap<FilePath, Language>,
+    root_folder: FileSystemFolder
   ): void {
     if (file_ids.size === 0) {
       return;
@@ -156,6 +162,9 @@ export class ResolutionRegistry {
       definitions,
       imports,
       resolutions: this,
+      exports,
+      languages,
+      root_folder,
     };
 
     // Resolve calls using pure function

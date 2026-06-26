@@ -8,6 +8,7 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
+import { make_export_chain_context } from "../file_folders_test_helper";
 import { resolve_function_call } from "./function_call";
 import type { CallResolutionContext } from "./call_resolver";
 import { DefinitionRegistry } from "../registries/definition";
@@ -60,7 +61,7 @@ describe("Function Call Resolution", () => {
     references = new ReferenceRegistry();
     imports = new ImportGraph();
     resolutions = new ResolutionRegistry();
-    context = { references, scopes, types, definitions, imports, resolutions };
+    context = { references, scopes, types, definitions, imports, resolutions, ...make_export_chain_context() };
   });
 
   describe("Resolves to function symbol", () => {

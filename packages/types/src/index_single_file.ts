@@ -59,9 +59,6 @@ export interface TypeMemberInfo {
   /** Properties by name */
   readonly properties: ReadonlyMap<SymbolName, SymbolId>;
 
-  /** Constructor (if any) - classes only */
-  readonly constructor?: SymbolId;
-
   /** Types this extends (for inheritance lookup in 11.109.3) */
   readonly extends: readonly SymbolName[];
 }

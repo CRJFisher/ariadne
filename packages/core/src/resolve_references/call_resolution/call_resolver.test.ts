@@ -5,6 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
+import { make_export_chain_context } from "../file_folders_test_helper";
 import {
   resolve_calls_for_files,
   type CallResolutionContext,
@@ -60,7 +61,7 @@ describe("resolve_calls_for_files", () => {
     references = new ReferenceRegistry();
     imports = new ImportGraph();
     resolutions = new ResolutionRegistry();
-    context = { references, scopes, types, definitions, imports, resolutions };
+    context = { references, scopes, types, definitions, imports, resolutions, ...make_export_chain_context() };
   });
 
   describe("Empty inputs", () => {

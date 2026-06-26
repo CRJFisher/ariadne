@@ -362,16 +362,15 @@ describe("Project Integration - Python", () => {
       expect(type_info).toBeDefined();
       if (!type_info) return;
 
-      // Verify Python __init__ is captured as constructor
-      expect(type_info.constructor).toBeDefined();
-      if (!type_info.constructor) return;
+      // Verify Python __init__ is keyed into the member index as the constructor
+      const user_members = project.definitions
+        .get_member_index()
+        .get(user_class!.symbol_id);
+      const init_id = user_members?.get("__init__" as SymbolName);
+      expect(init_id).toBeDefined();
 
-      // Verify the constructor is the __init__ method
-      const constructor_def = project.definitions.get(type_info.constructor);
-      expect(constructor_def).toBeDefined();
-      if (constructor_def && constructor_def.kind === "method") {
-        expect(constructor_def.name).toBe("__init__");
-      }
+      const constructor_def = project.definitions.get(init_id!);
+      expect(constructor_def?.name).toBe("__init__" as SymbolName);
 
       // Verify instance methods exist
       expect(type_info.methods.size).toBeGreaterThan(0);
@@ -693,8 +692,11 @@ class Service:
       expect(type_info).toBeDefined();
       if (!type_info) return;
 
-      // Verify __init__ is captured as constructor
-      expect(type_info.constructor).toBeDefined();
+      // Verify __init__ is keyed into the member index as the constructor
+      const user_members = project.definitions
+        .get_member_index()
+        .get(user_class!.symbol_id);
+      expect(user_members?.get("__init__" as SymbolName)).toBeDefined();
 
       // Verify instance methods also exist
       expect(type_info.methods.size).toBeGreaterThan(0);

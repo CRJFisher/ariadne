@@ -17,6 +17,7 @@ import type {
   SymbolId,
   SymbolName,
   FilePath,
+  Language,
   ConstructorCallReference,
   ClassDefinition,
   Result,
@@ -24,7 +25,9 @@ import type {
 } from "@ariadnejs/types";
 import { err, ok } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../registries/definition";
+import type { ExportRegistry } from "../registries/export";
 import type { ResolutionRegistry } from "../resolve_references";
+import type { FileSystemFolder } from "../file_folders";
 import { resolve_namespace_export } from "./method_lookup";
 
 /**
@@ -41,6 +44,9 @@ import { resolve_namespace_export } from "./method_lookup";
  * @param call_ref - Constructor call reference from semantic index
  * @param definitions - Definition registry for class lookup
  * @param resolutions - Resolution registry with eager resolutions
+ * @param exports - Export registry (for following namespace re-export chains)
+ * @param languages - File-path → language map (for module-path resolution in re-export chains)
+ * @param root_folder - Project root folder (for module-path resolution in re-export chains)
  * @param import_source_resolver - Optional resolver mapping a namespace import symbol to its source file
  * @returns Array of resolved constructor/class symbol_ids (empty if resolution fails)
  */
@@ -48,6 +54,9 @@ export function resolve_constructor_call(
   call_ref: ConstructorCallReference,
   definitions: DefinitionRegistry,
   resolutions: ResolutionRegistry,
+  exports: ExportRegistry,
+  languages: ReadonlyMap<FilePath, Language>,
+  root_folder: FileSystemFolder,
   import_source_resolver?: (import_id: SymbolId) => FilePath | undefined
 ): Result<SymbolId[], ResolutionFailure> {
   let class_symbol: SymbolId | null = null;
@@ -60,7 +69,7 @@ export function resolve_constructor_call(
       if (namespace_def?.kind === "import" && namespace_def.import_kind === "namespace") {
         const source_file = import_source_resolver(namespace_id);
         if (source_file) {
-          class_symbol = resolve_namespace_export(source_file, call_ref.property_chain[1], definitions);
+          class_symbol = resolve_namespace_export(source_file, call_ref.property_chain[1], exports, languages, root_folder);
         }
       }
     }

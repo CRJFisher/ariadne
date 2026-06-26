@@ -15,11 +15,14 @@ import type {
   SymbolId,
   SymbolName,
   FilePath,
+  Language,
   Result,
   ResolutionFailure,
 } from "@ariadnejs/types";
 import { err, ok } from "@ariadnejs/types";
 import { DefinitionRegistry } from "../registries/definition";
+import type { ExportRegistry } from "../registries/export";
+import type { FileSystemFolder } from "../file_folders";
 import type { ReceiverResolutionContext } from "./receiver_resolution";
 
 /**
@@ -54,7 +57,13 @@ export function resolve_method_on_type(
         partial_info: { resolved_receiver_type: receiver_type },
       });
     }
-    const sym = resolve_namespace_export(source_file, method_name, definitions);
+    const sym = resolve_namespace_export(
+      source_file,
+      method_name,
+      context.exports,
+      context.languages,
+      context.root_folder
+    );
     if (!sym) {
       return err({
         stage: "method_lookup",
@@ -89,7 +98,13 @@ export function resolve_method_on_type(
     // (e.g. `from training import pipeline` where pipeline is a .py file)
     const submodule_path = context.imports.get_submodule_import_path(receiver_type);
     if (submodule_path) {
-      const sym = resolve_namespace_export(submodule_path, method_name, definitions);
+      const sym = resolve_namespace_export(
+        submodule_path,
+        method_name,
+        context.exports,
+        context.languages,
+        context.root_folder
+      );
       if (!sym) {
         return err({
           stage: "method_lookup",
@@ -145,6 +160,14 @@ export function resolve_method_on_type(
       reason: "method_not_on_type",
       partial_info: { resolved_receiver_type: receiver_type },
     });
+  }
+
+  // A constructor keyed into the member index (self.__init__(),
+  // super().__init__()) targets exactly one concrete constructor. Skip the
+  // class-polymorphic expansion below so it does not fan a single constructor
+  // call out to every subclass's constructor.
+  if (definitions.get(method_symbol)?.kind === "constructor") {
+    return ok([method_symbol]);
   }
 
   // Check if this is a polymorphic call (receiver is an interface)
@@ -311,30 +334,35 @@ function get_transitive_subtypes(
 }
 
 /**
- * Look up a named export in a source file by name.
+ * Look up a named export in a source file, following re-export chains.
  *
  * Used for namespace imports (`import * as ns from './mod'`) and
- * constructor resolution (`new ns.Foo()` → find `Foo` in `mod`).
+ * constructor resolution (`new ns.Foo()` → find `Foo` in `mod`). Delegates
+ * to the export-chain follower so a barrel re-export
+ * (`mod.ts: export { Foo } from './impl'`) resolves through to the terminal
+ * definition in `impl`, not just same-file exports.
  *
  * @param source_file - The file path of the source module
  * @param export_name - Name of the exported symbol to find
- * @param definitions - Definition registry
+ * @param exports - Export registry holding per-file export metadata
+ * @param languages - File-path → language map (for module-path resolution)
+ * @param root_folder - Project root folder (for module-path resolution)
  * @returns The exported symbol id, or null if not found
  */
 export function resolve_namespace_export(
   source_file: FilePath,
   export_name: SymbolName,
-  definitions: DefinitionRegistry
+  exports: ExportRegistry,
+  languages: ReadonlyMap<FilePath, Language>,
+  root_folder: FileSystemFolder
 ): SymbolId | null {
-  const source_defs = definitions.get_exportable_definitions_in_file(source_file);
-
-  for (const def of source_defs) {
-    if (def.name === export_name && def.kind !== "import" && def.is_exported) {
-      return def.symbol_id;
-    }
-  }
-
-  return null;
+  return exports.resolve_export_chain(
+    source_file,
+    export_name,
+    "namespace",
+    languages,
+    root_folder
+  );
 }
 
 /**

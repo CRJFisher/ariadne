@@ -22,6 +22,7 @@ import type {
   MethodCallReference,
   FunctionCallReference,
   ConstructorCallReference,
+  Language,
   Result,
   ResolutionFailure,
 } from "@ariadnejs/types";
@@ -30,7 +31,9 @@ import type { DefinitionRegistry } from "../registries/definition";
 import type { TypeRegistry } from "../registries/type";
 import type { ScopeRegistry } from "../registries/scope";
 import type { ReferenceRegistry } from "../registries/reference";
+import type { ExportRegistry } from "../registries/export";
 import type { ImportGraph } from "../../project/import_graph";
+import type { FileSystemFolder } from "../file_folders";
 import type { CallResolutionResult } from "../resolution_state";
 import type { ResolutionRegistry } from "../resolve_references";
 import { detect_indirect_reachability } from "../indirect_reachability";
@@ -61,6 +64,9 @@ export interface CallResolutionContext {
   readonly definitions: DefinitionRegistry;
   readonly imports: ImportGraph;
   readonly resolutions: ResolutionRegistry;
+  readonly exports: ExportRegistry;
+  readonly languages: ReadonlyMap<FilePath, Language>;
+  readonly root_folder: FileSystemFolder;
 }
 
 /**
@@ -208,7 +214,10 @@ function resolve_calls(
             context.definitions,
             context.types,
             context.resolutions,
-            context.imports
+            context.imports,
+            context.exports,
+            context.languages,
+            context.root_folder
           );
 
           // If standard resolution failed, try collection dispatch resolution.
@@ -242,6 +251,9 @@ function resolve_calls(
             ref,
             context.definitions,
             context.resolutions,
+            context.exports,
+            context.languages,
+            context.root_folder,
             (import_id) => context.imports.get_resolved_import_path(import_id)
           );
           break;

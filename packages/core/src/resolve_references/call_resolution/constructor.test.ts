@@ -11,6 +11,9 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { resolve_constructor_call, find_constructor_in_class_hierarchy, include_constructors_for_class_symbols } from "./constructor";
 import { DefinitionRegistry } from "../registries/definition";
 import { ResolutionRegistry } from "../resolve_references";
+import { ExportRegistry } from "../registries/export";
+import type { FileSystemFolder } from "../file_folders";
+import { make_export_chain_context } from "../file_folders_test_helper";
 import { set_test_resolutions, unwrap } from "../resolve_references.test";
 import { create_constructor_call_reference } from "../../index_single_file/references/factories";
 import { class_symbol, is_err } from "@ariadnejs/types";
@@ -20,6 +23,7 @@ import type {
   ScopeId,
   Location,
   FilePath,
+  Language,
   MethodDefinition,
   ClassDefinition,
   ConstructorDefinition,
@@ -45,10 +49,14 @@ const MOCK_LOCATION: Location = {
 describe("Constructor Call Resolution", () => {
   let definitions: DefinitionRegistry;
   let resolutions: ResolutionRegistry;
+  let exports: ExportRegistry;
+  let languages: Map<FilePath, Language>;
+  let root_folder: FileSystemFolder;
 
   beforeEach(() => {
     definitions = new DefinitionRegistry();
     resolutions = new ResolutionRegistry();
+    ({ exports, languages, root_folder } = make_export_chain_context());
   });
 
   describe("Resolves to constructor symbol", () => {
@@ -109,7 +117,10 @@ describe("Constructor Call Resolution", () => {
       const resolved = resolve_constructor_call(
         call_ref,
         definitions,
-        resolutions
+        resolutions,
+        exports,
+        languages,
+        root_folder
       );
 
       // Assert - should resolve to constructor symbol, not class symbol
@@ -182,7 +193,10 @@ describe("Constructor Call Resolution", () => {
       const resolved = resolve_constructor_call(
         call_ref,
         definitions,
-        resolutions
+        resolutions,
+        exports,
+        languages,
+        root_folder
       );
 
       // Assert
@@ -229,7 +243,10 @@ describe("Constructor Call Resolution", () => {
       const resolved = resolve_constructor_call(
         call_ref,
         definitions,
-        resolutions
+        resolutions,
+        exports,
+        languages,
+        root_folder
       );
 
       // Assert - falls back to class symbol
@@ -268,7 +285,10 @@ describe("Constructor Call Resolution", () => {
       const resolved = resolve_constructor_call(
         call_ref,
         definitions,
-        resolutions
+        resolutions,
+        exports,
+        languages,
+        root_folder
       );
 
       expect(unwrap(resolved)).toEqual([class_id]);
@@ -289,7 +309,10 @@ describe("Constructor Call Resolution", () => {
       const resolved = resolve_constructor_call(
         call_ref,
         definitions,
-        resolutions
+        resolutions,
+        exports,
+        languages,
+        root_folder
       );
 
       expect(resolved.ok).toBe(false);
@@ -332,7 +355,10 @@ describe("Constructor Call Resolution", () => {
       const resolved = resolve_constructor_call(
         call_ref,
         definitions,
-        resolutions
+        resolutions,
+        exports,
+        languages,
+        root_folder
       );
 
       // Function is not a class, so resolution fails
@@ -362,7 +388,10 @@ describe("Constructor Call Resolution", () => {
       const resolved = resolve_constructor_call(
         call_ref,
         definitions,
-        resolutions
+        resolutions,
+        exports,
+        languages,
+        root_folder
       );
 
       expect(resolved.ok).toBe(false);
@@ -415,7 +444,10 @@ describe("Constructor Call Resolution", () => {
       const resolved = resolve_constructor_call(
         call_ref,
         definitions,
-        resolutions
+        resolutions,
+        exports,
+        languages,
+        root_folder
       );
 
       // Should NOT find the "constructor" in methods array

@@ -405,6 +405,9 @@ export class Project {
           affected_index,
           this.definitions,
           this.resolutions,
+          this.exports,
+          languages,
+          root_folder,
           (import_id) => this.imports.get_resolved_import_path(import_id),
         );
       }
@@ -424,6 +427,9 @@ export class Project {
       this.types,
       this.definitions,
       this.imports,
+      this.exports,
+      languages,
+      root_folder,
     );
     profiler.end("resolve_calls");
   }
@@ -487,6 +493,9 @@ export class Project {
             dependent_index,
             this.definitions,
             this.resolutions,
+            this.exports,
+            languages,
+            this.root_folder,
             (import_id) => this.imports.get_resolved_import_path(import_id)
           );
         }
@@ -499,7 +508,10 @@ export class Project {
         this.scopes,
         this.types,
         this.definitions,
-        this.imports
+        this.imports,
+        this.exports,
+        languages,
+        this.root_folder
       );
     }
   }
