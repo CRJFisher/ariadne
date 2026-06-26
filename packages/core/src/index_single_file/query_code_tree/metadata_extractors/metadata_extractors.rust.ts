@@ -112,6 +112,34 @@ function extract_rust_type(node: SyntaxNode | null | undefined): string | undefi
 }
 
 /**
+ * Flatten a Rust scoped path node into its ordered segment names, dropping the
+ * turbofish at every level.
+ *
+ * `worker::create` → ["worker", "create"]; `crate::runtime::Driver` →
+ * ["crate", "runtime", "Driver"]; `Cell::<u8>` → ["Cell"]; `Self` → ["Self"].
+ * Used by `extract_call_path_prefix` to carry the qualifier of a qualified call.
+ */
+function scoped_path_segments(node: SyntaxNode): string[] {
+  switch (node.type) {
+    case "scoped_identifier":
+    case "scoped_type_identifier": {
+      const path_node = node.childForFieldName("path");
+      const name_node = node.childForFieldName("name");
+      const prefix = path_node ? scoped_path_segments(path_node) : [];
+      return name_node ? [...prefix, name_node.text] : prefix;
+    }
+    // Turbofish segment (`Cell::<u8>`) — keep the bare type, drop the arguments.
+    case "generic_type": {
+      const type_node = node.childForFieldName("type");
+      return type_node ? scoped_path_segments(type_node) : [];
+    }
+    default:
+      // Leaf segment: identifier, type_identifier, primitive_type, crate/self/super.
+      return [node.text];
+  }
+}
+
+/**
  * Rust metadata extractors implementation
  */
 export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
@@ -772,6 +800,28 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
       }
     }
 
+    // Qualified path captured directly: the call node is the `scoped_identifier`
+    // itself (`worker::create`, `Parker::make`) or, for associated constructors,
+    // the captured path child (`crate::runtime::Driver`). The terminal name is the
+    // scoped_identifier's `name` field. A bare `identifier` is deliberately NOT
+    // handled here so it keeps returning `undefined` (the builder then falls back
+    // to `capture.text`, which is correct for `Self`/`Config`).
+    if (node.type === "scoped_identifier") {
+      const name_node = node.childForFieldName("name");
+      if (name_node) {
+        return name_node.text as SymbolName;
+      }
+    }
+
+    // Turbofish type captured as the constructor path child (`Cell::<u8>`): the
+    // terminal name is the bare `type` field, with the turbofish dropped.
+    if (node.type === "generic_type") {
+      const type_node = node.childForFieldName("type");
+      if (type_node) {
+        return type_node.text as SymbolName;
+      }
+    }
+
     // --- Struct literal expressions ---
     // Struct literals (e.g. `models::Struct { ... }`) are captured alongside
     // call expressions and need name extraction via the same interface.
@@ -808,5 +858,30 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
     }
 
     return undefined;
+  },
+
+  /**
+   * Extract the scoped-path qualifier of a qualified Rust call.
+   *
+   * The terminal name is reduced to a bare name by `extract_call_name`; this
+   * carries the path that scopes that lookup so call resolution can honour the
+   * author's qualifier instead of resolving the bare terminal in scope.
+   *
+   * `"function"` mode drops the terminal segment — the captured node is the
+   * whole `scoped_identifier` (`worker::create` → ["worker"]). `"constructor"`
+   * mode keeps the full type path — the captured node is already the path child
+   * (`crate::runtime::Driver` → ["crate","runtime","Driver"], `Cell::<u8>` →
+   * ["Cell"], `Self` → ["Self"]). Returns undefined when no qualifier remains
+   * (a bare unqualified call).
+   */
+  extract_call_path_prefix(
+    node: SyntaxNode,
+    mode: "function" | "constructor"
+  ): readonly SymbolName[] | undefined {
+    const segments = scoped_path_segments(node);
+    const prefix = mode === "function" ? segments.slice(0, -1) : segments;
+    return prefix.length > 0
+      ? prefix.map((segment) => segment as SymbolName)
+      : undefined;
   },
 };

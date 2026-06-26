@@ -403,19 +403,56 @@ describe("Project Integration - Rust", () => {
       expect(local_helper).toBeDefined();
       expect(local_helper!.location.file_path).toContain("shadowing.rs");
 
-      // helper() calls in main() and test_shadowing() should resolve to LOCAL definition
-      const helper_calls = shadowing_index!.references.filter(
+      // Bare helper() calls (main(), test_shadowing()) carry no path_prefix and
+      // resolve to the LOCAL definition — the terminal-name reduction does not
+      // collapse the qualified call onto them.
+      const bare_helper_calls = shadowing_index!.references.filter(
         (r): r is FunctionCallReference =>
           r.kind === "function_call" &&
-          r.name === ("helper" as SymbolName)
+          r.name === ("helper" as SymbolName) &&
+          r.path_prefix === undefined
       );
-      expect(helper_calls.length).toBe(2);
+      expect(bare_helper_calls.length).toBe(2);
 
-      for (const call of helper_calls) {
+      for (const call of bare_helper_calls) {
         const resolved = project.resolutions.resolve(call.scope_id, call.name);
         expect(resolved).toBeDefined();
         expect(resolved).toBe(local_helper!.symbol_id);
       }
+
+      // The qualified utils::helper() call reduces to terminal `helper` with
+      // path_prefix ["utils"] — exactly one such call.
+      const qualified_helper_calls = shadowing_index!.references.filter(
+        (r): r is FunctionCallReference =>
+          r.kind === "function_call" &&
+          r.name === ("helper" as SymbolName) &&
+          r.path_prefix !== undefined
+      );
+      expect(qualified_helper_calls.length).toBe(1);
+      expect(qualified_helper_calls[0].path_prefix).toEqual([
+        "utils",
+      ] as SymbolName[]);
+
+      // Regression guard: the qualified utils::helper() must resolve to the
+      // IMPORT (utils.rs), not the local shadow. The qualifier overrides the
+      // last-write-wins scope map that bare helper() rides.
+      const utils_helper = Array.from(
+        project.get_index_single_file(utils_file)!.functions.values()
+      ).find((f) => f.name === ("helper" as SymbolName));
+      expect(utils_helper).toBeDefined();
+
+      const call_graph = project.get_call_graph();
+      const use_original_node = Array.from(call_graph.nodes.values()).find(
+        (n) =>
+          project.definitions.get(n.symbol_id)?.name ===
+          ("use_original_helper" as SymbolName)
+      );
+      expect(use_original_node).toBeDefined();
+
+      const qualified_targets = use_original_node!.enclosed_calls
+        .filter((c) => c.name === ("helper" as SymbolName))
+        .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
+      expect(qualified_targets).toEqual([utils_helper!.symbol_id]);
 
       // process_data() call should resolve to utils.rs (not shadowed)
       const process_call = shadowing_index!.references.find(
@@ -434,6 +471,84 @@ describe("Project Integration - Rust", () => {
       const process_def = project.definitions.get(process_resolved!);
       expect(process_def).toBeDefined();
       expect(process_def!.location.file_path).toContain("utils.rs");
+    });
+  });
+
+  describe("Qualified Call Resolution", () => {
+    it("resolves a module-qualified call (worker::create) to the module function", async () => {
+      const worker_file = file_path("modules/worker.rs");
+      const uses_worker_file = file_path("modules/uses_worker.rs");
+      project.update_file(worker_file, load_source("modules/worker.rs"));
+      project.update_file(uses_worker_file, load_source("modules/uses_worker.rs"));
+
+      // worker::create(7) reduces to terminal `create` with path_prefix ["worker"]
+      const uses_worker_index = project.get_index_single_file(uses_worker_file)!;
+      const create_call = uses_worker_index.references.find(
+        (r): r is FunctionCallReference =>
+          r.kind === "function_call" && r.name === ("create" as SymbolName)
+      );
+      expect(create_call).toBeDefined();
+      expect(create_call!.path_prefix).toEqual(["worker"] as SymbolName[]);
+
+      const worker_create = Array.from(
+        project.get_index_single_file(worker_file)!.functions.values()
+      ).find((f) => f.name === ("create" as SymbolName));
+      expect(worker_create).toBeDefined();
+
+      const call_graph = project.get_call_graph();
+      const run_node = Array.from(call_graph.nodes.values()).find(
+        (n) =>
+          project.definitions.get(n.symbol_id)?.name === ("run" as SymbolName)
+      );
+      expect(run_node).toBeDefined();
+
+      const targets = run_node!.enclosed_calls
+        .filter((c) => c.name === ("create" as SymbolName))
+        .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
+      expect(targets).toEqual([worker_create!.symbol_id]);
+
+      // create is now reachable from run(), not a false-positive entry point.
+      expect(new Set(call_graph.entry_points).has(worker_create!.symbol_id)).toBe(
+        false
+      );
+    });
+
+    it("resolves a type-qualified associated function (Parker::make) via the member index", async () => {
+      const af_file = file_path("modules/associated_fn.rs");
+      project.update_file(af_file, load_source("modules/associated_fn.rs"));
+
+      const af_index = project.get_index_single_file(af_file)!;
+      const make_call = af_index.references.find(
+        (r): r is FunctionCallReference =>
+          r.kind === "function_call" && r.name === ("make" as SymbolName)
+      );
+      expect(make_call).toBeDefined();
+      expect(make_call!.path_prefix).toEqual(["Parker"] as SymbolName[]);
+
+      const parker = Array.from(af_index.classes.values()).find(
+        (c) => c.name === ("Parker" as SymbolName)
+      );
+      expect(parker).toBeDefined();
+      const make_member = project.definitions
+        .get_member_index()
+        .get(parker!.symbol_id)
+        ?.get("make" as SymbolName);
+      expect(make_member).toBeDefined();
+
+      const call_graph = project.get_call_graph();
+      const build_node = Array.from(call_graph.nodes.values()).find(
+        (n) =>
+          project.definitions.get(n.symbol_id)?.name === ("build" as SymbolName)
+      );
+      expect(build_node).toBeDefined();
+
+      const targets = build_node!.enclosed_calls
+        .filter((c) => c.name === ("make" as SymbolName))
+        .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
+      expect(targets).toEqual([make_member!]);
+
+      // make is reachable from build(), not a false-positive entry point.
+      expect(new Set(call_graph.entry_points).has(make_member!)).toBe(false);
     });
   });
 

@@ -130,6 +130,14 @@ export interface FunctionCallReference extends BaseReference {
   readonly kind: "function_call";
   /** Location of variable being assigned if this call may be a class instantiation (e.g. obj = SomeClass()) */
   readonly potential_construct_target?: Location;
+  /**
+   * Rust scoped-path qualifier that scopes the terminal-name lookup, e.g.
+   * ["worker"] for `worker::create()` or ["Parker"] for `Parker::make()`.
+   * Held separately from the TypeScript `[namespace, class]` `property_chain`
+   * convention: this is the module/type path that disambiguates the terminal
+   * (including against a local shadow), not a namespace-class pair.
+   */
+  readonly path_prefix?: readonly SymbolName[];
 }
 
 /**
@@ -159,6 +167,14 @@ export interface ConstructorCallReference extends BaseReference {
   readonly construct_target?: Location;
   /** Namespace-qualified constructors: ["models", "User"] for new models.User() */
   readonly property_chain?: readonly SymbolName[];
+  /**
+   * Rust full type path of an associated constructor, e.g.
+   * ["crate","runtime","Driver"] for `crate::runtime::Driver::new()` or
+   * ["Cell"] for `Cell::<u8>::new()`. Held separately from `property_chain`,
+   * whose two TypeScript-oriented consumers bake in a `[namespace, class]`
+   * index convention; this is a type-last path that scopes the terminal lookup.
+   */
+  readonly path_prefix?: readonly SymbolName[];
 }
 
 /**

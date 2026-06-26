@@ -107,7 +107,8 @@ export function create_function_call_reference(
   name: SymbolName,
   location: Location,
   scope_id: ScopeId,
-  potential_construct_target?: Location
+  potential_construct_target?: Location,
+  path_prefix?: readonly SymbolName[]
 ): FunctionCallReference {
   return {
     kind: "function_call",
@@ -115,6 +116,7 @@ export function create_function_call_reference(
     location,
     scope_id,
     ...(potential_construct_target !== undefined && { potential_construct_target }),
+    ...(path_prefix !== undefined && { path_prefix }),
   };
 }
 
@@ -153,7 +155,8 @@ export function create_constructor_call_reference(
   location: Location,
   scope_id: ScopeId,
   construct_target?: Location,
-  property_chain?: readonly SymbolName[]
+  property_chain?: readonly SymbolName[],
+  path_prefix?: readonly SymbolName[]
 ): ConstructorCallReference {
   return {
     kind: "constructor_call",
@@ -162,6 +165,7 @@ export function create_constructor_call_reference(
     scope_id,
     ...(construct_target !== undefined && { construct_target }),
     ...(property_chain !== undefined && { property_chain }),
+    ...(path_prefix !== undefined && { path_prefix }),
   };
 }
 

@@ -99,6 +99,17 @@ export interface MetadataExtractors {
    * Extract the method or function name from a call node
    */
   extract_call_name(node: SyntaxNode): SymbolName | undefined;
+
+  /**
+   * Extract the scoped-path qualifier of a qualified call (Rust only).
+   *
+   * TypeScript/JavaScript/Python carry no scoped-path prefix on a call, so they
+   * omit this method and `references.ts` invokes it optionally (`?.`).
+   */
+  extract_call_path_prefix?(
+    node: SyntaxNode,
+    mode: "function" | "constructor"
+  ): readonly SymbolName[] | undefined;
 }
 
 /**

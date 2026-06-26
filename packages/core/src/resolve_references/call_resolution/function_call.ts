@@ -15,6 +15,8 @@
 
 import type {
   SymbolId,
+  SymbolName,
+  ScopeId,
   FunctionCallReference,
   Result,
   ResolutionFailure,
@@ -24,6 +26,125 @@ import type { CallResolutionContext } from "./call_resolver";
 import type { ResolutionRegistry } from "../resolve_references";
 import { resolve_collection_dispatch } from "./collection_dispatch";
 import { resolve_callable_instance } from "./callable_instance.python";
+
+/**
+ * Leading path segments that pin a Rust path to a module root rather than
+ * naming a resolvable binding in scope.
+ */
+const PATH_ANCHORS: ReadonlySet<string> = new Set(["crate", "self", "super"]);
+
+/**
+ * Resolve a qualified call via its scoped-path prefix, honouring the author's
+ * qualifier instead of the bare terminal — which a same-name local definition
+ * can shadow in the scope map.
+ *
+ * - Type-qualified associated function (`Parker::make`): resolve the qualifier
+ *   to a class, then look up the terminal in its member index. Associated
+ *   functions are stored as `kind: "method"`; the method-rejection gate that
+ *   guards bare function calls is bypassed here because the qualifier names the
+ *   owning type explicitly.
+ * - Module-qualified (`utils::helper`, including the local-shadow case):
+ *   resolve via the matching `use mod::terminal` import to its cross-file
+ *   target, so the call binds to the import rather than a same-name local.
+ *
+ * Returns null on a path miss; the caller then falls back to bare resolution.
+ */
+function resolve_via_path_prefix(
+  ref: FunctionCallReference,
+  context: CallResolutionContext,
+  resolver: ResolutionRegistry
+): SymbolId | null {
+  const prefix = normalize_path_prefix(ref.path_prefix ?? []);
+  if (prefix.length === 0) return null;
+
+  const qualifier = prefix[prefix.length - 1];
+  const terminal = ref.name;
+
+  // Type-qualified associated function: qualifier is the owning struct/enum.
+  const qualifier_id = resolver.resolve(ref.scope_id, qualifier);
+  if (qualifier_id) {
+    const qualifier_def = context.definitions.get(qualifier_id);
+    if (qualifier_def?.kind === "class") {
+      const member = context.definitions
+        .get_member_index()
+        .get(qualifier_id)
+        ?.get(terminal);
+      if (member) return member;
+    }
+  }
+
+  // Module-qualified: bind to the `use <prefix>::<terminal>` import.
+  return resolve_via_import_anchor(ref, prefix, terminal, context);
+}
+
+/**
+ * Drop leading crate/self/super anchors — they pin the path to a module root
+ * but do not name a binding the scope resolver can look up.
+ */
+function normalize_path_prefix(
+  path_prefix: readonly SymbolName[]
+): readonly SymbolName[] {
+  let start = 0;
+  while (start < path_prefix.length && PATH_ANCHORS.has(path_prefix[start])) {
+    start++;
+  }
+  return path_prefix.slice(start);
+}
+
+/**
+ * Find the `use <prefix>::<terminal>` import in lexical scope and resolve it to
+ * its cross-file target via the export chain. Matching on the import path binds
+ * the qualified call to the import even when a local definition shadows the
+ * terminal name in the scope map — the disambiguation the prefix exists to make.
+ */
+function resolve_via_import_anchor(
+  ref: FunctionCallReference,
+  prefix: readonly SymbolName[],
+  terminal: SymbolName,
+  context: CallResolutionContext
+): SymbolId | null {
+  const prefix_str = prefix.join("::");
+  const qualifier = prefix[prefix.length - 1];
+
+  let scope_id: ScopeId | null = ref.scope_id;
+  while (scope_id) {
+    for (const imp of context.imports.get_scope_imports(scope_id)) {
+      // Namespace imports bind the module name, not the terminal.
+      if (imp.import_kind === "namespace") continue;
+
+      const imported_name = (imp.original_name ?? imp.name) as SymbolName;
+      if (imported_name !== terminal) continue;
+
+      // `import_path` is a `ModulePath` brand; widen to compare against the
+      // plain prefix string and the `SymbolName` qualifier.
+      const import_path: string = imp.import_path;
+      const matches_path =
+        import_path === prefix_str ||
+        import_path === qualifier ||
+        import_path.endsWith(`::${qualifier}`);
+      if (!matches_path) continue;
+
+      const source_file = context.imports.get_resolved_import_path(
+        imp.symbol_id
+      );
+      if (!source_file) continue;
+
+      const resolved = context.exports.resolve_export_chain(
+        source_file,
+        imported_name,
+        imp.import_kind,
+        context.languages,
+        context.root_folder
+      );
+      if (resolved) return resolved;
+    }
+
+    const scope = context.scopes.get_scope(scope_id);
+    scope_id = scope?.parent_id ?? null;
+  }
+
+  return null;
+}
 
 /**
  * Find alternative resolution by skipping method/constructor definitions.
@@ -131,6 +252,16 @@ export function resolve_function_call(
   context: CallResolutionContext,
   resolver: ResolutionRegistry
 ): Result<SymbolId[], ResolutionFailure> {
+  // Path-qualified calls resolve via the qualifier first — the author wrote the
+  // path, so honour it. This binds the terminal under its module/type rather
+  // than letting a same-name local shadow capture it via the scope map.
+  if (ref.path_prefix && ref.path_prefix.length > 0) {
+    const via_path = resolve_via_path_prefix(ref, context, resolver);
+    if (via_path) {
+      return ok([via_path]);
+    }
+  }
+
   // Step 1: Resolve function name
   const name_result = find_function_resolution(ref, context, resolver);
 

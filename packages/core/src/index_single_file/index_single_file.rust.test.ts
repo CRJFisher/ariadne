@@ -877,6 +877,47 @@ fn main() {
       const config_constructor = constructor_calls.find((c) => c.name === "Config");
       expect(config_constructor).toBeDefined();
     });
+
+    it("reduces qualified calls to the terminal name and carries the path prefix", () => {
+      const code = `
+mod worker {
+    pub fn create(id: u32) -> u32 { id }
+}
+
+fn main() {
+    worker::create(7);
+    crate::runtime::Driver::new();
+    Cell::<u8>::new();
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      // worker::create(7) → function call, terminal name `create`, prefix ["worker"]
+      const function_calls = index.references.filter(
+        (r): r is FunctionCallReference => r.kind === "function_call",
+      );
+      const create_call = function_calls.find((c) => c.name === "create");
+      expect(create_call).toBeDefined();
+      expect(create_call!.path_prefix).toEqual(["worker"]);
+
+      const constructor_calls = index.references.filter(
+        (r): r is ConstructorCallReference => r.kind === "constructor_call",
+      );
+
+      // crate::runtime::Driver::new() → constructor name `Driver`, full type path
+      const driver_ctor = constructor_calls.find((c) => c.name === "Driver");
+      expect(driver_ctor).toBeDefined();
+      expect(driver_ctor!.path_prefix).toEqual(["crate", "runtime", "Driver"]);
+
+      // Cell::<u8>::new() → constructor name `Cell`, turbofish stripped
+      const cell_ctor = constructor_calls.find((c) => c.name === "Cell");
+      expect(cell_ctor).toBeDefined();
+      expect(cell_ctor!.path_prefix).toEqual(["Cell"]);
+    });
   });
 
   // ============================================================================

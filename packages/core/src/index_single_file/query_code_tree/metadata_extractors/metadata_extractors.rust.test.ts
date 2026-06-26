@@ -1307,6 +1307,108 @@ impl MyStruct {
 
       expect(result).toBe("new");
     });
+
+    it("extracts the terminal name from a bare scoped_identifier call node", () => {
+      // The qualified-call capture hands the scoped_identifier itself, not the call.
+      const code = "worker::create(7)";
+      const tree = parser.parse(code);
+      const scoped = tree.rootNode.descendantsOfType("scoped_identifier")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_name(scoped);
+
+      expect(result).toBe("create");
+    });
+
+    it("extracts the terminal type name from a full constructor path node", () => {
+      const code = "crate::runtime::Driver::new()";
+      const tree = parser.parse(code);
+      const path_node = tree.rootNode
+        .descendantsOfType("scoped_identifier")
+        .find((n) => n.text === "crate::runtime::Driver");
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_name(path_node!);
+
+      expect(result).toBe("Driver");
+    });
+
+    it("extracts the type name from a turbofish constructor path, stripping the turbofish", () => {
+      const code = "Cell::<u8>::new()";
+      const tree = parser.parse(code);
+      const generic = tree.rootNode.descendantsOfType("generic_type")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_name(generic);
+
+      expect(result).toBe("Cell");
+    });
+  });
+
+  describe("extract_call_path_prefix", () => {
+    it("drops the terminal segment in function mode (worker::create → [worker])", () => {
+      const code = "worker::create(7)";
+      const tree = parser.parse(code);
+      const scoped = tree.rootNode.descendantsOfType("scoped_identifier")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_path_prefix!(
+        scoped,
+        "function",
+      );
+
+      expect(result).toEqual(["worker"]);
+    });
+
+    it("drops the terminal segment for a type-qualified associated fn (Parker::make → [Parker])", () => {
+      const code = "Parker::make(5)";
+      const tree = parser.parse(code);
+      const scoped = tree.rootNode.descendantsOfType("scoped_identifier")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_path_prefix!(
+        scoped,
+        "function",
+      );
+
+      expect(result).toEqual(["Parker"]);
+    });
+
+    it("keeps the full type path in constructor mode (crate::runtime::Driver)", () => {
+      const code = "crate::runtime::Driver::new()";
+      const tree = parser.parse(code);
+      const path_node = tree.rootNode
+        .descendantsOfType("scoped_identifier")
+        .find((n) => n.text === "crate::runtime::Driver");
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_path_prefix!(
+        path_node!,
+        "constructor",
+      );
+
+      expect(result).toEqual(["crate", "runtime", "Driver"]);
+    });
+
+    it("strips the turbofish from each segment in constructor mode (Cell::<u8> → [Cell])", () => {
+      const code = "Cell::<u8>::new()";
+      const tree = parser.parse(code);
+      const generic = tree.rootNode.descendantsOfType("generic_type")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_path_prefix!(
+        generic,
+        "constructor",
+      );
+
+      expect(result).toEqual(["Cell"]);
+    });
+
+    it("returns undefined for an unqualified call (no path prefix)", () => {
+      const code = "func()";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_path_prefix!(
+        call_expr,
+        "function",
+      );
+
+      expect(result).toBeUndefined();
+    });
   });
 
   describe("extract_receiver_info", () => {

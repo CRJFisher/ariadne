@@ -595,11 +595,16 @@ export class ReferenceBuilder {
         // ConstructorCallReference with proper construct_target
         const potential_construct_target = this.extractors?.extract_construct_target(capture.node, this.file_path);
 
+        // Rust qualified call (worker::create) — carry the path that scopes the
+        // terminal-name lookup so call resolution honours the author's qualifier.
+        const path_prefix = this.extractors?.extract_call_path_prefix?.(capture.node, "function");
+
         reference = create_function_call_reference(
           reference_name,
           location,
           scope_id,
-          potential_construct_target
+          potential_construct_target,
+          path_prefix
         );
         break;
       }
@@ -619,12 +624,17 @@ export class ReferenceBuilder {
           }
         }
 
+        // Rust associated constructor (crate::runtime::Driver::new) — carry the
+        // full type path that scopes the terminal lookup.
+        const path_prefix = this.extractors?.extract_call_path_prefix?.(capture.node, "constructor");
+
         reference = create_constructor_call_reference(
           reference_name,
           location,
           scope_id,
           construct_target,
-          property_chain
+          property_chain,
+          path_prefix
         );
         break;
       }
