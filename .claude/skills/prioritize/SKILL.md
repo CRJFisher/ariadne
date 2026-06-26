@@ -28,39 +28,42 @@ That script is the **only writer of `backlog/tasks/`** in the pipeline. It is
 never run on the autonomous sweep — graduation is always a human decision, which is
 what this skill exists to make. The investigation is design-only: the
 `refactor-investigator` reads `packages/core` but never writes it, and the
-plan/comprehension artifacts it stages graduate into `backlog/` only for the
-groups the user funds.
+comprehension doc it stages graduates into `backlog/` only for the groups the
+user funds.
 
 ## What the export does
 
-A real run mints **nested** backlog ids that mirror the plan tier tree, then for
-each selected exportable row:
+The backlog card body is **always** the architect's authored imperative work plan
+— `task_assignment.json`, produced by `refactor-task-architect` from the verified
+`refactor_plan.md`. The export adapter renders the card verbatim from that authored
+content; it never falls back to the plan engine's cheap, pre-investigation
+`PlanTask.body`. So a real export **requires** `--assignments <file>`; without it
+the script runs preview-only (`--dry-run`), listing the candidate rows whose ids
+the architect has not yet authored.
 
-1. assigns its backlog id from the plan tree (`assign_backlog_ids`): an
-   `architectural` root takes the next free top-level id (`TASK-347`); its
-   `fault_area` child nests as `TASK-347.1`; each `localized` leaf nests as
-   `TASK-347.1.<n>`, carrying a `parent_task_id` link and an `ordinal`,
-2. writes `backlog/tasks/<dotted-id> - <slug>.md` (rendered from the
-   `PlanTask`'s title/body),
-3. stamps the row's verbatim `dedup_key` into the task's `plan_dedup_key`
-   frontmatter — the idempotency link,
-4. flips the DB row `→ exported` (recording `exported_backlog_task`) and logs
-   one `export` `PlanSweepEvent`.
+A real (`--assignments`) run, for each authored backlog task:
 
-So a graduated change group lands as **one epic per group** (the architectural
-root) with the fault-area node and the concrete fixes nested beneath it. Within
-a sibling level the order is core fixes first (by descending impact), then the
-interim classifier work last (`medium` priority) — the `ordinal` field fixes
-that order in the tracker. A row whose plan-tree parent is not part of the same
-selection becomes its own top-level root, so a partial selection stays
-well-formed.
+1. resolves the architect's relative ids (`"1"`, `"1.1"`) to absolute backlog ids:
+   a top-level task takes the next free id (`TASK-347`); a sub-task nests as
+   `TASK-347.1`, carrying a `parent_task_id` link and an `ordinal`,
+2. writes `backlog/tasks/<dotted-id> - <slug>.md`, rendered from the authored
+   `title` / `description_md` / `acceptance_criteria`,
+3. stamps the verbatim `dedup_key` of the task's lowest-tier (architectural) source
+   row into `plan_dedup_key` — the idempotency link,
+4. flips **every** claimed source row `→ exported` (recording
+   `exported_backlog_task`) and logs one `export` `PlanSweepEvent` per row.
 
-Only `proposed` and `accepted` rows are exportable. A row already `exported`,
-or whose `dedup_key` a backlog task already carries, is skipped — so a re-run
-with the same arguments is a no-op.
+So a graduated change group lands as **one epic per group** (the fundamental
+refactor) with the genuinely-separate downstream adaptations nested beneath it as
+sub-tasks — the split the architect chose, not the plan tier tree. The collapsed
+rows (fault-area node, merged leaves) write no file of their own; they fold into
+the epic and are still flipped to `exported`.
 
-Promote whole change groups together (root + fault-area node + leaves) so the
-backlog tree is complete; that is what the workflow below builds toward.
+Only `proposed` and `accepted` rows are exportable. A row already `exported`, or
+whose `dedup_key` a backlog task already carries, is dropped from the selection —
+so its authored task finds no still-exportable rows and a re-run with the same
+arguments is a no-op. Every selected row must be claimed by some authored task's
+`plan_task_ids`, or the export errors (the architect's map is incomplete).
 
 ## Workflow
 
@@ -68,9 +71,9 @@ Prioritization is a conversation, not a single command. You build the picture of
 the candidate work, **deep-investigate each change group against the real
 `packages/core` code** to turn the plan's cheap routing-and-sizing into a
 concrete refactoring design, hand the user a comprehension doc per group to grasp
-it, decide together which groups graduate, then promote exactly that set — and
-graduate each funded group's refactor plan and comprehension doc into `backlog/`
-alongside its epic.
+it, decide together which groups graduate, then promote exactly that set — each
+funded group becoming backlog tasks authored from its verified design, with the
+comprehension doc graduated alongside the epic.
 
 The deep investigation runs on **every** candidate group, before the funding
 decision, so the user decides with full designs in hand. This is a deliberate
@@ -90,15 +93,17 @@ Always invoke with `node --import tsx`. Never `pnpm exec tsx` or `npx tsx`
 
 ### 1. Preview the candidates
 
-Run with filters and `--dry-run`. This lists the would-be backlog tasks and
-writes nothing — it is the raw prioritization view.
+Run with filters and `--dry-run`. This lists the candidate rows and writes
+nothing — the raw prioritization view. Backlog ids are not yet known (the
+architect authors them in step 6a), so the preview reports only the row ids.
 
 ```bash
 node --import tsx .claude/skills/plan/scripts/export_to_backlog.ts \
   --status proposed --dry-run
 ```
 
-The output lists each candidate as `{id, backlog_task, path}`.
+The output lists each candidate as `{id, backlog_task: "", path: ""}`; read the
+source rows (step 2) for the grouping signal.
 
 ### 2. Gather the change groups
 
@@ -184,22 +189,25 @@ Step 6a dispatches one architect per confirmed group, all in parallel, and waits
 for all to finish. Steps 6b and 6c then run per confirmed group, one group at a
 time.
 
-**Step 6a — assign backlog ids** (one `refactor-task-architect` per confirmed group):
+**Step 6a — author the backlog tasks** (one `refactor-task-architect` per confirmed group):
 
 Dispatch one `Task(refactor-task-architect)` per confirmed group. The agent reads
-`~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md` (sections 6 and 7),
-applies the natural-split criterion — one top-level task for the fundamental
-refactor, sub-tasks only for genuinely separate downstream adaptations — and
-writes a `BacklogIdAssignment` map with relative ids to
-`~/.ariadne/plan/prioritize/<fault_area>/task_assignment.json`. The plan engine's
-tier labels are a routing concept, not the splitting axis. Dispatch prompt:
+the full `~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md`, applies the
+natural-split criterion — one top-level task for the fundamental refactor,
+sub-tasks only for genuinely separate downstream adaptations — and **authors each
+task as an imperative work plan** (title + body + acceptance criteria) transformed
+from the verified design. It writes a `tasks[]` assignment file with relative ids
+to `~/.ariadne/plan/prioritize/<fault_area>/task_assignment.json`. The plan
+engine's tier labels are a routing concept, not the splitting axis; the cheap
+`PlanTask.body` is never carried over. Dispatch prompt:
 
-> Assign backlog ids for change group `<fault_area>`. The refactor plan is at
-> `~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md`. The plan task ids
+> Author the backlog tasks for change group `<fault_area>`. The refactor plan is
+> at `~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md`. The plan task ids
 > for this group are: `<row_id>`, `<row_id>`, … (architectural root, fault_area
 > node, localized leaves — the ids from your step 2 grouping for this
-> fault_area). Apply the natural-split criterion and write the
-> BacklogIdAssignment map to
+> fault_area). Apply the natural-split criterion, author each task's imperative
+> work plan from the refactor plan, and write the task_assignment.json (a
+> `tasks[]` array, every row id claimed by exactly one task's `plan_task_ids`) to
 > `~/.ariadne/plan/prioritize/<fault_area>/task_assignment.json`.
 
 Run these architects in parallel (one message per group) and wait for all to
@@ -211,34 +219,37 @@ complete before proceeding to 6b.
 node --import tsx .claude/skills/plan/scripts/export_to_backlog.ts \
   --fault-area <area> \
   --assignments ~/.ariadne/plan/prioritize/<area>/task_assignment.json \
-  > /tmp/export_summary_<area>.json
+  > "$SCRATCH/export_summary_<area>.json"
 ```
 
-The `--assignments` flag accepts the `task_assignment.json` produced in 6a and
-uses its `BacklogIdAssignment` map instead of computing ids from
-`assign_backlog_ids`. Without the flag the script uses `assign_backlog_ids` to
-derive ids from the plan tier tree. The `--fault-area <area>` selector picks the
-architectural root, fault-area node, and every localized leaf in one go.
+`--assignments` is **required** for a write: it supplies the authored `tasks[]`
+that become the backlog cards (without it the script only previews candidates).
+The `--fault-area <area>` selector picks the architectural root, fault-area node,
+and every localized leaf in one go — every one must be claimed by some authored
+task, or the export errors. Redirect the summary into your scratchpad directory
+(the sandbox blocks `/tmp`); use that path in 6c.
 
-**Step 6c — graduate the investigation docs** (reads the export summary, copies
-staged docs to `backlog/` for each funded architectural root):
+**Step 6c — graduate the comprehension doc** (reads the export summary, moves the
+staged comprehension doc beside the epic for each funded group):
 
 ```bash
 node --import tsx .claude/skills/plan/scripts/graduate_group_docs.ts \
-  --export-summary /tmp/export_summary_<area>.json
+  --export-summary "$SCRATCH/export_summary_<area>.json"
 ```
 
-This copies `~/.ariadne/plan/prioritize/<fault_area>/refactor_plan.md` to
-`backlog/docs/TASK-<id>-<slug>-refactor.md`, and **moves**
-`backlog/docs/<fault_area>.comprehension.html` to
-`backlog/tasks/task-<id> - <slug>.overview.html` — renamed to share the epic's
-filename prefix so it sorts beside it in folder views — using the backlog ids
-just minted by step 6b. The move consumes its staged source, so the funded
-group's comprehension HTML leaves `backlog/docs/` entirely. Groups with no staged
-docs (investigation did not run, or already graduated) are silently skipped — the
-script is idempotent. An unfunded group's `<fault_area>.comprehension.html` stays
-in `backlog/docs/` as a local-only file (gitignored, never committed); delete it
-once the decision is made, or leave it as a record of the investigation.
+This **moves** `backlog/docs/<fault_area>.comprehension.html` to
+`backlog/tasks/task-<id> - <slug>.overview.html` — sharing the epic's filename
+prefix (derived from the epic's rendered `.md` path) so it sorts beside it in
+folder views. The move consumes its staged source, so the funded group's
+comprehension HTML leaves `backlog/docs/` entirely. The verified `refactor_plan.md`
+is **not** copied into the repo — the epic's card is already its imperative
+transformation, so an in-repo design doc would duplicate it; the plan stays in
+`~/.ariadne` staging as the investigation record. Groups with no staged
+comprehension doc (investigation did not run, or already graduated) are silently
+skipped — the script is idempotent. An unfunded group's
+`<fault_area>.comprehension.html` stays in `backlog/docs/` as a local-only file
+(gitignored, never committed); delete it once the decision is made, or leave it as
+a record of the investigation.
 
 ## Selectors
 
@@ -248,7 +259,9 @@ once the decision is made, or leave it as a record of the investigation.
 | `--fault-area <area>`         | rows in one `AriadneFaultArea`                    |
 | `--priority core\|classifier` | core-fix rows, or classifier-authoring rows       |
 | `--id <db-task-id>`           | one exact row (repeatable); overrides the filters |
+| `--assignments <file>`        | authored `tasks[]`; **required to write**         |
 | `--dry-run`                   | list the selection, write nothing                 |
 
 With no selectors, every exportable (`proposed`/`accepted`) row is selected —
-always preview that with `--dry-run` first.
+always preview that with `--dry-run` first. A write requires `--assignments`; a
+run without it only previews the candidate rows.

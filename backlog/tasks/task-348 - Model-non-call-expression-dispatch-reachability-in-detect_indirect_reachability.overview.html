@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>entry_point_classification — funding decision aid</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --ink:#1f1e1c; --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  nav.toc{position:sticky;top:0;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 0}
+  nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.toc .brand{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.toc a{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:4px 10px}
+  nav.toc a:hover{border-color:var(--clay);color:var(--slate)}
+  main{width:90%;max-width:1600px;margin:0 auto;padding:28px 0 80px}
+  .prose{max-width:72ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:34px;line-height:1.12;margin:0 0 10px;letter-spacing:-.01em;max-width:26ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:23px;margin:50px 0 4px;letter-spacing:-.01em;scroll-margin-top:64px}
+  h3{font-family:var(--mono);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);margin:20px 0 8px}
+  .lead{font-size:16px;color:var(--g600);max-width:80ch;margin:0 0 6px}
+  code{font-family:var(--mono);font-size:.85em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .chip.rust strong{color:var(--rust)} .chip.olive strong{color:var(--olive)} .chip.clay strong{color:var(--clay)}
+  .cap{font-size:13.5px;color:var(--g600);margin:8px 2px 14px;max-width:84ch}
+  .cap b{color:var(--slate);font-weight:600}
+  /* callouts */
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:18px 0;max-width:90ch}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)} .callout.slate{border-left-color:var(--slate)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 6px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)}
+  .callout p{margin:0;font-size:14px}
+  .callout p+p{margin-top:8px}
+  .invert{background:var(--slate);border-radius:var(--r);padding:18px 22px;margin:18px 0;color:var(--ivory);max-width:none}
+  .invert .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--oat);margin:0 0 8px;display:block}
+  .invert b{color:#fff;font-weight:600}
+  .invert .big{font-family:var(--serif);font-size:19px;line-height:1.35;color:var(--ivory);margin:0}
+  .invert code{background:rgba(255,255,255,.12);color:#f0e9da}
+  /* diagram */
+  .ba{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin:14px 0}
+  .panel{background:var(--paper);border:1px solid var(--g200);padding:14px 16px 16px}
+  .panel.cur{border-radius:var(--r) 0 0 var(--r)}
+  .panel.pln{border-radius:0 var(--r) var(--r) 0;border-left:none}
+  .panel .ptitle{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;margin:0 0 8px}
+  .panel.cur .ptitle{color:var(--rust)} .panel.pln .ptitle{color:var(--olive)}
+  .panel svg{width:100%;height:auto;display:block}
+  .arrowcol{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 14px;background:var(--ivory)}
+  .arrowcol .a{font-size:26px;color:var(--clay);line-height:1}
+  .arrowcol .al{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);margin-top:6px;writing-mode:vertical-rl;transform:rotate(180deg)}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:12px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,.12)}
+  .legend i.add{background:var(--olive)} .legend i.del{background:var(--rust)} .legend i.mod{background:var(--clay)} .legend i.same{background:var(--oat)}
+  /* impact bars */
+  .impact{display:grid;grid-template-columns:170px 1fr;gap:10px 14px;align-items:center;margin:14px 0;max-width:980px}
+  .impact .lbl{font-family:var(--mono);font-size:12px;color:var(--slate);text-align:right}
+  .impact .lbl small{display:block;color:var(--g600);font-size:10.5px;font-weight:400}
+  .bar{position:relative;height:30px;background:var(--g100);border-radius:7px;overflow:hidden}
+  .bar .fill{position:absolute;top:0;left:0;height:100%;border-radius:7px;display:flex;align-items:center;padding-left:11px}
+  .bar .fill.tot{background:var(--slate)} .bar .fill.real{background:var(--olive)} .bar .fill.excl{background:var(--g400)} .bar .fill.now{background:var(--clay)}
+  .bar .v{font-family:var(--mono);font-size:12.5px;color:#fff;font-weight:600;white-space:nowrap}
+  .bar .v small{font-weight:400;opacity:.85}
+  /* decision table */
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13px}
+  th,td{text-align:left;padding:10px 11px;border-bottom:1px solid var(--g200);vertical-align:top}
+  th{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--g600);background:var(--paper);position:sticky;top:43px;z-index:3}
+  td.leaf code{font-size:.92em}
+  td.leaf .frame{display:block;color:var(--g600);font-size:11.5px;margin-top:3px;font-family:var(--sans);font-style:italic}
+  .vd{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.04em;padding:3px 9px;border-radius:999px;display:inline-block;white-space:nowrap;font-weight:600}
+  .vd.core{background:rgba(108,122,74,.18);color:var(--olive)}
+  .vd.split{background:rgba(185,121,79,.18);color:var(--clay)}
+  .vd.interim{background:rgba(43,42,40,.12);color:var(--slate)}
+  .vd.known{background:rgba(154,147,135,.22);color:var(--g600)}
+  .vd.excl{background:rgba(168,71,47,.16);color:var(--rust)}
+  td.where code{font-size:.9em}
+  td.where .lands{display:block;color:var(--g600);font-size:11.5px;margin-top:3px;font-family:var(--sans)}
+  td.eff{font-family:var(--mono);text-align:center;white-space:nowrap}
+  td.eff .e{font-weight:700;font-size:15px;color:var(--slate)}
+  td.eff .k{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--g600);margin-top:2px}
+  td.eff.zero .e{color:var(--g400)}
+  td.rows{font-family:var(--mono);text-align:center;font-size:13px;color:var(--slate);white-space:nowrap}
+  tr.corerow td{background:#f6f7f1}
+  tr.exclrow td{background:#fbf2ef;color:var(--g600)}
+  /* mechanism cards */
+  .mechs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:16px 0}
+  .mech{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column}
+  .mech .mnum{font-family:var(--mono);font-weight:700;font-size:12px;color:var(--ivory);background:var(--olive);border-radius:7px;padding:3px 9px;align-self:flex-start}
+  .mech.three .mnum{background:var(--clay)}
+  .mech h4{font-family:var(--serif);font-size:17px;font-weight:600;margin:9px 0 4px;letter-spacing:-.01em}
+  .mech .file{font-family:var(--mono);font-size:10.5px;color:var(--clay);margin:0 0 9px}
+  .mech .does{font-size:13px;color:var(--slate);margin:0 0 11px}
+  .mech .does b{color:var(--rust)}
+  .mech .foot{margin-top:auto;border-top:1px solid var(--g200);padding-top:10px;display:flex;flex-wrap:wrap;gap:5px}
+  .mech .tg{font-family:var(--mono);font-size:10px;background:var(--g100);border-radius:999px;padding:2px 8px;color:var(--g600)}
+  /* benefit/cost grid */
+  .bc{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:14px 0;border:1px solid var(--g200);border-radius:var(--r);overflow:hidden}
+  .bc .col{padding:16px 18px}
+  .bc .col.ben{background:#f6f7f1}
+  .bc .col.cost{background:var(--paper);border-left:1px solid var(--g200)}
+  .bc .h{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;margin:0 0 11px}
+  .bc .ben .h{color:var(--olive)} .bc .cost .h{color:var(--clay)}
+  .bc ul{margin:0;padding:0;list-style:none}
+  .bc li{font-size:13.5px;padding:6px 0 6px 20px;position:relative;color:var(--slate);border-top:1px solid rgba(0,0,0,.05)}
+  .bc li:first-child{border-top:none}
+  .bc li::before{content:"";position:absolute;left:0;top:13px;width:8px;height:8px;border-radius:50%}
+  .bc .ben li::before{background:var(--olive)} .bc .cost li::before{background:var(--clay)}
+  .bc li b{font-weight:600}
+  footer{margin-top:56px;border-top:1px solid var(--g200);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400);line-height:1.7}
+  @media(max-width:880px){
+    .mechs{grid-template-columns:1fr}
+    .ba{grid-template-columns:1fr;gap:10px}
+    .panel.cur,.panel.pln{border-radius:var(--r);border-left:1px solid var(--g200)}
+    .arrowcol{flex-direction:row}.arrowcol .a{transform:rotate(90deg)}.arrowcol .al{writing-mode:horizontal-tb;transform:none;margin:0 0 0 8px}
+    .bc{grid-template-columns:1fr}.bc .col.cost{border-left:none;border-top:1px solid var(--g200)}
+    .impact{grid-template-columns:1fr}.impact .lbl{text-align:left}
+    table{display:block;overflow-x:auto}
+  }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <div class="inner">
+    <span class="brand">entry_point_classification · funding aid</span>
+    <a href="#impact">Impact</a>
+    <a href="#change">Before / after</a>
+    <a href="#decision">Decision table</a>
+    <a href="#mechanisms">3 mechanisms</a>
+    <a href="#rank">Benefit vs cost</a>
+  </div>
+</nav>
+
+<main>
+
+  <p class="eyebrow">Refactoring change group · funding decision</p>
+  <h1>Modelling dispatch reachability that produces no call edge</h1>
+  <p class="lead prose">This fault area flags reachable functions as dead. The fix moves upstream into reachability and the call-graph producer — collapsing six proposed sub-tasks into three real core mechanisms, with the classifier kept only as an interim bridge.</p>
+
+  <div class="meta">
+    <span class="chip rust">False unreachable flags <strong>266</strong></span>
+    <span class="chip">across <strong>19 projects</strong></span>
+    <span class="chip">over <strong>19 runs</strong></span>
+    <span class="chip olive">real members (class A) <strong>59</strong></span>
+    <span class="chip">re-routed elsewhere (class B) <strong>207</strong></span>
+    <span class="chip clay">core fix effort <strong>3–5</strong></span>
+  </div>
+
+  <!-- ============ IMPACT ============ -->
+  <h2 id="impact">What this group removes, and how broadly</h2>
+  <p class="cap prose">Of the <b>266</b> false unreachable-function flags handed to this fault area, only the <b>59</b> reachability-gap members are real work here; the other <b>207</b> carry a genuine in-repo call the resolver missed and are re-routed to <code>import_resolution</code>, <code>name_resolution</code>, <code>receiver_type_inference</code>, and <code>coverage_config</code>.</p>
+
+  <div class="impact" role="img" aria-label="Impact breakdown: 266 observed flags, 59 real members fixed here, 207 re-routed">
+    <div class="lbl">Observed flags<small>this group, all projects</small></div>
+    <div class="bar"><div class="fill tot" style="width:100%"><span class="v">266&nbsp;<small>flags · 19 projects · 19 runs</small></span></div></div>
+
+    <div class="lbl">Fixed here (class A)<small>reachability gaps</small></div>
+    <div class="bar"><div class="fill real" style="width:22.2%"><span class="v">59</span></div></div>
+
+    <div class="lbl">Re-routed (class B)<small>resolver misses, not this area</small></div>
+    <div class="bar"><div class="fill excl" style="width:77.8%"><span class="v">207</span></div></div>
+  </div>
+  <p class="cap prose">The <b>59</b> are split across the three core mechanisms below; a small residual of codegen and downstream-public-API cases has no static signal and stays an interim known-issue rather than forcing a brittle predicate.</p>
+
+  <!-- ============ BEFORE / AFTER ============ -->
+  <h2 id="change">The change in functionality</h2>
+  <p class="cap prose">Today <code>detect_indirect_reachability</code> rescues only one shape — a named <b>function</b> passed as a value — so methods, closures, field stores, and runner callables all leak through as false dead flags.</p>
+
+  <div class="ba">
+    <div class="panel cur">
+      <p class="ptitle">Current</p>
+      <svg viewBox="0 0 360 300" role="img" aria-label="Current flow: trace_call_graph emits entry points, narrow reachability rescues only named functions, classifier papers over per language">
+        <defs>
+          <marker id="ahr" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#a8472f"/></marker>
+          <marker id="ahg" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#5f594f"/></marker>
+        </defs>
+        <!-- producer -->
+        <rect x="70" y="14" width="220" height="40" rx="9" fill="#e7ddc9" stroke="#9a9387"/>
+        <text x="180" y="32" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="#2b2a28">trace_call_graph</text>
+        <text x="180" y="46" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="#5f594f">detect_entry_points</text>
+        <line x1="180" y1="54" x2="180" y2="76" stroke="#5f594f" stroke-width="1.6" marker-end="url(#ahg)"/>
+        <!-- narrow reach -->
+        <rect x="40" y="78" width="280" height="48" rx="9" fill="#fffdf8" stroke="#a8472f" stroke-width="1.6"/>
+        <text x="180" y="97" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="#a8472f">indirect_reachability</text>
+        <text x="180" y="112" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#5f594f">rescues ONLY: named function as value</text>
+        <!-- leaks -->
+        <line x1="180" y1="126" x2="180" y2="150" stroke="#a8472f" stroke-width="1.8" marker-end="url(#ahr)"/>
+        <text x="300" y="142" text-anchor="end" font-family="var(--mono)" font-size="9" fill="#a8472f">methods · closures · fields · runners leak</text>
+        <!-- bloated entry set -->
+        <rect x="70" y="152" width="220" height="40" rx="9" fill="#fbeae6" stroke="#a8472f"/>
+        <text x="180" y="170" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="#a8472f">entry-point set (bloated)</text>
+        <text x="180" y="184" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="#5f594f">266 false dead flags</text>
+        <line x1="180" y1="192" x2="180" y2="214" stroke="#5f594f" stroke-width="1.6" marker-end="url(#ahg)"/>
+        <!-- classifier -->
+        <rect x="55" y="216" width="250" height="48" rx="9" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="180" y="235" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="#2b2a28">classify_entry_points</text>
+        <text x="180" y="250" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#5f594f">post-hoc suppression · per-language builtins</text>
+        <text x="180" y="284" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="#a8472f" font-style="italic">papers over a few; can't see reference shapes</text>
+      </svg>
+    </div>
+
+    <div class="arrowcol"><span class="a">&rarr;</span><span class="al">one altitude up</span></div>
+
+    <div class="panel pln">
+      <p class="ptitle">Planned</p>
+      <svg viewBox="0 0 360 300" role="img" aria-label="Planned flow: widened reachability and producer gates remove symbols before they become entry points, leaving a shrunk classifier">
+        <defs>
+          <marker id="aho" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#6c7a4a"/></marker>
+          <marker id="ahg2" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#5f594f"/></marker>
+        </defs>
+        <!-- producer + gate -->
+        <rect x="40" y="14" width="280" height="48" rx="9" fill="#eef1e6" stroke="#6c7a4a" stroke-width="1.6"/>
+        <text x="180" y="33" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="#2b2a28">trace_call_graph</text>
+        <text x="180" y="48" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#6c7a4a">+ #[test]/#[cfg(test)] &amp; ASV benchmark gates</text>
+        <line x1="180" y1="62" x2="180" y2="84" stroke="#5f594f" stroke-width="1.6" marker-end="url(#ahg2)"/>
+        <!-- widened reach -->
+        <rect x="30" y="86" width="300" height="58" rx="9" fill="#eef1e6" stroke="#6c7a4a" stroke-width="1.8"/>
+        <text x="180" y="105" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="#6c7a4a">indirect_reachability (widened)</text>
+        <text x="180" y="120" text-anchor="middle" font-family="var(--mono)" font-size="8.8" fill="#5f594f">+ methods/bound + anonymous closures</text>
+        <text x="180" y="133" text-anchor="middle" font-family="var(--mono)" font-size="8.8" fill="#5f594f">+ field_store_read</text>
+        <line x1="180" y1="144" x2="180" y2="166" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#aho)"/>
+        <!-- clean set -->
+        <rect x="70" y="168" width="220" height="40" rx="9" fill="#eef1e6" stroke="#6c7a4a"/>
+        <text x="180" y="186" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="#6c7a4a">entry-point set (clean)</text>
+        <text x="180" y="200" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="#5f594f">59 false flags removed at source</text>
+        <line x1="180" y1="208" x2="180" y2="230" stroke="#5f594f" stroke-width="1.6" marker-end="url(#ahg2)"/>
+        <!-- shrunk classifier -->
+        <rect x="65" y="232" width="230" height="48" rx="9" fill="#fffdf8" stroke="#b9794f" stroke-dasharray="5 4"/>
+        <text x="180" y="251" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="#b9794f">classifier (interim only)</text>
+        <text x="180" y="266" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#5f594f">2 builtins deleted · codegen stays known-issue</text>
+      </svg>
+    </div>
+  </div>
+  <div class="legend">
+    <span><i class="add"></i> added / widened</span>
+    <span><i class="del"></i> removed / leaking today</span>
+    <span><i class="mod"></i> shrunk to interim</span>
+    <span><i class="same"></i> unchanged stage</span>
+  </div>
+
+  <div class="callout olive">
+    <span class="k">Chosen mechanism — §2</span>
+    <p>The fix lives <b>one altitude up</b>: <code>indirect_reachability</code> already owns "is this callable reached without a direct call edge?" and has the registries to answer it for methods, closures, and field stores.</p>
+    <p>The classifier sees only an <code>EnrichedEntryPoint</code> — name, path, diagnostics — and is structurally blind to those reference shapes.</p>
+  </div>
+
+  <!-- ============ DECISION TABLE ============ -->
+  <h2 id="decision">Decision table — what survives the decomposition verdict</h2>
+  <p class="cap prose">The investigator's verdict <b>collapses the six proposed leaves into three core mechanisms</b>, re-tiers two interim rows, and excludes the resolver-miss rows entirely. Green rows are real core fixes to fund; the rust row grounds <b>no work here</b>.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Leaf · proposed framing</th>
+        <th>Verdict</th>
+        <th>Where it lands</th>
+        <th>Effort</th>
+        <th>Rows</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="corerow">
+        <td class="leaf"><code>a321</code><span class="frame">"generalize TS-only closure suppression"</span></td>
+        <td><span class="vd core">core · mech 1</span></td>
+        <td class="where"><code>indirect_reachability.ts</code> closure arm<span class="lands">deletes 2 TS-only builtins as redundant</span></td>
+        <td class="eff"><span class="e">1</span><span class="k">core</span></td>
+        <td class="rows">66</td>
+      </tr>
+      <tr class="corerow">
+        <td class="leaf"><code>b79f</code><span class="frame">"new stored-reference classifier family"</span></td>
+        <td><span class="vd split">split → 1 + 2</span></td>
+        <td class="where"><code>indirect_reachability.ts</code> value + field arms<span class="lands">closures → mech 1; method/field refs → mech 2; real-call rows excluded (class B)</span></td>
+        <td class="eff"><span class="e">3</span><span class="k">core</span></td>
+        <td class="rows">90</td>
+      </tr>
+      <tr class="corerow">
+        <td class="leaf"><code>57c2</code><span class="frame">"decorator/registration classifier path"</span></td>
+        <td><span class="vd split">split → 2 + reg</span></td>
+        <td class="where">mostly mech 2; residual decorator names via registry<span class="lands">reference-passed handlers → mech 2; pure decorator tables → framework-dispatch builtin; DI <code>.get()</code> rows excluded (class B)</span></td>
+        <td class="eff"><span class="e">3</span><span class="k">core</span></td>
+        <td class="rows">65</td>
+      </tr>
+      <tr class="corerow">
+        <td class="leaf"><code>5543</code><span class="frame">"widen rust-macro-invocation regex"</span></td>
+        <td><span class="vd core">core · mech 3</span></td>
+        <td class="where"><code>trace_call_graph.ts</code> attribute gate<span class="lands">the named builtin does not exist; fix is the <code>#[test]</code>/<code>#[cfg(test)]</code> definition gate</span></td>
+        <td class="eff"><span class="e">1</span><span class="k">core</span></td>
+        <td class="rows">20</td>
+      </tr>
+      <tr class="corerow">
+        <td class="leaf"><code>fdd5</code><span class="frame">"path + name predicate"</span></td>
+        <td><span class="vd core">core · mech 3</span></td>
+        <td class="where"><code>trace_call_graph.ts</code> benchmark gate<span class="lands">ASV <code>time_*</code>/<code>mem_*</code> under <code>asv_bench/</code> runner convention</span></td>
+        <td class="eff"><span class="e">1</span><span class="k">core</span></td>
+        <td class="rows">14</td>
+      </tr>
+      <tr>
+        <td class="leaf"><code>dceb</code><span class="frame">"discrete narrow predicates"</span></td>
+        <td><span class="vd split">split 3 ways</span></td>
+        <td class="where">reachability (2) + 2 known-issues<span class="lands">dispatch rows → mech 2; <code>quote!</code>/Askama codegen + downstream public-API → <code>classifier.kind = "none"</code> (YAGNI)</span></td>
+        <td class="eff"><span class="e">3</span><span class="k">core</span></td>
+        <td class="rows">11</td>
+      </tr>
+      <tr>
+        <td class="leaf"><code>cc55</code><span class="frame">"suppress all six meanwhile"</span></td>
+        <td><span class="vd interim">interim only</span></td>
+        <td class="where">registry <code>wip</code> rules, human-written<span class="lands">a bridge until the core arms land; closure + field rules retire entirely, codegen stays known-issue</span></td>
+        <td class="eff zero"><span class="e">0</span><span class="k">interim</span></td>
+        <td class="rows">—</td>
+      </tr>
+      <tr class="exclrow">
+        <td class="leaf"><code>class B</code> — re-routed members<span class="frame">real in-repo call the resolver missed</span></td>
+        <td><span class="vd excl">excluded</span></td>
+        <td class="where">→ <code>import_resolution</code> · <code>name_resolution</code> · <code>receiver_type_inference</code> · <code>coverage_config</code><span class="lands">named only so the implementer does not "fix" them in reachability</span></td>
+        <td class="eff zero"><span class="e">—</span><span class="k">n/a</span></td>
+        <td class="rows">207</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ============ MECHANISMS ============ -->
+  <h2 id="mechanisms">The three real mechanisms to fund</h2>
+  <p class="cap prose">Two are widenings of one reachability module; one is a pair of convention gates in the call-graph producer. All deletions are duplicate per-language builtins subsumed by the language-general arms.</p>
+
+  <div class="mechs">
+    <div class="mech">
+      <span class="mnum">MECH 1</span>
+      <h4>Closure-as-callback reachability</h4>
+      <p class="file">indirect_reachability.ts · closure arm</p>
+      <p class="does">An anonymous closure is <b>structurally never</b> an entry point. When its definition carries a callback/argument context, mark it reachable — language-general, replacing two TS-only builtins.</p>
+      <div class="foot"><span class="tg">a321</span><span class="tg">closure half of b79f</span><span class="tg">−2 builtins</span></div>
+    </div>
+    <div class="mech">
+      <span class="mnum">MECH 2</span>
+      <h4>Value / field / argument references</h4>
+      <p class="file">indirect_reachability.ts · value + field arms</p>
+      <p class="does">Widen the value-reference arm from <code>function</code> to <b>methods and bound methods</b>, and add a <code>field_store_read</code> arm for callables invoked through an object/class field.</p>
+      <div class="foot"><span class="tg">b79f</span><span class="tg">57c2</span><span class="tg">dceb dispatch</span></div>
+    </div>
+    <div class="mech three">
+      <span class="mnum">MECH 3</span>
+      <h4>Runner / benchmark conventions</h4>
+      <p class="file">trace_call_graph.ts · producer gates</p>
+      <p class="does">No in-repo reference exists — the harness invokes them. Gate <code>#[test]</code>/<code>#[cfg(test)]</code> definitions and ASV <code>time_*</code> benchmarks at the producer, beside the existing test-file gate.</p>
+      <div class="foot"><span class="tg">5543</span><span class="tg">fdd5</span><span class="tg">codegen → known-issue</span></div>
+    </div>
+  </div>
+
+  <!-- ============ BENEFIT vs COST ============ -->
+  <h2 id="rank">Benefit versus cost — ranking this group</h2>
+
+  <div class="bc">
+    <div class="col ben">
+      <p class="h">Benefit</p>
+      <ul>
+        <li>Removes <b>59 of 266</b> false dead-function flags <b>at the source</b>, so they never recur across the 19 projects.</li>
+        <li>Fixes are <b>language-general</b>: one reachability arm covers Rust, Python, and TS where three per-language builtins did before.</li>
+        <li><b>Net code reduction</b> — two TS builtins and a stored-callback builtin retire as the core arms land.</li>
+        <li>Strictly additive data model (<code>field_store_read</code> reason); no schema bump, fixtures only.</li>
+      </ul>
+    </div>
+    <div class="col cost">
+      <p class="h">Cost · blast radius</p>
+      <ul>
+        <li><b>Core fix effort 3–5</b> concentrated in <code>indirect_reachability.ts</code> (load-bearing edit) plus two gates in <code>trace_call_graph.ts</code>.</li>
+        <li>One <b>over-suppression risk</b>: the field-store arm could hide a genuinely-dead function that is merely mentioned — gate it conservatively, cover with a guard test.</li>
+        <li>Consumers unchanged; shrinking the entry-point array upstream is transparent downstream.</li>
+        <li><b>Interim classifier work is effort 0</b> beyond authoring <code>wip</code> rows; the codegen residual stays a known-issue, not a fragile predicate.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="invert">
+    <span class="k">Funding call</span>
+    <p class="big">Fund the three core mechanisms (<b>5543</b>, <b>fdd5</b>, <b>a321</b> first — effort 1, highest rows-per-effort), then <b>b79f</b>/<b>57c2</b>/<b>dceb</b> (effort 3) for the method, field, and dispatch references. Author the <b>cc55</b> interim rules now as a zero-effort bridge. The <b>207 class-B rows do not belong to this group</b> — they are credited to import/name/receiver resolution and must not inflate this group's benefit.</p>
+  </div>
+
+  <footer>
+    Source: ~/.ariadne/plan/prioritize/entry_point_classification/refactor_plan.md ·
+    fault area packages/core/src/classify_entry_points ·
+    266 false unreachable-function flags · 19 projects · 19 runs ·
+    decomposition verdict: 6 leaves → 3 core mechanisms + interim + excluded.
+  </footer>
+
+</main>
+</body>
+</html>

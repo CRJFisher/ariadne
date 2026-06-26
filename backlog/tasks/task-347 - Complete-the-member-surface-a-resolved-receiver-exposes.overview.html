@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>method_lookup — member-surface completeness: fund-or-skip</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --ink:#1f1e1c; --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  nav.cross{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 0}
+  nav.cross .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.cross .brand{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.cross a, nav.cross .here{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:4px 10px;display:inline-flex;align-items:center;gap:6px}
+  nav.cross a:hover{border-color:var(--clay);color:var(--slate)}
+  nav.cross .here{background:var(--slate);color:var(--ivory);border-color:var(--slate)}
+  nav.cross .dot{width:7px;height:7px;border-radius:50%;background:var(--olive)}
+  nav.toc{position:sticky;top:43px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
+  nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.toc .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--g600);margin-right:4px}
+  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:3px 9px}
+  nav.toc a:hover{border-color:var(--clay);color:var(--slate)}
+  main{width:90%;max-width:1600px;margin:0 auto;padding:28px 0 90px}
+  .prose{max-width:72ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:34px;line-height:1.12;margin:0 0 12px;letter-spacing:-.01em;max-width:24ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:23px;margin:50px 0 4px;letter-spacing:-.01em;scroll-margin-top:96px}
+  h3{font-family:var(--mono);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);margin:20px 0 8px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .chip.rust strong{color:var(--rust)} .chip.olive strong{color:var(--olive)}
+  code{font-family:var(--mono);font-size:.86em;background:var(--g100);border-radius:5px;padding:1px 5px;color:var(--ink)}
+  .cap{font-size:13.5px;color:var(--g600);margin:8px 2px 14px;max-width:88ch}
+  .cap b{color:var(--slate);font-weight:600}
+  /* before/after */
+  .ba{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin:14px 0}
+  .ba .panel{background:var(--paper);border:1px solid var(--g200);padding:14px 16px 16px}
+  .ba .panel.before{border-radius:var(--r) 0 0 var(--r)}
+  .ba .panel.after{border-radius:0 var(--r) var(--r) 0;border-left:none}
+  .ba .arrow{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 4px;background:var(--ivory)}
+  .ba .arrow .a{font-size:24px;color:var(--clay);line-height:1}
+  .ba .arrow .l{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);writing-mode:vertical-rl;margin-top:6px}
+  .ba .ttl{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;margin:0 0 8px}
+  .ba .before .ttl{color:var(--rust)} .ba .after .ttl{color:var(--olive)}
+  .ba svg{width:100%;height:auto;display:block}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:12px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,.12)}
+  .legend i.edge{width:18px;height:0;border-radius:0;border-top:2px solid var(--olive)}
+  .legend i.fail{width:18px;height:0;border-radius:0;border-top:2px solid var(--rust)}
+  /* callouts */
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:18px 0;max-width:92ch}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)} .callout.slate{border-left-color:var(--g400)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 6px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)}
+  .callout p{margin:0;font-size:14px}
+  .callout.invert{background:var(--slate);border-left-color:var(--clay)}
+  .callout.invert p{color:var(--ivory)} .callout.invert .k{color:var(--clay)}
+  .callout.invert b{color:#fff}
+  /* impact decomposition bars */
+  .impact{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:18px;margin:14px 0}
+  .ibar{display:grid;grid-template-columns:230px 1fr 52px;align-items:center;gap:12px;margin:7px 0}
+  .ibar .lab{font-size:13px}
+  .ibar .lab .t{font-weight:600;color:var(--slate)} .ibar .lab .s{font-family:var(--mono);font-size:10.5px;color:var(--g600);display:block;margin-top:1px}
+  .ibar .track{height:22px;background:var(--g100);border-radius:6px;overflow:hidden}
+  .ibar .fill{height:100%;border-radius:6px}
+  .ibar .fill.core{background:var(--olive)} .ibar .fill.alias{background:var(--clay)} .ibar .fill.maybe{background:var(--oat)} .ibar .fill.excl{background:var(--rust)}
+  .ibar .n{font-family:var(--mono);font-size:15px;font-weight:700;text-align:right;color:var(--slate)}
+  .ibar .n.excl{color:var(--rust)}
+  .itot{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px;border-top:1px solid var(--g200);padding-top:12px}
+  .itot .b{font-family:var(--mono);font-size:11.5px;color:var(--g600)}
+  .itot .b strong{font-size:17px;color:var(--slate)}
+  .itot .b.fund strong{color:var(--olive)} .itot .b.away strong{color:var(--rust)}
+  /* arm matrix */
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--g200);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--g600);background:var(--paper)}
+  td .file{font-family:var(--mono);font-size:11.5px;color:var(--g600);display:block;margin-top:3px}
+  td .mech{font-weight:600;color:var(--slate)}
+  td.c{text-align:center}
+  .pill{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.04em;padding:3px 9px;border-radius:999px;display:inline-block;white-space:nowrap}
+  .pill.core{background:rgba(108,122,74,.16);color:var(--olive)}
+  .pill.del{background:rgba(168,71,47,.14);color:var(--rust)}
+  .pill.clf{background:rgba(168,71,47,.10);color:var(--rust);text-decoration:line-through}
+  .pill.alias{background:rgba(185,121,79,.16);color:var(--clay)}
+  .eff{font-family:var(--mono);font-weight:700}
+  .eff.lo{color:var(--olive)} .eff.md{color:var(--clay)} .eff.zero{color:var(--g400)}
+  .rows{font-family:var(--mono);font-weight:700;color:var(--slate)}
+  .rows.zero{color:var(--g400);font-weight:400}
+  tr.t-core td:first-child{box-shadow:inset 3px 0 0 var(--olive)}
+  tr.t-del td:first-child{box-shadow:inset 3px 0 0 var(--rust)}
+  tr.t-retired{opacity:.62}
+  /* excluded routing */
+  .excl-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0}
+  .ex{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);padding:14px 16px;border-top:3px solid var(--rust)}
+  .ex .sym{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--slate)}
+  .ex .loc{font-family:var(--mono);font-size:10.5px;color:var(--g600);margin:3px 0 9px}
+  .ex .why{font-size:12.5px;color:var(--slate);margin:0 0 10px}
+  .ex .route{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--rust);border-top:1px dashed var(--g200);padding-top:9px}
+  .ex .route b{color:var(--slate)}
+  /* code panel */
+  .code{background:var(--code);border-radius:var(--r);padding:0;margin:14px 0;overflow:hidden;border:1px solid #000}
+  .code .fl{font-family:var(--mono);font-size:10.5px;color:#b9b09c;background:#1c1a16;padding:7px 14px;border-bottom:1px solid #000;letter-spacing:.03em}
+  .code pre{margin:0;padding:14px 16px;font-family:var(--mono);font-size:12.5px;line-height:1.6;color:var(--codeink);overflow-x:auto;white-space:pre}
+  .code .kw{color:#c98a5e} .code .str{color:#9aa86a} .code .cm{color:#736b5c;font-style:italic} .code .fn{color:#d8c98a} .code .dim{color:#6f6757}
+  .code .add{display:inline-block;width:100%;background:rgba(108,122,74,.22)} .code .del{display:inline-block;width:100%;background:rgba(168,71,47,.20);text-decoration:line-through;color:#b58a7c}
+  @media(max-width:820px){
+    .ba{grid-template-columns:1fr} .ba .panel.after{border-left:1px solid var(--g200);border-radius:0 0 var(--r) var(--r)} .ba .panel.before{border-radius:var(--r) var(--r) 0 0}
+    .ba .arrow{flex-direction:row;padding:8px 0} .ba .arrow .a{transform:rotate(90deg)} .ba .arrow .l{writing-mode:horizontal-tb;margin:0 0 0 8px}
+    .excl-grid{grid-template-columns:1fr}
+    .ibar{grid-template-columns:1fr 60px} .ibar .track{display:none}
+  }
+</style>
+</head>
+<body>
+<nav class="cross"><div class="inner">
+  <span class="brand">unreachable-fp campaign</span>
+  <span class="here"><span class="dot"></span>method_lookup — member surface</span>
+  <a href="TASKS-347-351-campaign-overview.html">campaign overview ↗</a>
+</div></nav>
+<nav class="toc"><div class="inner">
+  <span class="brand">on this page</span>
+  <a href="#change">the change</a>
+  <a href="#arms">arms &amp; cost</a>
+  <a href="#impact">impact: 30→24</a>
+  <a href="#excluded">excluded rows</a>
+  <a href="#rank">rank this group</a>
+</div></nav>
+
+<main>
+  <p class="eyebrow">refactor change group · decision aid</p>
+  <h1>method_lookup: complete the member surface a resolved receiver exposes</h1>
+  <div class="meta">
+    <span class="chip rust">false flags removed · <strong>24</strong> (of 30 rolled-up)</span>
+    <span class="chip">breadth · <strong>5 projects × 5 runs</strong></span>
+    <span class="chip olive">core fix effort · <strong>3–5</strong></span>
+    <span class="chip">data-model change · <strong>none</strong></span>
+    <span class="chip">net new code · <strong>~1 line + a deletion</strong></span>
+  </div>
+  <p class="cap prose">Every false unreachable-function flag in this group reaches member lookup with a <b>correctly resolved receiver</b> and then misses — because the surface lookup searches was built without the member it needs. The fix completes the surface where it is built, not at 30 call sites.</p>
+
+  <h2 id="change">The change in functionality</h2>
+  <p class="cap prose">One root cause, two faces: the flat member index omits the <b>constructor</b>, and namespace-export lookup re-implements export resolution and never follows <b>re-export chains</b>. Both are fixed at the builder; the existing consumer code resolves these cases unchanged.</p>
+  <div class="ba">
+    <div class="panel before">
+      <p class="ttl">Current — surface built incomplete</p>
+      <svg viewBox="0 0 360 300" role="img" aria-label="Current flow: a correctly resolved receiver hits the member index, the index lacks the constructor or follows no re-export chain, lookup misses and the function is flagged unreachable.">
+        <defs>
+          <marker id="aF" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#a8472f"/></marker>
+          <marker id="aN" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#9a9387"/></marker>
+        </defs>
+        <rect x="58" y="14" width="244" height="40" rx="9" fill="#e7ddc9" stroke="#b9794f"/>
+        <text x="180" y="32" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#2b2a28">receiver resolved ✓</text>
+        <text x="180" y="46" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">class symbol · namespace</text>
+        <line x1="180" y1="54" x2="180" y2="78" stroke="#9a9387" stroke-width="1.6" marker-end="url(#aN)"/>
+        <rect x="8" y="80" width="166" height="62" rx="9" fill="#fffdf8" stroke="#ddd6c8"/>
+        <text x="91" y="100" text-anchor="middle" font-family="ui-sans-serif,system-ui" font-size="11" fill="#2b2a28">flat member index</text>
+        <text x="91" y="116" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">methods + properties</text>
+        <text x="91" y="132" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#a8472f">✗ no __init__ / ctor</text>
+        <rect x="186" y="80" width="166" height="62" rx="9" fill="#fffdf8" stroke="#ddd6c8"/>
+        <text x="269" y="100" text-anchor="middle" font-family="ui-sans-serif,system-ui" font-size="11" fill="#2b2a28">namespace export</text>
+        <text x="269" y="116" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">naive local scan</text>
+        <text x="269" y="132" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#a8472f">✗ no re-export chain</text>
+        <line x1="91" y1="142" x2="91" y2="196" stroke="#a8472f" stroke-width="1.8" marker-end="url(#aF)"/>
+        <line x1="269" y1="142" x2="269" y2="196" stroke="#a8472f" stroke-width="1.8" marker-end="url(#aF)"/>
+        <rect x="58" y="198" width="244" height="40" rx="9" fill="#fbf2ef" stroke="#a8472f"/>
+        <text x="180" y="217" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#a8472f">method_not_on_type</text>
+        <text x="180" y="231" text-anchor="middle" font-family="ui-sans-serif,system-ui" font-size="10" fill="#5f594f">miss → call edge lost</text>
+        <line x1="180" y1="238" x2="180" y2="262" stroke="#a8472f" stroke-width="1.8" marker-end="url(#aF)"/>
+        <rect x="58" y="264" width="244" height="32" rx="9" fill="#a8472f"/>
+        <text x="180" y="284" text-anchor="middle" font-family="ui-sans-serif,system-ui" font-size="11.5" fill="#fff" font-weight="600">flagged unreachable (false)</text>
+      </svg>
+    </div>
+    <div class="arrow"><span class="a">→</span><span class="l">complete the builder</span></div>
+    <div class="panel after">
+      <p class="ttl">Planned — surface completed at the builder</p>
+      <svg viewBox="0 0 360 300" role="img" aria-label="Planned flow: the same resolved receiver hits a member index that now keys the constructor, and namespace lookup delegates to the existing resolve_export_chain; lookup hits and the call edge is recorded.">
+        <defs>
+          <marker id="aO" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#6c7a4a"/></marker>
+          <marker id="aN2" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#9a9387"/></marker>
+        </defs>
+        <rect x="58" y="14" width="244" height="40" rx="9" fill="#e7ddc9" stroke="#b9794f"/>
+        <text x="180" y="32" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#2b2a28">receiver resolved ✓</text>
+        <text x="180" y="46" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">unchanged</text>
+        <line x1="180" y1="54" x2="180" y2="78" stroke="#9a9387" stroke-width="1.6" marker-end="url(#aN2)"/>
+        <rect x="8" y="80" width="166" height="62" rx="9" fill="#eef1e4" stroke="#6c7a4a" stroke-width="1.5"/>
+        <text x="91" y="100" text-anchor="middle" font-family="ui-sans-serif,system-ui" font-size="11" fill="#2b2a28">flat member index</text>
+        <text x="91" y="116" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">methods + properties</text>
+        <text x="91" y="132" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#6c7a4a">+ ctor.name keyed ✓</text>
+        <rect x="186" y="80" width="166" height="62" rx="9" fill="#eef1e4" stroke="#6c7a4a" stroke-width="1.5"/>
+        <text x="269" y="100" text-anchor="middle" font-family="ui-sans-serif,system-ui" font-size="11" fill="#2b2a28">namespace export</text>
+        <text x="269" y="116" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">→ resolve_export_chain</text>
+        <text x="269" y="132" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#6c7a4a">✓ follows re-exports</text>
+        <line x1="91" y1="142" x2="91" y2="196" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#aO)"/>
+        <line x1="269" y1="142" x2="269" y2="196" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#aO)"/>
+        <rect x="58" y="198" width="244" height="40" rx="9" fill="#eef1e4" stroke="#6c7a4a"/>
+        <text x="180" y="217" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#445233">member found</text>
+        <text x="180" y="231" text-anchor="middle" font-family="ui-sans-serif,system-ui" font-size="10" fill="#5f594f">hit → call edge recorded</text>
+        <line x1="180" y1="238" x2="180" y2="262" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#aO)"/>
+        <rect x="58" y="264" width="244" height="32" rx="9" fill="#6c7a4a"/>
+        <text x="180" y="284" text-anchor="middle" font-family="ui-sans-serif,system-ui" font-size="11.5" fill="#fff" font-weight="600">correctly reachable</text>
+      </svg>
+    </div>
+  </div>
+  <div class="legend prose">
+    <span><i style="background:#eef1e4;border-color:#6c7a4a"></i> completed surface (added)</span>
+    <span><i style="background:#fbf2ef;border-color:#a8472f"></i> miss / removed flag</span>
+    <span><i class="edge"></i> resolves (hit)</span>
+    <span><i class="fail"></i> misses today</span>
+  </div>
+
+  <div class="code">
+    <div class="fl">mechanism A — definition.ts:159-166 (inside the existing constructor loop)</div>
+<pre><span class="cm">// constructor already iterated for by_symbol + location_to_symbol</span>
+flat_members.<span class="fn">set</span>(by_symbol_key, ctor.symbol_id);
+<span class="add">+   flat_members.<span class="fn">set</span>(ctor.name, ctor.symbol_id);  <span class="cm">// __init__ / constructor / impl name</span></span></pre>
+  </div>
+  <div class="code">
+    <div class="fl">mechanism B — method_lookup.ts:324-338 (delete the naive scan, delegate to the existing follower)</div>
+<pre><span class="del">-   for (const def of definitions.get_exportable_definitions_in_file(source_file)) {</span>
+<span class="del">-     if (def.is_exported &amp;&amp; def.name === export_name) return def.symbol_id;</span>
+<span class="del">-   }</span>
+<span class="add">+   return exports.<span class="fn">resolve_export_chain</span>(source_file, export_name, <span class="str">"namespace"</span>, languages, root_folder);</span></pre>
+  </div>
+
+  <h2 id="arms">The arms, and what each costs</h2>
+  <p class="cap prose">Four arms came in; the verdict <b>collapses</b> the two big core leaves, <b>splits</b> the operator-alias leaf, and <b>retires</b> the interim classifier. Net new code is one <code>set</code> plus a drift deletion — most of the "cost" is context-threading and tests, not novel logic.</p>
+  <table>
+    <thead><tr><th>Arm</th><th>What it actually is</th><th>Kind</th><th class="c">core_fix_effort</th><th class="c">rows resolved</th></tr></thead>
+    <tbody>
+      <tr class="t-core">
+        <td><span class="mech">Constructor linkage</span><span class="file">definition.ts · was pt-2d58e8d1</span></td>
+        <td>One missing <code>flat_members.set(ctor.name, …)</code>. Both lookup paths and inheritance / polymorphic dispatch already read this index.<span class="file">collapses to 1 line — not a new resolver path</span></td>
+        <td><span class="pill core">core fix</span></td>
+        <td class="c"><span class="eff lo">3</span></td>
+        <td class="c"><span class="rows">14</span></td>
+      </tr>
+      <tr class="t-core">
+        <td><span class="mech">Namespace re-export chains</span><span class="file">method_lookup.ts · was pt-d8b41077</span></td>
+        <td>Delete the naive local scan; delegate to the existing <code>resolve_export_chain</code> (already used by name resolution). Needs <code>exports</code>/<code>languages</code>/<code>root_folder</code> threaded onto the call context.<span class="file">drift deletion + context threading — not new code</span></td>
+        <td><span class="pill core">core fix</span></td>
+        <td class="c"><span class="eff md">5</span></td>
+        <td class="c"><span class="rows">10</span></td>
+      </tr>
+      <tr class="t-core">
+        <td><span class="mech">Operator-method alias</span><span class="file">definition.ts · split from pt-46c48757</span></td>
+        <td>Only the <code>__getitem__ = _getitem</code> class-body alias is a true member-surface gap; capture literal <code>name = member</code> aliases alongside mechanism A. Other rows in this leaf are excluded (below).<span class="file">joins the member-index completion</span></td>
+        <td><span class="pill alias">core · alias</span></td>
+        <td class="c"><span class="eff lo">2</span></td>
+        <td class="c"><span class="rows">2</span></td>
+      </tr>
+      <tr class="t-del">
+        <td><span class="mech">Dead <code>constructor</code> field</span><span class="file">type_preprocessing/member.ts:73-74,82</span></td>
+        <td><code>TypeMemberInfo.constructor</code> is the drifting twin of the flat index and provably unused once A lands. Delete it, per YAGNI — removes a second source of constructor identity.<span class="file">deletion, not addition</span></td>
+        <td><span class="pill del">drift deletion</span></td>
+        <td class="c"><span class="eff zero">—</span></td>
+        <td class="c"><span class="rows zero">0 (hardening)</span></td>
+      </tr>
+      <tr class="t-retired">
+        <td><span class="mech">Interim classifier</span><span class="file">was pt-65d46e6a</span></td>
+        <td>Retired. With A and B landing the durable fix, the interim classifier is not worth authoring; per the classifier-lifecycle contract it grounds no core work.<span class="file">excluded from the core epic</span></td>
+        <td><span class="pill clf">retired</span></td>
+        <td class="c"><span class="eff zero">—</span></td>
+        <td class="c"><span class="rows zero">—</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="impact">Impact: the 30 rolled-up flags decompose to 24 fundable</h2>
+  <p class="cap prose">The headline <b>30</b> overstates this group. <b>24 rows</b> are the real member-surface change, <b>2</b> are the operator alias, <b>1</b> is an unverified maybe, and <b>3</b> belong to other fault areas. Bar length = rows; green is the durable member-surface fix.</p>
+  <div class="impact">
+    <div class="ibar">
+      <div class="lab"><span class="t">Constructor misses</span><span class="s">django bucket · mechanism A</span></div>
+      <div class="track"><div class="fill core" style="width:58.3%"></div></div>
+      <div class="n">14</div>
+    </div>
+    <div class="ibar">
+      <div class="lab"><span class="t">Namespace re-export misses</span><span class="s">TypeScript barrels · mechanism B</span></div>
+      <div class="track"><div class="fill core" style="width:41.7%"></div></div>
+      <div class="n">10</div>
+    </div>
+    <div class="ibar">
+      <div class="lab"><span class="t">Operator alias</span><span class="s">sqlalchemy <code>__getitem__</code> · joins A</span></div>
+      <div class="track"><div class="fill alias" style="width:8.3%"></div></div>
+      <div class="n">2</div>
+    </div>
+    <div class="ibar">
+      <div class="lab"><span class="t">sqlx <code>eq_impl</code></span><span class="s">maybe — Rust triage in step 6</span></div>
+      <div class="track"><div class="fill maybe" style="width:4.2%"></div></div>
+      <div class="n">1</div>
+    </div>
+    <div class="ibar">
+      <div class="lab"><span class="t">Excluded → other fault areas</span><span class="s">name-resolution &amp; receiver-type-inference</span></div>
+      <div class="track"><div class="fill excl" style="width:12.5%"></div></div>
+      <div class="n excl">3</div>
+    </div>
+    <div class="itot">
+      <span class="b">rolled-up flags · <strong>30</strong></span>
+      <span class="b fund">fundable here · <strong>24</strong> <span style="font-weight:400">(+2 alias, 1 maybe)</span></span>
+      <span class="b away">route elsewhere · <strong>3</strong></span>
+    </div>
+  </div>
+
+  <h2 id="excluded">The 3 excluded rows — and where they route</h2>
+  <p class="cap prose">These reach a wrong receiver type <b>before</b> member lookup runs; the member surface is fine. Funding this group does <b>not</b> resolve them — they belong to other fault areas.</p>
+  <div class="excl-grid">
+    <div class="ex">
+      <div class="sym"><code>clone</code></div>
+      <div class="loc">annotation.py:480 · stage <code>constructor_lookup</code></div>
+      <p class="why">Name resolves to the later <code>clone = None</code> variable, not the nested function — scope shadowing in the lexical walk.</p>
+      <div class="route">route → <b>name_resolution</b></div>
+    </div>
+    <div class="ex">
+      <div class="sym"><code>on_conflict_do_update</code></div>
+      <div class="loc">provision.py:158</div>
+      <p class="why">The factory <code>insert()</code> return type is unknown to the resolver, so the receiver type is never inferred — upstream of member lookup.</p>
+      <div class="route">route → <b>return-type inference</b></div>
+    </div>
+    <div class="ex">
+      <div class="sym"><code>to_parquet</code></div>
+      <div class="loc">test_parquet.py:380 · <code>constructor_target_not_a_class</code></div>
+      <p class="why">The DataFrame instance is not bound to the <code>frame.py</code> <code>DataFrame</code> class — a cross-module type-binding gap, so lookup never runs against the right type.</p>
+      <div class="route">route → <b>receiver-type inference</b></div>
+    </div>
+  </div>
+
+  <h2 id="rank">Rank this group against the other six</h2>
+  <div class="callout invert">
+    <span class="k">benefit vs cost</span>
+    <p><b>High benefit, low blast-radius.</b> 24 durable false-flag removals across 5 projects for ~1 net line of new code plus a drift deletion — the two big arms <i>collapse</i> rather than expand. The only real surface is threading three already-available inputs onto the call context (mechanism B) and the regression tests. No data-model or wire-contract change; no schema bump.</p>
+  </div>
+  <div class="callout olive">
+    <span class="k">fund</span>
+    <p>The constructor arm (effort 3, 14 rows) and namespace arm (effort 5, 10 rows) are both <b>core fixes</b> that delete drift — fund together; the operator-alias capture (effort 2, 2 rows) rides along in <code>definition.ts</code>.</p>
+  </div>
+  <div class="callout rust">
+    <span class="k">defer / drop</span>
+    <p>The interim classifier is <b>retired</b> — do not author it. The sqlx <code>eq_impl</code> row is a <b>maybe</b>: triage it against the now-completed index in step 6, and only open a separate Rust receiver-resolution sub-task if it still misses.</p>
+  </div>
+  <div class="callout slate">
+    <span class="k">watch — open questions</span>
+    <p>Verify Rust/JS constructor naming can't collide with an ordinary method name before keying; confirm no test asserted the old wrong-miss behavior for explicit <code>super().__init__()</code> once the constructor is keyed.</p>
+  </div>
+
+  <p class="cap prose" style="margin-top:40px;border-top:1px solid var(--g200);padding-top:14px">
+    Source · <code>~/.ariadne/plan/prioritize/method_lookup/refactor_plan.md</code> — fault area <code>packages/core/src/resolve_references/call_resolution/</code>. Generated decision aid; reflects the plan's decomposition verdict (two leaves collapsed, one split, one retired, three rows excluded).
+  </p>
+</main>
+</body>
+</html>

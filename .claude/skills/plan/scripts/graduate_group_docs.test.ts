@@ -3,13 +3,14 @@
  * temp plan-DB and backlog trees (both env-overridden), and assert the contract:
  *
  *   - the comprehension HTML is MOVED out of `backlog/docs/` into `backlog/tasks/`
- *     under a name that shares the epic's `task-<id> - <slug>` prefix (so it sorts
- *     beside it), while the refactor plan is COPIED (its source is retained);
+ *     under a name that shares the epic's `task-<id> - <slug>` prefix (derived
+ *     from the epic's rendered `.md` path), so it sorts beside it;
  *   - a move consumes its staged source and overwrites any prior overview, so a
  *     regenerated doc wins and nothing is stranded in the committed `backlog/docs/`;
+ *   - the refactor plan is NOT copied into the repo (it stays in `~/.ariadne` staging);
  *   - `--dry-run` mutates nothing;
- *   - a re-run after the move is a no-op (`skipped_no_src`), and a missing staged
- *     source is silently skipped.
+ *   - a re-run after the move is a no-op (`skipped_no_src`), and a group whose
+ *     comprehension HTML was never staged is silently skipped.
  */
 
 import type { Dirent } from "node:fs";
@@ -29,16 +30,16 @@ import {
   backlog_comprehension_staging_path,
   backlog_docs_dir,
   backlog_tasks_dir,
-  plan_prioritize_area_dir,
 } from "../src/store/paths.js";
 import { JsonPlanTaskRepository } from "../src/store/json_plan_task_repository.js";
 import type { ExportSummary } from "./export_to_backlog.js";
 import { run, type GraduateSummary } from "./graduate_group_docs.js";
 
 const FAULT_AREA = "name_resolution";
-const TITLE = "[name_resolution] Resolve namespace receiver calls";
-const SLUG = "name_resolution-Resolve-namespace-receiver-calls";
+const SLUG = "Complete-the-member-surface";
 const BACKLOG_ID = "347";
+const EPIC_FILENAME = `task-${BACKLOG_ID} - ${SLUG}.md`;
+const OVERVIEW_FILENAME = `task-${BACKLOG_ID} - ${SLUG}.overview.html`;
 
 let plan_dir: string;
 let backlog_dir: string;
@@ -54,8 +55,8 @@ function make_architectural_root(): PlanTask {
     tier: "architectural",
     parent_id: null,
     child_ids: [],
-    title: TITLE,
-    body: "Receiver type lost.\n\n## Acceptance criteria\n\n- [ ] Fix it.\n",
+    title: "[name_resolution] cheap plan-engine title",
+    body: "cheap body",
     fault_area: FAULT_AREA,
     evidence: [],
     observed_count: 0,
@@ -79,24 +80,17 @@ function make_export_summary(dry_run: boolean): ExportSummary {
     dry_run,
     export_run_id: "export-run-1",
     selectors: { status: "proposed", fault_area: FAULT_AREA, priority: null, ids: [] },
-    exported: [
-      { id: "pt-arch", backlog_task: `TASK-${BACKLOG_ID}`, path: `task-${BACKLOG_ID} - ${SLUG}.md` },
-    ],
+    exported: [{ id: "pt-arch", backlog_task: `TASK-${BACKLOG_ID}`, path: EPIC_FILENAME }],
     skipped_already_exported: [],
     skipped_non_exportable: [],
     missing_ids: [],
   };
 }
 
-/** Seed both staged inputs the graduation reads. */
-async function seed_staged_docs(comprehension_html: string): Promise<void> {
-  const docs = backlog_docs_dir();
-  await fs.mkdir(docs, { recursive: true });
-  await fs.writeFile(backlog_comprehension_staging_path(FAULT_AREA), comprehension_html, "utf8");
-
-  const area = plan_prioritize_area_dir(FAULT_AREA);
-  await fs.mkdir(area, { recursive: true });
-  await fs.writeFile(path.join(area, "refactor_plan.md"), "# Refactor plan\n", "utf8");
+/** Stage the one input graduation reads: the comprehension HTML under backlog/docs. */
+async function seed_comprehension(html: string): Promise<void> {
+  await fs.mkdir(backlog_docs_dir(), { recursive: true });
+  await fs.writeFile(backlog_comprehension_staging_path(FAULT_AREA), html, "utf8");
 }
 
 async function write_summary(summary: ExportSummary): Promise<string> {
@@ -160,12 +154,10 @@ afterEach(async () => {
 });
 
 describe("graduate_group_docs", () => {
-  it("moves the comprehension HTML beside the epic and copies the refactor plan", async () => {
-    await seed_staged_docs("<html>decision aid</html>");
+  it("moves the comprehension HTML beside the epic, deriving the name from the epic path", async () => {
+    await seed_comprehension("<html>decision aid</html>");
     const html_src = backlog_comprehension_staging_path(FAULT_AREA);
-    const html_dest = path.join(backlog_tasks_dir(), `task-${BACKLOG_ID} - ${SLUG}.overview.html`);
-    const plan_src = path.join(plan_prioritize_area_dir(FAULT_AREA), "refactor_plan.md");
-    const plan_dest = path.join(backlog_docs_dir(), `TASK-${BACKLOG_ID}-${SLUG}-refactor.md`);
+    const html_dest = path.join(backlog_tasks_dir(), OVERVIEW_FILENAME);
 
     const summary = await run(["--export-summary", await write_summary(make_export_summary(false))]);
 
@@ -175,7 +167,6 @@ describe("graduate_group_docs", () => {
         {
           fault_area: FAULT_AREA,
           backlog_id: BACKLOG_ID,
-          refactor_plan: { src: plan_src, dest: plan_dest, action: "copied" },
           comprehension: { src: html_src, dest: html_dest, action: "moved" },
         },
       ],
@@ -184,16 +175,22 @@ describe("graduate_group_docs", () => {
 
     expect(await exists(html_src)).toEqual(false);
     expect(await exists(html_dest)).toEqual(true);
-    expect(path.basename(html_dest)).toEqual(`task-${BACKLOG_ID} - ${SLUG}.overview.html`);
-    expect(await exists(plan_src)).toEqual(true);
-    expect(await exists(plan_dest)).toEqual(true);
+  });
+
+  it("does not copy the refactor plan into the repo", async () => {
+    await seed_comprehension("<html>decision aid</html>");
+    await run(["--export-summary", await write_summary(make_export_summary(false))]);
+
+    // No `-refactor.md` design doc lands anywhere under the backlog tree.
+    const all = await snapshot_tree(backlog_dir);
+    expect([...all.keys()].some((rel) => rel.endsWith("-refactor.md"))).toEqual(false);
   });
 
   it("overwrites a prior overview with the regenerated source, leaving no staged copy", async () => {
-    const html_dest = path.join(backlog_tasks_dir(), `task-${BACKLOG_ID} - ${SLUG}.overview.html`);
+    const html_dest = path.join(backlog_tasks_dir(), OVERVIEW_FILENAME);
     await fs.mkdir(backlog_tasks_dir(), { recursive: true });
     await fs.writeFile(html_dest, "<html>stale overview</html>", "utf8");
-    await seed_staged_docs("<html>regenerated</html>");
+    await seed_comprehension("<html>regenerated</html>");
 
     const summary = await run(["--export-summary", await write_summary(make_export_summary(false))]);
 
@@ -203,9 +200,8 @@ describe("graduate_group_docs", () => {
   });
 
   it("--dry-run mutates nothing", async () => {
-    await seed_staged_docs("<html>decision aid</html>");
+    await seed_comprehension("<html>decision aid</html>");
     const before_backlog = await snapshot_tree(backlog_dir);
-    const before_plan = await snapshot_tree(plan_dir);
 
     const summary = await run([
       "--export-summary",
@@ -215,30 +211,21 @@ describe("graduate_group_docs", () => {
 
     expect(summary.dry_run).toEqual(true);
     expect(summary.results[0].comprehension.action).toEqual("moved");
-    expect(summary.results[0].refactor_plan.action).toEqual("copied");
     expect(await exists(backlog_comprehension_staging_path(FAULT_AREA))).toEqual(true);
     expect(await snapshot_tree(backlog_dir)).toEqual(before_backlog);
-    expect(await snapshot_tree(plan_dir)).toEqual(before_plan);
   });
 
   it("is a no-op on re-run once the source has moved", async () => {
-    await seed_staged_docs("<html>decision aid</html>");
+    await seed_comprehension("<html>decision aid</html>");
     await run(["--export-summary", await write_summary(make_export_summary(false))]);
 
     const summary = await run(["--export-summary", summary_path]);
 
     expect(summary.results[0].comprehension.action).toEqual("skipped_no_src");
-    expect(summary.results[0].refactor_plan.action).toEqual("skipped_exists");
   });
 
   it("skips a group whose comprehension HTML was never staged", async () => {
-    const area = plan_prioritize_area_dir(FAULT_AREA);
-    await fs.mkdir(area, { recursive: true });
-    await fs.writeFile(path.join(area, "refactor_plan.md"), "# Refactor plan\n", "utf8");
-
     const summary = await run(["--export-summary", await write_summary(make_export_summary(false))]);
-
     expect(summary.results[0].comprehension.action).toEqual("skipped_no_src");
-    expect(summary.results[0].refactor_plan.action).toEqual("copied");
   });
 });

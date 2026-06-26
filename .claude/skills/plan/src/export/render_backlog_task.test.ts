@@ -12,15 +12,15 @@ import {
   derive_backlog_priority,
   render_backlog_task,
   slugify_title,
-  split_rendered_body,
 } from "./render_backlog_task.js";
+import type { AuthoredBacklogTask } from "./task_assignment.js";
 
-/** A fully-populated `PlanTask` (the record is total); `overrides` set the per-test discriminators. */
+/** A fully-populated primary `PlanTask` (the record is total); `overrides` set the per-test discriminators. */
 function make_task(overrides: Partial<PlanTask>): PlanTask {
   return {
     schema_version: PLAN_TASK_SCHEMA_VERSION,
     id: "pt-base" as PlanTaskId,
-    tier: "localized",
+    tier: "architectural",
     parent_id: null,
     child_ids: [],
     title: "title",
@@ -40,6 +40,20 @@ function make_task(overrides: Partial<PlanTask>): PlanTask {
     is_classifier_work: false,
     core_fix_effort: 3,
     core_fix_effort_rationale: "new resolver path in name_resolution",
+    ...overrides,
+  };
+}
+
+/** An authored backlog task with absolute ids (post-remap), the shape the renderer consumes. */
+function make_authored(overrides: Partial<AuthoredBacklogTask>): AuthoredBacklogTask {
+  return {
+    backlog_id: "347",
+    parent_backlog_id: null,
+    ordinal: null,
+    title: "Resolve namespace receiver calls",
+    description_md: "Receiver type lost at the namespace hop.",
+    acceptance_criteria: [],
+    plan_task_ids: ["pt-base"],
     ...overrides,
   };
 }
@@ -72,86 +86,42 @@ describe("slugify_title", () => {
 
 describe("backlog_task_filename", () => {
   it("renders the `task-<id> - <slug>.md` convention", () => {
-    expect(backlog_task_filename("347", "[type_resolution] Narrow receiver")).toEqual(
-      "task-347 - type_resolution-Narrow-receiver.md",
+    expect(backlog_task_filename("347", "Narrow the receiver")).toEqual(
+      "task-347 - Narrow-the-receiver.md",
     );
   });
 
   it("renders a dotted child id into the filename", () => {
-    expect(backlog_task_filename("347.1.2", "[type_resolution] Narrow receiver")).toEqual(
-      "task-347.1.2 - type_resolution-Narrow-receiver.md",
+    expect(backlog_task_filename("347.1.2", "Narrow the receiver")).toEqual(
+      "task-347.1.2 - Narrow-the-receiver.md",
     );
-  });
-});
-
-describe("split_rendered_body", () => {
-  it("splits a rendered body at the acceptance heading", () => {
-    const body = [
-      "Receiver type lost at the namespace hop.",
-      "",
-      "## Observations",
-      "",
-      "- Observed count: **2**",
-      "",
-      "## Acceptance criteria",
-      "",
-      "- [ ] Root-cause fix lands in `core`.",
-      "- [ ] Add a regression test.",
-      "",
-    ].join("\n");
-    expect(split_rendered_body(body)).toEqual({
-      description_md: [
-        "Receiver type lost at the namespace hop.",
-        "",
-        "## Observations",
-        "",
-        "- Observed count: **2**",
-      ].join("\n"),
-      acceptance_items: ["Root-cause fix lands in `core`.", "Add a regression test."],
-    });
-  });
-
-  it("puts the whole body in description when there is no acceptance heading", () => {
-    expect(split_rendered_body("Just prose, no criteria.\n")).toEqual({
-      description_md: "Just prose, no criteria.",
-      acceptance_items: [],
-    });
   });
 });
 
 describe("render_backlog_task", () => {
-  it("renders frontmatter (stamping plan_dedup_key + source id) and the two delimited body regions", () => {
-    const task = make_task({
+  it("renders the authored body and a numbered checklist, stamping the primary's dedup link", () => {
+    const authored = make_authored({
+      title: "Complete the member surface a resolved receiver exposes",
+      description_md: "Key the constructor into the flat member index, and delegate namespace lookup to the export chain.",
+      acceptance_criteria: ["Root-cause fix lands in `core`.", "Add a regression test."],
+    });
+    const primary = make_task({
       id: "pt-abc123" as PlanTaskId,
-      title: "[name_resolution] Resolve namespace receiver calls",
       fault_area: "name_resolution",
       dedup_key: "a1b2c3d4e5f6",
       is_classifier_work: false,
-      body: [
-        "Receiver type lost at the namespace hop.",
-        "",
-        "## Acceptance criteria",
-        "",
-        "- [ ] Root-cause fix lands in `core`.",
-        "- [ ] Add a regression test.",
-        "",
-      ].join("\n"),
     });
 
-    const rendered = render_backlog_task(
-      task,
-      { backlog_id: "347", parent_backlog_id: null, ordinal: null },
-      "2026-06-04 14:30",
-    );
+    const rendered = render_backlog_task(authored, primary, "2026-06-04 14:30");
 
     expect(rendered.filename).toEqual(
-      "task-347 - name_resolution-Resolve-namespace-receiver-calls.md",
+      "task-347 - Complete-the-member-surface-a-resolved-receiver-exposes.md",
     );
     expect(rendered.content).toEqual(
       [
         "---",
         "id: TASK-347",
-        "title: \"[name_resolution] Resolve namespace receiver calls\"",
+        "title: \"Complete the member surface a resolved receiver exposes\"",
         "status: To Do",
         "assignee: []",
         "created_date: \"2026-06-04 14:30\"",
@@ -168,7 +138,7 @@ describe("render_backlog_task", () => {
         "",
         "<!-- SECTION:DESCRIPTION:BEGIN -->",
         "",
-        "Receiver type lost at the namespace hop.",
+        "Key the constructor into the flat member index, and delegate namespace lookup to the export chain.",
         "",
         "<!-- SECTION:DESCRIPTION:END -->",
         "",
@@ -185,39 +155,42 @@ describe("render_backlog_task", () => {
     );
   });
 
-  it("stamps medium priority for classifier work", () => {
-    const task = make_task({ is_classifier_work: true, body: "prose\n" });
+  it("stamps medium priority when the primary row is classifier work", () => {
     const rendered = render_backlog_task(
-      task,
-      { backlog_id: "12", parent_backlog_id: null, ordinal: null },
+      make_authored({}),
+      make_task({ is_classifier_work: true }),
       "2026-06-04 14:30",
     );
     expect(rendered.content.includes("priority: medium")).toBe(true);
   });
 
   it("stamps parent_task_id and ordinal for a nested child, and a dotted id/filename", () => {
-    const task = make_task({
+    const authored = make_authored({
+      backlog_id: "347.1.2",
+      parent_backlog_id: "347.1",
+      ordinal: 2000,
+      title: "Bind sibling inner-scope names",
+      description_md: "Leaf prose.",
+      acceptance_criteria: [],
+      plan_task_ids: ["pt-leaf"],
+    });
+    const primary = make_task({
       id: "pt-leaf" as PlanTaskId,
-      title: "[name_resolution] Bind sibling inner-scope names",
+      tier: "localized",
       fault_area: "name_resolution",
       dedup_key: "leafkey",
-      body: "Leaf prose.\n",
     });
 
-    const rendered = render_backlog_task(
-      task,
-      { backlog_id: "347.1.2", parent_backlog_id: "347.1", ordinal: 2000 },
-      "2026-06-04 14:30",
-    );
+    const rendered = render_backlog_task(authored, primary, "2026-06-04 14:30");
 
     expect(rendered.filename).toEqual(
-      "task-347.1.2 - name_resolution-Bind-sibling-inner-scope-names.md",
+      "task-347.1.2 - Bind-sibling-inner-scope-names.md",
     );
     expect(rendered.content).toEqual(
       [
         "---",
         "id: TASK-347.1.2",
-        "title: \"[name_resolution] Bind sibling inner-scope names\"",
+        "title: \"Bind sibling inner-scope names\"",
         "status: To Do",
         "assignee: []",
         "created_date: \"2026-06-04 14:30\"",

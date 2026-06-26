@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Generated comprehension aid for funding decision on the receiver_type_inference change group.
+     Source: ~/.ariadne/plan/prioritize/receiver_type_inference/refactor_plan.md -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>receiver_type_inference — three indexing-feeder fixes, one false-positive group</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --ink:#1f1e1c; --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  /* cross-doc nav bar */
+  nav.cross{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 0}
+  nav.cross .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.cross .brand{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.cross a, nav.cross .here{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:4px 10px;display:inline-flex;align-items:center;gap:6px}
+  nav.cross a:hover{border-color:var(--clay);color:var(--slate)}
+  nav.cross .here{background:var(--slate);color:var(--ivory);border-color:var(--slate)}
+  nav.cross .dot{width:7px;height:7px;border-radius:50%;background:var(--olive)}
+  /* in-page outline bar */
+  nav.toc{position:sticky;top:43px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
+  nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.toc .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--g600);margin-right:4px}
+  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:3px 9px}
+  nav.toc a:hover{border-color:var(--clay);color:var(--slate)}
+  main{width:90%;max-width:1600px;margin:0 auto;padding:30px 0 80px}
+  .prose{max-width:74ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:34px;line-height:1.1;margin:0 0 14px;letter-spacing:-.01em;max-width:26ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:24px;margin:54px 0 6px;letter-spacing:-.01em;scroll-margin-top:96px}
+  h3{font-family:var(--mono);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);margin:22px 0 8px}
+  p{margin:0 0 12px}
+  .lead{font-size:16.5px;color:var(--g600);max-width:80ch}
+  code{font-family:var(--mono);font-size:.85em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .chip.hot{background:#fbf2ef;border-color:var(--rust)} .chip.hot strong{color:var(--rust)}
+  .chip.good{background:#f2f4ec;border-color:var(--olive)} .chip.good strong{color:var(--olive)}
+  .cap{font-size:13.5px;color:var(--g600);margin:8px 2px 14px;max-width:82ch}
+  .cap b{color:var(--slate);font-weight:600}
+  /* callout */
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:15px 19px;margin:18px 0;max-width:88ch}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)} .callout.slate{border-left-color:var(--slate);background:var(--slate);color:var(--ivory)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 7px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)} .callout.slate .k{color:var(--oat)}
+  .callout p{margin:0 0 6px;font-size:14.5px} .callout p:last-child{margin:0}
+  .callout.slate code{background:rgba(255,255,255,.12);color:var(--oat)}
+  .callout b{color:var(--slate)} .callout.slate b{color:#fff}
+  .callout .rank{display:flex;flex-wrap:wrap;gap:18px;margin-top:10px}
+  .callout .rank div{font-size:13.5px} .callout .rank .lab{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--oat);display:block;margin-bottom:2px}
+  /* before/after diagram pair */
+  .ba{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin:14px 0}
+  .ba .panel{background:var(--paper);border:1px solid var(--g200);padding:16px 18px}
+  .ba .panel:first-child{border-radius:var(--r) 0 0 var(--r)} .ba .panel:last-child{border-radius:0 var(--r) var(--r) 0;border-left:none}
+  .ba .arrow{display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--ivory);padding:0 4px;min-width:44px}
+  .ba .arrow .glyph{font-family:var(--serif);font-size:30px;color:var(--clay);line-height:1}
+  .ba .arrow .lab{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--g600);writing-mode:vertical-rl;margin-top:6px}
+  .ba .ptitle{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px}
+  .ba .panel.cur .ptitle{color:var(--rust)} .ba .panel.plan .ptitle{color:var(--olive)}
+  .ba svg{width:100%;height:auto;display:block}
+  @media(max-width:760px){.ba{grid-template-columns:1fr}.ba .panel,.ba .panel:first-child,.ba .panel:last-child{border-radius:var(--r);border-left:1px solid var(--g200);margin-bottom:8px}.ba .arrow{flex-direction:row;padding:4px 0}.ba .arrow .glyph{transform:rotate(90deg)}.ba .arrow .lab{writing-mode:horizontal-tb;margin:0 0 0 8px}}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:12px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,.12)}
+  .legend i.add{background:var(--olive)} .legend i.del{background:var(--rust)} .legend i.mod{background:var(--oat);border-color:var(--clay)} .legend i.same{background:var(--paper);border-color:var(--g400)}
+  /* shape matrix */
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--g200);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--g600);background:var(--paper)}
+  td code{font-size:.9em}
+  .verdict{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;white-space:nowrap}
+  .verdict::before{content:"";width:11px;height:11px;border-radius:50%;display:inline-block}
+  .verdict.ok{color:var(--olive)} .verdict.ok::before{background:var(--olive)}
+  .verdict.bad{color:var(--rust)} .verdict.bad::before{background:var(--rust)}
+  tr.flagged td{background:#fbf2ef}
+  .fixtag{font-family:var(--mono);font-size:10px;font-weight:700;border-radius:999px;padding:2px 8px;color:var(--ivory)}
+  .fixtag.A{background:#7a5a3a} .fixtag.B{background:#5b6840} .fixtag.C{background:#8a5a3a} .fixtag.none{background:var(--g400)}
+  /* fix cards */
+  .fixes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:16px 0}
+  @media(max-width:900px){.fixes{grid-template-columns:1fr}}
+  .fix{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column}
+  .fix .top{display:flex;align-items:center;gap:10px;margin-bottom:3px}
+  .fix .badge{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--ivory);border-radius:7px;padding:3px 10px}
+  .fix.A .badge{background:#7a5a3a} .fix.B .badge{background:#5b6840} .fix.C .badge{background:#8a5a3a}
+  .fix .lang{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--clay);margin-left:auto}
+  .fix h4{font-family:var(--serif);font-size:17px;font-weight:600;margin:6px 0 8px;letter-spacing:-.01em}
+  .fix .what{font-size:13px;color:var(--slate);margin:0 0 10px}
+  .fix .what b{color:var(--rust)}
+  .fix .file{font-family:var(--mono);font-size:10.5px;color:var(--g600);background:var(--g100);border-radius:6px;padding:5px 8px;margin:0 0 10px;word-break:break-all}
+  .code{background:var(--code);border-radius:9px;padding:11px 13px;margin:0 0 11px;overflow-x:auto}
+  .code pre{margin:0;font-family:var(--mono);font-size:11px;line-height:1.5;color:var(--codeink);white-space:pre}
+  .code .kw{color:#c98a64} .code .str{color:#9bb06a} .code .cm{color:#7d7669} .code .fn{color:#d9c27a} .code .hl{background:rgba(108,122,74,.28);display:inline-block;width:100%}
+  .fix .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:auto}
+  .fix .chips .c{font-family:var(--mono);font-size:10.5px;border-radius:999px;padding:3px 9px}
+  .fix .chips .members{background:#fbf2ef;color:var(--rust);font-weight:600}
+  .fix .chips .tier{background:#f2f4ec;color:var(--olive)}
+  .fix .chips .surf{background:var(--g100);color:var(--g600)}
+  /* sub-task remap table */
+  .leaf{font-family:var(--mono);font-size:11.5px;color:var(--slate)}
+  .disp{font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-radius:999px;padding:3px 9px;display:inline-block;white-space:nowrap}
+  .disp.collapse{background:#fbf2ef;color:var(--rust)}
+  .disp.keep{background:#f2f4ec;color:var(--olive)}
+  .disp.retier{background:rgba(185,121,79,.18);color:var(--clay)}
+  .disp.retire{background:var(--g100);color:var(--g600)}
+  .disp.exclude{background:var(--slate);color:var(--oat)}
+  /* effort row */
+  .effort{display:flex;align-items:center;gap:8px}
+  .bar{height:9px;border-radius:5px;background:var(--g200);position:relative;flex:1;max-width:120px;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:5px}
+  .bar i.lo{background:var(--olive)} .bar i.md{background:var(--clay)}
+  .barlab{font-family:var(--mono);font-size:11px;color:var(--g600)}
+  footer{border-top:1px solid var(--g200);margin-top:60px;padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400)}
+</style>
+</head>
+<body>
+
+<nav class="cross">
+  <div class="inner">
+    <span class="brand">FP unreachable-fn · change groups</span>
+    <span class="here"><span class="dot"></span>receiver_type_inference</span>
+    <a href="TASKS-347-351-campaign-overview.html">347–351 campaign</a>
+    <a href="self-healing-pipeline-architecture.html">pipeline architecture</a>
+  </div>
+</nav>
+
+<nav class="toc">
+  <div class="inner">
+    <span class="brand">On this page</span>
+    <a href="#shift">Where the fix lives</a>
+    <a href="#shapes">Source shapes</a>
+    <a href="#fixes">The three fixes</a>
+    <a href="#remap">Sub-task remap</a>
+    <a href="#decision">Fund-or-not</a>
+  </div>
+</nav>
+
+<main>
+
+  <p class="eyebrow">Change group · false-positive unreachable-function flags</p>
+  <h1>Receiver types are dropped at indexing, not resolution — three feeder fixes close the gap</h1>
+  <p class="lead prose">Methods reached only through <code>this.field.m()</code>, <code>self.attr.m()</code>, or a JSDoc-typed param are flagged unreachable because the receiver's declared type never reaches the registry. The resolver is already correct; the loss happens in three indexing feeders across three language surfaces.</p>
+
+  <div class="meta">
+    <span class="chip hot"><strong>34</strong>&nbsp;false unreachable flags</span>
+    <span class="chip"><strong>8</strong>&nbsp;projects</span>
+    <span class="chip"><strong>8</strong>&nbsp;runs observed</span>
+    <span class="chip good">core fix resolves <strong>~28</strong>&nbsp;members</span>
+    <span class="chip">core_fix_effort <strong>3–5</strong></span>
+    <span class="chip"><strong>2</strong>&nbsp;rows → interim classifier</span>
+    <span class="chip"><strong>2</strong>&nbsp;rows excluded</span>
+  </div>
+
+  <!-- ============ CRUX: BEFORE / AFTER ============ -->
+  <h2 id="shift">Where the fix lives: upstream of the resolver, not inside it</h2>
+  <p class="cap prose">The plan's root-cause finding: <b>the receiver resolver <code>receiver_resolution.ts</code> already walks every one of these shapes correctly.</b> It returns <code>method_not_on_type</code> only because the type-bearing definition was never built. Each fix populates a <code>def.type</code> the resolver already reads — <b>zero resolver lines change.</b></p>
+
+  <div class="ba">
+    <div class="panel cur">
+      <p class="ptitle">Current — type lost at indexing</p>
+      <svg viewBox="0 0 360 300" role="img" aria-label="Current pipeline: indexing feeder drops the receiver type, so the resolver correctly reports method_not_on_type and the method is falsely flagged unreachable">
+        <defs>
+          <marker id="aR" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#a8472f"/></marker>
+          <marker id="aG2" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#9a9387"/></marker>
+        </defs>
+        <!-- source -->
+        <rect x="40" y="14" width="280" height="40" rx="9" fill="#fff" stroke="#9a9387"/>
+        <text x="180" y="32" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#2b2a28">receiver: this.config?.m()</text>
+        <text x="180" y="46" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">declared/constructed type present in source</text>
+        <line x1="180" y1="54" x2="180" y2="74" stroke="#9a9387" stroke-width="1.5" marker-end="url(#aG2)"/>
+        <!-- indexing feeder -->
+        <rect x="40" y="76" width="280" height="48" rx="9" fill="#fbe6df" stroke="#a8472f" stroke-width="1.5"/>
+        <text x="180" y="96" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" font-weight="700" fill="#a8472f">indexing feeder</text>
+        <text x="180" y="112" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#a8472f">capture / JSDoc / promotion gap</text>
+        <line x1="180" y1="124" x2="180" y2="146" stroke="#a8472f" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#aR)"/>
+        <text x="190" y="139" font-family="ui-monospace,monospace" font-size="9" fill="#a8472f">type dropped</text>
+        <!-- registry -->
+        <rect x="40" y="148" width="280" height="40" rx="9" fill="#fff" stroke="#9a9387"/>
+        <text x="180" y="167" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#2b2a28">registry</text>
+        <text x="180" y="181" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#a8472f">def.type empty / no class field</text>
+        <line x1="180" y1="188" x2="180" y2="208" stroke="#9a9387" stroke-width="1.5" marker-end="url(#aG2)"/>
+        <!-- resolver (unchanged, correct) -->
+        <rect x="40" y="210" width="280" height="40" rx="9" fill="#eef1e6" stroke="#6c7a4a"/>
+        <text x="180" y="229" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#3f4a2c">receiver_resolution.ts (correct)</text>
+        <text x="180" y="243" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">no type → method_not_on_type</text>
+        <line x1="180" y1="250" x2="180" y2="268" stroke="#a8472f" stroke-width="1.5" marker-end="url(#aR)"/>
+        <!-- outcome -->
+        <rect x="60" y="270" width="240" height="26" rx="13" fill="#a8472f"/>
+        <text x="180" y="287" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" font-weight="700" fill="#fff">FALSE unreachable flag</text>
+      </svg>
+    </div>
+    <div class="arrow"><span class="glyph">→</span><span class="lab">3 feeder fixes</span></div>
+    <div class="panel plan">
+      <p class="ptitle">Planned — feeders populate the type</p>
+      <svg viewBox="0 0 360 300" role="img" aria-label="Planned pipeline: three indexing feeder fixes populate def.type, the unchanged resolver resolves the receiver, and the method is correctly reachable">
+        <defs>
+          <marker id="aG" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#6c7a4a"/></marker>
+        </defs>
+        <rect x="40" y="14" width="280" height="40" rx="9" fill="#fff" stroke="#9a9387"/>
+        <text x="180" y="32" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#2b2a28">receiver: this.config?.m()</text>
+        <text x="180" y="46" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">same source</text>
+        <line x1="180" y1="54" x2="180" y2="74" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#aG)"/>
+        <!-- indexing feeder fixed -->
+        <rect x="40" y="76" width="280" height="48" rx="9" fill="#eef1e6" stroke="#6c7a4a" stroke-width="1.5"/>
+        <text x="180" y="96" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" font-weight="700" fill="#3f4a2c">indexing feeder — FIXED</text>
+        <text x="180" y="112" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#3f4a2c">capture A · JSDoc B · promote C</text>
+        <line x1="180" y1="124" x2="180" y2="146" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#aG)"/>
+        <text x="190" y="139" font-family="ui-monospace,monospace" font-size="9" fill="#6c7a4a">type carried</text>
+        <rect x="40" y="148" width="280" height="40" rx="9" fill="#fff" stroke="#9a9387"/>
+        <text x="180" y="167" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#2b2a28">registry</text>
+        <text x="180" y="181" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#3f4a2c">def.type = ApplicationConfig</text>
+        <line x1="180" y1="188" x2="180" y2="208" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#aG)"/>
+        <rect x="40" y="210" width="280" height="40" rx="9" fill="#eef1e6" stroke="#6c7a4a"/>
+        <text x="180" y="229" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#3f4a2c">receiver_resolution.ts (UNCHANGED)</text>
+        <text x="180" y="243" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">walks chain → member found</text>
+        <line x1="180" y1="250" x2="180" y2="268" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#aG)"/>
+        <rect x="60" y="270" width="240" height="26" rx="13" fill="#6c7a4a"/>
+        <text x="180" y="287" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" font-weight="700" fill="#fff">correctly REACHABLE</text>
+      </svg>
+    </div>
+  </div>
+  <div class="legend">
+    <span><i class="del"></i> dropped / false flag</span>
+    <span><i class="add"></i> populated / resolved</span>
+    <span><i class="same"></i> unchanged stage</span>
+    <span style="color:var(--olive)">resolver node is olive in both panels — it is never edited</span>
+  </div>
+
+  <!-- ============ SOURCE SHAPES ============ -->
+  <h2 id="shapes">Which source shapes flip, and which were never the fault</h2>
+  <p class="cap prose">Each shape was reproduced end-to-end against the live <code>Project</code> pipeline. A shape flips from <span class="verdict bad" style="display:inline-flex">FLAGGED</span> to resolved the moment its missing definition exists — pinning each failure to one feeder, never to the resolver.</p>
+  <table>
+    <thead><tr><th style="width:38%">Source shape</th><th style="width:14%">Today</th><th>Why it fails / why it works</th><th style="width:9%">Fix</th></tr></thead>
+    <tbody>
+      <tr><td><code>private config: ApplicationConfig</code> &nbsp;(non-optional)</td><td><span class="verdict ok">resolved</span></td><td>property def built with <code>type</code></td><td><span class="fixtag none">—</span></td></tr>
+      <tr class="flagged"><td><code>private readonly config?: T</code> &nbsp;(optional ctor param-prop)</td><td><span class="verdict bad">FLAGGED</span></td><td>optional param-property emits no class field</td><td><span class="fixtag A">A</span></td></tr>
+      <tr class="flagged"><td><code>previous?: …Node</code> &nbsp;(optional ctor param-prop, recursive)</td><td><span class="verdict bad">FLAGGED</span></td><td>same optional param-property gap</td><td><span class="fixtag A">A</span></td></tr>
+      <tr><td><code>client._extensions: T</code> &nbsp;(declared body field)</td><td><span class="verdict ok">resolved</span></td><td>property def built with <code>type</code></td><td><span class="fixtag none">—</span></td></tr>
+      <tr class="flagged"><td><code>@param {ModuleGraph} g</code> then <code>g.method()</code> (JS)</td><td><span class="verdict bad">FLAGGED</span></td><td>JSDoc <code>@param</code> tag never associated to the param</td><td><span class="fixtag B">B</span></td></tr>
+      <tr><td><code>self.df = DataFrame()</code> in <code>__init__</code>, sibling method</td><td><span class="verdict ok">resolved</span></td><td>built from <code>__init__</code> self-assignment</td><td><span class="fixtag none">—</span></td></tr>
+      <tr class="flagged"><td><code>self.df = DataFrame()</code> in <code>setup()</code> (not <code>__init__</code>)</td><td><span class="verdict bad">FLAGGED</span></td><td>self-attr promotion gated to <code>__init__</code></td><td><span class="fixtag C">C</span></td></tr>
+      <tr class="flagged"><td><code>self.df = pd.DataFrame()</code> &nbsp;(namespace-qualified)</td><td><span class="verdict bad">FLAGGED</span></td><td>RHS type read only for bare-identifier ctor</td><td><span class="fixtag C">C</span></td></tr>
+      <tr><td><code>x = DataFrame(); x.method()</code> &nbsp;(local, same method)</td><td><span class="verdict ok">resolved</span></td><td>local constructor binding already works</td><td><span class="fixtag none">—</span></td></tr>
+    </tbody>
+  </table>
+
+  <!-- ============ THE THREE FIXES ============ -->
+  <h2 id="fixes">Three independent fixes — distinct languages, distinct files, parallelizable</h2>
+  <p class="cap prose">No shared cross-folder pass, no duplicate builder. Each fix lives in one capture/extractor file at the <b>indexing</b> altitude and can ship in any order or in parallel.</p>
+  <div class="fixes">
+
+    <article class="fix A">
+      <div class="top"><span class="badge">FIX A</span><span class="lang">TypeScript</span></div>
+      <h4>Optional ctor param-properties emit their class field</h4>
+      <p class="what">Required param-properties promote to a class field; an <b>optional</b> one (<code>config?: T</code>) is an <code>optional_parameter</code> node with no <code>@definition.field</code> capture, so the implicit field is never indexed.</p>
+      <div class="file">queries/typescript.scm · capture_handlers.typescript.ts</div>
+      <div class="code"><pre><span class="cm">; add after line 178 — mirror required-param rules</span>
+(<span class="fn">optional_parameter</span>
+  (accessibility_modifier)
+  pattern: (identifier)
+    @definition.parameter.optional
+    <span class="hl">@definition.field</span>)
+<span class="cm">; + readonly variant — both captures fire</span></pre></div>
+      <div class="chips">
+        <span class="c members">resolves ~11 members</span>
+        <span class="c tier">core fix · effort 3</span>
+        <span class="c surf">capture rule</span>
+      </div>
+    </article>
+
+    <article class="fix B">
+      <div class="top"><span class="badge">FIX B</span><span class="lang">JavaScript</span></div>
+      <h4>Associate JSDoc <code>@param {T} name</code> with the param</h4>
+      <p class="what"><code>extract_jsdoc_type</code> matches only <code>@type</code> / <code>@returns</code>. A param typed <b>purely in JSDoc</b> gets no <code>def.type</code>, so <code>resolve_identifier_base</code> has nothing to resolve.</p>
+      <div class="file">metadata_extractors.javascript.ts</div>
+      <div class="code"><pre><span class="cm">// find enclosing JSDoc, match by param name</span>
+<span class="kw">const</span> tag = jsdoc.match(
+  <span class="hl">/@param\s+\{([^}]+)\}\s+<span class="str">name</span>/</span>);
+<span class="kw">return</span> tag?.[<span class="str">1</span>]; <span class="cm">// → def.type</span>
+<span class="cm">// exact name match, no positional guess</span></pre></div>
+      <div class="chips">
+        <span class="c members">resolves 11 webpack members</span>
+        <span class="c tier">core fix · per-lang adapter</span>
+        <span class="c surf">JSDoc extractor</span>
+      </div>
+    </article>
+
+    <article class="fix C">
+      <div class="top"><span class="badge">FIX C</span><span class="lang">Python</span></div>
+      <h4>Promote <code>self.attr</code> outside <code>__init__</code> + read qualified RHS</h4>
+      <p class="what">Two gates drop the pandas cluster: promotion is <b>gated to <code>__init__</code></b> (asv benchmarks assign in <code>setup()</code>), and RHS type is read only for a <b>bare-identifier</b> ctor, not <code>pd.DataFrame()</code>.</p>
+      <div class="file">capture_handlers.python.ts</div>
+      <div class="code"><pre><span class="cm"># widen gate: any method body,</span>
+<span class="cm"># dedupe on (class, attr_name)</span>
+<span class="hl">promote_self_attr(any_method)</span>
+<span class="cm"># qualified RHS: take last segment</span>
+pd.DataFrame() <span class="kw">→</span> <span class="str">"DataFrame"</span></pre></div>
+      <div class="chips">
+        <span class="c members">resolves pandas self.df/self.st</span>
+        <span class="c tier">core fix · re-tiered 5 → ~3</span>
+        <span class="c surf">capture handler</span>
+      </div>
+    </article>
+
+  </div>
+
+  <p class="cap prose"><b>Data-model changes: none.</b> <code>PropertyDefinition.type</code> and <code>ParameterDefinition.type</code> already carry the type name — every fix populates a field left empty today. No schema bump. <b>Resolver, bindings, constructor, member modules: no edit.</b></p>
+
+  <!-- ============ SUB-TASK REMAP ============ -->
+  <h2 id="remap">How the four sub-task leaves collapse, keep, re-tier, retire</h2>
+  <p class="cap prose">The architectural root and all three core leaves named <code>receiver_resolution.ts</code> as the fix site — it is not. The work re-maps onto the three indexing feeders, with two evidence rows excluded from the fault area entirely.</p>
+  <table>
+    <thead><tr><th style="width:20%">Leaf</th><th style="width:13%">Disposition</th><th>What actually happens</th><th style="width:10%">Lands as</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="leaf">pt-4c00be79</span><br><span style="font-size:11.5px;color:var(--g600)">declared-class-typed fields · 14 ev.</span></td>
+        <td><span class="disp collapse">collapse</span></td>
+        <td>Its TS members (nest <code>ApplicationConfig</code>×6, <code>TestingInjector</code>, prisma <code>MergedExtensionsList</code>×4) are <b>one</b> change — Fix A. Premise (harden the property-chain hop in <code>bindings.ts</code>/<code>member.ts</code>) is unfounded; declared body fields already resolve. Python members → Fix C verification targets.</td>
+        <td><span class="fixtag A">A</span></td>
+      </tr>
+      <tr>
+        <td><span class="leaf">pt-92b41982</span><br><span style="font-size:11.5px;color:var(--g600)">JSDoc receiver types · 11 ev.</span></td>
+        <td><span class="disp keep">keep</span></td>
+        <td>Genuine per-language adapter. All 11 webpack members are real JSDoc <code>@param</code> gaps. The sqlalchemy <code>ss_cursor</code> row is misfiled (Python) → moves to the Fix C verification set.</td>
+        <td><span class="fixtag B">B</span></td>
+      </tr>
+      <tr>
+        <td><span class="leaf">pt-abdc058f</span><br><span style="font-size:11.5px;color:var(--g600)">ctor types across methods · 9 ev.</span></td>
+        <td><span class="disp retier">re-tier 5→3</span></td>
+        <td>Real fix is Fix C (a Python capture-handler change), <b>not</b> the "new cross-folder flow-tracking pass" the leaf describes — per-class attribute typing already exists. Two rows (<code>Categorical()</code>-into-local, Cython-<code>object</code> <code>self.obj</code>) don't reproduce → left to interim classifier.</td>
+        <td><span class="fixtag C">C</span></td>
+      </tr>
+      <tr>
+        <td><span class="leaf">pt-af4f58c1</span><br><span style="font-size:11.5px;color:var(--g600)">interim classifier · is_classifier_work</span></td>
+        <td><span class="disp retire">mostly retire</span></td>
+        <td>Builtin <code>check_receiver-type-unknown.ts</code> already covers the JS identifier-receiver shape. With A–C landed, only <b>two residual pandas rows</b> remain (fixture-injected <code>Styler</code>, Cython-<code>object</code> <code>self.obj</code>). Author the interim classifier for those two only — not the 30+ the core fixes resolve.</td>
+        <td><span class="fixtag none">2</span></td>
+      </tr>
+      <tr>
+        <td><span class="leaf">tokio · Cython object</span><br><span style="font-size:11.5px;color:var(--g600)">2 evidence rows</span></td>
+        <td><span class="disp exclude">exclude</span></td>
+        <td>tokio <code>delay_queue.rs index</code> is a <b>syntactic-extraction</b> gap (no index-operator capture), not type inference — route elsewhere. pandas <code>_set_value</code> / fixture <code>Styler</code> are genuinely out of static reach.</td>
+        <td><span class="fixtag none">—</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Sequencing — three fixes ship independently</h3>
+  <table>
+    <thead><tr><th style="width:8%">Order</th><th style="width:18%">Fix</th><th style="width:22%">Effort</th><th>Reach</th></tr></thead>
+    <tbody>
+      <tr><td><span class="fixtag A">1</span></td><td>Fix A · typescript.scm</td><td><div class="effort"><div class="bar"><i class="lo" style="width:50%"></i></div><span class="barlab">3 · smallest</span></div></td><td>≈11 members · highest count, land first</td></tr>
+      <tr><td><span class="fixtag B">2</span></td><td>Fix B · JS JSDoc <code>@param</code></td><td><div class="effort"><div class="bar"><i class="lo" style="width:55%"></i></div><span class="barlab">~3</span></div></td><td>11 webpack members</td></tr>
+      <tr><td><span class="fixtag C">3</span></td><td>Fix C · Python self-attr</td><td><div class="effort"><div class="bar"><i class="md" style="width:62%"></i></div><span class="barlab">~3 (was 5)</span></div></td><td>pandas cluster + verify celery/sqlalchemy/django</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ============ DECISION ============ -->
+  <h2 id="decision">Fund-or-not: benefit vs cost for ranking against the other six</h2>
+
+  <div class="callout slate">
+    <span class="k">Decision framing</span>
+    <p><b>Benefit:</b> clears <b>34</b> observed false unreachable-function flags across <b>8</b> projects — roughly <b>28 members</b> resolved by core fixes alone, the rest by the existing builtin and a narrowed two-row interim classifier.</p>
+    <p><b>Cost:</b> three small, independent, additive indexing-feeder edits — <b>no resolver change, no data-model change, no cross-folder pass.</b> Effort sits at the <b>low end (3)</b> for A and B; C re-tiers down from 5 to ~3. No deletions required.</p>
+    <div class="rank">
+      <div><span class="lab">Benefit</span>34 FPs · 8 projects · ~28 members</div>
+      <div><span class="lab">Cost</span>effort 3–5 · 3 files · all additive</div>
+      <div><span class="lab">Risk</span>low — additive captures, regression-guarded</div>
+      <div><span class="lab">Arm split</span>3 core fixes + 1 two-row interim classifier</div>
+    </div>
+  </div>
+
+  <div class="callout olive">
+    <span class="k">Why this ranks high</span>
+    <p>High false-flag count for unusually low and well-bounded effort: the work is three localized producer edits in distinct files, every consumer already reads the populated fields, and the riskiest-sounding leaf (the effort-5 "cross-folder flow pass") <b>does not exist and is not needed.</b></p>
+  </div>
+
+  <div class="callout rust">
+    <span class="k">What this does NOT cover</span>
+    <p>Two residual pandas rows (fixture-injected <code>Styler</code>, Cython-<code>object</code> <code>self.obj</code>) stay false until a narrowed interim classifier is authored. The tokio index-operator row is a <b>different fault area</b> (syntactic extraction) and grounds no work here.</p>
+  </div>
+
+  <footer>
+    receiver_type_inference · funding decision aid &nbsp;·&nbsp; source: ~/.ariadne/plan/prioritize/receiver_type_inference/refactor_plan.md &nbsp;·&nbsp; observed 34 FP flags / 8 projects / 8 runs
+  </footer>
+
+</main>
+</body>
+</html>
