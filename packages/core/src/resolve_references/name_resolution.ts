@@ -170,6 +170,24 @@ function resolve_scope_recursive(
         context.languages,
         context.root_folder
       );
+
+      // Explicit-named-import fallback: `is_exported` governs only the
+      // *implicit* public surface (wildcard / namespace / re-export). An
+      // explicit `from ._lib import _make_block` names its target directly, so
+      // it binds to any module-level definition in the source file — even one
+      // the export registry rejects for is_exported=false (Python single-
+      // underscore names, Rust non-`pub` items). Restricted to the source
+      // file's module scope so it cannot bind to a nested-scope definition,
+      // and to `named` imports so default/namespace/wildcard stay gated.
+      if (!resolved && imp_def.import_kind === "named") {
+        const root_scope = context.scopes.get_file_root_scope(source_file);
+        if (root_scope) {
+          resolved =
+            context.definitions
+              .get_scope_definitions(root_scope.id)
+              .get(import_name) ?? null;
+        }
+      }
     }
 
     // Submodule fallback: if export chain failed for a named import,

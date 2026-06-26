@@ -280,4 +280,53 @@ impl Counter {
       expect(referenced.has(set_count_id!)).toBe(true);
     });
   });
+
+  describe("crate-path single-hop named import of a non-pub item", () => {
+    it("resolves use crate::helpers::format_value to its private definition via the widened lookup", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "lib.rs": `mod helpers;
+
+use crate::helpers::format_value;
+
+pub fn run(x: i32) -> i32 {
+    format_value(x)
+}
+`,
+        // Non-pub item: is_exported=false, so it never enters the export
+        // registry — only the explicit-named-import fallback binds it.
+        "helpers.rs": `fn format_value(x: i32) -> i32 {
+    x + 1
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const call_graph = project.get_call_graph();
+
+      const run_node = [...call_graph.nodes.values()].find(
+        (node) =>
+          node.name === ("run" as SymbolName) &&
+          node.location.file_path === file_paths["lib.rs"]
+      );
+      expect(run_node).not.toBeUndefined();
+
+      const call = run_node!.enclosed_calls.find(
+        (c) => c.name === ("format_value" as SymbolName)
+      );
+      expect(call).not.toBeUndefined();
+      expect(call!.resolution_failure).toBeUndefined();
+      const target = call_graph.nodes.get(call!.resolutions[0].symbol_id);
+      expect(target?.location.file_path).toEqual(file_paths["helpers.rs"]);
+      expect(target?.name).toEqual("format_value" as SymbolName);
+
+      const entry = call_graph.entry_points.find((ep) => {
+        const node = call_graph.nodes.get(ep);
+        return (
+          node?.name === ("format_value" as SymbolName) &&
+          node.location.file_path === file_paths["helpers.rs"]
+        );
+      });
+      expect(entry).toBeUndefined();
+    });
+  });
 });

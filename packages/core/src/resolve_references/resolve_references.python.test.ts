@@ -7,7 +7,7 @@
 
 import { describe, it, expect, afterAll } from "vitest";
 import { Project } from "../project/project";
-import type { FilePath, SymbolName } from "@ariadnejs/types";
+import type { CallGraph, FilePath, SymbolName } from "@ariadnejs/types";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
@@ -53,6 +53,34 @@ afterAll(() => {
   }
 });
 
+/** Locate the CallableNode for a caller function defined in a given file. */
+function find_caller_node(
+  call_graph: CallGraph,
+  caller_name: string,
+  file_path: FilePath
+) {
+  return [...call_graph.nodes.values()].find(
+    (node) =>
+      node.name === (caller_name as SymbolName) &&
+      node.location.file_path === file_path
+  );
+}
+
+/** True when `name` (defined in `file_path`) is reported as an entry point. */
+function is_entry_point(
+  call_graph: CallGraph,
+  name: string,
+  file_path: FilePath
+): boolean {
+  return call_graph.entry_points.some((ep) => {
+    const node = call_graph.nodes.get(ep);
+    return (
+      node?.name === (name as SymbolName) &&
+      node.location.file_path === file_path
+    );
+  });
+}
+
 describe("Python Multi-File Resolve References Integration", () => {
   describe("namespace-qualified class instantiation", () => {
     it("import models; user = models.User(name); user.greet() resolves greet to User method", async () => {
@@ -95,6 +123,211 @@ def create_user(name):
         );
       });
       expect(greet_entry).toBeUndefined();
+    });
+  });
+
+  describe("underscore-private explicit named imports", () => {
+    const LIB = `def _make_block(x):
+    return x
+
+def _ensure_sync_result(r):
+    return r
+
+def _parse_mapper_argument(a):
+    return a
+
+def make_block(x):
+    return x
+`;
+
+    it("binds each underscore-private named import and resolves the calls to their _lib.py definitions", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "_lib.py": LIB,
+        "app.py": `from ._lib import _make_block, _ensure_sync_result, _parse_mapper_argument
+
+def run():
+    _make_block(1)
+    _ensure_sync_result(2)
+    _parse_mapper_argument(3)
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const private_names = [
+        "_make_block",
+        "_ensure_sync_result",
+        "_parse_mapper_argument",
+      ];
+
+      const app_scope = project.scopes.get_file_root_scope(file_paths["app.py"]);
+      expect(app_scope).not.toBeUndefined();
+
+      // Each private name binds in app.py's scope to its _lib.py definition.
+      for (const name of private_names) {
+        const resolved = project.resolutions.resolve(
+          app_scope!.id,
+          name as SymbolName
+        );
+        expect(resolved).not.toBeNull();
+        expect(resolved).toContain("_lib.py");
+        expect(resolved).toContain(name);
+      }
+
+      const call_graph = project.get_call_graph();
+      const run_node = find_caller_node(call_graph, "run", file_paths["app.py"]);
+      expect(run_node).not.toBeUndefined();
+
+      // Each call resolves to the matching _lib.py definition with no failure,
+      // and none of the private names is left as an entry point.
+      for (const name of private_names) {
+        const call = run_node!.enclosed_calls.find(
+          (c) => c.name === (name as SymbolName)
+        );
+        expect(call).not.toBeUndefined();
+        expect(call!.resolution_failure).toBeUndefined();
+        const target = call_graph.nodes.get(call!.resolutions[0].symbol_id);
+        expect(target?.location.file_path).toEqual(file_paths["_lib.py"]);
+        expect(target?.name).toEqual(name as SymbolName);
+
+        expect(is_entry_point(call_graph, name, file_paths["_lib.py"])).toEqual(
+          false
+        );
+      }
+    });
+
+    it("keeps the public control name resolving when imported alongside private names", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "_lib.py": LIB,
+        "app.py": `from ._lib import make_block
+
+def run():
+    make_block(1)
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const app_scope = project.scopes.get_file_root_scope(file_paths["app.py"]);
+      expect(app_scope).not.toBeUndefined();
+
+      const resolved = project.resolutions.resolve(
+        app_scope!.id,
+        "make_block" as SymbolName
+      );
+      expect(resolved).not.toBeNull();
+      expect(resolved).toContain("_lib.py");
+      expect(resolved).toContain("make_block");
+
+      const call_graph = project.get_call_graph();
+      const run_node = find_caller_node(call_graph, "run", file_paths["app.py"]);
+      const call = run_node!.enclosed_calls.find(
+        (c) => c.name === ("make_block" as SymbolName)
+      );
+      expect(call!.resolution_failure).toBeUndefined();
+      const target = call_graph.nodes.get(call!.resolutions[0].symbol_id);
+      expect(target?.location.file_path).toEqual(file_paths["_lib.py"]);
+      expect(target?.name).toEqual("make_block" as SymbolName);
+
+      expect(
+        is_entry_point(call_graph, "make_block", file_paths["_lib.py"])
+      ).toEqual(false);
+    });
+
+    it("does not surface an underscore-private name through a wildcard import", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "_lib.py": LIB,
+        "wildcard_app.py": `from ._lib import *
+
+def run():
+    _make_block(1)
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const app_scope = project.scopes.get_file_root_scope(
+        file_paths["wildcard_app.py"]
+      );
+      expect(app_scope).not.toBeUndefined();
+
+      // The wildcard binds the name "*", not "_make_block".
+      const resolved = project.resolutions.resolve(
+        app_scope!.id,
+        "_make_block" as SymbolName
+      );
+      expect(resolved).toBeNull();
+
+      // The unresolved call leaves _make_block an entry point.
+      const call_graph = project.get_call_graph();
+      expect(
+        is_entry_point(call_graph, "_make_block", file_paths["_lib.py"])
+      ).toEqual(true);
+    });
+
+    it("does not resolve an underscore-private member accessed through a namespace import", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "_lib.py": LIB,
+        "namespace_app.py": `import _lib as ns
+
+def run():
+    ns._make_block(1)
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const call_graph = project.get_call_graph();
+
+      // _make_block is not reached via the namespace member access.
+      expect(
+        is_entry_point(call_graph, "_make_block", file_paths["_lib.py"])
+      ).toEqual(true);
+
+      const run_node = find_caller_node(
+        call_graph,
+        "run",
+        file_paths["namespace_app.py"]
+      );
+      const call = run_node!.enclosed_calls.find(
+        (c) => c.name === ("_make_block" as SymbolName)
+      );
+      const resolved_to_private = (call?.resolutions ?? []).some((r) => {
+        const target = call_graph.nodes.get(r.symbol_id);
+        return (
+          target?.location.file_path === file_paths["_lib.py"] &&
+          target?.name === ("_make_block" as SymbolName)
+        );
+      });
+      expect(resolved_to_private).toEqual(false);
+    });
+
+    it("does not place an underscore-private name on the package surface for a re-export consumer", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "pkg/_lib.py": LIB,
+        "pkg/__init__.py": `from ._lib import make_block
+`,
+        "reexport_app.py": `from pkg import _make_block
+
+def run():
+    _make_block(1)
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const app_scope = project.scopes.get_file_root_scope(
+        file_paths["reexport_app.py"]
+      );
+      expect(app_scope).not.toBeUndefined();
+
+      // __init__.py re-exports only `make_block`; `_make_block` is not defined
+      // there, so the explicit import through the package stays unbound.
+      const resolved = project.resolutions.resolve(
+        app_scope!.id,
+        "_make_block" as SymbolName
+      );
+      expect(resolved).toBeNull();
+
+      const call_graph = project.get_call_graph();
+      expect(
+        is_entry_point(call_graph, "_make_block", file_paths["pkg/_lib.py"])
+      ).toEqual(true);
     });
   });
 });

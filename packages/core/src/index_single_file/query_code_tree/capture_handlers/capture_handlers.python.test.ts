@@ -1364,6 +1364,30 @@ def index():
       }
 
       describe("Functions", () => {
+        it("keeps is_exported false for an underscore module-level name and true for its public sibling", () => {
+          const build_func = (code: string) => {
+            const context = create_test_context(true);
+            const builder = new DefinitionBuilder(context);
+            const capture = create_capture(
+              code,
+              "definition.function",
+              "identifier"
+            );
+            PYTHON_HANDLERS["definition.function"]!(capture, builder, context);
+            return builder.build().functions.values().next().value;
+          };
+
+          const private_func = build_func(`def _make_block(x):
+    pass`);
+          expect(private_func?.name).toEqual("_make_block");
+          expect(private_func?.is_exported).toEqual(false);
+
+          const public_func = build_func(`def make_block(x):
+    pass`);
+          expect(public_func?.name).toEqual("make_block");
+          expect(public_func?.is_exported).toEqual(true);
+        });
+
         it("should have is_exported=true for module-level public functions", () => {
           const code = `def public_function():
     pass`;

@@ -307,3 +307,54 @@ export function buildDashboard(): string {
     expect(resolved_widget).toContain("widget.ts");
   });
 });
+
+describe("TypeScript Named Import Regression Control", () => {
+  it("resolves an exported named import to its definition and leaves the callee out of the entry points", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "lib.ts": `export function foo(x: number): number {
+  return x;
+}
+`,
+      "app.ts": `import { foo } from "./lib";
+
+export function run(): number {
+  return foo(1);
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const app_scope = project.scopes.get_file_root_scope(file_paths["app.ts"]);
+    expect(app_scope).not.toBeUndefined();
+    const resolved = project.resolutions.resolve(
+      app_scope!.id,
+      "foo" as SymbolName
+    );
+    expect(resolved).not.toBeNull();
+    expect(resolved).toContain("lib.ts");
+    expect(resolved).toContain("foo");
+
+    const call_graph = project.get_call_graph();
+    const run_node = [...call_graph.nodes.values()].find(
+      (node) =>
+        node.name === ("run" as SymbolName) &&
+        node.location.file_path === file_paths["app.ts"]
+    );
+    const call = run_node!.enclosed_calls.find(
+      (c) => c.name === ("foo" as SymbolName)
+    );
+    expect(call!.resolution_failure).toBeUndefined();
+    const target = call_graph.nodes.get(call!.resolutions[0].symbol_id);
+    expect(target?.location.file_path).toEqual(file_paths["lib.ts"]);
+    expect(target?.name).toEqual("foo" as SymbolName);
+
+    const entry = call_graph.entry_points.find((ep) => {
+      const node = call_graph.nodes.get(ep);
+      return (
+        node?.name === ("foo" as SymbolName) &&
+        node.location.file_path === file_paths["lib.ts"]
+      );
+    });
+    expect(entry).toBeUndefined();
+  });
+});
