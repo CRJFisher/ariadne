@@ -415,6 +415,9 @@ export class Project {
     profiler.end("type_registry");
 
     // Phase 5: Call resolution
+    // Pass the same exports/languages/root_folder instances handed to
+    // resolve_names above, so namespace re-export following sees the current
+    // export graph rather than a stale snapshot.
     profiler.start("resolve_calls");
     const call_resolution_files = new Set([
       ...affected_files,

@@ -34,26 +34,6 @@ function bind_member_alias(
 }
 
 /**
- * Source line range of a scope. Scope ids encode
- * `kind:file:start_line:start_col:end_line:end_col`; the line numbers are the
- * 4th- and 2nd-from-last colon-separated tokens.
- */
-function scope_line_range(
-  scope_id: ScopeId
-): { start: number; end: number } | null {
-  const parts = scope_id.split(":");
-  if (parts.length < 4) {
-    return null;
-  }
-  const start = Number(parts[parts.length - 4]);
-  const end = Number(parts[parts.length - 2]);
-  if (Number.isNaN(start) || Number.isNaN(end)) {
-    return null;
-  }
-  return { start, end };
-}
-
-/**
  * Central registry for all definitions across the project.
  *
  * Maintains multiple indexes for fast lookups:
@@ -201,6 +181,11 @@ export class DefinitionRegistry {
         // Python, constructor for TS/JS). This makes member-style constructor
         // calls — self.__init__(), super().__init__() — resolvable through the
         // same member lookup that serves ordinary methods.
+        //
+        // Keying cannot clobber a real method: __init__/constructor are captured
+        // only into `def.constructors`, never `def.methods`, so the name is not
+        // already in flat_members. (Rust's `new` is captured as an ordinary
+        // method, so it never reaches this loop.)
         if (def.kind === "class" && def.constructors) {
           for (const ctor of def.constructors) {
             this.by_symbol.set(ctor.symbol_id, ctor);
@@ -211,7 +196,7 @@ export class DefinitionRegistry {
         }
 
         if (def.kind === "class") {
-          this.capture_member_aliases(def, flat_members, definitions);
+          this.capture_member_aliases(def, flat_members);
         }
 
         this.member_index.set(def.symbol_id, flat_members);
@@ -420,65 +405,22 @@ export class DefinitionRegistry {
    * `__getitem__ = _getitem`). Rebinds the alias name in `flat_members` to the
    * target member's symbol so calls through the alias resolve to the real member.
    *
-   * Two index shapes are handled:
-   * - Direct (`__getitem__ = _getitem` at class-body indentation) indexes as a
-   *   class PropertyDefinition whose `initial_value` names the target.
-   * - Conditional (`if not TYPE_CHECKING: __setitem__ = _getitem`) indexes as a
-   *   VariableDefinition scoped to a block nested directly in the class body.
-   *   Variables inside method bodies are excluded so method locals are never
-   *   mistaken for member aliases.
+   * Scoped to assignments at class-body indentation, which index as class
+   * PropertyDefinitions carrying the right-hand side in `initial_value`. Only
+   * literal member-to-member aliases bind; an RHS that is not a bare member name
+   * has no matching key in `flat_members` and is ignored.
    *
-   * Only literal member-to-member aliases bind; an RHS that is not a bare member
-   * name has no matching key in `flat_members` and is ignored.
+   * Aliases hidden inside a class-body block (e.g. under `if not TYPE_CHECKING:`)
+   * are deliberately out of scope: distinguishing such a block from a nested
+   * function body needs the scope-parent tree, which this registry does not hold,
+   * and a line-range approximation would mis-key method-local variables.
    */
   private capture_member_aliases(
     class_def: ClassDefinition,
-    flat_members: Map<SymbolName, SymbolId>,
-    all_definitions: AnyDefinition[]
+    flat_members: Map<SymbolName, SymbolId>
   ): void {
     for (const prop of class_def.properties) {
       bind_member_alias(prop.name, prop.initial_value, prop.symbol_id, flat_members);
-    }
-
-    const class_body_scope =
-      class_def.methods[0]?.defining_scope_id ??
-      class_def.properties[0]?.defining_scope_id;
-    if (!class_body_scope) {
-      return;
-    }
-    const class_range = scope_line_range(class_body_scope);
-    if (!class_range) {
-      return;
-    }
-    const method_body_ranges = class_def.methods
-      .map((m) => m.body_scope_id)
-      .filter((s): s is ScopeId => s !== undefined)
-      .map(scope_line_range)
-      .filter((r): r is { start: number; end: number } => r !== null);
-
-    for (const def of all_definitions) {
-      if (def.kind !== "variable" && def.kind !== "constant") {
-        continue;
-      }
-      if (def.defining_scope_id === class_body_scope) {
-        continue; // class-body-level assignment — already keyed via properties
-      }
-      const range = scope_line_range(def.defining_scope_id);
-      if (!range) {
-        continue;
-      }
-      const within_class =
-        range.start >= class_range.start && range.end <= class_range.end;
-      if (!within_class) {
-        continue;
-      }
-      const within_method = method_body_ranges.some(
-        (m) => range.start >= m.start && range.end <= m.end
-      );
-      if (within_method) {
-        continue;
-      }
-      bind_member_alias(def.name, def.initial_value, def.symbol_id, flat_members);
     }
   }
 

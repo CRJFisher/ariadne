@@ -156,9 +156,9 @@ function make_mock_registries() {
 
 // Empty export-chain inputs for unit tests that do not follow re-export chains.
 const {
-  exports: mock_exports,
-  languages: mock_languages,
-  root_folder: mock_root_folder,
+  exports: empty_exports,
+  languages: empty_languages,
+  root_folder: empty_root_folder,
 } = make_export_chain_context();
 
 describe("TypeRegistry", () => {
@@ -195,7 +195,7 @@ describe("TypeRegistry", () => {
       // Populate definitions registry so get_type_members can look up the class
       definitions.update_file(file1, [class_def]);
 
-      registry.update_file(file1, index, definitions, resolutions, mock_exports, mock_languages, mock_root_folder);
+      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
 
       const retrieved = registry.get_type_members(class_id);
       expect(retrieved).toBeDefined();
@@ -247,7 +247,7 @@ describe("TypeRegistry", () => {
       // Populate definitions registry so get_type_members can look up the class
       definitions.update_file(file1, [class_def]);
 
-      registry.update_file(file1, index, definitions, resolutions, mock_exports, mock_languages, mock_root_folder);
+      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
 
       const members = definitions.get_member_index().get(class_id);
       expect(members?.get("constructor" as SymbolName)).toEqual(constructor_id);
@@ -269,7 +269,7 @@ describe("TypeRegistry", () => {
       // Populate definitions registry so get_type_members can look up the class
       definitions.update_file(file1, [class_def]);
 
-      registry.update_file(file1, index, definitions, resolutions, mock_exports, mock_languages, mock_root_folder);
+      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
 
       const members = definitions.get_member_index().get(class_id);
       expect(members?.get("constructor" as SymbolName)).toBeUndefined();
@@ -327,7 +327,7 @@ describe("TypeRegistry", () => {
       // Populate definitions registry so get_type_members can look up the class
       definitions.update_file(file1, [class_def]);
 
-      registry.update_file(file1, index, definitions, resolutions, mock_exports, mock_languages, mock_root_folder);
+      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
 
       const members = definitions.get_member_index().get(class_id);
       expect(members?.get("__init__" as SymbolName)).toEqual(init_id);
@@ -376,7 +376,7 @@ describe("TypeRegistry", () => {
           new Map([["User" as SymbolName, user_class_id]])
         );
 
-        type_registry.update_file(file1, index, definitions, resolutions, mock_exports, mock_languages, mock_root_folder);
+        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
 
         // Test get_symbol_type
         const result = type_registry.get_symbol_type(user_var_id);
@@ -471,7 +471,7 @@ describe("TypeRegistry", () => {
           ])
         );
 
-        type_registry.update_file(file1, index, definitions, resolutions, mock_exports, mock_languages, mock_root_folder);
+        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
 
         const result = type_registry.walk_inheritance_chain(dog_id);
         expect(result).toEqual([dog_id, mammal_id, animal_id]);
@@ -504,7 +504,7 @@ describe("TypeRegistry", () => {
           classes: new Map([[animal_id, animal_def]]),
         });
 
-        type_registry.update_file(file1, index, definitions, resolutions, mock_exports, mock_languages, mock_root_folder);
+        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
 
         const result = type_registry.walk_inheritance_chain(animal_id);
         expect(result).toEqual([animal_id]);
@@ -551,7 +551,7 @@ describe("TypeRegistry", () => {
           classes: new Map([[class_id, class_def]]),
         });
 
-        type_registry.update_file(file1, index, definitions, resolutions, mock_exports, mock_languages, mock_root_folder);
+        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
 
         const result = type_registry.get_type_member(
           class_id,
@@ -626,7 +626,7 @@ describe("TypeRegistry", () => {
           new Map([["Animal" as SymbolName, animal_id]])
         );
 
-        type_registry.update_file(file1, index, definitions, resolutions, mock_exports, mock_languages, mock_root_folder);
+        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
 
         // Dog should find speak() from Animal
         const result = type_registry.get_type_member(
@@ -652,7 +652,7 @@ describe("TypeRegistry", () => {
           classes: new Map([[class_id, class_def]]),
         });
 
-        type_registry.update_file(file1, index, definitions, resolutions, mock_exports, mock_languages, mock_root_folder);
+        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
 
         const result = type_registry.get_type_member(
           class_id,
@@ -737,7 +737,7 @@ describe("TypeRegistry", () => {
           new Map([["Animal" as SymbolName, animal_id]])
         );
 
-        type_registry.update_file(file1, index, definitions, resolutions, mock_exports, mock_languages, mock_root_folder);
+        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
 
         // Should return Dog's speak, not Animal's
         const result = type_registry.get_type_member(

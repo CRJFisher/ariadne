@@ -141,19 +141,14 @@ describe("Python Submodule Import Resolution Integration", () => {
 });
 
 describe("Operator-alias member resolution", () => {
-  it("binds direct and TYPE_CHECKING operator aliases to the target member", async () => {
+  it("binds a class-body operator alias to the target member", async () => {
     const { project, temp_dir, file_paths } = await setup_project({
-      "reg.py": `from typing import TYPE_CHECKING
-
-
-class Reg:
+      "reg.py": `class Reg:
     def _getitem(self, key):
         return key
 
     __getitem__ = _getitem
-
-    if not TYPE_CHECKING:
-        __setitem__ = _getitem
+    bogus = not_a_member
 `,
     });
     temp_dirs.push(temp_dir);
@@ -172,10 +167,13 @@ class Reg:
     const getitem_target = members!.get("_getitem" as SymbolName);
     expect(getitem_target).toBeDefined();
 
-    // Both the direct (`__getitem__`) and conditional (`__setitem__`, under
-    // `if not TYPE_CHECKING:`) aliases bind to the underlying `_getitem` method.
+    // The direct alias (`__getitem__ = _getitem`) binds to the underlying
+    // `_getitem` method.
     expect(members!.get("__getitem__" as SymbolName)).toEqual(getitem_target);
-    expect(members!.get("__setitem__" as SymbolName)).toEqual(getitem_target);
+
+    // An assignment whose right-hand side is not a member of the class keeps its
+    // own symbol — it is not mis-bound to another member.
+    expect(members!.get("bogus" as SymbolName)).not.toEqual(getitem_target);
   });
 });
 
