@@ -113,11 +113,12 @@ interface ScopeTreeResolutionResult {
  * Recursively resolve all symbols in a scope and its children.
  * Implements lexical scoping with proper shadowing.
  *
- * Algorithm:
- * 1. Inherit parent resolutions (lexical scope)
- * 2. Add import resolutions (can shadow parent)
- * 3. Add local definitions (shadows everything)
- * 4. Recurse to children
+ * Algorithm (over a base map inherited from the parent scope):
+ * 1. Add import resolutions (can shadow inherited)
+ * 2. Add local definitions (shadows everything, minus the self-initializer carve-out)
+ * 3. Hoist function declarations out of descendant block scopes
+ * 4. Store this scope's resolutions
+ * 5. Recurse to children
  *
  * @param scope_id - Current scope to resolve
  * @param parent_resolutions - Resolutions inherited from parent scope
@@ -216,35 +217,46 @@ function resolve_scope_recursive(
     // exist while its own initializer evaluates (Rust/JS bring the name into
     // scope only after the initializer), so the call inside that initializer
     // must resolve to the binding already in scope — typically an import of
-    // the same name. Keep that shadowed binding instead of layering the
-    // not-yet-live local over it. Narrowed to the self-initializer case
-    // (`initialized_from_call === name`): every other shadow still overrides,
-    // so ordinary lexical shadowing is unchanged.
+    // the same name (or an inherited outer local). Keep that shadowed binding
+    // instead of layering the not-yet-live local over it. Narrowed to the
+    // self-initializer case (`initialized_from_call === name`): every other
+    // shadow still overrides, so ordinary lexical shadowing is unchanged.
+    //
+    // Resolution is scope-keyed, not position-keyed (one binding per name per
+    // scope), so this drops the local from the scope map for the *whole* scope:
+    // later references to the local also resolve to the shadowed binding. That
+    // is acceptable because a self-initializer local is a leaf value in the
+    // shapes this targets (serde `let has_flatten = has_flatten(fields)`), and
+    // the call edge — what entry-point detection needs — is what we recover.
     if (scope_resolutions.has(name) && is_self_initializer(symbol_id, name, context)) {
       continue;
     }
     scope_resolutions.set(name, symbol_id);
   }
 
-  // Step 2.5: Hoist function declarations out of descendant block scopes.
+  // Step 3: Hoist function declarations out of descendant block scopes.
   // A `function`/`fn` declared inside a nested block (if/for/match/try/…) is
   // recorded under that block's scope, yet it is lexically reachable from
   // sibling scopes under the same function or module: JS hoists function
   // declarations to the enclosing function scope; a Rust block item reaches
   // sibling statements in the same body. Without this, a sibling scope misses
-  // the definition (`name_not_in_scope`). Collect such functions and layer
-  // them in without overriding a closer binding already in scope.
+  // the definition (`name_not_in_scope`). Layer such functions in without
+  // overriding a closer binding already in scope (so a same-named import or
+  // outer local still wins, keeping valid shadowing intact). This deliberately
+  // over-approximates toward reachability — the safe direction for entry-point
+  // detection — but only for a name with no competing binding, which in valid
+  // code is never referenced from a scope that cannot reach it.
   for (const [name, symbol_id] of collect_hoisted_functions(scope_id, context)) {
     if (!scope_resolutions.has(name)) {
       scope_resolutions.set(name, symbol_id);
     }
   }
 
-  // Step 3: Store this scope's resolutions
+  // Step 4: Store this scope's resolutions
   result.resolutions_by_scope.set(scope_id, scope_resolutions);
   result.scope_to_file.set(scope_id, file_path);
 
-  // Step 4: Recurse to children
+  // Step 5: Recurse to children
   const scope = context.scopes.get_scope(scope_id);
   if (scope && scope.child_ids) {
     for (const child_id of scope.child_ids) {
@@ -274,6 +286,10 @@ function resolve_scope_recursive(
  * `let has_flatten = has_flatten(fields)`. The binding is not yet in scope
  * while its initializer runs, so the call inside it resolves to the shadowed
  * outer binding (e.g. an import), not the local.
+ *
+ * Reads `initialized_from_call`, which the per-language capture handlers
+ * (JS/TS/Rust) populate; the same field also drives return-type inference in
+ * `registries/type.ts`.
  */
 function is_self_initializer(
   symbol_id: SymbolId,
@@ -288,12 +304,12 @@ function is_self_initializer(
 }
 
 /**
- * Collect `function` definitions declared in descendant *block* scopes that
- * hoist into `scope_id`. Descends only through block-like scopes (`block`,
- * `local`) and stops at any nested function/method/constructor/class scope —
- * those open their own hoisting domain. The result maps each hoisted name to
- * its definition; an inner block's definition wins over an outer one for the
- * same name, matching lexical nesting.
+ * Collect `function` definitions declared in descendant block scopes that
+ * hoist into `scope_id`. Descends only through `block` scopes and stops at any
+ * nested function/method/constructor/class scope — those open their own
+ * hoisting domain. The result maps each hoisted name to its definition; when a
+ * name is declared in blocks at different depths, the shallower (closer to
+ * `scope_id`) definition wins.
  */
 function collect_hoisted_functions(
   scope_id: ScopeId,
@@ -307,7 +323,7 @@ function collect_hoisted_functions(
 
   for (const child_id of scope.child_ids) {
     const child = context.scopes.get_scope(child_id);
-    if (child?.type !== "block" && child?.type !== "local") {
+    if (child?.type !== "block") {
       continue; // a non-block scope opens its own hoisting domain
     }
 

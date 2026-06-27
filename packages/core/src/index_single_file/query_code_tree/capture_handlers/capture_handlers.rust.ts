@@ -607,6 +607,7 @@ export function handle_definition_constant(
     export: export_info.export,
     type: const_type,
     function_collection,
+    initialized_from_call: extract_call_initializer_name(capture.node),
   });
 }
 

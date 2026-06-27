@@ -110,15 +110,15 @@
 
   <div class="meta">
     <span class="chip rust"><strong>4</strong>-member leaf (smallest)</span>
-    <span class="chip"><strong>1</strong> file: name_resolution.ts</span>
+    <span class="chip"><strong>2</strong> files: name_resolution.ts + Rust indexer</span>
     <span class="chip clay"><strong>2</strong> small corrections</span>
-    <span class="chip olive"><strong>Step-2</strong> + resolve_scope_recursive</span>
+    <span class="chip olive"><strong>5</strong> steps in resolve_scope_recursive</span>
   </div>
-  <p class="cap prose">Both edits stay inside <code>resolve_references/name_resolution.ts</code>: C.1 corrects how local <code>let</code> bindings layer over imports; C.2 propagates sibling/hoisted functions into the calling scope's map.</p>
+  <p class="cap prose">C.2 is confined to <code>resolve_references/name_resolution.ts</code>; C.1 spans the Rust indexer too: the self-initializer is detected via <code>VariableDefinition.initialized_from_call</code>, a field only the JS/TS indexers emit, so reaching Rust parity needs a new <code>extract_call_initializer_name</code> in the Rust symbol factories.</p>
 
   <section id="c1">
     <h2><span class="tag-cc c1">C.1</span>A <code>let x = … x(…)</code> self-initializer shadows the import for the call in its own initializer</h2>
-    <p class="cap prose">Step-2 (<code>name_resolution.ts:191–196</code>) layers <i>all</i> local definitions over imports unconditionally. For <code>let has_flatten = has_flatten(fields)</code> (serde <code>struct_.rs:67</code>), the local binding is registered first, so the call inside the initializer resolves to the just-declared variable instead of the imported function.</p>
+    <p class="cap prose">When a local would shadow an existing binding and is itself a self-initializer (<code>initialized_from_call === name</code>), <code>is_self_initializer</code> keeps the shadowed import, so <code>let has_flatten = has_flatten(fields)</code> (serde <code>struct_.rs:67</code>) resolves to the imported function.</p>
 
     <div class="ba">
       <div class="panel">
@@ -182,11 +182,33 @@
       <span><i style="background:#eef0e6;border-color:#5b6840"></i> resolves to import (correct)</span>
       <span>serde <code>struct_.rs:67</code></span>
     </div>
+
+    <div class="callout">
+      <span class="k">C.1 spans the Rust indexer too</span>
+      <p>The carve-out reads <code>VariableDefinition.initialized_from_call</code> — a field only the JS/TS indexers emit. The serde target is Rust, so detecting the self-initializer there needs a matching <code>extract_call_initializer_name</code> in <code>symbol_factories.rust.ts</code>, wired into the Rust capture handlers for <code>let</code>, <code>let mut</code>, and <code>const</code>.</p>
+    </div>
+
+    <div class="code">
+      <div class="fl">symbol_factories.rust.ts &#8212; extract_call_initializer_name (Rust parity for initialized_from_call)</div>
+<pre><span class="kw">export function</span> <span class="fn">extract_call_initializer_name</span>(node): SymbolName | <span class="kw">undefined</span> {
+  <span class="kw">let</span> assignment = node.type === <span class="str">"identifier"</span> ? node.parent : node;
+  <span class="cm">// covers `let`, `let mut`, `const`:</span>
+  <span class="kw">if</span> (assignment.type !== <span class="str">"let_declaration"</span> &amp;&amp; assignment.type !== <span class="str">"const_item"</span>) <span class="kw">return</span>;
+
+  <span class="kw">const</span> value = assignment.<span class="fn">childForFieldName</span>(<span class="str">"value"</span>);
+  <span class="kw">if</span> (value?.type !== <span class="str">"call_expression"</span>) <span class="kw">return</span>;
+
+  <span class="kw">let</span> fn = value.<span class="fn">childForFieldName</span>(<span class="str">"function"</span>);
+  <span class="cm">// turbofish `x::&lt;T&gt;()` wraps the callee in a generic_function:</span>
+  <span class="kw">if</span> (fn?.type === <span class="str">"generic_function"</span>) fn = fn.<span class="fn">childForFieldName</span>(<span class="str">"function"</span>) ?? fn;
+  <span class="kw">return</span> fn?.type === <span class="str">"identifier"</span> ? fn.text : <span class="kw">undefined</span>;
+}</pre>
+    </div>
   </section>
 
   <section id="c2">
     <h2><span class="tag-cc c2">C.2</span>A sibling-inner / hoisted function is absent from the calling sibling scope's map</h2>
-    <p class="cap prose">A function defined in a sibling inner scope — or hoisted in JS — never enters the scope map of the sibling scope that lexically reaches it: a nested <code>cleanup</code> called inside a <code>this.done</code> arrow before its sibling <code>function cleanup</code> declaration; serde <code>content_as_str</code> intra-file.</p>
+    <p class="cap prose">A <code>function</code>/<code>fn</code> declared in a descendant <code>block</code> scope is lexically reachable from sibling scopes in the same body, so <code>collect_hoisted_functions</code> hoists it up into the calling scope's map.</p>
 
     <div class="ba">
       <div class="panel">
@@ -232,7 +254,7 @@
           <text x="230" y="78" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">function cleanup(){…}</text>
           <text x="230" y="98" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5b6840">defined here</text>
           <line x1="166" y1="77" x2="156" y2="77" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#e-ok)"/>
-          <text x="160" y="135" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5b6840">child recursion propagates fn def</text>
+          <text x="160" y="135" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5b6840">hoisted from descendant block scope</text>
           <line x1="90" y1="120" x2="90" y2="160" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#e-ok)"/>
           <rect x="22" y="164" width="136" height="42" rx="8" fill="#eef0e6" stroke="#5b6840" stroke-width="1.5"/>
           <text x="90" y="183" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#5b6840">BOUND</text>
@@ -247,17 +269,40 @@
     </div>
 
     <div class="code">
-      <div class="fl">name_resolution.ts — resolve_scope_recursive child recursion (the propagation to add)</div>
-<pre><span class="cm">// Step 2 today layers local defs unconditionally (name_resolution.ts:191):</span>
-<span class="kw">for</span> (<span class="kw">const</span> [name, symbol_id] <span class="kw">of</span> local_defs) scope_resolutions.<span class="fn">set</span>(name, symbol_id);
+      <div class="fl">name_resolution.ts — resolve_scope_recursive: 5 labelled steps over the parent's base map</div>
+<pre><span class="cm">// Step 1 — add imports resolved at this scope</span>
+<span class="kw">for</span> (<span class="kw">const</span> imp_def <span class="kw">of</span> imports) scope_resolutions.<span class="fn">set</span>(imp_def.name, resolved);
 
-<span class="cm">// C.1 — do not let a self-initializer shadow its own import at the reference:</span>
-<span class="ok"><span class="kw">if</span> (!is_self_initializer_reference(name)) scope_resolutions.<span class="fn">set</span>(name, symbol_id);</span>
+<span class="cm">// Step 2 — add local definitions, WITH the C.1 self-initializer carve-out</span>
+<span class="kw">for</span> (<span class="kw">const</span> [name, symbol_id] <span class="kw">of</span> local_defs) {
+  <span class="ok"><span class="kw">if</span> (scope_resolutions.<span class="fn">has</span>(name) &amp;&amp; <span class="fn">is_self_initializer</span>(symbol_id, name, context))</span>
+    <span class="ok"><span class="kw">continue</span>;  <span class="cm">// keep the shadowed binding (the import in scope)</span></span>
+  scope_resolutions.<span class="fn">set</span>(name, symbol_id);
+}
 
-<span class="cm">// C.2 — in child recursion, hoist a function def into sibling scopes that reach it:</span>
-<span class="ok"><span class="kw">for</span> (<span class="kw">const</span> child_id <span class="kw">of</span> scope.child_ids)</span>
-<span class="ok">  propagate_hoisted_functions(child_id, scope_resolutions, context);  <span class="cm">// JS hoist · Rust items</span></span>
-</pre>
+<span class="cm">// Step 3 — C.2: hoist function decls out of descendant block scopes</span>
+<span class="kw">for</span> (<span class="kw">const</span> [name, symbol_id] <span class="kw">of</span> <span class="fn">collect_hoisted_functions</span>(scope_id, context))
+  <span class="ok"><span class="kw">if</span> (!scope_resolutions.<span class="fn">has</span>(name)) scope_resolutions.<span class="fn">set</span>(name, symbol_id);</span>
+
+<span class="cm">// Step 4 — store this scope's resolutions</span>
+result.resolutions_by_scope.<span class="fn">set</span>(scope_id, scope_resolutions);
+
+<span class="cm">// Step 5 — recurse into children, passing scope_resolutions as the base</span>
+<span class="kw">for</span> (<span class="kw">const</span> child_id <span class="kw">of</span> scope.child_ids) <span class="fn">resolve_scope_recursive</span>(child_id, scope_resolutions, …);</pre>
+    </div>
+
+    <div class="code">
+      <div class="fl">collect_hoisted_functions — descend only block scopes; shallower block wins on ties</div>
+<pre><span class="kw">for</span> (<span class="kw">const</span> child_id <span class="kw">of</span> scope.child_ids) {
+  <span class="cm">// stop at function/method/constructor/class — each opens its own hoisting domain</span>
+  <span class="kw">if</span> (child.type !== <span class="str">"block"</span>) <span class="kw">continue</span>;
+
+  <span class="kw">for</span> (<span class="kw">const</span> [name, symbol_id] <span class="kw">of</span> <span class="fn">get_scope_definitions</span>(child_id))
+    <span class="kw">if</span> (<span class="fn">get</span>(symbol_id)?.kind === <span class="str">"function"</span>) hoisted.<span class="fn">set</span>(name, symbol_id);
+
+  <span class="kw">for</span> (<span class="kw">const</span> [name, symbol_id] <span class="kw">of</span> <span class="fn">collect_hoisted_functions</span>(child_id, context))
+    <span class="kw">if</span> (!hoisted.<span class="fn">has</span>(name)) hoisted.<span class="fn">set</span>(name, symbol_id);  <span class="cm">// shallower wins</span>
+}</pre>
     </div>
   </section>
 
@@ -269,8 +314,14 @@
       <p style="margin-top:8px">C.2 propagates a function only into sibling scopes that <b>lexically reach it</b>, never into unrelated scopes. Over-widening either edit reintroduces wrong bindings the corpus depends on.</p>
     </div>
     <div class="callout olive">
-      <span class="k">confinement (AC #4)</span>
-      <p>Both corrections live entirely in <code>resolve_references/name_resolution.ts</code> — Step-2 layering and <code>resolve_scope_recursive</code>. No other file changes.</p>
+      <span class="k">confinement — corrected scope (AC #4)</span>
+      <p>C.2 is confined to <code>resolve_references/name_resolution.ts</code> (Step 3 of <code>resolve_scope_recursive</code> + <code>collect_hoisted_functions</code>). C.1 spans two files: the carve-out in <code>name_resolution.ts</code> Step 2, plus the Rust indexer parity — <code>extract_call_initializer_name</code> in <code>symbol_factories.rust.ts</code> wired into the Rust capture handlers — so <code>initialized_from_call</code> is populated for Rust as it already is for JS/TS.</p>
+    </div>
+
+    <div class="callout slate">
+      <span class="k">two deliberate edges — real, reviewed decisions</span>
+      <p><b>(a) Scope-keyed, not position-keyed.</b> The carve-out drops the self-initializer local from the whole scope map — fine for the leaf-value self-initializers this targets (the serde case); position-aware resolution would be needed only if such a local were later a method/dispatch receiver, which is out of scope.</p>
+      <p style="margin-top:8px"><b>(b) Hoist over-approximates toward reachability.</b> The safe direction for entry-point detection — but only for a name with no competing binding, which in valid code is never referenced from a scope that cannot reach it, so valid code is unaffected.</p>
     </div>
   </section>
 
@@ -280,12 +331,12 @@
       <li><span class="n">1</span><div><code>Project</code> + <code>update_file</code>: a serde-style <code>let x = … x(…)</code> self-initializer resolves the call to the <b>imported function</b>, not the local binding.</div></li>
       <li><span class="n">2</span><div>A nested function called before its sibling declaration (nest-style hoisting) resolves to the function definition.</div></li>
       <li class="risk"><span class="n">3</span><div><b>Correct shadowing in non-self-initializer cases is unchanged</b> — the ordering fix is scoped to the self-initializer.</div></li>
-      <li><span class="n">4</span><div>Both corrections are confined to <code>resolve_references/name_resolution.ts</code> (Step-2 and <code>resolve_scope_recursive</code>).</div></li>
+      <li><span class="n">4</span><div>C.2 is confined to <code>resolve_references/name_resolution.ts</code> (Step 3 + <code>collect_hoisted_functions</code>); C.1 also touches the Rust indexer (<code>extract_call_initializer_name</code> in <code>symbol_factories.rust.ts</code>) to populate <code>initialized_from_call</code> at Rust parity with JS/TS.</div></li>
     </ol>
   </section>
 
   <footer>
-    Both edits in resolve_references/name_resolution.ts — C.1 Step-2 layering (lines 191–196) · C.2 resolve_scope_recursive child recursion · evidence: serde struct_.rs:67, content_as_str intra-file · sequenced 3rd of A→B→C
+C.1 — name_resolution.ts Step 2 carve-out + Rust indexer extract_call_initializer_name · C.2 — name_resolution.ts collect_hoisted_functions · evidence: serde struct_.rs:67, content_as_str intra-file · sequenced 3rd of A→B→C
   </footer>
 
 </main>

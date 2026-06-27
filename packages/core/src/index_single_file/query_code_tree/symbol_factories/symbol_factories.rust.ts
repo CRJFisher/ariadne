@@ -817,7 +817,12 @@ export function extract_call_initializer_name(
     return undefined;
   }
 
-  const function_node = value_node.childForFieldName?.("function");
+  let function_node = value_node.childForFieldName?.("function");
+  // Turbofish `x::<T>()` wraps the callee in a generic_function; the bare name
+  // is its `function` child.
+  if (function_node?.type === "generic_function") {
+    function_node = function_node.childForFieldName?.("function") ?? function_node;
+  }
   if (function_node?.type === "identifier") {
     return function_node.text as SymbolName;
   }

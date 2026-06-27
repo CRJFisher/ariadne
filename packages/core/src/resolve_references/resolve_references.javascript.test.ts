@@ -297,5 +297,113 @@ export function doWork() {
         .entry_points.find((ep) => ep === cleanup_fn!.symbol_id);
       expect(entry).toBeUndefined();
     });
+
+    it("hoists a function declared several blocks deep", async () => {
+      // `deep` is two blocks down (if/if); it still hoists to the function
+      // scope so the sibling arrow reaches it.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "mod.js": `export function run(a, b) {
+  const probe = () => deep();
+  probe();
+  if (a) {
+    if (b) {
+      function deep() {
+        return 1;
+      }
+    }
+  }
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const deep_fn = project.definitions
+        .get_definitions_by_name("deep" as SymbolName)
+        .find((def) => def.location.file_path === file_paths["mod.js"]);
+      expect(deep_fn).not.toBeUndefined();
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["mod.js"])
+        .find((c) => c.name === ("deep" as SymbolName));
+      expect(call!.resolution_failure).toBeUndefined();
+      expect(call!.resolutions.map((r) => r.symbol_id)).toEqual([
+        deep_fn!.symbol_id,
+      ]);
+    });
+
+    it("does not hoist a function across a nested function boundary", async () => {
+      // `inner_only` is declared inside `wrapper`'s body — a function scope, not
+      // a block. It must NOT hoist into `run`, so the sibling arrow cannot reach
+      // it and `inner_only` stays an entry point. This pins the stop-at-function
+      // boundary that keeps hoisting from over-reaching.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "mod.js": `export function run() {
+  const probe = () => inner_only();
+  probe();
+  function wrapper() {
+    function inner_only() {
+      return 1;
+    }
+  }
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const inner_fn = project.definitions
+        .get_definitions_by_name("inner_only" as SymbolName)
+        .find((def) => def.location.file_path === file_paths["mod.js"]);
+      expect(inner_fn).not.toBeUndefined();
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["mod.js"])
+        .find((c) => c.name === ("inner_only" as SymbolName));
+      expect(call!.resolutions).toEqual([]);
+      expect(call!.resolution_failure?.reason).toEqual("name_not_in_scope");
+
+      const entry = project
+        .get_call_graph()
+        .entry_points.find((ep) => ep === inner_fn!.symbol_id);
+      expect(entry).toEqual(inner_fn!.symbol_id);
+    });
+  });
+
+  // Self-initializer (task-349.3, Change C.1): a `const x = x(…)` binding does
+  // not shadow its own import for the call inside its initializer.
+  describe("self-initializer binding", () => {
+    it("resolves a self-initializer call to the import, not the local", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "mod.js": `import { has_flatten } from "./helpers.js";
+
+export function build(fields) {
+  const has_flatten = has_flatten(fields);
+  return has_flatten;
+}
+`,
+        "helpers.js": `export function has_flatten(fields) {
+  return fields.length > 0;
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const imported_fn = project.definitions
+        .get_definitions_by_name("has_flatten" as SymbolName)
+        .find((def) => def.location.file_path === file_paths["helpers.js"]);
+      expect(imported_fn).not.toBeUndefined();
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["mod.js"])
+        .find((c) => c.name === ("has_flatten" as SymbolName));
+      expect(call!.resolution_failure).toBeUndefined();
+      expect(call!.resolutions.map((r) => r.symbol_id)).toEqual([
+        imported_fn!.symbol_id,
+      ]);
+
+      const entry = project
+        .get_call_graph()
+        .entry_points.find((ep) => ep === imported_fn!.symbol_id);
+      expect(entry).toBeUndefined();
+    });
   });
 });

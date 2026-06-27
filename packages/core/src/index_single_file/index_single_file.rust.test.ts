@@ -1462,8 +1462,10 @@ fn main() {
       // self-initializer (`let has_flatten = has_flatten(fields)`). Only bare
       // function calls populate it; method calls do not.
       const code = `
+const MADE: i32 = make();
 fn build(fields: &[u8]) -> bool {
     let has_flatten = has_flatten(fields);
+    let parsed = parse::<i32>();
     let plain = compute();
     let via_method = config.get();
     let literal = 0;
@@ -1481,6 +1483,14 @@ fn build(fields: &[u8]) -> bool {
       );
       expect(vars.get("has_flatten" as SymbolName)?.initialized_from_call).toEqual(
         "has_flatten" as SymbolName,
+      );
+      // Turbofish: the callee is a generic_function wrapping the bare name.
+      expect(vars.get("parsed" as SymbolName)?.initialized_from_call).toEqual(
+        "parse" as SymbolName,
+      );
+      // const items reach the extractor too (parity with let).
+      expect(vars.get("MADE" as SymbolName)?.initialized_from_call).toEqual(
+        "make" as SymbolName,
       );
       expect(vars.get("plain" as SymbolName)?.initialized_from_call).toEqual(
         "compute" as SymbolName,
