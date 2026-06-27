@@ -8,7 +8,7 @@
 
 import { describe, it, expect } from "vitest";
 import { detect_indirect_reachability } from "./indirect_reachability";
-import { function_symbol, variable_symbol } from "@ariadnejs/types";
+import { function_symbol, method_symbol, variable_symbol } from "@ariadnejs/types";
 import type {
   SymbolId,
   SymbolName,
@@ -18,6 +18,7 @@ import type {
   AnyDefinition,
   ScopeId,
   FunctionDefinition,
+  MethodDefinition,
   VariableDefinition,
 } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./registries/definition";
@@ -51,6 +52,18 @@ function make_function_def(name: string, location: Location): FunctionDefinition
     is_exported: false,
     signature: { parameters: [] },
     body_scope_id: `scope:test.ts:function:${location.start_line}:${location.start_column}` as ScopeId,
+  };
+}
+
+function make_method_def(name: string, location: Location): MethodDefinition {
+  return {
+    kind: "method",
+    symbol_id: method_symbol(name as SymbolName, location),
+    name: name as SymbolName,
+    defining_scope_id: SCOPE_FILE,
+    location,
+    parameters: [],
+    body_scope_id: `scope:test.ts:method:${location.start_line}:${location.start_column}` as ScopeId,
   };
 }
 
@@ -253,6 +266,78 @@ describe("detect_indirect_reachability", () => {
 
       const resolve = (_scope_id: string, name: SymbolName) =>
         name === ("handler" as SymbolName) ? fn_def.symbol_id : null;
+
+      const result = detect_indirect_reachability(
+        file_references as Map<FilePath, readonly { kind: string; access_type?: string; scope_id: string; name: SymbolName; location: Location }[]>,
+        registry,
+        resolve
+      );
+
+      expect(result.size).toBe(0);
+    });
+  });
+
+  describe("method reference detection", () => {
+    it("marks a method read as a value as function_reference", () => {
+      const method_def = make_method_def("on_node_start", MOCK_LOCATION);
+      const defs = new Map<SymbolId, AnyDefinition>([[method_def.symbol_id, method_def]]);
+      const registry = mock_definition_registry(defs);
+
+      const file_references = new Map([
+        [
+          TEST_FILE,
+          [
+            {
+              kind: "variable_reference",
+              access_type: "read",
+              scope_id: SCOPE_FILE,
+              name: "on_node_start" as SymbolName,
+              location: READ_LOCATION,
+            },
+          ],
+        ],
+      ]);
+
+      const resolve = (_scope_id: string, name: SymbolName) =>
+        name === ("on_node_start" as SymbolName) ? method_def.symbol_id : null;
+
+      const result = detect_indirect_reachability(
+        file_references as Map<FilePath, readonly { kind: string; access_type?: string; scope_id: string; name: SymbolName; location: Location }[]>,
+        registry,
+        resolve
+      );
+
+      expect(result.size).toBe(1);
+      const entry = result.get(method_def.symbol_id)!;
+      expect(entry.function_id).toBe(method_def.symbol_id);
+      expect(entry.reason).toEqual({
+        type: "function_reference",
+        read_location: READ_LOCATION,
+      });
+    });
+
+    it("skips a method read at its own definition site", () => {
+      const method_def = make_method_def("process", MOCK_LOCATION);
+      const defs = new Map<SymbolId, AnyDefinition>([[method_def.symbol_id, method_def]]);
+      const registry = mock_definition_registry(defs);
+
+      const file_references = new Map([
+        [
+          TEST_FILE,
+          [
+            {
+              kind: "variable_reference",
+              access_type: "read",
+              scope_id: SCOPE_FILE,
+              name: "process" as SymbolName,
+              location: MOCK_LOCATION,
+            },
+          ],
+        ],
+      ]);
+
+      const resolve = (_scope_id: string, name: SymbolName) =>
+        name === ("process" as SymbolName) ? method_def.symbol_id : null;
 
       const result = detect_indirect_reachability(
         file_references as Map<FilePath, readonly { kind: string; access_type?: string; scope_id: string; name: SymbolName; location: Location }[]>,

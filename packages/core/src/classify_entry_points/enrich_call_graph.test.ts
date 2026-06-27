@@ -350,3 +350,163 @@ describe("enrich_call_graph", () => {
     ).not.toThrow();
   });
 });
+
+/**
+ * Evidence-case coverage for task-348: a bound or static method read as a value
+ * (passed as an argument, `.bind(this)`, stored in a field) is indirectly
+ * reachable and must leave the entry-point set. Assertions run against the raw
+ * `trace_call_graph` output so they isolate the reachability arm from registry
+ * classification. Each entry-point name set is pinned to the exact output of the
+ * real pipeline.
+ */
+describe("method-as-value indirect reachability (task-348)", () => {
+  function entry_point_names(project: Project): string[] {
+    const raw = trace_call_graph(project.definitions, project.resolutions);
+    return raw.entry_points
+      .map((id) => raw.nodes.get(id)!.name as unknown as string)
+      .sort();
+  }
+
+  it("Python bound method passed as an argument leaves the entry points", async () => {
+    const { project } = await make_project_with({
+      "pool.py": [
+        "class Registry:",
+        "    def register(self, fn):",
+        "        self._fn = fn",
+        "",
+        "class Pool:",
+        "    def __init__(self, registry):",
+        "        registry.register(self._acquire_connection)",
+        "    def _acquire_connection(self):",
+        "        return 1",
+        "",
+        "Pool(Registry())",
+        "",
+      ].join("\n"),
+    });
+
+    const names = entry_point_names(project);
+    expect(names).not.toContain("_acquire_connection");
+    expect(names).toEqual(["register"]);
+  });
+
+  it("Python method passed as a value leaves the entry points", async () => {
+    const { project } = await make_project_with({
+      "graph.py": [
+        "class Scheduler:",
+        "    def add(self, cb):",
+        "        self._cb = cb",
+        "",
+        "class Graph:",
+        "    def __init__(self, scheduler):",
+        "        scheduler.add(self.on_node_start)",
+        "    def on_node_start(self):",
+        "        return 1",
+        "",
+        "Graph(Scheduler())",
+        "",
+      ].join("\n"),
+    });
+
+    const names = entry_point_names(project);
+    expect(names).not.toContain("on_node_start");
+    expect(names).toEqual(["add"]);
+  });
+
+  it("TypeScript bound method via this.method.bind(this) leaves the entry points", async () => {
+    const { project } = await make_project_with({
+      "logger.ts": [
+        "class Logger {",
+        "  attach(out: { write: (s: string) => void }) {",
+        "    out.write = this.write.bind(this);",
+        "  }",
+        "  write(s: string) {",
+        "    return s;",
+        "  }",
+        "}",
+        "new Logger();",
+        "",
+      ].join("\n"),
+    });
+
+    const names = entry_point_names(project);
+    expect(names).not.toContain("write");
+    expect(names).toEqual(["attach"]);
+  });
+
+  it("Python method stored into a field leaves the entry points", async () => {
+    const { project } = await make_project_with({
+      "engine.py": [
+        "class Engine:",
+        "    def __init__(self):",
+        "        self._processor = self.process",
+        "    def process(self):",
+        "        return 1",
+        "",
+        "Engine()",
+        "",
+      ].join("\n"),
+    });
+
+    const names = entry_point_names(project);
+    expect(names).not.toContain("process");
+    expect(names).toEqual([]);
+  });
+
+  it("named function passed as an argument stays out of the entry points", async () => {
+    const { project } = await make_project_with({
+      "events.ts": [
+        "function elementMouseOver() {",
+        "  return 1;",
+        "}",
+        "declare const el: { addEventListener: (e: string, f: () => void) => void };",
+        "el.addEventListener('x', elementMouseOver);",
+        "",
+      ].join("\n"),
+    });
+
+    const names = entry_point_names(project);
+    expect(names).not.toContain("elementMouseOver");
+    expect(names).toEqual([]);
+  });
+
+  it("inline closures get a synthetic callback edge and stay out of the entry points", async () => {
+    const ts = await make_project_with({
+      "m.ts": ["export const ys = [1, 2].map((x) => x + 1);", ""].join("\n"),
+    });
+    expect(entry_point_names(ts.project)).toEqual([]);
+
+    const py = await make_project_with({
+      "l.py": ["result = list(map(lambda x: x + 1, [1, 2]))", ""].join("\n"),
+    });
+    expect(entry_point_names(py.project)).toEqual([]);
+
+    const rs = await make_project_with({
+      "lib.rs": ["fn main() {", "    let _ = Some(1).map(|x| x + 1);", "}", ""].join("\n"),
+    });
+    const rust_names = entry_point_names(rs.project);
+    expect(rust_names).not.toContain("<anonymous>");
+    expect(rust_names).toEqual(["main"]);
+  });
+
+  it("a genuinely dead method whose name is never read stays an entry point", async () => {
+    const { project } = await make_project_with({
+      "service.py": [
+        "class Service:",
+        "    def used(self):",
+        "        return self.helper()",
+        "    def helper(self):",
+        "        return 1",
+        "    def orphan(self):",
+        "        return 2",
+        "",
+        "Service().used()",
+        "",
+      ].join("\n"),
+    });
+
+    const names = entry_point_names(project);
+    expect(names).toContain("orphan");
+    expect(names).toEqual(["orphan", "used"]);
+  });
+});

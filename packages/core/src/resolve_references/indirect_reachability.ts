@@ -1,11 +1,13 @@
 /**
  * Indirect reachability detection.
  *
- * Detects functions that are reachable without direct call edges:
+ * Detects functions and methods that are reachable without direct call edges:
  * - Functions stored in collections that are read (e.g., `return HANDLERS`)
  * - Named functions passed as values/arguments (e.g., `apply(doubler, 21)`)
+ * - Bound or static methods read as values (e.g., `register(self._acquire_connection)`,
+ *   `out.write = this.write.bind(this)`, `self._processor = self.process`)
  *
- * These functions should not be considered entry points.
+ * These callables should not be considered entry points.
  */
 
 import type { FilePath, SymbolId, SymbolName, Location, FunctionCollection, IndirectReachabilityReason } from "@ariadnejs/types";
@@ -82,9 +84,14 @@ export function detect_indirect_reachability(
         continue;
       }
 
-      // Check if the resolved symbol is a function definition (passed as value)
+      // Check if the resolved symbol is a function or method definition read as a
+      // value. A bare member-name read (`self._acquire_connection`, `this.write`)
+      // resolves to the method symbol via lexical scope, so a method passed as a
+      // value or stored in a field is reachable just like a free function.
+      // Constructors are excluded: reading a constructor as a value is not a real
+      // pattern (constructor invocations arrive as call references, not reads).
       const def = definitions.get(symbol_id);
-      if (def && def.kind === "function") {
+      if (def && (def.kind === "function" || def.kind === "method")) {
         // Skip if the reference is at the definition site itself
         // (e.g., Python's `def foo` creates a variable_reference read at the def location)
         if (
