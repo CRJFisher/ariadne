@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>task-348 — empirical fix evidence</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --ink:#1f1e1c; --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  nav.toc{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 0}
+  nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.toc .brand{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.toc a{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:4px 10px}
+  nav.toc a:hover{border-color:var(--clay);color:var(--slate)}
+  nav.toc a[aria-current=page]{background:var(--slate);color:var(--ivory);border-color:var(--slate)}
+  main{width:90%;max-width:1600px;margin:0 auto;padding:28px 0 80px}
+  .prose{max-width:74ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:34px;line-height:1.12;margin:0 0 10px;letter-spacing:-.01em;max-width:28ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:23px;margin:50px 0 4px;letter-spacing:-.01em;scroll-margin-top:64px}
+  h3{font-family:var(--mono);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);margin:20px 0 8px}
+  .lead{font-size:16px;color:var(--g600);margin:0 0 6px}
+  code{font-family:var(--mono);font-size:.85em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .chip.rust strong{color:var(--rust)} .chip.olive strong{color:var(--olive)} .chip.clay strong{color:var(--clay)}
+  .cap{font-size:13.5px;color:var(--g600);margin:8px 2px 14px}
+  .cap b{color:var(--slate);font-weight:600}
+  /* callouts */
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:18px 0;max-width:96ch}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)} .callout.slate{border-left-color:var(--slate)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 6px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)}
+  .callout p{margin:0;font-size:14px}
+  .callout p+p{margin-top:8px}
+  .invert{background:var(--slate);border-radius:var(--r);padding:20px 24px;margin:18px 0;color:var(--ivory)}
+  .invert .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--oat);margin:0 0 8px;display:block}
+  .invert b{color:#fff;font-weight:600}
+  .invert .big{font-family:var(--serif);font-size:19px;line-height:1.35;color:var(--ivory);margin:0}
+  .invert code{background:rgba(255,255,255,.12);color:#f0e9da}
+  /* evidence table */
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13px}
+  th,td{text-align:left;padding:10px 11px;border-bottom:1px solid var(--g200);vertical-align:top}
+  th{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--g600);background:var(--paper);position:sticky;top:43px;z-index:3}
+  td.n{font-family:var(--mono);font-weight:700;color:var(--g400);text-align:right;width:24px}
+  td.case code{font-size:.92em}
+  td.case .sub{display:block;color:var(--g600);font-size:11.5px;margin-top:3px;font-family:var(--sans)}
+  .lang{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.04em;padding:2px 8px;border-radius:5px;display:inline-block;background:var(--g100);color:var(--g600);font-weight:600}
+  td.cat{font-family:var(--sans);font-size:12px;color:var(--slate)}
+  .vd{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.04em;padding:3px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-weight:600}
+  .vd::before{content:"";width:8px;height:8px;border-radius:50%;display:inline-block}
+  .vd.already{background:rgba(108,122,74,.16);color:var(--olive)} .vd.already::before{background:var(--olive)}
+  .vd.fixed{background:rgba(185,121,79,.18);color:var(--clay)} .vd.fixed::before{background:var(--clay)}
+  .vd.excl{background:rgba(168,71,47,.15);color:var(--rust)} .vd.excl::before{background:var(--rust)}
+  td.fix{font-size:12px;color:var(--slate)}
+  td.fix code{font-size:.88em}
+  tr.r-already td:first-child,tr.r-already td.case{box-shadow:inset 3px 0 0 var(--olive)}
+  tr.r-fixed td:first-child,tr.r-fixed td.case{box-shadow:inset 3px 0 0 var(--clay)}
+  tr.r-excl td:first-child,tr.r-excl td.case{box-shadow:inset 3px 0 0 var(--rust)}
+  tr.r-excl td{background:#fbf4f1}
+  tr.r-fixed td{background:#faf5ef}
+  tr.r-already td{background:#f6f7f1}
+  /* legend */
+  .legend{display:flex;flex-wrap:wrap;gap:18px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:4px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .legend i{width:12px;height:12px;border-radius:50%;display:inline-block}
+  .legend i.already{background:var(--olive)} .legend i.fixed{background:var(--clay)} .legend i.excl{background:var(--rust)}
+  /* plan vs reality */
+  .pvr{width:100%;font-size:13px;border-collapse:collapse;margin:14px 0}
+  .pvr th,.pvr td{padding:10px 12px;border-bottom:1px solid var(--g200);vertical-align:top;text-align:left}
+  .pvr th{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--g600);background:var(--paper)}
+  .pvr td.step{font-family:var(--mono);font-size:11.5px;color:var(--slate);white-space:nowrap}
+  .pvr td.step b{display:block;font-family:var(--sans);font-weight:600;color:var(--g600);font-size:11px;margin-top:2px;white-space:normal}
+  .disp{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.04em;padding:3px 9px;border-radius:999px;display:inline-block;white-space:nowrap;font-weight:600}
+  .disp.core{background:rgba(185,121,79,.18);color:var(--clay)}
+  .disp.have{background:rgba(108,122,74,.16);color:var(--olive)}
+  .disp.cut{background:rgba(168,71,47,.15);color:var(--rust)}
+  .disp.clean{background:rgba(43,42,40,.1);color:var(--slate)}
+  .disp.test{background:rgba(43,42,40,.1);color:var(--slate)}
+  .pvr td.why{font-size:12px;color:var(--slate)}
+  .pvr td.why code{font-size:.88em}
+  tr.pvr-cut td{background:#fbf4f1}
+  /* code */
+  .code{background:var(--code);border-radius:var(--r);overflow:hidden;margin:14px 0;border:1px solid #3a362d}
+  .code .fl{font-family:var(--mono);font-size:10.5px;color:#b9b09c;background:#1f1d18;padding:8px 14px;border-bottom:1px solid #3a362d;letter-spacing:.03em}
+  .code pre{margin:0;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.65;color:var(--codeink);white-space:pre}
+  .code .kw{color:#c98a5e} .code .str{color:#a9b87a} .code .cm{color:#7d7768;font-style:italic} .code .fn{color:#e0c98a} .code .dim{color:#7d7768}
+  .code .add{display:inline-block;width:100%;background:rgba(108,122,74,.22)}
+  .code .del{display:inline-block;width:100%;background:rgba(168,71,47,.22);text-decoration:line-through;opacity:.8}
+  .code .hl{background:rgba(185,121,79,.25);border-radius:3px}
+  footer{margin-top:56px;border-top:1px solid var(--g200);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400);line-height:1.7}
+  @media(max-width:880px){
+    table,.pvr{display:block;overflow-x:auto}
+  }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <div class="inner">
+    <span class="brand">task-348 · empirical evidence</span>
+    <a href="task-348 - Model-non-call-expression-dispatch-reachability-in-detect_indirect_reachability.overview.html">Overview</a>
+    <a href="#" aria-current="page">Fix evidence</a>
+    <a href="#mech">Mechanism</a>
+    <a href="#evidence">Evidence cases</a>
+    <a href="#plan">Plan vs reality</a>
+    <a href="#diff">The diff</a>
+    <a href="#scope">Scoping decision</a>
+  </div>
+</nav>
+
+<main>
+
+  <p class="eyebrow">indirect_reachability · ground-truth fix evidence</p>
+  <h1>One gate, widened: what the pipeline actually does to each dispatch shape</h1>
+  <p class="lead prose">Each evidence case was run through the real <code>Project</code> pipeline. The shipped change is one widened definition-kind gate in <code>detect_indirect_reachability</code> — from <code>function</code> to <code>function | method</code> — plus a few lines of doc comment. Most cases the pipeline already handles; two are out of scope.</p>
+
+  <div class="meta">
+    <span class="chip olive">Already handled <strong>4</strong></span>
+    <span class="chip clay">Fixed by this change <strong>4</strong></span>
+    <span class="chip rust">Out of scope <strong>2</strong></span>
+    <span class="chip">Core source edit <strong>1 condition + doc</strong></span>
+    <span class="chip">Builtin deletion <strong>deferred → 348.2</strong></span>
+  </div>
+
+  <!-- ============ MECHANISM ============ -->
+  <h2 id="mech">The single mechanism at the heart of the task</h2>
+  <p class="cap prose"><code>detect_indirect_reachability</code> walks every <code>variable_reference</code> read; when the read resolves to a definition it rescues that symbol from the dead-flag set. Today it rescues only <code>kind === "function"</code>. Widening that one gate to also accept <code>method</code> is the entire shipped change.</p>
+
+  <div class="callout">
+    <span class="k">indirect_reachability.ts:85-101 — the gate</span>
+    <p>A bare read of a bound or instance method (<code>self._acquire_connection</code>, <code>this.write</code>) resolves to a <code>method:</code> definition, but the gate only matches <code>function:</code>, so the method leaks through as a false dead-flag entry point.</p>
+    <p><b>Constructor is deliberately excluded</b> — reading a constructor as a value is not a real pattern; constructor invocations arrive as call references, not reads, and the def-site skip at lines 90-96 stays.</p>
+  </div>
+
+  <!-- ============ EVIDENCE TABLE ============ -->
+  <h2 id="evidence">Every evidence case, run through the real pipeline</h2>
+  <p class="cap prose">Verdicts are empirical, not hypothesised — each row was executed end-to-end against <code>indirect_reachability.ts</code>, <code>call_resolver.ts</code>, and <code>trace_call_graph/</code>.</p>
+
+  <div class="legend" aria-hidden="true">
+    <span><i class="already"></i> Already not an entry point (no code needed)</span>
+    <span><i class="fixed"></i> Fixed by this change (the widened gate)</span>
+    <span><i class="excl"></i> Out of scope (not a reachability problem)</span>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>#</th><th>Evidence case</th><th>Lang</th><th>Category</th><th>Current status</th><th>What fixes it</th></tr>
+    </thead>
+    <tbody>
+      <tr class="r-already">
+        <td class="n">1</td>
+        <td class="case"><code>addEventListener(elementMouseOver)</code><span class="sub">named function passed as argument</span></td>
+        <td><span class="lang">TS</span></td>
+        <td class="cat">named fn as arg</td>
+        <td><span class="vd already">already ok</span></td>
+        <td class="fix">Existing <code>function_reference</code> arm — read resolves to <code>kind==="function"</code>.</td>
+      </tr>
+      <tr class="r-already">
+        <td class="n">2</td>
+        <td class="case"><code>arr.map(x =&gt; …)</code>, <code>p.then(…)</code><span class="sub">inline arrow / callback closures</span></td>
+        <td><span class="lang">TS</span></td>
+        <td class="cat">inline closure</td>
+        <td><span class="vd already">already ok</span></td>
+        <td class="fix"><code>call_resolver.ts:433-504</code> synthesizes a callback call-edge for anonymous fns with <code>callback_context.is_callback===true</code>.</td>
+      </tr>
+      <tr class="r-already">
+        <td class="n">3</td>
+        <td class="case"><code>sorted(xs, key=lambda x: …)</code><span class="sub">Python lambda passed as arg</span></td>
+        <td><span class="lang">Py</span></td>
+        <td class="cat">inline closure</td>
+        <td><span class="vd already">already ok</span></td>
+        <td class="fix">Same callback-edge synthesis in <code>call_resolver</code>.</td>
+      </tr>
+      <tr class="r-already">
+        <td class="n">4</td>
+        <td class="case"><code>opt.map(|x| …)</code><span class="sub">Rust closure passed to Option::map</span></td>
+        <td><span class="lang">Rust</span></td>
+        <td class="cat">inline closure</td>
+        <td><span class="vd already">already ok</span></td>
+        <td class="fix">Same callback-edge synthesis (Rust <code>callback_context</code> is the reference pattern).</td>
+      </tr>
+      <tr class="r-fixed">
+        <td class="n">5</td>
+        <td class="case"><code>register(self._acquire_connection)</code><span class="sub">bound method passed as value</span></td>
+        <td><span class="lang">Py</span></td>
+        <td class="cat">bound method as value</td>
+        <td><span class="vd fixed">false positive</span></td>
+        <td class="fix"><b>Widened gate</b> — bare <code>_acquire_connection</code> read resolves to <code>method:</code>, now marked <code>function_reference</code>.</td>
+      </tr>
+      <tr class="r-fixed">
+        <td class="n">6</td>
+        <td class="case"><code>callbacks=[self.on_node_start]</code><span class="sub">bound method as value</span></td>
+        <td><span class="lang">Py</span></td>
+        <td class="cat">bound method as value</td>
+        <td><span class="vd fixed">false positive</span></td>
+        <td class="fix"><b>Widened gate</b> — value-ref arm resolves to the method.</td>
+      </tr>
+      <tr class="r-fixed">
+        <td class="n">7</td>
+        <td class="case"><code>out.write = this.write.bind(this)</code><span class="sub">bound method as value</span></td>
+        <td><span class="lang">TS</span></td>
+        <td class="cat">bound method as value</td>
+        <td><span class="vd fixed">false positive</span></td>
+        <td class="fix"><b>Widened gate</b> — the <code>this.write</code> read resolves to <code>method:write</code>.</td>
+      </tr>
+      <tr class="r-fixed">
+        <td class="n">8</td>
+        <td class="case"><code>self._processor = self.process</code><span class="sub">method stored into a field</span></td>
+        <td><span class="lang">Py</span></td>
+        <td class="cat">method stored in field</td>
+        <td><span class="vd fixed">false positive</span></td>
+        <td class="fix"><b>Widened gate</b> — Python decomposes <code>self.process</code> into a bare <code>process</code> read resolving to the method.</td>
+      </tr>
+      <tr class="r-excl">
+        <td class="n">9</td>
+        <td class="case"><code>this._processor = this.process</code><span class="sub">method stored into a field</span></td>
+        <td><span class="lang">TS</span></td>
+        <td class="cat">method stored in field</td>
+        <td><span class="vd excl">not fixed</span></td>
+        <td class="fix">A TS field initializer <code>this.process</code> produces <b>no reference to <code>.process</code></b> (only a <code>this</code> read is captured). Nothing for reachability to key on — needs an <b>indexing-layer</b> change to capture member reads in field initializers.</td>
+      </tr>
+      <tr class="r-excl">
+        <td class="n">10</td>
+        <td class="case"><code>createPrismaPromise</code><span class="sub">named arrow in object prop, destructured cross-file, then called</span></td>
+        <td><span class="lang">TS</span></td>
+        <td class="cat">stored-callback-via-object-property</td>
+        <td><span class="vd excl">not a reach. bug</span></td>
+        <td class="fix">The call site fails with <code>name_not_in_scope</code> — a name/import <b>resolver miss</b>, not reachability. Out of scope per work-plan step 8.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ============ PLAN vs REALITY ============ -->
+  <h2 id="plan">The 8-step work plan, against what reality requires</h2>
+  <p class="cap prose">The plan hypothesised four new reachability arms and a reason-variant. Empirically only one arm needs widening; the rest already exist upstream, collapse into that one change, or are surplus code the constitution forbids.</p>
+
+  <table class="pvr">
+    <thead>
+      <tr><th>Plan step</th><th>Disposition</th><th>Why — verified empirically</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="step">1 · <code>field_store_read</code> reason<b>new IndirectReachabilityReason variant</b></td>
+        <td><span class="disp cut">not needed</span></td>
+        <td class="why">No keyable field-store signal exists distinct from the value-ref arm. Adding the variant is surplus code (YAGNI / "no surplus code").</td>
+      </tr>
+      <tr>
+        <td class="step">2 · widen value-ref arm<b>method kind only</b></td>
+        <td><span class="disp core">shipped</span></td>
+        <td class="why"><b>The change.</b> Replace <code>def.kind === "function"</code> with <code>function | method</code>. <code>constructor</code> excluded — it arrives as a call reference, never a read. Def-site self-reference skip (lines 90-96) kept; verified it skips method def-site reads too.</td>
+      </tr>
+      <tr>
+        <td class="step">3 · closure arm<b>anonymous-fn callback context</b></td>
+        <td><span class="disp have">already shipped</span></td>
+        <td class="why">Implemented upstream in <code>call_resolver.ts:433-504</code> via callback call-edge synthesis. No new code.</td>
+      </tr>
+      <tr>
+        <td class="step">4 · field-store arm<b>assignment-RHS / .bind shapes</b></td>
+        <td><span class="disp cut">collapses</span></td>
+        <td class="why">Python field-store is already covered by step 2; TS field-store is not keyable in reachability (see case 9). Nothing left to build.</td>
+      </tr>
+      <tr>
+        <td class="step">5 · delete 3 builtins<b>+ regen barrel &amp; permanent_data</b></td>
+        <td><span class="disp clean">deferred → 348.2</span></td>
+        <td class="why"><b>Not done here.</b> The three builtins still exist and stay imported in the barrel; they back <code>wip</code> registry rows, so deletion needs a human-owned registry write under the classifier-lifecycle contract. Tracked in TASK-348.2.</td>
+      </tr>
+      <tr>
+        <td class="step">6 · consumer tolerance<b>get_indirect_reachability callers</b></td>
+        <td><span class="disp have">no-op</span></td>
+        <td class="why">No new reason variant ships, so consumers need no edit — shrinking the entry-point set upstream is transparent.</td>
+      </tr>
+      <tr>
+        <td class="step">7 · tests<b>Project + update_file + fixtures</b></td>
+        <td><span class="disp test">required</span></td>
+        <td class="why"><b>Explicit emphasis.</b> Integration tests asserting (via <code>toEqual</code> over entry-point sets) every evidence case's verdict; honestly document cases 9 &amp; 10 as out-of-scope.</td>
+      </tr>
+      <tr class="pvr-cut">
+        <td class="step">8 · don't touch class-B<b>resolver-miss rows</b></td>
+        <td><span class="disp cut">out of scope</span></td>
+        <td class="why">Real in-repo call expressions belong to <code>import_resolution</code> / <code>name_resolution</code> / <code>receiver_type_inference</code>. Case 10 lives here.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ============ THE DIFF ============ -->
+  <h2 id="diff">The core fix, as a diff sketch</h2>
+  <p class="cap prose">One condition in <code>packages/core/src/resolve_references/indirect_reachability.ts</code>, plus a few lines of doc comment. <code>constructor</code> is excluded on purpose; the self-reference skip block below it is unchanged.</p>
+
+  <div class="code">
+    <div class="fl">packages/core/src/resolve_references/indirect_reachability.ts · lines 85–101</div>
+<pre>      <span class="cm">// Check if the resolved symbol is a function definition (passed as value)</span>
+      <span class="kw">const</span> def = definitions.<span class="fn">get</span>(symbol_id);
+<span class="del">      <span class="kw">if</span> (def &amp;&amp; def.kind === <span class="str">"function"</span>) {</span>
+<span class="add">      <span class="kw">if</span> (def &amp;&amp; (def.kind === <span class="str">"function"</span> || def.kind === <span class="str">"method"</span>)) {</span>
+        <span class="cm">// Skip if the reference is at the definition site itself</span>
+        <span class="cm">// (e.g. Python's `def foo` creates a variable_reference read at the def location)</span>
+        <span class="dim">  if (ref.location.file_path === def.location.file_path &amp;&amp;</span>
+        <span class="dim">      ref.location.start_line === def.location.start_line &amp;&amp;</span>
+        <span class="dim">      ref.location.start_column === def.location.start_column) { continue; }</span>
+        indirect_reachability.<span class="fn">set</span>(symbol_id, {
+          function_id: symbol_id,
+          reason: { type: <span class="str">"function_reference"</span>, read_location: ref.location },
+        });
+      }</pre>
+  </div>
+
+  <div class="callout">
+    <span class="k">builtin deletion — deferred to TASK-348.2, not done here</span>
+    <p><code>check_higher-order-function-callback.ts</code>, <code>check_inline-callback.ts</code>, and <code>check_stored-callback-via-object-property.ts</code> still exist and are still imported in the barrel. They are referenced by <code>wip</code> registry rows, so deleting them requires a human-owned registry write under the classifier-lifecycle contract — tracked in TASK-348.2.</p>
+  </div>
+
+  <!-- ============ SCOPING DECISION ============ -->
+  <h2 id="scope">The one open scoping decision</h2>
+  <p class="cap prose">Whether to also close the TS field-initializer member-read indexing gap that leaves case 9 (<code>this._processor</code> / Prisma-shaped) unfixed.</p>
+
+  <div class="invert">
+    <span class="k">Decision · A vs B</span>
+    <p class="big"><b>Option A — reachability-scoped fix only (recommended).</b> Ship the one-line gate widening + builtin cleanup. Cases 9 &amp; 10 documented as out-of-scope. Smallest surface, honours YAGNI, no capture-handler risk.</p>
+    <p class="big" style="margin-top:14px"><b>Option B — additionally fix the indexing gap.</b> Add an indexing-layer change to capture TS field-init member reads so <code>this.process</code> emits a <code>.process</code> reference reachability can key on. Larger, riskier — touches capture handlers — and only buys case 9.</p>
+  </div>
+
+  <div class="callout rust">
+    <span class="k">why case 9 cannot be fixed in reachability</span>
+    <p>At indexing time a TS field initializer <code>this._processor = this.process</code> captures only a <code>this</code> read; <b>no reference to <code>.process</code> is ever produced</b> for reachability to key on.</p>
+    <p>Python differs: it decomposes <code>self.process</code> into a bare <code>process</code> read — exactly why case 8, its Python twin, <i>is</i> fixed by this change.</p>
+  </div>
+
+  <footer>
+    Source of truth · empirical run of each evidence case through Project pipeline ·
+    packages/core/src/resolve_references/indirect_reachability.ts:85-101 ·
+    call_resolution/call_resolver.ts:433-504 · trace_call_graph/ ·
+    classify_entry_points/builtins/ · generated companion for task-348
+  </footer>
+
+</main>
+</body>
+</html>

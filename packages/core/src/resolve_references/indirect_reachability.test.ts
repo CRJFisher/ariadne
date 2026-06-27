@@ -19,6 +19,7 @@ import type {
   ScopeId,
   FunctionDefinition,
   MethodDefinition,
+  ConstructorDefinition,
   VariableDefinition,
 } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./registries/definition";
@@ -64,6 +65,19 @@ function make_method_def(name: string, location: Location): MethodDefinition {
     location,
     parameters: [],
     body_scope_id: `scope:test.ts:method:${location.start_line}:${location.start_column}` as ScopeId,
+  };
+}
+
+// Constructors reuse method_symbol for their id (see capture_handlers.javascript.ts).
+function make_constructor_def(name: string, location: Location): ConstructorDefinition {
+  return {
+    kind: "constructor",
+    symbol_id: method_symbol(name as SymbolName, location),
+    name: name as SymbolName,
+    defining_scope_id: SCOPE_FILE,
+    location,
+    parameters: [],
+    body_scope_id: `scope:test.ts:constructor:${location.start_line}:${location.start_column}` as ScopeId,
   };
 }
 
@@ -338,6 +352,38 @@ describe("detect_indirect_reachability", () => {
 
       const resolve = (_scope_id: string, name: SymbolName) =>
         name === ("process" as SymbolName) ? method_def.symbol_id : null;
+
+      const result = detect_indirect_reachability(
+        file_references as Map<FilePath, readonly { kind: string; access_type?: string; scope_id: string; name: SymbolName; location: Location }[]>,
+        registry,
+        resolve
+      );
+
+      expect(result.size).toBe(0);
+    });
+
+    it("does not mark a constructor read as a value (constructors are excluded)", () => {
+      const ctor_def = make_constructor_def("constructor", MOCK_LOCATION);
+      const defs = new Map<SymbolId, AnyDefinition>([[ctor_def.symbol_id, ctor_def]]);
+      const registry = mock_definition_registry(defs);
+
+      const file_references = new Map([
+        [
+          TEST_FILE,
+          [
+            {
+              kind: "variable_reference",
+              access_type: "read",
+              scope_id: SCOPE_FILE,
+              name: "constructor" as SymbolName,
+              location: READ_LOCATION,
+            },
+          ],
+        ],
+      ]);
+
+      const resolve = (_scope_id: string, name: SymbolName) =>
+        name === ("constructor" as SymbolName) ? ctor_def.symbol_id : null;
 
       const result = detect_indirect_reachability(
         file_references as Map<FilePath, readonly { kind: string; access_type?: string; scope_id: string; name: SymbolName; location: Location }[]>,

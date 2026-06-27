@@ -1,7 +1,7 @@
 ---
 id: TASK-348
 title: "Model non-call-expression dispatch reachability in detect_indirect_reachability"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-06-26 11:16"
 labels:
@@ -44,3 +44,24 @@ plan_source_tasks:
 <!-- AC:BEGIN -->
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+`detect_indirect_reachability` treats a bound or instance method read as a value the same way it treats a free function: such a callable is reachable without a direct call edge and is removed from the entry-point (dead-code) candidate set. The value-reference arm in `packages/core/src/resolve_references/indirect_reachability.ts` accepts a resolved definition whose `kind` is `function` or `method`. A bare member-name read (`self._acquire_connection`, `this.write`) resolves to its method symbol through lexical scope, so passing a method as an argument, binding it with `.bind(this)`, or storing it into a field all mark the method reachable. Constructors are excluded: reading a constructor as a value is not a real pattern, and constructor invocations arrive as call references rather than reads.
+
+### What changed
+
+- **Value-reference arm widened** (`indirect_reachability.ts`): the gate is `def.kind === "function" || def.kind === "method"`. The definition-site self-reference skip is retained and applies to methods unchanged.
+- **Tests**: unit cases in `indirect_reachability.test.ts` cover the method arm, the method definition-site skip, and the constructor exclusion. `Project` + `update_file` integration cases in `classify_entry_points/enrich_call_graph.test.ts` pin the exact entry-point set for every evidence case — Python bound-method-as-argument, Python method-as-value, TypeScript `this.method.bind(this)`, and the Python field-store form — plus regression guards (named function as argument, inline closures across TypeScript/Python/Rust) and a negative guard proving a genuinely dead method whose name is never read stays an entry point.
+
+### Decisions and scope
+
+- **Closure arm (work-plan step 3) needed no code.** Inline anonymous callbacks already receive a synthetic callback call-edge from `call_resolution/call_resolver.ts`, so they are already excluded from entry points across TypeScript, Python, and Rust. The regression guards lock this in.
+- **No new reason variant (work-plan step 1).** The Python field-store form decomposes `self.process` into a bare member read the widened arm already catches, so a method-as-value reuses the existing `function_reference` reason. A distinct `field_store_read` variant would be surplus.
+- **`constructor` dropped from the step-2 gate.** No evidence case reads a constructor as a value, so including it would be speculative.
+- **Builtin deletion (work-plan step 5) deferred to TASK-348.2.** The `higher-order-function-callback`, `inline-callback`, and `stored-callback-via-object-property` builtins are `wip` and unbundled (absent from `permanent_data.ts`), but they are still referenced by `wip` registry rows. Deleting them requires retiring those rows, which is a human-owned registry write under the classifier-lifecycle contract — TASK-348.2's domain.
+- **Two TypeScript cases deferred to TASK-190.28.** `this._processor = this.process` (a TS field initializer emits no member read at index time — an indexing-layer gap) and `createPrismaPromise` (the `stored-callback-via-object-property` cross-file `name_not_in_scope` resolver miss) are outside the reachability layer, consistent with work-plan step 8. TASK-190.28 captures both with their evidence fingerprints.
+
+A self-contained HTML companion sits beside this doc (`…core-fix-evidence.html`) recording the evidence-case matrix and the plan-versus-reality analysis.

@@ -470,6 +470,9 @@ describe("method-as-value indirect reachability (task-348)", () => {
     expect(names).toEqual([]);
   });
 
+  // Regression guard for the already-handled closure evidence cases. These
+  // exercise the synthetic callback edge in call_resolver (independent of the
+  // method-arm change above), not the widened value-reference arm.
   it("inline closures get a synthetic callback edge and stay out of the entry points", async () => {
     const ts = await make_project_with({
       "m.ts": ["export const ys = [1, 2].map((x) => x + 1);", ""].join("\n"),

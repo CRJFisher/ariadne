@@ -4,7 +4,8 @@
  * Detects functions and methods that are reachable without direct call edges:
  * - Functions stored in collections that are read (e.g., `return HANDLERS`)
  * - Named functions passed as values/arguments (e.g., `apply(doubler, 21)`)
- * - Bound or static methods read as values (e.g., `register(self._acquire_connection)`,
+ * - Bound or instance methods read as values via a bare member-name read that
+ *   resolves to the method through lexical scope (e.g., `register(self._acquire_connection)`,
  *   `out.write = this.write.bind(this)`, `self._processor = self.process`)
  *
  * These callables should not be considered entry points.
