@@ -13,7 +13,6 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
@@ -29,7 +28,7 @@ import {
  * skill-protocol's `repo_root()`; the walk is small enough to keep local.
  */
 function find_repo_root(): string {
-  let dir = path.dirname(fileURLToPath(import.meta.url));
+  let dir = __dirname;
   while (!fs.existsSync(path.join(dir, "pnpm-workspace.yaml"))) {
     const parent = path.dirname(dir);
     if (parent === dir) {
