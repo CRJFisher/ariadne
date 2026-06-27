@@ -782,11 +782,44 @@ export function extract_collection_source(node: SyntaxNode): SymbolName | undefi
         // Fallback to first child if field name is not available
         operand = value_node.child(0) || null;
       }
-      
+
       if (operand?.type === "identifier") {
         return operand.text as SymbolName;
       }
     }
+  }
+
+  return undefined;
+}
+
+/**
+ * Name of the plain function called in a `let`/`const` initializer, e.g.
+ * `has_flatten` in `let has_flatten = has_flatten(fields)`. Mirrors the
+ * JS/TS extractor so name resolution can recognise a self-initializer — a
+ * binding whose initializer calls a function of the same name — across all
+ * languages. Only bare function calls qualify; method calls (`x.f()`) carry no
+ * single callee name and are left to `collection_source`.
+ */
+export function extract_call_initializer_name(
+  node: SyntaxNode
+): SymbolName | undefined {
+  let assignment = node;
+  if (node.type === "identifier") {
+    assignment = node.parent || node;
+  }
+
+  if (assignment.type !== "let_declaration" && assignment.type !== "const_item") {
+    return undefined;
+  }
+
+  const value_node = assignment.childForFieldName?.("value");
+  if (value_node?.type !== "call_expression") {
+    return undefined;
+  }
+
+  const function_node = value_node.childForFieldName?.("function");
+  if (function_node?.type === "identifier") {
+    return function_node.text as SymbolName;
   }
 
   return undefined;

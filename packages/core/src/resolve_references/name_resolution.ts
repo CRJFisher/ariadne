@@ -212,7 +212,32 @@ function resolve_scope_recursive(
   const local_defs = context.definitions.get_scope_definitions(scope_id);
 
   for (const [name, symbol_id] of local_defs) {
+    // Self-initializer carve-out: a `let x = … x(…)` binding does not yet
+    // exist while its own initializer evaluates (Rust/JS bring the name into
+    // scope only after the initializer), so the call inside that initializer
+    // must resolve to the binding already in scope — typically an import of
+    // the same name. Keep that shadowed binding instead of layering the
+    // not-yet-live local over it. Narrowed to the self-initializer case
+    // (`initialized_from_call === name`): every other shadow still overrides,
+    // so ordinary lexical shadowing is unchanged.
+    if (scope_resolutions.has(name) && is_self_initializer(symbol_id, name, context)) {
+      continue;
+    }
     scope_resolutions.set(name, symbol_id);
+  }
+
+  // Step 2.5: Hoist function declarations out of descendant block scopes.
+  // A `function`/`fn` declared inside a nested block (if/for/match/try/…) is
+  // recorded under that block's scope, yet it is lexically reachable from
+  // sibling scopes under the same function or module: JS hoists function
+  // declarations to the enclosing function scope; a Rust block item reaches
+  // sibling statements in the same body. Without this, a sibling scope misses
+  // the definition (`name_not_in_scope`). Collect such functions and layer
+  // them in without overriding a closer binding already in scope.
+  for (const [name, symbol_id] of collect_hoisted_functions(scope_id, context)) {
+    if (!scope_resolutions.has(name)) {
+      scope_resolutions.set(name, symbol_id);
+    }
   }
 
   // Step 3: Store this scope's resolutions
@@ -241,4 +266,65 @@ function resolve_scope_recursive(
   }
 
   return result;
+}
+
+/**
+ * True when `symbol_id` is a `let`/`const` binding whose initializer calls a
+ * function of the same name — a self-initializer such as
+ * `let has_flatten = has_flatten(fields)`. The binding is not yet in scope
+ * while its initializer runs, so the call inside it resolves to the shadowed
+ * outer binding (e.g. an import), not the local.
+ */
+function is_self_initializer(
+  symbol_id: SymbolId,
+  name: SymbolName,
+  context: NameResolutionContext
+): boolean {
+  const def = context.definitions.get(symbol_id);
+  return (
+    (def?.kind === "variable" || def?.kind === "constant") &&
+    def.initialized_from_call === name
+  );
+}
+
+/**
+ * Collect `function` definitions declared in descendant *block* scopes that
+ * hoist into `scope_id`. Descends only through block-like scopes (`block`,
+ * `local`) and stops at any nested function/method/constructor/class scope —
+ * those open their own hoisting domain. The result maps each hoisted name to
+ * its definition; an inner block's definition wins over an outer one for the
+ * same name, matching lexical nesting.
+ */
+function collect_hoisted_functions(
+  scope_id: ScopeId,
+  context: NameResolutionContext
+): Map<SymbolName, SymbolId> {
+  const hoisted = new Map<SymbolName, SymbolId>();
+  const scope = context.scopes.get_scope(scope_id);
+  if (!scope?.child_ids) {
+    return hoisted;
+  }
+
+  for (const child_id of scope.child_ids) {
+    const child = context.scopes.get_scope(child_id);
+    if (child?.type !== "block" && child?.type !== "local") {
+      continue; // a non-block scope opens its own hoisting domain
+    }
+
+    for (const [name, symbol_id] of context.definitions.get_scope_definitions(
+      child_id
+    )) {
+      if (context.definitions.get(symbol_id)?.kind === "function") {
+        hoisted.set(name, symbol_id);
+      }
+    }
+
+    for (const [name, symbol_id] of collect_hoisted_functions(child_id, context)) {
+      if (!hoisted.has(name)) {
+        hoisted.set(name, symbol_id); // a shallower block's definition wins
+      }
+    }
+  }
+
+  return hoisted;
 }

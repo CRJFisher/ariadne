@@ -37,6 +37,7 @@ import {
   detect_callback_context,
   detect_function_collection,
   extract_collection_source,
+  extract_call_initializer_name,
   store_documentation,
   consume_documentation,
   type ImportInfo,
@@ -571,6 +572,7 @@ export function handle_definition_variable(
     type: var_type,
     function_collection,
     collection_source,
+    initialized_from_call: extract_call_initializer_name(capture.node),
   });
 }
 
@@ -642,6 +644,7 @@ export function handle_definition_variable_mut(
     type: var_type,
     function_collection,
     collection_source,
+    initialized_from_call: extract_call_initializer_name(capture.node),
   });
 }
 

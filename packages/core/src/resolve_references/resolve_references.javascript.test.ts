@@ -257,4 +257,45 @@ export function doWork() {
       expect(type_info!.methods.has("warn" as SymbolName)).toBe(true);
     });
   });
+
+  // Same-file binding gaps (task-349.3, Change C): a function declaration hoists
+  // out of a nested block to the sibling scopes that lexically reach it.
+  describe("hoisted function declarations", () => {
+    it("resolves a call to a function hoisted out of a sibling block", async () => {
+      // A `function cleanup` declared inside an `if` block is hoisted to the
+      // enclosing function scope, so the sibling arrow `() => cleanup()` reaches
+      // it. Without hoisting the call would fail with `name_not_in_scope`.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "mod.js": `export function run(cond) {
+  const done = () => cleanup();
+  done();
+  if (cond) {
+    function cleanup() {
+      return 1;
+    }
+  }
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const cleanup_fn = project.definitions
+        .get_definitions_by_name("cleanup" as SymbolName)
+        .find((def) => def.location.file_path === file_paths["mod.js"]);
+      expect(cleanup_fn).not.toBeUndefined();
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["mod.js"])
+        .find((c) => c.name === ("cleanup" as SymbolName));
+      expect(call!.resolution_failure).toBeUndefined();
+      expect(call!.resolutions.map((r) => r.symbol_id)).toEqual([
+        cleanup_fn!.symbol_id,
+      ]);
+
+      const entry = project
+        .get_call_graph()
+        .entry_points.find((ep) => ep === cleanup_fn!.symbol_id);
+      expect(entry).toBeUndefined();
+    });
+  });
 });

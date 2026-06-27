@@ -329,4 +329,125 @@ pub fn run(x: i32) -> i32 {
       expect(entry).toBeUndefined();
     });
   });
+
+  // Same-file binding gaps (task-349.3, Change C): a self-initializer must not
+  // shadow its own import, and a function declared in a nested block must hoist
+  // to sibling scopes that lexically reach it.
+  describe("same-file binding gaps", () => {
+    it("resolves a self-initializer call to the import, not the local binding", async () => {
+      // serde struct_.rs:67 shape — `let has_flatten = has_flatten(fields)`.
+      // The binding is not yet live while its initializer runs, so the call
+      // resolves to the imported function.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "lib.rs": `mod helpers;
+use helpers::has_flatten;
+
+pub fn build(fields: &[u8]) -> bool {
+    let has_flatten = has_flatten(fields);
+    has_flatten
+}
+`,
+        "helpers.rs": `pub fn has_flatten(fields: &[u8]) -> bool {
+    !fields.is_empty()
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const imported_fn = project.definitions
+        .get_definitions_by_name("has_flatten" as SymbolName)
+        .find((def) => def.location.file_path === file_paths["helpers.rs"]);
+      expect(imported_fn).not.toBeUndefined();
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["lib.rs"])
+        .find((c) => c.name === ("has_flatten" as SymbolName));
+      expect(call!.resolution_failure).toBeUndefined();
+      expect(call!.resolutions.map((r) => r.symbol_id)).toEqual([
+        imported_fn!.symbol_id,
+      ]);
+
+      // The imported function is now reached by the call, so it is not an
+      // unreachable entry point.
+      const entry = project
+        .get_call_graph()
+        .entry_points.find((ep) => ep === imported_fn!.symbol_id);
+      expect(entry).toBeUndefined();
+    });
+
+    it("keeps a non-self-initializer local binding shadowing its import", async () => {
+      // Negative control: `let tally = compute_len(items)` shadows the import
+      // `tally`, but its initializer does not call `tally`, so ordinary lexical
+      // shadowing stands — the name resolves to the local binding.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "lib.rs": `mod helpers;
+use helpers::tally;
+
+pub fn build(items: &[u8]) -> usize {
+    let tally = compute_len(items);
+    tally + 1
+}
+
+fn compute_len(items: &[u8]) -> usize {
+    items.len()
+}
+`,
+        "helpers.rs": `pub fn tally(items: &[u8]) -> usize {
+    items.len()
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const local_tally = project.definitions
+        .get_definitions_by_name("tally" as SymbolName)
+        .find(
+          (def) =>
+            def.kind === "variable" &&
+            def.location.file_path === file_paths["lib.rs"]
+        );
+      expect(local_tally).not.toBeUndefined();
+
+      const resolved = project.resolutions.resolve(
+        local_tally!.defining_scope_id,
+        "tally" as SymbolName
+      );
+      expect(resolved).toEqual(local_tally!.symbol_id);
+    });
+
+    it("resolves a call to a function declared in a sibling inner block", async () => {
+      // serde content_as_str shape — a `fn` declared in a nested block is
+      // reachable from a sibling statement in the same body. Without hoisting
+      // the call would fail with `name_not_in_scope`.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "lib.rs": `pub fn outer(cond: bool) -> i32 {
+    let v = { content_as_str() };
+    if cond {
+        fn content_as_str() -> i32 { 1 }
+    }
+    v
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const nested_fn = project.definitions
+        .get_definitions_by_name("content_as_str" as SymbolName)
+        .find((def) => def.location.file_path === file_paths["lib.rs"]);
+      expect(nested_fn).not.toBeUndefined();
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["lib.rs"])
+        .find((c) => c.name === ("content_as_str" as SymbolName));
+      expect(call!.resolution_failure).toBeUndefined();
+      expect(call!.resolutions.map((r) => r.symbol_id)).toEqual([
+        nested_fn!.symbol_id,
+      ]);
+
+      const entry = project
+        .get_call_graph()
+        .entry_points.find((ep) => ep === nested_fn!.symbol_id);
+      expect(entry).toBeUndefined();
+    });
+  });
 });

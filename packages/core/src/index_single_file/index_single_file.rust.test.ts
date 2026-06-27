@@ -14,7 +14,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import Parser from "tree-sitter";
 import Rust from "tree-sitter-rust";
-import type { FilePath, Language } from "@ariadnejs/types";
+import type { FilePath, Language, SymbolName } from "@ariadnejs/types";
 import type {
   FunctionCallReference,
   MethodCallReference,
@@ -1455,6 +1455,42 @@ fn main() {
         (t) => t.type_info?.type_name && t.type_info.certainty === "declared",
       );
       expect(has_valid_type).toBe(true);
+    });
+
+    it("records initialized_from_call for a let bound to a plain function call", () => {
+      // Parity with JS/TS: name resolution reads this to recognise a
+      // self-initializer (`let has_flatten = has_flatten(fields)`). Only bare
+      // function calls populate it; method calls do not.
+      const code = `
+fn build(fields: &[u8]) -> bool {
+    let has_flatten = has_flatten(fields);
+    let plain = compute();
+    let via_method = config.get();
+    let literal = 0;
+    has_flatten
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      const vars = new Map(
+        Array.from(index.variables.values()).map((v) => [v.name, v]),
+      );
+      expect(vars.get("has_flatten" as SymbolName)?.initialized_from_call).toEqual(
+        "has_flatten" as SymbolName,
+      );
+      expect(vars.get("plain" as SymbolName)?.initialized_from_call).toEqual(
+        "compute" as SymbolName,
+      );
+      expect(
+        vars.get("via_method" as SymbolName)?.initialized_from_call,
+      ).toBeUndefined();
+      expect(
+        vars.get("literal" as SymbolName)?.initialized_from_call,
+      ).toBeUndefined();
     });
 
     it("should handle generic types", () => {
