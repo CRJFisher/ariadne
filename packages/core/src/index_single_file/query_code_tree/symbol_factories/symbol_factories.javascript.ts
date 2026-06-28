@@ -29,6 +29,11 @@ import {
 import type { CaptureNode } from "../../index_single_file";
 import type { ProcessingContext } from "../../index_single_file";
 import { node_to_location } from "../../node_to_location";
+import {
+  extract_jsdoc_type,
+  find_preceding_jsdoc,
+  extract_jsdoc_param_type,
+} from "./jsdoc_extraction.javascript";
 
 // Re-export export analysis functions
 export {
@@ -248,121 +253,6 @@ export function extract_parameter_type(node: SyntaxNode): SymbolName | undefined
     return type_node.text as SymbolName;
   }
   return extract_jsdoc_param_type(node);
-}
-
-/**
- * Extract type from JSDoc comment
- * Looks for @type {TypeName} annotations in JSDoc comments
- */
-export function extract_jsdoc_type(comment_text: string): SymbolName | undefined {
-  // Match @type {TypeName} pattern
-  // Handles single-line: /** @type {Foo} */
-  // Handles multi-line:  /**
-  //                       * @type {Bar}
-  //                       */
-  const type_match = comment_text.match(/@type\s*\{([^}]+)\}/);
-  if (type_match && type_match[1]) {
-    return type_match[1].trim() as SymbolName;
-  }
-  return undefined;
-}
-
-/**
- * Find JSDoc comment immediately preceding a node
- * Returns the comment node if found, undefined otherwise
- */
-export function find_preceding_jsdoc(node: SyntaxNode): SyntaxNode | undefined {
-  // Look for comment nodes among previous siblings
-  let current = node.previousSibling;
-
-  // Skip whitespace and newlines
-  while (current && (current.type === "comment" || current.text.trim() === "")) {
-    if (current.type === "comment" && current.text.startsWith("/**")) {
-      return current;
-    }
-    current = current.previousSibling;
-  }
-
-  // Also check parent's previous siblings (for field_definition nodes)
-  if (node.parent) {
-    current = node.parent.previousSibling;
-    while (current && (current.type === "comment" || current.text.trim() === "")) {
-      if (current.type === "comment" && current.text.startsWith("/**")) {
-        return current;
-      }
-      current = current.previousSibling;
-    }
-  }
-
-  return undefined;
-}
-
-const FUNCTION_LIKE_TYPES = new Set([
-  "function_declaration",
-  "generator_function_declaration",
-  "function_expression",
-  "generator_function",
-  "arrow_function",
-  "method_definition",
-  "function",
-]);
-
-/**
- * Extract a parameter's type from the enclosing function's JSDoc `@param` tag.
- *
- * The capture node is the bare parameter identifier; its declared type may live
- * only in a `@param {T} <name>` tag on the function's leading JSDoc block. Climb
- * to the enclosing function-like node, locate that block, and return the type of
- * the tag whose name matches the parameter exactly.
- */
-function extract_jsdoc_param_type(param_node: SyntaxNode): SymbolName | undefined {
-  const param_name = param_node.text;
-
-  let fn: SyntaxNode | null = param_node.parent;
-  while (fn && !FUNCTION_LIKE_TYPES.has(fn.type)) {
-    fn = fn.parent;
-  }
-  if (!fn) {
-    return undefined;
-  }
-
-  // For an arrow/function expression bound to a `const`, the JSDoc precedes the
-  // declaration statement, not the expression — anchor the search there so
-  // find_preceding_jsdoc's direct-previous-sibling branch reaches it.
-  let comment_anchor: SyntaxNode = fn;
-  if (fn.parent?.type === "variable_declarator" && fn.parent.parent) {
-    comment_anchor = fn.parent.parent;
-  }
-
-  const jsdoc = find_preceding_jsdoc(comment_anchor);
-  if (!jsdoc) {
-    return undefined;
-  }
-
-  return match_jsdoc_param_type(jsdoc.text, param_name);
-}
-
-/**
- * Find the `@param {T} <name>` tag whose name matches exactly and return `T`.
- *
- * Matching on the full (possibly dotted) tag name by equality skips
- * documentation of nested object members (`@param {string} options.foo` never
- * types a bare `options` parameter) without positional guessing.
- */
-function match_jsdoc_param_type(
-  comment_text: string,
-  param_name: string
-): SymbolName | undefined {
-  const tag_pattern = /@param\s*\{([^}]*)\}\s*\[?\s*([A-Za-z_$][\w$.]*)\]?/g;
-  let match: RegExpExecArray | null;
-  while ((match = tag_pattern.exec(comment_text)) !== null) {
-    const type_text = match[1].trim();
-    const tag_name = match[2];
-    if (tag_name === param_name && type_text) {
-      return type_text as SymbolName;
-    }
-  }
-  return undefined;
 }
 
 /**

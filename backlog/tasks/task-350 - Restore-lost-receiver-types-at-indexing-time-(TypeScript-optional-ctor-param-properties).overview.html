@@ -29,8 +29,21 @@
   nav.cross a:hover{border-color:var(--clay);color:var(--slate)}
   nav.cross .here{background:var(--slate);color:var(--ivory);border-color:var(--slate)}
   nav.cross .dot{width:7px;height:7px;border-radius:50%;background:var(--olive)}
+  nav.cross .pending{font-family:var(--mono);font-size:11.5px;color:var(--g400);border:1px dashed var(--g200);background:transparent;border-radius:999px;padding:4px 10px;display:inline-flex;align-items:center;gap:6px}
+  nav.cross .pending .tag{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--g400)}
+  /* family (work-axis) nav bar */
+  nav.fam{position:sticky;top:43px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
+  nav.fam .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.fam .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--olive);margin-right:4px}
+  nav.fam a, nav.fam .here{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:3px 10px;display:inline-flex;align-items:center;gap:6px}
+  nav.fam a:hover{border-color:var(--olive);color:var(--slate)}
+  nav.fam .here{background:#eef1e6;border-color:var(--olive);color:var(--slate);font-weight:700}
+  nav.fam .pending{font-family:var(--mono);font-size:11px;color:var(--g400);border:1px dashed var(--g200);background:transparent;border-radius:999px;padding:3px 10px;display:inline-flex;align-items:center;gap:6px}
+  nav.fam .pending .tag{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--g400)}
+  nav.fam .st{font-size:9px;text-transform:uppercase;letter-spacing:.05em}
+  nav.fam .st.done{color:var(--olive)} nav.fam .st.todo{color:var(--clay)}
   /* in-page outline bar */
-  nav.toc{position:sticky;top:43px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
+  nav.toc{position:sticky;top:78px;z-index:8;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
   nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
   nav.toc .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--g600);margin-right:4px}
   nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:3px 9px}
@@ -39,7 +52,7 @@
   .prose{max-width:74ch}
   .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
   h1{font-family:var(--serif);font-weight:600;font-size:34px;line-height:1.1;margin:0 0 14px;letter-spacing:-.01em;max-width:26ch}
-  h2{font-family:var(--serif);font-weight:600;font-size:24px;margin:54px 0 6px;letter-spacing:-.01em;scroll-margin-top:96px}
+  h2{font-family:var(--serif);font-weight:600;font-size:24px;margin:54px 0 6px;letter-spacing:-.01em;scroll-margin-top:130px}
   h3{font-family:var(--mono);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);margin:22px 0 8px}
   p{margin:0 0 12px}
   .lead{font-size:16.5px;color:var(--g600);max-width:80ch}
@@ -133,6 +146,17 @@
     <span class="here"><span class="dot"></span>receiver_type_inference</span>
     <a href="TASKS-347-351-campaign-overview.html">347–351 campaign</a>
     <a href="self-healing-pipeline-architecture.html">pipeline architecture</a>
+  </div>
+</nav>
+
+<nav class="fam">
+  <div class="inner">
+    <span class="brand">TASK-350 family</span>
+    <span class="here">350 · epic <span class="st done">Done</span></span>
+    <a href="task-350 - Restore-lost-receiver-types-at-indexing-time-(TypeScript-optional-ctor-param-properties).companion.html">Fix A · TS <span class="st done">walkthrough</span></a>
+    <a href="task-350.1 - Fix-B-—-associate-JSDoc-@param-{T}-name-tags-with-the-named-parameter-(JavaScript).companion.html">350.1 · Fix B · JS <span class="st todo">To Do</span></a>
+    <a href="task-350.2 - Fix-C-—-promote-Python-self.attr-assignments-outside-__init__-and-read-namespace-qualified-constructor-RHS-(Python).fix-walkthrough.html">350.2 · Fix C · Py <span class="st todo">To Do</span></a>
+    <span class="pending">350.3 · interim classifier <span class="tag">not yet generated</span></span>
   </div>
 </nav>
 

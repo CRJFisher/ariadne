@@ -17,7 +17,6 @@ import {
   create_import_id,
   extract_return_type,
   extract_parameter_type,
-  extract_jsdoc_type,
   extract_import_path,
   extract_require_path,
   extract_original_name,
@@ -36,6 +35,7 @@ import {
 } from "./symbol_factories.javascript";
 import { anonymous_function_symbol } from "@ariadnejs/types";
 import type { FilePath, SymbolName } from "@ariadnejs/types";
+import { extract_jsdoc_type } from "./jsdoc_extraction.javascript";
 import { node_to_location } from "../../node_to_location";
 import {
   SemanticCategory,
@@ -274,14 +274,16 @@ describe("extract_parameter_type", () => {
     expect(result).toBeUndefined();
   });
 
-  // Finds the parameter identifier named `name` declared in a parameter list
-  // (formal_parameters, rest_pattern, assignment_pattern, or a parenless arrow).
+  // Finds the parameter identifier named `name` declared in a parameter list.
+  // Mirrors the @definition.parameter capture in javascript.scm: a direct
+  // identifier in formal_parameters, a rest_pattern, an assignment_pattern, or a
+  // catch_clause.
   function find_param(root: SyntaxNode, name: string): SyntaxNode {
     const PARAM_PARENTS = new Set([
       "formal_parameters",
       "rest_pattern",
       "assignment_pattern",
-      "arrow_function",
+      "catch_clause",
     ]);
     const match = find_all_nodes_by_type(root, "identifier").find(
       (n) => n.text === name && PARAM_PARENTS.has(n.parent!.type)
@@ -324,6 +326,22 @@ describe("extract_parameter_type", () => {
     );
     const result = extract_parameter_type(find_param(root, "mods"));
     expect(result).toBe("Array<Module>" as SymbolName);
+  });
+
+  it("types an optional parameter declared with @param {T} [name]", () => {
+    const root = parse_js("/** @param {Compilation} [c] */\nfunction f(c) {}");
+    const result = extract_parameter_type(find_param(root, "c"));
+    expect(result).toBe("Compilation" as SymbolName);
+  });
+
+  it("does not type a catch-clause variable from a same-named function @param", () => {
+    const root = parse_js(
+      "/** @param {Foo} e */\nfunction handle(e) {\n  try {\n    run();\n  } catch (e) {\n    e.report();\n  }\n}"
+    );
+    const catch_clause = find_node_by_type(root, "catch_clause")!;
+    const catch_var = find_node_by_type(catch_clause, "identifier")!;
+    expect(catch_var.parent!.type).toBe("catch_clause");
+    expect(extract_parameter_type(catch_var)).toBeUndefined();
   });
 
   it("does not type a bare param from a dotted @param {T} options.foo tag", () => {

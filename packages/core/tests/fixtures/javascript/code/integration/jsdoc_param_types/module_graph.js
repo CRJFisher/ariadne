@@ -8,8 +8,4 @@ export class ModuleGraph {
   getParentBlockIndex() {
     return 0;
   }
-
-  getModule() {
-    return null;
-  }
 }
