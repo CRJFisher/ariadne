@@ -236,13 +236,18 @@ export function extract_return_type(node: SyntaxNode): SymbolName | undefined {
 
 /**
  * Extract parameter type
+ *
+ * A structural TypeScript annotation wins when present. Pure JavaScript has no
+ * such annotation, so the type may live only in the enclosing function's JSDoc
+ * `@param {T} name` tag — fall back to that so the parameter's declared type
+ * survives indexing and a method call on the parameter can resolve its receiver.
  */
 export function extract_parameter_type(node: SyntaxNode): SymbolName | undefined {
   const type_node = node.childForFieldName("type");
   if (type_node) {
     return type_node.text as SymbolName;
   }
-  return undefined;
+  return extract_jsdoc_param_type(node);
 }
 
 /**
@@ -289,6 +294,74 @@ export function find_preceding_jsdoc(node: SyntaxNode): SyntaxNode | undefined {
     }
   }
 
+  return undefined;
+}
+
+const FUNCTION_LIKE_TYPES = new Set([
+  "function_declaration",
+  "generator_function_declaration",
+  "function_expression",
+  "generator_function",
+  "arrow_function",
+  "method_definition",
+  "function",
+]);
+
+/**
+ * Extract a parameter's type from the enclosing function's JSDoc `@param` tag.
+ *
+ * The capture node is the bare parameter identifier; its declared type may live
+ * only in a `@param {T} <name>` tag on the function's leading JSDoc block. Climb
+ * to the enclosing function-like node, locate that block, and return the type of
+ * the tag whose name matches the parameter exactly.
+ */
+function extract_jsdoc_param_type(param_node: SyntaxNode): SymbolName | undefined {
+  const param_name = param_node.text;
+
+  let fn: SyntaxNode | null = param_node.parent;
+  while (fn && !FUNCTION_LIKE_TYPES.has(fn.type)) {
+    fn = fn.parent;
+  }
+  if (!fn) {
+    return undefined;
+  }
+
+  // For an arrow/function expression bound to a `const`, the JSDoc precedes the
+  // declaration statement, not the expression — anchor the search there so
+  // find_preceding_jsdoc's direct-previous-sibling branch reaches it.
+  let comment_anchor: SyntaxNode = fn;
+  if (fn.parent?.type === "variable_declarator" && fn.parent.parent) {
+    comment_anchor = fn.parent.parent;
+  }
+
+  const jsdoc = find_preceding_jsdoc(comment_anchor);
+  if (!jsdoc) {
+    return undefined;
+  }
+
+  return match_jsdoc_param_type(jsdoc.text, param_name);
+}
+
+/**
+ * Find the `@param {T} <name>` tag whose name matches exactly and return `T`.
+ *
+ * Matching on the full (possibly dotted) tag name by equality skips
+ * documentation of nested object members (`@param {string} options.foo` never
+ * types a bare `options` parameter) without positional guessing.
+ */
+function match_jsdoc_param_type(
+  comment_text: string,
+  param_name: string
+): SymbolName | undefined {
+  const tag_pattern = /@param\s*\{([^}]*)\}\s*\[?\s*([A-Za-z_$][\w$.]*)\]?/g;
+  let match: RegExpExecArray | null;
+  while ((match = tag_pattern.exec(comment_text)) !== null) {
+    const type_text = match[1].trim();
+    const tag_name = match[2];
+    if (tag_name === param_name && type_text) {
+      return type_text as SymbolName;
+    }
+  }
   return undefined;
 }
 

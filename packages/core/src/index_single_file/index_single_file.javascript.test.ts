@@ -10,6 +10,7 @@ import JavaScript from "tree-sitter-javascript";
 import type {
   Language,
   FilePath,
+  SymbolName,
   FunctionCallReference,
   MethodCallReference,
   ConstructorCallReference,
@@ -1032,6 +1033,52 @@ describe("Semantic Index - JavaScript", () => {
         (f) => f.name === "greet",
       );
       expect(greet_func).toBeDefined();
+    });
+
+    it("types a function parameter from its JSDoc @param tag", () => {
+      const code = `
+        /** @param {ModuleGraph} g */
+        function buildChunkGraph(g) {
+          return g;
+        }
+
+        function plain(h) {
+          return h;
+        }
+      `;
+
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language,
+      );
+      const result = build_index_single_file(
+        parsed_file,
+        tree,
+        "javascript" as Language,
+      );
+
+      const build_func = Array.from(result.functions.values()).find(
+        (f) => f.name === "buildChunkGraph",
+      );
+      expect(build_func).toBeDefined();
+      const g_param = build_func!.signature.parameters.find(
+        (p) => p.name === ("g" as SymbolName),
+      );
+      expect(g_param).toBeDefined();
+      expect(g_param!.type).toBe("ModuleGraph" as SymbolName);
+
+      // A parameter with no JSDoc tag keeps an undefined type.
+      const plain_func = Array.from(result.functions.values()).find(
+        (f) => f.name === "plain",
+      );
+      const h_param = plain_func!.signature.parameters.find(
+        (p) => p.name === ("h" as SymbolName),
+      );
+      expect(h_param).toBeDefined();
+      expect(h_param!.type).toBeUndefined();
     });
 
     it("should correctly parse computed member access and bracket notation", () => {

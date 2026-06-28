@@ -273,6 +273,75 @@ describe("extract_parameter_type", () => {
     const result = extract_parameter_type(param_node);
     expect(result).toBeUndefined();
   });
+
+  // Finds the parameter identifier named `name` declared in a parameter list
+  // (formal_parameters, rest_pattern, assignment_pattern, or a parenless arrow).
+  function find_param(root: SyntaxNode, name: string): SyntaxNode {
+    const PARAM_PARENTS = new Set([
+      "formal_parameters",
+      "rest_pattern",
+      "assignment_pattern",
+      "arrow_function",
+    ]);
+    const match = find_all_nodes_by_type(root, "identifier").find(
+      (n) => n.text === name && PARAM_PARENTS.has(n.parent!.type)
+    );
+    if (!match) throw new Error(`parameter ${name} not found`);
+    return match;
+  }
+
+  it("types a function parameter from a JSDoc @param {T} name tag", () => {
+    const root = parse_js("/** @param {ModuleGraph} g */\nfunction build(g) {}");
+    const result = extract_parameter_type(find_param(root, "g"));
+    expect(result).toBe("ModuleGraph" as SymbolName);
+  });
+
+  it("types a method parameter from a JSDoc @param tag inside a class", () => {
+    const root = parse_js(
+      "class C {\n  /** @param {ModuleGraph} g */\n  build(g) {}\n}"
+    );
+    const result = extract_parameter_type(find_param(root, "g"));
+    expect(result).toBe("ModuleGraph" as SymbolName);
+  });
+
+  it("types an arrow parameter whose const declaration carries the JSDoc", () => {
+    const root = parse_js("/** @param {Compilation} c */\nconst f = (c) => c;");
+    const result = extract_parameter_type(find_param(root, "c"));
+    expect(result).toBe("Compilation" as SymbolName);
+  });
+
+  it("matches the @param tag for the right name among multiple", () => {
+    const root = parse_js(
+      "/**\n * @param {Foo} a\n * @param {Bar} b\n */\nfunction f(a, b) {}"
+    );
+    expect(extract_parameter_type(find_param(root, "a"))).toBe("Foo" as SymbolName);
+    expect(extract_parameter_type(find_param(root, "b"))).toBe("Bar" as SymbolName);
+  });
+
+  it("preserves a verbatim generic JSDoc param type", () => {
+    const root = parse_js(
+      "/** @param {Array<Module>} mods */\nfunction f(mods) {}"
+    );
+    const result = extract_parameter_type(find_param(root, "mods"));
+    expect(result).toBe("Array<Module>" as SymbolName);
+  });
+
+  it("does not type a bare param from a dotted @param {T} options.foo tag", () => {
+    const root = parse_js(
+      "/** @param {string} options.foo */\nfunction f(options) {}"
+    );
+    const result = extract_parameter_type(find_param(root, "options"));
+    expect(result).toBeUndefined();
+  });
+
+  it("prefers a structural TypeScript annotation over JSDoc when both exist", () => {
+    const root = parse_ts(
+      "/** @param {Wrong} g */\nfunction f(g: Right) {}"
+    );
+    const param_node = find_node_by_type(root, "required_parameter")!;
+    const result = extract_parameter_type(param_node);
+    expect(result).toBe(": Right");
+  });
 });
 
 describe("extract_jsdoc_type", () => {
