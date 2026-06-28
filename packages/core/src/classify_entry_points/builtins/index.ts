@@ -34,9 +34,7 @@ import { check_framework_lifecycle_dispatch } from "./check_framework-lifecycle-
 import { check_framework_lifecycle_handler } from "./check_framework-lifecycle-handler";
 import { check_framework_lifecycle_override } from "./check_framework-lifecycle-override";
 import { check_getter_accessor_not_tracked } from "./check_getter-accessor-not-tracked";
-import { check_higher_order_function_callback } from "./check_higher-order-function-callback";
 import { check_import_resolution_missed } from "./check_import-resolution-missed";
-import { check_inline_callback } from "./check_inline-callback";
 import { check_inline_constructor_method_chain } from "./check_inline-constructor-method-chain";
 import { check_intra_class_method_call } from "./check_intra-class-method-call";
 import { check_intra_file_call_not_in_registry } from "./check_intra-file-call-not-in-registry";
@@ -105,9 +103,7 @@ export const BUILTIN_CHECKS: Record<string, BuiltinCheckFn> = {
   check_framework_lifecycle_handler,
   check_framework_lifecycle_override,
   check_getter_accessor_not_tracked,
-  check_higher_order_function_callback,
   check_import_resolution_missed,
-  check_inline_callback,
   check_inline_constructor_method_chain,
   check_intra_class_method_call,
   check_intra_file_call_not_in_registry,

@@ -2218,22 +2218,20 @@
       "group_id": "higher-order-function-callback",
       "title": "higher-order-function-callback",
       "description": "Proposed by plan investigator — fill in before enabling.",
-      "status": "wip",
+      "status": "fixed",
       "languages": [
         "typescript"
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
-        "function_name": "check_higher_order_function_callback",
-        "min_confidence": 0.9
+        "kind": "none"
       },
       "observed_count": 1,
       "observed_projects": [
         "angular"
       ],
       "last_seen_run": "2026-04-25T17-07-32.678Z",
-      "backlog_task": "TASK-204"
+      "backlog_task": "TASK-348"
     },
     {
       "group_id": "import-resolution-missed",
@@ -3088,22 +3086,20 @@
       "group_id": "inline-callback",
       "title": "inline-callback",
       "description": "Proposed by plan investigator — fill in before enabling.",
-      "status": "wip",
+      "status": "fixed",
       "languages": [
         "typescript"
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
-        "function_name": "check_inline_callback",
-        "min_confidence": 0.9
+        "kind": "none"
       },
       "observed_count": 1,
       "observed_projects": [
         "typeorm"
       ],
       "last_seen_run": "2026-04-27T16-19-42.325Z",
-      "backlog_task": "TASK-204"
+      "backlog_task": "TASK-348"
     },
     {
       "group_id": "interface-dispatch",
