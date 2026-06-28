@@ -95,6 +95,15 @@ describe("is_runner_invoked_callable", () => {
         false
       );
     });
+
+    it("retains a #[cfg(not(test))] production function (no cfg decorator attached)", () => {
+      // The indexer records no cfg decorator for not(test); a def with no
+      // test/cfg decorator must not be suppressed.
+      const def = rust_function("prod_only", []);
+      expect(is_runner_invoked_callable(def, rust_file, "rust" as Language)).toBe(
+        false
+      );
+    });
   });
 
   describe("python ASV benchmark methods", () => {

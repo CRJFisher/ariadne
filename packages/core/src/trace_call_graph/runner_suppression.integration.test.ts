@@ -53,15 +53,22 @@ describe("runner-convention entry-point suppression", () => {
 
     const names = entry_point_names(project);
 
-    // Only the production function and the non-test `cfg(unix)` function remain.
+    // Production code remains: the plain function plus the non-test cfg gates
+    // `cfg(unix)` and `cfg(not(test))`. Every test-harness callable is gone.
     expect(names).toEqual(
-      new Set(["run_server", "unix_only_entry"] as SymbolName[])
+      new Set([
+        "run_server",
+        "unix_only_entry",
+        "prod_only_entry",
+      ] as SymbolName[])
     );
 
     // helper() is reachable from run_server() — never an entry point.
     expect(names.has("helper" as SymbolName)).toBe(false);
     // #[test] directly attributed.
     expect(names.has("top_level_test" as SymbolName)).toBe(false);
+    // #[cfg(feature=...)] #[test] — the feature cfg is ignored, the #[test] suppresses.
+    expect(names.has("chrono_feature_test" as SymbolName)).toBe(false);
     // #[test] inside a #[cfg(test)] mod.
     expect(names.has("masks_roundtrip" as SymbolName)).toBe(false);
     // Plain helper gated test-only by the enclosing #[cfg(test)].
@@ -80,10 +87,15 @@ describe("runner-convention entry-point suppression", () => {
 
     const names = entry_point_names(project);
 
+    // Every asv_bench time_/mem_/peakmem_ method is suppressed; the only entry
+    // point left is the same-prefixed method living outside asv_bench. The
+    // exhaustive set proves no benchmark method leaks through.
+    expect(names).toEqual(new Set(["time_elapsed"] as SymbolName[]));
+
     // ASV discovers and invokes these by introspection — suppressed.
     expect(names.has("time_frame_from_scalar_ea_float64" as SymbolName)).toBe(false);
-    expect(names.has("time_frame_from_scalar_ea_float64_na" as SymbolName)).toBe(false);
-    expect(names.has("time_nested_dict" as SymbolName)).toBe(false);
+    expect(names.has("mem_frame" as SymbolName)).toBe(false);
+    expect(names.has("peakmem_frame" as SymbolName)).toBe(false);
 
     // Over-suppression guard: a time_-prefixed method outside asv_bench is not a
     // benchmark and stays a genuine entry point.

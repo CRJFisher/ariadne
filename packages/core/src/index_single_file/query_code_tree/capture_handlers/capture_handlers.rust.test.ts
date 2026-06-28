@@ -2317,7 +2317,28 @@ fn unix_only() {}
       const fn = Array.from(index.functions.values()).find(
         (f) => f.name === "unix_only"
       );
-      expect(fn!.decorators).toBeUndefined();
+      expect(fn!.decorators).toEqual(undefined);
+    });
+
+    it("does not treat #[cfg(not(test))] as a test gate", async () => {
+      const index = await build_index_from_code(`#[cfg(not(test))]
+fn prod_only() {}
+`);
+      const fn = Array.from(index.functions.values()).find(
+        (f) => f.name === "prod_only"
+      );
+      expect(fn!.decorators).toEqual(undefined);
+    });
+
+    it("records only the test decorator for #[cfg(feature=...)] #[test]", async () => {
+      const index = await build_index_from_code(`#[cfg(feature = "chrono")]
+#[test]
+fn chrono_feature_test() {}
+`);
+      const fn = Array.from(index.functions.values()).find(
+        (f) => f.name === "chrono_feature_test"
+      );
+      expect(decorator_names(fn!)).toEqual(["test"]);
     });
 
     it("leaves a plain production function with no decorators", async () => {
@@ -2326,7 +2347,7 @@ fn unix_only() {}
       const fn = Array.from(index.functions.values()).find(
         (f) => f.name === "run_server"
       );
-      expect(fn!.decorators).toBeUndefined();
+      expect(fn!.decorators).toEqual(undefined);
     });
   });
 });

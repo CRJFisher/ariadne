@@ -261,14 +261,35 @@ function classify_test_harness_attribute(
   if (identifier.text === "test") return "test";
   if (identifier.text === "cfg") {
     const predicate = attribute.children.find((c) => c.type === "token_tree");
-    if (predicate && token_tree_references_test(predicate)) return "cfg_test";
+    if (predicate && cfg_predicate_requires_test(predicate)) return "cfg_test";
   }
   return null;
 }
 
-function token_tree_references_test(node: SyntaxNode): boolean {
-  if (node.type === "identifier" && node.text === "test") return true;
-  return node.children.some(token_tree_references_test);
+/**
+ * Whether a `cfg(...)` predicate gates code INTO test builds — `test`,
+ * `all(test, ...)`, `any(test, ...)`. A `not(...)` wrapper inverts the sense, so
+ * its contents are skipped: `cfg(not(test))` gates code into production-only
+ * builds and must NOT be treated as test-gating. `cfg(feature = "test")` is also
+ * excluded because there the `test` token is a string literal, not a config
+ * identifier.
+ */
+function cfg_predicate_requires_test(token_tree: SyntaxNode): boolean {
+  const children = token_tree.children;
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i];
+    if (child.type === "identifier") {
+      if (child.text === "test") return true;
+      if (child.text === "not") {
+        // Skip the negated sub-predicate — its `test` does not gate code in.
+        const next = children[i + 1];
+        if (next && next.type === "token_tree") i++;
+      }
+    } else if (child.type === "token_tree") {
+      if (cfg_predicate_requires_test(child)) return true;
+    }
+  }
+  return false;
 }
 
 /**

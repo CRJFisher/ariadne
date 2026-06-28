@@ -12,3 +12,9 @@ class FromScalar:
 
     def time_nested_dict(self):
         pass
+
+    def mem_frame(self):
+        pass
+
+    def peakmem_frame(self):
+        pass

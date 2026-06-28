@@ -15,6 +15,12 @@ fn helper() {}
 #[test]
 fn top_level_test() {}
 
+// Suppressed: a feature-gated test (matching sqlx interval.rs evidence). The
+// feature cfg is not a test gate, but the direct #[test] suppresses it.
+#[cfg(feature = "chrono")]
+#[test]
+fn chrono_feature_test() {}
+
 #[cfg(test)]
 mod tests {
     // Suppressed: `#[test]` inside a `#[cfg(test)]` mod.
@@ -29,3 +35,8 @@ mod tests {
 // uncalled function stays a genuine entry point.
 #[cfg(unix)]
 fn unix_only_entry() {}
+
+// Over-suppression guard: `cfg(not(test))` gates code into PRODUCTION-only
+// builds, so this uncalled function is a genuine entry point, not a test.
+#[cfg(not(test))]
+fn prod_only_entry() {}
