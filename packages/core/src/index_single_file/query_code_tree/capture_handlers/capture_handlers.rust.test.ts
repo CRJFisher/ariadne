@@ -2256,4 +2256,77 @@ fn helper() {}
       expect(fn_def!.docstring).toBe("/// Inline helper.");
     });
   });
+
+  describe("Test-harness attribute decorators", () => {
+    async function build_index_from_code(code: string) {
+      const tree = parser.parse(code);
+      const lines = code.split("\n");
+      const parsed_file = {
+        file_path: "src/foo.rs" as any,
+        file_lines: lines.length,
+        file_end_column: lines[lines.length - 1]?.length || 0,
+        tree,
+        lang: "rust" as const,
+      };
+      return build_index_single_file(parsed_file, tree, "rust");
+    }
+
+    function decorator_names(fn: { decorators?: readonly { name: string }[] }) {
+      return (fn.decorators ?? []).map((d) => d.name).sort();
+    }
+
+    it("records a test decorator on a directly #[test]-attributed function", async () => {
+      const index = await build_index_from_code(`#[test]
+fn top_level_test() {}
+`);
+      const fn = Array.from(index.functions.values()).find(
+        (f) => f.name === "top_level_test"
+      );
+      expect(decorator_names(fn!)).toEqual(["test"]);
+    });
+
+    it("records test and cfg decorators on a #[test] fn inside a #[cfg(test)] mod", async () => {
+      const index = await build_index_from_code(`#[cfg(test)]
+mod tests {
+    #[test]
+    fn masks_roundtrip() {}
+}
+`);
+      const fn = Array.from(index.functions.values()).find(
+        (f) => f.name === "masks_roundtrip"
+      );
+      expect(decorator_names(fn!)).toEqual(["cfg", "test"]);
+    });
+
+    it("inherits the cfg decorator onto a plain helper inside a #[cfg(test)] mod", async () => {
+      const index = await build_index_from_code(`#[cfg(test)]
+mod tests {
+    fn build_fixture() {}
+}
+`);
+      const fn = Array.from(index.functions.values()).find(
+        (f) => f.name === "build_fixture"
+      );
+      expect(decorator_names(fn!)).toEqual(["cfg"]);
+    });
+
+    it("ignores #[cfg(...)] predicates that are not test", async () => {
+      const index = await build_index_from_code(`#[cfg(unix)]
+fn unix_only() {}
+`);
+      const fn = Array.from(index.functions.values()).find(
+        (f) => f.name === "unix_only"
+      );
+      expect(fn!.decorators).toBeUndefined();
+    });
+
+    it("leaves a plain production function with no decorators", async () => {
+      const index = await build_index_from_code(`fn run_server() {}
+`);
+      const fn = Array.from(index.functions.values()).find(
+        (f) => f.name === "run_server"
+      );
+      expect(fn!.decorators).toBeUndefined();
+    });
+  });
 });

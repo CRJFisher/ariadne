@@ -9,6 +9,7 @@ import type {
 import type { DefinitionRegistry } from "../resolve_references/registries/definition";
 import type { ResolutionRegistry } from "../resolve_references/resolve_references";
 import { is_test_file } from "../project/detect_test_file";
+import { is_runner_invoked_callable } from "./runner_suppression";
 
 export type { TraceCallGraphOptions };
 
@@ -67,10 +68,14 @@ function build_function_nodes(
     // Get calls made from this function's body scope
     const enclosed_calls = resolutions.get_calls_by_caller_scope(body_scope_id);
 
-    // Determine if this function is in a test file
+    // Determine if this function is invoked only by a test/benchmark runner —
+    // either by living in a test file, or by a definition-level runner
+    // convention (Rust `#[test]`/`#[cfg(test)]`, ASV benchmark methods).
     const file_path = func_def.location.file_path;
     const language = detect_language(file_path);
-    const is_test = is_test_file(file_path, language);
+    const is_test =
+      is_test_file(file_path, language) ||
+      is_runner_invoked_callable(func_def, file_path, language);
 
     // Create function node
     nodes.set(func_def.symbol_id, {

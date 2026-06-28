@@ -43,7 +43,7 @@ import {
   type ImportInfo,
 } from "../symbol_factories/symbol_factories.rust";
 
-// Import and re-export method handlers from separate file
+// Import method and free-function handlers from their separate files
 import {
   handle_definition_method,
   handle_definition_method_associated,
@@ -51,6 +51,13 @@ import {
   handle_definition_method_async,
   handle_definition_constructor,
 } from "./methods.rust";
+import {
+  handle_definition_function,
+  handle_definition_function_generic,
+  handle_definition_function_async,
+  handle_definition_function_const,
+  handle_definition_function_unsafe,
+} from "./functions.rust";
 
 export {
   handle_definition_method,
@@ -58,6 +65,11 @@ export {
   handle_definition_method_default,
   handle_definition_method_async,
   handle_definition_constructor,
+  handle_definition_function,
+  handle_definition_function_generic,
+  handle_definition_function_async,
+  handle_definition_function_const,
+  handle_definition_function_unsafe,
 };
 
 // ============================================================================
@@ -261,179 +273,6 @@ export function handle_definition_interface_method(
       });
     }
   }
-}
-
-// ============================================================================
-// FUNCTION HANDLERS
-// ============================================================================
-
-export function handle_definition_function(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // Skip functions inside impl blocks or traits - they're handled by method/constructor handlers
-  const impl_info = find_containing_impl(capture);
-  const trait_name = find_containing_trait(capture);
-  if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
-    return;
-  }
-
-  // Skip generic functions - they're handled by definition.function.generic
-  const generics = extract_generic_parameters(capture.node.parent || capture.node);
-  if (generics && generics.length > 0) {
-    return;
-  }
-
-  // Skip functions with modifiers (async, const, unsafe) - handled by specialized handlers
-  const fn_node = capture.node.parent || capture.node;
-  if (fn_node.children?.some(c => c.type === "function_modifiers")) {
-    return;
-  }
-
-  const func_id = create_function_id(capture);
-  const export_info = extract_export_info(capture.node.parent || capture.node);
-  const docstring = consume_documentation(capture.location);
-
-  builder.add_function(
-    {
-      symbol_id: func_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      is_exported: export_info.is_exported,
-      export: export_info.export,
-      return_type: extract_return_type(capture.node.parent || capture.node),
-      docstring,
-    },
-    capture
-  );
-}
-
-export function handle_definition_function_generic(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // Skip functions inside impl blocks or traits - they're handled by method/constructor handlers
-  const impl_info = find_containing_impl(capture);
-  const trait_name = find_containing_trait(capture);
-  if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
-    return;
-  }
-
-  const func_id = create_function_id(capture);
-  const generics = extract_generic_parameters(capture.node.parent || capture.node);
-  const export_info = extract_export_info(capture.node.parent || capture.node);
-  const docstring = consume_documentation(capture.location);
-
-  builder.add_function(
-    {
-      symbol_id: func_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      is_exported: export_info.is_exported,
-      export: export_info.export,
-      generics,
-      return_type: extract_return_type(capture.node.parent || capture.node),
-      docstring,
-    },
-    capture
-  );
-}
-
-export function handle_definition_function_async(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // Skip functions inside impl blocks or traits - they're handled by method/constructor handlers
-  const impl_info = find_containing_impl(capture);
-  const trait_name = find_containing_trait(capture);
-  if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
-    return;
-  }
-
-  const func_id = create_function_id(capture);
-  const export_info = extract_export_info(capture.node.parent || capture.node);
-  const docstring = consume_documentation(capture.location);
-
-  builder.add_function(
-    {
-      symbol_id: func_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      is_exported: export_info.is_exported,
-      export: export_info.export,
-      return_type: extract_return_type(capture.node.parent || capture.node),
-      docstring,
-    },
-    capture
-  );
-}
-
-export function handle_definition_function_const(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // Skip functions inside impl blocks or traits - they're handled by method/constructor handlers
-  const impl_info = find_containing_impl(capture);
-  const trait_name = find_containing_trait(capture);
-  if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
-    return;
-  }
-
-  const func_id = create_function_id(capture);
-  const export_info = extract_export_info(capture.node.parent || capture.node);
-  const docstring = consume_documentation(capture.location);
-
-  builder.add_function(
-    {
-      symbol_id: func_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      is_exported: export_info.is_exported,
-      export: export_info.export,
-      return_type: extract_return_type(capture.node.parent || capture.node),
-      docstring,
-    },
-    capture
-  );
-}
-
-export function handle_definition_function_unsafe(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // Skip functions inside impl blocks or traits - they're handled by method/constructor handlers
-  const impl_info = find_containing_impl(capture);
-  const trait_name = find_containing_trait(capture);
-  if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
-    return;
-  }
-
-  const func_id = create_function_id(capture);
-  const export_info = extract_export_info(capture.node.parent || capture.node);
-  const docstring = consume_documentation(capture.location);
-
-  builder.add_function(
-    {
-      symbol_id: func_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      is_exported: export_info.is_exported,
-      export: export_info.export,
-      return_type: extract_return_type(capture.node.parent || capture.node),
-      docstring,
-    },
-    capture
-  );
 }
 
 // ============================================================================
