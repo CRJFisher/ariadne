@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Parent overview for TASK-190 (self-repair entry-point pipeline). Re-scanned sibling companions in backlog/tasks/.
+     Source: task-190 - ...md (description + 5-phase architecture). Links only to companions that exist on disk; others marked not-yet-generated. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TASK-190 — the self-repair pipeline that finds and fixes false entry points</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  nav.cross{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 0}
+  nav.cross .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.cross .brand{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.cross a,nav.cross .here,nav.cross .pending{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:4px 10px;display:inline-flex;align-items:center;gap:6px}
+  nav.cross a:hover{border-color:var(--clay);color:var(--slate)}
+  nav.cross .here{background:var(--slate);color:var(--ivory);border-color:var(--slate)}
+  nav.cross .pending{color:var(--g400);border-style:dashed;cursor:default}
+  nav.cross .pending .tag{font-size:9px;letter-spacing:.04em}
+  nav.cross .dot{width:7px;height:7px;border-radius:50%;background:var(--olive)}
+  nav.cross .dot.todo{background:var(--clay)} nav.cross .dot.pend{background:var(--g400)}
+  main{width:90%;max-width:1600px;margin:0 auto;padding:30px 0 80px}
+  .prose{max-width:68ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:33px;line-height:1.13;margin:0 0 14px;letter-spacing:-.01em;max-width:24ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:23px;margin:52px 0 6px;letter-spacing:-.01em;scroll-margin-top:64px}
+  .lead{font-size:16px;color:var(--g600);max-width:74ch;margin:0 0 8px}
+  .lead b{color:var(--slate);font-weight:600}
+  code{font-family:var(--mono);font-size:.85em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .cap{font-size:13.5px;color:var(--g600);margin:8px 2px 14px;max-width:78ch}
+  .cap b{color:var(--slate);font-weight:600}
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:15px 19px;margin:18px 0;max-width:80ch}
+  .callout.slate{border-left-color:var(--slate);background:var(--slate);color:var(--ivory)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 7px;display:block}
+  .callout.slate .k{color:var(--oat)}
+  .callout p{margin:0 0 6px;font-size:14px} .callout p:last-child{margin:0}
+  .callout b{color:var(--slate)} .callout.slate b{color:#fff}
+  .callout.slate code{background:rgba(255,255,255,.12);color:var(--oat)}
+  .flowwrap{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:16px;margin:14px 0}
+  .flowwrap svg{width:100%;height:auto;display:block}
+  /* task strip */
+  .strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin:14px 0}
+  .tcard{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);padding:13px 15px;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:6px}
+  a.tcard:hover{border-color:var(--clay)}
+  .tcard .id{font-family:var(--mono);font-size:11px;color:var(--clay);font-weight:700;letter-spacing:.03em;display:flex;align-items:center;gap:7px}
+  .tcard .ttl{font-size:13.5px;color:var(--slate);line-height:1.35}
+  .tcard .st{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;border-radius:999px;padding:2px 8px;align-self:flex-start}
+  .st.done{background:#f2f4ec;color:var(--olive)} .st.todo{background:#faf2ec;color:var(--clay)}
+  .tcard .doc{font-family:var(--mono);font-size:10px;color:var(--g400)}
+  .tcard.has .doc{color:var(--olive)}
+  footer{border-top:1px solid var(--g200);margin-top:60px;padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400)}
+</style>
+</head>
+<body>
+
+<nav class="cross">
+  <div class="inner">
+    <span class="brand">TASK&nbsp;190</span>
+    <span class="here">● overview</span>
+    <span class="dot pend"></span>
+    <a href="task-190.28 - Model-TS-field-initializer-method-refs-and-stored-callback-resolver-miss-as-reachability.reachability-fix.html"><span class="dot"></span> 190.28 · reachability fix</a>
+    <a href="task-190.26.overview.html"><span class="dot"></span> 190.26 · prioritize</a>
+    <a href="task-190.30.overview.html"><span class="dot"></span> 190.30 · classifier scope</a>
+    <a href="task-190.22 - Restructure-self-healing-pipeline-to-triage-→-plan-planning-only.overview.html"><span class="dot"></span> 190.22 · triage→plan split</a>
+  </div>
+</nav>
+
+<main>
+  <p class="eyebrow">Self-repair pipeline · entry-point classification</p>
+  <h1>Finding the codebase's true entry points — and teaching the tool its own false alarms</h1>
+  <p class="lead prose">Ariadne traces call graphs to find a codebase's real entry points. Functions with no caller look like entry points, but many are reached <b>indirectly</b> — stored in a field, passed as a callback, dispatched from a collection.</p>
+  <p class="cap prose" style="margin-top:0">TASK-190 builds a pipeline that detects these false positives, investigates each, and lands the core fixes so the analysis improves itself.</p>
+
+  <div class="meta">
+    <span class="chip">parent of <strong>23 sub-tasks</strong></span>
+    <span class="chip">depends <strong>TASK-189</strong></span>
+    <span class="chip">priority <strong>high</strong></span>
+  </div>
+
+  <h2>The five-phase loop</h2>
+  <p class="cap prose">A single Claude Code session drives a deterministic state machine: detect false positives, investigate each in its own context, plan a fix, and land it. Bash phases carry no LLM; a stop hook advances the state file between phases.</p>
+
+  <div class="flowwrap">
+    <svg viewBox="0 0 980 150" role="img" aria-label="Five-phase pipeline: detection, prepare and classify, triage loop, fix planning, finalize and update registry, flowing left to right">
+      <defs>
+        <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#b9794f"/>
+        </marker>
+      </defs>
+      <!-- 5 phase boxes -->
+      <g font-family="ui-monospace,monospace">
+        <rect x="6"   y="42" width="172" height="66" rx="11" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="92"  y="66" text-anchor="middle" font-size="11" fill="#5f594f">1 · detect (bash)</text>
+        <text x="92"  y="84" text-anchor="middle" font-size="11.5" fill="#2b2a28">false entry points</text>
+
+        <rect x="206" y="42" width="172" height="66" rx="11" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="292" y="66" text-anchor="middle" font-size="11" fill="#5f594f">2 · prepare (bash)</text>
+        <text x="292" y="84" text-anchor="middle" font-size="11.5" fill="#2b2a28">classify + route</text>
+
+        <rect x="406" y="42" width="172" height="66" rx="11" fill="#e7ddc9" stroke="#b9794f"/>
+        <text x="492" y="66" text-anchor="middle" font-size="11" fill="#5f594f">3 · triage loop</text>
+        <text x="492" y="84" text-anchor="middle" font-size="11.5" fill="#2b2a28">investigate each</text>
+
+        <rect x="606" y="42" width="172" height="66" rx="11" fill="#e7ddc9" stroke="#b9794f"/>
+        <text x="692" y="66" text-anchor="middle" font-size="11" fill="#5f594f">4 · plan fixes</text>
+        <text x="692" y="84" text-anchor="middle" font-size="11.5" fill="#2b2a28">→ backlog task</text>
+
+        <rect x="806" y="42" width="172" height="66" rx="11" fill="#f2f4ec" stroke="#6c7a4a"/>
+        <text x="892" y="66" text-anchor="middle" font-size="11" fill="#5f594f">5 · finalize (bash)</text>
+        <text x="892" y="84" text-anchor="middle" font-size="11.5" fill="#2b2a28">update registry</text>
+      </g>
+      <line x1="178" y1="75" x2="204" y2="75" stroke="#b9794f" stroke-width="1.8" marker-end="url(#a)"/>
+      <line x1="378" y1="75" x2="404" y2="75" stroke="#b9794f" stroke-width="1.8" marker-end="url(#a)"/>
+      <line x1="578" y1="75" x2="604" y2="75" stroke="#b9794f" stroke-width="1.8" marker-end="url(#a)"/>
+      <line x1="778" y1="75" x2="804" y2="75" stroke="#b9794f" stroke-width="1.8" marker-end="url(#a)"/>
+      <text x="492" y="130" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#9a9387">stop hook + state file advance phases — deterministic, resumable</text>
+    </svg>
+  </div>
+
+  <div class="callout">
+    <span class="k">Where TASK-190.28 lands</span>
+    <p>190.28 is a <b>phase-5 core fix</b>: two TypeScript false positives that survived detection get corrected at the indexing layer so the call graph stops reporting them. After they land, the human retires the matching classifier rows — closing the loop the pipeline exists to close.</p>
+  </div>
+
+  <h2>The recent entry-point-classification sub-tasks</h2>
+  <p class="cap prose">The current cluster of work hardening detection and closing the loop. Cards with a green source line link to a comprehension companion; the rest are not yet generated.</p>
+
+  <div class="strip">
+    <a class="tcard has" href="task-190.28 - Model-TS-field-initializer-method-refs-and-stored-callback-resolver-miss-as-reachability.reachability-fix.html">
+      <span class="id"><span>190.28</span><span class="st todo">To Do</span></span>
+      <span class="ttl">Model TS field-initializer method refs &amp; stored-callback resolver-miss as reachability</span>
+      <span class="doc">→ reachability-fix.html</span>
+    </a>
+    <a class="tcard has" href="task-190.26.overview.html">
+      <span class="id"><span>190.26</span><span class="st done">Done</span></span>
+      <span class="ttl">Prioritize skill: auto-investigate change groups before the funding decision</span>
+      <span class="doc">→ overview.html</span>
+    </a>
+    <a class="tcard has" href="task-190.30.overview.html">
+      <span class="id"><span>190.30</span><span class="st todo">To Do</span></span>
+      <span class="ttl">Tighten classifier scope to permanent limitations only; close the authoring gap</span>
+      <span class="doc">→ overview.html</span>
+    </a>
+    <a class="tcard has" href="task-190.22 - Restructure-self-healing-pipeline-to-triage-→-plan-planning-only.overview.html">
+      <span class="id"><span>190.22</span><span class="st todo">To Do</span></span>
+      <span class="ttl">Restructure pipeline to triage → plan (planning-only)</span>
+      <span class="doc">→ overview.html</span>
+    </a>
+    <div class="tcard">
+      <span class="id"><span>190.27</span><span class="st todo">To Do</span></span>
+      <span class="ttl">Prioritize skill: fix-history archaeologist sub-agent mining prior attempts</span>
+      <span class="doc">not yet generated</span>
+    </div>
+    <div class="tcard">
+      <span class="id"><span>190.29</span><span class="st todo">To Do</span></span>
+      <span class="ttl">Close the human-directed registry-write gap: sanctioned agent path + reconcile name-mode</span>
+      <span class="doc">not yet generated</span>
+    </div>
+    <div class="tcard">
+      <span class="id"><span>190.25</span><span class="st todo">To Do</span></span>
+      <span class="ttl">Plan skill: close the outer loop — export dedup, resolved semantics, validator drift</span>
+      <span class="doc">not yet generated</span>
+    </div>
+    <div class="tcard">
+      <span class="id"><span>190.23 / 190.24</span><span class="st todo">To Do</span></span>
+      <span class="ttl">Dynamic workflows for triage/plan fan-out · runtime analytics &amp; indexing estimator</span>
+      <span class="doc">not yet generated</span>
+    </div>
+  </div>
+
+  <div class="callout slate">
+    <span class="k">The north-star</span>
+    <p>Every fix that lands removes a class of false entry points <b>and</b> retires the classifier row that flagged it — so the call-graph analysis converges on the codebase's real entry points without permanent special-casing.</p>
+  </div>
+
+  <footer>
+    TASK-190 · 23 sub-tasks · companions re-scanned from <code>backlog/tasks/</code> · source <code>task-190 - ...md</code>
+  </footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Comprehension aid for task-190.28 (Model TS field-initializer method refs + stored-callback resolver-miss as reachability) — AS BUILT.
+     Source files read:
+       backlog/tasks/task-190.28 - ...md (Implementation Notes)
+       git 0b3054a9 feat(190.28): capture TS field-initializer method refs and shorthand object literal reads
+       packages/core/src/index_single_file/query_code_tree/queries/typescript.scm  (+ public_field_definition pattern, + shorthand object pattern)
+       packages/core/src/index_single_file/query_code_tree/queries/javascript.scm  (+ shorthand object pattern)
+       packages/core/src/index_single_file/query_code_tree/capture_handlers/capture_handlers.typescript.test.ts  (Variable reads for indirect reachability)
+       packages/core/src/classify_entry_points/enrich_call_graph.test.ts  (3 task-190.28 integration tests)
+     Describes the SHIPPED fix: three tree-sitter capture rules that restore the variable read both cases drop before reachability. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Two TypeScript reads the indexer dropped — and the three captures that restore them</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --ink:#1f1e1c; --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  /* cross-doc nav bar */
+  nav.cross{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 0}
+  nav.cross .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.cross .brand{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.cross a, nav.cross .here{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:4px 10px;display:inline-flex;align-items:center;gap:6px}
+  nav.cross a:hover{border-color:var(--clay);color:var(--slate)}
+  nav.cross .here{background:var(--slate);color:var(--ivory);border-color:var(--slate)}
+  /* in-page outline bar */
+  nav.toc{position:sticky;top:43px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
+  nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.toc .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--g600);margin-right:4px}
+  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:3px 9px}
+  nav.toc a:hover{border-color:var(--clay);color:var(--slate)}
+  main{width:90%;max-width:1600px;margin:0 auto;padding:30px 0 80px}
+  .prose{max-width:68ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:31px;line-height:1.14;margin:0 0 14px;letter-spacing:-.01em;max-width:28ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:23px;margin:54px 0 6px;letter-spacing:-.01em;scroll-margin-top:96px}
+  h3{font-family:var(--mono);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);margin:22px 0 8px}
+  .lead{font-size:15.5px;color:var(--g600);max-width:74ch;margin:0 0 12px}
+  .lead b{color:var(--slate);font-weight:600}
+  code{font-family:var(--mono);font-size:.85em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .chip.hot{background:#fbf2ef;border-color:var(--rust)} .chip.hot strong{color:var(--rust)}
+  .chip.good{background:#f2f4ec;border-color:var(--olive)} .chip.good strong{color:var(--olive)}
+  .cap{font-size:13.5px;color:var(--g600);margin:8px 2px 14px;max-width:78ch}
+  .cap b{color:var(--slate);font-weight:600}
+  /* callout */
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:15px 19px;margin:18px 0;max-width:80ch}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)} .callout.slate{border-left-color:var(--slate);background:var(--slate);color:var(--ivory)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 7px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)} .callout.slate .k{color:var(--oat)}
+  .callout p{margin:0 0 6px;font-size:14px} .callout p:last-child{margin:0}
+  .callout.slate code{background:rgba(255,255,255,.12);color:var(--oat)}
+  .callout b{color:var(--slate)} .callout.slate b{color:#fff}
+  /* before/after diagram pair */
+  .ba{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin:14px 0}
+  .ba .panel{background:var(--paper);border:1px solid var(--g200);padding:16px 18px}
+  .ba .panel:first-child{border-radius:var(--r) 0 0 var(--r)} .ba .panel:last-child{border-radius:0 var(--r) var(--r) 0;border-left:none}
+  .ba .arrow{display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--ivory);padding:0 4px;min-width:46px}
+  .ba .arrow .glyph{font-family:var(--serif);font-size:30px;color:var(--clay);line-height:1}
+  .ba .arrow .lab{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--g600);writing-mode:vertical-rl;margin-top:6px}
+  .ba .ptitle{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px}
+  .ba .panel.cur .ptitle{color:var(--rust)} .ba .panel.plan .ptitle{color:var(--olive)}
+  .ba svg{width:100%;height:auto;display:block}
+  @media(max-width:760px){.ba{grid-template-columns:1fr}.ba .panel,.ba .panel:first-child,.ba .panel:last-child{border-radius:var(--r);border-left:1px solid var(--g200);margin-bottom:8px}.ba .arrow{flex-direction:row;padding:4px 0}.ba .arrow .glyph{transform:rotate(90deg)}.ba .arrow .lab{writing-mode:horizontal-tb;margin:0 0 0 8px}}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:12px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,.12)}
+  .legend i.add{background:var(--olive)} .legend i.del{background:var(--rust)} .legend i.same{background:var(--paper);border-color:var(--g400)}
+  /* full-width flow */
+  .flowwrap{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:14px 16px;margin:14px 0}
+  .flowwrap svg{width:100%;height:auto;display:block}
+  /* two-up AST grid */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+  @media(max-width:880px){.grid2{grid-template-columns:1fr}}
+  .acard{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column}
+  .acard .top{display:flex;align-items:center;gap:9px;margin-bottom:4px}
+  .acard .num{font-family:var(--mono);font-weight:700;font-size:12px;color:var(--ivory);background:var(--clay);border-radius:6px;padding:2px 8px}
+  .acard.b .num{background:var(--olive)}
+  .acard h4{font-family:var(--mono);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin:0;color:var(--slate)}
+  .acard .sig{font-family:var(--mono);font-size:11.5px;color:var(--g600);margin:2px 0 8px}
+  .acard svg{width:100%;height:auto;display:block;margin-top:4px}
+  /* code panels */
+  .code{background:var(--code);border-radius:9px;padding:11px 14px;margin:12px 0;overflow-x:auto}
+  .code .file-label{font-family:var(--mono);font-size:10px;color:#9a9387;letter-spacing:.05em;display:block;margin:0 0 8px}
+  .code pre{margin:0;font-family:var(--mono);font-size:11.5px;line-height:1.55;color:var(--codeink);white-space:pre}
+  .code .kw{color:#c98a64} .code .str{color:#9bb06a} .code .cm{color:#7d7669} .code .fn{color:#d9c27a} .code .num{color:#c98a64} .code .ty{color:#7fa8b0}
+  .code .add{background:rgba(108,122,74,.26);display:inline-block;width:100%}
+  .code .del{background:rgba(168,71,47,.24);display:inline-block;width:100%;text-decoration:line-through;text-decoration-color:rgba(232,225,210,.45)}
+  .code .hl{background:rgba(108,122,74,.30);display:inline-block;width:100%}
+  /* table */
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--g200);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--g600);background:var(--paper)}
+  td code{font-size:.9em}
+  .verdict{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;white-space:nowrap}
+  .verdict::before{content:"";width:11px;height:11px;border-radius:50%;display:inline-block}
+  .verdict.ok{color:var(--olive)} .verdict.ok::before{background:var(--olive)}
+  .verdict.bad{color:var(--rust)} .verdict.bad::before{background:var(--rust)}
+  /* checklist (shipped = done) */
+  ul.ck{list-style:none;padding:0;margin:14px 0;max-width:84ch}
+  ul.ck li{display:grid;grid-template-columns:22px 1fr;gap:10px;padding:8px 0;border-bottom:1px solid var(--g200);font-size:13.5px;align-items:start}
+  ul.ck .box{width:16px;height:16px;border:2px solid var(--olive);border-radius:4px;margin-top:2px;position:relative;background:var(--olive)}
+  ul.ck .box::after{content:"";position:absolute;left:4px;top:0px;width:5px;height:10px;border:solid var(--ivory);border-width:0 2px 2px 0;transform:rotate(40deg)}
+  ul.ck .box.todo{background:transparent;border-color:var(--g400)} ul.ck .box.todo::after{display:none}
+  ul.ck li b{color:var(--slate)}
+  footer{border-top:1px solid var(--g200);margin-top:60px;padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400)}
+  footer code{background:var(--g100);font-size:11px}
+</style>
+</head>
+<body>
+
+<nav class="cross">
+  <div class="inner">
+    <span class="brand">TASK&nbsp;190.28</span>
+    <a href="task-190 - Build-self-repair-pipeline-with-Claude-Code-native-architecture.overview.html">↑ TASK-190 — self-repair pipeline</a>
+    <span class="here">● 190.28 · reachability fix · shipped</span>
+  </div>
+</nav>
+
+<nav class="toc">
+  <div class="inner">
+    <span class="brand">On this page</span>
+    <a href="#gap">AST node-shape gap</a>
+    <a href="#flow">Where the read was dropped</a>
+    <a href="#captures">The three captures</a>
+    <a href="#scope">Scope-chain resolution</a>
+    <a href="#caseb">Case B · same-file approximation</a>
+    <a href="#acc">What shipped</a>
+  </div>
+</nav>
+
+<main>
+
+  <p class="eyebrow">Entry-point classification · TypeScript / JavaScript false positives · shipped</p>
+  <h1>Two TypeScript reads the indexer dropped — and the three captures that restore them</h1>
+  <p class="lead prose">A method stored in a class field (<code>this._proc = this.process</code>) and a function exported through an object shorthand (<code>return { extractValue }</code>) both survived as <b>false-positive entry points</b> — the value-read marking each callable reachable was never captured.</p>
+  <p class="lead prose">The fix lands entirely in the <b>indexing layer</b>: three tree-sitter capture rules emit the missing read, with <b>no change to <code>detect_indirect_reachability</code></b> or anything downstream.</p>
+
+  <div class="meta">
+    <span class="chip">parent <strong>TASK-190</strong></span>
+    <span class="chip">depends <strong>TASK-348</strong></span>
+    <span class="chip">commit <strong>0b3054a9</strong></span>
+    <span class="chip good">+3 .scm captures</span>
+    <span class="chip good">+6 tests</span>
+    <span class="chip good">status <strong>Done</strong></span>
+  </div>
+
+  <div class="callout olive">
+    <span class="k">The crux in one line</span>
+    <p>The catch-all read query <code>(identifier) @reference.variable</code> matches only <code>(identifier)</code> nodes. <code>this.process</code> in a field initializer never produced a read of <code>process</code>, and <code>{ extractValue }</code> is a <code>(shorthand_property_identifier)</code> node — so the read never existed, and <code>detect_indirect_reachability</code> had nothing to key on. Three new patterns supply exactly those two missing reads.</p>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="gap">The AST node-shape gap</h2>
+  <p class="cap prose">Each tree-sitter parse below ends at a leaf the pre-existing read queries <b>could not match</b> (rust). The name needed as a read — <code>process</code> / <code>extractValue</code> — is present in the tree, but reachable only through a node type no query captured.</p>
+
+  <div class="grid2">
+    <article class="acard a">
+      <div class="top"><span class="num">A</span><h4>private _proc = this.process</h4></div>
+      <div class="sig prose">field initializer · the <code>(this)</code> object blocked every member-read query</div>
+      <svg viewBox="0 0 360 240" role="img" aria-label="AST for a class field initializer this dot process; the this node is a this-node not an identifier, so the existing member-expression read queries (which all required object identifier) did not fire">
+        <rect x="96" y="8"   width="168" height="30" rx="8" fill="#e7ddc9" stroke="#b9794f"/>
+        <text x="180" y="27" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#2b2a28">public_field_definition</text>
+
+        <rect x="110" y="78"  width="140" height="30" rx="8" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="180" y="97" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#2b2a28">member_expression</text>
+
+        <!-- this/super node: rust = was unmatchable by every member-read query -->
+        <rect x="34" y="150" width="128" height="30" rx="8" fill="#a8472f" stroke="#7e3422"/>
+        <text x="98" y="169" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#f7f3ec">object: (this)|(super)</text>
+
+        <rect x="190" y="150" width="150" height="30" rx="8" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="265" y="166" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#2b2a28">property:</text>
+        <text x="265" y="177" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#2b2a28">property_identifier</text>
+
+        <rect x="208" y="206" width="114" height="26" rx="7" fill="#6c7a4a" stroke="#54603a"/>
+        <text x="265" y="223" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#f7f3ec">"process"</text>
+
+        <line x1="180" y1="38"  x2="180" y2="78"  stroke="#9a9387" stroke-width="1.5"/>
+        <line x1="160" y1="108" x2="98"  y2="150" stroke="#9a9387" stroke-width="1.5"/>
+        <line x1="200" y1="108" x2="265" y2="150" stroke="#9a9387" stroke-width="1.5"/>
+        <line x1="265" y1="180" x2="265" y2="206" stroke="#6c7a4a" stroke-width="1.5"/>
+      </svg>
+      <p class="cap" style="margin-bottom:0">The pre-existing property-access query required <code>object: (identifier)</code>; with <code>object: (this)</code> or <code>(super)</code> it never fired, so <code>process</code> was captured by <b>nothing</b>.</p>
+    </article>
+
+    <article class="acard b">
+      <div class="top"><span class="num">B</span><h4>return { extractValue }</h4></div>
+      <div class="sig prose">object shorthand · not an <code>(identifier)</code>, so the catch-all skipped it</div>
+      <svg viewBox="0 0 360 240" role="img" aria-label="AST for an object literal with a shorthand property extractValue; the shorthand_property_identifier node is not an identifier so the catch-all read query did not match it">
+        <rect x="120" y="8"  width="120" height="30" rx="8" fill="#e7ddc9" stroke="#b9794f"/>
+        <text x="180" y="27" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#2b2a28">object</text>
+
+        <!-- shorthand node: rust = was unmatchable -->
+        <rect x="60" y="96" width="240" height="46" rx="9" fill="#a8472f" stroke="#7e3422"/>
+        <text x="180" y="115" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#f7f3ec">shorthand_property_identifier</text>
+        <text x="180" y="131" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#f7f3ec">"extractValue"</text>
+
+        <!-- contrast node it is NOT -->
+        <rect x="70" y="186" width="220" height="40" rx="9" fill="#efeae1" stroke="#9a9387" stroke-dasharray="4 3"/>
+        <text x="180" y="203" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#5f594f">≠  (identifier)  — what the</text>
+        <text x="180" y="217" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#5f594f">catch-all read query matches</text>
+
+        <line x1="180" y1="38" x2="180" y2="96" stroke="#9a9387" stroke-width="1.5"/>
+      </svg>
+      <p class="cap" style="margin-bottom:0">A distinct node type. <code>shorthand_property_identifier</code> (object literal) is also distinct from <code>shorthand_property_identifier_pattern</code> (destructuring) — capturing one cannot collide with the other.</p>
+    </article>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="flow">Where the read was dropped — and where the capture now restores it</h2>
+  <p class="cap prose">The 4-pass index feeds <code>detect_indirect_reachability</code>, which removes any function or method <b>read as a value</b> from the entry-point set. The read was lost in pass 1; the new capture re-introduces it with nothing changed downstream.</p>
+
+  <div class="ba">
+    <div class="panel cur">
+      <p class="ptitle">Before — read lost in pass 1</p>
+      <svg viewBox="0 0 300 300" role="img" aria-label="Before flow: tree-sitter query produced no read of process or extractValue, so detect indirect reachability had nothing, and the callable stayed an entry point">
+        <rect x="40" y="14" width="220" height="34" rx="9" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="150" y="35" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#2b2a28">1 · query_code_tree (.scm)</text>
+
+        <rect x="40" y="70" width="220" height="40" rx="9" fill="#fbf2ef" stroke="#a8472f" stroke-dasharray="4 3"/>
+        <text x="150" y="88" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#a8472f">read of "process" / "extractValue"</text>
+        <text x="150" y="101" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#a8472f">NOT captured — dropped</text>
+
+        <rect x="40" y="132" width="220" height="34" rx="9" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="150" y="153" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#2b2a28">4 · references builder</text>
+
+        <rect x="40" y="188" width="220" height="40" rx="9" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="150" y="206" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#2b2a28">detect_indirect_reachability</text>
+        <text x="150" y="220" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#5f594f">no read → nothing to key on</text>
+
+        <rect x="40" y="250" width="220" height="38" rx="9" fill="#a8472f" stroke="#7e3422"/>
+        <text x="150" y="273" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#f7f3ec">✗ stayed an ENTRY POINT</text>
+
+        <line x1="150" y1="48"  x2="150" y2="70"  stroke="#9a9387" stroke-width="1.5"/>
+        <line x1="150" y1="110" x2="150" y2="132" stroke="#a8472f" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <line x1="150" y1="166" x2="150" y2="188" stroke="#9a9387" stroke-width="1.5"/>
+        <line x1="150" y1="228" x2="150" y2="250" stroke="#a8472f" stroke-width="1.8"/>
+      </svg>
+    </div>
+    <div class="arrow"><span class="glyph">→</span><span class="lab">+3 captures</span></div>
+    <div class="panel plan">
+      <p class="ptitle">After — read restored, callable leaves</p>
+      <svg viewBox="0 0 300 300" role="img" aria-label="After flow: the new captures emit a variable reference read which the references builder carries to detect indirect reachability, which marks the symbol indirectly reachable and removes it from entry points">
+        <rect x="40" y="14" width="220" height="34" rx="9" fill="#f2f4ec" stroke="#6c7a4a"/>
+        <text x="150" y="35" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#2b2a28">1 · query_code_tree (.scm)</text>
+
+        <rect x="40" y="70" width="220" height="40" rx="9" fill="#6c7a4a" stroke="#54603a"/>
+        <text x="150" y="88" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#f7f3ec">@reference.variable emitted</text>
+        <text x="150" y="101" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#e7ddc9">variable_reference · read</text>
+
+        <rect x="40" y="132" width="220" height="34" rx="9" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="150" y="153" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#2b2a28">4 · references builder</text>
+
+        <rect x="40" y="188" width="220" height="40" rx="9" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="150" y="206" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#2b2a28">detect_indirect_reachability</text>
+        <text x="150" y="220" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#5f594f">value read → mark reachable</text>
+
+        <rect x="40" y="250" width="220" height="38" rx="9" fill="#6c7a4a" stroke="#54603a"/>
+        <text x="150" y="273" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#f7f3ec">✓ indirectly reachable</text>
+
+        <line x1="150" y1="48"  x2="150" y2="70"  stroke="#6c7a4a" stroke-width="1.5"/>
+        <line x1="150" y1="110" x2="150" y2="132" stroke="#6c7a4a" stroke-width="1.8"/>
+        <line x1="150" y1="166" x2="150" y2="188" stroke="#9a9387" stroke-width="1.5"/>
+        <line x1="150" y1="228" x2="150" y2="250" stroke="#6c7a4a" stroke-width="1.8"/>
+      </svg>
+    </div>
+  </div>
+  <div class="legend">
+    <span><i class="add"></i> captured / reachable</span>
+    <span><i class="del"></i> dropped / entry point</span>
+    <span><i class="same"></i> unchanged pipeline stage</span>
+  </div>
+
+  <div class="callout olive">
+    <span class="k">Why nothing downstream changed</span>
+    <p>TASK-348 already widened <code>detect_indirect_reachability</code>: a resolved <code>function</code> or <code>method</code> read as a value (and not at its own definition site) becomes <code>IndirectReachabilityEntry</code> with reason <code>function_reference</code>. The only missing input was the read itself — which these three captures supply.</p>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="captures">The three captures that emit the missing read</h2>
+  <p class="cap prose">Case A adds a member-read capture under a class field initializer, narrowed to <code>[(this) (super)]</code> objects. Case B adds a shorthand-property read. TypeScript got both patterns; JavaScript got the shorthand pattern only — three new rules across the two grammars.</p>
+
+  <div class="code">
+    <span class="file-label">packages/core/src/index_single_file/query_code_tree/queries/typescript.scm  ·  + Case A  (after line 715)</span>
+<pre><span class="cm">; Member reads in class field initializers (e.g. private _proc = this.process).</span>
+<span class="cm">; Narrowed to this/super so external-object reads (handled by the property_access</span>
+<span class="cm">; pattern at line 632) are not double-captured.</span>
+<span class="add">(public_field_definition</span>
+<span class="add">  value: (member_expression</span>
+<span class="add">    object: [(this) (super)]</span>
+<span class="add">    property: (property_identifier) <span class="fn">@reference.variable</span></span>
+<span class="add">  )</span>
+<span class="add">)</span></pre>
+  </div>
+
+  <div class="code">
+    <span class="file-label">typescript.scm  AND  javascript.scm  ·  + Case B</span>
+<pre><span class="cm">; Shorthand properties in object literals (e.g. return { fn } or const obj = { fn })</span>
+<span class="cm">; emit a variable read so detect_indirect_reachability marks the referenced</span>
+<span class="cm">; function indirectly reachable and removes it from the entry-point set.</span>
+<span class="add">(object</span>
+<span class="add">  (shorthand_property_identifier) <span class="fn">@reference.variable</span></span>
+<span class="add">)</span></pre>
+  </div>
+
+  <p class="cap prose">For contrast, the catch-all that was already in each file — the rule that <b>cannot</b> reach either node above:</p>
+  <div class="code">
+    <span class="file-label">typescript.scm / javascript.scm  ·  existing catch-all (last rule)</span>
+<pre><span class="cm">; General identifier references (catch-all)</span>
+(identifier) <span class="fn">@reference.variable</span>   <span class="cm">; only matches (identifier) leaves</span></pre>
+  </div>
+
+  <div class="callout">
+    <span class="k">The negative guard that keeps Case A narrow</span>
+    <p>The Case A pattern matches a <code>member_expression</code> initializer only — never a <code>call_expression</code>. A field initialized via a method <i>call</i>, <code>private _result = this.compute()</code>, emits <b>no</b> read of <code>compute</code>.</p>
+    <p>So an invoked method is never wrongly marked a stored reference; a dedicated test asserts this read set is empty.</p>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="scope">Case A — why the resolver finds the method: the scope chain</h2>
+  <p class="cap prose">Once <code>process</code> surfaces as a read inside the class field, <code>detect_indirect_reachability</code> resolves the name to the method symbol. That succeeds because a <b>method name lives in its class body scope</b>, not the method-body scope — its <code>defining_scope_id</code> is the class scope.</p>
+
+  <div class="flowwrap">
+    <svg viewBox="0 0 880 200" role="img" aria-label="Scope chain: the field initializer read of process sits in the class body scope; resolve walks to the class scope where the method process is registered under by_scope, and returns its method symbol id">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#6c7a4a"/>
+        </marker>
+      </defs>
+
+      <rect x="14" y="64" width="190" height="72" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+      <text x="109" y="88" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#5f594f">read site (pass 4)</text>
+      <text x="109" y="106" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#2b2a28">name = "process"</text>
+      <text x="109" y="122" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#2b2a28">scope = class body</text>
+
+      <rect x="250" y="70" width="150" height="60" rx="10" fill="#e7ddc9" stroke="#b9794f"/>
+      <text x="325" y="95" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#2b2a28">resolve(</text>
+      <text x="325" y="111" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#2b2a28">class_scope, "process")</text>
+
+      <rect x="446" y="30" width="234" height="140" rx="12" fill="#f7f3ec" stroke="#9a9387"/>
+      <text x="563" y="52" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#5f594f">class body scope · by_scope[id]</text>
+      <rect x="468" y="66" width="190" height="34" rx="8" fill="#6c7a4a" stroke="#54603a"/>
+      <text x="563" y="87" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#f7f3ec">method  process</text>
+      <rect x="468" y="110" width="190" height="34" rx="8" fill="#fffdf8" stroke="#9a9387"/>
+      <text x="563" y="131" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#2b2a28">field  _proc</text>
+
+      <rect x="722" y="64" width="144" height="72" rx="10" fill="#f2f4ec" stroke="#6c7a4a"/>
+      <text x="794" y="88" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#5f594f">resolved →</text>
+      <text x="794" y="106" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#2b2a28">method:…:process</text>
+      <text x="794" y="122" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#6c7a4a">→ reachable, not entry</text>
+
+      <line x1="204" y1="100" x2="248" y2="100" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#ah)"/>
+      <line x1="400" y1="100" x2="464" y2="84" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#ah)"/>
+      <line x1="660" y1="83" x2="720" y2="96" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#ah)"/>
+    </svg>
+  </div>
+  <p class="cap prose">A method's <code>defining_scope_id</code> is the class body scope because the method <b>name location</b> sits in the class body, not inside the method. So resolving <code>"process"</code> from the class scope returns the method symbol — exactly the symbol the widened reachability arm marks.</p>
+
+  <!-- ============================================================ -->
+  <h2 id="caseb">Case B is a same-file reachability approximation — two reads, one acted on</h2>
+  <p class="cap prose">The shipped Case B does <b>not</b> resolve the cross-file destructure. The shorthand-read capture fires <b>where <code>extractValue</code> is defined</b>; that read alone marks the function indirectly reachable. The name <code>extractValue</code> therefore yields <b>two</b> variable reads — and only the second one does the work.</p>
+
+  <div class="code">
+    <span class="file-label">extract.ts  ·  the two reads of extractValue, distinguished by the same-location guard</span>
+<pre><span class="kw">function</span> <span class="fn">extractValue</span>(s: <span class="ty">string</span>) {   <span class="cm">// read #1 — function-name (identifier)</span>
+  <span class="kw">return</span> s.trim();                  <span class="cm">//   catch-all fires here, AT the definition site</span>
+}
+<span class="kw">const</span> obj = { <span class="hl">extractValue</span> };       <span class="cm">// read #2 — shorthand_property_identifier (use site)</span></pre>
+  </div>
+
+  <div class="callout slate">
+    <span class="k">Which read marks it reachable</span>
+    <p>Read #1 is at <code>extractValue</code>'s own definition location, so <code>detect_indirect_reachability</code> <b>skips it</b>. Read #2 — the shorthand — is a distinct node at a distinct location, so it marks <code>extractValue</code> reachable.</p>
+    <p>Full cross-file call resolution for the destructure-then-call path remains separate work.</p>
+  </div>
+
+  <table>
+    <thead><tr><th>Case</th><th>Node that was missed</th><th>New capture (shipped)</th><th>Marked reachable by</th><th>Grammars</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>A</b> field method ref</td>
+        <td><code>object: (this) | (super)</code></td>
+        <td><code>public_field_definition › member_expression › property_identifier</code></td>
+        <td>resolve in class body scope</td>
+        <td>typescript</td>
+      </tr>
+      <tr>
+        <td><b>B</b> stored callback</td>
+        <td><code>shorthand_property_identifier</code></td>
+        <td><code>object › shorthand_property_identifier</code></td>
+        <td>non-definition-site read, same file</td>
+        <td>typescript + javascript</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ============================================================ -->
+  <h2 id="acc">What shipped — tests and changed files</h2>
+  <p class="cap prose">Six new tests, in two files, cover AST-level emission and end-to-end entry-point suppression — including the negative guard.</p>
+  <ul class="ck">
+    <li><span class="box"></span><span><b>AST · field read.</b> <code>build_index_from_code</code> asserts <code>private _proc = this.process</code> emits exactly one <code>variable_reference</code> read of <code>process</code> — <code>capture_handlers.typescript.test.ts</code>.</span></li>
+    <li><span class="box"></span><span><b>AST · shorthand read.</b> <code>const obj = { extractValue }</code> emits <b>two</b> reads of <code>extractValue</code> (definition-site identifier + shorthand) — <code>capture_handlers.typescript.test.ts</code>.</span></li>
+    <li><span class="box"></span><span><b>AST · negative guard.</b> <code>private _result = this.compute()</code> emits <b>zero</b> reads of <code>compute</code> — a method call is not a stored reference.</span></li>
+    <li><span class="box"></span><span><b>Integration · Case A.</b> A <code>Project</code> with <code>this._proc = this.process</code> yields entry points <code>[]</code> — <code>process</code> left the set. <code>enrich_call_graph.test.ts</code>.</span></li>
+    <li><span class="box"></span><span><b>Integration · Case B.</b> A <code>Project</code> with <code>const obj = { extractValue }</code> yields entry points <code>[]</code> — <code>extractValue</code> left the set.</span></li>
+    <li><span class="box"></span><span><b>Integration · negative.</b> A method never read as a value (<code>orphan</code>) stays an entry point — entry points equal <code>["orphan","used"]</code>.</span></li>
+    <li><span class="box todo"></span><span><b>Registry retirement (human).</b> The <code>typed-field-method-dispatch</code> and <code>stored-callback-via-object-property</code> <code>wip</code> rows are retired by the human per the classifier-lifecycle contract once the fix lands.</span></li>
+  </ul>
+
+  <div class="callout slate">
+    <span class="k">Net change</span>
+    <p>Three tree-sitter capture rules (2 in <code>typescript.scm</code>, 1 in <code>javascript.scm</code>) and six tests — <b>zero lines</b> changed in <code>detect_indirect_reachability</code>.</p>
+    <p>The reachability arm from TASK-348 was already correct; these cases simply never reached it because the read was dropped at the node-type boundary in pass 1.</p>
+  </div>
+
+  <footer>
+    <code>task-190.28</code> · shipped in <code>0b3054a9</code> · sources: <code>queries/typescript.scm</code>, <code>queries/javascript.scm</code>, <code>capture_handlers.typescript.test.ts</code>, <code>enrich_call_graph.test.ts</code> · depends <code>TASK-348</code> · parent <code>TASK-190</code>
+  </footer>
+
+</main>
+</body>
+</html>
