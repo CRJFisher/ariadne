@@ -1,0 +1,29 @@
+[
+  {
+    "source": "public-api-external-callers",
+    "description": "Public API methods on Project, FileSystemStorage, DefinitionRegistry, and ResolutionRegistry that are called from outside packages/core — via tests in packages/core/src/**/*.test.ts, the MCP package (packages/mcp), or external consumers. The core-only call graph cannot see these cross-package call edges, so they appear as uncalled.",
+    "entrypoints": [
+      { "name": "clear", "file_path": "packages/core/src/persistence/file_system_storage.ts" },
+      { "name": "record_counts", "file_path": "packages/core/src/profiling/profiler.ts" },
+      { "name": "remove_file", "file_path": "packages/core/src/project/project.ts" },
+      { "name": "get_classified_entry_points", "file_path": "packages/core/src/project/project.ts" },
+      { "name": "get_dependents", "file_path": "packages/core/src/project/project.ts" },
+      { "name": "get_type_info", "file_path": "packages/core/src/project/project.ts" },
+      { "name": "get_derived_data", "file_path": "packages/core/src/project/project.ts" },
+      { "name": "get_definition", "file_path": "packages/core/src/project/project.ts" },
+      { "name": "clear", "file_path": "packages/core/src/project/project.ts" },
+      { "name": "get_class_definitions", "file_path": "packages/core/src/resolve_references/registries/definition.ts" },
+      { "name": "get_definitions_by_name", "file_path": "packages/core/src/resolve_references/registries/definition.ts" },
+      { "name": "get_calls_for_file", "file_path": "packages/core/src/resolve_references/resolve_references.ts" }
+    ]
+  },
+  {
+    "source": "under-review-no-callers-found",
+    "description": "These are exported but have no callers anywhere in the repo (packages/, .claude/skills/). They may be dead code. Review and delete if not intentionally public API — the constitution forbids surplus exports. Whitelisted here temporarily to unblock the hook while the decision is made.",
+    "entrypoints": [
+      { "name": "get_all_scope_graphs", "file_path": "packages/core/src/project/project.ts" },
+      { "name": "get_source_code", "file_path": "packages/core/src/project/project.ts" },
+      { "name": "get_report", "file_path": "packages/core/src/profiling/profiler.ts" }
+    ]
+  }
+]

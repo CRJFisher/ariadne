@@ -6,12 +6,15 @@ import type {
   FilePath,
   TraceCallGraphOptions,
 } from "@ariadnejs/types";
+import { create_symbol_name } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../resolve_references/registries/definition";
 import type { ResolutionRegistry } from "../resolve_references/resolve_references";
 import { is_test_file } from "../project/detect_test_file";
 import { is_runner_invoked_callable } from "./runner_suppression";
 
 export type { TraceCallGraphOptions };
+
+const ANONYMOUS_SYMBOL_NAME = create_symbol_name("<anonymous>");
 
 /**
  * Detect language from file extension
@@ -126,6 +129,15 @@ function detect_entry_points(
   const entry_points: SymbolId[] = [];
 
   for (const [symbol_id, node] of nodes) {
+    // Skip anonymous functions — IIFEs, callbacks, and closures are never
+    // public entry points; their appearance in the uncalled set is a
+    // detector artifact caused by indirect invocation patterns that the
+    // call resolver does not follow (self-executing expressions, .forEach
+    // argument passing, etc.).
+    if (node.name === ANONYMOUS_SYMBOL_NAME) {
+      continue;
+    }
+
     // Skip if this symbol is called
     if (called_symbols.has(symbol_id)) {
       continue;

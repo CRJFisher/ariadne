@@ -4,8 +4,9 @@
  *
  * Runs Ariadne against git-modified packages and cross-checks flagged entry
  * points against the project's static known-entrypoints whitelist at
- * ~/.ariadne/triage-entrypoints/known_entrypoints/<package>.json. Blocks the
- * session if any exported-but-uncalled entry point is not on the whitelist.
+ * .claude/known_entrypoints/<package>.json (repo-relative, committed to git).
+ * Blocks the session if any exported-but-uncalled entry point is not on the
+ * whitelist.
  *
  * The whitelist is human-maintained (edit the JSON and commit). This hook only
  * reads it — it never writes. The triage skill's classifier registry is
@@ -15,7 +16,6 @@
 import { load_project, FileSystemStorage, resolve_cache_dir } from "@ariadnejs/core";
 import type { PersistenceStorage } from "@ariadnejs/core";
 import * as fs from "fs/promises";
-import * as os from "os";
 import * as path from "path";
 import { execSync } from "child_process";
 import { fileURLToPath } from "url";
@@ -87,13 +87,13 @@ function get_modified_packages(project_dir: string): string[] {
 }
 
 /**
- * Load whitelist for a specific package
+ * Load whitelist for a specific package from the repo-committed path
+ * .claude/known_entrypoints/<package>.json.
  */
-async function load_whitelist(package_name: string): Promise<Set<string>> {
+async function load_whitelist(project_dir: string, package_name: string): Promise<Set<string>> {
   const registry_path = path.join(
-    os.homedir(),
-    ".ariadne",
-    "triage-entrypoints",
+    project_dir,
+    ".claude",
     "known_entrypoints",
     `${package_name}.json`
   );
@@ -145,7 +145,7 @@ async function analyze_package(
     });
   }
 
-  const whitelist = await load_whitelist(package_name);
+  const whitelist = await load_whitelist(project_dir, package_name);
   return entry_points.filter((ep) => !whitelist.has(ep.name));
 }
 
@@ -215,7 +215,7 @@ async function main(): Promise<void> {
       `Found ${total} unexpected entry point(s) [${elapsed_s}s]:\n\n${formatted}\n\n` +
         `These are exported but never called. Either:\n` +
         `  1. Delete the dead code\n` +
-        `  2. Add to known_entrypoints/${modified_packages[0]}.json if legitimate API`
+        `  2. Add to .claude/known_entrypoints/${modified_packages[0]}.json if legitimate API`
     );
   } else {
     log(`All entry points are in whitelists (${elapsed_s}s)`);

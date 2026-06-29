@@ -16,6 +16,7 @@ import {
   method_symbol,
   class_symbol,
   interface_symbol,
+  anonymous_function_symbol,
 } from "@ariadnejs/types";
 import type {
   FunctionDefinition,
@@ -334,6 +335,109 @@ describe("trace_call_graph", () => {
       // Only the class method should be an entry point
       expect(call_graph.entry_points).not.toContain(interface_method_id);
       expect(call_graph.entry_points).toContain(class_method_id);
+      expect(call_graph.entry_points.length).toBe(1);
+    });
+  });
+
+  describe("anonymous function suppression", () => {
+    it("excludes anonymous functions from entry points (IIFEs, forEach callbacks)", () => {
+      const anon_id = anonymous_function_symbol({
+        file_path: file1,
+        start_line: 5,
+        start_column: 20,
+        end_line: 7,
+        end_column: 3,
+      });
+
+      const anon_body_scope = `scope:${file1}:function:<anonymous>:5:20` as ScopeId;
+
+      const anon_def: FunctionDefinition = {
+        kind: "function",
+        symbol_id: anon_id,
+        name: "<anonymous>" as SymbolName,
+        defining_scope_id: root_scope,
+        location: {
+          file_path: file1,
+          start_line: 5,
+          start_column: 20,
+          end_line: 7,
+          end_column: 3,
+        },
+        is_exported: false,
+        signature: { parameters: [] },
+        body_scope_id: anon_body_scope,
+      };
+
+      definitions.update_file(file1, [anon_def]);
+
+      const call_graph = trace_call_graph(definitions, resolutions);
+
+      expect(call_graph.nodes.has(anon_id)).toBe(true);
+      expect(call_graph.entry_points).not.toContain(anon_id);
+      expect(call_graph.entry_points.length).toBe(0);
+    });
+
+    it("excludes anonymous functions even when a named function is also present", () => {
+      const named_id = function_symbol("doWork" as SymbolName, {
+        file_path: file1,
+        start_line: 1,
+        start_column: 0,
+        end_line: 4,
+        end_column: 1,
+      });
+
+      const named_body_scope = `scope:${file1}:function:doWork:1:0` as ScopeId;
+
+      const named_def: FunctionDefinition = {
+        kind: "function",
+        symbol_id: named_id,
+        name: "doWork" as SymbolName,
+        defining_scope_id: root_scope,
+        location: {
+          file_path: file1,
+          start_line: 1,
+          start_column: 0,
+          end_line: 4,
+          end_column: 1,
+        },
+        is_exported: true,
+        signature: { parameters: [] },
+        body_scope_id: named_body_scope,
+      };
+
+      const anon_id = anonymous_function_symbol({
+        file_path: file1,
+        start_line: 5,
+        start_column: 20,
+        end_line: 7,
+        end_column: 3,
+      });
+
+      const anon_body_scope = `scope:${file1}:function:<anonymous>:5:20` as ScopeId;
+
+      const anon_def: FunctionDefinition = {
+        kind: "function",
+        symbol_id: anon_id,
+        name: "<anonymous>" as SymbolName,
+        defining_scope_id: root_scope,
+        location: {
+          file_path: file1,
+          start_line: 5,
+          start_column: 20,
+          end_line: 7,
+          end_column: 3,
+        },
+        is_exported: false,
+        signature: { parameters: [] },
+        body_scope_id: anon_body_scope,
+      };
+
+      definitions.update_file(file1, [named_def, anon_def]);
+
+      const call_graph = trace_call_graph(definitions, resolutions);
+
+      expect(call_graph.entry_points).toContain(named_id);
+      expect(call_graph.entry_points).not.toContain(anon_id);
       expect(call_graph.entry_points.length).toBe(1);
     });
   });
