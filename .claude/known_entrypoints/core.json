@@ -16,14 +16,5 @@
       { "name": "get_definitions_by_name", "file_path": "packages/core/src/resolve_references/registries/definition.ts" },
       { "name": "get_calls_for_file", "file_path": "packages/core/src/resolve_references/resolve_references.ts" }
     ]
-  },
-  {
-    "source": "under-review-no-callers-found",
-    "description": "These are exported but have no callers anywhere in the repo (packages/, .claude/skills/). They may be dead code. Review and delete if not intentionally public API — the constitution forbids surplus exports. Whitelisted here temporarily to unblock the hook while the decision is made.",
-    "entrypoints": [
-      { "name": "get_all_scope_graphs", "file_path": "packages/core/src/project/project.ts" },
-      { "name": "get_source_code", "file_path": "packages/core/src/project/project.ts" },
-      { "name": "get_report", "file_path": "packages/core/src/profiling/profiler.ts" }
-    ]
   }
 ]

@@ -350,7 +350,6 @@ async function try_restore_from_cache(
 
     const cached_index = deserialize_semantic_index(parsed);
 
-    // Still need file content for get_source_code() lookups
     const content = existing_content ?? await fs.readFile(file_path, "utf-8");
     project.restore_file(file_path, content, cached_index);
     return true;

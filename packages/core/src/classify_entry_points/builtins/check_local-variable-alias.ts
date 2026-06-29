@@ -17,7 +17,8 @@ export function check_local_variable_alias(
   const check_2 = entry_point.diagnostics.ariadne_call_refs.length <= 0;
   const check_3 = new RegExp("^[A-Z][A-Za-z0-9_]*$").test(entry_point.name);
   const check_4 = (entry_point.diagnostics.grep_call_sites.length > 0 && entry_point.diagnostics.grep_call_sites.every((h) => h.file_path === entry_point.file_path)) === true;
-  const check_5 = (() => { const pattern = new RegExp("\\bnew\\s+[A-Z][A-Za-z0-9_]*\\s*\\("); return entry_point.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })();
+  const pattern_5 = new RegExp("\\bnew\\s+[A-Z][A-Za-z0-9_]*\\s*\\(");
+  const check_5 = entry_point.diagnostics.grep_call_sites.some((h) => pattern_5.test(h.content));
   const check_6 = entry_point.diagnostics.grep_call_sites.some((h) => !h.captures.includes("reference.constructor"));
   return check_0 && check_1 && check_2 && check_3 && check_4 && check_5 && check_6;
 }

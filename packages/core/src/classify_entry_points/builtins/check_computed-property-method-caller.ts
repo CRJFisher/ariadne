@@ -10,6 +10,7 @@ export function check_computed_property_method_caller(
   entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
 ): boolean {
-  const check_0 = (() => { const pattern = new RegExp("^\\s*(async\\s+)?\\*?\\s*\\[Symbol\\.[A-Za-z]+\\]\\s*\\("); return entry_point.diagnostics.grep_call_sites.some((h) => { const lines = read_file_lines(h.file_path); const start = Math.max(0, h.line - 1 - 5); for (let i = start; i < h.line - 1; i++) { if (pattern.test(lines[i] ?? "")) return true; } return false; }); })();
+  const pattern_0 = new RegExp("^\\s*(async\\s+)?\\*?\\s*\\[Symbol\\.[A-Za-z]+\\]\\s*\\(");
+  const check_0 = entry_point.diagnostics.grep_call_sites.some((h) => { const lines = read_file_lines(h.file_path); const start = Math.max(0, h.line - 1 - 5); for (let i = start; i < h.line - 1; i++) { if (pattern_0.test(lines[i] ?? "")) return true; } return false; });
   return check_0;
 }

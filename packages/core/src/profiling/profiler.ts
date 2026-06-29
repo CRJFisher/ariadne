@@ -13,7 +13,6 @@
  *   const tree = parser.parse(content);
  *   profiler.end('tree_sitter_parse');
  *   profiler.end('update_file');
- *   const report = profiler.get_report();
  */
 
 import { performance } from "perf_hooks";
@@ -39,22 +38,6 @@ export interface FileTimingEntry {
   capture_count: number;
   scope_count: number;
   definition_count: number;
-}
-
-export interface ProfileReport {
-  enabled: boolean;
-  total_ms: number;
-  entries: TimingEntry[];
-  file_timings: FileTimingEntry[];
-  summary: {
-    native_ms: number;
-    native_pct: number;
-    js_ms: number;
-    js_pct: number;
-    file_count: number;
-    avg_file_ms: number;
-    slowest_files: Array<{ file: FilePath; ms: number }>;
-  };
 }
 
 interface ActiveTimer {
@@ -189,95 +172,6 @@ class Profiler {
     if (counts.definitions !== undefined) {
       this.current_file_data.definition_count = counts.definitions;
     }
-  }
-
-  /**
-   * Get comprehensive report
-   */
-  get_report(): ProfileReport {
-    if (!this.enabled) {
-      return {
-        enabled: false,
-        total_ms: 0,
-        entries: [],
-        file_timings: [],
-        summary: {
-          native_ms: 0,
-          native_pct: 0,
-          js_ms: 0,
-          js_pct: 0,
-          file_count: 0,
-          avg_file_ms: 0,
-          slowest_files: [],
-        },
-      };
-    }
-
-    const entries = Array.from(this.root_entries.values());
-    const file_timings = Array.from(this.file_timings.values());
-
-    // Calculate totals
-    let total_ms = 0;
-    let native_ms = 0;
-
-    for (const entry of entries) {
-      total_ms += entry.total_ms;
-      if (
-        entry.label === "tree_sitter_parse" ||
-        entry.label === "query_captures"
-      ) {
-        native_ms += entry.total_ms;
-      }
-    }
-
-    // Also check nested entries for native timings
-    const find_native_time = (entry: TimingEntry): number => {
-      let time = 0;
-      if (
-        entry.label === "tree_sitter_parse" ||
-        entry.label === "query_captures"
-      ) {
-        time += entry.total_ms;
-      }
-      for (const child of entry.children.values()) {
-        time += find_native_time(child);
-      }
-      return time;
-    };
-
-    for (const entry of entries) {
-      for (const child of entry.children.values()) {
-        native_ms += find_native_time(child);
-      }
-    }
-
-    const js_ms = total_ms - native_ms;
-
-    // Find slowest files
-    const sorted_files = [...file_timings].sort(
-      (a, b) => b.total_ms - a.total_ms
-    );
-    const slowest_files = sorted_files.slice(0, 10).map((f) => ({
-      file: f.file_path,
-      ms: f.total_ms,
-    }));
-
-    return {
-      enabled: true,
-      total_ms,
-      entries,
-      file_timings,
-      summary: {
-        native_ms,
-        native_pct: total_ms > 0 ? (native_ms / total_ms) * 100 : 0,
-        js_ms,
-        js_pct: total_ms > 0 ? (js_ms / total_ms) * 100 : 0,
-        file_count: file_timings.length,
-        avg_file_ms:
-          file_timings.length > 0 ? total_ms / file_timings.length : 0,
-        slowest_files,
-      },
-    };
   }
 
   // Private helpers

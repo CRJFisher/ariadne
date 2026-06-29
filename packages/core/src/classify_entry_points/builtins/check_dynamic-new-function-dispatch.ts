@@ -14,6 +14,7 @@ export function check_dynamic_new_function_dispatch(
   void read_file_lines;
   const check_0 = detect_language(entry_point.file_path) === "javascript";
   const check_1 = entry_point.diagnostics.ariadne_call_refs.length <= 0;
-  const check_2 = (() => { const pattern = new RegExp("\\b(?:new\\s+Function|eval)\\s*\\("); return entry_point.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })();
+  const pattern_2 = new RegExp("\\b(?:new\\s+Function|eval)\\s*\\(");
+  const check_2 = entry_point.diagnostics.grep_call_sites.some((h) => pattern_2.test(h.content));
   return check_0 && check_1 && check_2;
 }

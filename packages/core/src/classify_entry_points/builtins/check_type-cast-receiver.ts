@@ -12,6 +12,7 @@ export function check_type_cast_receiver(
   read_file_lines: FileLinesReader,
 ): boolean {
   const check_0 = detect_language(entry_point.file_path) === "typescript";
-  const check_1 = (() => { const pattern = new RegExp("(<\\s*[A-Z][A-Za-z0-9_]*\\s*>\\s*[A-Za-z_$][A-Za-z0-9_$.]*|\\b[A-Za-z_$][A-Za-z0-9_$.]*\\s+as\\s+[A-Z][A-Za-z0-9_]*)"); return entry_point.diagnostics.grep_call_sites.some((h) => { const lines = read_file_lines(h.file_path); const start = Math.max(0, h.line - 1 - 10); for (let i = start; i < h.line - 1; i++) { if (pattern.test(lines[i] ?? "")) return true; } return false; }); })();
+  const pattern_1 = new RegExp("(<\\s*[A-Z][A-Za-z0-9_]*\\s*>\\s*[A-Za-z_$][A-Za-z0-9_$.]*|\\b[A-Za-z_$][A-Za-z0-9_$.]*\\s+as\\s+[A-Z][A-Za-z0-9_]*)");
+  const check_1 = entry_point.diagnostics.grep_call_sites.some((h) => { const lines = read_file_lines(h.file_path); const start = Math.max(0, h.line - 1 - 10); for (let i = start; i < h.line - 1; i++) { if (pattern_1.test(lines[i] ?? "")) return true; } return false; });
   return check_0 && check_1;
 }

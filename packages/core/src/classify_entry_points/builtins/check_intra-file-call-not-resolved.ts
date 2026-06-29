@@ -13,6 +13,7 @@ export function check_intra_file_call_not_resolved(
   void read_file_lines;
   const check_0 = entry_point.diagnostics.ariadne_call_refs.length <= 0;
   const check_1 = (entry_point.diagnostics.grep_call_sites.length > 0 && entry_point.diagnostics.grep_call_sites.every((h) => h.file_path === entry_point.file_path)) === true;
-  const check_2 = (() => { const pattern = new RegExp("^(?!\\s*(?:export\\s+)?(?:async\\s+)?function\\s)."); return entry_point.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })();
+  const pattern_2 = new RegExp("^(?!\\s*(?:export\\s+)?(?:async\\s+)?function\\s).");
+  const check_2 = entry_point.diagnostics.grep_call_sites.some((h) => pattern_2.test(h.content));
   return check_0 && check_1 && check_2;
 }

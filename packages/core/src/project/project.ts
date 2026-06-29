@@ -248,7 +248,7 @@ export class Project {
    * the cache was written. Runs only registry updates + resolution (Phases 2-5).
    *
    * @param file_id - The file to restore
-   * @param content - The file's source code (needed for get_source_code lookups)
+   * @param content - The file's source code (stored for `get_file_contents()` access)
    * @param cached_index - Pre-computed SemanticIndex from cache
    */
   restore_file(
@@ -280,6 +280,8 @@ export class Project {
     dependents: Set<FilePath>,
     root_folder: FileSystemFolder,
   ): void {
+    const get_import_path = (import_id: SymbolId) => this.imports.get_resolved_import_path(import_id);
+
     // Phase 2: Update project-level registries
     profiler.start("registry_updates");
     const all_definitions: AnyDefinition[] = [
@@ -408,7 +410,7 @@ export class Project {
           this.exports,
           languages,
           root_folder,
-          (import_id) => this.imports.get_resolved_import_path(import_id),
+          get_import_path,
         );
       }
     }
@@ -451,6 +453,7 @@ export class Project {
 
     this.enriched_cache = null;
 
+    const get_import_path = (import_id: SymbolId) => this.imports.get_resolved_import_path(import_id);
     const dependents = this.imports.get_dependents(file_id);
 
     // Remove from file-level stores
@@ -499,7 +502,7 @@ export class Project {
             this.exports,
             languages,
             this.root_folder,
-            (import_id) => this.imports.get_resolved_import_path(import_id)
+            get_import_path
           );
         }
       }
@@ -629,14 +632,6 @@ export class Project {
   }
 
   /**
-   * Get all semantic indexes (for MCP compatibility).
-   * Returns a Map from file path to semantic index.
-   */
-  get_all_scope_graphs(): ReadonlyMap<FilePath, SemanticIndex> {
-    return this.index_single_filees;
-  }
-
-  /**
    * Read-only view of all indexed source-file contents. Diagnostics passes
    * (e.g. `extract_entry_point_diagnostics`) walk this map instead of touching
    * the filesystem so they see exactly the bytes the resolver saw — including
@@ -697,53 +692,6 @@ export class Project {
       file_path: file_id,
       exported_symbols: this.exports.get_exports(file_id),
     };
-  }
-
-  /**
-   * Get source code for a definition range.
-   * @param def - Definition object with range and file_path
-   * @param file_path - File path (optional, uses def.file_path if not provided)
-   * @returns Source code string
-   */
-  get_source_code(
-    def: {
-      file_path?: FilePath;
-      range: { start: { row: number; column: number }; end: { row: number; column: number } };
-    },
-    file_path?: FilePath
-  ): string {
-    const path = file_path || def.file_path;
-    if (!path || !this.file_contents.has(path)) {
-      throw new Error(`File not found: ${path}`);
-    }
-
-    const content = this.file_contents.get(path);
-    if (!content) {
-      throw new Error(`File content not found: ${path}`);
-    }
-    const lines = content.split("\n");
-    const start_row = def.range.start.row;
-    const end_row = def.range.end.row;
-    const start_col = def.range.start.column;
-    const end_col = def.range.end.column;
-
-    if (start_row === end_row) {
-      // Single line
-      return lines[start_row]?.substring(start_col, end_col) || "";
-    } else {
-      // Multiple lines
-      const result_lines: string[] = [];
-      for (let i = start_row; i <= end_row && i < lines.length; i++) {
-        if (i === start_row) {
-          result_lines.push(lines[i]?.substring(start_col) || "");
-        } else if (i === end_row) {
-          result_lines.push(lines[i]?.substring(0, end_col) || "");
-        } else {
-          result_lines.push(lines[i] || "");
-        }
-      }
-      return result_lines.join("\n");
-    }
   }
 
   /**

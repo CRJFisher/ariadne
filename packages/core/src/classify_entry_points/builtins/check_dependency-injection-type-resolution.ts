@@ -13,7 +13,9 @@ export function check_dependency_injection_type_resolution(
 ): boolean {
   const check_0 = detect_language(entry_point.file_path) === "typescript";
   const check_1 = entry_point.diagnostics.ariadne_call_refs.length <= 0;
-  const check_2 = (() => { const pattern = new RegExp("^\\s*\\.[A-Za-z_][A-Za-z0-9_]*\\s*\\("); return entry_point.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })();
-  const check_3 = (() => { const pattern = new RegExp("\\.get\\s*\\(\\s*[A-Z][A-Za-z0-9_]*\\s*[,)]"); return entry_point.diagnostics.grep_call_sites.some((h) => { const lines = read_file_lines(h.file_path); const start = Math.max(0, h.line - 1 - 3); for (let i = start; i < h.line - 1; i++) { if (pattern.test(lines[i] ?? "")) return true; } return false; }); })();
+  const pattern_2 = new RegExp("^\\s*\\.[A-Za-z_][A-Za-z0-9_]*\\s*\\(");
+  const check_2 = entry_point.diagnostics.grep_call_sites.some((h) => pattern_2.test(h.content));
+  const pattern_3 = new RegExp("\\.get\\s*\\(\\s*[A-Z][A-Za-z0-9_]*\\s*[,)]");
+  const check_3 = entry_point.diagnostics.grep_call_sites.some((h) => { const lines = read_file_lines(h.file_path); const start = Math.max(0, h.line - 1 - 3); for (let i = start; i < h.line - 1; i++) { if (pattern_3.test(lines[i] ?? "")) return true; } return false; });
   return check_0 && check_1 && check_2 && check_3;
 }

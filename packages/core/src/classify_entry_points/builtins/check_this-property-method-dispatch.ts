@@ -15,7 +15,8 @@ export function check_this_property_method_dispatch(
   const check_0 = detect_language(entry_point.file_path) === "javascript";
   const check_1 = entry_point.definition_features.definition_is_object_literal_method === true;
   const check_2 = entry_point.diagnostics.ariadne_call_refs.length <= 0;
-  const check_3 = (() => { const pattern = new RegExp("\\bthis\\.[A-Za-z_$][A-Za-z0-9_$]*\\s*\\("); return entry_point.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })();
+  const pattern_3 = new RegExp("\\bthis\\.[A-Za-z_$][A-Za-z0-9_$]*\\s*\\(");
+  const check_3 = entry_point.diagnostics.grep_call_sites.some((h) => pattern_3.test(h.content));
   const check_4 = (entry_point.diagnostics.grep_call_sites.length > 0 && entry_point.diagnostics.grep_call_sites.every((h) => h.file_path === entry_point.file_path)) === true;
   return check_0 && check_1 && check_2 && check_3 && check_4;
 }

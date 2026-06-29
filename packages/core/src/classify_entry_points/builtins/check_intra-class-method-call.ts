@@ -13,7 +13,8 @@ export function check_intra_class_method_call(
 ): boolean {
   void read_file_lines;
   const check_0 = detect_language(entry_point.file_path) === "typescript";
-  const check_1 = (() => { const pattern = new RegExp("\\bthis\\.\\w"); return entry_point.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })();
+  const pattern_1 = new RegExp("\\bthis\\.\\w");
+  const check_1 = entry_point.diagnostics.grep_call_sites.some((h) => pattern_1.test(h.content));
   const check_2 = entry_point.diagnostics.ariadne_call_refs.length <= 0;
   return check_0 && check_1 && check_2;
 }

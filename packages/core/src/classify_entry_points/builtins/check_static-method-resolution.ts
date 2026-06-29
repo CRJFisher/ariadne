@@ -14,7 +14,8 @@ export function check_static_method_resolution(
   const check_0 = entry_point.diagnostics.diagnosis === "callers-in-registry-unresolved";
   const check_1 = entry_point.diagnostics.ariadne_call_refs.some((r) => r.receiver_kind === "identifier");
   const check_2 = entry_point.diagnostics.ariadne_call_refs.some((r) => r.resolution_failure !== null && r.resolution_failure.reason === "name_not_in_scope");
-  const check_3 = (() => { const pattern = new RegExp("\\b[A-Z][A-Za-z0-9_]*\\s*\\.\\s*[A-Za-z_][A-Za-z0-9_]*\\s*\\("); return entry_point.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })();
+  const pattern_3 = new RegExp("\\b[A-Z][A-Za-z0-9_]*\\s*\\.\\s*[A-Za-z_][A-Za-z0-9_]*\\s*\\(");
+  const check_3 = entry_point.diagnostics.grep_call_sites.some((h) => pattern_3.test(h.content));
   const check_4 = entry_point.diagnostics.ariadne_call_refs.length >= 1;
   return check_0 && check_1 && check_2 && check_3 && check_4;
 }

@@ -15,7 +15,9 @@ export function check_import_resolution_missed(
   const check_0 = detect_language(entry_point.file_path) === "typescript";
   const check_1 = entry_point.diagnostics.ariadne_call_refs.length <= 0;
   const check_2 = (entry_point.diagnostics.grep_call_sites.length > 0 && entry_point.diagnostics.grep_call_sites.every((h) => h.file_path === entry_point.file_path)) === false;
-  const check_3 = (() => { const pattern = new RegExp("^\\s*import\\s*\\{"); return entry_point.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })();
-  const check_4 = (() => { const pattern = new RegExp("\\("); return entry_point.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })();
+  const pattern_3 = new RegExp("^\\s*import\\s*\\{");
+  const check_3 = entry_point.diagnostics.grep_call_sites.some((h) => pattern_3.test(h.content));
+  const pattern_4 = new RegExp("\\(");
+  const check_4 = entry_point.diagnostics.grep_call_sites.some((h) => pattern_4.test(h.content));
   return check_0 && check_1 && check_2 && check_3 && check_4;
 }

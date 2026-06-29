@@ -15,6 +15,7 @@ export function check_callers_not_in_registry_unclassified(
   const check_0 = detect_language(entry_point.file_path) === "javascript";
   const check_1 = entry_point.diagnostics.diagnosis === "callers-not-in-registry";
   const check_2 = entry_point.diagnostics.ariadne_call_refs.length <= 0;
-  const check_3 = (() => { const pattern = new RegExp("^\\s*(this|super)\\.[A-Za-z_][A-Za-z0-9_]*\\s*\\("); return entry_point.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })();
+  const pattern_3 = new RegExp("^\\s*(this|super)\\.[A-Za-z_][A-Za-z0-9_]*\\s*\\(");
+  const check_3 = entry_point.diagnostics.grep_call_sites.some((h) => pattern_3.test(h.content));
   return check_0 && check_1 && check_2 && check_3;
 }

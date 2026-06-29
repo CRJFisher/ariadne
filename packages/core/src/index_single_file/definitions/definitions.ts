@@ -108,21 +108,21 @@ export class DefinitionBuilder {
     const enums = new Map<SymbolId, EnumDefinition>();
     const namespaces = new Map<SymbolId, NamespaceDefinition>();
 
-    this.functions.forEach((state, id) => {
+    for (const [id, state] of this.functions) {
       functions.set(id, this.build_function(state));
-    });
-    this.classes.forEach((state, id) => {
+    }
+    for (const [id, state] of this.classes) {
       classes.set(id, this.build_class(state));
-    });
-    this.interfaces.forEach((state, id) => {
+    }
+    for (const [id, state] of this.interfaces) {
       interfaces.set(id, this.build_interface(state));
-    });
-    this.enums.forEach((state, id) => {
+    }
+    for (const [id, state] of this.enums) {
       enums.set(id, this.build_enum(state));
-    });
-    this.namespaces.forEach((state, id) => {
+    }
+    for (const [id, state] of this.namespaces) {
       namespaces.set(id, this.build_namespace(state));
-    });
+    }
 
     return {
       functions,

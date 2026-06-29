@@ -13,6 +13,7 @@ export function check_private_class_field_method(
 ): boolean {
   void read_file_lines;
   const check_0 = detect_language(entry_point.file_path) === "typescript";
-  const check_1 = (() => { const pattern = new RegExp("\\.#[A-Za-z_]"); return entry_point.diagnostics.grep_call_sites.some((h) => pattern.test(h.content)); })();
+  const pattern_1 = new RegExp("\\.#[A-Za-z_]");
+  const check_1 = entry_point.diagnostics.grep_call_sites.some((h) => pattern_1.test(h.content));
   return check_0 && check_1;
 }
