@@ -299,3 +299,184 @@ def build():
     expect(init_entry).toBeUndefined();
   });
 });
+
+// The pandas evidence shape: a `self.<attr> = Constructor()` assignment outside
+// `__init__` (in `setup()`) types the attribute so a `self.<attr>.method()` call
+// in a sibling method resolves, and the called member is no longer a false
+// entry point. Before Fix C the assignment was dropped (only `__init__` was
+// promoted) and the member surfaced as unreachable.
+describe("Constructor-flow property typing outside __init__", () => {
+  it("self.attr = Constructor() in setup() makes a sibling-method member reachable", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "data.py": `class DataFrame:
+    def head(self):
+        return self
+
+
+class Loader:
+    def setup(self):
+        self.df = DataFrame()
+
+    def run(self):
+        return self.df.head()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const call_graph = project.get_call_graph();
+    const head_entry = call_graph.entry_points.find((ep) => {
+      const node = call_graph.nodes.get(ep);
+      return (
+        node?.name === ("head" as SymbolName) &&
+        node.location.file_path === file_paths["data.py"]
+      );
+    });
+    expect(head_entry).toBeUndefined();
+  });
+
+  it("self.df.head() in a sibling resolves to exactly DataFrame.head", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "data.py": `class DataFrame:
+    def head(self):
+        return self
+
+
+class Loader:
+    def setup(self):
+        self.df = DataFrame()
+
+    def run(self):
+        return self.df.head()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const index = project.get_index_single_file(file_paths["data.py"]);
+    const classes = [...index!.classes.values()];
+    const data_frame = classes.find((c) => c.name === ("DataFrame" as SymbolName));
+    const loader = classes.find((c) => c.name === ("Loader" as SymbolName));
+    expect(data_frame).toBeDefined();
+    expect(loader).toBeDefined();
+
+    const member_index = project.definitions.get_member_index();
+    const head_id = member_index.get(data_frame!.symbol_id)!.get("head" as SymbolName);
+    const run_id = member_index.get(loader!.symbol_id)!.get("run" as SymbolName);
+    expect(head_id).toBeDefined();
+    expect(run_id).toBeDefined();
+
+    const call_graph = project.get_call_graph();
+    const run_node = call_graph.nodes.get(run_id!);
+    expect(run_node).toBeDefined();
+
+    const head_calls = run_node!.enclosed_calls.filter(
+      (c) => c.name === ("head" as SymbolName)
+    );
+    const resolved = new Set(
+      head_calls.flatMap((c) => c.resolutions.map((r) => r.symbol_id))
+    );
+    expect(resolved).toEqual(new Set([head_id]));
+  });
+
+  it("namespace-qualified self.attr = ns.Constructor() resolves via the last segment", async () => {
+    // `pd.DataFrame()` exercises the attribute-callee branch: the last segment
+    // `DataFrame` is taken as the type and resolves to the in-file class, so the
+    // member called on the receiver is reachable.
+    const { project, temp_dir, file_paths } = await setup_project({
+      "frames.py": `class DataFrame:
+    def head(self):
+        return self
+
+
+class Loader:
+    def setup(self):
+        self.df = pd.DataFrame()
+
+    def run(self):
+        return self.df.head()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const index = project.get_index_single_file(file_paths["frames.py"]);
+    const classes = [...index!.classes.values()];
+    const data_frame = classes.find((c) => c.name === ("DataFrame" as SymbolName));
+    const loader = classes.find((c) => c.name === ("Loader" as SymbolName));
+
+    const member_index = project.definitions.get_member_index();
+    const head_id = member_index.get(data_frame!.symbol_id)!.get("head" as SymbolName);
+    const run_id = member_index.get(loader!.symbol_id)!.get("run" as SymbolName);
+
+    const call_graph = project.get_call_graph();
+    const head_entry = call_graph.entry_points.find((ep) => {
+      const node = call_graph.nodes.get(ep);
+      return (
+        node?.name === ("head" as SymbolName) &&
+        node.location.file_path === file_paths["frames.py"]
+      );
+    });
+    expect(head_entry).toBeUndefined();
+
+    const run_node = call_graph.nodes.get(run_id!);
+    const head_calls = run_node!.enclosed_calls.filter(
+      (c) => c.name === ("head" as SymbolName)
+    );
+    const resolved = new Set(
+      head_calls.flatMap((c) => c.resolutions.map((r) => r.symbol_id))
+    );
+    expect(resolved).toEqual(new Set([head_id]));
+  });
+
+  it("an attr assigned in multiple methods yields one property and resolves the member once", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "svc.py": `class Client:
+    def send(self):
+        return self
+
+
+class Service:
+    def setup(self):
+        self.client = Client()
+
+    def reconfigure(self):
+        self.client = Client()
+
+    def run(self):
+        return self.client.send()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const index = project.get_index_single_file(file_paths["svc.py"]);
+    const classes = [...index!.classes.values()];
+    const service = classes.find((c) => c.name === ("Service" as SymbolName));
+    const client = classes.find((c) => c.name === ("Client" as SymbolName));
+
+    // Two assignment sites collapse to a single property.
+    expect(
+      service!.properties.filter((p) => p.name === ("client" as SymbolName)).length
+    ).toBe(1);
+
+    const member_index = project.definitions.get_member_index();
+    const send_id = member_index.get(client!.symbol_id)!.get("send" as SymbolName);
+    const run_id = member_index.get(service!.symbol_id)!.get("run" as SymbolName);
+
+    const call_graph = project.get_call_graph();
+    const send_entry = call_graph.entry_points.find((ep) => {
+      const node = call_graph.nodes.get(ep);
+      return (
+        node?.name === ("send" as SymbolName) &&
+        node.location.file_path === file_paths["svc.py"]
+      );
+    });
+    expect(send_entry).toBeUndefined();
+
+    const run_node = call_graph.nodes.get(run_id!);
+    const send_calls = run_node!.enclosed_calls.filter(
+      (c) => c.name === ("send" as SymbolName)
+    );
+    const resolved = new Set(
+      send_calls.flatMap((c) => c.resolutions.map((r) => r.symbol_id))
+    );
+    expect(resolved).toEqual(new Set([send_id]));
+  });
+});

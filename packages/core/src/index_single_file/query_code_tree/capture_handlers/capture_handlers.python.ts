@@ -6,6 +6,7 @@
  * imports, decorators, protocols, enums, and type aliases.
  */
 
+import type { SyntaxNode } from "tree-sitter";
 import type { SymbolName } from "@ariadnejs/types";
 import { anonymous_function_symbol, property_symbol } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definitions";
@@ -46,6 +47,13 @@ import {
   store_python_docstring,
   consume_python_docstring,
 } from "../symbol_factories/symbol_factories.python";
+import {
+  handle_definition_loop_var,
+  handle_definition_loop_var_multiple,
+  handle_definition_comprehension_var,
+  handle_definition_except_var,
+  handle_definition_with_var,
+} from "./loop_variable_handlers.python";
 // Import handlers from python_imports.ts for local use
 import {
   handle_definition_import,
@@ -290,12 +298,42 @@ export function handle_definition_field(
 }
 
 /**
- * Handle `self.attr = value` assignments in `__init__` methods.
+ * Extract the constructed type from an assignment's right-hand side.
+ *
+ * `self.x = Database()` yields `Database` from the bare-identifier callee;
+ * `self.x = pd.DataFrame()` yields the last segment `DataFrame` from the
+ * namespace-qualified attribute callee (mirroring how constructor bindings
+ * resolve `new models.User()` to `User`). Any non-constructor RHS yields
+ * `undefined`.
+ */
+function extract_constructor_rhs_type(
+  right: SyntaxNode | null
+): SymbolName | undefined {
+  if (right?.type !== "call") return undefined;
+  const callee = right.childForFieldName("function");
+  if (!callee) return undefined;
+  if (callee.type === "identifier") return callee.text as SymbolName;
+  if (callee.type === "attribute") {
+    return callee.childForFieldName("attribute")?.text as SymbolName | undefined;
+  }
+  return undefined;
+}
+
+/**
+ * Handle `self.attr = value` assignments inside class methods.
  *
  * Creates a PropertyDefinition on the containing class for instance attributes
- * assigned in `__init__`. The `@assignment.property` capture in python.scm fires
- * for all `obj.attr = value` patterns; this handler filters to only `self.X = ...`
- * inside `__init__`.
+ * so a later `self.attr.method()` resolves against the attribute's type. The
+ * `@assignment.property` capture in python.scm fires for all `obj.attr = value`
+ * patterns; this handler keeps only `self.X = ...` assignments in a direct
+ * method body of the class.
+ *
+ * Inside `__init__`, every `self.X` is promoted (typed or not) — the canonical
+ * declaration site. Outside `__init__`, only constructor/typed RHS assignments
+ * promote; an untyped transient mutation in an arbitrary method is not a
+ * declaration. Promotion is deduped by attribute name (see
+ * `add_inferred_property_to_class`): the first assignment wins and a later
+ * typed assignment upgrades an earlier untyped one.
  */
 export function handle_assignment_property(
   capture: CaptureNode,
@@ -315,35 +353,40 @@ export function handle_assignment_property(
   // Only handle self.X assignments
   if (object_node.type !== "identifier" || object_node.text !== "self") return;
 
-  // Only handle assignments inside __init__
-  let node = assignment_node.parent;
-  let in_init = false;
-  while (node) {
-    if (node.type === "function_definition") {
-      const name_node = node.childForFieldName("name");
-      in_init = name_node?.text === "__init__";
-      break;
-    }
-    node = node.parent;
+  // Promote only from a direct method body — the nearest enclosing function
+  // must sit directly in the class block, never a nested function.
+  let enclosing_function = assignment_node.parent;
+  while (
+    enclosing_function &&
+    enclosing_function.type !== "function_definition"
+  ) {
+    enclosing_function = enclosing_function.parent;
   }
-  if (!in_init) return;
+  if (!enclosing_function) return;
+  const method_block = enclosing_function.parent;
+  if (
+    method_block?.type !== "block" ||
+    method_block.parent?.type !== "class_definition"
+  ) {
+    return;
+  }
+  const in_init =
+    enclosing_function.childForFieldName("name")?.text === "__init__";
+
+  const right = assignment_node.childForFieldName("right");
+  const rhs_type = extract_constructor_rhs_type(right);
+
+  // Outside __init__, only a typed/constructor RHS is a declaration worth promoting.
+  if (!in_init && rhs_type === undefined) return;
 
   const class_id = find_containing_class(capture);
   if (!class_id) return;
 
   const attr_name = attr_node.text as SymbolName;
-  const file_path = capture.location.file_path;
-  const attr_location = node_to_location(attr_node, file_path);
-  const prop_id = property_symbol(attr_name, attr_location);
+  const attr_location = node_to_location(attr_node, capture.location.file_path);
 
-  // Extract type from RHS if it's a constructor call (e.g., Database())
-  const right = assignment_node.childForFieldName("right");
-  const rhs_type = right?.type === "call"
-    ? right.childForFieldName("function")?.text as SymbolName | undefined
-    : undefined;
-
-  builder.add_property_to_class(class_id, {
-    symbol_id: prop_id,
+  builder.add_inferred_property_to_class(class_id, {
+    symbol_id: property_symbol(attr_name, attr_location),
     name: attr_name,
     location: attr_location,
     scope_id: context.get_scope_id(capture.location),
@@ -706,105 +749,6 @@ export function handle_definition_variable_destructured(
     scope_id: defining_scope_id,
     is_exported: export_info.is_exported,
     export: export_info.export,
-    type: undefined,
-    initial_value: undefined,
-  });
-}
-
-// ============================================================================
-// LOOP AND COMPREHENSION VARIABLE HANDLERS
-// ============================================================================
-
-export function handle_definition_loop_var(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const var_id = create_variable_id(capture);
-
-  builder.add_variable({
-    kind: "variable",
-    symbol_id: var_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    is_exported: false, // Loop variables are never exported
-    type: undefined,
-    initial_value: undefined,
-  });
-}
-
-export function handle_definition_loop_var_multiple(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const var_id = create_variable_id(capture);
-
-  builder.add_variable({
-    kind: "variable",
-    symbol_id: var_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    is_exported: false, // Loop variables are never exported
-    type: undefined,
-    initial_value: undefined,
-  });
-}
-
-export function handle_definition_comprehension_var(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const var_id = create_variable_id(capture);
-
-  builder.add_variable({
-    kind: "variable",
-    symbol_id: var_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    is_exported: false, // Comprehension variables are never exported
-    type: undefined,
-    initial_value: undefined,
-  });
-}
-
-export function handle_definition_except_var(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const var_id = create_variable_id(capture);
-
-  builder.add_variable({
-    kind: "variable",
-    symbol_id: var_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    is_exported: false, // Exception variables are never exported
-    type: "Exception" as SymbolName,
-    initial_value: undefined,
-  });
-}
-
-export function handle_definition_with_var(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const var_id = create_variable_id(capture);
-
-  builder.add_variable({
-    kind: "variable",
-    symbol_id: var_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    is_exported: false, // Context manager variables are never exported
     type: undefined,
     initial_value: undefined,
   });

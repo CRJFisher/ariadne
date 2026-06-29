@@ -2444,7 +2444,7 @@ class Config:
       expect(name_prop!.type).toBeUndefined();
     });
 
-    it("should NOT create PropertyDefinition for self.attr = X() outside __init__", async () => {
+    it("should create PropertyDefinition for self.attr = Constructor() outside __init__", async () => {
       const code = `
 class Service:
     def setup(self):
@@ -2455,7 +2455,113 @@ class Service:
       const service_class = Array.from(index.classes.values()).find(c => c.name === "Service");
 
       expect(service_class).toBeDefined();
-      // No property should be created since we're not in __init__
+      const db_prop = service_class!.properties.find(p => p.name === "db");
+      expect(db_prop).toBeDefined();
+      expect(db_prop!.name).toBe("db");
+      expect(db_prop!.type).toBe("Database");
+      expect(service_class!.properties.filter(p => p.name === "db").length).toBe(1);
+    });
+
+    it("should extract last-segment type for self.attr = ns.Constructor() outside __init__", async () => {
+      const code = `
+class Loader:
+    def setup(self):
+        self.df = pd.DataFrame()
+`;
+
+      const index = await build_index_from_code(code);
+      const loader_class = Array.from(index.classes.values()).find(c => c.name === "Loader");
+
+      expect(loader_class).toBeDefined();
+      const df_prop = loader_class!.properties.find(p => p.name === "df");
+      expect(df_prop).toBeDefined();
+      expect(df_prop!.name).toBe("df");
+      expect(df_prop!.type).toBe("DataFrame");
+    });
+
+    it("should extract last-segment type for self.attr = ns.Constructor() in __init__", async () => {
+      const code = `
+class Loader:
+    def __init__(self):
+        self.df = pd.DataFrame()
+`;
+
+      const index = await build_index_from_code(code);
+      const loader_class = Array.from(index.classes.values()).find(c => c.name === "Loader");
+
+      expect(loader_class).toBeDefined();
+      const df_prop = loader_class!.properties.find(p => p.name === "df");
+      expect(df_prop).toBeDefined();
+      expect(df_prop!.type).toBe("DataFrame");
+    });
+
+    it("should NOT create a PropertyDefinition for a plain-string self.attr outside __init__", async () => {
+      const code = `
+class Service:
+    def setup(self):
+        self.name = "default"
+`;
+
+      const index = await build_index_from_code(code);
+      const service_class = Array.from(index.classes.values()).find(c => c.name === "Service");
+
+      expect(service_class).toBeDefined();
+      // Outside __init__, an untyped RHS is a transient mutation, not a declaration
+      const name_prop = service_class!.properties.find(p => p.name === "name");
+      expect(name_prop).toBeUndefined();
+    });
+
+    it("should emit exactly one PropertyDefinition for an attr assigned in two methods (first wins)", async () => {
+      const code = `
+class Service:
+    def setup(self):
+        self.client = HttpClient()
+
+    def reconfigure(self):
+        self.client = MockClient()
+`;
+
+      const index = await build_index_from_code(code);
+      const service_class = Array.from(index.classes.values()).find(c => c.name === "Service");
+
+      expect(service_class).toBeDefined();
+      expect(service_class!.properties.filter(p => p.name === "client").length).toBe(1);
+      const client_prop = service_class!.properties.find(p => p.name === "client");
+      expect(client_prop!.type).toBe("HttpClient");
+    });
+
+    it("should type an attr from a sibling constructor when __init__ leaves it untyped", async () => {
+      const code = `
+class Loader:
+    def __init__(self):
+        self.df = None
+
+    def setup(self):
+        self.df = pd.DataFrame()
+`;
+
+      const index = await build_index_from_code(code);
+      const loader_class = Array.from(index.classes.values()).find(c => c.name === "Loader");
+
+      expect(loader_class).toBeDefined();
+      expect(loader_class!.properties.filter(p => p.name === "df").length).toBe(1);
+      const df_prop = loader_class!.properties.find(p => p.name === "df");
+      expect(df_prop!.type).toBe("DataFrame");
+    });
+
+    it("should NOT promote self.attr assigned inside a nested function within a method", async () => {
+      const code = `
+class Service:
+    def setup(self):
+        def helper():
+            self.db = Database()
+        helper()
+`;
+
+      const index = await build_index_from_code(code);
+      const service_class = Array.from(index.classes.values()).find(c => c.name === "Service");
+
+      expect(service_class).toBeDefined();
       const db_prop = service_class!.properties.find(p => p.name === "db");
       expect(db_prop).toBeUndefined();
     });

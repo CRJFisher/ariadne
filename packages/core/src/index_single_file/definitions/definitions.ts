@@ -34,6 +34,16 @@ import {
 
 import type { ProcessingContext, CaptureNode } from "../index_single_file";
 import { find_body_scope_for_definition } from "../scopes/utils";
+import type {
+  ClassBuilderState,
+  ConstructorBuilderState,
+  EnumBuilderState,
+  FunctionBuilderState,
+  InterfaceBuilderState,
+  MethodBuilderState,
+  NamespaceBuilderState,
+  PropertyBuilderState,
+} from "./builder_state";
 
 // ============================================================================
 // Builder Result Type
@@ -54,105 +64,6 @@ export interface BuilderResult {
   types: ReadonlyMap<SymbolId, TypeAliasDefinition>;
   decorators: ReadonlyMap<SymbolId, DecoratorDefinition>;
   imports: ReadonlyMap<SymbolId, ImportDefinition>;
-}
-
-// ============================================================================
-// Builder State Types
-// ============================================================================
-
-/**
- * Builder state for accumulating class data
- */
-interface ClassBuilderState {
-  base: Partial<
-    Omit<
-      ClassDefinition,
-      "constructor" | "methods" | "properties" | "decorators"
-    >
-  >;
-  methods: Map<SymbolId, MethodBuilderState>;
-  properties: Map<SymbolId, PropertyBuilderState>;
-  constructors: Map<SymbolId, ConstructorBuilderState>;
-  decorators: DecoratorDefinition[];
-}
-
-/**
- * Builder state for accumulating method data
- */
-interface MethodBuilderState {
-  base: Partial<
-    Omit<MethodDefinition, "parameters" | "decorators" | "body_scope_id">
-  >;
-  parameters: Map<SymbolId, ParameterDefinition>;
-  decorators: DecoratorDefinition[];
-  body_scope_id?: ScopeId;
-}
-
-/**
- * Builder state for accumulating constructor data
- */
-interface ConstructorBuilderState {
-  base: Partial<
-    Omit<ConstructorDefinition, "parameters" | "decorators" | "body_scope_id">
-  >;
-  parameters: Map<SymbolId, ParameterDefinition>;
-  decorators: DecoratorDefinition[];
-  body_scope_id?: ScopeId;
-}
-
-/**
- * Builder state for accumulating property data
- */
-interface PropertyBuilderState {
-  base: Partial<Omit<PropertyDefinition, "decorators">>;
-  decorators: DecoratorDefinition[];
-}
-
-/**
- * Builder state for accumulating function data
- */
-interface FunctionBuilderState {
-  base: Partial<
-    Omit<FunctionDefinition, "signature" | "decorators" | "body_scope_id" | "callback_context">
-  >;
-  signature: FunctionSignatureState;
-  decorators: DecoratorDefinition[];
-  body_scope_id?: ScopeId;
-  callback_context?: CallbackContext;
-}
-
-/**
- * Builder state for function signatures
- */
-interface FunctionSignatureState {
-  parameters: Map<SymbolId, ParameterDefinition>;
-  return_type?: SymbolName;
-}
-
-/**
- * Builder state for accumulating interface data
- */
-interface InterfaceBuilderState {
-  base: Partial<Omit<InterfaceDefinition, "methods" | "properties">>;
-  methods: Map<SymbolId, MethodBuilderState>;
-  properties: Map<SymbolId, PropertyDefinition>;
-}
-
-/**
- * Builder state for accumulating enum data
- */
-interface EnumBuilderState {
-  base: Partial<Omit<EnumDefinition, "members" | "methods">>;
-  members: Map<SymbolId, EnumMember>;
-  methods?: Map<SymbolId, MethodBuilderState>;
-}
-
-/**
- * Builder state for accumulating namespace data
- */
-interface NamespaceBuilderState {
-  base: Partial<Omit<NamespaceDefinition, "exported_symbols">>;
-  exported_symbols: Set<SymbolId>;
 }
 
 // ============================================================================
@@ -726,6 +637,45 @@ export class DefinitionBuilder {
       },
       decorators: [],
     });
+    return this;
+  }
+
+  /**
+   * Add a class property inferred from a `self.<attr> = <rhs>` assignment,
+   * deduped by attribute name within the class.
+   *
+   * Property symbol_ids are location-based, so the same attribute assigned at
+   * two sites would otherwise emit two PropertyDefinitions. The first assignment
+   * (in capture/document order) wins; a later typed assignment upgrades an
+   * earlier untyped one (`self.df = None` in `__init__`, then
+   * `self.df = pd.DataFrame()` in a sibling method, types `df` as `DataFrame`),
+   * but a typed property is never overwritten.
+   */
+  add_inferred_property_to_class(
+    class_id: SymbolId,
+    definition: {
+      symbol_id: SymbolId;
+      name: SymbolName;
+      location: Location;
+      scope_id: ScopeId;
+      type?: SymbolName;
+    }
+  ): DefinitionBuilder {
+    const class_state = this.classes.get(class_id);
+    if (!class_state) return this;
+
+    const existing = Array.from(class_state.properties.entries()).find(
+      ([, p]) => p.base.name === definition.name
+    );
+    if (!existing) return this.add_property_to_class(class_id, definition);
+
+    const [existing_id, existing_state] = existing;
+    if (existing_state.base.type === undefined && definition.type !== undefined) {
+      class_state.properties.set(existing_id, {
+        ...existing_state,
+        base: { ...existing_state.base, type: definition.type },
+      });
+    }
     return this;
   }
 
