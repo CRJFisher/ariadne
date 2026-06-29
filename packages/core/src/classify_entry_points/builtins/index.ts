@@ -67,6 +67,7 @@ import { check_type_cast_dispatch } from "./check_type-cast-dispatch";
 import { check_type_cast_receiver } from "./check_type-cast-receiver";
 import { check_typed_field_method_dispatch } from "./check_typed-field-method-dispatch";
 import { check_unresolved_receiver_type } from "./check_unresolved-receiver-type";
+import { check_untyped_attribute_receiver } from "./check_untyped-attribute-receiver";
 
 export type BuiltinCheckFn = (
   entry_point: EnrichedEntryPoint,
@@ -136,4 +137,5 @@ export const BUILTIN_CHECKS: Record<string, BuiltinCheckFn> = {
   check_type_cast_receiver,
   check_typed_field_method_dispatch,
   check_unresolved_receiver_type,
+  check_untyped_attribute_receiver,
 };
