@@ -453,7 +453,7 @@ describe("method-as-value indirect reachability (task-348)", () => {
     expect(names).toEqual([]);
   });
 
-  it("TypeScript method stored into a class field initializer leaves the entry points (task-190.28)", async () => {
+  it("TypeScript method stored into a class field initializer leaves the entry points", async () => {
     const { project } = await make_project_with({
       "engine.ts": [
         "class Engine {",
@@ -472,7 +472,7 @@ describe("method-as-value indirect reachability (task-348)", () => {
     expect(names).toEqual([]);
   });
 
-  it("TypeScript function stored in a shorthand object literal leaves the entry points (task-190.28)", async () => {
+  it("TypeScript function stored in a shorthand object literal leaves the entry points", async () => {
     const { project } = await make_project_with({
       "extract.ts": [
         "function extractValue(s: string) {",
@@ -488,7 +488,50 @@ describe("method-as-value indirect reachability (task-348)", () => {
     expect(names).toEqual([]);
   });
 
-  it("a TypeScript method never referenced as a value stays an entry point (task-190.28)", async () => {
+  it("TypeScript function returned in a shorthand object and destructured cross-file leaves the entry points", async () => {
+    const { project } = await make_project_with({
+      "factory.ts": [
+        "export function extractValue(s: string) {",
+        "  return s.trim();",
+        "}",
+        "export function make() {",
+        "  return { extractValue };",
+        "}",
+        "",
+      ].join("\n"),
+      "use.ts": [
+        'import { make } from "./factory";',
+        "const { extractValue } = make();",
+        'extractValue("hello");',
+        "",
+      ].join("\n"),
+    });
+
+    const names = entry_point_names(project);
+    expect(names).not.toContain("extractValue");
+  });
+
+  it("JavaScript method stored into a class field initializer leaves the entry points", async () => {
+    const { project } = await make_project_with({
+      "engine.js": ["class Engine {", "  _proc = this.process;", "  process() {", "    return 1;", "  }", "}", "new Engine();", ""].join("\n"),
+    });
+
+    const names = entry_point_names(project);
+    expect(names).not.toContain("process");
+    expect(names).toEqual([]);
+  });
+
+  it("JavaScript function stored in a shorthand object literal leaves the entry points", async () => {
+    const { project } = await make_project_with({
+      "extract.js": ["function extractValue(s) {", "  return s.trim();", "}", "const obj = { extractValue };", ""].join("\n"),
+    });
+
+    const names = entry_point_names(project);
+    expect(names).not.toContain("extractValue");
+    expect(names).toEqual([]);
+  });
+
+  it("a TypeScript method never referenced as a value stays an entry point", async () => {
     const { project } = await make_project_with({
       "widget.ts": [
         "class Widget {",

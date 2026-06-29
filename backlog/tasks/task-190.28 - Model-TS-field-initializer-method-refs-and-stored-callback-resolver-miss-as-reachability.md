@@ -1,7 +1,7 @@
 ---
 id: TASK-190.28
 title: "Model TS field-initializer method references and stored-callback resolver-miss as reachability"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-06-27 00:00"
 labels:
@@ -67,3 +67,17 @@ The call site `extractValue(5)` fails resolution with `name_not_in_scope` (`rece
 - [ ] The `typed-field-method-dispatch` and `stored-callback-via-object-property` registry rows are retired by the human once the core fixes land.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+### High-level summary
+
+Both false-positive cases are resolved at the indexing layer by adding two tree-sitter query patterns — one to TypeScript's `.scm` file, one to JavaScript's. No changes are required in `detect_indirect_reachability` or anywhere downstream: once the reads are captured, the existing task-348 value-reference arm marks the targets indirectly reachable.
+
+**Case A** — A TypeScript `public_field_definition` (JavaScript: `field_definition`) whose initializer is a `member_expression` with `object: [(this) (super)]` emits the `property_identifier` as `@reference.variable`. This captures exactly the `this.process` read in `private _proc = this.process;` without double-capturing external-object reads already handled by the property-access pattern.
+
+**Case B** — An `(object (shorthand_property_identifier))` pattern captures shorthand properties like `{ extractValue }` as `@reference.variable`. The existing catch-all `(identifier) @reference.variable` fires on the function-name node at the definition site (skipped by the same-location guard in `detect_indirect_reachability`); the new pattern fires on the distinct `shorthand_property_identifier` node at the use site, marking the function indirectly reachable.
+
+Both patterns were added to `typescript.scm` and `javascript.scm` for consistency. Tests cover: AST-level `variable_reference` emission (TypeScript capture handler tests, including `this`, `super`, shorthand, and negative method-call guard), and end-to-end entry-point suppression via integration tests (TypeScript and JavaScript, including a cross-file factory.ts + use.ts destructure scenario).
+
+The Case B resolution here is a reachability approximation: `extractValue` is marked indirectly reachable because it appears in a shorthand property in the file where it is defined. Full cross-file call resolution for the destructure path is separate work.

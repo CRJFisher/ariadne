@@ -715,11 +715,8 @@
   (identifier) @reference.typeof
 ) @reference.typeof
 
-; Member reads in class field initializers (e.g., private _proc = this.process).
-; Surfaces the property name as a variable read so detect_indirect_reachability
-; can mark stored method references as indirectly reachable. Narrowed to
-; this/super to avoid spurious reads when the object is an external identifier
-; (which the property_access pattern at line 632 already handles).
+; Field-initializer member read: narrowed to this/super so external-object fields
+; aren't double-captured (the property_access pattern already handles those).
 (public_field_definition
   value: (member_expression
     object: [(this) (super)]
@@ -727,9 +724,8 @@
   )
 )
 
-; Shorthand properties in object literals (e.g., return { fn } or const obj = { fn })
-; emit a variable read so detect_indirect_reachability marks the referenced
-; function as indirectly reachable and removes it from the entry-point set.
+; Shorthand object property ({ fn }): the catch-all (identifier) fires only on the
+; definition-site node, so this supplies the use-site read.
 (object
   (shorthand_property_identifier) @reference.variable
 )

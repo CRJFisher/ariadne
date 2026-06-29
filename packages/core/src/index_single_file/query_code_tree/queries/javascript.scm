@@ -434,9 +434,17 @@
 ; super references (for inheritance)
 (super) @reference.super
 
-; Shorthand properties in object literals (e.g., return { fn } or const obj = { fn })
-; emit a variable read so detect_indirect_reachability marks the referenced
-; function as indirectly reachable and removes it from the entry-point set.
+; Field-initializer member read: narrowed to this/super so external-object fields
+; aren't double-captured (the property_access pattern already handles those).
+(field_definition
+  value: (member_expression
+    object: [(this) (super)]
+    property: (property_identifier) @reference.variable
+  )
+)
+
+; Shorthand object property ({ fn }): the catch-all (identifier) fires only on the
+; definition-site node, so this supplies the use-site read.
 (object
   (shorthand_property_identifier) @reference.variable
 )

@@ -672,16 +672,29 @@ class MyComponent {
     });
   });
 
-  // TASK-190.28: a method/function name read as a value (field initializer or
-  // shorthand object literal) must emit a variable_reference read so
-  // detect_indirect_reachability can mark the symbol reachable.
-  describe("Variable reads for indirect reachability (TASK-190.28)", () => {
+  describe("Variable reads for indirect reachability", () => {
     it("emits a variable_reference read for a method stored in a class field initializer", () => {
       const code = `class Engine {
   private _proc = this.process;
   process() {
     return 1;
   }
+}`;
+      const index = build_index_from_code(code);
+      const reads = index.references
+        .filter((r) => r.kind === "variable_reference" && r.name === "process")
+        .map((r) => ({ kind: r.kind, name: r.name, access_type: r.access_type }));
+      expect(reads).toEqual([
+        { kind: "variable_reference", name: "process", access_type: "read" },
+      ]);
+    });
+
+    it("emits a variable_reference read for a super method stored in a class field initializer", () => {
+      const code = `class Base {
+  process() { return 1; }
+}
+class Engine extends Base {
+  private _proc = super.process;
 }`;
       const index = build_index_from_code(code);
       const reads = index.references
@@ -701,16 +714,16 @@ const obj = { extractValue };`;
       const reads = index.references
         .filter((r) => r.kind === "variable_reference" && r.name === "extractValue")
         .map((r) => ({ kind: r.kind, name: r.name, access_type: r.access_type }));
-      // Two reads: (1) function-name identifier in the declaration (catch-all, definition
-      // site — skipped by detect_indirect_reachability) and (2) shorthand property in
-      // { extractValue } (our new pattern, non-definition site — acted on to mark reachable).
+      // Two reads: catch-all fires on function-name identifier (definition site,
+      // skipped by detect_indirect_reachability) + new pattern fires on shorthand
+      // property node (use site, marks function as indirectly reachable).
       expect(reads).toEqual([
         { kind: "variable_reference", name: "extractValue", access_type: "read" },
         { kind: "variable_reference", name: "extractValue", access_type: "read" },
       ]);
     });
 
-    it("does NOT emit a spurious read from a field initialized via a method call", () => {
+    it("does not emit a spurious read from a field initialized via a method call", () => {
       const code = `class Engine {
   private _result = this.compute();
   compute() {
