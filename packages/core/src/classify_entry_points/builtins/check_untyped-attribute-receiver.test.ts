@@ -38,7 +38,7 @@ function make_ref(overrides: Partial<CallRefDiagnostic> = {}): CallRefDiagnostic
     resolved_to: [],
     receiver_kind: "self_keyword" as ReceiverKind,
     resolution_failure: {
-      stage: "receiver_resolution",
+      stage: "type_inference",
       reason: "member_type_unknown" as ResolutionFailureReason,
       partial_info: { resolved_receiver_type: class_symbol_id(CALLER_FILE) },
     },
@@ -79,10 +79,13 @@ describe("check_untyped_attribute_receiver", () => {
     expect(check_untyped_attribute_receiver(make_entry(), EMPTY_READER)).toBe(true);
   });
 
+  // The typed-attribute / untyped-sub-member shape, e.g. `self.frame.values.foo()`
+  // where `self.frame` is typed (a class in another file) but `.values` is not:
+  // the receiver resolves to that other-file class, so file != caller_file.
   it("does not match when the resolved receiver type lives in another file (typed attribute, untyped sub-member)", () => {
     const ref = make_ref({
       resolution_failure: {
-        stage: "receiver_resolution",
+        stage: "type_inference",
         reason: "member_type_unknown" as ResolutionFailureReason,
         partial_info: { resolved_receiver_type: class_symbol_id("/repo/other/module.py") },
       },
@@ -119,7 +122,7 @@ describe("check_untyped_attribute_receiver", () => {
   it("does not match a different failure reason (method_not_on_type on a typed receiver)", () => {
     const ref = make_ref({
       resolution_failure: {
-        stage: "receiver_resolution",
+        stage: "method_lookup",
         reason: "method_not_on_type" as ResolutionFailureReason,
         partial_info: { resolved_receiver_type: class_symbol_id(CALLER_FILE) },
       },
@@ -135,7 +138,7 @@ describe("check_untyped_attribute_receiver", () => {
   it("does not match when resolved_receiver_type is absent", () => {
     const ref = make_ref({
       resolution_failure: {
-        stage: "receiver_resolution",
+        stage: "type_inference",
         reason: "member_type_unknown" as ResolutionFailureReason,
         partial_info: {},
       },
@@ -145,5 +148,24 @@ describe("check_untyped_attribute_receiver", () => {
 
   it("does not match an entry with no call refs", () => {
     expect(check_untyped_attribute_receiver(make_entry({ refs: [] }), EMPTY_READER)).toBe(false);
+  });
+
+  it("matches when a non-matching ref precedes a matching one (.some over all refs)", () => {
+    const non_matching = make_ref({
+      resolution_failure: {
+        stage: "method_lookup",
+        reason: "method_not_on_type" as ResolutionFailureReason,
+        partial_info: { resolved_receiver_type: class_symbol_id(CALLER_FILE) },
+      },
+    });
+    const entry = make_entry({ refs: [non_matching, make_ref()] });
+    expect(check_untyped_attribute_receiver(entry, EMPTY_READER)).toBe(true);
+  });
+
+  it("does not match when every ref fails a clause", () => {
+    const identifier_ref = make_ref({ receiver_kind: "identifier" as ReceiverKind });
+    const resolved_ref = make_ref({ resolution_count: 1, resolution_failure: null });
+    const entry = make_entry({ refs: [identifier_ref, resolved_ref] });
+    expect(check_untyped_attribute_receiver(entry, EMPTY_READER)).toBe(false);
   });
 });

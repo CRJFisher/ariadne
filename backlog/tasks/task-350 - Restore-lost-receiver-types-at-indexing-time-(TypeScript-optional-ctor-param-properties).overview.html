@@ -153,10 +153,11 @@
   <div class="inner">
     <span class="brand">TASK-350 family</span>
     <span class="here">350 · epic <span class="st done">Done</span></span>
-    <a href="task-350 - Restore-lost-receiver-types-at-indexing-time-(TypeScript-optional-ctor-param-properties).companion.html">Fix A · TS <span class="st done">walkthrough</span></a>
-    <a href="task-350.1 - Fix-B-—-associate-JSDoc-@param-{T}-name-tags-with-the-named-parameter-(JavaScript).companion.html">350.1 · Fix B · JS <span class="st todo">To Do</span></a>
-    <a href="task-350.2 - Fix-C-—-promote-Python-self.attr-assignments-outside-__init__-and-read-namespace-qualified-constructor-RHS-(Python).fix-walkthrough.html">350.2 · Fix C · Py <span class="st todo">To Do</span></a>
-    <span class="pending">350.3 · interim classifier <span class="tag">not yet generated</span></span>
+    <a href="task-350 - Restore-lost-receiver-types-at-indexing-time-(TypeScript-optional-ctor-param-properties).companion.html">Fix A · TS <span class="st done">Done</span></a>
+    <a href="task-350.1 - Fix-B-—-associate-JSDoc-@param-{T}-name-tags-with-the-named-parameter-(JavaScript).companion.html">350.1 · Fix B · JS <span class="st done">Done</span></a>
+    <a href="task-350.2 - Fix-C-—-promote-Python-self.attr-assignments-outside-__init__-and-read-namespace-qualified-constructor-RHS-(Python).fix-walkthrough.html">350.2 · Fix C · Py <span class="st done">Done</span></a>
+    <a href="task-350.3 - Author-the-narrowed-interim-classifier-for-the-two-residual-out-of-reach-pandas-rows.design.html">350.3 · interim classifier <span class="st done">Done</span></a>
+    <span class="here">350.4 · Shape I disposition <span class="st todo">To Do</span></span>
   </div>
 </nav>
 
@@ -363,13 +364,13 @@ pd.DataFrame() <span class="kw">→</span> <span class="str">"DataFrame"</span><
       <tr>
         <td><span class="leaf">pt-abdc058f</span><br><span style="font-size:11.5px;color:var(--g600)">ctor types across methods · 9 ev.</span></td>
         <td><span class="disp retier">re-tier 5→3</span></td>
-        <td>Real fix is Fix C (a Python capture-handler change), <b>not</b> the "new cross-folder flow-tracking pass" the leaf describes — per-class attribute typing already exists. Two rows (<code>Categorical()</code>-into-local, Cython-<code>object</code> <code>self.obj</code>) don't reproduce → left to interim classifier.</td>
+        <td>Real fix is Fix C (a Python capture-handler change), <b>not</b> the "new cross-folder flow-tracking pass" the leaf describes — per-class attribute typing already exists. Two rows (<code>Categorical()</code>-into-local, Cython-<code>object</code> <code>self.obj</code>) don't reproduce → the Cython-<code>object</code> <code>self.obj</code> row goes to the interim classifier (TASK-350.3); the fixture-injected <code>Styler</code> row is deferred to TASK-350.4.</td>
         <td><span class="fixtag C">C</span></td>
       </tr>
       <tr>
         <td><span class="leaf">pt-af4f58c1</span><br><span style="font-size:11.5px;color:var(--g600)">interim classifier · is_classifier_work</span></td>
         <td><span class="disp retire">mostly retire</span></td>
-        <td>Builtin <code>check_receiver-type-unknown.ts</code> already covers the JS identifier-receiver shape. With A–C landed, only <b>two residual pandas rows</b> remain (fixture-injected <code>Styler</code>, Cython-<code>object</code> <code>self.obj</code>). Author the interim classifier for those two only — not the 30+ the core fixes resolve.</td>
+        <td>Builtin <code>check_receiver-type-unknown.ts</code> already covers the JS identifier-receiver shape. With A–C landed, two residual pandas rows remain (fixture-injected <code>Styler</code>, Cython-<code>object</code> <code>self.obj</code>). The interim classifier covers only the Cython-<code>object</code> <code>self.obj</code> row — not the 30+ the core fixes resolve; the fixture-injected <code>Styler</code> row is a different diagnostic shape, deferred to TASK-350.4. <b>(TASK-350.3 — see its design page below.)</b></td>
         <td><span class="fixtag none">2</span></td>
       </tr>
       <tr>
@@ -388,6 +389,7 @@ pd.DataFrame() <span class="kw">→</span> <span class="str">"DataFrame"</span><
       <tr><td><span class="fixtag A">1</span></td><td>Fix A · typescript.scm</td><td><div class="effort"><div class="bar"><i class="lo" style="width:50%"></i></div><span class="barlab">3 · smallest</span></div></td><td>≈11 members · highest count, land first</td></tr>
       <tr><td><span class="fixtag B">2</span></td><td>Fix B · JS JSDoc <code>@param</code></td><td><div class="effort"><div class="bar"><i class="lo" style="width:55%"></i></div><span class="barlab">~3</span></div></td><td>11 webpack members</td></tr>
       <tr><td><span class="fixtag C">3</span></td><td>Fix C · Python self-attr</td><td><div class="effort"><div class="bar"><i class="md" style="width:62%"></i></div><span class="barlab">~3 (was 5)</span></div></td><td>pandas cluster + verify celery/sqlalchemy/django</td></tr>
+      <tr><td><span class="fixtag none">4</span></td><td>350.3 · interim classifier</td><td><div class="effort"><div class="bar"><i class="lo" style="width:45%"></i></div><span class="barlab">low · last</span></div></td><td>self-narrowing builtin for the <code>self.obj._set_value</code> row (Shape I → 350.4)</td></tr>
     </tbody>
   </table>
 
@@ -396,13 +398,13 @@ pd.DataFrame() <span class="kw">→</span> <span class="str">"DataFrame"</span><
 
   <div class="callout slate">
     <span class="k">Decision framing</span>
-    <p><b>Benefit:</b> clears <b>34</b> observed false unreachable-function flags across <b>8</b> projects — roughly <b>28 members</b> resolved by core fixes alone, the rest by the existing builtin and a narrowed two-row interim classifier.</p>
+    <p><b>Benefit:</b> clears <b>34</b> observed false unreachable-function flags across <b>8</b> projects — roughly <b>28 members</b> resolved by core fixes alone, the rest by the existing builtin and a narrowed interim classifier on the residual self-attribute row.</p>
     <p><b>Cost:</b> three small, independent, additive indexing-feeder edits — <b>no resolver change, no data-model change, no cross-folder pass.</b> Effort sits at the <b>low end (3)</b> for A and B; C re-tiers down from 5 to ~3. No deletions required.</p>
     <div class="rank">
       <div><span class="lab">Benefit</span>34 FPs · 8 projects · ~28 members</div>
       <div><span class="lab">Cost</span>effort 3–5 · 3 files · all additive</div>
       <div><span class="lab">Risk</span>low — additive captures, regression-guarded</div>
-      <div><span class="lab">Arm split</span>3 core fixes + 1 two-row interim classifier</div>
+      <div><span class="lab">Arm split</span>3 core fixes + 1 interim classifier (Shape I → 350.4)</div>
     </div>
   </div>
 
@@ -413,7 +415,7 @@ pd.DataFrame() <span class="kw">→</span> <span class="str">"DataFrame"</span><
 
   <div class="callout rust">
     <span class="k">What this does NOT cover</span>
-    <p>Two residual pandas rows (fixture-injected <code>Styler</code>, Cython-<code>object</code> <code>self.obj</code>) stay false until a narrowed interim classifier is authored. The tokio index-operator row is a <b>different fault area</b> (syntactic extraction) and grounds no work here.</p>
+    <p>The Cython-<code>object</code> <code>self.obj</code> row stays false until the narrowed interim classifier (TASK-350.3, now Done) is authored. The fixture-injected <code>Styler</code> row is a different diagnostic shape, deferred to TASK-350.4. The tokio index-operator row is a <b>different fault area</b> (syntactic extraction) and grounds no work here.</p>
   </div>
 
   <footer>

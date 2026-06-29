@@ -96,8 +96,11 @@ class Loader:
     });
 
     const enriched = enrich(project);
-    // The typed receiver resolves: count gains an incoming edge and never
-    // surfaces as an entry point, so the classifier is never asked about it.
+    // `self.df = DataFrame()` lives in `setup()`, outside `__init__` — the shape
+    // Fix C (TASK-350.2) promotes to a typed property. The typed receiver
+    // resolves: count gains an incoming edge and never surfaces as an entry
+    // point, so the classifier is never asked about it. (Revert Fix C — make
+    // `df` an untyped param — and count reappears as an entry point.)
     expect(enriched.find((e) => e.name === "count")).toBeUndefined();
   });
 

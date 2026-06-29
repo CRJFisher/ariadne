@@ -7,7 +7,8 @@
 // The resolver cannot follow the attribute's type, so it collapses the receiver
 // to the caller's own enclosing class, fails to find the method there, and
 // records `member_type_unknown` with `resolved_receiver_type` pointing at that
-// caller class — so the resolved receiver-type's file equals the call ref's
+// caller class (emitted by the type-inference stage in `receiver_resolution.ts`)
+// — so the resolved receiver-type's file equals the call ref's
 // `caller_file`. That equality is the discriminator: it isolates the
 // receiver-collapsed-to-self case from a typed attribute whose sub-member is
 // unknown (where the resolved type lives in another file).
@@ -39,9 +40,12 @@ export function check_untyped_attribute_receiver(
     if (failure === null || failure.reason !== "member_type_unknown") return false;
     const receiver_type = failure.partial_info.resolved_receiver_type;
     if (receiver_type === undefined) return false;
-    // SymbolId is `kind:file_path:start_line:start_col:end_line:end_col:name`;
-    // segment [1] is the file path (repo SymbolIds carry colon-free POSIX paths).
-    const receiver_file = receiver_type.split(":")[1];
+    // SymbolId is `kind:file_path:start_line:start_col:end_line:end_col:name`.
+    // The 5 trailing fields are fixed-arity, so the file path is everything
+    // between the kind and them — reconstructed by slice so a path that itself
+    // contains a colon (e.g. a Windows drive letter) is not truncated.
+    const parts = receiver_type.split(":");
+    const receiver_file = parts.slice(1, -5).join(":");
     return receiver_file === ref.caller_file;
   });
 }
