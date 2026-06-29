@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tighten the classifier registry to permanent limitations — and close the authoring gap</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --ink:#1f1e1c; --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+
+  /* cross-doc nav (outbound to sub-tasks) */
+  nav.cross{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
+  nav.cross .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.cross .brand{font-family:var(--mono);font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.cross a, nav.cross .pending, nav.cross .me{font-family:var(--mono);font-size:11px;text-decoration:none;border-radius:999px;padding:3px 10px;border:1px solid var(--g200)}
+  nav.cross a.doc-link{color:var(--g600);background:var(--paper)}
+  nav.cross a.doc-link:hover{border-color:var(--clay);color:var(--slate)}
+  nav.cross .me{color:var(--ivory);background:var(--slate);border-color:var(--slate)}
+  nav.cross .pending{color:var(--g400);background:transparent;border-style:dashed}
+  nav.cross .pending .tag{color:var(--clay);margin-left:6px}
+  nav.cross .pending .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--clay);margin-right:6px;vertical-align:0px}
+
+  /* same-page outline */
+  nav.toc{position:sticky;top:39px;z-index:9;background:var(--paper);border-bottom:1px solid var(--g200);padding:7px 0}
+  nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  nav.toc .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--g400);margin-right:6px}
+  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid transparent;border-radius:999px;padding:3px 9px}
+  nav.toc a:hover{border-color:var(--g200);background:var(--ivory);color:var(--slate)}
+
+  main{width:90%;max-width:1600px;margin:0 auto;padding:28px 0 80px}
+  .prose{max-width:72ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:33px;line-height:1.13;margin:0 0 14px;letter-spacing:-.01em;max-width:26ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:23px;margin:56px 0 4px;letter-spacing:-.01em;scroll-margin-top:96px}
+  h2 .n{font-family:var(--mono);font-size:13px;color:var(--clay);font-weight:600;margin-right:8px}
+  .lead{font-size:16px;color:var(--g600);max-width:82ch;margin:0 0 6px}
+  .lead b{color:var(--slate);font-weight:600}
+  code{font-family:var(--mono);font-size:.85em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .cap{font-size:13.5px;color:var(--g600);margin:9px 2px 16px;max-width:90ch}
+  .cap b{color:var(--slate);font-weight:600}
+
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:18px 0;max-width:94ch}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)}
+  .callout.slate{background:var(--slate);border-left-color:var(--clay)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 6px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)} .callout.slate .k{color:var(--oat)}
+  .callout p{margin:0;font-size:14.5px} .callout.slate p{color:var(--ivory)} .callout.slate b{color:#fff} .callout.slate code{background:#3a3833;color:var(--codeink)}
+
+  /* two-purpose split diagram */
+  .splitwrap svg{width:100%;height:auto;display:block}
+
+  /* registry-at-a-glance: stacked bar chart */
+  .charts{display:grid;grid-template-columns:1fr 1.4fr;gap:20px;margin:14px 0;align-items:stretch}
+  .chartcard{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:16px 18px}
+  .chartcard h3{font-family:var(--serif);font-size:17px;font-weight:600;margin:0 0 2px}
+  .chartcard .ttl{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--g400);margin:0 0 12px}
+  .chartcard svg{width:100%;height:auto;display:block}
+  @media(max-width:840px){ .charts{grid-template-columns:1fr} }
+
+  /* disposition table with magnitude bars */
+  table.disp{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+  table.disp th{text-align:left;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--g400);font-weight:600;padding:7px 10px;border-bottom:1.5px solid var(--g200)}
+  table.disp td{padding:9px 10px;border-bottom:1px solid var(--g100);vertical-align:top}
+  table.disp tr:last-child td{border-bottom:none}
+  .dtag{font-family:var(--mono);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;border-radius:999px;padding:3px 9px;white-space:nowrap;display:inline-block}
+  .dtag.promote{background:rgba(108,122,74,.16);color:var(--olive);border:1px solid rgba(108,122,74,.4)}
+  .dtag.stub{background:rgba(168,71,47,.12);color:var(--rust);border:1px solid rgba(168,71,47,.35)}
+  .dtag.deferred{background:rgba(185,121,79,.14);color:var(--clay);border:1px solid rgba(185,121,79,.4)}
+  .dtag.pending{background:var(--g100);color:var(--g600);border:1px solid var(--g200)}
+  .barcell{min-width:150px}
+  .bar{height:18px;border-radius:5px;display:flex;align-items:center;padding:0 7px;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600}
+  .bar.promote{background:var(--olive)} .bar.stub{background:var(--rust)} .bar.deferred{background:var(--clay)} .bar.pending{background:var(--g400)}
+  .ex{font-family:var(--mono);font-size:11.5px;color:var(--g600);line-height:1.7}
+  .ex code{font-size:1em;background:var(--ivory);border:1px solid var(--g200);padding:1px 5px}
+  .act{font-size:12.5px;color:var(--g600)} .act code{font-size:1em}
+
+  /* before/after lifecycle */
+  .sbs{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0}
+  .panel{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:16px 18px}
+  .panel.aft{border-color:var(--clay);box-shadow:0 0 0 1px rgba(185,121,79,.25)}
+  .panel .ph{display:flex;align-items:baseline;gap:9px;margin:0 0 12px}
+  .panel .ph .tag{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.09em;border-radius:999px;padding:3px 9px}
+  .panel.cur .ph .tag{background:var(--g100);color:var(--g600)}
+  .panel.aft .ph .tag{background:var(--clay);color:var(--ivory)}
+  .panel .ph h3{font-family:var(--serif);font-size:17px;font-weight:600;margin:0;letter-spacing:-.01em}
+  .panel svg{width:100%;height:auto;display:block}
+  @media(max-width:840px){ .sbs{grid-template-columns:1fr} }
+
+  /* status / checklist */
+  .board{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:14px 0}
+  @media(max-width:840px){ .board{grid-template-columns:1fr} }
+  .col{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:14px 16px}
+  .col h3{font-family:var(--serif);font-size:17px;font-weight:600;margin:0 0 2px;display:flex;align-items:center;gap:8px}
+  .col .sub{font-family:var(--mono);font-size:11px;color:var(--g400);margin:0 0 12px}
+  .col.done{border-color:rgba(108,122,74,.5)}
+  .cl{list-style:none;margin:0;padding:0}
+  .cl li{display:grid;grid-template-columns:20px 1fr;gap:9px;align-items:start;padding:6px 0;border-top:1px solid var(--g100);font-size:13px;line-height:1.42}
+  .cl li:first-child{border-top:none}
+  .cl li small{display:block;color:var(--g400);font-family:var(--mono);font-size:10.5px;margin-top:2px}
+  .mark{width:17px;height:17px;border-radius:5px;border:1.5px solid var(--g400);margin-top:2px;position:relative;flex-shrink:0}
+  .mark.on{background:var(--olive);border-color:var(--olive)}
+  .mark.on::after{content:"";position:absolute;left:5px;top:1.5px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(43deg)}
+  .grp{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--clay);margin:14px 0 4px;padding-top:8px;border-top:1px dashed var(--g200)}
+  .grp:first-of-type{border-top:none;padding-top:0;margin-top:6px}
+
+  footer{margin-top:56px;border-top:1px solid var(--g200);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400);line-height:1.7}
+  .legend{display:flex;flex-wrap:wrap;gap:14px 18px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:10px 2px 4px;align-items:center}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,.1)}
+</style>
+</head>
+<body>
+
+<!-- ============ CROSS-DOC NAV ============ -->
+<nav class="cross">
+  <div class="inner">
+    <span class="brand">task 190.30 · classifier scope</span>
+    <span class="me" aria-current="page">190.30 · overview</span>
+    <span class="pending"><span class="dot"></span>190.30.1 · audit &amp; cleanup<span class="tag">not yet generated</span></span>
+    <span class="pending"><span class="dot"></span>190.30.2 · classifier-author<span class="tag">not yet generated</span></span>
+  </div>
+</nav>
+
+<!-- ============ SAME-PAGE OUTLINE ============ -->
+<nav class="toc">
+  <div class="inner">
+    <span class="brand">on this page</span>
+    <a href="#problem">1 · The conflation</a>
+    <a href="#glance">2 · Registry at a glance</a>
+    <a href="#disposition">3 · Disposition plan</a>
+    <a href="#lifecycle">4 · The new lifecycle</a>
+    <a href="#status">5 · Done &amp; remaining</a>
+  </div>
+</nav>
+
+<main>
+<header>
+  <p class="eyebrow">self-healing pipeline · classifier registry</p>
+  <h1>The classifier registry becomes a permanent-limitations catalog — and gains an agent to author its entries</h1>
+  <p class="lead prose">One file (<code>known_issues/registry.json</code>) does two incompatible jobs: it catalogs patterns static analysis can <b>never</b> resolve, and it suppresses triage cost for bugs Ariadne <b>could</b> fix.</p>
+  <p class="lead prose">Task 190.30 splits those jobs apart: keep only the genuinely-impossible patterns, move fixable bugs to the backlog, and add a <code>classifier-author</code> agent so new permanent-limitation entries get a real classifier instead of a never-firing stub.</p>
+  <div class="meta">
+    <span class="chip">registry <strong>180 entries</strong></span>
+    <span class="chip">wip <strong>169 · 94%</strong></span>
+    <span class="chip">never-fire stubs <strong>105</strong></span>
+    <span class="chip">sub-tasks <strong>2</strong></span>
+    <span class="chip">human stays <strong>sole registry writer</strong></span>
+  </div>
+</header>
+
+<!-- ============ 1. THE CONFLATION ============ -->
+<h2 id="problem"><span class="n">01</span>One registry, two jobs that fight each other</h2>
+<p class="cap prose">The same file answers two questions with opposite maintenance rules: <b>"can a static analyzer ever know this?"</b> and <b>"have we fixed this bug yet?"</b> — so 94% of it is unfilled deferred-bug stubs that never fire.</p>
+<div class="splitwrap">
+<svg viewBox="0 0 1000 300" role="img" aria-label="The registry conflates a permanent-limitations catalog with a triage-cost suppressor list, which 190.30 splits into a tight registry plus the backlog.">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5f594f"/>
+    </marker>
+    <marker id="aro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6c7a4a"/>
+    </marker>
+    <marker id="arc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#b9794f"/>
+    </marker>
+  </defs>
+
+  <!-- center: the one registry today -->
+  <rect x="370" y="118" width="260" height="64" rx="10" fill="#2b2a28"/>
+  <text x="500" y="143" text-anchor="middle" fill="#f7f3ec" font-family="ui-serif,Georgia,serif" font-size="16" font-weight="600">registry.json</text>
+  <text x="500" y="164" text-anchor="middle" fill="#e7ddc9" font-family="ui-monospace,Menlo,monospace" font-size="11">180 entries · 94% wip</text>
+
+  <!-- job A: permanent catalog -->
+  <rect x="20" y="40" width="300" height="64" rx="10" fill="#fffdf8" stroke="#6c7a4a" stroke-width="1.5"/>
+  <text x="170" y="64" text-anchor="middle" fill="#2b2a28" font-family="ui-serif,Georgia,serif" font-size="14.5" font-weight="600">Permanent-limitations catalog</text>
+  <text x="170" y="84" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10.5">static analysis can NEVER resolve</text>
+  <path d="M320,80 C345,90 350,110 368,128" fill="none" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#aro)"/>
+
+  <!-- job B: triage suppressor -->
+  <rect x="20" y="196" width="300" height="64" rx="10" fill="#fffdf8" stroke="#a8472f" stroke-width="1.5"/>
+  <text x="170" y="220" text-anchor="middle" fill="#2b2a28" font-family="ui-serif,Georgia,serif" font-size="14.5" font-weight="600">Triage-cost suppressor list</text>
+  <text x="170" y="240" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10.5">deferred bugs Ariadne COULD fix</text>
+  <path d="M320,224 C345,212 350,192 368,172" fill="none" stroke="#a8472f" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arc)"/>
+
+  <!-- arrow to outcome -->
+  <path d="M630,150 L690,150" fill="none" stroke="#5f594f" stroke-width="1.8" marker-end="url(#ar)"/>
+  <text x="660" y="140" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10">190.30</text>
+
+  <!-- outcome A: tight registry -->
+  <rect x="700" y="62" width="280" height="64" rx="10" fill="#fffdf8" stroke="#6c7a4a" stroke-width="2"/>
+  <text x="840" y="86" text-anchor="middle" fill="#2b2a28" font-family="ui-serif,Georgia,serif" font-size="14.5" font-weight="600">Registry = permanent only</text>
+  <text x="840" y="106" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10.5">~14 promoted · all firing</text>
+
+  <!-- outcome B: backlog -->
+  <rect x="700" y="174" width="280" height="64" rx="10" fill="#fffdf8" stroke="#b9794f" stroke-width="2"/>
+  <text x="840" y="198" text-anchor="middle" fill="#2b2a28" font-family="ui-serif,Georgia,serif" font-size="14.5" font-weight="600">Fixable bugs → backlog</text>
+  <text x="840" y="218" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10.5">~155 removed · tracked as tasks</text>
+</svg>
+</div>
+<div class="legend">
+  <span><i style="background:#6c7a4a"></i> permanent limitation (kept / promoted)</span>
+  <span><i style="background:#a8472f"></i> deferred fixable bug (removed)</span>
+  <span><i style="background:#2b2a28"></i> today's conflated registry</span>
+</div>
+<div class="callout rust">
+  <span class="k">the creation gap</span>
+  <p class="prose">No pipeline agent ever <b>authors</b> a classifier: triage emits <code>fp-novel</code> → plan proposes a task → prioritize files a backlog card → the human hand-writes the entire predicate or builtin with no tooling. So 105 entries sit as <code>kind:"none"</code> stubs that never fire.</p>
+</div>
+
+<!-- ============ 2. REGISTRY AT A GLANCE ============ -->
+<h2 id="glance"><span class="n">02</span>Registry at a glance: 94% wip, and most of that never fires</h2>
+<p class="cap prose">Left: the 180 entries by lifecycle status. Right: the 169 <code>wip</code> entries by classifier kind — <b>105 are <code>none</code></b> (plan stubs, never fire), and many <code>builtin</code> entries suppress bugs rather than mark limitations.</p>
+<div class="charts">
+
+  <div class="chartcard">
+    <p class="ttl">180 entries · by status</p>
+    <h3>94% are work-in-progress</h3>
+    <svg viewBox="0 0 380 200" role="img" aria-label="Of 180 registry entries: 169 wip, 9 permanent, 2 fixed.">
+      <!-- wip -->
+      <text x="0" y="38" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">wip</text>
+      <rect x="70" y="24" width="300" height="26" rx="5" fill="#a8472f"/>
+      <text x="84" y="42" font-family="ui-monospace,Menlo,monospace" font-size="12.5" fill="#fff" font-weight="700">169 · 94%</text>
+      <!-- permanent -->
+      <text x="0" y="90" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">permanent</text>
+      <rect x="70" y="76" width="16" height="26" rx="5" fill="#6c7a4a"/>
+      <text x="94" y="94" font-family="ui-monospace,Menlo,monospace" font-size="12.5" fill="#6c7a4a" font-weight="700">9 · 5%</text>
+      <!-- fixed -->
+      <text x="0" y="142" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">fixed</text>
+      <rect x="70" y="128" width="4" height="26" rx="2" fill="#9a9387"/>
+      <text x="84" y="146" font-family="ui-monospace,Menlo,monospace" font-size="12.5" fill="#9a9387" font-weight="700">2 · 1%</text>
+      <line x1="70" y1="170" x2="370" y2="170" stroke="#ddd6c8" stroke-width="1"/>
+      <text x="70" y="188" font-family="ui-monospace,Menlo,monospace" font-size="10.5" fill="#9a9387">0</text>
+      <text x="362" y="188" font-family="ui-monospace,Menlo,monospace" font-size="10.5" fill="#9a9387" text-anchor="end">180</text>
+    </svg>
+  </div>
+
+  <div class="chartcard">
+    <p class="ttl">169 wip entries · by classifier kind</p>
+    <h3>105 stubs that never fire</h3>
+    <svg viewBox="0 0 560 200" role="img" aria-label="Of 169 wip entries: 105 kind none, 61 builtin, 13 predicate. Roughly 30 carry backlog_task links; roughly 14 are impossible-pattern promote candidates.">
+      <!-- none -->
+      <text x="0" y="32" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">none</text>
+      <rect x="90" y="18" width="350" height="24" rx="5" fill="#a8472f"/>
+      <text x="104" y="35" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#fff" font-weight="700">105 · never fires</text>
+      <!-- builtin -->
+      <text x="0" y="74" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">builtin</text>
+      <rect x="90" y="60" width="203" height="24" rx="5" fill="#b9794f"/>
+      <text x="104" y="77" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#fff" font-weight="700">61</text>
+      <!-- predicate -->
+      <text x="0" y="116" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">predicate</text>
+      <rect x="90" y="102" width="43" height="24" rx="5" fill="#6c7a4a"/>
+      <text x="143" y="119" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#6c7a4a" font-weight="700">13</text>
+
+      <!-- annotation band -->
+      <line x1="90" y1="148" x2="540" y2="148" stroke="#ddd6c8" stroke-width="1"/>
+      <circle cx="98" cy="170" r="5" fill="#b9794f"/>
+      <text x="110" y="174" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#5f594f">~30 carry a backlog_task link (deferred bug)</text>
+      <circle cx="98" cy="190" r="5" fill="#6c7a4a"/>
+      <text x="110" y="194" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#5f594f">~14 impossible-pattern promote candidates</text>
+    </svg>
+  </div>
+</div>
+<p class="cap prose">3 classifier kinds: <code>none</code> = stub that never fires · <code>predicate</code> = declarative JSON expression tree (no TS compile) · <code>builtin</code> = named TypeScript <code>check_*.ts</code> function (requires compile).</p>
+
+<!-- ============ 3. DISPOSITION PLAN ============ -->
+<h2 id="disposition"><span class="n">03</span>Entry disposition: ~155 removed, ~14 promoted</h2>
+<p class="cap prose">Every one of the 169 <code>wip</code> entries falls into exactly one bucket. Bar width shows the share of the 169. Short-term coverage loss is accepted — removed suppressors resurface as <code>fp-novel</code> on the next triage run, driving the fix.</p>
+<table class="disp">
+  <thead>
+    <tr><th>Disposition</th><th class="barcell">Count (of 169)</th><th>Example entries</th><th>Action</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="dtag stub">Remove-stub</span></td>
+      <td class="barcell"><div class="bar stub" style="width:96%">105</div></td>
+      <td class="ex">all <code>kind:"none"</code> entries — "Proposed by plan investigator — fill in before enabling"</td>
+      <td class="act">delete in one <code>atomic_update_registry</code> transaction; re-enters via <code>classifier-author</code> if genuinely needed</td>
+    </tr>
+    <tr>
+      <td><span class="dtag deferred">Remove-deferred</span></td>
+      <td class="barcell"><div class="bar deferred" style="width:30%">~30</div></td>
+      <td class="ex"><code>method-call-unresolved</code> (184) · <code>test-file-callers-missed</code> (182) · <code>aliased-re-export</code> (156) · <code>python-module-attribute-call</code> (190.11) · <code>cross-package-call</code> (190.13)</td>
+      <td class="act">delete; fix already tracked by the linked <code>backlog_task</code></td>
+    </tr>
+    <tr>
+      <td><span class="dtag promote">Promote</span></td>
+      <td class="barcell"><div class="bar promote" style="width:14%">~14</div></td>
+      <td class="ex"><code>eval-based-dynamic-dispatch</code> · <code>dynamic-runtime-injection</code> · <code>compiler-generated-dynamic-dispatch</code> · <code>type-cast-dispatch</code> · <code>string-keyed-dispatch</code> · <code>prototype-dispatch</code></td>
+      <td class="act"><code>reconcile-registry --id &lt;group_id&gt; --promote</code> → <code>permanent</code></td>
+    </tr>
+    <tr>
+      <td><span class="dtag pending">Keep-pending</span></td>
+      <td class="barcell"><div class="bar pending" style="width:7%">ambiguous</div></td>
+      <td class="ex">has an authored classifier but evidence for "permanent" is unclear</td>
+      <td class="act">leave as <code>wip</code>, document the ambiguity, revisit after 190.30.2</td>
+    </tr>
+  </tbody>
+</table>
+<div class="callout">
+  <span class="k">after cleanup</span>
+  <p class="prose">Orphaned <code>builtins/check_*.ts</code> files (whose <code>function_name</code> no longer appears in any entry) are deleted and removed from <code>builtins/index.ts</code>; <code>permanent_data.ts</code> is regenerated and <code>permanent_data.sync.test.ts</code> + <code>registry_writers.test.ts</code> pass.</p>
+</div>
+
+<!-- ============ 4. THE NEW LIFECYCLE ============ -->
+<h2 id="lifecycle"><span class="n">04</span>The authoring gap closes: a real classifier instead of a manual stub</h2>
+<p class="cap prose">Left: today, the path dead-ends at a hand-edited registry with no tooling. Right: <code>prioritize --priority permanent</code> dispatches <code>classifier-author</code>, which stages a validated draft the human inserts via <code>reconcile-registry --stage</code>.</p>
+<div class="sbs">
+
+  <div class="panel cur">
+    <div class="ph"><span class="tag">current · broken</span><h3>Falls into a tooling gap</h3></div>
+    <svg viewBox="0 0 420 320" role="img" aria-label="Current flow: triage fp-novel to plan PlanTask to prioritize backlog task, then the human hand-edits registry.json with no tooling.">
+      <defs>
+        <marker id="g1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5f594f"/></marker>
+        <marker id="g1r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a8472f"/></marker>
+      </defs>
+      <rect x="60" y="14" width="300" height="42" rx="9" fill="#fffdf8" stroke="#ddd6c8" stroke-width="1.4"/>
+      <text x="210" y="40" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="12.5">triage → fp-novel</text>
+      <path d="M210,56 L210,80" stroke="#5f594f" stroke-width="1.6" marker-end="url(#g1)"/>
+      <rect x="60" y="82" width="300" height="42" rx="9" fill="#fffdf8" stroke="#ddd6c8" stroke-width="1.4"/>
+      <text x="210" y="108" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="12.5">plan → PlanTask row</text>
+      <path d="M210,124 L210,148" stroke="#5f594f" stroke-width="1.6" marker-end="url(#g1)"/>
+      <rect x="60" y="150" width="300" height="42" rx="9" fill="#fffdf8" stroke="#ddd6c8" stroke-width="1.4"/>
+      <text x="210" y="176" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="12.5">prioritize → backlog task</text>
+      <path d="M210,192 L210,216" stroke="#a8472f" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#g1r)"/>
+      <rect x="55" y="218" width="310" height="46" rx="9" fill="#fbeee9" stroke="#a8472f" stroke-width="1.6"/>
+      <text x="210" y="240" text-anchor="middle" fill="#a8472f" font-family="ui-monospace,Menlo,monospace" font-size="12" font-weight="700">??? human authors by hand</text>
+      <text x="210" y="256" text-anchor="middle" fill="#a8472f" font-family="ui-monospace,Menlo,monospace" font-size="10.5">no tooling · falls in the gap</text>
+      <path d="M210,264 L210,284" stroke="#a8472f" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#g1r)"/>
+      <rect x="90" y="286" width="240" height="28" rx="7" fill="#2b2a28"/>
+      <text x="210" y="305" text-anchor="middle" fill="#e7ddc9" font-family="ui-monospace,Menlo,monospace" font-size="11">registry.json (hand-edited)</text>
+    </svg>
+  </div>
+
+  <div class="panel aft">
+    <div class="ph"><span class="tag">after 190.30.2</span><h3>Agent stages, human inserts</h3></div>
+    <svg viewBox="0 0 420 320" role="img" aria-label="New flow: triage fp-novel permanent-limitation group to plan PlanTask to prioritize priority permanent, which dispatches classifier-author to produce a draft, then human runs reconcile-registry --stage to insert a wip entry with a real classifier, later promoted to permanent.">
+      <defs>
+        <marker id="g2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5f594f"/></marker>
+        <marker id="g2o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6c7a4a"/></marker>
+      </defs>
+      <rect x="60" y="10" width="300" height="38" rx="9" fill="#fffdf8" stroke="#ddd6c8" stroke-width="1.4"/>
+      <text x="210" y="33" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="11.5">triage → fp-novel (permanent)</text>
+      <path d="M210,48 L210,66" stroke="#5f594f" stroke-width="1.6" marker-end="url(#g2)"/>
+      <rect x="60" y="68" width="300" height="38" rx="9" fill="#fffdf8" stroke="#ddd6c8" stroke-width="1.4"/>
+      <text x="210" y="91" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="11.5">plan → PlanTask (classifier work)</text>
+      <path d="M210,106 L210,124" stroke="#5f594f" stroke-width="1.6" marker-end="url(#g2)"/>
+      <rect x="50" y="126" width="320" height="44" rx="9" fill="#fbf2ea" stroke="#b9794f" stroke-width="1.8"/>
+      <text x="210" y="148" text-anchor="middle" fill="#b9794f" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="700">prioritize --priority permanent</text>
+      <text x="210" y="163" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10">dispatches classifier-author agent</text>
+      <path d="M210,170 L210,188" stroke="#b9794f" stroke-width="1.8" marker-end="url(#g2o)"/>
+      <rect x="40" y="190" width="340" height="44" rx="9" fill="#f1f3ea" stroke="#6c7a4a" stroke-width="1.8"/>
+      <text x="210" y="211" text-anchor="middle" fill="#4f5a36" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="700">draft_entry.json + REVIEW.md (+ .ts)</text>
+      <text x="210" y="226" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10">staged · agent never writes registry</text>
+      <path d="M210,234 L210,252" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#g2o)"/>
+      <rect x="50" y="254" width="320" height="36" rx="9" fill="#fffdf8" stroke="#b9794f" stroke-width="1.6"/>
+      <text x="210" y="277" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="11">human: reconcile-registry --stage</text>
+      <path d="M210,290 L210,302" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#g2o)"/>
+      <rect x="70" y="304" width="280" height="14" rx="6" fill="#6c7a4a"/>
+      <text x="210" y="315" text-anchor="middle" fill="#f7f3ec" font-family="ui-monospace,Menlo,monospace" font-size="9.5">wip entry, real classifier → later --promote → permanent</text>
+    </svg>
+  </div>
+</div>
+<div class="callout slate">
+  <span class="k">invariant preserved</span>
+  <p class="prose">The agent only ever produces a <b>staged draft</b>; the human runs <code>reconcile-registry --stage</code>, which validates against the <code>KnownIssue</code> Zod schema and writes through <code>atomic_update_registry</code>. The human stays the registry's sole writer — <code>registry_writers.test.ts</code> still passes.</p>
+</div>
+
+<!-- ============ 5. STATUS ============ -->
+<h2 id="status"><span class="n">05</span>Where this stands: audit done, execution ahead</h2>
+<p class="cap prose">The audit and task design are complete; an unrelated stop-hook cleanup landed alongside. Both sub-tasks are designed but not started.</p>
+<div class="board">
+
+  <div class="col done">
+    <h3><span class="mark on"></span>Done</h3>
+    <p class="sub">audit + design + an adjacent cleanup</p>
+    <ul class="cl">
+      <li><span class="mark on"></span><div>Workflow audit completed<small>180 entries, classify_entry_points, triage · plan · prioritize · reconcile-registry flows</small></div></li>
+      <li><span class="mark on"></span><div>Three task documents written<small>task-190.30 + 190.30.1 + 190.30.2 in backlog/tasks/</small></div></li>
+      <li><span class="mark on"></span><div>Stop-hook fix — 29 anonymous entry points eliminated<small>20 builtin IIFE → hoisted pattern_N · definitions.ts forEach → for…of · project.ts lambdas named</small></div></li>
+      <li><span class="mark on"></span><div>Build + tests green after the cleanup<small>2932 tests pass</small></div></li>
+    </ul>
+  </div>
+
+  <div class="col">
+    <h3><span class="mark"></span>Remaining</h3>
+    <p class="sub">two sub-tasks · not started</p>
+
+    <p class="grp">190.30.1 · registry audit &amp; cleanup</p>
+    <ul class="cl">
+      <li><span class="mark"></span><div>Write disposition script → reviewed JSON map of all 169<small>scratch, not committed · review before any write</small></div></li>
+      <li><span class="mark"></span><div>Promote ~14 via <code>reconcile-registry --promote</code></div></li>
+      <li><span class="mark"></span><div>Bulk-remove stubs + deferred in one <code>atomic_update_registry</code> txn</div></li>
+      <li><span class="mark"></span><div>Delete orphaned <code>check_*.ts</code> + barrel registrations</div></li>
+      <li><span class="mark"></span><div>Regenerate <code>permanent_data.ts</code>; tests pass</div></li>
+      <li><span class="mark"></span><div>Update <code>classifier-lifecycle.md</code> — drop the wip+none stub state</div></li>
+    </ul>
+
+    <p class="grp">190.30.2 · classifier-author agent</p>
+    <ul class="cl">
+      <li><span class="mark"></span><div>Create <code>.claude/agents/classifier-author.md</code><small>scoped tools · prefers predicate over builtin · never writes registry</small></div></li>
+      <li><span class="mark"></span><div>Add <code>--stage &lt;draft&gt;</code> to <code>reconcile_registry.ts</code><small>validate · dedup group_id · check builtin in BUILTIN_CHECKS · dry-run + --apply</small></div></li>
+      <li><span class="mark"></span><div>Cover <code>--stage</code> in <code>reconcile_registry.test.ts</code><small>happy path · dup rejection · missing-builtin rejection</small></div></li>
+      <li><span class="mark"></span><div>Document <code>--priority permanent</code> in prioritize SKILL.md</div></li>
+      <li><span class="mark"></span><div>Update <code>classifier-lifecycle.md</code> — add the draft path</div></li>
+    </ul>
+  </div>
+</div>
+
+<footer>
+  task-190.30 · overview · generated 2026-06-29 · self-contained, no network<br>
+  sources: backlog/tasks/task-190.30{,.1,.2} · .claude/skills/triage/known_issues/registry.json · packages/core/src/classify_entry_points/ · .claude/rules/classifier-lifecycle.md<br>
+  sub-task companions (190.30.1 audit, 190.30.2 classifier-author) not yet generated — request to add
+</footer>
+</main>
+</body>
+</html>
