@@ -434,5 +434,12 @@
 ; super references (for inheritance)
 (super) @reference.super
 
+; Shorthand properties in object literals (e.g., return { fn } or const obj = { fn })
+; emit a variable read so detect_indirect_reachability marks the referenced
+; function as indirectly reachable and removes it from the entry-point set.
+(object
+  (shorthand_property_identifier) @reference.variable
+)
+
 ; General identifier references (catch-all)
 (identifier) @reference.variable

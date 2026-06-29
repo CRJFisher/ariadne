@@ -672,6 +672,59 @@ class MyComponent {
     });
   });
 
+  // TASK-190.28: a method/function name read as a value (field initializer or
+  // shorthand object literal) must emit a variable_reference read so
+  // detect_indirect_reachability can mark the symbol reachable.
+  describe("Variable reads for indirect reachability (TASK-190.28)", () => {
+    it("emits a variable_reference read for a method stored in a class field initializer", () => {
+      const code = `class Engine {
+  private _proc = this.process;
+  process() {
+    return 1;
+  }
+}`;
+      const index = build_index_from_code(code);
+      const reads = index.references
+        .filter((r) => r.kind === "variable_reference" && r.name === "process")
+        .map((r) => ({ kind: r.kind, name: r.name, access_type: r.access_type }));
+      expect(reads).toEqual([
+        { kind: "variable_reference", name: "process", access_type: "read" },
+      ]);
+    });
+
+    it("emits a variable_reference read for a shorthand object-literal property", () => {
+      const code = `function extractValue(s: string) {
+  return s.trim();
+}
+const obj = { extractValue };`;
+      const index = build_index_from_code(code);
+      const reads = index.references
+        .filter((r) => r.kind === "variable_reference" && r.name === "extractValue")
+        .map((r) => ({ kind: r.kind, name: r.name, access_type: r.access_type }));
+      // Two reads: (1) function-name identifier in the declaration (catch-all, definition
+      // site — skipped by detect_indirect_reachability) and (2) shorthand property in
+      // { extractValue } (our new pattern, non-definition site — acted on to mark reachable).
+      expect(reads).toEqual([
+        { kind: "variable_reference", name: "extractValue", access_type: "read" },
+        { kind: "variable_reference", name: "extractValue", access_type: "read" },
+      ]);
+    });
+
+    it("does NOT emit a spurious read from a field initialized via a method call", () => {
+      const code = `class Engine {
+  private _result = this.compute();
+  compute() {
+    return 1;
+  }
+}`;
+      const index = build_index_from_code(code);
+      const reads = index.references
+        .filter((r) => r.kind === "variable_reference" && r.name === "compute")
+        .map((r) => ({ kind: r.kind, name: r.name, access_type: r.access_type }));
+      expect(reads).toEqual([]);
+    });
+  });
+
   describe("Function handling via integration", () => {
     it("should process named function declarations", () => {
       const code = "function greet(name: string): string { return \"Hello \" + name; }";

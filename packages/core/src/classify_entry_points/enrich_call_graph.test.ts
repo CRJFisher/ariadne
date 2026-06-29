@@ -453,6 +453,65 @@ describe("method-as-value indirect reachability (task-348)", () => {
     expect(names).toEqual([]);
   });
 
+  it("TypeScript method stored into a class field initializer leaves the entry points (task-190.28)", async () => {
+    const { project } = await make_project_with({
+      "engine.ts": [
+        "class Engine {",
+        "  private _proc = this.process;",
+        "  process() {",
+        "    return 1;",
+        "  }",
+        "}",
+        "new Engine();",
+        "",
+      ].join("\n"),
+    });
+
+    const names = entry_point_names(project);
+    expect(names).not.toContain("process");
+    expect(names).toEqual([]);
+  });
+
+  it("TypeScript function stored in a shorthand object literal leaves the entry points (task-190.28)", async () => {
+    const { project } = await make_project_with({
+      "extract.ts": [
+        "function extractValue(s: string) {",
+        "  return s.trim();",
+        "}",
+        "const obj = { extractValue };",
+        "",
+      ].join("\n"),
+    });
+
+    const names = entry_point_names(project);
+    expect(names).not.toContain("extractValue");
+    expect(names).toEqual([]);
+  });
+
+  it("a TypeScript method never referenced as a value stays an entry point (task-190.28)", async () => {
+    const { project } = await make_project_with({
+      "widget.ts": [
+        "class Widget {",
+        "  used() {",
+        "    return this.helper();",
+        "  }",
+        "  helper() {",
+        "    return 1;",
+        "  }",
+        "  orphan() {",
+        "    return 2;",
+        "  }",
+        "}",
+        "new Widget().used();",
+        "",
+      ].join("\n"),
+    });
+
+    const names = entry_point_names(project);
+    expect(names).toContain("orphan");
+    expect(names).toEqual(["orphan", "used"]);
+  });
+
   it("named function passed as an argument stays out of the entry points", async () => {
     const { project } = await make_project_with({
       "events.ts": [
