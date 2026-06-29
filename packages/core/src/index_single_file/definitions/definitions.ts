@@ -10,7 +10,6 @@ import {
   type ClassDefinition,
   type DecoratorDefinition,
   type EnumDefinition,
-  type EnumMember,
   type ExportMetadata,
   type FunctionDefinition,
   type ImportDefinition,
@@ -645,11 +644,12 @@ export class DefinitionBuilder {
    * deduped by attribute name within the class.
    *
    * Property symbol_ids are location-based, so the same attribute assigned at
-   * two sites would otherwise emit two PropertyDefinitions. The first assignment
-   * (in capture/document order) wins; a later typed assignment upgrades an
-   * earlier untyped one (`self.df = None` in `__init__`, then
-   * `self.df = pd.DataFrame()` in a sibling method, types `df` as `DataFrame`),
-   * but a typed property is never overwritten.
+   * two sites would otherwise emit two PropertyDefinitions. First-inserted
+   * wins; because definitions are processed in capture order and tree-sitter
+   * yields captures in document order, that is the textually-first assignment.
+   * A later typed assignment upgrades an earlier untyped one (`self.df = None`
+   * in `__init__`, then `self.df = pd.DataFrame()` in a sibling method, types
+   * `df` as `DataFrame`), but a typed property is never overwritten.
    */
   add_inferred_property_to_class(
     class_id: SymbolId,

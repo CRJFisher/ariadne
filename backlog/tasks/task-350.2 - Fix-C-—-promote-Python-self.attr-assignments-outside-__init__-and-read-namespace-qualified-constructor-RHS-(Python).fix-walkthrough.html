@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Comprehension aid for task-350.2 (Fix C — Python self.<attr> promotion outside __init__ + namespace-qualified RHS). AS BUILT — commit d8c8ad1c.
+     Source files read:
+       packages/core/src/index_single_file/query_code_tree/capture_handlers/capture_handlers.python.ts (handle_assignment_property + extract_constructor_rhs_type, ~300-404)
+       packages/core/src/index_single_file/definitions/definitions.ts (DefinitionBuilder.add_inferred_property_to_class, ~654-680)
+       packages/core/src/resolve_references/type_preprocessing/constructor.ts:46-69 (extract_constructor_bindings)
+       tests: capture_handlers.python.test.ts + resolve_references/call_resolution/receiver_resolution.python.integration.test.ts -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fix C — promote self.&lt;attr&gt; outside __init__ and read qualified constructor RHS</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --ink:#1f1e1c; --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  /* cross-doc nav bar */
+  nav.cross{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 0}
+  nav.cross .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.cross .brand{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.cross a, nav.cross .here, nav.cross .pending{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:4px 10px;display:inline-flex;align-items:center;gap:6px}
+  nav.cross a:hover{border-color:var(--clay);color:var(--slate)}
+  nav.cross .here{background:var(--slate);color:var(--ivory);border-color:var(--slate)}
+  nav.cross .pending{color:var(--g400);border-style:dashed;cursor:default}
+  nav.cross .pending .tag{font-size:9px;letter-spacing:.04em}
+  nav.cross .dot{width:7px;height:7px;border-radius:50%;background:var(--olive)}
+  nav.cross .dot.todo{background:var(--clay)} nav.cross .dot.pend{background:var(--g400)}
+  /* in-page outline bar */
+  nav.toc{position:sticky;top:43px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
+  nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.toc .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--g600);margin-right:4px}
+  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:3px 9px}
+  nav.toc a:hover{border-color:var(--clay);color:var(--slate)}
+  main{width:90%;max-width:1600px;margin:0 auto;padding:30px 0 80px}
+  .prose{max-width:74ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:32px;line-height:1.12;margin:0 0 14px;letter-spacing:-.01em;max-width:30ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:23px;margin:54px 0 6px;letter-spacing:-.01em;scroll-margin-top:96px}
+  h3{font-family:var(--mono);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);margin:22px 0 8px}
+  .lead{font-size:16px;color:var(--g600);max-width:80ch;margin:0 0 12px}
+  code{font-family:var(--mono);font-size:.85em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .chip.hot{background:#fbf2ef;border-color:var(--rust)} .chip.hot strong{color:var(--rust)}
+  .chip.good{background:#f2f4ec;border-color:var(--olive)} .chip.good strong{color:var(--olive)}
+  .cap{font-size:13.5px;color:var(--g600);margin:8px 2px 14px;max-width:84ch}
+  .cap b{color:var(--slate);font-weight:600}
+  /* callout */
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:15px 19px;margin:18px 0;max-width:90ch}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)} .callout.slate{border-left-color:var(--slate);background:var(--slate);color:var(--ivory)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 7px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)} .callout.slate .k{color:var(--oat)}
+  .callout p{margin:0 0 6px;font-size:14px} .callout p:last-child{margin:0}
+  .callout.slate code{background:rgba(255,255,255,.12);color:var(--oat)}
+  .callout b{color:var(--slate)} .callout.slate b{color:#fff}
+  /* before/after diagram pair */
+  .ba{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin:14px 0}
+  .ba .panel{background:var(--paper);border:1px solid var(--g200);padding:16px 18px}
+  .ba .panel:first-child{border-radius:var(--r) 0 0 var(--r)} .ba .panel:last-child{border-radius:0 var(--r) var(--r) 0;border-left:none}
+  .ba .arrow{display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--ivory);padding:0 4px;min-width:44px}
+  .ba .arrow .glyph{font-family:var(--serif);font-size:30px;color:var(--clay);line-height:1}
+  .ba .arrow .lab{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--g600);writing-mode:vertical-rl;margin-top:6px}
+  .ba .ptitle{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px}
+  .ba .panel.cur .ptitle{color:var(--rust)} .ba .panel.plan .ptitle{color:var(--olive)}
+  .ba svg{width:100%;height:auto;display:block}
+  @media(max-width:760px){.ba{grid-template-columns:1fr}.ba .panel,.ba .panel:first-child,.ba .panel:last-child{border-radius:var(--r);border-left:1px solid var(--g200);margin-bottom:8px}.ba .arrow{flex-direction:row;padding:4px 0}.ba .arrow .glyph{transform:rotate(90deg)}.ba .arrow .lab{writing-mode:horizontal-tb;margin:0 0 0 8px}}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:12px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,.12)}
+  .legend i.add{background:var(--olive)} .legend i.del{background:var(--rust)} .legend i.mod{background:var(--oat);border-color:var(--clay)} .legend i.same{background:var(--paper);border-color:var(--g400)}
+  /* full-width crux flow */
+  .flowwrap{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:14px 16px;margin:14px 0}
+  .flowwrap svg{width:100%;height:auto;display:block}
+  /* table */
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--g200);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--g600);background:var(--paper)}
+  td code{font-size:.9em}
+  .verdict{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;white-space:nowrap}
+  .verdict::before{content:"";width:11px;height:11px;border-radius:50%;display:inline-block}
+  .verdict.ok{color:var(--olive)} .verdict.ok::before{background:var(--olive)}
+  .verdict.bad{color:var(--rust)} .verdict.bad::before{background:var(--rust)}
+  .verdict.warn{color:var(--clay)} .verdict.warn::before{background:var(--clay)}
+  tr.flagged td{background:#fbf2ef}
+  tr.excl td{background:var(--g100);color:var(--g600)}
+  .disp{font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-radius:999px;padding:3px 9px;display:inline-block;white-space:nowrap}
+  .disp.core{background:#f2f4ec;color:var(--olive)}
+  .disp.exclude{background:var(--slate);color:var(--oat)}
+  /* code panels */
+  .code{background:var(--code);border-radius:9px;padding:11px 14px;margin:0;overflow-x:auto}
+  .code .file-label{font-family:var(--mono);font-size:10px;color:#9a9387;letter-spacing:.05em;display:block;margin:0 0 8px}
+  .code pre{margin:0;font-family:var(--mono);font-size:11.5px;line-height:1.55;color:var(--codeink);white-space:pre}
+  .code .kw{color:#c98a64} .code .str{color:#9bb06a} .code .cm{color:#7d7669} .code .fn{color:#d9c27a} .code .num{color:#c98a64}
+  .code .add{background:rgba(108,122,74,.26);display:inline-block;width:100%}
+  .code .del{background:rgba(168,71,47,.24);display:inline-block;width:100%;text-decoration:line-through;text-decoration-color:rgba(232,225,210,.45)}
+  .code .hl{background:rgba(108,122,74,.30);display:inline-block;width:100%}
+  /* comparison grid */
+  .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:14px 0}
+  @media(max-width:980px){.grid3{grid-template-columns:1fr}}
+  .ocard{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column}
+  .ocard .top{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+  .ocard .num{font-family:var(--mono);font-weight:700;font-size:12px;color:var(--ivory);background:var(--slate);border-radius:6px;padding:2px 8px}
+  .ocard.exist .num{background:var(--g400)} .ocard.new .num{background:var(--olive)} .ocard.mirror .num{background:var(--clay)}
+  .ocard h4{font-family:var(--mono);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin:0;color:var(--slate)}
+  .ocard .rationale{font-size:12.5px;color:var(--g600);margin:10px 0 0}
+  .ocard .rationale b{color:var(--slate)}
+  /* gate cards */
+  .gates{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+  @media(max-width:880px){.gates{grid-template-columns:1fr}}
+  .gate{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);padding:14px 16px}
+  .gate h4{font-family:var(--serif);font-size:16px;font-weight:600;margin:0 0 4px}
+  .gate .sub{font-size:12.5px;color:var(--g600);margin:0 0 10px}
+  .gate .sub b{color:var(--rust)}
+  footer{border-top:1px solid var(--g200);margin-top:60px;padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400)}
+  footer code{background:var(--g100);font-size:11px}
+</style>
+</head>
+<body>
+
+<nav class="cross">
+  <div class="inner">
+    <span class="brand">task-350 · restore receiver types at indexing</span>
+    <a href="task-350 - Restore-lost-receiver-types-at-indexing-time-(TypeScript-optional-ctor-param-properties).overview.html"><span class="dot"></span>parent overview</a>
+    <a href="task-350 - Restore-lost-receiver-types-at-indexing-time-(TypeScript-optional-ctor-param-properties).companion.html"><span class="dot"></span>parent companion</a>
+    <span class="here"><span class="dot"></span>350.2 · Fix C (Python) · shipped</span>
+    <span class="pending"><span class="dot pend"></span>350.1 · Fix B (JS) <span class="tag">no companion</span></span>
+    <span class="pending"><span class="dot pend"></span>350.3 · interim classifier <span class="tag">no companion</span></span>
+  </div>
+</nav>
+
+<nav class="toc">
+  <div class="inner">
+    <span class="brand">On this page</span>
+    <a href="#why">Why a dropped assignment flags a method</a>
+    <a href="#gates">The three gates</a>
+    <a href="#dedup">First-wins &amp; dedup</a>
+    <a href="#qualified">Qualified RHS</a>
+    <a href="#scope">In scope vs excluded</a>
+    <a href="#tests">Tests</a>
+  </div>
+</nav>
+
+<main>
+
+  <p class="eyebrow">task-350.2 · Fix C · Python capture handler · shipped d8c8ad1c</p>
+  <h1>Promote <code>self.&lt;attr&gt;</code> assigned anywhere in a class, and read the type off a namespace-qualified constructor</h1>
+  <p class="lead prose">One handler turns <code>self.X = Constructor()</code> into a typed class property that drives receiver inference. Three gates inside it now admit the pandas cluster: any method body, namespace-qualified constructors, and a CapWords callee check.</p>
+
+  <div class="meta">
+    <span class="chip">file <strong>capture_handlers.python.ts</strong></span>
+    <span class="chip">fn <strong>handle_assignment_property</strong></span>
+    <span class="chip">helper <strong>extract_constructor_rhs_type</strong></span>
+    <span class="chip good">resolves <strong>self.df / self.st</strong></span>
+    <span class="chip hot"><strong>3</strong>&nbsp;gates</span>
+    <span class="chip good"><strong>4/4</strong>&nbsp;integration tests pass</span>
+    <span class="chip"><strong>2</strong>&nbsp;rows excluded → 350.3</span>
+  </div>
+
+  <!-- ============ CRUX: DATA-FLOW CHAIN ============ -->
+  <h2 id="why">Why a dropped assignment becomes a false entry point</h2>
+  <p class="cap prose">The property type built at <b>indexing time</b> is the first link in a chain ending in <b>reachability</b>. Drop the property and every stage starves: no receiver type, no call resolution, the method looks uncalled.</p>
+
+  <div class="flowwrap">
+    <svg viewBox="0 0 1180 240" role="img" aria-label="Data flow: self.df assignment in setup() flows through handle_assignment_property to a class property, to receiver type inference, to call resolution of self.df.method, to reachability. Before the fix the property was dropped and the method became a false entry point; after the fix the type is carried and the method is reachable.">
+      <defs>
+        <marker id="aG" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#6c7a4a"/></marker>
+        <marker id="aR" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#a8472f"/></marker>
+        <marker id="aGr" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#9a9387"/></marker>
+      </defs>
+
+      <!-- source node -->
+      <rect x="14" y="78" width="190" height="84" rx="10" fill="#fff" stroke="#9a9387"/>
+      <text x="109" y="104" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" font-weight="700" fill="#2b2a28">source</text>
+      <text x="109" y="123" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#2b2a28">self.df = DataFrame()</text>
+      <text x="109" y="139" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">in setup(), not __init__</text>
+      <line x1="204" y1="120" x2="238" y2="120" stroke="#9a9387" stroke-width="1.6" marker-end="url(#aGr)"/>
+
+      <!-- handler node (the gates) -->
+      <rect x="240" y="64" width="200" height="112" rx="10" fill="#f4efe6" stroke="#b9794f" stroke-width="1.5"/>
+      <text x="340" y="85" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#8a5a3a">handle_assignment_property</text>
+      <text x="340" y="103" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">gate 1: any direct method body</text>
+      <text x="340" y="118" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">gate 2: last-segment of callee</text>
+      <text x="340" y="133" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">gate 3: callee is CapWords</text>
+      <text x="340" y="155" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#8a5a3a">SHIPPED — all three admit self.df</text>
+
+      <!-- BRANCH SPLIT: before (top) vs after (bottom) -->
+      <!-- before branch -->
+      <line x1="440" y1="100" x2="476" y2="64" stroke="#a8472f" stroke-width="1.6" stroke-dasharray="4 3" marker-end="url(#aR)"/>
+      <text x="450" y="74" font-family="ui-monospace,monospace" font-size="9" fill="#a8472f">before</text>
+      <rect x="478" y="36" width="150" height="50" rx="9" fill="#fbe6df" stroke="#a8472f" stroke-width="1.4"/>
+      <text x="553" y="58" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" font-weight="700" fill="#a8472f">no property built</text>
+      <text x="553" y="73" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#a8472f">class df: (none)</text>
+      <line x1="628" y1="61" x2="664" y2="61" stroke="#a8472f" stroke-width="1.6" marker-end="url(#aR)"/>
+      <rect x="666" y="36" width="158" height="50" rx="9" fill="#fff" stroke="#a8472f"/>
+      <text x="745" y="56" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#a8472f">receiver type = unknown</text>
+      <text x="745" y="71" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">self.df.method() unresolved</text>
+      <line x1="824" y1="61" x2="860" y2="61" stroke="#a8472f" stroke-width="1.6" marker-end="url(#aR)"/>
+      <rect x="862" y="36" width="200" height="50" rx="25" fill="#a8472f"/>
+      <text x="962" y="56" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#fff">FALSE entry point</text>
+      <text x="962" y="71" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#f7d9cf">method flagged unreachable</text>
+
+      <!-- after branch -->
+      <line x1="440" y1="140" x2="476" y2="176" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#aG)"/>
+      <text x="450" y="170" font-family="ui-monospace,monospace" font-size="9" fill="#6c7a4a">shipped</text>
+      <rect x="478" y="154" width="150" height="50" rx="9" fill="#eef1e6" stroke="#6c7a4a" stroke-width="1.4"/>
+      <text x="553" y="176" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" font-weight="700" fill="#3f4a2c">property built</text>
+      <text x="553" y="191" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#3f4a2c">df : DataFrame</text>
+      <line x1="628" y1="179" x2="664" y2="179" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#aG)"/>
+      <rect x="666" y="154" width="158" height="50" rx="9" fill="#fff" stroke="#6c7a4a"/>
+      <text x="745" y="174" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#3f4a2c">receiver type = DataFrame</text>
+      <text x="745" y="189" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">self.df.method() resolves</text>
+      <line x1="824" y1="179" x2="860" y2="179" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#aG)"/>
+      <rect x="862" y="154" width="200" height="50" rx="25" fill="#6c7a4a"/>
+      <text x="962" y="174" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#fff">correctly REACHABLE</text>
+      <text x="962" y="189" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#dfe6cf">no false flag</text>
+
+      <!-- stage band labels -->
+      <text x="109" y="200" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" letter-spacing=".06em" fill="#9a9387">INDEX</text>
+      <text x="340" y="200" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" letter-spacing=".06em" fill="#9a9387">INDEX · capture handler</text>
+      <text x="553" y="226" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" letter-spacing=".06em" fill="#9a9387">REGISTRY</text>
+      <text x="745" y="226" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" letter-spacing=".06em" fill="#9a9387">RESOLVE (unchanged)</text>
+      <text x="962" y="226" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" letter-spacing=".06em" fill="#9a9387">TRACE CALL GRAPH</text>
+    </svg>
+  </div>
+  <div class="legend">
+    <span><i class="del"></i> before — property dropped</span>
+    <span><i class="add"></i> shipped — type carried</span>
+    <span><i class="mod"></i> the handler this task edits</span>
+    <span style="color:var(--olive)">resolve &amp; trace stages are unchanged — only the producer is edited</span>
+  </div>
+
+  <!-- ============ THE THREE GATES (before/after) ============ -->
+  <h2 id="gates">The three gates, before vs shipped</h2>
+  <p class="cap prose">Gate 1 promotes from any direct method body; gate 2 takes the last segment of a qualified callee; gate 3 — added in review — admits only CapWords callees, so a transient call result is never recorded as a declaration. Gates 2 and 3 live in <code>extract_constructor_rhs_type</code>.</p>
+
+  <div class="gates">
+    <div class="gate">
+      <h4>Gate 1 — promote from any direct method body</h4>
+      <p class="sub">Before: <b>assignments outside <code>__init__</code> returned before any property was built.</b> asv benchmarks assign in <code>setup()</code> → zero properties on the class.</p>
+      <div class="ba" style="margin-top:6px">
+        <div class="panel cur" style="padding:12px 13px">
+          <p class="ptitle">Before</p>
+          <div class="code"><span class="file-label">capture_handlers.python.ts (former)</span><pre><span class="cm">// only inside __init__</span>
+<span class="kw">const</span> in_init = enclosing
+  ?.childForFieldName(<span class="str">"name"</span>)
+  ?.text === <span class="str">"__init__"</span>;
+<span class="del"><span class="kw">if</span> (!in_init) <span class="kw">return</span>;  <span class="cm">// drops setup()</span></span></pre></div>
+        </div>
+        <div class="arrow"><span class="glyph">→</span><span class="lab">widen</span></div>
+        <div class="panel plan" style="padding:12px 13px">
+          <p class="ptitle">Shipped</p>
+          <div class="code"><span class="file-label">capture_handlers.python.ts · ~365–389</span><pre><span class="cm">// nearest enclosing function must</span>
+<span class="cm">// sit directly in the class block</span>
+<span class="hl"><span class="kw">if</span> (method_block?.type !== <span class="str">"block"</span> ||</span>
+<span class="hl">  method_block.parent?.type</span>
+<span class="hl">    !== <span class="str">"class_definition"</span>) <span class="kw">return</span>;</span>
+<span class="kw">const</span> in_init = enclosing
+  .childForFieldName(<span class="str">"name"</span>)
+  ?.text === <span class="str">"__init__"</span>;
+<span class="cm">// in_init now only RELAXES the</span>
+<span class="cm">// rhs_type requirement (see gate 3)</span></pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gate">
+      <h4>Gate 2 — last segment of the callee</h4>
+      <p class="sub">Before: <b><code>rhs_type</code> was the function child's whole <code>.text</code></b>. For <code>pd.DataFrame()</code> the child is an <code>attribute</code> node → <code>.text</code> is <code>pd.DataFrame</code>, not <code>DataFrame</code>.</p>
+      <div class="ba" style="margin-top:6px">
+        <div class="panel cur" style="padding:12px 13px">
+          <p class="ptitle">Before</p>
+          <div class="code"><span class="file-label">whole .text of function child</span><pre><span class="del"><span class="kw">const</span> rhs_type =</span>
+<span class="del">  right.childForFieldName(<span class="str">"function"</span>)</span>
+<span class="del">    ?.text;  <span class="cm">// "pd.DataFrame" ✗</span></span></pre></div>
+        </div>
+        <div class="arrow"><span class="glyph">→</span><span class="lab">last seg</span></div>
+        <div class="panel plan" style="padding:12px 13px">
+          <p class="ptitle">Shipped</p>
+          <div class="code"><span class="file-label">extract_constructor_rhs_type · ~321–326</span><pre><span class="kw">const</span> callee =
+  right.childForFieldName(<span class="str">"function"</span>);
+<span class="kw">let</span> name;
+<span class="kw">if</span> (callee?.type === <span class="str">"identifier"</span>)
+  name = callee.text;
+<span class="add"><span class="kw">else if</span> (callee?.type === <span class="str">"attribute"</span>)</span>
+<span class="add">  name = callee</span>
+<span class="add">    .childForFieldName(<span class="str">"attribute"</span>)?.text;</span>
+<span class="cm">// pd.DataFrame() → "DataFrame"</span></pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gate" style="grid-column:1 / -1">
+      <h4>Gate 3 — the callee must be CapWords (added in review)</h4>
+      <p class="sub">Without this, <b>any method-call RHS outside <code>__init__</code> was wrongly promoted as a typed declaration</b> — and via first-wins dedup a bogus type could permanently block a later real constructor.</p>
+      <div class="ba" style="margin-top:6px">
+        <div class="panel cur" style="padding:12px 13px">
+          <p class="ptitle">Hazard it closes</p>
+          <div class="code"><span class="file-label">transient calls misread as constructions</span><pre><span class="del">self.x = helper()       <span class="cm"># promoted ✗</span></span>
+<span class="del">self.x = obj.transform()<span class="cm"># promoted ✗</span></span>
+<span class="del">self.x = self.factory() <span class="cm"># promoted ✗</span></span>
+<span class="cm"># first-wins → blocks a later</span>
+<span class="cm"># real Database() permanently</span></pre></div>
+        </div>
+        <div class="arrow"><span class="glyph">→</span><span class="lab">gate</span></div>
+        <div class="panel plan" style="padding:12px 13px">
+          <p class="ptitle">Shipped — CapWords proxy</p>
+          <div class="code"><span class="file-label">capture_handlers.python.ts · ~305, 327, 389</span><pre><span class="cm">// PEP 8 CapWords ≈ "this is a class"</span>
+<span class="add"><span class="kw">const</span> CONSTRUCTOR_NAME = <span class="str">/^_*[A-Z]/</span>;</span>
+<span class="add"><span class="kw">if</span> (!name ||</span>
+<span class="add">  !CONSTRUCTOR_NAME.test(name))</span>
+<span class="add">  <span class="kw">return</span> <span class="kw">undefined</span>;</span>
+<span class="cm"># Database, DataFrame, _Private ✓</span>
+<span class="cm"># helper, obj.transform, factory ✗</span>
+<span class="hl"><span class="kw">if</span> (!in_init &amp;&amp; rhs_type === undefined)</span>
+<span class="hl">  <span class="kw">return</span>;  <span class="cm">// outside __init__: typed only</span></span></pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="legend">
+    <span><i class="del"></i> removed / former behavior</span>
+    <span><i class="add"></i> added</span>
+    <span><i class="mod"></i> dedupe upgrade (next section)</span>
+    <span style="color:var(--olive)">no cross-file class table exists at indexing — CapWords is the syntactic proxy for a construction</span>
+  </div>
+
+  <div class="callout">
+    <span class="k">Why a syntactic proxy</span>
+    <p>Single-file indexing has <b>no cross-file class table</b> to confirm a callee is a class. PEP 8 CapWords (<code>/^_*[A-Z]/</code>) is the syntactic signal for a construction: <code>Database()</code> and <code>_Private()</code> type the attribute; <code>helper()</code> or <code>obj.transform()</code> stay transient.</p>
+  </div>
+
+  <!-- ============ DEDUP / FIRST-WINS ============ -->
+  <h2 id="dedup">First assignment wins; a typed assignment upgrades an untyped one</h2>
+  <p class="cap prose">Widening gate 1 exposes a hazard: the same attribute is often assigned in several methods. <code>add_inferred_property_to_class</code> keys dedup on the <b>attribute name</b>, not location — so two assignment lines collapse to one property.</p>
+
+  <div class="grid3">
+    <article class="ocard exist">
+      <div class="top"><span class="num">1</span><h4>Keyed by name, not location</h4></div>
+      <div class="code"><span class="file-label">definitions.ts · ~667–669</span><pre><span class="cm">// scan existing props for a name</span>
+<span class="cm">// match, NOT a symbol-id match</span>
+existing = props.find(
+  p =&gt; p.base.name === name);
+self.df = DataFrame()  <span class="cm"># L40</span>
+self.df = other()      <span class="cm"># L58 → same key</span></pre></div>
+      <p class="rationale">Two lines mint two location-based symbol ids, but the name match makes them <b>one property</b> of the class.</p>
+    </article>
+    <article class="ocard new">
+      <div class="top"><span class="num">2</span><h4>First-inserted wins; typed upgrades</h4></div>
+      <div class="code"><span class="file-label">definitions.ts · ~670–678</span><pre><span class="kw">if</span> (!existing)
+  <span class="kw">return</span> add_property(...);  <span class="cm"># first wins</span>
+<span class="hl"><span class="kw">if</span> (existing.type === undefined &amp;&amp;</span>
+<span class="hl">    definition.type !== undefined)</span>
+<span class="hl">  set type = definition.type; <span class="cm"># upgrade</span></span>
+<span class="cm"># a typed RHS is never overwritten</span></pre></div>
+      <p class="rationale">First-inserted (document order) wins. A later <b>typed</b> assignment upgrades an earlier <b>untyped</b> one; an existing typed value is never clobbered.</p>
+    </article>
+    <article class="ocard mirror">
+      <div class="top"><span class="num">✓</span><h4>Probed result</h4></div>
+      <div class="code"><span class="file-label">self.df = None in __init__, then = pd.DataFrame()</span><pre><span class="cm"># __init__:  self.df = None</span>
+<span class="cm">#   → df : (untyped)</span>
+<span class="cm"># setup():   self.df = pd.DataFrame()</span>
+df : DataFrame   <span class="cm"># upgraded ✓</span>
+<span class="cm"># still one property, not two</span></pre></div>
+      <p class="rationale">Verified by unit test: an untyped <code>__init__</code> assignment is later <b>upgraded</b> to <code>DataFrame</code> by a sibling constructor — one property throughout.</p>
+    </article>
+  </div>
+
+  <div class="callout">
+    <span class="k">Promotion scope</span>
+    <p>Promotion is confined to <b>direct method bodies</b> — the nearest enclosing function must sit directly in the class block, so a <code>self.x</code> inside a <b>nested function</b> never leaks into the class. Control-flow blocks (<code>if</code>/<code>for</code>/<code>with</code>/<code>try</code>) inside a method <b>do</b> promote, since the enclosing function is still the method.</p>
+  </div>
+
+  <!-- ============ QUALIFIED RHS — 3-way ============ -->
+  <h2 id="qualified">Namespace-qualified extraction mirrors an existing rule</h2>
+  <p class="cap prose">Taking the last segment of a qualified constructor is not a new idea in this codebase — <code>extract_constructor_bindings</code> already does it for <code>new models.User()</code>. The shipped <code>extract_constructor_rhs_type</code> applies the same last-segment rule on the Python self-attr path.</p>
+
+  <div class="grid3">
+    <article class="ocard exist">
+      <div class="top"><span class="num">A</span><h4>Bare identifier — already handled</h4></div>
+      <div class="code"><pre><span class="cm"># function child = identifier</span>
+self.df = <span class="fn">DataFrame</span>()
+<span class="cm"># callee.text = "DataFrame" ✓</span>
+rhs_type = <span class="str">"DataFrame"</span></pre></div>
+      <p class="rationale">The function child is an <code>identifier</code>; its whole <code>.text</code> is already the type name (and passes the CapWords gate).</p>
+    </article>
+    <article class="ocard new">
+      <div class="top"><span class="num">B</span><h4>Attribute node — this fix</h4></div>
+      <div class="code"><pre><span class="cm"># function child = attribute</span>
+self.df = pd.<span class="fn">DataFrame</span>()
+<span class="cm"># whole .text = "pd.DataFrame" ✗</span>
+<span class="hl">last segment = "DataFrame" ✓</span></pre></div>
+      <p class="rationale">Take the <code>attribute</code> field of the function node — the last segment — exactly as the parallel below already does for <code>new models.User()</code>.</p>
+    </article>
+    <article class="ocard mirror">
+      <div class="top"><span class="num">↔</span><h4>The parallel it mirrors</h4></div>
+      <div class="code"><span class="file-label">type_preprocessing/constructor.ts · 59–65</span><pre><span class="kw">if</span> (ref.property_chain &amp;&amp;
+    ref.property_chain.length &gt; <span class="num">1</span>) {
+  <span class="cm">// ["models","User"] → namespace</span>
+  namespace_qualified.set(key,
+    ref.property_chain);
+} <span class="kw">else</span> {
+  direct.set(key, ref.name); <span class="cm">// "User"</span>
+}</pre></div>
+      <p class="rationale">The constructor-binding extractor already splits qualified from direct and keeps the <b>last segment</b> as the class name. The handler now applies the same shape at indexing.</p>
+    </article>
+  </div>
+
+  <!-- ============ SCOPE vs EXCLUDED ============ -->
+  <h2 id="scope">What the fix resolves, and the two rows left out</h2>
+  <p class="cap prose">The fix carries the constructor-flow members. Two evidence rows are deliberately handed to the narrowed interim classifier in sibling task-350.3 — one because locals already resolve, one because it is genuinely beyond static reach.</p>
+  <table>
+    <thead><tr><th style="width:34%">Evidence shape</th><th style="width:12%">Before</th><th>Disposition &amp; reason</th><th style="width:14%">Lands</th></tr></thead>
+    <tbody>
+      <tr><td><code>self.df = DataFrame()</code> in <code>__init__</code></td><td><span class="verdict ok">resolved</span></td><td>Built from the <code>__init__</code> self-assignment — baseline, unchanged.</td><td><span class="disp core">already ok</span></td></tr>
+      <tr class="flagged"><td><code>self.df = DataFrame()</code> in <code>setup()</code></td><td><span class="verdict bad">FLAGGED</span></td><td>Gate 1 dropped it; promotion now fires in any direct method body.</td><td><span class="disp core">Fix C core</span></td></tr>
+      <tr class="flagged"><td><code>self.df = pd.DataFrame()</code> qualified</td><td><span class="verdict bad">FLAGGED</span></td><td>Gate 2 reads the last segment <code>DataFrame</code>; gate 3 confirms it is CapWords.</td><td><span class="disp core">Fix C core</span></td></tr>
+      <tr class="flagged"><td><code>self.df = None</code> then <code>= pd.DataFrame()</code></td><td><span class="verdict warn">untyped</span></td><td>First-wins keeps one property; the typed sibling upgrades the untyped value.</td><td><span class="disp core">Fix C core</span></td></tr>
+      <tr><td><code>self.x = helper()</code> outside <code>__init__</code></td><td><span class="verdict ok">no false type</span></td><td>Gate 3: non-CapWords callee is a transient result, not a declaration — correctly not promoted.</td><td><span class="disp core">Fix C core</span></td></tr>
+      <tr class="excl"><td><code>x = Categorical()</code> into a local &nbsp;<span style="font-family:var(--mono);font-size:10px">test_api.py:387</span></td><td><span class="verdict bad">FLAGGED</span></td><td>Not a <code>self.attr</code> at all — locals already resolve via constructor bindings; nothing for this handler to do.</td><td><span class="disp exclude">350.3 classifier</span></td></tr>
+      <tr class="excl"><td>Cython-<code>object</code> <code>self.obj</code> &nbsp;<span style="font-family:var(--mono);font-size:10px">indexing.py:3171</span></td><td><span class="verdict bad">FLAGGED</span></td><td>RHS type is a Cython object — genuinely out of static reach; no source type to extract.</td><td><span class="disp exclude">350.3 classifier</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout olive">
+    <span class="k">Deliberate non-goals</span>
+    <p>The two classifier rows go to <b>task-350.3</b>. Annotated assignments <code>self.x: T = ...</code> still infer from the RHS, not the annotation (pre-existing behavior, unchanged). celery / ss_cursor get no dedicated fixtures — they are subsumed by this uniform fix.</p>
+  </div>
+
+  <!-- ============ TESTS ============ -->
+  <h2 id="tests">Tests — unit pins the gates, integration proves reachability</h2>
+  <p class="cap prose">Unit tests on the capture handler pin the property output across the gates and the dedup rule; integration tests on the full <code>Project</code> pipeline prove the evidence cases resolve end-to-end. Reverting gate 3 fails all four integration tests.</p>
+  <table>
+    <thead><tr><th style="width:13%">Layer</th><th style="width:34%">Scenario</th><th>Asserts</th></tr></thead>
+    <tbody>
+      <tr><td><span class="disp core">unit</span><br><span style="font-family:var(--mono);font-size:10px;color:var(--g600)">capture_handlers.python.test.ts</span></td><td><code>self.attr = Constructor()</code> outside <code>__init__</code></td><td>class gets the property with <code>type: "Constructor"</code> — gate 1 widened.</td></tr>
+      <tr><td><span class="disp core">unit</span></td><td><code>self.attr = ns.Constructor()</code></td><td>property <code>type</code> is the last segment — gate 2, in and out of <code>__init__</code>.</td></tr>
+      <tr><td><span class="disp core">unit</span></td><td><code>self.attr = lowercase_call()</code> &amp; plain-string RHS outside <code>__init__</code></td><td><b>no</b> property created — gate 3 rejects non-CapWords callees.</td></tr>
+      <tr><td><span class="disp core">unit</span></td><td><code>self.df</code> assigned in two methods; untyped <code>__init__</code> + typed sibling</td><td>exactly one property; first wins, typed upgrades untyped — dedup.</td></tr>
+      <tr><td><span class="disp core">unit</span></td><td>constructor nested in <code>if</code>/<code>for</code>/<code>with</code> vs in a nested function</td><td>control-flow blocks promote; a nested function does <b>not</b> — promotion scope.</td></tr>
+      <tr><td><span class="disp core">integration</span><br><span style="font-family:var(--mono);font-size:10px;color:var(--g600)">receiver_resolution.python.integration.test.ts</span></td><td><code>self.attr = Constructor()</code> in <code>setup()</code>, member called in a sibling</td><td>the sibling-method call is reachable; the member is <b>not</b> a false entry point.</td></tr>
+      <tr><td><span class="disp core">integration</span></td><td><code>self.df.head()</code> in a sibling</td><td>resolves to exactly <code>DataFrame.head</code> — the precise target.</td></tr>
+      <tr><td><span class="disp core">integration</span></td><td>namespace-qualified <code>self.attr = ns.Constructor()</code></td><td>resolves via the last segment; member reaches its target.</td></tr>
+      <tr><td><span class="disp core">integration</span></td><td>attr assigned across multiple methods</td><td>one property; the member resolves once — no duplication.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout olive">
+    <span class="k">Scope of the change</span>
+    <p>One capture-handler change plus its builder dedup — <b>no resolver, bindings, constructor, member, or schema edit.</b> Incidental to satisfy a 32KB file-size hook: the <code>*BuilderState</code> interfaces moved to <code>builder_state.ts</code>, and the loop/comprehension/with/except variable handlers moved to <code>loop_variable_handlers.python.ts</code>.</p>
+  </div>
+
+  <footer>
+    task-350.2 · Fix C (Python) · shipped <code>d8c8ad1c</code> &nbsp;·&nbsp; producer: <code>capture_handlers.python.ts · handle_assignment_property</code> + <code>extract_constructor_rhs_type</code> &nbsp;·&nbsp; dedup: <code>definitions.ts · add_inferred_property_to_class</code> &nbsp;·&nbsp; mirrors <code>type_preprocessing/constructor.ts:59-65</code> &nbsp;·&nbsp; parent task-350 · siblings 350.1 / 350.3
+  </footer>
+
+</main>
+</body>
+</html>

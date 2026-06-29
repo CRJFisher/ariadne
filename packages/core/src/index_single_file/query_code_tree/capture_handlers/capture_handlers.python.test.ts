@@ -2463,6 +2463,8 @@ class Service:
     });
 
     it("should extract last-segment type for self.attr = ns.Constructor() outside __init__", async () => {
+      // The namespace (pd) is never resolved — only the trailing constructor
+      // segment becomes the type.
       const code = `
 class Loader:
     def setup(self):
@@ -2564,6 +2566,41 @@ class Service:
       expect(service_class).toBeDefined();
       const db_prop = service_class!.properties.find(p => p.name === "db");
       expect(db_prop).toBeUndefined();
+    });
+
+    it("should NOT promote self.attr = lowercase_call() outside __init__ (not a constructor)", async () => {
+      const code = `
+class Service:
+    def setup(self):
+        self.tmp = helper()
+        self.client = self.factory()
+`;
+
+      const index = await build_index_from_code(code);
+      const service_class = Array.from(index.classes.values()).find(c => c.name === "Service");
+
+      expect(service_class).toBeDefined();
+      // A non-constructor call result is a transient value, not a declaration
+      expect(service_class!.properties.find(p => p.name === "tmp")).toBeUndefined();
+      expect(service_class!.properties.find(p => p.name === "client")).toBeUndefined();
+    });
+
+    it("should promote self.attr = Constructor() nested in control-flow blocks within a method", async () => {
+      const code = `
+class Service:
+    def setup(self, flag):
+        if flag:
+            self.db = Database()
+        for x in range(3):
+            self.cache = Cache()
+`;
+
+      const index = await build_index_from_code(code);
+      const service_class = Array.from(index.classes.values()).find(c => c.name === "Service");
+
+      expect(service_class).toBeDefined();
+      expect(service_class!.properties.find(p => p.name === "db")!.type).toBe("Database");
+      expect(service_class!.properties.find(p => p.name === "cache")!.type).toBe("Cache");
     });
 
     it("should create multiple PropertyDefinitions for multiple self assignments in __init__", async () => {

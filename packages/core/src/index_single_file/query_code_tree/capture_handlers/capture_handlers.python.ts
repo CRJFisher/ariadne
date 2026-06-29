@@ -297,26 +297,35 @@ export function handle_definition_field(
   }
 }
 
+// A constructor callee is a class name, which Python spells in CapWords
+// (PEP 8), optionally with leading underscores for a private class. This
+// distinguishes `self.x = Database()` (a typed construction) from
+// `self.x = helper()` (a transient call result), since indexing has no
+// cross-file class table to resolve the callee against.
+const CONSTRUCTOR_NAME = /^_*[A-Z]/;
+
 /**
  * Extract the constructed type from an assignment's right-hand side.
  *
  * `self.x = Database()` yields `Database` from the bare-identifier callee;
  * `self.x = pd.DataFrame()` yields the last segment `DataFrame` from the
- * namespace-qualified attribute callee (mirroring how constructor bindings
- * resolve `new models.User()` to `User`). Any non-constructor RHS yields
- * `undefined`.
+ * namespace-qualified attribute callee — the same last-segment rule
+ * `extract_constructor_bindings` applies to namespace-qualified constructors.
+ * A call whose callee is not CapWords (e.g. `helper()`, `obj.transform()`) is
+ * a plain call result, not a construction, and yields `undefined`.
  */
 function extract_constructor_rhs_type(
   right: SyntaxNode | null
 ): SymbolName | undefined {
   if (right?.type !== "call") return undefined;
   const callee = right.childForFieldName("function");
-  if (!callee) return undefined;
-  if (callee.type === "identifier") return callee.text as SymbolName;
-  if (callee.type === "attribute") {
-    return callee.childForFieldName("attribute")?.text as SymbolName | undefined;
+  let name: string | undefined;
+  if (callee?.type === "identifier") name = callee.text;
+  else if (callee?.type === "attribute") {
+    name = callee.childForFieldName("attribute")?.text;
   }
-  return undefined;
+  if (!name || !CONSTRUCTOR_NAME.test(name)) return undefined;
+  return name as SymbolName;
 }
 
 /**
@@ -328,12 +337,12 @@ function extract_constructor_rhs_type(
  * patterns; this handler keeps only `self.X = ...` assignments in a direct
  * method body of the class.
  *
- * Inside `__init__`, every `self.X` is promoted (typed or not) — the canonical
- * declaration site. Outside `__init__`, only constructor/typed RHS assignments
- * promote; an untyped transient mutation in an arbitrary method is not a
+ * Inside `__init__`, every distinct attribute is promoted (typed or not) — the
+ * canonical declaration site. Outside `__init__`, only a constructor RHS
+ * promotes; an untyped transient mutation in an arbitrary method is not a
  * declaration. Promotion is deduped by attribute name (see
- * `add_inferred_property_to_class`): the first assignment wins and a later
- * typed assignment upgrades an earlier untyped one.
+ * `add_inferred_property_to_class`): the first assignment of an attribute wins
+ * and a later typed assignment upgrades an earlier untyped one.
  */
 export function handle_assignment_property(
   capture: CaptureNode,

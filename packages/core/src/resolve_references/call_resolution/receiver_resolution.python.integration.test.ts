@@ -1,9 +1,10 @@
 /**
- * Integration tests for Python submodule import call resolution
+ * Integration tests for Python call resolution through the full pipeline.
  *
- * Verifies that `from package import module; module.function()` calls resolve
- * correctly through the full resolution pipeline when the named import refers
- * to a submodule file rather than an explicit export.
+ * Covers submodule import resolution (`from package import module;
+ * module.function()` where the named import is a submodule file) and
+ * receiver-type inference from `self.<attr>` constructor-flow assignments
+ * (a member called on a constructor-typed attribute resolves and is reachable).
  */
 
 import { describe, it, expect, afterAll } from "vitest";
