@@ -109,8 +109,9 @@ Always invoke with `node --import tsx`. Never `pnpm exec tsx` or `npx tsx`
 
 5. **Promote (separate, deliberate).** To make a rule `permanent`, name it
    and pass `--promote`. The script refuses a rule whose `classifier.kind` is
-   `"none"` or `"retired"` (core cannot load an unclassified permanent rule) or
-   that is already `permanent` — refusals exit zero and report in
+   `"none"` (no classifier to bundle) or `"retired"` (a deactivated classifier
+   whose source is deleted — promoting it would resurrect a rule the human
+   retired), or that is already `permanent` — refusals exit zero and report in
    `rejected_promotions` with the reason. Accepted promotions flip the
    status, then the bundled core slice syncs via `generate_permanent_data.ts`
    on **every** `--promote` invocation (accepted or not), so a crash between
@@ -134,7 +135,7 @@ Always invoke with `node --import tsx`. Never `pnpm exec tsx` or `npx tsx`
 | `--id <group_id>` | exact rules (repeatable). As a **selector** (alone or with `--fixed`/`--drift`) it **overrides** the signal filters — both signals are scanned and only the named rules' proposals survive; ids matching no proposal report in `missing_ids` |
 | `--id ... --fixed --reason "<text>"` | **name-mode**: flip the named `wip` rows to `fixed` directly, no detection — for fixes that landed under a task other than the rule's `backlog_task`. Converts each row's classifier to the `retired` kind. `--reason` required; cannot combine with `--drift`; non-`wip` named rule is a no-op; unknown id reports in `missing_ids` |
 | `--id ... --promote` | name rules directly (no detection); flip them to `permanent` and sync the slice |
-| `--reason "<text>"` | required with name-mode (`--id ... --fixed`); the retirement audit line, since no commit subject is cited. Rejected with `--promote` or auto `--fixed`/`--drift` |
+| `--reason "<text>"` | valid ONLY with name-mode (`--fixed` and `--id` together), where it is required; the retirement audit line, since no commit subject is cited. Any other combination is rejected |
 
 `--id` has three modes. As a **selector** (alone or with `--fixed`/`--drift`)
 it overrides the signal filters and narrows the detected proposals to the
@@ -154,7 +155,7 @@ The script's only stdout is one JSON summary:
 | `proposals`               | the changeset, grouped by transition (`wip_to_fixed`, `wip_to_fixed_by_name`, `drift_detected`, `promote_to_permanent`)             |
 | `applied`                 | a registry write happened. `false` under `--dry-run`, when nothing was proposed, and when the fold was byte-identical (idempotent re-run) |
 | `permanent_slice_changed` | core's `permanent_data.ts` differs from a fresh render — rewritten on a real `--promote`, reported-only under `--dry-run` (rendered from the would-be-promoted rules) |
-| `missing_ids`             | `--id` values matching no proposal (selector mode) or no rule (`--promote` mode)                                                    |
+| `missing_ids`             | `--id` values matching no proposal (selector mode) or no rule (`--promote` / name-mode `--fixed`)                                   |
 | `rejected_promotions`     | `--promote` targets refused, with the reason (`classifier.kind` is `"none"` or `"retired"`, or already permanent)                   |
 | `drift_unknown_rule_ids`  | published `rule_id`s with no registry rule — review signals, never writes                                                           |
 | `skipped_sources`         | published files that failed to read or parse (e.g. a stale schema version) — reported, never fatal                                  |

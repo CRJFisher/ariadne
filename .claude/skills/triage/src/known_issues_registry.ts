@@ -197,6 +197,17 @@ function validate_entry(entry: unknown, at: string): asserts entry is KnownIssue
 
   validate_optional_rollup_fields(record, at_id);
 
+  // A `retired` classifier marks a rule whose bug is fixed, so it is only
+  // coherent on a `fixed` row — the name-mode writer always produces the two
+  // together. Reject a retired classifier on any other status; otherwise it
+  // would enter the active set and sit silently inert.
+  const classifier_record = record["classifier"] as { kind?: unknown };
+  if (classifier_record.kind === "retired" && record["status"] !== "fixed") {
+    throw new RegistryValidationError(
+      `${at_id}.classifier: kind="retired" requires status="fixed" (got status="${String(record["status"])}")`,
+    );
+  }
+
   // Evidence gate: a wip entry that carries an authored classifier must have
   // fired in a real triage run (observed_count >= 1). Every authored wip entry
   // is drafted from a novel group that crossed the promotion threshold, so it

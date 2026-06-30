@@ -1,7 +1,7 @@
 ---
 id: TASK-190.29
 title: "Close the human-directed registry-write gap: sanctioned agent path + reconcile --fixed name-mode"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-06-28 00:00"
 labels:
@@ -117,10 +117,64 @@ ad-hoc writer.
 
 <!-- AC:BEGIN -->
 
-- [ ] `reconcile_registry.ts` supports `--id <group_id>... --fixed` direct-name mode that flips named `wip` rules to `fixed` independent of git-log `backlog_task` matching, through the single `atomic_update_registry` transaction.
-- [ ] `reconcile_registry.test.ts` covers the name-mode: named `wip` flip applies, non-`wip` named rule is a no-op, unknown id reported in `missing_ids`; `registry_writers.test.ts` stays green.
-- [ ] A documented decision on whether the name-mode also drops a deleted builtin's classifier to `none`, with the chosen behavior implemented or the human-step stated in the rules doc.
-- [ ] `.claude/rules/classifier-lifecycle.md` (and the relevant skill docs) state the canonical hand-off: agents route human-directed registry transitions through a printed `reconcile-registry` command, never a bespoke registry writer, and note the self-modification classifier interaction.
-- [ ] An explicit, recorded decision on the permission scope (default: no broad allow-rule for registry writes).
+- [x] `reconcile_registry.ts` supports `--id <group_id>... --fixed` direct-name mode that flips named `wip` rules to `fixed` independent of git-log `backlog_task` matching, through the single `atomic_update_registry` transaction.
+- [x] `reconcile_registry.test.ts` covers the name-mode: named `wip` flip applies, non-`wip` named rule is a no-op, unknown id reported in `missing_ids`; `registry_writers.test.ts` stays green.
+- [x] A documented decision on whether the name-mode also drops a deleted builtin's classifier to `none`, with the chosen behavior implemented or the human-step stated in the rules doc. (Resolved: name-mode converts a real classifier to a structured `retired` marker — preserving the former spec — rather than collapsing to `none`.)
+- [x] `.claude/rules/classifier-lifecycle.md` (and the relevant skill docs) state the canonical hand-off: agents route human-directed registry transitions through a printed `reconcile-registry` command, never a bespoke registry writer, and note the self-modification classifier interaction.
+- [x] An explicit, recorded decision on the permission scope (default: no broad allow-rule for registry writes).
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+A classifier-registry rule is retired when the Ariadne bug it cataloged is fixed
+or subsumed. TASK-348.2 showed this transition had no sanctioned path: the
+harness self-modification classifier blocks any agent write to `registry.json`
+even under explicit in-session authorization, and `reconcile-registry`'s
+auto `wip → fixed` detector only fires when a fix-bearing commit's scope matches
+the rule's `backlog_task` — which misses the common case where the subsuming fix
+lands under a different task. The human was left to hand-run an ad-hoc script.
+
+The fix is a direct-name reconcile mode that mirrors `--promote`:
+`reconcile_registry.ts --id <group_id>... --fixed --reason "<text>"` flips the
+named `wip` rules to `fixed` without git-log matching, through the same single
+`atomic_update_registry` transaction. Retirement is recorded losslessly: a real
+classifier becomes the new structured `ClassifierSpec` variant
+`{ kind: "retired", from: <former predicate|builtin spec>, reason }`. The marker
+is `retired` rather than `none` because `none` means "unfilled stub awaiting
+authoring" — overloading it would collide the mechanism axis with a lifecycle
+state. `status` carries the lifecycle (`fixed`); the classifier stays honest
+about mechanism while preserving the former spec for audit. A retired rule never
+fires: it is excluded from the active classification set and from the permanent
+slice (both `select_permanent_slice_rules` and core's `validate_permanent_slice`
+enforce a `predicate|builtin` allowlist), so its `from.function_name` may safely
+name a builtin source file the retirement deleted.
+
+The workflow gap is closed by contract, not by code: agents never write the
+registry. When an agent flow needs a transition it does the code-side work
+(delete the retired builtin's file, drop it from the `BUILTIN_CHECKS` barrel),
+then **stops and prints the one `reconcile_registry.ts` command** for the human
+to run. No broad Bash allow-rule is added for registry writes — that would weaken
+the self-modification safeguard; the single printed command is the accepted cost
+of keeping the human the literal writer.
+
+**Navigation.** `.claude/rules/classifier-lifecycle.md` is the contract (the
+sanctioned hand-off, the permission decision, the `retired` lifecycle state).
+The capability lives in `.claude/skills/triage/scripts/reconcile_registry.ts`:
+`parse_argv` computes and guards `name_mode`, `run()` has the name-mode branch,
+and `fold_proposals` performs the retirement. The `retired` type and the
+permanent-slice allowlist are in `packages/types/src/known_issues.ts`; the
+registry validator's `retired` case (and its `retired ⟹ status:"fixed"` guard)
+is in `.claude/skills/triage/src/known_issues_registry.ts`;
+`.claude/skills/reconcile-registry/SKILL.md` documents the selector.
+
+**What to know.** `--reason` is mandatory in name-mode and rejected everywhere
+else; auto `--fixed` (no `--id`) is unchanged and status-only. The CLI is not
+backward-compatible: `--fixed --id X` without `--reason` now errors (previously a
+selector). Retirements predating this mechanism (the two TASK-348.2 rows) remain
+`fixed`/`none` — `retired` is the go-forward shape; back-filling them needs the
+deleted builtins' former `min_confidence`, recoverable only from git, and was
+left out of scope. A non-`wip` named rule is a silent no-op (no summary signal),
+a deliberate YAGNI call mirrored on the documented selector semantics.

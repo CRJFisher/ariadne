@@ -606,6 +606,7 @@ describe("parse_argv", () => {
       ids: [],
       promote: false,
       reason: null,
+      name_mode: false,
     });
   });
 
@@ -617,6 +618,7 @@ describe("parse_argv", () => {
       ids: ["rule-a", "rule-b"],
       promote: false,
       reason: null,
+      name_mode: false,
     });
   });
 
@@ -628,7 +630,14 @@ describe("parse_argv", () => {
       ids: ["rule-a"],
       promote: false,
       reason: "subsumed by TASK-348",
+      name_mode: true,
     });
+  });
+
+  it("rejects an empty --reason value", () => {
+    expect(() => parse_argv(["--id", "rule-a", "--fixed", "--reason", ""])).toThrowError(
+      /--reason requires a non-empty value/,
+    );
   });
 
   it("rejects name-mode (--id --fixed) without --reason", () => {
@@ -644,16 +653,18 @@ describe("parse_argv", () => {
   it("rejects --reason with --promote (not name-mode)", () => {
     expect(() =>
       parse_argv(["--id", "rule-a", "--promote", "--reason", "x"]),
-    ).toThrowError(/--reason is only valid/);
+    ).toThrowError(/--reason is valid only with name-mode/);
   });
 
   it("rejects --reason on a bare auto --fixed run (no --id)", () => {
-    expect(() => parse_argv(["--fixed", "--reason", "x"])).toThrowError(/--reason is only valid/);
+    expect(() => parse_argv(["--fixed", "--reason", "x"])).toThrowError(
+      /--reason is valid only with name-mode/,
+    );
   });
 
   it("rejects --reason with no following value", () => {
     expect(() => parse_argv(["--id", "rule-a", "--fixed", "--reason"])).toThrowError(
-      /--reason requires a value/,
+      /--reason requires a non-empty value/,
     );
   });
 

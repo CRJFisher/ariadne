@@ -71,10 +71,11 @@ function assert_permanent_non_none(issue: KnownIssue): void {
         "the slice must filter on status === \"permanent\"",
     );
   }
-  if (issue.classifier.kind === "none") {
+  if (issue.classifier.kind !== "predicate" && issue.classifier.kind !== "builtin") {
     throw new PermanentRegistryError(
-      `bundled slice contains kind:"none" rule "${issue.group_id}" — ` +
-        "the slice must drop unclassified rules",
+      `bundled slice contains kind:"${issue.classifier.kind}" rule "${issue.group_id}" — ` +
+        "the slice must carry only predicate/builtin classifiers (a `none` stub or " +
+        "`retired` rule cannot classify anything)",
     );
   }
 }

@@ -623,6 +623,40 @@ describe("validate_registry — retired classifier", () => {
     expect(() => validate_registry(registry)).toThrow(/from\.kind/);
   });
 
+  it("rejects a nested retired classifier in `from`", () => {
+    const registry = with_first_classifier({
+      kind: "retired",
+      from: {
+        kind: "retired",
+        from: { kind: "builtin", function_name: "check_x", min_confidence: 1 },
+        reason: "inner",
+      },
+      reason: "outer",
+    });
+    expect(() => validate_registry(registry)).toThrow(/from\.kind/);
+  });
+
+  it("rejects a retired classifier whose `from` builtin is malformed", () => {
+    const registry = with_first_classifier({
+      kind: "retired",
+      from: { kind: "builtin", function_name: "", min_confidence: 1 },
+      reason: "x",
+    });
+    expect(() => validate_registry(registry)).toThrow(/function_name/);
+  });
+
+  it("rejects a retired classifier on a non-fixed row", () => {
+    const registry = with_first_classifier(
+      {
+        kind: "retired",
+        from: { kind: "builtin", function_name: "check_x", min_confidence: 1 },
+        reason: "x",
+      },
+      "wip",
+    );
+    expect(() => validate_registry(registry)).toThrow(/requires status="fixed"/);
+  });
+
   it("rejects a retired classifier whose `from` is not an object", () => {
     const registry = with_first_classifier({ kind: "retired", from: "check_x", reason: "x" });
     expect(() => validate_registry(registry)).toThrow(/from/);

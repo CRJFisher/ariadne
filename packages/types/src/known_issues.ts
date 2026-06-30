@@ -215,12 +215,13 @@ export interface KnownIssuesRegistryFile {
 }
 
 /**
- * Select the rules that belong in core's bundled permanent slice: rules that
- * are `status: "permanent"` AND carry a real (predicate|builtin) classifier.
- * `none` (unfilled stub) and `retired` (deleted classifier) rules are dropped —
- * the core loader (`validate_permanent_slice`) cannot load either, and a
- * retired rule names a function that no longer exists. Source order is
- * preserved so regeneration diffs stay minimal.
+ * Select the rules that belong in core's bundled permanent slice: only
+ * `status: "permanent"` rules carrying a real `predicate`/`builtin` classifier
+ * qualify. Every other kind is excluded by construction — a `none` stub has no
+ * classifier and a `retired` rule names a deleted function — which is why the
+ * filter is a positive allowlist rather than a `!== "none"` denylist. The core
+ * loader (`validate_permanent_slice`) enforces the same allowlist at load time.
+ * Source order is preserved so regeneration diffs stay minimal.
  */
 export function select_permanent_slice_rules(
   rules: readonly KnownIssue[],

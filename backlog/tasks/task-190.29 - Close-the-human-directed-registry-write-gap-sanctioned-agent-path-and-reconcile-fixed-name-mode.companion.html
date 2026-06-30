@@ -7,8 +7,12 @@
        .claude/skills/reconcile-registry/SKILL.md  (selectors, workflow, write boundary)
        .claude/rules/classifier-lifecycle.md  (human is sole writer; atomic_update_registry contract; lifecycle transitions)
        packages/core/src/classify_entry_points/builtins/index.ts  (AUTO-GENERATED BUILTIN_CHECKS barrel: imports each builtin by name)
+       packages/types/src/known_issues.ts  (the `retired` ClassifierSpec variant; select_permanent_slice_rules predicate|builtin allowlist)
+       packages/core/src/classify_entry_points/registry_loader.ts  (validate_permanent_slice load-time allowlist guard)
+       .claude/skills/triage/src/known_issues_registry.ts  (validator: retired requires status fixed; builtin-uniqueness ignores a retired from)
        TASK-348.2 / commit 19a1be10 (the retirement that surfaced the gap)
-     Describes the PLANNED change: a --fixed name-mode for reconcile_registry.ts, the sanctioned agent hand-off, and the no-broad-allowlist decision. -->
+     Describes the AS-BUILT system (commit 35f3e4f9 + review-fix changes): a --fixed --reason name-mode for reconcile_registry.ts that
+     retires a real classifier into the structured `retired` marker, the sanctioned agent hand-off, and the no-broad-allowlist decision. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -101,7 +105,8 @@
   /* checklist */
   ul.ck{list-style:none;padding:0;margin:14px 0;max-width:90ch}
   ul.ck li{display:grid;grid-template-columns:22px 1fr;gap:10px;padding:8px 0;border-bottom:1px solid var(--g200);font-size:13.5px;align-items:start}
-  ul.ck .box{width:16px;height:16px;border:2px solid var(--g400);border-radius:4px;margin-top:2px;position:relative;background:transparent}
+  ul.ck .box{width:16px;height:16px;border:2px solid var(--olive);border-radius:4px;margin-top:2px;position:relative;background:var(--olive)}
+  ul.ck .box::after{content:"";position:absolute;left:4px;top:1px;width:5px;height:9px;border:solid var(--ivory);border-width:0 2px 2px 0;transform:rotate(45deg)}
   ul.ck li b{color:var(--slate)}
   footer{border-top:1px solid var(--g200);margin-top:60px;padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400);max-width:90ch}
   footer code{background:var(--g100);font-size:11px}
@@ -125,7 +130,7 @@
     <a href="#gap">The 348.2 gap</a>
     <a href="#handoff">The sanctioned path</a>
     <a href="#matrix">Selector matrix</a>
-    <a href="#decision">Clearing the classifier</a>
+    <a href="#decision">The retired marker</a>
     <a href="#rulestate">Rule through retirement</a>
     <a href="#code">The name-mode branch</a>
     <a href="#perms">Permissions decision</a>
@@ -135,22 +140,23 @@
 
 <main>
 
-  <p class="eyebrow">Classifier-registry lifecycle · sanctioned writer · planned</p>
+  <p class="eyebrow">Classifier-registry lifecycle · sanctioned writer · as-built</p>
   <h1>One sanctioned command for a human-directed registry retirement</h1>
   <p class="lead prose">A legitimate, human-authorized rule retirement in TASK-348.2 had <b>no clean path</b>: the harness blocked the agent's write, and the sanctioned writer <code>reconcile_registry.ts</code> could not express the transition — so the human hand-ran an ad-hoc script.</p>
-  <p class="lead prose">This task adds a <b><code>--id &lt;group_id&gt;… --fixed</code> name-mode</b> to the reconciler and codifies the agent hand-off, turning the retirement into a single command the human runs.</p>
+  <p class="lead prose">This task adds a <b><code>--id &lt;group_id&gt;… --fixed --reason "&lt;text&gt;"</code> name-mode</b> to the reconciler and codifies the agent hand-off, turning the retirement into a single command the human runs.</p>
 
   <div class="meta">
     <span class="chip">parent <strong>TASK-190</strong></span>
     <span class="chip">surfaced by <strong>TASK-348.2</strong></span>
-    <span class="chip">commit <strong>19a1be10</strong></span>
+    <span class="chip">commit <strong>35f3e4f9</strong></span>
     <span class="chip good">+ name-mode</span>
+    <span class="chip good">+ retired marker</span>
     <span class="chip good">+ codified hand-off</span>
     <span class="chip">priority <strong>medium</strong></span>
   </div>
 
   <h2 id="gap">The TASK-348.2 retirement, blocked twice</h2>
-  <p class="cap prose">Retiring two subsumed rows needed one registry edit (<code>wip→fixed</code> AND classifier <code>→none</code>) plus deleting two builtin files. The human authorized it in-session — yet neither sanctioned route worked. <b>Left:</b> what happened. <b>Right:</b> what this task makes happen.</p>
+  <p class="cap prose">Retiring two subsumed rows needed one registry edit (<code>wip→fixed</code> AND retire the classifier) plus deleting two builtin files. The human authorized it in-session — yet neither sanctioned route worked. <b>Left:</b> what happened. <b>Right:</b> what this task makes happen.</p>
 
   <div class="ba">
     <div class="panel cur">
@@ -183,8 +189,8 @@
     </div>
     <div class="arrow"><span class="glyph">→</span><span class="lab">this task</span></div>
     <div class="panel plan">
-      <p class="ptitle">Planned — one sanctioned command</p>
-      <svg viewBox="0 0 360 300" role="img" aria-label="Planned flow: agent does the code-side work, prints the exact reconcile command and stops, the human runs the single command, the agent continues">
+      <p class="ptitle">As built — one sanctioned command</p>
+      <svg viewBox="0 0 360 300" role="img" aria-label="As-built flow: agent does the code-side work, prints the exact reconcile command and stops, the human runs the single command, the agent continues">
         <defs>
           <marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6c7a4a"/></marker>
         </defs>
@@ -195,7 +201,7 @@
 
           <rect x="40" y="90" width="280" height="48" rx="10" fill="#f2f4ec" stroke="#6c7a4a"/>
           <text x="180" y="109" text-anchor="middle" font-size="11" fill="#6c7a4a">agent PRINTS one command · STOPS</text>
-          <text x="180" y="126" text-anchor="middle" font-size="10.5" fill="#2b2a28">reconcile … --id … --fixed</text>
+          <text x="180" y="126" text-anchor="middle" font-size="10.5" fill="#2b2a28">reconcile … --id … --fixed --reason</text>
 
           <rect x="40" y="166" width="280" height="48" rx="10" fill="#e7ddc9" stroke="#b9794f"/>
           <text x="180" y="185" text-anchor="middle" font-size="11" fill="#5f594f">human runs the single command</text>
@@ -245,14 +251,14 @@
     <div class="arrow"><span class="glyph">→</span><span class="lab">add</span></div>
     <div class="panel plan" style="border-radius:var(--r);border-left:1px solid var(--g200)">
       <p class="ptitle">Name-mode — human names the rules directly</p>
-      <svg viewBox="0 0 380 150" role="img" aria-label="Name-mode: the human passes the group ids explicitly with the fixed flag; the named wip rules flip directly with no git-log matching">
+      <svg viewBox="0 0 380 150" role="img" aria-label="Name-mode: the human passes the group ids explicitly with the fixed and reason flags; the named wip rules flip directly with no git-log matching, retiring their classifier">
         <g font-family="ui-monospace,monospace">
           <rect x="40" y="20" width="300" height="44" rx="10" fill="#f2f4ec" stroke="#6c7a4a"/>
-          <text x="190" y="39" text-anchor="middle" font-size="10.5" fill="#6c7a4a">--id &lt;a&gt; --id &lt;b&gt; --fixed</text>
+          <text x="190" y="39" text-anchor="middle" font-size="10.5" fill="#6c7a4a">--id &lt;a&gt; --id &lt;b&gt; --fixed --reason</text>
           <text x="190" y="56" text-anchor="middle" font-size="10.5" fill="#2b2a28">no git-log matching</text>
 
           <rect x="40" y="100" width="300" height="38" rx="10" fill="#f2f4ec" stroke="#6c7a4a"/>
-          <text x="190" y="124" text-anchor="middle" font-size="11" fill="#6c7a4a">named wip rules flip → fixed / none</text>
+          <text x="190" y="124" text-anchor="middle" font-size="11" fill="#6c7a4a">named wip rules flip → fixed + retired</text>
         </g>
         <line x1="190" y1="64" x2="190" y2="99" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#ao)"/>
       </svg>
@@ -260,7 +266,7 @@
   </div>
 
   <h2 id="matrix">Where name-mode sits among the selectors</h2>
-  <p class="cap prose">Name-mode is additive: it mirrors <code>--id --promote</code> (names rules, bypasses detection) but writes <code>fixed</code> instead of <code>permanent</code>. The auto <code>--fixed</code> path (no <code>--id</code>) is unchanged.</p>
+  <p class="cap prose">Name-mode is additive: it mirrors <code>--id --promote</code> (names rules, bypasses detection) but writes <code>fixed</code> + a <code>retired</code> classifier instead of <code>permanent</code>. The auto <code>--fixed</code> path (no <code>--id</code>) is unchanged.</p>
 
   <table>
     <thead>
@@ -268,7 +274,7 @@
         <th>Invocation</th>
         <th class="glyph-cell">Detects via git log?</th>
         <th class="glyph-cell">Names rules directly?</th>
-        <th class="glyph-cell">Clears classifier?</th>
+        <th class="glyph-cell">Retires classifier?</th>
         <th>Writes</th>
       </tr>
     </thead>
@@ -281,11 +287,11 @@
         <td><code>wip → fixed</code></td>
       </tr>
       <tr class="newrow">
-        <td class="mono">--id … --fixed <span class="newtag">new</span></td>
+        <td class="mono">--id … --fixed --reason <span class="newtag">new</span></td>
         <td class="glyph-cell g-no">○ no — bypassed</td>
         <td class="glyph-cell g-yes">● yes</td>
-        <td class="glyph-cell g-yes">● yes — <code>→ none</code></td>
-        <td><code>wip → fixed</code> + classifier <code>→ none</code></td>
+        <td class="glyph-cell g-yes">● yes — <code>→ retired</code></td>
+        <td><code>wip → fixed</code> + classifier <code>→ retired</code></td>
       </tr>
       <tr>
         <td class="mono">--drift</td>
@@ -310,26 +316,27 @@
       </tr>
     </tbody>
   </table>
-  <p class="cap prose"><b>The mirror:</b> name-mode copies <code>--promote</code>'s shape — a per-id branch in <code>run()</code> that takes <code>--id</code> rules directly, with unknown id → <code>missing_ids</code> and a non-<code>wip</code> named rule a silent no-op.</p>
+  <p class="cap prose"><b>The mirror:</b> name-mode copies <code>--promote</code>'s shape — a per-id branch in <code>run()</code> that takes <code>--id</code> rules directly, with unknown id → <code>missing_ids</code> and a non-<code>wip</code> named rule a silent no-op. <b>Guards:</b> name-mode requires <code>--reason</code>, cannot combine with <code>--drift</code>, and <code>--reason</code> is rejected anywhere else.</p>
 
-  <h2 id="decision">The key decision — name-mode also clears the classifier</h2>
+  <h2 id="decision">The key decision — name-mode retires into a structured marker</h2>
   <div class="callout olive">
-    <span class="k">AC #3 · decided</span>
-    <p>Name-mode flips status <b>and</b> sets the rule's <code>classifier</code> to <code>{kind:"none"}</code> in the same <code>atomic_update_registry</code> transaction. One sanctioned command closes the whole retirement — exactly the two registry edits TASK-348.2 made by hand.</p>
+    <span class="k">AC #3 · decided · implemented</span>
+    <p>Name-mode flips status <b>and</b> converts a real <code>predicate</code>/<code>builtin</code> classifier into <code>classifier: { kind: "retired", from: &lt;former spec verbatim&gt;, reason: &lt;--reason text&gt; }</code> in the same <code>atomic_update_registry</code> transaction. One sanctioned command closes the whole retirement — exactly the two registry edits TASK-348.2 made by hand.</p>
   </div>
   <div class="callout rust">
-    <span class="k">Why clearing is required, not optional</span>
-    <p>A <code>fixed</code> rule is dropped from classification entirely (<code>active_rules_for_classification</code> excludes <code>fixed</code>), so its classifier is permanently inert.</p>
-    <p>Worse, a retired <code>kind:"builtin"</code> rule whose implementation file is deleted is a <b>dangling reference</b>: the auto-generated <code>BUILTIN_CHECKS</code> barrel imports each builtin by name, so a deleted file <b>breaks compilation</b>.</p>
+    <span class="k">Why a structured `retired` marker, not `→ none`</span>
+    <p><code>none</code> already means <b>"unfilled stub awaiting authoring"</b>. Reusing it for retirement overloads the mechanism axis with a lifecycle meaning — a retired rule and a never-authored one would be indistinguishable.</p>
+    <p><code>retired</code> preserves the former spec verbatim in <code>from</code> for a <b>lossless, auditable</b> record, and unambiguously signals "deliberately removed, not a stub". <code>status</code> carries the lifecycle (<code>fixed</code>); the classifier stays honest about mechanism.</p>
+    <p>A <code>none</code> stub (no classifier) has nothing to retire, so it stays <code>none</code>.</p>
   </div>
   <div class="callout">
     <span class="k">The asymmetry — and why it is justified</span>
     <p>The auto-detected <code>--fixed</code> path stays <b>status-only</b>: a mechanical stamp reacting to a landed commit, with no signal that an implementation file is being removed.</p>
-    <p>Name-mode is the human deliberately naming rules to retire, so clearing the classifier there is the safe, intended bundling.</p>
+    <p>Name-mode is the human deliberately naming rules to retire, so retiring the classifier there — and recording <code>--reason</code> — is the safe, intended bundling.</p>
   </div>
 
   <h2 id="rulestate">A rule through retirement</h2>
-  <p class="cap prose">The complete retirement spans two surfaces: the registry edit (this command) and the code edit (ordinary agent work). The <code>builtin</code> file and its barrel entry are deleted on the code side; name-mode clears the now-dangling <code>classifier</code> on the registry side.</p>
+  <p class="cap prose">The complete retirement spans two surfaces: the registry edit (this command) and the code edit (ordinary agent work). The <code>builtin</code> file and its barrel entry are deleted on the code side; name-mode retires the former <code>classifier</code> into <code>retired</code> on the registry side, keeping the deleted spec in <code>from</code>.</p>
 
   <div class="ba">
     <div class="panel cur">
@@ -356,24 +363,24 @@
     </div>
     <div class="arrow"><span class="glyph">→</span><span class="lab">retire</span></div>
     <div class="panel plan">
-      <p class="ptitle">Planned — retired, no dangling ref</p>
-      <svg viewBox="0 0 360 200" role="img" aria-label="After: the rule is fixed with classifier none, and the builtin file and barrel entry are deleted; compilation stays clean">
+      <p class="ptitle">As built — retired, no dangling ref</p>
+      <svg viewBox="0 0 360 200" role="img" aria-label="After: the rule is fixed with a retired classifier preserving the former builtin in from, and the builtin file and barrel entry are deleted; compilation stays clean">
         <g font-family="ui-monospace,monospace">
-          <rect x="20" y="14" width="320" height="58" rx="10" fill="#f2f4ec" stroke="#6c7a4a"/>
-          <text x="180" y="34" text-anchor="middle" font-size="10.5" fill="#6c7a4a">registry row · reconcile name-mode</text>
-          <text x="180" y="52" text-anchor="middle" font-size="11.5" fill="#2b2a28">status: fixed</text>
-          <text x="180" y="68" text-anchor="middle" font-size="11.5" fill="#2b2a28">classifier: { kind: "none" }</text>
+          <rect x="20" y="10" width="320" height="66" rx="10" fill="#f2f4ec" stroke="#6c7a4a"/>
+          <text x="180" y="28" text-anchor="middle" font-size="10.5" fill="#6c7a4a">registry row · reconcile name-mode</text>
+          <text x="180" y="45" text-anchor="middle" font-size="11.5" fill="#2b2a28">status: fixed</text>
+          <text x="180" y="62" text-anchor="middle" font-size="10.5" fill="#2b2a28">classifier: { kind: "retired", from, reason }</text>
 
-          <rect x="20" y="96" width="155" height="48" rx="10" fill="#fbf2ef" stroke="#a8472f"/>
-          <text x="97" y="116" text-anchor="middle" font-size="10" fill="#a8472f">builtin file</text>
-          <text x="97" y="133" text-anchor="middle" font-size="10.5" fill="#2b2a28">deleted (code side)</text>
+          <rect x="20" y="98" width="155" height="48" rx="10" fill="#fbf2ef" stroke="#a8472f"/>
+          <text x="97" y="118" text-anchor="middle" font-size="10" fill="#a8472f">builtin file</text>
+          <text x="97" y="135" text-anchor="middle" font-size="10.5" fill="#2b2a28">deleted (code side)</text>
 
-          <rect x="185" y="96" width="155" height="48" rx="10" fill="#fbf2ef" stroke="#a8472f"/>
-          <text x="262" y="116" text-anchor="middle" font-size="10" fill="#a8472f">BUILTIN_CHECKS barrel</text>
-          <text x="262" y="133" text-anchor="middle" font-size="10.5" fill="#2b2a28">entry removed (code side)</text>
+          <rect x="185" y="98" width="155" height="48" rx="10" fill="#fbf2ef" stroke="#a8472f"/>
+          <text x="262" y="118" text-anchor="middle" font-size="10" fill="#a8472f">BUILTIN_CHECKS barrel</text>
+          <text x="262" y="135" text-anchor="middle" font-size="10.5" fill="#2b2a28">entry removed (code side)</text>
 
-          <rect x="20" y="160" width="320" height="30" rx="8" fill="#f2f4ec" stroke="#6c7a4a"/>
-          <text x="180" y="180" text-anchor="middle" font-size="10.5" fill="#6c7a4a">compiles — no orphan import</text>
+          <rect x="20" y="162" width="320" height="30" rx="8" fill="#f2f4ec" stroke="#6c7a4a"/>
+          <text x="180" y="182" text-anchor="middle" font-size="10.5" fill="#6c7a4a">compiles — from.function_name names deleted file, never imported</text>
         </g>
       </svg>
     </div>
@@ -383,42 +390,71 @@
     <span><i class="del"></i> deleted</span>
     <span><i class="same"></i> present</span>
   </div>
+  <p class="cap prose">A <code>retired</code> rule is excluded from the active classification set (filtered on <code>status === "fixed"</code>) <b>and</b> from the bundled permanent slice — both the generator <code>select_permanent_slice_rules</code> and the core load-time guard <code>validate_permanent_slice</code> enforce a <code>predicate|builtin</code> allowlist — so its <code>from.function_name</code> may safely name a builtin source file the retirement deleted.</p>
 
   <h2 id="code">The name-mode branch</h2>
-  <p class="cap prose">A new proposal kind <code>wip_to_fixed_by_name</code>; in <code>run()</code>, when <code>--fixed</code> accompanies <code>--id</code>, take a name-mode branch that bypasses the fixed-signal detector. The write still flows through the single <code>atomic_update_registry</code> transaction.</p>
+  <p class="cap prose">A new proposal kind <code>wip_to_fixed_by_name</code> carrying <code>reason</code>; in <code>run()</code>, when <code>--fixed</code> accompanies <code>--id</code> (the <code>name_mode</code> flag computed once in <code>parse_argv</code>), take a name-mode branch that bypasses the fixed-signal detector. The write still flows through the single <code>atomic_update_registry</code> transaction.</p>
 
   <div class="code">
     <span class="file-label">.claude/skills/triage/scripts/reconcile_registry.ts — new proposal kind</span>
-<pre><span class="cm">// A direct, human-named retirement — no git-log backlog_task matching.</span>
+<pre><span class="cm">// Signal 4 — name-mode wip → fixed. Retires a real classifier into the</span>
+<span class="cm">// structured `retired` marker carrying the retirement `reason`.</span>
 <span class="hl"><span class="kw">export interface</span> <span class="ty">FixedByNameProposal</span> {</span>
 <span class="hl">  kind: <span class="str">"wip_to_fixed_by_name"</span>;</span>
 <span class="hl">  group_id: <span class="ty">string</span>;</span>
+<span class="hl">  reason: <span class="ty">string</span>;</span>
 <span class="hl">}</span>
 </pre>
   </div>
 
   <div class="code">
     <span class="file-label">reconcile_registry.ts — run(): name-mode branch (mirrors --promote)</span>
-<pre><span class="kw">if</span> (args.fixed &amp;&amp; args.ids.length &gt; 0) {
-  <span class="cm">// Name-mode: bypass detection entirely, mirror --promote's shape.</span>
+<pre><span class="kw">else if</span> (args.name_mode) {
+  <span class="cm">// Direct-name retirement: flip each named wip rule to fixed without</span>
+  <span class="cm">// git-log detection. parse_argv guarantees a non-null reason in name-mode.</span>
+  <span class="kw">if</span> (args.reason === <span class="kw">null</span>) {
+    <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">"name-mode reached with a null reason — parse_argv guard bypassed"</span>);
+  }
+  <span class="kw">const</span> reason = args.reason;
   <span class="kw">for</span> (<span class="kw">const</span> id <span class="kw">of</span> args.ids) {
     <span class="kw">const</span> rule = rules_by_id.get(id);
     <span class="kw">if</span> (rule === <span class="kw">undefined</span>) {
       missing_ids.push(id);              <span class="cm">// unknown id → reported</span>
-    } <span class="kw">else if</span> (rule.status === <span class="str">"wip"</span>) {
-      fixed_by_name_proposals.push({ kind: <span class="str">"wip_to_fixed_by_name"</span>, group_id: id });
-    }                                    <span class="cm">// non-wip named rule → silent no-op</span>
+    } <span class="kw">else if</span> (rule.status !== <span class="str">"wip"</span>) {
+      <span class="kw">continue</span>;                          <span class="cm">// non-wip named rule → silent no-op</span>
+    } <span class="kw">else</span> {
+      fixed_by_name_proposals.push({ kind: <span class="str">"wip_to_fixed_by_name"</span>, group_id: id, reason });
+    }
   }
 }</pre>
   </div>
 
   <div class="code">
-    <span class="file-label">reconcile_registry.ts — fold_proposals(): status AND classifier, one transaction</span>
-<pre><span class="kw">case</span> <span class="str">"wip_to_fixed_by_name"</span>:
-  <span class="kw">if</span> (rule.status === <span class="str">"wip"</span>) {
-    next[i] = { ...rule, status: <span class="str">"fixed"</span>, classifier: { kind: <span class="str">"none"</span> } };
-  }
-  <span class="kw">break</span>;</pre>
+    <span class="file-label">reconcile_registry.ts — fold_proposals(): status AND structured retired marker, one transaction</span>
+<pre><span class="kw">case</span> <span class="str">"wip_to_fixed_by_name"</span>: {
+  <span class="cm">// Idempotent: a re-run on an already-fixed rule is a no-op.</span>
+  <span class="kw">if</span> (rule.status !== <span class="str">"wip"</span>) <span class="kw">break</span>;
+  <span class="cm">// Retire a real classifier into the structured `retired` marker; a</span>
+  <span class="cm">// `none` stub has nothing to retire, so it stays `none`.</span>
+  <span class="kw">const</span> classifier: <span class="ty">ClassifierSpec</span> =
+    rule.classifier.kind === <span class="str">"predicate"</span> || rule.classifier.kind === <span class="str">"builtin"</span>
+      ? { kind: <span class="str">"retired"</span>, from: rule.classifier, reason: proposal.reason }
+      : rule.classifier;
+  next[i] = { ...rule, status: <span class="str">"fixed"</span>, classifier };
+  <span class="kw">break</span>;
+}</pre>
+  </div>
+
+  <div class="code">
+    <span class="file-label">.claude/skills/triage/src/known_issues_registry.ts — validator: retired requires status fixed</span>
+<pre><span class="cm">// A `retired` classifier marks a rule whose bug is fixed, so it is only</span>
+<span class="cm">// coherent on a `fixed` row. Reject it on any other status; otherwise it</span>
+<span class="cm">// would enter the active set and sit silently inert.</span>
+<span class="kw">if</span> (classifier_record.kind === <span class="str">"retired"</span> &amp;&amp; record[<span class="str">"status"</span>] !== <span class="str">"fixed"</span>) {
+  <span class="kw">throw new</span> <span class="fn">RegistryValidationError</span>(
+    <span class="str">`${at_id}.classifier: kind="retired" requires status="fixed"`</span>,
+  );
+}</pre>
   </div>
 
   <h2 id="perms">Permissions — no broad allow-rule</h2>
@@ -430,20 +466,21 @@
   <div class="code" style="margin-top:14px">
     <span class="file-label">the one command the agent prints, then stops</span>
 <pre>node --import tsx .claude/skills/triage/scripts/reconcile_registry.ts \
-  --id higher-order-function-callback --id inline-callback --fixed</pre>
+  --id higher-order-function-callback --id inline-callback \
+  --fixed --reason "subsumed by callback-resolution in TASK-348"</pre>
   </div>
 
   <h2 id="ac">Acceptance criteria</h2>
   <ul class="ck">
-    <li><span class="box"></span><span><b><code>--id … --fixed</code> direct-name mode</b> flips named <code>wip</code> rules to <code>fixed</code> independent of git-log <code>backlog_task</code> matching, through the single <code>atomic_update_registry</code> transaction.</span></li>
-    <li><span class="box"></span><span><b><code>reconcile_registry.test.ts</code></b> covers name-mode: named <code>wip</code> flip applies, non-<code>wip</code> named rule is a no-op, unknown id reported in <code>missing_ids</code>; <code>registry_writers.test.ts</code> stays green.</span></li>
-    <li><span class="box"></span><span><b>Documented decision</b> on classifier-clearing — name-mode drops a retired builtin's classifier to <code>none</code> in the same transaction.</span></li>
+    <li><span class="box"></span><span><b><code>--id … --fixed --reason</code> direct-name mode</b> flips named <code>wip</code> rules to <code>fixed</code> independent of git-log <code>backlog_task</code> matching, through the single <code>atomic_update_registry</code> transaction. Guards: requires <code>--reason</code>, cannot combine with <code>--drift</code>; <code>--reason</code> is rejected outside name-mode.</span></li>
+    <li><span class="box"></span><span><b><code>reconcile_registry.test.ts</code></b> covers name-mode: named <code>wip</code> flip retires its classifier, non-<code>wip</code> named rule is a no-op, unknown id reported in <code>missing_ids</code>, parse guards fire; <code>registry_writers.test.ts</code> stays green.</span></li>
+    <li><span class="box"></span><span><b>Documented decision</b> on retirement — name-mode converts a retired builtin/predicate classifier into the structured <code>{ kind:"retired", from, reason }</code> marker (preserving the former spec), not a drop to <code>none</code>, in the same transaction.</span></li>
     <li><span class="box"></span><span><b>Canonical hand-off documented</b> in <code>classifier-lifecycle.md</code> and the skill docs: agents route human-directed transitions through a printed <code>reconcile-registry</code> command, never a bespoke writer; the self-modification classifier interaction is noted.</span></li>
     <li><span class="box"></span><span><b>Recorded permission decision</b> — no broad allow-rule for registry writes.</span></li>
   </ul>
 
   <footer>
-    Comprehension companion for <code>TASK-190.29</code>. Sources read: the task doc; <code>reconcile_registry.ts</code> (<code>parse_argv</code>, <code>run</code>, <code>fold_proposals</code>, <code>--promote</code> mode); <code>reconcile-registry/SKILL.md</code>; <code>classifier-lifecycle.md</code>; the auto-generated <code>BUILTIN_CHECKS</code> barrel. Surfaced by <code>TASK-348.2</code> / commit <code>19a1be10</code>. Code shown is the decided implementation shape, not yet landed.
+    Comprehension companion for <code>TASK-190.29</code>, as built at commit <code>35f3e4f9</code> plus the working-tree review-fix changes. Sources read: the task doc; <code>reconcile_registry.ts</code> (<code>parse_argv</code>, <code>run</code>, <code>fold_proposals</code>, <code>--promote</code> mode); <code>known_issues.ts</code> (the <code>retired</code> ClassifierSpec, <code>select_permanent_slice_rules</code> allowlist); <code>registry_loader.ts</code> (<code>validate_permanent_slice</code>); <code>known_issues_registry.ts</code> (validator); <code>reconcile-registry/SKILL.md</code>; <code>classifier-lifecycle.md</code>; the auto-generated <code>BUILTIN_CHECKS</code> barrel. Surfaced by <code>TASK-348.2</code> / commit <code>19a1be10</code>. Retirements predating this mechanism remain <code>fixed</code>/<code>none</code>; <code>retired</code> is the go-forward shape.
   </footer>
 
 </main>

@@ -12,7 +12,7 @@ The registry is the **permanent-limitations catalog**: each entry names a call r
 | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **triage**                                                                 | **never writes** the registry                                                                                                                                                                              | n/a                                                                                                                                                                                                                                                                                                                   |
 | **plan**                                                                   | **never reads or writes** the registry (planning-only; emits proposals into the task-DB)                                                                                                                   | n/a                                                                                                                                                                                                                                                                                                                   |
-| **Human (by hand, or via `reconcile-registry` → `reconcile_registry.ts`)** | every transition: `status: "wip"`, `classifier.kind`, `drift_detected`, `drift_evidence`, `observed_count`, `observed_projects`, `last_seen_run`, `backlog_task`; `status: "permanent"`; `status: "fixed"` | inserting a reviewed `classifier-author` draft (a real classifier for a permanent-limitation group), reviewing promotion candidates, and recording landed fixes — `reconcile-registry` detects the git-log scope matches and the published `classifier_regressions[]` and proposes the flips; the human confirms each |
+| **Human (by hand, or via `reconcile-registry` → `reconcile_registry.ts`)** | every transition: `status: "wip"`, `classifier.kind` (incl. `"retired"`), `drift_detected`, `drift_evidence`, `observed_count`, `observed_projects`, `last_seen_run`, `backlog_task`; `status: "permanent"`; `status: "fixed"` | inserting a reviewed `classifier-author` draft (a real classifier for a permanent-limitation group), reviewing promotion candidates, recording landed fixes, and retiring a rule by name when the subsuming fix landed under a different task (`--id ... --fixed --reason`, classifier → `retired`) — a directed flip, not detection. `reconcile-registry` detects the git-log scope matches and the published `classifier_regressions[]` and proposes those flips; the human confirms each |
 
 `triage`'s sub-agent (`triage-investigator`) writes only its own per-entry verdict file (`results/<entry_index>.json` under `triage_state/<project>/runs/<run-id>/`); it never touches `registry.json`. Any code under `.claude/skills/triage/` or `.claude/skills/plan/` that calls `writeFile` against `registry.json` — or invokes `serialize_known_issues_registry_json` anywhere other than `reconcile_registry.ts`'s `atomic_update_registry` mutator closure — is a contract violation.
 
@@ -55,17 +55,18 @@ The human performs every transition below. An entry enters the registry only wit
                                           │
                           ┌───────────────┼────────────────┐
                           │               │                │
-                  human            human review        human
-                (drift flag)     (promotion           (records landed
-                          │         review +            fix from git log)
-                          ▼         hand-edit)           │
-                  ┌─────────────┐         │              ▼
-                  │ wip,        │         ▼        ┌───────────┐
-                  │ drift_      │   ┌───────────┐  │   fixed   │
-                  │ detected:   │   │ permanent │  └───────────┘
-                  │   true      │   │ (bundles  │
-                  └─────────────┘   │  to core) │
-                                    └───────────┘
+                  human            human review        human: records a landed
+                (drift flag)     (promotion           fix from git log, OR
+                          │         review +            retires by name
+                          ▼         hand-edit)          (--fixed --reason)
+                  ┌─────────────┐         │                │
+                  │ wip,        │         ▼                ▼
+                  │ drift_      │   ┌───────────┐   ┌────────────────────┐
+                  │ detected:   │   │ permanent │   │ fixed              │
+                  │   true      │   │ (bundles  │   │ (name-mode also    │
+                  └─────────────┘   │  to core) │   │  sets classifier   │
+                                    └───────────┘   │  → retired)        │
+                                                    └────────────────────┘
 ```
 
 Every transition is a human decision, written through `atomic_update_registry`. The human flips `wip → permanent` after promotion review (`reconcile_registry.ts --id <group_id> --promote`), which regenerates the bundled core slice (`packages/core/src/classify_entry_points/permanent_data.ts`) via `generate_permanent_data.ts`; `permanent_data.sync.test.ts` asserts the committed slice byte-equals a fresh render of the registry, so neither file can silently drift. The human flips `status` to `fixed` once a fix lands — confirmed by a fix-bearing Conventional-Commits scope (`fix`/`feat`) in this repo's git log matching a rule's `backlog_task`, which `reconcile-registry` detects and proposes. The `KnownIssue` schema records no commit hash; the `backlog_task` link plus the git log are the audit trail.

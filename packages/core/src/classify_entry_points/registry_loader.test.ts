@@ -106,4 +106,24 @@ describe("validate_permanent_slice — pure validator", () => {
     expect(() => validate_permanent_slice(slice)).toThrow(PermanentRegistryError);
     expect(() => validate_permanent_slice(slice)).toThrow(/kind:"none"/);
   });
+
+  it("rejects a synthetic kind:\"retired\" rule with PermanentRegistryError", () => {
+    const slice: readonly KnownIssue[] = [
+      {
+        group_id: "synthetic-retired-rule",
+        title: "synthetic",
+        description: "synthetic",
+        status: "permanent",
+        languages: ["typescript"],
+        examples: [],
+        classifier: {
+          kind: "retired",
+          from: { kind: "builtin", function_name: "check_gone", min_confidence: 1 },
+          reason: "retired",
+        },
+      },
+    ];
+    expect(() => validate_permanent_slice(slice)).toThrow(PermanentRegistryError);
+    expect(() => validate_permanent_slice(slice)).toThrow(/kind:"retired"/);
+  });
 });

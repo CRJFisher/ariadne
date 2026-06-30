@@ -377,11 +377,11 @@ export function fold_proposals(
         break;
       }
       case "promote_to_permanent":
-        if (rule.classifier.kind === "none") {
+        if (rule.classifier.kind !== "predicate" && rule.classifier.kind !== "builtin") {
           throw new Error(
-            `cannot promote "${rule.group_id}": classifier.kind is "none" — ` +
-              "author a predicate or builtin classifier first; core's " +
-              "validate_permanent_slice rejects unclassified permanent rules",
+            `cannot promote "${rule.group_id}": classifier.kind is "${rule.classifier.kind}" — ` +
+              "only a predicate or builtin classifier is promotable; core's " +
+              "validate_permanent_slice rejects every other kind",
           );
         }
         if (rule.status !== "permanent") next[i] = { ...rule, status: "permanent" };
@@ -403,6 +403,12 @@ export interface CliArgs {
   promote: boolean;
   /** The retirement rationale for name-mode (`--id ... --fixed`); null otherwise. */
   reason: string | null;
+  /**
+   * `--fixed` with `--id`: the deliberate direct-retirement flip. Computed once
+   * here (the single source of truth) after guard validation, so `run()` reads
+   * it instead of re-deriving the predicate.
+   */
+  name_mode: boolean;
 }
 
 export function parse_argv(argv: string[]): CliArgs {
@@ -413,6 +419,7 @@ export function parse_argv(argv: string[]): CliArgs {
     ids: [],
     promote: false,
     reason: null,
+    name_mode: false,
   };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -437,8 +444,8 @@ export function parse_argv(argv: string[]): CliArgs {
         break;
       case "--reason": {
         const value = argv[i + 1];
-        if (value === undefined || value.startsWith("--")) {
-          throw new Error("--reason requires a value: the retirement rationale");
+        if (value === undefined || value.startsWith("--") || value.trim().length === 0) {
+          throw new Error("--reason requires a non-empty value: the retirement rationale");
         }
         args.reason = argv[++i];
         break;
@@ -462,21 +469,21 @@ export function parse_argv(argv: string[]): CliArgs {
   }
   // Name-mode is `--fixed` with `--id`: a deliberate, direct retirement flip
   // that bypasses git-log detection. It requires a `--reason` and cannot mix
-  // with `--drift`; `--reason` is meaningless anywhere else.
-  const name_mode = args.fixed && args.ids.length > 0;
-  if (name_mode && args.drift) {
+  // with `--drift`; `--reason` is valid ONLY in name-mode.
+  args.name_mode = args.fixed && args.ids.length > 0;
+  if (args.name_mode && args.drift) {
     throw new Error(
       "--fixed --id (name-mode) cannot combine with --drift: name-mode is a deliberate, direct flip",
     );
   }
-  if (name_mode && args.reason === null) {
+  if (args.name_mode && args.reason === null) {
     throw new Error(
       "--fixed --id (name-mode) requires --reason <text>: a retirement must record why",
     );
   }
-  if (args.reason !== null && !name_mode) {
+  if (args.reason !== null && !args.name_mode) {
     throw new Error(
-      "--reason is only valid with --fixed --id (name-mode): no commit subject is cited there",
+      "--reason is valid only with name-mode (--fixed and --id together): no commit subject is cited there",
     );
   }
   return args;
@@ -561,8 +568,6 @@ export async function run(
   const missing_ids: string[] = [];
   const rejected_promotions: RejectedPromotion[] = [];
 
-  const name_mode = args.fixed && args.ids.length > 0;
-
   if (args.promote) {
     for (const id of args.ids) {
       const rule = rules_by_id.get(id);
@@ -579,10 +584,13 @@ export async function run(
         promote_proposals.push({ kind: "promote_to_permanent", group_id: id });
       }
     }
-  } else if (name_mode) {
+  } else if (args.name_mode) {
     // Direct-name retirement: flip each named wip rule to fixed without
-    // git-log detection. The reason is guaranteed non-null by parse_argv.
-    const reason = args.reason ?? "";
+    // git-log detection. parse_argv guarantees a non-null reason in name-mode.
+    if (args.reason === null) {
+      throw new Error("name-mode reached with a null reason — parse_argv guard bypassed");
+    }
+    const reason = args.reason;
     for (const id of args.ids) {
       const rule = rules_by_id.get(id);
       if (rule === undefined) {
