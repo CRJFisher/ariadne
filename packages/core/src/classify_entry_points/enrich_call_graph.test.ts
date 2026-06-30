@@ -500,9 +500,9 @@ describe("method-as-value indirect reachability (task-348)", () => {
         "",
       ].join("\n"),
       "use.ts": [
-        'import { make } from "./factory";',
+        "import { make } from \"./factory\";",
         "const { extractValue } = make();",
-        'extractValue("hello");',
+        "extractValue(\"hello\");",
         "",
       ].join("\n"),
     });

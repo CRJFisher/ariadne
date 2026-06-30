@@ -313,7 +313,7 @@ describe("Constructor Call Resolution", () => {
     } {
       const class_id = class_symbol(struct_name, MOCK_LOCATION);
       const new_method_id =
-        `method:test.rs:2:4:4:5:new` as SymbolId;
+        "method:test.rs:2:4:4:5:new" as SymbolId;
       const new_method: MethodDefinition = {
         kind: "method",
         symbol_id: new_method_id,

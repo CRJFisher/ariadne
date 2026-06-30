@@ -770,7 +770,7 @@ describe("run", () => {
       {
         group_id: "rule-quiet",
         reason:
-          'classifier.kind is "none" — author a predicate or builtin classifier before promoting',
+          "classifier.kind is \"none\" — author a predicate or builtin classifier before promoting",
       },
     ]);
     expect(summary.applied).toEqual(false);

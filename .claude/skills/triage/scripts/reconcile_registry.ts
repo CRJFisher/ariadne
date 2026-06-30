@@ -70,6 +70,7 @@ import {
   TASK_SCOPE_REGEX,
   expand_task_scope,
 } from "../../../../scripts/check-commit-message.js";
+import { generate_permanent_data } from "./generate_permanent_data.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const USAGE =
@@ -480,7 +481,7 @@ export async function run(
 
   let fixed_proposals: FixedProposal[] = [];
   let drift_proposals: DriftProposal[] = [];
-  let promote_proposals: PromoteProposal[] = [];
+  const promote_proposals: PromoteProposal[] = [];
   let drift_unknown_rule_ids: string[] = [];
   let skipped_sources: SkippedSource[] = [];
   const missing_ids: string[] = [];
@@ -495,7 +496,7 @@ export async function run(
         rejected_promotions.push({
           group_id: id,
           reason:
-            'classifier.kind is "none" — author a predicate or builtin classifier before promoting',
+            "classifier.kind is \"none\" — author a predicate or builtin classifier before promoting",
         });
       } else if (rule.status === "permanent") {
         rejected_promotions.push({ group_id: id, reason: "already permanent" });
@@ -587,7 +588,6 @@ export async function run(
 // ---------------------------------------------------------------------------
 
 export async function build_real_deps(): Promise<ReconcileDeps> {
-  const { generate_permanent_data } = await import("./generate_permanent_data.js");
   const registry_path = known_issues_registry_path();
   return {
     registry_path,

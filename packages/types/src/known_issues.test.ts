@@ -159,7 +159,7 @@ describe("render_permanent_slice_module", () => {
       "// Source of truth: .claude/skills/triage/known_issues/registry.json\n" +
       "// Regenerated from the source registry when its permanent slice changes.\n" +
       "\n" +
-      'import type { KnownIssuesRegistryFile } from "@ariadnejs/types";\n' +
+      "import type { KnownIssuesRegistryFile } from \"@ariadnejs/types\";\n" +
       "\n" +
       "export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = " +
       JSON.stringify(
@@ -197,6 +197,6 @@ describe("render_permanent_slice_module", () => {
     const out = render_permanent_slice_module(KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION, [
       wip_rule,
     ]);
-    expect(out).toContain('"rules": []');
+    expect(out).toContain("\"rules\": []");
   });
 });

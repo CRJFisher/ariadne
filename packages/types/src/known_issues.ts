@@ -209,7 +209,7 @@ const PERMANENT_SLICE_MODULE_HEADER =
   "// Source of truth: .claude/skills/triage/known_issues/registry.json\n" +
   "// Regenerated from the source registry when its permanent slice changes.\n" +
   "\n" +
-  'import type { KnownIssuesRegistryFile } from "@ariadnejs/types";\n' +
+  "import type { KnownIssuesRegistryFile } from \"@ariadnejs/types\";\n" +
   "\n";
 
 /**
