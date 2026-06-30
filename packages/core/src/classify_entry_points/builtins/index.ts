@@ -5,67 +5,21 @@
 import type { EnrichedEntryPoint } from "@ariadnejs/types";
 import type { FileLinesReader } from "../auto_classify_types";
 
-import { check_aliased_import_method_dispatch } from "./check_aliased-import-method-dispatch";
-import { check_aliased_object_property_call } from "./check_aliased-object-property-call";
-import { check_angular_generated_instruction_call } from "./check_angular-generated-instruction-call";
-import { check_bundler_module_path_substitution } from "./check_bundler-module-path-substitution";
 import { check_bundler_module_substitution } from "./check_bundler-module-substitution";
-import { check_call_apply_dispatch } from "./check_call-apply-dispatch";
-import { check_callers_not_in_registry_unclassified } from "./check_callers-not-in-registry-unclassified";
-import { check_commonjs_module_property_call } from "./check_commonjs-module-property-call";
-import { check_compiler_generated_dynamic_dispatch } from "./check_compiler-generated-dynamic-dispatch";
-import { check_computed_property_method_caller } from "./check_computed-property-method-caller";
-import { check_constructor_call_resolution } from "./check_constructor-call-resolution";
-import { check_constructor_instance_method_resolution } from "./check_constructor-instance-method-resolution";
-import { check_constructor_new_expression } from "./check_constructor-new-expression";
-import { check_cross_package_registry_gap } from "./check_cross-package-registry-gap";
 import { check_dependency_injection_type_resolution } from "./check_dependency-injection-type-resolution";
 import { check_dynamic_cast_structural_type_dispatch } from "./check_dynamic-cast-structural-type-dispatch";
 import { check_dynamic_dispatch } from "./check_dynamic-dispatch";
 import { check_dynamic_dispatch_reporter_constructor } from "./check_dynamic-dispatch-reporter-constructor";
-import { check_dynamic_method_dispatch } from "./check_dynamic-method-dispatch";
 import { check_dynamic_new_function_dispatch } from "./check_dynamic-new-function-dispatch";
 import { check_dynamic_require_constructor } from "./check_dynamic-require-constructor";
-import { check_dynamic_runtime_injection } from "./check_dynamic-runtime-injection";
 import { check_eval_based_dynamic_dispatch } from "./check_eval-based-dynamic-dispatch";
-import { check_framework_command_builder_callback } from "./check_framework-command-builder-callback";
-import { check_framework_decorator_dispatch } from "./check_framework-decorator-dispatch";
 import { check_framework_lifecycle_dispatch } from "./check_framework-lifecycle-dispatch";
 import { check_framework_lifecycle_handler } from "./check_framework-lifecycle-handler";
 import { check_framework_lifecycle_override } from "./check_framework-lifecycle-override";
-import { check_getter_accessor_not_tracked } from "./check_getter-accessor-not-tracked";
-import { check_import_resolution_missed } from "./check_import-resolution-missed";
-import { check_inline_constructor_method_chain } from "./check_inline-constructor-method-chain";
-import { check_intra_class_method_call } from "./check_intra-class-method-call";
-import { check_intra_file_call_not_in_registry } from "./check_intra-file-call-not-in-registry";
-import { check_intra_file_call_not_resolved } from "./check_intra-file-call-not-resolved";
 import { check_jsx_mdx_component_usage } from "./check_jsx-mdx-component-usage";
-import { check_local_variable_alias } from "./check_local-variable-alias";
-import { check_method_call_on_typed_instance } from "./check_method-call-on-typed-instance";
-import { check_method_call_unresolved_receiver_type_lost } from "./check_method-call-unresolved";
-import { check_module_exports_class_constructor } from "./check_module-exports-class-constructor";
-import { check_private_class_field_method } from "./check_private-class-field-method";
-import { check_private_field_method_resolution } from "./check_private-field-method-resolution";
-import { check_property_alias_intra_file_call } from "./check_property-alias-intra-file-call";
-import { check_property_getter_dispatch } from "./check_property-getter-dispatch";
 import { check_py_dunder_protocol } from "./check_py-dunder-protocol";
 import { check_receiver_type_unknown } from "./check_receiver-type-unknown";
-import { check_same_file_call_missed } from "./check_same-file-call-missed";
-import { check_same_file_var_function_resolution } from "./check_same-file-var-function-resolution";
-import { check_static_method_on_cjs_class } from "./check_static-method-on-cjs-class";
-import { check_static_method_on_destructured_import } from "./check_static-method-on-destructured-import";
-import { check_static_method_resolution } from "./check_static-method-resolution";
-import { check_stored_callback_via_object_property } from "./check_stored-callback-via-object-property";
 import { check_string_keyed_dispatch } from "./check_string-keyed-dispatch";
-import { check_test_file_callers_missed } from "./check_test-file-callers-missed";
-import { check_this_based_method_dispatch } from "./check_this-based-method-dispatch";
-import { check_this_object_method_dispatch } from "./check_this-object-method-dispatch";
-import { check_this_property_method_dispatch } from "./check_this-property-method-dispatch";
-import { check_ts_class_getter_no_textual_callers } from "./check_dynamic-or-untyped-property-access";
-import { check_type_based_method_dispatch } from "./check_type-based-method-dispatch";
-import { check_type_cast_dispatch } from "./check_type-cast-dispatch";
-import { check_type_cast_receiver } from "./check_type-cast-receiver";
-import { check_typed_field_method_dispatch } from "./check_typed-field-method-dispatch";
 import { check_unresolved_receiver_type } from "./check_unresolved-receiver-type";
 import { check_untyped_attribute_receiver } from "./check_untyped-attribute-receiver";
 
@@ -75,67 +29,21 @@ export type BuiltinCheckFn = (
 ) => boolean;
 
 export const BUILTIN_CHECKS: Record<string, BuiltinCheckFn> = {
-  check_aliased_import_method_dispatch,
-  check_aliased_object_property_call,
-  check_angular_generated_instruction_call,
-  check_bundler_module_path_substitution,
   check_bundler_module_substitution,
-  check_call_apply_dispatch,
-  check_callers_not_in_registry_unclassified,
-  check_commonjs_module_property_call,
-  check_compiler_generated_dynamic_dispatch,
-  check_computed_property_method_caller,
-  check_constructor_call_resolution,
-  check_constructor_instance_method_resolution,
-  check_constructor_new_expression,
-  check_cross_package_registry_gap,
   check_dependency_injection_type_resolution,
   check_dynamic_cast_structural_type_dispatch,
   check_dynamic_dispatch,
   check_dynamic_dispatch_reporter_constructor,
-  check_dynamic_method_dispatch,
   check_dynamic_new_function_dispatch,
   check_dynamic_require_constructor,
-  check_dynamic_runtime_injection,
   check_eval_based_dynamic_dispatch,
-  check_framework_command_builder_callback,
-  check_framework_decorator_dispatch,
   check_framework_lifecycle_dispatch,
   check_framework_lifecycle_handler,
   check_framework_lifecycle_override,
-  check_getter_accessor_not_tracked,
-  check_import_resolution_missed,
-  check_inline_constructor_method_chain,
-  check_intra_class_method_call,
-  check_intra_file_call_not_in_registry,
-  check_intra_file_call_not_resolved,
   check_jsx_mdx_component_usage,
-  check_local_variable_alias,
-  check_method_call_on_typed_instance,
-  check_method_call_unresolved_receiver_type_lost,
-  check_module_exports_class_constructor,
-  check_private_class_field_method,
-  check_private_field_method_resolution,
-  check_property_alias_intra_file_call,
-  check_property_getter_dispatch,
   check_py_dunder_protocol,
   check_receiver_type_unknown,
-  check_same_file_call_missed,
-  check_same_file_var_function_resolution,
-  check_static_method_on_cjs_class,
-  check_static_method_on_destructured_import,
-  check_static_method_resolution,
-  check_stored_callback_via_object_property,
   check_string_keyed_dispatch,
-  check_test_file_callers_missed,
-  check_this_based_method_dispatch,
-  check_this_object_method_dispatch,
-  check_this_property_method_dispatch,
-  check_ts_class_getter_no_textual_callers,
-  check_type_based_method_dispatch,
-  check_type_cast_dispatch,
-  check_type_cast_receiver,
-  check_typed_field_method_dispatch,
   check_unresolved_receiver_type,
   check_untyped_attribute_receiver,
 };

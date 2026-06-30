@@ -551,62 +551,53 @@ describe("backlog_task linkage", () => {
   });
 });
 
-// ===== Required seeds =====
+// ===== Permanent-limitations catalog content =====
 
-describe("required seed content", () => {
+describe("permanent-limitations catalog content", () => {
   const registry = load_registry();
   const by_id = new Map(registry.map((e) => [e.group_id, e] as const));
 
-  it("webpack-dominant group_ids are present", () => {
+  it("the genuine static-analysis impossibilities are permanent entries", () => {
     for (const id of [
-      "method-chain-dispatch",
-      "polymorphic-subtype-dispatch",
+      "dynamic-dispatch",                      // webpack constructor-keyed Map dispatch
+      "string-keyed-dispatch",                 // Angular ɵɵ compiler instructions
+      "eval-based-dynamic-dispatch",           // eval / new Function locals
+      "dynamic-new-function-dispatch",
+      "dynamic-dispatch-reporter-constructor", // mocha string-keyed reporter ctor
+      "bundler-module-substitution",           // esbuild fill-plugin substitution
+      "dynamic-require-constructor",           // runtime require() + new
       "dynamic-property-keyed-callback",
-      "constructor-new-expression",
+      "unindexed-external-module",
+      "untyped-attribute-receiver",            // untyped Cython self-attribute receiver
+      "py-dunder-protocol",
     ]) {
-      expect(by_id.has(id)).toBe(true);
+      expect(by_id.get(id)?.status).toBe("permanent");
     }
   });
 
-  it("axis A tree-sitter gap group_ids are present", () => {
+  it("framework-contract invocation patterns are permanent entries", () => {
     for (const id of [
-      "ts-jsx-component-call",
-      "ts-decorator-factory-call",
-      "ts-private-method-unreachable",
-      "py-property-decorator-access",
-      "py-wildcard-import-caller",
-      "rust-macro-invocation-call",
-      "rust-trait-method-dispatch",
-      "js-commonjs-require-destructure",
-    ]) {
-      expect(by_id.has(id)).toBe(true);
-    }
-  });
-
-  it("axis C framework decorator group_ids are present", () => {
-    for (const id of [
+      "framework-lifecycle-handler",           // yargs CommandModule.handler
+      "framework-lifecycle-dispatch",          // NestJS reflect-metadata dispatch
+      "framework-lifecycle-override",          // Node stream protocol overrides
       "framework-pytest-fixture",
       "framework-flask-route",
       "framework-component-decorator",
     ]) {
-      expect(by_id.has(id)).toBe(true);
+      expect(by_id.get(id)?.status).toBe("permanent");
     }
   });
 
-  it("resolution-failure taxonomy (F1-F10) entries are present (via their registry group_ids)", () => {
+  it("ambiguous residuals stay wip pending classifier-author review", () => {
     for (const id of [
-      "aliased-receiver-type-lost",           // F1
-      "factory-return-type-unknown",          // F2
-      "inline-constructor-method-chain",      // F3
-      "python-module-attribute-call",         // F4
-      "aliased-re-export",                    // F5
-      "unindexed-external-module",            // F6
-      "polymorphic-subtype-dispatch",         // F7 (shared with webpack-dominant)
-      "super-inherited-method",               // F8
-      "dynamic-property-keyed-callback",      // F9 (shared with webpack-dominant)
-      "global-name-collision",                // F10
+      "ts-jsx-component-call",
+      "ts-decorator-factory-call",
+      "aliased-receiver-type-lost",
+      "super-inherited-method",
+      "module-attribute-alias",
+      "jsx-mdx-component-usage",
     ]) {
-      expect(by_id.has(id)).toBe(true);
+      expect(by_id.get(id)?.status).toBe("wip");
     }
   });
 

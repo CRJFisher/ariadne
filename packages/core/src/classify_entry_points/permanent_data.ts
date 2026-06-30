@@ -260,6 +260,209 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       }
     },
     {
+      "group_id": "dynamic-dispatch",
+      "title": "dynamic-dispatch",
+      "description": "Proposed by plan investigator — fill in before enabling.",
+      "status": "permanent",
+      "languages": [
+        "javascript"
+      ],
+      "examples": [],
+      "classifier": {
+        "kind": "builtin",
+        "function_name": "check_dynamic_dispatch",
+        "min_confidence": 0.9
+      },
+      "drift_detected": true,
+      "observed_count": 43,
+      "observed_projects": [
+        "webpack",
+        "lodash",
+        "prisma"
+      ],
+      "last_seen_run": "2026-04-27T16-24-40.808Z"
+    },
+    {
+      "group_id": "dynamic-dispatch-reporter-constructor",
+      "title": "dynamic-dispatch-reporter-constructor",
+      "description": "Proposed by plan investigator — fill in before enabling.",
+      "status": "permanent",
+      "languages": [
+        "javascript"
+      ],
+      "examples": [],
+      "classifier": {
+        "kind": "builtin",
+        "function_name": "check_dynamic_dispatch_reporter_constructor",
+        "min_confidence": 0.9
+      },
+      "observed_count": 12,
+      "observed_projects": [
+        "mocha"
+      ],
+      "last_seen_run": "2026-04-23T20-41-21.302Z"
+    },
+    {
+      "group_id": "dynamic-require-constructor",
+      "title": "dynamic-require-constructor",
+      "description": "Proposed by plan investigator — fill in before enabling.",
+      "status": "permanent",
+      "languages": [
+        "javascript"
+      ],
+      "examples": [],
+      "classifier": {
+        "kind": "builtin",
+        "function_name": "check_dynamic_require_constructor",
+        "min_confidence": 0.9
+      },
+      "observed_count": 1,
+      "observed_projects": [
+        "mocha"
+      ],
+      "last_seen_run": "2026-04-23T20-41-21.302Z"
+    },
+    {
+      "group_id": "framework-lifecycle-dispatch",
+      "title": "framework-lifecycle-dispatch",
+      "description": "Proposed by plan investigator — fill in before enabling.",
+      "status": "permanent",
+      "languages": [
+        "typescript"
+      ],
+      "examples": [],
+      "classifier": {
+        "kind": "builtin",
+        "function_name": "check_framework_lifecycle_dispatch",
+        "min_confidence": 0.9
+      },
+      "observed_count": 6,
+      "observed_projects": [
+        "nest"
+      ],
+      "last_seen_run": "2026-04-23T22-12-28.705Z"
+    },
+    {
+      "group_id": "framework-lifecycle-override",
+      "title": "framework-lifecycle-override",
+      "description": "Proposed by plan investigator — fill in before enabling.",
+      "status": "permanent",
+      "languages": [
+        "typescript"
+      ],
+      "examples": [],
+      "classifier": {
+        "kind": "builtin",
+        "function_name": "check_framework_lifecycle_override",
+        "min_confidence": 0.9
+      },
+      "observed_count": 1,
+      "observed_projects": [
+        "nest"
+      ],
+      "last_seen_run": "2026-04-23T22-12-28.705Z"
+    },
+    {
+      "group_id": "string-keyed-dispatch",
+      "title": "string-keyed-dispatch",
+      "description": "Proposed by plan investigator — fill in before enabling.",
+      "status": "permanent",
+      "languages": [
+        "typescript"
+      ],
+      "examples": [],
+      "classifier": {
+        "kind": "builtin",
+        "function_name": "check_string_keyed_dispatch",
+        "min_confidence": 0.95
+      },
+      "observed_count": 27,
+      "observed_projects": [
+        "angular"
+      ],
+      "last_seen_run": "2026-04-25T17-07-32.678Z"
+    },
+    {
+      "group_id": "dynamic-new-function-dispatch",
+      "title": "dynamic-new-function-dispatch",
+      "description": "Proposed by plan investigator — fill in before enabling.",
+      "status": "permanent",
+      "languages": [
+        "javascript"
+      ],
+      "examples": [],
+      "classifier": {
+        "kind": "builtin",
+        "function_name": "check_dynamic_new_function_dispatch",
+        "min_confidence": 0.9
+      },
+      "observed_count": 1,
+      "observed_projects": [
+        "lodash"
+      ],
+      "last_seen_run": "2026-04-27T11-02-57.035Z"
+    },
+    {
+      "group_id": "eval-based-dynamic-dispatch",
+      "title": "eval-based-dynamic-dispatch",
+      "description": "Proposed by plan investigator — fill in before enabling.",
+      "status": "permanent",
+      "languages": [
+        "javascript"
+      ],
+      "examples": [],
+      "classifier": {
+        "kind": "builtin",
+        "function_name": "check_eval_based_dynamic_dispatch",
+        "min_confidence": 0.9
+      },
+      "observed_count": 8,
+      "observed_projects": [
+        "lodash"
+      ],
+      "last_seen_run": "2026-04-27T11-02-57.035Z"
+    },
+    {
+      "group_id": "framework-lifecycle-handler",
+      "title": "framework-lifecycle-handler",
+      "description": "Proposed by plan investigator — fill in before enabling.",
+      "status": "permanent",
+      "languages": [
+        "typescript"
+      ],
+      "examples": [],
+      "classifier": {
+        "kind": "builtin",
+        "function_name": "check_framework_lifecycle_handler",
+        "min_confidence": 0.9
+      },
+      "observed_count": 12,
+      "observed_projects": [
+        "typeorm"
+      ],
+      "last_seen_run": "2026-04-27T16-19-42.325Z"
+    },
+    {
+      "group_id": "bundler-module-substitution",
+      "title": "bundler-module-substitution",
+      "description": "Proposed by plan investigator — fill in before enabling.",
+      "status": "permanent",
+      "languages": [
+        "typescript"
+      ],
+      "examples": [],
+      "classifier": {
+        "kind": "builtin",
+        "function_name": "check_bundler_module_substitution",
+        "min_confidence": 0.9
+      },
+      "observed_count": 4,
+      "observed_projects": [
+        "prisma"
+      ],
+      "last_seen_run": "2026-04-27T16-24-40.808Z"
+    },
+    {
       "group_id": "py-dunder-protocol",
       "title": "Python framework-invoked dunder method (`__str__`, `__repr__`, etc.)",
       "description": "Python dunder methods invoked by the runtime via the language protocol layer (`__str__`/`__repr__` for string conversion, `__eq__`/`__hash__`/`__lt__`/`__gt__` for comparisons, `__iter__`/`__next__` for iteration, `__enter__`/`__exit__` for context managers, etc.) are never called from user code. Excludes the traceable subset (`__init__`, `__call__`, `__new__`) which Ariadne can resolve through constructor / callable-instance dispatch. Replaces the hardcoded `filter_entry_points.python.ts` list.",
@@ -286,6 +489,27 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       },
       "classification": {
         "kind": "dunder_protocol"
+      }
+    },
+    {
+      "group_id": "untyped-attribute-receiver",
+      "title": "Python method reached only via an untyped self-attribute receiver",
+      "description": "A Python method whose only caller invokes it as self.<attr>.<method>() where <attr> is an untyped instance attribute (a Cython `object` constructor parameter such as pandas `self.obj`, or any attribute never assigned `self.<attr> = Constructor()`). The resolver cannot follow the attribute's type, collapses the receiver to the caller's own enclosing class, fails to find the method there, and records member_type_unknown with resolved_receiver_type pointing at that caller class — so the resolved receiver-type's file equals the call ref's caller_file. That equality is the discriminator. Interim classifier for the residual out-of-static-reach pandas row (indexing.py:3171 self.obj._set_value) after TASK-350 Fixes A-C; self-narrowing because Fix C promotes self.attr = Constructor() to typed properties, so typeable receivers resolve and never reach this classifier. Distinct from the JavaScript receiver-type-unknown rule (callers-not-in-registry with empty call refs, identifier receiver). The fixture-injected identifier receiver shape (styler._repr_html_) is deliberately out of scope — its identifier + receiver_type_unknown signal is indistinguishable from the dominant untyped-local-call bucket and belongs to a separate fault area (unindexed test caller / framework display-protocol method name). The deferred fixture-injected identifier-receiver row is tracked as TASK-350.4.",
+      "status": "permanent",
+      "languages": [
+        "python"
+      ],
+      "examples": [
+        {
+          "file": "pandas/core/indexing.py",
+          "line": 3171,
+          "snippet": "self.obj._set_value(*key, value=value, takeable=self._takeable)"
+        }
+      ],
+      "classifier": {
+        "kind": "builtin",
+        "function_name": "check_untyped_attribute_receiver",
+        "min_confidence": 0.9
       }
     }
   ]

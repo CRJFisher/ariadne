@@ -131,7 +131,7 @@
   <div class="inner">
     <span class="brand">task 190.30 · classifier scope</span>
     <span class="me" aria-current="page">190.30 · overview</span>
-    <span class="pending"><span class="dot"></span>190.30.1 · audit &amp; cleanup<span class="tag">not yet generated</span></span>
+    <a class="doc-link" href="task-190.30.1.disposition-plan.html">190.30.1 · audit &amp; cleanup</a>
     <span class="pending"><span class="dot"></span>190.30.2 · classifier-author<span class="tag">not yet generated</span></span>
   </div>
 </nav>
@@ -155,9 +155,9 @@
   <p class="lead prose">One file (<code>known_issues/registry.json</code>) does two incompatible jobs: it catalogs patterns static analysis can <b>never</b> resolve, and it suppresses triage cost for bugs Ariadne <b>could</b> fix.</p>
   <p class="lead prose">Task 190.30 splits those jobs apart: keep only the genuinely-impossible patterns, move fixable bugs to the backlog, and add a <code>classifier-author</code> agent so new permanent-limitation entries get a real classifier instead of a never-firing stub.</p>
   <div class="meta">
-    <span class="chip">registry <strong>180 entries</strong></span>
-    <span class="chip">wip <strong>169 · 94%</strong></span>
-    <span class="chip">never-fire stubs <strong>105</strong></span>
+    <span class="chip">registry <strong>181 entries</strong></span>
+    <span class="chip">wip <strong>170 · 94%</strong></span>
+    <span class="chip">never-fire stubs <strong>102</strong></span>
     <span class="chip">sub-tasks <strong>2</strong></span>
     <span class="chip">human stays <strong>sole registry writer</strong></span>
   </div>
@@ -183,7 +183,7 @@
   <!-- center: the one registry today -->
   <rect x="370" y="118" width="260" height="64" rx="10" fill="#2b2a28"/>
   <text x="500" y="143" text-anchor="middle" fill="#f7f3ec" font-family="ui-serif,Georgia,serif" font-size="16" font-weight="600">registry.json</text>
-  <text x="500" y="164" text-anchor="middle" fill="#e7ddc9" font-family="ui-monospace,Menlo,monospace" font-size="11">180 entries · 94% wip</text>
+  <text x="500" y="164" text-anchor="middle" fill="#e7ddc9" font-family="ui-monospace,Menlo,monospace" font-size="11">181 entries · 94% wip</text>
 
   <!-- job A: permanent catalog -->
   <rect x="20" y="40" width="300" height="64" rx="10" fill="#fffdf8" stroke="#6c7a4a" stroke-width="1.5"/>
@@ -219,22 +219,22 @@
 </div>
 <div class="callout rust">
   <span class="k">the creation gap</span>
-  <p class="prose">No pipeline agent ever <b>authors</b> a classifier: triage emits <code>fp-novel</code> → plan proposes a task → prioritize files a backlog card → the human hand-writes the entire predicate or builtin with no tooling. So 105 entries sit as <code>kind:"none"</code> stubs that never fire.</p>
+  <p class="prose">No pipeline agent ever <b>authors</b> a classifier: triage emits <code>fp-novel</code> → plan proposes a task → prioritize files a backlog card → the human hand-writes the entire predicate or builtin with no tooling. So 102 entries sit as <code>kind:"none"</code> stubs that never fire.</p>
 </div>
 
 <!-- ============ 2. REGISTRY AT A GLANCE ============ -->
 <h2 id="glance"><span class="n">02</span>Registry at a glance: 94% wip, and most of that never fires</h2>
-<p class="cap prose">Left: the 180 entries by lifecycle status. Right: the 169 <code>wip</code> entries by classifier kind — <b>105 are <code>none</code></b> (plan stubs, never fire), and many <code>builtin</code> entries suppress bugs rather than mark limitations.</p>
+<p class="cap prose">Left: the 181 entries by lifecycle status. Right: the 170 <code>wip</code> entries by classifier kind — <b>102 are <code>none</code></b> (plan stubs, never fire), and many <code>builtin</code> entries suppress bugs rather than mark limitations.</p>
 <div class="charts">
 
   <div class="chartcard">
-    <p class="ttl">180 entries · by status</p>
+    <p class="ttl">181 entries · by status</p>
     <h3>94% are work-in-progress</h3>
-    <svg viewBox="0 0 380 200" role="img" aria-label="Of 180 registry entries: 169 wip, 9 permanent, 2 fixed.">
+    <svg viewBox="0 0 380 200" role="img" aria-label="Of 181 registry entries: 170 wip, 9 permanent, 2 fixed.">
       <!-- wip -->
       <text x="0" y="38" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">wip</text>
       <rect x="70" y="24" width="300" height="26" rx="5" fill="#a8472f"/>
-      <text x="84" y="42" font-family="ui-monospace,Menlo,monospace" font-size="12.5" fill="#fff" font-weight="700">169 · 94%</text>
+      <text x="84" y="42" font-family="ui-monospace,Menlo,monospace" font-size="12.5" fill="#fff" font-weight="700">170 · 94%</text>
       <!-- permanent -->
       <text x="0" y="90" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">permanent</text>
       <rect x="70" y="76" width="16" height="26" rx="5" fill="#6c7a4a"/>
@@ -245,31 +245,31 @@
       <text x="84" y="146" font-family="ui-monospace,Menlo,monospace" font-size="12.5" fill="#9a9387" font-weight="700">2 · 1%</text>
       <line x1="70" y1="170" x2="370" y2="170" stroke="#ddd6c8" stroke-width="1"/>
       <text x="70" y="188" font-family="ui-monospace,Menlo,monospace" font-size="10.5" fill="#9a9387">0</text>
-      <text x="362" y="188" font-family="ui-monospace,Menlo,monospace" font-size="10.5" fill="#9a9387" text-anchor="end">180</text>
+      <text x="362" y="188" font-family="ui-monospace,Menlo,monospace" font-size="10.5" fill="#9a9387" text-anchor="end">181</text>
     </svg>
   </div>
 
   <div class="chartcard">
-    <p class="ttl">169 wip entries · by classifier kind</p>
+    <p class="ttl">170 wip entries · by classifier kind</p>
     <h3>105 stubs that never fire</h3>
-    <svg viewBox="0 0 560 200" role="img" aria-label="Of 169 wip entries: 105 kind none, 61 builtin, 13 predicate. Roughly 30 carry backlog_task links; roughly 14 are impossible-pattern promote candidates.">
+    <svg viewBox="0 0 560 200" role="img" aria-label="Of 170 wip entries: 102 kind none, 62 builtin, 6 predicate. Roughly 31 carry backlog_task links; roughly 14 are impossible-pattern promote candidates.">
       <!-- none -->
       <text x="0" y="32" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">none</text>
       <rect x="90" y="18" width="350" height="24" rx="5" fill="#a8472f"/>
-      <text x="104" y="35" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#fff" font-weight="700">105 · never fires</text>
+      <text x="104" y="35" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#fff" font-weight="700">102 · never fires</text>
       <!-- builtin -->
       <text x="0" y="74" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">builtin</text>
       <rect x="90" y="60" width="203" height="24" rx="5" fill="#b9794f"/>
-      <text x="104" y="77" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#fff" font-weight="700">61</text>
+      <text x="104" y="77" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#fff" font-weight="700">62</text>
       <!-- predicate -->
       <text x="0" y="116" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">predicate</text>
-      <rect x="90" y="102" width="43" height="24" rx="5" fill="#6c7a4a"/>
-      <text x="143" y="119" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#6c7a4a" font-weight="700">13</text>
+      <rect x="90" y="102" width="20" height="24" rx="5" fill="#6c7a4a"/>
+      <text x="120" y="119" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#6c7a4a" font-weight="700">6</text>
 
       <!-- annotation band -->
       <line x1="90" y1="148" x2="540" y2="148" stroke="#ddd6c8" stroke-width="1"/>
       <circle cx="98" cy="170" r="5" fill="#b9794f"/>
-      <text x="110" y="174" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#5f594f">~30 carry a backlog_task link (deferred bug)</text>
+      <text x="110" y="174" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#5f594f">~31 carry a backlog_task link (deferred bug)</text>
       <circle cx="98" cy="190" r="5" fill="#6c7a4a"/>
       <text x="110" y="194" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#5f594f">~14 impossible-pattern promote candidates</text>
     </svg>
@@ -279,7 +279,7 @@
 
 <!-- ============ 3. DISPOSITION PLAN ============ -->
 <h2 id="disposition"><span class="n">03</span>Entry disposition: ~155 removed, ~14 promoted</h2>
-<p class="cap prose">Every one of the 169 <code>wip</code> entries falls into exactly one bucket. Bar width shows the share of the 169. Short-term coverage loss is accepted — removed suppressors resurface as <code>fp-novel</code> on the next triage run, driving the fix.</p>
+<p class="cap prose">Every one of the 170 <code>wip</code> entries falls into exactly one bucket. Bar width shows the share of the 170. Short-term coverage loss is accepted — removed suppressors resurface as <code>fp-novel</code> on the next triage run, driving the fix.</p>
 <table class="disp">
   <thead>
     <tr><th>Disposition</th><th class="barcell">Count (of 169)</th><th>Example entries</th><th>Action</th></tr>
@@ -287,13 +287,13 @@
   <tbody>
     <tr>
       <td><span class="dtag stub">Remove-stub</span></td>
-      <td class="barcell"><div class="bar stub" style="width:96%">105</div></td>
+      <td class="barcell"><div class="bar stub" style="width:96%">102</div></td>
       <td class="ex">all <code>kind:"none"</code> entries — "Proposed by plan investigator — fill in before enabling"</td>
       <td class="act">delete in one <code>atomic_update_registry</code> transaction; re-enters via <code>classifier-author</code> if genuinely needed</td>
     </tr>
     <tr>
       <td><span class="dtag deferred">Remove-deferred</span></td>
-      <td class="barcell"><div class="bar deferred" style="width:30%">~30</div></td>
+      <td class="barcell"><div class="bar deferred" style="width:30%">~31</div></td>
       <td class="ex"><code>method-call-unresolved</code> (184) · <code>test-file-callers-missed</code> (182) · <code>aliased-re-export</code> (156) · <code>python-module-attribute-call</code> (190.11) · <code>cross-package-call</code> (190.13)</td>
       <td class="act">delete; fix already tracked by the linked <code>backlog_task</code></td>
     </tr>
@@ -389,7 +389,7 @@
     <h3><span class="mark on"></span>Done</h3>
     <p class="sub">audit + design + an adjacent cleanup</p>
     <ul class="cl">
-      <li><span class="mark on"></span><div>Workflow audit completed<small>180 entries, classify_entry_points, triage · plan · prioritize · reconcile-registry flows</small></div></li>
+      <li><span class="mark on"></span><div>Workflow audit completed<small>181 entries, classify_entry_points, triage · plan · prioritize · reconcile-registry flows</small></div></li>
       <li><span class="mark on"></span><div>Three task documents written<small>task-190.30 + 190.30.1 + 190.30.2 in backlog/tasks/</small></div></li>
       <li><span class="mark on"></span><div>Stop-hook fix — 29 anonymous entry points eliminated<small>20 builtin IIFE → hoisted pattern_N · definitions.ts forEach → for…of · project.ts lambdas named</small></div></li>
       <li><span class="mark on"></span><div>Build + tests green after the cleanup<small>2932 tests pass</small></div></li>
@@ -422,9 +422,9 @@
 </div>
 
 <footer>
-  task-190.30 · overview · generated 2026-06-29 · self-contained, no network<br>
+  task-190.30 · overview · generated 2026-06-30 (refreshed) · self-contained, no network<br>
   sources: backlog/tasks/task-190.30{,.1,.2} · .claude/skills/triage/known_issues/registry.json · packages/core/src/classify_entry_points/ · .claude/rules/classifier-lifecycle.md<br>
-  sub-task companions (190.30.1 audit, 190.30.2 classifier-author) not yet generated — request to add
+  companion for 190.30.1 (disposition plan) is live; 190.30.2 (classifier-author) not yet generated — request to add
 </footer>
 </main>
 </body>

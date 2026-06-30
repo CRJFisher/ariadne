@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registry audit — disposing 170 wip entries into five buckets</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --ink:#1f1e1c; --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+
+  nav.cross{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
+  nav.cross .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.cross .brand{font-family:var(--mono);font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.cross a, nav.cross .pending, nav.cross .me{font-family:var(--mono);font-size:11px;text-decoration:none;border-radius:999px;padding:3px 10px;border:1px solid var(--g200)}
+  nav.cross a.doc-link{color:var(--g600);background:var(--paper)}
+  nav.cross a.doc-link:hover{border-color:var(--clay);color:var(--slate)}
+  nav.cross .me{color:var(--ivory);background:var(--slate);border-color:var(--slate)}
+  nav.cross .pending{color:var(--g400);background:transparent;border-style:dashed}
+  nav.cross .pending .tag{color:var(--clay);margin-left:6px}
+  nav.cross .pending .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--clay);margin-right:6px;vertical-align:0px}
+
+  nav.toc{position:sticky;top:39px;z-index:9;background:var(--paper);border-bottom:1px solid var(--g200);padding:7px 0}
+  nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  nav.toc .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--g400);margin-right:6px}
+  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid transparent;border-radius:999px;padding:3px 9px}
+  nav.toc a:hover{border-color:var(--g200);background:var(--ivory);color:var(--slate)}
+
+  main{width:90%;max-width:1600px;margin:0 auto;padding:28px 0 80px}
+  .prose{max-width:72ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:32px;line-height:1.14;margin:0 0 12px;letter-spacing:-.01em;max-width:28ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:23px;margin:56px 0 4px;letter-spacing:-.01em;scroll-margin-top:96px}
+  h2 .n{font-family:var(--mono);font-size:13px;color:var(--clay);font-weight:600;margin-right:8px}
+  .lead{font-size:16px;color:var(--g600);max-width:84ch;margin:0 0 6px}
+  .lead b{color:var(--slate);font-weight:600}
+  code{font-family:var(--mono);font-size:.85em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .cap{font-size:13.5px;color:var(--g600);margin:9px 2px 16px;max-width:96ch}
+  .cap b{color:var(--slate);font-weight:600}
+
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:18px 0;max-width:96ch}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)}
+  .callout.slate{background:var(--slate);border-left-color:var(--clay)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 6px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)} .callout.slate .k{color:var(--oat)}
+  .callout p{margin:0;font-size:14.5px} .callout.slate p{color:var(--ivory)} .callout.slate b{color:#fff} .callout.slate code{background:#3a3833;color:var(--codeink)}
+
+  .splitwrap svg{width:100%;height:auto;display:block}
+  .legend{display:flex;flex-wrap:wrap;gap:14px 18px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:10px 2px 4px;align-items:center}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,.1)}
+
+  /* disposition table with magnitude bars */
+  table.disp{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+  table.disp th{text-align:left;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--g400);font-weight:600;padding:7px 10px;border-bottom:1.5px solid var(--g200)}
+  table.disp td{padding:10px 10px;border-bottom:1px solid var(--g100);vertical-align:top}
+  table.disp tr:last-child td{border-bottom:none}
+  .dtag{font-family:var(--mono);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;border-radius:999px;padding:3px 9px;white-space:nowrap;display:inline-block}
+  .dtag.promote{background:rgba(108,122,74,.16);color:#4f5a36;border:1px solid rgba(108,122,74,.45)}
+  .dtag.stub{background:rgba(168,71,47,.12);color:var(--rust);border:1px solid rgba(168,71,47,.4)}
+  .dtag.tracked{background:rgba(185,121,79,.14);color:#915a32;border:1px solid rgba(185,121,79,.45)}
+  .dtag.untracked{background:rgba(168,71,47,.16);color:var(--rust);border:1.5px solid var(--rust)}
+  .dtag.pending{background:var(--g100);color:var(--g600);border:1px solid var(--g200)}
+  .barcell{min-width:130px;width:150px}
+  .bar{height:19px;border-radius:5px;display:flex;align-items:center;padding:0 8px;color:#fff;font-family:var(--mono);font-size:11px;font-weight:700;min-width:30px}
+  .bar.promote{background:var(--olive)} .bar.stub{background:var(--rust)} .bar.tracked{background:var(--clay)} .bar.untracked{background:var(--rust)} .bar.pending{background:var(--g400)}
+  .bar.untracked{background:repeating-linear-gradient(45deg,var(--rust),var(--rust) 6px,#8d3b27 6px,#8d3b27 12px)}
+  .ex{font-family:var(--mono);font-size:11.5px;color:var(--g600);line-height:1.75}
+  .ex code{font-size:1em;background:var(--ivory);border:1px solid var(--g200);padding:1px 5px}
+  .act{font-size:12.5px;color:var(--g600)} .act code{font-size:1em}
+
+  /* before/after status */
+  .sbs{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;margin:14px 0;align-items:center}
+  .panel{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:16px 18px}
+  .panel.aft{border-color:var(--clay);box-shadow:0 0 0 1px rgba(185,121,79,.22)}
+  .panel .ph{display:flex;align-items:baseline;gap:9px;margin:0 0 12px}
+  .panel .ph .tag{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.09em;border-radius:999px;padding:3px 9px}
+  .panel.cur .ph .tag{background:var(--g100);color:var(--g600)}
+  .panel.aft .ph .tag{background:var(--clay);color:var(--ivory)}
+  .panel .ph h3{font-family:var(--serif);font-size:17px;font-weight:600;margin:0;letter-spacing:-.01em}
+  .panel svg{width:100%;height:auto;display:block}
+  .arrowcol{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--clay);font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+  .arrowcol .a{font-size:26px;line-height:1}
+  @media(max-width:840px){ .sbs{grid-template-columns:1fr} .arrowcol{flex-direction:row} }
+
+  /* numbered steps */
+  .steps{margin:14px 0}
+  .step{display:grid;grid-template-columns:42px 1fr;gap:14px;padding:11px 0;border-top:1px solid var(--g100)}
+  .step:first-child{border-top:none}
+  .badge{width:34px;height:34px;border-radius:50%;background:var(--slate);color:var(--ivory);font-family:var(--mono);font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center}
+  .badge.hot{background:var(--rust)} .badge.gate{background:var(--olive)}
+  .step h4{font-family:var(--sans);font-size:15px;font-weight:600;margin:3px 0 3px}
+  .step p{margin:0;font-size:13.5px;color:var(--g600);max-width:90ch}
+  .step p code{font-size:.92em}
+  .step .loc{font-family:var(--mono);font-size:11px;color:var(--clay);margin-top:4px}
+
+  footer{margin-top:56px;border-top:1px solid var(--g200);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400);line-height:1.7}
+</style>
+</head>
+<body>
+
+<nav class="cross">
+  <div class="inner">
+    <span class="brand">task 190.30 · classifier scope</span>
+    <a class="doc-link" href="task-190.30.overview.html">190.30 · overview</a>
+    <span class="me" aria-current="page">190.30.1 · audit &amp; cleanup</span>
+    <span class="pending"><span class="dot"></span>190.30.2 · classifier-author<span class="tag">not yet generated</span></span>
+  </div>
+</nav>
+
+<nav class="toc">
+  <div class="inner">
+    <span class="brand">on this page</span>
+    <a href="#scope">1 · The redefinition</a>
+    <a href="#tree">2 · The decision tree</a>
+    <a href="#table">3 · Five buckets, real counts</a>
+    <a href="#safety">4 · The safety rule</a>
+    <a href="#shape">5 · Before → after</a>
+    <a href="#order">6 · Execution order</a>
+  </div>
+</nav>
+
+<main>
+<header>
+  <p class="eyebrow">self-healing pipeline · registry audit</p>
+  <h1>Sorting 170 work-in-progress registry entries into five dispositions</h1>
+  <p class="lead prose"><code>known_issues/registry.json</code> stops being a suppressor list and becomes a <b>permanent-limitations catalog only</b>: each <code>wip</code> entry is promoted, removed, or deliberately held — and one disposition must create a backlog task <b>before</b> it deletes anything.</p>
+  <div class="meta">
+    <span class="chip">live registry <strong>181 entries</strong></span>
+    <span class="chip">wip to dispose <strong>170</strong></span>
+    <span class="chip">stubs (kind:none) <strong>102</strong></span>
+    <span class="chip">promote <strong>~14</strong></span>
+    <span class="chip">remove <strong>~150</strong></span>
+    <span class="chip">human stays <strong>sole writer</strong></span>
+  </div>
+</header>
+
+<!-- ===== 1. SCOPE REDEFINITION ===== -->
+<h2 id="scope"><span class="n">01</span>The registry sheds half its job</h2>
+<p class="cap prose">Today one file answers two questions with opposite maintenance rules — <b>"can static analysis ever resolve this?"</b> and <b>"have we fixed this bug yet?"</b>. The audit keeps only the first; fixable bugs move to the backlog.</p>
+<div class="sbs">
+  <div class="panel cur">
+    <div class="ph"><span class="tag">current</span><h3>One file, two conflated roles</h3></div>
+    <svg viewBox="0 0 420 230" role="img" aria-label="Current: registry.json holds both a permanent-limitations catalog and a triage-cost suppressor list of deferred fixable bugs.">
+      <rect x="60" y="92" width="300" height="46" rx="10" fill="#2b2a28"/>
+      <text x="210" y="113" text-anchor="middle" fill="#f7f3ec" font-family="ui-monospace,Menlo,monospace" font-size="12.5" font-weight="600">registry.json</text>
+      <text x="210" y="129" text-anchor="middle" fill="#e7ddc9" font-family="ui-monospace,Menlo,monospace" font-size="10">181 entries · 94% wip</text>
+      <rect x="40" y="14" width="340" height="44" rx="9" fill="#fffdf8" stroke="#6c7a4a" stroke-width="1.5"/>
+      <text x="210" y="34" text-anchor="middle" fill="#2b2a28" font-family="ui-serif,Georgia,serif" font-size="13.5" font-weight="600">role A · permanent-limitations catalog</text>
+      <text x="210" y="50" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10">static analysis can NEVER resolve</text>
+      <path d="M210,58 L210,90" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#aro1)"/>
+      <rect x="40" y="172" width="340" height="44" rx="9" fill="#fffdf8" stroke="#a8472f" stroke-width="1.5"/>
+      <text x="210" y="192" text-anchor="middle" fill="#2b2a28" font-family="ui-serif,Georgia,serif" font-size="13.5" font-weight="600">role B · triage-cost suppressor list</text>
+      <text x="210" y="208" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10">deferred bugs Ariadne COULD fix</text>
+      <path d="M210,172 L210,140" stroke="#a8472f" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arc1)"/>
+      <defs>
+        <marker id="aro1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6c7a4a"/></marker>
+        <marker id="arc1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a8472f"/></marker>
+      </defs>
+    </svg>
+  </div>
+  <div class="arrowcol"><span class="a">&rarr;</span><span>190.30.1</span></div>
+  <div class="panel aft">
+    <div class="ph"><span class="tag">planned</span><h3>Catalog only; bugs to backlog</h3></div>
+    <svg viewBox="0 0 420 230" role="img" aria-label="Planned: registry.json holds only promoted permanent limitations; deferred fixable bugs live in the backlog as tasks.">
+      <rect x="40" y="22" width="340" height="56" rx="10" fill="#fffdf8" stroke="#6c7a4a" stroke-width="2"/>
+      <text x="210" y="46" text-anchor="middle" fill="#2b2a28" font-family="ui-serif,Georgia,serif" font-size="14" font-weight="600">registry = permanent limitations only</text>
+      <text x="210" y="64" text-anchor="middle" fill="#4f5a36" font-family="ui-monospace,Menlo,monospace" font-size="10.5">~23 entries · all firing classifiers</text>
+      <rect x="40" y="152" width="340" height="56" rx="10" fill="#fffdf8" stroke="#b9794f" stroke-width="2"/>
+      <text x="210" y="176" text-anchor="middle" fill="#2b2a28" font-family="ui-serif,Georgia,serif" font-size="14" font-weight="600">fixable bugs → backlog tasks</text>
+      <text x="210" y="194" text-anchor="middle" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="10.5">~150 removed · tracked, not suppressed</text>
+      <path d="M210,90 L210,140" stroke="#9a9387" stroke-width="1.4" stroke-dasharray="3 4"/>
+      <text x="225" y="118" fill="#9a9387" font-family="ui-monospace,Menlo,monospace" font-size="10">split apart</text>
+    </svg>
+  </div>
+</div>
+<div class="legend">
+  <span><i style="background:#6c7a4a"></i> permanent limitation — kept / promoted</span>
+  <span><i style="background:#a8472f"></i> deferred fixable bug — removed</span>
+  <span><i style="background:#2b2a28"></i> today's conflated registry</span>
+</div>
+<div class="callout rust">
+  <span class="k">why it matters</span>
+  <p class="prose">A suppressor entry hides triage cost without fixing the bug; a catalog entry marks a wall the analyzer can never cross — conflating them leaves 94% of the file as never-firing deferred-bug stubs.</p>
+</div>
+
+<!-- ===== 2. DECISION TREE (LOAD-BEARING) ===== -->
+<h2 id="tree"><span class="n">02</span>The five-way decision tree</h2>
+<p class="cap prose">Every <code>wip</code> entry routes to <b>exactly one</b> disposition by three questions: is there an authored classifier, is a backlog task already linked, and is the pattern <b>impossible</b> for static analysis or just <b>not-yet-fixed</b>. Follow each entry top to bottom.</p>
+<div class="splitwrap">
+<svg viewBox="0 0 1180 470" role="img" aria-label="Decision tree: a wip entry with classifier kind none becomes Remove-stub; otherwise if it has a backlog_task it is Remove-deferred-tracked; otherwise if the pattern is impossible for static analysis it is Promote, if it is a fixable bug it is Remove-deferred-untracked which creates a backlog task first, and if ambiguous it is Keep-pending.">
+  <defs>
+    <marker id="t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5f594f"/></marker>
+    <marker id="to" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6c7a4a"/></marker>
+    <marker id="tr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a8472f"/></marker>
+    <marker id="tc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#b9794f"/></marker>
+  </defs>
+
+  <!-- start -->
+  <rect x="40" y="206" width="150" height="56" rx="10" fill="#2b2a28"/>
+  <text x="115" y="230" text-anchor="middle" fill="#f7f3ec" font-family="ui-serif,Georgia,serif" font-size="14" font-weight="600">a wip entry</text>
+  <text x="115" y="248" text-anchor="middle" fill="#e7ddc9" font-family="ui-monospace,Menlo,monospace" font-size="10">170 of them</text>
+
+  <!-- Q1 diamond: kind == none? -->
+  <path d="M300,234 L375,194 L450,234 L375,274 Z" fill="#fffdf8" stroke="#5f594f" stroke-width="1.6"/>
+  <text x="375" y="230" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="600">classifier</text>
+  <text x="375" y="245" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="600">kind = none?</text>
+  <path d="M190,234 L298,234" stroke="#5f594f" stroke-width="1.6" marker-end="url(#t)"/>
+
+  <!-- Q1 yes -> Remove-stub -->
+  <path d="M375,194 L375,70 L640,70" stroke="#a8472f" stroke-width="1.6" marker-end="url(#tr)"/>
+  <text x="392" y="130" fill="#a8472f" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="700">YES · 102</text>
+  <rect x="642" y="44" width="250" height="52" rx="10" fill="rgba(168,71,47,.10)" stroke="#a8472f" stroke-width="1.6"/>
+  <text x="767" y="66" text-anchor="middle" fill="#a8472f" font-family="ui-monospace,Menlo,monospace" font-size="12.5" font-weight="700">Remove-stub</text>
+  <text x="767" y="84" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10">delete · never fired</text>
+
+  <!-- Q1 no -> Q2 -->
+  <path d="M450,234 L500,234" stroke="#5f594f" stroke-width="1.6" marker-end="url(#t)"/>
+  <text x="466" y="225" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="700">no</text>
+
+  <!-- Q2 diamond: backlog_task linked? -->
+  <path d="M500,234 L578,192 L656,234 L578,276 Z" fill="#fffdf8" stroke="#5f594f" stroke-width="1.6"/>
+  <text x="578" y="230" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="600">backlog_task</text>
+  <text x="578" y="245" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="600">linked?</text>
+
+  <!-- Q2 yes -> Remove-deferred-tracked -->
+  <path d="M578,192 L578,160 L640,160" stroke="#b9794f" stroke-width="1.6" marker-end="url(#tc)"/>
+  <text x="540" y="178" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="10.5" font-weight="700">YES · ~10*</text>
+  <rect x="642" y="134" width="250" height="52" rx="10" fill="rgba(185,121,79,.12)" stroke="#b9794f" stroke-width="1.6"/>
+  <text x="767" y="156" text-anchor="middle" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="12" font-weight="700">Remove-deferred-tracked</text>
+  <text x="767" y="174" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10">delete · fix already tracked</text>
+
+  <!-- Q2 no -> Q3 -->
+  <path d="M656,234 L706,234" stroke="#5f594f" stroke-width="1.6" marker-end="url(#t)"/>
+  <text x="672" y="225" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="700">no</text>
+
+  <!-- Q3 diamond: impossible vs fixable -->
+  <path d="M706,234 L800,184 L894,234 L800,284 Z" fill="#fffdf8" stroke="#5f594f" stroke-width="1.6"/>
+  <text x="800" y="226" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="600">impossible for</text>
+  <text x="800" y="241" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="600">static analysis?</text>
+
+  <!-- Q3 impossible -> Promote -->
+  <path d="M800,184 L800,66 L930,66" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#to)"/>
+  <text x="812" y="120" fill="#4f5a36" font-family="ui-monospace,Menlo,monospace" font-size="10.5" font-weight="700">IMPOSSIBLE · ~14</text>
+  <rect x="932" y="40" width="222" height="52" rx="10" fill="rgba(108,122,74,.13)" stroke="#6c7a4a" stroke-width="1.8"/>
+  <text x="1043" y="62" text-anchor="middle" fill="#4f5a36" font-family="ui-monospace,Menlo,monospace" font-size="12.5" font-weight="700">Promote → permanent</text>
+  <text x="1043" y="80" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10">reconcile-registry --promote</text>
+
+  <!-- Q3 fixable -> Remove-deferred-untracked (the danger leaf) -->
+  <path d="M894,234 L912,234 L912,300 L930,300" stroke="#a8472f" stroke-width="2" marker-end="url(#tr)"/>
+  <text x="900" y="278" fill="#a8472f" font-family="ui-monospace,Menlo,monospace" font-size="10.5" font-weight="700">FIXABLE · ~40</text>
+  <rect x="932" y="276" width="222" height="62" rx="10" fill="rgba(168,71,47,.10)" stroke="#a8472f" stroke-width="2.4"/>
+  <text x="1043" y="298" text-anchor="middle" fill="#a8472f" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="700">Remove-deferred-UNTRACKED</text>
+  <text x="1043" y="315" text-anchor="middle" fill="#a8472f" font-family="ui-monospace,Menlo,monospace" font-size="9.5" font-weight="700">⚠ create backlog task FIRST</text>
+  <text x="1043" y="330" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">then delete · signal not lost</text>
+
+  <!-- Q3 ambiguous -> Keep-pending -->
+  <path d="M800,284 L800,420 L930,420" stroke="#9a9387" stroke-width="1.6" stroke-dasharray="4 4" marker-end="url(#t)"/>
+  <text x="812" y="370" fill="#7a746a" font-family="ui-monospace,Menlo,monospace" font-size="10.5" font-weight="700">AMBIGUOUS</text>
+  <rect x="932" y="396" width="222" height="50" rx="10" fill="var(--g100)" stroke="#9a9387" stroke-width="1.6"/>
+  <text x="1043" y="418" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="12.5" font-weight="700">Keep-pending</text>
+  <text x="1043" y="435" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10">stay wip · document · revisit</text>
+</svg>
+</div>
+<div class="legend">
+  <span><i style="background:#6c7a4a"></i> promote (keep)</span>
+  <span><i style="background:#a8472f"></i> remove</span>
+  <span><i style="background:#b9794f"></i> remove, already tracked</span>
+  <span><i style="background:#9a9387"></i> hold</span>
+  <span style="font-family:var(--mono);color:var(--g400)">* a kind:none entry with a backlog_task is still Remove-stub — the kind:none test comes first</span>
+</div>
+
+<!-- ===== 3. TABLE ===== -->
+<h2 id="table"><span class="n">03</span>Five buckets, real entries, real counts</h2>
+<p class="cap prose">Counts are from the <b>live registry</b> (181 entries; 170 wip). Bar width is the share of the 170. Example <code>group_id</code>s are taken verbatim from the current <code>registry.json</code>.</p>
+<table class="disp">
+  <thead>
+    <tr><th>Disposition</th><th class="barcell">Count of 170</th><th>Real example entries</th><th>Action</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="dtag stub">Remove-stub</span></td>
+      <td class="barcell"><div class="bar stub" style="width:100%">102</div></td>
+      <td class="ex">every <code>kind:"none"</code> entry — "Proposed by plan investigator — fill in before enabling"</td>
+      <td class="act">delete in one <code>atomic_update_registry</code> txn; re-enters via <code>classifier-author</code> only if genuinely a permanent limitation</td>
+    </tr>
+    <tr>
+      <td><span class="dtag tracked">Remove-deferred-tracked</span></td>
+      <td class="barcell"><div class="bar tracked" style="width:30%">~31</div></td>
+      <td class="ex"><code>method-call-unresolved</code>→184 · <code>test-file-callers-missed</code>→182 · <code>aliased-re-export</code>→156 · <code>python-module-attribute-call</code>→190.11 · <code>cross-package-call</code>→190.13</td>
+      <td class="act">delete; the linked <code>backlog_task</code> already tracks the fix — no new task needed</td>
+    </tr>
+    <tr>
+      <td><span class="dtag untracked">Remove-deferred-untracked</span></td>
+      <td class="barcell"><div class="bar untracked" style="width:38%">~40</div></td>
+      <td class="ex">authored <code>builtin</code>/<code>predicate</code> for a fixable bug, <b>no</b> <code>backlog_task</code> — the high-volume patterns that fire but have no fix tracked anywhere</td>
+      <td class="act"><b>create a backlog task first</b>, record its id as <code>backlog_task</code>, <i>then</i> delete — see §4</td>
+    </tr>
+    <tr>
+      <td><span class="dtag promote">Promote</span></td>
+      <td class="barcell"><div class="bar promote" style="width:14%">~14</div></td>
+      <td class="ex"><code>eval-based-dynamic-dispatch</code> · <code>dynamic-runtime-injection</code> · <code>compiler-generated-dynamic-dispatch</code> · <code>type-cast-dispatch</code> · <code>string-keyed-dispatch</code> · <code>prototype-dispatch</code></td>
+      <td class="act"><code>reconcile-registry --id &lt;group_id&gt; --promote</code> → <code>permanent</code></td>
+    </tr>
+    <tr>
+      <td><span class="dtag pending">Keep-pending</span></td>
+      <td class="barcell"><div class="bar pending" style="width:8%">few</div></td>
+      <td class="ex">authored classifier, but "permanent vs fixable" evidence is unclear</td>
+      <td class="act">leave as <code>wip</code>; document the ambiguity in <code>description</code>; revisit after 190.30.2</td>
+    </tr>
+  </tbody>
+</table>
+<div class="callout">
+  <span class="k">order matters in two places</span>
+  <p class="prose">The <code>kind:none</code> test runs <b>first</b>, so a stub with a stale <code>backlog_task</code> is still Remove-stub (this is why the live <i>31 wip-with-backlog</i> nets to ~31 deletions split across stub and tracked). And Remove-deferred-untracked must run before any deletion — that is the one bucket that produces a deliverable.</p>
+</div>
+
+<!-- ===== 4. SAFETY RULE ===== -->
+<h2 id="safety"><span class="n">04</span>The one disposition that creates work before it deletes</h2>
+<p class="cap prose">Remove-deferred-untracked is the riskiest step: these classifiers fire because the pattern is real and high-volume, but <b>nothing in the backlog drives its fix</b>. Delete it carelessly and the signal vanishes — the pattern resurfaces as <code>fp-novel</code> forever with no task behind it.</p>
+<div class="callout rust">
+  <span class="k">⚠ task-first, then delete — never the reverse</span>
+  <p class="prose">For each untracked entry: <b>author a new backlog task</b> for the underlying Ariadne bug (real, observed, high-volume), set its id as the entry's <code>backlog_task</code> for the audit trail, and only then delete the entry. The backlog task is the deliverable; the deletion is cleanup.</p>
+</div>
+<div class="steps">
+  <div class="step"><div class="badge hot">1</div><div><h4>Identify untracked entries from the disposition map</h4><p>Authored classifier (<code>kind</code> = builtin or predicate), pattern judged fixable, and <code>backlog_task</code> is empty.</p></div></div>
+  <div class="step"><div class="badge hot">2</div><div><h4>Author one backlog task per entry, before any registry write</h4><p>File under the right parent (e.g. <code>TASK-190</code> for resolution gaps); document what the bug is and at what altitude the fix belongs.</p></div></div>
+  <div class="step"><div class="badge hot">3</div><div><h4>Record the new task id, then delete the entry</h4><p>Set the new id as <code>backlog_task</code> in the disposition map before removal, so the audit trail survives the deletion.</p></div></div>
+</div>
+<div class="callout slate">
+  <span class="k">acceptance gate</span>
+  <p class="prose">"No deferred-feature classifier is removed without a tracking task in place." Every untracked entry has a new backlog task <b>created before</b> the entry is deleted — this is a hard checkbox on the task, not a best-effort.</p>
+</div>
+
+<!-- ===== 5. BEFORE / AFTER SHAPE ===== -->
+<h2 id="shape"><span class="n">05</span>The registry shape, before and after</h2>
+<p class="cap prose">The catalog goes from 94% never-firing <code>wip</code> to a small, fully-firing <code>permanent</code> set. Triage coverage drops in the short term — and that loss is explicitly accepted.</p>
+<div class="sbs">
+  <div class="panel cur">
+    <div class="ph"><span class="tag">before · live</span><h3>181 entries, 94% wip</h3></div>
+    <svg viewBox="0 0 420 170" role="img" aria-label="Before: 170 wip, 9 permanent, 2 fixed.">
+      <text x="0" y="34" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">wip</text>
+      <rect x="92" y="20" width="310" height="24" rx="5" fill="#a8472f"/>
+      <text x="106" y="37" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#fff" font-weight="700">170 · 94%</text>
+      <text x="0" y="82" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">permanent</text>
+      <rect x="92" y="68" width="17" height="24" rx="5" fill="#6c7a4a"/>
+      <text x="116" y="85" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#6c7a4a" font-weight="700">9</text>
+      <text x="0" y="130" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">fixed</text>
+      <rect x="92" y="116" width="4" height="24" rx="2" fill="#9a9387"/>
+      <text x="106" y="133" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#9a9387" font-weight="700">2</text>
+    </svg>
+  </div>
+  <div class="arrowcol"><span class="a">&rarr;</span><span>dispose</span></div>
+  <div class="panel aft">
+    <div class="ph"><span class="tag">after</span><h3>~23 entries, all firing</h3></div>
+    <svg viewBox="0 0 420 170" role="img" aria-label="After: roughly 0 wip remaining, roughly 23 permanent, 2 fixed; about 150 entries removed to the backlog.">
+      <text x="0" y="34" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">wip</text>
+      <rect x="92" y="20" width="14" height="24" rx="5" fill="#9a9387"/>
+      <text x="113" y="37" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#7a746a" font-weight="700">few (kept-pending)</text>
+      <text x="0" y="82" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">permanent</text>
+      <rect x="92" y="68" width="42" height="24" rx="5" fill="#6c7a4a"/>
+      <text x="142" y="85" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#4f5a36" font-weight="700">~23 · all fire</text>
+      <text x="0" y="130" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">removed</text>
+      <rect x="92" y="116" width="276" height="24" rx="5" fill="repeating-linear-gradient"/>
+      <rect x="92" y="116" width="276" height="24" rx="5" fill="#b9794f" opacity="0.55"/>
+      <text x="106" y="133" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#fff" font-weight="700">~150 → backlog tasks</text>
+    </svg>
+  </div>
+</div>
+<div class="callout">
+  <span class="k">accepted coverage loss</span>
+  <p class="prose">Removed suppressors will re-investigate as <code>fp-novel</code> on the next triage run — the <code>confirmed_unreachable_reuse</code> cache can't help because these were auto-classified with no stored <code>tp</code> verdicts. That degradation <b>is the intended outcome</b>: these patterns belong in the fix backlog, not the suppressor registry.</p>
+</div>
+
+<!-- ===== 6. EXECUTION ORDER ===== -->
+<h2 id="order"><span class="n">06</span>Execution order — and where the writer contract binds it</h2>
+<p class="cap prose">Strict sequence: produce and review the map, create tasks for untracked entries, promote, then one bulk delete. The <b>human is the registry's sole writer</b>; every mutation goes through <code>atomic_update_registry</code>, never a bare <code>writeFile</code>.</p>
+<div class="steps">
+  <div class="step"><div class="badge">1</div><div><h4>Build the disposition map, then review it</h4><p>A scratch (uncommitted) script reads <code>registry.json</code> and emits <code>{group_id, kind, status, backlog_task, has_classifier, proposed_disposition, rationale}</code> for all 170. <b>No writes happen until the map is reviewed.</b></p><div class="loc">scratch script · output reviewed before any mutation</div></div></div>
+  <div class="step"><div class="badge hot">2</div><div><h4>Author backlog tasks for every Remove-deferred-untracked entry</h4><p>This happens <b>before any registry edit</b> so nothing is deleted until tracking exists. Record each new task id back into the map.</p><div class="loc">backlog/tasks/ · the §4 safety rule</div></div></div>
+  <div class="step"><div class="badge">3</div><div><h4>Promote the ~14 impossible-pattern entries</h4><p>Sanity-check each classifier still identifies its pattern, then <code>reconcile_registry.ts --id &lt;group_id&gt; --promote</code> — flips to <code>permanent</code> and regenerates the bundled core slice.</p><div class="loc">.claude/skills/triage/scripts/reconcile_registry.ts</div></div></div>
+  <div class="step"><div class="badge hot">4</div><div><h4>Bulk-delete stubs + deferred in a single atomic transaction</h4><p>One <code>atomic_update_registry</code> mutation removes all Remove-stub / tracked / untracked entries — <b>not</b> 150 separate writes. Dry-run summary first; apply after review.</p><div class="loc">packages/skill-fs/src/atomic_update_registry.ts · one .lock-guarded txn</div></div></div>
+  <div class="step"><div class="badge">5</div><div><h4>Delete orphaned builtins and de-register them</h4><p>Any <code>check_*.ts</code> whose <code>function_name</code> no longer appears in any entry is deleted from <code>builtins/</code> and removed from <code>builtins/index.ts</code>. No deprecation shims.</p><div class="loc">packages/core/src/classify_entry_points/builtins/</div></div></div>
+  <div class="step"><div class="badge gate">6</div><div><h4>Regenerate permanent_data.ts and run the gates</h4><p><code>generate_permanent_data.ts</code>, then <code>permanent_data.sync.test.ts</code> (committed slice byte-equals a fresh render) and <code>registry_writers.test.ts</code> (AST walk proves no raw write touched the registry) must pass.</p><div class="loc">pnpm test --filter core</div></div></div>
+</div>
+<div class="callout slate">
+  <span class="k">the binding constraint</span>
+  <p class="prose"><code>plan</code> and <code>triage</code> never write the registry; only the human does, through <code>atomic_update_registry</code>. <code>registry_writers.test.ts</code> is an AST walk that fails the build if any site calls a raw write against a registry-shaped path — so even step 4’s bulk-delete routes through the helper.</p>
+</div>
+
+<footer>
+  task-190.30.1 · disposition plan · generated 2026-06-30 · self-contained, no network<br>
+  live counts read from .claude/skills/triage/known_issues/registry.json (181 entries: 170 wip / 9 permanent / 2 fixed)<br>
+  sources: backlog/tasks/task-190.30.1 · .claude/rules/classifier-lifecycle.md · packages/core/src/classify_entry_points/ · packages/skill-fs/src/atomic_update_registry.ts
+</footer>
+</main>
+</body>
+</html>
