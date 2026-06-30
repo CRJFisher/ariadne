@@ -16,7 +16,6 @@ import { check_eval_based_dynamic_dispatch } from "./check_eval-based-dynamic-di
 import { check_framework_lifecycle_dispatch } from "./check_framework-lifecycle-dispatch";
 import { check_framework_lifecycle_handler } from "./check_framework-lifecycle-handler";
 import { check_framework_lifecycle_override } from "./check_framework-lifecycle-override";
-import { check_jsx_mdx_component_usage } from "./check_jsx-mdx-component-usage";
 import { check_py_dunder_protocol } from "./check_py-dunder-protocol";
 import { check_receiver_type_unknown } from "./check_receiver-type-unknown";
 import { check_string_keyed_dispatch } from "./check_string-keyed-dispatch";
@@ -40,7 +39,6 @@ export const BUILTIN_CHECKS: Record<string, BuiltinCheckFn> = {
   check_framework_lifecycle_dispatch,
   check_framework_lifecycle_handler,
   check_framework_lifecycle_override,
-  check_jsx_mdx_component_usage,
   check_py_dunder_protocol,
   check_receiver_type_unknown,
   check_string_keyed_dispatch,

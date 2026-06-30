@@ -588,34 +588,41 @@ describe("permanent-limitations catalog content", () => {
     }
   });
 
-  it("ambiguous residuals stay wip pending classifier-author review", () => {
+  it("ambiguous receiver-type residuals stay wip pending triage evidence", () => {
     for (const id of [
-      "ts-jsx-component-call",
-      "ts-decorator-factory-call",
+      "dynamic-cast-structural-type-dispatch",
+      "dependency-injection-type-resolution",
+      "unresolved-receiver-type",
+      "receiver-type-unknown",
       "aliased-receiver-type-lost",
-      "super-inherited-method",
-      "module-attribute-alias",
-      "jsx-mdx-component-usage",
     ]) {
       expect(by_id.get(id)?.status).toBe("wip");
     }
   });
 
-  it("pre-measured predicate patterns carry their declared precision as min_confidence", () => {
-    // Only the predicate-classified members of the pre-measured set are pinned
-    // here. Entries with `kind: "none"` are known issues awaiting an automated
-    // classifier and intentionally omit precision metadata.
-    const measured: Array<{ id: string; min_confidence: number }> = [
-      { id: "module-attribute-alias", min_confidence: 1.0 },
-    ];
-    for (const m of measured) {
-      const entry = by_id.get(m.id);
-      expect(entry, `missing pre-measured entry ${m.id}`).toBeDefined();
-      if (!entry) continue;
-      if (entry.classifier.kind !== "predicate") {
-        throw new Error(`${m.id}: expected classifier kind "predicate", got "${entry.classifier.kind}"`);
-      }
-      expect(entry.classifier.min_confidence).toBeCloseTo(m.min_confidence, 3);
+  it("classifiers migrated to backlog tasks or removed are absent from the registry", () => {
+    // Capture/coverage gaps migrated to TASK-357/358/359; two over-broad obs=0
+    // predicates removed outright. None remains in the permanent-limitations catalog.
+    for (const id of [
+      "jsx-mdx-component-usage",
+      "ts-jsx-component-call",
+      "ts-decorator-factory-call",
+      "super-inherited-method",
+      "module-attribute-alias",
+    ]) {
+      expect(by_id.has(id)).toBe(false);
+    }
+  });
+
+  it("every permanent predicate pins a min_confidence in [0,1]", () => {
+    const permanent_predicates = registry.filter(
+      (e) => e.status === "permanent" && e.classifier.kind === "predicate",
+    );
+    expect(permanent_predicates.length).toBeGreaterThan(0);
+    for (const e of permanent_predicates) {
+      if (e.classifier.kind !== "predicate") continue;
+      expect(e.classifier.min_confidence).toBeGreaterThanOrEqual(0);
+      expect(e.classifier.min_confidence).toBeLessThanOrEqual(1);
     }
   });
 });

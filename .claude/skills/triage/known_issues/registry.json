@@ -108,118 +108,6 @@
       }
     },
     {
-      "group_id": "super-inherited-method",
-      "title": "F8 — `super` / inherited method call missed",
-      "description": "A subclass method is invoked via `super.method()` or through inheritance. The call's receiver resolves to the parent class rather than the dispatching subclass, and the inherited method on the parent is marked unreachable.\n\nKeep-pending (TASK-190.30.1): fixable super/inheritance-dispatch resolver gap but observed_count=0 (unvalidated). Do not promote; revisit once it fires.",
-      "status": "wip",
-      "languages": [
-        "typescript",
-        "javascript",
-        "python",
-        "rust"
-      ],
-      "examples": [
-        {
-          "file": "src/derived.ts",
-          "line": 10,
-          "snippet": "class Derived extends Base { m() { super.m(); } }"
-        }
-      ],
-      "classifier": {
-        "kind": "predicate",
-        "axis": "B",
-        "min_confidence": 0.9,
-        "expression": {
-          "op": "syntactic_feature_eq",
-          "name": "is_super_call",
-          "value": true
-        }
-      }
-    },
-    {
-      "group_id": "ts-jsx-component-call",
-      "title": "JSX/TSX component element not captured as a call",
-      "description": "`<Component />` in JSX/TSX is a function invocation at runtime but the tree-sitter query does not emit `@reference.call` for JSX elements. Components that are only referenced via JSX appear unreachable.\n\nKeep-pending (TASK-190.30.1): fixable JSX-element capture gap in typescript.scm, but observed_count=0 (unvalidated). Do not promote; revisit once it fires.",
-      "status": "wip",
-      "languages": [
-        "typescript",
-        "javascript"
-      ],
-      "examples": [
-        {
-          "file": "src/app.tsx",
-          "line": 8,
-          "snippet": "<UserCard user={u} />"
-        }
-      ],
-      "classifier": {
-        "kind": "predicate",
-        "axis": "A",
-        "min_confidence": 0.9,
-        "expression": {
-          "op": "all",
-          "of": [
-            {
-              "op": "any",
-              "of": [
-                {
-                  "op": "language_eq",
-                  "value": "typescript"
-                },
-                {
-                  "op": "language_eq",
-                  "value": "javascript"
-                }
-              ]
-            },
-            {
-              "op": "grep_line_regex",
-              "pattern": "<[A-Z][A-Za-z0-9_]*[\\s/>]"
-            },
-            {
-              "op": "missing_capture_at_grep_hit",
-              "capture_name": "reference.call"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "group_id": "ts-decorator-factory-call",
-      "title": "Decorator factory invocation not captured as a call",
-      "description": "`@Decorator(args)` attached to a class or method invokes the factory, but the decorator expression is not currently emitted as `@reference.call`, so the factory itself can look unreachable.\n\nKeep-pending (TASK-190.30.1): fixable decorator-factory capture gap, but observed_count=0 (unvalidated). Do not promote; revisit once it fires.",
-      "status": "wip",
-      "languages": [
-        "typescript",
-        "javascript"
-      ],
-      "examples": [
-        {
-          "file": "src/controller.ts",
-          "line": 4,
-          "snippet": "@Injectable({ scope: 'singleton' })\nclass Controller {}"
-        }
-      ],
-      "classifier": {
-        "kind": "predicate",
-        "axis": "A",
-        "min_confidence": 0.9,
-        "expression": {
-          "op": "all",
-          "of": [
-            {
-              "op": "grep_line_regex",
-              "pattern": "^\\s*@[A-Za-z_][A-Za-z0-9_]*\\s*\\("
-            },
-            {
-              "op": "missing_capture_at_grep_hit",
-              "capture_name": "reference.call"
-            }
-          ]
-        }
-      }
-    },
-    {
       "group_id": "py-property-decorator-access",
       "title": "`@property` getter accessed as attribute, never captured as a call",
       "description": "A Python `@property`-decorated method is invoked implicitly by attribute access (`obj.value`), not by an explicit `obj.value()`. Tree-sitter captures only emit `@reference.call` on call expressions, so these entry points look unreachable.",
@@ -399,34 +287,6 @@
       "classification": {
         "kind": "framework_invoked",
         "framework": "angular"
-      }
-    },
-    {
-      "group_id": "module-attribute-alias",
-      "title": "`callers-in-registry-wrong-target`: resolved target is a module-level alias",
-      "description": "When Ariadne's diagnosis is `callers-in-registry-wrong-target`, callers exist in the call graph but were resolved to the wrong definition — typically a local alias variable rather than the actual function. Seeded from `triage_patterns.json` rule `callers-in-registry-wrong-target` (precision 1.0).\n\nKeep-pending (TASK-190.30.1): fixable wrong-target alias resolution (`callers-in-registry-wrong-target`) but observed_count=0 (unvalidated seed). Do not promote; revisit once it fires.",
-      "status": "wip",
-      "languages": [
-        "typescript",
-        "javascript",
-        "python",
-        "rust"
-      ],
-      "examples": [
-        {
-          "file": "src/torch_util.py",
-          "line": 74,
-          "snippet": "revin = _revin_impl"
-        }
-      ],
-      "classifier": {
-        "kind": "predicate",
-        "axis": "B",
-        "min_confidence": 1,
-        "expression": {
-          "op": "diagnosis_eq",
-          "value": "callers-in-registry-wrong-target"
-        }
       }
     },
     {
@@ -750,26 +610,6 @@
       ],
       "last_seen_run": "2026-04-27T16-19-42.325Z",
       "backlog_task": "TASK-348"
-    },
-    {
-      "group_id": "jsx-mdx-component-usage",
-      "title": "jsx-mdx-component-usage",
-      "description": "Proposed by plan investigator — fill in before enabling.\n\nKeep-pending (TASK-190.30.1): root cause is `.mdx` absent from SUPPORTED_EXTENSIONS — a fixable coverage expansion, not a permanent limitation; the lone obs=1 hit (typeorm) may be a misfire. Revisit after a validated hit.",
-      "status": "wip",
-      "languages": [
-        "typescript"
-      ],
-      "examples": [],
-      "classifier": {
-        "kind": "builtin",
-        "function_name": "check_jsx_mdx_component_usage",
-        "min_confidence": 0.9
-      },
-      "observed_count": 1,
-      "observed_projects": [
-        "typeorm"
-      ],
-      "last_seen_run": "2026-04-27T16-19-42.325Z"
     },
     {
       "group_id": "bundler-module-substitution",
