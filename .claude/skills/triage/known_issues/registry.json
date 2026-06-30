@@ -338,46 +338,6 @@
       "last_seen_run": "2026-04-23T20-41-21.302Z"
     },
     {
-      "group_id": "receiver-type-unknown",
-      "title": "receiver-type-unknown",
-      "description": "Proposed by plan investigator — fill in before enabling.\n\nKeep-pending (TASK-190.30.1): untyped-JS receiver with no CallReference formed; ambiguous (fixable value-flow inference vs genuinely-untyped JS); obs=1 and the exact empty-ref gate was not reproducible.",
-      "status": "wip",
-      "languages": [
-        "javascript"
-      ],
-      "examples": [],
-      "classifier": {
-        "kind": "builtin",
-        "function_name": "check_receiver_type_unknown",
-        "min_confidence": 0.9
-      },
-      "observed_count": 1,
-      "observed_projects": [
-        "mocha"
-      ],
-      "last_seen_run": "2026-04-23T20-41-21.302Z"
-    },
-    {
-      "group_id": "unresolved-receiver-type",
-      "title": "unresolved-receiver-type",
-      "description": "Proposed by plan investigator — fill in before enabling.\n\nKeep-pending (TASK-190.30.1): untyped-JS receiver (`receiver_type_unknown`) — ambiguous between a fixable inference gap and genuinely-untyped JS; gate over-matches and the description's named failure reasons mismatch the observed one.",
-      "status": "wip",
-      "languages": [
-        "javascript"
-      ],
-      "examples": [],
-      "classifier": {
-        "kind": "builtin",
-        "function_name": "check_unresolved_receiver_type",
-        "min_confidence": 0.9
-      },
-      "observed_count": 6,
-      "observed_projects": [
-        "mocha"
-      ],
-      "last_seen_run": "2026-04-23T20-41-21.302Z"
-    },
-    {
       "group_id": "framework-lifecycle-dispatch",
       "title": "framework-lifecycle-dispatch",
       "description": "Permanent limitation. NestJS reads method-level handler decorators (`@Get`/`@Post`/`@SubscribeMessage`/`@MessagePattern`/`@Cron`/...) via reflect-metadata at startup and dispatches to the method at runtime; no textual call site exists. Subsumes the former byte-identical `framework-decorator-dispatch`.",
@@ -416,46 +376,6 @@
         "nest"
       ],
       "last_seen_run": "2026-04-23T22-12-28.705Z"
-    },
-    {
-      "group_id": "dependency-injection-type-resolution",
-      "title": "dependency-injection-type-resolution",
-      "description": "Proposed by plan investigator — fill in before enabling.\n\nKeep-pending (TASK-190.30.1): generic-return-type-from-argument inference (`Injector.get<T>(Token)`); hard-but-fixable, not a permanent limitation; obs=1, substantial feature. Revisit after more evidence.",
-      "status": "wip",
-      "languages": [
-        "typescript"
-      ],
-      "examples": [],
-      "classifier": {
-        "kind": "builtin",
-        "function_name": "check_dependency_injection_type_resolution",
-        "min_confidence": 0.9
-      },
-      "observed_count": 1,
-      "observed_projects": [
-        "angular"
-      ],
-      "last_seen_run": "2026-04-25T17-07-32.678Z"
-    },
-    {
-      "group_id": "dynamic-cast-structural-type-dispatch",
-      "title": "dynamic-cast-structural-type-dispatch",
-      "description": "Proposed by plan investigator — fill in before enabling.\n\nKeep-pending (TASK-190.30.1): hardest cast sub-case — cast target is an anonymous structural-type literal with no nominal class to bind to; obs=1, fix path unclear. Distinct from the nominal-cast fix in TASK-353.",
-      "status": "wip",
-      "languages": [
-        "typescript"
-      ],
-      "examples": [],
-      "classifier": {
-        "kind": "builtin",
-        "function_name": "check_dynamic_cast_structural_type_dispatch",
-        "min_confidence": 0.9
-      },
-      "observed_count": 1,
-      "observed_projects": [
-        "angular"
-      ],
-      "last_seen_run": "2026-04-25T17-07-32.678Z"
     },
     {
       "group_id": "higher-order-function-callback",

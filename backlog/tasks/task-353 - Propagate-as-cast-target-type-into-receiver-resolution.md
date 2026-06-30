@@ -28,9 +28,17 @@ The cast target type is statically present in the AST; this is a fixable resolve
 permanent limitation. Surfaced by TASK-190.30.1's registry audit, which deleted two near-duplicate
 suppressor classifiers for this pattern.
 
+### Structural-literal cast variant
+
+A follow-up triage folded in the harder structural-literal variant: `(x as { m?: () => void }).m()`,
+where the cast target is an inline anonymous object-type literal rather than a nominal class. There
+is no class definition to bind to, so resolution must fall through to the concrete underlying
+object's real type. Handle this after the nominal-cast case lands.
+
 ### Origin (deleted classifier rows this tracks)
 
-`type-cast-dispatch`, `type-cast-receiver` (near-duplicate; one fix resolves both).
+`type-cast-dispatch`, `type-cast-receiver` (near-duplicate; one fix resolves both), and
+`dynamic-cast-structural-type-dispatch` (the structural-literal cast target; observed once in angular).
 
 <!-- SECTION:DESCRIPTION:END -->
 
@@ -42,6 +50,8 @@ suppressor classifiers for this pattern.
       identifier's annotated type.
 - [ ] The `<Concrete>x` cast form is handled equivalently.
 - [ ] `extract_receiver` consults the `as_expression` / cast target when building the receiver base.
-- [ ] Regression tests cover both cast syntaxes.
+- [ ] The structural-literal cast variant `(x as { m(): void }).m()` resolves through the concrete
+      underlying object's type (no nominal class to bind to).
+- [ ] Regression tests cover both cast syntaxes and the structural-literal variant.
 
 <!-- AC:END -->

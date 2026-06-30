@@ -38,10 +38,13 @@ describe("load_registry", () => {
     expect(fs.existsSync(p)).toBe(true);
   });
 
-  it("loads `wip`-status rules alongside `permanent` ones", () => {
+  it("loads non-permanent statuses (does not filter to permanent only)", () => {
     const registry = load_registry();
-    const has_wip = registry.some((e) => e.status === "wip");
-    expect(has_wip).toBe(true);
+    // The catalog's resting state is permanent limitations plus fixed/retired
+    // closure rows; the loader returns every status (active-set filtering is the
+    // job of active_rules_for_classification, not load_registry).
+    const has_non_permanent = registry.some((e) => e.status !== "permanent");
+    expect(has_non_permanent).toBe(true);
   });
 
   it("loads `kind: \"none\"` rules (registry placeholders without a classifier)", () => {
@@ -759,18 +762,13 @@ describe("permanent-limitations catalog content", () => {
     }
   });
 
-  it("ambiguous receiver-type residuals stay wip, each with real observation evidence", () => {
-    for (const id of [
-      "dynamic-cast-structural-type-dispatch",
-      "dependency-injection-type-resolution",
-      "unresolved-receiver-type",
-      "receiver-type-unknown",
-    ]) {
-      const entry = by_id.get(id);
-      expect(entry?.status).toBe("wip");
-      // The evidence gate: every surviving wip classifier has fired in a real run.
-      expect((entry?.observed_count ?? 0) >= 1).toBe(true);
-    }
+  it("has no wip entries — the catalog's resting state is fully decided", () => {
+    // Every classifier has resolved to permanent (a true static-analysis limit),
+    // fixed/retired (the bug landed), or out of the registry entirely (deferred
+    // fixable bugs tracked only in backlog/tasks/). The last four wip residuals —
+    // all confirmed fixable CommonJS/cast/generic-inference gaps — were removed and
+    // routed to TASK-353/354/360/361.
+    expect(registry.filter((e) => e.status === "wip")).toEqual([]);
   });
 
   it("classifiers migrated to backlog tasks or removed are absent from the registry", () => {
@@ -784,6 +782,11 @@ describe("permanent-limitations catalog content", () => {
       "super-inherited-method",
       "module-attribute-alias",
       "aliased-receiver-type-lost",
+      // Removed by the follow-up triage (fixable, routed to backlog tasks):
+      "dependency-injection-type-resolution",
+      "dynamic-cast-structural-type-dispatch",
+      "unresolved-receiver-type",
+      "receiver-type-unknown",
     ]) {
       expect(by_id.has(id)).toBe(false);
     }
