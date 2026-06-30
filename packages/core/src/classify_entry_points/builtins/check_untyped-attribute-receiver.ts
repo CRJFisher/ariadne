@@ -14,9 +14,11 @@
 // unknown (where the resolved type lives in another file).
 //
 // Self-narrowing behind TASK-350 Fix C: `self.<attr> = Constructor()` assignments
-// now promote to typed properties, so typeable receivers resolve and never reach
-// this classifier; only genuinely-untyped receivers remain. The rule is therefore
-// only safe with Fix C landed and stays `status: wip`.
+// promote to typed properties, so typeable receivers resolve and never reach this
+// classifier; only genuinely-untyped receivers remain. The residual case — a Cython
+// `object` constructor parameter that can never gain a followable type — is out of
+// static reach, so the rule is a permanent-limitations-catalog entry (`status:
+// permanent`).
 //
 // Distinct from the JavaScript `receiver-type-unknown` builtin, which keys on the
 // inverse shape (`callers-not-in-registry` with empty call refs, identifier

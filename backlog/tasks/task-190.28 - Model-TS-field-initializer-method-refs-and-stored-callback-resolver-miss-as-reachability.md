@@ -81,3 +81,12 @@ Both false-positive cases are resolved at the indexing layer by adding two tree-
 Both patterns were added to `typescript.scm` and `javascript.scm` for consistency. Tests cover: AST-level `variable_reference` emission (TypeScript capture handler tests, including `this`, `super`, shorthand, and negative method-call guard), and end-to-end entry-point suppression via integration tests (TypeScript and JavaScript, including a cross-file factory.ts + use.ts destructure scenario).
 
 The Case B resolution here is a reachability approximation: `extractValue` is marked indirectly reachable because it appears in a shorthand property in the file where it is defined. Full cross-file call resolution for the destructure path is separate work.
+
+### Registry row retirement (TASK-190.30.1)
+
+The `stored-callback-via-object-property` registry row was retired by TASK-190.30.1
+(registry tightening to permanent limitations only) — deferred-feature suppressor
+classifiers no longer live in the registry. Its cross-file destructure resolution
+remains tracked by this task. `typed-field-method-dispatch` was likewise removed
+there (it links to TASK-205). No new tracking task was needed, since this task and
+TASK-205 already own the underlying work.

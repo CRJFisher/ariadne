@@ -27,6 +27,7 @@
   nav.cross a, nav.cross .pending, nav.cross .me{font-family:var(--mono);font-size:11px;text-decoration:none;border-radius:999px;padding:3px 10px;border:1px solid var(--g200)}
   nav.cross a.doc-link{color:var(--g600);background:var(--paper)}
   nav.cross a.doc-link:hover{border-color:var(--clay);color:var(--slate)}
+  nav.cross a.doc-link .done-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--olive);margin-right:5px;vertical-align:1px}
   nav.cross .me{color:var(--ivory);background:var(--slate);border-color:var(--slate)}
   nav.cross .pending{color:var(--g400);background:transparent;border-style:dashed}
   nav.cross .pending .tag{color:var(--clay);margin-left:6px}
@@ -51,6 +52,7 @@
   .meta{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 2px}
   .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
   .chip strong{color:var(--slate);font-weight:600}
+  .chip.land{background:rgba(108,122,74,.12);border-color:rgba(108,122,74,.4)} .chip.land strong{color:#4f5a36}
   .cap{font-size:13.5px;color:var(--g600);margin:9px 2px 16px;max-width:90ch}
   .cap b{color:var(--slate);font-weight:600}
 
@@ -77,14 +79,16 @@
   table.disp th{text-align:left;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--g400);font-weight:600;padding:7px 10px;border-bottom:1.5px solid var(--g200)}
   table.disp td{padding:9px 10px;border-bottom:1px solid var(--g100);vertical-align:top}
   table.disp tr:last-child td{border-bottom:none}
+  table.disp tr.total td{border-top:1.5px solid var(--g200);font-weight:600}
   .dtag{font-family:var(--mono);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;border-radius:999px;padding:3px 9px;white-space:nowrap;display:inline-block}
   .dtag.promote{background:rgba(108,122,74,.16);color:var(--olive);border:1px solid rgba(108,122,74,.4)}
   .dtag.stub{background:rgba(168,71,47,.12);color:var(--rust);border:1px solid rgba(168,71,47,.35)}
   .dtag.deferred{background:rgba(185,121,79,.14);color:var(--clay);border:1px solid rgba(185,121,79,.4)}
+  .dtag.fixed{background:rgba(108,122,74,.1);color:#4f5a36;border:1px solid rgba(108,122,74,.35)}
   .dtag.pending{background:var(--g100);color:var(--g600);border:1px solid var(--g200)}
   .barcell{min-width:150px}
-  .bar{height:18px;border-radius:5px;display:flex;align-items:center;padding:0 7px;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600}
-  .bar.promote{background:var(--olive)} .bar.stub{background:var(--rust)} .bar.deferred{background:var(--clay)} .bar.pending{background:var(--g400)}
+  .bar{height:18px;border-radius:5px;display:flex;align-items:center;padding:0 7px;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600;min-width:26px}
+  .bar.promote{background:var(--olive)} .bar.stub{background:var(--rust)} .bar.deferred{background:var(--clay)} .bar.fixed{background:#8a9a5e} .bar.pending{background:var(--g400)}
   .ex{font-family:var(--mono);font-size:11.5px;color:var(--g600);line-height:1.7}
   .ex code{font-size:1em;background:var(--ivory);border:1px solid var(--g200);padding:1px 5px}
   .act{font-size:12.5px;color:var(--g600)} .act code{font-size:1em}
@@ -117,6 +121,7 @@
   .mark.on::after{content:"";position:absolute;left:5px;top:1.5px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(43deg)}
   .grp{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--clay);margin:14px 0 4px;padding-top:8px;border-top:1px dashed var(--g200)}
   .grp:first-of-type{border-top:none;padding-top:0;margin-top:6px}
+  .grp .badge-done{color:var(--olive);font-weight:700}
 
   footer{margin-top:56px;border-top:1px solid var(--g200);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400);line-height:1.7}
   .legend{display:flex;flex-wrap:wrap;gap:14px 18px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:10px 2px 4px;align-items:center}
@@ -131,8 +136,8 @@
   <div class="inner">
     <span class="brand">task 190.30 · classifier scope</span>
     <span class="me" aria-current="page">190.30 · overview</span>
-    <a class="doc-link" href="task-190.30.1.disposition-plan.html">190.30.1 · audit &amp; cleanup</a>
-    <span class="pending"><span class="dot"></span>190.30.2 · classifier-author<span class="tag">not yet generated</span></span>
+    <a class="doc-link" href="task-190.30.1.disposition-plan.html"><span class="done-dot"></span>190.30.1 · audit &amp; cleanup · done</a>
+    <span class="pending"><span class="dot"></span>190.30.2 · classifier-author<span class="tag">to do · not yet generated</span></span>
   </div>
 </nav>
 
@@ -141,9 +146,9 @@
   <div class="inner">
     <span class="brand">on this page</span>
     <a href="#problem">1 · The conflation</a>
-    <a href="#glance">2 · Registry at a glance</a>
-    <a href="#disposition">3 · Disposition plan</a>
-    <a href="#lifecycle">4 · The new lifecycle</a>
+    <a href="#glance">2 · Registry, before → after</a>
+    <a href="#disposition">3 · How the 170 disposed</a>
+    <a href="#lifecycle">4 · The remaining authoring gap</a>
     <a href="#status">5 · Done &amp; remaining</a>
   </div>
 </nav>
@@ -151,23 +156,24 @@
 <main>
 <header>
   <p class="eyebrow">self-healing pipeline · classifier registry</p>
-  <h1>The classifier registry becomes a permanent-limitations catalog — and gains an agent to author its entries</h1>
-  <p class="lead prose">One file (<code>known_issues/registry.json</code>) does two incompatible jobs: it catalogs patterns static analysis can <b>never</b> resolve, and it suppresses triage cost for bugs Ariadne <b>could</b> fix.</p>
-  <p class="lead prose">Task 190.30 splits those jobs apart: keep only the genuinely-impossible patterns, move fixable bugs to the backlog, and add a <code>classifier-author</code> agent so new permanent-limitation entries get a real classifier instead of a never-firing stub.</p>
+  <h1>The classifier registry is now a permanent-limitations catalog — and one sub-task remains to author its entries</h1>
+  <p class="lead prose">One file (<code>known_issues/registry.json</code>) did two incompatible jobs: it cataloged patterns static analysis can <b>never</b> resolve, and it suppressed triage cost for bugs Ariadne <b>could</b> fix.</p>
+  <p class="lead prose">Task 190.30 splits those jobs apart. <b>190.30.1 is done</b> — the registry shrank from 181 to 32 entries, fixable bugs moved to the backlog. <b>190.30.2 remains</b> — a <code>classifier-author</code> agent so new permanent-limitation entries get a real classifier instead of a never-firing stub.</p>
   <div class="meta">
-    <span class="chip">registry <strong>181 entries</strong></span>
-    <span class="chip">wip <strong>170 · 94%</strong></span>
-    <span class="chip">never-fire stubs <strong>102</strong></span>
-    <span class="chip">sub-tasks <strong>2</strong></span>
-    <span class="chip">human stays <strong>sole registry writer</strong></span>
+    <span class="chip land">registry now <strong>32 entries</strong></span>
+    <span class="chip">was <strong>181 · 94% wip</strong></span>
+    <span class="chip land">promoted <strong>11</strong></span>
+    <span class="chip">new fix tasks <strong>6</strong></span>
+    <span class="chip">sub-tasks <strong>1 done · 1 to do</strong></span>
+    <span class="chip">human stays <strong>sole writer</strong></span>
   </div>
 </header>
 
 <!-- ============ 1. THE CONFLATION ============ -->
-<h2 id="problem"><span class="n">01</span>One registry, two jobs that fight each other</h2>
-<p class="cap prose">The same file answers two questions with opposite maintenance rules: <b>"can a static analyzer ever know this?"</b> and <b>"have we fixed this bug yet?"</b> — so 94% of it is unfilled deferred-bug stubs that never fire.</p>
+<h2 id="problem"><span class="n">01</span>One registry, two jobs that fought each other</h2>
+<p class="cap prose">The same file answered two questions with opposite maintenance rules: <b>"can a static analyzer ever know this?"</b> and <b>"have we fixed this bug yet?"</b> — so 94% of it was unfilled deferred-bug stubs that never fired. 190.30.1 split it.</p>
 <div class="splitwrap">
-<svg viewBox="0 0 1000 300" role="img" aria-label="The registry conflates a permanent-limitations catalog with a triage-cost suppressor list, which 190.30 splits into a tight registry plus the backlog.">
+<svg viewBox="0 0 1000 300" role="img" aria-label="The registry conflated a permanent-limitations catalog with a triage-cost suppressor list, which 190.30.1 split into a 32-entry catalog plus the backlog.">
   <defs>
     <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#5f594f"/>
@@ -180,7 +186,7 @@
     </marker>
   </defs>
 
-  <!-- center: the one registry today -->
+  <!-- center: the one registry before -->
   <rect x="370" y="118" width="260" height="64" rx="10" fill="#2b2a28"/>
   <text x="500" y="143" text-anchor="middle" fill="#f7f3ec" font-family="ui-serif,Georgia,serif" font-size="16" font-weight="600">registry.json</text>
   <text x="500" y="164" text-anchor="middle" fill="#e7ddc9" font-family="ui-monospace,Menlo,monospace" font-size="11">181 entries · 94% wip</text>
@@ -199,47 +205,44 @@
 
   <!-- arrow to outcome -->
   <path d="M630,150 L690,150" fill="none" stroke="#5f594f" stroke-width="1.8" marker-end="url(#ar)"/>
-  <text x="660" y="140" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10">190.30</text>
+  <text x="660" y="140" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10">190.30.1</text>
 
   <!-- outcome A: tight registry -->
   <rect x="700" y="62" width="280" height="64" rx="10" fill="#fffdf8" stroke="#6c7a4a" stroke-width="2"/>
   <text x="840" y="86" text-anchor="middle" fill="#2b2a28" font-family="ui-serif,Georgia,serif" font-size="14.5" font-weight="600">Registry = permanent only</text>
-  <text x="840" y="106" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10.5">~14 promoted · all firing</text>
+  <text x="840" y="106" text-anchor="middle" fill="#4f5a36" font-family="ui-monospace,Menlo,monospace" font-size="10.5">32 entries · 20 permanent · all firing</text>
 
   <!-- outcome B: backlog -->
   <rect x="700" y="174" width="280" height="64" rx="10" fill="#fffdf8" stroke="#b9794f" stroke-width="2"/>
   <text x="840" y="198" text-anchor="middle" fill="#2b2a28" font-family="ui-serif,Georgia,serif" font-size="14.5" font-weight="600">Fixable bugs → backlog</text>
-  <text x="840" y="218" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10.5">~155 removed · tracked as tasks</text>
+  <text x="840" y="218" text-anchor="middle" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="10.5">149 removed · 19 tracked as new tasks</text>
 </svg>
 </div>
 <div class="legend">
   <span><i style="background:#6c7a4a"></i> permanent limitation (kept / promoted)</span>
   <span><i style="background:#a8472f"></i> deferred fixable bug (removed)</span>
-  <span><i style="background:#2b2a28"></i> today's conflated registry</span>
+  <span><i style="background:#2b2a28"></i> the former conflated registry</span>
 </div>
 <div class="callout rust">
-  <span class="k">the creation gap</span>
-  <p class="prose">No pipeline agent ever <b>authors</b> a classifier: triage emits <code>fp-novel</code> → plan proposes a task → prioritize files a backlog card → the human hand-writes the entire predicate or builtin with no tooling. So 102 entries sit as <code>kind:"none"</code> stubs that never fire.</p>
+  <span class="k">the creation gap — still open (190.30.2)</span>
+  <p class="prose">No pipeline agent yet <b>authors</b> a classifier: triage emits <code>fp-novel</code> → plan proposes a task → prioritize files a backlog card → the human hand-writes the entire predicate or builtin with no tooling — the gap 190.30.2 closes.</p>
 </div>
 
-<!-- ============ 2. REGISTRY AT A GLANCE ============ -->
-<h2 id="glance"><span class="n">02</span>Registry at a glance: 94% wip, and most of that never fires</h2>
-<p class="cap prose">Left: the 181 entries by lifecycle status. Right: the 170 <code>wip</code> entries by classifier kind — <b>102 are <code>none</code></b> (plan stubs, never fire), and many <code>builtin</code> entries suppress bugs rather than mark limitations.</p>
+<!-- ============ 2. REGISTRY BEFORE / AFTER ============ -->
+<h2 id="glance"><span class="n">02</span>Registry, before and after: 181 → 32, the catalog now fires</h2>
+<p class="cap prose">Left: the 181 entries before, by lifecycle status — 94% never-firing <code>wip</code>. Right: the landed 32, dominated by promoted <code>permanent</code> entries that all fire, with 10 deliberately held <code>wip</code>.</p>
 <div class="charts">
 
   <div class="chartcard">
-    <p class="ttl">181 entries · by status</p>
-    <h3>94% are work-in-progress</h3>
-    <svg viewBox="0 0 380 200" role="img" aria-label="Of 181 registry entries: 170 wip, 9 permanent, 2 fixed.">
-      <!-- wip -->
+    <p class="ttl">before · 181 entries by status</p>
+    <h3>94% were work-in-progress</h3>
+    <svg viewBox="0 0 380 200" role="img" aria-label="Before: of 181 registry entries, 170 wip, 9 permanent, 2 fixed.">
       <text x="0" y="38" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">wip</text>
       <rect x="70" y="24" width="300" height="26" rx="5" fill="#a8472f"/>
       <text x="84" y="42" font-family="ui-monospace,Menlo,monospace" font-size="12.5" fill="#fff" font-weight="700">170 · 94%</text>
-      <!-- permanent -->
       <text x="0" y="90" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">permanent</text>
       <rect x="70" y="76" width="16" height="26" rx="5" fill="#6c7a4a"/>
       <text x="94" y="94" font-family="ui-monospace,Menlo,monospace" font-size="12.5" fill="#6c7a4a" font-weight="700">9 · 5%</text>
-      <!-- fixed -->
       <text x="0" y="142" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">fixed</text>
       <rect x="70" y="128" width="4" height="26" rx="2" fill="#9a9387"/>
       <text x="84" y="146" font-family="ui-monospace,Menlo,monospace" font-size="12.5" fill="#9a9387" font-weight="700">2 · 1%</text>
@@ -250,79 +253,94 @@
   </div>
 
   <div class="chartcard">
-    <p class="ttl">170 wip entries · by classifier kind</p>
-    <h3>105 stubs that never fire</h3>
-    <svg viewBox="0 0 560 200" role="img" aria-label="Of 170 wip entries: 102 kind none, 62 builtin, 6 predicate. Roughly 31 carry backlog_task links; roughly 14 are impossible-pattern promote candidates.">
-      <!-- none -->
-      <text x="0" y="32" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">none</text>
-      <rect x="90" y="18" width="350" height="24" rx="5" fill="#a8472f"/>
-      <text x="104" y="35" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#fff" font-weight="700">102 · never fires</text>
-      <!-- builtin -->
-      <text x="0" y="74" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">builtin</text>
-      <rect x="90" y="60" width="203" height="24" rx="5" fill="#b9794f"/>
-      <text x="104" y="77" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#fff" font-weight="700">62</text>
-      <!-- predicate -->
-      <text x="0" y="116" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">predicate</text>
-      <rect x="90" y="102" width="20" height="24" rx="5" fill="#6c7a4a"/>
-      <text x="120" y="119" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#6c7a4a" font-weight="700">6</text>
+    <p class="ttl">after · 32 entries by status &amp; kind</p>
+    <h3>20 permanent, all firing</h3>
+    <svg viewBox="0 0 560 200" role="img" aria-label="After: of 32 registry entries, 20 permanent, 10 wip kept-pending, 2 fixed; by classifier kind 17 builtin, 12 predicate, 3 none.">
+      <text x="0" y="32" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">permanent</text>
+      <rect x="90" y="18" width="240" height="24" rx="5" fill="#6c7a4a"/>
+      <text x="104" y="35" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#fff" font-weight="700">20 · all fire</text>
+      <text x="0" y="74" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">wip</text>
+      <rect x="90" y="60" width="120" height="24" rx="5" fill="#9a9387"/>
+      <text x="104" y="77" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#fff" font-weight="700">10 · kept-pending</text>
+      <text x="0" y="116" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">fixed</text>
+      <rect x="90" y="102" width="24" height="24" rx="5" fill="#8a9a5e"/>
+      <text x="124" y="119" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f6b3a" font-weight="700">2</text>
 
       <!-- annotation band -->
       <line x1="90" y1="148" x2="540" y2="148" stroke="#ddd6c8" stroke-width="1"/>
       <circle cx="98" cy="170" r="5" fill="#b9794f"/>
-      <text x="110" y="174" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#5f594f">~31 carry a backlog_task link (deferred bug)</text>
+      <text x="110" y="174" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#5f594f">by kind: 17 builtin · 12 predicate · 3 none</text>
       <circle cx="98" cy="190" r="5" fill="#6c7a4a"/>
-      <text x="110" y="194" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#5f594f">~14 impossible-pattern promote candidates</text>
+      <text x="110" y="194" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#5f594f">barrel shed 46 orphaned builtins → holds 17</text>
     </svg>
   </div>
 </div>
-<p class="cap prose">3 classifier kinds: <code>none</code> = stub that never fires · <code>predicate</code> = declarative JSON expression tree (no TS compile) · <code>builtin</code> = named TypeScript <code>check_*.ts</code> function (requires compile).</p>
+<p class="cap prose">3 classifier kinds: <code>none</code> = stub that never fires · <code>predicate</code> = declarative JSON expression tree (no TS compile) · <code>builtin</code> = named TypeScript <code>check_*.ts</code> function (requires compile). The 102 <code>kind:none</code> plan stubs that once dominated are gone.</p>
 
-<!-- ============ 3. DISPOSITION PLAN ============ -->
-<h2 id="disposition"><span class="n">03</span>Entry disposition: ~155 removed, ~14 promoted</h2>
-<p class="cap prose">Every one of the 170 <code>wip</code> entries falls into exactly one bucket. Bar width shows the share of the 170. Short-term coverage loss is accepted — removed suppressors resurface as <code>fp-novel</code> on the next triage run, driving the fix.</p>
+<!-- ============ 3. DISPOSITION RESULT ============ -->
+<h2 id="disposition"><span class="n">03</span>How the 170 wip entries disposed: 149 removed, 11 promoted, 10 held</h2>
+<p class="cap prose">Every one of the 170 <code>wip</code> entries landed in exactly one bucket. Bar width is the share of the 170. Short-term coverage loss is accepted — removed suppressors resurface as <code>fp-novel</code> on the next triage run, with a backlog task driving the fix. The full per-bucket record is on the 190.30.1 page.</p>
 <table class="disp">
   <thead>
-    <tr><th>Disposition</th><th class="barcell">Count (of 169)</th><th>Example entries</th><th>Action</th></tr>
+    <tr><th>Disposition</th><th class="barcell">Count of 170</th><th>Example entries</th><th>Result</th></tr>
   </thead>
   <tbody>
     <tr>
       <td><span class="dtag stub">Remove-stub</span></td>
-      <td class="barcell"><div class="bar stub" style="width:96%">102</div></td>
+      <td class="barcell"><div class="bar stub" style="width:100%">102</div></td>
       <td class="ex">all <code>kind:"none"</code> entries — "Proposed by plan investigator — fill in before enabling"</td>
-      <td class="act">delete in one <code>atomic_update_registry</code> transaction; re-enters via <code>classifier-author</code> if genuinely needed</td>
+      <td class="act">deleted in one <code>atomic_update_registry</code> transaction; never fired</td>
     </tr>
     <tr>
-      <td><span class="dtag deferred">Remove-deferred</span></td>
-      <td class="barcell"><div class="bar deferred" style="width:30%">~31</div></td>
-      <td class="ex"><code>method-call-unresolved</code> (184) · <code>test-file-callers-missed</code> (182) · <code>aliased-re-export</code> (156) · <code>python-module-attribute-call</code> (190.11) · <code>cross-package-call</code> (190.13)</td>
-      <td class="act">delete; fix already tracked by the linked <code>backlog_task</code></td>
+      <td><span class="dtag deferred">Remove-tracked</span></td>
+      <td class="barcell"><div class="bar deferred" style="width:11%">11</div></td>
+      <td class="ex"><code>method-call-unresolved</code> (184) · <code>test-file-callers-missed</code> (182) · <code>inline-constructor-method-chain</code> (187) · <code>cross-package-registry-gap</code> (198)</td>
+      <td class="act">deleted; fix already tracked by the linked open task</td>
+    </tr>
+    <tr>
+      <td><span class="dtag fixed">Already-fixed</span></td>
+      <td class="barcell"><div class="bar fixed" style="width:12%">12</div></td>
+      <td class="ex">edge now resolves in current core — <code>constructor-new-expression</code> · <code>static-method-resolution</code> · <code>intra-class-method-call</code></td>
+      <td class="act">deleted, no task — verified by live repro</td>
+    </tr>
+    <tr>
+      <td><span class="dtag stub">Track-then-remove</span></td>
+      <td class="barcell"><div class="bar stub" style="width:19%">19</div></td>
+      <td class="ex">authored classifier, fixable bug, no <code>backlog_task</code> — member capture, receiver binding, cast propagation</td>
+      <td class="act"><b>6 new tasks (TASK-351–356) created first</b>, then deleted — signal preserved</td>
     </tr>
     <tr>
       <td><span class="dtag promote">Promote</span></td>
-      <td class="barcell"><div class="bar promote" style="width:14%">~14</div></td>
-      <td class="ex"><code>eval-based-dynamic-dispatch</code> · <code>dynamic-runtime-injection</code> · <code>compiler-generated-dynamic-dispatch</code> · <code>type-cast-dispatch</code> · <code>string-keyed-dispatch</code> · <code>prototype-dispatch</code></td>
-      <td class="act"><code>reconcile-registry --id &lt;group_id&gt; --promote</code> → <code>permanent</code></td>
+      <td class="barcell"><div class="bar promote" style="width:11%">11</div></td>
+      <td class="ex"><code>dynamic-dispatch</code> · <code>string-keyed-dispatch</code> · <code>eval-based-dynamic-dispatch</code> · <code>framework-lifecycle-dispatch</code> · <code>untyped-attribute-receiver</code> (restored)</td>
+      <td class="act"><code>reconcile-registry --promote</code> → <code>permanent</code> (10 + 1 restored)</td>
     </tr>
     <tr>
       <td><span class="dtag pending">Keep-pending</span></td>
-      <td class="barcell"><div class="bar pending" style="width:7%">ambiguous</div></td>
-      <td class="ex">has an authored classifier but evidence for "permanent" is unclear</td>
-      <td class="act">leave as <code>wip</code>, document the ambiguity, revisit after 190.30.2</td>
+      <td class="barcell"><div class="bar pending" style="width:10%">10</div></td>
+      <td class="ex">authored but ambiguous, or <code>observed_count: 0</code> — <code>jsx-mdx-component-usage</code> · <code>super-inherited-method</code></td>
+      <td class="act">left as <code>wip</code>, ambiguity documented, revisit after 190.30.2</td>
+    </tr>
+    <tr class="total">
+      <td>disposed</td>
+      <td class="barcell">170</td>
+      <td class="ex">149 deleted (incl. 5 dedup twins) · 11 promoted · 10 kept-pending</td>
+      <td class="act">181 → 32 entries</td>
     </tr>
   </tbody>
 </table>
-<div class="callout">
-  <span class="k">after cleanup</span>
-  <p class="prose">Orphaned <code>builtins/check_*.ts</code> files (whose <code>function_name</code> no longer appears in any entry) are deleted and removed from <code>builtins/index.ts</code>; <code>permanent_data.ts</code> is regenerated and <code>permanent_data.sync.test.ts</code> + <code>registry_writers.test.ts</code> pass.</p>
+<div class="callout rust">
+  <span class="k">the spec's list did not decide the promotions</span>
+  <p class="prose"><b>6 of the spec's named promote candidates were fixable resolver gaps or already-fixed</b>, and <b>4 framework entries it never named are genuine impossibilities</b> — per-entry live reproduction, not the list, drove every promotion. The 190.30.1 page records the full audit trail.</p>
 </div>
 
-<!-- ============ 4. THE NEW LIFECYCLE ============ -->
-<h2 id="lifecycle"><span class="n">04</span>The authoring gap closes: a real classifier instead of a manual stub</h2>
-<p class="cap prose">Left: today, the path dead-ends at a hand-edited registry with no tooling. Right: <code>prioritize --priority permanent</code> dispatches <code>classifier-author</code>, which stages a validated draft the human inserts via <code>reconcile-registry --stage</code>.</p>
+<!-- ============ 4. THE REMAINING GAP ============ -->
+<h2 id="lifecycle"><span class="n">04</span>What 190.30.2 still adds: a real classifier instead of a manual stub</h2>
+<p class="cap prose">Left: today, the path still dead-ends at a hand-edited registry with no tooling. Right: <code>prioritize --priority permanent</code> dispatches <code>classifier-author</code>, which stages a validated draft the human inserts via <code>reconcile-registry --stage</code>.</p>
 <div class="sbs">
 
   <div class="panel cur">
-    <div class="ph"><span class="tag">current · broken</span><h3>Falls into a tooling gap</h3></div>
+    <div class="ph"><span class="tag">today · broken</span><h3>Falls into a tooling gap</h3></div>
     <svg viewBox="0 0 420 320" role="img" aria-label="Current flow: triage fp-novel to plan PlanTask to prioritize backlog task, then the human hand-edits registry.json with no tooling.">
       <defs>
         <marker id="g1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5f594f"/></marker>
@@ -381,36 +399,26 @@
 </div>
 
 <!-- ============ 5. STATUS ============ -->
-<h2 id="status"><span class="n">05</span>Where this stands: audit done, execution ahead</h2>
-<p class="cap prose">The audit and task design are complete; an unrelated stop-hook cleanup landed alongside. Both sub-tasks are designed but not started.</p>
+<h2 id="status"><span class="n">05</span>Where this stands: audit landed, authoring agent ahead</h2>
+<p class="cap prose">190.30.1 (registry audit &amp; cleanup) is <b>done</b> — registry 181 → 32, six new fix tasks. 190.30.2 (classifier-author agent) is <b>to do</b>.</p>
 <div class="board">
 
   <div class="col done">
-    <h3><span class="mark on"></span>Done</h3>
-    <p class="sub">audit + design + an adjacent cleanup</p>
+    <h3><span class="mark on"></span>Done — 190.30.1 registry audit &amp; cleanup</h3>
+    <p class="sub">181 → 32 entries · 11 promoted · 6 new fix tasks</p>
     <ul class="cl">
-      <li><span class="mark on"></span><div>Workflow audit completed<small>181 entries, classify_entry_points, triage · plan · prioritize · reconcile-registry flows</small></div></li>
-      <li><span class="mark on"></span><div>Three task documents written<small>task-190.30 + 190.30.1 + 190.30.2 in backlog/tasks/</small></div></li>
-      <li><span class="mark on"></span><div>Stop-hook fix — 29 anonymous entry points eliminated<small>20 builtin IIFE → hoisted pattern_N · definitions.ts forEach → for…of · project.ts lambdas named</small></div></li>
-      <li><span class="mark on"></span><div>Build + tests green after the cleanup<small>2932 tests pass</small></div></li>
+      <li><span class="mark on"></span><div>All 170 wip entries disposed against the tightened scope<small>102 stubs · 11 tracked · 12 already-fixed · 19 still-broken · 5 dedup twins · 11 promoted · 10 kept-pending</small></div></li>
+      <li><span class="mark on"></span><div>11 impossible-pattern entries promoted to <code>permanent</code><small>10 promoted + the restored untyped-attribute-receiver · decided by live Tier-1 repro, not the spec list</small></div></li>
+      <li><span class="mark on"></span><div>6 new top-level fix tasks created before deletion<small>TASK-351–356 track the 19 still-broken patterns · acceptance gate met</small></div></li>
+      <li><span class="mark on"></span><div>46 orphaned builtins deleted; barrel holds 17<small>BUILTIN_CHECKS now one per surviving builtin-kind entry</small></div></li>
+      <li><span class="mark on"></span><div><code>permanent_data.ts</code> regenerated; all gates green<small>permanent_data.sync · registry_writers · rewritten seed tests · full workspace suites pass</small></div></li>
+      <li><span class="mark on"></span><div><code>classifier-lifecycle.md</code> updated; audit trail in the task doc<small>wip+none stub state dropped · full per-bucket group_id lists committed in Implementation Notes</small></div></li>
     </ul>
   </div>
 
   <div class="col">
-    <h3><span class="mark"></span>Remaining</h3>
-    <p class="sub">two sub-tasks · not started</p>
-
-    <p class="grp">190.30.1 · registry audit &amp; cleanup</p>
-    <ul class="cl">
-      <li><span class="mark"></span><div>Write disposition script → reviewed JSON map of all 169<small>scratch, not committed · review before any write</small></div></li>
-      <li><span class="mark"></span><div>Promote ~14 via <code>reconcile-registry --promote</code></div></li>
-      <li><span class="mark"></span><div>Bulk-remove stubs + deferred in one <code>atomic_update_registry</code> txn</div></li>
-      <li><span class="mark"></span><div>Delete orphaned <code>check_*.ts</code> + barrel registrations</div></li>
-      <li><span class="mark"></span><div>Regenerate <code>permanent_data.ts</code>; tests pass</div></li>
-      <li><span class="mark"></span><div>Update <code>classifier-lifecycle.md</code> — drop the wip+none stub state</div></li>
-    </ul>
-
-    <p class="grp">190.30.2 · classifier-author agent</p>
+    <h3><span class="mark"></span>To do — 190.30.2 classifier-author agent</h3>
+    <p class="sub">closes the authoring gap · not started</p>
     <ul class="cl">
       <li><span class="mark"></span><div>Create <code>.claude/agents/classifier-author.md</code><small>scoped tools · prefers predicate over builtin · never writes registry</small></div></li>
       <li><span class="mark"></span><div>Add <code>--stage &lt;draft&gt;</code> to <code>reconcile_registry.ts</code><small>validate · dedup group_id · check builtin in BUILTIN_CHECKS · dry-run + --apply</small></div></li>
@@ -422,7 +430,8 @@
 </div>
 
 <footer>
-  task-190.30 · overview · generated 2026-06-30 (refreshed) · self-contained, no network<br>
+  task-190.30 · overview · refreshed as-built 2026-06-30 · self-contained, no network<br>
+  190.30.1 DONE — live registry now 32 entries (20 permanent / 10 wip / 2 fixed); barrel holds 17 builtins · 190.30.2 To Do<br>
   sources: backlog/tasks/task-190.30{,.1,.2} · .claude/skills/triage/known_issues/registry.json · packages/core/src/classify_entry_points/ · .claude/rules/classifier-lifecycle.md<br>
   companion for 190.30.1 (disposition plan) is live; 190.30.2 (classifier-author) not yet generated — request to add
 </footer>

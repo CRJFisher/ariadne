@@ -453,7 +453,7 @@
     {
       "group_id": "dynamic-dispatch",
       "title": "dynamic-dispatch",
-      "description": "Proposed by plan investigator — fill in before enabling.",
+      "description": "Permanent limitation. Webpack invokes dependency-template `apply()` methods through a constructor-keyed Map (`dependencyTemplates.get(constructor).apply(...)`); the callee is chosen at runtime by Map lookup, so no static call site exists.",
       "status": "permanent",
       "languages": [
         "javascript"
@@ -476,7 +476,7 @@
     {
       "group_id": "dynamic-dispatch-reporter-constructor",
       "title": "dynamic-dispatch-reporter-constructor",
-      "description": "Proposed by plan investigator — fill in before enabling.",
+      "description": "Permanent limitation. Mocha reporter class constructors are instantiated via string-keyed dispatch (`new this._reporter(...)` after a `builtinReporters[name]` lookup); no direct `new ClassName()` call site exists.",
       "status": "permanent",
       "languages": [
         "javascript"
@@ -496,7 +496,7 @@
     {
       "group_id": "dynamic-require-constructor",
       "title": "dynamic-require-constructor",
-      "description": "Proposed by plan investigator — fill in before enabling.",
+      "description": "Permanent limitation. Class identity flows through a runtime dynamic require/property lookup (`require(require.resolve(name))`, `this._reporter = require(...)`) and is instantiated via `new R(...)`; the constructor's call site is runtime string-keyed module dispatch.",
       "status": "permanent",
       "languages": [
         "javascript"
@@ -556,7 +556,7 @@
     {
       "group_id": "framework-lifecycle-dispatch",
       "title": "framework-lifecycle-dispatch",
-      "description": "Proposed by plan investigator — fill in before enabling.",
+      "description": "Permanent limitation. NestJS reads method-level handler decorators (`@Get`/`@Post`/`@SubscribeMessage`/`@MessagePattern`/`@Cron`/...) via reflect-metadata at startup and dispatches to the method at runtime; no textual call site exists. Subsumes the former byte-identical `framework-decorator-dispatch`.",
       "status": "permanent",
       "languages": [
         "typescript"
@@ -576,7 +576,7 @@
     {
       "group_id": "framework-lifecycle-override",
       "title": "framework-lifecycle-override",
-      "description": "Proposed by plan investigator — fill in before enabling.",
+      "description": "Permanent limitation. Node.js stream internals invoke the underscore-prefixed stream-protocol overrides (`_transform`/`_flush`/`_read`/`_write`/`_construct`/`_destroy`/`_final`) via the stream protocol; no application-source call site exists.",
       "status": "permanent",
       "languages": [
         "typescript"
@@ -655,7 +655,7 @@
     {
       "group_id": "string-keyed-dispatch",
       "title": "string-keyed-dispatch",
-      "description": "Proposed by plan investigator — fill in before enabling.",
+      "description": "Permanent limitation. Angular's JIT stores ɵɵ-prefixed runtime instructions in the `angularCoreEnv` string-keyed map and invokes them via `new Function(...)` over compiler-emitted source; no static AST call site exists. Subsumes the former `angular-generated-instruction-call` and `compiler-generated-dynamic-dispatch` (same ɵɵ + /packages/core/src/ gate, narrower paths).",
       "status": "permanent",
       "languages": [
         "typescript"
@@ -675,7 +675,7 @@
     {
       "group_id": "dynamic-new-function-dispatch",
       "title": "dynamic-new-function-dispatch",
-      "description": "Proposed by plan investigator — fill in before enabling.",
+      "description": "Permanent limitation. The function's only textual references live inside string literals passed to `new Function(...)` / `eval(...)`; the runtime constructs and invokes it from a string.",
       "status": "permanent",
       "languages": [
         "javascript"
@@ -695,7 +695,7 @@
     {
       "group_id": "eval-based-dynamic-dispatch",
       "title": "eval-based-dynamic-dispatch",
-      "description": "Proposed by plan investigator — fill in before enabling.",
+      "description": "Permanent limitation. Dunder-named template-compiler locals (`__link__`, `__loop__`, ...) are referenced only from generated source strings passed to `eval(...)` / `new Function(...)`; the call site lives inside a string, invisible to static analysis.",
       "status": "permanent",
       "languages": [
         "javascript"
@@ -715,7 +715,7 @@
     {
       "group_id": "framework-lifecycle-handler",
       "title": "framework-lifecycle-handler",
-      "description": "Proposed by plan investigator — fill in before enabling.",
+      "description": "Permanent limitation. yargs invokes `CommandModule.handler(args)` at runtime via the interface contract; there is no in-source call site for the handler.",
       "status": "permanent",
       "languages": [
         "typescript"
@@ -774,7 +774,7 @@
     {
       "group_id": "bundler-module-substitution",
       "title": "bundler-module-substitution",
-      "description": "Proposed by plan investigator — fill in before enabling.",
+      "description": "Permanent limitation. esbuild's fill-plugin `onResolve` hook redirects a Node built-in import to a filler file at build time, so the filler's exports are reachable only through the bundler's runtime path substitution, never the static call graph. Scope: TypeScript fillers with no resolved callers (the observed prisma shape); subsumes the former byte-identical `bundler-module-path-substitution` and the broader `dynamic-runtime-injection`.",
       "status": "permanent",
       "languages": [
         "typescript"
@@ -823,7 +823,7 @@
     {
       "group_id": "untyped-attribute-receiver",
       "title": "Python method reached only via an untyped self-attribute receiver",
-      "description": "A Python method whose only caller invokes it as self.<attr>.<method>() where <attr> is an untyped instance attribute (a Cython `object` constructor parameter such as pandas `self.obj`, or any attribute never assigned `self.<attr> = Constructor()`). The resolver cannot follow the attribute's type, collapses the receiver to the caller's own enclosing class, fails to find the method there, and records member_type_unknown with resolved_receiver_type pointing at that caller class — so the resolved receiver-type's file equals the call ref's caller_file. That equality is the discriminator. Interim classifier for the residual out-of-static-reach pandas row (indexing.py:3171 self.obj._set_value) after TASK-350 Fixes A-C; self-narrowing because Fix C promotes self.attr = Constructor() to typed properties, so typeable receivers resolve and never reach this classifier. Distinct from the JavaScript receiver-type-unknown rule (callers-not-in-registry with empty call refs, identifier receiver). The fixture-injected identifier receiver shape (styler._repr_html_) is deliberately out of scope — its identifier + receiver_type_unknown signal is indistinguishable from the dominant untyped-local-call bucket and belongs to a separate fault area (unindexed test caller / framework display-protocol method name). The deferred fixture-injected identifier-receiver row is tracked as TASK-350.4.",
+      "description": "Permanent limitation. A Python method reachable only as `self.<attr>.<method>()` where `self.<attr>` is an untyped Cython `object` constructor parameter that never gains a followable type. The receiver collapses to the caller's own enclosing class, the method is not found there (`resolution_failure.reason = member_type_unknown`, resolved type's file == caller file), and the call edge is genuinely out of static reach.",
       "status": "permanent",
       "languages": [
         "python"
