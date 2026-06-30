@@ -508,6 +508,43 @@ describe("validate_registry — negative cases", () => {
     expect(() => validate_registry(bad)).toThrow(/kind/);
   });
 
+  it("rejects a wip entry with an authored classifier and no observation evidence", () => {
+    const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
+    bad[0]["status"] = "wip";
+    bad[0]["classifier"] = { kind: "builtin", function_name: "check_unobserved", min_confidence: 0.9 };
+    delete bad[0]["observed_count"];
+    expect(() => validate_registry(bad)).toThrow(/observed_count.*must record observed_count >= 1/);
+  });
+
+  it("rejects a wip entry with an authored classifier and observed_count 0", () => {
+    const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
+    bad[0]["status"] = "wip";
+    bad[0]["classifier"] = { kind: "builtin", function_name: "check_zero_obs", min_confidence: 0.9 };
+    bad[0]["observed_count"] = 0;
+    expect(() => validate_registry(bad)).toThrow(/observed_count.*must record observed_count >= 1/);
+  });
+
+  it("accepts a wip authored classifier that records observed_count >= 1", () => {
+    const ok: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
+    ok[0]["status"] = "wip";
+    ok[0]["classifier"] = { kind: "builtin", function_name: "check_observed", min_confidence: 0.9 };
+    ok[0]["observed_count"] = 1;
+    expect(() => validate_registry(ok)).not.toThrow();
+  });
+
+  it("exempts kind:none wip stubs and permanent rows from the evidence gate", () => {
+    const ok: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
+    // wip + kind:none, no observation → allowed (no classifier to validate)
+    ok[0]["status"] = "wip";
+    ok[0]["classifier"] = { kind: "none" };
+    delete ok[0]["observed_count"];
+    // permanent + authored, no observation → allowed (past decision)
+    ok[1]["status"] = "permanent";
+    ok[1]["classifier"] = { kind: "builtin", function_name: "check_permanent", min_confidence: 0.9 };
+    delete ok[1]["observed_count"];
+    expect(() => validate_registry(ok)).not.toThrow();
+  });
+
   it("rejects two builtin entries that share a function_name", () => {
     const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
     bad[0]["classifier"] = {
@@ -588,27 +625,31 @@ describe("permanent-limitations catalog content", () => {
     }
   });
 
-  it("ambiguous receiver-type residuals stay wip pending triage evidence", () => {
+  it("ambiguous receiver-type residuals stay wip, each with real observation evidence", () => {
     for (const id of [
       "dynamic-cast-structural-type-dispatch",
       "dependency-injection-type-resolution",
       "unresolved-receiver-type",
       "receiver-type-unknown",
-      "aliased-receiver-type-lost",
     ]) {
-      expect(by_id.get(id)?.status).toBe("wip");
+      const entry = by_id.get(id);
+      expect(entry?.status).toBe("wip");
+      // The evidence gate: every surviving wip classifier has fired in a real run.
+      expect((entry?.observed_count ?? 0) >= 1).toBe(true);
     }
   });
 
   it("classifiers migrated to backlog tasks or removed are absent from the registry", () => {
-    // Capture/coverage gaps migrated to TASK-357/358/359; two over-broad obs=0
-    // predicates removed outright. None remains in the permanent-limitations catalog.
+    // Capture/coverage gaps migrated to TASK-357/358/359; three over-broad,
+    // never-observed (obs-absent) taxonomy-seed predicates removed outright. None
+    // remains in the permanent-limitations catalog.
     for (const id of [
       "jsx-mdx-component-usage",
       "ts-jsx-component-call",
       "ts-decorator-factory-call",
       "super-inherited-method",
       "module-attribute-alias",
+      "aliased-receiver-type-lost",
     ]) {
       expect(by_id.has(id)).toBe(false);
     }

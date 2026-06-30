@@ -40,42 +40,6 @@
       }
     },
     {
-      "group_id": "aliased-receiver-type-lost",
-      "title": "F1 — Aliased-receiver method call with type lost",
-      "description": "A method is called on a variable whose declared type is unknown (no annotation, no inferable initialiser). The receiver resolves to a variable definition but the resolver cannot recover the class on which to look up the method.\n\nKeep-pending (TASK-190.30.1): fixable-shaped (`receiver_type_unknown`) but observed_count=0 (unvalidated) and the failure reason is inherently ambiguous. Do not promote.",
-      "status": "wip",
-      "languages": [
-        "typescript",
-        "javascript",
-        "python"
-      ],
-      "examples": [
-        {
-          "file": "src/service.ts",
-          "line": 12,
-          "snippet": "const svc = create();\nsvc.run();"
-        }
-      ],
-      "classifier": {
-        "kind": "predicate",
-        "axis": "B",
-        "min_confidence": 0.9,
-        "expression": {
-          "op": "all",
-          "of": [
-            {
-              "op": "resolution_failure_reason_eq",
-              "value": "receiver_type_unknown"
-            },
-            {
-              "op": "receiver_kind_eq",
-              "value": "identifier"
-            }
-          ]
-        }
-      }
-    },
-    {
       "group_id": "unindexed-external-module",
       "title": "F6 — Caller lives in unindexed/external module",
       "description": "The only callers are inside a module that Ariadne did not index (outside configured folders, or an external package). When it is an external dependency, this is a permanent limitation. When it is an internal but unindexed folder, it is a configuration fix.",

@@ -151,6 +151,12 @@ Update `.claude/rules/classifier-lifecycle.md`:
       `--apply`) inserts the entry via `atomic_update_registry`.
 - [ ] `--stage` blocks insertion if `kind === "builtin"` and `function_name` is
       absent from `BUILTIN_CHECKS` (fail-loud, not silent skip).
+- [ ] `--stage` blocks insertion of a draft with no observation evidence: the
+      draft's `observed_count` must be >= 1 (every classifier is authored from an
+      observed novel group, so it inherits that group's count). This is the
+      authoring-path counterpart to the `validate_registry` evidence gate added in
+      TASK-190.30.1 (a wip authored classifier with `observed_count < 1` is rejected),
+      and stops speculative, never-observed classifiers from entering the catalog.
 - [ ] `reconcile_registry.test.ts` covers `--stage` happy path, duplicate
       group_id rejection, and missing-builtin rejection.
 - [ ] `prioritize` SKILL.md documents `--priority permanent`, the

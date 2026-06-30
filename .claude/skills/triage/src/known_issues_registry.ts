@@ -193,6 +193,24 @@ function validate_entry(entry: unknown, at: string): asserts entry is KnownIssue
   validate_classifier_spec(record["classifier"], `${at_id}.classifier`);
 
   validate_optional_rollup_fields(record, at_id);
+
+  // Evidence gate: a wip entry that carries an authored classifier must have
+  // fired in a real triage run (observed_count >= 1). Every authored wip entry
+  // is drafted from a novel group that crossed the promotion threshold, so it
+  // inherits that group's observation; an authored wip rule with no observation
+  // is a speculative, never-validated classifier and must not enter the catalog.
+  // Exempt: kind:"none" stubs (no classifier to validate) and permanent/fixed
+  // rows (a past human decision, observation is historical).
+  const classifier = record["classifier"] as { kind?: unknown };
+  if (record["status"] === "wip" && classifier.kind !== "none") {
+    const observed_count = record["observed_count"];
+    if (typeof observed_count !== "number" || observed_count < 1) {
+      throw new RegistryValidationError(
+        `${at_id}.observed_count: a wip entry with an authored classifier must record observed_count >= 1 ` +
+          "(no speculative, never-observed classifiers in the permanent-limitations catalog)",
+      );
+    }
+  }
 }
 
 function validate_examples(value: unknown, at: string): void {
