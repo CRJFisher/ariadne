@@ -93,6 +93,24 @@ describe("serialize_known_issues_registry_json", () => {
     const parsed = parse_known_issues_registry_json(out);
     expect(parsed).toEqual([]);
   });
+
+  it("round-trips a retired-kind rule with its nested `from` intact", () => {
+    const retired_rule: KnownIssue = {
+      group_id: "retired-rule",
+      title: "Retired rule",
+      description: "A retired classifier preserving its former builtin.",
+      status: "fixed",
+      languages: ["typescript"],
+      examples: [],
+      classifier: {
+        kind: "retired",
+        from: { kind: "builtin", function_name: "check_retired", min_confidence: 1 },
+        reason: "subsumed by TASK-348",
+      },
+    };
+    const wire = serialize_known_issues_registry_json([retired_rule]);
+    expect(parse_known_issues_registry_json(wire)).toEqual([retired_rule]);
+  });
 });
 
 const permanent_predicate_rule: KnownIssue = {
@@ -146,6 +164,25 @@ describe("select_permanent_slice_rules", () => {
 
   it("returns an empty slice when no rule qualifies", () => {
     expect(select_permanent_slice_rules([wip_rule, permanent_none_rule])).toEqual([]);
+  });
+
+  it("drops a retired rule even if it is (anomalously) marked permanent", () => {
+    const permanent_retired_rule: KnownIssue = {
+      group_id: "permanent-retired",
+      title: "Permanent but retired",
+      description: "A retired classifier must never enter the slice, even if permanent.",
+      status: "permanent",
+      languages: ["typescript"],
+      examples: [],
+      classifier: {
+        kind: "retired",
+        from: { kind: "builtin", function_name: "check_gone", min_confidence: 1 },
+        reason: "retired",
+      },
+    };
+    expect(
+      select_permanent_slice_rules([permanent_retired_rule, permanent_predicate_rule]),
+    ).toEqual([permanent_predicate_rule]);
   });
 });
 

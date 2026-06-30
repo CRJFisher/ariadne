@@ -133,7 +133,10 @@ export function validate_registry(value: unknown): asserts value is KnownIssuesR
     seen_group_ids.add(entry.group_id);
     // Builtin function_names must be unique because the generated barrel
     // imports them as identifiers — collisions would surface as cryptic TS
-    // compile errors. Catch them at registry-load time instead.
+    // compile errors. Catch them at registry-load time instead. A retired
+    // rule's former `from.function_name` is intentionally excluded: its source
+    // file is deleted and the barrel no longer imports it, so the name is free
+    // to reuse.
     if (entry.classifier.kind === "builtin") {
       const fn = entry.classifier.function_name;
       const prior = seen_function_names.get(fn);
@@ -280,8 +283,36 @@ function validate_classifier_spec(value: unknown, at: string): asserts value is 
     }
     return;
   }
+  if (kind === "retired") {
+    const reason = record["reason"];
+    if (typeof reason !== "string" || reason.length === 0) {
+      throw new RegistryValidationError(`${at}.reason: must be a non-empty string`);
+    }
+    const from = record["from"];
+    if (typeof from !== "object" || from === null) {
+      throw new RegistryValidationError(`${at}.from: must be an object`);
+    }
+    const from_kind = (from as Record<string, unknown>)["kind"];
+    if (from_kind !== "predicate" && from_kind !== "builtin") {
+      throw new RegistryValidationError(
+        `${at}.from.kind: must be "predicate" | "builtin" (got "${String(from_kind)}")`,
+      );
+    }
+    // The former classifier is checked exactly as strictly as a live one — a
+    // retired rule must carry a well-formed predicate/builtin in `from`.
+    validate_classifier_spec(from, `${at}.from`);
+    const extra = Object.keys(record).filter(
+      (k) => k !== "kind" && k !== "from" && k !== "reason",
+    );
+    if (extra.length > 0) {
+      throw new RegistryValidationError(
+        `${at}: kind="retired" must not carry extra fields (got: ${extra.join(", ")})`,
+      );
+    }
+    return;
+  }
   throw new RegistryValidationError(
-    `${at}.kind: must be "none" | "predicate" | "builtin" (got "${String(kind)}")`,
+    `${at}.kind: must be "none" | "predicate" | "builtin" | "retired" (got "${String(kind)}")`,
   );
 }
 

@@ -2,7 +2,7 @@
 
 The classifier registry at `.claude/skills/triage/known_issues/registry.json` is the loop-closure surface for the self-healing pipeline. Lifecycle transitions are owned by exactly one writer; this doc names each owner so the surface stays auditable.
 
-Neither pipeline skill writes the registry. `triage` reads it to filter classifier hits; `plan` neither reads nor writes it — its dedup signal is `backlog/tasks/*.md` frontmatter, not the registry. **The human is the registry's sole writer**: every status transition is a human decision, written by hand or through the `reconcile-registry` skill (`.claude/skills/reconcile-registry/SKILL.md`) over `reconcile_registry.ts`, and always through `atomic_update_registry`. The script is the _mechanism_, never the decider: it is `disable-model-invocation: true`, detects the mechanical transitions (landed fixes, published drift), and proposes every write for human confirmation behind a `--dry-run` preview.
+Neither pipeline skill writes the registry. `triage` reads it to filter classifier hits; `plan` neither reads nor writes it — its dedup signal is `backlog/tasks/*.md` frontmatter, not the registry. **The human is the registry's sole writer**: every status transition is a human decision, written by hand or through the `reconcile-registry` skill (`.claude/skills/reconcile-registry/SKILL.md`) over `reconcile_registry.ts`, and always through `atomic_update_registry`. The script is the _mechanism_, never the decider: it is `disable-model-invocation: true`, detects the mechanical transitions (landed fixes, published drift), and proposes every write for human confirmation behind a `--dry-run` preview. No agent ever writes the registry: an agent flow that needs a transition routes it back to the human as a printed `reconcile_registry.ts` command (see **Agent-initiated transitions** below), never an ad-hoc writer.
 
 The registry is the **permanent-limitations catalog**: each entry names a call relationship that is fundamentally unknowable to static analysis — dynamic dispatch through computed keys, runtime invocation via interpreter or framework protocols, bundler module substitution, macro expansion invisible to the pre-expansion AST, or callers in unindexed external modules. Every entry carries a real classifier (`classifier.kind` of `"predicate"` or `"builtin"`) that fires during triage. A pattern that represents a fixable Ariadne resolution bug is tracked in `backlog/tasks/`, never here — when its fix lands, the resolver resolves the call directly and no catalog entry is needed.
 
@@ -70,11 +70,37 @@ The human performs every transition below. An entry enters the registry only wit
 
 Every transition is a human decision, written through `atomic_update_registry`. The human flips `wip → permanent` after promotion review (`reconcile_registry.ts --id <group_id> --promote`), which regenerates the bundled core slice (`packages/core/src/classify_entry_points/permanent_data.ts`) via `generate_permanent_data.ts`; `permanent_data.sync.test.ts` asserts the committed slice byte-equals a fresh render of the registry, so neither file can silently drift. The human flips `status` to `fixed` once a fix lands — confirmed by a fix-bearing Conventional-Commits scope (`fix`/`feat`) in this repo's git log matching a rule's `backlog_task`, which `reconcile-registry` detects and proposes. The `KnownIssue` schema records no commit hash; the `backlog_task` link plus the git log are the audit trail.
 
+A rule reaches `fixed` two ways. The **auto-detected** path above is a status-only stamp: the classifier is left intact. The **name-mode** path (`reconcile_registry.ts --id <group_id>... --fixed --reason "<text>"`) is a deliberate retirement for the case the auto detector cannot see — where the subsuming fix landed under a task other than the rule's `backlog_task`, so no git-log scope matches. Name-mode flips the named `wip` rules to `fixed` directly and converts a real (`predicate`/`builtin`) classifier into the structured `retired` kind: `classifier: { kind: "retired", from: <former spec>, reason: <the --reason text> }`. The `retired` kind is the registry's representation of a removed classifier — it preserves the former predicate/builtin verbatim in `from` and records why in `reason`, so the retirement is lossless rather than collapsed to the `none` stub. A retired rule never fires (it is `fixed`, excluded from the active set and the permanent slice), so its `from.function_name` may safely name a builtin source file that the retirement deleted. (Retirements predating this mechanism remain `fixed`/`none`; `retired` is the go-forward shape.)
+
 A `fixed` row that resurfaces in a later run (the same `member_symbol` reappears in the published `triage_results` — the stable `(file_path, name, kind, start_line)` identity, not the positional `novel-<entry_index>` id) is surfaced for human review — there is no automatic re-flip back to `wip`.
+
+## Agent-initiated transitions: the sanctioned hand-off
+
+An agent flow (`build-and-review`, the `classifier-author` drafting agent, any future pipeline agent) never writes `registry.json`, even when a human has authorized a registry transition in-session. The registry is the human-owned self-modification surface: the harness permission classifier denies any agent Bash or Write call targeting `.claude/skills/triage/known_issues/registry.json` as `[Self-Modification]`, and an in-session `AskUserQuestion` authorization does not clear that denial. An agent that retries the blocked write — directly or through an ad-hoc `atomic_update_registry` script — only burns cycles against a guard that will not yield. The sanctioned path routes the write back to the human as a single named command:
+
+1. **Code side (agent does this).** Make every source change the transition implies. For a retired builtin classifier: delete the builtin's source file under `packages/core/src/classify_entry_points/builtins/`, and remove its `import` line and `BUILTIN_CHECKS` entry from that directory's `index.ts` barrel. These are ordinary repository edits the agent may make.
+
+2. **Hand-off (agent prints, human runs).** Print the single name-mode `reconcile_registry.ts` command that records the registry transition, then stop and wait for the human to run it — never a bespoke `atomic_update_registry` script:
+
+   ```bash
+   node --import tsx .claude/skills/triage/scripts/reconcile_registry.ts \
+     --id <group_id>... --fixed --reason "<why the rows retire>"
+   ```
+
+3. **Continue (agent resumes).** Once the human confirms the command ran, the agent continues its flow.
+
+The `--id ... --fixed --reason` name-mode exists for exactly this hand-off: it flips named `wip` rows to `fixed` without the auto `--fixed` detector's git-log `backlog_task` match, which misses the common case where the subsuming fix lands under a different task than the rows' original plan task. See `.claude/skills/reconcile-registry/SKILL.md` for the name-mode.
+
+## Permissions: no broad allowlist for registry writes
+
+The repository grants no Bash allow-rule for `reconcile_registry.ts` registry writes, and none should be added. A broad allow-rule would weaken the self-modification safeguard that keeps the human the registry's literal writer: the harness permission classifier reserves `registry.json` for the human precisely so no agent — under any in-session authorization — can mutate the loop-closure surface unattended. Widening the permission surface to make an agent's write pass would defeat that guard.
+
+The cost of keeping the guard is one human-run command per transition, and the name-mode plus the printed-command hand-off reduce that cost to a single copy-paste line. That is the accepted trade. Config edits to `.claude/settings.json` (or `settings.local.json`) must not broaden the permission surface in a way that lets an agent bypass the self-modification classifier for `registry.json`.
 
 ## Cross-references
 
 - The human-invoked registry write path: `.claude/skills/reconcile-registry/SKILL.md`
+- The retirement / name-mode hand-off command and selectors: `.claude/skills/reconcile-registry/SKILL.md`
 - The plan skill's role in the lifecycle: `.claude/skills/plan/SKILL.md`
 - The pipeline's read-only relationship to the registry: `.claude/skills/triage/SKILL.md`
 - Commit convention enforcing parseable task ids in fix commits: `.claude/rules/commit-convention.md`

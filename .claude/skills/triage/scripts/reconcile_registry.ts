@@ -22,9 +22,17 @@
  *      files are reported and skipped, never fatal.
  *   3. **promote** (`--id <group_id> --promote`) — the human's deliberate
  *      `wip → permanent` flip. Guarded: a rule whose `classifier.kind` is
- *      `"none"` is rejected (core's `validate_permanent_slice` cannot load
- *      it). After the registry write, `generate_permanent_data.ts` regenerates
- *      the bundled core slice.
+ *      `"none"` or `"retired"` is rejected (core's `validate_permanent_slice`
+ *      cannot load it). After the registry write, `generate_permanent_data.ts`
+ *      regenerates the bundled core slice.
+ *   4. **fixed-by-name** (`--id <group_id>... --fixed --reason "<text>"`) — the
+ *      human's deliberate `wip → fixed` retirement when the subsuming fix
+ *      landed under a task scope that does not match the rule's `backlog_task`,
+ *      so signal 1 cannot see it. Names rules directly like `--promote`,
+ *      bypasses git-log matching, requires `--reason`, and cannot combine with
+ *      `--drift`. Converts a real (predicate|builtin) classifier into the
+ *      structured `{ kind:"retired", from, reason }` marker. The auto `--fixed`
+ *      path (no `--id`) is unchanged — status-only, classifier untouched.
  *
  * ## Write boundary
  *
@@ -38,7 +46,7 @@
  *
  * Usage:
  *   node --import tsx reconcile_registry.ts \
- *     [--dry-run] [--fixed] [--drift] [--id <group_id>...] [--promote]
+ *     [--dry-run] [--fixed] [--drift] [--id <group_id>...] [--reason <text>] [--promote]
  */
 
 import { readFile, readdir } from "node:fs/promises";
@@ -57,6 +65,7 @@ import {
 } from "@ariadnejs/skill-protocol";
 import type {
   ClassifierRegressionFlag,
+  ClassifierSpec,
   DriftEvidence,
   KnownIssue,
 } from "@ariadnejs/types";
@@ -75,7 +84,9 @@ import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const USAGE =
   "Usage: reconcile_registry [--dry-run] [--fixed] [--drift] " +
-  "[--id <group_id>...] [--promote]\n";
+  "[--id <group_id>...] [--reason <text>] [--promote]\n" +
+  "  Name-mode: --id <group_id>... --fixed --reason \"<text>\" flips the named " +
+  "wip rules to fixed directly (no git-log matching) and retires their classifier.\n";
 
 /**
  * Commit types that assert a behavior change landed. A `docs(198)` or
@@ -120,7 +131,26 @@ export interface PromoteProposal {
   group_id: string;
 }
 
-export type RegistryProposal = FixedProposal | DriftProposal | PromoteProposal;
+/**
+ * Signal 4 — name-mode `wip → fixed`. The human names a rule directly
+ * (`--id ... --fixed --reason`) when the subsuming fix landed under a task
+ * scope that does not match the rule's `backlog_task`, so signal 1 cannot see
+ * it. Retires the rule: flips it to `fixed` and converts a real
+ * (predicate|builtin) classifier into the structured `retired` marker carrying
+ * `reason`.
+ */
+export interface FixedByNameProposal {
+  kind: "wip_to_fixed_by_name";
+  group_id: string;
+  /** The retirement rationale — the audit line, since no commit subject is cited. */
+  reason: string;
+}
+
+export type RegistryProposal =
+  | FixedProposal
+  | DriftProposal
+  | PromoteProposal
+  | FixedByNameProposal;
 
 // ---------------------------------------------------------------------------
 // Pure helpers
@@ -320,6 +350,18 @@ export function fold_proposals(
       case "wip_to_fixed":
         if (rule.status === "wip") next[i] = { ...rule, status: "fixed" };
         break;
+      case "wip_to_fixed_by_name": {
+        // Idempotent: a re-run on an already-fixed rule is a no-op.
+        if (rule.status !== "wip") break;
+        // Retire a real classifier into the structured `retired` marker; a
+        // `none` stub has nothing to retire, so it stays `none`.
+        const classifier: ClassifierSpec =
+          rule.classifier.kind === "predicate" || rule.classifier.kind === "builtin"
+            ? { kind: "retired", from: rule.classifier, reason: proposal.reason }
+            : rule.classifier;
+        next[i] = { ...rule, status: "fixed", classifier };
+        break;
+      }
       case "drift_detected": {
         const existing = rule.drift_evidence ?? [];
         const present = new Set(existing.map((row) => row.entry_index));
@@ -359,6 +401,8 @@ export interface CliArgs {
   drift: boolean;
   ids: string[];
   promote: boolean;
+  /** The retirement rationale for name-mode (`--id ... --fixed`); null otherwise. */
+  reason: string | null;
 }
 
 export function parse_argv(argv: string[]): CliArgs {
@@ -368,6 +412,7 @@ export function parse_argv(argv: string[]): CliArgs {
     drift: false,
     ids: [],
     promote: false,
+    reason: null,
   };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -390,6 +435,14 @@ export function parse_argv(argv: string[]): CliArgs {
       case "--promote":
         args.promote = true;
         break;
+      case "--reason": {
+        const value = argv[i + 1];
+        if (value === undefined || value.startsWith("--")) {
+          throw new Error("--reason requires a value: the retirement rationale");
+        }
+        args.reason = argv[++i];
+        break;
+      }
       case "--help":
       case "-h":
         process.stdout.write(USAGE);
@@ -405,6 +458,25 @@ export function parse_argv(argv: string[]): CliArgs {
   if (args.promote && (args.fixed || args.drift)) {
     throw new Error(
       "--promote cannot combine with --fixed/--drift: promotion is a separate, deliberate transaction",
+    );
+  }
+  // Name-mode is `--fixed` with `--id`: a deliberate, direct retirement flip
+  // that bypasses git-log detection. It requires a `--reason` and cannot mix
+  // with `--drift`; `--reason` is meaningless anywhere else.
+  const name_mode = args.fixed && args.ids.length > 0;
+  if (name_mode && args.drift) {
+    throw new Error(
+      "--fixed --id (name-mode) cannot combine with --drift: name-mode is a deliberate, direct flip",
+    );
+  }
+  if (name_mode && args.reason === null) {
+    throw new Error(
+      "--fixed --id (name-mode) requires --reason <text>: a retirement must record why",
+    );
+  }
+  if (args.reason !== null && !name_mode) {
+    throw new Error(
+      "--reason is only valid with --fixed --id (name-mode): no commit subject is cited there",
     );
   }
   return args;
@@ -446,6 +518,7 @@ export interface ReconcileSummary {
   selectors: { fixed: boolean; drift: boolean; ids: string[]; promote: boolean };
   proposals: {
     wip_to_fixed: FixedProposal[];
+    wip_to_fixed_by_name: FixedByNameProposal[];
     drift_detected: DriftProposal[];
     promote_to_permanent: PromoteProposal[];
   };
@@ -480,6 +553,7 @@ export async function run(
   const rules_by_id = new Map(registry.map((rule) => [rule.group_id, rule]));
 
   let fixed_proposals: FixedProposal[] = [];
+  const fixed_by_name_proposals: FixedByNameProposal[] = [];
   let drift_proposals: DriftProposal[] = [];
   const promote_proposals: PromoteProposal[] = [];
   let drift_unknown_rule_ids: string[] = [];
@@ -487,21 +561,37 @@ export async function run(
   const missing_ids: string[] = [];
   const rejected_promotions: RejectedPromotion[] = [];
 
+  const name_mode = args.fixed && args.ids.length > 0;
+
   if (args.promote) {
     for (const id of args.ids) {
       const rule = rules_by_id.get(id);
       if (rule === undefined) {
         missing_ids.push(id);
-      } else if (rule.classifier.kind === "none") {
+      } else if (rule.classifier.kind === "none" || rule.classifier.kind === "retired") {
         rejected_promotions.push({
           group_id: id,
-          reason:
-            "classifier.kind is \"none\" — author a predicate or builtin classifier before promoting",
+          reason: `classifier.kind is "${rule.classifier.kind}" — author a predicate or builtin classifier before promoting`,
         });
       } else if (rule.status === "permanent") {
         rejected_promotions.push({ group_id: id, reason: "already permanent" });
       } else {
         promote_proposals.push({ kind: "promote_to_permanent", group_id: id });
+      }
+    }
+  } else if (name_mode) {
+    // Direct-name retirement: flip each named wip rule to fixed without
+    // git-log detection. The reason is guaranteed non-null by parse_argv.
+    const reason = args.reason ?? "";
+    for (const id of args.ids) {
+      const rule = rules_by_id.get(id);
+      if (rule === undefined) {
+        missing_ids.push(id);
+      } else if (rule.status !== "wip") {
+        // A named non-wip rule is a silent no-op — nothing to retire.
+        continue;
+      } else {
+        fixed_by_name_proposals.push({ kind: "wip_to_fixed_by_name", group_id: id, reason });
       }
     }
   } else {
@@ -534,6 +624,7 @@ export async function run(
 
   const all_proposals: RegistryProposal[] = [
     ...fixed_proposals,
+    ...fixed_by_name_proposals,
     ...drift_proposals,
     ...promote_proposals,
   ];
@@ -571,6 +662,7 @@ export async function run(
     selectors: { fixed: args.fixed, drift: args.drift, ids: args.ids, promote: args.promote },
     proposals: {
       wip_to_fixed: fixed_proposals,
+      wip_to_fixed_by_name: fixed_by_name_proposals,
       drift_detected: drift_proposals,
       promote_to_permanent: promote_proposals,
     },

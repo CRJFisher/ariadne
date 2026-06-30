@@ -103,6 +103,22 @@ describe("active_rules_for_classification", () => {
     expect(active).not.toBe(registry);
     expect(active.map((r) => r.group_id)).toEqual(["a", "b", "c"]);
   });
+
+  it("excludes a retired rule (status fixed; classifier never fires again)", () => {
+    const registry = [
+      rule("a", { status: "wip" }),
+      rule("b", {
+        status: "fixed",
+        classifier: {
+          kind: "retired",
+          from: { kind: "builtin", function_name: "check_b", min_confidence: 0.9 },
+          reason: "subsumed by TASK-348",
+        },
+      }),
+    ];
+    const active = active_rules_for_classification(registry);
+    expect(active.map((r) => r.group_id)).toEqual(["a"]);
+  });
 });
 
 // ===== Wire-format envelope =====
@@ -177,9 +193,9 @@ describe("validate_registry — on-disk registry shape", () => {
     }
   });
 
-  it("every classifier uses kind in {none, predicate, builtin}", () => {
+  it("every classifier uses kind in {none, predicate, builtin, retired}", () => {
     for (const e of registry) {
-      expect(["none", "predicate", "builtin"]).toContain(e.classifier.kind);
+      expect(["none", "predicate", "builtin", "retired"]).toContain(e.classifier.kind);
       if (e.classifier.kind === "predicate") {
         expect(e.classifier.min_confidence).toBeGreaterThanOrEqual(0);
         expect(e.classifier.min_confidence).toBeLessThanOrEqual(1);
@@ -189,6 +205,10 @@ describe("validate_registry — on-disk registry shape", () => {
         expect(e.classifier.function_name.length).toBeGreaterThan(0);
         expect(e.classifier.min_confidence).toBeGreaterThanOrEqual(0);
         expect(e.classifier.min_confidence).toBeLessThanOrEqual(1);
+      }
+      if (e.classifier.kind === "retired") {
+        expect(["predicate", "builtin"]).toContain(e.classifier.from.kind);
+        expect(e.classifier.reason.length).toBeGreaterThan(0);
       }
     }
   });
@@ -558,6 +578,86 @@ describe("validate_registry — negative cases", () => {
       min_confidence: 0.95,
     };
     expect(() => validate_registry(bad)).toThrow(/function_name "check_collision" already used/);
+  });
+});
+
+// ===== retired classifier (the structured retirement marker) =====
+
+describe("validate_registry — retired classifier", () => {
+  function with_first_classifier(classifier: unknown, status = "fixed"): Record<string, unknown>[] {
+    const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
+    bad[0]["status"] = status;
+    bad[0]["classifier"] = classifier;
+    return bad;
+  }
+
+  it("accepts a well-formed retired classifier carrying its former builtin", () => {
+    const registry = with_first_classifier({
+      kind: "retired",
+      from: { kind: "builtin", function_name: "check_x", min_confidence: 0.9 },
+      reason: "subsumed by TASK-348",
+    });
+    expect(() => validate_registry(registry)).not.toThrow();
+  });
+
+  it("accepts a retired classifier carrying its former predicate", () => {
+    const registry = with_first_classifier({
+      kind: "retired",
+      from: {
+        kind: "predicate",
+        axis: "B",
+        expression: { op: "diagnosis_eq", value: "no_callers_found" },
+        min_confidence: 1,
+      },
+      reason: "resolver now resolves it",
+    });
+    expect(() => validate_registry(registry)).not.toThrow();
+  });
+
+  it("rejects a retired classifier whose `from.kind` is not predicate or builtin", () => {
+    const registry = with_first_classifier({
+      kind: "retired",
+      from: { kind: "none" },
+      reason: "x",
+    });
+    expect(() => validate_registry(registry)).toThrow(/from\.kind/);
+  });
+
+  it("rejects a retired classifier whose `from` is not an object", () => {
+    const registry = with_first_classifier({ kind: "retired", from: "check_x", reason: "x" });
+    expect(() => validate_registry(registry)).toThrow(/from/);
+  });
+
+  it("rejects a retired classifier with an empty reason", () => {
+    const registry = with_first_classifier({
+      kind: "retired",
+      from: { kind: "builtin", function_name: "check_x", min_confidence: 1 },
+      reason: "",
+    });
+    expect(() => validate_registry(registry)).toThrow(/reason/);
+  });
+
+  it("rejects a retired classifier carrying extra fields", () => {
+    const registry = with_first_classifier({
+      kind: "retired",
+      from: { kind: "builtin", function_name: "check_x", min_confidence: 1 },
+      reason: "x",
+      bogus: 1,
+    });
+    expect(() => validate_registry(registry)).toThrow(/extra fields/);
+  });
+
+  it("builtin uniqueness ignores a retired rule's former function_name", () => {
+    const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
+    bad[0]["status"] = "permanent";
+    bad[0]["classifier"] = { kind: "builtin", function_name: "check_dup", min_confidence: 1 };
+    bad[1]["status"] = "fixed";
+    bad[1]["classifier"] = {
+      kind: "retired",
+      from: { kind: "builtin", function_name: "check_dup", min_confidence: 1 },
+      reason: "retired but name reused live elsewhere",
+    };
+    expect(() => validate_registry(bad)).not.toThrow();
   });
 });
 

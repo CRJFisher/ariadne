@@ -493,6 +493,104 @@ describe("fold_proposals", () => {
     const rules = [make_wip_rule({ group_id: "rule-a" })];
     expect(fold_proposals(rules, [])).toEqual(rules);
   });
+
+  it("retires a builtin classifier: flips wip→fixed and rewrites it to retired", () => {
+    const rule = make_wip_rule({
+      group_id: "rule-a",
+      classifier: { kind: "builtin", function_name: "check_rule_a", min_confidence: 1 },
+    });
+    expect(
+      fold_proposals(
+        [rule],
+        [{ kind: "wip_to_fixed_by_name", group_id: "rule-a", reason: "subsumed by TASK-348" }],
+      ),
+    ).toEqual([
+      {
+        ...rule,
+        status: "fixed",
+        classifier: {
+          kind: "retired",
+          from: { kind: "builtin", function_name: "check_rule_a", min_confidence: 1 },
+          reason: "subsumed by TASK-348",
+        },
+      },
+    ]);
+  });
+
+  it("retires a predicate classifier similarly", () => {
+    const rule = make_wip_rule({
+      group_id: "rule-a",
+      classifier: {
+        kind: "predicate",
+        axis: "B",
+        expression: { op: "diagnosis_eq", value: "no_callers_found" },
+        min_confidence: 1,
+      },
+    });
+    expect(
+      fold_proposals(
+        [rule],
+        [{ kind: "wip_to_fixed_by_name", group_id: "rule-a", reason: "resolver now resolves it" }],
+      ),
+    ).toEqual([
+      {
+        ...rule,
+        status: "fixed",
+        classifier: {
+          kind: "retired",
+          from: {
+            kind: "predicate",
+            axis: "B",
+            expression: { op: "diagnosis_eq", value: "no_callers_found" },
+            min_confidence: 1,
+          },
+          reason: "resolver now resolves it",
+        },
+      },
+    ]);
+  });
+
+  it("flips a wip+none rule to fixed and leaves the classifier none", () => {
+    const rule = make_wip_rule({ group_id: "rule-a" });
+    expect(
+      fold_proposals(
+        [rule],
+        [{ kind: "wip_to_fixed_by_name", group_id: "rule-a", reason: "no classifier to retire" }],
+      ),
+    ).toEqual([{ ...rule, status: "fixed" }]);
+  });
+
+  it("is a no-op for a non-wip named rule", () => {
+    const rule = make_wip_rule({
+      group_id: "rule-a",
+      status: "fixed",
+      classifier: { kind: "none" },
+    });
+    expect(
+      fold_proposals(
+        [rule],
+        [{ kind: "wip_to_fixed_by_name", group_id: "rule-a", reason: "already retired" }],
+      ),
+    ).toEqual([rule]);
+  });
+
+  it("re-running the name-mode retirement is idempotent", () => {
+    const retired = make_wip_rule({
+      group_id: "rule-a",
+      status: "fixed",
+      classifier: {
+        kind: "retired",
+        from: { kind: "builtin", function_name: "check_rule_a", min_confidence: 1 },
+        reason: "subsumed by TASK-348",
+      },
+    });
+    expect(
+      fold_proposals(
+        [retired],
+        [{ kind: "wip_to_fixed_by_name", group_id: "rule-a", reason: "subsumed by TASK-348" }],
+      ),
+    ).toEqual([retired]);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -507,6 +605,7 @@ describe("parse_argv", () => {
       drift: false,
       ids: [],
       promote: false,
+      reason: null,
     });
   });
 
@@ -517,7 +616,45 @@ describe("parse_argv", () => {
       drift: false,
       ids: ["rule-a", "rule-b"],
       promote: false,
+      reason: null,
     });
+  });
+
+  it("parses --id --fixed --reason into name-mode args", () => {
+    expect(parse_argv(["--id", "rule-a", "--fixed", "--reason", "subsumed by TASK-348"])).toEqual({
+      dry_run: false,
+      fixed: true,
+      drift: false,
+      ids: ["rule-a"],
+      promote: false,
+      reason: "subsumed by TASK-348",
+    });
+  });
+
+  it("rejects name-mode (--id --fixed) without --reason", () => {
+    expect(() => parse_argv(["--id", "rule-a", "--fixed"])).toThrowError(/requires --reason/);
+  });
+
+  it("rejects name-mode combined with --drift", () => {
+    expect(() =>
+      parse_argv(["--id", "rule-a", "--fixed", "--drift", "--reason", "x"]),
+    ).toThrowError(/cannot combine with --drift/);
+  });
+
+  it("rejects --reason with --promote (not name-mode)", () => {
+    expect(() =>
+      parse_argv(["--id", "rule-a", "--promote", "--reason", "x"]),
+    ).toThrowError(/--reason is only valid/);
+  });
+
+  it("rejects --reason on a bare auto --fixed run (no --id)", () => {
+    expect(() => parse_argv(["--fixed", "--reason", "x"])).toThrowError(/--reason is only valid/);
+  });
+
+  it("rejects --reason with no following value", () => {
+    expect(() => parse_argv(["--id", "rule-a", "--fixed", "--reason"])).toThrowError(
+      /--reason requires a value/,
+    );
   });
 
   it("rejects --promote without --id", () => {
@@ -621,6 +758,7 @@ describe("run", () => {
             matched_subject: "fix(198): close it",
           },
         ],
+        wip_to_fixed_by_name: [],
         drift_detected: [
           {
             kind: "drift_detected",
@@ -688,42 +826,108 @@ describe("run", () => {
     expect(summary.missing_ids).toEqual(["rule-quiet", "rule-ghost"]);
   });
 
-  it("--id overrides the signal filters: a named rule's work surfaces from a suppressed signal", async () => {
+  it("--id overrides the signal filters: a named rule's fixed work surfaces despite --drift", async () => {
     await seed_registry([promotable_rule, tasked_rule, quiet_rule]);
     const summary = await run(
-      ["--dry-run", "--fixed", "--id", "rule-quiet"],
+      ["--dry-run", "--drift", "--id", "rule-tasked"],
       make_deps({
         read_commit_subjects: () => ["fix(198): close it"],
-        discover_drift_sources: async () => ({
-          sources: [
-            {
-              project: "webpack",
-              run_id: "deadbee-2026-06-01T10-00-00.000Z",
-              classifier_regressions: [
-                {
-                  rule_id: "rule-quiet",
-                  flagged_entries: [{ entry_index: 3, evidence_excerpt: "obj[name]()" }],
-                },
-              ],
-            },
-          ],
-          skipped: [],
-        }),
       }),
     );
-    // rule-quiet's only work is a drift proposal; despite --fixed, --id
-    // overrides the filter and the drift signal is scanned too.
-    expect(summary.proposals.drift_detected).toEqual([
+    // rule-tasked's only work is an auto wip_to_fixed proposal; despite --drift,
+    // bare --id overrides the filter and the fixed signal is scanned too. (The
+    // name-mode trigger is --fixed --id, so --drift --id stays a selector.)
+    expect(summary.proposals.wip_to_fixed).toEqual([
       {
-        kind: "drift_detected",
-        group_id: "rule-quiet",
-        set_drift_flag: true,
-        new_evidence: [{ entry_index: 3, evidence_excerpt: "obj[name]()" }],
-        flagged_by: [{ project: "webpack", run_id: "deadbee-2026-06-01T10-00-00.000Z" }],
+        kind: "wip_to_fixed",
+        group_id: "rule-tasked",
+        backlog_task: "TASK-198",
+        matched_scope: "198",
+        matched_subject: "fix(198): close it",
       },
     ]);
-    expect(summary.proposals.wip_to_fixed).toEqual([]);
+    expect(summary.proposals.drift_detected).toEqual([]);
+    expect(summary.proposals.wip_to_fixed_by_name).toEqual([]);
     expect(summary.missing_ids).toEqual([]);
+  });
+
+  it("name-mode flips a named wip rule and retires its classifier through the locked write", async () => {
+    await seed_registry([promotable_rule, tasked_rule, quiet_rule]);
+    const summary = await run(
+      ["--id", "rule-promotable", "--fixed", "--reason", "subsumed by TASK-348"],
+      make_deps({}),
+    );
+    expect(summary.applied).toEqual(true);
+    expect(summary.proposals.wip_to_fixed_by_name).toEqual([
+      { kind: "wip_to_fixed_by_name", group_id: "rule-promotable", reason: "subsumed by TASK-348" },
+    ]);
+    expect(summary.missing_ids).toEqual([]);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(
+      serialize_known_issues_registry_json([
+        {
+          ...promotable_rule,
+          status: "fixed",
+          classifier: {
+            kind: "retired",
+            from: { kind: "builtin", function_name: "check_rule_promotable", min_confidence: 1 },
+            reason: "subsumed by TASK-348",
+          },
+        },
+        tasked_rule,
+        quiet_rule,
+      ]),
+    );
+  });
+
+  it("reports an unknown name-mode id in missing_ids and writes nothing", async () => {
+    const seeded = await seed_registry([promotable_rule, tasked_rule, quiet_rule]);
+    const summary = await run(
+      ["--id", "rule-ghost", "--fixed", "--reason", "x"],
+      make_deps({}),
+    );
+    expect(summary.missing_ids).toEqual(["rule-ghost"]);
+    expect(summary.applied).toEqual(false);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
+  });
+
+  it("name-mode on a non-wip named rule is a silent no-op (not in missing_ids)", async () => {
+    const already_fixed = make_wip_rule({ group_id: "rule-done", status: "fixed" });
+    const seeded = await seed_registry([already_fixed, quiet_rule]);
+    const summary = await run(
+      ["--id", "rule-done", "--fixed", "--reason", "x"],
+      make_deps({ load_registry: async () => [already_fixed, quiet_rule] }),
+    );
+    expect(summary.missing_ids).toEqual([]);
+    expect(summary.proposals.wip_to_fixed_by_name).toEqual([]);
+    expect(summary.applied).toEqual(false);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
+  });
+
+  it("re-running name-mode retirement is idempotent (applied:false on the second run)", async () => {
+    await seed_registry([promotable_rule, tasked_rule, quiet_rule]);
+    const first = await run(
+      ["--id", "rule-promotable", "--fixed", "--reason", "subsumed"],
+      make_deps({}),
+    );
+    expect(first.applied).toEqual(true);
+    const after_first = await fs.readFile(registry_path, "utf8");
+
+    const retired_rule: KnownIssue = {
+      ...promotable_rule,
+      status: "fixed",
+      classifier: {
+        kind: "retired",
+        from: { kind: "builtin", function_name: "check_rule_promotable", min_confidence: 1 },
+        reason: "subsumed",
+      },
+    };
+    const second = await run(
+      ["--id", "rule-promotable", "--fixed", "--reason", "subsumed"],
+      make_deps({ load_registry: async () => [retired_rule, tasked_rule, quiet_rule] }),
+    );
+    expect(second.applied).toEqual(false);
+    expect(second.proposals.wip_to_fixed_by_name).toEqual([]);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(after_first);
   });
 
   it("promotes a classified rule and regenerates the permanent slice", async () => {

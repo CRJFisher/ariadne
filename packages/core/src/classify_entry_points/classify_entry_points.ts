@@ -4,6 +4,9 @@
  * For every `EnrichedEntryPoint`, walk the known-issues registry in priority
  * order and evaluate each entry's classifier:
  *   - `classifier.kind === "none"`      → skip (known issue, no automated detection)
+ *   - `classifier.kind === "retired"`   → skip (bug fixed; former classifier
+ *     preserved in `from`). Retired rules are `status: "fixed"` and never reach
+ *     core's permanent slice, so this arm is belt-and-suspenders.
  *   - `classifier.kind === "predicate"` → evaluate via `predicate_evaluator`.
  *   - `classifier.kind === "builtin"`   → look up `function_name` in the
  *     generated `builtins/index.ts` barrel and invoke it. A missing entry is a

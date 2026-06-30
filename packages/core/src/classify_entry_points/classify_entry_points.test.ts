@@ -75,6 +75,22 @@ function none_issue(group_id: string): KnownIssue {
   };
 }
 
+function retired_issue(group_id: string): KnownIssue {
+  return {
+    group_id,
+    title: `Title for ${group_id}`,
+    description: `Desc for ${group_id}`,
+    status: "fixed",
+    languages: ["typescript"],
+    examples: [],
+    classifier: {
+      kind: "retired",
+      from: { kind: "builtin", function_name: `check_${group_id}`, min_confidence: 1 },
+      reason: "subsumed by a core fix",
+    },
+  };
+}
+
 const EMPTY_READER = (_: string) => [] as readonly string[];
 
 // ===== Tests =====
@@ -146,6 +162,50 @@ describe("auto_classify — priority and match semantics", () => {
 
     expect(classified.result.auto_classified).toBe(true);
     expect(classified.result.auto_group_id).toBe("match");
+  });
+
+  it("retired classifiers are skipped silently like kind: none", () => {
+    const entry_point = make_entry({
+      diagnostics: {
+        grep_call_sites: [],
+        grep_call_sites_unindexed_tests: [],
+        ariadne_call_refs: [],
+        diagnosis: "no-textual-callers",
+        has_uncaptured_indexed_grep_hit: false,
+        callers_only_in_unindexed_tests: false,
+      },
+    });
+    const registry: KnownIssuesRegistry = [
+      retired_issue("skip-retired"),
+      predicate_issue("match", { op: "diagnosis_eq", value: "no-textual-callers" }, 1.0),
+    ];
+
+    const [classified] = auto_classify([entry_point], registry, EMPTY_READER);
+
+    expect(classified.result.auto_classified).toBe(true);
+    expect(classified.result.auto_group_id).toBe("match");
+  });
+
+  it("a retired classifier never hits the MissingBuiltinError path", () => {
+    const entry_point = make_entry({
+      diagnostics: {
+        grep_call_sites: [],
+        grep_call_sites_unindexed_tests: [],
+        ariadne_call_refs: [],
+        diagnosis: "no-textual-callers",
+        has_uncaptured_indexed_grep_hit: false,
+        callers_only_in_unindexed_tests: false,
+      },
+    });
+    const registry: KnownIssuesRegistry = [retired_issue("only-retired")];
+
+    // No builtin_checks provided: a real builtin would throw MissingBuiltinError,
+    // but a retired classifier is skipped before any barrel lookup.
+    const [classified] = auto_classify([entry_point], registry, EMPTY_READER);
+
+    expect(classified.result.auto_classified).toBe(false);
+    expect(classified.result.auto_group_id).toBeNull();
+    expect(classified.result.classifier_hints).toEqual([]);
   });
 
   it("no match anywhere → auto_classified: false with empty hints", () => {
