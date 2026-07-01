@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Author a classifier for a permanent limitation — the classifier-author agent and the --stage insertion path</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --ink:#1f1e1c; --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+
+  /* cross-doc nav (outbound to family) */
+  nav.cross{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
+  nav.cross .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.cross .brand{font-family:var(--mono);font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.cross a, nav.cross .pending, nav.cross .me{font-family:var(--mono);font-size:11px;text-decoration:none;border-radius:999px;padding:3px 10px;border:1px solid var(--g200)}
+  nav.cross a.doc-link{color:var(--g600);background:var(--paper)}
+  nav.cross a.doc-link:hover{border-color:var(--clay);color:var(--slate)}
+  nav.cross a.doc-link .done-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--olive);margin-right:5px;vertical-align:1px}
+  nav.cross .me{color:var(--ivory);background:var(--slate);border-color:var(--slate)}
+  nav.cross .pending{color:var(--g400);background:transparent;border-style:dashed}
+
+  /* same-page outline */
+  nav.toc{position:sticky;top:39px;z-index:9;background:var(--paper);border-bottom:1px solid var(--g200);padding:7px 0}
+  nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  nav.toc .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--g400);margin-right:6px}
+  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid transparent;border-radius:999px;padding:3px 9px}
+  nav.toc a:hover{border-color:var(--g200);background:var(--ivory);color:var(--slate)}
+
+  main{width:90%;max-width:1600px;margin:0 auto;padding:28px 0 80px}
+  .prose{max-width:72ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:32px;line-height:1.14;margin:0 0 14px;letter-spacing:-.01em;max-width:28ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:23px;margin:56px 0 4px;letter-spacing:-.01em;scroll-margin-top:96px}
+  h2 .n{font-family:var(--mono);font-size:13px;color:var(--clay);font-weight:600;margin-right:8px}
+  .lead{font-size:16px;color:var(--g600);max-width:84ch;margin:0 0 6px}
+  .lead b{color:var(--slate);font-weight:600}
+  code{font-family:var(--mono);font-size:.85em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .chip.clay{background:rgba(185,121,79,.12);border-color:rgba(185,121,79,.4)} .chip.clay strong{color:#915a32}
+  .chip.olive{background:rgba(108,122,74,.12);border-color:rgba(108,122,74,.4)} .chip.olive strong{color:#4f5a36}
+  .cap{font-size:13.5px;color:var(--g600);margin:9px 2px 16px;max-width:96ch}
+  .cap b{color:var(--slate);font-weight:600}
+
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:18px 0;max-width:96ch}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)}
+  .callout.slate{background:var(--slate);border-left-color:var(--clay)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 6px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)} .callout.slate .k{color:var(--oat)}
+  .callout p{margin:0 0 6px;font-size:14.5px} .callout p:last-child{margin-bottom:0}
+  .callout.slate p{color:var(--ivory)} .callout.slate b{color:#fff} .callout.slate code{background:#3a3833;color:var(--codeink)}
+
+  .diagram svg{width:100%;height:auto;display:block}
+
+  /* before/after */
+  .sbs{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0}
+  .panel{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:16px 18px}
+  .panel.aft{border-color:var(--clay);box-shadow:0 0 0 1px rgba(185,121,79,.25)}
+  .panel .ph{display:flex;align-items:baseline;gap:9px;margin:0 0 10px}
+  .panel .ph .tag{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.09em;border-radius:999px;padding:3px 9px}
+  .panel.cur .ph .tag{background:var(--g100);color:var(--g600)}
+  .panel.aft .ph .tag{background:var(--clay);color:var(--ivory)}
+  .panel .ph h3{font-family:var(--serif);font-size:17px;font-weight:600;margin:0;letter-spacing:-.01em}
+  .panel svg{width:100%;height:auto;display:block}
+  @media(max-width:900px){ .sbs{grid-template-columns:1fr} }
+
+  .legend{display:flex;flex-wrap:wrap;gap:12px 18px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:10px 2px 4px;align-items:center}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,.1)}
+  .legend i.dash{background:repeating-linear-gradient(90deg,var(--rust) 0 5px,transparent 5px 9px);border:none;height:3px;width:20px;border-radius:0}
+
+  /* staging handoff (two-cell comparison) */
+  .handoff{display:grid;grid-template-columns:1fr 44px 1fr;gap:0;margin:14px 0;align-items:stretch}
+  .hcell{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:16px 18px}
+  .hcell.agent{border-color:var(--olive)} .hcell.human{border-color:var(--clay)}
+  .hcell .role{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;border-radius:999px;padding:3px 10px;display:inline-block;margin-bottom:4px}
+  .hcell.agent .role{background:rgba(108,122,74,.15);color:#4f5a36} .hcell.human .role{background:rgba(185,121,79,.15);color:#915a32}
+  .hcell h3{font-family:var(--serif);font-size:17px;font-weight:600;margin:6px 0 4px}
+  .hcell .can{font-family:var(--mono);font-size:11px;color:var(--g400);margin:0 0 12px}
+  .hbound{display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+  .hbound .line{width:2px;flex:1;background:repeating-linear-gradient(180deg,var(--slate) 0 6px,transparent 6px 11px)}
+  .hbound .lbl{writing-mode:vertical-rl;font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);background:var(--ivory);padding:8px 2px;border:1px solid var(--g200);border-radius:999px;margin:6px 0}
+  .art{list-style:none;margin:0;padding:0}
+  .art li{display:grid;grid-template-columns:16px 1fr;gap:9px;align-items:start;padding:7px 0;border-top:1px solid var(--g100);font-size:13px;line-height:1.45}
+  .art li:first-child{border-top:none}
+  .art li .fdot{width:9px;height:9px;border-radius:2px;margin-top:5px}
+  .art li.j .fdot{background:var(--olive)} .art li.ts .fdot{background:var(--clay)} .art li.md .fdot{background:var(--g400)}
+  .art li code{font-size:.86em}
+  .art li small{display:block;color:var(--g400);font-family:var(--mono);font-size:10.5px;margin-top:2px}
+  @media(max-width:900px){ .handoff{grid-template-columns:1fr} .hbound{flex-direction:row;padding:8px 0}.hbound .line{width:auto;height:2px;flex:1;background:repeating-linear-gradient(90deg,var(--slate) 0 6px,transparent 6px 11px)}.hbound .lbl{writing-mode:horizontal-tb} }
+
+  /* code panel */
+  .code{background:var(--code);border-radius:var(--r);padding:0;margin:14px 0;overflow:hidden;border:1px solid #34312b}
+  .code .fl{font-family:var(--mono);font-size:11px;color:#b8b0a0;background:#201e1a;padding:8px 14px;border-bottom:1px solid #34312b;display:flex;justify-content:space-between}
+  .code .fl .kind{color:var(--clay)}
+  .code pre{margin:0;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.62;color:var(--codeink)}
+  .code .kw{color:#c98a5a} .code .str{color:#a8b978} .code .cm{color:#6f695c;font-style:italic} .code .fn{color:#e0c07a} .code .pk{color:#c98a5a} .code .num{color:#c98a5a}
+  .code .hl{background:rgba(185,121,79,.18);display:inline-block;width:100%}
+
+  /* status / checklist */
+  .board{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:14px 0}
+  @media(max-width:840px){ .board{grid-template-columns:1fr} }
+  .col{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:14px 16px}
+  .col h3{font-family:var(--serif);font-size:16px;font-weight:600;margin:0 0 2px;display:flex;align-items:center;gap:8px}
+  .col .sub{font-family:var(--mono);font-size:11px;color:var(--g400);margin:0 0 12px}
+  .col.concrete{border-color:rgba(108,122,74,.5)} .col.soft{border-color:rgba(185,121,79,.5)}
+  .cl{list-style:none;margin:0;padding:0}
+  .cl li{display:grid;grid-template-columns:20px 1fr;gap:9px;align-items:start;padding:6px 0;border-top:1px solid var(--g100);font-size:12.5px;line-height:1.42}
+  .cl li:first-child{border-top:none}
+  .cl li small{display:block;color:var(--g400);font-family:var(--mono);font-size:10.5px;margin-top:2px}
+  .mark{width:17px;height:17px;border-radius:5px;border:1.5px solid var(--g400);margin-top:2px;position:relative;flex-shrink:0}
+  .mark.on{background:var(--olive);border-color:var(--olive)}
+  .mark.on::after{content:"";position:absolute;left:5px;top:1.5px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(43deg)}
+
+  .prov{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);padding:12px 16px;margin:16px 0}
+  .prov .label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--g400);margin:0 0 6px}
+  .prov code{font-size:.8em;background:var(--g100)}
+  .prov .files{margin:0;padding:0;list-style:none;font-family:var(--mono);font-size:11.5px;color:var(--g600);line-height:1.85}
+
+  footer{margin-top:56px;border-top:1px solid var(--g200);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400);line-height:1.7}
+</style>
+</head>
+<body>
+
+<!-- ============ CROSS-DOC NAV ============ -->
+<nav class="cross">
+  <div class="inner">
+    <span class="brand">task 190.30 · classifier scope</span>
+    <a class="doc-link" href="task-190.30.overview.html">190.30 · overview</a>
+    <a class="doc-link" href="task-190.30.1.disposition-plan.html"><span class="done-dot"></span>190.30.1 · audit &amp; cleanup · done</a>
+    <span class="me" aria-current="page">190.30.2 · classifier-author</span>
+  </div>
+</nav>
+
+<!-- ============ SAME-PAGE OUTLINE ============ -->
+<nav class="toc">
+  <div class="inner">
+    <span class="brand">on this page</span>
+    <a href="#lifecycle">1 · The authoring lifecycle</a>
+    <a href="#decision">2 · Predicate vs builtin</a>
+    <a href="#gates">3 · The --stage gates</a>
+    <a href="#handoff">4 · The staging handoff</a>
+    <a href="#tension">5 · The wiring to confirm</a>
+    <a href="#status">6 · Deliverables</a>
+  </div>
+</nav>
+
+<main>
+<header>
+  <p class="eyebrow">self-healing pipeline · classifier registry · authoring gap</p>
+  <h1>When triage finds a permanent limitation, an agent drafts its classifier and the human inserts it under lock</h1>
+  <p class="lead prose">After 190.30.1 the registry is a <b>permanent-limitations catalog</b> — 22 entries, all firing. But when triage surfaces a <i>new</i> permanent limitation, there is no tool to turn it into a classifier: the human hand-writes the predicate or builtin from scratch.</p>
+  <p class="lead prose">190.30.2 adds a <code>classifier-author</code> agent that drafts a validated <code>KnownIssue</code> into a staging directory, plus a <code>reconcile_registry.ts --stage</code> path that validates that draft and — with <code>--apply</code> — inserts it through the lock-fenced write contract. <b>The agent never touches <code>registry.json</code>.</b></p>
+  <div class="meta">
+    <span class="chip clay">registry <strong>22 entries · 0 wip</strong></span>
+    <span class="chip">DSL operators <strong>17</strong></span>
+    <span class="chip">builtins in barrel <strong>12</strong></span>
+    <span class="chip olive">agent output <strong>staged draft</strong></span>
+    <span class="chip clay"><code>--stage</code> gates <strong>4</strong></span>
+    <span class="chip">human stays <strong>sole writer</strong></span>
+  </div>
+</header>
+
+<!-- ============ 1. LIFECYCLE BEFORE / AFTER ============ -->
+<h2 id="lifecycle"><span class="n">01</span>The authoring lifecycle: a hand-edit dead-end becomes a staged, validated insert</h2>
+<p class="cap prose"><b>Left (current):</b> a novel permanent-limitation group flows triage → plan → prioritize and then dead-ends — the human hand-writes the whole predicate or builtin into <code>registry.json</code> with no tooling. <b>Right (planned):</b> <code>prioritize --priority permanent</code> dispatches <code>classifier-author</code>, which stages a draft; the human reviews and runs <code>reconcile-registry --stage --apply</code> to insert a <code>wip</code> entry that later promotes to <code>permanent</code>.</p>
+<div class="sbs">
+
+  <div class="panel cur">
+    <div class="ph"><span class="tag">current · authoring gap</span><h3>Human hand-edits, unassisted</h3></div>
+    <svg viewBox="0 0 420 372" role="img" aria-label="Current flow: triage fp-novel to plan PlanTask to prioritize backlog task, then the human hand-writes the predicate or builtin into registry.json with no tooling.">
+      <defs>
+        <marker id="c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5f594f"/></marker>
+        <marker id="c1r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a8472f"/></marker>
+      </defs>
+      <rect x="55" y="14" width="310" height="40" rx="9" fill="#fffdf8" stroke="#ddd6c8" stroke-width="1.4"/>
+      <text x="210" y="33" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="12">triage → fp-novel</text>
+      <text x="210" y="47" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">a novel permanent limitation surfaces</text>
+      <path d="M210,54 L210,78" stroke="#5f594f" stroke-width="1.6" marker-end="url(#c1)"/>
+      <rect x="55" y="80" width="310" height="40" rx="9" fill="#fffdf8" stroke="#ddd6c8" stroke-width="1.4"/>
+      <text x="210" y="99" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="12">plan → PlanTask row</text>
+      <text x="210" y="113" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">grouped by fault_area · is_classifier_work</text>
+      <path d="M210,120 L210,144" stroke="#5f594f" stroke-width="1.6" marker-end="url(#c1)"/>
+      <rect x="55" y="146" width="310" height="40" rx="9" fill="#fffdf8" stroke="#ddd6c8" stroke-width="1.4"/>
+      <text x="210" y="165" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="12">prioritize → backlog task</text>
+      <text x="210" y="179" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">"author a classifier" — itself manual work</text>
+      <path d="M210,186 L210,212" stroke="#a8472f" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#c1r)"/>
+      <rect x="48" y="214" width="324" height="52" rx="9" fill="#fbeee9" stroke="#a8472f" stroke-width="1.6"/>
+      <text x="210" y="236" text-anchor="middle" fill="#a8472f" font-family="ui-monospace,Menlo,monospace" font-size="12" font-weight="700">??? human hand-writes classifier</text>
+      <text x="210" y="252" text-anchor="middle" fill="#a8472f" font-family="ui-monospace,Menlo,monospace" font-size="10">no tooling · predicate tree or check_*.ts by hand</text>
+      <path d="M210,266 L210,290" stroke="#a8472f" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#c1r)"/>
+      <rect x="90" y="292" width="240" height="30" rx="7" fill="#2b2a28"/>
+      <text x="210" y="311" text-anchor="middle" fill="#e7ddc9" font-family="ui-monospace,Menlo,monospace" font-size="11">registry.json (hand-edited)</text>
+      <text x="210" y="346" text-anchor="middle" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="10.5" font-style="italic">the gap 190.30.2 closes</text>
+    </svg>
+  </div>
+
+  <div class="panel aft">
+    <div class="ph"><span class="tag">planned · 190.30.2</span><h3>Agent drafts, human inserts under lock</h3></div>
+    <svg viewBox="0 0 420 372" role="img" aria-label="Planned flow: prioritize priority permanent dispatches classifier-author, which reads entry context and packages/core and writes a staged draft; the human runs reconcile-registry --stage --apply to insert a wip entry through atomic_update_registry, which later promotes to permanent.">
+      <defs>
+        <marker id="c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5f594f"/></marker>
+        <marker id="c2o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6c7a4a"/></marker>
+        <marker id="c2c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#b9794f"/></marker>
+      </defs>
+      <rect x="40" y="12" width="340" height="42" rx="9" fill="#fbf2ea" stroke="#b9794f" stroke-width="1.7"/>
+      <text x="210" y="31" text-anchor="middle" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="700">prioritize --priority permanent</text>
+      <text x="210" y="46" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">dispatches classifier-author (not refactor-investigator)</text>
+      <path d="M210,54 L210,74" stroke="#b9794f" stroke-width="1.7" marker-end="url(#c2c)"/>
+      <rect x="40" y="76" width="340" height="52" rx="9" fill="#f1f3ea" stroke="#6c7a4a" stroke-width="1.7"/>
+      <text x="210" y="96" text-anchor="middle" fill="#4f5a36" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="700">classifier-author agent</text>
+      <text x="210" y="110" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">reads get_entry_context + packages/core</text>
+      <text x="210" y="122" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">writes ONLY to its staging dir</text>
+      <path d="M210,128 L210,148" stroke="#6c7a4a" stroke-width="1.7" marker-end="url(#c2o)"/>
+      <rect x="40" y="150" width="340" height="46" rx="9" fill="#fffdf8" stroke="#6c7a4a" stroke-width="1.5"/>
+      <text x="210" y="170" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="11">draft_entry.json + REVIEW.md (+ check_*.ts)</text>
+      <text x="210" y="185" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">staged · status:"wip" · min_confidence 0.95</text>
+      <path d="M210,196 L210,216" stroke="#6c7a4a" stroke-width="1.7" marker-end="url(#c2o)"/>
+      <rect x="40" y="218" width="340" height="46" rx="9" fill="#fbf2ea" stroke="#b9794f" stroke-width="1.7"/>
+      <text x="210" y="238" text-anchor="middle" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="700">human: reconcile-registry --stage --apply</text>
+      <text x="210" y="253" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">validate → atomic_update_registry (lock-fenced)</text>
+      <path d="M210,264 L210,284" stroke="#b9794f" stroke-width="1.7" marker-end="url(#c2c)"/>
+      <rect x="72" y="286" width="276" height="34" rx="8" fill="#8a9a5e"/>
+      <text x="210" y="307" text-anchor="middle" fill="#fffdf8" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="600">wip entry · real classifier fires in triage</text>
+      <path d="M210,320 L210,340" stroke="#6c7a4a" stroke-width="1.7" marker-end="url(#c2o)"/>
+      <rect x="92" y="342" width="236" height="26" rx="7" fill="#6c7a4a"/>
+      <text x="210" y="359" text-anchor="middle" fill="#f7f3ec" font-family="ui-monospace,Menlo,monospace" font-size="10">stable → --promote → permanent</text>
+    </svg>
+  </div>
+</div>
+<div class="legend">
+  <span><i style="background:#6c7a4a"></i> agent-authored (design-only, never writes registry)</span>
+  <span><i style="background:#b9794f"></i> human-operated (reconcile-registry)</span>
+  <span><i class="dash"></i> the tooling gap</span>
+  <span><i style="background:#2b2a28"></i> the registry write surface</span>
+</div>
+<div class="callout slate">
+  <span class="k">the invariant, unchanged</span>
+  <p class="prose">Every arrow that reaches <code>registry.json</code> is <b>human-operated</b>. The agent only ever produces a <b>staged draft</b>; the human runs <code>--stage</code>, which validates against the <code>KnownIssue</code> schema and writes through <code>atomic_update_registry</code>. This is why the AST-walk in <code>registry_writers.test.ts</code> still passes — no agent code path calls a raw write function against the registry.</p>
+</div>
+
+<!-- ============ 2. PREDICATE VS BUILTIN ============ -->
+<h2 id="decision"><span class="n">02</span>The agent's core decision: predicate first, builtin only when the DSL can't say it</h2>
+<p class="cap prose">The agent <b>prefers <code>predicate</code></b> — a serialisable JSON tree over the 17 <code>PredicateExpr</code> operators in <code>packages/types/src/known_issues.ts</code>, evaluated with no TypeScript compile step. It falls back to <code>builtin</code> — a named <code>check_*.ts</code> function in <code>packages/core/.../builtins/</code> — only when the pattern needs logic the closed DSL cannot express.</p>
+<div class="diagram">
+<svg viewBox="0 0 1000 340" role="img" aria-label="Decision: start by preferring predicate; ask whether the closed DSL of 17 operators can express the pattern. If yes, emit a predicate expression tree, no compile needed. If it needs file-path regex, call-ref length checks, or multi-condition logic, fall back to a builtin check function that must be placed and compiled.">
+  <defs>
+    <marker id="d1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5f594f"/></marker>
+    <marker id="d1o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6c7a4a"/></marker>
+    <marker id="d1c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#b9794f"/></marker>
+  </defs>
+
+  <!-- start -->
+  <rect x="20" y="130" width="180" height="60" rx="10" fill="#2b2a28"/>
+  <text x="110" y="156" text-anchor="middle" fill="#f7f3ec" font-family="ui-serif,Georgia,serif" font-size="14" font-weight="600">Prefer predicate</text>
+  <text x="110" y="175" text-anchor="middle" fill="#e7ddc9" font-family="ui-monospace,Menlo,monospace" font-size="9.5">no TS compile</text>
+  <path d="M200,160 L246,160" stroke="#5f594f" stroke-width="1.8" marker-end="url(#d1)"/>
+
+  <!-- decision diamond -->
+  <path d="M400,160 L500,100 L600,160 L500,220 Z" fill="#fbf2ea" stroke="#b9794f" stroke-width="1.8"/>
+  <text x="500" y="150" text-anchor="middle" fill="#915a32" font-family="ui-sans-serif,system-ui,sans-serif" font-size="12.5" font-weight="600">Can the closed DSL</text>
+  <text x="500" y="167" text-anchor="middle" fill="#915a32" font-family="ui-sans-serif,system-ui,sans-serif" font-size="12.5" font-weight="600">express the pattern?</text>
+  <text x="500" y="185" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">17 operators</text>
+  <!-- edge label from start to diamond -->
+  <rect x="250" y="145" width="146" height="30" rx="8" fill="#fffdf8" stroke="#ddd6c8" stroke-width="1.3"/>
+  <text x="323" y="164" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="10.5">all · any · not · *_eq</text>
+  <path d="M396,160 L400,160" stroke="#5f594f" stroke-width="1.8" marker-end="url(#d1)"/>
+
+  <!-- YES branch → predicate -->
+  <path d="M500,220 L500,270 L640,270" fill="none" stroke="#6c7a4a" stroke-width="1.9" marker-end="url(#d1o)"/>
+  <text x="512" y="248" fill="#4f5a36" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="700">YES</text>
+  <rect x="642" y="242" width="338" height="60" rx="10" fill="#f1f3ea" stroke="#6c7a4a" stroke-width="1.8"/>
+  <text x="811" y="264" text-anchor="middle" fill="#4f5a36" font-family="ui-serif,Georgia,serif" font-size="14" font-weight="600">classifier.kind = "predicate"</text>
+  <text x="811" y="284" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10">expression tree in draft_entry.json · no .ts · no compile</text>
+
+  <!-- NO branch → builtin -->
+  <path d="M600,160 L620,160 L620,60 L640,60" fill="none" stroke="#b9794f" stroke-width="1.9" marker-end="url(#d1c)"/>
+  <text x="628" y="105" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="700">NO</text>
+  <rect x="642" y="18" width="338" height="84" rx="10" fill="#fbf2ea" stroke="#b9794f" stroke-width="1.8"/>
+  <text x="811" y="40" text-anchor="middle" fill="#915a32" font-family="ui-serif,Georgia,serif" font-size="14" font-weight="600">classifier.kind = "builtin"</text>
+  <text x="811" y="59" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">emits check_&lt;group_id&gt;.ts stub · BuiltinCheckFn</text>
+  <text x="811" y="74" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">human places it in builtins/ + rebuilds barrel</text>
+  <text x="811" y="90" text-anchor="middle" fill="#a8472f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">requires pnpm build --filter core</text>
+
+  <!-- fallback triggers -->
+  <rect x="20" y="250" width="330" height="78" rx="10" fill="#fffdf8" stroke="#ddd6c8" stroke-width="1.4"/>
+  <text x="34" y="270" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="700" letter-spacing=".06em">NO ONLY WHEN THE PATTERN NEEDS:</text>
+  <text x="34" y="289" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10.5">• file-path regex not in an operator</text>
+  <text x="34" y="305" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10.5">• ariadne_call_refs length / count checks</text>
+  <text x="34" y="321" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10.5">• multi-condition logic the DSL can't compose</text>
+</svg>
+</div>
+<p class="cap prose"><b>The 17 operators</b> the agent composes into an <code>expression</code> tree — combinators <code>all · any · not</code> plus leaves like <code>diagnosis_eq · decorator_matches · grep_line_regex · receiver_kind_eq · has_unindexed_test_caller</code>. The live builtin <code>check_string-keyed-dispatch</code> (Angular <code>ɵɵ</code>-prefix + core file-path regex) is exactly the file-path-regex case that forces the fallback.</p>
+
+<!-- ============ 3. THE --STAGE GATES ============ -->
+<h2 id="gates"><span class="n">03</span>The <code>--stage</code> insertion path: four gates before any write, dry-run by default</h2>
+<p class="cap prose">This is the concrete, testable half of the task — a new subcommand on <code>reconcile_registry.ts</code>. It reuses the existing <code>validate_registry</code> / evidence-gate machinery in <code>known_issues_registry.ts</code>. Each gate is a hard reject (fail-loud, no silent skip); only after all four pass does a <b>dry-run print</b> the entry — and only <code>--apply</code> writes, through <code>atomic_update_registry</code>.</p>
+<div class="diagram">
+<svg viewBox="0 0 1000 250" role="img" aria-label="The --stage pipeline: read draft_entry.json, then four sequential gates — KnownIssue schema, duplicate group_id, builtin function_name present in BUILTIN_CHECKS, observed_count at least 1. Each gate rejects to a fail-loud exit. On pass, dry-run prints the entry; --apply inserts via atomic_update_registry.">
+  <defs>
+    <marker id="s1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5f594f"/></marker>
+    <marker id="s1r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a8472f"/></marker>
+    <marker id="s1o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6c7a4a"/></marker>
+  </defs>
+
+  <!-- read -->
+  <rect x="10" y="94" width="118" height="52" rx="9" fill="#2b2a28"/>
+  <text x="69" y="116" text-anchor="middle" fill="#f7f3ec" font-family="ui-monospace,Menlo,monospace" font-size="10.5">read draft</text>
+  <text x="69" y="131" text-anchor="middle" fill="#e7ddc9" font-family="ui-monospace,Menlo,monospace" font-size="9">_entry.json</text>
+
+  <!-- gate template positions -->
+  <!-- gate 1 -->
+  <path d="M128,120 L150,120" stroke="#5f594f" stroke-width="1.7" marker-end="url(#s1)"/>
+  <rect x="152" y="92" width="150" height="56" rx="9" fill="#fbf2ea" stroke="#b9794f" stroke-width="1.6"/>
+  <text x="227" y="110" text-anchor="middle" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="700">gate 1</text>
+  <text x="227" y="125" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="10">KnownIssue</text>
+  <text x="227" y="139" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9">schema valid?</text>
+
+  <!-- gate 2 -->
+  <path d="M302,120 L322,120" stroke="#5f594f" stroke-width="1.7" marker-end="url(#s1)"/>
+  <rect x="324" y="92" width="150" height="56" rx="9" fill="#fbf2ea" stroke="#b9794f" stroke-width="1.6"/>
+  <text x="399" y="110" text-anchor="middle" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="700">gate 2</text>
+  <text x="399" y="125" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="10">group_id</text>
+  <text x="399" y="139" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9">not a duplicate?</text>
+
+  <!-- gate 3 -->
+  <path d="M474,120 L494,120" stroke="#5f594f" stroke-width="1.7" marker-end="url(#s1)"/>
+  <rect x="496" y="88" width="158" height="64" rx="9" fill="#fbf2ea" stroke="#b9794f" stroke-width="1.6"/>
+  <text x="575" y="106" text-anchor="middle" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="700">gate 3</text>
+  <text x="575" y="121" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="10">if builtin:</text>
+  <text x="575" y="134" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9">function_name in</text>
+  <text x="575" y="146" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9">BUILTIN_CHECKS?</text>
+
+  <!-- gate 4 -->
+  <path d="M654,120 L674,120" stroke="#5f594f" stroke-width="1.7" marker-end="url(#s1)"/>
+  <rect x="676" y="92" width="150" height="56" rx="9" fill="#fbf2ea" stroke="#b9794f" stroke-width="1.6"/>
+  <text x="751" y="110" text-anchor="middle" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="700">gate 4</text>
+  <text x="751" y="125" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="10">observed_count</text>
+  <text x="751" y="139" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9">&#8805; 1?</text>
+
+  <!-- pass to dry-run -->
+  <path d="M826,120 L848,120" stroke="#6c7a4a" stroke-width="1.9" marker-end="url(#s1o)"/>
+  <rect x="850" y="86" width="140" height="34" rx="8" fill="#fffdf8" stroke="#6c7a4a" stroke-width="1.6"/>
+  <text x="920" y="107" text-anchor="middle" fill="#4f5a36" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="600">dry-run: print</text>
+  <!-- apply -->
+  <path d="M920,120 L920,150" stroke="#6c7a4a" stroke-width="1.9" marker-end="url(#s1o)"/>
+  <rect x="850" y="152" width="140" height="42" rx="8" fill="#8a9a5e"/>
+  <text x="920" y="170" text-anchor="middle" fill="#fffdf8" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="700">--apply</text>
+  <text x="920" y="184" text-anchor="middle" fill="#f1f3ea" font-family="ui-monospace,Menlo,monospace" font-size="8.5">atomic_update_registry</text>
+
+  <!-- reject rail -->
+  <path d="M227,148 L227,210" stroke="#a8472f" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <path d="M399,148 L399,210" stroke="#a8472f" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <path d="M575,152 L575,210" stroke="#a8472f" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <path d="M751,148 L751,210" stroke="#a8472f" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <path d="M227,210 L740,210" stroke="#a8472f" stroke-width="1.5" marker-end="url(#s1r)"/>
+  <rect x="742" y="196" width="150" height="30" rx="8" fill="#fbeee9" stroke="#a8472f" stroke-width="1.5"/>
+  <text x="817" y="215" text-anchor="middle" fill="#a8472f" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="700">fail-loud · exit ≠ 0</text>
+
+  <!-- header labels -->
+  <text x="10" y="30" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10.5" font-weight="700" letter-spacing=".05em">FOUR SEQUENTIAL GATES — ANY FAILURE ABORTS BEFORE A WRITE</text>
+  <text x="10" y="48" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="9.5">reuses validate_registry + the evidence gate from known_issues_registry.ts · dry-run is the DEFAULT</text>
+</svg>
+</div>
+<div class="callout rust">
+  <span class="k">deliberate safety inversion — call this out at review</span>
+  <p class="prose"><code>--stage</code> is <b>dry-run by default</b> and writes only with <code>--apply</code>. This <b>inverts</b> the rest of <code>reconcile_registry.ts</code>, where every other signal <i>applies by default</i> and previews with <code>--dry-run</code>. Insertion of a brand-new catalog entry is the higher-stakes operation, so its default is the safe one. Worth confirming this asymmetry is intended and documented.</p>
+</div>
+<p class="cap prose"><b>Gate 3</b> rejects a <code>builtin</code> draft whose <code>function_name</code> is absent from <code>BUILTIN_CHECKS</code>, forcing the human to place the <code>.ts</code> and rebuild <i>first</i>. <b>Gate 4</b> is 190.30.1's evidence gate on the authoring path — <code>observed_count &lt; 1</code> is a speculative, never-observed classifier, refused.</p>
+<div class="code">
+  <div class="fl"><span>known_issues_registry.ts · validate_entry() — the evidence gate that gate 4 reuses</span><span class="kind">verbatim</span></div>
+<pre><span class="cm">// Evidence gate: a wip entry that carries an authored classifier must have</span>
+<span class="cm">// fired in a real triage run (observed_count &gt;= 1).</span>
+<span class="kw">const</span> classifier = record[<span class="str">"classifier"</span>] <span class="kw">as</span> { kind?: unknown };
+<span class="hl"><span class="kw">if</span> (record[<span class="str">"status"</span>] === <span class="str">"wip"</span> &amp;&amp; classifier.kind !== <span class="str">"none"</span>) {</span>
+  <span class="kw">const</span> observed_count = record[<span class="str">"observed_count"</span>];
+  <span class="kw">if</span> (<span class="kw">typeof</span> observed_count !== <span class="str">"number"</span> || observed_count &lt; <span class="num">1</span>) {
+    <span class="kw">throw new</span> <span class="fn">RegistryValidationError</span>(
+      <span class="str">`${at_id}.observed_count: a wip entry with an authored classifier `</span> +
+      <span class="str">`must record observed_count &gt;= 1`</span>,
+    );
+  }
+}</pre>
+</div>
+
+<!-- ============ 4. STAGING HANDOFF ============ -->
+<h2 id="handoff"><span class="n">04</span>The staging directory is the agent&#8596;human boundary</h2>
+<p class="cap prose">The whole write-boundary contract reduces to this line. Everything the agent produces lands in <code>~/.ariadne/prioritize/&lt;run&gt;/classifier-author/&lt;group_id&gt;/</code>. The human is the only actor that crosses into <code>registry.json</code>, and only via the validated <code>--stage</code> command.</p>
+<div class="handoff">
+  <div class="hcell agent">
+    <span class="role">agent · writes only here</span>
+    <h3>classifier-author drafts</h3>
+    <p class="can">reads: get_entry_context.ts · packages/core (read-only)</p>
+    <ul class="art">
+      <li class="j"><span class="fdot"></span><div><code>draft_entry.json</code><small>complete KnownIssue · status:"wip" · min_confidence 0.95 · predicate expression OR builtin function_name</small></div></li>
+      <li class="ts"><span class="fdot"></span><div><code>check_&lt;group_id&gt;.ts</code> <i>(builtin kind only)</i><small>BuiltinCheckFn stub · human places in builtins/ + rebuilds the barrel</small></div></li>
+      <li class="md"><span class="fdot"></span><div><code>REVIEW.md</code><small>what the pattern is · why it is permanent (not a fixable bug) · which entry points it matched · review checklist</small></div></li>
+    </ul>
+  </div>
+  <div class="hbound"><div class="line"></div><span class="lbl">write boundary</span><div class="line"></div></div>
+  <div class="hcell human">
+    <span class="role">human · sole registry writer</span>
+    <h3>reviews, then inserts</h3>
+    <p class="can">runs: reconcile-registry --stage &lt;draft&gt; [--apply]</p>
+    <ul class="art">
+      <li class="md"><span class="fdot"></span><div>Reads <code>REVIEW.md</code>, confirms the pattern is a true permanent limitation<small>the human is the decider — the agent only proposes</small></div></li>
+      <li class="ts"><span class="fdot"></span><div>For builtin drafts: places <code>check_*.ts</code>, runs <code>pnpm build --filter core</code><small>gate 3 blocks --apply until function_name is in BUILTIN_CHECKS</small></div></li>
+      <li class="j"><span class="fdot"></span><div>Runs <code>--stage draft_entry.json</code> (dry-run), then <code>--apply</code><small>inserts the wip entry through atomic_update_registry — the lock-fenced write</small></div></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============ 5. THE TENSION ============ -->
+<h2 id="tension"><span class="n">05</span>The one interpretation to confirm: how <code>classifier-author</code> wires into <i>today's</i> prioritize</h2>
+<p class="cap prose">The task doc (2026-06-29) describes prioritize routing novel groups via <code>--priority core|classifier</code>. The <b>current</b> <code>prioritize/SKILL.md</code> has since evolved into a deep-investigate / consolidate / export pipeline, where <code>--priority core|classifier</code> is a <b>selector</b> on <code>export_to_backlog.ts</code> (it picks <code>is_classifier_work</code> rows) — not a routing that forks to a different agent.</p>
+<div class="sbs">
+  <div class="panel cur">
+    <div class="ph"><span class="tag">the spec assumes</span><h3>--priority is a routing</h3></div>
+    <ul class="art" style="margin-top:2px">
+      <li class="md"><span class="fdot" style="background:var(--g400)"></span><div><code>--priority classifier</code> routes a novel group to a distinct path<small>the path that graduates it to a "author a classifier" backlog card</small></div></li>
+      <li class="md"><span class="fdot" style="background:var(--g400)"></span><div>Add <code>--priority permanent</code> as a third routing<small>dispatch classifier-author in place of the backlog-card path</small></div></li>
+    </ul>
+  </div>
+  <div class="panel aft">
+    <div class="ph"><span class="tag">the code now is</span><h3>--priority is a selector</h3></div>
+    <ul class="art" style="margin-top:2px">
+      <li class="j"><span class="fdot"></span><div>prioritize deep-investigates every group, then <code>export_to_backlog.ts</code> writes <code>backlog/</code><small>refactor-investigator → refactor-consolidator → refactor-task-architect → export</small></div></li>
+      <li class="ts"><span class="fdot"></span><div><code>--priority core|classifier</code> selects rows on that script<small>classifier picks is_classifier_work rows; it is a filter, not a dispatch fork</small></div></li>
+    </ul>
+  </div>
+</div>
+<div class="callout slate">
+  <span class="k">my reading — please confirm or correct before I implement</span>
+  <p class="prose">For <code>--priority permanent</code>, select the permanent-limitation classifier-work groups and dispatch <b><code>classifier-author</code> in place of <code>refactor-investigator</code></b> (it pulls each group's sample entries via <code>get_entry_context.ts</code>), producing a <b>staged draft instead of a backlog card</b>. No backlog task is created; the staging directory replaces graduation, and review happens through <code>reconcile-registry --stage</code>.</p>
+  <p class="prose"><b>What is unambiguous and testable:</b> the <code>--stage</code> script path, its four gates, its tests, and the <code>classifier-author.md</code> agent doc. <b>What is the softer, doc-level part:</b> the exact prioritize <i>wiring</i> — a <code>SKILL.md</code> edit, not a script contract. If you want the wiring drawn differently (e.g. a new dispatch fork rather than reusing the selector), say so and I'll adjust the plan.</p>
+</div>
+
+<!-- ============ 6. DELIVERABLES ============ -->
+<h2 id="status"><span class="n">06</span>Deliverables: the concrete contract vs the doc-level wiring</h2>
+<p class="cap prose">The nine acceptance criteria split cleanly. <b>Left</b> is the concrete, testable contract — script behavior, gates, and tests. <b>Right</b> is the softer, doc-level wiring — the two SKILL/rule edits and the standing invariant the AST-walk guards.</p>
+<div class="board">
+  <div class="col concrete">
+    <h3><span class="mark"></span>Concrete &amp; testable — script + agent + tests</h3>
+    <p class="sub">unambiguous · these define done</p>
+    <ul class="cl">
+      <li><span class="mark"></span><div><code>.claude/agents/classifier-author.md</code> exists, scoped tools<small>reads get_entry_context.ts + packages/core · writes only its staging dir · never writes registry</small></div></li>
+      <li><span class="mark"></span><div>Agent emits a valid <code>draft_entry.json</code> (passes KnownIssue schema) + <code>REVIEW.md</code><small>for at least one real triage novel group as a test case</small></div></li>
+      <li><span class="mark"></span><div>Agent emits <code>check_&lt;group_id&gt;.ts</code> for builtin kind; picks predicate whenever the DSL suffices</small></div></li>
+      <li><span class="mark"></span><div><code>--stage &lt;path&gt;</code> validates, dry-runs, and (with <code>--apply</code>) inserts via <code>atomic_update_registry</code></div></li>
+      <li><span class="mark"></span><div>Gate 3: blocks builtin insertion when <code>function_name</code> absent from <code>BUILTIN_CHECKS</code> (fail-loud)</div></li>
+      <li><span class="mark"></span><div>Gate 4: blocks a draft with <code>observed_count &lt; 1</code> (evidence gate)</div></li>
+      <li><span class="mark"></span><div><code>reconcile_registry.test.ts</code>: happy path · duplicate group_id · missing-builtin</div></li>
+    </ul>
+  </div>
+  <div class="col soft">
+    <h3><span class="mark"></span>Doc-level wiring — the softer part</h3>
+    <p class="sub">the interpretation from §5 lives here</p>
+    <ul class="cl">
+      <li><span class="mark"></span><div><code>prioritize/SKILL.md</code> documents <code>--priority permanent</code>, the classifier-author dispatch, and the staging → <code>--stage</code> review workflow<small>a SKILL edit, not a script contract — the wiring to confirm in §5</small></div></li>
+      <li><span class="mark"></span><div><code>.claude/rules/classifier-lifecycle.md</code>: remove the <code>wip + kind:none</code> stub state, add the classifier-author + <code>--stage</code> creation path<small>note: the go-forward doc already leads with the retired-kind path; the none-stub language is what this removes</small></div></li>
+      <li><span class="mark"></span><div><code>registry_writers.test.ts</code> AST-walk still passes — agent never calls a raw write against <code>registry.json</code><small>a standing invariant this task must not break, not new code</small></div></li>
+    </ul>
+  </div>
+</div>
+
+<div class="prov">
+  <p class="label">Grounded in — files read to build this</p>
+  <ul class="files">
+    <li>backlog/tasks/task-190.30.2 · task-190.30 (spec + parent)</li>
+    <li>.claude/skills/triage/scripts/reconcile_registry.ts (754 lines — the script gaining <code>--stage</code>; currently applies-by-default)</li>
+    <li>.claude/skills/triage/src/known_issues_registry.ts (<code>validate_registry</code> + the evidence gate <code>--stage</code> reuses)</li>
+    <li>packages/types/src/known_issues.ts (KnownIssue · ClassifierSpec · the 17 PredicateExpr operators)</li>
+    <li>packages/core/src/classify_entry_points/builtins/{index.ts, check_string-keyed-dispatch.ts} (BUILTIN_CHECKS barrel · a live builtin)</li>
+    <li>.claude/skills/triage/scripts/get_entry_context.ts · .claude/agents/triage-investigator.md (the payload + agent format)</li>
+    <li>.claude/skills/prioritize/SKILL.md (current flow — the source of the §5 wiring tension)</li>
+  </ul>
+</div>
+
+<footer>
+  task-190.30.2 · classifier-author agent + reconcile-registry --stage · comprehension companion · self-contained, no network<br>
+  live registry today: 22 entries (20 permanent / 2 fixed / 0 wip) · barrel holds 12 builtins · 17 predicate DSL operators<br>
+  status To Do · the §5 interpretation is the one thing to confirm before implementation begins
+</footer>
+</main>
+</body>
+</html>
