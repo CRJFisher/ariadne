@@ -2,28 +2,21 @@
  * Loader and schema validator for the known-issues registry.
  *
  * Registry source of truth: `.claude/skills/triage/known_issues/registry.json`.
- * The validator walks every entry, checks shape and enum values, and walks every
- * predicate expression so that unknown `op` values are rejected.
+ * The validator walks every entry, checks shape and enum values, and validates
+ * each classifier spec (`none` | `builtin` | `retired`).
  */
 
 import * as fs from "node:fs";
 
 import { known_issues_registry_path } from "@ariadnejs/skill-protocol";
 import {
-  DEFINITION_FEATURE_NAMES,
-  SYNTACTIC_FEATURE_NAMES,
   KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION,
   parse_known_issues_registry_json,
-  type DefinitionFeatureName,
-  type SyntacticFeatureName,
-  PREDICATE_OPERATORS,
   type ClassifierSpec,
   type KnownIssue,
   type KnownIssueLanguage,
   type KnownIssueStatus,
   type KnownIssuesRegistry,
-  type PredicateExpr,
-  type PredicateOperator,
 } from "@ariadnejs/types";
 
 // ===== Constants =====
@@ -39,24 +32,6 @@ const VALID_LANGUAGES: ReadonlySet<KnownIssueLanguage> = new Set<KnownIssueLangu
   "javascript",
   "python",
   "rust",
-]);
-
-const VALID_AXES: ReadonlySet<"A" | "B" | "C"> = new Set(["A", "B", "C"] as const);
-
-const VALID_OPERATORS: ReadonlySet<PredicateOperator> = new Set(PREDICATE_OPERATORS);
-
-const VALID_SYNTACTIC_FEATURE_NAMES: ReadonlySet<SyntacticFeatureName> = new Set(
-  SYNTACTIC_FEATURE_NAMES,
-);
-
-const VALID_DEFINITION_FEATURE_NAMES: ReadonlySet<DefinitionFeatureName> = new Set(
-  DEFINITION_FEATURE_NAMES,
-);
-
-const VALID_ACCESSOR_KIND_VALUES: ReadonlySet<"getter" | "setter" | "none"> = new Set([
-  "getter",
-  "setter",
-  "none",
 ]);
 
 const KEBAB_CASE = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
@@ -260,17 +235,6 @@ function validate_classifier_spec(value: unknown, at: string): asserts value is 
     }
     return;
   }
-  if (kind === "predicate") {
-    const axis = record["axis"];
-    if (typeof axis !== "string" || !VALID_AXES.has(axis as "A" | "B" | "C")) {
-      throw new RegistryValidationError(
-        `${at}.axis: must be "A", "B", or "C" (got "${String(axis)}")`,
-      );
-    }
-    require_confidence(record["min_confidence"], `${at}.min_confidence`);
-    validate_predicate_expr(record["expression"], `${at}.expression`);
-    return;
-  }
   if (kind === "builtin") {
     const function_name = record["function_name"];
     if (typeof function_name !== "string" || function_name.length === 0) {
@@ -304,13 +268,13 @@ function validate_classifier_spec(value: unknown, at: string): asserts value is 
       throw new RegistryValidationError(`${at}.from: must be an object`);
     }
     const from_kind = (from as Record<string, unknown>)["kind"];
-    if (from_kind !== "predicate" && from_kind !== "builtin") {
+    if (from_kind !== "builtin") {
       throw new RegistryValidationError(
-        `${at}.from.kind: must be "predicate" | "builtin" (got "${String(from_kind)}")`,
+        `${at}.from.kind: must be "builtin" (got "${String(from_kind)}")`,
       );
     }
     // The former classifier is checked exactly as strictly as a live one — a
-    // retired rule must carry a well-formed predicate/builtin in `from`.
+    // retired rule must carry a well-formed builtin in `from`.
     validate_classifier_spec(from, `${at}.from`);
     const extra = Object.keys(record).filter(
       (k) => k !== "kind" && k !== "from" && k !== "reason",
@@ -323,123 +287,8 @@ function validate_classifier_spec(value: unknown, at: string): asserts value is 
     return;
   }
   throw new RegistryValidationError(
-    `${at}.kind: must be "none" | "predicate" | "builtin" | "retired" (got "${String(kind)}")`,
+    `${at}.kind: must be "none" | "builtin" | "retired" (got "${String(kind)}")`,
   );
-}
-
-/**
- * Walks a predicate expression tree. Every node must carry an `op` from
- * {@link PREDICATE_OPERATORS}; unknown operators are rejected here.
- */
-export function validate_predicate_expr(value: unknown, at: string): asserts value is PredicateExpr {
-  if (typeof value !== "object" || value === null) {
-    throw new RegistryValidationError(`${at}: must be an object`);
-  }
-  const record = value as Record<string, unknown>;
-  const op = record["op"];
-  if (typeof op !== "string" || !VALID_OPERATORS.has(op as PredicateOperator)) {
-    throw new RegistryValidationError(
-      `${at}.op: unknown operator "${String(op)}" (allowed: ${[...VALID_OPERATORS].join(", ")})`,
-    );
-  }
-  switch (op as PredicateOperator) {
-    case "all":
-    case "any": {
-      if (!Array.isArray(record["of"])) {
-        throw new RegistryValidationError(`${at}.of: must be an array for op="${op}"`);
-      }
-      for (let i = 0; i < record["of"].length; i++) {
-        validate_predicate_expr(record["of"][i], `${at}.of[${i}]`);
-      }
-      return;
-    }
-    case "not": {
-      validate_predicate_expr(record["of"], `${at}.of`);
-      return;
-    }
-    case "diagnosis_eq":
-    case "language_eq":
-    case "resolution_failure_reason_eq":
-    case "receiver_kind_eq":
-      require_string(record, "value", at);
-      return;
-    case "decorator_matches":
-    case "grep_line_regex": {
-      require_string(record, "pattern", at);
-      const pattern = record["pattern"] as string;
-      try {
-        // Pre-compile once at load time so classifier evaluation is hot-path
-        // cheap and invalid patterns surface immediately.
-        record["compiled_pattern"] = new RegExp(pattern);
-      } catch (e) {
-        const reason = e instanceof Error ? e.message : String(e);
-        throw new RegistryValidationError(
-          `${at}.pattern: invalid regex for op="${op}" — ${reason}`,
-        );
-      }
-      return;
-    }
-    case "has_capture_at_grep_hit":
-    case "missing_capture_at_grep_hit":
-      require_string(record, "capture_name", at);
-      return;
-    case "syntactic_feature_eq":
-      require_string(record, "name", at);
-      if (!VALID_SYNTACTIC_FEATURE_NAMES.has(record["name"] as SyntacticFeatureName)) {
-        throw new RegistryValidationError(
-          `${at}.name: unknown syntactic feature "${String(record["name"])}" (allowed: ${[...VALID_SYNTACTIC_FEATURE_NAMES].join(", ")})`,
-        );
-      }
-      if (typeof record["value"] !== "boolean") {
-        throw new RegistryValidationError(`${at}.value: must be boolean for op="syntactic_feature_eq"`);
-      }
-      return;
-    case "grep_hits_all_intra_file":
-    case "has_unindexed_test_caller":
-      if (typeof record["value"] !== "boolean") {
-        throw new RegistryValidationError(`${at}.value: must be boolean for op="${op}"`);
-      }
-      return;
-    case "grep_hit_neighbourhood_matches": {
-      require_string(record, "pattern", at);
-      const window = record["window"];
-      if (typeof window !== "number" || !Number.isInteger(window) || window <= 0) {
-        throw new RegistryValidationError(
-          `${at}.window: must be a positive integer for op="grep_hit_neighbourhood_matches"`,
-        );
-      }
-      try {
-        record["compiled_pattern"] = new RegExp(record["pattern"] as string);
-      } catch (e) {
-        const reason = e instanceof Error ? e.message : String(e);
-        throw new RegistryValidationError(
-          `${at}.pattern: invalid regex for op="grep_hit_neighbourhood_matches" — ${reason}`,
-        );
-      }
-      return;
-    }
-    case "definition_feature_eq":
-      require_string(record, "name", at);
-      if (!VALID_DEFINITION_FEATURE_NAMES.has(record["name"] as DefinitionFeatureName)) {
-        throw new RegistryValidationError(
-          `${at}.name: unknown definition feature "${String(record["name"])}" (allowed: ${[...VALID_DEFINITION_FEATURE_NAMES].join(", ")})`,
-        );
-      }
-      if (typeof record["value"] !== "boolean") {
-        throw new RegistryValidationError(`${at}.value: must be boolean for op="definition_feature_eq"`);
-      }
-      return;
-    case "accessor_kind_eq":
-      if (
-        typeof record["value"] !== "string" ||
-        !VALID_ACCESSOR_KIND_VALUES.has(record["value"] as "getter" | "setter" | "none")
-      ) {
-        throw new RegistryValidationError(
-          `${at}.value: must be "getter" | "setter" | "none" (got "${String(record["value"])}")`,
-        );
-      }
-      return;
-  }
 }
 
 function validate_optional_rollup_fields(record: Record<string, unknown>, at: string): void {

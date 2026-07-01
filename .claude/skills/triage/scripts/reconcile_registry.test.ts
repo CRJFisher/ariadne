@@ -27,6 +27,7 @@ import {
   parse_commit_subject,
   pick_latest_run_id,
   run,
+  run_or_stage,
   type DriftSource,
   type ReconcileDeps,
 } from "./reconcile_registry.js";
@@ -517,39 +518,6 @@ describe("fold_proposals", () => {
     ]);
   });
 
-  it("retires a predicate classifier similarly", () => {
-    const rule = make_wip_rule({
-      group_id: "rule-a",
-      classifier: {
-        kind: "predicate",
-        axis: "B",
-        expression: { op: "diagnosis_eq", value: "no_callers_found" },
-        min_confidence: 1,
-      },
-    });
-    expect(
-      fold_proposals(
-        [rule],
-        [{ kind: "wip_to_fixed_by_name", group_id: "rule-a", reason: "resolver now resolves it" }],
-      ),
-    ).toEqual([
-      {
-        ...rule,
-        status: "fixed",
-        classifier: {
-          kind: "retired",
-          from: {
-            kind: "predicate",
-            axis: "B",
-            expression: { op: "diagnosis_eq", value: "no_callers_found" },
-            min_confidence: 1,
-          },
-          reason: "resolver now resolves it",
-        },
-      },
-    ]);
-  });
-
   it("flips a wip+none rule to fixed and leaves the classifier none", () => {
     const rule = make_wip_rule({ group_id: "rule-a" });
     expect(
@@ -607,6 +575,8 @@ describe("parse_argv", () => {
       promote: false,
       reason: null,
       name_mode: false,
+      stage: null,
+      apply: false,
     });
   });
 
@@ -619,6 +589,8 @@ describe("parse_argv", () => {
       promote: false,
       reason: null,
       name_mode: false,
+      stage: null,
+      apply: false,
     });
   });
 
@@ -631,6 +603,8 @@ describe("parse_argv", () => {
       promote: false,
       reason: "subsumed by TASK-348",
       name_mode: true,
+      stage: null,
+      apply: false,
     });
   });
 
@@ -681,6 +655,40 @@ describe("parse_argv", () => {
   it("rejects unknown arguments", () => {
     expect(() => parse_argv(["--frobnicate"])).toThrowError(/Unknown argument/);
   });
+
+  it("parses --stage <path> into stage args (dry-run by default)", () => {
+    expect(parse_argv(["--stage", "/drafts/d.json"])).toEqual({
+      dry_run: false,
+      fixed: false,
+      drift: false,
+      ids: [],
+      promote: false,
+      reason: null,
+      name_mode: false,
+      stage: "/drafts/d.json",
+      apply: false,
+    });
+  });
+
+  it("rejects --stage combined with a selector flag", () => {
+    expect(() => parse_argv(["--stage", "d.json", "--promote", "--id", "x"])).toThrowError(
+      /--stage cannot combine with/,
+    );
+  });
+
+  it("rejects --stage combined with --dry-run (dry-run is the default)", () => {
+    expect(() => parse_argv(["--stage", "d.json", "--dry-run"])).toThrowError(
+      /--stage is dry-run by default/,
+    );
+  });
+
+  it("rejects --apply without --stage", () => {
+    expect(() => parse_argv(["--apply"])).toThrowError(/--apply is valid only with --stage/);
+  });
+
+  it("rejects --stage with a missing path value", () => {
+    expect(() => parse_argv(["--stage"])).toThrowError(/--stage requires a draft file path/);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -714,6 +722,10 @@ describe("run", () => {
       regenerate_permanent_slice: async () => {
         throw new Error("regenerate_permanent_slice must not run without --promote");
       },
+      read_draft: async () => {
+        throw new Error("read_draft must not run outside stage-mode");
+      },
+      known_builtin_names: () => new Set<string>(),
       ...over,
     };
   }
@@ -985,7 +997,7 @@ describe("run", () => {
       {
         group_id: "rule-quiet",
         reason:
-          "classifier.kind is \"none\" — author a predicate or builtin classifier before promoting",
+          "classifier.kind is \"none\" — author a builtin classifier before promoting",
       },
     ]);
     expect(summary.applied).toEqual(false);
@@ -1049,6 +1061,112 @@ describe("run", () => {
       },
     ]);
     expect(summary.proposals.drift_detected).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// run_stage: insert an agent-authored draft (via run_or_stage dispatch)
+// ---------------------------------------------------------------------------
+
+describe("run_stage", () => {
+  let tmp_dir: string;
+  let registry_path: string;
+
+  const seeded_rule = make_wip_rule({ group_id: "rule-existing", observed_count: 1 });
+
+  const staged_draft: KnownIssue = make_wip_rule({
+    group_id: "rule-staged",
+    observed_count: 1,
+    classifier: { kind: "builtin", function_name: "check_staged", min_confidence: 0.95 },
+  });
+
+  function stage_deps(over: Partial<ReconcileDeps>): ReconcileDeps {
+    return {
+      registry_path,
+      load_registry: async () => [seeded_rule],
+      read_commit_subjects: () => [],
+      discover_drift_sources: async () => ({ sources: [], skipped: [] }),
+      regenerate_permanent_slice: async () => {
+        throw new Error("regenerate_permanent_slice must not run in stage-mode");
+      },
+      read_draft: async () => staged_draft,
+      known_builtin_names: () => new Set(["check_staged"]),
+      ...over,
+    };
+  }
+
+  async function seed(rules: KnownIssue[]): Promise<string> {
+    const bytes = serialize_known_issues_registry_json(rules);
+    await fs.writeFile(registry_path, bytes);
+    return bytes;
+  }
+
+  beforeEach(async () => {
+    tmp_dir = await fs.mkdtemp(path.join(os.tmpdir(), "reconcile-stage-"));
+    registry_path = path.join(tmp_dir, "registry.json");
+  });
+
+  afterEach(async () => {
+    await fs.rm(tmp_dir, { recursive: true, force: true });
+  });
+
+  it("dry-runs by default: validates and previews the insert without writing", async () => {
+    const seeded = await seed([seeded_rule]);
+    const summary = await run_or_stage(["--stage", "/drafts/rule-staged.json"], stage_deps({}));
+    expect(summary).toEqual({ draft: staged_draft, applied: false });
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
+  });
+
+  it("--apply appends the draft through the locked write", async () => {
+    await seed([seeded_rule]);
+    const summary = await run_or_stage(
+      ["--stage", "/drafts/rule-staged.json", "--apply"],
+      stage_deps({}),
+    );
+    expect(summary).toEqual({ draft: staged_draft, applied: true });
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(
+      serialize_known_issues_registry_json([seeded_rule, staged_draft]),
+    );
+  });
+
+  it("rejects a draft whose group_id already exists (no silent overwrite)", async () => {
+    const dup = make_wip_rule({
+      group_id: "rule-existing",
+      observed_count: 1,
+      classifier: { kind: "builtin", function_name: "check_staged", min_confidence: 0.95 },
+    });
+    const seeded = await seed([seeded_rule]);
+    await expect(
+      run_or_stage(["--stage", "/drafts/dup.json", "--apply"], stage_deps({ read_draft: async () => dup })),
+    ).rejects.toThrowError(/group_id "rule-existing" already exists/);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
+  });
+
+  it("rejects a builtin draft whose function_name is not in BUILTIN_CHECKS", async () => {
+    const seeded = await seed([seeded_rule]);
+    await expect(
+      run_or_stage(
+        ["--stage", "/drafts/rule-staged.json", "--apply"],
+        stage_deps({ known_builtin_names: () => new Set<string>() }),
+      ),
+    ).rejects.toThrowError(/function_name "check_staged" is not registered in core's BUILTIN_CHECKS/);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
+  });
+
+  it("blocks a wip builtin draft with observed_count < 1 (evidence gate)", async () => {
+    const speculative = make_wip_rule({
+      group_id: "rule-speculative",
+      observed_count: 0,
+      classifier: { kind: "builtin", function_name: "check_staged", min_confidence: 0.95 },
+    });
+    const seeded = await seed([seeded_rule]);
+    await expect(
+      run_or_stage(
+        ["--stage", "/drafts/spec.json", "--apply"],
+        stage_deps({ read_draft: async () => speculative }),
+      ),
+    ).rejects.toThrowError(/failed schema validation|observed_count/);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
   });
 });
 

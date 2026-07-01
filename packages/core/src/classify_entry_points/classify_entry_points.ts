@@ -7,12 +7,14 @@
  *   - `classifier.kind === "retired"`   → skip (bug fixed; former classifier
  *     preserved in `from`). Retired rules are `status: "fixed"` and never reach
  *     core's permanent slice, so this arm is belt-and-suspenders.
- *   - `classifier.kind === "predicate"` → evaluate via `predicate_evaluator`.
  *   - `classifier.kind === "builtin"`   → look up `function_name` in the
- *     generated `builtins/index.ts` barrel and invoke it. A missing entry is a
+ *     `builtins/index.ts` barrel and invoke it. A missing entry is a
  *     stale-barrel error — it means the registry references a builtin that the
- *     barrel was never regenerated for. Throw `MissingBuiltinError` so the
+ *     barrel was never updated for. Throw `MissingBuiltinError` so the
  *     pipeline stops loudly instead of silently dropping the classifier.
+ *
+ * `builtin` is the only match mechanism: every classifier is a bespoke
+ * `BuiltinCheckFn`.
  *
  * First match short-circuits the walk for that entry; sub-threshold hits
  * accumulate so the agent prompt can weigh them before starting investigation.
@@ -29,12 +31,10 @@ import type {
   ClassifierHint,
 } from "@ariadnejs/types";
 import { BUILTIN_CHECKS, type BuiltinCheckFn } from "./builtins/index";
-import { evaluate_predicate } from "./predicate_evaluator";
 import type {
   ClassifiedEntryPointResult,
   AutoClassifyResult,
   FileLinesReader,
-  PredicateContext,
 } from "./auto_classify_types";
 
 export interface AutoClassifyOptions {
@@ -79,28 +79,19 @@ function classify_one(
   read_file_lines: FileLinesReader,
   builtin_checks: Readonly<Record<string, BuiltinCheckFn>>,
 ): ClassifiedEntryPointResult {
-  const ctx: PredicateContext = { entry_point, read_file_lines };
   const hints: ClassifierHint[] = [];
 
   for (const issue of registry) {
     const spec = issue.classifier;
-    let reasoning: string;
-    let min_confidence: number;
-    if (spec.kind === "predicate") {
-      if (!evaluate_predicate(spec.expression, ctx)) continue;
-      reasoning = `Matched predicate classifier for ${issue.group_id}`;
-      min_confidence = spec.min_confidence;
-    } else if (spec.kind === "builtin") {
-      const check = builtin_checks[spec.function_name];
-      if (check === undefined) {
-        throw new MissingBuiltinError(issue.group_id, spec.function_name);
-      }
-      if (!check(entry_point, read_file_lines)) continue;
-      reasoning = `Matched builtin classifier ${spec.function_name} for ${issue.group_id}`;
-      min_confidence = spec.min_confidence;
-    } else {
-      continue;
+    // `none` and `retired` carry no live classifier — skip.
+    if (spec.kind !== "builtin") continue;
+    const check = builtin_checks[spec.function_name];
+    if (check === undefined) {
+      throw new MissingBuiltinError(issue.group_id, spec.function_name);
     }
+    if (!check(entry_point, read_file_lines)) continue;
+    const reasoning = `Matched builtin classifier ${spec.function_name} for ${issue.group_id}`;
+    const min_confidence = spec.min_confidence;
 
     const confidence = 1.0;
     if (confidence >= min_confidence) {

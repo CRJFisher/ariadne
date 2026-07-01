@@ -30,9 +30,21 @@
  *      landed under a task scope that does not match the rule's `backlog_task`,
  *      so signal 1 cannot see it. Names rules directly like `--promote`,
  *      bypasses git-log matching, requires `--reason`, and cannot combine with
- *      `--drift`. Converts a real (predicate|builtin) classifier into the
+ *      `--drift`. Converts a real builtin classifier into the
  *      structured `{ kind:"retired", from, reason }` marker. The auto `--fixed`
  *      path (no `--id`) is unchanged — status-only, classifier untouched.
+ *
+ * ## Stage (insertion of an agent-authored draft)
+ *
+ * `--stage <draft-path>` inserts a `classifier-author`-drafted `KnownIssue`
+ * into the registry after validating it: schema-check (which enforces the
+ * evidence gate, `observed_count >= 1`), reject a duplicate `group_id`, and
+ * reject a `builtin` whose `function_name` is not registered in core's
+ * `BUILTIN_CHECKS` (fail-loud: the human must place the `check_*.ts` and
+ * rebuild core first). Unlike the reconciliation signals above, `--stage` is
+ * **dry-run by default** — it prints the entry it would insert and exits;
+ * `--apply` performs the write. This asymmetry is deliberate: an insertion
+ * grows the permanent-limitations catalog, so it must be opted into.
  *
  * ## Write boundary
  *
@@ -73,6 +85,7 @@ import {
   parse_known_issues_registry_json,
   serialize_known_issues_registry_json,
 } from "@ariadnejs/types";
+import { BUILTIN_CHECKS } from "@ariadnejs/core";
 
 import {
   SUBJECT_REGEX,
@@ -80,13 +93,16 @@ import {
   expand_task_scope,
 } from "../../../../scripts/check-commit-message.js";
 import { generate_permanent_data } from "./generate_permanent_data.js";
+import { validate_registry } from "../src/known_issues_registry.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const USAGE =
   "Usage: reconcile_registry [--dry-run] [--fixed] [--drift] " +
   "[--id <group_id>...] [--reason <text>] [--promote]\n" +
   "  Name-mode: --id <group_id>... --fixed --reason \"<text>\" flips the named " +
-  "wip rules to fixed directly (no git-log matching) and retires their classifier.\n";
+  "wip rules to fixed directly (no git-log matching) and retires their classifier.\n" +
+  "  Stage: --stage <draft-path> [--apply] validates and inserts an agent-authored " +
+  "KnownIssue draft. Dry-run by default; pass --apply to write.\n";
 
 /**
  * Commit types that assert a behavior change landed. A `docs(198)` or
@@ -136,7 +152,7 @@ export interface PromoteProposal {
  * (`--id ... --fixed --reason`) when the subsuming fix landed under a task
  * scope that does not match the rule's `backlog_task`, so signal 1 cannot see
  * it. Retires the rule: flips it to `fixed` and converts a real
- * (predicate|builtin) classifier into the structured `retired` marker carrying
+ * builtin classifier into the structured `retired` marker carrying
  * `reason`.
  */
 export interface FixedByNameProposal {
@@ -356,7 +372,7 @@ export function fold_proposals(
         // Retire a real classifier into the structured `retired` marker; a
         // `none` stub has nothing to retire, so it stays `none`.
         const classifier: ClassifierSpec =
-          rule.classifier.kind === "predicate" || rule.classifier.kind === "builtin"
+          rule.classifier.kind === "builtin"
             ? { kind: "retired", from: rule.classifier, reason: proposal.reason }
             : rule.classifier;
         next[i] = { ...rule, status: "fixed", classifier };
@@ -377,10 +393,10 @@ export function fold_proposals(
         break;
       }
       case "promote_to_permanent":
-        if (rule.classifier.kind !== "predicate" && rule.classifier.kind !== "builtin") {
+        if (rule.classifier.kind !== "builtin") {
           throw new Error(
             `cannot promote "${rule.group_id}": classifier.kind is "${rule.classifier.kind}" — ` +
-              "only a predicate or builtin classifier is promotable; core's " +
+              "only a builtin classifier is promotable; core's " +
               "validate_permanent_slice rejects every other kind",
           );
         }
@@ -406,9 +422,17 @@ export interface CliArgs {
   /**
    * `--fixed` with `--id`: the deliberate direct-retirement flip. Computed once
    * here (the single source of truth) after guard validation, so `run()` reads
-   * it instead of re-deriving the predicate.
+   * it instead of re-deriving the condition.
    */
   name_mode: boolean;
+  /** Path to a `KnownIssue` draft JSON to insert; null outside stage-mode. */
+  stage: string | null;
+  /**
+   * Stage-mode only: perform the insert. Stage-mode is dry-run BY DEFAULT (the
+   * safety asymmetry vs. the reconciliation signals, which apply by default and
+   * preview with `--dry-run`), so a write must be opted into with `--apply`.
+   */
+  apply: boolean;
 }
 
 export function parse_argv(argv: string[]): CliArgs {
@@ -420,6 +444,8 @@ export function parse_argv(argv: string[]): CliArgs {
     promote: false,
     reason: null,
     name_mode: false,
+    stage: null,
+    apply: false,
   };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -450,6 +476,17 @@ export function parse_argv(argv: string[]): CliArgs {
         args.reason = argv[++i];
         break;
       }
+      case "--stage": {
+        const value = argv[i + 1];
+        if (value === undefined || value.startsWith("--") || value.trim().length === 0) {
+          throw new Error("--stage requires a draft file path");
+        }
+        args.stage = argv[++i];
+        break;
+      }
+      case "--apply":
+        args.apply = true;
+        break;
       case "--help":
       case "-h":
         process.stdout.write(USAGE);
@@ -486,6 +523,27 @@ export function parse_argv(argv: string[]): CliArgs {
       "--reason is valid only with name-mode (--fixed and --id together): no commit subject is cited there",
     );
   }
+  // Stage-mode is a standalone insertion transaction: it shares no machinery
+  // with the reconciliation signals, so it may not combine with any of them.
+  if (args.stage !== null) {
+    if (args.fixed || args.drift || args.promote || args.ids.length > 0 || args.reason !== null) {
+      throw new Error(
+        "--stage cannot combine with --fixed/--drift/--promote/--id/--reason: " +
+          "staging a draft is a standalone insertion transaction",
+      );
+    }
+    // --stage is dry-run by default and writes only with --apply; --dry-run
+    // would imply it toggles something it does not.
+    if (args.dry_run) {
+      throw new Error(
+        "--stage is dry-run by default; drop --dry-run and pass --apply to write the insert",
+      );
+    }
+  }
+  // --apply is the write opt-in for stage-mode; it is meaningless elsewhere.
+  if (args.apply && args.stage === null) {
+    throw new Error("--apply is valid only with --stage: it opts a draft insertion into writing");
+  }
   return args;
 }
 
@@ -513,6 +571,18 @@ export interface ReconcileDeps {
     dry_run: boolean;
     preview_rules: KnownIssue[] | null;
   }) => Promise<boolean>;
+  /**
+   * Read + JSON-parse a draft file. Returns `unknown` — validation is the
+   * caller's job (`validate_registry`), so a malformed draft surfaces as a
+   * schema error, not a read error. Injectable so tests never touch disk.
+   */
+  read_draft: (draft_path: string) => Promise<unknown>;
+  /**
+   * The `function_name`s core's `BUILTIN_CHECKS` currently exposes. A thunk so
+   * tests inject a fake set without importing `@ariadnejs/core`, and the real
+   * dep reads the freshly-built barrel.
+   */
+  known_builtin_names: () => ReadonlySet<string>;
 }
 
 export interface RejectedPromotion {
@@ -576,7 +646,7 @@ export async function run(
       } else if (rule.classifier.kind === "none" || rule.classifier.kind === "retired") {
         rejected_promotions.push({
           group_id: id,
-          reason: `classifier.kind is "${rule.classifier.kind}" — author a predicate or builtin classifier before promoting`,
+          reason: `classifier.kind is "${rule.classifier.kind}" — author a builtin classifier before promoting`,
         });
       } else if (rule.status === "permanent") {
         rejected_promotions.push({ group_id: id, reason: "already permanent" });
@@ -684,6 +754,115 @@ export async function run(
 }
 
 // ---------------------------------------------------------------------------
+// Stage: insert an agent-authored draft
+// ---------------------------------------------------------------------------
+
+/** A staged draft that failed validation, duplicated a group_id, or named an unregistered builtin. */
+export class StageDraftError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "StageDraftError";
+  }
+}
+
+export interface StageSummary {
+  /** The validated draft — echoed for the preview / audit line. */
+  draft: KnownIssue;
+  /** False = dry-run preview only (default); true = inserted via the locked write. */
+  applied: boolean;
+}
+
+/**
+ * Validate an agent-authored `KnownIssue` draft and insert it. The four gates —
+ * schema (which enforces the `observed_count >= 1` evidence gate), no duplicate
+ * `group_id`, and a builtin `function_name` registered in `BUILTIN_CHECKS` —
+ * mirror the lifecycle contract's promotion invariants at the authoring
+ * boundary. Dry-run unless `args.apply`; the write folds under the same
+ * `atomic_update_registry` lock as `run()`.
+ */
+export async function run_stage(
+  args: CliArgs,
+  deps: ReconcileDeps,
+): Promise<StageSummary> {
+  if (args.stage === null) {
+    throw new Error("run_stage reached with a null stage path — dispatch guard bypassed");
+  }
+
+  // 1–2. Read + validate. validate_registry runs the full per-entry validator
+  // (including the evidence gate) and narrows the singleton array to
+  // KnownIssuesRegistry, so `entry` is a KnownIssue after it returns.
+  const draft = await deps.read_draft(args.stage);
+  const drafts = [draft];
+  try {
+    validate_registry(drafts);
+  } catch (err) {
+    throw new StageDraftError(
+      `draft at ${args.stage} failed schema validation: ` +
+        (err instanceof Error ? err.message : String(err)),
+    );
+  }
+  const entry: KnownIssue = drafts[0];
+
+  // 3. Reject a duplicate group_id against the current registry (explicit, not
+  // a silent overwrite).
+  const registry = await deps.load_registry();
+  if (registry.some((rule) => rule.group_id === entry.group_id)) {
+    throw new StageDraftError(
+      `group_id "${entry.group_id}" already exists in the registry — staging refuses to ` +
+        "overwrite; pick a new group_id or edit the existing rule directly",
+    );
+  }
+
+  // 4. Fail-loud if a builtin's function_name is not registered in BUILTIN_CHECKS:
+  // the human must place the check_*.ts and rebuild core before staging.
+  if (entry.classifier.kind === "builtin") {
+    const known = deps.known_builtin_names();
+    if (!known.has(entry.classifier.function_name)) {
+      throw new StageDraftError(
+        `builtin function_name "${entry.classifier.function_name}" is not registered in ` +
+          "core's BUILTIN_CHECKS — place the check_*.ts under " +
+          "packages/core/src/classify_entry_points/builtins/, rebuild core " +
+          "(pnpm build --filter core), then re-stage",
+      );
+    }
+  }
+
+  // 5. Dry-run by default: preview and exit without writing.
+  if (!args.apply) {
+    return { draft: entry, applied: false };
+  }
+
+  // 6. Insert through the locked write, re-checking the duplicate under the
+  // lock so a concurrent insert of the same group_id cannot be clobbered.
+  const applied = await atomic_update_registry(deps.registry_path, async (raw) => {
+    const current_rules = parse_known_issues_registry_json(raw);
+    if (current_rules.some((rule) => rule.group_id === entry.group_id)) {
+      throw new StageDraftError(
+        `group_id "${entry.group_id}" already exists in the registry (detected under the write lock)`,
+      );
+    }
+    const next = serialize_known_issues_registry_json([...current_rules, entry]);
+    return { kind: "write", next, result: true };
+  });
+
+  return { draft: entry, applied };
+}
+
+/**
+ * Dispatch entry point: `--stage` routes to `run_stage` (its own summary
+ * shape); everything else routes to `run`. Keeps the two modes' summaries
+ * precise rather than widening one to carry the other's always-empty fields.
+ */
+export async function run_or_stage(
+  argv: string[],
+  deps: ReconcileDeps,
+): Promise<ReconcileSummary | StageSummary> {
+  const args = parse_argv(argv);
+  if (args.stage !== null) return run_stage(args, deps);
+  return run(argv, deps);
+}
+
+// ---------------------------------------------------------------------------
 // Real-world deps
 // ---------------------------------------------------------------------------
 
@@ -738,12 +917,14 @@ export async function build_real_deps(): Promise<ReconcileDeps> {
           ...(preview_rules === null ? {} : { source_rules: preview_rules }),
         })
       ).changed,
+    read_draft: async (draft_path) => JSON.parse(await readFile(draft_path, "utf8")),
+    known_builtin_names: () => new Set(Object.keys(BUILTIN_CHECKS)),
   };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   build_real_deps()
-    .then((deps) => run(process.argv.slice(2), deps))
+    .then((deps) => run_or_stage(process.argv.slice(2), deps))
     .then((summary) => process.stdout.write(JSON.stringify(summary, null, 2) + "\n"))
     .catch((err) => {
       process.stderr.write(

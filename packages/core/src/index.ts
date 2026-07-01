@@ -19,6 +19,8 @@ export {
   type EnrichedCallGraph,
   type EnrichCallGraphOptions,
   auto_classify,
+  BUILTIN_CHECKS,
+  type BuiltinCheckFn,
   MissingBuiltinError,
   type AutoClassifyOptions,
   type AutoClassifyResult,

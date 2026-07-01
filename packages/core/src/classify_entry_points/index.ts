@@ -12,7 +12,6 @@ export type {
   AutoClassifyResult,
   ClassifiedEntryPointResult,
   FileLinesReader,
-  PredicateContext,
 } from "./auto_classify_types";
 export {
   extract_entry_point_diagnostics,

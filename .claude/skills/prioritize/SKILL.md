@@ -33,6 +33,15 @@ what this skill exists to make. The investigation is design-only: the
 comprehension doc it stages graduates into `backlog/` only for the groups the
 user funds.
 
+**Two graduation destinations.** Most groups graduate into `backlog/` as
+refactoring work (the pipeline below). A group the human tags as a **permanent
+limitation** — a call relationship fundamentally unknowable to static analysis,
+not a fixable Ariadne bug — does not become a backlog card at all. It becomes a
+**classifier registry entry**: for these groups, dispatch the `classifier-author`
+agent in place of `refactor-investigator`, producing a staged draft the human
+reviews and applies via `reconcile-registry --stage` (see
+"Permanent-limitation groups" below).
+
 ## What the export does
 
 The backlog card body is **always** the architect's authored imperative work plan
@@ -178,6 +187,30 @@ Wait for every `Task()` in a wave to return before starting the next wave.
 **All step-3 waves must complete before consolidation (step 4) is dispatched.**
 The consolidator reads every group's plan front to back to judge linkage, so all
 plans must be on disk first.
+
+### 3a. Permanent-limitation groups (`classifier-author`)
+
+A change group the human identifies as a **permanent limitation** (see
+`.claude/rules/classifier-lifecycle.md`) routes differently: it never graduates
+to `backlog/`. Instead of a `Task(refactor-investigator)`, dispatch one
+`Task(classifier-author)` per such group. The agent reads `packages/core` and
+the group's triage entry context (`get_entry_context.ts`) and writes a **staged
+draft** — never the registry — to:
+
+```text
+~/.ariadne/prioritize/<run>/classifier-author/<group_id>/
+```
+
+containing `draft_entry.json` (a complete `KnownIssue` with a `builtin`
+classifier), `check_<group_id>.ts` (the `BuiltinCheckFn` to place under
+`packages/core/src/classify_entry_points/builtins/`), and `REVIEW.md` (why the
+pattern is a permanent limitation, which entries it matched, a review checklist).
+
+The human then reviews the draft, places the builtin and rebuilds core
+(`pnpm build --filter core`), and applies the entry with
+`reconcile-registry --stage` (see `.claude/skills/reconcile-registry/SKILL.md`).
+These groups do **not** flow into steps 4–7 (consolidation, comprehension docs,
+export) — those operate only on backlog-bound groups.
 
 ### 4. Consolidate into epics
 

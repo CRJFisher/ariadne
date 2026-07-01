@@ -5,15 +5,12 @@ import { fileURLToPath } from "node:url";
 
 import {
   parse_known_issues_registry_json,
-  PREDICATE_OPERATORS,
   type KnownIssuesRegistry,
-  type PredicateOperator,
 } from "@ariadnejs/types";
 import {
   RegistryValidationError,
   active_rules_for_classification,
   load_registry,
-  validate_predicate_expr,
   validate_registry,
 } from "./known_issues_registry.js";
 import { known_issues_registry_path } from "@ariadnejs/skill-protocol";
@@ -196,21 +193,16 @@ describe("validate_registry — on-disk registry shape", () => {
     }
   });
 
-  it("every classifier uses kind in {none, predicate, builtin, retired}", () => {
+  it("every classifier uses kind in {none, builtin, retired}", () => {
     for (const e of registry) {
-      expect(["none", "predicate", "builtin", "retired"]).toContain(e.classifier.kind);
-      if (e.classifier.kind === "predicate") {
-        expect(e.classifier.min_confidence).toBeGreaterThanOrEqual(0);
-        expect(e.classifier.min_confidence).toBeLessThanOrEqual(1);
-        expect(["A", "B", "C"]).toContain(e.classifier.axis);
-      }
+      expect(["none", "builtin", "retired"]).toContain(e.classifier.kind);
       if (e.classifier.kind === "builtin") {
         expect(e.classifier.function_name.length).toBeGreaterThan(0);
         expect(e.classifier.min_confidence).toBeGreaterThanOrEqual(0);
         expect(e.classifier.min_confidence).toBeLessThanOrEqual(1);
       }
       if (e.classifier.kind === "retired") {
-        expect(["predicate", "builtin"]).toContain(e.classifier.from.kind);
+        expect(e.classifier.from.kind).toEqual("builtin");
         expect(e.classifier.reason.length).toBeGreaterThan(0);
       }
     }
@@ -233,83 +225,6 @@ describe("validate_registry — examples", () => {
 });
 
 // ===== PredicateExpr: 12 operators, no others =====
-
-describe("PredicateExpr operators", () => {
-  it("enumerates the predicate operators declared in the design", () => {
-    expect([...PREDICATE_OPERATORS].sort()).toEqual(
-      [
-        "all",
-        "any",
-        "not",
-        "diagnosis_eq",
-        "language_eq",
-        "decorator_matches",
-        "has_capture_at_grep_hit",
-        "missing_capture_at_grep_hit",
-        "grep_line_regex",
-        "resolution_failure_reason_eq",
-        "receiver_kind_eq",
-        "syntactic_feature_eq",
-        "grep_hits_all_intra_file",
-        "grep_hit_neighbourhood_matches",
-        "definition_feature_eq",
-        "accessor_kind_eq",
-        "has_unindexed_test_caller",
-      ].sort(),
-    );
-  });
-
-  it("validate_predicate_expr rejects an unknown operator", () => {
-    expect(() => validate_predicate_expr({ op: "regex_match", pattern: "x" }, "root")).toThrow(
-      RegistryValidationError,
-    );
-  });
-
-  it("validate_predicate_expr rejects a misspelled known operator", () => {
-    expect(() => validate_predicate_expr({ op: "language_equals", value: "python" }, "root")).toThrow(
-      RegistryValidationError,
-    );
-  });
-
-  it("validate_predicate_expr walks combinator children", () => {
-    expect(() =>
-      validate_predicate_expr(
-        { op: "all", of: [{ op: "language_eq", value: "python" }, { op: "bogus" }] },
-        "root",
-      ),
-    ).toThrow(RegistryValidationError);
-  });
-
-  it("validate_predicate_expr accepts every operator shape used in the registry", () => {
-    const registry = load_registry();
-    for (const entry of registry) {
-      const classifier = entry.classifier;
-      if (classifier.kind !== "predicate") continue;
-      expect(() => validate_predicate_expr(classifier.expression, entry.group_id)).not.toThrow();
-    }
-  });
-
-  it("every operator appearing in the registry is one of the 12 declared operators", () => {
-    const registry = load_registry();
-    const valid: ReadonlySet<PredicateOperator> = new Set(PREDICATE_OPERATORS);
-    const seen = new Set<string>();
-
-    function walk(expr: unknown): void {
-      if (typeof expr !== "object" || expr === null) return;
-      const op = (expr as { op?: unknown }).op;
-      if (typeof op === "string") seen.add(op);
-      const of = (expr as { of?: unknown }).of;
-      if (Array.isArray(of)) of.forEach(walk);
-      else if (of && typeof of === "object") walk(of);
-    }
-    for (const entry of registry) {
-      if (entry.classifier.kind === "predicate") walk(entry.classifier.expression);
-    }
-    for (const op of seen) {
-      expect(valid.has(op as PredicateOperator)).toBe(true);
-    }
-  });
-});
 
 // ===== validate_registry catches common errors =====
 
@@ -348,141 +263,10 @@ describe("validate_registry — negative cases", () => {
     expect(() => validate_registry(bad)).toThrow(/status/);
   });
 
-  it("rejects min_confidence outside [0, 1]", () => {
-    const registry = clone(load_registry());
-    const entry = registry.find((e) => e.classifier.kind === "predicate");
-    if (!entry) return;
-    if (entry.classifier.kind === "predicate") {
-      entry.classifier.min_confidence = 1.5;
-    }
-    expect(() => validate_registry(registry)).toThrow(/min_confidence/);
-  });
-
-  it("rejects a predicate with an unknown axis", () => {
-    const registry = clone(load_registry());
-    const entry = registry.find((e) => e.classifier.kind === "predicate");
-    if (!entry) return;
-    if (entry.classifier.kind === "predicate") {
-      entry.classifier.axis = "Z" as "A" | "B" | "C";
-    }
-    expect(() => validate_registry(registry)).toThrow(/axis/);
-  });
-
   it("rejects a malformed backlog_task reference", () => {
     const registry = clone(load_registry());
     registry[0].backlog_task = "task-123";
     expect(() => validate_registry(registry)).toThrow(/backlog_task/);
-  });
-
-  it("rejects an invalid regex in grep_line_regex", () => {
-    expect(() =>
-      validate_predicate_expr({ op: "grep_line_regex", pattern: "[unterminated" }, "root"),
-    ).toThrow(/invalid regex/);
-  });
-
-  it("rejects an invalid regex in decorator_matches", () => {
-    expect(() =>
-      validate_predicate_expr({ op: "decorator_matches", pattern: "(unbalanced" }, "root"),
-    ).toThrow(/invalid regex/);
-  });
-
-  it("rejects an unknown syntactic_feature_eq.name", () => {
-    expect(() =>
-      validate_predicate_expr(
-        { op: "syntactic_feature_eq", name: "is_banana", value: true },
-        "root",
-      ),
-    ).toThrow(/unknown syntactic feature/);
-  });
-
-  it("accepts grep_hits_all_intra_file with a boolean value", () => {
-    expect(() =>
-      validate_predicate_expr({ op: "grep_hits_all_intra_file", value: true }, "root"),
-    ).not.toThrow();
-  });
-
-  it("rejects grep_hits_all_intra_file with a non-boolean value", () => {
-    expect(() =>
-      validate_predicate_expr({ op: "grep_hits_all_intra_file", value: "true" }, "root"),
-    ).toThrow(/boolean/);
-  });
-
-  it("accepts grep_hit_neighbourhood_matches with pattern + positive window", () => {
-    expect(() =>
-      validate_predicate_expr(
-        { op: "grep_hit_neighbourhood_matches", pattern: "require\\(", window: 5 },
-        "root",
-      ),
-    ).not.toThrow();
-  });
-
-  it("rejects grep_hit_neighbourhood_matches with non-positive window", () => {
-    expect(() =>
-      validate_predicate_expr(
-        { op: "grep_hit_neighbourhood_matches", pattern: "x", window: 0 },
-        "root",
-      ),
-    ).toThrow(/window/);
-  });
-
-  it("rejects grep_hit_neighbourhood_matches with invalid regex", () => {
-    expect(() =>
-      validate_predicate_expr(
-        { op: "grep_hit_neighbourhood_matches", pattern: "[unterm", window: 3 },
-        "root",
-      ),
-    ).toThrow(/invalid regex/);
-  });
-
-  it("accepts definition_feature_eq with a known name", () => {
-    expect(() =>
-      validate_predicate_expr(
-        { op: "definition_feature_eq", name: "definition_is_object_literal_method", value: true },
-        "root",
-      ),
-    ).not.toThrow();
-  });
-
-  it("rejects definition_feature_eq with an unknown name", () => {
-    expect(() =>
-      validate_predicate_expr(
-        { op: "definition_feature_eq", name: "not_a_feature", value: true },
-        "root",
-      ),
-    ).toThrow(/unknown definition feature/);
-  });
-
-  it("accepts accessor_kind_eq with getter/setter/none", () => {
-    for (const v of ["getter", "setter", "none"]) {
-      expect(() =>
-        validate_predicate_expr({ op: "accessor_kind_eq", value: v }, "root"),
-      ).not.toThrow();
-    }
-  });
-
-  it("rejects accessor_kind_eq with an unknown value", () => {
-    expect(() =>
-      validate_predicate_expr({ op: "accessor_kind_eq", value: "accessor" }, "root"),
-    ).toThrow(/getter/);
-  });
-
-  it("accepts has_unindexed_test_caller with a boolean value", () => {
-    expect(() =>
-      validate_predicate_expr({ op: "has_unindexed_test_caller", value: true }, "root"),
-    ).not.toThrow();
-  });
-
-  it("attaches compiled_pattern to grep_line_regex nodes after validation", () => {
-    const node: { op: string; pattern: string; compiled_pattern?: RegExp } = {
-      op: "grep_line_regex",
-      pattern: "foo.*bar",
-    };
-    validate_predicate_expr(node, "root");
-    if (!(node.compiled_pattern instanceof RegExp)) {
-      throw new Error("compiled_pattern was not attached as a RegExp");
-    }
-    expect(node.compiled_pattern.test("foo zzz bar")).toBe(true);
-    expect(node.compiled_pattern.source).toBe("foo.*bar");
   });
 
   it("accepts a builtin classifier entry", () => {
@@ -603,15 +387,10 @@ describe("validate_registry — retired classifier", () => {
     expect(() => validate_registry(registry)).not.toThrow();
   });
 
-  it("accepts a retired classifier carrying its former predicate", () => {
+  it("accepts a retired classifier carrying its former builtin", () => {
     const registry = with_first_classifier({
       kind: "retired",
-      from: {
-        kind: "predicate",
-        axis: "B",
-        expression: { op: "diagnosis_eq", value: "no_callers_found" },
-        min_confidence: 1,
-      },
+      from: { kind: "builtin", function_name: "check_former", min_confidence: 1 },
       reason: "resolver now resolves it",
     });
     expect(() => validate_registry(registry)).not.toThrow();
@@ -731,7 +510,7 @@ describe("permanent-limitations catalog content", () => {
   const registry = load_registry();
   const by_id = new Map(registry.map((e) => [e.group_id, e] as const));
 
-  it("the genuine static-analysis impossibilities are permanent entries", () => {
+  it("the genuine static-analysis impossibilities are permanent entries carrying builtin classifiers", () => {
     for (const id of [
       "dynamic-dispatch",                      // webpack constructor-keyed Map dispatch
       "string-keyed-dispatch",                 // Angular ɵɵ compiler instructions
@@ -741,11 +520,12 @@ describe("permanent-limitations catalog content", () => {
       "bundler-module-substitution",           // esbuild fill-plugin substitution
       "dynamic-require-constructor",           // runtime require() + new
       "dynamic-property-keyed-callback",
-      "unindexed-external-module",
       "untyped-attribute-receiver",            // untyped Cython self-attribute receiver
       "py-dunder-protocol",
     ]) {
-      expect(by_id.get(id)?.status).toBe("permanent");
+      const entry = by_id.get(id);
+      expect(entry?.status).toBe("permanent");
+      expect(entry?.classifier.kind).toBe("builtin");
     }
   });
 
@@ -792,13 +572,13 @@ describe("permanent-limitations catalog content", () => {
     }
   });
 
-  it("every permanent predicate pins a min_confidence in [0,1]", () => {
-    const permanent_predicates = registry.filter(
-      (e) => e.status === "permanent" && e.classifier.kind === "predicate",
+  it("every permanent builtin pins a min_confidence in [0,1]", () => {
+    const permanent_builtins = registry.filter(
+      (e) => e.status === "permanent" && e.classifier.kind === "builtin",
     );
-    expect(permanent_predicates.length).toBeGreaterThan(0);
-    for (const e of permanent_predicates) {
-      if (e.classifier.kind !== "predicate") continue;
+    expect(permanent_builtins.length).toBeGreaterThan(0);
+    for (const e of permanent_builtins) {
+      if (e.classifier.kind !== "builtin") continue;
       expect(e.classifier.min_confidence).toBeGreaterThanOrEqual(0);
       expect(e.classifier.min_confidence).toBeLessThanOrEqual(1);
     }

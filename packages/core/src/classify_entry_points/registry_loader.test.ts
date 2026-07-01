@@ -28,27 +28,6 @@ describe("registry_loader", () => {
     expect(dunder.classifier.kind).toEqual("builtin");
   });
 
-  it("pre-compiles regex patterns on predicate nodes", () => {
-    const registry = load_permanent_registry();
-    const py_property = registry.find(
-      (i) => i.group_id === "py-property-decorator-access",
-    );
-    if (!py_property) throw new Error("py-property-decorator-access missing");
-    if (py_property.classifier.kind !== "predicate") {
-      throw new Error("py-property-decorator-access: expected predicate classifier");
-    }
-    const expression = py_property.classifier.expression;
-    if (expression.op !== "all" && expression.op !== "any") {
-      throw new Error(`expected combinator at root, got op=${expression.op}`);
-    }
-    const decorator_node = expression.of.find((n) => n.op === "decorator_matches");
-    if (decorator_node === undefined || decorator_node.op !== "decorator_matches") {
-      throw new Error("decorator_matches node missing from expression");
-    }
-    expect(decorator_node.compiled_pattern instanceof RegExp).toEqual(true);
-    expect(decorator_node.compiled_pattern?.source).toEqual(decorator_node.pattern);
-  });
-
   it("returns the same registry instance on repeated calls (cache hit)", () => {
     const a = load_permanent_registry();
     const b = load_permanent_registry();
@@ -61,7 +40,7 @@ describe("validate_permanent_slice — pure validator", () => {
   // Each test constructs the slice it wants to assert against; no mutation
   // of the bundled `PERMANENT_REGISTRY` constant required.
 
-  function make_permanent_predicate_rule(group_id: string): KnownIssue {
+  function make_permanent_builtin_rule(group_id: string): KnownIssue {
     return {
       group_id,
       title: group_id,
@@ -70,22 +49,21 @@ describe("validate_permanent_slice — pure validator", () => {
       languages: ["typescript"],
       examples: [],
       classifier: {
-        kind: "predicate",
-        axis: "A",
-        expression: { op: "diagnosis_eq", value: "no-textual-callers" },
+        kind: "builtin",
+        function_name: `check_${group_id.replace(/-/g, "_")}`,
         min_confidence: 1.0,
       },
     };
   }
 
-  it("accepts a slice of permanent + non-none rules", () => {
-    const slice: readonly KnownIssue[] = [make_permanent_predicate_rule("ok-1")];
+  it("accepts a slice of permanent + builtin rules", () => {
+    const slice: readonly KnownIssue[] = [make_permanent_builtin_rule("ok-1")];
     expect(() => validate_permanent_slice(slice)).not.toThrow();
   });
 
   it("rejects a synthetic non-permanent rule with PermanentRegistryError", () => {
     const slice: readonly KnownIssue[] = [
-      { ...make_permanent_predicate_rule("synthetic-wip-rule"), status: "wip" },
+      { ...make_permanent_builtin_rule("synthetic-wip-rule"), status: "wip" },
     ];
     expect(() => validate_permanent_slice(slice)).toThrow(PermanentRegistryError);
     expect(() => validate_permanent_slice(slice)).toThrow(/non-permanent/);

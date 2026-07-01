@@ -113,17 +113,16 @@ describe("serialize_known_issues_registry_json", () => {
   });
 });
 
-const permanent_predicate_rule: KnownIssue = {
-  group_id: "permanent-predicate",
-  title: "Permanent predicate rule",
+const permanent_builtin_rule: KnownIssue = {
+  group_id: "permanent-builtin",
+  title: "Permanent builtin rule",
   description: "A bundled rule with a real classifier.",
   status: "permanent",
   languages: ["typescript"],
   examples: [],
   classifier: {
-    kind: "predicate",
-    axis: "B",
-    expression: { op: "diagnosis_eq", value: "no_callers_found" },
+    kind: "builtin",
+    function_name: "check_permanent_builtin",
     min_confidence: 1,
   },
 };
@@ -157,9 +156,9 @@ describe("select_permanent_slice_rules", () => {
     const out = select_permanent_slice_rules([
       wip_rule,
       permanent_none_rule,
-      permanent_predicate_rule,
+      permanent_builtin_rule,
     ]);
-    expect(out).toEqual([permanent_predicate_rule]);
+    expect(out).toEqual([permanent_builtin_rule]);
   });
 
   it("returns an empty slice when no rule qualifies", () => {
@@ -181,15 +180,15 @@ describe("select_permanent_slice_rules", () => {
       },
     };
     expect(
-      select_permanent_slice_rules([permanent_retired_rule, permanent_predicate_rule]),
-    ).toEqual([permanent_predicate_rule]);
+      select_permanent_slice_rules([permanent_retired_rule, permanent_builtin_rule]),
+    ).toEqual([permanent_builtin_rule]);
   });
 });
 
 describe("render_permanent_slice_module", () => {
   it("renders the exact module text for a one-rule slice", () => {
     const out = render_permanent_slice_module(KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION, [
-      permanent_predicate_rule,
+      permanent_builtin_rule,
     ]);
     const expected =
       "// AUTO-GENERATED slice of the known-issues registry — do not edit by hand.\n" +
@@ -200,7 +199,7 @@ describe("render_permanent_slice_module", () => {
       "\n" +
       "export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = " +
       JSON.stringify(
-        { schema_version: KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION, rules: [permanent_predicate_rule] },
+        { schema_version: KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION, rules: [permanent_builtin_rule] },
         null,
         2,
       ) +
@@ -212,20 +211,20 @@ describe("render_permanent_slice_module", () => {
     const full = render_permanent_slice_module(KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION, [
       wip_rule,
       permanent_none_rule,
-      permanent_predicate_rule,
+      permanent_builtin_rule,
     ]);
     const filtered = render_permanent_slice_module(KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION, [
-      permanent_predicate_rule,
+      permanent_builtin_rule,
     ]);
     expect(full).toEqual(filtered);
   });
 
   it("is byte-deterministic for identical input", () => {
     const a = render_permanent_slice_module(KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION, [
-      permanent_predicate_rule,
+      permanent_builtin_rule,
     ]);
     const b = render_permanent_slice_module(KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION, [
-      permanent_predicate_rule,
+      permanent_builtin_rule,
     ]);
     expect(a).toEqual(b);
   });

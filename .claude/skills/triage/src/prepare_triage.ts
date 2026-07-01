@@ -66,10 +66,6 @@ export function sort_residual_entry_points(entries: ResidualEntryPoint[]): Resid
 }
 
 export function prepare_triage(input: PrepareTriageInput): PrepareTriageReport {
-  // The skill's `prepare_triage` rebuilds the call graph from the in-memory
-  // project, so it cannot satisfy `has_unindexed_test_caller` predicates.
-  // Leave `unindexed_test_grep` at the default `"skipped"` so core's guard
-  // refuses the run rather than silently mis-classifying.
   const enriched = enrich_call_graph(input.call_graph, input.project, {
     registry: input.registry,
   });

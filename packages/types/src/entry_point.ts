@@ -54,13 +54,6 @@ export interface DefinitionFeatures {
   accessor_kind: "getter" | "setter" | null;
 }
 
-/** Stable enum of definition-level feature names. Drives DSL validation. */
-export const DEFINITION_FEATURE_NAMES = [
-  "definition_is_object_literal_method",
-] as const;
-
-export type DefinitionFeatureName = typeof DEFINITION_FEATURE_NAMES[number];
-
 /**
  * Summary diagnosis of where in Ariadne's pipeline the detection of callers
  * failed for a flagged entry point. One of the two deterministic fault signals
@@ -123,11 +116,11 @@ export interface GrepHit {
  * Derived (not persisted upstream): core does not emit a `SyntacticFeatures`
  * record on `CallReference`. `find_matching_call_refs` computes these at
  * extraction time by combining `CallReference` fields with the source line
- * text so the auto-classifier predicate evaluator can consume them uniformly.
+ * text so builtin classifiers can consume them uniformly.
  *
  * Registry entries today consume only `is_super_call` and `is_dynamic_dispatch`;
- * the remaining flags are populated best-effort so new registry entries adding
- * them do not require an extract-layer change.
+ * the remaining flags are populated best-effort so new builtin classifiers
+ * reading them do not require an extract-layer change.
  */
 export interface SyntacticFeatures {
   /** `call_type === "constructor"` */
@@ -145,19 +138,6 @@ export interface SyntacticFeatures {
   /** `call_site_syntax.index_key_is_literal === false` (e.g. `this._hooks[name].call()`) */
   is_dynamic_dispatch: boolean;
 }
-
-/** Stable list of `SyntacticFeatures` keys — drives registry validation. */
-export const SYNTACTIC_FEATURE_NAMES = [
-  "is_new_expression",
-  "is_super_call",
-  "is_optional_chain",
-  "is_awaited",
-  "is_callback_arg",
-  "is_inside_try",
-  "is_dynamic_dispatch",
-] as const;
-
-export type SyntacticFeatureName = typeof SYNTACTIC_FEATURE_NAMES[number];
 
 export interface CallRefDiagnostic {
   caller_function: string;

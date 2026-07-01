@@ -125,6 +125,26 @@ Always invoke with `node --import tsx`. Never `pnpm exec tsx` or `npx tsx`
      --id <group_id> --promote
    ```
 
+6. **Stage (insert an agent-authored draft).** A permanent-limitation classifier
+   drafted by the `classifier-author` agent (`prioritize`, step 3a) lands as a
+   staged `draft_entry.json`, never in the registry. Insert it with `--stage`:
+
+   ```bash
+   node --import tsx .claude/skills/triage/scripts/reconcile_registry.ts \
+     --stage ~/.ariadne/prioritize/<run>/classifier-author/<group_id>/draft_entry.json
+   ```
+
+   The script reads and validates the draft against the `KnownIssue` schema
+   (which enforces the evidence gate, `observed_count >= 1`), rejects a
+   `group_id` that already exists (no silent overwrite), and — because every
+   classifier is a `builtin` — verifies the draft's `function_name` is present in
+   core's `BUILTIN_CHECKS` (the `check_*.ts` has been placed under
+   `packages/core/src/classify_entry_points/builtins/` and core rebuilt with
+   `pnpm build --filter core`). Unlike the reconciliation signals, `--stage` is
+   **dry-run by default** (prints the entry it would insert); add `--apply` to
+   write via `atomic_update_registry`. A staged entry enters as `status: "wip"`;
+   promotion to `permanent` remains the separate `--promote` step.
+
 ## Selectors
 
 | Flag              | Selects                                                                  |
@@ -136,6 +156,7 @@ Always invoke with `node --import tsx`. Never `pnpm exec tsx` or `npx tsx`
 | `--id ... --fixed --reason "<text>"` | **name-mode**: flip the named `wip` rows to `fixed` directly, no detection — for fixes that landed under a task other than the rule's `backlog_task`. Converts each row's classifier to the `retired` kind. `--reason` required; cannot combine with `--drift`; non-`wip` named rule is a no-op; unknown id reports in `missing_ids` |
 | `--id ... --promote` | name rules directly (no detection); flip them to `permanent` and sync the slice |
 | `--reason "<text>"` | valid ONLY with name-mode (`--fixed` and `--id` together), where it is required; the retirement audit line, since no commit subject is cited. Any other combination is rejected |
+| `--stage <path> [--apply]` | **insertion mode**: read + validate an agent-authored `draft_entry.json`, reject a duplicate `group_id` and a `builtin` `function_name` absent from `BUILTIN_CHECKS`, enforce `observed_count >= 1`; dry-run unless `--apply`. Cannot combine with `--fixed`/`--drift`/`--promote`/`--id`/`--reason` — insertion is its own transaction |
 
 `--id` has three modes. As a **selector** (alone or with `--fixed`/`--drift`)
 it overrides the signal filters and narrows the detected proposals to the

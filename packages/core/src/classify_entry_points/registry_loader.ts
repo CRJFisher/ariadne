@@ -7,16 +7,14 @@
  * registry. Because the slice is a `.ts` module, tsc emits it into `dist/` as
  * part of the normal build — no separate copy step is needed.
  *
- * On first call we structurally-clone the bundled slice and pre-compile each
- * predicate's regex pattern. Cloning is a typed pure function (no JSON
- * round-trip) so non-serializable fields can never be silently dropped.
+ * On first call we shallow-clone the bundled slice so an HMR reload (or a test
+ * that swaps the slice) cannot leak a mutation back into the exported module
+ * constant.
  */
 
 import type {
-  ClassifierSpec,
   KnownIssue,
   KnownIssuesRegistry,
-  PredicateExpr,
 } from "@ariadnejs/types";
 import { KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION } from "@ariadnejs/types";
 import { PERMANENT_REGISTRY, PERMANENT_REGISTRY_SCHEMA_VERSION } from "./registry_permanent";
@@ -42,7 +40,7 @@ export function load_permanent_registry(): KnownIssuesRegistry {
     return permanent_registry_cache;
   }
   validate_permanent_slice(PERMANENT_REGISTRY);
-  permanent_registry_cache = PERMANENT_REGISTRY.map(clone_with_compiled_pattern);
+  permanent_registry_cache = PERMANENT_REGISTRY.map((issue) => ({ ...issue }));
   return permanent_registry_cache;
 }
 
@@ -71,70 +69,13 @@ function assert_permanent_non_none(issue: KnownIssue): void {
         "the slice must filter on status === \"permanent\"",
     );
   }
-  if (issue.classifier.kind !== "predicate" && issue.classifier.kind !== "builtin") {
+  if (issue.classifier.kind !== "builtin") {
     throw new PermanentRegistryError(
       `bundled slice contains kind:"${issue.classifier.kind}" rule "${issue.group_id}" — ` +
-        "the slice must carry only predicate/builtin classifiers (a `none` stub or " +
+        "the slice must carry only builtin classifiers (a `none` stub or " +
         "`retired` rule cannot classify anything)",
     );
   }
-}
-
-/**
- * Return a fresh `KnownIssue` whose predicate expression has `compiled_pattern`
- * pre-attached on every regex-bearing leaf. Pure: callers receive a tree that
- * shares no mutable substructure with `PERMANENT_REGISTRY`, so an HMR reload
- * (or a test that swaps the slice) cannot leak a `RegExp` back into the
- * exported module constant.
- */
-function clone_with_compiled_pattern(issue: KnownIssue): KnownIssue {
-  return { ...issue, classifier: clone_classifier(issue.classifier) };
-}
-
-function clone_classifier(spec: ClassifierSpec): ClassifierSpec {
-  if (spec.kind !== "predicate") return { ...spec };
-  return { ...spec, expression: clone_expr_with_compiled_pattern(spec.expression) };
-}
-
-function clone_expr_with_compiled_pattern(expr: PredicateExpr): PredicateExpr {
-  switch (expr.op) {
-    case "all":
-    case "any":
-      return { op: expr.op, of: expr.of.map(clone_expr_with_compiled_pattern) };
-    case "not":
-      return { op: "not", of: clone_expr_with_compiled_pattern(expr.of) };
-    case "decorator_matches":
-    case "grep_line_regex":
-      return {
-        op: expr.op,
-        pattern: expr.pattern,
-        compiled_pattern: new RegExp(expr.pattern),
-      };
-    case "grep_hit_neighbourhood_matches":
-      return {
-        op: expr.op,
-        pattern: expr.pattern,
-        window: expr.window,
-        compiled_pattern: new RegExp(expr.pattern),
-      };
-    case "diagnosis_eq":
-    case "language_eq":
-    case "has_capture_at_grep_hit":
-    case "missing_capture_at_grep_hit":
-    case "resolution_failure_reason_eq":
-    case "receiver_kind_eq":
-    case "syntactic_feature_eq":
-    case "grep_hits_all_intra_file":
-    case "definition_feature_eq":
-    case "accessor_kind_eq":
-    case "has_unindexed_test_caller":
-      return { ...expr };
-  }
-  // Force exhaustiveness: a new `PredicateOperator` lands → tsc compile error
-  // here, prompting the loader author to decide whether the new op carries a
-  // regex.
-  const _exhaustive: never = expr;
-  return _exhaustive;
 }
 
 /**

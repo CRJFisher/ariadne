@@ -63,26 +63,46 @@ project.
    insertion, with:
 
    - `group_id`, `title`, `description` — describing the permanent limitation
-   - `classifier.kind`: `"predicate"` for patterns expressible in the predicate
-     DSL; `"builtin"` for patterns requiring custom logic
-   - For predicate kind: a valid `expression` tree (using operators from
-     `PredicateExpr` in `packages/types/src/known_issues.ts`)
-   - For builtin kind: a `function_name` referencing the new builtin
+   - `classifier.kind`: always `"builtin"` — the predicate DSL is removed by this
+     task; every classifier is a bespoke `BuiltinCheckFn`
+   - `function_name` referencing the new builtin
    - `status: "wip"` — starts as candidate before promotion
    - `min_confidence: 0.95`
 
-2. `check_<group_id>.ts` (builtin kind only) — the `BuiltinCheckFn` stub
-   implementing the detection logic, ready to be placed in
+2. `check_<group_id>.ts` — the self-contained `BuiltinCheckFn` implementing the
+   detection logic, ready to be placed in
    `packages/core/src/classify_entry_points/builtins/`.
 
 3. `REVIEW.md` — a brief human-readable summary: what the pattern is, why it is
    a permanent limitation (not a fixable bug), which entry points from the triage
    run it would have matched, and a review checklist.
 
-**Agent constraints:** Prefers `predicate` over `builtin` — predicates require no
-TS compilation. Falls back to `builtin` only when the detection logic requires
-file-path regex, `ariadne_call_refs` length checks, or multi-condition logic the
-predicate DSL cannot express. Never writes `registry.json` directly.
+**Agent constraints:** Always emits a `builtin` — the predicate DSL has been
+removed, so every classifier is a bespoke `BuiltinCheckFn`. The agent authors the
+self-contained detection function directly. Never writes `registry.json`.
+
+### Predicate DSL removal
+
+This task also removes the classifier predicate DSL entirely; every registry
+classifier becomes a `builtin`:
+
+- Deletes `PredicateClassifierSpec`, `PredicateExpr`, `PREDICATE_OPERATORS`,
+  `PredicateOperator`, and `ClassifierAxis` from `packages/types/src/known_issues.ts`;
+  narrows `ClassifierSpec` to `none | builtin | retired` (and `retired.from` to
+  `BuiltinClassifierSpec`).
+- Deletes `predicate_evaluator.ts` and its test; drops the predicate arm from
+  `classify_entry_points.ts`, the compiled-pattern clone chain from
+  `registry_loader.ts`, the predicate-tree guard from `enrich_call_graph.ts`, the
+  `validate_predicate_expr` validator and axis/operator sets from
+  `known_issues_registry.ts`, and the predicate diagnosis-inclusion path from
+  `dispense_payload.ts` (relevance falls back to language match only).
+- Converts the existing permanent `predicate` registry entries to `builtin`
+  classifiers (new `check_*.ts` under `builtins/`, barrel updated) and regenerates
+  the permanent slice.
+- Retires the `unindexed-external-module` rule: its predicate compared against a
+  `resolution_failure.reason` value that does not exist in the enum, so it never
+  fired; converting it faithfully is impossible and no available signal expresses
+  its intent without over-matching, so it is dropped from the registry.
 
 ### `reconcile_registry.ts --stage <draft-path>` insertion path
 
@@ -96,7 +116,8 @@ node --import tsx .claude/skills/triage/scripts/reconcile_registry.ts \
 
 Behaviour:
 
-1. Read and validate `draft_entry.json` against the `KnownIssue` Zod schema.
+1. Read and validate `draft_entry.json` against the `KnownIssue` schema
+   (`validate_registry`, which also enforces the `observed_count >= 1` evidence gate).
 2. Verify `group_id` does not already exist in the registry (error, not silent
    overwrite).
 3. Verify that if `kind === "builtin"`, the referenced `function_name` exists in
@@ -143,10 +164,20 @@ Update `.claude/rules/classifier-lifecycle.md`:
 - [ ] `classifier-author` agent exists at `.claude/agents/classifier-author.md`
       with scoped tools: `get_entry_context.ts` reads, `packages/core` reads,
       write only to its staging dir.
-- [ ] Agent produces a valid `draft_entry.json` (passes `KnownIssue` Zod schema)
-      and `REVIEW.md` for at least one real triage novel group used as a test case.
-- [ ] Agent produces `check_<group_id>.ts` when it selects `kind: "builtin"`,
-      and always selects `kind: "predicate"` when the DSL is sufficient.
+- [ ] Agent produces a valid `draft_entry.json` (passes the `KnownIssue` schema)
+      and `REVIEW.md` for a permanent-limitation group.
+- [ ] Agent always emits `kind: "builtin"` with a self-contained
+      `check_<group_id>.ts` `BuiltinCheckFn` (the predicate DSL is removed).
+- [ ] The predicate DSL is removed: `PredicateExpr` / `PREDICATE_OPERATORS` /
+      `PredicateClassifierSpec` / `ClassifierAxis` deleted from `@ariadnejs/types`;
+      `ClassifierSpec` is `none | builtin | retired`; `predicate_evaluator.ts` and
+      its test deleted.
+- [ ] The existing permanent `predicate` registry entries are converted to
+      `builtin` classifiers (barrel updated, permanent slice regenerated) and
+      `permanent_data.sync.test.ts` passes; the non-firing
+      `unindexed-external-module` rule is retired.
+- [ ] `pnpm build` and the full test suite pass after removal (no dangling
+      `predicate` type/import references).
 - [ ] `reconcile_registry.ts --stage <path>` validates, dry-runs, and (with
       `--apply`) inserts the entry via `atomic_update_registry`.
 - [ ] `--stage` blocks insertion if `kind === "builtin"` and `function_name` is

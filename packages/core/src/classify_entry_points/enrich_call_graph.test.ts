@@ -177,15 +177,17 @@ describe("enrich_call_graph", () => {
         languages: ["python"],
         examples: [],
         classifier: {
-          kind: "predicate",
-          axis: "B",
-          expression: { op: "diagnosis_eq", value: "no-textual-callers" },
+          kind: "builtin",
+          function_name: "check_flask_route_decorator",
           min_confidence: 1.0,
         },
         classification: { kind: "framework_invoked", framework: "flask" },
       },
     ];
-    const enriched = enrich_call_graph(raw, project, { registry });
+    const enriched = enrich_call_graph(raw, project, {
+      registry,
+      builtin_checks: { check_flask_route_decorator: () => true },
+    });
     const fps = enriched.classified_entry_points.known_false_positives;
     expect(fps.length).toBeGreaterThan(0);
     for (const fp of fps) {
@@ -211,15 +213,17 @@ describe("enrich_call_graph", () => {
         languages: ["python"],
         examples: [],
         classifier: {
-          kind: "predicate",
-          axis: "C",
-          expression: { op: "diagnosis_eq", value: "no-textual-callers" },
+          kind: "builtin",
+          function_name: "check_test_only_helpers",
           min_confidence: 1.0,
         },
         classification: { kind: "test_only" },
       },
     ];
-    const enriched = enrich_call_graph(raw, project, { registry });
+    const enriched = enrich_call_graph(raw, project, {
+      registry,
+      builtin_checks: { check_test_only_helpers: () => true },
+    });
     const fps = enriched.classified_entry_points.known_false_positives;
     expect(fps.length).toBeGreaterThan(0);
     for (const fp of fps) {
@@ -242,15 +246,17 @@ describe("enrich_call_graph", () => {
         languages: ["python"],
         examples: [],
         classifier: {
-          kind: "predicate",
-          axis: "B",
-          expression: { op: "diagnosis_eq", value: "no-textual-callers" },
+          kind: "builtin",
+          function_name: "check_function_reference_callback",
           min_confidence: 1.0,
         },
         classification: { kind: "indirect_only" },
       },
     ];
-    const enriched = enrich_call_graph(raw, project, { registry });
+    const enriched = enrich_call_graph(raw, project, {
+      registry,
+      builtin_checks: { check_function_reference_callback: () => true },
+    });
     const fps = enriched.classified_entry_points.known_false_positives;
     expect(fps.length).toBeGreaterThan(0);
     for (const fp of fps) {
@@ -275,14 +281,16 @@ describe("enrich_call_graph", () => {
         languages: ["python"],
         examples: [],
         classifier: {
-          kind: "predicate",
-          axis: "A",
-          expression: { op: "diagnosis_eq", value: "no-textual-callers" },
+          kind: "builtin",
+          function_name: "check_wip_rule_no_metadata",
           min_confidence: 1.0,
         },
       },
     ];
-    const enriched = enrich_call_graph(raw, project, { registry });
+    const enriched = enrich_call_graph(raw, project, {
+      registry,
+      builtin_checks: { check_wip_rule_no_metadata: () => true },
+    });
     const fps = enriched.classified_entry_points.known_false_positives;
     expect(fps.length).toBeGreaterThan(0);
     for (const fp of fps) {
@@ -316,39 +324,6 @@ describe("enrich_call_graph", () => {
       /MissingBuiltinError|check_does_not_exist|barrel/i,
     );
   });
-
-  it("refuses runs whose registry uses has_unindexed_test_caller without unindexed_test_grep: applied", async () => {
-    const { project } = await make_project_with({
-      "x.py": "def lonely():\n    return 1\n",
-    });
-    const raw = trace_call_graph(project.definitions, project.resolutions);
-    const registry: KnownIssuesRegistry = [
-      {
-        group_id: "unindexed-test-only",
-        title: "Reached only from unindexed tests",
-        description: "Caller lives outside the indexed source set.",
-        status: "permanent",
-        languages: ["python"],
-        examples: [],
-        classifier: {
-          kind: "predicate",
-          axis: "B",
-          expression: { op: "has_unindexed_test_caller", value: true },
-          min_confidence: 1.0,
-        },
-      },
-    ];
-    expect(() => enrich_call_graph(raw, project, { registry })).toThrow(
-      /unindexed_test_grep|attach_unindexed_test_grep_hits/,
-    );
-    // Acknowledging the contract silences the guard.
-    expect(() =>
-      enrich_call_graph(raw, project, {
-        registry,
-        unindexed_test_grep: "applied",
-      }),
-    ).not.toThrow();
-  });
 });
 
 /**
@@ -363,7 +338,7 @@ describe("method-as-value indirect reachability (task-348)", () => {
   function entry_point_names(project: Project): string[] {
     const raw = trace_call_graph(project.definitions, project.resolutions);
     return raw.entry_points
-      .map((id) => raw.nodes.get(id)!.name as unknown as string)
+      .map((id) => raw.nodes.get(id)!.name)
       .sort();
   }
 

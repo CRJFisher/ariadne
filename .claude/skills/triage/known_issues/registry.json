@@ -20,14 +20,9 @@
         }
       ],
       "classifier": {
-        "kind": "predicate",
-        "axis": "B",
-        "min_confidence": 0.9,
-        "expression": {
-          "op": "syntactic_feature_eq",
-          "name": "is_dynamic_dispatch",
-          "value": true
-        }
+        "kind": "builtin",
+        "function_name": "check_dynamic_property_keyed_callback",
+        "min_confidence": 0.9
       },
       "observed_count": 12,
       "observed_projects": [
@@ -37,38 +32,6 @@
       "classification": {
         "kind": "framework_invoked",
         "framework": "language_dispatch"
-      }
-    },
-    {
-      "group_id": "unindexed-external-module",
-      "title": "F6 — Caller lives in unindexed/external module",
-      "description": "The only callers are inside a module that Ariadne did not index (outside configured folders, or an external package). When it is an external dependency, this is a permanent limitation. When it is an internal but unindexed folder, it is a configuration fix.",
-      "status": "permanent",
-      "languages": [
-        "typescript",
-        "javascript",
-        "python",
-        "rust"
-      ],
-      "examples": [
-        {
-          "file": "src/loader.ts",
-          "line": 3,
-          "snippet": "import { handler } from 'external-framework';"
-        }
-      ],
-      "classifier": {
-        "kind": "predicate",
-        "axis": "B",
-        "min_confidence": 0.95,
-        "expression": {
-          "op": "resolution_failure_reason_eq",
-          "value": "receiver_is_external_import"
-        }
-      },
-      "classification": {
-        "kind": "framework_invoked",
-        "framework": "external_module"
       }
     },
     {
@@ -87,22 +50,9 @@
         }
       ],
       "classifier": {
-        "kind": "predicate",
-        "axis": "A",
-        "min_confidence": 0.9,
-        "expression": {
-          "op": "all",
-          "of": [
-            {
-              "op": "language_eq",
-              "value": "python"
-            },
-            {
-              "op": "decorator_matches",
-              "pattern": "@property"
-            }
-          ]
-        }
+        "kind": "builtin",
+        "function_name": "check_py_property_decorator_access",
+        "min_confidence": 0.9
       },
       "classification": {
         "kind": "framework_invoked",
@@ -125,22 +75,9 @@
         }
       ],
       "classifier": {
-        "kind": "predicate",
-        "axis": "A",
-        "min_confidence": 0.9,
-        "expression": {
-          "op": "all",
-          "of": [
-            {
-              "op": "language_eq",
-              "value": "rust"
-            },
-            {
-              "op": "grep_line_regex",
-              "pattern": "[A-Za-z_][A-Za-z0-9_]*!\\s*[\\(\\[{]"
-            }
-          ]
-        }
+        "kind": "builtin",
+        "function_name": "check_rust_macro_invocation_call",
+        "min_confidence": 0.9
       },
       "classification": {
         "kind": "framework_invoked",
@@ -163,22 +100,9 @@
         }
       ],
       "classifier": {
-        "kind": "predicate",
-        "axis": "C",
-        "min_confidence": 0.95,
-        "expression": {
-          "op": "all",
-          "of": [
-            {
-              "op": "language_eq",
-              "value": "python"
-            },
-            {
-              "op": "decorator_matches",
-              "pattern": "@pytest.fixture*"
-            }
-          ]
-        }
+        "kind": "builtin",
+        "function_name": "check_framework_pytest_fixture",
+        "min_confidence": 0.95
       },
       "classification": {
         "kind": "framework_invoked",
@@ -201,22 +125,9 @@
         }
       ],
       "classifier": {
-        "kind": "predicate",
-        "axis": "C",
-        "min_confidence": 0.95,
-        "expression": {
-          "op": "all",
-          "of": [
-            {
-              "op": "language_eq",
-              "value": "python"
-            },
-            {
-              "op": "decorator_matches",
-              "pattern": "@*.route*"
-            }
-          ]
-        }
+        "kind": "builtin",
+        "function_name": "check_framework_flask_route",
+        "min_confidence": 0.95
       },
       "classification": {
         "kind": "framework_invoked",
@@ -240,13 +151,9 @@
         }
       ],
       "classifier": {
-        "kind": "predicate",
-        "axis": "C",
-        "min_confidence": 0.95,
-        "expression": {
-          "op": "decorator_matches",
-          "pattern": "@Component*"
-        }
+        "kind": "builtin",
+        "function_name": "check_framework_component_decorator",
+        "min_confidence": 0.95
       },
       "classification": {
         "kind": "framework_invoked",

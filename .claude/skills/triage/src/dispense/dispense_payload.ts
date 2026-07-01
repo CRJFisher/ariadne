@@ -8,7 +8,7 @@
  *   from `triage.json`).
  * - `relevant_registry_slice` — the subset of wip + permanent classifier rules
  *   that are in scope for the entry. The investigator uses this to detect
- *   `fp-classifier-regression` (a rule whose predicate *should* have matched
+ *   `fp-classifier-regression` (a rule whose classifier *should* have matched
  *   but did not) without loading the full registry.
  *
  * The slice filter is pure and deterministic: two investigators dispensed with
@@ -20,7 +20,6 @@
 import type {
   KnownIssue,
   KnownIssuesRegistry,
-  PredicateExpr,
 } from "@ariadnejs/types";
 
 import { language_from_extension } from "./language_from_extension.js";
@@ -61,9 +60,7 @@ export function build_dispense_payload(input: BuildDispensePayloadInput): Dispen
  * Inclusion rule:
  *
  *   rule.status ∈ {wip, permanent}  AND
- *     (rule.languages includes the entry's file-extension language  OR
- *      rule.classifier is a predicate whose tree contains
- *      `diagnosis_eq: <entry.diagnosis>`)
+ *   rule.languages includes the entry's file-extension language
  *
  * Sorted by `observed_count` descending (missing `observed_count` treated as
  * 0), then `group_id` ascending for deterministic tie-breaks. Truncated to
@@ -77,9 +74,7 @@ export function select_relevant_registry_slice(
   const entry_language = language_from_extension(entry.file_path);
   const matches = registry.filter((rule) => {
     if (rule.status === "fixed") return false;
-    if (entry_language !== null && rule.languages.includes(entry_language)) return true;
-    if (rule_predicate_mentions_diagnosis(rule, entry.diagnosis)) return true;
-    return false;
+    return entry_language !== null && rule.languages.includes(entry_language);
   });
   matches.sort((a, b) => {
     const ac = a.observed_count ?? 0;
@@ -88,30 +83,4 @@ export function select_relevant_registry_slice(
     return a.group_id < b.group_id ? -1 : a.group_id > b.group_id ? 1 : 0;
   });
   return matches.slice(0, max_rules);
-}
-
-// ===== Internal: predicate-tree scanning =====
-
-/**
- * Walk a classifier expression tree and return true when any `diagnosis_eq`
- * leaf has the given value. Rules whose classifier is `none` or `builtin`
- * have no expression and return false.
- */
-function rule_predicate_mentions_diagnosis(rule: KnownIssue, diagnosis: string): boolean {
-  if (rule.classifier.kind !== "predicate") return false;
-  return expression_mentions_diagnosis(rule.classifier.expression, diagnosis);
-}
-
-function expression_mentions_diagnosis(expr: PredicateExpr, diagnosis: string): boolean {
-  switch (expr.op) {
-    case "diagnosis_eq":
-      return expr.value === diagnosis;
-    case "all":
-    case "any":
-      return expr.of.some((child) => expression_mentions_diagnosis(child, diagnosis));
-    case "not":
-      return expression_mentions_diagnosis(expr.of, diagnosis);
-    default:
-      return false;
-  }
 }

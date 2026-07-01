@@ -15,7 +15,7 @@
  * Reads only indexed source bytes via `Project.get_file_contents` — no
  * filesystem I/O. The skill's triage pipeline runs an additional
  * `attach_unindexed_test_grep_hits` pass over its own analysis output before
- * classification when `has_unindexed_test_caller` predicates need to fire.
+ * classification, populating diagnostics a builtin classifier can read.
  */
 
 import type {
@@ -29,11 +29,11 @@ import type {
   KnownIssue,
   KnownIssuesRegistry,
   Location,
-  PredicateExpr,
   SymbolId,
 } from "@ariadnejs/types";
 import type { Project } from "../project/project";
 import { auto_classify } from "./classify_entry_points";
+import type { BuiltinCheckFn } from "./builtins";
 import { extract_entry_point_diagnostics } from "./extract_entry_point_diagnostics";
 import { load_permanent_registry } from "./registry_loader";
 
@@ -43,7 +43,7 @@ export interface EnrichedCallGraph {
   /** EnrichedEntryPoint indexed by SymbolId so callers can pair classifications with diagnostics. */
   readonly entry_points_by_id: ReadonlyMap<SymbolId, EnrichedEntryPoint>;
   /**
-   * Sub-threshold predicate matches accumulated during classification, keyed
+   * Sub-threshold classifier matches accumulated during classification, keyed
    * by entry-point SymbolId. Surfaces to the self-healing pipeline so the
    * residual (LLM-triage) bucket can carry these hints into the agent prompt.
    * Empty for symbols that hit a classifier (the matching group_id is on
@@ -60,33 +60,11 @@ export interface EnrichCallGraphOptions {
    */
   readonly registry?: KnownIssuesRegistry;
   /**
-   * Whether the caller has already run `attach_unindexed_test_grep_hits` on
-   * the call graph's source files. Defaults to `"skipped"` — predicates that
-   * read `has_unindexed_test_caller` will then see an empty grep set, so any
-   * registry rule using that predicate is a misuse and `enrich_call_graph`
-   * throws. Set to `"applied"` from the self-healing pipeline (which runs the
-   * grep pass in `detect_entrypoints.ts`) to silence the guard.
+   * Override `BUILTIN_CHECKS` for the classification pass, forwarded to
+   * `auto_classify`. Test-only seam so a test can inject a matching builtin
+   * without depending on a specific bundled check; production callers omit it.
    */
-  readonly unindexed_test_grep?: "applied" | "skipped";
-}
-
-/**
- * Visit `expr` and every nested combinator child, returning `true` as soon as
- * a `has_unindexed_test_caller` leaf is found. Used by the unindexed-test
- * guard below.
- */
-function predicate_uses_unindexed_test_caller(expr: PredicateExpr): boolean {
-  switch (expr.op) {
-    case "all":
-    case "any":
-      return expr.of.some(predicate_uses_unindexed_test_caller);
-    case "not":
-      return predicate_uses_unindexed_test_caller(expr.of);
-    case "has_unindexed_test_caller":
-      return true;
-    default:
-      return false;
-  }
+  readonly builtin_checks?: Readonly<Record<string, BuiltinCheckFn>>;
 }
 
 /**
@@ -101,33 +79,12 @@ export function enrich_call_graph(
   const enriched_entry_points = extract_entry_point_diagnostics(call_graph, project);
   const registry = options?.registry ?? load_permanent_registry();
 
-  // Guard: any rule using `has_unindexed_test_caller` requires the caller to
-  // have populated the grep set first (via `attach_unindexed_test_grep_hits`).
-  // The skill's `detect_entrypoints` runs that pass and passes
-  // `unindexed_test_grep: "applied"`; library callers and `prepare_triage`
-  // (which rebuilds the call graph in-process) cannot satisfy the predicate
-  // and would silently misclassify. Refuse the run instead.
-  const unindexed_test_grep = options?.unindexed_test_grep ?? "skipped";
-  if (unindexed_test_grep === "skipped") {
-    for (const issue of registry) {
-      if (issue.classifier.kind !== "predicate") continue;
-      if (predicate_uses_unindexed_test_caller(issue.classifier.expression)) {
-        throw new Error(
-          `enrich_call_graph: registry rule "${issue.group_id}" uses ` +
-            "`has_unindexed_test_caller`, which is only populated by " +
-            "`attach_unindexed_test_grep_hits`. Pass " +
-            "`{ unindexed_test_grep: \"applied\" }` after running that pass " +
-            "(see `detect_entrypoints.ts`), or drop rules that depend on it.",
-        );
-      }
-    }
-  }
-
   const read_file_lines = build_lazy_line_reader(project);
   const classified_results = auto_classify(
     enriched_entry_points,
     registry,
     read_file_lines,
+    options?.builtin_checks ? { builtin_checks: options.builtin_checks } : {},
   );
 
   const issues_by_id = new Map<string, KnownIssue>();

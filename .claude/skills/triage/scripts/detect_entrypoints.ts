@@ -470,7 +470,7 @@ async function analyze_directory(
   // here — the triage pipeline re-classifies in `prepare_triage` so it can
   // incorporate `tp_cache` decisions. Running classifier rules now would
   // also fire before `attach_unindexed_test_grep_hits` populates the
-  // `has_unindexed_test_caller` predicate input, producing wrong verdicts.
+  // unindexed-test grep diagnostics, producing wrong verdicts.
   const entry_points: EnrichedEntryPoint[] = extract_entry_point_diagnostics(
     call_graph,
     project,

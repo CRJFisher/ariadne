@@ -47,9 +47,9 @@ async function make_project_with(
   return { project, call_graph };
 }
 
-function predicate_issue(
+function builtin_issue(
   group_id: string,
-  diagnosis_value: string,
+  function_name: string,
 ): KnownIssue {
   return {
     group_id,
@@ -59,9 +59,8 @@ function predicate_issue(
     languages: ["python"],
     examples: [],
     classifier: {
-      kind: "predicate",
-      axis: "A",
-      expression: { op: "diagnosis_eq", value: diagnosis_value },
+      kind: "builtin",
+      function_name,
       min_confidence: 1.0,
     },
     classification: {
@@ -98,18 +97,20 @@ function make_entry(overrides: Partial<EnrichedEntryPoint> & { name: string }): 
 
 describe("prepare_triage — two-bucket end-to-end", () => {
   it("max-count caps only the residual bucket; auto_classified entries are always kept in full", async () => {
-    // 5 functions with no callers anywhere → diagnosis `no-textual-callers`
-    // (matches the auto-classifier predicate).
-    const auto_lines: string[] = [];
+    // 5 `@property`-decorated methods with no callers. The `@property` decorator
+    // above each definition makes the real `check_py_property_decorator_access`
+    // builtin fire, auto-classifying them.
+    const auto_lines: string[] = ["class Model:"];
     for (let i = 0; i < 5; i++) {
-      auto_lines.push(`def auto_${i}():`);
-      auto_lines.push("    pass");
+      auto_lines.push("    @property");
+      auto_lines.push(`    def auto_${i}(self):`);
+      auto_lines.push("        return 1");
       auto_lines.push("");
     }
     // 12 functions referenced only inside a Python comment. The grep pass
     // picks up the textual occurrence, but tree-sitter ignores the comment so
-    // Ariadne emits no CallReference → diagnosis `callers-not-in-registry`
-    // (does NOT match the auto-classifier predicate).
+    // Ariadne emits no CallReference → diagnosis `callers-not-in-registry`.
+    // No `@property` decorator → the builtin does not fire (residual bucket).
     const residual_lines: string[] = [];
     for (let i = 0; i < 12; i++) {
       residual_lines.push(`def resid_${String(i).padStart(2, "0")}():`);
@@ -125,7 +126,7 @@ describe("prepare_triage — two-bucket end-to-end", () => {
     const { project, call_graph } = await make_project_with({ "mod.py": code });
 
     const registry: KnownIssuesRegistry = [
-      predicate_issue("match-no-textual-callers", "no-textual-callers"),
+      builtin_issue("match-no-textual-callers", "check_py_property_decorator_access"),
     ];
 
     const report = prepare_triage({
