@@ -12,6 +12,7 @@ import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
 import { DefinitionBuilder } from "../../definitions/definitions";
 import { build_index_single_file } from "../../index_single_file";
 import { node_to_location } from "../../node_to_location";
+import { is_variable_reference } from "@ariadnejs/types";
 import type { ParsedFile } from "../../parsed_file";
 import type {
   ProcessingContext,
@@ -682,7 +683,8 @@ class MyComponent {
 }`;
       const index = build_index_from_code(code);
       const reads = index.references
-        .filter((r) => r.kind === "variable_reference" && r.name === "process")
+        .filter(is_variable_reference)
+        .filter((r) => r.name === "process")
         .map((r) => ({ kind: r.kind, name: r.name, access_type: r.access_type }));
       expect(reads).toEqual([
         { kind: "variable_reference", name: "process", access_type: "read" },
@@ -698,7 +700,8 @@ class Engine extends Base {
 }`;
       const index = build_index_from_code(code);
       const reads = index.references
-        .filter((r) => r.kind === "variable_reference" && r.name === "process")
+        .filter(is_variable_reference)
+        .filter((r) => r.name === "process")
         .map((r) => ({ kind: r.kind, name: r.name, access_type: r.access_type }));
       expect(reads).toEqual([
         { kind: "variable_reference", name: "process", access_type: "read" },
@@ -712,7 +715,8 @@ class Engine extends Base {
 const obj = { extractValue };`;
       const index = build_index_from_code(code);
       const reads = index.references
-        .filter((r) => r.kind === "variable_reference" && r.name === "extractValue")
+        .filter(is_variable_reference)
+        .filter((r) => r.name === "extractValue")
         .map((r) => ({ kind: r.kind, name: r.name, access_type: r.access_type }));
       // Two reads: catch-all fires on function-name identifier (definition site,
       // skipped by detect_indirect_reachability) + new pattern fires on shorthand
@@ -732,7 +736,8 @@ const obj = { extractValue };`;
 }`;
       const index = build_index_from_code(code);
       const reads = index.references
-        .filter((r) => r.kind === "variable_reference" && r.name === "compute")
+        .filter(is_variable_reference)
+        .filter((r) => r.name === "compute")
         .map((r) => ({ kind: r.kind, name: r.name, access_type: r.access_type }));
       expect(reads).toEqual([]);
     });
