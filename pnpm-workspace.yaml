@@ -2,6 +2,12 @@ packages:
   - "packages/*"
   - ".claude/skills/triage"
   - ".claude/skills/plan"
+# pnpm 11 reads hoist config here, not from .npmrc (public-hoist-pattern in .npmrc
+# is silently ignored → a config divergence that makes every `pnpm exec` want to
+# purge+recreate node_modules).
+publicHoistPattern:
+  - "*"
+  - "!tree-sitter*"
 allowBuilds:
   es5-ext: false
   esbuild: true
