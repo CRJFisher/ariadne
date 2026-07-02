@@ -41,7 +41,9 @@ The human performs every transition below. An entry enters the registry only wit
 
 ```
                   (novel:* permanent-limitation groups
-                   surfaced by plan's proposals)
+                   surfaced by plan's proposals, or
+                   reclassified during prioritize's
+                   investigation)
                                           │
                         classifier-author agent drafts a
                         builtin into a staging directory

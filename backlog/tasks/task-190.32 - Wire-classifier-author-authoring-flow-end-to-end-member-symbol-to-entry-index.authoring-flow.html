@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Comprehension companion for TASK-190.32 (pre-build planning artifact).
+     Source: task-190.32 - ...md + get_entry_context.ts, triage_state_types.ts, plan_task.ts,
+     classifier-author.md, prioritize/SKILL.md step 3a. Hand-authored inline SVG; no external deps. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TASK-190.32 — wiring the classifier-author flow end-to-end (member_symbol → entry)</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+
+  /* cross-doc nav */
+  nav.cross{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 0}
+  nav.cross .inner{padding-inline:clamp(16px,5vw,64px);display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.cross .brand{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.cross a,nav.cross .here{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:4px 10px;display:inline-flex;align-items:center;gap:6px}
+  nav.cross a:hover{border-color:var(--clay);color:var(--slate)}
+  nav.cross .here{background:var(--slate);color:var(--ivory);border-color:var(--slate)}
+  nav.cross .dot{width:7px;height:7px;border-radius:50%;background:var(--olive)}
+  nav.cross .dot.todo{background:var(--clay)}
+
+  /* section outline rail */
+  nav.toc{position:sticky;top:41px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:7px 0}
+  nav.toc .inner{padding-inline:clamp(16px,5vw,64px);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid transparent;border-radius:999px;padding:3px 9px}
+  nav.toc a:hover{border-color:var(--g200);color:var(--slate)}
+  nav.toc a.active{background:var(--oat);color:var(--slate)}
+
+  main{padding-inline:clamp(16px,5vw,64px);padding-top:26px;padding-bottom:80px}
+  .prose{max-width:68ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:32px;line-height:1.14;margin:0 0 12px;letter-spacing:-.01em;max-width:26ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:22px;margin:56px 0 4px;letter-spacing:-.01em;scroll-margin-top:96px}
+  h2 .n{font-family:var(--mono);font-size:12px;color:var(--clay);margin-right:9px;font-weight:400;vertical-align:2px}
+  .lead{font-size:16px;color:var(--g600);margin:0 0 4px}
+  .lead b{color:var(--slate);font-weight:600}
+  code{font-family:var(--mono);font-size:.84em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .cap{font-size:13.5px;color:var(--g600);margin:9px 2px 12px}
+  .cap b{color:var(--slate);font-weight:600}
+
+  .panel{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:16px;margin:14px 0}
+  .panel svg{width:100%;height:auto;display:block}
+
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:16px 0}
+  .callout.olive{border-left-color:var(--olive)}
+  .callout.rust{border-left-color:var(--rust)}
+  .callout.slate{border-left-color:var(--slate);background:var(--slate);color:var(--ivory)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 7px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)} .callout.slate .k{color:var(--oat)}
+  .callout p{margin:0 0 6px;font-size:14px} .callout p:last-child{margin:0}
+  .callout b{color:var(--slate)} .callout.slate b{color:#fff}
+  .callout.slate code{background:rgba(255,255,255,.13);color:var(--oat)}
+  .callout .owner{font-family:var(--mono);font-size:11px;color:var(--g400);margin-top:6px;display:block}
+  .callout.slate .owner{color:var(--oat)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin:8px 2px 0;font-family:var(--mono);font-size:11px;color:var(--g600)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .legend i.add{background:var(--olive)} .legend i.mod{background:var(--clay)} .legend i.rm{background:var(--rust)} .legend i.same{background:var(--oat);border:1px solid var(--g400)}
+  .legend i.fail{background:none;border-top:2px dashed var(--rust);border-radius:0;height:0;width:16px}
+
+  /* option comparison matrix */
+  .matrix{width:100%;border-collapse:collapse;margin:8px 0;font-size:13.5px}
+  .matrix th,.matrix td{border:1px solid var(--g200);padding:9px 12px;text-align:left;vertical-align:top}
+  .matrix thead th{background:var(--oat);font-family:var(--mono);font-size:11px;letter-spacing:.03em;text-transform:uppercase;color:var(--slate);font-weight:600}
+  .matrix th.crit{background:var(--g100);font-weight:600;width:26%;color:var(--slate)}
+  .matrix col.win{background:#f2f4ec}
+  .glyph{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px}
+  .g{width:13px;height:13px;border-radius:50%;flex:0 0 auto}
+  .g.full{background:var(--olive)}
+  .g.half{background:linear-gradient(90deg,var(--clay) 50%,var(--g200) 50%)}
+  .g.none{background:none;border:2px solid var(--rust)}
+  .g.mid{background:var(--clay)}
+  .verdict{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;border-radius:999px;padding:2px 9px}
+  .verdict.pick{background:#f2f4ec;color:var(--olive)} .verdict.rej{background:#faece9;color:var(--rust)}
+
+  /* two-option cards */
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+  .opt{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);padding:15px 17px;display:flex;flex-direction:column;gap:8px}
+  .opt.pick{border-color:var(--olive);box-shadow:0 0 0 1px var(--olive)}
+  .opt .badge{font-family:var(--mono);font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:8px}
+  .opt .badge .num{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff}
+  .opt.pick .num{background:var(--olive)} .opt.rej .num{background:var(--g400)}
+  .opt h3{font-family:var(--serif);font-size:16.5px;margin:0;font-weight:600;line-height:1.25}
+  .opt .why{font-size:13px;color:var(--g600);margin:0}
+  .opt .why b{color:var(--slate)}
+
+  /* change map table */
+  .change{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
+  .change th,.change td{border:1px solid var(--g200);padding:9px 12px;text-align:left;vertical-align:top}
+  .change thead th{background:var(--oat);font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--slate)}
+  .change td.file{font-family:var(--mono);font-size:11.5px;color:var(--slate);white-space:nowrap}
+  .change td .surf{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--clay);display:block;margin-bottom:3px}
+  .change .ac{font-family:var(--mono);font-size:10px;color:var(--olive);background:#f2f4ec;border-radius:999px;padding:2px 7px}
+
+  @media(max-width:760px){ .opts{grid-template-columns:1fr} }
+  footer{border-top:1px solid var(--g200);margin-top:56px;padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400)}
+  footer code{background:var(--g100)}
+</style>
+</head>
+<body>
+
+<nav class="cross">
+  <div class="inner">
+    <span class="brand">TASK&nbsp;190</span>
+    <a href="task-190 - Build-self-repair-pipeline-with-Claude-Code-native-architecture.overview.html"><span class="dot"></span> overview</a>
+    <span class="here">● 190.32 · authoring flow</span>
+    <a href="task-190.30.overview.html"><span class="dot todo"></span> 190.30 · classifier scope</a>
+    <a href="task-190.29 - Close-the-human-directed-registry-write-gap-sanctioned-agent-path-and-reconcile-fixed-name-mode.companion.html"><span class="dot todo"></span> 190.29 · registry hand-off</a>
+    <a href="task-190.26.overview.html"><span class="dot"></span> 190.26 · prioritize</a>
+  </div>
+</nav>
+
+<nav class="toc">
+  <div class="inner">
+    <a href="#break">The broken link</a>
+    <a href="#identity">Identity mismatch</a>
+    <a href="#options">Two fix options</a>
+    <a href="#e2e">End-to-end after fix</a>
+    <a href="#backstop">Routing backstop</a>
+    <a href="#changemap">Change map</a>
+  </div>
+</nav>
+
+<main>
+  <p class="eyebrow">Self-repair pipeline · classifier authoring flow</p>
+  <h1>Connecting the stable <code>member_symbol</code> prioritize holds to the <code>entry</code> the context script fetches</h1>
+  <p class="lead prose">The <code>classifier-author</code> agent and the <code>reconcile-registry --stage</code> insertion path both shipped — but a permanent-limitation group <b>cannot reach the agent as documented</b>: the data <code>prioritize</code> carries is not the key the context script accepts.</p>
+
+  <div class="meta">
+    <span class="chip">status <strong>To Do</strong></span>
+    <span class="chip">priority <strong>high</strong></span>
+    <span class="chip">parent <strong>TASK-190</strong></span>
+    <span class="chip">~<strong>4 surfaces</strong> touched</span>
+    <span class="chip">4 acceptance criteria</span>
+  </div>
+
+  <!-- ===== 1. THE BROKEN LINK (before/after) ===== -->
+  <h2 id="break"><span class="n">01</span>The broken link, and where the bridge goes</h2>
+  <p class="cap prose"><b>CURRENT:</b> prioritize holds only <code>member_symbol&nbsp;+&nbsp;run_id</code>, but <code>get_entry_context.ts</code> accepts only the run-local <code>entry_index</code> — the flow stalls at the first hop. <b>PLANNED:</b> the script gains a stable selector and resolves the entry itself.</p>
+
+  <div class="panel">
+    <svg viewBox="0 0 1180 380" role="img" aria-label="Before-and-after data flow. Current: plan evidence carrying member_symbol and run_id flows to prioritize step 3a to a classifier-author dispatch, which calls get_entry_context.ts keyed on entry_index only, which cannot match member_symbol against the triage state, so the flow stalls. Planned: get_entry_context.ts gains a member-symbol plus run-id selector and resolves the entry internally against the triage state by direct field match.">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#5f594f"/></marker>
+        <marker id="arO" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6c7a4a"/></marker>
+        <marker id="arR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#a8472f"/></marker>
+      </defs>
+
+      <!-- panel titles -->
+      <text x="16" y="24" font-family="ui-monospace,monospace" font-size="12" letter-spacing="1.5" fill="#a8472f">CURRENT — STALLS AT HOP 1</text>
+      <text x="620" y="24" font-family="ui-monospace,monospace" font-size="12" letter-spacing="1.5" fill="#6c7a4a">PLANNED — RESOLVES INTERNALLY</text>
+      <line x1="590" y1="44" x2="590" y2="360" stroke="#ddd6c8" stroke-width="1.5"/>
+      <text x="600" y="205" font-family="ui-serif,Georgia,serif" font-size="26" fill="#b9794f">→</text>
+
+      <g font-family="ui-monospace,monospace" font-size="11">
+        <!-- ===== CURRENT ===== -->
+        <!-- plan evidence -->
+        <rect x="16" y="52" width="200" height="72" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="116" y="74" text-anchor="middle" font-size="11.5" fill="#2b2a28">plan engine</text>
+        <text x="116" y="92" text-anchor="middle" fill="#5f594f">PlanTaskEvidence:</text>
+        <text x="116" y="108" text-anchor="middle" fill="#6c7a4a">member_symbol · run_id</text>
+
+        <!-- step 3a -->
+        <rect x="16" y="156" width="200" height="58" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="116" y="180" text-anchor="middle" fill="#2b2a28">prioritize step 3a</text>
+        <text x="116" y="198" text-anchor="middle" fill="#a8472f">no dispatch template</text>
+
+        <!-- dispatch -->
+        <rect x="16" y="246" width="200" height="52" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="116" y="270" text-anchor="middle" fill="#2b2a28">classifier-author</text>
+        <text x="116" y="286" text-anchor="middle" fill="#5f594f">dispatch</text>
+
+        <!-- get_entry_context (entry only) -->
+        <rect x="300" y="156" width="238" height="72" rx="10" fill="#faece9" stroke="#a8472f"/>
+        <text x="419" y="180" text-anchor="middle" font-size="11.5" fill="#2b2a28">get_entry_context.ts</text>
+        <text x="419" y="198" text-anchor="middle" fill="#a8472f">accepts --entry &lt;int&gt; ONLY</text>
+        <text x="419" y="214" text-anchor="middle" fill="#5f594f">run-local positional index</text>
+
+        <!-- triage state -->
+        <rect x="300" y="52" width="238" height="66" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="419" y="76" text-anchor="middle" font-size="11.5" fill="#2b2a28">triage state.entries[]</text>
+        <text x="419" y="94" text-anchor="middle" fill="#5f594f">carries all 4 identity fields</text>
+        <text x="419" y="110" text-anchor="middle" fill="#5f594f">+ entry_index</text>
+
+        <!-- current edges -->
+        <line x1="116" y1="124" x2="116" y2="154" stroke="#5f594f" stroke-width="1.6" marker-end="url(#ar)"/>
+        <line x1="116" y1="214" x2="116" y2="244" stroke="#5f594f" stroke-width="1.6" marker-end="url(#ar)"/>
+        <line x1="216" y1="272" x2="298" y2="210" stroke="#5f594f" stroke-width="1.6" marker-end="url(#ar)"/>
+        <!-- the broken hop: member_symbol can't key entry_index -->
+        <line x1="419" y1="156" x2="419" y2="120" stroke="#a8472f" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arR)"/>
+        <text x="431" y="140" font-size="10" fill="#a8472f">✗ no member_symbol key</text>
+
+        <!-- ===== PLANNED ===== -->
+        <rect x="620" y="52" width="200" height="72" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="720" y="74" text-anchor="middle" font-size="11.5" fill="#2b2a28">plan engine</text>
+        <text x="720" y="92" text-anchor="middle" fill="#5f594f">PlanTaskEvidence:</text>
+        <text x="720" y="108" text-anchor="middle" fill="#6c7a4a">member_symbol · run_id</text>
+
+        <rect x="620" y="156" width="200" height="58" rx="10" fill="#f2f4ec" stroke="#6c7a4a"/>
+        <text x="720" y="180" text-anchor="middle" fill="#2b2a28">prioritize step 3a</text>
+        <text x="720" y="198" text-anchor="middle" fill="#6c7a4a">+ dispatch template</text>
+
+        <rect x="620" y="246" width="200" height="52" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="720" y="270" text-anchor="middle" fill="#2b2a28">classifier-author</text>
+        <text x="720" y="286" text-anchor="middle" fill="#5f594f">dispatch (stable selector)</text>
+
+        <rect x="904" y="156" width="258" height="72" rx="10" fill="#f2f4ec" stroke="#6c7a4a"/>
+        <text x="1033" y="180" text-anchor="middle" font-size="11.5" fill="#2b2a28">get_entry_context.ts</text>
+        <text x="1033" y="198" text-anchor="middle" fill="#6c7a4a">+ --member-symbol --run-id</text>
+        <text x="1033" y="214" text-anchor="middle" fill="#5f594f">resolves entry internally</text>
+
+        <rect x="904" y="52" width="258" height="66" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="1033" y="76" text-anchor="middle" font-size="11.5" fill="#2b2a28">triage state.entries[]</text>
+        <text x="1033" y="94" text-anchor="middle" fill="#5f594f">.find(e =&gt; e matches</text>
+        <text x="1033" y="110" text-anchor="middle" fill="#5f594f">the 4 fields)</text>
+
+        <line x1="720" y1="124" x2="720" y2="154" stroke="#5f594f" stroke-width="1.6" marker-end="url(#ar)"/>
+        <line x1="720" y1="214" x2="720" y2="244" stroke="#5f594f" stroke-width="1.6" marker-end="url(#ar)"/>
+        <line x1="820" y1="272" x2="902" y2="210" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#arO)"/>
+        <line x1="1033" y1="156" x2="1033" y2="120" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#arO)"/>
+        <text x="1045" y="140" font-size="10" fill="#6c7a4a">✓ direct field match</text>
+      </g>
+    </svg>
+    <div class="legend">
+      <span><i class="add"></i> added surface</span>
+      <span><i class="mod"></i> modified</span>
+      <span><i class="fail"></i> stalled / failing edge</span>
+      <span><i class="same"></i> unchanged</span>
+    </div>
+  </div>
+
+  <div class="callout rust">
+    <span class="k">Why it stalls today</span>
+    <p>The data <code>prioritize</code> holds (<code>member_symbol</code>) is not what <code>get_entry_context.ts</code> accepts (<code>entry_index</code>), and <b>nothing documents the translation</b>.</p>
+    <p>Compounding it, <code>prioritize/SKILL.md</code> step 3a has <b>no dispatch-prompt template</b> — unlike every sibling step — so an orchestrator has neither the data nor the instruction to build a valid dispatch.</p>
+  </div>
+
+  <!-- ===== 2. IDENTITY MISMATCH ===== -->
+  <h2 id="identity"><span class="n">02</span>Why the two keys don't meet — and why the bridge is trivial</h2>
+  <p class="cap prose">The four stable fields are <b>already present</b> in each <code>TriageEntry</code>, so resolving <code>member_symbol → entry</code> is a direct <code>.find()</code> field match — no new data, no new store.</p>
+
+  <div class="panel">
+    <svg viewBox="0 0 1180 300" role="img" aria-label="Field map. On the left, member_symbol carries four stable fields: file_path, name, kind, start_line — plus run_id — and this is what prioritize holds. On the right, entry_index is a single run-local integer positional index, deliberately dropped by the plan engine because it is line-drift unstable across sweeps. Between them, the triage state entry carries all four stable fields and the entry_index, so a direct field match bridges them.">
+      <defs>
+        <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6c7a4a"/></marker>
+      </defs>
+      <g font-family="ui-monospace,monospace" font-size="12">
+        <!-- LEFT: member_symbol -->
+        <text x="16" y="28" font-size="12" letter-spacing="1" fill="#6c7a4a">STABLE — what prioritize holds</text>
+        <rect x="16" y="42" width="300" height="196" rx="10" fill="#f2f4ec" stroke="#6c7a4a"/>
+        <text x="30" y="66" font-size="13" fill="#2b2a28">member_symbol</text>
+        <line x1="30" y1="78" x2="302" y2="78" stroke="#c7cdb8"/>
+        <text x="30" y="102" fill="#5f594f">file_path</text>
+        <text x="30" y="128" fill="#5f594f">name</text>
+        <text x="30" y="154" fill="#5f594f">kind</text>
+        <text x="30" y="180" fill="#5f594f">start_line</text>
+        <text x="30" y="216" fill="#6c7a4a">+ run_id (from evidence row)</text>
+
+        <!-- MIDDLE: triage state -->
+        <text x="440" y="28" font-size="12" letter-spacing="1" fill="#5f594f">TRIAGE STATE — carries both</text>
+        <rect x="440" y="42" width="300" height="220" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="454" y="66" font-size="13" fill="#2b2a28">TriageEntry</text>
+        <line x1="454" y1="78" x2="726" y2="78" stroke="#e7ddc9"/>
+        <text x="454" y="102" fill="#2b2a28">file_path</text>
+        <text x="454" y="128" fill="#2b2a28">name</text>
+        <text x="454" y="154" fill="#2b2a28">kind</text>
+        <text x="454" y="180" fill="#2b2a28">start_line</text>
+        <text x="454" y="216" fill="#b9794f">entry_index  ← run-local</text>
+        <text x="454" y="242" fill="#9a9387">(the script already reads this file)</text>
+
+        <!-- RIGHT: entry_index -->
+        <text x="864" y="28" font-size="12" letter-spacing="1" fill="#a8472f">UNSTABLE — what the script wants</text>
+        <rect x="864" y="42" width="300" height="130" rx="10" fill="#faece9" stroke="#a8472f"/>
+        <text x="878" y="66" font-size="13" fill="#2b2a28">entry_index</text>
+        <line x1="878" y1="78" x2="1150" y2="78" stroke="#eccabf"/>
+        <text x="878" y="102" fill="#5f594f">one integer, positional</text>
+        <text x="878" y="124" fill="#a8472f">line-drift unstable</text>
+        <text x="878" y="146" fill="#a8472f">across sweeps</text>
+
+        <!-- match arrows: left 4 fields → middle 4 fields -->
+        <line x1="316" y1="98" x2="452" y2="98" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#ar2)"/>
+        <line x1="316" y1="124" x2="452" y2="124" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#ar2)"/>
+        <line x1="316" y1="150" x2="452" y2="150" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#ar2)"/>
+        <line x1="316" y1="176" x2="452" y2="176" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#ar2)"/>
+        <!-- middle entry_index → right -->
+        <line x1="740" y1="216" x2="862" y2="120" stroke="#b9794f" stroke-width="1.6" stroke-dasharray="4 3"/>
+        <text x="620" y="290" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#6c7a4a">the bridge: state.entries.find(e =&gt; e.file_path==f &amp;&amp; e.name==n &amp;&amp; e.kind==k &amp;&amp; e.start_line==l) → e.entry_index</text>
+      </g>
+    </svg>
+  </div>
+
+  <!-- ===== 3. TWO FIX OPTIONS ===== -->
+  <h2 id="options"><span class="n">03</span>Two fix options — keep the stable identity, or re-thread the unstable index</h2>
+  <p class="cap prose">Both make the flow work; they differ in <b>which component is forced to handle the drift-unstable index</b>.</p>
+
+  <div class="opts">
+    <div class="opt pick">
+      <span class="badge"><span class="num">1</span> OPTION 1 <span class="verdict pick">recommended</span></span>
+      <h3>Extend <code>get_entry_context.ts</code> with a stable selector</h3>
+      <p class="why">Add <code>--member-symbol</code> (+ <code>--run-id</code>); the script resolves <code>member_symbol → entry</code> internally against the run's triage state. <b>Prioritize keeps the stable identity and never touches the unstable index.</b> The drift-fragile translation lives in exactly one place, right next to the state file it reads.</p>
+    </div>
+    <div class="opt rej">
+      <span class="badge"><span class="num">2</span> OPTION 2 <span class="verdict rej">rejected</span></span>
+      <h3>Thread <code>entry_index</code> through prioritize</h3>
+      <p class="why">Pair each plan group back to its source <code>NovelIssue</code> per <code>run_id</code> at dispatch time to recover the index. <b>Re-introduces the exact index the plan engine deliberately dropped</b> for being line-drift unstable — prioritize now owns a fragile positional key across sweep boundaries.</p>
+    </div>
+  </div>
+
+  <table class="matrix">
+    <colgroup><col><col class="win"><col></colgroup>
+    <thead><tr><th class="crit">Criterion</th><th>Option 1 · stable selector</th><th>Option 2 · thread index</th></tr></thead>
+    <tbody>
+      <tr><th class="crit">Prioritize handles the unstable index</th>
+        <td><span class="glyph"><span class="g full"></span> never — keeps member_symbol</span></td>
+        <td><span class="glyph"><span class="g none"></span> yes — re-adopts entry_index</span></td></tr>
+      <tr><th class="crit">Translation lives in one place</th>
+        <td><span class="glyph"><span class="g full"></span> inside the script, by the state file</span></td>
+        <td><span class="glyph"><span class="g half"></span> split across dispatch + script</span></td></tr>
+      <tr><th class="crit">Survives line drift across sweeps</th>
+        <td><span class="glyph"><span class="g full"></span> resolves at fetch time</span></td>
+        <td><span class="glyph"><span class="g none"></span> index captured earlier, may drift</span></td></tr>
+      <tr><th class="crit">New data threaded through prioritize</th>
+        <td><span class="glyph"><span class="g full"></span> none</span></td>
+        <td><span class="glyph"><span class="g mid"></span> NovelIssue re-pairing per run</span></td></tr>
+      <tr><th class="crit">Agent prompt change</th>
+        <td><span class="glyph"><span class="g half"></span> selector flags (tools prefix already allows)</span></td>
+        <td><span class="glyph"><span class="g half"></span> stays entry_index</span></td></tr>
+    </tbody>
+  </table>
+  <div class="legend">
+    <span><span class="g full" style="width:12px;height:12px"></span> favourable</span>
+    <span><span class="g half" style="width:12px;height:12px"></span> mixed</span>
+    <span><span class="g mid" style="width:12px;height:12px"></span> added cost</span>
+    <span><span class="g none" style="width:12px;height:12px"></span> unfavourable</span>
+  </div>
+
+  <div class="callout olive">
+    <span class="k">Recommendation</span>
+    <p>Take <b>Option 1</b>. The <code>classifier-author</code> tools grant already prefix-matches <code>get_entry_context.ts:*</code>, so new flags stay permitted with no agent-config change; the four identity fields already live in <code>TriageEntry</code>, so the resolver is a one-line <code>.find()</code>.</p>
+  </div>
+
+  <div class="callout">
+    <span class="k">Open sub-decision · not yet decided</span>
+    <p>How the stable selector is encoded on the CLI is genuinely open. <b>(a)</b> one packed argument — <code>--member-symbol '{"file_path":…,"name":…,"kind":…,"start_line":…}'</code> (JSON or a delimited string): one flag, but the caller must serialize/quote it. <b>(b)</b> four discrete flags — <code>--file … --name … --kind … --line …</code>: no quoting, but four values to keep aligned. Both round-trip the same four fields; pick during implementation.</p>
+    <span class="owner">decide in: get_entry_context.ts parse_args + the step-3a template that emits it</span>
+  </div>
+
+  <!-- ===== 4. END TO END ===== -->
+  <h2 id="e2e"><span class="n">04</span>The full flow, once Option 1 lands</h2>
+  <p class="cap prose">Five hops, each owned by a named actor — <b>prioritize never handles an index</b>, and the human still owns the registry write at the end.</p>
+
+  <div class="panel">
+    <svg viewBox="0 0 1180 340" role="img" aria-label="End-to-end sequence across four lanes. Prioritize reads evidence rows and builds the step 3a dispatch prompt with per-sample stable selectors and run ids. Classifier-author fetches each sample via get_entry_context.ts with the member-symbol selector, which resolves the entry against the triage state and returns the investigation prompt. The agent drafts three staging artifacts. Finally the human reviews and applies the draft via reconcile-registry --stage.">
+      <defs>
+        <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b9794f"/></marker>
+      </defs>
+      <!-- lane headers -->
+      <g font-family="ui-monospace,monospace" font-size="11">
+        <text x="16" y="24" fill="#5f594f">prioritize</text>
+        <text x="316" y="24" fill="#5f594f">classifier-author</text>
+        <text x="640" y="24" fill="#5f594f">get_entry_context.ts</text>
+        <text x="960" y="24" fill="#5f594f">human</text>
+      </g>
+      <line x1="0" y1="34" x2="1180" y2="34" stroke="#e7ddc9"/>
+      <line x1="300" y1="34" x2="300" y2="330" stroke="#efeae1"/>
+      <line x1="624" y1="34" x2="624" y2="330" stroke="#efeae1"/>
+      <line x1="944" y1="34" x2="944" y2="330" stroke="#efeae1"/>
+
+      <g font-family="ui-monospace,monospace" font-size="11">
+        <!-- step 1 -->
+        <circle cx="30" cy="70" r="12" fill="#b9794f"/><text x="30" y="74" text-anchor="middle" font-size="11" fill="#fff">1</text>
+        <rect x="52" y="52" width="236" height="52" rx="9" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="66" y="74" fill="#2b2a28">read PlanTaskEvidence rows</text>
+        <text x="66" y="92" fill="#6c7a4a">member_symbol · run_id per sample</text>
+
+        <!-- step 2 -->
+        <circle cx="30" cy="150" r="12" fill="#b9794f"/><text x="30" y="154" text-anchor="middle" font-size="11" fill="#fff">2</text>
+        <rect x="52" y="132" width="236" height="52" rx="9" fill="#f2f4ec" stroke="#6c7a4a"/>
+        <text x="66" y="154" fill="#2b2a28">build step-3a dispatch prompt</text>
+        <text x="66" y="172" fill="#6c7a4a">NEW template: selectors + run + group_id</text>
+
+        <!-- arrow 2->3 -->
+        <line x1="288" y1="158" x2="330" y2="158" stroke="#b9794f" stroke-width="1.5" marker-end="url(#ar3)"/>
+
+        <!-- step 3 -->
+        <circle cx="332" cy="150" r="12" fill="#b9794f"/><text x="332" y="154" text-anchor="middle" font-size="11" fill="#fff">3</text>
+        <rect x="354" y="132" width="256" height="52" rx="9" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="368" y="154" fill="#2b2a28">for each sample: fetch context</text>
+        <text x="368" y="172" fill="#6c7a4a">--member-symbol … --run-id …</text>
+
+        <!-- arrow 3->4 -->
+        <line x1="610" y1="158" x2="654" y2="158" stroke="#b9794f" stroke-width="1.5" marker-end="url(#ar3)"/>
+
+        <!-- step 4 -->
+        <circle cx="656" cy="150" r="12" fill="#b9794f"/><text x="656" y="154" text-anchor="middle" font-size="11" fill="#fff">4</text>
+        <rect x="678" y="132" width="256" height="52" rx="9" fill="#f2f4ec" stroke="#6c7a4a"/>
+        <text x="692" y="154" fill="#2b2a28">resolve entry, return prompt</text>
+        <text x="692" y="172" fill="#6c7a4a">state.entries.find(4 fields)</text>
+
+        <!-- arrow 4->5 back to author lane -->
+        <line x1="678" y1="200" x2="486" y2="230" stroke="#b9794f" stroke-width="1.5" marker-end="url(#ar3)"/>
+
+        <!-- step 5 -->
+        <circle cx="332" cy="248" r="12" fill="#b9794f"/><text x="332" y="252" text-anchor="middle" font-size="11" fill="#fff">5</text>
+        <rect x="354" y="230" width="256" height="52" rx="9" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="368" y="252" fill="#2b2a28">draft 3 staging artifacts</text>
+        <text x="368" y="270" fill="#6c7a4a">draft_entry.json · check.ts · REVIEW.md</text>
+
+        <!-- arrow 5->6 to human -->
+        <line x1="610" y1="256" x2="974" y2="256" stroke="#b9794f" stroke-width="1.5" marker-end="url(#ar3)"/>
+
+        <!-- step 6 -->
+        <circle cx="976" cy="248" r="12" fill="#6c7a4a"/><text x="976" y="252" text-anchor="middle" font-size="11" fill="#fff">6</text>
+        <rect x="998" y="230" width="170" height="52" rx="9" fill="#f2f4ec" stroke="#6c7a4a"/>
+        <text x="1012" y="252" fill="#2b2a28">review + apply</text>
+        <text x="1012" y="270" fill="#6c7a4a">reconcile-registry --stage</text>
+      </g>
+      <text x="590" y="322" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#9a9387">no manual member_symbol → entry_index step anywhere in the chain</text>
+    </svg>
+  </div>
+
+  <!-- ===== 5. ROUTING BACKSTOP ===== -->
+  <h2 id="backstop"><span class="n">05</span>The routing false-negative — an asymmetric gap</h2>
+  <p class="cap prose">One misrouting is caught; its mirror is not. A <b>fixable bug</b> sent to <code>classifier-author</code> hits the agent's "if fixable, stop" gate — but a <b>true permanent limitation</b> sent to <code>refactor-investigator</code> → backlog has <b>no symmetric backstop</b>, so the limitation silently never gets its classifier.</p>
+
+  <div class="panel">
+    <svg viewBox="0 0 1180 260" role="img" aria-label="Two misrouting paths side by side. On the left, a fixable bug misrouted to classifier-author is caught: the agent's if-fixable-stop gate emits no draft and writes a REVIEW note. On the right, a true permanent limitation misrouted to refactor-investigator and then to backlog has no symmetric gate, so it silently becomes a backlog task that will never be fixed and never gets its classifier.">
+      <defs>
+        <marker id="arG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6c7a4a"/></marker>
+        <marker id="arRr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#a8472f"/></marker>
+      </defs>
+      <line x1="590" y1="20" x2="590" y2="240" stroke="#ddd6c8" stroke-width="1.5"/>
+      <g font-family="ui-monospace,monospace" font-size="11">
+        <!-- LEFT: caught -->
+        <text x="16" y="24" font-size="12" letter-spacing=".5" fill="#6c7a4a">CAUGHT — has a gate</text>
+        <rect x="16" y="40" width="230" height="50" rx="9" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="131" y="62" text-anchor="middle" fill="#2b2a28">fixable bug, misrouted</text>
+        <text x="131" y="80" text-anchor="middle" fill="#5f594f">→ classifier-author</text>
+        <line x1="131" y1="90" x2="131" y2="118" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#arG)"/>
+        <rect x="16" y="120" width="230" height="50" rx="9" fill="#f2f4ec" stroke="#6c7a4a"/>
+        <text x="131" y="142" text-anchor="middle" fill="#2b2a28">agent "if fixable, stop"</text>
+        <text x="131" y="160" text-anchor="middle" fill="#6c7a4a">emits no draft · REVIEW note</text>
+        <line x1="131" y1="170" x2="131" y2="198" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#arG)"/>
+        <rect x="16" y="200" width="230" height="42" rx="9" fill="#f2f4ec" stroke="#6c7a4a"/>
+        <text x="131" y="226" text-anchor="middle" fill="#6c7a4a">✓ misroute surfaced to human</text>
+
+        <!-- RIGHT: silent -->
+        <text x="620" y="24" font-size="12" letter-spacing=".5" fill="#a8472f">SILENT — no symmetric gate</text>
+        <rect x="620" y="40" width="230" height="50" rx="9" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="735" y="62" text-anchor="middle" fill="#2b2a28">true limitation, misrouted</text>
+        <text x="735" y="80" text-anchor="middle" fill="#5f594f">→ refactor-investigator</text>
+        <line x1="735" y1="90" x2="735" y2="118" stroke="#a8472f" stroke-width="1.5" marker-end="url(#arRr)"/>
+        <rect x="620" y="120" width="230" height="50" rx="9" fill="#faece9" stroke="#a8472f"/>
+        <text x="735" y="142" text-anchor="middle" fill="#2b2a28">no "actually unfixable?" gate</text>
+        <text x="735" y="160" text-anchor="middle" fill="#a8472f">plan written as if fixable</text>
+        <line x1="735" y1="170" x2="735" y2="198" stroke="#a8472f" stroke-width="1.5" marker-end="url(#arRr)"/>
+        <rect x="620" y="200" width="230" height="42" rx="9" fill="#faece9" stroke="#a8472f"/>
+        <text x="735" y="226" text-anchor="middle" fill="#a8472f">✗ backlog task never fixable · no classifier</text>
+
+        <!-- mitigations column -->
+        <text x="880" y="24" font-size="12" letter-spacing=".5" fill="#b9794f">CANDIDATE MITIGATIONS</text>
+        <rect x="880" y="40" width="284" height="88" rx="9" fill="#fffdf8" stroke="#b9794f"/>
+        <text x="896" y="62" fill="#2b2a28">(a) unfixable? check in the</text>
+        <text x="896" y="80" fill="#5f594f">refactor-investigator path —</text>
+        <text x="896" y="98" fill="#5f594f">a lightweight "is this actually</text>
+        <text x="896" y="116" fill="#5f594f">out of static reach?" note</text>
+        <rect x="880" y="140" width="284" height="88" rx="9" fill="#fffdf8" stroke="#b9794f"/>
+        <text x="896" y="162" fill="#2b2a28">(b) prioritize-step note</text>
+        <text x="896" y="180" fill="#5f594f">forcing the human's permanent-</text>
+        <text x="896" y="198" fill="#5f594f">vs-fixable call BEFORE dispatch,</text>
+        <text x="896" y="216" fill="#5f594f">not only inside the agent</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="callout">
+    <span class="k">Acceptance latitude</span>
+    <p>AC-4 is satisfied either by <b>addressing</b> the gap (mitigation a or b) <b>or</b> by <b>explicitly documenting it as accepted</b> — the decision itself must be recorded, not left implicit.</p>
+  </div>
+
+  <!-- ===== 6. CHANGE MAP ===== -->
+  <h2 id="changemap"><span class="n">06</span>What changes where — ~4 surfaces</h2>
+  <p class="cap prose">A tight, contained change: one script + its test, two docs, and the backstop decision.</p>
+
+  <table class="change">
+    <thead><tr><th>Surface</th><th>Change</th><th>AC</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="file"><span class="surf">script</span>get_entry_context.ts</td>
+        <td>Accept a stable selector (<code>--member-symbol</code> + <code>--run-id</code>) in <code>parse_args</code>; resolve <code>member_symbol → entry</code> in <code>main</code> via <code>state.entries.find</code> on the 4 identity fields. Keep <code>--entry</code> for the existing triage-investigator caller.</td>
+        <td><span class="ac">AC 1 · 2</span></td>
+      </tr>
+      <tr>
+        <td class="file"><span class="surf">test</span>get_entry_context.test.ts</td>
+        <td>Add a case resolving a known <code>member_symbol</code> against a state fixture to the expected <code>entry_index</code> (and a no-match error case). Extend the existing file — no new test file.</td>
+        <td><span class="ac">AC 2</span></td>
+      </tr>
+      <tr>
+        <td class="file"><span class="surf">agent prompt</span>classifier-author.md</td>
+        <td>Change "sample triage <b>entry indices</b>" → stable selectors, and the fetch command to <code>--member-symbol … --run-id …</code>. Tools grant already prefix-matches <code>get_entry_context.ts:*</code> — no allow-list edit.</td>
+        <td><span class="ac">AC 1</span></td>
+      </tr>
+      <tr>
+        <td class="file"><span class="surf">skill doc</span>prioritize/SKILL.md · step 3a</td>
+        <td>Add a concrete blockquote dispatch-prompt template naming exactly what to substitute — <code>&lt;project&gt;</code>, the resolved per-sample selectors, <code>&lt;run&gt;</code>, <code>&lt;group_id&gt;</code> — matching the style of steps 3, 4, 7a.</td>
+        <td><span class="ac">AC 3</span></td>
+      </tr>
+      <tr>
+        <td class="file"><span class="surf">backstop</span>refactor path · or step 3a note</td>
+        <td>Address the routing false-negative (mitigation a or b) <b>or</b> document it as explicitly accepted.</td>
+        <td><span class="ac">AC 4</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout slate">
+    <span class="k">The one idea to hold</span>
+    <p>Keep the drift-unstable <code>entry_index</code> <b>inside <code>get_entry_context.ts</code></b>, next to the state file it reads. Prioritize carries only the stable <code>member_symbol</code> end-to-end; the script does the last-mile <code>.find()</code> at fetch time, so nothing upstream ever holds a positional index that line drift can break.</p>
+  </div>
+
+  <footer>
+    TASK-190.32 · pre-build planning companion · sources <code>get_entry_context.ts</code> · <code>triage_state_types.ts</code> · <code>plan_task.ts</code> · <code>classifier-author.md</code> · <code>prioritize/SKILL.md</code> — refreshed as-built after implementation
+  </footer>
+</main>
+
+<script>
+/* section-outline active-state (progressive enhancement) */
+(function(){
+  var links=[].slice.call(document.querySelectorAll('nav.toc a'));
+  var map={};links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  var obs=new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(e.isIntersecting){links.forEach(function(l){l.classList.remove('active');});
+        var a=map[e.target.id];if(a)a.classList.add('active');}
+    });
+  },{rootMargin:'-40% 0px -55% 0px'});
+  document.querySelectorAll('main h2[id]').forEach(function(h){obs.observe(h);});
+})();
+</script>
+</body>
+</html>

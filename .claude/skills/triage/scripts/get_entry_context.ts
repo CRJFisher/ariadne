@@ -8,8 +8,19 @@
  * substitutes placeholders into the single prompt template, and outputs
  * the prompt to stdout.
  *
+ * The entry is selected one of two ways:
+ * - `--entry <index>` — the run-local positional index, used by
+ *   triage-investigator dispatch (the triage orchestrator holds indices).
+ * - `--file <path> --name <name> --kind <kind> --line <n>` — the stable
+ *   `member_symbol` identity `(file_path, name, kind, start_line)`, used by
+ *   classifier-author dispatch (prioritize holds member symbols from
+ *   `PlanTaskEvidence`, never entry indices). `file_path` is project-relative,
+ *   as published; the lookup relativizes state entries before matching.
+ *
  * Usage:
  *   node --import tsx .claude/skills/triage/scripts/get_entry_context.ts --project mocha --entry 62
+ *   node --import tsx .claude/skills/triage/scripts/get_entry_context.ts --project mocha --run-id <id> \
+ *     --file lib/interfaces/bdd.js --name bddInterface --kind function --line 12
  */
 
 import fs from "fs";
@@ -20,13 +31,15 @@ import {
   require_run,
   results_dir_for,
 } from "../src/store/paths.js";
-import type { TriageState } from "../src/triage_state_types.js";
+import type { TriageEntry, TriageState } from "../src/triage_state_types.js";
 import type {
   GrepHit,
   CallRefDiagnostic,
   ClassifierHint,
   KnownIssuesRegistry,
 } from "@ariadnejs/types";
+import type { MemberSymbol } from "@ariadnejs/skill-protocol";
+import { relativize } from "../src/finalize/confirmed_unreachable_reuse.js";
 import {
   build_dispense_payload,
   type DispensePayload,
@@ -34,7 +47,8 @@ import {
 import { load_registry } from "../src/known_issues_registry.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
-const USAGE = "Usage: get_entry_context.ts --project <name> --entry <index> [--run-id <id>]";
+const USAGE =
+  "Usage: get_entry_context.ts --project <name> (--entry <index> | --file <path> --name <name> --kind <kind> --line <n>) [--run-id <id>]";
 
 const THIS_FILE = fileURLToPath(import.meta.url);
 const THIS_DIR = path.dirname(THIS_FILE);
@@ -198,18 +212,133 @@ const DIAGNOSIS_HINTS: Record<string, DiagnosisHints> = {
 
 // ===== CLI Argument Parsing =====
 
-function parse_args(argv: string[]): { project: string; entry_index: number } {
-  const project = parse_project_arg(argv, USAGE);
-  const args = argv.slice(2);
-  let entry_index: number | null = null;
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--entry") entry_index = parseInt(args[++i], 10);
+export type EntrySelector =
+  | { by: "index"; entry_index: number }
+  | { by: "member_symbol"; member: MemberSymbol };
+
+const MEMBER_SYMBOL_KINDS: readonly MemberSymbol["kind"][] = [
+  "function",
+  "method",
+  "constructor",
+];
+
+function is_member_symbol_kind(value: string): value is MemberSymbol["kind"] {
+  return (MEMBER_SYMBOL_KINDS as readonly string[]).includes(value);
+}
+
+/**
+ * Parse the entry selector from the argv tail (`process.argv.slice(2)`).
+ * Exactly one selector mode must be present: `--entry <index>`, or the four
+ * member-symbol flags together. Throws on an invalid combination — the CLI
+ * wrapper decides how to exit.
+ */
+export function parse_entry_selector(args: readonly string[]): EntrySelector {
+  const flag_value = (flag: string): string | null => {
+    for (let i = 0; i < args.length; i++) {
+      if (args[i] === flag) {
+        const value = args[i + 1];
+        if (value !== undefined && value.length > 0) return value;
+      }
+    }
+    return null;
+  };
+
+  const entry_raw = flag_value("--entry");
+  const member_flags: [string, string | null][] = [
+    ["--file", flag_value("--file")],
+    ["--name", flag_value("--name")],
+    ["--kind", flag_value("--kind")],
+    ["--line", flag_value("--line")],
+  ];
+  const present_count = member_flags.filter(([, value]) => value !== null).length;
+
+  if (entry_raw !== null && present_count > 0) {
+    throw new Error(
+      "provide either --entry or the member-symbol flags (--file --name --kind --line), not both",
+    );
   }
-  if (entry_index === null || isNaN(entry_index)) {
-    process.stderr.write(`${USAGE}\n`);
+
+  if (entry_raw !== null) {
+    const entry_index = parseInt(entry_raw, 10);
+    if (isNaN(entry_index)) throw new Error("--entry requires an integer");
+    return { by: "index", entry_index };
+  }
+
+  if (present_count === 0) {
+    throw new Error(
+      "an entry selector is required: --entry <index>, or --file <path> --name <name> --kind <kind> --line <n>",
+    );
+  }
+  if (present_count < 4) {
+    const missing = member_flags
+      .filter(([, value]) => value === null)
+      .map(([flag]) => flag);
+    throw new Error(
+      `the member-symbol selector requires all four flags; missing ${missing.join(" ")}`,
+    );
+  }
+
+  const [[, file_path], [, name], [, kind_raw], [, line_raw]] = member_flags;
+  const start_line = parseInt(line_raw as string, 10);
+  if (isNaN(start_line)) throw new Error("--line requires an integer");
+  if (!is_member_symbol_kind(kind_raw as string)) {
+    throw new Error(`--kind must be one of ${MEMBER_SYMBOL_KINDS.join(", ")}`);
+  }
+  return {
+    by: "member_symbol",
+    member: {
+      file_path: file_path as string,
+      name: name as string,
+      kind: kind_raw as MemberSymbol["kind"],
+      start_line,
+    },
+  };
+}
+
+function parse_args(argv: string[]): { project: string; selector: EntrySelector } {
+  const project = parse_project_arg(argv, USAGE);
+  try {
+    return { project, selector: parse_entry_selector(argv.slice(2)) };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`${message}\n${USAGE}\n`);
     process.exit(1);
   }
-  return { project, entry_index };
+}
+
+// ===== Entry Resolution =====
+
+/**
+ * Resolve the selector against a run's triage state. Member-symbol matching
+ * relativizes each entry's `file_path` against the state's `project_path`
+ * before comparing — published member symbols carry project-relative paths
+ * while state entries may hold absolute ones.
+ *
+ * Returns every match: an index lookup yields at most one; a member-symbol
+ * lookup can in principle collide, and the caller fails loud on more than
+ * one rather than picking arbitrarily.
+ */
+export function find_entries_by_selector(
+  state: Pick<TriageState, "entries" | "project_path">,
+  selector: EntrySelector,
+): TriageEntry[] {
+  if (selector.by === "index") {
+    return state.entries.filter((e) => e.entry_index === selector.entry_index);
+  }
+  const member = selector.member;
+  return state.entries.filter(
+    (e) =>
+      e.name === member.name &&
+      e.kind === member.kind &&
+      e.start_line === member.start_line &&
+      relativize(e.file_path, state.project_path) === member.file_path,
+  );
+}
+
+function describe_selector(selector: EntrySelector): string {
+  if (selector.by === "index") return `Entry index ${selector.entry_index}`;
+  const member = selector.member;
+  return `Member symbol ${member.kind} ${member.name} at ${member.file_path}:${member.start_line}`;
 }
 
 // ===== Diagnostics Formatting =====
@@ -309,11 +438,40 @@ async function main(): Promise<void> {
 
   const state = JSON.parse(fs.readFileSync(state_path, "utf8")) as TriageState;
 
-  const entry = state.entries.find((e) => e.entry_index === cli.entry_index);
-  if (!entry) {
-    console.error(`Entry index ${cli.entry_index} not found in state file`);
+  const matches = find_entries_by_selector(state, cli.selector);
+  if (matches.length === 0) {
+    console.error(`${describe_selector(cli.selector)} not found in state file`);
+    if (cli.selector.by === "member_symbol") {
+      const member = cli.selector.member;
+      const near = state.entries.filter(
+        (e) =>
+          e.name === member.name &&
+          e.kind === member.kind &&
+          relativize(e.file_path, state.project_path) === member.file_path,
+      );
+      if (near.length > 0) {
+        console.error(
+          `Entries matching (file, name, kind) exist at start_line ${near
+            .map((e) => e.start_line)
+            .join(", ")} — the member symbol and --run-id likely come from different runs (start_line is run-specific).`,
+        );
+      } else {
+        console.error(
+          "The member symbol and --run-id must come from the same triage run.",
+        );
+      }
+    }
     process.exit(1);
   }
+  if (matches.length > 1) {
+    console.error(
+      `Ambiguous selector: ${matches.length} entries match ${describe_selector(cli.selector)} (entry indices ${matches
+        .map((e) => e.entry_index)
+        .join(", ")}). Use --entry <index> to disambiguate.`,
+    );
+    process.exit(1);
+  }
+  const entry = matches[0];
 
   const template = fs.readFileSync(TEMPLATE_PATH, "utf8");
 

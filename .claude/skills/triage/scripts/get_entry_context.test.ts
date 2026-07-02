@@ -4,6 +4,8 @@ import {
   format_call_refs,
   format_classifier_hints,
   substitute_template,
+  parse_entry_selector,
+  find_entries_by_selector,
 } from "./get_entry_context.js";
 import type { TriageEntry } from "../src/triage_state_types.js";
 import type { DispensePayload } from "../src/dispense/dispense_payload.js";
@@ -36,6 +38,41 @@ const BASE_SYNTACTIC_FEATURES: SyntacticFeatures = {
   is_inside_try: false,
   is_dynamic_dispatch: false,
 };
+
+const BASE_DIAGNOSTICS: EntryPointDiagnostics = {
+  grep_call_sites: [
+    { file_path: "test/server.test.ts" as FilePath, line: 10, content: "handle_request(req)", captures: [] },
+  ],
+  grep_call_sites_unindexed_tests: [],
+  has_uncaptured_indexed_grep_hit: false,
+  callers_only_in_unindexed_tests: false,
+  ariadne_call_refs: [],
+  diagnosis: "callers-not-in-registry",
+};
+
+function make_entry(overrides: Partial<TriageEntry>): TriageEntry {
+  return {
+    entry_index: 5,
+    name: "handle_request",
+    file_path: "src/server.ts" as FilePath,
+    start_line: 42,
+    kind: "function",
+    signature: "function handle_request(req: Request): Response",
+    route: "llm-triage",
+    diagnosis: "callers-not-in-registry",
+    known_source: null,
+    status: "pending",
+    result: null,
+    error: null,
+    is_exported: true,
+    access_modifier: null,
+    diagnostics: BASE_DIAGNOSTICS,
+    auto_classified: false,
+    classifier_hints: [],
+    tp_source_run_id: null,
+    ...overrides,
+  };
+}
 
 // ===== format_grep_hits =====
 
@@ -104,37 +141,7 @@ describe("format_call_refs", () => {
 // ===== substitute_template =====
 
 describe("substitute_template", () => {
-  const mock_diagnostics: EntryPointDiagnostics = {
-    grep_call_sites: [
-      { file_path: "test/server.test.ts" as FilePath, line: 10, content: "handle_request(req)", captures: [] },
-    ],
-    grep_call_sites_unindexed_tests: [],
-    has_uncaptured_indexed_grep_hit: false,
-    callers_only_in_unindexed_tests: false,
-    ariadne_call_refs: [],
-    diagnosis: "callers-not-in-registry",
-  };
-
-  const mock_entry: TriageEntry = {
-    entry_index: 5,
-    name: "handle_request",
-    file_path: "src/server.ts" as FilePath,
-    start_line: 42,
-    kind: "function",
-    signature: "function handle_request(req: Request): Response",
-    route: "llm-triage",
-    diagnosis: "callers-not-in-registry",
-    known_source: null,
-    status: "pending",
-    result: null,
-    error: null,
-    is_exported: true,
-    access_modifier: null,
-    diagnostics: mock_diagnostics,
-    auto_classified: false,
-    classifier_hints: [],
-    tp_source_run_id: null,
-  };
+  const mock_entry: TriageEntry = make_entry({});
 
   it("substitutes all placeholders", () => {
     const template = [
@@ -257,5 +264,184 @@ describe("format_classifier_hints", () => {
     expect(out).toContain("### Classifier hints (sub-threshold matches)");
     expect(out).toContain("- g1 (confidence 0.90): r1");
     expect(out).toContain("- g2 (confidence 0.40): r2");
+  });
+});
+
+// ===== parse_entry_selector =====
+
+describe("parse_entry_selector", () => {
+  it("parses the --entry index selector", () => {
+    expect(parse_entry_selector(["--project", "mocha", "--entry", "62"])).toEqual({
+      by: "index",
+      entry_index: 62,
+    });
+  });
+
+  it("parses the four-flag member-symbol selector", () => {
+    expect(
+      parse_entry_selector([
+        "--project", "mocha",
+        "--run-id", "20260630T101502Z",
+        "--file", "lib/interfaces/bdd.js",
+        "--name", "bddInterface",
+        "--kind", "function",
+        "--line", "12",
+      ]),
+    ).toEqual({
+      by: "member_symbol",
+      member: {
+        file_path: "lib/interfaces/bdd.js",
+        name: "bddInterface",
+        kind: "function",
+        start_line: 12,
+      },
+    });
+  });
+
+  it("rejects mixing --entry with member-symbol flags", () => {
+    expect(() => parse_entry_selector(["--entry", "1", "--file", "src/a.ts"])).toThrowError(
+      /not both/,
+    );
+  });
+
+  it("rejects a partial member-symbol selector naming the missing flags", () => {
+    expect(() =>
+      parse_entry_selector(["--file", "src/a.ts", "--name", "foo", "--kind", "function"]),
+    ).toThrowError(/missing --line/);
+  });
+
+  it("rejects an argv with no selector", () => {
+    expect(() => parse_entry_selector(["--project", "mocha"])).toThrowError(
+      /an entry selector is required/,
+    );
+  });
+
+  it("rejects a non-integer --entry", () => {
+    expect(() => parse_entry_selector(["--entry", "abc"])).toThrowError(
+      /--entry requires an integer/,
+    );
+  });
+
+  it("rejects a non-integer --line", () => {
+    expect(() =>
+      parse_entry_selector(["--file", "a.ts", "--name", "n", "--kind", "function", "--line", "x"]),
+    ).toThrowError(/--line requires an integer/);
+  });
+
+  it("rejects a kind outside the member-symbol union", () => {
+    expect(() =>
+      parse_entry_selector(["--file", "a.ts", "--name", "n", "--kind", "generator", "--line", "1"]),
+    ).toThrowError(/--kind must be one of function, method, constructor/);
+  });
+});
+
+// ===== find_entries_by_selector =====
+
+describe("find_entries_by_selector", () => {
+  const fn_at_42 = make_entry({
+    entry_index: 5,
+    name: "handle",
+    file_path: "src/server.ts" as FilePath,
+    kind: "function",
+    start_line: 42,
+  });
+  const method_at_42 = make_entry({
+    entry_index: 6,
+    name: "handle",
+    file_path: "src/server.ts" as FilePath,
+    kind: "method",
+    start_line: 42,
+  });
+  const fn_at_99 = make_entry({
+    entry_index: 7,
+    name: "handle",
+    file_path: "src/server.ts" as FilePath,
+    kind: "function",
+    start_line: 99,
+  });
+  const state = { project_path: "/repo", entries: [fn_at_42, method_at_42, fn_at_99] };
+
+  it("resolves an index selector to the entry with that entry_index", () => {
+    expect(find_entries_by_selector(state, { by: "index", entry_index: 6 })).toEqual([
+      method_at_42,
+    ]);
+  });
+
+  it("returns no match for a missing index", () => {
+    expect(find_entries_by_selector(state, { by: "index", entry_index: 999 })).toEqual([]);
+  });
+
+  it("resolves a member symbol to the exact four-field match", () => {
+    expect(
+      find_entries_by_selector(state, {
+        by: "member_symbol",
+        member: { file_path: "src/server.ts", name: "handle", kind: "function", start_line: 42 },
+      }),
+    ).toEqual([fn_at_42]);
+  });
+
+  it("kind is load-bearing: the method sibling at the same file, name, and line resolves for kind=method", () => {
+    expect(
+      find_entries_by_selector(state, {
+        by: "member_symbol",
+        member: { file_path: "src/server.ts", name: "handle", kind: "method", start_line: 42 },
+      }),
+    ).toEqual([method_at_42]);
+  });
+
+  it("start_line is load-bearing: the sibling at a different line resolves for its own line", () => {
+    expect(
+      find_entries_by_selector(state, {
+        by: "member_symbol",
+        member: { file_path: "src/server.ts", name: "handle", kind: "function", start_line: 99 },
+      }),
+    ).toEqual([fn_at_99]);
+  });
+
+  it("relativizes absolute state paths against project_path before matching", () => {
+    const absolute = make_entry({
+      entry_index: 8,
+      name: "abs_fn",
+      file_path: "/repo/src/abs.ts" as FilePath,
+      kind: "function",
+      start_line: 10,
+    });
+    expect(
+      find_entries_by_selector(
+        { project_path: "/repo", entries: [absolute] },
+        {
+          by: "member_symbol",
+          member: { file_path: "src/abs.ts", name: "abs_fn", kind: "function", start_line: 10 },
+        },
+      ),
+    ).toEqual([absolute]);
+  });
+
+  it("returns no match when no entry has the member identity", () => {
+    expect(
+      find_entries_by_selector(state, {
+        by: "member_symbol",
+        member: { file_path: "src/server.ts", name: "nope", kind: "function", start_line: 42 },
+      }),
+    ).toEqual([]);
+  });
+
+  it("returns every colliding entry for a duplicated member identity", () => {
+    const duplicate = make_entry({
+      entry_index: 9,
+      name: "handle",
+      file_path: "src/server.ts" as FilePath,
+      kind: "function",
+      start_line: 42,
+    });
+    expect(
+      find_entries_by_selector(
+        { project_path: "/repo", entries: [fn_at_42, duplicate] },
+        {
+          by: "member_symbol",
+          member: { file_path: "src/server.ts", name: "handle", kind: "function", start_line: 42 },
+        },
+      ),
+    ).toEqual([fn_at_42, duplicate]);
   });
 });

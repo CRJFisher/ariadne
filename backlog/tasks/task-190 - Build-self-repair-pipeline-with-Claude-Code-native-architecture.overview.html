@@ -78,6 +78,7 @@
     <a href="task-190.33 - Enforce-human-owns-registry-in-repo-not-just-via-harness-classifier.enforcement.html"><span class="dot"></span> 190.33 · registry enforcement</a>
     <a href="task-190.26.overview.html"><span class="dot"></span> 190.26 · prioritize</a>
     <a href="task-190.30.overview.html"><span class="dot"></span> 190.30 · classifier scope</a>
+    <a href="task-190.32 - Wire-classifier-author-authoring-flow-end-to-end-member-symbol-to-entry-index.authoring-flow.html"><span class="dot todo"></span> 190.32 · authoring flow</a>
     <a href="task-190.22 - Restructure-self-healing-pipeline-to-triage-→-plan-planning-only.overview.html"><span class="dot"></span> 190.22 · triage→plan split</a>
   </div>
 </nav>
@@ -144,6 +145,11 @@
     <p>Phase 5 flips a classifier row when a fix lands — a <b>human-owned registry write</b>. 190.33 makes that ownership real in the repo: an in-repo <code>PreToolUse</code> hook routes every agent write of <code>registry.json</code> to a per-edit human <b>ask</b>, so an unattended agent can't silently rewrite the loop-closure surface even if the out-of-repo harness guard is off.</p>
   </div>
 
+  <div class="callout">
+    <span class="k">Where TASK-190.32 lands</span>
+    <p>When phase 4 finds a <b>permanent limitation</b> — a false positive fundamentally out of static reach — it routes the group to the <code>classifier-author</code> agent instead of the backlog. 190.32 wires that authoring path end-to-end: the agent can now fetch each sample by the <b>stable <code>member_symbol</code></b> prioritize holds, so a permanent-limitation group actually reaches the agent and produces a staged classifier draft for the human to apply.</p>
+  </div>
+
   <h2>The recent entry-point-classification sub-tasks</h2>
   <p class="cap prose">The current cluster of work hardening detection and closing the loop. Cards with a green source line link to a comprehension companion; the rest are not yet generated.</p>
 
@@ -162,6 +168,11 @@
       <span class="id"><span>190.33</span><span class="st done">Done</span></span>
       <span class="ttl">Enforce human-owns-registry in-repo via a PreToolUse ask-hook, not just the harness classifier</span>
       <span class="doc">→ enforcement.html</span>
+    </a>
+    <a class="tcard has" href="task-190.32 - Wire-classifier-author-authoring-flow-end-to-end-member-symbol-to-entry-index.authoring-flow.html">
+      <span class="id"><span>190.32</span><span class="st todo">To Do</span></span>
+      <span class="ttl">Wire the classifier-author authoring flow end-to-end (member_symbol → entry_index)</span>
+      <span class="doc">→ authoring-flow.html</span>
     </a>
     <a class="tcard has" href="task-190.26.overview.html">
       <span class="id"><span>190.26</span><span class="st done">Done</span></span>

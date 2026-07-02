@@ -181,7 +181,20 @@ more). Each sub-agent reads its group's rows, gets to grips with the real
 > resolves the whole group at the right altitude — validating or collapsing the
 > plan's decomposition (catch over-decomposition, dead code, duplicate builders).
 > Write the plan to `<root>/<fault_area>/refactor_plan.md` and return your
-> one-line root cause + decomposition verdict.
+> one-line root cause + decomposition verdict. If the whole group turns out to
+> be a permanent limitation — no realistic resolver change would let Ariadne
+> resolve these callers — do not design a refactor: write `refactor_plan.md` as
+> a single permanent-limitation verdict naming the static boundary, and return
+> `PERMANENT-LIMITATION: <one line>` so the group reroutes to
+> `classifier-author` (step 3a) instead of graduating.
+
+A group returning a `PERMANENT-LIMITATION` verdict leaves the backlog pipeline:
+it does not proceed to consolidation or export; the human redispatches it
+through step 3a's `classifier-author` flow. This is the symmetric backstop to
+that agent's "if fixable, stop" gate — a fixable bug misrouted to
+`classifier-author` is caught there, and a true limitation misrouted here is
+caught by the investigator, so neither routing error silently produces the
+wrong artifact.
 
 Wait for every `Task()` in a wave to return before starting the next wave.
 **All step-3 waves must complete before consolidation (step 4) is dispatched.**
@@ -202,10 +215,45 @@ routes here; the human makes that call per group. So: review the
 permanent limitation (not an interim workaround), route it to `classifier-author`
 instead of `refactor-investigator`.
 
+The human's permanent-vs-fixable call runs in both directions, before dispatch.
+A group routed here that is actually a fixable bug is caught by the agent's own
+"if fixable, stop — emit no draft" gate; a true permanent limitation misrouted
+to step 3 is caught by the investigator's `PERMANENT-LIMITATION` verdict, which
+returns the group here. Neither routing error survives to the wrong artifact,
+but each costs a wasted dispatch — make the call deliberately.
+
 Such a group never graduates to `backlog/`. Dispatch one
-`Task(classifier-author)` per confirmed permanent-limitation group. The agent reads `packages/core` and
-the group's triage entry context (`get_entry_context.ts`) and writes a **staged
-draft** — never the registry — to:
+`Task(classifier-author)` per confirmed permanent-limitation group. The samples
+come from the group's rows' `PlanTaskEvidence`: each evidence row carries its
+own `project`, `run_id`, and stable `member_symbol` (`file_path`, `name`,
+`kind`, `start_line`), so one group's samples may span several projects and
+triage runs. Dedup the rows by `member_symbol` and cap at ~5 representative
+samples for a large group. Mint the `<group_id>` yourself — a fresh kebab-case
+id naming the limitation pattern (it names the staging directory and the future
+registry rule; it is authored here, not looked up). `<run>` is this
+invocation's staging timestamp (the Staging root above); each sample's
+`<run_id>` is its own evidence row's triage run. A sample whose triage run no
+longer resolves (runs are pruned) is dropped from the dispatch; if every
+sample's run is gone, skip the group and flag it for a fresh triage sweep.
+Dispatch prompt:
+
+> Author a builtin classifier for permanent-limitation group `<group_id>`.
+> Write your three staging artifacts to
+> `~/.ariadne/prioritize/<run>/classifier-author/<group_id>/`. The group's
+> sample members are listed below — fetch each one's context with
+> `node --import tsx .claude/skills/triage/scripts/get_entry_context.ts --project <project> --run-id <run_id> --file <file_path> --name <name> --kind <kind> --line <start_line>`:
+>
+> - project `<project>`, run `<run_id>`, member `<file_path>` `<name>` `<kind>` `<start_line>`
+> - … (one line per sample, from the evidence rows' `member_symbol`)
+>
+> Study the shared false-positive pattern across every sample and confirm it is
+> a permanent limitation (out of static reach — no realistic resolver fix). If
+> it is actually a fixable bug, write only `REVIEW.md` saying so and draft
+> nothing else. Return your one-line `done <group_id>: drafted` / `no-draft`
+> verdict.
+
+The agent reads `packages/core` and each sample's triage entry context and
+writes a **staged draft** — never the registry — to:
 
 ```text
 ~/.ariadne/prioritize/<run>/classifier-author/<group_id>/

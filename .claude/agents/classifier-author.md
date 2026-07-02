@@ -23,14 +23,20 @@ entire output is three files written to your staging directory. You never write
 
 # Context
 
-Your prompt contains a **project name** and a list of **sample triage entry
-indices** for one group. For each sample entry, fetch its full context:
+Your prompt contains, for one group, a list of **sample members** — each a
+`(project, run_id, member_symbol)` triple, where the `member_symbol` is the
+stable `(file_path, name, kind, start_line)` identity of a flagged entry
+point. The samples may span more than one project and triage run. For each
+sample, fetch its full context by its stable selector:
 
 ```bash
-node --import tsx .claude/skills/triage/scripts/get_entry_context.ts --project <project> --entry <entry_index>
+node --import tsx .claude/skills/triage/scripts/get_entry_context.ts \
+  --project <project> --run-id <run_id> \
+  --file <file_path> --name <name> --kind <kind> --line <start_line>
 ```
 
-The script prints an investigation prompt built from a `DispensePayload`:
+The script resolves the member symbol against that run's triage state and
+prints an investigation prompt built from a `DispensePayload`:
 
 - **`entry_context`** (a `TriageEntry`) — the entry's `name`, `file_path`,
   `start_line`, `kind`, `signature`, `is_exported`, `access_modifier`,
@@ -59,7 +65,8 @@ you cannot verify those hold from the `TriageEntry` you investigated.
 
 ## 1. Fetch every sample entry
 
-Run `get_entry_context.ts` for **each** sample index in your prompt. Read all of
+Run `get_entry_context.ts` for **each** sample member in your prompt (its
+`(project, run_id, member_symbol)` selector). Read all of
 them before drafting. The shared shape across the samples IS the pattern — a good
 builtin matches every sample and would generalize to unseen members of the same
 group.
@@ -199,9 +206,9 @@ Include:
 - **Pattern** — the false-positive mechanism in 2–3 sentences.
 - **Why permanent** — the static boundary that makes it unfixable (contrast with
   what a resolver fix would need to do).
-- **Matched samples** — the list of sample `project` / `entry_index` /
-  `file_path:line` this check fires on, one line per sample confirming the
-  discriminator holds.
+- **Matched samples** — the list of sample `project` / `member_symbol`
+  (`file_path:start_line`, `name`, `kind`) this check fires on, one line per
+  sample confirming the discriminator holds.
 - **Apply steps** (exact, in order):
   1. Place `check_<group_id>.ts` into
      `packages/core/src/classify_entry_points/builtins/`.

@@ -78,6 +78,19 @@ Cover **every** evidence row: the plan must resolve the whole group, not a
 subset. If a row does not actually belong to this fault area, say so explicitly
 and exclude it with a reason (it grounds no work in your plan).
 
+**Permanent-limitation escape.** While tracing, hold one prior question open: is
+this group fixable at all? A false-positive is a permanent limitation when the
+caller is out of static reach and no realistic resolver change would recover it —
+dynamic dispatch through computed keys, string-keyed registries, untyped
+receivers, framework/runtime invocation, compiler-injected APIs. If the **whole
+group** is such a limitation, stop the design: there is no refactor to author.
+Write `refactor_plan.md` as a single permanent-limitation verdict — name the
+exact static boundary, why a resolver fix cannot cross it, and the evidence rows
+it covers — and return `PERMANENT-LIMITATION: <one-line boundary>` as your
+inline summary, so `prioritize` reroutes the group to `classifier-author`
+(which authors its registry classifier) instead of graduating it to `backlog/`.
+This is the mirror of `classifier-author`'s "if fixable, stop" gate.
+
 ## Write the refactoring plan
 
 Write **one Markdown file** to `output_path`. Make it a self-contained,
@@ -111,5 +124,7 @@ it, re-tier it, or correct its altitude? Ground that verdict in the code.
 
 Write only the Markdown plan to `output_path`. Return a short inline summary: the
 one-line root cause, the chosen altitude, the decomposition verdict (kept /
-collapsed / re-tiered), and any excluded evidence rows. The `prioritize` skill
-reads your file from disk.
+collapsed / re-tiered), and any excluded evidence rows — or, when the group is a
+permanent limitation, the single `PERMANENT-LIMITATION: <boundary>` line in
+place of the decomposition verdict. The `prioritize` skill reads your file from
+disk.
