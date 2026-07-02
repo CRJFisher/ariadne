@@ -37,12 +37,12 @@ detected signals, it also accepts directed name-mode flips
 (`--id ... --fixed --reason`, `--id ... --promote`) where the human names the
 rules and the transition rather than letting detection propose it.
 
-| #   | Signal (mechanically detected)                                              | Proposed registry write                                        |
-| --- | --------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| 1   | a fix-bearing `git log` scope in this repo matches a `wip` rule's `backlog_task` | `wip → fixed`                                                  |
+| #   | Signal (mechanically detected)                                                                                                    | Proposed registry write                                        |
+| --- | --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| 1   | a fix-bearing `git log` scope in this repo matches a `wip` rule's `backlog_task`                                                  | `wip → fixed`                                                  |
 | 2   | a published `triage_results[].classifier_regressions[]` names a rule — its `rule_id` field carries the registry rule's `group_id` | set `drift_detected: true`; append new `drift_evidence[]` rows |
-| 3   | the human elects to promote a rule (`--id <group_id> --promote`)            | flip to `permanent`; regenerate `permanent_data.ts`            |
-| 4   | the human retires a rule by name (`--id <group_id>... --fixed --reason`)    | `wip → fixed`; classifier → `retired`                          |
+| 3   | the human elects to promote a rule (`--id <group_id> --promote`)                                                                  | flip to `permanent`; regenerate `permanent_data.ts`            |
+| 4   | the human retires a rule by name (`--id <group_id>... --fixed --reason`)                                                          | `wip → fixed`; classifier → `retired`                          |
 
 The `wip → fixed` detector derives the bare task scope from each rule's
 `backlog_task` (`TASK-198 → 198`) and matches it exactly — never by prefix —
@@ -140,23 +140,27 @@ Always invoke with `node --import tsx`. Never `pnpm exec tsx` or `npx tsx`
    classifier is a `builtin` — verifies the draft's `function_name` is present in
    core's `BUILTIN_CHECKS` (the `check_*.ts` has been placed under
    `packages/core/src/classify_entry_points/builtins/` and core rebuilt with
-   `pnpm build --filter core`). Unlike the reconciliation signals, `--stage` is
-   **dry-run by default** (prints the entry it would insert); add `--apply` to
-   write via `atomic_update_registry`. A staged entry enters as `status: "wip"`;
+   `pnpm build --filter core`). The `BUILTIN_CHECKS` check reads the **built**
+   core package, so a `function_name not in BUILTIN_CHECKS` rejection most often
+   means the `check_*.ts` was placed but core was not rebuilt — run
+   `pnpm build --filter core` and re-stage. Unlike the reconciliation signals,
+   `--stage` is **dry-run by default** (prints the entry it would insert); add
+   `--apply` to write via `atomic_update_registry`. A staged entry enters as
+   `status: "wip"`;
    promotion to `permanent` remains the separate `--promote` step.
 
 ## Selectors
 
-| Flag              | Selects                                                                  |
-| ----------------- | ------------------------------------------------------------------------ |
-| `--dry-run`       | print the proposed changeset, write nothing                              |
-| `--fixed`         | `wip → fixed` proposals only (auto-detected from the git log)            |
-| `--drift`         | drift-flag proposals only                                                |
-| `--id <group_id>` | exact rules (repeatable). As a **selector** (alone or with `--fixed`/`--drift`) it **overrides** the signal filters — both signals are scanned and only the named rules' proposals survive; ids matching no proposal report in `missing_ids` |
-| `--id ... --fixed --reason "<text>"` | **name-mode**: flip the named `wip` rows to `fixed` directly, no detection — for fixes that landed under a task other than the rule's `backlog_task`. Converts each row's classifier to the `retired` kind. `--reason` required; cannot combine with `--drift`; non-`wip` named rule is a no-op; unknown id reports in `missing_ids` |
-| `--id ... --promote` | name rules directly (no detection); flip them to `permanent` and sync the slice |
-| `--reason "<text>"` | valid ONLY with name-mode (`--fixed` and `--id` together), where it is required; the retirement audit line, since no commit subject is cited. Any other combination is rejected |
-| `--stage <path> [--apply]` | **insertion mode**: read + validate an agent-authored `draft_entry.json`, reject a duplicate `group_id` and a `builtin` `function_name` absent from `BUILTIN_CHECKS`, enforce `observed_count >= 1`; dry-run unless `--apply`. Cannot combine with `--fixed`/`--drift`/`--promote`/`--id`/`--reason` — insertion is its own transaction |
+| Flag                                 | Selects                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--dry-run`                          | print the proposed changeset, write nothing                                                                                                                                                                                                                                                                                             |
+| `--fixed`                            | `wip → fixed` proposals only (auto-detected from the git log)                                                                                                                                                                                                                                                                           |
+| `--drift`                            | drift-flag proposals only                                                                                                                                                                                                                                                                                                               |
+| `--id <group_id>`                    | exact rules (repeatable). As a **selector** (alone or with `--fixed`/`--drift`) it **overrides** the signal filters — both signals are scanned and only the named rules' proposals survive; ids matching no proposal report in `missing_ids`                                                                                            |
+| `--id ... --fixed --reason "<text>"` | **name-mode**: flip the named `wip` rows to `fixed` directly, no detection — for fixes that landed under a task other than the rule's `backlog_task`. Converts each row's classifier to the `retired` kind. `--reason` required; cannot combine with `--drift`; non-`wip` named rule is a no-op; unknown id reports in `missing_ids`    |
+| `--id ... --promote`                 | name rules directly (no detection); flip them to `permanent` and sync the slice                                                                                                                                                                                                                                                         |
+| `--reason "<text>"`                  | valid ONLY with name-mode (`--fixed` and `--id` together), where it is required; the retirement audit line, since no commit subject is cited. Any other combination is rejected                                                                                                                                                         |
+| `--stage <path> [--apply]`           | **insertion mode**: read + validate an agent-authored `draft_entry.json`, reject a duplicate `group_id` and a `builtin` `function_name` absent from `BUILTIN_CHECKS`, enforce `observed_count >= 1`; dry-run unless `--apply`. Cannot combine with `--fixed`/`--drift`/`--promote`/`--id`/`--reason` — insertion is its own transaction |
 
 `--id` has three modes. As a **selector** (alone or with `--fixed`/`--drift`)
 it overrides the signal filters and narrows the detected proposals to the
@@ -171,15 +175,15 @@ with `--dry-run` first.
 
 The script's only stdout is one JSON summary:
 
-| Field                     | Meaning                                                                                                                           |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `proposals`               | the changeset, grouped by transition (`wip_to_fixed`, `wip_to_fixed_by_name`, `drift_detected`, `promote_to_permanent`)             |
-| `applied`                 | a registry write happened. `false` under `--dry-run`, when nothing was proposed, and when the fold was byte-identical (idempotent re-run) |
+| Field                     | Meaning                                                                                                                                                               |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `proposals`               | the changeset, grouped by transition (`wip_to_fixed`, `wip_to_fixed_by_name`, `drift_detected`, `promote_to_permanent`)                                               |
+| `applied`                 | a registry write happened. `false` under `--dry-run`, when nothing was proposed, and when the fold was byte-identical (idempotent re-run)                             |
 | `permanent_slice_changed` | core's `permanent_data.ts` differs from a fresh render — rewritten on a real `--promote`, reported-only under `--dry-run` (rendered from the would-be-promoted rules) |
-| `missing_ids`             | `--id` values matching no proposal (selector mode) or no rule (`--promote` / name-mode `--fixed`)                                   |
-| `rejected_promotions`     | `--promote` targets refused, with the reason (`classifier.kind` is `"none"` or `"retired"`, or already permanent)                   |
-| `drift_unknown_rule_ids`  | published `rule_id`s with no registry rule — review signals, never writes                                                           |
-| `skipped_sources`         | published files that failed to read or parse (e.g. a stale schema version) — reported, never fatal                                  |
+| `missing_ids`             | `--id` values matching no proposal (selector mode) or no rule (`--promote` / name-mode `--fixed`)                                                                     |
+| `rejected_promotions`     | `--promote` targets refused, with the reason (`classifier.kind` is `"none"` or `"retired"`, or already permanent)                                                     |
+| `drift_unknown_rule_ids`  | published `rule_id`s with no registry rule — review signals, never writes                                                                                             |
+| `skipped_sources`         | published files that failed to read or parse (e.g. a stale schema version) — reported, never fatal                                                                    |
 
 Each auto-detected `wip_to_fixed` proposal carries `matched_subject` (the
 newest matching commit) as its audit line; each name-mode

@@ -190,10 +190,20 @@ plans must be on disk first.
 
 ### 3a. Permanent-limitation groups (`classifier-author`)
 
-A change group the human identifies as a **permanent limitation** (see
-`.claude/rules/classifier-lifecycle.md`) routes differently: it never graduates
-to `backlog/`. Instead of a `Task(refactor-investigator)`, dispatch one
-`Task(classifier-author)` per such group. The agent reads `packages/core` and
+**The routing signal.** The plan engine marks classifier-work groups with
+`is_classifier_work` (surfaced by `--priority classifier`) — but that flag alone
+means only "a classifier could route around this," which spans two disjoint
+outcomes: an **interim workaround** for a bug that Ariadne should eventually fix
+(these still graduate to `backlog/` as the tracked fix), and a **permanent
+limitation** that is fundamentally unknowable to static analysis (see
+`.claude/rules/classifier-lifecycle.md`). Only the permanent-limitation subset
+routes here; the human makes that call per group. So: review the
+`--priority classifier` groups, and for each one the human confirms is a
+permanent limitation (not an interim workaround), route it to `classifier-author`
+instead of `refactor-investigator`.
+
+Such a group never graduates to `backlog/`. Dispatch one
+`Task(classifier-author)` per confirmed permanent-limitation group. The agent reads `packages/core` and
 the group's triage entry context (`get_entry_context.ts`) and writes a **staged
 draft** — never the registry — to:
 

@@ -78,7 +78,7 @@ const GENERIC_HINTS: DiagnosisHints = {
     "",
     "   - The `Pre-Gathered Evidence → Ariadne call references` block lists every call site Ariadne saw, with `resolution_count`, `resolved_to`, `call_type`, and `caller_function` — this is Ariadne's view of the callers, no live query needed",
     "",
-    "5. **Emit a verdict** using the schema in the **Output** section below: `tp` when no real callers exist, `fp-classifier-regression` when an in-scope rule's predicate should have caught the real caller, `fp-novel` for a detection gap no in-scope rule covers, or `uncertain` when you cannot reduce to a single kind.",
+    "5. **Emit a verdict** using the schema in the **Output** section below: `tp` when no real callers exist, `fp-classifier-regression` when an in-scope rule's classifier should have caught the real caller, `fp-novel` for a detection gap no in-scope rule covers, or `uncertain` when you cannot reduce to a single kind.",
   ].join("\n"),
 };
 
@@ -247,7 +247,7 @@ export function format_classifier_hints(hints: readonly ClassifierHint[]): strin
     "",
     "### Classifier hints (sub-threshold matches)",
     "",
-    "Predicate classifiers from the known-issues registry matched this entry but did not reach the `min_confidence` threshold for auto-classification. Weigh these before starting the investigation — a hint often names the exact detection gap.",
+    "Builtin classifiers from the known-issues registry matched this entry but did not reach the `min_confidence` threshold for auto-classification. Weigh these before starting the investigation — a hint often names the exact detection gap.",
     "",
     bullets,
     "",

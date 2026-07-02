@@ -56,7 +56,7 @@ import * as fs from "node:fs/promises";
 /**
  * Tree-sitter capture names associated with each call type.
  *
- * Registry predicates that use `has_capture_at_grep_hit` /
+ * Registry builtin classifiers that read `has_capture_at_grep_hit` /
  * `missing_capture_at_grep_hit` reference capture names (e.g.
  * `"@reference.constructor"`); `explain_call_site()` emits a boolean
  * `capture_fired`, not a capture name. We bridge the two by deriving the
@@ -538,7 +538,7 @@ function read_source_line(
 /**
  * Derive `SyntacticFeatures` for a call from the `CallReference` and the
  * source line text at the call site. Core does not emit these flags directly
- * — we compose them here so the predicate evaluator can read them uniformly.
+ * — we compose them here so builtin classifiers can read them uniformly.
  *
  * Registry entries today use `is_super_call` and `is_dynamic_dispatch`. The
  * remaining flags are populated best-effort for future registry entries.

@@ -15,24 +15,7 @@
 import type { EnrichedEntryPoint } from "@ariadnejs/types";
 import type { FileLinesReader } from "../auto_classify_types";
 import { detect_language } from "../extract_entry_point_diagnostics";
-
-function extract_decorator_block(
-  lines: readonly string[],
-  start_line_1_based: number,
-): string {
-  const collected: string[] = [];
-  for (let i = start_line_1_based - 2; i >= 0; i--) {
-    const line = lines[i] ?? "";
-    const trimmed = line.trim();
-    if (trimmed.length === 0) continue;
-    if (trimmed.startsWith("@") || trimmed.startsWith("#[") || trimmed.startsWith("#![")) {
-      collected.unshift(line);
-      continue;
-    }
-    break;
-  }
-  return collected.join("\n");
-}
+import { extract_decorator_block } from "./extract_decorator_block";
 
 export function check_framework_flask_route(
   entry_point: EnrichedEntryPoint,

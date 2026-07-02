@@ -38,12 +38,22 @@ The script prints an investigation prompt built from a `DispensePayload`:
   each with `captures`), `ariadne_call_refs` (each with `caller_file`,
   `call_line`, `call_type`, `receiver_kind`, `resolution_failure`,
   `syntactic_features`), and `classifier_hints`.
-- **`relevant_registry_slice`** — the in-scope wip + permanent rules. Use it to
-  avoid drafting a duplicate of an existing classifier and to match an existing
-  entry's naming style.
+- **`relevant_registry_slice`** — the in-scope wip + permanent rules, capped at
+  ~20 (sorted by `observed_count`), so it is a dedup aid, not an exhaustive list.
+  Use it to avoid an obvious duplicate and to match naming style; `--stage`'s
+  duplicate-`group_id` rejection is the authoritative dedup guard.
 
 You also read `packages/core` to model your check on the real runtime types
 (step 3).
+
+**Payload vs. check-input shape.** `get_entry_context.ts` gives you a
+`TriageEntry`, but your check runs against an `EnrichedEntryPoint` — a different,
+richer type. The two share `name`, `file_path`, `start_line`, `kind`, and the
+diagnostics block (`grep_call_sites`, and `ariadne_call_refs` with
+`receiver_kind` / `resolution_failure` / `syntactic_features`). Build your
+discriminator ONLY from that shared subset. Do NOT key on `EnrichedEntryPoint`
+fields the sample payload does not expose (`definition_features`, `tree_size`) —
+you cannot verify those hold from the `TriageEntry` you investigated.
 
 # Instructions
 
@@ -84,18 +94,21 @@ FileLinesReader) => boolean` and the `BUILTIN_CHECKS` barrel.
 - Two or three existing checks as templates. `check_untyped-attribute-receiver.ts`
   is the reference for a call-ref-driven check; `check_string-keyed-dispatch.ts`
   for a name/path-regex check; `check_framework-component-decorator.ts` for a
-  decorator-block check (it inlines its own `extract_decorator_block` helper —
-  keep your file self-contained the same way). Match their import lines exactly:
+  decorator-block check (it imports the shared `extract_decorator_block` helper —
+  do the same for a decorator check). Match their import lines exactly:
   - `import type { EnrichedEntryPoint } from "@ariadnejs/types";`
   - `import type { FileLinesReader } from "../auto_classify_types";`
   - `import { detect_language } from "../extract_entry_point_diagnostics";` (only
     if you gate on language)
+  - `import { extract_decorator_block } from "./extract_decorator_block";` (only
+    for a decorator-block check)
 
 Your check must:
 
 - Take `(entry_point, read_file_lines)` and return `boolean`.
-- Be **self-contained** — inline any helper it needs (e.g. a decorator-block
-  extractor) so the single `.ts` file drops into `builtins/` without new imports.
+- Reach for the shared `builtins/` helpers (`detect_language`,
+  `extract_decorator_block`) rather than reinventing them; a check is one small
+  focused file that imports what it needs, like the existing checks.
 - Guard by language first when the pattern is language-specific
   (`detect_language(entry_point.file_path) !== "python"` → `return false`).
 - Read only from `entry_point` (and `read_file_lines` if you truly need source
@@ -138,17 +151,19 @@ no markdown fencing inside the `.json` or `.ts` files.
 
 Field rules:
 
-- `group_id` kebab-case; `function_name` is `check_` + the snake_case of that
-  id, and MUST equal the exported function name in the `check_<group_id>.ts` file.
+- `group_id` is kebab-case; `function_name` is `check_<group_id_snake>` (the
+  `group_id` in `snake_case`) and MUST equal the exported function name in the
+  check file.
 - `status` is always `"wip"` — a drafted classifier starts as a candidate; the
   human promotes it to `permanent` later.
 - `languages` from the sample entries' file extensions (`.ts`/`.tsx` →
   `typescript`, `.js`/`.jsx` → `javascript`, `.py` → `python`, `.rs` → `rust`).
 - `examples[]` — one entry per sample (`file`, `line`, `snippet`).
 - `min_confidence` is `0.95`.
-- `observed_count` MUST be `>= 1`, set to the group's size. The evidence gate in
-  `reconcile-registry --stage` rejects a draft with `observed_count < 1` — a
-  classifier is only authored from an observed group.
+- `observed_count` is REQUIRED in a staged draft and must be `>= 1`, set to the
+  group's size. The evidence gate in `reconcile-registry --stage` rejects a draft
+  whose `observed_count` is absent or `< 1` — a classifier is only authored from
+  an observed group.
 - `observed_projects` includes the target project; `last_seen_run` is the run id.
 - Do NOT set `classification`, `backlog_task`, `drift_detected`, or
   `drift_evidence` — those are human/registry-maintained.

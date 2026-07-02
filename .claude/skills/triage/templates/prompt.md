@@ -26,7 +26,7 @@ Write your result JSON to: {{output_path}}
 
 ### In-scope classifier rules
 
-The wip + permanent registry rules in scope for this entry (language match, or `diagnosis_eq` match for the entry's diagnosis). If you find a real caller that one of these rules' predicates *should* have matched but did not, emit `fp-classifier-regression` with the rule's `group_id` as `should_have_matched_rule_id`.
+The wip + permanent registry rules in scope for this entry (language match). If you find a real caller that one of these rules' classifiers _should_ have matched but did not, emit `fp-classifier-regression` with the rule's `group_id` as `should_have_matched_rule_id`.
 
 ```json
 {{relevant_registry_slice}}
@@ -44,7 +44,7 @@ Emit exactly one `TriageVerdict` JSON object — one of the four discriminated k
   ```
   { "kind": "tp", "member_evidence": { "file": "<path>", "line": <int>, "why": "<one sentence>" } }
   ```
-- **`fp-classifier-regression`** — a real caller exists that the predicate of one of the in-scope classifier rules *should* have matched but did not.
+- **`fp-classifier-regression`** — a real caller exists that one of the in-scope classifier rules _should_ have matched but did not.
   ```
   { "kind": "fp-classifier-regression", "should_have_matched_rule_id": "<group_id>", "evidence_excerpt": "<excerpt>", "member_evidence": { "file": "<path>", "line": <int>, "why": "<one sentence>" } }
   ```

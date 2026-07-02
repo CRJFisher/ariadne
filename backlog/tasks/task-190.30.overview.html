@@ -96,11 +96,11 @@
   /* before/after lifecycle */
   .sbs{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0}
   .panel{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:16px 18px}
-  .panel.aft{border-color:var(--clay);box-shadow:0 0 0 1px rgba(185,121,79,.25)}
+  .panel.aft{border-color:var(--olive);box-shadow:0 0 0 1px rgba(108,122,74,.25)}
   .panel .ph{display:flex;align-items:baseline;gap:9px;margin:0 0 12px}
   .panel .ph .tag{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.09em;border-radius:999px;padding:3px 9px}
   .panel.cur .ph .tag{background:var(--g100);color:var(--g600)}
-  .panel.aft .ph .tag{background:var(--clay);color:var(--ivory)}
+  .panel.aft .ph .tag{background:var(--olive);color:var(--ivory)}
   .panel .ph h3{font-family:var(--serif);font-size:17px;font-weight:600;margin:0;letter-spacing:-.01em}
   .panel svg{width:100%;height:auto;display:block}
   @media(max-width:840px){ .sbs{grid-template-columns:1fr} }
@@ -110,7 +110,7 @@
   @media(max-width:840px){ .board{grid-template-columns:1fr} }
   .col{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:14px 16px}
   .col h3{font-family:var(--serif);font-size:17px;font-weight:600;margin:0 0 2px;display:flex;align-items:center;gap:8px}
-  .col .sub{font-family:var(--mono);font-size:11px;color:var(--g400);margin:0 0 12px}
+  .col .subh{font-family:var(--mono);font-size:11px;color:var(--g400);margin:0 0 12px}
   .col.done{border-color:rgba(108,122,74,.5)}
   .cl{list-style:none;margin:0;padding:0}
   .cl li{display:grid;grid-template-columns:20px 1fr;gap:9px;align-items:start;padding:6px 0;border-top:1px solid var(--g100);font-size:13px;line-height:1.42}
@@ -137,7 +137,7 @@
     <span class="brand">task 190.30 · classifier scope</span>
     <span class="me" aria-current="page">190.30 · overview</span>
     <a class="doc-link" href="task-190.30.1.disposition-plan.html"><span class="done-dot"></span>190.30.1 · audit &amp; cleanup · done</a>
-    <a class="doc-link" href="task-190.30.2.classifier-author.html">190.30.2 · classifier-author · to do</a>
+    <a class="doc-link" href="task-190.30.2.classifier-author.html"><span class="done-dot"></span>190.30.2 · classifier-author · done</a>
   </div>
 </nav>
 
@@ -148,23 +148,23 @@
     <a href="#problem">1 · The conflation</a>
     <a href="#glance">2 · Registry, before → after</a>
     <a href="#disposition">3 · How the 170 disposed</a>
-    <a href="#lifecycle">4 · The remaining authoring gap</a>
-    <a href="#status">5 · Done &amp; remaining</a>
+    <a href="#lifecycle">4 · The authoring path</a>
+    <a href="#status">5 · Both sub-tasks done</a>
   </div>
 </nav>
 
 <main>
 <header>
   <p class="eyebrow">self-healing pipeline · classifier registry</p>
-  <h1>The classifier registry is now a permanent-limitations catalog — and one sub-task remains to author its entries</h1>
+  <h1>The classifier registry is now a builtin-only permanent-limitations catalog, with a tooled authoring path</h1>
   <p class="lead prose">One file (<code>known_issues/registry.json</code>) did two incompatible jobs: it cataloged patterns static analysis can <b>never</b> resolve, and it suppressed triage cost for bugs Ariadne <b>could</b> fix.</p>
-  <p class="lead prose">Task 190.30 splits those jobs apart. <b>190.30.1 is done</b> — the registry shrank from 181 to 32 entries, fixable bugs moved to the backlog. <b>190.30.2 remains</b> — a <code>classifier-author</code> agent so new permanent-limitation entries get a real classifier instead of a never-firing stub.</p>
+  <p class="lead prose">Task 190.30 splits those jobs apart, in two sub-tasks — <b>both now done</b>. <b>190.30.1</b> shrank the registry from 181 to a tight catalog and moved fixable bugs to the backlog. <b>190.30.2</b> removed the brittle predicate DSL — every classifier is now a <code>builtin</code> function — and added a <code>classifier-author</code> agent that drafts new entries for a human to insert under lock.</p>
   <div class="meta">
-    <span class="chip land">registry now <strong>32 entries</strong></span>
+    <span class="chip land">registry now <strong>21 rules</strong></span>
     <span class="chip">was <strong>181 · 94% wip</strong></span>
-    <span class="chip land">promoted <strong>11</strong></span>
-    <span class="chip">new fix tasks <strong>6</strong></span>
-    <span class="chip">sub-tasks <strong>1 done · 1 to do</strong></span>
+    <span class="chip land">all classifiers <strong>builtin</strong></span>
+    <span class="chip">predicate DSL <strong>removed</strong></span>
+    <span class="chip land">sub-tasks <strong>2 done</strong></span>
     <span class="chip">human stays <strong>sole writer</strong></span>
   </div>
 </header>
@@ -173,7 +173,7 @@
 <h2 id="problem"><span class="n">01</span>One registry, two jobs that fought each other</h2>
 <p class="cap prose">The same file answered two questions with opposite maintenance rules: <b>"can a static analyzer ever know this?"</b> and <b>"have we fixed this bug yet?"</b> — so 94% of it was unfilled deferred-bug stubs that never fired. 190.30.1 split it.</p>
 <div class="splitwrap">
-<svg viewBox="0 0 1000 300" role="img" aria-label="The registry conflated a permanent-limitations catalog with a triage-cost suppressor list, which 190.30.1 split into a 32-entry catalog plus the backlog.">
+<svg viewBox="0 0 1000 300" role="img" aria-label="The registry conflated a permanent-limitations catalog with a triage-cost suppressor list, which 190.30.1 split into a tight catalog plus the backlog.">
   <defs>
     <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#5f594f"/>
@@ -210,7 +210,7 @@
   <!-- outcome A: tight registry -->
   <rect x="700" y="62" width="280" height="64" rx="10" fill="#fffdf8" stroke="#6c7a4a" stroke-width="2"/>
   <text x="840" y="86" text-anchor="middle" fill="#2b2a28" font-family="ui-serif,Georgia,serif" font-size="14.5" font-weight="600">Registry = permanent only</text>
-  <text x="840" y="106" text-anchor="middle" fill="#4f5a36" font-family="ui-monospace,Menlo,monospace" font-size="10.5">32 entries · 20 permanent · all firing</text>
+  <text x="840" y="106" text-anchor="middle" fill="#4f5a36" font-family="ui-monospace,Menlo,monospace" font-size="10.5">a tight catalog · all firing</text>
 
   <!-- outcome B: backlog -->
   <rect x="700" y="174" width="280" height="64" rx="10" fill="#fffdf8" stroke="#b9794f" stroke-width="2"/>
@@ -223,14 +223,14 @@
   <span><i style="background:#a8472f"></i> deferred fixable bug (removed)</span>
   <span><i style="background:#2b2a28"></i> the former conflated registry</span>
 </div>
-<div class="callout rust">
-  <span class="k">the creation gap — still open (190.30.2)</span>
-  <p class="prose">No pipeline agent yet <b>authors</b> a classifier: triage emits <code>fp-novel</code> → plan proposes a task → prioritize files a backlog card → the human hand-writes the entire predicate or builtin with no tooling — the gap 190.30.2 closes.</p>
+<div class="callout olive">
+  <span class="k">the creation gap — now closed (190.30.2)</span>
+  <p class="prose">190.30.2 built the missing authoring path: when triage surfaces a novel permanent limitation, a <code>classifier-author</code> agent drafts a real <code>builtin</code> classifier into a staging directory, and the human inserts it via <code>reconcile-registry --stage</code>. The registry no longer needs hand-authored entries or never-firing stubs.</p>
 </div>
 
 <!-- ============ 2. REGISTRY BEFORE / AFTER ============ -->
-<h2 id="glance"><span class="n">02</span>Registry, before and after: 181 → 32, the catalog now fires</h2>
-<p class="cap prose">Left: the 181 entries before, by lifecycle status — 94% never-firing <code>wip</code>. Right: the landed 32, dominated by promoted <code>permanent</code> entries that all fire, with 10 deliberately held <code>wip</code>.</p>
+<h2 id="glance"><span class="n">02</span>Registry, before and after: 181 → 21, the catalog fires and is builtin-only</h2>
+<p class="cap prose">Left: the 181 entries before, by lifecycle status — 94% never-firing <code>wip</code>. Right: the landed catalog, dominated by promoted <code>permanent</code> entries that all fire, every classifier now a <code>builtin</code> after 190.30.2 removed the predicate DSL.</p>
 <div class="charts">
 
   <div class="chartcard">
@@ -253,29 +253,29 @@
   </div>
 
   <div class="chartcard">
-    <p class="ttl">after · 32 entries by status &amp; kind</p>
-    <h3>20 permanent, all firing</h3>
-    <svg viewBox="0 0 560 200" role="img" aria-label="After: of 32 registry entries, 20 permanent, 10 wip kept-pending, 2 fixed; by classifier kind 17 builtin, 12 predicate, 3 none.">
+    <p class="ttl">now · 21 rules by status &amp; kind</p>
+    <h3>19 permanent, all firing, all builtin</h3>
+    <svg viewBox="0 0 560 200" role="img" aria-label="Now: of 21 registry rules, 19 permanent and all firing, 2 fixed, 0 wip; by classifier kind 18 builtin and 3 none, with the predicate kind removed entirely.">
       <text x="0" y="32" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">permanent</text>
-      <rect x="90" y="18" width="240" height="24" rx="5" fill="#6c7a4a"/>
-      <text x="104" y="35" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#fff" font-weight="700">20 · all fire</text>
-      <text x="0" y="74" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">wip</text>
-      <rect x="90" y="60" width="120" height="24" rx="5" fill="#9a9387"/>
-      <text x="104" y="77" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#fff" font-weight="700">10 · kept-pending</text>
-      <text x="0" y="116" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">fixed</text>
-      <rect x="90" y="102" width="24" height="24" rx="5" fill="#8a9a5e"/>
-      <text x="124" y="119" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f6b3a" font-weight="700">2</text>
+      <rect x="90" y="18" width="260" height="24" rx="5" fill="#6c7a4a"/>
+      <text x="104" y="35" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#fff" font-weight="700">19 · all fire</text>
+      <text x="0" y="74" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">fixed</text>
+      <rect x="90" y="60" width="28" height="24" rx="5" fill="#8a9a5e"/>
+      <text x="128" y="77" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f6b3a" font-weight="700">2</text>
+      <text x="0" y="116" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#5f594f">wip</text>
+      <rect x="90" y="102" width="4" height="24" rx="2" fill="#9a9387"/>
+      <text x="104" y="119" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#9a9387" font-weight="700">0 · none held</text>
 
       <!-- annotation band -->
       <line x1="90" y1="148" x2="540" y2="148" stroke="#ddd6c8" stroke-width="1"/>
-      <circle cx="98" cy="170" r="5" fill="#b9794f"/>
-      <text x="110" y="174" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#5f594f">by kind: 17 builtin · 12 predicate · 3 none</text>
-      <circle cx="98" cy="190" r="5" fill="#6c7a4a"/>
-      <text x="110" y="194" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#5f594f">barrel shed 46 orphaned builtins → holds 17</text>
+      <circle cx="98" cy="170" r="5" fill="#6c7a4a"/>
+      <text x="110" y="174" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#5f594f">by kind: 18 builtin · 3 none · predicate kind REMOVED</text>
+      <circle cx="98" cy="190" r="5" fill="#b9794f"/>
+      <text x="110" y="194" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#5f594f">barrel holds 17 builtins · unindexed-external-module retired</text>
     </svg>
   </div>
 </div>
-<p class="cap prose">3 classifier kinds: <code>none</code> = stub that never fires · <code>predicate</code> = declarative JSON expression tree (no TS compile) · <code>builtin</code> = named TypeScript <code>check_*.ts</code> function (requires compile). The 102 <code>kind:none</code> plan stubs that once dominated are gone.</p>
+<p class="cap prose">After 190.30.2, <code>ClassifierSpec</code> is <code>none | builtin | retired</code>: <code>none</code> = stub that never fires · <code>builtin</code> = named TypeScript <code>check_*.ts</code> function (the only firing kind) · <code>retired</code> = a removed classifier, its former spec + reason preserved. The serialisable <code>predicate</code> kind — a declarative JSON expression tree — is gone.</p>
 
 <!-- ============ 3. DISPOSITION RESULT ============ -->
 <h2 id="disposition"><span class="n">03</span>How the 170 wip entries disposed: 149 removed, 11 promoted, 10 held</h2>
@@ -325,7 +325,7 @@
       <td>disposed</td>
       <td class="barcell">170</td>
       <td class="ex">149 deleted (incl. 5 dedup twins) · 11 promoted · 10 kept-pending</td>
-      <td class="act">181 → 32 entries</td>
+      <td class="act">181 → 32 entries at 190.30.1</td>
     </tr>
   </tbody>
 </table>
@@ -334,14 +334,14 @@
   <p class="prose"><b>6 of the spec's named promote candidates were fixable resolver gaps or already-fixed</b>, and <b>4 framework entries it never named are genuine impossibilities</b> — per-entry live reproduction, not the list, drove every promotion. The 190.30.1 page records the full audit trail.</p>
 </div>
 
-<!-- ============ 4. THE REMAINING GAP ============ -->
-<h2 id="lifecycle"><span class="n">04</span>What 190.30.2 still adds: a real classifier instead of a manual stub</h2>
-<p class="cap prose">Left: today, the path still dead-ends at a hand-edited registry with no tooling. Right: <code>prioritize --priority permanent</code> dispatches <code>classifier-author</code>, which stages a validated draft the human inserts via <code>reconcile-registry --stage</code>.</p>
+<!-- ============ 4. THE AUTHORING PATH ============ -->
+<h2 id="lifecycle"><span class="n">04</span>What 190.30.2 added: a builtin-only catalog and a staged authoring path</h2>
+<p class="cap prose">Left: the old path dead-ended at a hand-edited registry with no tooling. Right: <code>prioritize --priority permanent</code> dispatches <code>classifier-author</code>, which stages a validated <code>builtin</code> draft; the human inserts it via <code>reconcile-registry --stage</code> after five gates pass. The predicate DSL was removed in the same task — every classifier is now a check function.</p>
 <div class="sbs">
 
   <div class="panel cur">
-    <div class="ph"><span class="tag">today · broken</span><h3>Falls into a tooling gap</h3></div>
-    <svg viewBox="0 0 420 320" role="img" aria-label="Current flow: triage fp-novel to plan PlanTask to prioritize backlog task, then the human hand-edits registry.json with no tooling.">
+    <div class="ph"><span class="tag">before · broken</span><h3>Falls into a tooling gap</h3></div>
+    <svg viewBox="0 0 420 320" role="img" aria-label="Before: triage fp-novel to plan PlanTask to prioritize backlog task, then the human hand-edits registry.json with no tooling.">
       <defs>
         <marker id="g1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5f594f"/></marker>
         <marker id="g1r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a8472f"/></marker>
@@ -365,8 +365,8 @@
   </div>
 
   <div class="panel aft">
-    <div class="ph"><span class="tag">after 190.30.2</span><h3>Agent stages, human inserts</h3></div>
-    <svg viewBox="0 0 420 320" role="img" aria-label="New flow: triage fp-novel permanent-limitation group to plan PlanTask to prioritize priority permanent, which dispatches classifier-author to produce a draft, then human runs reconcile-registry --stage to insert a wip entry with a real classifier, later promoted to permanent.">
+    <div class="ph"><span class="tag">now · 190.30.2 shipped</span><h3>Agent stages, human inserts</h3></div>
+    <svg viewBox="0 0 420 320" role="img" aria-label="Now: triage fp-novel permanent-limitation group to plan PlanTask to prioritize priority permanent, which dispatches classifier-author to produce a builtin draft, then human runs reconcile-registry --stage to insert a wip entry with a real builtin classifier, later promoted to permanent.">
       <defs>
         <marker id="g2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5f594f"/></marker>
         <marker id="g2o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6c7a4a"/></marker>
@@ -382,57 +382,56 @@
       <text x="210" y="163" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10">dispatches classifier-author agent</text>
       <path d="M210,170 L210,188" stroke="#b9794f" stroke-width="1.8" marker-end="url(#g2o)"/>
       <rect x="40" y="190" width="340" height="44" rx="9" fill="#f1f3ea" stroke="#6c7a4a" stroke-width="1.8"/>
-      <text x="210" y="211" text-anchor="middle" fill="#4f5a36" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="700">draft_entry.json + REVIEW.md (+ .ts)</text>
-      <text x="210" y="226" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10">staged · agent never writes registry</text>
+      <text x="210" y="211" text-anchor="middle" fill="#4f5a36" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="700">draft_entry.json + check_*.ts + REVIEW.md</text>
+      <text x="210" y="226" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10">staged · builtin · agent never writes registry</text>
       <path d="M210,234 L210,252" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#g2o)"/>
       <rect x="50" y="254" width="320" height="36" rx="9" fill="#fffdf8" stroke="#b9794f" stroke-width="1.6"/>
-      <text x="210" y="277" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="11">human: reconcile-registry --stage</text>
+      <text x="210" y="277" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="11">human: reconcile-registry --stage (5 gates)</text>
       <path d="M210,290 L210,302" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#g2o)"/>
       <rect x="70" y="304" width="280" height="14" rx="6" fill="#6c7a4a"/>
-      <text x="210" y="315" text-anchor="middle" fill="#f7f3ec" font-family="ui-monospace,Menlo,monospace" font-size="9.5">wip entry, real classifier → later --promote → permanent</text>
+      <text x="210" y="315" text-anchor="middle" fill="#f7f3ec" font-family="ui-monospace,Menlo,monospace" font-size="9.5">wip entry, real builtin → later --promote → permanent</text>
     </svg>
   </div>
 </div>
 <div class="callout slate">
   <span class="k">invariant preserved</span>
-  <p class="prose">The agent only ever produces a <b>staged draft</b>; the human runs <code>reconcile-registry --stage</code>, which validates against the <code>KnownIssue</code> Zod schema and writes through <code>atomic_update_registry</code>. The human stays the registry's sole writer — <code>registry_writers.test.ts</code> still passes.</p>
+  <p class="prose">The agent only ever produces a <b>staged draft</b>; the human runs <code>reconcile-registry --stage</code>, which runs five gates and writes through <code>atomic_update_registry</code>. The human stays the registry's sole writer — <code>registry_writers.test.ts</code> still passes. Follow-up <b>TASK-190.31</b> tracks removing the human from classifier review entirely via growable eval-sets.</p>
 </div>
 
 <!-- ============ 5. STATUS ============ -->
-<h2 id="status"><span class="n">05</span>Where this stands: audit landed, authoring agent ahead</h2>
-<p class="cap prose">190.30.1 (registry audit &amp; cleanup) is <b>done</b> — registry 181 → 32, six new fix tasks. 190.30.2 (classifier-author agent) is <b>to do</b>.</p>
+<h2 id="status"><span class="n">05</span>Where this stands: both sub-tasks landed</h2>
+<p class="cap prose">190.30.1 (registry audit &amp; cleanup) and 190.30.2 (predicate-DSL removal + classifier-author agent) are <b>both done</b>. The registry is a builtin-only permanent-limitations catalog with a tooled, gated authoring path.</p>
 <div class="board">
 
   <div class="col done">
     <h3><span class="mark on"></span>Done — 190.30.1 registry audit &amp; cleanup</h3>
-    <p class="sub">181 → 32 entries · 11 promoted · 6 new fix tasks</p>
+    <p class="subh">181 → 32 entries · 11 promoted · 6 new fix tasks</p>
     <ul class="cl">
       <li><span class="mark on"></span><div>All 170 wip entries disposed against the tightened scope<small>102 stubs · 11 tracked · 12 already-fixed · 19 still-broken · 5 dedup twins · 11 promoted · 10 kept-pending</small></div></li>
       <li><span class="mark on"></span><div>11 impossible-pattern entries promoted to <code>permanent</code><small>10 promoted + the restored untyped-attribute-receiver · decided by live Tier-1 repro, not the spec list</small></div></li>
       <li><span class="mark on"></span><div>6 new top-level fix tasks created before deletion<small>TASK-351–356 track the 19 still-broken patterns · acceptance gate met</small></div></li>
-      <li><span class="mark on"></span><div>46 orphaned builtins deleted; barrel holds 17<small>BUILTIN_CHECKS now one per surviving builtin-kind entry</small></div></li>
+      <li><span class="mark on"></span><div>Orphaned builtins deleted; barrel one-per-surviving entry<small>BUILTIN_CHECKS now one key per live builtin-kind rule</small></div></li>
       <li><span class="mark on"></span><div><code>permanent_data.ts</code> regenerated; all gates green<small>permanent_data.sync · registry_writers · rewritten seed tests · full workspace suites pass</small></div></li>
-      <li><span class="mark on"></span><div><code>classifier-lifecycle.md</code> updated; audit trail in the task doc<small>wip+none stub state dropped · full per-bucket group_id lists committed in Implementation Notes</small></div></li>
     </ul>
   </div>
 
-  <div class="col">
-    <h3><span class="mark"></span>To do — 190.30.2 classifier-author agent</h3>
-    <p class="sub">closes the authoring gap · not started</p>
+  <div class="col done">
+    <h3><span class="mark on"></span>Done — 190.30.2 builtin-only + classifier-author</h3>
+    <p class="subh">predicate DSL removed · authoring path shipped</p>
     <ul class="cl">
-      <li><span class="mark"></span><div>Create <code>.claude/agents/classifier-author.md</code><small>scoped tools · prefers predicate over builtin · never writes registry</small></div></li>
-      <li><span class="mark"></span><div>Add <code>--stage &lt;draft&gt;</code> to <code>reconcile_registry.ts</code><small>validate · dedup group_id · check builtin in BUILTIN_CHECKS · dry-run + --apply</small></div></li>
-      <li><span class="mark"></span><div>Cover <code>--stage</code> in <code>reconcile_registry.test.ts</code><small>happy path · dup rejection · missing-builtin rejection</small></div></li>
-      <li><span class="mark"></span><div>Document <code>--priority permanent</code> in prioritize SKILL.md</div></li>
-      <li><span class="mark"></span><div>Update <code>classifier-lifecycle.md</code> — add the draft path</div></li>
+      <li><span class="mark on"></span><div>Predicate DSL removed end to end; <code>ClassifierSpec = none | builtin | retired</code><small>types, evaluator, and every consuming arm deleted — the wrong abstraction, cut</small></div></li>
+      <li><span class="mark on"></span><div>6 permanent predicate rules converted to builtins; <code>unindexed-external-module</code> retired<small>registry 22 → 21 · it compared against a value absent from ResolutionFailureReason and never fired</small></div></li>
+      <li><span class="mark on"></span><div><code>.claude/agents/classifier-author.md</code> — builtin-only, never writes registry<small>reads TriageEntry, emits draft_entry.json + check_*.ts + REVIEW.md into its staging dir</small></div></li>
+      <li><span class="mark on"></span><div><code>reconcile_registry.ts --stage</code> — five gates, dry-run by default, locked write<small>schema · kind · dup group_id · unique function_name · registered in BUILTIN_CHECKS</small></div></li>
+      <li><span class="mark on"></span><div>Docs updated: prioritize / reconcile-registry SKILLs + classifier-lifecycle.md<small>--priority permanent dispatch · --stage insertion · reframed write boundary · TASK-190.31 opened</small></div></li>
     </ul>
   </div>
 </div>
 
 <footer>
   task-190.30 · overview · refreshed as-built 2026-07-01 · self-contained, no network<br>
-  190.30.1 DONE — live registry now 32 entries (20 permanent / 10 wip / 2 fixed); barrel holds 17 builtins · 190.30.2 To Do<br>
-  sources: backlog/tasks/task-190.30{,.1,.2} · .claude/skills/triage/known_issues/registry.json · packages/core/src/classify_entry_points/ · .claude/rules/classifier-lifecycle.md<br>
+  190.30.1 &amp; 190.30.2 both DONE — live registry now 21 rules (19 permanent / 2 fixed · 18 builtin / 3 none); barrel holds 17 builtins · predicate DSL removed<br>
+  sources: backlog/tasks/task-190.30{,.1,.2,.31} · .claude/skills/triage/known_issues/registry.json · packages/core/src/classify_entry_points/ · .claude/rules/classifier-lifecycle.md<br>
   companions live: 190.30.1 (disposition plan) &amp; 190.30.2 (classifier-author) — both linked in the nav above
 </footer>
 </main>

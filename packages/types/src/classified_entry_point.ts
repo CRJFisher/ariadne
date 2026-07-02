@@ -67,7 +67,7 @@ export interface ClassifiedEntryPoints {
 }
 
 /**
- * A sub-threshold classifier match. Predicates always score `1.0` today, so
+ * A sub-threshold classifier match. Builtin classifiers always score `1.0` today, so
  * hints are accumulated only when a non-binary scorer is plugged in.
  * Persisted on `TriageEntry` so the agent prompt can weigh them before the
  * LLM investigator runs.
@@ -75,7 +75,7 @@ export interface ClassifiedEntryPoints {
 export interface ClassifierHint {
   /** Known-issue group this hint points at. */
   readonly group_id: string;
-  /** Score in [0, 1]. Predicates return 1.0; sub-threshold means `< min_confidence`. */
+  /** Score in [0, 1]. Builtin classifiers return 1.0; sub-threshold means `< min_confidence`. */
   readonly confidence: number;
   readonly reasoning: string;
 }

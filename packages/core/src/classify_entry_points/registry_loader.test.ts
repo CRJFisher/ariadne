@@ -6,6 +6,20 @@ import {
   reset_permanent_registry_cache_for_tests,
   validate_permanent_slice,
 } from "./registry_loader";
+import { BUILTIN_CHECKS } from "./builtins";
+
+describe("bundled slice ↔ BUILTIN_CHECKS bijection", () => {
+  it("every bundled builtin function_name resolves in BUILTIN_CHECKS", () => {
+    // Locks the barrel↔registry invariant so a drift (a registry rule naming a
+    // builtin the barrel never registered) fails fast here instead of as a
+    // runtime MissingBuiltinError when an entry point happens to match.
+    const names = load_permanent_registry()
+      .map((rule) => (rule.classifier.kind === "builtin" ? rule.classifier.function_name : null))
+      .filter((name): name is string => name !== null);
+    const missing = names.filter((name) => !(name in BUILTIN_CHECKS));
+    expect(missing).toEqual([]);
+  });
+});
 
 describe("registry_loader", () => {
   beforeEach(() => {

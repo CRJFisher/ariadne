@@ -26,7 +26,7 @@ export interface EnrichedEntryPoint {
 
   /**
    * Features of the definition site itself (not of call references to it).
-   * Drives classifier ops like `definition_feature_eq` — distinct from
+   * Read by builtin classifiers as a definition-site feature — distinct from
    * `SyntacticFeatures`, which lives on each `CallRefDiagnostic` and describes
    * the call site.
    */

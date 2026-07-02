@@ -572,9 +572,10 @@ export interface ReconcileDeps {
     preview_rules: KnownIssue[] | null;
   }) => Promise<boolean>;
   /**
-   * Read + JSON-parse a draft file. Returns `unknown` — validation is the
-   * caller's job (`validate_registry`), so a malformed draft surfaces as a
-   * schema error, not a read error. Injectable so tests never touch disk.
+   * Read + JSON-parse a draft file. Returns `unknown` — shape validation is the
+   * caller's job (`validate_registry`). `run_stage` wraps both a read/parse
+   * failure and a schema failure as `StageDraftError`. Injectable so tests
+   * never touch disk.
    */
   read_draft: (draft_path: string) => Promise<unknown>;
   /**
@@ -788,10 +789,21 @@ export async function run_stage(
     throw new Error("run_stage reached with a null stage path — dispatch guard bypassed");
   }
 
-  // 1–2. Read + validate. validate_registry runs the full per-entry validator
-  // (including the evidence gate) and narrows the singleton array to
-  // KnownIssuesRegistry, so `entry` is a KnownIssue after it returns.
-  const draft = await deps.read_draft(args.stage);
+  // 1. Read + JSON-parse the draft, wrapping a malformed-JSON parse error as a
+  // StageDraftError so every rejection on this path is a StageDraftError.
+  let draft: unknown;
+  try {
+    draft = await deps.read_draft(args.stage);
+  } catch (err) {
+    throw new StageDraftError(
+      `draft at ${args.stage} could not be read/parsed: ` +
+        (err instanceof Error ? err.message : String(err)),
+    );
+  }
+
+  // 2. Validate against the KnownIssue schema. validate_registry runs the full
+  // per-entry validator (including the evidence gate) and narrows the singleton
+  // array to KnownIssuesRegistry, so `entry` is a KnownIssue after it returns.
   const drafts = [draft];
   try {
     validate_registry(drafts);
@@ -803,44 +815,66 @@ export async function run_stage(
   }
   const entry: KnownIssue = drafts[0];
 
-  // 3. Reject a duplicate group_id against the current registry (explicit, not
-  // a silent overwrite).
-  const registry = await deps.load_registry();
-  if (registry.some((rule) => rule.group_id === entry.group_id)) {
+  // 3. The authoring path inserts a real builtin classifier only. A `none`
+  // stub or `retired` marker has no business entering through --stage.
+  if (entry.classifier.kind !== "builtin") {
     throw new StageDraftError(
-      `group_id "${entry.group_id}" already exists in the registry — staging refuses to ` +
-        "overwrite; pick a new group_id or edit the existing rule directly",
+      `--stage inserts a builtin classifier; draft "${entry.group_id}" has ` +
+        `classifier.kind "${entry.classifier.kind}"`,
+    );
+  }
+  const function_name = entry.classifier.function_name;
+
+  // 4. Reject a collision against the current registry — a duplicate group_id
+  // OR a builtin function_name already claimed by another rule. The
+  // singleton-array validation above cannot see the existing registry, so
+  // these cross-rule uniqueness invariants are checked here (and re-checked
+  // under the write lock) rather than left to fail on the next load.
+  const collision = (rules: readonly KnownIssue[]): StageDraftError | null => {
+    if (rules.some((rule) => rule.group_id === entry.group_id)) {
+      return new StageDraftError(
+        `group_id "${entry.group_id}" already exists in the registry — staging refuses to ` +
+          "overwrite; pick a new group_id or edit the existing rule directly",
+      );
+    }
+    const owner = rules.find(
+      (rule) => rule.classifier.kind === "builtin" && rule.classifier.function_name === function_name,
+    );
+    if (owner !== undefined) {
+      return new StageDraftError(
+        `builtin function_name "${function_name}" is already used by rule "${owner.group_id}" — ` +
+          "each builtin classifier must have a unique function_name",
+      );
+    }
+    return null;
+  };
+  const registry = await deps.load_registry();
+  const pre_lock_collision = collision(registry);
+  if (pre_lock_collision !== null) throw pre_lock_collision;
+
+  // 5. Fail-loud if the function_name is not registered in BUILTIN_CHECKS: the
+  // human must place the check_*.ts and rebuild core before staging.
+  if (!deps.known_builtin_names().has(function_name)) {
+    throw new StageDraftError(
+      `builtin function_name "${function_name}" is not registered in ` +
+        "core's BUILTIN_CHECKS — place the check_*.ts under " +
+        "packages/core/src/classify_entry_points/builtins/, rebuild core " +
+        "(pnpm build --filter core), then re-stage",
     );
   }
 
-  // 4. Fail-loud if a builtin's function_name is not registered in BUILTIN_CHECKS:
-  // the human must place the check_*.ts and rebuild core before staging.
-  if (entry.classifier.kind === "builtin") {
-    const known = deps.known_builtin_names();
-    if (!known.has(entry.classifier.function_name)) {
-      throw new StageDraftError(
-        `builtin function_name "${entry.classifier.function_name}" is not registered in ` +
-          "core's BUILTIN_CHECKS — place the check_*.ts under " +
-          "packages/core/src/classify_entry_points/builtins/, rebuild core " +
-          "(pnpm build --filter core), then re-stage",
-      );
-    }
-  }
-
-  // 5. Dry-run by default: preview and exit without writing.
+  // 6. Dry-run by default: preview and exit without writing.
   if (!args.apply) {
     return { draft: entry, applied: false };
   }
 
-  // 6. Insert through the locked write, re-checking the duplicate under the
-  // lock so a concurrent insert of the same group_id cannot be clobbered.
+  // 7. Insert through the locked write, re-checking the collision under the
+  // lock so a concurrent insert of the same group_id or function_name cannot
+  // be clobbered.
   const applied = await atomic_update_registry(deps.registry_path, async (raw) => {
     const current_rules = parse_known_issues_registry_json(raw);
-    if (current_rules.some((rule) => rule.group_id === entry.group_id)) {
-      throw new StageDraftError(
-        `group_id "${entry.group_id}" already exists in the registry (detected under the write lock)`,
-      );
-    }
+    const under_lock_collision = collision(current_rules);
+    if (under_lock_collision !== null) throw under_lock_collision;
     const next = serialize_known_issues_registry_json([...current_rules, entry]);
     return { kind: "write", next, result: true };
   });

@@ -29,9 +29,8 @@ const permanent_rule: KnownIssue = {
   languages: ["typescript"],
   examples: [],
   classifier: {
-    kind: "predicate",
-    axis: "A",
-    expression: { op: "diagnosis_eq", value: "no_callers_found" },
+    kind: "builtin",
+    function_name: "check_bundled_rule",
     min_confidence: 1,
   },
 };

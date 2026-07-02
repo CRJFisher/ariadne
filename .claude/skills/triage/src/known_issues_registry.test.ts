@@ -396,7 +396,7 @@ describe("validate_registry — retired classifier", () => {
     expect(() => validate_registry(registry)).not.toThrow();
   });
 
-  it("rejects a retired classifier whose `from.kind` is not predicate or builtin", () => {
+  it("rejects a retired classifier whose `from.kind` is not builtin", () => {
     const registry = with_first_classifier({
       kind: "retired",
       from: { kind: "none" },

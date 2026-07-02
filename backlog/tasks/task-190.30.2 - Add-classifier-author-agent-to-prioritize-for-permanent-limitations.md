@@ -1,7 +1,7 @@
 ---
 id: TASK-190.30.2
 title: "Add `classifier-author` agent to `prioritize` for permanent-limitation groups"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-06-29 00:00"
 labels:
@@ -199,3 +199,72 @@ Update `.claude/rules/classifier-lifecycle.md`:
       raw write function against `registry.json`).
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+### High-level summary
+
+The classifier registry is now a **builtin-only** catalog and has a tooled
+authoring path. Every classifier is a bespoke `BuiltinCheckFn` — a small
+TypeScript function at `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`
+looked up by `function_name` in the `BUILTIN_CHECKS` barrel. The serialisable
+`predicate` DSL is removed in full: `PredicateExpr`, `PREDICATE_OPERATORS`,
+`PredicateClassifierSpec`, and `ClassifierAxis` are gone from `@ariadnejs/types`
+(`ClassifierSpec` is now `none | builtin | retired`, and `retired.from` is a
+builtin spec); `predicate_evaluator.ts` is deleted; and the predicate arms are
+gone from the dispatcher (`classify_entry_points.ts`), the loader's
+compiled-pattern clone chain (`registry_loader.ts`), the `enrich_call_graph`
+unindexed-test guard, the triage validator (`validate_predicate_expr` + the
+axis/operator sets), and the dispense slice's `diagnosis_eq` inclusion path
+(relevance is now language-match only).
+
+The scope expanded from the original spec after the decision to drop the
+predicate abstraction as a brittle "wrong abstraction." The 7 firing permanent
+predicate rules were reconciled: 6 were converted to self-contained builtins
+preserving their former semantics verbatim (including the glob-as-regex patterns
+`@pytest.fixture*` / `@*.route*` / `@Component*` and the Rust macro regex), and
+`unindexed-external-module` was **retired** — its predicate compared
+`resolution_failure.reason` against `"receiver_is_external_import"`, a value that
+does not exist in the `ResolutionFailureReason` enum, so the untyped DSL had
+silently hidden a classifier that never fired. It could not be faithfully
+converted (no available signal expresses "caller in an external module" without
+over-matching), so it was dropped from the registry (21 rules, all builtin +
+`none`/`retired`).
+
+The authoring path closes the gap between "a novel permanent-limitation group"
+and "a live registry entry":
+
+- **`classifier-author` agent** (`.claude/agents/classifier-author.md`) — takes
+  one group (a project + sample triage entry indices), studies the false-positive
+  pattern via `get_entry_context.ts`, and writes three staging artifacts
+  (`draft_entry.json`, a self-contained `check_<group_id>.ts`, and `REVIEW.md`).
+  It never writes `registry.json`.
+- **`reconcile_registry.ts --stage <draft> [--apply]`** — the human's validated
+  insertion. It rejects a non-builtin draft, a draft failing the `KnownIssue`
+  schema (which enforces the `observed_count >= 1` evidence gate), a duplicate
+  `group_id`, a builtin `function_name` that collides with an existing rule, and
+  a `function_name` absent from core's `BUILTIN_CHECKS` (fail-loud, forcing the
+  place-and-rebuild step). It is dry-run by default; `--apply` writes through the
+  lock-fenced `atomic_update_registry`, re-checking collisions under the lock.
+
+Documentation was updated to match: `prioritize`/`reconcile-registry` SKILLs
+document the `classifier-author` dispatch and the `--stage` insertion; and
+`classifier-lifecycle.md` reflects the builtin-only catalog, the staging creation
+path, and a reframed write-boundary contract — the autonomous pipeline still
+never writes the registry unattended, but a human interactively directing a
+one-off edit (a refactor, as here) approves it at the permission prompt. Follow-up
+TASK-190.31 tracks growable classifier eval-sets that would remove the human from
+classifier review entirely (self-healing eddy loops).
+
+### Notable decisions
+
+- **`extract_decorator_block`** is a shared `builtins/` helper the decorator
+  checks import, not a per-file copy — the "self-contained builtin" goal is
+  served by a well-known intra-package import (the checks already import
+  `FileLinesReader` and `detect_language`), so N copies would be surplus.
+- **`enrich_call_graph`** gained a `builtin_checks` option that forwards to
+  `auto_classify`'s existing test-injection seam, replacing the removed
+  `unindexed_test_grep` guard option — the options surface did not grow.
+- A **barrel↔registry bijection** test locks every bundled builtin
+  `function_name` to a live `BUILTIN_CHECKS` key, converting a latent runtime
+  `MissingBuiltinError` into a fast unit failure.

@@ -46,7 +46,7 @@ export function load_registry(): KnownIssuesRegistry {
   } catch (e) {
     throw new RegistryValidationError(e instanceof Error ? e.message : String(e));
   }
-  // Deep validation (rule shapes, predicate ops, regex compile) — the wire
+  // Deep validation (rule shapes, builtin classifier specs) — the wire
   // format helper only checks the envelope.
   validate_registry(rules);
   return rules;

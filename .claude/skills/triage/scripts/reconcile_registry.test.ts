@@ -1168,6 +1168,62 @@ describe("run_stage", () => {
     ).rejects.toThrowError(/failed schema validation|observed_count/);
     expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
   });
+
+  it("rejects a non-builtin (none) draft — --stage inserts builtins only", async () => {
+    const none_draft = make_wip_rule({ group_id: "rule-none-draft", observed_count: 1 });
+    const seeded = await seed([seeded_rule]);
+    await expect(
+      run_or_stage(
+        ["--stage", "/drafts/none.json", "--apply"],
+        stage_deps({ read_draft: async () => none_draft }),
+      ),
+    ).rejects.toThrowError(/--stage inserts a builtin classifier/);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
+  });
+
+  it("rejects a draft whose builtin function_name is already used by another rule", async () => {
+    const owner = make_wip_rule({
+      group_id: "rule-owns-fn",
+      observed_count: 1,
+      classifier: { kind: "builtin", function_name: "check_staged", min_confidence: 0.95 },
+    });
+    const seeded = await seed([owner]);
+    await expect(
+      run_or_stage(
+        ["--stage", "/drafts/rule-staged.json", "--apply"],
+        stage_deps({ read_draft: async () => staged_draft, load_registry: async () => [owner] }),
+      ),
+    ).rejects.toThrowError(/function_name "check_staged" is already used by rule "rule-owns-fn"/);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
+  });
+
+  it("wraps a malformed-JSON read as a StageDraftError, writing nothing", async () => {
+    const seeded = await seed([seeded_rule]);
+    await expect(
+      run_or_stage(
+        ["--stage", "/drafts/bad.json"],
+        stage_deps({
+          read_draft: async () => {
+            throw new SyntaxError("Unexpected token < in JSON");
+          },
+        }),
+      ),
+    ).rejects.toThrowError(/could not be read\/parsed/);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
+  });
+
+  it("catches a collision under the write lock that the pre-lock snapshot missed", async () => {
+    // load_registry (the pre-lock read) is stale/empty, but the on-disk file
+    // already holds the draft's group_id — the under-lock re-check must reject.
+    const seeded = await seed([staged_draft]);
+    await expect(
+      run_or_stage(
+        ["--stage", "/drafts/rule-staged.json", "--apply"],
+        stage_deps({ load_registry: async () => [] }),
+      ),
+    ).rejects.toThrowError(/group_id "rule-staged" already exists/);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
+  });
 });
 
 // ---------------------------------------------------------------------------
