@@ -1100,6 +1100,44 @@ describe("run", () => {
     expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
   });
 
+  it("promotes the registered id and rejects the dangling one in a mixed batch", async () => {
+    const second_rule: KnownIssue = {
+      ...promotable_rule,
+      group_id: "rule-promotable-2",
+      classifier: { kind: "builtin", function_name: "check_gone", min_confidence: 1 },
+    };
+    await seed_registry([promotable_rule, second_rule]);
+    const summary = await run(
+      ["--id", "rule-promotable", "rule-promotable-2", "--promote"],
+      make_deps({
+        load_registry: async () => [promotable_rule, second_rule],
+        known_builtin_names: () => new Set(["check_rule_promotable"]),
+        regenerate_permanent_slice: async () => true,
+      }),
+    );
+    expect(summary.proposals.promote_to_permanent).toEqual([
+      { kind: "promote_to_permanent", group_id: "rule-promotable" },
+    ]);
+    expect(summary.rejected_promotions).toEqual([
+      {
+        group_id: "rule-promotable-2",
+        reason:
+          "builtin function_name \"check_gone\" is not registered in " +
+          "core's BUILTIN_CHECKS — place the check_*.ts under " +
+          "packages/core/src/classify_entry_points/builtins/, rebuild core " +
+          "(pnpm build --filter core), then re-promote",
+      },
+    ]);
+    expect(summary.applied).toEqual(true);
+    // Only the accepted rule flips; the dangling rule stays wip.
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(
+      serialize_known_issues_registry_json([
+        { ...promotable_rule, status: "permanent" },
+        second_rule,
+      ]),
+    );
+  });
+
   it("reports the dangling-builtin reason ahead of already-permanent", async () => {
     const permanent_dangling: KnownIssue = {
       ...promotable_rule,

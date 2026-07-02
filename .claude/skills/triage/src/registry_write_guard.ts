@@ -29,37 +29,57 @@ const PER_EDIT_CONTRACT =
   "the human (reconcile_registry.ts --stage / --id ... --fixed --reason).";
 
 /**
- * Bash write indicators. A command that merely reads the registry
- * (cat/jq/grep/git show) must pass — a guard that prompts on every read is
- * noise the human learns to click through or disables outright. Lexical
- * token-matching, not shell parsing: the goal is the realistic accident
- * surface (an agent literally typing a redirect or an in-place edit), with
- * the harness permission classifier as defense-in-depth for the adversarial
- * tail (variable indirection, eval, computed paths).
+ * Bash write patterns, each binding the write construct to the registry path
+ * itself. A command that merely reads the registry (cat/jq/grep/git show) —
+ * or that reads it and redirects the OUTPUT somewhere else — must pass: a
+ * guard that prompts on reads is noise the human learns to click through or
+ * disables outright. Lexical token-matching, not shell parsing: the goal is
+ * the realistic accident surface (an agent literally typing a redirect or an
+ * in-place edit against the registry), with the harness permission classifier
+ * as defense-in-depth for the adversarial tail (variable indirection, eval,
+ * computed paths). `[^|;&]*` keeps each match inside one pipeline segment so
+ * a write token in an unrelated segment cannot pair with a registry read.
  */
-const BASH_WRITE_INDICATORS = [
-  />/, // covers > and >>
-  /\btee\b/,
-  /\bsed\s+(-\S+\s+)*-i\b/,
-  /\bperl\s+(-\S+\s+)*-i\b/,
-  /\bmv\b/,
-  /\bcp\b/,
-  /\brm\b/,
-  /\bdd\b/,
-  /\btruncate\b/,
-  /writeFileSync|appendFileSync|writeFile|appendFile/,
+const BASH_WRITE_PATTERNS = [
+  />{1,2}\s*\S*registry\.json(\.lock)?\b/,
+  /(^|[\s;&|])tee\s[^|;&]*registry\.json/,
+  /(^|[\s;&|])(sed|perl)\s[^|;&]*-i\S*\s[^|;&]*registry\.json/,
+  // Command-position anchor, not \b: a flag cluster like `grep -rm 5` must
+  // not read as an `rm` invocation.
+  /(^|[\s;&|])(mv|cp|rm|dd|truncate)\s[^|;&]*registry\.json/,
+  // git checkout/restore silently replace the registry with the committed
+  // version — an accident-surface overwrite, not an adversarial one.
+  /(^|[\s;&|])git\s+(checkout|restore)\s[^|;&]*registry\.json/,
+  /\b(writeFileSync|appendFileSync|writeFile|appendFile)\b[^|;&]*registry\.json/,
 ];
 
 /**
- * True when a reconcile_registry.ts invocation is write-mode. The script
- * applies detected proposals by default — a bare invocation writes — so the
- * check is inverted: only explicitly read-only forms pass (`--dry-run`,
- * `--help`, or `--stage` without `--apply`, which previews the draft).
+ * True when the command carries `flag` as a real token. Quoted segments are
+ * stripped first so a flag mentioned inside an argument — e.g.
+ * `--reason "see --dry-run docs"` — cannot spoof read-only mode.
  */
+function has_flag(command: string, flag: string): boolean {
+  const unquoted = command
+    .replace(/'[^']*'/g, " ")
+    .replace(/"[^"]*"/g, " ");
+  return new RegExp(`(^|\\s)${flag}(=|\\s|$)`).test(unquoted);
+}
+
+/**
+ * True when a Bash command EXECUTES reconcile_registry.ts in write-mode. A
+ * mere mention of the script path (grep/cat/an editor opening it) must pass —
+ * the execution form requires a runner token before the script path. The
+ * script applies detected proposals by default — a bare invocation writes —
+ * so the flag check is inverted: only explicitly read-only forms pass
+ * (`--dry-run`, `--help`, or `--stage` without `--apply`; `--stage` is
+ * dry-run by default and writes only with `--apply`).
+ */
+const RECONCILE_EXECUTION = /\b(node|npx|tsx|pnpm)\b[^|;&]*reconcile_registry\.ts/;
+
 function is_write_mode_reconcile(command: string): boolean {
-  if (!command.includes("reconcile_registry.ts")) return false;
-  if (command.includes("--dry-run") || command.includes("--help")) return false;
-  if (command.includes("--stage") && !command.includes("--apply")) return false;
+  if (!RECONCILE_EXECUTION.test(command)) return false;
+  if (has_flag(command, "--dry-run") || has_flag(command, "--help")) return false;
+  if (has_flag(command, "--stage") && !has_flag(command, "--apply")) return false;
   return true;
 }
 
@@ -113,16 +133,13 @@ export function evaluate_tool_call(input: {
           `--dry-run), which writes the classifier registry. ${PER_EDIT_CONTRACT}`,
       };
     }
-    if (
-      command.includes("registry.json") &&
-      BASH_WRITE_INDICATORS.some((indicator) => indicator.test(command))
-    ) {
+    if (BASH_WRITE_PATTERNS.some((pattern) => pattern.test(command))) {
       return {
         decision: "ask",
         reason:
-          "This command references the human-owned classifier registry " +
-          `(${REGISTRY_REL}) alongside a write indicator (redirect, tee, ` +
-          `sed -i, mv/cp/rm, ...). ${PER_EDIT_CONTRACT}`,
+          "This command applies a write construct (redirect, tee, sed -i, " +
+          "mv/cp/rm, ...) to the human-owned classifier registry " +
+          `(${REGISTRY_REL}). ${PER_EDIT_CONTRACT}`,
       };
     }
     return { decision: "pass" };

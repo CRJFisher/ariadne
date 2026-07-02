@@ -39,7 +39,9 @@ function main(): void {
   });
   if (result.decision !== "ask") return;
 
-  log(`ask on ${String(input.tool_name)}`);
+  // Emit before logging: the decision is the load-bearing output, and an
+  // unwritable log file must not swallow the ask and fail open on the exact
+  // write the guard exists to gate.
   console.log(
     JSON.stringify({
       hookSpecificOutput: {
@@ -49,10 +51,21 @@ function main(): void {
       },
     }),
   );
+  const tool_input = input.tool_input as Record<string, unknown> | undefined;
+  const target = String(tool_input?.file_path ?? tool_input?.command ?? "");
+  safe_log(`ask on ${String(input.tool_name)}: ${target.slice(0, 160)}`);
+}
+
+function safe_log(message: string): void {
+  try {
+    log(message);
+  } catch {
+    // Logging must never break the hook or suppress its decision.
+  }
 }
 
 try {
   main();
 } catch (err) {
-  log(`fail-open: ${err instanceof Error ? err.message : String(err)}`);
+  safe_log(`fail-open: ${err instanceof Error ? err.message : String(err)}`);
 }

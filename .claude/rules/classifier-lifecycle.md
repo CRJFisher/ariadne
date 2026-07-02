@@ -99,12 +99,13 @@ The `--id ... --fixed --reason` name-mode exists for exactly this hand-off: it f
 
 ## Permissions: no broad allowlist for registry writes
 
-The repository grants no Bash allow-rule that lets an agent write the registry unattended, and none should be added. A broad allow-rule would weaken the self-modification safeguard: the `registry_write_guard.ts` hook holds `registry.json` behind a per-edit human `ask` so that no agent mutates the loop-closure surface unattended, and a standing allow-rule would suppress that prompt. A human directing an interactive session still approves each such edit at the prompt — that reviewed, per-edit approval is the safeguard working, not a bypass. Widening the permission surface into a standing allow-rule would remove that per-edit human checkpoint and let an unattended pipeline write the registry, which is exactly what the guard exists to prevent.
+The repository grants no Bash allow-rule that lets an agent write the registry unattended, and none should be added. The `registry_write_guard.ts` hook holds `registry.json` behind a per-edit human `ask`, and that `ask` takes precedence over a matching `allow` rule — but a narrow permission surface remains load-bearing as defense-in-depth for the window where a crashed hook fails open. A human directing an interactive session still approves each such edit at the prompt — that reviewed, per-edit approval is the safeguard working, not a bypass. Widening the permission surface into a standing allow-rule would remove that per-edit human checkpoint and let an unattended pipeline write the registry, which is exactly what the guard exists to prevent.
 
 The cost of keeping the guard is one human-approved write per pipeline transition, and the name-mode plus the printed-command hand-off reduce that cost to a single copy-paste line. That is the accepted trade. Config edits to `.claude/settings.json` (or `settings.local.json`) must neither broaden the permission surface into a standing allow-rule nor remove or weaken the `registry_write_guard.ts` `PreToolUse` hook that enforces the per-edit self-modification checkpoint for `registry.json`.
 
 ## Cross-references
 
+- The per-edit write-guard hook and its decision logic: `.claude/hooks/registry_write_guard.ts` over `.claude/skills/triage/src/registry_write_guard.ts`, wired in `.claude/settings.json`
 - The human-invoked registry write path: `.claude/skills/reconcile-registry/SKILL.md`
 - The retirement / name-mode hand-off command and selectors: `.claude/skills/reconcile-registry/SKILL.md`
 - The plan skill's role in the lifecycle: `.claude/skills/plan/SKILL.md`

@@ -146,6 +146,40 @@ describe("evaluate_tool_call — Bash path mentions", () => {
     ).toEqual("pass");
   });
 
+  it("passes registry reads that redirect their output elsewhere", () => {
+    expect(
+      decision_of("Bash", { command: `grep wip ${REGISTRY_REL} > /tmp/out.txt` }),
+    ).toEqual("pass");
+    expect(
+      decision_of("Bash", {
+        command: `git show HEAD:${REGISTRY_REL} > /tmp/before.json`,
+      }),
+    ).toEqual("pass");
+  });
+
+  it("passes reads whose > is a comparison, not a redirect", () => {
+    expect(
+      decision_of("Bash", {
+        command: `jq '[.[] | select(.observed_count > 1)]' ${REGISTRY_REL}`,
+      }),
+    ).toEqual("pass");
+  });
+
+  it("passes a flag cluster that merely contains a write verb", () => {
+    expect(
+      decision_of("Bash", { command: `grep -rm 5 wip ${REGISTRY_REL}` }),
+    ).toEqual("pass");
+  });
+
+  it("asks on git checkout/restore over the registry", () => {
+    expect(
+      decision_of("Bash", { command: `git checkout -- ${REGISTRY_REL}` }),
+    ).toEqual("ask");
+    expect(
+      decision_of("Bash", { command: `git restore ${REGISTRY_REL}` }),
+    ).toEqual("ask");
+  });
+
   it("passes when command is missing", () => {
     expect(decision_of("Bash", {})).toEqual("pass");
     expect(decision_of("Bash", undefined)).toEqual("pass");
@@ -186,6 +220,39 @@ describe("evaluate_tool_call — Bash reconcile_registry.ts invocations", () => 
     expect(decision_of("Bash", { command: `${RECONCILE} --help` })).toEqual(
       "pass",
     );
+  });
+
+  it("asks when a read-only flag appears only inside a quoted argument", () => {
+    expect(
+      decision_of("Bash", {
+        command: `${RECONCILE} --id r --fixed --reason "see --dry-run docs"`,
+      }),
+    ).toEqual("ask");
+    expect(
+      decision_of("Bash", {
+        command: `${RECONCILE} --id r --fixed --reason 'mentions --help'`,
+      }),
+    ).toEqual("ask");
+  });
+
+  it("passes commands that mention the script without executing it", () => {
+    expect(
+      decision_of("Bash", {
+        command:
+          "grep -n known_builtin_names .claude/skills/triage/scripts/reconcile_registry.ts",
+      }),
+    ).toEqual("pass");
+    expect(
+      decision_of("Bash", {
+        command: "cat .claude/skills/triage/scripts/reconcile_registry.ts",
+      }),
+    ).toEqual("pass");
+    expect(
+      decision_of("Bash", {
+        command:
+          "npx vitest run .claude/skills/triage/scripts/reconcile_registry.test.ts",
+      }),
+    ).toEqual("pass");
   });
 });
 
