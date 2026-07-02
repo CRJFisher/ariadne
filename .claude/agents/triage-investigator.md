@@ -1,6 +1,6 @@
 ---
 name: triage-investigator
-description: Investigates one entry point candidate and emits a single TriageVerdict — one of `tp`, `fp-novel`, `fp-classifier-regression`, `uncertain`. Gathers evidence for every entry; there is no early exit (a predicate-registry match is handled upstream in Phase 2 auto-classify, before an investigator is dispatched).
+description: Investigates one entry point candidate and emits a single TriageVerdict — one of `tp`, `fp-novel`, `fp-classifier-regression`, `uncertain`. Gathers evidence for every entry; there is no early exit (a registry classifier match is handled upstream in Phase 2 auto-classify, before an investigator is dispatched).
 tools: Bash(node --import tsx .claude/skills/triage/scripts/get_entry_context.ts:*), Read, Grep, Glob, Write(~/.ariadne/triage-entrypoints/**), Write(/tmp/**), mcp__ariadne__show_call_graph_neighborhood
 mcpServers:
   - ariadne
@@ -13,7 +13,7 @@ maxTurns: 50
 You investigate one entry point candidate and emit **exactly one `TriageVerdict`** of one of these four kinds:
 
 - **`tp`** — genuinely unreachable; the call graph is correct.
-- **`fp-classifier-regression`** — false positive that _should_ have been caught by one of the in-scope wip/permanent classifier rules but was not (the rule's predicate is too narrow). Emit the rule's `group_id` as `should_have_matched_rule_id`.
+- **`fp-classifier-regression`** — false positive that _should_ have been caught by one of the in-scope wip/permanent classifier rules but was not (the rule's classifier is too narrow). Emit the rule's `group_id` as `should_have_matched_rule_id`.
 - **`fp-novel`** — false positive that no in-scope rule should have caught. A real caller exists that Ariadne's resolver missed. Propose a one-or-two-sentence root cause; the verdict stands alone (offline grouping in the `plan` skill consolidates it later).
 - **`uncertain`** — the entry cannot be reduced to a single verdict (compounding gaps, ambiguous evidence). Surface for human-tier review.
 
@@ -30,7 +30,7 @@ node --import tsx .claude/skills/triage/scripts/get_entry_context.ts --project <
 The script outputs the full payload:
 
 - **`entry_context`** — the entry's name, file_path, kind, diagnosis, pre-gathered grep + Ariadne call references, and the output path for your verdict JSON.
-- **`relevant_registry_slice`** — the wip + permanent classifier rules in scope for this entry (language or `diagnosis_eq` match, capped at 20, sorted by `observed_count`). Used to detect `fp-classifier-regression`.
+- **`relevant_registry_slice`** — the wip + permanent classifier rules in scope for this entry (language match, capped at 20, sorted by `observed_count`). Each carries the rule's metadata, not its builtin check body. Used to detect `fp-classifier-regression`.
 
 ## Instructions
 
@@ -50,7 +50,7 @@ Gather evidence:
 
 Pick **exactly one** verdict kind based on the evidence:
 
-- **A real caller exists, and one of the rules in `relevant_registry_slice` has a predicate whose intent covers this caller but whose current shape failed to match** → `fp-classifier-regression`. Set `should_have_matched_rule_id` to the rule's `group_id`.
+- **A real caller exists, and one of the rules in `relevant_registry_slice` is a classifier whose described intent covers this caller but which failed to match** → `fp-classifier-regression`. Set `should_have_matched_rule_id` to the rule's `group_id`.
   ```json
   {
     "kind": "fp-classifier-regression",

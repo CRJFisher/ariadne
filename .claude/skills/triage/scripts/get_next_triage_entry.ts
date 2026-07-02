@@ -81,7 +81,7 @@ function parse_args(argv: string[]): CliArgs {
 /**
  * Pure selection over triage entries. An entry is pickable when:
  *   - `status === "pending"` AND
- *   - `auto_classified !== true` — predicate classifier already reached a
+ *   - `auto_classified !== true` — a builtin classifier already reached a
  *     verdict, so the LLM pool never needs to re-investigate it. Defence in
  *     depth: `build_triage_entries` already flips these to `"completed"`, but
  *     explicit filtering protects against future regressions that toggle

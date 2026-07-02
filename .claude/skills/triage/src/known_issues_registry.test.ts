@@ -35,13 +35,17 @@ describe("load_registry", () => {
     expect(fs.existsSync(p)).toBe(true);
   });
 
-  it("loads non-permanent statuses (does not filter to permanent only)", () => {
+  it("returns every on-disk row unfiltered (no status filtering in the loader)", () => {
     const registry = load_registry();
-    // The catalog's resting state is permanent limitations plus fixed/retired
-    // closure rows; the loader returns every status (active-set filtering is the
-    // job of active_rules_for_classification, not load_registry).
-    const has_non_permanent = registry.some((e) => e.status !== "permanent");
-    expect(has_non_permanent).toBe(true);
+    // load_registry validates but does not filter by status — active-set
+    // filtering is the job of active_rules_for_classification, not the loader.
+    // Asserted as a pass-through of the raw file rather than by the presence of
+    // any particular status, since the catalog's resting state can be entirely
+    // permanent.
+    const on_disk = parse_known_issues_registry_json(
+      fs.readFileSync(known_issues_registry_path(), "utf8"),
+    );
+    expect(registry.map((e) => e.group_id)).toEqual(on_disk.map((e) => e.group_id));
   });
 
   it("loads `kind: \"none\"` rules (registry placeholders without a classifier)", () => {
@@ -365,6 +369,26 @@ describe("validate_registry — negative cases", () => {
       min_confidence: 0.95,
     };
     expect(() => validate_registry(bad)).toThrow(/function_name "check_collision" already used/);
+  });
+
+  it("rejects a permanent entry that links a backlog_task (a misfiled fixable bug)", () => {
+    const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
+    bad[0]["status"] = "permanent";
+    bad[0]["classifier"] = { kind: "builtin", function_name: "check_perm_task", min_confidence: 0.9 };
+    bad[0]["backlog_task"] = "TASK-348";
+    expect(() => validate_registry(bad)).toThrow(
+      /permanent entry must not link a backlog task/,
+    );
+  });
+
+  it("rejects a permanent entry carrying drift_detected (a wip-only signal)", () => {
+    const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
+    bad[0]["status"] = "permanent";
+    bad[0]["classifier"] = { kind: "builtin", function_name: "check_perm_drift", min_confidence: 0.9 };
+    bad[0]["drift_detected"] = true;
+    expect(() => validate_registry(bad)).toThrow(
+      /permanent entry must not carry drift_detected/,
+    );
   });
 });
 

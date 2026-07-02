@@ -180,7 +180,6 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
         "function_name": "check_dynamic_dispatch",
         "min_confidence": 0.9
       },
-      "drift_detected": true,
       "observed_count": 43,
       "observed_projects": [
         "webpack",

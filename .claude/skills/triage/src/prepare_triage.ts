@@ -8,7 +8,7 @@
  *
  * Responsibilities:
  *   1. Run `enrich_call_graph` against the call graph + project + full registry.
- *   2. Partition each entry point into the `auto` (predicate / builtin match)
+ *   2. Partition each entry point into the `auto` (builtin classifier match)
  *      and `residual` (LLM-triage) buckets.
  *   3. Order the residual bucket deterministically and apply `max_count`.
  *   4. Delegate shape assembly to `build_triage_entries`.

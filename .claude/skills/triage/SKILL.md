@@ -162,7 +162,7 @@ Options:
 
 The script captures the target's HEAD short-commit, generates run-id `<short-commit>-<iso-ts>`, and creates `triage_state/<project>/runs/<run-id>/`. It partitions entries into three buckets:
 
-- **known-unreachable (registry)**: A predicate classifier from `known_issues/registry.json` matched at or above its `min_confidence` — marked completed immediately with the matched `group_id`.
+- **known-unreachable (registry)**: A builtin classifier from `known_issues/registry.json` matched at or above its `min_confidence` — marked completed immediately with the matched `group_id`.
 - **known-unreachable (previously-confirmed-tp)**: Reused from prior finalized runs at the same commit (accumulated across all runs, newest first). Skipped via `--no-reuse-tp`. Distinguished by `known_source: "previously-confirmed-tp"` and `tp_source_run_id`.
 - **llm-triage**: No classifier matched — marked pending for investigation.
 
@@ -246,7 +246,7 @@ Finalization builds the v5 `triage_results/<run-id>.json` entirely from the per-
 | `results/<entry_index>.json` (`fp-classifier-regression`) | `classifier_regressions[]` (rolled up by `should_have_matched_rule_id`)                                                          |
 | `results/<entry_index>.json` + `triage.json`              | `confirmed_unreachable[]` (auto-classified + TP cache + `kind: "tp"`), `uncertain[]`                                             |
 
-Each `confirmed_unreachable` row carries the identifiers needed for the cross-run TP cache (`name`, `file_path` relative to `project_path`, `kind`, `start_line`, optional `signature`) plus `source` (`"llm-tp"` for LLM-confirmed entries, `"registry:<group_id>"` for predicate hits, `"previously-confirmed-tp"` for TP-cache reuse) and the verdict's `member_evidence` when one exists. `uncertain` rows carry the same identifiers plus the verdict's `reason` and `member_evidence`.
+Each `confirmed_unreachable` row carries the identifiers needed for the cross-run TP cache (`name`, `file_path` relative to `project_path`, `kind`, `start_line`, optional `signature`) plus `source` (`"llm-tp"` for LLM-confirmed entries, `"registry:<group_id>"` for builtin-classifier hits, `"previously-confirmed-tp"` for TP-cache reuse) and the verdict's `member_evidence` when one exists. `uncertain` rows carry the same identifiers plus the verdict's `reason` and `member_evidence`.
 
 Finalization also:
 
@@ -355,7 +355,7 @@ This skill does not read or write this whitelist.
 
 ## Architecture: Key Modules
 
-The skill is a thin caller of `@ariadnejs/core`. Classification (`enrich_call_graph`, `extract_entry_point_diagnostics`, the predicate evaluator, builtins, and the bundled permanent registry slice) lives in `packages/core/src/classify_entry_points/`. Entry-point and known-issues types live in `@ariadnejs/types`. The skill modules under `src/` orchestrate the run lifecycle on top of that core API.
+The skill is a thin caller of `@ariadnejs/core`. Classification (`enrich_call_graph`, `extract_entry_point_diagnostics`, the builtin classifiers, and the bundled permanent registry slice) lives in `packages/core/src/classify_entry_points/`. Entry-point and known-issues types live in `@ariadnejs/types`. The skill modules under `src/` orchestrate the run lifecycle on top of that core API.
 
 | Module                                              | Purpose                                                                                                                                                                 |
 | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

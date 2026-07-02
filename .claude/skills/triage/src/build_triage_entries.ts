@@ -1,9 +1,9 @@
 /**
- * Convert the two triage buckets (auto-classified predicates, residual) into a
+ * Convert the two triage buckets (auto-classified, residual) into a
  * single ordered `TriageEntry[]`.
  *
  * Bucket semantics:
- * - **auto_classified** — matched a predicate classifier from the known-issues
+ * - **auto_classified** — matched a builtin classifier from the known-issues
  *   registry at or above `min_confidence`. Completed with a result keyed on
  *   the matched `group_id`.
  * - **residual** — routed to the LLM triage worker; any sub-threshold classifier
@@ -23,7 +23,7 @@ export interface BuildTriageEntriesInput {
   residual: ResidualEntryPoint[];
 }
 
-/** A residual entry that did not match any predicate classifier. */
+/** A residual entry that did not match any builtin classifier. */
 export interface ResidualEntryPoint {
   entry_point: EnrichedEntryPoint;
   classifier_hints: ClassifierHint[];

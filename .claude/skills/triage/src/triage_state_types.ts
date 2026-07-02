@@ -36,7 +36,7 @@ export interface TriageEntry {
   diagnosis: string;
   /**
    * Provenance tag for entries placed on `route="known-unreachable"`. Examples:
-   * `"registry:<group_id>"` for predicate/builtin classifier hits, or
+   * `"registry:<group_id>"` for builtin classifier hits, or
    * `"previously-confirmed-tp"` for entries reused from a prior run's TP cache.
    * `null` for `route="llm-triage"` entries.
    */
@@ -50,7 +50,7 @@ export interface TriageEntry {
   /** Pre-gathered diagnostics for self-service context */
   diagnostics: EntryPointDiagnostics;
   /**
-   * True when a predicate classifier from the known-issues registry matched this
+   * True when a builtin classifier from the known-issues registry matched this
    * entry at or above its `min_confidence` threshold. Orthogonal to `route`:
    * these entries carry `route === "known-unreachable"` and `status === "completed"`,
    * and are skipped by `get_next_triage_entry`.

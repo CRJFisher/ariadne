@@ -200,6 +200,34 @@ function validate_entry(entry: unknown, at: string): asserts entry is KnownIssue
       );
     }
   }
+
+  // Regime gate: a `permanent` entry is a genuine static-analysis impossibility,
+  // not a deferred fix — so it must not carry a `backlog_task`. That link marks a
+  // fixable bug tracked in the backlog, which by definition does not belong in the
+  // permanent-limitations catalog; its presence on a permanent row is the clearest
+  // signature of a mis-filed fixable bug.
+  if (
+    record["status"] === "permanent" &&
+    "backlog_task" in record &&
+    record["backlog_task"] !== undefined
+  ) {
+    throw new RegistryValidationError(
+      `${at_id}.backlog_task: a permanent entry must not link a backlog task — ` +
+        "a backlog_task marks a fixable bug, which does not belong in the permanent-limitations catalog",
+    );
+  }
+
+  // Drift review is a wip-only signal: it gates re-investigation of a candidate
+  // classifier (`active_rules_for_classification` only suppresses `wip` rows on
+  // it). A `permanent` rule was already promoted past that review, so a lingering
+  // `drift_detected: true` on it is dead metadata — reject it so the flag cannot
+  // silently rot on a promoted row.
+  if (record["status"] === "permanent" && record["drift_detected"] === true) {
+    throw new RegistryValidationError(
+      `${at_id}.drift_detected: a permanent entry must not carry drift_detected=true ` +
+        "(drift review is a wip-only signal; clear it before promotion)",
+    );
+  }
 }
 
 function validate_examples(value: unknown, at: string): void {
