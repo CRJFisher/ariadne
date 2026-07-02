@@ -75,6 +75,7 @@
     <span class="dot pend"></span>
     <a href="task-190.28 - Model-TS-field-initializer-method-refs-and-stored-callback-resolver-miss-as-reachability.reachability-fix.html"><span class="dot"></span> 190.28 · reachability fix</a>
     <a href="task-190.29 - Close-the-human-directed-registry-write-gap-sanctioned-agent-path-and-reconcile-fixed-name-mode.companion.html"><span class="dot"></span> 190.29 · registry hand-off</a>
+    <a href="task-190.33 - Enforce-human-owns-registry-in-repo-not-just-via-harness-classifier.enforcement.html"><span class="dot"></span> 190.33 · registry enforcement</a>
     <a href="task-190.26.overview.html"><span class="dot"></span> 190.26 · prioritize</a>
     <a href="task-190.30.overview.html"><span class="dot"></span> 190.30 · classifier scope</a>
     <a href="task-190.22 - Restructure-self-healing-pipeline-to-triage-→-plan-planning-only.overview.html"><span class="dot"></span> 190.22 · triage→plan split</a>
@@ -138,6 +139,11 @@
     <p>190.28 is a <b>phase-5 core fix</b>: two TypeScript false positives that survived detection get corrected at the indexing layer so the call graph stops reporting them. After they land, the human retires the matching classifier rows — closing the loop the pipeline exists to close.</p>
   </div>
 
+  <div class="callout">
+    <span class="k">Where TASK-190.33 lands</span>
+    <p>Phase 5 flips a classifier row when a fix lands — a <b>human-owned registry write</b>. 190.33 makes that ownership real in the repo: an in-repo <code>PreToolUse</code> hook routes every agent write of <code>registry.json</code> to a per-edit human <b>ask</b>, so an unattended agent can't silently rewrite the loop-closure surface even if the out-of-repo harness guard is off.</p>
+  </div>
+
   <h2>The recent entry-point-classification sub-tasks</h2>
   <p class="cap prose">The current cluster of work hardening detection and closing the loop. Cards with a green source line link to a comprehension companion; the rest are not yet generated.</p>
 
@@ -146,6 +152,16 @@
       <span class="id"><span>190.28</span><span class="st todo">To Do</span></span>
       <span class="ttl">Model TS field-initializer method refs &amp; stored-callback resolver-miss as reachability</span>
       <span class="doc">→ reachability-fix.html</span>
+    </a>
+    <a class="tcard has" href="task-190.29 - Close-the-human-directed-registry-write-gap-sanctioned-agent-path-and-reconcile-fixed-name-mode.companion.html">
+      <span class="id"><span>190.29</span><span class="st todo">To Do</span></span>
+      <span class="ttl">Close the human-directed registry-write gap: sanctioned agent path + reconcile name-mode</span>
+      <span class="doc">→ companion.html</span>
+    </a>
+    <a class="tcard has" href="task-190.33 - Enforce-human-owns-registry-in-repo-not-just-via-harness-classifier.enforcement.html">
+      <span class="id"><span>190.33</span><span class="st todo">To Do</span></span>
+      <span class="ttl">Enforce human-owns-registry in-repo via a PreToolUse ask-hook, not just the harness classifier</span>
+      <span class="doc">→ enforcement.html</span>
     </a>
     <a class="tcard has" href="task-190.26.overview.html">
       <span class="id"><span>190.26</span><span class="st done">Done</span></span>
@@ -167,11 +183,6 @@
       <span class="ttl">Prioritize skill: fix-history archaeologist sub-agent mining prior attempts</span>
       <span class="doc">not yet generated</span>
     </div>
-    <a class="tcard has" href="task-190.29 - Close-the-human-directed-registry-write-gap-sanctioned-agent-path-and-reconcile-fixed-name-mode.companion.html">
-      <span class="id"><span>190.29</span><span class="st todo">To Do</span></span>
-      <span class="ttl">Close the human-directed registry-write gap: sanctioned agent path + reconcile name-mode</span>
-      <span class="doc">→ companion.html</span>
-    </a>
     <div class="tcard">
       <span class="id"><span>190.25</span><span class="st todo">To Do</span></span>
       <span class="ttl">Plan skill: close the outer loop — export dedup, resolved semantics, validator drift</span>

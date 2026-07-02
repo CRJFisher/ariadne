@@ -959,6 +959,7 @@ describe("run", () => {
     const summary = await run(
       ["--id", "rule-promotable", "--promote"],
       make_deps({
+        known_builtin_names: () => new Set(["check_rule_promotable"]),
         regenerate_permanent_slice: async (opts) => {
           regenerate_calls.push(opts);
           return true;
@@ -1014,6 +1015,7 @@ describe("run", () => {
     const summary = await run(
       ["--dry-run", "--id", "rule-promotable", "--promote"],
       make_deps({
+        known_builtin_names: () => new Set(["check_rule_promotable"]),
         regenerate_permanent_slice: async (opts) => {
           regenerate_calls.push(opts);
           return true;
@@ -1033,6 +1035,96 @@ describe("run", () => {
       },
     ]);
     expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
+  });
+
+  it("rejects promoting a builtin whose function_name is absent from BUILTIN_CHECKS", async () => {
+    const seeded = await seed_registry([promotable_rule, tasked_rule, quiet_rule]);
+    const regenerate_calls: { dry_run: boolean; preview_rules: KnownIssue[] | null }[] = [];
+    const summary = await run(
+      ["--id", "rule-promotable", "--promote"],
+      make_deps({
+        // make_deps defaults known_builtin_names to an empty set — the
+        // check_rule_promotable builtin was deleted after staging.
+        regenerate_permanent_slice: async (opts) => {
+          regenerate_calls.push(opts);
+          return false;
+        },
+      }),
+    );
+    expect(summary.proposals.promote_to_permanent).toEqual([]);
+    expect(summary.rejected_promotions).toEqual([
+      {
+        group_id: "rule-promotable",
+        reason:
+          "builtin function_name \"check_rule_promotable\" is not registered in " +
+          "core's BUILTIN_CHECKS — place the check_*.ts under " +
+          "packages/core/src/classify_entry_points/builtins/, rebuild core " +
+          "(pnpm build --filter core), then re-promote",
+      },
+    ]);
+    expect(summary.applied).toEqual(false);
+    expect(summary.permanent_slice_changed).toEqual(false);
+    expect(regenerate_calls).toEqual([{ dry_run: false, preview_rules: null }]);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
+  });
+
+  it("previews a dangling-builtin rejection under --dry-run without writing", async () => {
+    const seeded = await seed_registry([promotable_rule, tasked_rule, quiet_rule]);
+    const regenerate_calls: { dry_run: boolean; preview_rules: KnownIssue[] | null }[] = [];
+    const summary = await run(
+      ["--dry-run", "--id", "rule-promotable", "--promote"],
+      make_deps({
+        regenerate_permanent_slice: async (opts) => {
+          regenerate_calls.push(opts);
+          return false;
+        },
+      }),
+    );
+    expect(summary.proposals.promote_to_permanent).toEqual([]);
+    expect(summary.rejected_promotions).toEqual([
+      {
+        group_id: "rule-promotable",
+        reason:
+          "builtin function_name \"check_rule_promotable\" is not registered in " +
+          "core's BUILTIN_CHECKS — place the check_*.ts under " +
+          "packages/core/src/classify_entry_points/builtins/, rebuild core " +
+          "(pnpm build --filter core), then re-promote",
+      },
+    ]);
+    expect(summary.applied).toEqual(false);
+    // An empty proposal set folds to the unchanged registry, so the preview
+    // reports no slice change from a rejected promotion.
+    expect(regenerate_calls).toEqual([
+      { dry_run: true, preview_rules: [promotable_rule, tasked_rule, quiet_rule] },
+    ]);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
+  });
+
+  it("reports the dangling-builtin reason ahead of already-permanent", async () => {
+    const permanent_dangling: KnownIssue = {
+      ...promotable_rule,
+      group_id: "rule-perm-dangling",
+      status: "permanent",
+      classifier: { kind: "builtin", function_name: "check_gone", min_confidence: 1 },
+    };
+    await seed_registry([permanent_dangling]);
+    const summary = await run(
+      ["--id", "rule-perm-dangling", "--promote"],
+      make_deps({
+        load_registry: async () => [permanent_dangling],
+        regenerate_permanent_slice: async () => false,
+      }),
+    );
+    expect(summary.rejected_promotions).toEqual([
+      {
+        group_id: "rule-perm-dangling",
+        reason:
+          "builtin function_name \"check_gone\" is not registered in " +
+          "core's BUILTIN_CHECKS — place the check_*.ts under " +
+          "packages/core/src/classify_entry_points/builtins/, rebuild core " +
+          "(pnpm build --filter core), then re-promote",
+      },
+    ]);
   });
 
   it("surfaces skipped sources from drift discovery", async () => {

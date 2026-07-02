@@ -649,6 +649,20 @@ export async function run(
           group_id: id,
           reason: `classifier.kind is "${rule.classifier.kind}" — author a builtin classifier before promoting`,
         });
+      } else if (!deps.known_builtin_names().has(rule.classifier.function_name)) {
+        // A builtin whose check_*.ts was deleted after staging: promoting it
+        // would bundle a dangling function_name into the permanent slice that
+        // only fails when core next builds. --stage guards this at authoring;
+        // --promote re-guards it. Checked ahead of already-permanent so the
+        // root-cause defect outranks the benign no-op reason.
+        rejected_promotions.push({
+          group_id: id,
+          reason:
+            `builtin function_name "${rule.classifier.function_name}" is not registered in ` +
+            "core's BUILTIN_CHECKS — place the check_*.ts under " +
+            "packages/core/src/classify_entry_points/builtins/, rebuild core " +
+            "(pnpm build --filter core), then re-promote",
+        });
       } else if (rule.status === "permanent") {
         rejected_promotions.push({ group_id: id, reason: "already permanent" });
       } else {
