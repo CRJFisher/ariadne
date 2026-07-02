@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <!-- SPDX-License-Identifier: Apache-2.0 -->
-<!-- Companion for TASK-190.33 — enforce human-owns-registry in-repo via a PreToolUse ask-hook.
-     Source: task-190.33 - ...md; .claude/hooks/file_naming_validator.ts + utils.ts (hook pattern);
-     .claude/settings.json (empty deny/ask, only Write|Edit file-naming hook);
-     .claude/skills/triage/scripts/reconcile_registry.ts run() promote branch (642-657) vs run_stage step 5 (855-864);
-     .claude/rules/classifier-lifecycle.md (three "harness guard" claims). Inherits TASK-190 family design tokens. -->
+<!-- Companion for TASK-190.33 — enforce human-owns-registry in-repo via a PreToolUse ask-hook. SHIPPED.
+     Verified against commits 154cf6c8 (feat) + 3df69176 (harden after review):
+     .claude/hooks/registry_write_guard.ts (thin fail-open stdin/emit wrapper, emits before logging);
+     .claude/skills/triage/src/registry_write_guard.ts + .test.ts (26 tests — decision logic outside .claude/hooks/ net);
+     .claude/settings.json (second PreToolUse entry, matcher Write|Edit|Bash, node --import tsx);
+     .claude/skills/triage/scripts/reconcile_registry.ts run() promote branch (642-671) vs run_stage step 5;
+     .claude/rules/classifier-lifecycle.md + .claude/agents/classifier-author.md (hook = per-edit checkpoint, harness = defense-in-depth);
+     .github/workflows/test.yml (triage suite gates merges). Inherits TASK-190 family design tokens. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -47,6 +50,8 @@
   .meta{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 2px}
   .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
   .chip strong{color:var(--slate);font-weight:600}
+  .chip.ok{background:#f2f4ec;border-color:#c3ceac;color:var(--olive)}
+  .chip.ok strong{color:var(--olive)}
   .cap{font-size:13.5px;color:var(--g600);margin:8px 2px 14px}
   .cap b{color:var(--slate);font-weight:600}
   .panelwrap{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:16px;margin:14px 0}
@@ -65,7 +70,9 @@
   .sw{width:11px;height:11px;border-radius:3px;display:inline-block;border:1px solid rgba(0,0,0,.12)}
   .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:15px 19px;margin:18px 0}
   .callout.slate{border-left-color:var(--slate);background:var(--slate);color:var(--ivory)}
+  .callout.olive{border-left-color:var(--olive)}
   .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 7px;display:block}
+  .callout.olive .k{color:var(--olive)}
   .callout.slate .k{color:var(--oat)}
   .callout p{margin:0 0 6px;font-size:14px;max-width:76ch} .callout p:last-child{margin:0}
   .callout b{color:var(--slate)} .callout.slate b{color:#fff}
@@ -75,6 +82,7 @@
   table.matrix th,table.matrix td{border:1px solid var(--g200);padding:10px 12px;text-align:left;vertical-align:top}
   table.matrix thead th{background:var(--oat);font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--slate);font-weight:600}
   table.matrix td.crit{font-size:12.5px;color:var(--slate);max-width:36ch}
+  table.matrix td.crit .done{font-family:var(--mono);font-size:9.5px;color:var(--olive);display:block;margin-top:5px;letter-spacing:.06em}
   table.matrix td.mech{font-family:var(--mono);font-size:11.5px;color:var(--g600)}
   table.matrix td.mech b{color:var(--slate);font-weight:600}
   .disc{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;white-space:nowrap}
@@ -122,25 +130,26 @@
 </nav>
 
 <main>
-  <p class="eyebrow">Classifier registry · in-repo enforcement</p>
+  <p class="eyebrow">Classifier registry · in-repo enforcement · shipped</p>
   <h1>Making "the human owns the registry" true in the repo, not just in the harness</h1>
-  <p class="lead prose">The classifier registry is the loop-closure surface: every status transition is a human decision. Three places in <code>classifier-lifecycle.md</code> claim a mechanical guard blocks an agent from writing it — <b>but nothing in the repository enforces that.</b></p>
-  <p class="cap prose" style="margin-top:0">A <code>PreToolUse</code> hook that routes every agent write of <code>registry.json</code> to a per-edit human <b>ask</b> puts the guard back inside the repo, where it survives a harness change.</p>
+  <p class="lead prose">The classifier registry is the loop-closure surface: every status transition is a human decision. <b>An in-repo <code>PreToolUse</code> hook now enforces that</b> — routing every agent <code>Write</code>/<code>Edit</code>/<code>Bash</code> that would write <code>registry.json</code> to a per-edit human <b>ask</b>.</p>
+  <p class="cap prose" style="margin-top:0">The guard lives inside the repo, where it survives a harness change; the out-of-repo harness classifier is demoted to defense-in-depth behind it.</p>
 
   <div class="meta">
     <span class="chip">parent <strong>TASK-190</strong></span>
-    <span class="chip">priority <strong>high</strong></span>
-    <span class="chip">labels <strong>hooks · enforcement</strong></span>
+    <span class="chip ok">status <strong>Done</strong></span>
+    <span class="chip">commits <strong>154cf6c8 · 3df69176</strong></span>
     <span class="chip">guarded path <strong>known_issues/registry.json</strong></span>
+    <span class="chip ok">tests <strong>26 guard · CI-gated</strong></span>
   </div>
 
-  <h2 id="layers">What the doc claims vs. what actually enforces</h2>
-  <p class="cap prose">The current guard rests entirely on an out-of-repo harness classifier that is <b>probabilistic in practice</b> — during TASK-190.30.2 the first several edits to the registry succeeded before it flagged a later one. The fix adds an in-repo layer and demotes the harness to defense-in-depth.</p>
+  <h2 id="layers">What the doc claimed vs. what now enforces</h2>
+  <p class="cap prose">The guard had rested on an out-of-repo harness classifier that is <b>probabilistic in practice</b> — during TASK-190.30.2, several edits landed before it flagged a later one. An in-repo layer now holds the checkpoint.</p>
 
   <div class="ba">
     <div class="pane">
-      <p class="panetitle cur">Current — claimed, not enforced</p>
-      <svg viewBox="0 0 360 250" role="img" aria-label="Current state: agent write of registry reaches an out-of-repo harness classifier that only probabilistically blocks; the repo has no gate.">
+      <p class="panetitle cur">Before — claimed, not enforced</p>
+      <svg viewBox="0 0 360 250" role="img" aria-label="Before state: agent write of registry reaches an out-of-repo harness classifier that only probabilistically blocks; the repo has no gate.">
         <defs>
           <marker id="ar-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#9a9387"/></marker>
           <marker id="ar-rust" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#a8472f"/></marker>
@@ -169,12 +178,12 @@
 
     <div class="divider">
       <span class="arw">→</span>
-      <span class="lbl">190.33 adds</span>
+      <span class="lbl">190.33 shipped</span>
     </div>
 
     <div class="pane">
-      <p class="panetitle pln">Planned — enforced in-repo, harness as backup</p>
-      <svg viewBox="0 0 360 250" role="img" aria-label="Planned state: agent write hits an in-repo PreToolUse ask-hook; interactive human approves, unattended agent is denied; harness classifier remains as defense-in-depth.">
+      <p class="panetitle pln">After — enforced in-repo, harness as backup</p>
+      <svg viewBox="0 0 360 250" role="img" aria-label="After state: agent write hits an in-repo PreToolUse ask-hook; interactive human approves, unattended agent is denied; harness classifier remains as defense-in-depth.">
         <defs>
           <marker id="ar-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6c7a4a"/></marker>
           <marker id="ar-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b9794f"/></marker>
@@ -186,7 +195,7 @@
 
         <!-- NEW in-repo hook -->
         <rect x="60" y="76" width="240" height="46" rx="10" fill="#f2f4ec" stroke="#6c7a4a" stroke-width="2"/>
-        <text x="180" y="94" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#6c7a4a">NEW · PreToolUse hook</text>
+        <text x="180" y="94" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#6c7a4a">PreToolUse hook · in-repo</text>
         <text x="180" y="111" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11.5" fill="#2b2a28">permissionDecision: ask</text>
 
         <!-- two outcomes -->
@@ -210,20 +219,21 @@
   </div>
   <div class="legend">
     <span><span class="sw" style="background:#6c7a4a"></span> added in-repo (the ask-hook)</span>
-    <span><span class="sw" style="background:#a8472f"></span> blocked / the gap being closed</span>
+    <span><span class="sw" style="background:#a8472f"></span> blocked / the gap now closed</span>
     <span><span class="sw" style="background:#fffdf8;border-color:#9a9387"></span> out-of-repo, dashed = probabilistic</span>
   </div>
 
   <div class="callout">
-    <span class="k">The three claims the doc makes — none backed by repo config</span>
-    <p><code>.claude/settings.json</code> has empty <code>deny</code> and <code>ask</code> lists; its only <code>PreToolUse</code> hook is the file-naming validator (matcher <code>Write|Edit</code>). The <code>registry_writers.test.ts</code> AST-walk catches <b>lock-bypassing code</b> at build time — it does not stop an agent hand-editing the JSON via <code>Write</code>/<code>Edit</code>.</p>
+    <span class="k">What the guard is wired into — and where its logic lives</span>
+    <p><code>.claude/settings.json</code> now carries a <b>second</b> <code>PreToolUse</code> entry, matcher <code>Write|Edit|Bash</code>, running <code>registry_write_guard.ts</code> under <code>node --import tsx</code>, alongside the file-naming validator.</p>
+    <p>The decision logic and its <b>26 tests</b> live in <code>.claude/skills/triage/src/</code> — because <code>.claude/hooks/</code> sits outside the repo's test/lint/typecheck nets; the hook file is a thin fail-open wrapper.</p>
   </div>
 
-  <h2 id="flow">How the hook decides — and where the Bash heuristic lives</h2>
-  <p class="cap prose">The hook follows the existing pattern: read stdin JSON via <code>parse_stdin()</code>, resolve the target, emit <code>hookSpecificOutput</code>. <b>Write/Edit resolve cleanly</b> from <code>tool_input.file_path</code>; <b>Bash is the hard case</b> — the command string must be inspected, but a read-only <code>cat</code>/<code>grep</code>/<code>jq</code> of the registry should not prompt.</p>
+  <h2 id="flow">How the hook decides — two layers, and a hardened Bash heuristic</h2>
+  <p class="cap prose">The <code>.claude/hooks/</code> entry parses stdin, calls <code>evaluate_tool_call()</code>, and on <code>ask</code> <b>emits the decision JSON before logging</b> so an unwritable log can't swallow it. <b>Write/Edit resolve cleanly</b>; <b>Bash is the hard case</b>, hardened after a live over-trigger.</p>
 
   <div class="panelwrap">
-    <svg viewBox="0 0 1000 340" role="img" aria-label="Hook decision flow: on PreToolUse, branch on tool. Write/Edit resolve file_path; Bash inspects the command for a registry mention and a write-indicator. Target is the registry means ask, which resolves to approve when interactive and deny when unattended; otherwise pass.">
+    <svg viewBox="0 0 1000 360" role="img" aria-label="Hook decision flow: the thin wrapper parses stdin and delegates to evaluate_tool_call. Write and Edit resolve file_path repo-relatively against the registry or its lock. Bash asks only when a write construct is bound to the registry within one pipeline segment, or when reconcile_registry.ts runs in write-mode; pure reads and reads-redirected-elsewhere pass. A registry target resolves ask to approve when interactive and deny when unattended.">
       <defs>
         <marker id="fa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b9794f"/></marker>
         <marker id="fo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6c7a4a"/></marker>
@@ -232,122 +242,133 @@
       </defs>
       <g font-family="ui-monospace,monospace">
         <!-- entry -->
-        <rect x="12" y="140" width="132" height="52" rx="10" fill="#e7ddc9" stroke="#9a9387"/>
-        <text x="78" y="162" text-anchor="middle" font-size="10.5" fill="#5f594f">PreToolUse</text>
-        <text x="78" y="178" text-anchor="middle" font-size="11" fill="#2b2a28">parse_stdin()</text>
+        <rect x="12" y="150" width="140" height="58" rx="10" fill="#e7ddc9" stroke="#9a9387"/>
+        <text x="82" y="172" text-anchor="middle" font-size="10" fill="#5f594f">thin wrapper</text>
+        <text x="82" y="187" text-anchor="middle" font-size="10.5" fill="#2b2a28">parse_stdin →</text>
+        <text x="82" y="201" text-anchor="middle" font-size="10.5" fill="#2b2a28">evaluate_tool_call</text>
 
         <!-- tool decision diamond -->
-        <path d="M232 166 L292 130 L352 166 L292 202 Z" fill="#fffdf8" stroke="#b9794f"/>
-        <text x="292" y="162" text-anchor="middle" font-size="10.5" fill="#2b2a28">tool_name?</text>
-        <text x="292" y="177" text-anchor="middle" font-size="9" fill="#9a9387">match</text>
+        <path d="M240 178 L300 142 L360 178 L300 214 Z" fill="#fffdf8" stroke="#b9794f"/>
+        <text x="300" y="174" text-anchor="middle" font-size="10.5" fill="#2b2a28">tool_name?</text>
+        <text x="300" y="189" text-anchor="middle" font-size="9" fill="#9a9387">match</text>
 
         <!-- Write/Edit path -->
-        <rect x="420" y="40" width="184" height="52" rx="10" fill="#fffdf8" stroke="#9a9387"/>
-        <text x="512" y="61" text-anchor="middle" font-size="10" fill="#5f594f">Write / Edit — easy</text>
-        <text x="512" y="78" text-anchor="middle" font-size="10.5" fill="#2b2a28">resolve tool_input.file_path</text>
+        <rect x="424" y="40" width="196" height="56" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="522" y="60" text-anchor="middle" font-size="10" fill="#5f594f">Write / Edit — easy</text>
+        <text x="522" y="76" text-anchor="middle" font-size="10" fill="#2b2a28">resolve file_path repo-rel</text>
+        <text x="522" y="90" text-anchor="middle" font-size="9" fill="#9a9387">vs registry.json (+ .lock)</text>
 
         <!-- Bash heuristic box -->
-        <rect x="420" y="228" width="184" height="72" rx="10" fill="#faf2ec" stroke="#b9794f" stroke-width="2"/>
-        <text x="512" y="248" text-anchor="middle" font-size="10" fill="#b9794f">Bash — the hard case</text>
-        <text x="512" y="265" text-anchor="middle" font-size="10" fill="#2b2a28">mentions registry.json?</text>
-        <text x="512" y="281" text-anchor="middle" font-size="10" fill="#2b2a28">AND write-indicator?</text>
-        <text x="512" y="295" text-anchor="middle" font-size="8.5" fill="#9a9387">(vs. cat / grep / jq → read-only)</text>
+        <rect x="424" y="230" width="196" height="104" rx="10" fill="#faf2ec" stroke="#b9794f" stroke-width="2"/>
+        <text x="522" y="250" text-anchor="middle" font-size="10" fill="#b9794f">Bash — the hard case</text>
+        <text x="522" y="267" text-anchor="middle" font-size="9.5" fill="#2b2a28">write construct BOUND to</text>
+        <text x="522" y="280" text-anchor="middle" font-size="9.5" fill="#2b2a28">registry (1 pipeline segment)?</text>
+        <text x="522" y="296" text-anchor="middle" font-size="9.5" fill="#2b2a28">OR reconcile.ts write-mode?</text>
+        <text x="522" y="313" text-anchor="middle" font-size="8.5" fill="#9a9387">reads / reads→elsewhere → pass</text>
+        <text x="522" y="326" text-anchor="middle" font-size="8.5" fill="#9a9387">mere mention → pass</text>
 
         <!-- converge: is target the registry? -->
-        <path d="M690 166 L752 128 L814 166 L752 204 Z" fill="#fffdf8" stroke="#b9794f"/>
-        <text x="752" y="162" text-anchor="middle" font-size="9.5" fill="#2b2a28">target =</text>
-        <text x="752" y="176" text-anchor="middle" font-size="9.5" fill="#2b2a28">registry?</text>
+        <path d="M702 178 L764 140 L826 178 L764 216 Z" fill="#fffdf8" stroke="#b9794f"/>
+        <text x="764" y="174" text-anchor="middle" font-size="9.5" fill="#2b2a28">writes</text>
+        <text x="764" y="188" text-anchor="middle" font-size="9.5" fill="#2b2a28">registry?</text>
 
         <!-- ask outcome -->
-        <rect x="866" y="40" width="122" height="118" rx="10" fill="#f2f4ec" stroke="#6c7a4a" stroke-width="2"/>
-        <text x="927" y="62" text-anchor="middle" font-size="10.5" fill="#6c7a4a">ask</text>
-        <text x="927" y="84" text-anchor="middle" font-size="9.5" fill="#2b2a28">interactive</text>
-        <text x="927" y="99" text-anchor="middle" font-size="9.5" fill="#6c7a4a">→ approve</text>
-        <text x="927" y="122" text-anchor="middle" font-size="9.5" fill="#2b2a28">unattended</text>
-        <text x="927" y="137" text-anchor="middle" font-size="9.5" fill="#a8472f">→ deny</text>
+        <rect x="878" y="46" width="110" height="120" rx="10" fill="#f2f4ec" stroke="#6c7a4a" stroke-width="2"/>
+        <text x="933" y="68" text-anchor="middle" font-size="10.5" fill="#6c7a4a">ask</text>
+        <text x="933" y="90" text-anchor="middle" font-size="9.5" fill="#2b2a28">interactive</text>
+        <text x="933" y="105" text-anchor="middle" font-size="9.5" fill="#6c7a4a">→ approve</text>
+        <text x="933" y="128" text-anchor="middle" font-size="9.5" fill="#2b2a28">unattended</text>
+        <text x="933" y="143" text-anchor="middle" font-size="9.5" fill="#a8472f">→ deny</text>
 
         <!-- pass outcome -->
-        <rect x="866" y="228" width="122" height="52" rx="10" fill="#fffdf8" stroke="#9a9387"/>
-        <text x="927" y="250" text-anchor="middle" font-size="10.5" fill="#5f594f">pass</text>
-        <text x="927" y="267" text-anchor="middle" font-size="9.5" fill="#2b2a28">no output</text>
+        <rect x="878" y="240" width="110" height="52" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="933" y="262" text-anchor="middle" font-size="10.5" fill="#5f594f">pass</text>
+        <text x="933" y="279" text-anchor="middle" font-size="9.5" fill="#2b2a28">exit 0, no output</text>
 
         <!-- edges -->
-        <line x1="144" y1="166" x2="230" y2="166" stroke="#9a9387" stroke-width="1.6" marker-end="url(#fg)"/>
-        <path d="M330 148 Q380 100 418 70" fill="none" stroke="#b9794f" stroke-width="1.6" marker-end="url(#fa)"/>
-        <path d="M330 184 Q380 240 418 258" fill="none" stroke="#b9794f" stroke-width="1.6" marker-end="url(#fa)"/>
-        <path d="M604 66 Q660 110 700 150" fill="none" stroke="#9a9387" stroke-width="1.6" marker-end="url(#fg)"/>
-        <path d="M604 264 Q660 220 700 182" fill="none" stroke="#9a9387" stroke-width="1.6" marker-end="url(#fg)"/>
-        <path d="M792 138 Q835 110 864 96" fill="none" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#fo)"/>
-        <text x="832" y="118" font-size="9" fill="#6c7a4a">yes</text>
-        <path d="M792 190 Q835 220 864 250" fill="none" stroke="#9a9387" stroke-width="1.6" marker-end="url(#fg)"/>
-        <text x="828" y="228" font-size="9" fill="#9a9387">no</text>
+        <line x1="152" y1="179" x2="238" y2="179" stroke="#9a9387" stroke-width="1.6" marker-end="url(#fg)"/>
+        <path d="M338 160 Q388 100 422 72" fill="none" stroke="#b9794f" stroke-width="1.6" marker-end="url(#fa)"/>
+        <path d="M338 196 Q388 250 422 268" fill="none" stroke="#b9794f" stroke-width="1.6" marker-end="url(#fa)"/>
+        <path d="M620 68 Q676 120 712 162" fill="none" stroke="#9a9387" stroke-width="1.6" marker-end="url(#fg)"/>
+        <path d="M620 282 Q676 232 712 194" fill="none" stroke="#9a9387" stroke-width="1.6" marker-end="url(#fg)"/>
+        <path d="M804 150 Q847 118 876 102" fill="none" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#fo)"/>
+        <text x="844" y="126" font-size="9" fill="#6c7a4a">yes</text>
+        <path d="M804 202 Q847 234 876 262" fill="none" stroke="#9a9387" stroke-width="1.6" marker-end="url(#fg)"/>
+        <text x="840" y="240" font-size="9" fill="#9a9387">no</text>
       </g>
     </svg>
   </div>
   <div class="legend">
     <span><span class="sw" style="background:#f2f4ec;border-color:#6c7a4a"></span> ask — the per-edit human checkpoint</span>
-    <span><span class="sw" style="background:#faf2ec;border-color:#b9794f"></span> Bash heuristic — the real decision point</span>
+    <span><span class="sw" style="background:#faf2ec;border-color:#b9794f"></span> Bash heuristic — bound writes only</span>
     <span><span class="sw" style="background:#a8472f"></span> unattended → deny (headless resolves ask to deny)</span>
   </div>
 
   <div class="callout">
-    <span class="k">The one design choice this hook makes</span>
-    <p>Prompting on <b>every</b> mention of <code>registry.json</code> would nag on read-only <code>cat</code>/<code>grep</code>/<code>jq</code> and on the sanctioned human path (<code>reconcile_registry.ts</code>, writing under the <code>registry.json.lock</code> sidecar).</p>
-    <p>Prompting only on a <b>write-indicator</b> keeps the ask targeted; a redirection or unusual write form that slips past is still backstopped by the harness classifier.</p>
+    <span class="k">The Bash rule the guard settled on (after hardening)</span>
+    <p>It asks only when a write construct is <b>bound to the registry path within one pipeline segment</b>: a redirect into it, <code>tee</code>/<code>sed -i</code>/<code>perl -i</code>, a command-position-anchored <code>mv</code>/<code>cp</code>/<code>rm</code>/<code>dd</code>/<code>truncate</code>, <code>git checkout</code>/<code>restore</code>, or a <code>writeFileSync</code>-family call — a <code>grep -rm</code> flag cluster is not an <code>rm</code>.</p>
+    <p>Running <code>reconcile_registry.ts</code> asks only <b>in write-mode</b>: a runner token (<code>node</code>/<code>npx</code>/<code>tsx</code>/<code>pnpm</code>) is required, so a mention passes; a bare invocation writes so it asks; <code>--dry-run</code>/<code>--help</code>/<code>--stage</code>-without-<code>--apply</code> pass. Flags are token-matched with quoted segments stripped, so <code>--reason "see --dry-run docs"</code> cannot spoof read-only.</p>
   </div>
 
   <h2 id="ac">Each acceptance criterion → the mechanism that satisfies it</h2>
-  <p class="cap prose">Three mechanisms carry the whole task: the <span class="disc hook">hook + settings</span>, a <span class="disc code">code gate in reconcile</span>, and a <span class="disc doc">doc-truth edit</span>.</p>
+  <p class="cap prose">Three mechanisms carry the whole task: the <span class="disc hook">hook + settings</span>, a <span class="disc code">code gate in reconcile</span>, and a <span class="disc doc">doc-truth edit</span> — all four criteria shipped.</p>
 
   <table class="matrix">
     <thead>
-      <tr><th style="width:44%">Acceptance criterion (from the task doc)</th><th style="width:20%">Mechanism</th><th>How it satisfies</th></tr>
+      <tr><th style="width:44%">Acceptance criterion (from the task doc)</th><th style="width:20%">Mechanism</th><th>How it shipped</th></tr>
     </thead>
     <tbody>
       <tr>
-        <td class="crit">A <code>PreToolUse</code> hook intercepts every agent <code>Write</code>/<code>Edit</code>/<code>Bash</code> targeting <code>registry.json</code> and routes it to a per-edit human <b>ask</b>, so an unattended agent cannot silently write.</td>
+        <td class="crit">A <code>PreToolUse</code> hook intercepts every agent <code>Write</code>/<code>Edit</code>/<code>Bash</code> targeting <code>registry.json</code> and routes it to a per-edit human <b>ask</b>, so an unattended agent cannot silently write.<span class="done">✓ done</span></td>
         <td><span class="disc hook">hook + settings</span></td>
-        <td class="mech">New hook matching <b>Write|Edit|Bash</b>, wired in <code>.claude/settings.json</code> alongside the file-naming validator; emits <code>permissionDecision: "ask"</code>.</td>
+        <td class="mech">Second <code>PreToolUse</code> entry, matcher <b>Write|Edit|Bash</b>, <code>node --import tsx registry_write_guard.ts</code>; emits <code>permissionDecision: "ask"</code> before logging.</td>
       </tr>
       <tr>
-        <td class="crit">The hook does not block a human-approved interactive edit — the per-edit checkpoint, consistent with the classifier-lifecycle reframe.</td>
+        <td class="crit">The hook does not block a human-approved interactive edit — the per-edit checkpoint, consistent with the classifier-lifecycle reframe.<span class="done">✓ done</span></td>
         <td><span class="disc hook">hook + settings</span></td>
-        <td class="mech"><b>ask</b>, not <b>deny</b>: interactive session resolves to a prompt the human approves; headless resolves ask → deny.</td>
+        <td class="mech"><b>ask</b>, not <b>deny</b>: interactive session resolves to a prompt the human approves; headless resolves ask → deny (fail-closed).</td>
       </tr>
       <tr>
-        <td class="crit"><code>classifier-lifecycle.md</code> describes the in-repo enforcement accurately — no claim resting solely on the out-of-repo harness classifier.</td>
+        <td class="crit"><code>classifier-lifecycle.md</code> describes the in-repo enforcement accurately — no claim resting solely on the out-of-repo harness classifier.<span class="done">✓ done</span></td>
         <td><span class="disc doc">doc truth</span></td>
-        <td class="mech">Rewrite the three claims: in-repo hook = the per-edit ask; harness classifier = <b>defense-in-depth</b>. Fix the same claim in <code>classifier-author.md</code>.</td>
+        <td class="mech">Hook named as the per-edit checkpoint; harness = <b>defense-in-depth</b>; ask-over-allow precedence stated; a Cross-references row indexes the hook. Same fix in <code>classifier-author.md</code>.</td>
       </tr>
       <tr>
-        <td class="crit"><code>--promote</code> re-checks <code>BUILTIN_CHECKS</code> membership like <code>--stage</code>, with a test.</td>
+        <td class="crit"><code>--promote</code> re-checks <code>BUILTIN_CHECKS</code> membership like <code>--stage</code>, with a test.<span class="done">✓ done</span></td>
         <td><span class="disc code">reconcile gate</span></td>
-        <td class="mech">Add the same <code>known_builtin_names().has(function_name)</code> rejection to the promote branch of <code>run()</code>; add a case to <code>reconcile_registry.test.ts</code>.</td>
+        <td class="mech"><code>known_builtin_names().has(function_name)</code> rejection added to the promote branch — <b>ahead of</b> the already-permanent check; a mixed-batch case added to <code>reconcile_registry.test.ts</code>.</td>
       </tr>
     </tbody>
   </table>
 
   <h2 id="promote">The secondary fix: closing the <code>--promote</code> membership hole</h2>
-  <p class="cap prose"><code>run_stage</code> already rejects a builtin whose <code>function_name</code> is absent from core's <code>BUILTIN_CHECKS</code> (step 5). The <code>--promote</code> branch checks <code>classifier.kind</code> and already-permanent, <b>but never re-checks membership</b> — so a builtin whose <code>check_*.ts</code> was deleted after staging could be promoted and leave the slice referencing a dangling name.</p>
+  <p class="cap prose"><code>run_stage</code> rejects a builtin whose <code>function_name</code> is absent from <code>BUILTIN_CHECKS</code>; the <code>--promote</code> branch <b>never re-checked membership</b>, so a builtin whose <code>check_*.ts</code> was deleted after staging could promote a dangling name into the slice.</p>
 
   <div class="code">
-    <div class="file"><span>.claude/skills/triage/scripts/reconcile_registry.ts</span><span class="loc">run() · promote branch ~642-657</span></div>
-<pre><span class="cm">// --promote path in run() — the membership gate to add, mirroring run_stage step 5</span>
+    <div class="file"><span>.claude/skills/triage/scripts/reconcile_registry.ts</span><span class="loc">run() · promote branch ~642-671</span></div>
+<pre><span class="cm">// --promote path in run() — membership gate placed BEFORE already-permanent</span>
 <span class="ctx"></span><span class="kw">const</span> rule = rules_by_id.<span class="fn">get</span>(id);
 <span class="ctx"></span><span class="kw">if</span> (rule === <span class="kw">undefined</span>) {
 <span class="ctx"></span>  missing_ids.<span class="fn">push</span>(id);
 <span class="ctx"></span>} <span class="kw">else if</span> (rule.classifier.kind === <span class="str">"none"</span> || rule.classifier.kind === <span class="str">"retired"</span>) {
-<span class="ctx"></span>  rejected_promotions.<span class="fn">push</span>({ group_id: id, reason: <span class="str">`classifier.kind is "…"`</span> });
+<span class="ctx"></span>  rejected_promotions.<span class="fn">push</span>({ group_id: id, reason: <span class="str">`classifier.kind is "…" — author a builtin first`</span> });
+<span class="add"></span><span class="cm">// Root-cause defect outranks the benign no-op reason: a deleted check_*.ts is</span>
+<span class="add"></span><span class="cm">// checked BEFORE already-permanent so promote can't bundle a dangling name.</span>
+<span class="add"></span>} <span class="kw">else if</span> (!deps.<span class="fn">known_builtin_names</span>().<span class="fn">has</span>(rule.classifier.function_name)) {
+<span class="add"></span>  rejected_promotions.<span class="fn">push</span>({ group_id: id, reason: <span class="str">`function_name not in BUILTIN_CHECKS … then re-promote`</span> });
 <span class="ctx"></span>} <span class="kw">else if</span> (rule.status === <span class="str">"permanent"</span>) {
 <span class="ctx"></span>  rejected_promotions.<span class="fn">push</span>({ group_id: id, reason: <span class="str">"already permanent"</span> });
-<span class="add"></span><span class="cm">// NEW — reject a builtin whose check_*.ts is not registered in core's BUILTIN_CHECKS</span>
-<span class="add"></span>} <span class="kw">else if</span> (!deps.<span class="fn">known_builtin_names</span>().<span class="fn">has</span>(rule.classifier.function_name)) {
-<span class="add"></span>  rejected_promotions.<span class="fn">push</span>({ group_id: id, reason: <span class="str">`function_name not in BUILTIN_CHECKS`</span> });
 <span class="ctx"></span>} <span class="kw">else</span> {
 <span class="ctx"></span>  promote_proposals.<span class="fn">push</span>({ kind: <span class="str">"promote_to_permanent"</span>, group_id: id });
 <span class="ctx"></span>}</pre>
   </div>
-  <p class="cap prose" style="margin-top:2px">The <code>ReconcileDeps.known_builtin_names()</code> thunk already exists and is used by <code>run_stage</code> — the fix reuses it, keeping the authoring boundary and the promotion boundary enforcing the same invariant.</p>
+  <p class="cap prose" style="margin-top:2px">The rejection is a <code>rejected_promotions</code> row (not a throw), mirroring <code>run_stage</code>'s remediation down to the <b>"re-promote"</b> instruction; the <code>known_builtin_names()</code> thunk is reused, so authoring and promotion enforce one invariant.</p>
+
+  <div class="callout olive">
+    <span class="k">Live validation — the guard proved itself, then got hardened</span>
+    <p>The guard's first version <b>over-triggered</b>: during the build session it raised <b>43 spurious asks</b> from read-only reviewer commands — mentions of <code>reconcile_registry.ts</code> that weren't executions, and write tokens unbound to the registry path.</p>
+    <p>That noise empirically proved <b>ask overrides auto-accept</b>; the bound-write / write-mode / quoted-flag-stripping heuristics above are the fix. CI now runs the triage suite, so the guard's 26 tests gate merges.</p>
+  </div>
 
   <div class="callout slate">
     <span class="k">Why this matters to the pipeline</span>
@@ -356,7 +377,7 @@
   </div>
 
   <footer>
-    TASK-190.33 · source <code>task-190.33 - …md</code> · verified against <code>.claude/hooks/file_naming_validator.ts</code>, <code>.claude/settings.json</code>, <code>reconcile_registry.ts</code> (run promote 642-657 / run_stage 855-864), <code>classifier-lifecycle.md</code>
+    TASK-190.33 · <b>shipped</b> in commits 154cf6c8 + 3df69176 · verified against <code>.claude/hooks/registry_write_guard.ts</code>, <code>.claude/skills/triage/src/registry_write_guard.ts</code> (26 tests), <code>.claude/settings.json</code>, <code>reconcile_registry.ts</code> (promote 642-671), <code>classifier-lifecycle.md</code>, <code>classifier-author.md</code>, <code>.github/workflows/test.yml</code>
   </footer>
 </main>
 </body>

@@ -1,7 +1,7 @@
 ---
 id: TASK-190.33
 title: "Enforce human-owns-registry in-repo, not just via the harness classifier"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-02 00:00"
 labels:
@@ -73,13 +73,67 @@ to the promote path.
 
 <!-- AC:BEGIN -->
 
-- [ ] A `PreToolUse` hook (configured in settings) intercepts every agent
+- [x] A `PreToolUse` hook (configured in settings) intercepts every agent
       `Write`/`Edit`/`Bash` targeting `registry.json` and routes it to a per-edit
       human `ask`, so an unattended agent cannot silently write the registry.
-- [ ] The hook does not block a human-approved interactive edit (the per-edit
+- [x] The hook does not block a human-approved interactive edit (the per-edit
       checkpoint), consistent with the classifier-lifecycle reframe.
-- [ ] `classifier-lifecycle.md` describes the in-repo enforcement accurately (no
+- [x] `classifier-lifecycle.md` describes the in-repo enforcement accurately (no
       claim that rests solely on the out-of-repo harness classifier).
-- [ ] `--promote` re-checks `BUILTIN_CHECKS` membership like `--stage`, with a test.
+- [x] `--promote` re-checks `BUILTIN_CHECKS` membership like `--stage`, with a test.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+### High-level summary
+
+The per-edit human checkpoint over `registry.json` is enforced in-repo by a
+`PreToolUse` hook. `.claude/settings.json` wires a `Write|Edit|Bash` matcher to
+`.claude/hooks/registry_write_guard.ts`, a thin fail-open wrapper that emits
+`hookSpecificOutput.permissionDecision: "ask"` — the only permission outcome
+that both re-raises a prompt under `defaultMode: "acceptEdits"` and lets an
+interactive human approve. An unattended agent has no one to answer the prompt,
+so the write stops; the harness `[Self-Modification]` classifier is
+defense-in-depth for obfuscated writes and the window where a crashed hook
+fails open. The decision logic and its 26 tests live in the triage package
+(`.claude/skills/triage/src/registry_write_guard.ts`), beside the registry
+domain code and inside the repo's test/lint/typecheck nets — `.claude/hooks/`
+is outside all three.
+
+The guard's Bash arm is a lexical accident-catcher, not a sandbox. It asks only
+when a write construct is bound to the registry path within one pipeline
+segment (redirect into it, `tee`/`sed -i`, command-position-anchored
+`mv`/`cp`/`rm`, `git checkout`/`restore`, `writeFileSync`-family), or when a
+command *executes* `reconcile_registry.ts` in write-mode — a runner token is
+required, mere mentions pass, and read-only flags are token-matched with quoted
+segments stripped so a `--reason "see --dry-run docs"` cannot spoof read-only
+mode. Pure reads never prompt: the first version asked on reads and produced
+43 spurious prompts in one session, which both proved the mechanism (an `ask`
+really does override auto-accept and allow rules) and taught the design rule
+the module now documents — a guard that prompts on reads is a guard the human
+disables.
+
+`--promote` re-checks `BUILTIN_CHECKS` membership exactly as `--stage` does: a
+builtin whose `check_*.ts` was deleted after staging is diverted to a
+`rejected_promotions` row (batch-safe, ahead of the benign `already permanent`
+reason) instead of bundling a dangling `function_name` into the permanent
+slice. `classifier-lifecycle.md` now names the hook as the checkpoint, states
+the ask-over-allow precedence, indexes the guard in its Cross-references, and
+records the hand-off truth: the human runs the printed reconcile command in
+their own terminal (outside the harness, no hook), while an agent running it
+write-mode via Bash trips the same per-edit `ask`. CI runs the triage suite so
+the guard's tests gate merges.
+
+### Details
+
+- Commits: `154cf6c8` (hook, gate, docs), `3df69176` (review hardening:
+  token-bound flags, path-bound patterns, git-restore coverage, emit-before-log,
+  mixed-batch promote test, CI step).
+- Review: 10-lens fan-out; fix-now findings were the reconcile
+  mention-vs-execution false positive, unbound write-token false positives, the
+  quoted-flag spoof (fail-open), log-before-emit, the missing Cross-references
+  row, the ask-over-allow wording, and the CI gap. Noted-not-actioned: shared
+  remediation-string helper (promote/stage), `node --import tsx` vs
+  `pnpm exec tsx` launcher divergence (verified safe), MultiEdit matcher
+  (tool absent from the current harness), SKILL.md soft-link to the guard.
