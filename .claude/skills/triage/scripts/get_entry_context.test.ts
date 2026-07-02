@@ -6,6 +6,7 @@ import {
   substitute_template,
   parse_entry_selector,
   find_entries_by_selector,
+  resolution_failure_message,
 } from "./get_entry_context.js";
 import type { TriageEntry } from "../src/triage_state_types.js";
 import type { DispensePayload } from "../src/dispense/dispense_payload.js";
@@ -324,14 +325,52 @@ describe("parse_entry_selector", () => {
 
   it("rejects a non-integer --line", () => {
     expect(() =>
-      parse_entry_selector(["--file", "a.ts", "--name", "n", "--kind", "function", "--line", "x"]),
+      parse_entry_selector([
+        "--run-id", "r1",
+        "--file", "a.ts", "--name", "n", "--kind", "function", "--line", "x",
+      ]),
     ).toThrowError(/--line requires an integer/);
+  });
+
+  it("rejects a partial-numeric --line rather than truncating it", () => {
+    expect(() =>
+      parse_entry_selector([
+        "--run-id", "r1",
+        "--file", "a.ts", "--name", "n", "--kind", "function", "--line", "12abc",
+      ]),
+    ).toThrowError(/--line requires an integer/);
+  });
+
+  it("rejects a partial-numeric --entry rather than truncating it", () => {
+    expect(() => parse_entry_selector(["--entry", "62x"])).toThrowError(
+      /--entry requires an integer/,
+    );
   });
 
   it("rejects a kind outside the member-symbol union", () => {
     expect(() =>
-      parse_entry_selector(["--file", "a.ts", "--name", "n", "--kind", "generator", "--line", "1"]),
+      parse_entry_selector([
+        "--run-id", "r1",
+        "--file", "a.ts", "--name", "n", "--kind", "generator", "--line", "1",
+      ]),
     ).toThrowError(/--kind must be one of function, method, constructor/);
+  });
+
+  it("rejects a member-symbol selector without --run-id", () => {
+    expect(() =>
+      parse_entry_selector([
+        "--file", "a.ts", "--name", "n", "--kind", "function", "--line", "1",
+      ]),
+    ).toThrowError(/the member-symbol selector requires --run-id/);
+  });
+
+  it("treats a flag-like token as a missing value, not as the value", () => {
+    expect(() =>
+      parse_entry_selector([
+        "--run-id", "r1",
+        "--file", "--name", "n", "--kind", "function", "--line", "1",
+      ]),
+    ).toThrowError(/missing --file/);
   });
 });
 
@@ -443,5 +482,126 @@ describe("find_entries_by_selector", () => {
         },
       ),
     ).toEqual([fn_at_42, duplicate]);
+  });
+});
+
+// ===== resolution_failure_message =====
+
+describe("resolution_failure_message", () => {
+  const fn_at_42 = make_entry({
+    entry_index: 5,
+    name: "handle",
+    file_path: "src/server.ts" as FilePath,
+    kind: "function",
+    start_line: 42,
+  });
+  const method_at_42 = make_entry({
+    entry_index: 6,
+    name: "handle",
+    file_path: "src/server.ts" as FilePath,
+    kind: "method",
+    start_line: 42,
+  });
+  const fn_at_99 = make_entry({
+    entry_index: 7,
+    name: "handle",
+    file_path: "src/server.ts" as FilePath,
+    kind: "function",
+    start_line: 99,
+  });
+  const state = { project_path: "/repo", entries: [fn_at_42, method_at_42, fn_at_99] };
+
+  it("returns null for exactly one match", () => {
+    expect(
+      resolution_failure_message(
+        state,
+        {
+          by: "member_symbol",
+          member: { file_path: "src/server.ts", name: "handle", kind: "function", start_line: 42 },
+        },
+        [fn_at_42],
+      ),
+    ).toEqual(null);
+  });
+
+  it("reports every colliding entry index for an ambiguous member symbol", () => {
+    const duplicate = make_entry({
+      entry_index: 9,
+      name: "handle",
+      file_path: "src/server.ts" as FilePath,
+      kind: "function",
+      start_line: 42,
+    });
+    expect(
+      resolution_failure_message(
+        { project_path: "/repo", entries: [fn_at_42, duplicate] },
+        {
+          by: "member_symbol",
+          member: { file_path: "src/server.ts", name: "handle", kind: "function", start_line: 42 },
+        },
+        [fn_at_42, duplicate],
+      ),
+    ).toEqual(
+      "Ambiguous selector: 2 entries match Member symbol function handle at src/server.ts:42 (entry indices 5, 9). Use --entry <index> to disambiguate.",
+    );
+  });
+
+  it("diagnoses a zero-match with same (file, name, kind) at other lines as run drift", () => {
+    expect(
+      resolution_failure_message(
+        state,
+        {
+          by: "member_symbol",
+          member: { file_path: "src/server.ts", name: "handle", kind: "function", start_line: 43 },
+        },
+        [],
+      ),
+    ).toEqual(
+      "Member symbol function handle at src/server.ts:43 not found in state file\n" +
+        "Entries matching (file, name, kind) exist at start_line 42, 99 — the member symbol and --run-id likely come from different runs (start_line is run-specific).",
+    );
+  });
+
+  it("diagnoses a zero-match with same (file, name) under other kinds as a --kind mismatch", () => {
+    expect(
+      resolution_failure_message(
+        state,
+        {
+          by: "member_symbol",
+          member: {
+            file_path: "src/server.ts",
+            name: "handle",
+            kind: "constructor",
+            start_line: 42,
+          },
+        },
+        [],
+      ),
+    ).toEqual(
+      "Member symbol constructor handle at src/server.ts:42 not found in state file\n" +
+        "Entries matching (file, name) exist with kind function, method — the selector's --kind does not match this run's entry.",
+    );
+  });
+
+  it("diagnoses a zero-match with no near entry as a run/selector mismatch", () => {
+    expect(
+      resolution_failure_message(
+        state,
+        {
+          by: "member_symbol",
+          member: { file_path: "src/server.ts", name: "nope", kind: "function", start_line: 42 },
+        },
+        [],
+      ),
+    ).toEqual(
+      "Member symbol function nope at src/server.ts:42 not found in state file\n" +
+        "The member symbol and --run-id must come from the same triage run.",
+    );
+  });
+
+  it("reports an index zero-match with the bare not-found line", () => {
+    expect(
+      resolution_failure_message(state, { by: "index", entry_index: 999 }, []),
+    ).toEqual("Entry index 999 not found in state file");
   });
 });

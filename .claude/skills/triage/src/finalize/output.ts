@@ -17,8 +17,6 @@
  * (and so the TP cache match key stays stable across hosts).
  */
 
-import * as path from "node:path";
-
 import type { EntryPointDiagnostics } from "@ariadnejs/types";
 import {
   aggregate_classifier_regressions,
@@ -35,6 +33,7 @@ import {
 } from "@ariadnejs/skill-protocol";
 import type { TriageVerdict } from "../verdict/triage_verdict.js";
 import type { TriageEntry, TriageState } from "../triage_state_types.js";
+import { relativize } from "../store/paths.js";
 
 // ===== Build inputs (producer-private) =====
 
@@ -62,11 +61,6 @@ export interface FinalizationSummary {
 }
 
 // ===== Pure Functions =====
-
-function relativize(file_path: string, project_path: string): string {
-  if (!path.isAbsolute(file_path)) return file_path;
-  return path.relative(project_path, file_path);
-}
 
 function entry_ref(entry: TriageEntry, project_path: string): PublishedEntryRef {
   const kind = entry.kind;

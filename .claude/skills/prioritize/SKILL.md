@@ -116,7 +116,10 @@ audit trail. At the start, take a UTC timestamp (`date -u +%Y%m%dT%H%M%SZ`) and 
 as the run's root for everything below. Each investigated group writes under
 `<root>/<fault_area>/`; the consolidator writes `<root>/consolidation.json` and a
 `<root>/clusters/<slug>/` folder per merged cluster. Use this concrete path
-(timestamp resolved) wherever the steps below write `<root>`.
+(timestamp resolved) wherever the steps below write `<root>`. The timestamp
+segment is the invocation's `<run>` id — `<root>` equals
+`~/.ariadne/prioritize/<run>/` — so a step that writes `<run>` (step 3a's
+dispatch) resolves by the same substitution.
 
 The division of labour stays clean. The `plan` engine remains the cheap,
 planning-only router-and-estimator — its strategist gains nothing here. All deep
@@ -190,7 +193,9 @@ more). Each sub-agent reads its group's rows, gets to grips with the real
 
 A group returning a `PERMANENT-LIMITATION` verdict leaves the backlog pipeline:
 it does not proceed to consolidation or export; the human redispatches it
-through step 3a's `classifier-author` flow. This is the symmetric backstop to
+through step 3a's `classifier-author` flow, using the same group's
+`PlanTaskEvidence` rows as the samples — the investigator returns only the
+verdict line, never the samples. This is the symmetric backstop to
 that agent's "if fixable, stop" gate — a fixable bug misrouted to
 `classifier-author` is caught there, and a true limitation misrouted here is
 caught by the investigator, so neither routing error silently produces the
@@ -232,10 +237,11 @@ samples for a large group. Mint the `<group_id>` yourself — a fresh kebab-case
 id naming the limitation pattern (it names the staging directory and the future
 registry rule; it is authored here, not looked up). `<run>` is this
 invocation's staging timestamp (the Staging root above); each sample's
-`<run_id>` is its own evidence row's triage run. A sample whose triage run no
-longer resolves (runs are pruned) is dropped from the dispatch; if every
-sample's run is gone, skip the group and flag it for a fresh triage sweep.
-Dispatch prompt:
+`<run_id>` is its own evidence row's triage run. Triage runs are pruned, so a
+sample's run may no longer resolve — the agent discovers that at fetch time,
+skips the sample, and notes it in `REVIEW.md`; a group whose samples all fail
+to resolve comes back `no-draft`. Report such a group in the run summary and
+re-run triage to mint fresh samples before retrying it. Dispatch prompt:
 
 > Author a builtin classifier for permanent-limitation group `<group_id>`.
 > Write your three staging artifacts to

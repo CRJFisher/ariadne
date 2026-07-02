@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <!-- SPDX-License-Identifier: Apache-2.0 -->
-<!-- Comprehension companion for TASK-190.32 (pre-build planning artifact).
-     Source: task-190.32 - ...md + get_entry_context.ts, triage_state_types.ts, plan_task.ts,
-     classifier-author.md, prioritize/SKILL.md step 3a. Hand-authored inline SVG; no external deps. -->
+<!-- Comprehension companion for TASK-190.32 (as-built, post-implementation + 10-lens review).
+     Source: task-190.32 - ...md + get_entry_context.ts (+ .test.ts), src/store/paths.ts,
+     finalize/output.ts, finalize/confirmed_unreachable_reuse.ts, classifier-author.md,
+     prioritize/SKILL.md step 3a, refactor-investigator.md, classifier-lifecycle.md.
+     Hand-authored inline SVG; no external deps. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -52,6 +54,8 @@
   .meta{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 2px}
   .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
   .chip strong{color:var(--slate);font-weight:600}
+  .chip.done{background:#f2f4ec;border-color:var(--olive)}
+  .chip.done strong{color:var(--olive)}
   .cap{font-size:13.5px;color:var(--g600);margin:9px 2px 12px}
   .cap b{color:var(--slate);font-weight:600}
 
@@ -69,12 +73,19 @@
   .callout.slate code{background:rgba(255,255,255,.13);color:var(--oat)}
   .callout .owner{font-family:var(--mono);font-size:11px;color:var(--g400);margin-top:6px;display:block}
   .callout.slate .owner{color:var(--oat)}
+  .callout.olive .owner{color:var(--olive)}
 
   .legend{display:flex;flex-wrap:wrap;gap:14px;margin:8px 2px 0;font-family:var(--mono);font-size:11px;color:var(--g600)}
   .legend span{display:inline-flex;align-items:center;gap:6px}
   .legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
   .legend i.add{background:var(--olive)} .legend i.mod{background:var(--clay)} .legend i.rm{background:var(--rust)} .legend i.same{background:var(--oat);border:1px solid var(--g400)}
   .legend i.fail{background:none;border-top:2px dashed var(--rust);border-radius:0;height:0;width:16px}
+
+  /* code panel */
+  .code{background:var(--code);color:var(--codeink);border-radius:var(--r);padding:14px 16px;margin:12px 0;overflow-x:auto}
+  .code .fl{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--g400);margin-bottom:9px;display:block}
+  .code pre{margin:0;font-family:var(--mono);font-size:12px;line-height:1.6;white-space:pre}
+  .code .kw{color:#c9a26b} .code .str{color:#a3b57a} .code .cm{color:#7d766a} .code .fn{color:#e0b878} .code .hl{color:#e8e1d2;font-weight:600}
 
   /* option comparison matrix */
   .matrix{width:100%;border-collapse:collapse;margin:8px 0;font-size:13.5px}
@@ -130,10 +141,11 @@
 
 <nav class="toc">
   <div class="inner">
-    <a href="#break">The broken link</a>
-    <a href="#identity">Identity mismatch</a>
-    <a href="#options">Two fix options</a>
-    <a href="#e2e">End-to-end after fix</a>
+    <a href="#break">The link, closed</a>
+    <a href="#identity">Identity match</a>
+    <a href="#options">The chosen design</a>
+    <a href="#resolve">Resolution mechanism</a>
+    <a href="#e2e">End-to-end flow</a>
     <a href="#backstop">Routing backstop</a>
     <a href="#changemap">Change map</a>
   </div>
@@ -142,22 +154,23 @@
 <main>
   <p class="eyebrow">Self-repair pipeline · classifier authoring flow</p>
   <h1>Connecting the stable <code>member_symbol</code> prioritize holds to the <code>entry</code> the context script fetches</h1>
-  <p class="lead prose">The <code>classifier-author</code> agent and the <code>reconcile-registry --stage</code> insertion path both shipped — but a permanent-limitation group <b>cannot reach the agent as documented</b>: the data <code>prioritize</code> carries is not the key the context script accepts.</p>
+  <p class="lead prose">The permanent-limitation authoring flow now runs <b>end-to-end on the stable member identity</b>: <code>get_entry_context.ts</code> accepts the four-field <code>member_symbol</code> plus a required <code>--run-id</code> and resolves the entry internally, so prioritize never touches the drift-unstable index.</p>
 
   <div class="meta">
-    <span class="chip">status <strong>To Do</strong></span>
+    <span class="chip done">status <strong>Done</strong></span>
     <span class="chip">priority <strong>high</strong></span>
     <span class="chip">parent <strong>TASK-190</strong></span>
-    <span class="chip">~<strong>4 surfaces</strong> touched</span>
-    <span class="chip">4 acceptance criteria</span>
+    <span class="chip">8 surfaces touched</span>
+    <span class="chip done">4/4 acceptance criteria</span>
+    <span class="chip">reviewed <strong>10-lens panel</strong></span>
   </div>
 
-  <!-- ===== 1. THE BROKEN LINK (before/after) ===== -->
-  <h2 id="break"><span class="n">01</span>The broken link, and where the bridge goes</h2>
-  <p class="cap prose"><b>CURRENT:</b> prioritize holds only <code>member_symbol&nbsp;+&nbsp;run_id</code>, but <code>get_entry_context.ts</code> accepts only the run-local <code>entry_index</code> — the flow stalls at the first hop. <b>PLANNED:</b> the script gains a stable selector and resolves the entry itself.</p>
+  <!-- ===== 1. THE LINK (before/after) ===== -->
+  <h2 id="break"><span class="n">01</span>The link that stalled, and the bridge that closed it</h2>
+  <p class="cap prose"><b>BEFORE:</b> prioritize held only <code>member_symbol&nbsp;+&nbsp;run_id</code>, but <code>get_entry_context.ts</code> accepted only the run-local <code>entry_index</code> — the flow stalled at the first hop. <b>AS-BUILT:</b> the script gained the four-field selector and resolves the entry itself.</p>
 
   <div class="panel">
-    <svg viewBox="0 0 1180 380" role="img" aria-label="Before-and-after data flow. Current: plan evidence carrying member_symbol and run_id flows to prioritize step 3a to a classifier-author dispatch, which calls get_entry_context.ts keyed on entry_index only, which cannot match member_symbol against the triage state, so the flow stalls. Planned: get_entry_context.ts gains a member-symbol plus run-id selector and resolves the entry internally against the triage state by direct field match.">
+    <svg viewBox="0 0 1180 380" role="img" aria-label="Before-and-after data flow. Before: plan evidence carrying member_symbol and run_id flows to prioritize step 3a to a classifier-author dispatch, which calls get_entry_context.ts keyed on entry_index only, which cannot match member_symbol against the triage state, so the flow stalls. As-built: get_entry_context.ts accepts the four member-symbol flags plus a required run-id and resolves the entry internally against the triage state by direct field match.">
       <defs>
         <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#5f594f"/></marker>
         <marker id="arO" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6c7a4a"/></marker>
@@ -165,50 +178,43 @@
       </defs>
 
       <!-- panel titles -->
-      <text x="16" y="24" font-family="ui-monospace,monospace" font-size="12" letter-spacing="1.5" fill="#a8472f">CURRENT — STALLS AT HOP 1</text>
-      <text x="620" y="24" font-family="ui-monospace,monospace" font-size="12" letter-spacing="1.5" fill="#6c7a4a">PLANNED — RESOLVES INTERNALLY</text>
+      <text x="16" y="24" font-family="ui-monospace,monospace" font-size="12" letter-spacing="1.5" fill="#a8472f">BEFORE — STALLED AT HOP 1</text>
+      <text x="620" y="24" font-family="ui-monospace,monospace" font-size="12" letter-spacing="1.5" fill="#6c7a4a">AS-BUILT — RESOLVES INTERNALLY</text>
       <line x1="590" y1="44" x2="590" y2="360" stroke="#ddd6c8" stroke-width="1.5"/>
       <text x="600" y="205" font-family="ui-serif,Georgia,serif" font-size="26" fill="#b9794f">→</text>
 
       <g font-family="ui-monospace,monospace" font-size="11">
-        <!-- ===== CURRENT ===== -->
-        <!-- plan evidence -->
+        <!-- ===== BEFORE ===== -->
         <rect x="16" y="52" width="200" height="72" rx="10" fill="#fffdf8" stroke="#9a9387"/>
         <text x="116" y="74" text-anchor="middle" font-size="11.5" fill="#2b2a28">plan engine</text>
         <text x="116" y="92" text-anchor="middle" fill="#5f594f">PlanTaskEvidence:</text>
         <text x="116" y="108" text-anchor="middle" fill="#6c7a4a">member_symbol · run_id</text>
 
-        <!-- step 3a -->
         <rect x="16" y="156" width="200" height="58" rx="10" fill="#fffdf8" stroke="#9a9387"/>
         <text x="116" y="180" text-anchor="middle" fill="#2b2a28">prioritize step 3a</text>
         <text x="116" y="198" text-anchor="middle" fill="#a8472f">no dispatch template</text>
 
-        <!-- dispatch -->
         <rect x="16" y="246" width="200" height="52" rx="10" fill="#fffdf8" stroke="#9a9387"/>
         <text x="116" y="270" text-anchor="middle" fill="#2b2a28">classifier-author</text>
         <text x="116" y="286" text-anchor="middle" fill="#5f594f">dispatch</text>
 
-        <!-- get_entry_context (entry only) -->
         <rect x="300" y="156" width="238" height="72" rx="10" fill="#faece9" stroke="#a8472f"/>
         <text x="419" y="180" text-anchor="middle" font-size="11.5" fill="#2b2a28">get_entry_context.ts</text>
         <text x="419" y="198" text-anchor="middle" fill="#a8472f">accepts --entry &lt;int&gt; ONLY</text>
         <text x="419" y="214" text-anchor="middle" fill="#5f594f">run-local positional index</text>
 
-        <!-- triage state -->
         <rect x="300" y="52" width="238" height="66" rx="10" fill="#fffdf8" stroke="#9a9387"/>
         <text x="419" y="76" text-anchor="middle" font-size="11.5" fill="#2b2a28">triage state.entries[]</text>
         <text x="419" y="94" text-anchor="middle" fill="#5f594f">carries all 4 identity fields</text>
         <text x="419" y="110" text-anchor="middle" fill="#5f594f">+ entry_index</text>
 
-        <!-- current edges -->
         <line x1="116" y1="124" x2="116" y2="154" stroke="#5f594f" stroke-width="1.6" marker-end="url(#ar)"/>
         <line x1="116" y1="214" x2="116" y2="244" stroke="#5f594f" stroke-width="1.6" marker-end="url(#ar)"/>
         <line x1="216" y1="272" x2="298" y2="210" stroke="#5f594f" stroke-width="1.6" marker-end="url(#ar)"/>
-        <!-- the broken hop: member_symbol can't key entry_index -->
         <line x1="419" y1="156" x2="419" y2="120" stroke="#a8472f" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arR)"/>
         <text x="431" y="140" font-size="10" fill="#a8472f">✗ no member_symbol key</text>
 
-        <!-- ===== PLANNED ===== -->
+        <!-- ===== AS-BUILT ===== -->
         <rect x="620" y="52" width="200" height="72" rx="10" fill="#fffdf8" stroke="#9a9387"/>
         <text x="720" y="74" text-anchor="middle" font-size="11.5" fill="#2b2a28">plan engine</text>
         <text x="720" y="92" text-anchor="middle" fill="#5f594f">PlanTaskEvidence:</text>
@@ -220,17 +226,17 @@
 
         <rect x="620" y="246" width="200" height="52" rx="10" fill="#fffdf8" stroke="#9a9387"/>
         <text x="720" y="270" text-anchor="middle" fill="#2b2a28">classifier-author</text>
-        <text x="720" y="286" text-anchor="middle" fill="#5f594f">dispatch (stable selector)</text>
+        <text x="720" y="286" text-anchor="middle" fill="#5f594f">dispatch (4 flags + run-id)</text>
 
         <rect x="904" y="156" width="258" height="72" rx="10" fill="#f2f4ec" stroke="#6c7a4a"/>
         <text x="1033" y="180" text-anchor="middle" font-size="11.5" fill="#2b2a28">get_entry_context.ts</text>
-        <text x="1033" y="198" text-anchor="middle" fill="#6c7a4a">+ --member-symbol --run-id</text>
-        <text x="1033" y="214" text-anchor="middle" fill="#5f594f">resolves entry internally</text>
+        <text x="1033" y="198" text-anchor="middle" fill="#6c7a4a">--file --name --kind --line</text>
+        <text x="1033" y="214" text-anchor="middle" fill="#5f594f">+ required --run-id</text>
 
         <rect x="904" y="52" width="258" height="66" rx="10" fill="#fffdf8" stroke="#9a9387"/>
         <text x="1033" y="76" text-anchor="middle" font-size="11.5" fill="#2b2a28">triage state.entries[]</text>
-        <text x="1033" y="94" text-anchor="middle" fill="#5f594f">.find(e =&gt; e matches</text>
-        <text x="1033" y="110" text-anchor="middle" fill="#5f594f">the 4 fields)</text>
+        <text x="1033" y="94" text-anchor="middle" fill="#5f594f">.filter(e =&gt; e matches</text>
+        <text x="1033" y="110" text-anchor="middle" fill="#5f594f">the 4 fields, relativized)</text>
 
         <line x1="720" y1="124" x2="720" y2="154" stroke="#5f594f" stroke-width="1.6" marker-end="url(#ar)"/>
         <line x1="720" y1="214" x2="720" y2="244" stroke="#5f594f" stroke-width="1.6" marker-end="url(#ar)"/>
@@ -247,18 +253,18 @@
     </div>
   </div>
 
-  <div class="callout rust">
-    <span class="k">Why it stalls today</span>
-    <p>The data <code>prioritize</code> holds (<code>member_symbol</code>) is not what <code>get_entry_context.ts</code> accepts (<code>entry_index</code>), and <b>nothing documents the translation</b>.</p>
-    <p>Compounding it, <code>prioritize/SKILL.md</code> step 3a has <b>no dispatch-prompt template</b> — unlike every sibling step — so an orchestrator has neither the data nor the instruction to build a valid dispatch.</p>
+  <div class="callout olive">
+    <span class="k">What closed the link</span>
+    <p>Prioritize holds <code>(project, run_id, member_symbol)</code> per evidence row and <b>never an <code>entry_index</code></b>; the script accepts the identity directly and does the last-mile lookup itself.</p>
+    <p>The <code>--entry</code> selector stays for the triage-investigator caller — each dispatches the key it naturally holds, so both are load-bearing, not a compatibility layer.</p>
   </div>
 
-  <!-- ===== 2. IDENTITY MISMATCH ===== -->
-  <h2 id="identity"><span class="n">02</span>Why the two keys don't meet — and why the bridge is trivial</h2>
-  <p class="cap prose">The four stable fields are <b>already present</b> in each <code>TriageEntry</code>, so resolving <code>member_symbol → entry</code> is a direct <code>.find()</code> field match — no new data, no new store.</p>
+  <!-- ===== 2. IDENTITY MATCH ===== -->
+  <h2 id="identity"><span class="n">02</span>Why the two keys meet — a direct field match</h2>
+  <p class="cap prose">The four stable fields are <b>already present</b> in each <code>TriageEntry</code>, so resolving <code>member_symbol → entry</code> is a direct <code>.filter()</code> field match — no new data, no new store, one relativize on the path.</p>
 
   <div class="panel">
-    <svg viewBox="0 0 1180 300" role="img" aria-label="Field map. On the left, member_symbol carries four stable fields: file_path, name, kind, start_line — plus run_id — and this is what prioritize holds. On the right, entry_index is a single run-local integer positional index, deliberately dropped by the plan engine because it is line-drift unstable across sweeps. Between them, the triage state entry carries all four stable fields and the entry_index, so a direct field match bridges them.">
+    <svg viewBox="0 0 1180 300" role="img" aria-label="Field map. On the left, member_symbol carries four stable fields: file_path, name, kind, start_line — plus run_id — and this is what prioritize holds. On the right, entry_index is a single run-local integer positional index, deliberately dropped by the plan engine because it is line-drift unstable across sweeps. Between them, the triage state entry carries all four stable fields and the entry_index, so a direct field match bridges them, relativizing the file path first.">
       <defs>
         <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6c7a4a"/></marker>
       </defs>
@@ -279,7 +285,7 @@
         <rect x="440" y="42" width="300" height="220" rx="10" fill="#fffdf8" stroke="#9a9387"/>
         <text x="454" y="66" font-size="13" fill="#2b2a28">TriageEntry</text>
         <line x1="454" y1="78" x2="726" y2="78" stroke="#e7ddc9"/>
-        <text x="454" y="102" fill="#2b2a28">file_path</text>
+        <text x="454" y="102" fill="#2b2a28">file_path <tspan fill="#b9794f">(relativized)</tspan></text>
         <text x="454" y="128" fill="#2b2a28">name</text>
         <text x="454" y="154" fill="#2b2a28">kind</text>
         <text x="454" y="180" fill="#2b2a28">start_line</text>
@@ -287,7 +293,7 @@
         <text x="454" y="242" fill="#9a9387">(the script already reads this file)</text>
 
         <!-- RIGHT: entry_index -->
-        <text x="864" y="28" font-size="12" letter-spacing="1" fill="#a8472f">UNSTABLE — what the script wants</text>
+        <text x="864" y="28" font-size="12" letter-spacing="1" fill="#a8472f">UNSTABLE — the dropped index</text>
         <rect x="864" y="42" width="300" height="130" rx="10" fill="#faece9" stroke="#a8472f"/>
         <text x="878" y="66" font-size="13" fill="#2b2a28">entry_index</text>
         <line x1="878" y1="78" x2="1150" y2="78" stroke="#eccabf"/>
@@ -295,38 +301,37 @@
         <text x="878" y="124" fill="#a8472f">line-drift unstable</text>
         <text x="878" y="146" fill="#a8472f">across sweeps</text>
 
-        <!-- match arrows: left 4 fields → middle 4 fields -->
+        <!-- match arrows -->
         <line x1="316" y1="98" x2="452" y2="98" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#ar2)"/>
         <line x1="316" y1="124" x2="452" y2="124" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#ar2)"/>
         <line x1="316" y1="150" x2="452" y2="150" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#ar2)"/>
         <line x1="316" y1="176" x2="452" y2="176" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#ar2)"/>
-        <!-- middle entry_index → right -->
         <line x1="740" y1="216" x2="862" y2="120" stroke="#b9794f" stroke-width="1.6" stroke-dasharray="4 3"/>
-        <text x="620" y="290" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#6c7a4a">the bridge: state.entries.find(e =&gt; e.file_path==f &amp;&amp; e.name==n &amp;&amp; e.kind==k &amp;&amp; e.start_line==l) → e.entry_index</text>
+        <text x="620" y="290" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#6c7a4a">the bridge: entries.filter(e =&gt; relativize(e.file_path)==f &amp;&amp; e.name==n &amp;&amp; e.kind==k &amp;&amp; e.start_line==l) → e.entry_index</text>
       </g>
     </svg>
   </div>
 
-  <!-- ===== 3. TWO FIX OPTIONS ===== -->
-  <h2 id="options"><span class="n">03</span>Two fix options — keep the stable identity, or re-thread the unstable index</h2>
-  <p class="cap prose">Both make the flow work; they differ in <b>which component is forced to handle the drift-unstable index</b>.</p>
+  <!-- ===== 3. THE CHOSEN DESIGN ===== -->
+  <h2 id="options"><span class="n">03</span>The chosen design — the stable selector, four discrete flags</h2>
+  <p class="cap prose">Two fixes were on the table; the one that landed keeps the drift-unstable index <b>out of prioritize entirely</b>, and its CLI encoding is now settled: four discrete flags plus a required run.</p>
 
   <div class="opts">
     <div class="opt pick">
-      <span class="badge"><span class="num">1</span> OPTION 1 <span class="verdict pick">recommended</span></span>
+      <span class="badge"><span class="num">1</span> OPTION 1 <span class="verdict pick">built</span></span>
       <h3>Extend <code>get_entry_context.ts</code> with a stable selector</h3>
-      <p class="why">Add <code>--member-symbol</code> (+ <code>--run-id</code>); the script resolves <code>member_symbol → entry</code> internally against the run's triage state. <b>Prioritize keeps the stable identity and never touches the unstable index.</b> The drift-fragile translation lives in exactly one place, right next to the state file it reads.</p>
+      <p class="why"><code>--file --name --kind --line</code> plus a mandatory <code>--run-id</code>; the script resolves <code>member_symbol → entry</code> internally against that run's triage state. <b>Prioritize keeps the stable identity and never touches the unstable index.</b> The drift-fragile translation lives in exactly one place, right next to the state file it reads.</p>
     </div>
     <div class="opt rej">
       <span class="badge"><span class="num">2</span> OPTION 2 <span class="verdict rej">rejected</span></span>
       <h3>Thread <code>entry_index</code> through prioritize</h3>
-      <p class="why">Pair each plan group back to its source <code>NovelIssue</code> per <code>run_id</code> at dispatch time to recover the index. <b>Re-introduces the exact index the plan engine deliberately dropped</b> for being line-drift unstable — prioritize now owns a fragile positional key across sweep boundaries.</p>
+      <p class="why">Pair each plan group back to its source <code>NovelIssue</code> per <code>run_id</code> at dispatch time to recover the index. <b>Re-introduces the exact index the plan engine deliberately dropped</b> for being line-drift unstable — prioritize would own a fragile positional key across sweep boundaries.</p>
     </div>
   </div>
 
   <table class="matrix">
     <colgroup><col><col class="win"><col></colgroup>
-    <thead><tr><th class="crit">Criterion</th><th>Option 1 · stable selector</th><th>Option 2 · thread index</th></tr></thead>
+    <thead><tr><th class="crit">Criterion</th><th>Option 1 · stable selector (built)</th><th>Option 2 · thread index</th></tr></thead>
     <tbody>
       <tr><th class="crit">Prioritize handles the unstable index</th>
         <td><span class="glyph"><span class="g full"></span> never — keeps member_symbol</span></td>
@@ -353,26 +358,79 @@
   </div>
 
   <div class="callout olive">
-    <span class="k">Recommendation</span>
-    <p>Take <b>Option 1</b>. The <code>classifier-author</code> tools grant already prefix-matches <code>get_entry_context.ts:*</code>, so new flags stay permitted with no agent-config change; the four identity fields already live in <code>TriageEntry</code>, so the resolver is a one-line <code>.find()</code>.</p>
+    <span class="k">CLI encoding · DECIDED</span>
+    <p>The selector is <b>four discrete flags</b> — <code>--file &lt;path&gt; --name &lt;name&gt; --kind &lt;kind&gt; --line &lt;n&gt;</code> — no JSON quoting to serialize or escape. <code>--run-id</code> is <b>REQUIRED</b> in member-symbol mode: <code>start_line</code> is run-specific, so the LATEST-run fallback would resolve against the wrong run.</p>
+    <p>The parser rejects mixing <code>--entry</code> with the member flags, a partial flag set, and member mode without a run.</p>
+    <span class="owner">landed in: get_entry_context.ts · parse_entry_selector</span>
+  </div>
+
+  <!-- ===== 4. RESOLUTION MECHANISM ===== -->
+  <h2 id="resolve"><span class="n">04</span>The resolution mechanism, as built — three pure functions</h2>
+  <p class="cap prose">Parsing, matching, and failure diagnostics are <b>pure exported functions</b> with exact-string tests; the CLI wrapper only wires argv and exit codes.</p>
+
+  <div class="panel">
+    <svg viewBox="0 0 1180 300" role="img" aria-label="Three-stage resolution pipeline. parse_entry_selector validates the argv tail into a discriminated selector, throwing on invalid combinations with strict integer parsing and treating a double-dash-prefixed next token as a missing value. find_entries_by_selector filters the run's triage state, relativizing each entry file path against the state project path before matching. resolution_failure_message returns tiered zero-match diagnostics or an ambiguity error, or null on exactly one match.">
+      <defs>
+        <marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b9794f"/></marker>
+      </defs>
+      <g font-family="ui-monospace,monospace" font-size="11">
+        <!-- stage 1 -->
+        <rect x="16" y="60" width="300" height="150" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="30" y="84" font-size="12" fill="#2b2a28">parse_entry_selector</text>
+        <line x1="30" y1="94" x2="302" y2="94" stroke="#e7ddc9"/>
+        <text x="30" y="116" fill="#5f594f">throws on invalid combos</text>
+        <text x="30" y="136" fill="#5f594f">strict /^\d+$/ integers</text>
+        <text x="30" y="156" fill="#5f594f">a --prefixed next token</text>
+        <text x="30" y="172" fill="#5f594f">counts as a missing value</text>
+        <text x="30" y="196" fill="#6c7a4a">→ EntrySelector (discriminated)</text>
+
+        <!-- stage 2 -->
+        <rect x="440" y="60" width="300" height="150" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="454" y="84" font-size="12" fill="#2b2a28">find_entries_by_selector</text>
+        <line x1="454" y1="94" x2="726" y2="94" stroke="#e7ddc9"/>
+        <text x="454" y="116" fill="#5f594f">filters state.entries[]</text>
+        <text x="454" y="136" fill="#b9794f">relativize(file_path,</text>
+        <text x="454" y="152" fill="#b9794f">state.project_path)</text>
+        <text x="454" y="176" fill="#5f594f">matches all 4 fields</text>
+        <text x="454" y="196" fill="#6c7a4a">→ TriageEntry[]</text>
+
+        <!-- stage 3 -->
+        <rect x="864" y="42" width="300" height="216" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="878" y="66" font-size="12" fill="#2b2a28">resolution_failure_message</text>
+        <line x1="878" y1="76" x2="1150" y2="76" stroke="#e7ddc9"/>
+        <text x="878" y="98" fill="#6c7a4a">1 match → null (ok)</text>
+        <text x="878" y="122" fill="#a8472f">&gt;1 → ambiguity, lists indices</text>
+        <text x="878" y="148" fill="#5f594f">0 · tiered near-miss:</text>
+        <text x="892" y="170" fill="#5f594f">same file,name,kind other line</text>
+        <text x="906" y="184" fill="#b9794f">→ run drift</text>
+        <text x="892" y="206" fill="#5f594f">same file,name other kind</text>
+        <text x="906" y="220" fill="#b9794f">→ --kind mismatch</text>
+        <text x="892" y="242" fill="#5f594f">nothing near → wrong run/selector</text>
+
+        <line x1="316" y1="135" x2="438" y2="135" stroke="#b9794f" stroke-width="1.5" marker-end="url(#ar4)"/>
+        <line x1="740" y1="135" x2="862" y2="150" stroke="#b9794f" stroke-width="1.5" marker-end="url(#ar4)"/>
+        <text x="590" y="286" text-anchor="middle" font-size="10" fill="#9a9387">every branch fails loud — a zero or ambiguous match never resolves to an arbitrary entry</text>
+      </g>
+    </svg>
   </div>
 
   <div class="callout">
-    <span class="k">Open sub-decision · not yet decided</span>
-    <p>How the stable selector is encoded on the CLI is genuinely open. <b>(a)</b> one packed argument — <code>--member-symbol '{"file_path":…,"name":…,"kind":…,"start_line":…}'</code> (JSON or a delimited string): one flag, but the caller must serialize/quote it. <b>(b)</b> four discrete flags — <code>--file … --name … --kind … --line …</code>: no quoting, but four values to keep aligned. Both round-trip the same four fields; pick during implementation.</p>
-    <span class="owner">decide in: get_entry_context.ts parse_args + the step-3a template that emits it</span>
+    <span class="k">The normalization contract · single-sourced</span>
+    <p><code>relativize</code> lives once in <code>src/store/paths.ts</code>, shared by three call sites: the publish side (<code>finalize/output.ts</code>), the TP cache (<code>finalize/confirmed_unreachable_reuse.ts</code>), and this lookup.</p>
+    <p>Published member symbols carry project-relative paths while state entries may hold absolute ones — so the match key <b>cannot drift</b>.</p>
+    <p>Review found the publish side previously carried a private identical copy; it is now one function.</p>
+    <span class="owner">load-bearing: relativize(file_path, project_path) in src/store/paths.ts</span>
   </div>
 
-  <!-- ===== 4. END TO END ===== -->
-  <h2 id="e2e"><span class="n">04</span>The full flow, once Option 1 lands</h2>
-  <p class="cap prose">Five hops, each owned by a named actor — <b>prioritize never handles an index</b>, and the human still owns the registry write at the end.</p>
+  <!-- ===== 5. END TO END ===== -->
+  <h2 id="e2e"><span class="n">05</span>The full flow, as it runs</h2>
+  <p class="cap prose">Six hops, each owned by a named actor — <b>prioritize never handles an index</b>, and the human still owns the registry write at the end.</p>
 
   <div class="panel">
-    <svg viewBox="0 0 1180 340" role="img" aria-label="End-to-end sequence across four lanes. Prioritize reads evidence rows and builds the step 3a dispatch prompt with per-sample stable selectors and run ids. Classifier-author fetches each sample via get_entry_context.ts with the member-symbol selector, which resolves the entry against the triage state and returns the investigation prompt. The agent drafts three staging artifacts. Finally the human reviews and applies the draft via reconcile-registry --stage.">
+    <svg viewBox="0 0 1180 340" role="img" aria-label="End-to-end sequence across four lanes. Prioritize reads evidence rows and builds the step 3a dispatch prompt with per-sample stable selectors and run ids, minting the group id itself. Classifier-author fetches each sample via get_entry_context.ts with the four member flags and run id, which resolves the entry against the triage state and returns the investigation prompt; a pruned-run sample is skipped and noted in REVIEW.md. The agent drafts three staging artifacts. Finally the human reviews and applies the draft via reconcile-registry --stage.">
       <defs>
         <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b9794f"/></marker>
       </defs>
-      <!-- lane headers -->
       <g font-family="ui-monospace,monospace" font-size="11">
         <text x="16" y="24" fill="#5f594f">prioritize</text>
         <text x="316" y="24" fill="#5f594f">classifier-author</text>
@@ -395,27 +453,24 @@
         <circle cx="30" cy="150" r="12" fill="#b9794f"/><text x="30" y="154" text-anchor="middle" font-size="11" fill="#fff">2</text>
         <rect x="52" y="132" width="236" height="52" rx="9" fill="#f2f4ec" stroke="#6c7a4a"/>
         <text x="66" y="154" fill="#2b2a28">build step-3a dispatch prompt</text>
-        <text x="66" y="172" fill="#6c7a4a">NEW template: selectors + run + group_id</text>
+        <text x="66" y="172" fill="#6c7a4a">dedup by member · mint group_id</text>
 
-        <!-- arrow 2->3 -->
         <line x1="288" y1="158" x2="330" y2="158" stroke="#b9794f" stroke-width="1.5" marker-end="url(#ar3)"/>
 
         <!-- step 3 -->
         <circle cx="332" cy="150" r="12" fill="#b9794f"/><text x="332" y="154" text-anchor="middle" font-size="11" fill="#fff">3</text>
         <rect x="354" y="132" width="256" height="52" rx="9" fill="#fffdf8" stroke="#9a9387"/>
         <text x="368" y="154" fill="#2b2a28">for each sample: fetch context</text>
-        <text x="368" y="172" fill="#6c7a4a">--member-symbol … --run-id …</text>
+        <text x="368" y="172" fill="#6c7a4a">--file --name --kind --line --run-id</text>
 
-        <!-- arrow 3->4 -->
         <line x1="610" y1="158" x2="654" y2="158" stroke="#b9794f" stroke-width="1.5" marker-end="url(#ar3)"/>
 
         <!-- step 4 -->
         <circle cx="656" cy="150" r="12" fill="#b9794f"/><text x="656" y="154" text-anchor="middle" font-size="11" fill="#fff">4</text>
         <rect x="678" y="132" width="256" height="52" rx="9" fill="#f2f4ec" stroke="#6c7a4a"/>
         <text x="692" y="154" fill="#2b2a28">resolve entry, return prompt</text>
-        <text x="692" y="172" fill="#6c7a4a">state.entries.find(4 fields)</text>
+        <text x="692" y="172" fill="#6c7a4a">filter 4 fields · fail loud on 0/&gt;1</text>
 
-        <!-- arrow 4->5 back to author lane -->
         <line x1="678" y1="200" x2="486" y2="230" stroke="#b9794f" stroke-width="1.5" marker-end="url(#ar3)"/>
 
         <!-- step 5 -->
@@ -424,7 +479,6 @@
         <text x="368" y="252" fill="#2b2a28">draft 3 staging artifacts</text>
         <text x="368" y="270" fill="#6c7a4a">draft_entry.json · check.ts · REVIEW.md</text>
 
-        <!-- arrow 5->6 to human -->
         <line x1="610" y1="256" x2="974" y2="256" stroke="#b9794f" stroke-width="1.5" marker-end="url(#ar3)"/>
 
         <!-- step 6 -->
@@ -433,24 +487,34 @@
         <text x="1012" y="252" fill="#2b2a28">review + apply</text>
         <text x="1012" y="270" fill="#6c7a4a">reconcile-registry --stage</text>
       </g>
-      <text x="590" y="322" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#9a9387">no manual member_symbol → entry_index step anywhere in the chain</text>
+      <text x="590" y="322" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#9a9387">pruned-run sample → skipped at fetch, noted in REVIEW.md; group with no resolvable samples returns no-draft</text>
     </svg>
   </div>
 
-  <!-- ===== 5. ROUTING BACKSTOP ===== -->
-  <h2 id="backstop"><span class="n">05</span>The routing false-negative — an asymmetric gap</h2>
-  <p class="cap prose">One misrouting is caught; its mirror is not. A <b>fixable bug</b> sent to <code>classifier-author</code> hits the agent's "if fixable, stop" gate — but a <b>true permanent limitation</b> sent to <code>refactor-investigator</code> → backlog has <b>no symmetric backstop</b>, so the limitation silently never gets its classifier.</p>
+  <div class="code">
+    <span class="fl">prioritize/SKILL.md · step 3a dispatch prompt (as landed)</span>
+<pre><span class="cm"># fetch each sample's context, one line per member from the evidence rows</span>
+node --import tsx .claude/skills/triage/scripts/get_entry_context.ts \
+  <span class="hl">--project</span> &lt;project&gt; <span class="hl">--run-id</span> &lt;run_id&gt; \
+  <span class="hl">--file</span> &lt;file_path&gt; <span class="hl">--name</span> &lt;name&gt; <span class="hl">--kind</span> &lt;kind&gt; <span class="hl">--line</span> &lt;start_line&gt;
+
+<span class="cm"># samples: (project, run_id, member_symbol) per row · dedup by member · cap ~5</span>
+<span class="cm"># &lt;group_id&gt; minted here by the orchestrator · &lt;run&gt; == the staging &lt;root&gt; timestamp</span></pre>
+  </div>
+
+  <!-- ===== 6. ROUTING BACKSTOP ===== -->
+  <h2 id="backstop"><span class="n">06</span>The routing false-negative — now symmetric</h2>
+  <p class="cap prose">Both misroutings are caught. A <b>fixable bug</b> sent to <code>classifier-author</code> hits its "if fixable, stop" gate; a <b>true permanent limitation</b> sent to <code>refactor-investigator</code> now returns a <code>PERMANENT-LIMITATION</code> verdict that reroutes the group back to step 3a on the same evidence rows.</p>
 
   <div class="panel">
-    <svg viewBox="0 0 1180 260" role="img" aria-label="Two misrouting paths side by side. On the left, a fixable bug misrouted to classifier-author is caught: the agent's if-fixable-stop gate emits no draft and writes a REVIEW note. On the right, a true permanent limitation misrouted to refactor-investigator and then to backlog has no symmetric gate, so it silently becomes a backlog task that will never be fixed and never gets its classifier.">
+    <svg viewBox="0 0 1180 240" role="img" aria-label="Two misrouting paths side by side, both now caught. On the left, a fixable bug misrouted to classifier-author is caught by the agent's if-fixable-stop gate: it emits no draft and writes a REVIEW note. On the right, a true permanent limitation misrouted to refactor-investigator is now caught too: the investigator returns a PERMANENT-LIMITATION boundary verdict, and prioritize reroutes the group back into step 3a using the same PlanTaskEvidence rows.">
       <defs>
         <marker id="arG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6c7a4a"/></marker>
-        <marker id="arRr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#a8472f"/></marker>
       </defs>
-      <line x1="590" y1="20" x2="590" y2="240" stroke="#ddd6c8" stroke-width="1.5"/>
+      <line x1="590" y1="20" x2="590" y2="222" stroke="#ddd6c8" stroke-width="1.5"/>
       <g font-family="ui-monospace,monospace" font-size="11">
         <!-- LEFT: caught -->
-        <text x="16" y="24" font-size="12" letter-spacing=".5" fill="#6c7a4a">CAUGHT — has a gate</text>
+        <text x="16" y="24" font-size="12" letter-spacing=".5" fill="#6c7a4a">FIXABLE → author · caught</text>
         <rect x="16" y="40" width="230" height="50" rx="9" fill="#fffdf8" stroke="#9a9387"/>
         <text x="131" y="62" text-anchor="middle" fill="#2b2a28">fixable bug, misrouted</text>
         <text x="131" y="80" text-anchor="middle" fill="#5f594f">→ classifier-author</text>
@@ -458,74 +522,89 @@
         <rect x="16" y="120" width="230" height="50" rx="9" fill="#f2f4ec" stroke="#6c7a4a"/>
         <text x="131" y="142" text-anchor="middle" fill="#2b2a28">agent "if fixable, stop"</text>
         <text x="131" y="160" text-anchor="middle" fill="#6c7a4a">emits no draft · REVIEW note</text>
-        <line x1="131" y1="170" x2="131" y2="198" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#arG)"/>
-        <rect x="16" y="200" width="230" height="42" rx="9" fill="#f2f4ec" stroke="#6c7a4a"/>
-        <text x="131" y="226" text-anchor="middle" fill="#6c7a4a">✓ misroute surfaced to human</text>
+        <line x1="131" y1="170" x2="131" y2="192" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#arG)"/>
+        <rect x="16" y="194" width="230" height="40" rx="9" fill="#f2f4ec" stroke="#6c7a4a"/>
+        <text x="131" y="219" text-anchor="middle" fill="#6c7a4a">✓ misroute surfaced to human</text>
 
-        <!-- RIGHT: silent -->
-        <text x="620" y="24" font-size="12" letter-spacing=".5" fill="#a8472f">SILENT — no symmetric gate</text>
+        <!-- RIGHT: also caught -->
+        <text x="620" y="24" font-size="12" letter-spacing=".5" fill="#6c7a4a">LIMITATION → investigator · caught</text>
         <rect x="620" y="40" width="230" height="50" rx="9" fill="#fffdf8" stroke="#9a9387"/>
         <text x="735" y="62" text-anchor="middle" fill="#2b2a28">true limitation, misrouted</text>
         <text x="735" y="80" text-anchor="middle" fill="#5f594f">→ refactor-investigator</text>
-        <line x1="735" y1="90" x2="735" y2="118" stroke="#a8472f" stroke-width="1.5" marker-end="url(#arRr)"/>
-        <rect x="620" y="120" width="230" height="50" rx="9" fill="#faece9" stroke="#a8472f"/>
-        <text x="735" y="142" text-anchor="middle" fill="#2b2a28">no "actually unfixable?" gate</text>
-        <text x="735" y="160" text-anchor="middle" fill="#a8472f">plan written as if fixable</text>
-        <line x1="735" y1="170" x2="735" y2="198" stroke="#a8472f" stroke-width="1.5" marker-end="url(#arRr)"/>
-        <rect x="620" y="200" width="230" height="42" rx="9" fill="#faece9" stroke="#a8472f"/>
-        <text x="735" y="226" text-anchor="middle" fill="#a8472f">✗ backlog task never fixable · no classifier</text>
+        <line x1="735" y1="90" x2="735" y2="118" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#arG)"/>
+        <rect x="620" y="120" width="230" height="50" rx="9" fill="#f2f4ec" stroke="#6c7a4a"/>
+        <text x="735" y="142" text-anchor="middle" fill="#2b2a28">PERMANENT-LIMITATION:</text>
+        <text x="735" y="160" text-anchor="middle" fill="#6c7a4a">&lt;boundary&gt; verdict, no refactor</text>
+        <line x1="735" y1="170" x2="735" y2="192" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#arG)"/>
+        <rect x="620" y="194" width="230" height="40" rx="9" fill="#f2f4ec" stroke="#6c7a4a"/>
+        <text x="735" y="219" text-anchor="middle" fill="#6c7a4a">✓ reroutes to 3a · same rows</text>
 
-        <!-- mitigations column -->
-        <text x="880" y="24" font-size="12" letter-spacing=".5" fill="#b9794f">CANDIDATE MITIGATIONS</text>
-        <rect x="880" y="40" width="284" height="88" rx="9" fill="#fffdf8" stroke="#b9794f"/>
-        <text x="896" y="62" fill="#2b2a28">(a) unfixable? check in the</text>
-        <text x="896" y="80" fill="#5f594f">refactor-investigator path —</text>
-        <text x="896" y="98" fill="#5f594f">a lightweight "is this actually</text>
-        <text x="896" y="116" fill="#5f594f">out of static reach?" note</text>
-        <rect x="880" y="140" width="284" height="88" rx="9" fill="#fffdf8" stroke="#b9794f"/>
-        <text x="896" y="162" fill="#2b2a28">(b) prioritize-step note</text>
-        <text x="896" y="180" fill="#5f594f">forcing the human's permanent-</text>
-        <text x="896" y="198" fill="#5f594f">vs-fixable call BEFORE dispatch,</text>
-        <text x="896" y="216" fill="#5f594f">not only inside the agent</text>
+        <!-- mechanism column -->
+        <text x="880" y="24" font-size="12" letter-spacing=".5" fill="#b9794f">HOW THE MIRROR WORKS</text>
+        <rect x="880" y="40" width="284" height="194" rx="9" fill="#fffdf8" stroke="#b9794f"/>
+        <text x="896" y="64" fill="#2b2a28">refactor-investigator emits the</text>
+        <text x="896" y="82" fill="#5f594f">token when the whole group is</text>
+        <text x="896" y="100" fill="#5f594f">out of static reach; step 3 sees</text>
+        <text x="896" y="118" fill="#5f594f">it and does not graduate the</text>
+        <text x="896" y="136" fill="#5f594f">group to backlog/.</text>
+        <text x="896" y="162" fill="#2b2a28">step 3a re-enters the group with</text>
+        <text x="896" y="180" fill="#5f594f">its same PlanTaskEvidence rows</text>
+        <text x="896" y="198" fill="#5f594f">as classifier-author samples —</text>
+        <text x="896" y="216" fill="#6c7a4a">neither routing error survives.</text>
       </g>
     </svg>
   </div>
 
-  <div class="callout">
-    <span class="k">Acceptance latitude</span>
-    <p>AC-4 is satisfied either by <b>addressing</b> the gap (mitigation a or b) <b>or</b> by <b>explicitly documenting it as accepted</b> — the decision itself must be recorded, not left implicit.</p>
+  <div class="callout olive">
+    <span class="k">AC-4 · addressed</span>
+    <p>The routing false-negative is <b>closed</b>, not just documented: <code>refactor-investigator.md</code> and step 3 carry the <code>PERMANENT-LIMITATION: &lt;boundary&gt;</code> verdict token, and step 3a redispatches the rerouted group through <code>classifier-author</code> on the same evidence rows — the exact mirror of the agent's "if fixable, stop" gate.</p>
   </div>
 
-  <!-- ===== 6. CHANGE MAP ===== -->
-  <h2 id="changemap"><span class="n">06</span>What changes where — ~4 surfaces</h2>
-  <p class="cap prose">A tight, contained change: one script + its test, two docs, and the backstop decision.</p>
+  <!-- ===== 7. CHANGE MAP ===== -->
+  <h2 id="changemap"><span class="n">07</span>What changed where — 8 surfaces</h2>
+  <p class="cap prose">The script and its test carry the resolution logic; three <code>finalize</code>/store files single-source the normalization; two docs carry the dispatch contract and the backstop.</p>
 
   <table class="change">
     <thead><tr><th>Surface</th><th>Change</th><th>AC</th></tr></thead>
     <tbody>
       <tr>
         <td class="file"><span class="surf">script</span>get_entry_context.ts</td>
-        <td>Accept a stable selector (<code>--member-symbol</code> + <code>--run-id</code>) in <code>parse_args</code>; resolve <code>member_symbol → entry</code> in <code>main</code> via <code>state.entries.find</code> on the 4 identity fields. Keep <code>--entry</code> for the existing triage-investigator caller.</td>
+        <td>Pure exported <code>parse_entry_selector</code> (throws on invalid combos; strict <code>/^\d+$/</code>; a <code>--</code>-prefixed next token counts as missing), <code>find_entries_by_selector</code> (relativizes state paths), and <code>resolution_failure_message</code> (tiered zero-match + loud ambiguity). <code>--entry</code> kept for triage-investigator.</td>
         <td><span class="ac">AC 1 · 2</span></td>
       </tr>
       <tr>
+        <td class="file"><span class="surf">store</span>src/store/paths.ts</td>
+        <td>Home of the single-sourced <code>relativize(file_path, project_path)</code> — the normalization contract the resolver, publish side, and TP cache all share.</td>
+        <td><span class="ac">AC 2</span></td>
+      </tr>
+      <tr>
+        <td class="file"><span class="surf">store</span>finalize/output.ts</td>
+        <td>Publish side now imports the shared <code>relativize</code> instead of a private identical copy (a review finding), so the match key cannot drift.</td>
+        <td><span class="ac">AC 2</span></td>
+      </tr>
+      <tr>
+        <td class="file"><span class="surf">store</span>finalize/confirmed_unreachable_reuse.ts</td>
+        <td>TP cache relativizes entry paths through the same shared function when keying reuse.</td>
+        <td><span class="ac">AC 2</span></td>
+      </tr>
+      <tr>
         <td class="file"><span class="surf">test</span>get_entry_context.test.ts</td>
-        <td>Add a case resolving a known <code>member_symbol</code> against a state fixture to the expected <code>entry_index</code> (and a no-match error case). Extend the existing file — no new test file.</td>
+        <td>Grew 29 → 39 cases: selector parsing, four-field resolution against a state fixture, relativize matching, the tiered zero-match diagnostics, and ambiguity failure — exact-string assertions. Part of the 392-test triage suite.</td>
         <td><span class="ac">AC 2</span></td>
       </tr>
       <tr>
         <td class="file"><span class="surf">agent prompt</span>classifier-author.md</td>
-        <td>Change "sample triage <b>entry indices</b>" → stable selectors, and the fetch command to <code>--member-symbol … --run-id …</code>. Tools grant already prefix-matches <code>get_entry_context.ts:*</code> — no allow-list edit.</td>
+        <td>Fetch command uses the four member flags plus <code>--run-id</code>; sample members are the stable selectors, not entry indices. Tools grant already prefix-matches <code>get_entry_context.ts:*</code>.</td>
         <td><span class="ac">AC 1</span></td>
       </tr>
       <tr>
         <td class="file"><span class="surf">skill doc</span>prioritize/SKILL.md · step 3a</td>
-        <td>Add a concrete blockquote dispatch-prompt template naming exactly what to substitute — <code>&lt;project&gt;</code>, the resolved per-sample selectors, <code>&lt;run&gt;</code>, <code>&lt;group_id&gt;</code> — matching the style of steps 3, 4, 7a.</td>
+        <td>Concrete blockquote dispatch template: per-sample <code>(project, run_id, member_symbol)</code> lines, <code>&lt;group_id&gt;</code> minted by the orchestrator, pruned-run samples skipped by the agent at fetch and noted in REVIEW.md (no-draft when none resolve); <code>&lt;run&gt;</code>/<code>&lt;root&gt;</code> equivalence in the Staging root section.</td>
         <td><span class="ac">AC 3</span></td>
       </tr>
       <tr>
-        <td class="file"><span class="surf">backstop</span>refactor path · or step 3a note</td>
-        <td>Address the routing false-negative (mitigation a or b) <b>or</b> document it as explicitly accepted.</td>
+        <td class="file"><span class="surf">backstop</span>refactor-investigator.md + steps 3/3a</td>
+        <td>The <code>PERMANENT-LIMITATION: &lt;boundary&gt;</code> verdict token; rerouted groups re-enter step 3a with the same PlanTaskEvidence rows. Diagram annotation in <code>classifier-lifecycle.md</code> gained the reclassified-during-investigation entry path.</td>
         <td><span class="ac">AC 4</span></td>
       </tr>
     </tbody>
@@ -533,11 +612,12 @@
 
   <div class="callout slate">
     <span class="k">The one idea to hold</span>
-    <p>Keep the drift-unstable <code>entry_index</code> <b>inside <code>get_entry_context.ts</code></b>, next to the state file it reads. Prioritize carries only the stable <code>member_symbol</code> end-to-end; the script does the last-mile <code>.find()</code> at fetch time, so nothing upstream ever holds a positional index that line drift can break.</p>
+    <p>The drift-unstable <code>entry_index</code> stays <b>inside <code>get_entry_context.ts</code></b>, next to the state file it reads.</p>
+    <p>Prioritize carries only the stable <code>member_symbol</code> end-to-end; the script does the last-mile <code>.filter()</code> at fetch time through the one shared <code>relativize</code>, so nothing upstream holds a positional index line drift can break.</p>
   </div>
 
   <footer>
-    TASK-190.32 · pre-build planning companion · sources <code>get_entry_context.ts</code> · <code>triage_state_types.ts</code> · <code>plan_task.ts</code> · <code>classifier-author.md</code> · <code>prioritize/SKILL.md</code> — refreshed as-built after implementation
+    TASK-190.32 · as-built after implementation + 10-lens review · sources <code>get_entry_context.ts</code> (+ <code>.test.ts</code>) · <code>src/store/paths.ts</code> · <code>finalize/output.ts</code> · <code>finalize/confirmed_unreachable_reuse.ts</code> · <code>classifier-author.md</code> · <code>prioritize/SKILL.md</code> · <code>refactor-investigator.md</code> · <code>classifier-lifecycle.md</code>
   </footer>
 </main>
 

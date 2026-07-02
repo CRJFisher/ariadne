@@ -15,7 +15,9 @@
  *   `member_symbol` identity `(file_path, name, kind, start_line)`, used by
  *   classifier-author dispatch (prioritize holds member symbols from
  *   `PlanTaskEvidence`, never entry indices). `file_path` is project-relative,
- *   as published; the lookup relativizes state entries before matching.
+ *   as published; the lookup relativizes state entries before matching. This
+ *   mode requires `--run-id`: `start_line` is run-specific, so the LATEST-run
+ *   fallback would silently resolve against the wrong run.
  *
  * Usage:
  *   node --import tsx .claude/skills/triage/scripts/get_entry_context.ts --project mocha --entry 62
@@ -28,6 +30,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { parse_project_arg, parse_run_id_arg } from "../src/cli_args.js";
 import {
+  relativize,
   require_run,
   results_dir_for,
 } from "../src/store/paths.js";
@@ -39,7 +42,6 @@ import type {
   KnownIssuesRegistry,
 } from "@ariadnejs/types";
 import type { MemberSymbol } from "@ariadnejs/skill-protocol";
-import { relativize } from "../src/finalize/confirmed_unreachable_reuse.js";
 import {
   build_dispense_payload,
   type DispensePayload,
@@ -47,8 +49,10 @@ import {
 import { load_registry } from "../src/known_issues_registry.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
-const USAGE =
-  "Usage: get_entry_context.ts --project <name> (--entry <index> | --file <path> --name <name> --kind <kind> --line <n>) [--run-id <id>]";
+const USAGE = [
+  "Usage: get_entry_context.ts --project <name> --entry <index> [--run-id <id>]",
+  "       get_entry_context.ts --project <name> --file <path> --name <name> --kind <kind> --line <n> --run-id <id>",
+].join("\n");
 
 const THIS_FILE = fileURLToPath(import.meta.url);
 const THIS_DIR = path.dirname(THIS_FILE);
@@ -229,18 +233,29 @@ function is_member_symbol_kind(value: string): value is MemberSymbol["kind"] {
 /**
  * Parse the entry selector from the argv tail (`process.argv.slice(2)`).
  * Exactly one selector mode must be present: `--entry <index>`, or the four
- * member-symbol flags together. Throws on an invalid combination — the CLI
- * wrapper decides how to exit.
+ * member-symbol flags together (plus `--run-id` — `start_line` is
+ * run-specific, so resolving a member symbol against the LATEST-run fallback
+ * would silently look in the wrong run). Throws on an invalid combination —
+ * the CLI wrapper decides how to exit.
  */
 export function parse_entry_selector(args: readonly string[]): EntrySelector {
+  // A next token that is itself a flag counts as a missing value, so an
+  // unsubstituted placeholder fails as "missing --x" instead of silently
+  // consuming the following flag.
   const flag_value = (flag: string): string | null => {
     for (let i = 0; i < args.length; i++) {
       if (args[i] === flag) {
         const value = args[i + 1];
-        if (value !== undefined && value.length > 0) return value;
+        if (value !== undefined && value.length > 0 && !value.startsWith("--")) {
+          return value;
+        }
       }
     }
     return null;
+  };
+  const strict_int = (raw: string, flag: string): number => {
+    if (!/^\d+$/.test(raw)) throw new Error(`${flag} requires an integer`);
+    return parseInt(raw, 10);
   };
 
   const entry_raw = flag_value("--entry");
@@ -259,14 +274,12 @@ export function parse_entry_selector(args: readonly string[]): EntrySelector {
   }
 
   if (entry_raw !== null) {
-    const entry_index = parseInt(entry_raw, 10);
-    if (isNaN(entry_index)) throw new Error("--entry requires an integer");
-    return { by: "index", entry_index };
+    return { by: "index", entry_index: strict_int(entry_raw, "--entry") };
   }
 
   if (present_count === 0) {
     throw new Error(
-      "an entry selector is required: --entry <index>, or --file <path> --name <name> --kind <kind> --line <n>",
+      "an entry selector is required: --entry <index>, or --file <path> --name <name> --kind <kind> --line <n> --run-id <id>",
     );
   }
   if (present_count < 4) {
@@ -277,10 +290,14 @@ export function parse_entry_selector(args: readonly string[]): EntrySelector {
       `the member-symbol selector requires all four flags; missing ${missing.join(" ")}`,
     );
   }
+  if (flag_value("--run-id") === null) {
+    throw new Error(
+      "the member-symbol selector requires --run-id (start_line is run-specific; the LATEST-run fallback would resolve against the wrong run)",
+    );
+  }
 
   const [[, file_path], [, name], [, kind_raw], [, line_raw]] = member_flags;
-  const start_line = parseInt(line_raw as string, 10);
-  if (isNaN(start_line)) throw new Error("--line requires an integer");
+  const start_line = strict_int(line_raw as string, "--line");
   if (!is_member_symbol_kind(kind_raw as string)) {
     throw new Error(`--kind must be one of ${MEMBER_SYMBOL_KINDS.join(", ")}`);
   }
@@ -308,6 +325,19 @@ function parse_args(argv: string[]): { project: string; selector: EntrySelector 
 
 // ===== Entry Resolution =====
 
+/** The (file, name) core of the member identity, shared by the resolver and
+ * the near-miss diagnostics so the match key is single-sourced. */
+function member_file_and_name_match(
+  entry: TriageEntry,
+  member: MemberSymbol,
+  project_path: string,
+): boolean {
+  return (
+    entry.name === member.name &&
+    relativize(entry.file_path, project_path) === member.file_path
+  );
+}
+
 /**
  * Resolve the selector against a run's triage state. Member-symbol matching
  * relativizes each entry's `file_path` against the state's `project_path`
@@ -328,10 +358,9 @@ export function find_entries_by_selector(
   const member = selector.member;
   return state.entries.filter(
     (e) =>
-      e.name === member.name &&
+      member_file_and_name_match(e, member, state.project_path) &&
       e.kind === member.kind &&
-      e.start_line === member.start_line &&
-      relativize(e.file_path, state.project_path) === member.file_path,
+      e.start_line === member.start_line,
   );
 }
 
@@ -339,6 +368,47 @@ function describe_selector(selector: EntrySelector): string {
   if (selector.by === "index") return `Entry index ${selector.entry_index}`;
   const member = selector.member;
   return `Member symbol ${member.kind} ${member.name} at ${member.file_path}:${member.start_line}`;
+}
+
+/**
+ * Build the fail-loud error text for a resolution that did not yield exactly
+ * one entry, or return null when it did. The zero-match diagnostics are
+ * tiered by which identity field diverged: same (file, name, kind) at other
+ * lines points at run drift (`start_line` is run-specific); same (file, name)
+ * under another kind points at the selector's `--kind`; no near entry at all
+ * points at a run/selector mismatch.
+ */
+export function resolution_failure_message(
+  state: Pick<TriageState, "entries" | "project_path">,
+  selector: EntrySelector,
+  matches: readonly TriageEntry[],
+): string | null {
+  if (matches.length === 1) return null;
+  if (matches.length > 1) {
+    return `Ambiguous selector: ${matches.length} entries match ${describe_selector(selector)} (entry indices ${matches
+      .map((e) => e.entry_index)
+      .join(", ")}). Use --entry <index> to disambiguate.`;
+  }
+
+  const head = `${describe_selector(selector)} not found in state file`;
+  if (selector.by === "index") return head;
+
+  const member = selector.member;
+  const same_file_and_name = state.entries.filter((e) =>
+    member_file_and_name_match(e, member, state.project_path),
+  );
+  const same_kind = same_file_and_name.filter((e) => e.kind === member.kind);
+  if (same_kind.length > 0) {
+    return `${head}\nEntries matching (file, name, kind) exist at start_line ${same_kind
+      .map((e) => e.start_line)
+      .join(", ")} — the member symbol and --run-id likely come from different runs (start_line is run-specific).`;
+  }
+  if (same_file_and_name.length > 0) {
+    return `${head}\nEntries matching (file, name) exist with kind ${[
+      ...new Set(same_file_and_name.map((e) => e.kind)),
+    ].join(", ")} — the selector's --kind does not match this run's entry.`;
+  }
+  return `${head}\nThe member symbol and --run-id must come from the same triage run.`;
 }
 
 // ===== Diagnostics Formatting =====
@@ -439,36 +509,9 @@ async function main(): Promise<void> {
   const state = JSON.parse(fs.readFileSync(state_path, "utf8")) as TriageState;
 
   const matches = find_entries_by_selector(state, cli.selector);
-  if (matches.length === 0) {
-    console.error(`${describe_selector(cli.selector)} not found in state file`);
-    if (cli.selector.by === "member_symbol") {
-      const member = cli.selector.member;
-      const near = state.entries.filter(
-        (e) =>
-          e.name === member.name &&
-          e.kind === member.kind &&
-          relativize(e.file_path, state.project_path) === member.file_path,
-      );
-      if (near.length > 0) {
-        console.error(
-          `Entries matching (file, name, kind) exist at start_line ${near
-            .map((e) => e.start_line)
-            .join(", ")} — the member symbol and --run-id likely come from different runs (start_line is run-specific).`,
-        );
-      } else {
-        console.error(
-          "The member symbol and --run-id must come from the same triage run.",
-        );
-      }
-    }
-    process.exit(1);
-  }
-  if (matches.length > 1) {
-    console.error(
-      `Ambiguous selector: ${matches.length} entries match ${describe_selector(cli.selector)} (entry indices ${matches
-        .map((e) => e.entry_index)
-        .join(", ")}). Use --entry <index> to disambiguate.`,
-    );
+  const failure = resolution_failure_message(state, cli.selector, matches);
+  if (failure !== null) {
+    console.error(failure);
     process.exit(1);
   }
   const entry = matches[0];

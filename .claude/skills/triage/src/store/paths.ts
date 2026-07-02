@@ -15,6 +15,20 @@ import path from "node:path";
 
 import { read_latest_run_id } from "./latest_pointer.js";
 
+// ===== Path normalization =====
+
+/**
+ * Normalize an entry's file path to the project-relative form published
+ * member identities carry. State entries may hold absolute paths; published
+ * `member_symbol` / TP-cache keys are always relative to `project_path`.
+ * The publish side (`finalize/output.ts`) and every lookup against a
+ * published identity must share this one function, or the match key drifts.
+ */
+export function relativize(file_path: string, project_path: string): string {
+  if (!path.isAbsolute(file_path)) return file_path;
+  return path.relative(project_path, file_path);
+}
+
 // ===== Base state directory =====
 
 /**

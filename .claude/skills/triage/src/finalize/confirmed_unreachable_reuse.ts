@@ -28,7 +28,8 @@
  */
 
 import * as fs from "node:fs/promises";
-import path from "path";
+
+import { relativize } from "../store/paths.js";
 
 import {
   triage_results_path,
@@ -217,14 +218,4 @@ export function apply_tp_cache_to_entries(
     });
   }
   return skipped;
-}
-
-/**
- * Normalize an entry's file path to the project-relative form published
- * member identities carry. State entries may hold absolute paths; published
- * `member_symbol` / TP-cache keys are always relative to `project_path`.
- */
-export function relativize(file_path: string, project_path: string): string {
-  if (!path.isAbsolute(file_path)) return file_path;
-  return path.relative(project_path, file_path);
 }

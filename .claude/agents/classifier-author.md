@@ -66,7 +66,10 @@ you cannot verify those hold from the `TriageEntry` you investigated.
 ## 1. Fetch every sample entry
 
 Run `get_entry_context.ts` for **each** sample member in your prompt (its
-`(project, run_id, member_symbol)` selector). Read all of
+`(project, run_id, member_symbol)` selector). A sample whose fetch fails
+because its triage run no longer resolves (runs are pruned) is skipped — note
+it in `REVIEW.md`. If no sample resolves, stop: emit only `REVIEW.md` and
+return `done <group_id>: no-draft (no sample runs resolve)`. Read all of
 them before drafting. The shared shape across the samples IS the pattern — a good
 builtin matches every sample and would generalize to unseen members of the same
 group.
@@ -206,9 +209,9 @@ Include:
 - **Pattern** — the false-positive mechanism in 2–3 sentences.
 - **Why permanent** — the static boundary that makes it unfixable (contrast with
   what a resolver fix would need to do).
-- **Matched samples** — the list of sample `project` / `member_symbol`
-  (`file_path:start_line`, `name`, `kind`) this check fires on, one line per
-  sample confirming the discriminator holds.
+- **Matched samples** — one line per sample confirming the discriminator
+  holds: `project` / `run_id` / `member_symbol` (`file_path`, `name`, `kind`,
+  `start_line`). Include any skipped samples whose runs no longer resolve.
 - **Apply steps** (exact, in order):
   1. Place `check_<group_id>.ts` into
      `packages/core/src/classify_entry_points/builtins/`.
