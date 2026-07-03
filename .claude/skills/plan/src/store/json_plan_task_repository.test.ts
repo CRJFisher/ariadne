@@ -252,6 +252,20 @@ describe("JsonPlanTaskRepository schema-version guard", () => {
     );
     await expect(repo.query({})).rejects.toThrow(/schema_version=0/);
   });
+
+  it("rejects a record missing the is_permanent_limitation boolean (a stale pre-rename row)", async () => {
+    // A missing flag reads falsy downstream, which would silently export a
+    // permanent-limitation row to backlog/ — the parse boundary rejects it instead.
+    const repo = new JsonPlanTaskRepository();
+    await fs.mkdir(plan_tasks_dir(), { recursive: true });
+    const legacy: Record<string, unknown> = { ...make_task({ id: "legacy" as PlanTaskId }) };
+    delete legacy.is_permanent_limitation;
+    legacy.is_classifier_work = true;
+    await fs.writeFile(path.join(plan_tasks_dir(), "legacy.json"), JSON.stringify(legacy), "utf8");
+    await expect(repo.get("legacy" as PlanTaskId)).rejects.toThrow(
+      /'is_permanent_limitation' must be a boolean \(got undefined\)/,
+    );
+  });
 });
 
 describe("JsonPlanTaskRepository append_sweep_event", () => {

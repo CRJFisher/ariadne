@@ -143,7 +143,11 @@ node --import tsx .claude/skills/plan/scripts/export_to_backlog.ts \
 ```
 
 The output lists each candidate as `{id, backlog_task: "", path: ""}`; read the
-source rows (step 2) for the grouping signal.
+source rows (step 2) for the grouping signal. The summary also carries a
+`skipped_permanent_limitation` array — the ids of rows the plan engine marked
+`is_permanent_limitation`. These never appear in the candidate list (they are
+never exportable) and route through step 3a instead of the backlog pipeline;
+read their ids here to build the permanent-limitation worklist.
 
 ### 2. Gather the change groups
 
@@ -164,7 +168,10 @@ one fault area. For each group, pull from the rows the signal the user weighs:
 - **Kind** — `is_permanent_limitation` marks a group whose call relationship is
   fundamentally unknowable to static analysis: no core fix is possible, the
   registry classifier is the durable deliverable, and the group routes to
-  step 3a instead of the backlog pipeline.
+  step 3a instead of the backlog pipeline. Such rows arrive via the step-1
+  `skipped_permanent_limitation` array, not the candidate list — fetch them
+  directly at `~/.ariadne/plan/tasks/<id>.json` and group them by `fault_area`
+  the same way.
 
 ### 3. Deep-investigate each change group
 
@@ -173,9 +180,10 @@ evidence rollup and never reads the cited files front to back, so the architectu
 node's body is a _hypothesis about the fix_, not a verified design. Turn it into a
 real design before the user decides.
 
-Dispatch one `Task(refactor-investigator)` per change group, all groups in one
-message so they run in parallel (cap at ~5 concurrent; drain in waves if there are
-more). Each sub-agent reads its group's rows, gets to grips with the real
+Dispatch one `Task(refactor-investigator)` per change group whose rows carry
+`is_permanent_limitation: false` (a `true` group routes to step 3a instead), all
+groups in one message so they run in parallel (cap at ~5 concurrent; drain in
+waves if there are more). Each sub-agent reads its group's rows, gets to grips with the real
 `packages/core` code, and writes a Markdown refactoring plan to
 `<root>/<fault_area>/refactor_plan.md`. Dispatch prompt:
 
@@ -215,11 +223,12 @@ plans must be on disk first.
 `is_permanent_limitation` — `true` when the call relationship is fundamentally
 unknowable to static analysis (no realistic resolver fix is possible; see
 `.claude/rules/classifier-lifecycle.md`), `false` for ordinary core-fix work.
-The flag is the **routing default**, read from each group's rows in step 2: a
-`true` group defaults here (its durable deliverable is a registry classifier,
-and it never graduates to `backlog/` — the export selector reports such rows as
-`skipped_permanent_limitation` in the step-1 dry run); a `false` group defaults
-to `refactor-investigator` (step 3).
+The flag is the **routing default**: a `true` group defaults here (its durable
+deliverable is a registry classifier, and it never graduates to `backlog/`), a
+`false` group defaults to `refactor-investigator` (step 3). The `true` groups
+surface in the step-1 dry run's `skipped_permanent_limitation` array — fetch
+those rows directly at `~/.ariadne/plan/tasks/<id>.json` (step 2's Kind bullet);
+they are never in the candidate list.
 
 **The human is the final adjudicator, not the flag.** The default is a starting
 point, not an automatism: before dispatch, confirm each `true` group really is

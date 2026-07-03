@@ -1,7 +1,7 @@
 ---
 id: TASK-190.34
 title: "Give plan a permanent-limitation concept distinct from interim-workaround"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-02 00:00"
 labels:
@@ -76,17 +76,77 @@ Plan's `is_classifier_work` concept is therefore replaced, not renamed:
 
 <!-- AC:BEGIN -->
 
-- [ ] Plan's taxonomy carries "permanent limitation (no core fix possible)" as a
+- [x] Plan's taxonomy carries "permanent limitation (no core fix possible)" as a
       first-class signal: `is_permanent_limitation` on `StrategistPlanNode` and
       `PlanTask`, replacing `is_classifier_work`.
-- [ ] The interim-workaround classifier concept is purged from plan: no prompt
+- [x] The interim-workaround classifier concept is purged from plan: no prompt
       guidance, rendered acceptance criterion, export partition, or priority
       rule proposes an interim classifier for a fixable bug.
-- [ ] The plan-strategist prompt can surface a permanent-limitation group without
+- [x] The plan-strategist prompt can surface a permanent-limitation group without
       asserting a durable core fix exists; the pinned-prompt test is updated to
       match.
-- [ ] Permanent-limitation tasks never export to `backlog/`; `prioritize` step 3a
+- [x] Permanent-limitation tasks never export to `backlog/`; `prioritize` step 3a
       routes to `classifier-author` vs `refactor-investigator` starting from
       plan's data, with the human as final adjudicator.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+The plan engine's taxonomy carries the permanent-limitation concept as a
+first-class boolean. `is_permanent_limitation` on `StrategistPlanNode` and
+`PlanTask` marks a group whose call relationship is fundamentally unknowable to
+static analysis: no core fix is possible, and the durable deliverable is a
+registry classifier authored downstream by `classifier-author`. Everything else
+is ordinary core-fix work. There is no third state — under the
+classifier-lifecycle regime the registry builtins are triage's only classifier
+mechanism and the registry holds only permanent limitations, so an "interim
+classifier" for a fixable bug has nowhere to live; plan therefore carries no
+concept of one. That deletion is the decision that shaped the change: the field
+is a replacement, not a rename, and the whole interim surface went with it —
+the strategist's "classifier is the interim mitigation" guidance, the rendered
+"author the interim classifier" acceptance criterion, the
+`--priority core|classifier` export partition, and the classifier→medium
+backlog-priority rule (every exported row is a core fix, stamped `high`).
+
+The flag flows strategist → `validate_plan` → `build_plan_tasks` → the task-DB
+row → export selection. `select_exportable_tasks` hard-excludes permanent rows
+in both selection modes and reports them on the `skipped_permanent_limitation`
+channel; that report, surfaced in the export dry run, is the listing
+`prioritize` step 3a routes from — plan's flag is the routing default, the
+human is the final adjudicator, and the agent gates (`classifier-author`'s
+"if fixable, stop"; the investigator's `PERMANENT-LIMITATION` verdict) remain
+the backstops in both directions.
+
+Front doors: the field docs at `plan/src/types.ts` (`StrategistPlanNode`) and
+`plan/src/store/plan_task.ts` (`PlanTask`); the strategist's pinned H2
+"Permanent limitations — the no-fix escape" in `.claude/agents/plan-strategist.md`;
+the export invariant in `plan/src/export/select_exportable_tasks.ts`; the
+operator path in `prioritize/SKILL.md` steps 1–3a. Two guards keep the
+never-export invariant structural: the store's parse boundary rejects a row
+missing the boolean (a stale pre-rename file fails loudly instead of reading
+falsy and silently exporting), and the reconcile augment re-adopts the
+candidate's fresh flag each sweep, like `core_fix_effort`.
+
+Known edge, deliberately left: `validate_plan`'s other-bucket rule counts an
+evidence-grounded permanent-limitation node as the bucket's "core fix" — naïvely
+excluding it would force a fake core-fix node on an all-permanent `other`
+bucket, so tightening it needs a design decision, not a one-liner.
+
+### Review
+
+An 11-lens opus review verified the change and surfaced fixes, all applied: a
+typecheck-only break in `graduate_group_docs.test.ts` (stale `ExportSelectors`
+shape — vitest strips types, so only `tsc --noEmit` caught it), the augment
+re-adoption and parse-boundary guards above, the stale `--priority` references
+in `PlanTask.core_fix_effort`'s doc and
+`docs/self-healing-pipeline/actuate-and-backlog.html`, and the prioritize
+SKILL's broken operator path (step 1 never named the
+`skipped_permanent_limitation` array; step 3a pointed at step 2's candidate
+grouping, which permanent rows never enter). Considered, not actioned: the
+skip channel staying `string[]` (id-only is sufficient), a smoke-test
+permanent-node fixture (unit coverage exists at every stage), and a strategist
+prompt instruction to code-ground the permanence call (the downstream gates
+re-adjudicate by design).

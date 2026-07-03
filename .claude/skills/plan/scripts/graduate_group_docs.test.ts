@@ -46,10 +46,11 @@ function make_export_summary(dry_run: boolean): ExportSummary {
   return {
     dry_run,
     export_run_id: "export-run-1",
-    selectors: { status: "proposed", fault_area: SLUG, priority: null, ids: [] },
+    selectors: { status: "proposed", fault_area: SLUG, ids: [] },
     exported: [{ id: "pt-arch", backlog_task: `TASK-${BACKLOG_ID}`, path: EPIC_FILENAME }],
     skipped_already_exported: [],
     skipped_non_exportable: [],
+    skipped_permanent_limitation: [],
     missing_ids: [],
   };
 }
@@ -147,14 +148,15 @@ describe("graduate_group_docs", () => {
     const merged_summary: ExportSummary = {
       dry_run: false,
       export_run_id: "export-run-2",
-      selectors: { status: "proposed", fault_area: null, priority: null, ids: ["pt-a", "pt-b", "pt-c"] },
+      selectors: { status: "proposed", fault_area: null, ids: ["pt-a", "pt-b", "pt-c"] },
       exported: [
         { id: "pt-a", backlog_task: "TASK-352", path: epic_filename },
         { id: "pt-b", backlog_task: "TASK-352.1", path: "task-352.1 - Complete-the-member-surface.md" },
-        { id: "pt-c", backlog_task: "TASK-352.2", path: "task-352.2 - Author-interim-classifier.md" },
+        { id: "pt-c", backlog_task: "TASK-352.2", path: "task-352.2 - Complete-the-return-type-surface.md" },
       ],
       skipped_already_exported: [],
       skipped_non_exportable: [],
+      skipped_permanent_limitation: [],
       missing_ids: [],
     };
     await seed_comprehension(MERGED_SLUG, "<html>merged decision aid</html>");

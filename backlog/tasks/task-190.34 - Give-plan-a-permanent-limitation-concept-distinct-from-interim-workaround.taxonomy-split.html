@@ -1,25 +1,27 @@
 <!DOCTYPE html>
 <!-- SPDX-License-Identifier: Apache-2.0 -->
-<!-- Comprehension companion for TASK-190.34 (proposed plan, pre-implementation).
-     Grounded against real source (verified, not trusted from the brief):
-       .claude/skills/plan/src/types.ts (StrategistPlanNode.is_classifier_work ~123-129);
-       .claude/skills/plan/src/store/plan_task.ts (PlanTask.is_classifier_work ~184-191);
-       .claude/skills/plan/src/reconcile/validate_plan.ts (shape 97-98, proposes_core_fix 176, effort-0 192-198);
+<!-- Comprehension companion for TASK-190.34 (as-built · commit 04d8ce16 + working-tree review fixes).
+     Grounded against the LANDED source (verified, not trusted from any relayed brief):
+       .claude/skills/plan/src/types.ts (StrategistPlanNode.is_permanent_limitation 124-131);
+       .claude/skills/plan/src/store/plan_task.ts (PlanTask.is_permanent_limitation 184-193);
+       .claude/skills/plan/src/reconcile/validate_plan.ts (shape 98, mutual-exclusion 172-178, proposes_core_fix 189, effort-0 205-209);
        .claude/skills/plan/src/reconcile/build_plan_tasks.ts (flow 149);
-       .claude/skills/plan/src/reconcile/render_task.ts (AC line 80-84);
-       .claude/skills/plan/src/export/render_backlog_task.ts (derive_backlog_priority 36-37, 97);
-       .claude/skills/plan/src/export/select_exportable_tasks.ts (priority partition 96-99);
-       .claude/agents/plan-strategist.md (H2 "The classifier is the interim mitigation" 132-137, JSON 199-202);
-       .claude/skills/plan/scripts/get_bucket_context.ts (classifier_priority_rule 107-110);
-       .claude/skills/plan/tests/agent_prompt_pin.test.ts (H2 pin 146, required keys 192);
-       .claude/skills/prioritize/SKILL.md (step 3a 209-228);
-       .claude/rules/classifier-lifecycle.md (registry = permanent limitations only).
+       .claude/skills/plan/src/reconcile/render_task.ts (three-way AC branch 63-85);
+       .claude/skills/plan/src/export/select_exportable_tasks.ts (skipped_permanent_limitation 74/110-115, both modes);
+       .claude/skills/plan/src/export/render_backlog_task.ts (priority: high 75/98 — derive_backlog_priority/BacklogPriority/ExportPriority deleted);
+       .claude/skills/plan/src/store/plan_task_record.ts (REQUIRED_BOOLEAN_FIELDS parse guard 20-23/50);
+       .claude/skills/plan/src/reconcile/reconcile_plan.ts (augment re-adopts is_permanent_limitation 230);
+       .claude/agents/plan-strategist.md (H2 "Permanent limitations — the no-fix escape" 132-168, five signals, default-to-core-fix, JSON 231);
+       .claude/skills/plan/scripts/get_bucket_context.ts (hydration rule 108-110);
+       .claude/skills/plan/tests/agent_prompt_pin.test.ts (H2 pin 147, forbidden 158-161, required 197);
+       .claude/skills/prioritize/SKILL.md (step 1 147-150, step 2 Kind 168-172, step 3 183-184, step 3a 220-239);
+       .claude/rules/classifier-lifecycle.md (registry = permanent-limitations catalog; builtins are triage's only classifier mechanism).
      Inherits TASK-190 family design tokens. Hand-authored inline SVG, no external deps. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TASK-190.34 — giving plan a permanent-limitation concept distinct from interim-workaround</title>
+<title>TASK-190.34 — giving plan a permanent-limitation flag, purging the interim-classifier concept</title>
 <style>
   :root{
     --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
@@ -62,8 +64,8 @@
   .meta{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 2px}
   .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
   .chip strong{color:var(--slate);font-weight:600}
-  .chip.todo{background:#fbf3ec;border-color:var(--clay)}
-  .chip.todo strong{color:var(--clay)}
+  .chip.done{background:#f2f4ec;border-color:var(--olive)}
+  .chip.done strong{color:var(--olive)}
   .cap{font-size:13.5px;color:var(--g600);margin:9px 2px 12px}
   .cap b{color:var(--slate);font-weight:600}
 
@@ -97,17 +99,17 @@
   .callout .owner{font-family:var(--mono);font-size:11px;color:var(--g400);margin-top:7px;display:block}
   .callout.slate .owner{color:var(--oat)}
 
-  /* option cards for the open decision */
-  .opts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:14px 0}
-  .opt{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);padding:14px 15px;display:flex;flex-direction:column;gap:7px}
-  .opt.pick{border-color:var(--olive);box-shadow:0 0 0 1px var(--olive)}
-  .opt .badge{font-family:var(--mono);font-size:10.5px;font-weight:700;display:inline-flex;align-items:center;gap:8px;letter-spacing:.04em}
-  .opt .badge .num{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:11px}
-  .opt.pick .num{background:var(--olive)} .opt.rej .num{background:var(--g400)}
-  .opt .verdict{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;border-radius:999px;padding:2px 8px;margin-left:auto}
-  .opt.pick .verdict{background:#f2f4ec;color:var(--olive)} .opt.rej .verdict{background:var(--g100);color:var(--g600)}
-  .opt h3{font-family:var(--mono);font-size:12.5px;margin:0;font-weight:600;line-height:1.35;color:var(--slate)}
-  .opt .why{font-size:12.5px;color:var(--g600);margin:0} .opt .why b{color:var(--slate)}
+  /* decisions-taken record cards */
+  .decs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+  .dec{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);padding:13px 15px;display:flex;flex-direction:column;gap:6px}
+  .dec.kept{border-left:4px solid var(--olive)}
+  .dec.purged{border-left:4px solid var(--rust)}
+  .dec .tag{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;display:inline-flex;align-items:center;gap:7px}
+  .dec.kept .tag{color:var(--olive)} .dec.purged .tag{color:var(--rust)}
+  .dec .tag::before{content:"";width:9px;height:9px;border-radius:50%;flex:none}
+  .dec.kept .tag::before{background:var(--olive)} .dec.purged .tag::before{background:var(--rust)}
+  .dec h3{font-family:var(--mono);font-size:12px;margin:0;font-weight:600;color:var(--slate);line-height:1.35}
+  .dec .why{font-size:12.5px;color:var(--g600);margin:0} .dec .why b{color:var(--slate)}
 
   /* change map table */
   .change{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
@@ -134,7 +136,7 @@
   footer{border-top:1px solid var(--g200);margin-top:60px;padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400);max-width:100ch}
   footer code{background:var(--g100)}
 
-  @media(max-width:820px){ .opts{grid-template-columns:1fr} }
+  @media(max-width:820px){ .decs{grid-template-columns:1fr} }
   @media(max-width:760px){
     .ba{grid-template-columns:1fr}
     .ba .divider{flex-direction:row;padding:8px 0}
@@ -158,36 +160,36 @@
 
 <nav class="toc">
   <div class="inner">
-    <a href="#split">The missing cell</a>
+    <a href="#split">The missing outcome</a>
     <a href="#regimes">Two destinations</a>
     <a href="#thread">The signal's path</a>
     <a href="#surface">Consumer surface</a>
-    <a href="#decision">The open decision</a>
+    <a href="#decisions">Decisions taken</a>
   </div>
 </nav>
 
 <main>
   <p class="eyebrow">Self-repair pipeline · plan taxonomy</p>
-  <h1>Splitting one boolean into the two outcomes it silently conflates</h1>
-  <p class="lead prose">The plan stage marks a group with <code>is_classifier_work</code> — a boolean framed everywhere as an <b>interim workaround</b> with a durable core fix still pending. <b>A permanent limitation with no possible core fix has no cell in that model.</b></p>
-  <p class="cap prose" style="margin-top:0">This task replaces the boolean with a tri-state signal so plan represents both disjoint outcomes and <code>prioritize</code> step 3a routes on data, not a bare human eyeball.</p>
+  <h1>Naming a permanent limitation, and purging the interim classifier</h1>
+  <p class="lead prose">The plan stage marked classifier-relevant groups with <code>is_classifier_work</code> — framed everywhere as an <b>interim workaround</b> with a durable core fix still pending. But under the registry regime, a classifier has <b>no interim home</b>: the registry holds only permanent limitations, and its builtins are triage's <b>only</b> classifier mechanism.</p>
+  <p class="cap prose" style="margin-top:0">So the interim-classifier concept was purged from plan, and the flag became <code>is_permanent_limitation: boolean</code> — the one distinction the pipeline actually routes on, threaded from the strategist prompt into the <code>PlanTask</code>.</p>
 
   <div class="meta">
-    <span class="chip todo">status <strong>To Do</strong></span>
+    <span class="chip done">status <strong>Landed</strong></span>
+    <span class="chip">commit <strong>04d8ce16</strong> + review fixes</span>
     <span class="chip">priority <strong>medium</strong></span>
     <span class="chip">parent <strong>TASK-190</strong></span>
-    <span class="chip">10 code surfaces + ~11 test files</span>
-    <span class="chip">no schema bump · no back-compat</span>
+    <span class="chip done">boolean · interim purged · no schema bump</span>
   </div>
 
-  <!-- ===== 1. THE MISSING CELL (before/after) ===== -->
-  <h2 id="split"><span class="n">01</span>The state the boolean cannot represent</h2>
-  <p class="cap prose"><b>CURRENT:</b> two states, and both assume a durable core fix exists — so a pure permanent limitation is unrepresentable and gets sized as "the cheap interim." <b>PLANNED:</b> a tri-state names the permanent case as a first-class outcome with no core fix.</p>
+  <!-- ===== 1. THE MISSING OUTCOME (before/after) ===== -->
+  <h2 id="split"><span class="n">01</span>The outcome the old boolean could not name</h2>
+  <p class="cap prose"><b>BEFORE:</b> <code>is_classifier_work</code>'s two states both assume a durable core fix exists, so a pure permanent limitation with no fix was unrepresentable. <b>AS-BUILT:</b> the boolean's axis is flipped to name exactly that — permanent-vs-fixable — and the interim concept is dropped entirely.</p>
 
   <div class="ba">
     <div class="pane">
-      <p class="panetitle cur">Current — a boolean, biased toward "a fix always exists"</p>
-      <svg viewBox="0 0 360 260" role="img" aria-label="Current model: is_classifier_work is a boolean. false means a core fix is the deliverable; true means an interim classifier workaround while a high-effort core fix waits. There is no state for a permanent limitation with no core fix.">
+      <p class="panetitle cur">Before — is_classifier_work, biased toward "a fix always exists"</p>
+      <svg viewBox="0 0 360 260" role="img" aria-label="Before: is_classifier_work is a boolean. false means a core fix is the deliverable; true means an interim classifier workaround while a high-effort core fix waits. There is no state for a permanent limitation with no core fix, and an interim classifier has nowhere to live under the registry regime.">
         <defs><marker id="c-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#9a9387"/></marker></defs>
         <rect x="90" y="12" width="180" height="46" rx="10" fill="#e7ddc9" stroke="#9a9387"/>
         <text x="180" y="32" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#5f594f">is_classifier_work</text>
@@ -203,7 +205,6 @@
         <text x="269" y="136" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">interim workaround,</text>
         <text x="269" y="149" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#b9794f">core fix pending</text>
 
-        <!-- the ghost missing state -->
         <rect x="105" y="188" width="150" height="60" rx="10" fill="#fffdf8" stroke="#a8472f" stroke-dasharray="5 4"/>
         <text x="180" y="210" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#a8472f">permanent limitation,</text>
         <text x="180" y="224" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#a8472f">no core fix possible</text>
@@ -222,167 +223,150 @@
     </div>
 
     <div class="pane">
-      <p class="panetitle pln">Planned — a tri-state, each outcome first-class</p>
-      <svg viewBox="0 0 360 260" role="img" aria-label="Planned model: classifier_work is a tri-state string union with three values. none means a core fix is the deliverable. interim-workaround means a fixable bug with a core fix pending, graduating to backlog. permanent-limitation means no core fix is possible and the classifier is the durable deliverable, routing to classifier-author and the registry.">
+      <p class="panetitle pln">As-built — is_permanent_limitation, the axis that actually routes</p>
+      <svg viewBox="0 0 360 260" role="img" aria-label="As-built: is_permanent_limitation is a boolean. false is the default — ordinary core-fix work that exports to backlog at priority high. true is a permanent limitation — no core fix is possible, the durable deliverable is a registry classifier authored by classifier-author, and the row never exports to backlog. The interim state is gone.">
         <defs><marker id="c-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6c7a4a"/></marker></defs>
-        <rect x="80" y="12" width="200" height="46" rx="10" fill="#f2f4ec" stroke="#6c7a4a" stroke-width="2"/>
-        <text x="180" y="32" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#6c7a4a">classifier_work</text>
-        <text x="180" y="48" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">"none" | "interim…" | "permanent…"</text>
+        <rect x="82" y="12" width="196" height="46" rx="10" fill="#f2f4ec" stroke="#6c7a4a" stroke-width="2"/>
+        <text x="180" y="32" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#6c7a4a">is_permanent_limitation</text>
+        <text x="180" y="48" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#2b2a28">: boolean</text>
 
-        <rect x="10" y="100" width="106" height="66" rx="10" fill="#fffdf8" stroke="#9a9387"/>
-        <text x="63" y="122" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#2b2a28">"none"</text>
-        <text x="63" y="140" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">core fix is</text>
-        <text x="63" y="153" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">the deliverable</text>
+        <rect x="20" y="100" width="150" height="72" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="95" y="122" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#2b2a28">false · default</text>
+        <text x="95" y="140" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">ordinary core-fix work</text>
+        <text x="95" y="155" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">→ backlog, priority high</text>
 
-        <rect x="127" y="100" width="106" height="66" rx="10" fill="#fbf3ec" stroke="#b9794f"/>
-        <text x="180" y="119" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">"interim-</text>
-        <text x="180" y="130" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">workaround"</text>
-        <text x="180" y="148" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">fixable, core</text>
-        <text x="180" y="159" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#b9794f">fix pending</text>
+        <rect x="190" y="100" width="150" height="72" rx="10" fill="#f2f4ec" stroke="#6c7a4a" stroke-width="2"/>
+        <text x="265" y="122" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#2b2a28">true</text>
+        <text x="265" y="140" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">no core fix; classifier IS</text>
+        <text x="265" y="155" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#6c7a4a">the deliverable → registry</text>
 
-        <rect x="244" y="100" width="106" height="66" rx="10" fill="#f2f4ec" stroke="#6c7a4a" stroke-width="2"/>
-        <text x="297" y="119" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">"permanent-</text>
-        <text x="297" y="130" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">limitation"</text>
-        <text x="297" y="148" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">no core fix;</text>
-        <text x="297" y="159" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#6c7a4a">classifier IS it</text>
+        <text x="180" y="200" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#6c7a4a">the previously-missing outcome, now the true branch ↑</text>
+        <rect x="46" y="214" width="268" height="34" rx="9" fill="#fbf3ec" stroke="#b9794f" stroke-dasharray="5 4"/>
+        <text x="180" y="235" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#a8472f">interim workaround — purged, no home in the registry</text>
 
-        <text x="180" y="204" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#6c7a4a">the previously-missing outcome, now named ↑</text>
-        <rect x="60" y="216" width="240" height="34" rx="9" fill="#f2f4ec" stroke="#6c7a4a"/>
-        <text x="180" y="237" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">prioritize step 3a routes on the value</text>
-
-        <line x1="130" y1="58" x2="80" y2="98" stroke="#9a9387" stroke-width="1.5" marker-end="url(#c-o)"/>
-        <line x1="180" y1="58" x2="180" y2="98" stroke="#b9794f" stroke-width="1.5" marker-end="url(#c-o)"/>
-        <line x1="230" y1="58" x2="290" y2="98" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#c-o)"/>
+        <line x1="140" y1="58" x2="100" y2="98" stroke="#9a9387" stroke-width="1.5" marker-end="url(#c-o)"/>
+        <line x1="220" y1="58" x2="260" y2="98" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#c-o)"/>
       </svg>
     </div>
   </div>
   <div class="legend">
-    <span><span class="sw" style="background:#6c7a4a"></span> permanent-limitation — the added, load-bearing state</span>
-    <span><span class="sw" style="background:#b9794f"></span> interim-workaround — the boolean's old <code>true</code></span>
-    <span><span class="sw" style="background:#fffdf8;border-color:#a8472f"></span> dashed = unrepresentable today</span>
+    <span><span class="sw" style="background:#6c7a4a"></span> permanent-limitation — the added <code>true</code> branch</span>
+    <span><span class="sw" style="background:#9a9387"></span> core-fix work — the <code>false</code> default</span>
+    <span><span class="sw" style="background:#fbf3ec;border-color:#b9794f"></span> dashed = interim, purged from plan</span>
   </div>
 
   <div class="callout rust">
-    <span class="k">Why the boolean is not just under-specified — it is biased backward</span>
-    <p>The registry (<code>classifier-lifecycle.md</code>) holds classifiers <b>only</b> for permanent limitations; fixable bugs live in <code>backlog/</code>. Yet the strategist prompt's pinned H2 is titled <b>"The classifier is the interim mitigation"</b> and asserts "the core fix is the durable deliverable" — so a strategist following it literally would <b>never</b> surface a pure permanent-limitation group. Plan's model points the opposite way from the regime it feeds.</p>
+    <span class="k">Why a tri-state was rejected and interim was purged, not renamed</span>
+    <p>Registry builtins are triage's <b>only</b> classifier mechanism, and the registry (<code>classifier-lifecycle.md</code>) holds <b>only</b> permanent limitations — so an "interim classifier" has nowhere to live. A fixable bug's real deliverable is the core fix in <code>backlog/</code>, not a temporary classifier. The interim concept had no destination, so plan needs exactly one bit: is this fixable, or not?</p>
   </div>
 
   <!-- ===== 2. TWO DESTINATIONS ===== -->
   <h2 id="regimes"><span class="n">02</span>The two outcomes land in different places</h2>
-  <p class="cap prose">The split matters because each value has a <b>distinct destination and a distinct owner</b>: an interim workaround graduates to a <code>backlog/</code> task; a permanent limitation routes to <code>classifier-author</code> and becomes a registry entry — it never files a backlog fix.</p>
+  <p class="cap prose">The flag matters because each value has a <b>distinct destination and owner</b>: a <code>false</code> group is a core-fix task that exports to <code>backlog/</code> at priority high; a <code>true</code> group routes to <code>classifier-author</code> and becomes a registry entry — it <b>never</b> exports to backlog.</p>
 
   <div class="panel">
-    <svg viewBox="0 0 1180 320" role="img" aria-label="Two disjoint outcome paths from a classifier_work value. classifier_work=none produces a core-fix task that exports to backlog at high priority. classifier_work=interim-workaround also graduates to backlog as a medium-priority tracked fix, because a core fix is still the real deliverable. classifier_work=permanent-limitation does not export to backlog; it routes through prioritize step 3a to the classifier-author agent, which drafts a builtin the human stages into the registry as a permanent-limitations catalog entry.">
+    <svg viewBox="0 0 1180 300" role="img" aria-label="Two disjoint outcome paths from is_permanent_limitation. is_permanent_limitation=false produces a core-fix task that exports to backlog at priority high — every exported row is high now. is_permanent_limitation=true does not export to backlog; the export selector hard-excludes it into the skipped_permanent_limitation channel, and prioritize step 3a reads that channel and routes the group to the classifier-author agent, which drafts a builtin the human stages into the registry as a permanent-limitations catalog entry.">
       <defs>
         <marker id="r-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#9a9387"/></marker>
-        <marker id="r-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b9794f"/></marker>
         <marker id="r-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6c7a4a"/></marker>
       </defs>
       <g font-family="ui-monospace,monospace" font-size="11">
-        <!-- source -->
-        <rect x="16" y="128" width="200" height="64" rx="10" fill="#e7ddc9" stroke="#9a9387"/>
-        <text x="116" y="152" text-anchor="middle" font-size="11.5" fill="#2b2a28">PlanTask</text>
-        <text x="116" y="170" text-anchor="middle" fill="#5f594f">classifier_work =</text>
-        <text x="116" y="184" text-anchor="middle" fill="#5f594f">one of three</text>
+        <rect x="16" y="120" width="200" height="64" rx="10" fill="#e7ddc9" stroke="#9a9387"/>
+        <text x="116" y="144" text-anchor="middle" font-size="11.5" fill="#2b2a28">PlanTask</text>
+        <text x="116" y="162" text-anchor="middle" fill="#5f594f">is_permanent_limitation</text>
+        <text x="116" y="176" text-anchor="middle" fill="#5f594f">= false | true</text>
 
-        <!-- three value chips -->
-        <rect x="300" y="26" width="196" height="52" rx="10" fill="#fffdf8" stroke="#9a9387"/>
-        <text x="398" y="48" text-anchor="middle" fill="#2b2a28">"none"</text>
-        <text x="398" y="66" text-anchor="middle" font-size="10" fill="#5f594f">a core fix is the deliverable</text>
+        <rect x="300" y="60" width="200" height="52" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="400" y="82" text-anchor="middle" fill="#2b2a28">false · default</text>
+        <text x="400" y="100" text-anchor="middle" font-size="10" fill="#5f594f">a core fix is the deliverable</text>
 
-        <rect x="300" y="132" width="196" height="52" rx="10" fill="#fbf3ec" stroke="#b9794f"/>
-        <text x="398" y="154" text-anchor="middle" fill="#2b2a28">"interim-workaround"</text>
-        <text x="398" y="172" text-anchor="middle" font-size="10" fill="#b9794f">fixable bug, core fix pending</text>
+        <rect x="300" y="192" width="200" height="52" rx="10" fill="#f2f4ec" stroke="#6c7a4a" stroke-width="2"/>
+        <text x="400" y="214" text-anchor="middle" fill="#2b2a28">true</text>
+        <text x="400" y="232" text-anchor="middle" font-size="10" fill="#6c7a4a">no core fix is possible</text>
 
-        <rect x="300" y="238" width="196" height="52" rx="10" fill="#f2f4ec" stroke="#6c7a4a" stroke-width="2"/>
-        <text x="398" y="260" text-anchor="middle" fill="#2b2a28">"permanent-limitation"</text>
-        <text x="398" y="278" text-anchor="middle" font-size="10" fill="#6c7a4a">no core fix is possible</text>
+        <line x1="216" y1="146" x2="298" y2="92" stroke="#9a9387" stroke-width="1.5" marker-end="url(#r-g)"/>
+        <line x1="216" y1="160" x2="298" y2="214" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#r-o)"/>
 
-        <line x1="216" y1="150" x2="298" y2="62" stroke="#9a9387" stroke-width="1.5" marker-end="url(#r-g)"/>
-        <line x1="216" y1="160" x2="298" y2="158" stroke="#b9794f" stroke-width="1.5" marker-end="url(#r-c)"/>
-        <line x1="216" y1="170" x2="298" y2="258" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#r-o)"/>
+        <rect x="568" y="56" width="220" height="66" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="678" y="80" text-anchor="middle" font-size="11.5" fill="#2b2a28">select_exportable_tasks</text>
+        <text x="678" y="100" text-anchor="middle" font-size="10" fill="#5f594f">selects the row (both modes)</text>
+        <text x="678" y="114" text-anchor="middle" font-size="10" fill="#5f594f">priority always high</text>
 
-        <!-- middle routing -->
-        <rect x="560" y="80" width="210" height="86" rx="10" fill="#fffdf8" stroke="#9a9387"/>
-        <text x="665" y="104" text-anchor="middle" font-size="11.5" fill="#2b2a28">export_to_backlog</text>
-        <text x="665" y="124" text-anchor="middle" font-size="10" fill="#5f594f">none → priority high</text>
-        <text x="665" y="140" text-anchor="middle" font-size="10" fill="#b9794f">interim → priority medium</text>
-        <text x="665" y="156" text-anchor="middle" font-size="10" fill="#5f594f">(tracked fix still lands)</text>
+        <rect x="568" y="188" width="220" height="72" rx="10" fill="#f2f4ec" stroke="#6c7a4a" stroke-width="2"/>
+        <text x="678" y="210" text-anchor="middle" font-size="11.5" fill="#2b2a28">skipped_permanent_limitation</text>
+        <text x="678" y="230" text-anchor="middle" font-size="10" fill="#6c7a4a">hard-excluded in both modes;</text>
+        <text x="678" y="246" text-anchor="middle" font-size="10" fill="#5f594f">reported for step 3a to read</text>
 
-        <rect x="560" y="220" width="210" height="86" rx="10" fill="#f2f4ec" stroke="#6c7a4a" stroke-width="2"/>
-        <text x="665" y="244" text-anchor="middle" font-size="11.5" fill="#2b2a28">prioritize step 3a</text>
-        <text x="665" y="264" text-anchor="middle" font-size="10" fill="#6c7a4a">routes on the value;</text>
-        <text x="665" y="280" text-anchor="middle" font-size="10" fill="#5f594f">human is final adjudicator</text>
-        <text x="665" y="296" text-anchor="middle" font-size="10" fill="#6c7a4a">→ classifier-author</text>
+        <line x1="500" y1="86" x2="566" y2="88" stroke="#9a9387" stroke-width="1.5" marker-end="url(#r-g)"/>
+        <line x1="500" y1="218" x2="566" y2="222" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#r-o)"/>
 
-        <line x1="496" y1="52" x2="558" y2="104" stroke="#9a9387" stroke-width="1.5" marker-end="url(#r-g)"/>
-        <line x1="496" y1="158" x2="558" y2="132" stroke="#b9794f" stroke-width="1.5" marker-end="url(#r-c)"/>
-        <line x1="496" y1="264" x2="558" y2="252" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#r-o)"/>
+        <rect x="856" y="56" width="310" height="66" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+        <text x="1011" y="80" text-anchor="middle" font-size="11.5" fill="#2b2a28">backlog/ task</text>
+        <text x="1011" y="100" text-anchor="middle" font-size="10" fill="#5f594f">the tracked, human-owned fix</text>
+        <text x="1011" y="114" text-anchor="middle" font-size="10" fill="#5f594f">priority: high (always)</text>
 
-        <!-- destinations -->
-        <rect x="850" y="90" width="316" height="66" rx="10" fill="#fffdf8" stroke="#9a9387"/>
-        <text x="1008" y="114" text-anchor="middle" font-size="11.5" fill="#2b2a28">backlog/ task</text>
-        <text x="1008" y="134" text-anchor="middle" font-size="10" fill="#5f594f">the tracked, human-owned fix — high / medium</text>
+        <rect x="856" y="184" width="310" height="80" rx="10" fill="#f2f4ec" stroke="#6c7a4a" stroke-width="2"/>
+        <text x="1011" y="206" text-anchor="middle" font-size="11.5" fill="#2b2a28">prioritize 3a → classifier-author → registry</text>
+        <text x="1011" y="226" text-anchor="middle" font-size="10" fill="#5f594f">reads the skipped array; human is final adjudicator</text>
+        <text x="1011" y="244" text-anchor="middle" font-size="10" fill="#6c7a4a">a builtin: agent drafts, human stages</text>
+        <text x="1011" y="258" text-anchor="middle" font-size="9.5" fill="#5f594f">never exports to backlog</text>
 
-        <rect x="850" y="228" width="316" height="78" rx="10" fill="#f2f4ec" stroke="#6c7a4a" stroke-width="2"/>
-        <text x="1008" y="252" text-anchor="middle" font-size="11.5" fill="#2b2a28">registry entry</text>
-        <text x="1008" y="272" text-anchor="middle" font-size="10" fill="#5f594f">the permanent-limitations catalog · a builtin</text>
-        <text x="1008" y="290" text-anchor="middle" font-size="10" fill="#6c7a4a">classifier drafted by the agent, staged by the human</text>
-
-        <line x1="770" y1="123" x2="848" y2="123" stroke="#9a9387" stroke-width="1.5" marker-end="url(#r-g)"/>
-        <line x1="770" y1="263" x2="848" y2="263" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#r-o)"/>
+        <line x1="788" y1="89" x2="854" y2="89" stroke="#9a9387" stroke-width="1.5" marker-end="url(#r-g)"/>
+        <line x1="788" y1="224" x2="854" y2="224" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#r-o)"/>
       </g>
     </svg>
   </div>
   <div class="legend">
     <span><span class="sw" style="background:#6c7a4a"></span> permanent path → registry, never backlog</span>
-    <span><span class="sw" style="background:#b9794f"></span> interim path → backlog, medium priority</span>
-    <span><span class="sw" style="background:#9a9387"></span> core-fix path → backlog, high priority</span>
+    <span><span class="sw" style="background:#9a9387"></span> core-fix path → backlog, priority high</span>
   </div>
 
   <div class="callout olive">
-    <span class="k">The routing that becomes data-driven</span>
-    <p>Today step 3a says the flag "spans two disjoint outcomes" and defers <b>wholly</b> to a human — plan supplies zero positive signal. After this task, step 3a starts from <code>classifier_work === "permanent-limitation"</code> and the human confirms, rather than sorting every <code>--priority classifier</code> group from scratch.</p>
-    <p>The backstops stay: a fixable bug misrouted to <code>classifier-author</code> still hits its "if fixable, stop" gate; a true limitation misrouted to <code>refactor-investigator</code> still returns its <code>PERMANENT-LIMITATION</code> verdict. The signal makes the common case cheap; the gates keep it safe.</p>
+    <span class="k">The routing that became data-driven</span>
+    <p>Before, step 3a said the flag "spans two disjoint outcomes" and deferred <b>wholly</b> to a human. Now the <code>skipped_permanent_limitation</code> array from the step-1 dry run <b>is</b> the permanent-limitation worklist: step 2's Kind bullet fetches those rows directly, step 3 dispatches <code>refactor-investigator</code> only for <code>false</code> groups, and step 3a routes the <code>true</code> groups to <code>classifier-author</code>.</p>
+    <p>The human stays final adjudicator, and the agent gates backstop the call: a fixable bug misrouted to <code>classifier-author</code> hits its "if fixable, stop" gate; a true limitation misrouted to <code>refactor-investigator</code> returns its <code>PERMANENT-LIMITATION</code> verdict.</p>
   </div>
 
   <!-- ===== 3. THE SIGNAL'S PATH ===== -->
   <h2 id="thread"><span class="n">03</span>Where the signal is threaded — strategist to routing</h2>
-  <p class="cap prose">One field, four hops: the strategist emits it in <code>StrategistPlan</code> JSON, the validator shape-checks it, Pass&nbsp;C copies it verbatim onto <code>PlanTask</code>, and every downstream consumer reads it in place of the boolean.</p>
+  <p class="cap prose">One boolean, four hops: the strategist emits it in <code>StrategistPlan</code> JSON, the validator shape-checks it and forbids the incoherent combination, Pass&nbsp;C copies it verbatim onto <code>PlanTask</code>, and every downstream consumer branches on it.</p>
 
   <div class="panel">
-    <svg viewBox="0 0 1180 250" role="img" aria-label="The signal's path across five stages. The plan-strategist agent emits classifier_work as one of three string values in the StrategistPlan JSON, grounded by the retitled prompt section and the hydration rule. validate_plan shape-checks it as one of the three literals and enforces core_fix_effort 0 for both non-none values. build_plan_tasks Pass C copies it verbatim onto the PlanTask. The PlanTask carries it as the persisted field. Downstream, render_task, render_backlog_task, select_exportable_tasks, and prioritize step 3a all read the tri-state instead of the boolean.">
+    <svg viewBox="0 0 1180 250" role="img" aria-label="The signal's path across five stages. The plan-strategist agent emits is_permanent_limitation as a boolean in the StrategistPlan JSON, defaulting to false and grounded by the retitled prompt section, its five signals, and the hydration rule. validate_plan shape-checks it as a boolean, forbids a node that is both a taxonomy extension and a permanent limitation, and enforces core_fix_effort 0 for permanent nodes. build_plan_tasks Pass C copies it verbatim onto the PlanTask. The PlanTask carries it as the persisted routing key, and the store parse boundary rejects a row missing it. Downstream, render_task, select_exportable_tasks, reconcile augment, and prioritize step 3a all branch on it.">
       <defs><marker id="t-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b9794f"/></marker></defs>
       <g font-family="ui-monospace,monospace" font-size="10.5">
-        <rect x="12" y="80" width="196" height="90" rx="10" fill="#f2f4ec" stroke="#6c7a4a"/>
+        <rect x="12" y="80" width="196" height="94" rx="10" fill="#f2f4ec" stroke="#6c7a4a"/>
         <text x="110" y="102" text-anchor="middle" font-size="11" fill="#2b2a28">plan-strategist.md</text>
-        <text x="110" y="122" text-anchor="middle" fill="#5f594f">emit classifier_work</text>
-        <text x="110" y="138" text-anchor="middle" fill="#6c7a4a">retitled H2 + hydration</text>
-        <text x="110" y="154" text-anchor="middle" fill="#5f594f">rule + pinned test</text>
+        <text x="110" y="122" text-anchor="middle" fill="#5f594f">emit is_permanent_limitation</text>
+        <text x="110" y="138" text-anchor="middle" fill="#6c7a4a">retitled H2 · 5 signals</text>
+        <text x="110" y="154" text-anchor="middle" fill="#5f594f">default false · hydration rule</text>
+        <text x="110" y="168" text-anchor="middle" fill="#5f594f">+ pinned test forbids interim</text>
 
-        <rect x="256" y="80" width="196" height="90" rx="10" fill="#fbf3ec" stroke="#b9794f"/>
+        <rect x="256" y="80" width="196" height="94" rx="10" fill="#fbf3ec" stroke="#b9794f"/>
         <text x="354" y="102" text-anchor="middle" font-size="11" fill="#2b2a28">validate_plan.ts</text>
-        <text x="354" y="122" text-anchor="middle" fill="#5f594f">shape: one of 3 literals</text>
-        <text x="354" y="138" text-anchor="middle" fill="#5f594f">proposes_core_fix uses it</text>
-        <text x="354" y="154" text-anchor="middle" fill="#b9794f">effort 0 for both non-none</text>
+        <text x="354" y="122" text-anchor="middle" fill="#5f594f">shape: boolean</text>
+        <text x="354" y="138" text-anchor="middle" fill="#b9794f">taxonomy AND permanent → err</text>
+        <text x="354" y="154" text-anchor="middle" fill="#5f594f">proposes_core_fix uses it</text>
+        <text x="354" y="168" text-anchor="middle" fill="#5f594f">permanent → effort 0</text>
 
-        <rect x="500" y="80" width="196" height="90" rx="10" fill="#fbf3ec" stroke="#b9794f"/>
+        <rect x="500" y="80" width="196" height="94" rx="10" fill="#fbf3ec" stroke="#b9794f"/>
         <text x="598" y="102" text-anchor="middle" font-size="11" fill="#2b2a28">build_plan_tasks.ts</text>
-        <text x="598" y="126" text-anchor="middle" fill="#5f594f">Pass C copies it</text>
-        <text x="598" y="142" text-anchor="middle" fill="#5f594f">verbatim → PlanTask</text>
+        <text x="598" y="128" text-anchor="middle" fill="#5f594f">Pass C copies it</text>
+        <text x="598" y="144" text-anchor="middle" fill="#5f594f">verbatim → PlanTask</text>
 
-        <rect x="744" y="80" width="196" height="90" rx="10" fill="#e7ddc9" stroke="#9a9387"/>
+        <rect x="744" y="80" width="196" height="94" rx="10" fill="#e7ddc9" stroke="#9a9387"/>
         <text x="842" y="102" text-anchor="middle" font-size="11" fill="#2b2a28">PlanTask</text>
-        <text x="842" y="126" text-anchor="middle" fill="#5f594f">persisted field,</text>
-        <text x="842" y="142" text-anchor="middle" fill="#5f594f">the routing key</text>
+        <text x="842" y="126" text-anchor="middle" fill="#5f594f">persisted routing key;</text>
+        <text x="842" y="142" text-anchor="middle" fill="#5f594f">parse boundary rejects</text>
+        <text x="842" y="158" text-anchor="middle" fill="#b9794f">a row missing it (fail loud)</text>
 
-        <rect x="988" y="52" width="180" height="146" rx="10" fill="#f2f4ec" stroke="#6c7a4a"/>
-        <text x="1078" y="74" text-anchor="middle" font-size="11" fill="#2b2a28">consumers</text>
-        <text x="1078" y="96" text-anchor="middle" fill="#5f594f">render_task (AC line)</text>
-        <text x="1078" y="114" text-anchor="middle" fill="#5f594f">render_backlog_task</text>
-        <text x="1078" y="132" text-anchor="middle" fill="#5f594f">select_exportable_tasks</text>
-        <text x="1078" y="150" text-anchor="middle" fill="#6c7a4a">prioritize step 3a</text>
-        <text x="1078" y="172" text-anchor="middle" font-size="9.5" fill="#6c7a4a">read tri-state, not bool</text>
+        <rect x="988" y="56" width="180" height="146" rx="10" fill="#f2f4ec" stroke="#6c7a4a"/>
+        <text x="1078" y="78" text-anchor="middle" font-size="11" fill="#2b2a28">consumers</text>
+        <text x="1078" y="100" text-anchor="middle" fill="#5f594f">render_task (3-way AC)</text>
+        <text x="1078" y="118" text-anchor="middle" fill="#5f594f">select_exportable_tasks</text>
+        <text x="1078" y="136" text-anchor="middle" fill="#5f594f">reconcile augment</text>
+        <text x="1078" y="154" text-anchor="middle" fill="#6c7a4a">prioritize step 3a</text>
+        <text x="1078" y="176" text-anchor="middle" font-size="9.5" fill="#6c7a4a">branch on the boolean</text>
 
         <text x="110" y="40" text-anchor="middle" fill="#6c7a4a" font-size="10">emit</text>
         <text x="354" y="40" text-anchor="middle" fill="#b9794f" font-size="10">validate</text>
@@ -390,139 +374,138 @@
         <text x="842" y="40" text-anchor="middle" fill="#5f594f" font-size="10">persist</text>
         <text x="1078" y="40" text-anchor="middle" fill="#6c7a4a" font-size="10">consume</text>
 
-        <line x1="208" y1="125" x2="254" y2="125" stroke="#b9794f" stroke-width="1.6" marker-end="url(#t-c)"/>
-        <line x1="452" y1="125" x2="498" y2="125" stroke="#b9794f" stroke-width="1.6" marker-end="url(#t-c)"/>
-        <line x1="696" y1="125" x2="742" y2="125" stroke="#b9794f" stroke-width="1.6" marker-end="url(#t-c)"/>
-        <line x1="940" y1="125" x2="986" y2="125" stroke="#b9794f" stroke-width="1.6" marker-end="url(#t-c)"/>
+        <line x1="208" y1="127" x2="254" y2="127" stroke="#b9794f" stroke-width="1.6" marker-end="url(#t-c)"/>
+        <line x1="452" y1="127" x2="498" y2="127" stroke="#b9794f" stroke-width="1.6" marker-end="url(#t-c)"/>
+        <line x1="696" y1="127" x2="742" y2="127" stroke="#b9794f" stroke-width="1.6" marker-end="url(#t-c)"/>
+        <line x1="940" y1="127" x2="986" y2="127" stroke="#b9794f" stroke-width="1.6" marker-end="url(#t-c)"/>
       </g>
     </svg>
   </div>
 
   <div class="code">
-    <div class="file"><span>.claude/skills/plan/src/reconcile/validate_plan.ts</span><span class="loc">shape ~97-98 · effort-0 rule ~176, 192-198</span></div>
-<pre><span class="cm">// SHAPE — the boolean check becomes a three-literal membership check</span>
-<span class="del">if (typeof value.is_classifier_work !== "boolean") {</span>
-<span class="del">  issues.push({ code: "shape_error", path: `${path}.is_classifier_work`, … });</span>
-<span class="add">const KINDS = ["none", "interim-workaround", "permanent-limitation"];</span>
-<span class="add">if (!KINDS.includes(value.classifier_work)) {</span>
-<span class="add">  issues.push({ code: "shape_error", path: `${path}.classifier_work`, … });</span>
-<span class="ctx">}</span>
+    <div class="file"><span>.claude/skills/plan/src/reconcile/validate_plan.ts</span><span class="loc">shape 98 · mutual-exclusion 172-178 · effort-0 189, 205</span></div>
+<pre><span class="cm">// SHAPE — the old boolean is renamed; the check stays a boolean check</span>
+<span class="del">if (typeof value.is_classifier_work !== "boolean") { … }</span>
+<span class="add">if (typeof value.is_permanent_limitation !== "boolean") { … }</span>
 
-<span class="cm">// RULE — a core fix is proposed only when the value is "none"</span>
-<span class="del">const proposes_core_fix = !node.is_taxonomy_extension &amp;&amp; !node.is_classifier_work;</span>
-<span class="add">const proposes_core_fix = !node.is_taxonomy_extension &amp;&amp; node.classifier_work === "none";</span>
-<span class="cm">// both non-none kinds still carry core_fix_effort 0 — unchanged invariant,</span>
-<span class="cm">// now expressed against the tri-state rather than the boolean.</span></pre>
+<span class="cm">// NEW RULE — a node cannot be both a taxonomy extension AND a permanent limitation:</span>
+<span class="cm">// the flags make opposite claims about whether a code deliverable exists.</span>
+<span class="add">if (node.is_taxonomy_extension &amp;&amp; node.is_permanent_limitation) {</span>
+<span class="add">  issues.push({ code: "taxonomy_extension_and_permanent_limitation", … });</span>
+<span class="add">}</span>
+
+<span class="cm">// RULE — a core fix is proposed only when NOT a permanent limitation</span>
+<span class="hl">const proposes_core_fix = !node.is_taxonomy_extension &amp;&amp; !node.is_permanent_limitation;</span>
+<span class="cm">// a permanent-limitation node carries core_fix_effort 0 — no core fix to size.</span></pre>
   </div>
 
   <div class="callout">
     <span class="k">The prompt edits that let the strategist emit the permanent case</span>
-    <p>The pinned H2 <b>"The classifier is the interim mitigation"</b> is retitled so it covers both outcomes and stops asserting a durable core fix always exists; <code>agent_prompt_pin.test.ts</code>'s H2 list and required-key set update to match. The hydration <code>classifier_priority_rule</code> in <code>get_bucket_context.ts</code> and the <code>StrategistPlan</code> JSON example move from <code>is_classifier_work: false</code> to the three-value field.</p>
+    <p>The pinned H2 is now <b>"Permanent limitations — the no-fix escape"</b>: it defaults every group to fixable core-fix work, lists the <b>five</b> unknowable-to-static-analysis signals from <code>classifier-lifecycle.md</code>, drops any durable-core-fix assertion, and says "when unsure, default to core-fix." The hydration rule and the <code>StrategistPlan</code> JSON example move to <code>is_permanent_limitation: false</code>; the pin test now <b>forbids</b> <code>is_classifier_work</code>, "interim mitigation", "interim classifier", and "interim workaround".</p>
     <span class="owner">plan-strategist.md · get_bucket_context.ts · agent_prompt_pin.test.ts</span>
   </div>
 
   <!-- ===== 4. CONSUMER SURFACE ===== -->
-  <h2 id="surface"><span class="n">04</span>What each consumer does now, and what it does after</h2>
-  <p class="cap prose">Ten code surfaces read the flag; each must move from a two-way boolean read to a three-way tri-state read. Line numbers verified against the source, not the brief.</p>
+  <h2 id="surface"><span class="n">04</span>What each consumer does now — as landed</h2>
+  <p class="cap prose">The rename touched every reader of the old flag, but the export layer changed <b>structurally</b>: the priority machinery was deleted and a hard-exclusion channel added. Line numbers verified against the landed source.</p>
 
   <table class="change">
-    <thead><tr><th style="width:24%">Surface</th><th style="width:38%">Reads the boolean today</th><th>Reads the tri-state after</th></tr></thead>
+    <thead><tr><th style="width:24%">Surface</th><th style="width:38%">Before (is_classifier_work)</th><th>As landed (is_permanent_limitation)</th></tr></thead>
     <tbody>
       <tr>
-        <td class="file"><span class="surf">type</span>types.ts <span style="color:var(--g400)">~123-129</span></td>
-        <td class="now"><code>is_classifier_work: boolean</code> on <code>StrategistPlanNode</code>, doc'd as "classifier work included as lower-priority localized nodes."</td>
-        <td class="next"><b>replace</b> with <code>classifier_work</code> tri-state; doc names the two outcomes.</td>
+        <td class="file"><span class="surf">type</span>types.ts <span style="color:var(--g400)">124-131</span></td>
+        <td class="now"><code>is_classifier_work: boolean</code> on <code>StrategistPlanNode</code>.</td>
+        <td class="next"><b>renamed</b> to <code>is_permanent_limitation</code>; doc says the node never exports to <code>backlog/</code>.</td>
       </tr>
       <tr>
-        <td class="file"><span class="surf">store</span>plan_task.ts <span style="color:var(--g400)">~184-191</span></td>
-        <td class="now"><code>is_classifier_work: boolean</code>, doc'd "interim … until the core fix lands. The core fix is always the real deliverable."</td>
-        <td class="next"><b>replace</b> field; doc distinguishes permanent (registry) from interim (backlog).</td>
+        <td class="file"><span class="surf">store</span>plan_task.ts <span style="color:var(--g400)">184-193</span></td>
+        <td class="now"><code>is_classifier_work</code>, doc'd "interim … until the core fix lands."</td>
+        <td class="next"><b>renamed</b>; doc names it the step-3a routing default, excluded from export.</td>
       </tr>
       <tr>
-        <td class="file"><span class="surf">validate</span>validate_plan.ts <span style="color:var(--g400)">97-98, 176, 192-198</span></td>
-        <td class="now">shape asserts <b>boolean</b>; <code>proposes_core_fix = !taxonomy &amp;&amp; !is_classifier_work</code>; effort-0 enforced for non-core-fix.</td>
-        <td class="next">shape asserts <b>3 literals</b>; <code>proposes_core_fix = … === "none"</code>; both non-none kinds keep effort 0.</td>
+        <td class="file"><span class="surf">validate</span>validate_plan.ts <span style="color:var(--g400)">98, 172-178, 189, 205</span></td>
+        <td class="now">boolean shape check; <code>proposes_core_fix = !taxonomy &amp;&amp; !is_classifier_work</code>.</td>
+        <td class="next">renamed shape check; <b>new</b> <code>taxonomy_extension_and_permanent_limitation</code> mutual-exclusion rule; permanent → effort 0.</td>
       </tr>
       <tr>
         <td class="file"><span class="surf">reconcile</span>build_plan_tasks.ts <span style="color:var(--g400)">149</span></td>
-        <td class="now"><code>is_classifier_work: entry.node.is_classifier_work</code> — verbatim flow into <code>PlanTask</code>.</td>
-        <td class="next"><b>rename</b> both sides to <code>classifier_work</code>; still verbatim.</td>
+        <td class="now"><code>is_classifier_work: entry.node.is_classifier_work</code>.</td>
+        <td class="next"><b>renamed</b> both sides; still verbatim flow into <code>PlanTask</code>.</td>
       </tr>
       <tr>
-        <td class="file"><span class="surf">render</span>render_task.ts <span style="color:var(--g400)">80-84</span></td>
-        <td class="now"><code>if (is_classifier_work)</code> appends one "author the interim classifier … until the core fix lands" AC line.</td>
-        <td class="next"><b>wording differs per kind</b> — interim keeps "until the fix lands"; permanent says the classifier is the durable deliverable.</td>
+        <td class="file"><span class="surf">render</span>render_task.ts <span style="color:var(--g400)">63-85</span></td>
+        <td class="now">two branches + an appended "author the interim classifier" line.</td>
+        <td class="next"><b>three-way branch</b>: taxonomy / permanent → "route to <code>classifier-author</code>, never exports" / core-fix. Interim criterion <b>gone</b>.</td>
       </tr>
       <tr>
-        <td class="file"><span class="surf">export</span>render_backlog_task.ts <span style="color:var(--g400)">36-37, 97</span></td>
-        <td class="now"><code>derive_backlog_priority(bool)</code>: classifier → medium, core → high; priority set when <b>every</b> source row is classifier work.</td>
-        <td class="next">interim → medium; core → high; <b>permanent may not export to backlog at all</b> (see the open decision).</td>
+        <td class="file"><span class="surf">export</span>render_backlog_task.ts <span style="color:var(--g400)">75, 98</span></td>
+        <td class="now"><code>derive_backlog_priority(bool)</code>: classifier → medium, core → high.</td>
+        <td class="next"><b>deleted</b> <code>derive_backlog_priority</code>/<code>BacklogPriority</code>/<code>ExportPriority</code>; every exported row is <code>priority: high</code>.</td>
       </tr>
       <tr>
-        <td class="file"><span class="surf">export</span>select_exportable_tasks.ts <span style="color:var(--g400)">96-99</span></td>
-        <td class="now"><code>--priority core|classifier</code> is a two-way boolean partition.</td>
-        <td class="next">becomes a <b>three-way</b> partition, or permanent is selected/excluded distinctly.</td>
+        <td class="file"><span class="surf">export</span>select_exportable_tasks.ts <span style="color:var(--g400)">74, 110-115</span></td>
+        <td class="now"><code>--priority core|classifier</code> boolean partition.</td>
+        <td class="next"><b>deleted</b> <code>--priority</code>; permanent rows <b>hard-excluded</b> in both modes into <code>skipped_permanent_limitation</code>.</td>
       </tr>
       <tr>
-        <td class="file"><span class="surf">skill</span>prioritize/SKILL.md <span style="color:var(--g400)">163-164, 209-228</span></td>
-        <td class="now">step 3a prose: the flag "spans two disjoint outcomes"; human sorts every group from scratch.</td>
-        <td class="next"><b>routing starts from the data</b> — the value picks the path, human confirms as final adjudicator.</td>
+        <td class="file"><span class="surf">store</span>plan_task_record.ts <span style="color:var(--g400)">20-23, 50</span></td>
+        <td class="now">no boolean-field parse guard.</td>
+        <td class="next"><b>new</b> <code>REQUIRED_BOOLEAN_FIELDS</code>: a row missing the flag <b>fails loudly</b> instead of reading falsy and silently exporting.</td>
       </tr>
       <tr>
-        <td class="file"><span class="surf">prompt</span>plan-strategist.md <span style="color:var(--g400)">132-137, 200</span></td>
-        <td class="now">H2 "The classifier is the interim mitigation"; JSON <code>is_classifier_work: false</code>.</td>
-        <td class="next"><b>retitle H2</b> to cover both outcomes; JSON emits the tri-state value.</td>
+        <td class="file"><span class="surf">reconcile</span>reconcile_plan.ts <span style="color:var(--g400)">230</span></td>
+        <td class="now">n/a.</td>
+        <td class="next">augment <b>re-adopts</b> the candidate's fresh <code>is_permanent_limitation</code> (like <code>core_fix_effort</code>).</td>
       </tr>
       <tr>
-        <td class="file"><span class="surf">prompt</span>get_bucket_context.ts <span style="color:var(--g400)">107-110</span></td>
-        <td class="now"><code>classifier_priority_rule</code>: "interim mitigation … core fix is the durable deliverable."</td>
-        <td class="next"><b>rewrite</b> so the rule names both outcomes and the permanent case.</td>
+        <td class="file"><span class="surf">skill</span>prioritize/SKILL.md <span style="color:var(--g400)">147-172, 183-184, 220-239</span></td>
+        <td class="now">step 3a prose: flag "spans two disjoint outcomes"; human sorts from scratch.</td>
+        <td class="next">step 1 names <code>skipped_permanent_limitation</code>; step 2 fetches those rows; step 3 dispatches <code>refactor-investigator</code> only for <code>false</code>; step 3a routes <code>true</code>.</td>
       </tr>
     </tbody>
   </table>
 
   <div class="callout">
     <span class="k">Two non-surfaces to keep in mind</span>
-    <p><code>packages/skill-protocol/dist/plan_task.d.ts</code> is <b>generated output</b> — the source of truth is the plan skill's <code>plan_task.ts</code>; the <code>.d.ts</code> regenerates, it is not edited.</p>
-    <p>~11 test files reference the flag — each updates its fixtures to the tri-state: <code>build_plan_tasks · render_task · validate_plan · select_exportable_tasks · render_backlog_task · export_to_backlog · json_plan_task_repository · load_staged_plans · reconcile_plan · record_membership_decisions · plan_engine_smoke</code>. <b>No <code>schema_version</code> bump</b> — the plan pipeline has no persisted production data.</p>
+    <p><code>packages/skill-protocol/dist/plan_task.d.ts</code> is <b>generated output</b> — the source of truth is the plan skill's <code>plan_task.ts</code>; it regenerates, it is not edited.</p>
+    <p>The test files across <code>build_plan_tasks · render_task · validate_plan · select_exportable_tasks · render_backlog_task · export_to_backlog · json_plan_task_repository · reconcile_plan · graduate_group_docs</code> update their fixtures to the boolean. Per the confirmed project decision, <b>no <code>schema_version</code> bump</b> — the plan pipeline has no persisted production data.</p>
   </div>
 
-  <!-- ===== 5. THE OPEN DECISION ===== -->
-  <h2 id="decision"><span class="n">05</span>The one open design decision — the field's name and shape</h2>
-  <p class="cap prose">The plan is settled except for one call: how to encode the tri-state. The string union is the recommended default; two alternatives are on the table.</p>
+  <!-- ===== 5. DECISIONS TAKEN ===== -->
+  <h2 id="decisions"><span class="n">05</span>Decisions taken — what the design settled on</h2>
+  <p class="cap prose">The pre-build plan floated a tri-state and left one question open; the landed design resolved all of it toward the leanest shape the regime allows.</p>
 
-  <div class="opts">
-    <div class="opt pick">
-      <span class="badge"><span class="num">1</span> tri-state string union <span class="verdict">recommended</span></span>
-      <h3>classifier_work:<br>"none" | "interim-workaround" | "permanent-limitation"</h3>
-      <p class="why"><b>One field, three named literals.</b> Shape check is a set-membership test; the value reads directly as the routing key at step 3a. Minimal surface, self-documenting, mirrors the <code>classifier.kind</code> union already used in the registry.</p>
+  <div class="decs">
+    <div class="dec kept">
+      <span class="tag">chosen</span>
+      <h3>A boolean, not a tri-state</h3>
+      <p class="why"><code>is_permanent_limitation: boolean</code> on both <code>StrategistPlanNode</code> and <code>PlanTask</code>. The pipeline routes on exactly one distinction — fixable or not — so a third state would be surface with no consumer.</p>
     </div>
-    <div class="opt rej">
-      <span class="badge"><span class="num">2</span> renamed field <span class="verdict">alt</span></span>
-      <h3>fix_outlook:<br>"fixable-now" | "fixable-later" | "unfixable"</h3>
-      <p class="why">Frames the axis as the <b>fix outlook</b> rather than "classifier work," which reads more naturally at the routing site. Same three-way shape; the trade is a larger rename churn across the ~11 test files and both prompt docs.</p>
+    <div class="dec purged">
+      <span class="tag">purged</span>
+      <h3>The interim-classifier concept, entirely</h3>
+      <p class="why">Not renamed — <b>removed</b>. Registry builtins are triage's only classifier mechanism and the registry holds only permanent limitations, so an interim classifier has no home; a fixable bug's deliverable is the core fix.</p>
     </div>
-    <div class="opt rej">
-      <span class="badge"><span class="num">3</span> nested object <span class="verdict">alt</span></span>
-      <h3>classifier: { kind, … }</h3>
-      <p class="why">Room to carry <b>per-kind metadata</b> later (e.g. a limitation's static-boundary note). Heavier now, and YAGNI against the constitution — no consumer needs a second field yet, so it adds shape surface with no current caller.</p>
+    <div class="dec purged">
+      <span class="tag">deleted</span>
+      <h3>The priority machinery</h3>
+      <p class="why"><code>--priority core|classifier</code>, <code>ExportPriority</code>, and <code>derive_backlog_priority</code>/<code>BacklogPriority</code> are gone. With interim purged, every exported row is a core fix at <code>priority: high</code> — no partition to select.</p>
     </div>
-  </div>
-
-  <div class="callout olive">
-    <span class="k">A sub-decision the recommended option forces</span>
-    <p>Does a <code>permanent-limitation</code> row export to <code>backlog/</code> at all? Per the lifecycle it routes to <code>classifier-author</code> → registry, <b>not</b> backlog — so <code>select_exportable_tasks</code> likely <b>excludes</b> permanent rows, and only <code>none</code> and <code>interim-workaround</code> produce a <code>backlog/</code> task.</p>
-    <span class="owner">to decide: field name/shape · whether permanent exports to backlog</span>
+    <div class="dec kept">
+      <span class="tag">resolved</span>
+      <h3>Permanent rows never export to backlog</h3>
+      <p class="why">The open question is settled: <code>select_exportable_tasks</code> hard-excludes a permanent row in both selection modes into <code>skipped_permanent_limitation</code> — the array <code>prioritize</code> step 3a reads as its worklist.</p>
+    </div>
   </div>
 
   <div class="callout slate">
     <span class="k">The one idea to hold</span>
-    <p>The registry is the <b>permanent-limitations catalog</b>; the backlog is the <b>fixable-bugs queue</b>. Plan today has a single boolean that cannot tell them apart and a prompt that biases toward "a fix always exists."</p>
-    <p>This task gives plan a first-class signal for both, so the split the pipeline runs on is carried by data end-to-end — the human stays the final adjudicator, but no longer the <b>only</b> place the distinction lives.</p>
+    <p>The registry is the <b>permanent-limitations catalog</b>; the backlog is the <b>fixable-bugs queue</b>. Plan now carries one bit — <code>is_permanent_limitation</code> — that maps each group to exactly one of them, with no interim state in between.</p>
+    <p>The human stays the final adjudicator, but the distinction the pipeline runs on is carried by data end-to-end, and a stale row that lacks the bit fails loudly rather than silently exporting a permanent limitation to <code>backlog/</code>.</p>
   </div>
 
   <footer>
-    TASK-190.34 · proposed plan (pre-implementation) · verified against <code>types.ts</code>, <code>plan_task.ts</code>, <code>validate_plan.ts</code> (97-98/176/192-198), <code>build_plan_tasks.ts</code> (149), <code>render_task.ts</code> (80-84), <code>render_backlog_task.ts</code> (36-37/97), <code>select_exportable_tasks.ts</code> (96-99), <code>plan-strategist.md</code> (132-137/200), <code>get_bucket_context.ts</code> (107-110), <code>agent_prompt_pin.test.ts</code> (146/192), <code>prioritize/SKILL.md</code> (209-228), <code>classifier-lifecycle.md</code>
+    TASK-190.34 · as-built · commit 04d8ce16 + working-tree review fixes · verified against <code>types.ts</code> (124-131), <code>plan_task.ts</code> (184-193), <code>validate_plan.ts</code> (98/172-178/189/205), <code>build_plan_tasks.ts</code> (149), <code>render_task.ts</code> (63-85), <code>render_backlog_task.ts</code> (75/98), <code>select_exportable_tasks.ts</code> (74/110-115), <code>plan_task_record.ts</code> (20-23/50), <code>reconcile_plan.ts</code> (230), <code>plan-strategist.md</code> (132-168/231), <code>get_bucket_context.ts</code> (108-110), <code>agent_prompt_pin.test.ts</code> (147/158-161/197), <code>prioritize/SKILL.md</code> (147-239), <code>classifier-lifecycle.md</code>
   </footer>
 </main>
 

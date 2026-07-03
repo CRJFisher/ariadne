@@ -209,7 +209,7 @@
 <h3>The StrategistPlan tier tree</h3>
 
 <figure>
-<svg viewBox="0 0 940 312" role="img" aria-label="StrategistPlan tier tree: an architectural root over a fault_area group node over localized leaves, including a classifier-work leaf. Each core-fix node carries a core_fix_effort estimate.">
+<svg viewBox="0 0 940 312" role="img" aria-label="StrategistPlan tier tree: an architectural root over a fault_area group node over localized leaves, including a permanent-limitation leaf. Each core-fix node carries a core_fix_effort estimate.">
   <defs>
     <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#9aa3b2"/>
@@ -240,21 +240,21 @@
   <text x="470" y="280" text-anchor="middle" fill="#9aa3b2" font-size="11.5">core_fix_effort: 1 | 3 | 5 + rationale</text>
 
   <rect x="620" y="220" width="280" height="72" rx="8" fill="#171a21" stroke="#2a2f3a" stroke-dasharray="5 4"/>
-  <text x="760" y="244" text-anchor="middle" fill="#e6e9ef" font-size="13" font-weight="700">localized (classifier work)</text>
-  <text x="760" y="262" text-anchor="middle" fill="#9aa3b2" font-size="11.5">is_classifier_work: true · interim mitigation</text>
+  <text x="760" y="244" text-anchor="middle" fill="#e6e9ef" font-size="13" font-weight="700">localized (permanent limitation)</text>
+  <text x="760" y="262" text-anchor="middle" fill="#9aa3b2" font-size="11.5">is_permanent_limitation: true · no core fix</text>
   <text x="760" y="280" text-anchor="middle" fill="#9aa3b2" font-size="11.5">core_fix_effort: 0 · lower priority</text>
 </svg>
-<figcaption>Tiers nest strictly <code>architectural → fault_area → localized</code>; every node carries the bucket's own <code>fault_area</code>. The real work items are the localized leaves; classifier work is an interim mitigation while a high-effort core fix waits.</figcaption>
+<figcaption>Tiers nest strictly <code>architectural → fault_area → localized</code>; every node carries the bucket's own <code>fault_area</code>. The real work items are the localized leaves; a permanent-limitation leaf marks a group with no possible core fix, whose durable deliverable is a registry classifier.</figcaption>
 </figure>
 
 <h3>The <code>core_fix_effort</code> cost axis</h3>
-<p>Every core-fix node (neither taxonomy-extension nor classifier work) carries a positive blast-radius estimate — how much complexity the fix would add to Ariadne:</p>
+<p>Every core-fix node (neither taxonomy-extension nor permanent-limitation) carries a positive blast-radius estimate — how much complexity the fix would add to Ariadne:</p>
 <table>
 <tr><th>Value</th><th>Meaning</th></tr>
 <tr><td><code>1</code></td><td>A single-file edit</td></tr>
 <tr><td><code>3</code></td><td>A new function or resolver path</td></tr>
 <tr><td><code>5</code></td><td>A new cross-folder resolver pass</td></tr>
-<tr><td><code>0</code></td><td>Sentinel on taxonomy-extension and classifier-work nodes (no core fix to size; rationale empty)</td></tr>
+<tr><td><code>0</code></td><td>Sentinel on taxonomy-extension and permanent-limitation nodes (no core fix to size; rationale empty)</td></tr>
 </table>
 <p>The estimate must be grounded in code — the strategist reads the owning <code>fault_area</code> folder (the <code>folder_anchor</code>) to judge what Ariadne already supports — and the grounding is recorded in a non-empty <code>core_fix_effort_rationale</code>. The strategist assigns no priority or status: the cost integer is weighed against each task's benefit rollups (<code>observed_count</code>, <code>projects</code>, <code>source_runs</code>) by the <a href="actuate-and-backlog.html">human</a> when promoting work.</p>
 
@@ -269,7 +269,7 @@
 <tr><td>Tree structure</td><td>A child's tier is strictly deeper than its parent's; every node's <code>fault_area</code> equals the bucket's; non-empty <code>title</code>/<code>body</code></td></tr>
 <tr><td>Evidence grounding</td><td><code>evidence_indices</code> in range and unique per node; a non-taxonomy <code>localized</code> leaf grounds at least one row</td></tr>
 <tr><td>Membership</td><td>Total (every index has exactly one verdict); a <code>belongs: false</code> verdict carries a non-empty reason; a <code>suggested_area</code> must be a real area and must not be the bucket's own (re-routing a member back into the bucket that excluded it never converges); no node grounds an excluded index</td></tr>
-<tr><td>Cost axis</td><td>A core-fix node carries a positive <code>core_fix_effort</code> + non-empty rationale; a taxonomy-extension or classifier-work node carries exactly <code>0</code></td></tr>
+<tr><td>Cost axis</td><td>A core-fix node carries a positive <code>core_fix_effort</code> + non-empty rationale; a taxonomy-extension or permanent-limitation node carries exactly <code>0</code></td></tr>
 <tr><td><code>other</code> bucket</td><td>Both a taxonomy-extension task and an evidence-grounded core-fix task exist; <code>is_taxonomy_extension</code> only on an <code>other</code> bucket</td></tr>
 </table>
 

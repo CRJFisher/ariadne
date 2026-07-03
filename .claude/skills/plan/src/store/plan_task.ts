@@ -197,13 +197,12 @@ export interface PlanTask {
    * authored scale (1 = a single-file edit; 3 = a new function/resolver path;
    * 5 = a new cross-folder resolver pass). It is the cost axis paired with the
    * benefit rollups (`observed_count`, `projects`, `source_runs`); the user weighs
-   * the two when choosing what to promote (`export_to_backlog --priority` selects
-   * the core-fix vs classifier-work partition). The strategist grounds the estimate
+   * the two when choosing what to promote. The strategist grounds the estimate
    * by inspecting the owning `fault_area` folder's current capability, and a
    * sweep adopts the fresh estimate on augment (a fix's cost is re-judged as the
    * folder evolves). It is `0` on a node that proposes no core fix — a
-   * taxonomy-extension task or a classifier-work task — where blast radius is
-   * not meaningful.
+   * taxonomy-extension task or a permanent-limitation task — where blast radius
+   * is not meaningful.
    *
    * Each tier's estimate stands on its own and is NOT additive across tiers: a
    * `localized` leaf sizes one concrete fix, while a parent (`fault_area` /

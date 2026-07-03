@@ -243,7 +243,7 @@ Same <code>PublishedEntryRef</code> identifiers, always with <code>member_eviden
 <tr><td>Lifecycle</td><td><code>status</code>, <code>superseded_by</code>, <code>exported_backlog_task</code></td><td><code>proposed | accepted</code> are the live set; <code>superseded | exported | resolved</code> are terminal and never re-matched.</td></tr>
 <tr><td>Reconciliation</td><td><code>dedup_key</code></td><td>Content hash of <code>fault_area</code> + the sorted, deduplicated set of the minting proposal's evidence <code>"&lt;file&gt;:&lt;line&gt;"</code> strings. Computed once, stored immutably; augment merges evidence but never recomputes it. Exact-overlap matching only.</td></tr>
 <tr><td>Provenance</td><td><code>created_in_sweep</code>, <code>updated_in_sweep</code>, <code>strategist</code></td><td>Sweep ids name <code>sweeps/&lt;id&gt;.jsonl</code> logs; distinct from <code>RunId</code>.</td></tr>
-<tr><td>Cost axis</td><td><code>is_classifier_work</code>, <code>core_fix_effort</code>, <code>core_fix_effort_rationale</code></td><td>Effort scale: 1 = single-file edit, 3 = new function/resolver path, 5 = new cross-folder resolver pass; <code>0</code> when no core fix is proposed. Per-tier, not additive across tiers.</td></tr>
+<tr><td>Cost axis</td><td><code>is_permanent_limitation</code>, <code>core_fix_effort</code>, <code>core_fix_effort_rationale</code></td><td>Effort scale: 1 = single-file edit, 3 = new function/resolver path, 5 = new cross-folder resolver pass; <code>0</code> when no core fix is proposed. Per-tier, not additive across tiers.</td></tr>
 </table>
 
 <p>The sweep event log records every reconciliation decision as a <code>PlanSweepEvent</code>, discriminated on <code>kind</code>: <code>create</code>, <code>augment</code>, <code>supersede</code>, <code>combine</code> (N→1 supersede fan-in), <code>resolve</code>, <code>export</code>, and <code>exclude_member</code> — the audit entry for a membership review, whose non-null <code>suggested_area</code> is a confirmed <code>derive_fault_area</code> mis-route.</p>
@@ -259,7 +259,7 @@ Same <code>PublishedEntryRef</code> identifiers, always with <code>member_eviden
 <li><code>tier</code>, <code>title</code>, <code>body</code>, <code>fault_area</code> carry over verbatim</li>
 <li><code>evidence_indices</code> — positional indexes into the bucket's <code>evidence[]</code>; leaves carry real indexes, parents may carry <code>[]</code> and inherit by union</li>
 <li><code>is_taxonomy_extension</code> — permitted only in an <code>other</code> bucket</li>
-<li><code>is_classifier_work</code> — lower-priority <code>localized</code> nodes only</li>
+<li><code>is_permanent_limitation</code> — no core fix is possible; the registry classifier is the durable deliverable (never exports to <code>backlog/</code>)</li>
 <li><code>core_fix_effort</code> + <code>core_fix_effort_rationale</code> — carried verbatim onto the task</li>
 </ul>
 The strategist authors prose and structure only — it never mints ids, <code>dedup_key</code>s, or evidence rows.

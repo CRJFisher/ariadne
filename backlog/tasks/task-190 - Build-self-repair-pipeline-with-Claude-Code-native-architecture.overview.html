@@ -79,7 +79,7 @@
     <a href="task-190.26.overview.html"><span class="dot"></span> 190.26 · prioritize</a>
     <a href="task-190.30.overview.html"><span class="dot"></span> 190.30 · classifier scope</a>
     <a href="task-190.32 - Wire-classifier-author-authoring-flow-end-to-end-member-symbol-to-entry-index.authoring-flow.html"><span class="dot todo"></span> 190.32 · authoring flow</a>
-    <a href="task-190.34 - Give-plan-a-permanent-limitation-concept-distinct-from-interim-workaround.taxonomy-split.html"><span class="dot todo"></span> 190.34 · taxonomy split</a>
+    <a href="task-190.34 - Give-plan-a-permanent-limitation-concept-distinct-from-interim-workaround.taxonomy-split.html"><span class="dot"></span> 190.34 · taxonomy split</a>
     <a href="task-190.22 - Restructure-self-healing-pipeline-to-triage-→-plan-planning-only.overview.html"><span class="dot"></span> 190.22 · triage→plan split</a>
   </div>
 </nav>
@@ -153,7 +153,7 @@
 
   <div class="callout">
     <span class="k">Where TASK-190.34 lands</span>
-    <p>Phase 4's plan stage marks classifier groups with one boolean that assumes a core fix always exists — so it can't tell a <b>permanent limitation</b> (→ registry) from an <b>interim workaround</b> (→ backlog). 190.34 replaces it with a tri-state threaded into the <code>PlanTask</code>, so step 3a routes each outcome on data.</p>
+    <p>Phase 4's plan stage marked classifier groups with a boolean that assumes a core fix always exists — it couldn't name a <b>permanent limitation</b> (no core fix; → registry via <code>classifier-author</code>) apart from ordinary core-fix work (→ backlog). 190.34 gives <code>StrategistPlanNode</code>/<code>PlanTask</code> an <code>is_permanent_limitation</code> flag and purges the interim-classifier concept, so step 3a routes on data.</p>
   </div>
 
   <h2>The recent entry-point-classification sub-tasks</h2>
@@ -181,8 +181,8 @@
       <span class="doc">→ authoring-flow.html</span>
     </a>
     <a class="tcard has" href="task-190.34 - Give-plan-a-permanent-limitation-concept-distinct-from-interim-workaround.taxonomy-split.html">
-      <span class="id"><span>190.34</span><span class="st todo">To Do</span></span>
-      <span class="ttl">Give plan a permanent-limitation concept distinct from interim-workaround</span>
+      <span class="id"><span>190.34</span><span class="st done">Done</span></span>
+      <span class="ttl">Give plan a permanent-limitation flag; purge the interim-classifier concept</span>
       <span class="doc">→ taxonomy-split.html</span>
     </a>
     <a class="tcard has" href="task-190.26.overview.html">

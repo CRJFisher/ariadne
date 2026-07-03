@@ -17,8 +17,12 @@ import { PLAN_TASK_SCHEMA_VERSION, type PlanTask } from "./plan_task.js";
  *     A non-string here mis-routes a query or dedup lookup with no error.
  *   - {@link REQUIRED_ARRAY_FIELDS} — the arrays a consumer iterates. A non-array
  *     here throws far from the store, in the engine's `.map`/`.length`.
+ *   - {@link REQUIRED_BOOLEAN_FIELDS} — the booleans a consumer branches on for a
+ *     safety guarantee. A missing `is_permanent_limitation` (a stale pre-rename
+ *     row) reads as falsy, which would silently export a permanent-limitation
+ *     row to `backlog/` — the exact outcome the export exclusion forbids.
  *
- * Fields outside both lists (`title`, `body`, `created_in_sweep`, `strategist`,
+ * Fields outside these lists (`title`, `body`, `created_in_sweep`, `strategist`,
  * the nullable links, `observed_count`) are returned verbatim: a wrong kind
  * there is a harmless passthrough the engine owns, so guarding it would be
  * surplus — the same altitude as `parse_triage_results` deferring deep-row
@@ -41,6 +45,9 @@ const REQUIRED_ARRAY_FIELDS: readonly (keyof PlanTask)[] = [
   "projects",
   "source_runs",
 ];
+
+/** The booleans a consumer branches on for a safety guarantee; a missing one reads falsy and silently mis-routes. */
+const REQUIRED_BOOLEAN_FIELDS: readonly (keyof PlanTask)[] = ["is_permanent_limitation"];
 
 export function parse_plan_task(source_label: string, text: string): PlanTask {
   let parsed: unknown;
@@ -71,6 +78,13 @@ export function parse_plan_task(source_label: string, text: string): PlanTask {
     if (!Array.isArray(obj[field])) {
       throw new Error(
         `${source_label}: '${String(field)}' must be an array (got ${describe(obj[field])})`,
+      );
+    }
+  }
+  for (const field of REQUIRED_BOOLEAN_FIELDS) {
+    if (typeof obj[field] !== "boolean") {
+      throw new Error(
+        `${source_label}: '${String(field)}' must be a boolean (got ${describe(obj[field])}). Re-mint the task or remove the stale file.`,
       );
     }
   }

@@ -180,6 +180,33 @@ describe("reconcile_plan", () => {
     }
   });
 
+  it("augment adopts the candidate's fresh is_permanent_limitation over the stored value", async () => {
+    // The permanent-limitation call is re-judged each sweep, like the cost
+    // estimate: seed a group as core-fix work, re-sweep it re-judged permanent,
+    // and assert the fresh flag won (so the export exclusion applies from now on).
+    const repo = new JsonPlanTaskRepository();
+    const evidence = [ev("a.ts", 1), ev("b.ts", 2)];
+
+    const s1 = plan_with([localized_leaf("fix a", "a", [0]), localized_leaf("fix b", "b", [1])]);
+    await recon(repo, build_plan_tasks(s1, evidence, { sweep_id: "sweep-1", strategist: "opus" }), "sweep-1");
+
+    const permanent_leaf = (title: string, body: string, indices: number[]): StrategistPlanNode => ({
+      ...localized_leaf(title, body, indices),
+      is_permanent_limitation: true,
+      core_fix_effort: 0,
+      core_fix_effort_rationale: "",
+    });
+    const s2 = plan_with([permanent_leaf("fix a", "a", [0]), permanent_leaf("fix b", "b", [1])]);
+    const { events } = await recon(repo, build_plan_tasks(s2, evidence, { sweep_id: "sweep-2", strategist: "opus" }), "sweep-2");
+
+    expect(events.every((e) => e.kind === "augment")).toBe(true);
+    const leaves = await repo.query({ tier: "localized" });
+    expect(leaves).toHaveLength(2);
+    for (const leaf of leaves) {
+      expect(leaf.is_permanent_limitation).toEqual(true);
+    }
+  });
+
   it("merges new evidence and bumps observed_count when a re-sweep adds a location", async () => {
     const repo = new JsonPlanTaskRepository();
     await recon(
