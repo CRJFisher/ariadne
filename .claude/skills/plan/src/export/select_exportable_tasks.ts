@@ -6,9 +6,13 @@
  *     reported as `missing_ids`. The filter flags are ignored — naming an id IS
  *     the selection.
  *   - **filtered** (`ids` empty): every task matching `status` (default
- *     `proposed`), and — when supplied — `fault_area` and `priority`. `priority`
- *     maps to `is_classifier_work`: `core` → core-fix rows, `classifier` →
- *     interim classifier-work rows.
+ *     `proposed`) and — when supplied — `fault_area`.
+ *
+ * A permanent-limitation row is NEVER exportable, in either mode — its durable
+ * deliverable is a registry classifier routed through `classifier-author`, not a
+ * backlog task. Such rows are reported as `skipped_permanent_limitation` (never
+ * silently dropped): that report is the listing surface `prioritize` step 3a
+ * reads to route permanent-limitation groups.
  *
  * Only LIVE work is exportable: a task must be `proposed` or `accepted`
  * ({@link EXPORTABLE_STATUSES}). Terminal states (`superseded`, `resolved`,
@@ -37,13 +41,9 @@ export const EXPORTABLE_STATUSES: ReadonlySet<PlanTaskStatus> = new Set<PlanTask
   "accepted",
 ]);
 
-/** Which `is_classifier_work` partition `--priority` selects. */
-export type ExportPriority = "core" | "classifier";
-
 export interface ExportSelectors {
   status: PlanTaskStatus;
   fault_area: AriadneFaultArea | null;
-  priority: ExportPriority | null;
   ids: string[];
 }
 
@@ -65,6 +65,13 @@ export interface ExportSelection {
   skipped_already_exported: SkippedExport[];
   /** Rows named in explicit mode whose terminal status makes them non-exportable. */
   skipped_non_exportable: SkippedNonExportable[];
+  /**
+   * Permanent-limitation rows the selection matched — never exportable; their
+   * deliverable is a registry classifier via `classifier-author`. Reported so a
+   * human naming one gets a routing signal, and so `prioritize` step 3a can list
+   * permanent-limitation groups from a dry run.
+   */
+  skipped_permanent_limitation: string[];
   /** Ids requested via the explicit mode that no task matches. */
   missing_ids: string[];
 }
@@ -93,10 +100,6 @@ export function select_exportable_tasks(
     for (const task of all_tasks) {
       if (task.status !== selectors.status) continue;
       if (selectors.fault_area !== null && task.fault_area !== selectors.fault_area) continue;
-      if (selectors.priority !== null) {
-        const want_classifier = selectors.priority === "classifier";
-        if (task.is_classifier_work !== want_classifier) continue;
-      }
       candidates.push(task);
     }
   }
@@ -104,7 +107,12 @@ export function select_exportable_tasks(
   const selected: PlanTask[] = [];
   const skipped_already_exported: SkippedExport[] = [];
   const skipped_non_exportable: SkippedNonExportable[] = [];
+  const skipped_permanent_limitation: string[] = [];
   for (const task of candidates) {
+    if (task.is_permanent_limitation) {
+      skipped_permanent_limitation.push(task.id);
+      continue;
+    }
     if (task.status === "exported" && task.exported_backlog_task !== null) {
       skipped_already_exported.push({ id: task.id, backlog_task: task.exported_backlog_task });
       continue;
@@ -122,5 +130,5 @@ export function select_exportable_tasks(
   }
   selected.sort((a, b) => a.id.localeCompare(b.id));
 
-  return { selected, skipped_already_exported, skipped_non_exportable, missing_ids };
+  return { selected, skipped_already_exported, skipped_non_exportable, skipped_permanent_limitation, missing_ids };
 }

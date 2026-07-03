@@ -18,8 +18,10 @@
  * Steps of a real (`--assignments`) run:
  *
  *   1. **select** — `select_exportable_tasks` picks the rows: filtered by
- *      `--status`/`--fault-area`/`--priority` or named by `--id`, skipping
- *      anything already promoted.
+ *      `--status`/`--fault-area` or named by `--id`, skipping anything already
+ *      promoted. Permanent-limitation rows are never selected — they route to
+ *      `classifier-author`, not `backlog/` — and are reported as
+ *      `skipped_permanent_limitation` (the listing `prioritize` step 3a reads).
  *   2. **load authored tasks** — `parse_task_assignment` reads the architect's
  *      `AuthoredBacklogTask[]`. The architect's relative ids (`"1"`, `"1.1"`) are
  *      resolved to absolute backlog ids — each top-level root takes the next free
@@ -50,7 +52,7 @@
  *
  * Usage:
  *   node --import tsx export_to_backlog.ts --assignments <file> \
- *     [--status proposed|accepted] [--fault-area <area>] [--priority core|classifier] \
+ *     [--status proposed|accepted] [--fault-area <area>] \
  *     [--id <db-task-id>...] [--dry-run]
  *   node --import tsx export_to_backlog.ts --dry-run   # preview candidate rows
  */
@@ -72,7 +74,6 @@ import { render_backlog_task } from "../src/export/render_backlog_task.js";
 import {
   EXPORTABLE_STATUSES,
   select_exportable_tasks,
-  type ExportPriority,
   type ExportSelectors,
   type ExportSelection,
 } from "../src/export/select_exportable_tasks.js";
@@ -80,7 +81,7 @@ import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const USAGE =
   "Usage: export_to_backlog [--status proposed|accepted] [--fault-area <area>] " +
-  "[--priority core|classifier] [--id <db-task-id>...] [--assignments <file>] [--dry-run]\n";
+  "[--id <db-task-id>...] [--assignments <file>] [--dry-run]\n";
 
 interface CliArgs {
   selectors: ExportSelectors;
@@ -96,7 +97,6 @@ function parse_argv(argv: string[]): CliArgs {
   const selectors: ExportSelectors = {
     status: "proposed",
     fault_area: null,
-    priority: null,
     ids: [],
   };
   let assignments_path: string | null = null;
@@ -118,14 +118,6 @@ function parse_argv(argv: string[]): CliArgs {
           throw new Error("--fault-area expects a fault-area name");
         }
         selectors.fault_area = value as AriadneFaultArea;
-        break;
-      }
-      case "--priority": {
-        const value = argv[++i];
-        if (value !== "core" && value !== "classifier") {
-          throw new Error("--priority expects core|classifier");
-        }
-        selectors.priority = value as ExportPriority;
         break;
       }
       case "--id":
@@ -181,6 +173,8 @@ export interface ExportSummary {
   skipped_already_exported: ExportSelection["skipped_already_exported"];
   /** Rows named via `--id` whose terminal status makes them non-exportable. */
   skipped_non_exportable: ExportSelection["skipped_non_exportable"];
+  /** Permanent-limitation rows — never exportable; they route to `classifier-author`. */
+  skipped_permanent_limitation: string[];
   missing_ids: string[];
 }
 
@@ -215,6 +209,7 @@ export async function run(argv: string[], now: Date = new Date()): Promise<Expor
       exported: selection.selected.map((task) => ({ id: task.id, backlog_task: "", path: "" })),
       skipped_already_exported: selection.skipped_already_exported,
       skipped_non_exportable: selection.skipped_non_exportable,
+      skipped_permanent_limitation: selection.skipped_permanent_limitation,
       missing_ids: selection.missing_ids,
     };
   }
@@ -297,6 +292,7 @@ export async function run(argv: string[], now: Date = new Date()): Promise<Expor
     })),
     skipped_already_exported: selection.skipped_already_exported,
     skipped_non_exportable: selection.skipped_non_exportable,
+    skipped_permanent_limitation: selection.skipped_permanent_limitation,
     missing_ids: selection.missing_ids,
   };
 }

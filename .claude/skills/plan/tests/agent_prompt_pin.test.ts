@@ -5,7 +5,8 @@
  * hydrated bucket fields, the validator loop, the `StrategistPlan` output shape,
  * and the `other`-bucket dual-task obligation. A pinned snapshot guards against
  * silent drift back to the dropped classifier-spec authoring + backlog-filing
- * framing, and pins the planning-only boundary (no `backlog` MCP grant).
+ * framing and the purged interim-classifier concept, and pins the planning-only
+ * boundary (no `backlog` MCP grant).
  */
 
 import * as fs from "node:fs";
@@ -143,7 +144,7 @@ describe("plan-strategist agent prompt — body structure", () => {
         "Verify bucket membership",
         "Build the hierarchical plan",
         "The `other` bucket — extend the taxonomy",
-        "The classifier is the interim mitigation",
+        "Permanent limitations — the no-fix escape",
         "Estimate each core fix's effort",
         "Self-validate → iterate loop",
         "Output",
@@ -151,9 +152,13 @@ describe("plan-strategist agent prompt — body structure", () => {
     });
   });
 
-  it("does not carry any of the dropped classifier-spec / backlog-filing framing", () => {
+  it("does not carry any of the dropped classifier-spec / backlog-filing / interim-classifier framing", () => {
     const doc = read_agent();
     const forbidden: string[] = [
+      "is_classifier_work",
+      "interim mitigation",
+      "interim classifier",
+      "interim workaround",
       "BuiltinClassifierSpec",
       "classifier_spec",
       "proposed_classifier",
@@ -189,7 +194,8 @@ describe("plan-strategist agent prompt — body structure", () => {
       "evidence_indices",
       "taxonomy",
       "is_taxonomy_extension",
-      "is_classifier_work",
+      "is_permanent_limitation",
+      "permanent limitation",
       "core_fix_effort",
       "membership",
       "suggested_area",

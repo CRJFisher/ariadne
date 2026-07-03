@@ -104,16 +104,21 @@ async function main(): Promise<void> {
             "missing folder-anchored area to ariadne_fault_area.ts + derive_fault_area) AND a " +
             "core-fix node grounded in evidence."
           : "is_taxonomy_extension must be false (only `other` buckets extend the taxonomy).",
-      classifier_priority_rule:
-        "Classifier-script work is the interim mitigation that suppresses the false-positive while a " +
-        "high-effort core fix waits; mark it with is_classifier_work=true and never author the classifier " +
-        "spec itself. The core fix is the durable deliverable.",
+      permanent_limitation_rule:
+        "Default every group to fixable core-fix work (is_permanent_limitation=false). Mark " +
+        "is_permanent_limitation=true ONLY when the call relationship is fundamentally unknowable to " +
+        "static analysis — no realistic resolver change would recover the caller (dynamic dispatch " +
+        "through a computed key, runtime/framework invocation, bundler module substitution, macro " +
+        "expansion, or callers in unindexed external modules). Such a group has no core fix: the " +
+        "registry classifier is its durable deliverable, authored downstream — never author the " +
+        "classifier spec itself. Name the exact static boundary in the node's body. If a resolver fix " +
+        "would cross the boundary, it is NOT permanent — plan it as core-fix work.",
       core_fix_effort_rule:
         "Every core-fix node carries core_fix_effort: a positive integer estimate of the fix's blast radius " +
         "on the scale 1 (single-file edit) / 3 (new function or resolver path) / 5 (new cross-folder resolver pass), " +
         `GROUNDED by reading the owning folder '${ARIADNE_FAULT_AREA_FOLDER[bucket.fault_area]}' with Read/Grep/Glob ` +
         "to judge what Ariadne already supports — not inferred from the fault pattern alone. Pair it with a " +
-        "non-empty core_fix_effort_rationale. A taxonomy-extension or classifier-work node proposes no core fix, " +
+        "non-empty core_fix_effort_rationale. A taxonomy-extension or permanent-limitation node proposes no core fix, " +
         "so it carries core_fix_effort 0 and an empty rationale. You assign no priority or status — effort and the " +
         "observed_count/projects benefit rollups are weighed by the user when promoting work to the backlog.",
     },

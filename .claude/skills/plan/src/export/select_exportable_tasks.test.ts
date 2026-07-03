@@ -30,14 +30,14 @@ function make_task(overrides: Partial<PlanTask>): PlanTask {
     created_in_sweep: "sweep-1",
     updated_in_sweep: "sweep-1",
     strategist: "claude-opus-4-8",
-    is_classifier_work: false,
+    is_permanent_limitation: false,
     core_fix_effort: 3,
     core_fix_effort_rationale: "new resolver path in name_resolution",
     ...overrides,
   };
 }
 
-const FILTER: ExportSelectors = { status: "proposed", fault_area: null, priority: null, ids: [] };
+const FILTER: ExportSelectors = { status: "proposed", fault_area: null, ids: [] };
 
 describe("select_exportable_tasks (filtered mode)", () => {
   it("selects only the given status (default proposed), sorted by id", () => {
@@ -51,37 +51,34 @@ describe("select_exportable_tasks (filtered mode)", () => {
     expect(result.missing_ids).toEqual([]);
   });
 
-  it("filters by fault_area and by priority (is_classifier_work)", () => {
+  it("filters by fault_area and excludes permanent-limitation rows from the selection", () => {
     const core = make_task({
       id: "pt-core" as PlanTaskId,
       dedup_key: "k1",
       fault_area: "name_resolution",
-      is_classifier_work: false,
+      is_permanent_limitation: false,
     });
-    const classifier = make_task({
-      id: "pt-cls" as PlanTaskId,
+    const permanent = make_task({
+      id: "pt-perm" as PlanTaskId,
       dedup_key: "k2",
       fault_area: "name_resolution",
-      is_classifier_work: true,
+      is_permanent_limitation: true,
     });
     const other_area = make_task({
       id: "pt-oa" as PlanTaskId,
       dedup_key: "k3",
       fault_area: "method_lookup",
-      is_classifier_work: false,
+      is_permanent_limitation: false,
     });
-    const all = [core, classifier, other_area];
+    const all = [core, permanent, other_area];
 
-    expect(
-      select_exportable_tasks(all, { ...FILTER, fault_area: "name_resolution" }, new Map()).selected,
-    ).toEqual([classifier, core]);
-    expect(select_exportable_tasks(all, { ...FILTER, priority: "core" }, new Map()).selected).toEqual([
-      core,
-      other_area,
-    ]);
-    expect(
-      select_exportable_tasks(all, { ...FILTER, priority: "classifier" }, new Map()).selected,
-    ).toEqual([classifier]);
+    const by_area = select_exportable_tasks(all, { ...FILTER, fault_area: "name_resolution" }, new Map());
+    expect(by_area.selected).toEqual([core]);
+    expect(by_area.skipped_permanent_limitation).toEqual(["pt-perm"]);
+
+    const unfiltered = select_exportable_tasks(all, FILTER, new Map());
+    expect(unfiltered.selected).toEqual([core, other_area]);
+    expect(unfiltered.skipped_permanent_limitation).toEqual(["pt-perm"]);
   });
 
   it("skips a row whose dedup_key a backlog task already carries (idempotency)", () => {
@@ -99,6 +96,7 @@ describe("select_exportable_tasks (filtered mode)", () => {
       selected: [],
       skipped_already_exported: [],
       skipped_non_exportable: [],
+      skipped_permanent_limitation: [],
       missing_ids: [],
     });
   });
@@ -129,6 +127,17 @@ describe("select_exportable_tasks (explicit id mode)", () => {
     const result = select_exportable_tasks([exported], { ...FILTER, ids: ["pt-x"] }, new Map());
     expect(result.selected).toEqual([]);
     expect(result.skipped_already_exported).toEqual([{ id: "pt-x", backlog_task: "TASK-201" }]);
+  });
+
+  it("skips an explicitly named permanent-limitation row — it routes to classifier-author, never backlog", () => {
+    const permanent = make_task({
+      id: "pt-perm" as PlanTaskId,
+      dedup_key: "kp",
+      is_permanent_limitation: true,
+    });
+    const result = select_exportable_tasks([permanent], { ...FILTER, ids: ["pt-perm"] }, new Map());
+    expect(result.selected).toEqual([]);
+    expect(result.skipped_permanent_limitation).toEqual(["pt-perm"]);
   });
 
   it("skips an explicitly named terminal-status row as non-exportable (and never collides on its key)", () => {

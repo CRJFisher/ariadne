@@ -62,8 +62,7 @@ tests, not just the split. The two sections that drive the split decision:
 
 - **Section 6 — Sub-task mapping**: the investigator's verdict on each
   `localized` leaf: which collapsed into the one change, which remain genuine
-  per-language adapters, which interim classifier work is retired by the core
-  fix.
+  per-language adapters.
 - **Section 7 — Sequencing**: the ordered work items. If two things appear as a
   single ordered item they belong to one task; if they appear as sequentially
   dependent separate items with different owners or test scopes they may warrant
@@ -74,7 +73,7 @@ tests, not just the split. The two sections that drive the split decision:
 > **One top-level task** for the fundamental refactor (the core data-model and
 > producer change). **One sub-task** for each genuinely separate downstream
 > adaptation the investigator identified (e.g., a language-specific consumer
-> change, an interim classifier retirement). Nothing else.
+> change). Nothing else.
 
 Ask for **each** row id in `row_ids[]`:
 

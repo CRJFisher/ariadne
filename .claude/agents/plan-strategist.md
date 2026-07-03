@@ -129,25 +129,56 @@ signal. This is how the taxonomy grows. For an `other` bucket you MUST emit BOTH
 
 `is_taxonomy_extension` is permitted only on an `other` bucket.
 
-## The classifier is the interim mitigation
+## Permanent limitations — the no-fix escape
 
-A classifier routes triage around the false-positive while a high-effort core
-fix waits; the core fix is the durable deliverable. Include classifier work as a
-`localized` node with `is_classifier_work: true`. Never author the classifier
-itself — only propose it as a task.
+Your default is that every group is a **fixable Ariadne resolver gap** with a
+durable core fix — plan it as core-fix work (`is_permanent_limitation: false`).
+But a minority of groups are not fixable at all: the call relationship is
+**fundamentally unknowable to static analysis**, and no realistic resolver
+change would let Ariadne recover the caller. For such a group there is no core
+fix to plan — the durable deliverable is a registry classifier, authored
+downstream by `classifier-author`. Mark the group
+`is_permanent_limitation: true`.
+
+Set it **only** when the evidence shows the caller is genuinely out of static
+reach — not merely that today's resolver misses it. The signals (the
+permanent-limitations catalog in `.claude/rules/classifier-lifecycle.md`):
+
+- **dynamic dispatch through a computed key** — a string-keyed registry or
+  dispatch map whose key is assembled at runtime;
+- **runtime or framework invocation** — the symbol is called by an interpreter
+  or framework via a decorator, naming convention, or lifecycle protocol, not a
+  source call site;
+- **bundler module substitution** — the real module is swapped at build time;
+- **macro expansion** invisible to the pre-expansion AST;
+- **callers in unindexed external modules** — the only caller lives outside the
+  analysed corpus.
+
+If a realistic resolver change *would* fix it, it is **not** a permanent
+limitation: plan it as core-fix work. When unsure, default to core-fix — the
+downstream `refactor-investigator` and `classifier-author` gates both re-test
+the permanent-vs-fixable call, so an honest "fixable" that turns out unfixable
+is caught, but a lazy "permanent" hides real resolver debt.
+
+A permanent-limitation node is a `localized` leaf grounded in the evidence rows
+it covers. It proposes no core fix, so it carries `core_fix_effort: 0` and an
+empty rationale. In its `body`, name the exact static boundary and why a
+resolver fix cannot cross it — that prose is what the human and
+`classifier-author` adjudicate against. Never author the classifier itself —
+only mark the group.
 
 ## Estimate each core fix's effort
 
-Every **core-fix** node (one that is neither a taxonomy-extension nor classifier
-work) carries `core_fix_effort`: a positive integer estimate of the fix's blast
-radius — how much complexity it would add to Ariadne — on the scale **1** (a
-single-file edit) / **3** (a new function or resolver path) / **5** (a new
-cross-folder resolver pass). **Ground the estimate in the code**: `Read`/`Grep`/
-`Glob` the owning `fault_area` folder (the `folder_anchor` in your hydrated
-context) to judge what Ariadne already supports, rather than guessing from the
-fault pattern. Record the grounding in `core_fix_effort_rationale` (a non-empty
-string). A taxonomy-extension or classifier-work node proposes no core fix, so it
-carries `core_fix_effort: 0` and an empty rationale.
+Every **core-fix** node (one that is neither a taxonomy-extension nor a
+permanent limitation) carries `core_fix_effort`: a positive integer estimate of
+the fix's blast radius — how much complexity it would add to Ariadne — on the
+scale **1** (a single-file edit) / **3** (a new function or resolver path) /
+**5** (a new cross-folder resolver pass). **Ground the estimate in the code**:
+`Read`/`Grep`/`Glob` the owning `fault_area` folder (the `folder_anchor` in your
+hydrated context) to judge what Ariadne already supports, rather than guessing
+from the fault pattern. Record the grounding in `core_fix_effort_rationale` (a
+non-empty string). A taxonomy-extension or permanent-limitation node proposes no
+core fix, so it carries `core_fix_effort: 0` and an empty rationale.
 
 You assign no priority, status, or disposition. The integer cost you surface is
 weighed against each task's benefit rollups (`observed_count`, `projects`,
@@ -197,7 +228,7 @@ Write **one file** to `<output_path>` (under `~/.ariadne/plan/staging/**`): the
       "fault_area": "<the bucket's AriadneFaultArea>",
       "evidence_indices": [<positional indexes into the bucket's evidence[]>],
       "is_taxonomy_extension": false,
-      "is_classifier_work": false,
+      "is_permanent_limitation": false,
       "core_fix_effort": <positive integer on a core-fix node; 0 otherwise>,
       "core_fix_effort_rationale": "string (grounding for the estimate; empty when effort is 0)",
       "children": [ <node>, ... ]

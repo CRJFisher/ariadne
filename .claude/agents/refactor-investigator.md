@@ -110,7 +110,7 @@ structure:
 5. **Consumer changes** — the resolvers/call sites that read the new data.
 6. **Sub-task mapping** — map each `localized` leaf (and its evidence) onto the
    plan: which collapse into the one change, which remain genuine per-language
-   adapters, which interim classifier work is retired by the core fix.
+   adapters.
 7. **Sequencing** — the ordered work items.
 8. **Test plan** — the tiers to cover (`build_index_single_file` inline,
    `Project + update_file`, fixtures) and the insulated tests that must stay

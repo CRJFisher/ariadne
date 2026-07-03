@@ -1,7 +1,7 @@
 ---
 name: prioritize
 description: Review the plan engine's task-DB and promote selected PlanTask rows into the user's backlog/. Drives export_to_backlog.ts — the only writer of backlog/, run deliberately by the human when graduating planned work.
-argument-hint: "[--status proposed|accepted] [--fault-area <area>] [--priority core|classifier] [--id <db-task-id>...] [--dry-run]"
+argument-hint: "[--status proposed|accepted] [--fault-area <area>] [--id <db-task-id>...] [--dry-run]"
 disable-model-invocation: true
 allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read, Write, Bash(open:*), Task
 ---
@@ -34,13 +34,14 @@ comprehension doc it stages graduates into `backlog/` only for the groups the
 user funds.
 
 **Two graduation destinations.** Most groups graduate into `backlog/` as
-refactoring work (the pipeline below). A group the human tags as a **permanent
-limitation** — a call relationship fundamentally unknowable to static analysis,
-not a fixable Ariadne bug — does not become a backlog card at all. It becomes a
-**classifier registry entry**: for these groups, dispatch the `classifier-author`
-agent in place of `refactor-investigator`, producing a staged draft the human
-reviews and applies via `reconcile-registry --stage` (see
-"Permanent-limitation groups" below).
+refactoring work (the pipeline below). A **permanent-limitation** group — a call
+relationship fundamentally unknowable to static analysis, not a fixable Ariadne
+bug, marked `is_permanent_limitation` by the plan engine and confirmed by the
+human — does not become a backlog card at all. It becomes a **classifier
+registry entry**: for these groups, dispatch the `classifier-author` agent in
+place of `refactor-investigator`, producing a staged draft the human reviews and
+applies via `reconcile-registry --stage` (see "Permanent-limitation groups"
+below).
 
 ## What the export does
 
@@ -158,10 +159,12 @@ one fault area. For each group, pull from the rows the signal the user weighs:
 - **Cost (blast radius)** — `core_fix_effort` and `core_fix_effort_rationale`:
   the strategist's estimate of how much complexity the core fix adds to Ariadne
   (1 = single-file edit, 3 = new resolver path, 5 = cross-folder pass). `0` on
-  classifier-work and taxonomy-extension rows, where blast radius is not
+  permanent-limitation and taxonomy-extension rows, where blast radius is not
   meaningful.
-- **Kind** — `is_classifier_work` marks an interim classifier workaround,
-  explicitly lower-priority than the core fix it routes around.
+- **Kind** — `is_permanent_limitation` marks a group whose call relationship is
+  fundamentally unknowable to static analysis: no core fix is possible, the
+  registry classifier is the durable deliverable, and the group routes to
+  step 3a instead of the backlog pipeline.
 
 ### 3. Deep-investigate each change group
 
@@ -208,24 +211,25 @@ plans must be on disk first.
 
 ### 3a. Permanent-limitation groups (`classifier-author`)
 
-**The routing signal.** The plan engine marks classifier-work groups with
-`is_classifier_work` (surfaced by `--priority classifier`) — but that flag alone
-means only "a classifier could route around this," which spans two disjoint
-outcomes: an **interim workaround** for a bug that Ariadne should eventually fix
-(these still graduate to `backlog/` as the tracked fix), and a **permanent
-limitation** that is fundamentally unknowable to static analysis (see
-`.claude/rules/classifier-lifecycle.md`). Only the permanent-limitation subset
-routes here; the human makes that call per group. So: review the
-`--priority classifier` groups, and for each one the human confirms is a
-permanent limitation (not an interim workaround), route it to `classifier-author`
-instead of `refactor-investigator`.
+**The routing signal.** The plan engine marks each group's rows with
+`is_permanent_limitation` — `true` when the call relationship is fundamentally
+unknowable to static analysis (no realistic resolver fix is possible; see
+`.claude/rules/classifier-lifecycle.md`), `false` for ordinary core-fix work.
+The flag is the **routing default**, read from each group's rows in step 2: a
+`true` group defaults here (its durable deliverable is a registry classifier,
+and it never graduates to `backlog/` — the export selector reports such rows as
+`skipped_permanent_limitation` in the step-1 dry run); a `false` group defaults
+to `refactor-investigator` (step 3).
 
-The human's permanent-vs-fixable call runs in both directions, before dispatch.
-A group routed here that is actually a fixable bug is caught by the agent's own
-"if fixable, stop — emit no draft" gate; a true permanent limitation misrouted
-to step 3 is caught by the investigator's `PERMANENT-LIMITATION` verdict, which
-returns the group here. Neither routing error survives to the wrong artifact,
-but each costs a wasted dispatch — make the call deliberately.
+**The human is the final adjudicator, not the flag.** The default is a starting
+point, not an automatism: before dispatch, confirm each `true` group really is
+out of static reach, and re-route a mis-marked group in either direction. The
+agent gates then backstop the call: a fixable bug misrouted here is caught by
+`classifier-author`'s "if fixable, stop — emit no draft" gate, and a true
+permanent limitation misrouted to step 3 is caught by the investigator's
+`PERMANENT-LIMITATION` verdict, which returns the group here. Neither routing
+error survives to the wrong artifact, but each costs a wasted dispatch — make
+the call deliberately.
 
 Such a group never graduates to `backlog/`. Dispatch one
 `Task(classifier-author)` per confirmed permanent-limitation group. The samples
@@ -323,7 +327,7 @@ instructions produces the same artifact. Each doc presents:
   the plan's chosen mechanism,
 - the impact — the false-positives it removes and how broadly, stated concretely
   (e.g. "eliminates 14 false unreachable-function flags across 6 projects"),
-- the cost/blast-radius and whether it is a core fix or interim classifier work,
+- the cost/blast-radius of the core fix,
 - for a merged cluster, **why its groups are linked** (the shared surface or
   dependency) and the sub-task work order,
 - a clear benefit-vs-cost framing so the user can rank clusters against each other.
@@ -424,7 +428,6 @@ a record of the investigation.
 | ----------------------------- | ------------------------------------------------- |
 | `--status proposed\|accepted` | rows in that lifecycle state                      |
 | `--fault-area <area>`         | rows in one `AriadneFaultArea`                    |
-| `--priority core\|classifier` | core-fix rows, or classifier-authoring rows       |
 | `--id <db-task-id>`           | one exact row (repeatable); overrides the filters |
 | `--assignments <file>`        | authored `tasks[]`; **required to write**         |
 | `--dry-run`                   | list the selection, write nothing                 |

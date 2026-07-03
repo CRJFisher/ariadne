@@ -24,19 +24,6 @@
 import type { PlanTask } from "../store/plan_task.js";
 import type { AuthoredBacklogTask } from "./task_assignment.js";
 
-/** Backlog priority stamped from the task's role: a core fix outranks interim classifier work. */
-export type BacklogPriority = "high" | "medium";
-
-/**
- * A core-fix task is the real deliverable → `high`; an interim classifier-script
- * work item is explicitly lower-priority → `medium`. This is the same ordering
- * the engine encodes in `is_classifier_work` (core-fix tasks ahead of
- * classifier-work tasks).
- */
-export function derive_backlog_priority(is_classifier_work: boolean): BacklogPriority {
-  return is_classifier_work ? "medium" : "high";
-}
-
 /**
  * A filesystem-safe dash slug for the task filename. Strips characters that are
  * unsafe in a filename (`/ \ : * ? " < > |`) and any bracketed prefix, folds
@@ -83,10 +70,10 @@ export interface RenderedBacklogTask {
  * Render one `AuthoredBacklogTask` into a complete backlog task file. The task
  * carries absolute backlog ids (already remapped). `primaries` are the source
  * `PlanTask`s whose `dedup_key`/`id` close the loop (one per collapsed source
- * group), whose `fault_area`s become the labels, and whose `is_classifier_work`
- * sets the priority — a core fix outranks classifier work, so the task is `high`
- * unless every source row is classifier work. `created_date` is passed in
- * (`YYYY-MM-DD HH:mm`) so the renderer stays pure and deterministic.
+ * group) and whose `fault_area`s become the labels. Every exported row is a core
+ * fix (permanent-limitation rows are excluded upstream by
+ * `select_exportable_tasks`), so the priority is always `high`. `created_date`
+ * is passed in (`YYYY-MM-DD HH:mm`) so the renderer stays pure and deterministic.
  */
 export function render_backlog_task(
   task: AuthoredBacklogTask,
@@ -94,7 +81,6 @@ export function render_backlog_task(
   created_date: string,
 ): RenderedBacklogTask {
   const sources = primaries.slice().sort((a, b) => a.id.localeCompare(b.id));
-  const priority = derive_backlog_priority(sources.every((p) => p.is_classifier_work));
   const fault_area_labels = [...new Set(sources.map((p) => p.fault_area))];
 
   const frontmatter = [
@@ -109,7 +95,7 @@ export function render_backlog_task(
     ...fault_area_labels.map((fault_area) => `  - ${fault_area}`),
     "dependencies: []",
     ...(task.parent_backlog_id !== null ? [`parent_task_id: TASK-${task.parent_backlog_id}`] : []),
-    `priority: ${priority}`,
+    "priority: high",
     ...(task.ordinal !== null ? [`ordinal: ${task.ordinal}`] : []),
     "plan_dedup_keys:",
     ...sources.map((p) => `  - ${p.dedup_key}`),

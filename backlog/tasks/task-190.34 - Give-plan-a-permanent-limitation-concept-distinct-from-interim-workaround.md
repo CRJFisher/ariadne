@@ -49,20 +49,26 @@ regime: the distinction is preserved by a human eyeball, not by plan's data mode
 
 ### The fix
 
-Give plan a first-class signal for the two disjoint outcomes, e.g. split
-`is_classifier_work` (or add a sibling field) into:
+Under the regime there is no such thing as an interim classifier: the registry
+builtins are triage's only classifier mechanism and the registry holds only
+permanent limitations, so a classifier for a fixable bug has nowhere to live.
+Plan's `is_classifier_work` concept is therefore replaced, not renamed:
 
-- **permanent-limitation** — no core fix is possible; the classifier is the
-  durable deliverable (routes to `classifier-author`);
-- **interim-workaround** — a fixable bug with a high-effort core fix pending; the
-  classifier is a temporary mitigation and the core fix is the real deliverable
-  (graduates to `backlog/`).
-
-Update the strategist prompt (and its pinned test) so it can emit the
-permanent-limitation case without asserting a durable core fix, and thread the
-signal into the `PlanTask` so `prioritize` step 3a routes on data rather than a
-pure human call. Keep the human as the final adjudicator, but give them (and the
-pipeline) a real signal to start from.
+- Replace `is_classifier_work` with **`is_permanent_limitation`** on
+  `StrategistPlanNode` and `PlanTask`: `true` marks a group whose call
+  relationship is fundamentally unknowable to static analysis — no core fix is
+  possible and the classifier is the durable deliverable (routes to
+  `classifier-author`, never exports to `backlog/`); `false` is ordinary
+  core-fix work.
+- Purge the interim-workaround concept from plan everywhere it surfaces: the
+  strategist prompt's "classifier is the interim mitigation" section (replaced
+  by permanent-limitation guidance that does not assert a durable core fix
+  exists), the rendered "author the interim classifier" acceptance criterion,
+  the `--priority core|classifier` export partition, and
+  `derive_backlog_priority`'s classifier→medium rule.
+- Thread the signal into `PlanTask` and give `prioritize` step 3a a data
+  surface to route on (a listing of permanent-limitation groups), keeping the
+  human as final adjudicator.
 
 <!-- SECTION:DESCRIPTION:END -->
 
@@ -70,13 +76,17 @@ pipeline) a real signal to start from.
 
 <!-- AC:BEGIN -->
 
-- [ ] Plan's taxonomy represents "permanent limitation (no core fix)" distinctly
-      from "interim workaround (core fix pending)" — not just the interim case.
+- [ ] Plan's taxonomy carries "permanent limitation (no core fix possible)" as a
+      first-class signal: `is_permanent_limitation` on `StrategistPlanNode` and
+      `PlanTask`, replacing `is_classifier_work`.
+- [ ] The interim-workaround classifier concept is purged from plan: no prompt
+      guidance, rendered acceptance criterion, export partition, or priority
+      rule proposes an interim classifier for a fixable bug.
 - [ ] The plan-strategist prompt can surface a permanent-limitation group without
       asserting a durable core fix exists; the pinned-prompt test is updated to
       match.
-- [ ] The signal is threaded into `PlanTask` and consumed by `prioritize` step 3a
-      so routing to `classifier-author` vs `backlog` starts from data, with the
-      human as final adjudicator.
+- [ ] Permanent-limitation tasks never export to `backlog/`; `prioritize` step 3a
+      routes to `classifier-author` vs `refactor-investigator` starting from
+      plan's data, with the human as final adjudicator.
 
 <!-- AC:END -->

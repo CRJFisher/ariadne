@@ -55,7 +55,7 @@ function leaf(indices: number[]): StrategistPlanNode {
     fault_area: "name_resolution",
     evidence_indices: indices,
     is_taxonomy_extension: false,
-    is_classifier_work: false,
+    is_permanent_limitation: false,
     core_fix_effort: 2,
     core_fix_effort_rationale: "grounded",
     children: [],

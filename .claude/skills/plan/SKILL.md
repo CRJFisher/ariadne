@@ -97,8 +97,10 @@ message so they run in parallel):
 > mis-routed member `belongs: false` with a reason and, when tellable, a
 > `suggested_area`) and ground tasks on confirmed members only. For an `other`
 > bucket, emit BOTH a taxonomy-extension task and an underlying core-fix task.
-> Classifier-script work is a lower-priority `localized` item only. Return
-> nothing inline.
+> Mark a group `is_permanent_limitation=true` only when the caller is
+> fundamentally unknowable to static analysis (no realistic resolver fix) —
+> such a group has no core fix and carries `core_fix_effort` 0; default
+> everything else to core-fix work. Return nothing inline.
 
 Wait for every `Task()` in a wave to return before starting the next.
 
@@ -163,7 +165,7 @@ the existing `Bash(node --import tsx:*)` grant is all it needs.
 
 ```bash
 node --import tsx .claude/skills/plan/scripts/export_to_backlog.ts \
-  [--status <status>] [--fault-area <area>] [--priority core|classifier] \
+  [--status <status>] [--fault-area <area>] \
   [--id <db-task-id>...] [--dry-run]
 ```
 
@@ -171,15 +173,17 @@ node --import tsx .claude/skills/plan/scripts/export_to_backlog.ts \
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--status proposed\|accepted` | Select rows in this live state (default `proposed`); only live work is exportable — terminal rows (`superseded`/`resolved`/`exported`) are never promoted                                                                         |
 | `--fault-area <area>`         | Restrict to one `AriadneFaultArea`                                                                                                                                                                                                |
-| `--priority core\|classifier` | `core` selects core-fix rows (stamped backlog `priority: high`), `classifier` the interim classifier work (`priority: medium`)                                                                                                    |
 | `--id <id>...`                | Export exactly these DB task ids — the filter flags are ignored, but a named row that is already exported (or whose `dedup_key` a backlog task carries) is still skipped, and a terminal-status row is reported as non-exportable |
 | `--dry-run`                   | Print the planned writes (incl. the would-be backlog ids); touch nothing                                                                                                                                                          |
 
 Each selected `PlanTask` becomes a new top-level `backlog/tasks/task-<id> - <slug>.md`,
 its frontmatter stamped with `plan_dedup_keys: [<PlanTask.dedup_key>, …]` (the
 loop-closure link Pass C's read-only dedup reads back, one entry per source group)
-and `plan_source_tasks` for traceability; `priority` is `high` for a core fix,
-`medium` for classifier work.
+and `plan_source_tasks` for traceability; every exported row is a core fix, so
+`priority` is always `high`. A permanent-limitation row is never exportable — in
+either selection mode — and is reported as `skipped_permanent_limitation`: its
+durable deliverable is a registry classifier routed through `classifier-author`
+(`prioritize` step 3a), not a backlog task.
 On success the DB row flips `proposed → exported` (recording `exported_backlog_task`)
 and one `export` `PlanSweepEvent` is logged. **Idempotent:** a row already
 `exported`, or whose `dedup_key` a backlog task already carries, is skipped, so a

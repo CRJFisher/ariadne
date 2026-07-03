@@ -146,7 +146,7 @@ export function build_plan_tasks(
       created_in_sweep: options.sweep_id,
       updated_in_sweep: options.sweep_id,
       strategist: options.strategist,
-      is_classifier_work: entry.node.is_classifier_work,
+      is_permanent_limitation: entry.node.is_permanent_limitation,
       core_fix_effort: entry.node.core_fix_effort,
       core_fix_effort_rationale: entry.node.core_fix_effort_rationale,
     } satisfies PlanTask;

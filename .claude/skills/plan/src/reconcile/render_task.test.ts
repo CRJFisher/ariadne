@@ -16,7 +16,7 @@ function node(overrides: Partial<StrategistPlanNode> = {}): StrategistPlanNode {
     fault_area: overrides.fault_area ?? "name_resolution",
     evidence_indices: overrides.evidence_indices ?? [],
     is_taxonomy_extension: overrides.is_taxonomy_extension ?? false,
-    is_classifier_work: overrides.is_classifier_work ?? false,
+    is_permanent_limitation: overrides.is_permanent_limitation ?? false,
     core_fix_effort: overrides.core_fix_effort ?? 3,
     core_fix_effort_rationale: overrides.core_fix_effort_rationale ?? "new resolver path in name_resolution",
     children: overrides.children ?? [],
@@ -112,13 +112,16 @@ describe("render_task_body", () => {
     );
   });
 
-  it("adds a lower-priority classifier criterion when the node is classifier work", () => {
+  it("emits the classifier-author routing criterion on a permanent-limitation node, with no core-fix criteria", () => {
     const body = render_task_body(
-      node({ is_classifier_work: true, fault_area: "syntactic_extraction" }),
+      node({ is_permanent_limitation: true, fault_area: "syntactic_extraction" }),
       [ev("src/a.ts", 1, "p")],
     );
     expect(body).toContain(
-      "- [ ] (Lower priority) Author the interim classifier so triage routes around the false positive until the core fix lands.",
+      "- [ ] The call relationship is fundamentally unknowable to static analysis — no core fix is possible. " +
+        "Route the group to `classifier-author`: the registry classifier is the durable deliverable, and this task never exports to `backlog/`.",
     );
+    expect(body).not.toContain("Root-cause fix lands in");
+    expect(body).not.toContain("Add a regression test reproducing the observed evidence");
   });
 });

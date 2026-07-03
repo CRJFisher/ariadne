@@ -122,18 +122,20 @@ export interface StrategistPlanNode {
    */
   is_taxonomy_extension: boolean;
   /**
-   * Marks a classifier-script work item. Classifier work is included only as
-   * explicitly lower-priority `localized` nodes — the strategist never authors a
-   * classifier spec itself.
+   * Marks a permanent limitation: the group's call relationship is fundamentally
+   * unknowable to static analysis, so no core fix is possible and the durable
+   * deliverable is a registry classifier (authored downstream by
+   * `classifier-author` — the strategist never authors a classifier spec itself).
+   * Such a node never exports to the user's `backlog/`.
    */
-  is_classifier_work: boolean;
+  is_permanent_limitation: boolean;
   /**
    * The strategist's blast-radius estimate for this node's core fix — a positive
    * integer on the scale 1 (single-file edit) / 3 (new function/resolver path) /
    * 5 (new cross-folder resolver pass), grounded by inspecting the owning
    * `fault_area` folder's current capability. Required on every core-fix node;
-   * `0` on a taxonomy-extension or classifier-work node (no core fix to size).
-   * Pass C carries it verbatim onto the `PlanTask` as the cost axis.
+   * `0` on a taxonomy-extension or permanent-limitation node (no core fix to
+   * size). Pass C carries it verbatim onto the `PlanTask` as the cost axis.
    */
   core_fix_effort: number;
   /** Prose grounding for `core_fix_effort` — required on core-fix nodes, empty when effort is `0`. */

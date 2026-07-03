@@ -182,13 +182,15 @@ export interface PlanTask {
    */
   strategist: string;
   /**
-   * True for an interim classifier-script work item — a workaround that routes
-   * triage around the false-positive until the core fix lands. These are
-   * explicitly lower-priority than the core fix; a consumer (the export adapter,
-   * a DB query) orders core-fix tasks ahead of classifier-work tasks by this
-   * flag. The core fix is always the real deliverable.
+   * True for a permanent limitation: the grounding call relationship is
+   * fundamentally unknowable to static analysis, so no core fix is possible and
+   * the durable deliverable is a registry classifier authored downstream by
+   * `classifier-author`. Such a task never exports to the user's `backlog/` —
+   * the export selector excludes it structurally — and `prioritize` step 3a
+   * reads this flag as its routing default (permanent → `classifier-author`,
+   * otherwise → `refactor-investigator`), with the human as final adjudicator.
    */
-  is_classifier_work: boolean;
+  is_permanent_limitation: boolean;
   /**
    * The strategist's estimate of how much complexity a core fix would add to
    * Ariadne — the fix's blast radius — as a positive integer on the strategist's

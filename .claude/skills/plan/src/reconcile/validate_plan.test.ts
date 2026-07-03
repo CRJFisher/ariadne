@@ -9,9 +9,9 @@ function full_membership(count: number): MembershipVerdict[] {
 }
 
 function leaf(overrides: Partial<StrategistPlanNode> = {}): StrategistPlanNode {
-  // A taxonomy-extension or classifier-work node proposes no core fix, so it
-  // carries the effort-0 sentinel; a core-fix node carries a positive estimate.
-  const exempt = (overrides.is_taxonomy_extension ?? false) || (overrides.is_classifier_work ?? false);
+  // A taxonomy-extension or permanent-limitation node proposes no core fix, so
+  // it carries the effort-0 sentinel; a core-fix node carries a positive estimate.
+  const exempt = (overrides.is_taxonomy_extension ?? false) || (overrides.is_permanent_limitation ?? false);
   return {
     tier: "localized",
     title: "fix",
@@ -19,7 +19,7 @@ function leaf(overrides: Partial<StrategistPlanNode> = {}): StrategistPlanNode {
     fault_area: "name_resolution",
     evidence_indices: [0],
     is_taxonomy_extension: false,
-    is_classifier_work: false,
+    is_permanent_limitation: false,
     core_fix_effort: exempt ? 0 : 2,
     core_fix_effort_rationale: exempt ? "" : "grounded estimate",
     children: [],
@@ -55,7 +55,7 @@ describe("validate_plan", () => {
         fault_area: "name_resolution",
         evidence_indices: [],
         is_taxonomy_extension: false,
-        is_classifier_work: false,
+        is_permanent_limitation: false,
         core_fix_effort: 5,
         core_fix_effort_rationale: "cross-folder resolver upgrade",
         children: [
@@ -66,7 +66,7 @@ describe("validate_plan", () => {
             fault_area: "name_resolution",
             evidence_indices: [],
             is_taxonomy_extension: false,
-            is_classifier_work: false,
+            is_permanent_limitation: false,
             core_fix_effort: 3,
             core_fix_effort_rationale: "new resolver path",
             children: [leaf({ evidence_indices: [0] }), leaf({ evidence_indices: [1] })],
@@ -116,7 +116,7 @@ describe("validate_plan", () => {
           fault_area: "not_a_real_area",
           evidence_indices: [0],
           is_taxonomy_extension: false,
-          is_classifier_work: false,
+          is_permanent_limitation: false,
           core_fix_effort: 2,
           core_fix_effort_rationale: "grounded estimate",
           children: [],
@@ -153,7 +153,7 @@ describe("validate_plan", () => {
           fault_area: "other",
           evidence_indices: [],
           is_taxonomy_extension: false,
-          is_classifier_work: false,
+          is_permanent_limitation: false,
           core_fix_effort: 3,
           core_fix_effort_rationale: "new resolver path",
           children: [
@@ -182,8 +182,8 @@ describe("validate_plan", () => {
   });
 
   it("requires the effort-0 sentinel on a node that proposes no core fix", () => {
-    // A classifier-work node carrying a positive effort is invalid (no core fix to size).
-    expect(codes(plan([leaf({ is_classifier_work: true, core_fix_effort: 3 })]), NAME_RES_CTX)).toEqual([
+    // A permanent-limitation node carrying a positive effort is invalid (no core fix to size).
+    expect(codes(plan([leaf({ is_permanent_limitation: true, core_fix_effort: 3 })]), NAME_RES_CTX)).toEqual([
       "core_fix_effort_invalid",
     ]);
     // A taxonomy-extension node carrying a positive effort is invalid too (other bucket).
@@ -194,8 +194,22 @@ describe("validate_plan", () => {
         other_ctx,
       ),
     ).toContain("core_fix_effort_invalid");
-    // The effort-0 sentinel on a classifier-work node is accepted.
-    expect(validate_plan(plan([leaf({ is_classifier_work: true })]), NAME_RES_CTX)).toEqual({ ok: true, issues: [] });
+    // The effort-0 sentinel on a permanent-limitation node is accepted.
+    expect(validate_plan(plan([leaf({ is_permanent_limitation: true })]), NAME_RES_CTX)).toEqual({ ok: true, issues: [] });
+  });
+
+  it("rejects a node asserting both taxonomy extension and permanent limitation", () => {
+    const other_ctx: ValidatePlanContext = { bucket_fault_area: "other", evidence_count: 1, sweep_id: "sweep-1" };
+    expect(
+      codes(
+        plan(
+          [leaf({ fault_area: "other", is_taxonomy_extension: true, is_permanent_limitation: true, evidence_indices: [], core_fix_effort: 0, core_fix_effort_rationale: "" })],
+          "other",
+          full_membership(1),
+        ),
+        other_ctx,
+      ),
+    ).toContain("taxonomy_extension_and_permanent_limitation");
   });
 });
 

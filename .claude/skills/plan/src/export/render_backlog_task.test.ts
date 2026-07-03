@@ -9,7 +9,6 @@ import {
 
 import {
   backlog_task_filename,
-  derive_backlog_priority,
   render_backlog_task,
   slugify_title,
 } from "./render_backlog_task.js";
@@ -37,7 +36,7 @@ function make_task(overrides: Partial<PlanTask>): PlanTask {
     created_in_sweep: "sweep-1",
     updated_in_sweep: "sweep-1",
     strategist: "claude-opus-4-8",
-    is_classifier_work: false,
+    is_permanent_limitation: false,
     core_fix_effort: 3,
     core_fix_effort_rationale: "new resolver path in name_resolution",
     ...overrides,
@@ -57,16 +56,6 @@ function make_authored(overrides: Partial<AuthoredBacklogTask>): AuthoredBacklog
     ...overrides,
   };
 }
-
-describe("derive_backlog_priority", () => {
-  it("a core fix is high priority", () => {
-    expect(derive_backlog_priority(false)).toEqual("high");
-  });
-
-  it("interim classifier work is lower (medium) priority", () => {
-    expect(derive_backlog_priority(true)).toEqual("medium");
-  });
-});
 
 describe("slugify_title", () => {
   it("strips the area-prefix brackets and dashes the words", () => {
@@ -109,7 +98,7 @@ describe("render_backlog_task", () => {
       id: "pt-abc123" as PlanTaskId,
       fault_area: "name_resolution",
       dedup_key: "a1b2c3d4e5f6",
-      is_classifier_work: false,
+      is_permanent_limitation: false,
     });
 
     const rendered = render_backlog_task(authored, [primary], "2026-06-04 14:30");
@@ -169,13 +158,13 @@ describe("render_backlog_task", () => {
       id: "pt-recv" as PlanTaskId,
       fault_area: "receiver_type_inference",
       dedup_key: "recvkey",
-      is_classifier_work: false,
+      is_permanent_limitation: false,
     });
     const method = make_task({
       id: "pt-method" as PlanTaskId,
       fault_area: "method_lookup",
       dedup_key: "methodkey",
-      is_classifier_work: true,
+      is_permanent_limitation: false,
     });
 
     const rendered = render_backlog_task(authored, [method, recv], "2026-06-04 14:30");
@@ -197,7 +186,6 @@ describe("render_backlog_task", () => {
         "  - method_lookup",
         "  - receiver_type_inference",
         "dependencies: []",
-        // High: not every source is classifier work.
         "priority: high",
         "plan_dedup_keys:",
         "  - methodkey",
@@ -225,15 +213,6 @@ describe("render_backlog_task", () => {
         "",
       ].join("\n"),
     );
-  });
-
-  it("stamps medium priority when the primary row is classifier work", () => {
-    const rendered = render_backlog_task(
-      make_authored({}),
-      [make_task({ is_classifier_work: true })],
-      "2026-06-04 14:30",
-    );
-    expect(rendered.content.includes("priority: medium")).toBe(true);
   });
 
   it("stamps parent_task_id and ordinal for a nested child, and a dotted id/filename", () => {

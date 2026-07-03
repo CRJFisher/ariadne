@@ -42,7 +42,7 @@ function three_tier_plan(): StrategistPlan {
         fault_area: "name_resolution",
         evidence_indices: [],
         is_taxonomy_extension: false,
-        is_classifier_work: false,
+        is_permanent_limitation: false,
         core_fix_effort: 5,
         core_fix_effort_rationale: "cross-folder resolver upgrade",
         children: [
@@ -53,7 +53,7 @@ function three_tier_plan(): StrategistPlan {
             fault_area: "name_resolution",
             evidence_indices: [],
             is_taxonomy_extension: false,
-            is_classifier_work: false,
+            is_permanent_limitation: false,
             core_fix_effort: 3,
             core_fix_effort_rationale: "new resolver path",
             children: [
@@ -64,7 +64,7 @@ function three_tier_plan(): StrategistPlan {
                 fault_area: "name_resolution",
                 evidence_indices: [0],
                 is_taxonomy_extension: false,
-                is_classifier_work: false,
+                is_permanent_limitation: false,
                 core_fix_effort: 1,
                 core_fix_effort_rationale: "single-file edit",
                 children: [],
@@ -76,7 +76,7 @@ function three_tier_plan(): StrategistPlan {
                 fault_area: "name_resolution",
                 evidence_indices: [1],
                 is_taxonomy_extension: false,
-                is_classifier_work: false,
+                is_permanent_limitation: false,
                 core_fix_effort: 1,
                 core_fix_effort_rationale: "single-file edit",
                 children: [],
@@ -169,7 +169,7 @@ describe("build_plan_tasks", () => {
           fault_area: "other",
           evidence_indices: [],
           is_taxonomy_extension: false,
-          is_classifier_work: false,
+          is_permanent_limitation: false,
           core_fix_effort: 3,
           core_fix_effort_rationale: "new resolver path",
           children: [
@@ -180,7 +180,7 @@ describe("build_plan_tasks", () => {
               fault_area: "other",
               evidence_indices: [],
               is_taxonomy_extension: true,
-              is_classifier_work: false,
+              is_permanent_limitation: false,
               core_fix_effort: 0,
               core_fix_effort_rationale: "",
               children: [],
@@ -192,7 +192,7 @@ describe("build_plan_tasks", () => {
               fault_area: "other",
               evidence_indices: [0],
               is_taxonomy_extension: false,
-              is_classifier_work: false,
+              is_permanent_limitation: false,
               core_fix_effort: 1,
               core_fix_effort_rationale: "single-file edit",
               children: [],
@@ -227,7 +227,7 @@ describe("build_plan_tasks", () => {
           fault_area: "name_resolution",
           evidence_indices: [0],
           is_taxonomy_extension: false,
-          is_classifier_work: false,
+          is_permanent_limitation: false,
           core_fix_effort: 1,
           core_fix_effort_rationale: "single-file edit",
           children: [],
@@ -241,7 +241,7 @@ describe("build_plan_tasks", () => {
     expect(task.dedup_key).toEqual(compute_dedup_key("name_resolution", [ev("a.ts", 1, "webpack")]));
   });
 
-  it("persists is_classifier_work onto the PlanTask from the node", () => {
+  it("persists is_permanent_limitation onto the PlanTask from the node", () => {
     const plan: StrategistPlan = {
       schema_version: 1,
       fault_area: "name_resolution",
@@ -250,12 +250,12 @@ describe("build_plan_tasks", () => {
       roots: [
         {
           tier: "localized",
-          title: "interim classifier",
-          body: "workaround",
+          title: "dynamic dispatch through a computed key",
+          body: "unknowable to static analysis; the registry classifier is the durable deliverable",
           fault_area: "name_resolution",
           evidence_indices: [0],
           is_taxonomy_extension: false,
-          is_classifier_work: true,
+          is_permanent_limitation: true,
           core_fix_effort: 0,
           core_fix_effort_rationale: "",
           children: [],
@@ -263,7 +263,7 @@ describe("build_plan_tasks", () => {
       ],
     };
     const [task] = build_plan_tasks(plan, [ev("a.ts", 1)], OPTS);
-    expect(task.is_classifier_work).toEqual(true);
+    expect(task.is_permanent_limitation).toEqual(true);
   });
 
   it("persists core_fix_effort and its rationale onto the PlanTask from the node", () => {
@@ -280,7 +280,7 @@ describe("build_plan_tasks", () => {
           fault_area: "name_resolution",
           evidence_indices: [0],
           is_taxonomy_extension: false,
-          is_classifier_work: false,
+          is_permanent_limitation: false,
           core_fix_effort: 4,
           core_fix_effort_rationale: "new resolver pass touching two folders",
           children: [],
@@ -307,15 +307,15 @@ describe("build_plan_tasks", () => {
           fault_area: "name_resolution",
           evidence_indices: [2],
           is_taxonomy_extension: false,
-          is_classifier_work: false,
+          is_permanent_limitation: false,
           core_fix_effort: 3,
           core_fix_effort_rationale: "new resolver path",
           children: [
-            { tier: "localized", title: "leaf 0", body: "l0", fault_area: "name_resolution", evidence_indices: [0], is_taxonomy_extension: false, is_classifier_work: false, core_fix_effort: 1, core_fix_effort_rationale: "single-file edit", children: [] },
+            { tier: "localized", title: "leaf 0", body: "l0", fault_area: "name_resolution", evidence_indices: [0], is_taxonomy_extension: false, is_permanent_limitation: false, core_fix_effort: 1, core_fix_effort_rationale: "single-file edit", children: [] },
           ],
         },
         // Root 2: a standalone localized leaf on index 1.
-        { tier: "localized", title: "leaf 1", body: "l1", fault_area: "name_resolution", evidence_indices: [1], is_taxonomy_extension: false, is_classifier_work: false, core_fix_effort: 1, core_fix_effort_rationale: "single-file edit", children: [] },
+        { tier: "localized", title: "leaf 1", body: "l1", fault_area: "name_resolution", evidence_indices: [1], is_taxonomy_extension: false, is_permanent_limitation: false, core_fix_effort: 1, core_fix_effort_rationale: "single-file edit", children: [] },
       ],
     };
     const bucket = [ev("a.ts", 1, "p"), ev("b.ts", 2, "p"), ev("c.ts", 3, "p")];

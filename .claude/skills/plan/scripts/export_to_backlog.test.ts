@@ -65,7 +65,7 @@ function make_task(overrides: Partial<PlanTask>): PlanTask {
     created_in_sweep: "sweep-1",
     updated_in_sweep: "sweep-1",
     strategist: "claude-opus-4-8",
-    is_classifier_work: false,
+    is_permanent_limitation: false,
     core_fix_effort: 3,
     core_fix_effort_rationale: "new resolver path in name_resolution",
     ...overrides,
@@ -307,13 +307,14 @@ describe("export_to_backlog run()", () => {
     expect((await repo.get("pt-1" as PlanTaskId))?.status).toEqual("proposed");
   });
 
-  it("previews classifier-only rows through the --priority plumbing", async () => {
+  it("excludes permanent-limitation rows from the preview and reports them as skipped", async () => {
     const repo = new JsonPlanTaskRepository();
-    await repo.put(make_task({ id: "pt-core" as PlanTaskId, dedup_key: "kc", is_classifier_work: false }));
-    await repo.put(make_task({ id: "pt-cls" as PlanTaskId, dedup_key: "kk", is_classifier_work: true }));
+    await repo.put(make_task({ id: "pt-core" as PlanTaskId, dedup_key: "kc", is_permanent_limitation: false }));
+    await repo.put(make_task({ id: "pt-perm" as PlanTaskId, dedup_key: "kk", is_permanent_limitation: true }));
 
-    const summary = await run(["--priority", "classifier", "--dry-run"], FIXED_NOW);
-    expect(summary.exported.map((e) => e.id)).toEqual(["pt-cls"]);
+    const summary = await run(["--dry-run"], FIXED_NOW);
+    expect(summary.exported.map((e) => e.id)).toEqual(["pt-core"]);
+    expect(summary.skipped_permanent_limitation).toEqual(["pt-perm"]);
   });
 
   it("rejects unknown args and a non-exportable --status", async () => {
@@ -321,8 +322,8 @@ describe("export_to_backlog run()", () => {
     await expect(run(["--status", "resolved"], FIXED_NOW)).rejects.toThrow(
       "--status expects one of proposed|accepted",
     );
-    await expect(run(["--priority", "urgent"], FIXED_NOW)).rejects.toThrow(
-      "--priority expects core|classifier",
+    await expect(run(["--priority", "core"], FIXED_NOW)).rejects.toThrow(
+      "Unknown argument: --priority",
     );
   });
 

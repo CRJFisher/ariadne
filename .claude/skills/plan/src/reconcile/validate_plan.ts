@@ -26,6 +26,7 @@ export type ValidationIssueCode =
   | "other_bucket_missing_taxonomy_extension"
   | "other_bucket_missing_core_fix"
   | "taxonomy_extension_on_non_other_bucket"
+  | "taxonomy_extension_and_permanent_limitation"
   | "core_fix_effort_invalid"
   | "membership_incomplete"
   | "membership_index_out_of_range"
@@ -94,8 +95,8 @@ function check_node_shape(value: unknown, path: string): ValidationIssue[] {
   if (typeof value.is_taxonomy_extension !== "boolean") {
     issues.push({ code: "shape_error", path: `${path}.is_taxonomy_extension`, message: "is_taxonomy_extension must be a boolean" });
   }
-  if (typeof value.is_classifier_work !== "boolean") {
-    issues.push({ code: "shape_error", path: `${path}.is_classifier_work`, message: "is_classifier_work must be a boolean" });
+  if (typeof value.is_permanent_limitation !== "boolean") {
+    issues.push({ code: "shape_error", path: `${path}.is_permanent_limitation`, message: "is_permanent_limitation must be a boolean" });
   }
   if (typeof value.core_fix_effort !== "number" || !Number.isInteger(value.core_fix_effort)) {
     issues.push({ code: "shape_error", path: `${path}.core_fix_effort`, message: "core_fix_effort must be an integer" });
@@ -165,15 +166,27 @@ function check_node_rules(
   }
   if (node.is_taxonomy_extension) found.taxonomy_extension = true;
 
-  // Cost axis: a core-fix node (neither a taxonomy extension nor classifier work)
-  // must carry a positive blast-radius estimate with prose grounding; a node that
-  // proposes no core fix carries the `0` sentinel and no rationale.
+  // A taxonomy extension claims a concrete code deliverable (the missing area);
+  // a permanent limitation claims no code deliverable is possible. One node
+  // asserting both is incoherent and cannot be routed.
+  if (node.is_taxonomy_extension && node.is_permanent_limitation) {
+    issues.push({
+      code: "taxonomy_extension_and_permanent_limitation",
+      path,
+      message: "a node cannot be both a taxonomy extension and a permanent limitation — the flags make opposite claims about whether a code deliverable exists",
+    });
+  }
+
+  // Cost axis: a core-fix node (neither a taxonomy extension nor a permanent
+  // limitation) must carry a positive blast-radius estimate with prose
+  // grounding; a node that proposes no core fix carries the `0` sentinel and no
+  // rationale.
   //
   // `proposes_core_fix` here is the EFFORT-SIZING obligation (any tier that
   // proposes a core fix at all). It is a distinct notion from `found.core_fix`
   // below, which is the narrower "an evidence-grounded fix exists" signal the
   // other-bucket pairing rule consults.
-  const proposes_core_fix = !node.is_taxonomy_extension && !node.is_classifier_work;
+  const proposes_core_fix = !node.is_taxonomy_extension && !node.is_permanent_limitation;
   if (proposes_core_fix) {
     if (node.core_fix_effort <= 0) {
       issues.push({
@@ -193,7 +206,7 @@ function check_node_rules(
     issues.push({
       code: "core_fix_effort_invalid",
       path: `${path}.core_fix_effort`,
-      message: "a taxonomy-extension or classifier-work node must carry core_fix_effort 0 (no core fix to size)",
+      message: "a taxonomy-extension or permanent-limitation node must carry core_fix_effort 0 (no core fix to size)",
     });
   }
 

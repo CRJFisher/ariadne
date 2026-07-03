@@ -65,7 +65,7 @@ function single_leaf_plan(): StrategistPlan {
         fault_area: "name_resolution",
         evidence_indices: [0],
         is_taxonomy_extension: false,
-        is_classifier_work: false,
+        is_permanent_limitation: false,
         core_fix_effort: 1,
         core_fix_effort_rationale: "single-file edit",
         children: [],

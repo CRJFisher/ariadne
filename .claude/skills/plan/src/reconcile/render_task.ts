@@ -68,6 +68,11 @@ export function render_task_body(
     parts.push(
       "- [ ] Add a `derive_fault_area` test that routes the formerly-`other` signal to the new area.",
     );
+  } else if (node.is_permanent_limitation) {
+    parts.push(
+      "- [ ] The call relationship is fundamentally unknowable to static analysis — no core fix is possible. " +
+        "Route the group to `classifier-author`: the registry classifier is the durable deliverable, and this task never exports to `backlog/`.",
+    );
   } else {
     const folder = ARIADNE_FAULT_AREA_FOLDER[node.fault_area];
     const target = folder.length > 0 ? `\`${folder}\`` : "Ariadne core";
@@ -77,11 +82,6 @@ export function render_task_body(
     parts.push(
       "- [ ] Add a regression test reproducing the observed evidence; confirm the fix covers it.",
     );
-    if (node.is_classifier_work) {
-      parts.push(
-        "- [ ] (Lower priority) Author the interim classifier so triage routes around the false positive until the core fix lands.",
-      );
-    }
   }
   return parts.join("\n") + "\n";
 }
