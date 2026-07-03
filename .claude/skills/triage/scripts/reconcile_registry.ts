@@ -21,18 +21,21 @@
  *      `entry_index`, so a re-run is idempotent. Malformed or stale published
  *      files are reported and skipped, never fatal.
  *   3. **promote** (`--id <group_id> --promote`) — the human's deliberate
- *      `wip → permanent` flip. Guarded: a rule whose `classifier.kind` is
- *      `"none"` or `"retired"` is rejected (core's `validate_permanent_slice`
- *      cannot load it). After the registry write, `generate_permanent_data.ts`
- *      regenerates the bundled core slice.
- *   4. **fixed-by-name** (`--id <group_id>... --fixed --reason "<text>"`) — the
- *      human's deliberate `wip → fixed` retirement when the subsuming fix
- *      landed under a task scope that does not match the rule's `backlog_task`,
- *      so signal 1 cannot see it. Names rules directly like `--promote`,
- *      bypasses git-log matching, requires `--reason`, and cannot combine with
- *      `--drift`. Converts a real builtin classifier into the
- *      structured `{ kind:"retired", from, reason }` marker. The auto `--fixed`
- *      path (no `--id`) is unchanged — status-only, classifier untouched.
+ *      `wip → permanent` flip. Guarded: a rule whose `function_name` is not
+ *      registered in core's `BUILTIN_CHECKS` is rejected (the bundled slice
+ *      would carry a dangling builtin). After the registry write,
+ *      `generate_permanent_data.ts` regenerates the bundled core slice.
+ *   4. **delete-by-name** (`--id <group_id>... --fixed --reason "<text>"`) — the
+ *      human's deliberate retirement when the subsuming fix landed under a
+ *      task scope that does not match the rule's `backlog_task`, so signal 1
+ *      cannot see it. Names rules directly like `--promote`, bypasses git-log
+ *      matching, requires `--reason`, and cannot combine with `--drift`.
+ *      Deletes the named row(s) from the registry and best-effort unlinks each
+ *      row's `check_<group_id>.ts` builtin source — git history is the audit
+ *      trail. Guarded: a row whose `function_name` is still registered in
+ *      core's `BUILTIN_CHECKS` is rejected (the code-side deletion — barrel
+ *      entry removed, core rebuilt — must land first). The auto `--fixed`
+ *      path (no `--id`) is unchanged — status-only, row untouched.
  *
  * ## Stage (insertion of an agent-authored draft)
  *
@@ -61,7 +64,8 @@
  *     [--dry-run] [--fixed] [--drift] [--id <group_id>...] [--reason <text>] [--promote]
  */
 
-import { readFile, readdir } from "node:fs/promises";
+import { readFile, readdir, unlink } from "node:fs/promises";
+import * as path from "node:path";
 import { execSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
@@ -77,7 +81,6 @@ import {
 } from "@ariadnejs/skill-protocol";
 import type {
   ClassifierRegressionFlag,
-  ClassifierSpec,
   DriftEvidence,
   KnownIssue,
 } from "@ariadnejs/types";
@@ -99,8 +102,8 @@ import "@ariadnejs/skill-fs/require-node-import-tsx";
 const USAGE =
   "Usage: reconcile_registry [--dry-run] [--fixed] [--drift] " +
   "[--id <group_id>...] [--reason <text>] [--promote]\n" +
-  "  Name-mode: --id <group_id>... --fixed --reason \"<text>\" flips the named " +
-  "wip rules to fixed directly (no git-log matching) and retires their classifier.\n" +
+  "  Name-mode: --id <group_id>... --fixed --reason \"<text>\" deletes the named " +
+  "rows directly (no git-log matching) and unlinks their check_*.ts sources.\n" +
   "  Stage: --stage <draft-path> [--apply] validates and inserts an agent-authored " +
   "KnownIssue draft. Dry-run by default; pass --apply to write.\n";
 
@@ -148,15 +151,15 @@ export interface PromoteProposal {
 }
 
 /**
- * Signal 4 — name-mode `wip → fixed`. The human names a rule directly
+ * Signal 4 — name-mode deletion. The human names a rule directly
  * (`--id ... --fixed --reason`) when the subsuming fix landed under a task
  * scope that does not match the rule's `backlog_task`, so signal 1 cannot see
- * it. Retires the rule: flips it to `fixed` and converts a real
- * builtin classifier into the structured `retired` marker carrying
- * `reason`.
+ * it. Deletes the row outright — the `reason` survives only in the run's
+ * summary output and the human's commit message; git history is the audit
+ * trail.
  */
-export interface FixedByNameProposal {
-  kind: "wip_to_fixed_by_name";
+export interface DeleteByNameProposal {
+  kind: "delete_by_name";
   group_id: string;
   /** The retirement rationale — the audit line, since no commit subject is cited. */
   reason: string;
@@ -166,7 +169,7 @@ export type RegistryProposal =
   | FixedProposal
   | DriftProposal
   | PromoteProposal
-  | FixedByNameProposal;
+  | DeleteByNameProposal;
 
 // ---------------------------------------------------------------------------
 // Pure helpers
@@ -344,8 +347,9 @@ export function detect_drift_proposals(
  * the rules as they are NOW (the locked read), so a proposal computed from a
  * stale preview degrades to a no-op instead of clobbering: an already-fixed
  * rule stays fixed, already-present evidence rows are not duplicated. Throws
- * on a proposal naming an absent rule (a detector/selector bug) and on
- * promoting a rule without a real classifier.
+ * on a proposal naming an absent rule (a detector/selector bug) — except a
+ * `delete_by_name` proposal, whose target being absent is the idempotent
+ * re-run case (the row is already deleted), not a bug.
  */
 export function fold_proposals(
   rules: readonly KnownIssue[],
@@ -353,10 +357,12 @@ export function fold_proposals(
 ): KnownIssue[] {
   const next = [...rules];
   const index_by_id = new Map(rules.map((rule, i) => [rule.group_id, i]));
+  const to_delete = new Set<string>();
 
   for (const proposal of proposals) {
     const i = index_by_id.get(proposal.group_id);
     if (i === undefined) {
+      if (proposal.kind === "delete_by_name") continue;
       throw new Error(
         `proposal targets unknown rule "${proposal.group_id}" — not in the registry`,
       );
@@ -366,18 +372,9 @@ export function fold_proposals(
       case "wip_to_fixed":
         if (rule.status === "wip") next[i] = { ...rule, status: "fixed" };
         break;
-      case "wip_to_fixed_by_name": {
-        // Idempotent: a re-run on an already-fixed rule is a no-op.
-        if (rule.status !== "wip") break;
-        // Retire a real classifier into the structured `retired` marker; a
-        // `none` stub has nothing to retire, so it stays `none`.
-        const classifier: ClassifierSpec =
-          rule.classifier.kind === "builtin"
-            ? { kind: "retired", from: rule.classifier, reason: proposal.reason }
-            : rule.classifier;
-        next[i] = { ...rule, status: "fixed", classifier };
+      case "delete_by_name":
+        to_delete.add(proposal.group_id);
         break;
-      }
       case "drift_detected": {
         const existing = rule.drift_evidence ?? [];
         const present = new Set(existing.map((row) => row.entry_index));
@@ -393,18 +390,12 @@ export function fold_proposals(
         break;
       }
       case "promote_to_permanent":
-        if (rule.classifier.kind !== "builtin") {
-          throw new Error(
-            `cannot promote "${rule.group_id}": classifier.kind is "${rule.classifier.kind}" — ` +
-              "only a builtin classifier is promotable; core's " +
-              "validate_permanent_slice rejects every other kind",
-          );
-        }
         if (rule.status !== "permanent") next[i] = { ...rule, status: "permanent" };
         break;
     }
   }
-  return next;
+  if (to_delete.size === 0) return next;
+  return next.filter((rule) => !to_delete.has(rule.group_id));
 }
 
 // ---------------------------------------------------------------------------
@@ -504,8 +495,8 @@ export function parse_argv(argv: string[]): CliArgs {
       "--promote cannot combine with --fixed/--drift: promotion is a separate, deliberate transaction",
     );
   }
-  // Name-mode is `--fixed` with `--id`: a deliberate, direct retirement flip
-  // that bypasses git-log detection. It requires a `--reason` and cannot mix
+  // Name-mode is `--fixed` with `--id`: a deliberate, direct deletion that
+  // bypasses git-log detection. It requires a `--reason` and cannot mix
   // with `--drift`; `--reason` is valid ONLY in name-mode.
   args.name_mode = args.fixed && args.ids.length > 0;
   if (args.name_mode && args.drift) {
@@ -584,9 +575,16 @@ export interface ReconcileDeps {
    * dep reads the freshly-built barrel.
    */
   known_builtin_names: () => ReadonlySet<string>;
+  /**
+   * Best-effort unlink of a deleted row's `check_<group_id>.ts` builtin
+   * source. Returns the removed path, or null when the file was already gone
+   * (the agent's code-side deletion normally removes it first). Injectable so
+   * tests never touch the real builtins directory.
+   */
+  delete_builtin_source: (group_id: string) => Promise<string | null>;
 }
 
-export interface RejectedPromotion {
+export interface RejectedRule {
   group_id: string;
   reason: string;
 }
@@ -596,14 +594,18 @@ export interface ReconcileSummary {
   selectors: { fixed: boolean; drift: boolean; ids: string[]; promote: boolean };
   proposals: {
     wip_to_fixed: FixedProposal[];
-    wip_to_fixed_by_name: FixedByNameProposal[];
+    delete_by_name: DeleteByNameProposal[];
     drift_detected: DriftProposal[];
     promote_to_permanent: PromoteProposal[];
   };
   /** `--id` values that matched no proposal (or, under `--promote`, no rule). */
   missing_ids: string[];
-  /** `--promote` targets refused: no classifier, or already permanent. */
-  rejected_promotions: RejectedPromotion[];
+  /** `--promote` targets refused: dangling builtin, or already permanent. */
+  rejected_promotions: RejectedRule[];
+  /** Name-mode targets refused: their builtin is still registered in BUILTIN_CHECKS. */
+  rejected_deletions: RejectedRule[];
+  /** `check_<group_id>.ts` paths the name-mode run actually unlinked. */
+  deleted_builtin_sources: string[];
   /** Published `rule_id`s with no registry rule — review signals, never writes. */
   drift_unknown_rule_ids: string[];
   /** Published files that failed to read/parse; reported, never fatal. */
@@ -631,24 +633,20 @@ export async function run(
   const rules_by_id = new Map(registry.map((rule) => [rule.group_id, rule]));
 
   let fixed_proposals: FixedProposal[] = [];
-  const fixed_by_name_proposals: FixedByNameProposal[] = [];
+  const delete_by_name_proposals: DeleteByNameProposal[] = [];
   let drift_proposals: DriftProposal[] = [];
   const promote_proposals: PromoteProposal[] = [];
   let drift_unknown_rule_ids: string[] = [];
   let skipped_sources: SkippedSource[] = [];
   const missing_ids: string[] = [];
-  const rejected_promotions: RejectedPromotion[] = [];
+  const rejected_promotions: RejectedRule[] = [];
+  const rejected_deletions: RejectedRule[] = [];
 
   if (args.promote) {
     for (const id of args.ids) {
       const rule = rules_by_id.get(id);
       if (rule === undefined) {
         missing_ids.push(id);
-      } else if (rule.classifier.kind === "none" || rule.classifier.kind === "retired") {
-        rejected_promotions.push({
-          group_id: id,
-          reason: `classifier.kind is "${rule.classifier.kind}" — author a builtin classifier before promoting`,
-        });
       } else if (!deps.known_builtin_names().has(rule.classifier.function_name)) {
         // A builtin whose check_*.ts was deleted after staging: promoting it
         // would bundle a dangling function_name into the permanent slice that
@@ -670,8 +668,8 @@ export async function run(
       }
     }
   } else if (args.name_mode) {
-    // Direct-name retirement: flip each named wip rule to fixed without
-    // git-log detection. parse_argv guarantees a non-null reason in name-mode.
+    // Direct-name retirement: delete each named row without git-log
+    // detection. parse_argv guarantees a non-null reason in name-mode.
     if (args.reason === null) {
       throw new Error("name-mode reached with a null reason — parse_argv guard bypassed");
     }
@@ -680,11 +678,21 @@ export async function run(
       const rule = rules_by_id.get(id);
       if (rule === undefined) {
         missing_ids.push(id);
-      } else if (rule.status !== "wip") {
-        // A named non-wip rule is a silent no-op — nothing to retire.
-        continue;
+      } else if (deps.known_builtin_names().has(rule.classifier.function_name)) {
+        // The code-side deletion (agent step 1 of the lifecycle hand-off) has
+        // not landed: the barrel still registers the builtin, so deleting the
+        // row would leave a live check with no registry rule. Reject with the
+        // concrete next action instead of failing later in the bijection test.
+        rejected_deletions.push({
+          group_id: id,
+          reason:
+            `builtin function_name "${rule.classifier.function_name}" is still registered in ` +
+            "core's BUILTIN_CHECKS — delete its check_*.ts and barrel entry under " +
+            "packages/core/src/classify_entry_points/builtins/, rebuild core " +
+            "(pnpm build --filter core), then re-run",
+        });
       } else {
-        fixed_by_name_proposals.push({ kind: "wip_to_fixed_by_name", group_id: id, reason });
+        delete_by_name_proposals.push({ kind: "delete_by_name", group_id: id, reason });
       }
     }
   } else {
@@ -717,7 +725,7 @@ export async function run(
 
   const all_proposals: RegistryProposal[] = [
     ...fixed_proposals,
-    ...fixed_by_name_proposals,
+    ...delete_by_name_proposals,
     ...drift_proposals,
     ...promote_proposals,
   ];
@@ -733,16 +741,37 @@ export async function run(
     });
   }
 
+  // Registry row gone → its check_<group_id>.ts must not linger. Best-effort
+  // even on an idempotent re-run (applied=false): a crash between a prior
+  // run's registry write and its unlink leaves the file behind, and this
+  // sweep is what recovers it. The builtin-still-registered guard above
+  // ensures the barrel no longer imports the file, so unlinking cannot break
+  // the build.
+  const deleted_builtin_sources: string[] = [];
+  if (!args.dry_run) {
+    for (const proposal of delete_by_name_proposals) {
+      const removed = await deps.delete_builtin_source(proposal.group_id);
+      if (removed !== null) deleted_builtin_sources.push(removed);
+    }
+  }
+
   let permanent_slice_changed = false;
-  if (args.promote) {
+  const deletes_permanent_row = delete_by_name_proposals.some(
+    (proposal) => rules_by_id.get(proposal.group_id)?.status === "permanent",
+  );
+  if (args.promote || deletes_permanent_row) {
     // Registry first (source of truth), then bring the slice in sync.
     // Unconditional on --promote (not on accepted proposals) so a re-run
     // recovers from a crash between the registry write and the regeneration:
     // the rule is rejected as already-permanent, but the slice still syncs.
-    // Under --dry-run the would-be-promoted rules stand in for the registry
-    // so the preview reports the slice change the promotion would produce.
+    // Name-mode triggers the same sync when it deletes a permanent row.
+    // Under --dry-run the would-be-folded rules stand in for the registry
+    // so the preview reports the slice change the transition would produce.
     const preview_rules = args.dry_run
-      ? fold_proposals(registry, promote_proposals)
+      ? fold_proposals(
+          registry,
+          args.promote ? promote_proposals : delete_by_name_proposals,
+        )
       : null;
     permanent_slice_changed = await deps.regenerate_permanent_slice({
       dry_run: args.dry_run,
@@ -755,12 +784,14 @@ export async function run(
     selectors: { fixed: args.fixed, drift: args.drift, ids: args.ids, promote: args.promote },
     proposals: {
       wip_to_fixed: fixed_proposals,
-      wip_to_fixed_by_name: fixed_by_name_proposals,
+      delete_by_name: delete_by_name_proposals,
       drift_detected: drift_proposals,
       promote_to_permanent: promote_proposals,
     },
     missing_ids,
     rejected_promotions,
+    rejected_deletions,
+    deleted_builtin_sources,
     drift_unknown_rule_ids,
     skipped_sources,
     applied,
@@ -828,18 +859,9 @@ export async function run_stage(
     );
   }
   const entry: KnownIssue = drafts[0];
-
-  // 3. The authoring path inserts a real builtin classifier only. A `none`
-  // stub or `retired` marker has no business entering through --stage.
-  if (entry.classifier.kind !== "builtin") {
-    throw new StageDraftError(
-      `--stage inserts a builtin classifier; draft "${entry.group_id}" has ` +
-        `classifier.kind "${entry.classifier.kind}"`,
-    );
-  }
   const function_name = entry.classifier.function_name;
 
-  // 4. Reject a collision against the current registry — a duplicate group_id
+  // 3. Reject a collision against the current registry — a duplicate group_id
   // OR a builtin function_name already claimed by another rule. The
   // singleton-array validation above cannot see the existing registry, so
   // these cross-rule uniqueness invariants are checked here (and re-checked
@@ -852,7 +874,7 @@ export async function run_stage(
       );
     }
     const owner = rules.find(
-      (rule) => rule.classifier.kind === "builtin" && rule.classifier.function_name === function_name,
+      (rule) => rule.classifier.function_name === function_name,
     );
     if (owner !== undefined) {
       return new StageDraftError(
@@ -866,7 +888,7 @@ export async function run_stage(
   const pre_lock_collision = collision(registry);
   if (pre_lock_collision !== null) throw pre_lock_collision;
 
-  // 5. Fail-loud if the function_name is not registered in BUILTIN_CHECKS: the
+  // 4. Fail-loud if the function_name is not registered in BUILTIN_CHECKS: the
   // human must place the check_*.ts and rebuild core before staging.
   if (!deps.known_builtin_names().has(function_name)) {
     throw new StageDraftError(
@@ -877,12 +899,12 @@ export async function run_stage(
     );
   }
 
-  // 6. Dry-run by default: preview and exit without writing.
+  // 5. Dry-run by default: preview and exit without writing.
   if (!args.apply) {
     return { draft: entry, applied: false };
   }
 
-  // 7. Insert through the locked write, re-checking the collision under the
+  // 6. Insert through the locked write, re-checking the collision under the
   // lock so a concurrent insert of the same group_id or function_name cannot
   // be clobbered.
   const applied = await atomic_update_registry(deps.registry_path, async (raw) => {
@@ -967,6 +989,26 @@ export async function build_real_deps(): Promise<ReconcileDeps> {
       ).changed,
     read_draft: async (draft_path) => JSON.parse(await readFile(draft_path, "utf8")),
     known_builtin_names: () => new Set(Object.keys(BUILTIN_CHECKS)),
+    delete_builtin_source: async (group_id) => {
+      const source_path = path.join(
+        repo_root(),
+        "packages",
+        "core",
+        "src",
+        "classify_entry_points",
+        "builtins",
+        `check_${group_id}.ts`,
+      );
+      try {
+        await unlink(source_path);
+        return source_path;
+      } catch (err) {
+        if (err instanceof Error && (err as { code?: string }).code === "ENOENT") {
+          return null;
+        }
+        throw err;
+      }
+    },
   };
 }
 

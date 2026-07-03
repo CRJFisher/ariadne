@@ -240,7 +240,7 @@ describe("substitute_template", () => {
         status: "wip",
         languages: ["typescript"],
         examples: [],
-        classifier: { kind: "none" },
+        classifier: { function_name: "check_demo_rule", min_confidence: 1 },
       },
     ];
     const result = substitute_template({

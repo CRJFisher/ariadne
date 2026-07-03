@@ -3,7 +3,7 @@
  *
  * Registry source of truth: `.claude/skills/triage/known_issues/registry.json`.
  * The validator walks every entry, checks shape and enum values, and validates
- * each classifier spec (`none` | `builtin` | `retired`).
+ * each classifier spec (`{ function_name, min_confidence }`).
  */
 
 import * as fs from "node:fs";
@@ -106,22 +106,17 @@ export function validate_registry(value: unknown): asserts value is KnownIssuesR
       throw new RegistryValidationError(`${at}: duplicate group_id "${entry.group_id}"`);
     }
     seen_group_ids.add(entry.group_id);
-    // Builtin function_names must be unique because the generated barrel
-    // imports them as identifiers — collisions would surface as cryptic TS
-    // compile errors. Catch them at registry-load time instead. A retired
-    // rule's former `from.function_name` is intentionally excluded: its source
-    // file is deleted and the barrel no longer imports it, so the name is free
-    // to reuse.
-    if (entry.classifier.kind === "builtin") {
-      const fn = entry.classifier.function_name;
-      const prior = seen_function_names.get(fn);
-      if (prior !== undefined) {
-        throw new RegistryValidationError(
-          `${at}: builtin function_name "${fn}" already used by group_id "${prior}"`,
-        );
-      }
-      seen_function_names.set(fn, entry.group_id);
+    // function_names must be unique because the barrel imports them as
+    // identifiers — collisions would surface as cryptic TS compile errors.
+    // Catch them at registry-load time instead.
+    const fn = entry.classifier.function_name;
+    const prior = seen_function_names.get(fn);
+    if (prior !== undefined) {
+      throw new RegistryValidationError(
+        `${at}: builtin function_name "${fn}" already used by group_id "${prior}"`,
+      );
     }
+    seen_function_names.set(fn, entry.group_id);
   }
 }
 
@@ -172,26 +167,14 @@ function validate_entry(entry: unknown, at: string): asserts entry is KnownIssue
 
   validate_optional_rollup_fields(record, at_id);
 
-  // A `retired` classifier marks a rule whose bug is fixed, so it is only
-  // coherent on a `fixed` row — the name-mode writer always produces the two
-  // together. Reject a retired classifier on any other status; otherwise it
-  // would enter the active set and sit silently inert.
-  const classifier_record = record["classifier"] as { kind?: unknown };
-  if (classifier_record.kind === "retired" && record["status"] !== "fixed") {
-    throw new RegistryValidationError(
-      `${at_id}.classifier: kind="retired" requires status="fixed" (got status="${String(record["status"])}")`,
-    );
-  }
-
-  // Evidence gate: a wip entry that carries an authored classifier must have
-  // fired in a real triage run (observed_count >= 1). Every authored wip entry
-  // is drafted from a novel group that crossed the promotion threshold, so it
-  // inherits that group's observation; an authored wip rule with no observation
-  // is a speculative, never-validated classifier and must not enter the catalog.
-  // Exempt: kind:"none" stubs (no classifier to validate) and permanent/fixed
-  // rows (a past human decision, observation is historical).
-  const classifier = record["classifier"] as { kind?: unknown };
-  if (record["status"] === "wip" && classifier.kind !== "none") {
+  // Evidence gate: a wip entry's authored classifier must have fired in a real
+  // triage run (observed_count >= 1). Every authored wip entry is drafted from
+  // a novel group that crossed the promotion threshold, so it inherits that
+  // group's observation; an authored wip rule with no observation is a
+  // speculative, never-validated classifier and must not enter the catalog.
+  // Exempt: permanent/fixed rows (a past human decision, observation is
+  // historical).
+  if (record["status"] === "wip") {
     const observed_count = record["observed_count"];
     if (typeof observed_count !== "number" || observed_count < 1) {
       throw new RegistryValidationError(
@@ -253,70 +236,26 @@ function validate_classifier_spec(value: unknown, at: string): asserts value is 
     throw new RegistryValidationError(`${at}: must be an object`);
   }
   const record = value as Record<string, unknown>;
-  const kind = record["kind"];
-  if (kind === "none") {
-    const extra = Object.keys(record).filter((k) => k !== "kind");
-    if (extra.length > 0) {
-      throw new RegistryValidationError(
-        `${at}: kind="none" must not carry extra fields (got: ${extra.join(", ")})`,
-      );
-    }
-    return;
-  }
-  if (kind === "builtin") {
-    const function_name = record["function_name"];
-    if (typeof function_name !== "string" || function_name.length === 0) {
-      throw new RegistryValidationError(
-        `${at}.function_name: must be a non-empty string`,
-      );
-    }
-    if (!BUILTIN_FUNCTION_NAME.test(function_name)) {
-      throw new RegistryValidationError(
-        `${at}.function_name: must match /^[a-z_][a-z0-9_]*$/ (got "${function_name}")`,
-      );
-    }
-    require_confidence(record["min_confidence"], `${at}.min_confidence`);
-    const extra = Object.keys(record).filter(
-      (k) => k !== "kind" && k !== "function_name" && k !== "min_confidence",
+  const function_name = record["function_name"];
+  if (typeof function_name !== "string" || function_name.length === 0) {
+    throw new RegistryValidationError(
+      `${at}.function_name: must be a non-empty string`,
     );
-    if (extra.length > 0) {
-      throw new RegistryValidationError(
-        `${at}: kind="builtin" must not carry extra fields (got: ${extra.join(", ")})`,
-      );
-    }
-    return;
   }
-  if (kind === "retired") {
-    const reason = record["reason"];
-    if (typeof reason !== "string" || reason.length === 0) {
-      throw new RegistryValidationError(`${at}.reason: must be a non-empty string`);
-    }
-    const from = record["from"];
-    if (typeof from !== "object" || from === null) {
-      throw new RegistryValidationError(`${at}.from: must be an object`);
-    }
-    const from_kind = (from as Record<string, unknown>)["kind"];
-    if (from_kind !== "builtin") {
-      throw new RegistryValidationError(
-        `${at}.from.kind: must be "builtin" (got "${String(from_kind)}")`,
-      );
-    }
-    // The former classifier is checked exactly as strictly as a live one — a
-    // retired rule must carry a well-formed builtin in `from`.
-    validate_classifier_spec(from, `${at}.from`);
-    const extra = Object.keys(record).filter(
-      (k) => k !== "kind" && k !== "from" && k !== "reason",
+  if (!BUILTIN_FUNCTION_NAME.test(function_name)) {
+    throw new RegistryValidationError(
+      `${at}.function_name: must match /^[a-z_][a-z0-9_]*$/ (got "${function_name}")`,
     );
-    if (extra.length > 0) {
-      throw new RegistryValidationError(
-        `${at}: kind="retired" must not carry extra fields (got: ${extra.join(", ")})`,
-      );
-    }
-    return;
   }
-  throw new RegistryValidationError(
-    `${at}.kind: must be "none" | "builtin" | "retired" (got "${String(kind)}")`,
+  require_confidence(record["min_confidence"], `${at}.min_confidence`);
+  const extra = Object.keys(record).filter(
+    (k) => k !== "function_name" && k !== "min_confidence",
   );
+  if (extra.length > 0) {
+    throw new RegistryValidationError(
+      `${at}: must not carry extra fields (got: ${extra.join(", ")})`,
+    );
+  }
 }
 
 function validate_optional_rollup_fields(record: Record<string, unknown>, at: string): void {

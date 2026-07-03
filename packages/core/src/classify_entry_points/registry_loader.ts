@@ -24,9 +24,8 @@ let permanent_registry_cache: KnownIssuesRegistry | null = null;
 /**
  * Loader error surfaced when the bundled slice is corrupt or out of date.
  * Fails loud rather than silently degrading classification: a slice that
- * carries a non-permanent or `kind: "none"` rule indicates the slice
- * regeneration regressed and the next user of the library would
- * mis-classify.
+ * carries a non-permanent rule indicates the slice regeneration regressed
+ * and the next user of the library would mis-classify.
  */
 export class PermanentRegistryError extends Error {
   constructor(message: string) {
@@ -46,8 +45,8 @@ export function load_permanent_registry(): KnownIssuesRegistry {
 
 /**
  * Cross-check the slice against the published schema version and reject
- * non-permanent or `kind: "none"` rules. Pure — no caching or mutation —
- * so tests can call it directly against a synthetic slice.
+ * non-permanent rules. Pure — no caching or mutation — so tests can call it
+ * directly against a synthetic slice.
  */
 export function validate_permanent_slice(rules: readonly KnownIssue[]): void {
   if (PERMANENT_REGISTRY_SCHEMA_VERSION !== KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION) {
@@ -58,22 +57,15 @@ export function validate_permanent_slice(rules: readonly KnownIssue[]): void {
     );
   }
   for (const issue of rules) {
-    assert_permanent_non_none(issue);
+    assert_permanent(issue);
   }
 }
 
-function assert_permanent_non_none(issue: KnownIssue): void {
+function assert_permanent(issue: KnownIssue): void {
   if (issue.status !== "permanent") {
     throw new PermanentRegistryError(
       `bundled slice contains non-permanent rule "${issue.group_id}" (status="${issue.status}") — ` +
         "the slice must filter on status === \"permanent\"",
-    );
-  }
-  if (issue.classifier.kind !== "builtin") {
-    throw new PermanentRegistryError(
-      `bundled slice contains kind:"${issue.classifier.kind}" rule "${issue.group_id}" — ` +
-        "the slice must carry only builtin classifiers (a `none` stub or " +
-        "`retired` rule cannot classify anything)",
     );
   }
 }

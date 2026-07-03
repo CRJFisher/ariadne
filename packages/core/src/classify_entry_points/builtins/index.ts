@@ -24,6 +24,7 @@ import { check_py_dunder_protocol } from "./check_py-dunder-protocol";
 import { check_py_property_decorator_access } from "./check_py-property-decorator-access";
 import { check_rust_macro_invocation_call } from "./check_rust-macro-invocation-call";
 import { check_string_keyed_dispatch } from "./check_string-keyed-dispatch";
+import { check_true_positive_lambda_handler } from "./check_true-positive-lambda-handler";
 import { check_untyped_attribute_receiver } from "./check_untyped-attribute-receiver";
 
 export type BuiltinCheckFn = (
@@ -49,5 +50,6 @@ export const BUILTIN_CHECKS: Record<string, BuiltinCheckFn> = {
   check_py_property_decorator_access,
   check_rust_macro_invocation_call,
   check_string_keyed_dispatch,
+  check_true_positive_lambda_handler,
   check_untyped_attribute_receiver,
 };

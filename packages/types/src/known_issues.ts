@@ -39,7 +39,7 @@ export interface KnownIssue {
    *
    * The registry-side `classifier` field is the *match mechanism* (a builtin
    * check). `classification` is the *user-facing label*. Two distinct
-   * concerns; keeping them separate lets a single classifier kind drive
+   * concerns; keeping them separate lets a single check function drive
    * different public labels.
    */
   classification?: KnownIssueClassificationMeta;
@@ -95,36 +95,20 @@ export type KnownIssueClassificationMeta =
   | { kind: "indirect_only" };
 
 /**
- * Hand-authored TypeScript function living at
+ * A hand-authored TypeScript check function living at
  * `classify_entry_points/builtins/check_<group_id>.ts`. The orchestrator looks
- * up the function in the barrel `classify_entry_points/builtins/index.ts` and
- * calls it directly. Every classifier is a builtin — a bespoke check function.
+ * up `function_name` in the barrel `classify_entry_points/builtins/index.ts`
+ * and calls it directly. Every catalog entry carries exactly one — there is no
+ * "no classifier yet" or "retired classifier" state: a rule whose underlying
+ * bug is fixed is deleted from the registry (git history is the audit trail),
+ * not marked in place.
+ *
+ * `min_confidence` ∈ [0, 1] is the score threshold a match must meet.
  */
-export interface BuiltinClassifierSpec {
-  kind: "builtin";
+export interface ClassifierSpec {
   function_name: string;
   min_confidence: number;
 }
-
-/**
- * Classifier variants:
- *
- * - `none`      — known failure mode, no automated classifier yet (an unfilled
- *                 stub). Distinct from `retired`, which carries a deleted one.
- * - `builtin`   — see {@link BuiltinClassifierSpec}. The only live match
- *                 mechanism: every classifier is a bespoke check function.
- * - `retired`   — the rule's underlying Ariadne bug is fixed, so its classifier
- *                 is removed; the rule is `status: "fixed"`. `from` preserves the
- *                 former builtin verbatim and `reason` records why, so
- *                 retirement is lossless and auditable rather than collapsed
- *                 to `none`. A retired rule never matches: it is excluded from
- *                 the active set (filtered on `fixed`) and from the permanent
- *                 slice, so its `from.function_name` may name a deleted file.
- */
-export type ClassifierSpec =
-  | { kind: "none" }
-  | BuiltinClassifierSpec
-  | { kind: "retired"; from: BuiltinClassifierSpec; reason: string };
 
 /** In-memory list of known issues. Loaders return this shape regardless of wire format. */
 export type KnownIssuesRegistry = KnownIssue[];
@@ -145,20 +129,16 @@ export interface KnownIssuesRegistryFile {
 }
 
 /**
- * Select the rules that belong in core's bundled permanent slice: only
- * `status: "permanent"` rules carrying a real `builtin` classifier qualify.
- * Every other kind is excluded by construction — a `none` stub has no
- * classifier and a `retired` rule names a deleted function — which is why the
- * filter is a positive allowlist rather than a `!== "none"` denylist. The core
- * loader (`validate_permanent_slice`) enforces the same allowlist at load time.
- * Source order is preserved so regeneration diffs stay minimal.
+ * Select the rules that belong in core's bundled permanent slice: every
+ * `status: "permanent"` rule qualifies — each carries a real builtin
+ * classifier by construction. The core loader (`validate_permanent_slice`)
+ * enforces the same filter at load time. Source order is preserved so
+ * regeneration diffs stay minimal.
  */
 export function select_permanent_slice_rules(
   rules: readonly KnownIssue[],
 ): KnownIssue[] {
-  return rules.filter(
-    (rule) => rule.status === "permanent" && rule.classifier.kind === "builtin",
-  );
+  return rules.filter((rule) => rule.status === "permanent");
 }
 
 const PERMANENT_SLICE_MODULE_HEADER =

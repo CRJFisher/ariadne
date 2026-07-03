@@ -149,7 +149,6 @@ no markdown fencing inside the `.json` or `.ts` files.
     }
   ],
   "classifier": {
-    "kind": "builtin",
     "function_name": "check_<group_id_snake>",
     "min_confidence": 0.95
   },
@@ -236,8 +235,9 @@ Include:
 - **Never create files in the project repository.** Your only persistent outputs
   are the three files under your staging dir. Use `/tmp/` for scratch.
 - **One group per invocation.** Draft for exactly the group in your prompt.
-- **Every classifier is a `builtin`.** Do not emit a `predicate` expression or
-  `classifier.kind: "predicate"` — that DSL no longer exists.
+- **Every classifier is a flat `{ function_name, min_confidence }` builtin.**
+  Do not emit a `kind` field or a `predicate` expression — the discriminant and
+  that DSL no longer exist.
 - **The check must match every sample** and be narrow enough not to fire on
   unrelated dead code. If the samples share no clean discriminator, or the
   pattern is a fixable bug, write only `REVIEW.md` explaining why and emit no

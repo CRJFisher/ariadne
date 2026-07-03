@@ -39,7 +39,7 @@ function make_wip_rule(over: Partial<KnownIssue> & { group_id: string }): KnownI
     status: "wip",
     languages: ["typescript"],
     examples: [],
-    classifier: { kind: "none" },
+    classifier: { function_name: "check_default", min_confidence: 1 },
     ...over,
   };
 }
@@ -456,7 +456,6 @@ describe("fold_proposals", () => {
     const rule = make_wip_rule({
       group_id: "rule-a",
       classifier: {
-        kind: "builtin",
         function_name: "check_rule_a",
         min_confidence: 1,
       },
@@ -464,13 +463,6 @@ describe("fold_proposals", () => {
     expect(
       fold_proposals([rule], [{ kind: "promote_to_permanent", group_id: "rule-a" }]),
     ).toEqual([{ ...rule, status: "permanent" }]);
-  });
-
-  it("throws when promoting a rule without a real classifier", () => {
-    const rule = make_wip_rule({ group_id: "rule-a" });
-    expect(() =>
-      fold_proposals([rule], [{ kind: "promote_to_permanent", group_id: "rule-a" }]),
-    ).toThrowError(/classifier\.kind is "none"/);
   });
 
   it("throws on a proposal naming an absent rule", () => {
@@ -495,69 +487,42 @@ describe("fold_proposals", () => {
     expect(fold_proposals(rules, [])).toEqual(rules);
   });
 
-  it("retires a builtin classifier: flips wip→fixed and rewrites it to retired", () => {
-    const rule = make_wip_rule({
+  it("deletes the named row and leaves others untouched", () => {
+    const target = make_wip_rule({
       group_id: "rule-a",
-      classifier: { kind: "builtin", function_name: "check_rule_a", min_confidence: 1 },
+      classifier: { function_name: "check_rule_a", min_confidence: 1 },
+    });
+    const bystander = make_wip_rule({ group_id: "rule-b" });
+    expect(
+      fold_proposals(
+        [target, bystander],
+        [{ kind: "delete_by_name", group_id: "rule-a", reason: "subsumed by TASK-348" }],
+      ),
+    ).toEqual([bystander]);
+  });
+
+  it("deletes a permanent named row (retiring a former permanent limitation)", () => {
+    const permanent = make_wip_rule({
+      group_id: "rule-perm",
+      status: "permanent",
+      classifier: { function_name: "check_rule_perm", min_confidence: 1 },
     });
     expect(
       fold_proposals(
-        [rule],
-        [{ kind: "wip_to_fixed_by_name", group_id: "rule-a", reason: "subsumed by TASK-348" }],
+        [permanent],
+        [{ kind: "delete_by_name", group_id: "rule-perm", reason: "resolver now handles it" }],
       ),
-    ).toEqual([
-      {
-        ...rule,
-        status: "fixed",
-        classifier: {
-          kind: "retired",
-          from: { kind: "builtin", function_name: "check_rule_a", min_confidence: 1 },
-          reason: "subsumed by TASK-348",
-        },
-      },
-    ]);
+    ).toEqual([]);
   });
 
-  it("flips a wip+none rule to fixed and leaves the classifier none", () => {
-    const rule = make_wip_rule({ group_id: "rule-a" });
+  it("a delete_by_name naming an absent row is a no-op, not an error (idempotent re-run)", () => {
+    const bystander = make_wip_rule({ group_id: "rule-b" });
     expect(
       fold_proposals(
-        [rule],
-        [{ kind: "wip_to_fixed_by_name", group_id: "rule-a", reason: "no classifier to retire" }],
+        [bystander],
+        [{ kind: "delete_by_name", group_id: "rule-gone", reason: "already deleted" }],
       ),
-    ).toEqual([{ ...rule, status: "fixed" }]);
-  });
-
-  it("is a no-op for a non-wip named rule", () => {
-    const rule = make_wip_rule({
-      group_id: "rule-a",
-      status: "fixed",
-      classifier: { kind: "none" },
-    });
-    expect(
-      fold_proposals(
-        [rule],
-        [{ kind: "wip_to_fixed_by_name", group_id: "rule-a", reason: "already retired" }],
-      ),
-    ).toEqual([rule]);
-  });
-
-  it("re-running the name-mode retirement is idempotent", () => {
-    const retired = make_wip_rule({
-      group_id: "rule-a",
-      status: "fixed",
-      classifier: {
-        kind: "retired",
-        from: { kind: "builtin", function_name: "check_rule_a", min_confidence: 1 },
-        reason: "subsumed by TASK-348",
-      },
-    });
-    expect(
-      fold_proposals(
-        [retired],
-        [{ kind: "wip_to_fixed_by_name", group_id: "rule-a", reason: "subsumed by TASK-348" }],
-      ),
-    ).toEqual([retired]);
+    ).toEqual([bystander]);
   });
 });
 
@@ -702,7 +667,6 @@ describe("run", () => {
   const promotable_rule: KnownIssue = make_wip_rule({
     group_id: "rule-promotable",
     classifier: {
-      kind: "builtin",
       function_name: "check_rule_promotable",
       min_confidence: 1,
     },
@@ -710,8 +674,12 @@ describe("run", () => {
   const tasked_rule = make_wip_rule({
     group_id: "rule-tasked",
     backlog_task: "TASK-198",
+    classifier: { function_name: "check_rule_tasked", min_confidence: 1 },
   });
-  const quiet_rule = make_wip_rule({ group_id: "rule-quiet" });
+  const quiet_rule = make_wip_rule({
+    group_id: "rule-quiet",
+    classifier: { function_name: "check_rule_quiet", min_confidence: 1 },
+  });
 
   function make_deps(over: Partial<ReconcileDeps>): ReconcileDeps {
     return {
@@ -720,12 +688,15 @@ describe("run", () => {
       read_commit_subjects: () => [],
       discover_drift_sources: async () => ({ sources: [], skipped: [] }),
       regenerate_permanent_slice: async () => {
-        throw new Error("regenerate_permanent_slice must not run without --promote");
+        throw new Error(
+          "regenerate_permanent_slice must not run without --promote or a permanent-row deletion",
+        );
       },
       read_draft: async () => {
         throw new Error("read_draft must not run outside stage-mode");
       },
       known_builtin_names: () => new Set<string>(),
+      delete_builtin_source: async () => null,
       ...over,
     };
   }
@@ -781,7 +752,7 @@ describe("run", () => {
             matched_subject: "fix(198): close it",
           },
         ],
-        wip_to_fixed_by_name: [],
+        delete_by_name: [],
         drift_detected: [
           {
             kind: "drift_detected",
@@ -797,6 +768,8 @@ describe("run", () => {
       },
       missing_ids: [],
       rejected_promotions: [],
+      rejected_deletions: [],
+      deleted_builtin_sources: [],
       drift_unknown_rule_ids: [],
       skipped_sources: [],
       applied: false,
@@ -870,35 +843,88 @@ describe("run", () => {
       },
     ]);
     expect(summary.proposals.drift_detected).toEqual([]);
-    expect(summary.proposals.wip_to_fixed_by_name).toEqual([]);
+    expect(summary.proposals.delete_by_name).toEqual([]);
     expect(summary.missing_ids).toEqual([]);
   });
 
-  it("name-mode flips a named wip rule and retires its classifier through the locked write", async () => {
+  it("name-mode deletes a named rule through the locked write and unlinks its check source", async () => {
     await seed_registry([promotable_rule, tasked_rule, quiet_rule]);
+    const unlink_calls: string[] = [];
     const summary = await run(
       ["--id", "rule-promotable", "--fixed", "--reason", "subsumed by TASK-348"],
-      make_deps({}),
+      make_deps({
+        delete_builtin_source: async (group_id) => {
+          unlink_calls.push(group_id);
+          return `/builtins/check_${group_id}.ts`;
+        },
+      }),
     );
     expect(summary.applied).toEqual(true);
-    expect(summary.proposals.wip_to_fixed_by_name).toEqual([
-      { kind: "wip_to_fixed_by_name", group_id: "rule-promotable", reason: "subsumed by TASK-348" },
+    expect(summary.proposals.delete_by_name).toEqual([
+      { kind: "delete_by_name", group_id: "rule-promotable", reason: "subsumed by TASK-348" },
     ]);
     expect(summary.missing_ids).toEqual([]);
+    expect(summary.rejected_deletions).toEqual([]);
+    expect(summary.deleted_builtin_sources).toEqual(["/builtins/check_rule-promotable.ts"]);
+    expect(unlink_calls).toEqual(["rule-promotable"]);
     expect(await fs.readFile(registry_path, "utf8")).toEqual(
-      serialize_known_issues_registry_json([
-        {
-          ...promotable_rule,
-          status: "fixed",
-          classifier: {
-            kind: "retired",
-            from: { kind: "builtin", function_name: "check_rule_promotable", min_confidence: 1 },
-            reason: "subsumed by TASK-348",
-          },
+      serialize_known_issues_registry_json([tasked_rule, quiet_rule]),
+    );
+  });
+
+  it("name-mode rejects a row whose builtin is still registered in BUILTIN_CHECKS", async () => {
+    const seeded = await seed_registry([promotable_rule, tasked_rule, quiet_rule]);
+    const unlink_calls: string[] = [];
+    const summary = await run(
+      ["--id", "rule-promotable", "--fixed", "--reason", "x"],
+      make_deps({
+        known_builtin_names: () => new Set(["check_rule_promotable"]),
+        delete_builtin_source: async (group_id) => {
+          unlink_calls.push(group_id);
+          return null;
         },
-        tasked_rule,
-        quiet_rule,
-      ]),
+      }),
+    );
+    expect(summary.proposals.delete_by_name).toEqual([]);
+    expect(summary.rejected_deletions).toEqual([
+      {
+        group_id: "rule-promotable",
+        reason:
+          "builtin function_name \"check_rule_promotable\" is still registered in " +
+          "core's BUILTIN_CHECKS — delete its check_*.ts and barrel entry under " +
+          "packages/core/src/classify_entry_points/builtins/, rebuild core " +
+          "(pnpm build --filter core), then re-run",
+      },
+    ]);
+    expect(summary.applied).toEqual(false);
+    expect(unlink_calls).toEqual([]);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
+  });
+
+  it("name-mode deletes a permanent row and regenerates the permanent slice", async () => {
+    const permanent_rule: KnownIssue = {
+      ...promotable_rule,
+      group_id: "rule-perm",
+      status: "permanent",
+      classifier: { function_name: "check_rule_perm", min_confidence: 1 },
+    };
+    await seed_registry([permanent_rule, quiet_rule]);
+    const regenerate_calls: { dry_run: boolean; preview_rules: KnownIssue[] | null }[] = [];
+    const summary = await run(
+      ["--id", "rule-perm", "--fixed", "--reason", "resolver now handles it"],
+      make_deps({
+        load_registry: async () => [permanent_rule, quiet_rule],
+        regenerate_permanent_slice: async (opts) => {
+          regenerate_calls.push(opts);
+          return true;
+        },
+      }),
+    );
+    expect(summary.applied).toEqual(true);
+    expect(summary.permanent_slice_changed).toEqual(true);
+    expect(regenerate_calls).toEqual([{ dry_run: false, preview_rules: null }]);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(
+      serialize_known_issues_registry_json([quiet_rule]),
     );
   });
 
@@ -913,20 +939,7 @@ describe("run", () => {
     expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
   });
 
-  it("name-mode on a non-wip named rule is a silent no-op (not in missing_ids)", async () => {
-    const already_fixed = make_wip_rule({ group_id: "rule-done", status: "fixed" });
-    const seeded = await seed_registry([already_fixed, quiet_rule]);
-    const summary = await run(
-      ["--id", "rule-done", "--fixed", "--reason", "x"],
-      make_deps({ load_registry: async () => [already_fixed, quiet_rule] }),
-    );
-    expect(summary.missing_ids).toEqual([]);
-    expect(summary.proposals.wip_to_fixed_by_name).toEqual([]);
-    expect(summary.applied).toEqual(false);
-    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
-  });
-
-  it("re-running name-mode retirement is idempotent (applied:false on the second run)", async () => {
+  it("re-running name-mode deletion is idempotent (the deleted id lands in missing_ids)", async () => {
     await seed_registry([promotable_rule, tasked_rule, quiet_rule]);
     const first = await run(
       ["--id", "rule-promotable", "--fixed", "--reason", "subsumed"],
@@ -935,21 +948,13 @@ describe("run", () => {
     expect(first.applied).toEqual(true);
     const after_first = await fs.readFile(registry_path, "utf8");
 
-    const retired_rule: KnownIssue = {
-      ...promotable_rule,
-      status: "fixed",
-      classifier: {
-        kind: "retired",
-        from: { kind: "builtin", function_name: "check_rule_promotable", min_confidence: 1 },
-        reason: "subsumed",
-      },
-    };
     const second = await run(
       ["--id", "rule-promotable", "--fixed", "--reason", "subsumed"],
-      make_deps({ load_registry: async () => [retired_rule, tasked_rule, quiet_rule] }),
+      make_deps({ load_registry: async () => [tasked_rule, quiet_rule] }),
     );
     expect(second.applied).toEqual(false);
-    expect(second.proposals.wip_to_fixed_by_name).toEqual([]);
+    expect(second.proposals.delete_by_name).toEqual([]);
+    expect(second.missing_ids).toEqual(["rule-promotable"]);
     expect(await fs.readFile(registry_path, "utf8")).toEqual(after_first);
   });
 
@@ -979,34 +984,6 @@ describe("run", () => {
         quiet_rule,
       ]),
     );
-  });
-
-  it("rejects promoting an unclassified rule and writes no registry change", async () => {
-    const seeded = await seed_registry([promotable_rule, tasked_rule, quiet_rule]);
-    const regenerate_calls: { dry_run: boolean; preview_rules: KnownIssue[] | null }[] = [];
-    const summary = await run(
-      ["--id", "rule-quiet", "--promote"],
-      make_deps({
-        regenerate_permanent_slice: async (opts) => {
-          regenerate_calls.push(opts);
-          return false;
-        },
-      }),
-    );
-    expect(summary.proposals.promote_to_permanent).toEqual([]);
-    expect(summary.rejected_promotions).toEqual([
-      {
-        group_id: "rule-quiet",
-        reason:
-          "classifier.kind is \"none\" — author a builtin classifier before promoting",
-      },
-    ]);
-    expect(summary.applied).toEqual(false);
-    expect(summary.permanent_slice_changed).toEqual(false);
-    // The slice sync still runs on every --promote so a crash between the
-    // registry write and the regeneration is recoverable by re-running.
-    expect(regenerate_calls).toEqual([{ dry_run: false, preview_rules: null }]);
-    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
   });
 
   it("previews a promotion under --dry-run from the would-be-promoted rules", async () => {
@@ -1104,7 +1081,7 @@ describe("run", () => {
     const second_rule: KnownIssue = {
       ...promotable_rule,
       group_id: "rule-promotable-2",
-      classifier: { kind: "builtin", function_name: "check_gone", min_confidence: 1 },
+      classifier: { function_name: "check_gone", min_confidence: 1 },
     };
     await seed_registry([promotable_rule, second_rule]);
     const summary = await run(
@@ -1143,7 +1120,7 @@ describe("run", () => {
       ...promotable_rule,
       group_id: "rule-perm-dangling",
       status: "permanent",
-      classifier: { kind: "builtin", function_name: "check_gone", min_confidence: 1 },
+      classifier: { function_name: "check_gone", min_confidence: 1 },
     };
     await seed_registry([permanent_dangling]);
     const summary = await run(
@@ -1202,12 +1179,16 @@ describe("run_stage", () => {
   let tmp_dir: string;
   let registry_path: string;
 
-  const seeded_rule = make_wip_rule({ group_id: "rule-existing", observed_count: 1 });
+  const seeded_rule = make_wip_rule({
+    group_id: "rule-existing",
+    observed_count: 1,
+    classifier: { function_name: "check_existing", min_confidence: 1 },
+  });
 
   const staged_draft: KnownIssue = make_wip_rule({
     group_id: "rule-staged",
     observed_count: 1,
-    classifier: { kind: "builtin", function_name: "check_staged", min_confidence: 0.95 },
+    classifier: { function_name: "check_staged", min_confidence: 0.95 },
   });
 
   function stage_deps(over: Partial<ReconcileDeps>): ReconcileDeps {
@@ -1221,6 +1202,9 @@ describe("run_stage", () => {
       },
       read_draft: async () => staged_draft,
       known_builtin_names: () => new Set(["check_staged"]),
+      delete_builtin_source: async () => {
+        throw new Error("delete_builtin_source must not run in stage-mode");
+      },
       ...over,
     };
   }
@@ -1263,7 +1247,7 @@ describe("run_stage", () => {
     const dup = make_wip_rule({
       group_id: "rule-existing",
       observed_count: 1,
-      classifier: { kind: "builtin", function_name: "check_staged", min_confidence: 0.95 },
+      classifier: { function_name: "check_staged", min_confidence: 0.95 },
     });
     const seeded = await seed([seeded_rule]);
     await expect(
@@ -1287,7 +1271,7 @@ describe("run_stage", () => {
     const speculative = make_wip_rule({
       group_id: "rule-speculative",
       observed_count: 0,
-      classifier: { kind: "builtin", function_name: "check_staged", min_confidence: 0.95 },
+      classifier: { function_name: "check_staged", min_confidence: 0.95 },
     });
     const seeded = await seed([seeded_rule]);
     await expect(
@@ -1299,15 +1283,18 @@ describe("run_stage", () => {
     expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
   });
 
-  it("rejects a non-builtin (none) draft — --stage inserts builtins only", async () => {
-    const none_draft = make_wip_rule({ group_id: "rule-none-draft", observed_count: 1 });
+  it("rejects a draft whose classifier carries a stray kind field (schema gate)", async () => {
+    const stray_kind = {
+      ...make_wip_rule({ group_id: "rule-stray", observed_count: 1 }),
+      classifier: { kind: "builtin", function_name: "check_staged", min_confidence: 0.95 },
+    };
     const seeded = await seed([seeded_rule]);
     await expect(
       run_or_stage(
-        ["--stage", "/drafts/none.json", "--apply"],
-        stage_deps({ read_draft: async () => none_draft }),
+        ["--stage", "/drafts/stray.json", "--apply"],
+        stage_deps({ read_draft: async () => stray_kind }),
       ),
-    ).rejects.toThrowError(/--stage inserts a builtin classifier/);
+    ).rejects.toThrowError(/failed schema validation/);
     expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
   });
 
@@ -1315,7 +1302,7 @@ describe("run_stage", () => {
     const owner = make_wip_rule({
       group_id: "rule-owns-fn",
       observed_count: 1,
-      classifier: { kind: "builtin", function_name: "check_staged", min_confidence: 0.95 },
+      classifier: { function_name: "check_staged", min_confidence: 0.95 },
     });
     const seeded = await seed([owner]);
     await expect(

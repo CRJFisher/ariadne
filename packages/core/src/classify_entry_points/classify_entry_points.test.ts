@@ -59,7 +59,6 @@ function builtin_issue(
     languages: ["typescript"],
     examples: [],
     classifier: {
-      kind: "builtin",
       function_name: `check_${group_id}`,
       min_confidence,
     },
@@ -74,34 +73,6 @@ function checks(...entries: [group_id: string, matches: boolean][]): Record<stri
     map[`check_${group_id}`] = () => matches;
   }
   return map;
-}
-
-function none_issue(group_id: string): KnownIssue {
-  return {
-    group_id,
-    title: `Title for ${group_id}`,
-    description: `Desc for ${group_id}`,
-    status: "permanent",
-    languages: ["typescript"],
-    examples: [],
-    classifier: { kind: "none" },
-  };
-}
-
-function retired_issue(group_id: string): KnownIssue {
-  return {
-    group_id,
-    title: `Title for ${group_id}`,
-    description: `Desc for ${group_id}`,
-    status: "fixed",
-    languages: ["typescript"],
-    examples: [],
-    classifier: {
-      kind: "retired",
-      from: { kind: "builtin", function_name: `check_${group_id}`, min_confidence: 1 },
-      reason: "subsumed by a core fix",
-    },
-  };
 }
 
 const EMPTY_READER = (_: string) => [] as readonly string[];
@@ -138,49 +109,6 @@ describe("auto_classify — priority and match semantics", () => {
 
     expect(classified.result.auto_classified).toBe(true);
     expect(classified.result.auto_group_id).toBe("will-match");
-    expect(classified.result.classifier_hints).toEqual([]);
-  });
-
-  it("kind: none entry_points are skipped silently", () => {
-    const entry_point = make_entry();
-    const registry: KnownIssuesRegistry = [
-      none_issue("skip-none"),
-      builtin_issue("match", 1.0),
-    ];
-
-    const [classified] = auto_classify([entry_point], registry, EMPTY_READER, {
-      builtin_checks: checks(["match", true]),
-    });
-
-    expect(classified.result.auto_classified).toBe(true);
-    expect(classified.result.auto_group_id).toBe("match");
-  });
-
-  it("retired classifiers are skipped silently like kind: none", () => {
-    const entry_point = make_entry();
-    const registry: KnownIssuesRegistry = [
-      retired_issue("skip-retired"),
-      builtin_issue("match", 1.0),
-    ];
-
-    const [classified] = auto_classify([entry_point], registry, EMPTY_READER, {
-      builtin_checks: checks(["match", true]),
-    });
-
-    expect(classified.result.auto_classified).toBe(true);
-    expect(classified.result.auto_group_id).toBe("match");
-  });
-
-  it("a retired classifier never hits the MissingBuiltinError path", () => {
-    const entry_point = make_entry();
-    const registry: KnownIssuesRegistry = [retired_issue("only-retired")];
-
-    // No builtin_checks provided: a real builtin would throw MissingBuiltinError,
-    // but a retired classifier is skipped before any barrel lookup.
-    const [classified] = auto_classify([entry_point], registry, EMPTY_READER);
-
-    expect(classified.result.auto_classified).toBe(false);
-    expect(classified.result.auto_group_id).toBeNull();
     expect(classified.result.classifier_hints).toEqual([]);
   });
 
@@ -258,7 +186,6 @@ describe("auto_classify — file reader plumbing", () => {
     };
     // The rule's function_name must match the injected check key.
     registry[0].classifier = {
-      kind: "builtin",
       function_name: "check_py_fixture",
       min_confidence: 1.0,
     };
@@ -279,7 +206,7 @@ describe("auto_classify — builtin dispatch", () => {
       status: "wip",
       languages: ["typescript"],
       examples: [],
-      classifier: { kind: "builtin", function_name, min_confidence },
+      classifier: { function_name, min_confidence },
     };
   }
 

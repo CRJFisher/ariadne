@@ -16,7 +16,7 @@ const sample_rule: KnownIssue = {
   status: "permanent",
   languages: ["typescript"],
   examples: [],
-  classifier: { kind: "none" },
+  classifier: { function_name: "check_example_group", min_confidence: 1 },
 };
 
 function envelope(rules: KnownIssue[]): string {
@@ -93,48 +93,19 @@ describe("serialize_known_issues_registry_json", () => {
     const parsed = parse_known_issues_registry_json(out);
     expect(parsed).toEqual([]);
   });
-
-  it("round-trips a retired-kind rule with its nested `from` intact", () => {
-    const retired_rule: KnownIssue = {
-      group_id: "retired-rule",
-      title: "Retired rule",
-      description: "A retired classifier preserving its former builtin.",
-      status: "fixed",
-      languages: ["typescript"],
-      examples: [],
-      classifier: {
-        kind: "retired",
-        from: { kind: "builtin", function_name: "check_retired", min_confidence: 1 },
-        reason: "subsumed by TASK-348",
-      },
-    };
-    const wire = serialize_known_issues_registry_json([retired_rule]);
-    expect(parse_known_issues_registry_json(wire)).toEqual([retired_rule]);
-  });
 });
 
-const permanent_builtin_rule: KnownIssue = {
-  group_id: "permanent-builtin",
-  title: "Permanent builtin rule",
-  description: "A bundled rule with a real classifier.",
+const permanent_rule: KnownIssue = {
+  group_id: "permanent-rule",
+  title: "Permanent rule",
+  description: "A bundled rule.",
   status: "permanent",
   languages: ["typescript"],
   examples: [],
   classifier: {
-    kind: "builtin",
-    function_name: "check_permanent_builtin",
+    function_name: "check_permanent_rule",
     min_confidence: 1,
   },
-};
-
-const permanent_none_rule: KnownIssue = {
-  group_id: "permanent-none",
-  title: "Permanent rule without a classifier",
-  description: "Permanent but kind none — must be dropped from the slice.",
-  status: "permanent",
-  languages: ["python"],
-  examples: [],
-  classifier: { kind: "none" },
 };
 
 const wip_rule: KnownIssue = {
@@ -145,50 +116,43 @@ const wip_rule: KnownIssue = {
   languages: ["rust"],
   examples: [],
   classifier: {
-    kind: "builtin",
     function_name: "check_wip_rule",
     min_confidence: 1,
   },
 };
 
+const fixed_rule: KnownIssue = {
+  group_id: "fixed-rule",
+  title: "Fixed rule",
+  description: "Not permanent — must be dropped from the slice.",
+  status: "fixed",
+  languages: ["python"],
+  examples: [],
+  classifier: {
+    function_name: "check_fixed_rule",
+    min_confidence: 1,
+  },
+};
+
 describe("select_permanent_slice_rules", () => {
-  it("keeps only permanent rules with a real classifier, in source order", () => {
+  it("keeps every permanent rule and drops the rest, in source order", () => {
     const out = select_permanent_slice_rules([
       wip_rule,
-      permanent_none_rule,
-      permanent_builtin_rule,
+      permanent_rule,
+      fixed_rule,
     ]);
-    expect(out).toEqual([permanent_builtin_rule]);
+    expect(out).toEqual([permanent_rule]);
   });
 
-  it("returns an empty slice when no rule qualifies", () => {
-    expect(select_permanent_slice_rules([wip_rule, permanent_none_rule])).toEqual([]);
-  });
-
-  it("drops a retired rule even if it is (anomalously) marked permanent", () => {
-    const permanent_retired_rule: KnownIssue = {
-      group_id: "permanent-retired",
-      title: "Permanent but retired",
-      description: "A retired classifier must never enter the slice, even if permanent.",
-      status: "permanent",
-      languages: ["typescript"],
-      examples: [],
-      classifier: {
-        kind: "retired",
-        from: { kind: "builtin", function_name: "check_gone", min_confidence: 1 },
-        reason: "retired",
-      },
-    };
-    expect(
-      select_permanent_slice_rules([permanent_retired_rule, permanent_builtin_rule]),
-    ).toEqual([permanent_builtin_rule]);
+  it("returns an empty slice when no rule is permanent", () => {
+    expect(select_permanent_slice_rules([wip_rule, fixed_rule])).toEqual([]);
   });
 });
 
 describe("render_permanent_slice_module", () => {
   it("renders the exact module text for a one-rule slice", () => {
     const out = render_permanent_slice_module(KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION, [
-      permanent_builtin_rule,
+      permanent_rule,
     ]);
     const expected =
       "// AUTO-GENERATED slice of the known-issues registry — do not edit by hand.\n" +
@@ -199,7 +163,7 @@ describe("render_permanent_slice_module", () => {
       "\n" +
       "export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = " +
       JSON.stringify(
-        { schema_version: KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION, rules: [permanent_builtin_rule] },
+        { schema_version: KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION, rules: [permanent_rule] },
         null,
         2,
       ) +
@@ -210,21 +174,21 @@ describe("render_permanent_slice_module", () => {
   it("filters the input through select_permanent_slice_rules", () => {
     const full = render_permanent_slice_module(KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION, [
       wip_rule,
-      permanent_none_rule,
-      permanent_builtin_rule,
+      fixed_rule,
+      permanent_rule,
     ]);
     const filtered = render_permanent_slice_module(KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION, [
-      permanent_builtin_rule,
+      permanent_rule,
     ]);
     expect(full).toEqual(filtered);
   });
 
   it("is byte-deterministic for identical input", () => {
     const a = render_permanent_slice_module(KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION, [
-      permanent_builtin_rule,
+      permanent_rule,
     ]);
     const b = render_permanent_slice_module(KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION, [
-      permanent_builtin_rule,
+      permanent_rule,
     ]);
     expect(a).toEqual(b);
   });

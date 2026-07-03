@@ -48,10 +48,13 @@ describe("load_registry", () => {
     expect(registry.map((e) => e.group_id)).toEqual(on_disk.map((e) => e.group_id));
   });
 
-  it("loads `kind: \"none\"` rules (registry placeholders without a classifier)", () => {
+  it("loads the true-positive-lambda-handler rule with its firing classifier", () => {
     const registry = load_registry();
-    const has_kind_none = registry.some((e) => e.classifier.kind === "none");
-    expect(has_kind_none).toBe(true);
+    const lambda = registry.find((e) => e.group_id === "true-positive-lambda-handler");
+    expect(lambda?.classifier).toEqual({
+      function_name: "check_true_positive_lambda_handler",
+      min_confidence: 1,
+    });
   });
 });
 
@@ -69,7 +72,7 @@ describe("active_rules_for_classification", () => {
       status: "wip",
       languages: ["typescript"],
       examples: [],
-      classifier: { kind: "builtin", function_name: group_id, min_confidence: 0.9 },
+      classifier: { function_name: group_id, min_confidence: 0.9 },
       ...overrides,
     };
   }
@@ -106,22 +109,6 @@ describe("active_rules_for_classification", () => {
     const active = active_rules_for_classification(registry);
     expect(active).not.toBe(registry);
     expect(active.map((r) => r.group_id)).toEqual(["a", "b", "c"]);
-  });
-
-  it("excludes a retired rule (status fixed; classifier never fires again)", () => {
-    const registry = [
-      rule("a", { status: "wip" }),
-      rule("b", {
-        status: "fixed",
-        classifier: {
-          kind: "retired",
-          from: { kind: "builtin", function_name: "check_b", min_confidence: 0.9 },
-          reason: "subsumed by TASK-348",
-        },
-      }),
-    ];
-    const active = active_rules_for_classification(registry);
-    expect(active.map((r) => r.group_id)).toEqual(["a"]);
   });
 });
 
@@ -197,18 +184,15 @@ describe("validate_registry — on-disk registry shape", () => {
     }
   });
 
-  it("every classifier uses kind in {none, builtin, retired}", () => {
+  it("every classifier is a flat { function_name, min_confidence } builtin", () => {
     for (const e of registry) {
-      expect(["none", "builtin", "retired"]).toContain(e.classifier.kind);
-      if (e.classifier.kind === "builtin") {
-        expect(e.classifier.function_name.length).toBeGreaterThan(0);
-        expect(e.classifier.min_confidence).toBeGreaterThanOrEqual(0);
-        expect(e.classifier.min_confidence).toBeLessThanOrEqual(1);
-      }
-      if (e.classifier.kind === "retired") {
-        expect(e.classifier.from.kind).toEqual("builtin");
-        expect(e.classifier.reason.length).toBeGreaterThan(0);
-      }
+      expect(e.classifier.function_name.length).toBeGreaterThan(0);
+      expect(e.classifier.min_confidence).toBeGreaterThanOrEqual(0);
+      expect(e.classifier.min_confidence).toBeLessThanOrEqual(1);
+      expect(Object.keys(e.classifier).sort()).toEqual([
+        "function_name",
+        "min_confidence",
+      ]);
     }
   });
 });
@@ -227,8 +211,6 @@ describe("validate_registry — examples", () => {
     }
   });
 });
-
-// ===== PredicateExpr: 12 operators, no others =====
 
 // ===== validate_registry catches common errors =====
 
@@ -273,56 +255,62 @@ describe("validate_registry — negative cases", () => {
     expect(() => validate_registry(registry)).toThrow(/backlog_task/);
   });
 
-  it("accepts a builtin classifier entry", () => {
+  it("accepts a flat classifier entry", () => {
     const registry = clone(load_registry());
     registry[0].classifier = {
-      kind: "builtin",
       function_name: "check_something",
       min_confidence: 0.9,
     };
     expect(() => validate_registry(registry)).not.toThrow();
   });
 
-  it("rejects a builtin classifier with an empty function_name", () => {
+  it("rejects a classifier with an empty function_name", () => {
     const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
     bad[0]["classifier"] = {
-      kind: "builtin",
       function_name: "",
       min_confidence: 0.9,
     };
     expect(() => validate_registry(bad)).toThrow(/function_name/);
   });
 
-  it("rejects a builtin classifier with an illegal function_name character", () => {
+  it("rejects a classifier with an illegal function_name character", () => {
     const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
     bad[0]["classifier"] = {
-      kind: "builtin",
       function_name: "Check-Something",
       min_confidence: 0.9,
     };
     expect(() => validate_registry(bad)).toThrow(/function_name/);
   });
 
-  it("rejects a builtin classifier with min_confidence outside [0,1]", () => {
+  it("rejects a classifier with min_confidence outside [0,1]", () => {
     const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
     bad[0]["classifier"] = {
-      kind: "builtin",
       function_name: "check_x",
       min_confidence: 2,
     };
     expect(() => validate_registry(bad)).toThrow(/min_confidence/);
   });
 
-  it("rejects an unknown classifier kind", () => {
+  it("rejects a classifier with a missing function_name", () => {
     const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
-    bad[0]["classifier"] = { kind: "magic" };
-    expect(() => validate_registry(bad)).toThrow(/kind/);
+    bad[0]["classifier"] = { min_confidence: 0.9 };
+    expect(() => validate_registry(bad)).toThrow(/function_name/);
+  });
+
+  it("rejects a classifier carrying a stray kind field", () => {
+    const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
+    bad[0]["classifier"] = {
+      kind: "builtin",
+      function_name: "check_x",
+      min_confidence: 0.9,
+    };
+    expect(() => validate_registry(bad)).toThrow(/extra fields.*kind/);
   });
 
   it("rejects a wip entry with an authored classifier and no observation evidence", () => {
     const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
     bad[0]["status"] = "wip";
-    bad[0]["classifier"] = { kind: "builtin", function_name: "check_unobserved", min_confidence: 0.9 };
+    bad[0]["classifier"] = { function_name: "check_unobserved", min_confidence: 0.9 };
     delete bad[0]["observed_count"];
     expect(() => validate_registry(bad)).toThrow(/observed_count.*must record observed_count >= 1/);
   });
@@ -330,7 +318,7 @@ describe("validate_registry — negative cases", () => {
   it("rejects a wip entry with an authored classifier and observed_count 0", () => {
     const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
     bad[0]["status"] = "wip";
-    bad[0]["classifier"] = { kind: "builtin", function_name: "check_zero_obs", min_confidence: 0.9 };
+    bad[0]["classifier"] = { function_name: "check_zero_obs", min_confidence: 0.9 };
     bad[0]["observed_count"] = 0;
     expect(() => validate_registry(bad)).toThrow(/observed_count.*must record observed_count >= 1/);
   });
@@ -338,33 +326,27 @@ describe("validate_registry — negative cases", () => {
   it("accepts a wip authored classifier that records observed_count >= 1", () => {
     const ok: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
     ok[0]["status"] = "wip";
-    ok[0]["classifier"] = { kind: "builtin", function_name: "check_observed", min_confidence: 0.9 };
+    ok[0]["classifier"] = { function_name: "check_observed", min_confidence: 0.9 };
     ok[0]["observed_count"] = 1;
     expect(() => validate_registry(ok)).not.toThrow();
   });
 
-  it("exempts kind:none wip stubs and permanent rows from the evidence gate", () => {
+  it("exempts permanent rows from the evidence gate", () => {
     const ok: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
-    // wip + kind:none, no observation → allowed (no classifier to validate)
-    ok[0]["status"] = "wip";
-    ok[0]["classifier"] = { kind: "none" };
-    delete ok[0]["observed_count"];
     // permanent + authored, no observation → allowed (past decision)
-    ok[1]["status"] = "permanent";
-    ok[1]["classifier"] = { kind: "builtin", function_name: "check_permanent", min_confidence: 0.9 };
-    delete ok[1]["observed_count"];
+    ok[0]["status"] = "permanent";
+    ok[0]["classifier"] = { function_name: "check_permanent", min_confidence: 0.9 };
+    delete ok[0]["observed_count"];
     expect(() => validate_registry(ok)).not.toThrow();
   });
 
-  it("rejects two builtin entries that share a function_name", () => {
+  it("rejects two entries that share a function_name", () => {
     const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
     bad[0]["classifier"] = {
-      kind: "builtin",
       function_name: "check_collision",
       min_confidence: 0.9,
     };
     bad[1]["classifier"] = {
-      kind: "builtin",
       function_name: "check_collision",
       min_confidence: 0.95,
     };
@@ -374,7 +356,7 @@ describe("validate_registry — negative cases", () => {
   it("rejects a permanent entry that links a backlog_task (a misfiled fixable bug)", () => {
     const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
     bad[0]["status"] = "permanent";
-    bad[0]["classifier"] = { kind: "builtin", function_name: "check_perm_task", min_confidence: 0.9 };
+    bad[0]["classifier"] = { function_name: "check_perm_task", min_confidence: 0.9 };
     bad[0]["backlog_task"] = "TASK-348";
     expect(() => validate_registry(bad)).toThrow(
       /permanent entry must not link a backlog task/,
@@ -384,120 +366,11 @@ describe("validate_registry — negative cases", () => {
   it("rejects a permanent entry carrying drift_detected (a wip-only signal)", () => {
     const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
     bad[0]["status"] = "permanent";
-    bad[0]["classifier"] = { kind: "builtin", function_name: "check_perm_drift", min_confidence: 0.9 };
+    bad[0]["classifier"] = { function_name: "check_perm_drift", min_confidence: 0.9 };
     bad[0]["drift_detected"] = true;
     expect(() => validate_registry(bad)).toThrow(
       /permanent entry must not carry drift_detected/,
     );
-  });
-});
-
-// ===== retired classifier (the structured retirement marker) =====
-
-describe("validate_registry — retired classifier", () => {
-  function with_first_classifier(classifier: unknown, status = "fixed"): Record<string, unknown>[] {
-    const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
-    bad[0]["status"] = status;
-    bad[0]["classifier"] = classifier;
-    return bad;
-  }
-
-  it("accepts a well-formed retired classifier carrying its former builtin", () => {
-    const registry = with_first_classifier({
-      kind: "retired",
-      from: { kind: "builtin", function_name: "check_x", min_confidence: 0.9 },
-      reason: "subsumed by TASK-348",
-    });
-    expect(() => validate_registry(registry)).not.toThrow();
-  });
-
-  it("accepts a retired classifier carrying its former builtin", () => {
-    const registry = with_first_classifier({
-      kind: "retired",
-      from: { kind: "builtin", function_name: "check_former", min_confidence: 1 },
-      reason: "resolver now resolves it",
-    });
-    expect(() => validate_registry(registry)).not.toThrow();
-  });
-
-  it("rejects a retired classifier whose `from.kind` is not builtin", () => {
-    const registry = with_first_classifier({
-      kind: "retired",
-      from: { kind: "none" },
-      reason: "x",
-    });
-    expect(() => validate_registry(registry)).toThrow(/from\.kind/);
-  });
-
-  it("rejects a nested retired classifier in `from`", () => {
-    const registry = with_first_classifier({
-      kind: "retired",
-      from: {
-        kind: "retired",
-        from: { kind: "builtin", function_name: "check_x", min_confidence: 1 },
-        reason: "inner",
-      },
-      reason: "outer",
-    });
-    expect(() => validate_registry(registry)).toThrow(/from\.kind/);
-  });
-
-  it("rejects a retired classifier whose `from` builtin is malformed", () => {
-    const registry = with_first_classifier({
-      kind: "retired",
-      from: { kind: "builtin", function_name: "", min_confidence: 1 },
-      reason: "x",
-    });
-    expect(() => validate_registry(registry)).toThrow(/function_name/);
-  });
-
-  it("rejects a retired classifier on a non-fixed row", () => {
-    const registry = with_first_classifier(
-      {
-        kind: "retired",
-        from: { kind: "builtin", function_name: "check_x", min_confidence: 1 },
-        reason: "x",
-      },
-      "wip",
-    );
-    expect(() => validate_registry(registry)).toThrow(/requires status="fixed"/);
-  });
-
-  it("rejects a retired classifier whose `from` is not an object", () => {
-    const registry = with_first_classifier({ kind: "retired", from: "check_x", reason: "x" });
-    expect(() => validate_registry(registry)).toThrow(/from/);
-  });
-
-  it("rejects a retired classifier with an empty reason", () => {
-    const registry = with_first_classifier({
-      kind: "retired",
-      from: { kind: "builtin", function_name: "check_x", min_confidence: 1 },
-      reason: "",
-    });
-    expect(() => validate_registry(registry)).toThrow(/reason/);
-  });
-
-  it("rejects a retired classifier carrying extra fields", () => {
-    const registry = with_first_classifier({
-      kind: "retired",
-      from: { kind: "builtin", function_name: "check_x", min_confidence: 1 },
-      reason: "x",
-      bogus: 1,
-    });
-    expect(() => validate_registry(registry)).toThrow(/extra fields/);
-  });
-
-  it("builtin uniqueness ignores a retired rule's former function_name", () => {
-    const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
-    bad[0]["status"] = "permanent";
-    bad[0]["classifier"] = { kind: "builtin", function_name: "check_dup", min_confidence: 1 };
-    bad[1]["status"] = "fixed";
-    bad[1]["classifier"] = {
-      kind: "retired",
-      from: { kind: "builtin", function_name: "check_dup", min_confidence: 1 },
-      reason: "retired but name reused live elsewhere",
-    };
-    expect(() => validate_registry(bad)).not.toThrow();
   });
 });
 
@@ -549,7 +422,7 @@ describe("permanent-limitations catalog content", () => {
     ]) {
       const entry = by_id.get(id);
       expect(entry?.status).toBe("permanent");
-      expect(entry?.classifier.kind).toBe("builtin");
+      expect(entry?.classifier.function_name.length).toBeGreaterThan(0);
     }
   });
 
@@ -596,13 +469,10 @@ describe("permanent-limitations catalog content", () => {
     }
   });
 
-  it("every permanent builtin pins a min_confidence in [0,1]", () => {
-    const permanent_builtins = registry.filter(
-      (e) => e.status === "permanent" && e.classifier.kind === "builtin",
-    );
-    expect(permanent_builtins.length).toBeGreaterThan(0);
-    for (const e of permanent_builtins) {
-      if (e.classifier.kind !== "builtin") continue;
+  it("every permanent rule pins a min_confidence in [0,1]", () => {
+    const permanent_rules = registry.filter((e) => e.status === "permanent");
+    expect(permanent_rules.length).toBeGreaterThan(0);
+    for (const e of permanent_rules) {
       expect(e.classifier.min_confidence).toBeGreaterThanOrEqual(0);
       expect(e.classifier.min_confidence).toBeLessThanOrEqual(1);
     }

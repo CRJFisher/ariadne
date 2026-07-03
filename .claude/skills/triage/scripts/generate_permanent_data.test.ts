@@ -29,7 +29,6 @@ const permanent_rule: KnownIssue = {
   languages: ["typescript"],
   examples: [],
   classifier: {
-    kind: "builtin",
     function_name: "check_bundled_rule",
     min_confidence: 1,
   },
@@ -42,7 +41,7 @@ const wip_rule: KnownIssue = {
   status: "wip",
   languages: ["python"],
   examples: [],
-  classifier: { kind: "none" },
+  classifier: { function_name: "check_wip_rule", min_confidence: 1 },
 };
 
 describe("generate_permanent_data", () => {

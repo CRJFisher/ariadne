@@ -2,19 +2,12 @@
  * Orchestrator for the entry-point classification stage.
  *
  * For every `EnrichedEntryPoint`, walk the known-issues registry in priority
- * order and evaluate each entry's classifier:
- *   - `classifier.kind === "none"`      → skip (known issue, no automated detection)
- *   - `classifier.kind === "retired"`   → skip (bug fixed; former classifier
- *     preserved in `from`). Retired rules are `status: "fixed"` and never reach
- *     core's permanent slice, so this arm is belt-and-suspenders.
- *   - `classifier.kind === "builtin"`   → look up `function_name` in the
- *     `builtins/index.ts` barrel and invoke it. A missing entry is a
- *     stale-barrel error — it means the registry references a builtin that the
- *     barrel was never updated for. Throw `MissingBuiltinError` so the
- *     pipeline stops loudly instead of silently dropping the classifier.
- *
- * `builtin` is the only match mechanism: every classifier is a bespoke
- * `BuiltinCheckFn`.
+ * order and evaluate each entry's classifier: look up `function_name` in the
+ * `builtins/index.ts` barrel and invoke it. Every classifier is a bespoke
+ * `BuiltinCheckFn`; a missing barrel entry is a stale-barrel error — it means
+ * the registry references a builtin that the barrel was never updated for.
+ * Throw `MissingBuiltinError` so the pipeline stops loudly instead of
+ * silently dropping the classifier.
  *
  * First match short-circuits the walk for that entry; sub-threshold hits
  * accumulate so the agent prompt can weigh them before starting investigation.
@@ -83,8 +76,6 @@ function classify_one(
 
   for (const issue of registry) {
     const spec = issue.classifier;
-    // `none` and `retired` carry no live classifier — skip.
-    if (spec.kind !== "builtin") continue;
     const check = builtin_checks[spec.function_name];
     if (check === undefined) {
       throw new MissingBuiltinError(issue.group_id, spec.function_name);

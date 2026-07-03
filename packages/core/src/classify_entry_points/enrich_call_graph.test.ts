@@ -177,7 +177,6 @@ describe("enrich_call_graph", () => {
         languages: ["python"],
         examples: [],
         classifier: {
-          kind: "builtin",
           function_name: "check_flask_route_decorator",
           min_confidence: 1.0,
         },
@@ -213,7 +212,6 @@ describe("enrich_call_graph", () => {
         languages: ["python"],
         examples: [],
         classifier: {
-          kind: "builtin",
           function_name: "check_test_only_helpers",
           min_confidence: 1.0,
         },
@@ -246,7 +244,6 @@ describe("enrich_call_graph", () => {
         languages: ["python"],
         examples: [],
         classifier: {
-          kind: "builtin",
           function_name: "check_function_reference_callback",
           min_confidence: 1.0,
         },
@@ -281,7 +278,6 @@ describe("enrich_call_graph", () => {
         languages: ["python"],
         examples: [],
         classifier: {
-          kind: "builtin",
           function_name: "check_wip_rule_no_metadata",
           min_confidence: 1.0,
         },
@@ -314,7 +310,6 @@ describe("enrich_call_graph", () => {
         languages: ["python"],
         examples: [],
         classifier: {
-          kind: "builtin",
           function_name: "check_does_not_exist",
           min_confidence: 1.0,
         },

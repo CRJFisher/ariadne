@@ -20,7 +20,6 @@
         }
       ],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_dynamic_property_keyed_callback",
         "min_confidence": 0.9
       },
@@ -50,7 +49,6 @@
         }
       ],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_py_property_decorator_access",
         "min_confidence": 0.9
       },
@@ -75,7 +73,6 @@
         }
       ],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_rust_macro_invocation_call",
         "min_confidence": 0.9
       },
@@ -100,7 +97,6 @@
         }
       ],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_framework_pytest_fixture",
         "min_confidence": 0.95
       },
@@ -125,7 +121,6 @@
         }
       ],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_framework_flask_route",
         "min_confidence": 0.95
       },
@@ -151,7 +146,6 @@
         }
       ],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_framework_component_decorator",
         "min_confidence": 0.95
       },
@@ -178,7 +172,8 @@
         }
       ],
       "classifier": {
-        "kind": "none"
+        "function_name": "check_true_positive_lambda_handler",
+        "min_confidence": 1
       }
     },
     {
@@ -191,7 +186,6 @@
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_dynamic_dispatch",
         "min_confidence": 0.9
       },
@@ -213,7 +207,6 @@
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_dynamic_dispatch_reporter_constructor",
         "min_confidence": 0.9
       },
@@ -233,7 +226,6 @@
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_dynamic_require_constructor",
         "min_confidence": 0.9
       },
@@ -253,7 +245,6 @@
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_framework_lifecycle_dispatch",
         "min_confidence": 0.9
       },
@@ -273,7 +264,6 @@
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_framework_lifecycle_override",
         "min_confidence": 0.9
       },
@@ -293,7 +283,6 @@
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_string_keyed_dispatch",
         "min_confidence": 0.95
       },
@@ -313,7 +302,6 @@
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_dynamic_new_function_dispatch",
         "min_confidence": 0.9
       },
@@ -333,7 +321,6 @@
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_eval_based_dynamic_dispatch",
         "min_confidence": 0.9
       },
@@ -353,7 +340,6 @@
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_framework_lifecycle_handler",
         "min_confidence": 0.9
       },
@@ -373,7 +359,6 @@
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_bundler_module_substitution",
         "min_confidence": 0.9
       },
@@ -404,7 +389,6 @@
         }
       ],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_py_dunder_protocol",
         "min_confidence": 1
       },
@@ -428,7 +412,6 @@
         }
       ],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_untyped_attribute_receiver",
         "min_confidence": 0.9
       }

@@ -59,19 +59,17 @@ function enrich(project: Project) {
 const read_file_lines = (file_path: string): readonly string[] =>
   fs.readFileSync(file_path, "utf8").split("\n");
 
-// The wip rule as authored in the source registry. Constructed inline so the
+// The rule as authored in the source registry. Constructed inline so the
 // test stays independent of `.claude/skills`, but the implementation is resolved
 // through the real `BUILTIN_CHECKS` barrel by `function_name`.
 const UNTYPED_ATTRIBUTE_RECEIVER_RULE: KnownIssue = {
   group_id: "untyped-attribute-receiver",
   title: "Python method reached only via an untyped self-attribute receiver",
-  description: "Interim classifier for the residual out-of-static-reach pandas row.",
-  status: "wip",
+  description: "Classifier for the residual out-of-static-reach pandas row.",
+  status: "permanent",
   languages: ["python"],
-  backlog_task: "TASK-350.3",
   examples: [],
   classifier: {
-    kind: "builtin",
     function_name: "check_untyped_attribute_receiver",
     min_confidence: 0.9,
   },

@@ -26,7 +26,6 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
         }
       ],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_dynamic_property_keyed_callback",
         "min_confidence": 0.9
       },
@@ -56,7 +55,6 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
         }
       ],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_py_property_decorator_access",
         "min_confidence": 0.9
       },
@@ -81,7 +79,6 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
         }
       ],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_rust_macro_invocation_call",
         "min_confidence": 0.9
       },
@@ -106,7 +103,6 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
         }
       ],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_framework_pytest_fixture",
         "min_confidence": 0.95
       },
@@ -131,7 +127,6 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
         }
       ],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_framework_flask_route",
         "min_confidence": 0.95
       },
@@ -157,13 +152,34 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
         }
       ],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_framework_component_decorator",
         "min_confidence": 0.95
       },
       "classification": {
         "kind": "framework_invoked",
         "framework": "angular"
+      }
+    },
+    {
+      "group_id": "true-positive-lambda-handler",
+      "title": "AWS Lambda handler file convention indicates framework entry point",
+      "description": "Functions defined in files whose path contains `_lambda_handler` are AWS Lambda handler entry points, invoked by AWS infrastructure and never called from source code. Seeded from `triage_patterns.json` rule `lambda-handler-file-true-positive` (precision 1.0).",
+      "status": "permanent",
+      "languages": [
+        "typescript",
+        "javascript",
+        "python"
+      ],
+      "examples": [
+        {
+          "file": "src/handlers/ingest_lambda_handler.py",
+          "line": 1,
+          "snippet": "def handler(event, context): ..."
+        }
+      ],
+      "classifier": {
+        "function_name": "check_true_positive_lambda_handler",
+        "min_confidence": 1
       }
     },
     {
@@ -176,7 +192,6 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_dynamic_dispatch",
         "min_confidence": 0.9
       },
@@ -198,7 +213,6 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_dynamic_dispatch_reporter_constructor",
         "min_confidence": 0.9
       },
@@ -218,7 +232,6 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_dynamic_require_constructor",
         "min_confidence": 0.9
       },
@@ -238,7 +251,6 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_framework_lifecycle_dispatch",
         "min_confidence": 0.9
       },
@@ -258,7 +270,6 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_framework_lifecycle_override",
         "min_confidence": 0.9
       },
@@ -278,7 +289,6 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_string_keyed_dispatch",
         "min_confidence": 0.95
       },
@@ -298,7 +308,6 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_dynamic_new_function_dispatch",
         "min_confidence": 0.9
       },
@@ -318,7 +327,6 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_eval_based_dynamic_dispatch",
         "min_confidence": 0.9
       },
@@ -338,7 +346,6 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_framework_lifecycle_handler",
         "min_confidence": 0.9
       },
@@ -358,7 +365,6 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       ],
       "examples": [],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_bundler_module_substitution",
         "min_confidence": 0.9
       },
@@ -389,7 +395,6 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
         }
       ],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_py_dunder_protocol",
         "min_confidence": 1
       },
@@ -413,7 +418,6 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
         }
       ],
       "classifier": {
-        "kind": "builtin",
         "function_name": "check_untyped_attribute_receiver",
         "min_confidence": 0.9
       }

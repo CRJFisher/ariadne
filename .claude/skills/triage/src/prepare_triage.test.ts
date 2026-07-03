@@ -59,7 +59,6 @@ function builtin_issue(
     languages: ["python"],
     examples: [],
     classifier: {
-      kind: "builtin",
       function_name,
       min_confidence: 1.0,
     },

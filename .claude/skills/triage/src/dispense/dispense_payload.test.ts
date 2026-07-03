@@ -57,7 +57,10 @@ function make_rule(overrides: Partial<KnownIssue> & { group_id: string }): Known
     status: "wip",
     languages: ["typescript", "javascript"],
     examples: [],
-    classifier: { kind: "none" },
+    classifier: {
+      function_name: `check_${overrides.group_id.replace(/-/g, "_")}`,
+      min_confidence: 1,
+    },
   };
   return { ...defaults, ...overrides };
 }
