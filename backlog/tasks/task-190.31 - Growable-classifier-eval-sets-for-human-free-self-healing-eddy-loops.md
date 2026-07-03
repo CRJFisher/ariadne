@@ -17,64 +17,48 @@ priority: medium
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 
-Today every classifier lifecycle transition is a human decision: the human
-reviews a `classifier-author` draft before `--stage --apply`, reviews promotion
-candidates before `wip → permanent`, and reviews drift evidence before flipping
-`drift_detected`. This keeps the human in the loop on the classifier catalog. The
-cost is one human review per transition; the ceiling is that classifiers cannot
-improve faster than a human can review them.
+Every classifier lifecycle transition is a human decision: the human reviews a
+`classifier-author` draft before `reconcile-registry --stage --apply`, reviews
+promotion candidates before `wip → permanent`, and reviews regression evidence
+before retiring a rule (retirement deletes the row and its `check_*.ts`;
+TASK-190.35). The in-repo write-guard hook (TASK-190.33) makes that per-edit
+human checkpoint mechanical. This keeps the human in the loop on the classifier
+catalog; the ceiling is that classifiers cannot improve faster than a human can
+review them.
 
-This task closes that loop: build **growable classifier eval-sets** that
-accumulate ground truth after each triage run, and drive the classifier
-lifecycle from those eval-sets automatically — **removing the human from
-classifier review in all cases**.
+This task raises that ceiling in two phases. Phase one builds the ground truth:
+**growable classifier eval-sets** that accumulate labeled examples from each
+triage run's `TriageVerdict`s, plus a continuous-validation pass that scores
+every active classifier (precision + recall) against its eval-set after each
+run. The human gates are unchanged — the eval-sets make the existing reviews
+informed instead of judgment-only. Phase two, gated on phase one's evidence,
+drives lifecycle transitions from eval-set thresholds automatically — removing
+the per-transition human review.
 
-### The eval-set
+The split is deliberate. A transition is only as trustworthy as the ground
+truth backing it, and today that ground truth does not exist: the eval-sets
+need multiple triage runs of accumulated verdicts before precision/recall
+thresholds mean anything. Phase one accumulates and proves the metrics; phase
+two spends them. Phase two is also a regime decision — it relaxes the
+"human owns every registry decision" invariant that TASK-190.30.x established
+and TASK-190.33 mechanically enforces — and that decision is made explicitly
+when phase one's evidence supports it, not as a side effect of building the
+plumbing.
 
-Each triage run already produces per-entry `TriageVerdict`s (`tp`, `fp-novel`,
-`fp-classifier-regression`, `uncertain`) with evidence. Persist these as a
-**labeled eval-set per classifier group**: each verdict is a labeled example
-(the entry's stable `(file_path, name, kind, start_line)` identity + its
-diagnostics + the adjudicated label). The eval-set **grows** every run — new
-verdicts append, so a classifier's ground-truth coverage strictly increases over
-time.
+### Sub-tasks
 
-### Self-healing eddy loops
+**TASK-190.31.1 — Eval-set store and continuous classifier validation** —
+Persist per-group labeled eval-sets that grow monotonically across runs, keyed
+by the stable member identity `(file_path, name, kind, start_line)`; score
+every active classifier against its eval-set after each run; surface
+regressions and promotion candidates as reports feeding the existing human
+review gates. See sub-task for detail.
 
-With an eval-set per group, each classifier gains a local feedback loop (an
-"eddy" off the main pipeline flow):
-
-- **Continuous validation.** After each run, evaluate every active classifier
-  against its accumulated eval-set: precision (does it fire only on true
-  false-positives?) and recall (does it catch every labeled member of its
-  group?). A classifier that regresses on its own eval-set is the signal that
-  today's human drift review provides — but computed, not adjudicated.
-- **Automatic refinement.** When a classifier's eval-set contains members it no
-  longer matches (recall drop) or matches that later adjudicated as `tp` (a
-  precision drop), regenerate/tune the `BuiltinCheckFn` against the full
-  eval-set and re-validate — with no human in the loop, gated on the eval-set
-  metrics rather than a human's judgment.
-- **Automatic promotion / retirement.** `wip → permanent` fires when a
-  classifier holds target precision/recall across N consecutive runs of its
-  eval-set; retirement fires when the eval-set shows the underlying pattern no
-  longer occurs (the fix landed) — both driven by eval-set thresholds, not human
-  review.
-
-### Removing the human review gate
-
-This supersedes the human-review requirements the current lifecycle encodes
-(`.claude/rules/classifier-lifecycle.md`): the `--stage` human-apply gate, the
-promotion-review gate, and the drift-absorb gate. In the target state the human
-sets the eval-set thresholds and the safety policy once; the eddy loops apply
-every transition automatically from eval-set evidence. The write-boundary /
-atomic-write contract still holds (all writes through `atomic_update_registry`);
-what changes is that the **decider** for each transition becomes the eval-set,
-not a human.
-
-This is a deliberate relaxation of the "human owns every registry decision"
-invariant that TASK-190.30.x established, made safe by the eval-sets: a
-transition is only as trustworthy as the ground truth backing it, and the
-eval-set is that ground truth, growing monotonically with every run.
+**TASK-190.31.2 — Eval-set-driven automatic lifecycle transitions** — Gated on
+TASK-190.31.1 evidence held across N runs: automatic refinement of regressed
+`BuiltinCheckFn`s, threshold-driven promotion and retirement, and a human-set
+threshold/safety-policy surface replacing per-transition review. See sub-task
+for detail.
 
 <!-- SECTION:DESCRIPTION:END -->
 
@@ -82,21 +66,17 @@ eval-set is that ground truth, growing monotonically with every run.
 
 <!-- AC:BEGIN -->
 
-- [ ] A per-group eval-set store accumulates labeled examples from each triage
-      run's `TriageVerdict`s, keyed by the stable member identity, and grows
-      monotonically across runs.
-- [ ] A continuous-validation pass scores every active classifier against its
-      eval-set (precision + recall) after each run and surfaces regressions.
-- [ ] An automatic-refinement path regenerates/tunes a regressed classifier's
-      `BuiltinCheckFn` against its eval-set and re-validates, with no human
-      review.
-- [ ] Promotion (`wip → permanent`) and retirement fire from eval-set thresholds
-      held across N consecutive runs, not from human review.
-- [ ] The lifecycle doc and skills are updated: eval-set-driven transitions
-      replace the human `--stage` / promotion / drift-absorb review gates, while
-      the `atomic_update_registry` write-boundary contract is retained.
-- [ ] A human-set threshold/safety-policy surface exists (the one place a human
-      still configures the loop), and the loops run without per-transition human
-      review.
+- [ ] TASK-190.31.1 complete: eval-sets accumulate across runs and the
+      continuous-validation pass scores every active classifier, with the human
+      review gates unchanged.
+- [ ] TASK-190.31.2 complete (or explicitly rejected as a regime decision):
+      lifecycle transitions fire from eval-set thresholds without
+      per-transition human review, with the `atomic_update_registry`
+      write-boundary contract retained.
 
 <!-- AC:END -->
+
+## Sub-tasks
+
+- TASK-190.31.1: Eval-set store and continuous classifier validation
+- TASK-190.31.2: Eval-set-driven automatic lifecycle transitions
