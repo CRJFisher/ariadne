@@ -30,11 +30,14 @@
  *      task scope that does not match the rule's `backlog_task`, so signal 1
  *      cannot see it. Names rules directly like `--promote`, bypasses git-log
  *      matching, requires `--reason`, and cannot combine with `--drift`.
- *      Deletes the named row(s) from the registry and best-effort unlinks each
- *      row's `check_<group_id>.ts` builtin source — git history is the audit
- *      trail. Guarded: a row whose `function_name` is still registered in
- *      core's `BUILTIN_CHECKS` is rejected (the code-side deletion — barrel
- *      entry removed, core rebuilt — must land first). The auto `--fixed`
+ *      Deletes the named row(s) from the registry — whatever their status —
+ *      and best-effort unlinks each row's `check_<group_id>.ts` builtin
+ *      source; git history is the audit trail. Guarded: a row whose
+ *      `function_name` is still registered in core's `BUILTIN_CHECKS` is
+ *      rejected (the code-side deletion — barrel entry removed, core rebuilt
+ *      — must land first). Every name-mode run sweeps the named ids' check
+ *      sources (absent ids included) and resyncs the permanent slice, so a
+ *      crash mid-transition is recovered by re-running. The auto `--fixed`
  *      path (no `--id`) is unchanged — status-only, row untouched.
  *
  * ## Stage (insertion of an agent-authored draft)
@@ -348,8 +351,10 @@ export function detect_drift_proposals(
  * stale preview degrades to a no-op instead of clobbering: an already-fixed
  * rule stays fixed, already-present evidence rows are not duplicated. Throws
  * on a proposal naming an absent rule (a detector/selector bug) — except a
- * `delete_by_name` proposal, whose target being absent is the idempotent
- * re-run case (the row is already deleted), not a bug.
+ * `delete_by_name` proposal, whose target being absent is the
+ * concurrent-deletion window (the row vanished between the preview read and
+ * this locked fold), not a bug; run() catches a plainly re-run id upstream
+ * into `missing_ids` before any proposal exists.
  */
 export function fold_proposals(
   rules: readonly KnownIssue[],
@@ -669,7 +674,9 @@ export async function run(
     }
   } else if (args.name_mode) {
     // Direct-name retirement: delete each named row without git-log
-    // detection. parse_argv guarantees a non-null reason in name-mode.
+    // detection, whatever its status — a permanent target is the common case
+    // (the deletes-permanent slice resync below exists for it). parse_argv
+    // guarantees a non-null reason in name-mode.
     if (args.reason === null) {
       throw new Error("name-mode reached with a null reason — parse_argv guard bypassed");
     }
@@ -741,30 +748,33 @@ export async function run(
     });
   }
 
-  // Registry row gone → its check_<group_id>.ts must not linger. Best-effort
-  // even on an idempotent re-run (applied=false): a crash between a prior
-  // run's registry write and its unlink leaves the file behind, and this
-  // sweep is what recovers it. The builtin-still-registered guard above
-  // ensures the barrel no longer imports the file, so unlinking cannot break
-  // the build.
+  // Registry row gone → its check_<group_id>.ts must not linger. The sweep
+  // covers this run's deletions AND the name-mode ids that were already
+  // absent (missing_ids): an absent id is the re-run after a crash between a
+  // prior run's registry write and its unlink, and sweeping it is what
+  // recovers the stranded file (ENOENT degrades to a no-op, so a mistyped id
+  // is harmless). Rejected ids are excluded — their barrel still imports the
+  // file, so unlinking would break the build; for everything swept, the
+  // builtin-still-registered guard above ensures the import is gone.
   const deleted_builtin_sources: string[] = [];
-  if (!args.dry_run) {
-    for (const proposal of delete_by_name_proposals) {
-      const removed = await deps.delete_builtin_source(proposal.group_id);
+  if (!args.dry_run && args.name_mode) {
+    const sweep_ids = [
+      ...delete_by_name_proposals.map((proposal) => proposal.group_id),
+      ...missing_ids,
+    ];
+    for (const group_id of sweep_ids) {
+      const removed = await deps.delete_builtin_source(group_id);
       if (removed !== null) deleted_builtin_sources.push(removed);
     }
   }
 
   let permanent_slice_changed = false;
-  const deletes_permanent_row = delete_by_name_proposals.some(
-    (proposal) => rules_by_id.get(proposal.group_id)?.status === "permanent",
-  );
-  if (args.promote || deletes_permanent_row) {
+  if (args.promote || args.name_mode) {
     // Registry first (source of truth), then bring the slice in sync.
-    // Unconditional on --promote (not on accepted proposals) so a re-run
-    // recovers from a crash between the registry write and the regeneration:
-    // the rule is rejected as already-permanent, but the slice still syncs.
-    // Name-mode triggers the same sync when it deletes a permanent row.
+    // Unconditional on --promote and name-mode (not on accepted proposals)
+    // so a re-run recovers from a crash between the registry write and the
+    // regeneration: the promote target is rejected as already-permanent (or
+    // the deleted row lands in missing_ids), but the slice still syncs.
     // Under --dry-run the would-be-folded rules stand in for the registry
     // so the preview reports the slice change the transition would produce.
     const preview_rules = args.dry_run
@@ -936,6 +946,28 @@ export async function run_or_stage(
 // Real-world deps
 // ---------------------------------------------------------------------------
 
+/**
+ * The real `delete_builtin_source` dep, parameterized on the builtins
+ * directory so the unlink behavior (path assembly, ENOENT-degrades-to-null,
+ * other fs errors rethrow) is testable against a temp dir.
+ */
+export function build_delete_builtin_source(
+  builtins_dir: string,
+): (group_id: string) => Promise<string | null> {
+  return async (group_id) => {
+    const source_path = path.join(builtins_dir, `check_${group_id}.ts`);
+    try {
+      await unlink(source_path);
+      return source_path;
+    } catch (err) {
+      if (err instanceof Error && (err as { code?: string }).code === "ENOENT") {
+        return null;
+      }
+      throw err;
+    }
+  };
+}
+
 export async function build_real_deps(): Promise<ReconcileDeps> {
   const registry_path = known_issues_registry_path();
   return {
@@ -989,26 +1021,16 @@ export async function build_real_deps(): Promise<ReconcileDeps> {
       ).changed,
     read_draft: async (draft_path) => JSON.parse(await readFile(draft_path, "utf8")),
     known_builtin_names: () => new Set(Object.keys(BUILTIN_CHECKS)),
-    delete_builtin_source: async (group_id) => {
-      const source_path = path.join(
+    delete_builtin_source: build_delete_builtin_source(
+      path.join(
         repo_root(),
         "packages",
         "core",
         "src",
         "classify_entry_points",
         "builtins",
-        `check_${group_id}.ts`,
-      );
-      try {
-        await unlink(source_path);
-        return source_path;
-      } catch (err) {
-        if (err instanceof Error && (err as { code?: string }).code === "ENOENT") {
-          return null;
-        }
-        throw err;
-      }
-    },
+      ),
+    ),
   };
 }
 

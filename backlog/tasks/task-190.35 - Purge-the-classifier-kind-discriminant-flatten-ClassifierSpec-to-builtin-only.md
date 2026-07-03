@@ -1,7 +1,7 @@
 ---
 id: TASK-190.35
 title: "Purge the classifier `kind` discriminant — flatten ClassifierSpec to builtin-only"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-02 00:00"
 labels:
@@ -91,20 +91,63 @@ row) is gone; git history is the record instead. Accepted per the task request.
 
 <!-- AC:BEGIN -->
 
-- [ ] `ClassifierSpec` is a flat `{ function_name, min_confidence }` (no `kind`
+- [x] `ClassifierSpec` is a flat `{ function_name, min_confidence }` (no `kind`
       discriminant, no `none`/`retired` variants) in `@ariadnejs/types`.
-- [ ] The `true-positive-lambda-handler` row carries a real
+- [x] The `true-positive-lambda-handler` row carries a real
       `check_true_positive_lambda_handler` builtin (no more inert `none` row).
-- [ ] `registry.json` migrated (no `kind` field on any classifier), permanent
+- [x] `registry.json` migrated (no `kind` field on any classifier), permanent
       slice regenerated, `permanent_data.sync.test.ts` passes.
-- [ ] Dispatch (`classify_entry_points.ts`), slice validation
+- [x] Dispatch (`classify_entry_points.ts`), slice validation
       (`registry_loader.ts`), and the triage validator all simplified to the
       single builtin shape; the barrel↔registry bijection guard still passes.
-- [ ] `reconcile_registry.ts` name-mode retirement deletes the row(s) + their
+- [x] `reconcile_registry.ts` name-mode retirement deletes the row(s) + their
       `check_*.ts` instead of writing a `retired` marker; tests updated.
-- [ ] `classifier-lifecycle.md` + the reconcile/prioritize SKILLs describe the
+- [x] `classifier-lifecycle.md` + the reconcile/prioritize SKILLs describe the
       flat classifier and retirement-by-deletion; no stale `none`/`retired`
       lifecycle language.
-- [ ] `pnpm build` + `pnpm typecheck` + full suite green.
+- [x] `pnpm build` + `pnpm typecheck` + full suite green.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+A classifier is the flat `{ function_name, min_confidence }` object in
+`@ariadnejs/types` (`known_issues.ts`): a name that resolves in core's
+`BUILTIN_CHECKS` barrel plus a confidence gate. The `kind` discriminant is
+gone because it carried no information — every real classifier is a builtin
+check function, and the `none` and `retired` variants existed only to
+represent states the catalog no longer has. `select_permanent_slice_rules`
+selects on `status === "permanent"` alone; dispatch in
+`classify_entry_points.ts` is an unconditional barrel lookup; and the triage
+validator's `validate_classifier_spec` checks one shape, rejecting any stray
+`kind` field so old-shape data fails loudly.
+
+The one former `none` row, `true-positive-lambda-handler`, carries a real
+`check_true_positive_lambda_handler` builtin ("file path contains
+`_lambda_handler`", seed precision 1.0) and therefore lives in the bundled
+permanent slice — 19 rules, regenerated via `generate_permanent_data.ts` and
+byte-guarded by `permanent_data.sync.test.ts`.
+
+Retirement is row deletion. `reconcile_registry.ts` name-mode
+(`--id ... --fixed --reason`) deletes the named rows — any status — after a
+guard confirms each row's builtin is no longer registered in
+`BUILTIN_CHECKS` (the agent's code-side deletion lands first), then sweeps
+the named ids' `check_<group_id>.ts` files as a backstop and resyncs the
+permanent slice. The sweep and resync run on every name-mode invocation,
+including ids already absent from the registry, so a crash between the
+registry write and the cleanup is recovered by re-running the same command;
+the `--reason` survives only in the run summary and the commit message — git
+history is the audit trail. The proposal kind is `delete_by_name`, with
+`rejected_deletions` and `deleted_builtin_sources` in the summary.
+
+Navigation: the type and slice selector live in
+`packages/types/src/known_issues.ts`; dispatch and the bijection guard in
+`packages/core/src/classify_entry_points/`; validation in
+`.claude/skills/triage/src/known_issues_registry.ts`; every lifecycle write
+in `.claude/skills/triage/scripts/reconcile_registry.ts`, documented in
+`.claude/rules/classifier-lifecycle.md` and the reconcile-registry SKILL.
+
+Known follow-on (out of scope here): the `fixed` status is now
+near-vestigial — only the auto git-log stamp produces it.

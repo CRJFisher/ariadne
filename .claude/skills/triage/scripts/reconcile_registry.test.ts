@@ -20,6 +20,7 @@ import {
 
 import {
   bare_task_scope,
+  build_delete_builtin_source,
   detect_drift_proposals,
   detect_fixed_proposals,
   fold_proposals,
@@ -527,6 +528,43 @@ describe("fold_proposals", () => {
 });
 
 // ---------------------------------------------------------------------------
+// build_delete_builtin_source (the real unlink dep)
+// ---------------------------------------------------------------------------
+
+describe("build_delete_builtin_source", () => {
+  let tmp_dir: string;
+
+  beforeEach(async () => {
+    tmp_dir = await fs.mkdtemp(path.join(os.tmpdir(), "reconcile-builtins-"));
+  });
+
+  afterEach(async () => {
+    await fs.rm(tmp_dir, { recursive: true, force: true });
+  });
+
+  it("unlinks check_<group_id>.ts and returns its path", async () => {
+    const source_path = path.join(tmp_dir, "check_rule-perm.ts");
+    await fs.writeFile(source_path, "export const x = 1;\n");
+    const delete_builtin_source = build_delete_builtin_source(tmp_dir);
+    expect(await delete_builtin_source("rule-perm")).toEqual(source_path);
+    await expect(fs.access(source_path)).rejects.toThrowError(/ENOENT/);
+  });
+
+  it("returns null when the file is already gone (ENOENT degrades to a no-op)", async () => {
+    const delete_builtin_source = build_delete_builtin_source(tmp_dir);
+    expect(await delete_builtin_source("rule-never-existed")).toEqual(null);
+  });
+
+  it("rethrows non-ENOENT fs errors", async () => {
+    // Deleting a path whose parent is a FILE (not a dir) fails with ENOTDIR.
+    const not_a_dir = path.join(tmp_dir, "not-a-dir");
+    await fs.writeFile(not_a_dir, "plain file\n");
+    const delete_builtin_source = build_delete_builtin_source(not_a_dir);
+    await expect(delete_builtin_source("rule-perm")).rejects.toThrowError(/ENOTDIR/);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // parse_argv
 // ---------------------------------------------------------------------------
 
@@ -689,7 +727,7 @@ describe("run", () => {
       discover_drift_sources: async () => ({ sources: [], skipped: [] }),
       regenerate_permanent_slice: async () => {
         throw new Error(
-          "regenerate_permanent_slice must not run without --promote or a permanent-row deletion",
+          "regenerate_permanent_slice must not run outside --promote or name-mode",
         );
       },
       read_draft: async () => {
@@ -847,15 +885,20 @@ describe("run", () => {
     expect(summary.missing_ids).toEqual([]);
   });
 
-  it("name-mode deletes a named rule through the locked write and unlinks its check source", async () => {
+  it("name-mode deletes a named rule through the locked write, unlinks its check source, and resyncs the slice", async () => {
     await seed_registry([promotable_rule, tasked_rule, quiet_rule]);
     const unlink_calls: string[] = [];
+    const regenerate_calls: { dry_run: boolean; preview_rules: KnownIssue[] | null }[] = [];
     const summary = await run(
       ["--id", "rule-promotable", "--fixed", "--reason", "subsumed by TASK-348"],
       make_deps({
         delete_builtin_source: async (group_id) => {
           unlink_calls.push(group_id);
           return `/builtins/check_${group_id}.ts`;
+        },
+        regenerate_permanent_slice: async (opts) => {
+          regenerate_calls.push(opts);
+          return false;
         },
       }),
     );
@@ -867,6 +910,7 @@ describe("run", () => {
     expect(summary.rejected_deletions).toEqual([]);
     expect(summary.deleted_builtin_sources).toEqual(["/builtins/check_rule-promotable.ts"]);
     expect(unlink_calls).toEqual(["rule-promotable"]);
+    expect(regenerate_calls).toEqual([{ dry_run: false, preview_rules: null }]);
     expect(await fs.readFile(registry_path, "utf8")).toEqual(
       serialize_known_issues_registry_json([tasked_rule, quiet_rule]),
     );
@@ -883,6 +927,7 @@ describe("run", () => {
           unlink_calls.push(group_id);
           return null;
         },
+        regenerate_permanent_slice: async () => false,
       }),
     );
     expect(summary.proposals.delete_by_name).toEqual([]);
@@ -928,14 +973,24 @@ describe("run", () => {
     );
   });
 
-  it("reports an unknown name-mode id in missing_ids and writes nothing", async () => {
+  it("reports an unknown name-mode id in missing_ids, sweeps it, and writes nothing", async () => {
     const seeded = await seed_registry([promotable_rule, tasked_rule, quiet_rule]);
+    const unlink_calls: string[] = [];
     const summary = await run(
       ["--id", "rule-ghost", "--fixed", "--reason", "x"],
-      make_deps({}),
+      make_deps({
+        delete_builtin_source: async (group_id) => {
+          unlink_calls.push(group_id);
+          return null;
+        },
+        regenerate_permanent_slice: async () => false,
+      }),
     );
     expect(summary.missing_ids).toEqual(["rule-ghost"]);
     expect(summary.applied).toEqual(false);
+    // A mistyped id is swept harmlessly (ENOENT → null → nothing recorded).
+    expect(unlink_calls).toEqual(["rule-ghost"]);
+    expect(summary.deleted_builtin_sources).toEqual([]);
     expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
   });
 
@@ -943,19 +998,52 @@ describe("run", () => {
     await seed_registry([promotable_rule, tasked_rule, quiet_rule]);
     const first = await run(
       ["--id", "rule-promotable", "--fixed", "--reason", "subsumed"],
-      make_deps({}),
+      make_deps({ regenerate_permanent_slice: async () => false }),
     );
     expect(first.applied).toEqual(true);
     const after_first = await fs.readFile(registry_path, "utf8");
 
     const second = await run(
       ["--id", "rule-promotable", "--fixed", "--reason", "subsumed"],
-      make_deps({ load_registry: async () => [tasked_rule, quiet_rule] }),
+      make_deps({
+        load_registry: async () => [tasked_rule, quiet_rule],
+        regenerate_permanent_slice: async () => false,
+      }),
     );
     expect(second.applied).toEqual(false);
     expect(second.proposals.delete_by_name).toEqual([]);
     expect(second.missing_ids).toEqual(["rule-promotable"]);
     expect(await fs.readFile(registry_path, "utf8")).toEqual(after_first);
+  });
+
+  it("a name-mode re-run recovers a crash between the registry write and the unlink/slice sync", async () => {
+    // A prior run deleted the permanent row from the registry, then crashed
+    // before unlinking its check source and regenerating the slice. The re-run
+    // finds the id absent (missing_ids) yet still sweeps the stranded file and
+    // resyncs the slice.
+    await seed_registry([quiet_rule]);
+    const unlink_calls: string[] = [];
+    const regenerate_calls: { dry_run: boolean; preview_rules: KnownIssue[] | null }[] = [];
+    const summary = await run(
+      ["--id", "rule-perm", "--fixed", "--reason", "resolver now handles it"],
+      make_deps({
+        load_registry: async () => [quiet_rule],
+        delete_builtin_source: async (group_id) => {
+          unlink_calls.push(group_id);
+          return `/builtins/check_${group_id}.ts`;
+        },
+        regenerate_permanent_slice: async (opts) => {
+          regenerate_calls.push(opts);
+          return true;
+        },
+      }),
+    );
+    expect(summary.missing_ids).toEqual(["rule-perm"]);
+    expect(summary.applied).toEqual(false);
+    expect(unlink_calls).toEqual(["rule-perm"]);
+    expect(summary.deleted_builtin_sources).toEqual(["/builtins/check_rule-perm.ts"]);
+    expect(regenerate_calls).toEqual([{ dry_run: false, preview_rules: null }]);
+    expect(summary.permanent_slice_changed).toEqual(true);
   });
 
   it("promotes a classified rule and regenerates the permanent slice", async () => {

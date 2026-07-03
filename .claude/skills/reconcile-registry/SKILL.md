@@ -92,15 +92,19 @@ Always invoke with `node --import tsx`. Never `pnpm exec tsx` or `npx tsx`
    `--fixed` detector cannot match it. Name the rules with `--id` alongside
    `--fixed` and give a `--reason`: the script **deletes the named rows** from
    the registry, independent of git-log matching, and unlinks each row's
-   `check_<group_id>.ts` builtin source if it still exists. The `--reason`
-   survives in the summary output and the commit message; git history is the
-   audit trail. Name-mode refuses a row whose `function_name` is still
-   registered in core's `BUILTIN_CHECKS` (reported in `rejected_deletions`) —
-   the code-side deletion (barrel entry removed, core rebuilt) must land
-   first. Deleting a `permanent` row also regenerates the bundled slice.
-   `--reason` is required in name-mode; an unknown id reports in
-   `missing_ids`. Auto `--fixed` (no `--id`) is unchanged — it cites the
-   matched commit, takes no `--reason`, and stamps `fixed` without deleting.
+   `check_<group_id>.ts` builtin source if it still exists. Deletion applies
+   to a row of any status — `permanent` targets are the common case. The
+   `--reason` survives in the summary output and the commit message; git
+   history is the audit trail. Name-mode refuses a row whose `function_name`
+   is still registered in core's `BUILTIN_CHECKS` (reported in
+   `rejected_deletions`) — the code-side deletion (barrel entry removed, core
+   rebuilt) must land first. Every name-mode run resyncs the bundled slice
+   and sweeps the named ids' `check_*.ts` files (including ids already absent
+   from the registry), so a crash between the registry write and the unlink
+   or regeneration is recovered by re-running the same command. `--reason` is
+   required in name-mode; an unknown id reports in `missing_ids`. Auto
+   `--fixed` (no `--id`) is unchanged — it cites the matched commit, takes no
+   `--reason`, and stamps `fixed` without deleting.
    This is the command an agent flow prints for the human after doing the
    code-side deletions (see the sanctioned hand-off in
    `.claude/rules/classifier-lifecycle.md`):
@@ -178,17 +182,17 @@ detection signals is selected — always preview that with `--dry-run` first.
 
 The script's only stdout is one JSON summary:
 
-| Field                     | Meaning                                                                                                                                                               |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `proposals`               | the changeset, grouped by transition (`wip_to_fixed`, `delete_by_name`, `drift_detected`, `promote_to_permanent`)                                                     |
-| `applied`                 | a registry write happened. `false` under `--dry-run`, when nothing was proposed, and when the fold was byte-identical (idempotent re-run)                             |
-| `permanent_slice_changed` | core's `permanent_data.ts` differs from a fresh render — rewritten on a real `--promote` or a name-mode deletion of a `permanent` row; reported-only under `--dry-run`|
-| `missing_ids`             | `--id` values matching no proposal (selector mode) or no rule (`--promote` / name-mode `--fixed`)                                                                     |
-| `rejected_promotions`     | `--promote` targets refused, with the reason (dangling builtin, or already permanent)                                                                                 |
-| `rejected_deletions`      | name-mode targets refused: the row's builtin is still registered in `BUILTIN_CHECKS` — do the code-side deletion and rebuild core first                               |
-| `deleted_builtin_sources` | the `check_<group_id>.ts` paths the name-mode run actually unlinked (empty when the agent's code-side deletion already removed them)                                  |
-| `drift_unknown_rule_ids`  | published `rule_id`s with no registry rule — review signals, never writes                                                                                             |
-| `skipped_sources`         | published files that failed to read or parse (e.g. a stale schema version) — reported, never fatal                                                                    |
+| Field                     | Meaning                                                                                                                                                            |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `proposals`               | the changeset, grouped by transition (`wip_to_fixed`, `delete_by_name`, `drift_detected`, `promote_to_permanent`)                                                  |
+| `applied`                 | a registry write happened. `false` under `--dry-run`, when nothing was proposed, and when the fold was byte-identical (idempotent re-run)                          |
+| `permanent_slice_changed` | core's `permanent_data.ts` differs from a fresh render — rewritten on every real `--promote` or name-mode run (crash-recoverable); reported-only under `--dry-run` |
+| `missing_ids`             | `--id` values matching no proposal (selector mode) or no rule (`--promote` / name-mode `--fixed`)                                                                  |
+| `rejected_promotions`     | `--promote` targets refused, with the reason (dangling builtin, or already permanent)                                                                              |
+| `rejected_deletions`      | name-mode targets refused: the row's builtin is still registered in `BUILTIN_CHECKS` — do the code-side deletion and rebuild core first                            |
+| `deleted_builtin_sources` | the `check_<group_id>.ts` paths the name-mode run actually unlinked (empty when the agent's code-side deletion already removed them)                               |
+| `drift_unknown_rule_ids`  | published `rule_id`s with no registry rule — review signals, never writes                                                                                          |
+| `skipped_sources`         | published files that failed to read or parse (e.g. a stale schema version) — reported, never fatal                                                                 |
 
 Each auto-detected `wip_to_fixed` proposal carries `matched_subject` (the
 newest matching commit) as its audit line; each name-mode `delete_by_name`

@@ -1,21 +1,23 @@
 <!DOCTYPE html>
 <!-- SPDX-License-Identifier: Apache-2.0 -->
-<!-- Comprehension companion for TASK-190.35 (To Do · planned change).
-     Grounded against the LIVE source (verified, not trusted from a relayed brief):
-       packages/types/src/known_issues.ts (ClassifierSpec union 124-127; BuiltinClassifierSpec 103-107;
-         select_permanent_slice_rules 156-162 — status==="permanent" && classifier.kind==="builtin");
-       packages/core/src/classify_entry_points/classify_entry_points.ts (classify_one 76-116;
-         dispatch guard `if (spec.kind !== "builtin") continue` at 87);
-       packages/core/src/classify_entry_points/registry_loader.ts (validate_permanent_slice 52-63;
-         assert_permanent_non_none 65-79 — classifier.kind!=="builtin" throw);
-       .claude/skills/triage/src/known_issues_registry.ts (validate_classifier_spec 251-320 — none/builtin/retired arms;
-         retired-requires-fixed coupling 179-184; wip evidence-gate kind!=="none" carve-out 193-201;
-         builtin uniqueness kind==="builtin" 115-124);
-       .claude/skills/triage/scripts/reconcile_registry.ts (fold_proposals wip_to_fixed_by_name 369-380 —
-         writes {kind:"retired",from,reason}; promote kind!=="builtin" reject 396-402;
-         --promote none/retired reject 647-651; --stage builtin-only gate 834-839);
-       .claude/skills/triage/known_issues/registry.json (census: 18 builtin, 1 none
-         [true-positive-lambda-handler @164-183, classifier {kind:"none"}], 0 retired, 0 wip/fixed).
+<!-- Comprehension companion for TASK-190.35 (Done · as-built, commit 431f691b + review-fix working tree).
+     Grounded against the LIVE post-build source (verified, not trusted from a relayed brief):
+       packages/types/src/known_issues.ts (flat ClassifierSpec { function_name, min_confidence } 108-111;
+         BuiltinClassifierSpec deleted; select_permanent_slice_rules 138-142 — status==="permanent" only);
+       packages/core/src/classify_entry_points/classify_entry_points.ts (classify_one; dispatch is an
+         unconditional builtin_checks[spec.function_name] lookup at 79 — no kind guard);
+       packages/core/src/classify_entry_points/registry_loader.ts (validate_permanent_slice 51-;
+         assert_permanent 64- — status!=="permanent" throw, no kind allowlist);
+       .claude/skills/triage/src/known_issues_registry.ts (validate_classifier_spec: single arm —
+         function_name regex + min_confidence ∈ [0,1]; rejects a stray `kind` as an extra field 251-256;
+         builtin uniqueness across rows 100-119);
+       .claude/skills/triage/scripts/reconcile_registry.ts (DeleteByNameProposal / kind:"delete_by_name"
+         164-169; fold_proposals delete-branch 380-403; name-mode guard rejects a still-registered builtin
+         into rejected_deletions 675-704; check-source sweep over proposals + missing_ids resyncs slice
+         every name-mode run 759-790; build_delete_builtin_source 954-969);
+       .claude/skills/triage/known_issues/registry.json (census: 19 permanent builtins;
+         true-positive-lambda-handler now fires via check_true_positive_lambda_handler @175, min_confidence 1);
+       packages/core/src/classify_entry_points/permanent_data.ts (19 permanent rows in the bundled slice).
      Inherits TASK-190.34 family design tokens verbatim. Hand-authored inline SVG, no external deps. -->
 <html lang="en">
 <head>
@@ -159,24 +161,24 @@
 
 <main>
   <p class="eyebrow">Self-repair pipeline · classifier catalog</p>
-  <h1>One shape for every classifier: flattening the <code>kind</code> tag away</h1>
-  <p class="preamble prose">The registry catalogs call relationships that static analysis can never resolve — a callback dispatched through a computed key, a function reached only through a macro. Each entry carries a small classifier that recognizes the pattern, tagged with a <code>kind</code> that could be one of three things: <b>none</b> (a stub with no check), <b>builtin</b> (a real check function), or <b>retired</b> (a fixed bug's former check, kept for the record). In practice the catalog is one thing: 18 of the 19 live entries are builtins, one is an inert stub, and no entry is retired. This work removes the tag and makes every classifier a plain check — a function name and a confidence threshold — so the code stops branching on a distinction that no longer distinguishes anything.</p>
+  <h1>One shape for every classifier: the <code>kind</code> tag is gone</h1>
+  <p class="preamble prose">The registry catalogs call relationships that static analysis can never resolve — a callback dispatched through a computed key, a function reached only through a macro. Each entry carries a small classifier that recognizes the pattern. That classifier used to be tagged with a <code>kind</code> that could be one of three things: <b>none</b> (a stub with no check), <b>builtin</b> (a real check function), or <b>retired</b> (a fixed bug's former check, kept for the record). In practice the catalog was one thing: 18 of the 19 entries were builtins, one was an inert stub, and none were retired. This work <b>removed</b> the tag: every classifier is now a plain check — a function name and a confidence threshold — so the code no longer branches on a distinction that stopped distinguishing anything. The lone stub became a firing check, and all 19 rows are permanent builtins.</p>
 
   <div class="meta">
-    <span class="chip">status <strong>To Do</strong></span>
+    <span class="chip done">status <strong>Done</strong></span>
     <span class="chip">parent <strong>TASK-190</strong></span>
-    <span class="chip">priority <strong>medium</strong></span>
+    <span class="chip">commit <strong>431f691b</strong></span>
     <span class="chip">5 branch sites <strong>+ data + docs</strong></span>
-    <span class="chip">census <strong>18 builtin · 1 none · 0 retired</strong></span>
+    <span class="chip">census <strong>19 builtin · 0 none · 0 retired</strong></span>
   </div>
 
   <!-- ===== 1. THE ONE SHAPE (before/after type) ===== -->
-  <h2 id="shape"><span class="n">01</span>The three-variant union collapses to one flat shape</h2>
-  <p class="cap prose"><b>CURRENT:</b> <code>ClassifierSpec</code> is a discriminated union — a <code>kind</code> tag selecting one of three shapes, two of which carry different fields. <b>PLANNED:</b> a single flat record, so <code>classifier</code> is always <code>{ function_name, min_confidence }</code> with no tag to read.</p>
+  <h2 id="shape"><span class="n">01</span>The three-variant union collapsed to one flat shape</h2>
+  <p class="cap prose"><b>BEFORE:</b> <code>ClassifierSpec</code> was a discriminated union — a <code>kind</code> tag selecting one of three shapes, two of which carried different fields. <b>NOW:</b> a single flat record, so <code>classifier</code> is always <code>{ function_name, min_confidence }</code> with no tag to read.</p>
 
   <div class="ba">
     <div class="pane">
-      <p class="panetitle cur">Current — union of three variants</p>
+      <p class="panetitle cur">Before — union of three variants</p>
       <svg viewBox="0 0 380 292" role="img" aria-label="Current ClassifierSpec is a discriminated union keyed on kind: none carries no fields, builtin carries function_name and min_confidence, retired carries a nested from builtin plus a reason string. Only the builtin variant survives the change; none and retired are removed.">
         <defs><marker id="c-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#9a9387"/></marker></defs>
         <rect x="112" y="10" width="156" height="42" rx="10" fill="#e7ddc9" stroke="#9a9387"/>
@@ -221,8 +223,8 @@
     </div>
 
     <div class="pane">
-      <p class="panetitle pln">Planned — one flat record, no tag</p>
-      <svg viewBox="0 0 380 292" role="img" aria-label="Planned classifier is a single flat record with two fields, function_name and min_confidence. There is no kind discriminant, so every read site accesses the fields unconditionally with no branch.">
+      <p class="panetitle pln">As built — one flat record, no tag</p>
+      <svg viewBox="0 0 380 292" role="img" aria-label="As built, the classifier is a single flat record with two fields, function_name and min_confidence. There is no kind discriminant, so every read site accesses the fields unconditionally with no branch.">
         <defs><marker id="c-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6c7a4a"/></marker></defs>
         <rect x="96" y="10" width="188" height="42" rx="10" fill="#f2f4ec" stroke="#6c7a4a" stroke-width="2"/>
         <text x="190" y="30" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#6c7a4a">classifier</text>
@@ -249,42 +251,42 @@
   </div>
 
   <!-- ===== 2. CENSUS ===== -->
-  <h2 id="census"><span class="n">02</span>Only two of nineteen rows change meaning</h2>
-  <p class="cap prose">The live registry holds <b>19 rows</b>. The 18 builtins just shed <code>"kind": "builtin"</code> — pure data migration. The single <code>none</code> row is converted into a real firing check; no row is retired, so removing that variant costs nothing today.</p>
+  <h2 id="census"><span class="n">02</span>Two of nineteen rows changed meaning; all now fire</h2>
+  <p class="cap prose">The registry holds <b>19 rows</b>. The 18 builtins shed <code>"kind": "builtin"</code> — pure data migration. The single <code>none</code> row was converted into a real firing check (<code>check_true_positive_lambda_handler</code>, <code>min_confidence: 1</code>); no row was retired, so removing that variant cost nothing. The result: <b>every row is a firing permanent builtin</b>, and the bundled slice (<code>permanent_data.ts</code>) carries all 19.</p>
 
   <table class="matrix">
     <thead>
-      <tr><th>Variant today</th><th>Rows</th><th>What they are</th><th>Fate under the flat shape</th></tr>
+      <tr><th>Variant before</th><th>Rows</th><th>What they were</th><th>Fate under the flat shape</th></tr>
     </thead>
     <tbody>
       <tr>
         <td class="mono">builtin</td>
         <td><span class="cnt big">18</span></td>
         <td class="now">Real <code>check_*.ts</code> functions — the whole active catalog (dynamic dispatch, macro calls, <code>@property</code> access, framework routes…).</td>
-        <td class="next"><span class="glyph keep">strip the tag</span> — <b>drop <code>"kind": "builtin"</code></b>, fields unchanged. Mechanical migration.</td>
+        <td class="next"><span class="glyph keep">stripped the tag</span> — <b>dropped <code>"kind": "builtin"</code></b>, fields unchanged. Mechanical migration, done.</td>
       </tr>
       <tr>
         <td class="mono">none</td>
         <td><span class="cnt one">1</span></td>
-        <td class="now"><code>true-positive-lambda-handler</code> — an inert stub. A <code>none</code> classifier <b>never fires</b> and is excluded from the permanent slice, so it does nothing today.</td>
-        <td class="next"><span class="glyph conv">convert</span> — give it a real <code>check_true_positive_lambda_handler</code> (&ldquo;path contains <code>_lambda_handler</code>&rdquo;). A dead row becomes a <b>firing</b> classifier.</td>
+        <td class="now"><code>true-positive-lambda-handler</code> — an inert stub. A <code>none</code> classifier <b>never fired</b> and was excluded from the permanent slice, so it did nothing.</td>
+        <td class="next"><span class="glyph conv">converted</span> — given a real <code>check_true_positive_lambda_handler</code> (&ldquo;path contains <code>_lambda_handler</code>&rdquo;) at <b><code>min_confidence: 1</code></b>. A dead row is now a <b>firing</b> classifier.</td>
       </tr>
       <tr>
         <td class="mono">retired</td>
         <td><span class="cnt zero">0</span></td>
-        <td class="now">A fixed bug's former builtin, preserved in <code>from</code> + <code>reason</code> on a <code>fixed</code> row. None exist in the live registry.</td>
-        <td class="next"><span class="glyph gone">delete the variant</span> — no data to migrate. Retirement semantics change (see below), the type simply loses the arm.</td>
+        <td class="now">A fixed bug's former builtin, preserved in <code>from</code> + <code>reason</code> on a <code>fixed</code> row. None existed in the registry.</td>
+        <td class="next"><span class="glyph gone">variant deleted</span> — no data to migrate. Retirement semantics changed (see below); the type simply lost the arm.</td>
       </tr>
     </tbody>
   </table>
 
   <!-- ===== 3. RETIREMENT REVERSAL (the subtle one) ===== -->
-  <h2 id="retire"><span class="n">03</span>Retirement flips from mark-in-place to delete-the-row</h2>
-  <p class="cap prose">This is the one genuinely subtle change. The <code>retired</code> kind was added <b>on purpose</b> so a fixed bug's <code>from.function_name</code> would not dangle after its <code>check_*.ts</code> was deleted. Removing the kind means a fixed classifier can no longer linger — so retirement <b>deletes the row and its check file outright</b>, with git history as the audit trail.</p>
+  <h2 id="retire"><span class="n">03</span>Retirement flipped from mark-in-place to delete-the-row</h2>
+  <p class="cap prose">This was the one genuinely subtle change. The <code>retired</code> kind existed <b>on purpose</b> so a fixed bug's <code>from.function_name</code> would not dangle after its <code>check_*.ts</code> was deleted. Removing the kind means a fixed classifier can no longer linger — so name-mode retirement now <b>deletes the row and its check file outright</b>, with git history as the audit trail. The proposal kind is <code>delete_by_name</code> (interface <code>DeleteByNameProposal</code>); it deletes rows of <b>any</b> status (a <code>permanent</code> target is the common case) and best-effort unlinks each row's <code>check_&lt;group_id&gt;.ts</code>.</p>
 
   <div class="ba">
     <div class="pane">
-      <p class="panetitle cur">Current — mark-in-place (retired kind)</p>
+      <p class="panetitle cur">Before — mark-in-place (retired kind)</p>
       <svg viewBox="0 0 360 250" role="img" aria-label="Current retirement: reconcile name-mode flips the wip row to fixed, deletes the check function source file, and rewrites the classifier in place as kind retired carrying the former builtin in from plus a reason. The row stays in the registry as a lossless audit record, and its from.function_name may name a now-deleted file without dangling because a retired rule never fires.">
         <defs><marker id="r-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#9a9387"/></marker></defs>
         <rect x="90" y="10" width="180" height="46" rx="10" fill="#fbf3ec" stroke="#b9794f"/>
@@ -318,8 +320,8 @@
     </div>
 
     <div class="pane">
-      <p class="panetitle pln">Planned — delete-the-row</p>
-      <svg viewBox="0 0 360 250" role="img" aria-label="Planned retirement: reconcile name-mode deletes the check function source file and removes the row from the registry entirely. Nothing lingers. Git history is the audit trail — the commit that deleted the row records what was retired and why. No retired kind, no from field, no dangling name is possible because the row is gone.">
+      <p class="panetitle pln">As built — delete-the-row</p>
+      <svg viewBox="0 0 360 250" role="img" aria-label="As built, retirement: reconcile name-mode deletes the check function source file and removes the row from the registry entirely. Nothing lingers. Git history is the audit trail — the commit that deleted the row records what was retired and why. No retired kind, no from field, no dangling name is possible because the row is gone.">
         <defs><marker id="r-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6c7a4a"/></marker></defs>
         <rect x="90" y="10" width="180" height="46" rx="10" fill="#fbf3ec" stroke="#b9794f"/>
         <text x="180" y="30" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#2b2a28">--fixed --reason (name-mode)</text>
@@ -353,56 +355,63 @@
 
   <div class="callout rust">
     <span class="k">Why this is the delicate part</span>
-    <p>The <code>retired</code> kind exists to solve the dangling-name problem: once a fix lands and its <code>check_*.ts</code> is deleted, the row's <code>function_name</code> points at a missing file.</p>
-    <p>So <code>retired</code> parks the former spec in <code>from</code> on a non-firing <code>fixed</code> row. Deleting the variant re-opens that problem — and the answer is to <b>delete the row too</b>: no lingering row, no name left to dangle.</p>
+    <p>The <code>retired</code> kind existed to solve the dangling-name problem: once a fix lands and its <code>check_*.ts</code> is deleted, the row's <code>function_name</code> points at a missing file.</p>
+    <p>So <code>retired</code> parked the former spec in <code>from</code> on a non-firing <code>fixed</code> row. Deleting the variant re-opens that problem — and the answer is to <b>delete the row too</b>: no lingering row, no name left to dangle.</p>
     <p>The <code>fixed</code> status then becomes largely vestigial (a fixed bug is an absent row) — a follow-on, out of scope here.</p>
   </div>
 
+  <div class="callout olive">
+    <span class="k">As-built mechanics · who deletes what, in order</span>
+    <p><b>Agent, code-side, first.</b> The retiring agent deletes the builtin's <code>check_&lt;group_id&gt;.ts</code> and removes its barrel <code>import</code> + <code>BUILTIN_CHECKS</code> entry, then rebuilds core. This ordering is <b>enforced</b>: name-mode <b>rejects</b> a row whose <code>function_name</code> is still registered in <code>BUILTIN_CHECKS</code> (surfaced in the summary's <code>rejected_deletions</code>), so the row cannot be deleted while a live check still imports it.</p>
+    <p><b>Script, registry-side, second.</b> After the registry write, the run sweeps the named ids' <code>check_&lt;group_id&gt;.ts</code> files — <b>including ids already absent from the registry</b> (the <code>missing_ids</code> set) — as a backstop, then resyncs the permanent slice on <b>every</b> name-mode run (mirroring <code>--promote</code>'s unconditional resync). So a crash between the registry write and the cleanup is recovered simply by re-running. The unlink dep is <code>build_delete_builtin_source(builtins_dir)</code>, testable against a temp dir; the summary reports what it removed in <code>deleted_builtin_sources</code>.</p>
+    <p>The <code>--reason</code> text is not persisted on any row — it survives <b>only</b> in the run summary and the human's commit message. Git history is the audit trail.</p>
+  </div>
+
   <!-- ===== 4. THE FIVE BRANCH SITES ===== -->
-  <h2 id="sites"><span class="n">04</span>Five files branch on <code>kind</code>; each collapses to one shape</h2>
-  <p class="cap prose">Every place that reads <code>classifier.kind</code> — the type plus four consumers — simplifies when the union becomes one shape. The barrel↔registry bijection guard from TASK-190.30.2 still holds and now covers every row.</p>
+  <h2 id="sites"><span class="n">04</span>Five files branched on <code>kind</code>; each collapsed to one shape</h2>
+  <p class="cap prose">Every place that read <code>classifier.kind</code> — the type plus four consumers — simplified when the union became one shape. The barrel↔registry bijection guard from TASK-190.30.2 still holds and now covers every row.</p>
 
   <table class="matrix">
     <thead>
-      <tr><th>File</th><th>Site</th><th>Branches on <code>kind</code> today</th><th>Simplifies to</th></tr>
+      <tr><th>File</th><th>Site</th><th>Branched on <code>kind</code> before</th><th>Simplified to</th></tr>
     </thead>
     <tbody>
       <tr>
         <td class="mono">types/…/<br>known_issues.ts</td>
         <td class="now">type + <code>select_permanent_slice_rules</code></td>
-        <td class="now">Union of 3 variants; slice filter is <b><code>status==="permanent" &amp;&amp; classifier.kind==="builtin"</code></b>.</td>
-        <td class="next">Flat <code>{ function_name, min_confidence }</code>; filter drops to <b><code>status==="permanent"</code></b> — every permanent row qualifies.</td>
+        <td class="now">Union of 3 variants; slice filter was <b><code>status==="permanent" &amp;&amp; classifier.kind==="builtin"</code></b>.</td>
+        <td class="next">Flat <code>{ function_name, min_confidence }</code>; filter dropped to <b><code>status==="permanent"</code></b> — every permanent row qualifies.</td>
       </tr>
       <tr>
         <td class="mono">core/…/<br>classify_entry_points.ts</td>
         <td class="now">dispatch (<code>classify_one</code>)</td>
         <td class="now">Guard <b><code>if (spec.kind !== "builtin") continue</code></b> before every lookup.</td>
-        <td class="next">Guard deleted — dispatch is an <b>unconditional</b> <code>builtin_checks[…]</code> lookup for every rule.</td>
+        <td class="next">Guard deleted — dispatch is an <b>unconditional</b> <code>builtin_checks[spec.function_name]</code> lookup for every rule.</td>
       </tr>
       <tr>
         <td class="mono">core/…/<br>registry_loader.ts</td>
         <td class="now"><code>validate_permanent_slice</code></td>
-        <td class="now"><code>assert_permanent_non_none</code> throws on <b><code>classifier.kind !== "builtin"</code></b>.</td>
-        <td class="next"><code>kind</code>-based allowlist dropped; only the <code>status==="permanent"</code> check remains.</td>
+        <td class="now"><code>assert_permanent_non_none</code> threw on <b><code>classifier.kind !== "builtin"</code></b>.</td>
+        <td class="next"><code>kind</code>-based allowlist dropped; renamed <code>assert_permanent</code> throws only on <code>status !== "permanent"</code>.</td>
       </tr>
       <tr>
         <td class="mono">triage/…/<br>known_issues_registry.ts</td>
         <td class="now"><code>validate_classifier_spec</code></td>
         <td class="now">Three arms (none / builtin / retired), the <b>retired-requires-fixed</b> coupling, a <code>kind!=="none"</code> evidence-gate carve-out, a <code>kind==="builtin"</code> uniqueness guard.</td>
-        <td class="next">One arm: validate <code>function_name</code> (regex + uniqueness) and <code>min_confidence ∈ [0,1]</code>. Evidence gate + permanent-row gates kept.</td>
+        <td class="next">One arm: validate <code>function_name</code> (regex + cross-row uniqueness) and <code>min_confidence ∈ [0,1]</code>, and <b>reject a stray <code>kind</code> as an extra field</b>. Evidence gate + permanent-row gates kept.</td>
       </tr>
       <tr>
         <td class="mono">triage/…/<br>reconcile_registry.ts</td>
         <td class="now">name-mode retire / <code>--promote</code> / <code>--stage</code></td>
-        <td class="now">Name-mode writes <b><code>{kind:"retired",from,reason}</code></b>; promote rejects <code>none</code>/<code>retired</code>; stage gates builtin-only.</td>
-        <td class="next">Name-mode <b>deletes</b> the row(s) + their <code>check_*.ts</code>; promote/stage <code>kind</code> checks disappear.</td>
+        <td class="now">Name-mode wrote <b><code>{kind:"retired",from,reason}</code></b>; promote rejected <code>none</code>/<code>retired</code>; stage gated builtin-only.</td>
+        <td class="next">Name-mode emits a <b><code>delete_by_name</code></b> proposal that <b>deletes</b> the row(s) (any status) + backstop-unlinks their <code>check_*.ts</code>, guarding a still-registered builtin into <code>rejected_deletions</code>; the promote/stage <code>kind</code> checks disappeared.</td>
       </tr>
     </tbody>
   </table>
 
   <!-- ===== 5. THE TYPE CHANGE (diff) ===== -->
   <h2 id="diff"><span class="n">05</span>The type change, verbatim</h2>
-  <p class="cap prose">The union and its <code>BuiltinClassifierSpec</code> collapse into one interface; the dispatch guard that read the tag goes away with it.</p>
+  <p class="cap prose">The union and its <code>BuiltinClassifierSpec</code> collapsed into one interface; the dispatch guard that read the tag went away with it.</p>
 
   <div class="code">
     <div class="file"><span>packages/types/src/known_issues.ts</span><span class="loc">ClassifierSpec</span></div>
@@ -439,13 +448,13 @@
   <div class="callout slate">
     <span class="k">The accepted trade</span>
     <p><b>Given up:</b> the in-registry, lossless retirement audit — a fixed bug's former <code>from</code> spec and <code>reason</code> preserved on a durable <code>fixed</code> row.</p>
-    <p><b>Bought:</b> a type with one shape instead of three, five files that stop asking &ldquo;which kind?&rdquo;, and a catalog where every entry carries a real, firing check — including the lambda-handler row that was dead weight.</p>
-    <p>The retirement record moves from the registry to git history: the commit that deletes a row <b>is</b> the audit trail. Accepted per the task request.</p>
+    <p><b>Bought:</b> a type with one shape instead of three, five files that stopped asking &ldquo;which kind?&rdquo;, and a catalog where every entry carries a real, firing check — including the lambda-handler row that was dead weight.</p>
+    <p>The retirement record moved from the registry to git history: the <code>--reason</code> text lives only in the run summary and the commit that deletes a row, which <b>is</b> the audit trail. Accepted per the task request.</p>
   </div>
 
   <footer>
-    TASK-190.35 · To Do · companion grounded against live source
-    (<code>known_issues.ts</code> · <code>classify_entry_points.ts</code> · <code>registry_loader.ts</code> · <code>known_issues_registry.ts</code> · <code>reconcile_registry.ts</code> · <code>registry.json</code> census 18 builtin / 1 none / 0 retired). Inherits TASK-190 family tokens.
+    TASK-190.35 · Done · as-built (commit 431f691b + review-fix working tree) · companion grounded against live source
+    (<code>known_issues.ts</code> · <code>classify_entry_points.ts</code> · <code>registry_loader.ts</code> · <code>known_issues_registry.ts</code> · <code>reconcile_registry.ts</code> · <code>registry.json</code> / <code>permanent_data.ts</code> census 19 builtin / 0 none / 0 retired). Inherits TASK-190 family tokens.
   </footer>
 </main>
 </body>

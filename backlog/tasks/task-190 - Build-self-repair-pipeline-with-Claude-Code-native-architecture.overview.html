@@ -80,7 +80,7 @@
     <a href="task-190.30.overview.html"><span class="dot"></span> 190.30 · classifier scope</a>
     <a href="task-190.32 - Wire-classifier-author-authoring-flow-end-to-end-member-symbol-to-entry-index.authoring-flow.html"><span class="dot todo"></span> 190.32 · authoring flow</a>
     <a href="task-190.34 - Give-plan-a-permanent-limitation-concept-distinct-from-interim-workaround.taxonomy-split.html"><span class="dot"></span> 190.34 · taxonomy split</a>
-    <a href="task-190.35 - Purge-the-classifier-kind-discriminant-flatten-ClassifierSpec-to-builtin-only.flatten-plan.html"><span class="dot todo"></span> 190.35 · flatten classifier</a>
+    <a href="task-190.35 - Purge-the-classifier-kind-discriminant-flatten-ClassifierSpec-to-builtin-only.flatten-plan.html"><span class="dot"></span> 190.35 · flatten classifier</a>
     <a href="task-190.22 - Restructure-self-healing-pipeline-to-triage-→-plan-planning-only.overview.html"><span class="dot"></span> 190.22 · triage→plan split</a>
   </div>
 </nav>
@@ -158,8 +158,8 @@
   </div>
 
   <div class="callout">
-    <span class="k">Where TASK-190.35 lands</span>
-    <p>The registry's classifier once carried a <code>kind</code> tag choosing between a stub, a real check, and a retired check — but the catalog is now entirely real checks (18 builtins, one inert stub, no retirements). 190.35 <b>flattens the tag away</b> so every classifier is a plain <code>{ function_name, min_confidence }</code>, converts the lone stub into a firing check, and makes retirement <b>delete the row</b> (git history is the audit) rather than mark it in place.</p>
+    <span class="k">Where TASK-190.35 landed</span>
+    <p>The registry's classifier once carried a <code>kind</code> tag choosing between a stub, a real check, and a retired check. 190.35 <b>flattened the tag away</b> (commit 431f691b): every classifier is now a plain <code>{ function_name, min_confidence }</code>, the lone stub became a firing check (so all 19 rows are permanent builtins), and retirement now <b>deletes the row</b> — a <code>delete_by_name</code> proposal that unlinks the row's <code>check_*.ts</code>, with git history as the audit — rather than marking it in place.</p>
   </div>
 
   <h2>The recent entry-point-classification sub-tasks</h2>
@@ -192,7 +192,7 @@
       <span class="doc">→ taxonomy-split.html</span>
     </a>
     <a class="tcard has" href="task-190.35 - Purge-the-classifier-kind-discriminant-flatten-ClassifierSpec-to-builtin-only.flatten-plan.html">
-      <span class="id"><span>190.35</span><span class="st todo">To Do</span></span>
+      <span class="id"><span>190.35</span><span class="st done">Done</span></span>
       <span class="ttl">Purge the classifier <code>kind</code> discriminant; flatten ClassifierSpec to builtin-only</span>
       <span class="doc">→ flatten-plan.html</span>
     </a>
