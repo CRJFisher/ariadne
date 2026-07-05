@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IA Review — The Program (Refactor Map)</title>
+<style>
+:root {
+  --ivory: #f7f3ec;
+  --oat: #ece4d6;
+  --paper: #fffdf8;
+  --slate: #2f3338;
+  --ink: #1d2024;
+  --mute: #6c6f73;
+  --faint: #9a9b97;
+  --clay: #c06d4f;
+  --olive: #6f7a4f;
+  --rust: #a8412a;
+  --work: #4a6b8a; /* work / build axis accent */
+  --concept: #7d6699; /* concept / idea axis accent */
+  --line: #d8cfbe;
+  --hair: #e4ddce;
+  --serif: ui-serif, Georgia, "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, ui-monospace, monospace;
+}
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--ivory);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .prose { max-width: 68ch; }
+
+  /* ---- cross-doc nav (top bar) ---- */
+  .crossnav {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--oat);
+    border-bottom: 1px solid var(--line);
+    padding: 10px clamp(16px, 5vw, 64px);
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px;
+  }
+  .crossnav .grouplabel {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--mute); margin-right: 4px;
+    border-left: 3px solid var(--work); padding-left: 8px;
+  }
+  .crossnav .doc-link, .crossnav .doc-active {
+    font-family: var(--mono); font-size: 12.5px; text-decoration: none;
+    padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line);
+  }
+  .crossnav .doc-link { color: var(--work); background: var(--paper); }
+  .crossnav .doc-link:hover { border-color: var(--work); }
+  .crossnav .doc-active {
+    color: var(--paper); background: var(--work); border-color: var(--work);
+    font-weight: 600;
+  }
+
+  /* ---- sticky in-page outline rail ---- */
+  .tocrail {
+    position: sticky; top: 43px; z-index: 9;
+    background: var(--ivory);
+    border-bottom: 1px solid var(--hair);
+    padding: 8px clamp(16px, 5vw, 64px);
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+  }
+  .tocrail .rail-label {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--faint); margin-right: 4px;
+  }
+  .tocrail a.chip {
+    font-family: var(--mono); font-size: 12px; text-decoration: none;
+    color: var(--slate); background: var(--paper);
+    border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px;
+  }
+  .tocrail a.chip:hover, .tocrail a.chip.active {
+    border-color: var(--clay); color: var(--rust);
+  }
+  a:focus-visible, button:focus-visible, .chip:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--work); outline-offset: 2px;
+  }
+
+  main { padding: 0 clamp(16px, 5vw, 64px) 90px; }
+  section { scroll-margin-top: 96px; }
+
+  /* ---- identity header ---- */
+  header.identity { padding: 40px 0 8px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--clay); margin: 0 0 10px;
+  }
+  header.identity h1 {
+    font-family: var(--serif); font-weight: 600; font-size: clamp(30px, 4vw, 46px);
+    line-height: 1.08; margin: 0 0 14px; color: var(--ink);
+  }
+  .byline {
+    display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
+    font-family: var(--mono); font-size: 12.5px; color: var(--mute);
+  }
+  .byline .badge {
+    background: var(--slate); color: var(--ivory); border-radius: 999px;
+    padding: 3px 11px; letter-spacing: .04em;
+  }
+  .byline .branch {
+    border: 1px solid var(--line); border-radius: 999px; padding: 3px 11px;
+    background: var(--paper);
+  }
+
+  .preamble {
+    font-family: var(--serif); font-size: 19px; line-height: 1.6;
+    color: var(--slate); margin: 22px 0 8px;
+  }
+
+  h2.sec {
+    font-family: var(--serif); font-weight: 600; font-size: clamp(21px, 2.4vw, 28px);
+    color: var(--ink); margin: 54px 0 6px; padding-top: 10px;
+  }
+  .sec-kicker {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--faint); margin: 44px 0 0;
+  }
+  figure { margin: 0; }
+  figcaption.cap {
+    font-size: 14px; color: var(--mute); margin: 12px 0 0; max-width: 78ch;
+  }
+  figcaption.cap b { color: var(--slate); }
+
+  /* ---- accent callouts ---- */
+  .callout {
+    border-left: 4px solid var(--clay);
+    background: var(--paper); border-radius: 0 10px 10px 0;
+    padding: 18px 22px; margin: 22px 0 8px;
+    box-shadow: 0 1px 2px rgba(45,51,56,.05);
+  }
+  .callout.good { border-left-color: var(--olive); background: #f4f5ec; }
+  .callout .clabel {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: .12em;
+    text-transform: uppercase; font-weight: 700; margin: 0 0 8px;
+    display: inline-flex; align-items: center; gap: 8px; color: var(--clay);
+  }
+  .callout.good .clabel { color: var(--olive); }
+  .callout .cbody { font-size: 15px; color: var(--ink); margin: 0; line-height: 1.55; }
+  .callout code, .cbody code {
+    font-family: var(--mono); font-size: .88em;
+    background: var(--oat); color: var(--ink); padding: 1px 5px; border-radius: 4px;
+  }
+  .callout.good code { background: #e7ead9; color: #40492e; }
+
+  /* inverted terminal-rule callout */
+  .callout.terminal {
+    border-left: 4px solid var(--slate);
+    background: var(--slate); color: var(--ivory);
+    border-radius: 0 10px 10px 0; padding: 20px 24px; margin: 22px 0 8px;
+  }
+  .callout.terminal .clabel { color: #d8b9a6; }
+  .callout.terminal .cbody { color: var(--ivory); }
+  .callout.terminal code {
+    background: #3d4249; color: #f0d9c9; padding: 1px 5px; border-radius: 4px;
+    font-family: var(--mono); font-size: .88em;
+  }
+  .callout.terminal b { color: #fff; }
+
+  /* ---- diagram shells ---- */
+  .diagram {
+    background: var(--paper); border: 1px solid var(--hair); border-radius: 14px;
+    padding: 20px; margin: 16px 0 0;
+  }
+  .diagram svg { display: block; width: 100%; height: auto; }
+  .ba-grid {
+    display: grid; grid-template-columns: 1fr auto 1fr; gap: 0; align-items: stretch;
+  }
+  .ba-panel { padding: 4px 14px; min-width: 0; }
+  .ba-panel h3 {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--mute); margin: 0 0 10px; font-weight: 700;
+  }
+  .ba-divider {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: var(--clay); font-size: 26px; padding: 0 6px; border-left: 1px dashed var(--line);
+    border-right: 1px dashed var(--line);
+  }
+  .ba-divider .arw-label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .12em; color: var(--faint);
+    writing-mode: vertical-rl; text-orientation: mixed; margin-top: 8px;
+  }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 16px 4px 0;
+    font-family: var(--mono); font-size: 11.5px; color: var(--mute);
+  }
+  .legend .lk { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .sw { width: 13px; height: 13px; border-radius: 3px; border: 1px solid rgba(0,0,0,.15); }
+
+  /* ---- ordering DAG + detail registry ---- */
+  .dag-wrap { display: grid; grid-template-columns: 1.55fr 1fr; gap: 18px; align-items: start; }
+  .dag-svg-shell {
+    background: var(--paper); border: 1px solid var(--hair); border-radius: 14px; padding: 14px;
+  }
+  .dag-node { cursor: pointer; }
+  .dag-node rect { transition: stroke .15s, stroke-width .15s; }
+  .dag-node.active rect { stroke: var(--clay); stroke-width: 2.5; }
+  .detail-panel {
+    position: sticky; top: 96px;
+    background: var(--paper); border: 1px solid var(--hair); border-radius: 14px;
+    padding: 18px 20px;
+  }
+  .detail-panel .dp-kicker {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--faint); margin: 0 0 6px;
+  }
+  .detail-panel h3 {
+    font-family: var(--serif); font-size: 19px; color: var(--ink); margin: 0 0 4px; font-weight: 600;
+  }
+  .detail-panel .dp-meta {
+    display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 12px;
+  }
+  .dp-meta .pill {
+    font-family: var(--mono); font-size: 11px; padding: 3px 9px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--ivory); color: var(--slate);
+  }
+  .dp-meta .pill.risk-low { border-color: var(--olive); color: #46502e; background: #eef1e2; }
+  .dp-meta .pill.risk-med { border-color: var(--clay); color: #7a3d26; background: #f6e6de; }
+  .dp-meta .pill.entry { border-color: var(--work); color: #2f4a63; background: #e4ecf3; }
+  .detail-panel .dp-body { font-size: 14px; color: var(--ink); margin: 0 0 10px; }
+  .detail-panel .dp-target {
+    font-family: var(--mono); font-size: 12px; color: var(--mute);
+    border-top: 1px dashed var(--line); padding-top: 10px; margin: 0;
+  }
+  .detail-panel .dp-target code { color: var(--rust); background: var(--oat); padding: 1px 4px; border-radius: 4px; }
+
+  /* ---- area register matrix ---- */
+  .matrix {
+    width: 100%; border-collapse: collapse; margin: 16px 0 0;
+    font-size: 14px; background: var(--paper); border: 1px solid var(--hair);
+    border-radius: 14px; overflow: hidden;
+  }
+  .matrix thead th {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--mute); text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line);
+    background: var(--ivory);
+  }
+  .matrix th.center, .matrix td.center { text-align: center; }
+  .matrix tbody td { padding: 13px 14px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+  .matrix tbody tr:last-child td { border-bottom: none; }
+  .matrix .area-id {
+    font-family: var(--mono); font-weight: 700; color: var(--work); white-space: nowrap;
+  }
+  .matrix .area-name { color: var(--ink); }
+  .matrix .unlocks { color: var(--mute); font-size: 13px; }
+  .glyph-eff {
+    font-family: var(--mono); font-weight: 700; font-size: 13px;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 6px;
+  }
+  .glyph-eff.m { background: #eef1e2; color: #46502e; }
+  .glyph-eff.l { background: #f6e6de; color: #7a3d26; }
+  .risk-dot {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--mono); font-size: 12px;
+  }
+  .risk-dot::before { content: ""; width: 11px; height: 11px; border-radius: 50%; }
+  .risk-dot.low { color: #46502e; }
+  .risk-dot.low::before { background: var(--olive); }
+  .risk-dot.med { color: #7a3d26; }
+  .risk-dot.med::before { background: var(--clay); }
+
+  /* ---- pro/con grid ---- */
+  .procon {
+    background: var(--paper); border: 1px solid var(--hair); border-radius: 14px;
+    padding: 6px 20px 16px; margin: 16px 0 0;
+  }
+  .procon .pc-head, .procon .pc-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 26px;
+  }
+  .procon .pc-head { padding: 14px 0 10px; border-bottom: 1px solid var(--line); }
+  .procon .pc-head h3 {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+    margin: 0; font-weight: 700;
+  }
+  .procon .pc-head .win { color: var(--olive); }
+  .procon .pc-head .lose { color: var(--rust); }
+  .procon .pc-row { padding: 12px 0; border-bottom: 1px solid var(--hair); }
+  .procon .pc-row:last-child { border-bottom: none; }
+  .procon .pro, .procon .con { position: relative; padding-left: 20px; font-size: 14px; color: var(--ink); }
+  .procon .pro::before, .procon .con::before {
+    content: ""; position: absolute; left: 0; top: 6px;
+    width: 11px; height: 11px; border-radius: 50%;
+  }
+  .procon .pro::before { background: var(--olive); }
+  .procon .con::before { background: var(--rust); }
+  .procon code { font-family: var(--mono); font-size: .85em; background: var(--oat); color: var(--ink); padding: 1px 5px; border-radius: 4px; }
+
+  /* ---- code panel (exceptions) ---- */
+  .code {
+    background: #24282d; border-radius: 12px; overflow: hidden; margin: 16px 0 0;
+    border: 1px solid #33383e;
+  }
+  .code .file-label {
+    font-family: var(--mono); font-size: 11.5px; color: #9aa0a8;
+    padding: 10px 16px; border-bottom: 1px solid #33383e; letter-spacing: .04em;
+    background: #1e2226;
+  }
+  .code pre {
+    margin: 0; padding: 16px 18px; overflow-x: auto;
+    font-family: var(--mono); font-size: 13px; line-height: 1.65; color: #d6dae0;
+  }
+  .code .cm { color: #7c8590; font-style: italic; }
+  .code .fn { color: #d7b48a; }
+  .code .kw { color: #a3b899; }
+  .code .str { color: #c9a86a; }
+  .code .hl { color: #e6a07f; font-weight: 600; }
+  .code .dim { color: #6a7079; }
+
+  /* ---- collapsible disclosure ---- */
+  details.disc {
+    background: var(--paper); border: 1px solid var(--hair); border-radius: 12px;
+    margin: 16px 0 0; padding: 0;
+  }
+  details.disc summary {
+    list-style: none; cursor: pointer; padding: 15px 18px;
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 13px; color: var(--slate);
+  }
+  details.disc summary::-webkit-details-marker { display: none; }
+  details.disc summary::before {
+    content: ""; width: 8px; height: 8px; border-right: 2px solid var(--clay);
+    border-bottom: 2px solid var(--clay); transform: rotate(-45deg); transition: transform .18s;
+    flex: none;
+  }
+  details.disc[open] summary::before { transform: rotate(45deg); }
+  details.disc .disc-body {
+    padding: 4px 18px 18px; font-size: 14px; color: var(--ink); border-top: 1px solid var(--hair);
+  }
+  details.disc .disc-body p { max-width: 78ch; margin: 12px 0; color: var(--mute); }
+  details.disc .disc-body code { font-family: var(--mono); font-size: .88em; background: var(--oat); color: var(--ink); padding: 1px 5px; border-radius: 4px; }
+  details.disc .disc-body strong { color: var(--slate); }
+
+  /* ---- out-of-scope list ---- */
+  .oos-list { list-style: none; margin: 8px 0 0; padding: 0; }
+  .oos-list li {
+    display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start;
+    padding: 8px 0; font-size: 14px; color: var(--ink);
+  }
+  .oos-list li::before {
+    content: "\2717"; color: var(--rust); font-weight: 700; font-family: var(--mono);
+    line-height: 1.5;
+  }
+  .oos-list code { font-family: var(--mono); font-size: .88em; background: var(--oat); color: var(--ink); padding: 1px 5px; border-radius: 4px; }
+  .oos-list .oos-tail { color: var(--mute); }
+
+  /* ---- provenance footer ---- */
+  footer.prov {
+    margin: 70px 0 0; padding: 22px 0 0; border-top: 1px solid var(--line);
+    font-family: var(--mono); font-size: 12px; color: var(--faint); line-height: 1.7;
+  }
+  footer.prov .plabel {
+    font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--mute);
+    display: block; margin-bottom: 8px;
+  }
+  footer.prov .files code { color: var(--mute); display: block; }
+
+  svg text { font-family: var(--mono); }
+
+  @media (max-width: 860px) {
+    .ba-grid { grid-template-columns: 1fr; }
+    .ba-divider { flex-direction: row; border: none; border-top: 1px dashed var(--line); border-bottom: 1px dashed var(--line); padding: 8px 0; }
+    .ba-divider .arw-label { writing-mode: horizontal-tb; margin: 0 0 0 8px; }
+    .dag-wrap { grid-template-columns: 1fr; }
+    .detail-panel { position: static; }
+    .procon .pc-head, .procon .pc-row { grid-template-columns: 1fr; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="crossnav" aria-label="Related documents">
+  <span class="grouplabel">IA Review</span>
+  <a class="doc-link" href="ia-review.information-architecture.structure-vs-purpose.html">The picture (structure vs purpose)</a>
+  <a class="doc-active" href="ia-review.refactor-program.program-map.html" aria-current="page">The program (refactor map)</a>
+</nav>
+
+<nav class="tocrail" aria-label="On this page">
+  <span class="rail-label">On this page</span>
+  <a class="chip" href="#shape">Shape of the change</a>
+  <a class="chip" href="#order">Ordered program</a>
+  <a class="chip" href="#register">Area register</a>
+  <a class="chip" href="#ruling">Dotted-language ruling</a>
+  <a class="chip" href="#scope">Out of scope</a>
+</nav>
+
+<main>
+  <header class="identity">
+    <p class="eyebrow">IA Review &middot; Refactor Program</p>
+    <h1>The program: seven areas, one ordering, one ruling</h1>
+    <div class="byline">
+      <span class="badge">packages/core &middot; types &middot; mcp &middot; skill-fs</span>
+      <span class="branch">10 of 12 routing drills fail today</span>
+      <span>constitution: no shims &middot; git mv preserves history</span>
+    </div>
+  </header>
+
+  <p class="preamble prose">This is the plan that fixes what the review found. It is not a rewrite &mdash; the pipeline's three-stage shape stays exactly as it is. The work is surgery one level down: pull the <code>detect_language</code> function out into a single honest home, break the 800-line files into precisely-named pieces, move each hidden language rule into the repo's own <code>feature.language.ts</code> naming convention, and delete about 450 lines of dead type code that nothing uses. Seven areas do this, and their order matters: one area unblocks two others, so the plan starts with the smallest, highest-leverage change (unifying <code>detect_language</code>) and fans out from there. A key up-front ruling settles a recurring argument: keep the dotted-suffix convention as the default, do not switch to per-language folders &mdash; with three narrow, already-enforced exceptions. Everything lands whole, no compatibility shims, history preserved through <code>git mv</code>.</p>
+
+  <!-- ============ SECTION A ============ -->
+  <p class="sec-kicker">A &middot; The shape of the change</p>
+  <h2 class="sec" id="shape">Same skeleton, honest interiors</h2>
+  <figure>
+    <div class="diagram">
+      <div class="ba-grid">
+        <!-- CURRENT PANEL -->
+        <div class="ba-panel">
+          <h3>Current</h3>
+          <svg viewBox="0 0 420 360" role="img" aria-label="Current structure: index_single_file hub, a 867-line classification megafile, three forked detect_language copies, a neutral-named all-Rust file, and a dead types island.">
+            <defs>
+              <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="#6c6f73"/>
+              </marker>
+            </defs>
+            <!-- index_single_file hub (modified = clay) -->
+            <rect x="24" y="24" width="200" height="66" rx="10" fill="#f6e6de" stroke="#c06d4f" stroke-width="1.6"/>
+            <text x="124" y="48" text-anchor="middle" font-size="12" font-weight="700" fill="#1d2024">index_single_file.ts</text>
+            <text x="124" y="66" text-anchor="middle" font-size="9.5" fill="#6c6f73">orchestrator + type-hub</text>
+            <text x="124" y="80" text-anchor="middle" font-size="9.5" fill="#6c6f73">+ displaced dispatch</text>
+
+            <!-- megafile (modified) -->
+            <rect x="244" y="24" width="152" height="82" rx="10" fill="#f6e6de" stroke="#c06d4f" stroke-width="1.6"/>
+            <text x="320" y="46" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1d2024">extract_entry_</text>
+            <text x="320" y="60" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1d2024">point_diagnostics</text>
+            <text x="320" y="76" text-anchor="middle" font-size="9" fill="#a8412a">867 LOC megafile</text>
+            <text x="320" y="90" text-anchor="middle" font-size="8.5" fill="#6c6f73">detect_language #1 +</text>
+            <text x="320" y="101" text-anchor="middle" font-size="8.5" fill="#6c6f73">build_signature + count_tree</text>
+
+            <!-- three forked detect_language copies (removed/dissolved = rust) -->
+            <rect x="24" y="132" width="372" height="58" rx="10" fill="#f2ddd6" stroke="#a8412a" stroke-width="1.6" stroke-dasharray="5 3"/>
+            <text x="210" y="156" text-anchor="middle" font-size="11" font-weight="700" fill="#7a2e1c">3 forked detect_language copies</text>
+            <text x="210" y="174" text-anchor="middle" font-size="9" fill="#7a2e1c">nullable &middot; throwing &middot; silent-default-to-TypeScript (latent mislabel bug)</text>
+
+            <!-- path_resolution neutral name (modified) -->
+            <rect x="24" y="212" width="200" height="52" rx="10" fill="#f6e6de" stroke="#c06d4f" stroke-width="1.6"/>
+            <text x="124" y="234" text-anchor="middle" font-size="11" font-weight="700" fill="#1d2024">path_resolution.ts</text>
+            <text x="124" y="251" text-anchor="middle" font-size="9" fill="#6c6f73">neutral name &middot; 100% Rust</text>
+
+            <!-- dead types island (removed) -->
+            <rect x="244" y="212" width="152" height="52" rx="10" fill="#f2ddd6" stroke="#a8412a" stroke-width="1.6" stroke-dasharray="5 3"/>
+            <text x="320" y="234" text-anchor="middle" font-size="11" font-weight="700" fill="#7a2e1c">packages/types</text>
+            <text x="320" y="251" text-anchor="middle" font-size="9" fill="#7a2e1c">dead island ~450 LOC</text>
+
+            <!-- edges: builtins depend upward into megafile -->
+            <line x1="224" y1="57" x2="244" y2="60" stroke="#6c6f73" stroke-width="1.4" marker-end="url(#arrA)"/>
+            <text x="24" y="292" font-size="9" fill="#9a9b97">14 builtins import detect_language from the megafile</text>
+            <line x1="124" y1="90" x2="124" y2="132" stroke="#6c6f73" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#arrA)"/>
+            <line x1="320" y1="106" x2="230" y2="132" stroke="#6c6f73" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#arrA)"/>
+          </svg>
+        </div>
+
+        <div class="ba-divider">
+          <span aria-hidden="true">&rarr;</span>
+          <span class="arw-label">SPLIT &amp; RE-HOME</span>
+        </div>
+
+        <!-- PLANNED PANEL -->
+        <div class="ba-panel">
+          <h3>Planned</h3>
+          <svg viewBox="0 0 420 360" role="img" aria-label="Planned structure: a single detect_language leaf with an assert_language wrapper, one parse dispatch point, capture_types extracted, the megafile split into named leaves, a dotted path_resolution.rust.ts, and the dead island deleted.">
+            <defs>
+              <marker id="arrB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="#6c6f73"/>
+              </marker>
+            </defs>
+            <!-- detect_language leaf (added = olive) -->
+            <rect x="24" y="24" width="180" height="62" rx="10" fill="#eef1e2" stroke="#6f7a4f" stroke-width="1.6"/>
+            <text x="114" y="46" text-anchor="middle" font-size="12" font-weight="700" fill="#1d2024">detect_language.ts</text>
+            <text x="114" y="63" text-anchor="middle" font-size="9" fill="#46502e">nullable core +</text>
+            <text x="114" y="76" text-anchor="middle" font-size="9" fill="#46502e">assert_language wrapper</text>
+
+            <!-- parse_file (added) -->
+            <rect x="224" y="24" width="172" height="62" rx="10" fill="#eef1e2" stroke="#6f7a4f" stroke-width="1.6"/>
+            <text x="310" y="46" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1d2024">project/parse_file.ts</text>
+            <text x="310" y="63" text-anchor="middle" font-size="9" fill="#46502e">one parse-dispatch</text>
+            <text x="310" y="76" text-anchor="middle" font-size="9" fill="#46502e">point</text>
+
+            <!-- capture_types (added) -->
+            <rect x="24" y="106" width="180" height="52" rx="10" fill="#eef1e2" stroke="#6f7a4f" stroke-width="1.6"/>
+            <text x="114" y="128" text-anchor="middle" font-size="11" font-weight="700" fill="#1d2024">capture_types.ts</text>
+            <text x="114" y="145" text-anchor="middle" font-size="8.5" fill="#46502e">18 upward imports flip direction</text>
+
+            <!-- megafile split (added) -->
+            <rect x="224" y="106" width="172" height="90" rx="10" fill="#eef1e2" stroke="#6f7a4f" stroke-width="1.6"/>
+            <text x="310" y="126" text-anchor="middle" font-size="9.5" font-weight="700" fill="#1d2024">megafile split &rarr;</text>
+            <text x="310" y="141" text-anchor="middle" font-size="8.5" fill="#46502e">derive_syntactic_features</text>
+            <text x="310" y="153" text-anchor="middle" font-size="8.5" fill="#46502e">derive_definition_features</text>
+            <text x="310" y="165" text-anchor="middle" font-size="8.5" fill="#46502e">attach_unindexed_test_grep</text>
+            <text x="310" y="180" text-anchor="middle" font-size="8.5" fill="#46502e">count_tree_size / build_signature</text>
+            <text x="310" y="192" text-anchor="middle" font-size="8" fill="#6c6f73">&rarr; trace_call_graph/</text>
+
+            <!-- dotted path_resolution (added, dotted rename) -->
+            <rect x="24" y="216" width="200" height="52" rx="10" fill="#eef1e2" stroke="#6f7a4f" stroke-width="1.6"/>
+            <text x="124" y="238" text-anchor="middle" font-size="11" font-weight="700" fill="#1d2024">path_resolution.rust.ts</text>
+            <text x="124" y="255" text-anchor="middle" font-size="9" fill="#46502e">dotted &middot; git mv, zero content change</text>
+
+            <!-- dead island deleted (removed) -->
+            <rect x="244" y="216" width="152" height="52" rx="10" fill="#f2ddd6" stroke="#a8412a" stroke-width="1.6" stroke-dasharray="5 3"/>
+            <text x="320" y="238" text-anchor="middle" font-size="11" font-weight="700" fill="#7a2e1c">dead island</text>
+            <text x="320" y="255" text-anchor="middle" font-size="9" fill="#7a2e1c">deleted</text>
+
+            <!-- edges -->
+            <line x1="204" y1="55" x2="224" y2="55" stroke="#6c6f73" stroke-width="1.4" marker-end="url(#arrB)"/>
+            <line x1="114" y1="86" x2="114" y2="106" stroke="#6c6f73" stroke-width="1.4" marker-end="url(#arrB)"/>
+            <text x="24" y="294" font-size="9" fill="#9a9b97">builtins now import from one routing-obvious leaf</text>
+          </svg>
+        </div>
+      </div>
+      <div class="legend" aria-hidden="true">
+        <span class="lk"><span class="sw" style="background:#eef1e2;border-color:#6f7a4f;"></span> added (olive)</span>
+        <span class="lk"><span class="sw" style="background:#f2ddd6;border-color:#a8412a;border-style:dashed;"></span> removed / dissolved (rust)</span>
+        <span class="lk"><span class="sw" style="background:#f6e6de;border-color:#c06d4f;"></span> modified (clay)</span>
+      </div>
+    </div>
+    <figcaption class="cap"><b>The program does not move a single boundary.</b> It splits hubs and megafiles into named leaves and re-homes displaced dispatch, so the change reads as "same skeleton, honest interiors." No zoomed-out context map sits here: the before/after already shows the whole affected system, and the picture page (structure vs purpose) carries the map &mdash; a second stacked map would only duplicate these nodes.</figcaption>
+  </figure>
+
+  <!-- ============ SECTION B ============ -->
+  <p class="sec-kicker">B &middot; The seven areas as an ordered program</p>
+  <h2 class="sec" id="order">Order the seven areas by what unblocks what</h2>
+  <div class="dag-wrap">
+    <div class="dag-svg-shell">
+      <svg viewBox="0 0 560 380" role="img" aria-label="Ordering dependency graph: Area 1 unblocks Areas 3 and 4; Area 4 unblocks Area 7; Area 5 unblocks Area 6; Area 2 stands alone. Areas 1, 2, and 5 are independent starting points.">
+        <defs>
+          <marker id="dagArr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#6c6f73"/>
+          </marker>
+        </defs>
+        <!-- edges (drawn first, under nodes) -->
+        <line x1="150" y1="66" x2="260" y2="120" stroke="#6c6f73" stroke-width="1.6" marker-end="url(#dagArr)"/>
+        <line x1="150" y1="66" x2="260" y2="212" stroke="#6c6f73" stroke-width="1.6" marker-end="url(#dagArr)"/>
+        <line x1="384" y1="238" x2="440" y2="290" stroke="#6c6f73" stroke-width="1.6" marker-end="url(#dagArr)"/>
+        <line x1="150" y1="252" x2="150" y2="298" stroke="#6c6f73" stroke-width="1.6" marker-end="url(#dagArr)"/>
+
+        <!-- A1 (entry point, hot) -->
+        <g class="dag-node" data-k="A1" tabindex="0" role="button" aria-label="Area 1 detail">
+          <rect x="30" y="24" width="120" height="46" rx="10" fill="#e4ecf3" stroke="#4a6b8a" stroke-width="2"/>
+          <text x="90" y="44" text-anchor="middle" font-size="12" font-weight="700" fill="#1d2024">Area 1</text>
+          <text x="90" y="60" text-anchor="middle" font-size="9" fill="#2f4a63">detect_language</text>
+        </g>
+        <!-- A3 -->
+        <g class="dag-node" data-k="A3" tabindex="0" role="button" aria-label="Area 3 detail">
+          <rect x="260" y="98" width="120" height="46" rx="10" fill="#fffdf8" stroke="#d8cfbe" stroke-width="1.6"/>
+          <text x="320" y="118" text-anchor="middle" font-size="12" font-weight="700" fill="#1d2024">Area 3</text>
+          <text x="320" y="134" text-anchor="middle" font-size="9" fill="#6c6f73">dotted leaves</text>
+        </g>
+        <!-- A4 -->
+        <g class="dag-node" data-k="A4" tabindex="0" role="button" aria-label="Area 4 detail">
+          <rect x="260" y="190" width="120" height="46" rx="10" fill="#fffdf8" stroke="#d8cfbe" stroke-width="1.6"/>
+          <text x="320" y="210" text-anchor="middle" font-size="12" font-weight="700" fill="#1d2024">Area 4</text>
+          <text x="320" y="226" text-anchor="middle" font-size="9" fill="#6c6f73">megafile split</text>
+        </g>
+        <!-- A7 -->
+        <g class="dag-node" data-k="A7" tabindex="0" role="button" aria-label="Area 7 detail">
+          <rect x="440" y="268" width="120" height="46" rx="10" fill="#fffdf8" stroke="#d8cfbe" stroke-width="1.6"/>
+          <text x="500" y="288" text-anchor="middle" font-size="12" font-weight="700" fill="#1d2024">Area 7</text>
+          <text x="500" y="304" text-anchor="middle" font-size="9" fill="#6c6f73">MCP split</text>
+        </g>
+        <!-- A5 (entry point) -->
+        <g class="dag-node" data-k="A5" tabindex="0" role="button" aria-label="Area 5 detail">
+          <rect x="90" y="206" width="120" height="46" rx="10" fill="#e4ecf3" stroke="#4a6b8a" stroke-width="2"/>
+          <text x="150" y="226" text-anchor="middle" font-size="12" font-weight="700" fill="#1d2024">Area 5</text>
+          <text x="150" y="242" text-anchor="middle" font-size="9" fill="#2f4a63">types package</text>
+        </g>
+        <!-- A6 -->
+        <g class="dag-node" data-k="A6" tabindex="0" role="button" aria-label="Area 6 detail">
+          <rect x="90" y="298" width="120" height="46" rx="10" fill="#fffdf8" stroke="#d8cfbe" stroke-width="1.6"/>
+          <text x="150" y="318" text-anchor="middle" font-size="12" font-weight="700" fill="#1d2024">Area 6</text>
+          <text x="150" y="334" text-anchor="middle" font-size="9" fill="#6c6f73">boundaries + barrels</text>
+        </g>
+        <!-- A2 (entry point, stands alone) -->
+        <g class="dag-node" data-k="A2" tabindex="0" role="button" aria-label="Area 2 detail">
+          <rect x="418" y="30" width="132" height="52" rx="10" fill="#e4ecf3" stroke="#4a6b8a" stroke-width="2"/>
+          <text x="484" y="50" text-anchor="middle" font-size="12" font-weight="700" fill="#1d2024">Area 2</text>
+          <text x="484" y="66" text-anchor="middle" font-size="8.5" fill="#2f4a63">index_single_file restructure</text>
+          <text x="484" y="78" text-anchor="middle" font-size="8" fill="#6c6f73">(parallel &middot; widest churn)</text>
+        </g>
+        <text x="418" y="102" font-size="9" fill="#9a9b97">independent &mdash; runs in parallel</text>
+      </svg>
+    </div>
+    <aside class="detail-panel" id="dagDetail" aria-live="polite">
+      <p class="dp-kicker">Selected area</p>
+      <h3 id="dp-title">Area 1 &mdash; detect_language + parse_file</h3>
+      <div class="dp-meta" id="dp-meta"></div>
+      <p class="dp-body" id="dp-body"></p>
+      <p class="dp-target" id="dp-target"></p>
+    </aside>
+  </div>
+  <figcaption class="cap"><b>Three areas are independent starting points</b> (Areas 1, 2, 5, tinted). Area 1 goes first because it has the smallest blast radius, the highest citation count across the reports, and it unblocks Areas 3 and 4. Click any node for its effort, risk, and what it unlocks.</figcaption>
+
+  <!-- ============ SECTION C ============ -->
+  <p class="sec-kicker">C &middot; The area register</p>
+  <h2 class="sec" id="register">Effort, risk, and what each area unlocks</h2>
+  <table class="matrix">
+    <thead>
+      <tr>
+        <th>Area</th>
+        <th class="center">Effort</th>
+        <th class="center">Risk</th>
+        <th>Unlocks</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="area-id">A1</span> <span class="area-name">detect_language + parse_file</span></td>
+        <td class="center"><span class="glyph-eff m" title="Medium effort">M</span></td>
+        <td class="center"><span class="risk-dot low">low</span></td>
+        <td class="unlocks">5th-language addition, pipeline-boundary hygiene, a latent-bug fix &mdash; highest-leverage single fix</td>
+      </tr>
+      <tr>
+        <td><span class="area-id">A2</span> <span class="area-name">index_single_file restructure</span></td>
+        <td class="center"><span class="glyph-eff l" title="Large effort">L</span></td>
+        <td class="center"><span class="risk-dot med">medium</span></td>
+        <td class="unlocks">routing inside stage 1, correct dependency direction &mdash; widest import churn in core</td>
+      </tr>
+      <tr>
+        <td><span class="area-id">A3</span> <span class="area-name">dotted leaves in resolution</span></td>
+        <td class="center"><span class="glyph-eff m" title="Medium effort">M</span></td>
+        <td class="center"><span class="risk-dot low">low&ndash;med</span></td>
+        <td class="unlocks">the call-resolution axis for a 5th language</td>
+      </tr>
+      <tr>
+        <td><span class="area-id">A4</span> <span class="area-name">classification megafile split</span></td>
+        <td class="center"><span class="glyph-eff m" title="Medium effort">M</span></td>
+        <td class="center"><span class="risk-dot low">low</span></td>
+        <td class="unlocks">routing in stage 3, kills a cross-package divergence</td>
+      </tr>
+      <tr>
+        <td><span class="area-id">A5</span> <span class="area-name">types package</span></td>
+        <td class="center"><span class="glyph-eff l" title="Large effort">L</span></td>
+        <td class="center"><span class="risk-dot low">low</span></td>
+        <td class="unlocks">an honest shared vocabulary; removes ~450 LOC of dead public API</td>
+      </tr>
+      <tr>
+        <td><span class="area-id">A6</span> <span class="area-name">boundaries + barrels</span></td>
+        <td class="center"><span class="glyph-eff m" title="Medium effort">M</span></td>
+        <td class="center"><span class="risk-dot med">medium</span></td>
+        <td class="unlocks">an enforceable stage order &mdash; touches the resolution hot path</td>
+      </tr>
+      <tr>
+        <td><span class="area-id">A7</span> <span class="area-name">MCP decomposition</span></td>
+        <td class="center"><span class="glyph-eff m" title="Medium effort">M</span></td>
+        <td class="center"><span class="risk-dot low">low</span></td>
+        <td class="unlocks">testable CLI parsing, per-concern routing in the agent-facing tools</td>
+      </tr>
+    </tbody>
+  </table>
+  <figcaption class="cap"><b>The program is dominated by M-effort / low-risk moves.</b> Only Area 2 (widest import churn) and Area 6 (resolution hot path) carry medium risk.</figcaption>
+
+  <aside class="callout">
+    <p class="clabel">Constitution constraint</p>
+    <p class="cbody">Everything lands at once. No shims, no re-exports, no transitional aliases &mdash; update all callers in the same commit, and use <code>git mv</code> for every rename so history survives.</p>
+  </aside>
+
+  <!-- ============ SECTION D ============ -->
+  <p class="sec-kicker">D &middot; The dotted-language ruling</p>
+  <h2 class="sec" id="ruling">Keep dotted <code>feature.language.ts</code>; prohibit language sub-folders</h2>
+  <div class="procon">
+    <div class="pc-head">
+      <h3 class="win">Dotted <code>feature.language.ts</code> &mdash; keep</h3>
+      <h3 class="lose">Language sub-folder <code>feature/language.ts</code> &mdash; reject</h3>
+    </div>
+    <div class="pc-row">
+      <div class="pro">Routing: <code>import_resolution.python.ts</code> is one unambiguous hop in a fuzzy finder.</div>
+      <div class="con">Routing: <code>import_resolution/python.ts</code> yields N indistinguishable <code>python.ts</code> files.</div>
+    </div>
+    <div class="pc-row">
+      <div class="pro">Editor adjacency: feature-primary names sort every language variant together.</div>
+      <div class="con">Language-primary folders scatter the same feature across N directories.</div>
+    </div>
+    <div class="pc-row">
+      <div class="pro">Test colocation: the hook's stacked-suffix grammar (<code>.python.integration.test.ts</code>) is built for dotted names &mdash; 40+ colocated dotted test files already.</div>
+      <div class="con">Sub-folders orphan the shared marshaller from its per-language leaves.</div>
+    </div>
+    <div class="pc-row">
+      <div class="pro">Shared-logic homing: the neutral <code>feature.ts</code> marshaller sits beside its dotted leaves.</div>
+      <div class="con">Per-language top-level modules additionally invert the intention tree &mdash; stages, not languages, are the module layout.</div>
+    </div>
+  </div>
+
+  <aside class="callout terminal">
+    <p class="clabel">Terminal rule &mdash; record in <code>.claude/rules/file-naming.md</code></p>
+    <p class="cbody">Dotted suffix is the default. Prefix sub-folders only for shared-base hierarchies; <code>builtins/</code> keeps language-in-<code>group_id</code>; <code>types</code> keeps annotated unions. Language sub-folders and per-language top-level modules are <b>prohibited</b>. The defect is never the mechanism &mdash; it is its bypass.</p>
+  </aside>
+
+  <figure>
+    <div class="code">
+      <div class="file-label">the three sanctioned exceptions &mdash; not counter-evidence</div>
+<pre><span class="cm">// 1 &mdash; shared-base sub-folder: a genuine two-language base class</span>
+index_single_file/scopes/extractors/
+  <span class="hl">javascript_typescript_scope_boundary_extractor.ts</span>   <span class="cm"># no single dotted suffix can name it</span>
+  <span class="dim">// carved out in .claude/hooks/file_naming.ts (EXTRACTOR_DIRS)</span>
+
+<span class="cm">// 2 &mdash; builtins/: language-in-group_id + inline guard, hook-enforced</span>
+classify_entry_points/builtins/
+  <span class="hl">check_framework-lifecycle-override.ts</span>   <span class="cm"># filename === group_id</span>
+  <span class="dim">// KEBAB_FILENAME_DIRS=["builtins"]; regex has no dot alternation &mdash;</span>
+  <span class="dim">// check_….python.ts is structurally rejected. Uses an inline detect_language guard.</span>
+
+<span class="cm">// 3 &mdash; packages/types: embedded annotated unions</span>
+types/src/entry_point.ts
+  ReceiverKind.type_cast   <span class="kw">/** <span class="hl">@language</span> typescript */</span>
+  dunder_protocol          <span class="kw">/** <span class="hl">@language</span> python */</span>
+  <span class="dim">// union members can't be additively contributed from separate files &mdash;</span>
+  <span class="dim">// the fix is a grep-able @language convention, not structure.</span>
+</pre>
+    </div>
+    <figcaption class="cap"><b>Keep the dotted mechanism as the default; the routing test decides it.</b> The three exceptions are part of the answer, not against it &mdash; each is already hook-enforced.</figcaption>
+  </figure>
+
+  <!-- ============ SECTION E ============ -->
+  <p class="sec-kicker">E &middot; Out of scope &amp; the small-items tail</p>
+  <h2 class="sec" id="scope">What the program deliberately does not touch</h2>
+  <aside class="callout good">
+    <p class="clabel">Deliberately bounded</p>
+    <p class="cbody">Five categories are cut as speculative or human-owned surface; separately, 36 mechanical renames, moves, and deletions are consolidated out of the seven program areas into one table in the source document.</p>
+  </aside>
+  <ul class="oos-list">
+    <li>Registry <code>group_id</code> migrations &mdash; routed to the human-owned <code>reconcile-registry</code> flow.</li>
+    <li><code>profiler.ts</code> hierarchical-timer split &mdash; rated not-urgent under YAGNI; only the shared stage-label constant lands.</li>
+    <li><code>import_graph.ts</code> internal cache split &mdash; the relocation in Area 6 is sufficient; a further split is speculative.</li>
+    <li>Classifier-authoring scaffolding &mdash; pipeline-capability work, not IA restructuring.</li>
+    <li><code>ProjectManager</code> watch-wiring split &mdash; watch, do not split, at 149 LOC.</li>
+  </ul>
+
+  <details class="disc">
+    <summary>The 36-row small-items tail &mdash; where it lives, and why two rows split</summary>
+    <div class="disc-body">
+      <p>The consolidated mechanical renames, moves, deletions, and one-line fixes are not re-rendered here; they live as the single 36-row table at the end of <code>ia-review.refactor-program.md</code>. Each is verified and needs no design decision beyond what the row states.</p>
+      <p><strong>Rows 18 and 19 look alike but route differently.</strong> Row 18 widens <code>check_framework-lifecycle-override.ts</code>'s gate to include <code>javascript</code> &mdash; a direct code edit, since <code>check_*.ts</code> bodies are ordinary repo code and the registry row is unchanged. Row 19 redefines a rule's match pattern, so it routes through the human-owned <code>reconcile-registry</code> flow.</p>
+    </div>
+  </details>
+
+  <footer class="prov">
+    <span class="plabel">Sources read</span>
+    <div class="files">
+      <code>backlog/drafts/ia-review.refactor-program.md &mdash; diagnosis, seven areas, ordering DAG, decisions, out-of-scope, small items</code>
+      <code>backlog/drafts/ia-review.information-architecture.md:40&ndash;54 &mdash; the dotted-vs-sub-folder ruling and the three scoped exceptions</code>
+    </div>
+  </footer>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  var DETAIL = {
+    A1: {
+      title: "Area 1 — detect_language + parse_file",
+      meta: [["M effort", ""], ["low", "risk-low"], ["entry point", "entry"]],
+      body: "One honest detect_language.ts (nullable core + assert_language wrapper) and one parse dispatch point in project/parse_file.ts. Kills a DRY fork, a latent silent-default-to-TypeScript mislabel bug, and a cross-stage coupling magnet.",
+      target: "detect_language.ts, project/parse_file.ts — highest-leverage single fix"
+    },
+    A2: {
+      title: "Area 2 — index_single_file restructure",
+      meta: [["L effort", ""], ["medium", "risk-med"], ["entry point", "entry"]],
+      body: "Dissolve the type-hub orchestrator and re-home displaced dispatch. 18 files import wire types upward; capture_types.ts flips that direction. Widest import churn in core, but proceeds in parallel.",
+      target: "capture_types.ts, metadata_extractors.ts, documentation_state.ts"
+    },
+    A3: {
+      title: "Area 3 — dotted leaves in resolution",
+      meta: [["M effort", ""], ["low–med", "risk-low"]],
+      body: "Move hidden whole-language logic out of neutral bodies into dotted leaves in resolve_references/ and references/. path_resolution.ts is 100% Rust yet un-suffixed.",
+      target: "path_resolution.rust.ts (git mv), constructor.rust.ts, function_call.rust.ts, export.typescript.ts"
+    },
+    A4: {
+      title: "Area 4 — classification megafile split",
+      meta: [["M effort", ""], ["low", "risk-low"]],
+      body: "Split the 867-LOC megafile into named leaves and give call-graph helpers one owner. MCP re-implements count_tree_size/build_signature and has already diverged on arity.",
+      target: "derive_syntactic_features.ts, count_tree_size.ts / build_signature.ts → trace_call_graph/"
+    },
+    A5: {
+      title: "Area 5 — types package",
+      meta: [["L effort", ""], ["low", "risk-low"], ["entry point", "entry"]],
+      body: "Delete the dead island (~450 LOC, zero external consumers), split the stage-straddlers, and reconcile the Resolution name collision the barrel hides.",
+      target: "semantic_index.ts, resolution.ts, call_graph.ts — barrel returns to uniform export *"
+    },
+    A6: {
+      title: "Area 6 — boundaries + barrels",
+      meta: [["M effort", ""], ["medium", "risk-med"]],
+      body: "Make ownership match pipeline order: fix four layering/stage inversions, rename the misnamed ResolutionRegistry store, and repair the barrels. Touches the resolution hot path.",
+      target: "export_chain_lookup.ts, resolution_registry.ts (git mv), project/index.ts repair"
+    },
+    A7: {
+      title: "Area 7 — MCP decomposition",
+      meta: [["M effort", ""], ["low", "risk-low"]],
+      body: "Separate boot from logic and split the two four-responsibility tools. server.ts boots at module scope today, so testing three pure functions starts a server.",
+      target: "cli.ts / cli_args.ts, resolve_symbol_ref.ts, traverse_call_graph.ts"
+    }
+  };
+  var titleEl = document.getElementById("dp-title");
+  var metaEl = document.getElementById("dp-meta");
+  var bodyEl = document.getElementById("dp-body");
+  var targetEl = document.getElementById("dp-target");
+  var nodes = document.querySelectorAll(".dag-node");
+
+  function select(key) {
+    var d = DETAIL[key];
+    if (!d) return;
+    titleEl.textContent = d.title;
+    metaEl.innerHTML = d.meta.map(function (m) {
+      return '<span class="pill ' + escapeHtml(m[1]) + '">' + escapeHtml(m[0]) + "</span>";
+    }).join("");
+    bodyEl.textContent = d.body;
+    targetEl.innerHTML = "<code>" + escapeHtml(d.target) + "</code>";
+    nodes.forEach(function (n) {
+      n.classList.toggle("active", n.getAttribute("data-k") === key);
+    });
+  }
+  nodes.forEach(function (n) {
+    var key = n.getAttribute("data-k");
+    n.addEventListener("click", function () { select(key); });
+    n.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(key); }
+    });
+  });
+  select("A1");
+
+  if ("IntersectionObserver" in window) {
+    var chips = document.querySelectorAll(".tocrail a.chip");
+    var map = {};
+    chips.forEach(function (c) { map[c.getAttribute("href").slice(1)] = c; });
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          chips.forEach(function (c) { c.classList.remove("active"); });
+          var c = map[en.target.id];
+          if (c) c.classList.add("active");
+        }
+      });
+    }, { rootMargin: "-40% 0px -55% 0px" });
+    document.querySelectorAll("main section, main h2.sec").forEach(function (s) {
+      if (s.id) obs.observe(s);
+    });
+  }
+})();
+</script>
+</body>
+</html>

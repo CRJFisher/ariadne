@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Self-Healing Pipeline Review — What to Fix First</title>
+<style>
+:root {
+  --ivory: #f7f3ec;
+  --oat: #ece4d6;
+  --paper: #fffdf8;
+  --slate: #2f3338;
+  --ink: #1d2024;
+  --mute: #6c6f73;
+  --faint: #9a9b97;
+  --clay: #c06d4f;
+  --olive: #6f7a4f;
+  --rust: #a8412a;
+  --work: #4a6b8a; /* work / build axis accent */
+  --concept: #7d6699; /* concept / idea axis accent */
+  --line: #d8cfbe;
+  --hair: #e4ddce;
+  --serif: ui-serif, Georgia, "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, ui-monospace, monospace;
+}
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--ivory);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .prose { max-width: 68ch; }
+
+  /* ---- cross-doc nav (top bar) ---- */
+  .crossnav {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--oat);
+    border-bottom: 1px solid var(--line);
+    padding: 10px clamp(16px, 5vw, 64px);
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px;
+  }
+  .crossnav .grouplabel {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--mute); margin-right: 4px;
+    border-left: 3px solid var(--work); padding-left: 8px;
+  }
+  .crossnav .doc-link, .crossnav .doc-active {
+    font-family: var(--mono); font-size: 12.5px; text-decoration: none;
+    padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line);
+  }
+  .crossnav .doc-link { color: var(--work); background: var(--paper); }
+  .crossnav .doc-link:hover { border-color: var(--work); }
+  .crossnav .doc-active {
+    color: var(--paper); background: var(--work); border-color: var(--work);
+    font-weight: 600;
+  }
+
+  /* ---- sticky in-page outline rail ---- */
+  .tocrail {
+    position: sticky; top: 43px; z-index: 9;
+    background: var(--ivory);
+    border-bottom: 1px solid var(--hair);
+    padding: 8px clamp(16px, 5vw, 64px);
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+  }
+  .tocrail .rail-label {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--faint); margin-right: 4px;
+  }
+  .tocrail a.chip {
+    font-family: var(--mono); font-size: 12px; text-decoration: none;
+    color: var(--slate); background: var(--paper);
+    border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px;
+  }
+  .tocrail a.chip:hover, .tocrail a.chip.active {
+    border-color: var(--clay); color: var(--rust);
+  }
+  a:focus-visible, button:focus-visible, input:focus-visible, .chip:focus-visible {
+    outline: 2px solid var(--work); outline-offset: 2px;
+  }
+
+  main { padding: 0 clamp(16px, 5vw, 64px) 90px; }
+  section { scroll-margin-top: 96px; }
+
+  /* ---- identity header ---- */
+  header.identity { padding: 40px 0 8px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--clay); margin: 0 0 10px;
+  }
+  header.identity h1 {
+    font-family: var(--serif); font-weight: 600; font-size: clamp(30px, 4vw, 46px);
+    line-height: 1.08; margin: 0 0 14px; color: var(--ink);
+  }
+  .byline {
+    display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
+    font-family: var(--mono); font-size: 12.5px; color: var(--mute);
+  }
+  .byline .badge {
+    background: var(--slate); color: var(--ivory); border-radius: 999px;
+    padding: 3px 11px; letter-spacing: .04em;
+  }
+  .byline .branch {
+    border: 1px solid var(--line); border-radius: 999px; padding: 3px 11px;
+    background: var(--paper);
+  }
+
+  .preamble {
+    font-family: var(--serif); font-size: 19px; line-height: 1.6;
+    color: var(--slate); margin: 22px 0 8px;
+  }
+
+  h2.sec {
+    font-family: var(--serif); font-weight: 600; font-size: clamp(21px, 2.4vw, 28px);
+    color: var(--ink); margin: 54px 0 6px; padding-top: 10px;
+  }
+  .sec-kicker {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--faint); margin: 0;
+  }
+  figcaption.cap {
+    font-size: 14px; color: var(--mute); margin: 10px 0 0;
+  }
+
+  /* ---- accent callouts ---- */
+  .callout {
+    border-left: 4px solid var(--clay);
+    background: var(--paper); border-radius: 0 10px 10px 0;
+    padding: 18px 22px; margin: 20px 0 8px;
+    box-shadow: 0 1px 2px rgba(45,51,56,.05);
+  }
+  .callout.fixnow { border-left-color: var(--rust); background: #fbf1ee; }
+  .callout.trust { border-left-color: var(--olive); background: #f4f5ec; }
+  .callout .clabel {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: .12em;
+    text-transform: uppercase; font-weight: 700; margin: 0 0 8px;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .callout.fixnow .clabel { color: var(--rust); }
+  .callout.trust .clabel { color: var(--olive); }
+  .callout .cbody { font-size: 15px; color: var(--ink); margin: 0; line-height: 1.55; }
+  .callout .csub {
+    font-family: var(--mono); font-size: 12.5px; color: var(--mute);
+    margin: 10px 0 0; padding-top: 8px; border-top: 1px dashed var(--line);
+  }
+  .callout code, .tocrail code, .cbody code {
+    font-family: var(--mono); font-size: .88em;
+    background: var(--oat); color: var(--ink); padding: 1px 5px; border-radius: 4px;
+  }
+  .callout.fixnow code { background: #f3ddd6; color: #7a2e1c; }
+  .callout.trust code { background: #e7ead9; color: #40492e; }
+  .glyph { width: 15px; height: 15px; flex: none; }
+
+  /* ---- ordered action list ---- */
+  .actionlist { margin: 14px 0 8px; display: flex; flex-direction: column; gap: 12px; }
+  .action {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 14px;
+    background: var(--paper); border: 1px solid var(--hair); border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .action .badge {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--slate); color: var(--ivory);
+    font-family: var(--mono); font-weight: 700; font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .action.hot .badge { background: var(--rust); }
+  .action .a-main { min-width: 0; }
+  .action .a-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; }
+  .action .a-title {
+    font-family: var(--serif); font-size: 18px; font-weight: 600; color: var(--ink);
+    margin: 0; line-height: 1.25;
+  }
+  .a-glyph {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .a-glyph.critical { color: var(--rust); }
+  .a-glyph.major { color: var(--clay); }
+  .a-glyph.minor { color: var(--mute); }
+  .a-glyph .glyph { width: 13px; height: 13px; }
+
+  .a-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin: 12px 0 0; }
+  .sizewrap { display: flex; align-items: center; gap: 8px; min-width: 190px; }
+  .sizewrap .sz-label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); width: 34px; text-align: right;
+  }
+  .sizetrack {
+    flex: 1; height: 8px; background: var(--oat); border-radius: 999px; overflow: hidden;
+    min-width: 90px;
+  }
+  .sizebar { height: 100%; border-radius: 999px; background: var(--work); }
+  .sizebar.small { width: 30%; }
+  .sizebar.medium { width: 62%; }
+  .sizebar.large { width: 100%; background: var(--rust); }
+  .sizebar.smlarge { width: 30%; background: linear-gradient(90deg, var(--work) 0 46%, var(--clay) 54% 100%); }
+  .sz-word { font-family: var(--mono); font-size: 11px; color: var(--mute); }
+  .a-resolves {
+    font-family: var(--mono); font-size: 11.5px; color: var(--olive);
+    background: #eef0e4; border: 1px solid #d9dec4; border-radius: 999px; padding: 2px 9px;
+  }
+  .a-first {
+    font-family: var(--mono); font-size: 12px; color: var(--slate);
+    margin: 10px 0 0; line-height: 1.5;
+  }
+  .a-first b { color: var(--clay); font-weight: 700; }
+  .a-first code { font-family: var(--mono); background: var(--oat); padding: 1px 4px; border-radius: 4px; }
+
+  /* ---- interactive checklist ---- */
+  .worksheet {
+    margin: 14px 0 8px; border: 1px solid var(--hair); border-radius: 12px;
+    background: var(--paper); overflow: hidden;
+  }
+  .ws-head {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 12px 18px; background: var(--oat); border-bottom: 1px solid var(--line);
+  }
+  .ws-head .ws-title {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--slate);
+  }
+  .ws-progress {
+    font-family: var(--mono); font-size: 12.5px; color: var(--olive); font-weight: 700;
+  }
+  .ws-note { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+  .ws-row {
+    display: grid; grid-template-columns: 26px 1fr auto auto; gap: 12px; align-items: center;
+    padding: 10px 18px; border-bottom: 1px solid var(--hair);
+  }
+  .ws-row:last-child { border-bottom: none; }
+  .ws-row input[type=checkbox] { width: 17px; height: 17px; accent-color: var(--olive); cursor: pointer; }
+  .ws-row label { cursor: pointer; font-size: 14.5px; color: var(--ink); }
+  .ws-row.done label { color: var(--faint); text-decoration: line-through; }
+  .ws-row .ws-num { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+  .ws-size {
+    font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em;
+    border-radius: 999px; padding: 2px 9px; border: 1px solid var(--line); color: var(--work);
+    background: var(--ivory);
+  }
+  .ws-size.large { color: var(--rust); border-color: #e2b8ad; }
+  .ws-resolves { font-family: var(--mono); font-size: 11px; color: var(--mute); white-space: nowrap; }
+  .ws-row.flagged { background: #fbf1ee; }
+  .ws-row.flagged .flag { color: var(--rust); }
+
+  /* ---- inventory matrix grid ---- */
+  .matrixwrap { margin: 14px 0 8px; }
+  .matrix {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    background: var(--paper); border: 1px solid var(--hair); border-radius: 12px; overflow: hidden;
+    font-size: 14px;
+  }
+  .matrix th, .matrix td { padding: 12px 12px; text-align: center; }
+  .matrix thead th {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--slate); background: var(--oat); border-bottom: 1px solid var(--line);
+  }
+  .matrix thead th.famcol, .matrix tbody th { text-align: left; }
+  .matrix tbody th {
+    font-family: var(--sans); font-weight: 600; font-size: 14.5px; color: var(--ink);
+    background: var(--ivory); border-right: 1px solid var(--hair);
+  }
+  .matrix tbody th .fam-id {
+    font-family: var(--mono); font-size: 11px; color: var(--faint); margin-left: 6px;
+  }
+  .matrix tbody tr + tr th, .matrix tbody tr + tr td { border-top: 1px solid var(--hair); }
+  .cellcount {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 30px; height: 26px; padding: 0 8px; border-radius: 7px;
+    font-family: var(--mono); font-weight: 700; font-size: 14px;
+  }
+  .cellcount.zero { color: var(--faint); background: transparent; font-weight: 400; }
+  .cellcount.crit { background: #f3d7cf; color: var(--rust); }
+  .cellcount.maj { background: #efe0d6; color: var(--clay); }
+  .cellcount.min { background: var(--oat); color: var(--slate); }
+  .cellcount.inf { background: #eef0ea; color: var(--mute); }
+  .matrix td.vercell { border-left: 1px dashed var(--line); }
+  .versplit { display: inline-flex; gap: 10px; align-items: center; font-family: var(--mono); font-size: 12.5px; }
+  .versplit span { display: inline-flex; align-items: center; gap: 4px; }
+  .versplit .vc { color: var(--olive); }
+  .versplit .va { color: var(--clay); }
+  .versplit .vn { color: var(--faint); }
+  .versplit .glyph { width: 12px; height: 12px; }
+  .matrix tfoot td, .matrix tfoot th {
+    background: var(--oat); font-family: var(--mono); font-size: 12.5px; color: var(--slate);
+    border-top: 2px solid var(--line);
+  }
+  .matrix tfoot th { text-align: left; font-weight: 700; }
+
+  .matrix-legend {
+    display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 14px 0 0;
+    font-family: var(--mono); font-size: 12px; color: var(--mute);
+  }
+  .matrix-legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+  .matrix-legend .glyph { width: 14px; height: 14px; }
+  .matrix-legend .swatch {
+    width: 26px; height: 15px; border-radius: 5px; display: inline-block; vertical-align: middle;
+  }
+  .swatch.crit { background: #f3d7cf; }
+  .swatch.maj { background: #efe0d6; }
+  .swatch.min { background: var(--oat); }
+
+  /* ---- provenance footer ---- */
+  footer.provenance {
+    margin-top: 64px; padding: 20px clamp(16px, 5vw, 64px);
+    border-top: 1px solid var(--line); background: var(--oat);
+    font-family: var(--mono); font-size: 12px; color: var(--mute);
+    display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: baseline;
+  }
+  footer.provenance .plabel {
+    letter-spacing: .12em; text-transform: uppercase; color: var(--faint); font-size: 10.5px;
+  }
+  footer.provenance code { color: var(--slate); }
+
+  @media (max-width: 720px) {
+    .action { grid-template-columns: 36px 1fr; }
+    .ws-row { grid-template-columns: 22px 1fr; }
+    .ws-row .ws-size, .ws-row .ws-resolves { grid-column: 2; justify-self: start; }
+    .matrix { font-size: 12.5px; }
+    .matrix th, .matrix td { padding: 9px 7px; }
+    .versplit { flex-direction: column; gap: 3px; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<!-- icon sprite -->
+<svg style="display:none" aria-hidden="true">
+  <symbol id="ic-warn" viewBox="0 0 24 24"><path d="M12 3 L22 20 L2 20 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><line x1="12" y1="9" x2="12" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.3" r="1.1" fill="currentColor"/></symbol>
+  <symbol id="ic-major" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="7.5" x2="12" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16.4" r="1.1" fill="currentColor"/></symbol>
+  <symbol id="ic-minor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24"><path d="M4 12.5 L9.5 18 L20 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="ic-half" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5 A8.5 8.5 0 0 1 12 20.5 Z" fill="currentColor"/></symbol>
+  <symbol id="ic-dash" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+</svg>
+
+<nav class="crossnav" aria-label="Pipeline review documents">
+  <span class="grouplabel">Pipeline Review</span>
+  <a class="doc-link" href="self-healing-pipeline-review.risk-posture.html">Risk posture</a>
+  <span class="doc-active" aria-current="page">What to fix first</span>
+</nav>
+
+<nav class="tocrail" aria-label="On this page">
+  <span class="rail-label">On this page</span>
+  <a class="chip" href="#fixnow">Fix now</a>
+  <a class="chip" href="#actions">Action list</a>
+  <a class="chip" href="#worksheet">Worksheet</a>
+  <a class="chip" href="#inventory">Inventory</a>
+  <a class="chip" href="#trust">Trust</a>
+</nav>
+
+<main>
+  <header class="identity">
+    <p class="eyebrow">Self-Healing Pipeline Review · Fundable Plan</p>
+    <h1>What to fix first</h1>
+    <div class="byline">
+      <span class="badge">Generated plan</span>
+      <span class="branch">4 skills · 166 raw findings → 128 unique rows</span>
+      <span>15 ranked fixes · 1 flagged for now</span>
+      <span>2026-07-03</span>
+    </div>
+  </header>
+
+  <p class="preamble prose">Once the review's verdict lands, the only remaining question is what to fund first. The reviewers ranked fifteen fixes so the highest-leverage work sits at the top: the one item flagged for immediate attention closes a gap where a human-only surface can be written around unattended, and it happens to resolve several smaller findings at once. Every item carries the three things a funding decision needs — what it resolves, how big it is, and the first concrete step — so a fix can be picked up without re-reading the full review. Beneath the list, the complete count of every finding is laid out by skill and severity, with each finding's verification status attached, so a number stands on its own: confirmed means it was independently re-checked, adjusted means it was softened on review, and four findings were refuted outright rather than quietly dropped.</p>
+
+  <!-- ============ FIX NOW ============ -->
+  <section id="fixnow">
+    <p class="sec-kicker">The one thing to do now</p>
+    <h2 class="sec">Fix now</h2>
+    <aside class="callout fixnow" role="note">
+      <p class="clabel"><svg class="glyph"><use href="#ic-warn"/></svg> Fix now / Critical</p>
+      <p class="cbody"><code>acceptEdits</code> plus broad <code>Bash(python3:*)</code> / <code>Bash(node:*)</code> allow-rules route around the write-guard's token list — its match set is only <code>writeFileSync|appendFileSync|writeFile|appendFile</code>, so a Python <code>open(&hellip;,'w')</code> or a <code>node -e</code> copy carries no matched token and auto-accepts. An unattended agent can then write the human-owned registry. The one finding warranting immediate attention.</p>
+      <p class="csub">Lives in <code>settings.local.json</code> (this machine), not the checked-in config. Resolved by action 1 below.</p>
+    </aside>
+  </section>
+
+  <!-- ============ ACTION LIST ============ -->
+  <section id="actions">
+    <p class="sec-kicker">The ordered decision surface</p>
+    <h2 class="sec">The ranked action list</h2>
+    <figcaption class="cap prose">Fifteen fixes in dossier order — each decidable from what it resolves, its size bar, and the very first concrete step, without opening the full review.</figcaption>
+
+    <div class="actionlist">
+
+      <article class="action hot">
+        <div class="badge">1</div>
+        <div class="a-main">
+          <div class="a-head">
+            <h3 class="a-title">Close the registry-guard bypass routes &amp; test the seam</h3>
+            <span class="a-glyph critical"><svg class="glyph"><use href="#ic-warn"/></svg> resolves critical</span>
+            <span class="a-resolves">+ guard-seam major + xargs/bun minors</span>
+          </div>
+          <div class="a-meta">
+            <div class="sizewrap"><span class="sz-label">Size</span><span class="sizetrack"><span class="sizebar medium"></span></span><span class="sz-word">medium</span></div>
+          </div>
+          <p class="a-first"><b>First step:</b> extend <code>registry_write_guard.ts:53</code>'s token list (<code>cpSync|renameSync|rmSync|createWriteStream</code>) + a python/perl open-mode pattern; add <code>bun</code> and bare-path exec at <code>:77</code>; then pipe synthetic stdin through the hook and assert <code>permissionDecision:"ask"</code>, and assert the <code>Write|Edit|Bash</code> matcher. Separately narrow the runner allow-rules and drop <code>Bash(xargs sed:*)</code>.</p>
+        </div>
+      </article>
+
+      <article class="action">
+        <div class="badge">2</div>
+        <div class="a-main">
+          <div class="a-head">
+            <h3 class="a-title">Quote <code>refactor-investigator.md:3</code>'s YAML description</h3>
+            <span class="a-glyph major"><svg class="glyph"><use href="#ic-major"/></svg> resolves major</span>
+          </div>
+          <div class="a-meta">
+            <div class="sizewrap"><span class="sz-label">Size</span><span class="sizetrack"><span class="sizebar small"></span></span><span class="sz-word">small · one line</span></div>
+          </div>
+          <p class="a-first"><b>First step:</b> quote the unquoted colon-space description so <code>yaml.safe_load</code> stops raising <code>ScannerError</code> — this breaks agent loading for the step-3 workhorse until fixed.</p>
+        </div>
+      </article>
+
+      <article class="action">
+        <div class="badge">3</div>
+        <div class="a-main">
+          <div class="a-head">
+            <h3 class="a-title">Unblock the live export path</h3>
+            <span class="a-glyph major"><svg class="glyph"><use href="#ic-major"/></svg> live blocker</span>
+          </div>
+          <div class="a-meta">
+            <div class="sizewrap"><span class="sz-label">Size</span><span class="sizetrack"><span class="sizebar small"></span></span><span class="sz-word">small</span></div>
+          </div>
+          <p class="a-first"><b>First step:</b> re-mint or remove the stale pre-190.35 row <code>~/.ariadne/plan/tasks/pt-018de0f069fbfd82.json</code> that aborts even <code>--dry-run</code> export; run the dry-run to enumerate any other stale rows.</p>
+        </div>
+      </article>
+
+      <article class="action">
+        <div class="badge">4</div>
+        <div class="a-main">
+          <div class="a-head">
+            <h3 class="a-title">Fix the false safety claims</h3>
+            <span class="a-glyph major"><svg class="glyph"><use href="#ic-major"/></svg> resolves 2 majors</span>
+          </div>
+          <div class="a-meta">
+            <div class="sizewrap"><span class="sz-label">Size</span><span class="sizetrack"><span class="sizebar smlarge"></span></span><span class="sz-word">small–medium</span></div>
+          </div>
+          <p class="a-first"><b>First step:</b> add <code>backlog/docs/*.comprehension.html</code> to <code>.gitignore</code> (the claimed rule does not exist); rewrite <code>plan/SKILL.md:166-190</code> to name <code>--assignments</code> or reduce it to a pointer at prioritize; decide the backlog-boundary posture.</p>
+        </div>
+      </article>
+
+      <article class="action">
+        <div class="badge">5</div>
+        <div class="a-main">
+          <div class="a-head">
+            <h3 class="a-title">Add <code>validate_consolidation.ts</code></h3>
+            <span class="a-glyph major"><svg class="glyph"><use href="#ic-major"/></svg> resolves weakest gate</span>
+          </div>
+          <div class="a-meta">
+            <div class="sizewrap"><span class="sz-label">Size</span><span class="sizetrack"><span class="sizebar medium"></span></span><span class="sz-word">medium</span></div>
+          </div>
+          <p class="a-first"><b>First step:</b> between prioritize steps 4 and 5, write the partition assertion over <code>clusters[].member_row_ids</code> vs investigated row ids — <code>consolidation.json</code> is the only unvalidated hand-off in the chain.</p>
+        </div>
+      </article>
+
+      <article class="action">
+        <div class="badge">6</div>
+        <div class="a-main">
+          <div class="a-head">
+            <h3 class="a-title">Make triage state writes atomic + locked</h3>
+            <span class="a-glyph major"><svg class="glyph"><use href="#ic-major"/></svg> resolves concurrency major</span>
+          </div>
+          <div class="a-meta">
+            <div class="sizewrap"><span class="sz-label">Size</span><span class="sizetrack"><span class="sizebar medium"></span></span><span class="sz-word">medium</span></div>
+          </div>
+          <p class="a-first"><b>First step:</b> reuse the <code>atomic_update_registry</code> sidecar (or at minimum temp+rename like <code>latest_pointer.ts:22-30</code>) for the bare <code>writeFileSync</code>; add an interleaving test; include <code>failed</code> in the completion gate with a retry counter.</p>
+        </div>
+      </article>
+
+      <article class="action">
+        <div class="badge">7</div>
+        <div class="a-main">
+          <div class="a-head">
+            <h3 class="a-title">Give prioritize a resume story &amp; fix <code>$SCRATCH</code></h3>
+            <span class="a-glyph major"><svg class="glyph"><use href="#ic-major"/></svg> resolves resume + specialist cluster</span>
+          </div>
+          <div class="a-meta">
+            <div class="sizewrap"><span class="sz-label">Size</span><span class="sizetrack"><span class="sizebar medium"></span></span><span class="sz-word">medium</span></div>
+          </div>
+          <p class="a-first"><b>First step:</b> substitute <code>$SCRATCH</code> with <code>&lt;root&gt;/export_summary_&lt;slug&gt;.json</code> and write the skip-if-output-exists rule for steps 3/3a/7a; name a <code>refactor-comprehension-author</code> agent. Mirror the skip-existing rule in plan Pass B.</p>
+        </div>
+      </article>
+
+      <article class="action">
+        <div class="badge">8</div>
+        <div class="a-main">
+          <div class="a-head">
+            <h3 class="a-title">meta.json campaign</h3>
+            <span class="a-glyph major"><svg class="glyph"><use href="#ic-major"/></svg> resolves lint-lens gaps</span>
+          </div>
+          <div class="a-meta">
+            <div class="sizewrap"><span class="sz-label">Size</span><span class="sizetrack"><span class="sizebar medium"></span></span><span class="sz-word">medium</span></div>
+          </div>
+          <p class="a-first"><b>First step:</b> two plan/meta.json line edits (pure corrections: delete the ghost <code>registry-read</code> store, prefix the path_patterns); then author minimal meta.json for triage, prioritize, reconcile-registry with flows/effects/intentions.</p>
+        </div>
+      </article>
+
+      <article class="action">
+        <div class="badge">9</div>
+        <div class="a-main">
+          <div class="a-head">
+            <h3 class="a-title">De-duplicate contracts to single owners</h3>
+            <span class="a-glyph major"><svg class="glyph"><use href="#ic-major"/></svg> resolves theme-7 duplication</span>
+          </div>
+          <div class="a-meta">
+            <div class="sizewrap"><span class="sz-label">Size</span><span class="sizetrack"><span class="sizebar medium"></span></span><span class="sz-word">medium · mechanical</span></div>
+          </div>
+          <p class="a-first"><b>First step:</b> delete the verdict shapes from <code>triage-investigator.md:54-84</code> and the SKILL table; keep the runtime-authoritative copy, reduce the rest to pointers. Same fix for reconcile name-mode (×4) and prioritize routing (×6).</p>
+        </div>
+      </article>
+
+      <article class="action">
+        <div class="badge">10</div>
+        <div class="a-main">
+          <div class="a-head">
+            <h3 class="a-title">Harden the judge gates that mint work</h3>
+            <span class="a-glyph major"><svg class="glyph"><use href="#ic-major"/></svg> resolves 5 gate majors</span>
+          </div>
+          <div class="a-meta">
+            <div class="sizewrap"><span class="sz-label">Size</span><span class="sizetrack"><span class="sizebar large"></span></span><span class="sz-word">large · split per item</span></div>
+          </div>
+          <p class="a-first"><b>First step:</b> the sample-execution gate in <code>--stage</code> — execute the drafted classifier against frozen <code>samples/*.json</code> before insertion (smallest, highest leverage; it also seeds per-rule regression sets). Then per-cluster human approval, reject empty <code>acceptance_criteria</code>, add <code>belongs:'unsure'</code>.</p>
+        </div>
+      </article>
+
+      <article class="action">
+        <div class="badge">11</div>
+        <div class="a-main">
+          <div class="a-head">
+            <h3 class="a-title"><code>dedup_key</code> stability</h3>
+            <span class="a-glyph major"><svg class="glyph"><use href="#ic-major"/></svg> resolves loop-closure leak</span>
+          </div>
+          <div class="a-meta">
+            <div class="sizewrap"><span class="sz-label">Size</span><span class="sizetrack"><span class="sizebar smlarge"></span></span><span class="sz-word">small now / large later</span></div>
+          </div>
+          <p class="a-first"><b>First step:</b> now — document the leak next to the dedup guarantee (<code>plan/SKILL.md:27-28</code>) exactly as triage documents its cache leaks; have prioritize step 1 cross-check <code>member_symbol</code> sets. Later — re-key on the sorted <code>(file_path,name,kind)</code> set.</p>
+        </div>
+      </article>
+
+      <article class="action">
+        <div class="badge">12</div>
+        <div class="a-main">
+          <div class="a-head">
+            <h3 class="a-title">CLI hygiene sweep</h3>
+            <span class="a-glyph minor"><svg class="glyph"><use href="#ic-minor"/></svg> resolves lint minors</span>
+          </div>
+          <div class="a-meta">
+            <div class="sizewrap"><span class="sz-label">Size</span><span class="sizetrack"><span class="sizebar small"></span></span><span class="sz-word">small</span></div>
+          </div>
+          <p class="a-first"><b>First step:</b> exit-2+USAGE for usage errors across pipeline CLIs; move <code>finalize_triage.ts:63</code>'s domain refusal to exit 1; message-not-stack in <code>reconcile_registry.ts:1042</code>; add <code>AskUserQuestion</code> to triage's allowed-tools; extend reconcile's argument-hint with <code>| --stage &lt;path&gt; [--apply]</code>.</p>
+        </div>
+      </article>
+
+      <article class="action">
+        <div class="badge">13</div>
+        <div class="a-main">
+          <div class="a-head">
+            <h3 class="a-title">Drain the abstain channel + add the one metric</h3>
+            <span class="a-glyph major"><svg class="glyph"><use href="#ic-major"/></svg> resolves dead-channel major</span>
+          </div>
+          <div class="a-meta">
+            <div class="sizewrap"><span class="sz-label">Size</span><span class="sizetrack"><span class="sizebar medium"></span></span><span class="sz-word">medium</span></div>
+          </div>
+          <p class="a-first"><b>First step:</b> surface <code>uncertain[]</code> in <code>get_triage_summary.ts</code> with repeat counts; add <code>tp_stability</code> sampling in <code>prepare_triage</code>; implement (or reword) the fixed-row resurfacing promise in classifier-lifecycle.md.</p>
+        </div>
+      </article>
+
+      <article class="action">
+        <div class="badge">14</div>
+        <div class="a-main">
+          <div class="a-head">
+            <h3 class="a-title">Eval seeds before they decay</h3>
+            <span class="a-glyph major"><svg class="glyph"><use href="#ic-major"/></svg> resolves decaying-seed major</span>
+          </div>
+          <div class="a-meta">
+            <div class="sizewrap"><span class="sz-label">Size</span><span class="sizetrack"><span class="sizebar medium"></span></span><span class="sz-word">medium</span></div>
+          </div>
+          <p class="a-first"><b>First step:</b> snapshot (dispense payload, expected verdict) pairs from runs about to be pruned, seeded from <code>diff_runs</code> flips; curate the per-skill 5-case seed sets the intention lens enumerated.</p>
+        </div>
+      </article>
+
+      <article class="action">
+        <div class="badge">15</div>
+        <div class="a-main">
+          <div class="a-head">
+            <h3 class="a-title">Deletions (constitution / YAGNI)</h3>
+            <span class="a-glyph minor"><svg class="glyph"><use href="#ic-minor"/></svg> resolves dead-state minors</span>
+          </div>
+          <div class="a-meta">
+            <div class="sizewrap"><span class="sz-label">Size</span><span class="sizetrack"><span class="sizebar small"></span></span><span class="sz-word">small</span></div>
+          </div>
+          <p class="a-first"><b>First step:</b> delete <code>accepted</code> status end-to-end; remove the <code>--strategist</code> flag (or fix its doc first); purge stale <code>settings.local.json</code> rules; drop triage's <code>Bash(ls:*)</code>; convert <code>/tmp</code> grants to <code>$TMPDIR</code>.</p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ============ WORKSHEET ============ -->
+  <section id="worksheet">
+    <p class="sec-kicker">The same list, as a funding tracker</p>
+    <h2 class="sec">Funding worksheet</h2>
+    <figcaption class="cap prose">The action list doubles as a trackable checklist — tick items as they land. State is local to this page, a decision aid, not saved anywhere.</figcaption>
+
+    <div class="worksheet">
+      <div class="ws-head">
+        <span class="ws-title">Fund &amp; track</span>
+        <span class="ws-progress"><span id="ws-count">0</span> / 15 done</span>
+        <span class="ws-note">local only · not persisted</span>
+      </div>
+      <div class="ws-row flagged">
+        <input type="checkbox" id="ck1"><label for="ck1"><span class="flag">◆</span> 1 · Close registry-guard bypass + test the seam</label>
+        <span class="ws-size">medium</span><span class="ws-resolves">resolves 4</span>
+      </div>
+      <div class="ws-row"><input type="checkbox" id="ck2"><label for="ck2">2 · Quote refactor-investigator.md:3 YAML</label><span class="ws-size">small</span><span class="ws-resolves">resolves 1</span></div>
+      <div class="ws-row"><input type="checkbox" id="ck3"><label for="ck3">3 · Unblock the live export path</label><span class="ws-size">small</span><span class="ws-resolves">resolves 1</span></div>
+      <div class="ws-row"><input type="checkbox" id="ck4"><label for="ck4">4 · Fix the false safety claims</label><span class="ws-size">small–med</span><span class="ws-resolves">resolves 2</span></div>
+      <div class="ws-row"><input type="checkbox" id="ck5"><label for="ck5">5 · Add validate_consolidation.ts</label><span class="ws-size">medium</span><span class="ws-resolves">resolves 1</span></div>
+      <div class="ws-row"><input type="checkbox" id="ck6"><label for="ck6">6 · Atomic + locked triage state writes</label><span class="ws-size">medium</span><span class="ws-resolves">resolves 2</span></div>
+      <div class="ws-row"><input type="checkbox" id="ck7"><label for="ck7">7 · Prioritize resume story + fix $SCRATCH</label><span class="ws-size">medium</span><span class="ws-resolves">resolves 4</span></div>
+      <div class="ws-row"><input type="checkbox" id="ck8"><label for="ck8">8 · meta.json campaign</label><span class="ws-size">medium</span><span class="ws-resolves">resolves 5</span></div>
+      <div class="ws-row"><input type="checkbox" id="ck9"><label for="ck9">9 · De-duplicate contracts to owners</label><span class="ws-size">medium</span><span class="ws-resolves">resolves 6</span></div>
+      <div class="ws-row"><input type="checkbox" id="ck10"><label for="ck10">10 · Harden the judge gates that mint work</label><span class="ws-size large">large</span><span class="ws-resolves">resolves 5</span></div>
+      <div class="ws-row"><input type="checkbox" id="ck11"><label for="ck11">11 · dedup_key stability</label><span class="ws-size">small→large</span><span class="ws-resolves">resolves 1</span></div>
+      <div class="ws-row"><input type="checkbox" id="ck12"><label for="ck12">12 · CLI hygiene sweep</label><span class="ws-size">small</span><span class="ws-resolves">resolves 6</span></div>
+      <div class="ws-row"><input type="checkbox" id="ck13"><label for="ck13">13 · Drain abstain channel + one metric</label><span class="ws-size">medium</span><span class="ws-resolves">resolves 3</span></div>
+      <div class="ws-row"><input type="checkbox" id="ck14"><label for="ck14">14 · Eval seeds before they decay</label><span class="ws-size">medium</span><span class="ws-resolves">resolves 1</span></div>
+      <div class="ws-row"><input type="checkbox" id="ck15"><label for="ck15">15 · Deletions (constitution / YAGNI)</label><span class="ws-size">small</span><span class="ws-resolves">resolves 5</span></div>
+    </div>
+  </section>
+
+  <!-- ============ INVENTORY ============ -->
+  <section id="inventory">
+    <p class="sec-kicker">The whole inventory, compacted to counts</p>
+    <h2 class="sec">Finding inventory</h2>
+    <figcaption class="cap prose">These 128 rows are the 166 lens-findings deduplicated: each defect several lenses caught merges into one entry, placed by skill and severity. The trailing column splits verification into confirmed, adjusted, and not-adversarially-verified.</figcaption>
+
+    <div class="matrixwrap">
+      <table class="matrix">
+        <thead>
+          <tr>
+            <th class="famcol">Skill family</th>
+            <th>Critical</th>
+            <th>Major</th>
+            <th>Minor</th>
+            <th>Info</th>
+            <th class="vercell">Verification (C · A · —)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th>triage <span class="fam-id">T</span></th>
+            <td><span class="cellcount zero">0</span></td>
+            <td><span class="cellcount maj">9</span></td>
+            <td><span class="cellcount min">8</span></td>
+            <td><span class="cellcount inf">9</span></td>
+            <td class="vercell"><span class="versplit"><span class="vc"><svg class="glyph"><use href="#ic-check"/></svg>23</span><span class="va"><svg class="glyph"><use href="#ic-half"/></svg>3</span><span class="vn"><svg class="glyph"><use href="#ic-dash"/></svg>0</span></span></td>
+          </tr>
+          <tr>
+            <th>plan <span class="fam-id">P</span></th>
+            <td><span class="cellcount zero">0</span></td>
+            <td><span class="cellcount maj">3</span></td>
+            <td><span class="cellcount min">15</span></td>
+            <td><span class="cellcount inf">10</span></td>
+            <td class="vercell"><span class="versplit"><span class="vc"><svg class="glyph"><use href="#ic-check"/></svg>24</span><span class="va"><svg class="glyph"><use href="#ic-half"/></svg>4</span><span class="vn"><svg class="glyph"><use href="#ic-dash"/></svg>0</span></span></td>
+          </tr>
+          <tr>
+            <th>prioritize <span class="fam-id">Z</span></th>
+            <td><span class="cellcount zero">0</span></td>
+            <td><span class="cellcount maj">9</span></td>
+            <td><span class="cellcount min">10</span></td>
+            <td><span class="cellcount inf">7</span></td>
+            <td class="vercell"><span class="versplit"><span class="vc"><svg class="glyph"><use href="#ic-check"/></svg>24</span><span class="va"><svg class="glyph"><use href="#ic-half"/></svg>2</span><span class="vn"><svg class="glyph"><use href="#ic-dash"/></svg>0</span></span></td>
+          </tr>
+          <tr>
+            <th>reconcile-registry <span class="fam-id">R</span></th>
+            <td><span class="cellcount zero">0</span></td>
+            <td><span class="cellcount maj">5</span></td>
+            <td><span class="cellcount min">6</span></td>
+            <td><span class="cellcount inf">6</span></td>
+            <td class="vercell"><span class="versplit"><span class="vc"><svg class="glyph"><use href="#ic-check"/></svg>15</span><span class="va"><svg class="glyph"><use href="#ic-half"/></svg>2</span><span class="vn"><svg class="glyph"><use href="#ic-dash"/></svg>0</span></span></td>
+          </tr>
+          <tr>
+            <th>pipeline-level <span class="fam-id">X</span></th>
+            <td><span class="cellcount crit">1</span></td>
+            <td><span class="cellcount maj">14</span></td>
+            <td><span class="cellcount min">12</span></td>
+            <td><span class="cellcount inf">4</span></td>
+            <td class="vercell"><span class="versplit"><span class="vc"><svg class="glyph"><use href="#ic-check"/></svg>5*</span><span class="va"><svg class="glyph"><use href="#ic-half"/></svg>0</span><span class="vn"><svg class="glyph"><use href="#ic-dash"/></svg>26</span></span></td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>All families</th>
+            <td>1</td>
+            <td>40</td>
+            <td>51</td>
+            <td>36</td>
+            <td class="vercell">128 rows · 91 confirmed · 11 adjusted · 26 unverified</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="matrix-legend">
+        <span class="lg"><span class="swatch crit"></span> critical (any count = rust)</span>
+        <span class="lg"><span class="swatch maj"></span> major (clay)</span>
+        <span class="lg"><span class="swatch min"></span> minor / info (neutral)</span>
+        <span class="lg" style="color:var(--olive)"><svg class="glyph" style="color:var(--olive)"><use href="#ic-check"/></svg> C = confirmed (re-checked)</span>
+        <span class="lg" style="color:var(--clay)"><svg class="glyph" style="color:var(--clay)"><use href="#ic-half"/></svg> A = adjusted (softened)</span>
+        <span class="lg" style="color:var(--faint)"><svg class="glyph" style="color:var(--faint)"><use href="#ic-dash"/></svg> — = not adversarially verified</span>
+        <span class="lg" style="color:var(--faint)">* the 5 corroborated by verified per-skill findings</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TRUST ============ -->
+  <section id="trust">
+    <p class="sec-kicker">Softened &amp; refuted findings, in the open</p>
+    <h2 class="sec">What the review took back</h2>
+    <aside class="callout trust" role="note">
+      <p class="clabel"><svg class="glyph"><use href="#ic-check"/></svg> Refutations &amp; notable downgrades</p>
+      <p class="cbody"><b>T14 "black hole" refuted</b> — <code>failed</code> entries do not finalize silently; the malformed file makes finalize throw at load (<code>verdict_ledger.ts:79-84</code>). <b>P1 blockquote</b> — the missing <code>&gt;</code> prefixes are cosmetic. <b>Z20 / Z21 staging collisions</b> — downgraded major→minor; the evidence was stale June-25 artifacts predating the July-3 rewrite. <b>R11 promote-recovery</b> — adjusted; the core regenerate invariant is tested, only the already-permanent variant is not.</p>
+      <p class="csub">Dropped as non-actionable noise: none outright.</p>
+    </aside>
+  </section>
+
+</main>
+
+<footer class="provenance">
+  <span class="plabel">Generated from</span>
+  <code>sr-review-pipeline/dossier.md</code>
+  <span class="plabel">Sections</span>
+  <code>§5 action list · §6 appendix</code>
+  <span class="plabel">Run date</span>
+  <code>2026-07-03</code>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.ws-row input[type=checkbox]'));
+  var counter = document.getElementById('ws-count');
+  function sync() {
+    var done = 0;
+    boxes.forEach(function (b) {
+      var row = b.closest('.ws-row');
+      if (b.checked) { row.classList.add('done'); done++; }
+      else { row.classList.remove('done'); }
+    });
+    counter.textContent = String(done);
+  }
+  boxes.forEach(function (b) { b.addEventListener('change', sync); });
+  sync();
+
+  // in-page outline: highlight active section chip
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.tocrail a.chip'));
+  var byId = {};
+  chips.forEach(function (c) { byId[c.getAttribute('href').slice(1)] = c; });
+  if ('IntersectionObserver' in window) {
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting && byId[e.target.id]) {
+          chips.forEach(function (c) { c.classList.remove('active'); });
+          byId[e.target.id].classList.add('active');
+        }
+      });
+    }, { rootMargin: '-96px 0px -60% 0px', threshold: 0 });
+    document.querySelectorAll('main section[id]').forEach(function (s) { obs.observe(s); });
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Self-Healing Pipeline Review — Risk Posture</title>
+<style>
+:root {
+  --ivory: #f7f3ec;
+  --oat: #ece4d6;
+  --paper: #fffdf8;
+  --slate: #2f3338;
+  --ink: #1d2024;
+  --mute: #6c6f73;
+  --faint: #9a9b97;
+  --clay: #c06d4f;
+  --olive: #6f7a4f;
+  --rust: #a8412a;
+  --work: #4a6b8a; /* work / build axis accent */
+  --concept: #7d6699; /* concept / idea axis accent */
+  --line: #d8cfbe;
+  --hair: #e4ddce;
+  --serif: ui-serif, Georgia, "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--ivory);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.prose { max-width: 68ch; }
+code, .mono { font-family: var(--mono); }
+
+/* ---- cross-doc nav ---- */
+.crossnav {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  padding: 10px clamp(16px, 5vw, 64px);
+  background: var(--oat);
+  border-bottom: 1px solid var(--line);
+}
+.crossnav .axis-label {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--work); font-weight: 700;
+  padding-right: 6px; border-right: 2px solid var(--work); margin-right: 4px;
+}
+.crossnav .doc-link, .crossnav .active-pill, .crossnav .pending {
+  font-family: var(--mono); font-size: 12.5px;
+  padding: 5px 12px; border-radius: 999px; text-decoration: none;
+  border: 1px solid var(--line);
+}
+.crossnav .doc-link { color: var(--work); background: var(--paper); }
+.crossnav .doc-link:hover { background: #fff; }
+.crossnav .active-pill {
+  background: var(--work); color: var(--ivory); border-color: var(--work); font-weight: 600;
+}
+.crossnav .pending {
+  color: var(--faint); background: transparent; border-style: dashed;
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.crossnav .pending .pdot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--clay); display: inline-block;
+}
+.crossnav .pending .tag {
+  font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--clay);
+}
+
+/* ---- sticky outline ---- */
+.outline {
+  position: sticky; top: 43px; z-index: 9;
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding: 8px clamp(16px, 5vw, 64px);
+  background: var(--ivory);
+  border-bottom: 1px solid var(--hair);
+}
+.outline a {
+  font-family: var(--mono); font-size: 12px; color: var(--mute);
+  text-decoration: none; padding: 4px 11px; border-radius: 999px;
+  border: 1px solid transparent;
+}
+.outline a:hover, .outline a.active { color: var(--slate); border-color: var(--line); background: var(--paper); }
+:focus-visible { outline: 2px solid var(--work); outline-offset: 2px; }
+
+main { padding: 0 clamp(16px, 5vw, 64px) 96px; }
+section { scroll-margin-top: 96px; padding-top: 40px; }
+
+/* ---- identity header ---- */
+.masthead { padding-top: 40px; }
+.eyebrow {
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--clay); margin: 0 0 10px;
+}
+h1 {
+  font-family: var(--serif); font-weight: 600; font-size: clamp(30px, 4.4vw, 46px);
+  line-height: 1.08; margin: 0 0 14px; color: var(--ink);
+  max-width: 22ch;
+}
+.byline {
+  display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center;
+  font-family: var(--mono); font-size: 12.5px; color: var(--mute);
+}
+.byline .branch {
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: 999px; padding: 3px 11px; color: var(--slate);
+}
+.byline .badge {
+  background: var(--slate); color: var(--ivory); border-radius: 999px;
+  padding: 3px 11px; font-size: 11px; letter-spacing: .06em;
+}
+
+.preamble {
+  font-family: var(--sans); font-size: 18px; line-height: 1.62;
+  color: var(--slate); margin: 26px 0 8px;
+}
+
+h2 {
+  font-family: var(--serif); font-weight: 600; font-size: clamp(22px, 2.8vw, 30px);
+  margin: 0 0 6px; color: var(--ink);
+}
+.sec-kicker {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--faint); margin: 0 0 6px;
+}
+figcaption, .cap {
+  font-family: var(--sans); font-size: 14px; color: var(--mute);
+  margin: 12px 0 0; font-style: italic;
+}
+
+/* ---- system context map ---- */
+.contextmap { width: 100%; margin-top: 20px; }
+.contextmap svg { width: 100%; height: auto; display: block; }
+
+/* ---- thesis (inverted accent-callout) ---- */
+.thesis {
+  background: var(--slate); color: var(--ivory);
+  border-radius: 14px; padding: 30px 34px; margin-top: 22px;
+  border-left: 4px solid var(--clay);
+}
+.thesis .kicker {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--clay); margin: 0 0 14px;
+}
+.thesis .lead {
+  font-family: var(--serif); font-size: clamp(21px, 2.9vw, 30px);
+  line-height: 1.28; margin: 0 0 12px; color: var(--ivory);
+}
+.thesis .lead .src { font-family: var(--mono); font-size: 12px; color: var(--faint); font-style: normal; }
+.thesis .muted {
+  font-size: 15px; color: #d7d2c7; margin: 0;
+}
+.thesis .muted .src { font-family: var(--mono); font-size: 12px; color: var(--faint); }
+.chiprow {
+  display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px;
+}
+.chiprow .chip {
+  font-family: var(--mono); font-size: 12.5px;
+  background: rgba(255,255,255,.07); color: #e8e3d8;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 999px; padding: 6px 13px;
+}
+.chiprow .chip strong { color: #fff; font-weight: 700; }
+.chiprow .chip.crit { border-color: var(--rust); color: #f0c4b8; }
+.chiprow .chip.crit strong { color: #f4a48f; }
+
+/* ---- asymmetry comparison ---- */
+.asym {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px; margin-top: 22px;
+}
+.asym-col {
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: 14px; padding: 22px 24px;
+}
+.asym-col.keep { border-top: 4px solid var(--olive); }
+.asym-col.hollow { border-top: 4px solid var(--rust); }
+.asym-col .colhead {
+  font-family: var(--mono); font-size: 12px; letter-spacing: .1em;
+  text-transform: uppercase; margin: 0 0 4px; font-weight: 700;
+}
+.asym-col.keep .colhead { color: var(--olive); }
+.asym-col.hollow .colhead { color: var(--rust); }
+.asym-col .subhead { font-family: var(--mono); font-size: 11px; color: var(--faint); margin: 0 0 16px; }
+.asym-col ul { list-style: none; margin: 0; padding: 0; }
+.asym-col li {
+  position: relative; padding: 9px 0 9px 22px;
+  font-size: 14.5px; color: var(--slate); line-height: 1.45;
+  border-top: 1px solid var(--hair);
+}
+.asym-col li:first-child { border-top: none; }
+.asym-col li::before {
+  content: ""; position: absolute; left: 2px; top: 15px;
+  width: 8px; height: 8px; border-radius: 50%;
+}
+.asym-col.keep li::before { background: var(--olive); }
+.asym-col.hollow li::before { background: var(--clay); }
+.asym-col.hollow li.severe::before { background: var(--rust); }
+.asym-col li b { color: var(--ink); }
+.asym-col li code { font-size: 12.5px; background: var(--oat); padding: 1px 5px; border-radius: 4px; }
+.asym-col li.anchor {
+  background: rgba(168,65,42,.06); margin: 0 -12px; padding-left: 34px; padding-right: 12px;
+  border-radius: 8px; border-top: 1px solid var(--hair);
+}
+.asym-col.keep li.anchor { background: rgba(111,122,79,.09); }
+.asym-col li.anchor::before { left: 14px; }
+.anchor-note {
+  font-family: var(--mono); font-size: 12px; color: var(--rust);
+  margin-top: 14px; padding-left: 4px;
+}
+
+/* ---- feature matrix ---- */
+.matrix-wrap { margin-top: 22px; overflow-x: auto; }
+table.matrix { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 13.5px; }
+table.matrix th, table.matrix td { border: 1px solid var(--hair); padding: 9px 10px; text-align: center; }
+table.matrix thead th {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--mute); background: var(--oat); font-weight: 600; vertical-align: bottom;
+}
+table.matrix th.rowhead {
+  text-align: left; font-family: var(--sans); text-transform: none; letter-spacing: 0;
+  color: var(--slate); font-weight: 500; background: var(--paper); max-width: 340px; line-height: 1.35;
+}
+table.matrix th.rowhead .tid { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-right: 6px; }
+table.matrix th.rowhead .critflag {
+  display: inline-block; font-family: var(--mono); font-size: 10px; letter-spacing: .06em;
+  background: var(--rust); color: #fff; border-radius: 4px; padding: 1px 6px; margin-left: 6px;
+}
+.glyph { display: inline-block; width: 15px; height: 15px; border-radius: 50%; vertical-align: middle; }
+.glyph.full { }
+.glyph.half { background: linear-gradient(90deg, currentColor 50%, transparent 50%); border: 1.5px solid currentColor; }
+.glyph.full { background: currentColor; }
+.glyph.none { background: transparent; }
+td.cell { color: var(--faint); }
+td.cell.on { color: var(--olive); }
+td.cell.warn { color: var(--clay); }
+td.cell.hot { color: var(--rust); background: rgba(168,65,42,.07); }
+.matrix-legend {
+  display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 14px;
+  font-family: var(--mono); font-size: 12px; color: var(--mute);
+  align-items: center;
+}
+.matrix-legend .lg { display: inline-flex; align-items: center; gap: 7px; }
+
+/* ---- skill health small-multiples ---- */
+.health {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px; margin-top: 22px;
+}
+.skillcard {
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: 14px; padding: 18px 18px 16px;
+  display: flex; flex-direction: column;
+}
+.skillcard .sk-name {
+  font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--slate);
+  letter-spacing: .02em; margin: 0 0 14px;
+}
+.barline { display: grid; grid-template-columns: 46px 1fr 26px; align-items: center; gap: 8px; margin-bottom: 9px; }
+.barline .bl-label { font-family: var(--mono); font-size: 10.5px; color: var(--faint); text-transform: uppercase; }
+.barline .bl-track { height: 12px; background: var(--oat); border-radius: 4px; overflow: hidden; }
+.barline .bl-fill { height: 100%; border-radius: 4px; background: var(--olive); }
+.barline .bl-fill.mid { background: var(--clay); }
+.barline .bl-fill.hot { background: var(--rust); }
+.barline .bl-val { font-family: var(--mono); font-size: 12px; color: var(--slate); text-align: right; }
+.skillcard .blocker {
+  font-size: 13px; color: var(--slate); line-height: 1.42; margin: 12px 0 0;
+  padding-top: 12px; border-top: 1px solid var(--hair);
+}
+.skillcard .blocker .bl-tag {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--rust); display: block; margin-bottom: 3px;
+}
+.skillcard .blocker code { font-size: 11.5px; background: var(--oat); padding: 1px 4px; border-radius: 3px; }
+.skillcard .keepchip {
+  margin-top: 12px; font-family: var(--mono); font-size: 11px; line-height: 1.4;
+  color: var(--olive); background: rgba(111,122,79,.1);
+  border-radius: 8px; padding: 8px 10px;
+}
+.skillcard .keepchip .kt { display: block; letter-spacing: .06em; text-transform: uppercase; font-size: 9.5px; color: var(--olive); opacity: .8; margin-bottom: 3px; }
+
+/* ---- verification legend ---- */
+.verlegend {
+  display: flex; flex-wrap: wrap; gap: 14px 26px; align-items: center;
+  background: var(--paper); border: 1px solid var(--line); border-radius: 14px;
+  padding: 18px 22px; margin-top: 22px;
+}
+.verlegend .vitem { display: inline-flex; align-items: center; gap: 9px; font-size: 14px; color: var(--slate); }
+.verlegend .vitem .vlabel { font-family: var(--mono); font-size: 12px; color: var(--mute); }
+.vglyph { width: 20px; height: 20px; flex: 0 0 20px; }
+.vernote {
+  font-family: var(--mono); font-size: 12.5px; color: var(--mute);
+  line-height: 1.55; margin: 16px 0 0; padding-left: 4px;
+}
+.vernote b { color: var(--slate); }
+
+/* ---- provenance ---- */
+.provenance {
+  margin-top: 56px; padding: 18px 22px;
+  background: var(--paper); border: 1px solid var(--line); border-radius: 12px;
+}
+.provenance .plabel {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--faint); margin: 0 0 8px;
+}
+.provenance code { font-family: var(--mono); font-size: 12px; color: var(--slate); word-break: break-all; }
+.provenance .files { list-style: none; margin: 6px 0 0; padding: 0; }
+.provenance .files li { padding: 2px 0; }
+
+footer {
+  margin-top: 20px; font-family: var(--mono); font-size: 11.5px; color: var(--faint);
+}
+
+@media (max-width: 820px) {
+  .asym { grid-template-columns: 1fr; }
+  .health { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) {
+  .health { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav class="crossnav" aria-label="Related review pages">
+  <span class="axis-label">Pipeline Review</span>
+  <span class="active-pill" aria-current="page">Risk posture</span>
+  <a class="doc-link" href="self-healing-pipeline-review.what-to-fix-first.html">What to fix first</a>
+</nav>
+
+<nav class="outline" aria-label="On this page">
+  <a href="#thesis">Thesis</a>
+  <a href="#asymmetry">Asymmetry</a>
+  <a href="#themes">Themes × Skills</a>
+  <a href="#health">Skill health</a>
+  <a href="#verification">Verification</a>
+</nav>
+
+<main>
+
+  <header class="masthead">
+    <p class="eyebrow">Self-Healing Pipeline · Multi-Lens Review</p>
+    <h1>A strong core whose loudest safety promises have the weakest enforcement</h1>
+    <div class="byline">
+      <span class="branch">4 skills → 1 loop</span>
+      <span class="mono">166 findings</span>
+      <span class="mono">7 root-cause themes</span>
+      <span class="badge">1 CRITICAL</span>
+    </div>
+  </header>
+
+  <p class="preamble prose">The self-healing pipeline is a loop that turns Ariadne's own call-graph blind spots into fixed code: four skills hand work down a chain — triage investigates dead-looking entry points, plan sweeps false positives into planned work, prioritize funds and exports that work into the backlog, and reconcile-registry is the human-owned keeper of the "permanently unknowable" list. Two of those surfaces are meant to be human-only. This page is a completed review of that loop, not a change to it. Its verdict is one sentence: the core is well built, but the safety promises the docs make most loudly are the ones with the least real enforcement behind them. Below, the strong parts sit next to the hollow spots so the gap is something you see rather than read — sharpest where one human-owned surface is guarded three ways and the other is guarded only by a sentence.</p>
+
+  <!-- SYSTEM CONTEXT MAP -->
+  <section id="context" aria-label="System context">
+    <figure class="contextmap">
+      <svg viewBox="0 0 1000 250" role="img" aria-label="The four pipeline skills in a chain, with two human-owned stores: registry.json triple-enforced, and backlog/ prose-only.">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#6c6f73"/>
+          </marker>
+        </defs>
+        <!-- chain -->
+        <g font-family="var(--mono)">
+          <rect x="30" y="40" width="150" height="52" rx="10" fill="#ece4d6" stroke="#d8cfbe"/>
+          <text x="105" y="71" text-anchor="middle" font-size="16" fill="#2f3338" font-family="ui-monospace, monospace">triage</text>
+
+          <rect x="255" y="40" width="150" height="52" rx="10" fill="#ece4d6" stroke="#d8cfbe"/>
+          <text x="330" y="71" text-anchor="middle" font-size="16" fill="#2f3338" font-family="ui-monospace, monospace">plan</text>
+
+          <rect x="480" y="40" width="150" height="52" rx="10" fill="#ece4d6" stroke="#d8cfbe"/>
+          <text x="555" y="71" text-anchor="middle" font-size="16" fill="#2f3338" font-family="ui-monospace, monospace">prioritize</text>
+
+          <rect x="770" y="40" width="200" height="52" rx="10" fill="#ece4d6" stroke="#d8cfbe"/>
+          <text x="870" y="71" text-anchor="middle" font-size="15" fill="#2f3338" font-family="ui-monospace, monospace">reconcile-registry</text>
+
+          <line x1="180" y1="66" x2="250" y2="66" stroke="#6c6f73" stroke-width="2" marker-end="url(#arrow)"/>
+          <line x1="405" y1="66" x2="475" y2="66" stroke="#6c6f73" stroke-width="2" marker-end="url(#arrow)"/>
+          <line x1="630" y1="66" x2="765" y2="66" stroke="#6c6f73" stroke-width="2" marker-end="url(#arrow)"/>
+        </g>
+
+        <!-- store: registry.json (triple-enforced) -->
+        <g>
+          <path d="M785,150 a85,14 0 0,0 170,0 v56 a85,14 0 0,1 -170,0 z" fill="#e6c3b4" stroke="#c06d4f"/>
+          <ellipse cx="870" cy="150" rx="85" ry="14" fill="#eccdc0" stroke="#c06d4f"/>
+          <text x="870" y="148" text-anchor="middle" font-size="14" fill="#2f3338" font-family="ui-monospace, monospace">registry.json</text>
+          <text x="870" y="192" text-anchor="middle" font-size="11" fill="#a8412a" font-family="ui-monospace, monospace">THIS REVIEW: triple-enforced</text>
+          <line x1="870" y1="92" x2="870" y2="135" stroke="#c06d4f" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+        </g>
+
+        <!-- store: backlog/ (prose-only) -->
+        <g>
+          <path d="M470,150 a85,14 0 0,0 170,0 v56 a85,14 0 0,1 -170,0 z" fill="#e6c3b4" stroke="#c06d4f"/>
+          <ellipse cx="555" cy="150" rx="85" ry="14" fill="#eccdc0" stroke="#c06d4f"/>
+          <text x="555" y="148" text-anchor="middle" font-size="14" fill="#2f3338" font-family="ui-monospace, monospace">backlog/</text>
+          <text x="555" y="192" text-anchor="middle" font-size="11" fill="#a8412a" font-family="ui-monospace, monospace">THIS REVIEW: prose-only</text>
+          <line x1="555" y1="92" x2="555" y2="135" stroke="#c06d4f" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+        </g>
+      </svg>
+      <figcaption class="cap prose">The whole review turns on how these two human-owned surfaces are guarded.</figcaption>
+    </figure>
+  </section>
+
+  <!-- THESIS -->
+  <section id="thesis">
+    <p class="sec-kicker">The verdict</p>
+    <aside class="thesis prose">
+      <p class="kicker">Thesis</p>
+      <p class="lead">The safety properties the docs advertise most loudly are the ones with the weakest enforcement. <span class="src">dossier §1:15</span></p>
+      <p class="muted">The core architecture is genuinely strong. <span class="src">dossier §1:13</span></p>
+      <div class="chiprow" role="list">
+        <span class="chip" role="listitem"><strong>166</strong> findings</span>
+        <span class="chip" role="listitem"><strong>4</strong> refuted / downgraded</span>
+        <span class="chip crit" role="listitem"><strong>1</strong> CRITICAL</span>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ASYMMETRY -->
+  <section id="asymmetry">
+    <p class="sec-kicker">The crux — strength beside its hollow spot</p>
+    <h2>The asymmetry</h2>
+    <div class="asym">
+      <article class="asym-col keep">
+        <p class="colhead">Structurally enforced</p>
+        <p class="subhead">keep — affirmed by multiple lenses (§1:13)</p>
+        <ul>
+          <li>Pass-by-reference hand-offs at every wave boundary; terse or empty text returns</li>
+          <li>File-authoritative verdicts — <b>"Ignore its <code>&lt;result&gt;</code> body entirely"</b></li>
+          <li>Single-producer artifacts and append-only run stores</li>
+          <li>Deterministic-first ordering — registry builtins classify before any LLM dispatch</li>
+          <li>Fail-closed export adapter — refuses to write without <code>--assignments</code></li>
+          <li class="anchor"><b>Registry write path is triple-enforced</b> — lock sidecar + AST-walk test + PreToolUse guard</li>
+          <li>The finalize guard: a half-finished sweep can only block retirement, never spuriously resolve</li>
+        </ul>
+      </article>
+      <article class="asym-col hollow">
+        <p class="colhead">Advertised but hollow</p>
+        <p class="subhead">the loudly-promised safety, weakly enforced (§1:16–22)</p>
+        <ul>
+          <li class="anchor severe"><b>"Only writer of backlog/" is prose-only and already false</b> — no hook, no test, no allowlist</li>
+          <li class="severe">Judge outputs gate irreversible decisions with shape-only checks — <code>consolidation.json</code> is ungated</li>
+          <li>Doc-vs-code drift on the write-boundary contracts a human relies on</li>
+          <li>Crash-recovery and write-atomicity discipline applied only to the registry</li>
+          <li><code>dedup_key</code> is the least drift-stable identity — any commit resurfaces funded work as fresh proposals</li>
+        </ul>
+      </article>
+    </div>
+    <p class="anchor-note">Paired anchor: registry vs backlog — the same kind of human-owned surface, opposite enforcement.</p>
+  </section>
+
+  <!-- THEMES x SKILLS -->
+  <section id="themes">
+    <p class="sec-kicker">Cross-cutting structure</p>
+    <h2>Themes × skills</h2>
+    <div class="matrix-wrap">
+      <table class="matrix">
+        <thead>
+          <tr>
+            <th class="rowhead" scope="col">Root-cause theme</th>
+            <th scope="col">triage</th>
+            <th scope="col">plan</th>
+            <th scope="col">prioritize</th>
+            <th scope="col">reconcile</th>
+            <th scope="col">pipeline-level</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th class="rowhead" scope="row"><span class="tid">T1</span>Human-ownership boundary enforced by prose, not structure<span class="critflag">CRITICAL</span></th>
+            <td class="cell hot"><span class="glyph full"></span></td>
+            <td class="cell warn"><span class="glyph half"></span></td>
+            <td class="cell hot"><span class="glyph full"></span></td>
+            <td class="cell hot"><span class="glyph full"></span></td>
+            <td class="cell hot"><span class="glyph full"></span></td>
+          </tr>
+          <tr>
+            <th class="rowhead" scope="row"><span class="tid">T2</span>Judge outputs gate irreversible decisions (shape-deep only)</th>
+            <td class="cell warn"><span class="glyph half"></span></td>
+            <td class="cell warn"><span class="glyph full"></span></td>
+            <td class="cell warn"><span class="glyph full"></span></td>
+            <td class="cell"><span class="glyph none"></span></td>
+            <td class="cell warn"><span class="glyph full"></span></td>
+          </tr>
+          <tr>
+            <th class="rowhead" scope="row"><span class="tid">T3</span>Doc-vs-code drift on load-bearing contracts</th>
+            <td class="cell warn"><span class="glyph full"></span></td>
+            <td class="cell warn"><span class="glyph full"></span></td>
+            <td class="cell warn"><span class="glyph full"></span></td>
+            <td class="cell warn"><span class="glyph half"></span></td>
+            <td class="cell warn"><span class="glyph half"></span></td>
+          </tr>
+          <tr>
+            <th class="rowhead" scope="row"><span class="tid">T4</span>Crash-recovery / atomicity applied only to the registry</th>
+            <td class="cell warn"><span class="glyph full"></span></td>
+            <td class="cell warn"><span class="glyph half"></span></td>
+            <td class="cell warn"><span class="glyph full"></span></td>
+            <td class="cell warn"><span class="glyph half"></span></td>
+            <td class="cell warn"><span class="glyph half"></span></td>
+          </tr>
+          <tr>
+            <th class="rowhead" scope="row"><span class="tid">T5</span><code>dedup_key</code> is the least drift-stable identity</th>
+            <td class="cell"><span class="glyph none"></span></td>
+            <td class="cell warn"><span class="glyph full"></span></td>
+            <td class="cell warn"><span class="glyph half"></span></td>
+            <td class="cell"><span class="glyph none"></span></td>
+            <td class="cell warn"><span class="glyph full"></span></td>
+          </tr>
+          <tr>
+            <th class="rowhead" scope="row"><span class="tid">T6</span>Eval/lint readiness — adopted by one skill of four</th>
+            <td class="cell warn"><span class="glyph full"></span></td>
+            <td class="cell warn"><span class="glyph half"></span></td>
+            <td class="cell warn"><span class="glyph full"></span></td>
+            <td class="cell warn"><span class="glyph full"></span></td>
+            <td class="cell"><span class="glyph none"></span></td>
+          </tr>
+          <tr>
+            <th class="rowhead" scope="row"><span class="tid">T7</span>Contract duplication — the same rule authored 2–6 times</th>
+            <td class="cell warn"><span class="glyph full"></span></td>
+            <td class="cell warn"><span class="glyph full"></span></td>
+            <td class="cell warn"><span class="glyph full"></span></td>
+            <td class="cell warn"><span class="glyph full"></span></td>
+            <td class="cell"><span class="glyph none"></span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="matrix-legend">
+      <span class="lg"><span class="glyph full" style="color:var(--olive)"></span> present</span>
+      <span class="lg"><span class="glyph half" style="color:var(--clay)"></span> partial</span>
+      <span class="lg"><span class="glyph none" style="border:1.5px solid var(--faint)"></span> absent</span>
+      <span class="lg"><span class="glyph full" style="color:var(--rust)"></span> tint = worst severity in cell (rust = CRITICAL/major)</span>
+    </div>
+  </section>
+
+  <!-- SKILL HEALTH -->
+  <section id="health">
+    <p class="sec-kicker">Relative standing — bar lengths, not prose</p>
+    <h2>Skill health</h2>
+    <div class="health">
+
+      <article class="skillcard">
+        <p class="sk-name">triage · T1–T26</p>
+        <div class="barline"><span class="bl-label">major</span><span class="bl-track"><span class="bl-fill hot" style="width:100%"></span></span><span class="bl-val">9</span></div>
+        <div class="barline"><span class="bl-label">minor</span><span class="bl-track"><span class="bl-fill" style="width:89%"></span></span><span class="bl-val">8</span></div>
+        <div class="barline"><span class="bl-label">info</span><span class="bl-track"><span class="bl-fill" style="width:100%"></span></span><span class="bl-val">9</span></div>
+        <p class="blocker"><span class="bl-tag">Standout blocker</span>Non-atomic <code>triage.json</code> — a bare write guarded by prose only.</p>
+        <p class="keepchip"><span class="kt">Confirmed strengths (keep)</span>File-based verdict returns save ~179K chars; sound parallel worker pool.</p>
+      </article>
+
+      <article class="skillcard">
+        <p class="sk-name">plan · P1–P28</p>
+        <div class="barline"><span class="bl-label">major</span><span class="bl-track"><span class="bl-fill hot" style="width:20%"></span></span><span class="bl-val">3</span></div>
+        <div class="barline"><span class="bl-label">minor</span><span class="bl-track"><span class="bl-fill" style="width:100%"></span></span><span class="bl-val">15</span></div>
+        <div class="barline"><span class="bl-label">info</span><span class="bl-track"><span class="bl-fill" style="width:67%"></span></span><span class="bl-val">10</span></div>
+        <p class="blocker"><span class="bl-tag">Standout blocker</span>Export doc refuses the workflow it documents — <code>--assignments</code> never named.</p>
+        <p class="keepchip"><span class="kt">Confirmed strengths (keep)</span>The exemplary finalize guard makes partial sweeps waste-only, never corrupting.</p>
+      </article>
+
+      <article class="skillcard">
+        <p class="sk-name">prioritize · Z1–Z26</p>
+        <div class="barline"><span class="bl-label">major</span><span class="bl-track"><span class="bl-fill hot" style="width:100%"></span></span><span class="bl-val">9</span></div>
+        <div class="barline"><span class="bl-label">minor</span><span class="bl-track"><span class="bl-fill" style="width:100%"></span></span><span class="bl-val">10</span></div>
+        <div class="barline"><span class="bl-label">info</span><span class="bl-track"><span class="bl-fill" style="width:70%"></span></span><span class="bl-val">7</span></div>
+        <p class="blocker"><span class="bl-tag">Standout blocker</span>Invalid-YAML frontmatter breaks the step-3 workhorse agent from loading.</p>
+        <p class="keepchip"><span class="kt">Confirmed strengths (keep)</span>Pass-by-reference across all six waves; fail-closed <code>--assignments</code> gate.</p>
+      </article>
+
+      <article class="skillcard">
+        <p class="sk-name">reconcile · R1–R17</p>
+        <div class="barline"><span class="bl-label">major</span><span class="bl-track"><span class="bl-fill mid" style="width:44%"></span></span><span class="bl-val">4</span></div>
+        <div class="barline"><span class="bl-label">minor</span><span class="bl-track"><span class="bl-fill" style="width:56%"></span></span><span class="bl-val">5</span></div>
+        <div class="barline"><span class="bl-label">info</span><span class="bl-track"><span class="bl-fill" style="width:89%"></span></span><span class="bl-val">8</span></div>
+        <p class="blocker"><span class="bl-tag">Standout blocker</span>Write-guard enforcement seam untested — hook wrapper + settings matcher.</p>
+        <p class="keepchip"><span class="kt">Confirmed strengths (keep)</span>Cleanest CLI in the pipeline; minimal permission surface is the baseline.</p>
+      </article>
+
+    </div>
+    <p class="cap prose">Bars are per-skill finding counts from the appendix families; the worst bar recolors rust.</p>
+  </section>
+
+  <!-- VERIFICATION LEGEND -->
+  <section id="verification">
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <symbol id="ic-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 12.5 L10.5 16 L17 8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-half" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2 A10 10 0 0 1 12 22 Z" fill="currentColor"/></symbol>
+      <symbol id="ic-strike" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="6" y1="18" x2="18" y2="6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+    </svg>
+    <p class="sec-kicker">Every finding travels with a verification status</p>
+    <h2>Verification legend</h2>
+    <div class="verlegend">
+      <span class="vitem" style="color:var(--olive)"><svg class="vglyph" aria-hidden="true"><use href="#ic-check"/></svg><span>Confirmed</span><span class="vlabel">C — verified</span></span>
+      <span class="vitem" style="color:var(--clay)"><svg class="vglyph" aria-hidden="true"><use href="#ic-half"/></svg><span>Adjusted / downgraded</span><span class="vlabel">A — reason inline</span></span>
+      <span class="vitem" style="color:var(--mute)"><svg class="vglyph" aria-hidden="true"><use href="#ic-strike"/></svg><span>Refuted</span><span class="vlabel">— not upheld</span></span>
+    </div>
+    <p class="vernote">Surfaced so the four are visible, not buried: <b>T14</b> "black hole" refuted — finalize throws loudly at load; <b>P1</b> blockquote defect is cosmetic; <b>Z20 / Z21</b> staging-collision evidence was stale, downgraded; <b>R11</b> promote-test adjusted — the core invariant is covered.</p>
+  </section>
+
+  <!-- PROVENANCE -->
+  <section id="provenance" aria-label="Provenance">
+    <div class="provenance">
+      <p class="plabel">Source</p>
+      <ul class="files">
+        <li><code>sr-review-pipeline/dossier.md</code> — multi-lens review, 166 findings across 8 lenses</li>
+        <li><code>.claude/skills/{triage,plan,prioritize,reconcile-registry}/</code> — the four reviewed skills</li>
+        <li><code>.claude/rules/classifier-lifecycle.md</code> · <code>.claude/hooks/registry_write_guard.ts</code></li>
+      </ul>
+    </div>
+    <footer>Multi-lens review of the self-healing pipeline · 2026-07-03 · source: sr-review-pipeline/dossier.md</footer>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var links = Array.prototype.slice.call(document.querySelectorAll('.outline a'));
+  var sections = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+  if (!('IntersectionObserver' in window)) return;
+  var obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      var i = sections.indexOf(e.target);
+      if (i < 0) return;
+      links.forEach(function (l) { l.classList.remove('active'); });
+      links[i].classList.add('active');
+    });
+  }, { rootMargin: '-40% 0px -55% 0px' });
+  sections.forEach(function (s) { if (s) obs.observe(s); });
+})();
+</script>
+
+</body>
+</html>
