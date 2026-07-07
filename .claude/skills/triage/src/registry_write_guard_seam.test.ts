@@ -74,6 +74,10 @@ describe("registry_write_guard hook seam", () => {
     expect(stdout).toEqual("");
   }, SPAWN_TIMEOUT_MS);
 
+  // This exercises parse_stdin's null return, the fail-open contract's
+  // input-facing layer. The wrapper's outer try/catch guards environmental
+  // crashes (EPIPE on a closed stdout, an unwritable log file) that no stdin
+  // payload can trigger, so it is not reachable from this seam.
   it("fails open on malformed stdin: exit 0, no output", () => {
     const { stdout, status } = run_hook("this is not json{{");
     expect(status).toEqual(0);

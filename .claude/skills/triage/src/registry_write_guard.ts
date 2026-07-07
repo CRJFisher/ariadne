@@ -38,7 +38,10 @@ const PER_EDIT_CONTRACT =
  * in-place edit against the registry), with the harness permission classifier
  * as defense-in-depth for the adversarial tail (variable indirection, eval,
  * computed paths). `[^|;&]*` keeps each match inside one pipeline segment so
- * a write token in an unrelated segment cannot pair with a registry read.
+ * a write token in an unrelated segment cannot pair with a registry read; the
+ * interpreter patterns additionally exclude `)` so a mode/verb cannot pair
+ * with a registry path from an earlier, already-closed call. The redirect
+ * pattern uses `\S*` instead because a redirect target is one unbroken token.
  */
 const BASH_WRITE_PATTERNS = [
   />{1,2}\s*\S*registry\.json(\.lock)?\b/,
@@ -51,13 +54,28 @@ const BASH_WRITE_PATTERNS = [
   // version — an accident-surface overwrite, not an adversarial one.
   /(^|[\s;&|])git\s+(checkout|restore)\s[^|;&]*registry\.json/,
   /\b(writeFileSync|appendFileSync|writeFile|appendFile|cpSync|copyFileSync|renameSync|rmSync|createWriteStream)\b[^|;&]*registry\.json/,
-  // Python open()/io.open() with a write mode ('w', 'a', 'r+' — positional or
-  // mode=). A read-mode or modeless open is how a script LOADS the registry
-  // and must pass.
-  /\b(io\s*\.\s*)?open\s*\([^|;&]*registry\.json[^|;&]*,\s*(mode\s*=\s*)?["'](w|a|r\+)/,
+  // Call-shaped move/copy/delete verbs shared by node's async fs API
+  // (fs.rm/rename/copyFile/cp) and python's shutil/os modules
+  // (shutil.move/copy, os.rename/replace/remove/unlink — the temp-file +
+  // atomic-replace idiom ends in exactly such a call). The mandatory `(`
+  // right after the verb keeps a flag cluster like `grep -rm 5` out. `)` is
+  // NOT excluded from the span: the registry is the destination argument
+  // here, and a nested-call source like os.replace(os.path.join(...), dest)
+  // legitimately closes a paren before the destination.
+  /\b(copyFile|copyfile|copy2|copy|rename|replace|move|remove|unlink|rm|cp)\s*\([^|;&]*registry\.json/,
+  // pathlib writers: Path('...registry.json').write_text/.write_bytes.
+  /registry\.json["']\s*\)\s*\.\s*(write_text|write_bytes)\b/,
+  // Python open()/io.open() with a write mode ('w', 'a', 'x', 'r+' —
+  // positional or mode=), assuming the conventional path-first argument
+  // order (the realistic accident shape). A read-mode or modeless open is
+  // how a script LOADS the registry and must pass. The `)` exclusion means
+  // a join-built path — open(os.path.join(d, 'registry.json'), 'w') — falls
+  // to the harness classifier: the alternative is false-asking on every
+  // closed read call followed by an unrelated quoted mode.
+  /\b(io\s*\.\s*)?open\s*\([^)|;&]*registry\.json[^)|;&]*,\s*(mode\s*=\s*)?["'](w|a|x|r\+)/,
   // Perl open with a >/>> mode targeting the registry (2-arg '>path' or
   // 3-arg '>', 'path' form).
-  /\bopen\s*\([^|;&]*["']\s*>{1,2}[^|;&]*registry\.json/,
+  /\bopen\s*\([^)|;&]*["']>{1,2}[^)|;&]*registry\.json/,
 ];
 
 /**
@@ -82,8 +100,11 @@ function has_flag(command: string, flag: string): boolean {
  * read-only forms pass (`--dry-run`, `--help`, or `--stage` without
  * `--apply`; `--stage` is dry-run by default and writes only with `--apply`).
  */
+// The bare-path clause anchors on line-start or a separator, NOT whitespace:
+// a path preceded only by whitespace is an argument (cat/grep of the script),
+// while a path in command position is an exec.
 const RECONCILE_EXECUTION =
-  /\b(node|npx|tsx|pnpm|bun)\b[^|;&]*reconcile_registry\.ts|(^|[;&|])\s*[^\s|;&]*reconcile_registry\.ts(\s|$)/;
+  /\b(node|npx|tsx|pnpm|bun|deno)\b[^|;&]*reconcile_registry\.ts|(^|[;&|])\s*[^\s|;&]*reconcile_registry\.ts(\s|$)/;
 
 function is_write_mode_reconcile(command: string): boolean {
   if (!RECONCILE_EXECUTION.test(command)) return false;
@@ -147,7 +168,8 @@ export function evaluate_tool_call(input: {
         decision: "ask",
         reason:
           "This command applies a write construct (redirect, tee, sed -i, " +
-          "mv/cp/rm, ...) to the human-owned classifier registry " +
+          "mv/cp/rm, an inline node/python/perl write, ...) to the " +
+          "human-owned classifier registry " +
           `(${REGISTRY_REL}). ${PER_EDIT_CONTRACT}`,
       };
     }

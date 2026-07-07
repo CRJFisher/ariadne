@@ -41,7 +41,13 @@ boundaries — the false claims go first.
      render-preview semantics).
    - Replace the "only writer of backlog/" claims (`plan/SKILL.md:213`,
      `prioritize/SKILL.md:3,29,128`, `export_to_backlog.ts:46`) with the
-     two-named-writers wording decided in TASK-190.36.2.
+     two-named-writers wording decided in TASK-190.36.2, verbatim:
+     "`export_to_backlog.ts` is the only writer of `backlog/tasks/*.md`
+     cards; `graduate_group_docs.ts` moves graduated comprehension docs
+     alongside them." No backlog AST test backs this boundary —
+     `export_to_backlog.ts` writes distinct per-task files and
+     `graduate_group_docs.ts` renames distinct files, so there is no
+     shared-file race for structural enforcement to protect.
 2. **Fix plan/meta.json** (the exemplar the new files copy): delete the ghost
    `registry-read` store (`:54-60`), drop the stale "NOT YET WIRED" on
    `backlog-read` (wired at `reconcile_plan.ts:27,85`), prefix both

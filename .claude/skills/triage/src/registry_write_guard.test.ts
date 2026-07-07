@@ -74,7 +74,7 @@ describe("evaluate_tool_call — Write/Edit", () => {
   });
 });
 
-describe("evaluate_tool_call — Bash path mentions", () => {
+describe("evaluate_tool_call — Bash write constructs", () => {
   it("passes read-only commands over the registry", () => {
     expect(decision_of("Bash", { command: `cat ${REGISTRY_REL}` })).toEqual(
       "pass",
@@ -175,6 +175,63 @@ describe("evaluate_tool_call — Bash path mentions", () => {
     ).toEqual("pass");
   });
 
+  it("asks on async node fs move/copy/delete twins", () => {
+    expect(
+      decision_of("Bash", {
+        command: `node -e 'require("fs").rm("${REGISTRY_REL}", () => {})'`,
+      }),
+    ).toEqual("ask");
+    expect(
+      decision_of("Bash", {
+        command: `node -e 'require("fs").promises.rename("/tmp/staged.json", "${REGISTRY_REL}")'`,
+      }),
+    ).toEqual("ask");
+    expect(
+      decision_of("Bash", {
+        command: `node -e 'fs.copyFile("draft.json", "${REGISTRY_ABS}", () => {})'`,
+      }),
+    ).toEqual("ask");
+  });
+
+  it("asks on python shutil/os moves, replaces, and removes", () => {
+    expect(
+      decision_of("Bash", {
+        command: `python3 -c "import shutil; shutil.move('/tmp/staged.json', '${REGISTRY_REL}')"`,
+      }),
+    ).toEqual("ask");
+    expect(
+      decision_of("Bash", {
+        command: `python3 -c "import os; os.replace('/tmp/staged.json', '${REGISTRY_ABS}')"`,
+      }),
+    ).toEqual("ask");
+    expect(
+      decision_of("Bash", {
+        command: `python3 -c "import os; os.remove('${REGISTRY_REL}')"`,
+      }),
+    ).toEqual("ask");
+    expect(
+      decision_of("Bash", {
+        command: `python3 -c "import os; os.replace(os.path.join(d, 'staged.json'), '${REGISTRY_REL}')"`,
+      }),
+    ).toEqual("ask");
+  });
+
+  it("asks on pathlib write_text against the registry", () => {
+    expect(
+      decision_of("Bash", {
+        command: `python3 -c "from pathlib import Path; Path('${REGISTRY_REL}').write_text('[]')"`,
+      }),
+    ).toEqual("ask");
+  });
+
+  it("passes a pathlib read of the registry", () => {
+    expect(
+      decision_of("Bash", {
+        command: `python3 -c "from pathlib import Path; print(Path('${REGISTRY_REL}').read_text())"`,
+      }),
+    ).toEqual("pass");
+  });
+
   it("asks on a python write-mode open against the registry", () => {
     expect(
       decision_of("Bash", {
@@ -201,6 +258,11 @@ describe("evaluate_tool_call — Bash path mentions", () => {
         command: `python3 -c "import io; io.open('${REGISTRY_REL}', 'w').write('[]')"`,
       }),
     ).toEqual("ask");
+    expect(
+      decision_of("Bash", {
+        command: `python3 -c "open('${REGISTRY_REL}', 'x').write('[]')"`,
+      }),
+    ).toEqual("ask");
   });
 
   it("passes a python read-mode or modeless open of the registry", () => {
@@ -217,6 +279,22 @@ describe("evaluate_tool_call — Bash path mentions", () => {
     expect(
       decision_of("Bash", {
         command: `python3 -c "print(open('${REGISTRY_ABS}', 'rb').read())"`,
+      }),
+    ).toEqual("pass");
+  });
+
+  it("passes a python read even when an unrelated quoted 'w' follows the closed open call", () => {
+    expect(
+      decision_of("Bash", {
+        command: `python3 -c "print(open('${REGISTRY_REL}').read(), 'w')"`,
+      }),
+    ).toEqual("pass");
+  });
+
+  it("passes a multiline registry read followed by a write to another file", () => {
+    expect(
+      decision_of("Bash", {
+        command: `python3 -c "data = open('${REGISTRY_REL}').read()\nopen('/tmp/report.txt', 'w').write(data)"`,
       }),
     ).toEqual("pass");
   });
@@ -343,6 +421,15 @@ describe("evaluate_tool_call — Bash reconcile_registry.ts invocations", () => 
       decision_of("Bash", {
         command:
           "bun .claude/skills/triage/scripts/reconcile_registry.ts --id r --promote",
+      }),
+    ).toEqual("ask");
+  });
+
+  it("asks on a deno invocation", () => {
+    expect(
+      decision_of("Bash", {
+        command:
+          "deno run -A .claude/skills/triage/scripts/reconcile_registry.ts --id r --fixed --reason 'subsumed'",
       }),
     ).toEqual("ask");
   });
