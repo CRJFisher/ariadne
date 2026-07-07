@@ -19,7 +19,10 @@ const REPO_ROOT = path.resolve(HERE, "..", "..", "..");
 const AGENTS_DIR = path.join(REPO_ROOT, ".claude", "agents");
 
 function extract_frontmatter(text: string): string | null {
-  const match = text.match(/^---\n([\s\S]*?)\n---/);
+  // Tolerate a BOM and CRLF so such a file is linted, not misreported as
+  // having no frontmatter (mirrors backlog_dedup.ts's normalization).
+  const normalized = text.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
+  const match = normalized.match(/^---\n([\s\S]*?)\n---/);
   return match ? match[1] : null;
 }
 
@@ -36,7 +39,10 @@ describe("agent frontmatter parses under a strict YAML loader", () => {
     const text = fs.readFileSync(path.join(AGENTS_DIR, file), "utf8");
     const frontmatter = extract_frontmatter(text);
     expect(frontmatter, `${file} has no --- frontmatter block`).not.toBeNull();
-    expect(() => yaml.load(frontmatter as string)).not.toThrow();
+    expect(
+      () => yaml.load(frontmatter as string),
+      `${file} frontmatter failed strict YAML parse (reported position is relative to the frontmatter block; quote any value containing a colon-space)`,
+    ).not.toThrow();
   });
 
   // Negative control: the loader must actually reject the colon-space class

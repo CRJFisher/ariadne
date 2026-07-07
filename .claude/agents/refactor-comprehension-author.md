@@ -54,7 +54,7 @@ Keep it scannable — a decision aid, not a transcript of the plan's rows. The
 HTML must be fully self-contained (inline styles, no external assets, no
 scripts fetched from anywhere).
 
-# Output
+## Output
 
 Write only the HTML file to the staging target. Your final message MUST be one
 line — `wrote <slug>.comprehension.html` — and nothing else; never echo the

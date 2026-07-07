@@ -326,7 +326,9 @@ For each cluster in `consolidation.json`, dispatch one
 `Task(refactor-comprehension-author)` to render a self-contained HTML
 comprehension doc from that cluster's `plan_path` (a merged
 `consolidated_plan.md` or a singleton's `refactor_plan.md`). Pass the exact
-staging target `backlog/docs/<slug>.comprehension.html` — the filename is the
+staging target `backlog/docs/<slug>.comprehension.html` (`<slug>` is the
+cluster's `consolidation.json` `slug`; a singleton's is its `fault_area`) — the
+filename is the
 graduation contract (`graduate_group_docs.ts` moves exactly that path in 7c; a
 mismatch is a silent `skipped_no_src`). The doc is staged in the repo so the
 user can open it from their tree while deciding; the `*.comprehension.html`
@@ -339,7 +341,8 @@ a funded cluster's doc into `backlog/tasks/`. Dispatch prompt:
 > fault areas are `<member_fault_areas>` and the sub-task work order is
 > `<ordering>`. Reply `wrote <slug>.comprehension.html`.
 
-Then author one **index** comprehension doc (written to a temp path and opened)
+Then author one **index** comprehension doc (written to
+`<root>/comprehension_index.html` and opened)
 that links every cluster's doc and presents the clusters in `consolidation.json`'s
 suggested `ordering` — upstream work first — with impact-to-cost as the secondary
 sort. Keep it scannable: a decision aid, not a transcript of the rows.

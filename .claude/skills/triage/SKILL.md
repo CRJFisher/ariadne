@@ -214,6 +214,8 @@ node --import tsx .claude/skills/triage/scripts/get_next_triage_entry.ts \
 
 Call the script **sequentially** (not in parallel) for replacements — each call needs a fresh read of `results/` to see the just-completed entry's verdict file before picking the next pending one. Pass an empty `--active` (omit the flag) if every worker has finished and you're doing a final drain check.
 
+To inspect live counts across in-flight runs at any time, run the on-demand summary in **Current State** (doc tail).
+
 ### Verdict schema
 
 Each `results/{entry_index}.json` is a strict `TriageVerdict` discriminated union. Finalize re-parses every file via `parse_triage_verdict`; malformed shapes halt finalize with an explicit error. Every false-positive verdict is **self-contained** — it carries its own evidence, so there is no in-run consolidation. Offline grouping of false positives happens downstream in the `plan` skill.

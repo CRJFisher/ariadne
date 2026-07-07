@@ -1,7 +1,7 @@
 ---
 id: TASK-190.36.1
 title: "Unblock the pipeline and land the quick run-cost wins"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-05 00:00"
 labels:
@@ -85,17 +85,58 @@ validates ``); a YAML parser raises `ScannerError`, which breaks loading of
 
 <!-- AC:BEGIN -->
 
-- [ ] All `.claude/agents/*.md` frontmatter parses under a strict YAML loader,
+- [x] All `.claude/agents/*.md` frontmatter parses under a strict YAML loader,
       pinned by a test.
-- [ ] `export_to_backlog.ts --dry-run` enumerates cleanly (no stale-row
+- [x] `export_to_backlog.ts --dry-run` enumerates cleanly (no stale-row
       throw); `~/.ariadne/plan/tasks/` holds only post-190.35 rows.
-- [ ] No `$SCRATCH` reference remains in `prioritize/SKILL.md`; the 7b/7c
+- [x] No `$SCRATCH` reference remains in `prioritize/SKILL.md`; the 7b/7c
       commands paste-and-run against `<root>`.
-- [ ] `triage/SKILL.md` declares `AskUserQuestion` and has no `!`-injected
+- [x] `triage/SKILL.md` declares `AskUserQuestion` and has no `!`-injected
       content before its reference sections.
-- [ ] `refactor-comprehension-author.md` exists, owns the authoring spec, and
+- [x] `refactor-comprehension-author.md` exists, owns the authoring spec, and
       the step-5 dispatch names it with the exact staging filename.
-- [ ] All five prioritize-family agents carry `disable-model-invocation: true`.
-- [ ] No agent grant or body prose references bare `/tmp`.
+- [x] All five prioritize-family agents carry `disable-model-invocation: true`.
+- [x] No agent grant or body prose references bare `/tmp`.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+The pipeline could not complete a prioritize run without manual workarounds:
+its step-3 workhorse agent failed to load (an unquoted YAML description with a
+mid-scalar colon-space), the task-DB was full of pre-190.35 rows the strict
+parser rejects before the dry-run gate, the 7b/7c copy-paste commands
+referenced an unbound `$SCRATCH`, and triage invoked a tool it never declared.
+Alongside those blockers, two run-cost leaks burned tokens every invocation:
+a `!`-injected live-state block busted the triage prompt-cache prefix, and an
+unnamed comprehension-doc dispatch could echo ~26KB of HTML into the session.
+
+The parse-ability of agent frontmatter is now a build invariant:
+`packages/skill-fs/src/agent_frontmatter.test.ts` walks `.claude/agents/*.md`
+and loads each frontmatter under `js-yaml` (an explicit skill-fs
+devDependency), with a negative control pinning the colon-space class.
+skill-fs owns the guard because it is the CI-covered home for `.claude/`
+structural tests (root `pnpm test` runs `./packages/*` only). The stale task-DB
+rows are deleted, backed up at `~/.ariadne/plan/_wiped_pre190.35_*`; they were
+never re-minted because `is_permanent_limitation` was never computed for them.
+
+Comprehension-doc authoring now lives in the named
+`refactor-comprehension-author` agent: the SKILL keeps the dispatch and the
+graduation contract (the exact `backlog/docs/<slug>.comprehension.html`
+filename `graduate_group_docs.ts` moves — a mismatch is a silent skip), the
+agent owns the presentation spec and a one-line return contract. That glob is
+now genuinely gitignored — the rule the SKILL and `paths.ts` described is in
+root `.gitignore`. Triage's `## Current State` is an on-demand instruction at
+the doc tail, pointed to from the Phase 3 worker-pool loop. All five
+prioritize-family agents carry `disable-model-invocation: true`.
+
+Temp-dir convergence deliberately lands on the literal `/tmp/claude/**`
+rather than `$TMPDIR`: permission-grant globs match literally and do not
+expand environment variables, so the grant uses the sandbox-allowed literal
+and body prose matches it. Known follow-up: `.claude/skills/plan/tests/` never
+runs in CI (pre-existing gap; the new guard intentionally lives in skill-fs
+instead). The lockfile diff carries a pnpm 11.9 format refresh (`libc:`
+annotations, a transitive `flatted` bump) that rides along with the js-yaml
+addition.
