@@ -3,7 +3,7 @@ name: triage
 description: Triage stage for entry-point candidates. Detects entry points in Ariadne packages or external codebases and triages false positives via per-entry investigators, publishing each false positive raw and self-contained.
 argument-hint: "[config-name | /path/to/repo | owner/repo (GitHub)]"
 disable-model-invocation: true
-allowed-tools: Bash(node --import tsx:*), Bash(ls:*), Read, Write, Glob, Task(triage-investigator)
+allowed-tools: Bash(node --import tsx:*), Bash(ls:*), Read, Write, Glob, AskUserQuestion, Task(triage-investigator)
 ---
 
 # Triage Entrypoints
@@ -74,10 +74,6 @@ When the input is a directory path and a project config already exists for that 
 No project configs ship pre-authored — author one with the steps above. A saved config lives at `~/.ariadne/triage-entrypoints/project_configs/<name>.json` and is passed to every phase via `--config <path>`. The file is a JSON object with `project_path` (required), optional `folders` (source directories to index), optional `exclude` (directories to skip), and `project_name` (only for internal `project_path: "."` projects).
 
 If no arguments are provided or the input is ambiguous, **ask the user** before proceeding.
-
-## Current State
-
-!`node --import tsx .claude/skills/triage/scripts/get_triage_summary.ts 2>/dev/null || echo "No active triage"`
 
 ## State and Output Locations
 
@@ -386,3 +382,11 @@ The skill is a thin caller of `@ariadnejs/core`. Classification (`enrich_call_gr
 | Agent               | Model  | Purpose                                                                                                              |
 | ------------------- | ------ | -------------------------------------------------------------------------------------------------------------------- |
 | triage-investigator | sonnet | Investigate a single residual entry; emit one `TriageVerdict` (tp / fp-novel / fp-classifier-regression / uncertain) |
+
+## Current State
+
+To see active triage runs and their live counts, run on demand:
+
+```bash
+node --import tsx .claude/skills/triage/scripts/get_triage_summary.ts
+```

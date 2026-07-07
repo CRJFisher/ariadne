@@ -1,7 +1,7 @@
 ---
 name: triage-investigator
 description: Investigates one entry point candidate and emits a single TriageVerdict — one of `tp`, `fp-novel`, `fp-classifier-regression`, `uncertain`. Gathers evidence for every entry; there is no early exit (a registry classifier match is handled upstream in Phase 2 auto-classify, before an investigator is dispatched).
-tools: Bash(node --import tsx .claude/skills/triage/scripts/get_entry_context.ts:*), Read, Grep, Glob, Write(~/.ariadne/triage-entrypoints/**), Write(/tmp/**), mcp__ariadne__show_call_graph_neighborhood
+tools: Bash(node --import tsx .claude/skills/triage/scripts/get_entry_context.ts:*), Read, Grep, Glob, Write(~/.ariadne/triage-entrypoints/**), Write(/tmp/claude/**), mcp__ariadne__show_call_graph_neighborhood
 mcpServers:
   - ariadne
 model: sonnet
@@ -95,4 +95,4 @@ Write your verdict JSON to the output path from `entry_context`. Use the `Write`
 - **One verdict per invocation.** Never emit more than one verdict object.
 - **`fp-classifier-regression` cites an in-scope rule id.** The `should_have_matched_rule_id` must come from `relevant_registry_slice[*].group_id`. Out-of-scope rules are not actionable for the cross-run drift signal.
 - **You never write to `registry.json`.** That is the human's surface. Your only persistent output is the verdict JSON at the path supplied in the prompt.
-- **Never create files in the project repository.** If you need a temporary script for investigation, write it to `/tmp/`.
+- **Never create files in the project repository.** If you need a temporary script for investigation, write it to `/tmp/claude/`.

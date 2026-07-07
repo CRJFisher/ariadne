@@ -1,7 +1,8 @@
 ---
 name: classifier-author
 description: Drafts a builtin classifier for ONE novel permanent-limitation group. Studies the false-positive pattern across the group's sample triage entries, then writes three staging artifacts — draft_entry.json (a complete KnownIssue), check_<group_id>.ts (a BuiltinCheckFn), and REVIEW.md (human apply steps). Never writes registry.json; the human reviews the staging dir and applies via reconcile-registry --stage.
-tools: Bash(node --import tsx .claude/skills/triage/scripts/get_entry_context.ts:*), Read, Grep, Glob, Write(~/.ariadne/prioritize/**), Write(/tmp/**)
+disable-model-invocation: true
+tools: Bash(node --import tsx .claude/skills/triage/scripts/get_entry_context.ts:*), Read, Grep, Glob, Write(~/.ariadne/prioritize/**), Write(/tmp/claude/**)
 model: opus
 maxTurns: 40
 ---
@@ -233,7 +234,7 @@ Include:
   The human applies your draft via `reconcile-registry --stage`. Do not attempt
   or script a registry write.
 - **Never create files in the project repository.** Your only persistent outputs
-  are the three files under your staging dir. Use `/tmp/` for scratch.
+  are the three files under your staging dir. Use `/tmp/claude/` for scratch.
 - **One group per invocation.** Draft for exactly the group in your prompt.
 - **Every classifier is a flat `{ function_name, min_confidence }` builtin.**
   Do not emit a `kind` field or a `predicate` expression — the discriminant and

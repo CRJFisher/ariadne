@@ -65,3 +65,5 @@ logs/security/
 
 .test_failures_*
 
+
+backlog/docs/*.comprehension.html

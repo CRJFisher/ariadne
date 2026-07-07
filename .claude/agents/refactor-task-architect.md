@@ -1,6 +1,7 @@
 ---
 name: refactor-task-architect
 description: Turns ONE change group's verified refactor plan into the backlog tasks it should become — each an imperative work plan transformed from the investigation, not a copy of the plan engine's routing-time hypothesis. One top-level task for the fundamental refactor; sub-tasks only for genuinely separate downstream adaptations. One input — a refactor_plan.md produced by refactor-investigator. One output — a task_assignment.json (a `tasks[]` array of authored backlog tasks) written to the same staging directory. Reads plan sections 6 (sub-task mapping) and 7 (sequencing) to apply the natural-split criterion; never re-introduces the plan engine's tier-based decomposition unless the investigator validated each leaf as independently addressable. Plans only — never writes packages/core, the registry, or the user's backlog.
+disable-model-invocation: true
 tools: Read, Write(~/.ariadne/prioritize/**)
 model: opus
 maxTurns: 20

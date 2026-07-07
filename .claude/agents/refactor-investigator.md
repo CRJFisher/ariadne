@@ -1,7 +1,8 @@
 ---
 name: refactor-investigator
-description: Turns ONE change group (the PlanTask rows that fix one AriadneFaultArea) into a single, code-grounded refactoring plan that resolves EVERY issue in the group as one coherent change at the right altitude. One input — a fault-area change group (the architectural root, its fault_area node, and the localized leaves, with their false-positive evidence). One output — a Markdown refactor plan written to a staging path. Investigates the real `packages/core` code: validates or collapses the plan's decomposition, names the concrete mechanism, and catches over-decomposition, dead code, and duplicate builders. Design-only — never writes `packages/core`, the registry, or the user's backlog.
-tools: Read, Grep, Glob, Bash(node --import tsx:*), Write(~/.ariadne/prioritize/**), Write(/tmp/**)
+description: "Turns ONE change group (the PlanTask rows that fix one AriadneFaultArea) into a single, code-grounded refactoring plan that resolves EVERY issue in the group as one coherent change at the right altitude. One input — a fault-area change group (the architectural root, its fault_area node, and the localized leaves, with their false-positive evidence). One output — a Markdown refactor plan written to a staging path. Investigates the real `packages/core` code: validates or collapses the plan's decomposition, names the concrete mechanism, and catches over-decomposition, dead code, and duplicate builders. Design-only — never writes `packages/core`, the registry, or the user's backlog."
+disable-model-invocation: true
+tools: Read, Grep, Glob, Bash(node --import tsx:*), Write(~/.ariadne/prioritize/**), Write(/tmp/claude/**)
 model: opus
 maxTurns: 200
 ---
@@ -55,7 +56,7 @@ The owning core folder is the `ARIADNE_FAULT_AREA_FOLDER[fault_area]` anchor in
 This is the work the plan phase could not do. Use `Read`/`Grep`/`Glob` over the
 fault-area folder (and the resolvers it feeds) to understand how the area
 actually works today, and `Bash(node --import tsx ...)` for **read-only**
-reproduction or AST inspection in `/tmp` when you need to confirm a mechanism.
+reproduction or AST inspection in `/tmp/claude/` when you need to confirm a mechanism.
 Never mutate `packages/core`, run a mutating test, or edit any tracked file.
 
 For each false-positive in the group, trace the real failure to its root cause —

@@ -322,24 +322,22 @@ singleton's own `refactor_plan.md`), a `rationale`, and a suggested cross-cluste
 
 ### 5. Render a comprehension doc per cluster
 
-For each cluster in `consolidation.json`, dispatch one sub-agent to render a
-self-contained HTML comprehension doc from that cluster's `plan_path` (a merged
-`consolidated_plan.md` or a singleton's `refactor_plan.md`), written to
-`backlog/docs/<slug>.comprehension.html` (in the repo, so the user can open it
-from their tree while deciding; the `*.comprehension.html` glob is gitignored, so a
-staging never lands in a commit until graduation moves a funded cluster's doc into
-`backlog/tasks/`). Pick a comprehension-doc specialist sub-agent if your
-environment offers one; otherwise a general-purpose sub-agent following these
-instructions produces the same artifact. Each doc presents:
+For each cluster in `consolidation.json`, dispatch one
+`Task(refactor-comprehension-author)` to render a self-contained HTML
+comprehension doc from that cluster's `plan_path` (a merged
+`consolidated_plan.md` or a singleton's `refactor_plan.md`). Pass the exact
+staging target `backlog/docs/<slug>.comprehension.html` — the filename is the
+graduation contract (`graduate_group_docs.ts` moves exactly that path in 7c; a
+mismatch is a silent `skipped_no_src`). The doc is staged in the repo so the
+user can open it from their tree while deciding; the `*.comprehension.html`
+glob is gitignored, so a staging never lands in a commit until graduation moves
+a funded cluster's doc into `backlog/tasks/`. Dispatch prompt:
 
-- a before/after pair of diagrams showing the change in functionality, grounded in
-  the plan's chosen mechanism,
-- the impact — the false-positives it removes and how broadly, stated concretely
-  (e.g. "eliminates 14 false unreachable-function flags across 6 projects"),
-- the cost/blast-radius of the core fix,
-- for a merged cluster, **why its groups are linked** (the shared surface or
-  dependency) and the sub-task work order,
-- a clear benefit-vs-cost framing so the user can rank clusters against each other.
+> Render the comprehension doc for cluster `<slug>`. The plan is at
+> `<plan_path>`. Write the self-contained HTML to
+> `backlog/docs/<slug>.comprehension.html`. For a merged cluster, the member
+> fault areas are `<member_fault_areas>` and the sub-task work order is
+> `<ordering>`. Reply `wrote <slug>.comprehension.html`.
 
 Then author one **index** comprehension doc (written to a temp path and opened)
 that links every cluster's doc and presents the clusters in `consolidation.json`'s
@@ -394,7 +392,7 @@ complete before proceeding to 7b.
 node --import tsx .claude/skills/plan/scripts/export_to_backlog.ts \
   --id <row_id> --id <row_id> … \
   --assignments <root>/clusters/<slug>/task_assignment.json \
-  > "$SCRATCH/export_summary_<slug>.json"
+  > "<root>/export_summary_<slug>.json"
 ```
 
 `--assignments` is **required** for a write: it supplies the authored `tasks[]`
@@ -403,8 +401,8 @@ Select the cluster's rows by repeating `--id` for every id in the cluster's
 `member_row_ids` — this spans a merged cluster's multiple fault areas in one run,
 and every selected id must be claimed by some authored task or the export errors.
 (For a singleton cluster `--fault-area <area>` selects the same rows.) Redirect the
-summary into your scratchpad directory (the sandbox blocks `/tmp`); use that path
-in 7c.
+summary to `<root>/export_summary_<slug>.json` — the run's staging root already
+used throughout steps 3–7 — and use that path in 7c.
 
 **Step 7c — graduate the comprehension doc** (reads the export summary, moves the
 staged comprehension doc beside the epic for each funded cluster):
@@ -412,7 +410,7 @@ staged comprehension doc beside the epic for each funded cluster):
 ```bash
 node --import tsx .claude/skills/plan/scripts/graduate_group_docs.ts \
   --slug <slug> \
-  --export-summary "$SCRATCH/export_summary_<slug>.json"
+  --export-summary "<root>/export_summary_<slug>.json"
 ```
 
 `--slug` is the cluster's slug (its `consolidation.json` `slug`; a singleton's is

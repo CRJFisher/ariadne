@@ -1,7 +1,8 @@
 ---
 name: refactor-consolidator
 description: Decides the epic boundaries across an invocation's investigated change groups — which groups are independent (each its own epic) and which are linked and must become ONE epic with ordered sub-tasks. One input — every group's code-grounded refactor_plan.md for one prioritize invocation. One output — a consolidation.json cluster map plus, for each merge, a consolidated_plan.md that designs the linked groups as one coherent change (often at a higher altitude than any single group reached). Reads the deep investigations to find shared refactor surfaces and load-bearing dependencies the per-group passes could not see; merges only on strong, code-cited evidence and defaults to independent. Design-only — never writes packages/core, the registry, or the user's backlog.
-tools: Read, Grep, Glob, Bash(node --import tsx:*), Write(~/.ariadne/prioritize/**), Write(/tmp/**)
+disable-model-invocation: true
+tools: Read, Grep, Glob, Bash(node --import tsx:*), Write(~/.ariadne/prioritize/**), Write(/tmp/claude/**)
 model: opus
 maxTurns: 120
 ---
@@ -76,7 +77,7 @@ guard against: a merged epic that bundles genuinely separate work produces a
 sprawling card that does each part badly. When a merge is plausible but the code
 does not confirm a shared surface or a load-bearing dependency, leave the groups
 separate and say why in the cluster's `rationale`. Use `Read`/`Grep`/`Glob`, and
-`Bash(node --import tsx ...)` for read-only inspection in `/tmp`, to confirm a
+`Bash(node --import tsx ...)` for read-only inspection in `/tmp/claude/`, to confirm a
 merge claim against the real `packages/core`; never mutate any tracked file.
 
 ## Write the merged plan for each linked cluster
