@@ -50,7 +50,14 @@ const BASH_WRITE_PATTERNS = [
   // git checkout/restore silently replace the registry with the committed
   // version — an accident-surface overwrite, not an adversarial one.
   /(^|[\s;&|])git\s+(checkout|restore)\s[^|;&]*registry\.json/,
-  /\b(writeFileSync|appendFileSync|writeFile|appendFile)\b[^|;&]*registry\.json/,
+  /\b(writeFileSync|appendFileSync|writeFile|appendFile|cpSync|copyFileSync|renameSync|rmSync|createWriteStream)\b[^|;&]*registry\.json/,
+  // Python open()/io.open() with a write mode ('w', 'a', 'r+' — positional or
+  // mode=). A read-mode or modeless open is how a script LOADS the registry
+  // and must pass.
+  /\b(io\s*\.\s*)?open\s*\([^|;&]*registry\.json[^|;&]*,\s*(mode\s*=\s*)?["'](w|a|r\+)/,
+  // Perl open with a >/>> mode targeting the registry (2-arg '>path' or
+  // 3-arg '>', 'path' form).
+  /\bopen\s*\([^|;&]*["']\s*>{1,2}[^|;&]*registry\.json/,
 ];
 
 /**
@@ -68,13 +75,15 @@ function has_flag(command: string, flag: string): boolean {
 /**
  * True when a Bash command EXECUTES reconcile_registry.ts in write-mode. A
  * mere mention of the script path (grep/cat/an editor opening it) must pass —
- * the execution form requires a runner token before the script path. The
- * script applies detected proposals by default — a bare invocation writes —
- * so the flag check is inverted: only explicitly read-only forms pass
- * (`--dry-run`, `--help`, or `--stage` without `--apply`; `--stage` is
- * dry-run by default and writes only with `--apply`).
+ * the execution form requires a runner token before the script path, or the
+ * script path itself in command position (`./reconcile_registry.ts`, an
+ * absolute-path exec). The script applies detected proposals by default — a
+ * bare invocation writes — so the flag check is inverted: only explicitly
+ * read-only forms pass (`--dry-run`, `--help`, or `--stage` without
+ * `--apply`; `--stage` is dry-run by default and writes only with `--apply`).
  */
-const RECONCILE_EXECUTION = /\b(node|npx|tsx|pnpm)\b[^|;&]*reconcile_registry\.ts/;
+const RECONCILE_EXECUTION =
+  /\b(node|npx|tsx|pnpm|bun)\b[^|;&]*reconcile_registry\.ts|(^|[;&|])\s*[^\s|;&]*reconcile_registry\.ts(\s|$)/;
 
 function is_write_mode_reconcile(command: string): boolean {
   if (!RECONCILE_EXECUTION.test(command)) return false;

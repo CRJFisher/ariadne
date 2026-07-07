@@ -139,6 +139,109 @@ describe("evaluate_tool_call — Bash path mentions", () => {
     ).toEqual("ask");
   });
 
+  it("asks on inline node copy/rename/rm/stream writes", () => {
+    expect(
+      decision_of("Bash", {
+        command: `node -e 'require("fs").cpSync("draft.json", "${REGISTRY_REL}")'`,
+      }),
+    ).toEqual("ask");
+    expect(
+      decision_of("Bash", {
+        command: `node -e 'fs.copyFileSync("draft.json", "${REGISTRY_ABS}")'`,
+      }),
+    ).toEqual("ask");
+    expect(
+      decision_of("Bash", {
+        command: `node -e 'fs.renameSync("/tmp/staged.json", "${REGISTRY_REL}")'`,
+      }),
+    ).toEqual("ask");
+    expect(
+      decision_of("Bash", {
+        command: `node -e 'fs.rmSync("${REGISTRY_REL}")'`,
+      }),
+    ).toEqual("ask");
+    expect(
+      decision_of("Bash", {
+        command: `node -e 'fs.createWriteStream("${REGISTRY_REL}").end("[]")'`,
+      }),
+    ).toEqual("ask");
+  });
+
+  it("passes an inline node read of the registry", () => {
+    expect(
+      decision_of("Bash", {
+        command: `node -e 'console.log(fs.readFileSync("${REGISTRY_REL}", "utf8"))'`,
+      }),
+    ).toEqual("pass");
+  });
+
+  it("asks on a python write-mode open against the registry", () => {
+    expect(
+      decision_of("Bash", {
+        command: `python3 -c "open('${REGISTRY_REL}', 'w').write('[]')"`,
+      }),
+    ).toEqual("ask");
+    expect(
+      decision_of("Bash", {
+        command: `python3 -c "open('${REGISTRY_ABS}', 'a').write(',{}')"`,
+      }),
+    ).toEqual("ask");
+    expect(
+      decision_of("Bash", {
+        command: `python3 -c "f = open('${REGISTRY_REL}', 'r+'); f.write('[]')"`,
+      }),
+    ).toEqual("ask");
+    expect(
+      decision_of("Bash", {
+        command: `python3 -c "open('${REGISTRY_REL}', mode='w').write('[]')"`,
+      }),
+    ).toEqual("ask");
+    expect(
+      decision_of("Bash", {
+        command: `python3 -c "import io; io.open('${REGISTRY_REL}', 'w').write('[]')"`,
+      }),
+    ).toEqual("ask");
+  });
+
+  it("passes a python read-mode or modeless open of the registry", () => {
+    expect(
+      decision_of("Bash", {
+        command: `python3 -c "import json; print(json.load(open('${REGISTRY_REL}')))"`,
+      }),
+    ).toEqual("pass");
+    expect(
+      decision_of("Bash", {
+        command: `python3 -c "print(open('${REGISTRY_REL}', 'r').read())"`,
+      }),
+    ).toEqual("pass");
+    expect(
+      decision_of("Bash", {
+        command: `python3 -c "print(open('${REGISTRY_ABS}', 'rb').read())"`,
+      }),
+    ).toEqual("pass");
+  });
+
+  it("asks on a perl > open against the registry", () => {
+    expect(
+      decision_of("Bash", {
+        command: `perl -e "open(F, '>', '${REGISTRY_REL}'); print F '[]'"`,
+      }),
+    ).toEqual("ask");
+    expect(
+      decision_of("Bash", {
+        command: `perl -e "open(F, '>>${REGISTRY_ABS}'); print F ','"`,
+      }),
+    ).toEqual("ask");
+  });
+
+  it("passes a perl read-mode open of the registry", () => {
+    expect(
+      decision_of("Bash", {
+        command: `perl -e "open(F, '<', '${REGISTRY_REL}'); print <F>"`,
+      }),
+    ).toEqual("pass");
+  });
+
   it("passes commands that never mention the registry", () => {
     expect(decision_of("Bash", { command: "pnpm test" })).toEqual("pass");
     expect(
@@ -233,6 +336,49 @@ describe("evaluate_tool_call — Bash reconcile_registry.ts invocations", () => 
         command: `${RECONCILE} --id r --fixed --reason 'mentions --help'`,
       }),
     ).toEqual("ask");
+  });
+
+  it("asks on a bun invocation", () => {
+    expect(
+      decision_of("Bash", {
+        command:
+          "bun .claude/skills/triage/scripts/reconcile_registry.ts --id r --promote",
+      }),
+    ).toEqual("ask");
+  });
+
+  it("asks on a command-position bare-path exec", () => {
+    expect(
+      decision_of("Bash", {
+        command: "./reconcile_registry.ts --id r --fixed --reason 'subsumed'",
+      }),
+    ).toEqual("ask");
+    expect(
+      decision_of("Bash", {
+        command:
+          "cd .claude/skills/triage/scripts && ./reconcile_registry.ts --id r --promote",
+      }),
+    ).toEqual("ask");
+    expect(
+      decision_of("Bash", {
+        command:
+          "/repo/.claude/skills/triage/scripts/reconcile_registry.ts --stage draft.json --apply",
+      }),
+    ).toEqual("ask");
+  });
+
+  it("passes read-only bun and bare-path invocations", () => {
+    expect(
+      decision_of("Bash", {
+        command:
+          "bun .claude/skills/triage/scripts/reconcile_registry.ts --dry-run",
+      }),
+    ).toEqual("pass");
+    expect(
+      decision_of("Bash", {
+        command: "./reconcile_registry.ts --stage draft.json",
+      }),
+    ).toEqual("pass");
   });
 
   it("passes commands that mention the script without executing it", () => {
