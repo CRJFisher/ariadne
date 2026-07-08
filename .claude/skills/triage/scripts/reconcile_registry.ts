@@ -1073,9 +1073,14 @@ async function load_samples_beside_draft(draft_path: string): Promise<StageSampl
   }
   const samples: StageSample[] = [];
   for (const name of filenames) {
-    const entry_point = JSON.parse(
-      await readFile(path.join(samples_dir, name), "utf8"),
-    ) as EnrichedEntryPoint;
+    let entry_point: EnrichedEntryPoint;
+    try {
+      entry_point = JSON.parse(await readFile(path.join(samples_dir, name), "utf8")) as EnrichedEntryPoint;
+    } catch (err) {
+      throw new StageDraftError(
+        `sample samples/${name} could not be read/parsed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
     samples.push({ name, entry_point });
   }
   return samples;

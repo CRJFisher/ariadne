@@ -153,9 +153,19 @@ describe("audit_overrides", () => {
   });
 
   it("does not flag an override re-confirmed in a later sweep", () => {
-    const audited = audit_overrides([
-      override({ first_excluded_in_sweep: "sweep-1", last_excluded_in_sweep: "sweep-4" }),
-    ]);
-    expect(audited.map((a) => a.never_re_confirmed)).toEqual([false]);
+    const expected: OverrideAudit[] = [
+      {
+        fault_area: "name_resolution",
+        member: MEMBER,
+        reason: "actually an import miss",
+        suggested_area: "import_resolution",
+        first_excluded_in_sweep: "sweep-1",
+        last_excluded_in_sweep: "sweep-4",
+        never_re_confirmed: false,
+      },
+    ];
+    expect(
+      audit_overrides([override({ first_excluded_in_sweep: "sweep-1", last_excluded_in_sweep: "sweep-4" })]),
+    ).toEqual(expected);
   });
 });

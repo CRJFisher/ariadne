@@ -35,7 +35,7 @@ export interface ConsolidationIssue {
 export interface ValidateConsolidationContext {
   /** The union of every investigated group's `row_ids` — the exact set the clusters must partition. */
   investigated_row_ids: readonly string[];
-  /** Row ids a verdict rerouted INTO the permanent-limitation set; must appear in no cluster (Z24 wedge). */
+  /** Row ids a verdict rerouted INTO the permanent-limitation set; must appear in no cluster. */
   permanent_rerouted_ids: readonly string[];
   /** Injected disk check for `plan_path` existence (the CLI passes `fs.existsSync`). */
   plan_path_exists: (plan_path: string) => boolean;
@@ -151,8 +151,12 @@ export function validate_consolidation(
     }
   });
 
-  // Exact partition of member_row_ids over the investigated row ids.
+  // Exact partition of member_row_ids over the investigated row ids. A row
+  // rerouted to a permanent limitation is legitimately absent from every cluster
+  // (it routes to classifier-author), so it is exempt from the drop check — the
+  // permanent_rerouted_in_cluster check below still catches one that leaks in.
   const investigated = new Set(ctx.investigated_row_ids);
+  const permanent = new Set(ctx.permanent_rerouted_ids);
   const assignment_count = new Map<string, number[]>();
   clusters.forEach((cluster, i) => {
     for (const id of cluster.member_row_ids) {
@@ -163,7 +167,7 @@ export function validate_consolidation(
   });
 
   for (const id of investigated) {
-    if (!assignment_count.has(id)) {
+    if (!assignment_count.has(id) && !permanent.has(id)) {
       issues.push({
         code: "row_dropped",
         path: "clusters",
@@ -188,8 +192,8 @@ export function validate_consolidation(
     }
   }
 
-  // No permanent-rerouted id in any cluster (the Z24 wedge).
-  const permanent = new Set(ctx.permanent_rerouted_ids);
+  // A row rerouted to a permanent limitation routes to classifier-author, never
+  // into a cluster, so any such id in a cluster is a routing error.
   clusters.forEach((cluster, i) => {
     for (const id of cluster.member_row_ids) {
       if (permanent.has(id)) {

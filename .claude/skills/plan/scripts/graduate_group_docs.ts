@@ -127,10 +127,14 @@ export async function run(argv: string[]): Promise<GraduateSummary> {
   const { slug, export_summary_path, dry_run } = parse_argv(argv);
   const summary = await read_export_summary(export_summary_path);
 
-  if (summary.dry_run) {
+  // A summary that did not write (a `--dry-run` candidate preview, or an
+  // `--assignments`-without-`--write` card preview) names would-be epic files
+  // that were never created — graduating beside them would strand the doc.
+  if (!summary.wrote) {
     process.stderr.write(
-      "Warning: ExportSummary has dry_run=true — no rows were actually exported, " +
-      "so graduation would produce no backlog/docs targets.\n",
+      "Warning: ExportSummary has wrote=false — no backlog tasks were written " +
+      "(preview run), so graduation would move the comprehension doc beside a " +
+      "non-existent epic. Re-run the export with --write first.\n",
     );
   }
 

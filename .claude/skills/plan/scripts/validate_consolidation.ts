@@ -22,6 +22,8 @@
 
 import * as fs from "node:fs";
 import { readFile } from "node:fs/promises";
+import * as os from "node:os";
+import * as path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import {
@@ -110,8 +112,15 @@ export async function run(argv: string[]): Promise<ValidateConsolidationResult> 
   return validate_consolidation(consolidation_raw, {
     investigated_row_ids,
     permanent_rerouted_ids: permanent_rerouted_ids(reroutes),
-    plan_path_exists: (plan_path) => fs.existsSync(plan_path),
+    plan_path_exists: (plan_path) => fs.existsSync(expand_home(plan_path)),
   });
+}
+
+/** Node does not expand `~`; the consolidator's plan_paths are tilde-rooted. */
+function expand_home(p: string): string {
+  if (p === "~") return os.homedir();
+  if (p.startsWith("~/")) return path.join(os.homedir(), p.slice(2));
+  return p;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

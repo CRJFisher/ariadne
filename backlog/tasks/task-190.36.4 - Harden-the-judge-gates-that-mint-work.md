@@ -1,7 +1,7 @@
 ---
 id: TASK-190.36.4
 title: "Harden the judge gates that mint work"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-05 00:00"
 labels:
@@ -126,3 +126,75 @@ validation `fail` → exit 1).
       and acceptance criteria post-authoring.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+Seven seams where a single model verdict was silent and permanent now carry a
+deterministic check or a recorded, reviewable decision. Every new prioritize-flow
+validator mirrors the proven `validate_plan` shape — a pure `(raw, ctx) → {ok,
+issues}` function, a thin CLI, and a colocated `toEqual`-literal test — and agrees
+on the exit-code convention (a usage error exits 2, a validation failure exits 1).
+
+**1 — Sample-execution gate in `--stage`.** A drafted classifier is now executed
+before it enters the registry. `get_entry_context.ts --enriched` emits the full
+`EnrichedEntryPoint` (the shape `auto_classify` feeds a check, carrying the
+`tree_size`/`definition_features` the narrower `TriageEntry` drops) by looking it
+up in the run manifest's `source_analysis_path`; the `classifier-author` persists
+one per group as `samples/*.json`. `reconcile_registry --stage` then runs the
+drafted builtin against every sample, prints the per-sample result in the dry-run
+preview, and refuses `--apply` on any miss — a pure read-path check that leaves the
+`--stage`/`--apply` write asymmetry untouched.
+
+**2 — `validate_consolidation`.** The one unvalidated hand-off — `consolidation.json`,
+whose ids reach export only via human copy-paste — is now checked as prioritize
+step 4.5 and re-checked as an export precondition. It asserts the clusters exactly
+partition the investigated row ids (`row_dropped` / `row_double_assigned` /
+`row_unknown`), each `plan_path` exists on disk (tilde-expanded), slug shape +
+uniqueness, and no permanent-rerouted id in any cluster. Step 4 persists the
+`groups.json` universe it partitions against.
+
+**3 — Evidence-bearing tasks must state their acceptance.** `export_to_backlog`
+rejects an authored task whose still-selected rows carry false-positive evidence
+but whose `acceptance_criteria` is empty; an evidence-free task may keep `[]`, and
+the guard skips a task whose rows are all already-exported, preserving idempotency.
+
+**4 — File-authoritative permanent-limitation routing.** The `refactor-investigator`
+writes a strict-parsed `verdict.json` (`{outcome, boundary, row_ids}`) beside its
+plan; prioritize routes from that file, never the free-text `<result>` line.
+`apply_investigation_verdicts` reconciles each verdict against the mint-time
+`is_permanent_limitation` flag, flips a disagreeing flag through the task-DB writer
+so the export gate agrees with the investigation, and records the reroute. The
+reroute set is a pure function of the verdict files (every permanent-verdict row,
+not only the currently-disagreeing ones), so a resume or re-run reproduces the same
+`reroutes.json` rather than silently emptying the record `validate_consolidation`
+depends on; duplicate/conflicting verdicts are surfaced, not merged last-write-wins.
+
+**5 — `belongs: 'unsure'` and the standing-override audit.** The membership verdict
+is now three-valued: `'unsure'` grounds nothing this sweep but writes no standing
+override, so an ambiguous member re-enters review next sweep instead of being
+suppressed forever (which a `false` still does). `reconcile_plan`'s summary now
+lists every active override with its sweep stamps and a `never_re_confirmed` flag —
+a read-side surface for the human, with no auto-unsuppress.
+
+**6 — Builtin field-denylist backstop.** A `packages/core` AST test walks every
+non-test file under `builtins/` and fails the build on any read of `tree_size` or
+`definition_features` — the fields absent from the author's evidence surface — via
+property access, string-literal element access, or destructuring, with a
+negative-control test proving the scanner is not a silent no-op.
+
+**7 — Per-cluster human read before export.** `export_to_backlog` gains a `--write`
+opt-in: plain `--assignments` renders each would-be card's title and acceptance
+criteria and writes nothing, so the coordinator surfaces each cluster through
+`AskUserQuestion` (approve / edit / skip) before the writing run — the same
+DIFF-channel treatment the registry gets from `--stage`. `graduate_group_docs`
+warns on a non-`wrote` summary so a preview can never graduate a doc beside an
+unwritten epic.
+
+All acceptance criteria are met and pinned by tests. The full suite is green across
+every workspace root (plan, triage, core, mcp, skill-fs, skill-protocol, types);
+`tsc` and `eslint` are clean. An 8-lens review plus a fix-diff re-review found and
+closed a consolidation partition-vs-reroute contradiction, a `reroutes.json`
+resume-idempotency hole, a tilde-path mismatch, a graduation preview footgun, and
+several doc/test gaps.

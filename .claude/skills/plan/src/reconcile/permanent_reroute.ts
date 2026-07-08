@@ -1,14 +1,14 @@
 /**
  * The reroute record: prioritize's durable note that a `refactor-investigator`
- * verdict disagreed with a `PlanTask`'s mint-time `is_permanent_limitation` flag,
- * and the flag was flipped to match the investigation.
+ * verdict placed a row in the permanent set or disagreed with its mint-time
+ * `is_permanent_limitation` flag.
  *
- * File-authoritative permanent-limitation routing (TASK-190.36.4 item 4) writes
- * one record per disagreement to `<run>/reroutes.json`, then flips the source
- * row through the task-DB writer so the export gate and the investigation agree.
- * `validate_consolidation` (item 2) reads these records: a row now judged a
- * permanent limitation routes to `classifier-author`, never into a cluster, so
- * any such id appearing in a consolidation cluster is the Z24 wedge.
+ * `apply_investigation_verdicts` writes one record per wedge-relevant row to
+ * `<run>/reroutes.json` and flips any disagreeing flag through the task-DB writer
+ * so the export gate and the investigation agree. `validate_consolidation` reads
+ * these records: a row judged a permanent limitation routes to `classifier-author`,
+ * never into a cluster, so any such id appearing in a consolidation cluster is a
+ * routing error.
  */
 export interface PermanentLimitationReroute {
   /** The `PlanTask` id whose flag was flipped. */

@@ -130,6 +130,19 @@ describe("validate_consolidation", () => {
     expect(validate_consolidation(consolidation, ctx())).toEqual({ ok: false, issues: expected });
   });
 
+  it("passes when a permanent-rerouted row is correctly absent from every cluster", () => {
+    // pt-c is investigated but rerouted to a permanent limitation, so it belongs
+    // in no cluster — that is not a dropped row.
+    const consolidation = {
+      clusters: [
+        { slug: "receiver-type", member_row_ids: ["pt-a", "pt-b"], plan_path: "/root/a/plan.md" },
+      ],
+    };
+    expect(
+      validate_consolidation(consolidation, ctx({ permanent_rerouted_ids: ["pt-c"] })),
+    ).toEqual({ ok: true, issues: [] });
+  });
+
   it("fails a permanent-rerouted id that leaked into a cluster (Z24 wedge)", () => {
     const expected: ConsolidationIssue[] = [
       {

@@ -244,7 +244,7 @@ orchestrator). Each sub-agent reads its group's rows, gets to grips with the rea
 > plan's decomposition (catch over-decomposition, dead code, duplicate builders).
 > Write the plan to `<root>/<fault_area>/refactor_plan.md`, write a strict-parsed
 > `verdict.json` beside it (`{outcome: "fixable" | "permanent_limitation",
-> boundary, row_ids}` — every row id in the group), and return your one-line root
+boundary, row_ids}` — every row id in the group), and return your one-line root
 > cause + decomposition verdict. If the whole group turns out to be a permanent
 > limitation — no realistic resolver change would let Ariadne resolve these
 > callers — do not design a refactor: write `refactor_plan.md` as a single
@@ -379,9 +379,12 @@ another is left unstated (it carries no obligation).
 
 Before dispatching, **persist the investigated groups** the consolidator (and the
 step-4.5 validator) partition against — write `<root>/groups.json`, one entry per
-investigated group: `[{ fault_area, plan_path, row_ids }]` (the same `row_ids` you
-list in the dispatch prompt below). This is the authoritative investigated-row-id
-universe: `validate_consolidation` checks the clusters partition it exactly.
+investigated group that is still on the backlog path: `[{ fault_area, plan_path,
+row_ids }]` (the same `row_ids` you list in the dispatch prompt below). A group
+step 3.5 rerouted to a permanent limitation has left the backlog path (it goes to
+step 3a), so it is excluded from consolidation entirely — but the validator is
+robust either way: it reads `reroutes.json` and exempts any rerouted-to-permanent
+row from the exact-partition check, flagging it only if it leaks into a cluster.
 
 With only one investigated group there is nothing to consolidate — skip to step 5.
 Otherwise dispatch one `Task(refactor-consolidator)` over the whole set:

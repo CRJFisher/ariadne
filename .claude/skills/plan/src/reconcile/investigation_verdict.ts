@@ -2,14 +2,13 @@
  * The `refactor-investigator`'s strict-parsed `verdict.json`, written beside its
  * `refactor_plan.md`, and the routing it drives.
  *
- * Prioritize previously routed a group on the free-text `<result>` line
- * `PERMANENT-LIMITATION:` while `refactor_plan.md` was authoritative — the
- * anti-pattern the triage lifecycle forbids — and the deterministic export gate
- * (`select_exportable_tasks`) keyed on the plan-engine mint-time
- * `is_permanent_limitation` flag, never updated by the investigation. This module
- * makes the on-disk `verdict.json` authoritative: prioritize routes from it, and a
- * disagreement with the mint-time flag produces a {@link PermanentLimitationReroute}
- * and flips the source `PlanTask` flag so the export gate and the investigation agree.
+ * The `verdict.json` file is authoritative: prioritize routes each investigated
+ * group from it (an `outcome` of `permanent_limitation` sends the group to
+ * `classifier-author`, `fixable` keeps it on the backlog path). A verdict that
+ * disagrees with a `PlanTask`'s mint-time `is_permanent_limitation` flag produces
+ * a {@link PermanentLimitationReroute} and flips the flag through the task-DB
+ * writer, so the deterministic export gate (`select_exportable_tasks`, which keys
+ * on that flag) and the investigation agree.
  */
 
 import type { PermanentLimitationReroute } from "./permanent_reroute.js";
@@ -52,16 +51,27 @@ export interface RowFlag {
 }
 
 export interface VerdictReconciliation {
-  /** One record per row whose flag the verdict disagreed with (a flip is required). */
+  /**
+   * The reroute records: one per row whose verdict places it in the permanent set
+   * (the Z24 wedge-relevant rows) OR whose mint-time flag disagrees with the
+   * verdict (a required flip). Emitting every permanent-verdict row — not only the
+   * rows whose flag currently disagrees — makes this set a pure function of the
+   * verdict files, so a re-run after the flags are already flipped reproduces the
+   * same records rather than silently emptying them.
+   */
   reroutes: PermanentLimitationReroute[];
   /** Row ids named by a verdict but absent from the task-DB — a hard error for the caller. */
   unknown_row_ids: string[];
+  /** Row ids two verdicts place in conflicting outcomes — a hard error for the caller. */
+  conflicting_row_ids: string[];
 }
 
 /**
  * Reconcile investigation verdicts against the mint-time `is_permanent_limitation`
- * flags. Pure: it computes the reroutes and unknown ids; the caller flips the rows
- * through the task-DB writer and persists the reroute records.
+ * flags. Pure: it computes the reroutes, unknown ids, and conflicts; the caller
+ * flips the rows through the task-DB writer and persists the reroute records. A
+ * row named by more than one verdict is recorded once (deduped); the same row in
+ * two verdicts with opposite outcomes is a conflict, not a silent last-write-wins.
  */
 export function reconcile_verdicts(
   verdicts: readonly InvestigationVerdict[],
@@ -69,15 +79,24 @@ export function reconcile_verdicts(
 ): VerdictReconciliation {
   const reroutes: PermanentLimitationReroute[] = [];
   const unknown_row_ids: string[] = [];
+  const conflicting_row_ids: string[] = [];
+  const decided = new Map<string, boolean>();
   for (const verdict of verdicts) {
     const now_permanent = verdict.outcome === "permanent_limitation";
     for (const row_id of verdict.row_ids) {
+      const prior = decided.get(row_id);
+      if (prior !== undefined) {
+        if (prior !== now_permanent) conflicting_row_ids.push(row_id);
+        continue;
+      }
       const flag = flag_by_id.get(row_id);
       if (flag === undefined) {
         unknown_row_ids.push(row_id);
         continue;
       }
-      if (flag.is_permanent_limitation !== now_permanent) {
+      decided.set(row_id, now_permanent);
+      const disagrees = flag.is_permanent_limitation !== now_permanent;
+      if (now_permanent || disagrees) {
         reroutes.push({
           row_id,
           fault_area: flag.fault_area,
@@ -88,5 +107,5 @@ export function reconcile_verdicts(
       }
     }
   }
-  return { reroutes, unknown_row_ids };
+  return { reroutes, unknown_row_ids, conflicting_row_ids };
 }

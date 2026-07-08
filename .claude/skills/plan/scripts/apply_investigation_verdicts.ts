@@ -7,7 +7,7 @@
  * task-DB writer and records the disagreement in `reroutes.json`. The export gate
  * (`select_exportable_tasks`) then agrees with the investigation, and
  * `validate_consolidation` reads `reroutes.json` to keep a rerouted-to-permanent
- * row out of every cluster (the Z24 wedge).
+ * row out of every cluster.
  *
  * Inputs:
  *   --verdict <path>...   one or more verdict.json files (repeatable / space-listed)
@@ -108,10 +108,15 @@ export async function run(argv: string[], now: Date = new Date()): Promise<Apply
     ]),
   );
 
-  const { reroutes, unknown_row_ids } = reconcile_verdicts(verdicts, flag_by_id);
+  const { reroutes, unknown_row_ids, conflicting_row_ids } = reconcile_verdicts(verdicts, flag_by_id);
   if (unknown_row_ids.length > 0) {
     throw new Error(
       `verdict names row id(s) absent from the task-DB: ${unknown_row_ids.join(", ")}`,
+    );
+  }
+  if (conflicting_row_ids.length > 0) {
+    throw new Error(
+      `row id(s) placed in conflicting outcomes by two verdicts: ${conflicting_row_ids.join(", ")}`,
     );
   }
 
@@ -119,6 +124,9 @@ export async function run(argv: string[], now: Date = new Date()): Promise<Apply
     const run_id = mint_run_id(now);
     const task_by_id = new Map<string, PlanTask>(all_tasks.map((task) => [task.id, task]));
     for (const reroute of reroutes) {
+      // A reroute whose flag already agrees (a re-run's wedge record) needs no
+      // flip — skip the put so a re-run does not churn updated_in_sweep.
+      if (reroute.now_permanent_limitation === reroute.was_permanent_limitation) continue;
       const task = task_by_id.get(reroute.row_id);
       if (task === undefined) continue; // unreachable — reconcile only emits known ids
       await repo.put({

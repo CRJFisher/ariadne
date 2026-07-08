@@ -108,6 +108,24 @@ describe("collect_membership_exclusions", () => {
     const all_belong: MembershipVerdict[] = EVIDENCE.map((_, index) => ({ index, belongs: true, reason: "" }));
     expect(collect_membership_exclusions(plan(all_belong), EVIDENCE)).toEqual([]);
   });
+
+  it("writes no override for an `unsure` verdict — only `false` becomes an exclusion", () => {
+    // `unsure` grounds nothing this sweep but writes NO standing override, so the
+    // member re-enters review next sweep; only the `false` peer yields an exclusion.
+    const mixed: MembershipVerdict[] = [
+      { index: 0, belongs: true, reason: "" },
+      { index: 1, belongs: "unsure", reason: "cannot tell whether this shares the root cause" },
+      { index: 2, belongs: false, reason: "confirmed mis-route" },
+    ];
+    expect(collect_membership_exclusions(plan(mixed), EVIDENCE)).toEqual([
+      {
+        fault_area: "name_resolution",
+        member: { file_path: "src/c.ts", name: "c", kind: "function", start_line: 3 },
+        reason: "confirmed mis-route",
+        suggested_area: null,
+      },
+    ]);
+  });
 });
 
 describe("record_membership_decisions", () => {
