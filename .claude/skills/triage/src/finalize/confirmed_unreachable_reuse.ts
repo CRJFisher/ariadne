@@ -180,6 +180,12 @@ export async function derive_tp_cache(
  * How many would-be cache hits to leave in the llm-triage pool per run as a
  * stability audit. A cheap fixed sample: five re-investigations regardless of
  * cache size keeps the audit's cost flat while still catching systematic drift.
+ *
+ * Consequence at small cache sizes: when a run has ≤5 would-be hits, ALL of them
+ * are sampled and none are reused, so the TP cache saves nothing that run. This
+ * is an accepted, bounded cost (≤5 extra investigations) — the frozen-verdict
+ * audit is worth most exactly where the cache is smallest, and reuse only
+ * meaningfully matters on the large runs where 5 is a negligible fraction.
  */
 export const TP_STABILITY_SAMPLE_TARGET = 5;
 

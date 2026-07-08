@@ -1,7 +1,7 @@
 ---
 id: TASK-190.36.5
 title: "Stabilize loop-closure identity and drain the signal channels"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-05 00:00"
 labels:
@@ -99,19 +99,106 @@ Suggested order: 1 → 2 → 3 → 5 → 4 → 6.
 
 <!-- AC:BEGIN -->
 
-- [ ] The dedup_key line-drift leak is documented beside plan's dedup
+- [x] The dedup_key line-drift leak is documented beside plan's dedup
       guarantee, and prioritize step 1 surfaces member-set collisions with
       exported work.
-- [ ] Each run's manifest records a tp_stability agreement rate from real
+- [x] Each run's manifest records a tp_stability agreement rate from real
       re-investigations of sampled cache hits.
-- [ ] `get_triage_summary` shows uncertain counts and cross-run repeat
+- [x] `get_triage_summary` shows uncertain counts and cross-run repeat
       counts; `plan/SKILL.md` states why plan does not consume `uncertain`.
 - [ ] Investigator (dispense payload, expected verdict) pairs survive
-      `prune_runs`, hosted in the 190.31.1 store.
-- [ ] The fixed-row resurfacing promise either has a working detector
+      `prune_runs`, hosted in the 190.31.1 store. **Deferred** onto
+      TASK-190.31.1 (no eval-set store exists yet); wiring recorded there.
+- [x] The fixed-row resurfacing promise either has a working detector
       emitting a review slice, or is reworded to what is detectable.
-- [ ] The re-key decision is made explicitly: either dedup_key derives from
+- [x] The re-key decision is made explicitly: either dedup_key derives from
       the sorted member set with the one-shot migration landed and deleted,
       or the deferral is recorded with its standing cost.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+The pipeline's drift-tolerant identity is the `member_symbol`
+`(file_path, name, kind[, start_line])`, but two surfaces did not use it: the
+loop-closure `dedup_key` hashed exact call-site `file:line`, so any target-repo
+line shift resurfaced already-funded work as fresh proposals; and the
+abstain/TP-cache signal channels gave the operator no way to tell when frozen
+judgments had gone stale. This task aligns them.
+
+`dedup_key` now hashes the sorted `(file_path, name, kind)` member set
+(`compute_dedup_key`), so a member that only moves down its file keeps its key
+and augments the existing task instead of duplicating it; evidence union and the
+orphan-overlap scorer still key on the call-site `location_token`, since two
+call sites are distinct evidence. `start_line` is excluded so pure line shifts
+are absorbed; the residual costs — a member changing FILE or NAME re-keys, and
+two members sharing `(file, name, kind)` at different lines collapse to one
+token — are documented at the derivation. The one-shot migration re-stamped the
+single exported backlog key (task-347.1), recomputed from its recovered member
+set (its two `_getitem` overloads collapsing to one token).
+
+Two audit signals now drain the frozen-judgment channels. The TP cache leaves up
+to five would-be hits per run on the `llm-triage` route (`tp_stability_sample`)
+so the investigator re-checks them; finalize records
+`manifest.tp_cache.stability = {sampled, agreed, rate}`, a low rate being the
+operator's cue to run `--no-reuse-tp`. `get_triage_summary` surfaces the latest
+`uncertain` count plus a cross-run repeat count, so a perpetually-uncertain entry
+— which re-investigates every run and never enters the cache — is visible instead
+of silent spend.
+
+Navigate from `compute_dedup_key.ts` (the identity),
+`exported_overlap.ts` + `cross_check_exported_overlap.ts` (the prioritize
+step-1 advisory that catches the partial member-set overlaps exact-hash dedup
+misses), and `confirmed_unreachable_reuse.ts` (`apply_tp_cache_to_entries` +
+`compute_tp_stability`). Cross-run signals live under `src/cross_run/`
+(`uncertain_repeats.ts` reuses `diff_runs`' fuzzy key).
+
+Deliberate non-goals: plan does not consume `uncertain` (grounding a fix-plan on
+an unproven FP would mint work against an unconfirmed signal); the fixed-row
+resurfacing promise is reworded to what is detectable — fixed rows retain only
+call-site examples, no member identity, and the investigator's active slice is
+wip+permanent, so nothing auto-detects a regression against a fixed rule. Item 4
+(snapshot investigator eval seeds before `prune_runs`) is deferred onto
+TASK-190.31.1, whose eval-set store does not yet exist; the investigator
+replay-pair partition is specified there.
+
+### Per-item detail
+
+- **Item 6 (re-key):** `compute_dedup_key` derives from `member_token`
+  (`file_path\0name\0kind`, NUL-joined). `location_token` is retained and still
+  drives `union_evidence` and reconcile's orphan supersede/combine overlap.
+  Migration: task-347.1's `plan_dedup_keys` re-stamped to
+  `3fc6b57f…4f51` (the live task-DB is empty post-wipe, so it was the only
+  persisted key; membership-override and sweep-log stores key on member identity
+  or are append-only, so nothing else silently mismatched). ~9 test hashes
+  regenerated; a positive line-shift-tolerance test added.
+- **Item 1:** identity + residual cost documented in `compute_dedup_key.ts`,
+  `plan_task.ts`, and `plan/SKILL.md`. `find_exported_overlaps` +
+  `cross_check_exported_overlap.ts` surface partial member-set overlaps with
+  exported backlog rows for human review (no auto-suppress), wired into
+  `prioritize/SKILL.md` step 1.
+- **Item 2:** `select_stability_sample_indices` picks a deterministic even
+  spread; samples stay `route=llm-triage`, `auto_classified=false`, so the
+  picker/completion gate treat them as ordinary residual entries.
+  `compute_tp_stability` scores agreement at finalize; `TpCacheRecord.stability`
+  is `null` until then. Accepted bound: for a run with ≤5 hits, all are sampled
+  and none reused — documented at `TP_STABILITY_SAMPLE_TARGET`.
+- **Item 3:** `count_uncertain_repeats` counts fuzzy-identity recurrences across
+  the recent published runs; `all_finalized_run_ids` orders by the ISO-timestamp
+  suffix so "newest-first" holds across commits.
+
+### Review
+
+Reviewed by a 6-lens opus fan-out plus a fix-diff re-review. Findings actioned:
+the cross-commit run ordering bug (`all_finalized_run_ids` sorted lexicographically,
+letting the commit hex dominate — now sorts on the timestamp suffix), a
+membership-override doc inaccuracy (it keys on the full 4-tuple incl.
+`start_line`, not `(file, name, kind)`), the same-name/overload collision cost
+(now documented), and four test-coverage gaps (overlap ordering, format helpers,
+uncertain tie-breaker, an inert `status:"failed"` premise). Noted-not-actioned:
+the ≤5-hit TP-cache no-op (documented as an accepted bound rather than changed).
+The re-review also caught an out-of-scope working-tree change that had weakened
+the registry write-guard (dropping `Bash` from its PreToolUse matcher); it was
+reverted and is not part of this task.

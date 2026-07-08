@@ -6,7 +6,11 @@ import type { AriadneFaultArea } from "@ariadnejs/types";
 import type { PlanTask, PlanTaskEvidence, PlanTaskId, PlanTaskStatus } from "../store/plan_task.js";
 import { PLAN_TASK_SCHEMA_VERSION } from "../store/plan_task.js";
 import { compute_dedup_key } from "./compute_dedup_key.js";
-import { find_exported_overlaps } from "./exported_overlap.js";
+import {
+  find_exported_overlaps,
+  format_exported_overlaps,
+  format_member_token,
+} from "./exported_overlap.js";
 
 const RUN = parse_run_id("aaaaaaa-2026-04-16T18-10-16.855Z");
 
@@ -171,5 +175,56 @@ describe("find_exported_overlaps", () => {
     });
     const candidate = task({ id: "pt-candidate", status: "proposed", members: [ev("z.ts", "fn_z")] });
     expect(find_exported_overlaps([exported, candidate])).toEqual([]);
+  });
+
+  it("emits overlaps sorted by candidate_id then exported_id regardless of input order", () => {
+    // Two exported rows + two candidates, seeded in reverse of the sorted order.
+    const exp_y = task({ id: "pt-exp-y", status: "exported", exported_backlog_task: "TASK-Y", members: [ev("shared.ts", "fn_s")] });
+    const exp_x = task({ id: "pt-exp-x", status: "exported", exported_backlog_task: "TASK-X", members: [ev("shared.ts", "fn_s")] });
+    const cand_b = task({ id: "pt-cand-b", status: "proposed", members: [ev("shared.ts", "fn_s"), ev("b.ts", "fn_b")] });
+    const cand_a = task({ id: "pt-cand-a", status: "proposed", members: [ev("shared.ts", "fn_s"), ev("a.ts", "fn_a")] });
+
+    const overlaps = find_exported_overlaps([exp_y, cand_b, exp_x, cand_a]);
+    expect(overlaps.map((o) => `${o.candidate_id}->${o.exported_id}`)).toEqual([
+      "pt-cand-a->pt-exp-x",
+      "pt-cand-a->pt-exp-y",
+      "pt-cand-b->pt-exp-x",
+      "pt-cand-b->pt-exp-y",
+    ]);
+  });
+});
+
+describe("format_member_token / format_exported_overlaps", () => {
+  it("renders a NUL-joined member token as file:name (kind)", () => {
+    expect(format_member_token("src/a.ts\0my fn\0method")).toEqual("src/a.ts:my fn (method)");
+  });
+
+  it("returns an empty string when there are no overlaps", () => {
+    expect(format_exported_overlaps([])).toEqual("");
+  });
+
+  it("labels a subsumed vs partial overlap and lists the shared members", () => {
+    const block = format_exported_overlaps([
+      {
+        candidate_id: "pt-c1" as PlanTaskId,
+        candidate_fault_area: "name_resolution",
+        exported_id: "pt-e1" as PlanTaskId,
+        exported_backlog_task: "TASK-1",
+        shared_members: ["a.ts\0fn_a\0function"],
+        candidate_subsumed: true,
+      },
+      {
+        candidate_id: "pt-c2" as PlanTaskId,
+        candidate_fault_area: "method_lookup",
+        exported_id: "pt-e2" as PlanTaskId,
+        exported_backlog_task: "TASK-2",
+        shared_members: ["b.ts\0fn_b\0method"],
+        candidate_subsumed: false,
+      },
+    ]);
+    expect(block).toContain("candidate ⊆ exported");
+    expect(block).toContain("partial overlap");
+    expect(block).toContain("a.ts:fn_a (function)");
+    expect(block).toContain("NOT auto-suppressed");
   });
 });

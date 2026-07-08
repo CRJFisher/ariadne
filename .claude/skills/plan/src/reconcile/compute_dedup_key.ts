@@ -11,13 +11,16 @@
  * differs at all hashes differently and becomes a new task.
  *
  * Keying on the flagged member (`member_symbol`) rather than the call-site
- * location aligns `dedup_key` with the pipeline's canonical drift-tolerant
- * identity — the same `(file_path, name, kind)` the membership-override store and
- * `diff_runs`' fuzzy fallback key on. Its residual drift cost is named where the
- * identity is derived (`member_token` below): a member that moves FILES or is
- * RENAMED re-keys and re-proposes; a member that only shifts LINES within its
- * file does not. `start_line` is deliberately excluded from the key so a pure
- * line shift is absorbed.
+ * location makes `dedup_key` drift-tolerant to line shifts, aligning it with
+ * `diff_runs`' fuzzy fallback, which keys on the same `(file_path, name, kind)`.
+ * (The membership-override store is DIFFERENT: it keys on the full 4-tuple
+ * INCLUDING `start_line`, so a line-shifted member re-enters its review rather
+ * than surviving the shift — do not conflate the two.) The residual costs are
+ * named where the identity is derived (`member_token` below): a member that
+ * moves FILES or is RENAMED re-keys and re-proposes, and two distinct members
+ * sharing `(file_path, name, kind)` at different `start_line`s collapse to one
+ * token. `start_line` is deliberately excluded from the key so a pure line shift
+ * is absorbed.
  */
 
 import { createHash } from "node:crypto";
@@ -52,11 +55,16 @@ const MEMBER_SEP = "\0";
  *
  * `start_line` is excluded on purpose: it is the field of `member_symbol` that
  * shifts on any edit above the definition, and including it would re-key a task
- * whose members merely moved down a file. The accepted residual cost is that a
- * member which changes FILE or NAME does re-key (its token changes), so such a
+ * whose members merely moved down a file. Two accepted residual costs follow:
+ * (1) a member which changes FILE or NAME re-keys (its token changes), so such a
  * task re-proposes as fresh work rather than augmenting the prior one — the
  * prioritize step-1 exported-overlap advisory (`exported_overlap.ts`) surfaces
- * that case for human review.
+ * that case for human review; (2) two genuinely distinct members sharing
+ * `(file_path, name, kind)` but differing only in `start_line` (e.g. overloads,
+ * or a name reused at two definition sites) collapse to ONE token — a collision
+ * `dedup_key` cannot break, unlike the membership-override key which keeps
+ * `start_line`. In practice co-located same-name members are flagged together
+ * and stably, so the merge risk is low.
  */
 export function member_token(evidence: PlanTaskEvidence): string {
   const { file_path, name, kind } = evidence.member_symbol;

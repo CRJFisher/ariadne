@@ -564,11 +564,15 @@ describe("compute_tp_stability", () => {
     });
   });
 
-  it("excludes a sample with no verdict (failed) from the sampled count", () => {
+  it("excludes a sample with no verdict — driven by verdict absence, not entry.status", () => {
+    // Both s2 and s3 lack a verdict and must be excluded; their differing status
+    // (failed vs completed) proves the exclusion signal is verdict absence, not
+    // status. Only s1 (which has a verdict) is counted.
     const s1 = entry({ entry_index: 0, tp_stability_sample: true });
     const s2 = entry({ entry_index: 1, tp_stability_sample: true, status: "failed" });
+    const s3 = entry({ entry_index: 2, tp_stability_sample: true, status: "completed" });
     const verdicts = new Map<number, TriageVerdict>([[0, tp_verdict]]);
-    expect(compute_tp_stability(state_with([s1, s2]), verdicts)).toEqual({
+    expect(compute_tp_stability(state_with([s1, s2, s3]), verdicts)).toEqual({
       sampled: 1,
       agreed: 1,
       rate: 1,

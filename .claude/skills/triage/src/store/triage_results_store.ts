@@ -48,11 +48,14 @@ export async function all_finalized_runs_at_commit(
 }
 
 /**
- * Return every published run-id for a project, newest-first (lexicographic
- * descending — run-ids are `<short-commit>-<iso-timestamp>`, so this orders by
- * time within a commit). Empty when the project has no published results. Unlike
- * {@link all_finalized_runs_at_commit} this spans commits, for cross-run signals
- * (e.g. uncertain-repeat counting) that track an entry across target-repo edits.
+ * Return every published run-id for a project, **wall-clock newest-first**.
+ * Unlike {@link all_finalized_runs_at_commit} this spans commits, for cross-run
+ * signals (e.g. uncertain-repeat counting) that track an entry across target-repo
+ * edits — so ordering must be by TIME, not by run-id lexicographically. A run-id
+ * is `<short-commit>-<iso-timestamp>`, and the leading commit hex is unrelated to
+ * time; a whole-id sort would interleave commits by hex prefix. This sorts on the
+ * ISO-timestamp suffix (everything after the first `-`), which is lexicographic-
+ * ally monotonic in time. Empty when the project has no published results.
  */
 export async function all_finalized_run_ids(project: string): Promise<string[]> {
   const dir = triage_results_dir(project);
@@ -62,11 +65,11 @@ export async function all_finalized_run_ids(project: string): Promise<string[]> 
   } catch {
     return [];
   }
+  const timestamp_suffix = (run_id: string): string => run_id.slice(run_id.indexOf("-") + 1);
   return files
     .filter((f) => f.endsWith(".json"))
-    .sort()
-    .reverse()
-    .map((f) => f.slice(0, -".json".length));
+    .map((f) => f.slice(0, -".json".length))
+    .sort((a, b) => timestamp_suffix(b).localeCompare(timestamp_suffix(a)));
 }
 
 /**

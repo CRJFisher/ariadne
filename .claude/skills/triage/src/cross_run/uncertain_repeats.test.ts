@@ -74,4 +74,23 @@ describe("count_uncertain_repeats", () => {
     // z: 2 runs, a: 1 run → z first despite alphabetical order.
     expect(count_uncertain_repeats(runs).map((r) => r.name)).toEqual(["z", "a"]);
   });
+
+  it("breaks run_count ties by file_path, then name", () => {
+    // All four share run_count 1, so only the file_path/name tie-breakers order
+    // them: file_path ascending first (src/a before src/b), name ascending within.
+    const runs = [
+      run([
+        uncertain("two", "src/b.ts"),
+        uncertain("beta", "src/a.ts"),
+        uncertain("alpha", "src/a.ts"),
+        uncertain("one", "src/b.ts"),
+      ]),
+    ];
+    expect(count_uncertain_repeats(runs).map((r) => `${r.file_path}:${r.name}`)).toEqual([
+      "src/a.ts:alpha",
+      "src/a.ts:beta",
+      "src/b.ts:one",
+      "src/b.ts:two",
+    ]);
+  });
 });

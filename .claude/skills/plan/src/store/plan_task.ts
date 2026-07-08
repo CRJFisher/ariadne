@@ -97,13 +97,14 @@ export interface PlanTaskEvidence {
   member_evidence: MemberEvidence;
   /**
    * Stable identity of the flagged entry point this evidence row is about,
-   * carried verbatim from the published `NovelIssue`. The strategist reviews
-   * membership per row, the reconcile pass keys its membership-override store on
-   * this identity, and `compute_dedup_key` hashes its `(file_path, name, kind)`
-   * token — so a mis-routed member and its owning task both survive line drift
-   * across sweeps. Distinct from the `member_evidence` call-site `file:line`,
-   * which grounds evidence union (two call sites are distinct evidence): this
-   * names the FLAGGED MEMBER, that names the call site.
+   * carried verbatim from the published `NovelIssue`. Two consumers key on it,
+   * with DIFFERENT drift behavior: `compute_dedup_key` hashes its `(file_path,
+   * name, kind)` token (no `start_line`), so a task survives its members' line
+   * shifts across sweeps; the reconcile pass's membership-override store keys on
+   * the full 4-tuple INCLUDING `start_line`, so a line-shifted member re-enters
+   * that review rather than surviving. Distinct from the `member_evidence`
+   * call-site `file:line`, which grounds evidence union (two call sites are
+   * distinct evidence): this names the FLAGGED MEMBER, that names the call site.
    */
   member_symbol: MemberSymbol;
   project: string;

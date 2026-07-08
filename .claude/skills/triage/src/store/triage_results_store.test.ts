@@ -4,7 +4,9 @@ import path from "path";
 
 import type { TriageResultsFile } from "@ariadnejs/skill-protocol";
 import {
+  all_finalized_run_ids,
   all_finalized_runs_at_commit,
+  list_projects_with_results,
   read_triage_results,
 } from "./triage_results_store.js";
 
@@ -68,6 +70,42 @@ describe("all_finalized_runs_at_commit", () => {
   it("does not match a partial-prefix collision (e.g. 'dead' vs 'deadbee')", async () => {
     seed("p", "deadbee-2026-04-26T00-00-00.000Z");
     expect(await all_finalized_runs_at_commit("p", "dead")).toEqual([]);
+  });
+});
+
+describe("all_finalized_run_ids", () => {
+  it("returns empty array when the project has no published results", async () => {
+    expect(await all_finalized_run_ids("nope")).toEqual([]);
+  });
+
+  it("orders by wall-clock time across commits, not by the run-id's commit hex", async () => {
+    // `feedf00` sorts lexicographically ABOVE `deadbee`, but its run is OLDER.
+    // A whole-id sort would put the older run first; the timestamp-suffix sort
+    // must put the newer `deadbee` run first.
+    seed("p", "feedf00-2026-04-27T00-00-00.000Z");
+    seed("p", "deadbee-2026-04-28T00-00-00.000Z");
+    seed("p", "deadbee-2026-04-26T00-00-00.000Z");
+
+    expect(await all_finalized_run_ids("p")).toEqual([
+      "deadbee-2026-04-28T00-00-00.000Z",
+      "feedf00-2026-04-27T00-00-00.000Z",
+      "deadbee-2026-04-26T00-00-00.000Z",
+    ]);
+  });
+});
+
+describe("list_projects_with_results", () => {
+  it("returns empty array when analysis_output is missing", async () => {
+    expect(await list_projects_with_results()).toEqual([]);
+  });
+
+  it("lists only project dirs that have a triage_results subdir, sorted", async () => {
+    seed("zulu", "deadbee-2026-04-28T00-00-00.000Z");
+    seed("alpha", "deadbee-2026-04-28T00-00-00.000Z");
+    // A bare project dir with no triage_results subdir is not a published project.
+    fsSync.mkdirSync(path.join(ANALYSIS_OUTPUT, "empty_proj"), { recursive: true });
+
+    expect(await list_projects_with_results()).toEqual(["alpha", "zulu"]);
   });
 });
 
