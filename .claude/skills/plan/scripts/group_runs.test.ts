@@ -4,9 +4,10 @@
  *   - `resolve_sweep_id` returns an explicit sweep id verbatim (resume) and
  *     mints a fresh, sortable one when none is given;
  *   - `existing_plan_areas` reports exactly the fault areas whose staged plan
- *     (`plans/<area>.json`) is present AND non-empty, so a resumed run skips
- *     re-dispatching those strategists — a zero-byte file (crashed pre-write)
- *     counts as absent, and a missing plans dir yields an empty set.
+ *     (`plans/<area>.json`) is present AND parses as JSON, so a resumed run skips
+ *     re-dispatching those strategists — a zero-byte or truncated file (crashed
+ *     mid-write via the non-atomic harness Write tool) counts as absent, and a
+ *     missing plans dir yields an empty set.
  */
 
 import * as fs from "node:fs/promises";
@@ -51,12 +52,13 @@ describe("existing_plan_areas", () => {
     expect(await existing_plan_areas(SWEEP_ID)).toEqual(new Set());
   });
 
-  it("reports non-empty staged plans and excludes empty files and non-json", async () => {
+  it("reports parseable staged plans and excludes empty, truncated, and non-json files", async () => {
     const plans_dir = plan_staging_plans_dir(SWEEP_ID);
     await fs.mkdir(plans_dir, { recursive: true });
     await fs.writeFile(path.join(plans_dir, "name_resolution.json"), JSON.stringify({ root: {} }) + "\n");
     await fs.writeFile(path.join(plans_dir, "decorators.json"), JSON.stringify({ root: {} }) + "\n");
     await fs.writeFile(path.join(plans_dir, "crashed.json"), ""); // zero-byte pre-write
+    await fs.writeFile(path.join(plans_dir, "truncated.json"), "{\"root\":{\"tas"); // crashed mid-write
     await fs.writeFile(path.join(plans_dir, "notes.txt"), "ignore me");
 
     expect(await existing_plan_areas(SWEEP_ID)).toEqual(

@@ -30,15 +30,18 @@ import { parse_plan_task } from "./plan_task_record.js";
  * it graduates the row into `backlog/`. This store adds no lock for that overlap
  * because it cannot happen unattended: both flows are human-sequenced skills the
  * user runs one at a time, so racing them requires deliberate concurrent
- * invocation — and even then recovery is benign. Both writers converge on the
- * SAME terminal `exported` mark from the same source signal, so a last-writer
- * that clobbers the other re-derives the identical state; a row left un-marked by
- * a lost write is re-marked `exported` by the next sweep's overlay (the export
- * dedup keyed on `backlog/tasks/*.md` `plan_dedup_keys`). No verdict is lost and
- * no divergent state is possible, so a lock would guard a window that never
- * corrupts. This is the YAGNI counterpart to the registry's lock: the registry's
- * concurrent writers compute INDEPENDENT mutations (real last-writer-wins loss),
- * where these compute the same idempotent one.
+ * invocation — and even then recovery is benign. Both writers derive the SAME
+ * terminal decision from the same source signal — `status: "exported"` plus the
+ * `exported_backlog_task` link — so a last-writer clobber cannot land a wrong
+ * terminal status, and a row left un-marked by a lost write is re-marked
+ * `exported` by the next sweep's overlay (the export dedup keyed on
+ * `backlog/tasks/*.md` `plan_dedup_keys`). A `put()` rewrites the whole record,
+ * so a clobber can still overwrite the loser's provenance-only fields (e.g.
+ * `updated_in_sweep`) with stale values — but that costs audit metadata, never a
+ * verdict or the terminal status, so a lock would guard a window that produces no
+ * meaningful loss. This is the YAGNI counterpart to the registry's lock: the
+ * registry's concurrent writers compute INDEPENDENT mutations (real
+ * last-writer-wins loss of a decision), where these agree on the decision.
  *
  * Reads (`get`/`query`/`children_of`/`find_by_dedup_key`) are the proven
  * `discover_runs` pattern: `readdir` + per-file parse + in-memory filter. The

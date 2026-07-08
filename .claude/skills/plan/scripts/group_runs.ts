@@ -95,10 +95,13 @@ export function resolve_sweep_id(sweep: string | null): string {
 
 /**
  * The fault areas in `sweep_id` whose strategist plan (`plans/<area>.json`) is
- * already staged and non-empty. On a resumed run these are skipped from the
- * Pass B dispatch so the opus/200-turn strategist fan-out is not re-spent. An
- * empty file counts as absent (a crashed pre-write leaves a zero-byte file).
- * Returns an empty set when the plans dir does not exist. Exported for testing.
+ * already staged and complete. On a resumed run these are skipped from the Pass
+ * B dispatch so the opus/200-turn strategist fan-out is not re-spent. The
+ * strategist writes its plan with the non-atomic harness `Write` tool, so a
+ * crash mid-write can leave a truncated file — completeness is therefore gated
+ * on JSON-parseability, not mere non-emptiness: a zero-byte or truncated file
+ * counts as absent so the bucket is re-dispatched. Returns an empty set when the
+ * plans dir does not exist. Exported for testing.
  */
 export async function existing_plan_areas(sweep_id: string): Promise<Set<string>> {
   const plans_dir = plan_staging_plans_dir(sweep_id);
@@ -112,8 +115,13 @@ export async function existing_plan_areas(sweep_id: string): Promise<Set<string>
   const areas = new Set<string>();
   for (const file of files) {
     if (!file.endsWith(".json")) continue;
-    const stat = await fs.stat(path.join(plans_dir, file));
-    if (stat.size === 0) continue;
+    try {
+      JSON.parse(await fs.readFile(path.join(plans_dir, file), "utf8"));
+    } catch {
+      // Truncated / zero-byte pre-write, or an unreadable/dir-shaped entry —
+      // treat as not yet staged so the bucket is re-dispatched (the safe way).
+      continue;
+    }
     areas.add(file.slice(0, -".json".length));
   }
   return areas;

@@ -143,7 +143,7 @@ describe("absorb_and_pick", () => {
     return JSON.parse(await fs.readFile(state_path, "utf8")) as TriageState;
   }
 
-  it("two concurrent picks over disjoint result files lose no verdicts and release the lock", async () => {
+  it("absorbs disjoint verdicts under concurrency and releases the lock", async () => {
     await write_state(
       make_state([
         make_entry({ entry_index: 0 }),
@@ -153,8 +153,6 @@ describe("absorb_and_pick", () => {
     await fs.writeFile(path.join(results_dir, "0.json"), tp_verdict_json());
     await fs.writeFile(path.join(results_dir, "1.json"), tp_verdict_json());
 
-    // Both fills run concurrently; the lock serialises their read-mutate-write
-    // cycles so neither clobbers the other's absorbed verdict.
     await Promise.all([
       absorb_and_pick(state_path, run_dir, 1, new Set([1])),
       absorb_and_pick(state_path, run_dir, 1, new Set([0])),
@@ -162,6 +160,34 @@ describe("absorb_and_pick", () => {
 
     const state = await read_state();
     expect(state.entries.map((e) => e.status)).toEqual(["completed", "completed"]);
+    expect(await fs.readdir(run_dir)).not.toContain("triage.json.lock");
+  });
+
+  it("serialises concurrent retry re-dispatches so no failed→pending mutation is clobbered", async () => {
+    // Two failed entries, each with a stale malformed result file. Two fills run
+    // concurrently, each re-dispatching a DIFFERENT failed entry (disjoint active
+    // sets). This is the read-modify-write the lock protects: each fill flips its
+    // entry failed→pending and bumps retry_count off a stale read. Without the
+    // lock, the second writer clobbers the first's mutation and one bump is lost;
+    // with it, both survive.
+    await write_state(
+      make_state([
+        make_entry({ entry_index: 0, status: "failed", retry_count: 0 }),
+        make_entry({ entry_index: 1, status: "failed", retry_count: 0 }),
+      ]),
+    );
+    await fs.writeFile(path.join(results_dir, "0.json"), "malformed{{{");
+    await fs.writeFile(path.join(results_dir, "1.json"), "malformed{{{");
+
+    await Promise.all([
+      absorb_and_pick(state_path, run_dir, 1, new Set([1])),
+      absorb_and_pick(state_path, run_dir, 1, new Set([0])),
+    ]);
+
+    const state = await read_state();
+    expect(state.entries.map((e) => e.status)).toEqual(["pending", "pending"]);
+    expect(state.entries.map((e) => e.retry_count)).toEqual([1, 1]);
+    expect(await fs.readdir(results_dir)).toEqual([]);
     expect(await fs.readdir(run_dir)).not.toContain("triage.json.lock");
   });
 

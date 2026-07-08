@@ -1,7 +1,7 @@
 ---
 id: TASK-190.36.3
 title: "Generalize atomicity and crash-resume beyond the registry"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-05 00:00"
 labels:
@@ -77,18 +77,105 @@ most expensive re-spend protection).
 
 <!-- AC:BEGIN -->
 
-- [ ] No bare `writeFileSync` against triage's shared state remains; the
+- [x] No bare `writeFileSync` against triage's shared state remains; the
       interleaving test proves two concurrent picks lose no verdicts.
-- [ ] A run with transient investigator failures re-picks up to the retry
+- [x] A run with transient investigator failures re-picks up to the retry
       budget and cannot report `complete` while an un-terminalized `failed`
       entry exists.
-- [ ] Killing a prioritize session mid-fan-out and re-invoking the skill
+- [x] Killing a prioritize session mid-fan-out and re-invoking the skill
       re-dispatches only the missing areas (verified by manifest inspection).
-- [ ] `group_runs.ts --sweep <id>` reuses the sweep dir and skips existing
+- [x] `group_runs.ts --sweep <id>` reuses the sweep dir and skips existing
       staged plans, pinned by a test.
-- [ ] Strategist dispatches return `wrote <area>`; the SKILL and agent body
+- [x] Strategist dispatches return `wrote <area>`; the SKILL and agent body
       agree.
-- [ ] `json_plan_task_repository.ts` documents the single-writer sequencing
+- [x] `json_plan_task_repository.ts` documents the single-writer sequencing
       assumption; no lock is added.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+The atomic-write/lock/resume discipline the registry already carries now extends
+to the pipeline's other shared mutable state, so a session death or overlapping
+invocation no longer discards a paid investigation.
+
+Triage's picker (`get_next_triage_entry.ts`) runs its whole read → merge → pick →
+write cycle as one locked transaction (`absorb_and_pick`) through
+`atomic_update_registry`, replacing the bare `writeFileSync`. Two overlapping
+picks can no longer lose a state mutation to last-writer-wins. `failed` entries —
+which always carry a malformed result file, since that parse failure is the only
+path to `failed` — now retry: the picker re-dispatches a `failed` entry while
+`retry_count < MAX_TRIAGE_RETRIES` (2), clearing the stale result file inside the
+same locked transaction so `merge_results` cannot re-fail it before the retry
+investigator writes, and the completion gate (`pool_is_drained`) stays open until
+every failure terminalizes. A persistently-malformed file still halts finalize
+loudly — the intended terminal signal.
+
+The plan and prioritize skills gain crash-resume. `group_runs.ts --sweep <id>`
+reuses an existing sweep dir and marks each fault area whose `StrategistPlan` is
+already staged (`plan_exists`), and plan Pass B skips re-dispatching those
+opus/200-turn strategists; "already staged" is gated on JSON-parseability so a
+truncated non-atomic write does not mask a re-dispatch. Strategist dispatches now
+return a `wrote <fault_area>` confirmation, so a pre-write crash is distinguishable
+from success without waiting for Pass C's `missing_plan` rejection. Prioritize
+documents an idempotent resume: skip-if-output-exists guards on steps 3/3a/7a plus
+a `<root>/run.json` manifest, trusting only completed per-group artifacts
+(`consolidation.json` is re-validated, coordinating with TASK-190.36.4). The
+task-DB store (`json_plan_task_repository.ts`) documents the Pass-C/export
+two-writer sequencing assumption and its benign-recovery property — both writers
+agree on the terminal `exported` decision and a lost write is re-healed by the
+next sweep's overlay — and adds no lock (YAGNI).
+
+### What changed
+
+- **Triage picker — atomic + locked + retry** (`get_next_triage_entry.ts`,
+  `triage_state_types.ts`, `build_triage_entries.ts`). New exported
+  `absorb_and_pick` wraps the transaction in `atomic_update_registry`;
+  `pick_next_entries` also selects retryable `failed` entries;
+  `pool_is_drained` generalizes the completion gate; new `retry_count` field
+  (required, initialized to 0 at entry creation). Tests prove disjoint-verdict
+  absorption under concurrency, the retry-race the lock actually protects,
+  stale-file unlink + `retry_count` bump, and the gate staying open until
+  terminalization.
+- **Plan Pass B resume** (`group_runs.ts`, `plan/SKILL.md`). `--sweep <id>` via
+  `resolve_sweep_id`; `existing_plan_areas` reports parseable staged plans;
+  the summary carries `resumed` / `skipped_planned` / per-bucket `plan_exists`,
+  and Pass B skips already-staged buckets and re-dispatches a strategist that
+  returns without `wrote <area>`. Pinned by `group_runs.test.ts`.
+- **Strategist return contract** (`plan/SKILL.md`, `plan-strategist.md`) — a
+  ~15-char `wrote <fault_area>` confirmation, SKILL and agent body agreed.
+- **Prioritize resume** (`prioritize/SKILL.md`) — a "Resuming a crashed run"
+  section, per-step skip predicates on 3/3a/7a, and the `run.json` manifest.
+- **Task-DB two-writer posture** (`json_plan_task_repository.ts`) — documented,
+  no lock.
+
+### Review outcome
+
+A seven-lens review plus a fix-diff re-review ran over the implementation.
+Applied fixes: wired plan Pass B to actually consume the new `plan_exists`
+signal (the resume was otherwise inert at the operator surface); gated
+`existing_plan_areas` on JSON-parseability rather than mere non-emptiness (a
+non-atomic strategist write can truncate); made the concurrency test target the
+retry read-modify-write the lock genuinely protects (the original test was
+tautological against the lock); corrected several prose overclaims (the resume
+root-discovery step, the "atomically renamed" characterization of sub-agent
+writes, and the two-writer comment's "no divergent state" claim); and kept
+`existing_plan_areas` fault-tolerant to unreadable/dir-shaped entries.
+
+### Deferred (surfaced by review, out of scope)
+
+- An investigator that crashes **without writing any result file** leaves its
+  entry `pending` with no retry bound (retries key on the malformed-file
+  `failed` path only). Pre-existing; bounding it needs a dispatch counter or a
+  worker-pool attempt cap.
+- Double-dispatch of the same `pending` entry is prevented only by the caller's
+  shared `--active` set, not by persisted in-flight state; safe under the
+  pipeline's sequential worker-pool usage. Pre-existing.
+- A `--sweep` resume whose scanned run-set changed can leave stale bucket/plan
+  files that Pass C still reads — belongs with TASK-190.36.4's validation gate.
+- `retry_count` is a required field read via a bare cast with no schema bump; a
+  run created before this change and resumed after would silently not retry old
+  `failed` entries. Consistent with the ephemeral-state / no-back-compat policy;
+  adding a `?? 0` normalization would be a forbidden compatibility shim.

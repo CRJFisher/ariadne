@@ -138,20 +138,23 @@ classifier-author per group in step 3/3a, an architect per cluster in step 7a).
 A session death mid-fan-out must not re-spend the investigations that already
 finished. Resume is idempotent by construction:
 
-- **Reuse the prior root, don't mint a new timestamp.** To resume, set `<root>`
-  to the crashed run's existing `~/.ariadne/prioritize/<timestamp>/` (the run's
-  `run.json` names it) instead of taking a fresh `date -u` stamp. A fresh root
-  re-does everything; the prior root already holds the finished outputs.
+- **Find the crashed run's root, don't mint a new timestamp.** To resume, list
+  `~/.ariadne/prioritize/` and take the most recent timestamp dir whose
+  `run.json` shows unfinished waves (a `dispatched` area with no matching
+  `completed`); reuse that path as `<root>` instead of taking a fresh `date -u`
+  stamp. A fresh root re-does everything; the prior root already holds the
+  finished outputs.
 - **Skip a dispatch whose output already exists.** Before dispatching any agent
   in steps 3, 3a, and 7a, check for its output file and **skip the dispatch when
-  the file exists and is non-empty** (a zero-byte file is a crashed pre-write —
-  re-dispatch it). The per-step predicates are stated in each step below. Trust
-  only _completed_ artifacts: the per-group `refactor_plan.md` /
-  `task_assignment.json` are single-writer, atomically renamed files, so their
-  presence-and-non-emptiness is a sound completion signal. The cross-group
-  `consolidation.json` (step 4) is NOT trusted blindly on resume — re-dispatch
-  the consolidator (or re-validate its output) rather than accept a possibly
-  partial map (coordinates with TASK-190.36.4's validation gate).
+  the file exists and looks complete** (per-step predicates below). These outputs
+  are single-writer, whole-file writes by one sub-agent via the harness `Write`
+  tool — not atomic temp+rename — so a crash mid-write can leave a partial file.
+  Non-emptiness is therefore a completion _heuristic_, not a guarantee: skip on a
+  non-empty, well-formed file, but re-dispatch a zero-byte or visibly truncated
+  one. The cross-group `consolidation.json` (step 4) is NOT trusted blindly on
+  resume — re-dispatch the consolidator (or re-validate its output) rather than
+  accept a possibly partial map (coordinates with TASK-190.36.4's validation
+  gate).
 - **`run.json` is the resume lookup.** Maintain a `<root>/run.json` manifest so
   resume is a lookup, not a filesystem scan. After each wave in steps 3/3a/7a
   completes, stamp the manifest with what was dispatched and what completed:
@@ -290,7 +293,8 @@ skip:** before dispatching a group, if
 `~/.ariadne/prioritize/<run>/classifier-author/<group_id>/REVIEW.md` already
 exists and is non-empty, the agent finished on a prior run (it writes `REVIEW.md`
 on both the `drafted` and `no-draft` outcomes) — skip the dispatch and reuse the
-staged draft. The samples
+staged outputs (`draft_entry.json` + `check_<group_id>.ts` when drafted, or the
+`no-draft` `REVIEW.md` verdict otherwise). The samples
 come from the group's rows' `PlanTaskEvidence`: each evidence row carries its
 own `project`, `run_id`, and stable `member_symbol` (`file_path`, `name`,
 `kind`, `start_line`), so one group's samples may span several projects and

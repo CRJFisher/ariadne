@@ -55,6 +55,7 @@ backlog** below) — the only path that writes `backlog/`.
 | `--project <name>` | Restrict to one project directory under `analysis_output`     |
 | `--last <n>`       | Keep the most recent N runs after filtering                   |
 | `--run <path>`     | Short-circuit discovery; sweep a single `triage_results` JSON |
+| `--sweep <id>`     | Resume an existing sweep dir (see Pass B resume)              |
 
 ## Flow
 
@@ -64,11 +65,12 @@ backlog** below) — the only path that writes `backlog/`.
 node --import tsx .claude/skills/plan/scripts/group_runs.ts <FORWARDED_ARGS>
 ```
 
-Capture the printed JSON as `SWEEP`. It holds `sweep_id`, `bucket_count`, and
-`buckets[]` — each with `fault_area`, `observed_count`, `projects`,
-`source_runs`, `needs_judgement`, `description_count`, and `bucket_path` (the
-staged `FaultAreaBucket` file). The full evidence lives in the bucket files;
-the summary is the dispatch manifest.
+Capture the printed JSON as `SWEEP`. It holds `sweep_id`, `resumed`,
+`bucket_count`, `skipped_planned` (the fault areas whose strategist plan is
+already staged), and `buckets[]` — each with `fault_area`, `observed_count`,
+`projects`, `source_runs`, `needs_judgement`, `description_count`, `bucket_path`
+(the staged `FaultAreaBucket` file), and `plan_exists`. The full evidence lives
+in the bucket files; the summary is the dispatch manifest.
 
 Pass A reads the membership-override store (`~/.ariadne/plan/membership_overrides.json`,
 written by prior reconcile passes) and, for each false-positive, **follows the
@@ -82,9 +84,12 @@ judged mis-routed is therefore corrected here instead of re-adjudicated every sw
 ### Pass B — dispatch the strategist wave
 
 The strategist is opus/200-turn, so cap concurrency at
-`MAX_CONCURRENT_STRATEGISTS = 5` and drain `SWEEP.buckets[]` in waves. For each
-bucket, fire one `Task(plan-strategist)` (all buckets in a wave in a single
-message so they run in parallel):
+`MAX_CONCURRENT_STRATEGISTS = 5` and drain `SWEEP.buckets[]` in waves. **Skip a
+bucket whose `plan_exists` is `true`** — its `StrategistPlan` is already staged
+(the `skipped_planned` rollup lists them), so re-dispatching would re-spend the
+opus/200-turn fan-out the `--sweep <id>` resume exists to save. For each
+remaining bucket, fire one `Task(plan-strategist)` (all buckets in a wave in a
+single message so they run in parallel):
 
 > Design the hierarchical fix plan for fault-area bucket `<fault_area>` in sweep
 > `<sweep_id>`. Hydrate with `node --import tsx
@@ -105,7 +110,11 @@ message so they run in parallel):
 > confirmation lets the dispatcher distinguish a completed write from a
 > pre-write crash without waiting for Pass C's `missing_plan` rejection.
 
-Wait for every `Task()` in a wave to return before starting the next.
+Wait for every `Task()` in a wave to return before starting the next. A
+strategist that returns without a `wrote <fault_area>` line — or whose
+`plans/<fault_area>.json` is missing or zero-byte — crashed before committing its
+plan; re-dispatch that bucket rather than letting Pass C reject it as
+`missing_plan`.
 
 ### Pass C — reconcile into the task-DB
 
