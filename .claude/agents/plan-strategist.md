@@ -244,4 +244,6 @@ Write **one file** to `<output_path>` (under `~/.ariadne/plan/staging/**`): the
 - `membership` carries one verdict per evidence index — total and consistent with
   the `evidence_indices` your nodes ground (see **Verify bucket membership**). Pass
   C records each exclusion and re-routes the member next sweep.
-- Return nothing inline. The reconcile pass reads your file from disk.
+- Return a ~15-char `wrote <fault_area>` confirmation, and nothing else. The
+  reconcile pass reads your plan from disk; the confirmation only lets the
+  dispatcher tell a completed write apart from a pre-write crash.

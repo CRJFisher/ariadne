@@ -100,7 +100,10 @@ message so they run in parallel):
 > Mark a group `is_permanent_limitation=true` only when the caller is
 > fundamentally unknowable to static analysis (no realistic resolver fix) —
 > such a group has no core fix and carries `core_fix_effort` 0; default
-> everything else to core-fix work. Return nothing inline.
+> everything else to core-fix work. Return a ~15-char `wrote <fault_area>`
+> confirmation — the reconcile pass reads your plan from disk, but the
+> confirmation lets the dispatcher distinguish a completed write from a
+> pre-write crash without waiting for Pass C's `missing_plan` rejection.
 
 Wait for every `Task()` in a wave to return before starting the next.
 

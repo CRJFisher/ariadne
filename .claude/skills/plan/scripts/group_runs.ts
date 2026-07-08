@@ -11,27 +11,42 @@
  * Writes only to `~/.ariadne/plan/staging/<sweep-id>/`. Never writes `backlog/`,
  * `registry.json`, or `packages/core`.
  *
+ * `--sweep <id>` resumes an existing sweep instead of minting a fresh one:
+ * buckets are regenerated into the same dir, and any fault area whose strategist
+ * plan (`plans/<area>.json`) is already staged is flagged `plan_exists` in the
+ * summary so Pass B skips re-dispatching its opus/200-turn strategist. Pass the
+ * same scan filters as the original run so the regenerated buckets match.
+ *
  * Usage:
- *   node --import tsx group_runs.ts [--project <name>] [--last <n>] [--run <path>]
+ *   node --import tsx group_runs.ts [--project <name>] [--last <n>] [--run <path>] [--sweep <id>]
  */
 
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { atomic_write_file } from "@ariadnejs/skill-fs";
+import { atomic_write_file, error_code } from "@ariadnejs/skill-fs";
 import { parse_run_id, read_triage_results_file } from "@ariadnejs/skill-protocol";
 
 import { group_fault_areas, type ParsedRun } from "../src/group/group_fault_areas.js";
 import { JsonMembershipOverrideStore } from "../src/store/membership_override.js";
-import { plan_staging_buckets_dir, plan_staging_manifest_path } from "../src/store/paths.js";
+import {
+  plan_staging_buckets_dir,
+  plan_staging_manifest_path,
+  plan_staging_plans_dir,
+} from "../src/store/paths.js";
 import { scan_runs } from "../src/store/scan_runs.js";
 import { build_sweep_manifest } from "../src/store/sweep_manifest.js";
 import type { ScanOptions } from "../src/types.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
-function parse_argv(argv: string[]): ScanOptions {
-  const opts: ScanOptions = { project: null, last: null, run: null };
+/** Pass A scan options plus `sweep`: an existing sweep id to resume into (`null` mints a fresh one). */
+interface GroupRunsOptions extends ScanOptions {
+  sweep: string | null;
+}
+
+function parse_argv(argv: string[]): GroupRunsOptions {
+  const opts: GroupRunsOptions = { project: null, last: null, run: null, sweep: null };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     switch (arg) {
@@ -47,9 +62,14 @@ function parse_argv(argv: string[]): ScanOptions {
       case "--run":
         opts.run = argv[++i];
         break;
+      case "--sweep":
+        opts.sweep = argv[++i];
+        break;
       case "--help":
       case "-h":
-        process.stdout.write("Usage: group_runs [--project N] [--last N] [--run P]\n");
+        process.stdout.write(
+          "Usage: group_runs [--project N] [--last N] [--run P] [--sweep ID]\n",
+        );
         process.exit(0);
         break;
       default:
@@ -62,6 +82,41 @@ function parse_argv(argv: string[]): ScanOptions {
 /** A sweep id is filesystem-safe and sortable; one per invocation, no randomness needed. */
 function mint_sweep_id(): string {
   return `sweep-${new Date().toISOString().replace(/[:.]/g, "-")}`;
+}
+
+/**
+ * The sweep this invocation writes into: an explicit `--sweep <id>` resumes an
+ * existing sweep dir (so Pass B's already-staged plans survive a re-run); its
+ * absence mints a fresh sweep. Exported for testing.
+ */
+export function resolve_sweep_id(sweep: string | null): string {
+  return sweep ?? mint_sweep_id();
+}
+
+/**
+ * The fault areas in `sweep_id` whose strategist plan (`plans/<area>.json`) is
+ * already staged and non-empty. On a resumed run these are skipped from the
+ * Pass B dispatch so the opus/200-turn strategist fan-out is not re-spent. An
+ * empty file counts as absent (a crashed pre-write leaves a zero-byte file).
+ * Returns an empty set when the plans dir does not exist. Exported for testing.
+ */
+export async function existing_plan_areas(sweep_id: string): Promise<Set<string>> {
+  const plans_dir = plan_staging_plans_dir(sweep_id);
+  let files: string[];
+  try {
+    files = await fs.readdir(plans_dir);
+  } catch (err) {
+    if (error_code(err) === "ENOENT") return new Set();
+    throw err;
+  }
+  const areas = new Set<string>();
+  for (const file of files) {
+    if (!file.endsWith(".json")) continue;
+    const stat = await fs.stat(path.join(plans_dir, file));
+    if (stat.size === 0) continue;
+    areas.add(file.slice(0, -".json".length));
+  }
+  return areas;
 }
 
 async function main(): Promise<void> {
@@ -98,7 +153,8 @@ async function main(): Promise<void> {
   // here instead of re-adjudicated this sweep.
   const overrides = await new JsonMembershipOverrideStore().read();
   const buckets = group_fault_areas(parsed_runs, overrides);
-  const sweep_id = mint_sweep_id();
+  const sweep_id = resolve_sweep_id(opts.sweep);
+  const planned_areas = await existing_plan_areas(sweep_id);
   const buckets_dir = plan_staging_buckets_dir(sweep_id);
   await fs.mkdir(buckets_dir, { recursive: true });
 
@@ -120,9 +176,15 @@ async function main(): Promise<void> {
 
   const summary = {
     sweep_id,
+    resumed: opts.sweep !== null,
     run_count: parsed_runs.length,
     swept_projects: manifest.projects,
     bucket_count: buckets.length,
+    // On a resumed sweep, buckets whose plan is already staged; Pass B skips
+    // dispatching a strategist for these.
+    skipped_planned: buckets
+      .map((b) => b.fault_area)
+      .filter((area) => planned_areas.has(area)),
     buckets: buckets.map((b) => ({
       fault_area: b.fault_area,
       observed_count: b.observed_count,
@@ -131,6 +193,8 @@ async function main(): Promise<void> {
       needs_judgement: b.needs_judgement,
       description_count: b.descriptions.length,
       bucket_path: path.join(buckets_dir, `${b.fault_area}.json`),
+      // True when a staged plan already exists — Pass B does not re-dispatch it.
+      plan_exists: planned_areas.has(b.fault_area),
     })),
     failed_runs,
   };

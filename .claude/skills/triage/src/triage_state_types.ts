@@ -44,6 +44,15 @@ export interface TriageEntry {
   status: "pending" | "completed" | "failed";
   result: TriageEntryResult | null;
   error: string | null;
+  /**
+   * Count of retry dispatches already consumed for this entry. Starts at 0.
+   * An entry becomes `failed` only when its result file is malformed
+   * (`merge_results`), so a `failed` entry is retryable: the picker re-dispatches
+   * it while `retry_count < MAX_TRIAGE_RETRIES`, incrementing this and clearing
+   * the stale result file each time. Once the budget is exhausted the entry
+   * terminalizes as `failed`, and its malformed file halts finalize loudly.
+   */
+  retry_count: number;
   /** Enriched metadata for template substitution (stripped on finalize) */
   is_exported: boolean;
   access_modifier: string | null;

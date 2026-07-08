@@ -38,6 +38,7 @@ function build_mock_entry(overrides: Partial<TriageEntry> = {}): TriageEntry {
       auto_classified: false,
       classifier_hints: [],
       tp_source_run_id: null,
+      retry_count: 0,
     } satisfies TriageEntry,
     overrides,
     { entry_index: idx },

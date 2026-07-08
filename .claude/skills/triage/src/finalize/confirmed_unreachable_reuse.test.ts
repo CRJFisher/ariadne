@@ -375,6 +375,7 @@ describe("apply_tp_cache_to_entries", () => {
       auto_classified: false,
       classifier_hints: [],
       tp_source_run_id: null,
+      retry_count: 0,
       ...over,
     };
   }

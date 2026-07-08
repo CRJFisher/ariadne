@@ -131,6 +131,46 @@ side of the boundary (it owns `export_to_backlog.ts`, the only writer of
 Always invoke with `node --import tsx`. Never `pnpm exec tsx` or `npx tsx`
 (those open IPC sockets the sandbox blocks).
 
+### Resuming a crashed run
+
+A prioritize run fans out expensive opus/200-turn sub-agents (an investigator or
+classifier-author per group in step 3/3a, an architect per cluster in step 7a).
+A session death mid-fan-out must not re-spend the investigations that already
+finished. Resume is idempotent by construction:
+
+- **Reuse the prior root, don't mint a new timestamp.** To resume, set `<root>`
+  to the crashed run's existing `~/.ariadne/prioritize/<timestamp>/` (the run's
+  `run.json` names it) instead of taking a fresh `date -u` stamp. A fresh root
+  re-does everything; the prior root already holds the finished outputs.
+- **Skip a dispatch whose output already exists.** Before dispatching any agent
+  in steps 3, 3a, and 7a, check for its output file and **skip the dispatch when
+  the file exists and is non-empty** (a zero-byte file is a crashed pre-write —
+  re-dispatch it). The per-step predicates are stated in each step below. Trust
+  only _completed_ artifacts: the per-group `refactor_plan.md` /
+  `task_assignment.json` are single-writer, atomically renamed files, so their
+  presence-and-non-emptiness is a sound completion signal. The cross-group
+  `consolidation.json` (step 4) is NOT trusted blindly on resume — re-dispatch
+  the consolidator (or re-validate its output) rather than accept a possibly
+  partial map (coordinates with TASK-190.36.4's validation gate).
+- **`run.json` is the resume lookup.** Maintain a `<root>/run.json` manifest so
+  resume is a lookup, not a filesystem scan. After each wave in steps 3/3a/7a
+  completes, stamp the manifest with what was dispatched and what completed:
+
+  ```json
+  {
+    "run": "<timestamp>",
+    "investigate": { "dispatched": ["<fault_area>", …], "completed": ["<fault_area>", …] },
+    "classifier_author": { "dispatched": ["<group_id>", …], "completed": ["<group_id>", …] },
+    "architect": { "dispatched": ["<slug>", …], "completed": ["<slug>", …] }
+  }
+  ```
+
+  On resume, read `run.json` first: an area in `completed` needs no dispatch. The
+  on-disk output check above is the backstop when `run.json` itself is stale (it
+  is written after a wave, so a crash mid-wave leaves finished outputs a later
+  scan still finds). Write it with the `Write` tool (a plain per-run scratch
+  file; it is not the classifier registry and no lock applies).
+
 ### 1. Preview the candidates
 
 Run with filters and `--dry-run`. This lists the candidate rows and writes
@@ -183,7 +223,11 @@ real design before the user decides.
 Dispatch one `Task(refactor-investigator)` per change group whose rows carry
 `is_permanent_limitation: false` (a `true` group routes to step 3a instead), all
 groups in one message so they run in parallel (cap at ~5 concurrent; drain in
-waves if there are more). Each sub-agent reads its group's rows, gets to grips with the real
+waves if there are more). **Resume skip:** before dispatching a group, if
+`<root>/<fault_area>/refactor_plan.md` already exists and is non-empty, the
+investigation finished on a prior run — skip the dispatch and reuse it (the agent
+overwrites unconditionally when dispatched, so the skip must happen here, in the
+orchestrator). Each sub-agent reads its group's rows, gets to grips with the real
 `packages/core` code, and writes a Markdown refactoring plan to
 `<root>/<fault_area>/refactor_plan.md`. Dispatch prompt:
 
@@ -241,7 +285,12 @@ error survives to the wrong artifact, but each costs a wasted dispatch — make
 the call deliberately.
 
 Such a group never graduates to `backlog/`. Dispatch one
-`Task(classifier-author)` per confirmed permanent-limitation group. The samples
+`Task(classifier-author)` per confirmed permanent-limitation group. **Resume
+skip:** before dispatching a group, if
+`~/.ariadne/prioritize/<run>/classifier-author/<group_id>/REVIEW.md` already
+exists and is non-empty, the agent finished on a prior run (it writes `REVIEW.md`
+on both the `drafted` and `no-draft` outcomes) — skip the dispatch and reuse the
+staged draft. The samples
 come from the group's rows' `PlanTaskEvidence`: each evidence row carries its
 own `project`, `run_id`, and stable `member_symbol` (`file_path`, `name`,
 `kind`, `start_line`), so one group's samples may span several projects and
@@ -366,7 +415,10 @@ for all to finish. Steps 7b and 7c then run per confirmed cluster, one at a time
 
 **Step 7a — author the backlog tasks** (one `refactor-task-architect` per confirmed cluster):
 
-Dispatch one `Task(refactor-task-architect)` per confirmed cluster. The agent
+Dispatch one `Task(refactor-task-architect)` per confirmed cluster. **Resume
+skip:** before dispatching a cluster, if its `task_assignment.json` (beside the
+plan) already exists and is non-empty, the architect finished on a prior run —
+skip the dispatch and reuse it. The agent
 reads the full plan at the cluster's `plan_path`, applies the natural-split
 criterion — one top-level task for the fundamental refactor, sub-tasks only for
 genuinely separate downstream adaptations (for a merged cluster, the linked groups

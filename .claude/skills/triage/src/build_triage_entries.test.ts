@@ -105,6 +105,7 @@ describe("build_triage_entries — auto_classified bucket", () => {
       auto_classified: true,
       classifier_hints: [],
       tp_source_run_id: null,
+      retry_count: 0,
     }];
     expect(result).toEqual(expected);
   });
@@ -187,6 +188,7 @@ describe("build_triage_entries — residual bucket", () => {
         reasoning: "sub-threshold predicate match",
       }],
       tp_source_run_id: null,
+      retry_count: 0,
     }];
     expect(result).toEqual(expected);
   });

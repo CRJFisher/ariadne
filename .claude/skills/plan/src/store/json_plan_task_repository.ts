@@ -18,12 +18,27 @@ import { parse_plan_task } from "./plan_task_record.js";
  * temp + rename), plus an append-only `~/.ariadne/plan/sweeps/<sweep_id>.jsonl`
  * provenance log.
  *
- * Single writer per task file, so writes are rename-atomic with NO global lock
- * — this store deliberately stays out of the registry-writer lock contract and
- * is never added to its allowlist (the `<id>.json` path is not registry-shaped).
- * The same single-writer assumption covers the sweep log: one engine pass owns
- * its `sweep_id`, so `append_sweep_event` needs no lock to keep the JSONL
- * one-object-per-line invariant.
+ * Writes are rename-atomic with NO global lock — this store deliberately stays
+ * out of the registry-writer lock contract and is never added to its allowlist
+ * (the `<id>.json` path is not registry-shaped). The same assumption covers the
+ * sweep log: one engine pass owns its `sweep_id`, so `append_sweep_event` needs
+ * no lock to keep the JSONL one-object-per-line invariant.
+ *
+ * Two-writer posture (sequencing assumption, not a lock). Two flows `put()` the
+ * same `<id>.json`: Plan Pass C (`reconcile_plan.ts`) flips a row `→ exported`,
+ * and the prioritize export adapter (`export_to_backlog.ts`) does the same when
+ * it graduates the row into `backlog/`. This store adds no lock for that overlap
+ * because it cannot happen unattended: both flows are human-sequenced skills the
+ * user runs one at a time, so racing them requires deliberate concurrent
+ * invocation — and even then recovery is benign. Both writers converge on the
+ * SAME terminal `exported` mark from the same source signal, so a last-writer
+ * that clobbers the other re-derives the identical state; a row left un-marked by
+ * a lost write is re-marked `exported` by the next sweep's overlay (the export
+ * dedup keyed on `backlog/tasks/*.md` `plan_dedup_keys`). No verdict is lost and
+ * no divergent state is possible, so a lock would guard a window that never
+ * corrupts. This is the YAGNI counterpart to the registry's lock: the registry's
+ * concurrent writers compute INDEPENDENT mutations (real last-writer-wins loss),
+ * where these compute the same idempotent one.
  *
  * Reads (`get`/`query`/`children_of`/`find_by_dedup_key`) are the proven
  * `discover_runs` pattern: `readdir` + per-file parse + in-memory filter. The
