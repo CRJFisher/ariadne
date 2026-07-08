@@ -53,27 +53,36 @@ prints an investigation prompt built from a `DispensePayload`:
 You also read `packages/core` to model your check on the real runtime types
 (step 3).
 
-**Payload vs. check-input shape.** `get_entry_context.ts` gives you a
-`TriageEntry`, but your check runs against an `EnrichedEntryPoint` — a different,
-richer type. The two share `name`, `file_path`, `start_line`, `kind`, and the
-diagnostics block (`grep_call_sites`, and `ariadne_call_refs` with
-`receiver_kind` / `resolution_failure` / `syntactic_features`). Build your
-discriminator ONLY from that shared subset. Do NOT key on `EnrichedEntryPoint`
-fields the sample payload does not expose (`definition_features`, `tree_size`) —
-you cannot verify those hold from the `TriageEntry` you investigated.
+**Payload vs. check-input shape.** The investigation prompt renders a
+`TriageEntry`, but your check runs against an `EnrichedEntryPoint` — a richer
+type. `get_entry_context.ts --enriched` emits that exact `EnrichedEntryPoint`;
+you persist one per sample (step 1) so `reconcile-registry --stage` executes your
+drafted check against the real shape before insertion — a check that misfires is
+refused at `--apply`. Even with the enriched sample in hand, do NOT key on
+`definition_features` or `tree_size`: they are language-unstable (defaulted for
+Python/Rust), and a `packages/core` denylist test rejects any check that reads
+them. Build your discriminator from `name`, `file_path`, `start_line`, `kind`,
+and the diagnostics block (`grep_call_sites`, and `ariadne_call_refs` with
+`receiver_kind` / `resolution_failure` / `syntactic_features`).
 
 # Instructions
 
-## 1. Fetch every sample entry
+## 1. Fetch and persist every sample entry
 
 Run `get_entry_context.ts` for **each** sample member in your prompt (its
-`(project, run_id, member_symbol)` selector). A sample whose fetch fails
-because its triage run no longer resolves (runs are pruned) is skipped — note
-it in `REVIEW.md`. If no sample resolves, stop: emit only `REVIEW.md` and
-return `done <group_id>: no-draft (no sample runs resolve)`. Read all of
-them before drafting. The shared shape across the samples IS the pattern — a good
-builtin matches every sample and would generalize to unseen members of the same
-group.
+`(project, run_id, member_symbol)` selector) to read the investigation context.
+Then run it again with `--enriched` and save stdout — the full
+`EnrichedEntryPoint` JSON — to `samples/<index>.json` in your staging dir
+(`samples/0.json`, `samples/1.json`, …). These persisted samples are what
+`reconcile-registry --stage` runs your drafted check against; a draft with no
+samples is refused, and a check that misses any sample is refused at `--apply`.
+
+A sample whose fetch fails because its triage run no longer resolves (runs are
+pruned) is skipped — note it in `REVIEW.md`, and do not persist a `samples/`
+file for it. If no sample resolves, stop: emit only `REVIEW.md` and return
+`done <group_id>: no-draft (no sample runs resolve)`. Read all of them before
+drafting. The shared shape across the samples IS the pattern — a good builtin
+matches every sample and would generalize to unseen members of the same group.
 
 ## 2. Confirm the pattern is a permanent limitation
 
@@ -127,11 +136,13 @@ Your check must:
   the existing checks).
 - Be named `check_<group_id_snake>` — the snake_case of the kebab `group_id`.
 
-## 4. Write the three staging artifacts
+## 4. Write the staging artifacts
 
 Write to `~/.ariadne/prioritize/<run>/classifier-author/<group_id>/` (the `<run>`
 and `<group_id>` are in your prompt). Use the `Write` tool for raw file content —
-no markdown fencing inside the `.json` or `.ts` files.
+no markdown fencing inside the `.json` or `.ts` files. Alongside the three files
+below sits the `samples/*.json` directory you populated in step 1 — the stage
+gate's execution input.
 
 ### 4a. `draft_entry.json` — a complete `KnownIssue`
 
@@ -223,7 +234,9 @@ Include:
      `node --import tsx .claude/skills/triage/scripts/reconcile_registry.ts --stage ~/.ariadne/prioritize/<run>/classifier-author/<group_id>/draft_entry.json`,
      then re-run with `--apply`.
   - Note: `--stage` blocks unless `function_name` resolves in `BUILTIN_CHECKS`,
-    so step 3 must succeed first.
+    so step 3 must succeed first. `--stage` also executes the check against every
+    `samples/*.json` and prints the per-sample result; `--apply` is refused on
+    any miss, so confirm the dry-run shows every sample passing first.
 
 # Constraints
 

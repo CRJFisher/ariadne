@@ -151,19 +151,30 @@ export interface StrategistPlanNode {
  * reviews each member it was handed.
  *
  * The review is TOTAL (the validator requires one verdict per `evidence[]` index)
- * and CONSISTENT (no node may ground an index whose verdict is `belongs: false`).
- * A `belongs: false` verdict carries a non-empty `reason`; `suggested_area` names
- * the `AriadneFaultArea` the member should route to instead when the strategist
- * can tell (a confirmed `derive_fault_area` mis-route), and is omitted otherwise.
+ * and CONSISTENT (no node may ground an index whose verdict is not `true`). A
+ * non-`true` verdict carries a non-empty `reason`; `suggested_area` names the
+ * `AriadneFaultArea` the member should route to instead when the strategist can
+ * tell (a confirmed `derive_fault_area` mis-route), and is omitted otherwise.
+ *
+ * `belongs` is three-valued:
+ *   - `true`  — the member shares this bucket's bulk root cause; it grounds work.
+ *   - `false` — a confirmed mis-route; it grounds nothing AND writes a standing
+ *               membership override so Pass A re-routes/suppresses it next sweep.
+ *   - `"unsure"` — grounds nothing THIS sweep but writes NO override, so the
+ *               member re-enters review next sweep. The uncommitted middle: it
+ *               keeps a genuinely ambiguous member out of the plan without the
+ *               unconditional, never-expiring suppression a `false` incurs.
  */
+export type MembershipBelonging = boolean | "unsure";
+
 export interface MembershipVerdict {
   /** Positional index into the bucket's `evidence[]`. */
   index: number;
-  /** True when the member shares this bucket's bulk root cause. */
-  belongs: boolean;
-  /** Justification; required (non-empty) on a `belongs: false` verdict. */
+  /** Whether the member shares this bucket's bulk root cause (three-valued). */
+  belongs: MembershipBelonging;
+  /** Justification; required (non-empty) on any non-`true` verdict. */
   reason: string;
-  /** The area the member should route to instead (only on a `belongs: false` verdict, when tellable). */
+  /** The area the member should route to instead (only on a `false` verdict, when tellable). */
   suggested_area?: AriadneFaultArea;
 }
 

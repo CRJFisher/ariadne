@@ -26,7 +26,7 @@ import { reconcile_plan } from "../src/reconcile/reconcile_plan.js";
 import { record_membership_decisions } from "../src/reconcile/record_membership_decisions.js";
 import { read_exported_backlog_keys } from "../src/store/backlog_dedup.js";
 import { JsonPlanTaskRepository } from "../src/store/json_plan_task_repository.js";
-import { JsonMembershipOverrideStore } from "../src/store/membership_override.js";
+import { JsonMembershipOverrideStore, audit_overrides } from "../src/store/membership_override.js";
 import { backlog_tasks_dir, plan_staging_manifest_path } from "../src/store/paths.js";
 import { type SweepManifest } from "../src/store/sweep_manifest.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
@@ -93,12 +93,18 @@ async function main(): Promise<void> {
 
   // Record the membership decisions: one `exclude_member` event + override record
   // per excluded member, and the `derive_fault_area` correction signals.
+  const override_store = new JsonMembershipOverrideStore();
   const { events: membership_events, corrections } = await record_membership_decisions(
     repo,
-    new JsonMembershipOverrideStore(),
+    override_store,
     sweep_id,
     exclusions,
   );
+
+  // Read-side audit of the standing overrides after this sweep's writes. Suppression
+  // never expires, so surface every active override with its sweep stamps and a
+  // never-re-confirmed flag for the human — no auto-unsuppress.
+  const active_overrides = audit_overrides(await override_store.read());
 
   const summary = {
     sweep_id,
@@ -113,6 +119,7 @@ async function main(): Promise<void> {
     exported: events.filter((e) => e.kind === "export").length,
     excluded_members: membership_events.length,
     derive_fault_area_corrections: corrections,
+    active_overrides,
   };
   process.stdout.write(JSON.stringify(summary, null, 2) + "\n");
 }

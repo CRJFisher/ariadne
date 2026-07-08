@@ -6,11 +6,14 @@ import {
   substitute_template,
   parse_entry_selector,
   find_entries_by_selector,
+  find_enriched_entry_point,
   resolution_failure_message,
 } from "./get_entry_context.js";
 import type { TriageEntry } from "../src/triage_state_types.js";
 import type { DispensePayload } from "../src/dispense/dispense_payload.js";
 import type {
+  AnalysisResult,
+  EnrichedEntryPoint,
   GrepHit,
   CallRefDiagnostic,
   EntryPointDiagnostics,
@@ -604,5 +607,44 @@ describe("resolution_failure_message", () => {
     expect(
       resolution_failure_message(state, { by: "index", entry_index: 999 }, []),
     ).toEqual("Entry index 999 not found in state file");
+  });
+});
+
+// ===== find_enriched_entry_point =====
+
+describe("find_enriched_entry_point", () => {
+  const enriched_at_42: EnrichedEntryPoint = {
+    name: "handle_request",
+    file_path: "src/server.ts" as FilePath,
+    start_line: 42,
+    kind: "function",
+    tree_size: 7,
+    is_exported: true,
+    definition_features: {
+      definition_is_object_literal_method: false,
+      accessor_kind: null,
+    },
+    diagnostics: BASE_DIAGNOSTICS,
+  };
+  const method_at_42: EnrichedEntryPoint = { ...enriched_at_42, kind: "method" };
+  const analysis: AnalysisResult = {
+    project_name: "demo",
+    project_path: "/repo",
+    entry_points: [method_at_42, enriched_at_42],
+  };
+
+  it("matches on the full member identity (file_path, name, kind, start_line)", () => {
+    const entry = make_entry({ name: "handle_request", kind: "function", start_line: 42 });
+    expect(find_enriched_entry_point(analysis, entry)).toEqual(enriched_at_42);
+  });
+
+  it("distinguishes a function from a same-name method at the same line", () => {
+    const entry = make_entry({ name: "handle_request", kind: "method", start_line: 42 });
+    expect(find_enriched_entry_point(analysis, entry)).toEqual(method_at_42);
+  });
+
+  it("returns undefined when no entry point matches the identity", () => {
+    const entry = make_entry({ name: "handle_request", kind: "function", start_line: 99 });
+    expect(find_enriched_entry_point(analysis, entry)).toEqual(undefined);
   });
 });

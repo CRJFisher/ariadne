@@ -70,6 +70,38 @@ export function override_key(fault_area: AriadneFaultArea, member: MemberSymbol)
   return `${fault_area}\n${member_identity_token(member)}`;
 }
 
+/**
+ * A read-side audit row for one active override. Suppression is unconditional and
+ * never expires (see the store docstring), so the reconcile summary lists every
+ * active override with its sweep stamps and a `never_re_confirmed` flag —
+ * surfacing suppressions written once and never re-confirmed for the human to
+ * review, mirroring the registry's no-auto-reflip rule. There is no
+ * auto-unsuppress; clearing an override stays a human edit.
+ */
+export interface OverrideAudit {
+  fault_area: AriadneFaultArea;
+  member: MemberSymbol;
+  reason: string;
+  suggested_area: AriadneFaultArea | null;
+  first_excluded_in_sweep: string;
+  last_excluded_in_sweep: string;
+  /** True when the override was recorded in exactly one sweep and never re-confirmed since. */
+  never_re_confirmed: boolean;
+}
+
+/** Map active overrides to audit rows, flagging those recorded once and never re-confirmed. */
+export function audit_overrides(overrides: readonly MembershipOverride[]): OverrideAudit[] {
+  return overrides.map((override) => ({
+    fault_area: override.fault_area,
+    member: override.member,
+    reason: override.reason,
+    suggested_area: override.suggested_area,
+    first_excluded_in_sweep: override.first_excluded_in_sweep,
+    last_excluded_in_sweep: override.last_excluded_in_sweep,
+    never_re_confirmed: override.first_excluded_in_sweep === override.last_excluded_in_sweep,
+  }));
+}
+
 /** One exclusion the reconcile pass records (the input to {@link MembershipOverrideStore.upsert_many}). */
 export interface MembershipExclusion {
   fault_area: AriadneFaultArea;

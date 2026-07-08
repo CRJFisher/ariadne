@@ -8,10 +8,12 @@ import type { MemberSymbol } from "@ariadnejs/skill-protocol";
 
 import {
   JsonMembershipOverrideStore,
+  audit_overrides,
   member_identity_token,
   override_key,
   type MembershipExclusion,
   type MembershipOverride,
+  type OverrideAudit,
 } from "./membership_override.js";
 
 let plan_dir: string;
@@ -119,5 +121,41 @@ describe("JsonMembershipOverrideStore", () => {
     const store = new JsonMembershipOverrideStore();
     await store.upsert_many([], "sweep-1");
     expect(await store.read()).toEqual([]);
+  });
+});
+
+describe("audit_overrides", () => {
+  function override(over: Partial<MembershipOverride>): MembershipOverride {
+    return {
+      fault_area: "name_resolution",
+      member: MEMBER,
+      reason: "actually an import miss",
+      suggested_area: "import_resolution",
+      first_excluded_in_sweep: "sweep-1",
+      last_excluded_in_sweep: "sweep-1",
+      ...over,
+    };
+  }
+
+  it("flags an override recorded once and never re-confirmed", () => {
+    const expected: OverrideAudit[] = [
+      {
+        fault_area: "name_resolution",
+        member: MEMBER,
+        reason: "actually an import miss",
+        suggested_area: "import_resolution",
+        first_excluded_in_sweep: "sweep-1",
+        last_excluded_in_sweep: "sweep-1",
+        never_re_confirmed: true,
+      },
+    ];
+    expect(audit_overrides([override({})])).toEqual(expected);
+  });
+
+  it("does not flag an override re-confirmed in a later sweep", () => {
+    const audited = audit_overrides([
+      override({ first_excluded_in_sweep: "sweep-1", last_excluded_in_sweep: "sweep-4" }),
+    ]);
+    expect(audited.map((a) => a.never_re_confirmed)).toEqual([false]);
   });
 });

@@ -68,11 +68,12 @@
  */
 
 import { readFile, readdir, unlink } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import { execSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
-import { atomic_update_registry } from "@ariadnejs/skill-fs";
+import { atomic_update_registry, error_code } from "@ariadnejs/skill-fs";
 import {
   analysis_output_dir,
   is_run_id,
@@ -85,13 +86,14 @@ import {
 import type {
   ClassifierRegressionFlag,
   DriftEvidence,
+  EnrichedEntryPoint,
   KnownIssue,
 } from "@ariadnejs/types";
 import {
   parse_known_issues_registry_json,
   serialize_known_issues_registry_json,
 } from "@ariadnejs/types";
-import { BUILTIN_CHECKS } from "@ariadnejs/core";
+import { BUILTIN_CHECKS, type BuiltinCheckFn, type FileLinesReader } from "@ariadnejs/core";
 
 import {
   SUBJECT_REGEX,
@@ -581,6 +583,26 @@ export interface ReconcileDeps {
    */
   known_builtin_names: () => ReadonlySet<string>;
   /**
+   * The actual `BuiltinCheckFn` core exposes for a `function_name`, or undefined
+   * when unregistered. `known_builtin_names` gates membership; this returns the
+   * callable so `run_stage` can execute the drafted check against samples. A
+   * thunk-per-name so tests inject a fake check without importing `@ariadnejs/core`.
+   */
+  get_builtin_check: (function_name: string) => BuiltinCheckFn | undefined;
+  /**
+   * Load the `EnrichedEntryPoint` samples the classifier-author persisted beside
+   * the draft (`samples/*.json` under the draft's directory). Returns `[]` when
+   * the directory is absent. Injectable so tests never touch disk.
+   */
+  load_stage_samples: (draft_path: string) => Promise<StageSample[]>;
+  /**
+   * Read a source file's lines for a check that inspects file content. Best-effort:
+   * returns `[]` when the file is absent at stage time (the analyzed project may
+   * no longer be on disk), so such a check fails the sample and refuses `--apply`
+   * — the safe direction (refuse rather than insert an unverified classifier).
+   */
+  read_file_lines: FileLinesReader;
+  /**
    * Best-effort unlink of a deleted row's `check_<group_id>.ts` builtin
    * source. Returns the removed path, or null when the file was already gone
    * (the agent's code-side deletion normally removes it first). Injectable so
@@ -821,20 +843,47 @@ export class StageDraftError extends Error {
   }
 }
 
+/** One EnrichedEntryPoint sample the classifier-author persisted beside the draft. */
+export interface StageSample {
+  /** The `samples/*.json` basename — the preview / audit label. */
+  name: string;
+  entry_point: EnrichedEntryPoint;
+}
+
+/** The result of running the drafted check against one persisted sample. */
+export interface SampleCheckResult {
+  /** The sample's `samples/*.json` basename. */
+  sample: string;
+  /** `entry_point.file_path` — the source the check keyed on. */
+  file_path: string;
+  /** True when the drafted check fired (returned true) on this sample. */
+  passed: boolean;
+}
+
 export interface StageSummary {
   /** The validated draft — echoed for the preview / audit line. */
   draft: KnownIssue;
   /** False = dry-run preview only (default); true = inserted via the locked write. */
   applied: boolean;
+  /**
+   * Per-sample result of executing the drafted check against every persisted
+   * EnrichedEntryPoint sample. Printed in the dry-run preview; a miss refuses
+   * `--apply`. The gate that catches a check keyed on `tree_size`/
+   * `definition_features` the author validated only against the narrower
+   * `TriageEntry`.
+   */
+  sample_results: SampleCheckResult[];
 }
 
 /**
- * Validate an agent-authored `KnownIssue` draft and insert it. The four gates —
+ * Validate an agent-authored `KnownIssue` draft and insert it. The gates —
  * schema (which enforces the `observed_count >= 1` evidence gate), no duplicate
- * `group_id`, and a builtin `function_name` registered in `BUILTIN_CHECKS` —
- * mirror the lifecycle contract's promotion invariants at the authoring
- * boundary. Dry-run unless `args.apply`; the write folds under the same
- * `atomic_update_registry` lock as `run()`.
+ * `group_id`, a unique builtin `function_name`, that `function_name` registered
+ * in `BUILTIN_CHECKS`, and a sample-execution gate that runs the drafted check
+ * against every persisted EnrichedEntryPoint sample — mirror the lifecycle
+ * contract's promotion invariants at the authoring boundary. Dry-run unless
+ * `args.apply`; the write folds under the same `atomic_update_registry` lock as
+ * `run()`.
  */
 export async function run_stage(
   args: CliArgs,
@@ -909,12 +958,52 @@ export async function run_stage(
     );
   }
 
-  // 5. Dry-run by default: preview and exit without writing.
+  // 5. Sample-execution gate. The drafted check is now registered in
+  // BUILTIN_CHECKS (gate 4), so run it against every EnrichedEntryPoint sample
+  // the classifier-author persisted beside the draft. This is the only gate
+  // that feeds the check the full EnrichedEntryPoint shape `auto_classify` uses:
+  // schema + membership pass a check keyed on `tree_size`/`definition_features`
+  // that the author validated only against the narrower TriageEntry, but such a
+  // check misfires here. Pure reads only — the write asymmetry the guard depends
+  // on is untouched.
+  const check = deps.get_builtin_check(function_name);
+  if (check === undefined) {
+    throw new StageDraftError(
+      `builtin "${function_name}" is in BUILTIN_CHECKS names but its check function ` +
+        "could not be resolved — rebuild core (pnpm build --filter core) and re-stage",
+    );
+  }
+  const samples = await deps.load_stage_samples(args.stage);
+  if (samples.length === 0) {
+    throw new StageDraftError(
+      "no EnrichedEntryPoint samples found beside the draft (expected samples/*.json). " +
+        "The classifier-author must persist the group's samples " +
+        "(get_entry_context.ts --enriched) so the drafted check runs before insertion",
+    );
+  }
+  const sample_results: SampleCheckResult[] = samples.map((sample) => ({
+    sample: sample.name,
+    file_path: sample.entry_point.file_path,
+    passed: check(sample.entry_point, deps.read_file_lines),
+  }));
+
+  // 6. Dry-run by default: preview per-sample results and exit without writing.
   if (!args.apply) {
-    return { draft: entry, applied: false };
+    return { draft: entry, applied: false, sample_results };
   }
 
-  // 6. Insert through the locked write, re-checking the collision under the
+  // 7. Refuse `--apply` on any miss: a classifier must fire on every persisted
+  // sample of its group before insertion.
+  const misses = sample_results.filter((result) => !result.passed);
+  if (misses.length > 0) {
+    throw new StageDraftError(
+      `drafted check "${function_name}" returned false on ${misses.length} of ` +
+        `${samples.length} sample(s): ${misses.map((m) => m.sample).join(", ")}. ` +
+        "A classifier must fire on every persisted EnrichedEntryPoint sample before insertion",
+    );
+  }
+
+  // 8. Insert through the locked write, re-checking the collision under the
   // lock so a concurrent insert of the same group_id or function_name cannot
   // be clobbered.
   const applied = await atomic_update_registry(deps.registry_path, async (raw) => {
@@ -925,7 +1014,7 @@ export async function run_stage(
     return { kind: "write", next, result: true };
   });
 
-  return { draft: entry, applied };
+  return { draft: entry, applied, sample_results };
 }
 
 /**
@@ -965,6 +1054,52 @@ export function build_delete_builtin_source(
       }
       throw err;
     }
+  };
+}
+
+/**
+ * Load the `samples/*.json` the classifier-author persisted beside the draft.
+ * Each file is one full `EnrichedEntryPoint` (from `get_entry_context.ts
+ * --enriched`). Returns `[]` when the `samples/` directory is absent.
+ */
+async function load_samples_beside_draft(draft_path: string): Promise<StageSample[]> {
+  const samples_dir = path.join(path.dirname(draft_path), "samples");
+  let filenames: string[];
+  try {
+    filenames = (await readdir(samples_dir)).filter((f) => f.endsWith(".json")).sort();
+  } catch (err) {
+    if (error_code(err) === "ENOENT") return [];
+    throw err;
+  }
+  const samples: StageSample[] = [];
+  for (const name of filenames) {
+    const entry_point = JSON.parse(
+      await readFile(path.join(samples_dir, name), "utf8"),
+    ) as EnrichedEntryPoint;
+    samples.push({ name, entry_point });
+  }
+  return samples;
+}
+
+/**
+ * A disk-backed `FileLinesReader` for the sample gate: reads the sample's source
+ * file (cached per path). A check that inspects file content sees the real lines
+ * when the analyzed project is still on disk, and `[]` otherwise — so an absent
+ * file fails the sample rather than silently passing.
+ */
+function build_disk_file_lines_reader(): FileLinesReader {
+  const cache = new Map<string, readonly string[]>();
+  return (file_path: string) => {
+    const cached = cache.get(file_path);
+    if (cached !== undefined) return cached;
+    let lines: readonly string[];
+    try {
+      lines = readFileSync(file_path, "utf8").split(/\r?\n/);
+    } catch {
+      lines = [];
+    }
+    cache.set(file_path, lines);
+    return lines;
   };
 }
 
@@ -1021,6 +1156,9 @@ export async function build_real_deps(): Promise<ReconcileDeps> {
       ).changed,
     read_draft: async (draft_path) => JSON.parse(await readFile(draft_path, "utf8")),
     known_builtin_names: () => new Set(Object.keys(BUILTIN_CHECKS)),
+    get_builtin_check: (function_name) => BUILTIN_CHECKS[function_name],
+    load_stage_samples: (draft_path) => load_samples_beside_draft(draft_path),
+    read_file_lines: build_disk_file_lines_reader(),
     delete_builtin_source: build_delete_builtin_source(
       path.join(
         repo_root(),

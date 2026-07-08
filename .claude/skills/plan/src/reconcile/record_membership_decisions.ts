@@ -44,7 +44,10 @@ export interface MembershipDecisionOutcome {
 
 /**
  * Resolve a validated plan's `belongs: false` verdicts to {@link MembershipExclusion}s.
- * Pure: `bucket_evidence[index].member_symbol` is the excluded member's identity.
+ * Only `false` — a confirmed mis-route — writes a standing override; a `"unsure"`
+ * verdict grounds nothing this sweep but is deliberately NOT recorded here, so the
+ * member re-enters review next sweep instead of being suppressed forever. Pure:
+ * `bucket_evidence[index].member_symbol` is the excluded member's identity.
  * Precondition: the plan passed `validate_plan` (so every verdict index is in
  * range); an out-of-range index here is an upstream contract break and throws.
  */
@@ -53,7 +56,7 @@ export function collect_membership_exclusions(
   bucket_evidence: PlanTaskEvidence[],
 ): MembershipExclusion[] {
   return plan.membership
-    .filter((verdict) => !verdict.belongs)
+    .filter((verdict) => verdict.belongs === false)
     .map((verdict) => {
       const evidence = bucket_evidence[verdict.index];
       if (evidence === undefined) {

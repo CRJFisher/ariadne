@@ -87,10 +87,34 @@ receivers, framework/runtime invocation, compiler-injected APIs. If the **whole
 group** is such a limitation, stop the design: there is no refactor to author.
 Write `refactor_plan.md` as a single permanent-limitation verdict — name the
 exact static boundary, why a resolver fix cannot cross it, and the evidence rows
-it covers — and return `PERMANENT-LIMITATION: <one-line boundary>` as your
-inline summary, so `prioritize` reroutes the group to `classifier-author`
-(which authors its registry classifier) instead of graduating it to `backlog/`.
-This is the mirror of `classifier-author`'s "if fixable, stop" gate.
+it covers — and set `verdict.json`'s `outcome` to `"permanent_limitation"` (next
+section), so `prioritize` reroutes the group to `classifier-author` (which
+authors its registry classifier) instead of graduating it to `backlog/`. This is
+the mirror of `classifier-author`'s "if fixable, stop" gate.
+
+## Write the verdict file
+
+Always write a strict-parsed `verdict.json` **beside** `refactor_plan.md` (the
+same directory as `output_path`). It is the authoritative routing signal —
+`prioritize` reads it, never a free-text `<result>` line, and reconciles it
+against each row's mint-time `is_permanent_limitation` flag (a disagreement flips
+the flag and records a reroute):
+
+```json
+{
+  "outcome": "fixable",
+  "boundary": "one line: the root cause (fixable) or the static boundary (permanent_limitation)",
+  "row_ids": ["<every PlanTask id in this group, from the row_paths filenames>"]
+}
+```
+
+- `outcome` is `"fixable"` for a real refactor plan, `"permanent_limitation"` for
+  the escape above.
+- `row_ids` lists every row in the group (the `id` field of each `row_paths[]`
+  task) — the ids the reconcile step keys on.
+- Still return `PERMANENT-LIMITATION: <one-line boundary>` (or a one-line fixable
+  summary) as your inline message for the human reading the run log; the file, not
+  the prose, drives routing.
 
 ## Write the refactoring plan
 

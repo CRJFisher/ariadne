@@ -34,8 +34,10 @@ import {
   require_run,
   results_dir_for,
 } from "../src/store/paths.js";
-import type { TriageEntry, TriageState } from "../src/triage_state_types.js";
+import type { RunManifest, TriageEntry, TriageState } from "../src/triage_state_types.js";
 import type {
+  AnalysisResult,
+  EnrichedEntryPoint,
   GrepHit,
   CallRefDiagnostic,
   ClassifierHint,
@@ -50,8 +52,9 @@ import { load_registry } from "../src/known_issues_registry.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const USAGE = [
-  "Usage: get_entry_context.ts --project <name> --entry <index> [--run-id <id>]",
-  "       get_entry_context.ts --project <name> --file <path> --name <name> --kind <kind> --line <n> --run-id <id>",
+  "Usage: get_entry_context.ts --project <name> --entry <index> [--run-id <id>] [--enriched]",
+  "       get_entry_context.ts --project <name> --file <path> --name <name> --kind <kind> --line <n> --run-id <id> [--enriched]",
+  "  --enriched: emit the full EnrichedEntryPoint JSON (samples/*.json seed for the classifier-author) instead of the investigation prompt.",
 ].join("\n");
 
 const THIS_FILE = fileURLToPath(import.meta.url);
@@ -312,10 +315,15 @@ export function parse_entry_selector(args: readonly string[]): EntrySelector {
   };
 }
 
-function parse_args(argv: string[]): { project: string; selector: EntrySelector } {
+function parse_args(argv: string[]): {
+  project: string;
+  selector: EntrySelector;
+  enriched: boolean;
+} {
   const project = parse_project_arg(argv, USAGE);
+  const enriched = argv.includes("--enriched");
   try {
-    return { project, selector: parse_entry_selector(argv.slice(2)) };
+    return { project, selector: parse_entry_selector(argv.slice(2)), enriched };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     process.stderr.write(`${message}\n${USAGE}\n`);
@@ -499,12 +507,53 @@ export function substitute_template(input: SubstituteTemplateInput): string {
   return result;
 }
 
+// ===== Enriched Emit =====
+
+/**
+ * Find `entry`'s full `EnrichedEntryPoint` in a source `AnalysisResult`, matching
+ * on the member identity `(file_path, name, kind, start_line)`. The analysis's
+ * `entry_points` carry the fields the lossy TriageEntry drops (`tree_size`,
+ * `definition_features`).
+ */
+export function find_enriched_entry_point(
+  analysis: AnalysisResult,
+  entry: TriageEntry,
+): EnrichedEntryPoint | undefined {
+  return analysis.entry_points.find(
+    (ep: EnrichedEntryPoint) =>
+      ep.file_path === entry.file_path &&
+      ep.name === entry.name &&
+      ep.kind === entry.kind &&
+      ep.start_line === entry.start_line,
+  );
+}
+
+/**
+ * Resolve `entry` to its full `EnrichedEntryPoint` (via the manifest's
+ * `source_analysis_path`) and print it as JSON.
+ */
+export function emit_enriched_entry_point(manifest_path: string, entry: TriageEntry): void {
+  const manifest = JSON.parse(fs.readFileSync(manifest_path, "utf8")) as RunManifest;
+  const analysis = JSON.parse(
+    fs.readFileSync(manifest.source_analysis_path, "utf8"),
+  ) as AnalysisResult;
+  const match = find_enriched_entry_point(analysis, entry);
+  if (match === undefined) {
+    console.error(
+      `--enriched: no EnrichedEntryPoint in ${manifest.source_analysis_path} matches ` +
+        `${entry.kind} "${entry.name}" at ${entry.file_path}:${entry.start_line}`,
+    );
+    process.exit(1);
+  }
+  process.stdout.write(JSON.stringify(match, null, 2) + "\n");
+}
+
 // ===== Main =====
 
 async function main(): Promise<void> {
   const cli = parse_args(process.argv);
   const run_id_opt = parse_run_id_arg(process.argv);
-  const { run_id, state_path } = require_run(cli.project, run_id_opt);
+  const { run_id, state_path, manifest_path } = require_run(cli.project, run_id_opt);
 
   const state = JSON.parse(fs.readFileSync(state_path, "utf8")) as TriageState;
 
@@ -515,6 +564,16 @@ async function main(): Promise<void> {
     process.exit(1);
   }
   const entry = matches[0];
+
+  // `--enriched`: emit the full EnrichedEntryPoint (with `tree_size` and
+  // `definition_features`, the fields the lossy TriageEntry drops) that
+  // `auto_classify` feeds to a builtin check. The classifier-author persists
+  // these as `samples/*.json` so `reconcile_registry --stage` can execute the
+  // drafted check against the exact shape it runs against in production.
+  if (cli.enriched) {
+    emit_enriched_entry_point(manifest_path, entry);
+    return;
+  }
 
   const template = fs.readFileSync(TEMPLATE_PATH, "utf8");
 

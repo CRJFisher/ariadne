@@ -167,8 +167,11 @@ describe("export_to_backlog run()", () => {
 
     expect(after).toEqual(before);
     expect(summary.dry_run).toEqual(true);
-    // Candidate listing carries the row id; the backlog id is authored later.
-    expect(summary.exported).toEqual([{ id: "pt-1", backlog_task: "", path: "" }]);
+    expect(summary.wrote).toEqual(false);
+    // Candidate listing carries the row id; the backlog id/title/AC are authored later.
+    expect(summary.exported).toEqual([
+      { id: "pt-1", backlog_task: "", path: "", title: "", acceptance_criteria: [] },
+    ]);
     const row = await repo.get("pt-1" as PlanTaskId);
     expect(row?.status).toEqual("proposed");
     expect(row?.exported_backlog_task).toEqual(null);
@@ -180,6 +183,67 @@ describe("export_to_backlog run()", () => {
     await expect(run([], FIXED_NOW)).rejects.toThrow(
       "writing backlog tasks requires --assignments",
     );
+  });
+
+  it("refuses an evidence-bearing task whose acceptance criteria are empty", async () => {
+    const repo = new JsonPlanTaskRepository();
+    await repo.put(
+      make_task({
+        id: "pt-1" as PlanTaskId,
+        evidence: [
+          {
+            member_evidence: { file: "src/a.ts", line: 4, why: "unresolved caller" },
+            member_symbol: { file_path: "src/a.ts", name: "flagged", kind: "function", start_line: 4 },
+            project: "p",
+            run_id: "run-1" as RunId,
+            diagnosis: "callers-in-registry-unresolved",
+            resolution_failure: { stage: "name_resolution", reason: "name_not_in_scope" },
+            has_uncaptured_indexed_grep_hit: false,
+            callers_only_in_unindexed_tests: false,
+          },
+        ],
+      }),
+    );
+
+    const file = await write_assignment([
+      {
+        backlog_id: "1",
+        title: "Resolve the flagged caller",
+        acceptance_criteria: [],
+        plan_task_ids: ["pt-1"],
+      },
+    ]);
+
+    await expect(run(["--assignments", file], FIXED_NOW)).rejects.toThrow(
+      /empty acceptance_criteria/,
+    );
+    // No file written; the row stays proposed.
+    expect((await repo.get("pt-1" as PlanTaskId))?.status).toEqual("proposed");
+  });
+
+  it("allows an evidence-free task to keep empty acceptance criteria", async () => {
+    const repo = new JsonPlanTaskRepository();
+    await repo.put(make_task({ id: "pt-1" as PlanTaskId, evidence: [] }));
+
+    const file = await write_assignment([
+      {
+        backlog_id: "1",
+        title: "Housekeeping with no evidence",
+        acceptance_criteria: [],
+        plan_task_ids: ["pt-1"],
+      },
+    ]);
+
+    const summary = await run(["--assignments", file, "--write"], FIXED_NOW);
+    expect(summary.exported).toEqual([
+      {
+        id: "pt-1",
+        backlog_task: "TASK-347",
+        path: "task-347 - Housekeeping-with-no-evidence.md",
+        title: "Housekeeping with no evidence",
+        acceptance_criteria: [],
+      },
+    ]);
   });
 
   it("renders the authored card, flips the DB row, and logs an export event", async () => {
@@ -200,13 +264,16 @@ describe("export_to_backlog run()", () => {
       },
     ]);
 
-    const summary = await run(["--assignments", file], FIXED_NOW);
+    const summary = await run(["--assignments", file, "--write"], FIXED_NOW);
 
+    expect(summary.wrote).toEqual(true);
     expect(summary.exported).toEqual([
       {
         id: "pt-1",
         backlog_task: "TASK-347",
         path: "task-347 - Resolve-namespace-receiver-calls.md",
+        title: "Resolve namespace receiver calls",
+        acceptance_criteria: ["Root-cause fix lands in `core`."],
       },
     ]);
 
@@ -244,6 +311,55 @@ describe("export_to_backlog run()", () => {
     expect(events).toEqual([{ kind: "export", task_id: "pt-1", backlog_task: "TASK-347" }]);
   });
 
+  it("renders card previews under --assignments without --write (no file, no DB flip)", async () => {
+    const repo = new JsonPlanTaskRepository();
+    await repo.put(make_task({ id: "pt-1" as PlanTaskId, dedup_key: "expkey1" }));
+    const file = await write_assignment([
+      {
+        backlog_id: "1",
+        title: "Resolve namespace receiver calls",
+        acceptance_criteria: ["Root-cause fix lands in `core`."],
+        plan_task_ids: ["pt-1"],
+      },
+    ]);
+
+    const before = await snapshot_tree(backlog_dir);
+    const summary = await run(["--assignments", file], FIXED_NOW);
+    const after = await snapshot_tree(backlog_dir);
+
+    // The preview carries the would-be card's title + acceptance criteria (the
+    // per-cluster human-read surface) but writes nothing and flips no row.
+    expect(after).toEqual(before);
+    expect(summary.wrote).toEqual(false);
+    expect(summary.exported).toEqual([
+      {
+        id: "pt-1",
+        backlog_task: "TASK-347",
+        path: "task-347 - Resolve-namespace-receiver-calls.md",
+        title: "Resolve namespace receiver calls",
+        acceptance_criteria: ["Root-cause fix lands in `core`."],
+      },
+    ]);
+    expect((await repo.get("pt-1" as PlanTaskId))?.status).toEqual("proposed");
+    // No sweep log at all — preview writes nothing.
+    const sweep_files = await fs.readdir(plan_sweeps_dir()).catch(() => [] as string[]);
+    expect(sweep_files.filter((f) => f.startsWith("export-"))).toEqual([]);
+  });
+
+  it("--assignments --write --dry-run renders the preview but writes nothing (dry-run wins)", async () => {
+    const repo = new JsonPlanTaskRepository();
+    await repo.put(make_task({ id: "pt-1" as PlanTaskId, dedup_key: "expkey1" }));
+    const file = await write_assignment([
+      { backlog_id: "1", title: "Resolve namespace receiver calls", plan_task_ids: ["pt-1"] },
+    ]);
+
+    const before = await snapshot_tree(backlog_dir);
+    const summary = await run(["--assignments", file, "--write", "--dry-run"], FIXED_NOW);
+    expect(await snapshot_tree(backlog_dir)).toEqual(before);
+    expect(summary.wrote).toEqual(false);
+    expect((await repo.get("pt-1" as PlanTaskId))?.status).toEqual("proposed");
+  });
+
   it("a second identical run is a no-op (idempotent)", async () => {
     const repo = new JsonPlanTaskRepository();
     await repo.put(make_task({ id: "pt-1" as PlanTaskId, dedup_key: "expkey1" }));
@@ -251,13 +367,13 @@ describe("export_to_backlog run()", () => {
       { backlog_id: "1", title: "Resolve namespace receiver calls", plan_task_ids: ["pt-1"] },
     ]);
 
-    await run(["--assignments", file], FIXED_NOW);
+    await run(["--assignments", file, "--write"], FIXED_NOW);
     const after_first = await snapshot_tree(backlog_dir);
     const events_after_first = (await fs.readdir(plan_sweeps_dir())).filter((f) =>
       f.startsWith("export-"),
     );
 
-    const summary = await run(["--assignments", file], FIXED_NOW);
+    const summary = await run(["--assignments", file, "--write"], FIXED_NOW);
     const after_second = await snapshot_tree(backlog_dir);
 
     expect(after_second).toEqual(after_first);
@@ -298,7 +414,7 @@ describe("export_to_backlog run()", () => {
     ]);
 
     const before = await snapshot_tree(backlog_dir);
-    const summary = await run(["--assignments", file], FIXED_NOW);
+    const summary = await run(["--assignments", file, "--write"], FIXED_NOW);
     const after = await snapshot_tree(backlog_dir);
 
     expect(after).toEqual(before);
@@ -376,12 +492,25 @@ describe("export_to_backlog run()", () => {
         },
       ]);
 
-      const summary = await run(["--assignments", file], FIXED_NOW);
+      const summary = await run(["--assignments", file, "--write"], FIXED_NOW);
 
       // One entry per authored task; the top-level's primary is the architectural row.
+      const default_ac = ["Fix lands.", "Regression test added."];
       expect(summary.exported).toEqual([
-        { id: "pt-arch", backlog_task: "TASK-347", path: "task-347 - Complete-the-member-surface.md" },
-        { id: "pt-leaf-sub", backlog_task: "TASK-347.1", path: "task-347.1 - Follow-re-export-chains.md" },
+        {
+          id: "pt-arch",
+          backlog_task: "TASK-347",
+          path: "task-347 - Complete-the-member-surface.md",
+          title: "Complete the member surface",
+          acceptance_criteria: default_ac,
+        },
+        {
+          id: "pt-leaf-sub",
+          backlog_task: "TASK-347.1",
+          path: "task-347.1 - Follow-re-export-chains.md",
+          title: "Follow re-export chains",
+          acceptance_criteria: default_ac,
+        },
       ]);
 
       // Exactly two backlog files written.

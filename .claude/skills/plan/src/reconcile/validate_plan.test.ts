@@ -283,6 +283,43 @@ describe("validate_plan — membership review", () => {
     expect(validate_plan(p, NAME_RES_CTX)).toEqual({ ok: true, issues: [] });
   });
 
+  it("accepts an `unsure` verdict that grounds nothing (grounds this sweep, no override)", () => {
+    const p = plan([leaf({ evidence_indices: [0] })], "name_resolution", [
+      { index: 0, belongs: true, reason: "" },
+      { index: 1, belongs: "unsure", reason: "cannot tell whether this shares the root cause" },
+    ]);
+    expect(validate_plan(p, NAME_RES_CTX)).toEqual({ ok: true, issues: [] });
+  });
+
+  it("requires a non-empty reason on an `unsure` verdict", () => {
+    const p = plan([leaf({ evidence_indices: [0] })], "name_resolution", [
+      { index: 0, belongs: true, reason: "" },
+      { index: 1, belongs: "unsure", reason: "  " },
+    ]);
+    expect(codes(p, NAME_RES_CTX)).toEqual(["membership_excluded_missing_reason"]);
+  });
+
+  it("forbids a node from grounding an `unsure` member (consistency)", () => {
+    const p = plan(
+      [leaf({ evidence_indices: [0] }), leaf({ evidence_indices: [1] })],
+      "name_resolution",
+      [
+        { index: 0, belongs: true, reason: "" },
+        { index: 1, belongs: "unsure", reason: "ambiguous membership" },
+      ],
+    );
+    expect(codes(p, NAME_RES_CTX)).toEqual(["node_grounds_excluded_index"]);
+  });
+
+  it("rejects a belongs value that is neither boolean nor `unsure`", () => {
+    const p = plan([leaf({ evidence_indices: [0] })], "name_resolution", [
+      { index: 0, belongs: true, reason: "" },
+      { index: 1, belongs: "maybe" as never, reason: "x" },
+    ]);
+    // The bad verdict fails shape and returns early, so index 1 is also uncovered.
+    expect(codes(p, NAME_RES_CTX)).toEqual(["membership_incomplete", "shape_error"]);
+  });
+
   it("flags membership that is not an array", () => {
     const p = { ...plan([leaf({ evidence_indices: [0] })]), membership: "nope" as never };
     expect(codes(p, NAME_RES_CTX)).toContain("shape_error");

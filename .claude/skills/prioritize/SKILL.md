@@ -49,11 +49,13 @@ The backlog card body is **always** the architect's authored imperative work pla
 — `task_assignment.json`, produced by `refactor-task-architect` from the verified
 `refactor_plan.md`. The export adapter renders the card verbatim from that authored
 content; it never falls back to the plan engine's cheap, pre-investigation
-`PlanTask.body`. So a real export **requires** `--assignments <file>`; without it
-the script runs preview-only (`--dry-run`), listing the candidate rows whose ids
-the architect has not yet authored.
+`PlanTask.body`. So a real export **requires** `--assignments <file>` and the
+explicit `--write` opt-in. Without `--assignments`, `--dry-run` lists the candidate
+rows whose ids the architect has not yet authored; with `--assignments` but without
+`--write`, the script renders the would-be card bodies (title + acceptance
+criteria) for the per-cluster human read (step 7a.5) and writes nothing.
 
-A real (`--assignments`) run, for each authored backlog task:
+A real (`--assignments --write`) run, for each authored backlog task:
 
 1. resolves the architect's relative ids (`"1"`, `"1.1"`) to absolute backlog ids:
    a top-level task takes the next free id (`TASK-347`); a sub-task nests as
@@ -152,9 +154,8 @@ finished. Resume is idempotent by construction:
   Non-emptiness is therefore a completion _heuristic_, not a guarantee: skip on a
   non-empty, well-formed file, but re-dispatch a zero-byte or visibly truncated
   one. The cross-group `consolidation.json` (step 4) is NOT trusted blindly on
-  resume — re-dispatch the consolidator (or re-validate its output) rather than
-  accept a possibly partial map (coordinates with TASK-190.36.4's validation
-  gate).
+  resume — re-run step 4.5's `validate_consolidation` over it (and re-dispatch the
+  consolidator if it fails) rather than accept a possibly partial map.
 - **`run.json` is the resume lookup.** Maintain a `<root>/run.json` manifest so
   resume is a lookup, not a filesystem scan. After each wave in steps 3/3a/7a
   completes, stamp the manifest with what was dispatched and what completed:
@@ -241,28 +242,49 @@ orchestrator). Each sub-agent reads its group's rows, gets to grips with the rea
 > false-positive to its root cause, and design the single coherent change that
 > resolves the whole group at the right altitude — validating or collapsing the
 > plan's decomposition (catch over-decomposition, dead code, duplicate builders).
-> Write the plan to `<root>/<fault_area>/refactor_plan.md` and return your
-> one-line root cause + decomposition verdict. If the whole group turns out to
-> be a permanent limitation — no realistic resolver change would let Ariadne
-> resolve these callers — do not design a refactor: write `refactor_plan.md` as
-> a single permanent-limitation verdict naming the static boundary, and return
-> `PERMANENT-LIMITATION: <one line>` so the group reroutes to
+> Write the plan to `<root>/<fault_area>/refactor_plan.md`, write a strict-parsed
+> `verdict.json` beside it (`{outcome: "fixable" | "permanent_limitation",
+> boundary, row_ids}` — every row id in the group), and return your one-line root
+> cause + decomposition verdict. If the whole group turns out to be a permanent
+> limitation — no realistic resolver change would let Ariadne resolve these
+> callers — do not design a refactor: write `refactor_plan.md` as a single
+> permanent-limitation verdict naming the static boundary, and set
+> `verdict.json`'s `outcome` to `"permanent_limitation"` so the group reroutes to
 > `classifier-author` (step 3a) instead of graduating.
 
-A group returning a `PERMANENT-LIMITATION` verdict leaves the backlog pipeline:
-it does not proceed to consolidation or export; the human redispatches it
-through step 3a's `classifier-author` flow, using the same group's
-`PlanTaskEvidence` rows as the samples — the investigator returns only the
-verdict line, never the samples. This is the symmetric backstop to
-that agent's "if fixable, stop" gate — a fixable bug misrouted to
-`classifier-author` is caught there, and a true limitation misrouted here is
-caught by the investigator, so neither routing error silently produces the
-wrong artifact.
+The **`verdict.json` file** — not the returned prose line — drives routing. A
+group whose verdict is `permanent_limitation` leaves the backlog pipeline: it does
+not proceed to consolidation or export; the human redispatches it through step
+3a's `classifier-author` flow, using the same group's `PlanTaskEvidence` rows as
+the samples. This is the symmetric backstop to that agent's "if fixable, stop"
+gate — a fixable bug misrouted to `classifier-author` is caught there, and a true
+limitation misrouted here is caught by the investigator's verdict, so neither
+routing error silently produces the wrong artifact.
 
 Wait for every `Task()` in a wave to return before starting the next wave.
-**All step-3 waves must complete before consolidation (step 4) is dispatched.**
-The consolidator reads every group's plan front to back to judge linkage, so all
-plans must be on disk first.
+**All step-3 waves must complete before step 3.5.**
+
+### 3.5. Reconcile verdicts against the mint-time flags
+
+The investigation is now authoritative; the plan-engine mint-time
+`is_permanent_limitation` flag on each row may disagree with it (a group minted
+`fixable` that investigates as a permanent limitation, or the reverse). Reconcile
+them so the export gate (`select_exportable_tasks`, which keys on the flag) agrees
+with the investigation:
+
+```bash
+node --import tsx .claude/skills/plan/scripts/apply_investigation_verdicts.ts \
+  --verdict <root>/<fault_area>/verdict.json <root>/<other_fault_area>/verdict.json … \
+  --reroutes <root>/reroutes.json
+```
+
+It flips each disagreeing row's flag through the task-DB writer and records the
+disagreement in `<root>/reroutes.json`. A row flipped **to** permanent-limitation
+now routes to step 3a, not consolidation; `validate_consolidation` (step 4.5)
+reads `reroutes.json` to keep such a row out of every cluster. Run `--dry-run`
+first to preview the flips. **All step-3 waves must complete before consolidation
+(step 4) is dispatched.** The consolidator reads every group's plan front to back
+to judge linkage, so all plans must be on disk first.
 
 ### 3a. Permanent-limitation groups (`classifier-author`)
 
@@ -283,9 +305,10 @@ out of static reach, and re-route a mis-marked group in either direction. The
 agent gates then backstop the call: a fixable bug misrouted here is caught by
 `classifier-author`'s "if fixable, stop — emit no draft" gate, and a true
 permanent limitation misrouted to step 3 is caught by the investigator's
-`PERMANENT-LIMITATION` verdict, which returns the group here. Neither routing
-error survives to the wrong artifact, but each costs a wasted dispatch — make
-the call deliberately.
+`verdict.json` (`outcome: "permanent_limitation"`), which step 3.5 reconciles —
+flipping the row's flag and rerouting the group here. Neither routing error
+survives to the wrong artifact, but each costs a wasted dispatch — make the call
+deliberately.
 
 Such a group never graduates to `backlog/`. Dispatch one
 `Task(classifier-author)` per confirmed permanent-limitation group. **Resume
@@ -354,6 +377,12 @@ feeder→consumer dependency, or that a deeper root cause unifies — belongs un
 epic; independent work stays separate, and a loose preference to do one epic before
 another is left unstated (it carries no obligation).
 
+Before dispatching, **persist the investigated groups** the consolidator (and the
+step-4.5 validator) partition against — write `<root>/groups.json`, one entry per
+investigated group: `[{ fault_area, plan_path, row_ids }]` (the same `row_ids` you
+list in the dispatch prompt below). This is the authoritative investigated-row-id
+universe: `validate_consolidation` checks the clusters partition it exactly.
+
 With only one investigated group there is nothing to consolidate — skip to step 5.
 Otherwise dispatch one `Task(refactor-consolidator)` over the whole set:
 
@@ -372,6 +401,26 @@ the run: each `clusters[]` entry is one epic, carrying its `member_fault_areas`,
 the union `member_row_ids`, the `plan_path` (a merged `consolidated_plan.md` or a
 singleton's own `refactor_plan.md`), a `rationale`, and a suggested cross-cluster
 `ordering`. Steps 5–7 iterate clusters, not raw groups.
+
+### 4.5. Validate the consolidation
+
+`consolidation.json`'s ids reach export only via human copy-paste into `--id`
+flags, so a row dropped from every cluster silently never exports and a
+double-assigned row exports twice. Validate the map before trusting it:
+
+```bash
+node --import tsx .claude/skills/plan/scripts/validate_consolidation.ts \
+  --consolidation <root>/consolidation.json \
+  --groups <root>/groups.json \
+  --reroutes <root>/reroutes.json
+```
+
+It fails (exit 1, `issues[]` on stdout) on a dropped row, a double-assigned row,
+an unknown id, a missing `plan_path`, a bad or duplicate `slug`, or a
+permanent-rerouted id that leaked into a cluster. Fix the consolidation
+(re-dispatch the consolidator, or correct the map) until it passes, then proceed.
+**Re-run this same command as an export precondition** in step 7b — the map must
+still validate at write time.
 
 ### 5. Render a comprehension doc per cluster
 
@@ -415,7 +464,8 @@ confirmed the set.
 ### 7. Promote
 
 Step 7a dispatches one architect per confirmed cluster, all in parallel, and waits
-for all to finish. Steps 7b and 7c then run per confirmed cluster, one at a time.
+for all to finish. Step 7a.5 surfaces each authored cluster for a human read before
+any write. Steps 7b and 7c then run per confirmed cluster, one at a time.
 
 **Step 7a — author the backlog tasks** (one `refactor-task-architect` per confirmed cluster):
 
@@ -443,25 +493,54 @@ Dispatch prompt:
 > claimed by exactly one task's `plan_task_ids`) beside the plan.
 
 Run these architects in parallel (one message per cluster) and wait for all to
-complete before proceeding to 7b.
+complete before proceeding to 7a.5.
 
-**Step 7b — export the rows** (one run per confirmed cluster):
+**Step 7a.5 — per-cluster human read** (before any write):
+
+The cards are judge prose exported verbatim, and the funding decision (step 6)
+predated the authoring it funds. Give the human the last look. For each confirmed
+cluster, run the export in **preview mode** — `--assignments` WITHOUT `--write` —
+so it renders the would-be card bodies (title + acceptance criteria) and writes
+nothing:
 
 ```bash
 node --import tsx .claude/skills/plan/scripts/export_to_backlog.ts \
   --id <row_id> --id <row_id> … \
-  --assignments <root>/clusters/<slug>/task_assignment.json \
+  --assignments <root>/clusters/<slug>/task_assignment.json
+```
+
+Surface each cluster's rendered `exported[]` (each entry's `title` +
+`acceptance_criteria`) through `AskUserQuestion` — approve / edit / skip. On
+**edit**, the human revises `task_assignment.json` (or you do, at their direction)
+and re-run the preview. On **skip**, drop the cluster from this run's write set.
+Only approved clusters proceed to 7b. This is the same DIFF-channel treatment the
+registry gets from `--stage`.
+
+**Step 7b — export the rows** (one run per approved cluster):
+
+Re-run the step-4.5 validator as the export precondition (the map must still
+validate at write time), then export **with `--write`**:
+
+```bash
+node --import tsx .claude/skills/plan/scripts/validate_consolidation.ts \
+  --consolidation <root>/consolidation.json --groups <root>/groups.json \
+  --reroutes <root>/reroutes.json
+
+node --import tsx .claude/skills/plan/scripts/export_to_backlog.ts \
+  --id <row_id> --id <row_id> … \
+  --assignments <root>/clusters/<slug>/task_assignment.json --write \
   > "<root>/export_summary_<slug>.json"
 ```
 
-`--assignments` is **required** for a write: it supplies the authored `tasks[]`
-that become the backlog cards (without it the script only previews candidates).
-Select the cluster's rows by repeating `--id` for every id in the cluster's
-`member_row_ids` — this spans a merged cluster's multiple fault areas in one run,
-and every selected id must be claimed by some authored task or the export errors.
-(For a singleton cluster `--fault-area <area>` selects the same rows.) Redirect the
-summary to `<root>/export_summary_<slug>.json` — the run's staging root already
-used throughout steps 3–7 — and use that path in 7c.
+Both `--assignments` and `--write` are **required** for a write: `--assignments`
+supplies the authored `tasks[]` that become the backlog cards, and `--write` is the
+opt-in past the preview (plain `--assignments` only renders card bodies — that is
+step 7a.5). Select the cluster's rows by repeating `--id` for every id in the
+cluster's `member_row_ids` — this spans a merged cluster's multiple fault areas in
+one run, and every selected id must be claimed by some authored task or the export
+errors. (For a singleton cluster `--fault-area <area>` selects the same rows.)
+Redirect the summary to `<root>/export_summary_<slug>.json` — the run's staging
+root already used throughout steps 3–7 — and use that path in 7c.
 
 **Step 7c — graduate the comprehension doc** (reads the export summary, moves the
 staged comprehension doc beside the epic for each funded cluster):
@@ -490,14 +569,16 @@ a record of the investigation.
 
 ## Selectors
 
-| Flag                          | Selects                                           |
-| ----------------------------- | ------------------------------------------------- |
-| `--status proposed\|accepted` | rows in that lifecycle state                      |
-| `--fault-area <area>`         | rows in one `AriadneFaultArea`                    |
-| `--id <db-task-id>`           | one exact row (repeatable); overrides the filters |
-| `--assignments <file>`        | authored `tasks[]`; **required to write**         |
-| `--dry-run`                   | list the selection, write nothing                 |
+| Flag                          | Selects                                                               |
+| ----------------------------- | --------------------------------------------------------------------- |
+| `--status proposed\|accepted` | rows in that lifecycle state                                          |
+| `--fault-area <area>`         | rows in one `AriadneFaultArea`                                        |
+| `--id <db-task-id>`           | one exact row (repeatable); overrides the filters                     |
+| `--assignments <file>`        | authored `tasks[]`; renders card previews (no write on its own)       |
+| `--write`                     | opt-in past the preview; **required to write** (with `--assignments`) |
+| `--dry-run`                   | list the selection, write nothing (wins over `--write`)               |
 
 With no selectors, every exportable (`proposed`/`accepted`) row is selected —
-always preview that with `--dry-run` first. A write requires `--assignments`; a
-run without it only previews the candidate rows.
+always preview that with `--dry-run` first. A write requires both `--assignments`
+and `--write`; `--assignments` alone renders the card previews, and no
+`--assignments` only previews the candidate rows.

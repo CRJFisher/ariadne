@@ -45,9 +45,18 @@ let saved_backlog_override: string | undefined;
 function make_export_summary(dry_run: boolean): ExportSummary {
   return {
     dry_run,
+    wrote: !dry_run,
     export_run_id: "export-run-1",
     selectors: { status: "proposed", fault_area: SLUG, ids: [] },
-    exported: [{ id: "pt-arch", backlog_task: `TASK-${BACKLOG_ID}`, path: EPIC_FILENAME }],
+    exported: [
+      {
+        id: "pt-arch",
+        backlog_task: `TASK-${BACKLOG_ID}`,
+        path: EPIC_FILENAME,
+        title: "Epic title",
+        acceptance_criteria: ["Fix lands."],
+      },
+    ],
     skipped_already_exported: [],
     skipped_non_exportable: [],
     skipped_permanent_limitation: [],
@@ -145,14 +154,16 @@ describe("graduate_group_docs", () => {
   it("moves the doc beside the epic, not a sub-task, for a merged multi-task cluster", async () => {
     const MERGED_SLUG = "receiver-type-completion";
     const epic_filename = "task-352 - Restore-lost-receiver-types.md";
+    const ac = ["Fix lands."];
     const merged_summary: ExportSummary = {
       dry_run: false,
+      wrote: true,
       export_run_id: "export-run-2",
       selectors: { status: "proposed", fault_area: null, ids: ["pt-a", "pt-b", "pt-c"] },
       exported: [
-        { id: "pt-a", backlog_task: "TASK-352", path: epic_filename },
-        { id: "pt-b", backlog_task: "TASK-352.1", path: "task-352.1 - Complete-the-member-surface.md" },
-        { id: "pt-c", backlog_task: "TASK-352.2", path: "task-352.2 - Complete-the-return-type-surface.md" },
+        { id: "pt-a", backlog_task: "TASK-352", path: epic_filename, title: "Epic", acceptance_criteria: ac },
+        { id: "pt-b", backlog_task: "TASK-352.1", path: "task-352.1 - Complete-the-member-surface.md", title: "Sub 1", acceptance_criteria: ac },
+        { id: "pt-c", backlog_task: "TASK-352.2", path: "task-352.2 - Complete-the-return-type-surface.md", title: "Sub 2", acceptance_criteria: ac },
       ],
       skipped_already_exported: [],
       skipped_non_exportable: [],

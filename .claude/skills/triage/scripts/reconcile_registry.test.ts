@@ -12,7 +12,7 @@ import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { known_issues_registry_path } from "@ariadnejs/skill-protocol";
-import type { KnownIssue } from "@ariadnejs/types";
+import type { EnrichedEntryPoint, FilePath, KnownIssue } from "@ariadnejs/types";
 import {
   parse_known_issues_registry_json,
   serialize_known_issues_registry_json,
@@ -31,6 +31,7 @@ import {
   run_or_stage,
   type DriftSource,
   type ReconcileDeps,
+  type StageSample,
 } from "./reconcile_registry.js";
 
 function make_wip_rule(over: Partial<KnownIssue> & { group_id: string }): KnownIssue {
@@ -734,6 +735,15 @@ describe("run", () => {
         throw new Error("read_draft must not run outside stage-mode");
       },
       known_builtin_names: () => new Set<string>(),
+      get_builtin_check: () => {
+        throw new Error("get_builtin_check must not run outside stage-mode");
+      },
+      load_stage_samples: async () => {
+        throw new Error("load_stage_samples must not run outside stage-mode");
+      },
+      read_file_lines: () => {
+        throw new Error("read_file_lines must not run outside stage-mode");
+      },
       delete_builtin_source: async () => null,
       ...over,
     };
@@ -1279,6 +1289,32 @@ describe("run_stage", () => {
     classifier: { function_name: "check_staged", min_confidence: 0.95 },
   });
 
+  function make_sample(name: string): StageSample {
+    const entry_point: EnrichedEntryPoint = {
+      name: "handler",
+      file_path: "/repo/src/handler.ts" as FilePath,
+      start_line: 10,
+      kind: "function",
+      tree_size: 0,
+      is_exported: true,
+      definition_features: {
+        definition_is_object_literal_method: false,
+        accessor_kind: null,
+      },
+      diagnostics: {
+        grep_call_sites: [],
+        grep_call_sites_unindexed_tests: [],
+        ariadne_call_refs: [],
+        diagnosis: "no-textual-callers",
+        has_uncaptured_indexed_grep_hit: false,
+        callers_only_in_unindexed_tests: false,
+      },
+    };
+    return { name, entry_point };
+  }
+
+  // Stage-mode defaults: the drafted check fires on every sample, and one sample
+  // is persisted. Individual tests override to exercise misses / empty samples.
   function stage_deps(over: Partial<ReconcileDeps>): ReconcileDeps {
     return {
       registry_path,
@@ -1290,6 +1326,9 @@ describe("run_stage", () => {
       },
       read_draft: async () => staged_draft,
       known_builtin_names: () => new Set(["check_staged"]),
+      get_builtin_check: () => () => true,
+      load_stage_samples: async () => [make_sample("0.json")],
+      read_file_lines: () => [],
       delete_builtin_source: async () => {
         throw new Error("delete_builtin_source must not run in stage-mode");
       },
@@ -1315,7 +1354,11 @@ describe("run_stage", () => {
   it("dry-runs by default: validates and previews the insert without writing", async () => {
     const seeded = await seed([seeded_rule]);
     const summary = await run_or_stage(["--stage", "/drafts/rule-staged.json"], stage_deps({}));
-    expect(summary).toEqual({ draft: staged_draft, applied: false });
+    expect(summary).toEqual({
+      draft: staged_draft,
+      applied: false,
+      sample_results: [{ sample: "0.json", file_path: "/repo/src/handler.ts", passed: true }],
+    });
     expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
   });
 
@@ -1325,7 +1368,11 @@ describe("run_stage", () => {
       ["--stage", "/drafts/rule-staged.json", "--apply"],
       stage_deps({}),
     );
-    expect(summary).toEqual({ draft: staged_draft, applied: true });
+    expect(summary).toEqual({
+      draft: staged_draft,
+      applied: true,
+      sample_results: [{ sample: "0.json", file_path: "/repo/src/handler.ts", passed: true }],
+    });
     expect(await fs.readFile(registry_path, "utf8")).toEqual(
       serialize_known_issues_registry_json([seeded_rule, staged_draft]),
     );
@@ -1427,6 +1474,64 @@ describe("run_stage", () => {
         stage_deps({ load_registry: async () => [] }),
       ),
     ).rejects.toThrowError(/group_id "rule-staged" already exists/);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
+  });
+
+  it("refuses --apply when the drafted check misses a sample, writing nothing", async () => {
+    const seeded = await seed([seeded_rule]);
+    await expect(
+      run_or_stage(
+        ["--stage", "/drafts/rule-staged.json", "--apply"],
+        stage_deps({
+          load_stage_samples: async () => [make_sample("0.json"), make_sample("1.json")],
+          // Fires on the first sample, misses the second — the exact hazard the gate catches.
+          get_builtin_check: () => {
+            let call = 0;
+            return () => {
+              call += 1;
+              return call === 1;
+            };
+          },
+        }),
+      ),
+    ).rejects.toThrowError(/returned false on 1 of 2 sample\(s\): 1\.json/);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
+  });
+
+  it("dry-run previews per-sample results including a miss (no write)", async () => {
+    const seeded = await seed([seeded_rule]);
+    const summary = await run_or_stage(
+      ["--stage", "/drafts/rule-staged.json"],
+      stage_deps({
+        load_stage_samples: async () => [make_sample("0.json"), make_sample("1.json")],
+        get_builtin_check: () => {
+          let call = 0;
+          return () => {
+            call += 1;
+            return call === 1;
+          };
+        },
+      }),
+    );
+    expect(summary).toEqual({
+      draft: staged_draft,
+      applied: false,
+      sample_results: [
+        { sample: "0.json", file_path: "/repo/src/handler.ts", passed: true },
+        { sample: "1.json", file_path: "/repo/src/handler.ts", passed: false },
+      ],
+    });
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
+  });
+
+  it("refuses a draft with no persisted samples (unverifiable check)", async () => {
+    const seeded = await seed([seeded_rule]);
+    await expect(
+      run_or_stage(
+        ["--stage", "/drafts/rule-staged.json", "--apply"],
+        stage_deps({ load_stage_samples: async () => [] }),
+      ),
+    ).rejects.toThrowError(/no EnrichedEntryPoint samples found/);
     expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
   });
 });

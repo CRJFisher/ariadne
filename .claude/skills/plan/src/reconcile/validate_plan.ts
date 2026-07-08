@@ -260,8 +260,8 @@ function check_membership(
       issues.push({ code: "shape_error", path: `${path}.index`, message: "index must be an integer" });
       return;
     }
-    if (typeof entry.belongs !== "boolean") {
-      issues.push({ code: "shape_error", path: `${path}.belongs`, message: "belongs must be a boolean" });
+    if (typeof entry.belongs !== "boolean" && entry.belongs !== "unsure") {
+      issues.push({ code: "shape_error", path: `${path}.belongs`, message: "belongs must be a boolean or \"unsure\"" });
       return;
     }
     if (typeof entry.reason !== "string") {
@@ -282,11 +282,17 @@ function check_membership(
     }
     seen.add(index);
 
-    if (entry.belongs === false) {
+    // Any non-`true` verdict grounds nothing this sweep (both `false` and
+    // `"unsure"`), so it joins the excluded set the grounding-consistency check
+    // reads, and must carry a reason. Only `false` — a confirmed mis-route —
+    // writes a standing override and may name a `suggested_area`.
+    if (entry.belongs !== true) {
       excluded.add(index);
       if (entry.reason.trim().length === 0) {
-        issues.push({ code: "membership_excluded_missing_reason", path: `${path}.reason`, message: "a `belongs: false` verdict must carry a non-empty reason" });
+        issues.push({ code: "membership_excluded_missing_reason", path: `${path}.reason`, message: "a non-`true` membership verdict must carry a non-empty reason" });
       }
+    }
+    if (entry.belongs === false) {
       if (entry.suggested_area !== undefined && !is_ariadne_fault_area(entry.suggested_area)) {
         issues.push({ code: "membership_suggested_area_invalid", path: `${path}.suggested_area`, message: `'${entry.suggested_area}' is not an AriadneFaultArea` });
       } else if (entry.suggested_area === bucket_fault_area) {

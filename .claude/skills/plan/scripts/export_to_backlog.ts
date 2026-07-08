@@ -11,11 +11,17 @@
  * The backlog card body is ALWAYS the architect's authored imperative work plan
  * (`task_assignment.json`, produced by `refactor-task-architect` from the
  * verified `refactor_plan.md`) — never the cheap, pre-investigation
- * `PlanTask.body`. So a real write REQUIRES `--assignments <file>`. Without it
- * the script runs in preview-only mode (`--dry-run`), listing the selectable
- * candidate rows whose ids the architect has not yet authored.
+ * `PlanTask.body`. So a real write REQUIRES both `--assignments <file>` and the
+ * explicit `--write` opt-in. Three preview modes write nothing:
+ *   - no `--assignments` + `--dry-run` — lists the selectable candidate rows
+ *     whose ids the architect has not yet authored;
+ *   - `--assignments` without `--write` — renders each would-be card's title and
+ *     acceptance criteria (the per-cluster human-read surface) without writing;
+ *   - `--assignments --write --dry-run` — same render preview (`--dry-run` wins).
+ * The coordinator surfaces the `--assignments`-without-`--write` preview through
+ * `AskUserQuestion` (approve / edit / skip) before the `--write` run.
  *
- * Steps of a real (`--assignments`) run:
+ * Steps of a real (`--assignments --write`) run:
  *
  *   1. **select** — `select_exportable_tasks` picks the rows: filtered by
  *      `--status`/`--fault-area` or named by `--id`, skipping anything already
@@ -51,10 +57,10 @@
  * **Script invocation:** always `node --import tsx`. Never `pnpm exec tsx`.
  *
  * Usage:
- *   node --import tsx export_to_backlog.ts --assignments <file> \
- *     [--status proposed|accepted] [--fault-area <area>] \
- *     [--id <db-task-id>...] [--dry-run]
- *   node --import tsx export_to_backlog.ts --dry-run   # preview candidate rows
+ *   node --import tsx export_to_backlog.ts --assignments <file> --write \
+ *     [--status proposed|accepted] [--fault-area <area>] [--id <db-task-id>...]
+ *   node --import tsx export_to_backlog.ts --assignments <file>   # render card previews
+ *   node --import tsx export_to_backlog.ts --dry-run              # preview candidate rows
  */
 
 import { mkdir, readFile } from "node:fs/promises";
@@ -81,12 +87,14 @@ import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const USAGE =
   "Usage: export_to_backlog [--status proposed|accepted] [--fault-area <area>] " +
-  "[--id <db-task-id>...] [--assignments <file>] [--dry-run]\n";
+  "[--id <db-task-id>...] [--assignments <file>] [--write] [--dry-run]\n";
 
 interface CliArgs {
   selectors: ExportSelectors;
   assignments_path: string | null;
   dry_run: boolean;
+  /** Explicit opt-in to actually write. Plain `--assignments` renders card previews only. */
+  write: boolean;
 }
 
 function parse_argv(argv: string[]): CliArgs {
@@ -101,6 +109,7 @@ function parse_argv(argv: string[]): CliArgs {
   };
   let assignments_path: string | null = null;
   let dry_run = false;
+  let write = false;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     switch (arg) {
@@ -137,11 +146,14 @@ function parse_argv(argv: string[]): CliArgs {
       case "--dry-run":
         dry_run = true;
         break;
+      case "--write":
+        write = true;
+        break;
       default:
         throw new Error(`Unknown argument: ${arg}`);
     }
   }
-  return { selectors, assignments_path, dry_run };
+  return { selectors, assignments_path, dry_run, write };
 }
 
 /** An export run is not a sweep, but `append_sweep_event` names a log file; namespace it `export-`. */
@@ -162,13 +174,19 @@ interface ExportedEntry {
   id: string;
   backlog_task: string;
   path: string;
+  /** The authored card title (empty in the candidate-only, no-`--assignments` preview). */
+  title: string;
+  /** The authored acceptance criteria — the coordinator surfaces these for the per-cluster human read. */
+  acceptance_criteria: string[];
 }
 
 export interface ExportSummary {
   dry_run: boolean;
+  /** True iff backlog files were actually written (`--assignments --write`, not `--dry-run`). */
+  wrote: boolean;
   export_run_id: string;
   selectors: ExportSelectors;
-  /** The created (or, under `--dry-run`, would-be) backlog tasks. */
+  /** The created (with `--write`) or would-be (preview) backlog tasks. */
   exported: ExportedEntry[];
   skipped_already_exported: ExportSelection["skipped_already_exported"];
   /** Rows named via `--id` whose terminal status makes them non-exportable. */
@@ -182,7 +200,13 @@ export interface ExportSummary {
 const TIER_RANK: Record<PlanTaskTier, number> = { architectural: 0, fault_area: 1, localized: 2 };
 
 export async function run(argv: string[], now: Date = new Date()): Promise<ExportSummary> {
-  const { selectors, assignments_path, dry_run } = parse_argv(argv);
+  const { selectors, assignments_path, dry_run, write } = parse_argv(argv);
+  // A write requires the explicit `--write` opt-in and no `--dry-run`. Plain
+  // `--assignments` renders the would-be card bodies (title + acceptance criteria)
+  // without writing, so the coordinator can surface each cluster to the human
+  // (approve / edit / skip) before the writing run — the same DIFF-channel treatment
+  // the registry gets from `--stage`.
+  const will_write = write && !dry_run;
 
   const repo = new JsonPlanTaskRepository();
   const all_tasks = await repo.query({});
@@ -204,9 +228,16 @@ export async function run(argv: string[], now: Date = new Date()): Promise<Expor
     }
     return {
       dry_run: true,
+      wrote: false,
       export_run_id,
       selectors,
-      exported: selection.selected.map((task) => ({ id: task.id, backlog_task: "", path: "" })),
+      exported: selection.selected.map((task) => ({
+        id: task.id,
+        backlog_task: "",
+        path: "",
+        title: "",
+        acceptance_criteria: [],
+      })),
       skipped_already_exported: selection.skipped_already_exported,
       skipped_non_exportable: selection.skipped_non_exportable,
       skipped_permanent_limitation: selection.skipped_permanent_limitation,
@@ -233,6 +264,26 @@ export async function run(argv: string[], now: Date = new Date()): Promise<Expor
     }
   }
 
+  // Evidence-bearing tasks must carry acceptance criteria. `parse_task_assignment`
+  // accepts `[]` vacuously; here — the one place authored tasks and their source
+  // rows are both loaded — reject an authored task whose still-selected rows carry
+  // false-positive evidence but whose acceptance criteria are empty. A task whose
+  // rows are all already-exported (none in this selection) is skipped, preserving
+  // idempotency; an evidence-free task may keep `[]`.
+  for (const task of authored) {
+    const rows = task.plan_task_ids
+      .map((id) => selected_by_id.get(id))
+      .filter((row): row is PlanTask => row !== undefined);
+    const has_evidence = rows.some((row) => row.evidence.length > 0);
+    if (rows.length > 0 && has_evidence && task.acceptance_criteria.length === 0) {
+      throw new Error(
+        `authored task TASK-${task.backlog_id} carries evidence-bearing rows ` +
+          `(${rows.filter((r) => r.evidence.length > 0).map((r) => r.id).join(", ")}) ` +
+          "but has empty acceptance_criteria — an evidence-bearing task must state how it is proven done",
+      );
+    }
+  }
+
   // One backlog file per authored task. A task whose claimed rows are all already
   // exported (not in this selection) contributes no write — that is what makes a
   // re-run idempotent. The lowest-tier claimed row is the primary (summary
@@ -253,7 +304,7 @@ export async function run(argv: string[], now: Date = new Date()): Promise<Expor
     return [{ task, primary, rows, backlog_task: `TASK-${task.backlog_id}`, rendered }];
   });
 
-  if (!dry_run && planned.length > 0) {
+  if (will_write && planned.length > 0) {
     await mkdir(backlog_tasks_dir(), { recursive: true });
     const resolved_base = path.resolve(backlog_tasks_dir());
     for (const entry of planned) {
@@ -283,12 +334,15 @@ export async function run(argv: string[], now: Date = new Date()): Promise<Expor
 
   return {
     dry_run,
+    wrote: will_write && planned.length > 0,
     export_run_id,
     selectors,
     exported: planned.map((entry) => ({
       id: entry.primary.id,
       backlog_task: entry.backlog_task,
       path: entry.rendered.filename,
+      title: entry.task.title,
+      acceptance_criteria: entry.task.acceptance_criteria,
     })),
     skipped_already_exported: selection.skipped_already_exported,
     skipped_non_exportable: selection.skipped_non_exportable,
