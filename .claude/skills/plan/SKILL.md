@@ -35,6 +35,13 @@ classifier `registry.json`, or `packages/core`. Graduation of a plan task into
 `backlog/` is the separate, user-invoked export adapter (see **Export to
 backlog** below) — the only path that writes `backlog/`.
 
+Pass A buckets only the run's `novel_issues[]` (confirmed false-positives). It
+deliberately does **not** consume `uncertain[]`: an uncertain verdict is the
+investigator's abstain, not a confirmed FP, so grounding a fix-plan on one would
+mint work against an unproven signal. Persistently-uncertain entries are surfaced
+to the human instead — as a cross-run repeat count in `get_triage_summary` — to
+resolve or exclude, never fed into planning.
+
 **Script invocation:** always `node --import tsx`. Never `pnpm exec tsx` or
 `npx tsx`.
 
@@ -126,8 +133,19 @@ node --import tsx .claude/skills/plan/scripts/reconcile_plan.ts --sweep <sweep_i
 
 For each staged `(bucket, plan)` pair the reconciler validates the plan,
 flattens it into `PlanTask` candidates (minting ids + parent/child links and the
-immutable `dedup_key` = a hash of `fault_area` + the sorted evidence
-`file:line` set), then reconciles within the DB:
+immutable `dedup_key` = a hash of `fault_area` + the sorted `(file_path, name,
+kind)` member set), then reconciles within the DB:
+
+The `dedup_key` keys on the flagged **member** identity, not the call-site
+`file:line`, so it is drift-tolerant to line shifts — a target-repo commit that
+moves a flagged function down its file re-swaps to the SAME key and augments the
+existing task instead of re-proposing it. `start_line` is excluded from the key
+for exactly this reason (evidence union still keys on the call-site `file:line`,
+so two distinct call sites stay distinct evidence). The residual cost is that a
+member which changes FILE or NAME re-keys and re-proposes as fresh work; the
+prioritize step-1 [exported-overlap advisory](../prioritize/SKILL.md) surfaces
+such a candidate against already-exported backlog work for human review (no
+auto-suppress).
 
 - **create / augment** — a candidate whose `dedup_key` already names a live task
   **augments** it (evidence merged, rollups bumped, the latest tree's structural

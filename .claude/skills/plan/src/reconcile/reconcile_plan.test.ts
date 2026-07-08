@@ -29,10 +29,10 @@ afterEach(async () => {
 
 const RUN = parse_run_id("aaaaaaa-2026-04-16T18-10-16.855Z");
 
-function ev(file: string, line: number, project = "p"): PlanTaskEvidence {
+function ev(file: string, line: number, project = "p", member_name = "flagged_fn"): PlanTaskEvidence {
   return {
     member_evidence: { file, line, why: "w" },
-    member_symbol: { file_path: file, name: "flagged_fn", kind: "function", start_line: line },
+    member_symbol: { file_path: file, name: member_name, kind: "function", start_line: line },
     project,
     run_id: RUN,
     diagnosis: "callers-not-in-registry",
@@ -318,10 +318,13 @@ describe("reconcile_plan — orphan retirement", () => {
     const repo = new JsonPlanTaskRepository();
     const { leaf_a } = await seed(repo);
 
-    // s2: leaf "a" now grounds {a.ts:1, a.ts:2} → new dedup_key (orphans the old
-    // leaf-a), but the new leaf overlaps a.ts:1 → supersede.
+    // s2: leaf "a" now grounds a SECOND, distinct member (`fn_a2`) alongside the
+    // original `flagged_fn`, so its member set changes → new dedup_key (orphans
+    // the old leaf-a). The new leaf still shares the a.ts:1 CALL SITE with the
+    // orphan, so overlap scoring supersedes the orphan into it. (A pure line
+    // shift would NOT re-key — the member set is what the key tracks.)
     const churn = plan_with([localized_leaf("fix a", "a", [0, 1]), localized_leaf("fix b", "b", [2])]);
-    const evidence2 = [ev("a.ts", 1), ev("a.ts", 2), ev("b.ts", 2)];
+    const evidence2 = [ev("a.ts", 1), ev("a.ts", 2, "p", "fn_a2"), ev("b.ts", 2)];
     const { events } = await recon(
       repo,
       build_plan_tasks(churn, evidence2, { sweep_id: "s2", strategist: "opus" }),

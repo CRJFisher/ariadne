@@ -45,6 +45,7 @@ function seed_manifest(project: string, run_id: string, overrides: Partial<RunMa
       source_run_id: null,
       skipped_count: 0,
       skipped_entry_keys: [],
+      stability: null,
     },
     ...overrides,
   };

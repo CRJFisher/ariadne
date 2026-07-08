@@ -38,7 +38,7 @@
  *
  * Matching is 1:1 — each existing task is claimed by at most one candidate, so
  * two candidates legitimately sharing a `(dedup_key, tier)` each claim a DISTINCT
- * prior task. `dedup_key` stays pure (fault_area + location set only) — the id
+ * prior task. `dedup_key` stays pure (fault_area + member set only) — the id
  * and tier disambiguate, never a widened key.
  */
 

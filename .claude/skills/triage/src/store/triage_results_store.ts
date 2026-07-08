@@ -12,8 +12,10 @@
  */
 
 import * as fs from "node:fs/promises";
+import type { Dirent } from "node:fs";
 
 import {
+  analysis_output_dir,
   parse_triage_results,
   triage_results_dir,
   triage_results_path,
@@ -43,6 +45,52 @@ export async function all_finalized_runs_at_commit(
     .sort()
     .reverse()
     .map((f) => f.slice(0, -".json".length));
+}
+
+/**
+ * Return every published run-id for a project, newest-first (lexicographic
+ * descending — run-ids are `<short-commit>-<iso-timestamp>`, so this orders by
+ * time within a commit). Empty when the project has no published results. Unlike
+ * {@link all_finalized_runs_at_commit} this spans commits, for cross-run signals
+ * (e.g. uncertain-repeat counting) that track an entry across target-repo edits.
+ */
+export async function all_finalized_run_ids(project: string): Promise<string[]> {
+  const dir = triage_results_dir(project);
+  let files: string[];
+  try {
+    files = await fs.readdir(dir);
+  } catch {
+    return [];
+  }
+  return files
+    .filter((f) => f.endsWith(".json"))
+    .sort()
+    .reverse()
+    .map((f) => f.slice(0, -".json".length));
+}
+
+/**
+ * List every project directory under `analysis_output/` that has a
+ * `triage_results/` subdir. Sorted. Empty when nothing has been published yet.
+ */
+export async function list_projects_with_results(): Promise<string[]> {
+  let entries: Dirent[];
+  try {
+    entries = await fs.readdir(analysis_output_dir(), { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const projects: string[] = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    try {
+      await fs.access(triage_results_dir(entry.name));
+      projects.push(entry.name);
+    } catch {
+      // No triage_results subdir — not a published-results project.
+    }
+  }
+  return projects.sort();
 }
 
 /**

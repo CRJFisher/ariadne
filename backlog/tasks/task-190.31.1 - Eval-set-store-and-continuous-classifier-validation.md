@@ -83,3 +83,29 @@ TASK-190.33 write-guard. No registry write is added or automated here.
       gates, and the TASK-190.33 write-guard are untouched.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+### Investigator replay-pair partition (wire from TASK-190.36.5 item 4)
+
+This store has a second consumer beyond the classifier eval-set. TASK-190.36.5
+item 4 ("Snapshot investigator eval seeds before pruning") is **deferred onto
+this task**: no eval-set store existed when 190.36.5 landed, so building it here
+is a precondition. Design this store as **one physical store with two logical
+partitions**:
+
+1. **Classifier examples** — the per-group labeled examples this task's
+   Description defines (recall/precision ground truth).
+2. **Investigator replay pairs** — `(dispense_payload, expected_verdict,
+   member_identity, group_id)` tuples, so an investigator verdict can be
+   replayed deterministically against its exact original input.
+
+The replay-pair partition is populated by a **pre-prune snapshot**:
+`prune_runs.ts` deletes `triage_state/<project>/runs/<run-id>/` at keep-count 5,
+discarding both the per-entry verdicts and their byte-identical dispense-payload
+inputs (built by `dispense/dispense_payload.ts`) — the reproducible inputs decay
+while the published labels live forever. Before `rm`, snapshot the tuples into
+this store, **prioritizing `diff_runs` flips** (the highest-signal regression
+cases: an entry whose verdict changed between runs). Build this as the
+investigator partition of this store, not a competing mechanism. When it lands,
+close TASK-190.36.5 item 4.

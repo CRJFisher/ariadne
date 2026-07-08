@@ -24,6 +24,7 @@ import {
   build_finalization_summary,
 } from "../src/finalize/output.js";
 import { load_verdicts_by_entry_index } from "../src/finalize/verdict_ledger.js";
+import { compute_tp_stability } from "../src/finalize/confirmed_unreachable_reuse.js";
 import { parse_project_arg, parse_run_id_arg } from "../src/cli_args.js";
 import { triage_results_dir, triage_results_path } from "@ariadnejs/skill-protocol";
 import {
@@ -84,6 +85,10 @@ async function main(): Promise<void> {
   const output_file = triage_results_path(state.project_name, run_id);
   await atomic_write_file(output_file, JSON.stringify(output, null, 2) + "\n");
 
+  // Score the TP-cache stability audit from the sampled would-be hits that were
+  // re-investigated this run (null-safe when nothing was sampled).
+  manifest.tp_cache.stability = compute_tp_stability(state, verdicts_by_entry_index);
+
   manifest.status = "finalized";
   manifest.finalized_at = new Date().toISOString();
   await atomic_write_file(manifest_path, JSON.stringify(manifest, null, 2) + "\n");
@@ -104,6 +109,14 @@ async function main(): Promise<void> {
   console.error(`  Uncertain:                    ${summary.uncertain_count}`);
   if (summary.failed_count > 0) {
     console.error(`  Failed:                       ${summary.failed_count}`);
+  }
+  const stability = manifest.tp_cache.stability;
+  if (stability !== null && stability.sampled > 0) {
+    const pct = stability.rate === null ? "n/a" : `${Math.round(stability.rate * 100)}%`;
+    console.error(
+      `  TP-cache stability:           ${stability.agreed}/${stability.sampled} agreed (${pct})` +
+        (stability.rate !== null && stability.rate < 1 ? " — consider --no-reuse-tp" : ""),
+    );
   }
 
   console.error(`\n  Output file: ${output_file}`);

@@ -78,6 +78,17 @@ export interface TriageEntry {
    * verdicts from re-investigated ones.
    */
   tp_source_run_id: string | null;
+  /**
+   * True for a would-be TP-cache hit that was deliberately LEFT on the
+   * `llm-triage` route (not flipped to `known-unreachable`) so the investigator
+   * re-checks a cached verdict that would otherwise be reused unverified. The
+   * finalize step compares each sample's fresh verdict against the cached `tp`
+   * to compute `manifest.tp_cache.stability`. A sample is an ordinary llm-triage
+   * entry to the picker/completion gate — `auto_classified` stays false — so it
+   * is investigated and completed normally, never mistaken for an incomplete
+   * entry.
+   */
+  tp_stability_sample: boolean;
 }
 
 export interface TriageEntryResult {
@@ -101,6 +112,25 @@ export interface TpCacheRecord {
   source_run_id: string | null;
   skipped_count: number;
   skipped_entry_keys: TpCacheEntryKey[];
+  /**
+   * Agreement rate of the TP-cache stability audit, filled at finalize. `null`
+   * until then and whenever no would-be hit was sampled (cache disabled, no
+   * source, or zero hits). A low `rate` is the operator's signal that frozen TP
+   * verdicts have drifted and the run should be repeated with `--no-reuse-tp`.
+   */
+  stability: TpStability | null;
+}
+
+/**
+ * Outcome of the TP-cache stability audit: of the `sampled` would-be cache hits
+ * left in the llm-triage pool and re-investigated, `agreed` returned a fresh
+ * `tp` verdict matching the cached one. `rate = agreed / sampled`, or `null`
+ * when `sampled === 0` (nothing to divide).
+ */
+export interface TpStability {
+  sampled: number;
+  agreed: number;
+  rate: number | null;
 }
 
 export interface TpCacheEntryKey {

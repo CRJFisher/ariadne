@@ -193,6 +193,23 @@ source rows (step 2) for the grouping signal. The summary also carries a
 never exportable) and route through step 3a instead of the backlog pipeline;
 read their ids here to build the permanent-limitation worklist.
 
+Then run the **exported-overlap advisory** — a read-only cross-check that
+surfaces candidates whose flagged MEMBER set overlaps work already promoted into
+`backlog/`:
+
+```bash
+node --import tsx .claude/skills/plan/scripts/cross_check_exported_overlap.ts
+```
+
+`dedup_key` suppression is exact-overlap only, so a candidate that shares SOME
+but not all members with an exported card — or the same members re-grouped under
+a different `fault_area` — is NOT auto-suppressed and would export as work that
+duplicates part of an existing card. The advisory names each such collision (the
+shared members, and whether the candidate is fully subsumed) for human review.
+It writes nothing and suppresses nothing; when it reports an overlap, decide
+whether to drop the candidate or fold it into the existing backlog task before
+graduating.
+
 ### 2. Gather the change groups
 
 Read each candidate's source row at `~/.ariadne/plan/tasks/<id>.json` and group

@@ -77,7 +77,12 @@ function exact_key(e: { name: string; file_path: string; kind: string; start_lin
   return `${e.name}\t${e.file_path}\t${e.kind}\t${e.start_line}`;
 }
 
-function fuzzy_key(e: { name: string; file_path: string; kind: string }): string {
+/**
+ * The line-drift-tolerant identity of a published entry — `(name, file_path,
+ * kind)` without `start_line`. Shared with the cross-run uncertain-repeat
+ * counter so both absorb line shifts the same way.
+ */
+export function fuzzy_key(e: { name: string; file_path: string; kind: string }): string {
   return `${e.name}\t${e.file_path}\t${e.kind}`;
 }
 

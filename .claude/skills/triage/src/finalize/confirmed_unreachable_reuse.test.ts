@@ -3,11 +3,15 @@ import * as fsSync from "fs";
 import path from "path";
 
 import type { TriageResultsFile, ConfirmedUnreachableSource } from "@ariadnejs/skill-protocol";
-import type { TriageEntry } from "../triage_state_types.js";
+import type { TriageEntry, TriageState } from "../triage_state_types.js";
+import type { TriageVerdict } from "../verdict/triage_verdict.js";
 import {
   apply_tp_cache_to_entries,
+  compute_tp_stability,
   derive_tp_cache,
   cache_key_string,
+  select_stability_sample_indices,
+  TP_STABILITY_SAMPLE_TARGET,
 } from "./confirmed_unreachable_reuse.js";
 
 // vi.hoisted runs before all `import` statements, so the env var is set
@@ -337,9 +341,35 @@ describe("derive_tp_cache — fallback through older runs", () => {
   });
 });
 
-describe("apply_tp_cache_to_entries", () => {
-  const PROJECT_PATH = "/projects/myapp";
+const PROJECT_PATH = "/projects/myapp";
 
+function entry(over: Partial<TriageEntry> = {}): TriageEntry {
+  return {
+    entry_index: 0,
+    name: "f",
+    file_path: `${PROJECT_PATH}/src/f.ts`,
+    start_line: 1,
+    kind: "function",
+    signature: null,
+    route: "llm-triage",
+    diagnosis: "no-textual-callers",
+    known_source: null,
+    status: "pending",
+    result: null,
+    error: null,
+    is_exported: true,
+    access_modifier: null,
+    diagnostics: { grep_call_sites: [], grep_call_sites_unindexed_tests: [], ariadne_call_refs: [], diagnosis: "no-textual-callers", has_uncaptured_indexed_grep_hit: false, callers_only_in_unindexed_tests: false },
+    auto_classified: false,
+    classifier_hints: [],
+    tp_source_run_id: null,
+    tp_stability_sample: false,
+    retry_count: 0,
+    ...over,
+  };
+}
+
+describe("apply_tp_cache_to_entries", () => {
   function build_cache_from_published(
     run_id: string,
     items: { name: string; file_path: string; start_line: number; kind: "function" | "method" | "constructor" }[],
@@ -355,53 +385,69 @@ describe("apply_tp_cache_to_entries", () => {
     };
   }
 
-  function entry(over: Partial<TriageEntry> = {}): TriageEntry {
-    return {
-      entry_index: 0,
-      name: "f",
-      file_path: `${PROJECT_PATH}/src/f.ts`,
+  /** `n` distinct matching entries + a cache that covers all of them. */
+  function matching_run(n: number): { entries: TriageEntry[]; cache: ReturnType<typeof build_cache_from_published> } {
+    const items = Array.from({ length: n }, (_, i) => ({
+      name: `f${i}`,
+      file_path: `src/f${i}.ts`,
       start_line: 1,
-      kind: "function",
-      signature: null,
-      route: "llm-triage",
-      diagnosis: "no-textual-callers",
-      known_source: null,
-      status: "pending",
-      result: null,
-      error: null,
-      is_exported: true,
-      access_modifier: null,
-      diagnostics: { grep_call_sites: [], grep_call_sites_unindexed_tests: [], ariadne_call_refs: [], diagnosis: "no-textual-callers", has_uncaptured_indexed_grep_hit: false, callers_only_in_unindexed_tests: false },
-      auto_classified: false,
-      classifier_hints: [],
-      tp_source_run_id: null,
-      retry_count: 0,
-      ...over,
-    };
+      kind: "function" as const,
+    }));
+    const cache = build_cache_from_published("source-run-id", items);
+    const entries = items.map((it, i) =>
+      entry({ entry_index: i, name: it.name, file_path: `${PROJECT_PATH}/${it.file_path}` }),
+    );
+    return { entries, cache };
   }
 
-  it("flips matching llm-triage entries to known-unreachable + previously-confirmed-tp", () => {
-    const cache = build_cache_from_published("source-run-id", [
-      { name: "f", file_path: "src/f.ts", start_line: 1, kind: "function" },
-    ]);
-    const e = entry();
-    const skipped = apply_tp_cache_to_entries([e], cache, PROJECT_PATH);
-    expect(skipped).toHaveLength(1);
-    expect(skipped[0]).toEqual({
-      name: "f",
-      file_path: "src/f.ts",
-      kind: "function",
-      start_line: 1,
-    });
-    expect(e.route).toBe("known-unreachable");
-    expect(e.auto_classified).toBe(true);
-    expect(e.status).toBe("completed");
-    expect(e.known_source).toBe("previously-confirmed-tp");
-    expect(e.tp_source_run_id).toBe("source-run-id");
-    // v4: TP-cache reuse no longer synthesizes a TriageEntryResult; the
-    // confirmed_unreachable record is built from (route, known_source,
-    // tp_source_run_id) at finalize time, not from entry.result.
-    expect(e.result).toBe(null);
+  it("flips non-sampled matching llm-triage entries to known-unreachable + previously-confirmed-tp", () => {
+    // 7 hits: TP_STABILITY_SAMPLE_TARGET (5) are left as stability samples, 2 flip.
+    const { entries, cache } = matching_run(7);
+    const skipped = apply_tp_cache_to_entries(entries, cache, PROJECT_PATH);
+
+    const sampled = entries.filter((e) => e.tp_stability_sample);
+    const flipped = entries.filter((e) => e.route === "known-unreachable");
+    expect(sampled).toHaveLength(TP_STABILITY_SAMPLE_TARGET);
+    expect(flipped).toHaveLength(2);
+    expect(skipped).toHaveLength(2);
+
+    // Sampled entries stay on the llm-triage route, untouched otherwise, so the
+    // picker investigates them and the completion gate does not see them as done.
+    for (const e of sampled) {
+      expect(e.route).toBe("llm-triage");
+      expect(e.auto_classified).toBe(false);
+      expect(e.status).toBe("pending");
+      expect(e.known_source).toBe(null);
+    }
+    // Flipped entries carry the full TP-cache stamping.
+    for (const e of flipped) {
+      expect(e.tp_stability_sample).toBe(false);
+      expect(e.auto_classified).toBe(true);
+      expect(e.status).toBe("completed");
+      expect(e.known_source).toBe("previously-confirmed-tp");
+      expect(e.tp_source_run_id).toBe("source-run-id");
+      // TP-cache reuse does not synthesize a TriageEntryResult; the
+      // confirmed_unreachable record is built from (route, known_source,
+      // tp_source_run_id) at finalize time, not from entry.result.
+      expect(e.result).toBe(null);
+    }
+    expect(skipped.map((k) => k.name).sort()).toEqual(flipped.map((e) => e.name).sort());
+  });
+
+  it("leaves up to TP_STABILITY_SAMPLE_TARGET hits as stability samples, evenly spread", () => {
+    const { entries, cache } = matching_run(12);
+    apply_tp_cache_to_entries(entries, cache, PROJECT_PATH);
+    const sampled_idx = entries.filter((e) => e.tp_stability_sample).map((e) => e.entry_index);
+    expect(sampled_idx).toEqual([...select_stability_sample_indices(12, TP_STABILITY_SAMPLE_TARGET)].sort((a, b) => a - b));
+    expect(sampled_idx).toHaveLength(TP_STABILITY_SAMPLE_TARGET);
+    expect(entries.filter((e) => e.route === "known-unreachable")).toHaveLength(7);
+  });
+
+  it("samples every hit and flips none when there are fewer hits than the target", () => {
+    const { entries, cache } = matching_run(3);
+    const skipped = apply_tp_cache_to_entries(entries, cache, PROJECT_PATH);
+    expect(entries.every((e) => e.tp_stability_sample)).toBe(true);
+    expect(skipped).toHaveLength(0);
   });
 
   it("does not override registry-classified entries (route=known-unreachable)", () => {
@@ -447,9 +493,10 @@ describe("apply_tp_cache_to_entries", () => {
       { name: "f", file_path: "src/f.ts", start_line: 1, kind: "function" },
     ]);
     const e = entry({ file_path: `${PROJECT_PATH}/src/f.ts` });
-    const skipped = apply_tp_cache_to_entries([e], cache, PROJECT_PATH);
-    expect(skipped).toHaveLength(1);
-    expect(e.route).toBe("known-unreachable");
+    apply_tp_cache_to_entries([e], cache, PROJECT_PATH);
+    // The absolute path relativized to "src/f.ts" and matched the cache; as the
+    // sole hit it is taken as the stability sample, proving the match landed.
+    expect(e.tp_stability_sample).toBe(true);
   });
 
   it("cache_key_string uses NUL separator so paths with spaces don't collide", () => {
@@ -464,5 +511,76 @@ describe("apply_tp_cache_to_entries", () => {
       { name: "f", file_path: "src/f.ts", start_line: 1, kind: "function" },
     ]);
     expect(apply_tp_cache_to_entries([], cache, PROJECT_PATH)).toEqual([]);
+  });
+});
+
+describe("select_stability_sample_indices", () => {
+  it("returns all indices when n <= target", () => {
+    expect([...select_stability_sample_indices(3, 5)].sort((a, b) => a - b)).toEqual([0, 1, 2]);
+    expect([...select_stability_sample_indices(0, 5)]).toEqual([]);
+  });
+
+  it("spreads target indices evenly across [0, n) when n > target", () => {
+    expect([...select_stability_sample_indices(10, 5)].sort((a, b) => a - b)).toEqual([0, 2, 4, 6, 8]);
+    expect(select_stability_sample_indices(100, 5).size).toBe(5);
+  });
+
+  it("is deterministic — same (n, target) yields the same set", () => {
+    expect(select_stability_sample_indices(37, 5)).toEqual(select_stability_sample_indices(37, 5));
+  });
+});
+
+describe("compute_tp_stability", () => {
+  function state_with(entries: TriageEntry[]): TriageState {
+    return {
+      project_name: "p",
+      project_path: "/p",
+      phase: "complete",
+      entries,
+      created_at: "2026-04-16T00:00:00.000Z",
+      updated_at: "2026-04-16T00:00:00.000Z",
+    };
+  }
+
+  const evidence = { file: "src/f.ts", line: 1, why: "no callers" };
+  const tp_verdict: TriageVerdict = { kind: "tp", member_evidence: evidence };
+  const uncertain_verdict: TriageVerdict = { kind: "uncertain", reason: "unsure", member_evidence: evidence };
+
+  it("counts sampled entries whose fresh verdict agreed with the cached tp", () => {
+    const s1 = entry({ entry_index: 0, tp_stability_sample: true });
+    const s2 = entry({ entry_index: 1, tp_stability_sample: true });
+    const s3 = entry({ entry_index: 2, tp_stability_sample: true });
+    const not_sampled = entry({ entry_index: 3, tp_stability_sample: false });
+    const verdicts = new Map<number, TriageVerdict>([
+      [0, tp_verdict],
+      [1, tp_verdict],
+      [2, uncertain_verdict],
+      [3, tp_verdict],
+    ]);
+    expect(compute_tp_stability(state_with([s1, s2, s3, not_sampled]), verdicts)).toEqual({
+      sampled: 3,
+      agreed: 2,
+      rate: 2 / 3,
+    });
+  });
+
+  it("excludes a sample with no verdict (failed) from the sampled count", () => {
+    const s1 = entry({ entry_index: 0, tp_stability_sample: true });
+    const s2 = entry({ entry_index: 1, tp_stability_sample: true, status: "failed" });
+    const verdicts = new Map<number, TriageVerdict>([[0, tp_verdict]]);
+    expect(compute_tp_stability(state_with([s1, s2]), verdicts)).toEqual({
+      sampled: 1,
+      agreed: 1,
+      rate: 1,
+    });
+  });
+
+  it("returns a null rate when nothing was sampled", () => {
+    const only = entry({ entry_index: 0, tp_stability_sample: false });
+    expect(compute_tp_stability(state_with([only]), new Map())).toEqual({
+      sampled: 0,
+      agreed: 0,
+      rate: null,
+    });
   });
 });

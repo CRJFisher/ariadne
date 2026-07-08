@@ -42,8 +42,11 @@ import {
 } from "../store/triage_results_store.js";
 import type {
   TpCacheEntryKey,
+  TpStability,
   TriageEntry,
+  TriageState,
 } from "../triage_state_types.js";
+import type { TriageVerdict } from "../verdict/triage_verdict.js";
 
 export interface TpCacheKey {
   name: string;
@@ -174,12 +177,38 @@ export async function derive_tp_cache(
 // ===== Application =====
 
 /**
+ * How many would-be cache hits to leave in the llm-triage pool per run as a
+ * stability audit. A cheap fixed sample: five re-investigations regardless of
+ * cache size keeps the audit's cost flat while still catching systematic drift.
+ */
+export const TP_STABILITY_SAMPLE_TARGET = 5;
+
+/**
+ * Deterministically choose up to `target` indices spread evenly across `[0, n)`.
+ * Even spacing (rather than the first `target`) samples the whole hit list, so
+ * drift concentrated in one region of the entry order is still caught. Pure and
+ * stable: the same `(n, target)` always yields the same set, so a re-run at the
+ * same commit samples the same hits.
+ */
+export function select_stability_sample_indices(n: number, target: number): Set<number> {
+  const count = Math.min(target, n);
+  const indices = new Set<number>();
+  for (let i = 0; i < count; i++) indices.add(Math.floor((i * n) / count));
+  return indices;
+}
+
+/**
  * Mutate matching `route="llm-triage"` entries in place: flip them to
  * `route="known-unreachable"`, status "completed", and stamp a synthesized
  * `result` plus the source provenance.
  *
+ * A deterministic sample of up to {@link TP_STABILITY_SAMPLE_TARGET} would-be
+ * hits is instead LEFT on the llm-triage route with `tp_stability_sample = true`
+ * so the investigator re-checks the cached verdict; `compute_tp_stability`
+ * scores those at finalize. Samples are NOT flipped and NOT counted as skipped.
+ *
  * Returns the list of canonical `TpCacheEntryKey` records describing each
- * skipped entry, for inclusion on the run's manifest.
+ * flipped (skipped) entry, for inclusion on the run's manifest.
  *
  * Match scope: only entries with `entry.route === "llm-triage"`.
  * Registry-classified entries (route="known-unreachable") already have a
@@ -190,7 +219,9 @@ export function apply_tp_cache_to_entries(
   cache: TpCache,
   project_path: string,
 ): TpCacheEntryKey[] {
-  const skipped: TpCacheEntryKey[] = [];
+  // Collect the would-be hits in entry order first, so the stability sample is a
+  // deterministic slice of them rather than order-dependent on the flip loop.
+  const hits: { entry: TriageEntry; key: TpCacheEntryKey }[] = [];
   for (const entry of entries) {
     if (entry.route !== "llm-triage") continue;
     const file_path_rel = relativize(entry.file_path, project_path);
@@ -201,7 +232,23 @@ export function apply_tp_cache_to_entries(
       start_line: entry.start_line,
     });
     if (!cache.entries_by_key.has(k)) continue;
+    hits.push({
+      entry,
+      key: { name: entry.name, file_path: file_path_rel, kind: entry.kind, start_line: entry.start_line },
+    });
+  }
 
+  const sample_indices = select_stability_sample_indices(hits.length, TP_STABILITY_SAMPLE_TARGET);
+  const skipped: TpCacheEntryKey[] = [];
+
+  hits.forEach(({ entry, key }, i) => {
+    if (sample_indices.has(i)) {
+      // Leave on the llm-triage route — the investigator re-checks it. Nothing
+      // else changes, so the picker and completion gate treat it as any residual
+      // entry.
+      entry.tp_stability_sample = true;
+      return;
+    }
     entry.route = "known-unreachable";
     entry.auto_classified = true;
     entry.status = "completed";
@@ -209,13 +256,31 @@ export function apply_tp_cache_to_entries(
     entry.known_source = "previously-confirmed-tp";
     entry.tp_source_run_id = cache.source_run_id;
     entry.result = null;
+    skipped.push(key);
+  });
 
-    skipped.push({
-      name: entry.name,
-      file_path: file_path_rel,
-      kind: entry.kind,
-      start_line: entry.start_line,
-    });
-  }
   return skipped;
+}
+
+/**
+ * Score the TP-cache stability audit at finalize. Of the entries flagged
+ * `tp_stability_sample` that produced a verdict, `agreed` counts those whose
+ * fresh verdict is `tp` — i.e. the re-investigation confirmed the cached
+ * true-positive. A sample that ended `failed` (no verdict) is excluded from
+ * `sampled` since it yields no agreement signal. Pure.
+ */
+export function compute_tp_stability(
+  state: TriageState,
+  verdicts_by_entry_index: Map<number, TriageVerdict>,
+): TpStability {
+  let sampled = 0;
+  let agreed = 0;
+  for (const entry of state.entries) {
+    if (!entry.tp_stability_sample) continue;
+    const verdict = verdicts_by_entry_index.get(entry.entry_index);
+    if (verdict === undefined) continue;
+    sampled += 1;
+    if (verdict.kind === "tp") agreed += 1;
+  }
+  return { sampled, agreed, rate: sampled === 0 ? null : agreed / sampled };
 }

@@ -98,10 +98,12 @@ export interface PlanTaskEvidence {
   /**
    * Stable identity of the flagged entry point this evidence row is about,
    * carried verbatim from the published `NovelIssue`. The strategist reviews
-   * membership per row and the reconcile pass keys its membership-override store
-   * on this identity, so a mis-routed member survives line drift across sweeps.
-   * Distinct from the `member_evidence` call-site `file:line` that grounds the
-   * `dedup_key`: this names the FLAGGED MEMBER, that names the call site.
+   * membership per row, the reconcile pass keys its membership-override store on
+   * this identity, and `compute_dedup_key` hashes its `(file_path, name, kind)`
+   * token — so a mis-routed member and its owning task both survive line drift
+   * across sweeps. Distinct from the `member_evidence` call-site `file:line`,
+   * which grounds evidence union (two call sites are distinct evidence): this
+   * names the FLAGGED MEMBER, that names the call site.
    */
   member_symbol: MemberSymbol;
   project: string;
@@ -156,16 +158,20 @@ export interface PlanTask {
   /**
    * Stable reconciliation key, computed ONCE when the task is minted: a content
    * hash of `fault_area` joined with the lexicographically sorted SET of the
-   * MINTING PROPOSAL's evidence `"<file>:<line>"` strings (deduplicated before
-   * sorting). It is stored immutably — augment merges new evidence and bumps
-   * the rollups but NEVER recomputes the key, so a later re-sweep of the same
-   * proposal still hashes to the same value and matches via
-   * `find_by_dedup_key`. Inputs are `fault_area` + that location set ONLY —
-   * never `title`, `body`, `tier`, `status`, the rollups, or provenance. This
-   * is exact-overlap reconciliation only (no fuzzy/subset matching): a proposal
-   * whose evidence set differs at all gets a different key and a new task. The
-   * engine computes the key from a canonical recipe (190.22.10) that must be
-   * stable across a store's sweeps; this field stores its output.
+   * MINTING PROPOSAL's `(file_path, name, kind)` MEMBER tokens (deduplicated
+   * before sorting). It is stored immutably — augment merges new evidence and
+   * bumps the rollups but NEVER recomputes the key, so a later re-sweep of the
+   * same proposal still hashes to the same value and matches via
+   * `find_by_dedup_key`. Inputs are `fault_area` + that member set ONLY — never
+   * `title`, `body`, `tier`, `status`, the rollups, provenance, or the call-site
+   * `file:line`. Keying on the flagged member rather than the call site makes
+   * the key drift-tolerant to line shifts (a member that only moves down its
+   * file keeps its key); the residual cost is that a member which changes FILE
+   * or NAME re-keys. This is exact-overlap reconciliation only (no fuzzy/subset
+   * matching): a proposal whose member set differs at all gets a different key
+   * and a new task. The engine computes the key from a canonical recipe
+   * (`compute_dedup_key`) that must be stable across a store's sweeps; this
+   * field stores its output.
    */
   dedup_key: string;
   /**

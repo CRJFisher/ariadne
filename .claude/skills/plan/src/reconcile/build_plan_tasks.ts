@@ -11,7 +11,7 @@
  * `architectural` node's `dedup_key` is stable across sweeps of the same runs.
  * The id is salted with `tier` + a stable pre-order ordinal so two nodes that
  * legitimately share a `dedup_key` (e.g. a degenerate single-leaf subtree) still
- * land in distinct files; `dedup_key` itself stays pure (fault_area + location
+ * land in distinct files; `dedup_key` itself stays pure (fault_area + member
  * set only) per its contract, and reconcile disambiguates a shared key by tier.
  */
 

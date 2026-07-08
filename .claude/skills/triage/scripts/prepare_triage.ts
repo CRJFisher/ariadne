@@ -287,6 +287,8 @@ async function main(): Promise<void> {
       source_run_id: tp_source_run_id,
       skipped_count: tp_skipped_count,
       skipped_entry_keys: tp_skipped_entry_keys,
+      // Filled at finalize once the stability samples have been re-investigated.
+      stability: null,
     },
   };
 
