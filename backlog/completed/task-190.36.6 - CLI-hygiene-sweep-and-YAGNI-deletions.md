@@ -67,17 +67,17 @@ argument`, missing `--project`) move to exit 2 + USAGE across all 19 CLIs
 
 <!-- AC:BEGIN -->
 
-- [ ] Every pipeline CLI exits 2 + USAGE on a usage error and 1 on a genuine
+- [x] Every pipeline CLI exits 2 + USAGE on a usage error and 1 on a genuine
       failure; `finalize_triage`'s domain refusal exits 1; result-signal
       exits are unchanged; `cli_args.test.ts` pins the new codes.
-- [ ] A flag typo on `reconcile_registry.ts` prints a one-line message plus
+- [x] A flag typo on `reconcile_registry.ts` prints a one-line message plus
       USAGE, no stack.
-- [ ] `--stage --dry-run` produces the stage preview, pinned by a test.
-- [ ] The reconcile argument-hint names `--stage`/`--apply`.
-- [ ] `grep -r '"accepted"' ` over plan/prioritize sources, docs, and tests
+- [x] `--stage --dry-run` produces the stage preview, pinned by a test.
+- [x] The reconcile argument-hint names `--stage`/`--apply`.
+- [x] `grep -r '"accepted"' ` over plan/prioritize sources, docs, and tests
       returns nothing.
-- [ ] `plan/SKILL.md` describes `--strategist` as a provenance stamp.
-- [ ] Triage's allowed-tools carries no unused grants.
+- [x] `plan/SKILL.md` describes `--strategist` as a provenance stamp.
+- [x] Triage's allowed-tools carries no unused grants.
 
 <!-- AC:END -->
 

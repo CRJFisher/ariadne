@@ -95,16 +95,37 @@ allow-rule for registry writes, nor weaken the hook.
 - [x] The seam test pipes real stdin through the actual hook file and asserts
       the ask/pass/fail-open triple; a second assertion pins the
       `Write|Edit|Bash` matcher in `.claude/settings.json`.
-- [ ] `settings.local.json` no longer contains `Bash(xargs sed:*)` or the four
+- [x] `settings.local.json` no longer contains `Bash(xargs sed:*)` or the four
       dead/stale rules. _Human-run (machine-local, ships no code): the harness
       self-modification classifier blocks agent edits to settings files; the
       five rules to delete are listed under Implementation Notes._
+      Verified at epic closure (2026-07-09): all five rules absent from
+      `permissions.allow`.
 - [x] The backlog-boundary wording (two named writers) is recorded for
       TASK-190.36.7; no backlog AST test is added.
 
 <!-- AC:END -->
 
 ## Implementation Notes
+
+### Superseded: Bash detection removed for a Write|Edit-only guard (2026-07-09)
+
+The Bash-catching mechanism this task delivered was later reversed as too
+brittle. A Bash-matching `PreToolUse` hook disables the harness sandbox
+`autoAllowBashIfSandboxed` and floods interactive sessions with permission
+prompts. Commits `d2dfcebb` (drop `Bash` from the `settings.json` matcher) and
+`2e81ed77` (remove the `BASH_WRITE_PATTERNS`/`RECONCILE_EXECUTION` branch, its
+test suites, and reconcile the docs) narrow the guard to a `Write|Edit`-only
+matcher. The shell-write surface now falls to the harness `[Self-Modification]`
+classifier as defense-in-depth, and the git-tracked registry (13 commits, not
+ignored) is the rollback backstop for any errant write.
+
+The current state of the guard, its tests, and `classifier-lifecycle.md` all
+reflect the `Write|Edit`-only decision; the summary below describes the
+mechanism as originally delivered and is retained as historical record — it no
+longer matches the code. The AC lines referencing Bash guard tests
+(`node -e` cpSync/renameSync, `bun reconcile_registry.ts …`) were satisfied
+when this task landed but those tests were removed by `2e81ed77`.
 
 ### High-level summary
 

@@ -108,21 +108,21 @@ validation `fail` → exit 1).
 
 <!-- AC:BEGIN -->
 
-- [ ] `--stage --apply` refuses any draft whose check does not return true on
+- [x] `--stage --apply` refuses any draft whose check does not return true on
       every persisted sample; the dry-run preview prints per-sample results.
-- [ ] `validate_consolidation.ts` fails on a dropped row, a double-assigned
+- [x] `validate_consolidation.ts` fails on a dropped row, a double-assigned
       row, an unknown id, a missing plan_path, a duplicate slug, and a
       rerouted id — each pinned with a `toEqual` literal-issues test.
-- [ ] An evidence-bearing authored task with empty acceptance criteria cannot
+- [x] An evidence-bearing authored task with empty acceptance criteria cannot
       export.
-- [ ] Prioritize routing reads `verdict.json`, never `<result>` prose; a
+- [x] Prioritize routing reads `verdict.json`, never `<result>` prose; a
       flag/verdict disagreement produces a reroute record and a consistent
       export gate.
-- [ ] `belongs: 'unsure'` writes no override; the standing-override audit
+- [x] `belongs: 'unsure'` writes no override; the standing-override audit
       lists never-re-confirmed suppressions.
-- [ ] The builtin field-denylist test fails on a check reading `tree_size` or
+- [x] The builtin field-denylist test fails on a check reading `tree_size` or
       `definition_features`.
-- [ ] No backlog card body is written without a human having seen its title
+- [x] No backlog card body is written without a human having seen its title
       and acceptance criteria post-authoring.
 
 <!-- AC:END -->
