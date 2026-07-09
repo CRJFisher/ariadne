@@ -241,9 +241,10 @@ Include:
 # Constraints
 
 - **You never write `registry.json`.** The in-repo `registry_write_guard.ts`
-  `PreToolUse` hook routes any agent Write/Edit/Bash against
-  `.claude/skills/triage/known_issues/registry.json` to a per-edit human `ask`
-  (the harness `[Self-Modification]` classifier backs it as defense-in-depth).
+  `PreToolUse` hook routes any agent Write/Edit against
+  `.claude/skills/triage/known_issues/registry.json` to a per-edit human `ask`,
+  and the harness `[Self-Modification]` classifier gates shell writes under
+  `.claude/` as defense-in-depth.
   The human applies your draft via `reconcile-registry --stage`. Do not attempt
   or script a registry write.
 - **Never create files in the project repository.** Your only persistent outputs

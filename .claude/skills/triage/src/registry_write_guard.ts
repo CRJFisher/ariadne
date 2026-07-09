@@ -4,8 +4,11 @@
  *
  * The classifier registry is the human-owned loop-closure surface
  * (`.claude/rules/classifier-lifecycle.md`): every write is a per-edit human
- * decision. This module decides, from a single tool call, whether that call
- * would write the registry and therefore must be routed to a human `ask`.
+ * decision. This module decides, from a single `Write`/`Edit` tool call,
+ * whether that call would write the registry and therefore must be routed to a
+ * human `ask`. Shell-based writes are out of scope — the hook matches only
+ * `Write`/`Edit`, and the harness `[Self-Modification]` classifier is the
+ * defense-in-depth layer for the Bash surface.
  *
  * The logic lives here — inside the triage workspace package — rather than in
  * `.claude/hooks/`, because that directory is outside every test, lint, and
@@ -27,91 +30,6 @@ const PER_EDIT_CONTRACT =
   "per-edit human decision: approve only if you are interactively directing " +
   "this edit; an unattended pipeline agent must route the transition back to " +
   "the human (reconcile_registry.ts --stage / --id ... --fixed --reason).";
-
-/**
- * Bash write patterns, each binding the write construct to the registry path
- * itself. A command that merely reads the registry (cat/jq/grep/git show) —
- * or that reads it and redirects the OUTPUT somewhere else — must pass: a
- * guard that prompts on reads is noise the human learns to click through or
- * disables outright. Lexical token-matching, not shell parsing: the goal is
- * the realistic accident surface (an agent literally typing a redirect or an
- * in-place edit against the registry), with the harness permission classifier
- * as defense-in-depth for the adversarial tail (variable indirection, eval,
- * computed paths). `[^|;&]*` keeps each match inside one pipeline segment so
- * a write token in an unrelated segment cannot pair with a registry read; the
- * interpreter patterns additionally exclude `)` so a mode/verb cannot pair
- * with a registry path from an earlier, already-closed call. The redirect
- * pattern uses `\S*` instead because a redirect target is one unbroken token.
- */
-const BASH_WRITE_PATTERNS = [
-  />{1,2}\s*\S*registry\.json(\.lock)?\b/,
-  /(^|[\s;&|])tee\s[^|;&]*registry\.json/,
-  /(^|[\s;&|])(sed|perl)\s[^|;&]*-i\S*\s[^|;&]*registry\.json/,
-  // Command-position anchor, not \b: a flag cluster like `grep -rm 5` must
-  // not read as an `rm` invocation.
-  /(^|[\s;&|])(mv|cp|rm|dd|truncate)\s[^|;&]*registry\.json/,
-  // git checkout/restore silently replace the registry with the committed
-  // version — an accident-surface overwrite, not an adversarial one.
-  /(^|[\s;&|])git\s+(checkout|restore)\s[^|;&]*registry\.json/,
-  /\b(writeFileSync|appendFileSync|writeFile|appendFile|cpSync|copyFileSync|renameSync|rmSync|createWriteStream)\b[^|;&]*registry\.json/,
-  // Call-shaped move/copy/delete verbs shared by node's async fs API
-  // (fs.rm/rename/copyFile/cp) and python's shutil/os modules
-  // (shutil.move/copy, os.rename/replace/remove/unlink — the temp-file +
-  // atomic-replace idiom ends in exactly such a call). The mandatory `(`
-  // right after the verb keeps a flag cluster like `grep -rm 5` out. `)` is
-  // NOT excluded from the span: the registry is the destination argument
-  // here, and a nested-call source like os.replace(os.path.join(...), dest)
-  // legitimately closes a paren before the destination.
-  /\b(copyFile|copyfile|copy2|copy|rename|replace|move|remove|unlink|rm|cp)\s*\([^|;&]*registry\.json/,
-  // pathlib writers: Path('...registry.json').write_text/.write_bytes.
-  /registry\.json["']\s*\)\s*\.\s*(write_text|write_bytes)\b/,
-  // Python open()/io.open() with a write mode ('w', 'a', 'x', 'r+' —
-  // positional or mode=), assuming the conventional path-first argument
-  // order (the realistic accident shape). A read-mode or modeless open is
-  // how a script LOADS the registry and must pass. The `)` exclusion means
-  // a join-built path — open(os.path.join(d, 'registry.json'), 'w') — falls
-  // to the harness classifier: the alternative is false-asking on every
-  // closed read call followed by an unrelated quoted mode.
-  /\b(io\s*\.\s*)?open\s*\([^)|;&]*registry\.json[^)|;&]*,\s*(mode\s*=\s*)?["'](w|a|x|r\+)/,
-  // Perl open with a >/>> mode targeting the registry (2-arg '>path' or
-  // 3-arg '>', 'path' form).
-  /\bopen\s*\([^)|;&]*["']>{1,2}[^)|;&]*registry\.json/,
-];
-
-/**
- * True when the command carries `flag` as a real token. Quoted segments are
- * stripped first so a flag mentioned inside an argument — e.g.
- * `--reason "see --dry-run docs"` — cannot spoof read-only mode.
- */
-function has_flag(command: string, flag: string): boolean {
-  const unquoted = command
-    .replace(/'[^']*'/g, " ")
-    .replace(/"[^"]*"/g, " ");
-  return new RegExp(`(^|\\s)${flag}(=|\\s|$)`).test(unquoted);
-}
-
-/**
- * True when a Bash command EXECUTES reconcile_registry.ts in write-mode. A
- * mere mention of the script path (grep/cat/an editor opening it) must pass —
- * the execution form requires a runner token before the script path, or the
- * script path itself in command position (`./reconcile_registry.ts`, an
- * absolute-path exec). The script applies detected proposals by default — a
- * bare invocation writes — so the flag check is inverted: only explicitly
- * read-only forms pass (`--dry-run`, `--help`, or `--stage` without
- * `--apply`; `--stage` is dry-run by default and writes only with `--apply`).
- */
-// The bare-path clause anchors on line-start or a separator, NOT whitespace:
-// a path preceded only by whitespace is an argument (cat/grep of the script),
-// while a path in command position is an exec.
-const RECONCILE_EXECUTION =
-  /\b(node|npx|tsx|pnpm|bun|deno)\b[^|;&]*reconcile_registry\.ts|(^|[;&|])\s*[^\s|;&]*reconcile_registry\.ts(\s|$)/;
-
-function is_write_mode_reconcile(command: string): boolean {
-  if (!RECONCILE_EXECUTION.test(command)) return false;
-  if (has_flag(command, "--dry-run") || has_flag(command, "--help")) return false;
-  if (has_flag(command, "--stage") && !has_flag(command, "--apply")) return false;
-  return true;
-}
 
 /**
  * True when `candidate` resolves to the registry or its `.lock` sidecar.
@@ -140,36 +58,6 @@ export function evaluate_tool_call(input: {
         decision: "ask",
         reason:
           `This ${tool_name} targets the human-owned classifier registry ` +
-          `(${REGISTRY_REL}). ${PER_EDIT_CONTRACT}`,
-      };
-    }
-    return { decision: "pass" };
-  }
-
-  if (tool_name === "Bash") {
-    const command = tool_input?.command;
-    if (typeof command !== "string" || command.length === 0) {
-      return { decision: "pass" };
-    }
-    // The sanctioned write path never names registry.json on its command
-    // line — it names the script — so it needs its own clause: an agent
-    // running the reconciler in write-mode IS an unattended registry write,
-    // laundered through the blessed script.
-    if (is_write_mode_reconcile(command)) {
-      return {
-        decision: "ask",
-        reason:
-          "This command runs reconcile_registry.ts in write-mode (no " +
-          `--dry-run), which writes the classifier registry. ${PER_EDIT_CONTRACT}`,
-      };
-    }
-    if (BASH_WRITE_PATTERNS.some((pattern) => pattern.test(command))) {
-      return {
-        decision: "ask",
-        reason:
-          "This command applies a write construct (redirect, tee, sed -i, " +
-          "mv/cp/rm, an inline node/python/perl write, ...) to the " +
-          "human-owned classifier registry " +
           `(${REGISTRY_REL}). ${PER_EDIT_CONTRACT}`,
       };
     }

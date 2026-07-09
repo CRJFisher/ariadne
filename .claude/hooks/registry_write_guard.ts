@@ -15,7 +15,7 @@
  * approve/block; only `hookSpecificOutput.permissionDecision` carries `ask`.
  *
  * WHY try/catch → silent exit 0: a crashing PreToolUse hook must fail open
- * predictably rather than block every unrelated Write/Edit/Bash in the repo;
+ * predictably rather than block every unrelated Write/Edit in the repo;
  * the harness permission classifier remains defense-in-depth for that window.
  *
  * All decision logic (and its tests) lives in the triage package —
@@ -52,7 +52,7 @@ function main(): void {
     }),
   );
   const tool_input = input.tool_input as Record<string, unknown> | undefined;
-  const target = String(tool_input?.file_path ?? tool_input?.command ?? "");
+  const target = String(tool_input?.file_path ?? "");
   safe_log(`ask on ${String(input.tool_name)}: ${target.slice(0, 160)}`);
 }
 

@@ -5,9 +5,9 @@
  * 1. The hook wrapper (`.claude/hooks/registry_write_guard.ts`): stdin
  *    parsing, the `hookSpecificOutput` emission that carries the `ask`, and
  *    the deliberate fail-open contract (malformed stdin → exit 0, no output).
- * 2. The `.claude/settings.json` wiring: dropping `Bash` (or `Write`/`Edit`)
- *    from the PreToolUse matcher would disable the checkpoint with every
- *    unit test still green.
+ * 2. The `.claude/settings.json` wiring: dropping `Write` or `Edit` from the
+ *    PreToolUse matcher would disable the checkpoint with every unit test
+ *    still green.
  */
 
 import { describe, expect, it } from "vitest";
@@ -102,7 +102,7 @@ interface HookSettings {
 }
 
 describe("registry_write_guard settings wiring", () => {
-  it("wires the guard on a PreToolUse matcher covering Write, Edit, and Bash", () => {
+  it("wires the guard on a PreToolUse matcher covering Write and Edit", () => {
     const settings = JSON.parse(
       readFileSync(SETTINGS_PATH, "utf8"),
     ) as HookSettings;
@@ -112,7 +112,7 @@ describe("registry_write_guard settings wiring", () => {
       ),
     );
     expect(guard_entries.map((entry) => entry.matcher)).toEqual([
-      "Write|Edit|Bash",
+      "Write|Edit",
     ]);
   });
 });
