@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "skill": "triage",
+  "description": "Triage stage for entry-point candidates. Detects entry points in Ariadne packages or external codebases and triages false positives via per-entry investigators, publishing each false positive raw and self-contained.",
+
+  "flows": [
+    {
+      "id": "detect-triage-publish",
+      "name": "Detect entry-point candidates → per-entry triage → publish v5 triage_results",
+      "description": "Four-phase pipeline: detect entry points, classify against the known-issues registry, dispatch one investigator per residual candidate, and publish a self-contained v5 triage_results envelope (novel_issues / classifier_regressions / confirmed_unreachable / uncertain).",
+      "representativeness": 0.90,
+      "representativeness_anchor": "purpose",
+      "effects": "repo-local",
+      "intentions": [
+        "Write boundary: triage never writes known_issues/registry.json — it reads the registry only to filter classifier hits; every status transition is a human decision.",
+        "Every residual entry gets an investigator verdict — there is no early exit; a registry classifier match is handled upstream in Phase 2 auto-classify, before an investigator is dispatched.",
+        "Auto-classify and the investigator's in-scope slice match only wip + permanent registry rows.",
+        "Every false-positive verdict is self-contained — it carries its own evidence, so there is no in-run consolidation; offline grouping happens downstream in plan.",
+        "Finalize builds the published envelope entirely from the per-entry verdict files in results/, re-parsing each via parse_triage_verdict — a malformed shape halts finalize, never silently skips.",
+        "The published envelope is schema v5 — readers hard-reject any triage_results whose schema_version does not match; there are no migration shims."
+      ],
+      "entry": {
+        "kind": "user_invocation",
+        "command": "/triage [config-name | /path/to/repo | owner/repo] [--max-count <n>]"
+      },
+      "exit": {
+        "kind": "published_output",
+        "target": "triage-results"
+      },
+      "phases": ["P1", "P2", "P3", "P4"],
+      "bypasses": [],
+      "diagram_anchor": "per-step-pipeline",
+      "is_primary": true
+    },
+    {
+      "id": "author-project-config",
+      "name": "Author a new project detection config",
+      "description": "When the target is a directory path with no saved config, preview the folder tree, pick exclusions to keep the indexed file count ≤ ~4,000, confirm with the user via AskUserQuestion, and save a project config the rest of the pipeline reads.",
+      "representativeness": 0.30,
+      "representativeness_anchor": "sub-mode",
+      "effects": "repo-local",
+      "intentions": [
+        "Keep the effective indexed file count ≤ ~4,000; present the full preview list and let the user's final answer be authoritative.",
+        "No project configs ship pre-authored — a config is authored only through this reviewed flow.",
+        "project_name is auto-derived for external projects; only internal (project_path: \".\") projects carry an explicit project_name."
+      ],
+      "entry": {
+        "kind": "internal_branch",
+        "from_flow_id": "detect-triage-publish",
+        "condition": "input is a directory path with no saved project config for that path"
+      },
+      "exit": {
+        "kind": "store_write",
+        "target": "project-configs"
+      },
+      "phases": ["P1"],
+      "bypasses": [],
+      "diagram_anchor": "per-step-pipeline",
+      "is_primary": false
+    },
+    {
+      "id": "diff-runs",
+      "name": "Compare two finalized runs to surface regression candidates",
+      "description": "Diff two runs' published triage_results to highlight TP↔FP flips, appeared/disappeared entries, group-id changes, and membership deltas. Reads only the published files, so it works even after the underlying run dirs are pruned.",
+      "representativeness": 0.20,
+      "representativeness_anchor": "sub-mode",
+      "effects": "repo-local",
+      "intentions": [
+        "Diffing reads only the published triage_results/<run-id>.json — it works even when the underlying run dirs have been pruned.",
+        "Never mutates any run state — the diff is a read-only comparison."
+      ],
+      "entry": {
+        "kind": "user_invocation",
+        "command": "node --import tsx .claude/skills/triage/scripts/diff_runs.ts --project <name> --from <run-id> --to <run-id>"
+      },
+      "exit": {
+        "kind": "terminal_no_op",
+        "target": "triage-results"
+      },
+      "phases": [],
+      "bypasses": [],
+      "diagram_anchor": "per-step-pipeline",
+      "is_primary": false
+    },
+    {
+      "id": "run-retention",
+      "name": "Prune / abandon run directories",
+      "description": "Garbage-collect old run dirs (prune_runs.ts, default keep 5) and mark in-flight runs abandoned (abandon_run.ts), clearing a stale LATEST pointer.",
+      "representativeness": 0.15,
+      "representativeness_anchor": "self-maintenance",
+      "effects": "repo-local",
+      "intentions": [
+        "Published triage_results/<run-id>.json are kept forever — prune only run dirs, never the analysis_output tree.",
+        "Active and abandoned runs never auto-prune; a run referenced as another run's tp_cache.source_run_id is protected."
+      ],
+      "entry": {
+        "kind": "user_invocation",
+        "command": "node --import tsx .claude/skills/triage/scripts/prune_runs.ts --project <name> [--keep <n>]"
+      },
+      "exit": {
+        "kind": "store_write",
+        "target": "triage-state"
+      },
+      "phases": [],
+      "bypasses": [],
+      "diagram_anchor": "per-step-pipeline",
+      "is_primary": false
+    }
+  ],
+
+  "stores": [
+    {
+      "id": "known-issues-registry",
+      "path": ".claude/skills/triage/known_issues/registry.json",
+      "access": "read-only",
+      "writer_owner": "human",
+      "semantic_role": "Canonical classifier registry (wip + permanent + fixed rows). This skill reads it to auto-classify entries and to build the investigator's in-scope wip/permanent slice, but NEVER writes it — every status transition is a human decision applied through atomic_update_registry via the reconcile-registry skill.",
+      "touched_by_flows": ["detect-triage-publish"]
+    },
+    {
+      "id": "triage-state",
+      "path": "~/.ariadne/triage-entrypoints/triage_state/<project>/runs/<run-id>/",
+      "access": "read-write",
+      "writer_owner": null,
+      "semantic_role": "Per-run working state: manifest.json (status, commit_hash, tp_cache), triage.json (entries + per-entry results), results/<entry_index>.json (one TriageVerdict per residual entry), and the LATEST pointer to the active run-id. prepare_triage writes LATEST; finalize_triage clears it.",
+      "touched_by_flows": ["detect-triage-publish", "run-retention"]
+    },
+    {
+      "id": "detect-analysis-output",
+      "path": "~/.ariadne/triage-entrypoints/analysis_output/<project>/detect_entrypoints/<timestamp>.json",
+      "access": "write",
+      "writer_owner": null,
+      "semantic_role": "Timestamped detection output, kept project-scoped; one detection feeds many triage runs. prepare_triage reads the latest as its --analysis input.",
+      "touched_by_flows": ["detect-triage-publish"]
+    },
+    {
+      "id": "triage-results",
+      "path": "~/.ariadne/triage-entrypoints/analysis_output/<project>/triage_results/<run-id>.json",
+      "access": "read-write",
+      "writer_owner": null,
+      "semantic_role": "The published v5 envelope (novel_issues, classifier_regressions, confirmed_unreachable, uncertain). Written by finalize_triage; re-read on the next same-commit run as the TP cache (confirmed_unreachable_reuse), by diff_runs, and by downstream skills. Preserve forever — never rm -rf.",
+      "touched_by_flows": ["detect-triage-publish", "diff-runs"]
+    },
+    {
+      "id": "project-configs",
+      "path": "~/.ariadne/triage-entrypoints/project_configs/<name>.json",
+      "access": "read-write",
+      "writer_owner": null,
+      "semantic_role": "Per-project detection config (project_path, optional folders/exclude, optional project_name). Authored through the config-authoring flow and passed to every phase via --config.",
+      "touched_by_flows": ["detect-triage-publish", "author-project-config"]
+    }
+  ],
+
+  "sub_agents": [
+    {
+      "id": "triage-investigator",
+      "model": "sonnet",
+      "max_turns": 50,
+      "multiplicity": "one per residual llm-triage entry; the main agent runs a continuous worker pool that bounds concurrency to N=5 and caps total dispatch at --max-count (default 250)",
+      "used_in_flows": ["detect-triage-publish"]
+    }
+  ],
+
+  "published_outputs": [
+    {
+      "id": "triage-results",
+      "path_pattern": "~/.ariadne/triage-entrypoints/analysis_output/<project>/triage_results/<run-id>.json",
+      "schema_version": "TriageResultsFile (TRIAGE_RESULTS_SCHEMA_VERSION=5)",
+      "consumed_by": ["plan", "reconcile-registry"],
+      "written_by_flows": ["detect-triage-publish"]
+    }
+  ],
+
+  "external_inputs": [],
+
+  "downstream_consumers": ["plan", "reconcile-registry"]
+}

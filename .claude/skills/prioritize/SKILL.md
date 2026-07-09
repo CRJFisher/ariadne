@@ -1,6 +1,6 @@
 ---
 name: prioritize
-description: Review the plan engine's task-DB and promote selected PlanTask rows into the user's backlog/. Drives export_to_backlog.ts — the only writer of backlog/, run deliberately by the human when graduating planned work.
+description: Review the plan engine's task-DB and promote selected PlanTask rows into the user's backlog/. Drives export_to_backlog.ts — the only writer of backlog/tasks/*.md cards (graduate_group_docs.ts moves graduated comprehension docs alongside them), run deliberately by the human when graduating planned work.
 argument-hint: "[--status proposed] [--fault-area <area>] [--id <db-task-id>...] [--dry-run]"
 disable-model-invocation: true
 allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read, Write, Bash(open:*), Task
@@ -26,7 +26,8 @@ script:
 .claude/skills/plan/scripts/export_to_backlog.ts
 ```
 
-That script is the **only writer of `backlog/tasks/`** in the pipeline. It is
+That script is the **only writer of `backlog/tasks/*.md` cards** in the pipeline
+(`graduate_group_docs.ts` moves graduated comprehension docs alongside them). It is
 never run on the autonomous sweep — graduation is always a human decision, which is
 what this skill exists to make. The investigation is design-only: the
 `refactor-investigator` reads `packages/core` but never writes it, and the
@@ -128,7 +129,7 @@ The division of labour stays clean. The `plan` engine remains the cheap,
 planning-only router-and-estimator — its strategist gains nothing here. All deep
 design lives in `prioritize`, which is already the write-capable, human-invoked
 side of the boundary (it owns `export_to_backlog.ts`, the only writer of
-`backlog/`).
+`backlog/tasks/*.md` cards).
 
 Always invoke with `node --import tsx`. Never `pnpm exec tsx` or `npx tsx`
 (those open IPC sockets the sandbox blocks).
@@ -227,12 +228,11 @@ one fault area. For each group, pull from the rows the signal the user weighs:
   permanent-limitation and taxonomy-extension rows, where blast radius is not
   meaningful.
 - **Kind** — `is_permanent_limitation` marks a group whose call relationship is
-  fundamentally unknowable to static analysis: no core fix is possible, the
-  registry classifier is the durable deliverable, and the group routes to
-  step 3a instead of the backlog pipeline. Such rows arrive via the step-1
+  fundamentally unknowable to static analysis. Such rows arrive via the step-1
   `skipped_permanent_limitation` array, not the candidate list — fetch them
   directly at `~/.ariadne/plan/tasks/<id>.json` and group them by `fault_area`
-  the same way.
+  the same way. They route to step 3a (`classifier-author`), never the backlog
+  pipeline — **step 3a** owns the routing contract.
 
 ### 3. Deep-investigate each change group
 
@@ -452,10 +452,10 @@ staging target `backlog/docs/<slug>.comprehension.html` (`<slug>` is the
 cluster's `consolidation.json` `slug`; a singleton's is its `fault_area`) — the
 filename is the
 graduation contract (`graduate_group_docs.ts` moves exactly that path in 7c; a
-mismatch is a silent `skipped_no_src`). The doc is staged in the repo so the
-user can open it from their tree while deciding; the `*.comprehension.html`
-glob is gitignored, so a staging never lands in a commit until graduation moves
-a funded cluster's doc into `backlog/tasks/`. Dispatch prompt:
+mismatch is a silent `skipped_no_src`). The doc is staged in the repo (tracked, not
+gitignored) so the user can open it from their tree while deciding; it stays
+uncommitted until graduation moves a funded cluster's doc into `backlog/tasks/`,
+and an unfunded cluster's doc is deleted. Dispatch prompt:
 
 > Render the comprehension doc for cluster `<slug>`. The plan is at
 > `<plan_path>`. Write the self-contained HTML to
@@ -583,20 +583,20 @@ epic's card is already its imperative transformation, so an in-repo design doc
 would duplicate it; the plan stays in `~/.ariadne` staging as the investigation
 record. A cluster with no staged comprehension doc (already graduated) is silently
 skipped — the script is idempotent. An unfunded cluster's
-`<slug>.comprehension.html` stays in `backlog/docs/` as a local-only file
-(gitignored, never committed); delete it once the decision is made, or leave it as
-a record of the investigation.
+`<slug>.comprehension.html` stays in `backlog/docs/` as a tracked, uncommitted
+file; delete it once the decision is made rather than committing it — leaving it
+tracked keeps a failed graduation visible in `git status`.
 
 ## Selectors
 
-| Flag                          | Selects                                                               |
-| ----------------------------- | --------------------------------------------------------------------- |
-| `--status proposed`           | rows in that lifecycle state (the only live state)                    |
-| `--fault-area <area>`         | rows in one `AriadneFaultArea`                                        |
-| `--id <db-task-id>`           | one exact row (repeatable); overrides the filters                     |
-| `--assignments <file>`        | authored `tasks[]`; renders card previews (no write on its own)       |
-| `--write`                     | opt-in past the preview; **required to write** (with `--assignments`) |
-| `--dry-run`                   | list the selection, write nothing (wins over `--write`)               |
+| Flag                   | Selects                                                               |
+| ---------------------- | --------------------------------------------------------------------- |
+| `--status proposed`    | rows in that lifecycle state (the only live state)                    |
+| `--fault-area <area>`  | rows in one `AriadneFaultArea`                                        |
+| `--id <db-task-id>`    | one exact row (repeatable); overrides the filters                     |
+| `--assignments <file>` | authored `tasks[]`; renders card previews (no write on its own)       |
+| `--write`              | opt-in past the preview; **required to write** (with `--assignments`) |
+| `--dry-run`            | list the selection, write nothing (wins over `--write`)               |
 
 With no selectors, every exportable (`proposed`) row is selected —
 always preview that with `--dry-run` first. A write requires both `--assignments`

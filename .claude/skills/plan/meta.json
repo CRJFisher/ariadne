@@ -7,12 +7,20 @@
     {
       "id": "group-strategize-reconcile",
       "name": "Triage false-positives → grouped hierarchical plan tree",
+      "description": "Triage false-positives → grouped hierarchical plan tree",
       "representativeness": 0.95,
       "representativeness_anchor": "purpose",
+      "effects": "repo-local",
+      "intentions": [
+        "Write boundary: the plan engine never writes backlog/, registry.json, or packages/core — it writes only the task-DB under ~/.ariadne/plan/.",
+        "Augment, not duplicate: a re-sweep of the same runs reconciles into existing PlanTask rows by dedup_key rather than minting duplicates.",
+        "Partial-sweep safety: a sweep interrupted partway leaves the task-DB consistent — no orphaned or half-written rows.",
+        "Permanent-never-exported: a permanent-limitation row never graduates to backlog/; its durable deliverable is a registry classifier."
+      ],
       "entry": {
         "kind": "sibling_skill_artifact",
         "skill": "triage",
-        "path_pattern": "analysis_output/<project>/triage_results/<run-id>.json"
+        "path_pattern": "~/.ariadne/triage-entrypoints/analysis_output/<project>/triage_results/<run-id>.json"
       },
       "exit": {
         "kind": "store_write",
@@ -51,19 +59,11 @@
       "touched_by_flows": ["group-strategize-reconcile"]
     },
     {
-      "id": "registry-read",
-      "path": ".claude/skills/triage/known_issues/registry.json",
-      "access": "read-only",
-      "writer_owner": "human",
-      "semantic_role": "read-only dedup/grounding signal — already-known issues that should not seed new plan tasks. The plan engine never writes the registry.",
-      "touched_by_flows": ["group-strategize-reconcile"]
-    },
-    {
       "id": "backlog-read",
       "path": "backlog/tasks/",
       "access": "read-only",
       "writer_owner": "user",
-      "semantic_role": "permitted (AC #4) read-only dedup signal — NOT YET WIRED into reconcile. WRITE BOUNDARY: never written by this skill; graduation is the user-invoked export adapter (190.22.11).",
+      "semantic_role": "read-only dedup signal wired into Pass C reconcile (src/store/backlog_dedup.ts via reconcile_plan.ts), keyed on the `plan_dedup_keys` frontmatter export_to_backlog.ts stamps. WRITE BOUNDARY: never written by this skill; graduation is the user-invoked export adapter.",
       "touched_by_flows": ["group-strategize-reconcile"]
     }
   ],
@@ -98,7 +98,7 @@
   "external_inputs": [
     {
       "from_skill": "triage",
-      "path_pattern": "analysis_output/<project>/triage_results/<run-id>.json",
+      "path_pattern": "~/.ariadne/triage-entrypoints/analysis_output/<project>/triage_results/<run-id>.json",
       "read_by_flows": ["group-strategize-reconcile"]
     }
   ],

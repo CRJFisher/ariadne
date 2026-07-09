@@ -59,7 +59,7 @@ When the input is a directory path and a project config already exists for that 
 
 3. Pick directories to exclude from indexing, with the goal of keeping the total indexed file count at **≤ ~4,000 files**. Common candidates: vendored / third-party / generated trees, directories whose contents are not first-party source, or any single directory whose file count dominates the rest of the project. A high `file_count_recursive` with a low `file_count_direct` means the directory is a container for sub-packages, not a leaf vendor blob — do not exclude it on count alone.
 
-   Estimate the post-exclusion count: subtract the `file_count_recursive` of each directory you plan to exclude from `total_source_files`. If the estimated count exceeds ~4,000 and the project cannot be reasonably reduced further, inform the user that indexing will take significantly longer than a typical run before proceeding.
+   Estimate the post-exclusion count: subtract the `file_count_recursive` of each directory you plan to exclude from `total_source_files`. The **Pre-flight: File Count Check** below owns the ~4,000-file threshold and the action when a project exceeds it.
 
 4. Present the **full** preview list in your message text (relative path + `file_count_recursive` per line), with your pre-selected exclusions marked and a short reason for each pick. Then use AskUserQuestion with three options: "Accept these exclusions", "Modify — I'll describe changes in my reply", "Exclude nothing". If the user chooses Modify, read their follow-up message, apply the changes, and confirm the final list before continuing. The user's final answer is authoritative.
 5. Propose a config with:
@@ -218,14 +218,7 @@ To inspect live counts across in-flight runs at any time, run the on-demand summ
 
 ### Verdict schema
 
-Each `results/{entry_index}.json` is a strict `TriageVerdict` discriminated union. Finalize re-parses every file via `parse_triage_verdict`; malformed shapes halt finalize with an explicit error. Every false-positive verdict is **self-contained** — it carries its own evidence, so there is no in-run consolidation. Offline grouping of false positives happens downstream in the `plan` skill.
-
-| `kind`                     | Required payload                                                     | Becomes at finalize …                                                                                                                    |
-| -------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `tp`                       | `member_evidence`                                                    | one `confirmed_unreachable[]` row (`source: "llm-tp"`)                                                                                   |
-| `fp-novel`                 | `proposed_root_cause`, `evidence_excerpt`, `member_evidence`         | one `novel_issues[]` row (one-per-verdict; enriched with the entry's deterministic `diagnosis` / `resolution_failure` / `receiver_kind`) |
-| `fp-classifier-regression` | `should_have_matched_rule_id`, `evidence_excerpt`, `member_evidence` | rolled up into `classifier_regressions[]` by `should_have_matched_rule_id`                                                               |
-| `uncertain`                | `reason`, `member_evidence`                                          | one `uncertain[]` row                                                                                                                    |
+Each `results/{entry_index}.json` is a strict `TriageVerdict` discriminated union — one of `tp`, `fp-novel`, `fp-classifier-regression`, `uncertain`. The required payload per kind is specified once in the investigator prompt's **Output** section (`templates/prompt.md`) and enforced by `parse_triage_verdict` at finalize; a malformed shape halts finalize with an explicit error. Every false-positive verdict is **self-contained** — it carries its own evidence, so there is no in-run consolidation; offline grouping of false positives happens downstream in the `plan` skill. How each kind maps into the published envelope is the **Phase 4** finalize table below.
 
 ## Phase 4: Finalize
 
@@ -312,10 +305,7 @@ node --import tsx scripts/prepare_triage.ts --analysis <analysis.json> --project
 node --import tsx scripts/diff_runs.ts --project <name> --from <run-1> --to <run-2>
 ```
 
-Two known leaks during this loop (escape hatch: `--no-reuse-tp`):
-
-- **Uncommitted target-repo edits** don't bust the cache (`git commit` first, or pass `--no-reuse-tp`).
-- **Ariadne core changes** don't bust it either (run once with `--no-reuse-tp` after substantive resolution improvements).
+The two known cache leaks apply during this loop — uncommitted target-repo edits and Ariadne core changes don't bust the cache; the escape hatch is `--no-reuse-tp`. See **Reusing Prior TP Verdicts** above for the full statement.
 
 ## Persisted-State Preservation Policy
 
@@ -361,17 +351,17 @@ The skill is a thin caller of `@ariadnejs/core`. Classification (`enrich_call_gr
 | `prepare_triage.ts`                                 | Run-namespaced orchestration: call core's `enrich_call_graph` with the full registry, partition into known-unreachable / TP-cache / llm-triage                          |
 | `build_triage_entries.ts`                           | Assemble `TriageEntry` records from prepared buckets                                                                                                                    |
 | `finalize/output.ts`                                | Build the published v5 envelope from the per-entry verdict files (pure); attaches the deterministic core fault diagnostics to each `novel_issues[]` row                 |
-| `finalize/verdict_ledger.ts`                        | Shared per-entry verdict loader (`results/<entry_index>.json`); used by both `merge_results.ts` and `finalize_triage.ts`                                                |
-| `merge_results.ts`                                  | Merge investigator result files into triage state                                                                                                                       |
-| `triage_verdict.ts`                                 | `TriageVerdict` discriminated union + strict runtime parser; the published `NovelIssue` row type                                                                        |
+| `finalize/verdict_ledger.ts`                        | Shared per-entry verdict loader (`results/<entry_index>.json`); used by both `finalize/merge_results.ts` and `finalize_triage.ts`                                       |
+| `finalize/merge_results.ts`                         | Merge investigator result files into triage state                                                                                                                       |
+| `verdict/triage_verdict.ts`                         | `TriageVerdict` discriminated union + strict runtime parser; the published `NovelIssue` row type                                                                        |
 | `@ariadnejs/skill-fs` · `classifier_regressions.ts` | `aggregate_classifier_regressions` — finalize-time per-rule rollup of `fp-classifier-regression` verdicts (used only by triage's finalize)                              |
-| `dispense_payload.ts`                               | Build the per-entry dispense payload (entry context + in-scope registry slice)                                                                                          |
+| `dispense/dispense_payload.ts`                      | Build the per-entry dispense payload (entry context + in-scope registry slice)                                                                                          |
 | `triage_state_types.ts`                             | Triage state types (`TriageState`, `TriageEntry`, `TriageEntryResult`)                                                                                                  |
 | `store/paths.ts`                                    | Triage state file locations                                                                                                                                             |
 | `cli_args.ts`                                       | Required-flag CLI helpers (`parse_project_arg`, `parse_run_id_arg`)                                                                                                     |
-| `confirmed_unreachable_reuse.ts`                    | TP cache derivation — short-circuits the LLM investigator across runs at the same commit                                                                                |
-| `run_discovery.ts`                                  | Run-id enumeration, manifest reading, prune protection                                                                                                                  |
-| `analysis_output.ts`                                | Timestamped analysis output JSON I/O                                                                                                                                    |
+| `finalize/confirmed_unreachable_reuse.ts`           | TP cache derivation — short-circuits the LLM investigator across runs at the same commit                                                                                |
+| `store/run_discovery.ts`                            | Run-id enumeration, manifest reading, prune protection                                                                                                                  |
+| `store/analysis_output.ts`                          | Timestamped analysis output JSON I/O                                                                                                                                    |
 | `project_id.ts`                                     | Project-identifier derivation (`path_to_project_id`, `project_id_from_config`)                                                                                          |
 | `@ariadnejs/skill-fs/require-node-import-tsx`       | Side-effect guard shared with `plan`: aborts if invoked via `tsx` CLI instead of `node --import tsx`                                                                    |
 

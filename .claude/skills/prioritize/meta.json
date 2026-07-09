@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "skill": "prioritize",
+  "description": "Review the plan engine's task-DB and promote selected PlanTask rows into the user's backlog/. Drives export_to_backlog.ts — the only writer of backlog/tasks/*.md cards (graduate_group_docs.ts moves graduated comprehension docs alongside them), run deliberately by the human when graduating planned work.",
+
+  "flows": [
+    {
+      "id": "investigate-consolidate-graduate",
+      "name": "Plan task-DB rows → verified refactor epics in backlog/",
+      "description": "Review the plan task-DB, deep-investigate each change group against the real packages/core, consolidate linked groups into epics, stage a comprehension doc per cluster, and graduate the funded clusters into backlog/.",
+      "representativeness": 0.95,
+      "representativeness_anchor": "purpose",
+      "effects": "repo-local",
+      "intentions": [
+        "export_to_backlog.ts is the only writer of backlog/tasks/*.md cards; graduation is always a human decision, never run on the autonomous sweep.",
+        "A real export requires both --assignments and --write: the card body is always the architect's authored task_assignment.json, never the plan engine's cheap pre-investigation PlanTask.body.",
+        "The verdict.json file — not the sub-agent's returned prose — drives routing; a group whose verdict is permanent_limitation leaves the backlog pipeline and reroutes to classifier-author.",
+        "Only proposed rows export; a row already exported, or whose dedup_key a backlog card already carries, is dropped, so a re-run with the same arguments is a no-op.",
+        "Every selected row must be claimed by exactly one authored task's plan_task_ids, or the export errors — the architect's map must be complete.",
+        "The investigation is design-only: refactor-investigator reads packages/core but never writes it."
+      ],
+      "entry": {
+        "kind": "user_invocation"
+      },
+      "exit": {
+        "kind": "store_write",
+        "target": "backlog-tasks"
+      },
+      "phases": ["preview", "gather-groups", "investigate", "reconcile-verdicts", "consolidate", "validate-consolidation", "comprehend", "decide", "promote"],
+      "bypasses": ["consolidation (step 4) is skipped when only one investigated group remains on the backlog path"],
+      "diagram_anchor": "workflow",
+      "is_primary": true
+    },
+    {
+      "id": "permanent-limitation-routing",
+      "name": "Permanent-limitation group → staged registry classifier draft",
+      "description": "Route a group whose call relationship is fundamentally unknowable to static analysis to classifier-author, which stages a registry draft (draft_entry.json + check_<group>.ts) the human reviews and applies via reconcile-registry --stage.",
+      "representativeness": 0.30,
+      "representativeness_anchor": "sub-mode",
+      "effects": "repo-local",
+      "intentions": [
+        "A permanent-limitation group routes to classifier-author, never to a backlog card — its durable deliverable is a registry classifier.",
+        "prioritize and its classifier-author sub-agent never write registry.json; the agent stages a draft the human applies via reconcile-registry --stage.",
+        "The human is the final adjudicator of the is_permanent_limitation flag, not the flag itself; a mis-marked group is re-routed in either direction before dispatch.",
+        "A fixable bug misrouted here is caught by classifier-author's 'if fixable, stop — emit no draft' gate."
+      ],
+      "entry": {
+        "kind": "user_invocation"
+      },
+      "exit": {
+        "kind": "store_write",
+        "target": "classifier-author-staging"
+      },
+      "phases": ["route", "confirm-permanent", "dispatch-classifier-author", "stage-draft", "hand-off-to-human"],
+      "bypasses": ["consolidation, comprehension docs, and export (steps 4-7) do not run for permanent-limitation groups"],
+      "diagram_anchor": "permanent-limitation-groups",
+      "is_primary": false
+    }
+  ],
+
+  "stores": [
+    {
+      "id": "plan-tasks",
+      "path": "~/.ariadne/plan/tasks/<id>.json",
+      "access": "read-only",
+      "writer_owner": "plan",
+      "semantic_role": "the plan engine's task-DB: one PlanTask row per proposed fix. prioritize reads candidate rows here to build change groups by fault_area; the export adapter flips claimed rows to exported through the plan writer, but prioritize itself never mints rows.",
+      "touched_by_flows": ["investigate-consolidate-graduate", "permanent-limitation-routing"]
+    },
+    {
+      "id": "backlog-tasks",
+      "path": "backlog/tasks/<dotted-id> - <slug>.md",
+      "access": "write",
+      "writer_owner": null,
+      "semantic_role": "the user's backlog. export_to_backlog.ts (the pipeline's only writer of these cards) renders each funded cluster's epic and sub-tasks verbatim from the architect's task_assignment.json, stamps the source groups' dedup_key into plan_dedup_keys, and flips every claimed plan row to exported.",
+      "touched_by_flows": ["investigate-consolidate-graduate"]
+    },
+    {
+      "id": "backlog-docs-staging",
+      "path": "backlog/docs/<slug>.comprehension.html",
+      "access": "write",
+      "writer_owner": null,
+      "semantic_role": "per-cluster comprehension doc staged in-repo (tracked, not gitignored) so the user opens it from their tree while ranking clusters. It stays uncommitted until graduation moves a funded cluster's doc beside its epic; an unfunded cluster's doc is deleted.",
+      "touched_by_flows": ["investigate-consolidate-graduate"]
+    },
+    {
+      "id": "backlog-overview",
+      "path": "backlog/tasks/task-<id> - <title-slug>.overview.html",
+      "access": "write",
+      "writer_owner": null,
+      "semantic_role": "the graduated comprehension doc. graduate_group_docs.ts MOVES a funded cluster's backlog/docs/<slug>.comprehension.html here, sharing the epic's filename prefix so it sorts beside the epic card in folder views.",
+      "touched_by_flows": ["investigate-consolidate-graduate"]
+    },
+    {
+      "id": "prioritize-staging",
+      "path": "~/.ariadne/prioritize/<run>/...",
+      "access": "write",
+      "writer_owner": null,
+      "semantic_role": "per-invocation investigation staging under a minted UTC-timestamp root: refactor_plan.md + verdict.json per group, reroutes.json, groups.json, consolidation.json + clusters/<slug>/consolidated_plan.md + task_assignment.json, run.json resume manifest, and export_summary_<slug>.json. Written by the sub-agents and orchestrator; the audit trail of each run.",
+      "touched_by_flows": ["investigate-consolidate-graduate"]
+    },
+    {
+      "id": "classifier-author-staging",
+      "path": "~/.ariadne/prioritize/<run>/classifier-author/<group_id>/",
+      "access": "write",
+      "writer_owner": null,
+      "semantic_role": "per-group registry-draft staging: draft_entry.json (a complete KnownIssue with a builtin classifier), check_<group_id>.ts (the BuiltinCheckFn to place under packages/core), and REVIEW.md. classifier-author writes here and NEVER writes registry.json — the human applies the draft via reconcile-registry --stage.",
+      "touched_by_flows": ["permanent-limitation-routing"]
+    }
+  ],
+
+  "sub_agents": [
+    {
+      "id": "refactor-investigator",
+      "model": "opus",
+      "max_turns": 200,
+      "multiplicity": "one per fixable change group (rows with is_permanent_limitation:false); dispatched all in one message, capped at ~5 concurrent and drained in waves. disable-model-invocation:true.",
+      "used_in_flows": ["investigate-consolidate-graduate"]
+    },
+    {
+      "id": "refactor-consolidator",
+      "model": "opus",
+      "max_turns": 120,
+      "multiplicity": "one per invocation, reasoning across every investigated group's plan; skipped entirely when only one group was investigated. disable-model-invocation:true.",
+      "used_in_flows": ["investigate-consolidate-graduate"]
+    },
+    {
+      "id": "refactor-comprehension-author",
+      "model": "opus",
+      "max_turns": 30,
+      "multiplicity": "one per cluster in consolidation.json, rendering that cluster's plan into backlog/docs/<slug>.comprehension.html. disable-model-invocation:true.",
+      "used_in_flows": ["investigate-consolidate-graduate"]
+    },
+    {
+      "id": "refactor-task-architect",
+      "model": "opus",
+      "max_turns": 20,
+      "multiplicity": "one per confirmed (funded) cluster, dispatched in parallel; authors task_assignment.json. disable-model-invocation:true.",
+      "used_in_flows": ["investigate-consolidate-graduate"]
+    },
+    {
+      "id": "classifier-author",
+      "model": "opus",
+      "max_turns": 40,
+      "multiplicity": "one per confirmed permanent-limitation group; stages a registry draft, never writes registry.json. disable-model-invocation:true.",
+      "used_in_flows": ["permanent-limitation-routing"]
+    }
+  ],
+
+  "published_outputs": [
+    {
+      "id": "backlog-task-cards",
+      "path_pattern": "backlog/tasks/task-<id> - <slug>.md",
+      "schema_version": null,
+      "consumed_by": ["plan"],
+      "written_by_flows": ["investigate-consolidate-graduate"]
+    },
+    {
+      "id": "graduated-comprehension-doc",
+      "path_pattern": "backlog/tasks/task-<id> - <title-slug>.overview.html",
+      "schema_version": null,
+      "consumed_by": [],
+      "written_by_flows": ["investigate-consolidate-graduate"]
+    },
+    {
+      "id": "classifier-registry-draft",
+      "path_pattern": "~/.ariadne/prioritize/<run>/classifier-author/<group_id>/{draft_entry.json,check_<group_id>.ts,REVIEW.md}",
+      "schema_version": null,
+      "consumed_by": ["reconcile-registry"],
+      "written_by_flows": ["permanent-limitation-routing"]
+    }
+  ],
+
+  "external_inputs": [
+    {
+      "from_skill": "plan",
+      "path_pattern": "~/.ariadne/plan/tasks/<id>.json",
+      "read_by_flows": ["investigate-consolidate-graduate", "permanent-limitation-routing"]
+    }
+  ],
+
+  "downstream_consumers": ["plan", "reconcile-registry"]
+}

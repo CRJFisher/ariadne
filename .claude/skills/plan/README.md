@@ -24,7 +24,7 @@ classifier `registry.json`, or `packages/core`.
   prior sweep judged mis-routed, so a mis-route is corrected, not re-litigated.
 - **Pass B — strategize** (`plan-strategist`, opus, one per bucket): turn one
   bucket into a hierarchical fix-plan tree (`architectural → fault_area →
-  localized`) as a `StrategistPlan`, self-validated via `scripts/validate_plan.ts`.
+localized`) as a `StrategistPlan`, self-validated via `scripts/validate_plan.ts`.
   First reviews bucket membership — a total per-member `membership` verdict — so
   tasks ground only on members that share the bucket's root cause. For an `other`
   bucket the strategist emits BOTH a taxonomy-extension task and an underlying
@@ -42,7 +42,8 @@ classifier `registry.json`, or `packages/core`.
 `plan` is the middle link in the self-healing chain: triage (sense) → plan
 (group + strategize) → export/actuate. Graduation of a plan task into the user's
 `backlog/` is the separate, user-invoked export adapter
-(`scripts/export_to_backlog.ts`) — the only path that writes `backlog/`.
+(`scripts/export_to_backlog.ts`) — the only writer of `backlog/tasks/*.md` cards
+(`graduate_group_docs.ts` moves graduated comprehension docs alongside them).
 
 Sub-agent: `.claude/agents/plan-strategist.md` — opus, 200 turns, one per
 fault-area bucket.

@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "skill": "reconcile-registry",
+  "description": "Reconcile the classifier registry against work already done — flip wip rules to fixed when a fix-bearing task-scoped commit lands, flag drift from published classifier_regressions, and promote rules to permanent. Drives reconcile_registry.ts, the registry's only human-invoked writer, run deliberately by the human through atomic_update_registry.",
+
+  "flows": [
+    {
+      "id": "reconcile-transitions",
+      "name": "Detect mechanical registry transitions → human-confirmed status flips",
+      "description": "Detect mechanical registry transitions → human-confirmed status flips",
+      "representativeness": 0.9,
+      "representativeness_anchor": "purpose",
+      "effects": "repo-local",
+      "intentions": [
+        "Every registry write goes through atomic_update_registry — one lock-fenced read-mutate-write per invocation; this skill's script is the only human-invoked writer of registry.json.",
+        "The human confirms every status transition: the script detects the mechanical arrows (landed fix, published drift) and proposes them under --dry-run; it never runs on the autonomous sweep and never makes the permanent judgment.",
+        "function_name must be in core's BUILTIN_CHECKS: --promote refuses a rule whose builtin is dangling, and name-mode --fixed refuses to delete a row whose builtin is still registered (code-side deletion + core rebuild must land first).",
+        "A fixed row carries no drift_detected — the wip → fixed detector cites the newest matching fix/feat commit subject as its audit line; no commit hash is stored, the backlog_task link plus git log are the audit trail.",
+        "Idempotent apply: all proposals fold into one atomic_update_registry transaction; a re-run degrades already-absorbed proposals to nothing and reports applied: false."
+      ],
+      "entry": {
+        "kind": "user_invocation",
+        "path_pattern": "node --import tsx .claude/skills/triage/scripts/reconcile_registry.ts [--dry-run|--fixed|--drift|--promote|--id ... --fixed --reason]"
+      },
+      "exit": {
+        "kind": "store_write",
+        "target": "known-issues-registry"
+      },
+      "phases": ["dry-run-preview", "narrow-selectors", "apply", "retire-by-name", "promote"],
+      "bypasses": [],
+      "diagram_anchor": "lifecycle-transitions",
+      "is_primary": true
+    },
+    {
+      "id": "stage-draft",
+      "name": "Insert a classifier-author draft (creation → wip)",
+      "description": "Insert a classifier-author draft (creation → wip)",
+      "representativeness": 0.35,
+      "representativeness_anchor": "sub-mode",
+      "effects": "repo-local",
+      "intentions": [
+        "Every registry write goes through atomic_update_registry — --stage --apply folds the insertion under the same lock; --stage is dry-run by default.",
+        "observed_count >= 1 evidence gate: the draft is validated against the KnownIssue schema, which enforces the evidence gate; a duplicate group_id is rejected (no silent overwrite).",
+        "function_name must be in core's BUILTIN_CHECKS: the draft's builtin function_name must be present in the built core package, and the drafted check must pass against every persisted EnrichedEntryPoint sample before --apply.",
+        "The human confirms every status transition: a staged entry enters as status wip; promotion to permanent remains the separate --promote step. The classifier-author agent writes only the staging draft, never registry.json."
+      ],
+      "entry": {
+        "kind": "sibling_skill_artifact",
+        "skill": "prioritize",
+        "path_pattern": "~/.ariadne/prioritize/<run>/classifier-author/<group_id>/draft_entry.json"
+      },
+      "exit": {
+        "kind": "store_write",
+        "target": "known-issues-registry"
+      },
+      "phases": ["read-draft", "validate-schema-and-builtin", "sample-execution-gate", "apply"],
+      "bypasses": [],
+      "diagram_anchor": "lifecycle-transitions",
+      "is_primary": false
+    }
+  ],
+
+  "stores": [
+    {
+      "id": "known-issues-registry",
+      "path": ".claude/skills/triage/known_issues/registry.json",
+      "access": "write",
+      "writer_owner": null,
+      "semantic_role": "the loop-closure surface: one KnownIssue row per permanent-limitation classifier group. reconcile_registry.ts is the registry's only human-invoked writer and reaches it solely through atomic_update_registry(path, mutator) — a .lock-fenced read-mutate-write per invocation. writer_owner is null because this skill IS the registry's write path; the human confirms every status transition (the script detects and proposes, never decides).",
+      "touched_by_flows": ["reconcile-transitions", "stage-draft"]
+    },
+    {
+      "id": "permanent-slice",
+      "path": "packages/core/src/classify_entry_points/permanent_data.ts",
+      "access": "write",
+      "writer_owner": null,
+      "semantic_role": "the bundled core slice of permanent-limitation rules, regenerated via generate_permanent_data.ts on every --promote and every name-mode run (crash-recoverable by re-running the same command). permanent_data.sync.test.ts asserts the committed slice byte-equals a fresh render so it cannot silently drift. writer_owner null: this skill's script is the regenerator.",
+      "touched_by_flows": ["reconcile-transitions"]
+    },
+    {
+      "id": "repo-git-log",
+      "path": "<repo>/.git (git log --format=%s --no-merges)",
+      "access": "read-only",
+      "writer_owner": null,
+      "semantic_role": "read-only landed-fix signal for the wip → fixed detector: the bare task scope of each wip rule's backlog_task (TASK-198 → 198) is matched exactly against fix/feat commit subjects in this repo's git log (range scopes like 190.17.12-14 expand to exact ids). No backlog/tasks/*.md file is read — the backlog_task link lives in the registry rows themselves.",
+      "touched_by_flows": ["reconcile-transitions"]
+    },
+    {
+      "id": "triage-published-regressions",
+      "path": "~/.ariadne/triage-entrypoints/analysis_output/<project>/triage_results/<run-id>.json",
+      "access": "read-only",
+      "writer_owner": "triage",
+      "semantic_role": "read-only drift signal: each project's latest finalized run's classifier_regressions[] names registry rules by rule_id (= group_id); the drift detector proposes drift_detected: true plus append-only drift_evidence[] rows deduped by entry_index. read, never written by this skill.",
+      "touched_by_flows": ["reconcile-transitions"]
+    },
+    {
+      "id": "classifier-author-staging",
+      "path": "~/.ariadne/prioritize/<run>/classifier-author/<group_id>/draft_entry.json (+ samples/*.json)",
+      "access": "read-only",
+      "writer_owner": "prioritize",
+      "semantic_role": "read-only staging input for --stage: the classifier-author agent (prioritize, step 3a) writes a KnownIssue draft plus its EnrichedEntryPoint samples here, never to the registry. --stage reads and validates the draft and executes the drafted builtin against the persisted samples before --apply inserts it as status wip.",
+      "touched_by_flows": ["stage-draft"]
+    }
+  ],
+
+  "sub_agents": [],
+
+  "published_outputs": [
+    {
+      "id": "known-issues-registry",
+      "path_pattern": ".claude/skills/triage/known_issues/registry.json",
+      "schema_version": "KnownIssuesRegistryFile (KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION=1)",
+      "consumed_by": ["triage"],
+      "written_by_flows": ["reconcile-transitions", "stage-draft"]
+    },
+    {
+      "id": "permanent-slice",
+      "path_pattern": "packages/core/src/classify_entry_points/permanent_data.ts",
+      "schema_version": null,
+      "consumed_by": ["core", "triage"],
+      "written_by_flows": ["reconcile-transitions"]
+    }
+  ],
+
+  "external_inputs": [
+    {
+      "from_skill": "triage",
+      "path_pattern": "~/.ariadne/triage-entrypoints/analysis_output/<project>/triage_results/<run-id>.json",
+      "read_by_flows": ["reconcile-transitions"]
+    },
+    {
+      "from_skill": "prioritize",
+      "path_pattern": "~/.ariadne/prioritize/<run>/classifier-author/<group_id>/draft_entry.json",
+      "read_by_flows": ["stage-draft"]
+    }
+  ],
+
+  "downstream_consumers": ["triage"]
+}

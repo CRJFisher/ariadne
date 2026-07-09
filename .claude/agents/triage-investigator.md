@@ -51,38 +51,11 @@ Gather evidence:
 Pick **exactly one** verdict kind based on the evidence:
 
 - **A real caller exists, and one of the rules in `relevant_registry_slice` is a classifier whose described intent covers this caller but which failed to match** → `fp-classifier-regression`. Set `should_have_matched_rule_id` to the rule's `group_id`.
-  ```json
-  {
-    "kind": "fp-classifier-regression",
-    "should_have_matched_rule_id": "<group_id from slice>",
-    "evidence_excerpt": "<excerpt>",
-    "member_evidence": { "file": "<path>", "line": <int>, "why": "<one sentence>" }
-  }
-  ```
-- **A real caller exists and no in-scope rule should have matched** → `fp-novel`. Propose a precise root cause.
-  ```json
-  {
-    "kind": "fp-novel",
-    "proposed_root_cause": "<one or two sentences naming the gap>",
-    "evidence_excerpt": "<excerpt>",
-    "member_evidence": { "file": "<path>", "line": <int>, "why": "<one sentence>" }
-  }
-  ```
+- **A real caller exists and no in-scope rule should have matched** → `fp-novel`. Propose a precise one-or-two-sentence root cause.
 - **No real caller exists in the codebase** → `tp`.
-  ```json
-  {
-    "kind": "tp",
-    "member_evidence": { "file": "<path>", "line": <int>, "why": "<one sentence on the search that ruled out callers>" }
-  }
-  ```
 - **Cannot reduce to a single verdict** (compounding gaps, ambiguous evidence, multiple plausible classifications) → `uncertain` with a one-sentence reason.
-  ```json
-  {
-    "kind": "uncertain",
-    "reason": "<one sentence>",
-    "member_evidence": { "file": "<path>", "line": <int>, "why": "<one sentence>" }
-  }
-  ```
+
+The exact JSON shape for each kind — the required fields per discriminant — is specified in your investigation prompt's **Output** section and enforced by `parse_triage_verdict` at finalize; emit that shape verbatim.
 
 ## Output Format
 

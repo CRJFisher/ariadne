@@ -76,16 +76,27 @@ Emit a `membership` array on your `StrategistPlan`: one verdict per evidence ind
 ```json
 { "index": 0, "belongs": true, "reason": "" }
 { "index": 3, "belongs": false, "reason": "this is an import miss, not a name-resolution one", "suggested_area": "import_resolution" }
+{ "index": 5, "belongs": "unsure", "reason": "spans import and name resolution; cannot confidently place it this sweep" }
 ```
 
-- A member **`belongs`** when it genuinely shares this bucket's bulk root cause.
+`belongs` is three-way — `true`, `false`, or `"unsure"`:
+
+- A member **`belongs: true`** when it genuinely shares this bucket's bulk root
+  cause. Only `true` members ground tasks.
 - Mark **`belongs: false`** for a member Pass A mis-routed here, with a non-empty
   `reason`. When you can tell where it should route, name the `suggested_area`
   (its true `AriadneFaultArea`) — that becomes a `derive_fault_area` correction
   signal and re-routes the member on the next sweep.
+- Mark **`belongs: "unsure"`** when you cannot confidently place the member — a
+  genuinely ambiguous or cross-area fault you will not adjudicate this sweep. Like
+  `false` it grounds nothing and needs a non-empty `reason`, but unlike `false` it
+  writes **no** standing re-route: name no `suggested_area`, so the member stays in
+  this bucket for a later sweep to revisit rather than being pushed elsewhere on a
+  guess.
 - The review must be **total** (one verdict per evidence index, no gaps) and
-  **consistent** (no node may carry an `evidence_index` whose verdict is
-  `belongs: false`). `validate_plan.ts` enforces both.
+  **consistent** — no node may ground an `evidence_index` whose verdict is not
+  `belongs: true` (both `false` and `"unsure"` exclude the member).
+  `validate_plan.ts` enforces both.
 - **Prioritise the `needs_judgement_indices`** — those landed in their bucket by a
   defaulted derivation, so they are the likeliest mis-routes.
 
@@ -218,7 +229,8 @@ Write **one file** to `<output_path>` (under `~/.ariadne/plan/staging/**`): the
   "sweep_id": "<echoed from the dispatch>",
   "membership": [
     { "index": 0, "belongs": true, "reason": "" },
-    { "index": 1, "belongs": false, "reason": "<why it does not belong>", "suggested_area": "<its true area, when tellable>" }
+    { "index": 1, "belongs": false, "reason": "<why it does not belong>", "suggested_area": "<its true area, when tellable>" },
+    { "index": 2, "belongs": "unsure", "reason": "<why it cannot be placed this sweep>" }
   ],
   "roots": [
     {

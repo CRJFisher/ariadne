@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * The user-invoked export adapter — the only writer of the user's `backlog/` in
- * the self-healing pipeline. Promotes selected `PlanTask` rows from the plan
- * engine's task-DB
- * (`~/.ariadne/plan/`) into `backlog/tasks/*.md`. Never runs on the autonomous
- * sweep; the human runs it deliberately when graduating proposed work.
+ * The user-invoked export adapter — the only writer of `backlog/tasks/*.md`
+ * cards (its sibling `graduate_group_docs.ts` moves graduated comprehension docs
+ * alongside them). Promotes selected `PlanTask` rows from the plan engine's
+ * task-DB (`~/.ariadne/plan/`) into `backlog/tasks/*.md`. Never runs on the
+ * autonomous sweep; the human runs it deliberately when graduating proposed work.
  *
  * ## The adapter pipeline
  *
@@ -49,8 +49,10 @@
  * carries, is skipped (`src/export/select_exportable_tasks.ts`), so its authored
  * task finds no still-exportable rows and is itself skipped.
  *
- * This script is the only one that writes `backlog/`; the rest of the plan
- * engine writes only the task-DB under `~/.ariadne/plan/`. The `plan_dedup_keys`
+ * This script is the only writer of `backlog/tasks/*.md` cards
+ * (`graduate_group_docs.ts` moves graduated comprehension docs alongside them);
+ * the rest of the plan engine writes only the task-DB under
+ * `~/.ariadne/plan/`. The `plan_dedup_keys`
  * this script stamps are read back read-only by `src/store/backlog_dedup.ts`
  * during the plan engine's reconcile pass — that is where the dedup loop closes.
  *

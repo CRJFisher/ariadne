@@ -33,7 +33,7 @@ The engine is **planning-only**: it reads
 log under `~/.ariadne/plan/`. It never writes the user's `backlog/`, the
 classifier `registry.json`, or `packages/core`. Graduation of a plan task into
 `backlog/` is the separate, user-invoked export adapter (see **Export to
-backlog** below) — the only path that writes `backlog/`.
+backlog** below; the writer set for `backlog/` is named under **Write boundaries**).
 
 Pass A buckets only the run's `novel_issues[]` (confirmed false-positives). It
 deliberately does **not** consume `uncertain[]`: an uncertain verdict is the
@@ -101,21 +101,16 @@ single message so they run in parallel):
 > Design the hierarchical fix plan for fault-area bucket `<fault_area>` in sweep
 > `<sweep_id>`. Hydrate with `node --import tsx
 .claude/skills/plan/scripts/get_bucket_context.ts --bucket <bucket_path>
---sweep <sweep_id>`. Run the validator (`scripts/validate_plan.ts --plan
-<output_path> --bucket <bucket_path> --sweep-id <sweep_id>`) against your draft until it returns
-> clean, then write the final `StrategistPlan` JSON to `<output_path>`
-> (`~/.ariadne/plan/staging/<sweep_id>/plans/<fault_area>.json`). First emit a
-> total per-member `membership` review (one verdict per evidence index; mark a
-> mis-routed member `belongs: false` with a reason and, when tellable, a
-> `suggested_area`) and ground tasks on confirmed members only. For an `other`
-> bucket, emit BOTH a taxonomy-extension task and an underlying core-fix task.
-> Mark a group `is_permanent_limitation=true` only when the caller is
-> fundamentally unknowable to static analysis (no realistic resolver fix) —
-> such a group has no core fix and carries `core_fix_effort` 0; default
-> everything else to core-fix work. Return a ~15-char `wrote <fault_area>`
-> confirmation — the reconcile pass reads your plan from disk, but the
-> confirmation lets the dispatcher distinguish a completed write from a
-> pre-write crash without waiting for Pass C's `missing_plan` rejection.
+--sweep <sweep_id>`, then follow your agent instructions (membership review,
+> `other`-bucket dual task, permanent-limitation gate, grounded effort estimate)
+> and self-validate against `scripts/validate_plan.ts --plan <output_path>
+--bucket <bucket_path> --sweep-id <sweep_id>` until it returns clean. Write the
+> final `StrategistPlan` JSON to `<output_path>`
+> (`~/.ariadne/plan/staging/<sweep_id>/plans/<fault_area>.json`) and return a
+> ~15-char `wrote <fault_area>` confirmation — the reconcile pass reads your plan
+> from disk, but the confirmation lets the dispatcher distinguish a completed
+> write from a pre-write crash without waiting for Pass C's `missing_plan`
+> rejection.
 
 Wait for every `Task()` in a wave to return before starting the next. A
 strategist that returns without a `wrote <fault_area>` line — or whose
@@ -187,37 +182,25 @@ re-sweep of the same runs augments rather than duplicates; an export is idempote
 
 ## Export to backlog (user-invoked)
 
-Graduate proposed task-DB rows into the user's `backlog/` — the only write into
-`backlog/`, run deliberately by the human and **never on the autonomous sweep**.
-The adapter writes `backlog/tasks/*.md` **directly via the filesystem** (no
-`mcp__backlog__*` tool), so the `plan` path never holds a mutating backlog grant;
-the existing `Bash(node --import tsx:*)` grant is all it needs.
+Graduating proposed task-DB rows into the user's `backlog/` is driven by the
+`prioritize` skill, which owns the export contract end-to-end: candidate review →
+`refactor-task-architect` authoring → `export_to_backlog.ts --assignments <file>
+--write` → `graduate_group_docs.ts`. A real write **requires** both `--assignments`
+(the architect's `task_assignment.json`) and the explicit `--write` opt-in; a bare
+invocation throws, and `--dry-run` previews the candidate rows without writing. See
+`prioritize/SKILL.md` for the invocation and `scripts/export_to_backlog.ts`'s
+docstring for the canonical flag reference.
 
-```bash
-node --import tsx .claude/skills/plan/scripts/export_to_backlog.ts \
-  [--status <status>] [--fault-area <area>] \
-  [--id <db-task-id>...] [--dry-run]
-```
-
-| Flag                          | Effect                                                                                                                                                                                                                            |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--status proposed`           | Select rows in this live state (the default, and the only live state); only live work is exportable — terminal rows (`superseded`/`resolved`/`exported`) are never promoted                                                       |
-| `--fault-area <area>`         | Restrict to one `AriadneFaultArea`                                                                                                                                                                                                |
-| `--id <id>...`                | Export exactly these DB task ids — the filter flags are ignored, but a named row that is already exported (or whose `dedup_key` a backlog task carries) is still skipped, and a terminal-status row is reported as non-exportable |
-| `--dry-run`                   | Print the planned writes (incl. the would-be backlog ids); touch nothing                                                                                                                                                          |
-
-Each selected `PlanTask` becomes a new top-level `backlog/tasks/task-<id> - <slug>.md`,
-its frontmatter stamped with `plan_dedup_keys: [<PlanTask.dedup_key>, …]` (the
-loop-closure link Pass C's read-only dedup reads back, one entry per source group)
-and `plan_source_tasks` for traceability; every exported row is a core fix, so
-`priority` is always `high`. A permanent-limitation row is never exportable — in
-either selection mode — and is reported as `skipped_permanent_limitation`: its
-durable deliverable is a registry classifier routed through `classifier-author`
+**Write boundary:** the adapter runs deliberately by the human, **never on the
+autonomous sweep**, and writes `backlog/tasks/*.md` **directly via the filesystem**
+(no `mcp__backlog__*` tool), so the `plan` path never holds a mutating backlog
+grant — the existing `Bash(node --import tsx:*)` grant is all it needs. Each
+exported `PlanTask` becomes a `backlog/tasks/task-<id> - <slug>.md` stamped with
+`plan_dedup_keys` (the loop-closure link Pass C's read-only dedup reads back) and
+`plan_source_tasks`; the write is idempotent on the `proposed → exported`
+transition. A permanent-limitation row is never exportable — its durable
+deliverable is a registry classifier routed through `classifier-author`
 (`prioritize` step 3a), not a backlog task.
-On success the DB row flips `proposed → exported` (recording `exported_backlog_task`)
-and one `export` `PlanSweepEvent` is logged. **Idempotent:** a row already
-`exported`, or whose `dedup_key` a backlog task already carries, is skipped, so a
-re-run is a no-op.
 
 ## State
 
@@ -239,8 +222,10 @@ only the task-DB under `~/.ariadne/plan/` — `tasks/`, `sweeps/`, and the
 membership-override store, of which the reconcile pass (Pass C) is the sole
 writer; the strategist writes only its staged `StrategistPlan`. Pass C reads `backlog/tasks/*.md`
 frontmatter **read-only** (`src/store/backlog_dedup.ts`, keyed on
-`plan_dedup_keys`) as a dedup signal — it is never written by the pipeline; the
-only writer is the user-invoked export adapter (`scripts/export_to_backlog.ts`).
+`plan_dedup_keys`) as a dedup signal — it is never written by the autonomous
+pipeline. `export_to_backlog.ts` is the only writer of `backlog/tasks/*.md` cards;
+`graduate_group_docs.ts` moves graduated comprehension docs alongside them. Both
+are user-invoked and never run on the sweep.
 The registry's analogous human-invoked write path is the `reconcile-registry`
 skill (`.claude/skills/reconcile-registry/SKILL.md`) over
 `triage/scripts/reconcile_registry.ts`; `plan` never touches the registry.

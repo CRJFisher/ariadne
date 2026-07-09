@@ -64,6 +64,3 @@ docs/tmp/
 logs/security/
 
 .test_failures_*
-
-# staged prioritize comprehension docs; graduated into backlog/tasks/ on funding
-backlog/docs/*.comprehension.html

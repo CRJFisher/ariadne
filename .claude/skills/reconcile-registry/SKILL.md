@@ -170,13 +170,10 @@ Always invoke with `node --import tsx`. Never `pnpm exec tsx` or `npx tsx`
 | `--reason "<text>"`                  | valid ONLY with name-mode (`--fixed` and `--id` together), where it is required; the retirement audit line, since no commit subject is cited. Any other combination is rejected                                                                                                                                                         |
 | `--stage <path> [--apply]`           | **insertion mode**: read + validate an agent-authored `draft_entry.json`, reject a duplicate `group_id` and a `builtin` `function_name` absent from `BUILTIN_CHECKS`, enforce `observed_count >= 1`; dry-run unless `--apply`. Cannot combine with `--fixed`/`--drift`/`--promote`/`--id`/`--reason` — insertion is its own transaction |
 
-`--id` has three modes. As a **selector** (alone or with `--fixed`/`--drift`)
-it overrides the signal filters and narrows the detected proposals to the
-named rules. With **`--fixed --reason`** it is name-mode: it bypasses
-detection and deletes the named rows outright, recording `--reason` as the
-audit line. With **`--promote`** it bypasses detection and flips the named
-rules to `permanent`. With no selectors at all, every proposal across both
-detection signals is selected — always preview that with `--dry-run` first.
+`--id`'s three modes (selector, name-mode `--fixed --reason`, and `--promote`)
+are in the Selectors table above; **step 4** is the canonical name-mode
+walkthrough. With no selectors at all, every proposal across both detection
+signals is selected — always preview that with `--dry-run` first.
 
 ## Output
 

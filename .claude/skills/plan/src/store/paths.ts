@@ -131,9 +131,11 @@ export function backlog_docs_dir(): string {
  * cluster's epic once the cluster is funded.
  *
  * Lives under `backlog/docs/` — not the similarly-named `backlog/comprehension/`,
- * which is unwired legacy — and the `*.comprehension.html` glob is gitignored, so
- * a staging never reaches a commit: a funded cluster's doc graduates into
- * `backlog/tasks/` (committed), an unfunded cluster's stays local until removed.
+ * which is unwired legacy. The staging doc is tracked in the repo, not gitignored:
+ * it stays uncommitted until graduation moves a funded cluster's doc into
+ * `backlog/tasks/` (where it commits beside the epic); an unfunded cluster's doc is
+ * deleted. Tracking it keeps a failed graduation visible in `git status` rather
+ * than silently stranded.
  */
 export function backlog_comprehension_staging_path(slug: string): string {
   return path.join(backlog_docs_dir(), `${slug}.comprehension.html`);
