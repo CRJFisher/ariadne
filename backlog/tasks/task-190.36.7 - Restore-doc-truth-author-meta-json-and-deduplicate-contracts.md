@@ -1,7 +1,7 @@
 ---
 id: TASK-190.36.7
 title: "Restore doc truth, author meta.json, and de-duplicate contracts"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-05 00:00"
 labels:
@@ -99,17 +99,108 @@ check_registry.ts` (strict-parse rows, `function_name ∈ BUILTIN_CHECKS`,
 
 <!-- AC:BEGIN -->
 
-- [ ] No pipeline doc asserts a gitignore rule, export invocation, or writer
+- [x] No pipeline doc asserts a gitignore rule, export invocation, or writer
       set that the code contradicts (spot-checked by re-running the review's
       verification commands).
-- [ ] `plan/meta.json` contains no ghost store, no stale wiring note, full
+- [x] `plan/meta.json` contains no ghost store, no stale wiring note, full
       path patterns, and named intentions; the three new meta.json files
       exist in the union shape.
-- [ ] `check_triage_results.ts` and `check_registry.ts` pass on current
+- [x] `check_triage_results.ts` and `check_registry.ts` pass on current
       artifacts and fail on a seeded malformed fixture.
-- [ ] Triage's architecture table paths all resolve on disk.
-- [ ] Each Theme-7 contract (verdict shape, name-mode, routing, strategist
+- [x] Triage's architecture table paths all resolve on disk.
+- [x] Each Theme-7 contract (verdict shape, name-mode, routing, strategist
       rules, cache leaks) exists verbatim in exactly one owning surface, with
       pointers elsewhere.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+The pipeline's loop-closure model rests on the operator trusting what the docs
+assert about write boundaries; this task makes every such assertion match the
+code, gives the two skills without one a `meta.json` contract, adds the lint
+lenses the review asked for, and collapses each duplicated contract to a single
+owning surface.
+
+**Doc truth.** Comprehension staging docs are tracked in the repo, not
+gitignored — the `.gitignore` rule is removed and `prioritize/SKILL.md` and
+`plan/src/store/paths.ts` now say "staged, uncommitted until graduation moves a
+funded cluster's doc; unfunded ones deleted," so a failed graduation stays
+visible in `git status`. (This resolves a direct conflict: TASK-190.36.1 had
+*added* that gitignore rule to match the docs; .7 takes the opposite,
+operator-confirmed resolution.) `plan/SKILL.md`'s stale export section — which
+documented an invocation the code hard-refuses — is rewritten to point at
+`prioritize` (the contract owner) and `export_to_backlog.ts`'s already-accurate
+docstring, and states the real contract (a write requires `--assignments` +
+`--write`; a bare invocation throws; `--dry-run` previews). Every "only writer of
+`backlog/`" claim becomes the two-named-writers wording:
+`export_to_backlog.ts` is the only writer of `backlog/tasks/*.md` cards;
+`graduate_group_docs.ts` moves graduated comprehension docs (`.overview.html`)
+alongside them.
+
+**Contracts.** `plan/meta.json` loses its ghost `registry-read` store, drops the
+stale "NOT YET WIRED" note (the `backlog/tasks` dedup read *is* wired via
+`reconcile_plan.ts`), gains the `~/.ariadne/triage-entrypoints/` path prefix, and
+gains `effects: "repo-local"` plus four named, test-backed intentions. New
+`meta.json` files for `triage`, `prioritize`, and `reconcile-registry` follow the
+union shape (skill-diagrammer schema plus the sr-review `intentions`/`effects`/
+`flows[].exit` fields), each declaring flows, stores, sub-agents, published
+outputs, and downstream consumers with cross-skill producer/consumer edges
+reciprocated.
+
+**Lint lenses.** `check_triage_results.ts` strict-parses the published v5
+envelope by reusing `parse_triage_results`; `check_registry.ts` layers three
+cross-checks on `validate_registry` — `function_name ∈ BUILTIN_CHECKS`, a present
+`observed_count >= 1`, and no `drift_detected` on a `fixed` row. Both follow the
+usage→2 / fail→1 / ok→0 convention, live beside `reconcile_registry.ts` under
+`triage/scripts/` (clean in-skill and workspace imports, no forbidden cross-skill
+sibling path), and carry fixture tests that pass on current artifacts and fail on
+seeded malformed input.
+
+**Architecture table & de-dup.** Triage's architecture table gains the `src/`
+subdirectory on the six mislisted modules (`finalize/`, `verdict/`, `store/`,
+`dispense/`), so every path resolves. Each Theme-7 contract now lives in exactly
+one owner with pointers elsewhere: the `TriageVerdict` shape in
+`templates/prompt.md` (the JSON blocks are gone from the investigator agent,
+which keeps its decision logic); reconcile name-mode in `reconcile-registry`
+SKILL step 4; permanent-limitation routing in `prioritize` intro + step 3a; the
+strategist's rule clusters in `plan-strategist.md` (whose membership section now
+documents the three-way `belongs: true | false | "unsure"` matching
+`validate_plan.ts`, with the Pass B dispatch prompt reduced to bindings); and the
+TP-cache leaks in one statement.
+
+### Noteworthy decisions and scope notes
+
+- **Gitignore conflict.** TASK-190.36.1 and .7 resolved the same doc/code
+  inconsistency in opposite directions. .1 (already landed) added the gitignore
+  rule; .7 removes it and makes the docs say tracked-not-gitignored. The operator
+  chose .7's resolution — staging docs stay visible in `git status` so a failed
+  graduation is not silently stranded.
+- **Validator placement.** The task named
+  `reconcile-registry/scripts/check_registry.ts`, but both validators live under
+  `triage/scripts/` beside `reconcile_registry.ts` itself (the reconcile tooling
+  already lives there). This keeps imports of `triage/src` and `@ariadnejs/core`
+  clean and avoids a forbidden cross-skill sibling import.
+- **Item 7 (optional).** Done as a light in-file dedup — the Pre-flight File
+  Count Check section now owns the ~4,000-file threshold and the config-authoring
+  step points at it — rather than the heavier "extract to reference files"
+  restructuring, per YAGNI.
+- **Commit boundary.** A concurrent registry-write-guard refactor (removing the
+  guard's Bash interception) was present, uncommitted, in the working tree. This
+  task's files were committed separately (`docs(190.36.7)`, `6777f179`), leaving
+  those guard files — and `classifier-lifecycle.md`, which the two changes share
+  — for that refactor's own commit. The item-6b name-mode de-dup edit to
+  `classifier-lifecycle.md:76` therefore lands with the guard refactor's commit,
+  not this one.
+- **Verification.** typecheck (triage + plan) and eslint clean; the validators
+  were driven end-to-end (pass on the live registry and a real triage_results
+  file; fail on seeded malformed fixtures; usage error exits 2); triage skill
+  vitest 413 + the new validator tests (17), plan 251, and the skill-fs registry
+  write-boundary AST scan all pass. A 7-lens review plus a two-round fix-diff
+  re-review drove a batch of fixes: the `--project` sweep now fails on a missing
+  results dir instead of passing vacuously, `check_registry` reports a missing
+  `--file` as a structured issue, the cross-skill consumer graph in the meta.json
+  files is reciprocated, and coverage was added for the sweep, multi-rule,
+  boundary, and empty-registry paths.

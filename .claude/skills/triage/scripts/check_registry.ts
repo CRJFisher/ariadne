@@ -85,7 +85,19 @@ function parse_argv(argv: string[]): CliArgs {
 
 export function check_registry(file_path: string): RegistryCheckResult {
   const issues: string[] = [];
-  const raw = fs.readFileSync(file_path, "utf8");
+  let raw: string;
+  try {
+    raw = fs.readFileSync(file_path, "utf8");
+  } catch (err) {
+    // A missing or unreadable --file (the common "wrong path") yields a clean
+    // structured issue rather than a stack dump out of the outer catch.
+    return {
+      registry_path: file_path,
+      ok: false,
+      checked: 0,
+      issues: [err instanceof Error ? err.message : String(err)],
+    };
+  }
 
   let rules: KnownIssue[];
   try {

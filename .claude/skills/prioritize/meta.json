@@ -69,7 +69,7 @@
     },
     {
       "id": "backlog-tasks",
-      "path": "backlog/tasks/<dotted-id> - <slug>.md",
+      "path": "backlog/tasks/task-<dotted-id> - <slug>.md",
       "access": "write",
       "writer_owner": null,
       "semantic_role": "the user's backlog. export_to_backlog.ts (the pipeline's only writer of these cards) renders each funded cluster's epic and sub-tasks verbatim from the architect's task_assignment.json, stamps the source groups' dedup_key into plan_dedup_keys, and flips every claimed plan row to exported.",

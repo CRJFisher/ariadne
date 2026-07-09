@@ -29,7 +29,7 @@ import {
   all_finalized_run_ids,
   read_triage_results,
 } from "../src/store/triage_results_store.js";
-import { triage_results_path } from "@ariadnejs/skill-protocol";
+import { triage_results_dir, triage_results_path } from "@ariadnejs/skill-protocol";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const USAGE =
@@ -126,6 +126,21 @@ export async function check_triage_results(args: CliArgs): Promise<TriageResults
   }
 
   const project = args.project as string;
+  if (args.run_id === null) {
+    // A sweep over a missing results dir would return zero runs and pass
+    // vacuously — indistinguishable from a typo'd project name. Fail instead.
+    // An existing-but-empty dir (a legitimately unpublished project) still passes.
+    const dir = triage_results_dir(project);
+    try {
+      await fs.access(dir);
+    } catch {
+      return {
+        ok: false,
+        checked: 0,
+        issues: [{ file: dir, error: `no triage_results directory for project "${project}" — check the --project name` }],
+      };
+    }
+  }
   const run_ids = args.run_id !== null ? [args.run_id] : await all_finalized_run_ids(project);
   for (const run_id of run_ids) {
     checked += 1;

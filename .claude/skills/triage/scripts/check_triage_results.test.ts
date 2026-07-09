@@ -6,10 +6,11 @@
  */
 
 import * as fs from "node:fs/promises";
+import * as fsSync from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { check_triage_results } from "./check_triage_results.js";
 
@@ -23,6 +24,18 @@ const valid_envelope = JSON.stringify({
   uncertain: [],
   last_updated: "2026-07-09T00:00:00Z",
 });
+
+const SWEEP_TMP = vi.hoisted(() => {
+  const tmp_path = `${process.env.TMPDIR ?? "/tmp"}/ariadne-test-check-triage-results-${process.pid}`;
+  process.env.ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE = tmp_path;
+  return tmp_path;
+});
+
+function seed_run(project: string, run_id: string, contents: string): void {
+  const dir = path.join(SWEEP_TMP, "analysis_output", project, "triage_results");
+  fsSync.mkdirSync(dir, { recursive: true });
+  fsSync.writeFileSync(path.join(dir, `${run_id}.json`), contents);
+}
 
 describe("check_triage_results", () => {
   let tmp_dir: string;
@@ -77,5 +90,55 @@ describe("check_triage_results", () => {
     const result = await check_triage_results({ file_path, project: null, run_id: null });
     expect(result.ok).toEqual(false);
     expect(result.issues[0].error).toContain("invalid JSON");
+  });
+});
+
+describe("check_triage_results --project sweep", () => {
+  beforeEach(() => {
+    fsSync.rmSync(SWEEP_TMP, { recursive: true, force: true });
+    fsSync.mkdirSync(SWEEP_TMP, { recursive: true });
+  });
+
+  afterEach(() => {
+    fsSync.rmSync(SWEEP_TMP, { recursive: true, force: true });
+  });
+
+  it("sweeps every finalized run and surfaces only the malformed one", async () => {
+    seed_run("proj", "aaa1111-2026-07-01T00-00-00.000Z", valid_envelope);
+    seed_run("proj", "bbb2222-2026-07-02T00-00-00.000Z", valid_envelope.replace("\"schema_version\":5", "\"schema_version\":4"));
+    const result = await check_triage_results({ file_path: null, project: "proj", run_id: null });
+    expect(result.ok).toEqual(false);
+    expect(result.checked).toEqual(2);
+    expect(result.issues.length).toEqual(1);
+    expect(result.issues[0].error).toContain("schema_version=4 does not match current v5");
+  });
+
+  it("passes when every finalized run is valid", async () => {
+    seed_run("proj", "aaa1111-2026-07-01T00-00-00.000Z", valid_envelope);
+    seed_run("proj", "bbb2222-2026-07-02T00-00-00.000Z", valid_envelope);
+    expect(await check_triage_results({ file_path: null, project: "proj", run_id: null })).toEqual({
+      ok: true,
+      checked: 2,
+      issues: [],
+    });
+  });
+
+  it("fails a project whose results directory is missing (a likely typo)", async () => {
+    const result = await check_triage_results({ file_path: null, project: "nonexistent", run_id: null });
+    expect(result.ok).toEqual(false);
+    expect(result.checked).toEqual(0);
+    expect(result.issues.length).toEqual(1);
+    expect(result.issues[0].error).toContain("no triage_results directory for project \"nonexistent\"");
+  });
+
+  it("passes an existing results directory that holds no runs yet", async () => {
+    fsSync.mkdirSync(path.join(SWEEP_TMP, "analysis_output", "unpublished", "triage_results"), {
+      recursive: true,
+    });
+    expect(await check_triage_results({ file_path: null, project: "unpublished", run_id: null })).toEqual({
+      ok: true,
+      checked: 0,
+      issues: [],
+    });
   });
 });

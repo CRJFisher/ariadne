@@ -83,14 +83,14 @@
       "id": "plan-tasks",
       "path_pattern": "~/.ariadne/plan/tasks/<id>.json",
       "schema_version": "PlanTask (PLAN_TASK_SCHEMA_VERSION=1)",
-      "consumed_by": ["export-adapter"],
+      "consumed_by": ["prioritize"],
       "written_by_flows": ["group-strategize-reconcile"]
     },
     {
       "id": "plan-sweep-log",
       "path_pattern": "~/.ariadne/plan/sweeps/<sweep-id>.jsonl",
       "schema_version": "PlanSweepEvent",
-      "consumed_by": ["export-adapter"],
+      "consumed_by": [],
       "written_by_flows": ["group-strategize-reconcile"]
     }
   ],
@@ -103,5 +103,5 @@
     }
   ],
 
-  "downstream_consumers": ["export-adapter"]
+  "downstream_consumers": ["prioritize"]
 }

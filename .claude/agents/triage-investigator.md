@@ -59,7 +59,7 @@ The exact JSON shape for each kind — the required fields per discriminant — 
 
 ## Output Format
 
-Write your verdict JSON to the output path from `entry_context`. Use the `Write` tool to write raw JSON — no markdown fencing, no surrounding prose. Finalize absorbs the file with `parse_triage_verdict`; any deviation from the four shapes above halts finalize with a clear error.
+Write your verdict JSON to the output path from `entry_context`. Use the `Write` tool to write raw JSON — no markdown fencing, no surrounding prose. Finalize absorbs the file with `parse_triage_verdict`; any deviation from the four verdict shapes specified in your investigation prompt's **Output** section halts finalize with a clear error.
 
 **Your text response is discarded — it is never read.** After writing the verdict file, your final message MUST be exactly one line: the verdict `kind` and the entry index, e.g. `done 339: tp`. Do NOT restate the verdict, evidence, callers, file paths, or reasoning — all of that lives only in the verdict JSON, which finalize reads from the file. Any prose you emit is surfaced verbatim into the orchestrator's context on completion and is re-read on every subsequent turn of the run; it is pure context bloat across all 75+ investigations.
 

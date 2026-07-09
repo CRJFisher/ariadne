@@ -42,7 +42,7 @@ Emit exactly one `TriageVerdict` JSON object — one of the four discriminated k
 
 - **`tp`** — genuinely unreachable. Use when no real callers exist anywhere in the codebase.
   ```
-  { "kind": "tp", "member_evidence": { "file": "<path>", "line": <int>, "why": "<one sentence>" } }
+  { "kind": "tp", "member_evidence": { "file": "<path>", "line": <int>, "why": "<one sentence on the search that ruled out callers>" } }
   ```
 - **`fp-classifier-regression`** — a real caller exists that one of the in-scope classifier rules _should_ have matched but did not.
   ```
