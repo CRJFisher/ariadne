@@ -291,7 +291,7 @@
 <tr><th>Step</th><th>Decision</th><th>Events</th></tr>
 <tr>
   <td><strong>1. Create / augment</strong></td>
-  <td>A candidate whose <code>dedup_key</code> + <code>tier</code> names a live task (<code>proposed</code>/<code>accepted</code>) <strong>augments</strong> it: evidence merged by location, rollups recomputed, the current sweep's structural pointers adopted (remapped <code>parent_id</code>; <code>child_ids</code> unioned in), and the cost estimate refreshed from the candidate (the owning folder's capability evolves, so <code>core_fix_effort</code> is re-judged each sweep). Everything else is created fresh. Matching is 1:1 — exact id first (identical re-sweep), then a <code>(dedup_key, tier)</code> fallback for a moved-but-unchanged node; each existing task is claimed by at most one candidate.</td>
+  <td>A candidate whose <code>dedup_key</code> + <code>tier</code> names a live task (<code>proposed</code>) <strong>augments</strong> it: evidence merged by location, rollups recomputed, the current sweep's structural pointers adopted (remapped <code>parent_id</code>; <code>child_ids</code> unioned in), and the cost estimate refreshed from the candidate (the owning folder's capability evolves, so <code>core_fix_effort</code> is re-judged each sweep). Everything else is created fresh. Matching is 1:1 — exact id first (identical re-sweep), then a <code>(dedup_key, tier)</code> fallback for a moved-but-unchanged node; each existing task is claimed by at most one candidate.</td>
   <td><code>create</code> · <code>augment</code></td>
 </tr>
 <tr>

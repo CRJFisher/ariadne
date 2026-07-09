@@ -434,7 +434,7 @@ export interface CliArgs {
 }
 
 /** A CLI argv/validation error — printed as message + USAGE and exited 2, never as a stack. */
-export class UsageError extends Error {}
+class UsageError extends Error {}
 
 export function parse_argv(argv: string[]): CliArgs {
   const args: CliArgs = {
