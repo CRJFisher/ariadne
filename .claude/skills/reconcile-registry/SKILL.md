@@ -1,7 +1,7 @@
 ---
 name: reconcile-registry
 description: Reconcile the classifier registry against work already done — flip wip rules to fixed when a fix-bearing task-scoped commit lands, flag drift from published classifier_regressions, and promote rules to permanent. Drives reconcile_registry.ts, the registry's only human-invoked writer, run deliberately by the human through atomic_update_registry.
-argument-hint: "[--dry-run] [--fixed] [--drift] [--id <group_id>...] [--reason <text>] [--promote]"
+argument-hint: "[--dry-run] [--fixed] [--drift] [--id <group_id>...] [--reason <text>] [--promote] | --stage <draft-path> [--apply]"
 disable-model-invocation: true
 allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read
 ---

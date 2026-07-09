@@ -43,13 +43,12 @@ export const PLAN_TASK_SCHEMA_VERSION = 1;
 export type PlanTaskId = string & { __brand: "PlanTaskId" };
 
 /**
- * Lifecycle state of a plan task. `proposed` and `accepted` are the LIVE set
- * the engine reconciles against by `dedup_key` (a colliding proposal augments a
- * live task instead of duplicating). Every other state is terminal — a terminal
- * task is never matched, augmented, or re-orphaned by a later sweep.
+ * Lifecycle state of a plan task. `proposed` is the sole LIVE state the engine
+ * reconciles against by `dedup_key` (a colliding proposal augments a live task
+ * instead of duplicating). Every other state is terminal — a terminal task is
+ * never matched, augmented, or re-orphaned by a later sweep.
  *
- * - `proposed`   engine-emitted this sweep; not yet endorsed.
- * - `accepted`   endorsed by the strategist/user; still live.
+ * - `proposed`   engine-emitted this sweep; the live, exportable state.
  * - `superseded` folded into a replacement task (see `superseded_by`); the
  *                replacement carries its own evidence, so a superseded record
  *                keeps its vanished locations rather than donating them.
@@ -63,7 +62,6 @@ export type PlanTaskId = string & { __brand: "PlanTaskId" };
  */
 export type PlanTaskStatus =
   | "proposed"
-  | "accepted"
   | "superseded"
   | "exported"
   | "resolved";

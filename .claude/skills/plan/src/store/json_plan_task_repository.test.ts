@@ -133,7 +133,7 @@ describe("JsonPlanTaskRepository query", () => {
     const match = make_task({
       id: "m" as PlanTaskId,
       fault_area: "name_resolution",
-      status: "accepted",
+      status: "superseded",
     });
     const wrong_status = make_task({
       id: "ws" as PlanTaskId,
@@ -143,11 +143,11 @@ describe("JsonPlanTaskRepository query", () => {
     const wrong_area = make_task({
       id: "wa" as PlanTaskId,
       fault_area: "method_lookup",
-      status: "accepted",
+      status: "superseded",
     });
     await repo.put_many([match, wrong_status, wrong_area]);
 
-    const got = await repo.query({ fault_area: "name_resolution", status: "accepted" });
+    const got = await repo.query({ fault_area: "name_resolution", status: "superseded" });
     expect(got).toEqual([match]);
   });
 

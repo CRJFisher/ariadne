@@ -433,6 +433,9 @@ export interface CliArgs {
   apply: boolean;
 }
 
+/** A CLI argv/validation error — printed as message + USAGE and exited 2, never as a stack. */
+export class UsageError extends Error {}
+
 export function parse_argv(argv: string[]): CliArgs {
   const args: CliArgs = {
     dry_run: false,
@@ -469,7 +472,7 @@ export function parse_argv(argv: string[]): CliArgs {
       case "--reason": {
         const value = argv[i + 1];
         if (value === undefined || value.startsWith("--") || value.trim().length === 0) {
-          throw new Error("--reason requires a non-empty value: the retirement rationale");
+          throw new UsageError("--reason requires a non-empty value: the retirement rationale");
         }
         args.reason = argv[++i];
         break;
@@ -477,7 +480,7 @@ export function parse_argv(argv: string[]): CliArgs {
       case "--stage": {
         const value = argv[i + 1];
         if (value === undefined || value.startsWith("--") || value.trim().length === 0) {
-          throw new Error("--stage requires a draft file path");
+          throw new UsageError("--stage requires a draft file path");
         }
         args.stage = argv[++i];
         break;
@@ -491,14 +494,14 @@ export function parse_argv(argv: string[]): CliArgs {
         process.exit(0);
         break;
       default:
-        throw new Error(`Unknown argument: ${arg}`);
+        throw new UsageError(`Unknown argument: ${arg}`);
     }
   }
   if (args.promote && args.ids.length === 0) {
-    throw new Error("--promote requires --id <group_id>: promotion is per-rule and deliberate");
+    throw new UsageError("--promote requires --id <group_id>: promotion is per-rule and deliberate");
   }
   if (args.promote && (args.fixed || args.drift)) {
-    throw new Error(
+    throw new UsageError(
       "--promote cannot combine with --fixed/--drift: promotion is a separate, deliberate transaction",
     );
   }
@@ -507,17 +510,17 @@ export function parse_argv(argv: string[]): CliArgs {
   // with `--drift`; `--reason` is valid ONLY in name-mode.
   args.name_mode = args.fixed && args.ids.length > 0;
   if (args.name_mode && args.drift) {
-    throw new Error(
+    throw new UsageError(
       "--fixed --id (name-mode) cannot combine with --drift: name-mode is a deliberate, direct flip",
     );
   }
   if (args.name_mode && args.reason === null) {
-    throw new Error(
+    throw new UsageError(
       "--fixed --id (name-mode) requires --reason <text>: a retirement must record why",
     );
   }
   if (args.reason !== null && !args.name_mode) {
-    throw new Error(
+    throw new UsageError(
       "--reason is valid only with name-mode (--fixed and --id together): no commit subject is cited there",
     );
   }
@@ -525,22 +528,17 @@ export function parse_argv(argv: string[]): CliArgs {
   // with the reconciliation signals, so it may not combine with any of them.
   if (args.stage !== null) {
     if (args.fixed || args.drift || args.promote || args.ids.length > 0 || args.reason !== null) {
-      throw new Error(
+      throw new UsageError(
         "--stage cannot combine with --fixed/--drift/--promote/--id/--reason: " +
           "staging a draft is a standalone insertion transaction",
       );
     }
-    // --stage is dry-run by default and writes only with --apply; --dry-run
-    // would imply it toggles something it does not.
-    if (args.dry_run) {
-      throw new Error(
-        "--stage is dry-run by default; drop --dry-run and pass --apply to write the insert",
-      );
-    }
+    // --stage is dry-run by default; --dry-run is the explicit preview idiom and
+    // is accepted as a no-op (it forces preview and wins over --apply in run_stage).
   }
   // --apply is the write opt-in for stage-mode; it is meaningless elsewhere.
   if (args.apply && args.stage === null) {
-    throw new Error("--apply is valid only with --stage: it opts a draft insertion into writing");
+    throw new UsageError("--apply is valid only with --stage: it opts a draft insertion into writing");
   }
   return args;
 }
@@ -988,7 +986,9 @@ export async function run_stage(
   }));
 
   // 6. Dry-run by default: preview per-sample results and exit without writing.
-  if (!args.apply) {
+  // An explicit --dry-run forces the preview and wins over --apply, matching the
+  // export adapter's `will_write = write && !dry_run` idiom.
+  if (!args.apply || args.dry_run) {
     return { draft: entry, applied: false, sample_results };
   }
 
@@ -1182,6 +1182,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     .then((deps) => run_or_stage(process.argv.slice(2), deps))
     .then((summary) => process.stdout.write(JSON.stringify(summary, null, 2) + "\n"))
     .catch((err) => {
+      if (err instanceof UsageError) {
+        process.stderr.write(`${err.message}\n${USAGE}`);
+        process.exit(2);
+      }
       process.stderr.write(
         `reconcile_registry failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}\n`,
       );

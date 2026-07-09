@@ -7,7 +7,9 @@
  */
 
 /**
- * Extract the required `--project <name>` from argv, or exit(1) with the usage string.
+ * Extract the required `--project <name>` from argv, or exit(2) with the usage
+ * string. A missing required argument is a usage error, so it exits 2 (the
+ * pipeline convention: usage error → 2, genuine failure → 1).
  */
 export function parse_project_arg(argv: readonly string[], usage: string): string {
   const args = argv.slice(2);
@@ -18,7 +20,7 @@ export function parse_project_arg(argv: readonly string[], usage: string): strin
     }
   }
   process.stderr.write(`${usage}\n`);
-  process.exit(1);
+  process.exit(2);
 }
 
 /** Extract optional `--run-id <id>` from argv. Returns null when absent or empty. */

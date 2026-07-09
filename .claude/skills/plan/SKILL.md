@@ -129,7 +129,7 @@ plan; re-dispatch that bucket rather than letting Pass C reject it as
 node --import tsx .claude/skills/plan/scripts/reconcile_plan.ts --sweep <sweep_id> [--strategist <id>]
 ```
 
-`--strategist <id>` (optional, default `plan-strategist`) names which strategist's staged plans (`staging/<sweep-id>/plans/<area>.json`) the reconciler loads.
+`--strategist <id>` (optional, default `plan-strategist`) is the provenance stamp written onto every minted `PlanTask` (the authoring agent identity); it does not select which plans load — Pass C loads every staged plan under `staging/<sweep-id>/plans/`.
 
 For each staged `(bucket, plan)` pair the reconciler validates the plan,
 flattens it into `PlanTask` candidates (minting ids + parent/child links and the
@@ -201,7 +201,7 @@ node --import tsx .claude/skills/plan/scripts/export_to_backlog.ts \
 
 | Flag                          | Effect                                                                                                                                                                                                                            |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--status proposed\|accepted` | Select rows in this live state (default `proposed`); only live work is exportable — terminal rows (`superseded`/`resolved`/`exported`) are never promoted                                                                         |
+| `--status proposed`           | Select rows in this live state (the default, and the only live state); only live work is exportable — terminal rows (`superseded`/`resolved`/`exported`) are never promoted                                                       |
 | `--fault-area <area>`         | Restrict to one `AriadneFaultArea`                                                                                                                                                                                                |
 | `--id <id>...`                | Export exactly these DB task ids — the filter flags are ignored, but a named row that is already exported (or whose `dedup_key` a backlog task carries) is still skipped, and a terminal-status row is reported as non-exportable |
 | `--dry-run`                   | Print the planned writes (incl. the would-be backlog ids); touch nothing                                                                                                                                                          |

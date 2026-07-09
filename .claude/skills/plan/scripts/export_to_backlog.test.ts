@@ -251,7 +251,7 @@ describe("export_to_backlog run()", () => {
     await repo.put(make_task({ id: "pt-1" as PlanTaskId, dedup_key: "expkey1" }));
     // A non-proposed row must be left alone (it is not in the default selection).
     await repo.put(
-      make_task({ id: "pt-acc" as PlanTaskId, dedup_key: "expkey2", status: "accepted" }),
+      make_task({ id: "pt-term" as PlanTaskId, dedup_key: "expkey2", status: "superseded" }),
     );
 
     const file = await write_assignment([
@@ -294,11 +294,11 @@ describe("export_to_backlog run()", () => {
     // The dedup reader recognises the promoted task (the loop closes).
     expect(await read_exported_backlog_keys(backlog_dir)).toEqual(new Map([["expkey1", "TASK-347"]]));
 
-    // The DB row flipped; the accepted row is untouched.
+    // The DB row flipped; the terminal (non-proposed) row is untouched.
     const exported = await repo.get("pt-1" as PlanTaskId);
     expect(exported?.status).toEqual("exported");
     expect(exported?.exported_backlog_task).toEqual("TASK-347");
-    expect((await repo.get("pt-acc" as PlanTaskId))?.status).toEqual("accepted");
+    expect((await repo.get("pt-term" as PlanTaskId))?.status).toEqual("superseded");
 
     // Exactly one export event in this run's log.
     const log_dir = plan_sweeps_dir();
@@ -436,7 +436,7 @@ describe("export_to_backlog run()", () => {
   it("rejects unknown args and a non-exportable --status", async () => {
     await expect(run(["--bogus"], FIXED_NOW)).rejects.toThrow("Unknown argument: --bogus");
     await expect(run(["--status", "resolved"], FIXED_NOW)).rejects.toThrow(
-      "--status expects one of proposed|accepted",
+      "--status expects one of proposed",
     );
     await expect(run(["--priority", "core"], FIXED_NOW)).rejects.toThrow(
       "Unknown argument: --priority",

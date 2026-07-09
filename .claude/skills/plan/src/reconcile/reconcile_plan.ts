@@ -3,7 +3,7 @@
  * task-DB and commit. Three decisions, in order:
  *
  *   1. CREATE / AUGMENT (the augment-not-duplicate guarantee). A candidate whose
- *      `dedup_key` + `tier` already names a LIVE task (`proposed`/`accepted`)
+ *      `dedup_key` + `tier` already names a LIVE task (`proposed`)
  *      augments it — merging evidence, bumping rollups, and ADOPTING the current
  *      sweep's structural pointers (its remapped `parent_id`; its `child_ids`
  *      unioned in) so the stored tree always reflects the latest plan. Everything
@@ -88,7 +88,7 @@ export interface ReconcileOutcome {
 }
 
 function is_live(task: PlanTask): boolean {
-  return task.status === "proposed" || task.status === "accepted";
+  return task.status === "proposed";
 }
 
 /** Composite key disambiguating two tasks that share a `dedup_key` by their tier. */

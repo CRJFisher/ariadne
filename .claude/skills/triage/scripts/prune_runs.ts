@@ -28,8 +28,8 @@ function parse_keep(argv: readonly string[]): number {
     if (args[i] === "--keep") {
       const n = parseInt(args[i + 1] ?? "", 10);
       if (isNaN(n) || n < 0) {
-        process.stderr.write("Error: --keep must be a non-negative integer\n");
-        process.exit(1);
+        process.stderr.write(`Error: --keep must be a non-negative integer\n${USAGE}\n`);
+        process.exit(2);
       }
       return n;
     }

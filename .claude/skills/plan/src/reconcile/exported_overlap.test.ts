@@ -98,7 +98,7 @@ describe("find_exported_overlaps", () => {
       exported_backlog_task: "TASK-9",
       members: [ev("a.ts", "fn_a"), ev("b.ts", "fn_b")],
     });
-    const candidate = task({ id: "pt-candidate", status: "accepted", members: [ev("a.ts", "fn_a")] });
+    const candidate = task({ id: "pt-candidate", status: "proposed", members: [ev("a.ts", "fn_a")] });
 
     const [overlap] = find_exported_overlaps([exported, candidate]);
     expect(overlap.candidate_subsumed).toBe(true);

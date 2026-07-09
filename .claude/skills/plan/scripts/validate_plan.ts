@@ -20,11 +20,15 @@ import { validate_plan } from "../src/reconcile/validate_plan.js";
 import type { FaultAreaBucket } from "../src/types.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
+const USAGE = "Usage: validate_plan --plan <plan.json> --bucket <bucket.json> --sweep-id <id>\n";
+
 interface CliArgs {
   plan_path: string;
   bucket_path: string;
   sweep_id: string;
 }
+
+class UsageError extends Error {}
 
 function parse_argv(argv: string[]): CliArgs {
   let plan_path: string | null = null;
@@ -44,16 +48,16 @@ function parse_argv(argv: string[]): CliArgs {
         break;
       case "--help":
       case "-h":
-        process.stdout.write("Usage: validate_plan --plan <plan.json> --bucket <bucket.json> --sweep-id <id>\n");
+        process.stdout.write(USAGE);
         process.exit(0);
         break;
       default:
-        throw new Error(`Unknown argument: ${arg}`);
+        throw new UsageError(`Unknown argument: ${arg}`);
     }
   }
-  if (plan_path === null || plan_path.length === 0) throw new Error("--plan <path> is required");
-  if (bucket_path === null || bucket_path.length === 0) throw new Error("--bucket <path> is required");
-  if (sweep_id === null || sweep_id.length === 0) throw new Error("--sweep-id <id> is required");
+  if (plan_path === null || plan_path.length === 0) throw new UsageError("--plan <path> is required");
+  if (bucket_path === null || bucket_path.length === 0) throw new UsageError("--bucket <path> is required");
+  if (sweep_id === null || sweep_id.length === 0) throw new UsageError("--sweep-id <id> is required");
   return { plan_path, bucket_path, sweep_id };
 }
 
@@ -90,6 +94,10 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
+  if (err instanceof UsageError) {
+    process.stderr.write(`${err.message}\n${USAGE}`);
+    process.exit(2);
+  }
   process.stderr.write(
     `validate_plan failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}\n`,
   );

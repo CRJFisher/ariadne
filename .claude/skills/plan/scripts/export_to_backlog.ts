@@ -58,7 +58,7 @@
  *
  * Usage:
  *   node --import tsx export_to_backlog.ts --assignments <file> --write \
- *     [--status proposed|accepted] [--fault-area <area>] [--id <db-task-id>...]
+ *     [--status proposed] [--fault-area <area>] [--id <db-task-id>...]
  *   node --import tsx export_to_backlog.ts --assignments <file>   # render card previews
  *   node --import tsx export_to_backlog.ts --dry-run              # preview candidate rows
  */
@@ -86,7 +86,7 @@ import {
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const USAGE =
-  "Usage: export_to_backlog [--status proposed|accepted] [--fault-area <area>] " +
+  "Usage: export_to_backlog [--status proposed] [--fault-area <area>] " +
   "[--id <db-task-id>...] [--assignments <file>] [--write] [--dry-run]\n";
 
 interface CliArgs {
@@ -96,6 +96,8 @@ interface CliArgs {
   /** Explicit opt-in to actually write. Plain `--assignments` renders card previews only. */
   write: boolean;
 }
+
+class UsageError extends Error {}
 
 function parse_argv(argv: string[]): CliArgs {
   if (argv.includes("--help") || argv.includes("-h")) {
@@ -116,7 +118,7 @@ function parse_argv(argv: string[]): CliArgs {
       case "--status": {
         const value = argv[++i] as PlanTaskStatus;
         if (!EXPORTABLE_STATUSES.has(value)) {
-          throw new Error(`--status expects one of ${[...EXPORTABLE_STATUSES].join("|")}`);
+          throw new UsageError(`--status expects one of ${[...EXPORTABLE_STATUSES].join("|")}`);
         }
         selectors.status = value;
         break;
@@ -124,7 +126,7 @@ function parse_argv(argv: string[]): CliArgs {
       case "--fault-area": {
         const value = argv[++i];
         if (value === undefined || value.startsWith("--")) {
-          throw new Error("--fault-area expects a fault-area name");
+          throw new UsageError("--fault-area expects a fault-area name");
         }
         selectors.fault_area = value as AriadneFaultArea;
         break;
@@ -138,7 +140,7 @@ function parse_argv(argv: string[]): CliArgs {
       case "--assignments": {
         const value = argv[++i];
         if (value === undefined || value.startsWith("--")) {
-          throw new Error("--assignments expects a file path");
+          throw new UsageError("--assignments expects a file path");
         }
         assignments_path = value;
         break;
@@ -150,7 +152,7 @@ function parse_argv(argv: string[]): CliArgs {
         write = true;
         break;
       default:
-        throw new Error(`Unknown argument: ${arg}`);
+        throw new UsageError(`Unknown argument: ${arg}`);
     }
   }
   return { selectors, assignments_path, dry_run, write };
@@ -355,6 +357,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   run(process.argv.slice(2))
     .then((summary) => process.stdout.write(JSON.stringify(summary, null, 2) + "\n"))
     .catch((err) => {
+      if (err instanceof UsageError) {
+        process.stderr.write(`${err.message}\n${USAGE}`);
+        process.exit(2);
+      }
       process.stderr.write(
         `export_to_backlog failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}\n`,
       );

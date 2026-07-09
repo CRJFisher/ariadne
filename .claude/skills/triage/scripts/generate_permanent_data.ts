@@ -35,6 +35,8 @@ import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const USAGE = "Usage: generate_permanent_data [--dry-run]\n";
 
+class UsageError extends Error {}
+
 /** Absolute path of the generated core slice. */
 export function permanent_slice_output_path(): string {
   return path.join(
@@ -105,16 +107,23 @@ function parse_argv(argv: string[]): { dry_run: boolean } {
         process.exit(0);
         break;
       default:
-        throw new Error(`Unknown argument: ${arg}`);
+        throw new UsageError(`Unknown argument: ${arg}`);
     }
   }
   return { dry_run };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  generate_permanent_data(parse_argv(process.argv.slice(2)))
+  // parse_argv runs inside the chain so a UsageError it throws lands in .catch
+  // (a synchronous throw in the call argument would escape the promise).
+  Promise.resolve()
+    .then(() => generate_permanent_data(parse_argv(process.argv.slice(2))))
     .then((summary) => process.stdout.write(JSON.stringify(summary, null, 2) + "\n"))
     .catch((err) => {
+      if (err instanceof UsageError) {
+        process.stderr.write(`${err.message}\n${USAGE}`);
+        process.exit(2);
+      }
       process.stderr.write(
         `generate_permanent_data failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}\n`,
       );

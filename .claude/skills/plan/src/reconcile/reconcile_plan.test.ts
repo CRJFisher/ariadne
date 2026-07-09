@@ -433,7 +433,7 @@ describe("reconcile_plan — orphan retirement", () => {
     );
 
     const after = await repo.query({});
-    const live = after.filter((t) => t.status === "proposed" || t.status === "accepted");
+    const live = after.filter((t) => t.status === "proposed");
     const live_ids = new Set(live.map((t) => t.id));
     for (const t of live) {
       if (t.parent_id !== null) expect(live_ids.has(t.parent_id)).toBe(true);
@@ -654,7 +654,7 @@ describe("reconcile_plan — backlog export overlay", () => {
     const root_after = after.find((t) => t.id === root.id);
     expect(root_after?.status).toEqual("exported");
     // Invariant: no live task points at a non-existent id; children point at the parent.
-    for (const t of after.filter((t) => t.status === "proposed" || t.status === "accepted")) {
+    for (const t of after.filter((t) => t.status === "proposed")) {
       if (t.parent_id !== null) expect(all_ids.has(t.parent_id)).toBe(true);
     }
     for (const leaf of after.filter((t) => t.tier === "localized")) {

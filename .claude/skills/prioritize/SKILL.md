@@ -1,7 +1,7 @@
 ---
 name: prioritize
 description: Review the plan engine's task-DB and promote selected PlanTask rows into the user's backlog/. Drives export_to_backlog.ts — the only writer of backlog/, run deliberately by the human when graduating planned work.
-argument-hint: "[--status proposed|accepted] [--fault-area <area>] [--id <db-task-id>...] [--dry-run]"
+argument-hint: "[--status proposed] [--fault-area <area>] [--id <db-task-id>...] [--dry-run]"
 disable-model-invocation: true
 allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read, Write, Bash(open:*), Task
 ---
@@ -75,7 +75,7 @@ chose, not the plan tier tree. The collapsed rows (fault-area node, merged leave
 write no file of their own; they fold into the epic and are still flipped to
 `exported`.
 
-Only `proposed` and `accepted` rows are exportable. A row already `exported`, or
+Only `proposed` rows are exportable. A row already `exported`, or
 whose `dedup_key` a backlog task already carries, is dropped from the selection —
 so its authored task finds no still-exportable rows and a re-run with the same
 arguments is a no-op. Every selected row must be claimed by some authored task's
@@ -591,14 +591,14 @@ a record of the investigation.
 
 | Flag                          | Selects                                                               |
 | ----------------------------- | --------------------------------------------------------------------- |
-| `--status proposed\|accepted` | rows in that lifecycle state                                          |
+| `--status proposed`           | rows in that lifecycle state (the only live state)                    |
 | `--fault-area <area>`         | rows in one `AriadneFaultArea`                                        |
 | `--id <db-task-id>`           | one exact row (repeatable); overrides the filters                     |
 | `--assignments <file>`        | authored `tasks[]`; renders card previews (no write on its own)       |
 | `--write`                     | opt-in past the preview; **required to write** (with `--assignments`) |
 | `--dry-run`                   | list the selection, write nothing (wins over `--write`)               |
 
-With no selectors, every exportable (`proposed`/`accepted`) row is selected —
+With no selectors, every exportable (`proposed`) row is selected —
 always preview that with `--dry-run` first. A write requires both `--assignments`
 and `--write`; `--assignments` alone renders the card previews, and no
 `--assignments` only previews the candidate rows.

@@ -43,9 +43,9 @@ describe("select_exportable_tasks (filtered mode)", () => {
   it("selects only the given status (default proposed), sorted by id", () => {
     const proposed_b = make_task({ id: "pt-b" as PlanTaskId, dedup_key: "kb", status: "proposed" });
     const proposed_a = make_task({ id: "pt-a" as PlanTaskId, dedup_key: "ka", status: "proposed" });
-    const accepted = make_task({ id: "pt-c" as PlanTaskId, dedup_key: "kc", status: "accepted" });
+    const terminal = make_task({ id: "pt-c" as PlanTaskId, dedup_key: "kc", status: "superseded" });
 
-    const result = select_exportable_tasks([proposed_b, proposed_a, accepted], FILTER, new Map());
+    const result = select_exportable_tasks([proposed_b, proposed_a, terminal], FILTER, new Map());
     expect(result.selected).toEqual([proposed_a, proposed_b]);
     expect(result.skipped_already_exported).toEqual([]);
     expect(result.missing_ids).toEqual([]);
@@ -104,15 +104,15 @@ describe("select_exportable_tasks (filtered mode)", () => {
 
 describe("select_exportable_tasks (explicit id mode)", () => {
   it("selects exactly the named ids and reports the misses", () => {
-    const a = make_task({ id: "pt-a" as PlanTaskId, dedup_key: "ka", status: "accepted" });
+    const a = make_task({ id: "pt-a" as PlanTaskId, dedup_key: "ka", fault_area: "method_lookup" });
     const b = make_task({ id: "pt-b" as PlanTaskId, dedup_key: "kb" });
 
     const result = select_exportable_tasks(
       [a, b],
-      { ...FILTER, ids: ["pt-a", "pt-missing"] },
+      { ...FILTER, fault_area: "name_resolution", ids: ["pt-a", "pt-missing"] },
       new Map(),
     );
-    // Status filter is ignored in id mode — the explicitly named `accepted` row is selected.
+    // Filters are ignored in id mode — pt-a is selected despite not matching the fault_area filter.
     expect(result.selected).toEqual([a]);
     expect(result.missing_ids).toEqual(["pt-missing"]);
   });

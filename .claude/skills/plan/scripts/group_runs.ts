@@ -40,10 +40,14 @@ import { build_sweep_manifest } from "../src/store/sweep_manifest.js";
 import type { ScanOptions } from "../src/types.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
+const USAGE = "Usage: group_runs [--project N] [--last N] [--run P] [--sweep ID]\n";
+
 /** Pass A scan options plus `sweep`: an existing sweep id to resume into (`null` mints a fresh one). */
 interface GroupRunsOptions extends ScanOptions {
   sweep: string | null;
 }
+
+class UsageError extends Error {}
 
 function parse_argv(argv: string[]): GroupRunsOptions {
   const opts: GroupRunsOptions = { project: null, last: null, run: null, sweep: null };
@@ -55,7 +59,7 @@ function parse_argv(argv: string[]): GroupRunsOptions {
         break;
       case "--last": {
         const n = Number.parseInt(argv[++i], 10);
-        if (Number.isNaN(n) || n <= 0) throw new Error("--last expects a positive int");
+        if (Number.isNaN(n) || n <= 0) throw new UsageError("--last expects a positive int");
         opts.last = n;
         break;
       }
@@ -67,13 +71,11 @@ function parse_argv(argv: string[]): GroupRunsOptions {
         break;
       case "--help":
       case "-h":
-        process.stdout.write(
-          "Usage: group_runs [--project N] [--last N] [--run P] [--sweep ID]\n",
-        );
+        process.stdout.write(USAGE);
         process.exit(0);
         break;
       default:
-        throw new Error(`Unknown argument: ${arg}`);
+        throw new UsageError(`Unknown argument: ${arg}`);
     }
   }
   return opts;
@@ -212,6 +214,10 @@ async function main(): Promise<void> {
 // Only run when invoked as the entry point (skips when imported by tests).
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((err) => {
+    if (err instanceof UsageError) {
+      process.stderr.write(`${err.message}\n${USAGE}`);
+      process.exit(2);
+    }
     process.stderr.write(
       `group_runs failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}\n`,
     );

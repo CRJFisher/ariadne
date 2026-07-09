@@ -33,6 +33,7 @@
  * Exit codes:
  *   0 = success
  *   1 = no state file found, invalid state JSON, or a transaction failure
+ *   2 = usage error (bad --count/--active, missing --project)
  */
 
 import * as fs from "node:fs/promises";
@@ -71,8 +72,8 @@ function parse_args(argv: string[]): CliArgs {
     if (args[i] === "--count") {
       const n = parseInt(args[++i], 10);
       if (isNaN(n) || n < 1) {
-        process.stderr.write("Error: --count must be a positive integer\n");
-        process.exit(1);
+        process.stderr.write(`Error: --count must be a positive integer\n${USAGE}\n`);
+        process.exit(2);
       }
       count = n;
     } else if (args[i] === "--active") {
@@ -81,8 +82,8 @@ function parse_args(argv: string[]): CliArgs {
         for (const token of raw.split(",")) {
           const n = parseInt(token.trim(), 10);
           if (isNaN(n)) {
-            process.stderr.write(`Error: --active contains non-integer value: ${token}\n`);
-            process.exit(1);
+            process.stderr.write(`Error: --active contains non-integer value: ${token}\n${USAGE}\n`);
+            process.exit(2);
           }
           active.add(n);
         }

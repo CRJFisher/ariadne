@@ -17,14 +17,16 @@ import {
 } from "../src/reconcile/exported_overlap.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
+const USAGE = "Usage: cross_check_exported_overlap [--format text|json]\n";
+
 function parse_format(argv: readonly string[]): "text" | "json" {
   const args = argv.slice(2);
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--format") {
       const v = args[i + 1] ?? "";
       if (v === "text" || v === "json") return v;
-      process.stderr.write("Error: --format must be text|json\n");
-      process.exit(1);
+      process.stderr.write(`Error: --format must be text|json\n${USAGE}`);
+      process.exit(2);
     }
   }
   return "text";

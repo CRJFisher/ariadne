@@ -554,13 +554,14 @@ async function resolve_mode(args: CLIArgs): Promise<ResolvedMode> {
   if (args.config) return resolve_config_mode(args.config);
   if (args.path && args.github) {
     console.error("Error: --path and --github are mutually exclusive.");
-    process.exit(1);
+    print_usage();
+    process.exit(2);
   }
   if (args.github) return resolve_github_mode(args.github, args.branch, args.depth);
   if (args.path) return resolve_local_mode(args.path);
   console.error("Error: One of --config, --path, or --github is required.");
   print_usage();
-  process.exit(1);
+  process.exit(2);
 }
 
 async function ensure_directory(dir_path: string): Promise<void> {

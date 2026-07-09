@@ -14,7 +14,7 @@
  * silently dropped): that report is the listing surface `prioritize` step 3a
  * reads to route permanent-limitation groups.
  *
- * Only LIVE work is exportable: a task must be `proposed` or `accepted`
+ * Only LIVE work is exportable: a task must be `proposed`
  * ({@link EXPORTABLE_STATUSES}). Terminal states (`superseded`, `resolved`,
  * `exported`) are retired work the engine no longer tracks as actionable, so
  * promoting them into the user's backlog is always a mistake — a filter typo
@@ -38,7 +38,6 @@ import type { PlanTask, PlanTaskStatus } from "../store/plan_task.js";
 /** The live states a task may be promoted from; terminal states are retired work and never exportable. */
 export const EXPORTABLE_STATUSES: ReadonlySet<PlanTaskStatus> = new Set<PlanTaskStatus>([
   "proposed",
-  "accepted",
 ]);
 
 export interface ExportSelectors {

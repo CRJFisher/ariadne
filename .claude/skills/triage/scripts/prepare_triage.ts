@@ -54,6 +54,8 @@ import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const DEFAULT_MAX_COUNT = 250;
 
+const USAGE = `Usage: prepare_triage.ts --analysis <path> [--project <name>] [--config <path>] [--max-count <n> (default: ${DEFAULT_MAX_COUNT})] [--no-reuse-tp] [--tp-source-run <run-id>]\n`;
+
 interface CliArgs {
   analysis_path: string;
   project: string | null;
@@ -86,8 +88,8 @@ function parse_args(argv: string[]): CliArgs {
       case "--max-count": {
         const n = parseInt(args[++i], 10);
         if (isNaN(n) || n < 1) {
-          process.stderr.write("Error: --max-count must be a positive integer\n");
-          process.exit(1);
+          process.stderr.write(`Error: --max-count must be a positive integer\n${USAGE}`);
+          process.exit(2);
         }
         max_count = n;
         break;
@@ -102,10 +104,8 @@ function parse_args(argv: string[]): CliArgs {
   }
 
   if (!analysis_path) {
-    console.error(
-      `Usage: prepare_triage.ts --analysis <path> [--project <name>] [--config <path>] [--max-count <n> (default: ${DEFAULT_MAX_COUNT})] [--no-reuse-tp] [--tp-source-run <run-id>]`,
-    );
-    process.exit(1);
+    process.stderr.write(USAGE);
+    process.exit(2);
   }
 
   return { analysis_path, project, config_path, max_count, no_reuse_tp, tp_source_run };

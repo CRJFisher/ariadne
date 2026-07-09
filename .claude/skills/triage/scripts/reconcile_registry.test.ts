@@ -680,10 +680,18 @@ describe("parse_argv", () => {
     );
   });
 
-  it("rejects --stage combined with --dry-run (dry-run is the default)", () => {
-    expect(() => parse_argv(["--stage", "d.json", "--dry-run"])).toThrowError(
-      /--stage is dry-run by default/,
-    );
+  it("accepts --stage --dry-run as a no-op preview (dry-run is the default idiom)", () => {
+    expect(parse_argv(["--stage", "d.json", "--dry-run"])).toEqual({
+      dry_run: true,
+      fixed: false,
+      drift: false,
+      ids: [],
+      promote: false,
+      reason: null,
+      name_mode: false,
+      stage: "d.json",
+      apply: false,
+    });
   });
 
   it("rejects --apply without --stage", () => {
@@ -1532,6 +1540,23 @@ describe("run_stage", () => {
         stage_deps({ load_stage_samples: async () => [] }),
       ),
     ).rejects.toThrowError(/no EnrichedEntryPoint samples found/);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
+  });
+
+  it("--dry-run wins over --apply: previews without writing even on an all-pass check", async () => {
+    const seeded = await seed([seeded_rule]);
+    const summary = await run_or_stage(
+      ["--stage", "/drafts/rule-staged.json", "--dry-run", "--apply"],
+      stage_deps({
+        load_stage_samples: async () => [make_sample("0.json")],
+        get_builtin_check: () => () => true,
+      }),
+    );
+    expect(summary).toEqual({
+      draft: staged_draft,
+      applied: false,
+      sample_results: [{ sample: "0.json", file_path: "/repo/src/handler.ts", passed: true }],
+    });
     expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
   });
 });

@@ -17,15 +17,16 @@ describe("parse_project_arg", () => {
     ).toBe("express");
   });
 
-  it("exits via process.exit(1) when --project is missing", () => {
+  it("exits via process.exit(2) with USAGE when --project is missing", () => {
     const exit_spy = vi.spyOn(process, "exit").mockImplementation(((code?: number) => {
       throw new Error(`__exit__:${code ?? 0}`);
     }) as never);
     const stderr_spy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
     try {
       expect(() => parse_project_arg(["node", "script.ts"], "Usage: foo --project <name>")).toThrow(
-        "__exit__:1",
+        "__exit__:2",
       );
+      expect(stderr_spy).toHaveBeenCalledWith("Usage: foo --project <name>\n");
     } finally {
       exit_spy.mockRestore();
       stderr_spy.mockRestore();

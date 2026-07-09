@@ -12,6 +12,8 @@ import * as path from "path";
 import { DEFAULT_MAX_DEPTH, preview_folders } from "../src/preview_folders.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
+const USAGE = `Usage: preview_folders.ts --path <abs_path> [--max-depth <n> (default: ${DEFAULT_MAX_DEPTH})]\n`;
+
 interface CliArgs {
   project_path: string;
   max_depth: number;
@@ -29,18 +31,16 @@ function parse_args(argv: string[]): CliArgs {
     } else if (arg === "--max-depth" && args[i + 1]) {
       const n = parseInt(args[++i], 10);
       if (isNaN(n) || n < 1) {
-        process.stderr.write("Error: --max-depth must be a positive integer\n");
-        process.exit(1);
+        process.stderr.write(`Error: --max-depth must be a positive integer\n${USAGE}`);
+        process.exit(2);
       }
       max_depth = n;
     }
   }
 
   if (!project_path) {
-    process.stderr.write(
-      `Usage: preview_folders.ts --path <abs_path> [--max-depth <n> (default: ${DEFAULT_MAX_DEPTH})]\n`,
-    );
-    process.exit(1);
+    process.stderr.write(USAGE);
+    process.exit(2);
   }
 
   return { project_path: path.resolve(project_path), max_depth };

@@ -23,8 +23,8 @@ function parse_optional_status(argv: readonly string[]): string | null {
     if (args[i] === "--status") {
       const v = args[i + 1] ?? "";
       if (["active", "finalized", "abandoned"].includes(v)) return v;
-      process.stderr.write("Error: --status must be active|finalized|abandoned\n");
-      process.exit(1);
+      process.stderr.write(`Error: --status must be active|finalized|abandoned\n${USAGE}\n`);
+      process.exit(2);
     }
   }
   return null;
@@ -36,8 +36,8 @@ function parse_last(argv: readonly string[]): number | null {
     if (args[i] === "--last") {
       const n = parseInt(args[i + 1] ?? "", 10);
       if (isNaN(n) || n < 1) {
-        process.stderr.write("Error: --last must be a positive integer\n");
-        process.exit(1);
+        process.stderr.write(`Error: --last must be a positive integer\n${USAGE}\n`);
+        process.exit(2);
       }
       return n;
     }

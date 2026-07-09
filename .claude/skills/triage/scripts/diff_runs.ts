@@ -24,7 +24,7 @@ function parse_required(argv: readonly string[], flag: string): string {
     }
   }
   process.stderr.write(`${USAGE}\n`);
-  process.exit(1);
+  process.exit(2);
 }
 
 function parse_format(argv: readonly string[]): "text" | "json" {
@@ -33,8 +33,8 @@ function parse_format(argv: readonly string[]): "text" | "json" {
     if (args[i] === "--format") {
       const v = args[i + 1] ?? "";
       if (v === "text" || v === "json") return v;
-      process.stderr.write("Error: --format must be text|json\n");
-      process.exit(1);
+      process.stderr.write(`Error: --format must be text|json\n${USAGE}\n`);
+      process.exit(2);
     }
   }
   return "text";

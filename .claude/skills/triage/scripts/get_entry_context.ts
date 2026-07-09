@@ -327,7 +327,7 @@ function parse_args(argv: string[]): {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     process.stderr.write(`${message}\n${USAGE}\n`);
-    process.exit(1);
+    process.exit(2);
   }
 }
 

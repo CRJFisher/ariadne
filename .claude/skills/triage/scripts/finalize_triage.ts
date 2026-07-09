@@ -61,7 +61,7 @@ async function main(): Promise<void> {
       `Error: run ${run_id} was already finalized at ${manifest.finalized_at}. ` +
         "Refusing to overwrite the published triage_results artifact.",
     );
-    process.exit(2);
+    process.exit(1);
   }
 
   const verdicts_by_entry_index = await load_verdicts_by_entry_index(

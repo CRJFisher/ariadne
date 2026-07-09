@@ -31,10 +31,14 @@ import { backlog_tasks_dir, plan_staging_manifest_path } from "../src/store/path
 import { type SweepManifest } from "../src/store/sweep_manifest.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
+const USAGE = "Usage: reconcile_plan --sweep <sweep-id> [--strategist <id>]\n";
+
 interface CliArgs {
   sweep_id: string;
   strategist: string;
 }
+
+class UsageError extends Error {}
 
 function parse_argv(argv: string[]): CliArgs {
   let sweep_id: string | null = null;
@@ -50,14 +54,14 @@ function parse_argv(argv: string[]): CliArgs {
         break;
       case "--help":
       case "-h":
-        process.stdout.write("Usage: reconcile_plan --sweep <sweep-id> [--strategist <id>]\n");
+        process.stdout.write(USAGE);
         process.exit(0);
         break;
       default:
-        throw new Error(`Unknown argument: ${arg}`);
+        throw new UsageError(`Unknown argument: ${arg}`);
     }
   }
-  if (sweep_id === null || sweep_id.length === 0) throw new Error("--sweep <sweep-id> is required");
+  if (sweep_id === null || sweep_id.length === 0) throw new UsageError("--sweep <sweep-id> is required");
   return { sweep_id, strategist };
 }
 
@@ -126,6 +130,10 @@ async function main(): Promise<void> {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((err) => {
+    if (err instanceof UsageError) {
+      process.stderr.write(`${err.message}\n${USAGE}`);
+      process.exit(2);
+    }
     process.stderr.write(
       `reconcile_plan failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}\n`,
     );

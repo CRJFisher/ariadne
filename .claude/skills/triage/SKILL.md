@@ -3,7 +3,7 @@ name: triage
 description: Triage stage for entry-point candidates. Detects entry points in Ariadne packages or external codebases and triages false positives via per-entry investigators, publishing each false positive raw and self-contained.
 argument-hint: "[config-name | /path/to/repo | owner/repo (GitHub)]"
 disable-model-invocation: true
-allowed-tools: Bash(node --import tsx:*), Bash(ls:*), Read, Write, Glob, AskUserQuestion, Task(triage-investigator)
+allowed-tools: Bash(node --import tsx:*), Read, Write, Glob, AskUserQuestion, Task(triage-investigator)
 ---
 
 # Triage Entrypoints

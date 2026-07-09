@@ -38,7 +38,7 @@ function member_set(task: PlanTask): Set<string> {
 }
 
 function is_live(task: PlanTask): boolean {
-  return task.status === "proposed" || task.status === "accepted";
+  return task.status === "proposed";
 }
 
 /**

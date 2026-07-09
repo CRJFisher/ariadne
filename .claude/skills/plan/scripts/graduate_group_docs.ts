@@ -56,6 +56,8 @@ interface CliArgs {
   dry_run: boolean;
 }
 
+class UsageError extends Error {}
+
 function parse_argv(argv: string[]): CliArgs {
   let slug: string | null = null;
   let export_summary_path: string | null = null;
@@ -66,7 +68,7 @@ function parse_argv(argv: string[]): CliArgs {
       case "--slug": {
         const value = argv[++i];
         if (value === undefined || value.startsWith("--")) {
-          throw new Error("--slug expects a cluster slug");
+          throw new UsageError("--slug expects a cluster slug");
         }
         slug = value;
         break;
@@ -74,7 +76,7 @@ function parse_argv(argv: string[]): CliArgs {
       case "--export-summary": {
         const value = argv[++i];
         if (value === undefined || value.startsWith("--")) {
-          throw new Error("--export-summary expects a file path");
+          throw new UsageError("--export-summary expects a file path");
         }
         export_summary_path = value;
         break;
@@ -88,10 +90,10 @@ function parse_argv(argv: string[]): CliArgs {
         process.exit(0);
         break;
       default:
-        throw new Error(`Unknown argument: ${arg}`);
+        throw new UsageError(`Unknown argument: ${arg}`);
     }
   }
-  if (slug === null) throw new Error("graduate_group_docs requires --slug <cluster-slug>");
+  if (slug === null) throw new UsageError("graduate_group_docs requires --slug <cluster-slug>");
   return { slug, export_summary_path, dry_run };
 }
 
@@ -177,6 +179,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   run(process.argv.slice(2))
     .then((summary) => process.stdout.write(JSON.stringify(summary, null, 2) + "\n"))
     .catch((err) => {
+      if (err instanceof UsageError) {
+        process.stderr.write(`${err.message}\n${USAGE}`);
+        process.exit(2);
+      }
       process.stderr.write(
         `graduate_group_docs failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}\n`,
       );

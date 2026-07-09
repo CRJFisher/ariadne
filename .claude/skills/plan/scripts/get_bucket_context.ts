@@ -22,10 +22,14 @@ import {
 import type { FaultAreaBucket } from "../src/types.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
+const USAGE = "Usage: get_bucket_context --bucket <file> --sweep <id>\n";
+
 interface CliArgs {
   bucket_path: string;
   sweep_id: string;
 }
+
+class UsageError extends Error {}
 
 function parse_argv(argv: string[]): CliArgs {
   let bucket_path: string | null = null;
@@ -41,15 +45,15 @@ function parse_argv(argv: string[]): CliArgs {
         break;
       case "--help":
       case "-h":
-        process.stdout.write("Usage: get_bucket_context --bucket <file> --sweep <id>\n");
+        process.stdout.write(USAGE);
         process.exit(0);
         break;
       default:
-        throw new Error(`Unknown argument: ${arg}`);
+        throw new UsageError(`Unknown argument: ${arg}`);
     }
   }
-  if (bucket_path === null || bucket_path.length === 0) throw new Error("--bucket <file> is required");
-  if (sweep_id === null || sweep_id.length === 0) throw new Error("--sweep <id> is required");
+  if (bucket_path === null || bucket_path.length === 0) throw new UsageError("--bucket <file> is required");
+  if (sweep_id === null || sweep_id.length === 0) throw new UsageError("--sweep <id> is required");
   return { bucket_path, sweep_id };
 }
 
@@ -131,6 +135,10 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
+  if (err instanceof UsageError) {
+    process.stderr.write(`${err.message}\n${USAGE}`);
+    process.exit(2);
+  }
   process.stderr.write(
     `get_bucket_context failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}\n`,
   );
