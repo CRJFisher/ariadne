@@ -277,6 +277,19 @@ describe("resolve_module_path_typescript", () => {
       );
       expect(result).toBe("/project/src/Component.tsx");
     });
+
+    it("resolves import with explicit .jsx extension to the .jsx file", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/Widget.jsx",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./Widget.jsx",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/Widget.jsx");
+    });
   });
 
   describe("bare imports", () => {
@@ -298,6 +311,16 @@ describe("resolve_module_path_typescript", () => {
         tree
       );
       expect(result).toBe("@types/node");
+    });
+
+    it("returns package subpath import unchanged", () => {
+      const tree = create_file_tree("/project", ["src/app.ts"]);
+      const result = resolve_module_path_typescript(
+        "lodash/fp",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("lodash/fp");
     });
   });
 
@@ -378,6 +401,26 @@ describe("resolve_module_path_typescript", () => {
         tree
       );
       expect(result).toBe("/project/src/nonexistent.ts");
+    });
+
+    it("keeps existing .tsx extension when file not found", () => {
+      const tree = create_file_tree("/project", ["src/app.ts"]);
+      const result = resolve_module_path_typescript(
+        "./nonexistent.tsx",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/nonexistent.tsx");
+    });
+
+    it("falls back to a relative path when importing_file is relative", () => {
+      const tree = create_file_tree("/project", ["src/app.ts"]);
+      const result = resolve_module_path_typescript(
+        "./nonexistent",
+        "src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("src/nonexistent.ts");
     });
   });
 });
