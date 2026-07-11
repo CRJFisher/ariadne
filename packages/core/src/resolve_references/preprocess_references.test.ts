@@ -1,12 +1,3 @@
-/**
- * Tests for Generic Reference Preprocessing Dispatcher
- *
- * Verifies that:
- * 1. Python files dispatch to preprocess_python_references
- * 2. TypeScript/JavaScript files are no-op
- * 3. Unknown languages are no-op
- */
-
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { preprocess_references } from "./preprocess_references";
 import { ReferenceRegistry } from "./registries/reference";
@@ -22,7 +13,6 @@ import { ResolutionRegistry } from "./resolve_references";
 
 import { preprocess_python_references } from "./preprocess_references.python";
 
-// Mock the Python preprocessor
 vi.mock("./preprocess_references.python", () => ({
   preprocess_python_references: vi.fn(),
 }));
@@ -56,7 +46,7 @@ describe("preprocess_references", () => {
     vi.restoreAllMocks();
   });
 
-  it("should call preprocess_python_references for Python files", () => {
+  it("dispatches Python files to preprocess_python_references", () => {
     preprocess_references(
       TEST_FILE_PY,
       "python",
@@ -74,8 +64,7 @@ describe("preprocess_references", () => {
     );
   });
 
-  it("should not process TypeScript files (no-op)", () => {
-    // Add a reference to verify it's not modified
+  it("leaves TypeScript references untouched", () => {
     const func_call: FunctionCallReference = {
       kind: "function_call",
       name: "someFunc" as SymbolName,
@@ -92,15 +81,13 @@ describe("preprocess_references", () => {
       resolutions
     );
 
-    // Python preprocessor should NOT be called
     expect(preprocess_python_references).not.toHaveBeenCalled();
 
-    // References should be unchanged
     const refs = references.get_file_references(TEST_FILE_TS);
     expect(refs).toEqual([func_call]);
   });
 
-  it("should not process JavaScript files (no-op)", () => {
+  it("leaves JavaScript references untouched", () => {
     const func_call: FunctionCallReference = {
       kind: "function_call",
       name: "someFunc" as SymbolName,
@@ -123,19 +110,19 @@ describe("preprocess_references", () => {
     expect(refs).toEqual([func_call]);
   });
 
-  it("should not process unknown languages (no-op)", () => {
-    const unknown_file = "test.xyz" as FilePath;
+  it("leaves Rust references untouched", () => {
+    const rust_file = "test.rs" as FilePath;
     const func_call: FunctionCallReference = {
       kind: "function_call",
       name: "someFunc" as SymbolName,
-      location: { ...MOCK_LOCATION, file_path: unknown_file },
+      location: { ...MOCK_LOCATION, file_path: rust_file },
       scope_id: FILE_SCOPE_ID,
     };
-    references.update_file(unknown_file, [func_call]);
+    references.update_file(rust_file, [func_call]);
 
     preprocess_references(
-      unknown_file,
-      "rust", // Not yet supported
+      rust_file,
+      "rust",
       references,
       definitions,
       resolutions
@@ -143,7 +130,7 @@ describe("preprocess_references", () => {
 
     expect(preprocess_python_references).not.toHaveBeenCalled();
 
-    const refs = references.get_file_references(unknown_file);
+    const refs = references.get_file_references(rust_file);
     expect(refs).toEqual([func_call]);
   });
 });

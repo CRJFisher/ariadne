@@ -1,16 +1,3 @@
-/**
- * Reference Preprocessing
- *
- * Preprocesses references based on language-specific semantics.
- * Called AFTER name resolution, BEFORE type resolution.
- *
- * This enables language-specific reference transformations without
- * polluting the generic call resolution logic.
- *
- * Currently supports:
- * - Python: Converts class instantiation function_call to constructor_call
- */
-
 import type { FilePath, Language } from "@ariadnejs/types";
 import type { ReferenceRegistry } from "./registries/reference";
 import type { DefinitionRegistry } from "./registries/definition";
@@ -18,15 +5,13 @@ import type { ResolutionRegistry } from "./resolve_references";
 import { preprocess_python_references } from "./preprocess_references.python";
 
 /**
- * Preprocess references based on language-specific semantics.
+ * Rewrite references in place to reflect language-specific call semantics
+ * before call resolution runs. Languages with no rewrites are a no-op.
  *
- * Called AFTER name resolution, BEFORE type resolution.
+ * Runs after name resolution (so callees can be classified) and before type
+ * resolution (so rewritten references feed type binding).
  *
- * @param file_path - File being processed
- * @param language - Language of the file
- * @param references - Reference registry (will be mutated)
- * @param definitions - Definition registry (read-only)
- * @param resolutions - Resolution registry (read-only)
+ * `references` is mutated; `definitions` and `resolutions` are read-only.
  */
 export function preprocess_references(
   file_path: FilePath,
@@ -44,14 +29,7 @@ export function preprocess_references(
         resolutions
       );
       break;
-
-    // Future languages can add handlers here:
-    // case "rust":
-    //   preprocess_rust_references(...);
-    //   break;
-
     default:
-      // No preprocessing needed for this language
       break;
   }
 }
