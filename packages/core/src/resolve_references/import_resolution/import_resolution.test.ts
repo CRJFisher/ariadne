@@ -4,7 +4,10 @@
 
 import { describe, it, expect } from "vitest";
 import type { FilePath } from "@ariadnejs/types";
-import { resolve_module_path } from "./import_resolution";
+import {
+  resolve_module_path,
+  resolve_submodule_import_path,
+} from "./import_resolution";
 import type { FileSystemFolder } from "../file_folders";
 
 /**
@@ -120,5 +123,60 @@ describe("resolve_module_path dispatcher", () => {
         tree
       )
     ).toThrow("Unsupported language");
+  });
+});
+
+describe("resolve_submodule_import_path dispatcher", () => {
+  it("resolves a Python submodule sibling file", () => {
+    const tree = create_file_tree("/project", [
+      "pkg/__init__.py",
+      "pkg/pipeline.py",
+    ]);
+    const result = resolve_submodule_import_path(
+      "/project/pkg/__init__.py" as FilePath,
+      "pipeline",
+      "python",
+      tree
+    );
+    expect(result).toBe("/project/pkg/pipeline.py");
+  });
+
+  it("resolves a Python submodule package directory", () => {
+    const tree = create_file_tree("/project", [
+      "pkg/__init__.py",
+      "pkg/nested/__init__.py",
+    ]);
+    const result = resolve_submodule_import_path(
+      "/project/pkg/__init__.py" as FilePath,
+      "nested",
+      "python",
+      tree
+    );
+    expect(result).toBe("/project/pkg/nested/__init__.py");
+  });
+
+  it("returns undefined when the Python name is an explicit export, not a submodule", () => {
+    const tree = create_file_tree("/project", ["pkg/__init__.py"]);
+    const result = resolve_submodule_import_path(
+      "/project/pkg/__init__.py" as FilePath,
+      "some_export",
+      "python",
+      tree
+    );
+    expect(result).toBeUndefined();
+  });
+
+  it("returns undefined for non-Python languages", () => {
+    const tree = create_file_tree("/project", [
+      "src/index.ts",
+      "src/utils.ts",
+    ]);
+    const result = resolve_submodule_import_path(
+      "/project/src/index.ts" as FilePath,
+      "utils",
+      "typescript",
+      tree
+    );
+    expect(result).toBeUndefined();
   });
 });

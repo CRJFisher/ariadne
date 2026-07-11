@@ -1,8 +1,6 @@
 /**
- * Import Resolution - Lazy resolver creation for imported symbols
- *
- * This module creates resolver functions for imports that are invoked on-demand.
- * Resolvers follow export chains only when an imported symbol is first referenced.
+ * Language-agnostic import-resolution dispatcher. Routes to the per-language
+ * resolvers based on the source language of the importing file.
  */
 
 import type { FilePath, Language } from "@ariadnejs/types";
@@ -16,13 +14,8 @@ import {
 import { resolve_module_path_rust } from "./import_resolution.rust";
 
 /**
- * Resolve import path to absolute file path (language-aware)
- *
- * @param import_path - Import path string from the import statement
- * @param importing_file - Absolute path to the file containing the import
- * @param language - Programming language
- * @param root_folder - Root of the file system tree
- * @returns Absolute file path to the imported module
+ * Resolve an import path to the absolute file path of the imported module,
+ * delegating to the resolver for the importing file's language.
  */
 export function resolve_module_path(
   import_path: string,
@@ -57,17 +50,10 @@ export function resolve_module_path(
 }
 
 /**
- * Check whether a named import refers to a submodule file (language-aware dispatch)
- *
- * For Python's `from package import module`, the named import may refer to a
- * submodule file rather than an explicit export. This function dispatches to
- * language-specific implementations.
- *
- * @param resolved_source_file - Resolved path of the import source
- * @param import_name - The imported name
- * @param language - Programming language
- * @param root_folder - Root of the file system tree
- * @returns Absolute path to the submodule file, or undefined if not a submodule
+ * Resolve a named import that refers to a submodule file rather than an
+ * explicit export. Only Python has this case (`from package import module`,
+ * where `module` is a sibling file, not a name exported by the package); every
+ * other language returns undefined.
  */
 export function resolve_submodule_import_path(
   resolved_source_file: FilePath,
