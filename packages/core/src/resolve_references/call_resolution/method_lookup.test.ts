@@ -1,19 +1,3 @@
-/**
- * Unit Tests for Method Lookup Module
- *
- * Tests the core function for looking up methods on resolved receiver types:
- * - resolve_method_on_type: Main entry point for method lookup
- *
- * Scenarios covered:
- * - Regular class method lookup
- * - Interface polymorphic resolution
- * - Object literal FunctionCollection lookup
- * - Namespace import method lookup
- * - Fallback paths and error cases
- *
- * For full integration tests, see method.test.ts.
- */
-
 import { describe, it, expect, beforeEach } from "vitest";
 import { resolve_method_on_type } from "./method_lookup";
 import type { ReceiverResolutionContext } from "./receiver_resolution";
@@ -98,7 +82,7 @@ describe("resolve_method_on_type", () => {
   });
 
   describe("Regular class method lookup", () => {
-    it("should find method via TypeRegistry", () => {
+    it("finds method via TypeRegistry", () => {
       const class_id = class_symbol("MyClass", MOCK_LOCATION);
       const method_id = method_symbol("process" as SymbolName, MOCK_LOCATION);
 
@@ -129,7 +113,6 @@ describe("resolve_method_on_type", () => {
 
       definitions.update_file(TEST_FILE, [class_def, method_def]);
 
-      // Setup TypeRegistry to return the method
       types["resolved_type_members"] = new Map();
       types["resolved_type_members"].set(
         class_id,
@@ -145,7 +128,7 @@ describe("resolve_method_on_type", () => {
       expect(unwrap(result)).toEqual([method_id]);
     });
 
-    it("should find method via DefinitionRegistry fallback", () => {
+    it("finds method via DefinitionRegistry member-index fallback when TypeRegistry misses", () => {
       const class_id = class_symbol("MyClass", MOCK_LOCATION);
       const method_id = method_symbol("process" as SymbolName, MOCK_LOCATION);
 
@@ -176,7 +159,6 @@ describe("resolve_method_on_type", () => {
 
       definitions.update_file(TEST_FILE, [class_def, method_def]);
 
-      // TypeRegistry doesn't have the member, so it should fall back to member_index
       const result = resolve_method_on_type(
         class_id,
         "process" as SymbolName,
@@ -186,7 +168,7 @@ describe("resolve_method_on_type", () => {
       expect(unwrap(result)).toEqual([method_id]);
     });
 
-    it("should return empty array if method not found", () => {
+    it("fails with method_not_on_type when the class has no such method", () => {
       const class_id = class_symbol("MyClass", MOCK_LOCATION);
 
       const class_def: ClassDefinition = {
@@ -211,15 +193,19 @@ describe("resolve_method_on_type", () => {
         context
       );
 
-      expect(result.ok).toBe(false);
+      expect(is_err(result)).toBe(true);
       if (is_err(result)) {
-        expect(result.error.reason).toBe("method_not_on_type");
+        expect(result.error).toEqual({
+          stage: "method_lookup",
+          reason: "method_not_on_type",
+          partial_info: { resolved_receiver_type: class_id },
+        });
       }
     });
   });
 
   describe("Interface polymorphic resolution", () => {
-    it("should resolve method to all implementations", () => {
+    it("resolves method to all implementations", () => {
       const interface_id = interface_symbol("Handler", MOCK_LOCATION);
       const class_a_id = class_symbol("HandlerA", { ...MOCK_LOCATION, start_line: 10 });
       const class_b_id = class_symbol("HandlerB", { ...MOCK_LOCATION, start_line: 20 });
@@ -328,13 +314,10 @@ describe("resolve_method_on_type", () => {
         context
       );
 
-      // Should return both implementation methods
-      expect(unwrap(result)).toHaveLength(2);
-      expect(unwrap(result)).toContain(method_a_id);
-      expect(unwrap(result)).toContain(method_b_id);
+      expect(unwrap(result)).toEqual([method_a_id, method_b_id]);
     });
 
-    it("should return empty array for interface with no implementations", () => {
+    it("fails with polymorphic_no_implementations for an interface no class implements", () => {
       const interface_id = interface_symbol("Handler", MOCK_LOCATION);
       const interface_method_id = method_symbol("process" as SymbolName, MOCK_LOCATION);
 
@@ -375,17 +358,19 @@ describe("resolve_method_on_type", () => {
         context
       );
 
-      // No implementations = empty result
-      expect(result.ok).toBe(false);
+      expect(is_err(result)).toBe(true);
       if (is_err(result)) {
-        expect(result.error.stage).toBe("method_lookup");
-        expect(result.error.reason).toBe("polymorphic_no_implementations");
+        expect(result.error).toEqual({
+          stage: "method_lookup",
+          reason: "polymorphic_no_implementations",
+          partial_info: { resolved_receiver_type: interface_id },
+        });
       }
     });
   });
 
   describe("Class polymorphic resolution", () => {
-    it("should resolve method to base and all child overrides", () => {
+    it("resolves method to base and all child overrides", () => {
       const base_class_id = class_symbol("Base", MOCK_LOCATION);
       const child_class_id = class_symbol("Child", { ...MOCK_LOCATION, start_line: 10 });
       const base_method_id = method_symbol("helper" as SymbolName, MOCK_LOCATION);
@@ -467,10 +452,7 @@ describe("resolve_method_on_type", () => {
         context
       );
 
-      // Should return both base and child methods
-      expect(unwrap(result)).toHaveLength(2);
-      expect(unwrap(result)).toContain(base_method_id);
-      expect(unwrap(result)).toContain(child_method_id);
+      expect(unwrap(result)).toEqual([base_method_id, child_method_id]);
     });
 
     it("does not fan a constructor call out to subclass constructors", () => {
@@ -553,7 +535,7 @@ describe("resolve_method_on_type", () => {
       expect(unwrap(result)).toEqual([base_ctor_id]);
     });
 
-    it("should resolve multi-level inheritance (3 levels)", () => {
+    it("resolves multi-level inheritance across three levels", () => {
       const class_a_id = class_symbol("A", MOCK_LOCATION);
       const class_b_id = class_symbol("B", { ...MOCK_LOCATION, start_line: 10 });
       const class_c_id = class_symbol("C", { ...MOCK_LOCATION, start_line: 20 });
@@ -663,14 +645,10 @@ describe("resolve_method_on_type", () => {
         context
       );
 
-      // Should return all three methods
-      expect(unwrap(result)).toHaveLength(3);
-      expect(unwrap(result)).toContain(method_a_id);
-      expect(unwrap(result)).toContain(method_b_id);
-      expect(unwrap(result)).toContain(method_c_id);
+      expect(unwrap(result)).toEqual([method_a_id, method_b_id, method_c_id]);
     });
 
-    it("should return only base method when no overrides exist", () => {
+    it("returns only base method when no subtype overrides exist", () => {
       const base_class_id = class_symbol("Base", MOCK_LOCATION);
       const child_class_id = class_symbol("Child", { ...MOCK_LOCATION, start_line: 10 });
       const base_method_id = method_symbol("helper" as SymbolName, MOCK_LOCATION);
@@ -743,7 +721,7 @@ describe("resolve_method_on_type", () => {
       expect(unwrap(result)).toEqual([base_method_id]);
     });
 
-    it("should handle sibling classes both overriding", () => {
+    it("resolves base plus both sibling overrides in diamond-shaped hierarchy", () => {
       const base_class_id = class_symbol("Base", MOCK_LOCATION);
       const child1_class_id = class_symbol("Child1", { ...MOCK_LOCATION, start_line: 10 });
       const child2_class_id = class_symbol("Child2", { ...MOCK_LOCATION, start_line: 20 });
@@ -852,16 +830,16 @@ describe("resolve_method_on_type", () => {
         context
       );
 
-      // Should return all three methods
-      expect(unwrap(result)).toHaveLength(3);
-      expect(unwrap(result)).toContain(base_method_id);
-      expect(unwrap(result)).toContain(child1_method_id);
-      expect(unwrap(result)).toContain(child2_method_id);
+      expect(unwrap(result)).toEqual([
+        base_method_id,
+        child1_method_id,
+        child2_method_id,
+      ]);
     });
   });
 
   describe("Namespace import method lookup", () => {
-    it("should resolve method from source file exports", () => {
+    it("resolves method from source file exports", () => {
       const namespace_import_id = "import:test.ts:1:0:1:20:utils" as SymbolId;
       const helper_fn_id = function_symbol("helper" as SymbolName, {
         ...MOCK_LOCATION,
@@ -912,7 +890,7 @@ describe("resolve_method_on_type", () => {
       expect(unwrap(result)).toEqual([helper_fn_id]);
     });
 
-    it("should return empty for non-exported function", () => {
+    it("fails with method_not_on_type for a non-exported function in the namespace source", () => {
       const namespace_import_id = "import:test.ts:1:0:1:20:utils" as SymbolId;
       const private_fn_id = function_symbol("private_helper" as SymbolName, {
         ...MOCK_LOCATION,
@@ -959,14 +937,20 @@ describe("resolve_method_on_type", () => {
         context_with_resolver
       );
 
-      expect(result.ok).toBe(false);
+      expect(is_err(result)).toBe(true);
       if (is_err(result)) {
-        expect(result.error.stage).toBe("method_lookup");
-        expect(result.error.reason).toBe("method_not_on_type");
+        expect(result.error).toEqual({
+          stage: "method_lookup",
+          reason: "method_not_on_type",
+          partial_info: {
+            resolved_receiver_type: namespace_import_id,
+            import_target_file: UTILS_FILE,
+          },
+        });
       }
     });
 
-    it("should return empty for non-existent function", () => {
+    it("fails with method_not_on_type for a name absent from the namespace source", () => {
       const namespace_import_id = "import:test.ts:1:0:1:20:utils" as SymbolId;
 
       const import_def: ImportDefinition = {
@@ -994,14 +978,20 @@ describe("resolve_method_on_type", () => {
         context_with_resolver
       );
 
-      expect(result.ok).toBe(false);
+      expect(is_err(result)).toBe(true);
       if (is_err(result)) {
-        expect(result.error.stage).toBe("method_lookup");
-        expect(result.error.reason).toBe("method_not_on_type");
+        expect(result.error).toEqual({
+          stage: "method_lookup",
+          reason: "method_not_on_type",
+          partial_info: {
+            resolved_receiver_type: namespace_import_id,
+            import_target_file: UTILS_FILE,
+          },
+        });
       }
     });
 
-    it("should return empty when no import path resolver is provided", () => {
+    it("fails with import_unresolved when the namespace import path cannot be resolved", () => {
       const namespace_import_id = "import:test.ts:1:0:1:20:utils" as SymbolId;
 
       const import_def: ImportDefinition = {
@@ -1016,23 +1006,25 @@ describe("resolve_method_on_type", () => {
 
       definitions.update_file(TEST_FILE, [import_def]);
 
-      // Use context without resolver
       const result = resolve_method_on_type(
         namespace_import_id,
         "helper" as SymbolName,
         context
       );
 
-      expect(result.ok).toBe(false);
+      expect(is_err(result)).toBe(true);
       if (is_err(result)) {
-        expect(result.error.stage).toBe("import_resolution");
-        expect(result.error.reason).toBe("import_unresolved");
+        expect(result.error).toEqual({
+          stage: "import_resolution",
+          reason: "import_unresolved",
+          partial_info: { resolved_receiver_type: namespace_import_id },
+        });
       }
     });
   });
 
   describe("Object literal FunctionCollection lookup", () => {
-    it("should find method in stored_functions", () => {
+    it("finds method in stored_functions", () => {
       const var_id = variable_symbol("HANDLERS", MOCK_LOCATION);
       const method_fn_id = function_symbol("process" as SymbolName, MOCK_LOCATION);
 
@@ -1080,7 +1072,7 @@ describe("resolve_method_on_type", () => {
       expect(unwrap(result)).toEqual([method_fn_id]);
     });
 
-    it("should find method in stored_references via resolution", () => {
+    it("finds method in stored_references via scope resolution", () => {
       const var_id = variable_symbol("HANDLERS", MOCK_LOCATION);
       const external_fn_id = function_symbol("external_process" as SymbolName, {
         ...MOCK_LOCATION,
@@ -1136,7 +1128,7 @@ describe("resolve_method_on_type", () => {
       expect(unwrap(result)).toEqual([external_fn_id]);
     });
 
-    it("should return empty for method not in collection", () => {
+    it("fails with collection_dispatch_miss for a method absent from the collection", () => {
       const var_id = variable_symbol("HANDLERS", MOCK_LOCATION);
       const other_fn_id = function_symbol("other" as SymbolName, MOCK_LOCATION);
 
@@ -1179,16 +1171,19 @@ describe("resolve_method_on_type", () => {
         context
       );
 
-      expect(result.ok).toBe(false);
+      expect(is_err(result)).toBe(true);
       if (is_err(result)) {
-        expect(result.error.stage).toBe("method_lookup");
-        expect(result.error.reason).toBe("collection_dispatch_miss");
+        expect(result.error).toEqual({
+          stage: "method_lookup",
+          reason: "collection_dispatch_miss",
+          partial_info: { resolved_receiver_type: var_id },
+        });
       }
     });
   });
 
   describe("Edge cases", () => {
-    it("should handle unknown receiver type", () => {
+    it("fails with method_not_on_type for an unregistered receiver type", () => {
       const unknown_id = "unknown:test.ts:1:0:1:10:mystery" as SymbolId;
 
       const result = resolve_method_on_type(
@@ -1197,10 +1192,17 @@ describe("resolve_method_on_type", () => {
         context
       );
 
-      expect(result.ok).toBe(false);
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error).toEqual({
+          stage: "method_lookup",
+          reason: "method_not_on_type",
+          partial_info: { resolved_receiver_type: unknown_id },
+        });
+      }
     });
 
-    it("should prefer TypeRegistry over member_index", () => {
+    it("prefers TypeRegistry member over member_index when both hold the name", () => {
       const class_id = class_symbol("MyClass", MOCK_LOCATION);
       const method_id_registry = method_symbol("process" as SymbolName, MOCK_LOCATION);
       const method_id_index = method_symbol("process" as SymbolName, { ...MOCK_LOCATION, start_line: 99 });
@@ -1245,7 +1247,6 @@ describe("resolve_method_on_type", () => {
         context
       );
 
-      // Should return the TypeRegistry result, not the member_index one
       expect(unwrap(result)).toEqual([method_id_registry]);
     });
   });
@@ -1254,11 +1255,9 @@ describe("resolve_method_on_type", () => {
     const IMPORT_GRAPH_FILE = "/test/import_graph.ts" as FilePath;
     const IMPORT_GRAPH_SCOPE = "module:import_graph.ts:1:1:100:1" as ScopeId;
 
-    it("should resolve method through named import to actual class", () => {
-      // This tests the pattern:
+    it("resolves method through a named import to the actual class", () => {
       // import { ImportGraph } from "./import_graph";
       // class Project { imports: ImportGraph; update() { this.imports.update_file(...); } }
-
       const import_id = "import:test.ts:1:0:1:30:ImportGraph" as SymbolId;
       const actual_class_id = class_symbol("ImportGraph", {
         ...MOCK_LOCATION,
@@ -1326,7 +1325,7 @@ describe("resolve_method_on_type", () => {
       expect(unwrap(result)).toEqual([update_method_id]);
     });
 
-    it("should return empty for non-exported class in source file", () => {
+    it("fails with reexport_chain_unresolved for a non-exported class in the source file", () => {
       const import_id = "import:test.ts:1:0:1:30:PrivateClass" as SymbolId;
       const private_class_id = class_symbol("PrivateClass", {
         ...MOCK_LOCATION,
@@ -1375,13 +1374,22 @@ describe("resolve_method_on_type", () => {
         context_with_resolver
       );
 
-      expect(result.ok).toBe(false);
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error).toEqual({
+          stage: "import_resolution",
+          reason: "reexport_chain_unresolved",
+          partial_info: {
+            resolved_receiver_type: import_id,
+            import_target_file: IMPORT_GRAPH_FILE,
+          },
+        });
+      }
     });
 
-    it("should fall back to submodule resolution when named import fails export chain", () => {
-      // This tests the pattern:
+    it("falls back to submodule resolution when a named import misses the export chain", () => {
       // from training import pipeline  (pipeline is a submodule file, not an export)
-      // pipeline.train()               (should resolve to train() in pipeline.py)
+      // pipeline.train()               resolves to train() in pipeline.py
       const PIPELINE_FILE = "/project/training/pipeline.py" as FilePath;
       const PIPELINE_SCOPE = "module:pipeline.py:1:0:100:0:<module>" as ScopeId;
       const import_id = "import:test.ts:1:0:1:30:pipeline" as SymbolId;
@@ -1436,7 +1444,7 @@ describe("resolve_method_on_type", () => {
       expect(unwrap(result)).toEqual([train_fn_id]);
     });
 
-    it("should fail with reexport_chain_unresolved when source resolves but export is missing", () => {
+    it("fails with reexport_chain_unresolved when source resolves but the export is missing", () => {
       // import { Helper } from "./barrel"; — barrel.ts re-exports nothing matching Helper
       const import_id = "import:test.ts:1:0:1:30:Helper" as SymbolId;
 
@@ -1469,8 +1477,14 @@ describe("resolve_method_on_type", () => {
 
       expect(is_err(result)).toBe(true);
       if (is_err(result)) {
-        expect(result.error.stage).toBe("import_resolution");
-        expect(result.error.reason).toBe("reexport_chain_unresolved");
+        expect(result.error).toEqual({
+          stage: "import_resolution",
+          reason: "reexport_chain_unresolved",
+          partial_info: {
+            resolved_receiver_type: import_id,
+            import_target_file: IMPORT_GRAPH_FILE,
+          },
+        });
       }
     });
   });

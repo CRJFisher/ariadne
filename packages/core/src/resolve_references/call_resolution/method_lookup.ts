@@ -1,16 +1,3 @@
-/**
- * Method Lookup Module
- *
- * Looks up methods on resolved receiver types. This is Phase 2 of the
- * unified method call resolution architecture.
- *
- * Handles:
- * - Direct method lookup on classes
- * - Polymorphic resolution for interface method calls
- * - Object literal method lookup via FunctionCollection
- * - Namespace export lookup for namespace imports
- */
-
 import type {
   SymbolId,
   SymbolName,
@@ -26,16 +13,11 @@ import type { FileSystemFolder } from "../file_folders";
 import type { ReceiverResolutionContext } from "./receiver_resolution";
 
 /**
- * Look up a method on a resolved receiver type
+ * Look up a method on a resolved receiver type, dispatching on receiver kind
+ * (namespace/named/default import, object-literal collection, class, interface).
  *
- * Handles multiple receiver kinds:
- * - Regular class/interface: direct member lookup
- * - Interface: polymorphic resolution (all implementations)
- * - Object literal (FunctionCollection): lookup in stored functions
- * - Namespace import: lookup in source file exports
- *
- * @returns Resolved method symbol_ids on success, or a `ResolutionFailure`
- *          identifying which sub-stage and reason caused the lookup to fail.
+ * On failure the `ResolutionFailure` names the sub-stage and reason so
+ * downstream classifiers can distinguish failure modes without re-resolving.
  */
 export function resolve_method_on_type(
   receiver_type: SymbolId,
@@ -44,10 +26,8 @@ export function resolve_method_on_type(
 ): Result<SymbolId[], ResolutionFailure> {
   const { definitions, types } = context;
 
-  // Check for special receiver types that need different handling
   const receiver_def = definitions.get(receiver_type);
 
-  // Handle namespace imports
   if (receiver_def?.kind === "import" && receiver_def.import_kind === "namespace") {
     const source_file = context.imports.get_resolved_import_path(receiver_type);
     if (!source_file) {
@@ -77,25 +57,23 @@ export function resolve_method_on_type(
     return ok([sym]);
   }
 
-  // Handle named/default imports - follow to actual exported class/type
+  // A named/default import is a stand-in for the class it points at; follow it
+  // to the terminal definition and resolve the method there.
   if (receiver_def?.kind === "import" && (receiver_def.import_kind === "named" || receiver_def.import_kind === "default")) {
     const source_file = context.imports.get_resolved_import_path(receiver_type);
     if (source_file) {
-      // Find the actual exported symbol in the source file
       const export_name = receiver_def.original_name || receiver_def.name;
       const actual_type = resolve_named_import(
         source_file,
         export_name,
-        receiver_def.import_kind,
         definitions
       );
       if (actual_type) {
-        // Recursively resolve method on the actual type
         return resolve_method_on_type(actual_type, method_name, context);
       }
     }
-    // Submodule fallback: named import may refer to a submodule file
-    // (e.g. `from training import pipeline` where pipeline is a .py file)
+    // A named import may point at a submodule file rather than an export
+    // (e.g. `from training import pipeline` where pipeline is a .py file).
     const submodule_path = context.imports.get_submodule_import_path(receiver_type);
     if (submodule_path) {
       const sym = resolve_namespace_export(
@@ -118,8 +96,8 @@ export function resolve_method_on_type(
       return ok([sym]);
     }
     if (source_file) {
-      // Source file resolved but the named export was not found and no submodule fallback:
-      // resolver walked the re-export chain and observed no terminal definition.
+      // Source file resolved but neither a matching export nor a submodule was
+      // found: the re-export chain terminated with no definition.
       return err({
         stage: "import_resolution",
         reason: "reexport_chain_unresolved",
@@ -136,16 +114,15 @@ export function resolve_method_on_type(
     });
   }
 
-  // Handle object literals with FunctionCollection
   const fn_collection = definitions.get_function_collection(receiver_type);
   if (fn_collection) {
     return resolve_collection_method(receiver_type, method_name, definitions, context);
   }
 
-  // Regular type: look up method as a member
   let method_symbol = types.get_type_member(receiver_type, method_name);
 
-  // Fallback to definition registry's member index
+  // The TypeRegistry only holds members it could resolve types for; fall back
+  // to the raw member index for members it never typed.
   if (!method_symbol) {
     const member_index = definitions.get_member_index();
     const type_members = member_index.get(receiver_type);
@@ -170,7 +147,6 @@ export function resolve_method_on_type(
     return ok([method_symbol]);
   }
 
-  // Check if this is a polymorphic call (receiver is an interface)
   if (receiver_def?.kind === "interface") {
     const impls = resolve_polymorphic_method(receiver_type, method_name, definitions);
     if (impls.length === 0) {
@@ -183,8 +159,8 @@ export function resolve_method_on_type(
     return ok(impls);
   }
 
-  // For classes, check if subtypes override this method
-  // This ensures all possible runtime targets are connected in the call graph
+  // Fan a class call out to every subtype override so all possible runtime
+  // targets are connected in the call graph, which entry-point detection needs.
   if (receiver_def?.kind === "class") {
     return ok(
       resolve_polymorphic_class_method(
@@ -196,31 +172,22 @@ export function resolve_method_on_type(
     );
   }
 
-  // Concrete call: single resolution
   return ok([method_symbol]);
 }
 
 /**
- * Resolve a polymorphic method call to all concrete implementations
+ * Resolve an interface method call to every implementing class's version,
+ * across transitive inheritance: if A implements I and B extends A, a call
+ * to I.method() resolves to both A.method() and B.method() (where overridden).
  *
- * When a method is called on an interface, we need to find all classes
- * that implement it and return their implementations of the method.
- *
- * Handles multi-level inheritance: if A implements I, and B extends A,
- * a call to I.method() will resolve to both A.method() and B.method()
- * (if B overrides it).
- *
- * @param interface_type_id - SymbolId of the interface
- * @param method_name - Name of the method being called
- * @param definitions - Definition registry with type inheritance index
- * @returns Array of SymbolIds for all implementation methods
+ * Interfaces are abstract, so only implementations are returned — there is no
+ * base method to include.
  */
 function resolve_polymorphic_method(
   interface_type_id: SymbolId,
   method_name: SymbolName,
   definitions: DefinitionRegistry
 ): SymbolId[] {
-  // Get ALL types in the inheritance tree (transitive subtypes)
   const all_subtypes = get_transitive_subtypes(interface_type_id, definitions);
 
   if (all_subtypes.size === 0) {
@@ -230,7 +197,6 @@ function resolve_polymorphic_method(
   const implementations: SymbolId[] = [];
   const member_index = definitions.get_member_index();
 
-  // Look up the method in each implementing class (direct or transitive)
   for (const subtype_id of all_subtypes) {
     const subtype_members = member_index.get(subtype_id);
     if (!subtype_members) {
@@ -247,21 +213,11 @@ function resolve_polymorphic_method(
 }
 
 /**
- * Resolve a method call on a class, including all subtype overrides.
+ * Resolve a class method call to the base method plus every subtype override.
  *
- * Returns the base method PLUS any overriding methods in subtypes.
- * This ensures all possible runtime targets are connected in the call graph,
- * which is essential for accurate entry point detection.
- *
- * Unlike interface polymorphism which only returns implementations (since
- * interfaces are abstract), class polymorphism includes the base method
- * because it may be called directly.
- *
- * @param class_id - SymbolId of the class containing the method
- * @param method_name - Name of the method being called
- * @param base_method_id - SymbolId of the method in the base class
- * @param definitions - Definition registry with type inheritance index
- * @returns Array of SymbolIds: base method + all overriding methods
+ * Unlike an interface (abstract, so only implementations count), a class
+ * method may be called directly, so the base is always included alongside the
+ * overrides. Returning all runtime targets keeps entry-point detection accurate.
  */
 function resolve_polymorphic_class_method(
   class_id: SymbolId,
@@ -294,18 +250,10 @@ function resolve_polymorphic_class_method(
 }
 
 /**
- * Get all transitive subtypes of a type (full inheritance tree)
+ * Collect the full subtree of subtypes below a type. For I with A implements I,
+ * B extends A, C extends B, returns {A, B, C}. The root itself is excluded.
  *
- * For interface I with:
- *   class A implements I
- *   class B extends A
- *   class C extends B
- *
- * Returns: {A, B, C}
- *
- * @param type_id - Root type to find subtypes for
- * @param definitions - Definition registry with type inheritance index
- * @returns Set of all transitive subtypes
+ * `processed` guards against cycles in a malformed inheritance graph.
  */
 function get_transitive_subtypes(
   type_id: SymbolId,
@@ -322,7 +270,6 @@ function get_transitive_subtypes(
     }
     processed.add(current);
 
-    // Get direct subtypes
     const direct_subtypes = definitions.get_subtypes(current);
     for (const subtype of direct_subtypes) {
       result.add(subtype);
@@ -336,18 +283,10 @@ function get_transitive_subtypes(
 /**
  * Look up a named export in a source file, following re-export chains.
  *
- * Used for namespace imports (`import * as ns from './mod'`) and
- * constructor resolution (`new ns.Foo()` → find `Foo` in `mod`). Delegates
- * to the export-chain follower so a barrel re-export
- * (`mod.ts: export { Foo } from './impl'`) resolves through to the terminal
- * definition in `impl`, not just same-file exports.
- *
- * @param source_file - The file path of the source module
- * @param export_name - Name of the exported symbol to find
- * @param exports - Export registry holding per-file export metadata
- * @param languages - File-path → language map (for module-path resolution)
- * @param root_folder - Project root folder (for module-path resolution)
- * @returns The exported symbol id, or null if not found
+ * Used for namespace imports (`import * as ns from './mod'`) and constructor
+ * resolution (`new ns.Foo()` → find `Foo` in `mod`). Following the chain lets
+ * a barrel re-export (`mod.ts: export { Foo } from './impl'`) resolve through
+ * to the terminal definition in `impl`, not just same-file exports.
  */
 export function resolve_namespace_export(
   source_file: FilePath,
@@ -366,38 +305,28 @@ export function resolve_namespace_export(
 }
 
 /**
- * Resolve a named or default import to its actual exported type
+ * Resolve a named or default import to the exported definition it names.
  *
- * For `import { ImportGraph } from "./import_graph"`, finds the actual
- * ImportGraph class exported from import_graph.ts.
+ * For `import { ImportGraph } from "./import_graph"`, finds the `ImportGraph`
+ * class exported from import_graph.ts.
  *
- * @param source_file - The file path of the source module
- * @param export_name - Name of the exported symbol to find
- * @param import_kind - Type of import (named or default)
- * @param definitions - Definition registry
- * @returns The actual type SymbolId, or null if not found
+ * Matches by name, which also covers default imports via the common
+ * `export default class ClassName` pattern where the local and exported names
+ * coincide; the definition carries no separate default-export marker.
  */
 function resolve_named_import(
   source_file: FilePath,
   export_name: SymbolName,
-  import_kind: "named" | "default",
   definitions: DefinitionRegistry
 ): SymbolId | null {
   const source_defs = definitions.get_exportable_definitions_in_file(source_file);
 
   for (const def of source_defs) {
-    // Skip imports (re-exports are handled separately)
+    // Re-exports are followed by resolve_namespace_export, not here.
     if (def.kind === "import") continue;
     if (!def.is_exported) continue;
 
-    // For named imports, match by name
-    if (import_kind === "named" && def.name === export_name) {
-      return def.symbol_id;
-    }
-
-    // For default imports, we'd need to check if this is the default export
-    // For now, match by name (common pattern: export default class ClassName)
-    if (import_kind === "default" && def.name === export_name) {
+    if (def.name === export_name) {
       return def.symbol_id;
     }
   }
@@ -406,16 +335,9 @@ function resolve_named_import(
 }
 
 /**
- * Resolve a method call on an object literal with FunctionCollection
- *
- * For `const HANDLERS = { process() {} }; HANDLERS.process();`
- * we need to look up `process` in the stored functions of the object literal.
- *
- * @param variable_id - SymbolId of the variable holding the object literal
- * @param method_name - Name of the method to look up
- * @param definitions - Definition registry
- * @param context - Resolution context (for resolving stored references)
- * @returns Array with the method symbol, or empty if not found
+ * Resolve a method call on an object literal held in a FunctionCollection, e.g.
+ * `const HANDLERS = { process() {} }; HANDLERS.process();` resolves `process`
+ * to the stored function.
  */
 function resolve_collection_method(
   variable_id: SymbolId,
@@ -432,8 +354,8 @@ function resolve_collection_method(
     });
   }
 
-  // Check stored_functions (directly defined anonymous functions)
-  // These are SymbolIds - we need to match by name from the definition
+  // stored_functions are inline anonymous definitions keyed by SymbolId; match
+  // on each definition's own name.
   for (const stored_fn_id of fn_collection.stored_functions) {
     const fn_def = definitions.get(stored_fn_id);
     if (fn_def && fn_def.name === method_name) {
@@ -441,12 +363,11 @@ function resolve_collection_method(
     }
   }
 
-  // Check stored_references (function references by name)
-  // These are SymbolNames - we need to resolve them in the defining scope
+  // stored_references are names of functions defined elsewhere; resolve them in
+  // the scope where the collection variable is declared.
   if (fn_collection.stored_references) {
     for (const ref_name of fn_collection.stored_references) {
       if (ref_name === method_name) {
-        // The reference name matches - resolve it in the variable's defining scope
         const var_def = definitions.get(variable_id);
         if (var_def) {
           const resolved = context.resolutions.resolve(var_def.defining_scope_id, method_name);
