@@ -44,7 +44,6 @@ greet();
 
     expect(result.capture_fired).toBe(true);
     expect(result.candidate_definitions).toEqual([]);
-    expect(result.resolution_failure).toBeDefined();
     expect(result.resolution_failure?.reason).toBe("name_not_in_scope");
   });
 
@@ -62,7 +61,6 @@ greet();
     expect(result.capture_fired).toBe(true);
     expect(result.receiver_kind).toBe("identifier");
     expect(result.candidate_definitions).toEqual([]);
-    expect(result.resolution_failure).toBeDefined();
     expect(result.resolution_failure?.reason).toBe("receiver_type_unknown");
   });
 
@@ -201,6 +199,27 @@ o.inner.run();
 
     expect(result.capture_fired).toBe(true);
     expect(result.receiver_kind).toBe("member_expression");
+    expect(result.candidate_definitions).toEqual([]);
+    expect(result.resolution_failure?.reason).toBe("member_type_unknown");
+  });
+
+  it("returns capture_fired=false when a column is supplied that no call starts at", () => {
+    const file = "main.ts" as FilePath;
+    project.update_file(
+      file,
+      `function greet() { return "hi"; }
+greet();
+`
+    );
+
+    const call_line = find_call_line(project, file, "greet" as SymbolName);
+    const result = explain_call_site(project, file, call_line, 999);
+
+    const expected: ExplainCallSiteResult = {
+      capture_fired: false,
+      candidate_definitions: [],
+    };
+    expect(result).toEqual(expected);
   });
 
   it("returns resolution_failure with reason=method_not_on_type for a method that does not exist on a typed receiver", () => {
@@ -218,7 +237,6 @@ c.nonexistent();
 
     expect(result.capture_fired).toBe(true);
     expect(result.candidate_definitions).toEqual([]);
-    expect(result.resolution_failure).toBeDefined();
     expect(result.resolution_failure?.reason).toBe("method_not_on_type");
   });
 
@@ -238,9 +256,10 @@ function dispatch(h: Handler) { h.run(); }
 
     expect(result.capture_fired).toBe(true);
     expect(result.receiver_kind).toBe("identifier");
-    expect(result.candidate_definitions.length).toBeGreaterThanOrEqual(2);
     const names = result.candidate_definitions.map((d) => d.name).sort();
-    for (const name of names) expect(name).toBe("run");
+    expect(names).toEqual(["run", "run"]);
+    const kinds = result.candidate_definitions.map((d) => d.kind);
+    expect(kinds).toEqual(["method", "method"]);
   });
 
   it("captures constructor calls without a receiver_kind", () => {
@@ -264,10 +283,10 @@ new C();
     );
 
     expect(result.capture_fired).toBe(true);
-    // Constructor calls deliberately carry no call_site_syntax, so
-    // receiver_kind must be absent — that absence is the fact.
     expect(result.receiver_kind).toBeUndefined();
-    expect(result.candidate_definitions.length).toBeGreaterThan(0);
+    expect(result.candidate_definitions.length).toBe(1);
+    expect(result.candidate_definitions[0].name).toBe("constructor");
+    expect(result.candidate_definitions[0].kind).toBe("constructor");
   });
 });
 
