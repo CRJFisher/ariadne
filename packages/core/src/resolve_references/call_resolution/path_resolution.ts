@@ -27,11 +27,7 @@ import type {
 import type { DefinitionRegistry } from "../registries/definition";
 import type { ScopeRegistry } from "../registries/scope";
 
-/**
- * Leading path segments that pin a Rust path to a module root rather than
- * naming a resolvable binding in scope.
- */
-export const PATH_ANCHORS: ReadonlySet<string> = new Set(["crate", "self", "super"]);
+const PATH_ANCHORS: ReadonlySet<string> = new Set(["crate", "self", "super"]);
 
 /**
  * Drop leading crate/self/super anchors — they pin the path to a module root

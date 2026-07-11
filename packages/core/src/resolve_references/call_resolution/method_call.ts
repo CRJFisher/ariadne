@@ -61,7 +61,6 @@ export function resolve_method_call(
   languages: ReadonlyMap<FilePath, Language>,
   root_folder: FileSystemFolder
 ): Result<SymbolId[], ResolutionFailure> {
-  // Build resolution context
   const context: ReceiverResolutionContext = {
     scopes,
     definitions,
@@ -73,7 +72,6 @@ export function resolve_method_call(
     root_folder,
   };
 
-  // Phase 1: Extract and resolve the receiver expression to a type
   const receiver = extract_receiver(call_ref);
   const receiver_result = resolve_receiver_type(receiver, context);
 
@@ -81,7 +79,6 @@ export function resolve_method_call(
     return receiver_result;
   }
 
-  // Phase 2: Look up method on the resolved receiver type
   return resolve_method_on_type(
     receiver_result.value,
     receiver.method_name,
