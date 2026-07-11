@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { TypeScriptScopeBoundaryExtractor } from "./typescript_scope_boundary_extractor";
+import type { ScopeBoundaries } from "../boundary_base";
 import type { FilePath } from "@ariadnejs/types";
 import type Parser from "tree-sitter";
 
@@ -7,7 +8,6 @@ describe("TypeScriptScopeBoundaryExtractor", () => {
   const extractor = new TypeScriptScopeBoundaryExtractor();
   const file_path = "test.ts" as FilePath;
 
-  // Helper to create mock nodes
   function create_mock_node(
     type: string,
     fields: Record<string, Parser.SyntaxNode | null> = {},
@@ -43,10 +43,10 @@ describe("TypeScriptScopeBoundaryExtractor", () => {
     } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
   }
 
-  describe("TypeScript-specific class-like constructs", () => {
-    it("should handle interface declarations", () => {
-      const name_node = create_mock_node("identifier");
-      const body_node = create_mock_node("interface_body");
+  describe("TypeScript class-like constructs", () => {
+    it("scopes an interface declaration to its name and body", () => {
+      const name_node = create_mock_node("type_identifier", {}, { row: 0, column: 10 }, { row: 0, column: 19 });
+      const body_node = create_mock_node("interface_body", {}, { row: 0, column: 20 }, { row: 4, column: 1 });
       const interface_decl = create_mock_node("interface_declaration", {
         name: name_node,
         body: body_node,
@@ -54,26 +54,30 @@ describe("TypeScriptScopeBoundaryExtractor", () => {
 
       const result = extractor.extract_boundaries(interface_decl, "class", file_path);
 
-      expect(result.symbol_location.start_line).toBe(1);
-      expect(result.scope_location.start_line).toBe(1);
+      const expected: ScopeBoundaries = {
+        symbol_location: { file_path, start_line: 1, start_column: 11, end_line: 1, end_column: 19 },
+        scope_location: { file_path, start_line: 1, start_column: 21, end_line: 5, end_column: 1 },
+      };
+      expect(result).toEqual(expected);
     });
 
-    it("should handle interface_body nodes directly", () => {
-      const name_node = create_mock_node("identifier");
-      const parent_interface = create_mock_node("interface_declaration", {
-        name: name_node,
-      });
+    it("resolves an interface_body node through its parent declaration", () => {
+      const name_node = create_mock_node("type_identifier", {}, { row: 0, column: 10 }, { row: 0, column: 19 });
+      const parent_interface = create_mock_node("interface_declaration", { name: name_node });
       const interface_body = create_mock_node("interface_body", {}, { row: 1, column: 10 }, { row: 3, column: 1 }, parent_interface);
 
       const result = extractor.extract_boundaries(interface_body, "class", file_path);
 
-      expect(result.symbol_location.start_line).toBe(1);
-      expect(result.scope_location.start_line).toBe(2);
+      const expected: ScopeBoundaries = {
+        symbol_location: { file_path, start_line: 1, start_column: 11, end_line: 1, end_column: 19 },
+        scope_location: { file_path, start_line: 2, start_column: 11, end_line: 4, end_column: 1 },
+      };
+      expect(result).toEqual(expected);
     });
 
-    it("should handle enum declarations", () => {
-      const name_node = create_mock_node("identifier");
-      const body_node = create_mock_node("enum_body");
+    it("scopes an enum declaration to its name and body", () => {
+      const name_node = create_mock_node("identifier", {}, { row: 0, column: 5 }, { row: 0, column: 10 });
+      const body_node = create_mock_node("enum_body", {}, { row: 0, column: 11 }, { row: 3, column: 1 });
       const enum_decl = create_mock_node("enum_declaration", {
         name: name_node,
         body: body_node,
@@ -81,40 +85,30 @@ describe("TypeScriptScopeBoundaryExtractor", () => {
 
       const result = extractor.extract_boundaries(enum_decl, "class", file_path);
 
-      expect(result.symbol_location.start_line).toBe(1);
-      expect(result.scope_location.start_line).toBe(1);
+      const expected: ScopeBoundaries = {
+        symbol_location: { file_path, start_line: 1, start_column: 6, end_line: 1, end_column: 10 },
+        scope_location: { file_path, start_line: 1, start_column: 12, end_line: 4, end_column: 1 },
+      };
+      expect(result).toEqual(expected);
     });
 
-    it("should handle enum_body nodes directly", () => {
-      const name_node = create_mock_node("identifier");
-      const parent_enum = create_mock_node("enum_declaration", {
-        name: name_node,
-      });
+    it("resolves an enum_body node through its parent declaration", () => {
+      const name_node = create_mock_node("identifier", {}, { row: 0, column: 5 }, { row: 0, column: 10 });
+      const parent_enum = create_mock_node("enum_declaration", { name: name_node });
       const enum_body = create_mock_node("enum_body", {}, { row: 1, column: 10 }, { row: 3, column: 1 }, parent_enum);
 
       const result = extractor.extract_boundaries(enum_body, "class", file_path);
 
-      expect(result.symbol_location.start_line).toBe(1);
-      expect(result.scope_location.start_line).toBe(2);
+      const expected: ScopeBoundaries = {
+        symbol_location: { file_path, start_line: 1, start_column: 6, end_line: 1, end_column: 10 },
+        scope_location: { file_path, start_line: 2, start_column: 11, end_line: 4, end_column: 1 },
+      };
+      expect(result).toEqual(expected);
     });
 
-    it("should handle namespace declarations", () => {
-      const name_node = create_mock_node("identifier");
-      const body_node = create_mock_node("namespace_body");
-      const namespace_decl = create_mock_node("namespace_declaration", {
-        name: name_node,
-        body: body_node,
-      });
-
-      const result = extractor.extract_boundaries(namespace_decl, "module", file_path);
-
-      expect(result.symbol_location.start_line).toBe(1);
-      expect(result.scope_location.start_line).toBe(1);
-    });
-
-    it("should delegate to base class for regular class declarations", () => {
-      const name_node = create_mock_node("identifier");
-      const body_node = create_mock_node("class_body");
+    it("delegates a regular class declaration to the base extractor", () => {
+      const name_node = create_mock_node("type_identifier", {}, { row: 0, column: 6 }, { row: 0, column: 9 });
+      const body_node = create_mock_node("class_body", {}, { row: 0, column: 10 }, { row: 5, column: 1 });
       const class_decl = create_mock_node("class_declaration", {
         name: name_node,
         body: body_node,
@@ -122,24 +116,83 @@ describe("TypeScriptScopeBoundaryExtractor", () => {
 
       const result = extractor.extract_boundaries(class_decl, "class", file_path);
 
-      expect(result.symbol_location.start_line).toBe(1);
-      expect(result.scope_location.start_line).toBe(1);
-    });
-
-    it("should handle nodes without type (mock nodes)", () => {
-      const mock_node = create_mock_node("");
-      // Remove the type property to simulate undefined
-      delete (mock_node as any).type;
-
-      const result = extractor.extract_boundaries(mock_node, "class", file_path);
-
-      // Should fall back to base class handling
-      expect(result.symbol_location).toEqual(result.scope_location);
+      const expected: ScopeBoundaries = {
+        symbol_location: { file_path, start_line: 1, start_column: 7, end_line: 1, end_column: 9 },
+        scope_location: { file_path, start_line: 1, start_column: 11, end_line: 6, end_column: 1 },
+      };
+      expect(result).toEqual(expected);
     });
   });
 
-  describe("Error handling for interface/enum body nodes", () => {
-    it("should throw error for interface_body without interface parent", () => {
+  describe("TypeScript namespace/module constructs", () => {
+    it("scopes a namespace declaration to its name and body", () => {
+      const name_node = create_mock_node("identifier", {}, { row: 0, column: 10 }, { row: 0, column: 15 });
+      const body_node = create_mock_node("statement_block", {}, { row: 0, column: 16 }, { row: 5, column: 1 });
+      const namespace_decl = create_mock_node("internal_module", {
+        name: name_node,
+        body: body_node,
+      });
+
+      const result = extractor.extract_boundaries(namespace_decl, "module", file_path);
+
+      const expected: ScopeBoundaries = {
+        symbol_location: { file_path, start_line: 1, start_column: 11, end_line: 1, end_column: 15 },
+        scope_location: { file_path, start_line: 1, start_column: 17, end_line: 6, end_column: 1 },
+      };
+      expect(result).toEqual(expected);
+    });
+
+    it("maps the root program node to its own full location", () => {
+      const program = create_mock_node("program", {}, { row: 0, column: 0 }, { row: 10, column: 0 });
+
+      const result = extractor.extract_boundaries(program, "module", file_path);
+
+      const location = { file_path, start_line: 1, start_column: 1, end_line: 11, end_column: 0 };
+      const expected: ScopeBoundaries = {
+        symbol_location: location,
+        scope_location: location,
+      };
+      expect(result).toEqual(expected);
+    });
+  });
+
+  describe("TypeScript method and constructor signatures", () => {
+    it("scopes a body-less method signature to its parameters", () => {
+      const name_node = create_mock_node("property_identifier", {}, { row: 0, column: 2 }, { row: 0, column: 8 });
+      const params_node = create_mock_node("formal_parameters", {}, { row: 0, column: 8 }, { row: 0, column: 20 });
+      const method_signature = create_mock_node("method_signature", {
+        name: name_node,
+        parameters: params_node,
+      });
+
+      const result = extractor.extract_boundaries(method_signature, "method", file_path);
+
+      const expected: ScopeBoundaries = {
+        symbol_location: { file_path, start_line: 1, start_column: 3, end_line: 1, end_column: 8 },
+        scope_location: { file_path, start_line: 1, start_column: 9, end_line: 1, end_column: 20 },
+      };
+      expect(result).toEqual(expected);
+    });
+
+    it("scopes a body-less constructor signature to its parameters", () => {
+      const params_node = create_mock_node("formal_parameters", {}, { row: 0, column: 11 }, { row: 0, column: 25 });
+      const constructor_signature = create_mock_node("constructor_signature", {
+        parameters: params_node,
+      });
+
+      const result = extractor.extract_boundaries(constructor_signature, "constructor", file_path);
+
+      const params_location = { file_path, start_line: 1, start_column: 12, end_line: 1, end_column: 25 };
+      const expected: ScopeBoundaries = {
+        symbol_location: params_location,
+        scope_location: params_location,
+      };
+      expect(result).toEqual(expected);
+    });
+  });
+
+  describe("malformed node handling", () => {
+    it("throws when an interface_body has no interface_declaration parent", () => {
       const interface_body = create_mock_node("interface_body");
 
       expect(() => {
@@ -147,7 +200,7 @@ describe("TypeScriptScopeBoundaryExtractor", () => {
       }).toThrow("interface_body node must have interface_declaration parent");
     });
 
-    it("should throw error for enum_body without enum parent", () => {
+    it("throws when an enum_body has no enum_declaration parent", () => {
       const enum_body = create_mock_node("enum_body");
 
       expect(() => {
@@ -155,87 +208,61 @@ describe("TypeScriptScopeBoundaryExtractor", () => {
       }).toThrow("enum_body node must have enum_declaration parent");
     });
 
-    it("should throw error for interface declaration without name", () => {
+    it("throws when an interface declaration has no name field", () => {
       const body_node = create_mock_node("interface_body");
-      const interface_decl = create_mock_node("interface_declaration", {
-        body: body_node,
-        // No name field
-      });
+      const interface_decl = create_mock_node("interface_declaration", { body: body_node });
 
       expect(() => {
         extractor.extract_boundaries(interface_decl, "class", file_path);
       }).toThrow("Interface declaration has no name field");
     });
 
-    it("should throw error for enum declaration without name", () => {
+    it("throws when an interface declaration has no body field", () => {
+      const name_node = create_mock_node("type_identifier");
+      const interface_decl = create_mock_node("interface_declaration", { name: name_node });
+
+      expect(() => {
+        extractor.extract_boundaries(interface_decl, "class", file_path);
+      }).toThrow("Interface declaration has no body field");
+    });
+
+    it("throws when an enum declaration has no name field", () => {
       const body_node = create_mock_node("enum_body");
-      const enum_decl = create_mock_node("enum_declaration", {
-        body: body_node,
-        // No name field
-      });
+      const enum_decl = create_mock_node("enum_declaration", { body: body_node });
 
       expect(() => {
         extractor.extract_boundaries(enum_decl, "class", file_path);
       }).toThrow("Enum declaration has no name field");
     });
 
-    it("should throw error for namespace declaration without name", () => {
-      const body_node = create_mock_node("namespace_body");
-      const namespace_decl = create_mock_node("namespace_declaration", {
-        body: body_node,
-        // No name field
-      });
+    it("throws when an enum declaration has no body field", () => {
+      const name_node = create_mock_node("identifier");
+      const enum_decl = create_mock_node("enum_declaration", { name: name_node });
+
+      expect(() => {
+        extractor.extract_boundaries(enum_decl, "class", file_path);
+      }).toThrow("Enum declaration has no body field");
+    });
+
+    it("throws when a namespace declaration has no name field", () => {
+      const body_node = create_mock_node("statement_block");
+      const namespace_decl = create_mock_node("internal_module", { body: body_node });
 
       expect(() => {
         extractor.extract_boundaries(namespace_decl, "module", file_path);
       }).toThrow("Namespace declaration has no name field");
     });
 
-    it("should throw error for namespace declaration without body", () => {
+    it("throws when a namespace declaration has no body field", () => {
       const name_node = create_mock_node("identifier");
-      const namespace_decl = create_mock_node("namespace_declaration", {
-        name: name_node,
-        // No body field
-      });
+      const namespace_decl = create_mock_node("internal_module", { name: name_node });
 
       expect(() => {
         extractor.extract_boundaries(namespace_decl, "module", file_path);
       }).toThrow("Namespace declaration has no body field");
     });
-  });
 
-  describe("TypeScript method and function handling", () => {
-    it("should handle TypeScript method signatures", () => {
-      const name_node = create_mock_node("identifier");
-      const params_node = create_mock_node("formal_parameters");
-      const method_signature = create_mock_node("method_signature", {
-        name: name_node,
-        parameters: params_node,
-        // No body for interface method signatures
-      });
-
-      const result = extractor.extract_boundaries(method_signature, "method", file_path);
-
-      expect(result.symbol_location.start_line).toBe(1);
-      expect(result.scope_location.start_line).toBe(1);
-    });
-
-    it("should handle TypeScript constructor signatures", () => {
-      const params_node = create_mock_node("formal_parameters");
-      const constructor_signature = create_mock_node("constructor_signature", {
-        parameters: params_node,
-        // No body for interface constructor signatures
-      });
-
-      const result = extractor.extract_boundaries(constructor_signature, "constructor", file_path);
-
-      expect(result.symbol_location.start_line).toBe(1);
-      expect(result.scope_location.start_line).toBe(1);
-    });
-  });
-
-  describe("Unsupported node types", () => {
-    it("should throw error for unsupported TypeScript class-like node types", () => {
+    it("throws for an unsupported TypeScript class-like node type", () => {
       const unsupported_node = create_mock_node("unsupported_type");
 
       expect(() => {
