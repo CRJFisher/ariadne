@@ -10,7 +10,7 @@ import { ExportRegistry } from "./registries/export";
 import type { FileSystemFolder } from "./file_folders";
 
 /** An empty file-system tree, for unit tests that don't resolve module paths. */
-export const EMPTY_ROOT_FOLDER: FileSystemFolder = {
+const EMPTY_ROOT_FOLDER: FileSystemFolder = {
   path: "/" as FilePath,
   folders: new Map(),
   files: new Set(),

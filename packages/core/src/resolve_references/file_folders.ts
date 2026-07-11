@@ -53,19 +53,15 @@ export function has_file_in_tree(
   file_path: FilePath,
   root_folder: FileSystemFolder
 ): boolean {
-  // Normalize the path and split into parts
   const normalized = path.normalize(file_path);
   const parts = normalized.split(path.sep).filter((p) => p);
 
   let current: FileSystemFolder | undefined = root_folder;
-
-  // Navigate to parent folder
   for (let i = 0; i < parts.length - 1; i++) {
     current = current?.folders.get(parts[i]);
     if (!current) return false;
   }
 
-  // Check if file exists in the final folder
   const filename = parts[parts.length - 1];
   return current?.files.has(filename) || false;
 }
