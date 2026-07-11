@@ -243,6 +243,20 @@ describe("resolve_module_path_rust", () => {
       expect(result).toBe("/project/src/config/mod.rs");
     });
 
+    it("resolves nested local module path relative to current directory", () => {
+      const tree = create_file_tree("/project", [
+        "src/main.rs",
+        "src/handlers/mod.rs",
+        "src/handlers/auth.rs",
+      ]);
+      const result = resolve_module_path_rust(
+        "handlers::auth",
+        "/project/src/main.rs" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/handlers/auth.rs");
+    });
+
     it("returns opaque path for external crate", () => {
       const tree = create_file_tree("/project", ["src/main.rs"]);
       const result = resolve_module_path_rust(
@@ -296,6 +310,20 @@ describe("resolve_module_path_rust", () => {
         tree
       );
       expect(result).toBe("/project/src/utils.rs");
+    });
+
+    it("finds crate root via Cargo.toml without a src/ directory", () => {
+      const tree = create_file_tree("/project", [
+        "Cargo.toml",
+        "utils.rs",
+        "deep/file.rs",
+      ]);
+      const result = resolve_module_path_rust(
+        "crate::utils",
+        "/project/deep/file.rs" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/utils.rs");
     });
 
     it("falls back to importing file directory when no root markers exist", () => {
