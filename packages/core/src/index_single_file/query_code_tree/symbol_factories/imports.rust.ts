@@ -1,9 +1,3 @@
-/**
- * Rust Import Extraction
- *
- * Functions for extracting import information from Rust use declarations
- * and extern crate statements.
- */
 import type { SyntaxNode } from "tree-sitter";
 import type { SymbolName, ModulePath } from "@ariadnejs/types";
 import { create_module_path, create_symbol_name } from "@ariadnejs/types";
@@ -15,10 +9,8 @@ export interface ImportInfo {
   is_wildcard?: boolean;
 }
 
-/**
- * Extract scoped path from scoped_identifier node
- * Traverses the tree to build full path like "std::fmt"
- */
+// Rebuilds "std::fmt::Display" from the nested scoped_identifier tree, whose
+// `path` field points at the next segment inward until a non-scoped base node.
 function extract_scoped_path(node: SyntaxNode): string {
   const parts: string[] = [];
   let current: SyntaxNode | null = node;
@@ -32,7 +24,6 @@ function extract_scoped_path(node: SyntaxNode): string {
       if (path.type === "scoped_identifier") {
         current = path;
       } else {
-        // Base identifier
         parts.unshift(path.text);
         break;
       }
@@ -44,10 +35,10 @@ function extract_scoped_path(node: SyntaxNode): string {
   return parts.join("::");
 }
 
-/**
- * Extract imports from complete use_declaration node
- * Handles all use patterns: simple, scoped, aliased, lists, wildcards
- */
+// Normalizes every `use` form so `module_path` names the module and `name` the
+// imported item — the item, glob, alias, and group braces are stripped here, which
+// is the shape the downstream Rust import resolver relies on. A leading `pub`
+// visibility_modifier is ignored: re-export visibility is handled by the caller.
 export function extract_imports_from_use_declaration(
   node: SyntaxNode
 ): ImportInfo[] {
@@ -62,10 +53,9 @@ export function extract_imports_from_use_declaration(
     return imports;
   }
 
-  // Handle different use patterns by argument type
   switch (argument.type) {
     case "identifier": {
-      // Simple: use foo
+      // use foo
       const name = argument.text as SymbolName;
       imports.push({
         name,
@@ -75,8 +65,7 @@ export function extract_imports_from_use_declaration(
     }
 
     case "scoped_identifier": {
-      // Scoped: use std::fmt::Display
-      // module_path is the path to the module (without the item name)
+      // use std::fmt::Display — module_path is the path minus the item name
       const name = argument.childForFieldName?.("name");
       const path_node = argument.childForFieldName?.("path");
       if (name && path_node) {
@@ -92,7 +81,7 @@ export function extract_imports_from_use_declaration(
     }
 
     case "use_list": {
-      // List: use {Display, Debug}
+      // use {Display, Debug} — a group with no path prefix
       for (let i = 0; i < argument.childCount; i++) {
         const item = argument.child(i);
         if (!item) continue;
@@ -130,8 +119,8 @@ export function extract_imports_from_use_declaration(
     }
 
     case "scoped_use_list": {
-      // List with path: use std::fmt::{Display, Debug}
-      // Also handles nested lists: use std::{cmp::Ordering, collections::{HashMap, HashSet}}
+      // use std::fmt::{Display, Debug} and nested groups like
+      // use std::{cmp::Ordering, collections::{HashMap, HashSet}}
       const path = argument.childForFieldName?.("path");
       const list = argument.childForFieldName?.("list");
 
@@ -140,7 +129,6 @@ export function extract_imports_from_use_declaration(
           ? extract_scoped_path(path)
           : path.text;
 
-        // Process items in the list recursively
         const process_use_list_items = (list_node: SyntaxNode, prefix: string) => {
           for (let i = 0; i < list_node.childCount; i++) {
             const item = list_node.child(i);
@@ -222,7 +210,7 @@ export function extract_imports_from_use_declaration(
     }
 
     case "use_as_clause": {
-      // Alias: use foo as bar or use self::math::add as add_numbers
+      // use foo as bar, or use self::math::add as add_numbers
       const original = argument.children?.find(
         (c) => c.type === "identifier" || c.type === "scoped_identifier"
       );
@@ -267,9 +255,16 @@ export function extract_imports_from_use_declaration(
     }
 
     case "use_wildcard": {
-      // Wildcard: use foo::*
+      // use foo::*, and prefix keywords use crate::*, use super::*, use self::*,
+      // where the segment before `*` is a bare `crate`/`super`/`self` node rather
+      // than an identifier.
       const path = argument.children?.find(
-        (c) => c.type === "scoped_identifier" || c.type === "identifier"
+        (c) =>
+          c.type === "scoped_identifier" ||
+          c.type === "identifier" ||
+          c.type === "crate" ||
+          c.type === "super" ||
+          c.type === "self"
       );
       if (path) {
         const module_path = path.type === "scoped_identifier"
@@ -288,10 +283,7 @@ export function extract_imports_from_use_declaration(
   return imports;
 }
 
-/**
- * Extract import from complete extern_crate_declaration node
- * Handles: extern crate foo; and extern crate foo as bar;
- */
+// Handles `extern crate foo;` and `extern crate foo as bar;`.
 export function extract_import_from_extern_crate(
   node: SyntaxNode
 ): ImportInfo | undefined {

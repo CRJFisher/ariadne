@@ -1,11 +1,3 @@
-/**
- * Tests for Rust import extraction
- *
- * Tests extract_imports_from_use_declaration and extract_import_from_extern_crate
- * against real tree-sitter ASTs to verify module_path correctly separates
- * module path from item name.
- */
-
 import { describe, it, expect } from "vitest";
 import Parser from "tree-sitter";
 import Rust from "tree-sitter-rust";
@@ -15,7 +7,6 @@ import type { SymbolName } from "@ariadnejs/types";
 import {
   extract_imports_from_use_declaration,
   extract_import_from_extern_crate,
-  type ImportInfo,
 } from "./imports.rust";
 
 function parse_rust(code: string): SyntaxNode {
@@ -25,29 +16,29 @@ function parse_rust(code: string): SyntaxNode {
   return tree.rootNode;
 }
 
-function find_use_declaration(root: SyntaxNode): SyntaxNode | null {
+function find_use_declaration(root: SyntaxNode): SyntaxNode {
   for (let i = 0; i < root.childCount; i++) {
     const child = root.child(i);
     if (child && child.type === "use_declaration") return child;
   }
-  return null;
+  throw new Error("no use_declaration found");
 }
 
-function find_extern_crate(root: SyntaxNode): SyntaxNode | null {
+function find_extern_crate(root: SyntaxNode): SyntaxNode {
   for (let i = 0; i < root.childCount; i++) {
     const child = root.child(i);
     if (child && child.type === "extern_crate_declaration") return child;
   }
-  return null;
+  throw new Error("no extern_crate_declaration found");
+}
+
+function imports_of(code: string) {
+  return extract_imports_from_use_declaration(find_use_declaration(parse_rust(code)));
 }
 
 describe("extract_imports_from_use_declaration", () => {
-  it("simple use: use foo", () => {
-    const root = parse_rust("use foo;");
-    const use_node = find_use_declaration(root)!;
-    const result = extract_imports_from_use_declaration(use_node);
-
-    expect(result).toEqual([
+  it("keeps the bare name as both name and module_path for use foo", () => {
+    expect(imports_of("use foo;")).toEqual([
       {
         name: "foo" as SymbolName,
         module_path: create_module_path("foo"),
@@ -55,12 +46,8 @@ describe("extract_imports_from_use_declaration", () => {
     ]);
   });
 
-  it("scoped use: use std::fmt::Display — module_path excludes the item name", () => {
-    const root = parse_rust("use std::fmt::Display;");
-    const use_node = find_use_declaration(root)!;
-    const result = extract_imports_from_use_declaration(use_node);
-
-    expect(result).toEqual([
+  it("drops the item name from module_path for use std::fmt::Display", () => {
+    expect(imports_of("use std::fmt::Display;")).toEqual([
       {
         name: "Display" as SymbolName,
         module_path: create_module_path("std::fmt"),
@@ -68,12 +55,8 @@ describe("extract_imports_from_use_declaration", () => {
     ]);
   });
 
-  it("scoped use with two segments: use utils::helper", () => {
-    const root = parse_rust("use utils::helper;");
-    const use_node = find_use_declaration(root)!;
-    const result = extract_imports_from_use_declaration(use_node);
-
-    expect(result).toEqual([
+  it("splits a two-segment path into module and item for use utils::helper", () => {
+    expect(imports_of("use utils::helper;")).toEqual([
       {
         name: "helper" as SymbolName,
         module_path: create_module_path("utils"),
@@ -81,12 +64,44 @@ describe("extract_imports_from_use_declaration", () => {
     ]);
   });
 
-  it("scoped use list: use utils::{helper, process_data} — module_path is the prefix", () => {
-    const root = parse_rust("use utils::{helper, process_data};");
-    const use_node = find_use_declaration(root)!;
-    const result = extract_imports_from_use_declaration(use_node);
+  it("keeps every segment but the item for a deep path use a::b::c::d", () => {
+    expect(imports_of("use a::b::c::d;")).toEqual([
+      {
+        name: "d" as SymbolName,
+        module_path: create_module_path("a::b::c"),
+      },
+    ]);
+  });
 
-    expect(result).toEqual([
+  it("keeps the crate prefix in module_path for use crate::models::User", () => {
+    expect(imports_of("use crate::models::User;")).toEqual([
+      {
+        name: "User" as SymbolName,
+        module_path: create_module_path("crate::models"),
+      },
+    ]);
+  });
+
+  it("keeps the super prefix in module_path for use super::foo", () => {
+    expect(imports_of("use super::foo;")).toEqual([
+      {
+        name: "foo" as SymbolName,
+        module_path: create_module_path("super"),
+      },
+    ]);
+  });
+
+  it("keeps the self prefix in module_path for use self::bar", () => {
+    expect(imports_of("use self::bar;")).toEqual([
+      {
+        name: "bar" as SymbolName,
+        module_path: create_module_path("self"),
+      },
+    ]);
+  });
+
+  it("gives each group member the shared prefix as module_path", () => {
+    expect(imports_of("use utils::{helper, process_data};")).toEqual([
       {
         name: "helper" as SymbolName,
         module_path: create_module_path("utils"),
@@ -98,12 +113,8 @@ describe("extract_imports_from_use_declaration", () => {
     ]);
   });
 
-  it("scoped use list with deeper path: use std::{cmp::Ordering}", () => {
-    const root = parse_rust("use std::{cmp::Ordering};");
-    const use_node = find_use_declaration(root)!;
-    const result = extract_imports_from_use_declaration(use_node);
-
-    expect(result).toEqual([
+  it("extends the prefix with a group member's own path", () => {
+    expect(imports_of("use std::{cmp::Ordering};")).toEqual([
       {
         name: "Ordering" as SymbolName,
         module_path: create_module_path("std::cmp"),
@@ -111,12 +122,8 @@ describe("extract_imports_from_use_declaration", () => {
     ]);
   });
 
-  it("nested scoped use list: use std::{collections::{HashMap, HashSet}}", () => {
-    const root = parse_rust("use std::{collections::{HashMap, HashSet}};");
-    const use_node = find_use_declaration(root)!;
-    const result = extract_imports_from_use_declaration(use_node);
-
-    expect(result).toEqual([
+  it("flattens a nested group into one import per leaf", () => {
+    expect(imports_of("use std::{collections::{HashMap, HashSet}};")).toEqual([
       {
         name: "HashMap" as SymbolName,
         module_path: create_module_path("std::collections"),
@@ -128,12 +135,38 @@ describe("extract_imports_from_use_declaration", () => {
     ]);
   });
 
-  it("scoped use list with alias: use utils::{helper as h}", () => {
-    const root = parse_rust("use utils::{helper as h};");
-    const use_node = find_use_declaration(root)!;
-    const result = extract_imports_from_use_declaration(use_node);
+  it("flattens a two-level nested group use a::{b::{c}}", () => {
+    expect(imports_of("use a::{b::{c}};")).toEqual([
+      {
+        name: "c" as SymbolName,
+        module_path: create_module_path("a::b"),
+      },
+    ]);
+  });
 
-    expect(result).toEqual([
+  it("resolves mixed group members with differing depths", () => {
+    expect(imports_of("use a::b::{c::d, e::{f, g}};")).toEqual([
+      {
+        name: "d" as SymbolName,
+        module_path: create_module_path("a::b::c"),
+      },
+      {
+        name: "f" as SymbolName,
+        module_path: create_module_path("a::b::e"),
+      },
+      {
+        name: "g" as SymbolName,
+        module_path: create_module_path("a::b::e"),
+      },
+    ]);
+  });
+
+  it("returns no imports for an empty group use utils::{}", () => {
+    expect(imports_of("use utils::{};")).toEqual([]);
+  });
+
+  it("records the original name for an aliased group member use utils::{helper as h}", () => {
+    expect(imports_of("use utils::{helper as h};")).toEqual([
       {
         name: "h" as SymbolName,
         module_path: create_module_path("utils"),
@@ -142,12 +175,8 @@ describe("extract_imports_from_use_declaration", () => {
     ]);
   });
 
-  it("scoped use list with scoped alias: use std::{cmp::Ordering as Ord}", () => {
-    const root = parse_rust("use std::{cmp::Ordering as Ord};");
-    const use_node = find_use_declaration(root)!;
-    const result = extract_imports_from_use_declaration(use_node);
-
-    expect(result).toEqual([
+  it("records the original name for a scoped aliased group member use std::{cmp::Ordering as Ord}", () => {
+    expect(imports_of("use std::{cmp::Ordering as Ord};")).toEqual([
       {
         name: "Ord" as SymbolName,
         module_path: create_module_path("std::cmp"),
@@ -156,12 +185,21 @@ describe("extract_imports_from_use_declaration", () => {
     ]);
   });
 
-  it("top-level alias: use self::math::add as add_numbers", () => {
-    const root = parse_rust("use self::math::add as add_numbers;");
-    const use_node = find_use_declaration(root)!;
-    const result = extract_imports_from_use_declaration(use_node);
+  it("names each member by the group prefix for a bare group use {foo, bar}", () => {
+    expect(imports_of("use {foo, bar};")).toEqual([
+      {
+        name: "foo" as SymbolName,
+        module_path: create_module_path("foo"),
+      },
+      {
+        name: "bar" as SymbolName,
+        module_path: create_module_path("bar"),
+      },
+    ]);
+  });
 
-    expect(result).toEqual([
+  it("uses the alias as name and the scoped path as module_path for use self::math::add as add_numbers", () => {
+    expect(imports_of("use self::math::add as add_numbers;")).toEqual([
       {
         name: "add_numbers" as SymbolName,
         module_path: create_module_path("self::math"),
@@ -170,12 +208,8 @@ describe("extract_imports_from_use_declaration", () => {
     ]);
   });
 
-  it("simple alias: use foo as bar", () => {
-    const root = parse_rust("use foo as bar;");
-    const use_node = find_use_declaration(root)!;
-    const result = extract_imports_from_use_declaration(use_node);
-
-    expect(result).toEqual([
+  it("uses the alias as name and the original as module_path for use foo as bar", () => {
+    expect(imports_of("use foo as bar;")).toEqual([
       {
         name: "bar" as SymbolName,
         module_path: create_module_path("foo"),
@@ -184,12 +218,8 @@ describe("extract_imports_from_use_declaration", () => {
     ]);
   });
 
-  it("wildcard: use std::fmt::*", () => {
-    const root = parse_rust("use std::fmt::*;");
-    const use_node = find_use_declaration(root)!;
-    const result = extract_imports_from_use_declaration(use_node);
-
-    expect(result).toEqual([
+  it("marks a glob import with name * and is_wildcard for use std::fmt::*", () => {
+    expect(imports_of("use std::fmt::*;")).toEqual([
       {
         name: "*" as SymbolName,
         module_path: create_module_path("std::fmt"),
@@ -198,12 +228,57 @@ describe("extract_imports_from_use_declaration", () => {
     ]);
   });
 
-  it("crate-relative scoped list: use crate::models::{User, Post}", () => {
-    const root = parse_rust("use crate::models::{User, Post};");
-    const use_node = find_use_declaration(root)!;
-    const result = extract_imports_from_use_declaration(use_node);
+  it("marks a single-segment glob for use foo::*", () => {
+    expect(imports_of("use foo::*;")).toEqual([
+      {
+        name: "*" as SymbolName,
+        module_path: create_module_path("foo"),
+        is_wildcard: true,
+      },
+    ]);
+  });
 
-    expect(result).toEqual([
+  it("marks a crate-prefixed glob for use crate::*", () => {
+    expect(imports_of("use crate::*;")).toEqual([
+      {
+        name: "*" as SymbolName,
+        module_path: create_module_path("crate"),
+        is_wildcard: true,
+      },
+    ]);
+  });
+
+  it("marks a super-prefixed glob for use super::*", () => {
+    expect(imports_of("use super::*;")).toEqual([
+      {
+        name: "*" as SymbolName,
+        module_path: create_module_path("super"),
+        is_wildcard: true,
+      },
+    ]);
+  });
+
+  it("marks a self-prefixed glob for use self::*", () => {
+    expect(imports_of("use self::*;")).toEqual([
+      {
+        name: "*" as SymbolName,
+        module_path: create_module_path("self"),
+        is_wildcard: true,
+      },
+    ]);
+  });
+
+  it("ignores the pub visibility modifier on a scoped re-export pub use foo::bar", () => {
+    expect(imports_of("pub use foo::bar;")).toEqual([
+      {
+        name: "bar" as SymbolName,
+        module_path: create_module_path("foo"),
+      },
+    ]);
+  });
+
+  it("ignores the pub visibility modifier on a group re-export pub use crate::models::{User, Post}", () => {
+    expect(imports_of("pub use crate::models::{User, Post};")).toEqual([
       {
         name: "User" as SymbolName,
         module_path: create_module_path("crate::models"),
@@ -215,19 +290,17 @@ describe("extract_imports_from_use_declaration", () => {
     ]);
   });
 
-  it("returns empty array for non-use_declaration nodes", () => {
+  it("returns an empty array for a non-use_declaration node", () => {
     const root = parse_rust("fn main() {}");
-    const result = extract_imports_from_use_declaration(root);
-
-    expect(result).toEqual([]);
+    expect(extract_imports_from_use_declaration(root)).toEqual([]);
   });
 });
 
 describe("extract_import_from_extern_crate", () => {
-  it("simple extern crate", () => {
-    const root = parse_rust("extern crate serde;");
-    const crate_node = find_extern_crate(root)!;
-    const result = extract_import_from_extern_crate(crate_node);
+  it("maps a crate name to name and module_path with no original_name", () => {
+    const result = extract_import_from_extern_crate(
+      find_extern_crate(parse_rust("extern crate serde;"))
+    );
 
     expect(result).toEqual({
       name: "serde" as SymbolName,
@@ -236,10 +309,10 @@ describe("extract_import_from_extern_crate", () => {
     });
   });
 
-  it("extern crate with alias", () => {
-    const root = parse_rust("extern crate serde as s;");
-    const crate_node = find_extern_crate(root)!;
-    const result = extract_import_from_extern_crate(crate_node);
+  it("uses the alias as name and records the crate as original_name", () => {
+    const result = extract_import_from_extern_crate(
+      find_extern_crate(parse_rust("extern crate serde as s;"))
+    );
 
     expect(result).toEqual({
       name: "s" as SymbolName,
@@ -248,10 +321,8 @@ describe("extract_import_from_extern_crate", () => {
     });
   });
 
-  it("returns undefined for non-extern_crate nodes", () => {
+  it("returns undefined for a non-extern_crate node", () => {
     const root = parse_rust("fn main() {}");
-    const result = extract_import_from_extern_crate(root);
-
-    expect(result).toBeUndefined();
+    expect(extract_import_from_extern_crate(root)).toBeUndefined();
   });
 });
