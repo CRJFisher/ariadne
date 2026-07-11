@@ -1,18 +1,9 @@
 /**
- * JavaScript/TypeScript metadata extraction functions
+ * JavaScript/TypeScript definition metadata extraction for the 4-pass semantic
+ * indexer.
  *
- * Language-specific implementation of metadata extractors for method call resolution.
- * Extracts reference context and TypeInfo from JavaScript/TypeScript AST nodes.
- *
- * Supports:
- * - Type annotations: TypeScript type_annotation and JSDoc comments
- * - Method calls: Extracts receiver location from member_expression patterns
- * - Property chains: Recursive traversal of member_expression and optional_chain
- * - Constructor tracking: Finds target variables in new_expression patterns
- * - Optional chaining: Detects ?. syntax in method and property access
- *
- * All extraction is purely tree-sitter AST-based - no type inference or
- * cross-file resolution happens here.
+ * All extraction is tree-sitter AST-based: no type inference or cross-file
+ * resolution happens here.
  */
 
 import type { SyntaxNode } from "tree-sitter";
@@ -21,54 +12,32 @@ import { type_symbol } from "@ariadnejs/types";
 import type { MetadataExtractors, ReceiverInfo } from "./types";
 import { node_to_location } from "../../node_to_location";
 
-
 /**
- * Extract JSDoc type annotation from comment
- *
- * Handles patterns like:
- * - `@type {string}`
- * - `@param {number} x`
- * - `@returns {boolean}`
+ * JSDoc carries types in a preceding comment rather than the AST, so the type
+ * lives on the sibling immediately before the declaration statement.
  */
 function extract_jsdoc_type(node: SyntaxNode): string | undefined {
-  // Look for JSDoc comment in multiple locations
-  let statement_node: SyntaxNode | null = null;
+  const statement_node = node.type === "variable_declarator" ? node.parent : node;
+  if (!statement_node) return undefined;
 
-  // For variable_declarator, get the parent statement
-  if (node.type === "variable_declarator") {
-    // variable_declarator -> lexical_declaration
-    statement_node = node.parent;
-  } else if (node.type === "function_declaration") {
-    statement_node = node;
-  } else {
-    statement_node = node;
-  }
+  const parent = statement_node.parent;
+  if (!parent) return undefined;
 
-  // Check for preceding comment
-  if (statement_node) {
-    // Get index of statement in parent
-    const parent = statement_node.parent;
-    if (parent) {
-      for (let i = 0; i < parent.childCount; i++) {
-        const child = parent.child(i);
-        if (child === statement_node && i > 0) {
-          // Check previous sibling
-          const prev_child = parent.child(i - 1);
-          if (prev_child && prev_child.type === "comment") {
-            const text = prev_child.text;
+  for (let i = 0; i < parent.childCount; i++) {
+    const child = parent.child(i);
+    if (child === statement_node && i > 0) {
+      const prev_child = parent.child(i - 1);
+      if (prev_child && prev_child.type === "comment") {
+        const text = prev_child.text;
 
-            // Match @type {TypeName}
-            const type_match = text.match(/@type\s*\{([^}]+)\}/);
-            if (type_match) {
-              return type_match[1].trim();
-            }
+        const type_match = text.match(/@type\s*\{([^}]+)\}/);
+        if (type_match) {
+          return type_match[1].trim();
+        }
 
-            // Match @returns {TypeName}
-            const returns_match = text.match(/@returns?\s*\{([^}]+)\}/);
-            if (returns_match) {
-              return returns_match[1].trim();
-            }
-          }
+        const returns_match = text.match(/@returns?\s*\{([^}]+)\}/);
+        if (returns_match) {
+          return returns_match[1].trim();
         }
       }
     }
@@ -77,79 +46,41 @@ function extract_jsdoc_type(node: SyntaxNode): string | undefined {
   return undefined;
 }
 
-/**
- * Extract type from TypeScript type annotation
- */
 function extract_typescript_type(node: SyntaxNode): string | undefined {
-  // For TypeScript, look for type_annotation child
   const type_annotation = node.childForFieldName("type");
-  if (type_annotation) {
-    // TypeScript type_annotation nodes include the ':' character
-    // We need to extract the actual type part after the ':'
-    if (type_annotation.type === "type_annotation") {
-      // Skip the ':' and get the actual type node
-      for (let i = 0; i < type_annotation.childCount; i++) {
-        const child = type_annotation.child(i);
-        if (child && child.type !== ":") {
-          return child.text;
-        }
+  if (!type_annotation) return undefined;
+
+  // A type_annotation node includes the leading ':'; the type is the first
+  // non-':' child.
+  if (type_annotation.type === "type_annotation") {
+    for (let i = 0; i < type_annotation.childCount; i++) {
+      const child = type_annotation.child(i);
+      if (child && child.type !== ":") {
+        return child.text;
       }
-      // Fallback: remove leading ':' and whitespace
-      return type_annotation.text.replace(/^:\s*/, "");
     }
-
-    // Handle simple type identifiers
-    if (type_annotation.type === "type_identifier") {
-      return type_annotation.text;
-    }
-
-    // Handle predefined types (string, number, boolean, etc.)
-    if (type_annotation.type === "predefined_type") {
-      return type_annotation.text;
-    }
-
-    // Handle generic types like Array<T>
-    if (type_annotation.type === "generic_type") {
-      return type_annotation.text;
-    }
-
-    // Handle union types, intersection types, etc.
-    return type_annotation.text;
+    return type_annotation.text.replace(/^:\s*/, "");
   }
 
-  return undefined;
+  return type_annotation.text;
 }
 
-/**
- * JavaScript metadata extractors implementation
- */
 export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
-  /**
-   * Extract type information from JSDoc or TypeScript annotations
-   */
   extract_type_from_annotation(
     node: SyntaxNode,
     file_path: FilePath
   ): TypeInfo | undefined {
-    let type_name: string | undefined;
-
-    // Try TypeScript type annotation first
-    type_name = extract_typescript_type(node);
-
-    // Fall back to JSDoc
-    if (!type_name) {
-      type_name = extract_jsdoc_type(node);
-    }
+    const type_name = extract_typescript_type(node) ?? extract_jsdoc_type(node);
 
     if (!type_name) {
       return undefined;
     }
 
-    // Create TypeInfo
     const location = node_to_location(node, file_path);
     const type_id = type_symbol(type_name, location);
 
-    // Check if this is a declared TypeScript type (has type_annotation child)
+    // A declared TS annotation carries a type_annotation child; a JSDoc-inferred
+    // type does not, which drives the certainty distinction.
     const has_type_annotation = node.childForFieldName("type")?.type === "type_annotation";
 
     return {
@@ -161,25 +92,6 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
   },
 
   /**
-   * Extract receiver location from method call
-   *
-   * Essential for method resolution - identifies the object a method is called on.
-   * Navigates the AST to find the receiver (object) portion of a method call.
-   *
-   * Tree-sitter pattern:
-   * ```
-   * (call_expression
-   *   function: (member_expression
-   *     object: (_) @receiver    ← Extract this location
-   *     property: (property_identifier)))
-   * ```
-   *
-   * Handles:
-   * - `obj.method()` → location of `obj`
-   * - `this.method()` → location of `this`
-   * - `super.method()` → location of `super`
-   * - `a.b.c.method()` → location of `a.b.c` (entire chain except method name)
-   *
    * The receiver location enables looking up the receiver's type to determine
    * which class defines the method.
    */
@@ -187,7 +99,6 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
     node: SyntaxNode,
     file_path: FilePath
   ): Location | undefined {
-    // Handle call_expression
     if (node.type === "call_expression") {
       const function_node = node.childForFieldName("function");
 
@@ -199,7 +110,6 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
       }
     }
 
-    // Handle member_expression directly
     if (node.type === "member_expression") {
       const object_node = node.childForFieldName("object");
       if (object_node) {
@@ -211,32 +121,8 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
   },
 
   /**
-   * Extract property access chain
-   *
-   * Critical for chained method calls - builds complete sequence of accessed properties.
-   * Recursively traverses member_expression, optional_chain, and subscript_expression nodes.
-   *
-   * Algorithm:
-   * 1. Start with leftmost identifier (root object)
-   * 2. Traverse each member access from left to right
-   * 3. Build array of all property/method names in order
-   *
-   * Tree-sitter pattern (recursive):
-   * ```
-   * (member_expression
-   *   object: (member_expression      ← Recurse here
-   *     object: (identifier) @chain.0
-   *     property: (property_identifier) @chain.1)
-   *   property: (property_identifier) @chain.2)
-   * ```
-   *
-   * Handles:
-   * - `a.b.c.d` → ["a", "b", "c", "d"]
-   * - `this.data.items` → ["this", "data", "items"]
-   * - `obj?.prop?.method` → ["obj", "prop", "method"]
-   * - `obj["computed"].method` → ["obj", "computed", "method"]
-   *
-   * Used for both method calls and property access to track the complete chain.
+   * The ordered access chain (root object first) lets chained method calls
+   * resolve against the full path rather than just the immediate receiver.
    */
   extract_property_chain(node: SyntaxNode): SymbolName[] | undefined {
     const chain: string[] = [];
@@ -246,7 +132,6 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
         const object_node = current.childForFieldName("object");
         const property_node = current.childForFieldName("property");
 
-        // Recursively traverse nested member expressions
         if (object_node) {
           if (object_node.type === "member_expression" ||
               object_node.type === "optional_chain" ||
@@ -258,12 +143,10 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
           }
         }
 
-        // Add the property
         if (property_node && property_node.type === "property_identifier") {
           chain.push(property_node.text);
         }
       } else if (current.type === "subscript_expression") {
-        // Handle bracket notation like obj["prop"]
         const object_node = current.childForFieldName("object");
         const index_node = current.childForFieldName("index");
 
@@ -278,16 +161,15 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
           }
         }
 
-        // For computed properties, try to extract string literals
+        // Only static string keys contribute a resolvable name; dynamic indices
+        // are dropped from the chain.
         if (index_node && index_node.type === "string") {
-          // Extract string content without quotes (handle both single and double quotes)
           if (index_node.text.startsWith("\"") || index_node.text.startsWith("'")) {
             const prop = index_node.text.slice(1, -1);
             chain.push(prop);
           }
         }
       } else if (current.type === "call_expression") {
-        // For method calls, extract the chain from the function part
         const function_node = current.childForFieldName("function");
         if (function_node && (function_node.type === "member_expression" ||
                              function_node.type === "optional_chain" ||
@@ -303,21 +185,13 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
   },
 
   /**
-   * Extract receiver information with self-reference keyword detection
-   *
-   * Detects `this` and `super` keywords in JavaScript/TypeScript and returns
-   * enriched information about the receiver, including whether it's a self-reference.
-   *
-   * Examples:
-   * - `this.method()` → is_self_reference: true, keyword: 'this'
-   * - `user.getName()` → is_self_reference: false
-   * - `super.process()` → is_self_reference: true, keyword: 'super'
+   * A `this`/`super` receiver resolves to the enclosing class rather than an
+   * external symbol, so the receiver is tagged as a self-reference.
    */
   extract_receiver_info(
     node: SyntaxNode,
     file_path: FilePath
   ): ReceiverInfo | undefined {
-    // Handle call_expression: extract from function field
     let target_node = node;
     if (node.type === "call_expression") {
       const function_node = node.childForFieldName("function");
@@ -326,7 +200,6 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
       }
     }
 
-    // Handle member_expression or optional_chain
     if (target_node.type === "member_expression" || target_node.type === "optional_chain") {
       const object_node = target_node.childForFieldName("object");
       const property_node = target_node.childForFieldName("property");
@@ -335,7 +208,6 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
 
       const property_name = property_node?.text;
 
-      // Detect self-reference keywords
       if (object_node.type === "this") {
         return {
           receiver_location: node_to_location(object_node, file_path),
@@ -358,16 +230,13 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
         };
       }
 
-      // Regular object receiver (not a keyword)
-      // Use extract_property_chain for nested receivers like obj.prop.method()
       const object_chain = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(target_node);
 
-      // Fallback: if chain extraction failed, use simple receiver + property
       const chain = object_chain || (property_name
         ? [object_node.text as SymbolName, property_name as SymbolName]
         : [object_node.text as SymbolName]);
 
-      // Detect self-reference keywords at root of nested chain (e.g. this.data.items.push())
+      // A self keyword can sit at the root of a nested chain (this.data.items.push()).
       const SELF_KEYWORDS: Record<string, "this" | "super"> = {
         this: "this",
         super: "super",
@@ -385,20 +254,10 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
     return undefined;
   },
 
-  /**
-   * Extract assignment source and target locations
-   *
-   * Handles:
-   * - `x = y` → target: x, source: y
-   * - `const x = getValue()` → target: x, source: getValue()
-   * - `obj.prop = value` → target: obj.prop, source: value
-   * - Destructuring: `const {a, b} = obj` → target: {a, b}, source: obj
-   */
   extract_assignment_parts(
     node: SyntaxNode,
     file_path: FilePath
   ): { source: Location | undefined; target: Location | undefined } {
-    // Handle assignment_expression
     if (node.type === "assignment_expression") {
       const left = node.childForFieldName("left");
       const right = node.childForFieldName("right");
@@ -409,7 +268,6 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
       };
     }
 
-    // Handle variable_declarator (const x = ...)
     if (node.type === "variable_declarator") {
       const name = node.childForFieldName("name");
       const value = node.childForFieldName("value");
@@ -420,7 +278,6 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
       };
     }
 
-    // Handle augmented_assignment_expression (x += y)
     if (node.type === "augmented_assignment_expression") {
       const left = node.childForFieldName("left");
       const right = node.childForFieldName("right");
@@ -435,39 +292,14 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
   },
 
   /**
-   * Extract constructor call target variable
-   *
-   * Essential for type tracking - most reliable way to determine object types.
-   * Navigates from new_expression to the variable being assigned to.
-   *
-   * Tree-sitter pattern:
-   * ```
-   * (variable_declarator
-   *   name: (identifier) @construct.target    ← Extract this location
-   *   value: (new_expression
-   *     constructor: (identifier) @construct.class))
-   * ```
-   *
-   * Also handles assignment expressions:
-   * ```
-   * (assignment_expression
-   *   left: (_) @construct.target    ← Extract this location
-   *   right: (new_expression))
-   * ```
-   *
-   * Handles:
-   * - `const obj = new Class()` → location of `obj`
-   * - `let x = new Map()` → location of `x`
-   * - `this.prop = new Thing()` → location of `this.prop`
-   *
-   * This enables immediate type determination: when we see `const x = new Y()`,
-   * we know `x` has type `Y` without complex inference.
+   * `const x = new Y()` fixes x's type to Y without inference, so the assigned
+   * target is the most reliable type signal. Walks up to the enclosing declarator
+   * or assignment.
    */
   extract_construct_target(
     node: SyntaxNode,
     file_path: FilePath
   ): Location | undefined {
-    // Look for parent variable_declarator
     let parent = node.parent;
     while (parent) {
       if (parent.type === "variable_declarator") {
@@ -478,7 +310,6 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
         break;
       }
 
-      // Handle assignment to property
       if (parent.type === "assignment_expression") {
         const left = parent.childForFieldName("left");
         if (left) {
@@ -493,23 +324,12 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
     return undefined;
   },
 
-  /**
-   * Extract generic type arguments from JSDoc or TypeScript
-   *
-   * Handles:
-   * - `Array<string>` → ["string"]
-   * - `Map<string, number>` → ["string", "number"]
-   * - JSDoc: `@type {Array.<string>}` → ["string"]
-   * - JSDoc: `@type {Object.<string, number>}` → ["string", "number"]
-   */
   extract_type_arguments(node: SyntaxNode): string[] | undefined {
     const args: string[] = [];
 
-    // Handle TypeScript generic types
     if (node.type === "generic_type" || node.type === "type_identifier") {
       const type_args = node.childForFieldName("type_arguments");
       if (type_args) {
-        // Iterate through type argument children
         for (let i = 0; i < type_args.childCount; i++) {
           const child = type_args.child(i);
           if (child && child.type !== "," && child.type !== "<" && child.type !== ">") {
@@ -519,7 +339,7 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
       }
     }
 
-    // Handle JSDoc generics (Array.<Type> or Object.<Key, Value>)
+    // JSDoc encodes generics as Array.<Type> / Object.<Key, Value> in comment text.
     const text = node.text;
     const jsdoc_match = text.match(/[A-Z]\w*\.<([^>]+)>/);
     if (jsdoc_match) {
@@ -532,50 +352,24 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
   },
 
   /**
-   * Check if a node represents optional chaining
-   *
-   * Detects optional chaining syntax (`?.`) in JavaScript/TypeScript.
-   * Important for understanding null-safety semantics in method calls.
-   *
-   * Tree-sitter pattern:
-   * ```
-   * (optional_chain              ← Look for this node type
-   *   object: (_)
-   *   property: (_))
-   * ```
-   *
-   * Algorithm:
-   * 1. Check if node itself is `optional_chain` type
-   * 2. For call_expression, check if function field is `optional_chain`
-   * 3. For member_expression, recursively check children
-   *
-   * Detects optional chaining syntax (`?.`) in JavaScript/TypeScript:
-   * - `obj?.method()` → true
-   * - `obj.method()` → false
-   * - `obj?.prop?.method()` → true
-   * - `a.b?.c.d` → true (any part uses ?.)
-   *
-   * Returns true if any part of the access chain uses optional chaining.
+   * True if any part of the access chain uses `?.`; optional chaining changes
+   * the null-safety semantics of the call.
    */
   extract_is_optional_chain(node: SyntaxNode): boolean {
-    // Check if the node itself is an optional_chain
     if (node.type === "optional_chain") {
       return true;
     }
 
-    // For call_expression, check if the function part is optional_chain
     if (node.type === "call_expression") {
       const function_node = node.childForFieldName("function");
       if (function_node && function_node.type === "optional_chain") {
         return true;
       }
-      // Also recursively check if function_node has optional chaining
       if (function_node) {
         return JAVASCRIPT_METADATA_EXTRACTORS.extract_is_optional_chain(function_node);
       }
     }
 
-    // For member_expression, check if it has an optional_chain child
     if (node.type === "member_expression") {
       for (let i = 0; i < node.childCount; i++) {
         const child = node.child(i);
@@ -584,7 +378,6 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
         }
       }
 
-      // Also check if nested member_expression has optional chaining
       const object_node = node.childForFieldName("object");
       if (object_node && object_node.type === "member_expression") {
         return JAVASCRIPT_METADATA_EXTRACTORS.extract_is_optional_chain(object_node);
@@ -594,14 +387,6 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
     return false;
   },
 
-  /**
-   * Check if a call node represents a method call
-   *
-   * JavaScript/TypeScript: call_expression with member_expression function
-   *
-   * @param node - The SyntaxNode representing a call
-   * @returns true if it's a method call, false if it's a function call
-   */
   is_method_call(node: SyntaxNode): boolean {
     if (node.type === "call_expression") {
       const function_node = node.childForFieldName("function");
@@ -612,28 +397,17 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
     return false;
   },
 
-  /**
-   * Extract the method or function name from a call node
-   *
-   * For method calls, extracts the property name.
-   * For function calls, extracts the function identifier.
-   *
-   * @param node - The SyntaxNode representing a call
-   * @returns The name of the method or function, or undefined
-   */
   extract_call_name(node: SyntaxNode): SymbolName | undefined {
     if (node.type === "call_expression") {
       const function_node = node.childForFieldName("function");
 
       if (function_node) {
-        // Method call: extract property name from member_expression
         if (function_node.type === "member_expression") {
           const property_node = function_node.childForFieldName("property");
           if (property_node) {
             return property_node.text as SymbolName;
           }
         }
-        // Function call: extract identifier
         else if (function_node.type === "identifier") {
           return function_node.text as SymbolName;
         }
