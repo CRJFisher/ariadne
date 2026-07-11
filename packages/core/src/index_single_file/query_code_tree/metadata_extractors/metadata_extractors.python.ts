@@ -1,17 +1,8 @@
 /**
- * Python metadata extraction functions
+ * Python metadata extractors for the 4-pass semantic indexer.
  *
- * Language-specific implementation of metadata extractors for method call resolution.
- *
- * Supports:
- * - Type hints: PEP 484 type annotations and Python 3.10+ union syntax
- * - Method calls: Extracts receiver location from attribute patterns
- * - Property chains: Recursive traversal of attribute and subscript nodes
- * - Constructor tracking: Finds target variables in assignment patterns
- * - No optional chaining: Python lacks ?. syntax, always returns false
- *
- * All extraction is purely tree-sitter AST-based - no type inference or
- * cross-file resolution happens here.
+ * All extraction is tree-sitter AST-based: no type inference or cross-file
+ * resolution happens here.
  */
 
 import type { SyntaxNode } from "tree-sitter";
@@ -20,23 +11,12 @@ import { type_symbol } from "@ariadnejs/types";
 import type { MetadataExtractors, ReceiverInfo } from "./types";
 import { node_to_location } from "../../node_to_location";
 
-/**
- * Extract type from Python type annotation
- *
- * Handles patterns like:
- * - Function parameters: `def f(x: int)`
- * - Function return types: `def f() -> str`
- * - Variable annotations: `x: int = 5`
- * - Complex types: `List[str]`, `Optional[int]`, `Union[str, int]`
- */
 function extract_python_type(node: SyntaxNode | null | undefined): string | undefined {
   if (!node) {
     return undefined;
   }
 
-  // Handle type nodes directly
   if (node.type === "type") {
-    // For type nodes, extract the actual type expression
     for (let i = 0; i < node.childCount; i++) {
       const child = node.child(i);
       if (child && child.type !== ":") {
@@ -46,23 +26,19 @@ function extract_python_type(node: SyntaxNode | null | undefined): string | unde
     return node.text;
   }
 
-  // Handle identifier types
   if (node.type === "identifier" || node.type === "type_identifier") {
     return node.text;
   }
 
-  // Handle generic types (List[int], Dict[str, int])
   if (node.type === "generic_type" || node.type === "subscript") {
     return node.text;
   }
 
-  // Handle Union and Optional types
+  // Python 3.10+ union syntax (`str | int`) parses as a binary_operator.
   if (node.type === "binary_operator" && node.text.includes("|")) {
-    // Python 3.10+ union syntax: str | int
     return node.text;
   }
 
-  // Look for type annotation in function parameter
   if (node.type === "typed_parameter" || node.type === "typed_default_parameter") {
     const type_node = node.childForFieldName("type");
     if (type_node) {
@@ -70,7 +46,6 @@ function extract_python_type(node: SyntaxNode | null | undefined): string | unde
     }
   }
 
-  // Look for return type annotation in function
   if (node.type === "function_definition") {
     const return_type_node = node.childForFieldName("return_type");
     if (return_type_node) {
@@ -78,11 +53,10 @@ function extract_python_type(node: SyntaxNode | null | undefined): string | unde
     }
   }
 
-  // Look for type annotation in assignment (Python uses assignment with type field)
+  // In Python's grammar, `x: int = 5` is an assignment node with a "type" field.
   if (node.type === "assignment" || node.type === "annotated_assignment") {
     const type_node = node.childForFieldName("type");
     if (type_node) {
-      // The type field contains a "type" node, we want its text
       return type_node.text;
     }
   }
@@ -90,19 +64,7 @@ function extract_python_type(node: SyntaxNode | null | undefined): string | unde
   return undefined;
 }
 
-/**
- * Python metadata extractors implementation
- */
 export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
-  /**
-   * Extract type information from Python type hints
-   *
-   * Handles:
-   * - Function parameters: `def f(x: int) -> str`
-   * - Variable annotations: `x: int = 5`
-   * - Complex types: `List[str]`, `Optional[int]`, `Union[str, int]`
-   * - Python 3.10+ union syntax: `str | int`
-   */
   extract_type_from_annotation(
     node: SyntaxNode,
     file_path: FilePath
@@ -113,11 +75,9 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
       return undefined;
     }
 
-    // Create TypeInfo
     const location = node_to_location(node, file_path);
     const type_id = type_symbol(type_name as SymbolName, location);
 
-    // Check for nullable types (None, Optional)
     const is_nullable =
       type_name.includes("None") ||
       type_name.includes("Optional") ||
@@ -126,34 +86,14 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
     return {
       type_id,
       type_name: type_name as SymbolName,
-      certainty: "declared", // Python type hints are always explicit
+      certainty: "declared",
       is_nullable,
     };
   },
 
   /**
-   * Extract receiver location from method call
-   *
-   * Essential for method resolution - identifies the object a method is called on.
-   * Navigates the AST to find the receiver (object) portion of a method call.
-   *
-   * Tree-sitter pattern:
-   * ```
-   * (call
-   *   function: (attribute
-   *     object: (_) @receiver    ← Extract this location
-   *     attribute: (identifier)))
-   * ```
-   *
-   * Handles:
-   * - `obj.method()` → location of `obj`
-   * - `self.method()` → location of `self`
-   * - `cls.method()` → location of `cls`
-   * - `super().method()` → location of `super()`
-   * - `a.b.c.method()` → location of `a.b.c` (entire chain except method name)
-   *
-   * The receiver location enables looking up the receiver's type to determine
-   * which class defines the method.
+   * Extract receiver location from a method call, i.e. the object a method is
+   * called on. For `a.b.c.method()` the receiver is the whole `a.b.c` chain.
    */
   extract_call_receiver(
     node: SyntaxNode | null | undefined,
@@ -163,11 +103,9 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
       return undefined;
     }
 
-    // Handle call node
     if (node.type === "call") {
       const function_node = node.childForFieldName("function");
 
-      // Check if it's an attribute access (method call)
       if (function_node && function_node.type === "attribute") {
         const object_node = function_node.childForFieldName("object");
         if (object_node) {
@@ -176,7 +114,6 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
       }
     }
 
-    // Handle attribute node directly
     if (node.type === "attribute") {
       const object_node = node.childForFieldName("object");
       if (object_node) {
@@ -188,32 +125,9 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
   },
 
   /**
-   * Extract property access chain
-   *
-   * Critical for chained method calls - builds complete sequence of accessed properties.
-   * Recursively traverses attribute and subscript nodes.
-   *
-   * Algorithm:
-   * 1. Start with leftmost identifier (root object)
-   * 2. Traverse each attribute access from left to right
-   * 3. Build array of all property/method names in order
-   *
-   * Tree-sitter pattern (recursive):
-   * ```
-   * (attribute
-   *   object: (attribute         ← Recurse here
-   *     object: (identifier) @chain.0
-   *     attribute: (identifier) @chain.1)
-   *   attribute: (identifier) @chain.2)
-   * ```
-   *
-   * Handles:
-   * - `a.b.c.d` → ["a", "b", "c", "d"]
-   * - `self.data.items` → ["self", "data", "items"]
-   * - `obj['key'].prop` → ["obj", "key", "prop"]
-   * - `super().method` → ["super", "method"]
-   *
-   * Used for both method calls and property access to track the complete chain.
+   * Extract the left-to-right property access chain from an attribute/subscript/call node.
+   * `a.b.c.d` → ["a", "b", "c", "d"]; string subscript keys are included
+   * (`obj['key'].prop` → ["obj", "key", "prop"]) while numeric/variable keys are dropped.
    */
   extract_property_chain(node: SyntaxNode | null | undefined): SymbolName[] | undefined {
     if (!node) {
@@ -227,7 +141,6 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
         const object_node = current.childForFieldName("object");
         const attr_node = current.childForFieldName("attribute");
 
-        // Recursively traverse nested attributes
         if (object_node) {
           if (object_node.type === "attribute" || object_node.type === "subscript") {
             traverse(object_node);
@@ -238,12 +151,10 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
           }
         }
 
-        // Add the attribute
         if (attr_node && attr_node.type === "identifier") {
           chain.push(attr_node.text);
         }
       } else if (current.type === "subscript") {
-        // Handle bracket notation like obj['key']
         const value_node = current.childForFieldName("value");
         const subscript_node = current.childForFieldName("subscript");
 
@@ -255,9 +166,8 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
           }
         }
 
-        // For subscript, try to extract string literals
+        // Only string keys are meaningful chain segments; strip the surrounding quotes.
         if (subscript_node && subscript_node.type === "string") {
-          // Extract string content without quotes
           const text = subscript_node.text;
           if (text.startsWith("\"") || text.startsWith("'")) {
             const key = text.slice(1, -1);
@@ -265,7 +175,6 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
           }
         }
       } else if (current.type === "call") {
-        // For method calls, extract the chain from the function part
         const function_node = current.childForFieldName("function");
         if (function_node && (function_node.type === "attribute" || function_node.type === "subscript")) {
           traverse(function_node);
@@ -279,22 +188,14 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
   },
 
   /**
-   * Extract receiver information with self-reference keyword detection
-   *
-   * Detects `self`, `cls`, and `super()` keywords in Python and returns
-   * enriched information about the receiver, including whether it's a self-reference.
-   *
-   * Examples:
-   * - `self.method()` → is_self_reference: true, keyword: 'self'
-   * - `user.get_name()` → is_self_reference: false
-   * - `cls.class_method()` → is_self_reference: true, keyword: 'cls'
-   * - `super().method()` → is_self_reference: true, keyword: 'super'
+   * Extract receiver information, flagging `self`/`cls`/`super()` as self-references.
+   * `self.method()` → is_self_reference true, self_keyword "self";
+   * `user.get_name()` → is_self_reference false.
    */
   extract_receiver_info(
     node: SyntaxNode,
     file_path: FilePath
   ): ReceiverInfo | undefined {
-    // Handle call: extract from function field
     let target_node = node;
     if (node.type === "call") {
       const function_node = node.childForFieldName("function");
@@ -303,7 +204,6 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
       }
     }
 
-    // Handle attribute
     if (target_node.type === "attribute") {
       const object_node = target_node.childForFieldName("object");
       const attr_node = target_node.childForFieldName("attribute");
@@ -313,7 +213,6 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
       const attr_name = attr_node?.text;
       const object_text = object_node.text;
 
-      // Detect self-reference keywords
       if (object_node.type === "identifier") {
         if (object_text === "self") {
           return {
@@ -338,7 +237,6 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
         }
       }
 
-      // Detect super() calls
       if (object_node.type === "call" && object_node.text.startsWith("super()")) {
         return {
           receiver_location: node_to_location(object_node, file_path),
@@ -350,7 +248,7 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
         };
       }
 
-      // Use extract_property_chain for nested receivers like self.db.query()
+      // Nested receivers like self.db.query() need the full parsed chain.
       const chain = PYTHON_METADATA_EXTRACTORS.extract_property_chain(target_node);
 
       if (chain && chain.length > 0) {
@@ -369,7 +267,6 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
         };
       }
 
-      // Fallback: simple receiver + property
       return {
         receiver_location: node_to_location(object_node, file_path),
         property_chain: attr_name
@@ -383,16 +280,10 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
   },
 
   /**
-   * Extract assignment source and target locations
-   *
-   * Handles:
-   * - Simple assignment: `x = y`
-   * - Multiple assignment: `a, b = c, d`
-   * - Unpacking: `a, *rest = values`
-   * - Attribute assignment: `obj.prop = value`
-   * - Subscript assignment: `obj['key'] = value`
-   * - Augmented assignment: `x += 5`
-   * - Annotated assignment: `x: int = 5`
+   * Extract assignment source and target locations. In Python's grammar an
+   * annotated assignment (`x: int = 5`) is an `assignment` node with a "type"
+   * field, so the `annotated_assignment` branch below covers only grammars that
+   * emit a distinct node.
    */
   extract_assignment_parts(
     node: SyntaxNode | null | undefined,
@@ -402,9 +293,6 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
       return { source: undefined, target: undefined };
     }
 
-    // Handle assignment (both with and without type annotation)
-    // In Python's tree-sitter, annotated assignments like `x: int = 5` are
-    // just assignment nodes with a "type" field
     if (node.type === "assignment") {
       const left = node.childForFieldName("left");
       const right = node.childForFieldName("right");
@@ -415,7 +303,6 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
       };
     }
 
-    // Handle annotated assignment if it exists (for compatibility)
     if (node.type === "annotated_assignment") {
       const target_node = node.childForFieldName("target");
       const value_node = node.childForFieldName("value");
@@ -426,7 +313,6 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
       };
     }
 
-    // Handle augmented assignment (x += y)
     if (node.type === "augmented_assignment") {
       const left = node.childForFieldName("left");
       const right = node.childForFieldName("right");
@@ -437,7 +323,7 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
       };
     }
 
-    // Handle walrus operator (:=) for Python 3.8+
+    // Walrus operator (`x := value`).
     if (node.type === "named_expression") {
       const name = node.childForFieldName("name");
       const value = node.childForFieldName("value");
@@ -452,35 +338,10 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
   },
 
   /**
-   * Extract constructor call target variable
-   *
-   * Essential for type tracking - most reliable way to determine object types.
-   * In Python, constructors are regular function calls, so we navigate from the
-   * call node to find the assignment target.
-   *
-   * Tree-sitter pattern:
-   * ```
-   * (assignment
-   *   left: (identifier) @construct.target    ← Extract this location
-   *   right: (call
-   *     function: (identifier) @construct.class))
-   * ```
-   *
-   * Also handles annotated assignments:
-   * ```
-   * (annotated_assignment
-   *   target: (identifier) @construct.target    ← Extract this location
-   *   value: (call))
-   * ```
-   *
-   * Handles:
-   * - `obj = MyClass()` → location of `obj`
-   * - `self.prop = Thing()` → location of `self.prop`
-   * - `items = [Item() for _ in range(10)]` → location of `items`
-   * - `x := MyClass()` → location of `x` (walrus operator)
-   *
-   * This enables immediate type determination: when we see `x = Y()`,
-   * we know `x` has type `Y` without complex inference.
+   * Extract the assignment target that receives a constructor call. Python
+   * constructors are ordinary calls, so this walks up from the call node to the
+   * enclosing assignment/annotated-assignment/walrus and returns its target,
+   * yielding the variable's type without inference (`x = Y()` → `x` is a `Y`).
    */
   extract_construct_target(
     node: SyntaxNode | null | undefined,
@@ -490,8 +351,6 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
       return undefined;
     }
 
-    // In Python, constructors are regular function calls
-    // Look for parent assignment
     let parent = node.parent;
     while (parent) {
       if (parent.type === "assignment") {
@@ -502,7 +361,6 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
         break;
       }
 
-      // Handle assignment with type annotation (Python uses assignment with type field)
       if (parent.type === "annotated_assignment") {
         const target_node = parent.childForFieldName("target");
         if (target_node) {
@@ -511,7 +369,6 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
         break;
       }
 
-      // Handle named expression (walrus operator)
       if (parent.type === "named_expression") {
         const name = parent.childForFieldName("name");
         if (name) {
@@ -527,15 +384,9 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
   },
 
   /**
-   * Extract generic type arguments
-   *
-   * Handles:
-   * - `List[int]` → ["int"]
-   * - `Dict[str, int]` → ["str", "int"]
-   * - `Optional[str]` → ["str"]
-   * - `Union[str, int, None]` → ["str", "int", "None"]
-   * - `Callable[[int, str], bool]` → ["[int, str]", "bool"]
-   * - Nested generics: `List[Dict[str, int]]` → ["Dict[str, int]"]
+   * Extract the top-level generic type arguments, keeping nested generics whole.
+   * `Dict[str, int]` → ["str", "int"]; `List[Dict[str, int]]` → ["Dict[str, int]"];
+   * `Callable[[int, str], bool]` → ["[int, str]", "bool"].
    */
   extract_type_arguments(node: SyntaxNode | null | undefined): string[] | undefined {
     if (!node) {
@@ -544,13 +395,10 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
 
     const args: string[] = [];
 
-    // Handle generic_type node (Python's tree-sitter uses this for generics)
     if (node.type === "generic_type") {
-      // Look for type_parameter children
       for (let i = 0; i < node.namedChildCount; i++) {
         const child = node.namedChild(i);
         if (child && child.type === "type_parameter") {
-          // Extract type arguments from within type_parameter
           for (let j = 0; j < child.namedChildCount; j++) {
             const type_child = child.namedChild(j);
             if (type_child && type_child.type === "type") {
@@ -561,11 +409,9 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
       }
     }
 
-    // Handle subscript node (for runtime subscripting like obj['key'])
     if (node.type === "subscript") {
       const subscript_node = node.childForFieldName("subscript");
       if (subscript_node) {
-        // Handle tuple of types (Dict[str, int])
         if (subscript_node.type === "tuple") {
           for (let i = 0; i < subscript_node.childCount; i++) {
             const child = subscript_node.child(i);
@@ -574,22 +420,19 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
             }
           }
         } else {
-          // Single type argument
           args.push(subscript_node.text);
         }
       }
     }
 
-    // Try to extract from text using regex for complex cases
+    // Text fallback for shapes the node walks above miss; depth tracking keeps
+    // Callable's inner `[int, str]` from splitting at its inner comma.
     if (args.length === 0) {
       const text = node.text;
-      // Match pattern like Type[Args]
       const match = text.match(/\w+\[([^\]]+)\]/);
       if (match) {
         const type_arg_string = match[1];
-        // Handle nested brackets for Callable
         if (type_arg_string.includes("[") && type_arg_string.includes("]")) {
-          // For Callable[[int, str], bool], split carefully
           const parts: string[] = [];
           let current = "";
           let depth = 0;
@@ -608,7 +451,6 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
           }
           args.push(...parts);
         } else {
-          // Simple comma-separated types
           const type_args = type_arg_string.split(",").map(arg => arg.trim());
           args.push(...type_args);
         }
@@ -618,26 +460,12 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
     return args.length > 0 ? args : undefined;
   },
 
-  /**
-   * Check if a node represents optional chaining
-   *
-   * Python does not have optional chaining syntax, so this always returns false.
-   *
-   * @param _node - The SyntaxNode (unused)
-   * @returns Always false for Python
-   */
+  // Python has no optional chaining syntax.
   extract_is_optional_chain(_node: SyntaxNode): boolean {
     return false;
   },
 
-  /**
-   * Check if a call node represents a method call
-   *
-   * Python: call with attribute function
-   *
-   * @param node - The SyntaxNode representing a call
-   * @returns true if it's a method call, false if it's a function call
-   */
+  // A method call is a call whose function is an attribute access (`obj.m()`).
   is_method_call(node: SyntaxNode): boolean {
     if (node.type === "call") {
       const function_node = node.childForFieldName("function");
@@ -648,28 +476,17 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
     return false;
   },
 
-  /**
-   * Extract the method or function name from a call node
-   *
-   * For method calls, extracts the attribute name.
-   * For function calls, extracts the function identifier.
-   *
-   * @param node - The SyntaxNode representing a call
-   * @returns The name of the method or function, or undefined
-   */
   extract_call_name(node: SyntaxNode): SymbolName | undefined {
     if (node.type === "call") {
       const function_node = node.childForFieldName("function");
 
       if (function_node) {
-        // Method call: extract attribute name
         if (function_node.type === "attribute") {
           const attribute_node = function_node.childForFieldName("attribute");
           if (attribute_node) {
             return attribute_node.text as SymbolName;
           }
         }
-        // Function call: extract identifier
         else if (function_node.type === "identifier") {
           return function_node.text as SymbolName;
         }
