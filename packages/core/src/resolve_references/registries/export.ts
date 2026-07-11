@@ -15,98 +15,75 @@ import {
 } from "./export.python";
 
 /**
- * Extended export metadata for resolution.
- * Contains everything needed to follow re-export chains.
+ * Everything needed to follow a re-export chain to its ultimate source symbol.
  */
 interface EnhancedExportMetadata {
-  /** Symbol ID of the exported symbol */
   symbol_id: SymbolId;
 
-  /** Name used in export (may differ from symbol name if aliased) */
+  /** Name used in the export, which differs from the symbol name when aliased. */
   export_name: SymbolName;
 
-  /** True if this is a default export */
   is_default: boolean;
 
-  /** True if this is a re-export (export { x } from './other') */
+  /** True for re-exports (`export { x } from './other'`). */
   is_reexport: boolean;
 
-  /** For re-exports: the ImportDefinition containing source info */
+  /** Source info carried on re-exports so the chain can be followed. */
   import_def?: ImportDefinition;
 }
 
 /**
- * Registry tracking what symbols each file exports.
- *
- * Used for import resolution: when resolving `import { foo } from './module'`,
- * we need to check if the target file exports `foo`.
- *
- * Now also stores full export metadata and implements resolve_export_chain
- * to follow re-export chains without needing SemanticIndex.
+ * Registry tracking what symbols each file exports, keyed for the two lookups
+ * import resolution needs: the set of exported symbols per file, and per-name
+ * metadata rich enough to follow `export { x } from './other'` re-export chains
+ * without a SemanticIndex.
  */
 export class ExportRegistry {
-  /** File → Set of SymbolIds that file exports (legacy compatibility) */
   private exports: Map<FilePath, Set<SymbolId>> = new Map();
 
-  /** File → (export name → export metadata) */
   private export_metadata: Map<
     FilePath,
     Map<SymbolName, EnhancedExportMetadata>
   > = new Map();
 
-  /** File → default export metadata */
   private default_exports: Map<FilePath, EnhancedExportMetadata> = new Map();
 
-  /** Track which file contributed which exports (for cleanup) */
-  private by_file: Map<FilePath, Set<SymbolName>> = new Map();
-
   /**
-   * Update exports for a file.
-   * Replaces any existing export information for the file.
-   * Gets definitions from DefinitionRegistry.
-   *
-   * @param file_id - The file being updated
-   * @param definitions - Definition registry containing all definitions
+   * Replace all export information for a file from its current definitions.
    */
   update_file(file_id: FilePath, definitions: DefinitionRegistry): void {
-    // Remove old data
     this.remove_file(file_id);
 
-    // Build export metadata from all exportable definitions in semantic index
     const symbol_ids = new Set<SymbolId>();
     const metadata_map = new Map<SymbolName, EnhancedExportMetadata>();
-    const export_names = new Set<SymbolName>();
 
-    // Helper to add exportable definitions to the registry
     const add_to_registry = (def: ExportableDefinition) => {
-      // ImportDefinitions don't have is_exported - check export field directly
+      // ImportDefinitions carry no is_exported flag; their re-export status
+      // lives entirely on the export field.
       if (def.kind === "import") {
         if (!def.export) {
           return;
         }
       } else {
-        // Only add exported symbols
         if (!def.is_exported) {
           return;
         }
       }
 
-      // Get the effective export name (alias or original name)
       const export_name = def.export?.export_name || def.name;
       const is_default = def.export?.is_default === true;
       const is_reexport = def.export?.is_reexport === true;
 
-      // For re-exports, the definition itself is an ImportDefinition
       const import_def =
         is_reexport && def.kind === "import"
           ? (def as ImportDefinition)
           : undefined;
 
-      // Check for duplicates - temporarily allow function/variable duplicates for arrow functions
       const existing = metadata_map.get(export_name);
       if (existing && !is_default) {
-        // Special case: if we have both a function and a variable/constant with the same name,
-        // prefer the variable (this handles arrow functions assigned to const variables)
+        // An arrow function assigned to a const produces both a function and a
+        // variable/constant definition under one name; the variable is the
+        // exported binding.
         if (
           (existing.symbol_id.includes("function:") &&
             (def.kind === "variable" || def.kind === "constant")) ||
@@ -114,9 +91,7 @@ export class ExportRegistry {
             (existing.symbol_id.includes("variable:") ||
               existing.symbol_id.includes("constant:")))
         ) {
-          // Prefer variable/constant over function for arrow function assignments
           if (def.kind === "variable" || def.kind === "constant") {
-            // Replace the function with the variable
             metadata_map.set(export_name, {
               symbol_id: def.symbol_id,
               export_name,
@@ -127,13 +102,11 @@ export class ExportRegistry {
             symbol_ids.add(def.symbol_id);
             return;
           }
-          // If current def is function and existing is variable/constant, keep the existing (do nothing)
           return;
         }
 
-        // Special case: Variable/constant reassignment (Python-specific)
-        // Python allows: `x = 1; x = 2` at module level - both create definitions,
-        // but only the last one should be exported
+        // Python module-level reassignment (`x = 1; x = 2`) yields one
+        // definition per assignment; only the last in source order is exported.
         if (
           is_python_file(file_id) &&
           is_variable_or_constant_symbol(existing.symbol_id) &&
@@ -145,7 +118,6 @@ export class ExportRegistry {
               def.location.start_line
             )
           ) {
-            // Current definition is later - replace existing
             metadata_map.set(export_name, {
               symbol_id: def.symbol_id,
               export_name,
@@ -156,16 +128,12 @@ export class ExportRegistry {
             symbol_ids.add(def.symbol_id);
             symbol_ids.delete(existing.symbol_id);
           }
-          // If existing is later, keep it (do nothing)
           return;
         }
 
-        // Special case: Local definition shadows imported re-export
-        // When `from x import foo` is followed by `def foo():`, the local
-        // definition shadows the import. The local definition should be exported.
+        // A local definition (`def foo():`) shadows a re-exported import of the
+        // same name; the local binding is the one that gets exported.
         if (existing.is_reexport && !is_reexport) {
-          // Current def is a local definition, existing is a re-exported import
-          // Replace with the local definition (shadows the import)
           metadata_map.set(export_name, {
             symbol_id: def.symbol_id,
             export_name,
@@ -178,13 +146,10 @@ export class ExportRegistry {
           return;
         }
 
-        // Reverse case: if current def is a re-export but existing is local, keep existing
         if (is_reexport && !existing.is_reexport) {
-          // Local definition shadows the import - keep the local definition
           return;
         }
 
-        // For all other duplicates, this is an error
         throw new Error(
           `Duplicate export name "${export_name}" in file ${file_id}.\n` +
             `  First:  ${existing.symbol_id}\n` +
@@ -204,7 +169,6 @@ export class ExportRegistry {
       symbol_ids.add(def.symbol_id);
 
       if (is_default) {
-        // Check for duplicate default export
         const existing_default = this.default_exports.get(file_id);
         if (existing_default) {
           throw new Error(
@@ -214,107 +178,68 @@ export class ExportRegistry {
               "This indicates a bug in indexing or malformed source code."
           );
         }
-        // Store as default export
         this.default_exports.set(file_id, metadata);
       } else {
-        // Store as named export
         metadata_map.set(export_name, metadata);
-        export_names.add(export_name);
       }
     };
 
-    // Get all definitions for this file from DefinitionRegistry
     const file_definitions =
       definitions.get_exportable_definitions_in_file(file_id);
 
-    // Process all exportable definitions
     for (const def of file_definitions) {
       add_to_registry(def);
     }
 
-    // Store in all indexes
     if (symbol_ids.size > 0) {
       this.exports.set(file_id, symbol_ids);
     }
     if (metadata_map.size > 0) {
       this.export_metadata.set(file_id, metadata_map);
     }
-    if (export_names.size > 0) {
-      this.by_file.set(file_id, export_names);
-    }
   }
 
   /**
-   * Get all symbols exported by a file.
-   *
-   * @param file_id - The file to query
-   * @returns Set of exported SymbolIds (empty set if file has no exports)
+   * All symbols exported by a file, as a copy safe for the caller to mutate.
    */
   get_exports(file_id: FilePath): Set<SymbolId> {
     const exports = this.exports.get(file_id);
     return exports ? new Set(exports) : new Set();
   }
 
-  /**
-   * Get named export metadata for a file.
-   *
-   * @param file_path - The file to query
-   * @param export_name - The export name to look up
-   * @returns Export metadata or undefined if not found
-   */
-  get_export(
+  private get_export(
     file_path: FilePath,
     export_name: SymbolName
   ): EnhancedExportMetadata | undefined {
     return this.export_metadata.get(file_path)?.get(export_name);
   }
 
-  /**
-   * Get default export metadata for a file.
-   *
-   * @param file_path - The file to query
-   * @returns Default export metadata or undefined if no default export
-   */
-  get_default_export(file_path: FilePath): EnhancedExportMetadata | undefined {
+  private get_default_export(
+    file_path: FilePath
+  ): EnhancedExportMetadata | undefined {
     return this.default_exports.get(file_path);
   }
 
-  /**
-   * Remove all export information from a file.
-   *
-   * @param file_id - The file to remove
-   */
   remove_file(file_id: FilePath): void {
     this.exports.delete(file_id);
     this.export_metadata.delete(file_id);
     this.default_exports.delete(file_id);
-    this.by_file.delete(file_id);
   }
 
-  /**
-   * Clear all export information from the registry.
-   */
   clear(): void {
     this.exports.clear();
     this.export_metadata.clear();
     this.default_exports.clear();
-    this.by_file.clear();
   }
 
   /**
-   * Follow export chain to find ultimate source symbol.
-   * Handles re-export chains: base.js → middle.js → main.js
+   * Follow a re-export chain (`base.js → middle.js → main.js`) to the symbol
+   * that ultimately backs an export, using only this registry's data.
    *
-   * This is a self-contained resolution method that only uses ExportRegistry data.
-   * It replaces the resolve_export_chain function from import_resolution.ts.
-   *
-   * @param source_file - File containing the export
-   * @param export_name - Name of the exported symbol (ignored for default imports)
-   * @param import_kind - Type of import (named, default, or namespace)
-   * @param languages - Map of file paths to their languages
-   * @param root_folder - Root folder for module path resolution
-   * @param visited - Set of visited exports for cycle detection (internal)
-   * @returns Resolved symbol_id or null if not found
+   * @param export_name - Ignored for default imports.
+   * @param visited - Cycle-detection accumulator; callers leave it unset.
+   * @returns The resolved symbol_id, or null when the export is missing, the
+   *   source language is unknown, or the chain is circular.
    */
   resolve_export_chain(
     source_file: FilePath,
@@ -324,40 +249,33 @@ export class ExportRegistry {
     root_folder: FileSystemFolder,
     visited: Set<string> = new Set()
   ): SymbolId | null {
-    // Detect cycles
     const key =
       import_kind === "default"
         ? `${source_file}:default`
         : `${source_file}:${export_name}:${import_kind}`;
 
     if (visited.has(key)) {
-      return null; // Circular re-export
+      return null;
     }
     visited.add(key);
 
-    // Get export metadata from THIS registry
     const export_meta =
       import_kind === "default"
         ? this.get_default_export(source_file)
         : this.get_export(source_file, export_name);
 
     if (!export_meta) {
-      // Export not found
       return null;
     }
 
-    // If it's a re-export, follow the chain
     if (export_meta.is_reexport && export_meta.import_def) {
       const imp_def = export_meta.import_def;
 
-      // Get language from languages map (the file doing the re-export)
       const language = languages.get(source_file);
       if (!language) {
-        // Source file language not available - cannot resolve re-export
         return null;
       }
 
-      // Resolve the module path to get the target file
       const resolved_file = resolve_module_path(
         imp_def.import_path,
         source_file,
@@ -365,23 +283,19 @@ export class ExportRegistry {
         root_folder
       );
 
-      // Get the original name and import kind for the next hop
       const original_name = (imp_def.original_name ||
         imp_def.name) as SymbolName;
-      const next_import_kind = imp_def.import_kind;
 
-      // RECURSIVE: Follow the chain
       return this.resolve_export_chain(
         resolved_file,
         original_name,
-        next_import_kind,
+        imp_def.import_kind,
         languages,
         root_folder,
         visited
       );
     }
 
-    // Not a re-export, return the symbol
     return export_meta.symbol_id;
   }
 }
