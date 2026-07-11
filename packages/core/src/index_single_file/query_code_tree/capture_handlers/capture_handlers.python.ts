@@ -54,28 +54,7 @@ import {
   handle_definition_except_var,
   handle_definition_with_var,
 } from "./loop_variable_handlers.python";
-// Import handlers from python_imports.ts for local use
-import {
-  handle_definition_import,
-  handle_import_named,
-  handle_import_named_source,
-  handle_import_named_alias,
-  handle_import_module,
-  handle_import_module_source,
-  handle_import_module_alias,
-  handle_import_star,
-} from "./imports.python";
-// Re-export import handlers for external use
-export {
-  handle_definition_import,
-  handle_import_named,
-  handle_import_named_source,
-  handle_import_named_alias,
-  handle_import_module,
-  handle_import_module_source,
-  handle_import_module_alias,
-  handle_import_star,
-};
+import { handle_definition_import } from "./imports.python";
 
 // ============================================================================
 // DOCUMENTATION HANDLERS
@@ -1009,13 +988,6 @@ export const PYTHON_HANDLERS: HandlerRegistry = {
 
   // Imports
   "definition.import": handle_definition_import,
-  "import.named": handle_import_named,
-  "import.named.source": handle_import_named_source,
-  "import.named.alias": handle_import_named_alias,
-  "import.module": handle_import_module,
-  "import.module.source": handle_import_module_source,
-  "import.module.alias": handle_import_module_alias,
-  "import.star": handle_import_star,
 
   // Protocols
   "definition.interface": handle_definition_interface,

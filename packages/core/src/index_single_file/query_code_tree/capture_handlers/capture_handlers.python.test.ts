@@ -124,9 +124,20 @@ describe("Python Builder Configuration", () => {
     return null;
   }
 
+  // Helper function to find a dotted_name node by its exact text
+  function find_dotted_name(node: SyntaxNode, text: string): SyntaxNode | null {
+    if (node.type === "dotted_name" && node.text === text) return node;
+
+    for (let i = 0; i < node.childCount; i++) {
+      const found = find_dotted_name(node.child(i)!, text);
+      if (found) return found;
+    }
+    return null;
+  }
+
   describe("PYTHON_HANDLERS", () => {
     it("should export a valid handler registry with all expected keys", () => {
-      expect(Object.keys(PYTHON_HANDLERS).length).toEqual(45);
+      expect(Object.keys(PYTHON_HANDLERS).length).toEqual(38);
     });
 
     it("should contain class definition capture mappings", () => {
@@ -215,22 +226,9 @@ describe("Python Builder Configuration", () => {
       }
     });
 
-    it("should contain import capture mappings", () => {
-      const import_mappings = [
-        "import.named",
-        "import.named.source",
-        "import.named.alias",
-        "import.module",
-        "import.module.source",
-        "import.module.alias",
-        "import.star",
-      ];
-
-      for (const mapping of import_mappings) {
-        expect((mapping in PYTHON_HANDLERS)).toBe(true);
-        const handler = PYTHON_HANDLERS[mapping];
-        expect(typeof handler).toBe("function");
-      }
+    it("should contain the import capture mapping", () => {
+      expect(("definition.import" in PYTHON_HANDLERS)).toBe(true);
+      expect(typeof PYTHON_HANDLERS["definition.import"]).toBe("function");
     });
 
     it("should handle a simple class definition", () => {
@@ -313,11 +311,11 @@ describe("Python Builder Configuration", () => {
 
     it("should handle import statements", () => {
       const code = "import os";
-      const capture = create_capture(code, "import.module", "dotted_name");
+      const capture = create_capture(code, "definition.import", "dotted_name");
       const context = create_test_context();
       const builder = new DefinitionBuilder(context);
 
-      PYTHON_HANDLERS["import.module"]!(capture, builder, context);
+      PYTHON_HANDLERS["definition.import"]!(capture, builder, context);
 
       const definitions = builder.build();
       expect(definitions.imports.size).toEqual(1);
@@ -492,18 +490,17 @@ describe("Python Builder Configuration", () => {
     it("should handle from imports", () => {
       const code = "from os import path";
       const ast = parser.parse(code);
-      // Find the import_from_statement, then get the imported name (second dotted_name)
       const import_stmt = find_node_by_type(ast.rootNode, "import_from_statement")!;
       const dotted_names: SyntaxNode[] = [];
       for (let i = 0; i < import_stmt.childCount; i++) {
         const child = import_stmt.child(i)!;
         if (child.type === "dotted_name") dotted_names.push(child);
       }
-      const path_node = dotted_names[1]!; // "path" is the second dotted_name
+      const path_node = dotted_names[1]!;
       const capture: CaptureNode = {
-        name: "import.named",
-        category: "import" as SemanticCategory,
-        entity: "named" as SemanticEntity,
+        name: "definition.import",
+        category: "definition" as SemanticCategory,
+        entity: "import" as SemanticEntity,
         node: path_node as any,
         text: path_node.text as SymbolName,
         location: node_to_location(path_node, "test.py" as any),
@@ -511,50 +508,12 @@ describe("Python Builder Configuration", () => {
       const context = create_test_context();
       const builder = new DefinitionBuilder(context);
 
-      PYTHON_HANDLERS["import.named"]!(capture, builder, context);
+      PYTHON_HANDLERS["definition.import"]!(capture, builder, context);
 
       const definitions = builder.build();
       expect(definitions.imports.size).toEqual(1);
       const import_def = definitions.imports.values().next().value!;
       expect(import_def.name).toEqual("path");
-    });
-
-    it("should handle aliased imports", () => {
-      const code = "import numpy as np";
-      const ast = parser.parse(code);
-      const context = create_test_context();
-      const builder = new DefinitionBuilder(context);
-
-      // Aliased imports require import.module.source then import.module.alias
-      // import.module.source captures the source module name "numpy"
-      const source_node = find_node_by_type(ast.rootNode, "dotted_name")!;
-      const source_capture: CaptureNode = {
-        name: "import.module.source",
-        category: "import" as SemanticCategory,
-        entity: "module" as SemanticEntity,
-        node: source_node as any,
-        text: source_node.text as SymbolName,
-        location: node_to_location(source_node, "test.py" as any),
-      };
-      PYTHON_HANDLERS["import.module.source"]!(source_capture, builder, context);
-
-      // import.module.alias captures the alias "np"
-      const alias_node = find_node_by_type(ast.rootNode, "aliased_import")!;
-      const alias_identifier = alias_node.childForFieldName("alias")!;
-      const alias_capture: CaptureNode = {
-        name: "import.module.alias",
-        category: "import" as SemanticCategory,
-        entity: "module" as SemanticEntity,
-        node: alias_identifier as any,
-        text: alias_identifier.text as SymbolName,
-        location: node_to_location(alias_identifier, "test.py" as any),
-      };
-      PYTHON_HANDLERS["import.module.alias"]!(alias_capture, builder, context);
-
-      const definitions = builder.build();
-      expect(definitions.imports.size).toEqual(1);
-      const import_def = definitions.imports.values().next().value!;
-      expect(import_def.name).toEqual("np");
     });
 
     it("should handle relative imports (from .module import name)", () => {
@@ -1704,67 +1663,44 @@ def index():
       });
 
       describe("Imports", () => {
-        it("should have is_exported=true for module-level public imports", () => {
+        it("marks module-level public imports as re-exports", () => {
           const code = "import os";
           const context = create_test_context();
           const builder = new DefinitionBuilder(context);
-          const capture = create_capture(code, "import.module", "dotted_name");
+          const capture = create_capture(code, "definition.import", "dotted_name");
 
-          PYTHON_HANDLERS["import.module"]!(
-            capture,
-            builder,
-            context
-          );
+          PYTHON_HANDLERS["definition.import"]!(capture, builder, context);
 
           const definitions = builder.build();
-          const import_def = definitions.imports.values().next().value;
+          const import_def = definitions.imports.values().next().value!;
 
-          expect(import_def).toBeDefined();
-          expect(import_def?.name).toBe("os");
+          expect(import_def.name).toBe("os");
+          expect(import_def.export).toEqual({ is_reexport: true });
         });
 
-        it("should have is_exported=false for module-level private imports", () => {
+        it("does not mark underscore-prefixed imports as re-exports", () => {
           const code = "from internal import _private_module";
           const context = create_test_context();
           const builder = new DefinitionBuilder(context);
-
-          // Create capture for the imported name
           const ast = parser.parse(code);
-          const identifiers: SyntaxNode[] = [];
 
-          const find_identifiers = (node: SyntaxNode) => {
-            if (node.type === "dotted_name" && node.text === "_private_module") {
-              identifiers.push(node);
-            }
-            for (let i = 0; i < node.childCount; i++) {
-              find_identifiers(node.child(i)!);
-            }
+          const private_node = find_dotted_name(ast.rootNode, "_private_module")!;
+          const capture: CaptureNode = {
+            name: "definition.import",
+            category: "definition" as SemanticCategory,
+            entity: "import" as SemanticEntity,
+            node: private_node as any,
+            text: "_private_module" as SymbolName,
+            location: node_to_location(private_node, "test.py" as any),
           };
 
-          find_identifiers(ast.rootNode);
+          PYTHON_HANDLERS["definition.import"]!(capture, builder, context);
 
-          if (identifiers[0]) {
-            const capture: CaptureNode = {
-              name: "import.named",
-              category: "import" as any,
-              entity: "named" as any,
-              node: identifiers[0] as any,
-              text: "_private_module" as SymbolName,
-              location: node_to_location(identifiers[0], "test.py" as any),
-            };
+          const definitions = builder.build();
+          const import_def = definitions.imports.values().next().value!;
 
-            PYTHON_HANDLERS["import.named"]!(
-              capture,
-              builder,
-              context
-            );
-
-            const definitions = builder.build();
-            const import_def = definitions.imports.values().next().value;
-
-            expect(import_def).toBeDefined();
-            expect(import_def?.name).toBe("_private_module");
-          }
+          expect(import_def.name).toBe("_private_module");
+          expect(import_def.export).toBeUndefined();
         });
       });
     });

@@ -551,6 +551,12 @@
   (wildcard_import) @definition.import
 )
 
+; Relative import all (from .pkg import *, from . import *)
+(import_from_statement
+  module_name: (relative_import)
+  (wildcard_import) @definition.import
+)
+
 ; Relative imports (from . import X, from .. import Y)
 (import_from_statement
   module_name: (relative_import)
