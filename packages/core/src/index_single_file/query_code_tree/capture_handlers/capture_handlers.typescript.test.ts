@@ -89,9 +89,8 @@ describe("TypeScript Builder Configuration", () => {
   }
 
   describe("TYPESCRIPT_HANDLERS", () => {
-    it("should contain all expected handler keys", () => {
+    it("registers a handler for every capture name emitted by typescript.scm", () => {
       const expected_keys = [
-        // Inherited from JavaScript
         "definition.variable",
         "definition.function",
         "definition.anonymous_function",
@@ -99,55 +98,38 @@ describe("TypeScript Builder Configuration", () => {
         "definition.method",
         "definition.field",
         "definition.parameter",
-        // TypeScript-specific: Interfaces
+        "definition.parameter.optional",
         "definition.interface",
         "definition.interface.method",
         "definition.interface.property",
-        // TypeScript-specific: Type aliases
         "definition.type_alias",
-        // TypeScript-specific: Enums
         "definition.enum",
         "definition.enum.member",
-        // TypeScript-specific: Namespaces
         "definition.namespace",
-        // TypeScript-specific: Decorators
         "decorator.class",
         "decorator.method",
         "decorator.property",
-        // TypeScript-specific: Methods
-        "definition.method.private",
-        "definition.method.abstract",
-        // TypeScript-specific: Fields
-        "definition.field.private",
-        "definition.field.param_property",
-        // TypeScript-specific: Parameters
-        "definition.parameter.optional",
-        "definition.parameter.rest",
       ];
 
       for (const key of expected_keys) {
         expect(key in TYPESCRIPT_HANDLERS).toBe(true);
         expect(typeof TYPESCRIPT_HANDLERS[key]).toBe("function");
       }
-
-      // Verify expected keys are a subset (there may be additional inherited JS handlers)
-      expect(Object.keys(TYPESCRIPT_HANDLERS).length).toBeGreaterThanOrEqual(expected_keys.length);
     });
 
-    it("should extend JavaScript configuration with all JS keys present", () => {
+    it("inherits every JavaScript handler key", () => {
       const js_keys = Object.keys(JAVASCRIPT_HANDLERS);
       for (const key of js_keys) {
         expect(key in TYPESCRIPT_HANDLERS).toBe(true);
       }
-      // TypeScript has more handlers than JavaScript
       expect(Object.keys(TYPESCRIPT_HANDLERS).length).toBeGreaterThan(
-        Object.keys(JAVASCRIPT_HANDLERS).length
+        js_keys.length
       );
     });
   });
 
   describe("Interface handling", () => {
-    it("should process interface definitions", () => {
+    it("processes interface definitions", () => {
       const code = `interface IUser {
   name: string;
   age: number;
@@ -172,7 +154,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(iface.properties).toEqual([]);
     });
 
-    it("should process interface with extends", () => {
+    it("processes interface with extends", () => {
       const code = "interface IAdmin extends IUser, ISerializable {}";
       const index = build_index_from_code(code);
       const iface = Array.from(index.interfaces.values()).find(i => i.name === "IAdmin")!;
@@ -181,7 +163,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(iface.extends).toEqual(["IUser", "ISerializable"]);
     });
 
-    it("should process interface method signatures via integration", () => {
+    it("processes interface method signatures via integration", () => {
       const code = `interface ICalculator {
   add(a: number, b: number): number;
 }`;
@@ -195,7 +177,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(method.return_type).toBe("number");
     });
 
-    it("should process interface property signatures via integration", () => {
+    it("processes interface property signatures via integration", () => {
       const code = `interface IConfig {
   debug: boolean;
   name: string;
@@ -214,7 +196,7 @@ describe("TypeScript Builder Configuration", () => {
   });
 
   describe("Type alias handling", () => {
-    it("should process type alias definitions", () => {
+    it("processes type alias definitions", () => {
       const code = "type UserID = string | number;";
       const ast = get_ast_node(code);
       const type_alias_node = find_node_by_type(ast, "type_alias_declaration")!;
@@ -234,7 +216,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(type_alias.type_expression).toBe("string | number");
     });
 
-    it("should process generic type aliases", () => {
+    it("processes generic type aliases", () => {
       const code = "type Result<T, E> = { ok: T } | { error: E };";
       const ast = get_ast_node(code);
       const type_alias_node = find_node_by_type(ast, "type_alias_declaration")!;
@@ -253,7 +235,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(type_alias.generics).toEqual(["T", "E"]);
     });
 
-    it("should process exported type alias via integration", () => {
+    it("processes exported type alias via integration", () => {
       const code = "export type StatusCode = 200 | 404 | 500;";
       const index = build_index_from_code(code);
       const type_alias = Array.from(index.types.values()).find(t => t.name === "StatusCode")!;
@@ -264,7 +246,7 @@ describe("TypeScript Builder Configuration", () => {
   });
 
   describe("Enum handling", () => {
-    it("should process enum definitions", () => {
+    it("processes enum definitions", () => {
       const code = `enum Color {
   Red = 0,
   Green = 1,
@@ -289,7 +271,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(enum_def.members).toEqual([]);
     });
 
-    it("should process const enum definitions", () => {
+    it("processes const enum definitions", () => {
       const code = `const enum Status {
   Active,
   Inactive
@@ -311,7 +293,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(enum_def.is_const).toBe(true);
     });
 
-    it("should process enum with members via integration", () => {
+    it("processes enum with members via integration", () => {
       const code = `enum Direction {
   Up = "UP",
   Down = "DOWN",
@@ -329,7 +311,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(enum_def.members.map(m => m.value)).toEqual(["\"UP\"", "\"DOWN\"", "\"LEFT\"", "\"RIGHT\""]);
     });
 
-    it("should process exported enum via integration", () => {
+    it("processes exported enum via integration", () => {
       const code = "export enum LogLevel { Debug, Info, Warn, Error }";
       const index = build_index_from_code(code);
       const enum_def = Array.from(index.enums.values()).find(e => e.name === "LogLevel")!;
@@ -339,7 +321,7 @@ describe("TypeScript Builder Configuration", () => {
   });
 
   describe("Namespace handling", () => {
-    it("should process namespace definitions", () => {
+    it("processes namespace definitions", () => {
       const code = `namespace Utils {
   export function log(msg: string): void {}
 }`;
@@ -362,7 +344,7 @@ describe("TypeScript Builder Configuration", () => {
   });
 
   describe("Class enhancements", () => {
-    it("should process abstract classes via integration", () => {
+    it("processes abstract classes via integration", () => {
       const code = `abstract class Shape {
   abstract area(): number;
 }`;
@@ -377,7 +359,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(cls.methods[0]!.return_type).toBe("number");
     });
 
-    it("should process classes with implements via integration", () => {
+    it("processes classes with implements via integration", () => {
       const code = `class User implements IUser, ISerializable {
   name: string = "";
 }`;
@@ -388,7 +370,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(cls.extends).toEqual(["IUser", "ISerializable"]);
     });
 
-    it("should process classes with extends and implements via integration", () => {
+    it("processes classes with extends and implements via integration", () => {
       const code = `class Admin extends BaseUser implements IAdmin {
   role: string = "admin";
 }`;
@@ -397,7 +379,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(cls.extends).toEqual(["BaseUser", "IAdmin"]);
     });
 
-    it("should process generic classes via integration", () => {
+    it("processes generic classes via integration", () => {
       const code = `class Container<T> {
   private value: T = {} as T;
 }`;
@@ -408,7 +390,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(cls.generics).toEqual(["T"]);
     });
 
-    it("should process exported class via integration", () => {
+    it("processes exported class via integration", () => {
       const code = "export class Service { run() {} }";
       const index = build_index_from_code(code);
       const cls = Array.from(index.classes.values()).find(c => c.name === "Service")!;
@@ -419,7 +401,7 @@ describe("TypeScript Builder Configuration", () => {
   });
 
   describe("Method handling via integration", () => {
-    it("should process class methods", () => {
+    it("processes class methods", () => {
       const code = `class Calculator {
   add(a: number, b: number): number { return a + b; }
   subtract(a: number, b: number): number { return a - b; }
@@ -440,7 +422,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(sub.return_type).toBe("number");
     });
 
-    it("should process async methods", () => {
+    it("processes async methods", () => {
       const code = `class Api {
   async fetch(url: string): Promise<Response> { return new Response(); }
 }`;
@@ -451,7 +433,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(method.async).toBe(true);
     });
 
-    it("should process static methods", () => {
+    it("processes static methods", () => {
       const code = `class Factory {
   static create(): Factory { return new Factory(); }
 }`;
@@ -463,13 +445,13 @@ describe("TypeScript Builder Configuration", () => {
   });
 
   describe("Decorator handling", () => {
-    it("should have decorator handler functions registered", () => {
+    it("has decorator handler functions registered", () => {
       expect(typeof TYPESCRIPT_HANDLERS["decorator.class"]).toBe("function");
       expect(typeof TYPESCRIPT_HANDLERS["decorator.method"]).toBe("function");
       expect(typeof TYPESCRIPT_HANDLERS["decorator.property"]).toBe("function");
     });
 
-    it("should process class decorator when target is found", () => {
+    it("processes class decorator when target is found", () => {
       // Decorator handlers require the class to exist in the builder first.
       // Use direct handler invocation with a pre-registered class.
       const code = `@Component
@@ -503,7 +485,7 @@ class MyComponent {
   });
 
   describe("Access modifiers via integration", () => {
-    it("should handle private members", () => {
+    it("handles private members", () => {
       const code = `class Account {
   private balance: number = 0;
   private updateBalance() {}
@@ -518,7 +500,7 @@ class MyComponent {
       expect(update_method.access_modifier).toBe("private");
     });
 
-    it("should handle protected members", () => {
+    it("handles protected members", () => {
       const code = `class Base {
   protected data: string = "";
   protected process() {}
@@ -533,17 +515,16 @@ class MyComponent {
       expect(process_method.access_modifier).toBe("protected");
     });
 
-    it("should handle readonly properties", () => {
+    it("handles readonly properties", () => {
       const code = `class Config {
   readonly version: string = "1.0";
 }`;
       const index = build_index_from_code(code);
       const cls = Array.from(index.classes.values()).find(c => c.name === "Config")!;
-      // readonly is set internally but not exposed on PropertyDefinition as a top-level field
-      // Check the property exists with correct type
       const version_prop = cls.properties.find(p => p.name === "version")!;
       expect(version_prop.kind).toBe("property");
       expect(version_prop.type).toBe("string");
+      expect(version_prop.readonly).toBe(true);
     });
   });
 
@@ -718,9 +699,9 @@ const obj = { extractValue };`;
         .filter(is_variable_reference)
         .filter((r) => r.name === "extractValue")
         .map((r) => ({ kind: r.kind, name: r.name, access_type: r.access_type }));
-      // Two reads: catch-all fires on function-name identifier (definition site,
-      // skipped by detect_indirect_reachability) + new pattern fires on shorthand
-      // property node (use site, marks function as indirectly reachable).
+      // Two reads: the catch-all fires on the function-name identifier (definition
+      // site, skipped by detect_indirect_reachability), and the shorthand-property
+      // rule fires on the use site that marks the function indirectly reachable.
       expect(reads).toEqual([
         { kind: "variable_reference", name: "extractValue", access_type: "read" },
         { kind: "variable_reference", name: "extractValue", access_type: "read" },
@@ -744,7 +725,7 @@ const obj = { extractValue };`;
   });
 
   describe("Function handling via integration", () => {
-    it("should process named function declarations", () => {
+    it("processes named function declarations", () => {
       const code = "function greet(name: string): string { return \"Hello \" + name; }";
       const index = build_index_from_code(code);
       const fn = Array.from(index.functions.values()).find(f => f.name === "greet")!;
@@ -757,7 +738,7 @@ const obj = { extractValue };`;
       expect(fn.signature.parameters[0].type).toBe("string");
     });
 
-    it("should process exported functions", () => {
+    it("processes exported functions", () => {
       const code = "export function process(): void {}";
       const index = build_index_from_code(code);
       const fn = Array.from(index.functions.values()).find(f => f.name === "process")!;
@@ -765,7 +746,7 @@ const obj = { extractValue };`;
       expect(fn.return_type).toBe("void");
     });
 
-    it("should process arrow function assigned to variable", () => {
+    it("processes arrow function assigned to variable", () => {
       const code = "const add = (a: number, b: number): number => a + b;";
       const index = build_index_from_code(code);
       const fn = Array.from(index.functions.values()).find(f => f.name === "add")!;
@@ -778,7 +759,7 @@ const obj = { extractValue };`;
   });
 
   describe("Anonymous function handling via integration", () => {
-    it("should process anonymous arrow functions as callbacks", () => {
+    it("processes anonymous arrow functions as callbacks", () => {
       const code = "function run() { items.forEach((item) => { console.log(item); }); }";
       const index = build_index_from_code(code);
       const anon_fns = Array.from(index.functions.values()).filter(f => f.name === "<anonymous>");
@@ -788,7 +769,7 @@ const obj = { extractValue };`;
   });
 
   describe("Parameter handling via integration", () => {
-    it("should process required parameters", () => {
+    it("processes required parameters", () => {
       const code = "function greet(name: string, count: number): void {}";
       const index = build_index_from_code(code);
       const fn = Array.from(index.functions.values()).find(f => f.name === "greet")!;
@@ -799,7 +780,7 @@ const obj = { extractValue };`;
       expect(fn.signature.parameters[1].type).toBe("number");
     });
 
-    it("should process optional parameters", () => {
+    it("processes optional parameters", () => {
       const code = "function greet(name: string, suffix?: string): void {}";
       const index = build_index_from_code(code);
       const fn = Array.from(index.functions.values()).find(f => f.name === "greet")!;
@@ -808,7 +789,7 @@ const obj = { extractValue };`;
       expect(fn.signature.parameters[1].type).toBe("string");
     });
 
-    it("should process rest parameters", () => {
+    it("processes rest parameters", () => {
       const code = "function sum(...values: number[]): number { return values.reduce((a, b) => a + b, 0); }";
       const index = build_index_from_code(code);
       const fn = Array.from(index.functions.values()).find(f => f.name === "sum")!;
@@ -817,7 +798,7 @@ const obj = { extractValue };`;
       expect(fn.signature.parameters[0].type).toBe("number[]");
     });
 
-    it("should process parameters with default values", () => {
+    it("processes parameters with default values", () => {
       const code = "function greet(name: string = \"World\"): void {}";
       const index = build_index_from_code(code);
       const fn = Array.from(index.functions.values()).find(f => f.name === "greet")!;
@@ -829,7 +810,7 @@ const obj = { extractValue };`;
   });
 
   describe("Return type extraction", () => {
-    it("should extract return type from function declaration", () => {
+    it("extracts return type from function declaration", () => {
       const code = "function getValue(): string { return \"test\"; }";
       const ast = get_ast_node(code);
       const function_node = find_node_by_type(ast, "function_declaration");
@@ -842,7 +823,7 @@ const obj = { extractValue };`;
       expect(return_type).toBe("string");
     });
 
-    it("should extract complex return types", () => {
+    it("extracts complex return types", () => {
       const code = "function getUser(): Promise<User> { return Promise.resolve({} as User); }";
       const ast = get_ast_node(code);
       const function_node = find_node_by_type(ast, "function_declaration");
@@ -855,7 +836,7 @@ const obj = { extractValue };`;
       expect(return_type).toBe("Promise<User>");
     });
 
-    it("should return undefined for functions without return type", () => {
+    it("returns undefined for functions without return type", () => {
       const code = "function doSomething() { console.log(\"test\"); }";
       const ast = get_ast_node(code);
       const function_node = find_node_by_type(ast, "function_declaration");
@@ -870,7 +851,7 @@ const obj = { extractValue };`;
   });
 
   describe("Export Detection for Nested Variables", () => {
-    it("should NOT mark variables inside exported object literals as exported", () => {
+    it("does not mark variables inside exported object literals as exported", () => {
       const code = `
 export const CONFIG = {
   handler: () => {
@@ -881,7 +862,6 @@ export const CONFIG = {
       const ast = get_ast_node(code);
       const builder = new DefinitionBuilder(mock_context);
 
-      // Find all variable declarators
       function find_all_variables(node: SyntaxNode): Array<{node: SyntaxNode, name: string}> {
         const results: Array<{node: SyntaxNode, name: string}> = [];
 
@@ -904,7 +884,6 @@ export const CONFIG = {
 
       const variables = find_all_variables(ast);
 
-      // Process each variable using the JavaScript config (TypeScript uses same logic)
       const var_handler = JAVASCRIPT_HANDLERS["definition.variable"];
 
       for (const {node, name} of variables) {
@@ -920,16 +899,16 @@ export const CONFIG = {
       const config_var = vars.find(v => v.name === "CONFIG")!;
       const local_var = vars.find(v => v.name === "local_var")!;
 
-      // CONFIG should be exported
       expect(config_var.kind).toBe("constant");
       expect(config_var.is_exported).toBe(true);
 
-      // local_var should NOT be exported (it's inside a nested arrow function)
+      // local_var lives inside a nested arrow function, so the export on CONFIG
+      // must not leak onto it.
       expect(local_var.kind).toBe("constant");
       expect(local_var.is_exported).toBe(false);
     });
 
-    it("should NOT mark variables inside exported arrays with functions as exported", () => {
+    it("does not mark variables inside exported arrays with functions as exported", () => {
       const code = `
 export const HANDLERS: Array<Function> = [
   function process(item: any): any {
@@ -977,16 +956,16 @@ export const HANDLERS: Array<Function> = [
       const handlers_var = vars.find(v => v.name === "HANDLERS")!;
       const temp_var = vars.find(v => v.name === "temp")!;
 
-      // HANDLERS should be exported
       expect(handlers_var.kind).toBe("constant");
       expect(handlers_var.is_exported).toBe(true);
 
-      // temp should NOT be exported (it's inside a nested function)
+      // temp lives inside a nested function, so the export on HANDLERS must not
+      // leak onto it.
       expect(temp_var.kind).toBe("constant");
       expect(temp_var.is_exported).toBe(false);
     });
 
-    it("should NOT mark deeply nested variables in exported type-annotated objects as exported", () => {
+    it("does not mark deeply nested variables in exported type-annotated objects as exported", () => {
       const code = `
 export const NESTED: {
   outer: {
@@ -1040,11 +1019,11 @@ export const NESTED: {
       const nested_var = vars.find(v => v.name === "NESTED")!;
       const deeply_var = vars.find(v => v.name === "deeply_nested")!;
 
-      // NESTED should be exported
       expect(nested_var.kind).toBe("constant");
       expect(nested_var.is_exported).toBe(true);
 
-      // deeply_nested should NOT be exported (it's inside a nested arrow function)
+      // deeply_nested lives inside a nested arrow function, so the export on
+      // NESTED must not leak onto it.
       expect(deeply_var.kind).toBe("constant");
       expect(deeply_var.is_exported).toBe(false);
     });
@@ -1055,7 +1034,7 @@ export const NESTED: {
   // ============================================================================
 
   describe("Factory pattern type inference", () => {
-    it("should extract initialized_from_call for variables assigned from function calls", () => {
+    it("extracts initialized_from_call for variables assigned from function calls", () => {
       const code = `
 function createHandler(): Handler {
   return new HandlerA();
@@ -1073,7 +1052,7 @@ function use() {
       expect(h_var.initialized_from_call).toBe("createHandler");
     });
 
-    it("should NOT set initialized_from_call for variables with literal initializers", () => {
+    it("does not set initialized_from_call for variables with literal initializers", () => {
       const code = `
 const x = 42;
 const y = "hello";
@@ -1087,7 +1066,7 @@ const z = { a: 1 };
       }
     });
 
-    it("should extract initialized_from_call for const declarations", () => {
+    it("extracts initialized_from_call for const declarations", () => {
       const code = `
 const extractor = get_scope_boundary_extractor(language);
 `;
@@ -1099,7 +1078,7 @@ const extractor = get_scope_boundary_extractor(language);
       expect(extractor_var.initialized_from_call).toBe("get_scope_boundary_extractor");
     });
 
-    it("should NOT set initialized_from_call for method calls on objects", () => {
+    it("does not set initialized_from_call for method calls on objects", () => {
       const code = `
 const result = obj.getSomething();
 `;
@@ -1108,8 +1087,8 @@ const result = obj.getSomething();
 
       const result_var = vars.find(v => v.name === "result")!;
       expect(result_var.kind).toBe("constant");
-      // Method calls on objects (property access) should not set initialized_from_call
-      // Only direct function calls should be tracked
+      // initialized_from_call tracks direct function calls only; a method call
+      // through property access is not a factory relationship worth recording.
       expect(result_var.initialized_from_call).toBeUndefined();
     });
   });
@@ -1119,7 +1098,7 @@ const result = obj.getSomething();
   // ============================================================================
 
   describe("Property type extraction", () => {
-    it("should extract type from public field with annotation", () => {
+    it("extracts type from public field with annotation", () => {
       const code = `
         class Foo {
           public field: Registry = new Registry();
@@ -1135,7 +1114,7 @@ const result = obj.getSomething();
       expect(field_prop.access_modifier).toBe("public");
     });
 
-    it("should extract type from private field", () => {
+    it("extracts type from private field", () => {
       const code = `
         class Foo {
           private data: Map<string, number>;
@@ -1150,7 +1129,7 @@ const result = obj.getSomething();
       expect(data_prop.access_modifier).toBe("private");
     });
 
-    it("should extract type from optional field", () => {
+    it("extracts type from optional field", () => {
       const code = `
         class Foo {
           optional?: string;
@@ -1164,7 +1143,7 @@ const result = obj.getSomething();
       expect(optional_prop.type).toBe("string");
     });
 
-    it("should extract type from readonly field", () => {
+    it("extracts type from readonly field", () => {
       const code = `
         class Foo {
           readonly config: Config;
@@ -1178,7 +1157,7 @@ const result = obj.getSomething();
       expect(config_prop.type).toBe("Config");
     });
 
-    it("should extract type from static field", () => {
+    it("extracts type from static field", () => {
       const code = `
         class Foo {
           static instance: Foo;
@@ -1192,7 +1171,7 @@ const result = obj.getSomething();
       expect(instance_prop.type).toBe("Foo");
     });
 
-    it("should extract generic type annotations", () => {
+    it("extracts generic type annotations", () => {
       const code = `
         class Foo {
           items: Map<string, Item[]>;
@@ -1206,7 +1185,7 @@ const result = obj.getSomething();
       expect(items_prop.type).toBe("Map<string, Item[]>");
     });
 
-    it("should extract array type annotations", () => {
+    it("extracts array type annotations", () => {
       const code = `
         class Foo {
           numbers: number[];
@@ -1224,7 +1203,7 @@ const result = obj.getSomething();
       expect(items_prop.type).toBe("Array<string>");
     });
 
-    it("should extract union type annotations", () => {
+    it("extracts union type annotations", () => {
       const code = `
         class Foo {
           value: string | number | null;
@@ -1238,7 +1217,7 @@ const result = obj.getSomething();
       expect(value_prop.type).toBe("string | number | null");
     });
 
-    it("should extract function type annotations", () => {
+    it("extracts function type annotations", () => {
       const code = `
         class Foo {
           handler: (data: string) => void;
@@ -1270,7 +1249,7 @@ const result = obj.getSomething();
     }
 
     describe("Callback detection - positive cases", () => {
-      it("should detect callback in array.forEach()", () => {
+      it("detects callback in array.forEach()", () => {
         const code = "items.forEach((item) => { console.log(item); });";
         const tree = parser.parse(code);
         const arrow_fn = find_arrow_function(tree.rootNode);
@@ -1284,7 +1263,7 @@ const result = obj.getSomething();
         expect(context.receiver_location?.start_line).toBe(1);
       });
 
-      it("should detect callback in array.map()", () => {
+      it("detects callback in array.map()", () => {
         const code = "numbers.map(x => x * 2);";
         const tree = parser.parse(code);
         const arrow_fn = find_arrow_function(tree.rootNode);
@@ -1296,7 +1275,7 @@ const result = obj.getSomething();
         expect(context.receiver_location).not.toBeNull();
       });
 
-      it("should detect callback in array.filter()", () => {
+      it("detects callback in array.filter()", () => {
         const code = "items.filter(item => item.active);";
         const tree = parser.parse(code);
         const arrow_fn = find_arrow_function(tree.rootNode);
@@ -1307,7 +1286,7 @@ const result = obj.getSomething();
         expect(context.is_callback).toBe(true);
       });
 
-      it("should detect callback as second argument", () => {
+      it("detects callback as second argument", () => {
         const code = "setTimeout(() => console.log(\"done\"), 1000);";
         const tree = parser.parse(code);
         const arrow_fn = find_arrow_function(tree.rootNode);
@@ -1318,7 +1297,7 @@ const result = obj.getSomething();
         expect(context.is_callback).toBe(true);
       });
 
-      it("should detect nested callback (callback inside callback)", () => {
+      it("detects nested callback (callback inside callback)", () => {
         const code = "items.map(x => [x].filter(y => y > 0));";
         const tree = parser.parse(code);
 
@@ -1336,7 +1315,6 @@ const result = obj.getSomething();
 
         expect(arrow_fns.length).toBe(2);
 
-        // Both should be detected as callbacks
         const outer_context = detect_callback_context(arrow_fns[0], "test.ts" as FilePath);
         const inner_context = detect_callback_context(arrow_fns[1], "test.ts" as FilePath);
 
@@ -1344,7 +1322,7 @@ const result = obj.getSomething();
         expect(inner_context.is_callback).toBe(true);
       });
 
-      it("should detect callback in method call", () => {
+      it("detects callback in method call", () => {
         const code = "obj.subscribe(event => handle(event));";
         const tree = parser.parse(code);
         const arrow_fn = find_arrow_function(tree.rootNode);
@@ -1357,7 +1335,7 @@ const result = obj.getSomething();
     });
 
     describe("Non-callback detection - negative cases", () => {
-      it("should NOT detect callback in variable assignment", () => {
+      it("does not detect callback in variable assignment", () => {
         const code = "const fn = () => { console.log(\"test\"); };";
         const tree = parser.parse(code);
         const arrow_fn = find_arrow_function(tree.rootNode);
@@ -1369,7 +1347,7 @@ const result = obj.getSomething();
         expect(context.receiver_location).toBeNull();
       });
 
-      it("should NOT detect callback in return statement", () => {
+      it("does not detect callback in return statement", () => {
         const code = "function factory() { return () => {}; }";
         const tree = parser.parse(code);
         const arrow_fn = find_arrow_function(tree.rootNode);
@@ -1380,7 +1358,7 @@ const result = obj.getSomething();
         expect(context.is_callback).toBe(false);
       });
 
-      it("should NOT detect callback in object literal", () => {
+      it("does not detect callback in object literal", () => {
         const code = "const obj = { handler: () => {} };";
         const tree = parser.parse(code);
         const arrow_fn = find_arrow_function(tree.rootNode);
@@ -1391,7 +1369,7 @@ const result = obj.getSomething();
         expect(context.is_callback).toBe(false);
       });
 
-      it("should NOT detect callback in array literal", () => {
+      it("does not detect callback in array literal", () => {
         const code = "const fns = [() => {}];";
         const tree = parser.parse(code);
         const arrow_fn = find_arrow_function(tree.rootNode);
@@ -1404,7 +1382,7 @@ const result = obj.getSomething();
     });
 
     describe("Receiver location capture", () => {
-      it("should capture correct receiver location for forEach call", () => {
+      it("captures correct receiver location for forEach call", () => {
         const code = "items.forEach((x) => x * 2);";
         const tree = parser.parse(code);
         const arrow_fn = find_arrow_function(tree.rootNode);
@@ -1421,7 +1399,7 @@ const result = obj.getSomething();
         });
       });
 
-      it("should capture receiver location spanning multiple lines", () => {
+      it("captures receiver location spanning multiple lines", () => {
         const code = `items.forEach(
   (item) => {
     console.log(item);
@@ -1441,7 +1419,7 @@ const result = obj.getSomething();
   });
 
   describe("TypeScript docstring extraction", () => {
-    it("should extract JSDoc on a function", () => {
+    it("extracts JSDoc on a function", () => {
       const code = "/** Compute the total. */\nfunction total(a: number): number { return a; }";
       const index = build_index_from_code(code);
       const fn = Array.from(index.functions.values()).find(f => f.name === "total")!;
@@ -1449,7 +1427,7 @@ const result = obj.getSomething();
       expect(fn.docstring).toContain("Compute the total.");
     });
 
-    it("should extract JSDoc on a class", () => {
+    it("extracts JSDoc on a class", () => {
       const code = "/** A user entity. */\nclass User { name: string = \"\"; }";
       const index = build_index_from_code(code);
       const cls = Array.from(index.classes.values()).find(c => c.name === "User")!;
@@ -1457,7 +1435,7 @@ const result = obj.getSomething();
       expect(cls.docstring?.[0]).toContain("A user entity.");
     });
 
-    it("should extract JSDoc on a method", () => {
+    it("extracts JSDoc on a method", () => {
       const code = "class Calc {\n  /** Add two numbers. */\n  add(a: number, b: number) { return a + b; }\n}";
       const index = build_index_from_code(code);
       const cls = Array.from(index.classes.values()).find(c => c.name === "Calc")!;
@@ -1466,7 +1444,7 @@ const result = obj.getSomething();
       expect(method.docstring).toContain("Add two numbers.");
     });
 
-    it("should extract JSDoc on a const variable", () => {
+    it("extracts JSDoc on a const variable", () => {
       const code = "/** @type {Service} */\nconst svc = create_service();";
       const index = build_index_from_code(code);
       const variable = Array.from(index.variables.values()).find(v => v.name === "svc")!;
