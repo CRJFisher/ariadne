@@ -235,7 +235,6 @@ describe("get_all_referenced_symbols", () => {
       read_location: MOCK_LOCATION,
     };
     const entry: IndirectReachabilityEntry = {
-      function_id: symbol_id,
       reason,
     };
 
@@ -256,7 +255,6 @@ describe("get_all_referenced_symbols", () => {
       read_location: MOCK_LOCATION,
     };
     const entry: IndirectReachabilityEntry = {
-      function_id: symbol_id,
       reason,
     };
 
@@ -282,7 +280,6 @@ describe("get_all_referenced_symbols", () => {
       resolutions: [{ symbol_id: called, confidence: "certain", reason: { type: "direct" } }],
     };
     const entry: IndirectReachabilityEntry = {
-      function_id: indirect,
       reason: {
         type: "function_reference",
         read_location: MOCK_LOCATION,
@@ -347,7 +344,6 @@ describe("get_indirect_reachability", () => {
       read_location: MOCK_LOCATION,
     };
     const entry: IndirectReachabilityEntry = {
-      function_id: symbol_id,
       reason,
     };
 
@@ -487,11 +483,9 @@ describe("remove_file", () => {
       read_location: MOCK_LOCATION_B,
     };
     const entry_a: IndirectReachabilityEntry = {
-      function_id: symbol_a,
       reason: reason_a,
     };
     const entry_b: IndirectReachabilityEntry = {
-      function_id: symbol_b,
       reason: reason_b,
     };
 
@@ -522,11 +516,9 @@ describe("remove_file", () => {
       read_location: MOCK_LOCATION_B,
     };
     const entry_a: IndirectReachabilityEntry = {
-      function_id: symbol_a,
       reason: reason_a,
     };
     const entry_b: IndirectReachabilityEntry = {
-      function_id: symbol_b,
       reason: reason_b,
     };
 
@@ -673,7 +665,6 @@ describe("apply_call_resolution", () => {
       read_location: MOCK_LOCATION_A,
     };
     const entry: IndirectReachabilityEntry = {
-      function_id: symbol_id,
       reason,
     };
 
@@ -697,7 +688,6 @@ describe("apply_call_resolution", () => {
       read_location: MOCK_LOCATION_A,
     };
     const entry: IndirectReachabilityEntry = {
-      function_id: symbol_id,
       reason,
     };
 

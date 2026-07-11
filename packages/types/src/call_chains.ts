@@ -56,14 +56,10 @@ export type IndirectReachabilityReason =
   | { type: "function_reference"; read_location: Location };
 
 /**
- * Function reachability without direct call edge
- *
- * Covers two cases:
- * - Functions stored in collections that are read (collection_read)
- * - Named functions passed as values/arguments (function_reference)
+ * Function reachability without direct call edge. The owning map keys each entry
+ * by the reachable function's `SymbolId`; `reason` records how it was reached.
  */
 export interface IndirectReachability {
-  readonly function_id: SymbolId;
   readonly reason: IndirectReachabilityReason;
 }
 
