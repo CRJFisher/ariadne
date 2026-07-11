@@ -4,6 +4,20 @@ import Rust from "tree-sitter-rust";
 import { RustScopeBoundaryExtractor } from "./rust_scope_boundary_extractor";
 import type { FilePath } from "@ariadnejs/types";
 
+const FILE = "test.rs" as FilePath;
+
+function find_by_type(
+  node: Parser.SyntaxNode,
+  type: string
+): Parser.SyntaxNode | null {
+  if (node.type === type) return node;
+  for (let i = 0; i < node.childCount; i++) {
+    const found = find_by_type(node.child(i)!, type);
+    if (found) return found;
+  }
+  return null;
+}
+
 describe("RustScopeBoundaryExtractor", () => {
   let parser: Parser;
   let extractor: RustScopeBoundaryExtractor;
@@ -14,419 +28,304 @@ describe("RustScopeBoundaryExtractor", () => {
     extractor = new RustScopeBoundaryExtractor();
   });
 
-  describe("Struct boundaries", () => {
-    it("should extract struct name and body boundaries", () => {
-      const code = `struct Point {
-    x: f64,
-    y: f64,
-}`;
-      const tree = parser.parse(code);
-      const struct_node = tree.rootNode.firstChild!;
+  // The scope query captures class-family scopes on the body node, which has no
+  // name field, so symbol and scope both resolve to the body node's location.
+  describe("class-family body scopes", () => {
+    it("maps a struct field_declaration_list body to a single scope location", () => {
+      const code = "struct Point {\n    x: f64,\n    y: f64,\n}";
+      const body = parser
+        .parse(code)
+        .rootNode.firstChild!.childForFieldName("body")!;
+      expect(body.type).toBe("field_declaration_list");
 
-      const boundaries = extractor.extract_boundaries(
-        struct_node,
-        "class",
-        "test.rs" as FilePath
-      );
+      const boundaries = extractor.extract_boundaries(body, "class", FILE);
 
-      expect(boundaries.symbol_location).toEqual({
-        file_path: "test.rs",
-        start_line: 1,
-        start_column: 8,
-        end_line: 1,
-        end_column: 12,
-      });
-
-      expect(boundaries.scope_location).toEqual({
-        file_path: "test.rs",
-        start_line: 1,
-        start_column: 14,
-        end_line: 4,
-        end_column: 1,
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.rs",
+          start_line: 1,
+          start_column: 14,
+          end_line: 4,
+          end_column: 1,
+        },
+        scope_location: {
+          file_path: "test.rs",
+          start_line: 1,
+          start_column: 14,
+          end_line: 4,
+          end_column: 1,
+        },
       });
     });
 
-    it("should handle unit struct (no body)", () => {
-      const code = "struct Unit;";
-      const tree = parser.parse(code);
-      const struct_node = tree.rootNode.firstChild!;
+    it("maps an enum enum_variant_list body to a single scope location", () => {
+      const code = "enum Color {\n    Red,\n    Green,\n}";
+      const body = parser
+        .parse(code)
+        .rootNode.firstChild!.childForFieldName("body")!;
+      expect(body.type).toBe("enum_variant_list");
 
-      const boundaries = extractor.extract_boundaries(
-        struct_node,
-        "class",
-        "test.rs" as FilePath
-      );
+      const boundaries = extractor.extract_boundaries(body, "class", FILE);
 
-      expect(boundaries.symbol_location).toEqual(boundaries.scope_location);
-    });
-
-    it("should handle tuple struct", () => {
-      const code = "struct Pair(i32, i32);";
-      const tree = parser.parse(code);
-      const struct_node = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        struct_node,
-        "class",
-        "test.rs" as FilePath
-      );
-
-      // Tuple struct has an ordered_field_declaration_list body
-      expect(boundaries.symbol_location).toEqual({
-        file_path: "test.rs",
-        start_line: 1,
-        start_column: 8,
-        end_line: 1,
-        end_column: 11,
-      });
-
-      expect(boundaries.scope_location).toEqual({
-        file_path: "test.rs",
-        start_line: 1,
-        start_column: 12,
-        end_line: 1,
-        end_column: 21,
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.rs",
+          start_line: 1,
+          start_column: 12,
+          end_line: 4,
+          end_column: 1,
+        },
+        scope_location: {
+          file_path: "test.rs",
+          start_line: 1,
+          start_column: 12,
+          end_line: 4,
+          end_column: 1,
+        },
       });
     });
-  });
 
-  describe("Enum boundaries", () => {
-    it("should extract enum name and body boundaries", () => {
-      const code = `enum Color {
-    Red,
-    Green,
-    Blue,
-}`;
-      const tree = parser.parse(code);
-      const enum_node = tree.rootNode.firstChild!;
+    it("maps a trait declaration_list body to a single scope location", () => {
+      const code = "trait Drawable {\n    fn draw(&self);\n}";
+      const body = parser
+        .parse(code)
+        .rootNode.firstChild!.childForFieldName("body")!;
+      expect(body.type).toBe("declaration_list");
 
-      const boundaries = extractor.extract_boundaries(
-        enum_node,
-        "class",
-        "test.rs" as FilePath
-      );
+      const boundaries = extractor.extract_boundaries(body, "class", FILE);
 
-      expect(boundaries.symbol_location).toEqual({
-        file_path: "test.rs",
-        start_line: 1,
-        start_column: 6,
-        end_line: 1,
-        end_column: 10,
-      });
-
-      expect(boundaries.scope_location).toEqual({
-        file_path: "test.rs",
-        start_line: 1,
-        start_column: 12,
-        end_line: 5,
-        end_column: 1,
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.rs",
+          start_line: 1,
+          start_column: 16,
+          end_line: 3,
+          end_column: 1,
+        },
+        scope_location: {
+          file_path: "test.rs",
+          start_line: 1,
+          start_column: 16,
+          end_line: 3,
+          end_column: 1,
+        },
       });
     });
   });
 
-  describe("Trait boundaries", () => {
-    it("should extract trait name and body boundaries", () => {
-      const code = `trait Drawable {
-    fn draw(&self);
-}`;
-      const tree = parser.parse(code);
-      const trait_node = tree.rootNode.firstChild!;
+  // Impl bodies are captured as `block` scopes, so they route through the base
+  // block handling rather than the class override.
+  describe("impl body block scope", () => {
+    it("maps an impl declaration_list body to a single scope location", () => {
+      const code = "impl Point {\n    fn new() -> Self { Self }\n}";
+      const body = parser
+        .parse(code)
+        .rootNode.firstChild!.childForFieldName("body")!;
+      expect(body.type).toBe("declaration_list");
 
-      const boundaries = extractor.extract_boundaries(
-        trait_node,
-        "class",
-        "test.rs" as FilePath
-      );
+      const boundaries = extractor.extract_boundaries(body, "block", FILE);
 
-      expect(boundaries.symbol_location).toEqual({
-        file_path: "test.rs",
-        start_line: 1,
-        start_column: 7,
-        end_line: 1,
-        end_column: 14,
-      });
-
-      expect(boundaries.scope_location).toEqual({
-        file_path: "test.rs",
-        start_line: 1,
-        start_column: 16,
-        end_line: 3,
-        end_column: 1,
-      });
-    });
-  });
-
-  describe("Impl boundaries", () => {
-    it("should extract impl type and body boundaries", () => {
-      const code = `impl Point {
-    fn new(x: f64, y: f64) -> Self {
-        Self { x, y }
-    }
-}`;
-      const tree = parser.parse(code);
-      const impl_node = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        impl_node,
-        "class",
-        "test.rs" as FilePath
-      );
-
-      expect(boundaries.symbol_location).toEqual({
-        file_path: "test.rs",
-        start_line: 1,
-        start_column: 6,
-        end_line: 1,
-        end_column: 10,
-      });
-
-      expect(boundaries.scope_location).toEqual({
-        file_path: "test.rs",
-        start_line: 1,
-        start_column: 12,
-        end_line: 5,
-        end_column: 1,
-      });
-    });
-
-    it("should extract trait impl boundaries with type field pointing to implementing type", () => {
-      const code = `impl Display for Point {
-    fn fmt(&self, f: &mut Formatter) -> Result {
-        write!(f, "({}, {})", self.x, self.y)
-    }
-}`;
-      const tree = parser.parse(code);
-      const impl_node = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        impl_node,
-        "class",
-        "test.rs" as FilePath
-      );
-
-      // Symbol is "Point" (the implementing type), not "Display" (the trait)
-      expect(boundaries.symbol_location).toEqual({
-        file_path: "test.rs",
-        start_line: 1,
-        start_column: 18,
-        end_line: 1,
-        end_column: 22,
-      });
-
-      expect(boundaries.scope_location).toEqual({
-        file_path: "test.rs",
-        start_line: 1,
-        start_column: 24,
-        end_line: 5,
-        end_column: 1,
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.rs",
+          start_line: 1,
+          start_column: 12,
+          end_line: 3,
+          end_column: 1,
+        },
+        scope_location: {
+          file_path: "test.rs",
+          start_line: 1,
+          start_column: 12,
+          end_line: 3,
+          end_column: 1,
+        },
       });
     });
   });
 
-  describe("Module boundaries", () => {
-    it("should handle root source_file node", () => {
-      const code = "fn main() {}";
-      const tree = parser.parse(code);
-      const root_node = tree.rootNode;
+  describe("module scopes", () => {
+    it("collapses the root source_file to a single location so the processor drops it", () => {
+      const root = parser.parse("fn main() {}").rootNode;
+      expect(root.type).toBe("source_file");
 
-      const boundaries = extractor.extract_boundaries(
-        root_node,
-        "module",
-        "test.rs" as FilePath
-      );
+      const boundaries = extractor.extract_boundaries(root, "module", FILE);
 
-      expect(boundaries.symbol_location).toEqual(boundaries.scope_location);
-      expect(boundaries.scope_location.start_line).toBe(1);
-    });
-
-    it("should handle inline mod declaration", () => {
-      const code = `mod utils {
-    fn helper() {}
-}`;
-      const tree = parser.parse(code);
-      const mod_node = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        mod_node,
-        "module",
-        "test.rs" as FilePath
-      );
-
-      expect(boundaries.symbol_location).toEqual({
-        file_path: "test.rs",
-        start_line: 1,
-        start_column: 5,
-        end_line: 1,
-        end_column: 9,
-      });
-
-      expect(boundaries.scope_location).toEqual({
-        file_path: "test.rs",
-        start_line: 1,
-        start_column: 11,
-        end_line: 3,
-        end_column: 1,
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.rs",
+          start_line: 1,
+          start_column: 1,
+          end_line: 1,
+          end_column: 12,
+        },
+        scope_location: {
+          file_path: "test.rs",
+          start_line: 1,
+          start_column: 1,
+          end_line: 1,
+          end_column: 12,
+        },
       });
     });
 
-    it("should handle external mod declaration (no body)", () => {
-      const code = "mod external;";
-      const tree = parser.parse(code);
-      const mod_node = tree.rootNode.firstChild!;
+    it("splits an inline mod into its name symbol and its body scope", () => {
+      const code = "mod utils {\n    fn helper() {}\n}";
+      const mod = parser.parse(code).rootNode.firstChild!;
+      expect(mod.type).toBe("mod_item");
 
-      const boundaries = extractor.extract_boundaries(
-        mod_node,
-        "module",
-        "test.rs" as FilePath
-      );
+      const boundaries = extractor.extract_boundaries(mod, "module", FILE);
 
-      expect(boundaries.symbol_location).toEqual(boundaries.scope_location);
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.rs",
+          start_line: 1,
+          start_column: 5,
+          end_line: 1,
+          end_column: 9,
+        },
+        scope_location: {
+          file_path: "test.rs",
+          start_line: 1,
+          start_column: 11,
+          end_line: 3,
+          end_column: 1,
+        },
+      });
     });
   });
 
-  describe("Field and variant list boundaries", () => {
-    it("should handle field_declaration_list", () => {
-      const code = `struct Foo {
-    x: i32,
-}`;
-      const tree = parser.parse(code);
-      const struct_node = tree.rootNode.firstChild!;
-      const field_list = struct_node.childForFieldName("body")!;
-      expect(field_list.type).toBe("field_declaration_list");
+  describe("function scopes", () => {
+    it("splits a function into its name symbol and a parameters-to-body scope", () => {
+      const code = "fn calculate(x: i32, y: i32) -> i32 {\n    x + y\n}";
+      const func = parser.parse(code).rootNode.firstChild!;
+      expect(func.type).toBe("function_item");
 
-      const boundaries = extractor.extract_boundaries(
-        field_list,
-        "class",
-        "test.rs" as FilePath
-      );
+      const boundaries = extractor.extract_boundaries(func, "function", FILE);
 
-      expect(boundaries.symbol_location).toEqual(boundaries.scope_location);
-    });
-
-    it("should handle enum_variant_list", () => {
-      const code = `enum Dir {
-    Up,
-    Down,
-}`;
-      const tree = parser.parse(code);
-      const enum_node = tree.rootNode.firstChild!;
-      const variant_list = enum_node.childForFieldName("body")!;
-      expect(variant_list.type).toBe("enum_variant_list");
-
-      const boundaries = extractor.extract_boundaries(
-        variant_list,
-        "class",
-        "test.rs" as FilePath
-      );
-
-      expect(boundaries.symbol_location).toEqual(boundaries.scope_location);
-    });
-
-    it("should handle declaration_list from trait", () => {
-      const code = `trait Foo {
-    fn bar(&self);
-}`;
-      const tree = parser.parse(code);
-      const trait_node = tree.rootNode.firstChild!;
-      const decl_list = trait_node.childForFieldName("body")!;
-      expect(decl_list.type).toBe("declaration_list");
-
-      const boundaries = extractor.extract_boundaries(
-        decl_list,
-        "class",
-        "test.rs" as FilePath
-      );
-
-      expect(boundaries.symbol_location).toEqual(boundaries.scope_location);
-    });
-  });
-
-  describe("Function boundaries", () => {
-    it("should extract function name and scope boundaries", () => {
-      const code = `fn calculate(x: i32, y: i32) -> i32 {
-    x + y
-}`;
-      const tree = parser.parse(code);
-      const func_node = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        func_node,
-        "function",
-        "test.rs" as FilePath
-      );
-
-      expect(boundaries.symbol_location).toEqual({
-        file_path: "test.rs",
-        start_line: 1,
-        start_column: 4,
-        end_line: 1,
-        end_column: 12,
-      });
-
-      expect(boundaries.scope_location).toEqual({
-        file_path: "test.rs",
-        start_line: 1,
-        start_column: 13,
-        end_line: 3,
-        end_column: 1,
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.rs",
+          start_line: 1,
+          start_column: 4,
+          end_line: 1,
+          end_column: 12,
+        },
+        scope_location: {
+          file_path: "test.rs",
+          start_line: 1,
+          start_column: 13,
+          end_line: 3,
+          end_column: 1,
+        },
       });
     });
 
-    it("should extract closure boundaries", () => {
+    it("uses the parameter list as the symbol for an anonymous closure", () => {
       const code = "fn main() { let f = |x: i32| x + 1; }";
-      const tree = parser.parse(code);
+      const closure = find_by_type(
+        parser.parse(code).rootNode,
+        "closure_expression"
+      )!;
 
-      function find_by_type(node: Parser.SyntaxNode, type: string): Parser.SyntaxNode | null {
-        if (node.type === type) return node;
-        for (let i = 0; i < node.childCount; i++) {
-          const found = find_by_type(node.child(i)!, type);
-          if (found) return found;
-        }
-        return null;
-      }
+      const boundaries = extractor.extract_boundaries(closure, "function", FILE);
 
-      const closure = find_by_type(tree.rootNode, "closure_expression")!;
-      expect(closure).not.toBeNull();
-
-      const boundaries = extractor.extract_boundaries(
-        closure,
-        "function",
-        "test.rs" as FilePath
-      );
-
-      // Closures are anonymous: symbol_location falls back to parameters
-      expect(boundaries.symbol_location).toEqual({
-        file_path: "test.rs",
-        start_line: 1,
-        start_column: 21,
-        end_line: 1,
-        end_column: 28,
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.rs",
+          start_line: 1,
+          start_column: 21,
+          end_line: 1,
+          end_column: 28,
+        },
+        scope_location: {
+          file_path: "test.rs",
+          start_line: 1,
+          start_column: 21,
+          end_line: 1,
+          end_column: 34,
+        },
       });
-
-      expect(boundaries.scope_location.start_line).toBe(1);
-      expect(boundaries.scope_location.start_column).toBe(21);
     });
   });
 
-  describe("Block boundaries", () => {
-    it("should extract block scope for if statement", () => {
-      const code = `fn foo() {
-    if true {
-        let x = 1;
-    }
-}`;
-      const tree = parser.parse(code);
-      const func_node = tree.rootNode.firstChild!;
-      const body = func_node.childForFieldName("body")!;
-      const if_node = body.firstNamedChild!;
+  describe("block scopes", () => {
+    it("maps an if_expression to a single scope location", () => {
+      const code = "fn foo() {\n    if true {\n        let x = 1;\n    }\n}";
+      const if_node = find_by_type(
+        parser.parse(code).rootNode,
+        "if_expression"
+      )!;
 
-      const boundaries = extractor.extract_boundaries(
-        if_node,
-        "block",
-        "test.rs" as FilePath
-      );
+      const boundaries = extractor.extract_boundaries(if_node, "block", FILE);
 
-      expect(boundaries.symbol_location).toEqual(boundaries.scope_location);
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.rs",
+          start_line: 2,
+          start_column: 5,
+          end_line: 4,
+          end_column: 5,
+        },
+        scope_location: {
+          file_path: "test.rs",
+          start_line: 2,
+          start_column: 5,
+          end_line: 4,
+          end_column: 5,
+        },
+      });
+    });
+
+    it("maps a match_arm to a single scope location", () => {
+      const code = "fn foo() {\n    match x {\n        1 => bar(),\n        _ => baz(),\n    }\n}";
+      const arm = find_by_type(parser.parse(code).rootNode, "match_arm")!;
+
+      const boundaries = extractor.extract_boundaries(arm, "block", FILE);
+
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.rs",
+          start_line: 3,
+          start_column: 9,
+          end_line: 3,
+          end_column: 19,
+        },
+        scope_location: {
+          file_path: "test.rs",
+          start_line: 3,
+          start_column: 9,
+          end_line: 3,
+          end_column: 19,
+        },
+      });
+    });
+
+    it("maps an unsafe_block to a single scope location", () => {
+      const code = "fn foo() {\n    unsafe {\n        let x = 1;\n    }\n}";
+      const unsafe = find_by_type(
+        parser.parse(code).rootNode,
+        "unsafe_block"
+      )!;
+
+      const boundaries = extractor.extract_boundaries(unsafe, "block", FILE);
+
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.rs",
+          start_line: 2,
+          start_column: 5,
+          end_line: 4,
+          end_column: 5,
+        },
+        scope_location: {
+          file_path: "test.rs",
+          start_line: 2,
+          start_column: 5,
+          end_line: 4,
+          end_column: 5,
+        },
+      });
     });
   });
 });
