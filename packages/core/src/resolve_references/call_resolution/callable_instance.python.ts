@@ -34,18 +34,17 @@ export function resolve_callable_instance(
 ): SymbolId | undefined {
   const def = definitions.get(resolved_symbol);
 
-  // Only check variables and constants - functions should be called directly
+  // A bare function name is called directly; only an instance held in a
+  // variable or constant can dispatch through the __call__ protocol.
   if (!def || (def.kind !== "variable" && def.kind !== "constant")) {
     return undefined;
   }
 
-  // Get the type of the variable
   const type_id = types.get_symbol_type(resolved_symbol);
   if (!type_id) {
     return undefined;
   }
 
-  // Check if the type has a __call__ method
   const call_method = types.get_type_member(type_id, "__call__" as SymbolName);
   if (!call_method) {
     return undefined;
