@@ -1,11 +1,3 @@
-/**
- * Comprehensive tests for constructor_tracking extraction
- * Tests extraction of constructor bindings across all 4 languages
- *
- * Verifies that extract_constructor_bindings correctly processes constructor
- * calls with construct_target metadata from index_single_file references.
- */
-
 import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";
@@ -16,10 +8,6 @@ import type { Language, FilePath } from "@ariadnejs/types";
 import { build_index_single_file } from "../../index_single_file/index_single_file";
 import type { ParsedFile } from "../../index_single_file/parsed_file";
 import { extract_constructor_bindings } from "./constructor";
-
-// ============================================================================
-// Test Helpers
-// ============================================================================
 
 function create_parsed_file(
   code: string,
@@ -37,10 +25,6 @@ function create_parsed_file(
   };
 }
 
-// ============================================================================
-// JavaScript Tests
-// ============================================================================
-
 describe("Constructor Tracking - JavaScript", () => {
   let parser: Parser;
 
@@ -49,7 +33,7 @@ describe("Constructor Tracking - JavaScript", () => {
     parser.setLanguage(JavaScript);
   });
 
-  it("should extract constructor binding for simple assignment", () => {
+  it("binds a simple assignment to its class name", () => {
     const code = `
       class User {}
       const user = new User();
@@ -71,7 +55,7 @@ describe("Constructor Tracking - JavaScript", () => {
     expect(type_values).toEqual(["User"]);
   });
 
-  it("should extract constructor bindings for multiple assignments", () => {
+  it("binds each of multiple assignments to its class name", () => {
     const code = `
       class Dog {}
       class Cat {}
@@ -96,7 +80,7 @@ describe("Constructor Tracking - JavaScript", () => {
     expect(type_values).toEqual(["Cat", "Dog"]);
   });
 
-  it("should extract constructor binding for property assignment", () => {
+  it("binds a constructor assigned to an object property", () => {
     const code = `
       class Service {}
       class App {
@@ -122,10 +106,10 @@ describe("Constructor Tracking - JavaScript", () => {
     expect(type_values).toEqual(["Service"]);
   });
 
-  it("should not extract standalone constructor calls without assignment", () => {
+  it("skips a standalone constructor call with no assignment target", () => {
     const code = `
       class Logger {}
-      new Logger(); // Standalone, no assignment
+      new Logger();
     `;
 
     const tree = parser.parse(code);
@@ -141,11 +125,98 @@ describe("Constructor Tracking - JavaScript", () => {
 
     expect(bindings.direct.size).toBe(0);
   });
-});
 
-// ============================================================================
-// TypeScript Tests
-// ============================================================================
+  it("binds a subclass instantiation to the subclass, not its base class", () => {
+    const code = `
+      class Animal {}
+      class Dog extends Animal {}
+      const d = new Dog();
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.js" as FilePath,
+      tree,
+      "javascript"
+    );
+    const index = build_index_single_file(parsed_file, tree, "javascript");
+
+    const bindings = extract_constructor_bindings(index.references);
+
+    expect(bindings.direct.size).toBe(1);
+    const type_values = Array.from(bindings.direct.values());
+    expect(type_values).toEqual(["Dog"]);
+  });
+
+  it("binds a constructor whose class is never defined", () => {
+    const code = `
+      const x = new Unknown();
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.js" as FilePath,
+      tree,
+      "javascript"
+    );
+    const index = build_index_single_file(parsed_file, tree, "javascript");
+
+    const bindings = extract_constructor_bindings(index.references);
+
+    expect(bindings.direct.size).toBe(1);
+    const type_values = Array.from(bindings.direct.values());
+    expect(type_values).toEqual(["Unknown"]);
+  });
+
+  it("binds a class that declares an explicit constructor to its name", () => {
+    const code = `
+      class Widget {
+        constructor() {}
+      }
+      const w = new Widget();
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.js" as FilePath,
+      tree,
+      "javascript"
+    );
+    const index = build_index_single_file(parsed_file, tree, "javascript");
+
+    const bindings = extract_constructor_bindings(index.references);
+
+    expect(bindings.direct.size).toBe(1);
+    const type_values = Array.from(bindings.direct.values());
+    expect(type_values).toEqual(["Widget"]);
+  });
+
+  it("skips a constructor returned from a factory without assignment", () => {
+    const code = `
+      class Thing {}
+      function make() {
+        return new Thing();
+      }
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.js" as FilePath,
+      tree,
+      "javascript"
+    );
+    const index = build_index_single_file(parsed_file, tree, "javascript");
+
+    const bindings = extract_constructor_bindings(index.references);
+
+    expect(bindings.direct.size).toBe(0);
+    expect(bindings.namespace_qualified.size).toBe(0);
+  });
+});
 
 describe("Constructor Tracking - TypeScript", () => {
   let parser: Parser;
@@ -155,7 +226,7 @@ describe("Constructor Tracking - TypeScript", () => {
     parser.setLanguage(TypeScript.typescript);
   });
 
-  it("should extract constructor binding for typed assignment", () => {
+  it("binds a type-annotated assignment to its class name", () => {
     const code = `
       class User {
         name: string;
@@ -179,7 +250,7 @@ describe("Constructor Tracking - TypeScript", () => {
     expect(type_values).toEqual(["User"]);
   });
 
-  it("should extract constructor bindings for multiple typed assignments", () => {
+  it("binds each of multiple typed assignments to its class name", () => {
     const code = `
       class ApiService {
         fetchData() {}
@@ -209,7 +280,7 @@ describe("Constructor Tracking - TypeScript", () => {
     expect(type_values).toEqual(["ApiService", "DataStore"]);
   });
 
-  it("should extract constructor binding for class field assignment", () => {
+  it("binds a constructor assigned to a class field", () => {
     const code = `
       class Database {}
 
@@ -238,7 +309,7 @@ describe("Constructor Tracking - TypeScript", () => {
     expect(type_values).toEqual(["Database"]);
   });
 
-  it("should handle generic class constructors", () => {
+  it("binds a generic class constructor to its base class name", () => {
     const code = `
       class Container<T> {
         value: T;
@@ -262,7 +333,7 @@ describe("Constructor Tracking - TypeScript", () => {
     expect(type_values).toEqual(["Container"]);
   });
 
-  it("should extract qualified constructor binding for namespace-qualified call", () => {
+  it("binds a namespace-qualified call to its namespace chain, not direct", () => {
     const code = `
       import * as models from "./models";
       const user = new models.User("Alice");
@@ -284,11 +355,31 @@ describe("Constructor Tracking - TypeScript", () => {
     expect(chains).toEqual([["models", "User"]]);
     expect(bindings.direct.size).toBe(0);
   });
-});
 
-// ============================================================================
-// Python Tests
-// ============================================================================
+  it("routes direct and namespace-qualified calls in one file to separate maps", () => {
+    const code = `
+      import * as models from "./models";
+      const a = new User();
+      const u = new models.User("x");
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.ts" as FilePath,
+      tree,
+      "typescript"
+    );
+    const index = build_index_single_file(parsed_file, tree, "typescript");
+
+    const bindings = extract_constructor_bindings(index.references);
+
+    expect(Array.from(bindings.direct.values())).toEqual(["User"]);
+    expect(Array.from(bindings.namespace_qualified.values())).toEqual([
+      ["models", "User"],
+    ]);
+  });
+});
 
 describe("Constructor Tracking - Python", () => {
   let parser: Parser;
@@ -298,7 +389,7 @@ describe("Constructor Tracking - Python", () => {
     parser.setLanguage(Python);
   });
 
-  it("should extract constructor binding for simple assignment", () => {
+  it("binds a simple assignment to its class name", () => {
     const code = `
 class User:
     pass
@@ -322,7 +413,7 @@ user = User()
     expect(type_values).toEqual(["User"]);
   });
 
-  it("should extract constructor bindings for multiple assignments", () => {
+  it("binds each of multiple assignments to its class name", () => {
     const code = `
 class Dog:
     pass
@@ -350,7 +441,7 @@ my_cat = Cat()
     expect(type_values).toEqual(["Cat", "Dog"]);
   });
 
-  it("should extract constructor binding for attribute assignment", () => {
+  it("binds a constructor assigned to an instance attribute", () => {
     const code = `
 class Service:
     pass
@@ -376,7 +467,7 @@ class App:
     expect(type_values).toEqual(["Service"]);
   });
 
-  it("should handle constructor with type annotations", () => {
+  it("binds a type-annotated assignment to its class name", () => {
     const code = `
 class Database:
     pass
@@ -399,11 +490,32 @@ db: Database = Database()
     const type_values = Array.from(bindings.direct.values());
     expect(type_values).toEqual(["Database"]);
   });
-});
 
-// ============================================================================
-// Rust Tests
-// ============================================================================
+  it("binds a class that defines __init__ to its class name", () => {
+    const code = `
+class X:
+    def __init__(self):
+        pass
+
+x = X()
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.py" as FilePath,
+      tree,
+      "python"
+    );
+    const index = build_index_single_file(parsed_file, tree, "python");
+
+    const bindings = extract_constructor_bindings(index.references);
+
+    expect(bindings.direct.size).toBe(1);
+    const type_values = Array.from(bindings.direct.values());
+    expect(type_values).toEqual(["X"]);
+  });
+});
 
 describe("Constructor Tracking - Rust", () => {
   let parser: Parser;
@@ -413,7 +525,7 @@ describe("Constructor Tracking - Rust", () => {
     parser.setLanguage(Rust);
   });
 
-  it("should extract constructor binding for struct instantiation", () => {
+  it("binds a struct expression to its struct name", () => {
     const code = `
       struct User {
         name: String,
@@ -438,7 +550,7 @@ describe("Constructor Tracking - Rust", () => {
     expect(type_values).toEqual(["User"]);
   });
 
-  it("should extract constructor bindings for multiple struct instantiations", () => {
+  it("binds each of multiple struct expressions to its struct name", () => {
     const code = `
       struct Point {
         x: i32,
@@ -471,7 +583,7 @@ describe("Constructor Tracking - Rust", () => {
     expect(type_values).toEqual(["Color", "Point"]);
   });
 
-  it("should extract constructor binding for struct field assignment", () => {
+  it("skips a struct expression returned without assignment", () => {
     const code = `
       struct Database;
 
@@ -498,11 +610,11 @@ describe("Constructor Tracking - Rust", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    // App { db } is a return expression (not in let/assignment) so no construct_target
+    // `App { db }` is a return expression, not a let/assignment, so it carries no construct_target.
     expect(bindings.direct.size).toBe(0);
   });
 
-  it("should extract constructor binding for Type::new() associated function", () => {
+  it("binds a Type::new() associated function call to its type name", () => {
     const code = `
       struct Database {
         name: String,
@@ -535,7 +647,7 @@ describe("Constructor Tracking - Rust", () => {
     expect(type_values).toEqual(["Database"]);
   });
 
-  it("should handle tuple struct instantiation", () => {
+  it("skips tuple-struct instantiation, which indexes as a function call", () => {
     const code = `
       struct Point(i32, i32);
       let p = Point(10, 20);
@@ -552,24 +664,21 @@ describe("Constructor Tracking - Rust", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    // Tuple struct Point(10, 20) is captured as a function_call, not constructor_call
-    // (only struct expression syntax produces constructor_call references)
+    // Only struct-expression syntax (`Point { .. }`) produces a constructor_call
+    // reference; `Point(10, 20)` indexes as a function_call.
     expect(bindings.direct.size).toBe(0);
   });
 });
 
-// ============================================================================
-// Edge Cases
-// ============================================================================
-
 describe("Constructor Tracking - Edge Cases", () => {
-  it("should handle empty references array", () => {
+  it("returns empty maps for an empty references array", () => {
     const bindings = extract_constructor_bindings([]);
 
     expect(bindings.direct.size).toBe(0);
+    expect(bindings.namespace_qualified.size).toBe(0);
   });
 
-  it("should handle references without constructor calls", () => {
+  it("returns empty maps when no reference is a constructor call", () => {
     const parser = new Parser();
     parser.setLanguage(JavaScript);
 
@@ -590,17 +699,16 @@ describe("Constructor Tracking - Edge Cases", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    // No constructor calls in code
     expect(bindings.direct.size).toBe(0);
+    expect(bindings.namespace_qualified.size).toBe(0);
   });
 
-  it("should ignore constructor calls without construct_target", () => {
+  it("skips constructor calls that carry no construct_target", () => {
     const parser = new Parser();
     parser.setLanguage(TypeScript.typescript);
 
     const code = `
       class Logger {}
-      // Standalone constructor call (no assignment)
       new Logger();
     `;
 
@@ -615,7 +723,7 @@ describe("Constructor Tracking - Edge Cases", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    // Standalone calls without assignment produce no constructor bindings
     expect(bindings.direct.size).toBe(0);
+    expect(bindings.namespace_qualified.size).toBe(0);
   });
 });
