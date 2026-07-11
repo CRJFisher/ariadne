@@ -1,7 +1,3 @@
-/**
- * Logging module exports
- */
-
 export {
   initialize_logger,
   log_info,

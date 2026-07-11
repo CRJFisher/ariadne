@@ -15,6 +15,7 @@ let stderr_level_priority: number = LEVEL_PRIORITY.info;
 function ensure_initialized(): void {
   if (initialized) return;
   log_file_path = process.env.DEBUG_LOG_FILE || null;
+  stderr_level_priority = LEVEL_PRIORITY.info;
   const env_level = process.env.ARIADNE_LOG_LEVEL?.toLowerCase();
   if (
     env_level === "error" ||
@@ -27,12 +28,8 @@ function ensure_initialized(): void {
   initialized = true;
 }
 
-/**
- * Initialize logger from environment.
- * Call once at server startup before any logging.
- * Idempotent — safe to call multiple times; also called lazily on first write.
- */
 export function initialize_logger(): void {
+  // Reset so an explicit call re-reads the environment even after a prior lazy init.
   initialized = false;
   ensure_initialized();
 
