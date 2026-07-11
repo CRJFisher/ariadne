@@ -1,12 +1,8 @@
 import { createHash } from "crypto";
 
-/** Branded type for SHA-256 content hashes. */
+/** Branded so an arbitrary string cannot stand in where a verified hash is required. */
 export type ContentHash = string & { _brand: "ContentHash" };
 
-/**
- * Compute SHA-256 hex digest of file content.
- * Deterministic: same content always produces the same hash.
- */
 export function compute_content_hash(content: string): ContentHash {
   return createHash("sha256")
     .update(content, "utf-8")

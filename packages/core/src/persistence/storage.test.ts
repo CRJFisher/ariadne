@@ -5,7 +5,7 @@ import * as path from "path";
 import type { PersistenceStorage } from "./storage";
 import { FileSystemStorage } from "./file_system_storage";
 
-/** In-memory storage for testing. Exported for use in other test files. */
+/** Shared by sibling persistence tests, so it lives here rather than inline. */
 export class InMemoryStorage implements PersistenceStorage {
   private manifest_data: string | null = null;
   private indexes: Map<string, string> = new Map();
@@ -27,15 +27,14 @@ export class InMemoryStorage implements PersistenceStorage {
     this.indexes.clear();
   }
 
-  /** Test helper: directly set manifest data */
+  // Synchronous back doors let tests seed corrupt or partial state that the
+  // async read/write contract would never produce on its own.
   set_manifest(data: string | null): void {
     this.manifest_data = data;
   }
-  /** Test helper: directly set index data */
   set_index(file_path: string, data: string): void {
     this.indexes.set(file_path, data);
   }
-  /** Test helper: delete a specific index entry */
   delete_index(file_path: string): void {
     this.indexes.delete(file_path);
   }
@@ -108,13 +107,11 @@ function run_storage_contract_tests(
   });
 }
 
-// Run contract tests for InMemoryStorage
 run_storage_contract_tests(
   "InMemoryStorage",
   async () => new InMemoryStorage(),
 );
 
-// Run contract tests for FileSystemStorage
 let temp_dir = "";
 run_storage_contract_tests(
   "FileSystemStorage",
