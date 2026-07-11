@@ -43,11 +43,11 @@ export function handle_definition_method(
     };
     const struct_id = builder.find_class_by_name(impl_info.struct_name);
     if (struct_id) {
-      builder.add_method_to_class(struct_id, method_def, capture);
+      builder.add_method_to_class(struct_id, method_def);
     } else {
       const enum_id = builder.find_enum_by_name(impl_info.struct_name);
       if (enum_id) {
-        builder.add_method_to_enum(enum_id, method_def, capture);
+        builder.add_method_to_enum(enum_id, method_def);
       }
     }
   }
@@ -75,11 +75,11 @@ export function handle_definition_method_associated(
     };
     const struct_id = builder.find_class_by_name(impl_info.struct_name);
     if (struct_id) {
-      builder.add_method_to_class(struct_id, method_def, capture);
+      builder.add_method_to_class(struct_id, method_def);
     } else {
       const enum_id = builder.find_enum_by_name(impl_info.struct_name);
       if (enum_id) {
-        builder.add_method_to_enum(enum_id, method_def, capture);
+        builder.add_method_to_enum(enum_id, method_def);
       }
     }
   }
@@ -133,11 +133,11 @@ export function handle_definition_method_async(
     };
     const struct_id = builder.find_class_by_name(impl_info.struct_name);
     if (struct_id) {
-      builder.add_method_to_class(struct_id, method_def, capture);
+      builder.add_method_to_class(struct_id, method_def);
     } else {
       const enum_id = builder.find_enum_by_name(impl_info.struct_name);
       if (enum_id) {
-        builder.add_method_to_enum(enum_id, method_def, capture);
+        builder.add_method_to_enum(enum_id, method_def);
       }
     }
   }
@@ -165,11 +165,11 @@ export function handle_definition_constructor(
     };
     const struct_id = builder.find_class_by_name(impl_info.struct_name);
     if (struct_id) {
-      builder.add_method_to_class(struct_id, method_def, capture);
+      builder.add_method_to_class(struct_id, method_def);
     } else {
       const enum_id = builder.find_enum_by_name(impl_info.struct_name);
       if (enum_id) {
-        builder.add_method_to_enum(enum_id, method_def, capture);
+        builder.add_method_to_enum(enum_id, method_def);
       }
     }
   }

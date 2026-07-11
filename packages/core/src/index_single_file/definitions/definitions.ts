@@ -194,18 +194,15 @@ export class DefinitionBuilder {
       generics?: SymbolName[];
       docstring?: string;
     },
-    capture: CaptureNode
   ): DefinitionBuilder {
     const class_state = this.classes.get(class_id);
     if (!class_state) return this;
 
-    // Compute body_scope_id using the capture parameter
-    // Abstract methods don't have bodies, so skip body_scope_id lookup for them
+    // Abstract methods have no body, so they have no body scope.
     let body_scope_id: ScopeId | undefined;
     if (!definition.abstract) {
       try {
         body_scope_id = find_body_scope_for_definition(
-          capture,
           this.context.scopes,
           definition.name,
           definition.location
@@ -255,7 +252,6 @@ export class DefinitionBuilder {
     if (capture) {
       try {
         body_scope_id = find_body_scope_for_definition(
-          capture,
           this.context.scopes,
           definition.name,
           definition.location
@@ -333,7 +329,6 @@ export class DefinitionBuilder {
       async?: boolean;
       docstring?: string;
     },
-    capture: CaptureNode
   ): DefinitionBuilder {
     const enum_state = this.enums.get(enum_id);
     if (!enum_state) return this;
@@ -345,7 +340,6 @@ export class DefinitionBuilder {
     let body_scope_id: ScopeId | undefined;
     try {
       body_scope_id = find_body_scope_for_definition(
-        capture,
         this.context.scopes,
         definition.name,
         definition.location
@@ -392,7 +386,6 @@ export class DefinitionBuilder {
     if (capture) {
       try {
         body_scope_id = find_body_scope_for_definition(
-          capture,
           this.context.scopes,
           definition.name,
           definition.location
@@ -452,7 +445,6 @@ export class DefinitionBuilder {
     if (capture) {
       try {
         body_scope_id = find_body_scope_for_definition(
-          capture,
           this.context.scopes,
           "<anonymous>" as SymbolName,
           definition.location

@@ -102,20 +102,6 @@ function create_test_capture(
   };
 }
 
-function create_method_capture(
-  name: SymbolName,
-  location: Location
-): CaptureNode {
-  return {
-    name: "definition.method",
-    node: {} as any,
-    text: name,
-    category: "definition" as SemanticCategory,
-    entity: "method" as SemanticEntity,
-    location: location,
-  };
-}
-
 // ============================================================================
 // Complex Assembly Tests
 // ============================================================================
@@ -148,7 +134,7 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       return_type: "string" as SymbolName,
       access_modifier: "public",
       async: true,
-    }, create_method_capture("method1" as SymbolName, method1_location));
+    });
 
     const method2_location = create_test_location(7, 2);
     builder.add_method_to_class(class_id, {
@@ -159,7 +145,7 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       return_type: "number" as SymbolName,
       access_modifier: "private",
       static: true,
-    }, create_method_capture("method2" as SymbolName, method2_location));
+    });
 
     // Add multiple properties
     builder.add_property_to_class(class_id, {
@@ -295,7 +281,7 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       name: "decoratedMethod" as SymbolName,
       location: method_location,
       scope_id: context.root_scope_id,
-    }, create_method_capture("decoratedMethod" as SymbolName, method_location));
+    });
 
     // Add decorators to method
     builder.add_decorator_to_target(method_id, {
@@ -647,7 +633,7 @@ describe("DefinitionBuilder - Public API", () => {
         name: "chainMethod" as SymbolName,
         location: chain_method_location,
         scope_id: context.root_scope_id,
-      }, create_method_capture("chainMethod" as SymbolName, chain_method_location))
+      })
       .add_property_to_class(class_id, {
         symbol_id: "property:test:5:2:5:15:chainProp" as SymbolId,
         name: "chainProp" as SymbolName,

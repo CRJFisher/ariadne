@@ -170,7 +170,6 @@ export function handle_definition_method(
         async: is_async,
         docstring,
       },
-      capture
     );
   }
 }
@@ -197,7 +196,6 @@ export function handle_definition_method_static(
         async: is_async_function(capture.node.parent || capture.node),
         docstring,
       },
-      capture
     );
   }
 }
@@ -224,7 +222,6 @@ export function handle_definition_method_class(
         async: is_async_function(capture.node.parent || capture.node),
         docstring,
       },
-      capture
     );
   }
 }

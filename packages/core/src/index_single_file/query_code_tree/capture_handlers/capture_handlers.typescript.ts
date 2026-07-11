@@ -483,7 +483,6 @@ export function handle_ts_definition_method(
       generics: parent ? extract_type_parameters(parent) : [],
       docstring,
     },
-    capture
   );
 }
 
@@ -514,7 +513,6 @@ export function handle_definition_method_private(
       return_type: extract_return_type(capture.node),
       generics: parent ? extract_type_parameters(parent) : [],
     },
-    capture
   );
 }
 
@@ -545,7 +543,6 @@ export function handle_definition_method_abstract(
       return_type: extract_return_type(capture.node),
       generics: parent ? extract_type_parameters(parent) : [],
     },
-    capture
   );
 }
 

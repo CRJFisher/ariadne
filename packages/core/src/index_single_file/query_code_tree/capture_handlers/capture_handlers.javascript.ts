@@ -101,7 +101,6 @@ export function handle_definition_method(
         return_type: extract_return_type(capture.node),
         docstring,
       },
-      capture
     );
   }
 }
