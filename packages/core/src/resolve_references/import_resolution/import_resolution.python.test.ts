@@ -19,8 +19,7 @@ import { create_file_tree } from "./import_resolution.test";
 
 describe("resolve_module_path_python", () => {
   describe("simple module names (no dots)", () => {
-    it("simple module name resolves to same directory first", () => {
-      // Tests sys.path[0] behavior: local directory checked first
+    it("resolves simple module name to same directory first", () => {
       const tree = create_file_tree("/project", [
         "package_a/weighted_mape.py",
         "package_a/caller.py",
@@ -36,14 +35,11 @@ describe("resolve_module_path_python", () => {
       expect(result).toBe("/project/package_a/weighted_mape.py");
     });
 
-    it("should resolve sibling module before project root", () => {
-      // Given: file at /project/pkg/main.py, sibling /project/pkg/utils.py
-      // When: resolving "utils"
-      // Then: returns /project/pkg/utils.py (not /project/utils.py if it existed)
+    it("resolves sibling module before project root", () => {
       const tree = create_file_tree("/project", [
         "pkg/main.py",
         "pkg/utils.py",
-        "utils.py", // Project root also has utils.py
+        "utils.py",
       ]);
 
       const result = resolve_module_path_python(
@@ -52,14 +48,10 @@ describe("resolve_module_path_python", () => {
         tree
       );
 
-      // Should resolve to sibling, not project root
       expect(result).toBe("/project/pkg/utils.py");
     });
 
-    it("should resolve sibling package (module/__init__.py)", () => {
-      // Given: file at /project/pkg/main.py, sibling package /project/pkg/utils/__init__.py
-      // When: resolving "utils"
-      // Then: returns /project/pkg/utils/__init__.py
+    it("resolves sibling package to its __init__.py", () => {
       const tree = create_file_tree("/project", [
         "pkg/main.py",
         "pkg/utils/__init__.py",
@@ -74,8 +66,7 @@ describe("resolve_module_path_python", () => {
       expect(result).toBe("/project/pkg/utils/__init__.py");
     });
 
-    it("local package with __init__.py resolves correctly", () => {
-      // Tests local package resolution without parent __init__.py
+    it("resolves local package with __init__.py without a parent package", () => {
       const tree = create_file_tree("/project", [
         "package_a/mymodule/__init__.py",
         "package_a/mymodule/helper.py",
@@ -91,9 +82,7 @@ describe("resolve_module_path_python", () => {
       expect(result).toBe("/project/package_a/mymodule/__init__.py");
     });
 
-    it("should prefer .py file over package for simple modules", () => {
-      // If both utils.py and utils/__init__.py exist as siblings,
-      // Python prefers the .py file
+    it("prefers .py file over package for simple modules", () => {
       const tree = create_file_tree("/project", [
         "pkg/main.py",
         "pkg/utils.py",
@@ -106,16 +95,12 @@ describe("resolve_module_path_python", () => {
         tree
       );
 
-      // Should resolve to .py file first (checked before __init__.py)
       expect(result).toBe("/project/pkg/utils.py");
     });
 
-    it("should fall back to project root if no sibling exists", () => {
-      // Given: file at /project/pkg/main.py, only /project/utils.py exists
-      // When: resolving "utils"
-      // Then: returns /project/utils.py
+    it("falls back to project root when no sibling exists", () => {
       const tree = create_file_tree("/project", [
-        "pkg/__init__.py", // Make pkg a package
+        "pkg/__init__.py",
         "pkg/main.py",
         "utils.py",
       ]);
@@ -129,7 +114,7 @@ describe("resolve_module_path_python", () => {
       expect(result).toBe("/project/utils.py");
     });
 
-    it("should handle modules at project root", () => {
+    it("resolves modules at project root", () => {
       const tree = create_file_tree("/project", ["main.py", "helper.py"]);
 
       const result = resolve_module_path_python(
@@ -141,7 +126,7 @@ describe("resolve_module_path_python", () => {
       expect(result).toBe("/project/helper.py");
     });
 
-    it("different callers resolve to their local modules", () => {
+    it("resolves different callers to their local modules", () => {
       const tree = create_file_tree("/project", [
         "package_a/utils.py",
         "package_a/caller_a.py",
@@ -167,10 +152,7 @@ describe("resolve_module_path_python", () => {
   });
 
   describe("dotted module names", () => {
-    it("should resolve sibling subpackage", () => {
-      // Given: file at /project/pkg/main.py, /project/pkg/sub/mod.py exists
-      // When: resolving "sub.mod"
-      // Then: returns /project/pkg/sub/mod.py
+    it("resolves sibling subpackage", () => {
       const tree = create_file_tree("/project", [
         "pkg/main.py",
         "pkg/sub/__init__.py",
@@ -186,10 +168,7 @@ describe("resolve_module_path_python", () => {
       expect(result).toBe("/project/pkg/sub/mod.py");
     });
 
-    it("should resolve deeply nested sibling subpackage", () => {
-      // Given: file at /project/pkg/main.py, /project/pkg/a/b/c.py exists
-      // When: resolving "a.b.c"
-      // Then: returns /project/pkg/a/b/c.py
+    it("resolves deeply nested sibling subpackage", () => {
       const tree = create_file_tree("/project", [
         "pkg/main.py",
         "pkg/a/__init__.py",
@@ -206,10 +185,7 @@ describe("resolve_module_path_python", () => {
       expect(result).toBe("/project/pkg/a/b/c.py");
     });
 
-    it("should fall back to project root for dotted paths", () => {
-      // Given: file at /project/pkg/main.py, only /project/other/mod.py exists
-      // When: resolving "other.mod"
-      // Then: returns /project/other/mod.py
+    it("falls back to project root for dotted paths", () => {
       const tree = create_file_tree("/project", [
         "pkg/__init__.py",
         "pkg/main.py",
@@ -226,8 +202,7 @@ describe("resolve_module_path_python", () => {
       expect(result).toBe("/project/other/mod.py");
     });
 
-    it("should resolve package __init__.py for dotted import", () => {
-      // When importing a package (not a module within it)
+    it("resolves a dotted import of a package to its __init__.py", () => {
       const tree = create_file_tree("/project", [
         "pkg/main.py",
         "pkg/sub/__init__.py",
@@ -243,11 +218,11 @@ describe("resolve_module_path_python", () => {
       expect(result).toBe("/project/pkg/sub/nested/__init__.py");
     });
 
-    it("dotted import checks local directory first", () => {
+    it("checks local directory first for dotted imports", () => {
       const tree = create_file_tree("/project", [
         "package_a/utils/helpers.py",
         "package_a/caller.py",
-        "utils/helpers.py", // Different module at project root
+        "utils/helpers.py",
       ]);
 
       const result = resolve_module_path_python(
@@ -261,8 +236,7 @@ describe("resolve_module_path_python", () => {
   });
 
   describe("relative imports", () => {
-    it("single dot resolves to same directory", () => {
-      // Simpler test without __init__.py files
+    it("resolves single dot to same directory", () => {
       const tree = create_file_tree("/project", [
         "package/caller.py",
         "package/helper.py",
@@ -277,8 +251,7 @@ describe("resolve_module_path_python", () => {
       expect(result).toBe("/project/package/helper.py");
     });
 
-    it("double dot resolves to parent directory", () => {
-      // Simpler test without __init__.py files
+    it("resolves double dot to parent directory", () => {
       const tree = create_file_tree("/project", [
         "package/subpackage/caller.py",
         "package/helper.py",
@@ -293,7 +266,7 @@ describe("resolve_module_path_python", () => {
       expect(result).toBe("/project/package/helper.py");
     });
 
-    it("should resolve single dot relative import (from .module)", () => {
+    it("resolves single dot relative import to a named module", () => {
       const tree = create_file_tree("/project", [
         "pkg/__init__.py",
         "pkg/main.py",
@@ -309,7 +282,7 @@ describe("resolve_module_path_python", () => {
       expect(result).toBe("/project/pkg/utils.py");
     });
 
-    it("should resolve double dot relative import (from ..module)", () => {
+    it("resolves double dot relative import to a named module", () => {
       const tree = create_file_tree("/project", [
         "pkg/__init__.py",
         "pkg/sub/__init__.py",
@@ -326,7 +299,7 @@ describe("resolve_module_path_python", () => {
       expect(result).toBe("/project/pkg/utils.py");
     });
 
-    it("should resolve triple dot relative import", () => {
+    it("resolves triple dot relative import", () => {
       const tree = create_file_tree("/project", [
         "pkg/__init__.py",
         "pkg/a/__init__.py",
@@ -344,7 +317,37 @@ describe("resolve_module_path_python", () => {
       expect(result).toBe("/project/pkg/utils.py");
     });
 
-    it("should resolve relative import of sibling package", () => {
+    it("resolves a bare single dot to the current package __init__.py", () => {
+      const tree = create_file_tree("/project", [
+        "pkg/__init__.py",
+        "pkg/caller.py",
+      ]);
+
+      const result = resolve_module_path_python(
+        ".",
+        "/project/pkg/caller.py" as FilePath,
+        tree
+      );
+
+      expect(result).toBe("/project/pkg/__init__.py");
+    });
+
+    it("resolves a bare double dot to the parent package __init__.py", () => {
+      const tree = create_file_tree("/project", [
+        "pkg/__init__.py",
+        "pkg/sub/caller.py",
+      ]);
+
+      const result = resolve_module_path_python(
+        "..",
+        "/project/pkg/sub/caller.py" as FilePath,
+        tree
+      );
+
+      expect(result).toBe("/project/pkg/__init__.py");
+    });
+
+    it("resolves relative import of a sibling package", () => {
       const tree = create_file_tree("/project", [
         "pkg/__init__.py",
         "pkg/sub/__init__.py",
@@ -362,7 +365,7 @@ describe("resolve_module_path_python", () => {
       expect(result).toBe("/project/pkg/other/helper.py");
     });
 
-    it("relative import with submodule", () => {
+    it("resolves relative import with a submodule", () => {
       const tree = create_file_tree("/project", [
         "package/subpackage/caller.py",
         "package/utils/helper.py",
@@ -376,10 +379,22 @@ describe("resolve_module_path_python", () => {
 
       expect(result).toBe("/project/package/utils/helper.py");
     });
+
+    it("returns the constructed .py path when a relative import is unresolvable", () => {
+      const tree = create_file_tree("/project", ["pkg/caller.py"]);
+
+      const result = resolve_module_path_python(
+        ".missing",
+        "/project/pkg/caller.py" as FilePath,
+        tree
+      );
+
+      expect(result).toBe("/project/pkg/missing.py");
+    });
   });
 
   describe("package __init__.py resolution", () => {
-    it("package name resolves to __init__.py", () => {
+    it("resolves package name to its __init__.py", () => {
       const tree = create_file_tree("/project", [
         "mypackage/__init__.py",
         "mypackage/module.py",
@@ -395,8 +410,7 @@ describe("resolve_module_path_python", () => {
       expect(result).toBe("/project/mypackage/__init__.py");
     });
 
-    it("prefers .py file over __init__.py for same name", () => {
-      // When both utils.py and utils/__init__.py exist, utils.py wins
+    it("prefers .py file over __init__.py for the same name", () => {
       const tree = create_file_tree("/project", [
         "utils.py",
         "utils/__init__.py",
@@ -418,7 +432,7 @@ describe("resolve_module_path_python", () => {
       const tree = create_file_tree("/project", [
         "shared/utils.py",
         "package_a/caller.py",
-        ".git/.gitkeep", // Project root marker
+        ".git/.gitkeep",
       ]);
 
       const result = resolve_module_path_python(
@@ -430,7 +444,7 @@ describe("resolve_module_path_python", () => {
       expect(result).toBe("/project/shared/utils.py");
     });
 
-    it("package imports resolve from project root", () => {
+    it("resolves package imports from project root", () => {
       const tree = create_file_tree("/project", [
         "mypackage/__init__.py",
         "mypackage/module.py",
@@ -448,16 +462,13 @@ describe("resolve_module_path_python", () => {
   });
 
   describe("edge cases", () => {
-    it("should handle module name matching directory name (path duplication prevention)", () => {
-      // When in /project/nested/ and importing "nested.helper",
-      // should not resolve to /project/nested/nested/helper.py
+    it("avoids path duplication when module name matches directory name", () => {
       const tree = create_file_tree("/project", [
         "nested/__init__.py",
         "nested/main.py",
         "nested/helper.py",
       ]);
 
-      // Importing "helper" (simple) from nested/main.py
       const result = resolve_module_path_python(
         "helper",
         "/project/nested/main.py" as FilePath,
@@ -467,7 +478,7 @@ describe("resolve_module_path_python", () => {
       expect(result).toBe("/project/nested/helper.py");
     });
 
-    it("should handle deeply nested package structure", () => {
+    it("resolves within a deeply nested package structure", () => {
       const tree = create_file_tree("/project", [
         "a/__init__.py",
         "a/b/__init__.py",
@@ -483,6 +494,30 @@ describe("resolve_module_path_python", () => {
       );
 
       expect(result).toBe("/project/a/b/c/helper.py");
+    });
+
+    it("searches parent directories for a standalone script import", () => {
+      const tree = create_file_tree("/project", ["scripts/run.py", "lib.py"]);
+
+      const result = resolve_module_path_python(
+        "lib",
+        "/project/scripts/run.py" as FilePath,
+        tree
+      );
+
+      expect(result).toBe("/project/lib.py");
+    });
+
+    it("returns the constructed .py path when an absolute import is unresolvable", () => {
+      const tree = create_file_tree("/project", ["main.py"]);
+
+      const result = resolve_module_path_python(
+        "missing",
+        "/project/main.py" as FilePath,
+        tree
+      );
+
+      expect(result).toBe("/project/missing.py");
     });
   });
 
@@ -552,7 +587,6 @@ describe("resolve_module_path_python", () => {
 
   describe("monorepo with duplicate module names", () => {
     it("resolves same-named modules based on import location", () => {
-      // Simulates the exact scenario from the bug report
       const tree = create_file_tree("/monorepo", [
         ".git/.gitkeep",
         "package_a/weighted_mape.py",
@@ -561,14 +595,12 @@ describe("resolve_module_path_python", () => {
         "package_b/caller.py",
       ]);
 
-      // Caller in package_a imports its local weighted_mape
       const result_a = resolve_module_path_python(
         "weighted_mape",
         "/monorepo/package_a/caller.py" as FilePath,
         tree
       );
 
-      // Caller in package_b imports its local weighted_mape
       const result_b = resolve_module_path_python(
         "weighted_mape",
         "/monorepo/package_b/caller.py" as FilePath,
