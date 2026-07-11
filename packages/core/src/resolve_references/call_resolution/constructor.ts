@@ -1,16 +1,9 @@
 /**
  * Constructor Call Resolution
  *
- * Resolves constructor calls and enriches class-resolving calls with
- * constructor references. Handles:
- * - Direct constructor calls: new ClassName(), ClassName() (Python)
- * - Inherited constructors: SubClass() where parent has __init__
- * - Post-resolution enrichment: any call resolving to a class symbol
- *   also references the constructor
- *
- * Integration points:
- * - Uses ResolutionRegistry for EAGER O(1) class name resolution
- * - Uses DefinitionRegistry to look up class definitions and constructors
+ * Resolves a constructor call (`new ClassName()`, Python `ClassName()`, Rust
+ * `Type::new()` / struct literal) to the class's constructor definition, or the
+ * class symbol itself when no explicit constructor exists.
  */
 
 import type {
@@ -48,25 +41,8 @@ const RUST_ASSOCIATED_CONSTRUCTOR_NAME = "new" as SymbolName;
 const SELF_TYPE_KEYWORD = "Self" as SymbolName;
 
 /**
- * Resolve a constructor call to zero, one, or more symbols
- *
- * EAGER approach: Uses pre-computed resolutions from ResolutionRegistry.
- *
- * Steps:
- * 1. If property_chain is set: resolve namespace → class via import path
- * 2. Otherwise: resolve class name using EAGER resolution
- * 3. Verify it's a class definition
- * 4. Return constructor symbol if exists, otherwise class symbol
- *
- * @param call_ref - Constructor call reference from semantic index
- * @param definitions - Definition registry for class lookup
- * @param scopes - Scope registry (for resolving `Self::new()` to the enclosing impl type)
- * @param resolutions - Resolution registry with eager resolutions
- * @param exports - Export registry (for following namespace re-export chains)
- * @param languages - File-path → language map (for module-path resolution in re-export chains)
- * @param root_folder - Project root folder (for module-path resolution in re-export chains)
- * @param import_source_resolver - Optional resolver mapping a namespace import symbol to its source file
- * @returns Array of resolved constructor/class symbol_ids (empty if resolution fails)
+ * Resolve a constructor call to its constructor definition, falling back to the
+ * class symbol when the class declares no explicit constructor.
  */
 export function resolve_constructor_call(
   call_ref: ConstructorCallReference,
@@ -104,7 +80,6 @@ export function resolve_constructor_call(
     }
   }
 
-  // Simple constructor: new ClassName() / in-scope Type::new()
   if (!class_symbol) {
     class_symbol = resolutions.resolve(call_ref.scope_id, call_ref.name as SymbolName);
   }
@@ -127,7 +102,6 @@ export function resolve_constructor_call(
     });
   }
 
-  // Verify it's actually a class and get constructor
   const class_def = find_class_definition(class_symbol, definitions);
 
   if (!class_def) {
@@ -138,7 +112,6 @@ export function resolve_constructor_call(
     });
   }
 
-  // Walk class hierarchy for constructor.
   let constructor_symbol = find_constructor_in_class_hierarchy(
     class_def,
     definitions,
@@ -176,8 +149,6 @@ export function resolve_constructor_call(
  * does. Bails (returns null) likewise when the qualifier is not an in-scope `mod`
  * whose body holds the type — a cross-file re-export hop belongs to
  * import_resolution, so we do not fabricate an edge.
- *
- * @returns The resolved type symbol, or null when the path does not bind in scope
  */
 function resolve_type_via_module_path(
   call_ref: ConstructorCallReference,
@@ -219,12 +190,8 @@ function resolve_type_via_module_path(
  * `ClassDefinition.constructors`. This links a resolved `Type::new()` /
  * `Self::new()` call to that member so the constructor is reachable instead of
  * surfacing as a false-positive entry point.
- *
- * @param type_id - Resolved struct/enum symbol
- * @param definitions - Definition registry holding the member index
- * @returns The `new` member symbol, or null when the type exposes no callable `new`
  */
-export function find_associated_constructor(
+function find_associated_constructor(
   type_id: SymbolId,
   definitions: DefinitionRegistry
 ): SymbolId | null {
@@ -241,19 +208,11 @@ export function find_associated_constructor(
 }
 
 /**
- * Post-resolution enrichment: add constructor references for class symbols.
+ * Add constructor references for any resolved symbol that is a class.
  *
- * When any call resolution (method_call, function_call, constructor_call)
- * resolves to a class symbol, this function ensures the class's constructor
- * is also included in the resolved symbols. This handles cases like:
- * - module.ClassName() → resolves to class, should also reference __init__
- * - <Component /> (JSX) → resolves to class, should also reference constructor
- * - SubClass() (no own __init__) → should reference parent's __init__
- *
- * @param resolved_symbols - Symbols resolved by the primary resolution step
- * @param definitions - Definition registry for class/constructor lookup
- * @param resolutions - Resolution registry for resolving parent class names
- * @returns Enriched symbol array with constructors added for class symbols
+ * A call resolving to a class symbol (e.g. `module.ClassName()`, JSX `<Component />`)
+ * should also reach the class's constructor so the constructor is not surfaced as an
+ * unreachable entry point.
  */
 export function include_constructors_for_class_symbols(
   resolved_symbols: SymbolId[],
@@ -282,32 +241,21 @@ export function include_constructors_for_class_symbols(
 }
 
 /**
- * Walk the class hierarchy to find the nearest constructor.
+ * Walk the class hierarchy to find the nearest constructor: this class first,
+ * then up the extends chain. Returns the first constructor found, or null.
  *
- * Checks the given class first, then walks up the extends chain
- * to find an inherited constructor. Handles:
- * - Direct constructors: class has own __init__ / constructor
- * - Inherited constructors: parent class has the constructor
- * - Cycle protection: prevents infinite loops in malformed hierarchies
- *
- * @param class_def - Class definition to start from
- * @param definitions - Definition registry for parent class lookup
- * @param resolutions - Resolution registry for resolving parent class names
- * @param visited - Set of visited class SymbolIds for cycle protection
- * @returns Constructor SymbolId or null if no constructor found in hierarchy
+ * The `visited` set guards against cycles in a malformed extends chain.
  */
-export function find_constructor_in_class_hierarchy(
+function find_constructor_in_class_hierarchy(
   class_def: ClassDefinition,
   definitions: DefinitionRegistry,
   resolutions: ResolutionRegistry,
   visited?: Set<SymbolId>
 ): SymbolId | null {
-  // Check this class's own constructors
   if (class_def.constructors && class_def.constructors.length > 0) {
     return class_def.constructors[0].symbol_id;
   }
 
-  // No own constructor — walk up extends chain
   if (class_def.extends.length === 0) {
     return null;
   }
@@ -316,14 +264,12 @@ export function find_constructor_in_class_hierarchy(
   visited_set.add(class_def.symbol_id);
 
   for (const parent_name of class_def.extends) {
-    // Resolve parent class name in the class's defining scope
     const parent_id = resolutions.resolve(
       class_def.defining_scope_id,
       parent_name
     );
     if (!parent_id) continue;
 
-    // Cycle protection
     if (visited_set.has(parent_id)) continue;
 
     const parent_def = find_class_definition(parent_id, definitions);
@@ -341,14 +287,7 @@ export function find_constructor_in_class_hierarchy(
   return null;
 }
 
-/**
- * Find class definition from DefinitionRegistry.
- *
- * @param class_symbol - Class symbol ID
- * @param definitions - Definition registry
- * @returns ClassDefinition or null if not found or not a class
- */
-export function find_class_definition(
+function find_class_definition(
   class_symbol: SymbolId,
   definitions: DefinitionRegistry
 ): ClassDefinition | null {
