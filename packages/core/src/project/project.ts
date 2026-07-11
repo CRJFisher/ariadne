@@ -34,7 +34,6 @@ import RustParser from "tree-sitter-rust";
 import type { FileSystemFolder } from "../resolve_references/file_folders";
 import { readdir, realpath } from "fs/promises";
 import { join } from "path";
-import { profiler } from "../profiling";
 import type { PersistenceStorage } from "../persistence/storage";
 import { compute_content_hash } from "../persistence/content_hash";
 import type { CacheManifestEntry } from "../persistence/cache_manifest";
@@ -206,8 +205,6 @@ export class Project {
       throw new Error("Project not initialized");
     }
 
-    profiler.start_file(file_id);
-
     // Any file mutation invalidates the EnrichedCallGraph cache.
     this.enriched_cache = null;
 
@@ -216,7 +213,6 @@ export class Project {
 
     // Phase 1: Compute file-local data
     const language = detect_language(file_id);
-    profiler.start("tree_sitter_parse");
     const parser = get_parser(language);
     // Auto-adjust buffer to fit the file (2x content length, minimum 1MB)
     const needed = content.length * 2;
@@ -226,19 +222,14 @@ export class Project {
     const tree = parser.parse(content, undefined, {
       bufferSize: this.parser_buffer_size,
     });
-    profiler.end("tree_sitter_parse");
     const parsed_file = create_parsed_file(file_id, content, tree, language);
-    profiler.start("build_index");
     const index_single_file = build_index_single_file(parsed_file, tree, language);
-    profiler.end("build_index");
 
     this.index_single_filees.set(file_id, index_single_file);
     this.file_contents.set(file_id, content);
 
     // Phases 2-5: Registry update + resolution
     this.apply_index_and_resolve(file_id, index_single_file, dependents, this.root_folder);
-
-    profiler.end_file();
   }
 
   /**
@@ -283,7 +274,6 @@ export class Project {
     const get_import_path = (import_id: SymbolId) => this.imports.get_resolved_import_path(import_id);
 
     // Phase 2: Update project-level registries
-    profiler.start("registry_updates");
     const all_definitions: AnyDefinition[] = [
       ...Array.from(index_single_file.functions.values()),
       ...Array.from(index_single_file.classes.values()),
@@ -344,7 +334,6 @@ export class Project {
       ...non_import_definitions,
       ...fixed_import_definitions,
     ]);
-    profiler.end("registry_updates");
 
     // Phase 3: Re-resolve affected files
     const affected_files = new Set([file_id, ...dependents]);
@@ -354,7 +343,6 @@ export class Project {
       languages.set(file_path, index.language);
     }
 
-    profiler.start("resolve_names");
     this.resolutions.resolve_names(
       affected_files,
       languages,
@@ -364,10 +352,8 @@ export class Project {
       this.imports,
       root_folder,
     );
-    profiler.end("resolve_names");
 
     // Phase 3.5: Cross-file type inheritance resolution
-    profiler.start("cross_file_inheritance");
     const files_needing_call_reresolution = new Set<FilePath>();
     for (const affected_file of affected_files) {
       const parent_files =
@@ -379,10 +365,8 @@ export class Project {
         files_needing_call_reresolution.add(parent_file);
       }
     }
-    profiler.end("cross_file_inheritance");
 
     // Phase 3.6: Reference preprocessing
-    profiler.start("preprocess_references");
     for (const affected_file of affected_files) {
       const affected_index = this.index_single_filees.get(affected_file);
       if (affected_index) {
@@ -395,10 +379,8 @@ export class Project {
         );
       }
     }
-    profiler.end("preprocess_references");
 
     // Phase 4: Type registry
-    profiler.start("type_registry");
     for (const affected_file of affected_files) {
       const affected_index = this.index_single_filees.get(affected_file);
       if (affected_index) {
@@ -414,13 +396,11 @@ export class Project {
         );
       }
     }
-    profiler.end("type_registry");
 
     // Phase 5: Call resolution
     // Pass the same exports/languages/root_folder instances handed to
     // resolve_names above, so namespace re-export following sees the current
     // export graph rather than a stale snapshot.
-    profiler.start("resolve_calls");
     const call_resolution_files = new Set([
       ...affected_files,
       ...files_needing_call_reresolution,
@@ -436,7 +416,6 @@ export class Project {
       languages,
       root_folder,
     );
-    profiler.end("resolve_calls");
   }
 
   /**

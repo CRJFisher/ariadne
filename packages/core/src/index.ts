@@ -56,9 +56,6 @@ export {
   ResolutionRegistry,
 } from "./project";
 
-// Profiling
-export { profiler } from "./profiling";
-
 // Logging
 export {
   initialize_logger,

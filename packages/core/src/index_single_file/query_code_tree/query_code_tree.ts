@@ -4,7 +4,6 @@ import {
   load_query,
   LANGUAGE_TO_TREESITTER_LANG,
 } from "./query_loader";
-import { profiler } from "../../profiling";
 
 /**
  * Cache for compiled Query objects per language.
@@ -29,9 +28,7 @@ function get_compiled_query(lang: Language): Query {
     throw new Error(`No tree-sitter parser found for language: ${lang}`);
   }
 
-  profiler.start("query_compile");
   const query = new Query(parser, query_string);
-  profiler.end("query_compile");
 
   COMPILED_QUERY_CACHE.set(lang, query);
   return query;
@@ -42,14 +39,7 @@ function get_compiled_query(lang: Language): Query {
  * Returns raw tree-sitter captures for processing.
  */
 export function query_tree(lang: Language, tree: Tree): QueryCapture[] {
-  profiler.start("get_compiled_query");
   const query = get_compiled_query(lang);
-  profiler.end("get_compiled_query");
-
-  profiler.start("query_execute");
-  const captures = query.captures(tree.rootNode);
-  profiler.end("query_execute");
-
-  return captures;
+  return query.captures(tree.rootNode);
 }
 
