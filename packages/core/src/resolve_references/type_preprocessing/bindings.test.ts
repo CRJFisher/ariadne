@@ -1,12 +1,9 @@
 /**
- * Comprehensive tests for type_bindings extraction
- * Tests extraction of type annotations across all 4 languages
- *
- * Note: These tests verify that extract_type_bindings correctly processes
- * the data provided by index_single_file. Some type annotations may not be
- * extracted by index_single_file itself (e.g., TypeScript top-level variable types,
- * standalone function return types). This is expected - our function extracts
- * what exists in the index_single_file definitions.
+ * extract_type_bindings operates on the definition maps produced by
+ * build_index_single_file, so these tests exercise it through that indexer.
+ * A binding exists only where the indexer captured a type annotation: for
+ * example, TypeScript top-level variable annotations are not indexed, so those
+ * cases yield no binding rather than a resolved type.
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
@@ -16,13 +13,10 @@ import TypeScript from "tree-sitter-typescript";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
 import type { Language, FilePath } from "@ariadnejs/types";
+import { location_key } from "@ariadnejs/types";
 import { build_index_single_file } from "../../index_single_file/index_single_file";
 import type { ParsedFile } from "../../index_single_file/parsed_file";
 import { extract_type_bindings } from "./bindings";
-
-// ============================================================================
-// Test Helpers
-// ============================================================================
 
 function create_parsed_file(
   code: string,
@@ -40,10 +34,6 @@ function create_parsed_file(
   };
 }
 
-// ============================================================================
-// JavaScript Tests
-// ============================================================================
-
 describe("Type Bindings - JavaScript", () => {
   let parser: Parser;
 
@@ -52,7 +42,7 @@ describe("Type Bindings - JavaScript", () => {
     parser.setLanguage(JavaScript);
   });
 
-  it("should handle JavaScript without type annotations", () => {
+  it("extracts nothing from JavaScript, which carries no type annotations", () => {
     const code = `
       const user = { name: "John", age: 25 };
       function greet(name) {
@@ -76,11 +66,10 @@ describe("Type Bindings - JavaScript", () => {
       interfaces: index.interfaces,
     });
 
-    // No type annotations should be extracted
     expect(bindings.size).toBe(0);
   });
 
-  it("should work with JavaScript classes", () => {
+  it("extracts nothing from JavaScript classes, which carry no member type annotations", () => {
     const code = `
       class User {
         constructor() {
@@ -105,14 +94,9 @@ describe("Type Bindings - JavaScript", () => {
       interfaces: index.interfaces,
     });
 
-    // JS classes without type annotations produce no bindings
     expect(bindings.size).toBe(0);
   });
 });
-
-// ============================================================================
-// TypeScript Tests
-// ============================================================================
 
 describe("Type Bindings - TypeScript", () => {
   let parser: Parser;
@@ -122,7 +106,7 @@ describe("Type Bindings - TypeScript", () => {
     parser.setLanguage(TypeScript.typescript);
   });
 
-  it("should extract parameter type annotations from functions", () => {
+  it("extracts parameter type annotations from functions", () => {
     const code = `
       function greet(name: string, age: number): void {
         console.log(\`Hello \${name}, age \${age}\`);
@@ -150,7 +134,36 @@ describe("Type Bindings - TypeScript", () => {
     expect(type_values).toEqual(["number", "string", "void"]);
   });
 
-  it("should extract class property type annotations", () => {
+  it("keys return-type bindings to the function location and parameter bindings to parameter locations", () => {
+    const code = "function greet(name: string): void {}";
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.ts" as FilePath,
+      tree,
+      "typescript"
+    );
+    const index = build_index_single_file(parsed_file, tree, "typescript");
+
+    const bindings = extract_type_bindings({
+      variables: index.variables,
+      functions: index.functions,
+      classes: index.classes,
+      interfaces: index.interfaces,
+    });
+
+    const func = Array.from(index.functions.values())[0];
+    const param = func.signature.parameters[0];
+    expect(bindings).toEqual(
+      new Map([
+        [location_key(func.location), "void"],
+        [location_key(param.location), "string"],
+      ])
+    );
+  });
+
+  it("extracts class property type annotations", () => {
     const code = `
       class User {
         name: string;
@@ -186,7 +199,7 @@ describe("Type Bindings - TypeScript", () => {
     expect(type_values).toEqual(["boolean", "number", "number", "string", "string"]);
   });
 
-  it("should extract method return type and parameter annotations", () => {
+  it("extracts method return type and parameter annotations", () => {
     const code = `
       class Calculator {
         add(a: number, b: number): number {
@@ -220,7 +233,7 @@ describe("Type Bindings - TypeScript", () => {
     expect(type_values).toEqual(["number", "number", "number", "number", "number", "number"]);
   });
 
-  it("should extract interface property type annotations", () => {
+  it("extracts interface property type annotations", () => {
     const code = `
       interface User {
         id: number;
@@ -251,7 +264,7 @@ describe("Type Bindings - TypeScript", () => {
     expect(type_values).toEqual(["boolean", "number", "string", "string"]);
   });
 
-  it("should extract interface method type annotations", () => {
+  it("extracts interface method type annotations", () => {
     const code = `
       interface Calculator {
         add(a: number, b: number): number;
@@ -280,7 +293,7 @@ describe("Type Bindings - TypeScript", () => {
     expect(type_values).toEqual(["number", "number", "number", "number", "number", "number"]);
   });
 
-  it("should handle complex nested types", () => {
+  it("preserves generic and union type annotations verbatim", () => {
     const code = `
       interface Response<T> {
         data: T;
@@ -309,7 +322,7 @@ describe("Type Bindings - TypeScript", () => {
     expect(type_values).toEqual(["Error | null", "T"]);
   });
 
-  it("should not extract variable type annotations (not captured by index_single_file)", () => {
+  it("produces no binding for top-level variable annotations, which the indexer does not capture", () => {
     const code = `
       const x: number = 42;
       let name: string = "hello";
@@ -331,11 +344,10 @@ describe("Type Bindings - TypeScript", () => {
       interfaces: index.interfaces,
     });
 
-    // Top-level variable type annotations are not extracted by index_single_file
     expect(bindings.size).toBe(0);
   });
 
-  it("should extract getter/setter type annotations", () => {
+  it("extracts getter/setter type annotations", () => {
     const code = `
       class User {
         private _name: string = "";
@@ -365,7 +377,7 @@ describe("Type Bindings - TypeScript", () => {
     expect(type_values).toEqual(["string", "string", "string"]);
   });
 
-  it("should extract abstract class member type annotations", () => {
+  it("extracts abstract class member type annotations", () => {
     const code = `
       abstract class Shape {
         abstract area(): number;
@@ -396,10 +408,6 @@ describe("Type Bindings - TypeScript", () => {
   });
 });
 
-// ============================================================================
-// Python Tests
-// ============================================================================
-
 describe("Type Bindings - Python", () => {
   let parser: Parser;
 
@@ -408,7 +416,7 @@ describe("Type Bindings - Python", () => {
     parser.setLanguage(Python);
   });
 
-  it("should extract variable type annotations", () => {
+  it("extracts variable type annotations", () => {
     const code = `
 name: str = "John"
 age: int = 25
@@ -436,7 +444,68 @@ is_active: bool = True
     expect(type_values).toEqual(["bool", "int", "str"]);
   });
 
-  it("should extract parameter and return type annotations from functions", () => {
+  it("omits variables that have no type annotation", () => {
+    const code = `
+x = 1
+y = "hello"
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.py" as FilePath,
+      tree,
+      "python"
+    );
+    const index = build_index_single_file(parsed_file, tree, "python");
+
+    const bindings = extract_type_bindings({
+      variables: index.variables,
+      functions: index.functions,
+      classes: index.classes,
+      interfaces: index.interfaces,
+    });
+
+    expect(bindings.size).toBe(0);
+  });
+
+  it("keys a redefined name to each definition location when shadowed across scopes", () => {
+    const code = `
+x: int = 1
+def f():
+    x: str = "a"
+    return x
+`;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.py" as FilePath,
+      tree,
+      "python"
+    );
+    const index = build_index_single_file(parsed_file, tree, "python");
+
+    const bindings = extract_type_bindings({
+      variables: index.variables,
+      functions: index.functions,
+      classes: index.classes,
+      interfaces: index.interfaces,
+    });
+
+    const variables = Array.from(index.variables.values());
+    const outer = variables.find((v) => v.type === "int");
+    const inner = variables.find((v) => v.type === "str");
+    if (!outer || !inner) throw new Error("expected two annotated x definitions");
+    expect(bindings).toEqual(
+      new Map([
+        [location_key(outer.location), "int"],
+        [location_key(inner.location), "str"],
+      ])
+    );
+  });
+
+  it("extracts parameter and return type annotations from functions", () => {
     const code = `
 def greet(name: str, age: int) -> None:
     print(f"Hello {name}, age {age}")
@@ -463,7 +532,7 @@ def greet(name: str, age: int) -> None:
     expect(type_values).toEqual(["None", "int", "str"]);
   });
 
-  it("should extract class attribute type annotations", () => {
+  it("extracts class attribute type annotations", () => {
     const code = `
 class User:
     name: str
@@ -497,7 +566,7 @@ class User:
     expect(type_values).toEqual(["bool", "int", "int", "str", "str"]);
   });
 
-  it("should extract method parameter and return type annotations", () => {
+  it("extracts method parameter and return type annotations", () => {
     const code = `
 class Calculator:
     def add(self, a: int, b: int) -> int:
@@ -525,7 +594,7 @@ class Calculator:
     expect(type_values).toEqual(["int", "int", "int"]);
   });
 
-  it("should extract @classmethod parameter and return types", () => {
+  it("extracts @classmethod parameter and return types", () => {
     const code = `
 class User:
     @classmethod
@@ -555,10 +624,6 @@ class User:
   });
 });
 
-// ============================================================================
-// Rust Tests
-// ============================================================================
-
 describe("Type Bindings - Rust", () => {
   let parser: Parser;
 
@@ -567,7 +632,7 @@ describe("Type Bindings - Rust", () => {
     parser.setLanguage(Rust);
   });
 
-  it("should extract variable type annotations", () => {
+  it("extracts variable type annotations", () => {
     const code = `
       let name: String = String::from("John");
       let age: i32 = 25;
@@ -595,7 +660,7 @@ describe("Type Bindings - Rust", () => {
     expect(type_values).toEqual(["String", "bool", "i32"]);
   });
 
-  it("should extract parameter and return type annotations from functions", () => {
+  it("extracts parameter and return type annotations from functions", () => {
     const code = `
       fn greet(name: &str, age: i32) -> () {
           println!("Hello {}, age {}", name, age);
@@ -623,7 +688,7 @@ describe("Type Bindings - Rust", () => {
     expect(type_values).toEqual(["&str", "()", "i32"]);
   });
 
-  it("should extract struct field type annotations", () => {
+  it("extracts struct field type annotations", () => {
     const code = `
       struct User {
           name: String,
@@ -653,7 +718,7 @@ describe("Type Bindings - Rust", () => {
     expect(type_values).toEqual(["String", "bool", "i32"]);
   });
 
-  it("should not extract impl method types (impl not indexed as class)", () => {
+  it("produces no binding for a standalone impl block, which is not indexed as a class", () => {
     const code = `
       impl Calculator {
           fn add(&self, a: i32, b: i32) -> i32 {
@@ -678,17 +743,12 @@ describe("Type Bindings - Rust", () => {
       interfaces: index.interfaces,
     });
 
-    // Standalone impl blocks without a struct definition are not indexed as classes
     expect(bindings.size).toBe(0);
   });
 });
 
-// ============================================================================
-// Edge Cases
-// ============================================================================
-
 describe("Type Bindings - Edge Cases", () => {
-  it("should handle empty definitions", () => {
+  it("returns an empty map for empty definitions", () => {
     const bindings = extract_type_bindings({
       variables: new Map(),
       functions: new Map(),
@@ -699,7 +759,7 @@ describe("Type Bindings - Edge Cases", () => {
     expect(bindings.size).toBe(0);
   });
 
-  it("should handle definitions without type annotations", () => {
+  it("returns an empty map when no definition carries a type annotation", () => {
     const parser = new Parser();
     parser.setLanguage(JavaScript);
 
@@ -725,7 +785,6 @@ describe("Type Bindings - Edge Cases", () => {
       interfaces: index.interfaces,
     });
 
-    // No type annotations in JavaScript code
     expect(bindings.size).toBe(0);
   });
 });
