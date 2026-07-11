@@ -30,6 +30,22 @@ describe("slugify_project_path", () => {
     const slug = slugify_project_path("/");
     expect(slug).toMatch(/^[0-9a-f]{8}$/);
   });
+
+  it("lowercases uppercase basenames", () => {
+    const slug = slugify_project_path("/Users/chuck/MyProject");
+    expect(slug).toMatch(/^myproject-[0-9a-f]{8}$/);
+  });
+
+  it("falls back to bare hash when basename is all special characters", () => {
+    const slug = slugify_project_path("/foo/!!!");
+    expect(slug).toMatch(/^[0-9a-f]{8}$/);
+  });
+
+  it("resolves relative paths to absolute before hashing", () => {
+    expect(slugify_project_path("relative/path")).toEqual(
+      slugify_project_path(path.resolve("relative/path")),
+    );
+  });
 });
 
 describe("resolve_cache_dir", () => {
@@ -72,14 +88,40 @@ describe("resolve_cache_dir", () => {
     expect(resolve_cache_dir("/any/project")).toBeNull();
   });
 
+  it("returns null when ARIADNE_CACHE_DIR is '0'", () => {
+    process.env.ARIADNE_CACHE_DIR = "0";
+    expect(resolve_cache_dir("/any/project")).toBeNull();
+  });
+
   it("returns null when ARIADNE_CACHE_DIR is empty string", () => {
     process.env.ARIADNE_CACHE_DIR = "";
     expect(resolve_cache_dir("/any/project")).toBeNull();
   });
 
-  it("resolves relative ARIADNE_CACHE_DIR to absolute", () => {
+  it("returns null when ARIADNE_CACHE_DIR is whitespace only", () => {
+    process.env.ARIADNE_CACHE_DIR = "   ";
+    expect(resolve_cache_dir("/any/project")).toBeNull();
+  });
+
+  it("matches disable values case-insensitively", () => {
+    process.env.ARIADNE_CACHE_DIR = "OFF";
+    expect(resolve_cache_dir("/any/project")).toBeNull();
+  });
+
+  it("trims surrounding whitespace before disabling", () => {
+    process.env.ARIADNE_CACHE_DIR = "  none  ";
+    expect(resolve_cache_dir("/any/project")).toBeNull();
+  });
+
+  it("trims surrounding whitespace on a path value", () => {
+    process.env.ARIADNE_CACHE_DIR = "  /custom/cache  ";
+    expect(resolve_cache_dir("/any/project")).toEqual("/custom/cache");
+  });
+
+  it("resolves relative ARIADNE_CACHE_DIR against the current directory", () => {
     process.env.ARIADNE_CACHE_DIR = "relative/path";
-    const result = resolve_cache_dir("/any/project");
-    expect(path.isAbsolute(result!)).toBe(true);
+    expect(resolve_cache_dir("/any/project")).toEqual(
+      path.resolve("relative/path"),
+    );
   });
 });
