@@ -28,31 +28,27 @@ describe("scopes.boundary_extractor infrastructure", () => {
   });
 
   describe("get_scope_boundary_extractor", () => {
-    it("should return PythonScopeBoundaryExtractor for python", () => {
+    it("returns PythonScopeBoundaryExtractor for python", () => {
       const extractor = get_scope_boundary_extractor("python" as Language);
-      expect(extractor).toBeDefined();
       expect(extractor.constructor.name).toBe("PythonScopeBoundaryExtractor");
     });
 
-    it("should return TypeScriptScopeBoundaryExtractor for typescript", () => {
+    it("returns TypeScriptScopeBoundaryExtractor for typescript", () => {
       const extractor = get_scope_boundary_extractor("typescript" as Language);
-      expect(extractor).toBeDefined();
       expect(extractor.constructor.name).toBe("TypeScriptScopeBoundaryExtractor");
     });
 
-    it("should return JavaScriptScopeBoundaryExtractor for javascript", () => {
+    it("returns the shared JS/TS extractor for javascript", () => {
       const extractor = get_scope_boundary_extractor("javascript" as Language);
-      expect(extractor).toBeDefined();
-      expect(extractor.constructor.name).toBe("JavaScriptScopeBoundaryExtractor");
+      expect(extractor.constructor.name).toBe("JavaScriptTypeScriptScopeBoundaryExtractor");
     });
 
-    it("should return Rust extractor for rust language", () => {
+    it("returns RustScopeBoundaryExtractor for rust", () => {
       const extractor = get_scope_boundary_extractor("rust" as Language);
-      expect(extractor).toBeDefined();
       expect(extractor.constructor.name).toBe("RustScopeBoundaryExtractor");
     });
 
-    it("should throw error for unknown language", () => {
+    it("throws for unknown language", () => {
       expect(() => {
         get_scope_boundary_extractor("unknown" as Language);
       }).toThrow(/No scope boundary extractor for language: unknown/);

@@ -7,33 +7,29 @@ import {
 import { node_to_location } from "../../node_to_location";
 
 /**
- * Shared scope boundary extraction for JavaScript and TypeScript.
- * Both languages use braces for scoping and have similar AST structures.
- *
- * This base class contains the special logic that was previously in scopes.ts
- * for handling named function expressions and other TypeScript/JavaScript specifics.
+ * Scope boundary extraction shared by JavaScript and TypeScript, used directly
+ * for JavaScript. Both languages brace-scope with near-identical AST structure;
+ * TypeScript-only constructs (interface, enum, namespace) are added by the
+ * TypeScript subclass.
  */
-export abstract class JavaScriptTypeScriptScopeBoundaryExtractor
+export class JavaScriptTypeScriptScopeBoundaryExtractor
   extends CommonScopeBoundaryExtractor
 {
   protected extract_class_boundaries(
     node: Parser.SyntaxNode,
     file_path: FilePath,
   ): ScopeBoundaries {
-    // Handle when TreeSitter captures class_body directly instead of class_declaration
     if (node.type === "class_body") {
       return this.extract_class_body_boundaries(node, file_path);
     }
 
-    // Node could be: class_declaration, class (TS), interface_declaration, enum_declaration
-
     const name_node = node.childForFieldName("name");
+    // interface_declaration exposes its members under `object`, not `body`.
     const body_node =
       node.childForFieldName("body") ||
-      node.childForFieldName("object"); // For interface_declaration
+      node.childForFieldName("object");
 
     if (!name_node && !body_node) {
-      // For test mocks without name or body fields, use the entire node
       const location = node_to_location(node, file_path);
       return { symbol_location: location, scope_location: location };
     }
@@ -46,24 +42,20 @@ export abstract class JavaScriptTypeScriptScopeBoundaryExtractor
       throw new Error(`${node.type || "Node"} has no body field`);
     }
 
-    // Symbol: just the name
     const symbol_location = node_to_location(name_node, file_path);
-
-    // Scope: the body node (starts at "{", which is what we want)
     const scope_location = node_to_location(body_node, file_path);
 
     return { symbol_location, scope_location };
   }
 
   /**
-   * Extract class body boundaries.
-   * Handles when TreeSitter captures class_body directly instead of class_declaration.
+   * Extract boundaries when TreeSitter captures a class_body directly rather
+   * than its enclosing class declaration.
    */
   protected extract_class_body_boundaries(
     node: Parser.SyntaxNode,
     file_path: FilePath,
   ): ScopeBoundaries {
-    // For class_body, we need to find the parent class declaration
     const parent = node.parent;
     if (!parent || !["class_declaration", "abstract_class_declaration", "class", "class_expression"].includes(parent.type)) {
       throw new Error("class_body node must have class declaration parent");
@@ -71,7 +63,6 @@ export abstract class JavaScriptTypeScriptScopeBoundaryExtractor
 
     const name_node = parent.childForFieldName("name");
     if (!name_node) {
-      // Handle anonymous classes - use the class body location for both symbol and scope
       const location = node_to_location(node, file_path);
       return { symbol_location: location, scope_location: location };
     }
@@ -86,22 +77,19 @@ export abstract class JavaScriptTypeScriptScopeBoundaryExtractor
     node: Parser.SyntaxNode,
     file_path: FilePath,
   ): ScopeBoundaries {
-    // Handle arrow functions specially (JavaScript-specific but also valid in TypeScript)
     if (node.type === "arrow_function") {
       return this.extract_arrow_function_boundaries(node, file_path);
     }
 
-    // Handle both regular functions and named function expressions
     const name_node = node.childForFieldName("name");
 
-    // Check if this is a named function expression
+    // A named function expression scopes its own name for self-reference, so
+    // the name belongs inside the function scope rather than the parent scope.
     const is_named_function_expr =
       node.type === "function_expression" && name_node !== null;
 
     if (is_named_function_expr) {
-      // Named function expression: scope starts AFTER "function" keyword
-      // The name itself is IN the function's scope (for self-reference)
-      const function_keyword = node.child(0); // First child is "function" keyword
+      const function_keyword = node.child(0);
 
       if (!function_keyword) {
         throw new Error("Function expression has no function keyword");
@@ -109,10 +97,7 @@ export abstract class JavaScriptTypeScriptScopeBoundaryExtractor
 
       const body_node = node.childForFieldName("body");
       if (!body_node) {
-        // Handle interface method signatures which don't have bodies
-        // For method signatures, the scope starts after the function keyword
         const params_node = node.childForFieldName("parameters");
-        // name_node is guaranteed non-null here due to is_named_function_expr check above
         const symbol_location = node_to_location(name_node, file_path);
         const scope_location = params_node
           ? node_to_location(params_node, file_path)
@@ -126,11 +111,9 @@ export abstract class JavaScriptTypeScriptScopeBoundaryExtractor
         return { symbol_location, scope_location };
       }
 
-      // Symbol: the function name (belongs to function's OWN scope)
-      // name_node is guaranteed non-null here due to is_named_function_expr check above
       const symbol_location = node_to_location(name_node, file_path);
 
-      // Scope: starts after "function" keyword but before the name
+      // Scope opens right after the `function` keyword so the name sits inside it.
       const scope_location: Location = {
         file_path,
         start_line: function_keyword.endPosition.row + 1,
@@ -141,19 +124,16 @@ export abstract class JavaScriptTypeScriptScopeBoundaryExtractor
 
       return { symbol_location, scope_location };
     } else {
-      // Regular function declaration or anonymous function expression
       const params_node = node.childForFieldName("parameters") || node.childForFieldName("parameter");
       const body_node = node.childForFieldName("body");
 
       if (!params_node && !body_node) {
-        // For test mocks or functions without parameters/body, use the entire node
         const location = node_to_location(node, file_path);
         return { symbol_location: location, scope_location: location };
       }
 
       if (!body_node) {
-        // Handle interface method signatures which don't have bodies
-        // For method signatures, the scope is just the parameters
+        // Body-less signatures (interface/method signatures) scope to their parameters.
         const symbol_location = name_node
           ? node_to_location(name_node, file_path)
           : params_node
@@ -167,7 +147,6 @@ export abstract class JavaScriptTypeScriptScopeBoundaryExtractor
       }
 
       if (!params_node) {
-        // Function without parameters but with body - scope starts at body
         const symbol_location = name_node
           ? node_to_location(name_node, file_path)
           : node_to_location(body_node, file_path);
@@ -178,9 +157,8 @@ export abstract class JavaScriptTypeScriptScopeBoundaryExtractor
 
       const symbol_location = name_node
         ? node_to_location(name_node, file_path)
-        : node_to_location(params_node, file_path); // Anonymous: no name
+        : node_to_location(params_node, file_path);
 
-      // Scope starts at parameters
       const scope_location: Location = {
         file_path,
         start_line: params_node.startPosition.row + 1,
@@ -197,7 +175,6 @@ export abstract class JavaScriptTypeScriptScopeBoundaryExtractor
     node: Parser.SyntaxNode,
     file_path: FilePath,
   ): ScopeBoundaries {
-    // Constructors are like methods - scope starts at parameters
     return this.extract_function_boundaries(node, file_path);
   }
 
@@ -205,7 +182,6 @@ export abstract class JavaScriptTypeScriptScopeBoundaryExtractor
     node: Parser.SyntaxNode,
     file_path: FilePath,
   ): ScopeBoundaries {
-    // Block scopes: entire node is the scope
     const location = node_to_location(node, file_path);
     return {
       symbol_location: location,
@@ -214,8 +190,9 @@ export abstract class JavaScriptTypeScriptScopeBoundaryExtractor
   }
 
   /**
-   * Extract boundaries for arrow functions.
-   * Arrow functions don't have explicit names or parameter parentheses in some cases.
+   * Arrow functions have no name; a single unparenthesized parameter appears
+   * under `parameter` rather than `parameters`, and the scope falls back to the
+   * whole node when there is no parameter list at all.
    */
   protected extract_arrow_function_boundaries(
     node: Parser.SyntaxNode,
@@ -228,7 +205,6 @@ export abstract class JavaScriptTypeScriptScopeBoundaryExtractor
       throw new Error("Arrow function missing body");
     }
 
-    // For arrow functions, the symbol location is the parameter(s)
     const symbol_location = params_node
       ? node_to_location(params_node, file_path)
       : node_to_location(node, file_path);
