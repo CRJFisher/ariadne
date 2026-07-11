@@ -20,7 +20,7 @@ export function get_handler_registry(language: Language): HandlerRegistry {
   }
 }
 
-export type { HandlerFunction, HandlerRegistry } from "./types";
+export type { HandlerRegistry } from "./types";
 export { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
 export { TYPESCRIPT_HANDLERS } from "./capture_handlers.typescript";
 export { PYTHON_HANDLERS } from "./capture_handlers.python";
