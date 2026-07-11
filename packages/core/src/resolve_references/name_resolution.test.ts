@@ -10,15 +10,20 @@ import { DefinitionRegistry } from "./registries/definition";
 import { ScopeRegistry } from "./registries/scope";
 import { ExportRegistry } from "./registries/export";
 import { ImportGraph } from "../project/import_graph";
-import { function_symbol, class_symbol } from "@ariadnejs/types";
+import { function_symbol, namespace_symbol, variable_symbol } from "@ariadnejs/types";
 import type {
   FilePath,
   ScopeId,
+  SymbolId,
   SymbolName,
   Location,
   FunctionDefinition,
+  VariableDefinition,
+  ImportDefinition,
+  ModulePath,
   Language,
   LexicalScope,
+  ScopeType,
 } from "@ariadnejs/types";
 import type { FileSystemFolder } from "./file_folders";
 
@@ -33,6 +38,39 @@ const MOCK_LOCATION: Location = {
   end_line: 1,
   end_column: 10,
 };
+
+function make_scope(
+  id: ScopeId,
+  type: ScopeType,
+  parent_id: ScopeId | null,
+  child_ids: ScopeId[] = []
+): LexicalScope {
+  return {
+    id,
+    type,
+    location: MOCK_LOCATION,
+    parent_id,
+    name: null,
+    child_ids,
+  } as LexicalScope;
+}
+
+function make_function(
+  name: string,
+  scope_id: ScopeId,
+  symbol_id: SymbolId
+): FunctionDefinition {
+  return {
+    kind: "function",
+    symbol_id,
+    name: name as SymbolName,
+    defining_scope_id: scope_id,
+    location: MOCK_LOCATION,
+    signature: { parameters: [] },
+    body_scope_id: `scope:test.ts:${name}:1:0` as ScopeId,
+    is_exported: false,
+  };
+}
 
 describe("resolve_names", () => {
   let definitions: DefinitionRegistry;
@@ -66,14 +104,14 @@ describe("resolve_names", () => {
   });
 
   describe("Empty inputs", () => {
-    it("should return empty result for empty file_ids", () => {
+    it("returns empty result for empty file_ids", () => {
       const result = resolve_names(new Set(), context);
 
       expect(result.resolutions_by_scope.size).toBe(0);
       expect(result.scope_to_file.size).toBe(0);
     });
 
-    it("should return empty result for file with no scopes", () => {
+    it("returns empty result for file with no scopes", () => {
       const result = resolve_names(new Set([TEST_FILE]), context);
 
       expect(result.resolutions_by_scope.size).toBe(0);
@@ -82,228 +120,303 @@ describe("resolve_names", () => {
   });
 
   describe("Local definition resolution", () => {
-    it("should resolve local function definition in file scope", () => {
-      const func_id = function_symbol("greet" as SymbolName, MOCK_LOCATION as Location);
+    it("resolves a local function definition in file scope", () => {
+      const func_id = function_symbol("greet" as SymbolName, MOCK_LOCATION);
 
-      // Set up scope
-      const scope_map = new Map<ScopeId, LexicalScope>([
-        [
-          FILE_SCOPE_ID,
-          {
-            id: FILE_SCOPE_ID,
-            type: "global" as const,
-            location: MOCK_LOCATION,
-            parent_id: null,
-            name: null,
-            child_ids: [] as readonly ScopeId[],
-          } as LexicalScope,
-        ],
+      scopes.update_file(
+        TEST_FILE,
+        new Map([[FILE_SCOPE_ID, make_scope(FILE_SCOPE_ID, "global", null)]])
+      );
+      definitions.update_file(TEST_FILE, [
+        make_function("greet", FILE_SCOPE_ID, func_id),
       ]);
-      scopes.update_file(TEST_FILE, scope_map);
-
-      // Set up definition
-      const func_def: FunctionDefinition = {
-        kind: "function",
-        symbol_id: func_id,
-        name: "greet" as SymbolName,
-        defining_scope_id: FILE_SCOPE_ID,
-        location: MOCK_LOCATION,
-        signature: { parameters: [] },
-        body_scope_id: FUNC_SCOPE_ID,
-        is_exported: false,
-      };
-      definitions.update_file(TEST_FILE, [func_def]);
 
       const result = resolve_names(new Set([TEST_FILE]), context);
 
-      expect(result.resolutions_by_scope.size).toBe(1);
-
-      const file_scope_resolutions = result.resolutions_by_scope.get(FILE_SCOPE_ID);
-      expect(file_scope_resolutions).toBeDefined();
-      expect(file_scope_resolutions!.get("greet" as SymbolName)).toBe(func_id);
+      expect(result.resolutions_by_scope.get(FILE_SCOPE_ID)).toEqual(
+        new Map<SymbolName, SymbolId>([["greet" as SymbolName, func_id]])
+      );
     });
 
-    it("should resolve multiple definitions in same scope", () => {
-      const func_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION as Location);
+    it("resolves multiple definitions in the same scope", () => {
+      const func_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION);
       const func_b = function_symbol("funcB" as SymbolName, {
         ...MOCK_LOCATION,
         start_line: 5,
-      } as Location);
+      });
 
-      const scope_map = new Map<ScopeId, LexicalScope>([
-        [
-          FILE_SCOPE_ID,
-          {
-            id: FILE_SCOPE_ID,
-            type: "global" as const,
-            location: MOCK_LOCATION,
-            parent_id: null,
-            name: null,
-            child_ids: [] as readonly ScopeId[],
-          } as LexicalScope,
-        ],
-      ]);
-      scopes.update_file(TEST_FILE, scope_map);
-
+      scopes.update_file(
+        TEST_FILE,
+        new Map([[FILE_SCOPE_ID, make_scope(FILE_SCOPE_ID, "global", null)]])
+      );
       definitions.update_file(TEST_FILE, [
-        {
-          kind: "function",
-          symbol_id: func_a,
-          name: "funcA" as SymbolName,
-          defining_scope_id: FILE_SCOPE_ID,
-          location: MOCK_LOCATION,
-          signature: { parameters: [] },
-          body_scope_id: "scope:test.ts:funcA:1:0" as ScopeId,
-          is_exported: false,
-        },
-        {
-          kind: "function",
-          symbol_id: func_b,
-          name: "funcB" as SymbolName,
-          defining_scope_id: FILE_SCOPE_ID,
-          location: { ...MOCK_LOCATION, start_line: 5 },
-          signature: { parameters: [] },
-          body_scope_id: "scope:test.ts:funcB:5:0" as ScopeId,
-          is_exported: false,
-        },
+        make_function("funcA", FILE_SCOPE_ID, func_a),
+        make_function("funcB", FILE_SCOPE_ID, func_b),
       ]);
 
       const result = resolve_names(new Set([TEST_FILE]), context);
 
-      const file_scope_resolutions = result.resolutions_by_scope.get(FILE_SCOPE_ID);
-      expect(file_scope_resolutions!.size).toBe(2);
-      expect(file_scope_resolutions!.get("funcA" as SymbolName)).toBe(func_a);
-      expect(file_scope_resolutions!.get("funcB" as SymbolName)).toBe(func_b);
+      expect(result.resolutions_by_scope.get(FILE_SCOPE_ID)).toEqual(
+        new Map<SymbolName, SymbolId>([
+          ["funcA" as SymbolName, func_a],
+          ["funcB" as SymbolName, func_b],
+        ])
+      );
+    });
+
+    it("leaves an undefined name unresolved", () => {
+      const func_id = function_symbol("greet" as SymbolName, MOCK_LOCATION);
+
+      scopes.update_file(
+        TEST_FILE,
+        new Map([[FILE_SCOPE_ID, make_scope(FILE_SCOPE_ID, "global", null)]])
+      );
+      definitions.update_file(TEST_FILE, [
+        make_function("greet", FILE_SCOPE_ID, func_id),
+      ]);
+
+      const result = resolve_names(new Set([TEST_FILE]), context);
+
+      const file_scope = result.resolutions_by_scope.get(FILE_SCOPE_ID)!;
+      expect(file_scope.get("missing" as SymbolName)).toBeUndefined();
     });
   });
 
   describe("Lexical scope inheritance", () => {
-    it("should inherit parent scope resolutions in child scope", () => {
-      const outer_func = function_symbol("outer" as SymbolName, MOCK_LOCATION as Location);
+    it("inherits parent scope resolutions in a child scope", () => {
+      const outer_func = function_symbol("outer" as SymbolName, MOCK_LOCATION);
       const inner_scope_id = "scope:test.ts:inner:2:0" as ScopeId;
 
-      // Set up nested scopes
-      const scope_map = new Map<ScopeId, LexicalScope>([
-        [
-          FILE_SCOPE_ID,
-          {
-            id: FILE_SCOPE_ID,
-            type: "global" as const,
-            location: MOCK_LOCATION,
-            parent_id: null,
-            name: null,
-            child_ids: [inner_scope_id] as readonly ScopeId[],
-          } as LexicalScope,
-        ],
-        [
-          inner_scope_id,
-          {
-            id: inner_scope_id,
-            type: "function" as const,
-            location: { ...MOCK_LOCATION, start_line: 2 },
-            parent_id: FILE_SCOPE_ID,
-            name: "inner" as SymbolName,
-            child_ids: [] as readonly ScopeId[],
-          } as LexicalScope,
-        ],
-      ]);
-      scopes.update_file(TEST_FILE, scope_map);
-
-      // Define outer in file scope
+      scopes.update_file(
+        TEST_FILE,
+        new Map([
+          [FILE_SCOPE_ID, make_scope(FILE_SCOPE_ID, "global", null, [inner_scope_id])],
+          [inner_scope_id, make_scope(inner_scope_id, "function", FILE_SCOPE_ID)],
+        ])
+      );
       definitions.update_file(TEST_FILE, [
-        {
-          kind: "function",
-          symbol_id: outer_func,
-          name: "outer" as SymbolName,
-          defining_scope_id: FILE_SCOPE_ID,
-          location: MOCK_LOCATION,
-          signature: { parameters: [] },
-          body_scope_id: "scope:test.ts:outer:1:0" as ScopeId,
-          is_exported: false,
-        },
+        make_function("outer", FILE_SCOPE_ID, outer_func),
       ]);
 
       const result = resolve_names(new Set([TEST_FILE]), context);
 
-      // Inner scope should inherit outer's resolution
-      const inner_resolutions = result.resolutions_by_scope.get(inner_scope_id);
-      expect(inner_resolutions).toBeDefined();
-      expect(inner_resolutions!.get("outer" as SymbolName)).toBe(outer_func);
+      expect(result.resolutions_by_scope.get(inner_scope_id)).toEqual(
+        new Map<SymbolName, SymbolId>([["outer" as SymbolName, outer_func]])
+      );
     });
 
-    it("should allow child scope to shadow parent definition", () => {
-      const outer_func = function_symbol("func" as SymbolName, MOCK_LOCATION as Location);
+    it("lets a child scope shadow a parent definition", () => {
+      const outer_func = function_symbol("func" as SymbolName, MOCK_LOCATION);
       const inner_func = function_symbol("func" as SymbolName, {
         ...MOCK_LOCATION,
         start_line: 3,
-      } as Location);
+      });
       const inner_scope_id = "scope:test.ts:inner:2:0" as ScopeId;
 
-      const scope_map = new Map<ScopeId, LexicalScope>([
-        [
-          FILE_SCOPE_ID,
-          {
-            id: FILE_SCOPE_ID,
-            type: "global" as const,
-            location: MOCK_LOCATION,
-            parent_id: null,
-            name: null,
-            child_ids: [inner_scope_id] as readonly ScopeId[],
-          } as LexicalScope,
-        ],
-        [
-          inner_scope_id,
-          {
-            id: inner_scope_id,
-            type: "function" as const,
-            location: { ...MOCK_LOCATION, start_line: 2 },
-            parent_id: FILE_SCOPE_ID,
-            name: "inner" as SymbolName,
-            child_ids: [] as readonly ScopeId[],
-          } as LexicalScope,
-        ],
-      ]);
-      scopes.update_file(TEST_FILE, scope_map);
-
+      scopes.update_file(
+        TEST_FILE,
+        new Map([
+          [FILE_SCOPE_ID, make_scope(FILE_SCOPE_ID, "global", null, [inner_scope_id])],
+          [inner_scope_id, make_scope(inner_scope_id, "function", FILE_SCOPE_ID)],
+        ])
+      );
       definitions.update_file(TEST_FILE, [
-        {
-          kind: "function",
-          symbol_id: outer_func,
-          name: "func" as SymbolName,
-          defining_scope_id: FILE_SCOPE_ID,
-          location: MOCK_LOCATION,
-          signature: { parameters: [] },
-          body_scope_id: "scope:test.ts:func:1:0" as ScopeId,
-          is_exported: false,
-        },
-        {
-          kind: "function",
-          symbol_id: inner_func,
-          name: "func" as SymbolName,
-          defining_scope_id: inner_scope_id,
-          location: { ...MOCK_LOCATION, start_line: 3 },
-          signature: { parameters: [] },
-          body_scope_id: "scope:test.ts:func:3:0" as ScopeId,
-          is_exported: false,
-        },
+        make_function("func", FILE_SCOPE_ID, outer_func),
+        make_function("func", inner_scope_id, inner_func),
       ]);
 
       const result = resolve_names(new Set([TEST_FILE]), context);
 
-      // File scope has outer
-      expect(result.resolutions_by_scope.get(FILE_SCOPE_ID)!.get("func" as SymbolName)).toBe(
-        outer_func
-      );
+      expect(
+        result.resolutions_by_scope.get(FILE_SCOPE_ID)!.get("func" as SymbolName)
+      ).toBe(outer_func);
+      expect(
+        result.resolutions_by_scope.get(inner_scope_id)!.get("func" as SymbolName)
+      ).toBe(inner_func);
+    });
+  });
 
-      // Inner scope has inner (shadows outer)
-      expect(result.resolutions_by_scope.get(inner_scope_id)!.get("func" as SymbolName)).toBe(
-        inner_func
+  describe("Import resolution", () => {
+    it("resolves a namespace import to the import's own symbol", () => {
+      const import_id = namespace_symbol("utils" as SymbolName, MOCK_LOCATION);
+
+      scopes.update_file(
+        TEST_FILE,
+        new Map([[FILE_SCOPE_ID, make_scope(FILE_SCOPE_ID, "global", null)]])
+      );
+      const ns_import: ImportDefinition = {
+        kind: "import",
+        symbol_id: import_id,
+        name: "utils" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        import_path: "./utils" as ModulePath,
+        import_kind: "namespace",
+      };
+      imports.update_file(TEST_FILE, [ns_import], "typescript", mock_root_folder);
+
+      const result = resolve_names(new Set([TEST_FILE]), context);
+
+      expect(result.resolutions_by_scope.get(FILE_SCOPE_ID)).toEqual(
+        new Map<SymbolName, SymbolId>([["utils" as SymbolName, import_id]])
+      );
+    });
+
+    it("drops a named import whose export chain and submodule fallback both fail", () => {
+      const import_id = function_symbol("thing" as SymbolName, MOCK_LOCATION);
+
+      scopes.update_file(
+        TEST_FILE,
+        new Map([[FILE_SCOPE_ID, make_scope(FILE_SCOPE_ID, "global", null)]])
+      );
+      const named_import: ImportDefinition = {
+        kind: "import",
+        symbol_id: import_id,
+        name: "thing" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        import_path: "./unresolved" as ModulePath,
+        import_kind: "named",
+      };
+      imports.update_file(TEST_FILE, [named_import], "typescript", mock_root_folder);
+
+      const result = resolve_names(new Set([TEST_FILE]), context);
+
+      expect(result.resolutions_by_scope.get(FILE_SCOPE_ID)).toEqual(
+        new Map<SymbolName, SymbolId>()
       );
     });
   });
 
+  describe("Self-initializer carve-out", () => {
+    it("keeps an inherited binding when a same-named local is its own initializer", () => {
+      const outer_func = function_symbol("has_flatten" as SymbolName, MOCK_LOCATION);
+      const local_var = variable_symbol("has_flatten" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 4,
+      });
+      const inner_scope_id = "scope:test.ts:inner:2:0" as ScopeId;
+
+      scopes.update_file(
+        TEST_FILE,
+        new Map([
+          [FILE_SCOPE_ID, make_scope(FILE_SCOPE_ID, "global", null, [inner_scope_id])],
+          [inner_scope_id, make_scope(inner_scope_id, "function", FILE_SCOPE_ID)],
+        ])
+      );
+      const self_init: VariableDefinition = {
+        kind: "variable",
+        symbol_id: local_var,
+        name: "has_flatten" as SymbolName,
+        defining_scope_id: inner_scope_id,
+        location: { ...MOCK_LOCATION, start_line: 4 },
+        is_exported: false,
+        initialized_from_call: "has_flatten" as SymbolName,
+      };
+      definitions.update_file(TEST_FILE, [
+        make_function("has_flatten", FILE_SCOPE_ID, outer_func),
+        self_init,
+      ]);
+
+      const result = resolve_names(new Set([TEST_FILE]), context);
+
+      expect(
+        result.resolutions_by_scope
+          .get(inner_scope_id)!
+          .get("has_flatten" as SymbolName)
+      ).toBe(outer_func);
+    });
+
+    it("overrides an inherited binding for an ordinary same-named local", () => {
+      const outer_func = function_symbol("value" as SymbolName, MOCK_LOCATION);
+      const local_var = variable_symbol("value" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 4,
+      });
+      const inner_scope_id = "scope:test.ts:inner:2:0" as ScopeId;
+
+      scopes.update_file(
+        TEST_FILE,
+        new Map([
+          [FILE_SCOPE_ID, make_scope(FILE_SCOPE_ID, "global", null, [inner_scope_id])],
+          [inner_scope_id, make_scope(inner_scope_id, "function", FILE_SCOPE_ID)],
+        ])
+      );
+      const ordinary_local: VariableDefinition = {
+        kind: "variable",
+        symbol_id: local_var,
+        name: "value" as SymbolName,
+        defining_scope_id: inner_scope_id,
+        location: { ...MOCK_LOCATION, start_line: 4 },
+        is_exported: false,
+      };
+      definitions.update_file(TEST_FILE, [
+        make_function("value", FILE_SCOPE_ID, outer_func),
+        ordinary_local,
+      ]);
+
+      const result = resolve_names(new Set([TEST_FILE]), context);
+
+      expect(
+        result.resolutions_by_scope.get(inner_scope_id)!.get("value" as SymbolName)
+      ).toBe(local_var);
+    });
+  });
+
+  describe("Function hoisting", () => {
+    it("hoists a function declared in a descendant block into the enclosing scope", () => {
+      const helper_id = function_symbol("helper" as SymbolName, MOCK_LOCATION);
+      const block_scope_id = "scope:test.ts:block:2:0" as ScopeId;
+
+      scopes.update_file(
+        TEST_FILE,
+        new Map([
+          [FILE_SCOPE_ID, make_scope(FILE_SCOPE_ID, "global", null, [block_scope_id])],
+          [block_scope_id, make_scope(block_scope_id, "block", FILE_SCOPE_ID)],
+        ])
+      );
+      definitions.update_file(TEST_FILE, [
+        make_function("helper", block_scope_id, helper_id),
+      ]);
+
+      const result = resolve_names(new Set([TEST_FILE]), context);
+
+      expect(
+        result.resolutions_by_scope.get(FILE_SCOPE_ID)!.get("helper" as SymbolName)
+      ).toBe(helper_id);
+    });
+
+    it("does not hoist a non-function declared in a descendant block", () => {
+      const var_id = variable_symbol("temp" as SymbolName, MOCK_LOCATION);
+      const block_scope_id = "scope:test.ts:block:2:0" as ScopeId;
+
+      scopes.update_file(
+        TEST_FILE,
+        new Map([
+          [FILE_SCOPE_ID, make_scope(FILE_SCOPE_ID, "global", null, [block_scope_id])],
+          [block_scope_id, make_scope(block_scope_id, "block", FILE_SCOPE_ID)],
+        ])
+      );
+      const block_var: VariableDefinition = {
+        kind: "variable",
+        symbol_id: var_id,
+        name: "temp" as SymbolName,
+        defining_scope_id: block_scope_id,
+        location: MOCK_LOCATION,
+        is_exported: false,
+      };
+      definitions.update_file(TEST_FILE, [block_var]);
+
+      const result = resolve_names(new Set([TEST_FILE]), context);
+
+      expect(
+        result.resolutions_by_scope.get(FILE_SCOPE_ID)!.get("temp" as SymbolName)
+      ).toBeUndefined();
+    });
+  });
+
   describe("Multiple files", () => {
-    it("should resolve names across multiple files", () => {
+    it("resolves names across multiple files", () => {
       const file_a = "a.ts" as FilePath;
       const file_b = "b.ts" as FilePath;
       const scope_a = "scope:a.ts:file:0:0" as ScopeId;
@@ -312,13 +425,12 @@ describe("resolve_names", () => {
       const func_a = function_symbol("funcA" as SymbolName, {
         ...MOCK_LOCATION,
         file_path: file_a,
-      } as Location);
+      });
       const func_b = function_symbol("funcB" as SymbolName, {
         ...MOCK_LOCATION,
         file_path: file_b,
-      } as Location);
+      });
 
-      // Update context with both languages
       context = {
         ...context,
         languages: new Map([
@@ -327,128 +439,53 @@ describe("resolve_names", () => {
         ]),
       };
 
-      // Set up scopes for both files
       scopes.update_file(
         file_a,
-        new Map<ScopeId, LexicalScope>([
-          [
-            scope_a,
-            {
-              id: scope_a,
-              type: "global" as const,
-              location: { ...MOCK_LOCATION, file_path: file_a },
-              parent_id: null,
-              name: null,
-              child_ids: [] as readonly ScopeId[],
-            } as LexicalScope,
-          ],
-        ])
+        new Map([[scope_a, make_scope(scope_a, "global", null)]])
       );
       scopes.update_file(
         file_b,
-        new Map<ScopeId, LexicalScope>([
-          [
-            scope_b,
-            {
-              id: scope_b,
-              type: "global" as const,
-              location: { ...MOCK_LOCATION, file_path: file_b },
-              parent_id: null,
-              name: null,
-              child_ids: [] as readonly ScopeId[],
-            } as LexicalScope,
-          ],
-        ])
+        new Map([[scope_b, make_scope(scope_b, "global", null)]])
       );
-
-      // Set up definitions
-      definitions.update_file(file_a, [
-        {
-          kind: "function",
-          symbol_id: func_a,
-          name: "funcA" as SymbolName,
-          defining_scope_id: scope_a,
-          location: { ...MOCK_LOCATION, file_path: file_a },
-          signature: { parameters: [] },
-          body_scope_id: "scope:a.ts:funcA:1:0" as ScopeId,
-          is_exported: false,
-        },
-      ]);
-      definitions.update_file(file_b, [
-        {
-          kind: "function",
-          symbol_id: func_b,
-          name: "funcB" as SymbolName,
-          defining_scope_id: scope_b,
-          location: { ...MOCK_LOCATION, file_path: file_b },
-          signature: { parameters: [] },
-          body_scope_id: "scope:b.ts:funcB:1:0" as ScopeId,
-          is_exported: false,
-        },
-      ]);
+      definitions.update_file(file_a, [make_function("funcA", scope_a, func_a)]);
+      definitions.update_file(file_b, [make_function("funcB", scope_b, func_b)]);
 
       const result = resolve_names(new Set([file_a, file_b]), context);
 
-      expect(result.resolutions_by_scope.size).toBe(2);
-      expect(result.resolutions_by_scope.get(scope_a)!.get("funcA" as SymbolName)).toBe(
-        func_a
+      expect(result.resolutions_by_scope.get(scope_a)).toEqual(
+        new Map<SymbolName, SymbolId>([["funcA" as SymbolName, func_a]])
       );
-      expect(result.resolutions_by_scope.get(scope_b)!.get("funcB" as SymbolName)).toBe(
-        func_b
+      expect(result.resolutions_by_scope.get(scope_b)).toEqual(
+        new Map<SymbolName, SymbolId>([["funcB" as SymbolName, func_b]])
       );
-
       expect(result.scope_to_file.get(scope_a)).toBe(file_a);
       expect(result.scope_to_file.get(scope_b)).toBe(file_b);
     });
   });
 
   describe("scope_to_file tracking", () => {
-    it("should track which file each scope belongs to", () => {
-      const func_id = function_symbol("greet" as SymbolName, MOCK_LOCATION as Location);
+    it("tracks which file each scope belongs to", () => {
+      const func_id = function_symbol("greet" as SymbolName, MOCK_LOCATION);
 
-      const scope_map = new Map<ScopeId, LexicalScope>([
-        [
-          FILE_SCOPE_ID,
-          {
-            id: FILE_SCOPE_ID,
-            type: "global" as const,
-            location: MOCK_LOCATION,
-            parent_id: null,
-            name: null,
-            child_ids: [FUNC_SCOPE_ID] as readonly ScopeId[],
-          } as LexicalScope,
-        ],
-        [
-          FUNC_SCOPE_ID,
-          {
-            id: FUNC_SCOPE_ID,
-            type: "function" as const,
-            location: MOCK_LOCATION,
-            parent_id: FILE_SCOPE_ID,
-            name: "greet" as SymbolName,
-            child_ids: [] as readonly ScopeId[],
-          } as LexicalScope,
-        ],
-      ]);
-      scopes.update_file(TEST_FILE, scope_map);
-
+      scopes.update_file(
+        TEST_FILE,
+        new Map([
+          [FILE_SCOPE_ID, make_scope(FILE_SCOPE_ID, "global", null, [FUNC_SCOPE_ID])],
+          [FUNC_SCOPE_ID, make_scope(FUNC_SCOPE_ID, "function", FILE_SCOPE_ID)],
+        ])
+      );
       definitions.update_file(TEST_FILE, [
-        {
-          kind: "function",
-          symbol_id: func_id,
-          name: "greet" as SymbolName,
-          defining_scope_id: FILE_SCOPE_ID,
-          location: MOCK_LOCATION,
-          signature: { parameters: [] },
-          body_scope_id: FUNC_SCOPE_ID,
-          is_exported: false,
-        },
+        make_function("greet", FILE_SCOPE_ID, func_id),
       ]);
 
       const result = resolve_names(new Set([TEST_FILE]), context);
 
-      expect(result.scope_to_file.get(FILE_SCOPE_ID)).toBe(TEST_FILE);
-      expect(result.scope_to_file.get(FUNC_SCOPE_ID)).toBe(TEST_FILE);
+      expect(result.scope_to_file).toEqual(
+        new Map<ScopeId, FilePath>([
+          [FILE_SCOPE_ID, TEST_FILE],
+          [FUNC_SCOPE_ID, TEST_FILE],
+        ])
+      );
     });
   });
 });
