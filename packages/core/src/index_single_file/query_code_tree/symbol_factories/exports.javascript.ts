@@ -1,41 +1,30 @@
 /**
- * JavaScript/TypeScript Export Analysis
+ * JavaScript/TypeScript export analysis.
  *
- * Functions for analyzing export statements and extracting export metadata.
- * Uses caching to avoid O(n) lookups for each symbol.
+ * Extracts export metadata so definitions carry the correct `is_exported` flag.
+ * A per-file cache turns the repeated per-symbol lookups (one for every
+ * definition in the file) into O(1) map reads instead of re-walking the tree.
  */
 import type { SyntaxNode } from "tree-sitter";
 import type { SymbolName, ExportMetadata } from "@ariadnejs/types";
-
-// ============================================================================
-// Export Cache - Built once per file for O(1) lookups
-// ============================================================================
 
 interface ExportCache {
   named_exports: Map<SymbolName, ExportMetadata>;
   commonjs_exports: Map<SymbolName, ExportMetadata>;
 }
 
-/**
- * Cache for export info, keyed by root node id.
- * This allows O(1) lookups instead of O(n) tree traversals.
- */
 let export_cache: ExportCache | null = null;
 let cached_root_id: number | null = null;
 
-/**
- * Build export cache for a file (called lazily on first lookup)
- */
 function build_export_cache(root: SyntaxNode): ExportCache {
   const named_exports = new Map<SymbolName, ExportMetadata>();
   const commonjs_exports = new Map<SymbolName, ExportMetadata>();
 
-  // Scan all root-level children for export statements
   for (let i = 0; i < root.childCount; i++) {
     const child = root.child(i);
     if (!child) continue;
 
-    // Named exports: export { foo, bar as baz }
+    // export { foo, bar as baz } and its re-export form export { ... } from '...'
     if (child.type === "export_statement") {
       const specifiers = find_export_specifiers(child);
       const is_reexport = child.children.some((c) => c.type === "from");
@@ -49,7 +38,7 @@ function build_export_cache(root: SyntaxNode): ExportCache {
       }
     }
 
-    // CommonJS exports: module.exports = { foo, bar }
+    // CommonJS object assignment: module.exports = { foo, bar: baz }
     if (child.type === "expression_statement") {
       const expr = child.child(0);
       if (expr?.type === "assignment_expression") {
@@ -95,9 +84,6 @@ function build_export_cache(root: SyntaxNode): ExportCache {
   return { named_exports, commonjs_exports };
 }
 
-/**
- * Get or build export cache for the given root node
- */
 function get_export_cache(root: SyntaxNode): ExportCache {
   if (export_cache && cached_root_id === root.id) {
     return export_cache;
@@ -109,16 +95,15 @@ function get_export_cache(root: SyntaxNode): ExportCache {
 }
 
 /**
- * Find all export_specifier nodes in an export_clause
- * Returns array of export_specifier nodes from: export { foo, bar as baz }
+ * Collect the export_specifier nodes from `export { foo, bar as baz }`.
+ * export_clause is a plain child rather than a named field, so it is located
+ * by iterating children instead of via childForFieldName.
  */
-export function find_export_specifiers(export_node: SyntaxNode): SyntaxNode[] {
+function find_export_specifiers(export_node: SyntaxNode): SyntaxNode[] {
   const specifiers: SyntaxNode[] = [];
 
-  // Look for export_clause in children (not as a named field)
   for (const child of export_node.children) {
     if (child.type === "export_clause") {
-      // Find all export_specifier children
       for (const clause_child of child.children) {
         if (clause_child.type === "export_specifier") {
           specifiers.push(clause_child);
@@ -132,21 +117,15 @@ export function find_export_specifiers(export_node: SyntaxNode): SyntaxNode[] {
 }
 
 /**
- * Extract original name and alias from an export_specifier node
- * For "export { foo as bar }":
- *   - Returns { name: "foo", alias: "bar" }
- * For "export { foo }":
- *   - Returns { name: "foo", alias: undefined }
+ * Split an export_specifier into original name and optional alias.
+ * `foo as bar` yields { name: "foo", alias: "bar" }; `foo` yields
+ * { name: "foo", alias: undefined }. The specifier's identifier children are
+ * ordered [original, alias?], so the first is the name and the second the alias.
  */
-export function extract_export_specifier_info(specifier_node: SyntaxNode): {
+function extract_export_specifier_info(specifier_node: SyntaxNode): {
   name: SymbolName;
   alias?: SymbolName;
 } {
-  // export_specifier structure:
-  // - First identifier: original name
-  // - "as" keyword (if present)
-  // - Second identifier: alias (if present)
-
   const identifiers: SyntaxNode[] = [];
   for (const child of specifier_node.children) {
     if (child.type === "identifier") {
@@ -165,39 +144,30 @@ export function extract_export_specifier_info(specifier_node: SyntaxNode): {
   return { name, alias };
 }
 
-/**
- * Check if export statement has 'from' keyword (re-export)
- */
 function has_from_clause(export_node: SyntaxNode): boolean {
   return export_node.children.some((child) => child.type === "from");
 }
 
-/**
- * Check if export statement has 'default' keyword
- */
 function has_default_keyword(export_node: SyntaxNode): boolean {
   return export_node.children.some((child) => child.type === "default");
 }
 
 /**
- * Analyze export statement to extract metadata for a specific symbol
- * @param export_node The export_statement node
- * @param symbol_name The name of the symbol we're checking (e.g., "foo" from "function foo()")
- * @returns Export metadata if this export applies to the symbol
+ * Extract export metadata that an export_statement contributes to `symbol_name`.
+ * Returns undefined when the statement is a plain direct export (`export function
+ * foo`) with no alias, default, or re-export marker, or when the symbol is absent
+ * from an export/re-export list.
  */
 export function analyze_export_statement(
   export_node: SyntaxNode,
   symbol_name?: SymbolName
 ): ExportMetadata | undefined {
-  // Check for export default
   if (has_default_keyword(export_node)) {
     return { is_default: true };
   }
 
-  // Check for re-export: export { x } from './y'
   const is_reexport = has_from_clause(export_node);
   if (is_reexport) {
-    // For re-exports, check if this specific symbol is being re-exported
     if (symbol_name) {
       const specifiers = find_export_specifiers(export_node);
       for (const spec of specifiers) {
@@ -209,39 +179,31 @@ export function analyze_export_statement(
           };
         }
       }
-      // Symbol not found in this re-export
       return undefined;
     }
     return { is_reexport: true };
   }
 
-  // Check for named export with alias: export { foo as bar }
-  // This only applies if we're checking a named export (not direct export)
   const specifiers = find_export_specifiers(export_node);
   if (specifiers.length > 0 && symbol_name) {
-    // Look for this specific symbol in the export specifiers
     for (const spec of specifiers) {
       const info = extract_export_specifier_info(spec);
       if (info.name === symbol_name) {
-        // Found! Return alias if present
         return info.alias ? { export_name: info.alias } : undefined;
       }
     }
-    // Symbol not found in this export statement
     return undefined;
   }
 
-  // Direct export with no special metadata: export function foo() {}
   return undefined;
 }
 
 /**
- * Check if a node is exported and extract export metadata
- * This handles:
- * 1. Direct exports: export function foo() {}
- * 2. Named exports: export { foo, bar as baz }
- * 3. Default exports: export default foo
- * 4. Re-exports: export { x } from './y'
+ * Determine whether a definition node is exported and gather its export metadata.
+ *
+ * Covers direct exports (`export function foo`), export/re-export lists
+ * (`export { foo, bar as baz }`, `export { x } from './y'`), default exports,
+ * and CommonJS `module.exports = { ... }` assignments.
  */
 export function extract_export_info(
   node: SyntaxNode,
@@ -252,9 +214,6 @@ export function extract_export_info(
 } {
   let current: SyntaxNode | null = node;
 
-  // First, check if this is a direct export: export function foo() {}
-  // BUT: Stop if we enter a nested function/arrow function scope
-  // Variables inside nested functions are NOT exported even if the outer const is exported
   while (current) {
     const parent: SyntaxNode | null = current.parent;
 
@@ -266,8 +225,9 @@ export function extract_export_info(
       };
     }
 
-    // Stop walking up if we're at a function body (statement_block inside a function)
-    // This prevents marking variables inside nested functions as exported
+    // A definition nested inside a function is scoped to that function and never
+    // inherits the enclosing statement's export status, so stop at the function
+    // body boundary rather than walking up into an outer export_statement.
     const is_inside_function_body =
       current.type === "statement_block" &&
       parent &&
@@ -279,21 +239,16 @@ export function extract_export_info(
         parent.type === "generator_function");
 
     if (is_inside_function_body) {
-      // We're at a function body boundary - stop here
-      // Variables inside this function should not inherit the outer export status
       break;
     }
 
     current = parent;
   }
 
-  // Second, check if this symbol is exported via named export or CommonJS
-  // Use cached lookups (O(1)) instead of O(n) tree traversals
   if (symbol_name) {
     const root = get_root_node(node);
     const cache = get_export_cache(root);
 
-    // Check named exports cache
     const named_export = cache.named_exports.get(symbol_name);
     if (named_export) {
       return {
@@ -302,7 +257,6 @@ export function extract_export_info(
       };
     }
 
-    // Check CommonJS exports cache
     const commonjs_export = cache.commonjs_exports.get(symbol_name);
     if (commonjs_export) {
       return {
@@ -315,9 +269,6 @@ export function extract_export_info(
   return { is_exported: false };
 }
 
-/**
- * Get the root (program) node
- */
 function get_root_node(node: SyntaxNode): SyntaxNode {
   let current = node;
   while (current.parent) {

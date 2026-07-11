@@ -35,10 +35,7 @@ import {
   extract_jsdoc_param_type,
 } from "./jsdoc_extraction.javascript";
 
-// Re-export export analysis functions
 export {
-  find_export_specifiers,
-  extract_export_specifier_info,
   analyze_export_statement,
   extract_export_info,
 } from "./exports.javascript";
