@@ -1,35 +1,16 @@
 /**
- * Type Alias Metadata Extraction
- *
- * Extracts raw type expressions from type aliases (NOT resolved to SymbolIds).
- * Maps type alias SymbolIds to their type_expression strings.
- *
- * Resolution of type expressions to SymbolIds happens in task 11.109.3 using ScopeResolver.
+ * Extracts the raw type expression of each type alias, keyed by the alias's
+ * SymbolId. The expressions stay as verbatim source strings (`"T | Error"`,
+ * `"User"`); resolution to SymbolIds happens later in the TypeRegistry, which
+ * is the only stage with the cross-file scope to resolve them.
  */
 
 import type { TypeAliasDefinition, SymbolId, SymbolName } from "@ariadnejs/types";
 
 /**
- * Extract type alias metadata from type definitions
- *
- * Extracts type_expression strings from TypeAliasDefinition objects where:
- * - type_expression is defined
- *
- * @param types - Map of type alias definitions from semantic index
- * @returns Map from type alias SymbolId to type_expression string (NOT resolved)
- *
- * @example
- * ```typescript
- * // Input: type UserId = string;
- * // Output: Map { "type:file.ts:1:5:1:11:UserId" => "string" }
- *
- * // Input: type Result<T> = T | Error;
- * // Output: Map { "type:file.ts:1:5:1:11:Result" => "T | Error" }
- * ```
- *
- * @remarks
- * This function extracts raw type expression strings. Resolution to SymbolIds
- * happens using ScopeResolver for scope-aware type resolution.
+ * Aliases whose `type_expression` is undefined — a trait associated type
+ * declaration with no value (`type Item;`) — carry no expression to extract
+ * and are skipped, so they never appear in the result.
  */
 export function extract_type_alias_metadata(
   types: ReadonlyMap<SymbolId, TypeAliasDefinition>
@@ -37,7 +18,6 @@ export function extract_type_alias_metadata(
   const metadata = new Map<SymbolId, SymbolName>();
 
   for (const [type_symbol_id, type_def] of types) {
-    // Only extract if type_expression is defined
     if (type_def.type_expression) {
       metadata.set(type_symbol_id, type_def.type_expression);
     }
