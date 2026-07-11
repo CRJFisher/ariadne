@@ -62,7 +62,7 @@ const MOCK_LOCATION: Location = {
 
 describe("extract_receiver", () => {
   describe("SelfReferenceCall extraction", () => {
-    it("should extract this.method() with no property chain", () => {
+    it("extracts this.method() with no property chain", () => {
       const ref: SelfReferenceCall = {
         kind: "self_reference_call",
         name: "process" as SymbolName,
@@ -82,7 +82,7 @@ describe("extract_receiver", () => {
       });
     });
 
-    it("should extract this.property.method() with property chain", () => {
+    it("extracts this.property.method() with property chain", () => {
       const ref: SelfReferenceCall = {
         kind: "self_reference_call",
         name: "query" as SymbolName,
@@ -102,7 +102,7 @@ describe("extract_receiver", () => {
       });
     });
 
-    it("should extract self.method() for Python", () => {
+    it("extracts self.method() for Python", () => {
       const ref: SelfReferenceCall = {
         kind: "self_reference_call",
         name: "process" as SymbolName,
@@ -122,7 +122,7 @@ describe("extract_receiver", () => {
       });
     });
 
-    it("should extract super.method()", () => {
+    it("extracts super.method()", () => {
       const ref: SelfReferenceCall = {
         kind: "self_reference_call",
         name: "process" as SymbolName,
@@ -142,7 +142,7 @@ describe("extract_receiver", () => {
       });
     });
 
-    it("should extract cls.method() for Python classmethods", () => {
+    it("extracts cls.method() for Python classmethods", () => {
       const ref: SelfReferenceCall = {
         kind: "self_reference_call",
         name: "create" as SymbolName,
@@ -162,7 +162,7 @@ describe("extract_receiver", () => {
       });
     });
 
-    it("should handle deep property chains", () => {
+    it("handles deep property chains", () => {
       const ref: SelfReferenceCall = {
         kind: "self_reference_call",
         name: "execute" as SymbolName,
@@ -188,7 +188,7 @@ describe("extract_receiver", () => {
   });
 
   describe("MethodCallReference extraction", () => {
-    it("should extract obj.method() with identifier base", () => {
+    it("extracts obj.method() with identifier base", () => {
       const ref: MethodCallReference = {
         kind: "method_call",
         name: "process" as SymbolName,
@@ -209,7 +209,7 @@ describe("extract_receiver", () => {
       });
     });
 
-    it("should extract obj.field.method() with property chain", () => {
+    it("extracts obj.field.method() with property chain", () => {
       const ref: MethodCallReference = {
         kind: "method_call",
         name: "query" as SymbolName,
@@ -230,8 +230,8 @@ describe("extract_receiver", () => {
       });
     });
 
-    it("should detect 'this' in method_call and treat as keyword", () => {
-      // This is the critical fix for this.property.method() indexed as method_call
+    it("detects 'this' in method_call and treat as keyword", () => {
+      // this.property.method() is indexed as method_call, yet 'this' is a keyword base.
       const ref: MethodCallReference = {
         kind: "method_call",
         name: "query" as SymbolName,
@@ -252,7 +252,7 @@ describe("extract_receiver", () => {
       });
     });
 
-    it("should detect 'self' in method_call and treat as keyword", () => {
+    it("detects 'self' in method_call and treat as keyword", () => {
       const ref: MethodCallReference = {
         kind: "method_call",
         name: "query" as SymbolName,
@@ -273,7 +273,7 @@ describe("extract_receiver", () => {
       });
     });
 
-    it("should detect 'super' in method_call and treat as keyword", () => {
+    it("detects 'super' in method_call and treat as keyword", () => {
       const ref: MethodCallReference = {
         kind: "method_call",
         name: "query" as SymbolName,
@@ -294,7 +294,7 @@ describe("extract_receiver", () => {
       });
     });
 
-    it("should detect 'cls' in method_call and treat as keyword", () => {
+    it("detects 'cls' in method_call and treat as keyword", () => {
       const ref: MethodCallReference = {
         kind: "method_call",
         name: "create" as SymbolName,
@@ -315,7 +315,7 @@ describe("extract_receiver", () => {
       });
     });
 
-    it("should NOT treat regular identifiers as keywords", () => {
+    it("does not treat regular identifiers as keywords", () => {
       // Variable named 'thisService' should be treated as identifier
       const ref: MethodCallReference = {
         kind: "method_call",
@@ -346,7 +346,7 @@ describe("find_containing_class_scope", () => {
     scopes = new ScopeRegistry();
   });
 
-  it("should find class scope when directly inside class", () => {
+  it("finds class scope when directly inside class", () => {
     const scope_map = new Map();
     scope_map.set(FILE_SCOPE_ID, {
       id: FILE_SCOPE_ID,
@@ -376,7 +376,7 @@ describe("find_containing_class_scope", () => {
     expect(result).toBe(CLASS_SCOPE_ID);
   });
 
-  it("should find class scope from nested block scope", () => {
+  it("finds class scope from nested block scope", () => {
     const scope_map = new Map();
     scope_map.set(FILE_SCOPE_ID, {
       id: FILE_SCOPE_ID,
@@ -413,7 +413,7 @@ describe("find_containing_class_scope", () => {
     expect(result).toBe(CLASS_SCOPE_ID);
   });
 
-  it("should return null when not in a class", () => {
+  it("returns null when not in a class", () => {
     const scope_map = new Map();
     const func_scope_id = "scope:test.ts:standalone:1:0" as ScopeId;
     scope_map.set(FILE_SCOPE_ID, {
@@ -437,7 +437,7 @@ describe("find_containing_class_scope", () => {
     expect(result).toBeNull();
   });
 
-  it("should return null for file scope", () => {
+  it("returns null for file scope", () => {
     const scope_map = new Map();
     scope_map.set(FILE_SCOPE_ID, {
       id: FILE_SCOPE_ID,
@@ -453,7 +453,7 @@ describe("find_containing_class_scope", () => {
     expect(result).toBeNull();
   });
 
-  it("should return null for unknown scope", () => {
+  it("returns null for unknown scope", () => {
     const scope_map = new Map();
     scope_map.set(FILE_SCOPE_ID, {
       id: FILE_SCOPE_ID,
@@ -590,7 +590,7 @@ describe("resolve_receiver_type", () => {
   }
 
   describe("keyword base resolution", () => {
-    it("should resolve this.method() to containing class", () => {
+    it("resolves this.method() to containing class", () => {
       setup_class_scopes();
       setup_class_definitions();
 
@@ -606,7 +606,46 @@ describe("resolve_receiver_type", () => {
       expect(is_ok(result) && result.value).toBe(my_class_id);
     });
 
-    it("should fail with no_enclosing_class_scope for this outside of class", () => {
+    it("resolves super.method() to the parent class", () => {
+      setup_class_scopes();
+      setup_class_definitions();
+
+      const base_class_id = class_symbol("Base", { ...MOCK_LOCATION, start_line: 30 });
+      types["parent_classes"] = new Map([[my_class_id, base_class_id]]);
+
+      const receiver: ReceiverExpression = {
+        base: { type: "keyword", value: "super" },
+        chain: [],
+        method_name: "process" as SymbolName,
+        scope_id: METHOD_SCOPE_ID,
+      };
+
+      const result = resolve_receiver_type(receiver, context);
+
+      expect(is_ok(result) && result.value).toBe(base_class_id);
+    });
+
+    it("fails with no_parent_class for super in a class without a parent", () => {
+      setup_class_scopes();
+      setup_class_definitions();
+
+      const receiver: ReceiverExpression = {
+        base: { type: "keyword", value: "super" },
+        chain: [],
+        method_name: "process" as SymbolName,
+        scope_id: METHOD_SCOPE_ID,
+      };
+
+      const result = resolve_receiver_type(receiver, context);
+
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error.stage).toBe("receiver_resolution");
+        expect(result.error.reason).toBe("no_parent_class");
+      }
+    });
+
+    it("fails with no_enclosing_class_scope for this outside of class", () => {
       // Setup scope without class
       const func_scope_id = "scope:test.ts:standalone:1:0" as ScopeId;
       const scope_map = new Map();
@@ -644,7 +683,7 @@ describe("resolve_receiver_type", () => {
   });
 
   describe("property chain walking", () => {
-    it("should resolve this.property.method() via type annotation", () => {
+    it("resolves this.property.method() via type annotation", () => {
       setup_class_scopes();
       setup_class_definitions();
 
@@ -665,11 +704,11 @@ describe("resolve_receiver_type", () => {
       expect(is_ok(result) && result.value).toBe(database_class_id);
     });
 
-    it("should resolve this.property.method() via TypeRegistry", () => {
+    it("resolves this.property.method() via TypeRegistry", () => {
       setup_class_scopes();
       setup_class_definitions();
 
-      // Set up type via TypeRegistry instead of annotation resolution
+      // Type supplied via the TypeRegistry rather than a resolvable annotation.
       types["symbol_types"] = new Map();
       types["symbol_types"].set(property_id, database_class_id);
 
@@ -685,7 +724,35 @@ describe("resolve_receiver_type", () => {
       expect(is_ok(result) && result.value).toBe(database_class_id);
     });
 
-    it("should fail with method_not_on_type if property not found", () => {
+    it("resolves a multi-segment chain across successive member types", () => {
+      setup_class_scopes();
+      setup_class_definitions();
+
+      const middle_class_id = class_symbol("Middle", { ...MOCK_LOCATION, start_line: 15 });
+      const inner_prop_id = property_symbol("inner", { ...MOCK_LOCATION, start_line: 16 });
+
+      // this.db.inner.query(): db is a Middle, and Middle.inner is a Database.
+      types["symbol_types"] = new Map([
+        [property_id, middle_class_id],
+        [inner_prop_id, database_class_id],
+      ]);
+      types["resolved_type_members"] = new Map([
+        [middle_class_id, new Map([[("inner" as SymbolName), inner_prop_id]])],
+      ]);
+
+      const receiver: ReceiverExpression = {
+        base: { type: "keyword", value: "this" },
+        chain: ["db" as SymbolName, "inner" as SymbolName],
+        method_name: "query" as SymbolName,
+        scope_id: METHOD_SCOPE_ID,
+      };
+
+      const result = resolve_receiver_type(receiver, context);
+
+      expect(is_ok(result) && result.value).toBe(database_class_id);
+    });
+
+    it("fails with method_not_on_type if property not found", () => {
       setup_class_scopes();
       setup_class_definitions();
 
@@ -704,7 +771,7 @@ describe("resolve_receiver_type", () => {
       }
     });
 
-    it("should fail with class_definition_not_found if property type cannot be resolved", () => {
+    it("fails with class_definition_not_found if property type cannot be resolved", () => {
       setup_class_scopes();
 
       // Create property without type annotation and no TypeRegistry entry
@@ -762,7 +829,7 @@ describe("resolve_receiver_type", () => {
   });
 
   describe("identifier base resolution", () => {
-    it("should resolve obj.method() via scope resolution and type lookup", () => {
+    it("resolves obj.method() via scope resolution and type lookup", () => {
       const var_id = "variable:test.ts:5:15:5:18:obj" as SymbolId;
 
       // Setup scope with variable
@@ -822,7 +889,50 @@ describe("resolve_receiver_type", () => {
       expect(is_ok(result) && result.value).toBe(my_class_id);
     });
 
-    it("should fail with name_not_in_scope if identifier cannot be resolved", () => {
+    it("resolves a type name receiver to the type itself for static calls", () => {
+      const scope_map = new Map();
+      scope_map.set(FILE_SCOPE_ID, {
+        id: FILE_SCOPE_ID,
+        type: "file",
+        location: { file_path: TEST_FILE, start_line: 0, start_column: 0, end_line: 100, end_column: 0 },
+        parent_id: null,
+        child_ids: [],
+      });
+      scopes.update_file(TEST_FILE, scope_map);
+
+      definitions.update_file(TEST_FILE, [
+        {
+          kind: "class",
+          symbol_id: my_class_id,
+          name: "MyClass" as SymbolName,
+          defining_scope_id: FILE_SCOPE_ID,
+          location: { ...MOCK_LOCATION, start_line: 1 },
+          is_exported: false,
+          extends: [],
+          methods: [],
+          properties: [],
+          decorators: [],
+          constructors: [],
+        },
+      ]);
+
+      const scope_resolutions = new Map<SymbolName, SymbolId>();
+      scope_resolutions.set("MyClass" as SymbolName, my_class_id);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
+
+      const receiver: ReceiverExpression = {
+        base: { type: "identifier", value: "MyClass" as SymbolName },
+        chain: [],
+        method_name: "create" as SymbolName,
+        scope_id: FILE_SCOPE_ID,
+      };
+
+      const result = resolve_receiver_type(receiver, context);
+
+      expect(is_ok(result) && result.value).toBe(my_class_id);
+    });
+
+    it("fails with name_not_in_scope if identifier cannot be resolved", () => {
       const scope_map = new Map();
       scope_map.set(FILE_SCOPE_ID, {
         id: FILE_SCOPE_ID,
@@ -848,7 +958,7 @@ describe("resolve_receiver_type", () => {
       }
     });
 
-    it("should fail with receiver_type_unknown when identifier has no inferable type", () => {
+    it("fails with receiver_type_unknown when identifier has no inferable type", () => {
       // A bare variable with no type annotation, no TypeRegistry entry, and not a type def
       const var_id = "variable:test.ts:5:0:5:8:untyped" as SymbolId;
       const scope_map = new Map();
@@ -892,7 +1002,7 @@ describe("resolve_receiver_type", () => {
       }
     });
 
-    it("should fail with member_type_unknown when chained property has no resolvable type", () => {
+    it("fails with member_type_unknown when chained property has no resolvable type", () => {
       setup_class_scopes();
 
       // Property exists but has no type annotation and no TypeRegistry entry.
