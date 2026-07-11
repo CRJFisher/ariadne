@@ -1,5 +1,5 @@
 import { readFileSync, existsSync } from "fs";
-import { join, dirname } from "path";
+import { join } from "path";
 import type { Language } from "@ariadnejs/types";
 import JavaScript from "tree-sitter-javascript";
 import Python from "tree-sitter-python";
@@ -7,10 +7,8 @@ import Rust from "tree-sitter-rust";
 import TypeScript from "tree-sitter-typescript";
 import { Query } from "tree-sitter";
 
-/**
- * Language to tree-sitter parser mapping
- * NOTE: TypeScript uses .typescript grammar (not .tsx) for compatibility with both .ts and .tsx files
- */
+// TypeScript maps to the `.typescript` grammar rather than `.tsx` so a single
+// query works for both `.ts` and `.tsx` sources.
 export const LANGUAGE_TO_TREESITTER_LANG = new Map([
   ["javascript", JavaScript],
   ["typescript", TypeScript.typescript],
@@ -18,9 +16,6 @@ export const LANGUAGE_TO_TREESITTER_LANG = new Map([
   ["rust", Rust],
 ]);
 
-/**
- * Supported languages (derived from the Language type)
- */
 export const SUPPORTED_LANGUAGES: readonly Language[] = [
   "javascript",
   "typescript",
@@ -28,99 +23,38 @@ export const SUPPORTED_LANGUAGES: readonly Language[] = [
   "rust",
 ] as const;
 
-/**
- * Query cache for performance
- * Exported for testing purposes only
- */
+// Exported so tests can reset process-wide memoization between cases.
 export const query_cache = new Map<Language, string>();
-
-/**
- * Cache for the queries directory path (computed once per process)
- * Exported as object for testing purposes only
- */
 export const cached_queries_dir_cache = { value: null as string | null };
 
-/**
- * Get the queries directory path (robust across different environments)
- */
+// The `.scm` files ship alongside this module in both `src` (dev/test) and
+// `dist` (published), so they always resolve relative to this file.
 export function get_queries_dir(): string {
-  // Return cached result if available
   if (cached_queries_dir_cache.value !== null) {
     return cached_queries_dir_cache.value;
   }
 
-  // Strategy: Try multiple approaches to find the queries directory
-  // This handles development, CI, production, and bundled environments
-
-  const possible_paths = [
-    // 1. Standard CommonJS approach (works in most cases)
-    join(dirname(__filename), "queries"),
-
-    // 2. From package root (for cases where __filename is in a different structure)
-    join(__dirname, "queries"),
-
-    // 3. Relative to current working directory (fallback for some CI environments)
-    join(
-      process.cwd(),
-      "packages",
-      "core",
-      "dist",
-      "semantic_index",
-      "queries"
-    ),
-    join(process.cwd(), "packages", "core", "src", "semantic_index", "queries"),
-    join(process.cwd(), "dist", "semantic_index", "queries"),
-    join(process.cwd(), "src", "semantic_index", "queries"),
-
-    // 4. For bundled environments or when installed as a package
-    join(
-      process.cwd(),
-      "node_modules",
-      "@ariadnejs",
-      "core",
-      "dist",
-      "semantic_index",
-      "queries"
-    ),
-  ];
-
-  // Try each path until we find one that exists
-  for (const path of possible_paths) {
-    if (existsSync(path)) {
-      cached_queries_dir_cache.value = path;
-      return path;
-    }
+  const queries_dir = join(__dirname, "queries");
+  if (existsSync(queries_dir)) {
+    cached_queries_dir_cache.value = queries_dir;
+    return queries_dir;
   }
-
-  // If all else fails, provide detailed error information for debugging
-  const error_details = possible_paths
-    .map(
-      (path, index) => `  ${index + 1}. ${path} (exists: ${existsSync(path)})`
-    )
-    .join("\n");
 
   const environment_info = {
     node_env: process.env.NODE_ENV,
     cwd: process.cwd(),
-    filename: __filename,
     dirname: __dirname,
-    argv0: process.argv[0],
-    argv1: process.argv[1],
     platform: process.platform,
     arch: process.arch,
   };
 
   throw new Error(
-    `Unable to locate queries directory. Tried the following paths:\n${error_details}\n\n` +
+    `Unable to locate queries directory at '${queries_dir}'.\n\n` +
       `Environment information:\n${JSON.stringify(environment_info, null, 2)}`
   );
 }
 
-/**
- * Validate that a language is supported
- */
 function validate_language(language: Language): void {
-  // Check for null/undefined/empty inputs
   if (language == null || (language as string) === "") {
     throw new Error(
       `Invalid language: ${language}. Language cannot be null, undefined, or empty.`
@@ -142,16 +76,14 @@ function validate_language(language: Language): void {
   }
 }
 
-/**
- * Validate query syntax by attempting to parse it
- */
+// Compiling the query surfaces `.scm` syntax errors at load time with the
+// offending language named, rather than deep inside pass-1 execution.
 function validate_query_syntax(query_string: string, language: Language): void {
   try {
     const parser = LANGUAGE_TO_TREESITTER_LANG.get(language);
     if (!parser) {
       throw new Error(`No parser available for ${language}`);
     }
-    // Attempt to create the query to validate syntax
     new Query(parser, query_string);
   } catch (error) {
     throw new Error(
@@ -162,17 +94,12 @@ function validate_query_syntax(query_string: string, language: Language): void {
   }
 }
 
-/**
- * Load a tree-sitter query for a specific language
- */
 export function load_query(language: Language): string {
-  // Check cache first
   const cached = query_cache.get(language);
   if (cached !== undefined) {
     return cached;
   }
 
-  // Validate language support
   validate_language(language);
 
   const queries_dir = get_queries_dir();
@@ -180,29 +107,20 @@ export function load_query(language: Language): string {
 
   try {
     const query_string = readFileSync(query_path, "utf-8");
-
-    // Validate query syntax
     validate_query_syntax(query_string, language);
-
-    // Cache the result
     query_cache.set(language, query_string);
-
     return query_string;
   } catch (error) {
     if (
       error instanceof Error &&
       error.message.includes("Invalid query syntax")
     ) {
-      // Re-throw validation errors as-is
       throw error;
     }
 
-    // File system errors
     const error_msg = error instanceof Error ? error.message : String(error);
     throw new Error(
       `Failed to load semantic index query for language '${language}' from '${query_path}': ${error_msg}`
     );
   }
 }
-
-
