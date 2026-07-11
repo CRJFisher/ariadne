@@ -1,16 +1,10 @@
 /**
- * Function Call Resolution
+ * Resolves bare function calls (no receiver) to their target definitions.
  *
- * Resolves bare function calls (no receiver) by:
- * 1. Resolving the function name via scope-based resolution
- * 2. Skipping method/constructor definitions (they require receivers)
- * 3. Falling back to collection dispatch and callable instance patterns
- *
- * Integration points:
- * - Uses ResolutionRegistry for EAGER O(1) name resolution
- * - Uses DefinitionRegistry for definition kind checks
- * - Uses collection dispatch for Map/Array/Object function stores
- * - Uses callable instance for Python __call__ method resolution
+ * A path-qualified call (`worker::create`) binds through its qualifier first,
+ * honouring the author's path over a same-name local. A bare call resolves by
+ * name, skips method/constructor definitions (they require a receiver), then
+ * falls back to collection dispatch and the Python callable-instance protocol.
  */
 
 import type {
@@ -187,17 +181,15 @@ function find_function_resolution(
     });
   }
 
-  // Check if resolution is valid for a function call
   const def = context.definitions.get(initial);
   if (!def) return ok(initial); // Trust unresolved symbols
 
   // Methods and constructors require receivers - can't be called as bare functions
   if (def.kind !== "method" && def.kind !== "constructor") {
-    return ok(initial); // Valid: function, variable, import
+    return ok(initial);
   }
 
-  // Resolved to method/constructor - this can't be the target of a bare function call
-  // Find alternative by walking up from the class scope
+  // Find an alternative by walking up from the class scope to where imports live.
   const method_body_scope = def.body_scope_id;
   if (!method_body_scope) {
     return err({
@@ -219,7 +211,6 @@ function find_function_resolution(
     });
   }
 
-  // Class scope's parent should be module scope with imports
   const class_scope = context.scopes.get_scope(body_scope.parent_id);
   if (!class_scope?.parent_id) {
     return err({
@@ -232,7 +223,6 @@ function find_function_resolution(
     });
   }
 
-  // Try resolving from module scope (where imports live)
   const alternative = resolver.resolve(class_scope.parent_id, ref.name);
   if (!alternative) {
     return err({
@@ -242,7 +232,6 @@ function find_function_resolution(
     });
   }
 
-  // Verify the alternative is valid for a function call
   const alt_def = context.definitions.get(alternative);
   if (!alt_def) return ok(alternative);
 
