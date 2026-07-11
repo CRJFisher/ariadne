@@ -1,45 +1,20 @@
-/**
- * Base classes and interfaces for scope boundary extraction.
- * This file contains the shared interfaces and base classes without any dependencies
- * on the specific language extractors to avoid circular imports.
- */
+// Kept free of imports from the language extractors so those can extend this
+// base without a circular dependency.
 
 import type { FilePath, Location, ScopeType } from "@ariadnejs/types";
 import type Parser from "tree-sitter";
 import { node_to_location } from "../node_to_location";
 
-/**
- * Extracted boundary information for a scope-creating construct.
- *
- * The symbol_location belongs to the parent scope (where the name is declared).
- * The scope_location defines the new child scope being created.
- */
 export interface ScopeBoundaries {
-  // Where the symbol name is declared (e.g., class name, function name)
-  // This location belongs to the PARENT scope
+  // The name declaration belongs to the parent scope, not the scope it opens.
   symbol_location: Location;
-
-  // Where the scope that symbol creates begins and ends
-  // This location defines the NEW CHILD scope
+  // The child scope the construct creates.
   scope_location: Location;
 }
 
-/**
- * Language-specific extractor for scope boundaries.
- *
- * Different tree-sitter grammars report node positions differently.
- * This interface provides a semantic transformation from raw tree-sitter
- * positions to our scope boundary model.
- */
+// tree-sitter grammars report node positions differently per language; an
+// extractor maps those raw positions onto the semantic scope-boundary model.
 export interface ScopeBoundaryExtractor {
-  /**
-   * Extract semantic scope boundaries from a tree-sitter node.
-   *
-   * @param node - Tree-sitter node captured as a scope
-   * @param scope_type - Type of scope being created
-   * @param file_path - File path for location construction
-   * @returns Symbol location (for parent scope) and scope location (for new scope)
-   */
   extract_boundaries(
     node: Parser.SyntaxNode,
     scope_type: ScopeType,
@@ -47,22 +22,8 @@ export interface ScopeBoundaryExtractor {
   ): ScopeBoundaries;
 }
 
-/**
- * Common scope boundary extraction logic.
- *
- * This class provides default implementations that work for TypeScript,
- * JavaScript, Rust, and most other languages. Language-specific extractors
- * only need to override methods for special cases.
- *
- * Common patterns:
- * - Class scope = `body` field node (works for TS, JS, Rust)
- * - Function scope = parameters to end (works for most)
- * - Block scope = entire node (works for all)
- *
- * Special cases requiring overrides:
- * - Python: class body needs colon finding (body field is wrong position)
- * - TS/JS: named function expressions need special handling
- */
+// Default extraction covering the shape shared by TypeScript, JavaScript, and
+// Rust. Language extractors override only the methods whose grammar diverges.
 export class CommonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
 
   extract_boundaries(
@@ -87,10 +48,6 @@ export class CommonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
     }
   }
 
-  /**
-   * Default module/namespace boundary extraction.
-   * Uses the body field if present, otherwise falls back to the entire node.
-   */
   protected extract_module_boundaries(
     node: Parser.SyntaxNode,
     file_path: FilePath
@@ -109,15 +66,6 @@ export class CommonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
     return { symbol_location, scope_location };
   }
 
-  /**
-   * Default class boundary extraction.
-   *
-   * Uses the `body` field directly - works for most languages where
-   * tree-sitter reports the body position correctly.
-   *
-   * Works for: TypeScript, JavaScript, Rust
-   * Override for: Python (body starts at first child, not at delimiter)
-   */
   protected extract_class_boundaries(
     node: Parser.SyntaxNode,
     file_path: FilePath
@@ -138,15 +86,8 @@ export class CommonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
     };
   }
 
-  /**
-   * Default function boundary extraction.
-   *
-   * Scope starts at parameters node (excludes function name from scope).
-   * This works for most languages.
-   *
-   * Works for: Python, Rust, most function declarations
-   * Override for: JS/TS named function expressions (special case)
-   */
+  // Scope opens at the parameter list so the function's own name stays in the
+  // parent scope rather than the scope it creates.
   protected extract_function_boundaries(
     node: Parser.SyntaxNode,
     file_path: FilePath
@@ -173,10 +114,6 @@ export class CommonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
     };
   }
 
-  /**
-   * Default constructor boundary extraction.
-   * Same as function boundaries for most languages.
-   */
   protected extract_constructor_boundaries(
     node: Parser.SyntaxNode,
     file_path: FilePath
@@ -184,11 +121,7 @@ export class CommonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
     return this.extract_function_boundaries(node, file_path);
   }
 
-  /**
-   * Default block boundary extraction.
-   * The entire node is the scope (no separate name).
-   * This works for ALL languages.
-   */
+  // A block has no name, so the whole node serves as both symbol and scope.
   protected extract_block_boundaries(
     node: Parser.SyntaxNode,
     file_path: FilePath
