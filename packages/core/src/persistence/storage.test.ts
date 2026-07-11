@@ -159,4 +159,65 @@ describe("FileSystemStorage - specific behavior", () => {
       "data",
     );
   });
+
+  it("persists data across storage instances at the same directory", async () => {
+    await storage.write_manifest("manifest_data");
+    await storage.write_index("/src/test.ts", "index_data");
+
+    const reopened = new FileSystemStorage(temp_dir);
+    expect(await reopened.read_manifest()).toEqual("manifest_data");
+    expect(await reopened.read_index("/src/test.ts")).toEqual("index_data");
+  });
+
+  it("maps a source path to the same cache file on every write", async () => {
+    await storage.write_index("/src/test.ts", "v1");
+    await storage.write_index("/src/test.ts", "v2");
+    const entries = await fs.readdir(path.join(temp_dir, "indexes"));
+    expect(entries).toEqual(entries.filter((e) => e.endsWith(".json")));
+    expect(entries.length).toEqual(1);
+  });
+
+  it("leaves no temporary files after successful writes", async () => {
+    await storage.write_manifest("manifest_data");
+    await storage.write_index("/src/test.ts", "index_data");
+
+    const root_entries = await fs.readdir(temp_dir);
+    const index_entries = await fs.readdir(path.join(temp_dir, "indexes"));
+    const all = [...root_entries, ...index_entries];
+    expect(all.filter((e) => e.endsWith(".tmp"))).toEqual([]);
+  });
+
+  it("cleans up the temp file and rethrows when rename fails", async () => {
+    const cache_path = path.join(
+      temp_dir,
+      "indexes",
+      await index_filename_for("/src/collide.ts"),
+    );
+    await fs.mkdir(cache_path, { recursive: true });
+
+    await expect(
+      storage.write_index("/src/collide.ts", "data"),
+    ).rejects.toThrow();
+
+    const index_entries = await fs.readdir(path.join(temp_dir, "indexes"));
+    expect(index_entries.filter((e) => e.endsWith(".tmp"))).toEqual([]);
+  });
 });
+
+/**
+ * Recover the cache filename a FileSystemStorage assigns to a source path by
+ * writing once to a throwaway directory and reading back the created entry.
+ */
+async function index_filename_for(source_path: string): Promise<string> {
+  const probe_dir = await fs.mkdtemp(
+    path.join(os.tmpdir(), "ariadne-probe-"),
+  );
+  try {
+    const probe = new FileSystemStorage(probe_dir);
+    await probe.write_index(source_path, "probe");
+    const entries = await fs.readdir(path.join(probe_dir, "indexes"));
+    return entries[0];
+  } finally {
+    await fs.rm(probe_dir, { recursive: true, force: true });
+  }
+}

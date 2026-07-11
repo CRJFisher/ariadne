@@ -6,10 +6,8 @@ import type { PersistenceStorage } from "./storage";
 const MANIFEST_FILENAME = "manifest.json";
 const INDEXES_DIR = "indexes";
 
-/**
- * Map a source file path to a deterministic cache filename.
- * Uses SHA-256 hash of the path, truncated to 32 hex chars.
- */
+// Source paths contain separators and can exceed filename length limits, so
+// hash them to a fixed-length, filesystem-safe name.
 function source_path_to_cache_filename(source_path: string): string {
   const hash = createHash("sha256")
     .update(source_path)
@@ -18,10 +16,6 @@ function source_path_to_cache_filename(source_path: string): string {
   return `${hash}.json`;
 }
 
-/**
- * Filesystem-backed persistence storage.
- * Writes to a configurable cache directory using atomic write-to-temp-then-rename.
- */
 export class FileSystemStorage implements PersistenceStorage {
   private readonly cache_dir: string;
   private readonly indexes_dir: string;
@@ -67,14 +61,13 @@ export class FileSystemStorage implements PersistenceStorage {
     try {
       await rm(this.cache_dir, { recursive: true, force: true });
     } catch {
-      // Directory may not exist
+      // Clearing the cache is best-effort; removal failures are not errors.
     }
   }
 
-  /**
-   * Write atomically: write to a temp file in the same directory, then rename.
-   * rename() is atomic on POSIX when source and target are on the same filesystem.
-   */
+  // rename() is atomic on POSIX when source and target share a filesystem, so a
+  // reader never observes a partially written file. The temp file lives in the
+  // target directory to keep it on the same filesystem as the rename target.
   private async atomic_write(
     target_path: string,
     data: string,
