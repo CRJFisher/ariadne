@@ -2,8 +2,9 @@ import type { SyntaxNode } from "tree-sitter";
 import type { CallbackContext, FilePath } from "@ariadnejs/types";
 
 /**
- * Detect if a closure is passed as a callback argument.
- * Walks up the AST to find if the closure is inside function call arguments.
+ * Determine whether a closure is passed as an argument to a function call.
+ * The walk is bounded to MAX_DEPTH ancestors so a closure buried deep inside
+ * unrelated expressions is not misattributed to a distant enclosing call.
  */
 export function detect_callback_context(
   node: SyntaxNode,
@@ -14,10 +15,8 @@ export function detect_callback_context(
   const MAX_DEPTH = 5;
 
   while (current && depth < MAX_DEPTH) {
-    // Rust uses 'arguments' for function call arguments
     if (current.type === "arguments") {
       const call_node = current.parent;
-      // Rust uses 'call_expression' for function calls
       if (call_node && call_node.type === "call_expression") {
         return {
           is_callback: true,
