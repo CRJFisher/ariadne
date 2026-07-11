@@ -1,12 +1,3 @@
-/**
- * Tests for trace_call_graph
- *
- * Verifies that:
- * - Callable definitions (functions, methods with bodies) become call graph nodes
- * - Interface method signatures (no body_scope_id) are excluded from entry points
- * - Entry points are correctly detected as functions with no callers
- */
-
 import { describe, it, expect, beforeEach } from "vitest";
 import { trace_call_graph } from "./trace_call_graph";
 import { DefinitionRegistry } from "../resolve_references/registries/definition";
@@ -39,12 +30,8 @@ describe("trace_call_graph", () => {
     resolutions = new ResolutionRegistry();
   });
 
-  it("should be a function", () => {
-    expect(typeof trace_call_graph).toBe("function");
-  });
-
   describe("interface method filtering", () => {
-    it("should exclude interface method signatures from call graph nodes", () => {
+    it("excludes interface method signatures from call graph nodes", () => {
       // Create an interface with method signatures (no body_scope_id)
       const interface_id = interface_symbol("MyInterface" as SymbolName, {
         file_path: file1,
@@ -110,7 +97,7 @@ describe("trace_call_graph", () => {
       expect(call_graph.entry_points.length).toBe(0);
     });
 
-    it("should include class methods with body_scope_id as entry points", () => {
+    it("includes class methods with a body scope as entry points", () => {
       const class_id = class_symbol("MyClass" as SymbolName, {
         file_path: file1,
         start_line: 1,
@@ -178,7 +165,7 @@ describe("trace_call_graph", () => {
       expect(call_graph.entry_points.length).toBe(1);
     });
 
-    it("should include functions as entry points when not called", () => {
+    it("includes uncalled functions as entry points", () => {
       const func_id = function_symbol("myFunction" as SymbolName, {
         file_path: file1,
         start_line: 1,
@@ -217,7 +204,7 @@ describe("trace_call_graph", () => {
       expect(call_graph.entry_points).toContain(func_id);
     });
 
-    it("should correctly distinguish interface methods from class methods", () => {
+    it("distinguishes interface methods from class methods", () => {
       // Interface with method signature (no body)
       const interface_id = interface_symbol("Processor" as SymbolName, {
         file_path: file1,
@@ -442,6 +429,91 @@ describe("trace_call_graph", () => {
     });
   });
 
+  describe("test-file suppression", () => {
+    const test_file = "widget.test.ts" as FilePath;
+    const test_scope = `scope:${test_file}:module` as ScopeId;
+
+    function test_file_function(): FunctionDefinition {
+      const location = {
+        file_path: test_file,
+        start_line: 1,
+        start_column: 0,
+        end_line: 3,
+        end_column: 1,
+      };
+      return {
+        kind: "function",
+        symbol_id: function_symbol("renders_widget" as SymbolName, location),
+        name: "renders_widget" as SymbolName,
+        defining_scope_id: test_scope,
+        location,
+        is_exported: false,
+        signature: { parameters: [] },
+        body_scope_id:
+          `scope:${test_file}:function:renders_widget:1:0` as ScopeId,
+      };
+    }
+
+    it("marks callables in test files with is_test true", () => {
+      const def = test_file_function();
+      definitions.update_file(test_file, [def]);
+
+      const call_graph = trace_call_graph(definitions, resolutions);
+
+      expect(call_graph.nodes.get(def.symbol_id)?.is_test).toBe(true);
+    });
+
+    it("marks callables in source files with is_test false", () => {
+      const src_file = "widget.ts" as FilePath;
+      const location = {
+        file_path: src_file,
+        start_line: 1,
+        start_column: 0,
+        end_line: 3,
+        end_column: 1,
+      };
+      const def: FunctionDefinition = {
+        kind: "function",
+        symbol_id: function_symbol("render_widget" as SymbolName, location),
+        name: "render_widget" as SymbolName,
+        defining_scope_id: `scope:${src_file}:module` as ScopeId,
+        location,
+        is_exported: true,
+        signature: { parameters: [] },
+        body_scope_id:
+          `scope:${src_file}:function:render_widget:1:0` as ScopeId,
+      };
+      definitions.update_file(src_file, [def]);
+
+      const call_graph = trace_call_graph(definitions, resolutions);
+
+      expect(call_graph.nodes.get(def.symbol_id)?.is_test).toBe(false);
+    });
+
+    it("excludes test-file callables from entry points by default", () => {
+      const def = test_file_function();
+      definitions.update_file(test_file, [def]);
+
+      const call_graph = trace_call_graph(definitions, resolutions);
+
+      expect(call_graph.nodes.has(def.symbol_id)).toBe(true);
+      expect(call_graph.entry_points).not.toContain(def.symbol_id);
+      expect(call_graph.entry_points.length).toBe(0);
+    });
+
+    it("includes test-file callables as entry points when include_tests is set", () => {
+      const def = test_file_function();
+      definitions.update_file(test_file, [def]);
+
+      const call_graph = trace_call_graph(definitions, resolutions, {
+        include_tests: true,
+      });
+
+      expect(call_graph.entry_points).toContain(def.symbol_id);
+      expect(call_graph.entry_points.length).toBe(1);
+    });
+  });
+
   describe("Python dunder methods (raw trace_call_graph; classification happens in enrich_call_graph)", () => {
     const python_file = "test.py" as FilePath;
     const python_scope = `scope:${python_file}:module` as ScopeId;
@@ -506,9 +578,9 @@ describe("trace_call_graph", () => {
       // __str__ should be in nodes (it has a body)
       expect(call_graph.nodes.has(str_method_id)).toBe(true);
 
-      // After 190.17.6 the dunder filter is enforced by enrich_call_graph
-      // (via the py-dunder-protocol permanent registry rule), not by
-      // trace_call_graph. The raw call graph surfaces all uncalled callables.
+      // The dunder filter is enforced by enrich_call_graph (via the
+      // py-dunder-protocol permanent registry rule), not by trace_call_graph;
+      // the raw call graph surfaces all uncalled callables.
       expect(call_graph.entry_points).toContain(str_method_id);
       expect(call_graph.entry_points.length).toBe(1);
     });
@@ -751,9 +823,9 @@ describe("trace_call_graph", () => {
       expect(call_graph.nodes.has(eq_method_id)).toBe(true);
       expect(call_graph.nodes.has(process_method_id)).toBe(true);
 
-      // After 190.17.6 trace_call_graph returns all uncalled callables; the
-      // dunder filter is applied later by enrich_call_graph against the
-      // py-dunder-protocol permanent registry rule.
+      // trace_call_graph returns all uncalled callables; the dunder filter is
+      // applied later by enrich_call_graph against the py-dunder-protocol
+      // permanent registry rule.
       expect(call_graph.entry_points).toContain(repr_method_id);
       expect(call_graph.entry_points).toContain(eq_method_id);
       expect(call_graph.entry_points).toContain(process_method_id);

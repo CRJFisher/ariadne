@@ -16,9 +16,6 @@ export type { TraceCallGraphOptions };
 
 const ANONYMOUS_SYMBOL_NAME = create_symbol_name("<anonymous>");
 
-/**
- * Detect language from file extension
- */
 function detect_language(file_path: FilePath): Language {
   const ext = file_path.split(".").pop()?.toLowerCase();
   switch (ext) {
@@ -33,23 +30,10 @@ function detect_language(file_path: FilePath): Language {
     case "rs":
       return "rust" as Language;
     default:
-      return "typescript" as Language; // Default for unknown
+      return "typescript" as Language;
   }
 }
 
-/**
- * Build function nodes with their enclosed calls.
- *
- * Each node contains:
- * - symbol_id: The function/method identifier
- * - enclosed_calls: All calls made from this function's body
- *   - Each CallReference has resolutions array with all possible targets
- *   - Multi-candidate calls have multiple resolutions (polymorphic, collection, etc.)
- *
- * @param definitions - Definition registry containing all callable definitions
- * @param resolutions - Resolution registry with resolved call references
- * @returns Map of symbol_id to CallableNode
- */
 function build_function_nodes(
   definitions: DefinitionRegistry,
   resolutions: ResolutionRegistry
@@ -58,29 +42,26 @@ function build_function_nodes(
 
   const callable_defs = definitions.get_callable_definitions();
 
-  // For each function definition
   for (const func_def of callable_defs) {
-    // Get body scope ID (only methods can have undefined body_scope_id for interface methods)
+    // Interface method signatures have no body scope: no enclosed calls and
+    // never dead code, so they are not call graph nodes.
     const body_scope_id = func_def.body_scope_id;
-
-    // Skip if no body scope (e.g., interface methods)
     if (!body_scope_id) {
       continue;
     }
 
-    // Get calls made from this function's body scope
     const enclosed_calls = resolutions.get_calls_by_caller_scope(body_scope_id);
 
-    // Determine if this function is invoked only by a test/benchmark runner —
-    // either by living in a test file, or by a definition-level runner
-    // convention (Rust `#[test]`/`#[cfg(test)]`, ASV benchmark methods).
+    // A callable with no incoming call edge is still not dead code when a
+    // test/benchmark runner invokes it — because it lives in a test file, or
+    // by a definition-level runner convention (Rust `#[test]`/`#[cfg(test)]`,
+    // ASV benchmark methods). Marking it lets entry-point detection suppress it.
     const file_path = func_def.location.file_path;
     const language = detect_language(file_path);
     const is_test =
       is_test_file(file_path, language) ||
       is_runner_invoked_callable(func_def, file_path, language);
 
-    // Create function node
     nodes.set(func_def.symbol_id, {
       symbol_id: func_def.symbol_id,
       name: func_def.name,
@@ -94,26 +75,6 @@ function build_function_nodes(
   return nodes;
 }
 
-/**
- * Detect entry points in the call graph.
- * Entry points are functions that are never called by any other function.
- *
- * Algorithm:
- * 1. Get set of all SymbolIds that are referenced (called)
- *    - Includes ALL symbols from ALL resolutions (handles multi-candidate calls)
- *    - Polymorphic calls mark all implementations as called
- *    - Collection dispatch marks all stored functions as called
- * 2. Find function nodes whose SymbolId is NOT in that set
- *
- * Framework-invoked false positives (Python dunders, Flask routes, pytest
- * fixtures, etc.) are filtered later by `enrich_call_graph` against the
- * permanent known-issues registry — `trace_call_graph` returns the raw
- * unfiltered set so callers can choose whether to apply classification.
- *
- * @param nodes - All function nodes in the call graph
- * @param resolutions - Resolution registry (get_all_referenced_symbols iterates all resolutions)
- * @returns Array of SymbolIds that are entry points
- */
 function detect_entry_points(
   nodes: ReadonlyMap<SymbolId, CallableNode>,
   resolutions: ResolutionRegistry,
@@ -121,29 +82,22 @@ function detect_entry_points(
 ): SymbolId[] {
   const include_tests = options?.include_tests ?? false;
 
-  // Get all SymbolIds that are referenced (called)
-  // This correctly handles multi-candidate calls by processing all resolutions
   const called_symbols = resolutions.get_all_referenced_symbols();
 
-  // Entry points are functions NOT in the called set
   const entry_points: SymbolId[] = [];
 
   for (const [symbol_id, node] of nodes) {
-    // Skip anonymous functions — IIFEs, callbacks, and closures are never
-    // public entry points; their appearance in the uncalled set is a
-    // detector artifact caused by indirect invocation patterns that the
-    // call resolver does not follow (self-executing expressions, .forEach
-    // argument passing, etc.).
+    // Anonymous functions (IIFEs, callbacks, closures) are never public entry
+    // points; they surface as uncalled only because the resolver does not
+    // follow their indirect invocation (self-execution, `.forEach` argument).
     if (node.name === ANONYMOUS_SYMBOL_NAME) {
       continue;
     }
 
-    // Skip if this symbol is called
     if (called_symbols.has(symbol_id)) {
       continue;
     }
 
-    // Skip test file functions unless explicitly included
     if (!include_tests && node.is_test) {
       continue;
     }
@@ -155,36 +109,25 @@ function detect_entry_points(
 }
 
 /**
- * Detect the call graph from semantic indexes and registries
+ * Build the call graph and detect entry points — callables with no incoming
+ * call edge.
  *
- * Returns a CallGraph with:
- * - nodes: Map of callable symbols to their CallableNode (contains enclosed_calls)
- * - entry_points: Array of SymbolIds for functions never called
- *
- * Multi-candidate resolution support:
- * - CallReference.resolutions contains all possible targets for each call
- * - Entry point detection processes all resolutions (marks all candidates as called)
- * - No special handling needed - works correctly with single or multiple resolutions
- *
- * @param definitions - Definition registry with all function/method definitions
- * @param resolutions - Resolution registry with resolved call references
- * @returns CallGraph with nodes and entry points
+ * The entry-point set is raw: framework-invoked false positives (Python
+ * dunders, Flask routes, pytest fixtures) are filtered downstream by
+ * `enrich_call_graph` against the permanent known-issues registry, so callers
+ * choose whether to apply that classification.
  */
 export function trace_call_graph(
   definitions: DefinitionRegistry,
   resolutions: ResolutionRegistry,
   options?: TraceCallGraphOptions
 ): CallGraph {
-  // Build function nodes with their enclosed calls
   const nodes = build_function_nodes(definitions, resolutions);
-
-  // Detect entry points (functions never called)
   const entry_points = detect_entry_points(nodes, resolutions, options);
 
   return {
     nodes,
     entry_points,
-    // Include indirect reachability for downstream tools
     indirect_reachability: resolutions.get_indirect_reachability(),
   };
 }
