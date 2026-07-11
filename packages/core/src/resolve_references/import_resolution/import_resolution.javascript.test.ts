@@ -287,5 +287,25 @@ describe("resolve_module_path_javascript", () => {
       );
       expect(result).toBe("/project/src/nonexistent.jsx");
     });
+
+    it("appends .js to a non-JS extension when file not found", () => {
+      const tree = create_file_tree("/project", ["src/app.js"]);
+      const result = resolve_module_path_javascript(
+        "./data.json",
+        "/project/src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/data.json.js");
+    });
+
+    it("returns a relative fallback path when importing_file is relative", () => {
+      const tree = create_file_tree("/project", ["src/app.js"]);
+      const result = resolve_module_path_javascript(
+        "./nonexistent",
+        "src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("src/nonexistent.js");
+    });
   });
 });
