@@ -149,6 +149,34 @@ describe("serialize_semantic_index / deserialize_semantic_index", () => {
     });
   });
 
+  describe("pre-parsed object input", () => {
+    it("deserializes from an already-parsed object without re-parsing JSON", () => {
+      const index = parse_ts(
+        "export function greet(name: string): string { return name; }",
+      );
+      const json = serialize_semantic_index(index);
+      const parsed = JSON.parse(json) as Record<string, unknown>;
+      const restored = deserialize_semantic_index(parsed);
+      assert_index_equal(index, restored);
+    });
+
+    it("produces equal indexes from string and object inputs", () => {
+      const index = parse_ts("export const x = 1;");
+      const json = serialize_semantic_index(index);
+      const from_string = deserialize_semantic_index(json);
+      const from_object = deserialize_semantic_index(
+        JSON.parse(json) as Record<string, unknown>,
+      );
+      assert_index_equal(from_string, from_object);
+    });
+  });
+
+  describe("malformed string input", () => {
+    it("throws on non-JSON input", () => {
+      expect(() => deserialize_semantic_index("not json {")).toThrow();
+    });
+  });
+
   describe("round-trip with real parsed files", () => {
     it("TypeScript: functions, classes, interfaces", () => {
       const code = `
@@ -262,6 +290,72 @@ describe("validate_semantic_index_shape", () => {
 
   it("returns false for null", () => {
     expect(validate_semantic_index_shape(null)).toBe(false);
+  });
+
+  it("returns false for non-object primitives", () => {
+    expect(validate_semantic_index_shape("scope:0")).toBe(false);
+    expect(validate_semantic_index_shape(42)).toBe(false);
+    expect(validate_semantic_index_shape(undefined)).toBe(false);
+  });
+
+  it("returns false for non-string language", () => {
+    expect(
+      validate_semantic_index_shape({
+        file_path: "test.ts",
+        language: 123,
+        root_scope_id: "scope:0",
+        scopes: [],
+        functions: [],
+        classes: [],
+        variables: [],
+        interfaces: [],
+        enums: [],
+        namespaces: [],
+        types: [],
+        imported_symbols: [],
+        references: [],
+      }),
+    ).toBe(false);
+  });
+
+  it("returns false for non-string root_scope_id", () => {
+    expect(
+      validate_semantic_index_shape({
+        file_path: "test.ts",
+        language: "typescript",
+        root_scope_id: null,
+        scopes: [],
+        functions: [],
+        classes: [],
+        variables: [],
+        interfaces: [],
+        enums: [],
+        namespaces: [],
+        types: [],
+        imported_symbols: [],
+        references: [],
+      }),
+    ).toBe(false);
+  });
+
+  it("returns false for non-array references", () => {
+    expect(
+      validate_semantic_index_shape({
+        file_path: "test.ts",
+        language: "typescript",
+        root_scope_id: "scope:0",
+        scopes: [],
+        functions: [],
+        classes: [],
+        variables: [],
+        interfaces: [],
+        enums: [],
+        namespaces: [],
+        types: [],
+        imported_symbols: [],
+        references: "not an array",
+      }),
+    ).toBe(false);
   });
 
   it("returns false for missing fields", () => {

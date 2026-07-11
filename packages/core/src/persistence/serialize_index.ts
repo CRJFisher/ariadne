@@ -24,10 +24,6 @@ import type {
 } from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/index_single_file";
 
-// ============================================================================
-// Map/Set serialization utilities
-// ============================================================================
-
 function serialize_map<K, V>(map: ReadonlyMap<K, V>): [K, V][] {
   return Array.from(map.entries());
 }
@@ -36,11 +32,6 @@ function deserialize_map<K, V>(entries: [K, V][]): ReadonlyMap<K, V> {
   return new Map(entries) as ReadonlyMap<K, V>;
 }
 
-// ============================================================================
-// SemanticIndex serialization
-// ============================================================================
-
-/** Serialize a SemanticIndex to a JSON string. */
 export function serialize_semantic_index(index: SemanticIndex): string {
   return JSON.stringify({
     file_path: index.file_path,
@@ -59,7 +50,6 @@ export function serialize_semantic_index(index: SemanticIndex): string {
   });
 }
 
-/** Deserialize a SemanticIndex from a JSON string or pre-parsed object. */
 export function deserialize_semantic_index(
   input: string | Record<string, unknown>,
 ): SemanticIndex {
@@ -82,8 +72,9 @@ export function deserialize_semantic_index(
 }
 
 /**
- * Structural spot-check for deserialized SemanticIndex shape.
- * Catches common corruption modes without deep field validation.
+ * Guards the cache-load path: a corrupt or truncated cache file must be
+ * rejected before deserialization treats its fields as valid Maps. Checks
+ * shape only, not field contents, since callers rebuild on any failure.
  */
 export function validate_semantic_index_shape(parsed: unknown): boolean {
   if (parsed === null || typeof parsed !== "object") return false;
