@@ -1,8 +1,11 @@
-import { describe, it, expect, beforeAll, vi } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
 import Python from "tree-sitter-python";
 import { PythonScopeBoundaryExtractor } from "./python_scope_boundary_extractor";
-import type { FilePath } from "@ariadnejs/types";
+import type { FilePath, ScopeType } from "@ariadnejs/types";
+import type { ScopeBoundaries } from "../boundary_base";
+
+const FP = "test.py" as FilePath;
 
 describe("PythonScopeBoundaryExtractor", () => {
   let parser: Parser;
@@ -14,449 +17,640 @@ describe("PythonScopeBoundaryExtractor", () => {
     extractor = new PythonScopeBoundaryExtractor();
   });
 
-  describe("Class boundaries", () => {
-    it("should extract class name and body boundaries correctly", () => {
-      const code = `class Calculator:
-    def add(self, x):
-        return x + 1`;
+  // Mirrors the pipeline: the scope processor passes the exact node the .scm query
+  // captures (a body `block` for classes, the inner `function_definition` for most
+  // defs, the outer `decorated_definition` for classmethods, the `lambda` node itself).
+  function boundaries_for(
+    code: string,
+    scope_type: ScopeType,
+    pick: (root: Parser.SyntaxNode) => Parser.SyntaxNode
+  ): ScopeBoundaries {
+    const tree = parser.parse(code);
+    return extractor.extract_boundaries(pick(tree.rootNode), scope_type, FP);
+  }
 
-      const tree = parser.parse(code);
-      const class_node = tree.rootNode.firstChild!;
+  const class_body = (root: Parser.SyntaxNode) =>
+    root.firstChild!.childForFieldName("body")!;
+  const first_def_in_class = (root: Parser.SyntaxNode) =>
+    root.firstChild!.childForFieldName("body")!.firstNamedChild!;
 
-      const boundaries = extractor.extract_boundaries(
-        class_node,
-        "class",
-        "test.py" as FilePath
+  describe("module scope", () => {
+    it("spans the whole file with symbol and scope coinciding", () => {
+      const boundaries = boundaries_for(
+        "x = 1\ndef f():\n    return x",
+        "module",
+        (root) => root
       );
 
-      // Symbol location: just "Calculator"
-      expect(boundaries.symbol_location).toEqual({
-        file_path: "test.py",
-        start_line: 1,
-        start_column: 7,
-        end_line: 1,
-        end_column: 16,
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 1,
+          end_line: 3,
+          end_column: 12,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 1,
+          end_line: 3,
+          end_column: 12,
+        },
       });
-
-      // Scope location: starts AFTER ":", not at "def"
-      expect(boundaries.scope_location.start_line).toBe(1);
-      expect(boundaries.scope_location.start_column).toBe(18); // After ":"
-      expect(boundaries.scope_location.end_line).toBe(3); // End of class body
-    });
-
-    it("should handle class with base classes", () => {
-      const code = `class Child(Parent, Mixin):
-    pass`;
-
-      const tree = parser.parse(code);
-      const class_node = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        class_node,
-        "class",
-        "test.py" as FilePath
-      );
-
-      expect(boundaries.symbol_location.start_column).toBe(7); // "Child"
-      expect(boundaries.symbol_location.end_column).toBe(11); // "Child"
-      expect(boundaries.scope_location.start_line).toBe(1);
-      expect(boundaries.scope_location.start_column).toBe(28); // After "(Parent, Mixin):"
-    });
-
-    it("should handle class with multiple methods", () => {
-      const code = `class Calculator:
-    def add(self, x, y):
-        return x + y
-
-    def subtract(self, x, y):
-        return x - y`;
-
-      const tree = parser.parse(code);
-      const class_node = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        class_node,
-        "class",
-        "test.py" as FilePath
-      );
-
-      expect(boundaries.symbol_location.start_line).toBe(1);
-      expect(boundaries.scope_location.start_line).toBe(1);
-      expect(boundaries.scope_location.end_line).toBe(6); // End of class with multiple methods
-    });
-
-    it("should handle class with no body (just pass)", () => {
-      const code = `class Empty:
-    pass`;
-
-      const tree = parser.parse(code);
-      const class_node = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        class_node,
-        "class",
-        "test.py" as FilePath
-      );
-
-      expect(boundaries.symbol_location.start_line).toBe(1);
-      expect(boundaries.scope_location.start_line).toBe(1);
-      expect(boundaries.scope_location.end_line).toBe(2);
-    });
-
-    it("should handle decorated class", () => {
-      const code = `@dataclass
-class Person:
-    name: str`;
-
-      const tree = parser.parse(code);
-      // Decorated class is wrapped in decorated_definition
-      const decorated_node = tree.rootNode.firstChild!;
-      const class_node = decorated_node.childForFieldName("definition")!;
-
-      const boundaries = extractor.extract_boundaries(
-        class_node,
-        "class",
-        "test.py" as FilePath
-      );
-
-      expect(boundaries.symbol_location.start_line).toBe(2); // Class is on line 2
-      expect(boundaries.scope_location.start_line).toBe(2);
-    });
-
-    it("should handle nested classes", () => {
-      const code = `class Outer:
-    class Inner:
-        def method(self):
-            pass`;
-
-      const tree = parser.parse(code);
-      const outer_class = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        outer_class,
-        "class",
-        "test.py" as FilePath
-      );
-
-      expect(boundaries.symbol_location.start_line).toBe(1);
-      expect(boundaries.scope_location.start_line).toBe(1);
-      expect(boundaries.scope_location.end_line).toBe(4);
     });
   });
 
-  describe("Function boundaries", () => {
-    it("should extract function name and scope correctly", () => {
-      const code = `def calculate(x, y):
-    return x + y`;
-
-      const tree = parser.parse(code);
-      const func_node = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        func_node,
-        "function",
-        "test.py" as FilePath
+  describe("class scope", () => {
+    it("names the class in the parent scope and opens the body after the colon", () => {
+      const boundaries = boundaries_for(
+        "class Calculator:\n    def add(self, x):\n        return x + 1",
+        "class",
+        class_body
       );
 
-      // Symbol: just the name
-      expect(boundaries.symbol_location).toEqual({
-        file_path: "test.py",
-        start_line: 1,
-        start_column: 5,
-        end_line: 1,
-        end_column: 13,
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 7,
+          end_line: 1,
+          end_column: 16,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 18,
+          end_line: 3,
+          end_column: 20,
+        },
       });
-
-      // Scope: starts at parameters
-      expect(boundaries.scope_location.start_line).toBe(1);
-      expect(boundaries.scope_location.start_column).toBe(14); // At "("
     });
 
-    it("should extract method boundaries inside class", () => {
-      const code = `class Calc:
-    def add(self, x):
-        return x`;
+    it("opens the body after the base-class list and colon", () => {
+      const boundaries = boundaries_for(
+        "class Child(Parent, Mixin):\n    pass",
+        "class",
+        class_body
+      );
 
-      const tree = parser.parse(code);
-      const class_node = tree.rootNode.firstChild!;
-      const body_node = class_node.childForFieldName("body")!;
-      const method_node = body_node.firstNamedChild!;
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 7,
+          end_line: 1,
+          end_column: 11,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 28,
+          end_line: 2,
+          end_column: 8,
+        },
+      });
+    });
 
-      const boundaries = extractor.extract_boundaries(
-        method_node,
+    it("extends the scope to the end of the last method", () => {
+      const boundaries = boundaries_for(
+        "class Calculator:\n    def add(self, x, y):\n        return x + y\n\n    def subtract(self, x, y):\n        return x - y",
+        "class",
+        class_body
+      );
+
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 7,
+          end_line: 1,
+          end_column: 16,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 18,
+          end_line: 6,
+          end_column: 20,
+        },
+      });
+    });
+
+    it("handles a class whose only body is pass", () => {
+      const boundaries = boundaries_for(
+        "class Empty:\n    pass",
+        "class",
+        class_body
+      );
+
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 7,
+          end_line: 1,
+          end_column: 11,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 13,
+          end_line: 2,
+          end_column: 8,
+        },
+      });
+    });
+
+    it("reads the name from the class_definition of a decorated class", () => {
+      const boundaries = boundaries_for(
+        "@dataclass\nclass Person:\n    name: str",
+        "class",
+        (root) =>
+          root.firstChild!.childForFieldName("definition")!.childForFieldName(
+            "body"
+          )!
+      );
+
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 2,
+          start_column: 7,
+          end_line: 2,
+          end_column: 12,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 2,
+          start_column: 14,
+          end_line: 3,
+          end_column: 13,
+        },
+      });
+    });
+
+    it("resolves the nearest enclosing class for a nested class", () => {
+      const boundaries = boundaries_for(
+        "class Outer:\n    class Inner:\n        def method(self):\n            pass",
+        "class",
+        class_body
+      );
+
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 7,
+          end_line: 1,
+          end_column: 11,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 13,
+          end_line: 4,
+          end_column: 16,
+        },
+      });
+    });
+
+    it("opens the body after the colon on the last line of a multi-line base list", () => {
+      const boundaries = boundaries_for(
+        "class Complex(\n    BaseClass,\n    MixinOne,\n    MixinTwo\n):\n    def method(self):\n        pass",
+        "class",
+        class_body
+      );
+
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 7,
+          end_line: 1,
+          end_column: 13,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 5,
+          start_column: 3,
+          end_line: 7,
+          end_column: 12,
+        },
+      });
+    });
+
+    it("finds the colon despite extra spacing before it", () => {
+      const boundaries = boundaries_for(
+        "class TestClass   :\n    pass",
+        "class",
+        class_body
+      );
+
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 7,
+          end_line: 1,
+          end_column: 15,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 20,
+          end_line: 2,
+          end_column: 8,
+        },
+      });
+    });
+
+    it("handles a single-line class definition", () => {
+      const boundaries = boundaries_for("class Point: pass", "class", class_body);
+
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 7,
+          end_line: 1,
+          end_column: 11,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 13,
+          end_line: 1,
+          end_column: 17,
+        },
+      });
+    });
+
+    it("rejects a non-block node for a class scope", () => {
+      const tree = parser.parse("class Calculator:\n    pass");
+      const class_definition = tree.rootNode.firstChild!;
+
+      expect(() =>
+        extractor.extract_boundaries(class_definition, "class", FP)
+      ).toThrow("Expected block node for class scope, got class_definition");
+    });
+  });
+
+  describe("function scope", () => {
+    it("names the function in the parent scope and opens the scope at the parameters", () => {
+      const boundaries = boundaries_for(
+        "def calculate(x, y):\n    return x + y",
+        "function",
+        (root) => root.firstChild!
+      );
+
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 5,
+          end_line: 1,
+          end_column: 13,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 14,
+          end_line: 2,
+          end_column: 16,
+        },
+      });
+    });
+
+    it("opens the scope at the parameters for a function with type hints", () => {
+      const boundaries = boundaries_for(
+        "def typed_func(x: int, y: str) -> bool:\n    return True",
+        "function",
+        (root) => root.firstChild!
+      );
+
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 5,
+          end_line: 1,
+          end_column: 14,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 15,
+          end_line: 2,
+          end_column: 15,
+        },
+      });
+    });
+
+    it("skips the async keyword when placing the function name", () => {
+      const boundaries = boundaries_for(
+        "async def fetch_data():\n    return await api_call()",
+        "function",
+        (root) => root.firstChild!
+      );
+
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 11,
+          end_line: 1,
+          end_column: 20,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 21,
+          end_line: 2,
+          end_column: 27,
+        },
+      });
+    });
+
+    it("takes the name and body from the inner function of a decorated def", () => {
+      const boundaries = boundaries_for(
+        "@staticmethod\n@cache\ndef expensive_func():\n    return calc()",
+        "function",
+        (root) => root.firstChild!.childForFieldName("definition")!
+      );
+
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 3,
+          start_column: 5,
+          end_line: 3,
+          end_column: 18,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 3,
+          start_column: 19,
+          end_line: 4,
+          end_column: 17,
+        },
+      });
+    });
+
+    it("scopes a function nested inside another function", () => {
+      const boundaries = boundaries_for(
+        "def outer():\n    def inner(a):\n        return a\n    return inner",
+        "function",
+        first_def_in_class
+      );
+
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 2,
+          start_column: 9,
+          end_line: 2,
+          end_column: 13,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 2,
+          start_column: 14,
+          end_line: 3,
+          end_column: 16,
+        },
+      });
+    });
+
+    it("scopes an empty function body", () => {
+      const boundaries = boundaries_for(
+        "def empty_func():\n    ...",
+        "function",
+        (root) => root.firstChild!
+      );
+
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 5,
+          end_line: 1,
+          end_column: 14,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 15,
+          end_line: 2,
+          end_column: 7,
+        },
+      });
+    });
+
+    it("opens the scope at the opening parenthesis for complex parameter types", () => {
+      const boundaries = boundaries_for(
+        "def complex_method(self, data: Dict[str, Any], callback: Optional[Callable[[str], None]] = None):\n    return data",
+        "function",
+        (root) => root.firstChild!
+      );
+
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 5,
+          end_line: 1,
+          end_column: 18,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 19,
+          end_line: 2,
+          end_column: 15,
+        },
+      });
+    });
+
+    it("rejects an unexpected node type for a function scope", () => {
+      const tree = parser.parse("x = 1");
+      const statement = tree.rootNode.firstChild!;
+
+      expect(() =>
+        extractor.extract_boundaries(statement, "function", FP)
+      ).toThrow(
+        "Expected function_definition, lambda, or decorated_definition node, got expression_statement"
+      );
+    });
+  });
+
+  describe("method scope", () => {
+    it("scopes a method captured as a function_definition inside a class", () => {
+      const boundaries = boundaries_for(
+        "class Calc:\n    def add(self, x):\n        return x",
         "method",
-        "test.py" as FilePath
+        first_def_in_class
       );
 
-      // Symbol: "add"
-      expect(boundaries.symbol_location.start_line).toBe(2);
-      expect(boundaries.symbol_location.start_column).toBe(9); // "add"
-
-      // Scope: starts at parameters
-      expect(boundaries.scope_location.start_line).toBe(2);
-      expect(boundaries.scope_location.start_column).toBe(12); // At "("
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 2,
+          start_column: 9,
+          end_line: 2,
+          end_column: 11,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 2,
+          start_column: 12,
+          end_line: 3,
+          end_column: 16,
+        },
+      });
     });
 
-    it("should handle function with type hints", () => {
-      const code = `def typed_func(x: int, y: str) -> bool:
-    return True`;
-
-      const tree = parser.parse(code);
-      const func_node = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        func_node,
-        "function",
-        "test.py" as FilePath
+    it("unwraps the decorated_definition captured for a classmethod", () => {
+      const boundaries = boundaries_for(
+        "class C:\n    @classmethod\n    def make(cls, x):\n        return x",
+        "method",
+        first_def_in_class
       );
 
-      expect(boundaries.symbol_location.start_line).toBe(1);
-      expect(boundaries.symbol_location.start_column).toBe(5); // "typed_func"
-      expect(boundaries.scope_location.start_line).toBe(1);
-      expect(boundaries.scope_location.start_column).toBe(15); // At "("
-    });
-
-    it("should handle async function", () => {
-      const code = `async def fetch_data():
-    return await api_call()`;
-
-      const tree = parser.parse(code);
-      const func_node = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        func_node,
-        "function",
-        "test.py" as FilePath
-      );
-
-      expect(boundaries.symbol_location.start_line).toBe(1);
-      expect(boundaries.symbol_location.start_column).toBe(11); // "fetch_data"
-      expect(boundaries.scope_location.start_line).toBe(1);
-      expect(boundaries.scope_location.start_column).toBe(21); // At "("
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 3,
+          start_column: 9,
+          end_line: 3,
+          end_column: 12,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 3,
+          start_column: 13,
+          end_line: 4,
+          end_column: 16,
+        },
+      });
     });
   });
 
-  describe("Constructor boundaries", () => {
-    it("should handle __init__ method as regular function", () => {
-      const code = `class Person:
-    def __init__(self, name):
-        self.name = name`;
-
-      const tree = parser.parse(code);
-      const class_node = tree.rootNode.firstChild!;
-      const body_node = class_node.childForFieldName("body")!;
-      const init_node = body_node.firstNamedChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        init_node,
+  describe("constructor scope", () => {
+    it("treats __init__ as a regular method scope", () => {
+      const boundaries = boundaries_for(
+        "class Person:\n    def __init__(self, name):\n        self.name = name",
         "constructor",
-        "test.py" as FilePath
+        first_def_in_class
       );
 
-      // Constructor should be treated like a regular method
-      expect(boundaries.symbol_location.start_line).toBe(2);
-      expect(boundaries.symbol_location.start_column).toBe(9); // "__init__"
-      expect(boundaries.scope_location.start_line).toBe(2);
-      expect(boundaries.scope_location.start_column).toBe(17); // At "("
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 2,
+          start_column: 9,
+          end_line: 2,
+          end_column: 16,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 2,
+          start_column: 17,
+          end_line: 3,
+          end_column: 24,
+        },
+      });
     });
   });
 
-  describe("Block boundaries", () => {
-    it("should handle if block", () => {
-      const code = `if condition:
-    do_something()`;
-
-      const tree = parser.parse(code);
-      const if_node = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        if_node,
-        "block",
-        "test.py" as FilePath
+  describe("lambda scope", () => {
+    it("treats the lambda expression as both symbol and scope", () => {
+      const boundaries = boundaries_for(
+        "cb = lambda x: x * 2",
+        "function",
+        (root) => root.firstChild!.firstChild!.childForFieldName("right")!
       );
 
-      // For blocks, symbol and scope locations are the same
-      expect(boundaries.symbol_location).toEqual(boundaries.scope_location);
-      expect(boundaries.scope_location.start_line).toBe(1);
-      expect(boundaries.scope_location.end_line).toBe(2);
-    });
-
-    it("should handle for loop block", () => {
-      const code = `for i in range(10):
-    print(i)`;
-
-      const tree = parser.parse(code);
-      const for_node = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        for_node,
-        "block",
-        "test.py" as FilePath
-      );
-
-      expect(boundaries.symbol_location).toEqual(boundaries.scope_location);
-      expect(boundaries.scope_location.start_line).toBe(1);
-      expect(boundaries.scope_location.end_line).toBe(2);
-    });
-
-    it("should handle while loop block", () => {
-      const code = `while True:
-    continue`;
-
-      const tree = parser.parse(code);
-      const while_node = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        while_node,
-        "block",
-        "test.py" as FilePath
-      );
-
-      expect(boundaries.symbol_location).toEqual(boundaries.scope_location);
-      expect(boundaries.scope_location.start_line).toBe(1);
-      expect(boundaries.scope_location.end_line).toBe(2);
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 6,
+          end_line: 1,
+          end_column: 20,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 6,
+          end_line: 1,
+          end_column: 20,
+        },
+      });
     });
   });
 
-  describe("Edge cases", () => {
-    it("should handle complex class inheritance", () => {
-      const code = `class Complex(
-    BaseClass,
-    MixinOne,
-    MixinTwo
-):
-    def method(self):
-        pass`;
-
-      const tree = parser.parse(code);
-      const class_node = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        class_node,
-        "class",
-        "test.py" as FilePath
-      );
-
-      expect(boundaries.symbol_location.start_line).toBe(1);
-      expect(boundaries.symbol_location.start_column).toBe(7); // "Complex"
-      expect(boundaries.scope_location.start_line).toBe(5); // After the colon
-    });
-
-    it("should handle function with decorators", () => {
-      const code = `@staticmethod
-@cache
-def expensive_func():
-    return calculation()`;
-
-      const tree = parser.parse(code);
-      // Decorated function is wrapped in decorated_definition — pass the outer node
-      // to exercise the extract_decorated_function_boundaries() dispatch branch
-      const decorated_node = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        decorated_node,
-        "function",
-        "test.py" as FilePath
-      );
-
-      expect(boundaries.symbol_location.start_line).toBe(3); // Function is on line 3
-      expect(boundaries.scope_location.start_line).toBe(3);
-    });
-
-    it("should handle class with unusual spacing around colon", () => {
-      // This test creates a case where the colon might be harder to find
-      // to potentially trigger the alternative colon detection branch
-      const code = `class TestClass   :
-    pass`;
-
-      const tree = parser.parse(code);
-      const class_node = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        class_node,
-        "class",
-        "test.py" as FilePath
-      );
-
-      // Should still work correctly even with unusual spacing
-      expect(boundaries.symbol_location.start_line).toBe(1);
-      expect(boundaries.symbol_location.start_column).toBe(7); // "TestClass"
-      expect(boundaries.scope_location.start_line).toBe(1);
-      expect(boundaries.scope_location.start_column).toBe(20); // After "TestClass   :"
-    });
-
-    it("should handle empty function body", () => {
-      const code = `def empty_func():
-    ...`;
-
-      const tree = parser.parse(code);
-      const func_node = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        func_node,
-        "function",
-        "test.py" as FilePath
-      );
-
-      expect(boundaries.symbol_location.start_line).toBe(1);
-      expect(boundaries.symbol_location.start_column).toBe(5); // "empty_func"
-      expect(boundaries.scope_location.start_line).toBe(1);
-      expect(boundaries.scope_location.end_line).toBe(2);
-    });
-
-    it("should handle single-line class definition", () => {
-      const code = "class Point: pass";
-
-      const tree = parser.parse(code);
-      const class_node = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        class_node,
-        "class",
-        "test.py" as FilePath
-      );
-
-      expect(boundaries.symbol_location.start_line).toBe(1);
-      expect(boundaries.symbol_location.start_column).toBe(7); // "Point"
-      expect(boundaries.scope_location.start_line).toBe(1);
-      expect(boundaries.scope_location.start_column).toBe(13); // After "Point:"
-    });
-
-    it("should handle lambda expressions via block boundaries", () => {
-      const code = "lambda_func = lambda x: x * 2";
-
-      const tree = parser.parse(code);
-      const assignment_node = tree.rootNode.firstChild!;
-
-      // Test that we can extract boundaries from assignment statements too
-      const boundaries = extractor.extract_boundaries(
-        assignment_node,
+  describe("block scope", () => {
+    it("treats an if statement as both symbol and scope", () => {
+      const boundaries = boundaries_for(
+        "if condition:\n    do_something()",
         "block",
-        "test.py" as FilePath
+        (root) => root.firstChild!
       );
 
-      expect(boundaries.symbol_location.start_line).toBe(1);
-      expect(boundaries.scope_location.start_line).toBe(1);
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 1,
+          end_line: 2,
+          end_column: 18,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 1,
+          end_line: 2,
+          end_column: 18,
+        },
+      });
     });
 
-    it("should handle method with complex parameter types", () => {
-      const code = `def complex_method(self, data: Dict[str, Any], callback: Optional[Callable[[str], None]] = None):
-    return data`;
-
-      const tree = parser.parse(code);
-      const func_node = tree.rootNode.firstChild!;
-
-      const boundaries = extractor.extract_boundaries(
-        func_node,
-        "function",
-        "test.py" as FilePath
+    it("treats a for loop as both symbol and scope", () => {
+      const boundaries = boundaries_for(
+        "for i in range(10):\n    print(i)",
+        "block",
+        (root) => root.firstChild!
       );
 
-      expect(boundaries.symbol_location.start_line).toBe(1);
-      expect(boundaries.symbol_location.start_column).toBe(5); // "complex_method"
-      expect(boundaries.scope_location.start_line).toBe(1);
-      // Scope should start at the opening parenthesis of parameters
-      expect(boundaries.scope_location.start_column).toBe(19); // At "("
+      expect(boundaries).toEqual({
+        symbol_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 1,
+          end_line: 2,
+          end_column: 12,
+        },
+        scope_location: {
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 1,
+          end_line: 2,
+          end_column: 12,
+        },
+      });
     });
+  });
+
+  it("rejects an unsupported scope type", () => {
+    const tree = parser.parse("x = 1");
+
+    expect(() =>
+      extractor.extract_boundaries(
+        tree.rootNode,
+        "parameter" as ScopeType,
+        FP
+      )
+    ).toThrow("Unsupported scope type: parameter");
   });
 });
