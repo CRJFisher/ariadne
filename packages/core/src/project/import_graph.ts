@@ -48,10 +48,10 @@ export class ImportGraph {
   private submodule_import_paths: Map<SymbolId, FilePath> = new Map();
 
   /**
-   * Update import relationships for a file.
-   * Removes old relationships, establishes new ones.
-   * Now accepts ImportDefinition[] to store full metadata.
-   * Pre-resolves module paths for performance.
+   * Replace all import relationships for a file with a fresh set.
+   *
+   * Module paths are resolved to absolute file paths once here and cached, so
+   * later resolution queries never repeat the filesystem walk.
    *
    * @param file_path - The file being updated
    * @param imports - ImportDefinitions from the file
@@ -64,16 +64,12 @@ export class ImportGraph {
     language: Language,
     root_folder: FileSystemFolder
   ): void {
-    // Step 1: Get old dependencies to clean up reverse edges
     const old_deps = this.dependencies.get(file_path);
     if (old_deps) {
-      // Remove reverse edges for old dependencies
       for (const target of old_deps) {
         const target_dependents = this.dependents.get(target);
         if (target_dependents) {
           target_dependents.delete(file_path);
-
-          // Clean up empty sets
           if (target_dependents.size === 0) {
             this.dependents.delete(target);
           }
@@ -81,7 +77,6 @@ export class ImportGraph {
       }
     }
 
-    // Step 2: Clean up old scope index and resolved paths
     const old_import_defs = this.imports_by_file.get(file_path);
     if (old_import_defs) {
       for (const imp_def of old_import_defs) {
@@ -97,19 +92,15 @@ export class ImportGraph {
             this.imports_by_scope.set(scope_id, filtered);
           }
         }
-        // Clean up resolved path and submodule path
         this.resolved_import_paths.delete(imp_def.symbol_id);
         this.submodule_import_paths.delete(imp_def.symbol_id);
       }
     }
 
-    // Step 3: Extract target files from imports and pre-resolve module paths
     const target_files = new Set<FilePath>();
 
-    // Store ImportDefinitions for metadata queries
     this.imports_by_file.set(file_path, imports);
 
-    // Build scope index and pre-resolve module paths
     for (const imp_def of imports) {
       const scope_id = imp_def.defining_scope_id;
       if (!this.imports_by_scope.has(scope_id)) {
@@ -120,7 +111,6 @@ export class ImportGraph {
         scope_imports.push(imp_def);
       }
 
-      // Pre-resolve module path to absolute file path (cache for performance)
       const resolved_path = resolve_module_path(
         imp_def.import_path,
         file_path,
@@ -129,7 +119,6 @@ export class ImportGraph {
       );
       this.resolved_import_paths.set(imp_def.symbol_id, resolved_path);
 
-      // For named imports, check if the imported name is a submodule file
       if (imp_def.import_kind === "named") {
         const import_name = (imp_def.original_name || imp_def.name) as string;
         const submodule_path = resolve_submodule_import_path(
@@ -143,20 +132,16 @@ export class ImportGraph {
         }
       }
 
-      // For dependency graph: use resolved path
       target_files.add(resolved_path);
     }
 
-    // Step 4: Update dependencies (file_path → targets)
     if (target_files.size === 0) {
-      // File has no imports, remove from dependencies map
       this.dependencies.delete(file_path);
       this.imports_by_file.delete(file_path);
     } else {
       this.dependencies.set(file_path, target_files);
     }
 
-    // Step 5: Add reverse relationships (targets → file_path as dependent)
     for (const target of target_files) {
       if (!this.dependents.has(target)) {
         this.dependents.set(target, new Set());
@@ -181,23 +166,17 @@ export class ImportGraph {
   }
 
   /**
-   * Remove all import relationships for a file.
-   * Removes both outgoing (dependencies) and incoming (dependents) edges.
-   * Also cleans up ImportDefinition storage and scope index.
+   * Remove a file and every import edge touching it, in both directions.
    *
    * @param file_path - The file to remove
    */
   remove_file(file_path: FilePath): void {
-    // Remove outgoing edges (this file's dependencies)
     const old_deps = this.dependencies.get(file_path);
     if (old_deps) {
       for (const target of old_deps) {
-        // Remove file_path from target's dependents
         const target_dependents = this.dependents.get(target);
         if (target_dependents) {
           target_dependents.delete(file_path);
-
-          // Clean up empty sets
           if (target_dependents.size === 0) {
             this.dependents.delete(target);
           }
@@ -207,23 +186,20 @@ export class ImportGraph {
       this.dependencies.delete(file_path);
     }
 
-    // Remove incoming edges (other files depending on this file)
     const old_dependents = this.dependents.get(file_path);
     if (old_dependents) {
       for (const source of old_dependents) {
-        // Remove file_path from source's dependencies
         const source_deps = this.dependencies.get(source);
         if (source_deps) {
+          // The source file still exists with its own imports minus this one,
+          // so keep its (now possibly empty) dependency set in the map.
           source_deps.delete(file_path);
-          // Note: We don't delete the source from the map even if empty,
-          // because the source file still exists, it just has no dependencies
         }
       }
 
       this.dependents.delete(file_path);
     }
 
-    // Clean up ImportDefinition storage, scope index, and resolved paths
     const old_import_defs = this.imports_by_file.get(file_path);
     if (old_import_defs) {
       for (const imp_def of old_import_defs) {
@@ -239,7 +215,6 @@ export class ImportGraph {
             this.imports_by_scope.set(scope_id, filtered);
           }
         }
-        // Clean up resolved path and submodule path
         this.resolved_import_paths.delete(imp_def.symbol_id);
         this.submodule_import_paths.delete(imp_def.symbol_id);
       }
