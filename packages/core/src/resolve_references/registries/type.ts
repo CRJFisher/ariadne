@@ -14,92 +14,61 @@ import {
   extract_type_bindings,
   extract_constructor_bindings,
   extract_type_members,
-  extract_type_alias_metadata,
 } from "../type_preprocessing";
 import { ResolutionRegistry } from "../resolve_references";
 import { resolve_namespace_export } from "../call_resolution/method_lookup";
 
 /**
- * Extracted type metadata (transient - not persisted).
- * Used during update_file() to pass data from extraction to resolution.
+ * Type metadata extracted from one file's semantic index, still keyed by name.
+ * Transient: consumed by resolve_type_metadata() within the same update_file()
+ * call and never stored.
  */
 interface ExtractedTypeData {
-  /** Location → type name for direct constructors (`new User()`) */
+  /** Annotation/constructor site → type name, e.g. `new User()` → "User" */
   simple_type_bindings: Map<LocationKey, SymbolName>;
-  /** Location → namespace chain for qualified constructors (`new models.User()`) */
+  /** Constructor site → namespace chain, e.g. `new models.User()` → ["models", "User"] */
   namespace_constructor_bindings: Map<LocationKey, readonly SymbolName[]>;
-  /** Type → member metadata (with extends/implements as names) */
+  /** Type → member metadata, with extends/implements still as names */
   type_members: Map<SymbolId, TypeMemberInfo>;
-  /** Type alias → expression */
-  type_aliases: Map<SymbolId, SymbolName>;
-  /** Variable SymbolId → called function name (for return type inference) */
+  /** Variable → the function it was initialized from, for return-type inference */
   call_initializers: Map<SymbolId, SymbolName>;
 }
 
-/**
- * Track which symbols a file contributed (for removal).
- * Only tracks resolved SymbolIds - no name-based data.
- */
+/** Symbols a file contributed, tracked so remove_file() can evict them. */
 interface FileTypeContributions {
-  /** SymbolIds with resolved type information */
   resolved_symbols: Set<SymbolId>;
 }
 
 /**
- * Central registry for type information across the project.
+ * Project-wide store of resolved type relationships, all keyed by SymbolId:
+ * symbol → type, type → members, class → parent, class → interfaces.
  *
- * Stores resolved type relationships using SymbolIds:
- * - Symbol types (variable → type class/interface)
- * - Type members (type → methods/properties)
- * - Inheritance (class → parent class)
- * - Interfaces (class → implemented interfaces)
- *
- * Follows the registry pattern: update_file() extracts and resolves in one operation.
- * All data is resolved using DefinitionRegistry and ResolutionRegistry.
+ * update_file() extracts type names from a file's index and resolves them to
+ * SymbolIds in one pass. It must run after ResolutionRegistry.resolve_names()
+ * for that file, since resolving a type name depends on name-resolution results.
  */
 export class TypeRegistry {
-  // ===== SymbolId-based resolved storage =====
-
-  /** Maps symbol → type (resolved). e.g., variable → class it's typed as */
   private symbol_types: Map<SymbolId, SymbolId> = new Map();
-
-  /** Maps type → member name → member symbol (resolved) */
   private resolved_type_members: Map<SymbolId, Map<SymbolName, SymbolId>> =
     new Map();
-
-  /** Maps class → parent class (resolved from extends clause) */
   private parent_classes: Map<SymbolId, SymbolId> = new Map();
-
-  /** Maps class → implemented interfaces (resolved from implements/extends) */
   private implemented_interfaces: Map<SymbolId, SymbolId[]> = new Map();
-
-  /** Track which file contributed resolved data (for cleanup) */
   private resolved_by_file: Map<FilePath, FileTypeContributions> = new Map();
 
-  /**
-   * Store reference to DefinitionRegistry for get_type_members() lookups.
-   * Set during update_file() calls.
-   */
+  /** Held for get_type_members() lookups; set on every update_file() call. */
   private definitions?: DefinitionRegistry;
 
   /**
-   * Update type information for a file.
+   * Extract type names from `file_path`'s index and resolve them to SymbolIds.
+   * The file's prior contributions are evicted first, so a re-index fully
+   * replaces them.
    *
-   * Three-phase process:
-   * 1. Remove old type data for this file
-   * 2. Extract type metadata from semantic index (names) - TRANSIENT
-   * 3. Resolve type metadata to SymbolIds (using ResolutionRegistry) - PERSISTED
+   * Must run after ResolutionRegistry.resolve_names() for the file: resolving a
+   * type name depends on name-resolution results.
    *
-   * NOTE: Must be called AFTER ResolutionRegistry.resolve_names() for the file.
-   *
-   * @param file_path - The file being updated
-   * @param index - Semantic index containing type information
-   * @param definitions - Definition registry (for location/scope lookups)
-   * @param resolutions - Resolution registry (for name → SymbolId resolution)
-   * @param exports - Export registry (for following namespace re-export chains)
-   * @param languages - File-path → language map (for module-path resolution in re-export chains)
-   * @param root_folder - Project root folder (for module-path resolution in re-export chains)
-   * @param import_source_resolver - Resolves a namespace import symbol to its source file path
+   * @param import_source_resolver - Resolves a namespace import symbol to its
+   *   source file. When absent, namespace-qualified constructor bindings
+   *   (`user = models.User()`) are skipped rather than resolved.
    */
   update_file(
     file_path: FilePath,
@@ -111,16 +80,9 @@ export class TypeRegistry {
     root_folder: FileSystemFolder,
     import_source_resolver?: (import_id: SymbolId) => FilePath | undefined
   ): void {
-    // Store definitions reference for get_type_members()
     this.definitions = definitions;
-
-    // Phase 1: Remove old type data from this file
     this.remove_file(file_path);
-
-    // Phase 2: Extract raw type data (names) - TRANSIENT, not persisted
     const extracted = this.extract_type_data(index);
-
-    // Phase 3: Resolve type metadata (names → SymbolIds) - PERSISTED
     this.resolve_type_metadata(
       file_path,
       extracted,
@@ -133,17 +95,7 @@ export class TypeRegistry {
     );
   }
 
-  /**
-   * Extract type metadata from semantic index.
-   *
-   * Returns extracted data WITHOUT persisting it.
-   * The data is immediately passed to resolve_type_metadata().
-   *
-   * @param index - Semantic index with type information
-   * @returns Extracted type metadata (transient)
-   */
   private extract_type_data(index: SemanticIndex): ExtractedTypeData {
-    // Extract type bindings from definitions
     const type_bindings_from_defs = extract_type_bindings({
       variables: index.variables,
       functions: index.functions,
@@ -151,30 +103,23 @@ export class TypeRegistry {
       interfaces: index.interfaces,
     });
 
-    // Extract type bindings from constructor calls
     const ctor_bindings = extract_constructor_bindings(index.references);
 
-    // Merge direct type bindings (new User())
     const simple_type_bindings = new Map([
       ...type_bindings_from_defs,
       ...ctor_bindings.direct,
     ]);
 
-    // Extract type members
     const type_members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
       enums: index.enums,
     });
 
-    // Extract type aliases
-    const type_aliases = extract_type_alias_metadata(index.types);
-
-    // Extract call initializers for return type inference
+    // A call-initialized variable with no annotation takes its type from the
+    // called function's return type (STEP 1.5 of resolve_type_metadata).
     const call_initializers = new Map<SymbolId, SymbolName>();
     for (const variable of index.variables.values()) {
-      // Only process variables without explicit type annotation
-      // that were initialized from a function call
       if (!variable.type && variable.initialized_from_call) {
         call_initializers.set(variable.symbol_id, variable.initialized_from_call);
       }
@@ -184,31 +129,13 @@ export class TypeRegistry {
       simple_type_bindings,
       namespace_constructor_bindings: new Map(ctor_bindings.namespace_qualified),
       type_members: new Map(type_members),
-      type_aliases: new Map(type_aliases),
       call_initializers,
     };
   }
 
   /**
-   * Resolve type metadata from names to SymbolIds.
-   *
-   * Process:
-   * 1. Resolve type bindings: location → type_name → type_id
-   * 1b. Resolve namespace-qualified type bindings: location → [ns, class] → type_id
-   * 2. Build member maps: type_id → member_name → member_id
-   * 3. Resolve inheritance: type_id → parent_name → parent_id
-   * 4. Resolve interfaces: type_id → interface_names → interface_ids
-   *
-   * This is called internally by update_file() after extraction.
-   *
-   * @param file_id - The file being processed
-   * @param extracted - Extracted type data (transient)
-   * @param definitions - Definition registry for location/scope lookups
-   * @param resolutions - Resolution registry for name → SymbolId lookups
-   * @param exports - Export registry (for following namespace re-export chains)
-   * @param languages - File-path → language map (for module-path resolution in re-export chains)
-   * @param root_folder - Project root folder (for module-path resolution in re-export chains)
-   * @param import_source_resolver - Resolves a namespace import symbol to its source file path
+   * Resolve extracted type names to SymbolIds and store them, recording which
+   * symbols the file contributed so remove_file() can later evict them.
    */
   private resolve_type_metadata(
     file_id: FilePath,
@@ -222,17 +149,14 @@ export class TypeRegistry {
   ): void {
     const resolved_symbols = new Set<SymbolId>();
 
-    // STEP 1: Resolve type bindings (location → type_name → type_id)
+    // STEP 1: variable/parameter → annotated or directly-constructed type.
     for (const [loc_key, type_name] of extracted.simple_type_bindings) {
-      // Get the symbol at this location (the variable/parameter being typed)
       const symbol_id = definitions.get_symbol_at_location(loc_key);
       if (!symbol_id) continue;
 
-      // Get the scope where this symbol is defined
       const scope_id = definitions.get_symbol_scope(symbol_id);
       if (!scope_id) continue;
 
-      // Resolve the type name to a type SymbolId
       const type_id = resolutions.resolve(scope_id, type_name);
       if (type_id) {
         this.symbol_types.set(symbol_id, type_id);
@@ -240,15 +164,15 @@ export class TypeRegistry {
       }
     }
 
-    // STEP 1b: Resolve namespace-qualified constructor type bindings
-    // e.g., user = models.User(name) — chain is ["models", "User"]
-    // Skipped entirely when import_source_resolver is absent (degrades silently).
+    // STEP 1b: namespace-qualified constructor, e.g. `user = models.User()`
+    // (chain ["models", "User"]). Reaching the class requires following the
+    // namespace import, so without import_source_resolver the binding is left
+    // unresolved rather than guessed.
     if (import_source_resolver) {
       for (const [loc_key, chain] of extracted.namespace_constructor_bindings) {
         const symbol_id = definitions.get_symbol_at_location(loc_key);
-        // Skip if location has no symbol
         if (!symbol_id) continue;
-        // Skip if already resolved by STEP 1 (explicit annotation or direct constructor)
+        // A STEP 1 annotation or direct constructor takes precedence.
         if (this.symbol_types.has(symbol_id)) continue;
 
         const scope_id = definitions.get_symbol_scope(symbol_id);
@@ -271,31 +195,24 @@ export class TypeRegistry {
       }
     }
 
-    // STEP 1.5: Infer types from function return types (for factory patterns)
-    // For variables initialized from function calls without explicit type annotations,
-    // infer the type from the function's declared return type.
+    // STEP 1.5: factory pattern — an untyped variable takes the declared return
+    // type of the function it was initialized from.
     for (const [variable_id, function_name] of extracted.call_initializers) {
-      // Skip if variable already has a type (from explicit annotation in STEP 1)
       if (this.symbol_types.has(variable_id)) continue;
 
-      // Get the scope where the variable is defined
       const scope_id = definitions.get_symbol_scope(variable_id);
       if (!scope_id) continue;
 
-      // Resolve the function name to its SymbolId
       const function_id = resolutions.resolve(scope_id, function_name);
       if (!function_id) continue;
 
-      // Get the function definition
       const function_def = definitions.get(function_id);
       if (!function_def || function_def.kind !== "function") continue;
 
-      // Get the function's return type (as string)
       const return_type_name = function_def.return_type;
       if (!return_type_name) continue;
 
-      // Resolve the return type name to a type SymbolId
-      // Use the function's scope for resolution (return type is declared in function's context)
+      // The return type is declared in the function's own scope, so resolve it there.
       const function_scope_id = definitions.get_symbol_scope(function_id);
       const type_id = resolutions.resolve(function_scope_id || scope_id, return_type_name);
       if (type_id) {
@@ -304,9 +221,8 @@ export class TypeRegistry {
       }
     }
 
-    // STEP 2: Build resolved member maps
+    // STEP 2: copy each type's already-resolved member map from DefinitionRegistry.
     for (const type_id of extracted.type_members.keys()) {
-      // Get members directly from DefinitionRegistry (already SymbolIds)
       const member_map = definitions.get_member_index().get(type_id);
       if (member_map && member_map.size > 0) {
         this.resolved_type_members.set(type_id, new Map(member_map));
@@ -314,17 +230,16 @@ export class TypeRegistry {
       }
     }
 
-    // STEP 3: Resolve inheritance (extends clause)
+    // STEP 3: resolve extends/implements names. The first resolved name is the
+    // parent class; any remaining are implemented interfaces.
     for (const [type_id, member_info] of extracted.type_members) {
       if (!member_info.extends || member_info.extends.length === 0) {
         continue;
       }
 
-      // Get the scope where this type is defined
       const scope_id = definitions.get_symbol_scope(type_id);
       if (!scope_id) continue;
 
-      // Resolve parent/interface names to SymbolIds
       const resolved_parents: SymbolId[] = [];
       for (const parent_name of member_info.extends) {
         const parent_id = resolutions.resolve(scope_id, parent_name);
@@ -334,7 +249,6 @@ export class TypeRegistry {
       }
 
       if (resolved_parents.length > 0) {
-        // First is parent class, rest are interfaces
         this.parent_classes.set(type_id, resolved_parents[0]);
         resolved_symbols.add(type_id);
 
@@ -344,30 +258,24 @@ export class TypeRegistry {
       }
     }
 
-    // Track what this file contributed
     if (resolved_symbols.size > 0) {
       this.resolved_by_file.set(file_id, { resolved_symbols });
     }
   }
 
   /**
-   * Get members of a type by its SymbolId.
-   *
-   * Delegates to DefinitionRegistry for type member metadata.
-   *
-   * @param type_id - The type SymbolId (class, interface, enum, etc.)
-   * @returns TypeMemberInfo with methods, properties, extends
+   * Type members (methods, properties, extends) for a type, built on demand
+   * from its DefinitionRegistry entry. Enum members live in the member index
+   * rather than on the definition, so they are read from there.
    */
   get_type_members(type_id: SymbolId): TypeMemberInfo | undefined {
     if (!this.definitions) {
       return undefined;
     }
 
-    // Get the definition for this type
     const def = this.definitions.get(type_id);
     if (!def) return undefined;
 
-    // Build TypeMemberInfo from definition
     if (def.kind === "class") {
       return {
         methods: new Map(
@@ -389,7 +297,6 @@ export class TypeRegistry {
         extends: def.extends ?? [],
       };
     } else if (def.kind === "enum") {
-      // For enums, get members from the member index
       const member_map = this.definitions.get_member_index().get(type_id);
       return {
         methods: new Map(),
@@ -402,39 +309,19 @@ export class TypeRegistry {
   }
 
   /**
-   * Get the type of a symbol (variable, parameter, etc.)
-   *
-   * Returns the SymbolId of the type (class, interface, etc.) that the symbol is typed as.
-   *
-   * Priority:
-   * 1. Explicit type annotations (const x: Type)
-   * 2. Constructor assignments (const x = new Type())
-   * 3. Return types from function calls (future)
-   *
-   * @param symbol_id - The symbol to get the type for
-   * @returns SymbolId of the type, or null if type unknown
-   *
-   * @example
-   * ```typescript
-   * const user: User = new User();
-   * //    ^--- symbol_id
-   * //           ^--- returned type_id
-   * ```
+   * Resolved type of a variable/parameter/receiver, or null if unknown.
+   * Populated from explicit annotations, constructor assignments, and inferred
+   * function return types (see resolve_type_metadata).
    */
   get_symbol_type(symbol_id: SymbolId): SymbolId | null {
     return this.symbol_types.get(symbol_id) || null;
   }
 
   /**
-   * Register a type binding discovered during call resolution.
-   *
-   * This is an escape hatch for types that cannot be resolved during update_file()
-   * because they require knowing which call resolved to which class — information
-   * only available after Phase 2 (e.g., `user = models.User(name)` in Python).
-   *
-   * @param symbol_id - The symbol being typed (e.g., the variable `user`)
-   * @param type_id - The resolved type (e.g., the `User` class symbol)
-   * @param file_path - The file containing the symbol (for cleanup tracking)
+   * Record a type binding found during call resolution — the escape hatch for
+   * bindings that cannot be resolved in update_file() because they depend on
+   * which call resolved to which class, known only after call resolution
+   * (e.g. Python `user = models.User(name)`).
    */
   register_late_binding(symbol_id: SymbolId, type_id: SymbolId, file_path: FilePath): void {
     this.symbol_types.set(symbol_id, type_id);
@@ -447,34 +334,18 @@ export class TypeRegistry {
   }
 
   /**
-   * Walk the full inheritance chain from most derived to base.
-   *
-   * Returns array starting with the class itself, followed by parent,
-   * grandparent, etc. Handles circular inheritance gracefully (stops at cycle).
-   *
-   * @param class_id - The class to start from
-   * @returns Array of SymbolIds in inheritance chain
-   *
-   * @example
-   * ```typescript
-   * class Animal { }
-   * class Mammal extends Animal { }
-   * class Dog extends Mammal { }
-   *
-   * walk_inheritance_chain(dog_id) → [dog_id, mammal_id, animal_id]
-   * ```
+   * Inheritance chain from `class_id` up to its base, most-derived first.
+   * Stops on a cycle so malformed inheritance cannot loop forever.
    */
   walk_inheritance_chain(class_id: SymbolId): readonly SymbolId[] {
     const chain: SymbolId[] = [class_id];
     const seen = new Set<SymbolId>([class_id]);
     let current = class_id;
 
-    // Walk up extends chain
     while (true) {
       const parent = this.parent_classes.get(current);
       if (!parent) break;
 
-      // Detect cycles (shouldn't happen in valid code, but be defensive)
       if (seen.has(parent)) {
         console.warn(`Circular inheritance detected: ${class_id} → ${parent}`);
         break;
@@ -489,34 +360,14 @@ export class TypeRegistry {
   }
 
   /**
-   * Get a member (method/property) of a type by name.
-   *
-   * Walks the inheritance chain to find inherited members.
-   *
-   * Search order:
-   * 1. Direct members of the type
-   * 2. Members of parent class (recursively)
-   * 3. Members of implemented interfaces
-   *
-   * @param type_id - The type to look up members in
-   * @param member_name - The member name to find
-   * @returns SymbolId of the member, or null if not found
-   *
-   * @example
-   * ```typescript
-   * class Animal { speak() {} }
-   * class Dog extends Animal { bark() {} }
-   *
-   * get_type_member(dog_id, "bark")  → dog.bark symbol_id
-   * get_type_member(dog_id, "speak") → animal.speak symbol_id (inherited)
-   * ```
+   * Resolve a member by name on `type_id`, walking the inheritance chain and
+   * checking implemented interfaces at each level. Because the chain is walked
+   * most-derived first, an overriding member shadows the inherited one.
    */
   get_type_member(type_id: SymbolId, member_name: SymbolName): SymbolId | null {
-    // Walk inheritance chain from most derived to base
     const chain = this.walk_inheritance_chain(type_id);
 
     for (const class_id of chain) {
-      // Check direct members first
       const members = this.resolved_type_members.get(class_id);
       if (members) {
         const member_id = members.get(member_name);
@@ -525,7 +376,6 @@ export class TypeRegistry {
         }
       }
 
-      // Check implemented interfaces
       const interfaces = this.implemented_interfaces.get(class_id) || [];
       for (const interface_id of interfaces) {
         const interface_members = this.resolved_type_members.get(interface_id);
@@ -541,18 +391,13 @@ export class TypeRegistry {
     return null;
   }
 
-  /**
-   * Remove all type information from a file.
-   *
-   * @param file_path - The file to remove
-   */
+  /** Evict every index of the type data a file contributed. */
   remove_file(file_path: FilePath): void {
     const contributions = this.resolved_by_file.get(file_path);
     if (!contributions) {
-      return; // File not in registry
+      return;
     }
 
-    // Clean up resolved data
     for (const symbol_id of contributions.resolved_symbols) {
       this.symbol_types.delete(symbol_id);
       this.resolved_type_members.delete(symbol_id);
@@ -560,13 +405,9 @@ export class TypeRegistry {
       this.implemented_interfaces.delete(symbol_id);
     }
 
-    // Remove file tracking
     this.resolved_by_file.delete(file_path);
   }
 
-  /**
-   * Clear all type information from the registry.
-   */
   clear(): void {
     this.symbol_types.clear();
     this.resolved_type_members.clear();

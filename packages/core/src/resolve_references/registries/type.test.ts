@@ -6,6 +6,7 @@ import { set_test_resolutions } from "../resolve_references.test";
 import { make_export_chain_context } from "../file_folders_test_helper";
 import {
   class_symbol,
+  interface_symbol,
   method_symbol,
   variable_symbol,
   MethodDefinition,
@@ -169,7 +170,7 @@ describe("TypeRegistry", () => {
   });
 
   describe("get_type_members", () => {
-    it("should return undefined for non-existent type", () => {
+    it("returns undefined for non-existent type", () => {
       const file1 = "file1.ts" as FilePath;
       const loc = make_location(file1, 1);
       const class_id = class_symbol("NonExistent", loc);
@@ -177,7 +178,7 @@ describe("TypeRegistry", () => {
       expect(registry.get_type_members(class_id)).toBeUndefined();
     });
 
-    it("should retrieve type members by symbol id", () => {
+    it("retrieves type members by symbol id", () => {
       const file1 = "file1.ts" as FilePath;
       const { id: class_id, def: class_def } = make_class_with_members(
         "MyClass",
@@ -185,22 +186,63 @@ describe("TypeRegistry", () => {
         ["foo"],
         ["bar"]
       );
+      const foo_id = class_def.methods[0].symbol_id;
+      const bar_id = class_def.properties[0].symbol_id;
 
       const index = make_test_index(file1, {
         classes: new Map([[class_id, class_def]]),
       });
 
       const { definitions, resolutions } = make_mock_registries();
-
-      // Populate definitions registry so get_type_members can look up the class
       definitions.update_file(file1, [class_def]);
 
       registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
 
       const retrieved = registry.get_type_members(class_id);
-      expect(retrieved).toBeDefined();
-      expect(retrieved?.methods.get("foo" as SymbolName)).toBeDefined();
-      expect(retrieved?.properties.get("bar" as SymbolName)).toBeDefined();
+      expect(retrieved?.methods.get("foo" as SymbolName)).toEqual(foo_id);
+      expect(retrieved?.properties.get("bar" as SymbolName)).toEqual(bar_id);
+      expect(retrieved?.extends).toEqual([]);
+    });
+
+    it("builds members for an interface from its definition", () => {
+      const file1 = "file1.ts" as FilePath;
+      const iface_loc = make_location(file1, 1, 0, 5, 1);
+      const iface_id = interface_symbol("Greeter", iface_loc);
+      const greet_loc = make_location(file1, 2, 2);
+      const greet_id = method_symbol("greet", greet_loc);
+      const iface_def: AnyDefinition = {
+        kind: "interface",
+        symbol_id: iface_id,
+        name: "Greeter" as SymbolName,
+        location: iface_loc,
+        defining_scope_id: "module:0:0" as ScopeId,
+        is_exported: false,
+        extends: [],
+        methods: [
+          {
+            kind: "method",
+            symbol_id: greet_id,
+            name: "greet" as SymbolName,
+            location: greet_loc,
+            parameters: [],
+            defining_scope_id: "module:0:0" as ScopeId,
+          },
+        ],
+        properties: [],
+      };
+
+      const index = make_test_index(file1, {
+        interfaces: new Map([[iface_id, iface_def]]),
+      });
+
+      const { definitions, resolutions } = make_mock_registries();
+      definitions.update_file(file1, [iface_def]);
+
+      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
+
+      const retrieved = registry.get_type_members(iface_id);
+      expect(retrieved?.methods.get("greet" as SymbolName)).toEqual(greet_id);
+      expect(retrieved?.properties.size).toEqual(0);
       expect(retrieved?.extends).toEqual([]);
     });
 
@@ -336,7 +378,7 @@ describe("TypeRegistry", () => {
 
   describe("TypeContext Methods", () => {
     describe("get_symbol_type", () => {
-      it("should return type from explicit annotation", () => {
+      it("returns type from explicit annotation", () => {
         const file1 = "file1.ts" as FilePath;
         const type_registry = new TypeRegistry();
         const definitions = new DefinitionRegistry();
@@ -383,7 +425,7 @@ describe("TypeRegistry", () => {
         expect(result).toBe(user_class_id);
       });
 
-      it("should return null for untyped symbols", () => {
+      it("returns null for untyped symbols", () => {
         const file1 = "file1.ts" as FilePath;
         const type_registry = new TypeRegistry();
 
@@ -396,7 +438,7 @@ describe("TypeRegistry", () => {
     });
 
     describe("walk_inheritance_chain", () => {
-      it("should return full inheritance chain", () => {
+      it("returns the full inheritance chain", () => {
         const file1 = "file1.ts" as FilePath;
         const type_registry = new TypeRegistry();
         const definitions = new DefinitionRegistry();
@@ -477,7 +519,7 @@ describe("TypeRegistry", () => {
         expect(result).toEqual([dog_id, mammal_id, animal_id]);
       });
 
-      it("should include only the class itself if no parent", () => {
+      it("includes only the class itself when there is no parent", () => {
         const file1 = "file1.ts" as FilePath;
         const type_registry = new TypeRegistry();
         const definitions = new DefinitionRegistry();
@@ -510,7 +552,7 @@ describe("TypeRegistry", () => {
         expect(result).toEqual([animal_id]);
       });
 
-      it("should handle circular inheritance gracefully", () => {
+      it("stops at a cycle in circular inheritance", () => {
         const file1 = "file1.ts" as FilePath;
         const type_registry = new TypeRegistry();
 
@@ -533,7 +575,7 @@ describe("TypeRegistry", () => {
     });
 
     describe("get_type_member", () => {
-      it("should find direct members", () => {
+      it("finds direct members", () => {
         const file1 = "file1.ts" as FilePath;
         const type_registry = new TypeRegistry();
         const definitions = new DefinitionRegistry();
@@ -545,6 +587,7 @@ describe("TypeRegistry", () => {
           ["getName"],
           ["name"]
         );
+        const get_name_id = class_def.methods[0].symbol_id;
 
         definitions.update_file(file1, [class_def]);
         const index = make_test_index(file1, {
@@ -557,11 +600,10 @@ describe("TypeRegistry", () => {
           class_id,
           "getName" as SymbolName
         );
-        expect(result).toBeDefined();
-        expect(result).not.toBeNull();
+        expect(result).toBe(get_name_id);
       });
 
-      it("should find inherited members", () => {
+      it("finds inherited members", () => {
         const file1 = "file1.ts" as FilePath;
         const type_registry = new TypeRegistry();
         const definitions = new DefinitionRegistry();
@@ -636,7 +678,7 @@ describe("TypeRegistry", () => {
         expect(result).toBe(speak_method_id);
       });
 
-      it("should return null for non-existent members", () => {
+      it("returns null for non-existent members", () => {
         const file1 = "file1.ts" as FilePath;
         const type_registry = new TypeRegistry();
         const definitions = new DefinitionRegistry();
@@ -661,7 +703,7 @@ describe("TypeRegistry", () => {
         expect(result).toBeNull();
       });
 
-      it("should prefer direct members over inherited", () => {
+      it("prefers direct members over inherited", () => {
         const file1 = "file1.ts" as FilePath;
         const type_registry = new TypeRegistry();
         const definitions = new DefinitionRegistry();
@@ -749,5 +791,139 @@ describe("TypeRegistry", () => {
       });
     });
 
+  });
+
+  describe("register_late_binding", () => {
+    it("records a binding queryable via get_symbol_type", () => {
+      const file1 = "file1.ts" as FilePath;
+      const var_id = variable_symbol("user", make_location(file1, 3));
+      const type_id = class_symbol("User", make_location(file1, 1, 0, 2, 1));
+
+      registry.register_late_binding(var_id, type_id, file1);
+
+      expect(registry.get_symbol_type(var_id)).toBe(type_id);
+    });
+
+    it("evicts a late binding when its file is removed", () => {
+      const file1 = "file1.ts" as FilePath;
+      const var_id = variable_symbol("user", make_location(file1, 3));
+      const type_id = class_symbol("User", make_location(file1, 1, 0, 2, 1));
+
+      registry.register_late_binding(var_id, type_id, file1);
+      registry.remove_file(file1);
+
+      expect(registry.get_symbol_type(var_id)).toBeNull();
+    });
+  });
+
+  describe("remove_file", () => {
+    it("evicts symbol types, members, and inheritance for the file", () => {
+      const file1 = "file1.ts" as FilePath;
+      const definitions = new DefinitionRegistry();
+      const resolutions = new ResolutionRegistry();
+
+      const animal_loc = make_location(file1, 1, 0, 5, 1);
+      const animal_id = class_symbol("Animal", animal_loc);
+      const speak_loc = make_location(file1, 2, 2);
+      const speak_id = method_symbol("speak", speak_loc);
+      const animal_def: AnyDefinition = {
+        kind: "class",
+        symbol_id: animal_id,
+        name: "Animal" as SymbolName,
+        location: animal_loc,
+        defining_scope_id: "module:0:0" as ScopeId,
+        is_exported: false,
+        extends: [],
+        methods: [
+          {
+            kind: "method",
+            symbol_id: speak_id,
+            name: "speak" as SymbolName,
+            location: speak_loc,
+            parameters: [],
+            defining_scope_id: "module:0:0" as ScopeId,
+          },
+        ],
+        properties: [],
+        decorators: [],
+        constructors: [],
+      };
+
+      const dog_loc = make_location(file1, 7, 0, 9, 1);
+      const dog_id = class_symbol("Dog", dog_loc);
+      const dog_def: AnyDefinition = {
+        kind: "class",
+        symbol_id: dog_id,
+        name: "Dog" as SymbolName,
+        location: dog_loc,
+        defining_scope_id: "module:0:0" as ScopeId,
+        is_exported: false,
+        extends: ["Animal" as SymbolName],
+        methods: [],
+        properties: [],
+        decorators: [],
+        constructors: [],
+      };
+
+      const { id: user_id, def: user_def } = make_variable_with_type(
+        "user",
+        "Dog",
+        file1,
+        11
+      );
+
+      definitions.update_file(file1, [animal_def, dog_def, user_def]);
+      const index = make_test_index(file1, {
+        variables: new Map([[user_id, user_def]]),
+        classes: new Map([
+          [animal_id, animal_def],
+          [dog_id, dog_def],
+        ]),
+      });
+      set_test_resolutions(
+        resolutions,
+        "module:0:0" as ScopeId,
+        new Map([
+          ["Animal" as SymbolName, animal_id],
+          ["Dog" as SymbolName, dog_id],
+        ])
+      );
+
+      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
+
+      expect(registry.get_symbol_type(user_id)).toBe(dog_id);
+      expect(registry.walk_inheritance_chain(dog_id)).toEqual([dog_id, animal_id]);
+      expect(registry.get_type_member(dog_id, "speak" as SymbolName)).toBe(speak_id);
+
+      registry.remove_file(file1);
+
+      expect(registry.get_symbol_type(user_id)).toBeNull();
+      expect(registry.walk_inheritance_chain(dog_id)).toEqual([dog_id]);
+      expect(registry.get_type_member(dog_id, "speak" as SymbolName)).toBeNull();
+    });
+  });
+
+  describe("clear", () => {
+    it("empties every index", () => {
+      const file1 = "file1.ts" as FilePath;
+      const definitions = new DefinitionRegistry();
+      const resolutions = new ResolutionRegistry();
+
+      const { id: class_id, def: class_def } = make_class_with_members(
+        "User",
+        file1,
+        ["getName"]
+      );
+
+      definitions.update_file(file1, [class_def]);
+      const index = make_test_index(file1, {
+        classes: new Map([[class_id, class_def]]),
+      });
+      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
+
+      registry.clear();
+
+      expect(registry.get_type_member(class_id, "getName" as SymbolName)).toBeNull();
+    });
   });
 });
