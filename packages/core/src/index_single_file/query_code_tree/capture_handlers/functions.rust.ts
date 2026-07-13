@@ -14,8 +14,8 @@ import {
   extract_export_info,
   find_containing_impl,
   find_containing_trait,
-  attach_rust_test_harness_attributes,
 } from "../symbol_factories/symbol_factories.rust";
+import { attach_rust_test_harness_attributes } from "../symbol_factories/test_attributes.rust";
 import {
   consume_documentation,
 } from "../symbol_factories/documentation_state.rust";

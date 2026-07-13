@@ -30,17 +30,19 @@ import {
   extract_type_annotation,
   extract_initial_value,
   extract_default_value,
-  extract_import_path,
-  extract_require_path,
-  extract_original_name,
-  is_default_import,
-  is_namespace_import,
   extract_extends,
   detect_callback_context,
   detect_function_collection,
   extract_collection_source,
   extract_call_initializer_name,
 } from "../symbol_factories/symbol_factories.javascript";
+import {
+  extract_import_path,
+  extract_require_path,
+  extract_original_name,
+  is_default_import,
+  is_namespace_import,
+} from "../symbol_factories/imports.javascript";
 import {
   store_documentation,
   consume_documentation,
