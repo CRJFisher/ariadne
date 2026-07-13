@@ -1,27 +1,8 @@
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import type { Language } from "@ariadnejs/types";
-import JavaScript from "tree-sitter-javascript";
-import Python from "tree-sitter-python";
-import Rust from "tree-sitter-rust";
-import TypeScript from "tree-sitter-typescript";
 import { Query } from "tree-sitter";
-
-// TypeScript maps to the `.typescript` grammar rather than `.tsx` so a single
-// query works for both `.ts` and `.tsx` sources.
-export const LANGUAGE_TO_TREESITTER_LANG = new Map([
-  ["javascript", JavaScript],
-  ["typescript", TypeScript.typescript],
-  ["python", Python],
-  ["rust", Rust],
-]);
-
-export const SUPPORTED_LANGUAGES: readonly Language[] = [
-  "javascript",
-  "typescript",
-  "python",
-  "rust",
-] as const;
+import { LANGUAGE_TO_TREESITTER_LANG, SUPPORTED_LANGUAGES } from "./parsers";
 
 // Exported so tests can reset process-wide memoization between cases.
 export const query_cache = new Map<Language, string>();

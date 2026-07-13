@@ -1,56 +1,20 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import type { Language } from "@ariadnejs/types";
-import JavaScript from "tree-sitter-javascript";
-import Python from "tree-sitter-python";
-import Rust from "tree-sitter-rust";
-import TypeScript from "tree-sitter-typescript";
 import { mkdtempSync, rmSync, writeFileSync, readFileSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 import {
-  LANGUAGE_TO_TREESITTER_LANG,
   load_query,
   query_cache,
   cached_queries_dir_cache,
   get_queries_dir,
-  SUPPORTED_LANGUAGES,
 } from "./query_loader";
+import { LANGUAGE_TO_TREESITTER_LANG, SUPPORTED_LANGUAGES } from "./parsers";
 
 describe("query_loader", () => {
   beforeEach(() => {
     query_cache.clear();
     cached_queries_dir_cache.value = null;
-  });
-
-  describe("LANGUAGE_TO_TREESITTER_LANG", () => {
-    it("maps each supported language to its tree-sitter grammar", () => {
-      expect([...LANGUAGE_TO_TREESITTER_LANG.keys()]).toEqual([
-        "javascript",
-        "typescript",
-        "python",
-        "rust",
-      ]);
-      expect(LANGUAGE_TO_TREESITTER_LANG.get("javascript")).toBe(JavaScript);
-      expect(LANGUAGE_TO_TREESITTER_LANG.get("typescript")).toBe(
-        TypeScript.typescript
-      );
-      expect(LANGUAGE_TO_TREESITTER_LANG.get("python")).toBe(Python);
-      expect(LANGUAGE_TO_TREESITTER_LANG.get("rust")).toBe(Rust);
-    });
-  });
-
-  describe("SUPPORTED_LANGUAGES", () => {
-    it("lists exactly the languages with a tree-sitter grammar", () => {
-      expect(SUPPORTED_LANGUAGES).toEqual([
-        "javascript",
-        "typescript",
-        "python",
-        "rust",
-      ]);
-      expect([...LANGUAGE_TO_TREESITTER_LANG.keys()]).toEqual([
-        ...SUPPORTED_LANGUAGES,
-      ]);
-    });
   });
 
   describe("get_queries_dir", () => {

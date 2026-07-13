@@ -37,7 +37,7 @@ export {
 
 // Tree-sitter query execution (used by triage for diagnostic capture analysis)
 export { query_tree } from "./index_single_file/query_code_tree/query_code_tree";
-export { LANGUAGE_TO_TREESITTER_LANG, SUPPORTED_LANGUAGES } from "./index_single_file/query_code_tree/query_loader";
+export { LANGUAGE_TO_TREESITTER_LANG, SUPPORTED_LANGUAGES } from "./index_single_file/query_code_tree/parsers";
 
 // Introspection APIs (facts-only readback of resolver state for classifiers)
 export {
