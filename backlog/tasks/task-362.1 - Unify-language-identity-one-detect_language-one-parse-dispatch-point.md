@@ -1,7 +1,7 @@
 ---
 id: TASK-362.1
 title: "Unify language identity — one detect_language, one parse dispatch point"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-05 00:00"
 labels:
@@ -133,3 +133,47 @@ skill-side loader that reads persisted samples back from JSON.
 - [ ] Full core test suite green; no re-exports or aliases left behind.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+A file's language is a fact established exactly once, at the moment the file
+enters the system, and carried forward as an explicit parameter. Before this
+task, three private `detect_language` copies answered "what language is this
+file?" with three different unknown-extension contracts — one of them silently
+defaulting to TypeScript inside `trace_call_graph`, a latent mislabel bug —
+because downstream code had dropped the language thread the front half of the
+pipeline already carries (`ParsedFile.lang`, `SemanticIndex.language`, the
+`languages` map handed to every resolution phase).
+
+The change re-attaches that thread rather than giving re-derivation a shared
+home. `packages/core/src/detect_language.ts` is the single path-based detector
+(`detect_language(path): Language | null`, plus the core-internal throwing
+`assert_language`), and its callers are ingress sites only: the parse dispatch,
+file-discovery filtering, and the skill-side sample loader that re-enters
+persisted JSON. `project/parse_file.ts` owns the parse-phase dispatch, building
+parsers from the `parsers.ts` grammar registry (row 22) so the four tree-sitter
+grammar imports live at one site. `Project` maintains its `languages` map as
+first-class ingress state — set on update/restore, deleted on remove, exposed
+via `get_languages()` — instead of rebuilding it from all indexes on every
+update. Downstream, `trace_call_graph` receives the map as a parameter (a miss
+throws; nothing defaults), `BuiltinCheckFn` carries a trailing `language`
+parameter that the classifier driver looks up per entry, and
+`extract_entry_point_diagnostics` reads the map where it derives per-language
+features.
+
+Navigation: language identity starts at `detect_language.ts`; parsing lives in
+`project/parse_file.ts`; the map's lifecycle is the four mutation sites in
+`project/project.ts`; the classifier contract is
+`classify_entry_points/builtins/index.ts`. A structural guard in
+`builtins/field_denylist.test.ts` fails the build if a builtin ever re-derives
+language from a path, and `.claude/agents/classifier-author.md` templates the
+three-argument check signature so future drafts match.
+
+Sharp edges: the canonical detector is case-sensitive (uppercase extensions
+never arrive through discovery, which is also case-sensitive); `.mjs`/`.cjs`
+map to JavaScript at ingress, so `update_file` accepts them where the old
+parse-phase copy threw; and the fail-loud map lookups convert a
+formerly-silent mislabel into a crash, which is the intended contract — worth
+one smoke run against a large real project before the next release.

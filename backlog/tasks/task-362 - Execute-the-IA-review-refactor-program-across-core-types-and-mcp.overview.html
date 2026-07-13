@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TASK-362 — IA-review refactor program</title>
+<style>
+:root {
+  --ivory: #f7f3ec;
+  --oat: #ece4d6;
+  --paper: #fffdf8;
+  --slate: #2f3338;
+  --ink: #1d2024;
+  --mute: #6c6f73;
+  --faint: #9a9b97;
+  --clay: #c06d4f;
+  --olive: #6f7a4f;
+  --rust: #a8412a;
+  --work: #4a6b8a; /* work / build axis accent */
+  --concept: #7d6699; /* concept / idea axis accent */
+  --line: #d8cfbe;
+  --hair: #e4ddce;
+  --serif: ui-serif, Georgia, "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--ivory);
+  color: var(--slate);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.prose { max-width: 68ch; }
+
+/* ===== cross-doc-nav-index (work axis) ===== */
+.xnav {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--oat);
+  border-bottom: 2px solid var(--work);
+  padding: 8px clamp(16px, 5vw, 64px);
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+}
+.xnav .axis-tag {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--work); font-weight: 700;
+  margin-right: 10px; padding: 3px 8px; border: 1px solid var(--work);
+  border-radius: 999px;
+}
+.xnav a.doc-link, .xnav span.pending, .xnav span.current {
+  font-family: var(--mono); font-size: 11.5px;
+  padding: 4px 10px; border-radius: 999px; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.xnav a.doc-link {
+  color: var(--work); background: var(--paper);
+  border: 1px solid var(--work);
+}
+.xnav a.doc-link:hover { background: var(--work); color: var(--ivory); }
+.xnav a.doc-link:hover .dot.done { background: var(--ivory); }
+.xnav span.current {
+  color: var(--ivory); background: var(--work);
+  border: 1px solid var(--work); font-weight: 700;
+}
+.xnav span.pending {
+  color: var(--faint); background: transparent;
+  border: 1px dashed var(--line);
+}
+.xnav .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.dot.done { background: var(--olive); }
+.dot.cur { background: var(--ivory); }
+.dot.pend { background: var(--faint); }
+.xnav .ng { font-size: 9px; letter-spacing: .06em; color: var(--faint); text-transform: uppercase; }
+
+/* ===== sticky-toc-rail ===== */
+.toc {
+  position: sticky; top: 44px; z-index: 9;
+  background: var(--ivory);
+  border-bottom: 1px solid var(--hair);
+  padding: 7px clamp(16px, 5vw, 64px);
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+}
+.toc a {
+  font-family: var(--mono); font-size: 11px; text-decoration: none;
+  color: var(--mute); padding: 3px 9px; border-radius: 999px;
+  border: 1px solid var(--line);
+}
+.toc a:hover, .toc a.active { color: var(--slate); border-color: var(--clay); background: var(--paper); }
+
+main { padding: 0 clamp(16px, 5vw, 64px) 80px; }
+section { scroll-margin-top: 150px; padding-top: 34px; }
+
+/* ===== identity-header ===== */
+.idh { padding-top: 34px; border-bottom: 1px solid var(--hair); padding-bottom: 22px; }
+.idh .eyebrow {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--clay); margin-bottom: 10px;
+}
+.idh h1 {
+  font-family: var(--serif); font-weight: 600; font-size: clamp(30px, 4.4vw, 46px);
+  line-height: 1.08; margin: 0 0 14px; color: var(--ink); letter-spacing: -.01em;
+}
+.idh .meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.idh .meta .chip {
+  font-family: var(--mono); font-size: 11.5px; color: var(--mute);
+  background: var(--paper); border: 1px solid var(--line);
+  padding: 4px 10px; border-radius: 999px;
+}
+.idh .meta .chip b { color: var(--slate); }
+.idh .meta .branch { color: var(--work); border-color: var(--work); }
+.idh .meta .started { color: var(--clay); border-color: var(--clay); }
+
+/* ===== preamble ===== */
+.preamble {
+  font-size: 18px; line-height: 1.62; color: var(--slate);
+  margin: 26px 0 4px;
+}
+.preamble code { font-family: var(--mono); font-size: .88em; color: var(--slate); background: var(--oat); padding: 1px 5px; border-radius: 4px; }
+
+/* ===== prompt-provenance-box ===== */
+.prov {
+  border: 1px solid var(--line); border-left: 4px solid var(--clay);
+  background: var(--paper); border-radius: 10px;
+  padding: 16px 20px; margin: 26px 0 6px;
+}
+.prov .label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--clay); margin-bottom: 10px;
+}
+.prov ul { margin: 0; padding-left: 0; list-style: none; }
+.prov li {
+  font-family: var(--mono); font-size: 12.5px; color: var(--mute);
+  padding: 3px 0; line-height: 1.45;
+}
+.prov li b { color: var(--slate); font-weight: 600; }
+
+/* ===== figures / diagrams ===== */
+.fig { margin: 8px 0 0; }
+.fig svg { width: 100%; height: auto; display: block; }
+figcaption {
+  font-size: 14px; color: var(--mute); margin-top: 12px;
+  font-style: italic;
+}
+figcaption code { font-family: var(--mono); font-style: normal; font-size: .9em; color: var(--slate); background: var(--oat); padding: 1px 5px; border-radius: 4px; }
+h2.sh {
+  font-family: var(--serif); font-weight: 600; font-size: clamp(21px, 2.6vw, 27px);
+  color: var(--ink); margin: 0 0 4px; letter-spacing: -.005em;
+}
+.sk {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--clay); margin-bottom: 8px;
+}
+.legend {
+  display: flex; flex-wrap: wrap; gap: 16px; margin-top: 14px;
+  font-family: var(--mono); font-size: 11.5px; color: var(--mute);
+}
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+.lg-work { background: #eef1f4; border: 1px solid var(--work); }
+.lg-mute { background: #f2f0ea; border: 1px solid var(--faint); }
+.lg-clay { background: var(--clay); }
+
+/* ===== vertical-timeline (waves) ===== */
+.tl { position: relative; margin: 14px 0 0; padding-left: 8px; }
+.tl .row { display: grid; grid-template-columns: 30px 1fr; gap: 16px; padding-bottom: 22px; position: relative; }
+.tl .row:not(:last-child)::before {
+  content: ""; position: absolute; left: 14px; top: 24px; bottom: -4px;
+  width: 2px; background: var(--line);
+}
+.tl .dot {
+  width: 26px; height: 26px; border-radius: 50%; z-index: 1;
+  background: var(--paper); border: 2px solid var(--work);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 11px; color: var(--work); font-weight: 700;
+}
+.tl .row.impact .dot { background: var(--clay); border-color: var(--clay); color: var(--ivory); }
+.tl .body .t {
+  font-family: var(--sans); font-weight: 600; font-size: 15px; color: var(--slate);
+  margin-bottom: 4px; display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline;
+}
+.tl .body .rowtag {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--work); border: 1px solid var(--work); border-radius: 999px; padding: 1px 7px;
+}
+.tl .body .rowtag.warn { color: var(--clay); border-color: var(--clay); }
+.tl .body .d { font-size: 13.5px; color: var(--mute); }
+.tl .body code, .prov code, .decided code, .sub code { font-family: var(--mono); font-size: .9em; color: var(--slate); background: var(--oat); padding: 1px 5px; border-radius: 4px; }
+
+/* ===== collapsible-disclosure (sub-tasks) ===== */
+.tracklabel {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--work); font-weight: 700; margin: 20px 0 2px; padding-top: 4px;
+  border-top: 2px solid var(--work); display: inline-block;
+}
+.tracklabel.enf { color: var(--faint); border-top-color: var(--faint); }
+.subs { margin-top: 6px; }
+details.sub { border-bottom: 1px solid var(--hair); }
+details.sub > summary {
+  list-style: none; cursor: pointer; padding: 13px 4px;
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline;
+}
+details.sub > summary::-webkit-details-marker { display: none; }
+details.sub > summary::before {
+  content: "\25B8"; color: var(--clay); font-size: 12px; transition: transform .15s ease;
+  display: inline-block; margin-right: 2px;
+}
+details.sub[open] > summary::before { transform: rotate(90deg); }
+.sub .sid { font-family: var(--mono); font-size: 12.5px; color: var(--work); font-weight: 700; }
+.sub .stitle { font-family: var(--sans); font-weight: 600; font-size: 15px; color: var(--slate); }
+.sub .stag {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .06em;
+  color: var(--mute); background: var(--paper); border: 1px solid var(--line);
+  border-radius: 999px; padding: 2px 8px;
+}
+.sub .stag.enf { color: var(--olive); border-color: var(--olive); }
+.sub .stag.enc { color: var(--concept); border-color: var(--concept); }
+.sub a.golink {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--work); border: 1px solid var(--work); background: var(--paper);
+  border-radius: 999px; padding: 2px 9px; text-decoration: none; margin-left: auto;
+}
+.sub a.golink:hover { background: var(--work); color: var(--ivory); }
+.sub .spend {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--faint); border: 1px dashed var(--line); border-radius: 999px;
+  padding: 2px 9px; margin-left: auto;
+}
+.sub .goal {
+  padding: 0 4px 16px 24px; font-size: 13.5px; color: var(--mute); max-width: 92ch;
+}
+
+/* ===== accent-callout: decided matters (inverted) ===== */
+.decided {
+  background: var(--slate); color: #e8e4db;
+  border-left: 4px solid var(--clay); border-radius: 12px;
+  padding: 22px 26px; margin-top: 12px;
+}
+.decided .klabel {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .14em;
+  text-transform: uppercase; color: #e6b6a3; margin-bottom: 14px; font-weight: 700;
+}
+.decided ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+.decided li {
+  display: grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: start;
+  font-size: 14px; line-height: 1.5;
+}
+.decided .num {
+  font-family: var(--mono); font-size: 11px; font-weight: 700; color: #e6b6a3;
+  border: 1px solid #5a5f64; border-radius: 6px; text-align: center;
+  padding: 2px 0; background: #3a3f45;
+}
+.decided b { color: var(--ivory); font-weight: 600; }
+.decided code { background: #3a3f45; color: #d7c9a8; }
+
+footer {
+  border-top: 1px solid var(--hair); margin-top: 40px; padding: 22px clamp(16px, 5vw, 64px) 40px;
+  font-family: var(--mono); font-size: 11.5px; color: var(--faint);
+}
+footer b { color: var(--mute); }
+</style>
+</head>
+<body>
+
+<!-- ===== cross-doc-nav-index: work axis ===== -->
+<nav class="xnav" aria-label="Task family navigation (work axis)">
+  <span class="axis-tag">Work axis · TASK-362</span>
+  <span class="current" aria-current="page"><span class="dot cur"></span>Program map</span>
+  <a class="doc-link" href="task-362.1 - Unify-language-identity-one-detect_language-one-parse-dispatch-point.language-identity.html"><span class="dot done"></span>362.1 · Language identity</a>
+  <span class="pending"><span class="dot pend"></span>362.2 Type-hub<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.3 Dotted leaves<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.4 Split megafile<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.5 Dead island<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.6 Stage boundaries<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.7 MCP boot/logic<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.8 Hygiene sweep<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.9 IA rules<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.10 File-naming hook<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.11 Singleton guard<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.12 Stage hook<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.13 Doc-truth<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.14 Write nudges<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.15 Thin context<span class="ng">not yet generated</span></span>
+</nav>
+
+<!-- ===== sticky-toc-rail ===== -->
+<nav class="toc" aria-label="Section outline">
+  <a href="#shape">Program shape</a>
+  <a href="#waves">Work waves</a>
+  <a href="#subtasks">The fifteen pieces</a>
+  <a href="#decided">Settled rulings</a>
+</nav>
+
+<main>
+
+<!-- ===== identity-header ===== -->
+<header class="idh">
+  <div class="eyebrow">TASK-362 · Information architecture · Refactor program</div>
+  <h1>Execute the IA-review refactor program across core, types, and mcp</h1>
+  <div class="meta">
+    <span class="chip">15 sub-tasks</span>
+    <span class="chip">2 tracks</span>
+    <span class="chip">4 dependency waves</span>
+    <span class="chip branch">packages: <b>core · types · mcp</b></span>
+    <span class="chip started">362.1 <b>started</b></span>
+  </div>
+</header>
+
+<!-- ===== plain-language-preamble (verbatim) ===== -->
+<p class="preamble prose">Task 362 is a cleanup program for Ariadne's core code. A review found that while the top-level folders match the intended design, the code one level down has drifted: four oversized files each hide many jobs behind a single name, and the handling of "which programming language is this?" is scattered and inconsistent across the codebase. The program splits into fifteen sub-tasks along two tracks. The first eight (362.1 to 362.8) do the actual refactoring — unifying language detection, breaking up the oversized files, cleaning package boundaries. The last seven (362.9 to 362.15) harden the guardrails — hooks and rules that keep the newly-cleaned patterns from drifting back. The sub-tasks run in dependency waves; 362.1 goes first because it has the smallest blast radius, the highest citation count across the review, and it unblocks two other areas.</p>
+
+<!-- ===== prompt-provenance-box ===== -->
+<aside class="prov">
+  <div class="label">Built from — the IA-review drafts &amp; the TASK-362 brief</div>
+  <ul>
+    <li><b>task-362 brief :17–34</b> — the diagnosis: ten of twelve routing drills fail one level below the folders; <code>detect_language</code> exists as three forked copies (one a latent mislabel bug in <code>trace_call_graph.ts</code>)</li>
+    <li><b>task-362 brief :45–78</b> — the eight refactor-track sub-tasks with area / effort / risk one-liners</li>
+    <li><b>task-362 brief :87–107</b> — the dependency graph (verbatim edges) and the four-wave work order</li>
+    <li><b>task-362 brief :114–147</b> — the enforcement / encouragement layer (362.9–362.15) and its warn-only-until-refactor sequencing</li>
+    <li><b>task-362 brief :36–41, :184–200</b> — the six decided rulings and the full fifteen-item sub-task list</li>
+    <li><b>backlog/drafts/ia-review.refactor-program.md · ia-review.information-architecture.md</b> — the verified program &amp; analysis</li>
+  </ul>
+</aside>
+
+<!-- ===== family shape: mermaid-prerendered-svg (LOAD-BEARING) ===== -->
+<section id="shape">
+  <div class="sk">The program at a glance</div>
+  <h2 class="sh">Fifteen sub-tasks, two tracks, feeding four dependency waves</h2>
+  <figure class="fig" role="img" aria-label="Program dependency graph: fifteen sub-tasks across two tracks and four waves. The refactor track 362.1 to 362.8 carries the real dependency edges; 362.1 is the clay-tinted root feeding 362.3, 362.4 and 362.8; the enforcement track 362.9 to 362.15 couples in via dotted warn-only edges from 362.1, 362.6 and 362.9.">
+    <div class="cdoc-mermaid-scope"><svg id="my-svg" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="flowchart" style="max-width: 1376.39px; background-color: white;" viewBox="0 0 1376.390625 1199.5" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#my-svg{font-size:14px;fill:#2f3338;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#fffdf8;}#my-svg .error-text{fill:#000207;stroke:#000207;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#2f3338;stroke:#2f3338;}#my-svg .marker.cross{stroke:#2f3338;}#my-svg svg{font-size:14px;}#my-svg p{margin:0;}#my-svg .label{color:#2f3338;}#my-svg .cluster-label text{fill:#000207;}#my-svg .cluster-label span{color:#000207;}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#2f3338;color:#2f3338;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ece4d6;stroke:#c06d4f;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#2f3338!important;stroke-width:0;stroke:#2f3338;}#my-svg .arrowheadPath{fill:#0b0b0b;}#my-svg .edgePath .path{stroke:#2f3338;stroke-width:1px;}#my-svg .flowchart-link{stroke:#2f3338;fill:none;}#my-svg .edgeLabel{background-color:hsl(-81.8181818182, 36.6666666667%, 88.2352941176%);text-align:center;}#my-svg .edgeLabel p{background-color:hsl(-81.8181818182, 36.6666666667%, 88.2352941176%);}#my-svg .edgeLabel rect{opacity:0.5;background-color:hsl(-81.8181818182, 36.6666666667%, 88.2352941176%);fill:hsl(-81.8181818182, 36.6666666667%, 88.2352941176%);}#my-svg .labelBkg{background-color:rgba(227.9999999999, 213.9999999998, 235.9999999999, 0.5);}#my-svg .cluster rect{fill:#fffdf8;stroke:hsl(42.8571428571, 60%, 88.6274509804%);stroke-width:1px;}#my-svg .cluster text{fill:#000207;}#my-svg .cluster span{color:#000207;}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-size:12px;background:#fffdf8;border:1px solid hsl(42.8571428571, 60%, 88.6274509804%);border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#2f3338;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:hsl(-81.8181818182, 36.6666666667%, 88.2352941176%);text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:hsl(-81.8181818182, 36.6666666667%, 88.2352941176%);padding:2px;}#my-svg .icon-shape .label rect,#my-svg .image-shape .label rect{opacity:0.5;background-color:hsl(-81.8181818182, 36.6666666667%, 88.2352941176%);fill:hsl(-81.8181818182, 36.6666666667%, 88.2352941176%);}#my-svg .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#my-svg .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#my-svg .node .neo-node{stroke:#c06d4f;}#my-svg [data-look="neo"].node rect,#my-svg [data-look="neo"].cluster rect,#my-svg [data-look="neo"].node polygon{stroke:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].node path{stroke:url(#my-svg-gradient);stroke-width:1px;}#my-svg [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].node .neo-line path{stroke:#c06d4f;filter:none;}#my-svg [data-look="neo"].node circle{stroke:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].node circle .state-start{fill:#000000;}#my-svg [data-look="neo"].icon-shape .icon{fill:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].icon-shape .icon-neo path{stroke:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#my-svg .started&gt;*{fill:rgb(192, 109, 79)!important;stroke:rgb(168, 65, 42)!important;color:rgb(247, 243, 236)!important;font-weight:600!important;}#my-svg .started span{fill:rgb(192, 109, 79)!important;stroke:rgb(168, 65, 42)!important;color:rgb(247, 243, 236)!important;font-weight:600!important;}#my-svg .started tspan{fill:rgb(247, 243, 236)!important;}</style><g><marker id="my-svg_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"/></marker><marker id="my-svg_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"/></marker><g class="root"><g class="clusters"><g class="cluster" id="my-svg-ENFORCE" data-look="classic"><rect style="fill:#f2f0ea !important;stroke:#9a9b97 !important" x="653" y="8" width="715.390625" height="567"/><g class="cluster-label" transform="translate(888.3046875, 8)"><foreignObject width="244.78125" height="21"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5;"><span class="nodeLabel" style="color:#6c6f73 !important"><p>ENFORCE / ENCOURAGE · 362.9–362.15</p></span></div></foreignObject></g></g><g class="cluster" id="my-svg-REFACTOR" data-look="classic"><rect style="fill:#eef1f4 !important;stroke:#4a6b8a !important" x="8" y="595" width="1360.390625" height="596.5"/><g class="cluster-label" transform="translate(612.78125, 595)"><foreignObject width="150.828125" height="21"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5;"><span class="nodeLabel" style="color:#2f3338 !important"><p>REFACTOR · 362.1–362.8</p></span></div></foreignObject></g></g></g><g class="edgePaths"><path d="M201.089,783L220.574,801.417C240.059,819.833,279.03,856.667,319.944,898.137C360.858,939.607,403.716,985.713,425.145,1008.767L446.574,1031.82" id="my-svg-L_T1_T3_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_T1_T3_0" data-points="W3sieCI6MjAxLjA4ODczNzIwMTM2NTE4LCJ5Ijo3ODN9LHsieCI6MzE4LCJ5Ijo4OTMuNX0seyJ4Ijo0NDkuMjk2ODUxNTc0MjEyOSwieSI6MTAzNC43NX1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M227.884,783L242.903,791.333C257.922,799.667,287.961,816.333,306.481,824.667C325,833,332,833,335.5,833L339,833" id="my-svg-L_T1_T4_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_T1_T4_0" data-points="W3sieCI6MjI3Ljg4MzcyMDkzMDIzMjU2LCJ5Ijo3ODN9LHsieCI6MzE4LCJ5Ijo4MzN9LHsieCI6MzQzLCJ5Ijo4MzN9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M264.455,1137L273.379,1140.167C282.303,1143.333,300.152,1149.667,327.462,1141.475C354.773,1133.284,391.545,1110.568,409.931,1099.21L428.318,1087.852" id="my-svg-L_T2_T3_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_T2_T3_0" data-points="W3sieCI6MjY0LjQ1NDU0NTQ1NDU0NTQ0LCJ5IjoxMTM3fSx7IngiOjMxOCwieSI6MTE1Nn0seyJ4Ijo0MzEuNzIwNjI2NjMxODUzOCwieSI6MTA4NS43NX1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M559.393,747L570.828,750.375C582.262,753.75,605.131,760.5,620.732,763.875C636.333,767.25,644.667,767.25,671.325,799.536C697.983,831.823,742.966,896.395,765.458,928.682L787.95,960.968" id="my-svg-L_T5_T6_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_T5_T6_0" data-points="W3sieCI6NTU5LjM5MzQ0MjYyMjk1MDgsInkiOjc0N30seyJ4Ijo2MjgsInkiOjc2Ny4yNX0seyJ4Ijo2NTMsInkiOjc2Ny4yNX0seyJ4Ijo3OTAuMjM1OTU1MDU2MTc5OCwieSI6OTY0LjI1fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M570.109,1072.937L579.758,1074.197C589.406,1075.458,608.703,1077.979,622.518,1079.239C636.333,1080.5,644.667,1080.5,666.832,1069.962C688.998,1059.424,724.996,1038.347,742.995,1027.809L760.994,1017.271" id="my-svg-L_T3_T6_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_T3_T6_0" data-points="W3sieCI6NTcwLjEwOTM3NSwieSI6MTA3Mi45MzY4Njk5NTk2NzczfSx7IngiOjYyOCwieSI6MTA4MC41fSx7IngiOjY1MywieSI6MTA4MC41fSx7IngiOjc2NC40NDYyODA5OTE3MzU1LCJ5IjoxMDE1LjI1fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M293,1117.565L297.167,1118.095C301.333,1118.626,309.667,1119.688,339.667,1120.219C369.667,1120.75,421.333,1120.75,473,1120.75C524.667,1120.75,576.333,1120.75,606.333,1120.75C636.333,1120.75,644.667,1120.75,669.129,1103.597C693.591,1086.444,734.182,1052.138,754.478,1034.985L774.773,1017.832" id="my-svg-L_T2_T6_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_T2_T6_0" data-points="W3sieCI6MjkzLCJ5IjoxMTE3LjU2NDUxNjEyOTAzMjJ9LHsieCI6MzE4LCJ5IjoxMTIwLjc1fSx7IngiOjQ3MywieSI6MTEyMC43NX0seyJ4Ijo2MjgsInkiOjExMjAuNzV9LHsieCI6NjUzLCJ5IjoxMTIwLjc1fSx7IngiOjc3Ny44MjgyNDQyNzQ4MDkyLCJ5IjoxMDE1LjI1fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M603,858.371L607.167,859.184C611.333,859.997,619.667,861.624,628,862.437C636.333,863.25,644.667,863.25,657.043,863.25C669.419,863.25,685.839,863.25,694.048,863.25L702.258,863.25" id="my-svg-L_T4_T7_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_T4_T7_0" data-points="W3sieCI6NjAzLCJ5Ijo4NTguMzcwOTY3NzQxOTM1NX0seyJ4Ijo2MjgsInkiOjg2My4yNX0seyJ4Ijo2NTMsInkiOjg2My4yNX0seyJ4Ijo3MDYuMjU3ODEyNSwieSI6ODYzLjI1fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M227.884,711L242.903,702.667C257.922,694.333,287.961,677.667,328.814,669.333C369.667,661,421.333,661,473,661C524.667,661,576.333,661,606.333,661C636.333,661,644.667,661,674.667,661C704.667,661,756.333,661,815.949,661C875.565,661,943.13,661,1006.078,690.856C1069.026,720.713,1127.356,780.426,1156.521,810.282L1185.686,840.139" id="my-svg-L_T1_T8_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_T1_T8_0" data-points="W3sieCI6MjI3Ljg4MzcyMDkzMDIzMjU2LCJ5Ijo3MTF9LHsieCI6MzE4LCJ5Ijo2NjF9LHsieCI6NDczLCJ5Ijo2NjF9LHsieCI6NjI4LCJ5Ijo2NjF9LHsieCI6NjUzLCJ5Ijo2NjF9LHsieCI6ODA4LCJ5Ijo2NjF9LHsieCI6MTAxMC42OTUzMTI1LCJ5Ijo2NjF9LHsieCI6MTE4OC40ODEwODA1NzIyODksInkiOjg0M31d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M195.442,1065L215.868,1042.333C236.295,1019.667,277.147,974.333,323.407,951.667C369.667,929,421.333,929,473,929C524.667,929,576.333,929,606.333,929C636.333,929,644.667,929,674.667,929C704.667,929,756.333,929,815.949,929C875.565,929,943.13,929,995.818,923.357C1048.505,917.715,1086.315,906.429,1105.219,900.787L1124.124,895.144" id="my-svg-L_T2_T8_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_T2_T8_0" data-points="W3sieCI6MTk1LjQ0MTg2MDQ2NTExNjMsInkiOjEwNjV9LHsieCI6MzE4LCJ5Ijo5Mjl9LHsieCI6NDczLCJ5Ijo5Mjl9LHsieCI6NjI4LCJ5Ijo5Mjl9LHsieCI6NjUzLCJ5Ijo5Mjl9LHsieCI6ODA4LCJ5Ijo5Mjl9LHsieCI6MTAxMC42OTUzMTI1LCJ5Ijo5Mjl9LHsieCI6MTEyNy45NTcwNjM1MzMwNTc5LCJ5Ijo4OTR9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M570.109,1053.985L579.758,1053.362C589.406,1052.74,608.703,1051.495,622.518,1050.872C636.333,1050.25,644.667,1050.25,674.667,1050.25C704.667,1050.25,756.333,1050.25,815.949,1050.25C875.565,1050.25,943.13,1050.25,1005.459,1024.653C1067.788,999.057,1124.881,947.864,1153.427,922.267L1181.974,896.67" id="my-svg-L_T3_T8_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_T3_T8_0" data-points="W3sieCI6NTcwLjEwOTM3NSwieSI6MTA1My45ODQ4NzkwMzIyNTh9LHsieCI6NjI4LCJ5IjoxMDUwLjI1fSx7IngiOjY1MywieSI6MTA1MC4yNX0seyJ4Ijo4MDgsInkiOjEwNTAuMjV9LHsieCI6MTAxMC42OTUzMTI1LCJ5IjoxMDUwLjI1fSx7IngiOjExODQuOTUxOTQyOTE2MDkzNSwieSI6ODk0fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M594.967,797L600.473,795.375C605.978,793.75,616.989,790.5,626.661,788.875C636.333,787.25,644.667,787.25,674.667,787.25C704.667,787.25,756.333,787.25,815.949,787.25C875.565,787.25,943.13,787.25,999.474,796.294C1055.818,805.337,1100.94,823.424,1123.501,832.468L1146.063,841.512" id="my-svg-L_T4_T8_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_T4_T8_0" data-points="W3sieCI6NTk0Ljk2NzIxMzExNDc1NDEsInkiOjc5N30seyJ4Ijo2MjgsInkiOjc4Ny4yNX0seyJ4Ijo2NTMsInkiOjc4Ny4yNX0seyJ4Ijo4MDgsInkiOjc4Ny4yNX0seyJ4IjoxMDEwLjY5NTMxMjUsInkiOjc4Ny4yNX0seyJ4IjoxMTQ5Ljc3NTQ4MDc2OTIzMDksInkiOjg0M31d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M581.992,707.261L589.66,706.259C597.328,705.257,612.664,703.254,624.499,702.252C636.333,701.25,644.667,701.25,674.667,701.25C704.667,701.25,756.333,701.25,815.949,701.25C875.565,701.25,943.13,701.25,1005.03,724.451C1066.931,747.651,1123.166,794.053,1151.283,817.254L1179.401,840.454" id="my-svg-L_T5_T8_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_T5_T8_0" data-points="W3sieCI6NTgxLjk5MjE4NzUsInkiOjcwNy4yNjA2OTgwODQ2Nzc0fSx7IngiOjYyOCwieSI6NzAxLjI1fSx7IngiOjY1MywieSI6NzAxLjI1fSx7IngiOjgwOCwieSI6NzAxLjI1fSx7IngiOjEwMTAuNjk1MzEyNSwieSI6NzAxLjI1fSx7IngiOjExODIuNDg2NDA2OTUwNjcyNywieSI6ODQzfV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M915.555,1000.495L931.411,1002.079C947.268,1003.663,978.982,1006.832,1021.986,989.464C1064.991,972.097,1119.287,934.193,1146.435,915.241L1173.583,896.29" id="my-svg-L_T6_T8_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_T6_T8_0" data-points="W3sieCI6OTE1LjU1NDY4NzUsInkiOjEwMDAuNDk1MTA1MDI5ODcwOH0seyJ4IjoxMDEwLjY5NTMxMjUsInkiOjEwMTB9LHsieCI6MTE3Ni44NjI0OTQ0Nzg3OTg3LCJ5Ijo4OTR9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M909.742,863.25L926.568,863.25C943.393,863.25,977.044,863.25,1010.197,863.673C1043.349,864.096,1076.003,864.942,1092.331,865.364L1108.658,865.787" id="my-svg-L_T7_T8_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_T7_T8_0" data-points="W3sieCI6OTA5Ljc0MjE4NzUsInkiOjg2My4yNX0seyJ4IjoxMDEwLjY5NTMxMjUsInkiOjg2My4yNX0seyJ4IjoxMTEyLjY1NjI1LCJ5Ijo4NjUuODkwODg0NTYzNDk5OH1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M210.897,711L228.747,697.583C246.598,684.167,282.299,657.333,325.983,643.917C369.667,630.5,421.333,630.5,473,630.5C524.667,630.5,576.333,630.5,606.333,630.5C636.333,630.5,644.667,630.5,670.395,597.392C696.124,564.284,739.248,498.068,760.81,464.96L782.372,431.852" id="my-svg-L_T1_T11_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_T1_T11_0" data-points="W3sieCI6MjEwLjg5Njk5NTcwODE1NDUyLCJ5Ijo3MTF9LHsieCI6MzE4LCJ5Ijo2MzAuNX0seyJ4Ijo0NzMsInkiOjYzMC41fSx7IngiOjYyOCwieSI6NjMwLjV9LHsieCI6NjUzLCJ5Ijo2MzAuNX0seyJ4Ijo3ODQuNTU0NjIxODQ4NzM5NSwieSI6NDI4LjV9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M915.555,981.658L931.411,980.465C947.268,979.272,978.982,976.886,1026.68,866.75C1074.379,756.613,1138.063,538.726,1169.905,429.783L1201.746,320.839" id="my-svg-L_T6_T12_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_T6_T12_0" data-points="W3sieCI6OTE1LjU1NDY4NzUsInkiOjk4MS42NTgwMDczMjMxODM3fSx7IngiOjEwMTAuNjk1MzEyNSwieSI6OTc0LjV9LHsieCI6MTIwMi44Njg1OTAwMzI0NDQyLCJ5IjozMTd9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M937.148,169.5L949.406,169.5C961.664,169.5,986.18,169.5,1010.151,169.5C1034.122,169.5,1057.549,169.5,1069.263,169.5L1080.977,169.5" id="my-svg-L_T9_T13_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_T9_T13_0" data-points="W3sieCI6OTM3LjE0ODQzNzUsInkiOjE2OS41fSx7IngiOjEwMTAuNjk1MzEyNSwieSI6MTY5LjV9LHsieCI6MTA4NC45NzY1NjI1LCJ5IjoxNjkuNX1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_T1_T3_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T1_T4_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T2_T3_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T5_T6_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T3_T6_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T2_T6_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T4_T7_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T1_T8_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T2_T8_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T3_T8_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T4_T8_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T5_T8_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T6_T8_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T7_T8_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(473, 630.5)"><g class="label" data-id="L_T1_T11_0" transform="translate(-47.6953125, -10.5)"><foreignObject width="95.390625" height="21"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>warn-only until</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(1093.39879, 691.53903)"><g class="label" data-id="L_T6_T12_0" transform="translate(-47.6953125, -10.5)"><foreignObject width="95.390625" height="21"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>warn-only until</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(1010.6953125, 169.5)"><g class="label" data-id="L_T9_T13_0" transform="translate(-28.2734375, -10.5)"><foreignObject width="56.546875" height="21"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>precedes</p></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default started" id="my-svg-flowchart-T1-0" data-look="classic" transform="translate(163, 747)"><rect class="basic label-container" style="fill:#c06d4f !important;stroke:#a8412a !important" x="-130" y="-36" width="260" height="72"/><g class="label" style="color:#f7f3ec !important;font-weight:600 !important" transform="translate(-100, -21)"><rect/><foreignObject width="200" height="42"><div style="color: rgb(247, 243, 236) !important; font-weight: 600 !important; display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#f7f3ec !important;font-weight:600 !important" class="nodeLabel"><p>362.1 · Unify language identity</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-T2-1" data-look="classic" transform="translate(163, 1101)"><rect class="basic label-container" style="" x="-130" y="-36" width="260" height="72"/><g class="label" style="" transform="translate(-100, -21)"><rect/><foreignObject width="200" height="42"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>362.2 · Dissolve index_single_file hub</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-T3-2" data-look="classic" transform="translate(473, 1060.25)"><rect class="basic label-container" style="" x="-97.109375" y="-25.5" width="194.21875" height="51"/><g class="label" style="" transform="translate(-67.109375, -10.5)"><rect/><foreignObject width="134.21875" height="21"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>362.3 · Dotted leaves</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-T4-3" data-look="classic" transform="translate(473, 833)"><rect class="basic label-container" style="" x="-130" y="-36" width="260" height="72"/><g class="label" style="" transform="translate(-100, -21)"><rect/><foreignObject width="200" height="42"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>362.4 · Split classification megafile</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-T5-4" data-look="classic" transform="translate(473, 721.5)"><rect class="basic label-container" style="" x="-108.9921875" y="-25.5" width="217.984375" height="51"/><g class="label" style="" transform="translate(-78.9921875, -10.5)"><rect/><foreignObject width="157.984375" height="21"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>362.5 · Types dead island</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-T6-5" data-look="classic" transform="translate(808, 989.75)"><rect class="basic label-container" style="" x="-107.5546875" y="-25.5" width="215.109375" height="51"/><g class="label" style="" transform="translate(-77.5546875, -10.5)"><rect/><foreignObject width="155.109375" height="21"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>362.6 · Stage boundaries</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-T7-6" data-look="classic" transform="translate(808, 863.25)"><rect class="basic label-container" style="" x="-101.7421875" y="-25.5" width="203.484375" height="51"/><g class="label" style="" transform="translate(-71.7421875, -10.5)"><rect/><foreignObject width="143.484375" height="21"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>362.7 · MCP boot/logic</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-T8-7" data-look="classic" transform="translate(1213.390625, 868.5)"><rect class="basic label-container" style="" x="-100.734375" y="-25.5" width="201.46875" height="51"/><g class="label" style="" transform="translate(-70.734375, -10.5)"><rect/><foreignObject width="141.46875" height="21"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>362.8 · Hygiene sweep</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-T9-8" data-look="classic" transform="translate(808, 169.5)"><rect class="basic label-container" style="" x="-129.1484375" y="-25.5" width="258.296875" height="51"/><g class="label" style="" transform="translate(-99.1484375, -10.5)"><rect/><foreignObject width="198.296875" height="21"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>362.9 · Refresh IA rule payloads</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-T10-9" data-look="classic" transform="translate(1213.390625, 68.5)"><rect class="basic label-container" style="" x="-111.4609375" y="-25.5" width="222.921875" height="51"/><g class="label" style="" transform="translate(-81.4609375, -10.5)"><rect/><foreignObject width="162.921875" height="21"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>362.10 · File-naming hook</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-T11-10" data-look="classic" transform="translate(808, 392.5)"><rect class="basic label-container" style="" x="-130" y="-36" width="260" height="72"/><g class="label" style="" transform="translate(-100, -21)"><rect/><foreignObject width="200" height="42"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>362.11 · detect_language Stop guard</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-T12-11" data-look="classic" transform="translate(1213.390625, 281)"><rect class="basic label-container" style="" x="-130" y="-36" width="260" height="72"/><g class="label" style="" transform="translate(-100, -21)"><rect/><foreignObject width="200" height="42"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>362.12 · Stage-boundary Stop hook</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-T13-12" data-look="classic" transform="translate(1213.390625, 169.5)"><rect class="basic label-container" style="" x="-128.4140625" y="-25.5" width="256.828125" height="51"/><g class="label" style="" transform="translate(-98.4140625, -10.5)"><rect/><foreignObject width="196.828125" height="21"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>362.13 · Doc-truth + dead-code</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-T14-13" data-look="classic" transform="translate(1213.390625, 392.5)"><rect class="basic label-container" style="" x="-115.4296875" y="-25.5" width="230.859375" height="51"/><g class="label" style="" transform="translate(-85.4296875, -10.5)"><rect/><foreignObject width="170.859375" height="21"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>362.14 · Write-time nudges</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-T15-14" data-look="classic" transform="translate(1213.390625, 504)"><rect class="basic label-container" style="" x="-130" y="-36" width="260" height="72"/><g class="label" style="" transform="translate(-100, -21)"><rect/><foreignObject width="200" height="42"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>362.15 · Thin always-on context</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="my-svg-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"/></filter></defs><defs><filter id="my-svg-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"/></filter></defs><linearGradient id="my-svg-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#c06d4f" stop-opacity="1"/><stop offset="100%" stop-color="hsl(-81.8181818182, 0%, 78.2352941176%)" stop-opacity="1"/></linearGradient></svg></div>
+    <figcaption class="prose">The refactor track (362.1–362.8) carries the solid dependency edges; each dotted edge is an enforcement guard that ships warn-only until its matching refactor removes today's violations — and <code>362.1</code> is the clay-tinted root that unblocks the most.</figcaption>
+  </figure>
+  <div class="legend">
+    <span><i class="lg-clay"></i> 362.1 — the started root, smallest blast radius</span>
+    <span><i class="lg-work"></i> REFACTOR track (362.1–362.8)</span>
+    <span><i class="lg-mute"></i> ENFORCE / ENCOURAGE track (362.9–362.15)</span>
+  </div>
+</section>
+
+<!-- ===== work order: vertical-timeline ===== -->
+<section id="waves">
+  <div class="sk">Work order</div>
+  <h2 class="sh">Four waves, each unblocking the next</h2>
+  <div class="tl">
+    <div class="row impact">
+      <div class="dot">1</div>
+      <div class="body">
+        <div class="t">362.1 ∥ 362.2 ∥ 362.5 — the three independent starts <span class="rowtag">362.1 first in wave</span></div>
+        <div class="d">362.1 leads: smallest blast radius, highest citation count, and it unblocks two areas. 362.2 (widest import churn) and 362.5 (types dead island) start alongside it. Landing 362.1 flips <code>detect_language_singleton_stop</code> (362.11) from warn-only to blocking.</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="dot">2</div>
+      <div class="body">
+        <div class="t">362.3 ∥ 362.4 — extraction against settled stage-1 code</div>
+        <div class="d">Dotted leaves (362.3) build on 362.1's unified language identity and land after 362.2's stage-1 restructure; the classification megafile split (362.4) also depends on 362.1 removing detection from it first.</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="dot">3</div>
+      <div class="body">
+        <div class="t">362.6 ∥ 362.7 — boundaries &amp; MCP, written once against final names <span class="rowtag warn">362.6 → 362.12</span></div>
+        <div class="d">Barrel and stage-boundary repair (362.6) is written once, against the final file names from 362.2/.3/.5; MCP (362.7) deletes its helper copies once 362.4 gives them one owner in core. 362.6 landing flips <code>stage_boundary_stop</code> (362.12) to blocking.</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="dot">4</div>
+      <div class="body">
+        <div class="t">362.8 — the closing hygiene &amp; doc-truth sweep</div>
+        <div class="d">The residual small-item rows and every doc rewrite land against settled code once 362.1–362.7 are in. In the enforcement track, the rule-payload refresh (362.9) precedes <code>doc_path_truth</code> (362.13) so the new hook never blocks on known-stale rules.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== per-sub-task detail: collapsible-disclosure ===== -->
+<section id="subtasks">
+  <div class="sk">The fifteen pieces</div>
+  <h2 class="sh">What each sub-task changes</h2>
+
+  <div class="tracklabel">Refactor track · 362.1–362.8</div>
+  <div class="subs">
+    <details class="sub" open>
+      <summary><span class="sid">362.1</span> <span class="stitle">Unify language identity — one <code>detect_language</code>, one parse-dispatch point</span> <span class="stag">Area 1 · effort M · risk low</span> <a class="golink" href="task-362.1 - Unify-language-identity-one-detect_language-one-parse-dispatch-point.language-identity.html">open detail →</a></summary>
+      <div class="goal">Highest-leverage single fix, named independently by three layer-2 reports: kills the DRY fork, the latent trace-stage mislabel bug, and the 14-builtin import edge into a product megafile. Also lands the terminal file-naming rule (<code>file-naming.md</code>) and the <code>query_loader.ts</code> parser-registry split.</div>
+    </details>
+    <details class="sub">
+      <summary><span class="sid">362.2</span> <span class="stitle">Dissolve the <code>index_single_file</code> type-hub orchestrator</span> <span class="stag">Area 2 · effort L · risk medium</span> <span class="spend">not yet generated</span></summary>
+      <div class="goal">Fixes the inverted dependency arrow — 18 files importing wire types upward from the orchestrator — and the displaced metadata / documentation-state dispatch. Widest import churn in core.</div>
+    </details>
+    <details class="sub">
+      <summary><span class="sid">362.3</span> <span class="stitle">Extract hidden language logic into dotted leaves</span> <span class="stag">Area 3 · effort M · risk low-medium</span> <span class="spend">not yet generated</span></summary>
+      <div class="goal">Makes the call-resolution axis in <code>resolve_references/</code> and <code>references/</code> enumerable from names alone, as the import axis already is — a dotted suffix or a marshaller on every whole-language body.</div>
+    </details>
+    <details class="sub">
+      <summary><span class="sid">362.4</span> <span class="stitle">Split the classification megafile; one owner for call-graph helpers</span> <span class="stag">Area 4 · effort M · risk low</span> <span class="spend">not yet generated</span></summary>
+      <div class="goal">Splits <code>extract_entry_point_diagnostics.ts</code> (867 LOC) and ends the MCP re-implementation divergence of <code>build_signature</code> / <code>count_tree_size</code>.</div>
+    </details>
+    <details class="sub">
+      <summary><span class="sid">362.5</span> <span class="stitle">Types package — delete the dead island, split the stage-straddlers, reconcile <code>Resolution</code></span> <span class="stag">Area 5 · effort L · risk low</span> <span class="spend">not yet generated</span></summary>
+      <div class="goal">Removes ~450 LOC of dead public API, dissolves the barrel-masked name collision, and moves <code>SemanticIndex</code> to the types boundary.</div>
+    </details>
+    <details class="sub">
+      <summary><span class="sid">362.6</span> <span class="stitle">Align stage boundaries and barrels with the pipeline order</span> <span class="stag">Area 6 · effort M · risk medium</span> <span class="spend">not yet generated</span></summary>
+      <div class="goal">Fixes four verified boundary violations and makes every barrel export only its own folder's surface. Touches the resolution hot path.</div>
+    </details>
+    <details class="sub">
+      <summary><span class="sid">362.7</span> <span class="stitle">MCP — separate boot from logic, split the two four-responsibility tools</span> <span class="stag">Area 7 · effort M · risk low</span> <span class="spend">not yet generated</span></summary>
+      <div class="goal">Ends the boots-a-server-at-import-scope inversion and gives the agent-facing tools per-concern routing.</div>
+    </details>
+    <details class="sub">
+      <summary><span class="sid">362.8</span> <span class="stitle">Support-tissue &amp; skill-package hygiene sweep; restore doc truth</span> <span class="stag">residue · effort S · risk low</span> <span class="spend">not yet generated</span></summary>
+      <div class="goal">The small-item table rows owned by no area, plus the doc rewrites that must land after the code settles. Lands last, against fully settled code.</div>
+    </details>
+  </div>
+
+  <div class="tracklabel enf">Enforce / encourage track · 362.9–362.15</div>
+  <div class="subs">
+    <details class="sub">
+      <summary><span class="sid">362.9</span> <span class="stitle">Refresh IA rule payloads — stale subsystem layouts &amp; missing path-scoped rules</span> <span class="stag enc">encourage</span> <span class="spend">not yet generated</span></summary>
+      <div class="goal">Fixes stale subsystem layouts and adds the missing path-scoped rules, so guidance loads only when a matching file is touched. Precedes <code>doc_path_truth</code> (362.13).</div>
+    </details>
+    <details class="sub">
+      <summary><span class="sid">362.10</span> <span class="stitle">Harden the file-naming hook — sub-folder block, generic-name denylist, drop go/java</span> <span class="stag enf">enforce</span> <span class="spend">not yet generated</span></summary>
+      <div class="goal">Extends the existing <code>file_naming.ts</code> PreToolUse hook with a language sub-folder block and a generic-name denylist; the denylist lands with the 362.5 / 362.8 renames.</div>
+    </details>
+    <details class="sub">
+      <summary><span class="sid">362.11</span> <span class="stitle">Add the <code>detect_language</code> singleton Stop guard</span> <span class="stag enf">enforce</span> <span class="spend">not yet generated</span></summary>
+      <div class="goal">A new Stop script asserting exactly one <code>detect_language</code> definition — ships warn-only until 362.1 lands, then blocks a re-fork.</div>
+    </details>
+    <details class="sub">
+      <summary><span class="sid">362.12</span> <span class="stitle">Add the stage-boundary Stop hook and its paired stage-boundaries rule</span> <span class="stag enf">enforce</span> <span class="spend">not yet generated</span></summary>
+      <div class="goal">A <code>stage_boundary_stop.ts</code> Stop hook plus a path-scoped rule; ships warn-only until 362.6 removes today's boundary violations.</div>
+    </details>
+    <details class="sub">
+      <summary><span class="sid">362.13</span> <span class="stitle">Enforce doc-truth &amp; full dead-code coverage at Stop</span> <span class="stag enf">enforce</span> <span class="spend">not yet generated</span></summary>
+      <div class="goal">A <code>doc_path_truth.ts</code> Stop hook and full <code>detect_dead_code</code> coverage; lands after the 362.9 rule-payload refresh so it never blocks on known-stale rules.</div>
+    </details>
+    <details class="sub">
+      <summary><span class="sid">362.14</span> <span class="stitle">Add the write-time judgement nudges</span> <span class="stag enc">encourage</span> <span class="spend">not yet generated</span></summary>
+      <div class="goal">One write-time <code>additionalContext</code> micro-injection: a marshaller-presence prompt and a megafile notice. Judgement patterns are never wired to a block — a false-positive block is worse than a miss.</div>
+    </details>
+    <details class="sub">
+      <summary><span class="sid">362.15</span> <span class="stitle">Thin the always-on context</span> <span class="stag enc">encourage</span> <span class="spend">not yet generated</span></summary>
+      <div class="goal">Trims <code>CLAUDE.md</code> (126→~40 lines) and path-scopes the unscoped 114-line <code>classifier-lifecycle.md</code>, making the enforcement layer net strongly negative on always-on tokens (~−200 lines/turn).</div>
+    </details>
+  </div>
+</section>
+
+<!-- ===== decided matters: accent-callout (inverted) ===== -->
+<section id="decided">
+  <div class="sk">Settled rulings</div>
+  <h2 class="sh">Six decisions the sub-tasks apply, not reopen</h2>
+  <aside class="decided prose">
+    <div class="klabel">Decided matters — contested recommendations already ruled on</div>
+    <ol>
+      <li><span class="num">1</span><span><b>Keep dotted files.</b> The <code>{feature}.{lang}.ts</code> mechanism is correct and hook-enforced; sub-tasks extend it, never replace it.</span></li>
+      <li><span class="num">2</span><span><b>No builtins renames.</b> The <code>check_*</code> builtin filenames stay as they are.</span></li>
+      <li><span class="num">3</span><span><b><code>detect_language</code> contract reconciliation.</b> The three forked copies collapse to one nullable <code>detect_language</code> plus a throwing <code>assert_language</code> (362.1).</span></li>
+      <li><span class="num">4</span><span><b>MCP de-duplication.</b> MCP imports <code>build_signature</code> / <code>count_tree_size</code> from core instead of re-implementing them (362.4 / 362.7).</span></li>
+      <li><span class="num">5</span><span><b><code>@language</code> annotations in types.</b> Deliberately-inline language branches carry <code>@language</code> comments rather than a dotted file.</span></li>
+      <li><span class="num">6</span><span><b>Registry <code>group_id</code> renames out of scope.</b> The classifier registry keys are not touched by this program.</span></li>
+    </ol>
+  </aside>
+</section>
+
+</main>
+
+<footer>
+  <div><b>TASK-362</b> · IA-review refactor program · 15 sub-tasks across two tracks (refactor 362.1–362.8, enforce/encourage 362.9–362.15) · four dependency waves · 362.1 goes first</div>
+  <div>Sources read: task-362 brief :17–34, :36–41, :45–78, :87–107, :114–147, :184–200 · backlog/drafts/ia-review.refactor-program.md · ia-review.information-architecture.md</div>
+</footer>
+
+</body>
+</html>

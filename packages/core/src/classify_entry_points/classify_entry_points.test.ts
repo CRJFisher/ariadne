@@ -203,6 +203,42 @@ describe("auto_classify — file reader plumbing", () => {
   });
 });
 
+describe("auto_classify — language threading", () => {
+  it("passes each entry's own language from the map into the check", () => {
+    const ts_entry = make_entry({ file_path: fp("src/target.ts") });
+    const py_entry = make_entry({ file_path: fp("app.py") });
+    const registry: KnownIssuesRegistry = [builtin_issue("py_only", 1.0)];
+    const builtin_checks: Record<string, BuiltinCheckFn> = {
+      check_py_only: (_entry, _reader, language) => language === "python",
+    };
+
+    const [ts_result, py_result] = auto_classify(
+      [ts_entry, py_entry],
+      registry,
+      EMPTY_READER,
+      LANGUAGES,
+      { builtin_checks },
+    );
+
+    expect(ts_result.result.auto_classified).toBe(false);
+    expect(py_result.result.auto_classified).toBe(true);
+    expect(py_result.result.auto_group_id).toBe("py_only");
+  });
+
+  it("throws when an entry point's file has no recorded language", () => {
+    const entry_point = make_entry({ file_path: fp("unmapped.ts") });
+    const registry: KnownIssuesRegistry = [builtin_issue("any", 1.0)];
+
+    expect(() =>
+      auto_classify([entry_point], registry, EMPTY_READER, LANGUAGES, {
+        builtin_checks: checks(["any", true]),
+      }),
+    ).toThrow(
+      "No language recorded for unmapped.ts — every entry point must come from a parsed file",
+    );
+  });
+});
+
 describe("auto_classify — builtin dispatch", () => {
   function tagged_builtin(group_id: string, function_name: string, min_confidence = 1.0): KnownIssue {
     return {

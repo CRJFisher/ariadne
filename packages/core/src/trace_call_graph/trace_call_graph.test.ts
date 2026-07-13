@@ -555,6 +555,21 @@ describe("trace_call_graph", () => {
       expect(call_graph.nodes.get(def.symbol_id)?.is_test).toBe(true);
     });
 
+    it("follows the map when it disagrees with the path (language is threaded, not re-derived)", () => {
+      // A .py-suffixed path registered as typescript: Python test-file
+      // conventions must NOT apply, proving the path plays no part.
+      const py_test_file = "helpers_test.py" as FilePath;
+      const def = python_function(py_test_file);
+      definitions.update_file(py_test_file, [def]);
+      const disagreeing = new Map<FilePath, Language>([
+        [py_test_file, "typescript"],
+      ]);
+
+      const call_graph = trace_call_graph(definitions, resolutions, disagreeing);
+
+      expect(call_graph.nodes.get(def.symbol_id)?.is_test).toBe(false);
+    });
+
     it("throws when a callable's file has no recorded language", () => {
       const orphan_file = "orphan.py" as FilePath;
       const def = python_function(orphan_file);

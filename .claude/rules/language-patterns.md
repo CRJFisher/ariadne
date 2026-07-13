@@ -6,18 +6,26 @@ paths: packages/core/src/**
 
 ## Language Dispatch Pattern
 
-Language-specific code follows the `{module}.{language}.ts` naming convention. The main module dispatches to language-specific implementations based on file extension:
+Language-specific code follows the `{module}.{language}.ts` naming convention. The main module dispatches to language-specific implementations on the threaded `language` parameter:
 
 ```typescript
 // module_name.ts (main entry point — dispatcher)
 import { handle_python } from "./module_name.python";
 import { handle_typescript } from "./module_name.typescript";
 
-function process(file_path: FilePath): void {
-  if (file_path.endsWith(".py")) return handle_python(file_path);
-  if (file_path.endsWith(".ts")) return handle_typescript(file_path);
+function process(file_path: FilePath, language: Language): void {
+  switch (language) {
+    case "python":
+      return handle_python(file_path);
+    case "typescript":
+      return handle_typescript(file_path);
+  }
 }
 ```
+
+A file's language is decided once at parse ingress (`detect_language.ts`) and
+threaded to dispatchers as a parameter — never re-derived from the path
+downstream of parse.
 
 See `@.claude/rules/file-naming.md` for the complete naming convention.
 

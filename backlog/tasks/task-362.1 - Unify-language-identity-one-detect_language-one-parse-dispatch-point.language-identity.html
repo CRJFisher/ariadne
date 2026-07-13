@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TASK-362.1 — Unify language identity</title>
+<style>
+:root {
+  --ivory: #f7f3ec;
+  --oat: #ece4d6;
+  --paper: #fffdf8;
+  --slate: #2f3338;
+  --ink: #1d2024;
+  --mute: #6c6f73;
+  --faint: #9a9b97;
+  --clay: #c06d4f;
+  --olive: #6f7a4f;
+  --rust: #a8412a;
+  --work: #4a6b8a; /* work / build axis accent */
+  --concept: #7d6699; /* concept / idea axis accent */
+  --line: #d8cfbe;
+  --hair: #e4ddce;
+  --serif: ui-serif, Georgia, "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--ivory);
+  color: var(--slate);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.prose { max-width: 68ch; }
+
+/* ===== cross-doc-nav-index (work axis) ===== */
+.xnav {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--oat);
+  border-bottom: 2px solid var(--work);
+  padding: 8px clamp(16px, 5vw, 64px);
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+}
+.xnav .axis-tag {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--work); font-weight: 700;
+  margin-right: 10px; padding: 3px 8px; border: 1px solid var(--work);
+  border-radius: 999px;
+}
+.xnav a.doc-link, .xnav span.pending, .xnav span.current {
+  font-family: var(--mono); font-size: 11.5px;
+  padding: 4px 10px; border-radius: 999px; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.xnav a.doc-link {
+  color: var(--work); background: var(--paper);
+  border: 1px solid var(--work);
+}
+.xnav a.doc-link:hover { background: var(--work); color: var(--ivory); }
+.xnav span.current {
+  color: var(--ivory); background: var(--work);
+  border: 1px solid var(--work); font-weight: 700;
+}
+.xnav span.pending {
+  color: var(--faint); background: transparent;
+  border: 1px dashed var(--line);
+}
+.xnav .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.dot.done { background: var(--olive); }
+.dot.cur { background: var(--ivory); }
+.dot.pend { background: var(--faint); }
+.xnav .ng { font-size: 9px; letter-spacing: .06em; color: var(--faint); text-transform: uppercase; }
+
+/* ===== sticky-toc-rail ===== */
+.toc {
+  position: sticky; top: 44px; z-index: 9;
+  background: var(--ivory);
+  border-bottom: 1px solid var(--hair);
+  padding: 7px clamp(16px, 5vw, 64px);
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+}
+.toc a {
+  font-family: var(--mono); font-size: 11px; text-decoration: none;
+  color: var(--mute); padding: 3px 9px; border-radius: 999px;
+  border: 1px solid var(--line);
+}
+.toc a:hover, .toc a.active { color: var(--slate); border-color: var(--clay); background: var(--paper); }
+
+main { padding: 0 clamp(16px, 5vw, 64px) 80px; }
+section { scroll-margin-top: 150px; padding-top: 34px; }
+
+/* ===== identity-header ===== */
+.idh { padding-top: 34px; border-bottom: 1px solid var(--hair); padding-bottom: 22px; }
+.idh .eyebrow {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--clay); margin-bottom: 10px;
+}
+.idh h1 {
+  font-family: var(--serif); font-weight: 600; font-size: clamp(30px, 4.4vw, 46px);
+  line-height: 1.08; margin: 0 0 14px; color: var(--ink); letter-spacing: -.01em;
+}
+.idh .meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.idh .meta .chip {
+  font-family: var(--mono); font-size: 11.5px; color: var(--mute);
+  background: var(--paper); border: 1px solid var(--line);
+  padding: 4px 10px; border-radius: 999px;
+}
+.idh .meta .chip b { color: var(--slate); }
+.idh .meta .branch { color: var(--work); border-color: var(--work); }
+
+/* ===== preamble ===== */
+.preamble {
+  font-size: 18px; line-height: 1.62; color: var(--slate);
+  margin: 26px 0 4px;
+}
+
+/* ===== prompt-provenance-box ===== */
+.prov {
+  border: 1px solid var(--line); border-left: 4px solid var(--clay);
+  background: var(--paper); border-radius: 10px;
+  padding: 16px 20px; margin: 26px 0 6px;
+}
+.prov .label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--clay); margin-bottom: 10px;
+}
+.prov ul { margin: 0; padding-left: 0; list-style: none; }
+.prov li {
+  font-family: var(--mono); font-size: 12.5px; color: var(--mute);
+  padding: 3px 0; line-height: 1.45;
+}
+.prov li b { color: var(--slate); font-weight: 600; }
+
+/* ===== figures / diagrams ===== */
+.fig { margin: 8px 0 0; }
+.fig svg { width: 100%; height: auto; display: block; }
+figcaption {
+  font-size: 14px; color: var(--mute); margin-top: 12px;
+  font-style: italic;
+}
+h2.sh {
+  font-family: var(--serif); font-weight: 600; font-size: clamp(21px, 2.6vw, 27px);
+  color: var(--ink); margin: 0 0 4px; letter-spacing: -.005em;
+}
+.sk {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--clay); margin-bottom: 8px;
+}
+.legend {
+  display: flex; flex-wrap: wrap; gap: 16px; margin-top: 14px;
+  font-family: var(--mono); font-size: 11.5px; color: var(--mute);
+}
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+.lg-olive { background: var(--olive); }
+.lg-clay { background: var(--clay); }
+.lg-rust { background: var(--rust); }
+.lg-gray { background: var(--oat); border: 1px solid var(--line); }
+
+/* before/after grid */
+.ba { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: stretch; margin-top: 10px; }
+.ba .panel { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+.ba .ptitle {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--mute); text-align: center; margin-bottom: 6px;
+}
+.ba .divider { display: flex; align-items: center; justify-content: center; }
+.ba .divider .arrow {
+  font-family: var(--mono); font-size: 12px; color: var(--work);
+  writing-mode: vertical-rl; letter-spacing: .1em; padding: 0 2px;
+}
+@media (max-width: 820px) {
+  .ba { grid-template-columns: 1fr; }
+  .ba .divider .arrow { writing-mode: horizontal-tb; }
+}
+
+/* ===== feature-matrix-grid ===== */
+.mtx {
+  display: grid; grid-template-columns: 1.7fr repeat(3, 1.1fr);
+  border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+  background: var(--paper); margin-top: 10px;
+}
+.mtx .hcell, .mtx .rcell, .mtx .dcell {
+  padding: 12px 12px; border-bottom: 1px solid var(--hair); border-right: 1px solid var(--hair);
+}
+.mtx .hcell {
+  font-family: var(--mono); font-size: 11.5px; color: var(--slate);
+  background: var(--oat); font-weight: 600; word-break: break-word;
+}
+.mtx .hcell.safe { background: #e6e9dc; color: var(--olive); border-bottom: 2px solid var(--olive); }
+.mtx .hcell.corner { background: var(--paper); }
+.mtx .rcell { font-size: 13.5px; color: var(--slate); display: flex; align-items: center; }
+.mtx .dcell {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  justify-content: center; text-align: center;
+}
+.mtx .dcell.bug { background: #f3e2dc; }
+.mtx .dcell.safecol { background: #eef1e6; }
+.mtx .disc { width: 17px; height: 17px; border-radius: 50%; box-sizing: border-box; border: 2px solid transparent; flex: none; }
+.disc.olive.full { background: var(--olive); border-color: var(--olive); }
+.disc.clay.full { background: var(--clay); border-color: var(--clay); }
+.disc.rust.full { background: var(--rust); border-color: var(--rust); }
+.disc.mute.empty { background: transparent; border-color: var(--faint); }
+.disc.clay.half { background: linear-gradient(90deg, var(--clay) 0 50%, transparent 50% 100%); border-color: var(--clay); }
+.mtx .mlab { font-family: var(--mono); font-size: 10.5px; color: var(--mute); }
+.mtx .mlab.bugv { color: var(--rust); font-weight: 700; }
+
+/* ===== code-panel-highlight ===== */
+.codewrap { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px; }
+@media (max-width: 900px) { .codewrap { grid-template-columns: 1fr; } }
+.code {
+  background: var(--ink); border-radius: 12px; overflow: hidden;
+  border: 1px solid #000;
+}
+.code .file-label {
+  font-family: var(--mono); font-size: 11.5px; color: #cfd3d8;
+  background: #26292d; padding: 8px 14px; border-bottom: 1px solid #000;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.code .file-label .tag { color: var(--olive); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+.code .file-label .tag.del { color: var(--rust); }
+.code pre {
+  margin: 0; padding: 14px 16px; overflow-x: auto;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.62; color: #e8e4db;
+  white-space: pre;
+}
+.code .kw { color: #b78cc4; }
+.code .str { color: #a3b47a; }
+.code .fn { color: #7fa8cf; }
+.code .cm { color: #6f7378; font-style: italic; }
+.code .hl { background: rgba(111,122,79,.22); display: inline-block; width: 100%; }
+.code .del {
+  background: rgba(168,65,42,.20); display: inline-block; width: 100%;
+  color: #d99f90; text-decoration: line-through; text-decoration-color: rgba(168,65,42,.6);
+}
+.code .lit { color: #d9b48a; }
+
+/* ===== vertical-timeline ===== */
+.tl { position: relative; margin: 14px 0 0; padding-left: 8px; }
+.tl .row { display: grid; grid-template-columns: 26px 1fr; gap: 16px; padding-bottom: 22px; position: relative; }
+.tl .row:not(:last-child)::before {
+  content: ""; position: absolute; left: 12px; top: 22px; bottom: -4px;
+  width: 2px; background: var(--line);
+}
+.tl .dot {
+  width: 22px; height: 22px; border-radius: 50%; z-index: 1;
+  background: var(--paper); border: 2px solid var(--work);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 10px; color: var(--work); font-weight: 700;
+}
+.tl .row.impact .dot { background: var(--clay); border-color: var(--clay); color: var(--ivory); }
+.tl .body .t {
+  font-family: var(--sans); font-weight: 600; font-size: 15px; color: var(--slate);
+  margin-bottom: 3px; display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline;
+}
+.tl .body .rowtag {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--clay); border: 1px solid var(--clay); border-radius: 999px; padding: 1px 7px;
+}
+.tl .body .d { font-size: 13.5px; color: var(--mute); }
+.tl .body code, .prov code, .callout code, .mtx code, .idh code { font-family: var(--mono); font-size: .9em; color: var(--slate); background: var(--oat); padding: 1px 5px; border-radius: 4px; }
+.tl .body .d code { background: var(--oat); }
+
+/* ===== accent-callout ===== */
+.callout {
+  border-left: 4px solid var(--rust); background: var(--paper);
+  border-radius: 10px; padding: 18px 22px; margin: 12px 0 0;
+  border-top: 1px solid var(--line); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+}
+.callout .klabel {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--rust); margin-bottom: 8px; font-weight: 700;
+}
+.callout p { margin: 0 0 10px; font-size: 15px; color: var(--slate); }
+.callout p:last-child { margin-bottom: 0; }
+.callout .grep {
+  font-family: var(--mono); font-size: 12.5px; color: var(--ivory);
+  background: var(--slate); border-radius: 8px; padding: 10px 14px; margin-top: 6px;
+  display: block; white-space: pre-wrap;
+}
+.callout .grep b { color: #a3b47a; }
+
+/* ===== interactive-checklist ===== */
+.acc { list-style: none; padding: 0; margin: 12px 0 0; }
+.acc li {
+  display: grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: start;
+  padding: 12px 0; border-bottom: 1px solid var(--hair);
+}
+.acc input[type=checkbox] {
+  width: 18px; height: 18px; margin-top: 2px; accent-color: var(--olive); cursor: pointer;
+}
+.acc label { font-size: 14.5px; color: var(--slate); cursor: pointer; }
+.acc label code { font-family: var(--mono); font-size: .88em; background: var(--oat); padding: 1px 5px; border-radius: 4px; color: var(--slate); }
+.acc input:checked + label { color: var(--mute); }
+.acc input:checked + label code { opacity: .7; }
+
+footer {
+  border-top: 1px solid var(--hair); margin-top: 40px; padding: 22px clamp(16px, 5vw, 64px) 40px;
+  font-family: var(--mono); font-size: 11.5px; color: var(--faint);
+}
+footer b { color: var(--mute); }
+</style>
+</head>
+<body>
+
+<!-- ===== cross-doc-nav-index: work axis ===== -->
+<nav class="xnav" aria-label="Task family navigation (work axis)">
+  <span class="axis-tag">Work axis · TASK-362</span>
+  <a class="doc-link" href="task-362 - Execute-the-IA-review-refactor-program-across-core-types-and-mcp.overview.html"><span class="dot done"></span>Program overview (362)</a>
+  <span class="current" aria-current="page"><span class="dot cur"></span>362.1 · Language identity</span>
+  <span class="pending"><span class="dot pend"></span>362.2 Type-hub<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.3 Dotted leaves<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.4 Split megafile<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.5 Dead island<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.6 Stage boundaries<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.7 MCP boot/logic<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.8 Hygiene sweep<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.9 IA rules<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.10 File-naming hook<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.11 Singleton guard<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.12 Stage hook<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.13 Doc-truth<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.14 Write nudges<span class="ng">not yet generated</span></span>
+  <span class="pending"><span class="dot pend"></span>362.15 Thin context<span class="ng">not yet generated</span></span>
+</nav>
+
+<!-- ===== sticky-toc-rail ===== -->
+<nav class="toc" aria-label="Section outline">
+  <a href="#orient">Where language lives</a>
+  <a href="#crux">Before &amp; after</a>
+  <a href="#contracts">Touch sites</a>
+  <a href="#code">Canonical code</a>
+  <a href="#work">Sequenced work</a>
+  <a href="#risk">Fail-loud point</a>
+  <a href="#accept">Acceptance</a>
+</nav>
+
+<main>
+
+<!-- ===== identity-header ===== -->
+<header class="idh">
+  <div class="eyebrow">TASK-362.1 · Information architecture · Language axis</div>
+  <h1>Unify language identity: one detect_language, one parse-dispatch point</h1>
+  <div class="meta">
+    <span class="chip branch">program → <b>TASK-362</b></span>
+    <span class="chip">effort <b>M</b></span>
+    <span class="chip">risk <b>low</b></span>
+    <span class="chip">1 <b>detect_language</b> at ingress</span>
+    <span class="chip">3 dropped threads <b>re-attached</b></span>
+    <span class="chip">16 builtins read a <b>param</b></span>
+  </div>
+</header>
+
+<!-- ===== plain-language-preamble (verbatim) ===== -->
+<p class="preamble prose">Before Ariadne can index a file it must know one thing: what programming language is this? That question has a correct answer exactly once — the moment a file enters the system — and the front half of the pipeline already computes it there and carries it forward as an explicit value: on the parsed file, on its semantic index, and in a <code>languages</code> map handed to every resolution phase. But three places downstream threw that answer away and re-derived it from the file's path string, and the three re-derivations disagree — one returns nothing on an unknown extension, one throws, and one silently guesses "TypeScript", mislabelling files during the call-graph trace. This task re-attaches the dropped thread: language is passed as a parameter into <code>trace_call_graph</code>, the classifier builtins, and the diagnostics extractor, so none of them guess. Path-based detection survives only at the true ingress points, behind one canonical <code>detect_language</code>.</p>
+
+<!-- ===== prompt-provenance-box ===== -->
+<aside class="prov">
+  <div class="label">Built from — task brief &amp; verified source sites</div>
+  <ul>
+    <li><b>task-362.1</b> — the ingress-thread design, the Work steps, rows 33 &amp; 22, the six acceptance criteria</li>
+    <li><b>resolve_references/name_resolution.ts:24, 61</b> — the <code>languages</code> map the front half already threads (<code>ReadonlyMap&lt;FilePath, Language&gt;</code>)</li>
+    <li><b>trace_call_graph/trace_call_graph.ts:19–34, 120</b> — the private copy that defaults to <code>"typescript"</code>; the signature that gains a <code>languages</code> parameter</li>
+    <li><b>classify_entry_points/builtins/index.ts:30–33</b> — <code>BuiltinCheckFn</code>, gaining a <code>language</code> parameter; <code>check_framework-flask-route.ts:17,24</code> re-detects from <code>file_path</code></li>
+    <li><b>classify_entry_points/extract_entry_point_diagnostics.ts:718</b> — the exported nullable copy, deleted; the module consumes the <code>languages</code> map instead</li>
+    <li><b>project/project.ts:29–33, 59–73, 215–225, 341–343</b> — grammar imports, the throwing copy, the parse dispatch, the <code>languages</code> map rebuilt on every update</li>
+  </ul>
+</aside>
+
+<!-- ===== orientation: system-context-map ===== -->
+<section id="orient">
+  <div class="sk">Orientation — one thread, three drop points</div>
+  <h2 class="sh">Language is decided once at ingress, then re-asked three times downstream</h2>
+  <figure class="fig">
+    <svg viewBox="0 0 1280 320" role="img" aria-label="Ariadne's pipeline. Language is decided once at the ingress stage (parse_file) and threaded forward as data — onto the parsed file, its semantic index, and a languages map read by project resolution. The clay thread runs solid through those stages, then breaks: the call-graph trace and the entry-point classification stages ignore it and re-derive language from the raw file path, one of them defaulting to typescript.">
+      <defs>
+        <marker id="or-gray" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6c6f73"/></marker>
+        <marker id="or-clay" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#c06d4f"/></marker>
+        <marker id="or-rust" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#a8412a"/></marker>
+      </defs>
+      <!-- box 1: ingress (origin, clay border) -->
+      <rect x="20" y="44" width="222" height="104" rx="12" fill="#fffdf8" stroke="#c06d4f" stroke-width="2"/>
+      <text x="131" y="80" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="12.5" fill="#c06d4f" font-weight="700">Ingress · parse_file.ts</text>
+      <text x="131" y="103" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="11.5" fill="#6c6f73">language decided once</text>
+      <text x="131" y="128" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10" fill="#c06d4f" font-weight="700">◆ origin of the thread</text>
+      <!-- box 2: index -->
+      <rect x="256" y="44" width="222" height="104" rx="12" fill="#ece4d6" stroke="#d8cfbe" stroke-width="1.5"/>
+      <text x="367" y="82" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="12" fill="#2f3338" font-weight="600">index_single_file</text>
+      <text x="367" y="104" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="11.5" fill="#6c6f73">per-file indexing</text>
+      <text x="367" y="127" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10.5" fill="#6f7a4f">carries the language</text>
+      <!-- box 3: project resolution -->
+      <rect x="492" y="44" width="222" height="104" rx="12" fill="#ece4d6" stroke="#d8cfbe" stroke-width="1.5"/>
+      <text x="603" y="80" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11.5" fill="#2f3338" font-weight="600">project + resolve_references</text>
+      <text x="603" y="102" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="11.5" fill="#6c6f73">project resolution</text>
+      <text x="603" y="125" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10.5" fill="#6f7a4f">reads the languages map</text>
+      <!-- box 4: trace (drop point, clay) -->
+      <rect x="728" y="44" width="222" height="104" rx="12" fill="#c06d4f" stroke="#a8412a" stroke-width="1.5"/>
+      <text x="839" y="82" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="13" fill="#f7f3ec" font-weight="600">trace_call_graph</text>
+      <text x="839" y="104" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="11.5" fill="#f3e6df">call-graph trace</text>
+      <text x="839" y="128" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10" fill="#f7f3ec" font-weight="700">◆ THIS WORK</text>
+      <!-- box 5: classify (drop point, clay) -->
+      <rect x="964" y="44" width="222" height="104" rx="12" fill="#c06d4f" stroke="#a8412a" stroke-width="1.5"/>
+      <text x="1075" y="80" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="12" fill="#f7f3ec" font-weight="600">classify_entry_points</text>
+      <text x="1075" y="101" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="11" fill="#f3e6df">builtins + diagnostics</text>
+      <text x="1075" y="125" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10" fill="#f7f3ec" font-weight="700">◆ THIS WORK · 2 sites</text>
+      <!-- top edges -->
+      <line x1="242" y1="96" x2="254" y2="96" stroke="#6c6f73" stroke-width="1.6" marker-end="url(#or-gray)"/>
+      <line x1="478" y1="96" x2="490" y2="96" stroke="#6c6f73" stroke-width="1.6" marker-end="url(#or-gray)"/>
+      <line x1="714" y1="96" x2="726" y2="96" stroke="#6c6f73" stroke-width="1.6" marker-end="url(#or-gray)"/>
+      <line x1="950" y1="96" x2="962" y2="96" stroke="#6c6f73" stroke-width="1.6" marker-end="url(#or-gray)"/>
+      <!-- the language thread -->
+      <line x1="131" y1="148" x2="131" y2="210" stroke="#c06d4f" stroke-width="2.4"/>
+      <circle cx="131" cy="210" r="4.5" fill="#c06d4f"/>
+      <line x1="131" y1="210" x2="700" y2="210" stroke="#c06d4f" stroke-width="2.4"/>
+      <!-- up-stubs feeding index and resolution -->
+      <line x1="367" y1="210" x2="367" y2="150" stroke="#c06d4f" stroke-width="1.6" marker-end="url(#or-clay)"/>
+      <line x1="603" y1="210" x2="603" y2="150" stroke="#c06d4f" stroke-width="1.6" marker-end="url(#or-clay)"/>
+      <text x="249" y="200" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10.5" fill="#c06d4f">ParsedFile.lang</text>
+      <text x="485" y="200" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10.5" fill="#c06d4f">SemanticIndex.language</text>
+      <text x="668" y="200" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10.5" fill="#c06d4f">languages map</text>
+      <!-- frayed break -->
+      <line x1="712" y1="200" x2="722" y2="220" stroke="#a8412a" stroke-width="2"/>
+      <line x1="720" y1="200" x2="730" y2="220" stroke="#a8412a" stroke-width="2"/>
+      <text x="760" y="207" text-anchor="start" font-family="'SF Mono',Menlo,monospace" font-size="10" fill="#a8412a" font-weight="700">✕ thread dropped downstream</text>
+      <!-- detour: trace -->
+      <rect x="764" y="250" width="150" height="54" rx="8" fill="#a8412a" stroke="#7d2f1e" stroke-width="1.2"/>
+      <text x="839" y="274" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="9.5" fill="#f7f3ec">re-detect from path</text>
+      <text x="839" y="292" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="9.5" fill="#f3ded7" font-weight="700">→ defaults to "typescript"</text>
+      <line x1="839" y1="250" x2="839" y2="150" stroke="#a8412a" stroke-width="1.8" marker-end="url(#or-rust)"/>
+      <!-- detour: classify -->
+      <rect x="1000" y="250" width="150" height="54" rx="8" fill="#a8412a" stroke="#7d2f1e" stroke-width="1.2"/>
+      <text x="1075" y="274" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="9.5" fill="#f7f3ec">re-detect from path</text>
+      <text x="1075" y="292" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="9.5" fill="#f3ded7">(builtins + diagnostics)</text>
+      <line x1="1075" y1="250" x2="1075" y2="150" stroke="#a8412a" stroke-width="1.8" marker-end="url(#or-rust)"/>
+    </svg>
+    <div class="legend">
+      <span><i class="lg-clay"></i> language decided / threaded forward</span>
+      <span><i class="lg-gray"></i> stage that carries the thread unchanged</span>
+      <span><i class="lg-rust"></i> re-derived from the raw path (thread dropped)</span>
+    </div>
+    <figcaption class="prose">Language is decided once at ingress and rides the pipeline as data — onto the parsed file, its semantic index, and a map handed to resolution — yet three downstream stages ignore that thread and re-derive language from the raw path.</figcaption>
+  </figure>
+</section>
+
+<!-- ===== crux: before-after-state-diagram ===== -->
+<section id="crux">
+  <div class="sk">The change — re-attach the thread, don't re-home the copy</div>
+  <h2 class="sh">The dropped thread is re-attached — the same map is threaded on into all three consumers</h2>
+  <div class="ba">
+    <!-- CURRENT -->
+    <div class="panel">
+      <div class="ptitle">Current — thread breaks downstream</div>
+      <svg viewBox="0 0 620 480" role="img" aria-label="Current shape: language is threaded from ingress into a languages map read by resolution, but the thread ends there — unused. Three downstream consumers each re-derive language from the file path: trace_call_graph defaults to typescript, the 15 builtins call detect_language on entry_point.file_path, and extract_entry_point_diagnostics exports the private copy.">
+        <defs>
+          <marker id="cur-rust" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#a8412a"/></marker>
+        </defs>
+        <!-- spine -->
+        <rect x="8" y="26" width="138" height="52" rx="9" fill="#ece4d6" stroke="#d8cfbe" stroke-width="1.4"/>
+        <text x="77" y="49" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#2f3338" font-weight="600">Ingress</text>
+        <text x="77" y="66" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9.5" fill="#6c6f73">parse</text>
+        <rect x="158" y="26" width="138" height="52" rx="9" fill="#ece4d6" stroke="#d8cfbe" stroke-width="1.4"/>
+        <text x="227" y="49" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#2f3338" font-weight="600">index</text>
+        <text x="227" y="66" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9.5" fill="#6c6f73">per-file</text>
+        <rect x="308" y="26" width="138" height="52" rx="9" fill="#ece4d6" stroke="#d8cfbe" stroke-width="1.4"/>
+        <text x="377" y="49" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10.5" fill="#2f3338" font-weight="600">languages map</text>
+        <text x="377" y="66" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9.5" fill="#6c6f73">ingress state</text>
+        <rect x="458" y="26" width="138" height="52" rx="9" fill="#ece4d6" stroke="#d8cfbe" stroke-width="1.4"/>
+        <text x="527" y="49" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#2f3338" font-weight="600">resolution</text>
+        <text x="527" y="66" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9.5" fill="#6c6f73">reads the map</text>
+        <!-- gray arrows -->
+        <line x1="146" y1="52" x2="156" y2="52" stroke="#6c6f73" stroke-width="1.5"/>
+        <line x1="296" y1="52" x2="306" y2="52" stroke="#6c6f73" stroke-width="1.5"/>
+        <line x1="446" y1="52" x2="456" y2="52" stroke="#6c6f73" stroke-width="1.5"/>
+        <!-- the clay thread underline -->
+        <line x1="77" y1="90" x2="527" y2="90" stroke="#c06d4f" stroke-width="2.4"/>
+        <text x="150" y="108" text-anchor="start" font-family="'SF Mono',Menlo,monospace" font-size="9.5" fill="#c06d4f">the language thread</text>
+        <!-- thread reaches, then breaks unused -->
+        <line x1="490" y1="90" x2="490" y2="150" stroke="#c06d4f" stroke-width="2.2"/>
+        <line x1="482" y1="150" x2="492" y2="168" stroke="#a8412a" stroke-width="2"/>
+        <line x1="490" y1="150" x2="500" y2="168" stroke="#a8412a" stroke-width="2"/>
+        <text x="600" y="140" text-anchor="end" font-family="'SF Mono',Menlo,monospace" font-size="9.5" fill="#a8412a" font-weight="700">✕ reaches here, then ignored</text>
+        <!-- consumer 1 -->
+        <rect x="120" y="188" width="420" height="78" rx="10" fill="#ece4d6" stroke="#d8cfbe" stroke-width="1.5"/>
+        <text x="140" y="214" text-anchor="start" font-family="'SF Mono',Menlo,monospace" font-size="12" fill="#2f3338" font-weight="600">trace_call_graph.ts</text>
+        <rect x="128" y="230" width="404" height="28" rx="6" fill="#a8412a"/>
+        <text x="330" y="248" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10" fill="#f7f3ec">↺ re-derives from path — defaults to "typescript"</text>
+        <!-- consumer 2 -->
+        <rect x="120" y="288" width="420" height="78" rx="10" fill="#ece4d6" stroke="#d8cfbe" stroke-width="1.5"/>
+        <text x="140" y="314" text-anchor="start" font-family="'SF Mono',Menlo,monospace" font-size="12" fill="#2f3338" font-weight="600">15 builtins (check_*.ts)</text>
+        <rect x="128" y="330" width="404" height="28" rx="6" fill="#a8412a"/>
+        <text x="330" y="348" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10" fill="#f7f3ec">↺ detect_language(entry_point.file_path)</text>
+        <!-- consumer 3 -->
+        <rect x="120" y="388" width="420" height="78" rx="10" fill="#ece4d6" stroke="#d8cfbe" stroke-width="1.5"/>
+        <text x="140" y="414" text-anchor="start" font-family="'SF Mono',Menlo,monospace" font-size="11.5" fill="#2f3338" font-weight="600">extract_entry_point_diagnostics.ts</text>
+        <rect x="128" y="430" width="404" height="28" rx="6" fill="#a8412a"/>
+        <text x="330" y="448" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10" fill="#f7f3ec">↺ exports the private detect_language(file_path)</text>
+      </svg>
+    </div>
+    <!-- divider -->
+    <div class="divider"><span class="arrow">▶ becomes</span></div>
+    <!-- BUILT -->
+    <div class="panel">
+      <div class="ptitle">Built — thread continuous</div>
+      <svg viewBox="0 0 620 480" role="img" aria-label="Built shape: detection lives only at the ingress node, in one canonical detect_language.ts. The languages map is threaded on into all three consumers as an olive trunk: trace_call_graph reads a languages parameter, the 15 builtins read a language parameter, and extract_entry_point_diagnostics consumes the languages map. The three private copies are deleted.">
+        <defs>
+          <marker id="plan-olive" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6f7a4f"/></marker>
+        </defs>
+        <!-- spine (Ingress node clay = canonical detection home) -->
+        <rect x="8" y="26" width="138" height="52" rx="9" fill="#c06d4f" stroke="#a8412a" stroke-width="1.6"/>
+        <text x="77" y="47" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10.5" fill="#f7f3ec" font-weight="700">Ingress</text>
+        <text x="77" y="65" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="9" fill="#f3e6df">detect_language.ts</text>
+        <rect x="158" y="26" width="138" height="52" rx="9" fill="#ece4d6" stroke="#d8cfbe" stroke-width="1.4"/>
+        <text x="227" y="49" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#2f3338" font-weight="600">index</text>
+        <text x="227" y="66" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9.5" fill="#6c6f73">per-file</text>
+        <rect x="308" y="26" width="138" height="52" rx="9" fill="#ece4d6" stroke="#d8cfbe" stroke-width="1.4"/>
+        <text x="377" y="49" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10.5" fill="#2f3338" font-weight="600">languages map</text>
+        <text x="377" y="66" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9.5" fill="#6c6f73">ingress state</text>
+        <rect x="458" y="26" width="138" height="52" rx="9" fill="#ece4d6" stroke="#d8cfbe" stroke-width="1.4"/>
+        <text x="527" y="49" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#2f3338" font-weight="600">resolution</text>
+        <text x="527" y="66" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9.5" fill="#6c6f73">reads the map</text>
+        <!-- gray arrows -->
+        <line x1="146" y1="52" x2="156" y2="52" stroke="#6c6f73" stroke-width="1.5"/>
+        <line x1="296" y1="52" x2="306" y2="52" stroke="#6c6f73" stroke-width="1.5"/>
+        <line x1="446" y1="52" x2="456" y2="52" stroke="#6c6f73" stroke-width="1.5"/>
+        <!-- the clay thread underline + ingress-only note -->
+        <line x1="77" y1="90" x2="527" y2="90" stroke="#c06d4f" stroke-width="2.4"/>
+        <text x="150" y="108" text-anchor="start" font-family="'SF Mono',Menlo,monospace" font-size="9.5" fill="#c06d4f">detection lives only at ingress</text>
+        <!-- olive trunk threading the map onward -->
+        <line x1="90" y1="90" x2="90" y2="427" stroke="#6f7a4f" stroke-width="2.4"/>
+        <line x1="90" y1="227" x2="118" y2="227" stroke="#6f7a4f" stroke-width="2" marker-end="url(#plan-olive)"/>
+        <line x1="90" y1="327" x2="118" y2="327" stroke="#6f7a4f" stroke-width="2" marker-end="url(#plan-olive)"/>
+        <line x1="90" y1="427" x2="118" y2="427" stroke="#6f7a4f" stroke-width="2" marker-end="url(#plan-olive)"/>
+        <!-- consumer 1 -->
+        <rect x="120" y="188" width="420" height="78" rx="10" fill="#ece4d6" stroke="#d8cfbe" stroke-width="1.5"/>
+        <text x="140" y="214" text-anchor="start" font-family="'SF Mono',Menlo,monospace" font-size="12" fill="#2f3338" font-weight="600">trace_call_graph.ts</text>
+        <rect x="128" y="230" width="404" height="28" rx="6" fill="#6f7a4f"/>
+        <text x="330" y="248" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10" fill="#f7f3ec">✓ reads the languages parameter</text>
+        <!-- consumer 2 -->
+        <rect x="120" y="288" width="420" height="78" rx="10" fill="#ece4d6" stroke="#d8cfbe" stroke-width="1.5"/>
+        <text x="140" y="314" text-anchor="start" font-family="'SF Mono',Menlo,monospace" font-size="12" fill="#2f3338" font-weight="600">15 builtins (check_*.ts)</text>
+        <rect x="128" y="330" width="404" height="28" rx="6" fill="#6f7a4f"/>
+        <text x="330" y="348" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10" fill="#f7f3ec">✓ read the language parameter</text>
+        <!-- consumer 3 -->
+        <rect x="120" y="388" width="420" height="78" rx="10" fill="#ece4d6" stroke="#d8cfbe" stroke-width="1.5"/>
+        <text x="140" y="414" text-anchor="start" font-family="'SF Mono',Menlo,monospace" font-size="11.5" fill="#2f3338" font-weight="600">extract_entry_point_diagnostics.ts</text>
+        <rect x="128" y="430" width="404" height="28" rx="6" fill="#6f7a4f"/>
+        <text x="330" y="448" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10" fill="#f7f3ec">✓ consumes the languages map</text>
+      </svg>
+    </div>
+  </div>
+  <div class="legend">
+    <span><i class="lg-olive"></i> thread re-attached — reads the parameter</span>
+    <span><i class="lg-clay"></i> canonical detection, at ingress only</span>
+    <span><i class="lg-rust"></i> private copy re-deriving from path (deleted)</span>
+    <span><i class="lg-gray"></i> unchanged spine</span>
+  </div>
+  <figcaption class="prose">The spine is unchanged — language still flows from ingress into the <code>languages</code> map — and the fix threads that map on into all three consumers, deleting the three private copies that re-derived from the path.</figcaption>
+</section>
+
+<!-- ===== support: feature-matrix-grid ===== -->
+<section id="contracts">
+  <div class="sk">Support — every site that touches language</div>
+  <h2 class="sh">Only ingress may read the path; everything downstream reads the thread</h2>
+  <div class="mtx" role="table" aria-label="Each site that touches language: whether it is an ingress or downstream site, whether it detects language from the path, and where its language comes from after the fix">
+    <div class="hcell corner">site</div>
+    <div class="hcell">kind</div>
+    <div class="hcell">detects from path?</div>
+    <div class="hcell safe">language after the fix</div>
+
+    <div class="rcell"><code>parse_file.ts</code> — parse dispatch</div>
+    <div class="dcell"><span class="mlab" style="color:var(--olive);font-weight:700">ingress</span></div>
+    <div class="dcell"><span class="disc olive full" title="yes — by design"></span><span class="mlab">yes · by design</span></div>
+    <div class="dcell safecol"><span class="mlab"><code>assert_language(path)</code></span></div>
+
+    <div class="rcell">file-discovery filtering</div>
+    <div class="dcell"><span class="mlab" style="color:var(--olive);font-weight:700">ingress</span></div>
+    <div class="dcell"><span class="disc olive full" title="yes — by design"></span><span class="mlab">yes · by design</span></div>
+    <div class="dcell safecol"><span class="mlab"><code>detect_language(path)</code></span></div>
+
+    <div class="rcell"><code>reconcile_registry.ts</code> — sample loader</div>
+    <div class="dcell"><span class="mlab" style="color:var(--olive);font-weight:700">ingress</span></div>
+    <div class="dcell"><span class="disc olive full" title="yes — by design, once per sample"></span><span class="mlab">yes · at load</span></div>
+    <div class="dcell safecol"><span class="mlab"><code>detect_language(path)</code></span></div>
+
+    <div class="rcell"><code>trace_call_graph</code></div>
+    <div class="dcell"><span class="mlab" style="color:var(--clay);font-weight:700">downstream</span></div>
+    <div class="dcell"><span class="disc mute empty" title="no — reads the thread"></span><span class="mlab">no</span></div>
+    <div class="dcell safecol"><span class="mlab"><code>languages</code> parameter</span></div>
+
+    <div class="rcell">the 15 builtins + <code>check_py-dunder</code></div>
+    <div class="dcell"><span class="mlab" style="color:var(--clay);font-weight:700">downstream</span></div>
+    <div class="dcell"><span class="disc mute empty" title="no — reads the thread"></span><span class="mlab">no</span></div>
+    <div class="dcell safecol"><span class="mlab"><code>language</code> parameter</span></div>
+
+    <div class="rcell"><code>extract_entry_point_diagnostics</code></div>
+    <div class="dcell"><span class="mlab" style="color:var(--clay);font-weight:700">downstream</span></div>
+    <div class="dcell"><span class="disc mute empty" title="no — reads the thread"></span><span class="mlab">no</span></div>
+    <div class="dcell safecol"><span class="mlab"><code>languages</code> map</span></div>
+  </div>
+  <div class="legend">
+    <span><span class="disc olive full"></span> legitimately detects from a path (ingress)</span>
+    <span><span class="disc mute empty"></span> reads the threaded value instead (downstream)</span>
+  </div>
+  <figcaption class="prose">The unknown-extension divergence disappears downstream: every definition <code>trace_call_graph</code> sees came from an already-parsed file, so the <code>languages</code> lookup does not miss — the old TypeScript default can't arise, and a stray miss throws rather than guessing.</figcaption>
+</section>
+
+<!-- ===== support: code-panel-highlight ===== -->
+<section id="code">
+  <div class="sk">Support — the canonical pair &amp; the two threaded signatures</div>
+  <h2 class="sh">One detection body at ingress; two signatures gain the thread</h2>
+  <div class="codewrap">
+    <div class="code">
+      <div class="file-label"><span>packages/core/src/detect_language.ts</span><span class="tag">new · canonical</span></div>
+<pre><span class="cm">// The single path-based language detector. Callers are</span>
+<span class="cm">// ingress-only: parse_file.ts, file-discovery filtering,</span>
+<span class="cm">// and skill-side loaders re-entering persisted JSON.</span>
+<span class="kw">export function</span> <span class="fn">detect_language</span>(file_path: <span class="kw">string</span>): Language | <span class="kw">null</span> {
+  <span class="kw">if</span> (file_path.<span class="fn">endsWith</span>(<span class="str">".ts"</span>) || file_path.<span class="fn">endsWith</span>(<span class="str">".tsx"</span>)) {
+    <span class="kw">return</span> <span class="str">"typescript"</span>;
+  }
+  <span class="kw">if</span> (
+    file_path.<span class="fn">endsWith</span>(<span class="str">".js"</span>) ||
+    file_path.<span class="fn">endsWith</span>(<span class="str">".jsx"</span>) ||
+    file_path.<span class="fn">endsWith</span>(<span class="str">".mjs"</span>) ||
+    file_path.<span class="fn">endsWith</span>(<span class="str">".cjs"</span>)
+  ) {
+    <span class="kw">return</span> <span class="str">"javascript"</span>;
+  }
+  <span class="kw">if</span> (file_path.<span class="fn">endsWith</span>(<span class="str">".py"</span>)) <span class="kw">return</span> <span class="str">"python"</span>;
+  <span class="kw">if</span> (file_path.<span class="fn">endsWith</span>(<span class="str">".rs"</span>)) <span class="kw">return</span> <span class="str">"rust"</span>;
+  <span class="cm">// go / java / cpp recognized, not yet supported</span>
+  <span class="kw">return</span> <span class="kw">null</span>;
+}
+
+<span class="hl"><span class="kw">export function</span> <span class="fn">assert_language</span>(file_path: <span class="kw">string</span>): Language {</span>
+<span class="hl">  <span class="kw">const</span> language = <span class="fn">detect_language</span>(file_path);</span>
+<span class="hl">  <span class="kw">if</span> (language === <span class="kw">null</span>) {</span>
+<span class="hl">    <span class="kw">const</span> ext = file_path.<span class="fn">split</span>(<span class="str">"."</span>).<span class="fn">pop</span>()?.<span class="fn">toLowerCase</span>();</span>
+<span class="hl">    <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">`Unsupported file extension: ${ext}`</span>);</span>
+<span class="hl">  }</span>
+<span class="hl">  <span class="kw">return</span> language;</span>
+<span class="hl">}</span>
+
+<span class="del">// deleted: project.ts:59–73 detect_language → throws</span>
+<span class="del">// deleted: trace_call_graph.ts:19–34 default "typescript"</span>
+<span class="del">// deleted: extract_entry_point_diagnostics.ts:718 copy</span></pre>
+    </div>
+    <div class="code">
+      <div class="file-label"><span>packages/core/src/project/parse_file.ts</span><span class="tag">new · one dispatch point</span></div>
+<pre><span class="cm">// The single parse-phase dispatch point; consumes</span>
+<span class="cm">// assert_language and builds parsers from the parsers.ts</span>
+<span class="cm">// registry — the four grammar imports live at one site.</span>
+<span class="kw">import</span> Parser <span class="kw">from</span> <span class="str">"tree-sitter"</span>;
+<span class="kw">import</span> { assert_language } <span class="kw">from</span> <span class="str">"../detect_language"</span>;
+<span class="kw">import</span> { LANGUAGE_TO_TREESITTER_LANG } <span class="kw">from</span> <span class="str">"../index_single_file/query_code_tree/parsers"</span>;
+
+<span class="kw">function</span> <span class="fn">get_parser</span>(language: Language): Parser {
+  <span class="kw">const</span> grammar = LANGUAGE_TO_TREESITTER_LANG.<span class="fn">get</span>(language);
+  <span class="kw">if</span> (!grammar) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">`Unsupported language: ${language}`</span>);
+  <span class="kw">const</span> parser = <span class="kw">new</span> <span class="fn">Parser</span>();
+  parser.<span class="fn">setLanguage</span>(grammar);
+  <span class="kw">return</span> parser;
+}
+
+<span class="hl"><span class="kw">export function</span> <span class="fn">parse_file</span>(file_path: FilePath, content: <span class="kw">string</span>, buffer_size: <span class="kw">number</span>): ParsedFile {</span>
+<span class="hl">  <span class="kw">const</span> language = <span class="fn">assert_language</span>(file_path); <span class="cm">// fails loud on unknown</span></span>
+<span class="hl">  <span class="kw">const</span> parser = <span class="fn">get_parser</span>(language);</span>
+<span class="hl">  <span class="kw">const</span> tree = parser.<span class="fn">parse</span>(content, undefined, { bufferSize: buffer_size });</span>
+<span class="hl">  <span class="kw">return</span> { file_path, tree, lang: language, <span class="cm">/* …line metadata */</span> };</span>
+<span class="hl">}</span></pre>
+    </div>
+  </div>
+  <div class="code" style="margin-top:16px">
+    <div class="file-label"><span>the two signatures that gain the thread</span><span class="tag">changed · parameter added</span></div>
+<pre><span class="cm">// trace_call_graph receives the same ReadonlyMap the</span>
+<span class="cm">// resolution phase already threads (name_resolution.ts:24).</span>
+<span class="kw">export function</span> <span class="fn">trace_call_graph</span>(
+  definitions: DefinitionRegistry,
+  resolutions: ResolutionRegistry,
+<span class="hl">  languages: ReadonlyMap&lt;FilePath, Language&gt;,   <span class="cm">// ← threaded in</span></span>
+  options?: TraceCallGraphOptions,
+): CallGraph
+
+<span class="cm">// BuiltinCheckFn gains a trailing language; the 16</span>
+<span class="cm">// language-gating builtins read it — the 15 that called</span>
+<span class="cm">// detect_language(entry_point.file_path), plus check_py-</span>
+<span class="cm">// dunder-protocol, which dropped its .endsWith(".py").</span>
+<span class="kw">export type</span> BuiltinCheckFn = (
+  entry_point: EnrichedEntryPoint,
+  read_file_lines: FileLinesReader,
+<span class="hl">  language: Language,   <span class="cm">// ← threaded in</span></span>
+) =&gt; <span class="kw">boolean</span>;</pre>
+  </div>
+  <figcaption class="prose"><code>detect_language</code> is the one path-based detector; <code>assert_language</code> and <code>parse_file</code> are the only genuinely new logic, and everything downstream is a signature that gains one already-computed parameter — not a copy.</figcaption>
+</section>
+
+<!-- ===== support: vertical-timeline ===== -->
+<section id="work">
+  <div class="sk">Support — the sequenced work</div>
+  <h2 class="sh">One ingress-first sweep, no shims, in a deliberate order</h2>
+  <div class="tl">
+    <div class="row impact">
+      <div class="dot">·</div>
+      <div class="body">
+        <div class="t">Record the terminal dotted-suffix language rule <span class="rowtag">Row 33 · lands first</span></div>
+        <div class="d">Write the language-mechanism rule into <code>.claude/rules/file-naming.md</code> as the task's first commit, so TASK-362.2/.3 apply a decided rule rather than re-litigating one.</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="dot">1</div>
+      <div class="body">
+        <div class="t">Create <code>detect_language.ts</code></div>
+        <div class="d">Lift the canonical nullable body; add <code>assert_language</code> as the throwing wrapper. One file, two functions — the only path-based detection that survives.</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="dot">2</div>
+      <div class="body">
+        <div class="t">Create <code>project/parse_file.ts</code></div>
+        <div class="d">Move <code>get_parser</code> and the parse dispatch out of <code>project.ts</code>; consume <code>assert_language</code> and build parsers from the <code>parsers.ts</code> registry, so the four grammar imports live at one site. This is the single parse-phase dispatch point.</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="dot">3</div>
+      <div class="body">
+        <div class="t">Make the <code>languages</code> map first-class ingress state on <code>Project</code></div>
+        <div class="d">Maintain it incrementally alongside the per-file indexes and pass it by reference — rather than rebuilding it from every index on each <code>update_file</code>/<code>remove_file</code>.</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="dot">4</div>
+      <div class="body">
+        <div class="t">Re-attach the three dropped threads, delete all three private copies</div>
+        <div class="d"><code>trace_call_graph</code> gains a <code>languages</code> parameter; <code>BuiltinCheckFn</code> gains a trailing <code>language</code> parameter that the 15 former <code>detect_language</code> builtins and <code>check_py-dunder-protocol.ts</code> read (16 language-gating checks); <code>extract_entry_point_diagnostics.ts</code> consumes the map. The <code>classifier-author</code> agent doc is updated to template the new signature.</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="dot">5</div>
+      <div class="body">
+        <div class="t">Skill-side ingress: <code>reconcile_registry.ts</code> sample loader</div>
+        <div class="d">Compute each sample's language once as it is loaded from <code>samples/*.json</code>, via the canonical <code>detect_language</code>, and pass it to the check under test.</div>
+      </div>
+    </div>
+    <div class="row impact">
+      <div class="dot">·</div>
+      <div class="body">
+        <div class="t">Split the parser registry into <code>parsers.ts</code> <span class="rowtag">Row 22</span></div>
+        <div class="d">Move <code>LANGUAGE_TO_TREESITTER_LANG</code> + <code>SUPPORTED_LANGUAGES</code> out of <code>query_loader.ts</code> into <code>parsers.ts</code>, which <code>parse_file.ts</code> builds its parsers from. (The stale <code>semantic_index/queries/</code> fallback paths were already removed in <code>120482cd</code>.)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== support: accent-callout ===== -->
+<section id="risk">
+  <div class="sk">Support — where failing loud actually lives</div>
+  <h2 class="sh">trace_call_graph stops re-deriving and reads the thread</h2>
+  <aside class="callout prose">
+    <div class="klabel">The one behavior change — read, don't re-derive</div>
+    <p><code>trace_call_graph</code> no longer detects language — it reads the <code>languages</code> parameter it is handed. By construction the lookup does not miss: every definition came from an already-parsed file, so the old TypeScript default never arises downstream.</p>
+    <p>Two sites fail loud instead of guessing: <code>assert_language</code> throws at ingress on an unsupported extension, and a missed downstream lookup makes <code>trace_call_graph</code> throw <code>No language recorded for &lt;path&gt;</code> rather than defaulting.</p>
+    <p>A formerly-silent mislabel becomes a loud crash — and nothing is left behind: no re-exports, no aliases, no transitional layer.</p>
+    <span class="grep">grep -rn "detect_language(" packages/core/src<br>→ <b>matches only ingress</b> — parse_file.ts, file-discovery</span>
+    <p style="margin-top:10px">A structural guard, <code>builtins/field_denylist.test.ts</code>, fails the build if any builtin references <code>detect_language</code> or gates on an extension via <code>.endsWith</code> — the ingress-only rule stays enforced, not merely grepped.</p>
+  </aside>
+</section>
+
+<!-- ===== support: interactive-checklist ===== -->
+<section id="accept">
+  <div class="sk">Acceptance criteria</div>
+  <h2 class="sh">Done — all six criteria hold</h2>
+  <ul class="acc">
+    <li><input type="checkbox" id="ac1" checked><label for="ac1"><code>grep -rn "function detect_language" packages/core/src</code> returns exactly one definition, in <code>detect_language.ts</code>; <code>assert_language</code> is the only throwing form.</label></li>
+    <li><input type="checkbox" id="ac2" checked><label for="ac2">No code downstream of parse detects from a path: <code>grep -rn "detect_language(" packages/core/src</code> matches only ingress sites (<code>parse_file.ts</code>, file-discovery). <code>trace_call_graph</code> and the builtins consume language as a parameter; no code path silently defaults a file to TypeScript.</label></li>
+    <li><input type="checkbox" id="ac3" checked><label for="ac3"><code>Project.update_file</code> throws on an unsupported extension at the parse dispatch (test added); the <code>languages</code> map is maintained incrementally, not rebuilt per update.</label></li>
+    <li><input type="checkbox" id="ac4" checked><label for="ac4"><code>project.ts</code> contains no tree-sitter grammar imports and no parser construction; <code>project/parse_file.ts</code> owns them.</label></li>
+    <li><input type="checkbox" id="ac5" checked><label for="ac5"><code>BuiltinCheckFn</code> takes a trailing <code>language</code> parameter; the 15 former <code>detect_language</code> builtins and <code>check_py-dunder-protocol.ts</code> read it (16 language-gating checks); no <code>.endsWith(".py")</code>-style raw checks remain (enforced by <code>field_denylist.test.ts</code>); the <code>reconcile_registry.ts</code> staged-check harness supplies language at sample load, and <code>.claude/agents/classifier-author.md</code> templates the new signature.</label></li>
+    <li><input type="checkbox" id="ac6" checked><label for="ac6"><code>file-naming.md</code> records the terminal dotted-suffix rule (row 33); the <code>query_loader.ts</code> parser registry split landed (row 22); full core suite green, no re-exports or aliases left behind.</label></li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  <div><b>TASK-362.1</b> · Program Area 1 of the IA review refactor program (TASK-362) · effort M, risk low · goes first in the epic</div>
+  <div>Sources read: name_resolution.ts:24,61 · trace_call_graph.ts:19–34,120 · builtins/index.ts:30–33 · check_framework-flask-route.ts:17,24 · check_py-dunder-protocol.ts:28 · extract_entry_point_diagnostics.ts:718 · project.ts:29–33,59–73,215–225,341–343 · task-362.1 brief</div>
+</footer>
+
+</body>
+</html>
