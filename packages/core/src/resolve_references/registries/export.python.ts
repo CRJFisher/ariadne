@@ -1,10 +1,20 @@
-import type { SymbolId } from "@ariadnejs/types";
+import type { FilePath, SymbolId } from "@ariadnejs/types";
 
 /**
  * Python module-level reassignment (`x = 1; x = 2`) produces a separate
  * definition per assignment, all sharing one name. For export purposes only
  * the last assignment is visible, so duplicates are resolved by source order.
  */
+
+/**
+ * Check if a file is a Python file by extension.
+ *
+ * @param file_path - File path to check
+ * @returns true if file has .py or .pyw extension
+ */
+export function is_python_file(file_path: FilePath): boolean {
+  return file_path.endsWith(".py") || file_path.endsWith(".pyw");
+}
 
 /**
  * SymbolId format is `kind:file:start_line:start_col:end_line:end_col:name`,

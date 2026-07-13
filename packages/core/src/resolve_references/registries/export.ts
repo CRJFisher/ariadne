@@ -8,11 +8,13 @@ import {
 } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./definition";
 import { resolve_module_path } from "../import_resolution";
-import { FileSystemFolder, is_python_file } from "../file_folders";
+import type { FileSystemFolder } from "../file_folders";
 import {
+  is_python_file,
   should_replace_python_variable,
   is_variable_or_constant_symbol,
 } from "./export.python";
+import { resolve_arrow_function_export } from "./export.typescript";
 
 /**
  * Everything needed to follow a re-export chain to its ultimate source symbol.
@@ -81,27 +83,22 @@ export class ExportRegistry {
 
       const existing = metadata_map.get(export_name);
       if (existing && !is_default) {
-        // An arrow function assigned to a const produces both a function and a
-        // variable/constant definition under one name; the variable is the
-        // exported binding.
-        if (
-          (existing.symbol_id.includes("function:") &&
-            (def.kind === "variable" || def.kind === "constant")) ||
-          (def.kind === "function" &&
-            (existing.symbol_id.includes("variable:") ||
-              existing.symbol_id.includes("constant:")))
-        ) {
-          if (def.kind === "variable" || def.kind === "constant") {
-            metadata_map.set(export_name, {
-              symbol_id: def.symbol_id,
-              export_name,
-              is_default,
-              is_reexport,
-              import_def,
-            });
-            symbol_ids.add(def.symbol_id);
-            return;
-          }
+        const arrow_decision = resolve_arrow_function_export(
+          existing.symbol_id,
+          def.kind
+        );
+        if (arrow_decision === "replace_existing") {
+          metadata_map.set(export_name, {
+            symbol_id: def.symbol_id,
+            export_name,
+            is_default,
+            is_reexport,
+            import_def,
+          });
+          symbol_ids.add(def.symbol_id);
+          return;
+        }
+        if (arrow_decision === "keep_existing") {
           return;
         }
 

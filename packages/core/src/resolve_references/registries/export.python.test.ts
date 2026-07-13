@@ -1,9 +1,32 @@
 import { describe, it, expect } from "vitest";
-import type { SymbolId } from "@ariadnejs/types";
+import type { FilePath, SymbolId } from "@ariadnejs/types";
 import {
+  is_python_file,
   should_replace_python_variable,
   is_variable_or_constant_symbol,
 } from "./export.python";
+
+describe("is_python_file", () => {
+  it("recognizes a .py file", () => {
+    expect(is_python_file("/pkg/main.py" as FilePath)).toBe(true);
+  });
+
+  it("recognizes a .pyw file", () => {
+    expect(is_python_file("/pkg/gui.pyw" as FilePath)).toBe(true);
+  });
+
+  it("rejects a .ts file", () => {
+    expect(is_python_file("/src/app.ts" as FilePath)).toBe(false);
+  });
+
+  it("rejects a .pyc compiled file", () => {
+    expect(is_python_file("/pkg/main.pyc" as FilePath)).toBe(false);
+  });
+
+  it("rejects a path with no extension", () => {
+    expect(is_python_file("/pkg/README" as FilePath)).toBe(false);
+  });
+});
 
 describe("should_replace_python_variable", () => {
   it("replaces when the current definition is on a later line", () => {
