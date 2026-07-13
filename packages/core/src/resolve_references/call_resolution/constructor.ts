@@ -24,7 +24,7 @@ import type { ResolutionRegistry } from "../resolve_references";
 import type { FileSystemFolder } from "../file_folders";
 import { resolve_namespace_export } from "./method_lookup";
 import { find_containing_class_scope, find_class_from_scope } from "./receiver_resolution";
-import { normalize_path_prefix, resolve_in_module_body } from "./path_resolution";
+import { normalize_path_prefix, resolve_in_module_body } from "./path_resolution.rust";
 
 /**
  * The terminal name of a Rust associated constructor. The `rust.scm` query only

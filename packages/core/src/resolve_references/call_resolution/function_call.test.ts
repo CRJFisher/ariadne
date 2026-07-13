@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { make_export_chain_context } from "../file_folders_test_helper";
+import { make_export_chain_context } from "../resolution_test_helpers";
 import { resolve_function_call } from "./function_call";
 import type { CallResolutionContext } from "./call_resolver";
 import { DefinitionRegistry } from "../registries/definition";

@@ -5,7 +5,7 @@ import { ScopeRegistry } from "../registries/scope";
 import { ResolutionRegistry } from "../resolve_references";
 import { ExportRegistry } from "../registries/export";
 import type { FileSystemFolder } from "../file_folders";
-import { make_export_chain_context } from "../file_folders_test_helper";
+import { make_export_chain_context } from "../resolution_test_helpers";
 import { set_test_resolutions, unwrap } from "../resolve_references.test";
 import { create_constructor_call_reference } from "../../index_single_file/references/factories";
 import { class_symbol, is_err } from "@ariadnejs/types";

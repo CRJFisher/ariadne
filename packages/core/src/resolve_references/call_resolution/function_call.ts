@@ -24,7 +24,7 @@ import {
   is_callable_definition,
   normalize_path_prefix,
   resolve_in_module_body,
-} from "./path_resolution";
+} from "./path_resolution.rust";
 
 /**
  * Resolve a qualified call via its scoped-path prefix, honouring the author's

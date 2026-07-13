@@ -4,7 +4,7 @@ import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ResolutionRegistry } from "../resolve_references";
 import { set_test_resolutions } from "../resolve_references.test";
-import { make_export_chain_context } from "../file_folders_test_helper";
+import { make_export_chain_context } from "../resolution_test_helpers";
 import {
   variable_symbol,
   constant_symbol,

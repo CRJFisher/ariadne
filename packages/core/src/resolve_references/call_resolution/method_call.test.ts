@@ -7,7 +7,7 @@ import { ResolutionRegistry } from "../resolve_references";
 import { ImportGraph } from "../../project/import_graph";
 import { ExportRegistry } from "../registries/export";
 import type { FileSystemFolder } from "../file_folders";
-import { make_export_chain_context } from "../file_folders_test_helper";
+import { make_export_chain_context } from "../resolution_test_helpers";
 import { set_test_resolutions, unwrap } from "../resolve_references.test";
 import { create_method_call_reference } from "../../index_single_file/references/factories";
 import { method_symbol, class_symbol, function_symbol, variable_symbol } from "@ariadnejs/types";
