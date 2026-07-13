@@ -9,7 +9,7 @@ import type { SyntaxNode } from "tree-sitter";
 import { TYPESCRIPT_HANDLERS } from "./capture_handlers.typescript";
 import { extract_return_type, detect_callback_context } from "../symbol_factories/symbol_factories.typescript";
 import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
-import { DefinitionBuilder } from "../../definitions/definitions";
+import { DefinitionBuilder } from "../../definitions/definition_builder";
 import { build_index_single_file } from "../../index_single_file";
 import { node_to_location } from "../../node_to_location";
 import { is_variable_reference } from "@ariadnejs/types";

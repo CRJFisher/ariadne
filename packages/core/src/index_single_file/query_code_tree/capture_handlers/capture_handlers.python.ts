@@ -9,7 +9,7 @@
 import type { SyntaxNode } from "tree-sitter";
 import type { SymbolName } from "@ariadnejs/types";
 import { anonymous_function_symbol, property_symbol } from "@ariadnejs/types";
-import type { DefinitionBuilder } from "../../definitions/definitions";
+import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { CaptureNode, ProcessingContext } from "../../index_single_file";
 import { node_to_location } from "../../node_to_location";
 import type { HandlerRegistry } from "./types";

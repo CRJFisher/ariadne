@@ -2,4 +2,4 @@
  * Definitions Module - Process symbol definitions
  */
 
-export { DefinitionBuilder } from "./definitions";
+export { DefinitionBuilder } from "./definition_builder";

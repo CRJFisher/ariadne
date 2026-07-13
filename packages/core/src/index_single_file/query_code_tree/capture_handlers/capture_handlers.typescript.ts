@@ -6,7 +6,7 @@
 
 import type { SymbolName } from "@ariadnejs/types";
 import { function_symbol, anonymous_function_symbol } from "@ariadnejs/types";
-import type { DefinitionBuilder } from "../../definitions/definitions";
+import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { CaptureNode, ProcessingContext } from "../../index_single_file";
 import type { HandlerRegistry } from "./types";
 import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";

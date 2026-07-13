@@ -8,7 +8,7 @@ import JavaScript from "tree-sitter-javascript";
 import type { SyntaxNode } from "tree-sitter";
 import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
 import { analyze_export_statement, detect_callback_context } from "../symbol_factories/symbol_factories.javascript";
-import { DefinitionBuilder } from "../../definitions/definitions";
+import { DefinitionBuilder } from "../../definitions/definition_builder";
 import { build_index_single_file } from "../../index_single_file";
 import type {
   ProcessingContext,

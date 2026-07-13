@@ -1,4 +1,4 @@
-import type { DefinitionBuilder } from "../../definitions/definitions";
+import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { CaptureNode, ProcessingContext } from "../../index_single_file";
 
 type HandlerFunction = (

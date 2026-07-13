@@ -32,7 +32,7 @@ import { node_to_location } from "./node_to_location";
 import {
   DefinitionBuilder,
   type BuilderResult,
-} from "./definitions/definitions";
+} from "./definitions/definition_builder";
 import type { MetadataExtractors } from "./query_code_tree/metadata_extractors";
 import {
   get_handler_registry,

@@ -8,7 +8,7 @@
  */
 
 import type { SymbolName } from "@ariadnejs/types";
-import type { DefinitionBuilder } from "../../definitions/definitions";
+import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { CaptureNode, ProcessingContext } from "../../index_single_file";
 import { create_variable_id } from "../symbol_factories/symbol_factories.python";
 

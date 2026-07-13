@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { DefinitionBuilder } from "./definitions";
+import { DefinitionBuilder } from "./definition_builder";
 import type {
   ProcessingContext,
   CaptureNode,

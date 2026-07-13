@@ -4,7 +4,7 @@ import Parser from "tree-sitter";
 import Rust from "tree-sitter-rust";
 import { RUST_HANDLERS } from "./capture_handlers.rust";
 import { detect_callback_context } from "../symbol_factories/symbol_factories.rust";
-import { DefinitionBuilder } from "../../definitions/definitions";
+import { DefinitionBuilder } from "../../definitions/definition_builder";
 import { build_index_single_file } from "../../index_single_file";
 import type {
   ProcessingContext,

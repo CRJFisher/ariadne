@@ -23,7 +23,7 @@ import {
   anonymous_function_symbol,
 } from "@ariadnejs/types";
 import type { CaptureNode, ProcessingContext } from "../../index_single_file";
-import type { DefinitionBuilder } from "../../definitions/definitions";
+import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import { node_to_location } from "../../node_to_location";
 export { detect_callback_context } from "./callback.rust";
 export {

@@ -13,7 +13,7 @@ import {
   handle_definition_constructor,
 } from "./methods.rust";
 import { RUST_HANDLERS } from "./capture_handlers.rust";
-import { DefinitionBuilder } from "../../definitions/definitions";
+import { DefinitionBuilder } from "../../definitions/definition_builder";
 import type {
   ProcessingContext,
   CaptureNode,

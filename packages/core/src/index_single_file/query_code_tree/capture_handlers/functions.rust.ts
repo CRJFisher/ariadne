@@ -4,7 +4,7 @@
  * Separated from main capture_handlers.rust.ts to keep file sizes manageable.
  */
 
-import type { DefinitionBuilder } from "../../definitions/definitions";
+import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { CaptureNode, ProcessingContext } from "../../index_single_file";
 import {
   create_function_id,

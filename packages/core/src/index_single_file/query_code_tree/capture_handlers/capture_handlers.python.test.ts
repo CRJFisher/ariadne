@@ -7,7 +7,7 @@ import Parser from "tree-sitter";
 import Python from "tree-sitter-python";
 import type { SyntaxNode } from "tree-sitter";
 import { PYTHON_HANDLERS } from "./capture_handlers.python";
-import { DefinitionBuilder } from "../../definitions/definitions";
+import { DefinitionBuilder } from "../../definitions/definition_builder";
 import { build_index_single_file } from "../../index_single_file";
 import type {
   ProcessingContext,
