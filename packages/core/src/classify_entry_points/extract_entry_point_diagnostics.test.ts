@@ -11,7 +11,6 @@ import {
   classify_accessor_line,
   count_tree_size,
   derive_definition_features,
-  detect_language,
   extract_entry_point_diagnostics,
 } from "./extract_entry_point_diagnostics";
 import type {
@@ -324,36 +323,6 @@ describe("build_grep_index", () => {
   it("returns empty index for no source files", () => {
     const index = build_grep_index(new Map(), new Map());
     expect(index.size).toBe(0);
-  });
-});
-
-// ===== detect_language =====
-
-describe("detect_language", () => {
-  it("detects TypeScript files", () => {
-    expect(detect_language("src/index.ts")).toBe("typescript");
-    expect(detect_language("src/component.tsx")).toBe("typescript");
-  });
-
-  it("detects JavaScript files", () => {
-    expect(detect_language("lib/utils.js")).toBe("javascript");
-    expect(detect_language("src/app.jsx")).toBe("javascript");
-  });
-
-  it("detects Python files", () => {
-    expect(detect_language("main.py")).toBe("python");
-  });
-
-  it("detects Rust files", () => {
-    expect(detect_language("src/lib.rs")).toBe("rust");
-  });
-
-  it("returns null for unsupported file types", () => {
-    expect(detect_language("main.go")).toBeNull();
-    expect(detect_language("App.java")).toBeNull();
-    expect(detect_language("lib.cpp")).toBeNull();
-    expect(detect_language("README.md")).toBeNull();
-    expect(detect_language("style.css")).toBeNull();
   });
 });
 

@@ -117,6 +117,52 @@ describe("Project", () => {
     });
   });
 
+  describe("languages", () => {
+    it("throws at the parse dispatch for an unsupported extension", async () => {
+      await project.initialize();
+      expect(() =>
+        project.update_file("main.go" as FilePath, "package main")
+      ).toThrow("Unsupported file extension: go");
+      expect(project.get_languages()).toEqual(new Map());
+    });
+
+    it("maintains the map incrementally across update, restore, remove, and clear", async () => {
+      await project.initialize();
+      const ts_file = "app.ts" as FilePath;
+      const py_file = "main.py" as FilePath;
+      const rs_file = "lib.rs" as FilePath;
+
+      project.update_file(ts_file, "function foo() {}");
+      project.update_file(py_file, "def f():\n    pass\n");
+      expect(project.get_languages()).toEqual(
+        new Map([
+          [ts_file, "typescript"],
+          [py_file, "python"],
+        ])
+      );
+
+      const cached_index = project.get_index_single_file(ts_file)!;
+      const restored = new Project();
+      await restored.initialize();
+      restored.update_file(rs_file, "fn main() {}");
+      restored.restore_file(ts_file, "function foo() {}", cached_index);
+      expect(restored.get_languages()).toEqual(
+        new Map([
+          [rs_file, "rust"],
+          [ts_file, "typescript"],
+        ])
+      );
+
+      restored.remove_file(rs_file);
+      expect(restored.get_languages()).toEqual(
+        new Map([[ts_file, "typescript"]])
+      );
+
+      restored.clear();
+      expect(restored.get_languages()).toEqual(new Map());
+    });
+  });
+
   describe("remove_file", () => {
     it("should remove all data for a file", async () => {
       await project.initialize();
