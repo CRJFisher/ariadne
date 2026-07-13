@@ -41,7 +41,7 @@ async function make_project_with(
   for (const [rel, content] of Object.entries(files)) {
     project.update_file(join(root, rel) as FilePath, content);
   }
-  const call_graph = trace_call_graph(project.definitions, project.resolutions, {
+  const call_graph = trace_call_graph(project.definitions, project.resolutions, project.get_languages(), {
     include_tests: false,
   });
   return { project, call_graph };

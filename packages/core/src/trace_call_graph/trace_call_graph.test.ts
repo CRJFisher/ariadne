@@ -10,6 +10,7 @@ import {
   anonymous_function_symbol,
 } from "@ariadnejs/types";
 import type {
+  Language,
   FunctionDefinition,
   ClassDefinition,
   InterfaceDefinition,
@@ -23,6 +24,12 @@ describe("trace_call_graph", () => {
   let definitions: DefinitionRegistry;
   let resolutions: ResolutionRegistry;
   const file1 = "test.ts" as FilePath;
+  const languages: ReadonlyMap<FilePath, Language> = new Map<FilePath, Language>([
+    ["test.ts" as FilePath, "typescript"],
+    ["test.py" as FilePath, "python"],
+    ["widget.ts" as FilePath, "typescript"],
+    ["widget.test.ts" as FilePath, "typescript"],
+  ]);
   const root_scope = `scope:${file1}:module` as ScopeId;
 
   beforeEach(() => {
@@ -86,7 +93,7 @@ describe("trace_call_graph", () => {
 
       definitions.update_file(file1, [interface_def]);
 
-      const call_graph = trace_call_graph(definitions, resolutions);
+      const call_graph = trace_call_graph(definitions, resolutions, languages);
 
       // Interface method should NOT be in the call graph nodes
       expect(call_graph.nodes.has(method_id)).toBe(false);
@@ -154,7 +161,7 @@ describe("trace_call_graph", () => {
 
       definitions.update_file(file1, [class_def]);
 
-      const call_graph = trace_call_graph(definitions, resolutions);
+      const call_graph = trace_call_graph(definitions, resolutions, languages);
 
       // Class method WITH body should be in the call graph nodes
       expect(call_graph.nodes.has(method_id)).toBe(true);
@@ -195,7 +202,7 @@ describe("trace_call_graph", () => {
 
       definitions.update_file(file1, [func_def]);
 
-      const call_graph = trace_call_graph(definitions, resolutions);
+      const call_graph = trace_call_graph(definitions, resolutions, languages);
 
       // Function should be in the call graph nodes
       expect(call_graph.nodes.has(func_id)).toBe(true);
@@ -312,7 +319,7 @@ describe("trace_call_graph", () => {
 
       definitions.update_file(file1, [interface_def, class_def]);
 
-      const call_graph = trace_call_graph(definitions, resolutions);
+      const call_graph = trace_call_graph(definitions, resolutions, languages);
 
       // Only the class method (with body) should be in nodes
       expect(call_graph.nodes.has(interface_method_id)).toBe(false);
@@ -357,7 +364,7 @@ describe("trace_call_graph", () => {
 
       definitions.update_file(file1, [anon_def]);
 
-      const call_graph = trace_call_graph(definitions, resolutions);
+      const call_graph = trace_call_graph(definitions, resolutions, languages);
 
       expect(call_graph.nodes.has(anon_id)).toBe(true);
       expect(call_graph.entry_points).not.toContain(anon_id);
@@ -421,7 +428,7 @@ describe("trace_call_graph", () => {
 
       definitions.update_file(file1, [named_def, anon_def]);
 
-      const call_graph = trace_call_graph(definitions, resolutions);
+      const call_graph = trace_call_graph(definitions, resolutions, languages);
 
       expect(call_graph.entry_points).toContain(named_id);
       expect(call_graph.entry_points).not.toContain(anon_id);
@@ -458,7 +465,7 @@ describe("trace_call_graph", () => {
       const def = test_file_function();
       definitions.update_file(test_file, [def]);
 
-      const call_graph = trace_call_graph(definitions, resolutions);
+      const call_graph = trace_call_graph(definitions, resolutions, languages);
 
       expect(call_graph.nodes.get(def.symbol_id)?.is_test).toBe(true);
     });
@@ -485,7 +492,7 @@ describe("trace_call_graph", () => {
       };
       definitions.update_file(src_file, [def]);
 
-      const call_graph = trace_call_graph(definitions, resolutions);
+      const call_graph = trace_call_graph(definitions, resolutions, languages);
 
       expect(call_graph.nodes.get(def.symbol_id)?.is_test).toBe(false);
     });
@@ -494,7 +501,7 @@ describe("trace_call_graph", () => {
       const def = test_file_function();
       definitions.update_file(test_file, [def]);
 
-      const call_graph = trace_call_graph(definitions, resolutions);
+      const call_graph = trace_call_graph(definitions, resolutions, languages);
 
       expect(call_graph.nodes.has(def.symbol_id)).toBe(true);
       expect(call_graph.entry_points).not.toContain(def.symbol_id);
@@ -505,12 +512,59 @@ describe("trace_call_graph", () => {
       const def = test_file_function();
       definitions.update_file(test_file, [def]);
 
-      const call_graph = trace_call_graph(definitions, resolutions, {
+      const call_graph = trace_call_graph(definitions, resolutions, languages, {
         include_tests: true,
       });
 
       expect(call_graph.entry_points).toContain(def.symbol_id);
       expect(call_graph.entry_points.length).toBe(1);
+    });
+  });
+
+  describe("language identity comes from the threaded map", () => {
+    function python_function(file_path: FilePath): FunctionDefinition {
+      const location = {
+        file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 3,
+        end_column: 0,
+      };
+      return {
+        kind: "function",
+        symbol_id: function_symbol("helper" as SymbolName, location),
+        name: "helper" as SymbolName,
+        defining_scope_id: `scope:${file_path}:module` as ScopeId,
+        location,
+        is_exported: false,
+        signature: { parameters: [] },
+        body_scope_id: `scope:${file_path}:function:helper:1:0` as ScopeId,
+      };
+    }
+
+    it("applies Python test-file conventions to a Python file (no silent typescript default)", () => {
+      const py_test_file = "helpers_test.py" as FilePath;
+      const def = python_function(py_test_file);
+      definitions.update_file(py_test_file, [def]);
+      const py_languages = new Map<FilePath, Language>([
+        [py_test_file, "python"],
+      ]);
+
+      const call_graph = trace_call_graph(definitions, resolutions, py_languages);
+
+      expect(call_graph.nodes.get(def.symbol_id)?.is_test).toBe(true);
+    });
+
+    it("throws when a callable's file has no recorded language", () => {
+      const orphan_file = "orphan.py" as FilePath;
+      const def = python_function(orphan_file);
+      definitions.update_file(orphan_file, [def]);
+
+      expect(() =>
+        trace_call_graph(definitions, resolutions, new Map())
+      ).toThrow(
+        "No language recorded for orphan.py — every callable definition must come from a parsed file"
+      );
     });
   });
 
@@ -573,7 +627,7 @@ describe("trace_call_graph", () => {
 
       definitions.update_file(python_file, [class_def]);
 
-      const call_graph = trace_call_graph(definitions, resolutions);
+      const call_graph = trace_call_graph(definitions, resolutions, languages);
 
       // __str__ should be in nodes (it has a body)
       expect(call_graph.nodes.has(str_method_id)).toBe(true);
@@ -639,7 +693,7 @@ describe("trace_call_graph", () => {
 
       definitions.update_file(python_file, [class_def]);
 
-      const call_graph = trace_call_graph(definitions, resolutions);
+      const call_graph = trace_call_graph(definitions, resolutions, languages);
 
       // __init__ should be in nodes
       expect(call_graph.nodes.has(init_method_id)).toBe(true);
@@ -702,7 +756,7 @@ describe("trace_call_graph", () => {
 
       definitions.update_file(python_file, [class_def]);
 
-      const call_graph = trace_call_graph(definitions, resolutions);
+      const call_graph = trace_call_graph(definitions, resolutions, languages);
 
       // __call__ should be in nodes
       expect(call_graph.nodes.has(call_method_id)).toBe(true);
@@ -816,7 +870,7 @@ describe("trace_call_graph", () => {
 
       definitions.update_file(python_file, [class_def]);
 
-      const call_graph = trace_call_graph(definitions, resolutions);
+      const call_graph = trace_call_graph(definitions, resolutions, languages);
 
       // All methods should be in nodes
       expect(call_graph.nodes.has(repr_method_id)).toBe(true);
@@ -891,7 +945,7 @@ describe("trace_call_graph", () => {
 
       definitions.update_file(ts_file, [class_def]);
 
-      const call_graph = trace_call_graph(definitions, resolutions);
+      const call_graph = trace_call_graph(definitions, resolutions, languages);
 
       // In TypeScript, __str__ should remain an entry point (not filtered)
       expect(call_graph.nodes.has(str_method_id)).toBe(true);

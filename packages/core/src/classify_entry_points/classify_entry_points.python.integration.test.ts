@@ -52,7 +52,7 @@ async function setup_project(
 }
 
 function enrich(project: Project) {
-  const call_graph = trace_call_graph(project.definitions, project.resolutions, {});
+  const call_graph = trace_call_graph(project.definitions, project.resolutions, project.get_languages(), {});
   return extract_entry_point_diagnostics(call_graph, project);
 }
 

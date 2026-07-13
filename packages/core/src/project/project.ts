@@ -488,7 +488,7 @@ export class Project {
     ) {
       return cached.enriched;
     }
-    const raw = trace_call_graph(this.definitions, this.resolutions, { include_tests });
+    const raw = trace_call_graph(this.definitions, this.resolutions, this.languages, { include_tests });
     const enriched = enrich_call_graph(raw, this, { registry });
     this.enriched_cache = { registry, include_tests, enriched };
     return enriched;
