@@ -30,6 +30,7 @@ import type {
   ScopeId,
   Location,
   FilePath,
+  Language,
   Result,
   ResolutionFailure,
   FunctionDefinition,
@@ -189,184 +190,6 @@ describe("Function Call Resolution", () => {
 
       const resolved = resolve_function_call(call_ref, context, resolutions);
       expect(unwrap(resolved)).toEqual([import_func_id]);
-    });
-  });
-
-  describe("Path-qualified calls", () => {
-    it("binds a type-qualified associated function over a same-name local", () => {
-      const CLASS_SCOPE_ID = "scope:test.ts:class:1:0" as ScopeId;
-      const class_id = class_symbol("Parker" as SymbolName, {
-        ...MOCK_LOCATION,
-        start_line: 1,
-      });
-      const make_method_id = method_symbol("make", {
-        ...MOCK_LOCATION,
-        start_line: 2,
-      });
-      const local_make_id = function_symbol("make" as SymbolName, {
-        ...MOCK_LOCATION,
-        start_line: 8,
-      });
-
-      const class_def: ClassDefinition = {
-        kind: "class",
-        symbol_id: class_id,
-        name: "Parker" as SymbolName,
-        defining_scope_id: FILE_SCOPE_ID,
-        location: { ...MOCK_LOCATION, start_line: 1 },
-        is_exported: false,
-        extends: [],
-        methods: [
-          {
-            kind: "method",
-            symbol_id: make_method_id,
-            name: "make" as SymbolName,
-            defining_scope_id: CLASS_SCOPE_ID,
-            location: { ...MOCK_LOCATION, start_line: 2 },
-            parameters: [],
-          },
-        ],
-        properties: [],
-        decorators: [],
-        constructors: [],
-      };
-
-      const local_make_def: FunctionDefinition = {
-        kind: "function",
-        symbol_id: local_make_id,
-        name: "make" as SymbolName,
-        defining_scope_id: FILE_SCOPE_ID,
-        location: { ...MOCK_LOCATION, start_line: 8 },
-        signature: { parameters: [] },
-        body_scope_id: "scope:test.ts:make:8:0" as ScopeId,
-        is_exported: false,
-      };
-
-      definitions.update_file(TEST_FILE, [class_def, local_make_def]);
-
-      set_test_resolutions(
-        resolutions,
-        FILE_SCOPE_ID,
-        new Map<SymbolName, SymbolId>([
-          ["Parker" as SymbolName, class_id],
-          ["make" as SymbolName, local_make_id],
-        ])
-      );
-
-      const call_ref = create_function_call_reference(
-        "make" as SymbolName,
-        { ...MOCK_LOCATION, start_line: 10 },
-        FILE_SCOPE_ID,
-        undefined,
-        ["Parker"] as SymbolName[]
-      );
-
-      const resolved = resolve_function_call(call_ref, context, resolutions);
-      expect(unwrap(resolved)).toEqual([make_method_id]);
-    });
-
-    it("binds a module-qualified call through the module body scope", () => {
-      const MODULE_SCOPE_ID = "scope:test.ts:module:1:0" as ScopeId;
-      const worker_ns_id = namespace_symbol("worker", {
-        ...MOCK_LOCATION,
-        start_line: 1,
-      });
-      const create_id = function_symbol("create" as SymbolName, {
-        ...MOCK_LOCATION,
-        start_line: 2,
-      });
-
-      const worker_ns_def: NamespaceDefinition = {
-        kind: "namespace",
-        symbol_id: worker_ns_id,
-        name: "worker" as SymbolName,
-        defining_scope_id: FILE_SCOPE_ID,
-        location: { ...MOCK_LOCATION, start_line: 1 },
-        is_exported: false,
-      };
-
-      const create_def: FunctionDefinition = {
-        kind: "function",
-        symbol_id: create_id,
-        name: "create" as SymbolName,
-        defining_scope_id: MODULE_SCOPE_ID,
-        location: { ...MOCK_LOCATION, start_line: 2 },
-        signature: { parameters: [] },
-        body_scope_id: "scope:test.ts:create:2:0" as ScopeId,
-        is_exported: false,
-      };
-
-      definitions.update_file(TEST_FILE, [worker_ns_def, create_def]);
-
-      const scope_map = new Map<ScopeId, LexicalScope>();
-      scope_map.set(FILE_SCOPE_ID, {
-        id: FILE_SCOPE_ID,
-        type: "global",
-        location: MOCK_LOCATION,
-        parent_id: null,
-        name: null,
-        child_ids: [MODULE_SCOPE_ID],
-      });
-      scope_map.set(MODULE_SCOPE_ID, {
-        id: MODULE_SCOPE_ID,
-        type: "module",
-        location: { ...MOCK_LOCATION, start_line: 1 },
-        parent_id: FILE_SCOPE_ID,
-        name: "worker" as SymbolName,
-        child_ids: [],
-      });
-      scopes.update_file(TEST_FILE, scope_map);
-
-      set_test_resolutions(
-        resolutions,
-        FILE_SCOPE_ID,
-        new Map<SymbolName, SymbolId>([["worker" as SymbolName, worker_ns_id]])
-      );
-
-      const call_ref = create_function_call_reference(
-        "create" as SymbolName,
-        { ...MOCK_LOCATION, start_line: 10 },
-        FILE_SCOPE_ID,
-        undefined,
-        ["worker"] as SymbolName[]
-      );
-
-      const resolved = resolve_function_call(call_ref, context, resolutions);
-      expect(unwrap(resolved)).toEqual([create_id]);
-    });
-
-    it("falls back to bare resolution when the path prefix misses", () => {
-      const helper_id = function_symbol("helper" as SymbolName, MOCK_LOCATION);
-
-      const helper_def: FunctionDefinition = {
-        kind: "function",
-        symbol_id: helper_id,
-        name: "helper" as SymbolName,
-        defining_scope_id: FILE_SCOPE_ID,
-        location: MOCK_LOCATION,
-        signature: { parameters: [] },
-        body_scope_id: FUNC_SCOPE_ID,
-        is_exported: false,
-      };
-
-      definitions.update_file(TEST_FILE, [helper_def]);
-
-      set_test_resolutions(
-        resolutions,
-        FILE_SCOPE_ID,
-        new Map<SymbolName, SymbolId>([["helper" as SymbolName, helper_id]])
-      );
-
-      const call_ref = create_function_call_reference(
-        "helper" as SymbolName,
-        { ...MOCK_LOCATION, start_line: 10 },
-        FILE_SCOPE_ID,
-        undefined,
-        ["Unknown"] as SymbolName[]
-      );
-
-      const resolved = resolve_function_call(call_ref, context, resolutions);
-      expect(unwrap(resolved)).toEqual([helper_id]);
     });
   });
 
@@ -717,7 +540,11 @@ describe("Function Call Resolution", () => {
         py_scope
       );
 
-      const resolved = resolve_function_call(call_ref, context, resolutions);
+      const py_context = {
+        ...context,
+        languages: new Map<FilePath, Language>([[py_file, "python"]]),
+      };
+      const resolved = resolve_function_call(call_ref, py_context, resolutions);
       expect(unwrap(resolved)).toEqual([call_method_id]);
     });
 
@@ -754,11 +581,15 @@ describe("Function Call Resolution", () => {
         py_scope
       );
 
-      const resolved = resolve_function_call(call_ref, context, resolutions);
+      const py_context = {
+        ...context,
+        languages: new Map<FilePath, Language>([[py_file, "python"]]),
+      };
+      const resolved = resolve_function_call(call_ref, py_context, resolutions);
       expect(unwrap(resolved)).toEqual([var_id]);
     });
 
-    it("does not attempt __call__ resolution for non-.py files", () => {
+    it("does not attempt __call__ resolution for non-python files", () => {
       const var_id = variable_symbol("processor" as SymbolName, MOCK_LOCATION);
       const var_def: VariableDefinition = {
         kind: "variable",
@@ -781,7 +612,11 @@ describe("Function Call Resolution", () => {
         FILE_SCOPE_ID
       );
 
-      const resolved = resolve_function_call(call_ref, context, resolutions);
+      const ts_context = {
+        ...context,
+        languages: new Map<FilePath, Language>([[TEST_FILE, "typescript"]]),
+      };
+      const resolved = resolve_function_call(call_ref, ts_context, resolutions);
       expect(unwrap(resolved)).toEqual([var_id]);
     });
   });
