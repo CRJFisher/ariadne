@@ -1002,7 +1002,8 @@ describe("JavaScript Builder Configuration", () => {
         const builder = new ReferenceBuilder(
           processing_context,
           JAVASCRIPT_METADATA_EXTRACTORS,
-          TEST_FILE_PATH
+          TEST_FILE_PATH,
+          "javascript"
         );
 
         builder.process(captures[0]);
@@ -1067,7 +1068,8 @@ describe("JavaScript Builder Configuration", () => {
         const builder = new ReferenceBuilder(
           processing_context,
           JAVASCRIPT_METADATA_EXTRACTORS,
-          TEST_FILE_PATH
+          TEST_FILE_PATH,
+          "javascript"
         );
 
         builder.process(captures[0]);
@@ -1127,7 +1129,8 @@ describe("JavaScript Builder Configuration", () => {
         const builder = new ReferenceBuilder(
           processing_context,
           JAVASCRIPT_METADATA_EXTRACTORS,
-          TEST_FILE_PATH
+          TEST_FILE_PATH,
+          "javascript"
         );
 
         builder.process(captures[0]);
@@ -1176,7 +1179,8 @@ describe("JavaScript Builder Configuration", () => {
         const builder = new ReferenceBuilder(
           processing_context,
           JAVASCRIPT_METADATA_EXTRACTORS,
-          TEST_FILE_PATH
+          TEST_FILE_PATH,
+          "javascript"
         );
 
         builder.process(captures[0]);
@@ -1222,7 +1226,8 @@ describe("JavaScript Builder Configuration", () => {
         const builder = new ReferenceBuilder(
           processing_context,
           JAVASCRIPT_METADATA_EXTRACTORS,
-          TEST_FILE_PATH
+          TEST_FILE_PATH,
+          "javascript"
         );
 
         builder.process(captures[0]);
