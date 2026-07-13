@@ -48,7 +48,7 @@ import type { ProcessingContext } from "./scopes/processing_context";
 
 /**
  * Semantic Index - Single-file analysis results
- * Import/Export union types are created during cross-file resolution in symbol_resolution.ts
+ * Import/Export union types are created during cross-file resolution in resolve_references/
  */
 export interface SemanticIndex {
   readonly file_path: FilePath;

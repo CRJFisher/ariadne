@@ -465,7 +465,7 @@ describe("DefinitionBuilder - Complex Assembly", () => {
     expect(constructor_def.parameters[0].type).toBe("string");
     expect(constructor_def.parameters[1].name).toBe("age");
     expect(constructor_def.parameters[1].type).toBe("number");
-    expect(constructor_def.parameters[1].default_value).toBeUndefined;
+    expect(constructor_def.parameters[1].default_value).toBeUndefined();
   });
 
   it("should support parameters for interface methods", () => {

@@ -1,5 +1,5 @@
 /**
- * Python loop and comprehension variable handlers
+ * Python control-flow variable handlers
  *
  * Handlers for the binding constructs that introduce a variable bound to the
  * scope they open: `for` loops, comprehensions, `except ... as`, and

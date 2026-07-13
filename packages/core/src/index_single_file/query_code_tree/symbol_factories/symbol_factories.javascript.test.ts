@@ -2,9 +2,9 @@
  * Tests for JavaScript symbol factories
  */
 
-import { describe, it, expect, beforeAll, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
+import { parse_js, find_node_by_type } from "./test_utils";
 import Parser from "tree-sitter";
-import JavaScript from "tree-sitter-javascript";
 import TypeScript from "tree-sitter-typescript";
 import type { SyntaxNode } from "tree-sitter";
 import {
@@ -31,36 +31,12 @@ import { extract_jsdoc_type } from "./jsdoc_extraction.javascript";
 import { node_to_location } from "../../node_to_location";
 import { SemanticCategory, SemanticEntity, type CaptureNode } from "../../capture_types";
 
-// Parsers for tree-sitter
-let js_parser: Parser;
-let ts_parser: Parser;
-
 const file_path = "/test.js" as FilePath;
 
-beforeAll(() => {
-  js_parser = new Parser();
-  js_parser.setLanguage(JavaScript);
-  ts_parser = new Parser();
-  ts_parser.setLanguage(TypeScript.typescript);
-});
-
-// Helper to parse code and get AST root
-export function parse_js(code: string): SyntaxNode {
-  return js_parser.parse(code).rootNode;
-}
-
 function parse_ts(code: string): SyntaxNode {
-  return ts_parser.parse(code).rootNode;
-}
-
-// Helper to find first node of specific type
-export function find_node_by_type(node: SyntaxNode, type: string): SyntaxNode | null {
-  if (node.type === type) return node;
-  for (let i = 0; i < node.childCount; i++) {
-    const found = find_node_by_type(node.child(i)!, type);
-    if (found) return found;
-  }
-  return null;
+  const parser = new Parser();
+  parser.setLanguage(TypeScript.typescript);
+  return parser.parse(code).rootNode;
 }
 
 // Helper to find all nodes of specific type
@@ -708,6 +684,3 @@ describe("detect_callback_context", () => {
   });
 });
 
-// ============================================================================
-// Documentation State Management
-// ============================================================================

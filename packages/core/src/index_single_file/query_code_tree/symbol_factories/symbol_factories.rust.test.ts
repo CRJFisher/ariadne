@@ -2,7 +2,7 @@
  * Tests for Rust symbol factories
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import Parser from "tree-sitter";
 import Rust from "tree-sitter-rust";
 import type { SyntaxNode } from "tree-sitter";
@@ -1093,9 +1093,6 @@ describe("detect_callback_context", () => {
   });
 });
 
-// ============================================================================
-// Documentation state management
-// ============================================================================
 
 // ============================================================================
 // detect_function_collection

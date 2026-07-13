@@ -10,7 +10,7 @@ import {
   parse_python,
   make_capture,
   find_string_node,
-} from "./symbol_factories.python.test";
+} from "./test_utils";
 
 describe("clean_python_docstring", () => {
   it("should strip triple double quotes from single-line docstring", () => {

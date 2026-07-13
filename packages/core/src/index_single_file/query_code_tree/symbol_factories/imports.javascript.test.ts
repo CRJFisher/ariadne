@@ -7,7 +7,7 @@ import {
   is_default_import,
   is_namespace_import,
 } from "./imports.javascript";
-import { parse_js, find_node_by_type } from "./symbol_factories.javascript.test";
+import { parse_js, find_node_by_type } from "./test_utils";
 
 describe("extract_import_path", () => {
   it("should extract path from import statement", () => {

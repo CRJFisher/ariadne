@@ -8,8 +8,8 @@ import { RUST_METADATA_EXTRACTORS } from "./metadata_extractors.rust";
 /**
  * Get language-specific metadata extractors
  *
- * JavaScript extractors work for both JavaScript and TypeScript since
- * tree-sitter-typescript is a superset of tree-sitter-javascript
+ * TypeScript reuses the JavaScript extractors for most methods but overrides
+ * type-annotation extraction, so it dispatches its own extractor set.
  */
 export function get_metadata_extractors(
   language: Language
