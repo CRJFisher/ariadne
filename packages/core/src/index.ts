@@ -30,10 +30,12 @@ export {
   attach_unindexed_test_grep_hits,
   collect_unindexed_test_files,
   build_class_name_by_constructor_position,
-  detect_language,
   load_permanent_registry,
   PermanentRegistryError,
 } from "./classify_entry_points";
+
+// Language identity (path-based detection is ingress-only)
+export { detect_language } from "./detect_language";
 
 // Tree-sitter query execution (used by triage for diagnostic capture analysis)
 export { query_tree } from "./index_single_file/query_code_tree/query_code_tree";

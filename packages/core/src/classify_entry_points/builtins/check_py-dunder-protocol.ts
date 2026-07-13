@@ -7,7 +7,7 @@
 // `__new__`) remains an entry point and is excluded here. Replaces the old
 // hardcoded `filter_entry_points.python.ts` list with a registry-driven rule.
 
-import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { EnrichedEntryPoint, Language } from "@ariadnejs/types";
 import type { FileLinesReader } from "../auto_classify_types";
 
 const TRACEABLE_DUNDERS: ReadonlySet<string> = new Set([
@@ -23,9 +23,10 @@ function is_dunder_method(name: string): boolean {
 export function check_py_dunder_protocol(
   entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
+  language: Language,
 ): boolean {
   void read_file_lines;
-  if (!entry_point.file_path.endsWith(".py")) return false;
+  if (language !== "python") return false;
   if (entry_point.kind !== "method") return false;
   if (TRACEABLE_DUNDERS.has(entry_point.name)) return false;
   return is_dunder_method(entry_point.name);

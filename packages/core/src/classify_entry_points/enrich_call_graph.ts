@@ -84,6 +84,7 @@ export function enrich_call_graph(
     enriched_entry_points,
     registry,
     read_file_lines,
+    project.get_languages(),
     options?.builtin_checks ? { builtin_checks: options.builtin_checks } : {},
   );
 

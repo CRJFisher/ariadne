@@ -130,3 +130,24 @@ describe("builtin field denylist (AST scan over builtins/check_*.ts)", () => {
     }
   });
 });
+
+describe("builtins do not re-derive language from the path", () => {
+  const LANGUAGE_EXT_ENDSWITH = /\.endsWith\(\s*["'`]\.(ts|tsx|js|jsx|mjs|cjs|py|rs)["'`]\s*\)/;
+
+  it("no builtin imports or calls detect_language, and none gates on a language extension", () => {
+    const violations: string[] = [];
+    for (const file of collect_check_sources(HERE)) {
+      const text = fs.readFileSync(file, "utf8");
+      if (text.includes("detect_language")) {
+        violations.push(`${path.relative(HERE, file)}: references detect_language`);
+      }
+      if (LANGUAGE_EXT_ENDSWITH.test(text)) {
+        violations.push(`${path.relative(HERE, file)}: gates on a language extension via .endsWith`);
+      }
+    }
+    // Language identity arrives as the BuiltinCheckFn `language` parameter,
+    // threaded from the pipeline's ingress — a check that re-derives it from
+    // the path bypasses that contract.
+    expect(violations).toEqual([]);
+  });
+});

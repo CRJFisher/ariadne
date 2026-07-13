@@ -20,7 +20,9 @@
 
 import type {
   EnrichedEntryPoint,
+  FilePath,
   KnownIssuesRegistry,
+  Language,
   ClassifierHint,
 } from "@ariadnejs/types";
 import { BUILTIN_CHECKS, type BuiltinCheckFn } from "./builtins/index";
@@ -58,11 +60,12 @@ export function auto_classify(
   entry_points: readonly EnrichedEntryPoint[],
   registry: KnownIssuesRegistry,
   read_file_lines: FileLinesReader,
+  languages: ReadonlyMap<FilePath, Language>,
   options: AutoClassifyOptions = {},
 ): ClassifiedEntryPointResult[] {
   const builtin_checks = options.builtin_checks ?? BUILTIN_CHECKS;
   return entry_points.map((entry_point) =>
-    classify_one(entry_point, registry, read_file_lines, builtin_checks),
+    classify_one(entry_point, registry, read_file_lines, languages, builtin_checks),
   );
 }
 
@@ -70,8 +73,15 @@ function classify_one(
   entry_point: EnrichedEntryPoint,
   registry: KnownIssuesRegistry,
   read_file_lines: FileLinesReader,
+  languages: ReadonlyMap<FilePath, Language>,
   builtin_checks: Readonly<Record<string, BuiltinCheckFn>>,
 ): ClassifiedEntryPointResult {
+  const language = languages.get(entry_point.file_path);
+  if (language === undefined) {
+    throw new Error(
+      `No language recorded for ${entry_point.file_path} — every entry point must come from a parsed file`
+    );
+  }
   const hints: ClassifierHint[] = [];
 
   for (const issue of registry) {
@@ -80,7 +90,7 @@ function classify_one(
     if (check === undefined) {
       throw new MissingBuiltinError(issue.group_id, spec.function_name);
     }
-    if (!check(entry_point, read_file_lines)) continue;
+    if (!check(entry_point, read_file_lines, language)) continue;
     const reasoning = `Matched builtin classifier ${spec.function_name} for ${issue.group_id}`;
     const min_confidence = spec.min_confidence;
 

@@ -76,7 +76,7 @@ function make_entry(overrides: {
 
 describe("check_untyped_attribute_receiver", () => {
   it("matches a Python method whose self-attribute receiver collapsed to the caller's own class", () => {
-    expect(check_untyped_attribute_receiver(make_entry(), EMPTY_READER)).toBe(true);
+    expect(check_untyped_attribute_receiver(make_entry(), EMPTY_READER, "python")).toBe(true);
   });
 
   // The typed-attribute / untyped-sub-member shape, e.g. `self.frame.values.foo()`
@@ -90,7 +90,7 @@ describe("check_untyped_attribute_receiver", () => {
         partial_info: { resolved_receiver_type: class_symbol_id("/repo/other/module.py") },
       },
     });
-    expect(check_untyped_attribute_receiver(make_entry({ refs: [ref] }), EMPTY_READER)).toBe(false);
+    expect(check_untyped_attribute_receiver(make_entry({ refs: [ref] }), EMPTY_READER, "python")).toBe(false);
   });
 
   it("does not match an identifier receiver (the fixture-injected styler._repr_html_ shape is out of scope)", () => {
@@ -102,21 +102,21 @@ describe("check_untyped_attribute_receiver", () => {
         partial_info: {},
       },
     });
-    expect(check_untyped_attribute_receiver(make_entry({ refs: [ref] }), EMPTY_READER)).toBe(false);
+    expect(check_untyped_attribute_receiver(make_entry({ refs: [ref] }), EMPTY_READER, "python")).toBe(false);
   });
 
   it("does not match a non-Python entry point", () => {
     const entry = make_entry({ file_path: "/repo/src/indexing.ts" as FilePath });
-    expect(check_untyped_attribute_receiver(entry, EMPTY_READER)).toBe(false);
+    expect(check_untyped_attribute_receiver(entry, EMPTY_READER, "typescript")).toBe(false);
   });
 
   it("does not match a non-method entry point", () => {
-    expect(check_untyped_attribute_receiver(make_entry({ kind: "function" }), EMPTY_READER)).toBe(false);
+    expect(check_untyped_attribute_receiver(make_entry({ kind: "function" }), EMPTY_READER, "python")).toBe(false);
   });
 
   it("does not match when the call resolved (resolution_count > 0)", () => {
     const ref = make_ref({ resolution_count: 1 });
-    expect(check_untyped_attribute_receiver(make_entry({ refs: [ref] }), EMPTY_READER)).toBe(false);
+    expect(check_untyped_attribute_receiver(make_entry({ refs: [ref] }), EMPTY_READER, "python")).toBe(false);
   });
 
   it("does not match a different failure reason (method_not_on_type on a typed receiver)", () => {
@@ -127,12 +127,12 @@ describe("check_untyped_attribute_receiver", () => {
         partial_info: { resolved_receiver_type: class_symbol_id(CALLER_FILE) },
       },
     });
-    expect(check_untyped_attribute_receiver(make_entry({ refs: [ref] }), EMPTY_READER)).toBe(false);
+    expect(check_untyped_attribute_receiver(make_entry({ refs: [ref] }), EMPTY_READER, "python")).toBe(false);
   });
 
   it("does not match when there is no resolution failure", () => {
     const ref = make_ref({ resolution_count: 1, resolution_failure: null });
-    expect(check_untyped_attribute_receiver(make_entry({ refs: [ref] }), EMPTY_READER)).toBe(false);
+    expect(check_untyped_attribute_receiver(make_entry({ refs: [ref] }), EMPTY_READER, "python")).toBe(false);
   });
 
   it("does not match when resolved_receiver_type is absent", () => {
@@ -143,11 +143,11 @@ describe("check_untyped_attribute_receiver", () => {
         partial_info: {},
       },
     });
-    expect(check_untyped_attribute_receiver(make_entry({ refs: [ref] }), EMPTY_READER)).toBe(false);
+    expect(check_untyped_attribute_receiver(make_entry({ refs: [ref] }), EMPTY_READER, "python")).toBe(false);
   });
 
   it("does not match an entry with no call refs", () => {
-    expect(check_untyped_attribute_receiver(make_entry({ refs: [] }), EMPTY_READER)).toBe(false);
+    expect(check_untyped_attribute_receiver(make_entry({ refs: [] }), EMPTY_READER, "python")).toBe(false);
   });
 
   it("matches when a non-matching ref precedes a matching one (.some over all refs)", () => {
@@ -159,13 +159,13 @@ describe("check_untyped_attribute_receiver", () => {
       },
     });
     const entry = make_entry({ refs: [non_matching, make_ref()] });
-    expect(check_untyped_attribute_receiver(entry, EMPTY_READER)).toBe(true);
+    expect(check_untyped_attribute_receiver(entry, EMPTY_READER, "python")).toBe(true);
   });
 
   it("does not match when every ref fails a clause", () => {
     const identifier_ref = make_ref({ receiver_kind: "identifier" as ReceiverKind });
     const resolved_ref = make_ref({ resolution_count: 1, resolution_failure: null });
     const entry = make_entry({ refs: [identifier_ref, resolved_ref] });
-    expect(check_untyped_attribute_receiver(entry, EMPTY_READER)).toBe(false);
+    expect(check_untyped_attribute_receiver(entry, EMPTY_READER, "python")).toBe(false);
   });
 });

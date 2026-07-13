@@ -1532,6 +1532,42 @@ describe("run_stage", () => {
     expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
   });
 
+  it("supplies the sample's language to the check at load", async () => {
+    await seed([seeded_rule]);
+    const summary = await run_or_stage(
+      ["--stage", "/drafts/rule-staged.json"],
+      stage_deps({
+        get_builtin_check: () => (_entry, _reader, language) =>
+          language === "typescript",
+      }),
+    );
+    expect(summary).toEqual({
+      draft: staged_draft,
+      applied: false,
+      sample_results: [
+        { sample: "0.json", file_path: "/repo/src/handler.ts", passed: true },
+      ],
+    });
+  });
+
+  it("refuses a sample whose file extension no indexed language matches", async () => {
+    const seeded = await seed([seeded_rule]);
+    const go_sample: StageSample = {
+      ...make_sample("0.json"),
+      entry_point: {
+        ...make_sample("0.json").entry_point,
+        file_path: "/repo/src/main.go" as FilePath,
+      },
+    };
+    await expect(
+      run_or_stage(
+        ["--stage", "/drafts/rule-staged.json", "--apply"],
+        stage_deps({ load_stage_samples: async () => [go_sample] }),
+      ),
+    ).rejects.toThrowError(/unsupported file extension/);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
+  });
+
   it("refuses a draft with no persisted samples (unverifiable check)", async () => {
     const seeded = await seed([seeded_rule]);
     await expect(

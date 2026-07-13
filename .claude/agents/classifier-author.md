@@ -108,7 +108,7 @@ Read these to write a correctly-typed, drop-in file:
 
 - `packages/core/src/classify_entry_points/builtins/index.ts` — the
   `BuiltinCheckFn` signature `(entry_point: EnrichedEntryPoint, read_file_lines:
-FileLinesReader) => boolean` and the `BUILTIN_CHECKS` barrel.
+FileLinesReader, language: Language) => boolean` and the `BUILTIN_CHECKS` barrel.
 - `packages/types/src/entry_point.ts` — `EnrichedEntryPoint` and
   `CallRefDiagnostic` fields your check reads.
 - Two or three existing checks as templates. `check_untyped-attribute-receiver.ts`
@@ -116,24 +116,26 @@ FileLinesReader) => boolean` and the `BUILTIN_CHECKS` barrel.
   for a name/path-regex check; `check_framework-component-decorator.ts` for a
   decorator-block check (it imports the shared `extract_decorator_block` helper —
   do the same for a decorator check). Match their import lines exactly:
-  - `import type { EnrichedEntryPoint } from "@ariadnejs/types";`
+  - `import type { EnrichedEntryPoint, Language } from "@ariadnejs/types";` (the
+    `Language` import only if you gate on language)
   - `import type { FileLinesReader } from "../auto_classify_types";`
-  - `import { detect_language } from "../extract_entry_point_diagnostics";` (only
-    if you gate on language)
   - `import { extract_decorator_block } from "./extract_decorator_block";` (only
     for a decorator-block check)
 
 Your check must:
 
-- Take `(entry_point, read_file_lines)` and return `boolean`.
-- Reach for the shared `builtins/` helpers (`detect_language`,
-  `extract_decorator_block`) rather than reinventing them; a check is one small
-  focused file that imports what it needs, like the existing checks.
+- Take `(entry_point, read_file_lines, language)` and return `boolean`. The
+  driver computes `language` from the pipeline's languages map — never
+  re-derive it from `entry_point.file_path`.
+- Reach for the shared `builtins/` helpers (`extract_decorator_block`) rather
+  than reinventing them; a check is one small focused file that imports what
+  it needs, like the existing checks.
 - Guard by language first when the pattern is language-specific
-  (`detect_language(entry_point.file_path) !== "python"` → `return false`).
-- Read only from `entry_point` (and `read_file_lines` if you truly need source
-  text; most checks do not — mark it `void read_file_lines;` when unused, like
-  the existing checks).
+  (`language !== "python"` → `return false`).
+- Read only from `entry_point` and `language` (and `read_file_lines` if you
+  truly need source text; most checks do not — mark it `void read_file_lines;`
+  when unused, like the existing checks; a language-agnostic check may omit
+  the trailing `language` parameter entirely).
 - Be named `check_<group_id_snake>` — the snake_case of the kebab `group_id`.
 
 ## 4. Write the staging artifacts
@@ -201,12 +203,13 @@ a comment block explaining the pattern and the discriminator (model it on
 //
 // <2–4 lines: the false-positive mechanism, why it is permanent, the discriminator>
 
-import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { EnrichedEntryPoint, Language } from "@ariadnejs/types";
 import type { FileLinesReader } from "../auto_classify_types";
 
 export function check_<group_id_snake>(
   entry_point: EnrichedEntryPoint,
-  read_file_lines: FileLinesReader
+  read_file_lines: FileLinesReader,
+  language: Language,
 ): boolean {
   void read_file_lines;
   // ... discriminator logic that returns true for every sample entry ...

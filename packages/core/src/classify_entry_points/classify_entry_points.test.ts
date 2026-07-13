@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import type {
+  Language,
   EnrichedEntryPoint,
   FilePath,
   KnownIssue,
@@ -77,6 +78,11 @@ function checks(...entries: [group_id: string, matches: boolean][]): Record<stri
 
 const EMPTY_READER = (_: string) => [] as readonly string[];
 
+const LANGUAGES: ReadonlyMap<FilePath, Language> = new Map<FilePath, Language>([
+  [fp("src/target.ts"), "typescript"],
+  [fp("app.py"), "python"],
+]);
+
 // ===== Tests =====
 
 describe("auto_classify — priority and match semantics", () => {
@@ -87,7 +93,7 @@ describe("auto_classify — priority and match semantics", () => {
       builtin_issue("second", 1.0),
     ];
 
-    const [classified] = auto_classify([entry_point], registry, EMPTY_READER, {
+    const [classified] = auto_classify([entry_point], registry, EMPTY_READER, LANGUAGES, {
       builtin_checks: checks(["first", true], ["second", true]),
     });
 
@@ -103,7 +109,7 @@ describe("auto_classify — priority and match semantics", () => {
       builtin_issue("will-match", 1.0),
     ];
 
-    const [classified] = auto_classify([entry_point], registry, EMPTY_READER, {
+    const [classified] = auto_classify([entry_point], registry, EMPTY_READER, LANGUAGES, {
       builtin_checks: checks(["wont-match", false], ["will-match", true]),
     });
 
@@ -119,7 +125,7 @@ describe("auto_classify — priority and match semantics", () => {
       builtin_issue("b", 1.0),
     ];
 
-    const [classified] = auto_classify([entry_point], registry, EMPTY_READER, {
+    const [classified] = auto_classify([entry_point], registry, EMPTY_READER, LANGUAGES, {
       builtin_checks: checks(["a", false], ["b", false]),
     });
 
@@ -138,7 +144,7 @@ describe("auto_classify — sub-threshold hints", () => {
     // KnownIssue directly to bypass the registry validator's [0,1] check.
     const registry: KnownIssuesRegistry = [builtin_issue("hint-only", 1.1)];
 
-    const [classified] = auto_classify([entry_point], registry, EMPTY_READER, {
+    const [classified] = auto_classify([entry_point], registry, EMPTY_READER, LANGUAGES, {
       builtin_checks: checks(["hint-only", true]),
     });
 
@@ -161,7 +167,7 @@ describe("auto_classify — sub-threshold hints", () => {
       builtin_issue("final", 1.0),
     ];
 
-    const [classified] = auto_classify([entry_point], registry, EMPTY_READER, {
+    const [classified] = auto_classify([entry_point], registry, EMPTY_READER, LANGUAGES, {
       builtin_checks: checks(["hint-1", true], ["hint-2", true], ["final", true]),
     });
 
@@ -190,7 +196,7 @@ describe("auto_classify — file reader plumbing", () => {
       min_confidence: 1.0,
     };
 
-    const [classified] = auto_classify([entry_point], registry, reader, { builtin_checks });
+    const [classified] = auto_classify([entry_point], registry, reader, LANGUAGES, { builtin_checks });
 
     expect(classified.result.auto_classified).toBe(true);
     expect(classified.result.auto_group_id).toBe("py-fixture");
@@ -220,7 +226,7 @@ describe("auto_classify — builtin dispatch", () => {
         return true;
       },
     };
-    const [classified] = auto_classify([entry_point], registry, EMPTY_READER, { builtin_checks });
+    const [classified] = auto_classify([entry_point], registry, EMPTY_READER, LANGUAGES, { builtin_checks });
     expect(classified.result.auto_classified).toBe(true);
     expect(classified.result.auto_group_id).toBe("bg");
     expect(classified.result.reasoning).toBe(
@@ -232,10 +238,10 @@ describe("auto_classify — builtin dispatch", () => {
   it("throws MissingBuiltinError when function_name is missing from the barrel", () => {
     const entry_point = make_entry();
     const registry: KnownIssuesRegistry = [tagged_builtin("stale", "check_stale")];
-    expect(() => auto_classify([entry_point], registry, EMPTY_READER, { builtin_checks: {} })).toThrow(
+    expect(() => auto_classify([entry_point], registry, EMPTY_READER, LANGUAGES, { builtin_checks: {} })).toThrow(
       MissingBuiltinError,
     );
-    expect(() => auto_classify([entry_point], registry, EMPTY_READER, { builtin_checks: {} })).toThrow(
+    expect(() => auto_classify([entry_point], registry, EMPTY_READER, LANGUAGES, { builtin_checks: {} })).toThrow(
       /check_stale/,
     );
   });
@@ -246,7 +252,7 @@ describe("auto_classify — builtin dispatch", () => {
       tagged_builtin("b", "check_b"),
       tagged_builtin("p", "check_p"),
     ];
-    const [classified] = auto_classify([entry_point], registry, EMPTY_READER, {
+    const [classified] = auto_classify([entry_point], registry, EMPTY_READER, LANGUAGES, {
       builtin_checks: { check_b: () => false, check_p: () => true },
     });
     expect(classified.result.auto_classified).toBe(true);

@@ -125,7 +125,7 @@ class _ScalarAccessIndexer(NDFrameIndexerBase):
     // The untyped `self.obj` receiver leaves _set_value flagged as unreachable.
     expect(set_value).toBeDefined();
 
-    const classified = auto_classify(enriched, REGISTRY, read_file_lines);
+    const classified = auto_classify(enriched, REGISTRY, read_file_lines, project.get_languages());
     const set_value_result = classified.find(
       (c) => c.entry_point.name === "_set_value",
     );
@@ -156,7 +156,7 @@ class Loader:
     });
 
     const enriched = enrich(project);
-    const classified = auto_classify(enriched, REGISTRY, read_file_lines);
+    const classified = auto_classify(enriched, REGISTRY, read_file_lines, project.get_languages());
     // No remaining entry point matches the rule — setup/run are plain functions
     // with no untyped self-attribute call.
     for (const c of classified) {

@@ -398,7 +398,7 @@ describe("derive_definition_features", () => {
 
   it("returns false / null for non-JS/TS files", () => {
     const node = make_node({ file_path: "src/main.py", kind: "method" });
-    const out = derive_definition_features(node, new Set(), new Map());
+    const out = derive_definition_features(node, new Set(), new Map(), "python");
     expect(out).toEqual({
       definition_is_object_literal_method: false,
       accessor_kind: null,
@@ -415,7 +415,7 @@ describe("derive_definition_features", () => {
     const lines = new Map<FilePath, string[]>([
       [fp("src/o.ts"), ["const o = {", "  foo() { return 1; },", "};"]],
     ]);
-    const out = derive_definition_features(node, new Set(), lines);
+    const out = derive_definition_features(node, new Set(), lines, "typescript");
     expect(out).toEqual({
       definition_is_object_literal_method: true,
       accessor_kind: null,
@@ -433,7 +433,7 @@ describe("derive_definition_features", () => {
       [fp("src/c.ts"), ["class C {", "  foo() {}", "}"]],
     ]);
     const class_methods = new Set<SymbolId>([sym("class_method")]);
-    const out = derive_definition_features(node, class_methods, lines);
+    const out = derive_definition_features(node, class_methods, lines, "typescript");
     expect(out).toEqual({
       definition_is_object_literal_method: false,
       accessor_kind: null,
@@ -449,7 +449,7 @@ describe("derive_definition_features", () => {
     const lines = new Map<FilePath, string[]>([
       [fp("src/f.ts"), ["function foo() {", "  return 1;", "}"]],
     ]);
-    const out = derive_definition_features(node, new Set(), lines);
+    const out = derive_definition_features(node, new Set(), lines, "typescript");
     expect(out).toEqual({
       definition_is_object_literal_method: false,
       accessor_kind: null,
@@ -467,7 +467,7 @@ describe("derive_definition_features", () => {
       [fp("src/c.ts"), ["class C {", "  get name() { return this._n; }", "}"]],
     ]);
     const class_methods = new Set<SymbolId>([sym("class_method")]);
-    const out = derive_definition_features(node, class_methods, lines);
+    const out = derive_definition_features(node, class_methods, lines, "typescript");
     expect(out).toEqual({
       definition_is_object_literal_method: false,
       accessor_kind: "getter",
@@ -485,7 +485,7 @@ describe("derive_definition_features", () => {
       [fp("src/c.ts"), ["class C {", "  set name(v: string) { this._n = v; }", "}"]],
     ]);
     const class_methods = new Set<SymbolId>([sym("class_method")]);
-    const out = derive_definition_features(node, class_methods, lines);
+    const out = derive_definition_features(node, class_methods, lines, "typescript");
     expect(out).toEqual({
       definition_is_object_literal_method: false,
       accessor_kind: "setter",

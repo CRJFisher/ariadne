@@ -4,7 +4,7 @@
 // `BUILTIN_CHECKS` entry here. The orchestrator looks up a builtin classifier by
 // `function_name` via BUILTIN_CHECKS.
 
-import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { EnrichedEntryPoint, Language } from "@ariadnejs/types";
 import type { FileLinesReader } from "../auto_classify_types";
 
 import { check_bundler_module_substitution } from "./check_bundler-module-substitution";
@@ -30,6 +30,7 @@ import { check_untyped_attribute_receiver } from "./check_untyped-attribute-rece
 export type BuiltinCheckFn = (
   entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
+  language: Language,
 ) => boolean;
 
 export const BUILTIN_CHECKS: Record<string, BuiltinCheckFn> = {

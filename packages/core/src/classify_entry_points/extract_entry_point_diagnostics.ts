@@ -122,6 +122,7 @@ export function extract_entry_point_diagnostics(
   project: Project,
 ): EnrichedEntryPoint[] {
   const source_files = project.get_file_contents();
+  const languages = project.get_languages();
   const lines_by_file = build_lines_by_file(source_files);
   const call_refs_by_name = build_call_refs_by_name(call_graph);
   const call_refs_by_file_line = build_call_refs_by_file_line(call_graph);
@@ -165,10 +166,17 @@ export function extract_entry_point_diagnostics(
       class_name_by_constructor_id,
     );
 
+    const language = languages.get(node.location.file_path);
+    if (language === undefined) {
+      throw new Error(
+        `No language recorded for ${node.location.file_path} — every entry point must come from a parsed file`
+      );
+    }
     const definition_features = derive_definition_features(
       node,
       class_method_symbol_ids,
       lines_by_file,
+      language,
     );
 
     entry_points.push({
@@ -583,10 +591,11 @@ export function derive_definition_features(
   node: CallableNode,
   class_methods: ReadonlySet<SymbolId>,
   lines_by_file: ReadonlyMap<FilePath, string[]>,
+  language: Language,
 ): DefinitionFeatures {
   const file_path = node.location.file_path;
   const start_line = node.location.start_line;
-  const is_jsts = /\.(ts|tsx|js|jsx|mjs|cjs)$/.test(file_path);
+  const is_jsts = language === "typescript" || language === "javascript";
   if (!is_jsts) {
     return { definition_is_object_literal_method: false, accessor_kind: null };
   }
@@ -710,32 +719,6 @@ export function count_tree_size(
   }
 
   return count;
-}
-
-/**
- * Detect programming language from file extension.
- */
-export function detect_language(file_path: string): Language | null {
-  if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) {
-    return "typescript";
-  }
-  if (
-    file_path.endsWith(".js") ||
-    file_path.endsWith(".jsx") ||
-    file_path.endsWith(".mjs") ||
-    file_path.endsWith(".cjs")
-  ) {
-    return "javascript";
-  }
-  if (file_path.endsWith(".py")) {
-    return "python";
-  }
-  if (file_path.endsWith(".rs")) {
-    return "rust";
-  }
-  // Note: go, java, cpp are recognized by find_source_files but not yet
-  // supported by Ariadne's Language type, so return null for them.
-  return null;
 }
 
 /**
