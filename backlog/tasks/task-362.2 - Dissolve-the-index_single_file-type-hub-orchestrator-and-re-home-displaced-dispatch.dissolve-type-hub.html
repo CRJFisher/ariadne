@@ -354,14 +354,14 @@ footer b { color: var(--mute); }
     <span class="chip branch">program → <b>TASK-362</b></span>
     <span class="chip">effort <b>L</b></span>
     <span class="chip">risk <b>medium</b></span>
-    <span class="chip">~18 importers <b>re-pointed</b></span>
+    <span class="chip">16 importers <b>re-pointed</b></span>
     <span class="chip">4 wire types <b>re-homed</b></span>
     <span class="chip">widest import churn <b>in core</b></span>
   </div>
 </header>
 
 <!-- ===== plain-language-preamble (verbatim) ===== -->
-<p class="preamble prose">Ariadne reads source files and works out which functions call which — that map reveals a codebase's entry points. The first stage, <code>index_single_file</code>, does this one file at a time in four passes: query the syntax tree, build scopes, collect definitions, then references. Over time the single file that orchestrates those passes quietly took on three extra jobs it should not hold. It defines the fundamental data shapes — a <code>CaptureNode</code>, the category and entity enums, the <code>ProcessingContext</code> — that roughly eighteen other files reach up to borrow. And it hand-picks each language's helpers by name. That upward borrowing inverts the natural dependency direction: leaves depending on the orchestrator above them. Task 362.2 moves those shapes down to where they are actually built, and replaces the hand-enumerated per-language calls with proper in-folder dispatchers, leaving the orchestrator to only orchestrate.</p>
+<p class="preamble prose">Ariadne reads source files and works out which functions call which — that map reveals a codebase's entry points. The first stage, <code>index_single_file</code>, does this one file at a time in four passes: query the syntax tree, build scopes, collect definitions, then references. Over time the single file that orchestrates those passes had quietly taken on three extra jobs it should not hold. It defined the fundamental data shapes — a <code>CaptureNode</code>, the category and entity enums, the <code>ProcessingContext</code> — that sixteen other files reached up to borrow. And it hand-picked each language's helpers by name. That upward borrowing inverted the natural dependency direction: leaves depending on the orchestrator above them. Task 362.2 moved those shapes down to where they are actually built, and replaced the hand-enumerated per-language calls with proper in-folder dispatchers, leaving the orchestrator to only orchestrate.</p>
 
 <!-- ===== prompt-provenance-box ===== -->
 <aside class="prov">
@@ -370,8 +370,8 @@ footer b { color: var(--mute); }
     <li><b>task-362.2</b> — the type-hub role, the displaced dispatch, the target structure, the four Work steps, rows 3 / 4 / 20 / 21, the six acceptance criteria</li>
     <li><b>index_single_file.ts:96–115</b> — the <code>CaptureNode[]</code> construction from captures (the wire types in use); <b>:242, 262, 274, 341</b> — the four exported type definitions that relocate out (<code>ProcessingContext</code>, <code>CaptureNode</code>, <code>SemanticEntity</code>, <code>SemanticCategory</code>)</li>
     <li><b>index_single_file.ts:123–125</b> — the three hand-enumerated <code>reset_*_documentation()</code> calls <em>(brief cites L138–140; the file has shifted — verified live at 123–125)</em>; <b>:164–179</b> — the <code>get_metadata_extractors(language)</code> switch <em>(brief cites L185)</em></li>
-    <li><b>symbol_factories/symbol_factories.rust.ts:25–26</b> — the upward <code>CaptureNode, ProcessingContext</code> import that flips, and the <code>DefinitionBuilder</code> pass-boundary edge</li>
-    <li><b>metadata_extractors/index.ts:2</b> — the re-exported <code>ExtractionResult</code> / <code>NodeTraversal</code> / <code>ExtractionContext</code> (zero-consumer, deleted)</li>
+    <li><b>symbol_factories/symbol_factories.rust.ts:25–26</b> — the upward <code>CaptureNode, ProcessingContext</code> import that flips, and the type-only <code>DefinitionBuilder</code> edge, now localized in <code>test_attributes.rust.ts</code></li>
+    <li><b>metadata_extractors/index.ts:2</b> — the barrel and its re-exported <code>ExtractionResult</code> / <code>NodeTraversal</code> / <code>ExtractionContext</code> (zero-consumer, barrel and types deleted)</li>
   </ul>
 </aside>
 
@@ -441,8 +441,8 @@ footer b { color: var(--mute); }
   <div class="ba">
     <!-- CURRENT -->
     <div class="panel">
-      <div class="ptitle">Current — orchestrator is also a type hub</div>
-      <svg viewBox="0 0 620 500" role="img" aria-label="Current shape: index_single_file.ts sits at the top as orchestrator plus type hub, defining CaptureNode, SemanticEntity, SemanticCategory and ProcessingContext. About 18 leaf files across capture_handlers, symbol_factories, scopes, definitions and references import those fundamental wire types upward from it — dashed rust arrows pointing up into the orchestrator, the inverted dependency edges.">
+      <div class="ptitle">Before — orchestrator is also a type hub</div>
+      <svg viewBox="0 0 620 500" role="img" aria-label="Before: index_single_file.ts sits at the top as orchestrator plus type hub, defining CaptureNode, SemanticEntity, SemanticCategory and ProcessingContext. 16 leaf files across capture_handlers, symbol_factories, scopes, definitions and references import those fundamental wire types upward from it — dashed rust arrows pointing up into the orchestrator, the inverted dependency edges.">
         <defs>
           <marker id="cur-rust" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#a8412a"/></marker>
         </defs>
@@ -463,18 +463,18 @@ footer b { color: var(--mute); }
         <text x="310" y="236" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#a8412a" font-weight="700">&#9650; types imported UPWARD (inverted)</text>
         <!-- leaf cluster -->
         <rect x="110" y="320" width="400" height="150" rx="12" fill="#ece4d6" stroke="#d8cfbe" stroke-width="1.5"/>
-        <text x="310" y="360" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="18" fill="#2f3338" font-weight="700">~18 leaf files</text>
+        <text x="310" y="360" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="18" fill="#2f3338" font-weight="700">16 leaf files</text>
         <text x="310" y="394" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10.5" fill="#6c6f73">capture_handlers/ · symbol_factories/ · scopes/</text>
         <text x="310" y="414" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10.5" fill="#6c6f73">definitions/ · references/</text>
         <text x="310" y="446" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10.5" fill="#a8412a">each borrows its fundamental wire types from above</text>
       </svg>
     </div>
     <!-- divider -->
-    <div class="divider"><span class="arrow">▶ flips to</span></div>
-    <!-- PLANNED -->
+    <div class="divider"><span class="arrow">▶ flipped to</span></div>
+    <!-- AFTER -->
     <div class="panel">
-      <div class="ptitle">Planned — types owned at the leaves' level</div>
-      <svg viewBox="0 0 620 500" role="img" aria-label="Planned shape: index_single_file.ts becomes an orchestrator that defines no types. Two new sibling type-owner files hold the shapes at the leaves' own level: capture_types.ts owns CaptureNode, SemanticCategory and SemanticEntity, and scopes/processing_context.ts owns ProcessingContext, sited where it is built. The 18 leaf files now import sideways from those two owners with solid olive arrows, and the orchestrator imports its children normally, downward.">
+      <div class="ptitle">After — types owned at the leaves' level</div>
+      <svg viewBox="0 0 620 500" role="img" aria-label="After: index_single_file.ts is an orchestrator that defines no types. Two new sibling type-owner files hold the shapes at the leaves' own level: capture_types.ts owns CaptureNode, SemanticCategory and SemanticEntity, and scopes/processing_context.ts owns ProcessingContext, sited where it is built. The 16 leaf files now import sideways from those two owners with solid olive arrows, and the orchestrator imports its children normally, downward.">
         <defs>
           <marker id="pl-olive" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6f7a4f"/></marker>
           <marker id="pl-gray" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6c6f73"/></marker>
@@ -499,7 +499,7 @@ footer b { color: var(--mute); }
         <text x="461" y="243" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#eef1e6">sited where it is built · NEW</text>
         <!-- leaf cluster -->
         <rect x="110" y="350" width="400" height="120" rx="12" fill="#ece4d6" stroke="#d8cfbe" stroke-width="1.5"/>
-        <text x="310" y="386" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="16" fill="#2f3338" font-weight="700">~18 leaf files</text>
+        <text x="310" y="386" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="16" fill="#2f3338" font-weight="700">16 leaf files</text>
         <text x="310" y="412" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10.5" fill="#6f7a4f">now import from sibling type-owners</text>
         <text x="310" y="436" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="9.5" fill="#6c6f73">capture_handlers/ · symbol_factories/ · scopes/ · definitions/ · references/</text>
         <!-- olive sideways imports -->
@@ -519,8 +519,7 @@ footer b { color: var(--mute); }
   <div class="code">
     <div class="file-label"><span>index_single_file/query_code_tree/symbol_factories/symbol_factories.rust.ts</span><span class="tag">changed · the import flips</span></div>
 <pre><span class="del">- import type { CaptureNode, ProcessingContext } from "../../index_single_file";</span>
-<span class="add">+ import type { CaptureNode, SemanticCategory, SemanticEntity } from "../../capture_types";</span>
-<span class="add">+ import type { ProcessingContext } from "../../scopes/processing_context";</span></pre>
+<span class="add">+ import type { CaptureNode } from "../../capture_types";</span></pre>
   </div>
 </section>
 
@@ -529,7 +528,7 @@ footer b { color: var(--mute); }
   <div class="sk">Detail — where per-language dispatch is stranded</div>
   <h2 class="sh">Two passes have their language dispatch stranded in the orchestrator, not an in-folder marshaller</h2>
   <figure class="fig">
-    <svg viewBox="0 0 1280 400" role="img" aria-label="The four-pass spine — query_code_tree, scopes to ProcessingContext, definitions with its handler registry, references with metadata extractors. Three displaced-dispatch hotspots, clay for displaced-today: on Pass 4 the get_metadata_extractors switch living in the orchestrator at lines 164 to 179 re-homes to a new metadata_extractors marshaller (badge 2). Spanning Pass 3, three hand-enumerated reset documentation calls at lines 123 to 125 reaching two folders down collapse to one reset_documentation_state dispatcher on a new documentation_state.ts (badge 2). A rust dashed back-edge runs from Pass 3 definitions up into symbol_factories.rust.ts, the only pass-boundary runtime edge, localized into a new test_attributes.rust.ts (badge 3).">
+    <svg viewBox="0 0 1280 400" role="img" aria-label="The four-pass spine — query_code_tree, scopes to ProcessingContext, definitions with its handler registry, references with metadata extractors. Three displaced-dispatch hotspots, clay for displaced-today: on Pass 4 the get_metadata_extractors switch living in the orchestrator at lines 164 to 179 re-homes to a new metadata_extractors marshaller (badge 2). Spanning Pass 3, three hand-enumerated reset documentation calls at lines 123 to 125 reaching two folders down collapse to one reset_documentation_state dispatcher on a new documentation_state.ts (badge 2). A rust dashed back-edge runs from Pass 3 definitions up into test_attributes.rust.ts, the only pass-boundary edge — a type-only DefinitionBuilder import, localized into a new test_attributes.rust.ts (badge 3).">
       <defs>
         <marker id="pp-gray" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6c6f73"/></marker>
         <marker id="pp-clay" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#c06d4f"/></marker>
@@ -537,7 +536,7 @@ footer b { color: var(--mute); }
       </defs>
       <!-- rust back-edge (pass1 -> pass3), drawn first so nodes sit on top -->
       <path d="M159 60 C 159 18, 803 18, 803 58" fill="none" stroke="#a8412a" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#pp-rust)"/>
-      <text x="481" y="16" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10" fill="#a8412a" font-weight="700">symbol_factories.rust.ts imports DefinitionBuilder (rust:26) — the only pass-boundary edge</text>
+      <text x="481" y="16" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10" fill="#a8412a" font-weight="700">test_attributes.rust.ts imports DefinitionBuilder (type-only) — the stage's only pass-boundary edge</text>
       <circle cx="481" cy="30" r="12" fill="#c06d4f"/>
       <text x="481" y="34" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#f7f3ec" font-weight="700">3</text>
       <!-- pass spine -->
@@ -610,35 +609,35 @@ footer b { color: var(--mute); }
 
 <!-- ===== work order: vertical-timeline ===== -->
 <section id="work">
-  <div class="sk">Work order — the four build steps, in execution order</div>
-  <h2 class="sh">Move the types down first, then re-home dispatch, then split leaves, then prune</h2>
+  <div class="sk">Work order — the four steps, in the order they landed</div>
+  <h2 class="sh">Moved the types down first, then re-homed dispatch, then split leaves, then pruned</h2>
   <div class="tl">
     <div class="row impact">
       <div class="dot">1</div>
       <div class="body">
-        <div class="t">Extract the wire types down to where they are built</div>
-        <div class="d">Create <code>capture_types.ts</code> (<code>CaptureNode</code>, <code>SemanticCategory</code>, <code>SemanticEntity</code>); move <code>ProcessingContext</code> into <code>scopes/processing_context.ts</code>, sited where it is built. Update the ~18 upward importers in one compiler-enumerated pass — mechanical, no re-exports.</div>
+        <div class="t">Extracted the wire types down to where they are built</div>
+        <div class="d">Created <code>capture_types.ts</code> (<code>CaptureNode</code>, <code>SemanticCategory</code>, <code>SemanticEntity</code>); moved <code>ProcessingContext</code> into <code>scopes/processing_context.ts</code>, sited where it is built. Updated the 16 upward importers in one compiler-enumerated pass — mechanical, no re-exports.</div>
       </div>
     </div>
     <div class="row impact">
       <div class="dot">2</div>
       <div class="body">
-        <div class="t">Re-home the displaced dispatch into in-folder owners <span class="rowtag">resolves both dispatch hotspots</span></div>
-        <div class="d">Add the <code>metadata_extractors.ts</code> marshaller and the <code>documentation_state.ts</code> dispatcher; the orchestrator calls <code>reset_documentation_state(language)</code> once instead of three hand-enumerated resets.</div>
+        <div class="t">Re-homed the displaced dispatch into in-folder owners <span class="rowtag">resolved both dispatch hotspots</span></div>
+        <div class="d">Added the <code>metadata_extractors.ts</code> marshaller and the <code>documentation_state.ts</code> dispatcher; the orchestrator now calls <code>reset_documentation_state(language)</code> once instead of three hand-enumerated resets.</div>
       </div>
     </div>
     <div class="row impact">
       <div class="dot">3</div>
       <div class="body">
-        <div class="t">Split the overloaded language leaves <span class="rowtag">localizes the rust back-edge</span></div>
-        <div class="d">Split the doc-state machines and JS import helpers out of <code>symbol_factories.{lang}.ts</code>; add <code>imports.javascript.ts</code> (parity with the Python/Rust siblings); extract <code>test_attributes.rust.ts</code> so the pass-1→pass-3 edge no longer crosses out of <code>definitions/</code>.</div>
+        <div class="t">Split the overloaded language leaves <span class="rowtag">localized the rust back-edge</span></div>
+        <div class="d">Split the doc-state machines and JS import helpers out of <code>symbol_factories.{lang}.ts</code>; added <code>imports.javascript.ts</code> (parity with the Python/Rust siblings); extracted <code>test_attributes.rust.ts</code> so the type-only pass-1→pass-3 edge no longer crosses out of <code>definitions/</code>.</div>
       </div>
     </div>
     <div class="row">
       <div class="dot">4</div>
       <div class="body">
-        <div class="t">Delete dead types, land the renames, prune vestigial barrels</div>
-        <div class="d">Delete the verified-dead types; <code>git mv</code> the surviving <code>metadata_extractors/types.ts</code> → <code>metadata_extractor_types.ts</code>; land rows 3 / 4 / 20 / 21; complete-or-remove the vestigial <code>definitions/</code> and <code>symbol_factories/</code> barrels.</div>
+        <div class="t">Deleted dead types, landed the renames, pruned the vestigial barrels</div>
+        <div class="d">Deleted the three verified-dead metadata types; <code>git mv</code>'d the surviving <code>metadata_extractors/types.ts</code> → <code>metadata_extractor_types.ts</code>; landed rows 3 / 4 (rename-only — <code>find_root_scope</code> had no duplicate to fold) / 20 / 21. Deleted three barrels (<code>symbol_factories/index.ts</code>, <code>definitions/index.ts</code>, <code>metadata_extractors/index.ts</code>) plus the stage-root <code>index_single_file/index.ts</code>; <code>query_code_tree/index.ts</code> and <code>capture_handlers/index.ts</code> survive as live dispatchers.</div>
       </div>
     </div>
   </div>
@@ -658,7 +657,7 @@ footer b { color: var(--mute); }
   <span class="cm">group the 4 Rust-only + 1 Python-only methods under labelled sections</span>
 <span class="cm"># row 4</span>
 <span class="rn">scopes/utils.ts</span> <span class="arw">→</span> <span class="rn">scope_lookup.ts</span>
-  <span class="cm">dedupe find_root_scope + the location-geometry predicates duplicated with scopes.ts</span>
+  <span class="cm">rename only — find_root_scope had no duplicate to fold</span>
 <span class="cm"># row 20</span>
 <span class="rn">capture_handlers/types.ts</span> <span class="arw">→</span> <span class="rn">handler_types.ts</span>
 <span class="cm"># row 21</span>
@@ -666,16 +665,22 @@ footer b { color: var(--mute); }
   <span class="cm">also handles except…as, with…as</span>
 <span class="cm"># step 4 — surviving file renamed as the dead types are removed</span>
 <span class="rn">metadata_extractors/types.ts</span> <span class="arw">→</span> <span class="rn">metadata_extractor_types.ts</span>
-  <span class="cm">live MetadataExtractors + ReceiverInfo survive</span></pre>
+  <span class="cm">live MetadataExtractors + ReceiverInfo survive</span>
+<span class="cm"># new file — shared test helpers</span>
+<span class="add">+ symbol_factories/test_utils.ts  (NEW) — shared test helpers;</span>
+<span class="add">                                   tests import from here, never a sibling .test.ts</span>
+<span class="cm"># barrels — deleted: symbol_factories/index.ts, definitions/index.ts,</span>
+<span class="cm">#   metadata_extractors/index.ts, and the stage-root index_single_file/index.ts</span>
+<span class="cm"># surviving: query_code_tree/index.ts, capture_handlers/index.ts — live dispatchers, not vestiges</span></pre>
       </div>
       <div class="code">
         <div class="file-label"><span>deletions — verified zero-consumer</span><span class="tag del">removed</span></div>
-<pre><span class="del">- symbol_factories/types.ts       SymbolCreationContext</span>
-<span class="del">- metadata_extractors/types.ts    ExtractionResult</span>
+<pre><span class="del">- metadata_extractors/types.ts    ExtractionResult</span>
 <span class="del">- metadata_extractors/types.ts    NodeTraversal</span>
 <span class="del">- metadata_extractors/types.ts    ExtractionContext</span>
-<span class="cm"># the three metadata types are re-exported by metadata_extractors/index.ts:2</span>
-<span class="cm"># but have no real consumer — the re-export goes with them</span></pre>
+<span class="cm"># the three metadata types were re-exported by metadata_extractors/index.ts:2</span>
+<span class="cm"># but had no real consumer — the re-export (and that barrel) went with them</span>
+<span class="cm"># note: symbol_factories/types.ts / SymbolCreationContext never existed — spec drift, no-op</span></pre>
       </div>
     </div>
   </details>
@@ -683,31 +688,31 @@ footer b { color: var(--mute); }
 
 <!-- ===== acceptance: interactive-checklist ===== -->
 <section id="accept">
-  <div class="sk">Acceptance criteria — the verification plan</div>
-  <h2 class="sh">Six criteria, each mechanically checkable</h2>
+  <div class="sk">Acceptance criteria — verified, all six criteria met</div>
+  <h2 class="sh">Six criteria, each mechanically checkable — all green</h2>
   <ul class="acc">
-    <li><input type="checkbox" id="ac1"><label for="ac1"><code>index_single_file.ts</code> defines no types and imports nothing from <code>symbol_factories.{lang}.ts</code> leaves; it calls one <code>reset_documentation_state(language)</code> dispatcher.</label></li>
-    <li><input type="checkbox" id="ac2"><label for="ac2">Zero files import <code>CaptureNode</code> / <code>ProcessingContext</code> / <code>SemanticEntity</code> / <code>SemanticCategory</code> from <code>index_single_file.ts</code> (compiler-verified after the move).</label></li>
-    <li><input type="checkbox" id="ac3"><label for="ac3"><code>symbol_factories.rust.ts</code> no longer imports from <code>definitions/</code>; the pass-1→pass-3 edge lives in <code>test_attributes.rust.ts</code>.</label></li>
-    <li><input type="checkbox" id="ac4"><label for="ac4"><code>imports.javascript.ts</code> exists in parity with the Python/Rust siblings.</label></li>
-    <li><input type="checkbox" id="ac5"><label for="ac5">Dead types deleted; rows 3, 4, 20, 21 landed as <code>git mv</code> renames with tests moved in the same commits.</label></li>
-    <li><input type="checkbox" id="ac6"><label for="ac6">Full core test suite green; no vestigial barrels remain in the stage.</label></li>
+    <li><input type="checkbox" id="ac1" checked><label for="ac1"><code>index_single_file.ts</code> defines no types and imports nothing from <code>symbol_factories.{lang}.ts</code> leaves; it calls one <code>reset_documentation_state(language)</code> dispatcher.</label></li>
+    <li><input type="checkbox" id="ac2" checked><label for="ac2">Zero files import <code>CaptureNode</code> / <code>ProcessingContext</code> / <code>SemanticEntity</code> / <code>SemanticCategory</code> from <code>index_single_file.ts</code> (compiler-verified after the move).</label></li>
+    <li><input type="checkbox" id="ac3" checked><label for="ac3"><code>symbol_factories.rust.ts</code> no longer imports from <code>definitions/</code>; the pass-1→pass-3 edge lives in <code>test_attributes.rust.ts</code>.</label></li>
+    <li><input type="checkbox" id="ac4" checked><label for="ac4"><code>imports.javascript.ts</code> exists in parity with the Python/Rust siblings.</label></li>
+    <li><input type="checkbox" id="ac5" checked><label for="ac5">Dead types deleted; rows 3, 4, 20, 21 landed as <code>git mv</code> renames with tests moved in the same commits.</label></li>
+    <li><input type="checkbox" id="ac6" checked><label for="ac6">Full core test suite green; no vestigial barrels remain in the stage.</label></li>
   </ul>
 </section>
 
 <!-- ===== risk register: accent-callout ×2 ===== -->
 <section id="risk">
   <div class="sk">Risk register — the cost and the payoff</div>
-  <h2 class="sh">The widest import churn in core — mechanical, but it lands as one commit</h2>
+  <h2 class="sh">The widest import churn in core — mechanical, landed as one commit</h2>
   <div class="risk-stack">
     <aside class="callout prose">
-      <div class="klabel">Risk — land it all at once</div>
-      <p>Widest import churn in core: ~18 files re-point their type imports in one pass. Effort <b>L</b>, risk <b>medium</b>.</p>
-      <p>Land everything at once — no re-exports, no transitional aliases, per the no-shims constitution. The compiler enumerates every importer, so the churn is mechanical but must not be split across commits.</p>
+      <div class="klabel">Risk — landed all at once</div>
+      <p>Widest import churn in core: 16 files re-pointed their type imports in one pass. Effort <b>L</b>, risk <b>medium</b>.</p>
+      <p>Everything landed at once — no re-exports, no transitional aliases, per the no-shims constitution. The compiler enumerated every importer, so the churn stayed mechanical and was not split across commits.</p>
     </aside>
     <aside class="callout olive-sev prose">
       <div class="klabel">Payoff — hidden touch points become discoverable slots</div>
-      <p>After this task, five of the ten stage-1 language touch points currently hand-enumerated in neutral files become discoverable dotted slots — a new-language author finds the marshaller and dispatcher by folder, not by grep.</p>
+      <p>Five of the ten stage-1 language touch points that were hand-enumerated in neutral files are now discoverable dotted slots — a new-language author finds the marshaller and dispatcher by folder, not by grep.</p>
     </aside>
   </div>
 </section>

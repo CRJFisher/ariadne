@@ -4,8 +4,6 @@
 
 import { describe, it, expect } from "vitest";
 import { parse_python, make_capture, find_string_node } from "./test_utils";
-import Parser from "tree-sitter";
-import Python from "tree-sitter-python";
 import type { SyntaxNode } from "tree-sitter";
 import {
   create_class_id,
