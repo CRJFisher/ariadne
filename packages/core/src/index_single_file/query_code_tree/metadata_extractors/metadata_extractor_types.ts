@@ -111,28 +111,3 @@ export interface MetadataExtractors {
     mode: "function" | "constructor"
   ): readonly SymbolName[] | undefined;
 }
-
-/**
- * Result of attempting to extract metadata
- */
-export type ExtractionResult<T> = T | undefined;
-
-/**
- * AST node traversal result
- */
-export interface NodeTraversal {
-  /** The current node being traversed */
-  node: SyntaxNode;
-  /** Path from root to current node, as node types */
-  path: string[];
-}
-
-/**
- * Helper type for metadata extraction context
- */
-export interface ExtractionContext {
-  /** The file being processed */
-  file_path: FilePath;
-  /** The root node of the file's AST */
-  root_node: SyntaxNode;
-}

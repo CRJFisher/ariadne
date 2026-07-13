@@ -38,7 +38,7 @@ import {
 
 import type { CaptureNode } from "../capture_types";
 import type { ProcessingContext } from "../scopes/processing_context";
-import type { MetadataExtractors } from "../query_code_tree/metadata_extractors";
+import type { MetadataExtractors } from "../query_code_tree/metadata_extractors/metadata_extractor_types";
 
 // ============================================================================
 // Reference Kind Enum

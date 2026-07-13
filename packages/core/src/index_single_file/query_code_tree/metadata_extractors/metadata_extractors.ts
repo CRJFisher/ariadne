@@ -1,5 +1,5 @@
 import type { Language } from "@ariadnejs/types";
-import type { MetadataExtractors } from "./types";
+import type { MetadataExtractors } from "./metadata_extractor_types";
 import { JAVASCRIPT_METADATA_EXTRACTORS } from "./metadata_extractors.javascript";
 import { TYPESCRIPT_METADATA_EXTRACTORS } from "./metadata_extractors.typescript";
 import { PYTHON_METADATA_EXTRACTORS } from "./metadata_extractors.python";

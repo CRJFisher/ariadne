@@ -8,7 +8,7 @@ import JavaScript from "tree-sitter-javascript";
 import TypeScript from "tree-sitter-typescript";
 import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
 import { TYPESCRIPT_HANDLERS } from "./capture_handlers.typescript";
-import { DefinitionBuilder } from "../../definitions";
+import { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { CaptureNode } from "../../capture_types";
 import type { ProcessingContext } from "../../scopes/processing_context";
 import type { FilePath, SymbolName, ScopeId, LexicalScope } from "@ariadnejs/types";

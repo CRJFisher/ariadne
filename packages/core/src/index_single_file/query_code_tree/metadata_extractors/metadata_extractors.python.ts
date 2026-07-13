@@ -8,7 +8,7 @@
 import type { SyntaxNode } from "tree-sitter";
 import type { Location, SymbolName, TypeInfo, FilePath, SelfReferenceKeyword } from "@ariadnejs/types";
 import { type_symbol } from "@ariadnejs/types";
-import type { MetadataExtractors, ReceiverInfo } from "./types";
+import type { MetadataExtractors, ReceiverInfo } from "./metadata_extractor_types";
 import { node_to_location } from "../../node_to_location";
 
 function extract_python_type(node: SyntaxNode | null | undefined): string | undefined {

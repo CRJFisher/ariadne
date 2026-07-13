@@ -21,7 +21,7 @@ import type {
   ConstructorCallReference,
 } from "@ariadnejs/types";
 import { ReferenceBuilder } from "../../references/references";
-import { JAVASCRIPT_METADATA_EXTRACTORS } from "../metadata_extractors";
+import { JAVASCRIPT_METADATA_EXTRACTORS } from "../metadata_extractors/metadata_extractors.javascript";
 import { node_to_location } from "../../node_to_location";
 
 describe("JavaScript Builder Configuration", () => {

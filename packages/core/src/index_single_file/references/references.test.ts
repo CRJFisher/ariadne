@@ -23,7 +23,7 @@ import type {
   SymbolId,
 } from "@ariadnejs/types";
 import { module_scope } from "@ariadnejs/types";
-import type { MetadataExtractors, ReceiverInfo } from "../query_code_tree/metadata_extractors";
+import type { MetadataExtractors, ReceiverInfo } from "../query_code_tree/metadata_extractors/metadata_extractor_types";
 
 // ============================================================================
 // Mock Metadata Extractors
