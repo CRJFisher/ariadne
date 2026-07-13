@@ -93,7 +93,7 @@ import {
   parse_known_issues_registry_json,
   serialize_known_issues_registry_json,
 } from "@ariadnejs/types";
-import { BUILTIN_CHECKS, type BuiltinCheckFn, type FileLinesReader } from "@ariadnejs/core";
+import { BUILTIN_CHECKS, detect_language, type BuiltinCheckFn, type FileLinesReader } from "@ariadnejs/core";
 
 import {
   SUBJECT_REGEX,
@@ -979,11 +979,21 @@ export async function run_stage(
         "(get_entry_context.ts --enriched) so the drafted check runs before insertion",
     );
   }
-  const sample_results: SampleCheckResult[] = samples.map((sample) => ({
-    sample: sample.name,
-    file_path: sample.entry_point.file_path,
-    passed: check(sample.entry_point, deps.read_file_lines),
-  }));
+  const sample_results: SampleCheckResult[] = samples.map((sample) => {
+    const language = detect_language(sample.entry_point.file_path);
+    if (language === null) {
+      throw new StageDraftError(
+        `sample "${sample.name}" has an unsupported file extension ` +
+          `(${sample.entry_point.file_path}) — a persisted EnrichedEntryPoint ` +
+          "sample must come from a language Ariadne indexes",
+      );
+    }
+    return {
+      sample: sample.name,
+      file_path: sample.entry_point.file_path,
+      passed: check(sample.entry_point, deps.read_file_lines, language),
+    };
+  });
 
   // 6. Dry-run by default: preview per-sample results and exit without writing.
   // An explicit --dry-run forces the preview and wins over --apply, matching the

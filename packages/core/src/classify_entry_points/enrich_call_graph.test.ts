@@ -148,7 +148,7 @@ describe("enrich_call_graph", () => {
     const classified = project.get_classified_entry_points();
     const total = classified.true_entry_points.length + classified.known_false_positives.length;
     // Every raw entry point must surface in exactly one bucket (no drops, no dupes).
-    const raw_count = trace_call_graph(project.definitions, project.resolutions).entry_points.length;
+    const raw_count = trace_call_graph(project.definitions, project.resolutions, project.get_languages()).entry_points.length;
     expect(total).toBe(raw_count);
   });
 
@@ -156,7 +156,7 @@ describe("enrich_call_graph", () => {
     const { project } = await make_project_with({
       "x.py": "def lonely_function():\n    return 1\n",
     });
-    const raw = trace_call_graph(project.definitions, project.resolutions);
+    const raw = trace_call_graph(project.definitions, project.resolutions, project.get_languages());
     // Empty registry → all entries are true_entry_points.
     const enriched = enrich_call_graph(raw, project, { registry: [] });
     expect(enriched.classified_entry_points.known_false_positives.length).toBe(0);
@@ -167,7 +167,7 @@ describe("enrich_call_graph", () => {
     const { project } = await make_project_with({
       "routes.py": "def handler():\n    return 'ok'\n",
     });
-    const raw = trace_call_graph(project.definitions, project.resolutions);
+    const raw = trace_call_graph(project.definitions, project.resolutions, project.get_languages());
     const registry: KnownIssuesRegistry = [
       {
         group_id: "flask-route-decorator",
@@ -200,7 +200,7 @@ describe("enrich_call_graph", () => {
     const { project } = await make_project_with({
       "tests/test_x.py": "def helper():\n    return 1\n",
     });
-    const raw = trace_call_graph(project.definitions, project.resolutions, {
+    const raw = trace_call_graph(project.definitions, project.resolutions, project.get_languages(), {
       include_tests: true,
     });
     const registry: KnownIssuesRegistry = [
@@ -234,7 +234,7 @@ describe("enrich_call_graph", () => {
     const { project } = await make_project_with({
       "x.py": "def callback():\n    return 1\n",
     });
-    const raw = trace_call_graph(project.definitions, project.resolutions);
+    const raw = trace_call_graph(project.definitions, project.resolutions, project.get_languages());
     const registry: KnownIssuesRegistry = [
       {
         group_id: "function-reference-callback",
@@ -267,7 +267,7 @@ describe("enrich_call_graph", () => {
     const { project } = await make_project_with({
       "x.py": "def lonely():\n    return 1\n",
     });
-    const raw = trace_call_graph(project.definitions, project.resolutions);
+    const raw = trace_call_graph(project.definitions, project.resolutions, project.get_languages());
     // No `classification` field on the rule → fallback path in build_classification.
     const registry: KnownIssuesRegistry = [
       {
@@ -300,7 +300,7 @@ describe("enrich_call_graph", () => {
     const { project } = await make_project_with({
       "x.py": "def lonely():\n    return 1\n",
     });
-    const raw = trace_call_graph(project.definitions, project.resolutions);
+    const raw = trace_call_graph(project.definitions, project.resolutions, project.get_languages());
     const registry: KnownIssuesRegistry = [
       {
         group_id: "bogus-builtin",
@@ -331,7 +331,7 @@ describe("enrich_call_graph", () => {
  */
 describe("method-as-value indirect reachability (task-348)", () => {
   function entry_point_names(project: Project): string[] {
-    const raw = trace_call_graph(project.definitions, project.resolutions);
+    const raw = trace_call_graph(project.definitions, project.resolutions, project.get_languages());
     return raw.entry_points
       .map((id) => raw.nodes.get(id)!.name)
       .sort();

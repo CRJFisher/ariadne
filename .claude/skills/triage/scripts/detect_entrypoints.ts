@@ -459,7 +459,7 @@ async function analyze_directory(
   // known FPs against the bundled permanent slice and lose entries the wip-rule classifiers must evaluate.
   console.error("Building call graph...");
   const callgraph_start = Date.now();
-  const call_graph = trace_call_graph(project.definitions, project.resolutions, {
+  const call_graph = trace_call_graph(project.definitions, project.resolutions, project.get_languages(), {
     include_tests: options.include_tests,
   });
   console.error(

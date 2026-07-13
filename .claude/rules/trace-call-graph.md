@@ -10,9 +10,9 @@ paths: packages/core/src/trace_call_graph/**
 
 ## Single-Pass Architecture
 
-The entry point `trace_call_graph(definitions, resolutions)` runs a single pass:
+The entry point `trace_call_graph(definitions, resolutions, languages)` runs a single pass. The `languages` map is the Project's per-file language state, decided once at parse ingress and threaded in exactly as the resolution phases receive it:
 
-1. **Build callable nodes** — For each callable definition (function, method, constructor), create a `CallableNode` with its enclosed `CallReference[]` from resolved calls
+1. **Build callable nodes** — For each callable definition (function, method, constructor), create a `CallableNode` with its enclosed `CallReference[]` from resolved calls; each node's language comes from the `languages` map (consumed by test-file and runner-convention detection), and a missing entry throws
 2. **Detect entry points** — Functions whose `SymbolId` never appears as a resolution target in any call reference
 
 ## Module Layout

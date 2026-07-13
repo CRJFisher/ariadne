@@ -11,7 +11,6 @@ import {
   classify_accessor_line,
   count_tree_size,
   derive_definition_features,
-  detect_language,
   extract_entry_point_diagnostics,
 } from "./extract_entry_point_diagnostics";
 import type {
@@ -327,36 +326,6 @@ describe("build_grep_index", () => {
   });
 });
 
-// ===== detect_language =====
-
-describe("detect_language", () => {
-  it("detects TypeScript files", () => {
-    expect(detect_language("src/index.ts")).toBe("typescript");
-    expect(detect_language("src/component.tsx")).toBe("typescript");
-  });
-
-  it("detects JavaScript files", () => {
-    expect(detect_language("lib/utils.js")).toBe("javascript");
-    expect(detect_language("src/app.jsx")).toBe("javascript");
-  });
-
-  it("detects Python files", () => {
-    expect(detect_language("main.py")).toBe("python");
-  });
-
-  it("detects Rust files", () => {
-    expect(detect_language("src/lib.rs")).toBe("rust");
-  });
-
-  it("returns null for unsupported file types", () => {
-    expect(detect_language("main.go")).toBeNull();
-    expect(detect_language("App.java")).toBeNull();
-    expect(detect_language("lib.cpp")).toBeNull();
-    expect(detect_language("README.md")).toBeNull();
-    expect(detect_language("style.css")).toBeNull();
-  });
-});
-
 // ===== classify_accessor_line =====
 
 describe("classify_accessor_line", () => {
@@ -429,7 +398,7 @@ describe("derive_definition_features", () => {
 
   it("returns false / null for non-JS/TS files", () => {
     const node = make_node({ file_path: "src/main.py", kind: "method" });
-    const out = derive_definition_features(node, new Set(), new Map());
+    const out = derive_definition_features(node, new Set(), new Map(), "python");
     expect(out).toEqual({
       definition_is_object_literal_method: false,
       accessor_kind: null,
@@ -446,7 +415,7 @@ describe("derive_definition_features", () => {
     const lines = new Map<FilePath, string[]>([
       [fp("src/o.ts"), ["const o = {", "  foo() { return 1; },", "};"]],
     ]);
-    const out = derive_definition_features(node, new Set(), lines);
+    const out = derive_definition_features(node, new Set(), lines, "typescript");
     expect(out).toEqual({
       definition_is_object_literal_method: true,
       accessor_kind: null,
@@ -464,7 +433,7 @@ describe("derive_definition_features", () => {
       [fp("src/c.ts"), ["class C {", "  foo() {}", "}"]],
     ]);
     const class_methods = new Set<SymbolId>([sym("class_method")]);
-    const out = derive_definition_features(node, class_methods, lines);
+    const out = derive_definition_features(node, class_methods, lines, "typescript");
     expect(out).toEqual({
       definition_is_object_literal_method: false,
       accessor_kind: null,
@@ -480,7 +449,7 @@ describe("derive_definition_features", () => {
     const lines = new Map<FilePath, string[]>([
       [fp("src/f.ts"), ["function foo() {", "  return 1;", "}"]],
     ]);
-    const out = derive_definition_features(node, new Set(), lines);
+    const out = derive_definition_features(node, new Set(), lines, "typescript");
     expect(out).toEqual({
       definition_is_object_literal_method: false,
       accessor_kind: null,
@@ -498,7 +467,7 @@ describe("derive_definition_features", () => {
       [fp("src/c.ts"), ["class C {", "  get name() { return this._n; }", "}"]],
     ]);
     const class_methods = new Set<SymbolId>([sym("class_method")]);
-    const out = derive_definition_features(node, class_methods, lines);
+    const out = derive_definition_features(node, class_methods, lines, "typescript");
     expect(out).toEqual({
       definition_is_object_literal_method: false,
       accessor_kind: "getter",
@@ -516,7 +485,7 @@ describe("derive_definition_features", () => {
       [fp("src/c.ts"), ["class C {", "  set name(v: string) { this._n = v; }", "}"]],
     ]);
     const class_methods = new Set<SymbolId>([sym("class_method")]);
-    const out = derive_definition_features(node, class_methods, lines);
+    const out = derive_definition_features(node, class_methods, lines, "typescript");
     expect(out).toEqual({
       definition_is_object_literal_method: false,
       accessor_kind: "setter",

@@ -8,7 +8,6 @@ import type {
   KnownIssuesRegistry,
   TraceCallGraphOptions,
 } from "@ariadnejs/types";
-import type { ParsedFile } from "../index_single_file/parsed_file";
 import { build_index_single_file } from "../index_single_file/index_single_file";
 import type { SemanticIndex } from "../index_single_file/index_single_file";
 import { DefinitionRegistry } from "../resolve_references/registries/definition";
@@ -26,11 +25,7 @@ import {
 } from "../classify_entry_points/enrich_call_graph";
 import { fix_import_definition_locations } from "./fix_import_locations";
 import { extract_all_parameters } from "./extract_nested_definitions";
-import Parser from "tree-sitter";
-import TypeScriptParser from "tree-sitter-typescript";
-import JavaScriptParser from "tree-sitter-javascript";
-import PythonParser from "tree-sitter-python";
-import RustParser from "tree-sitter-rust";
+import { parse_file } from "./parse_file";
 import type { FileSystemFolder } from "../resolve_references/file_folders";
 import { readdir, realpath } from "fs/promises";
 import { join } from "path";
@@ -51,70 +46,6 @@ import { serialize_semantic_index } from "../persistence/serialize_index";
  */
 export interface ClassifyOptions extends TraceCallGraphOptions {
   readonly registry?: KnownIssuesRegistry;
-}
-
-/**
- * Detect language from file path extension
- */
-function detect_language(file_path: FilePath): Language {
-  const ext = file_path.split(".").pop()?.toLowerCase();
-  switch (ext) {
-    case "ts":
-    case "tsx":
-      return "typescript" as Language;
-    case "js":
-    case "jsx":
-      return "javascript" as Language;
-    case "py":
-      return "python" as Language;
-    case "rs":
-      return "rust" as Language;
-    default:
-      throw new Error(`Unsupported file extension: ${ext}`);
-  }
-}
-
-/**
- * Get parser for language
- */
-function get_parser(language: Language): Parser {
-  const parser = new Parser();
-  switch (language) {
-    case "typescript":
-      parser.setLanguage(TypeScriptParser.typescript);
-      break;
-    case "javascript":
-      parser.setLanguage(JavaScriptParser);
-      break;
-    case "python":
-      parser.setLanguage(PythonParser);
-      break;
-    case "rust":
-      parser.setLanguage(RustParser);
-      break;
-    default:
-      throw new Error(`Unsupported language: ${language}`);
-  }
-  return parser;
-}
-
-/**
- * Create ParsedFile object
- */
-function create_parsed_file(
-  file_path: FilePath,
-  content: string,
-  tree: Parser.Tree,
-  language: Language
-): ParsedFile {
-  const lines = content.split("\n");
-  return {
-    file_path,
-    file_lines: lines.length,
-    file_end_column: lines[lines.length - 1]?.length || 0,
-    tree,
-    lang: language,
-  };
 }
 
 /**
@@ -139,6 +70,9 @@ export class Project {
   // ===== File-level data (immutable once computed) =====
   private index_single_filees: Map<FilePath, SemanticIndex> = new Map();
   private file_contents: Map<FilePath, string> = new Map();
+  // Language decided once at ingress per file; every downstream consumer
+  // reads this map instead of re-deriving from the path.
+  private languages: Map<FilePath, Language> = new Map();
 
   // ===== Configuration =====
   /** Buffer size for tree-sitter parser (auto-adjusts upward to fit largest file). */
@@ -212,21 +146,21 @@ export class Project {
     const dependents = this.imports.get_dependents(file_id);
 
     // Phase 1: Compute file-local data
-    const language = detect_language(file_id);
-    const parser = get_parser(language);
-    // Auto-adjust buffer to fit the file (2x content length, minimum 1MB)
+    // Auto-adjust buffer to fit the file (2x content length)
     const needed = content.length * 2;
     if (needed > this.parser_buffer_size) {
       this.parser_buffer_size = needed;
     }
-    const tree = parser.parse(content, undefined, {
-      bufferSize: this.parser_buffer_size,
-    });
-    const parsed_file = create_parsed_file(file_id, content, tree, language);
-    const index_single_file = build_index_single_file(parsed_file, tree, language);
+    const parsed_file = parse_file(file_id, content, this.parser_buffer_size);
+    const index_single_file = build_index_single_file(
+      parsed_file,
+      parsed_file.tree,
+      parsed_file.lang
+    );
 
     this.index_single_filees.set(file_id, index_single_file);
     this.file_contents.set(file_id, content);
+    this.languages.set(file_id, parsed_file.lang);
 
     // Phases 2-5: Registry update + resolution
     this.apply_index_and_resolve(file_id, index_single_file, dependents, this.root_folder);
@@ -257,6 +191,7 @@ export class Project {
 
     this.index_single_filees.set(file_id, cached_index);
     this.file_contents.set(file_id, content);
+    this.languages.set(file_id, cached_index.language);
 
     this.apply_index_and_resolve(file_id, cached_index, dependents, this.root_folder);
   }
@@ -338,14 +273,9 @@ export class Project {
     // Phase 3: Re-resolve affected files
     const affected_files = new Set([file_id, ...dependents]);
 
-    const languages = new Map<FilePath, Language>();
-    for (const [file_path, index] of this.index_single_filees) {
-      languages.set(file_path, index.language);
-    }
-
     this.resolutions.resolve_names(
       affected_files,
-      languages,
+      this.languages,
       this.definitions,
       this.scopes,
       this.exports,
@@ -390,7 +320,7 @@ export class Project {
           this.definitions,
           this.resolutions,
           this.exports,
-          languages,
+          this.languages,
           root_folder,
           get_import_path,
         );
@@ -413,7 +343,7 @@ export class Project {
       this.definitions,
       this.imports,
       this.exports,
-      languages,
+      this.languages,
       root_folder,
     );
   }
@@ -438,6 +368,7 @@ export class Project {
     // Remove from file-level stores
     this.index_single_filees.delete(file_id);
     this.file_contents.delete(file_id);
+    this.languages.delete(file_id);
 
     // Remove from registries
     this.definitions.remove_file(file_id);
@@ -452,16 +383,10 @@ export class Project {
 
     // Re-resolve dependent files (imports may be broken now)
     if (dependents.size > 0) {
-      // Create language map from semantic indexes
-      const languages = new Map<FilePath, Language>();
-      for (const [file_path, index] of this.index_single_filees) {
-        languages.set(file_path, index.language);
-      }
-
       // Phase 1: Name resolution
       this.resolutions.resolve_names(
         dependents,
-        languages,
+        this.languages,
         this.definitions,
         this.scopes,
         this.exports,
@@ -479,7 +404,7 @@ export class Project {
             this.definitions,
             this.resolutions,
             this.exports,
-            languages,
+            this.languages,
             this.root_folder,
             get_import_path
           );
@@ -495,7 +420,7 @@ export class Project {
         this.definitions,
         this.imports,
         this.exports,
-        languages,
+        this.languages,
         this.root_folder
       );
     }
@@ -563,7 +488,7 @@ export class Project {
     ) {
       return cached.enriched;
     }
-    const raw = trace_call_graph(this.definitions, this.resolutions, { include_tests });
+    const raw = trace_call_graph(this.definitions, this.resolutions, this.languages, { include_tests });
     const enriched = enrich_call_graph(raw, this, { registry });
     this.enriched_cache = { registry, include_tests, enriched };
     return enriched;
@@ -618,6 +543,15 @@ export class Project {
    */
   get_file_contents(): ReadonlyMap<FilePath, string> {
     return this.file_contents;
+  }
+
+  /**
+   * Read-only view of each indexed file's language, decided once at parse
+   * ingress. Downstream passes (trace, classification) consume this instead
+   * of re-deriving language from paths.
+   */
+  get_languages(): ReadonlyMap<FilePath, Language> {
+    return this.languages;
   }
 
   /**
@@ -726,6 +660,7 @@ export class Project {
   clear(): void {
     this.file_contents.clear();
     this.index_single_filees.clear();
+    this.languages.clear();
     this.definitions.clear();
     this.types.clear();
     this.scopes.clear();

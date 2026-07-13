@@ -23,6 +23,7 @@ Source File
 ```
 project/
 ├── project.ts                        # Project class (main orchestrator)
+├── parse_file.ts                     # Parse-phase language dispatch (grammar selection → ParsedFile)
 ├── import_graph.ts                   # Import dependency tracking
 ├── detect_test_file.ts               # Test file detection (dispatcher)
 ├── detect_test_file.{language}.ts    # Language-specific test detection

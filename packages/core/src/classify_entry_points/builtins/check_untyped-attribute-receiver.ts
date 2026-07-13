@@ -24,16 +24,16 @@
 // inverse shape (`callers-not-in-registry` with empty call refs, identifier
 // receiver). This rule requires a populated `self_keyword` call ref.
 
-import type { EnrichedEntryPoint } from "@ariadnejs/types";
+import type { EnrichedEntryPoint, Language } from "@ariadnejs/types";
 import type { FileLinesReader } from "../auto_classify_types";
-import { detect_language } from "../extract_entry_point_diagnostics";
 
 export function check_untyped_attribute_receiver(
   entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
+  language: Language,
 ): boolean {
   void read_file_lines;
-  if (detect_language(entry_point.file_path) !== "python") return false;
+  if (language !== "python") return false;
   if (entry_point.kind !== "method") return false;
   return entry_point.diagnostics.ariadne_call_refs.some((ref) => {
     if (ref.receiver_kind !== "self_keyword") return false;

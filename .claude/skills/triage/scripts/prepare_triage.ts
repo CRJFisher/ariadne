@@ -200,7 +200,7 @@ async function load_project_for_classification(
   // Raw call graph: every uncalled callable. The triage classifier needs the
   // unfiltered set so it can route both permanent and wip registry rules
   // against every candidate.
-  const call_graph = trace_call_graph(project.definitions, project.resolutions, {
+  const call_graph = trace_call_graph(project.definitions, project.resolutions, project.get_languages(), {
     include_tests: false,
   });
   return { project, call_graph };

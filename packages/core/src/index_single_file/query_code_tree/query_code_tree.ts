@@ -1,9 +1,7 @@
 import type { Language } from "@ariadnejs/types";
 import { type Tree, Query, type QueryCapture } from "tree-sitter";
-import {
-  load_query,
-  LANGUAGE_TO_TREESITTER_LANG,
-} from "./query_loader";
+import { load_query } from "./query_loader";
+import { LANGUAGE_TO_TREESITTER_LANG } from "./parsers";
 
 /**
  * Cache for compiled Query objects per language.

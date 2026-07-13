@@ -16,27 +16,10 @@ export type { TraceCallGraphOptions };
 
 const ANONYMOUS_SYMBOL_NAME = create_symbol_name("<anonymous>");
 
-function detect_language(file_path: FilePath): Language {
-  const ext = file_path.split(".").pop()?.toLowerCase();
-  switch (ext) {
-    case "ts":
-    case "tsx":
-      return "typescript" as Language;
-    case "js":
-    case "jsx":
-      return "javascript" as Language;
-    case "py":
-      return "python" as Language;
-    case "rs":
-      return "rust" as Language;
-    default:
-      return "typescript" as Language;
-  }
-}
-
 function build_function_nodes(
   definitions: DefinitionRegistry,
-  resolutions: ResolutionRegistry
+  resolutions: ResolutionRegistry,
+  languages: ReadonlyMap<FilePath, Language>
 ): ReadonlyMap<SymbolId, CallableNode> {
   const nodes = new Map<SymbolId, CallableNode>();
 
@@ -57,7 +40,12 @@ function build_function_nodes(
     // by a definition-level runner convention (Rust `#[test]`/`#[cfg(test)]`,
     // ASV benchmark methods). Marking it lets entry-point detection suppress it.
     const file_path = func_def.location.file_path;
-    const language = detect_language(file_path);
+    const language = languages.get(file_path);
+    if (language === undefined) {
+      throw new Error(
+        `No language recorded for ${file_path} — every callable definition must come from a parsed file`
+      );
+    }
     const is_test =
       is_test_file(file_path, language) ||
       is_runner_invoked_callable(func_def, file_path, language);
@@ -120,9 +108,10 @@ function detect_entry_points(
 export function trace_call_graph(
   definitions: DefinitionRegistry,
   resolutions: ResolutionRegistry,
+  languages: ReadonlyMap<FilePath, Language>,
   options?: TraceCallGraphOptions
 ): CallGraph {
-  const nodes = build_function_nodes(definitions, resolutions);
+  const nodes = build_function_nodes(definitions, resolutions, languages);
   const entry_points = detect_entry_points(nodes, resolutions, options);
 
   return {

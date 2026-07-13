@@ -28,6 +28,23 @@ Language identifiers ALWAYS come as a suffix, never a prefix:
 
 Supported languages: typescript, javascript, python, rust, go, java
 
+### Language Mechanism Rule (terminal)
+
+The dotted suffix is the default — and only general — mechanism for
+language-specific code:
+
+- `{module}.{language}.ts` is the default for any language-specific variant.
+- Prefix-named files inside a dedicated sub-folder (e.g.
+  `extractors/python_scope_boundary_extractor.ts`) are permitted only for
+  shared-base hierarchies — language classes extending a common base that
+  lives in the same sub-folder.
+- Language sub-folders (`python/`, `typescript/`) are prohibited.
+- Per-language top-level modules (a `python_imports.ts` at a module root)
+  are prohibited.
+- `classify_entry_points/builtins/` uses filename = `group_id`
+  (`check_<group_id>.ts`); a group id may name a language as part of the
+  pattern it classifies without invoking the suffix rule.
+
 ### Special Cases
 
 - **Package `src/` root**: Files directly in `packages/*/src/` use simple `snake_case.ts`

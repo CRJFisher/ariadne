@@ -130,3 +130,32 @@ describe("builtin field denylist (AST scan over builtins/check_*.ts)", () => {
     }
   });
 });
+
+const LANGUAGE_EXT_ENDSWITH = /\.endsWith\(\s*["'`]\.(ts|tsx|js|jsx|mjs|cjs|py|rs)["'`]\s*\)/;
+
+describe("builtins do not re-derive language from the path", () => {
+  it("no builtin imports or calls detect_language, and none gates on a language extension", () => {
+    const violations: string[] = [];
+    for (const file of collect_check_sources(HERE)) {
+      const text = fs.readFileSync(file, "utf8");
+      if (text.includes("detect_language")) {
+        violations.push(`${path.relative(HERE, file)}: references detect_language`);
+      }
+      if (LANGUAGE_EXT_ENDSWITH.test(text)) {
+        violations.push(`${path.relative(HERE, file)}: gates on a language extension via .endsWith`);
+      }
+    }
+    // Language identity arrives as the BuiltinCheckFn `language` parameter,
+    // threaded from the pipeline's ingress — a check that re-derives it from
+    // the path bypasses that contract.
+    expect(violations).toEqual([]);
+  });
+
+  it("negative control: the extension-gate regex fires on synthetic offending sources", () => {
+    expect(LANGUAGE_EXT_ENDSWITH.test("entry_point.file_path.endsWith(\".py\")")).toBe(true);
+    expect(LANGUAGE_EXT_ENDSWITH.test("file_path.endsWith('.ts')")).toBe(true);
+    expect(LANGUAGE_EXT_ENDSWITH.test("file_path.endsWith(`.mjs`)")).toBe(true);
+    // A path-shape regex that is not a language gate stays allowed.
+    expect(LANGUAGE_EXT_ENDSWITH.test("file_path.endsWith(\"/index.gen\")")).toBe(false);
+  });
+});
