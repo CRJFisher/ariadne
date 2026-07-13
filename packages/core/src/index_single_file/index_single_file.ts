@@ -32,21 +32,13 @@ import {
   DefinitionBuilder,
   type BuilderResult,
 } from "./definitions/definition_builder";
-import type { MetadataExtractors } from "./query_code_tree/metadata_extractors";
 import {
   get_handler_registry,
   type HandlerRegistry,
 } from "./query_code_tree/capture_handlers";
-import {
-  JAVASCRIPT_METADATA_EXTRACTORS,
-  TYPESCRIPT_METADATA_EXTRACTORS,
-  PYTHON_METADATA_EXTRACTORS,
-  RUST_METADATA_EXTRACTORS,
-} from "./query_code_tree/metadata_extractors";
+import { get_metadata_extractors } from "./query_code_tree/metadata_extractors/metadata_extractors";
 import { ParsedFile } from "./parsed_file";
-import { reset_documentation_state as reset_js_documentation } from "./query_code_tree/symbol_factories/symbol_factories.javascript";
-import { reset_documentation_state as reset_python_documentation } from "./query_code_tree/symbol_factories/symbol_factories.python";
-import { reset_documentation_state as reset_rust_documentation } from "./query_code_tree/symbol_factories/symbol_factories.rust";
+import { reset_documentation_state } from "./query_code_tree/symbol_factories/documentation_state";
 import {
   SemanticCategory,
   SemanticEntity,
@@ -125,9 +117,7 @@ export function build_index_single_file(
 
   // PASS 3: Process definitions with language-specific handler registry.
   // Reset documentation state to prevent cross-file contamination from prior indexing passes
-  reset_js_documentation();
-  reset_python_documentation();
-  reset_rust_documentation();
+  reset_documentation_state(language);
   const handler_registry = get_handler_registry(language);
   const builder_result = process_definitions(context, handler_registry);
 
@@ -154,33 +144,6 @@ export function build_index_single_file(
     imported_symbols: builder_result.imports,
     references: all_references,
   };
-}
-
-// ============================================================================
-// Language Configuration Router
-// ============================================================================
-
-/**
- * Get language-specific metadata extractors
- *
- * JavaScript extractors work for both JavaScript and TypeScript since
- * tree-sitter-typescript is a superset of tree-sitter-javascript
- */
-function get_metadata_extractors(
-  language: Language
-): MetadataExtractors | undefined {
-  switch (language) {
-    case "javascript":
-      return JAVASCRIPT_METADATA_EXTRACTORS;
-    case "typescript":
-      return TYPESCRIPT_METADATA_EXTRACTORS;
-    case "python":
-      return PYTHON_METADATA_EXTRACTORS;
-    case "rust":
-      return RUST_METADATA_EXTRACTORS;
-    default:
-      return undefined;
-  }
 }
 
 // ============================================================================

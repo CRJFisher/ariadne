@@ -45,9 +45,11 @@ import {
   detect_callback_context,
   detect_function_collection,
   extract_collection_source,
+} from "../symbol_factories/symbol_factories.python";
+import {
   store_python_docstring,
   consume_python_docstring,
-} from "../symbol_factories/symbol_factories.python";
+} from "../symbol_factories/documentation_state.python";
 import {
   handle_definition_loop_var,
   handle_definition_loop_var_multiple,

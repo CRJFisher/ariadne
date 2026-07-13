@@ -39,10 +39,12 @@ import {
   detect_function_collection,
   extract_collection_source,
   extract_call_initializer_name,
-  store_documentation,
-  consume_documentation,
   type ImportInfo,
 } from "../symbol_factories/symbol_factories.rust";
+import {
+  store_documentation,
+  consume_documentation,
+} from "../symbol_factories/documentation_state.rust";
 
 // Import method and free-function handlers from their separate files
 import {

@@ -36,13 +36,15 @@ import {
   is_default_import,
   is_namespace_import,
   extract_extends,
-  store_documentation,
   detect_callback_context,
   detect_function_collection,
-  consume_documentation,
   extract_collection_source,
   extract_call_initializer_name,
 } from "../symbol_factories/symbol_factories.javascript";
+import {
+  store_documentation,
+  consume_documentation,
+} from "../symbol_factories/documentation_state.javascript";
 
 // ============================================================================
 // DOCUMENTATION HANDLERS

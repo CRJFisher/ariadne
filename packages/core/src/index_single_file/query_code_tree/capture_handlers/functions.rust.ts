@@ -14,9 +14,11 @@ import {
   extract_export_info,
   find_containing_impl,
   find_containing_trait,
-  consume_documentation,
   attach_rust_test_harness_attributes,
 } from "../symbol_factories/symbol_factories.rust";
+import {
+  consume_documentation,
+} from "../symbol_factories/documentation_state.rust";
 
 export function handle_definition_function(
   capture: CaptureNode,

@@ -14,8 +14,10 @@ import {
   find_containing_impl,
   find_containing_trait,
   is_associated_function,
-  consume_documentation,
 } from "../symbol_factories/symbol_factories.rust";
+import {
+  consume_documentation,
+} from "../symbol_factories/documentation_state.rust";
 
 // ============================================================================
 // METHOD HANDLERS

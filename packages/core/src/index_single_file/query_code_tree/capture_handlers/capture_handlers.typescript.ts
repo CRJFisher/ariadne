@@ -16,10 +16,12 @@ import {
   extract_export_info,
   extract_type_annotation,
   extract_initial_value,
-  consume_documentation,
   extract_collection_source,
   extract_call_initializer_name,
 } from "../symbol_factories/symbol_factories.javascript";
+import {
+  consume_documentation,
+} from "../symbol_factories/documentation_state.javascript";
 import {
   create_interface_id,
   extract_interface_extends,
