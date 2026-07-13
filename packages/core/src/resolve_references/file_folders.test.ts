@@ -43,6 +43,33 @@ describe("has_file_in_tree", () => {
     ).toBe(true);
   });
 
+  it("resolves an absolute path against a tree rooted below /", () => {
+    const project_tree = folder("/project", [], {
+      src: folder("/project/src", ["lib.rs", "utils.rs"]),
+    });
+    expect(
+      has_file_in_tree("/project/src/utils.rs" as FilePath, project_tree)
+    ).toBe(true);
+  });
+
+  it("resolves a root-relative path against a tree rooted below /", () => {
+    const project_tree = folder("/project", [], {
+      src: folder("/project/src", ["lib.rs", "utils.rs"]),
+    });
+    expect(has_file_in_tree("src/utils.rs" as FilePath, project_tree)).toBe(
+      true
+    );
+  });
+
+  it("returns false for an absolute path outside the tree root", () => {
+    const project_tree = folder("/project", [], {
+      src: folder("/project/src", ["lib.rs"]),
+    });
+    expect(
+      has_file_in_tree("/elsewhere/src/lib.rs" as FilePath, project_tree)
+    ).toBe(false);
+  });
+
   it("returns false when an intermediate folder is absent", () => {
     expect(has_file_in_tree("/src/missing/leaf.ts" as FilePath, TREE)).toBe(
       false

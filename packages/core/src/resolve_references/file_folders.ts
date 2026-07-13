@@ -45,7 +45,8 @@ export interface FileSystemFolder {
 /**
  * Check if a file exists in the file system tree
  *
- * @param file_path - Absolute path to the file to check
+ * @param file_path - Path to the file to check; absolute paths are resolved
+ *   against the tree root, relative paths are taken as root-relative
  * @param root_folder - Root of the file system tree
  * @returns true if file exists, false otherwise
  */
@@ -53,7 +54,10 @@ export function has_file_in_tree(
   file_path: FilePath,
   root_folder: FileSystemFolder
 ): boolean {
-  const normalized = path.normalize(file_path);
+  const relative = path.isAbsolute(file_path)
+    ? path.relative(root_folder.path, file_path)
+    : file_path;
+  const normalized = path.normalize(relative);
   const parts = normalized.split(path.sep).filter((p) => p);
 
   let current: FileSystemFolder | undefined = root_folder;
