@@ -4,6 +4,7 @@
 import type { FilePath, Location, ScopeType } from "@ariadnejs/types";
 import type Parser from "tree-sitter";
 import { node_to_location } from "../node_to_location";
+import type { CaptureNode } from "../capture_types";
 
 export interface ScopeBoundaries {
   // The name declaration belongs to the parent scope, not the scope it opens.
@@ -12,19 +13,124 @@ export interface ScopeBoundaries {
   scope_location: Location;
 }
 
+/**
+ * Scope type priority for deterministic sorting.
+ * Lower number = processed first (parent types before child types).
+ * When two captures have identical locations, this ensures parent scopes
+ * are created before child scopes.
+ */
+const SCOPE_TYPE_PRIORITY: Record<string, number> = {
+  module: 0,
+  namespace: 0,
+  class: 1,
+  interface: 1,
+  enum: 1,
+  function: 2,
+  method: 3,
+  constructor: 3,
+  closure: 4,
+  block: 5,
+};
+
+/**
+ * Get priority for a capture entity for sorting purposes.
+ */
+export function get_capture_priority(entity: string): number {
+  return SCOPE_TYPE_PRIORITY[entity] ?? 10;
+}
+
+/**
+ * Compare two locations for sorting
+ */
+export function compare_locations(a: Location, b: Location): number {
+  if (a.start_line !== b.start_line) return a.start_line - b.start_line;
+  if (a.start_column !== b.start_column) return a.start_column - b.start_column;
+  if (a.end_line !== b.end_line) return a.end_line - b.end_line;
+  return a.end_column - b.end_column;
+}
+
+/**
+ * Check if a location contains another location
+ * For well-formed nested scopes, checking the start position is usually sufficient,
+ * but we verify both start and end for correctness.
+ */
+export function location_contains(
+  container: Location,
+  contained: Location
+): boolean {
+  // Check if contained START is within container bounds
+  if (
+    contained.start_line < container.start_line ||
+    contained.start_line > container.end_line
+  ) {
+    return false;
+  }
+
+  // If on the start line, check column is at or after container start
+  if (
+    contained.start_line === container.start_line &&
+    contained.start_column < container.start_column
+  ) {
+    return false;
+  }
+
+  // Check if contained END is within container bounds
+  if (
+    contained.end_line < container.start_line ||
+    contained.end_line > container.end_line
+  ) {
+    return false;
+  }
+
+  // If on the end line, check column is at or before container end
+  if (
+    contained.end_line === container.end_line &&
+    contained.end_column > container.end_column
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Calculate area of a location (for finding smallest containing scope)
+ * Uses a position-based calculation for accurate ordering across multi-line spans
+ */
+export function calculate_area(location: Location): number {
+  // Convert start and end to single position numbers
+  // Each line is worth 10000 units to ensure column positions don't overflow
+  const start_pos = location.start_line * 10000 + location.start_column;
+  const end_pos = location.end_line * 10000 + location.end_column;
+  return end_pos - start_pos;
+}
+
 // tree-sitter grammars report node positions differently per language; an
-// extractor maps those raw positions onto the semantic scope-boundary model.
+// extractor maps those raw positions onto the semantic scope-boundary model,
+// and orders scope captures so parents are created before their children.
 export interface ScopeBoundaryExtractor {
   extract_boundaries(
     node: Parser.SyntaxNode,
     scope_type: ScopeType,
     file_path: FilePath
   ): ScopeBoundaries;
+
+  sort_captures(captures: readonly CaptureNode[]): CaptureNode[];
 }
 
 // Default extraction covering the shape shared by TypeScript, JavaScript, and
 // Rust. Language extractors override only the methods whose grammar diverges.
 export class CommonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
+
+  // Location order plus the scope-type priority tiebreak yields a
+  // deterministic parent-before-child creation order for brace-scoped grammars.
+  sort_captures(captures: readonly CaptureNode[]): CaptureNode[] {
+    return [...captures].sort(
+      (a, b) =>
+        compare_locations(a.location, b.location) ||
+        get_capture_priority(a.entity) - get_capture_priority(b.entity)
+    );
+  }
 
   extract_boundaries(
     node: Parser.SyntaxNode,

@@ -3,14 +3,52 @@ import type Parser from "tree-sitter";
 import {
   ScopeBoundaryExtractor,
   ScopeBoundaries,
+  calculate_area,
+  compare_locations,
+  get_capture_priority,
+  location_contains,
 } from "../boundary_base";
 import { node_to_location } from "../../node_to_location";
+import type { CaptureNode } from "../../capture_types";
 
 // Python opens scopes with a colon and indentation rather than braces, so the
 // body-start column has to be derived from the ":" token position. That divergence
 // is why this extractor implements ScopeBoundaryExtractor directly instead of
 // reusing CommonScopeBoundaryExtractor's brace-oriented boundary logic.
 export class PythonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
+
+  // A Python class scope opens after the ":" and can share its start position
+  // with the scope of a method defined on its first line, which a plain
+  // location sort mis-orders. Containment decides parent-before-child
+  // directly, then area (larger first) and scope-type priority break ties,
+  // falling back to the common location order.
+  sort_captures(captures: readonly CaptureNode[]): CaptureNode[] {
+    return [...captures].sort((a, b) => {
+      const a_contains_b = location_contains(a.location, b.location);
+      const b_contains_a = location_contains(b.location, a.location);
+
+      if (a_contains_b && !b_contains_a) {
+        return -1;
+      }
+      if (b_contains_a && !a_contains_b) {
+        return 1;
+      }
+
+      const area_a = calculate_area(a.location);
+      const area_b = calculate_area(b.location);
+      if (area_a !== area_b) {
+        return area_b - area_a;
+      }
+
+      const priority_diff =
+        get_capture_priority(a.entity) - get_capture_priority(b.entity);
+      if (priority_diff !== 0) {
+        return priority_diff;
+      }
+
+      return compare_locations(a.location, b.location);
+    });
+  }
 
   extract_boundaries(
     node: Parser.SyntaxNode,

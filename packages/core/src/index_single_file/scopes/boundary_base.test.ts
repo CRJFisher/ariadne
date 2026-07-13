@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { CommonScopeBoundaryExtractor, type ScopeBoundaries } from "./boundary_base";
-import type { FilePath, Location } from "@ariadnejs/types";
+import type { FilePath, Location, SymbolName } from "@ariadnejs/types";
 import type Parser from "tree-sitter";
+import { SemanticCategory, SemanticEntity, type CaptureNode } from "../capture_types";
 
 describe("CommonScopeBoundaryExtractor", () => {
   const extractor = new CommonScopeBoundaryExtractor();
@@ -267,5 +268,49 @@ describe("CommonScopeBoundaryExtractor", () => {
       };
       expect(result).toEqual(expected);
     });
+  });
+});
+
+describe("CommonScopeBoundaryExtractor.sort_captures", () => {
+  const extractor = new CommonScopeBoundaryExtractor();
+
+  function scope_capture(
+    entity: SemanticEntity,
+    start_line: number,
+    start_column: number,
+    end_line: number,
+    end_column: number
+  ): CaptureNode {
+    return {
+      category: SemanticCategory.SCOPE,
+      entity,
+      name: `scope.${entity}`,
+      text: "" as SymbolName,
+      location: {
+        file_path: "test.ts" as FilePath,
+        start_line,
+        start_column,
+        end_line,
+        end_column,
+      },
+      node: {} as Parser.SyntaxNode,
+    };
+  }
+
+  it("orders captures by location", () => {
+    const later = scope_capture(SemanticEntity.FUNCTION, 10, 1, 12, 1);
+    const earlier = scope_capture(SemanticEntity.FUNCTION, 1, 1, 3, 1);
+
+    expect(extractor.sort_captures([later, earlier])).toEqual([
+      earlier,
+      later,
+    ]);
+  });
+
+  it("breaks an identical-location tie by scope-type priority", () => {
+    const block = scope_capture(SemanticEntity.BLOCK, 1, 1, 5, 1);
+    const cls = scope_capture(SemanticEntity.CLASS, 1, 1, 5, 1);
+
+    expect(extractor.sort_captures([block, cls])).toEqual([cls, block]);
   });
 });
