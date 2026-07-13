@@ -53,7 +53,7 @@ import {
   handle_definition_comprehension_var,
   handle_definition_except_var,
   handle_definition_with_var,
-} from "./loop_variable_handlers.python";
+} from "./control_flow_variable_handlers.python";
 import { handle_definition_import } from "./imports.python";
 
 // ============================================================================
