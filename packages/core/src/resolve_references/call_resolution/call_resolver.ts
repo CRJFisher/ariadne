@@ -39,7 +39,7 @@ import { resolve_method_call } from "./method_call";
 import { resolve_constructor_call, include_constructors_for_class_symbols } from "./constructor";
 import { resolve_collection_dispatch } from "./collection_dispatch";
 import { resolve_function_call } from "./function_call";
-import { find_enclosing_function_scope } from "../../index_single_file/scopes/utils";
+import { find_enclosing_function_scope } from "../../index_single_file/scopes/scope_lookup";
 
 type CallSymbolReference =
   | SelfReferenceCall

@@ -7,7 +7,7 @@
 import type { SyntaxNode } from "tree-sitter";
 import type { Location, SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
 import { type_symbol } from "@ariadnejs/types";
-import type { MetadataExtractors } from "./types";
+import type { MetadataExtractors } from "./metadata_extractor_types";
 import { JAVASCRIPT_METADATA_EXTRACTORS } from "./metadata_extractors.javascript";
 import { node_to_location } from "../../node_to_location";
 

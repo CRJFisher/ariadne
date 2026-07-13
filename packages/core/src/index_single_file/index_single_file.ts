@@ -2,7 +2,7 @@
  * Semantic Index - Main orchestration using direct builder pattern
  */
 
-import type { QueryCapture, SyntaxNode, Tree } from "tree-sitter";
+import type { QueryCapture, Tree } from "tree-sitter";
 import type {
   FilePath,
   Language,
@@ -19,7 +19,6 @@ import type {
   NamespaceDefinition,
   TypeAliasDefinition,
   SymbolReference,
-  Location,
 } from "@ariadnejs/types";
 
 import { query_tree } from "./query_code_tree";
@@ -32,26 +31,24 @@ import { node_to_location } from "./node_to_location";
 import {
   DefinitionBuilder,
   type BuilderResult,
-} from "./definitions/definitions";
-import type { MetadataExtractors } from "./query_code_tree/metadata_extractors";
+} from "./definitions/definition_builder";
 import {
   get_handler_registry,
   type HandlerRegistry,
 } from "./query_code_tree/capture_handlers";
-import {
-  JAVASCRIPT_METADATA_EXTRACTORS,
-  TYPESCRIPT_METADATA_EXTRACTORS,
-  PYTHON_METADATA_EXTRACTORS,
-  RUST_METADATA_EXTRACTORS,
-} from "./query_code_tree/metadata_extractors";
+import { get_metadata_extractors } from "./query_code_tree/metadata_extractors/metadata_extractors";
 import { ParsedFile } from "./parsed_file";
-import { reset_documentation_state as reset_js_documentation } from "./query_code_tree/symbol_factories/symbol_factories.javascript";
-import { reset_documentation_state as reset_python_documentation } from "./query_code_tree/symbol_factories/symbol_factories.python";
-import { reset_documentation_state as reset_rust_documentation } from "./query_code_tree/symbol_factories/symbol_factories.rust";
+import { reset_documentation_state } from "./query_code_tree/symbol_factories/documentation_state";
+import {
+  SemanticCategory,
+  SemanticEntity,
+  type CaptureNode,
+} from "./capture_types";
+import type { ProcessingContext } from "./scopes/processing_context";
 
 /**
  * Semantic Index - Single-file analysis results
- * Import/Export union types are created during cross-file resolution in symbol_resolution.ts
+ * Import/Export union types are created during cross-file resolution in resolve_references/
  */
 export interface SemanticIndex {
   readonly file_path: FilePath;
@@ -120,9 +117,7 @@ export function build_index_single_file(
 
   // PASS 3: Process definitions with language-specific handler registry.
   // Reset documentation state to prevent cross-file contamination from prior indexing passes
-  reset_js_documentation();
-  reset_python_documentation();
-  reset_rust_documentation();
+  reset_documentation_state(language);
   const handler_registry = get_handler_registry(language);
   const builder_result = process_definitions(context, handler_registry);
 
@@ -149,33 +144,6 @@ export function build_index_single_file(
     imported_symbols: builder_result.imports,
     references: all_references,
   };
-}
-
-// ============================================================================
-// Language Configuration Router
-// ============================================================================
-
-/**
- * Get language-specific metadata extractors
- *
- * JavaScript extractors work for both JavaScript and TypeScript since
- * tree-sitter-typescript is a superset of tree-sitter-javascript
- */
-function get_metadata_extractors(
-  language: Language
-): MetadataExtractors | undefined {
-  switch (language) {
-    case "javascript":
-      return JAVASCRIPT_METADATA_EXTRACTORS;
-    case "typescript":
-      return TYPESCRIPT_METADATA_EXTRACTORS;
-    case "python":
-      return PYTHON_METADATA_EXTRACTORS;
-    case "rust":
-      return RUST_METADATA_EXTRACTORS;
-    default:
-      return undefined;
-  }
 }
 
 // ============================================================================
@@ -233,120 +201,4 @@ function process_definitions(
   }
 
   return builder.build();
-}
-
-/**
- * Processing context with precomputed depths for efficient scope lookups
- */
-
-export interface ProcessingContext {
-  /** All captures in the file */
-  captures: readonly CaptureNode[];
-  /** All scopes in the file */
-  scopes: ReadonlyMap<ScopeId, LexicalScope>;
-  /** Precomputed depth for each scope */
-  scope_depths: ReadonlyMap<ScopeId, number>;
-  /** Root scope ID (module/global scope) */
-  root_scope_id: ScopeId;
-  /** Find the deepest scope containing a location */
-  get_scope_id(location: Location): ScopeId;
-  get_child_scope_with_symbol_name(
-    scope_id: ScopeId,
-    name: SymbolName
-  ): ScopeId;
-}
-/**
- * Capture node from tree-sitter query
- */
-
-export interface CaptureNode {
-  category: SemanticCategory;
-  entity: SemanticEntity;
-  name: string; // The identifier in the .scm query
-  text: SymbolName; // The text of the captured node
-  location: Location; // The location of the captured node
-  node: SyntaxNode; // tree-sitter Node
-}
-/**
- * Semantic entity types (normalized across languages)
- */
-
-export enum SemanticEntity {
-  // Scopes
-  MODULE = "module",
-  CLASS = "class",
-  FUNCTION = "function",
-  METHOD = "method",
-  CONSTRUCTOR = "constructor",
-  BLOCK = "block",
-  CLOSURE = "closure",
-  INTERFACE = "interface",
-  ENUM = "enum",
-  NAMESPACE = "namespace",
-
-  // Definitions
-  VARIABLE = "variable",
-  CONSTANT = "constant",
-  PARAMETER = "parameter",
-  FIELD = "field",
-  PROPERTY = "property",
-  TYPE_PARAMETER = "type_parameter",
-  ENUM_MEMBER = "enum_member",
-  ANONYMOUS_FUNCTION = "anonymous_function",
-
-  // Imports/Exports
-  REEXPORT = "reexport",
-
-  // Types
-  TYPE = "type",
-  TYPE_ALIAS = "type_alias",
-  TYPE_ANNOTATION = "type_annotation",
-  TYPE_PARAMETERS = "type_parameters",
-  TYPE_ASSERTION = "type_assertion",
-  TYPE_CONSTRAINT = "type_constraint",
-  TYPE_ARGUMENT = "type_argument",
-
-  // References
-  CALL = "call",
-  MEMBER_ACCESS = "member_access",
-  TYPE_REFERENCE = "type_reference",
-  TYPEOF = "typeof",
-  WRITE = "write", // Variable write/assignment
-
-  // Special
-  THIS = "this",
-  SUPER = "super",
-  IMPORT = "import",
-
-  // Modifiers
-  ACCESS_MODIFIER = "access_modifier",
-  READONLY_MODIFIER = "readonly_modifier",
-  VISIBILITY = "visibility",
-  MUTABILITY = "mutability",
-  REFERENCE = "reference",
-
-  // Documentation
-  DOCUMENTATION = "documentation",
-
-  // Expressions and constructs
-  OPERATOR = "operator",
-  ARGUMENT_LIST = "argument_list",
-  LABEL = "label",
-  MACRO = "macro",
-}
-/**
- * Core semantic categories
- */
-
-export enum SemanticCategory {
-  SCOPE = "scope",
-  DEFINITION = "definition",
-  REFERENCE = "reference",
-  IMPORT = "import",
-  EXPORT = "export",
-  TYPE = "type",
-  ASSIGNMENT = "assignment",
-  RETURN = "return",
-  DECORATOR = "decorator",
-  MODIFIER = "modifier",
 }

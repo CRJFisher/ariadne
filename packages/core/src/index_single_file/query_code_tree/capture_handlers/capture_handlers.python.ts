@@ -9,10 +9,11 @@
 import type { SyntaxNode } from "tree-sitter";
 import type { SymbolName } from "@ariadnejs/types";
 import { anonymous_function_symbol, property_symbol } from "@ariadnejs/types";
-import type { DefinitionBuilder } from "../../definitions/definitions";
-import type { CaptureNode, ProcessingContext } from "../../index_single_file";
+import type { DefinitionBuilder } from "../../definitions/definition_builder";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
 import { node_to_location } from "../../node_to_location";
-import type { HandlerRegistry } from "./types";
+import type { HandlerRegistry } from "./handler_types";
 import {
   create_class_id,
   extract_extends,
@@ -44,16 +45,18 @@ import {
   detect_callback_context,
   detect_function_collection,
   extract_collection_source,
+} from "../symbol_factories/symbol_factories.python";
+import {
   store_python_docstring,
   consume_python_docstring,
-} from "../symbol_factories/symbol_factories.python";
+} from "../symbol_factories/documentation_state.python";
 import {
   handle_definition_loop_var,
   handle_definition_loop_var_multiple,
   handle_definition_comprehension_var,
   handle_definition_except_var,
   handle_definition_with_var,
-} from "./loop_variable_handlers.python";
+} from "./control_flow_variable_handlers.python";
 import { handle_definition_import } from "./imports.python";
 
 // ============================================================================

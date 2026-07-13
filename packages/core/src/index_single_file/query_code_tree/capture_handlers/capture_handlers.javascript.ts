@@ -7,9 +7,10 @@
 
 import type { SyntaxNode } from "tree-sitter";
 import type { SymbolName } from "@ariadnejs/types";
-import type { DefinitionBuilder } from "../../definitions/definitions";
-import type { CaptureNode, ProcessingContext } from "../../index_single_file";
-import type { HandlerRegistry } from "./types";
+import type { DefinitionBuilder } from "../../definitions/definition_builder";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
+import type { HandlerRegistry } from "./handler_types";
 import { method_symbol, anonymous_function_symbol } from "@ariadnejs/types";
 import {
   create_class_id,
@@ -29,19 +30,23 @@ import {
   extract_type_annotation,
   extract_initial_value,
   extract_default_value,
+  extract_extends,
+  detect_callback_context,
+  detect_function_collection,
+  extract_collection_source,
+  extract_call_initializer_name,
+} from "../symbol_factories/symbol_factories.javascript";
+import {
   extract_import_path,
   extract_require_path,
   extract_original_name,
   is_default_import,
   is_namespace_import,
-  extract_extends,
+} from "../symbol_factories/imports.javascript";
+import {
   store_documentation,
-  detect_callback_context,
-  detect_function_collection,
   consume_documentation,
-  extract_collection_source,
-  extract_call_initializer_name,
-} from "../symbol_factories/symbol_factories.javascript";
+} from "../symbol_factories/documentation_state.javascript";
 
 // ============================================================================
 // DOCUMENTATION HANDLERS

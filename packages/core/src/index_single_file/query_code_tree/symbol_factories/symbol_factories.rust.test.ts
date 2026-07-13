@@ -2,7 +2,7 @@
  * Tests for Rust symbol factories
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import Parser from "tree-sitter";
 import Rust from "tree-sitter-rust";
 import type { SyntaxNode } from "tree-sitter";
@@ -34,9 +34,6 @@ import {
   find_containing_callable,
   detect_function_collection,
   detect_callback_context,
-  store_documentation,
-  consume_documentation,
-  reset_documentation_state,
 } from "./symbol_factories.rust";
 import {
   anonymous_function_symbol,
@@ -54,11 +51,7 @@ import {
 } from "@ariadnejs/types";
 import type { FilePath, SymbolName } from "@ariadnejs/types";
 import { node_to_location } from "../../node_to_location";
-import {
-  SemanticCategory,
-  SemanticEntity,
-  type CaptureNode,
-} from "../../../index_single_file";
+import { SemanticCategory, SemanticEntity, type CaptureNode } from "../../capture_types";
 
 // ============================================================================
 // Helpers
@@ -1100,99 +1093,6 @@ describe("detect_callback_context", () => {
   });
 });
 
-// ============================================================================
-// Documentation state management
-// ============================================================================
-
-describe("documentation state", () => {
-  beforeEach(() => {
-    reset_documentation_state();
-  });
-
-  it("stores and consumes documentation for adjacent definition", () => {
-    store_documentation("/// Does something", 5);
-    const doc = consume_documentation({
-      file_path,
-      start_line: 6,
-      start_column: 1,
-      end_line: 10,
-      end_column: 1,
-    });
-    expect(doc).toBe("/// Does something");
-  });
-
-  it("concatenates consecutive comment lines", () => {
-    store_documentation("/// Line 1", 5);
-    store_documentation("/// Line 2", 6);
-    const doc = consume_documentation({
-      file_path,
-      start_line: 7,
-      start_column: 1,
-      end_line: 10,
-      end_column: 1,
-    });
-    expect(doc).toBe("/// Line 1\n/// Line 2");
-  });
-
-  it("returns undefined when no documentation matches", () => {
-    store_documentation("/// Far away", 1);
-    const doc = consume_documentation({
-      file_path,
-      start_line: 10,
-      start_column: 1,
-      end_line: 15,
-      end_column: 1,
-    });
-    expect(doc).toBeUndefined();
-  });
-
-  it("consumes documentation only once", () => {
-    store_documentation("/// Single use", 5);
-    const first = consume_documentation({
-      file_path,
-      start_line: 6,
-      start_column: 1,
-      end_line: 10,
-      end_column: 1,
-    });
-    expect(first).toBe("/// Single use");
-
-    const second = consume_documentation({
-      file_path,
-      start_line: 6,
-      start_column: 1,
-      end_line: 10,
-      end_column: 1,
-    });
-    expect(second).toBeUndefined();
-  });
-
-  it("allows 1-line gap between doc and definition", () => {
-    store_documentation("/// With gap", 5);
-    // Definition starts at line 7 (gap at line 6)
-    const doc = consume_documentation({
-      file_path,
-      start_line: 7,
-      start_column: 1,
-      end_line: 10,
-      end_column: 1,
-    });
-    expect(doc).toBe("/// With gap");
-  });
-
-  it("reset clears all pending documentation", () => {
-    store_documentation("/// Cleared", 5);
-    reset_documentation_state();
-    const doc = consume_documentation({
-      file_path,
-      start_line: 6,
-      start_column: 1,
-      end_line: 10,
-      end_column: 1,
-    });
-    expect(doc).toBeUndefined();
-  });
-});
 
 // ============================================================================
 // detect_function_collection

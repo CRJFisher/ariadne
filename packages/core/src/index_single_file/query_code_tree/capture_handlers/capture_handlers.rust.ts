@@ -7,9 +7,10 @@
 
 import type { SymbolId, SymbolName } from "@ariadnejs/types";
 import { enum_member_symbol, anonymous_function_symbol, create_module_path } from "@ariadnejs/types";
-import type { DefinitionBuilder } from "../../definitions/definitions";
-import type { CaptureNode, ProcessingContext } from "../../index_single_file";
-import type { HandlerRegistry } from "./types";
+import type { DefinitionBuilder } from "../../definitions/definition_builder";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
+import type { HandlerRegistry } from "./handler_types";
 import {
   create_struct_id,
   create_enum_id,
@@ -38,10 +39,12 @@ import {
   detect_function_collection,
   extract_collection_source,
   extract_call_initializer_name,
-  store_documentation,
-  consume_documentation,
   type ImportInfo,
 } from "../symbol_factories/symbol_factories.rust";
+import {
+  store_documentation,
+  consume_documentation,
+} from "../symbol_factories/documentation_state.rust";
 
 // Import method and free-function handlers from their separate files
 import {

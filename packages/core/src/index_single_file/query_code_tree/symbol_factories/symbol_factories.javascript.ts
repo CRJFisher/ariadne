@@ -12,7 +12,6 @@ import type {
   SymbolName,
   Location,
   ScopeId,
-  ModulePath,
   CallbackContext,
   FunctionCollectionInfo,
   FilePath,
@@ -26,8 +25,8 @@ import {
   property_symbol,
   variable_symbol,
 } from "@ariadnejs/types";
-import type { CaptureNode } from "../../index_single_file";
-import type { ProcessingContext } from "../../index_single_file";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
 import { node_to_location } from "../../node_to_location";
 import {
   extract_jsdoc_type,
@@ -320,126 +319,6 @@ export function extract_default_value(node: SyntaxNode): string | undefined {
 }
 
 // ============================================================================
-// Import Extraction
-// ============================================================================
-
-/**
- * Extract import path from import statement
- */
-export function extract_import_path(node: SyntaxNode | null | undefined): ModulePath {
-  if (!node) {
-    return "" as ModulePath;
-  }
-  // Use childForFieldName without optional chaining - it exists on SyntaxNode
-  const source = node.childForFieldName("source");
-  if (source) {
-    // Remove quotes from the string literal
-    const text = source.text;
-    return text.slice(1, -1) as ModulePath;
-  }
-  return "" as ModulePath;
-}
-
-/**
- * Extract module path from require() call
- * For CommonJS: const x = require('./module')
- */
-export function extract_require_path(node: SyntaxNode | null | undefined): ModulePath {
-  if (!node || node.type !== "string") {
-    return "" as ModulePath;
-  }
-  // Remove quotes from the string literal
-  const text = node.text;
-  return text.slice(1, -1) as ModulePath;
-}
-
-/**
- * Extract original name for aliased imports
- */
-export function extract_original_name(
-  node: SyntaxNode | null,
-  local_name: SymbolName
-): SymbolName | undefined {
-  if (!node) {
-    return undefined;
-  }
-
-  // Find import_clause as a child (not a field in JavaScript grammar)
-  let import_clause: SyntaxNode | null = null;
-  for (const child of node.children || []) {
-    if (child.type === "import_clause") {
-      import_clause = child;
-      break;
-    }
-  }
-
-  if (import_clause) {
-    // Find named_imports as a child (not a field)
-    let named_imports: SyntaxNode | null = null;
-    for (const child of import_clause.children || []) {
-      if (child.type === "named_imports") {
-        named_imports = child;
-        break;
-      }
-    }
-
-    if (named_imports) {
-      for (const child of named_imports.children || []) {
-        if (child.type === "import_specifier") {
-          const alias = child.childForFieldName("alias"); // alias IS a field
-          if (alias?.text === local_name) {
-            const name = child.childForFieldName("name"); // name IS a field
-            return name?.text as SymbolName;
-          }
-        }
-      }
-    }
-  }
-  return undefined;
-}
-
-/**
- * Check if this is a default import
- * Default import: import formatDate from './utils'
- * Structure: import_clause contains a direct identifier child (not inside named_imports)
- */
-export function is_default_import(node: SyntaxNode, name: SymbolName): boolean {
-  // Find import_clause as a child (not a field in JavaScript grammar)
-  let import_clause: SyntaxNode | null = null;
-  for (const child of node.children || []) {
-    if (child.type === "import_clause") {
-      import_clause = child;
-      break;
-    }
-  }
-
-  if (import_clause) {
-    // Check if import_clause has a direct identifier child (the default import)
-    // This identifier is NOT inside named_imports or namespace_import
-    for (const child of import_clause.children || []) {
-      if (child.type === "identifier" && child.text === name) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-/**
- * Check if this is a namespace import
- */
-export function is_namespace_import(node: SyntaxNode): boolean {
-  // Find import_clause child (may not have a field name)
-  const import_clause = node.children.find(c => c.type === "import_clause");
-  if (import_clause) {
-    // Check if it contains a namespace_import child
-    const namespace_import = import_clause.children.find(c => c.type === "namespace_import");
-    return namespace_import !== undefined;
-  }
-  return false;
-}
-
-// ============================================================================
 // Inheritance Extraction
 // ============================================================================
 
@@ -496,49 +375,6 @@ export function extract_extends(node: SyntaxNode): SymbolName[] {
   }
 
   return results;
-}
-
-// ============================================================================
-// Documentation State Management
-// ============================================================================
-
-/**
- * Map to track pending documentation comments by line number
- * Key: end line of comment, Value: comment text
- */
-const pending_documentation = new Map<number, string>();
-
-/**
- * Store documentation comment for association with next definition
- */
-export function store_documentation(comment: string, end_line: number): void {
-  pending_documentation.set(end_line, comment);
-}
-
-/**
- * Consume documentation for a definition at the given location
- * Returns the documentation if found within 1-2 lines before the definition
- */
-export function consume_documentation(location: Location): string | undefined {
-  const def_start_line = location.start_line;
-
-  // Check for comment ending 1 or 2 lines before definition
-  for (const end_line of [def_start_line - 1, def_start_line - 2]) {
-    const doc = pending_documentation.get(end_line);
-    if (doc) {
-      pending_documentation.delete(end_line);
-      return doc;
-    }
-  }
-
-  return undefined;
-}
-
-/**
- * Reset documentation state between file indexing passes to prevent cross-file contamination
- */
-export function reset_documentation_state(): void {
-  pending_documentation.clear();
 }
 
 // ============================================================================

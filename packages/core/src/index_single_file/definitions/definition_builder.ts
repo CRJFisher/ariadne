@@ -31,8 +31,9 @@ import {
   FunctionCollection,
 } from "@ariadnejs/types";
 
-import type { ProcessingContext, CaptureNode } from "../index_single_file";
-import { find_body_scope_for_definition } from "../scopes/utils";
+import type { CaptureNode } from "../capture_types";
+import type { ProcessingContext } from "../scopes/processing_context";
+import { find_body_scope_for_definition } from "../scopes/scope_lookup";
 import type {
   ClassBuilderState,
   ConstructorBuilderState,
@@ -278,6 +279,10 @@ export class DefinitionBuilder {
     return this;
   }
 
+  // ==========================================================================
+  // Rust-only: impl-block name lookups and enum methods
+  // ==========================================================================
+
   /**
    * Find a class ID by name (for languages like Rust where impl blocks reference structs by name)
    */
@@ -363,6 +368,10 @@ export class DefinitionBuilder {
     });
     return this;
   }
+
+  // ==========================================================================
+  // All languages
+  // ==========================================================================
 
   /**
    * Add a function definition
@@ -631,6 +640,10 @@ export class DefinitionBuilder {
     return this;
   }
 
+  // ==========================================================================
+  // Python-only: self-assignment property inference
+  // ==========================================================================
+
   /**
    * Add a class property inferred from a `self.<attr> = <rhs>` assignment,
    * deduped by attribute name within the class.
@@ -670,6 +683,10 @@ export class DefinitionBuilder {
     }
     return this;
   }
+
+  // ==========================================================================
+  // All languages
+  // ==========================================================================
 
   /**
    * Add an interface definition

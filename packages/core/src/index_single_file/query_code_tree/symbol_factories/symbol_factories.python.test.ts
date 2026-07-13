@@ -2,9 +2,8 @@
  * Tests for Python symbol factories
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
-import Parser from "tree-sitter";
-import Python from "tree-sitter-python";
+import { describe, it, expect } from "vitest";
+import { parse_python, make_capture, find_string_node } from "./test_utils";
 import type { SyntaxNode } from "tree-sitter";
 import {
   create_class_id,
@@ -35,10 +34,6 @@ import {
   determine_method_type,
   detect_callback_context,
   detect_function_collection,
-  store_python_docstring,
-  consume_python_docstring,
-  reset_documentation_state,
-  clean_python_docstring,
 } from "./symbol_factories.python";
 import {
   anonymous_function_symbol,
@@ -54,49 +49,15 @@ import {
 } from "@ariadnejs/types";
 import type { FilePath, SymbolName, SymbolId } from "@ariadnejs/types";
 import { node_to_location } from "../../node_to_location";
-import {
-  SemanticCategory,
-  SemanticEntity,
-  type CaptureNode,
-} from "../../../index_single_file";
+import { SemanticCategory, SemanticEntity, type CaptureNode } from "../../capture_types";
 
 // ============================================================================
 // Helpers
 // ============================================================================
 
-function parse_python(code: string): SyntaxNode {
-  const parser = new Parser();
-  parser.setLanguage(Python);
-  const tree = parser.parse(code);
-  return tree.rootNode;
-}
 
 const file_path = "/test.py" as FilePath;
 
-/** Build a CaptureNode from a tree-sitter node. */
-function make_capture(
-  node: SyntaxNode,
-  opts: {
-    name?: string;
-    category?: SemanticCategory;
-    entity?: SemanticEntity;
-  } = {},
-): CaptureNode {
-  return {
-    node,
-    text: node.text as SymbolName,
-    name: opts.name ?? "definition.function",
-    category: opts.category ?? SemanticCategory.DEFINITION,
-    entity: opts.entity ?? SemanticEntity.FUNCTION,
-    location: {
-      file_path,
-      start_line: node.startPosition.row + 1,
-      start_column: node.startPosition.column + 1,
-      end_line: node.endPosition.row + 1,
-      end_column: node.endPosition.column + 1,
-    },
-  };
-}
 
 /** DFS to find first node matching a predicate. */
 function find_node(root: SyntaxNode, predicate: (n: SyntaxNode) => boolean): SyntaxNode | null {
@@ -179,10 +140,6 @@ function find_assignment(root: SyntaxNode): SyntaxNode | null {
   return find_node(root, (n) => n.type === "assignment");
 }
 
-/** Find a string node (for docstrings). */
-function find_string_node(root: SyntaxNode): SyntaxNode | null {
-  return find_node(root, (n) => n.type === "string");
-}
 
 // ============================================================================
 // create_*_id functions
@@ -1126,95 +1083,3 @@ describe("detect_function_collection", () => {
   });
 });
 
-// ============================================================================
-// Docstring management
-// ============================================================================
-
-describe("clean_python_docstring", () => {
-  it("should strip triple double quotes from single-line docstring", () => {
-    expect(clean_python_docstring("\"\"\"Hello\"\"\"")).toBe("Hello");
-  });
-
-  it("should strip triple single quotes from single-line docstring", () => {
-    expect(clean_python_docstring("'''Hello'''")).toBe("Hello");
-  });
-
-  it("should strip and dedent multi-line docstring", () => {
-    const raw = "\"\"\"\n  Hello\n  World\n\"\"\"";
-    expect(clean_python_docstring(raw)).toBe("Hello\nWorld");
-  });
-
-  it("should handle empty docstring", () => {
-    expect(clean_python_docstring("\"\"\"\"\"\"")).toBe("");
-  });
-
-  it("should handle docstring with varying indentation", () => {
-    const raw = "\"\"\"\n    First line\n      Indented\n    Back\n\"\"\"";
-    expect(clean_python_docstring(raw)).toBe("First line\n  Indented\nBack");
-  });
-});
-
-describe("store_python_docstring / consume_python_docstring / reset_documentation_state", () => {
-  beforeEach(() => {
-    reset_documentation_state();
-  });
-
-  it("should store and consume a docstring keyed by definition start line", () => {
-    const code = "def foo():\n  \"\"\"A docstring.\"\"\"\n  pass";
-    const root = parse_python(code);
-
-    // Find the string node (the docstring)
-    const string_node = find_string_node(root)!;
-    expect(string_node).not.toBeNull();
-
-    const capture = make_capture(string_node, {
-      name: "definition.documentation",
-      entity: SemanticEntity.DOCUMENTATION,
-    });
-
-    store_python_docstring(capture);
-
-    // The function_definition starts at line 1
-    const consumed = consume_python_docstring(1);
-    expect(consumed).toBe("A docstring.");
-  });
-
-  it("should return undefined when consuming a non-existent docstring", () => {
-    const result = consume_python_docstring(999);
-    expect(result).toBeUndefined();
-  });
-
-  it("should consume only once (second call returns undefined)", () => {
-    const code = "def bar():\n  \"\"\"Doc.\"\"\"\n  pass";
-    const root = parse_python(code);
-    const string_node = find_string_node(root)!;
-    const capture = make_capture(string_node, {
-      name: "definition.documentation",
-      entity: SemanticEntity.DOCUMENTATION,
-    });
-
-    store_python_docstring(capture);
-
-    const first = consume_python_docstring(1);
-    expect(first).toBe("Doc.");
-
-    const second = consume_python_docstring(1);
-    expect(second).toBeUndefined();
-  });
-
-  it("should clear all stored docstrings on reset", () => {
-    const code = "def baz():\n  \"\"\"Baz doc.\"\"\"\n  pass";
-    const root = parse_python(code);
-    const string_node = find_string_node(root)!;
-    const capture = make_capture(string_node, {
-      name: "definition.documentation",
-      entity: SemanticEntity.DOCUMENTATION,
-    });
-
-    store_python_docstring(capture);
-    reset_documentation_state();
-
-    const result = consume_python_docstring(1);
-    expect(result).toBeUndefined();
-  });
-});

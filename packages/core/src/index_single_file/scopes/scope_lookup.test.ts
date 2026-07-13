@@ -5,7 +5,7 @@ import type {
   SymbolName,
   Location,
 } from "@ariadnejs/types";
-import { find_body_scope_for_definition, find_enclosing_function_scope } from "./utils";
+import { find_body_scope_for_definition, find_enclosing_function_scope } from "./scope_lookup";
 
 const mock_location = (
   start_line: number,

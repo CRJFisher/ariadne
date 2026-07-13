@@ -5,16 +5,19 @@
  */
 
 import type { SymbolName } from "@ariadnejs/types";
-import type { DefinitionBuilder } from "../../definitions/definitions";
-import type { CaptureNode, ProcessingContext } from "../../index_single_file";
+import type { DefinitionBuilder } from "../../definitions/definition_builder";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
 import {
   create_method_id,
   extract_return_type,
   find_containing_impl,
   find_containing_trait,
   is_associated_function,
-  consume_documentation,
 } from "../symbol_factories/symbol_factories.rust";
+import {
+  consume_documentation,
+} from "../symbol_factories/documentation_state.rust";
 
 // ============================================================================
 // METHOD HANDLERS

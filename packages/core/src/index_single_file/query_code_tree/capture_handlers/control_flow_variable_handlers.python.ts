@@ -1,5 +1,5 @@
 /**
- * Python loop and comprehension variable handlers
+ * Python control-flow variable handlers
  *
  * Handlers for the binding constructs that introduce a variable bound to the
  * scope they open: `for` loops, comprehensions, `except ... as`, and
@@ -8,8 +8,9 @@
  */
 
 import type { SymbolName } from "@ariadnejs/types";
-import type { DefinitionBuilder } from "../../definitions/definitions";
-import type { CaptureNode, ProcessingContext } from "../../index_single_file";
+import type { DefinitionBuilder } from "../../definitions/definition_builder";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
 import { create_variable_id } from "../symbol_factories/symbol_factories.python";
 
 export function handle_definition_loop_var(

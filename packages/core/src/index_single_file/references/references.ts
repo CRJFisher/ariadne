@@ -36,9 +36,9 @@ import {
   create_assignment_reference,
 } from "./factories";
 
-import type { CaptureNode } from "../index_single_file";
-import type { ProcessingContext } from "../index_single_file";
-import type { MetadataExtractors } from "../query_code_tree/metadata_extractors";
+import type { CaptureNode } from "../capture_types";
+import type { ProcessingContext } from "../scopes/processing_context";
+import type { MetadataExtractors } from "../query_code_tree/metadata_extractors/metadata_extractor_types";
 
 // ============================================================================
 // Reference Kind Enum

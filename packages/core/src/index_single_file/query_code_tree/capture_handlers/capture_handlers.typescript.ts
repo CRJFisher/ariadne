@@ -6,19 +6,22 @@
 
 import type { SymbolName } from "@ariadnejs/types";
 import { function_symbol, anonymous_function_symbol } from "@ariadnejs/types";
-import type { DefinitionBuilder } from "../../definitions/definitions";
-import type { CaptureNode, ProcessingContext } from "../../index_single_file";
-import type { HandlerRegistry } from "./types";
+import type { DefinitionBuilder } from "../../definitions/definition_builder";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
+import type { HandlerRegistry } from "./handler_types";
 import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
 import {
   create_variable_id,
   extract_export_info,
   extract_type_annotation,
   extract_initial_value,
-  consume_documentation,
   extract_collection_source,
   extract_call_initializer_name,
 } from "../symbol_factories/symbol_factories.javascript";
+import {
+  consume_documentation,
+} from "../symbol_factories/documentation_state.javascript";
 import {
   create_interface_id,
   extract_interface_extends,

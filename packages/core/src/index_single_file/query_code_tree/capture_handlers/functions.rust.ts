@@ -4,8 +4,9 @@
  * Separated from main capture_handlers.rust.ts to keep file sizes manageable.
  */
 
-import type { DefinitionBuilder } from "../../definitions/definitions";
-import type { CaptureNode, ProcessingContext } from "../../index_single_file";
+import type { DefinitionBuilder } from "../../definitions/definition_builder";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
 import {
   create_function_id,
   extract_generic_parameters,
@@ -13,9 +14,11 @@ import {
   extract_export_info,
   find_containing_impl,
   find_containing_trait,
-  consume_documentation,
-  attach_rust_test_harness_attributes,
 } from "../symbol_factories/symbol_factories.rust";
+import { attach_rust_test_harness_attributes } from "../symbol_factories/test_attributes.rust";
+import {
+  consume_documentation,
+} from "../symbol_factories/documentation_state.rust";
 
 export function handle_definition_function(
   capture: CaptureNode,

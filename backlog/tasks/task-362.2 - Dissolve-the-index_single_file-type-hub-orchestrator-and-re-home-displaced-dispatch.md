@@ -1,7 +1,7 @@
 ---
 id: TASK-362.2
 title: "Dissolve the index_single_file type-hub orchestrator and re-home displaced dispatch"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-05 00:00"
 labels:
@@ -105,18 +105,65 @@ hand-enumerated in neutral files become discoverable dotted slots.
 
 <!-- AC:BEGIN -->
 
-- [ ] `index_single_file.ts` defines no types and imports nothing from
+- [x] `index_single_file.ts` defines no types and imports nothing from
       `symbol_factories.{lang}.ts` leaves; it calls one
       `reset_documentation_state(language)` dispatcher.
-- [ ] Zero files import `CaptureNode`/`ProcessingContext`/`SemanticEntity`/
+- [x] Zero files import `CaptureNode`/`ProcessingContext`/`SemanticEntity`/
       `SemanticCategory` from `index_single_file.ts` (compiler-verified after
       the move).
-- [ ] `symbol_factories.rust.ts` no longer imports from `definitions/`; the
+- [x] `symbol_factories.rust.ts` no longer imports from `definitions/`; the
       pass-1→pass-3 edge lives in `test_attributes.rust.ts`.
-- [ ] `imports.javascript.ts` exists in parity with the Python/Rust
+- [x] `imports.javascript.ts` exists in parity with the Python/Rust
       siblings.
-- [ ] Dead types deleted; rows 3, 4, 20, 21 landed as `git mv` renames with
+- [x] Dead types deleted; rows 3, 4, 20, 21 landed as `git mv` renames with
       tests moved in the same commits.
-- [ ] Full core test suite green; no vestigial barrels remain in the stage.
+- [x] Full core test suite green; no vestigial barrels remain in the stage.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+Stage-1 indexing had grown an inverted dependency arrow: the pipeline
+orchestrator, `index_single_file.ts`, defined the stage's shared wire types,
+so sixteen files across every pass imported upward into the module that is
+supposed to sit on top of them, and the orchestrator also hand-carried two
+pieces of language dispatch that belong inside the folders that own them.
+This task restores the arrow's direction and makes the language touch points
+discoverable dotted slots.
+
+The wire types now live at the bottom of the stage. `capture_types.ts`
+(stage root) owns `CaptureNode`, `SemanticCategory`, and `SemanticEntity`;
+`scopes/processing_context.ts` owns `ProcessingContext`, sited beside the
+`create_processing_context` builder that constructs it. Every pass imports
+these downward or sideways; the orchestrator's only remaining type is
+`SemanticIndex`, its own output contract. Language dispatch is in-folder:
+`metadata_extractors/metadata_extractors.ts` marshals the per-language
+extractor sets, and `symbol_factories/documentation_state.ts` dispatches one
+`reset_documentation_state(language)` call over per-language state modules
+(`documentation_state.{javascript,python,rust}.ts`, TypeScript sharing the
+JavaScript store), each owning its pending-documentation map and accessors
+outright — a new language adds one dotted leaf and one switch arm instead of
+editing three neutral files. The factory megafiles slimmed accordingly:
+`imports.javascript.ts` sits in parity with `imports.rust.ts`, and
+`test_attributes.rust.ts` localizes the stage's only pass-1→pass-3 edge (a
+type-only `DefinitionBuilder` import for `#[test]`/`#[cfg(test)]` decorator
+attachment).
+
+To navigate: start at `index_single_file.ts` (now a pure four-pass
+orchestrator), follow types to `capture_types.ts` and
+`scopes/processing_context.ts`, and dispatch to the two marshallers. The
+rename rows landed as `git mv` (definition_builder.ts, scope_lookup.ts,
+handler_types.ts, control_flow_variable_handlers.python.ts,
+metadata_extractor_types.ts), so `git log --follow` reaches pre-move
+history. Shared test helpers live in `symbol_factories/test_utils.ts` —
+test files must import helpers from there, never from a sibling `.test.ts`,
+which re-collects that file's suites.
+
+Known spec drifts, verified: `symbol_factories/types.ts` and
+`SymbolCreationContext` never existed (deletion was a no-op), and row 4's
+`find_root_scope` dedupe had no duplicate to fold — the rename landed alone.
+The stage's remaining barrels (`query_code_tree/index.ts`,
+`capture_handlers/index.ts`) are live dispatchers, not vestiges.
+

@@ -4,13 +4,9 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { DefinitionBuilder } from "./definitions";
-import type {
-  ProcessingContext,
-  CaptureNode,
-  SemanticEntity,
-  SemanticCategory,
-} from "../index_single_file";
+import { DefinitionBuilder } from "./definition_builder";
+import type { CaptureNode, SemanticEntity, SemanticCategory } from "../capture_types";
+import type { ProcessingContext } from "../scopes/processing_context";
 import type {
   Location,
   ScopeId,
@@ -469,7 +465,7 @@ describe("DefinitionBuilder - Complex Assembly", () => {
     expect(constructor_def.parameters[0].type).toBe("string");
     expect(constructor_def.parameters[1].name).toBe("age");
     expect(constructor_def.parameters[1].type).toBe("number");
-    expect(constructor_def.parameters[1].default_value).toBeUndefined;
+    expect(constructor_def.parameters[1].default_value).toBeUndefined();
   });
 
   it("should support parameters for interface methods", () => {

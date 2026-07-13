@@ -13,11 +13,9 @@ import {
   handle_definition_constructor,
 } from "./methods.rust";
 import { RUST_HANDLERS } from "./capture_handlers.rust";
-import { DefinitionBuilder } from "../../definitions/definitions";
-import type {
-  ProcessingContext,
-  CaptureNode,
-} from "../../index_single_file";
+import { DefinitionBuilder } from "../../definitions/definition_builder";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
 import type { Location, SymbolName, ScopeId } from "@ariadnejs/types";
 import type { FilePath } from "@ariadnejs/types";
 import { node_to_location } from "../../node_to_location";

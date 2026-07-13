@@ -14,11 +14,8 @@ import type {
 } from "@ariadnejs/types";
 import { module_scope, scope_string, ScopeType } from "@ariadnejs/types";
 import { ParsedFile } from "../parsed_file";
-import {
-  CaptureNode,
-  ProcessingContext,
-  SemanticCategory,
-} from "../index_single_file";
+import { CaptureNode, SemanticCategory } from "../capture_types";
+import { ProcessingContext } from "./processing_context";
 import { get_scope_boundary_extractor } from "./boundary_extractor";
 import type Parser from "tree-sitter";
 
