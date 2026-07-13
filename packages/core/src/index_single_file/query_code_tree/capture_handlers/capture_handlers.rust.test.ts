@@ -6,10 +6,8 @@ import { RUST_HANDLERS } from "./capture_handlers.rust";
 import { detect_callback_context } from "../symbol_factories/symbol_factories.rust";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
 import { build_index_single_file } from "../../index_single_file";
-import type {
-  ProcessingContext,
-  CaptureNode,
-} from "../../index_single_file";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
 import type { Location, SymbolName, ScopeId, FilePath } from "@ariadnejs/types";
 import type { SyntaxNode } from "tree-sitter";
 import { node_to_location } from "../../node_to_location";

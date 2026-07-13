@@ -7,4 +7,4 @@
  */
 
 export { build_index_single_file } from "./index_single_file";
-export { SemanticCategory, SemanticEntity, type CaptureNode } from "./index_single_file";
+export { SemanticCategory, SemanticEntity, type CaptureNode } from "./capture_types";

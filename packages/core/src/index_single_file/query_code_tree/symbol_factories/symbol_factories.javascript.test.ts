@@ -37,11 +37,7 @@ import { anonymous_function_symbol } from "@ariadnejs/types";
 import type { FilePath, SymbolName } from "@ariadnejs/types";
 import { extract_jsdoc_type } from "./jsdoc_extraction.javascript";
 import { node_to_location } from "../../node_to_location";
-import {
-  SemanticCategory,
-  SemanticEntity,
-  type CaptureNode,
-} from "../../../index_single_file";
+import { SemanticCategory, SemanticEntity, type CaptureNode } from "../../capture_types";
 
 // Parsers for tree-sitter
 let js_parser: Parser;

@@ -9,12 +9,8 @@ import type { SyntaxNode } from "tree-sitter";
 import { PYTHON_HANDLERS } from "./capture_handlers.python";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
 import { build_index_single_file } from "../../index_single_file";
-import type {
-  ProcessingContext,
-  CaptureNode,
-  SemanticCategory,
-  SemanticEntity,
-} from "../../index_single_file";
+import type { CaptureNode, SemanticCategory, SemanticEntity } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
 import type { FilePath, Location, ScopeId, SymbolName } from "@ariadnejs/types";
 import { node_to_location } from "../../node_to_location";
 import { extract_import_path, detect_callback_context } from "../symbol_factories/symbol_factories.python";

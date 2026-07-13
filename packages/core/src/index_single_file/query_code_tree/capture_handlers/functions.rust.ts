@@ -5,7 +5,8 @@
  */
 
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
-import type { CaptureNode, ProcessingContext } from "../../index_single_file";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
 import {
   create_function_id,
   extract_generic_parameters,

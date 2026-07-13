@@ -26,8 +26,8 @@ import {
   property_symbol,
   variable_symbol,
 } from "@ariadnejs/types";
-import type { CaptureNode } from "../../index_single_file";
-import type { ProcessingContext } from "../../index_single_file";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
 import { node_to_location } from "../../node_to_location";
 import {
   extract_jsdoc_type,

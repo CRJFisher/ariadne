@@ -17,12 +17,8 @@ import type {
   LexicalScope,
   Language,
 } from "@ariadnejs/types";
-import {
-  CaptureNode,
-  SemanticEntity,
-  SemanticCategory,
-  build_index_single_file,
-} from "../index_single_file";
+import { build_index_single_file } from "../index_single_file";
+import { CaptureNode, SemanticEntity, SemanticCategory } from "../capture_types";
 import { ParsedFile } from "../parsed_file";
 
 describe("scopes", () => {

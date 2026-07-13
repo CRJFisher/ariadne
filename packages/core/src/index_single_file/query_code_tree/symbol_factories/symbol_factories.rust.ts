@@ -22,7 +22,8 @@ import {
   module_symbol,
   anonymous_function_symbol,
 } from "@ariadnejs/types";
-import type { CaptureNode, ProcessingContext } from "../../index_single_file";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import { node_to_location } from "../../node_to_location";
 export { detect_callback_context } from "./callback.rust";

@@ -31,7 +31,8 @@ import {
   FunctionCollection,
 } from "@ariadnejs/types";
 
-import type { ProcessingContext, CaptureNode } from "../index_single_file";
+import type { CaptureNode } from "../capture_types";
+import type { ProcessingContext } from "../scopes/processing_context";
 import { find_body_scope_for_definition } from "../scopes/scope_lookup";
 import type {
   ClassBuilderState,

@@ -51,11 +51,7 @@ import {
 } from "@ariadnejs/types";
 import type { FilePath, SymbolId, SymbolName } from "@ariadnejs/types";
 import { node_to_location } from "../../node_to_location";
-import {
-  SemanticCategory,
-  SemanticEntity,
-  type CaptureNode,
-} from "../../../index_single_file";
+import { SemanticCategory, SemanticEntity, type CaptureNode } from "../../capture_types";
 
 // ============================================================================
 // Helpers

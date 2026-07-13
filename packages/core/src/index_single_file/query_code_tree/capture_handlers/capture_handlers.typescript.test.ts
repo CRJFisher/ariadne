@@ -14,12 +14,8 @@ import { build_index_single_file } from "../../index_single_file";
 import { node_to_location } from "../../node_to_location";
 import { is_variable_reference } from "@ariadnejs/types";
 import type { ParsedFile } from "../../parsed_file";
-import type {
-  ProcessingContext,
-  CaptureNode,
-  SemanticEntity,
-  SemanticCategory,
-} from "../../index_single_file";
+import type { CaptureNode, SemanticEntity, SemanticCategory } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
 import type { FilePath, Location, ScopeId, SymbolName } from "@ariadnejs/types";
 
 describe("TypeScript Builder Configuration", () => {

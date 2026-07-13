@@ -5,12 +5,8 @@
 
 import { describe, it, expect } from "vitest";
 import { DefinitionBuilder } from "./definition_builder";
-import type {
-  ProcessingContext,
-  CaptureNode,
-  SemanticEntity,
-  SemanticCategory,
-} from "../index_single_file";
+import type { CaptureNode, SemanticEntity, SemanticCategory } from "../capture_types";
+import type { ProcessingContext } from "../scopes/processing_context";
 import type {
   Location,
   ScopeId,

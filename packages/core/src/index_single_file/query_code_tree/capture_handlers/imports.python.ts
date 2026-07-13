@@ -5,7 +5,8 @@ import type {
 } from "@ariadnejs/types";
 import { variable_symbol, create_module_path } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
-import type { CaptureNode, ProcessingContext } from "../../index_single_file";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
 import { node_to_location } from "../../node_to_location";
 import {
   create_variable_id,

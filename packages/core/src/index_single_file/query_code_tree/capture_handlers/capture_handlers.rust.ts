@@ -8,7 +8,8 @@
 import type { SymbolId, SymbolName } from "@ariadnejs/types";
 import { enum_member_symbol, anonymous_function_symbol, create_module_path } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
-import type { CaptureNode, ProcessingContext } from "../../index_single_file";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
 import type { HandlerRegistry } from "./handler_types";
 import {
   create_struct_id,

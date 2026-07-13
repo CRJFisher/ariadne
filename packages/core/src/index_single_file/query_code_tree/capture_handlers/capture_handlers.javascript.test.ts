@@ -10,12 +10,8 @@ import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
 import { analyze_export_statement, detect_callback_context } from "../symbol_factories/symbol_factories.javascript";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
 import { build_index_single_file } from "../../index_single_file";
-import type {
-  ProcessingContext,
-  CaptureNode,
-  SemanticCategory,
-  SemanticEntity,
-} from "../../index_single_file";
+import type { CaptureNode, SemanticCategory, SemanticEntity } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
 import type {
   Location,
   ScopeId,
