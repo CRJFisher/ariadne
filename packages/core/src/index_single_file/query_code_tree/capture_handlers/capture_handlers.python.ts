@@ -12,7 +12,7 @@ import { anonymous_function_symbol, property_symbol } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { CaptureNode, ProcessingContext } from "../../index_single_file";
 import { node_to_location } from "../../node_to_location";
-import type { HandlerRegistry } from "./types";
+import type { HandlerRegistry } from "./handler_types";
 import {
   create_class_id,
   extract_extends,

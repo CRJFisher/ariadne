@@ -1,5 +1,5 @@
 import type { Language } from "@ariadnejs/types";
-import type { HandlerRegistry } from "./types";
+import type { HandlerRegistry } from "./handler_types";
 import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
 import { TYPESCRIPT_HANDLERS } from "./capture_handlers.typescript";
 import { PYTHON_HANDLERS } from "./capture_handlers.python";
@@ -20,7 +20,7 @@ export function get_handler_registry(language: Language): HandlerRegistry {
   }
 }
 
-export type { HandlerRegistry } from "./types";
+export type { HandlerRegistry } from "./handler_types";
 export { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
 export { TYPESCRIPT_HANDLERS } from "./capture_handlers.typescript";
 export { PYTHON_HANDLERS } from "./capture_handlers.python";
