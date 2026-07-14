@@ -8,7 +8,7 @@ import type {
   KnownIssuesRegistry,
   ClassifierHint,
 } from "@ariadnejs/types";
-import { auto_classify, MissingBuiltinError } from "./classify_entry_points";
+import { auto_classify, MissingBuiltinError } from "./auto_classify";
 import type { BuiltinCheckFn } from "./builtins";
 
 const fp = (s: string) => s as FilePath;

@@ -17,7 +17,7 @@ import { describe, it, expect, afterAll } from "vitest";
 import { Project } from "../project/project";
 import { trace_call_graph } from "../trace_call_graph/trace_call_graph";
 import { extract_entry_point_diagnostics } from "./extract_entry_point_diagnostics";
-import { auto_classify } from "./classify_entry_points";
+import { auto_classify } from "./auto_classify";
 import type { FilePath, KnownIssue, KnownIssuesRegistry } from "@ariadnejs/types";
 import * as fs from "fs";
 import * as path from "path";

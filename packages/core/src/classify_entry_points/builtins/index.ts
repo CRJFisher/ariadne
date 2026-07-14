@@ -3,6 +3,12 @@
 // removed from the known-issues registry, add or remove its import and
 // `BUILTIN_CHECKS` entry here. The orchestrator looks up a builtin classifier by
 // `function_name` via BUILTIN_CHECKS.
+//
+// These checks live in core (not in the triage skill) because they run against
+// `EnrichedEntryPoint` inside `enrich_call_graph` during Stage-3 classification.
+// That evaluation happens entirely within the core pipeline and never crosses
+// the skill boundary — the registry supplies only each rule's `function_name`
+// and `min_confidence`; the match logic is this code.
 
 import type { EnrichedEntryPoint, Language } from "@ariadnejs/types";
 import type { FileLinesReader } from "../auto_classify_types";
