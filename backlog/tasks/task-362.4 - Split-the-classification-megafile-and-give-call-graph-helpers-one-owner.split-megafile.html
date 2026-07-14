@@ -668,7 +668,7 @@ footer b { color: var(--mute); }
   <div class="sk">Ride-along small-item rows — the renames, deletions, and the two that need care</div>
   <h2 class="sh">Two mechanical rows land, rows 16 &amp; 17 defer to a follow-up, and two registry mismatches route back to the human as hand-offs</h2>
   <ul class="acc">
-    <li><input type="checkbox" id="r2"><label for="r2"><b>Row 2</b><code>git mv classify_entry_points.ts → auto_classify.ts</code> — it is the registry-walk sub-step; <code>enrich_call_graph.ts</code> is the stage face. Its integration test is renamed to <code>untyped_attribute_receiver.integration.test.ts</code> after the receiver case it exercises.</label></li>
+    <li><input type="checkbox" id="r2"><label for="r2"><b>Row 2</b><code>git mv classify_entry_points.ts → auto_classify.ts</code> — it is the registry-walk sub-step; <code>enrich_call_graph.ts</code> is the stage face. Its integration test is renamed to <code>auto_classify.integration.test.ts</code> after the receiver case it exercises.</label></li>
     <li class="deferred"><input type="checkbox" id="r16" disabled><label for="r16"><b class="dfr">Row 16 · deferred</b>delete <code>registry_permanent.ts</code> (22-LOC field-unwrap shim) — parked to a follow-up to avoid colliding with in-flight reconcile-registry work; <code>registry_permanent.ts</code> and <code>registry_loader.ts</code> are untouched by this task.</label></li>
     <li class="deferred"><input type="checkbox" id="r17" disabled><label for="r17"><b class="dfr">Row 17 · deferred</b><code>permanent_data.ts → registry_permanent_data.ts</code> plus its generator and sync test — parked to the same follow-up; <code>permanent_data.ts</code> and <code>generate_permanent_data.ts</code> stay untouched here.</label></li>
     <li><input type="checkbox" id="r34"><label for="r34"><b>Row 34</b>add the one-paragraph placement rationale to <code>builtins/index.ts</code> — checks run against <code>EnrichedEntryPoint</code> inside <code>enrich_call_graph</code>, which does not cross the skill boundary.</label></li>
@@ -701,7 +701,7 @@ footer b { color: var(--mute); }
 
 <footer>
   <div><b>TASK-362.4</b> · Program Area 4 of the IA review refactor program (TASK-362) · effort M, risk low · depends on 362.1, blocks 362.7</div>
-  <div>As built: megafile trimmed to 554 LOC / ~19 KB (from ~29 KB); build_signature adopts MCP's <code>(definition, location?): string</code> superset, try/catch dropped; Row 2 test → untyped_attribute_receiver.integration.test.ts; rows 16 &amp; 17 deferred (registry_permanent.ts, permanent_data.ts, generate_permanent_data.ts untouched); rows 18 &amp; 19 route to the human as reconcile-registry hand-offs.</div>
+  <div>As built: megafile trimmed to 554 LOC / ~19 KB (from ~29 KB); build_signature adopts MCP's <code>(definition, location?): string</code> superset, try/catch dropped; Row 2 test → auto_classify.integration.test.ts; rows 16 &amp; 17 deferred (registry_permanent.ts, permanent_data.ts, generate_permanent_data.ts untouched); rows 18 &amp; 19 route to the human as reconcile-registry hand-offs.</div>
   <div>Sources read: extract_entry_point_diagnostics.ts (:120, :346, :555, :590–613, :667, :703, :754, :817) · trace_call_graph/build_signature.ts · packages/mcp/.../list_entrypoints.ts:88,147 · builtins/check_framework-lifecycle-override.ts:1,16 · builtins/check_string-keyed-dispatch.ts:17 · registry.json framework-lifecycle-override.languages · task-362.4 brief:24–83</div>
 </footer>
 

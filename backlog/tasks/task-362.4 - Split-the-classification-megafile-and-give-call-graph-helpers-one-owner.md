@@ -159,8 +159,10 @@ the published signatures match what MCP's copies already expose.
 
 **Ride-along rows.** Row 2: `classify_entry_points.ts` → `auto_classify.ts` (the
 registry-walk sub-step; `enrich_call_graph.ts` is the stage face), with its unit
-test and the untyped-attribute-receiver integration test renamed to match their
-subject and all importers repointed. Row 18: `check_framework-lifecycle-override`
+test renamed and the untyped-attribute-receiver integration test renamed to
+`auto_classify.integration.test.ts` (it drives the `auto_classify` classification
+path, so it maps to that module and satisfies the bidirectional-test-coverage
+hook), and all importers repointed. Row 18: `check_framework-lifecycle-override`
 now classifies JavaScript stream subclasses as well as TypeScript (JS
 `_transform`/`_flush` never classified before), covered by a new test; the
 file's stale "AUTO-GENERATED / do not edit by hand" provenance is corrected —

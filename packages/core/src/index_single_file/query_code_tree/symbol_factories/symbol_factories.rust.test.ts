@@ -34,6 +34,7 @@ import {
   find_containing_callable,
   detect_function_collection,
   detect_callback_context,
+  extract_collection_source,
 } from "./symbol_factories.rust";
 import {
   anonymous_function_symbol,
@@ -1149,5 +1150,76 @@ describe("detect_function_collection", () => {
 
     const result = detect_function_collection(let_decl, file_path);
     expect(result).toBeNull();
+  });
+
+  it("detects hashmap! macro as a Map", () => {
+    const code = "let config = hashmap!{'k' => fn1};";
+    const root = parse_rust(code);
+    const let_decl = find_node_by_type(root, "let_declaration")!;
+
+    const result = detect_function_collection(let_decl, file_path);
+    expect(result).not.toBeNull();
+    expect(result!.collection_type).toBe("Map");
+    expect(result!.stored_references).toContain("fn1");
+  });
+
+  it("detects closures in array with anonymous symbols", () => {
+    const code = "let handlers = [|x| x + 1, |y| y * 2];";
+    const root = parse_rust(code);
+    const let_decl = find_node_by_type(root, "let_declaration")!;
+
+    const result = detect_function_collection(let_decl, file_path);
+    expect(result).not.toBeNull();
+    expect(result!.collection_type).toBe("Array");
+    expect(result!.stored_functions).toHaveLength(2);
+    expect(result!.stored_functions[0]).toMatch(/^function:.*:<anonymous>$/);
+  });
+
+  it("returns empty or null for empty vec! macro", () => {
+    const code = "let handlers: Vec<fn()> = vec![];";
+    const root = parse_rust(code);
+    const let_decl = find_node_by_type(root, "let_declaration")!;
+
+    const result = detect_function_collection(let_decl, file_path);
+    expect(
+      result === null ||
+        (result?.stored_references?.length === 0 && result?.stored_functions?.length === 0),
+    ).toBe(true);
+  });
+});
+
+// ============================================================================
+// extract_collection_source
+// ============================================================================
+
+describe("extract_collection_source", () => {
+  it("extracts derived variable from method call", () => {
+    const code = "let handler = config.get(\"key\");";
+    const root = parse_rust(code);
+    const let_decl = find_node_by_type(root, "let_declaration")!;
+    const pattern = let_decl.childForFieldName("pattern")!;
+
+    const derived = extract_collection_source(pattern);
+    expect(derived).toBe("config");
+  });
+
+  it("extracts derived variable from index expression", () => {
+    const code = "let handler = config[\"key\"];";
+    const root = parse_rust(code);
+    const let_decl = find_node_by_type(root, "let_declaration")!;
+    const pattern = let_decl.childForFieldName("pattern")!;
+
+    const derived = extract_collection_source(pattern);
+    expect(derived).toBe("config");
+  });
+
+  it("returns undefined for plain assignment", () => {
+    const code = "let handler = some_func;";
+    const root = parse_rust(code);
+    const let_decl = find_node_by_type(root, "let_declaration")!;
+    const pattern = let_decl.childForFieldName("pattern")!;
+
+    const derived = extract_collection_source(pattern);
+    expect(derived).toBeUndefined();
   });
 });

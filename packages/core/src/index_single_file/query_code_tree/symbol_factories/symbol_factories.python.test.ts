@@ -34,6 +34,7 @@ import {
   determine_method_type,
   detect_callback_context,
   detect_function_collection,
+  extract_collection_source,
 } from "./symbol_factories.python";
 import {
   anonymous_function_symbol,
@@ -1080,6 +1081,123 @@ describe("detect_function_collection", () => {
     expect(result).not.toBeNull();
     expect(result!.collection_type).toBe("Array");
     expect(result!.stored_functions.length).toBe(1);
+  });
+
+  it("should detect list splat operator", () => {
+    const code = "handlers = [*BASE_HANDLERS, fn1]";
+    const root = parse_python(code);
+    const assignment = find_assignment(root)!;
+
+    const result = detect_function_collection(assignment, file_path);
+    expect(result).not.toBeNull();
+    expect(result!.collection_type).toBe("Array");
+    expect(result!.stored_references).toContain("BASE_HANDLERS");
+    expect(result!.stored_references).toContain("fn1");
+  });
+
+  it("should detect dict splat operator", () => {
+    const code = "config = {**BASE_CONFIG, 'extra': fn1}";
+    const root = parse_python(code);
+    const assignment = find_assignment(root)!;
+
+    const result = detect_function_collection(assignment, file_path);
+    expect(result).not.toBeNull();
+    expect(result!.collection_type).toBe("Object");
+    expect(result!.stored_references).toContain("BASE_CONFIG");
+    expect(result!.stored_references).toContain("fn1");
+  });
+
+  it("should detect lambda functions in list with anonymous symbols", () => {
+    const code = "handlers = [lambda x: x + 1, lambda y: y * 2]";
+    const root = parse_python(code);
+    const assignment = find_assignment(root)!;
+
+    const result = detect_function_collection(assignment, file_path);
+    expect(result).not.toBeNull();
+    expect(result!.collection_type).toBe("Array");
+    expect(result!.stored_functions).toHaveLength(2);
+    expect(result!.stored_functions[0]).toMatch(/^function:.*:<anonymous>$/);
+    expect(result!.stored_references).toHaveLength(0);
+  });
+
+  it("should detect lambda functions in dict values", () => {
+    const code = "handlers = {'a': lambda x: x + 1, 'b': lambda y: y * 2}";
+    const root = parse_python(code);
+    const assignment = find_assignment(root)!;
+
+    const result = detect_function_collection(assignment, file_path);
+    expect(result).not.toBeNull();
+    expect(result!.collection_type).toBe("Object");
+    expect(result!.stored_functions).toHaveLength(2);
+  });
+
+  it("should return null for empty list", () => {
+    const code = "handlers = []";
+    const root = parse_python(code);
+    const assignment = find_assignment(root)!;
+
+    const result = detect_function_collection(assignment, file_path);
+    expect(result).toBeNull();
+  });
+
+  it("should return null for empty dict", () => {
+    const code = "config = {}";
+    const root = parse_python(code);
+    const assignment = find_assignment(root)!;
+
+    const result = detect_function_collection(assignment, file_path);
+    expect(result).toBeNull();
+  });
+
+  it("should return null for non-function list", () => {
+    const code = "items = [1, 2, 3]";
+    const root = parse_python(code);
+    const assignment = find_assignment(root)!;
+
+    const result = detect_function_collection(assignment, file_path);
+    expect(result).toBeNull();
+  });
+
+  it("should return null for string assignment", () => {
+    const code = "name = 'hello'";
+    const root = parse_python(code);
+    const assignment = find_assignment(root)!;
+
+    const result = detect_function_collection(assignment, file_path);
+    expect(result).toBeNull();
+  });
+});
+
+// ============================================================================
+// extract_collection_source
+// ============================================================================
+
+describe("extract_collection_source", () => {
+  it("should extract derived variable from method call", () => {
+    const code = "handler = config.get('key')";
+    const root = parse_python(code);
+    const identifier = find_identifier(root, "handler")!;
+
+    const derived = extract_collection_source(identifier);
+    expect(derived).toBe("config");
+  });
+
+  it("should extract derived variable from subscript", () => {
+    const code = "handler = config['key']";
+    const root = parse_python(code);
+    const identifier = find_identifier(root, "handler")!;
+
+    const derived = extract_collection_source(identifier);
+    expect(derived).toBe("config");
+  });
+
+  it("should return undefined for plain assignment", () => {
+    const code = "handler = some_func";
+    const root = parse_python(code);
+    const identifier = find_identifier(root, "handler")!;
+
+    const derived = extract_collection_source(identifier);
+    expect(derived).toBeUndefined();
   });
 });
 

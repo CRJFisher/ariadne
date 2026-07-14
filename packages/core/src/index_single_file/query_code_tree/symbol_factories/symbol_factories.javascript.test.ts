@@ -544,6 +544,326 @@ describe("extract_collection_source", () => {
     const result = extract_collection_source(name_node);
     expect(result).toBeUndefined();
   });
+
+  it("should return undefined for plain identifier initializer: const handler = someFunction", () => {
+    const root = parse_ts("const handler = someFunction;");
+    const declaration = root.child(0)!;
+    const declarator = declaration.namedChildren[0]!;
+    const identifier = declarator.childForFieldName("name")!;
+
+    const derived = extract_collection_source(identifier);
+    expect(derived).toBeUndefined();
+  });
+});
+
+// ============================================================================
+// Function Collection Detection
+// ============================================================================
+
+describe("detect_function_collection", () => {
+  it("should detect object with function references", () => {
+    const code = "const handlers = { a: fn1, b: fn2 };";
+    const root = parse_ts(code);
+    const declaration = root.child(0)!; // lexical_declaration
+    const declarator = declaration.namedChildren[0]!; // variable_declarator
+
+    const result = detect_function_collection(declarator, file_path);
+
+    expect(result).toBeDefined();
+    expect(result?.collection_type).toBe("Object");
+    expect(result?.stored_references).toHaveLength(2);
+    expect(result?.stored_references).toContain("fn1");
+    expect(result?.stored_references).toContain("fn2");
+  });
+
+  it("should detect object spread operator", () => {
+    const code = "const handlers = { ...BASE_HANDLERS, extra: fn1 };";
+    const root = parse_ts(code);
+    const declaration = root.child(0)!;
+    const declarator = declaration.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+
+    expect(result).toBeDefined();
+    expect(result?.collection_type).toBe("Object");
+    expect(result?.stored_references).toContain("BASE_HANDLERS");
+    expect(result?.stored_references).toContain("fn1");
+  });
+
+  it("should detect array with function references", () => {
+    const code = "const handlers = [fn1, fn2];";
+    const root = parse_ts(code);
+    const declaration = root.child(0)!;
+    const declarator = declaration.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+
+    expect(result).toBeDefined();
+    expect(result?.collection_type).toBe("Array");
+    expect(result?.stored_references).toHaveLength(2);
+    expect(result?.stored_references).toContain("fn1");
+  });
+
+  it("should detect array spread operator", () => {
+    const code = "const handlers = [...BASE_HANDLERS, fn1];";
+    const root = parse_ts(code);
+    const declaration = root.child(0)!;
+    const declarator = declaration.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+
+    expect(result).toBeDefined();
+    expect(result?.collection_type).toBe("Array");
+    expect(result?.stored_references).toContain("BASE_HANDLERS");
+    expect(result?.stored_references).toContain("fn1");
+  });
+
+  it("should detect exported const with type annotation", () => {
+    const code = `export const HANDLERS: HandlerRegistry = {
+  "key1": fn1,
+  "key2": fn2,
+};`;
+    const root = parse_ts(code);
+    const declarator = find_node_by_type(root, "variable_declarator")!;
+
+    const result = detect_function_collection(declarator, file_path);
+
+    expect(result).toBeDefined();
+    expect(result?.collection_type).toBe("Object");
+    expect(result?.stored_references).toContain("fn1");
+    expect(result?.stored_references).toContain("fn2");
+  });
+
+  it("should detect from identifier parent (simulating capture handler)", () => {
+    // This simulates what handle_definition_variable does: capture.node.parent
+    const code = `export const HANDLERS: HandlerRegistry = {
+  "key1": fn1,
+  "key2": fn2,
+};`;
+    const root = parse_ts(code);
+    const identifier = find_all_nodes_by_type(root, "identifier").find(
+      (n) => n.text === "HANDLERS",
+    )!;
+    const parent = identifier.parent!;
+
+    const result = detect_function_collection(parent, file_path);
+
+    expect(result).toBeDefined();
+    expect(result?.collection_type).toBe("Object");
+    expect(result?.stored_references).toContain("fn1");
+    expect(result?.stored_references).toContain("fn2");
+  });
+
+  it("should detect object with 'as const' assertion", () => {
+    const code = `export const HANDLERS = {
+  "key1": fn1,
+  "key2": fn2,
+} as const;`;
+    const root = parse_ts(code);
+    const declaration = root.child(0)!; // export_statement
+    const lexical = declaration.namedChildren.find((c) => c.type === "lexical_declaration");
+    const declarator = lexical?.namedChildren[0];
+
+    expect(declarator).toBeDefined();
+
+    const result = detect_function_collection(declarator!, file_path);
+
+    expect(result).toBeDefined();
+    expect(result?.collection_type).toBe("Object");
+    expect(result?.stored_references).toContain("fn1");
+    expect(result?.stored_references).toContain("fn2");
+  });
+
+  it("should detect object with type annotation and 'as const'", () => {
+    const code = `export const HANDLERS: HandlerRegistry = {
+  "key1": fn1,
+  "key2": fn2,
+} as const;`;
+    const root = parse_ts(code);
+    const declarator = find_node_by_type(root, "variable_declarator")!;
+
+    const result = detect_function_collection(declarator, file_path);
+
+    expect(result).toBeDefined();
+    expect(result?.collection_type).toBe("Object");
+    expect(result?.stored_references).toContain("fn1");
+    expect(result?.stored_references).toContain("fn2");
+  });
+
+  it("should detect object with shorthand method definitions", () => {
+    const code = `const MY_OBJECT = {
+  method_a() {
+    return MY_OBJECT.method_b();
+  },
+  method_b() {
+    return 1;
+  }
+};`;
+    const root = parse_ts(code);
+    const declaration = root.child(0)!; // lexical_declaration
+    const declarator = declaration.namedChildren[0]!; // variable_declarator
+
+    const result = detect_function_collection(declarator, file_path);
+
+    expect(result).toBeDefined();
+    expect(result?.collection_type).toBe("Object");
+    // Shorthand methods should be stored as functions (not references)
+    expect(result?.stored_functions).toHaveLength(2);
+    // Method symbols include the name in their ID
+    expect(result?.stored_functions?.[0]).toContain("method_a");
+    expect(result?.stored_functions?.[1]).toContain("method_b");
+  });
+
+  it("should detect object with mixed shorthand methods and references", () => {
+    const code = `const EXTRACTORS = {
+  extract_type() { return "type"; },
+  extract_name: external_fn,
+  extract_value() { return "value"; }
+};`;
+    const root = parse_ts(code);
+    const declaration = root.child(0)!;
+    const declarator = declaration.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+
+    expect(result).toBeDefined();
+    expect(result?.collection_type).toBe("Object");
+    // 2 shorthand methods
+    expect(result?.stored_functions).toHaveLength(2);
+    expect(result?.stored_functions?.[0]).toContain("extract_type");
+    expect(result?.stored_functions?.[1]).toContain("extract_value");
+    // 1 reference
+    expect(result?.stored_references).toHaveLength(1);
+    expect(result?.stored_references).toContain("external_fn");
+  });
+
+  it("should detect new Map with function references", () => {
+    const code = "const handlers = new Map([[\"key1\", fn1], [\"key2\", fn2]]);";
+    const root = parse_ts(code);
+    const declaration = root.child(0)!;
+    const declarator = declaration.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+
+    expect(result).toBeDefined();
+    expect(result?.collection_type).toBe("Map");
+    expect(result?.stored_references).toContain("fn1");
+    expect(result?.stored_references).toContain("fn2");
+  });
+
+  it("should detect new Set with function references", () => {
+    const code = "const handlers = new Set([fn1, fn2, fn3]);";
+    const root = parse_ts(code);
+    const declaration = root.child(0)!;
+    const declarator = declaration.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+
+    expect(result).toBeDefined();
+    expect(result?.collection_type).toBe("Set");
+    expect(result?.stored_references).toContain("fn1");
+    expect(result?.stored_references).toContain("fn2");
+    expect(result?.stored_references).toContain("fn3");
+  });
+
+  it("should detect new Map with arrow function values", () => {
+    const code = "const handlers = new Map([[\"key1\", (x) => x * 2]]);";
+    const root = parse_ts(code);
+    const declaration = root.child(0)!;
+    const declarator = declaration.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+
+    expect(result).toBeDefined();
+    expect(result?.collection_type).toBe("Map");
+    expect(result?.stored_functions).toHaveLength(1);
+    expect(result?.stored_functions?.[0]).toMatch(/^function:.*:<anonymous>$/);
+  });
+
+  it("should detect arrow functions in JS/TS array", () => {
+    const code = "const handlers = [(x) => x + 1, (y) => y * 2];";
+    const root = parse_ts(code);
+    const declaration = root.child(0)!;
+    const declarator = declaration.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+
+    expect(result).toBeDefined();
+    expect(result?.collection_type).toBe("Array");
+    expect(result?.stored_functions).toHaveLength(2);
+    expect(result?.stored_functions?.[0]).toMatch(/^function:.*:<anonymous>$/);
+    expect(result?.stored_functions?.[1]).toMatch(/^function:.*:<anonymous>$/);
+    expect(result?.stored_references).toHaveLength(0);
+  });
+
+  it("should detect arrow functions in JS/TS object values", () => {
+    const code = "const handlers = { a: (x) => x + 1, b: (y) => y * 2 };";
+    const root = parse_ts(code);
+    const declaration = root.child(0)!;
+    const declarator = declaration.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+
+    expect(result).toBeDefined();
+    expect(result?.collection_type).toBe("Object");
+    expect(result?.stored_functions).toHaveLength(2);
+  });
+
+  it("should detect mixed references and anonymous functions in JS/TS", () => {
+    const code = "const handlers = [fn1, (x) => x * 2, fn2];";
+    const root = parse_ts(code);
+    const declaration = root.child(0)!;
+    const declarator = declaration.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+
+    expect(result).toBeDefined();
+    expect(result?.collection_type).toBe("Array");
+    expect(result?.stored_functions).toHaveLength(1);
+    expect(result?.stored_references).toHaveLength(2);
+    expect(result?.stored_references).toContain("fn1");
+    expect(result?.stored_references).toContain("fn2");
+  });
+
+  it("should return null for empty object", () => {
+    const code = "const handlers = {};";
+    const root = parse_ts(code);
+    const declaration = root.child(0)!;
+    const declarator = declaration.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+    expect(result).toBeNull();
+  });
+
+  it("should return null for empty array", () => {
+    const code = "const handlers = [];";
+    const root = parse_ts(code);
+    const declaration = root.child(0)!;
+    const declarator = declaration.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+    expect(result).toBeNull();
+  });
+
+  it("should return null for object with non-function values", () => {
+    const code = "const config = { a: 1, b: \"hello\", c: true };";
+    const root = parse_ts(code);
+    const declaration = root.child(0)!;
+    const declarator = declaration.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+    expect(result).toBeNull();
+  });
+
+  it("should return null for string assignment", () => {
+    const code = "const name = \"hello\";";
+    const root = parse_ts(code);
+    const declaration = root.child(0)!;
+    const declarator = declaration.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+    expect(result).toBeNull();
+  });
 });
 
 // ============================================================================
