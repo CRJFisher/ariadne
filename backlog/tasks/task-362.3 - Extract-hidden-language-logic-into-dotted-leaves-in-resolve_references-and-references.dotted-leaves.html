@@ -361,17 +361,17 @@ footer b { color: var(--mute); }
 </header>
 
 <!-- ===== plain-language-preamble (verbatim) ===== -->
-<p class="preamble prose">Ariadne reads source files and works out which functions call which, so it can find a codebase's entry points. It supports several languages, and its cleanest habit is to keep each language's quirks in its own file, named with a dotted suffix: <code>import_resolution.rust.ts</code>, <code>import_resolution.python.ts</code>, and so on — a plain dispatcher on top hands each file to the right leaf. The import side of the code already works this way. The call-resolution side does not: six files with neutral names like <code>function_call.ts</code> and <code>path_resolution.ts</code> quietly hold Rust-only or Python-only logic inside them, invisible from the outside. A newcomer adding a fifth language would have to read every file body to find them. This task moves that hidden logic out into properly-named dotted leaves — mostly cut-and-paste with tests moved alongside, no behaviour change — so the structure finally tells the truth about what each file does.</p>
+<p class="preamble prose">Ariadne reads source files and works out which functions call which, so it can find a codebase's entry points. It supports several languages, and its cleanest habit is to keep each language's quirks in its own file, named with a dotted suffix: <code>import_resolution.rust.ts</code>, <code>import_resolution.python.ts</code>, and so on — a plain dispatcher on top hands each file to the right leaf. The import side of the code already works this way. The call-resolution side did not: six files with neutral names like <code>function_call.ts</code> and <code>path_resolution.ts</code> quietly held Rust-only or Python-only logic inside them, invisible from the outside. A newcomer adding a fifth language would have had to read every file body to find them. This work moved that hidden logic out into properly-named dotted leaves — mostly cut-and-paste with tests moved alongside, no behaviour change — so the structure finally tells the truth about what each file does.</p>
 
 <!-- ===== prompt-provenance-box ===== -->
 <aside class="prov">
-  <div class="label">Built from — task brief &amp; verified source sites</div>
+  <div class="label">Built from — task brief &amp; as-built source (branch feat/task-362.3-dotted-language-leaves)</div>
   <ul>
     <li><b>task-362.3</b> — Program Area 3 of the IA review refactor program; the six verified touch points, the target structure, the deliberately-inline branches, and small-item rows 8 / 9 / 10 / 12 / 13 / 14 / 15</li>
-    <li><b>ia-review.refactor-program.md:118, 127</b> — the gold-standard framing (the import axis is dotted; the call-resolution axis buries the same logic) and the Go-implementer motivation</li>
-    <li><b>call_resolution/path_resolution.ts:1–8, :30</b> — module doc names Rust; <code>PATH_ANCHORS = {"crate","self","super"}</code> — wholly Rust, 87 LOC, yet not <code>.rust.ts</code></li>
-    <li><b>call_resolution/function_call.ts:310</b> — <code>ref.location.file_path.endsWith(".py")</code>, the Python gate; <b>references/references.ts</b> — 754 LOC, <code>extract_call_site_syntax</code> at :357 with TS/Python <code>node.type</code> branches at :569, :577, :618</li>
-    <li><b>scopes/scopes.ts:149</b> — <code>if (file.lang === "python")</code> containment-sort; target home <code>scopes/extractors/python_scope_boundary_extractor.ts</code> already exists</li>
+    <li><b>Implementation Notes (task-362.3.md:126–164)</b> — the as-built account: two dispatch shapes coexist deliberately; the <code>SELF_KEYWORD_TEXTS</code> duplication; the fault-area map needed no edits</li>
+    <li><b>call_resolution/constructor.ts:27–30, 62, 74, 105</b> — imports three <code>_rust</code> helpers from <code>./constructor.rust</code> and calls them <b>unconditionally</b>; the leaf self-guards on <code>Self</code> / <code>path_prefix</code></li>
+    <li><b>call_resolution/function_call.ts:165–171</b> — the Python gate now reads the threaded map: <code>context.languages.get(ref.location.file_path) === "python"</code> under an <code>@language python</code> marker; Rust <code>::</code> lives in <code>function_call.rust.ts</code> (157 LOC)</li>
+    <li><b>references/call_site_syntax.ts:16–28</b> — the <code>switch (language)</code> marshaller fanning to <code>.typescript.ts</code> / <code>.python.ts</code>, Rust → <code>undefined</code>; <code>references.ts</code> now 553 LOC. <b>scopes/scopes.ts:122–123</b> — neutral <code>extractor.sort_captures(captures)</code>; the sort lives in <code>python_scope_boundary_extractor.ts:25</code></li>
   </ul>
 </aside>
 
@@ -425,19 +425,19 @@ footer b { color: var(--mute); }
       <span><i class="lg-clay"></i> this work — a Stage-1 pass and a Stage-2 cluster</span>
       <span><i class="lg-gray"></i> untouched pass / stage</span>
     </div>
-    <figcaption class="prose">The <code>resolve_references/</code> work does not wait on the Stage-1 <code>references</code> split; each slice lands on its own.</figcaption>
+    <figcaption class="prose">The <code>resolve_references/</code> work did not wait on the Stage-1 <code>references</code> split; each slice landed on its own.</figcaption>
   </figure>
 </section>
 
 <!-- ===== crux: before-after-state-diagram ===== -->
 <section id="crux">
-  <div class="sk">The crux — one pattern, applied six times</div>
-  <h2 class="sh">A neutral file that secretly holds one language becomes a thin dispatcher fanning to dotted leaves</h2>
+  <div class="sk">The crux — hidden language, re-homed through two deliberate shapes</div>
+  <h2 class="sh">Each neutral file gave up its hidden language — some to a language marshaller, some to a self-guarding leaf</h2>
   <div class="ba">
-    <!-- ============ CURRENT ============ -->
+    <!-- ============ BEFORE ============ -->
     <div class="panel">
-      <div class="ptitle">CURRENT</div>
-      <svg viewBox="0 0 640 920" role="img" aria-label="CURRENT state. At top, the gold standard: import_resolution.ts is an olive dispatcher fanning to four dotted leaves — .rust.ts, .python.ts, .typescript.ts, .javascript.ts. Below, the call-resolution axis: six neutral-named files drawn as solid clay nodes, each with a darker clay compartment naming the language it secretly hides. path_resolution.ts hides wholly-Rust logic, 87 LOC, PATH_ANCHORS crate self super. constructor.ts hides about 120 lines of Rust. function_call.ts hides a Python endsWith .py gate plus about 115 lines of Rust colon-colon resolution. export.ts hides a Python guard and a TypeScript-slash-JavaScript arrow-function dedup block. references.ts is 754 lines with TypeScript and Python node-type branches. scopes.ts hides a Python containment-sort branch.">
+      <div class="ptitle">BEFORE</div>
+      <svg viewBox="0 0 640 920" role="img" aria-label="BEFORE state. At top, the gold standard: import_resolution.ts is an olive dispatcher fanning to four dotted leaves — .rust.ts, .python.ts, .typescript.ts, .javascript.ts. Below, the call-resolution axis: six neutral-named files drawn as solid clay nodes, each with a darker clay compartment naming the language it secretly hides. path_resolution.ts hides wholly-Rust logic, 87 LOC, PATH_ANCHORS crate self super. constructor.ts hides about 120 lines of Rust. function_call.ts hides a Python endsWith .py gate plus about 115 lines of Rust colon-colon resolution. export.ts hides a Python guard and a TypeScript-slash-JavaScript arrow-function dedup block. references.ts is 754 lines with TypeScript and Python node-type branches. scopes.ts hides a Python containment-sort branch.">
         <defs>
           <marker id="cur-clay" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#c06d4f"/></marker>
           <marker id="cur-olive" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6f7a4f"/></marker>
@@ -487,7 +487,7 @@ footer b { color: var(--mute); }
         <text x="117" y="487" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9.5" fill="#f3ded7">neutral name</text>
         <line x1="222" y1="472" x2="270" y2="472" stroke="#c06d4f" stroke-width="1.6" marker-end="url(#cur-clay)"/>
         <rect x="272" y="444" width="356" height="56" rx="9" fill="#8f3421" stroke="#7d2f1e" stroke-width="1.4"/>
-        <text x="450" y="468" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#f7dfd8" font-weight="700">PY .endsWith(".py") gate (L310)</text>
+        <text x="450" y="468" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#f7dfd8" font-weight="700">PY gate · brittle .endsWith(".py")</text>
         <text x="450" y="487" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#f3ded7">+ ~115 LOC RUST :: resolution</text>
 
         <!-- Row 3: export.ts (top 550) -->
@@ -497,7 +497,7 @@ footer b { color: var(--mute); }
         <line x1="222" y1="590" x2="270" y2="590" stroke="#c06d4f" stroke-width="1.6" marker-end="url(#cur-clay)"/>
         <rect x="272" y="562" width="356" height="56" rx="9" fill="#8f3421" stroke="#7d2f1e" stroke-width="1.4"/>
         <text x="450" y="586" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#f7dfd8" font-weight="700">Python guard + TS/JS arrow-fn dedup</text>
-        <text x="450" y="605" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#f3ded7">only export.python.ts exists today</text>
+        <text x="450" y="605" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#f3ded7">only export.python.ts existed</text>
 
         <!-- Row 4: references.ts (top 668) -->
         <rect x="12" y="680" width="210" height="56" rx="9" fill="#c06d4f" stroke="#8f3421" stroke-width="1.5"/>
@@ -514,20 +514,21 @@ footer b { color: var(--mute); }
         <text x="117" y="841" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9.5" fill="#f3ded7">neutral name</text>
         <line x1="222" y1="826" x2="270" y2="826" stroke="#c06d4f" stroke-width="1.6" marker-end="url(#cur-clay)"/>
         <rect x="272" y="798" width="356" height="56" rx="9" fill="#8f3421" stroke="#7d2f1e" stroke-width="1.4"/>
-        <text x="450" y="822" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#f7dfd8" font-weight="700">if (file.lang === "python") (L149)</text>
-        <text x="450" y="841" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#f3ded7">containment-sort in a neutral file</text>
+        <text x="450" y="822" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#f7dfd8" font-weight="700">if (file.lang === "python") { … }</text>
+        <text x="450" y="841" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#f3ded7">containment-sort inlined in a neutral file</text>
       </svg>
     </div>
 
     <!-- divider -->
     <div class="divider"><span class="arrow">▶ extract to</span></div>
 
-    <!-- ============ PLANNED ============ -->
+    <!-- ============ AS BUILT ============ -->
     <div class="panel">
-      <div class="ptitle">PLANNED</div>
-      <svg viewBox="0 0 640 920" role="img" aria-label="PLANNED state. The gold standard import_resolution.ts dispatcher and its four leaves are unchanged at top. Below, each of the six neutral files becomes a thin dispatch skeleton, olive-outlined, fanning to a new olive dotted leaf. path_resolution.ts is git-moved to path_resolution.rust.ts with zero content change. constructor.ts to constructor.rust.ts. function_call.ts to function_call.rust.ts. export.ts to a new export.typescript.ts beside the existing export.python.ts. references.ts to a call_site_syntax.ts marshaller with .typescript.ts and .python.ts leaves. scopes.ts loses its Rust — its Python sort is absorbed into the existing PythonScopeBoundaryExtractor.">
+      <div class="ptitle">AS BUILT</div>
+      <svg viewBox="0 0 640 920" role="img" aria-label="AS BUILT state. The gold standard import_resolution.ts dispatcher and its four leaves are unchanged at top. Below, the six re-homed files split into two deliberate shapes. Language marshallers: references.ts routes through call_site_syntax.ts, a switch on language fanning to a typescript-slash-javascript leaf and a python leaf, with Rust returning undefined; export.ts routes by language to a new export.typescript.ts beside the existing export.python.ts. Self-guarding leaves: constructor.ts calls constructor.rust.ts unconditionally and the leaf self-guards on Self and path_prefix, returning null for any other shape; function_call.ts calls function_call.rust.ts unconditionally and it self-guards on a colon-colon path_prefix. path_resolution.rust.ts is a pure git move holding the shared Rust module-path walk both rust leaves use. scopes.ts keeps no dotted leaf — its Python containment sort moved into PythonScopeBoundaryExtractor.sort_captures, with the common location sort in boundary_base.ts.">
         <defs>
           <marker id="pl-olive" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6f7a4f"/></marker>
+          <marker id="pl-rust" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#a8412a"/></marker>
         </defs>
         <!-- gold standard (unchanged) -->
         <text x="320" y="18" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10.5" fill="#55603c" font-weight="700">GOLD STANDARD · unchanged — the model to match</text>
@@ -548,7 +549,7 @@ footer b { color: var(--mute); }
         <text x="556" y="128" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10.5" fill="#55603c" font-weight="600">.javascript.ts</text>
         <!-- divider -->
         <line x1="12" y1="164" x2="628" y2="164" stroke="#d8cfbe" stroke-width="1.2"/>
-        <text x="320" y="184" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10" fill="#6f7a4f" font-weight="700">CALL-RESOLUTION AXIS · skeleton dispatches to a dotted leaf</text>
+        <text x="320" y="184" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="9.5" fill="#6f7a4f" font-weight="700">CALL-RESOLUTION AXIS · TWO SHAPES — marshaller fan ⋔ · self-guarding leaf →|</text>
 
         <!-- Row 0: path_resolution -> path_resolution.rust.ts (git mv) top 196 -->
         <rect x="12" y="208" width="210" height="56" rx="9" fill="#6f7a4f" stroke="#55603c" stroke-width="1.6"/>
@@ -556,44 +557,60 @@ footer b { color: var(--mute); }
         <text x="117" y="251" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9.5" fill="#eef1e6">git mv · renamed as-is</text>
         <line x1="222" y1="236" x2="270" y2="236" stroke="#6f7a4f" stroke-width="1.6" marker-end="url(#pl-olive)"/>
         <rect x="272" y="208" width="356" height="56" rx="9" fill="#fffdf8" stroke="#6f7a4f" stroke-width="1.4"/>
-        <text x="450" y="232" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#55603c" font-weight="700">zero content change</text>
-        <text x="450" y="251" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#6f7a4f">no neutral wholly-language file remains</text>
+        <text x="450" y="232" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#55603c" font-weight="700">shared Rust module-path walk</text>
+        <text x="450" y="251" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#6f7a4f">zero content change · used by both .rust.ts leaves</text>
 
-        <!-- Row 1: constructor.ts skeleton -> constructor.rust.ts top 314 -->
+        <!-- Row 1: constructor.ts -> constructor.rust.ts · SELF-GUARDING LEAF -->
         <rect x="12" y="326" width="210" height="56" rx="9" fill="#fffdf8" stroke="#6f7a4f" stroke-width="1.5"/>
         <text x="117" y="351" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="12" fill="#2f3338" font-weight="600">constructor.ts</text>
-        <text x="117" y="369" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9.5" fill="#6f7a4f">dispatch skeleton</text>
-        <line x1="222" y1="354" x2="270" y2="354" stroke="#6f7a4f" stroke-width="1.6" marker-end="url(#pl-olive)"/>
+        <text x="117" y="369" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9.5" fill="#6f7a4f">shared resolution spine</text>
+        <text x="247" y="345" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="7" fill="#55603c" font-weight="700">uncond.</text>
+        <line x1="222" y1="354" x2="270" y2="354" stroke="#6f7a4f" stroke-width="2.8" marker-end="url(#pl-olive)"/>
         <rect x="272" y="326" width="356" height="56" rx="9" fill="#6f7a4f" stroke="#55603c" stroke-width="1.5"/>
-        <text x="450" y="350" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11.5" fill="#f7f3ec" font-weight="700">constructor.rust.ts</text>
-        <text x="450" y="369" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#eef1e6">extracted Rust block + colocated tests</text>
+        <text x="450" y="346" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#f7f3ec" font-weight="700">constructor.rust.ts</text>
+        <text x="450" y="362" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9.5" fill="#eef1e6">called unconditionally —</text>
+        <text x="450" y="376" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="9.5" fill="#eef1e6">self-guards on Self / path_prefix, else null</text>
 
-        <!-- Row 2: function_call.ts skeleton -> function_call.rust.ts top 432 -->
+        <!-- Row 2: function_call.ts -> function_call.rust.ts · SELF-GUARDING LEAF -->
         <rect x="12" y="444" width="210" height="56" rx="9" fill="#fffdf8" stroke="#6f7a4f" stroke-width="1.5"/>
         <text x="117" y="469" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="12" fill="#2f3338" font-weight="600">function_call.ts</text>
-        <text x="117" y="487" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9.5" fill="#6f7a4f">dispatch skeleton</text>
-        <line x1="222" y1="472" x2="270" y2="472" stroke="#6f7a4f" stroke-width="1.6" marker-end="url(#pl-olive)"/>
+        <text x="117" y="487" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9.5" fill="#6f7a4f">shared resolution spine</text>
+        <text x="247" y="463" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="7" fill="#55603c" font-weight="700">uncond.</text>
+        <line x1="222" y1="472" x2="270" y2="472" stroke="#6f7a4f" stroke-width="2.8" marker-end="url(#pl-olive)"/>
         <rect x="272" y="444" width="356" height="56" rx="9" fill="#6f7a4f" stroke="#55603c" stroke-width="1.5"/>
-        <text x="450" y="468" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11.5" fill="#f7f3ec" font-weight="700">function_call.rust.ts</text>
-        <text x="450" y="487" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#eef1e6">Rust :: path logic + colocated tests</text>
+        <text x="450" y="464" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#f7f3ec" font-weight="700">function_call.rust.ts</text>
+        <text x="450" y="480" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9.5" fill="#eef1e6">called unconditionally —</text>
+        <text x="450" y="494" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="9.5" fill="#eef1e6">self-guards on :: path_prefix, else null</text>
+        <text x="450" y="516" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="8" fill="#4a6b8a">Python gate → context.languages.get(path) === "python" → callable_instance.python.ts</text>
 
-        <!-- Row 3: export.ts skeleton -> export.typescript.ts top 550 -->
+        <!-- Row 3: export.ts -> export.{typescript,python}.ts · LANGUAGE MARSHALLER -->
         <rect x="12" y="562" width="210" height="56" rx="9" fill="#fffdf8" stroke="#6f7a4f" stroke-width="1.5"/>
         <text x="117" y="587" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="12" fill="#2f3338" font-weight="600">export.ts</text>
-        <text x="117" y="605" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9.5" fill="#6f7a4f">dispatch skeleton</text>
-        <line x1="222" y1="590" x2="270" y2="590" stroke="#6f7a4f" stroke-width="1.6" marker-end="url(#pl-olive)"/>
-        <rect x="272" y="562" width="356" height="56" rx="9" fill="#6f7a4f" stroke="#55603c" stroke-width="1.5"/>
-        <text x="450" y="586" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11.5" fill="#f7f3ec" font-weight="700">export.typescript.ts</text>
-        <text x="450" y="605" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#eef1e6">arrow-fn dedup · beside export.python.ts</text>
+        <text x="117" y="605" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9.5" fill="#6f7a4f">routes by language</text>
+        <text x="261" y="586" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="7" fill="#6f7a4f" font-weight="700">switch(lang)</text>
+        <line x1="222" y1="590" x2="298" y2="576" stroke="#6f7a4f" stroke-width="1.4" marker-end="url(#pl-olive)"/>
+        <line x1="222" y1="590" x2="298" y2="606" stroke="#6f7a4f" stroke-width="1.4" marker-end="url(#pl-olive)"/>
+        <rect x="300" y="564" width="328" height="24" rx="7" fill="#6f7a4f" stroke="#55603c" stroke-width="1.4"/>
+        <text x="464" y="580" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10" fill="#f7f3ec" font-weight="700">export.typescript.ts · NEW — arrow-fn dedup</text>
+        <rect x="300" y="594" width="328" height="24" rx="7" fill="#fffdf8" stroke="#6f7a4f" stroke-width="1.4"/>
+        <text x="464" y="610" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10" fill="#55603c" font-weight="600">export.python.ts · existing sibling</text>
 
-        <!-- Row 4: references.ts skeleton -> call_site_syntax.ts top 668 -->
+        <!-- Row 4: references.ts -> call_site_syntax.ts · LANGUAGE MARSHALLER -->
         <rect x="12" y="680" width="210" height="56" rx="9" fill="#fffdf8" stroke="#6f7a4f" stroke-width="1.5"/>
         <text x="117" y="705" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="12" fill="#2f3338" font-weight="600">references.ts</text>
-        <text x="117" y="723" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9.5" fill="#6f7a4f">routing + ReferenceBuilder</text>
-        <line x1="222" y1="708" x2="270" y2="708" stroke="#6f7a4f" stroke-width="1.6" marker-end="url(#pl-olive)"/>
-        <rect x="272" y="680" width="356" height="56" rx="9" fill="#6f7a4f" stroke="#55603c" stroke-width="1.5"/>
-        <text x="450" y="704" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11.5" fill="#f7f3ec" font-weight="700">call_site_syntax.ts (marshaller)</text>
-        <text x="450" y="723" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#eef1e6">→ .typescript.ts · .python.ts leaves</text>
+        <text x="117" y="723" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="9" fill="#6f7a4f">553 LOC · routing + builder</text>
+        <line x1="222" y1="708" x2="270" y2="708" stroke="#6f7a4f" stroke-width="1.4" marker-end="url(#pl-olive)"/>
+        <rect x="272" y="680" width="122" height="56" rx="9" fill="#6f7a4f" stroke="#55603c" stroke-width="1.5"/>
+        <text x="333" y="704" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="9.5" fill="#f7f3ec" font-weight="700">call_site_syntax.ts</text>
+        <text x="333" y="720" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="8.5" fill="#eef1e6">switch(language)</text>
+        <line x1="394" y1="700" x2="450" y2="691" stroke="#6f7a4f" stroke-width="1.4" marker-end="url(#pl-olive)"/>
+        <line x1="394" y1="710" x2="450" y2="713" stroke="#6f7a4f" stroke-width="1.4" marker-end="url(#pl-olive)"/>
+        <line x1="394" y1="720" x2="450" y2="731" stroke="#a8412a" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#pl-rust)"/>
+        <rect x="452" y="681" width="176" height="20" rx="6" fill="#fffdf8" stroke="#6f7a4f" stroke-width="1.3"/>
+        <text x="540" y="695" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="8.5" fill="#55603c" font-weight="600">.typescript.ts / .javascript.ts</text>
+        <rect x="452" y="703" width="176" height="20" rx="6" fill="#fffdf8" stroke="#6f7a4f" stroke-width="1.3"/>
+        <text x="540" y="717" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="8.5" fill="#55603c" font-weight="600">.python.ts</text>
+        <text x="540" y="735" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="8.5" fill="#a8412a" font-weight="700">rust → undefined (no method shape)</text>
 
         <!-- Row 5: scopes.ts skeleton -> PythonScopeBoundaryExtractor top 786 -->
         <rect x="12" y="798" width="210" height="56" rx="9" fill="#fffdf8" stroke="#6f7a4f" stroke-width="1.5"/>
@@ -602,18 +619,23 @@ footer b { color: var(--mute); }
         <text x="175" y="847" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="8.5" fill="#f7f3ec" font-weight="700">sort removed</text>
         <line x1="222" y1="826" x2="270" y2="826" stroke="#6f7a4f" stroke-width="1.6" marker-end="url(#pl-olive)"/>
         <rect x="272" y="798" width="356" height="56" rx="9" fill="#6f7a4f" stroke="#55603c" stroke-width="1.5"/>
-        <text x="450" y="822" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#f7f3ec" font-weight="700">PythonScopeBoundaryExtractor</text>
-        <text x="450" y="841" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#eef1e6">existing extractors/ home — no new file</text>
+        <text x="450" y="820" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10.5" fill="#f7f3ec" font-weight="700">PythonScopeBoundaryExtractor.sort_captures</text>
+        <text x="450" y="837" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9.5" fill="#eef1e6">no new file · common sort in boundary_base.ts</text>
       </svg>
     </div>
   </div>
   <div class="legend">
     <span><i class="lg-olive"></i> added — new dotted leaf / new home</span>
-    <span><i class="lg-clay"></i> hidden-language body today</span>
+    <span><i class="lg-clay"></i> hidden-language body (before)</span>
     <span><i class="lg-rust"></i> logic removed from the neutral file</span>
-    <span><i class="lg-skel"></i> thin dispatch skeleton</span>
+    <span>⋔ language marshaller — switch(language) fans to a leaf per language (Rust → undefined)</span>
+    <span>→| self-guarding leaf — spine calls the .rust.ts leaf unconditionally; the leaf guards on syntax</span>
   </div>
-  <figcaption class="prose">Every neutral file ends up matching <code>import_resolution.ts</code>: a plain dispatcher on top, the language-specific work in a suffixed leaf beside it.</figcaption>
+  <figcaption class="prose">Two deliberate shapes result: a language marshaller that switches to a leaf per language (Rust returns <code>undefined</code>), and a neutral spine that calls its <code>.rust.ts</code> leaf unconditionally while the leaf self-guards on syntax.</figcaption>
+  <aside class="callout olive-sev prose">
+    <div class="klabel">Why two shapes, not one uniform fan</div>
+    <p>A literal <code>switch(language)</code> inside <code>constructor.ts</code> or <code>function_call.ts</code> would duplicate the shared resolution spine into every leaf — so the spine calls one <code>.rust.ts</code> leaf unconditionally and the leaf guards itself on <code>Self</code> / <code>path_prefix</code>.</p>
+  </aside>
 </section>
 
 <!-- ===== support: touch-point inventory (feature-matrix-grid + magnitude-bar-cell) ===== -->
@@ -641,7 +663,7 @@ footer b { color: var(--mute); }
       <div class="file" role="cell">constructor.ts</div>
       <div role="cell"><span class="langs"><span class="lang-chip lang-rust">RUST</span></span></div>
       <div role="cell"><div class="bar-wrap"><div class="bar-track"><div class="bar-fill" style="width:16%"></div></div><span class="bar-val">~120 LOC block</span></div></div>
-      <div role="cell"><span class="trans">extract-leaf</span></div>
+      <div role="cell"><span class="trans">self-guarding leaf</span></div>
       <div class="newf" role="cell">constructor.rust.ts</div>
       <div class="chg" role="cell">mechanical move</div>
     </div>
@@ -649,7 +671,7 @@ footer b { color: var(--mute); }
       <div class="file" role="cell">function_call.ts</div>
       <div role="cell"><span class="langs"><span class="lang-chip lang-py">PY</span><span class="lang-chip lang-rust">RUST</span></span></div>
       <div role="cell"><div class="bar-wrap"><div class="bar-track"><div class="bar-fill" style="width:15%"></div></div><span class="bar-val">~115 LOC + PY gate</span></div></div>
-      <div role="cell"><span class="trans">extract-leaf</span></div>
+      <div role="cell"><span class="trans">self-guarding leaf</span></div>
       <div class="newf" role="cell">function_call.rust.ts</div>
       <div class="chg" role="cell">mechanical move</div>
     </div>
@@ -657,15 +679,15 @@ footer b { color: var(--mute); }
       <div class="file" role="cell">export.ts</div>
       <div role="cell"><span class="langs"><span class="lang-chip lang-tsjs">TS·JS</span></span></div>
       <div role="cell"><div class="bar-wrap"><div class="bar-track"><div class="bar-fill" style="width:9%"></div></div><span class="bar-val">dedup block</span></div></div>
-      <div role="cell"><span class="trans">extract-leaf</span></div>
+      <div role="cell"><span class="trans">language marshaller</span></div>
       <div class="newf" role="cell">export.typescript.ts</div>
       <div class="chg" role="cell">mechanical move</div>
     </div>
     <div class="mrow" role="row">
       <div class="file" role="cell">references.ts</div>
       <div role="cell"><span class="langs"><span class="lang-chip lang-tsjs">TS·JS</span><span class="lang-chip lang-py">PY</span></span></div>
-      <div role="cell"><div class="bar-wrap"><div class="bar-track"><div class="bar-fill peak" style="width:100%"></div></div><span class="bar-val">754 LOC file — largest</span></div></div>
-      <div role="cell"><span class="trans">new-marshaller</span></div>
+      <div role="cell"><div class="bar-wrap"><div class="bar-track"><div class="bar-fill peak" style="width:100%"></div></div><span class="bar-val">754 → 553 LOC · largest surface</span></div></div>
+      <div role="cell"><span class="trans">language marshaller</span></div>
       <div class="newf" role="cell">call_site_syntax.ts + .typescript.ts + .python.ts</div>
       <div class="chg" role="cell">mechanical move</div>
     </div>
@@ -682,9 +704,9 @@ footer b { color: var(--mute); }
     <span><i style="background:var(--rust);border-radius:4px"></i> Rust</span>
     <span><i style="background:var(--work);border-radius:4px"></i> Python</span>
     <span><i style="background:var(--concept);border-radius:4px"></i> TypeScript / JavaScript</span>
-    <span><i class="lg-clay"></i> peak surface — the 754-line file</span>
+    <span><i class="lg-clay"></i> peak surface — the references.ts file</span>
   </div>
-  <figcaption class="prose"><code>references.ts</code> is the largest surface by far — a 754-line file; the other blocks are single branches or ~90–120-line bodies.</figcaption>
+  <figcaption class="prose"><code>references.ts</code> was the largest surface by far and slimmed from 754 to 553 lines once the call-site branches moved into <code>call_site_syntax</code>; the other blocks are single branches or ~90–120-line bodies.</figcaption>
 </section>
 
 <!-- ===== target structure (collapsible-disclosure + code-panel-highlight) ===== -->
@@ -697,10 +719,10 @@ footer b { color: var(--mute); }
       <div class="code">
         <div class="file-label"><span>target structure — task-362.3 brief</span><span class="tag">verbatim</span></div>
 <pre><span class="dir">resolve_references/call_resolution/</span>
-<span class="cm">├──</span> constructor.ts                <span class="arw">→</span> neutral dispatch skeleton
-<span class="add">├── constructor.rust.ts           (NEW — extracted Rust block)</span>
-<span class="cm">├──</span> function_call.ts              <span class="arw">→</span> neutral dispatch skeleton
-<span class="add">├── function_call.rust.ts          (NEW — Rust :: path logic)</span>
+<span class="cm">├──</span> constructor.ts                <span class="arw">→</span> shared spine · calls the leaf unconditionally
+<span class="add">├── constructor.rust.ts           (NEW — self-guarding leaf; guards on Self / path_prefix)</span>
+<span class="cm">├──</span> function_call.ts              <span class="arw">→</span> shared spine · calls the leaf unconditionally
+<span class="add">├── function_call.rust.ts          (NEW — self-guarding leaf; guards on :: path_prefix)</span>
 <span class="add">└── path_resolution.rust.ts        (git mv from path_resolution.ts — zero content change)</span>
 
 <span class="dir">resolve_references/registries/</span>
@@ -729,7 +751,7 @@ footer b { color: var(--mute); }
     <li><input type="checkbox" id="r12"><label for="r12"><b>Row 12</b>drop <code>export</code> from <code>find_class_definition</code> / <code>find_associated_constructor</code> in <code>call_resolution/constructor.ts</code>.</label></li>
     <li><input type="checkbox" id="r13"><label for="r13"><b>Row 13</b>delete the orphaned JSDoc at <code>type_preprocessing/member.ts:27–28</code>.</label></li>
     <li><input type="checkbox" id="r14"><label for="r14"><b>Row 14</b>trim <code>import_resolution/index.ts</code> to <code>resolve_module_path</code> + <code>resolve_submodule_import_path</code>.</label></li>
-    <li><input type="checkbox" id="r15"><label for="r15"><b>Row 15</b>replace <code>import_resolution.rust.ts</code>'s private <code>file_exists</code> with the shared <code>has_file_in_tree</code>.</label></li>
+    <li><input type="checkbox" id="r15"><label for="r15"><b>Row 15</b>replace <code>import_resolution.rust.ts</code>'s private <code>file_exists</code> with the shared <code>has_file_in_tree</code> — now that it relativizes absolute inputs against the tree root, the Rust wrapper dissolves entirely.</label></li>
   </ul>
   <aside class="callout olive-sev prose">
     <div class="klabel">Deliberately left inline — decided in the program, do not extract</div>
@@ -740,6 +762,10 @@ footer b { color: var(--mute); }
     </ul>
     <p>Each is too small for the routing benefit of a dotted leaf; each gets a one-line <code>@language</code> comment so it stays grep-discoverable instead.</p>
   </aside>
+  <aside class="callout clay-sev prose">
+    <div class="klabel">One deliberate duplication</div>
+    <p><code>SELF_KEYWORD_TEXTS</code> is copied across the two call-site leaves on purpose — hoisting it to a shared home would create a leaf↔marshaller import cycle.</p>
+  </aside>
 </section>
 
 <!-- ===== sequencing & risk (accent-callout) ===== -->
@@ -748,12 +774,12 @@ footer b { color: var(--mute); }
   <h2 class="sh">One dependency upstream, one ordering constraint, and per-commit green</h2>
   <div class="risk-stack">
     <aside class="callout clay-sev prose">
-      <div class="klabel">Sequencing — what has to land first</div>
-      <p>Depends on <b>TASK-362.1</b>: the dotted leaves import the shared <code>detect_language</code>. The <code>index_single_file/references/</code> slice lands after <b>TASK-362.2</b>'s Stage-1 restructure; the <code>resolve_references/</code> work is independent of it and can land any time.</p>
+      <div class="klabel">Sequencing — what landed first</div>
+      <p>Built on <b>TASK-362.1</b>: the dotted leaves import the shared <code>detect_language</code>. The <code>index_single_file/references/</code> slice landed after <b>TASK-362.2</b>'s Stage-1 restructure; the <code>resolve_references/</code> work was independent of it.</p>
     </aside>
     <aside class="callout olive-sev prose">
       <div class="klabel">Safety — mechanical and reversible per commit</div>
-      <p>Each extraction moves its block plus its colocated tests in one commit and is independently landable. Every moved file also gets its one-line <code>ariadne_fault_area.ts</code> target edit, and the full test suite stays green per commit.</p>
+      <p>Each extraction moved its block plus its colocated tests in one commit, independently landable. The fault-area map (<code>ariadne_fault_area.ts</code>) needed no edits — no file-precise target moved — and the full suite stayed green per commit.</p>
     </aside>
   </div>
 </section>
@@ -762,7 +788,7 @@ footer b { color: var(--mute); }
 
 <footer>
   <div><b>TASK-362.3</b> · Program Area 3 of the IA review refactor program (TASK-362) · effort M, risk low–medium · depends on 362.1, orders after 362.2</div>
-  <div>Sources read: path_resolution.ts:1–8,30 · function_call.ts:310 · references.ts:357,569,577,618 (754 LOC) · scopes.ts:149 · import_resolution/ &amp; registries/export.python.ts (gold standard) · task-362.3 brief · ia-review.refactor-program.md:118,127</div>
+  <div>Sources read (as built): constructor.ts:27–30,62,74,105 · constructor.rust.ts (148 LOC) · function_call.ts:165–171 · function_call.rust.ts (157 LOC) · call_site_syntax.ts:16–28 · references.ts (553 LOC) · scopes.ts:122–123 · python_scope_boundary_extractor.ts:25 · boundary_base.ts · registries/export.typescript.ts · task-362.3 Implementation Notes:126–164</div>
 </footer>
 
 </body>

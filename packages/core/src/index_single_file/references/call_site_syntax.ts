@@ -4,8 +4,8 @@
  * Extracts the syntactic context of a method call (receiver kind, call-chain
  * target shape, index-key literalness) for downstream auto-classifiers. Routes
  * to the language leaf that owns the grammar's node types; a language with no
- * recognizable method-call shape (Rust today) yields undefined, leaving the
- * signal missing rather than fabricated.
+ * recognizable method-call shape (Rust) yields undefined, leaving the signal
+ * missing rather than fabricated.
  */
 
 import type { CallSiteSyntax, Language } from "@ariadnejs/types";

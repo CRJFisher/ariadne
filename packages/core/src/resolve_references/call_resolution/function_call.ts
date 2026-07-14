@@ -162,6 +162,7 @@ export function resolve_function_call(
     }
   }
 
+  // @language python
   // Step 3: Python-specific callable instance (__call__ method)
   if (
     resolved_symbols.length === 1 &&

@@ -45,21 +45,25 @@ resolve_references/
 │   ├── type.ts                   # TypeRegistry (type metadata, inheritance)
 │   ├── scope.ts                  # ScopeRegistry (scope tree persistence)
 │   ├── export.ts                 # ExportRegistry (export tracking)
+│   ├── export.{python,typescript}.ts  # Language-specific export dedup rules
 │   ├── reference.ts              # ReferenceRegistry (raw reference storage)
 │   └── index.ts
 ├── call_resolution/              # Phase 2: type-aware call resolution
 │   ├── call_resolver.ts          # Main orchestrator
 │   ├── function_call.ts          # Function call resolution
+│   ├── function_call.rust.ts     # Rust ::-qualified call resolution
 │   ├── method_call.ts            # Method call resolution
 │   ├── method_lookup.ts          # Polymorphic method lookup
 │   ├── constructor.ts            # Constructor resolution
+│   ├── constructor.rust.ts       # Rust Self/associated-constructor resolution
+│   ├── path_resolution.rust.ts   # Rust module-path walking shared by the leaves
+│   ├── callable_instance.python.ts  # Python __call__ callable-instance resolution
 │   ├── collection_dispatch.ts    # Collection-stored function dispatch
 │   └── receiver_resolution.*.ts  # Language-specific receiver type inference
 ├── type_preprocessing/           # Type metadata extraction from definitions and references
 │   ├── bindings.ts               # Variable/parameter type bindings
-│   ├── constructor.ts            # Constructor call type bindings
-│   ├── member.ts                 # Type member extraction (methods, properties, enum members)
-│   └── alias.ts                  # Type alias metadata
+│   ├── constructor_bindings.ts   # Constructor call type bindings
+│   └── member.ts                 # Type member extraction (methods, properties, enum members)
 └── import_resolution/            # Cross-file import path resolution
     ├── import_resolution.ts      # Dispatcher
     └── import_resolution.*.ts    # Language-specific import resolvers

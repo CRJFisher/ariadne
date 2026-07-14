@@ -677,7 +677,9 @@ describe("PythonScopeBoundaryExtractor.sort_captures", () => {
   }
 
   it("orders a containing class scope before the method scope it contains", () => {
-    const method = scope_capture(SemanticEntity.METHOD, 2, 11, 3, 20);
+    // Same start position: plain location order would put the method (earlier
+    // end) first; only containment decides parent-before-child here.
+    const method = scope_capture(SemanticEntity.METHOD, 1, 10, 3, 20);
     const cls = scope_capture(SemanticEntity.CLASS, 1, 10, 5, 1);
 
     expect(extractor.sort_captures([method, cls])).toEqual([cls, method]);

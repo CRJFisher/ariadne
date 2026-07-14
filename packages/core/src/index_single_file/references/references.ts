@@ -11,6 +11,11 @@
  * - Detects optional chaining syntax (`obj?.method?.()`)
  * - Infers type information from annotations and JSDoc
  *
+ * Call-site syntactic context is marshalled through ./call_site_syntax to its
+ * per-language leaves; the node-type branches that remain here extract
+ * reference NAMES (function/constructor/property identifiers), not call-site
+ * syntax.
+ *
  * Uses functional composition pattern - each capture is processed through
  * a builder that chains operations and builds the final reference array.
  */
