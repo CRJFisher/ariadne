@@ -3,9 +3,9 @@
  * source-line text. Core does not emit these flags directly — they are
  * assembled here so builtin classifiers can read them uniformly.
  *
- * Registry entries today use `is_super_call` and `is_dynamic_dispatch`; the
- * remaining flags are populated best-effort for future entries. `is_inside_try`
- * has no syntactic source and stays `false`.
+ * A builtin classifier reads `is_dynamic_dispatch`; the remaining flags are
+ * computed but currently unread. `is_inside_try` has no syntactic source and
+ * stays `false`.
  */
 
 import type { CallReference, SyntacticFeatures } from "@ariadnejs/types";

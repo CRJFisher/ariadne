@@ -1,11 +1,10 @@
 /**
  * Render a callable definition as a human-readable signature string.
  *
- * The single reconciled contract for both the diagnostics enrichment and the
- * MCP `list_entrypoints` / `show_call_graph_neighborhood` tools. The optional
- * `location` exists so anonymous callables render as `<anonymous@file:line>`
- * and stay distinguishable in a flat listing; callers that already have a name
- * omit it.
+ * The single reconciled contract: the diagnostics enrichment calls it with a
+ * name, and the optional `location` renders anonymous callables as
+ * `<anonymous@file:line>` so they stay distinguishable in a flat listing. The
+ * signature is the superset both a named-caller and a flat-listing caller need.
  */
 
 import type {

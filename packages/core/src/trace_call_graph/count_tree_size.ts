@@ -3,12 +3,11 @@
  *
  * Owned by `trace_call_graph/` because it is a pure function of `CallGraph`
  * structure — the stage that builds the graph owns the metrics computed over
- * it. Both the diagnostics enrichment (`extract_entry_point_diagnostics`) and
- * the MCP `list_entrypoints` tool rank entry points by this size, so the
- * single reconciled signature returns both counts: `resolved` (functions
- * reachable through resolved call edges) and `unresolved` (call sites the
- * resolver could not link). Consumers that only rank by reachable size read
- * `.resolved`.
+ * it. The single reconciled signature returns both counts an entry-point
+ * ranking can need: `resolved` (functions reachable through resolved call
+ * edges) and `unresolved` (call sites the resolver could not link). The
+ * diagnostics enrichment (`extract_entry_point_diagnostics`) ranks by
+ * `.resolved` alone; the `unresolved` tally serves callers that surface both.
  */
 
 import type { CallGraph, SymbolId } from "@ariadnejs/types";

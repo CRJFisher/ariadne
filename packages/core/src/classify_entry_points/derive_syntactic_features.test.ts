@@ -59,9 +59,14 @@ describe("derive_syntactic_features", () => {
     expect(out).toEqual({ ...NEUTRAL, is_super_call: true });
   });
 
-  it("flags optional chaining and await together", () => {
-    const out = derive_syntactic_features(make_call_ref(), "const r = await obj?.load();");
-    expect(out).toEqual({ ...NEUTRAL, is_optional_chain: true, is_awaited: true });
+  it("flags optional chaining independently of await", () => {
+    const out = derive_syntactic_features(make_call_ref(), "const r = obj?.load();");
+    expect(out).toEqual({ ...NEUTRAL, is_optional_chain: true });
+  });
+
+  it("flags await independently of optional chaining", () => {
+    const out = derive_syntactic_features(make_call_ref(), "const r = await load();");
+    expect(out).toEqual({ ...NEUTRAL, is_awaited: true });
   });
 
   it("flags a callback invocation from the call reference", () => {

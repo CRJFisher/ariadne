@@ -161,4 +161,27 @@ describe("count_tree_size", () => {
       unresolved: 1,
     });
   });
+
+  it("propagates a subtree's unresolved count up through a resolved edge", () => {
+    const nodes = new Map<SymbolId, CallableNode>();
+    nodes.set(
+      sym("child_id"),
+      make_callable_node("child", "child_id", [make_call_ref("external", [])]),
+    );
+    nodes.set(
+      sym("parent_id"),
+      make_callable_node("parent", "parent_id", [make_call_ref("child", ["child_id"])]),
+    );
+
+    const call_graph: CallGraph = {
+      nodes,
+      entry_points: [sym("parent_id")],
+      indirect_reachability: new Map(),
+    };
+
+    expect(count_tree_size(sym("parent_id"), call_graph, new Set())).toEqual({
+      resolved: 1,
+      unresolved: 1,
+    });
+  });
 });
