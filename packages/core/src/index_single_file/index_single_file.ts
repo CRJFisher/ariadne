@@ -126,7 +126,8 @@ export function build_index_single_file(
   const all_references = process_references(
     context,
     metadata_extractors,
-    file.file_path
+    file.file_path,
+    language
   );
 
   return {

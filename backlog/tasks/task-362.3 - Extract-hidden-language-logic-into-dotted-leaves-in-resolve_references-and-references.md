@@ -1,7 +1,7 @@
 ---
 id: TASK-362.3
 title: "Extract hidden language logic into dotted leaves in resolve_references and references"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-05 00:00"
 labels:
@@ -101,19 +101,65 @@ a one-line edit each.
 
 <!-- AC:BEGIN -->
 
-- [ ] `path_resolution.rust.ts` exists via `git mv` with zero content change;
+- [x] `path_resolution.rust.ts` exists via `git mv` with zero content change;
       no neutral-named wholly-language file remains in `call_resolution/`.
-- [ ] `constructor.ts` and `function_call.ts` are neutral dispatch skeletons;
+- [x] `constructor.ts` and `function_call.ts` are neutral dispatch skeletons;
       their Rust blocks live in `.rust.ts` leaves with tests colocated.
-- [ ] `registries/export.ts` has no inline TS/JS dedup block;
+- [x] `registries/export.ts` has no inline TS/JS dedup block;
       `export.typescript.ts` exists as sibling to `export.python.ts`.
-- [ ] `references/references.ts` holds only capture-kind routing +
+- [x] `references/references.ts` holds only capture-kind routing +
       `ReferenceBuilder`; `call_site_syntax.{ts,typescript.ts,python.ts}`
       own the node-type branches.
-- [ ] The `scopes.ts:152` Python sort lives in
+- [x] The `scopes.ts:152` Python sort lives in
       `PythonScopeBoundaryExtractor`; the three deliberately-inline branches
       carry `@language` comments.
-- [ ] Rows 8, 9, 10, 12, 13, 14, 15 landed; `ariadne_fault_area.ts` targets
+- [x] Rows 8, 9, 10, 12, 13, 14, 15 landed; `ariadne_fault_area.ts` targets
       updated for every moved file; full test suite green.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+
+## High-level summary
+
+The call-resolution axis hid per-language logic inside neutral-named files, so
+a reader (or a Go implementer) had to read every body to find the language
+touch points the import axis exposes through file names alone. This task
+brings the call-resolution and reference-extraction slices up to the
+dotted-leaf standard: language-specific code lives in `{module}.{language}.ts`
+files, and neutral files carry only routing.
+
+Two dispatch shapes coexist deliberately. Where the discriminator is language
+itself, a marshaller switches on the threaded `language` parameter:
+`references/call_site_syntax.ts` routes to `call_site_syntax.typescript.ts` /
+`call_site_syntax.python.ts` (Rust yields undefined — no recognizable
+method-call shape), with `language` threaded from `index_single_file.ts`
+through `process_references` and `ReferenceBuilder`. Where the discriminator
+is a syntactic marker only one language produces (`Self`, a `::`
+`path_prefix`), the neutral spine calls a self-guarding leaf unconditionally:
+`constructor.rust.ts` and `function_call.rust.ts` return null for any other
+call shape, so `constructor.ts` / `function_call.ts` carry no Rust literals. A
+literal language switch there would duplicate the shared resolution spine into
+every leaf.
+
+Navigation: `call_resolution/path_resolution.rust.ts` (a pure rename) holds
+the Rust module-path walking both leaves share.
+`registries/export.typescript.ts` owns the arrow-function export dedup
+decision beside `export.python.ts`, which gained `is_python_file`. Capture
+ordering is a `ScopeBoundaryExtractor` responsibility: the common location
+sort lives in `boundary_base.ts` (with the location-geometry helpers), and
+`PythonScopeBoundaryExtractor.sort_captures` owns the containment sort. The
+Python callable-instance gate in `function_call.ts` reads the threaded
+languages map, not the file extension.
+
+Sharp edges: `receiver_resolution.ts`, `type_preprocessing/member.ts`, and
+`name_resolution.ts` keep small interwoven language branches inline by design,
+marked with `@language` comments for grep. `SELF_KEYWORD_TEXTS` is duplicated
+across the two call-site leaves (hoisting it would cycle leaf↔marshaller).
+`has_file_in_tree` accepts absolute paths by relativizing against the tree
+root, which let the Rust import resolver's private wrapper dissolve. The
+fault-area map needed no edits — no file-precise target moved.
+
+<!-- SECTION:NOTES:END -->

@@ -17,16 +17,6 @@ import type {
 } from "@ariadnejs/types";
 
 /**
- * Extract the local name from a SymbolId
- *
- * SymbolId format: "kind:file_path:start_line:start_column:end_line:end_column:name"
- * This extracts the last component (the local identifier name)
- *
- * @param symbol_id - The SymbolId to extract from
- * @returns The local name component
- */
-
-/**
  * Extract type members from class, interface, and enum definitions
  *
  * Builds a map of type SymbolId → its members for efficient lookup
@@ -114,6 +104,7 @@ export function extract_type_members(definitions: {
       properties.set(member.name, member.symbol_id);
     }
 
+    // @language rust
     // Index methods (Rust enums can have impl methods)
     if (enum_def.methods) {
       for (const method of enum_def.methods) {

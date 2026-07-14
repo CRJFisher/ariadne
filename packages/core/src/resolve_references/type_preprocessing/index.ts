@@ -5,5 +5,5 @@
  */
 
 export { extract_type_bindings } from "./bindings";
-export { extract_constructor_bindings, type ConstructorBindings } from "./constructor";
+export { extract_constructor_bindings, type ConstructorBindings } from "./constructor_bindings";
 export { extract_type_members } from "./member";

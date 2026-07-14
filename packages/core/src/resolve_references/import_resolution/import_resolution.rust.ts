@@ -11,20 +11,6 @@ import type { FileSystemFolder } from "../file_folders";
 import { has_file_in_tree } from "../file_folders";
 
 /**
- * Candidate paths are built as absolute paths via `path.join`, but the tree is
- * keyed relative to its root, so strip the root prefix before the lookup.
- */
-function file_exists(
-  file_path: FilePath,
-  root_folder: FileSystemFolder
-): boolean {
-  const relative = file_path.startsWith(root_folder.path)
-    ? path.relative(root_folder.path, file_path)
-    : file_path;
-  return has_file_in_tree(relative as FilePath, root_folder);
-}
-
-/**
  * Resolve a Rust `use` module path to an absolute file path. The leading segment
  * selects the base: `crate` is the crate root, `super` the parent module, `self`
  * the current module, and any other segment names a local module relative to the
@@ -48,7 +34,7 @@ export function resolve_module_path_rust(
     const current_dir = path.dirname(importing_file);
     const resolved = resolve_rust_module_path(current_dir, parts, root_folder);
 
-    if (file_exists(resolved, root_folder)) {
+    if (has_file_in_tree(resolved, root_folder)) {
       return resolved;
     }
 
@@ -115,7 +101,7 @@ function resolve_rust_module_path(
     ];
 
     for (const candidate of candidates) {
-      if (file_exists(candidate as FilePath, root_folder)) {
+      if (has_file_in_tree(candidate as FilePath, root_folder)) {
         if (is_last) {
           return candidate as FilePath;
         } else {
@@ -147,19 +133,19 @@ function find_rust_crate_root(
 
   while (true) {
     if (
-      file_exists(path.join(current, "lib.rs") as FilePath, root_folder) ||
-      file_exists(path.join(current, "main.rs") as FilePath, root_folder)
+      has_file_in_tree(path.join(current, "lib.rs") as FilePath, root_folder) ||
+      has_file_in_tree(path.join(current, "main.rs") as FilePath, root_folder)
     ) {
       return current;
     }
 
     if (
-      file_exists(path.join(current, "Cargo.toml") as FilePath, root_folder)
+      has_file_in_tree(path.join(current, "Cargo.toml") as FilePath, root_folder)
     ) {
       const src_dir = path.join(current, "src");
       if (
-        file_exists(path.join(src_dir, "lib.rs") as FilePath, root_folder) ||
-        file_exists(path.join(src_dir, "main.rs") as FilePath, root_folder)
+        has_file_in_tree(path.join(src_dir, "lib.rs") as FilePath, root_folder) ||
+        has_file_in_tree(path.join(src_dir, "main.rs") as FilePath, root_folder)
       ) {
         return src_dir;
       }

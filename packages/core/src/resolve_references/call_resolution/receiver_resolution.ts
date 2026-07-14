@@ -348,6 +348,7 @@ export function find_containing_class_scope(
       return current_scope_id;
     }
 
+    // @language rust
     // A Rust impl block is a `block` scope; owning methods distinguishes it from a
     // plain block (if/for/loop), which never owns class members.
     if (scope.type === "block" && definitions) {

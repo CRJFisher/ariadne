@@ -2,8 +2,9 @@ import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
 import Python from "tree-sitter-python";
 import { PythonScopeBoundaryExtractor } from "./python_scope_boundary_extractor";
-import type { FilePath, ScopeType } from "@ariadnejs/types";
+import type { FilePath, ScopeType, SymbolName } from "@ariadnejs/types";
 import type { ScopeBoundaries } from "../boundary_base";
+import { SemanticCategory, SemanticEntity, type CaptureNode } from "../../capture_types";
 
 const FP = "test.py" as FilePath;
 
@@ -652,5 +653,59 @@ describe("PythonScopeBoundaryExtractor", () => {
         FP
       )
     ).toThrow("Unsupported scope type: parameter");
+  });
+});
+
+describe("PythonScopeBoundaryExtractor.sort_captures", () => {
+  const extractor = new PythonScopeBoundaryExtractor();
+
+  function scope_capture(
+    entity: SemanticEntity,
+    start_line: number,
+    start_column: number,
+    end_line: number,
+    end_column: number
+  ): CaptureNode {
+    return {
+      category: SemanticCategory.SCOPE,
+      entity,
+      name: `scope.${entity}`,
+      text: "" as SymbolName,
+      location: { file_path: FP, start_line, start_column, end_line, end_column },
+      node: {} as Parser.SyntaxNode,
+    };
+  }
+
+  it("orders a containing class scope before the method scope it contains", () => {
+    // Same start position: plain location order would put the method (earlier
+    // end) first; only containment decides parent-before-child here.
+    const method = scope_capture(SemanticEntity.METHOD, 1, 10, 3, 20);
+    const cls = scope_capture(SemanticEntity.CLASS, 1, 10, 5, 1);
+
+    expect(extractor.sort_captures([method, cls])).toEqual([cls, method]);
+  });
+
+  it("orders disjoint scopes by area, larger first", () => {
+    const small = scope_capture(SemanticEntity.FUNCTION, 1, 1, 1, 20);
+    const large = scope_capture(SemanticEntity.FUNCTION, 10, 1, 20, 1);
+
+    expect(extractor.sort_captures([small, large])).toEqual([large, small]);
+  });
+
+  it("breaks an identical-location tie by scope-type priority", () => {
+    const block = scope_capture(SemanticEntity.BLOCK, 1, 1, 5, 1);
+    const cls = scope_capture(SemanticEntity.CLASS, 1, 1, 5, 1);
+
+    expect(extractor.sort_captures([block, cls])).toEqual([cls, block]);
+  });
+
+  it("falls back to location order for equal-area, equal-priority scopes", () => {
+    const later = scope_capture(SemanticEntity.FUNCTION, 10, 1, 10, 21);
+    const earlier = scope_capture(SemanticEntity.FUNCTION, 1, 1, 1, 21);
+
+    expect(extractor.sort_captures([later, earlier])).toEqual([
+      earlier,
+      later,
+    ]);
   });
 });

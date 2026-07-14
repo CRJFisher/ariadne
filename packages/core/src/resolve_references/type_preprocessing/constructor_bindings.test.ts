@@ -7,7 +7,7 @@ import Rust from "tree-sitter-rust";
 import type { Language, FilePath } from "@ariadnejs/types";
 import { build_index_single_file } from "../../index_single_file/index_single_file";
 import type { ParsedFile } from "../../index_single_file/parsed_file";
-import { extract_constructor_bindings } from "./constructor";
+import { extract_constructor_bindings } from "./constructor_bindings";
 
 function create_parsed_file(
   code: string,

@@ -8,8 +8,3 @@ export {
   resolve_module_path,
   resolve_submodule_import_path,
 } from "./import_resolution";
-
-export { resolve_module_path_javascript } from "./import_resolution.javascript";
-export { resolve_module_path_typescript } from "./import_resolution.typescript";
-export { resolve_module_path_python } from "./import_resolution.python";
-export { resolve_module_path_rust } from "./import_resolution.rust";

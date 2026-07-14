@@ -3,7 +3,7 @@ import {
   normalize_path_prefix,
   resolve_in_module_body,
   is_callable_definition,
-} from "./path_resolution";
+} from "./path_resolution.rust";
 import { DefinitionRegistry } from "../registries/definition";
 import { ScopeRegistry } from "../registries/scope";
 import {

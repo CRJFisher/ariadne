@@ -1,10 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { FilePath } from "@ariadnejs/types";
-import {
-  has_file_in_tree,
-  is_python_file,
-  type FileSystemFolder,
-} from "./file_folders";
+import { has_file_in_tree, type FileSystemFolder } from "./file_folders";
 
 function folder(
   path: string,
@@ -43,6 +39,33 @@ describe("has_file_in_tree", () => {
     ).toBe(true);
   });
 
+  it("resolves an absolute path against a tree rooted below /", () => {
+    const project_tree = folder("/project", [], {
+      src: folder("/project/src", ["lib.rs", "utils.rs"]),
+    });
+    expect(
+      has_file_in_tree("/project/src/utils.rs" as FilePath, project_tree)
+    ).toBe(true);
+  });
+
+  it("resolves a root-relative path against a tree rooted below /", () => {
+    const project_tree = folder("/project", [], {
+      src: folder("/project/src", ["lib.rs", "utils.rs"]),
+    });
+    expect(has_file_in_tree("src/utils.rs" as FilePath, project_tree)).toBe(
+      true
+    );
+  });
+
+  it("returns false for an absolute path outside the tree root", () => {
+    const project_tree = folder("/project", [], {
+      src: folder("/project/src", ["lib.rs"]),
+    });
+    expect(
+      has_file_in_tree("/elsewhere/src/lib.rs" as FilePath, project_tree)
+    ).toBe(false);
+  });
+
   it("returns false when an intermediate folder is absent", () => {
     expect(has_file_in_tree("/src/missing/leaf.ts" as FilePath, TREE)).toBe(
       false
@@ -79,27 +102,5 @@ describe("has_file_in_tree", () => {
 
   it("tolerates a trailing separator on the path", () => {
     expect(has_file_in_tree("/src/nested/" as FilePath, TREE)).toBe(false);
-  });
-});
-
-describe("is_python_file", () => {
-  it("recognizes a .py file", () => {
-    expect(is_python_file("/pkg/main.py" as FilePath)).toBe(true);
-  });
-
-  it("recognizes a .pyw file", () => {
-    expect(is_python_file("/pkg/gui.pyw" as FilePath)).toBe(true);
-  });
-
-  it("rejects a .ts file", () => {
-    expect(is_python_file("/src/app.ts" as FilePath)).toBe(false);
-  });
-
-  it("rejects a .pyc compiled file", () => {
-    expect(is_python_file("/pkg/main.pyc" as FilePath)).toBe(false);
-  });
-
-  it("rejects a path with no extension", () => {
-    expect(is_python_file("/pkg/README" as FilePath)).toBe(false);
   });
 });

@@ -23,22 +23,11 @@ import type { ScopeRegistry } from "../registries/scope";
 import type { ResolutionRegistry } from "../resolve_references";
 import type { FileSystemFolder } from "../file_folders";
 import { resolve_namespace_export } from "./method_lookup";
-import { find_containing_class_scope, find_class_from_scope } from "./receiver_resolution";
-import { normalize_path_prefix, resolve_in_module_body } from "./path_resolution";
-
-/**
- * The terminal name of a Rust associated constructor. The `rust.scm` query only
- * captures `^new$` as an associated constructor, so the member-index lookup that
- * links a `Type::new()` call to its function always keys on this name.
- */
-const RUST_ASSOCIATED_CONSTRUCTOR_NAME = "new" as SymbolName;
-
-/**
- * The `Self` type keyword a Rust associated function uses to name its own impl
- * type, e.g. `Self::new()`. A constructor call whose terminal type name is
- * `Self` is resolved to the enclosing impl/trait type by walking the call scope.
- */
-const SELF_TYPE_KEYWORD = "Self" as SymbolName;
+import {
+  resolve_self_type_rust,
+  resolve_type_via_module_path_rust,
+  find_associated_constructor_rust,
+} from "./constructor.rust";
 
 /**
  * Resolve a constructor call to its constructor definition, falling back to the
@@ -70,28 +59,21 @@ export function resolve_constructor_call(
     }
   }
 
-  // Rust `Self::new()`: the terminal type name is the `Self` keyword, which is
-  // never in scope. Substitute it with the enclosing impl/trait type by walking
-  // the call's scope up to the containing class scope.
-  if (!class_symbol && call_ref.name === SELF_TYPE_KEYWORD) {
-    const class_scope_id = find_containing_class_scope(call_ref.scope_id, scopes, definitions);
-    if (class_scope_id) {
-      class_symbol = find_class_from_scope(class_scope_id, definitions);
-    }
+  // `Self` is never in scope, so its substitution must run before the bare-name
+  // lookup; the leaf self-guards and returns null for any other call shape.
+  if (!class_symbol) {
+    class_symbol = resolve_self_type_rust(call_ref, scopes, definitions);
   }
 
   if (!class_symbol) {
     class_symbol = resolutions.resolve(call_ref.scope_id, call_ref.name as SymbolName);
   }
 
-  // Inline full-path Rust constructor: the terminal type name is not bound by a
-  // bare name in scope (`crate::runtime::Driver::new()` never imports `Driver`),
-  // so the simple lookup above misses. Walk the type's module path to bind it.
-  // Gated to the Rust qualified path by `path_prefix`, after the bare-name miss,
-  // so the in-scope `Type::new()` (349.4) and TS/Python `new ClassName()` paths
-  // are untouched.
-  if (!class_symbol && call_ref.path_prefix && call_ref.path_prefix.length > 0) {
-    class_symbol = resolve_type_via_module_path(call_ref, definitions, scopes, resolutions);
+  // Inline full-path constructors are never bound by a bare name, so the module
+  // path walk runs only after the bare-name miss; the leaf self-guards on
+  // `path_prefix`, leaving the TS/Python `new ClassName()` path untouched.
+  if (!class_symbol) {
+    class_symbol = resolve_type_via_module_path_rust(call_ref, definitions, scopes, resolutions);
   }
 
   if (!class_symbol) {
@@ -118,93 +100,14 @@ export function resolve_constructor_call(
     resolutions
   );
 
-  // Rust associated constructor: `fn new()` is stored as a plain method, so the
-  // hierarchy walk (which reads `ClassDefinition.constructors`) finds nothing.
-  // Link the call to the `new` member directly. Gated to the Rust qualified path
-  // by `path_prefix`, so the TS/Python `new ClassName()` path is untouched.
-  if (!constructor_symbol && call_ref.path_prefix && call_ref.path_prefix.length > 0) {
-    constructor_symbol = find_associated_constructor(class_def.symbol_id, definitions);
+  // Associated constructors are stored as plain methods, so the hierarchy walk
+  // (which reads `ClassDefinition.constructors`) finds nothing; the leaf
+  // self-guards on `path_prefix` and links the `new` member directly.
+  if (!constructor_symbol) {
+    constructor_symbol = find_associated_constructor_rust(call_ref, class_def, definitions);
   }
 
   return ok([constructor_symbol || class_symbol]);
-}
-
-/**
- * Bind an inline-full-path Rust constructor's type by walking its module path.
- *
- * A constructor `path_prefix` is **type-last**: the final segment is the type
- * (`crate::runtime::Driver` → `["crate","runtime","Driver"]`, type `Driver`), the
- * leading segments are its module path. Contrast the function-call resolver, whose
- * terminal lives in `ref.name` and whose qualifier is therefore the *last* prefix
- * segment; here the type is the last segment, so its module qualifier is the
- * *second-to-last*. When the bare type name misses in scope (the type is never
- * imported), resolve that module qualifier in scope and look the type up in that
- * module's body. The module qualifier disambiguates same-named types across
- * modules, so two in-scope modules each exposing a `Driver` resolve to the correct
- * one via the prefix.
- *
- * Only the type's immediate module is walked: the qualifier must itself resolve in
- * the caller's scope, so a deeper path (`crate::a::b::Driver`) whose intermediate
- * module `b` is not bound in scope bails, exactly as the function-call resolver
- * does. Bails (returns null) likewise when the qualifier is not an in-scope `mod`
- * whose body holds the type — a cross-file re-export hop belongs to
- * import_resolution, so we do not fabricate an edge.
- */
-function resolve_type_via_module_path(
-  call_ref: ConstructorCallReference,
-  definitions: DefinitionRegistry,
-  scopes: ScopeRegistry,
-  resolutions: ResolutionRegistry
-): SymbolId | null {
-  const prefix = normalize_path_prefix(call_ref.path_prefix ?? []);
-  // Need at least [module, Type]: the type is the last segment, its immediate
-  // module is the segment before it. A lone type segment (`["Driver"]`) has no
-  // module path to walk and already missed the bare lookup.
-  if (prefix.length < 2) return null;
-
-  const type_name = call_ref.name as SymbolName;
-  // Type-last prefix: the type is the last segment, its module the one before it.
-  const qualifier = prefix[prefix.length - 2];
-
-  const qualifier_id = resolutions.resolve(call_ref.scope_id, qualifier);
-  if (!qualifier_id) return null;
-
-  // Rust `mod` declarations are captured as namespace definitions.
-  const qualifier_def = definitions.get(qualifier_id);
-  if (qualifier_def?.kind !== "namespace") return null;
-
-  return resolve_in_module_body(
-    qualifier,
-    qualifier_def.defining_scope_id,
-    type_name,
-    scopes,
-    definitions
-  );
-}
-
-/**
- * Find a Rust associated constructor (`fn new`) for a type via the member index.
- *
- * Rust's `impl T { fn new() -> Self }` is indexed as a plain method on `T`
- * rather than a `ConstructorDefinition`, so it never populates
- * `ClassDefinition.constructors`. This links a resolved `Type::new()` /
- * `Self::new()` call to that member so the constructor is reachable instead of
- * surfacing as a false-positive entry point.
- */
-function find_associated_constructor(
-  type_id: SymbolId,
-  definitions: DefinitionRegistry
-): SymbolId | null {
-  const members = definitions.get_member_index().get(type_id);
-  const member = members?.get(RUST_ASSOCIATED_CONSTRUCTOR_NAME);
-  if (!member) {
-    return null;
-  }
-  // A field named `new` (`struct T { new: ... }`) overwrites the `fn new` method
-  // in the flat member index; only a callable target is the constructor. Mirrors
-  // the `is_callable_definition` guard on the function-call member lookup.
-  const kind = definitions.get(member)?.kind;
-  return kind === "method" || kind === "function" ? member : null;
 }
 
 /**

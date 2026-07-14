@@ -196,6 +196,7 @@ function resolve_scope_recursive(
     scope_resolutions.set(name, symbol_id);
   }
 
+  // @language javascript,rust
   // Hoist function declarations out of descendant block scopes.
   // A `function`/`fn` declared inside a nested block (if/for/match/try/…) is
   // recorded under that block's scope, yet it is lexically reachable from
