@@ -17,14 +17,13 @@
  *     filesystem so diagnostics see exactly what the resolver saw (no TOCTOU
  *     drift, supports in-memory edits via `Project.update_file`).
  *
- * The unindexed-test grep pass (`attach_unindexed_test_grep_hits`) is the
- * only diagnostic that touches FS outside the indexed source set; it lives
- * here as a separate exported helper that callers chain after extraction
- * when they need `grep_call_sites_unindexed_tests` populated.
+ * This pass is synchronous and free of FS I/O. The opt-in unindexed-test grep
+ * (`attach_unindexed_test_grep_hits`, the one FS-touching diagnostic) lives in
+ * its own module; callers chain it after extraction when they need
+ * `grep_call_sites_unindexed_tests` populated.
  */
 
 import type {
-  AnyDefinition,
   CallGraph,
   CallableNode,
   CallReference,
@@ -32,26 +31,23 @@ import type {
   FunctionDefinition,
   MethodDefinition,
   ConstructorDefinition,
-  ParameterDefinition,
   SymbolId,
   SymbolName,
-  Language,
   FilePath,
 } from "@ariadnejs/types";
 import type {
-  DefinitionFeatures,
   EnrichedEntryPoint,
   EntryPointDiagnostics,
   GrepHit,
   CallRefDiagnostic,
-  SyntacticFeatures,
 } from "@ariadnejs/types";
 
 import { log_info, log_warn } from "../logging";
 import type { Project } from "../project/project";
-import { find_source_files } from "../project/file_loading";
-import * as path from "node:path";
-import * as fs from "node:fs/promises";
+import { build_signature } from "../trace_call_graph/build_signature";
+import { count_tree_size } from "../trace_call_graph/count_tree_size";
+import { derive_syntactic_features } from "./derive_syntactic_features";
+import { derive_definition_features } from "./derive_definition_features";
 
 /**
  * Tree-sitter capture names associated with each call type.
@@ -90,21 +86,6 @@ export function build_constructor_to_class_name_map(
     }
   }
   return map;
-}
-
-/**
- * Options for the optional unindexed-test grep pass.
- */
-export interface UnindexedTestGrepOptions {
-  /**
-   * Project root used to discover unindexed-test files.
-   */
-  readonly project_path: string;
-  /**
-   * Additional ignore patterns passed through to `find_source_files` so the
-   * unindexed-test walk honours the same exclusions as primary indexing.
-   */
-  readonly ignore_patterns?: readonly string[];
 }
 
 /**
@@ -151,7 +132,7 @@ export function extract_entry_point_diagnostics(
     if (!node) continue;
 
     const iter_start = Date.now();
-    const tree_size = count_tree_size(entry_point_id, call_graph, new Set());
+    const { resolved: tree_size } = count_tree_size(entry_point_id, call_graph, new Set());
     const def = node.definition;
     const kind = def.kind as "function" | "method" | "constructor";
 
@@ -207,24 +188,6 @@ export function extract_entry_point_diagnostics(
   entry_points.sort((a, b) => b.tree_size - a.tree_size);
 
   return entry_points;
-}
-
-/**
- * Build the constructor → class name map keyed by `file_path:start_line`. The
- * unindexed-test grep pass uses this to grep for `ClassName(` instead of
- * `__init__()` — same heuristic as the in-source grep pass.
- */
-export function build_class_name_by_constructor_position(
-  project: Project,
-): ReadonlyMap<string, string> {
-  const out = new Map<string, string>();
-  for (const class_def of project.definitions.get_class_definitions()) {
-    for (const ctor of class_def.constructors ?? []) {
-      const key = `${ctor.location.file_path}:${ctor.location.start_line}`;
-      out.set(key, class_def.name as string);
-    }
-  }
-  return out;
 }
 
 /**
@@ -544,84 +507,6 @@ function read_source_line(
 }
 
 /**
- * Derive `SyntacticFeatures` for a call from the `CallReference` and the
- * source line text at the call site. Core does not emit these flags directly
- * — we compose them here so builtin classifiers can read them uniformly.
- *
- * Registry entries today use `is_super_call` and `is_dynamic_dispatch`. The
- * remaining flags are populated best-effort for future registry entries.
- * `is_inside_try` has no syntactic source and remains `false`.
- */
-function derive_syntactic_features(
-  call_ref: CallReference,
-  source_line: string,
-): SyntacticFeatures {
-  const receiver_kind = call_ref.call_site_syntax?.receiver_kind;
-  const index_key_is_literal = call_ref.call_site_syntax?.index_key_is_literal;
-  return {
-    is_new_expression: call_ref.call_type === "constructor",
-    // Core emits `receiver_kind: "self_keyword"` for this/self/super/cls. To
-    // isolate super we fall back to a textual check on the call-site line.
-    is_super_call: /\bsuper\s*\./.test(source_line),
-    is_optional_chain: /\?\./.test(source_line),
-    is_awaited: /\bawait\s/.test(source_line),
-    is_callback_arg: call_ref.is_callback_invocation === true,
-    is_inside_try: false,
-    is_dynamic_dispatch:
-      receiver_kind === "index_access" && index_key_is_literal === false,
-  };
-}
-
-/**
- * Derive definition-site features (JS/TS-aware) from a `CallableNode` plus
- * the source-file lines around its definition. Separate from call-site
- * `SyntacticFeatures` — those describe the call; these describe the callee.
- *
- * - `accessor_kind`: read directly from the `get` / `set` token on the
- *   definition line (class and object-literal accessors share this syntax).
- * - `definition_is_object_literal_method`: true for `kind === "method"` entries
- *   whose symbol_id is NOT in the class-method symbol set. Class methods are
- *   registered via `ClassDefinition.methods`; anything else with `kind="method"`
- *   (JS/TS object-literal shorthand) falls through.
- *
- * Python/Rust callees carry `{ false, null }` — no JS-style accessor syntax
- * and no object-literal-method concept.
- */
-export function derive_definition_features(
-  node: CallableNode,
-  class_methods: ReadonlySet<SymbolId>,
-  lines_by_file: ReadonlyMap<FilePath, string[]>,
-  language: Language,
-): DefinitionFeatures {
-  const file_path = node.location.file_path;
-  const start_line = node.location.start_line;
-  const is_jsts = language === "typescript" || language === "javascript";
-  if (!is_jsts) {
-    return { definition_is_object_literal_method: false, accessor_kind: null };
-  }
-  const def_line = read_source_line(lines_by_file, file_path, start_line);
-  const accessor_kind = classify_accessor_line(def_line);
-  const kind = node.definition.kind;
-  const is_object_literal_method =
-    kind === "method" && !class_methods.has(node.symbol_id);
-  return {
-    definition_is_object_literal_method: is_object_literal_method,
-    accessor_kind,
-  };
-}
-
-export function classify_accessor_line(line: string): "getter" | "setter" | null {
-  // Matches `get name(` or `set name(`, allowing for leading whitespace,
-  // optional `static`, optional access modifier, and optional `async`. Must
-  // be followed by whitespace + identifier + optional whitespace + `(` to
-  // avoid false positives on identifiers that happen to start with `get`.
-  const re = /^\s*(?:(?:public|private|protected|static|async|readonly)\s+)*(get|set)\s+[A-Za-z_$][\w$]*\s*\(/;
-  const m = re.exec(line);
-  if (m === null) return null;
-  return m[1] === "get" ? "getter" : "setter";
-}
-
-/**
  * Diagnose the failure mode based on grep results and Ariadne call references.
  */
 function compute_diagnosis(
@@ -662,189 +547,8 @@ function compute_diagnosis(
 // ===== Shared Utilities =====
 
 /**
- * Build a human-readable function signature from a definition.
- */
-export function build_signature(
-  definition: AnyDefinition,
-): string | undefined {
-  try {
-    if (definition.kind === "function") {
-      const params =
-        definition.signature?.parameters
-          ?.map((p: ParameterDefinition) => `${p.name}: ${p.type || "any"}`)
-          .join(", ") || "";
-      const return_type =
-        definition.signature?.return_type ||
-        definition.return_type ||
-        "unknown";
-      return `${definition.name}(${params}): ${return_type}`;
-    } else if (definition.kind === "method") {
-      const params =
-        definition.parameters
-          ?.map((p: ParameterDefinition) => `${p.name}: ${p.type || "any"}`)
-          .join(", ") || "";
-      const return_type = definition.return_type || "unknown";
-      return `${definition.name}(${params}): ${return_type}`;
-    } else if (definition.kind === "constructor") {
-      const params =
-        definition.parameters
-          ?.map((p: ParameterDefinition) => `${p.name}: ${p.type || "any"}`)
-          .join(", ") || "";
-      return `constructor(${params})`;
-    }
-  } catch {
-    return undefined;
-  }
-}
-
-/**
- * Count tree size (total unique functions called) via DFS.
- */
-export function count_tree_size(
-  node_id: SymbolId,
-  call_graph: CallGraph,
-  visited: Set<SymbolId>,
-): number {
-  if (visited.has(node_id)) return 0;
-  visited.add(node_id);
-
-  const node = call_graph.nodes.get(node_id);
-  if (!node) return 0;
-
-  let count = 0;
-  for (const call_ref of node.enclosed_calls) {
-    for (const resolution of call_ref.resolutions) {
-      count += 1 + count_tree_size(resolution.symbol_id, call_graph, visited);
-    }
-  }
-
-  return count;
-}
-
-/**
  * Escape special regex characters in a string.
  */
 function escape_regex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-// ===== Unindexed-test-dir grep (opt-in) =====
-
-// Common conventions for test-directory siting. Kept narrow on purpose —
-// project-specific patterns should extend this list via a config entry, not
-// by broadening the default.
-export const UNINDEXED_TEST_DIR_SEGMENTS: readonly string[] = [
-  "/test/",
-  "/tests/",
-  "/__tests__/",
-  "/spec/",
-];
-
-const TEST_FILE_EXTENSIONS: readonly string[] = [
-  ".ts",
-  ".tsx",
-  ".js",
-  ".jsx",
-  ".mjs",
-  ".cjs",
-  ".py",
-  ".rs",
-];
-
-export async function attach_unindexed_test_grep_hits(
-  entry_points: EnrichedEntryPoint[],
-  project_path: string,
-  indexed_source_files: ReadonlyMap<string, string>,
-  class_name_by_constructor_position: ReadonlyMap<string, string>,
-  ignore_patterns: readonly string[],
-): Promise<void> {
-  const test_files = await collect_unindexed_test_files(
-    project_path,
-    indexed_source_files,
-    ignore_patterns,
-  );
-  if (test_files.size === 0) return;
-
-  // Per-identifier inverted index over the test files.
-  const grep_index = new Map<string, { file_path: string; line: number; content: string }[]>();
-  const pattern = /(?<![A-Za-z0-9_$])([A-Za-z_$][\w$]*)\s*\(/g;
-  for (const [file_path, content] of test_files) {
-    const lines = content.split("\n");
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      pattern.lastIndex = 0;
-      let m: RegExpExecArray | null;
-      let trimmed: string | null = null;
-      while ((m = pattern.exec(line)) !== null) {
-        const name = m[1];
-        let hits = grep_index.get(name);
-        if (!hits) {
-          hits = [];
-          grep_index.set(name, hits);
-        }
-        if (trimmed === null) trimmed = line.trim();
-        hits.push({ file_path, line: i + 1, content: trimmed });
-      }
-    }
-  }
-
-  for (const entry of entry_points) {
-    // Constructors are grepped by class name, not __init__/constructor —
-    // mirror the behaviour of the primary grep pass.
-    let grep_name: string;
-    if (entry.kind === "constructor") {
-      const key = `${entry.file_path}:${entry.start_line}`;
-      grep_name = class_name_by_constructor_position.get(key) ?? entry.name;
-    } else {
-      grep_name = entry.name;
-    }
-    if (grep_name === "<anonymous>") continue;
-    const hits = grep_index.get(grep_name);
-    if (!hits) continue;
-    entry.diagnostics.grep_call_sites_unindexed_tests = hits.map((h) => ({
-      file_path: h.file_path as FilePath,
-      line: h.line,
-      content: h.content,
-      captures: [],
-    }));
-    // Callers exist only in unindexed test dirs when this pass found hits and
-    // the indexed-source grep pass found none → the `coverage_config` signal.
-    entry.diagnostics.callers_only_in_unindexed_tests =
-      entry.diagnostics.grep_call_sites.length === 0;
-  }
-}
-
-export async function collect_unindexed_test_files(
-  project_path: string,
-  indexed_source_files: ReadonlyMap<string, string>,
-  ignore_patterns: readonly string[],
-): Promise<Map<string, string>> {
-  const out = new Map<string, string>();
-  // Reuse core's gitignore-aware walker so test-dir discovery honours the
-  // same exclusion rules as primary indexing (`.gitignore` + `options.exclude`
-  // + `IGNORED_DIRECTORIES`). Output is then narrowed to test directories
-  // and to files not already indexed.
-  let candidates: string[];
-  try {
-    candidates = await find_source_files(
-      project_path,
-      project_path,
-      [...ignore_patterns],
-    );
-  } catch {
-    return out;
-  }
-  for (const full of candidates) {
-    if (indexed_source_files.has(full)) continue;
-    if (!TEST_FILE_EXTENSIONS.some((ext) => full.endsWith(ext))) continue;
-    const rel = `/${path.relative(project_path, full)}/`;
-    if (!UNINDEXED_TEST_DIR_SEGMENTS.some((seg) => rel.includes(seg))) continue;
-    try {
-      const content = await fs.readFile(full, "utf-8");
-      out.set(full, content);
-    } catch {
-      // silently skip unreadable
-    }
-  }
-  return out;
 }

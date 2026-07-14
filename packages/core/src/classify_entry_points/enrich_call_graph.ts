@@ -32,7 +32,7 @@ import type {
   SymbolId,
 } from "@ariadnejs/types";
 import type { Project } from "../project/project";
-import { auto_classify } from "./classify_entry_points";
+import { auto_classify } from "./auto_classify";
 import type { BuiltinCheckFn } from "./builtins";
 import { extract_entry_point_diagnostics } from "./extract_entry_point_diagnostics";
 import { load_permanent_registry } from "./registry_loader";

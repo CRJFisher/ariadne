@@ -12,6 +12,8 @@ export type { ClassifyOptions } from "./project/project";
 // Core processing functions
 export { build_index_single_file } from "./index_single_file/index_single_file";
 export { trace_call_graph, type TraceCallGraphOptions } from "./trace_call_graph/trace_call_graph";
+export { build_signature, type SignatureLocation } from "./trace_call_graph/build_signature";
+export { count_tree_size } from "./trace_call_graph/count_tree_size";
 
 // Entry-point classification (rule-application against known-issues registry)
 export {
