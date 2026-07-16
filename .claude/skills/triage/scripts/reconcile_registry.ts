@@ -276,6 +276,12 @@ export interface DriftDetection {
   proposals: DriftProposal[];
   /** `rule_id`s named by a published run but absent from the registry. */
   unknown_rule_ids: string[];
+  /**
+   * `rule_id`s named by a published run that resolve to a non-wip (permanent
+   * or fixed) rule. Drift is a wip-only signal, so these get no proposal —
+   * reported so the human can fix the predicate or demote the rule.
+   */
+  on_non_wip_rule_ids: string[];
 }
 
 /**
@@ -294,12 +300,25 @@ export function detect_drift_proposals(
     { evidence: Map<number, DriftEvidence>; flagged_by: { project: string; run_id: string }[] }
   >();
   const unknown_rule_ids: string[] = [];
+  const on_non_wip_rule_ids: string[] = [];
 
   for (const source of sources) {
     for (const flag of source.classifier_regressions) {
-      if (!rules_by_id.has(flag.rule_id)) {
+      const flagged_rule = rules_by_id.get(flag.rule_id);
+      if (flagged_rule === undefined) {
         if (!unknown_rule_ids.includes(flag.rule_id)) {
           unknown_rule_ids.push(flag.rule_id);
+        }
+        continue;
+      }
+      // Drift is a wip-only signal: `validate_entry` rejects `drift_detected`
+      // on a permanent (or fixed) row, so proposing it there writes a registry
+      // the loader refuses. A regression naming a non-wip rule is still real
+      // signal — its bundled predicate is under-matching — so surface it for
+      // the human to fix the predicate or demote the rule, never a silent drop.
+      if (flagged_rule.status !== "wip") {
+        if (!on_non_wip_rule_ids.includes(flag.rule_id)) {
+          on_non_wip_rule_ids.push(flag.rule_id);
         }
         continue;
       }
@@ -340,7 +359,7 @@ export function detect_drift_proposals(
       flagged_by: acc.flagged_by,
     });
   }
-  return { proposals, unknown_rule_ids };
+  return { proposals, unknown_rule_ids, on_non_wip_rule_ids };
 }
 
 // ---------------------------------------------------------------------------
@@ -633,6 +652,12 @@ export interface ReconcileSummary {
   deleted_builtin_sources: string[];
   /** Published `rule_id`s with no registry rule — review signals, never writes. */
   drift_unknown_rule_ids: string[];
+  /**
+   * Published `rule_id`s that name a non-wip (permanent/fixed) rule — drift is
+   * wip-only, so these get no proposal; reported so the human can fix the
+   * predicate or demote the rule, never silently dropped.
+   */
+  drift_on_non_wip_rule_ids: string[];
   /** Published files that failed to read/parse; reported, never fatal. */
   skipped_sources: SkippedSource[];
   /**
@@ -662,6 +687,7 @@ export async function run(
   let drift_proposals: DriftProposal[] = [];
   const promote_proposals: PromoteProposal[] = [];
   let drift_unknown_rule_ids: string[] = [];
+  let drift_on_non_wip_rule_ids: string[] = [];
   let skipped_sources: SkippedSource[] = [];
   const missing_ids: string[] = [];
   const rejected_promotions: RejectedRule[] = [];
@@ -738,6 +764,7 @@ export async function run(
       const detection = detect_drift_proposals(registry, discovered.sources);
       drift_proposals = detection.proposals;
       drift_unknown_rule_ids = detection.unknown_rule_ids;
+      drift_on_non_wip_rule_ids = detection.on_non_wip_rule_ids;
     }
     if (args.ids.length > 0) {
       const named = new Set(args.ids);
@@ -823,6 +850,7 @@ export async function run(
     rejected_deletions,
     deleted_builtin_sources,
     drift_unknown_rule_ids,
+    drift_on_non_wip_rule_ids,
     skipped_sources,
     applied,
     permanent_slice_changed,

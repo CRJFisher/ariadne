@@ -247,6 +247,7 @@ describe("detect_drift_proposals", () => {
         },
       ],
       unknown_rule_ids: [],
+      on_non_wip_rule_ids: [],
     });
   });
 
@@ -284,6 +285,7 @@ describe("detect_drift_proposals", () => {
         },
       ],
       unknown_rule_ids: [],
+      on_non_wip_rule_ids: [],
     });
   });
 
@@ -307,7 +309,7 @@ describe("detect_drift_proposals", () => {
           }),
         ],
       ),
-    ).toEqual({ proposals: [], unknown_rule_ids: [] });
+    ).toEqual({ proposals: [], unknown_rule_ids: [], on_non_wip_rule_ids: [] });
   });
 
   it("merges disjoint evidence from two projects, deduped by entry_index", () => {
@@ -356,6 +358,7 @@ describe("detect_drift_proposals", () => {
         },
       ],
       unknown_rule_ids: [],
+      on_non_wip_rule_ids: [],
     });
   });
 
@@ -374,7 +377,26 @@ describe("detect_drift_proposals", () => {
           }),
         ],
       ),
-    ).toEqual({ proposals: [], unknown_rule_ids: ["rule-ghost"] });
+    ).toEqual({ proposals: [], unknown_rule_ids: ["rule-ghost"], on_non_wip_rule_ids: [] });
+  });
+
+  it("skips a regression naming a permanent rule, reporting it in on_non_wip_rule_ids", () => {
+    const permanent_rule = make_wip_rule({ group_id: "rule-perm", status: "permanent" });
+    expect(
+      detect_drift_proposals(
+        [permanent_rule],
+        [
+          source({
+            classifier_regressions: [
+              {
+                rule_id: "rule-perm",
+                flagged_entries: [{ entry_index: 2, evidence_excerpt: "handlers[key]()" }],
+              },
+            ],
+          }),
+        ],
+      ),
+    ).toEqual({ proposals: [], unknown_rule_ids: [], on_non_wip_rule_ids: ["rule-perm"] });
   });
 });
 
@@ -827,6 +849,7 @@ describe("run", () => {
       rejected_deletions: [],
       deleted_builtin_sources: [],
       drift_unknown_rule_ids: [],
+      drift_on_non_wip_rule_ids: [],
       skipped_sources: [],
       applied: false,
       permanent_slice_changed: false,
