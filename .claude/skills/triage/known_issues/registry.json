@@ -415,6 +415,185 @@
         "function_name": "check_untyped_attribute_receiver",
         "min_confidence": 0.9
       }
+    },
+    {
+      "group_id": "rust-macro-registration-table",
+      "title": "Rust function registered as a value in a builtin-macro expander table",
+      "description": "A Rust function is registered as a function-pointer value inside a `register_*! { key: path::fn, }` builtin-macro expander table (rustc's register_bang!/register_attr!/register_derive!). The compiler dispatches through the stored pointer at expansion time; the binding line carries no macro-invocation token, no $crate, and the definition no reachability attribute, so the pre-expansion AST sees no call site. Disjoint from rust-macro-invocation-call, which keys on call-site macro forms this pattern lacks.",
+      "status": "wip",
+      "languages": [
+        "rust"
+      ],
+      "examples": [
+        {
+          "file": "compiler/rustc_builtin_macros/src/lib.rs",
+          "line": 86,
+          "snippet": "bench: test::expand_bench,"
+        },
+        {
+          "file": "compiler/rustc_builtin_macros/src/lib.rs",
+          "line": 95,
+          "snippet": "naked_asm: asm::expand_naked_asm,"
+        }
+      ],
+      "classifier": {
+        "function_name": "check_rust_macro_registration_table",
+        "min_confidence": 0.9
+      },
+      "classification": {
+        "kind": "framework_invoked",
+        "framework": "rust-macro-expander"
+      },
+      "observed_count": 6,
+      "observed_projects": [
+        "rust-lang/rust"
+      ],
+      "last_seen_run": "942ac9c-2026-06-22T19-29-32.970Z"
+    },
+    {
+      "group_id": "py-functional-property-accessor",
+      "title": "Python accessor passed to the functional property(...) builtin",
+      "description": "A Python function is passed as an fget/fset/fdel argument to the builtin `property(...)` call — `POST = property(_get_post, _set_post)`. The descriptor invokes the accessor implicitly on attribute access, never as an explicit call, so call captures never link a caller. The accessor carries no decorator, so py-property-decorator-access (the decorator-form sibling) structurally cannot see it; the two rules partition the property surface with no overlap.",
+      "status": "wip",
+      "languages": [
+        "python"
+      ],
+      "examples": [
+        {
+          "file": "django/http/request.py",
+          "line": 1,
+          "snippet": "POST = property(_get_post, _set_post)"
+        },
+        {
+          "file": "django/contrib/gis/gdal/datasource.py",
+          "line": 1,
+          "snippet": "srs = property(_get_srs, _set_srs)"
+        }
+      ],
+      "classifier": {
+        "function_name": "check_py_functional_property_accessor",
+        "min_confidence": 0.9
+      },
+      "classification": {
+        "kind": "framework_invoked",
+        "framework": "python_property"
+      },
+      "observed_count": 8,
+      "observed_projects": [
+        "django"
+      ],
+      "last_seen_run": "aa0efc9-2026-06-18T18-25-42.253Z"
+    },
+    {
+      "group_id": "registration-decorator-dispatch",
+      "title": "Python function enrolled by a registration decorator, dispatched via computed key",
+      "description": "A Python function is enrolled into a runtime dispatch table by a registration decorator on its definition (`@register_lowering(...)`, `@<registrar>.for_db(...)`, `@event.listens_for(...)`, `@control_command(...)`, SQLAlchemy's bare `@post`), then invoked via a computed key (`lowerings[op](...)`). The only line bearing the function's name is the decorated definition, so no static call edge exists. The curated decorator set is evidence-driven; ordinary decorators (@staticmethod, @lru_cache, @property, @pytest.fixture) and dotted HTTP-route shortcuts (@app.post) do not match.",
+      "status": "wip",
+      "languages": [
+        "python"
+      ],
+      "examples": [
+        {
+          "file": "torch/_inductor/lowering.py",
+          "line": 1,
+          "snippet": "@register_lowering(aten.convolution)"
+        },
+        {
+          "file": "lib/sqlalchemy/event/api.py",
+          "line": 1,
+          "snippet": "@event.listens_for(Engine, \"connect\")"
+        }
+      ],
+      "classifier": {
+        "function_name": "check_registration_decorator_dispatch",
+        "min_confidence": 0.9
+      },
+      "classification": {
+        "kind": "framework_invoked",
+        "framework": "registration_dispatch"
+      },
+      "observed_count": 24,
+      "observed_projects": [
+        "pytorch",
+        "celery",
+        "sqlalchemy"
+      ],
+      "last_seen_run": "1d715bc-2026-06-22T15-11-13.691Z"
+    },
+    {
+      "group_id": "dispatch-table-value-registration",
+      "title": "Callback registered as a dict/list-literal value, invoked by computed key",
+      "description": "A callback's only textual mention is its enrolment as a value in a dict/object/list literal (including lambda-wrapped dict values), later invoked through a computed key on a line that does not bear its name — `ADDER_MAP.get(node.kind())`, `table[key]()`. The registration-side companion to dynamic-property-keyed-callback (which fires on the invocation line); the name is anchored at an unquoted value position so same-named identifiers in ordinary data do not match.",
+      "status": "wip",
+      "languages": [
+        "python",
+        "typescript",
+        "javascript"
+      ],
+      "examples": [
+        {
+          "file": "torch/backends/_nnapi/serializer.py",
+          "line": 1,
+          "snippet": "\"aten::conv2d\": lambda self, node: self.add_conv2d(node),"
+        },
+        {
+          "file": "celery/events/dumper.py",
+          "line": 1,
+          "snippet": "handlers = {'*': dumper.on_event}"
+        }
+      ],
+      "classifier": {
+        "function_name": "check_dispatch_table_value_registration",
+        "min_confidence": 0.9
+      },
+      "classification": {
+        "kind": "framework_invoked",
+        "framework": "language_dispatch"
+      },
+      "observed_count": 28,
+      "observed_projects": [
+        "pytorch",
+        "celery",
+        "sqlalchemy"
+      ],
+      "last_seen_run": "1d715bc-2026-06-22T15-11-13.691Z"
+    },
+    {
+      "group_id": "callback-passed-to-invoker",
+      "title": "Bound method passed by reference to a higher-order invoker",
+      "description": "A bound method is handed by reference to a higher-order invoker that calls it indirectly — `maybe_call(self.on_node_status, ...)`, `this.socket.on('data', this.onData.bind(this))`. The entry's name appears only in argument position (a `self.`/`this.` reference with no trailing call, or `.bind(`), so the resolver has no invocation site to link. Bare-name callback arguments (`register(handler)`) are deliberately not matched — no textual discriminator separates them from data values; that form is deferred to resolver work.",
+      "status": "wip",
+      "languages": [
+        "python",
+        "javascript",
+        "typescript"
+      ],
+      "examples": [
+        {
+          "file": "celery/apps/multi.py",
+          "line": 1,
+          "snippet": "maybe_call(self.on_node_status, node, retcode)"
+        },
+        {
+          "file": "lib/webpack-dev-server/client.js",
+          "line": 1,
+          "snippet": "this.socket.on('data', this.onData.bind(this))"
+        }
+      ],
+      "classifier": {
+        "function_name": "check_callback_passed_to_invoker",
+        "min_confidence": 0.9
+      },
+      "classification": {
+        "kind": "indirect_only"
+      },
+      "observed_count": 5,
+      "observed_projects": [
+        "celery",
+        "sqlalchemy",
+        "angular"
+      ],
+      "last_seen_run": "aef7f13-2026-06-22T10-38-14.644Z"
     }
   ]
 }

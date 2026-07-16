@@ -439,13 +439,26 @@ describe("permanent-limitations catalog content", () => {
     }
   });
 
-  it("has no wip entries — the catalog's resting state is fully decided", () => {
-    // Every classifier has resolved to permanent (a true static-analysis limit),
-    // fixed/retired (the bug landed), or out of the registry entirely (deferred
-    // fixable bugs tracked only in backlog/tasks/). The last four wip residuals —
-    // all confirmed fixable CommonJS/cast/generic-inference gaps — were removed and
-    // routed to TASK-353/354/360/361.
-    expect(registry.filter((e) => e.status === "wip")).toEqual([]);
+  it("wip entries are exactly the staged probation cohort — no undecided stragglers", () => {
+    // A wip row is a classifier on probation: staged through
+    // `reconcile-registry --stage`, live in triage but not bundled into core,
+    // awaiting promotion review. Pinning the cohort by name means an
+    // unintended wip row (or a silently vanished one) still fails here, while
+    // the deliberate stage/promote lifecycle updates this list. The current
+    // cohort entered from the drift-investigation escalations (mis-classified
+    // cases that are genuine limitations with no prior rule).
+    expect(
+      registry
+        .filter((e) => e.status === "wip")
+        .map((e) => e.group_id)
+        .sort(),
+    ).toEqual([
+      "callback-passed-to-invoker",
+      "dispatch-table-value-registration",
+      "py-functional-property-accessor",
+      "registration-decorator-dispatch",
+      "rust-macro-registration-table",
+    ]);
   });
 
   it("classifiers migrated to backlog tasks or removed are absent from the registry", () => {
