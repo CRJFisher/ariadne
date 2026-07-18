@@ -6,10 +6,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   show_call_graph_neighborhood,
   show_call_graph_neighborhood_schema,
-  parse_symbol_ref,
-  find_node_by_symbol_ref,
-  build_callers_index,
-  paths_match,
 } from "./show_call_graph_neighborhood";
 import type { Project } from "@ariadnejs/core";
 import type {
@@ -161,380 +157,6 @@ describe("show_call_graph_neighborhood_schema", () => {
   });
 });
 
-describe("paths_match", () => {
-  it("should match exact paths", () => {
-    expect(paths_match("src/utils.ts", "src/utils.ts")).toBe(true);
-  });
-
-  it("should match relative path against absolute path", () => {
-    expect(paths_match("/project/src/utils.ts", "src/utils.ts")).toBe(true);
-    expect(paths_match("src/utils.ts", "/project/src/utils.ts")).toBe(true);
-  });
-
-  it("should NOT match partial path segments", () => {
-    // "ared/utils.ts" should NOT match "shared/utils.ts"
-    // because "ared" is not a complete path segment
-    expect(paths_match("ared/utils.ts", "shared/utils.ts")).toBe(false);
-    expect(paths_match("andlers.ts", "handlers.ts")).toBe(false);
-  });
-
-  it("should match filename at path boundary", () => {
-    // "utils.ts" at a path boundary (after /) SHOULD match
-    // This supports relative path matching like "utils.ts" matching "src/utils.ts"
-    expect(paths_match("utils.ts", "src/utils.ts")).toBe(true);
-  });
-
-  it("should match at path boundaries", () => {
-    // "utils.ts" at start of longer path (no prefix char) should match
-    expect(paths_match("utils.ts", "utils.ts")).toBe(true);
-    // "src/utils.ts" ending longer path should match
-    expect(paths_match("/project/src/utils.ts", "src/utils.ts")).toBe(true);
-  });
-
-  it("should handle Windows-style path separators", () => {
-    expect(paths_match("C:\\project\\src\\utils.ts", "src\\utils.ts")).toBe(true);
-  });
-});
-
-describe("parse_symbol_ref", () => {
-  it("should parse standard format", () => {
-    const result = parse_symbol_ref("src/handlers.ts:15#handle_request");
-    expect(result).toEqual({
-      file_path: "src/handlers.ts",
-      line: 15,
-      name: "handle_request",
-    });
-  });
-
-  it("should handle Windows paths with colons", () => {
-    const result = parse_symbol_ref("C:/Users/foo/bar.ts:10#my_func");
-    expect(result).toEqual({
-      file_path: "C:/Users/foo/bar.ts",
-      line: 10,
-      name: "my_func",
-    });
-  });
-
-  it("should handle deep paths", () => {
-    const result = parse_symbol_ref(
-      "packages/core/src/utils/helpers.ts:42#helper_func"
-    );
-    expect(result).toEqual({
-      file_path: "packages/core/src/utils/helpers.ts",
-      line: 42,
-      name: "helper_func",
-    });
-  });
-
-  it("should handle names with underscores", () => {
-    const result = parse_symbol_ref("test.ts:1#__private_method__");
-    expect(result).toEqual({
-      file_path: "test.ts",
-      line: 1,
-      name: "__private_method__",
-    });
-  });
-
-  it("should throw on missing hash", () => {
-    expect(() => parse_symbol_ref("test.ts:1")).toThrow("missing '#'");
-  });
-
-  it("should throw on missing colon before line", () => {
-    expect(() => parse_symbol_ref("test.ts#foo")).toThrow("missing ':'");
-  });
-
-  it("should throw on non-numeric line", () => {
-    expect(() => parse_symbol_ref("test.ts:abc#foo")).toThrow("not a number");
-  });
-});
-
-describe("find_node_by_symbol_ref", () => {
-  it("should find node by exact match", () => {
-    const node = create_mock_node(
-      "symbol:foo",
-      "foo",
-      "src/utils.ts",
-      10,
-      20
-    );
-    const call_graph: CallGraph = {
-      nodes: new Map([[node.symbol_id, node]]),
-      entry_points: [node.symbol_id],
-    };
-
-    const result = find_node_by_symbol_ref(call_graph, {
-      file_path: "src/utils.ts",
-      line: 10,
-      name: "foo",
-    });
-
-    expect(result).toBe(node);
-  });
-
-  it("should match relative path against absolute path", () => {
-    const node = create_mock_node(
-      "symbol:foo",
-      "foo",
-      "/Users/me/project/src/utils.ts",
-      10,
-      20
-    );
-    const call_graph: CallGraph = {
-      nodes: new Map([[node.symbol_id, node]]),
-      entry_points: [node.symbol_id],
-    };
-
-    const result = find_node_by_symbol_ref(call_graph, {
-      file_path: "src/utils.ts",
-      line: 10,
-      name: "foo",
-    });
-
-    expect(result).toBe(node);
-  });
-
-  it("should return undefined when not found", () => {
-    const node = create_mock_node(
-      "symbol:foo",
-      "foo",
-      "src/utils.ts",
-      10,
-      20
-    );
-    const call_graph: CallGraph = {
-      nodes: new Map([[node.symbol_id, node]]),
-      entry_points: [node.symbol_id],
-    };
-
-    const result = find_node_by_symbol_ref(call_graph, {
-      file_path: "src/utils.ts",
-      line: 10,
-      name: "bar", // Wrong name
-    });
-
-    expect(result).toBeUndefined();
-  });
-
-  it("should return undefined when line doesn't match", () => {
-    const node = create_mock_node(
-      "symbol:foo",
-      "foo",
-      "src/utils.ts",
-      10,
-      20
-    );
-    const call_graph: CallGraph = {
-      nodes: new Map([[node.symbol_id, node]]),
-      entry_points: [node.symbol_id],
-    };
-
-    const result = find_node_by_symbol_ref(call_graph, {
-      file_path: "src/utils.ts",
-      line: 11, // Wrong line
-      name: "foo",
-    });
-
-    expect(result).toBeUndefined();
-  });
-});
-
-describe("build_callers_index", () => {
-  it("should build empty index for no calls", () => {
-    const node = create_mock_node("symbol:foo", "foo", "test.ts", 1, 5);
-    const call_graph: CallGraph = {
-      nodes: new Map([[node.symbol_id, node]]),
-      entry_points: [node.symbol_id],
-    };
-
-    const index = build_callers_index(call_graph);
-
-    expect(index.size).toBe(0);
-  });
-
-  it("should map callee to caller", () => {
-    const callee = create_mock_node("symbol:callee", "callee", "test.ts", 1, 5);
-    const caller = create_mock_node(
-      "symbol:caller",
-      "caller",
-      "test.ts",
-      10,
-      20,
-      [
-        {
-          name: "callee" as SymbolName,
-          location: {} as any,
-          scope_id: "scope:caller" as any,
-          call_type: "function",
-          resolutions: [{ symbol_id: callee.symbol_id, confidence: "certain" as any, reason: { type: "direct" } }],
-        },
-      ]
-    );
-
-    const call_graph: CallGraph = {
-      nodes: new Map([
-        [callee.symbol_id, callee],
-        [caller.symbol_id, caller],
-      ]),
-      entry_points: [caller.symbol_id],
-    };
-
-    const index = build_callers_index(call_graph);
-
-    expect(index.has(callee.symbol_id)).toBe(true);
-    expect(index.get(callee.symbol_id)?.has(caller.symbol_id)).toBe(true);
-  });
-
-  it("should handle multiple callers", () => {
-    const callee = create_mock_node("symbol:callee", "callee", "test.ts", 1, 5);
-    const caller1 = create_mock_node(
-      "symbol:caller1",
-      "caller1",
-      "test.ts",
-      10,
-      20,
-      [
-        {
-          name: "callee" as SymbolName,
-          location: {} as any,
-          scope_id: "scope:caller1" as any,
-          call_type: "function",
-          resolutions: [{ symbol_id: callee.symbol_id, confidence: "certain" as any, reason: { type: "direct" } }],
-        },
-      ]
-    );
-    const caller2 = create_mock_node(
-      "symbol:caller2",
-      "caller2",
-      "test.ts",
-      30,
-      40,
-      [
-        {
-          name: "callee" as SymbolName,
-          location: {} as any,
-          scope_id: "scope:caller2" as any,
-          call_type: "function",
-          resolutions: [{ symbol_id: callee.symbol_id, confidence: "certain" as any, reason: { type: "direct" } }],
-        },
-      ]
-    );
-
-    const call_graph: CallGraph = {
-      nodes: new Map([
-        [callee.symbol_id, callee],
-        [caller1.symbol_id, caller1],
-        [caller2.symbol_id, caller2],
-      ]),
-      entry_points: [caller1.symbol_id, caller2.symbol_id],
-    };
-
-    const index = build_callers_index(call_graph);
-
-    expect(index.get(callee.symbol_id)?.size).toBe(2);
-    expect(index.get(callee.symbol_id)?.has(caller1.symbol_id)).toBe(true);
-    expect(index.get(callee.symbol_id)?.has(caller2.symbol_id)).toBe(true);
-  });
-
-  it("should preserve genuine recursive self-calls", () => {
-    // A function that calls itself (genuine recursion)
-    const recursive_func = create_mock_node(
-      "symbol:factorial",
-      "factorial",
-      "test.ts",
-      1,
-      10,
-      [
-        {
-          name: "factorial" as SymbolName,
-          location: {} as any,
-          scope_id: "scope:factorial" as any,
-          call_type: "function",
-          // NOT a callback invocation - genuine recursive call
-          resolutions: [{ symbol_id: "symbol:factorial" as SymbolId, confidence: "certain" as any, reason: { type: "direct" } }],
-        },
-      ]
-    );
-
-    const call_graph: CallGraph = {
-      nodes: new Map([[recursive_func.symbol_id, recursive_func]]),
-      entry_points: [recursive_func.symbol_id],
-    };
-
-    const index = build_callers_index(call_graph);
-
-    // Genuine recursion should be preserved in the callers index
-    expect(index.has(recursive_func.symbol_id)).toBe(true);
-    expect(index.get(recursive_func.symbol_id)?.has(recursive_func.symbol_id)).toBe(true);
-  });
-
-  it("should filter callback invocation self-calls", () => {
-    // An anonymous callback that appears to call itself due to scope resolution artifacts
-    const callback_func = create_mock_node(
-      "symbol:anonymous_callback",
-      "<anonymous>",
-      "test.ts",
-      5,
-      15,
-      [
-        {
-          name: "<anonymous>" as SymbolName,
-          location: {} as any,
-          scope_id: "scope:callback" as any,
-          call_type: "function",
-          // This IS a callback invocation - should be filtered
-          is_callback_invocation: true,
-          resolutions: [{ symbol_id: "symbol:anonymous_callback" as SymbolId, confidence: "certain" as any, reason: { type: "direct" } }],
-        },
-      ]
-    );
-
-    const call_graph: CallGraph = {
-      nodes: new Map([[callback_func.symbol_id, callback_func]]),
-      entry_points: [callback_func.symbol_id],
-    };
-
-    const index = build_callers_index(call_graph);
-
-    // Callback self-call should be filtered out
-    expect(index.has(callback_func.symbol_id)).toBe(false);
-  });
-
-  it("should preserve non-self callback invocations", () => {
-    // A callback that calls another function (not itself)
-    const target_func = create_mock_node("symbol:target", "target", "test.ts", 1, 5);
-    const callback_func = create_mock_node(
-      "symbol:callback",
-      "<anonymous>",
-      "test.ts",
-      10,
-      20,
-      [
-        {
-          name: "target" as SymbolName,
-          location: {} as any,
-          scope_id: "scope:callback" as any,
-          call_type: "function",
-          is_callback_invocation: true,
-          resolutions: [{ symbol_id: target_func.symbol_id, confidence: "certain" as any, reason: { type: "direct" } }],
-        },
-      ]
-    );
-
-    const call_graph: CallGraph = {
-      nodes: new Map([
-        [target_func.symbol_id, target_func],
-        [callback_func.symbol_id, callback_func],
-      ]),
-      entry_points: [callback_func.symbol_id],
-    };
-
-    const index = build_callers_index(call_graph);
-
-    // Non-self callback invocations should be preserved
-    expect(index.has(target_func.symbol_id)).toBe(true);
-    expect(index.get(target_func.symbol_id)?.has(callback_func.symbol_id)).toBe(true);
-  });
-});
 
 describe("show_call_graph_neighborhood", () => {
   let mock_project: Pick<Project, "get_call_graph">;
@@ -828,6 +450,55 @@ describe("show_call_graph_neighborhood", () => {
     expect(result_depth2).toContain("c1(): void");
     expect(result_depth2).toContain("c2(): void");
     expect(result_depth2).not.toContain("c3(): void");
+  });
+
+  it("respects callees_depth limit across a multi-level chain", async () => {
+    // Chain: target -> h1 -> h2
+    const h2 = create_mock_node("symbol:h2", "h2", "test.ts", 30, 35);
+    const h1 = create_mock_node("symbol:h1", "h1", "test.ts", 20, 25, [
+      {
+        name: "h2" as SymbolName,
+        location: {} as any,
+        scope_id: "scope:h1" as any,
+        call_type: "function",
+        resolutions: [{ symbol_id: h2.symbol_id, confidence: "certain" as any, reason: { type: "direct" } }],
+      },
+    ]);
+    const target = create_mock_node("symbol:target", "target", "test.ts", 1, 5, [
+      {
+        name: "h1" as SymbolName,
+        location: {} as any,
+        scope_id: "scope:target" as any,
+        call_type: "function",
+        resolutions: [{ symbol_id: h1.symbol_id, confidence: "certain" as any, reason: { type: "direct" } }],
+      },
+    ]);
+
+    const call_graph: CallGraph = {
+      nodes: new Map([
+        [target.symbol_id, target],
+        [h1.symbol_id, h1],
+        [h2.symbol_id, h2],
+      ]),
+      entry_points: [target.symbol_id],
+    };
+    vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
+
+    const result_depth1 = await call_show({
+      symbol_ref: "test.ts:1#target",
+      callees_depth: 1,
+      show_full_signature: true,
+    });
+    expect(result_depth1).toContain("h1(): void");
+    expect(result_depth1).not.toContain("h2(): void");
+
+    const result_depth2 = await call_show({
+      symbol_ref: "test.ts:1#target",
+      callees_depth: 2,
+      show_full_signature: true,
+    });
+    expect(result_depth2).toContain("h1(): void");
+    expect(result_depth2).toContain("h2(): void");
   });
 
   it("should show just name when show_full_signature is false", async () => {

@@ -27,7 +27,7 @@ describe("MCP Server E2E - list_entrypoints tool", () => {
   const PACKAGES_CORE_PATH = path.resolve(__dirname, "../../../../core");
 
   // Path to the built server executable (3 levels up from src/tools/core/)
-  const SERVER_PATH = path.resolve(__dirname, "../../../dist/server.js");
+  const SERVER_PATH = path.resolve(__dirname, "../../../dist/cli.js");
 
   beforeAll(async () => {
     // Create MCP client with stdio transport
@@ -302,7 +302,7 @@ describe("MCP Server E2E - list_entrypoints with show_suppressed enabled", () =>
   let transport: StdioClientTransport;
 
   const PACKAGES_CORE_PATH = path.resolve(__dirname, "../../../../core");
-  const SERVER_PATH = path.resolve(__dirname, "../../../dist/server.js");
+  const SERVER_PATH = path.resolve(__dirname, "../../../dist/cli.js");
 
   beforeAll(async () => {
     // Spawn a separate server with the suppressed-section flag enabled.

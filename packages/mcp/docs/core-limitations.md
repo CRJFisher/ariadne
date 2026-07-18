@@ -28,7 +28,7 @@ This document outlines current limitations in `@ariadnejs/core` that prevent ful
 
 **Evidence**:
 
-- In `packages/mcp/src/start_server.ts:169`: "TODO task-51: Ref type doesn't include file info yet"
+- Symbol-ref resolution (`packages/mcp/src/tools/core/resolve_symbol_ref.ts`) matches on file path, line, and name because the `Ref` type carries no file info of its own
 - References are assumed to be in the same file as the definition
 
 **Impact**:

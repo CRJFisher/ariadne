@@ -4,11 +4,10 @@ import * as path from "path";
 import * as fs from "fs";
 import {
   init_analytics,
-  is_analytics_enabled,
   record_session_client_info,
   record_tool_call,
   close_analytics,
-} from "./analytics";
+} from "./session_writer";
 
 // Suppress logger output during tests
 vi.mock("@ariadnejs/core", async (import_original) => {
@@ -28,7 +27,7 @@ function read_jsonl<T>(file_path: string): T[] {
     .map((line) => JSON.parse(line) as T);
 }
 
-describe("analytics", () => {
+describe("session_writer", () => {
   let analytics_dir: string;
   let sid: string;
   let tmp_dir: string;
@@ -214,58 +213,6 @@ describe("analytics", () => {
 
     it("is safe to call when not initialized", () => {
       expect(() => close_analytics()).not.toThrow();
-    });
-  });
-
-  describe("is_analytics_enabled", () => {
-    const original_env = process.env;
-
-    beforeEach(() => {
-      process.env = { ...original_env };
-      delete process.env.ARIADNE_ANALYTICS;
-    });
-
-    afterEach(() => {
-      process.env = original_env;
-    });
-
-    it("returns true when ARIADNE_ANALYTICS=1 env var is set", () => {
-      process.env.ARIADNE_ANALYTICS = "1";
-      expect(is_analytics_enabled()).toEqual(true);
-    });
-
-    it("returns true when config file has analytics: true", () => {
-      const config_dir = path.join(tmp_dir, ".ariadne");
-      fs.mkdirSync(config_dir, { recursive: true });
-      fs.writeFileSync(
-        path.join(config_dir, "config.json"),
-        JSON.stringify({ analytics: true }),
-      );
-      process.env.HOME = tmp_dir;
-
-      expect(is_analytics_enabled()).toEqual(true);
-    });
-
-    it("returns false when neither env var nor config is set", () => {
-      process.env.HOME = tmp_dir;
-      expect(is_analytics_enabled()).toEqual(false);
-    });
-
-    it("returns false when config file does not exist", () => {
-      process.env.HOME = tmp_dir;
-      expect(is_analytics_enabled()).toEqual(false);
-    });
-
-    it("returns false when config file is malformed JSON", () => {
-      const config_dir = path.join(tmp_dir, ".ariadne");
-      fs.mkdirSync(config_dir, { recursive: true });
-      fs.writeFileSync(
-        path.join(config_dir, "config.json"),
-        "not valid json{{",
-      );
-      process.env.HOME = tmp_dir;
-
-      expect(is_analytics_enabled()).toEqual(false);
     });
   });
 });

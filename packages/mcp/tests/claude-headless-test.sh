@@ -78,11 +78,11 @@ check_prerequisites() {
     log_verbose "MCP config found: $MCP_CONFIG"
 
     # Check MCP server is built
-    if [[ ! -f "$PROJECT_ROOT/packages/mcp/dist/server.js" ]]; then
+    if [[ ! -f "$PROJECT_ROOT/packages/mcp/dist/cli.js" ]]; then
         log_error "MCP server not built. Run 'npm run build' in packages/mcp first."
         exit 1
     fi
-    log_verbose "MCP server built: $PROJECT_ROOT/packages/mcp/dist/server.js"
+    log_verbose "MCP server built: $PROJECT_ROOT/packages/mcp/dist/cli.js"
 
     # Check fixtures exist
     if [[ ! -d "$PROJECT_ROOT/packages/core/tests/fixtures/typescript/code" ]]; then

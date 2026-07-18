@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import type { ToolCallRow } from "./analytics_config";
 
 export interface SessionRow {
   session_id: string;
@@ -7,18 +8,6 @@ export interface SessionRow {
   project_path: string;
   client_name: string | null;
   client_version: string | null;
-}
-
-export interface ToolCallRow {
-  session_id: string;
-  tool_name: string;
-  called_at: string;
-  duration_ms: number;
-  success: boolean;
-  error_message: string | null;
-  arguments: Record<string, unknown>;
-  request_id: string | null;
-  tool_use_id: string | null;
 }
 
 export interface ToolCallSummary {

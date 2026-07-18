@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "ariadne-mcp": "dist/server.js",
+    "ariadne-mcp": "dist/cli.js",
     "ariadne-analytics": "dist/scripts/ariadne_analytics.js"
   },
   "files": [
@@ -16,13 +16,13 @@
   "scripts": {
     "update-version": "node scripts/update-version.js",
     "prebuild": "npm run update-version",
-    "build": "tsc && chmod +x dist/server.js",
+    "build": "tsc && chmod +x dist/cli.js",
     "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run build && npm test",
-    "start": "node dist/server.js"
+    "start": "node dist/cli.js"
   },
   "keywords": [
     "mcp",

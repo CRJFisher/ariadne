@@ -1,4 +1,4 @@
-import type { ToolGroupDefinition } from "../tool_registry";
+import type { ToolGroupDefinition } from "../register_tools";
 import {
   list_entrypoints,
   list_entrypoints_schema,

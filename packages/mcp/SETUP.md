@@ -151,7 +151,7 @@ If you're developing or have cloned the Ariadne repository:
   "mcpServers": {
     "ariadne-dev": {
       "command": "node",
-      "args": ["/path/to/ariadne/packages/mcp/dist/server.js"]
+      "args": ["/path/to/ariadne/packages/mcp/dist/cli.js"]
     }
   }
 }

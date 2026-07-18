@@ -3,7 +3,9 @@ import type { CallToolResult, ToolAnnotations } from "@modelcontextprotocol/sdk/
 import type { Project } from "@ariadnejs/core";
 import type { ProjectManager } from "../project_manager";
 import { resolve_project } from "./resolve_project";
-import { record_tool_call } from "../analytics/analytics";
+// Analytics edge: every registered tool callback records its call here, so
+// usage capture cannot drift out of sync with registration.
+import { record_tool_call } from "../analytics/session_writer";
 
 /**
  * A single tool's definition: schema, metadata, and pure handler function.
