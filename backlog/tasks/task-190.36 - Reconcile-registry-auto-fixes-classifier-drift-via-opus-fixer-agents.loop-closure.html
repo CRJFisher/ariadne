@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <!-- SPDX-License-Identifier: Apache-2.0 -->
-<!-- Companion for TASK-190.36 — reconcile-registry closes the classifier-drift loop by dispatching one opus fixer agent per drifted rule.
-     Built against: task-190.36 description + AC; packages/types/src/known_issues.ts:62-67 (DriftEvidence current shape);
-     .claude/skills/triage/scripts/reconcile_registry.ts:293-363 (detect_drift_proposals dedup + flagged_by);
+<!-- Companion for TASK-190.36 (Done) — reconcile-registry closes the classifier-drift loop by dispatching one opus classifier-fixer agent per drifted rule.
+     Built against: task-190.36 description + AC (status Done); packages/types/src/known_issues.ts:64-73 (as-built DriftEvidence: project, run_id, entry_index, evidence_excerpt);
+     .claude/skills/triage/scripts/reconcile_registry.ts:293-374 (drift_dedup_key NUL-join + detect_drift_proposals);
+     .claude/skills/triage/src/known_issues_registry.ts:290-313 (validate_drift_evidence — rejects malformed rows at load, non-integer entry_index);
+     .claude/agents/classifier-fixer.md (as-built fixer: fixability triage → captured / fixable-in-ariadne / mis-classified / skipped; get_entry_context --project --run-id --entry --enriched);
+     .claude/skills/reconcile-registry/SKILL.md step 4 (registry-derived dispatch set, staging, one post-wave build);
      packages/core/src/classify_entry_points/builtins/check_untyped-attribute-receiver.ts:30-53 (a real BuiltinCheckFn the fixer edits);
-     .claude/agents/classifier-author.md:34-37 (get_entry_context.ts selector) + :70-86 (mis-classified escalation);
      .claude/rules/classifier-lifecycle.md (source edit, not a registry write). Inherits TASK-190 family design tokens. -->
 <html lang="en">
 <head>
@@ -85,7 +87,7 @@
   /* crux walk — numbered step list bound to the diagram badges */
   .steps{display:grid;grid-template-columns:44px 1fr;gap:12px 14px;margin:16px 0 4px}
   .steps .badge{width:32px;height:32px;border-radius:50%;background:var(--clay);color:var(--ivory);font-family:var(--mono);font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:2px}
-  .steps .badge.cap{background:var(--olive)} .steps .badge.esc{background:var(--clay)}
+  .steps .badge.cap{background:var(--olive)} .steps .badge.esc{background:var(--clay)} .steps .badge.fix{background:#5f6b78}
   .steps .body{align-self:start}
   .steps .st-title{font-family:var(--sans);font-weight:600;font-size:14.5px;color:var(--slate);margin:0 0 3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .steps .st-title .glyph{width:16px;height:16px;flex:none}
@@ -96,11 +98,12 @@
   .tag-pill{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:2px 8px}
   .tag-pill.cap{background:#f2f4ec;color:var(--olive);border:1px solid #c3ceac}
   .tag-pill.esc{background:#faf2ec;color:var(--clay);border:1px solid #e2c3ad}
+  .tag-pill.fix{background:#eef1f4;color:#4f5b68;border:1px solid #b8c4cf}
   /* matrix (termination states) */
   table.matrix{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
   table.matrix th,table.matrix td{border:1px solid var(--g200);padding:11px 12px;text-align:left;vertical-align:middle}
   table.matrix thead th{background:var(--oat);font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--slate);font-weight:600}
-  table.matrix thead th.cap{color:var(--olive)} table.matrix thead th.esc{color:var(--clay)}
+  table.matrix thead th.cap{color:var(--olive)} table.matrix thead th.esc{color:var(--clay)} table.matrix thead th.fix{color:#4f5b68}
   table.matrix td.crit{font-size:12.5px;color:var(--slate);max-width:40ch}
   table.matrix td.gcell{text-align:center;width:22%}
   .gl{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;white-space:nowrap}
@@ -108,6 +111,7 @@
   .gl.yes::before{background:var(--olive)}
   .gl.no::before{background:transparent;border:2px solid var(--g400);width:12px;height:12px}
   .gl.yes.esc::before{background:var(--clay)}
+  .gl.yes.fix::before{background:#5f6b78}
   /* code panel */
   .code{background:var(--code);color:var(--codeink);border-radius:var(--r);padding:0;margin:14px 0;overflow:hidden;border:1px solid #000}
   .code .file{font-family:var(--mono);font-size:11px;color:#b9b2a3;background:#1c1a16;padding:8px 14px;border-bottom:1px solid #000;display:flex;justify-content:space-between}
@@ -126,6 +130,10 @@
   details.disc[open]>summary .chev{transform:rotate(45deg)}
   details.disc>summary b{color:var(--slate)}
   details.disc .inner{padding:0 15px 6px}
+  dl.dispatch{margin:12px 0 6px;display:grid;grid-template-columns:auto 1fr;gap:9px 18px;align-items:baseline}
+  dl.dispatch dt{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--clay);white-space:nowrap}
+  dl.dispatch dd{margin:0;font-size:13px;color:var(--g600)}
+  dl.dispatch dd b{color:var(--slate)}
   footer{border-top:1px solid var(--g200);margin-top:60px;padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400);max-width:96ch}
   footer code{background:var(--g100);color:var(--g600)}
   @media(max-width:760px){
@@ -167,7 +175,7 @@
     <a href="#change">What closing the loop changes</a>
     <a href="#loop">The fixer agent's work loop</a>
     <a href="#schema">The enabling schema change</a>
-    <a href="#states">The two termination states</a>
+    <a href="#states">The three termination states</a>
   </div>
 </nav>
 
@@ -175,29 +183,31 @@
   <p class="eyebrow">Self-repair pipeline · classifier drift · closing the loop</p>
   <h1>Reconcile-registry repairs a drifted classifier, one fixer agent at a time</h1>
 
-  <p class="preamble prose">Ariadne flags functions that look unreachable. Some flags are false alarms — the function IS called, through dynamic dispatch a static analyzer can't follow — so a small "classifier" predicate learns each false-alarm shape and suppresses it. Over time a classifier can start missing cases it once caught (drift). Today reconcile-registry only NOTICES drift and records the missed cases; a human then hand-edits the predicate. Task 190.36 closes that loop: after drift is recorded, it dispatches one focused agent per drifted classifier to repair its predicate. The hard part is a tug-of-war — widen the predicate to catch missed cases (recall), but not so wide it silences genuinely-unreachable functions the pipeline exists to surface (precision). So each agent captures only cases that are truly the same limitation, and escalates the rest.</p>
+  <p class="preamble prose">Ariadne flags functions that look unreachable. Some flags are false alarms — the function IS called, through dynamic dispatch a static analyzer can't follow — so a small "classifier" predicate learns each false-alarm shape and suppresses it. Over time a classifier can start missing cases it once caught (drift). reconcile-registry records those missed cases as evidence; the loop now closes itself, dispatching one opus agent per drifted classifier to repair its predicate. The hard part is a tug-of-war — widen to catch missed cases (recall), but not so wide it silences real unreachable functions the pipeline exists to surface (precision). So each agent asks a fixability question first, then lands every case in one state: <b>captured</b>, referred as a <b>fixable-in-Ariadne</b> bug, or escalated as <b>mis-classified</b> — parking anything too thin to judge as <b>skipped</b>.</p>
 
   <div class="meta">
     <span class="chip">parent <strong>TASK-190</strong></span>
-    <span class="chip todo">status <strong>To Do</strong></span>
+    <span class="chip">status <strong>Done</strong></span>
     <span class="chip">owner skill <strong>reconcile-registry</strong></span>
+    <span class="chip">agent <strong>classifier-fixer · opus</strong></span>
     <span class="chip">edit target <strong>check_&lt;group_id&gt;.ts</strong></span>
-    <span class="chip">agent <strong>1 opus / drifted rule</strong></span>
+    <span class="chip">terminal states <strong>captured · fixable · mis-classified</strong></span>
   </div>
 
   <div class="provenance prose">
-    <span class="plabel">Grounded in</span>
-    <code>task-190.36</code> description + acceptance criteria · <code>packages/types/src/known_issues.ts:62-67</code> · <code>reconcile_registry.ts:293-363</code> · <code>check_untyped-attribute-receiver.ts:30-53</code> · <code>.claude/agents/classifier-author.md</code> · <code>.claude/rules/classifier-lifecycle.md</code>
+    <span class="plabel">Grounded in the as-built sources</span>
+    <code>task-190.36</code> (Done) · <code>packages/types/src/known_issues.ts:64-73</code> · <code>reconcile_registry.ts:293-374</code> · <code>known_issues_registry.ts:290-313</code> · <code>.claude/agents/classifier-fixer.md</code> · <code>reconcile-registry/SKILL.md</code> step 4 · <code>check_untyped-attribute-receiver.ts:30-53</code> · <code>.claude/rules/classifier-lifecycle.md</code>
   </div>
 
   <h2 id="where">Where this link sits in the self-repair chain</h2>
-  <p class="cap prose">Triage publishes regressions; reconcile-registry records drift. <b>This work adds the next link</b> — a fixer agent that edits core's <code>check_&lt;group_id&gt;.ts</code> builtins, escalating to <code>classifier-author</code> for a different limitation.</p>
+  <p class="cap prose">Triage publishes regressions; reconcile-registry records drift. <b>The closing link</b> is a <code>classifier-fixer</code> agent: it edits core's <code>check_&lt;group_id&gt;.ts</code> for same-limitation cases, refers a <b>fixable</b> bug to the backlog, and escalates a <b>mis-classified</b> case to <code>classifier-author</code>.</p>
 
   <div class="panelwrap">
-    <svg viewBox="0 0 1020 250" role="img" aria-label="System context: a triage run publishes classifier_regressions; reconcile-registry --drift sets drift_detected and appends drift_evidence; THIS WORK dispatches one opus fixer agent per drifted rule; the agent edits core's check builtins, and escalates mis-classified cases to classifier-author.">
+    <svg viewBox="0 0 1020 270" role="img" aria-label="System context: a triage run publishes classifier_regressions; reconcile-registry --drift sets drift_detected and appends drift_evidence; the session dispatches one opus classifier-fixer agent per drifted rule; the agent edits core's check builtins for captured cases, refers fixable cases to a backlog proposal, and escalates mis-classified cases to classifier-author.">
       <defs>
         <marker id="sc-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#9a9387"/></marker>
         <marker id="sc-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b9794f"/></marker>
+        <marker id="sc-f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#5f6b78"/></marker>
       </defs>
       <g font-family="ui-monospace,monospace">
         <!-- triage run -->
@@ -210,21 +220,25 @@
         <text x="361" y="94" text-anchor="middle" font-size="11.5" fill="#2b2a28">reconcile-registry --drift</text>
         <text x="361" y="112" text-anchor="middle" font-size="9" fill="#5f594f">set drift_detected: true</text>
         <text x="361" y="125" text-anchor="middle" font-size="9" fill="#5f594f">append drift_evidence[]</text>
-        <!-- THIS WORK fixer dispatch -->
+        <!-- fixer dispatch (the closing link) -->
         <rect x="518" y="62" width="232" height="86" rx="11" fill="#f0dcc9" stroke="#b9794f" stroke-width="2.4"/>
-        <text x="634" y="82" text-anchor="middle" font-size="8.5" fill="#a8472f" letter-spacing="1">THIS WORK · 190.36</text>
-        <text x="634" y="102" text-anchor="middle" font-size="12" fill="#2b2a28">fixer-agent dispatch</text>
+        <text x="634" y="82" text-anchor="middle" font-size="8.5" fill="#a8472f" letter-spacing="1">190.36 · CLOSES THE LOOP</text>
+        <text x="634" y="102" text-anchor="middle" font-size="12" fill="#2b2a28">classifier-fixer dispatch</text>
         <text x="634" y="120" text-anchor="middle" font-size="9" fill="#5f594f">one opus agent</text>
         <text x="634" y="132" text-anchor="middle" font-size="9" fill="#5f594f">per drifted rule</text>
         <!-- core builtins -->
         <rect x="800" y="72" width="200" height="66" rx="10" fill="#e7ddc9" stroke="#9a9387"/>
         <text x="900" y="98" text-anchor="middle" font-size="12" fill="#2b2a28">core builtins</text>
         <text x="900" y="118" text-anchor="middle" font-size="10" fill="#5f594f">check_&lt;group_id&gt;.ts</text>
-        <text x="900" y="130" text-anchor="middle" font-size="8.5" fill="#9a9387">(the edit target)</text>
+        <text x="900" y="130" text-anchor="middle" font-size="8.5" fill="#9a9387">(captured — the edit target)</text>
+        <!-- fixable referral -->
+        <rect x="392" y="200" width="222" height="48" rx="10" fill="#eef1f4" stroke="#5f6b78" stroke-dasharray="5 4"/>
+        <text x="503" y="220" text-anchor="middle" font-size="11" fill="#4f5b68">backlog-task proposal</text>
+        <text x="503" y="235" text-anchor="middle" font-size="8.5" fill="#6c7a4a">fixable-in-Ariadne · never absorbed</text>
         <!-- classifier-author escalation -->
-        <rect x="518" y="188" width="232" height="46" rx="10" fill="#fffdf8" stroke="#b9794f" stroke-dasharray="5 4"/>
-        <text x="634" y="207" text-anchor="middle" font-size="11" fill="#a8472f">classifier-author</text>
-        <text x="634" y="222" text-anchor="middle" font-size="8.5" fill="#9a9387">escalation target · novel group</text>
+        <rect x="654" y="200" width="238" height="48" rx="10" fill="#fffdf8" stroke="#b9794f" stroke-dasharray="5 4"/>
+        <text x="773" y="220" text-anchor="middle" font-size="11" fill="#a8472f">classifier-author</text>
+        <text x="773" y="235" text-anchor="middle" font-size="8.5" fill="#9a9387">mis-classified · novel group</text>
         <!-- edges -->
         <line x1="204" y1="105" x2="252" y2="105" stroke="#9a9387" stroke-width="1.7" marker-end="url(#sc-g)"/>
         <text x="228" y="98" text-anchor="middle" font-size="8.5" fill="#9a9387">publishes</text>
@@ -232,15 +246,17 @@
         <text x="492" y="98" text-anchor="middle" font-size="8.5" fill="#b9794f">on drift</text>
         <line x1="750" y1="105" x2="798" y2="105" stroke="#b9794f" stroke-width="1.8" marker-end="url(#sc-c)"/>
         <text x="774" y="98" text-anchor="middle" font-size="8.5" fill="#b9794f">edits</text>
-        <line x1="634" y1="148" x2="634" y2="186" stroke="#b9794f" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#sc-c)"/>
-        <text x="700" y="172" text-anchor="middle" font-size="8.5" fill="#a8472f">mis-classified</text>
+        <path d="M600 148 C560 172, 520 178, 503 198" fill="none" stroke="#5f6b78" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#sc-f)"/>
+        <text x="512" y="172" text-anchor="middle" font-size="8.5" fill="#4f5b68">fixable</text>
+        <path d="M668 148 C708 172, 748 178, 765 198" fill="none" stroke="#b9794f" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#sc-c)"/>
+        <text x="762" y="172" text-anchor="middle" font-size="8.5" fill="#a8472f">mis-classified</text>
       </g>
     </svg>
   </div>
-  <p class="cap prose">The drift signal is mechanical and already lands; the missing link is turning each recorded miss into a repaired predicate without human hand-editing.</p>
+  <p class="cap prose">The drift signal is mechanical and already landed; the closing link turns each recorded miss into a repaired predicate — or a routed hand-off — without human hand-editing.</p>
 
   <h2 id="crux">Why the fixer can't just broaden until every case matches</h2>
-  <p class="cap prose">Recall and precision pull in opposite directions. Widening the predicate to catch missed cases is the tempting move — but each widening risks matching real unreachable functions, which are exactly the <b>true-positives the pipeline exists to surface</b>. The termination condition is the resolution, not a compromise.</p>
+  <p class="cap prose">Recall and precision pull in opposite directions. Widening the predicate is tempting — but each widening risks matching real unreachable functions, the <b>true-positives the pipeline exists to surface</b>. The termination condition is the resolution, not a compromise.</p>
 
   <div class="panelwrap">
     <svg viewBox="0 0 1040 500" role="img" aria-label="Causal map of the precision/recall tension. A drifted classifier causes low recall. Broadening the predicate raises recall but risks low precision, which suppresses true-positives — the real unreachable functions the pipeline exists to surface. The raise-recall force and the keep-precision force are in tension. The termination condition constrains broadening: capture same-limitation cases only, escalate the rest.">
@@ -275,11 +291,13 @@
         <text x="675" y="382" text-anchor="middle" font-size="11" fill="#a8472f">low precision</text>
         <text x="675" y="402" text-anchor="middle" font-size="9.5" fill="#5f594f">→ true-positive suppression</text>
         <!-- N6 termination condition (heavy) -->
-        <rect x="120" y="356" width="326" height="80" rx="11" fill="#f2f4ec" stroke="#6c7a4a" stroke-width="2.6"/>
-        <text x="283" y="382" text-anchor="middle" font-size="12" fill="#2b2a28">termination condition</text>
-        <text x="283" y="401" text-anchor="middle" font-size="9.5" fill="#6c7a4a">capture same-limitation only,</text>
-        <text x="283" y="415" text-anchor="middle" font-size="9.5" fill="#6c7a4a">escalate the rest</text>
-        <circle cx="130" cy="356" r="14" fill="#6c7a4a"/><text x="130" y="361" text-anchor="middle" font-size="13" fill="#f7f3ec" font-weight="600">3</text>
+        <rect x="112" y="342" width="352" height="104" rx="11" fill="#f2f4ec" stroke="#6c7a4a" stroke-width="2.6"/>
+        <text x="288" y="366" text-anchor="middle" font-size="12" fill="#2b2a28">termination condition</text>
+        <text x="288" y="386" text-anchor="middle" font-size="9.5" fill="#5f6b78">fixability gate runs FIRST — a fixable bug</text>
+        <text x="288" y="400" text-anchor="middle" font-size="9.5" fill="#5f6b78">is referred, never absorbed;</text>
+        <text x="288" y="418" text-anchor="middle" font-size="9.5" fill="#6c7a4a">then capture same-limitation only,</text>
+        <text x="288" y="432" text-anchor="middle" font-size="9.5" fill="#6c7a4a">escalate the rest</text>
+        <circle cx="122" cy="342" r="14" fill="#6c7a4a"/><text x="122" y="347" text-anchor="middle" font-size="13" fill="#f7f3ec" font-weight="600">3</text>
 
         <!-- edges -->
         <!-- N1 causes N2 -->
@@ -295,8 +313,8 @@
         <path d="M790 372 C880 356, 906 300, 906 230" fill="none" stroke="#a8472f" stroke-width="1.8" marker-end="url(#cm-rust)"/>
         <text x="862" y="320" text-anchor="middle" font-size="8.5" fill="#a8472f">suppresses</text>
         <!-- N6 constrains -> N3 -->
-        <path d="M420 356 C500 300, 540 262, 566 224" fill="none" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#cm-o)"/>
-        <text x="512" y="300" text-anchor="middle" font-size="8.5" fill="#6c7a4a">constrains</text>
+        <path d="M460 360 C520 306, 542 262, 566 224" fill="none" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#cm-o)"/>
+        <text x="524" y="300" text-anchor="middle" font-size="8.5" fill="#6c7a4a">constrains</text>
         <!-- tension edge: raise recall <-> keep precision -->
         <path d="M372 216 C430 300, 500 330, 558 384" fill="none" stroke="#a8472f" stroke-width="2" stroke-dasharray="7 5" marker-start="url(#cm-rust)" marker-end="url(#cm-rust)"/>
         <rect x="392" y="290" width="86" height="20" rx="5" fill="#faf2ec" stroke="#a8472f" stroke-dasharray="3 3"/>
@@ -324,17 +342,17 @@
     </div>
     <div class="badge cap">3</div>
     <div class="body">
-      <p class="st-title">The termination condition refuses the trade</p>
-      <p class="st-body">Capture only cases that are truly the <b>same limitation</b>; escalate the rest. It is not a midpoint between recall and precision — it declines to buy recall with precision at all.</p>
+      <p class="st-title">The termination condition refuses the trade — fixability gate first</p>
+      <p class="st-body">A <b>fixable</b> case is referred to the backlog, never absorbed — a predicate over a fixable bug would suppress it permanently. Only then capture what is truly the <b>same limitation</b>, escalate the rest. It declines to buy recall with precision at all.</p>
     </div>
   </div>
 
   <h2 id="change">What closing the loop changes in reconcile-registry</h2>
-  <p class="cap prose">Today the flow stops at the drift record and waits on a human. The change appends a dispatch step and a two-way fork: a case is either <b>captured</b> into the predicate or <b>escalated</b> as a different limitation.</p>
+  <p class="cap prose">Without the fixer, the flow stopped at the drift record. The closed loop appends dispatch and a <b>fixability-gated three-way fork</b>: each case is <b>captured</b>, referred as a <b>fixable</b> bug, or <b>escalated</b> as a different limitation.</p>
 
   <div class="ba">
     <div class="pane">
-      <p class="panetitle cur">Current — drift is recorded, then it stops</p>
+      <p class="panetitle cur">Without the fixer — drift is recorded, then it stops</p>
       <svg viewBox="0 0 380 340" role="img" aria-label="Current flow: reconcile-registry --drift apply sets drift_detected true and appends drift_evidence, then STOPS — a human must hand-edit check_*.ts.">
         <defs><marker id="ba-g1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#9a9387"/></marker></defs>
         <g font-family="ui-monospace,monospace">
@@ -357,162 +375,191 @@
       <span class="lbl">190.36 closes it</span>
     </div>
     <div class="pane">
-      <p class="panetitle pln">Planned — dispatch, then a two-way fork</p>
-      <svg viewBox="0 0 380 340" role="img" aria-label="Planned flow: --drift apply sets drift_detected and appends drift_evidence, then dispatches one fixer agent per drifted rule, which forks to CAPTURED (broaden predicate, add positive fixtures and a negative guard, rebuild core green) or MIS-CLASSIFIED (record cases, notify user, hand off to classifier-author).">
+      <p class="panetitle pln">As built — dispatch, fixability gate, then a three-way fork</p>
+      <svg viewBox="0 0 380 400" role="img" aria-label="As-built flow: --drift apply sets drift_detected and appends drift_evidence, then dispatches one classifier-fixer agent per drifted rule; a fixability triage runs first, then each case forks to CAPTURED (broaden predicate, positive fixtures, negative guard, own vitest green), FIXABLE (a fixable-in-Ariadne bug becomes a backlog-task proposal, never absorbed), or MIS-CLASSIFIED (record member_symbol, hand off to classifier-author).">
         <defs>
           <marker id="ba-g2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#9a9387"/></marker>
           <marker id="ba-o2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6c7a4a"/></marker>
           <marker id="ba-c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b9794f"/></marker>
+          <marker id="ba-f2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#5f6b78"/></marker>
         </defs>
         <g font-family="ui-monospace,monospace">
-          <rect x="96" y="8" width="188" height="40" rx="10" fill="#e7ddc9" stroke="#9a9387"/>
-          <text x="190" y="33" text-anchor="middle" font-size="11.5" fill="#2b2a28">--drift apply</text>
-          <rect x="66" y="72" width="248" height="50" rx="10" fill="#fffdf8" stroke="#9a9387"/>
-          <text x="190" y="92" text-anchor="middle" font-size="9.5" fill="#2b2a28">set drift_detected</text>
-          <text x="190" y="108" text-anchor="middle" font-size="9.5" fill="#2b2a28">append drift_evidence[]</text>
-          <rect x="60" y="146" width="260" height="48" rx="10" fill="#f2f4ec" stroke="#6c7a4a" stroke-width="2.2"/>
-          <text x="190" y="166" text-anchor="middle" font-size="9.5" fill="#2b2a28">dispatch 1 fixer agent</text>
-          <text x="190" y="182" text-anchor="middle" font-size="9.5" fill="#6c7a4a">per drifted rule</text>
-          <!-- fork -->
-          <rect x="8" y="240" width="176" height="88" rx="10" fill="#f2f4ec" stroke="#6c7a4a" stroke-width="2"/>
-          <text x="96" y="260" text-anchor="middle" font-size="9.5" fill="#6c7a4a">CAPTURED</text>
-          <text x="96" y="276" text-anchor="middle" font-size="8" fill="#2b2a28">broaden predicate +</text>
-          <text x="96" y="288" text-anchor="middle" font-size="8" fill="#2b2a28">positive fixtures +</text>
-          <text x="96" y="300" text-anchor="middle" font-size="8" fill="#2b2a28">negative guard +</text>
-          <text x="96" y="312" text-anchor="middle" font-size="8" fill="#2b2a28">rebuild core green</text>
-          <rect x="196" y="240" width="176" height="88" rx="10" fill="#faf2ec" stroke="#b9794f" stroke-width="2"/>
-          <text x="284" y="260" text-anchor="middle" font-size="9.5" fill="#a8472f">MIS-CLASSIFIED</text>
-          <text x="284" y="276" text-anchor="middle" font-size="8" fill="#2b2a28">record cases,</text>
-          <text x="284" y="288" text-anchor="middle" font-size="8" fill="#2b2a28">notify user,</text>
-          <text x="284" y="300" text-anchor="middle" font-size="8" fill="#2b2a28">hand off to</text>
-          <text x="284" y="312" text-anchor="middle" font-size="8" fill="#2b2a28">classifier-author</text>
+          <rect x="96" y="6" width="188" height="36" rx="10" fill="#e7ddc9" stroke="#9a9387"/>
+          <text x="190" y="29" text-anchor="middle" font-size="11.5" fill="#2b2a28">--drift apply</text>
+          <rect x="66" y="58" width="248" height="46" rx="10" fill="#fffdf8" stroke="#9a9387"/>
+          <text x="190" y="78" text-anchor="middle" font-size="9.5" fill="#2b2a28">set drift_detected</text>
+          <text x="190" y="94" text-anchor="middle" font-size="9.5" fill="#2b2a28">append drift_evidence[]</text>
+          <rect x="60" y="120" width="260" height="44" rx="10" fill="#f2f4ec" stroke="#6c7a4a" stroke-width="2.2"/>
+          <text x="190" y="139" text-anchor="middle" font-size="9.5" fill="#2b2a28">dispatch 1 classifier-fixer</text>
+          <text x="190" y="154" text-anchor="middle" font-size="9.5" fill="#6c7a4a">per drifted rule</text>
+          <rect x="88" y="180" width="204" height="40" rx="10" fill="#eef1f4" stroke="#5f6b78" stroke-width="2.2"/>
+          <text x="190" y="199" text-anchor="middle" font-size="9.5" fill="#4f5b68">fixability triage —</text>
+          <text x="190" y="213" text-anchor="middle" font-size="9" fill="#4f5b68">runs on every case FIRST</text>
+          <!-- three-way fork -->
+          <rect x="4" y="266" width="118" height="118" rx="10" fill="#f2f4ec" stroke="#6c7a4a" stroke-width="2"/>
+          <text x="63" y="286" text-anchor="middle" font-size="9" fill="#6c7a4a">CAPTURED</text>
+          <text x="63" y="303" text-anchor="middle" font-size="7.5" fill="#2b2a28">broaden predicate,</text>
+          <text x="63" y="315" text-anchor="middle" font-size="7.5" fill="#2b2a28">+ positive fixtures,</text>
+          <text x="63" y="327" text-anchor="middle" font-size="7.5" fill="#2b2a28">+ negative guard,</text>
+          <text x="63" y="339" text-anchor="middle" font-size="7.5" fill="#2b2a28">own vitest green</text>
+          <rect x="131" y="266" width="118" height="118" rx="10" fill="#eef1f4" stroke="#5f6b78" stroke-width="2"/>
+          <text x="190" y="286" text-anchor="middle" font-size="9" fill="#4f5b68">FIXABLE</text>
+          <text x="190" y="303" text-anchor="middle" font-size="7.5" fill="#2b2a28">a resolver bug —</text>
+          <text x="190" y="315" text-anchor="middle" font-size="7.5" fill="#2b2a28">backlog-task</text>
+          <text x="190" y="327" text-anchor="middle" font-size="7.5" fill="#2b2a28">proposal,</text>
+          <text x="190" y="339" text-anchor="middle" font-size="7.5" fill="#2b2a28">never absorbed</text>
+          <rect x="258" y="266" width="118" height="118" rx="10" fill="#faf2ec" stroke="#b9794f" stroke-width="2"/>
+          <text x="317" y="286" text-anchor="middle" font-size="8.5" fill="#a8472f">MIS-CLASSIFIED</text>
+          <text x="317" y="303" text-anchor="middle" font-size="7.5" fill="#2b2a28">record</text>
+          <text x="317" y="315" text-anchor="middle" font-size="7.5" fill="#2b2a28">member_symbol,</text>
+          <text x="317" y="327" text-anchor="middle" font-size="7.5" fill="#2b2a28">hand off to</text>
+          <text x="317" y="339" text-anchor="middle" font-size="7.5" fill="#2b2a28">classifier-author</text>
           <!-- edges -->
-          <line x1="190" y1="48" x2="190" y2="70" stroke="#9a9387" stroke-width="1.6" marker-end="url(#ba-g2)"/>
-          <line x1="190" y1="122" x2="190" y2="144" stroke="#6c7a4a" stroke-width="1.7" marker-end="url(#ba-o2)"/>
-          <path d="M170 194 C150 214, 110 220, 96 238" fill="none" stroke="#6c7a4a" stroke-width="1.7" marker-end="url(#ba-o2)"/>
-          <path d="M210 194 C230 214, 270 220, 284 238" fill="none" stroke="#b9794f" stroke-width="1.7" marker-end="url(#ba-c2)"/>
+          <line x1="190" y1="42" x2="190" y2="56" stroke="#9a9387" stroke-width="1.6" marker-end="url(#ba-g2)"/>
+          <line x1="190" y1="104" x2="190" y2="118" stroke="#6c7a4a" stroke-width="1.7" marker-end="url(#ba-o2)"/>
+          <line x1="190" y1="164" x2="190" y2="178" stroke="#5f6b78" stroke-width="1.7" marker-end="url(#ba-f2)"/>
+          <path d="M150 220 C110 238, 75 246, 65 264" fill="none" stroke="#6c7a4a" stroke-width="1.7" marker-end="url(#ba-o2)"/>
+          <line x1="190" y1="220" x2="190" y2="264" stroke="#5f6b78" stroke-width="1.7" marker-end="url(#ba-f2)"/>
+          <path d="M230 220 C270 238, 305 246, 315 264" fill="none" stroke="#b9794f" stroke-width="1.7" marker-end="url(#ba-c2)"/>
         </g>
       </svg>
     </div>
   </div>
   <div class="legend">
-    <span><span class="sw" style="background:#f2f4ec;border-color:#6c7a4a"></span> added / captured (olive)</span>
-    <span><span class="sw" style="background:#faf2ec;border-color:#a8472f"></span> removed / stop (rust)</span>
-    <span><span class="sw" style="background:#faf2ec;border-color:#b9794f"></span> modified / escalate (clay)</span>
+    <span><span class="sw" style="background:#f2f4ec;border-color:#6c7a4a"></span> captured — same limitation (olive)</span>
+    <span><span class="sw" style="background:#eef1f4;border-color:#5f6b78"></span> fixable-in-Ariadne — backlog (slate-blue)</span>
+    <span><span class="sw" style="background:#faf2ec;border-color:#b9794f"></span> mis-classified — escalate (clay)</span>
+    <span><span class="sw" style="background:none;border:2px dashed #5f6b78"></span> a case too thin to rule is skipped, not forked</span>
   </div>
 
   <h2 id="loop">The fixer agent's work loop</h2>
-  <p class="cap prose">Each agent owns exactly one <code>check_&lt;group_id&gt;.ts</code>. It reads the rule's evidence, resolves each case to its full entry context, decides same-pattern versus different, and lands in one of the two termination states.</p>
+  <p class="cap prose">Each <code>classifier-fixer</code> owns one <code>check_&lt;group_id&gt;.ts</code>. It resolves each case, runs the fixability triage first, then lands every permanent case in captured or mis-classified — parking anything it can't resolve as skipped.</p>
 
   <div class="steps">
     <div class="badge">1</div>
     <div class="body">
-      <p class="st-title">Read the evidence and resolve each case</p>
-      <p class="st-body">Read the rule's <code>drift_evidence[]</code> and the current <code>check_&lt;group_id&gt;.ts</code> predicate, then resolve each case's full <code>EnrichedEntryPoint</code> — not just the one-line excerpt — via <code>get_entry_context.ts</code>, enabled by the schema change below.</p>
-      <span class="st-loc"><b>get_entry_context.ts</b> selector · .claude/agents/classifier-author.md :34-37 — <code>--project --run-id --file --name --kind --line</code></span>
+      <p class="st-title">Resolve every case to its full entry</p>
+      <p class="st-body">Pull each case's full <code>EnrichedEntryPoint</code> — the exact shape the check receives — and persist it to <code>cases/&lt;project&gt;-&lt;entry_index&gt;.json</code>. A pruned run degrades to its excerpt; a case too thin to rule is recorded <b>skipped</b>, never guessed.</p>
+      <span class="st-loc"><b>get_entry_context.ts</b> · .claude/agents/classifier-fixer.md :37-52 — <code>--project --run-id --entry --enriched</code></span>
     </div>
-    <div class="badge">2</div>
+    <div class="badge fix">2</div>
     <div class="body">
-      <p class="st-title">Decide: same limitation, or a different one?</p>
-      <p class="st-body">For each evidence case, judge whether it is the <b>same permanent-limitation pattern</b> the rule captures, or a genuinely different one that only looks similar in the excerpt.</p>
+      <p class="st-title"><svg class="glyph" style="color:#5f6b78"><use href="#ic-check"/></svg> Fixability triage — before any classifier work <span class="tag-pill fix">gate</span></p>
+      <p class="st-body">Ask first: could Ariadne resolve this call with a <b>modest fix</b>? A fixable case terminates as <b>fixable-in-Ariadne</b> — a backlog-task proposal, <b>never absorbed</b>, since a predicate over a fixable bug suppresses it from triage permanently. Only permanent cases proceed.</p>
     </div>
     <div class="badge cap">3</div>
     <div class="body">
-      <p class="st-title"><svg class="glyph" style="color:var(--olive)"><use href="#ic-check"/></svg> Captured <span class="tag-pill cap">predicate edit</span></p>
-      <p class="st-body">Broaden or correct the predicate so every same-pattern case matches; ship a test asserting the evidence cases now match <b>and a negative guard</b> asserting a known true-positive still does <em>not</em> match; rebuild core green.</p>
+      <p class="st-title"><svg class="glyph" style="color:var(--olive)"><use href="#ic-check"/></svg> Captured — same limitation, predicate too narrow <span class="tag-pill cap">predicate edit</span></p>
+      <p class="st-body">Extend the discriminator to the cases' shared shape — never a catch-all. Ship a test both ways: the evidence cases as positive fixtures <b>and a negative guard</b> keeping a known true-positive out; run the check's own vitest green.</p>
     </div>
     <div class="badge esc">4</div>
     <div class="body">
-      <p class="st-title"><svg class="glyph" style="color:var(--clay)"><use href="#ic-warn"/></svg> Mis-classified <span class="tag-pill esc">escalate</span></p>
-      <p class="st-body"><b>Never stretch the predicate</b> to cover a different pattern — that suppresses true-positives. Record which cases belong elsewhere, notify the user, and hand off to <code>classifier-author</code> for a novel permanent-limitation group.</p>
+      <p class="st-title"><svg class="glyph" style="color:var(--clay)"><use href="#ic-warn"/></svg> Mis-classified — a different limitation <span class="tag-pill esc">escalate</span></p>
+      <p class="st-body"><b>Never stretch the predicate</b> over a different pattern — that suppresses true-positives. Record the case's stable <code>member_symbol</code> (<code>file_path, name, kind, start_line</code>) and why, for the human to feed <code>classifier-author</code>.</p>
     </div>
   </div>
 
-  <h2 id="schema">The schema change that makes a case resolvable</h2>
-  <p class="cap prose">A <code>drift_evidence[]</code> row carries only <code>{ entry_index, evidence_excerpt }</code>, deduped by <code>entry_index</code> alone — it can't say which run the index came from. Adding <code>{ project, run_id }</code> per row makes each case resolvable.</p>
+  <h2 id="schema">The schema that makes a case resolvable</h2>
+  <p class="cap prose">A <code>drift_evidence[]</code> row now carries its <code>{ project, run_id }</code> provenance (highlighted) beside <code>{ entry_index, evidence_excerpt }</code>, and dedupes by the <code>(project, entry_index)</code> pair — <code>entry_index</code> alone is run-local.</p>
 
   <div class="code">
-    <div class="file"><span>packages/types/src/known_issues.ts</span><span class="loc">DriftEvidence · 62-67 → planned</span></div>
+    <div class="file"><span>packages/types/src/known_issues.ts</span><span class="loc">DriftEvidence · 64-73</span></div>
 <pre><span class="cm">// Per-citation evidence accumulated alongside drift_detected.</span>
 <span class="kw">export</span> <span class="kw">interface</span> <span class="ty">DriftEvidence</span> {
-<span class="ctx"></span>  <span class="cm">/** Entry index from the triage run's per-entry triage state. */</span>
+<span class="hl">  <span class="cm">/** Project whose published run flagged the entry. */</span></span>
+<span class="hl">  project: <span class="ty">string</span>;</span>
+<span class="hl">  <span class="cm">/** The finalized run; first-seen wins on re-observation. */</span></span>
+<span class="hl">  run_id: <span class="ty">string</span>;</span>
+<span class="ctx"></span>  <span class="cm">/** Entry index from the run's per-entry triage state. */</span>
 <span class="ctx"></span>  entry_index: <span class="ty">number</span>;
 <span class="ctx"></span>  <span class="cm">/** Grep call-site line / diagnosis the investigator captured. */</span>
 <span class="ctx"></span>  evidence_excerpt: <span class="ty">string</span>;
-<span class="add"></span>  <span class="cm">/** Which run the entry_index came from — makes the row resolvable. */</span>
-<span class="add"></span>  project: <span class="ty">string</span>;
-<span class="add"></span>  run_id: <span class="ty">string</span>;
 }
-<span class="cm">// dedup key: entry_index  →  (project, entry_index)</span></pre>
+<span class="cm">// dedup key: NUL-join (project, entry_index) — entry_index is run-local</span></pre>
   </div>
-  <p class="cap prose">With <code>{ project, run_id }</code> on the row, the fixer feeds <code>get_entry_context.ts</code> a real selector and pulls the entry's full diagnostics — the same <code>ariadne_call_refs</code> block a predicate like <code>check_untyped-attribute-receiver</code> keys on — instead of pattern-matching a single excerpt line.</p>
+  <p class="cap prose">With the pair on the row, a fixer runs <code>get_entry_context.ts --project --run-id --entry --enriched</code> and pulls the same <code>ariadne_call_refs</code> block a predicate like <code>check_untyped-attribute-receiver</code> keys on — not a single excerpt line. A loader pass (<code>validate_drift_evidence</code>) rejects a malformed row <b>at load</b>: a non-integer <code>entry_index</code>, a missing <code>project</code>/<code>run_id</code>.</p>
 
   <details class="disc">
-    <summary><span class="chev"></span> The detector that writes the row — <b><code>detect_drift_proposals</code></b> must carry <code>source.project</code> / <code>source.run_id</code> onto each new evidence entry</summary>
+    <summary><span class="chev"></span> The detector that writes the row — <b><code>detect_drift_proposals</code></b> threads <code>source.project</code> / <code>source.run_id</code> onto each evidence row and keys the dedup map by the NUL-joined pair</summary>
     <div class="inner">
       <div class="code" style="margin-top:12px">
-        <div class="file"><span>.claude/skills/triage/scripts/reconcile_registry.ts</span><span class="loc">detect_drift_proposals · 330-338</span></div>
-<pre><span class="ctx"></span>acc.flagged_by.<span class="fn">push</span>({ project: source.project, run_id: source.run_id });
-<span class="ctx"></span><span class="kw">for</span> (<span class="kw">const</span> entry <span class="kw">of</span> flag.flagged_entries) {
-<span class="del"></span>  <span class="kw">if</span> (!acc.evidence.<span class="fn">has</span>(entry.entry_index)) {
-<span class="del"></span>    acc.evidence.<span class="fn">set</span>(entry.entry_index, {
-<span class="del"></span>      entry_index: entry.entry_index,
-<span class="del"></span>      evidence_excerpt: entry.evidence_excerpt,
-<span class="del"></span>    });
-<span class="add"></span>  <span class="kw">const</span> key = <span class="str">`${source.project}::${entry.entry_index}`</span>;
-<span class="add"></span>  <span class="kw">if</span> (!acc.evidence.<span class="fn">has</span>(key)) {
-<span class="add"></span>    acc.evidence.<span class="fn">set</span>(key, {
-<span class="add"></span>      entry_index: entry.entry_index,
-<span class="add"></span>      evidence_excerpt: entry.evidence_excerpt,
-<span class="add"></span>      project: source.project,
-<span class="add"></span>      run_id: source.run_id,
-<span class="add"></span>    });
-<span class="ctx"></span>  }
+        <div class="file"><span>.claude/skills/triage/scripts/reconcile_registry.ts</span><span class="loc">drift_dedup_key + detect_drift_proposals · 293-350</span></div>
+<pre><span class="cm">// entry_index is run-local; a row's identity is the pair.</span>
+<span class="cm">// NUL joins the parts — it can't appear in a project dir name.</span>
+<span class="kw">export</span> <span class="kw">function</span> <span class="fn">drift_dedup_key</span>(project: <span class="ty">string</span>, entry_index: <span class="ty">number</span>): <span class="ty">string</span> {
+<span class="ctx"></span>  <span class="kw">return</span> <span class="str">`${project}\0${entry_index}`</span>;
+}
+
+<span class="cm">// detect_drift_proposals — dedup evidence by (project, entry_index)</span>
+<span class="ctx"></span><span class="kw">const</span> key = <span class="fn">drift_dedup_key</span>(source.project, entry.entry_index);
+<span class="ctx"></span><span class="kw">if</span> (!acc.evidence.<span class="fn">has</span>(key)) {
+<span class="ctx"></span>  acc.evidence.<span class="fn">set</span>(key, {
+<span class="ctx"></span>    project: source.project,
+<span class="ctx"></span>    run_id: source.run_id,
+<span class="ctx"></span>    entry_index: entry.entry_index,
+<span class="ctx"></span>    evidence_excerpt: entry.evidence_excerpt,
+<span class="ctx"></span>  });
 <span class="ctx"></span>}</pre>
       </div>
-      <p class="cap prose" style="margin-top:2px">The detector already knows <code>source.project</code> and <code>source.run_id</code> — it pushes them onto <code>flagged_by</code>. The change threads the same pair onto each evidence row and rekeys the dedup map by <code>(project, entry_index)</code>, so two runs sharing an index no longer collapse into one.</p>
+      <p class="cap prose" style="margin-top:2px">The detector reads <code>source.project</code> / <code>source.run_id</code> from the <code>DriftSource</code> already in scope — so the <code>classifier_regressions[]</code> producer is untouched. Keying the dedup map through <code>drift_dedup_key</code>, two runs sharing an index no longer collapse, and a fully-covered rule yields no proposal.</p>
     </div>
   </details>
 
-  <h2 id="states">The two termination states, side by side</h2>
-  <p class="cap prose">Every evidence case ends in exactly one recorded state. Captured is an <b>ordinary source edit</b> of the predicate — never a registry write, so the write-guard is not involved; mis-classified escalates without touching the predicate.</p>
+  <h2 id="states">The three termination states, side by side</h2>
+  <p class="cap prose">Every adjudicated case ends in one recorded state (a case too thin to rule is <b>skipped</b>, not terminated). Captured is an <b>ordinary source edit</b> — never a registry write, so the write-guard is not involved; the other two record a hand-off.</p>
 
   <table class="matrix">
     <thead>
       <tr>
-        <th style="width:44%">Criterion</th>
+        <th style="width:40%">Criterion</th>
         <th class="cap">Captured</th>
+        <th class="fix">Fixable-in-Ariadne</th>
         <th class="esc">Mis-classified</th>
       </tr>
     </thead>
     <tbody>
-      <tr><td class="crit">Edits the <code>check_*.ts</code> predicate</td><td class="gcell"><span class="gl yes">yes</span></td><td class="gcell"><span class="gl no">no</span></td></tr>
-      <tr><td class="crit">Ships positive fixtures (evidence cases now match)</td><td class="gcell"><span class="gl yes">yes</span></td><td class="gcell"><span class="gl no">no</span></td></tr>
-      <tr><td class="crit">Ships a negative guard (a known true-positive still does not match)</td><td class="gcell"><span class="gl yes">yes</span></td><td class="gcell"><span class="gl no">no</span></td></tr>
-      <tr><td class="crit">Rebuilds core green</td><td class="gcell"><span class="gl yes">yes</span></td><td class="gcell"><span class="gl no">no</span></td></tr>
-      <tr><td class="crit">Escalates to <code>classifier-author</code></td><td class="gcell"><span class="gl no">no</span></td><td class="gcell"><span class="gl yes esc">yes</span></td></tr>
-      <tr><td class="crit">Writes <code>registry.json</code></td><td class="gcell"><span class="gl no">no</span></td><td class="gcell"><span class="gl no">no</span></td></tr>
+      <tr><td class="crit">Edits the <code>check_*.ts</code> predicate</td><td class="gcell"><span class="gl yes">yes</span></td><td class="gcell"><span class="gl no">no</span></td><td class="gcell"><span class="gl no">no</span></td></tr>
+      <tr><td class="crit">Ships positive fixtures + a negative true-positive guard</td><td class="gcell"><span class="gl yes">yes</span></td><td class="gcell"><span class="gl no">no</span></td><td class="gcell"><span class="gl no">no</span></td></tr>
+      <tr><td class="crit">Runs the check's own vitest green</td><td class="gcell"><span class="gl yes">yes</span></td><td class="gcell"><span class="gl no">no</span></td><td class="gcell"><span class="gl no">no</span></td></tr>
+      <tr><td class="crit">Produces a backlog-task proposal (the contained fix)</td><td class="gcell"><span class="gl no">no</span></td><td class="gcell"><span class="gl yes fix">yes</span></td><td class="gcell"><span class="gl no">no</span></td></tr>
+      <tr><td class="crit">Records <code>member_symbol</code> for the <code>classifier-author</code> flow</td><td class="gcell"><span class="gl no">no</span></td><td class="gcell"><span class="gl no">no</span></td><td class="gcell"><span class="gl yes esc">yes</span></td></tr>
+      <tr><td class="crit">Writes <code>registry.json</code></td><td class="gcell"><span class="gl no">no</span></td><td class="gcell"><span class="gl no">no</span></td><td class="gcell"><span class="gl no">no</span></td></tr>
     </tbody>
   </table>
   <div class="legend">
-    <span><span class="sw" style="background:var(--olive);border-radius:50%"></span> does this (olive)</span>
-    <span><span class="sw" style="background:var(--clay);border-radius:50%"></span> does this — escalation (clay)</span>
+    <span><span class="sw" style="background:var(--olive);border-radius:50%"></span> captured (olive)</span>
+    <span><span class="sw" style="background:#5f6b78;border-radius:50%"></span> fixable-in-Ariadne (slate-blue)</span>
+    <span><span class="sw" style="background:var(--clay);border-radius:50%"></span> mis-classified — escalation (clay)</span>
     <span><span class="sw" style="background:none;border:2px solid var(--g400);border-radius:50%"></span> does not</span>
   </div>
 
+  <details class="disc">
+    <summary><span class="chev"></span> How the session picks which rules to dispatch, and gates the whole wave (<b>SKILL step 4</b>)</summary>
+    <div class="inner">
+      <dl class="dispatch prose">
+        <dt>Dispatch set</dt>
+        <dd>Registry-derived: every <code>wip</code> rule with <code>drift_detected: true</code>, dispatched when it had an applied proposal <b>this run</b> or no prior <b>well-formed</b> <code>verdicts.json</code> (<code>Glob</code>bed across all run roots) accounts for its evidence in <code>cases[]</code>/<code>skipped_cases[]</code>. A crashed wave recovers next invocation.</dd>
+        <dt>Per-rule staging</dt>
+        <dd><code>cases/&lt;project&gt;-&lt;entry_index&gt;.json</code>, <code>verdicts.json</code>, and <code>REVIEW.md</code> under <code>~/.ariadne/reconcile/&lt;run&gt;/classifier-fixer/&lt;group_id&gt;/</code>.</dd>
+        <dt>Build &amp; commit</dt>
+        <dd>Fixers edit and run their own check's vitest <b>in parallel</b>; the session owns one post-wave <code>pnpm build --filter core</code> + builtins suite. The human commits the check edits; the fixer <b>never writes <code>registry.json</code></b>.</dd>
+      </dl>
+    </div>
+  </details>
+
   <div class="callout slate">
     <span class="k">The riskiest guarantee</span>
-    <p>The skill <b>never over-broadens silently</b> — a case that cannot be captured without risking true-positive suppression is escalated, never absorbed. The predicate only grows to cover what is genuinely the same limitation; everything else routes to a human-owned <code>classifier-author</code> hand-off.</p>
+    <p>The predicate <b>never over-broadens silently</b>. A fixable case goes to the backlog; a case risking true-positive suppression is escalated; a case too thin to rule is skipped — <b>none absorbed</b>. It grows only to cover the <b>same permanent limitation</b> — all else stays human-owned.</p>
   </div>
 
   <div class="callout olive">
     <span class="k">Where this converges</span>
-    <p>Once growable eval-sets exist (TASK-190.31.1 / .2), the fixer validates its broadened predicate against the rule's eval-set — precision <b>and</b> recall — before the change is accepted, so a fix that buys recall at the cost of precision is caught mechanically rather than by the agent's own judgment.</p>
+    <p>Once eval-sets exist (TASK-190.31.1 / .2), the fixer validates its broadened predicate against the rule's eval-set — precision <b>and</b> recall — before acceptance, so buying recall at the cost of precision is caught mechanically, not by the agent's judgment.</p>
   </div>
 
   <footer>
-    TASK-190.36 · <b>To Do</b> · reconcile-registry closes the classifier-drift loop by dispatching one opus fixer agent per drifted rule · grounded in
-    <code>task-190.36</code> (description + AC), <code>packages/types/src/known_issues.ts:62-67</code>, <code>reconcile_registry.ts:293-363</code>, <code>check_untyped-attribute-receiver.ts:30-53</code>, <code>.claude/agents/classifier-author.md</code>, <code>.claude/rules/classifier-lifecycle.md</code>
+    TASK-190.36 · <b>Done</b> · reconcile-registry closes the classifier-drift loop by dispatching one opus classifier-fixer agent per drifted rule · grounded in
+    <code>task-190.36</code> (description + AC), <code>packages/types/src/known_issues.ts:64-73</code>, <code>reconcile_registry.ts:293-374</code>, <code>known_issues_registry.ts:290-313</code>, <code>.claude/agents/classifier-fixer.md</code>, <code>reconcile-registry/SKILL.md</code> step 4, <code>check_untyped-attribute-receiver.ts:30-53</code>, <code>.claude/rules/classifier-lifecycle.md</code>
   </footer>
 </main>
 

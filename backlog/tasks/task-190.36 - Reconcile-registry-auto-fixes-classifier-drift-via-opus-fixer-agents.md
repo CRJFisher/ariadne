@@ -1,7 +1,7 @@
 ---
 id: TASK-190.36
 title: "Reconcile-registry auto-fixes classifier drift via opus fixer agents"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-14 00:00"
 labels:
@@ -29,8 +29,9 @@ This task closes the loop inside the skill. After the drift-flag write lands,
 `reconcile-registry` dispatches one **opus fixer agent per drifted rule** to
 repair that rule's `BuiltinCheckFn` so it captures the evidence it was missing.
 Each agent owns exactly one `check_<group_id>.ts`, works from that rule's
-`drift_evidence[]` plus the current predicate, and runs to one of two
-termination states:
+`drift_evidence[]` plus the current predicate, and runs each evidence case to
+one of three termination states — the two below, plus **fixable-in-Ariadne**
+(defined in the fixability-triage section that follows):
 
 1. **Captured** — the predicate is broadened/corrected so every evidence case
    now matches, guarded by tests (the evidence cases as positive fixtures, plus
@@ -102,32 +103,80 @@ core must be rebuilt for the compiled predicate to update.
 
 <!-- AC:BEGIN -->
 
-- [ ] After a `--drift` apply, `reconcile-registry` dispatches one opus fixer
+- [x] After a `--drift` apply, `reconcile-registry` dispatches one opus fixer
       agent per rule with an applied drift proposal (a flag flip or fresh
       evidence this run), each scoped to a single `check_<group_id>.ts` and
       handed the rule's full accumulated `drift_evidence[]`.
-- [ ] Each agent terminates in exactly one recorded state per evidence case:
+- [x] Each agent terminates in exactly one recorded state per evidence case:
       captured (predicate now matches, test added), fixable-in-Ariadne
       (surfaced to the user as a backlog-task proposal with the fixability
       rationale), or mis-classified (escalated to the user with the cases that
-      need a separate classifier).
-- [ ] No evidence case reaches capture or a `classifier-author` hand-off
+      need a separate classifier). A case whose triage run is pruned and whose
+      excerpt is too thin to adjudicate is recorded as skipped — surfaced to
+      the user to re-run triage — never silently dropped and never absorbed.
+- [x] No evidence case reaches capture or a `classifier-author` hand-off
       without the fixability check ruling it a permanent limitation: a case
       Ariadne could support with a modest fix routes to a backlog-task
       proposal, never into a classifier.
-- [ ] Every "captured" fix ships a test that asserts the evidence cases now
+- [x] Every "captured" fix ships a test that asserts the evidence cases now
       match AND a negative guard asserting a known true-positive still does not
       match; core rebuilds and the classifier test suite is green.
-- [ ] The skill never over-broadens silently: a case the agent cannot capture
+- [x] The skill never over-broadens silently: a case the agent cannot capture
       without risking true-positive suppression is escalated, never absorbed.
-- [ ] `drift_evidence[]` rows carry `{ project, run_id }` and dedupe by
+- [x] `drift_evidence[]` rows carry `{ project, run_id }` and dedupe by
       `(project, entry_index)`, so a fixer agent can resolve a case back to its
       full `EnrichedEntryPoint` via `get_entry_context.ts`.
-- [ ] The mis-classified escalation hands off to the `classifier-author` flow
+- [x] The mis-classified escalation hands off to the `classifier-author` flow
       (a novel permanent-limitation group), consistent with the
       classifier-lifecycle contract.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+The drift signal closes its own loop. `reconcile-registry --drift` records
+that a wip rule's classifier under-matches, and the accumulated
+`drift_evidence[]` rows are now actionable rather than a hand-edit to-do
+list: after the human applies the drift flag, the skill dispatches one
+`classifier-fixer` agent (opus, `.claude/agents/classifier-fixer.md`) per
+drift-flagged rule, each owning exactly one
+`packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
+
+The enabling schema change is provenance. A `DriftEvidence` row carries
+`{project, run_id, entry_index, evidence_excerpt}` and dedupes by
+`(project, entry_index)` — `entry_index` is run-local, so the pair is the
+identity. The provenance attaches inside `detect_drift_proposals` from the
+`DriftSource` already in scope, so the `classifier_regressions[]` producer is
+untouched; the cascade stops at the reconcile detector, the shared
+`known_issues.ts` type, and a new loader validation that fails a malformed
+row at load, not at dispatch. With the pair in hand, a fixer resolves any
+case to its full `EnrichedEntryPoint` via
+`get_entry_context.ts --project --run-id --entry --enriched`.
+
+The precision/recall crux is encoded as a fixability-first triage. Each
+evidence case terminates in exactly one recorded state: **captured** (same
+permanent limitation; predicate broadened under a positive-fixture plus
+negative true-positive test guard), **fixable-in-Ariadne** (a fixable
+resolution bug becomes a backlog-task proposal — never absorbed, because a
+classifier over a fixable bug suppresses it from triage permanently), or
+**mis-classified** (a different permanent limitation, recorded by
+`member_symbol` for the human to route into `classifier-author`). A case
+whose run is pruned and whose excerpt is too thin is recorded as skipped and
+surfaced. The fixer never writes `registry.json`; the human owns every
+resulting decision.
+
+Navigate from `.claude/skills/reconcile-registry/SKILL.md` step 4 — the
+dispatch set is registry-derived (crash-recoverable, with a cross-run
+resume-skip keyed on well-formed `verdicts.json` coverage), and the session
+owns the single post-wave `pnpm build --filter core` + builtins test pass.
+The lifecycle contract lives in `.claude/rules/classifier-lifecycle.md`.
+
+Watch: a pruned row's `run_id` never refreshes (append-only, first-seen
+wins), so a permanently-skipped case parks until fresh evidence or a human
+hand-edit retires it. Eval-set validation of broadened predicates
+(TASK-190.31.1) remains the mechanical precision gate this converges with.
 
 ## Cross-references
 

@@ -299,7 +299,16 @@ function validate_drift_evidence(value: unknown, at: string): void {
     const record = row as Record<string, unknown>;
     require_string(record, "project", `${at}[${i}]`);
     require_string(record, "run_id", `${at}[${i}]`);
-    require_number(record, "entry_index", `${at}[${i}]`);
+    const entry_index = record["entry_index"];
+    if (
+      typeof entry_index !== "number" ||
+      !Number.isInteger(entry_index) ||
+      entry_index < 0
+    ) {
+      throw new RegistryValidationError(
+        `${at}[${i}].entry_index: must be a non-negative integer`,
+      );
+    }
     require_string(record, "evidence_excerpt", `${at}[${i}]`);
   }
 }

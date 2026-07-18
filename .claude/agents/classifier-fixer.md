@@ -2,7 +2,7 @@
 name: classifier-fixer
 description: Repairs ONE drifted rule's builtin classifier from its drift_evidence[]. Runs the fixability triage on every evidence case first, then terminates each adjudicated case as captured (predicate broadened, positive + negative-guard tests), fixable-in-Ariadne (backlog-task proposal, never absorbed), or mis-classified (hand-off toward classifier-author). Edits only check_<group_id>.ts and its test; never writes registry.json.
 disable-model-invocation: true
-tools: Bash(node --import tsx .claude/skills/triage/scripts/get_entry_context.ts:*), Bash(npx vitest run:*), Read, Grep, Glob, Edit, Write(packages/core/src/classify_entry_points/builtins/**), Write(~/.ariadne/reconcile/**), Write(/tmp/claude/**)
+tools: Bash(node --import tsx .claude/skills/triage/scripts/get_entry_context.ts:*), Bash(npx vitest run:*), Read, Grep, Glob, Edit(packages/core/src/classify_entry_points/builtins/**), Write(packages/core/src/classify_entry_points/builtins/**), Write(~/.ariadne/reconcile/**), Write(/tmp/claude/**)
 model: opus
 maxTurns: 50
 ---
@@ -41,7 +41,9 @@ node --import tsx .claude/skills/triage/scripts/get_entry_context.ts \
 
 Then re-run with `--enriched` and save stdout — the full `EnrichedEntryPoint`
 JSON, the exact shape your check receives at runtime — to
-`cases/<entry_index>.json` under your staging directory
+`cases/<project>-<entry_index>.json` (a case's identity is
+`(project, entry_index)`; the index alone can collide across projects) under
+your staging directory
 (`~/.ariadne/reconcile/<run>/classifier-fixer/<group_id>/`, the `<run>` is in
 your prompt). Build your discriminator from the enriched shape's `name`,
 `file_path`, `start_line`, `kind`, and diagnostics (`grep_call_sites`,
@@ -105,15 +107,20 @@ modeled on `check_string-keyed-dispatch.test.ts`) prove the broadening both
 ways:
 
 - **Positive fixtures** — one per captured case, built from the persisted
-  `cases/<entry_index>.json` shapes, asserting the check now returns `true`.
+  `cases/<project>-<entry_index>.json` shapes, asserting the check now returns
+  `true`.
 - **Negative guard** — at least one fixture asserting a genuinely resolvable or
-  genuinely dead entry still returns `false`. Source it from a real
-  true-positive shape (a `tp`-verdict entry of the same run, fetched via
-  `get_entry_context.ts`, or an existing negative fixture pattern in the
-  builtins tests) — the guard must sit close to the broadening's edge, not be a
-  trivially-unrelated input. All pre-existing negative fixtures must stay green;
-  a broadening that flips one is over-broad — narrow it or move the offending
-  cases to mis-classified.
+  genuinely dead entry still returns `false`. To source a real true-positive
+  shape: read the case's run's published results at
+  `~/.ariadne/triage-entrypoints/analysis_output/<project>/triage_results/<run_id>.json`,
+  pick a `confirmed_unreachable[]` row with `source.kind: "llm-tp"` (an
+  investigator-confirmed true positive), and fetch it with
+  `get_entry_context.ts --project <project> --run-id <run_id> --entry <its entry_index> --enriched`.
+  When the run is pruned, model the guard on an existing negative fixture
+  pattern in the builtins tests instead. Either way the guard must sit close
+  to the broadening's edge, not be a trivially-unrelated input. All
+  pre-existing negative fixtures must stay green; a broadening that flips one
+  is over-broad — narrow it or move the offending cases to mis-classified.
 
 Run the check's own suite until green:
 

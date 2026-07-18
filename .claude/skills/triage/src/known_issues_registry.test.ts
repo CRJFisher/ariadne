@@ -415,6 +415,42 @@ describe("validate_registry — negative cases", () => {
     ];
     expect(() => validate_registry(bad)).toThrow(/drift_evidence\[0\]\.run_id/);
   });
+
+  it("rejects a drift_evidence row with a non-integer entry_index", () => {
+    const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
+    bad[0]["status"] = "wip";
+    bad[0]["classifier"] = { function_name: "check_float_index", min_confidence: 0.9 };
+    bad[0]["observed_count"] = 1;
+    bad[0]["drift_evidence"] = [
+      {
+        project: "flask",
+        run_id: "0011aaa-2026-06-11T10-00-00.000Z",
+        entry_index: 4.5,
+        evidence_excerpt: "handlers[key]()",
+      },
+    ];
+    expect(() => validate_registry(bad)).toThrow(
+      /drift_evidence\[0\]\.entry_index: must be a non-negative integer/,
+    );
+  });
+
+  it("rejects a drift_evidence row with a negative entry_index", () => {
+    const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
+    bad[0]["status"] = "wip";
+    bad[0]["classifier"] = { function_name: "check_neg_index", min_confidence: 0.9 };
+    bad[0]["observed_count"] = 1;
+    bad[0]["drift_evidence"] = [
+      {
+        project: "flask",
+        run_id: "0011aaa-2026-06-11T10-00-00.000Z",
+        entry_index: -1,
+        evidence_excerpt: "handlers[key]()",
+      },
+    ];
+    expect(() => validate_registry(bad)).toThrow(
+      /drift_evidence\[0\]\.entry_index: must be a non-negative integer/,
+    );
+  });
 });
 
 // ===== backlog_task either matches an existing task or is intentionally absent =====

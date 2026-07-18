@@ -90,22 +90,52 @@ Always invoke with `node --import tsx`. Never `pnpm exec tsx` or `npx tsx`
    node --import tsx .claude/skills/triage/scripts/reconcile_registry.ts --fixed
    ```
 
-4. **Dispatch drift fixers (after a `--drift` apply).** Every applied
-   `drift_detected` proposal names a rule with fresh, un-actioned evidence.
-   For each such rule, read its full `drift_evidence[]` from the registry
-   (post-apply — old rows the human never dispatched are part of the repair)
-   and launch one `Task(classifier-fixer)` per rule, in parallel, scoped to
-   that rule's `check_<group_id>.ts`. `<run>` is this invocation's timestamp;
-   it names the staging root `~/.ariadne/reconcile/<run>/classifier-fixer/`.
-   **Resume skip:** a rule whose `classifier-fixer/<group_id>/verdicts.json`
-   already exists finished on a prior invocation — skip it and reuse the
-   staged verdicts. Dispatch prompt:
+   The flag mirrors whichever signal step 2 previewed — `--drift` for the
+   drift path that feeds step 4.
+
+4. **Dispatch drift fixers (after a `--drift` apply).** The dispatch set is
+   read from the **registry, not the apply summary**, so a wave that crashed
+   mid-dispatch recovers on the next invocation: every `wip` rule with
+   `drift_detected: true` is a candidate. Dispatch a candidate when either
+
+   - it had an applied `drift_detected` proposal **this run** (fresh
+     evidence always re-dispatches), or
+   - no prior wave **accounted for its current evidence**: `Glob` every
+     `~/.ariadne/reconcile/*/classifier-fixer/<group_id>/verdicts.json`
+     (across **all** run roots, not just this one) and check whether some
+     prior **well-formed** file accounts for every `(project, entry_index)`
+     in the rule's `drift_evidence[]` — in its `cases[]` (adjudicated) or
+     its `skipped_cases[]` (declared unadjudicatable; a re-run over the
+     same pruned evidence will not do better). A file that fails the
+     malformed-verdict checks below never counts, so a refused wave cannot
+     suppress its own re-dispatch.
+
+   Skip the rest: a rule whose current evidence a prior wave fully
+   accounted for, with no fresh evidence this run, is done. A rule whose
+   only remaining rows are prior `skipped_cases[]` stays parked until the
+   human re-runs triage or retires the stale rows by hand through the
+   human-owned registry write path (the append-only dedup keeps a pruned
+   row's original `run_id`, so only fresh evidence or a hand edit moves
+   it). For each dispatched rule, read its full
+   `drift_evidence[]` from the registry (post-apply — old rows the human
+   never dispatched are part of the repair) and launch one
+   `Task(classifier-fixer)` per rule, in parallel, scoped to that rule's
+   `check_<group_id>.ts`. `<run>` is this invocation's timestamp; it names
+   the staging root `~/.ariadne/reconcile/<run>/classifier-fixer/`. Dispatch
+   prompt — substitute every placeholder and paste the rule's registry
+   `description` and its `drift_evidence[]` rows inline:
 
    > Repair the drifted builtin classifier for rule `<group_id>`. Its check is
-   > `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`;
-   > its registry description and `drift_evidence[]` rows are below. Write
-   > your staging artifacts to
+   > `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`.
+   > Your run id is `<run>`; write your staging artifacts to
    > `~/.ariadne/reconcile/<run>/classifier-fixer/<group_id>/`.
+   > The rule's registry description:
+   >
+   > `<description>`
+   >
+   > Its drift_evidence rows, one per line:
+   >
+   > `{ project, run_id, entry_index, evidence_excerpt }` …
 
    Each fixer terminates every adjudicated evidence case in exactly one of
    three states (fixability triage first — see
@@ -123,14 +153,23 @@ Always invoke with `node --import tsx`. Never `pnpm exec tsx` or `npx tsx`
      permanent-limitation group for the `classifier-author` flow
      (`prioritize`, step 3a).
 
-   After the wave returns, run the single gated build-and-test pass —
-   `pnpm build --filter core`, then
+   After the wave returns, **read each fixer's `verdicts.json`** — the
+   session is its only consumer — and refuse a malformed verdict: a
+   `captured` case with no `test_file`, a case recorded in two states, or a
+   case citing a `(project, entry_index)` pair outside the rule's
+   `drift_evidence[]`. A
+   refused verdict means that fixer's work is not trusted: revert its check
+   edit and re-dispatch or escalate. Then run the single gated
+   build-and-test pass — `pnpm build --filter core`, then
    `npx vitest run packages/core/src/classify_entry_points/builtins/` — and
    surface every fixer's `REVIEW.md`, backlog proposal, mis-classified
    hand-off, and skipped case to the human. The fixers edit checks in
    parallel but never build; this pass is the one green/red signal for the
    whole wave. Red means a fixer's broadening conflicts with the suite —
-   revert or narrow that check before committing anything.
+   revert or narrow that check first. Once green, the human commits the
+   changed `check_<group_id>.ts` files and their tests (the registry write
+   already landed in step 3's apply; `registry.json` is committed with it,
+   never by a fixer).
 
 5. **Retire by name (direct deletion, no detection).** When a fix lands under
    a different task than a rule's `backlog_task` — the common case for a rule
