@@ -40,8 +40,10 @@ resolve_references/
 ├── resolution_state.ts           # Immutable state + pure resolution functions
 ├── name_resolution.ts            # Phase 1: scope-based name resolution
 ├── export_chain_lookup.ts        # Named/namespace export lookup through re-export chains
-├── preprocess_references.ts      # Reference preprocessing
+├── preprocess_references.ts      # Reference preprocessing (marshaller)
+├── preprocess_references.python.ts  # Python class-instantiation calls → constructor calls
 ├── indirect_reachability.ts      # Functions reachable via collection/reference
+├── file_folders.ts               # Virtual folder tree: I/O-free file-existence checks
 ├── registries/                   # Project-level data stores
 │   ├── definition.ts             # DefinitionRegistry (all definitions, multiple indexes)
 │   ├── type.ts                   # TypeRegistry (type metadata, inheritance)
@@ -60,15 +62,17 @@ resolve_references/
 │   ├── path_resolution.rust.ts   # Rust module-path walking shared by the leaves
 │   ├── callable_instance.python.ts  # Python __call__ callable-instance resolution
 │   ├── collection_dispatch.ts    # Collection-stored function dispatch
-│   └── receiver_resolution.*.ts  # Language-specific receiver type inference
+│   └── receiver_resolution.ts    # Receiver type inference (unified base + property-chain walk)
 ├── type_preprocessing/           # Type metadata extraction from definitions and references
+│   ├── index.ts                  # type_preprocessing barrel
 │   ├── bindings.ts               # Variable/parameter type bindings
 │   ├── constructor_bindings.ts   # Constructor call type bindings
 │   └── member.ts                 # Type member extraction (methods, properties, enum members)
 └── import_resolution/            # Cross-file import path resolution
+    ├── index.ts                  # import_resolution barrel
     ├── import_graph.ts           # ImportGraph (import dependency tracking)
-    ├── import_resolution.ts      # Dispatcher
-    └── import_resolution.*.ts    # Language-specific import resolvers
+    ├── import_resolution.ts      # Marshaller (language switch)
+    └── import_resolution.{javascript,python,rust,typescript}.ts  # Language-specific resolvers
 ```
 
 ## Key Types
@@ -92,3 +96,9 @@ When a file changes, the `Project` class:
 1. Re-indexes the file (`index_single_file`)
 2. Updates all registries (`definitions`, `types`, `scopes`, `exports`, `references`)
 3. Re-resolves the changed file + its dependents (files that import from it)
+
+## Hook Enforcement
+
+`.claude/hooks/file_naming_validator.ts` (PreToolUse) enforces the `{feature}.{language}.ts`
+naming this layout reflects, and `file_naming_validator_stop.ts` re-checks at Stop.
+`import_resolution/` is the reference marshaller shape — see `@.claude/rules/language-patterns.md`.

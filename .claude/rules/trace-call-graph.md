@@ -22,7 +22,8 @@ trace_call_graph/
 ├── trace_call_graph.ts     # Build CallableNodes + detect raw entry points
 ├── runner_suppression.ts   # Runner-convention is_test marking (Rust #[test]/#[cfg(test)], ASV benchmarks)
 ├── build_signature.ts      # Render a callable definition as a human-readable signature string
-└── count_tree_size.ts      # Transitive fan-out metric over a CallGraph (resolved/unresolved counts)
+├── count_tree_size.ts      # Transitive fan-out metric over a CallGraph (resolved/unresolved counts)
+└── index.ts                # Stage-3 barrel
 ```
 
 ## Key Types
@@ -50,3 +51,9 @@ Two mechanisms make functions reachable without direct calls:
 - **Function reference** — Named function passed as a value or argument
 
 The `ResolutionRegistry` tracks these as `IndirectReachability` entries, and the graph carries them so downstream classification avoids false-positive entry points.
+
+## Hook Enforcement
+
+`.claude/hooks/file_naming_validator.ts` (PreToolUse) enforces this folder's module naming,
+and `file_naming_validator_stop.ts` re-checks at Stop. Downstream classification of these raw
+entry points is `@.claude/rules/classify-entry-points.md`.
