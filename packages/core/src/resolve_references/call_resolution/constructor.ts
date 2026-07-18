@@ -22,7 +22,7 @@ import type { ExportRegistry } from "../registries/export";
 import type { ScopeRegistry } from "../registries/scope";
 import type { ResolutionRegistry } from "../resolve_references";
 import type { FileSystemFolder } from "../file_folders";
-import { resolve_namespace_export } from "./method_lookup";
+import { resolve_namespace_export } from "../export_chain_lookup";
 import {
   resolve_self_type_rust,
   resolve_type_via_module_path_rust,
