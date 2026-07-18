@@ -38,9 +38,14 @@ language-specific code:
   `extractors/python_scope_boundary_extractor.ts`) are permitted only for
   shared-base hierarchies — language classes extending a common base that
   lives in the same sub-folder.
-- Language sub-folders (`python/`, `typescript/`) are prohibited.
+- A directory segment below `src/` may never be a language name —
+  `typescript`, `javascript`, `python`, `rust`, `go`, `java` — whether or not
+  that language has an accepted suffix, and whatever its capitalisation. Only
+  whole segments match, so `typescript_helpers/` is fine, and a package may be
+  named after a language.
 - Per-language top-level modules (a `python_imports.ts` at a module root)
-  are prohibited.
+  are prohibited by convention; the hook does not detect them, so this one
+  rests on review.
 - `classify_entry_points/builtins/` uses filename = `group_id`
   (`check_<group_id>.ts`); a group id may name a language as part of the
   pattern it classifies without invoking the suffix rule.
@@ -83,9 +88,16 @@ These basenames are blocked in `packages/*/src` (closed set, same as the hook's)
 `utils.ts`, `types.ts`, `common.ts`, `errors.ts`, `helpers.ts`, `constants.ts`,
 `analytics.ts`, `misc.ts`, `shared.ts`
 
-`index.ts` and `*.test.ts` are exempt. The ban covers the main-implementation
-position too: a folder named for a banned category is itself the violation, so
-`analytics/analytics.ts` is blocked — name the concept instead.
+The stem before the first dot carries the name, so `types.d.ts` and
+`utils.python.ts` are blocked alongside the plain forms. `index.ts` and
+`*.test.ts` are exempt.
+
+The basename is checked before the folder-module rule, so a banned name is
+blocked in the main-implementation position too: `analytics/analytics.ts` is
+blocked even though `{folder}/{folder}.ts` is otherwise the main-implementation
+name. The folder itself is not inspected — `analytics/query_stats.ts` is
+fine — so a folder whose name is a banned category takes `index.ts` as its
+entry point, or gets renamed to the concept it holds.
 
 ## Language-Specific Marshalling Pattern
 
@@ -102,4 +114,9 @@ Examples: `import_resolution.ts`, `capture_handlers.ts`
 
 ## Hook Enforcement
 
-File naming is enforced by `.claude/hooks/file_naming_validator.ts`. Violations are blocked with suggestions for correct names.
+File naming is enforced twice, both paths sharing the checks in
+`.claude/hooks/file_naming.ts`: `.claude/hooks/file_naming_validator.ts` blocks
+a non-conforming Write or Edit as it happens, and
+`.claude/hooks/file_naming_validator_stop.ts` audits every workspace package at
+session end. Violations are blocked with a suggested correct name whenever one
+exists.

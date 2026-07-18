@@ -6,18 +6,17 @@
 import fs from "fs";
 import path from "path";
 
+// Every token that names a language. A folder may never be named after one,
+// whether or not its dotted suffix is accepted.
+export const LANGUAGE_NAMES = ["typescript", "javascript", "python", "rust", "go", "java"];
+
 // Languages whose dotted suffix is accepted: {module}.{language}.ts
 export const LANGUAGES = ["typescript", "javascript", "python", "rust"];
 
-// Language names that are not supported as a dotted suffix. Kept separate from
-// LANGUAGES because the two lists drive opposite decisions: LANGUAGES is the
-// accept list, and shrinking it alone would let `foo.go.ts` fall through to the
-// generic two-part submodule pattern and start validating.
-export const UNSUPPORTED_LANGUAGES = ["go", "java"];
-
-// Every token that names a language. A folder may never be named after one,
-// whether or not its dotted suffix is supported.
-export const LANGUAGE_FOLDER_SEGMENTS = [...LANGUAGES, ...UNSUPPORTED_LANGUAGES];
+// The reject list is derived so that adding a language to LANGUAGES is the
+// single edit that grants support. A name absent from both lists reads as an
+// ordinary aspect to the generic two-part submodule pattern.
+export const UNSUPPORTED_LANGUAGES = LANGUAGE_NAMES.filter((name) => !LANGUAGES.includes(name));
 
 // Category names that describe a bucket rather than a concept. Scoped to
 // packages/*/src by where validate_src_file is called from, so the `.claude/`
@@ -142,6 +141,14 @@ export function validate_src_file(relative_path: string, parts: string[]): Valid
   const filename = parts[parts.length - 1];
   const ext = path.extname(filename);
 
+  // The directory rule is checked ahead of every filename rule, including the
+  // extension gate: `.scm` query files are the artifact most likely to attract
+  // a per-language folder, and an allowlisted extension must not exempt a path.
+  const language_folder = validate_no_language_folder(relative_path, parts);
+  if (!language_folder.valid) {
+    return language_folder;
+  }
+
   // Allow non-TS files with special extensions (.scm query files, .md docs)
   if (ALLOWED_SRC_EXTENSIONS.includes(ext)) {
     return { valid: true };
@@ -160,8 +167,8 @@ export function validate_src_file(relative_path: string, parts: string[]): Valid
     return { valid: true };
   }
 
-  // The generic-name check runs ahead of the structural ones: a rename is a
-  // cheaper fix to surface than a directory restructure.
+  // The generic-name check runs ahead of the language one: a rename is the
+  // cheaper fix to surface when a filename violates both.
   const generic_basename = validate_no_generic_basename(relative_path, filename);
   if (!generic_basename.valid) {
     return generic_basename;
@@ -170,11 +177,6 @@ export function validate_src_file(relative_path: string, parts: string[]): Valid
   const unsupported_language = validate_no_unsupported_language(relative_path, filename);
   if (!unsupported_language.valid) {
     return unsupported_language;
-  }
-
-  const language_folder = validate_no_language_folder(relative_path, parts);
-  if (!language_folder.valid) {
-    return language_folder;
   }
 
   // Get the containing folder name
@@ -222,21 +224,61 @@ export function validate_src_file(relative_path: string, parts: string[]): Valid
 
 /**
  * Reject a filename whose name is a category rather than a concept.
+ *
+ * The stem before the first dot carries the name, so a declaration file or a
+ * language variant of a banned name is caught alongside the plain form.
  */
-export function validate_no_generic_basename(relative_path: string, filename: string): ValidationResult {
+function validate_no_generic_basename(relative_path: string, filename: string): ValidationResult {
   if (filename === "index.ts" || filename.endsWith(".test.ts")) {
     return { valid: true };
   }
 
-  if (!BLOCKED_GENERIC_BASENAMES.has(filename)) {
+  const stem = filename.split(".")[0];
+  if (!BLOCKED_GENERIC_BASENAMES.has(`${stem}.ts`)) {
     return { valid: true };
   }
 
   return {
     valid: false,
-    error: `Blocked: '${relative_path}' - '${filename}' names a category, not a concept.\n` +
+    error: `Blocked: '${relative_path}' - '${stem}' names a category, not a concept.\n` +
       `Name the file for what it holds (e.g. resolve_module_path.ts). See .claude/rules/file-naming.md`
   };
+}
+
+/** Test suffixes a language token must precede rather than follow. */
+const TEST_SUFFIX_PATTERN = /\.(?:integration\.test|e2e\.test|bench\.test|test)\.ts$/;
+
+/**
+ * Describe how to replace a file sitting in a language folder.
+ *
+ * A recommendation is only ever a name this validator accepts, so following it
+ * cannot land on the next check's rejection.
+ */
+function language_folder_remedy(filename: string, language: string, parent_is_src_root: boolean): string {
+  if (!LANGUAGES.includes(language)) {
+    return `'${language}' has no accepted dotted suffix, so move the file into the parent folder under a concept name.`;
+  }
+
+  if (filename === "index.ts") {
+    return "A barrel names its folder's exports rather than one language's, so move it into the parent folder.";
+  }
+
+  if (!filename.endsWith(".ts")) {
+    return `Move the file into the parent folder and name it for the language it serves, e.g. ${language}.${path.extname(filename).slice(1)}.`;
+  }
+
+  const test_suffix = filename.match(TEST_SUFFIX_PATTERN)?.[0] ?? "";
+  const base = filename.slice(0, filename.length - (test_suffix.length || ".ts".length));
+  const stem = base.endsWith(`.${language}`) ? base : `${base}.${language}`;
+  const suggestion = `${stem}${test_suffix || ".ts"}`;
+
+  // The src root takes plain snake_case only, so a dotted suffix needs a
+  // feature folder to live in.
+  if (parent_is_src_root) {
+    return `Move it under the feature folder it belongs to, as {feature}/${suggestion}.`;
+  }
+
+  return `Use a dotted suffix in the parent folder instead: ${suggestion}.`;
 }
 
 /**
@@ -245,34 +287,37 @@ export function validate_no_generic_basename(relative_path: string, filename: st
  * Only segments below src are scanned, so a package may still be named after a
  * language, and only whole segments match, so `typescript_utils/` is untouched.
  * The filename is excluded because a language legitimately appears there, both
- * as a dotted suffix and as an extractor prefix.
+ * as a dotted suffix and as an extractor prefix. Matching folds case because
+ * `Python/` and `python/` are one directory on a case-insensitive filesystem.
  */
-export function validate_no_language_folder(relative_path: string, parts: string[]): ValidationResult {
+function validate_no_language_folder(relative_path: string, parts: string[]): ValidationResult {
   const directories = parts.slice(3, parts.length - 1);
   const filename = parts[parts.length - 1];
 
-  for (const segment of directories) {
-    if (LANGUAGE_FOLDER_SEGMENTS.includes(segment)) {
-      const stem = filename.replace(/\.ts$/, "");
-      return {
-        valid: false,
-        error: `Blocked: '${relative_path}' - language sub-folder '${segment}/' is prohibited.\n` +
-          `Use a dotted suffix in the parent folder instead: ${stem}.${segment}.ts. ` +
-          `See .claude/rules/file-naming.md`
-      };
+  for (const [index, segment] of directories.entries()) {
+    const language = segment.toLowerCase();
+    if (!LANGUAGE_NAMES.includes(language)) {
+      continue;
     }
+
+    const remedy = language_folder_remedy(filename, language, index === 0);
+    return {
+      valid: false,
+      error: `Blocked: '${relative_path}' - language sub-folder '${segment}/' is prohibited.\n` +
+        `${remedy} See .claude/rules/file-naming.md`
+    };
   }
 
   return { valid: true };
 }
 
 /**
- * Reject a dotted filename part naming a language we do not support.
+ * Reject a dotted filename part naming a language without an accepted suffix.
  *
- * Without this the generic two-part submodule pattern accepts `foo.go.ts`,
- * because `go` is absent from LANGUAGES and so reads as an ordinary aspect.
+ * The generic two-part submodule pattern reads an unrecognized dotted part as
+ * an ordinary aspect, so an unsupported language must be rejected by name.
  */
-export function validate_no_unsupported_language(relative_path: string, filename: string): ValidationResult {
+function validate_no_unsupported_language(relative_path: string, filename: string): ValidationResult {
   for (const part of filename.split(".")) {
     if (UNSUPPORTED_LANGUAGES.includes(part)) {
       return {
@@ -506,6 +551,21 @@ export function validate_package_root_file(relative_path: string, parts: string[
 }
 
 /**
+ * List the workspace packages that carry a src directory, as `packages/<name>`.
+ */
+function workspace_packages(project_dir: string): string[] {
+  try {
+    return fs
+      .readdirSync(path.join(project_dir, "packages"), { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => `packages/${entry.name}`)
+      .filter((pkg) => fs.existsSync(path.join(project_dir, pkg, "src")));
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Audit project for file naming violations
  */
 export function audit_prohibited_files(project_dir: string): string[] {
@@ -528,9 +588,9 @@ export function audit_prohibited_files(project_dir: string): string[] {
     // Ignore errors reading root
   }
 
-  // Check package directories
-  const packages = ["packages/core", "packages/types", "packages/mcp"];
-  for (const pkg of packages) {
+  // Every workspace package, so a package added later is audited without an
+  // edit here — the PreToolUse validator already covers all of packages/*.
+  for (const pkg of workspace_packages(project_dir)) {
     const pkg_root = path.join(project_dir, pkg);
 
     try {
@@ -551,7 +611,7 @@ export function audit_prohibited_files(project_dir: string): string[] {
     const src_dir = path.join(pkg_root, "src");
     try {
       if (fs.existsSync(src_dir)) {
-        audit_src_directory(src_dir, pkg, violations);
+        audit_src_directory(src_dir, pkg, project_dir, violations);
       }
     } catch {
       // Ignore errors
@@ -564,16 +624,18 @@ export function audit_prohibited_files(project_dir: string): string[] {
 /**
  * Recursively audit src directory for naming violations
  */
-function audit_src_directory(dir: string, pkg_prefix: string, violations: string[]): void {
+function audit_src_directory(dir: string, pkg_prefix: string, project_dir: string, violations: string[]): void {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
 
   for (const entry of entries) {
     const full_path = path.join(dir, entry.name);
 
     if (entry.isDirectory()) {
-      audit_src_directory(full_path, pkg_prefix, violations);
+      audit_src_directory(full_path, pkg_prefix, project_dir, violations);
     } else if (entry.isFile()) {
-      const relative_from_pkg = full_path.split(pkg_prefix + "/")[1];
+      // Relative to the package root, so a checkout whose own path contains
+      // `packages/<name>/` cannot shift the segments.
+      const relative_from_pkg = path.relative(path.join(project_dir, pkg_prefix), full_path);
       if (!relative_from_pkg) continue;
 
       const parts = [pkg_prefix.split("/")[0], pkg_prefix.split("/")[1], ...relative_from_pkg.split(path.sep)];
