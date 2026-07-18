@@ -8,7 +8,7 @@ import path from "path";
 
 // Every token that names a language. A folder may never be named after one,
 // whether or not its dotted suffix is accepted.
-export const LANGUAGE_NAMES = ["typescript", "javascript", "python", "rust", "go", "java"];
+const LANGUAGE_NAMES = ["typescript", "javascript", "python", "rust", "go", "java"];
 
 // Languages whose dotted suffix is accepted: {module}.{language}.ts
 export const LANGUAGES = ["typescript", "javascript", "python", "rust"];
@@ -75,6 +75,10 @@ export const KEBAB_FILENAME_DIRS = ["builtins"];
 
 // File extensions that are always allowed in src (non-TypeScript)
 export const ALLOWED_SRC_EXTENSIONS = [".scm", ".md"];
+
+// Ordered longest-first so the most specific suffix matches a name that ends
+// with several of them.
+const TEST_SUFFIXES = [".integration.test.ts", ".e2e.test.ts", ".bench.test.ts", ".test.ts"];
 
 // Files that look like prohibited patterns but are actually allowed
 export const ALLOWED_SPECIAL_FILES = new Set([
@@ -245,40 +249,53 @@ function validate_no_generic_basename(relative_path: string, filename: string): 
   };
 }
 
-/** Test suffixes a language token must precede rather than follow. */
-const TEST_SUFFIX_PATTERN = /\.(?:integration\.test|e2e\.test|bench\.test|test)\.ts$/;
+/**
+ * Name the file would carry in the parent folder, with the language moved into
+ * a dotted suffix ahead of any test suffix.
+ */
+function language_suffixed_name(filename: string, language: string): string | null {
+  if (!filename.endsWith(".ts")) {
+    return null;
+  }
+
+  // A barrel names its folder's exports rather than one language's, so the
+  // validator accepting `index.<language>.ts` does not make it good advice.
+  if (filename === "index.ts") {
+    return null;
+  }
+
+  const test_suffix = TEST_SUFFIXES.find((suffix) => filename.endsWith(suffix));
+  const base = filename.slice(0, filename.length - (test_suffix ?? ".ts").length);
+  if (!base) {
+    return null;
+  }
+
+  const stem = base.endsWith(`.${language}`) ? base : `${base}.${language}`;
+  return `${stem}${test_suffix ?? ".ts"}`;
+}
 
 /**
  * Describe how to replace a file sitting in a language folder.
  *
- * A recommendation is only ever a name this validator accepts, so following it
- * cannot land on the next check's rejection.
+ * A name is only recommended once this validator has accepted it, so following
+ * the advice cannot land on another rule's rejection.
  */
-function language_folder_remedy(filename: string, language: string, parent_is_src_root: boolean): string {
-  if (!LANGUAGES.includes(language)) {
-    return `'${language}' has no accepted dotted suffix, so move the file into the parent folder under a concept name.`;
+function language_folder_remedy(parts: string[], language_index: number, language: string): string {
+  const filename = parts[parts.length - 1];
+  const suffixed = language_suffixed_name(filename, language);
+
+  if (suffixed) {
+    const relocated = [...parts];
+    relocated.splice(language_index, 1);
+    relocated[relocated.length - 1] = suffixed;
+
+    // Recursion terminates: each candidate carries one language folder fewer.
+    if (validate_src_file(relocated.join("/"), relocated).valid) {
+      return `Use a dotted suffix in the parent folder instead: ${suffixed}.`;
+    }
   }
 
-  if (filename === "index.ts") {
-    return "A barrel names its folder's exports rather than one language's, so move it into the parent folder.";
-  }
-
-  if (!filename.endsWith(".ts")) {
-    return `Move the file into the parent folder and name it for the language it serves, e.g. ${language}.${path.extname(filename).slice(1)}.`;
-  }
-
-  const test_suffix = filename.match(TEST_SUFFIX_PATTERN)?.[0] ?? "";
-  const base = filename.slice(0, filename.length - (test_suffix.length || ".ts".length));
-  const stem = base.endsWith(`.${language}`) ? base : `${base}.${language}`;
-  const suggestion = `${stem}${test_suffix || ".ts"}`;
-
-  // The src root takes plain snake_case only, so a dotted suffix needs a
-  // feature folder to live in.
-  if (parent_is_src_root) {
-    return `Move it under the feature folder it belongs to, as {feature}/${suggestion}.`;
-  }
-
-  return `Use a dotted suffix in the parent folder instead: ${suggestion}.`;
+  return "Move the file into the parent folder under a name that states the concept it holds.";
 }
 
 /**
@@ -300,7 +317,7 @@ function validate_no_language_folder(relative_path: string, parts: string[]): Va
       continue;
     }
 
-    const remedy = language_folder_remedy(filename, language, index === 0);
+    const remedy = language_folder_remedy(parts, 3 + index, language);
     return {
       valid: false,
       error: `Blocked: '${relative_path}' - language sub-folder '${segment}/' is prohibited.\n` +
@@ -377,16 +394,13 @@ export function validate_folder_module_naming(filename: string, folder_name: str
     };
   }
 
-  // Valid test suffixes
-  const test_suffixes = [".test.ts", ".integration.test.ts", ".e2e.test.ts", ".bench.test.ts"];
-
   // Check if file starts with {folder_name}. (main module file)
   if (filename.startsWith(`${folder_name}.`)) {
-    return validate_main_module_file(filename, folder_name, test_suffixes);
+    return validate_main_module_file(filename, folder_name, TEST_SUFFIXES);
   }
 
   // Otherwise it's a submodule file - validate snake_case pattern
-  return validate_submodule_file(filename, test_suffixes, folder_name);
+  return validate_submodule_file(filename, TEST_SUFFIXES, folder_name);
 }
 
 /**

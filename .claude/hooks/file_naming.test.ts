@@ -4,11 +4,13 @@
  * silently stops enforcing the naming rules.
  */
 
+import { existsSync } from "fs";
+import { join } from "path";
+import { fileURLToPath } from "url";
 import { describe, expect, it } from "vitest";
 import {
   BLOCKED_GENERIC_BASENAMES,
   LANGUAGES,
-  LANGUAGE_NAMES,
   UNSUPPORTED_LANGUAGES,
   audit_prohibited_files,
   validate_src_file,
@@ -39,20 +41,12 @@ describe("naming constants", () => {
     ]);
   });
 
-  it("names every language a folder may not be called after", () => {
-    expect(LANGUAGE_NAMES).toEqual(["typescript", "javascript", "python", "rust", "go", "java"]);
-  });
-
   it("lists exactly the four supported languages", () => {
     expect(LANGUAGES).toEqual(["typescript", "javascript", "python", "rust"]);
   });
 
   it("derives the unsupported languages from the supported ones", () => {
     expect(UNSUPPORTED_LANGUAGES).toEqual(["go", "java"]);
-  });
-
-  it("keeps the supported and unsupported lists disjoint", () => {
-    expect(LANGUAGES.filter((language) => UNSUPPORTED_LANGUAGES.includes(language))).toEqual([]);
   });
 });
 
@@ -120,10 +114,10 @@ describe("language sub-folder block", () => {
     expect(check(`packages/core/src/call_resolution/${segment}/resolve.ts`)).toBe(false);
   });
 
-  it("directs a language folder at the src root into a feature folder", () => {
+  it("recommends no name at the src root, where a dotted suffix is invalid", () => {
     expect(error_for("packages/core/src/python/resolve.ts")).toEqual(
       "Blocked: 'packages/core/src/python/resolve.ts' - language sub-folder 'python/' is prohibited.\n" +
-        "Move it under the feature folder it belongs to, as {feature}/resolve.python.ts. " +
+        "Move the file into the parent folder under a name that states the concept it holds. " +
         "See .claude/rules/file-naming.md"
     );
   });
@@ -161,19 +155,16 @@ describe("language sub-folder block", () => {
     );
   });
 
-  it("suggests no dotted suffix for a language that has none", () => {
-    expect(error_for("packages/core/src/call_resolution/go/resolve.ts")).toEqual(
-      "Blocked: 'packages/core/src/call_resolution/go/resolve.ts' - language sub-folder 'go/' is prohibited.\n" +
-        "'go' has no accepted dotted suffix, so move the file into the parent folder under a concept name. " +
-        "See .claude/rules/file-naming.md"
-    );
-  });
-
-  it("suggests no language suffix for a barrel", () => {
-    expect(error_for("packages/core/src/call_resolution/python/index.ts")).toEqual(
-      "Blocked: 'packages/core/src/call_resolution/python/index.ts' - language sub-folder 'python/' is prohibited.\n" +
-        "A barrel names its folder's exports rather than one language's, so move it into the parent folder. " +
-        "See .claude/rules/file-naming.md"
+  it.each([
+    ["go/resolve.ts", "the language has no accepted suffix"],
+    ["python/index.ts", "a barrel takes no language suffix"],
+    ["python/utils.ts", "the suffixed name is a banned category"],
+    ["python/parse.cache.ts", "the suffixed stem has no submodule pattern"],
+    ["python/config.json", "src takes no such extension"],
+    ["python/Makefile", "the file has no extension"],
+  ])("recommends no name for %s, because %s", (folder_path) => {
+    expect(error_for(`packages/core/src/call_resolution/${folder_path}`)).toContain(
+      "Move the file into the parent folder under a name that states the concept it holds."
     );
   });
 
@@ -277,8 +268,13 @@ describe("language prefix", () => {
 });
 
 describe("repository audit", () => {
+  const repo_root = fileURLToPath(new URL("../..", import.meta.url));
+
+  it("scans the workspace packages", () => {
+    expect(existsSync(join(repo_root, "packages/core/src"))).toBe(true);
+  });
+
   it("reports no naming violations across the workspace", () => {
-    const repo_root = new URL("../..", import.meta.url).pathname;
     expect(audit_prohibited_files(repo_root)).toEqual([]);
   });
 });
