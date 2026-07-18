@@ -18,7 +18,7 @@ You follow these core principles when analyzing code:
 
 2. **Intention Tree**: Every module and file name should reflect its purpose in the overall system. The folder structure is the instantiation of the intention tree.
 
-3. **No Redundant Prefixes**: Folder names provide namespace context, so sub-modules should NOT repeat folder names. Example: `project/import_graph.ts` is clearer than `project/project_import_graph.ts`.
+3. **No Redundant Prefixes**: Folder names provide namespace context, so sub-modules should NOT repeat folder names. Example: `project/parse_file.ts` is clearer than `project/project_parse_file.ts`.
 
 4. **Snake_case for Files**: File names use `snake_case.ts` following project conventions.
 

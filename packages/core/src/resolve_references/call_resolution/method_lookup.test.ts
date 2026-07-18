@@ -1325,6 +1325,63 @@ describe("resolve_method_on_type", () => {
       expect(unwrap(result)).toEqual([update_method_id]);
     });
 
+    it("skips a re-export import definition in the source file instead of resolving to it", () => {
+      // import { Widget } from "./import_graph"; where import_graph.ts contains
+      // `export { Widget } from "./widget"` — a re-export import def whose name
+      // matches. Named-import lookup must not return the re-export def itself;
+      // the chain falls through to reexport_chain_unresolved.
+      const import_id = "import:test.ts:1:0:1:30:Widget" as SymbolId;
+      const reexport_id = "import:import_graph.ts:1:0:1:40:Widget" as SymbolId;
+
+      const import_def: ImportDefinition = {
+        kind: "import",
+        symbol_id: import_id,
+        name: "Widget" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        import_kind: "named",
+        import_path: "./import_graph" as ModulePath,
+      };
+
+      const reexport_def: ImportDefinition = {
+        kind: "import",
+        symbol_id: reexport_id,
+        name: "Widget" as SymbolName,
+        defining_scope_id: IMPORT_GRAPH_SCOPE,
+        location: { ...MOCK_LOCATION, file_path: IMPORT_GRAPH_FILE },
+        import_kind: "named",
+        import_path: "./widget" as ModulePath,
+      };
+
+      definitions.update_file(TEST_FILE, [import_def]);
+      definitions.update_file(IMPORT_GRAPH_FILE, [reexport_def]);
+
+      const imports_for_test = new ImportGraph();
+      imports_for_test["resolved_import_paths"].set(import_id, IMPORT_GRAPH_FILE);
+      const context_with_resolver: ReceiverResolutionContext = {
+        ...context,
+        imports: imports_for_test,
+      };
+
+      const result = resolve_method_on_type(
+        import_id,
+        "render" as SymbolName,
+        context_with_resolver
+      );
+
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error).toEqual({
+          stage: "import_resolution",
+          reason: "reexport_chain_unresolved",
+          partial_info: {
+            resolved_receiver_type: import_id,
+            import_target_file: IMPORT_GRAPH_FILE,
+          },
+        });
+      }
+    });
+
     it("fails with reexport_chain_unresolved for a non-exported class in the source file", () => {
       const import_id = "import:test.ts:1:0:1:30:PrivateClass" as SymbolId;
       const private_class_id = class_symbol("PrivateClass", {

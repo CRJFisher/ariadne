@@ -1,8 +1,8 @@
 /**
  * Stage-2 resolution surface: the project-level registries, the resolution
  * store, and the import graph. Modules inside resolve_references/ import
- * siblings directly, never through this barrel — it serves project/,
- * trace_call_graph/, and the core public API only.
+ * siblings directly, never through this barrel — it exists for consumers
+ * outside the stage (today the core public API in src/index.ts).
  */
 
 export { DefinitionRegistry } from "./registries/definition";
