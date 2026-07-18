@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import type { ClassifierRegressionFlag } from "@ariadnejs/types";
+
 import {
   aggregate_classifier_regressions,
-  type ClassifierRegressionFlag,
   type ClassifierRegressionInput,
 } from "./classifier_regressions.js";
 

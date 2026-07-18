@@ -2,7 +2,7 @@ import * as fs from "node:fs/promises";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { atomic_write_file } from "./atomic_write.js";
-import { error_code } from "./errors.js";
+import { error_code } from "./node_error_code.js";
 
 /**
  * Outcome returned by an `atomic_update_registry` mutator. `kind: "write"`

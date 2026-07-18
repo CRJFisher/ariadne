@@ -9,12 +9,7 @@
  * authoring `drift_evidence` rows to mark drifting wip rules.
  */
 
-import type {
-  ClassifierRegressionFlag,
-  ClassifierRegressionFlaggedEntry,
-} from "@ariadnejs/types";
-
-export type { ClassifierRegressionFlag, ClassifierRegressionFlaggedEntry };
+import type { ClassifierRegressionFlag } from "@ariadnejs/types";
 
 /**
  * Minimal shape `aggregate_classifier_regressions` rolls up: the rule the

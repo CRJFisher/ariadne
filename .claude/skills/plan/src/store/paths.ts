@@ -1,6 +1,7 @@
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+
+import { repo_root } from "@ariadnejs/skill-protocol";
 
 /**
  * Base state directory for the `plan` engine's task-DB. Defaults to
@@ -82,13 +83,6 @@ export function plan_staging_manifest_path(sweep_id: string): string {
   return path.join(plan_staging_dir(sweep_id), "manifest.json");
 }
 
-/** Absolute repo root — same value every script derives. */
-export function get_repo_root(): string {
-  const here = path.dirname(fileURLToPath(import.meta.url));
-  // src/store/ → src/ → plan/ → skills/ → .claude/ → repo root
-  return path.resolve(here, "..", "..", "..", "..", "..");
-}
-
 /**
  * The user's `backlog/tasks/` directory, rooted at the repo. The plan engine
  * reads it ONLY as a dedup signal (it never writes here); the user-invoked
@@ -99,7 +93,7 @@ export function get_repo_root(): string {
 export function backlog_tasks_dir(): string {
   return (
     process.env.ARIADNE_BACKLOG_DIR_OVERRIDE ??
-    path.join(get_repo_root(), "backlog", "tasks")
+    path.join(repo_root(), "backlog", "tasks")
   );
 }
 
@@ -111,7 +105,7 @@ export function backlog_tasks_dir(): string {
  * so a test isolates the scan and the write target to one temp tree.
  */
 export function backlog_root_dir(): string {
-  return process.env.ARIADNE_BACKLOG_DIR_OVERRIDE ?? path.join(get_repo_root(), "backlog");
+  return process.env.ARIADNE_BACKLOG_DIR_OVERRIDE ?? path.join(repo_root(), "backlog");
 }
 
 /**
