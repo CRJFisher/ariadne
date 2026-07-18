@@ -235,9 +235,9 @@ describe("extract_export_info CommonJS exports", () => {
     expect(info(code, "inner")).toEqual({ is_exported: false });
   });
 
-  it("does not mark a local when the exports assignment carries an anonymous function", () => {
-    const code = "function foo() {}\nexports.bar = () => {};";
-    expect(info(code, "foo")).toEqual({ is_exported: false });
+  it("does not mark a same-named local when the exports assignment carries an anonymous function", () => {
+    const code = "function bar() {}\nexports.bar = () => {};";
+    expect(info(code, "bar")).toEqual({ is_exported: false });
   });
 });
 
