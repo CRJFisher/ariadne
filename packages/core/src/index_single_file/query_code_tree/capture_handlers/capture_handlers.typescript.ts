@@ -290,43 +290,7 @@ export function handle_definition_namespace(
 // DECORATOR HANDLERS
 // ============================================================================
 
-export function handle_decorator_class(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const target_id = find_decorator_target(capture);
-  if (!target_id) return;
-
-  const decorator_name = extract_decorator_name(capture.node);
-
-  builder.add_decorator_to_target(target_id, {
-    defining_scope_id: context.get_scope_id(capture.location),
-    name: decorator_name,
-    arguments: extract_decorator_arguments(capture.node),
-    location: capture.location,
-  });
-}
-
-export function handle_decorator_method(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const target_id = find_decorator_target(capture);
-  if (!target_id) return;
-
-  const decorator_name = extract_decorator_name(capture.node);
-
-  builder.add_decorator_to_target(target_id, {
-    defining_scope_id: context.get_scope_id(capture.location),
-    name: decorator_name,
-    arguments: extract_decorator_arguments(capture.node),
-    location: capture.location,
-  });
-}
-
-export function handle_decorator_property(
+function handle_decorator(
   capture: CaptureNode,
   builder: DefinitionBuilder,
   context: ProcessingContext
@@ -589,7 +553,7 @@ export const TYPESCRIPT_HANDLERS: HandlerRegistry = {
 
   "definition.namespace": handle_definition_namespace,
 
-  "decorator.class": handle_decorator_class,
-  "decorator.method": handle_decorator_method,
-  "decorator.property": handle_decorator_property,
+  "decorator.class": handle_decorator,
+  "decorator.method": handle_decorator,
+  "decorator.property": handle_decorator,
 } as const;
