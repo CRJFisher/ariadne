@@ -7,27 +7,21 @@ import {
   is_supported_file,
   parse_gitignore,
 } from "./file_loading";
-import type { PersistenceStorage } from "../persistence/storage";
-import { compute_content_hash } from "../persistence/content_hash";
 import type {
   CacheManifest,
   CacheManifestEntry,
-} from "../persistence/cache_manifest";
+  PersistenceStorage,
+} from "../persistence";
+import { is_git_repo, query_git_file_state } from "../persistence";
+import type { GitFileState } from "../persistence";
 import {
-  CURRENT_SCHEMA_VERSION,
-  deserialize_manifest,
-  serialize_manifest,
-} from "../persistence/cache_manifest";
-import {
-  serialize_semantic_index,
-  deserialize_semantic_index,
-  validate_semantic_index_shape,
-} from "../persistence/serialize_index";
-import {
-  is_git_repo,
-  query_git_file_state,
-} from "../persistence/git_change_detection";
-import type { GitFileState } from "../persistence/git_change_detection";
+  read_cache_manifest,
+  can_use_cache,
+  content_matches_cache,
+  try_restore_from_cache,
+  write_file_index,
+  write_cache_manifest,
+} from "./project_cache_strategy";
 
 export interface LoadProjectOptions {
   project_path: string;
@@ -129,21 +123,9 @@ export async function load_project(
     : files_to_load;
 
   // Load manifest if storage is provided
-  let manifest: CacheManifest | null = null;
-  if (storage) {
-    try {
-      const raw = await storage.read_manifest();
-      if (raw !== null) {
-        manifest = deserialize_manifest(raw);
-      }
-    } catch (error) {
-      console.warn(
-        `[ariadne:persistence] Failed to load cache manifest: ${
-          error instanceof Error ? error.message : error
-        }. Falling back to full re-index.`,
-      );
-    }
-  }
+  const manifest: CacheManifest | null = storage
+    ? await read_cache_manifest(storage)
+    : null;
 
   // Git-accelerated change detection
   // Query git state whenever storage is provided (even on cold load) so the
@@ -212,11 +194,8 @@ export async function load_project(
       // check if content hash matches the cached entry
       if (storage && manifest && !used_cache) {
         const cached_entry = manifest.entries.get(fp);
-        if (cached_entry) {
-          const content_hash = compute_content_hash(content);
-          if (content_hash === cached_entry.content_hash) {
-            used_cache = await try_restore_from_cache(project, fp, storage, content);
-          }
+        if (cached_entry && content_matches_cache(content, cached_entry)) {
+          used_cache = await try_restore_from_cache(project, fp, storage, content);
         }
       }
 
@@ -237,24 +216,18 @@ export async function load_project(
 
         // Update cache for this file
         if (storage) {
-          const content_hash = compute_content_hash(content);
-          const entry: CacheManifestEntry = {
-            content_hash,
-            git_blob_hash: git_state?.tracked_hashes.get(file_path),
-          };
-          manifest_entries.set(fp, entry);
-
-          try {
-            const index = project.get_index_single_file(fp);
-            if (index) {
-              await storage.write_index(fp, serialize_semantic_index(index));
-            }
-          } catch (error) {
-            console.warn(
-              `[ariadne:persistence] Failed to save index for ${file_path}: ${
-                error instanceof Error ? error.message : error
-              }`,
+          const index = project.get_index_single_file(fp);
+          if (index) {
+            const entry = await write_file_index(
+              storage,
+              fp,
+              index,
+              content,
+              git_state?.tracked_hashes.get(file_path),
             );
+            if (entry) {
+              manifest_entries.set(fp, entry);
+            }
           }
         }
       }
@@ -273,92 +246,8 @@ export async function load_project(
 
   // Write updated manifest
   if (storage && manifest_entries.size > 0) {
-    try {
-      await storage.write_manifest(
-        serialize_manifest({
-          schema_version: CURRENT_SCHEMA_VERSION,
-          git_tree_hash: git_state?.tree_hash,
-          entries: manifest_entries,
-        }),
-      );
-    } catch (error) {
-      console.warn(
-        `[ariadne:persistence] Failed to save manifest: ${
-          error instanceof Error ? error.message : error
-        }`,
-      );
-    }
+    await write_cache_manifest(storage, manifest_entries, git_state?.tree_hash);
   }
 
   return project;
-}
-
-/**
- * Determine if a file can use its cached index based on git state.
- *
- * Fast path (git tree unchanged): tracked+clean files are guaranteed unchanged.
- * Diff path (git tree changed): compare git blob hash against cached entry.
- * Fallback (no git): must read file and compute content hash (returns false).
- */
-function can_use_cache(
-  file_path: FilePath,
-  cached_entry: CacheManifestEntry,
-  git_state: GitFileState | null,
-  git_tree_unchanged: boolean,
-): boolean {
-  if (!git_state) {
-    // No git — can't determine without reading file. Caller must content-hash.
-    return false;
-  }
-
-  // File is dirty (unstaged changes) or untracked — must re-index
-  if (git_state.dirty_files.has(file_path)) return false;
-  if (git_state.untracked_files.has(file_path)) return false;
-
-  if (git_tree_unchanged) {
-    // Tree hash matches — all tracked clean files are unchanged
-    return git_state.tracked_hashes.has(file_path);
-  }
-
-  // Tree hash differs — compare per-file git blob hash
-  if (cached_entry.git_blob_hash) {
-    const current_blob = git_state.tracked_hashes.get(file_path);
-    return current_blob === cached_entry.git_blob_hash;
-  }
-
-  // No git blob hash in cache entry — can't determine without reading
-  return false;
-}
-
-/**
- * Try to restore a file from cache. Reads the cached index from storage,
- * reads file content from disk, and calls restore_file.
- * Returns true on success, false on any failure.
- */
-async function try_restore_from_cache(
-  project: Project,
-  file_path: FilePath,
-  storage: PersistenceStorage,
-  existing_content?: string,
-): Promise<boolean> {
-  try {
-    const raw_index = await storage.read_index(file_path);
-    if (raw_index === null) return false;
-
-    const parsed = JSON.parse(raw_index);
-    if (!validate_semantic_index_shape(parsed)) return false;
-
-    const cached_index = deserialize_semantic_index(parsed);
-
-    const content = existing_content ?? await fs.readFile(file_path, "utf-8");
-    project.restore_file(file_path, content, cached_index);
-    return true;
-  } catch (error) {
-    console.warn(
-      `[ariadne:persistence] Cache read error for ${file_path}: ${
-        error instanceof Error ? error.message : error
-      }. Re-indexing.`,
-    );
-    return false;
-  }
 }

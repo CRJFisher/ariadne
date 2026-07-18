@@ -54,9 +54,9 @@ import { derive_definition_features } from "./derive_definition_features";
  *
  * Registry builtin classifiers that read `has_capture_at_grep_hit` /
  * `missing_capture_at_grep_hit` reference capture names (e.g.
- * `"@reference.constructor"`); `explain_call_site()` emits a boolean
- * `capture_fired`, not a capture name. We bridge the two by deriving the
- * canonical capture name(s) from `call_type`.
+ * `"@reference.constructor"`); diagnostics record only the call's
+ * `call_type`. We bridge the two by deriving the canonical capture
+ * name(s) from `call_type`.
  */
 const CAPTURE_NAMES_BY_CALL_TYPE: Record<"function" | "method" | "constructor", readonly string[]> = {
   function: ["@reference.call"],
