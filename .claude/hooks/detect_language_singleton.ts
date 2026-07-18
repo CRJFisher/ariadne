@@ -23,13 +23,16 @@ export interface DefinitionSite {
   line: number;
 }
 
-// Anchored on DEFINITION forms only. `declare` between `export` and
-// `function` breaks the match, so dist .d.ts declarations are rejected even
-// before the path filter prunes them. `\b[^=\n]*=` on the const form allows a
-// type annotation between the name and `=` while `\b` rejects longer names
-// like detect_language_map.
-const FUNCTION_DEF = /^\s*(export\s+)?(async\s+)?function\s+detect_language\s*\(/;
-const CONST_DEF = /^\s*(export\s+)?const\s+detect_language\b[^=\n]*=/;
+// Anchored on free function/variable DEFINITION forms only — the canonical
+// export is a free function, so class/object methods, generators, and
+// multi-line declarations are out of scope by decision, not oversight.
+// `declare` between `export` and `function` breaks the match, so dist .d.ts
+// declarations are rejected even before the path filter prunes them.
+// `\b[^=\n]*=` on the binding form allows a type annotation between the name
+// and `=` while `\b` rejects longer names like detect_language_map.
+const FUNCTION_DEF =
+  /^\s*(export\s+)?(default\s+)?(async\s+)?function\s+detect_language\s*\(/;
+const CONST_DEF = /^\s*(export\s+)?(const|let|var)\s+detect_language\b[^=\n]*=/;
 
 export function is_scannable_source_path(rel_path: string): boolean {
   return (
@@ -56,6 +59,9 @@ export function find_definition_lines(content: string): number[] {
 export function find_singleton_offenders(defs: DefinitionSite[]): DefinitionSite[] {
   const canonical = defs.filter((d) => d.file === CANONICAL_PATH);
   const foreign = defs.filter((d) => d.file !== CANONICAL_PATH);
+  // Zero definitions is intentionally not an offense: deleting the canonical
+  // definition breaks every importer and is caught by build_stop; this guard
+  // targets surplus and misplaced copies only.
   // Duplicates inside the canonical file offend too — list every canonical
   // site so the message shows both lines, not just the surplus one.
   return canonical.length > 1 ? [...foreign, ...canonical] : foreign;

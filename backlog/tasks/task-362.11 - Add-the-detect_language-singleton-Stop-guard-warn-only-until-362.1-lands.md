@@ -1,7 +1,7 @@
 ---
 id: TASK-362.11
 title: Add the detect_language singleton Stop guard (warn-only until 362.1 lands)
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-05 11:39"
 labels:
@@ -42,7 +42,19 @@ Co-locate a test with fixture strings for the canonical definition (passes), a s
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 detect_language_singleton_stop.ts is wired into the settings.json Stop array and early-exits unless a packages/\*_/_.ts file changed
-- [ ] #2 more than one detect_language definition, or any definition outside packages/core/src/detect_language.ts, is flagged with file:line
-- [ ] #3 ships warn-only; flips to decision:block in the same commit that closes 362.1; co-located test covers pass/block/import-ignored
+- [x] #1 detect_language_singleton_stop.ts is wired into the settings.json Stop array and early-exits unless a packages/\*_/_.ts file changed
+- [x] #2 more than one detect_language definition, or any definition outside packages/core/src/detect_language.ts, is flagged with file:line
+- [x] #3 ships warn-only; flips to decision:block in the same commit that closes 362.1; co-located test covers pass/block/import-ignored
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+The guard exists because the language-identity invariant that TASK-362.1 established — one `detect_language(path): Language|null`, living at `packages/core/src/detect_language.ts`, returning `null` for unknown extensions — is exactly the kind of consolidation that erodes silently: a second definition anywhere in `packages/` re-opens the fork in which unknown extensions defaulted to a language and call graphs mislabeled files. This Stop hook makes the invariant self-enforcing.
+
+The hook ships in `decision:block` mode, not the warn-only mode this task originally sequenced. The warn phase existed solely to avoid wedging turns while 362.1's consolidation was in flight; 362.1 landed with the tree clean (exactly one canonical definition), so a block cannot fire on pre-existing state, and warn-only would have left the guard permanently non-enforcing with no flip event remaining. The wedge risks a blocking Stop hook carries are neutralized directly: a `stop_hook_active` guard prevents block loops, a fail-open try/catch (plus a per-file guard in the walk) keeps a crash or unreadable file from blocking unrelated turns, and diagnostics go to `hook_log.txt` so stdout carries nothing but the violation JSON.
+
+`detect_language_singleton.ts` owns the pure logic — the two line-anchored definition regexes (free `function`/`default function`/`const|let|var` forms; imports, re-exports, call sites, `declare` lines, and longer names never match), the scannable-path filter (`packages/**/*.ts` minus `.test.ts`, `.d.ts`, `dist/`, `node_modules/`), offender selection (zero definitions is deliberately allowed — deletion is a build failure, not a fork), and the violation message. `detect_language_singleton_stop.ts` is the untested seam: stdin parse, the changed-files trigger (mirroring the scan filter, and scanning anyway when git detection failed), the full-tree walk, and the block emit. The trigger gates on a scannable change; the scan then covers the whole tree so the pre-existing half of a fork is always listed. `detect_language_singleton.test.ts` (25 fixture-string tests) is discovered because `vitest.config.mjs` promotes `.claude/hooks/` into a test root for `scripts/run_all_tests.sh`.
+
+Known non-goals, documented in the code: class/object-method and multi-line definition forms, `.tsx`/`.mts`/`.cts` files, and generic signatures are out of scope (the canonical export is a free, non-generic function). A TypeScript overload signature added to the canonical file would be flagged as a duplicate — acceptable, since the canonical contract is a single non-overloaded function.

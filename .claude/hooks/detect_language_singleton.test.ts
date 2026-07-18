@@ -42,6 +42,25 @@ describe("find_definition_lines", () => {
     ).toEqual([1]);
   });
 
+  it("matches a default-export function definition", () => {
+    expect(
+      find_definition_lines(
+        "export default function detect_language(file_path: string) {",
+      ),
+    ).toEqual([1]);
+  });
+
+  it("matches let and var bindings", () => {
+    expect(
+      find_definition_lines(
+        [
+          "let detect_language = (file_path: string) => null;",
+          "var detect_language = legacy_detect;",
+        ].join("\n"),
+      ),
+    ).toEqual([1, 2]);
+  });
+
   it("ignores an import line", () => {
     expect(
       find_definition_lines(

@@ -3,9 +3,11 @@
  * Stop hook: block when the detect_language singleton invariant is broken
  * (TASK-362.11).
  *
- * Scans the full packages tree, not just the changeset — a fork can live in a
- * file the turn never touched, and the turn that must be blocked is the one
- * that made the tree inconsistent, wherever the older definition sits.
+ * When triggered, scans the full packages tree, not just the changeset — the
+ * pre-existing half of a fork lives in a file the turn never touched, and the
+ * turn that must be blocked is the one that made the tree inconsistent. The
+ * trigger itself still gates on a scannable change: a turn cannot introduce a
+ * definition without touching a scannable file, so untriggered turns are safe.
  *
  * WHY try/catch → silent exit 0: a crashing guard must fail open predictably
  * rather than wedge every unrelated Stop in the repo.
@@ -44,7 +46,16 @@ function collect_definition_sites(project_dir: string): DefinitionSite[] {
       }
       const rel = path.relative(project_dir, abs).split(path.sep).join("/");
       if (!is_scannable_source_path(rel)) continue;
-      for (const line of find_definition_lines(fs.readFileSync(abs, "utf8"))) {
+      let content: string;
+      try {
+        content = fs.readFileSync(abs, "utf8");
+      } catch (err) {
+        // One unreadable entry (broken symlink, racing delete) must narrow
+        // the scan by one file, not abort it through the outer fail-open.
+        safe_log(`skipping unreadable ${rel}: ${String(err)}`);
+        continue;
+      }
+      for (const line of find_definition_lines(content)) {
         sites.push({ file: rel, line });
       }
     }
@@ -66,9 +77,15 @@ function main(): void {
   const project_dir = get_project_dir();
   const changed = get_changed_files(project_dir);
 
-  // Trigger matches the scan filter: only a scannable file can introduce a
-  // definition, so test/dist/declaration-only changesets never pay the walk.
-  if (!changed.all_files.some(is_scannable_source_path)) {
+  // Trigger matches the scan filter rather than reusing has_source_changes /
+  // changed_ts_files: those include .claude/skills/triage and keep .d.ts and
+  // .test.ts paths, and only a scannable file can introduce a definition, so
+  // test/dist/declaration-only changesets never pay the walk. When git
+  // detection failed (all_files empty yet has_no_changes false), scan anyway
+  // — that fallback means "assume everything changed", not "nothing changed".
+  const git_detection_failed =
+    changed.all_files.length === 0 && !changed.has_no_changes;
+  if (!git_detection_failed && !changed.all_files.some(is_scannable_source_path)) {
     return;
   }
 
