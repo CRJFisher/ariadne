@@ -3,7 +3,7 @@
     "ariadne": {
       "type": "stdio",
       "command": "node",
-      "args": ["./packages/mcp/dist/server.js"],
+      "args": ["./packages/mcp/dist/cli.js"],
       "env": {
         "PROJECT_PATH": "."
       }

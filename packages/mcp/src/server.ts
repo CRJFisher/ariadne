@@ -1,100 +1,104 @@
-#!/usr/bin/env node
-import { start_server } from "./start_server";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { FileSystemStorage, resolve_cache_dir, initialize_logger, log_info } from "@ariadnejs/core";
+import { VERSION } from "./version";
+import { ProjectManager } from "./project_manager";
+import { is_analytics_enabled } from "./analytics/analytics_config";
+import {
+  close_analytics,
+  init_analytics,
+  record_session_client_info,
+} from "./analytics/session_writer";
+import { register_tool_groups } from "./tools/register_tools";
+import { create_core_tool_group } from "./tools/core/tool_group";
 
-export interface CliOptions {
+export interface AriadneMCPServerOptions {
   project_path?: string;
+  transport?: "stdio";
   watch?: boolean;
   toolsets?: string[];
+  /**
+   * Server-level config for `list_entrypoints`: when true, every tool
+   * invocation appends a "Suppressed" section with the registry-classified
+   * known false positives. Set via CLI (`--show-suppressed`) or env var
+   * (`ARIADNE_SHOW_SUPPRESSED=1`); defaults to false.
+   */
   show_suppressed?: boolean;
 }
 
-/**
- * Parse CLI arguments.
- * Supports:
- *   --project-path <path>, -p <path>, --project-path=<path>
- *   --watch, --no-watch
- *   --toolsets=core,topology (comma-separated tool group names)
- *   --show-suppressed, --no-show-suppressed
- */
-export function parse_cli_args(argv: string[] = process.argv.slice(2)): CliOptions {
-  const result: CliOptions = {};
+export async function start_server(
+  options: AriadneMCPServerOptions = {}
+): Promise<McpServer> {
+  initialize_logger();
 
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
+  // Precedence: CLI > PROJECT_PATH env > cwd
+  const project_path =
+    options.project_path || process.env.PROJECT_PATH || process.cwd();
 
-    // Project path flags
-    if (arg === "--project-path" || arg === "-p") {
-      result.project_path = argv[i + 1];
-      i++;
-    } else if (arg?.startsWith("--project-path=")) {
-      result.project_path = arg.split("=")[1];
-    }
+  // Initialize analytics if enabled
+  const analytics_enabled = is_analytics_enabled();
+  if (analytics_enabled) {
+    init_analytics(project_path);
+    process.on("exit", close_analytics);
+  }
 
-    // Watch control flags
-    if (arg === "--watch") {
-      result.watch = true;
-    } else if (arg === "--no-watch") {
-      result.watch = false;
-    }
+  // Create McpServer (high-level API)
+  const mcp_server = new McpServer(
+    { name: "ariadne-mcp", version: VERSION },
+    { capabilities: { tools: {} } },
+  );
 
-    // Toolsets flag
-    if (arg?.startsWith("--toolsets=")) {
-      result.toolsets = arg.split("=")[1].split(",").filter(Boolean);
-    } else if (arg === "--toolsets") {
-      const next = argv[i + 1];
-      if (next && !next.startsWith("--")) {
-        result.toolsets = next.split(",").filter(Boolean);
-        i++;
+  // Capture client info once MCP initialization completes
+  if (analytics_enabled) {
+    mcp_server.server.oninitialized = () => {
+      const client = mcp_server.server.getClientVersion();
+      if (client) {
+        record_session_client_info(client.name, client.version);
       }
-    }
-
-    // Suppressed-section visibility flag (server-level, applies to every
-    // list_entrypoints call). Triage workflows enable this via .mcp.json;
-    // everyday agents leave it off and see the clean default output.
-    if (arg === "--show-suppressed") {
-      result.show_suppressed = true;
-    } else if (arg === "--no-show-suppressed") {
-      result.show_suppressed = false;
-    }
+    };
   }
 
-  return result;
+  // Resolve cache directory for persistence
+  const cache_dir = resolve_cache_dir(project_path);
+  const storage = cache_dir ? new FileSystemStorage(cache_dir) : undefined;
+  if (cache_dir) {
+    log_info(`Cache directory: ${cache_dir}`);
+  }
+
+  // Initialize persistent project with file watching and optional persistence
+  const project_manager = new ProjectManager();
+  await project_manager.initialize({
+    project_path,
+    watch: options.watch ?? true,
+    storage,
+  });
+  await project_manager.load_all_files();
+
+  log_info(
+    `Ariadne MCP server initialized for: ${project_path}` +
+      (project_manager.is_watching() ? " (watching for changes)" : ""),
+  );
+
+  // Build tool groups with server-level config baked in.
+  const core_tool_group = create_core_tool_group({
+    list_entrypoints: { show_suppressed: options.show_suppressed ?? false },
+  });
+  const all_tool_groups = [core_tool_group];
+
+  // Register tool groups (filtered by --toolsets if specified)
+  register_tool_groups(all_tool_groups, {
+    mcp_server,
+    project_manager,
+    project_path,
+    enabled_groups: options.toolsets ?? [],
+    storage,
+  });
+
+  // Connect transport
+  if (options.transport === "stdio" || !options.transport) {
+    const transport = new StdioServerTransport();
+    await mcp_server.connect(transport);
+  }
+
+  return mcp_server;
 }
-
-/**
- * Resolve toolsets from CLI > env var > default (all).
- */
-export function resolve_toolsets(cli_toolsets?: string[]): string[] {
-  if (cli_toolsets && cli_toolsets.length > 0) {
-    return cli_toolsets;
-  }
-  const env_toolsets = process.env.ARIADNE_TOOLSETS;
-  if (env_toolsets) {
-    return env_toolsets.split(",").filter(Boolean);
-  }
-  return [];
-}
-
-/**
- * Resolve show_suppressed from CLI > env var > default (false).
- *
- * Env var accepts truthy strings: "1", "true", "yes" (case-insensitive).
- * Anything else — including unset — resolves to false.
- */
-export function resolve_show_suppressed(cli_value?: boolean): boolean {
-  if (cli_value !== undefined) {
-    return cli_value;
-  }
-  const env = process.env.ARIADNE_SHOW_SUPPRESSED;
-  if (env === undefined) return false;
-  const normalized = env.trim().toLowerCase();
-  return normalized === "1" || normalized === "true" || normalized === "yes";
-}
-
-const cli_options = parse_cli_args();
-start_server({
-  project_path: cli_options.project_path,
-  watch: cli_options.watch,
-  toolsets: resolve_toolsets(cli_options.toolsets),
-  show_suppressed: resolve_show_suppressed(cli_options.show_suppressed),
-}).catch(console.error);

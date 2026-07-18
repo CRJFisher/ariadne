@@ -4,14 +4,14 @@ import {
   register_tool_groups,
   type ToolGroupDefinition,
   type ToolRegistrar,
-} from "./tool_registry";
+} from "./register_tools";
 import type { ProjectManager } from "../project_manager";
 import type { Project } from "@ariadnejs/core";
 
-import { record_tool_call } from "../analytics/analytics";
+import { record_tool_call } from "../analytics/session_writer";
 import { resolve_project } from "./resolve_project";
 
-vi.mock("../analytics/analytics", () => ({
+vi.mock("../analytics/session_writer", () => ({
   record_tool_call: vi.fn(),
 }));
 
@@ -60,7 +60,7 @@ describe("register_tool_groups", () => {
     vi.mocked(resolve_project).mockResolvedValue(mock_project);
   });
 
-  it("should register all tools from all groups when enabled_groups is empty", () => {
+  it("registers all tools from all groups when enabled_groups is empty", () => {
     const group_a = make_test_group({ group_name: "a", tools: [
       { name: "tool_a", description: "A", input_schema: z.object({}), handler: vi.fn().mockResolvedValue("a") },
     ]});
@@ -80,7 +80,7 @@ describe("register_tool_groups", () => {
     expect(registered_tools.has("tool_b")).toBe(true);
   });
 
-  it("should register only tools from enabled groups", () => {
+  it("registers only tools from enabled groups", () => {
     const group_a = make_test_group({ group_name: "a", tools: [
       { name: "tool_a", description: "A", input_schema: z.object({}), handler: vi.fn().mockResolvedValue("a") },
     ]});
@@ -100,7 +100,7 @@ describe("register_tool_groups", () => {
     expect(registered_tools.has("tool_b")).toBe(false);
   });
 
-  it("should call handler and record analytics on success", async () => {
+  it("calls handler and records analytics on success", async () => {
     const group = make_test_group();
 
     register_tool_groups([group], {
@@ -130,7 +130,7 @@ describe("register_tool_groups", () => {
     });
   });
 
-  it("should record analytics on handler error", async () => {
+  it("records analytics on handler error", async () => {
     const group = make_test_group();
     vi.mocked(group.tools[0].handler).mockRejectedValue(new Error("boom"));
 
@@ -162,7 +162,7 @@ describe("register_tool_groups", () => {
     });
   });
 
-  it("should call resolve_project with parsed args", async () => {
+  it("calls resolve_project with parsed args", async () => {
     const group = make_test_group({
       tools: [{
         name: "filtered_tool",

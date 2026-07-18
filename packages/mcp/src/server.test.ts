@@ -1,233 +1,144 @@
-import { describe, it, expect, afterEach } from "vitest";
-import {
-  parse_cli_args,
-  resolve_show_suppressed,
-  resolve_toolsets,
-} from "./server";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
-/**
- * Tests for server.ts CLI argument parsing logic
- *
- * Note: server.ts is a thin CLI wrapper that parses arguments and calls start_server.
- * The actual server logic is tested in start_server.test.ts.
- */
+import { start_server } from "./server";
+import { ProjectManager } from "./project_manager";
+import { register_tool_groups } from "./tools/register_tools";
+import { is_analytics_enabled } from "./analytics/analytics_config";
+import { init_analytics } from "./analytics/session_writer";
+import { create_core_tool_group } from "./tools/core/tool_group";
 
-describe("server CLI argument parsing", () => {
-  describe("parse_cli_args", () => {
-    it("should parse --project-path flag with separate value", () => {
-      const result = parse_cli_args(["--project-path", "/test/path"]);
-      expect(result).toEqual({ project_path: "/test/path" });
-    });
+vi.mock("@modelcontextprotocol/sdk/server/mcp.js", () => ({
+  McpServer: vi.fn().mockImplementation(function () {
+    this.server = { oninitialized: null, getClientVersion: vi.fn() };
+    this.connect = vi.fn();
+  }),
+}));
 
-    it("should parse -p shorthand flag", () => {
-      const result = parse_cli_args(["-p", "/short/path"]);
-      expect(result).toEqual({ project_path: "/short/path" });
-    });
+vi.mock("@modelcontextprotocol/sdk/server/stdio.js", () => ({
+  StdioServerTransport: vi.fn().mockImplementation(function () {}),
+}));
 
-    it("should parse --project-path=value format", () => {
-      const result = parse_cli_args(["--project-path=/equals/path"]);
-      expect(result).toEqual({ project_path: "/equals/path" });
-    });
+vi.mock("./project_manager", () => ({
+  ProjectManager: vi.fn().mockImplementation(function () {
+    this.initialize = vi.fn();
+    this.load_all_files = vi.fn();
+    this.is_watching = vi.fn().mockReturnValue(false);
+  }),
+}));
 
-    it("should return empty object when no arguments provided", () => {
-      const result = parse_cli_args([]);
-      expect(result).toEqual({});
-    });
+vi.mock("./analytics/analytics_config", () => ({
+  is_analytics_enabled: vi.fn().mockReturnValue(false),
+}));
 
-    it("should return empty object for unrelated arguments", () => {
-      const result = parse_cli_args(["--verbose", "--debug"]);
-      expect(result).toEqual({});
-    });
+vi.mock("./analytics/session_writer", () => ({
+  init_analytics: vi.fn(),
+  close_analytics: vi.fn(),
+  record_session_client_info: vi.fn(),
+}));
 
-    it("should handle --project-path as last argument without value", () => {
-      const result = parse_cli_args(["--project-path"]);
-      expect(result).toEqual({ project_path: undefined });
-    });
+vi.mock("./tools/register_tools", () => ({
+  register_tool_groups: vi.fn(),
+}));
 
-    it("should use last matching flag when multiple provided", () => {
-      // When multiple flags are provided, the last one wins
-      const result = parse_cli_args([
-        "--project-path",
-        "/first",
-        "-p",
-        "/second",
-      ]);
-      expect(result).toEqual({ project_path: "/second" });
-    });
+vi.mock("./tools/core/tool_group", () => ({
+  create_core_tool_group: vi.fn(() => ({
+    group_name: "core",
+    description: "Core tools",
+    tools: [],
+  })),
+}));
 
-    it("should handle path with spaces in equals format", () => {
-      const result = parse_cli_args(["--project-path=/path/with spaces/here"]);
-      expect(result).toEqual({ project_path: "/path/with spaces/here" });
-    });
+vi.mock("@ariadnejs/core", () => ({
+  FileSystemStorage: vi.fn().mockImplementation(function () {}),
+  resolve_cache_dir: vi.fn().mockReturnValue("/mock/cache/dir"),
+  initialize_logger: vi.fn(),
+  log_info: vi.fn(),
+}));
 
-    it("should parse --watch flag", () => {
-      const result = parse_cli_args(["--watch"]);
-      expect(result).toEqual({ watch: true });
-    });
+describe("start_server", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-    it("should parse --no-watch flag", () => {
-      const result = parse_cli_args(["--no-watch"]);
-      expect(result).toEqual({ watch: false });
-    });
+  it("initializes project manager with given path and watch setting", async () => {
+    await start_server({ project_path: "/test/path", watch: false });
 
-    it("should combine --project-path and --watch flags", () => {
-      const result = parse_cli_args(["--project-path", "/test/path", "--watch"]);
-      expect(result).toEqual({ project_path: "/test/path", watch: true });
-    });
-
-    it("should combine --project-path and --no-watch flags", () => {
-      const result = parse_cli_args(["-p", "/test/path", "--no-watch"]);
-      expect(result).toEqual({ project_path: "/test/path", watch: false });
-    });
-
-    it("should return undefined watch when no watch flag provided", () => {
-      const result = parse_cli_args(["--project-path", "/test/path"]);
-      expect(result.watch).toBeUndefined();
-    });
-
-    it("should handle --no-watch overriding earlier --watch", () => {
-      // Last flag wins is typical CLI behavior, but our impl processes all flags
-      // so --no-watch after --watch should set watch to false
-      const result = parse_cli_args(["--watch", "--no-watch"]);
-      expect(result.watch).toBe(false);
-    });
-
-    it("should parse --toolsets=value format", () => {
-      const result = parse_cli_args(["--toolsets=core,topology"]);
-      expect(result.toolsets).toEqual(["core", "topology"]);
-    });
-
-    it("should parse --toolsets with separate value", () => {
-      const result = parse_cli_args(["--toolsets", "core"]);
-      expect(result.toolsets).toEqual(["core"]);
-    });
-
-    it("should parse single toolset", () => {
-      const result = parse_cli_args(["--toolsets=core"]);
-      expect(result.toolsets).toEqual(["core"]);
-    });
-
-    it("should combine --toolsets with other flags", () => {
-      const result = parse_cli_args(["-p", "/path", "--toolsets=core", "--no-watch"]);
-      expect(result).toEqual({
-        project_path: "/path",
-        toolsets: ["core"],
+    const pm_instance = vi.mocked(ProjectManager).mock.results[0].value;
+    expect(pm_instance.initialize).toHaveBeenCalledWith(
+      expect.objectContaining({
+        project_path: "/test/path",
         watch: false,
-      });
-    });
+      }),
+    );
+    expect(pm_instance.load_all_files).toHaveBeenCalled();
+  });
 
-    it("should return undefined toolsets when not specified", () => {
-      const result = parse_cli_args([]);
-      expect(result.toolsets).toBeUndefined();
-    });
+  it("defaults watch to true when not specified", async () => {
+    await start_server({ project_path: "/test/path" });
 
-    it("parses --show-suppressed", () => {
-      const result = parse_cli_args(["--show-suppressed"]);
-      expect(result.show_suppressed).toBe(true);
-    });
+    const pm_instance = vi.mocked(ProjectManager).mock.results[0].value;
+    expect(pm_instance.initialize).toHaveBeenCalledWith(
+      expect.objectContaining({
+        project_path: "/test/path",
+        watch: true,
+      }),
+    );
+  });
 
-    it("parses --no-show-suppressed", () => {
-      const result = parse_cli_args(["--no-show-suppressed"]);
-      expect(result.show_suppressed).toBe(false);
-    });
+  it("passes toolsets to register_tool_groups as enabled_groups", async () => {
+    await start_server({ project_path: "/test/path", toolsets: ["core"] });
 
-    it("returns undefined show_suppressed when neither flag is present", () => {
-      const result = parse_cli_args(["--watch"]);
-      expect(result.show_suppressed).toBeUndefined();
-    });
+    expect(register_tool_groups).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.objectContaining({ enabled_groups: ["core"] }),
+    );
+  });
 
-    it("lets --no-show-suppressed override an earlier --show-suppressed", () => {
-      const result = parse_cli_args(["--show-suppressed", "--no-show-suppressed"]);
-      expect(result.show_suppressed).toBe(false);
+  it("defaults enabled_groups to empty array when no toolsets specified", async () => {
+    await start_server({ project_path: "/test/path" });
+
+    expect(register_tool_groups).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.objectContaining({ enabled_groups: [] }),
+    );
+  });
+
+  it("initializes analytics when enabled", async () => {
+    vi.mocked(is_analytics_enabled).mockReturnValue(true);
+
+    await start_server({ project_path: "/analytics/path" });
+
+    expect(init_analytics).toHaveBeenCalledWith("/analytics/path");
+  });
+
+  it("does not initialize analytics when disabled", async () => {
+    vi.mocked(is_analytics_enabled).mockReturnValue(false);
+
+    await start_server({ project_path: "/test/path" });
+
+    expect(init_analytics).not.toHaveBeenCalled();
+  });
+
+  it("returns McpServer instance", async () => {
+    const result = await start_server({ project_path: "/test/path" });
+
+    expect(result).toBeDefined();
+    expect(result.connect).toBeDefined();
+  });
+
+  it("threads show_suppressed: true into create_core_tool_group", async () => {
+    await start_server({ project_path: "/test/path", show_suppressed: true });
+
+    expect(create_core_tool_group).toHaveBeenCalledWith({
+      list_entrypoints: { show_suppressed: true },
     });
   });
 
-  describe("resolve_toolsets", () => {
-    const original_env = process.env.ARIADNE_TOOLSETS;
+  it("defaults show_suppressed to false in create_core_tool_group", async () => {
+    await start_server({ project_path: "/test/path" });
 
-    afterEach(() => {
-      if (original_env === undefined) {
-        delete process.env.ARIADNE_TOOLSETS;
-      } else {
-        process.env.ARIADNE_TOOLSETS = original_env;
-      }
-    });
-
-    it("should return CLI toolsets when provided", () => {
-      process.env.ARIADNE_TOOLSETS = "env_group";
-      expect(resolve_toolsets(["cli_group"])).toEqual(["cli_group"]);
-    });
-
-    it("should fall back to ARIADNE_TOOLSETS env var when CLI is empty", () => {
-      process.env.ARIADNE_TOOLSETS = "core,topology";
-      expect(resolve_toolsets([])).toEqual(["core", "topology"]);
-    });
-
-    it("should fall back to ARIADNE_TOOLSETS env var when CLI is undefined", () => {
-      process.env.ARIADNE_TOOLSETS = "core";
-      expect(resolve_toolsets(undefined)).toEqual(["core"]);
-    });
-
-    it("should return empty array when neither CLI nor env var is set", () => {
-      delete process.env.ARIADNE_TOOLSETS;
-      expect(resolve_toolsets(undefined)).toEqual([]);
-    });
-
-    it("should filter empty strings from env var", () => {
-      process.env.ARIADNE_TOOLSETS = "core,,topology,";
-      expect(resolve_toolsets(undefined)).toEqual(["core", "topology"]);
-    });
-  });
-
-  describe("resolve_show_suppressed", () => {
-    const original_env = process.env.ARIADNE_SHOW_SUPPRESSED;
-
-    afterEach(() => {
-      if (original_env === undefined) {
-        delete process.env.ARIADNE_SHOW_SUPPRESSED;
-      } else {
-        process.env.ARIADNE_SHOW_SUPPRESSED = original_env;
-      }
-    });
-
-    it("returns CLI value when explicitly true", () => {
-      process.env.ARIADNE_SHOW_SUPPRESSED = "0";
-      expect(resolve_show_suppressed(true)).toBe(true);
-    });
-
-    it("returns CLI value when explicitly false", () => {
-      process.env.ARIADNE_SHOW_SUPPRESSED = "1";
-      expect(resolve_show_suppressed(false)).toBe(false);
-    });
-
-    it("falls back to env var '1' as true", () => {
-      process.env.ARIADNE_SHOW_SUPPRESSED = "1";
-      expect(resolve_show_suppressed(undefined)).toBe(true);
-    });
-
-    it("falls back to env var 'true' (any case) as true", () => {
-      process.env.ARIADNE_SHOW_SUPPRESSED = "TRUE";
-      expect(resolve_show_suppressed(undefined)).toBe(true);
-    });
-
-    it("falls back to env var 'yes' as true", () => {
-      process.env.ARIADNE_SHOW_SUPPRESSED = "yes";
-      expect(resolve_show_suppressed(undefined)).toBe(true);
-    });
-
-    it("treats env var '0' as false", () => {
-      process.env.ARIADNE_SHOW_SUPPRESSED = "0";
-      expect(resolve_show_suppressed(undefined)).toBe(false);
-    });
-
-    it("treats unset env var as false", () => {
-      delete process.env.ARIADNE_SHOW_SUPPRESSED;
-      expect(resolve_show_suppressed(undefined)).toBe(false);
-    });
-
-    it("treats arbitrary string as false", () => {
-      process.env.ARIADNE_SHOW_SUPPRESSED = "maybe";
-      expect(resolve_show_suppressed(undefined)).toBe(false);
+    expect(create_core_tool_group).toHaveBeenCalledWith({
+      list_entrypoints: { show_suppressed: false },
     });
   });
 });

@@ -28,7 +28,7 @@ This document outlines current limitations in `@ariadnejs/core` that prevent ful
 
 **Evidence**:
 
-- In `packages/mcp/src/start_server.ts:169`: "TODO task-51: Ref type doesn't include file info yet"
+- In `packages/mcp/src/server.ts:169`: "TODO task-51: Ref type doesn't include file info yet"
 - References are assumed to be in the same file as the definition
 
 **Impact**:

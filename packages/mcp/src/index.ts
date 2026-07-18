@@ -1,2 +1,2 @@
-export { start_server } from "./start_server";
-export type { AriadneMCPServerOptions } from "./start_server";
+export { start_server } from "./server";
+export type { AriadneMCPServerOptions } from "./server";

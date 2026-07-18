@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import type { ToolCallRecord } from "./analytics_config";
 
 export interface SessionRow {
   session_id: string;
@@ -9,14 +10,17 @@ export interface SessionRow {
   client_version: string | null;
 }
 
-export interface ToolCallRow {
+/**
+ * The persisted JSONL row, derived from the write-side `ToolCallRecord` so the
+ * shared business fields track it by construction. The deltas are the write
+ * boundary's doing: `session_writer` stamps `session_id`/`called_at` from
+ * ambient session state and normalizes the optional fields to explicit `null`.
+ */
+export interface ToolCallRow
+  extends Omit<ToolCallRecord, "error_message" | "request_id" | "tool_use_id"> {
   session_id: string;
-  tool_name: string;
   called_at: string;
-  duration_ms: number;
-  success: boolean;
   error_message: string | null;
-  arguments: Record<string, unknown>;
   request_id: string | null;
   tool_use_id: string | null;
 }
