@@ -20,7 +20,8 @@
  *
  * All decision logic (and its tests) lives in the triage package —
  * `.claude/skills/triage/src/registry_write_guard.ts` — because this
- * directory is outside the repo's test/lint/typecheck nets.
+ * directory is outside the repo's lint/typecheck nets and the guard's
+ * domain (the classifier registry) is the triage package's.
  */
 
 import { parse_stdin, get_project_dir, create_logger } from "./utils.js";
