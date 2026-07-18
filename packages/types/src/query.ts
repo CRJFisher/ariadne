@@ -68,40 +68,6 @@ export interface QueryResult<T> {
 }
 
 // ============================================================================
-// Resolution Types
-// ============================================================================
-
-/**
- * Confidence levels for resolution operations
- */
-export type ResolutionConfidence = "high" | "medium" | "low";
-
-/**
- * Standard resolution result wrapper
- * Used when resolving symbols, types, imports, etc.
- */
-export interface Resolution<T> {
-  readonly resolved: T | undefined;
-  readonly confidence: ResolutionConfidence;
-  readonly reason: QueryResolutionReason;
-  readonly resolution_path: readonly FilePath[];
-}
-
-/**
- * Reasons for query resolution outcomes
- */
-export type QueryResolutionReason =
-  | "direct_match" // Exact match found
-  | "imported" // Resolved through import
-  | "inherited" // Resolved through inheritance
-  | "inferred" // Type inference or heuristics
-  | "partial_match" // Partially resolved
-  | "builtin" // Built-in type/symbol
-  | "external" // External library
-  | "not_found" // Could not resolve
-  | "ambiguous"; // Multiple possible resolutions
-
-// ============================================================================
 // Error Types
 // ============================================================================
 
@@ -123,10 +89,6 @@ export type QueryErrorKind =
   | "type_error" // Type validation failed
   | "resolution_error" // Symbol/type resolution failed
   | "language_error"; // Language-specific error
-
-// ============================================================================
-// Collection Types
-// ============================================================================
 
 // ============================================================================
 // Type Guards
@@ -175,16 +137,6 @@ export function is_query_result<T>(value: unknown): value is QueryResult<T> {
   );
 }
 
-export function is_resolution<T>(value: unknown): value is Resolution<T> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "resolved" in value &&
-    "confidence" in value &&
-    "reason" in value
-  );
-}
-
 export function is_query_error(value: unknown): value is QueryError {
   return (
     typeof value === "object" &&
@@ -198,68 +150,6 @@ export function is_query_error(value: unknown): value is QueryError {
 // ============================================================================
 // Utility Functions
 // ============================================================================
-
-/**
- * Create a high-confidence resolution
- */
-export function resolve_high<T>(
-  resolved: T,
-  reason: QueryResolutionReason = "direct_match",
-  resolution_path: readonly FilePath[] = []
-): Resolution<T> {
-  return {
-    resolved,
-    confidence: "high",
-    reason,
-    resolution_path,
-  };
-}
-
-/**
- * Create a medium-confidence resolution
- */
-export function resolve_medium<T>(
-  resolved: T,
-  reason: QueryResolutionReason,
-  resolution_path: readonly FilePath[] = []
-): Resolution<T> {
-  return {
-    resolved,
-    confidence: "medium",
-    reason,
-    resolution_path,
-  };
-}
-
-/**
- * Create a low-confidence resolution
- */
-export function resolve_low<T>(
-  resolved: T,
-  reason: QueryResolutionReason,
-  resolution_path: readonly FilePath[] = []
-): Resolution<T> {
-  return {
-    resolved,
-    confidence: "low",
-    reason,
-    resolution_path,
-  };
-}
-
-/**
- * Create a failed resolution
- */
-export function resolve_failed<T>(
-  reason: QueryResolutionReason = "not_found"
-): Resolution<T> {
-  return {
-    resolved: undefined,
-    confidence: "low",
-    reason,
-    resolution_path: [], // Empty array for failed resolutions
-  };
-}
 
 /**
  * Create a query error

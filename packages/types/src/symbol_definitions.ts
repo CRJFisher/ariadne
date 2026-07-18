@@ -4,11 +4,12 @@
 
 import { Location } from "./common";
 import { ScopeId } from "./scopes";
-import { DocString } from "./aliases";
 import { SymbolId, SymbolKind } from "./symbol";
 import { SymbolName } from "./symbol";
 import { ModulePath } from "./import_export";
 import { CallbackContext } from "./call_chains";
+
+export type DocString = string;
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export type ParameterName = string & { __brand: "ParameterName" };

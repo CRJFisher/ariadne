@@ -3,8 +3,8 @@
  * what downstream stages (triage, finalization) consume.
  *
  * The classifier DSL for the known-issues registry lives in `known_issues.ts`.
- * Triage-results shapes (false positives, confirmed-unreachable groupings)
- * live in `false_positive_results.ts`.
+ * The published triage-results wire contract lives in
+ * `@ariadnejs/skill-protocol` (`triage_results.ts`).
  */
 
 import type { ReceiverKind, ResolutionFailure } from "./call_chains.js";
