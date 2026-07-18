@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 /**
  * Regenerate core's bundled permanent slice
- * (`packages/core/src/classify_entry_points/permanent_data.ts`) from the
- * source known-issues registry. The apply-half of the `wip → permanent`
+ * (`packages/core/src/classify_entry_points/registry_permanent_data.ts`) from
+ * the source known-issues registry. The apply-half of the `wip → permanent`
  * lifecycle transition: `reconcile_registry.ts --promote` invokes it after
- * flipping a rule's status, and `permanent_data.sync.test.ts` asserts the
- * committed slice byte-equals this script's output thereafter.
+ * flipping a rule's status, and `registry_permanent_data.sync.test.ts` asserts
+ * the committed slice byte-equals this script's output thereafter.
  *
  * The render itself is `render_permanent_slice_module` in `@ariadnejs/types`
  * (shared with the sync test); this script is the thin I/O half: read the
- * registry, render, write. It writes `permanent_data.ts` — a TypeScript
- * module, not the registry — so the registry write-boundary fence does not
- * apply to its output path.
+ * registry, render, write. It writes `registry_permanent_data.ts` — a
+ * TypeScript module, not the registry — so the registry write-boundary fence
+ * does not apply to its output path.
  *
  * **Script invocation:** always `node --import tsx`. Never `pnpm exec tsx`.
  *
@@ -45,7 +45,7 @@ export function permanent_slice_output_path(): string {
     "core",
     "src",
     "classify_entry_points",
-    "permanent_data.ts",
+    "registry_permanent_data.ts",
   );
 }
 
@@ -66,7 +66,7 @@ export interface GenerateOptions {
   source_rules?: KnownIssue[];
   /** Source registry to read; defaults to the repo's known-issues registry. Injected by tests. */
   source_registry_path?: string;
-  /** Slice module to write; defaults to core's `permanent_data.ts`. Injected by tests. */
+  /** Slice module to write; defaults to core's `registry_permanent_data.ts`. Injected by tests. */
   output_path?: string;
 }
 

@@ -1,7 +1,7 @@
 /**
  * Drift guard for the bundled permanent slice: the committed
- * `permanent_data.ts` must byte-equal a fresh render of the source registry
- * (`.claude/skills/triage/known_issues/registry.json`). A hand-edit to either
+ * `registry_permanent_data.ts` must byte-equal a fresh render of the source
+ * registry (`.claude/skills/triage/known_issues/registry.json`). A hand-edit to either
  * file fails here; the fix is always to edit the registry and rerun
  * `generate_permanent_data.ts` (the `triage` skill scripts directory).
  *
@@ -39,7 +39,7 @@ function find_repo_root(): string {
   return dir;
 }
 
-describe("permanent_data.ts sync", () => {
+describe("registry_permanent_data.ts sync", () => {
   it("byte-equals a fresh render of the source registry's permanent slice", () => {
     const root = find_repo_root();
     const source_raw = fs.readFileSync(
@@ -47,7 +47,7 @@ describe("permanent_data.ts sync", () => {
       "utf8",
     );
     const committed = fs.readFileSync(
-      path.join(root, "packages", "core", "src", "classify_entry_points", "permanent_data.ts"),
+      path.join(root, "packages", "core", "src", "classify_entry_points", "registry_permanent_data.ts"),
       "utf8",
     );
     const fresh = render_permanent_slice_module(

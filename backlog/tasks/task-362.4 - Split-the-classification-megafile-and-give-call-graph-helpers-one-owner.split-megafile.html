@@ -259,9 +259,6 @@ h2.sh {
 .acc label code { font-family: var(--mono); font-size: .86em; background: var(--oat); padding: 1px 5px; border-radius: 4px; color: var(--slate); }
 .acc input:checked + label { color: var(--mute); }
 .acc input:checked + label code { opacity: .7; }
-.acc li.deferred { opacity: .68; }
-.acc li.deferred input { visibility: hidden; }
-.acc label b.dfr { color: var(--rust); border-color: var(--rust); }
 
 /* ===== accent-callout ===== */
 .callout {
@@ -346,7 +343,7 @@ footer b { color: var(--mute); }
     <span class="chip">risk <b>low</b></span>
     <span class="chip"><b>867 LOC</b> split</span>
     <span class="chip"><b>4 new files</b> + 2 relocated</span>
-    <span class="chip"><b>4 rows</b> land · 16/17 deferred</span>
+    <span class="chip"><b>6 rows</b> land · 2 hand-offs open</span>
   </div>
 </header>
 
@@ -357,10 +354,10 @@ footer b { color: var(--mute); }
 <aside class="prov">
   <div class="label">Built from — task brief &amp; verified source lines (branch feat/self-healing-pipeline-debug)</div>
   <ul>
-    <li><b>task-362.4</b> — Program Area 4 of the IA review refactor program; the 867-LOC inventory, the target structure for <code>classify_entry_points/</code> and <code>trace_call_graph/</code>, and small-item rows 2 / 18 / 19 / 34 (rows 16 &amp; 17 deferred to a follow-up)</li>
+    <li><b>task-362.4</b> — Program Area 4 of the IA review refactor program; the 867-LOC inventory, the target structure for <code>classify_entry_points/</code> and <code>trace_call_graph/</code>, and small-item rows 2 / 16 / 17 / 18 / 19 / 34</li>
     <li><b>extract_entry_point_diagnostics.ts</b> — <code>extract_entry_point_diagnostics</code> :120 · <code>build_grep_index</code> :346 · <code>derive_syntactic_features</code> :555 · <code>derive_definition_features</code> + <code>is_jsts</code> gate :590–601 · <code>classify_accessor_line</code> :613 · <code>build_signature</code> :667 · <code>count_tree_size</code> :703 · <code>attach_unindexed_test_grep_hits</code> (<b>async</b>, <code>fs.readFile</code>) :754</li>
     <li><b>packages/mcp/.../list_entrypoints.ts</b> — re-implements <code>count_tree_size</code> :88 (returns <code>{resolved, unresolved}</code>) and <code>build_signature</code> :147 (<code>(definition, location?): string</code>); the two <code>build_signature</code>s have already diverged on arity and return type</li>
-    <li><b>builtins/check_framework-lifecycle-override.ts:16</b> — <code>const check_1 = language === "typescript";</code> (Row 18) · <b>builtins/check_string-keyed-dispatch.ts:17</b> — <code>new RegExp("/packages/core/src/")</code> (Row 19) · <b>registry_permanent.ts</b> — 22-LOC shim, untouched (Row 16 deferred)</li>
+    <li><b>builtins/check_framework-lifecycle-override.ts:16</b> — <code>const check_1 = language === "typescript";</code> (Row 18) · <b>builtins/check_string-keyed-dispatch.ts:17</b> — <code>new RegExp("/packages/core/src/")</code> (Row 19) · <b>registry_loader.ts:20</b> — <code>import { PERMANENT_REGISTRY_FILE } from "./registry_permanent_data"</code>, read at <code>:41</code>, <code>:42</code>, <code>:52</code> (Rows 16 + 17) · <b>generate_permanent_data.ts:41</b> — <code>permanent_slice_output_path()</code> · <b>packages/types/src/known_issues.ts:153,158</b> — renderer docstring</li>
   </ul>
 </aside>
 
@@ -666,11 +663,11 @@ footer b { color: var(--mute); }
 <!-- ===== E. ride-along small-item rows (interactive-checklist + accent-callout) ===== -->
 <section id="rows">
   <div class="sk">Ride-along small-item rows — the renames, deletions, and the two that need care</div>
-  <h2 class="sh">Two mechanical rows land, rows 16 &amp; 17 defer to a follow-up, and two registry mismatches route back to the human as hand-offs</h2>
+  <h2 class="sh">Four mechanical rows land — 16 and 17 as one commit, since they share <code>registry_loader.ts</code>'s import edge — and two registry mismatches route back to the human as hand-offs</h2>
   <ul class="acc">
     <li><input type="checkbox" id="r2"><label for="r2"><b>Row 2</b><code>git mv classify_entry_points.ts → auto_classify.ts</code> — it is the registry-walk sub-step; <code>enrich_call_graph.ts</code> is the stage face. Its integration test is renamed to <code>auto_classify.integration.test.ts</code> after the receiver case it exercises.</label></li>
-    <li class="deferred"><input type="checkbox" id="r16" disabled><label for="r16"><b class="dfr">Row 16 · deferred</b>delete <code>registry_permanent.ts</code> (22-LOC field-unwrap shim) — parked to a follow-up to avoid colliding with in-flight reconcile-registry work; <code>registry_permanent.ts</code> and <code>registry_loader.ts</code> are untouched by this task.</label></li>
-    <li class="deferred"><input type="checkbox" id="r17" disabled><label for="r17"><b class="dfr">Row 17 · deferred</b><code>permanent_data.ts → registry_permanent_data.ts</code> plus its generator and sync test — parked to the same follow-up; <code>permanent_data.ts</code> and <code>generate_permanent_data.ts</code> stay untouched here.</label></li>
+    <li><input type="checkbox" id="r17"><label for="r17"><b>Row 17</b><code>permanent_data.ts → registry_permanent_data.ts</code>, so the slice reads beside the <code>registry_loader.ts</code> that consumes it. Three call sites move with it: <code>permanent_slice_output_path()</code> (<code>generate_permanent_data.ts:41</code>), the drift guard (now <code>registry_permanent_data.sync.test.ts</code>), and the renderer docstring in <code>@ariadnejs/types</code>. Byte-safe: <code>render_permanent_slice_module</code> never embeds the output filename, so the committed slice bytes are unchanged and <code>--dry-run</code> round-trips to the new path reporting <code>changed: false</code>.</label></li>
+    <li><input type="checkbox" id="r16"><label for="r16"><b>Row 16</b>delete <code>registry_permanent.ts</code>, the 22-line field-unwrap shim. <code>registry_loader.ts</code> now imports <code>PERMANENT_REGISTRY_FILE</code> straight from <code>./registry_permanent_data</code> and reads <code>.rules</code> / <code>.schema_version</code> at the three points that need them — one hop fewer, one vocabulary instead of two.</label></li>
     <li><input type="checkbox" id="r34"><label for="r34"><b>Row 34</b>add the one-paragraph placement rationale to <code>builtins/index.ts</code> — checks run against <code>EnrichedEntryPoint</code> inside <code>enrich_call_graph</code>, which does not cross the skill boundary.</label></li>
   </ul>
   <div class="risk-stack">
@@ -693,7 +690,7 @@ footer b { color: var(--mute); }
   <h2 class="sh">One dependency upstream, one task downstream, no registry contact, split file-by-file</h2>
   <aside class="callout slate-sev prose">
     <div class="klabel">Sequencing — split file-by-file, tests following each move</div>
-    <p>Depends on <b>362.1</b>, which first extracts <code>detect_language</code> and re-points the 14 builtin imports. Blocks <b>362.7</b>, whose first commit deletes MCP's copies. No registry contact; each file moves with its tests, green per commit.</p>
+    <p>Depends on <b>362.1</b>, which first extracts <code>detect_language</code> and re-points the 14 builtin imports. Blocks <b>362.7</b>, whose first commit deletes MCP's copies. Rows 16 and 17 ship as one commit — splitting them leaves a non-compiling intermediate state on <code>registry_loader.ts</code>'s import edge. Every suite is green: core 3395, types 136, skill-fs 30, triage 424, mcp 228.</p>
   </aside>
 </section>
 
@@ -701,8 +698,9 @@ footer b { color: var(--mute); }
 
 <footer>
   <div><b>TASK-362.4</b> · Program Area 4 of the IA review refactor program (TASK-362) · effort M, risk low · depends on 362.1, blocks 362.7</div>
-  <div>As built: megafile trimmed to 554 LOC / ~19 KB (from ~29 KB); build_signature adopts MCP's <code>(definition, location?): string</code> superset, try/catch dropped; Row 2 test → auto_classify.integration.test.ts; rows 16 &amp; 17 deferred (registry_permanent.ts, permanent_data.ts, generate_permanent_data.ts untouched); rows 18 &amp; 19 route to the human as reconcile-registry hand-offs.</div>
-  <div>Sources read: extract_entry_point_diagnostics.ts (:120, :346, :555, :590–613, :667, :703, :754, :817) · trace_call_graph/build_signature.ts · packages/mcp/.../list_entrypoints.ts:88,147 · builtins/check_framework-lifecycle-override.ts:1,16 · builtins/check_string-keyed-dispatch.ts:17 · registry.json framework-lifecycle-override.languages · task-362.4 brief:24–83</div>
+  <div>As built: megafile 554 LOC / ~19 KB (from ~29 KB); build_signature = MCP's <code>(definition, location?): string</code> superset, try/catch dropped; Row 2 test → auto_classify.integration.test.ts.</div>
+  <div>Row 17: permanent_data.ts → registry_permanent_data.ts, slice bytes unchanged. Row 16: registry_permanent.ts shim deleted. Green — core 3395, types 136, skill-fs 30, triage 424, mcp 228. Rows 18 &amp; 19 remain reconcile-registry hand-offs.</div>
+  <div>Sources read: extract_entry_point_diagnostics.ts (:120, :346, :555, :590–613, :667, :703, :754, :817) · trace_call_graph/build_signature.ts · packages/mcp/.../list_entrypoints.ts:88,147 · builtins/check_framework-lifecycle-override.ts:1,16 · builtins/check_string-keyed-dispatch.ts:17 · registry_loader.ts:6,20,41–54 · registry_permanent_data.sync.test.ts · generate_permanent_data.ts:41,86 · packages/types/src/known_issues.ts:153,158 · registry.json framework-lifecycle-override.languages · task-362.4 brief:24–83</div>
 </footer>
 
 </body>

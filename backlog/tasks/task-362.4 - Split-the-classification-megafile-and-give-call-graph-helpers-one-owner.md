@@ -1,7 +1,7 @@
 ---
 id: TASK-362.4
 title: "Split the classification megafile and give call-graph helpers one owner"
-status: In Progress
+status: Done
 assignee: []
 created_date: "2026-07-05 00:00"
 labels:
@@ -96,16 +96,15 @@ regenerated. (MCP-side deletion of its copies is TASK-362.7's first commit.)
 - [x] `build_signature` and `count_tree_size` exist once each, in
       `trace_call_graph/`, with the reconciled signature both core and MCP
       consumers need.
-- [~] Row 2 landed (rename + all callers updated); row 18's gate widened with
-      a test covering a JS `_transform` subclass; row 34's rationale paragraph
-      added. **Rows 16 and 17 are deferred** to a follow-up (see Implementation
-      Notes) to avoid colliding with in-flight reconcile-registry work.
+- [x] Rows 2, 16, 17 landed as renames/deletions with all callers updated;
+      row 18's gate widened with a test covering a JS `_transform` subclass;
+      row 34's rationale paragraph added.
 - [x] Row 19 handed off: the human-runnable `reconcile-registry` route is
       recorded in this task's notes; `registry.json` untouched by this task.
-- [~] In-scope suite green (core 3319 passed; mcp 228 passed; new/changed
-      files green). `permanent_data.sync.test.ts` remains red for a
-      pre-existing reason unrelated to this task (deferred row 17 + in-flight
-      registry drift) — it clears when the deferred rows land.
+- [x] Full test suite green (core 3395; types 136; skill-fs 30; triage 424;
+      mcp 228). `registry_permanent_data.sync.test.ts` green after the row-17
+      rename, and `generate_permanent_data.ts --dry-run` round-trips to the
+      renamed path with `changed: false`.
 
 <!-- AC:END -->
 
@@ -171,17 +170,29 @@ in `builtins/index.ts` records why the classifiers live in core (they run
 against `EnrichedEntryPoint` inside `enrich_call_graph`, never crossing the skill
 boundary).
 
-### Deferred: Rows 16 and 17
+### Rows 16 and 17 — the registry-slice indirection
 
-Rows 16 (delete the `registry_permanent.ts` field-unwrap shim) and 17
-(`permanent_data.ts` → `registry_permanent_data.ts`, plus the generator and sync
-test) are **deferred to a follow-up**. They touch the exact machinery the
-in-flight reconcile-registry drift work regenerates through; landing them
-concurrently risks a duplicate-file / stale-generator collision. They should
-land once that registry work settles. Because row 17 is deferred,
-`permanent_data.sync.test.ts` stays red for a reason unrelated to this task (the
-committed permanent slice does not yet reflect the committed registry's drift
-fields).
+Rows 16 and 17 landed together, after the concurrent reconcile-registry drift
+work settled (they share `registry_loader.ts`'s import edge, so splitting them
+would leave an intermediate state that does not compile).
+
+Row 17 renames the bundled slice `permanent_data.ts` →
+`registry_permanent_data.ts`, so the file sorts and reads beside the
+`registry_loader.ts` that consumes it. Three call sites move with it: the
+generator's `permanent_slice_output_path()`
+(`.claude/skills/triage/scripts/generate_permanent_data.ts`), the drift guard
+(now `registry_permanent_data.sync.test.ts`), and the renderer's docstring in
+`@ariadnejs/types`. The rename is byte-safe because
+`render_permanent_slice_module` never embeds the output filename — its header
+cites only the source registry — so the committed slice's bytes are unchanged.
+`generate_permanent_data.ts --dry-run` confirms the round trip: it now targets
+`registry_permanent_data.ts` and reports `changed: false`.
+
+Row 16 deletes `registry_permanent.ts`, a 22-line shim whose only job was to
+unwrap two fields off the slice envelope and re-export them under different
+names. `registry_loader.ts` now imports `PERMANENT_REGISTRY_FILE` directly and
+reads `.rules` / `.schema_version` at the three points that need them, which
+removes a hop and a second vocabulary for the same data.
 
 ### Hand-offs to the human (registry is human-owned; not written by this task)
 

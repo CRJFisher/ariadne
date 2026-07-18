@@ -3,7 +3,7 @@
  *
  * The full registry (with `wip` and `proposed` rules) lives at
  * `.claude/skills/triage/known_issues/registry.json`. Core ships only the
- * permanent slice as `permanent_data.ts`, regenerated from the source
+ * permanent slice as `registry_permanent_data.ts`, regenerated from the source
  * registry. Because the slice is a `.ts` module, tsc emits it into `dist/` as
  * part of the normal build — no separate copy step is needed.
  *
@@ -17,7 +17,7 @@ import type {
   KnownIssuesRegistry,
 } from "@ariadnejs/types";
 import { KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION } from "@ariadnejs/types";
-import { PERMANENT_REGISTRY, PERMANENT_REGISTRY_SCHEMA_VERSION } from "./registry_permanent";
+import { PERMANENT_REGISTRY_FILE } from "./registry_permanent_data";
 
 let permanent_registry_cache: KnownIssuesRegistry | null = null;
 
@@ -38,8 +38,8 @@ export function load_permanent_registry(): KnownIssuesRegistry {
   if (permanent_registry_cache !== null) {
     return permanent_registry_cache;
   }
-  validate_permanent_slice(PERMANENT_REGISTRY);
-  permanent_registry_cache = PERMANENT_REGISTRY.map((issue) => ({ ...issue }));
+  validate_permanent_slice(PERMANENT_REGISTRY_FILE.rules);
+  permanent_registry_cache = PERMANENT_REGISTRY_FILE.rules.map((issue) => ({ ...issue }));
   return permanent_registry_cache;
 }
 
@@ -49,9 +49,9 @@ export function load_permanent_registry(): KnownIssuesRegistry {
  * directly against a synthetic slice.
  */
 export function validate_permanent_slice(rules: readonly KnownIssue[]): void {
-  if (PERMANENT_REGISTRY_SCHEMA_VERSION !== KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION) {
+  if (PERMANENT_REGISTRY_FILE.schema_version !== KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION) {
     throw new PermanentRegistryError(
-      `bundled permanent slice schema_version ${PERMANENT_REGISTRY_SCHEMA_VERSION} ` +
+      `bundled permanent slice schema_version ${PERMANENT_REGISTRY_FILE.schema_version} ` +
         `does not match @ariadnejs/types ${KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION} — ` +
         "the permanent slice must be regenerated from the source registry",
     );

@@ -150,12 +150,13 @@ const PERMANENT_SLICE_MODULE_HEADER =
   "\n";
 
 /**
- * Render the bundled permanent-slice module (`permanent_data.ts` in core)
- * from a full registry rule array: filter via
+ * Render the bundled permanent-slice module (`registry_permanent_data.ts` in
+ * core) from a full registry rule array: filter via
  * {@link select_permanent_slice_rules}, wrap in the `{ schema_version, rules }`
  * envelope with `schema_version` copied verbatim, and emit the typed `.ts`
- * module text. Pure and byte-deterministic — `permanent_data.sync.test.ts`
- * asserts the committed slice equals this render of the source registry.
+ * module text. Pure and byte-deterministic —
+ * `registry_permanent_data.sync.test.ts` asserts the committed slice equals
+ * this render of the source registry.
  *
  * This produces a TypeScript module, never registry-JSON bytes; the registry
  * write-boundary fence (`registry_writers.test.ts`) does not apply to it.
