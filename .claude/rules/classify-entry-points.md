@@ -28,9 +28,10 @@ is load-bearing: `reconcile-registry` maps a row to its file by that name and un
 Two constraints bind the check body, both guarded by `builtins/field_denylist.test.ts`:
 
 - Read `language` off the `BuiltinCheckFn` parameter. A `detect_language` import or an
-  extension gate fails the build — see `@.claude/rules/language-patterns.md`.
+  extension gate blocks at Stop — see `@.claude/rules/language-patterns.md`.
 - Never key on `tree_size` or `definition_features`. Both are absent from the `TriageEntry`
-  the author validates against, so a check reading them passes staging and misfires later.
+  the author validates against, so a check reading them can clear the `--stage` sample gate
+  on the sampled language and misfire on another.
 
 `registry_permanent_data.ts` is generated — regenerate it, never hand-edit it.
 
@@ -42,7 +43,8 @@ the registry, so a stem that is not a real `group_id` passes. `registry_write_gu
 (PreToolUse) routes every registry write to a per-edit human `ask`. `run_tests_stop.ts`
 (Stop) scopes vitest to the directories of changed `.ts` files, so a `builtins/` edit runs
 `field_denylist.test.ts` but not `registry_permanent_data.sync.test.ts` one level up, and a
-registry-JSON edit runs neither — run the sync test yourself after `--promote`.
+registry-JSON-only edit runs neither. `--promote` also rewrites `registry_permanent_data.ts`,
+which puts the sync test back in scope.
 
 On demand: `.claude/skills/triage/scripts/check_registry.ts` rejects a `function_name`
 absent from `BUILTIN_CHECKS`. Nothing invokes it automatically; run it or the

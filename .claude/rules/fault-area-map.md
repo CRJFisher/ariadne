@@ -15,6 +15,7 @@ The map pins each `AriadneFaultArea` to one core path — where the plan pipelin
 triage false positive. A split is the risky case: `method_lookup.ts` owns two areas
 (`method_lookup` and `polymorphic_dispatch`), so splitting it breaks both targets.
 
-Enforcement: `build_stop.ts` (Stop) rebuilds each modified package with `tsc`, so a missing
-key in the `Record<AriadneFaultArea, string>` fails the build. A value naming a deleted path,
+Enforcement: `build_stop.ts` (Stop) rebuilds each modified package and its downstream
+dependents with `tsc`, so a missing key in the `Record<AriadneFaultArea, string>` fails the
+build. A value naming a deleted path,
 and wrong-owner-after-split, are review-carried.

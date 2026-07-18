@@ -5,7 +5,7 @@ paths: packages/types/src/**
 # Language Annotations in @ariadnejs/types
 
 This package expresses the language axis as embedded annotated unions, not per-language
-files. Every union member or field applying to a subset of the four languages carries an
+files. Every union member or field applying to a subset of the four languages MUST carry an
 `@language` tag naming them — `type_cast`=typescript, `dunder_protocol`=python,
 `path_prefix`=rust.
 
