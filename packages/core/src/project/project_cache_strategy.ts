@@ -15,7 +15,7 @@ import {
   validate_semantic_index_shape,
 } from "../persistence";
 import type { GitFileState } from "../persistence";
-import type { SemanticIndex } from "../index_single_file/index_single_file";
+import type { SemanticIndex } from "@ariadnejs/types";
 import type { Project } from "./project";
 
 /**
