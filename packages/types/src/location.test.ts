@@ -1,5 +1,5 @@
 /**
- * Tests for common utilities
+ * Tests for location key utilities
  */
 
 import { describe, it, expect } from "vitest";

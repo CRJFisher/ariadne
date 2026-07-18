@@ -80,9 +80,9 @@ export interface ResolutionFailure {
  * - `member_expression`  — `a.b.m()` (nested member access as receiver)
  * - `call_chain`         — `foo().m()` (receiver is itself a call)
  * - `index_access`       — `arr[k].m()` (receiver is an index/subscript)
- * - `type_cast`          — `(x as T).m()` // @language typescript
+ * - `type_cast`          — `(x as T).m()` @language typescript
  * - `parenthesized`      — `(expr).m()` (wraps any non-trivial expression)
- * - `non_null_assertion` — `x!.m()` // @language typescript
+ * - `non_null_assertion` — `x!.m()` @language typescript
  */
 export type ReceiverKind =
   | "identifier"

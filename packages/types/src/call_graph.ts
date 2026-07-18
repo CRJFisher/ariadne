@@ -11,24 +11,6 @@ import type { Resolution } from "./resolution";
 import type { ResolutionFailure, CallSiteSyntax } from "./resolution_failure";
 
 /**
- * Context information for anonymous functions that are callbacks.
- * Tracked during definition capture, classified during resolution.
- */
-export interface CallbackContext {
-  /** True if this function is syntactically inside call expression arguments */
-  readonly is_callback: boolean;
-
-  /**
-   * Whether the receiving function is external (built-in/library) or internal (our code).
-   * Null = not yet classified (set during resolution phase).
-   */
-  readonly receiver_is_external: boolean | null;
-
-  /** Location of the call expression that receives this callback */
-  readonly receiver_location: Location | null;
-}
-
-/**
  * Node in a call graph representing a function/method
  */
 export interface CallableNode {
