@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { TypeRegistry } from "./type";
 import { DefinitionRegistry } from "./definition";
-import { ResolutionRegistry } from "../resolve_references";
+import { ResolutionRegistry } from "../resolution_registry";
 import { set_test_resolutions } from "../resolve_references.test";
 import { make_export_chain_context } from "../resolution_test_helpers";
 import {

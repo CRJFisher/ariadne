@@ -15,7 +15,7 @@ import { TypeRegistry } from "../registries/type";
 import { ScopeRegistry } from "../registries/scope";
 import { ReferenceRegistry } from "../registries/reference";
 import { ImportGraph } from "../import_resolution/import_graph";
-import { ResolutionRegistry } from "../resolve_references";
+import { ResolutionRegistry } from "../resolution_registry";
 import { set_test_resolutions } from "../resolve_references.test";
 import { create_method_call_reference, create_constructor_call_reference } from "../../index_single_file/references/factories";
 import {

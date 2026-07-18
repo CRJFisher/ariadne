@@ -9,7 +9,7 @@ import type {
   FilePath,
   FunctionCallReference,
 } from "@ariadnejs/types";
-import { ResolutionRegistry } from "./resolve_references";
+import { ResolutionRegistry } from "./resolution_registry";
 
 import { preprocess_python_references } from "./preprocess_references.python";
 

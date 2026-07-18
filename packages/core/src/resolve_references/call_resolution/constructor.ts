@@ -20,7 +20,7 @@ import { err, ok } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../registries/definition";
 import type { ExportRegistry } from "../registries/export";
 import type { ScopeRegistry } from "../registries/scope";
-import type { ResolutionRegistry } from "../resolve_references";
+import type { ResolutionRegistry } from "../resolution_registry";
 import type { FileSystemFolder } from "../file_folders";
 import { resolve_namespace_export } from "../export_chain_lookup";
 import {

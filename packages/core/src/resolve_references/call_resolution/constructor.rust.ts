@@ -17,7 +17,7 @@ import type {
 } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../registries/definition";
 import type { ScopeRegistry } from "../registries/scope";
-import type { ResolutionRegistry } from "../resolve_references";
+import type { ResolutionRegistry } from "../resolution_registry";
 import {
   find_containing_class_scope,
   find_class_from_scope,

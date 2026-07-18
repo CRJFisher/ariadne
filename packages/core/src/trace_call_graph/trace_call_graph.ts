@@ -8,7 +8,7 @@ import type {
 } from "@ariadnejs/types";
 import { create_symbol_name } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../resolve_references/registries/definition";
-import type { ResolutionRegistry } from "../resolve_references/resolve_references";
+import type { ResolutionRegistry } from "../resolve_references/resolution_registry";
 import { is_test_file } from "../project/detect_test_file";
 import { is_runner_invoked_callable } from "./runner_suppression";
 

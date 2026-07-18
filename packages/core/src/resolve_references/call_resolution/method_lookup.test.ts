@@ -4,7 +4,7 @@ import type { ReceiverResolutionContext } from "./receiver_resolution";
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
-import { ResolutionRegistry } from "../resolve_references";
+import { ResolutionRegistry } from "../resolution_registry";
 import { ImportGraph } from "../import_resolution/import_graph";
 import { ExportRegistry } from "../registries/export";
 import type { FileSystemFolder } from "../file_folders";

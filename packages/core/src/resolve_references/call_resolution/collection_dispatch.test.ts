@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { resolve_collection_dispatch } from "./collection_dispatch";
 import { DefinitionRegistry } from "../registries/definition";
-import { ResolutionRegistry } from "../resolve_references";
+import { ResolutionRegistry } from "../resolution_registry";
 import { set_test_resolutions } from "../resolve_references.test";
 import {
   is_err,

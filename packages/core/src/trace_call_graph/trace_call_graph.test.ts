@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { trace_call_graph } from "./trace_call_graph";
 import { DefinitionRegistry } from "../resolve_references/registries/definition";
-import { ResolutionRegistry } from "../resolve_references/resolve_references";
+import { ResolutionRegistry } from "../resolve_references/resolution_registry";
 import {
   function_symbol,
   method_symbol,

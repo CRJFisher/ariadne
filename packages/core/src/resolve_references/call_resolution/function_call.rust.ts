@@ -14,7 +14,7 @@ import type {
   FunctionCallReference,
 } from "@ariadnejs/types";
 import type { CallResolutionContext } from "./call_resolver";
-import type { ResolutionRegistry } from "../resolve_references";
+import type { ResolutionRegistry } from "../resolution_registry";
 import {
   is_callable_definition,
   normalize_path_prefix,

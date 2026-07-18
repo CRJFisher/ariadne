@@ -16,7 +16,7 @@ import { ScopeRegistry } from "../resolve_references/registries/scope";
 import { ExportRegistry } from "../resolve_references/registries/export";
 import { ReferenceRegistry } from "../resolve_references/registries/reference";
 import { ImportGraph } from "../resolve_references/import_resolution/import_graph";
-import { ResolutionRegistry } from "../resolve_references/resolve_references";
+import { ResolutionRegistry } from "../resolve_references/resolution_registry";
 import { preprocess_references } from "../resolve_references/preprocess_references";
 import { trace_call_graph } from "../trace_call_graph/trace_call_graph";
 import {

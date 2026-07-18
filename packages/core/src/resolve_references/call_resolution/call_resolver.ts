@@ -33,7 +33,7 @@ import type { ExportRegistry } from "../registries/export";
 import type { ImportGraph } from "../import_resolution/import_graph";
 import type { FileSystemFolder } from "../file_folders";
 import type { CallResolutionResult } from "../resolution_state";
-import type { ResolutionRegistry } from "../resolve_references";
+import type { ResolutionRegistry } from "../resolution_registry";
 import { detect_indirect_reachability } from "../indirect_reachability";
 import { resolve_method_call } from "./method_call";
 import { resolve_constructor_call, include_constructors_for_class_symbols } from "./constructor";

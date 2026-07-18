@@ -8,7 +8,7 @@ import type {
   SymbolName,
   SymbolReference,
 } from "@ariadnejs/types";
-import type { ResolutionRegistry } from "./resolve_references";
+import type { ResolutionRegistry } from "./resolution_registry";
 import * as path from "path";
 import * as os from "os";
 import * as fs from "fs";

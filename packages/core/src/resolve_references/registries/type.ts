@@ -15,7 +15,7 @@ import {
   extract_constructor_bindings,
   extract_type_members,
 } from "../type_preprocessing";
-import type { ResolutionRegistry } from "../resolve_references";
+import type { ResolutionRegistry } from "../resolution_registry";
 import { resolve_namespace_export } from "../export_chain_lookup";
 
 /**
