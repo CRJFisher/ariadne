@@ -4,8 +4,6 @@ import { Location } from "./location";
 export type SymbolId = string & { __brand: "SymbolId" }; // This is the encoded version of the Symbol object
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export type SymbolName = string & { __brand: "SymbolName" }; // This is the local identifier of the symbol
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export type ReferenceId = string & { __brand: "ReferenceId" }; // Unique identifier for a reference (reference to a symbol)
 
 /** Create a SymbolName from a string */
 export function create_symbol_name(name: string): SymbolName {
@@ -412,56 +410,4 @@ export function type_alias_symbol(name: string, location: Location): SymbolId {
     name: name as SymbolName,
     location,
   });
-}
-
-/**
- * Create a named module symbol (for languages like Rust with explicit module declarations)
- *
- * @param name - The module name
- * @param location - The source location where the module is defined
- * @returns A SymbolId for the module
- *
- * @example
- * ```typescript
- * const moduleId = named_module_symbol('utils', {
- *   file_path: 'src/lib.rs',
- *   line: 5,
- *   column: 0,
- *   end_line: 20,
- *   end_column: 1
- * });
- * ```
- */
-export function named_module_symbol(
-  name: string,
-  location: Location
-): SymbolId {
-  return symbol_string({
-    kind: "module",
-    name: name as SymbolName,
-    location,
-  });
-}
-
-/**
- * Create a reference identifier
- *
- * @param name - The name being referenced
- * @param file_path - The file containing the reference
- * @param location - The source location of the reference
- * @returns A ReferenceId for the reference
- *
- * @example
- * ```typescript
- * const refId = reference_id('foo', 'src/app.ts' as FilePath, {
- *   file_path: 'src/app.ts',
- *   start_line: 5,
- *   start_column: 10,
- *   end_line: 5,
- *   end_column: 13
- * });
- * ```
- */
-export function reference_id(name: string, location: Location): ReferenceId {
-  return `ref:${location.file_path}:${location.start_line}:${location.start_column}:${name}` as ReferenceId;
 }
