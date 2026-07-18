@@ -20,10 +20,13 @@ const REPO_ROOT = path.resolve(
   "..",
 );
 
-function changed_files(all_files: string[]): ChangedFiles {
+function changed_files(
+  all_files: string[],
+  has_source_changes = false,
+): ChangedFiles {
   return {
     all_files,
-    has_source_changes: false,
+    has_source_changes,
     has_no_changes: all_files.length === 0,
     modified_packages: [],
     modified_areas: [],
@@ -71,6 +74,29 @@ describe("extract_cited_paths", () => {
     expect(extract_cited_paths(markdown)).toEqual([
       "packages/core/src/project/project.ts",
     ]);
+  });
+
+  it("resumes backtick-span extraction after a fence closes", () => {
+    const markdown = [
+      "```",
+      "├── packages/core/src/in_fence.ts",
+      "```",
+      "Then prose citing `packages/core/src/after_fence.ts`.",
+    ].join("\n");
+    expect(extract_cited_paths(markdown)).toEqual([
+      "packages/core/src/in_fence.ts",
+      "packages/core/src/after_fence.ts",
+    ]);
+  });
+
+  it("applies the ignore marker to a line inside a scannable fence", () => {
+    const markdown = [
+      "```",
+      `├── packages/core/src/gone.ts ${IGNORE_MARKER}`,
+      "└── packages/core/src/kept.ts",
+      "```",
+    ].join("\n");
+    expect(extract_cited_paths(markdown)).toEqual(["packages/core/src/kept.ts"]);
   });
 
   it("ignores tokens inside a language-tagged fence", () => {
@@ -153,6 +179,22 @@ describe("should_run", () => {
     ).toEqual(true);
   });
 
+  it("runs when a cited .claude ts file changed", () => {
+    expect(
+      should_run(changed_files([".claude/hooks/registry_write_guard.ts"])),
+    ).toEqual(true);
+  });
+
+  it("runs on the git-failure fallback despite an empty file list", () => {
+    expect(should_run(changed_files([], true))).toEqual(true);
+  });
+
+  it("skips a non-cited source change even when source changes are reported", () => {
+    expect(
+      should_run(changed_files(["packages/core/tests/fixture_check.ts"], true)),
+    ).toEqual(false);
+  });
+
   it("skips when only unrelated files changed", () => {
     expect(
       should_run(
@@ -225,7 +267,7 @@ describe("find_missing_citations", () => {
 });
 
 describe("build_block_reason", () => {
-  it("formats one spec message per missing citation", () => {
+  it("formats one spec message per missing citation plus the marker hint", () => {
     expect(
       build_block_reason([
         { source: "a.md", cited_path: "packages/core/src/gone.ts" },
@@ -236,7 +278,8 @@ describe("build_block_reason", () => {
       ]),
     ).toEqual(
       "a.md references packages/core/src/gone.ts which does not exist — update the layout/map or restore the file\n" +
-        "ARIADNE_FAULT_AREA_FOLDER.name_resolution references packages/core/src/also_gone.ts which does not exist — update the layout/map or restore the file",
+        "ARIADNE_FAULT_AREA_FOLDER.name_resolution references packages/core/src/also_gone.ts which does not exist — update the layout/map or restore the file\n" +
+        "A line deliberately citing a counter-example path can be exempted with <!-- doc-path-truth:ignore -->",
     );
   });
 });

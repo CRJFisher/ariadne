@@ -26,7 +26,7 @@ const __dirname = path.dirname(__filename);
 
 const LOG_FILE = path.join(__dirname, "..", "hook_log.txt");
 
-interface EntryPoint {
+export interface EntryPoint {
   name: string;
   kind: string;
   file_path: string;
@@ -142,14 +142,8 @@ async function analyze_package(
   project_dir: string,
   package_name: string,
   storage: PersistenceStorage | undefined,
+  whitelist: Set<string>,
 ): Promise<EntryPoint[]> {
-  // Whitelist first: an absent file skips the package before the expensive
-  // call-graph analysis.
-  const whitelist = await load_whitelist(project_dir, package_name);
-  if (whitelist === null) {
-    return [];
-  }
-
   const src_folder = path.join("packages", package_name, "src");
 
   const project = await load_project({
@@ -173,6 +167,17 @@ async function analyze_package(
     });
   }
 
+  return filter_unexpected_entrypoints(entry_points, whitelist);
+}
+
+/**
+ * An empty whitelist deliberately gates every flagged entry point; the
+ * absent-file skip is decided by the caller before analysis.
+ */
+export function filter_unexpected_entrypoints(
+  entry_points: EntryPoint[],
+  whitelist: Set<string>,
+): EntryPoint[] {
   return entry_points.filter((ep) => !whitelist.has(ep.name));
 }
 
@@ -210,9 +215,17 @@ async function main(): Promise<void> {
 
   // Analyze each modified package
   for (const pkg of modified_packages) {
+    // The whitelist loads outside the tolerant catch: a corrupt whitelist
+    // must reach the fatal handler and block, while an analysis crash only
+    // skips its own package.
+    const whitelist = await load_whitelist(project_dir, pkg);
+    if (whitelist === null) {
+      continue;
+    }
+
     log(`Analyzing package: ${pkg}`);
     try {
-      const unexpected = await analyze_package(project_dir, pkg, storage);
+      const unexpected = await analyze_package(project_dir, pkg, storage, whitelist);
       if (unexpected.length > 0) {
         all_unexpected.push({ package: pkg, entry_points: unexpected });
       }
@@ -242,7 +255,7 @@ async function main(): Promise<void> {
       `Found ${total} unexpected entry point(s) [${elapsed_s}s]:\n\n${formatted}\n\n` +
         `These are exported but never called. Either:\n` +
         `  1. Delete the dead code\n` +
-        `  2. Add to .claude/known_entrypoints/${modified_packages[0]}.json if legitimate API`
+        `  2. Add to the flagged package's .claude/known_entrypoints/<package>.json if legitimate API`
     );
   } else {
     log(`All entry points are in whitelists (${elapsed_s}s)`);

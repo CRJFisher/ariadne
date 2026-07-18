@@ -2,7 +2,12 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import * as fs from "fs/promises";
 import * as os from "os";
 import * as path from "path";
-import { load_whitelist, packages_from_changed_files } from "./detect_dead_code.js";
+import {
+  filter_unexpected_entrypoints,
+  load_whitelist,
+  packages_from_changed_files,
+  type EntryPoint,
+} from "./detect_dead_code.js";
 
 describe("packages_from_changed_files", () => {
   it("includes a package when a src ts file changed", () => {
@@ -53,6 +58,40 @@ describe("packages_from_changed_files", () => {
         "packages/types/README.md",
       ]),
     ).toEqual(["core", "mcp"]);
+  });
+});
+
+describe("filter_unexpected_entrypoints", () => {
+  const flagged: EntryPoint[] = [
+    {
+      name: "start_server",
+      kind: "function",
+      file_path: "packages/mcp/src/server.ts",
+      start_line: 10,
+    },
+    {
+      name: "orphan_helper",
+      kind: "function",
+      file_path: "packages/mcp/src/tools/helper.ts",
+      start_line: 3,
+    },
+  ];
+
+  it("gates every flagged entry point against an empty whitelist", () => {
+    expect(filter_unexpected_entrypoints(flagged, new Set())).toEqual(flagged);
+  });
+
+  it("filters out whitelisted names only", () => {
+    expect(
+      filter_unexpected_entrypoints(flagged, new Set(["start_server"])),
+    ).toEqual([
+      {
+        name: "orphan_helper",
+        kind: "function",
+        file_path: "packages/mcp/src/tools/helper.ts",
+        start_line: 3,
+      },
+    ]);
   });
 });
 

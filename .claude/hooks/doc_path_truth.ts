@@ -39,6 +39,10 @@ const CANDIDATE_PATH_RE = /^(?:packages|\.claude)\/[A-Za-z0-9_./-]+\.ts$/;
 
 const SRC_TS_RE = /^packages\/[^/]+\/src\/.+\.ts$/;
 
+// Rules also cite .claude-prefixed .ts files (hooks, skill sources), so
+// moving one must trigger the scan in the same session that broke it.
+const CLAUDE_TS_RE = /^\.claude\/.+\.ts$/;
+
 export interface PathCitation {
   source: string;
   cited_path: string;
@@ -46,11 +50,19 @@ export interface PathCitation {
 
 /**
  * A rule or the fault-area map can only go stale when a rule file or a
- * package source file changed (a `.ts` move/split is what stales a layout).
+ * cited-prefix source file changed (a `.ts` move/split is what stales a
+ * layout). Fails closed when git enumeration failed — the fallback uniquely
+ * reports source changes with an empty `all_files` list.
  */
 export function should_run(changed: ChangedFiles): boolean {
-  return changed.all_files.some(
-    (f) => f.startsWith(`${RULES_DIR}/`) || SRC_TS_RE.test(f),
+  const git_enumeration_failed =
+    changed.has_source_changes && changed.all_files.length === 0;
+  return (
+    git_enumeration_failed ||
+    changed.all_files.some(
+      (f) =>
+        f.startsWith(`${RULES_DIR}/`) || SRC_TS_RE.test(f) || CLAUDE_TS_RE.test(f),
+    )
   );
 }
 
@@ -122,12 +134,14 @@ export function find_missing_citations(
 }
 
 export function build_block_reason(missing: PathCitation[]): string {
-  return missing
-    .map(
-      (m) =>
-        `${m.source} references ${m.cited_path} which does not exist — update the layout/map or restore the file`,
-    )
-    .join("\n");
+  const lines = missing.map(
+    (m) =>
+      `${m.source} references ${m.cited_path} which does not exist — update the layout/map or restore the file`,
+  );
+  lines.push(
+    `A line deliberately citing a counter-example path can be exempted with ${IGNORE_MARKER}`,
+  );
+  return lines.join("\n");
 }
 
 function main(): void {
