@@ -4,21 +4,9 @@
 
 import type { QueryCapture, Tree } from "tree-sitter";
 import type {
-  FilePath,
   Language,
-  SymbolId,
-  ImportDefinition,
   SymbolName,
-  ScopeId,
-  LexicalScope,
-  FunctionDefinition,
-  ClassDefinition,
-  VariableDefinition,
-  InterfaceDefinition,
-  EnumDefinition,
-  NamespaceDefinition,
-  TypeAliasDefinition,
-  SymbolReference,
+  SemanticIndex,
 } from "@ariadnejs/types";
 
 import { query_tree } from "./query_code_tree";
@@ -45,32 +33,6 @@ import {
   type CaptureNode,
 } from "./capture_types";
 import type { ProcessingContext } from "./scopes/processing_context";
-
-/**
- * Semantic Index - Single-file analysis results
- * Import/Export union types are created during cross-file resolution in resolve_references/
- */
-export interface SemanticIndex {
-  readonly file_path: FilePath;
-  readonly language: Language;
-  readonly root_scope_id: ScopeId;
-
-  /** Scope data */
-  readonly scopes: ReadonlyMap<ScopeId, LexicalScope>;
-
-  /** Definitions */
-  readonly functions: ReadonlyMap<SymbolId, FunctionDefinition>;
-  readonly classes: ReadonlyMap<SymbolId, ClassDefinition>;
-  readonly variables: ReadonlyMap<SymbolId, VariableDefinition>;
-  readonly interfaces: ReadonlyMap<SymbolId, InterfaceDefinition>;
-  readonly enums: ReadonlyMap<SymbolId, EnumDefinition>;
-  readonly namespaces: ReadonlyMap<SymbolId, NamespaceDefinition>;
-  readonly types: ReadonlyMap<SymbolId, TypeAliasDefinition>;
-  readonly imported_symbols: ReadonlyMap<SymbolId, ImportDefinition>;
-
-  /** References */
-  readonly references: readonly SymbolReference[];
-}
 
 // ============================================================================
 // Main Entry Point

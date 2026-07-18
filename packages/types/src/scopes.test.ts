@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type { Location, FilePath } from "./common";
+import type { Location, FilePath } from "./location";
 import {
   scope_string,
   scope_from_string,

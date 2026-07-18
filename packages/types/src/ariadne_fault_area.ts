@@ -21,8 +21,8 @@
 import type {
   ResolutionFailureReason,
   ResolutionFailureStage,
-} from "./call_chains.js";
-import type { Language } from "./common.js";
+} from "./resolution_failure.js";
+import type { Language } from "./location.js";
 import type { EntryPointDiagnosis } from "./entry_point.js";
 
 /**

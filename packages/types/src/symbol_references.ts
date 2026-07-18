@@ -1,8 +1,8 @@
-import type { Location } from "./common";
+import type { Location } from "./location";
 import type { ScopeId } from "./scopes";
-import type { TypeInfo } from "./index_single_file";
-import type { SymbolName, SymbolId } from "./symbol";
-import type { CallSiteSyntax } from "./call_chains";
+import type { TypeInfo } from "./type_member_info";
+import type { SymbolName } from "./symbol";
+import type { CallSiteSyntax } from "./resolution_failure";
 
 /**
  * Discriminated union of all reference types, dispatched via `ref.kind`.
@@ -73,7 +73,10 @@ export interface SelfReferenceCall extends BaseReference {
 }
 
 /**
- * Self-reference keywords across all supported languages
+ * Self-reference keywords across all supported languages.
+ * - `this` / `super` — @language javascript,typescript
+ * - `self` — @language python,rust
+ * - `cls` — @language python
  */
 export type SelfReferenceKeyword = "this" | "self" | "super" | "cls";
 
@@ -136,6 +139,7 @@ export interface FunctionCallReference extends BaseReference {
    * Held separately from the TypeScript `[namespace, class]` `property_chain`
    * convention: this is the module/type path that disambiguates the terminal
    * (including against a local shadow), not a namespace-class pair.
+   * @language rust
    */
   readonly path_prefix?: readonly SymbolName[];
 }
@@ -173,6 +177,7 @@ export interface ConstructorCallReference extends BaseReference {
    * ["Cell"] for `Cell::<u8>::new()`. Held separately from `property_chain`,
    * whose two TypeScript-oriented consumers bake in a `[namespace, class]`
    * index convention; this is a type-last path that scopes the terminal lookup.
+   * @language rust
    */
   readonly path_prefix?: readonly SymbolName[];
 }
@@ -284,41 +289,4 @@ export function is_type_reference(ref: SymbolReference): ref is TypeReference {
 
 export function is_assignment(ref: SymbolReference): ref is AssignmentReference {
   return ref.kind === "assignment";
-}
-
-// ============================================================================
-// Resolution Types
-// ============================================================================
-
-/**
- * Confidence level for symbol resolution
- */
-export type ResolutionConfidence =
-  | "certain"    // Definite resolution (direct or all polymorphic implementations)
-  | "probable"   // High-confidence heuristic match
-  | "possible";  // Lower-confidence candidate
-
-/**
- * Structured reason for resolution
- *
- * Discriminated union allows type-safe analysis and serialization.
- */
-export type ResolutionReason =
-  | { type: "direct" }
-  | { type: "interface_implementation"; interface_id: SymbolId }
-  | { type: "collection_member"; collection_id: SymbolId; access_pattern?: string }
-  | { type: "heuristic_match"; score: number };
-
-/**
- * Single resolution candidate with metadata
- */
-export interface Resolution {
-  /** Resolved symbol identifier */
-  symbol_id: SymbolId;
-
-  /** Confidence level for this resolution */
-  confidence: ResolutionConfidence;
-
-  /** Structured reason explaining why this symbol was selected */
-  reason: ResolutionReason;
 }

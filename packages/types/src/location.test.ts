@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type { Location, FilePath, LocationKey } from "./common";
-import { location_key, parse_location_key } from "./common";
+import type { Location, FilePath, LocationKey } from "./location";
+import { location_key, parse_location_key } from "./location";
 
 describe("location_key", () => {
   it("should create a location key from a location", () => {

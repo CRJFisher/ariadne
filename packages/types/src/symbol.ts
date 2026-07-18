@@ -1,4 +1,4 @@
-import { Location } from "./common";
+import { Location } from "./location";
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export type SymbolId = string & { __brand: "SymbolId" }; // This is the encoded version of the Symbol object

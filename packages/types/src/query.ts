@@ -5,8 +5,8 @@
  * to provide consistency and type safety across the codebase.
  */
 
-import { Location, Language } from "./common";
-import { FilePath } from "./common";
+import { Location, Language } from "./location";
+import { FilePath } from "./location";
 import { SymbolName } from "./symbol";
 
 // ============================================================================

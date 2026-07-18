@@ -4,8 +4,7 @@
  * assembled here so builtin classifiers can read them uniformly.
  *
  * A builtin classifier reads `is_dynamic_dispatch`; the remaining flags are
- * computed but currently unread. `is_inside_try` has no syntactic source and
- * stays `false`.
+ * computed but currently unread.
  */
 
 import type { CallReference, SyntacticFeatures } from "@ariadnejs/types";
@@ -24,7 +23,6 @@ export function derive_syntactic_features(
     is_optional_chain: /\?\./.test(source_line),
     is_awaited: /\bawait\s/.test(source_line),
     is_callback_arg: call_ref.is_callback_invocation === true,
-    is_inside_try: false,
     is_dynamic_dispatch:
       receiver_kind === "index_access" && index_key_is_literal === false,
   };

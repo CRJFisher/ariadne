@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect } from "vitest";
-import type { ResolutionFailureReason, ResolutionFailureStage } from "./call_chains.js";
+import type { ResolutionFailureReason, ResolutionFailureStage } from "./resolution_failure.js";
 import {
   ARIADNE_FAULT_AREAS,
   ARIADNE_FAULT_AREA_FOLDER,

@@ -9,7 +9,7 @@ import type {
   TraceCallGraphOptions,
 } from "@ariadnejs/types";
 import { build_index_single_file } from "../index_single_file/index_single_file";
-import type { SemanticIndex } from "../index_single_file/index_single_file";
+import type { SemanticIndex } from "@ariadnejs/types";
 import { DefinitionRegistry } from "../resolve_references/registries/definition";
 import { TypeRegistry } from "../resolve_references/registries/type";
 import { ScopeRegistry } from "../resolve_references/registries/scope";

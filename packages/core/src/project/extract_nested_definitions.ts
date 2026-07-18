@@ -1,5 +1,5 @@
 import type { ParameterDefinition } from "@ariadnejs/types";
-import type { SemanticIndex } from "../index_single_file/index_single_file";
+import type { SemanticIndex } from "@ariadnejs/types";
 
 /**
  * Flatten the parameters nested inside functions, methods, constructors, and

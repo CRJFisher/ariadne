@@ -3,14 +3,17 @@
  *
  * A TypeId uniquely identifies a type in the codebase. Unlike SymbolId which
  * identifies definitions, TypeId identifies type instances and references.
+ *
+ * The factories and built-in constants model the JS/TS type system only
+ * (union/intersection/tuple forms, `any`/`unknown`/`never`/`void`).
+ * @language javascript,typescript
  */
 
-import type { Location, FilePath } from "./common";
+import type { Location, FilePath } from "./location";
 import type { SymbolName } from "./symbol";
 
 /**
  * Branded type for type identifiers
- * @deprecated Use TypeName instead
  */
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export type TypeId = string & { __brand: "TypeId" };

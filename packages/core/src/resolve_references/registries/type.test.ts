@@ -12,7 +12,7 @@ import {
   MethodDefinition,
   PropertyDefinition,
 } from "@ariadnejs/types";
-import type { SemanticIndex } from "../../index_single_file/index_single_file";
+import type { SemanticIndex } from "@ariadnejs/types";
 import type {
   FilePath,
   Location,

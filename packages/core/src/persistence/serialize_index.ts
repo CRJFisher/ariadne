@@ -22,7 +22,7 @@ import type {
   ImportDefinition,
   SymbolReference,
 } from "@ariadnejs/types";
-import type { SemanticIndex } from "../index_single_file/index_single_file";
+import type { SemanticIndex } from "@ariadnejs/types";
 
 function serialize_map<K, V>(map: ReadonlyMap<K, V>): [K, V][] {
   return Array.from(map.entries());

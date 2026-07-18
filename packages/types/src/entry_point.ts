@@ -7,8 +7,8 @@
  * `@ariadnejs/skill-protocol` (`triage_results.ts`).
  */
 
-import type { ReceiverKind, ResolutionFailure } from "./call_chains.js";
-import type { FilePath } from "./common.js";
+import type { ReceiverKind, ResolutionFailure } from "./resolution_failure.js";
+import type { FilePath } from "./location.js";
 
 // ===== Enriched Entry Point (with CallableNode metadata + diagnostics) =====
 
@@ -44,12 +44,14 @@ export interface DefinitionFeatures {
   /**
    * True when the entry is a method defined as an object-literal
    * property-shorthand (`let o = { name() { ... } }`) rather than a class
-   * method or standalone function. JS/TS only.
+   * method or standalone function.
+   * @language javascript,typescript
    */
   definition_is_object_literal_method: boolean;
   /**
    * `"getter"` / `"setter"` when the definition carries the `get` / `set`
-   * keyword (JS/TS class accessor). `null` otherwise.
+   * keyword (class accessor). `null` otherwise.
+   * @language javascript,typescript
    */
   accessor_kind: "getter" | "setter" | null;
 }
@@ -133,8 +135,6 @@ export interface SyntacticFeatures {
   is_awaited: boolean;
   /** `is_callback_invocation === true` (synthetic edge from forEach-style dispatch) */
   is_callback_arg: boolean;
-  /** Not surfaced by core — always false. */
-  is_inside_try: boolean;
   /** `call_site_syntax.index_key_is_literal === false` (e.g. `this._hooks[name].call()`) */
   is_dynamic_dispatch: boolean;
 }

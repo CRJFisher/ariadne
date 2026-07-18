@@ -4,13 +4,13 @@
  * `Project.get_call_graph()` returns true positives only; `Project.get_classified_entry_points()`
  * returns the full set, each entry paired with an `EntryPointClassification`.
  *
- * Kept separate from `call_chains.ts` (which describes the call graph shape)
+ * Kept separate from `call_graph.ts` (which describes the call graph shape)
  * because classification is an orthogonal concern bolted on top of the graph
  * — the classifier could be replaced or removed without touching the graph
  * types.
  */
 
-import type { IndirectReachabilityReason } from "./call_chains.js";
+import type { IndirectReachabilityReason } from "./call_graph.js";
 import type { SymbolId } from "./symbol.js";
 
 /**
@@ -36,6 +36,7 @@ export type EntryPointClassification =
       /** Human-readable framework label (e.g. "flask", "pytest", "angular"). */
       readonly framework: string;
     }
+  // @language python
   | {
       readonly kind: "dunder_protocol";
       readonly group_id: string;

@@ -2,7 +2,7 @@
  * Import and export types for module dependencies and APIs
  */
 
-import { FilePath } from "./common";
+import { FilePath } from "./location";
 import { SymbolName } from "./symbol";
 import { SymbolId } from "./symbol";
 import { SemanticNode } from "./query";

@@ -1,4 +1,4 @@
-import { Location } from "./common";
+import { Location } from "./location";
 
 export type AnalysisPhase =
   | "parsing"

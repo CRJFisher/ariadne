@@ -2,12 +2,12 @@
  * Type definitions for code element definitions.
  */
 
-import { Location } from "./common";
+import { Location } from "./location";
 import { ScopeId } from "./scopes";
 import { SymbolId, SymbolKind } from "./symbol";
 import { SymbolName } from "./symbol";
 import { ModulePath } from "./import_export";
-import { CallbackContext } from "./call_chains";
+import { CallbackContext } from "./call_graph";
 
 export type DocString = string;
 

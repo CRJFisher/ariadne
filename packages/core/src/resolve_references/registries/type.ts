@@ -6,7 +6,7 @@ import type {
   Language,
   TypeMemberInfo,
 } from "@ariadnejs/types";
-import type { SemanticIndex } from "../../index_single_file/index_single_file";
+import type { SemanticIndex } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./definition";
 import type { ExportRegistry } from "./export";
 import type { FileSystemFolder } from "../file_folders";

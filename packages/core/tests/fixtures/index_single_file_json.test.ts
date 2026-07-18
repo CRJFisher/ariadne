@@ -12,7 +12,7 @@ import type {
   LexicalScope,
   FunctionDefinition,
 } from "@ariadnejs/types";
-import type { SemanticIndex } from "../../src/index_single_file/index_single_file";
+import type { SemanticIndex } from "@ariadnejs/types";
 import {
   index_single_file_to_json,
   json_to_index_single_file,

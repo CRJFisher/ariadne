@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import { SymbolId, SymbolName, function_symbol, method_symbol } from "./symbol";
-import { Location, FilePath } from "./common";
+import { Location, FilePath } from "./location";
 
 describe("Symbol Utilities", () => {
   const test_location: Location = {

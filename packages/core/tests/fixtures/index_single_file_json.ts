@@ -129,7 +129,7 @@ export interface SemanticIndexJSON {
  * @returns JSON-serializable object
  */
 export function index_single_file_to_json(
-  index: import("../../src/index_single_file/index_single_file").SemanticIndex
+  index: import("@ariadnejs/types").SemanticIndex
 ): SemanticIndexJSON {
   return {
     file_path: index.file_path,
@@ -167,7 +167,7 @@ function record_to_readonly_map<K extends string, V>(record: Record<string, V>):
  */
 export function json_to_index_single_file(
   json: SemanticIndexJSON
-): import("../../src/index_single_file/index_single_file").SemanticIndex {
+): import("@ariadnejs/types").SemanticIndex {
   return {
     file_path: json.file_path as FilePath,
     language: json.language as Language,
@@ -194,7 +194,7 @@ export function json_to_index_single_file(
  * @returns Formatted JSON string
  */
 export function index_single_file_to_json_string(
-  index: import("../../src/index_single_file/index_single_file").SemanticIndex
+  index: import("@ariadnejs/types").SemanticIndex
 ): string {
   return JSON.stringify(index_single_file_to_json(index), null, 2);
 }
@@ -209,7 +209,7 @@ export function index_single_file_to_json_string(
  */
 export function json_string_to_index_single_file(
   json_string: string
-): import("../../src/index_single_file/index_single_file").SemanticIndex {
+): import("@ariadnejs/types").SemanticIndex {
   return json_to_index_single_file(JSON.parse(json_string));
 }
 
@@ -224,7 +224,7 @@ export function json_string_to_index_single_file(
  * @param output_path - Absolute path to the output JSON file
  */
 export function write_index_single_file_fixture(
-  index: import("../../src/index_single_file/index_single_file").SemanticIndex,
+  index: import("@ariadnejs/types").SemanticIndex,
   output_path: string
 ): void {
   const json_string = index_single_file_to_json_string(index);
@@ -243,7 +243,7 @@ export function write_index_single_file_fixture(
  */
 export function load_index_single_file_fixture(
   fixture_path: string
-): import("../../src/index_single_file/index_single_file").SemanticIndex {
+): import("@ariadnejs/types").SemanticIndex {
   const json_string = fs.readFileSync(fixture_path, "utf-8");
   const absolute_json_string = relative_to_absolute_paths(json_string);
   return json_string_to_index_single_file(absolute_json_string);

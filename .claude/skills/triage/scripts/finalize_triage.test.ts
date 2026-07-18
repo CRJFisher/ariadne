@@ -38,7 +38,6 @@ const BASE_SYNTACTIC_FEATURES: SyntacticFeatures = {
   is_optional_chain: false,
   is_awaited: false,
   is_callback_arg: false,
-  is_inside_try: false,
   is_dynamic_dispatch: false,
 };
 

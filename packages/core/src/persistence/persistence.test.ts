@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import type { FilePath } from "@ariadnejs/types";
 import { Project } from "../project/project";
-import type { SemanticIndex } from "../index_single_file/index_single_file";
+import type { SemanticIndex } from "@ariadnejs/types";
 import {
   serialize_semantic_index,
   deserialize_semantic_index,

@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import type { TypeId, FilePath, SymbolName } from "./index";
-import type { Location } from "./common";
+import type { Location } from "./location";
 import {
   defined_type_id,
   primitive_type_id,

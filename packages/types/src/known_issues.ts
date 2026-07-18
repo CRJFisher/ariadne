@@ -96,6 +96,7 @@ export interface ClassifierRegressionFlaggedEntry {
  */
 export type KnownIssueClassificationMeta =
   | { kind: "framework_invoked"; framework: string }
+  // @language python
   | { kind: "dunder_protocol" }
   | { kind: "test_only" }
   | { kind: "indirect_only" };
