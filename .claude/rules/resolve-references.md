@@ -35,19 +35,20 @@ Resolves call references to their target definitions using name resolution resul
 
 ```
 resolve_references/
-├── resolve_references.ts         # ResolutionRegistry (thin orchestration wrapper)
+├── index.ts                      # Stage-2 barrel (registries, ResolutionRegistry, ImportGraph)
+├── resolution_registry.ts        # ResolutionRegistry (thin orchestration wrapper)
 ├── resolution_state.ts           # Immutable state + pure resolution functions
 ├── name_resolution.ts            # Phase 1: scope-based name resolution
+├── export_chain_lookup.ts        # Named/namespace export lookup through re-export chains
 ├── preprocess_references.ts      # Reference preprocessing
 ├── indirect_reachability.ts      # Functions reachable via collection/reference
 ├── registries/                   # Project-level data stores
 │   ├── definition.ts             # DefinitionRegistry (all definitions, multiple indexes)
 │   ├── type.ts                   # TypeRegistry (type metadata, inheritance)
-│   ├── scope.ts                  # ScopeRegistry (scope tree persistence)
+│   ├── scope.ts                  # ScopeRegistry (scope tree persistence + enclosing-function walk)
 │   ├── export.ts                 # ExportRegistry (export tracking)
 │   ├── export.{python,typescript}.ts  # Language-specific export dedup rules
-│   ├── reference.ts              # ReferenceRegistry (raw reference storage)
-│   └── index.ts
+│   └── reference.ts              # ReferenceRegistry (raw reference storage)
 ├── call_resolution/              # Phase 2: type-aware call resolution
 │   ├── call_resolver.ts          # Main orchestrator
 │   ├── function_call.ts          # Function call resolution
@@ -65,6 +66,7 @@ resolve_references/
 │   ├── constructor_bindings.ts   # Constructor call type bindings
 │   └── member.ts                 # Type member extraction (methods, properties, enum members)
 └── import_resolution/            # Cross-file import path resolution
+    ├── import_graph.ts           # ImportGraph (import dependency tracking)
     ├── import_resolution.ts      # Dispatcher
     └── import_resolution.*.ts    # Language-specific import resolvers
 ```

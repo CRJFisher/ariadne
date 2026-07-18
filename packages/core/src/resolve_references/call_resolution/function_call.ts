@@ -15,7 +15,7 @@ import type {
 } from "@ariadnejs/types";
 import { err, is_ok, ok } from "@ariadnejs/types";
 import type { CallResolutionContext } from "./call_resolver";
-import type { ResolutionRegistry } from "../resolve_references";
+import type { ResolutionRegistry } from "../resolution_registry";
 import { resolve_collection_dispatch } from "./collection_dispatch";
 import { resolve_callable_instance } from "./callable_instance.python";
 import { resolve_via_path_prefix_rust } from "./function_call.rust";

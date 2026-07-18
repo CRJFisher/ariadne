@@ -1,7 +1,7 @@
 import type { FilePath, Language } from "@ariadnejs/types";
 import type { ReferenceRegistry } from "./registries/reference";
 import type { DefinitionRegistry } from "./registries/definition";
-import type { ResolutionRegistry } from "./resolve_references";
+import type { ResolutionRegistry } from "./resolution_registry";
 import { preprocess_python_references } from "./preprocess_references.python";
 
 /**

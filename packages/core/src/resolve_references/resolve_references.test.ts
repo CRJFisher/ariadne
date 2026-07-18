@@ -1,3 +1,9 @@
+/**
+ * Stage-level integration suite for the resolve_references stage (with the
+ * .{language}.test.ts siblings) — named for the folder, so it has no paired
+ * source file by design. Also the common-ancestor host for test helpers
+ * shared by call_resolution/ tests.
+ */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { Project } from "../project/project";
 import type {
@@ -8,7 +14,7 @@ import type {
   SymbolName,
   SymbolReference,
 } from "@ariadnejs/types";
-import type { ResolutionRegistry } from "./resolve_references";
+import type { ResolutionRegistry } from "./resolution_registry";
 import * as path from "path";
 import * as os from "os";
 import * as fs from "fs";

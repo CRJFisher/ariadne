@@ -12,7 +12,7 @@ import type { TypeRegistry } from "./registries/type";
 import type { ScopeRegistry } from "./registries/scope";
 import type { ExportRegistry } from "./registries/export";
 import type { ReferenceRegistry } from "./registries/reference";
-import type { ImportGraph } from "../project/import_graph";
+import type { ImportGraph } from "./import_resolution/import_graph";
 
 import {
   type ResolutionState,

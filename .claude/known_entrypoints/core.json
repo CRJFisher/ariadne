@@ -14,7 +14,7 @@
       { "name": "clear", "file_path": "packages/core/src/project/project.ts" },
       { "name": "get_class_definitions", "file_path": "packages/core/src/resolve_references/registries/definition.ts" },
       { "name": "get_definitions_by_name", "file_path": "packages/core/src/resolve_references/registries/definition.ts" },
-      { "name": "get_calls_for_file", "file_path": "packages/core/src/resolve_references/resolve_references.ts" }
+      { "name": "get_calls_for_file", "file_path": "packages/core/src/resolve_references/resolution_registry.ts" }
     ]
   },
   {

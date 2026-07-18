@@ -54,6 +54,38 @@ export class ScopeRegistry {
     return this.by_scope_id;
   }
 
+  /**
+   * Walk up the scope tree from `scope_id` to the nearest enclosing
+   * function/method/constructor scope. A call at module level has no enclosing
+   * function, so the root scope (the one with a null parent) is returned instead.
+   */
+  find_enclosing_function_scope(scope_id: ScopeId): ScopeId {
+    let current_id: ScopeId = scope_id;
+    const visited = new Set<ScopeId>();
+
+    while (true) {
+      if (visited.has(current_id)) {
+        throw new Error("Cycle detected in scope tree");
+      }
+      visited.add(current_id);
+
+      const scope = this.by_scope_id.get(current_id);
+      if (!scope) {
+        throw new Error(`Scope ${current_id} not found`);
+      }
+
+      if (is_function_scope(scope)) {
+        return scope.id;
+      }
+
+      if (scope.parent_id === null) {
+        return scope.id;
+      }
+
+      current_id = scope.parent_id;
+    }
+  }
+
   remove_file(file_path: FilePath): void {
     const root = this.scope_trees.get(file_path);
     if (!root) {
@@ -84,4 +116,12 @@ export class ScopeRegistry {
     this.scope_trees.clear();
     this.by_scope_id.clear();
   }
+}
+
+function is_function_scope(scope: LexicalScope): boolean {
+  return (
+    scope.type === "function" ||
+    scope.type === "method" ||
+    scope.type === "constructor"
+  );
 }

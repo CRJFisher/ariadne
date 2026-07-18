@@ -15,8 +15,8 @@ import {
   extract_constructor_bindings,
   extract_type_members,
 } from "../type_preprocessing";
-import { ResolutionRegistry } from "../resolve_references";
-import { resolve_namespace_export } from "../call_resolution/method_lookup";
+import type { ResolutionRegistry } from "../resolution_registry";
+import { resolve_namespace_export } from "../export_chain_lookup";
 
 /**
  * Type metadata extracted from one file's semantic index, still keyed by name.

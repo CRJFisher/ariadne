@@ -1,5 +1,5 @@
 import type { ImportDefinition, AnyDefinition } from "@ariadnejs/types";
-import type { ImportGraph } from "./import_graph";
+import type { ImportGraph } from "../resolve_references/import_resolution/import_graph";
 import type { ExportRegistry } from "../resolve_references/registries/export";
 import type { DefinitionRegistry } from "../resolve_references/registries/definition";
 

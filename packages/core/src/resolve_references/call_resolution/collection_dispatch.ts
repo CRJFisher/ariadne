@@ -21,7 +21,7 @@ import type {
 } from "@ariadnejs/types";
 import { err, ok } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../registries/definition";
-import type { ResolutionRegistry } from "../resolve_references";
+import type { ResolutionRegistry } from "../resolution_registry";
 
 
 /**

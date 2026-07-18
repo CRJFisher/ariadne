@@ -5,15 +5,48 @@
  * Provides functions to analyze codebases and extract code graphs.
  */
 
-// Main coordinator
+// Project orchestration: coordinator, loading, file discovery
 export { Project } from "./project";
-export type { ClassifyOptions } from "./project/project";
+export type { ClassifyOptions } from "./project";
+export { load_project } from "./project";
+export type { LoadProjectOptions } from "./project";
+export { is_test_file } from "./project";
+export {
+  SUPPORTED_EXTENSIONS,
+  IGNORED_DIRECTORIES,
+  IGNORED_GLOBS,
+  is_supported_file,
+  parse_gitignore,
+  should_ignore_path,
+  find_source_files,
+} from "./project";
 
-// Core processing functions
-export { build_index_single_file } from "./index_single_file/index_single_file";
-export { trace_call_graph, type TraceCallGraphOptions } from "./trace_call_graph/trace_call_graph";
-export { build_signature, type SignatureLocation } from "./trace_call_graph/build_signature";
-export { count_tree_size } from "./trace_call_graph/count_tree_size";
+// Stage 1: per-file semantic indexing and tree-sitter query execution
+export {
+  build_index_single_file,
+  query_tree,
+  LANGUAGE_TO_TREESITTER_LANG,
+  SUPPORTED_LANGUAGES,
+} from "./index_single_file";
+
+// Stage 2: project-level registries and resolution state
+export {
+  DefinitionRegistry,
+  TypeRegistry,
+  ScopeRegistry,
+  ExportRegistry,
+  ImportGraph,
+  ResolutionRegistry,
+} from "./resolve_references";
+
+// Stage 3: call-graph tracing
+export {
+  trace_call_graph,
+  type TraceCallGraphOptions,
+  build_signature,
+  type SignatureLocation,
+  count_tree_size,
+} from "./trace_call_graph";
 
 // Entry-point classification (rule-application against known-issues registry)
 export {
@@ -39,27 +72,6 @@ export {
 // Language identity (path-based detection is ingress-only)
 export { detect_language } from "./detect_language";
 
-// Tree-sitter query execution (used by triage for diagnostic capture analysis)
-export { query_tree } from "./index_single_file/query_code_tree/query_code_tree";
-export { LANGUAGE_TO_TREESITTER_LANG, SUPPORTED_LANGUAGES } from "./index_single_file/query_code_tree/parsers";
-
-// Introspection APIs (facts-only readback of resolver state for classifiers)
-export {
-  explain_call_site,
-  type ExplainCallSiteResult,
-  list_name_collisions,
-} from "./introspection";
-
-// Project-level registries
-export {
-  DefinitionRegistry,
-  TypeRegistry,
-  ScopeRegistry,
-  ExportRegistry,
-  ImportGraph,
-  ResolutionRegistry,
-} from "./project";
-
 // Logging
 export {
   initialize_logger,
@@ -69,25 +81,6 @@ export {
   log_debug,
 } from "./logging";
 
-// Test file detection
-export { is_test_file } from "./project/detect_test_file";
-
-// Project loading
-export { load_project } from "./project/load_project";
-export type { LoadProjectOptions } from "./project/load_project";
-
-// File discovery
-export {
-  SUPPORTED_EXTENSIONS,
-  IGNORED_DIRECTORIES,
-  IGNORED_GLOBS,
-  is_supported_file,
-  parse_gitignore,
-  should_ignore_path,
-  find_source_files,
-} from "./project/file_loading";
-
 // Persistence
-export type { PersistenceStorage } from "./persistence/storage";
-export { FileSystemStorage } from "./persistence/file_system_storage";
-export { resolve_cache_dir, slugify_project_path } from "./persistence/resolve_cache_dir";
+export type { PersistenceStorage } from "./persistence";
+export { FileSystemStorage, resolve_cache_dir, slugify_project_path } from "./persistence";

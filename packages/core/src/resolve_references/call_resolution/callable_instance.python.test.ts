@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { resolve_callable_instance } from "./callable_instance.python";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
-import { ResolutionRegistry } from "../resolve_references";
+import { ResolutionRegistry } from "../resolution_registry";
 import { set_test_resolutions } from "../resolve_references.test";
 import { make_export_chain_context } from "../resolution_test_helpers";
 import {

@@ -206,4 +206,141 @@ describe("ScopeRegistry", () => {
       expect(registry.get_file_root_scope(file2)).toBeUndefined();
     });
   });
+
+  describe("find_enclosing_function_scope", () => {
+    const test_file = "test.ts" as FilePath;
+
+    function test_scope(
+      type: LexicalScope["type"],
+      name: string,
+      loc: Location,
+      id: ScopeId,
+      parent_id: ScopeId | null = null,
+    ): LexicalScope {
+      return {
+        id,
+        parent_id,
+        name: name as SymbolName,
+        type,
+        location: loc,
+        child_ids: [],
+      };
+    }
+
+    const module_id = "module:test.ts:0:0:100:0" as ScopeId;
+
+    function module_test_scope(): LexicalScope {
+      return test_scope("module", "", location(test_file, 0, 100), module_id);
+    }
+
+    it("finds the enclosing function for a call in a block scope", () => {
+      const function_id = "function:test.ts:10:0:20:0" as ScopeId;
+      const block_id = "block:test.ts:12:0:18:0" as ScopeId;
+
+      registry.update_file(test_file, scope_map(
+        module_test_scope(),
+        test_scope("function", "outer", location(test_file, 10, 20), function_id, module_id),
+        test_scope("block", "", location(test_file, 12, 18), block_id, function_id),
+      ));
+
+      expect(registry.find_enclosing_function_scope(block_id)).toBe(function_id);
+    });
+
+    it("returns the same scope for a call directly in a function", () => {
+      const function_id = "function:test.ts:10:0:20:0" as ScopeId;
+
+      registry.update_file(test_file, scope_map(
+        module_test_scope(),
+        test_scope("function", "my_func", location(test_file, 10, 20), function_id, module_id),
+      ));
+
+      expect(registry.find_enclosing_function_scope(function_id)).toBe(function_id);
+    });
+
+    it("returns the module scope for a top-level call", () => {
+      registry.update_file(test_file, scope_map(module_test_scope()));
+
+      expect(registry.find_enclosing_function_scope(module_id)).toBe(module_id);
+    });
+
+    it("returns the root scope when nested non-function scopes reach module level", () => {
+      const outer_block_id = "block:test.ts:2:0:80:0" as ScopeId;
+      const inner_block_id = "block:test.ts:4:0:60:0" as ScopeId;
+
+      registry.update_file(test_file, scope_map(
+        module_test_scope(),
+        test_scope("block", "", location(test_file, 2, 80), outer_block_id, module_id),
+        test_scope("block", "", location(test_file, 4, 60), inner_block_id, outer_block_id),
+      ));
+
+      expect(registry.find_enclosing_function_scope(inner_block_id)).toBe(module_id);
+    });
+
+    it("stops at the first (innermost) function scope", () => {
+      const outer_func_id = "function:test.ts:10:0:50:0" as ScopeId;
+      const inner_func_id = "function:test.ts:20:0:30:0" as ScopeId;
+      const block_id = "block:test.ts:22:0:28:0" as ScopeId;
+
+      registry.update_file(test_file, scope_map(
+        module_test_scope(),
+        test_scope("function", "outer", location(test_file, 10, 50), outer_func_id, module_id),
+        test_scope("function", "inner", location(test_file, 20, 30), inner_func_id, outer_func_id),
+        test_scope("block", "", location(test_file, 22, 28), block_id, inner_func_id),
+      ));
+
+      expect(registry.find_enclosing_function_scope(block_id)).toBe(inner_func_id);
+    });
+
+    it("treats a method scope as an enclosing function scope", () => {
+      const class_id = "class:test.ts:10:0:50:0" as ScopeId;
+      const method_id = "method:test.ts:20:0:30:0" as ScopeId;
+      const block_id = "block:test.ts:22:0:28:0" as ScopeId;
+
+      registry.update_file(test_file, scope_map(
+        module_test_scope(),
+        test_scope("class", "MyClass", location(test_file, 10, 50), class_id, module_id),
+        test_scope("method", "my_method", location(test_file, 20, 30), method_id, class_id),
+        test_scope("block", "", location(test_file, 22, 28), block_id, method_id),
+      ));
+
+      expect(registry.find_enclosing_function_scope(block_id)).toBe(method_id);
+    });
+
+    it("treats a constructor scope as an enclosing function scope", () => {
+      const class_id = "class:test.ts:10:0:50:0" as ScopeId;
+      const constructor_id = "constructor:test.ts:20:0:30:0" as ScopeId;
+      const block_id = "block:test.ts:22:0:28:0" as ScopeId;
+
+      registry.update_file(test_file, scope_map(
+        module_test_scope(),
+        test_scope("class", "MyClass", location(test_file, 10, 50), class_id, module_id),
+        test_scope("constructor", "constructor", location(test_file, 20, 30), constructor_id, class_id),
+        test_scope("block", "", location(test_file, 22, 28), block_id, constructor_id),
+      ));
+
+      expect(registry.find_enclosing_function_scope(block_id)).toBe(constructor_id);
+    });
+
+    it("throws when the starting scope is not indexed", () => {
+      const non_existent_id = "invalid:scope:id" as ScopeId;
+
+      expect(() => {
+        registry.find_enclosing_function_scope(non_existent_id);
+      }).toThrow("Scope invalid:scope:id not found");
+    });
+
+    it("throws when the scope tree contains a cycle", () => {
+      const scope1_id = "scope1:test.ts:10:0:20:0" as ScopeId;
+      const scope2_id = "scope2:test.ts:20:0:30:0" as ScopeId;
+
+      registry.update_file(test_file, scope_map(
+        test_scope("block", "", location(test_file, 10, 20), scope1_id, scope2_id),
+        test_scope("block", "", location(test_file, 20, 30), scope2_id, scope1_id),
+      ));
+
+      expect(() => {
+        registry.find_enclosing_function_scope(scope1_id);
+      }).toThrow("Cycle detected in scope tree");
+    });
+  });
 });

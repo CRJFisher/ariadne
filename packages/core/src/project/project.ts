@@ -15,8 +15,8 @@ import { TypeRegistry } from "../resolve_references/registries/type";
 import { ScopeRegistry } from "../resolve_references/registries/scope";
 import { ExportRegistry } from "../resolve_references/registries/export";
 import { ReferenceRegistry } from "../resolve_references/registries/reference";
-import { ImportGraph } from "./import_graph";
-import { ResolutionRegistry } from "../resolve_references/resolve_references";
+import { ImportGraph } from "../resolve_references/import_resolution/import_graph";
+import { ResolutionRegistry } from "../resolve_references/resolution_registry";
 import { preprocess_references } from "../resolve_references/preprocess_references";
 import { trace_call_graph } from "../trace_call_graph/trace_call_graph";
 import {
@@ -24,19 +24,13 @@ import {
   type EnrichedCallGraph,
 } from "../classify_entry_points/enrich_call_graph";
 import { fix_import_definition_locations } from "./fix_import_locations";
-import { extract_all_parameters } from "./extract_nested_definitions";
+import { extract_all_parameters } from "./extract_parameters";
 import { parse_file } from "./parse_file";
 import type { FileSystemFolder } from "../resolve_references/file_folders";
 import { readdir, realpath } from "fs/promises";
 import { join } from "path";
-import type { PersistenceStorage } from "../persistence/storage";
-import { compute_content_hash } from "../persistence/content_hash";
-import type { CacheManifestEntry } from "../persistence/cache_manifest";
-import {
-  CURRENT_SCHEMA_VERSION,
-  serialize_manifest,
-} from "../persistence/cache_manifest";
-import { serialize_semantic_index } from "../persistence/serialize_index";
+import type { PersistenceStorage, CacheManifestEntry } from "../persistence";
+import { write_file_index, write_cache_manifest } from "./project_cache_strategy";
 
 /**
  * Options for the classification pipeline. Extends `TraceCallGraphOptions`
@@ -627,34 +621,13 @@ export class Project {
       const content = this.file_contents.get(file_path);
       if (!content) continue;
 
-      try {
-        const content_hash = compute_content_hash(content);
-        const serialized = serialize_semantic_index(index);
-        await storage.write_index(file_path, serialized);
-        manifest_entries.set(file_path, { content_hash });
-      } catch (error) {
-        console.warn(
-          `[ariadne:persistence] Failed to save cache for ${file_path}: ${
-            error instanceof Error ? error.message : error
-          }`,
-        );
+      const entry = await write_file_index(storage, file_path, index, content);
+      if (entry) {
+        manifest_entries.set(file_path, entry);
       }
     }
 
-    try {
-      await storage.write_manifest(
-        serialize_manifest({
-          schema_version: CURRENT_SCHEMA_VERSION,
-          entries: manifest_entries,
-        }),
-      );
-    } catch (error) {
-      console.warn(
-        `[ariadne:persistence] Failed to save manifest: ${
-          error instanceof Error ? error.message : error
-        }`,
-      );
-    }
+    await write_cache_manifest(storage, manifest_entries);
   }
 
   clear(): void {

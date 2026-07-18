@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { resolve_constructor_call } from "./constructor";
 import { DefinitionRegistry } from "../registries/definition";
 import { ScopeRegistry } from "../registries/scope";
-import { ResolutionRegistry } from "../resolve_references";
+import { ResolutionRegistry } from "../resolution_registry";
 import { ExportRegistry } from "../registries/export";
 import type { FileSystemFolder } from "../file_folders";
 import { make_export_chain_context } from "../resolution_test_helpers";

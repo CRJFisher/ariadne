@@ -22,8 +22,8 @@ import {
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
-import { ResolutionRegistry } from "../resolve_references";
-import { ImportGraph } from "../../project/import_graph";
+import { ResolutionRegistry } from "../resolution_registry";
+import { ImportGraph } from "../import_resolution/import_graph";
 import { set_test_resolutions } from "../resolve_references.test";
 import type {
   SymbolId,
