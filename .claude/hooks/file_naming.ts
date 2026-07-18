@@ -289,8 +289,14 @@ function language_folder_remedy(parts: string[], language_index: number, languag
     relocated.splice(language_index, 1);
     relocated[relocated.length - 1] = suffixed;
 
-    // Recursion terminates: each candidate carries one language folder fewer.
-    if (validate_src_file(relocated.join("/"), relocated).valid) {
+    // A candidate still sitting under a language folder is rejected for that
+    // reason alone, so ruling it out here keeps validate_src_file's call back
+    // into this remedy exactly one deep.
+    const under_language_folder = relocated
+      .slice(3, relocated.length - 1)
+      .some((segment) => LANGUAGE_NAMES.includes(segment.toLowerCase()));
+
+    if (!under_language_folder && validate_src_file(relocated.join("/"), relocated).valid) {
       return `Use a dotted suffix in the parent folder instead: ${suffixed}.`;
     }
   }

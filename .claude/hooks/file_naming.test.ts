@@ -172,6 +172,11 @@ describe("language sub-folder block", () => {
     expect(check("packages/core/src/a/b/c/rust/thing.ts")).toBe(false);
   });
 
+  it("blocks nested language folders without exhausting the stack", () => {
+    const nested = Array(5000).fill("python").join("/");
+    expect(check(`packages/core/src/${nested}/thing.ts`)).toBe(false);
+  });
+
   it("blocks a language folder above an extractors folder", () => {
     expect(check("packages/core/src/python/extractors/scope_extractor.ts")).toBe(false);
   });

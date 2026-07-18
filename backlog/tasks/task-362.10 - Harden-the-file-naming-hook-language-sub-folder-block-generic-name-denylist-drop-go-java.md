@@ -102,6 +102,11 @@ in the parent folder — and runs it back through `validate_src_file`, offering 
 only if it passes and falling back to "name the concept" prose otherwise. The
 recursion terminates because each candidate carries one language folder fewer.
 
+A candidate still sitting under a language folder is rejected for that reason
+alone, so it is ruled out before the validating call, which keeps that call
+exactly one level deep and makes the depth of a path irrelevant to the cost of
+blocking it.
+
 Verification rather than enumeration is what makes the advice trustworthy,
 because the cases that defeat a hand-written rule are not the obvious ones:
 `python/utils.ts` would otherwise be told to become `utils.python.ts`, which the
@@ -169,5 +174,9 @@ does not achieve its own acceptance criteria:
 - The `path.relative` fix in the audit and the validator's
   block-before-log ordering have no discriminating test; both need a
   filesystem or stdio harness the hook suite does not have.
+- `file_naming_validator.ts` runs `main()` without a `try`/`catch`, so a throw
+  anywhere in validation exits without emitting a block and the write proceeds.
+  Choosing fail-open or fail-closed for the hook surface is a policy call wider
+  than this task.
 - `CLAUDE.md` calls `test_utils.ts` a dumping ground while the hook allowlists
   it; task 362.15 already tracks that contradiction.
