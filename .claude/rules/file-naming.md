@@ -26,7 +26,7 @@ Language identifiers ALWAYS come as a suffix, never a prefix:
 - `imports.python.ts` - correct
 - `python.imports.ts` - incorrect (blocked by hook)
 
-Supported languages: typescript, javascript, python, rust, go, java
+Supported languages: typescript, javascript, python, rust
 
 ### Language Mechanism Rule (terminal)
 
@@ -54,6 +54,16 @@ language-specific code:
 
 ## Naming Philosophy
 
+A name must be **fully true**: it describes ALL of the file's content, not most
+of it. When a name stops being true because the file grew a second concern,
+split it into precisely-named leaves rather than widening the name to cover
+both.
+
+`{folder}/{folder}.ts` is reserved for the folder's main implementation. A
+store, a sub-step, or a helper never claims the folder name — a
+`ResolutionRegistry` store inside `resolution/` is `resolution_registry.ts`,
+not `resolution.ts`.
+
 File names describe their responsibility, not their category.
 
 **Preferred** (functionality-descriptive):
@@ -65,6 +75,17 @@ File names describe their responsibility, not their category.
 
 - `file_utils.ts` - generic, unclear purpose
 - `helpers.ts` - too broad
+
+### Banned Category Names
+
+These basenames are blocked in `packages/*/src` (closed set, same as the hook's):
+
+`utils.ts`, `types.ts`, `common.ts`, `errors.ts`, `helpers.ts`, `constants.ts`,
+`analytics.ts`, `misc.ts`, `shared.ts`
+
+`index.ts` and `*.test.ts` are exempt. The ban covers the main-implementation
+position too: a folder named for a banned category is itself the violation, so
+`analytics/analytics.ts` is blocked — name the concept instead.
 
 ## Language-Specific Marshalling Pattern
 
@@ -81,4 +102,4 @@ Examples: `import_resolution.ts`, `capture_handlers.ts`
 
 ## Hook Enforcement
 
-File naming is enforced by `.claude/hooks/file_naming_validator.cjs`. Violations are blocked with suggestions for correct names.
+File naming is enforced by `.claude/hooks/file_naming_validator.ts`. Violations are blocked with suggestions for correct names.

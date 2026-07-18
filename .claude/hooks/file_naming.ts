@@ -6,8 +6,33 @@
 import fs from "fs";
 import path from "path";
 
-// Supported languages for language-specific file patterns
-export const LANGUAGES = ["typescript", "javascript", "python", "rust", "go", "java"];
+// Languages whose dotted suffix is accepted: {module}.{language}.ts
+export const LANGUAGES = ["typescript", "javascript", "python", "rust"];
+
+// Language names that are not supported as a dotted suffix. Kept separate from
+// LANGUAGES because the two lists drive opposite decisions: LANGUAGES is the
+// accept list, and shrinking it alone would let `foo.go.ts` fall through to the
+// generic two-part submodule pattern and start validating.
+export const UNSUPPORTED_LANGUAGES = ["go", "java"];
+
+// Every token that names a language. A folder may never be named after one,
+// whether or not its dotted suffix is supported.
+export const LANGUAGE_FOLDER_SEGMENTS = [...LANGUAGES, ...UNSUPPORTED_LANGUAGES];
+
+// Category names that describe a bucket rather than a concept. Scoped to
+// packages/*/src by where validate_src_file is called from, so the `.claude/`
+// tree (which holds its own utils.ts and types.ts) is untouched.
+export const BLOCKED_GENERIC_BASENAMES = new Set([
+  "utils.ts",
+  "types.ts",
+  "common.ts",
+  "errors.ts",
+  "helpers.ts",
+  "constants.ts",
+  "analytics.ts",
+  "misc.ts",
+  "shared.ts",
+]);
 
 // Prohibited patterns for root directory files
 export const BLOCKED_ROOT_PATTERNS = [
@@ -57,7 +82,7 @@ export const ALLOWED_SPECIAL_FILES = new Set([
   "test_utils.ts",  // Test utilities, not ad-hoc tests
 ]);
 
-interface ValidationResult {
+export interface ValidationResult {
   valid: boolean;
   error?: string;
   warning?: string;
@@ -135,6 +160,23 @@ export function validate_src_file(relative_path: string, parts: string[]): Valid
     return { valid: true };
   }
 
+  // The generic-name check runs ahead of the structural ones: a rename is a
+  // cheaper fix to surface than a directory restructure.
+  const generic_basename = validate_no_generic_basename(relative_path, filename);
+  if (!generic_basename.valid) {
+    return generic_basename;
+  }
+
+  const unsupported_language = validate_no_unsupported_language(relative_path, filename);
+  if (!unsupported_language.valid) {
+    return unsupported_language;
+  }
+
+  const language_folder = validate_no_language_folder(relative_path, parts);
+  if (!language_folder.valid) {
+    return language_folder;
+  }
+
   // Get the containing folder name
   const folder_name = parts[parts.length - 2];
 
@@ -176,6 +218,72 @@ export function validate_src_file(relative_path: string, parts: string[]): Valid
 
   // Validate against folder-module naming conventions
   return validate_folder_module_naming(filename, folder_name);
+}
+
+/**
+ * Reject a filename whose name is a category rather than a concept.
+ */
+export function validate_no_generic_basename(relative_path: string, filename: string): ValidationResult {
+  if (filename === "index.ts" || filename.endsWith(".test.ts")) {
+    return { valid: true };
+  }
+
+  if (!BLOCKED_GENERIC_BASENAMES.has(filename)) {
+    return { valid: true };
+  }
+
+  return {
+    valid: false,
+    error: `Blocked: '${relative_path}' - '${filename}' names a category, not a concept.\n` +
+      `Name the file for what it holds (e.g. resolve_module_path.ts). See .claude/rules/file-naming.md`
+  };
+}
+
+/**
+ * Reject a directory segment named after a language.
+ *
+ * Only segments below src are scanned, so a package may still be named after a
+ * language, and only whole segments match, so `typescript_utils/` is untouched.
+ * The filename is excluded because a language legitimately appears there, both
+ * as a dotted suffix and as an extractor prefix.
+ */
+export function validate_no_language_folder(relative_path: string, parts: string[]): ValidationResult {
+  const directories = parts.slice(3, parts.length - 1);
+  const filename = parts[parts.length - 1];
+
+  for (const segment of directories) {
+    if (LANGUAGE_FOLDER_SEGMENTS.includes(segment)) {
+      const stem = filename.replace(/\.ts$/, "");
+      return {
+        valid: false,
+        error: `Blocked: '${relative_path}' - language sub-folder '${segment}/' is prohibited.\n` +
+          `Use a dotted suffix in the parent folder instead: ${stem}.${segment}.ts. ` +
+          `See .claude/rules/file-naming.md`
+      };
+    }
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Reject a dotted filename part naming a language we do not support.
+ *
+ * Without this the generic two-part submodule pattern accepts `foo.go.ts`,
+ * because `go` is absent from LANGUAGES and so reads as an ordinary aspect.
+ */
+export function validate_no_unsupported_language(relative_path: string, filename: string): ValidationResult {
+  for (const part of filename.split(".")) {
+    if (UNSUPPORTED_LANGUAGES.includes(part)) {
+      return {
+        valid: false,
+        error: `Blocked: '${relative_path}' - '${part}' is not a supported language.\n` +
+          `Supported languages: ${LANGUAGES.join(", ")}. See .claude/rules/file-naming.md`
+      };
+    }
+  }
+
+  return { valid: true };
 }
 
 /**
