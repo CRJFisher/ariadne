@@ -6,7 +6,8 @@
  * points against the project's static known-entrypoints whitelist at
  * .claude/known_entrypoints/<package>.json (repo-relative, committed to git).
  * Blocks the session if any exported-but-uncalled entry point is not on the
- * whitelist.
+ * whitelist. A package with no whitelist file is skipped (logged); a present
+ * whitelist with no entries deliberately blocks every flagged entry point.
  *
  * The whitelist is human-maintained (edit the JSON and commit). This hook only
  * reads it — it never writes. The triage skill's classifier registry is
@@ -18,7 +19,7 @@ import type { PersistenceStorage } from "@ariadnejs/core";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { execSync } from "child_process";
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,6 +53,22 @@ function output_result(decision: "block" | "approve", reason?: string): void {
 }
 
 /**
+ * A package's call graph can only change through its source, so only .ts
+ * changes under packages/<pkg>/src/ warrant the (expensive) analysis —
+ * docs, configs, and dist changes are skipped.
+ */
+export function packages_from_changed_files(files: string[]): string[] {
+  const packages = new Set<string>();
+  for (const file of files) {
+    const match = file.match(/^packages\/([^/]+)\/src\/.+\.ts$/);
+    if (match) {
+      packages.add(match[1]);
+    }
+  }
+  return Array.from(packages);
+}
+
+/**
  * Get list of packages that have modified files (staged or unstaged)
  */
 function get_modified_packages(project_dir: string): string[] {
@@ -67,20 +84,11 @@ function get_modified_packages(project_dir: string): string[] {
       encoding: "utf8",
     }).trim();
 
-    const all_files = [...diff_output.split("\n"), ...staged_output.split("\n")]
-      .filter((f) => f.trim())
-      .filter((f) => f.startsWith("packages/"));
+    const all_files = [...diff_output.split("\n"), ...staged_output.split("\n")].filter(
+      (f) => f.trim(),
+    );
 
-    // Extract unique package names
-    const packages = new Set<string>();
-    for (const file of all_files) {
-      const match = file.match(/^packages\/([^/]+)\//);
-      if (match) {
-        packages.add(match[1]);
-      }
-    }
-
-    return Array.from(packages);
+    return packages_from_changed_files(all_files);
   } catch {
     return [];
   }
@@ -89,8 +97,16 @@ function get_modified_packages(project_dir: string): string[] {
 /**
  * Load whitelist for a specific package from the repo-committed path
  * .claude/known_entrypoints/<package>.json.
+ *
+ * Returns null when the file is absent (the package opts out of dead-code
+ * gating); an empty Set when the file is present with no entries (every
+ * flagged entry point blocks). Malformed JSON propagates to the fatal
+ * handler — a corrupt whitelist must block loudly, not fail open.
  */
-async function load_whitelist(project_dir: string, package_name: string): Promise<Set<string>> {
+export async function load_whitelist(
+  project_dir: string,
+  package_name: string,
+): Promise<Set<string> | null> {
   const registry_path = path.join(
     project_dir,
     ".claude",
@@ -98,20 +114,25 @@ async function load_whitelist(project_dir: string, package_name: string): Promis
     `${package_name}.json`
   );
 
+  let content: string;
   try {
-    const content = await fs.readFile(registry_path, "utf-8");
-    const sources: KnownEntrypointSource[] = JSON.parse(content);
-    const names = new Set<string>();
-    for (const source of sources) {
-      for (const ep of source.entrypoints) {
-        names.add(ep.name);
-      }
+    content = await fs.readFile(registry_path, "utf-8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      log(`No known-entrypoints whitelist for package ${package_name}; skipping package`);
+      return null;
     }
-    return names;
-  } catch {
-    log(`No known-entrypoints registry found for package ${package_name}`);
-    return new Set();
+    throw error;
   }
+
+  const sources: KnownEntrypointSource[] = JSON.parse(content);
+  const names = new Set<string>();
+  for (const source of sources) {
+    for (const ep of source.entrypoints) {
+      names.add(ep.name);
+    }
+  }
+  return names;
 }
 
 /**
@@ -122,6 +143,13 @@ async function analyze_package(
   package_name: string,
   storage: PersistenceStorage | undefined,
 ): Promise<EntryPoint[]> {
+  // Whitelist first: an absent file skips the package before the expensive
+  // call-graph analysis.
+  const whitelist = await load_whitelist(project_dir, package_name);
+  if (whitelist === null) {
+    return [];
+  }
+
   const src_folder = path.join("packages", package_name, "src");
 
   const project = await load_project({
@@ -145,7 +173,6 @@ async function analyze_package(
     });
   }
 
-  const whitelist = await load_whitelist(project_dir, package_name);
   return entry_points.filter((ep) => !whitelist.has(ep.name));
 }
 
@@ -224,13 +251,15 @@ async function main(): Promise<void> {
   process.exit(0);
 }
 
-main().catch((error) => {
-  log(`Fatal error: ${error}`);
-  console.log(
-    JSON.stringify({
-      decision: "block",
-      reason: `Entry point detection failed: ${error}`,
-    })
-  );
-  process.exit(0);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((error) => {
+    log(`Fatal error: ${error}`);
+    console.log(
+      JSON.stringify({
+        decision: "block",
+        reason: `Entry point detection failed: ${error}`,
+      })
+    );
+    process.exit(0);
+  });
+}
