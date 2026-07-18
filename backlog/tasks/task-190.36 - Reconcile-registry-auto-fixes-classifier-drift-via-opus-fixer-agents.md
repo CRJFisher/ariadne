@@ -49,6 +49,22 @@ functions (low precision) — those are exactly the true-positives the pipeline
 exists to surface. The termination condition encodes that: capture only what is
 genuinely the same limitation; escalate the rest.
 
+### Fixability triage before any classifier work
+
+The registry is the permanent-limitations catalog: a pattern belongs there only
+when supporting it in Ariadne's static analysis is impractical. Before any
+evidence case is absorbed into a classifier — by broadening this rule's
+predicate or by escalating toward a new classifier — the fixer assesses
+fixability: could Ariadne resolve this call relationship with a modest fix (a
+bug fix or contained feature, not a large overhaul)? A fixable case terminates
+in a third state, **fixable-in-Ariadne**: the agent records the case with its
+fixability rationale and surfaces it to the user as a backlog-task proposal.
+It is never captured (broadening a predicate over a fixable bug would
+permanently suppress it from triage) and never handed to `classifier-author`
+(the hand-off is reserved for patterns that are genuinely impractical to
+support). Capture and mis-classified escalation both apply only to cases the
+fixability check has ruled permanent.
+
 ### Constraint surfaced during the first manual run
 
 `drift_evidence[]` rows are deduped by `entry_index` alone and carry only
@@ -87,11 +103,18 @@ core must be rebuilt for the compiled predicate to update.
 <!-- AC:BEGIN -->
 
 - [ ] After a `--drift` apply, `reconcile-registry` dispatches one opus fixer
-      agent per rule whose `drift_detected` flipped true this run, each scoped to
-      a single `check_<group_id>.ts`.
+      agent per rule with an applied drift proposal (a flag flip or fresh
+      evidence this run), each scoped to a single `check_<group_id>.ts` and
+      handed the rule's full accumulated `drift_evidence[]`.
 - [ ] Each agent terminates in exactly one recorded state per evidence case:
-      captured (predicate now matches, test added) or mis-classified (escalated
-      to the user with the cases that need a separate classifier).
+      captured (predicate now matches, test added), fixable-in-Ariadne
+      (surfaced to the user as a backlog-task proposal with the fixability
+      rationale), or mis-classified (escalated to the user with the cases that
+      need a separate classifier).
+- [ ] No evidence case reaches capture or a `classifier-author` hand-off
+      without the fixability check ruling it a permanent limitation: a case
+      Ariadne could support with a modest fix routes to a backlog-task
+      proposal, never into a classifier.
 - [ ] Every "captured" fix ships a test that asserts the evidence cases now
       match AND a negative guard asserting a known true-positive still does not
       match; core rebuilds and the classifier test suite is green.

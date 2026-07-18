@@ -53,13 +53,19 @@ export interface KnownIssue {
    * Per-citation evidence accumulated alongside `drift_detected`. Each row is
    * a per-entry triage-investigator's `fp-classifier-regression` verdict,
    * surfaced through the triage run's `classifier_regressions`
-   * aggregate. Append-only across runs so the human promotion reviewer can
-   * see every flag that recommended re-investigation.
+   * aggregate. Append-only across runs, deduped by `(project, entry_index)`,
+   * so the human promotion reviewer can see every flag that recommended
+   * re-investigation and a fixer agent can resolve each case back to its
+   * full `EnrichedEntryPoint` via `get_entry_context.ts`.
    */
   drift_evidence?: DriftEvidence[];
 }
 
 export interface DriftEvidence {
+  /** Project whose published run flagged the entry — with `run_id`, resolves `entry_index` to a full entry. */
+  project: string;
+  /** The finalized triage run that flagged the entry; first-seen wins on re-observation. */
+  run_id: string;
   /** Entry index from the triage run's per-entry triage state that produced the verdict. */
   entry_index: number;
   /** Short evidence snippet (decorator, call site) the investigator captured. */

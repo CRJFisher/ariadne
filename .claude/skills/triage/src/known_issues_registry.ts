@@ -280,6 +280,28 @@ function validate_optional_rollup_fields(record: Record<string, unknown>, at: st
       throw new RegistryValidationError(`${at}.last_seen_run: must be a string`);
     }
   }
+  if ("drift_evidence" in record && record["drift_evidence"] !== undefined) {
+    validate_drift_evidence(record["drift_evidence"], `${at}.drift_evidence`);
+  }
+}
+
+// A row missing `project`/`run_id` would reach a fixer agent unresolvable back
+// to its `EnrichedEntryPoint`, so a malformed row fails at load, not at dispatch.
+function validate_drift_evidence(value: unknown, at: string): void {
+  if (!Array.isArray(value)) {
+    throw new RegistryValidationError(`${at}: must be an array`);
+  }
+  for (let i = 0; i < value.length; i++) {
+    const row = value[i];
+    if (typeof row !== "object" || row === null) {
+      throw new RegistryValidationError(`${at}[${i}]: must be an object`);
+    }
+    const record = row as Record<string, unknown>;
+    require_string(record, "project", `${at}[${i}]`);
+    require_string(record, "run_id", `${at}[${i}]`);
+    require_number(record, "entry_index", `${at}[${i}]`);
+    require_string(record, "evidence_excerpt", `${at}[${i}]`);
+  }
 }
 
 // ===== Small helpers =====

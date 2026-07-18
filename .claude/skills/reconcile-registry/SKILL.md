@@ -1,9 +1,9 @@
 ---
 name: reconcile-registry
-description: Reconcile the classifier registry against work already done — flip wip rules to fixed when a fix-bearing task-scoped commit lands, flag drift from published classifier_regressions, and promote rules to permanent. Drives reconcile_registry.ts, the registry's only human-invoked writer, run deliberately by the human through atomic_update_registry.
+description: Reconcile the classifier registry against work already done — flip wip rules to fixed when a fix-bearing task-scoped commit lands, flag drift from published classifier_regressions and dispatch one classifier-fixer agent per drifted rule, and promote rules to permanent. Drives reconcile_registry.ts, the registry's only human-invoked writer, run deliberately by the human through atomic_update_registry.
 argument-hint: "[--dry-run] [--fixed] [--drift] [--id <group_id>...] [--reason <text>] [--promote] | --stage <draft-path> [--apply]"
 disable-model-invocation: true
-allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read
+allowed-tools: Bash(node --import tsx:*), Bash(pnpm build --filter core:*), Bash(npx vitest run:*), Task, AskUserQuestion, Read, Glob
 ---
 
 # Reconcile Registry
@@ -15,9 +15,11 @@ that triage published, and rules the human elects to make permanent. This
 skill is the deliberate, human-invoked step that detects those mechanical
 writes and proposes them — the registry's analogue of `prioritize`.
 
-It owns no logic of its own. All work runs through one script:
+It owns no logic of its own beyond one orchestration duty — dispatching a
+`classifier-fixer` agent per drift-flagged rule after a `--drift` apply
+(step 4). All registry work runs through one script:
 
-```
+```text
 .claude/skills/triage/scripts/reconcile_registry.ts
 ```
 
@@ -54,9 +56,11 @@ proposal cites the newest matching commit subject as its audit line. No
 commit hash is stored — the `backlog_task` link plus the git log are the
 audit trail.
 
-Drift evidence is append-only and deduped by `entry_index`, so a re-run after
-apply proposes nothing. Drift detection reads each project's latest finalized
-run only.
+Drift evidence is append-only and deduped by `(project, entry_index)` — each
+row carries its `{project, run_id}` provenance, so a fixer agent can resolve
+the case back to its full `EnrichedEntryPoint` via `get_entry_context.ts` — and
+a re-run after apply proposes nothing. Drift detection reads each project's
+latest finalized run only.
 
 ## Workflow
 
@@ -86,7 +90,49 @@ Always invoke with `node --import tsx`. Never `pnpm exec tsx` or `npx tsx`
    node --import tsx .claude/skills/triage/scripts/reconcile_registry.ts --fixed
    ```
 
-4. **Retire by name (direct deletion, no detection).** When a fix lands under
+4. **Dispatch drift fixers (after a `--drift` apply).** Every applied
+   `drift_detected` proposal names a rule with fresh, un-actioned evidence.
+   For each such rule, read its full `drift_evidence[]` from the registry
+   (post-apply — old rows the human never dispatched are part of the repair)
+   and launch one `Task(classifier-fixer)` per rule, in parallel, scoped to
+   that rule's `check_<group_id>.ts`. `<run>` is this invocation's timestamp;
+   it names the staging root `~/.ariadne/reconcile/<run>/classifier-fixer/`.
+   **Resume skip:** a rule whose `classifier-fixer/<group_id>/verdicts.json`
+   already exists finished on a prior invocation — skip it and reuse the
+   staged verdicts. Dispatch prompt:
+
+   > Repair the drifted builtin classifier for rule `<group_id>`. Its check is
+   > `packages/core/src/classify_entry_points/builtins/check_<group_id>.ts`;
+   > its registry description and `drift_evidence[]` rows are below. Write
+   > your staging artifacts to
+   > `~/.ariadne/reconcile/<run>/classifier-fixer/<group_id>/`.
+
+   Each fixer terminates every adjudicated evidence case in exactly one of
+   three states (fixability triage first — see
+   `.claude/agents/classifier-fixer.md`):
+
+   - **captured** — the predicate now matches the case; the check's test
+     gained the case as a positive fixture plus a negative true-positive
+     guard. An ordinary source edit; no registry write follows.
+   - **fixable-in-Ariadne** — the case is a fixable resolution bug, not a
+     permanent limitation. The fixer records a backlog-task proposal; present
+     it to the human, who decides whether to file the task. It is never
+     absorbed into a classifier.
+   - **mis-classified** — a _different_ permanent limitation. The fixer
+     records the case's `member_symbol`; present it to the human as a novel
+     permanent-limitation group for the `classifier-author` flow
+     (`prioritize`, step 3a).
+
+   After the wave returns, run the single gated build-and-test pass —
+   `pnpm build --filter core`, then
+   `npx vitest run packages/core/src/classify_entry_points/builtins/` — and
+   surface every fixer's `REVIEW.md`, backlog proposal, mis-classified
+   hand-off, and skipped case to the human. The fixers edit checks in
+   parallel but never build; this pass is the one green/red signal for the
+   whole wave. Red means a fixer's broadening conflicts with the suite —
+   revert or narrow that check before committing anything.
+
+5. **Retire by name (direct deletion, no detection).** When a fix lands under
    a different task than a rule's `backlog_task` — the common case for a rule
    subsumed by a broader classifier or a resolver improvement — the auto
    `--fixed` detector cannot match it. Name the rules with `--id` alongside
@@ -115,7 +161,7 @@ Always invoke with `node --import tsx`. Never `pnpm exec tsx` or `npx tsx`
      --fixed --reason "subsumed by callback-resolution in TASK-348"
    ```
 
-5. **Promote (separate, deliberate).** To make a rule `permanent`, name it
+6. **Promote (separate, deliberate).** To make a rule `permanent`, name it
    and pass `--promote`. The script refuses a rule whose `function_name` is
    not registered in core's `BUILTIN_CHECKS` (a dangling builtin would bundle
    into the permanent slice), or that is already `permanent` — refusals exit
@@ -133,7 +179,7 @@ Always invoke with `node --import tsx`. Never `pnpm exec tsx` or `npx tsx`
      --id <group_id> --promote
    ```
 
-6. **Stage (insert an agent-authored draft).** A permanent-limitation classifier
+7. **Stage (insert an agent-authored draft).** A permanent-limitation classifier
    drafted by the `classifier-author` agent (`prioritize`, step 3a) lands as a
    staged `draft_entry.json`, never in the registry. Insert it with `--stage`:
 
@@ -171,7 +217,7 @@ Always invoke with `node --import tsx`. Never `pnpm exec tsx` or `npx tsx`
 | `--stage <path> [--apply]`           | **insertion mode**: read + validate an agent-authored `draft_entry.json`, reject a duplicate `group_id` and a `builtin` `function_name` absent from `BUILTIN_CHECKS`, enforce `observed_count >= 1`; dry-run unless `--apply`. Cannot combine with `--fixed`/`--drift`/`--promote`/`--id`/`--reason` — insertion is its own transaction |
 
 `--id`'s three modes (selector, name-mode `--fixed --reason`, and `--promote`)
-are in the Selectors table above; **step 4** is the canonical name-mode
+are in the Selectors table above; **step 5** is the canonical name-mode
 walkthrough. With no selectors at all, every proposal across both detection
 signals is selected — always preview that with `--dry-run` first.
 
@@ -196,7 +242,8 @@ newest matching commit) as its audit line; each name-mode `delete_by_name`
 proposal carries `reason` (the supplied `--reason` text) in its place, since
 no commit subject is cited. Each `drift_detected` proposal carries
 `flagged_by`, the `{project, run_id}` provenance of every run that flagged
-the rule.
+the rule, and each of its `new_evidence[]` rows carries its own
+`{project, run_id}` — the selector a fixer agent feeds `get_entry_context.ts`.
 
 ## Cross-references
 

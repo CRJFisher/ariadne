@@ -17,9 +17,10 @@
  *   2. **drift** — each project's latest finalized
  *      `triage_results/<run-id>.json` names registry rules in
  *      `classifier_regressions[]`. Proposes `drift_detected: true` plus the
- *      missing `drift_evidence[]` rows, append-only and deduped by
- *      `entry_index`, so a re-run is idempotent. Malformed or stale published
- *      files are reported and skipped, never fatal.
+ *      missing `drift_evidence[]` rows — each carrying its `{project, run_id}`
+ *      provenance, append-only and deduped by `(project, entry_index)` — so a
+ *      re-run is idempotent. Malformed or stale published files are reported
+ *      and skipped, never fatal.
  *   3. **promote** (`--id <group_id> --promote`) — the human's deliberate
  *      `wip → permanent` flip. Guarded: a rule whose `function_name` is not
  *      registered in core's `BUILTIN_CHECKS` is rejected (the bundled slice
@@ -144,7 +145,7 @@ export interface DriftProposal {
   group_id: string;
   /** True only when the rule is not yet `drift_detected`. */
   set_drift_flag: boolean;
-  /** Rows absent from the rule's `drift_evidence`, deduped by `entry_index`. */
+  /** Rows absent from the rule's `drift_evidence`, deduped by `(project, entry_index)`. */
   new_evidence: DriftEvidence[];
   /** The published runs whose `classifier_regressions[]` flagged the rule. */
   flagged_by: { project: string; run_id: string }[];
@@ -285,10 +286,19 @@ export interface DriftDetection {
 }
 
 /**
+ * `entry_index` is run-local, so two projects (or two runs) can flag the same
+ * index for unrelated entries — the identity of an evidence row is the pair.
+ * NUL joins the parts because it cannot appear in a project directory name.
+ */
+export function drift_dedup_key(project: string, entry_index: number): string {
+  return `${project} ${entry_index}`;
+}
+
+/**
  * Signal 2 — drift. Aggregate every source's flags per rule, drop evidence
- * rows already present on the rule (dedup key: `entry_index`), and propose
- * only when something actually changes — a fully-covered rule yields no
- * proposal, so a re-run after apply proposes nothing.
+ * rows already present on the rule (dedup key: `(project, entry_index)`), and
+ * propose only when something actually changes — a fully-covered rule yields
+ * no proposal, so a re-run after apply proposes nothing.
  */
 export function detect_drift_proposals(
   rules: readonly KnownIssue[],
@@ -297,7 +307,7 @@ export function detect_drift_proposals(
   const rules_by_id = new Map(rules.map((rule) => [rule.group_id, rule]));
   const by_rule = new Map<
     string,
-    { evidence: Map<number, DriftEvidence>; flagged_by: { project: string; run_id: string }[] }
+    { evidence: Map<string, DriftEvidence>; flagged_by: { project: string; run_id: string }[] }
   >();
   const unknown_rule_ids: string[] = [];
   const on_non_wip_rule_ids: string[] = [];
@@ -329,8 +339,11 @@ export function detect_drift_proposals(
       }
       acc.flagged_by.push({ project: source.project, run_id: source.run_id });
       for (const entry of flag.flagged_entries) {
-        if (!acc.evidence.has(entry.entry_index)) {
-          acc.evidence.set(entry.entry_index, {
+        const key = drift_dedup_key(source.project, entry.entry_index);
+        if (!acc.evidence.has(key)) {
+          acc.evidence.set(key, {
+            project: source.project,
+            run_id: source.run_id,
             entry_index: entry.entry_index,
             evidence_excerpt: entry.evidence_excerpt,
           });
@@ -344,10 +357,10 @@ export function detect_drift_proposals(
     const rule = rules_by_id.get(group_id);
     if (rule === undefined) continue;
     const existing = new Set(
-      (rule.drift_evidence ?? []).map((row) => row.entry_index),
+      (rule.drift_evidence ?? []).map((row) => drift_dedup_key(row.project, row.entry_index)),
     );
     const new_evidence = [...acc.evidence.values()].filter(
-      (row) => !existing.has(row.entry_index),
+      (row) => !existing.has(drift_dedup_key(row.project, row.entry_index)),
     );
     const set_drift_flag = rule.drift_detected !== true;
     if (!set_drift_flag && new_evidence.length === 0) continue;
@@ -403,9 +416,11 @@ export function fold_proposals(
         break;
       case "drift_detected": {
         const existing = rule.drift_evidence ?? [];
-        const present = new Set(existing.map((row) => row.entry_index));
+        const present = new Set(
+          existing.map((row) => drift_dedup_key(row.project, row.entry_index)),
+        );
         const appended = proposal.new_evidence.filter(
-          (row) => !present.has(row.entry_index),
+          (row) => !present.has(drift_dedup_key(row.project, row.entry_index)),
         );
         if (rule.drift_detected === true && appended.length === 0) break;
         next[i] = {

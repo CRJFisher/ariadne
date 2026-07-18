@@ -372,6 +372,49 @@ describe("validate_registry — negative cases", () => {
       /permanent entry must not carry drift_detected/,
     );
   });
+
+  it("accepts a wip rule whose drift_evidence rows carry project and run_id", () => {
+    const ok: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
+    ok[0]["status"] = "wip";
+    ok[0]["classifier"] = { function_name: "check_drift_rows", min_confidence: 0.9 };
+    ok[0]["observed_count"] = 1;
+    ok[0]["drift_detected"] = true;
+    ok[0]["drift_evidence"] = [
+      {
+        project: "flask",
+        run_id: "0011aaa-2026-06-11T10-00-00.000Z",
+        entry_index: 7,
+        evidence_excerpt: "handlers[key]()",
+      },
+    ];
+    expect(() => validate_registry(ok)).not.toThrow();
+  });
+
+  it("rejects a drift_evidence row missing project", () => {
+    const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
+    bad[0]["status"] = "wip";
+    bad[0]["classifier"] = { function_name: "check_no_project", min_confidence: 0.9 };
+    bad[0]["observed_count"] = 1;
+    bad[0]["drift_evidence"] = [
+      {
+        run_id: "0011aaa-2026-06-11T10-00-00.000Z",
+        entry_index: 7,
+        evidence_excerpt: "handlers[key]()",
+      },
+    ];
+    expect(() => validate_registry(bad)).toThrow(/drift_evidence\[0\]\.project/);
+  });
+
+  it("rejects a drift_evidence row missing run_id", () => {
+    const bad: Record<string, unknown>[] = JSON.parse(JSON.stringify(load_registry()));
+    bad[0]["status"] = "wip";
+    bad[0]["classifier"] = { function_name: "check_no_run_id", min_confidence: 0.9 };
+    bad[0]["observed_count"] = 1;
+    bad[0]["drift_evidence"] = [
+      { project: "flask", entry_index: 7, evidence_excerpt: "handlers[key]()" },
+    ];
+    expect(() => validate_registry(bad)).toThrow(/drift_evidence\[0\]\.run_id/);
+  });
 });
 
 // ===== backlog_task either matches an existing task or is intentionally absent =====

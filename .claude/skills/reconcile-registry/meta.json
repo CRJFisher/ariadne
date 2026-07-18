@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "skill": "reconcile-registry",
-  "description": "Reconcile the classifier registry against work already done — flip wip rules to fixed when a fix-bearing task-scoped commit lands, flag drift from published classifier_regressions, and promote rules to permanent. Drives reconcile_registry.ts, the registry's only human-invoked writer, run deliberately by the human through atomic_update_registry.",
+  "description": "Reconcile the classifier registry against work already done — flip wip rules to fixed when a fix-bearing task-scoped commit lands, flag drift from published classifier_regressions and dispatch one classifier-fixer agent per drifted rule, and promote rules to permanent. Drives reconcile_registry.ts, the registry's only human-invoked writer, run deliberately by the human through atomic_update_registry.",
 
   "flows": [
     {
@@ -16,7 +16,8 @@
         "The human confirms every status transition: the script detects the mechanical arrows (landed fix, published drift) and proposes them under --dry-run; it never runs on the autonomous sweep and never makes the permanent judgment.",
         "function_name must be in core's BUILTIN_CHECKS: --promote refuses a rule whose builtin is dangling, and name-mode --fixed refuses to delete a row whose builtin is still registered (code-side deletion + core rebuild must land first).",
         "A fixed row carries no drift_detected — the wip → fixed detector cites the newest matching fix/feat commit subject as its audit line; no commit hash is stored, the backlog_task link plus git log are the audit trail.",
-        "Idempotent apply: all proposals fold into one atomic_update_registry transaction; a re-run degrades already-absorbed proposals to nothing and reports applied: false."
+        "Idempotent apply: all proposals fold into one atomic_update_registry transaction; a re-run degrades already-absorbed proposals to nothing and reports applied: false.",
+        "The classifier-fixer agent edits only check_<group_id>.ts and its test — ordinary source edits behind a fixability-first triage (captured / fixable-in-Ariadne / mis-classified); every registry write stays with the script, and the skill runs one gated core rebuild + builtins test pass after the fixer wave."
       ],
       "entry": {
         "kind": "user_invocation",
@@ -26,7 +27,7 @@
         "kind": "store_write",
         "target": "known-issues-registry"
       },
-      "phases": ["dry-run-preview", "narrow-selectors", "apply", "retire-by-name", "promote"],
+      "phases": ["dry-run-preview", "narrow-selectors", "apply", "dispatch-drift-fixers", "retire-by-name", "promote"],
       "bypasses": [],
       "diagram_anchor": "lifecycle-transitions",
       "is_primary": true
@@ -90,7 +91,15 @@
       "path": "~/.ariadne/triage-entrypoints/analysis_output/<project>/triage_results/<run-id>.json",
       "access": "read-only",
       "writer_owner": "triage",
-      "semantic_role": "read-only drift signal: each project's latest finalized run's classifier_regressions[] names registry rules by rule_id (= group_id); the drift detector proposes drift_detected: true plus append-only drift_evidence[] rows deduped by entry_index. read, never written by this skill.",
+      "semantic_role": "read-only drift signal: each project's latest finalized run's classifier_regressions[] names registry rules by rule_id (= group_id); the drift detector proposes drift_detected: true plus append-only drift_evidence[] rows carrying {project, run_id} provenance, deduped by (project, entry_index). read, never written by this skill.",
+      "touched_by_flows": ["reconcile-transitions"]
+    },
+    {
+      "id": "classifier-fixer-staging",
+      "path": "~/.ariadne/reconcile/<run>/classifier-fixer/<group_id>/ (verdicts.json, REVIEW.md, cases/*.json)",
+      "access": "read-only",
+      "writer_owner": "classifier-fixer",
+      "semantic_role": "read-only per-rule fixer verdicts: each dispatched classifier-fixer records one terminal state per adjudicated drift_evidence case (captured / fixable-in-ariadne / mis-classified) plus skipped cases. The skill reads the verdicts to surface backlog proposals and classifier-author hand-offs to the human; the resume-skip keys on verdicts.json existence.",
       "touched_by_flows": ["reconcile-transitions"]
     },
     {
@@ -103,7 +112,15 @@
     }
   ],
 
-  "sub_agents": [],
+  "sub_agents": [
+    {
+      "id": "classifier-fixer",
+      "model": "opus",
+      "max_turns": 50,
+      "multiplicity": "one per rule with an applied drift_detected proposal, dispatched in parallel after the --drift apply; resume-skip on an existing verdicts.json. Edits only check_<group_id>.ts + its test; never writes registry.json. disable-model-invocation:true.",
+      "used_in_flows": ["reconcile-transitions"]
+    }
+  ],
 
   "published_outputs": [
     {

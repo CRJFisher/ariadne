@@ -242,7 +242,14 @@ describe("detect_drift_proposals", () => {
           kind: "drift_detected",
           group_id: "rule-a",
           set_drift_flag: true,
-          new_evidence: [{ entry_index: 4, evidence_excerpt: "@app.route" }],
+          new_evidence: [
+            {
+              project: "webpack",
+              run_id: "deadbee-2026-06-01T10-00-00.000Z",
+              entry_index: 4,
+              evidence_excerpt: "@app.route",
+            },
+          ],
           flagged_by: [{ project: "webpack", run_id: "deadbee-2026-06-01T10-00-00.000Z" }],
         },
       ],
@@ -255,7 +262,14 @@ describe("detect_drift_proposals", () => {
     const rule = make_wip_rule({
       group_id: "rule-a",
       drift_detected: true,
-      drift_evidence: [{ entry_index: 4, evidence_excerpt: "@app.route" }],
+      drift_evidence: [
+        {
+          project: "webpack",
+          run_id: "beefca0-2026-05-20T10-00-00.000Z",
+          entry_index: 4,
+          evidence_excerpt: "@app.route",
+        },
+      ],
     });
     expect(
       detect_drift_proposals(
@@ -280,7 +294,14 @@ describe("detect_drift_proposals", () => {
           kind: "drift_detected",
           group_id: "rule-a",
           set_drift_flag: false,
-          new_evidence: [{ entry_index: 7, evidence_excerpt: "handlers[key]()" }],
+          new_evidence: [
+            {
+              project: "webpack",
+              run_id: "deadbee-2026-06-01T10-00-00.000Z",
+              entry_index: 7,
+              evidence_excerpt: "handlers[key]()",
+            },
+          ],
           flagged_by: [{ project: "webpack", run_id: "deadbee-2026-06-01T10-00-00.000Z" }],
         },
       ],
@@ -293,7 +314,14 @@ describe("detect_drift_proposals", () => {
     const rule = make_wip_rule({
       group_id: "rule-a",
       drift_detected: true,
-      drift_evidence: [{ entry_index: 4, evidence_excerpt: "@app.route" }],
+      drift_evidence: [
+        {
+          project: "webpack",
+          run_id: "beefca0-2026-05-20T10-00-00.000Z",
+          entry_index: 4,
+          evidence_excerpt: "@app.route",
+        },
+      ],
     });
     expect(
       detect_drift_proposals(
@@ -312,7 +340,7 @@ describe("detect_drift_proposals", () => {
     ).toEqual({ proposals: [], unknown_rule_ids: [], on_non_wip_rule_ids: [] });
   });
 
-  it("merges disjoint evidence from two projects, deduped by entry_index", () => {
+  it("merges evidence from two projects, deduped by (project, entry_index)", () => {
     const rule = make_wip_rule({ group_id: "rule-a" });
     const detection = detect_drift_proposals(
       [rule],
@@ -348,12 +376,77 @@ describe("detect_drift_proposals", () => {
           group_id: "rule-a",
           set_drift_flag: true,
           new_evidence: [
-            { entry_index: 4, evidence_excerpt: "@app.route" },
-            { entry_index: 9, evidence_excerpt: "cli.command()" },
+            {
+              project: "webpack",
+              run_id: "deadbee-2026-06-01T10-00-00.000Z",
+              entry_index: 4,
+              evidence_excerpt: "@app.route",
+            },
+            {
+              project: "flask",
+              run_id: "0011aaa-2026-06-11T10-00-00.000Z",
+              entry_index: 4,
+              evidence_excerpt: "@app.route",
+            },
+            {
+              project: "flask",
+              run_id: "0011aaa-2026-06-11T10-00-00.000Z",
+              entry_index: 9,
+              evidence_excerpt: "cli.command()",
+            },
           ],
           flagged_by: [
             { project: "webpack", run_id: "deadbee-2026-06-01T10-00-00.000Z" },
             { project: "flask", run_id: "0011aaa-2026-06-11T10-00-00.000Z" },
+          ],
+        },
+      ],
+      unknown_rule_ids: [],
+      on_non_wip_rule_ids: [],
+    });
+  });
+
+  it("dedupes a repeated (project, entry_index) across two runs of the same project, first-seen run wins", () => {
+    const rule = make_wip_rule({ group_id: "rule-a" });
+    const detection = detect_drift_proposals(
+      [rule],
+      [
+        source({
+          classifier_regressions: [
+            {
+              rule_id: "rule-a",
+              flagged_entries: [{ entry_index: 4, evidence_excerpt: "@app.route" }],
+            },
+          ],
+        }),
+        source({
+          run_id: "cafe000-2026-06-15T10-00-00.000Z",
+          classifier_regressions: [
+            {
+              rule_id: "rule-a",
+              flagged_entries: [{ entry_index: 4, evidence_excerpt: "@app.route" }],
+            },
+          ],
+        }),
+      ],
+    );
+    expect(detection).toEqual({
+      proposals: [
+        {
+          kind: "drift_detected",
+          group_id: "rule-a",
+          set_drift_flag: true,
+          new_evidence: [
+            {
+              project: "webpack",
+              run_id: "deadbee-2026-06-01T10-00-00.000Z",
+              entry_index: 4,
+              evidence_excerpt: "@app.route",
+            },
+          ],
+          flagged_by: [
+            { project: "webpack", run_id: "deadbee-2026-06-01T10-00-00.000Z" },
+            { project: "webpack", run_id: "cafe000-2026-06-15T10-00-00.000Z" },
           ],
         },
       ],
@@ -427,7 +520,14 @@ describe("fold_proposals", () => {
   it("appends drift evidence and sets the flag", () => {
     const rule = make_wip_rule({
       group_id: "rule-a",
-      drift_evidence: [{ entry_index: 1, evidence_excerpt: "old" }],
+      drift_evidence: [
+        {
+          project: "webpack",
+          run_id: "beefca0-2026-05-20T10-00-00.000Z",
+          entry_index: 1,
+          evidence_excerpt: "old",
+        },
+      ],
     });
     expect(
       fold_proposals(
@@ -437,7 +537,14 @@ describe("fold_proposals", () => {
             kind: "drift_detected",
             group_id: "rule-a",
             set_drift_flag: true,
-            new_evidence: [{ entry_index: 2, evidence_excerpt: "new" }],
+            new_evidence: [
+              {
+                project: "webpack",
+                run_id: "deadbee-2026-06-01T10-00-00.000Z",
+                entry_index: 2,
+                evidence_excerpt: "new",
+              },
+            ],
             flagged_by: [{ project: "webpack", run_id: "deadbee-2026-06-01T10-00-00.000Z" }],
           },
         ],
@@ -447,8 +554,18 @@ describe("fold_proposals", () => {
         ...rule,
         drift_detected: true,
         drift_evidence: [
-          { entry_index: 1, evidence_excerpt: "old" },
-          { entry_index: 2, evidence_excerpt: "new" },
+          {
+            project: "webpack",
+            run_id: "beefca0-2026-05-20T10-00-00.000Z",
+            entry_index: 1,
+            evidence_excerpt: "old",
+          },
+          {
+            project: "webpack",
+            run_id: "deadbee-2026-06-01T10-00-00.000Z",
+            entry_index: 2,
+            evidence_excerpt: "new",
+          },
         ],
       },
     ]);
@@ -458,7 +575,14 @@ describe("fold_proposals", () => {
     const rule = make_wip_rule({
       group_id: "rule-a",
       drift_detected: true,
-      drift_evidence: [{ entry_index: 2, evidence_excerpt: "already-landed" }],
+      drift_evidence: [
+        {
+          project: "webpack",
+          run_id: "beefca0-2026-05-20T10-00-00.000Z",
+          entry_index: 2,
+          evidence_excerpt: "already-landed",
+        },
+      ],
     });
     expect(
       fold_proposals(
@@ -468,12 +592,74 @@ describe("fold_proposals", () => {
             kind: "drift_detected",
             group_id: "rule-a",
             set_drift_flag: false,
-            new_evidence: [{ entry_index: 2, evidence_excerpt: "already-landed" }],
+            new_evidence: [
+              {
+                project: "webpack",
+                run_id: "deadbee-2026-06-01T10-00-00.000Z",
+                entry_index: 2,
+                evidence_excerpt: "already-landed",
+              },
+            ],
             flagged_by: [{ project: "webpack", run_id: "deadbee-2026-06-01T10-00-00.000Z" }],
           },
         ],
       ),
     ).toEqual([rule]);
+  });
+
+  it("appends a row whose entry_index is already present under a different project", () => {
+    const rule = make_wip_rule({
+      group_id: "rule-a",
+      drift_detected: true,
+      drift_evidence: [
+        {
+          project: "webpack",
+          run_id: "beefca0-2026-05-20T10-00-00.000Z",
+          entry_index: 2,
+          evidence_excerpt: "obj[name]()",
+        },
+      ],
+    });
+    expect(
+      fold_proposals(
+        [rule],
+        [
+          {
+            kind: "drift_detected",
+            group_id: "rule-a",
+            set_drift_flag: false,
+            new_evidence: [
+              {
+                project: "flask",
+                run_id: "0011aaa-2026-06-11T10-00-00.000Z",
+                entry_index: 2,
+                evidence_excerpt: "handlers[key]()",
+              },
+            ],
+            flagged_by: [{ project: "flask", run_id: "0011aaa-2026-06-11T10-00-00.000Z" }],
+          },
+        ],
+      ),
+    ).toEqual([
+      {
+        ...rule,
+        drift_detected: true,
+        drift_evidence: [
+          {
+            project: "webpack",
+            run_id: "beefca0-2026-05-20T10-00-00.000Z",
+            entry_index: 2,
+            evidence_excerpt: "obj[name]()",
+          },
+          {
+            project: "flask",
+            run_id: "0011aaa-2026-06-11T10-00-00.000Z",
+            entry_index: 2,
+            evidence_excerpt: "handlers[key]()",
+          },
+        ],
+      },
+    ]);
   });
 
   it("promotes a classified wip rule to permanent", () => {
@@ -836,7 +1022,14 @@ describe("run", () => {
             kind: "drift_detected",
             group_id: "rule-quiet",
             set_drift_flag: true,
-            new_evidence: [{ entry_index: 3, evidence_excerpt: "obj[name]()" }],
+            new_evidence: [
+              {
+                project: "webpack",
+                run_id: "deadbee-2026-06-01T10-00-00.000Z",
+                entry_index: 3,
+                evidence_excerpt: "obj[name]()",
+              },
+            ],
             flagged_by: [
               { project: "webpack", run_id: "deadbee-2026-06-01T10-00-00.000Z" },
             ],
@@ -886,6 +1079,71 @@ describe("run", () => {
     const second = await run(["--fixed"], second_deps);
     expect(second.applied).toEqual(false);
     expect(second.proposals.wip_to_fixed).toEqual([]);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(after_first);
+  });
+
+  it("applies a drift proposal through the locked write, appending provenance-bearing rows, and is idempotent", async () => {
+    await seed_registry([promotable_rule, tasked_rule, quiet_rule]);
+    const drift_sources = async () => ({
+      sources: [
+        {
+          project: "webpack",
+          run_id: "deadbee-2026-06-01T10-00-00.000Z",
+          classifier_regressions: [
+            {
+              rule_id: "rule-quiet",
+              flagged_entries: [{ entry_index: 4, evidence_excerpt: "@app.route" }],
+            },
+          ],
+        },
+        {
+          project: "flask",
+          run_id: "0011aaa-2026-06-11T10-00-00.000Z",
+          classifier_regressions: [
+            {
+              rule_id: "rule-quiet",
+              flagged_entries: [{ entry_index: 4, evidence_excerpt: "handlers[key]()" }],
+            },
+          ],
+        },
+      ],
+      skipped: [],
+    });
+
+    const first = await run(["--drift"], make_deps({ discover_drift_sources: drift_sources }));
+    expect(first.applied).toEqual(true);
+    const drifted_rule: KnownIssue = {
+      ...quiet_rule,
+      drift_detected: true,
+      drift_evidence: [
+        {
+          project: "webpack",
+          run_id: "deadbee-2026-06-01T10-00-00.000Z",
+          entry_index: 4,
+          evidence_excerpt: "@app.route",
+        },
+        {
+          project: "flask",
+          run_id: "0011aaa-2026-06-11T10-00-00.000Z",
+          entry_index: 4,
+          evidence_excerpt: "handlers[key]()",
+        },
+      ],
+    };
+    const after_first = await fs.readFile(registry_path, "utf8");
+    expect(after_first).toEqual(
+      serialize_known_issues_registry_json([promotable_rule, tasked_rule, drifted_rule]),
+    );
+
+    const second = await run(
+      ["--drift"],
+      make_deps({
+        load_registry: async () => [promotable_rule, tasked_rule, drifted_rule],
+        discover_drift_sources: drift_sources,
+      }),
+    );
+    expect(second.applied).toEqual(false);
+    expect(second.proposals.drift_detected).toEqual([]);
     expect(await fs.readFile(registry_path, "utf8")).toEqual(after_first);
   });
 
