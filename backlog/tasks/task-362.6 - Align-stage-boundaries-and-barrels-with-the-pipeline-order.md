@@ -1,7 +1,7 @@
 ---
 id: TASK-362.6
 title: "Align stage boundaries and barrels with the pipeline order"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-05 00:00"
 labels:
@@ -100,20 +100,83 @@ resolution_registry.*` build fossils.
 
 <!-- AC:BEGIN -->
 
-- [ ] No file under `resolve_references/registries/` value-imports from
+- [x] No file under `resolve_references/registries/` value-imports from
       `call_resolution/`; `export_chain_lookup.ts` owns the export-chain
       utilities.
-- [ ] `call_resolver.ts` imports nothing from `index_single_file/`;
+- [x] `call_resolver.ts` imports nothing from `index_single_file/`;
       `find_enclosing_function_scope` lives in `registries/scope.ts`.
-- [ ] `ImportGraph` lives in `resolve_references/import_resolution/`; nothing
+- [x] `ImportGraph` lives in `resolve_references/import_resolution/`; nothing
       in `project/` value-imports resolution logic.
-- [ ] `resolution_registry.ts` holds `ResolutionRegistry` via `git mv`; the
+- [x] `resolution_registry.ts` holds `ResolutionRegistry` via `git mv`; the
       dist fossils are gone and a clean rebuild produces current artifacts.
-- [ ] Every barrel exports only its own folder's surface; `core/index.ts`
+- [x] Every barrel exports only its own folder's surface; `core/index.ts`
       contains no deep-path bypasses; `persistence/index.ts` is the
       persistence entry point.
-- [ ] Rows 1, 5, 6, 11, 25 landed; row 7 decided and executed
+- [x] Rows 1, 5, 6, 11, 25 landed; row 7 decided and executed
       (wire-or-delete, with the decision recorded in this task's notes);
       full test suite green.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+The resolution pipeline's folder layout is the codebase's statement of its
+own stage order, and four value-import edges contradicted it: a data store
+reached into call-resolution logic, call resolution reached back into
+stage-1 indexing, a stage-2 artifact lived in the orchestrator's folder,
+and the barrels re-exported surfaces they did not own. This task makes the
+layout tell the truth: `project/` (the orchestrator) may depend on stages;
+a stage may not depend on a later one; each barrel exports only its own
+folder's surface.
+
+The ruling distinguishes value imports from type-only imports — a forward
+`import type` across stages is legal (erased at compile time, no runtime
+edge), so the fixes target the value edges. The moving parts:
+
+- `resolve_references/export_chain_lookup.ts` owns `resolve_namespace_export`
+  and `resolve_named_import`; `registries/type.ts`, `constructor.ts`, and
+  `method_lookup.ts` consume it, and `type.ts`'s `ResolutionRegistry` import
+  is type-only — together closing both store→logic cycles.
+- `find_enclosing_function_scope` is a `ScopeRegistry` method: the walk reads
+  the cross-file scope index the registry already owns.
+- `ImportGraph` lives in `resolve_references/import_resolution/` beside the
+  path resolvers it depends on; `resolution_registry.ts` holds
+  `ResolutionRegistry`.
+- `project/project_cache_strategy.ts` is the single owner of content-hash
+  computation and index/manifest writes; both `Project.save()` and
+  `load_project()` persist through it, so a manifest entry exists only for a
+  file whose index write succeeded.
+- `resolve_references/index.ts` is the real stage-2 barrel (five registries,
+  `ResolutionRegistry`, `ImportGraph`), consumed only from outside the stage;
+  `core/index.ts` routes every export through folder barrels, including the
+  new `index_single_file/index.ts` and `trace_call_graph/index.ts`.
+
+Navigation: stage boundaries read directly from the folder barrels; the
+module layouts in `.claude/rules/resolve-references.md` and
+`project-orchestration.md` mirror the tree. `resolve_references.test.ts`
+and its `.{language}.test.ts` siblings are the stage-level integration
+suite — named for the folder, with no paired source file by design.
+
+Decisions and deviations:
+
+- **Row 7 — delete.** `explain_call_site` (and row 6's `list_name_collisions`)
+  had zero consumers anywhere in the monorepo; the MCP core tool group never
+  adopted it. Wiring it in would manufacture a consumer for speculative
+  surface, so both were deleted, removing `explain_call_site`,
+  `ExplainCallSiteResult`, and `list_name_collisions` from the public API.
+- **Row 5 — subsumed.** With both files deleted, `introspection/` was empty;
+  the folder is removed rather than renamed to `project_queries/`.
+- **Rows 11 and 35** were already satisfied in the tree at task start
+  (verified absent); the dist check is a local build-hygiene step since
+  `dist/` is untracked — a clean rebuild produces `resolution_registry.*`.
+- The public-API removal carries no changeset, matching the 362.x stream's
+  convention of authoring changesets at release preparation (`/release`).
+
+Watch items: `save()` writes the manifest without git metadata, so a
+save-then-load falls back to content hashing (pre-existing); two
+pre-existing back-edges remain out of scope — `trace_call_graph` →
+`project/detect_test_file` and `classify_entry_points` →
+`project/file_loading` — candidates for a follow-up that lifts those shared
+primitives out of the orchestrator folder.
