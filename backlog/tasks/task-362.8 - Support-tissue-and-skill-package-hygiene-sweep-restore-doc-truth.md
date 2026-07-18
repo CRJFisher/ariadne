@@ -1,7 +1,7 @@
 ---
 id: TASK-362.8
 title: "Support-tissue and skill-package hygiene sweep; restore doc truth"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-05 00:00"
 labels:
@@ -69,17 +69,19 @@ Closeout:
 
 <!-- AC:BEGIN -->
 
-- [ ] Rows 23, 24, 36 landed: one shared stage-label const consumed at all
-      three sites (with a test that a label rename cannot silently zero
-      timing fields); profiling barrel trimmed; `TEST_DIR_PATTERNS` shared.
-- [ ] Rows 26, 27, 29 landed: `aggregate_classifier_regressions` lives with
+- [x] Row 36 landed: `TEST_DIR_PATTERNS` shared across the TS/JS detectors,
+      with a test pinning the pattern set and its anchoring. Rows 23, 24 are
+      rejected as superseded: the profiler subsystem (stage labels,
+      `update_file_timing`, the profiling barrel) was deleted wholesale in
+      `e21bc26a`, so no code remains to consolidate — see the Closeout Audit.
+- [x] Rows 26, 27, 29 landed: `aggregate_classifier_regressions` lives with
       its sole caller; `node_error_code.ts` renamed; plan's `get_repo_root`
       deleted in favor of `repo_root`.
-- [ ] Row 32 landed: `trace-call-graph.md` describes only files that exist,
+- [x] Row 32 landed: `trace-call-graph.md` describes only files that exist,
       in canonical present-tense style.
-- [ ] The 36-row closeout table is complete: every row cross-referenced to
+- [x] The 36-row closeout table is complete: every row cross-referenced to
       the sub-task that landed it, or rejected with a recorded reason.
-- [ ] Full test suite green across core, skill-fs, and the skill workspaces.
+- [x] Full test suite green across core, skill-fs, and the skill workspaces.
 
 <!-- AC:END -->
 
@@ -131,3 +133,46 @@ re-verify when 362.5/.6/.7 merge; the audit cannot close them early).
 | 34 | builtins placement rationale in `builtins/index.ts` | 362.4 | landed |
 | 35 | delete stale `dist/` build fossils | 362.6 | pending |
 | 36 | shared `TEST_DIR_PATTERNS` const | 362.8 | this task |
+
+## Implementation Notes
+
+## High-level summary
+
+This task is the residue sweep of the IA refactor program's 36-row
+small-items table: the rows no area sub-task owns, plus the doc rewrites
+that only make sense against settled code. The code rows relocate three
+pieces of support tissue to the single place each is consumed, and the doc
+row restores `trace-call-graph.md` to describing files that exist.
+
+`aggregate_classifier_regressions` lives in
+`.claude/skills/triage/src/finalize/classifier_regressions.ts`, beside its
+sole caller `output.ts`; the `ClassifierRegression*` types are imported
+from their canonical home in `@ariadnejs/types`, and skill-fs — having lost
+its only `@ariadnejs/types` consumer — sheds that dependency and its
+tsconfig project reference entirely. skill-fs's `node_error_code.ts` names
+what the module holds (the single `error_code` helper); every external
+caller reaches it through the unchanged barrel. The plan skill resolves the
+repo root through `repo_root()` from `@ariadnejs/skill-protocol` — the
+marker-file walk-up, anchored by a direct test in skill-protocol — rather
+than a private fixed-depth path climb. The TS/JS test-file detectors share
+`project/test_dir_patterns.ts`, whose `TEST_DIR_PATTERNS` const and
+`is_in_test_dir` predicate preserve the load-bearing anchoring asymmetry
+(`__tests__` matches unanchored; `/tests` and `/test` are slash-anchored),
+pinned by a focused test; the Python/Rust detectors keep their own pattern
+sets, so the language split is intact.
+
+Rows 23 and 24 are rejected, not landed: the profiler subsystem they
+target was deleted wholesale in `e21bc26a`, so no stage labels, timing
+switch, or profiling barrel remain to consolidate. The Closeout Audit
+table above cross-references all 36 rows; the ten rows owned by 362.5,
+362.6, and 362.7 are recorded as pending and re-verify when those tasks
+merge. Row 32 is also listed by 362.9, which verifies rather than
+re-edits.
+
+Verified by execution: core (3421 tests), skill-fs, skill-protocol,
+triage, and plan suites green; typecheck across all seven tsconfigs;
+the changed surfaces driven end-to-end against built artifacts (barrel
+`error_code`, TS/JS/Python detection, plan backlog paths resolving via
+`repo_root()`, the aggregation from its new home). A six-lens review
+confirmed behavioral equivalence of the extraction and doc truth of the
+rewrite.

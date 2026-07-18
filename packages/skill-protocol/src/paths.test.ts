@@ -4,6 +4,7 @@ import path from "node:path";
 
 import {
   analysis_output_dir,
+  repo_root,
   triage_results_dir,
   triage_results_path,
   parse_triage_results_path,
@@ -17,6 +18,14 @@ const TMP_BASE = vi.hoisted(() => {
   const tmp = `${process.env.TMPDIR ?? "/tmp"}/ariadne-test-skill-protocol-paths-${process.pid}`;
   process.env.ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE = tmp;
   return tmp;
+});
+
+describe("repo_root", () => {
+  it("resolves the directory holding pnpm-workspace.yaml", () => {
+    const root = repo_root();
+    expect(path.isAbsolute(root)).toEqual(true);
+    expect(fs.existsSync(path.join(root, "pnpm-workspace.yaml"))).toEqual(true);
+  });
 });
 
 describe("analysis_output_dir", () => {
