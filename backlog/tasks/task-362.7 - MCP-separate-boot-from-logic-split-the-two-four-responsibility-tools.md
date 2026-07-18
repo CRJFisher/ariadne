@@ -1,7 +1,7 @@
 ---
 id: TASK-362.7
 title: "MCP — separate boot from logic, split the two four-responsibility tools"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-05 00:00"
 labels:
@@ -39,7 +39,7 @@ All verified:
 
 ### Target structure
 
-```
+```text
 mcp/src/
 ├── cli.ts                    # bin entry: parse + boot only            (from server.ts)
 ├── cli_args.ts               # pure parse_cli_args/resolve_* exports   (from server.ts)
@@ -75,21 +75,59 @@ arity and return type — TASK-362.4 reconciled the contract).
 
 <!-- AC:BEGIN -->
 
-- [ ] Importing `cli_args.ts` (or any non-bin module) boots no server;
+- [x] Importing `cli_args.ts` (or any non-bin module) boots no server;
       `cli.ts` is the only side-effecting entry and `package.json` `bin`
       points at it; `server.ts` is the composition root (renamed via
       `git mv`).
-- [ ] `list_entrypoints.ts` and `show_call_graph_neighborhood.ts` contain
+- [x] `list_entrypoints.ts` and `show_call_graph_neighborhood.ts` contain
       only tool wiring + their headline concern; `format_suppressed.ts`,
       `resolve_symbol_ref.ts`, and `traverse_call_graph.ts` own the extracted
       concerns with tests.
-- [ ] No local `count_tree_size`/`build_signature` definitions remain in
+- [x] No local `count_tree_size`/`build_signature` definitions remain in
       MCP; both import from `@ariadnejs/core`; no tool imports helpers from
       a sibling tool.
-- [ ] `ToolCallRecord` is defined once in `analytics_config.ts` and consumed
+- [x] `ToolCallRecord` is defined once in `analytics_config.ts` and consumed
       by both the writer and `query_stats.ts` (compiler-linked read/write
       schema).
-- [ ] Row 28 landed; MCP package tests green; the server starts and serves
+- [x] Row 28 landed; MCP package tests green; the server starts and serves
       the `core` tool group.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+The MCP package's boot path and its two largest tools each carried four
+unrelated responsibilities, so importing the bin booted a live server and
+every concern in the tools had to be tested through the tool's front door.
+The package now separates process entry from composition: `cli.ts` is the
+only module with a side effect (parse argv, boot) and is what
+`package.json`'s `bin` compiles to (`dist/cli.js`); `cli_args.ts` holds the
+pure `parse_cli_args`/`resolve_*` functions; `server.ts` is the composition
+root exporting `start_server`, re-exported by `index.ts`.
+
+Each tool under `tools/core/` owns only its wiring plus headline concern.
+`list_entrypoints.ts` ranks entry points by tree size using
+`count_tree_size`/`build_signature` from `@ariadnejs/core` (the local copies
+are deleted); `format_suppressed.ts` renders the suppressed bucket;
+`show_call_graph_neighborhood.ts` keeps the ASCII renderer and delegates to
+`resolve_symbol_ref.ts` and `traverse_call_graph.ts`. `resolve_symbol_ref.ts`
+owns the `file_path:line#name` format in both directions — `parse_symbol_ref`
+and `build_symbol_ref` — a deliberate widening of the target tree so the
+format has one owner. Imports flow strictly tool → helper; the registration
+surface itself lives beside them in `tool_group.ts` and
+`tools/register_tools.ts` (Row 28 rename).
+
+Analytics is a write/read pair around a shared schema module:
+`analytics_config.ts` owns `ToolCallRecord` (write input) and `ToolCallRow`
+(persisted row, derived via `Omit` + stamped/nullable fields);
+`session_writer.ts` annotates its persisted literal with `ToolCallRow` and
+`query_stats.ts` parses into it, so drift on either side is a compile error.
+
+Watch items: `ariadne-analytics` remains a second, deliberate bin
+(`scripts/ariadne_analytics.ts`); the package `tsconfig` excludes test files
+from `tsc`, so test-only type drift (pre-existing across the suite) is
+invisible to CI; in git history the `start_server.ts → server.ts` move
+records as delete + modify because the `server.ts` path was simultaneously
+vacated by the CLI split.

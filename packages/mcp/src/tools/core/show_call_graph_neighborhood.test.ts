@@ -452,6 +452,55 @@ describe("show_call_graph_neighborhood", () => {
     expect(result_depth2).not.toContain("c3(): void");
   });
 
+  it("respects callees_depth limit across a multi-level chain", async () => {
+    // Chain: target -> h1 -> h2
+    const h2 = create_mock_node("symbol:h2", "h2", "test.ts", 30, 35);
+    const h1 = create_mock_node("symbol:h1", "h1", "test.ts", 20, 25, [
+      {
+        name: "h2" as SymbolName,
+        location: {} as any,
+        scope_id: "scope:h1" as any,
+        call_type: "function",
+        resolutions: [{ symbol_id: h2.symbol_id, confidence: "certain" as any, reason: { type: "direct" } }],
+      },
+    ]);
+    const target = create_mock_node("symbol:target", "target", "test.ts", 1, 5, [
+      {
+        name: "h1" as SymbolName,
+        location: {} as any,
+        scope_id: "scope:target" as any,
+        call_type: "function",
+        resolutions: [{ symbol_id: h1.symbol_id, confidence: "certain" as any, reason: { type: "direct" } }],
+      },
+    ]);
+
+    const call_graph: CallGraph = {
+      nodes: new Map([
+        [target.symbol_id, target],
+        [h1.symbol_id, h1],
+        [h2.symbol_id, h2],
+      ]),
+      entry_points: [target.symbol_id],
+    };
+    vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
+
+    const result_depth1 = await call_show({
+      symbol_ref: "test.ts:1#target",
+      callees_depth: 1,
+      show_full_signature: true,
+    });
+    expect(result_depth1).toContain("h1(): void");
+    expect(result_depth1).not.toContain("h2(): void");
+
+    const result_depth2 = await call_show({
+      symbol_ref: "test.ts:1#target",
+      callees_depth: 2,
+      show_full_signature: true,
+    });
+    expect(result_depth2).toContain("h1(): void");
+    expect(result_depth2).toContain("h2(): void");
+  });
+
   it("should show just name when show_full_signature is false", async () => {
     const node_id = "symbol:my_func" as SymbolId;
     const node: CallableNode = {

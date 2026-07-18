@@ -5,6 +5,7 @@ import { log_info, log_warn } from "@ariadnejs/core";
 import {
   resolve_analytics_dir,
   type ToolCallRecord,
+  type ToolCallRow,
 } from "./analytics_config";
 
 let analytics_dir: string | null = null;
@@ -42,7 +43,7 @@ export function record_session_client_info(
 export function record_tool_call(record: ToolCallRecord): void {
   if (!analytics_dir || !session_id) return;
   try {
-    const line = JSON.stringify({
+    const row: ToolCallRow = {
       session_id,
       tool_name: record.tool_name,
       called_at: new Date().toISOString(),
@@ -52,8 +53,11 @@ export function record_tool_call(record: ToolCallRecord): void {
       arguments: record.arguments,
       request_id: record.request_id ?? null,
       tool_use_id: record.tool_use_id ?? null,
-    });
-    fs.appendFileSync(path.join(analytics_dir, "tool_calls.jsonl"), line + "\n");
+    };
+    fs.appendFileSync(
+      path.join(analytics_dir, "tool_calls.jsonl"),
+      JSON.stringify(row) + "\n",
+    );
   } catch (error) {
     log_warn(`Failed to record tool call: ${error}`);
   }

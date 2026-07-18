@@ -8,8 +8,8 @@ import {
   SessionSummary,
   ToolCallDetail,
   SessionRow,
-  ToolCallRow,
 } from "./query_stats";
+import type { ToolCallRow } from "./analytics_config";
 
 const SESSIONS: SessionRow[] = [
   {

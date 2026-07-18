@@ -11,6 +11,23 @@ export interface ToolCallRecord {
   tool_use_id?: string;
 }
 
+/**
+ * The persisted JSONL row, derived from the write-side `ToolCallRecord` so the
+ * shared business fields track it by construction. The deltas are the write
+ * boundary's doing: `session_writer` stamps `session_id`/`called_at` from
+ * ambient session state and normalizes the optional fields to explicit `null`.
+ * The writer annotates its persisted literal with this type and the reader
+ * parses into it, so drift on either side is a compile error.
+ */
+export interface ToolCallRow
+  extends Omit<ToolCallRecord, "error_message" | "request_id" | "tool_use_id"> {
+  session_id: string;
+  called_at: string;
+  error_message: string | null;
+  request_id: string | null;
+  tool_use_id: string | null;
+}
+
 export function resolve_analytics_dir(dir?: string): string {
   if (dir) return dir;
   if (process.env.ARIADNE_ANALYTICS_DIR) return process.env.ARIADNE_ANALYTICS_DIR;
