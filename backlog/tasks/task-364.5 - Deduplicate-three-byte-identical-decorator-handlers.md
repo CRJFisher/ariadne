@@ -1,7 +1,7 @@
 ---
 id: TASK-364.5
 title: "De-duplicate the three byte-identical decorator handlers in capture_handlers.typescript.ts"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-12 00:00"
 labels:
@@ -46,10 +46,45 @@ mechanical removal.
 
 <!-- AC:BEGIN -->
 
-- [ ] A single implementation backs all three decorator capture names; no
+- [x] A single implementation backs all three decorator capture names; no
       duplicated handler body remains.
-- [ ] All three capture names still dispatch and produce unchanged output
+- [x] All three capture names still dispatch and produce unchanged output
       (existing TS capture-handler tests green).
-- [ ] Registry stays an object literal; call-graph traceability preserved.
+- [x] Registry stays an object literal; call-graph traceability preserved.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+The TypeScript capture-handler registry carried three byte-identical decorator
+handlers, one per capture name, so any change to decorator handling had to be
+made three times and a reader had to diff the bodies to learn they were the
+same. A single `handle_decorator` function now backs all three capture names.
+
+The registry in
+`packages/core/src/index_single_file/query_code_tree/capture_handlers/capture_handlers.typescript.ts`
+stays an object literal (`TYPESCRIPT_HANDLERS`), with `decorator.class`,
+`decorator.method`, and `decorator.property` all mapping to the shared
+function — the mapping is visible at the registry itself, preserving
+call-graph traceability. `handle_decorator` is not exported: dispatch reaches
+it only through the registry keys, and no external module imports the
+individual handlers (only the registry object is imported elsewhere), so the
+per-project export rule — export only what external modules use — applies.
+The handler distinguishes nothing by capture name; the decorator's target
+kind is discovered structurally by `find_decorator_target`, which is why one
+body serves all three keys.
+
+Behavior is unchanged and proven by execution: the TS capture-handler suites
+(90 tests) and the full workspace suite pass, and an end-to-end
+`build_index_single_file` run over a class carrying `@Component` (class),
+`@HostListener` (method), and `@Input` (property) decorators attaches all
+three decorators to their definitions. Three read-only reviewers
+(correctness-behavioral, completeness-vs-spec, adversarial cold-read)
+returned no actionable findings; dispatch is purely key-based, so three keys
+sharing one function object is behaviorally invisible.
+
+Worth knowing: `capture_handlers.python.ts` keeps four near-identical
+decorator handlers of its own (`handle_decorator_variable/function/property/method`);
+collapsing those is a separate candidate task, out of scope here.
