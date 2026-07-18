@@ -1190,6 +1190,42 @@ describe("run", () => {
     expect(await fs.readFile(registry_path, "utf8")).toEqual(after_first);
   });
 
+  it("--drift over a permanent-rule regression reports the slice and never writes", async () => {
+    const permanent_rule: KnownIssue = {
+      ...make_wip_rule({
+        group_id: "rule-permanent",
+        classifier: { function_name: "check_rule_permanent", min_confidence: 1 },
+      }),
+      status: "permanent",
+    };
+    const seeded = await seed_registry([permanent_rule, quiet_rule]);
+    const summary = await run(
+      ["--drift"],
+      make_deps({
+        load_registry: async () => [permanent_rule, quiet_rule],
+        discover_drift_sources: async () => ({
+          sources: [
+            {
+              project: "webpack",
+              run_id: "deadbee-2026-06-01T10-00-00.000Z",
+              classifier_regressions: [
+                {
+                  rule_id: "rule-permanent",
+                  flagged_entries: [{ entry_index: 6, evidence_excerpt: "cls.__call__" }],
+                },
+              ],
+            },
+          ],
+          skipped: [],
+        }),
+      }),
+    );
+    expect(summary.proposals.drift_detected).toEqual([]);
+    expect(summary.drift_on_non_wip_rule_ids).toEqual(["rule-permanent"]);
+    expect(summary.applied).toEqual(false);
+    expect(await fs.readFile(registry_path, "utf8")).toEqual(seeded);
+  });
+
   it("restricts the changeset with --id and reports unmatched ids", async () => {
     await seed_registry([promotable_rule, tasked_rule, quiet_rule]);
     const summary = await run(

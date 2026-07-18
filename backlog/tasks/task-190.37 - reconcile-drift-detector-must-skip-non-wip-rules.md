@@ -1,7 +1,7 @@
 ---
 id: TASK-190.37
 title: "reconcile --drift detector must skip non-wip rules"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-15 00:00"
 labels:
@@ -65,14 +65,56 @@ Run `reconcile_registry.ts --drift` when a finalized run's
 
 <!-- AC:BEGIN -->
 
-- [ ] `detect_drift_proposals` proposes `drift_detected` only for `wip` rules.
-- [ ] A regression naming a `permanent` or `fixed` rule is reported in a
+- [x] `detect_drift_proposals` proposes `drift_detected` only for `wip` rules.
+- [x] A regression naming a `permanent` or `fixed` rule is reported in a
       dedicated summary slice, never written as a flag and never silently dropped.
-- [ ] `reconcile_registry.test.ts` covers the permanent-rule-regression case.
-- [ ] After the fix, `reconcile --drift` over a corpus containing
+- [x] `reconcile_registry.test.ts` covers the permanent-rule-regression case.
+- [x] After the fix, `reconcile --drift` over a corpus containing
       permanent-rule regressions leaves `load_registry()` passing.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+### High-level summary
+
+Drift is a wip-only lifecycle signal: `validate_entry` rejects a permanent row
+carrying `drift_detected`, and `active_rules_for_classification` only acts on
+the flag for wip rows. The drift detector honors that invariant at the source.
+`detect_drift_proposals` skips any rule whose `status` is not `wip` before
+building a proposal, so a `--drift` apply can never write a flag the loader
+refuses — the failure mode where `reconcile --drift` desynced `registry.json`
+from its own schema and left `load_registry()` throwing is structurally closed.
+
+The skipped regressions are not discarded. A regression naming a `permanent`
+or `fixed` rule is real signal — the rule's predicate is under-matching — so
+the detector collects those `rule_id`s into `DriftDetection.on_non_wip_rule_ids`,
+which `run()` surfaces as the reported-only `ReconcileSummary.drift_on_non_wip_rule_ids`
+slice, printed with the rest of the summary JSON and documented in the
+`reconcile-registry` skill's Output table. The human decides the follow-up:
+broaden the builtin's `check_<group_id>.ts` predicate directly, or demote the
+rule back to `wip` by hand. The design mirrors the established
+`drift_unknown_rule_ids` slice, and the sibling `wip → fixed` detector's
+wip-only guard.
+
+Navigation: the guard and both reported slices live in `detect_drift_proposals`
+(`.claude/skills/triage/scripts/reconcile_registry.ts`); the wip-only invariant
+it honors lives in `.claude/skills/triage/src/known_issues_registry.ts`.
+Tests cover the permanent case, the fixed case alongside a still-proposing wip
+rule, and a run()-level non-dry-run `--drift` apply proving the slice populates
+while the registry bytes stay untouched.
+
+Verified end-to-end: a `--drift --dry-run` over the live corpus reports the 7
+permanent rules named by published regressions in `drift_on_non_wip_rule_ids`
+with zero proposals, and the on-disk registry (restored by removing the invalid
+flags the unguarded path had written) loads cleanly.
+
+Known edges, deliberately left: a rule receiving both a `wip_to_fixed` and a
+`drift_detected` proposal in the same run folds into a `fixed` row carrying an
+inert drift flag (the validator accepts it; `active_rules` ignores it), and
+under `--id` a non-wip regressed rule appears in both `missing_ids` and the
+unfiltered reported slice — both are pre-existing, low-impact behaviors noted
+during review, not part of this fix.
 
 ## Cross-references
 
