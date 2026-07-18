@@ -35,10 +35,10 @@ function extract_scoped_path(node: SyntaxNode): string {
   return parts.join("::");
 }
 
-// A `self` group member imports the group's own module: `use a::b::{self}` is
-// `use a::b`, so the last prefix segment is the bound name and the rest is the
-// module_path; a single-segment prefix mirrors bare `use foo`, where both are
-// the segment itself.
+// A `self` group member imports the group's own module (`use a::b::{self}` is
+// `use a::b`), so the prefix splits at its final `::` — the last segment names
+// the imported module, the rest is its module_path. A single-segment prefix
+// mirrors bare `use foo`, where both are the segment.
 function split_group_prefix(prefix: string): {
   module_name: string;
   parent_path: string;
