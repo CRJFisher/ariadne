@@ -184,6 +184,63 @@ describe("resolve_module_path_rust", () => {
       );
       expect(result).toBe("/project/src/module/bar/baz.rs");
     });
+
+    it("resolves super::super::item two levels up from a regular file", () => {
+      const tree = create_file_tree("/project", [
+        "src/lib.rs",
+        "src/a/b/foo.rs",
+        "src/a/target.rs",
+      ]);
+      const result = resolve_module_path_rust(
+        "super::super::target",
+        "/project/src/a/b/foo.rs" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/a/target.rs");
+    });
+
+    it("resolves super::super::item from mod.rs climbing past its own directory", () => {
+      const tree = create_file_tree("/project", [
+        "src/lib.rs",
+        "src/a/b/mod.rs",
+        "src/target.rs",
+      ]);
+      const result = resolve_module_path_rust(
+        "super::super::target",
+        "/project/src/a/b/mod.rs" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/target.rs");
+    });
+
+    it("resolves super::super::super::item three levels up from a regular file", () => {
+      const tree = create_file_tree("/project", [
+        "src/lib.rs",
+        "src/a/b/foo.rs",
+        "src/target.rs",
+      ]);
+      const result = resolve_module_path_rust(
+        "super::super::super::target",
+        "/project/src/a/b/foo.rs" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/target.rs");
+    });
+
+    it("walks a multi-segment tail after a super::super climb", () => {
+      const tree = create_file_tree("/project", [
+        "src/lib.rs",
+        "src/a/foo.rs",
+        "src/util/mod.rs",
+        "src/util/helper.rs",
+      ]);
+      const result = resolve_module_path_rust(
+        "super::super::util::helper",
+        "/project/src/a/foo.rs" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/util/helper.rs");
+    });
   });
 
   describe("self:: prefix resolution", () => {

@@ -113,6 +113,77 @@ describe("extract_imports_from_use_declaration", () => {
     ]);
   });
 
+  it("emits the group module itself for a self member alongside an item", () => {
+    expect(imports_of("use std::io::{self, Write};")).toEqual([
+      {
+        name: "io" as SymbolName,
+        module_path: create_module_path("std"),
+      },
+      {
+        name: "Write" as SymbolName,
+        module_path: create_module_path("std::io"),
+      },
+    ]);
+  });
+
+  it("emits both the module and the item for use a::b::{self, C}", () => {
+    expect(imports_of("use a::b::{self, C};")).toEqual([
+      {
+        name: "b" as SymbolName,
+        module_path: create_module_path("a"),
+      },
+      {
+        name: "C" as SymbolName,
+        module_path: create_module_path("a::b"),
+      },
+    ]);
+  });
+
+  it("treats a single-segment self group like a bare module import", () => {
+    expect(imports_of("use foo::{self};")).toEqual([
+      {
+        name: "foo" as SymbolName,
+        module_path: create_module_path("foo"),
+      },
+    ]);
+  });
+
+  it("keeps the crate prefix in module_path for a self group member", () => {
+    expect(imports_of("use crate::utils::{self, helper};")).toEqual([
+      {
+        name: "utils" as SymbolName,
+        module_path: create_module_path("crate"),
+      },
+      {
+        name: "helper" as SymbolName,
+        module_path: create_module_path("crate::utils"),
+      },
+    ]);
+  });
+
+  it("resolves self inside a nested group against the accumulated prefix", () => {
+    expect(imports_of("use a::{b::{self, C}};")).toEqual([
+      {
+        name: "b" as SymbolName,
+        module_path: create_module_path("a"),
+      },
+      {
+        name: "C" as SymbolName,
+        module_path: create_module_path("a::b"),
+      },
+    ]);
+  });
+
+  it("binds the group module under the alias for use a::b::{self as c}", () => {
+    expect(imports_of("use a::b::{self as c};")).toEqual([
+      {
+        name: "c" as SymbolName,
+        module_path: create_module_path("a"),
+        original_name: create_symbol_name("b"),
+      },
+    ]);
+  });
+
   it("extends the prefix with a group member's own path", () => {
     expect(imports_of("use std::{cmp::Ordering};")).toEqual([
       {

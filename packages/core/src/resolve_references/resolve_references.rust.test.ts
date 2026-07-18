@@ -450,4 +450,92 @@ fn compute_len(items: &[u8]) -> usize {
       expect(entry).toBeUndefined();
     });
   });
+
+  describe("cross-file super::super import", () => {
+    it("resolves a call through a use super::super:: import two module levels up", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "lib.rs": `mod a;
+mod helpers;
+`,
+        "a.rs": `pub mod b;
+`,
+        "a/b.rs": `use super::super::helpers::compute;
+
+pub fn run() -> i32 {
+    compute(3)
+}
+`,
+        "helpers.rs": `pub fn compute(x: i32) -> i32 {
+    x * 2
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const compute_def = project.definitions
+        .get_definitions_by_name("compute" as SymbolName)
+        .find((def) => def.location.file_path === file_paths["helpers.rs"]);
+      expect(compute_def).not.toBeUndefined();
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["a/b.rs"])
+        .find((c) => c.name === ("compute" as SymbolName));
+      expect(call!.resolution_failure).toBeUndefined();
+      expect(call!.resolutions.map((r) => r.symbol_id)).toEqual([
+        compute_def!.symbol_id,
+      ]);
+    });
+  });
+
+  describe("cross-file self group member import", () => {
+    it("binds the group module via self and resolves the sibling item's call", async () => {
+      // consumer.rs has no `mod` declaration for utils, so the name `utils`
+      // can only enter its scope through the `self` group member.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "lib.rs": `mod a;
+mod consumer;
+`,
+        "a.rs": `pub mod utils;
+`,
+        "a/utils.rs": `pub fn helper(x: i32) -> i32 {
+    x + 1
+}
+`,
+        "consumer.rs": `use a::utils::{self, helper};
+
+pub fn run() -> i32 {
+    helper(5)
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const utils_mod_def = project.definitions
+        .get_definitions_by_name("utils" as SymbolName)
+        .find((def) => def.location.file_path === file_paths["a.rs"]);
+      expect(utils_mod_def).not.toBeUndefined();
+
+      const consumer_scope = project.scopes.get_file_root_scope(
+        file_paths["consumer.rs"]
+      );
+      const resolved_utils = project.resolutions.resolve(
+        consumer_scope!.id,
+        "utils" as SymbolName
+      );
+      expect(resolved_utils).toEqual(utils_mod_def!.symbol_id);
+
+      const helper_def = project.definitions
+        .get_definitions_by_name("helper" as SymbolName)
+        .find((def) => def.location.file_path === file_paths["a/utils.rs"]);
+      expect(helper_def).not.toBeUndefined();
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["consumer.rs"])
+        .find((c) => c.name === ("helper" as SymbolName));
+      expect(call!.resolution_failure).toBeUndefined();
+      expect(call!.resolutions.map((r) => r.symbol_id)).toEqual([
+        helper_def!.symbol_id,
+      ]);
+    });
+  });
 });

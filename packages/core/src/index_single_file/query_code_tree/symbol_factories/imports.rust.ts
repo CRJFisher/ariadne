@@ -35,6 +35,24 @@ function extract_scoped_path(node: SyntaxNode): string {
   return parts.join("::");
 }
 
+// A `self` group member imports the group's own module: `use a::b::{self}` is
+// `use a::b`, so the last prefix segment is the bound name and the rest is the
+// module_path; a single-segment prefix mirrors bare `use foo`, where both are
+// the segment itself.
+function split_group_prefix(prefix: string): {
+  module_name: string;
+  parent_path: string;
+} {
+  const sep = prefix.lastIndexOf("::");
+  if (sep === -1) {
+    return { module_name: prefix, parent_path: prefix };
+  }
+  return {
+    module_name: prefix.slice(sep + 2),
+    parent_path: prefix.slice(0, sep),
+  };
+}
+
 // Normalizes every `use` form so `module_path` names the module and `name` the
 // imported item — the item, glob, alias, and group braces are stripped here, which
 // is the shape the downstream Rust import resolver relies on. A leading `pub`
@@ -139,6 +157,12 @@ export function extract_imports_from_use_declaration(
                 name: item.text as SymbolName,
                 module_path: create_module_path(prefix),
               });
+            } else if (item.type === "self") {
+              const { module_name, parent_path } = split_group_prefix(prefix);
+              imports.push({
+                name: module_name as SymbolName,
+                module_path: create_module_path(parent_path),
+              });
             } else if (item.type === "scoped_identifier") {
               const name = item.childForFieldName?.("name");
               const item_path_node = item.childForFieldName?.("path");
@@ -178,7 +202,18 @@ export function extract_imports_from_use_declaration(
                   break;
                 }
               }
-              if (original && alias) {
+              // `use a::b::{self as c}` — the `self` node is not an identifier,
+              // so the `original` finder above would wrongly grab the alias as
+              // the original. Emit the same shape as `use a::b as c`.
+              const self_member = item.children?.find((c) => c.type === "self");
+              if (self_member && alias) {
+                const { module_name, parent_path } = split_group_prefix(prefix);
+                imports.push({
+                  name: alias.text as SymbolName,
+                  module_path: create_module_path(parent_path),
+                  original_name: create_symbol_name(module_name),
+                });
+              } else if (original && alias) {
                 if (original.type === "scoped_identifier") {
                   // e.g., `use std::{cmp::Ordering as Ord}` — original is cmp::Ordering
                   const original_name_node = original.childForFieldName?.("name");

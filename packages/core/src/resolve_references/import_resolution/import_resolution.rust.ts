@@ -55,6 +55,9 @@ function resolve_from_crate_root(
  * A `mod.rs` file represents its containing directory, so its parent module
  * lives one directory further up; any other module file shares its directory
  * with its siblings, so its parent module resolves from that same directory.
+ * The caller strips the first `super`; each additional leading `super` climbs
+ * one more directory — after the first hop we are already in module-directory
+ * space, so the mod.rs distinction does not reapply.
  */
 function resolve_from_parent(
   module_parts: string[],
@@ -64,10 +67,16 @@ function resolve_from_parent(
   const base_name = path.basename(base_file);
   const current_dir = path.dirname(base_file);
 
-  const parent_dir =
+  let parent_dir =
     base_name === "mod.rs" ? path.dirname(current_dir) : current_dir;
 
-  return resolve_rust_module_path(parent_dir, module_parts, root_folder);
+  let remaining = module_parts;
+  while (remaining[0] === "super") {
+    parent_dir = path.dirname(parent_dir);
+    remaining = remaining.slice(1);
+  }
+
+  return resolve_rust_module_path(parent_dir, remaining, root_folder);
 }
 
 function resolve_from_current(
