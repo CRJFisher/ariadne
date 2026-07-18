@@ -4,7 +4,7 @@ import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ResolutionRegistry } from "../resolve_references";
-import { ImportGraph } from "../../project/import_graph";
+import { ImportGraph } from "../import_resolution/import_graph";
 import { ExportRegistry } from "../registries/export";
 import type { FileSystemFolder } from "../file_folders";
 import { make_export_chain_context } from "../resolution_test_helpers";

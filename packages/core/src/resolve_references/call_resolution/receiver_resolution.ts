@@ -37,7 +37,7 @@ import { DefinitionRegistry } from "../registries/definition";
 import type { TypeRegistry } from "../registries/type";
 import type { ExportRegistry } from "../registries/export";
 import type { ResolutionRegistry } from "../resolve_references";
-import type { ImportGraph } from "../../project/import_graph";
+import type { ImportGraph } from "../import_resolution/import_graph";
 import type { FileSystemFolder } from "../file_folders";
 
 /**

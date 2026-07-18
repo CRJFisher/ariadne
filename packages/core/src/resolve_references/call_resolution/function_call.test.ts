@@ -12,7 +12,7 @@ import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ScopeRegistry } from "../registries/scope";
 import { ReferenceRegistry } from "../registries/reference";
-import { ImportGraph } from "../../project/import_graph";
+import { ImportGraph } from "../import_resolution/import_graph";
 import { ResolutionRegistry } from "../resolve_references";
 import { set_test_resolutions, unwrap } from "../resolve_references.test";
 import { create_function_call_reference } from "../../index_single_file/references/factories";

@@ -16,7 +16,7 @@ import type { FileSystemFolder } from "./file_folders";
 import type { DefinitionRegistry } from "./registries/definition";
 import type { ScopeRegistry } from "./registries/scope";
 import type { ExportRegistry } from "./registries/export";
-import type { ImportGraph } from "../project/import_graph";
+import type { ImportGraph } from "./import_resolution/import_graph";
 import type { NameResolutionResult } from "./resolution_state";
 
 /** Registries and language map consulted while resolving names in a scope tree. */

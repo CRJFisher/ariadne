@@ -5,11 +5,11 @@ import type {
   Language,
   SymbolId,
 } from "@ariadnejs/types";
-import type { FileSystemFolder } from "../resolve_references/file_folders";
+import type { FileSystemFolder } from "../file_folders";
 import {
   resolve_module_path,
   resolve_submodule_import_path,
-} from "../resolve_references/import_resolution";
+} from "./import_resolution";
 
 /**
  * Bidirectional import dependency graph.

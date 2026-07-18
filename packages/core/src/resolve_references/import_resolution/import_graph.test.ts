@@ -9,7 +9,7 @@ import type {
   ModulePath,
   SymbolId,
 } from "@ariadnejs/types";
-import type { FileSystemFolder } from "../resolve_references/file_folders";
+import type { FileSystemFolder } from "../file_folders";
 
 function create_import_definition(
   source: FilePath,

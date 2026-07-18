@@ -9,7 +9,7 @@ import { resolve_names, type NameResolutionContext } from "./name_resolution";
 import { DefinitionRegistry } from "./registries/definition";
 import { ScopeRegistry } from "./registries/scope";
 import { ExportRegistry } from "./registries/export";
-import { ImportGraph } from "../project/import_graph";
+import { ImportGraph } from "./import_resolution/import_graph";
 import { function_symbol, namespace_symbol, variable_symbol } from "@ariadnejs/types";
 import type {
   FilePath,

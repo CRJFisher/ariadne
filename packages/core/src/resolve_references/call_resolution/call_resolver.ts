@@ -30,7 +30,7 @@ import type { TypeRegistry } from "../registries/type";
 import type { ScopeRegistry } from "../registries/scope";
 import type { ReferenceRegistry } from "../registries/reference";
 import type { ExportRegistry } from "../registries/export";
-import type { ImportGraph } from "../../project/import_graph";
+import type { ImportGraph } from "../import_resolution/import_graph";
 import type { FileSystemFolder } from "../file_folders";
 import type { CallResolutionResult } from "../resolution_state";
 import type { ResolutionRegistry } from "../resolve_references";
