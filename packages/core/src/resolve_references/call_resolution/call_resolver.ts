@@ -39,7 +39,6 @@ import { resolve_method_call } from "./method_call";
 import { resolve_constructor_call, include_constructors_for_class_symbols } from "./constructor";
 import { resolve_collection_dispatch } from "./collection_dispatch";
 import { resolve_function_call } from "./function_call";
-import { find_enclosing_function_scope } from "../../index_single_file/scopes/scope_lookup";
 
 type CallSymbolReference =
   | SelfReferenceCall
@@ -101,10 +100,7 @@ export function resolve_calls_for_files(
   const calls_by_caller = new Map<ScopeId, CallReference[]>();
 
   for (const call of all_calls) {
-    const caller_scope_id = find_enclosing_function_scope(
-      call.scope_id,
-      context.scopes.get_all_scopes()
-    );
+    const caller_scope_id = context.scopes.find_enclosing_function_scope(call.scope_id);
 
     const enriched_call: CallReference = {
       ...call,
