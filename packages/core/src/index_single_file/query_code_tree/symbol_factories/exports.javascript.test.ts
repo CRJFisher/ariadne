@@ -159,7 +159,7 @@ describe("extract_export_info export lists", () => {
   });
 });
 
-describe("extract_export_info CommonJS module.exports object", () => {
+describe("extract_export_info CommonJS exports", () => {
   it("marks a shorthand-exported symbol as exported", () => {
     const code = "function foo() {}\nmodule.exports = { foo };";
     expect(info(code, "foo")).toEqual({ is_exported: true, export: {} });
@@ -178,13 +178,65 @@ describe("extract_export_info CommonJS module.exports object", () => {
     expect(info(code, "foo")).toEqual({ is_exported: true, export: {} });
   });
 
-  it("does not treat exports.name property assignment as an export", () => {
+  it("marks an exports.name property assignment as exported", () => {
     const code = "function foo() {}\nexports.foo = foo;";
+    expect(info(code, "foo")).toEqual({ is_exported: true, export: {} });
+  });
+
+  it("marks a module.exports.name property assignment as exported", () => {
+    const code = "function foo() {}\nmodule.exports.foo = foo;";
+    expect(info(code, "foo")).toEqual({ is_exported: true, export: {} });
+  });
+
+  it("records the public name for a renamed exports property assignment", () => {
+    const code = "function foo() {}\nexports.renamed = foo;";
+    expect(info(code, "foo")).toEqual({
+      is_exported: true,
+      export: { export_name: "renamed" as SymbolName },
+    });
+  });
+
+  it("records the public name for a renamed module.exports property assignment", () => {
+    const code = "function foo() {}\nmodule.exports.renamed = foo;";
+    expect(info(code, "foo")).toEqual({
+      is_exported: true,
+      export: { export_name: "renamed" as SymbolName },
+    });
+  });
+
+  it("leaves a sibling local not assigned to exports unexported", () => {
+    const code = "function foo() {}\nfunction bar() {}\nexports.foo = foo;";
+    expect(info(code, "foo")).toEqual({ is_exported: true, export: {} });
+    expect(info(code, "bar")).toEqual({ is_exported: false });
+  });
+
+  it("does not treat a deep module.exports member chain as an export", () => {
+    const code = "function x() {}\nmodule.exports.foo.bar = x;";
+    expect(info(code, "x")).toEqual({ is_exported: false });
+  });
+
+  it("does not treat assignment to an unrelated object as an export", () => {
+    const code = "function foo() {}\nother.foo = foo;";
     expect(info(code, "foo")).toEqual({ is_exported: false });
   });
 
-  it("does not treat module.exports.name property assignment as an export", () => {
-    const code = "function foo() {}\nmodule.exports.foo = foo;";
+  it("does not treat an unrelated object's exports property as an export", () => {
+    const code = "function foo() {}\nother.exports.foo = foo;";
+    expect(info(code, "foo")).toEqual({ is_exported: false });
+  });
+
+  it("does not treat a computed exports key as an export", () => {
+    const code = "function foo() {}\nexports[\"foo\"] = foo;";
+    expect(info(code, "foo")).toEqual({ is_exported: false });
+  });
+
+  it("does not treat an exports assignment inside a function body as an export", () => {
+    const code = "function inner() {}\nfunction outer() {\n  exports.foo = inner;\n}";
+    expect(info(code, "inner")).toEqual({ is_exported: false });
+  });
+
+  it("does not mark a local when the exports assignment carries an anonymous function", () => {
+    const code = "function foo() {}\nexports.bar = () => {};";
     expect(info(code, "foo")).toEqual({ is_exported: false });
   });
 });

@@ -38,7 +38,8 @@ function build_export_cache(root: SyntaxNode): ExportCache {
       }
     }
 
-    // CommonJS object assignment: module.exports = { foo, bar: baz }
+    // CommonJS assignments: module.exports = { ... } and property-assignment
+    // exports (exports.foo = local / module.exports.foo = local)
     if (child.type === "expression_statement") {
       const expr = child.child(0);
       if (expr?.type === "assignment_expression") {
@@ -76,12 +77,53 @@ function build_export_cache(root: SyntaxNode): ExportCache {
               }
             }
           }
+
+          // Property-assignment CommonJS export: exports.NAME = local or
+          // module.exports.NAME = local. The cache is keyed by the local RHS
+          // identifier, so an anonymous RHS (exports.foo = function () {})
+          // has no local symbol to mark and stays out of reach. The top-level
+          // walk excludes assignments inside function bodies; computed keys
+          // (exports["foo"]) parse as subscript_expression and never enter
+          // this member_expression branch.
+          if (
+            right?.type === "identifier" &&
+            property?.type === "property_identifier" &&
+            is_commonjs_exports_base(object)
+          ) {
+            const symbol_name = right.text as SymbolName;
+            const export_name = property.text as SymbolName;
+            commonjs_exports.set(
+              symbol_name,
+              export_name !== symbol_name ? { export_name } : {}
+            );
+          }
         }
       }
     }
   }
 
   return { named_exports, commonjs_exports };
+}
+
+/**
+ * The CommonJS exports bag appears as an assignment base in two spellings: the
+ * bare `exports` identifier and the `module.exports` member expression. Deeper
+ * chains (`module.exports.foo`) and unrelated objects fail the check, so
+ * assignments onto them never register as exports.
+ */
+function is_commonjs_exports_base(node: SyntaxNode | null): boolean {
+  if (!node) return false;
+  if (node.type === "identifier") return node.text === "exports";
+  if (node.type === "member_expression") {
+    const object = node.childForFieldName("object");
+    const property = node.childForFieldName("property");
+    return (
+      object?.type === "identifier" &&
+      object.text === "module" &&
+      property?.text === "exports"
+    );
+  }
+  return false;
 }
 
 function get_export_cache(root: SyntaxNode): ExportCache {
@@ -203,7 +245,8 @@ export function analyze_export_statement(
  *
  * Covers direct exports (`export function foo`), export/re-export lists
  * (`export { foo, bar as baz }`, `export { x } from './y'`), default exports,
- * and CommonJS `module.exports = { ... }` assignments.
+ * and CommonJS assignments — whole-object (`module.exports = { ... }`) and
+ * property (`exports.foo = local`, `module.exports.foo = local`).
  */
 export function extract_export_info(
   node: SyntaxNode,
