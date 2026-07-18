@@ -491,6 +491,49 @@ describe("detect_drift_proposals", () => {
       ),
     ).toEqual({ proposals: [], unknown_rule_ids: [], on_non_wip_rule_ids: ["rule-perm"] });
   });
+
+  it("reports a fixed rule in on_non_wip_rule_ids while still proposing for a wip rule", () => {
+    const fixed_rule = make_wip_rule({ group_id: "rule-fixed", status: "fixed" });
+    const wip_rule = make_wip_rule({ group_id: "rule-wip" });
+    expect(
+      detect_drift_proposals(
+        [fixed_rule, wip_rule],
+        [
+          source({
+            classifier_regressions: [
+              {
+                rule_id: "rule-fixed",
+                flagged_entries: [{ entry_index: 3, evidence_excerpt: "getattr(obj, name)()" }],
+              },
+              {
+                rule_id: "rule-wip",
+                flagged_entries: [{ entry_index: 9, evidence_excerpt: "emitter.on(event, fn)" }],
+              },
+            ],
+          }),
+        ],
+      ),
+    ).toEqual({
+      proposals: [
+        {
+          kind: "drift_detected",
+          group_id: "rule-wip",
+          set_drift_flag: true,
+          new_evidence: [
+            {
+              project: "webpack",
+              run_id: "deadbee-2026-06-01T10-00-00.000Z",
+              entry_index: 9,
+              evidence_excerpt: "emitter.on(event, fn)",
+            },
+          ],
+          flagged_by: [{ project: "webpack", run_id: "deadbee-2026-06-01T10-00-00.000Z" }],
+        },
+      ],
+      unknown_rule_ids: [],
+      on_non_wip_rule_ids: ["rule-fixed"],
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------
