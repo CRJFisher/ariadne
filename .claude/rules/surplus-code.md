@@ -15,10 +15,10 @@ Surplus code is a liability: every exported symbol widens the surface a reader m
 
 `.claude/hooks/detect_dead_code.ts` (Stop) loads each git-modified package with Ariadne and
 blocks on any call-graph entry point absent from `.claude/known_entrypoints/<package>.json`.
+Call-graph reachability is its proxy for the first rule above: an exported symbol nothing
+calls surfaces as an entry point.
 
-That whitelist is for genuine external API only. Do not silence a genuinely-dead symbol by
-adding it — delete the symbol. Two sharp edges: the whitelist matches on symbol **name**
-alone, so a broad name (`run`, `main`, `handle`) silences every collision in the package;
-and a package with no whitelist file gets an empty set, so every entry point there blocks.
+When it blocks, delete the symbol. Add to the whitelist only for genuine external API — it
+matches on symbol name alone, so a broad name silences every collision in the package.
 
-The barrel clauses above are unenforced today — they are review-carried.
+The barrel rules are review-carried.

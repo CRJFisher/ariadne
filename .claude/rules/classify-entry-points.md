@@ -4,54 +4,49 @@ paths: packages/core/src/classify_entry_points/**
 
 # Classify Entry Points
 
-Stage-3 classification: `trace_call_graph` emits raw entry points, and this folder decides
-which of them are genuine.
-
-## Stage Face
-
-`enrich_call_graph.ts` is the stage face — it enriches each raw entry point into an
-`EnrichedEntryPoint` and applies the classification. `auto_classify.ts` is the
-auto-classify sub-step it calls. There is no `classify_entry_points.ts`: the
-folder-ts-is-the-orchestrator convention does not hold here, so read `index.ts` for the
-folder's public surface rather than reaching for a folder-named file.
+`trace_call_graph` emits raw entry points; this folder decides which are genuine.
+`enrich_call_graph.ts` is the stage face, calling `auto_classify.ts` as its sub-step.
+`index.ts` is the folder's public surface — there is no folder-named orchestrator here.
 
 ## Adding a Builtin Classifier
 
-A classifier is one `builtins/check_<group_id>.ts` file plus two lines in the
-`builtins/index.ts` barrel (an import and a `BUILTIN_CHECKS` entry).
+Three artifacts, all required. Ship the first two and the check is dead code: dispatch is by
+the registry row's `classifier.function_name`, so nothing reaches a check with no row.
 
-The name appears in three forms, and getting the transform wrong fails at runtime, not at
-the hook:
+1. `builtins/check_<group_id>.ts`.
+2. Two lines in `builtins/index.ts` — the import and the `BUILTIN_CHECKS` entry.
+3. A registry row, which you cannot write. Stage a draft and hand it to the human for
+   `reconcile_registry.ts --stage <draft> --apply`.
 
-| Form              | Shape                            | Example                        |
-| ----------------- | -------------------------------- | ------------------------------ |
-| Registry `group_id` | hyphenated                     | `py-dunder-protocol`           |
-| Filename          | `check_<group_id>.ts`, hyphenated | `check_py-dunder-protocol.ts` |
-| Exported function / `BUILTIN_CHECKS` key / registry `classifier.function_name` | underscored | `check_py_dunder_protocol` |
+One `group_id`, two spellings: it is hyphenated (`py-dunder-protocol`) and names the file
+(`check_py-dunder-protocol.ts`); the exported function, its `BUILTIN_CHECKS` key, and the
+registry `classifier.function_name` are all the underscored form
+(`check_py_dunder_protocol`). A mismatch fails at runtime. The filename↔`group_id` bijection
+is load-bearing: `reconcile-registry` maps a row to its file by that name and unlinks
+`check_<group_id>.ts` on retire.
 
-The filename↔`group_id` bijection is load-bearing: `reconcile-registry` maps a registry row
-to its file by that name, and unlinks `check_<group_id>.ts` on retire.
+Two constraints bind the check body, both guarded by `builtins/field_denylist.test.ts`:
 
-## Language Is Threaded, Never Re-Derived
+- Read `language` off the `BuiltinCheckFn` parameter. A `detect_language` import or an
+  extension gate fails the build — see `@.claude/rules/language-patterns.md`.
+- Never key on `tree_size` or `definition_features`. Both are absent from the `TriageEntry`
+  the author validates against, so a check reading them passes staging and misfires later.
 
-Language arrives as the `language` parameter on `BuiltinCheckFn`, threaded from parse
-ingress. Never re-derive it inside this folder — no `detect_language` import, no
-`.endsWith(".py")` extension gate. `builtins/field_denylist.test.ts` fails the build on
-either. See `@.claude/rules/language-patterns.md`.
+`registry_permanent_data.ts` is generated — regenerate it, never hand-edit it.
 
-`registry_permanent_data.ts` is generated from the registry — never hand-edit it.
+## Enforcement
 
-## Hook Enforcement
+Automatic: `file_naming_validator.ts` (PreToolUse) requires a lowercase stem separated by
+hyphens or underscores under `builtins/`; it neither requires the `check_` prefix nor opens
+the registry, so a stem that is not a real `group_id` passes. `registry_write_guard.ts`
+(PreToolUse) routes every registry write to a per-edit human `ask`. `run_tests_stop.ts`
+(Stop) scopes vitest to the directories of changed `.ts` files, so a `builtins/` edit runs
+`field_denylist.test.ts` but not `registry_permanent_data.sync.test.ts` one level up, and a
+registry-JSON edit runs neither — run the sync test yourself after `--promote`.
 
-- `.claude/hooks/file_naming_validator.ts` (PreToolUse) enforces kebab-case filenames under
-  `builtins/`. It does **not** open the registry, so it cannot catch a stem that is not a
-  real `group_id`.
-- `.claude/skills/triage/scripts/check_registry.ts` is what actually checks the bijection's
-  other half: it rejects a `classifier.function_name` absent from `BUILTIN_CHECKS`.
-- `.claude/hooks/registry_write_guard.ts` (PreToolUse) routes every registry write to a
-  per-edit human `ask`.
-- `run_tests_stop.ts` (Stop) runs `registry_permanent_data.sync.test.ts`, the byte-equality
-  drift guard between the registry and the bundled core slice.
+On demand: `.claude/skills/triage/scripts/check_registry.ts` rejects a `function_name`
+absent from `BUILTIN_CHECKS`. Nothing invokes it automatically; run it or the
+`reconcile-registry` skill.
 
-Lifecycle — who may write the registry, and how a rule is created, promoted, or retired —
-is `@.claude/rules/classifier-lifecycle.md`.
+Lifecycle — who may write the registry, and how a rule is created, promoted, or retired — is
+`@.claude/rules/classifier-lifecycle.md`.

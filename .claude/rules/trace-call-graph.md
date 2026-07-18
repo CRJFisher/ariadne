@@ -54,6 +54,4 @@ The `ResolutionRegistry` tracks these as `IndirectReachability` entries, and the
 
 ## Hook Enforcement
 
-`.claude/hooks/file_naming_validator.ts` (PreToolUse) enforces this folder's module naming,
-and `file_naming_validator_stop.ts` re-checks at Stop. Downstream classification of these raw
-entry points is `@.claude/rules/classify-entry-points.md`.
+Naming is hook-enforced by `file_naming_validator.ts` — see `@.claude/rules/file-naming.md`.

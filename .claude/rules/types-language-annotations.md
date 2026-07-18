@@ -5,19 +5,17 @@ paths: packages/types/src/**
 # Language Annotations in @ariadnejs/types
 
 This package expresses the language axis as embedded annotated unions, not per-language
-files. Every union member or field that applies to a subset of the four languages carries an
-`@language` tag naming them.
+files. Every union member or field applying to a subset of the four languages carries an
+`@language` tag naming them — `type_cast`=typescript, `dunder_protocol`=python,
+`path_prefix`=rust.
 
-- Tag form is either JSDoc (`* @language rust`) or an adjacent line comment
-  (`// @language python`) — both are current practice.
-- Multiple languages are comma-separated with no spaces: `@language javascript,typescript`.
-- Live examples: `type_cast` → `@language typescript` (`resolution_failure.ts`),
-  `dunder_protocol` → `@language python` (`classified_entry_point.ts`, `known_issues.ts`),
-  `path_prefix` → `@language rust` (`symbol_references.ts`).
+Use JSDoc (`* @language rust`) where the member already has a doc block, an adjacent line
+comment (`// @language python`) otherwise. Separate multiples with commas and no spaces:
+`@language javascript,typescript`.
 
-An unannotated language-specific member makes the add-a-language audit un-enumerable:
-`grep -rn "@language" packages/types/src` must return the complete set.
+Tag every language-subset member you add or edit. Backfill is incomplete, so
+`grep -rn "@language" packages/{types,core}/src` returns the tagged set, not the true set —
+every untagged member is a hole in the add-a-language audit. The same tag marks inline
+language branches in core: `@.claude/rules/language-patterns.md`.
 
-Enforcement: none. No hook or test checks for the tag — this is convention, and the
-add-a-language audit is the consumer that silently under-reports when a tag is missing.
-`build_stop.ts` catches an unhandled union member, which is a different failure.
+Enforcement: none — the tag is review-carried.

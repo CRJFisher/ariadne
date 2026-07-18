@@ -32,12 +32,11 @@ project/
 ├── test_dir_patterns.ts              # TEST_DIR_PATTERNS + directory-name test markers
 ├── extract_parameters.ts             # Parameter extraction from definitions
 ├── fix_import_locations.ts           # Import location correction
-└── index.ts                          # project barrel
+└── index.ts
 ```
 
-Enforcement: `.claude/hooks/file_naming_validator.ts` (PreToolUse) enforces the
-`{feature}.{language}.ts` naming this layout reflects; `file_naming_validator_stop.ts`
-re-checks at Stop.
+Enforcement: naming is hook-enforced by `file_naming_validator.ts` — see
+`@.claude/rules/file-naming.md`.
 
 ## Key Registries
 

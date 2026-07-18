@@ -99,6 +99,5 @@ When a file changes, the `Project` class:
 
 ## Hook Enforcement
 
-`.claude/hooks/file_naming_validator.ts` (PreToolUse) enforces the `{feature}.{language}.ts`
-naming this layout reflects, and `file_naming_validator_stop.ts` re-checks at Stop.
-`import_resolution/` is the reference marshaller shape — see `@.claude/rules/language-patterns.md`.
+Naming is hook-enforced by `file_naming_validator.ts` — see `@.claude/rules/file-naming.md`.
+`import_resolution/` is the reference marshaller shape: `@.claude/rules/language-patterns.md`.
