@@ -1,7 +1,7 @@
 ---
 id: TASK-362.12
 title: Add the stage-boundary Stop hook and its paired stage-boundaries rule
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-05 11:39"
 labels:
@@ -43,8 +43,20 @@ Create `.claude/rules/stage-boundaries.md` (`paths: packages/core/src/**`), ~15 
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 stage_boundary_stop.ts blocks value-imports from a lower to a higher pipeline stage and registries/**->call_resolution/**; import type is exempt
-- [ ] #2 each changed index.ts may only re-export its own subtree; a zero-export zero-importer barrel is flagged dead
-- [ ] #3 test uses the four real review violations as fixtures; ships warn-only until 362.6, then blocks
-- [ ] #4 .claude/rules/stage-boundaries.md (paths: packages/core/src/\*\*) restates the stage order and barrel contract
+- [x] #1 stage_boundary_stop.ts blocks value-imports from a lower to a higher pipeline stage and registries/**->call_resolution/**; import type is exempt
+- [x] #2 each changed index.ts may only re-export its own subtree; a zero-export zero-importer barrel is flagged dead
+- [x] #3 test uses the four real review violations as fixtures; ships warn-only until 362.6, then blocks
+- [x] #4 .claude/rules/stage-boundaries.md (paths: packages/core/src/\*\*) restates the stage order and barrel contract
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+The core pipeline's dependency direction — `index_single_file` (1) → `resolve_references` (2) → `trace_call_graph` / `classify_entry_points` (3), orchestrated by `project/` — is a contract nothing previously enforced. This task closes that gap at the enforce layer with a Stop hook over the two deterministic invariants (value-import direction and barrel subtree ownership), paired with a path-scoped rule that states the contract at write time, with zero always-on context.
+
+The invariant logic lives in `.claude/hooks/stage_boundary.ts` as pure functions over `{ path, content }` records; the thin `.claude/hooks/stage_boundary_stop.ts` wrapper supplies git state (`utils.get_changed_files`) and the filesystem, following the repo's logic-module + `_stop.ts` hook convention. Imports are parsed with the TypeScript compiler API rather than regexes so comments, template literals, multi-line statements, and inline `{ type X }` specifiers classify exactly — a blocking hook cannot afford text-match false positives. `STAGE_ORDER` is the source of truth; `project` is an Infinity sentinel, which makes "project imports anything" and "nothing imports project" the same comparison. The `registries → call_resolution` ban is a dedicated same-stage rule.
+
+The hook ships blocking, not warn-only: 362.6 is merged, and a whole-tree sweep of all 312 core source files returns zero violations. The two back-edges 362.6 documented as out-of-scope watch items (`trace_call_graph` → `project/detect_test_file`, `classify_entry_points` → `project/file_loading`) are pinned in `GRANDFATHERED_EDGES` — exact `file → specifier` pairs, so any new edge still blocks — and each entry retires when its shared primitive is lifted out of `project/`. Of the four review violations used as test fixtures, two block (the `project/index.ts` barrel escape, `registries/type.ts` → `call_resolution`) and two are asserted as allowed — they were relocation judgment calls, outside the deterministic rule (later-stage → earlier-stage; project → any stage), and the tests document that precision boundary.
+
+Navigate: `stage_boundary.ts` owns the contract, `stage_boundary_stop.ts` owns the plumbing, `stage_boundary.test.ts` is the behavioral spec (41 cases), `.claude/rules/stage-boundaries.md` is the agent-facing statement, and CI runs the test via the config-less root vitest step in `.github/workflows/test.yml`. Known scope edges, deliberate: dynamic `import()` and two-step barrel evasion (`import` + local `export`) are unchecked; the hook scans changed files only (tree-wide regressions surface when a file is next edited); on git failure it fails open, matching sibling hooks.

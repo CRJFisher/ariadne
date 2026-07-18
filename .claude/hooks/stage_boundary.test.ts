@@ -214,7 +214,45 @@ describe("check_stage", () => {
     expect(violations).toEqual([]);
   });
 
-  it("resolves a .js specifier suffix to its .ts target", () => {
+  it("blocks a default import carrying only type named bindings across stages", () => {
+    const violations = check_stage([
+      file(
+        `${CORE}/index_single_file/parsed_file.ts`,
+        `import DefinitionRegistry, { type Options } from "../resolve_references/registries/definition";\n`
+      ),
+    ]);
+    expect(violations).toEqual<Violation[]>([
+      {
+        kind: "stage_import",
+        file: `${CORE}/index_single_file/parsed_file.ts`,
+        line: 1,
+        specifier: "../resolve_references/registries/definition",
+        importer_stage: 1,
+        target_stage: 2,
+      },
+    ]);
+  });
+
+  it("blocks an export star as namespace crossing to a later stage", () => {
+    const violations = check_stage([
+      file(
+        `${CORE}/index_single_file/definitions.ts`,
+        `export * as registries from "../resolve_references/registries/type";\n`
+      ),
+    ]);
+    expect(violations).toEqual<Violation[]>([
+      {
+        kind: "stage_import",
+        file: `${CORE}/index_single_file/definitions.ts`,
+        line: 1,
+        specifier: "../resolve_references/registries/type",
+        importer_stage: 1,
+        target_stage: 2,
+      },
+    ]);
+  });
+
+  it("blocks a cross-stage value import written with a .js specifier suffix", () => {
     const violations = check_stage([
       file(
         `${CORE}/index_single_file/parsed_file.ts`,
@@ -325,6 +363,21 @@ describe("check_barrels", () => {
         file: `${CORE}/project/index.ts`,
         line: 1,
         specifier: "../resolve_references/registries/definition",
+      },
+    ]);
+  });
+
+  it("blocks a re-export from a sibling directory sharing the barrel dir's name prefix", () => {
+    const barrel = file(
+      `${CORE}/project/index.ts`,
+      `export { x } from "../project_queries/x";\n`
+    );
+    expect(check_barrels([barrel], [])).toEqual<Violation[]>([
+      {
+        kind: "barrel_escape",
+        file: `${CORE}/project/index.ts`,
+        line: 1,
+        specifier: "../project_queries/x",
       },
     ]);
   });
@@ -491,6 +544,35 @@ describe("format_violation", () => {
       `packages/core/src/resolve_references/name_resolution.ts:7 value-imports ` +
         `"../project/project" — stage 2 must not import project (the orchestrator); ` +
         `use import type or move the code to the owning stage`
+    );
+  });
+
+  it("names the forbidden edge for a registries import", () => {
+    expect(
+      format_violation({
+        kind: "registries_import",
+        file: `${CORE}/resolve_references/registries/type.ts`,
+        line: 20,
+        specifier: "../call_resolution/method_lookup",
+      })
+    ).toEqual(
+      `packages/core/src/resolve_references/registries/type.ts:20 value-imports ` +
+        `"../call_resolution/method_lookup" — registries never import call_resolution`
+    );
+  });
+
+  it("names the escaping re-export for a barrel escape", () => {
+    expect(
+      format_violation({
+        kind: "barrel_escape",
+        file: `${CORE}/project/index.ts`,
+        line: 1,
+        specifier: "../resolve_references/registries/definition",
+      })
+    ).toEqual(
+      `packages/core/src/project/index.ts:1 re-exports ` +
+        `"../resolve_references/registries/definition" — an index.ts re-exports only ` +
+        `its own directory subtree`
     );
   });
 

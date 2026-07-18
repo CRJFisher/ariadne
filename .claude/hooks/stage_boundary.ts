@@ -129,7 +129,7 @@ export function extract_module_edges(file: SourceFile): ModuleEdge[] {
   return edges;
 }
 
-export function has_exports(file: SourceFile): boolean {
+function has_exports(file: SourceFile): boolean {
   const sf = parse(file);
   return sf.statements.some(
     (stmt) =>
@@ -147,7 +147,7 @@ export function has_exports(file: SourceFile): boolean {
  * repo path, or null when out of scope (bare/cross-package specifiers, and
  * targets that leave packages/core/src).
  */
-export function resolve_relative(
+function resolve_relative(
   importer_path: string,
   specifier: string
 ): string | null {
@@ -165,7 +165,7 @@ export function resolve_relative(
  * Cross-cutting dirs (logging, persistence), root files, and unknown dirs
  * have no stage (null) and are exempt from the direction rule.
  */
-export function stage_of(repo_path: string): number | null {
+function stage_of(repo_path: string): number | null {
   if (!repo_path.startsWith(`${CORE_SRC}/`)) return null;
   const top = repo_path.slice(CORE_SRC.length + 1).split("/")[0];
   return STAGE_ORDER[top] ?? null;
