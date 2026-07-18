@@ -2,12 +2,13 @@ import * as path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import { repo_root } from "@ariadnejs/skill-protocol";
+
 import {
   backlog_comprehension_staging_path,
   backlog_docs_dir,
   backlog_root_dir,
   backlog_tasks_dir,
-  get_repo_root,
   plan_dir,
   plan_membership_overrides_path,
   plan_staging_manifest_path,
@@ -77,7 +78,7 @@ describe("backlog_tasks_dir", () => {
 
   it("falls back to <repo>/backlog/tasks", () => {
     delete process.env.ARIADNE_BACKLOG_DIR_OVERRIDE;
-    expect(backlog_tasks_dir()).toEqual(path.join(get_repo_root(), "backlog", "tasks"));
+    expect(backlog_tasks_dir()).toEqual(path.join(repo_root(), "backlog", "tasks"));
   });
 });
 
@@ -89,7 +90,7 @@ describe("backlog_root_dir", () => {
 
   it("falls back to <repo>/backlog", () => {
     delete process.env.ARIADNE_BACKLOG_DIR_OVERRIDE;
-    expect(backlog_root_dir()).toEqual(path.join(get_repo_root(), "backlog"));
+    expect(backlog_root_dir()).toEqual(path.join(repo_root(), "backlog"));
   });
 });
 

@@ -21,7 +21,7 @@ import type { EntryPointDiagnostics } from "@ariadnejs/types";
 import {
   aggregate_classifier_regressions,
   type ClassifierRegressionInput,
-} from "@ariadnejs/skill-fs";
+} from "./classifier_regressions.js";
 import {
   TRIAGE_RESULTS_SCHEMA_VERSION,
   type ConfirmedUnreachableSource,

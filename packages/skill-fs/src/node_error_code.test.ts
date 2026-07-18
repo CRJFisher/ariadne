@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { error_code } from "./errors.js";
+import { error_code } from "./node_error_code.js";
 
 describe("error_code", () => {
   it("returns the .code string when present", () => {

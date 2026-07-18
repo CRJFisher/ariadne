@@ -1,5 +1,7 @@
 import { basename, dirname } from "path";
 
+import { is_in_test_dir } from "./test_dir_patterns";
+
 export function is_test_file_javascript(file_path: string): boolean {
   const file_name = basename(file_path);
   const dir_name = dirname(file_path);
@@ -24,15 +26,7 @@ export function is_test_file_javascript(file_path: string): boolean {
     return true;
   }
 
-  if (dir_name.endsWith("__tests__") || dir_name.includes("__tests__/")) {
-    return true;
-  }
-
-  if (dir_name.endsWith("/tests") || dir_name.includes("/tests/")) {
-    return true;
-  }
-
-  if (dir_name.endsWith("/test") || dir_name.includes("/test/")) {
+  if (is_in_test_dir(dir_name)) {
     return true;
   }
 

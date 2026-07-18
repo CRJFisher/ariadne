@@ -345,25 +345,25 @@ This skill does not read or write this whitelist.
 
 The skill is a thin caller of `@ariadnejs/core`. Classification (`enrich_call_graph`, `extract_entry_point_diagnostics`, the builtin classifiers, and the bundled permanent registry slice) lives in `packages/core/src/classify_entry_points/`. Entry-point and known-issues types live in `@ariadnejs/types`. The skill modules under `src/` orchestrate the run lifecycle on top of that core API.
 
-| Module                                              | Purpose                                                                                                                                                                 |
-| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `known_issues_registry.ts`                          | Full-registry loader (skill-side) — reads the canonical `known_issues/registry.json`, including `wip` rules, and hands it to `enrich_call_graph` as a registry override |
-| `prepare_triage.ts`                                 | Run-namespaced orchestration: call core's `enrich_call_graph` with the full registry, partition into known-unreachable / TP-cache / llm-triage                          |
-| `build_triage_entries.ts`                           | Assemble `TriageEntry` records from prepared buckets                                                                                                                    |
-| `finalize/output.ts`                                | Build the published v5 envelope from the per-entry verdict files (pure); attaches the deterministic core fault diagnostics to each `novel_issues[]` row                 |
-| `finalize/verdict_ledger.ts`                        | Shared per-entry verdict loader (`results/<entry_index>.json`); used by both `finalize/merge_results.ts` and `finalize_triage.ts`                                       |
-| `finalize/merge_results.ts`                         | Merge investigator result files into triage state                                                                                                                       |
-| `verdict/triage_verdict.ts`                         | `TriageVerdict` discriminated union + strict runtime parser; the published `NovelIssue` row type                                                                        |
-| `@ariadnejs/skill-fs` · `classifier_regressions.ts` | `aggregate_classifier_regressions` — finalize-time per-rule rollup of `fp-classifier-regression` verdicts (used only by triage's finalize)                              |
-| `dispense/dispense_payload.ts`                      | Build the per-entry dispense payload (entry context + in-scope registry slice)                                                                                          |
-| `triage_state_types.ts`                             | Triage state types (`TriageState`, `TriageEntry`, `TriageEntryResult`)                                                                                                  |
-| `store/paths.ts`                                    | Triage state file locations                                                                                                                                             |
-| `cli_args.ts`                                       | Required-flag CLI helpers (`parse_project_arg`, `parse_run_id_arg`)                                                                                                     |
-| `finalize/confirmed_unreachable_reuse.ts`           | TP cache derivation — short-circuits the LLM investigator across runs at the same commit                                                                                |
-| `store/run_discovery.ts`                            | Run-id enumeration, manifest reading, prune protection                                                                                                                  |
-| `store/analysis_output.ts`                          | Timestamped analysis output JSON I/O                                                                                                                                    |
-| `project_id.ts`                                     | Project-identifier derivation (`path_to_project_id`, `project_id_from_config`)                                                                                          |
-| `@ariadnejs/skill-fs/require-node-import-tsx`       | Side-effect guard shared with `plan`: aborts if invoked via `tsx` CLI instead of `node --import tsx`                                                                    |
+| Module                                        | Purpose                                                                                                                                                                 |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `known_issues_registry.ts`                    | Full-registry loader (skill-side) — reads the canonical `known_issues/registry.json`, including `wip` rules, and hands it to `enrich_call_graph` as a registry override |
+| `prepare_triage.ts`                           | Run-namespaced orchestration: call core's `enrich_call_graph` with the full registry, partition into known-unreachable / TP-cache / llm-triage                          |
+| `build_triage_entries.ts`                     | Assemble `TriageEntry` records from prepared buckets                                                                                                                    |
+| `finalize/output.ts`                          | Build the published v5 envelope from the per-entry verdict files (pure); attaches the deterministic core fault diagnostics to each `novel_issues[]` row                 |
+| `finalize/verdict_ledger.ts`                  | Shared per-entry verdict loader (`results/<entry_index>.json`); used by both `finalize/merge_results.ts` and `finalize_triage.ts`                                       |
+| `finalize/merge_results.ts`                   | Merge investigator result files into triage state                                                                                                                       |
+| `verdict/triage_verdict.ts`                   | `TriageVerdict` discriminated union + strict runtime parser; the published `NovelIssue` row type                                                                        |
+| `finalize/classifier_regressions.ts`          | `aggregate_classifier_regressions` — finalize-time per-rule rollup of `fp-classifier-regression` verdicts (used only by triage's finalize)                              |
+| `dispense/dispense_payload.ts`                | Build the per-entry dispense payload (entry context + in-scope registry slice)                                                                                          |
+| `triage_state_types.ts`                       | Triage state types (`TriageState`, `TriageEntry`, `TriageEntryResult`)                                                                                                  |
+| `store/paths.ts`                              | Triage state file locations                                                                                                                                             |
+| `cli_args.ts`                                 | Required-flag CLI helpers (`parse_project_arg`, `parse_run_id_arg`)                                                                                                     |
+| `finalize/confirmed_unreachable_reuse.ts`     | TP cache derivation — short-circuits the LLM investigator across runs at the same commit                                                                                |
+| `store/run_discovery.ts`                      | Run-id enumeration, manifest reading, prune protection                                                                                                                  |
+| `store/analysis_output.ts`                    | Timestamped analysis output JSON I/O                                                                                                                                    |
+| `project_id.ts`                               | Project-identifier derivation (`path_to_project_id`, `project_id_from_config`)                                                                                          |
+| `@ariadnejs/skill-fs/require-node-import-tsx` | Side-effect guard shared with `plan`: aborts if invoked via `tsx` CLI instead of `node --import tsx`                                                                    |
 
 ## Reference
 
