@@ -90,24 +90,24 @@ Closeout:
 Every row of the program's 36-row small-items table
 (`backlog/drafts/ia-review.refactor-program.md`), cross-referenced to the
 sub-task that owns it. Ownership sums to exactly 36; no row is unowned.
-Statuses reflect the tree at the audit commit: **landed** (owner is Done and
-the artifact is verifiable in-tree), **this task** (landed by 362.8),
-**rejected** (recorded reason), **pending** (owner not yet Done — these rows
-re-verify when 362.5/.6/.7 merge; the audit cannot close them early).
+Statuses: **landed** (owner is Done and the artifact is verifiable
+in-tree), **this task** (landed by 362.8), **rejected** (recorded reason).
+Every row is closed: all owning sub-tasks (362.1–.7) are Done and each
+artifact was re-verified against the merged tree.
 
 | Row | Item | Owner | Status |
 | --- | --- | --- | --- |
-| 1 | `extract_nested_definitions.ts` → `extract_parameters.ts` | 362.6 | pending |
+| 1 | `extract_nested_definitions.ts` → `extract_parameters.ts` | 362.6 | landed |
 | 2 | `classify_entry_points.ts` → `auto_classify.ts` | 362.4 | landed |
 | 3 | `definitions.ts` → `definition_builder.ts` | 362.2 | landed |
 | 4 | `scopes/utils.ts` → `scope_lookup.ts` | 362.2 | landed |
-| 5 | `introspection/` → `project_queries/` | 362.6 | pending |
-| 6 | delete `list_name_collisions.ts` | 362.6 | pending |
-| 7 | `explain_call_site` wire-or-delete decision | 362.6 | pending |
+| 5 | `introspection/` → `project_queries/` | 362.6 | landed — subsumed: with rows 6 and 7 deleting both members, the empty folder is removed rather than renamed |
+| 6 | delete `list_name_collisions.ts` | 362.6 | landed |
+| 7 | `explain_call_site` wire-or-delete decision | 362.6 | landed — decided delete per YAGNI (zero consumers; the MCP core tool group never adopted it) |
 | 8 | `is_python_file` → `registries/export.python.ts` | 362.3 | landed |
 | 9 | `file_folders_test_helper.ts` → `resolution_test_helpers.ts` | 362.3 | landed |
 | 10 | `type_preprocessing/constructor.ts` → `constructor_bindings.ts` | 362.3 | landed |
-| 11 | delete `scope_to_definitions_index` | 362.6 | pending |
+| 11 | delete `scope_to_definitions_index` | 362.6 | landed — already absent at 362.6 start; verified gone |
 | 12 | un-export `find_class_definition`/`find_associated_constructor` | 362.3 | landed |
 | 13 | delete orphaned JSDoc in `type_preprocessing/member.ts` | 362.3 | landed |
 | 14 | trim `import_resolution/index.ts` | 362.3 | landed |
@@ -121,17 +121,17 @@ re-verify when 362.5/.6/.7 merge; the audit cannot close them early).
 | 22 | split parser registry out of `query_loader.ts` | 362.1 | landed |
 | 23 | shared pipeline-stage-label const in `core/src/profiling` | 362.8 | rejected — superseded: the profiler subsystem (including `update_file_timing` and the stage labels) was deleted wholesale in `e21bc26a`; no code remains to consolidate |
 | 24 | trim profiling barrel; rename `FileTimingEntry` | 362.8 | rejected — superseded: same deletion (`e21bc26a`) removed `TimingEntry`/`FileTimingEntry` and the barrel itself |
-| 25 | single owner for persistence save-path | 362.6 | pending |
+| 25 | single owner for persistence save-path | 362.6 | landed — as `project/project_cache_strategy.ts` |
 | 26 | move `aggregate_classifier_regressions` into triage finalize | 362.8 | this task |
 | 27 | `skill-fs/src/errors.ts` → `node_error_code.ts` | 362.8 | this task |
-| 28 | `tool_registry.ts` → `register_tools.ts` | 362.7 | pending |
+| 28 | `tool_registry.ts` → `register_tools.ts` | 362.7 | landed |
 | 29 | delete plan's `get_repo_root` for `repo_root` | 362.8 | this task |
-| 30 | delete stale `@deprecated` marker in `type_id.ts` | 362.5 | pending |
-| 31 | delete `SyntacticFeatures.is_inside_try` | 362.5 | pending |
+| 30 | delete stale `@deprecated` marker in `type_id.ts` | 362.5 | landed |
+| 31 | delete `SyntacticFeatures.is_inside_try` | 362.5 | landed |
 | 32 | rewrite `.claude/rules/trace-call-graph.md` | 362.8 | this task (also listed in 362.9 item 1; 362.9 verifies rather than re-edits) |
 | 33 | record the language-mechanism rule in `file-naming.md` | 362.1 | landed |
 | 34 | builtins placement rationale in `builtins/index.ts` | 362.4 | landed |
-| 35 | delete stale `dist/` build fossils | 362.6 | pending |
+| 35 | delete stale `dist/` build fossils | 362.6 | landed — `dist/` is untracked; a clean rebuild produces current `resolution_registry.*` artifacts |
 | 36 | shared `TEST_DIR_PATTERNS` const | 362.8 | this task |
 
 ## Implementation Notes
@@ -164,10 +164,10 @@ sets, so the language split is intact.
 Rows 23 and 24 are rejected, not landed: the profiler subsystem they
 target was deleted wholesale in `e21bc26a`, so no stage labels, timing
 switch, or profiling barrel remain to consolidate. The Closeout Audit
-table above cross-references all 36 rows; the ten rows owned by 362.5,
-362.6, and 362.7 are recorded as pending and re-verify when those tasks
-merge. Row 32 is also listed by 362.9, which verifies rather than
-re-edits.
+table above cross-references all 36 rows and is fully closed: the ten rows
+owned by 362.5, 362.6, and 362.7 were re-verified against the merged tree
+after those tasks landed. Row 32 is also listed by 362.9, which verifies
+rather than re-edits.
 
 Verified by execution: core (3421 tests), skill-fs, skill-protocol,
 triage, and plan suites green; typecheck across all seven tsconfigs;
