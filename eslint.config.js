@@ -231,8 +231,10 @@ export default [
     // route through the process-global loader (packages/core/src/native.ts) so
     // a re-evaluated module registry reuses one set of native class identities.
     // Type-only imports are erased at compile time and stay allowed. The loader
-    // itself and test files (which build throwaway parsers) are exempt.
-    files: ["packages/core/src/**/*.ts"],
+    // itself and test files (which build throwaway parsers) are exempt. Dev
+    // scripts are covered too, so nothing outside the loader requires the
+    // packages directly.
+    files: ["packages/core/src/**/*.ts", "packages/core/scripts/**/*.ts"],
     ignores: [
       "packages/core/src/native.ts",
       "**/*.test.ts",

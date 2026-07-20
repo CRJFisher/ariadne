@@ -12,6 +12,9 @@ import {
 } from "./native";
 import { query_tree } from "./index_single_file/query_code_tree/query_code_tree";
 
+// Deliberately re-derived from the public exports rather than imported from
+// native.ts: the test asserts the store's shape independently, so a change to
+// the loader's own type cannot silently move the goalposts.
 interface NativeStore {
   tree_sitter: typeof Parser;
   javascript: typeof JavaScript;
@@ -47,9 +50,11 @@ function parse(grammar: TreeSitter.Language, code: string): TreeSitter.Tree {
 // re-evaluated registry reuses it rather than minting rival classes.
 describe("native loader", () => {
   it("owns every tree-sitter and grammar identity in one process-global store", () => {
+    // Reverting the loader to a plain `require("tree-sitter")` leaves the store
+    // unpopulated, so native_store() throws and this test fails — its teeth
+    // against the regression are exactly the presence of the global cache.
     const store = native_store();
 
-    expect(store).toBeDefined();
     expect(Parser).toBe(store.tree_sitter);
     expect(Query).toBe(store.tree_sitter.Query);
     expect(JavaScript).toBe(store.javascript);
@@ -59,16 +64,7 @@ describe("native loader", () => {
     expect(COMPILED_QUERY_CACHE).toBe(store.compiled_queries);
   });
 
-  it("re-obtaining tree-sitter via the store is idempotent", () => {
-    const cache = native_store();
-    // A second registry re-runs the loader's `??=`; against the populated
-    // store it returns the first evaluation's objects untouched.
-    const reobtained = (cache.tree_sitter ??= Parser);
-    expect(reobtained).toBe(Parser);
-    expect(reobtained.Query).toBe(Query);
-  });
-
-  it("marshals captures across two independent parses sharing one compiled query", () => {
+  it("marshals the exact captures across two parses sharing one compiled query", () => {
     const first = query_tree("javascript", parse(JavaScript, "const a = 1;"));
     const cached_query = COMPILED_QUERY_CACHE.get("javascript" as Language);
     const second = query_tree(
@@ -76,10 +72,26 @@ describe("native loader", () => {
       parse(JavaScript, "function b() { return 2; }")
     );
 
-    expect(first.length).toBeGreaterThan(0);
-    expect(second.length).toBeGreaterThan(0);
-    // The compiled Query is cached once and reused for the second parse — the
-    // native language reference stays valid across marshalling calls.
+    // Both parses marshal (the crash path is Query.captures) and return the
+    // exact captures for the fixtures — proving the native binding produced
+    // correct data, not merely non-empty data.
+    expect(first.map((c) => c.name)).toEqual([
+      "scope.module",
+      "assignment.variable",
+      "definition.variable",
+      "assignment.variable",
+      "reference.variable",
+      "reference.variable",
+    ]);
+    expect(second.map((c) => c.name)).toEqual([
+      "scope.module",
+      "scope.function",
+      "definition.function",
+      "reference.variable",
+      "return.function",
+      "return.variable",
+    ]);
+    // The compiled Query is cached once and reused for the second parse.
     expect(cached_query).toBe(COMPILED_QUERY_CACHE.get("javascript" as Language));
   });
 });

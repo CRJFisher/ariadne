@@ -16,9 +16,14 @@ import type { Language } from "@ariadnejs/types";
  * binding. Compiled `Query` objects live in the same store because they hold
  * native language references tied to that single evaluation.
  *
+ * tree-sitter's module export IS the Parser class, with Query and Language
+ * attached as statics — so `tree_sitter` is re-exported as `Parser` and
+ * `tree_sitter.Query` yields the Query class.
+ *
  * Every runtime use of tree-sitter and the grammar packages routes through
  * this module, re-exported under the packages' own class names; eslint forbids
- * importing them as values anywhere else. Types still come straight from
+ * importing them as values anywhere else in production code (test files build
+ * throwaway parsers and are exempt). Types still come straight from
  * `tree-sitter` via `import type`, which is erased at compile time and so never
  * re-requires the wrapper.
  */
@@ -35,6 +40,8 @@ interface NativeCache {
   compiled_queries: Map<Language, TreeSitter.Query>;
 }
 
+// One leading underscore (not two) so the internal global key satisfies the
+// naming-convention lint while still reading as private.
 const cache = ((globalThis as { _ariadne_native?: Partial<NativeCache> })
   ._ariadne_native ??= {});
 
