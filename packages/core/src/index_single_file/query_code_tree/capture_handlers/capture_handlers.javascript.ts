@@ -6,7 +6,7 @@
  */
 
 import type { SyntaxNode } from "tree-sitter";
-import type { SymbolName } from "@ariadnejs/types";
+import type { SymbolName, ExportMetadata } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { CaptureNode } from "../../capture_types";
 import type { ProcessingContext } from "../../scopes/processing_context";
@@ -669,7 +669,16 @@ export function handle_import_reexport(
       location,
     });
 
-    const export_info = extract_export_info(export_stmt, name_node.text as SymbolName);
+    // Derive export metadata from this specifier directly. The shared
+    // extract_export_info cache keys named exports by source name, so multiple
+    // re-exports of one source symbol under different aliases (e.g.
+    // `create_class_id as create_js_class_id` and `create_class_id as
+    // create_py_class_id`) would collapse to a single alias and forge a
+    // duplicate export name.
+    const export_metadata: ExportMetadata = {
+      is_reexport: true,
+      export_name: alias_node ? (alias_node.text as SymbolName) : undefined,
+    };
 
     builder.add_import({
       symbol_id: import_id,
@@ -679,7 +688,7 @@ export function handle_import_reexport(
       import_path: extract_import_path(export_stmt),
       import_kind: "named",
       original_name,
-      export: export_info.export,
+      export: export_metadata,
     });
   }
 }

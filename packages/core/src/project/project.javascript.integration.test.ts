@@ -919,4 +919,26 @@ function process(x) {}
     });
   });
 
+  describe("Re-export barrel — multiple aliases of one source (TASK-364.8)", () => {
+    it("registers both aliases without a forged duplicate export", () => {
+      // Two specifiers share the source name create_class_id but carry
+      // distinct aliases, so each must reach ExportRegistry under its own
+      // export name; a source-name-keyed collapse would make update_file
+      // throw "Duplicate export name create_py_class_id".
+      const barrel = file_path("modules/reexport_barrel_multi_alias.js");
+      const content = `export { create_class_id as create_js_class_id } from "./sf_js";
+export { create_class_id as create_py_class_id } from "./sf_py";
+`;
+
+      expect(() => project.update_file(barrel, content)).not.toThrow();
+
+      // Both aliases survive as distinct exports; a collapse would have thrown
+      // above or dropped one of them here.
+      const export_names = Array.from(project.exports.get_exports(barrel))
+        .map((symbol_id) => symbol_id.split(":").pop())
+        .sort();
+      expect(export_names).toEqual(["create_js_class_id", "create_py_class_id"]);
+    });
+  });
+
 });

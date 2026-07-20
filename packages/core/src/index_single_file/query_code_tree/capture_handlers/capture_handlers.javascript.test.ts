@@ -2419,6 +2419,7 @@ export const NESTED = {
       expect(reexport.name).toBe("foo");
       expect(reexport.original_name).toBeUndefined(); // No alias
       expect(reexport.export?.is_reexport).toBe(true);
+      expect(reexport.export?.export_name).toBeUndefined(); // No alias → no distinct export name
     });
 
     it("should handle multiple aliased re-exports in same statement", async () => {
@@ -2448,6 +2449,54 @@ export const NESTED = {
       expect(qux_import!.name).toBe("qux");
       expect(qux_import!.original_name).toBe("baz");
       expect(qux_import!.export?.is_reexport).toBe(true);
+    });
+
+    it("gives each re-export of one source symbol its own alias as export name", async () => {
+      // The symbol_factories barrel re-exports create_class_id under a
+      // per-language alias from two different modules. Both specifiers share
+      // the source name create_class_id, so a source-name-keyed export lookup
+      // would forge a duplicate export named after whichever alias came last.
+      const code = `export { create_class_id as create_js_class_id } from "./symbol_factories.javascript";
+export { create_class_id as create_py_class_id } from "./symbol_factories.python";`;
+      const tree = parser.parse(code);
+      const lines = code.split("\n");
+      const parsed_file = {
+        file_path: TEST_FILE_PATH,
+        file_lines: lines.length,
+        file_end_column: lines[lines.length - 1].length + 1,
+        tree: tree,
+        lang: "javascript" as const,
+      };
+
+      const index = await build_index_single_file(parsed_file, tree, "javascript");
+      const imports = Array.from(index.imported_symbols.values());
+
+      const projected = imports
+        .map((i) => ({
+          name: i.name,
+          original_name: i.original_name,
+          import_path: i.import_path,
+          export_name: i.export?.export_name,
+          is_reexport: i.export?.is_reexport,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      expect(projected).toEqual([
+        {
+          name: "create_js_class_id" as SymbolName,
+          original_name: "create_class_id" as SymbolName,
+          import_path: "./symbol_factories.javascript",
+          export_name: "create_js_class_id" as SymbolName,
+          is_reexport: true,
+        },
+        {
+          name: "create_py_class_id" as SymbolName,
+          original_name: "create_class_id" as SymbolName,
+          import_path: "./symbol_factories.python",
+          export_name: "create_py_class_id" as SymbolName,
+          is_reexport: true,
+        },
+      ]);
     });
   });
 });
