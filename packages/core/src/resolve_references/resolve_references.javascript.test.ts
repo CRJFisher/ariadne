@@ -425,21 +425,122 @@ export function main() {
       });
       temp_dirs.push(temp_dir);
 
-      const new_call = project.resolutions
+      // The `new Widget()` site is captured as exactly one call reference.
+      const widget_calls = project.resolutions
         .get_calls_for_file(file_paths["mod.js"])
-        .find((c) => c.name === ("Widget" as SymbolName));
-      expect(new_call).not.toBeUndefined();
+        .filter((c) => c.name === ("Widget" as SymbolName));
+      expect(widget_calls.length).toEqual(1);
 
-      const widget_entries = project
-        .get_call_graph()
-        .entry_points.filter((ep) => {
-          const node = project.get_call_graph().nodes.get(ep);
-          return (
-            node?.name === ("Widget" as SymbolName) &&
-            node.location.file_path === file_paths["mod.js"]
-          );
-        });
+      const call_graph = project.get_call_graph();
+      // The outer binding is a real call-graph node (so the empty entry-point
+      // result below is non-vacuous), and it is reachable — not an entry point.
+      const widget_nodes = Array.from(call_graph.nodes.values()).filter(
+        (n) =>
+          n.name === ("Widget" as SymbolName) &&
+          n.location.file_path === file_paths["mod.js"],
+      );
+      expect(widget_nodes.length).toEqual(1);
+      const widget_entries = call_graph.entry_points.filter((ep) => {
+        const node = call_graph.nodes.get(ep);
+        return (
+          node?.name === ("Widget" as SymbolName) &&
+          node.location.file_path === file_paths["mod.js"]
+        );
+      });
       expect(widget_entries).toEqual([]);
+    });
+
+    it("resolves the self-reference and the outer binding for a distinct inner name", async () => {
+      // Inner (`fact`) differs from outer (`factorial`); the body scope is named
+      // after the outer var so the outer symbol still owns it. The in-body
+      // self-call resolves to the inner expression name.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "mod.js": `const factorial = function fact(n) {
+  return n <= 1 ? 1 : n * fact(n - 1);
+};
+
+export function run() {
+  return factorial(5);
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const calls = project.resolutions.get_calls_for_file(file_paths["mod.js"]);
+      const outer_call = calls.find(
+        (c) => c.name === ("factorial" as SymbolName),
+      );
+      expect(outer_call!.resolution_failure).toBeUndefined();
+      expect(outer_call!.resolutions.length).toEqual(1);
+      const self_call = calls.find((c) => c.name === ("fact" as SymbolName));
+      expect(self_call!.resolution_failure).toBeUndefined();
+      expect(self_call!.resolutions.length).toEqual(1);
+
+      const call_graph = project.get_call_graph();
+      const factorial_nodes = Array.from(call_graph.nodes.values()).filter(
+        (n) =>
+          n.name === ("factorial" as SymbolName) &&
+          n.location.file_path === file_paths["mod.js"],
+      );
+      expect(factorial_nodes.length).toEqual(1);
+      const stray_entries = call_graph.entry_points.filter((ep) => {
+        const node = call_graph.nodes.get(ep);
+        return (
+          (node?.name === ("factorial" as SymbolName) ||
+            node?.name === ("fact" as SymbolName)) &&
+          node.location.file_path === file_paths["mod.js"]
+        );
+      });
+      expect(stray_entries).toEqual([]);
+    });
+
+    it("indexes an exported binding without a duplicate-export error and exports only the outer name", async () => {
+      // The inner expression name is body-local; registering it as an export
+      // would collide with the outer name in the export registry and abort
+      // indexing. Only the outer name is the module export.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "mod.js": `export const X = function X() {
+  return 1;
+};
+`,
+        "use.js": `import { X } from "./mod.js";
+
+export function run() {
+  return X();
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["use.js"])
+        .find((c) => c.name === ("X" as SymbolName));
+      expect(call!.resolution_failure).toBeUndefined();
+      expect(call!.resolutions.length).toEqual(1);
+    });
+
+    it("does not export the inner expression name of an exported binding", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "mod.js": `export const outer = function inner() {
+  return 1;
+};
+`,
+        "use.js": `import { inner } from "./mod.js";
+
+export function run() {
+  return inner();
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      // `inner` is body-local, never a module export, so the import does not
+      // resolve to it.
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["use.js"])
+        .find((c) => c.name === ("inner" as SymbolName));
+      expect(call!.resolutions).toEqual([]);
+      expect(call!.resolution_failure?.reason).toEqual("name_not_in_scope");
     });
   });
 
