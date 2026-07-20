@@ -88,6 +88,39 @@ function info(code: string, name: string) {
   return extract_export_info(def_name_node(parse(code), name), name as SymbolName);
 }
 
+/**
+ * Locate the name identifier of a named function expression, e.g. the `castArray`
+ * in `exports.castArray = function castArray(){}`. This is the `capture.node` the
+ * @definition.function handler hands to `extract_export_info` for that shape,
+ * whose parent is a function_expression rather than a declaration.
+ */
+function fn_expr_name_node(root: SyntaxNode, name: string): SyntaxNode {
+  function search(node: SyntaxNode): SyntaxNode | undefined {
+    if (
+      node.type === "identifier" &&
+      node.text === name &&
+      node.parent?.type === "function_expression"
+    ) {
+      return node;
+    }
+    for (let i = 0; i < node.childCount; i++) {
+      const child = node.child(i);
+      if (child) {
+        const found = search(child);
+        if (found) return found;
+      }
+    }
+    return undefined;
+  }
+  const found = search(root);
+  if (!found) throw new Error(`no named function expression ${name} found`);
+  return found;
+}
+
+function info_fn_expr(code: string, name: string) {
+  return extract_export_info(fn_expr_name_node(parse(code), name), name as SymbolName);
+}
+
 describe("extract_export_info direct exports", () => {
   it("marks an exported function declaration as exported with no extra metadata", () => {
     expect(info("export function greet() {}", "greet")).toEqual({
@@ -201,6 +234,30 @@ describe("extract_export_info CommonJS exports", () => {
     expect(info(code, "foo")).toEqual({
       is_exported: true,
       export: { export_name: "renamed" as SymbolName },
+    });
+  });
+
+  it("marks a named function expression assigned to exports.name as exported", () => {
+    const code = "exports.castArray = function castArray(v) { return [v]; };";
+    expect(info_fn_expr(code, "castArray")).toEqual({
+      is_exported: true,
+      export: {},
+    });
+  });
+
+  it("marks a named function expression assigned to module.exports.name as exported", () => {
+    const code = "module.exports.isBrowser = function isBrowser() { return false; };";
+    expect(info_fn_expr(code, "isBrowser")).toEqual({
+      is_exported: true,
+      export: {},
+    });
+  });
+
+  it("records the public name when a named function expression's name differs from the property", () => {
+    const code = "exports.publicName = function internalName() {};";
+    expect(info_fn_expr(code, "internalName")).toEqual({
+      is_exported: true,
+      export: { export_name: "publicName" as SymbolName },
     });
   });
 

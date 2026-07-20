@@ -117,6 +117,152 @@ describe("Project Integration - JavaScript", () => {
     });
   });
 
+  describe("CommonJS whole-namespace method dispatch", () => {
+    // `const ns = require('./mod'); ns.fn()` must resolve `fn` against the
+    // module's `exports.fn` / `module.exports.fn` definition, and the target
+    // must count as reached so it is not a false unreachable entry point.
+    function find_function_id(mod_file: FilePath, name: string) {
+      const index = project.get_index_single_file(mod_file);
+      expect(index).toBeDefined();
+      const fn = Array.from(index!.functions.values()).find(
+        (f) => f.name === (name as SymbolName)
+      );
+      expect(fn).toBeDefined();
+      return fn!.symbol_id;
+    }
+
+    function method_call_targets(main_file: FilePath, name: string) {
+      const calls = project.resolutions.get_calls_for_file(main_file);
+      const call = calls.find((c) => c.name === (name as SymbolName));
+      expect(call).toBeDefined();
+      return call!.resolutions.map((r) => r.symbol_id);
+    }
+
+    it("resolves a named-function-expression export and marks it reached", () => {
+      const mod = [
+        "exports.castArray = function castArray(v) { return [v]; };",
+        "module.exports.isBrowser = function isBrowser() { return false; };",
+      ].join("\n");
+      const main = [
+        "const utils = require('./ns_named');",
+        "function run() {",
+        "  utils.castArray(1);",
+        "  utils.isBrowser();",
+        "}",
+      ].join("\n");
+      const mod_file = file_path("modules/ns_named.js");
+      const main_file = file_path("modules/main_ns_named.js");
+
+      project.update_file(mod_file, mod);
+      project.update_file(main_file, main);
+
+      const cast_array_id = find_function_id(mod_file, "castArray");
+      const is_browser_id = find_function_id(mod_file, "isBrowser");
+
+      expect(method_call_targets(main_file, "castArray")).toContain(cast_array_id);
+      expect(method_call_targets(main_file, "isBrowser")).toContain(is_browser_id);
+
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      expect(referenced.has(cast_array_id)).toBe(true);
+      expect(referenced.has(is_browser_id)).toBe(true);
+    });
+
+    it("resolves anonymous-function and arrow exports and attributes their bodies", () => {
+      const mod = [
+        "exports.escape = function (html) { return helper(html); };",
+        "module.exports.uniqueID = () => next();",
+        "function helper(x) { return x; }",
+        "function next() { return 1; }",
+      ].join("\n");
+      const main = [
+        "const u = require('./ns_anon');",
+        "function run() {",
+        "  u.escape('x');",
+        "  u.uniqueID();",
+        "}",
+      ].join("\n");
+      const mod_file = file_path("modules/ns_anon.js");
+      const main_file = file_path("modules/main_ns_anon.js");
+
+      project.update_file(mod_file, mod);
+      project.update_file(main_file, main);
+
+      const escape_id = find_function_id(mod_file, "escape");
+      const unique_id = find_function_id(mod_file, "uniqueID");
+      const helper_id = find_function_id(mod_file, "helper");
+      const next_id = find_function_id(mod_file, "next");
+
+      expect(method_call_targets(main_file, "escape")).toContain(escape_id);
+      expect(method_call_targets(main_file, "uniqueID")).toContain(unique_id);
+
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      // The exports themselves are reached via CJS-namespace dispatch...
+      expect(referenced.has(escape_id)).toBe(true);
+      expect(referenced.has(unique_id)).toBe(true);
+      // ...and their bodies' calls are attributed, so the locals they call are
+      // reached rather than surfacing as false unreachable entry points.
+      expect(referenced.has(helper_id)).toBe(true);
+      expect(referenced.has(next_id)).toBe(true);
+    });
+
+    it("does not treat a non-exports member assignment as an export", () => {
+      const mod = [
+        "exports.real = () => 1;",
+        "notExports.fake = () => 2;",
+      ].join("\n");
+      const main = [
+        "const u = require('./ns_guard');",
+        "function run() {",
+        "  u.real();",
+        "  u.fake();",
+        "}",
+      ].join("\n");
+      const mod_file = file_path("modules/ns_guard.js");
+      const main_file = file_path("modules/main_ns_guard.js");
+
+      project.update_file(mod_file, mod);
+      project.update_file(main_file, main);
+
+      const mod_index = project.get_index_single_file(mod_file);
+      const fake = Array.from(mod_index!.functions.values()).find(
+        (f) => f.name === ("fake" as SymbolName)
+      );
+      expect(fake).toBeUndefined();
+      expect(method_call_targets(main_file, "real")).toHaveLength(1);
+      expect(method_call_targets(main_file, "fake")).toHaveLength(0);
+    });
+
+    it("exports the arrow, not a same-named local, without a duplicate-export conflict", () => {
+      const mod = [
+        "function dup() { return 'local'; }",
+        "exports.dup = () => 'exported';",
+        "function useLocal() { return dup(); }",
+      ].join("\n");
+      const main = [
+        "const u = require('./ns_shadow');",
+        "function run() { u.dup(); }",
+      ].join("\n");
+      const mod_file = file_path("modules/ns_shadow.js");
+      const main_file = file_path("modules/main_ns_shadow.js");
+
+      project.update_file(mod_file, mod);
+      project.update_file(main_file, main);
+
+      const mod_index = project.get_index_single_file(mod_file);
+      const dups = Array.from(mod_index!.functions.values()).filter(
+        (f) => f.name === ("dup" as SymbolName)
+      );
+      // Two distinct definitions share the name; exactly one is exported.
+      expect(dups.length).toBe(2);
+      expect(dups.filter((f) => f.is_exported).length).toBe(1);
+
+      const exported_dup = dups.find((f) => f.is_exported)!;
+      expect(method_call_targets(main_file, "dup")).toContain(
+        exported_dup.symbol_id
+      );
+    });
+  });
+
   describe("ES6 Module Resolution", () => {
     it("should resolve import/export", async () => {
       const utils = load_source("modules/utils_es6.js");

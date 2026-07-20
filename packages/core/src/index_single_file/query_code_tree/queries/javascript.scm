@@ -96,6 +96,28 @@
   value: (function_expression) @definition.anonymous_function
 )
 
+; === CommonJS property exports of a function value ===
+; exports.NAME = function () {} / () => {}   and   module.exports.NAME = ...
+; The property names an exported top-level function. Named function
+; expressions are excluded (!name): they already produce a
+; @definition.function (function_expression rule above) and are marked exported
+; through the export cache. The body scope attaches to this property-located
+; definition via find_body_scope_for_definition, exactly as for
+; `const NAME = () => {}`.
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @_obj
+    property: (property_identifier) @definition.function.commonjs_export)
+  right: [(function_expression !name) (arrow_function)]
+  (#eq? @_obj "exports"))
+
+(assignment_expression
+  left: (member_expression
+    object: (member_expression) @_obj
+    property: (property_identifier) @definition.function.commonjs_export)
+  right: [(function_expression !name) (arrow_function)]
+  (#eq? @_obj "module.exports"))
+
 ; Variable declarations with assignments
 (variable_declarator
   name: (identifier) @definition.variable @assignment.variable

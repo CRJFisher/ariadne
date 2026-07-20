@@ -196,6 +196,39 @@ export function handle_definition_function(
   );
 }
 
+/**
+ * A CommonJS property export whose value is an anonymous function or arrow —
+ * `exports.NAME = function () {}` / `module.exports.NAME = () => {}`. The
+ * definition is named after the export property (the capture is the property
+ * identifier) and marked exported directly, so `ns.NAME()` resolves against it.
+ *
+ * Named function expressions are handled elsewhere (the function_expression
+ * definition rule plus the export cache) and are excluded by the query's
+ * `!name`. The property-identifier location lets `find_body_scope_for_definition`
+ * attach the function body, the same geometry as `const NAME = () => {}`.
+ */
+export function handle_definition_commonjs_export_function(
+  capture: CaptureNode,
+  builder: DefinitionBuilder,
+  context: ProcessingContext
+): void {
+  const func_id = create_function_id(capture);
+  const docstring = consume_documentation(capture.location);
+
+  builder.add_function(
+    {
+      symbol_id: func_id,
+      name: capture.text,
+      location: capture.location,
+      scope_id: context.get_scope_id(capture.location),
+      is_exported: true,
+      export: {},
+      docstring,
+    },
+    capture
+  );
+}
+
 export function handle_definition_arrow(
   capture: CaptureNode,
   builder: DefinitionBuilder,
@@ -959,6 +992,7 @@ export const JAVASCRIPT_HANDLERS: HandlerRegistry = {
   "definition.method": handle_definition_method,
   "definition.constructor": handle_definition_constructor,
   "definition.function": handle_definition_function,
+  "definition.function.commonjs_export": handle_definition_commonjs_export_function,
   "definition.arrow": handle_definition_arrow,
   "definition.anonymous_function": handle_definition_anonymous_function,
   "definition.param": handle_definition_param,
