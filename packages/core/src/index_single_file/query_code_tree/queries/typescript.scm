@@ -693,13 +693,18 @@
 )
 
 ; JSX components — a JSX element is how a component is invoked, so its tag name
-; captures as a call reference to the component definition.
+; captures as a call reference to the component definition. A tag whose name
+; starts with a lowercase letter is an intrinsic host element (`<div>`), not a
+; reference to any definition; every other tag (`<Panel>`, `<_Private>`) names a
+; component, so the match excludes only the lowercase-initial host form.
 (jsx_opening_element
   (identifier) @reference.call.jsx
+  (#not-match? @reference.call.jsx "^[a-z]")
 )
 
 (jsx_self_closing_element
   (identifier) @reference.call.jsx
+  (#not-match? @reference.call.jsx "^[a-z]")
 )
 
 ; this references (important for method context)

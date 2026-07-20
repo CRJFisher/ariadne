@@ -953,7 +953,9 @@ export { create_class_id as create_py_class_id } from "./sf_py";
         function App() {
           return (
             <Panel>
-              <Icon />
+              <div>
+                <Icon />
+              </div>
             </Panel>
           );
         }
@@ -994,6 +996,13 @@ export { create_class_id as create_py_class_id } from "./sf_py";
       const referenced = project.resolutions.get_all_referenced_symbols();
       expect(referenced.has(icon_fn!.symbol_id)).toBe(true);
       expect(referenced.has(panel_fn!.symbol_id)).toBe(true);
+
+      // The lowercase `<div>` is an intrinsic host element, not a component, so
+      // it emits no component call reference (only capitalized tags do).
+      const div_calls = index!.references.filter(
+        (r) => r.kind === "function_call" && r.name === ("div" as SymbolName)
+      );
+      expect(div_calls).toEqual([]);
     });
   });
 
