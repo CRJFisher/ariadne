@@ -2,7 +2,7 @@
  * `enrich_call_graph` is the single core primitive that wraps:
  *   1. per-entry diagnostics extraction (`extract_entry_point_diagnostics`)
  *   2. rule-application against the known-issues registry (the orchestrator
- *      in `classify_entry_points.ts`)
+ *      in `auto_classify.ts`)
  *   3. mapping classifier verdicts onto the public `EntryPointClassification`
  *      taxonomy carried by `ClassifiedEntryPoint`.
  *

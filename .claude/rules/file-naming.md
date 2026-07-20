@@ -81,4 +81,4 @@ Examples: `import_resolution.ts`, `capture_handlers.ts`
 
 ## Hook Enforcement
 
-File naming is enforced by `.claude/hooks/file_naming_validator.cjs`. Violations are blocked with suggestions for correct names.
+File naming is enforced by `.claude/hooks/file_naming_validator.ts` (PreToolUse), with `file_naming_validator_stop.ts` re-checking at Stop. Violations are blocked with suggestions for correct names.

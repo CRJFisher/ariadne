@@ -27,12 +27,16 @@ project/
 ├── project_cache_strategy.ts         # Cache read/write policy; sole owner of content-hash + index/manifest writes
 ├── file_loading.ts                   # Source file discovery and ignore rules
 ├── parse_file.ts                     # Parse-phase language dispatch (grammar selection → ParsedFile)
-├── detect_test_file.ts               # Test file detection (dispatcher)
+├── detect_test_file.ts               # Test file detection (marshaller)
 ├── detect_test_file.{language}.ts    # Language-specific test detection
+├── test_dir_patterns.ts              # TEST_DIR_PATTERNS + directory-name test markers
 ├── extract_parameters.ts             # Parameter extraction from definitions
 ├── fix_import_locations.ts           # Import location correction
 └── index.ts
 ```
+
+Enforcement: naming is hook-enforced by `file_naming_validator.ts` — see
+`@.claude/rules/file-naming.md`.
 
 ## Key Registries
 
