@@ -52,6 +52,9 @@ jobs:
       - name: Run triage skill tests (registry guard, reconcile)
         run: cd .claude/skills/triage && pnpm exec vitest run
 
+      - name: Run hook tests (file naming rules)
+        run: pnpm exec vitest run .claude/hooks/
+
       - name: Validate commit message convention
         # Permissive validator — only intervenes when a commit subject's scope
         # looks task-shaped (e.g. `fix(190.16.42):`). See

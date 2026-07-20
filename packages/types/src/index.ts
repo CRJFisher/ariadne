@@ -14,7 +14,6 @@ export * from "./import_export";
 export * from "./symbol_definitions";
 export * from "./scopes";
 export * from "./symbol_references";
-export * from "./errors";
 export * from "./result";
 export * from "./entry_point";
 export * from "./classified_entry_point";

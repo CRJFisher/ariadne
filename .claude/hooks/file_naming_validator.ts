@@ -13,7 +13,8 @@ import { create_logger, parse_stdin, get_project_dir } from "./utils.js";
 import {
   validate_root_file,
   validate_src_file,
-  validate_package_root_file
+  validate_package_root_file,
+  type ValidationResult
 } from "./file_naming.js";
 
 const log = create_logger("file-naming");
@@ -38,7 +39,7 @@ function main(): void {
     return;
   }
 
-  let result = { valid: true } as { valid: boolean; error?: string; warning?: string };
+  let result: ValidationResult = { valid: true };
 
   // Root directory file (single part, not hidden)
   if (parts.length === 1) {
@@ -54,11 +55,12 @@ function main(): void {
   }
 
   if (!result.valid && result.error) {
-    log(`Blocking: ${result.error}`);
+    // Emitted before logging: an unwritable log must not swallow the block.
     console.log(JSON.stringify({
       decision: "block",
       reason: result.error
     }));
+    log(`Blocking: ${result.error}`);
   } else if (result.warning) {
     log(result.warning);
   }
