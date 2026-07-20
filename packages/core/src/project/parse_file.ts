@@ -2,6 +2,7 @@ import Parser from "tree-sitter";
 import type { FilePath, Language } from "@ariadnejs/types";
 import type { ParsedFile } from "../index_single_file/parsed_file";
 import { assert_language } from "../detect_language";
+import { blank_mdx_frontmatter } from "./blank_mdx_frontmatter";
 import { LANGUAGE_TO_TREESITTER_LANG } from "../index_single_file/query_code_tree/parsers";
 
 function get_parser(language: Language): Parser {
@@ -27,7 +28,16 @@ export function parse_file(
 ): ParsedFile {
   const language = assert_language(file_path);
   const parser = get_parser(language);
-  const tree = parser.parse(content, undefined, { bufferSize: buffer_size });
+  // MDX collapses to the JavaScript language, so its YAML frontmatter reaches
+  // the JS grammar; blank it first so the block does not swallow the following
+  // import. Blanking preserves line/column positions, leaving other content's
+  // locations intact.
+  const parse_content = file_path.endsWith(".mdx")
+    ? blank_mdx_frontmatter(content)
+    : content;
+  const tree = parser.parse(parse_content, undefined, {
+    bufferSize: buffer_size,
+  });
 
   const lines = content.split("\n");
   return {

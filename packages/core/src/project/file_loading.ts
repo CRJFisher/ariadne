@@ -4,7 +4,7 @@ import * as path from "path";
 /**
  * Supported source file extensions regex
  */
-export const SUPPORTED_EXTENSIONS = /\.(ts|tsx|js|jsx|py|rs|go|java|cpp|c|hpp|h)$/;
+export const SUPPORTED_EXTENSIONS = /\.(ts|tsx|js|jsx|mdx|py|rs|go|java|cpp|c|hpp|h)$/;
 
 /**
  * Directories to always ignore during file loading and watching
