@@ -144,7 +144,10 @@ migration) until the matching refactor sub-task removes today's real
 violations — `detect_language_singleton_stop` follows 362.1,
 `stage_boundary_stop` follows 362.6, the generic-name denylist lands with the
 362.5/362.8 renames, and the rule-payload refresh (362.9) precedes
-`doc_path_truth` (362.13) so the new hook does not block on known-stale rules.
+`doc_path_truth` (362.13) so the new hook does not block on known-stale rules
+(satisfied in substance: after 362.8's refresh, 362.13 fixes the last stale
+citations in its own commit, and its live repo-truth test guards 362.9's
+later rule edits).
 
 <!-- SECTION:DESCRIPTION:END -->
 
