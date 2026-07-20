@@ -47,7 +47,6 @@ The capture schema ensures:
 `@reference.call` on `call_expression` → Extractor derives:
 
 - Call reference name (via `extract_call_name()`)
-- Receiver location (via `extract_call_receiver()`)
 - Property chain (via `extract_property_chain()`)
 - Call type: function vs method (via `is_method_call()`)
 

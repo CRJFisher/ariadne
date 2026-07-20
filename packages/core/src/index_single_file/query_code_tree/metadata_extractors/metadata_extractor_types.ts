@@ -35,14 +35,6 @@ export interface MetadataExtractors {
   ): TypeInfo | undefined;
 
   /**
-   * Extract receiver/object location from method call
-   */
-  extract_call_receiver(
-    node: SyntaxNode,
-    file_path: FilePath
-  ): Location | undefined;
-
-  /**
    * Extract property access chain
    */
   extract_property_chain(
@@ -58,30 +50,12 @@ export interface MetadataExtractors {
   ): ReceiverInfo | undefined;
 
   /**
-   * Extract assignment source and target locations
-   */
-  extract_assignment_parts(
-    node: SyntaxNode,
-    file_path: FilePath
-  ): {
-    source: Location | undefined;
-    target: Location | undefined;
-  };
-
-  /**
    * Extract constructor call target variable location
    */
   extract_construct_target(
     node: SyntaxNode,
     file_path: FilePath
   ): Location | undefined;
-
-  /**
-   * Extract generic type arguments
-   */
-  extract_type_arguments(
-    node: SyntaxNode
-  ): string[] | undefined;
 
   /**
    * Check if a node represents optional chaining

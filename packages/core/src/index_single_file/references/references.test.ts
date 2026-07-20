@@ -29,14 +29,8 @@ function create_mock_extractors(
 ): MetadataExtractors {
   return {
     extract_type_from_annotation: vi.fn((node, file_path) => undefined),
-    extract_call_receiver: vi.fn((node, file_path) => undefined),
     extract_property_chain: vi.fn((node) => undefined),
-    extract_assignment_parts: vi.fn((node, file_path) => ({
-      source: undefined,
-      target: undefined,
-    })),
     extract_construct_target: vi.fn((node, file_path) => undefined),
-    extract_type_arguments: vi.fn((node) => undefined),
     extract_is_optional_chain: vi.fn((node) => false),
     is_method_call: vi.fn((node) => false),
     extract_call_name: vi.fn((node) => undefined),
@@ -270,39 +264,6 @@ describe("ReferenceBuilder", () => {
       if (references[0].kind === "type_reference") {
         expect(references[0].type_context).toBe("annotation");
       }
-    });
-
-    it("should process type references with generics", () => {
-      const mock_extractors = create_mock_extractors({
-        extract_type_from_annotation: vi.fn((node, file_path) => ({
-          type_name: "Array" as SymbolName,
-          type_id: "type:Array:test.ts:1:0" as SymbolId,
-          certainty: "declared" as const,
-        })),
-        extract_type_arguments: vi.fn((node) => ["string"]),
-      });
-
-      const builder = new ReferenceBuilder(
-        context,
-        mock_extractors,
-        TEST_FILE_PATH,
-        "typescript"
-      );
-
-      const capture = create_test_capture({
-        category: SemanticCategory.REFERENCE,
-        entity: SemanticEntity.TYPE,
-        symbol_name: "Array",
-      });
-
-      builder.process(capture);
-      const references = builder.references;
-
-      expect(references).toHaveLength(1);
-      expect(references[0].name).toBe("Array");
-      expect(references[0].kind).toBe("type_reference");
-      // Generic type info extraction is not yet implemented in factories
-      // This will be added in future tasks
     });
 
     it("should process property access", () => {
