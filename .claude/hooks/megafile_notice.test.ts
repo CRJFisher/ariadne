@@ -39,6 +39,30 @@ describe("count_significant_lines", () => {
   it("counts code following a block comment that closes on the same line", () => {
     expect(count_significant_lines("/* lead */ const a = 1;\n")).toEqual(1);
   });
+
+  it("treats comment markers inside string literals as code, not comments", () => {
+    const content = [
+      'const url = "http://example.com";',
+      'const block = "/* not a comment */";',
+    ].join("\n");
+    expect(count_significant_lines(content)).toEqual(2);
+  });
+
+  it("ends the line at // even when a /* follows inside the comment (no false block open)", () => {
+    expect(count_significant_lines("const a = 1; // /* trick\nconst b = 2;\n")).toEqual(2);
+  });
+
+  it("counts code inside a backtick string containing comment markers", () => {
+    expect(count_significant_lines("const t = `http://x`; const y = 2;\n")).toEqual(1);
+  });
+
+  it("skips every line of an unterminated block comment running to EOF", () => {
+    expect(count_significant_lines("const a = 1;\n/* open to end\nstill inside\n")).toEqual(1);
+  });
+
+  it("handles CRLF line endings", () => {
+    expect(count_significant_lines("const a = 1;\r\n\r\nconst b = 2;\r\n")).toEqual(2);
+  });
 });
 
 describe("is_megafile_candidate", () => {

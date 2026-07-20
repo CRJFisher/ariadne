@@ -7,6 +7,10 @@
  * this hook only ever injects `additionalContext` — a name that is no longer
  * fully true is the concern, not the line count itself. A Stop-level block would
  * punish work-in-progress, so there is no block path here.
+ *
+ * There is deliberately no per-session dedup (unlike the marshaller nudge): the
+ * notice is cheap, and a file's size changes on every edit, so re-emitting on
+ * each write over the threshold is a fresh, accurate signal rather than noise.
  */
 
 import fs from "fs";
@@ -28,46 +32,52 @@ export interface PostToolUseContextOutput {
 /**
  * Count lines carrying code — blank lines and lines wholly inside `//` or
  * `/* *\/` comments do not count, while a line mixing code and a trailing
- * comment does. `/*` inside a string or regex is treated as a comment opener;
- * that heuristic slightly under-counts, which is acceptable for a warning.
+ * comment does. Comment markers inside `'`, `"`, or backtick string literals are
+ * treated as string content, not comments. Regex-literal delimiters are NOT
+ * tokenized, so a `/*` inside a regex still opens a comment scan; that
+ * under-counts, which is the safe direction for a non-gating warning.
  */
 export function count_significant_lines(content: string): number {
   let in_block = false;
+  let in_template = false;
   let count = 0;
 
   for (const raw of content.split("\n")) {
-    let rest = raw;
+    const line = raw.endsWith("\r") ? raw.slice(0, -1) : raw;
     let code = "";
+    let quote: "'" | "\"" | null = null;
+    let i = 0;
 
-    while (rest.length > 0) {
+    while (i < line.length) {
+      const c = line[i];
+      const c2 = line[i + 1];
+
       if (in_block) {
-        const end = rest.indexOf("*/");
-        if (end === -1) {
-          rest = "";
-        } else {
-          rest = rest.slice(end + 2);
-          in_block = false;
-        }
+        if (c === "*" && c2 === "/") { in_block = false; i += 2; } else { i += 1; }
+        continue;
+      }
+      if (in_template) {
+        if (c === "\\") { code += c + (c2 ?? ""); i += 2; continue; }
+        if (c === "`") { in_template = false; }
+        code += c;
+        i += 1;
+        continue;
+      }
+      if (quote) {
+        if (c === "\\") { code += c + (c2 ?? ""); i += 2; continue; }
+        if (c === quote) { quote = null; }
+        code += c;
+        i += 1;
         continue;
       }
 
-      const line_comment = rest.indexOf("//");
-      const block_comment = rest.indexOf("/*");
+      if (c === "/" && c2 === "/") break;
+      if (c === "/" && c2 === "*") { in_block = true; i += 2; continue; }
+      if (c === "'" || c === "\"") { quote = c; code += c; i += 1; continue; }
+      if (c === "`") { in_template = true; code += c; i += 1; continue; }
 
-      if (block_comment !== -1 && (line_comment === -1 || block_comment < line_comment)) {
-        code += rest.slice(0, block_comment);
-        rest = rest.slice(block_comment + 2);
-        in_block = true;
-        continue;
-      }
-
-      if (line_comment !== -1) {
-        code += rest.slice(0, line_comment);
-        break;
-      }
-
-      code += rest;
-      break;
+      code += c;
+      i += 1;
     }
 
     if (code.trim().length > 0) count++;
