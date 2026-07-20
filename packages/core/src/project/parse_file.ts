@@ -1,10 +1,11 @@
-import Parser from "tree-sitter";
+import type TreeSitter from "tree-sitter";
+import { Parser } from "../native";
 import type { FilePath, Language } from "@ariadnejs/types";
 import type { ParsedFile } from "../index_single_file/parsed_file";
 import { assert_language } from "../detect_language";
 import { LANGUAGE_TO_TREESITTER_LANG } from "../index_single_file/query_code_tree/parsers";
 
-function get_parser(language: Language): Parser {
+function get_parser(language: Language): TreeSitter {
   const grammar = LANGUAGE_TO_TREESITTER_LANG.get(language);
   if (!grammar) {
     throw new Error(`Unsupported language: ${language}`);

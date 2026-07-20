@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import type { Language } from "@ariadnejs/types";
-import { Query } from "tree-sitter";
+import { Query } from "../../native";
 import { LANGUAGE_TO_TREESITTER_LANG, SUPPORTED_LANGUAGES } from "./parsers";
 
 // Exported so tests can reset process-wide memoization between cases.

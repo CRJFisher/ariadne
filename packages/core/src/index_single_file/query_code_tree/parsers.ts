@@ -1,8 +1,5 @@
 import type { Language } from "@ariadnejs/types";
-import JavaScript from "tree-sitter-javascript";
-import Python from "tree-sitter-python";
-import Rust from "tree-sitter-rust";
-import TypeScript from "tree-sitter-typescript";
+import { JavaScript, Python, Rust, TypeScript } from "../../native";
 
 // TypeScript maps to the `.typescript` grammar rather than `.tsx` so a single
 // query works for both `.ts` and `.tsx` sources.

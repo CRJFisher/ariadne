@@ -1,6 +1,4 @@
-import Parser from "tree-sitter";
-import JavaScript from "tree-sitter-javascript";
-import Python from "tree-sitter-python";
+import { Parser, JavaScript, Python } from "../../../native";
 import type { SyntaxNode } from "tree-sitter";
 import type { FilePath, SymbolName } from "@ariadnejs/types";
 import {
