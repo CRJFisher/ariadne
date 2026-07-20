@@ -23,8 +23,9 @@ import type {
   FilePath,
   Location,
   CallReference,
+  IndirectReachability,
+  IndirectReachabilityReason,
 } from "@ariadnejs/types";
-import type { IndirectReachability, IndirectReachabilityReason } from "@ariadnejs/types";
 
 const TEST_FILE = "test.ts" as FilePath;
 const FILE_A = "a.ts" as FilePath;
