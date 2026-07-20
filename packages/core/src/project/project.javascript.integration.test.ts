@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { Project } from "./project";
 import path from "path";
 import fs from "fs";
-import type { FilePath, SymbolName } from "@ariadnejs/types";
+import type { FilePath, SymbolId, SymbolName } from "@ariadnejs/types";
 import type {
   ConstructorCallReference,
   MethodCallReference,
@@ -118,7 +118,7 @@ describe("Project Integration - JavaScript", () => {
   });
 
   describe("CommonJS whole-namespace method dispatch", () => {
-    // `const ns = require('./mod'); ns.fn()` must resolve `fn` against the
+    // `var ns = require('./mod'); ns.fn()` must resolve `fn` against the
     // module's `exports.fn` / `module.exports.fn` definition, and the target
     // must count as reached so it is not a false unreachable entry point.
     function find_function_id(mod_file: FilePath, name: string) {
@@ -138,13 +138,25 @@ describe("Project Integration - JavaScript", () => {
       return call!.resolutions.map((r) => r.symbol_id);
     }
 
+    // Targets of a call named `callee_name` enclosed in `caller_id`'s body —
+    // the caller->callee edge, which proves the caller owns that body scope
+    // (unlike the global referenced set, which collects the call regardless of
+    // which definition, if any, encloses it).
+    function enclosed_call_targets(caller_id: SymbolId, callee_name: string) {
+      const node = project.get_call_graph().nodes.get(caller_id);
+      expect(node).toBeDefined();
+      return node!.enclosed_calls
+        .filter((c) => c.name === (callee_name as SymbolName))
+        .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
+    }
+
     it("resolves a named-function-expression export and marks it reached", () => {
       const mod = [
         "exports.castArray = function castArray(v) { return [v]; };",
         "module.exports.isBrowser = function isBrowser() { return false; };",
       ].join("\n");
       const main = [
-        "const utils = require('./ns_named');",
+        "var utils = require('./ns_named');",
         "function run() {",
         "  utils.castArray(1);",
         "  utils.isBrowser();",
@@ -195,14 +207,16 @@ describe("Project Integration - JavaScript", () => {
       expect(method_call_targets(main_file, "escape")).toContain(escape_id);
       expect(method_call_targets(main_file, "uniqueID")).toContain(unique_id);
 
-      const referenced = project.resolutions.get_all_referenced_symbols();
       // The exports themselves are reached via CJS-namespace dispatch...
+      const referenced = project.resolutions.get_all_referenced_symbols();
       expect(referenced.has(escape_id)).toBe(true);
       expect(referenced.has(unique_id)).toBe(true);
-      // ...and their bodies' calls are attributed, so the locals they call are
-      // reached rather than surfacing as false unreachable entry points.
-      expect(referenced.has(helper_id)).toBe(true);
-      expect(referenced.has(next_id)).toBe(true);
+      // ...and each body's calls are attributed to the property-located
+      // definition, so `helper`/`next` are edges out of `escape`/`uniqueID`
+      // rather than orphaned calls. This is what proves body attribution — the
+      // definition owns its body scope despite being located at the property.
+      expect(enclosed_call_targets(escape_id, "helper")).toContain(helper_id);
+      expect(enclosed_call_targets(unique_id, "next")).toContain(next_id);
     });
 
     it("does not treat a non-exports member assignment as an export", () => {
@@ -256,10 +270,43 @@ describe("Project Integration - JavaScript", () => {
       expect(dups.length).toBe(2);
       expect(dups.filter((f) => f.is_exported).length).toBe(1);
 
+      // `u.dup()` resolves to the exported arrow only — not also the local.
       const exported_dup = dups.find((f) => f.is_exported)!;
-      expect(method_call_targets(main_file, "dup")).toContain(
-        exported_dup.symbol_id
+      expect(method_call_targets(main_file, "dup")).toEqual([
+        exported_dup.symbol_id,
+      ]);
+    });
+
+    it("does not export a function assigned to exports inside a function body", () => {
+      // A nested `exports.x = () => {}` is a local assignment, not a module
+      // export — matching the top-level-only treatment of the identifier and
+      // named-function-expression forms.
+      const mod = [
+        "function configure() {",
+        "  exports.hidden = () => 1;",
+        "}",
+        "exports.shown = () => 2;",
+      ].join("\n");
+      const main = [
+        "var u = require('./ns_nested');",
+        "function run() {",
+        "  u.hidden();",
+        "  u.shown();",
+        "}",
+      ].join("\n");
+      const mod_file = file_path("modules/ns_nested.js");
+      const main_file = file_path("modules/main_ns_nested.js");
+
+      project.update_file(mod_file, mod);
+      project.update_file(main_file, main);
+
+      const mod_index = project.get_index_single_file(mod_file);
+      const hidden = Array.from(mod_index!.functions.values()).find(
+        (f) => f.name === ("hidden" as SymbolName)
       );
+      expect(hidden).toBeUndefined();
+      expect(method_call_targets(main_file, "hidden")).toHaveLength(0);
+      expect(method_call_targets(main_file, "shown")).toHaveLength(1);
     });
   });
 

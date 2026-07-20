@@ -207,7 +207,7 @@ export function handle_definition_function(
  * `!name`. The property-identifier location lets `find_body_scope_for_definition`
  * attach the function body, the same geometry as `const NAME = () => {}`.
  */
-export function handle_definition_commonjs_export_function(
+export function handle_definition_function_commonjs_export(
   capture: CaptureNode,
   builder: DefinitionBuilder,
   context: ProcessingContext
@@ -992,7 +992,7 @@ export const JAVASCRIPT_HANDLERS: HandlerRegistry = {
   "definition.method": handle_definition_method,
   "definition.constructor": handle_definition_constructor,
   "definition.function": handle_definition_function,
-  "definition.function.commonjs_export": handle_definition_commonjs_export_function,
+  "definition.function.commonjs_export": handle_definition_function_commonjs_export,
   "definition.arrow": handle_definition_arrow,
   "definition.anonymous_function": handle_definition_anonymous_function,
   "definition.param": handle_definition_param,
