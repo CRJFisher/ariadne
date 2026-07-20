@@ -120,7 +120,7 @@ describe("JavaScript Metadata Extractors", () => {
     });
   });
 
-  describe("extract_receiver_info chain_call_arguments", () => {
+  describe("extract_receiver_info property_chain_arguments", () => {
     it("captures an intermediate call's identifier argument aligned to the chain", () => {
       const code = "injector.get(Token).handle()";
       const tree = parser.parse(code);
@@ -129,17 +129,17 @@ describe("JavaScript Metadata Extractors", () => {
       const info = JAVASCRIPT_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
 
       expect(info?.property_chain).toEqual(["injector", "get", "handle"]);
-      expect(info?.chain_call_arguments).toEqual([null, ["Token"], []]);
+      expect(info?.property_chain_arguments).toEqual([null, ["Token"], []]);
     });
 
-    it("preserves positional index for a non-identifier argument", () => {
-      const code = "injector.get(options, Token).handle()";
+    it("maps a non-identifier argument to null while preserving a later identifier's index", () => {
+      const code = "injector.get(5, Token).handle()";
       const tree = parser.parse(code);
       const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
 
       const info = JAVASCRIPT_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
 
-      expect(info?.chain_call_arguments).toEqual([null, ["options", "Token"], []]);
+      expect(info?.property_chain_arguments).toEqual([null, [null, "Token"], []]);
     });
 
     it("omits the field for a literal-only intermediate call", () => {
@@ -149,7 +149,7 @@ describe("JavaScript Metadata Extractors", () => {
 
       const info = JAVASCRIPT_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
 
-      expect(info?.chain_call_arguments).toBeUndefined();
+      expect(info?.property_chain_arguments).toBeUndefined();
     });
 
     it("omits the field for a plain method call with no intermediate call", () => {
@@ -159,7 +159,7 @@ describe("JavaScript Metadata Extractors", () => {
 
       const info = JAVASCRIPT_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
 
-      expect(info?.chain_call_arguments).toBeUndefined();
+      expect(info?.property_chain_arguments).toBeUndefined();
     });
   });
 

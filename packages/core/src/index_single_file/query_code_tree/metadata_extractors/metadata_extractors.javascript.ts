@@ -272,10 +272,10 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
       // an identifier argument — the raw material for generic-return inference.
       // Literal-only intermediate calls (add(5)) stay omitted so unrelated
       // method-call references keep their existing shape.
-      const chain_call_arguments = built?.call_arguments;
+      const property_chain_arguments = built?.call_arguments;
       const has_inference_argument =
-        chain_call_arguments !== undefined &&
-        chain_call_arguments
+        property_chain_arguments !== undefined &&
+        property_chain_arguments
           .slice(1, -1)
           .some((entry) => entry !== null && entry.some((arg) => arg !== null));
 
@@ -284,7 +284,7 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
         property_chain: chain,
         is_self_reference: keyword !== undefined,
         ...(keyword ? { self_keyword: keyword } : {}),
-        ...(has_inference_argument ? { chain_call_arguments } : {}),
+        ...(has_inference_argument ? { property_chain_arguments } : {}),
       };
     }
 

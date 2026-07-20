@@ -79,7 +79,7 @@ export function create_method_call_reference(
   is_optional_chain: boolean,
   potential_construct_target?: Location,
   call_site_syntax?: CallSiteSyntax,
-  chain_call_arguments?: ChainCallArguments
+  property_chain_arguments?: ChainCallArguments
 ): MethodCallReference {
   return {
     kind: "method_call",
@@ -91,7 +91,7 @@ export function create_method_call_reference(
     is_optional_chain,
     ...(potential_construct_target !== undefined && { potential_construct_target }),
     ...(call_site_syntax !== undefined && { call_site_syntax }),
-    ...(chain_call_arguments !== undefined && { chain_call_arguments }),
+    ...(property_chain_arguments !== undefined && { property_chain_arguments }),
   };
 }
 

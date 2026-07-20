@@ -89,8 +89,8 @@ export type SelfReferenceKeyword = "this" | "self" | "super" | "cls";
  * later parameter still aligns to its argument.
  *
  * @example injector.get(Token).method()
- * // property_chain:        ["injector", "get", "method"]
- * // chain_call_arguments:  [null, ["Token"], null]
+ * // property_chain:            ["injector", "get", "method"]
+ * // property_chain_arguments:  [null, ["Token"], []]
  *
  * @language javascript,typescript
  */
@@ -137,7 +137,7 @@ export interface MethodCallReference extends BaseReference {
    *
    * @language javascript,typescript
    */
-  readonly chain_call_arguments?: ChainCallArguments;
+  readonly property_chain_arguments?: ChainCallArguments;
 }
 
 /**

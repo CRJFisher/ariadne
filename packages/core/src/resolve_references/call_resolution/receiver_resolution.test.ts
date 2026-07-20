@@ -230,12 +230,12 @@ describe("extract_receiver", () => {
       });
     });
 
-    it("slices chain_call_arguments to align with the mid-chain properties", () => {
+    it("slices property_chain_arguments to align with the mid-chain properties", () => {
       const ref: MethodCallReference = {
         kind: "method_call",
         name: "handle" as SymbolName,
         property_chain: ["injector", "get", "handle"] as SymbolName[],
-        chain_call_arguments: [null, ["Token" as SymbolName], []],
+        property_chain_arguments: [null, ["Token" as SymbolName], []],
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
         receiver_location: MOCK_LOCATION,

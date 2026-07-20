@@ -112,8 +112,8 @@ export function extract_receiver(
   }
 
   const chain_arguments =
-    ref.kind === "method_call" && ref.chain_call_arguments
-      ? ref.chain_call_arguments.slice(1, -1)
+    ref.kind === "method_call" && ref.property_chain_arguments
+      ? ref.property_chain_arguments.slice(1, -1)
       : undefined;
 
   return {
@@ -407,8 +407,8 @@ function infer_generic_return_from_type_token(
 /**
  * Resolve a type-token argument to the class it designates: a class/type used
  * directly (`injector.get(Service)`) is its own type; a typed token binding
- * (`const TOKEN: Type<Service>`) resolves through its `Type<…>` annotation to
- * the wrapped class.
+ * (a parameter `token: Type<Service>`) resolves through its `Type<…>`
+ * annotation to the wrapped class.
  */
 function resolve_token_argument_type(
   argument_name: SymbolName,

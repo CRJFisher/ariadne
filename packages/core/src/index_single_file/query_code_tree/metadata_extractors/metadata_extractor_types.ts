@@ -23,7 +23,7 @@ export interface ReceiverInfo {
    *
    * @language javascript,typescript
    */
-  readonly chain_call_arguments?: ChainCallArguments;
+  readonly property_chain_arguments?: ChainCallArguments;
 }
 
 /**
