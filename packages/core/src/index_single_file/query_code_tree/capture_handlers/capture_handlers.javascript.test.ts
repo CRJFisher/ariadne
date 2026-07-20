@@ -2370,6 +2370,37 @@ export const NESTED = {
     });
   });
 
+  describe("CommonJS class expression capture", () => {
+    it("captures a named class expression exported via `exports.X = class` with its members", async () => {
+      const code =
+        "exports.Gadget = class Gadget {\n" +
+        "  constructor() {}\n" +
+        "  static create() {}\n" +
+        "  run() {}\n" +
+        "};";
+      const tree = parser.parse(code);
+      const lines = code.split("\n");
+      const parsed_file = {
+        file_path: TEST_FILE_PATH,
+        file_lines: lines.length,
+        file_end_column: lines[lines.length - 1].length + 1,
+        tree: tree,
+        lang: "javascript" as const,
+      };
+
+      const index = await build_index_single_file(parsed_file, tree, "javascript");
+
+      const classes = Array.from(index.classes.values());
+      expect(classes).toHaveLength(1);
+      const gadget = classes[0];
+      expect(gadget.name).toBe("Gadget");
+      expect(gadget.is_exported).toBe(true);
+      expect(gadget.export).toEqual({});
+      expect(gadget.methods.map((m) => m.name).sort()).toEqual(["create", "run"]);
+      expect(gadget.constructors).toHaveLength(1);
+    });
+  });
+
   describe("Aliased Re-export Handling", () => {
     it("should create ImportDefinition with correct export metadata for aliased re-exports", async () => {
       // Tests the fix for aliased re-exports: export { originalName as aliasedName } from './module'

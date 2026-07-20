@@ -117,6 +117,173 @@ describe("Project Integration - JavaScript", () => {
     });
   });
 
+  describe("CommonJS Class Export Dispatch", () => {
+    // Resolve a call by name + call_type in a file to its target definition
+    // ("kind:name"), or its resolution-failure reason when it does not resolve.
+    function resolved_target(
+      file: FilePath,
+      name: string,
+      call_type: "method" | "constructor"
+    ): { targets: string[]; failure?: string } {
+      const call = project.resolutions
+        .get_calls_for_file(file)
+        .find((c) => c.name === (name as SymbolName) && c.call_type === call_type);
+      if (!call) {
+        return { targets: [], failure: "call_not_found" };
+      }
+      const targets = call.resolutions.map((r) => {
+        const def = project.definitions.get(r.symbol_id);
+        return def ? `${def.kind}:${def.name}` : String(r.symbol_id);
+      });
+      const failure = call.resolution_failure
+        ? `${call.resolution_failure.stage}/${call.resolution_failure.reason}`
+        : undefined;
+      return { targets, failure };
+    }
+
+    describe("default export `module.exports = Class`", () => {
+      const mod_file = file_path("modules/cjs_default_class.js");
+      const main_file = file_path("modules/uses_cjs_default_class.js");
+      const mod_source = [
+        "class Widget {",
+        "  constructor() {}",
+        "  static make() { return new Widget(); }",
+        "  render() {}",
+        "}",
+        "module.exports = Widget;",
+      ].join("\n");
+      const main_source = [
+        "const Widget = require('./cjs_default_class');",
+        "function use() {",
+        "  const w = new Widget();",
+        "  w.render();",
+        "  return Widget.make();",
+        "}",
+      ].join("\n");
+
+      beforeEach(() => {
+        project.update_file(mod_file, mod_source);
+        project.update_file(main_file, main_source);
+      });
+
+      it("marks the class as the file's default export", () => {
+        const mod_index = project.get_index_single_file(mod_file);
+        const widget = Array.from(mod_index!.classes.values()).find(
+          (c) => c.name === ("Widget" as SymbolName)
+        );
+        expect(widget!.is_exported).toBe(true);
+        expect(widget!.export).toEqual({ is_default: true });
+      });
+
+      it("resolves a static method call `Widget.make()` to the class's static method", () => {
+        expect(resolved_target(main_file, "make", "method")).toEqual({
+          targets: ["method:make"],
+          failure: undefined,
+        });
+      });
+
+      it("resolves `new Widget()` to the class's constructor", () => {
+        expect(resolved_target(main_file, "Widget", "constructor")).toEqual({
+          targets: ["constructor:constructor"],
+          failure: undefined,
+        });
+      });
+
+      it("resolves an instance method call `w.render()` to the class's instance method", () => {
+        expect(resolved_target(main_file, "render", "method")).toEqual({
+          targets: ["method:render"],
+          failure: undefined,
+        });
+      });
+    });
+
+    describe("named export `exports.X = class`", () => {
+      const mod_file = file_path("modules/cjs_named_class.js");
+      const main_file = file_path("modules/uses_cjs_named_class.js");
+      const mod_source = [
+        "exports.Gadget = class Gadget {",
+        "  constructor() {}",
+        "  static create() { return new Gadget(); }",
+        "  run() {}",
+        "};",
+      ].join("\n");
+      const main_source = [
+        "const { Gadget } = require('./cjs_named_class');",
+        "function use() {",
+        "  const g = new Gadget();",
+        "  g.run();",
+        "  return Gadget.create();",
+        "}",
+      ].join("\n");
+
+      beforeEach(() => {
+        project.update_file(mod_file, mod_source);
+        project.update_file(main_file, main_source);
+      });
+
+      it("marks the class expression as a named export bound in scope to the class", () => {
+        const mod_index = project.get_index_single_file(mod_file);
+        const gadget = Array.from(mod_index!.classes.values()).find(
+          (c) => c.name === ("Gadget" as SymbolName)
+        );
+        expect(gadget!.is_exported).toBe(true);
+        expect(gadget!.export).toEqual({});
+
+        const call = project.resolutions
+          .get_calls_for_file(main_file)
+          .find((c) => c.name === ("create" as SymbolName));
+        expect(project.resolutions.resolve(call!.scope_id, "Gadget" as SymbolName)).toEqual(
+          gadget!.symbol_id
+        );
+      });
+
+      it("resolves a static method call `Gadget.create()` to the class's static method", () => {
+        expect(resolved_target(main_file, "create", "method")).toEqual({
+          targets: ["method:create"],
+          failure: undefined,
+        });
+      });
+
+      it("resolves `new Gadget()` to the class's constructor", () => {
+        expect(resolved_target(main_file, "Gadget", "constructor")).toEqual({
+          targets: ["constructor:constructor"],
+          failure: undefined,
+        });
+      });
+
+      it("resolves an instance method call `g.run()` to the class's instance method", () => {
+        expect(resolved_target(main_file, "run", "method")).toEqual({
+          targets: ["method:run"],
+          failure: undefined,
+        });
+      });
+    });
+
+    it("keeps `const utils = require()` an object-module namespace (no rebind)", () => {
+      const obj_file = file_path("modules/cjs_object_module.js");
+      const main_file = file_path("modules/uses_cjs_object_module.js");
+      project.update_file(
+        obj_file,
+        "function helper() {}\nmodule.exports = { helper };"
+      );
+      project.update_file(
+        main_file,
+        "const utils = require('./cjs_object_module');\nfunction use() { return utils.helper(); }"
+      );
+
+      // A namespace member that resolves to a function is reported with
+      // call_type "function", so match on the callee name alone.
+      const call = project.resolutions
+        .get_calls_for_file(main_file)
+        .find((c) => c.name === ("helper" as SymbolName));
+      const targets = call!.resolutions.map((r) => {
+        const def = project.definitions.get(r.symbol_id);
+        return def ? `${def.kind}:${def.name}` : String(r.symbol_id);
+      });
+      expect(targets).toEqual(["function:helper"]);
+    });
+  });
+
   describe("ES6 Module Resolution", () => {
     it("should resolve import/export", async () => {
       const utils = load_source("modules/utils_es6.js");

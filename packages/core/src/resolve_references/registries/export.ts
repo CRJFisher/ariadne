@@ -217,6 +217,30 @@ export class ExportRegistry {
     return this.default_exports.get(file_path);
   }
 
+  /**
+   * Resolve a module's default export when it is the file's ONLY export surface
+   * — the CommonJS `module.exports = Class` whole-module shape. Returns null
+   * when the file has any named exports (a genuine namespace/object module such
+   * as `module.exports = { a, b }`) or no default at all, so a
+   * `const X = require()` binding stays a namespace import in those cases.
+   */
+  resolve_sole_default_export(
+    source_file: FilePath,
+    languages: ReadonlyMap<FilePath, Language>,
+    root_folder: FileSystemFolder
+  ): SymbolId | null {
+    if (this.export_metadata.has(source_file)) {
+      return null;
+    }
+    return this.resolve_export_chain(
+      source_file,
+      "" as SymbolName,
+      "default",
+      languages,
+      root_folder
+    );
+  }
+
   remove_file(file_id: FilePath): void {
     this.exports.delete(file_id);
     this.export_metadata.delete(file_id);

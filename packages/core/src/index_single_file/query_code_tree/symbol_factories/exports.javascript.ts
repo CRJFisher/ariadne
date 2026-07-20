@@ -20,6 +20,18 @@ function build_export_cache(root: SyntaxNode): ExportCache {
   const named_exports = new Map<SymbolName, ExportMetadata>();
   const commonjs_exports = new Map<SymbolName, ExportMetadata>();
 
+  // `module.exports = X` is a whole-module default export; a later reassignment
+  // supersedes the earlier one (JS runtime semantics), so only the last-written
+  // symbol keeps `is_default` — the ExportRegistry rejects two defaults per file.
+  let default_export_name: SymbolName | null = null;
+  const set_commonjs_default = (symbol_name: SymbolName): void => {
+    if (default_export_name && default_export_name !== symbol_name) {
+      commonjs_exports.delete(default_export_name);
+    }
+    default_export_name = symbol_name;
+    commonjs_exports.set(symbol_name, { is_default: true });
+  };
+
   for (let i = 0; i < root.childCount; i++) {
     const child = root.child(i);
     if (!child) continue;
@@ -50,6 +62,21 @@ function build_export_cache(root: SyntaxNode): ExportCache {
           const object = left.childForFieldName("object");
           const property = left.childForFieldName("property");
 
+          // Whole-module default export: `module.exports = Widget` (an already
+          // declared class/function) or `module.exports = class Widget {}` (a
+          // named class expression). The single exported value is the file's
+          // default export.
+          if (object?.text === "module" && property?.text === "exports") {
+            if (right?.type === "identifier") {
+              set_commonjs_default(right.text as SymbolName);
+            } else if (right?.type === "class") {
+              const class_name = right.childForFieldName("name");
+              if (class_name) {
+                set_commonjs_default(class_name.text as SymbolName);
+              }
+            }
+          }
+
           if (object?.text === "module" && property?.text === "exports" && right?.type === "object") {
             for (let j = 0; j < right.childCount; j++) {
               const prop = right.child(j);
@@ -79,23 +106,34 @@ function build_export_cache(root: SyntaxNode): ExportCache {
           }
 
           // Property-assignment CommonJS export: exports.NAME = local or
-          // module.exports.NAME = local. The cache is keyed by the local RHS
-          // identifier, so an anonymous RHS (exports.foo = function () {})
-          // has no local symbol to mark and stays out of reach. The top-level
-          // walk excludes assignments inside function bodies; computed keys
-          // (exports["foo"]) parse as subscript_expression and never enter
-          // this member_expression branch.
+          // module.exports.NAME = local. The cache is keyed by the RHS symbol's
+          // own name (identifier binding or named class expression), so an
+          // anonymous RHS (exports.foo = function () {} / class {}) has no named
+          // symbol to mark and stays out of reach. The top-level walk excludes
+          // assignments inside function bodies; computed keys (exports["foo"])
+          // parse as subscript_expression and never enter this member_expression
+          // branch.
           if (
-            right?.type === "identifier" &&
             property?.type === "property_identifier" &&
             is_commonjs_exports_base(object)
           ) {
-            const symbol_name = right.text as SymbolName;
-            const export_name = property.text as SymbolName;
-            commonjs_exports.set(
-              symbol_name,
-              export_name !== symbol_name ? { export_name } : {}
-            );
+            // A named class expression export (`exports.X = class X {}`) is
+            // keyed by the class's own name — the name the class definition
+            // carries — so its `export_name` metadata attaches to that symbol.
+            const symbol_name =
+              right?.type === "identifier"
+                ? (right.text as SymbolName)
+                : right?.type === "class"
+                ? (right.childForFieldName("name")?.text as SymbolName | undefined)
+                : undefined;
+
+            if (symbol_name) {
+              const export_name = property.text as SymbolName;
+              commonjs_exports.set(
+                symbol_name,
+                export_name !== symbol_name ? { export_name } : {}
+              );
+            }
           }
         }
       }

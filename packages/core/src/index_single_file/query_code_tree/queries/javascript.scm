@@ -139,6 +139,16 @@
   )?
 )
 
+; Named class expressions, e.g. the CommonJS export `exports.X = class X {}`.
+; Only a named class expression is a definition; an anonymous `class {}` has no
+; name to identify and is left uncaptured.
+(class
+  name: (identifier) @definition.class
+  (class_heritage
+    (identifier) @reference.type_reference
+  )?
+)
+
 ; Method definitions (capture static modifier)
 (method_definition
   "static"? @modifier.visibility
