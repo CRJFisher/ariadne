@@ -120,3 +120,10 @@ a non-conforming Write or Edit as it happens, and
 `.claude/hooks/file_naming_validator_stop.ts` audits every workspace package at
 session end. Violations are blocked with a suggested correct name whenever one
 exists.
+
+On the allow path, `file_naming_validator.ts` also emits an encourage-only
+nudge (never a block) from `.claude/hooks/marshaller_nudge.ts`: writing a new
+`{feature}.{language}.ts` leaf under `packages/core/src` while no sibling
+`{feature}.ts` marshaller exists injects a PreToolUse `additionalContext`
+reminder to add the in-folder marshaller, deduped per session, feature, and
+folder.

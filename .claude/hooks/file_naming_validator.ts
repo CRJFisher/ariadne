@@ -16,6 +16,10 @@ import {
   validate_package_root_file,
   type ValidationResult
 } from "./file_naming.js";
+import {
+  marshaller_nudge_with_dedup,
+  marshaller_context_output,
+} from "./marshaller_nudge.js";
 
 const log = create_logger("file-naming");
 
@@ -61,8 +65,23 @@ function main(): void {
       reason: result.error
     }));
     log(`Blocking: ${result.error}`);
-  } else if (result.warning) {
+    return;
+  }
+
+  if (result.warning) {
     log(result.warning);
+  }
+
+  // Allow path only: a folder growing its first language variant with no
+  // marshaller earns an encourage-only nudge, kept isolated from the block
+  // logic above. Never a block — a false positive here is worse than a miss.
+  const nudge = marshaller_nudge_with_dedup(
+    file_path,
+    project_dir,
+    input.session_id as string | undefined,
+  );
+  if (nudge) {
+    console.log(JSON.stringify(marshaller_context_output(nudge)));
   }
 }
 
