@@ -4,6 +4,9 @@
       "Write(~/.ariadne/triage-entrypoints/**)"
     ]
   },
+  "worktree": {
+    "baseRef": "head"
+  },
   "hooks": {
     "PreToolUse": [
       {
