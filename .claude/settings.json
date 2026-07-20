@@ -25,6 +25,17 @@
         ]
       }
     ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/megafile_notice.ts\""
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
