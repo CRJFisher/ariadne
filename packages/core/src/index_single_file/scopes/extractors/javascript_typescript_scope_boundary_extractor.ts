@@ -171,24 +171,6 @@ export class JavaScriptTypeScriptScopeBoundaryExtractor
     }
   }
 
-  protected extract_constructor_boundaries(
-    node: Parser.SyntaxNode,
-    file_path: FilePath,
-  ): ScopeBoundaries {
-    return this.extract_function_boundaries(node, file_path);
-  }
-
-  protected extract_block_boundaries(
-    node: Parser.SyntaxNode,
-    file_path: FilePath,
-  ): ScopeBoundaries {
-    const location = node_to_location(node, file_path);
-    return {
-      symbol_location: location,
-      scope_location: location,
-    };
-  }
-
   /**
    * Arrow functions have no name; a single unparenthesized parameter appears
    * under `parameter` rather than `parameters`, and the scope falls back to the
